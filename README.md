@@ -1,6 +1,6 @@
 # hll_rcon_tool
-Hell let loose RCON bindings in pythoin with CLI and soon http API + react gui with extended command and state.
 
+Hell let loose RCON bindings for python with CLI and soon http API, react gui and extended commands
 
 ## USAGE with docker
 
@@ -34,5 +34,3 @@ Hell let loose RCON bindings in pythoin with CLI and soon http API + react gui w
     $ docker run -it -e HLL_HOST=1.1.1.1 -e HLL_PORT=20300 -e HLL_PASSWORD=mypassword rcon python -m rcon.cli get_name
 
       [FR]-[CFr]CorpsFranc https://discordapp.com/invite/wX2K2uG
-
-
