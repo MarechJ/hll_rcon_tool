@@ -1,3 +1,5 @@
+import os
+
 from rcon.commands import ServerCtl
 from rcon.settings import SERVER_INFO
 
@@ -5,8 +7,9 @@ if __name__ == '__main__':
     ctl = ServerCtl(
         SERVER_INFO
     )
+    mount_path = os.getenv("BROADCAST_PATH", '')
     
-    with open("broadcasts.txt") as f: 
+    with open(f"{mount_path}/broadcasts.txt") as f: 
         msgs = [l.split(' ', 1) for l in f] 
  
     while True: 
