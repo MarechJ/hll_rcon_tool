@@ -3,12 +3,6 @@ from functools import wraps
 
 from rcon.connection import HLLConnection
 
-@dataclass
-class Admin:
-    steam_id_64: str
-    role: str
-    name: str
-
 
 def escape_string(s):
     """ Logic taken from the official rcon client. 
@@ -94,11 +88,7 @@ class ServerCtl:
         return self._request(f"playerinfo {player_name}")
         
     def get_admin_ids(self):
-        admins = []
-        for admin in self._get("adminids", True):
-            id_, role, name = admin.split(' ')
-            admins.append(Admin(steam_id_64=id_, role=role, name=name[1:-1]))
-        return admins
+        return self._get("adminids", True)
         
     def get_temp_bans(self):
         return self._get("tempbans", True)
