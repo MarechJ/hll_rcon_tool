@@ -14,6 +14,7 @@ if __name__ == '__main__':
         msgs = [l.split(' ', 1) for l in f] 
  
     while True: 
-        for time_min, msg in msgs: 
+        for time_min, msg in msgs:
+            print(f"{time_min}minute(s): {msg}")
             ctl.set_broadcast(msg) 
             time.sleep(int(time_min) * 60) 

@@ -20,12 +20,20 @@ def do_print(func):
         return res
     return wrap
 
+
+PREFIXES_TO_EXPOSE = [
+    'get_', 'set_', 'do_'
+]
+
 # Dynamically register all the methods from ServerCtl
 for name, func in inspect.getmembers(ctl):
-    if not name.startswith('get_') and not name.startswith('set_'):
+    if not any(name.startswith(prefix) for prefix in PREFIXES_TO_EXPOSE):
         continue
     wrapped = do_print(func)
-    for pname, param in inspect.signature(func).parameters.items():
+
+    # Registering the arguments of the function must be done from last
+    # to first as they are decorators
+    for pname, param in [i for i in inspect.signature(func).parameters.items()][::-1]:
         if param.default != inspect._empty:
             wrapped = click.option(f"--{pname}", pname, default=param.default)(wrapped)
         else:
