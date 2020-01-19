@@ -211,7 +211,8 @@ class ServerCtl:
 
     def do_remove_vip(self, steam_id_64):
         return self._request(f'vipdel {steam_id_64}')
-    
+
+
 if __name__ == '__main__':
     import os
     from rcon.settings import SERVER_INFO
