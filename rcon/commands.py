@@ -1,7 +1,11 @@
+import logging
+
 from dataclasses import dataclass
 from functools import wraps
 
 from rcon.connection import HLLConnection
+
+logger = logging.getLogger(__name__)
 
 
 def escape_string(s):
@@ -39,16 +43,29 @@ class ServerCtl:
     set password not implemented on purpose
     """
     def __init__(self, config):
+        self.config = config
+        self._connect()
+
+    def _connect(self):
         self.conn = HLLConnection()
         self.conn.connect(
-            config['host'],
-            config['port'],
-            config['password']
+            self.config['host'],
+            self.config['port'],
+            self.config['password']
         )
 
+    def _reconnect(self):
+        self.conn.close()
+        self._connect()
+
     def _request(self, command: str):
-        self.conn.send(command.encode())
-        return self.conn.receive().decode()
+        try:
+            self.conn.send(command.encode())
+            return self.conn.receive().decode()
+        except (RuntimeError, BrokenPipeError):
+            logger.exception("Reconnecting")
+            # Add counter to avoid infinte loop
+            self._reconnect()
 
     def _get(self, item, is_list=False):
         res = self._request(f"get {item}")
@@ -60,7 +77,13 @@ class ServerCtl:
         if res[-1] == '':
             # There's a trailin \t
             res = res[:-1]
-        expected_len = int(res[0])
+        try:
+            expected_len = int(res[0])
+        except ValueError:
+            raise RuntimeError(
+                "Unexpected response from server."
+                "Unable to get list length"
+            )
         actual_len = len(res) - 1
         if expected_len != actual_len:
             raise RuntimeError(
