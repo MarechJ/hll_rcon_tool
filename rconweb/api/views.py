@@ -1,11 +1,12 @@
 import inspect
 
-from rcon.commands import ServerCtl
+from rcon.extended_commands import Rcon
 from rcon.settings import SERVER_INFO
 from django.shortcuts import render
 from django.http import JsonResponse
 
 # Create your views here.
+
 
 def wrap_method(func, parameters):
     def wrapper(request):
@@ -20,10 +21,12 @@ def wrap_method(func, parameters):
         return JsonResponse({"result": res})
     return wrapper
 
-ctl = ServerCtl(
+
+ctl = Rcon(
     SERVER_INFO
 )
-        
+
+
 PREFIXES_TO_EXPOSE = [
     'get_', 'set_', 'do_'
 ]
@@ -37,5 +40,4 @@ for name, func in inspect.getmembers(ctl):
 
     commands.append(
         (name, wrap_method(func, inspect.signature(func).parameters))
-    )  
-   
+    )
