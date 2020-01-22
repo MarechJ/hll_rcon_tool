@@ -2,6 +2,8 @@ import socket
 import array
 
 MSGLEN = 128
+TIMEOUT_SEC = 10
+
 
 class HLLConnection:
     """demonstration class only
@@ -13,7 +15,8 @@ class HLLConnection:
         self.sock = socket.socket(
             socket.AF_INET, socket.SOCK_STREAM
         )
-        
+        self.sock.settimeout(10)
+
     def connect(self, host, port, password: str):
         self.sock.connect((host, port))
         self.xorkey = self.sock.recv(MSGLEN)
@@ -24,7 +27,7 @@ class HLLConnection:
 
     def close(self):
         self.sock.close()
-        
+
     def send(self, msg):
         sent = self.sock.send(self._xor(msg))
         if sent != len(msg):
@@ -41,13 +44,9 @@ class HLLConnection:
     def receive(self, msglen=MSGLEN):
         buff = self.sock.recv(msglen)
         msg = self._xor(buff)
-        
+
         while len(buff) >= msglen:
             buff = self.sock.recv(msglen)
             msg += self._xor(buff)
-            
+
         return msg
-
-
-
-

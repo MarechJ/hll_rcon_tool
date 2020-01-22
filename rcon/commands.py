@@ -5,7 +5,7 @@ from rcon.connection import HLLConnection
 
 
 def escape_string(s):
-    """ Logic taken from the official rcon client. 
+    """ Logic taken from the official rcon client.
     There's probably plenty of nicer and more bulletproof ones
     """
     quoted = ""
@@ -31,7 +31,7 @@ def _escape_params(func):
         )
     return func
 
-    
+
 class ServerCtl:
     """TODO: Use string format instead of interpolation as it could be a
     security risk
@@ -49,26 +49,26 @@ class ServerCtl:
     def _request(self, command: str):
         self.conn.send(command.encode())
         return self.conn.receive().decode()
-    
+
     def _get(self, item, is_list=False):
         res = self._request(f"get {item}")
-        
+
         if not is_list:
             return res
-        
+
         res = res.split('\t')
         if res[-1] == '':
             # There's a trailin \t
             res = res[:-1]
         expected_len = int(res[0])
-        actual_len = len(res) - 1 
+        actual_len = len(res) - 1
         if expected_len != actual_len:
             raise RuntimeError(
                 f"Server returned incomplete list,"
                 f" expected {expected_len} got {actual_len}"
             )
         return res[1:]
-        
+
     def get_name(self):
         return self._get("name")
 
@@ -86,16 +86,16 @@ class ServerCtl:
     @_escape_params
     def get_player_info(self, player_name):
         return self._request(f"playerinfo {player_name}")
-        
+
     def get_admin_ids(self):
         return self._get("adminids", True)
-        
+
     def get_temp_bans(self):
         return self._get("tempbans", True)
 
     def get_perma_bans(self):
         return self._get("permabans", True)
-    
+
     def get_team_switch_cooldown(self):
         return self._get("teamswitchcooldown")
 
@@ -113,7 +113,7 @@ class ServerCtl:
 
     def get_admin_groups(self):
         return self._get("admingroups", True)
-    
+
     def get_logs(self, since_min_ago, filter_=''):
         return self._request(f'showlog {since_min_ago}')
 
@@ -134,7 +134,7 @@ class ServerCtl:
         String bool is on / off
         """
         return self._request(f'setautobalanceenabled {bool_str}')
-    
+
     def set_welcome_message(self, msg):
         return self._request(f"say {msg}")
 
@@ -158,7 +158,7 @@ class ServerCtl:
 
     def set_vip_slots(self, num):
         return self._request(f"setnumvipslots {num}")
-                             
+
     @_escape_params
     def set_broadcast(self, msg):
         return self._request(f'broadcast "{msg}"')
@@ -169,21 +169,21 @@ class ServerCtl:
 
     def do_swtich_player_now(self, player):
         return self._request(f'switchteamnow "{player}"')
-    
+
     def do_add_map_to_rotation(self, map_name):
         return self._request(f"rotadd {map_name}")
 
     def do_remove_map_from_rotation(self, map_name):
         return self._request(f"rotdel {map_name}")
-    
+
     @_escape_params
-    def do_punish(self, player):
+    def do_punish(self, player, reason):
         return self._request(f'punish "{player}" "{reason}"')
-    
+
     @_escape_params
-    def do_kick(self, player):
+    def do_kick(self, player, reason):
         return self._request(f'kick "{player}" "{reason}"')
-    
+
     @_escape_params
     def do_temp_ban(self, player, reason):
         return self._request(f'tempban "{player}" "{reason}"')
@@ -216,11 +216,11 @@ class ServerCtl:
 if __name__ == '__main__':
     import os
     from rcon.settings import SERVER_INFO
-    
+
     ctl = ServerCtl(
         SERVER_INFO
     )
-    
+
     print(ctl.get_map())
     maps = ctl.get_map_rotation()
     #print(ctl.set_map(maps[2]))
