@@ -3,13 +3,14 @@ import inspect
 import click
 
 from rcon.settings import SERVER_INFO
-from rcon.commands import ServerCtl
+from rcon.extended_commands import Rcon
+
 
 @click.group()
 def cli():
     pass
 
-ctl = ServerCtl(
+ctl = Rcon(
     SERVER_INFO
 )
 
@@ -38,9 +39,9 @@ for name, func in inspect.getmembers(ctl):
             wrapped = click.option(f"--{pname}", pname, default=param.default)(wrapped)
         else:
             wrapped = click.argument(pname)(wrapped)
-    
+
     cli.command(name=name)(wrapped)
-        
-    
+
+
 if __name__ == '__main__':
     cli()

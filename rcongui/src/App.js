@@ -8,6 +8,18 @@ import Grid from '@material-ui/core/Grid';
 import Button from '@material-ui/core/Button';
 import { yellow } from '@material-ui/core/colors';
 import Chip from '@material-ui/core/Chip';
+import List from '@material-ui/core/List';
+import ListItem from '@material-ui/core/ListItem';
+import ListItemIcon from '@material-ui/core/ListItemIcon';
+import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
+import ListItemText from '@material-ui/core/ListItemText';
+import Checkbox from '@material-ui/core/Checkbox';
+import IconButton from '@material-ui/core/IconButton';
+import CommentIcon from '@material-ui/icons/Comment';
+import ButtonGroup from '@material-ui/core/ButtonGroup';
+import TextField from '@material-ui/core/TextField';
+import Autocomplete from '@material-ui/lab/Autocomplete';
+import _ from 'lodash'
 
 const useStyles = makeStyles(theme => ({
   root: {
@@ -21,15 +33,14 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-const ColorButton = withStyles(theme => ({
-  root: {
-    color: theme.palette.getContrastText(yellow[500]),
-    backgroundColor: yellow[500],
-    '&:hover': {
-      backgroundColor: yellow[700],
-    },
-  },
-}))(Button);
+
+const Filter = ({players, handleChange}) => {
+  return (
+    <div style={{ width: 300 }}>
+      <TextField label="Filter" onChange={(event) => handleChange(event.target.value)} />
+    </div>
+  );
+}
 
 class PlayerList extends Component {
   constructor(props) {
@@ -68,6 +79,33 @@ class PlayerList extends Component {
   }
 }
 
+
+const CompactList = ({players, classes, handleToggle}) => (
+  <List className={classes.root}>
+  {players.map(value => {
+    const labelId = `checkbox-list-label-${value.name}`;
+
+    return (
+      <ListItem key={value.name} role={undefined} dense button onClick={(value) => handleToggle(value)}>
+        <ListItemIcon>
+          <Checkbox
+            edge="start"
+            checked={false}
+            tabIndex={-1}
+            disableRipple
+            inputProps={{ 'aria-labelledby': labelId }}
+          />
+        </ListItemIcon>
+        <ListItemText id={labelId} primary={value.name} secondary={value.steam_id_64}/>
+        <ListItemSecondaryAction>
+          <PlayerActions size="small" />
+        </ListItemSecondaryAction>
+      </ListItem>
+    );
+  })}
+</List>
+)
+
 const SelectedPlayers = ({players}) => (
   <React.Fragment>
     { players.map((p) => (
@@ -77,22 +115,24 @@ const SelectedPlayers = ({players}) => (
   </React.Fragment>
 )
 
-const PlayerActions = () => {
+const PlayerActions = ({size}) => {
   const classes = useStyles();
 
   return <React.Fragment>
-    <Button variant="contained" className={classes.margin}>
+    <ButtonGroup size={size} aria-label="small outlined button group">
+    <Button>
       PUNISH
     </Button>
-    <Button variant="contained" color="primary" className={classes.margin}>
+    <Button>
       KICK
     </Button>
-    <ColorButton variant="contained" color="primary" className={classes.margin}>
+    <Button>
       2H BAN
-    </ColorButton>
-    <Button variant="contained" color="secondary" className={classes.margin}>
+    </Button>
+    <Button>
       PERMA BAN
     </Button>
+    </ButtonGroup>
   </React.Fragment>
 }
 
@@ -100,10 +140,14 @@ class PlayerView extends Component {
   constructor(props) {
     super()
     this.state = {
-      selectedPlayers: []
+      selectedPlayers: [],
+      players: [],
+      filter: null
     }
 
     this.onPlayerSelected = this.onPlayerSelected.bind(this)
+    this.filterPlayers = this.filterPlayers.bind(this)
+    this.filterChange = this.filterChange.bind(this)
   }
 
   onPlayerSelected(players) {
@@ -111,18 +155,46 @@ class PlayerView extends Component {
     this.setState({selectedPlayers: players})
   }
 
+  componentDidMount() {
+    fetch(`${process.env.REACT_APP_API_URL}get_players`).then(
+      response => response.json()
+    ).then(
+      data => this.setState({players: data.result})
+    )
+  }
+
+  filterChange(regex) {
+      this.setState({filter: regex})
+  }
+
+  filterPlayers(players, regex) {
+    console.log(regex)
+    if (!regex) {
+      return players
+    }
+    const res = _.filter(players, (p) => p.name.toLowerCase().indexOf(regex) >= 0 )
+    console.log(res)
+    return res
+  }
+
   render() {
     const {classes} = this.props 
-    const {selectedPlayers} = this.state
+    const {selectedPlayers, players, filter} = this.state
 
     return <Grid container spacing={3}>
       <Grid item xs={6}>
-        <PlayerList onPlayerSelected={this.onPlayerSelected} />
+        {/* <PlayerList onPlayerSelected={this.onPlayerSelected} /> */}
+        <Filter handleChange={this.filterChange} />
+        {
+          players
+          ? <CompactList classes={classes} players={this.filterPlayers(players, filter)}/>
+          : "No players to list"
+        }
       </Grid>
       <Grid item xs={6}>
         <Paper className={classes.paper}>
           <SelectedPlayers players={selectedPlayers} />
-          <PlayerActions />
+          <PlayerActions players={selectedPlayers}/>
         </Paper>
       </Grid>
     </Grid> 
