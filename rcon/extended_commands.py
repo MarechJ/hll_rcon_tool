@@ -1,3 +1,5 @@
+import random
+
 from cachetools.func import ttl_cache
 
 from rcon.commands import ServerCtl
@@ -68,9 +70,23 @@ class Rcon(ServerCtl):
             for s in settings
         }
 
+    def do_randomize_map_rotation(self, maps=None):
+        maps = maps or self.get_maps()
+        current = self.get_map_rotation()
+
+        random.shuffle(maps)
+
+        for m in maps:
+            if m in current:
+                print(self.do_remove_map_from_rotation(m))
+            print(self.do_add_map_to_rotation(m))
+
+        return maps
+
 
 if __name__ == '__main__':
     from rcon.settings import SERVER_INFO
     r = Rcon(SERVER_INFO)
-
-    print(r.get_players())
+    print(r.get_map_rotation())
+    print(r.do_randomize_map_rotation())
+    print(r.get_map_rotation())
