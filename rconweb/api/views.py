@@ -1,24 +1,51 @@
 import inspect
 
-from rcon.extended_commands import Rcon
-from rcon.settings import SERVER_INFO
+import json
 from django.shortcuts import render
 from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+
+from rcon.extended_commands import Rcon
+from rcon.commands import CommandFailedError
+from rcon.settings import SERVER_INFO
 
 # Create your views here.
 
 
 def wrap_method(func, parameters):
+    @csrf_exempt
     def wrapper(request):
+
         arguments = {}
+        data = {}
+        failure = False
+
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            data = {}
+
         for pname, param in parameters.items():
             if param.default != inspect._empty:
-                arguments[pname] = request.POST.get(pname)
+                arguments[pname] = data.get(pname)
             else:
-                arguments[pname] = request.POST[pname]
+                try:
+                    arguments[pname] = data[pname]
+                except KeyError:
+                    # TODO raise 400
+                    raise
 
-        res = func(**arguments)
-        return JsonResponse({"result": res})
+        try:
+            res = func(**arguments)
+        except CommandFailedError:
+            failure = True
+            res = None
+        return JsonResponse({
+            "result": res,
+            "command": func.__name__,
+            "arguments": data,
+            "failed": failure
+        })
     return wrapper
 
 

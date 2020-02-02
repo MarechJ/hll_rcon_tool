@@ -18,6 +18,11 @@ import _ from "lodash";
 import Menu from "@material-ui/core/Menu";
 import MenuItem from "@material-ui/core/MenuItem";
 import ArrowDropDownIcon from "@material-ui/icons/ArrowDropDown";
+import Dialog from "@material-ui/core/Dialog";
+import DialogActions from "@material-ui/core/DialogActions";
+import DialogContent from "@material-ui/core/DialogContent";
+import DialogContentText from "@material-ui/core/DialogContentText";
+import DialogTitle from "@material-ui/core/DialogTitle";
 
 const useStyles = makeStyles(theme => ({
   root: {
@@ -27,95 +32,190 @@ const useStyles = makeStyles(theme => ({
     padding: theme.spacing(2)
   },
   margin: {
-    margin: theme.spacing(1)
+    margin: theme.spacing(2)
   }
 }));
 
-const Filter = ({ filter, handleChange }) => {
-  return (
-    <div style={{ width: 300 }}>
-      <TextField
-        label="Filter"
-        onChange={event => {
-          event.preventDefault();
-          handleChange(event.target.value);
-        }}
-      />
-    </div>
-  );
-};
+async function postData(url = "", data = {}) {
+  // Default options are marked with *
+  const response = await fetch(url, {
+    method: "POST", // *GET, POST, PUT, DELETE, etc.
+    mode: "cors", // no-cors, *cors, same-origin
+    cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
+    credentials: "same-origin", // include, *same-origin, omit
+    headers: {
+      "Content-Type": "application/json"
+    },
+    redirect: "follow", // manual, *follow, error
+    referrerPolicy: "no-referrer", // no-referrer, *client
+    body: JSON.stringify(data) // body data type must match "Content-Type" header
+  });
+  return await response.json(); // parses JSON response into native JavaScript objects
+}
 
-class PlayerList extends Component {
+class ReasonDialog extends React.Component {
   constructor(props) {
-    super();
+    super(props);
     this.state = {
-      players: []
+      reason: ""
     };
+
+    this.onChange = this.onChange.bind(this)
   }
 
-  componentDidMount() {
-    fetch(`${process.env.REACT_APP_API_URL}get_players`)
-      .then(response => response.json())
-      .then(data => this.setState({ players: data.result }));
+  onChange(e) {
+    e.preventDefault()
+    this.setState({ reason: e.target.value })
   }
 
   render() {
-    const { onPlayerSelected } = this.props;
+    const { open, handleClose, handleConfirm } = this.props;
+    const { reason } = this.state;
 
     return (
-      <MaterialTable
-        columns={[
-          { title: "Player", field: "name" },
-          { title: "SteamID", field: "steam_id_64" }
-        ]}
-        data={this.state.players}
-        title="Player List"
-        options={{
-          selection: true,
-          pageSize: 100,
-          pageSizeOptions: [5, 10, 25, 50, 100]
-        }}
-        onSelectionChange={rows => onPlayerSelected(rows)}
-      />
+      <Dialog open={open} aria-labelledby="form-dialog-title">
+        <DialogTitle id="form-dialog-title">
+          Execute {open.actionType} on {open.player}
+        </DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            id="name"
+            label="Reason"
+            value={reason}
+            onChange={this.onChange}
+            fullWidth
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => {
+              this.setState({ reason: "" }, handleClose);
+            }}
+            color="primary"
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={() => {
+              handleConfirm(open.actionType, open.player, reason) 
+              this.setState(
+                { reason: "" }
+              );
+            }}
+            color="primary"
+          >
+            Confirm
+          </Button>
+        </DialogActions>
+      </Dialog>
     );
   }
 }
 
-const CompactList = ({ players, classes, handleToggle }) => (
-  <List className={classes.root}>
-    {players.map(value => {
-      const labelId = `checkbox-list-label-${value.name}`;
-
-      return (
-        <ListItem
-          key={value.name}
-          role={undefined}
-          dense
-          button
-          onClick={value => handleToggle(value)}
-        >
-          <ListItemIcon>
-            <Checkbox
-              edge="start"
-              checked={false}
-              tabIndex={-1}
-              disableRipple
-              inputProps={{ "aria-labelledby": labelId }}
-            />
-          </ListItemIcon>
-          <ListItemText
-            id={labelId}
-            primary={value.name}
-            secondary={value.steam_id_64}
+const Filter = ({
+  classes,
+  filter,
+  handleChange,
+  total,
+  showCount,
+  handleMessageChange
+}) => {
+  /* todo refactor */
+  return (
+    <Grid item xs={12} spacing={2}>
+      <Grid container justify="space-between">
+        <Grid item xs={4}>
+          <TextField
+            label="Filter"
+            helperText={`Showing: ${showCount} / ${total}`}
+            onChange={event => {
+              event.preventDefault();
+              handleChange(event.target.value);
+            }}
           />
-          <ListItemSecondaryAction>
-            <PlayerActions size="small" />
-          </ListItemSecondaryAction>
-        </ListItem>
-      );
-    })}
-  </List>
+        </Grid>
+        <Grid item xs={8}>
+          <TextField
+            id="filled-full-width"
+            label="Punish/Kick/Ban message"
+            helperText={"Leave blank if you want a confirmation popup"}
+            fullWidth
+            onChange={event => {
+              event.preventDefault();
+              handleMessageChange(event.target.value);
+            }}
+          />
+        </Grid>
+      </Grid>
+    </Grid>
+  );
+};
+
+const PlayerItem = ({ name, steamID64, handleToggle, handleAction }) => (
+  <ListItem
+    key={name}
+    role={undefined}
+    dense
+    button
+    onClick={value => handleToggle(value)}
+  >
+    <ListItemIcon>
+      <Checkbox
+        edge="start"
+        checked={false}
+        tabIndex={-1}
+        disableRipple
+        inputProps={{ "aria-labelledby": `checkbox-list-label-${steamID64}` }}
+      />
+    </ListItemIcon>
+    <ListItemText
+      id={`checkbox-list-label-${steamID64}`}
+      primary={name}
+      secondary={steamID64}
+    />
+    <ListItemSecondaryAction>
+      <PlayerActions size="small" handleAction={handleAction} />
+    </ListItemSecondaryAction>
+  </ListItem>
 );
+
+class CompactList extends React.Component {
+  shouldComponentUpdate(nextProps, nextState) {
+    if (nextProps.playerSteamIDs.length !== this.props.playerSteamIDs.length) {
+      return true;
+    }
+    const diff = _.difference(
+      nextProps.playerSteamIDs,
+      this.props.playerSteamIDs
+    );
+    return diff.length > 0;
+  }
+
+  render() {
+    const {
+      playerNames,
+      playerSteamIDs,
+      classes,
+      handleToggle,
+      handleAction
+    } = this.props;
+
+    return (
+      <List className={classes.root}>
+        {_.zip(playerNames, playerSteamIDs).map(player => (
+          <PlayerItem
+            name={player[0]}
+            steamID64={player[1]}
+            key={player.steam_id_64}
+            handleAction={actionType => handleAction(actionType, player[0])}
+          />
+        ))}
+      </List>
+    );
+  }
+}
 
 const SelectedPlayers = ({ players }) => (
   <React.Fragment>
@@ -125,7 +225,7 @@ const SelectedPlayers = ({ players }) => (
   </React.Fragment>
 );
 
-const PlayerActions = ({ size }) => {
+const PlayerActions = ({ size, handleAction }) => {
   const classes = useStyles();
   const [anchorEl, setAnchorEl] = React.useState(null);
   const handleClick = event => {
@@ -138,9 +238,9 @@ const PlayerActions = ({ size }) => {
   return (
     <React.Fragment>
       <ButtonGroup size={size} aria-label="small outlined button group">
-        <Button>PUNISH</Button>
-        <Button>KICK</Button>
-        <Button>2H BAN</Button>
+        <Button onClick={() => handleAction("punish")}>PUNISH</Button>
+        <Button onClick={() => handleAction("kick")}>KICK</Button>
+        <Button onClick={() => handleAction("temp_ban")}>2H BAN</Button>
         <Button
           aria-controls="simple-menu"
           aria-haspopup="true"
@@ -155,9 +255,30 @@ const PlayerActions = ({ size }) => {
           open={Boolean(anchorEl)}
           onClose={handleClose}
         >
-          <MenuItem onClick={handleClose}>Switch team now</MenuItem>
-          <MenuItem onClick={handleClose}>Switch team on death</MenuItem>
-          <MenuItem onClick={handleClose}>Perma Ban</MenuItem>
+          <MenuItem
+            onClick={() => {
+              handleAction("switch_player_now");
+              handleClose();
+            }}
+          >
+            Switch team now
+          </MenuItem>
+          <MenuItem
+            onClick={() => {
+              handleAction("switch_player_on_death");
+              handleClose();
+            }}
+          >
+            Switch team on death
+          </MenuItem>
+          <MenuItem
+            onClick={() => {
+              handleAction("perma_ban");
+              handleClose();
+            }}
+          >
+            Perma Ban
+          </MenuItem>
         </Menu>
       </ButtonGroup>
     </React.Fragment>
@@ -170,14 +291,32 @@ class PlayerView extends Component {
     this.state = {
       selectedPlayers: [],
       players: [],
-      filteredPlayers: [],
+      filteredPlayerNames: [],
+      filterPlayerSteamIDs: [],
       filter: "",
-      filterTimeout: null
+      filterTimeout: null,
+      actionMessage: "",
+      doConfirm: false
     };
 
     this.onPlayerSelected = this.onPlayerSelected.bind(this);
     this.filterPlayers = this.filterPlayers.bind(this);
     this.filterChange = this.filterChange.bind(this);
+  }
+
+  handleAction(actionType, player, message = null) {
+    console.log(actionType, player, message)
+    if (message === null) {
+      message = this.state.actionMessage
+    } 
+    if (message === "") {
+      this.setState({ doConfirm: {player: player, actionType: actionType}});
+    } else {
+      postData(`${process.env.REACT_APP_API_URL}do_${actionType}`, {
+        player: player,
+        reason: message
+     });
+    }
   }
 
   onPlayerSelected(players) {
@@ -188,7 +327,7 @@ class PlayerView extends Component {
     fetch(`${process.env.REACT_APP_API_URL}get_players`)
       .then(response => response.json())
       .then(data =>
-        this.setState({ players: data.result, filteredPlayers: data.result })
+        this.setState({ players: data.result }, this.filterPlayers)
       );
   }
 
@@ -202,29 +341,60 @@ class PlayerView extends Component {
 
   filterPlayers() {
     const { filter, players } = this.state;
-    console.log(players.length, this.state.filteredPlayers.length);
     if (!filter) {
-      return this.setState({ filteredPlayers: players });
+      const filteredPlayerNames = players.map(p => p.name);
+      const filterPlayerSteamIDs = players.map(p => p.steam_id_64);
+      return this.setState({ filterPlayerSteamIDs, filteredPlayerNames });
     }
     const filteredPlayers = _.filter(
       players,
       p => p.name.toLowerCase().indexOf(filter) >= 0
     );
 
-    this.setState({ filteredPlayers });
+    const filteredPlayerNames = filteredPlayers.map(p => p.name);
+    const filterPlayerSteamIDs = filteredPlayers.map(p => p.steam_id_64);
+    this.setState({ filteredPlayerNames, filterPlayerSteamIDs });
   }
 
   render() {
     const { classes } = this.props;
-    const { selectedPlayers, players, filteredPlayers, filter } = this.state;
-
+    const {
+      selectedPlayers,
+      players,
+      filteredPlayerNames,
+      filterPlayerSteamIDs,
+      filter,
+      actionMessage,
+      doConfirm
+    } = this.state;
+    console.log(actionMessage)
     return (
       <Grid container spacing={3}>
         <Grid item xs={6}>
-          {/* <PlayerList onPlayerSelected={this.onPlayerSelected} /> */}
-          <Filter handleChange={this.filterChange} />
-
-          <CompactList classes={classes} players={filteredPlayers} />
+          <ReasonDialog
+            open={doConfirm}
+            handleClose={() => this.setState({ doConfirm: false })}
+            handleConfirm={(action, player, reason) => {
+              this.handleAction(action, player, reason);
+              this.setState({ doConfirm: false });
+            }}
+          />
+          <Filter
+            classes={classes}
+            handleChange={this.filterChange}
+            total={players.length}
+            showCount={filteredPlayerNames.length}
+            handleMessageChange={text => this.setState({ actionMessage: text })}
+            actionMessage={actionMessage}
+          />
+          <CompactList
+            classes={classes}
+            playerNames={filteredPlayerNames}
+            playerSteamIDs={filterPlayerSteamIDs}
+            handleAction={(actionType, player) =>
+              this.handleAction(actionType, player)
+            }
+          />
         </Grid>
         <Grid item xs={6}>
           <Paper className={classes.paper}>

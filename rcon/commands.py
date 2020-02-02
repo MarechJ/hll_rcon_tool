@@ -1,4 +1,5 @@
 import logging
+import socket
 
 from dataclasses import dataclass
 from functools import wraps
@@ -27,13 +28,16 @@ def escape_string(s):
 def _escape_params(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
-        print(args)
         return func(
             args[0],
             *[escape_string for a in args[1:]],
             **{k: v for k, v in kwargs.items()}
         )
     return func
+
+
+class CommandFailedError(Exception):
+    pass
 
 
 class ServerCtl:
@@ -61,11 +65,17 @@ class ServerCtl:
     def _request(self, command: str):
         try:
             self.conn.send(command.encode())
-            return self.conn.receive().decode()
-        except (RuntimeError, BrokenPipeError):
+            result = self.conn.receive().decode()
+        except (RuntimeError, BrokenPipeError, socket.timeout):
             logger.exception("Reconnecting")
             # Add counter to avoid infinte loop
             self._reconnect()
+            raise
+
+        if result == 'FAIL':
+            raise CommandFailedError(command)
+
+        return result
 
     def _get(self, item, is_list=False):
         res = self._request(f"get {item}")
@@ -107,8 +117,8 @@ class ServerCtl:
         return self._get("players", True)
 
     @_escape_params
-    def get_player_info(self, player_name):
-        return self._request(f"playerinfo {player_name}")
+    def get_player_info(self, player):
+        return self._request(f"playerinfo {player}")
 
     def get_admin_ids(self):
         return self._get("adminids", True)
@@ -190,7 +200,7 @@ class ServerCtl:
     def do_switch_player_on_death(self, player):
         return self._request(f'switchteamondeath "{player}"')
 
-    def do_swtich_player_now(self, player):
+    def do_switch_player_now(self, player):
         return self._request(f'switchteamnow "{player}"')
 
     def do_add_map_to_rotation(self, map_name):

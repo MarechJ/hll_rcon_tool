@@ -2,7 +2,7 @@ import random
 
 from cachetools.func import ttl_cache
 
-from rcon.commands import ServerCtl
+from rcon.commands import ServerCtl, CommandFailedError
 
 
 STEAMID = "steam_id_64"
@@ -12,9 +12,13 @@ ROLE = "role"
 
 class Rcon(ServerCtl):
     @ttl_cache(ttl=60 * 60)
-    def get_player_info(self, player_name):
-        raw = super().get_player_info(player_name)
-        name, steam_id_64 = raw.split('\n')
+    def get_player_info(self, player):
+        raw = super().get_player_info(player)
+        try:
+            name, steam_id_64 = raw.split('\n')
+        except ValueError:
+            self._reconnect()
+            raise
         return {
             NAME: name.split(": ", 1)[-1],
             STEAMID: steam_id_64.split(": ", 1)[-1],
@@ -45,10 +49,18 @@ class Rcon(ServerCtl):
     @ttl_cache(ttl=60 * 60)
     def get_vip_ids(self):
         res = super().get_vip_ids()
-        return [
-            dict(zip((STEAMID, NAME), i.split(" ", 1)))
-            for i in res
-        ]
+        l = []
+
+        for item in res:
+            try:
+                steam_id_64, name = item.split(" ", 1)
+            except ValueError:
+                self._reconnect()
+                raise
+            l.append(dict(zip((STEAMID, NAME), (steam_id_64, name))))
+
+        return l
+
 
     @ttl_cache(ttl=60)
     def get_status(self):
