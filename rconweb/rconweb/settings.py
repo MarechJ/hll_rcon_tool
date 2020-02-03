@@ -25,7 +25,7 @@ SECRET_KEY = '9*i9zm1jx(5y-ns=*r6p%#6-q!bst98u3o3pw6joyf#-e(bh(0'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['backend:8000', 'backend']
+ALLOWED_HOSTS = ['backend:8000', 'backend', '127.0.0.1']
 
 # TODO: You might not want that. Think XSS
 CORS_ORIGIN_ALLOW_ALL = True

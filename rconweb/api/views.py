@@ -1,5 +1,5 @@
 import inspect
-
+import logging
 import json
 from django.shortcuts import render
 from django.http import JsonResponse
@@ -10,7 +10,7 @@ from rcon.commands import CommandFailedError
 from rcon.settings import SERVER_INFO
 
 # Create your views here.
-
+logger = logging.getLogger(__name__)
 
 def wrap_method(func, parameters):
     @csrf_exempt
@@ -36,6 +36,7 @@ def wrap_method(func, parameters):
                     raise
 
         try:
+            print("%s %s" % (func.__name__, arguments))
             res = func(**arguments)
         except CommandFailedError:
             failure = True
