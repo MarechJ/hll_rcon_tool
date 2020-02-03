@@ -445,11 +445,12 @@ class PlayerView extends Component {
             "No players to show"
           )}
         </Grid>
-        <Grid item xs={6}>
-          {/* <Paper className={classes.paper}>
+            <Grid item xs={6}>
+	    {/*
+          <Paper className={classes.paper}>
             <SelectedPlayers players={selectedPlayers} />
             <PlayerActions players={selectedPlayers} />
-          </Paper> */}
+            </Paper> */}
         </Grid>
         <ToastContainer />
         <ReasonDialog
