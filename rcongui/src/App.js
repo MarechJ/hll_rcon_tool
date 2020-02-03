@@ -84,7 +84,7 @@ async function postData(url = "", data = {}) {
     method: "POST", // *GET, POST, PUT, DELETE, etc.
     mode: "cors", // no-cors, *cors, same-origin
     cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
-    credentials: "same-origin", // include, *same-origin, omit
+    credentials: "include", // include, *same-origin, omit
     headers: {
       "Content-Type": "application/json"
     },
@@ -370,8 +370,8 @@ class PlayerView extends Component {
     fetch(`${process.env.REACT_APP_API_URL}get_players`)
       .then(response => this.showResponse(response, "get_players"))
       .then(data =>
-        this.setState({ players: data.result }, this.filterPlayers)
-      );
+        this.setState({ players: data.result === null ? [] : data.result}, this.filterPlayers)
+      ).catch(() => toast.error("Unable to connect to API"));
   }
 
   componentDidMount() {
@@ -431,7 +431,7 @@ class PlayerView extends Component {
             handleMessageChange={text => this.setState({ actionMessage: text })}
             actionMessage={actionMessage}
           />
-          {players ? (
+          {players  ? (
             <CompactList
               classes={classes}
               playerNames={filteredPlayerNames}
@@ -442,7 +442,8 @@ class PlayerView extends Component {
               handleToggle={() => 1}
             />
           ) : (
-            "No players to show"
+
+            <p>"No players to show"</p>
           )}
         </Grid>
             <Grid item xs={6}>
