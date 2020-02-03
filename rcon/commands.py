@@ -1,5 +1,6 @@
 import logging
 import socket
+from functools import wraps
 
 from dataclasses import dataclass
 from functools import wraps
@@ -40,15 +41,38 @@ class CommandFailedError(Exception):
     pass
 
 
+class HLLServerError(Exception):
+    pass
+
+
+def _auto_retry(method):
+    @wraps(method)
+    def wrap(self, *args, **kwargs):
+        try:
+            return method(self, *args, **kwargs)
+        except HLLServerError:
+            if not self.auto_retry:
+                raise
+            logger.warning(
+                "Auto retrying %s %s %s", method.__name__, args, kwargs
+            )
+            self._reconnect()
+            return method(self, *args, **kwargs)
+            # TODO loop and counter implement counter
+
+    return wrap
+
+
 class ServerCtl:
     """TODO: Use string format instead of interpolation as it could be a
     security risk
 
     set password not implemented on purpose
     """
-    def __init__(self, config):
+    def __init__(self, config, auto_retry=1):
         self.config = config
         self._connect()
+        self.auto_retry = auto_retry
 
     def _connect(self):
         self.conn = HLLConnection()
@@ -59,24 +83,25 @@ class ServerCtl:
         )
 
     def _reconnect(self):
+        logger.warning("reconnecting")
         self.conn.close()
         self._connect()
 
+    @_auto_retry
     def _request(self, command: str):
+        logger.debug(command)
         try:
             self.conn.send(command.encode())
             result = self.conn.receive().decode()
         except (RuntimeError, BrokenPipeError, socket.timeout):
-            logger.exception("Reconnecting")
-            # Add counter to avoid infinte loop
-            self._reconnect()
-            raise
+            raise HLLServerError(command)
 
         if result == 'FAIL':
             raise CommandFailedError(command)
 
         return result
 
+    @_auto_retry
     def _get(self, item, is_list=False):
         res = self._request(f"get {item}")
 
@@ -90,13 +115,13 @@ class ServerCtl:
         try:
             expected_len = int(res[0])
         except ValueError:
-            raise RuntimeError(
+            raise HLLServerError(
                 "Unexpected response from server."
                 "Unable to get list length"
             )
         actual_len = len(res) - 1
         if expected_len != actual_len:
-            raise RuntimeError(
+            raise HLLServerError(
                 f"Server returned incomplete list,"
                 f" expected {expected_len} got {actual_len}"
             )

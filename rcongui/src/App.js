@@ -23,6 +23,11 @@ import DialogActions from "@material-ui/core/DialogActions";
 import DialogContent from "@material-ui/core/DialogContent";
 import DialogContentText from "@material-ui/core/DialogContentText";
 import DialogTitle from "@material-ui/core/DialogTitle";
+import LinearProgress from "@material-ui/core/LinearProgress";
+import Toolbar from "@material-ui/core/Toolbar";
+import Typography from '@material-ui/core/Typography';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const useStyles = makeStyles(theme => ({
   root: {
@@ -33,8 +38,45 @@ const useStyles = makeStyles(theme => ({
   },
   margin: {
     margin: theme.spacing(2)
+  },
+  textLeft: {
+    textAlign: "left",
+    paddingLeft: theme.spacing(2)
   }
 }));
+
+const AutoRefreshBar = ({ intervalFunction, everyMs, refreshIntevalMs }) => {
+  const classes = useStyles();
+  const [completed, setCompleted] = React.useState(0);
+
+  React.useEffect(() => {
+    function progress() {
+      setCompleted(oldCompleted => {
+        if (oldCompleted === 100) {
+          intervalFunction();
+          return 0;
+        }
+
+        return Math.min(oldCompleted + (refreshIntevalMs / everyMs) * 100, 100);
+      });
+    }
+
+    const timer = setInterval(progress, refreshIntevalMs);
+    return () => {
+      clearInterval(timer);
+    };
+  }, [everyMs, intervalFunction, refreshIntevalMs]);
+
+  return (
+    <React.Fragment>
+      <Grid className={classes.textLeft} container justify="flex-start">
+       <Grid item xs={12}><h1>Players view</h1></Grid>
+       <Grid item xs={12}><ListItemText secondary="Next auto refresh" /></Grid>
+       </Grid>  
+      <LinearProgress variant="determinate" value={completed} />
+    </React.Fragment>
+  );
+};
 
 async function postData(url = "", data = {}) {
   // Default options are marked with *
@@ -60,12 +102,12 @@ class ReasonDialog extends React.Component {
       reason: ""
     };
 
-    this.onChange = this.onChange.bind(this)
+    this.onChange = this.onChange.bind(this);
   }
 
   onChange(e) {
-    e.preventDefault()
-    this.setState({ reason: e.target.value })
+    e.preventDefault();
+    this.setState({ reason: e.target.value });
   }
 
   render() {
@@ -99,10 +141,8 @@ class ReasonDialog extends React.Component {
           </Button>
           <Button
             onClick={() => {
-              handleConfirm(open.actionType, open.player, reason) 
-              this.setState(
-                { reason: "" }
-              );
+              handleConfirm(open.actionType, open.player, reason);
+              this.setState({ reason: "" });
             }}
             color="primary"
           >
@@ -125,8 +165,8 @@ const Filter = ({
   /* todo refactor */
   return (
     <Grid item xs={12} spacing={2}>
-      <Grid container justify="space-between">
-        <Grid item xs={4}>
+      <Grid container justify="flex-start" direction="row">
+        <Grid item xs={12} md={4} className={classes.textLeft}>
           <TextField
             label="Filter"
             helperText={`Showing: ${showCount} / ${total}`}
@@ -136,7 +176,7 @@ const Filter = ({
             }}
           />
         </Grid>
-        <Grid item xs={8}>
+        <Grid item xs={12} md={8} className={classes.textLeft}>
           <TextField
             id="filled-full-width"
             label="Punish/Kick/Ban message"
@@ -158,18 +198,7 @@ const PlayerItem = ({ name, steamID64, handleToggle, handleAction }) => (
     key={name}
     role={undefined}
     dense
-    button
-    onClick={value => handleToggle(value)}
   >
-    <ListItemIcon>
-      <Checkbox
-        edge="start"
-        checked={false}
-        tabIndex={-1}
-        disableRipple
-        inputProps={{ "aria-labelledby": `checkbox-list-label-${steamID64}` }}
-      />
-    </ListItemIcon>
     <ListItemText
       id={`checkbox-list-label-${steamID64}`}
       primary={name}
@@ -302,20 +331,21 @@ class PlayerView extends Component {
     this.onPlayerSelected = this.onPlayerSelected.bind(this);
     this.filterPlayers = this.filterPlayers.bind(this);
     this.filterChange = this.filterChange.bind(this);
+    this.loadPlayers = this.loadPlayers.bind(this);
   }
 
   handleAction(actionType, player, message = null) {
-    console.log(actionType, player, message)
+    console.log(actionType, player, message);
     if (message === null) {
-      message = this.state.actionMessage
-    } 
+      message = this.state.actionMessage;
+    }
     if (message === "") {
-      this.setState({ doConfirm: {player: player, actionType: actionType}});
+      this.setState({ doConfirm: { player: player, actionType: actionType } });
     } else {
       postData(`${process.env.REACT_APP_API_URL}do_${actionType}`, {
         player: player,
         reason: message
-     });
+      });
     }
   }
 
@@ -323,12 +353,29 @@ class PlayerView extends Component {
     this.setState({ selectedPlayers: players });
   }
 
-  componentDidMount() {
+  async showResponse(response, command) {
+    if (!response.ok) {
+      toast.error(`Game server failed to return for ${command}`)
+    } else {
+      const res = await response.json()
+      if (res.failed === true) {
+        toast.warning(`Last command failed: ${command}`)
+      }
+      return res
+    }
+    return response.json();
+  }
+
+  loadPlayers() {
     fetch(`${process.env.REACT_APP_API_URL}get_players`)
-      .then(response => response.json())
+      .then(response => this.showResponse(response, "get_players"))
       .then(data =>
         this.setState({ players: data.result }, this.filterPlayers)
       );
+  }
+
+  componentDidMount() {
+    this.loadPlayers();
   }
 
   filterChange(filter) {
@@ -367,17 +414,14 @@ class PlayerView extends Component {
       actionMessage,
       doConfirm
     } = this.state;
-    console.log(actionMessage)
+    console.log(actionMessage);
     return (
-      <Grid container spacing={3}>
-        <Grid item xs={6}>
-          <ReasonDialog
-            open={doConfirm}
-            handleClose={() => this.setState({ doConfirm: false })}
-            handleConfirm={(action, player, reason) => {
-              this.handleAction(action, player, reason);
-              this.setState({ doConfirm: false });
-            }}
+      <Grid container spacing={0}>
+        <Grid item sm={12} md={6}>
+          <AutoRefreshBar
+            intervalFunction={this.loadPlayers}
+            everyMs={30000}
+            refreshIntevalMs={100}
           />
           <Filter
             classes={classes}
@@ -387,21 +431,35 @@ class PlayerView extends Component {
             handleMessageChange={text => this.setState({ actionMessage: text })}
             actionMessage={actionMessage}
           />
-          <CompactList
-            classes={classes}
-            playerNames={filteredPlayerNames}
-            playerSteamIDs={filterPlayerSteamIDs}
-            handleAction={(actionType, player) =>
-              this.handleAction(actionType, player)
-            }
-          />
+          {players ? (
+            <CompactList
+              classes={classes}
+              playerNames={filteredPlayerNames}
+              playerSteamIDs={filterPlayerSteamIDs}
+              handleAction={(actionType, player) =>
+                this.handleAction(actionType, player)
+              }
+              handleToggle={() => 1}
+            />
+          ) : (
+            "No players to show"
+          )}
         </Grid>
         <Grid item xs={6}>
-          <Paper className={classes.paper}>
+          {/* <Paper className={classes.paper}>
             <SelectedPlayers players={selectedPlayers} />
             <PlayerActions players={selectedPlayers} />
-          </Paper>
+          </Paper> */}
         </Grid>
+        <ToastContainer />
+        <ReasonDialog
+            open={doConfirm}
+            handleClose={() => this.setState({ doConfirm: false })}
+            handleConfirm={(action, player, reason) => {
+              this.handleAction(action, player, reason);
+              this.setState({ doConfirm: false });
+            }}
+          />
       </Grid>
     );
   }
