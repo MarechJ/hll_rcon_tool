@@ -99,7 +99,7 @@ class ReasonDialog extends React.Component {
           </Button>
           <Button
             onClick={() => {
-              handleConfirm(open.actionType, open.player, reason) 
+              handleConfirm(open.actionType, open.player, reason)
               this.setState(
                 { reason: "" }
               );
@@ -308,7 +308,7 @@ class PlayerView extends Component {
     console.log(actionType, player, message)
     if (message === null) {
       message = this.state.actionMessage
-    } 
+    }
     if (message === "") {
       this.setState({ doConfirm: {player: player, actionType: actionType}});
     } else {
@@ -396,11 +396,12 @@ class PlayerView extends Component {
             }
           />
         </Grid>
-        <Grid item xs={6}>
+            <Grid item xs={6}>
+	    {/*
           <Paper className={classes.paper}>
             <SelectedPlayers players={selectedPlayers} />
             <PlayerActions players={selectedPlayers} />
-          </Paper>
+            </Paper> */}
         </Grid>
       </Grid>
     );

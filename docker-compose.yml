@@ -1,0 +1,30 @@
+version: '3.1'
+
+services:
+  broadcast:
+    image: backend
+    environment:
+      HLL_HOST: ${HLL_HOST}
+      HLL_PORT: ${HLL_PORT}
+      HLL_PASSWORD: ${HLL_PASSWORD}
+      BROADCAST_PATH: /conf
+    restart: always
+    volumes:
+      - .:/conf
+    command: python -m rcon.broadcast
+  backend:
+    build: .
+    environment:
+      HLL_HOST: ${HLL_HOST}
+      HLL_PORT: ${HLL_PORT}
+      HLL_PASSWORD: ${HLL_PASSWORD}
+    restart: always
+  frontend:
+    build: ./rcongui
+    ports:
+      - 8010:80
+    links:
+      - "backend:backend"
+    restart: always
+    volumes:
+      - ./pw:/pw
