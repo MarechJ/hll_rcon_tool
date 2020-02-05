@@ -10,7 +10,8 @@ from rcon.commands import CommandFailedError
 from rcon.settings import SERVER_INFO
 
 # Create your views here.
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('django')
+
 
 def wrap_method(func, parameters):
     @csrf_exempt
@@ -25,6 +26,8 @@ def wrap_method(func, parameters):
         except json.JSONDecodeError:
             data = {}
 
+        logger.info("%s %s", func.__name__, data)
+
         for pname, param in parameters.items():
             if param.default != inspect._empty:
                 arguments[pname] = data.get(pname)
@@ -36,11 +39,12 @@ def wrap_method(func, parameters):
                     raise
 
         try:
-            print("%s %s" % (func.__name__, arguments))
+            logger.debug("%s %s", func.__name__, arguments)
             res = func(**arguments)
         except CommandFailedError:
             failure = True
             res = None
+        logger.debug("%s %s -> %s", func.__name__, arguments, res)
         return JsonResponse({
             "result": res,
             "command": func.__name__,

@@ -57,6 +57,7 @@ def _auto_retry(method):
                 "Auto retrying %s %s %s", method.__name__, args, kwargs
             )
             self._reconnect()
+            logger.exception(self)
             return method(self, *args, **kwargs)
             # TODO loop and counter implement counter
 
@@ -106,8 +107,8 @@ class ServerCtl:
         return result
 
     @_auto_retry
-    def _get(self, item, is_list=False):
-        res = self._request(f"get {item}")
+    def _get(self, item, is_list=False, can_fail=True):
+        res = self._request(f"get {item}", can_fail)
 
         if not is_list:
             return res
@@ -132,64 +133,64 @@ class ServerCtl:
         return res[1:]
 
     def get_name(self):
-        return self._get("name")
+        return self._get("name", can_fail=False)
 
     def get_map(self):
         # server adds a _RESTART suffix after the name when the map is
         # loading
-        return self._get("map")
+        return self._get("map", can_fail=False)
 
     def get_maps(self):
-        return self._get("mapsforrotation", True)
+        return self._get("mapsforrotation", True, can_fail=False)
 
     def get_players(self):
-        return self._get("players", True)
+        return self._get("players", True, can_fail=False)
 
     @_escape_params
     def get_player_info(self, player):
         return self._request(f"playerinfo {player}")
 
     def get_admin_ids(self):
-        return self._get("adminids", True)
+        return self._get("adminids", True, can_fail=False)
 
     def get_temp_bans(self):
-        return self._get("tempbans", True)
+        return self._get("tempbans", True, can_fail=False)
 
     def get_perma_bans(self):
-        return self._get("permabans", True)
+        return self._get("permabans", True, can_fail=False)
 
     def get_team_switch_cooldown(self):
-        return self._get("teamswitchcooldown")
+        return self._get("teamswitchcooldown", can_fail=False)
 
     def get_autobalance_threshold(self):
-        return self._get("autobalancethreshold")
+        return self._get("autobalancethreshold", can_fail=False)
 
     def get_map_rotation(self):
-        return self._request('rotlist').split('\n')[:-1]
+        return self._request('rotlist', can_fail=False).split('\n')[:-1]
 
     def get_slots(self):
-        return self._get("slots")
+        return self._get("slots", can_fail=False)
 
     def get_vip_ids(self):
-        return self._get("vipids", True)
+        return self._get("vipids", True, can_fail=False)
 
     def get_admin_groups(self):
-        return self._get("admingroups", True)
+        return self._get("admingroups", True, can_fail=False)
 
     def get_logs(self, since_min_ago, filter_=''):
         return self._request(f'showlog {since_min_ago}')
 
     def get_idle_autokick_time(self):
-        return self._get("idletime")
+        return self._get("idletime", can_fail=False)
 
     def get_max_ping_autokick(self):
-        return self._get('highping')
+        return self._get('highping', can_fail=False)
 
     def get_queue_length(self):
-        return self._get("maxqueuedplayers")
+        return self._get("maxqueuedplayers", can_fail=False)
 
     def get_vip_slots_num(self):
-        return self._get("numvipslots")
+        return self._get("numvipslots", can_fail=False)
 
     def set_autobalance(self, bool_str):
         """

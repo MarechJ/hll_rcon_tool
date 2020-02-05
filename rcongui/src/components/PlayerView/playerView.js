@@ -8,6 +8,7 @@ import AutoRefreshBar from "./header";
 import TextInputBar from "./textInputBar";
 import CompactList from "./playerList";
 import { ReasonDialog } from "./playerActions";
+import GroupActions from "./groupActions";
 
 class PlayerView extends Component {
   constructor(props) {
@@ -22,6 +23,7 @@ class PlayerView extends Component {
       actionMessage: "",
       doConfirm: false,
       alphaSort: false,
+      openGroupAction: false
     };
 
     this.onPlayerSelected = this.onPlayerSelected.bind(this);
@@ -35,7 +37,7 @@ class PlayerView extends Component {
     if (message === null) {
       message = this.state.actionMessage;
     }
-    if (message === "" && !actionType.startsWith("switch_") ) {
+    if (message === "" && !actionType.startsWith("switch_")) {
       this.setState({ doConfirm: { player: player, actionType: actionType } });
     } else {
       postData(`${process.env.REACT_APP_API_URL}do_${actionType}`, {
@@ -113,6 +115,7 @@ class PlayerView extends Component {
   render() {
     const { classes } = this.props;
     const {
+      openGroupAction,
       players,
       filteredPlayerNames,
       filterPlayerSteamIDs,
@@ -128,6 +131,7 @@ class PlayerView extends Component {
             intervalFunction={this.loadPlayers}
             everyMs={15000}
             refreshIntevalMs={100}
+            onGroupActionClick={() => this.setState({ openGroupAction: true })}
           />
           <TextInputBar
             classes={classes}
@@ -136,8 +140,9 @@ class PlayerView extends Component {
             showCount={filteredPlayerNames.length}
             handleMessageChange={text => this.setState({ actionMessage: text })}
             actionMessage={actionMessage}
-            handleToggleAlphaSort={(bool) => this.setState({alphaSort : bool})}
+            handleToggleAlphaSort={bool => this.setState({ alphaSort: bool })}
           />
+
           {players ? (
             <CompactList
               classes={classes}
@@ -153,12 +158,14 @@ class PlayerView extends Component {
             <p>"No players to show"</p>
           )}
         </Grid>
-        <Grid item xs={6}>
-          {/*
-            <Paper className={classes.paper}>
-              <SelectedPlayers players={selectedPlayers} />
-              <PlayerActions players={selectedPlayers} />
-              </Paper> */}
+        <Grid item xs={12} md={6}>
+          <GroupActions
+            onClose={() => this.setState({ openGroupAction: false })}
+            open={openGroupAction}
+            classes={classes}
+            players={players}
+            handleAction={this.handleAction}
+          />
         </Grid>
         <ReasonDialog
           open={doConfirm}

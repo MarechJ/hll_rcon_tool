@@ -72,7 +72,11 @@ class ReasonDialog extends React.Component {
   }
 }
 
-const PlayerActions = ({ size, handleAction }) => {
+const DropMenu = ({ startIdx, actions, handleAction }) => {
+  return <React.Fragment></React.Fragment>;
+};
+
+const PlayerActions = ({ size, handleAction, displayCount = 3, disable = false }) => {
   const classes = useStyles();
   const [anchorEl, setAnchorEl] = React.useState(null);
   const handleClick = event => {
@@ -81,20 +85,35 @@ const PlayerActions = ({ size, handleAction }) => {
   const handleClose = () => {
     setAnchorEl(null);
   };
+  const actions = [
+    ["punish", "PUNISH"],
+    ["kick", "KICK"],
+    ["temp_ban", "2H BAN"],
+    ["switch_player_now", "SWITCH"],
+    ["switch_player_on_death", "SWITCH ON DEATH"],
+    ["perma_ban", "PERMA BAN"]
+  ];
+  const show = Math.min(displayCount, actions.length);
 
   return (
     <React.Fragment>
-      <ButtonGroup size={size} aria-label="small outlined button group">
-        <Button onClick={() => handleAction("punish")}>PUNISH</Button>
-        <Button onClick={() => handleAction("kick")}>KICK</Button>
-        <Button onClick={() => handleAction("temp_ban")}>2H BAN</Button>
+      <ButtonGroup  size={size} aria-label="small outlined button group">
+        {_.range(show).map(idx => (
+          <Button disabled={disable && !actions[idx][0].startsWith("switch")} onClick={() => handleAction(actions[idx][0])}>
+            {actions[idx][1]}
+          </Button>
+        ))}
+        {show < actions.length ?
         <Button
+          disabled={disable}
           aria-controls="simple-menu"
           aria-haspopup="true"
           onClick={handleClick}
         >
           <ArrowDropDownIcon />
-        </Button>
+        </Button> : ""}
+      </ButtonGroup>
+      {show < actions.length ? (
         <Menu
           id="simple-menu"
           anchorEl={anchorEl}
@@ -102,32 +121,20 @@ const PlayerActions = ({ size, handleAction }) => {
           open={Boolean(anchorEl)}
           onClose={handleClose}
         >
-          <MenuItem
-            onClick={() => {
-              handleAction("switch_player_now");
-              handleClose();
-            }}
-          >
-            Switch team now
-          </MenuItem>
-          <MenuItem
-            onClick={() => {
-              handleAction("switch_player_on_death");
-              handleClose();
-            }}
-          >
-            Switch team on death
-          </MenuItem>
-          <MenuItem
-            onClick={() => {
-              handleAction("perma_ban");
-              handleClose();
-            }}
-          >
-            Perma Ban
-          </MenuItem>
+          {_.range(show, actions.length).map(idx => (
+            <MenuItem
+              onClick={() => {
+                handleAction(actions[idx][0]);
+                handleClose();
+              }}
+            >
+              {actions[idx][1]}
+            </MenuItem>
+          ))}
         </Menu>
-      </ButtonGroup>
+      ) : (
+        ""
+      )}
     </React.Fragment>
   );
 };

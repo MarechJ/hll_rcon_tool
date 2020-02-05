@@ -5,8 +5,15 @@ import _ from "lodash";
 import LinearProgress from "@material-ui/core/LinearProgress";
 import "react-toastify/dist/ReactToastify.css";
 import useStyles from "../useStyles";
+import Button from "@material-ui/core/Button";
+import Link from "@material-ui/core/Link";
 
-const AutoRefreshBar = ({ intervalFunction, everyMs, refreshIntevalMs }) => {
+const AutoRefreshBar = ({
+  intervalFunction,
+  everyMs,
+  refreshIntevalMs,
+  onGroupActionClick
+}) => {
   const classes = useStyles();
   const [completed, setCompleted] = React.useState(0);
 
@@ -32,10 +39,28 @@ const AutoRefreshBar = ({ intervalFunction, everyMs, refreshIntevalMs }) => {
     <React.Fragment>
       <Grid className={classes.textLeft} container justify="flex-start">
         <Grid item xs={12}>
-          <h1>Players view</h1>
+          <Grid container justify="space-between">
+            <Grid style={{ textAlign: "left"}} item xs={6}>
+              <h1>Players view</h1>
+            </Grid>
+            <Grid item xs={6} style={{ textAlign: "right"}}>
+              <h1>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  disableElevation
+                  onClick={onGroupActionClick}
+                >
+                  Group action
+                </Button>
+              </h1>
+            </Grid>
+          </Grid>
         </Grid>
         <Grid item xs={12}>
-          <ListItemText secondary="Next auto refresh" />
+          <Link onClick={() => intervalFunction()}>
+            <ListItemText secondary="Refresh now. Next auto refresh:" />
+          </Link>
         </Grid>
       </Grid>
       <LinearProgress

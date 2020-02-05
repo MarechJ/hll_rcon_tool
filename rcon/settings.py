@@ -45,12 +45,12 @@ LOGGING = {
 
     'loggers': {
         __package__: {
-            'handlers': ['console'],
+            'handlers': ['console', 'file'],
             'level': 'DEBUG',
             'propagate': False,
         },
         '__main__': {
-            'handlers': ['console'],
+            'handlers': ['console', 'file'],
             'level': 'DEBUG',
             'propagate': False,
         }

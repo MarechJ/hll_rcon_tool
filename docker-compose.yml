@@ -18,7 +18,10 @@ services:
       HLL_HOST: ${HLL_HOST}
       HLL_PORT: ${HLL_PORT}
       HLL_PASSWORD: ${HLL_PASSWORD}
+      LOGGING_PATH: /logs/backend.log
     restart: always
+    volumes:
+      - .:/logs
   frontend:
     build: ./rcongui
     ports:
