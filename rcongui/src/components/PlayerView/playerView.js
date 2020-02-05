@@ -30,6 +30,7 @@ class PlayerView extends Component {
     this.filterPlayers = this.filterPlayers.bind(this);
     this.filterChange = this.filterChange.bind(this);
     this.loadPlayers = this.loadPlayers.bind(this);
+    this.handleAction = this.handleAction.bind(this);
   }
 
   handleAction(actionType, player, message = null) {
