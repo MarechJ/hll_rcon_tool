@@ -12,4 +12,4 @@ ENV HLL_PORT ''
 ENV HLL_PASSWORD ''
 ENV PYTHONPATH /code/
 
-CMD cd rconweb && gunicorn -w 8 -b 0.0.0.0 rconweb.wsgi
+CMD cd rconweb && gunicorn -w 4 -b 0.0.0.0 rconweb.wsgi
