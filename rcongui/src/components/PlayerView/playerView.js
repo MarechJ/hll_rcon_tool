@@ -72,15 +72,19 @@ class PlayerView extends Component {
 
   loadPlayers() {
     console.log("Loading players");
-    fetch(`${process.env.REACT_APP_API_URL}get_players`)
+    return fetch(`${process.env.REACT_APP_API_URL}get_players`)
       .then(response => this.showResponse(response, "get_players"))
-      .then(data =>
+      .then(data => {
+       
         this.setState(
           { players: data.result === null ? [] : data.result },
-          this.filterPlayers
-        )
-      )
-      .catch(() => toast.error("Unable to connect to API"));
+          () => {
+            this.filterPlayers();
+          }
+        );
+        return data;
+      })
+      .catch((error) => toast.error("Unable to connect to API " + error));
   }
 
   componentDidMount() {

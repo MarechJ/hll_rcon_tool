@@ -7,6 +7,7 @@ import "react-toastify/dist/ReactToastify.css";
 import useStyles from "../useStyles";
 import Button from "@material-ui/core/Button";
 import Link from "@material-ui/core/Link";
+import { toast } from "react-toastify";
 
 const AutoRefreshBar = ({
   intervalFunction,
@@ -58,7 +59,7 @@ const AutoRefreshBar = ({
           </Grid>
         </Grid>
         <Grid item xs={12}>
-          <Link onClick={() => intervalFunction()}>
+          <Link style={{cursor: 'pointer'}} onClick={() => intervalFunction().then(() => toast.success("Refreshed"))}>
             <ListItemText secondary="Refresh now. Next auto refresh:" />
           </Link>
         </Grid>

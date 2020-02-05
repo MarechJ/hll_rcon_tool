@@ -101,10 +101,10 @@ const GroupActions = ({ players, classes, width, handleAction, onClose, open }) 
           )}
         />
         <Grid container>
-          <Grid item xs={12} xl={6} className={classes.marginBottom}>
+          <Grid item xs={12} xl={12} className={classes.marginBottom}>
             <Reason handleMessageChange={setMessage} helperText={"A message is mandatory"}/>
           </Grid>
-          <Grid item xs={12} xl={6} className={classes.marginTop}>
+          <Grid item xs={12} xl={12} className={classes.marginTop}>
             <PlayerActions handleAction={(actionType) => selectedPlayers.map((p) => handleAction(actionType, p.name, message))} disable={message === ""} displayCount={nbButton} />
           </Grid>
         </Grid>
