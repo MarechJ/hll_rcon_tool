@@ -43,11 +43,15 @@ const useStyles = makeStyles(theme => ({
   margin: {
     marginTop: theme.spacing(3)
   },
+  marginBottom: {
+    marginBottom: theme.spacing(1)
+  },
   textLeft: {
     textAlign: "left",
     paddingLeft: theme.spacing(2)
   }
 }));
+
 
 const AutoRefreshBar = ({ intervalFunction, everyMs, refreshIntevalMs }) => {
   const classes = useStyles();
@@ -77,7 +81,7 @@ const AutoRefreshBar = ({ intervalFunction, everyMs, refreshIntevalMs }) => {
        <Grid item xs={12}><h1>Players view</h1></Grid>
        <Grid item xs={12}><ListItemText secondary="Next auto refresh" /></Grid>
        </Grid>  
-      <LinearProgress variant="determinate" value={completed} />
+      <LinearProgress variant="determinate" value={completed} className={classes.marginBottom} />
     </React.Fragment>
   );
 };
@@ -90,13 +94,13 @@ async function postData(url = "", data = {}) {
     cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
     credentials: "same-origin", // include, *same-origin, omit
     headers: {
-      "Content-Type": "application/json"
+      "Content-Type": "application/json",
     },
     redirect: "follow", // manual, *follow, error
     referrerPolicy: "no-referrer", // no-referrer, *client
     body: JSON.stringify(data) // body data type must match "Content-Type" header
   });
-  return await response.json(); // parses JSON response into native JavaScript objects
+  return response; // parses JSON response into native JavaScript objects
 }
 
 class ReasonDialog extends React.Component {
@@ -374,7 +378,7 @@ class PlayerView extends Component {
       postData(`${process.env.REACT_APP_API_URL}do_${actionType}`, {
         player: player,
         reason: message
-      });
+      }).then((response => this.showResponse(response, `${actionType} ${player}`, true))).then(this.loadPlayers);
     }
   }
 
@@ -382,13 +386,15 @@ class PlayerView extends Component {
     this.setState({ selectedPlayers: players });
   }
 
-  async showResponse(response, command) {
+  async showResponse(response, command, showSuccess) {
     if (!response.ok) {
       toast.error(`Game server failed to return for ${command}`)
     } else {
       const res = await response.json()
       if (res.failed === true) {
         toast.warning(`Last command failed: ${command}`)
+      } else if (showSuccess === true) {
+        toast.success(`Done: ${command}`)
       }
       return res
     }
@@ -400,8 +406,8 @@ class PlayerView extends Component {
     fetch(`${process.env.REACT_APP_API_URL}get_players`)
       .then(response => this.showResponse(response, "get_players"))
       .then(data =>
-        this.setState({ players: data.result }, this.filterPlayers)
-      );
+        this.setState({ players: data.result === null ? [] : data.result}, this.filterPlayers)
+      ).catch(() => toast.error("Unable to connect to API"));
   }
 
   componentDidMount() {
@@ -450,7 +456,7 @@ class PlayerView extends Component {
         <Grid item sm={12} md={6}>
           <AutoRefreshBar
             intervalFunction={this.loadPlayers}
-            everyMs={30000}
+            everyMs={15000}
             refreshIntevalMs={100}
           />
           <Filter
@@ -461,7 +467,7 @@ class PlayerView extends Component {
             handleMessageChange={text => this.setState({ actionMessage: text })}
             actionMessage={actionMessage}
           />
-          {players ? (
+          {players  ? (
             <CompactList
               classes={classes}
               playerNames={filteredPlayerNames}
@@ -472,7 +478,8 @@ class PlayerView extends Component {
               handleToggle={() => 1}
             />
           ) : (
-            "No players to show"
+
+            <p>"No players to show"</p>
           )}
         </Grid>
             <Grid item xs={6}>

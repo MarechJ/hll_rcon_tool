@@ -225,12 +225,11 @@ class ServerCtl:
     def set_broadcast(self, msg):
         return self._request(f'broadcast "{msg}"')
 
-    @_escape_params
     def do_switch_player_on_death(self, player):
-        return self._request(f'switchteamondeath "{player}"')
+        return self._request(f'switchteamondeath {player}')
 
     def do_switch_player_now(self, player):
-        return self._request(f'switchteamnow "{player}"')
+        return self._request(f'switchteamnow {player}')
 
     def do_add_map_to_rotation(self, map_name):
         return self._request(f"rotadd {map_name}")
