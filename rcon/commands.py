@@ -88,16 +88,20 @@ class ServerCtl:
         self._connect()
 
     @_auto_retry
-    def _request(self, command: str):
+    def _request(self, command: str, can_fail=True):
         logger.debug(command)
         try:
             self.conn.send(command.encode())
             result = self.conn.receive().decode()
         except (RuntimeError, BrokenPipeError, socket.timeout):
+            logger.exception("Failed request")
             raise HLLServerError(command)
 
         if result == 'FAIL':
-            raise CommandFailedError(command)
+            if can_fail:
+                raise CommandFailedError(command)
+            else:
+                raise HLLServerError(f"Got FAIL for {command}")
 
         return result
 

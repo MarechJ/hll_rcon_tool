@@ -28,6 +28,10 @@ import Toolbar from "@material-ui/core/Toolbar";
 import Typography from '@material-ui/core/Typography';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import ToggleButton from '@material-ui/lab/ToggleButton';
+import ToggleButtonGroup from '@material-ui/lab/ToggleButtonGroup';
+import SortByAlphaIcon from '@material-ui/icons/SortByAlpha';
+import QueryBuilderIcon from '@material-ui/icons/QueryBuilder';
 
 const useStyles = makeStyles(theme => ({
   root: {
@@ -37,7 +41,7 @@ const useStyles = makeStyles(theme => ({
     padding: theme.spacing(2)
   },
   margin: {
-    margin: theme.spacing(2)
+    marginTop: theme.spacing(3)
   },
   textLeft: {
     textAlign: "left",
@@ -162,11 +166,35 @@ const Filter = ({
   showCount,
   handleMessageChange
 }) => {
+
+  const [alignment, setAlignment] = React.useState('left');
+
+  const handleToggle = (event, newAlignment) => {
+    setAlignment(newAlignment);
+  };
+
   /* todo refactor */
   return (
     <Grid item xs={12} spacing={2}>
-      <Grid container justify="flex-start" direction="row">
-        <Grid item xs={12} md={4} className={classes.textLeft}>
+      <Grid container justify="flex-start" direction="row" alignItems="center">
+      <Grid item xs={12} md={1} className={classes.margin}>
+        <ToggleButtonGroup
+            value={alignment}
+            exclusive
+            size="medium"
+            onChange={handleToggle}
+            aria-label="text alignment"
+          >
+             <ToggleButton value="left">
+              <QueryBuilderIcon onClick={() => console.log("sort query")}/>
+            </ToggleButton>
+            <ToggleButton value="centered">
+              <SortByAlphaIcon />
+            </ToggleButton>
+           
+          </ToggleButtonGroup>
+        </Grid>
+        <Grid item xs={12} md={3} className={classes.textLeft}>
           <TextField
             label="Filter"
             helperText={`Showing: ${showCount} / ${total}`}
@@ -188,6 +216,7 @@ const Filter = ({
             }}
           />
         </Grid>
+        
       </Grid>
     </Grid>
   );
@@ -367,6 +396,7 @@ class PlayerView extends Component {
   }
 
   loadPlayers() {
+    console.log("Loading players")
     fetch(`${process.env.REACT_APP_API_URL}get_players`)
       .then(response => this.showResponse(response, "get_players"))
       .then(data =>
