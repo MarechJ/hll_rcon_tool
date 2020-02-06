@@ -18,7 +18,10 @@ class Rcon(ServerCtl):
             name, steam_id_64 = raw.split('\n')
         except ValueError:
             self._reconnect()
-            raise
+            return {
+                NAME: player,
+                STEAMID: None
+            }
         return {
             NAME: name.split(": ", 1)[-1],
             STEAMID: steam_id_64.split(": ", 1)[-1],
