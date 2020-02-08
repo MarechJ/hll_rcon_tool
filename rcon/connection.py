@@ -5,6 +5,10 @@ MSGLEN = 128
 TIMEOUT_SEC = 10
 
 
+class HLLAuthError(Exception):
+    pass
+
+
 class HLLConnection:
     """demonstration class only
       - coded for clarity, not efficiency
@@ -20,12 +24,12 @@ class HLLConnection:
     def connect(self, host, port, password: str):
         self.sock.connect((host, port))
         self.xorkey = self.sock.recv(MSGLEN)
-        if len(self.xorkey) == 0:
+        if not self.xorkey:
             raise RuntimeError("The game server did not return a key")
         self.send(f"login {password}".encode())
         result = self.receive()
         if result != b'SUCCESS':
-            raise ValueError('Invalid password')
+            raise HLLAuthError('Invalid password')
 
     def close(self):
         self.sock.close()
