@@ -24,7 +24,7 @@ def wrap_method(func, parameters):
         try:
             data = json.loads(request.body)
         except json.JSONDecodeError:
-            data = {}
+            data = request.GET
 
         logger.info("%s %s", func.__name__, data)
 

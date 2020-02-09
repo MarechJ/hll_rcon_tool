@@ -1,7 +1,8 @@
 import random
 from contextlib import contextmanager
-from datetime import datetime
+from datetime import datetime, timedelta
 from cachetools.func import ttl_cache
+import logging
 
 from rcon.commands import ServerCtl, CommandFailedError
 
@@ -9,6 +10,9 @@ from rcon.commands import ServerCtl, CommandFailedError
 STEAMID = "steam_id_64"
 NAME = "name"
 ROLE = "role"
+
+
+logger = logging.getLogger(__name__)
 
 
 @contextmanager
@@ -125,6 +129,66 @@ class Rcon(ServerCtl):
         return {
             s: getattr(self, f'get_{s}')()
             for s in settings
+        }
+
+    def _convert_relative_time(self, from_, time_str):
+        time, unit  = time_str.split(' ')
+        if unit == 'ms':
+            return from_ - timedelta(milliseconds=int(time))
+        if unit == 'sec':
+            return from_ - timedelta(seconds=float(time))
+        if unit == 'hours':
+            hours, minutes, seconds = time.split(':')
+            return from_ - timedelta(
+                hours=int(hours),
+                minutes=int(minutes),
+                seconds=int(seconds)
+            )
+
+    def get_structured_logs(self, since_min_ago, filter_action=None, filter_player=None):
+        raw = super().get_logs(since_min_ago)
+        now = datetime.now()
+        res = []
+        actions = set()
+        players = set()
+        for line in raw.split('\n'):
+            if not line:
+                continue
+            try:
+                time, rest = line.split('] ', 1)
+                try:
+                    action, content = rest.split(': ', 1)
+                except ValueError:
+                    action, content = rest.split(' ', 1)
+                player, player2 = None, None
+                if action in {'CONNECTED', 'DISCONNECTED'}:
+                    player = content
+                if action in {'KILL', 'TEAM KILL'}:
+                    player, player2 = content.split(' -> ', 1)
+                time = self._convert_relative_time(now, time[1:])
+                players.add(player)
+                players.add(player2)
+                actions.add(action)
+            except ValueError:
+                logger.exception("Invalid line: '%s'", line)
+                raise
+            if filter_action and action != filter_action:
+                continue
+
+            res.append({
+                'time': time,
+                'raw': line,
+                'action': action,
+                'player': player,
+                'player2': player2,
+                'message': content
+            })
+
+        res.reverse()
+        return {
+            'actions': list(actions),
+            'players': list(players),
+            'logs': res
         }
 
     def do_kick(self, player, reason):

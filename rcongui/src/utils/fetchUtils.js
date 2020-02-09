@@ -1,3 +1,5 @@
+import { toast } from "react-toastify";
+
 async function postData(url = "", data = {}) {
   // Default options are marked with *
   const response = await fetch(url, {
@@ -15,4 +17,19 @@ async function postData(url = "", data = {}) {
   return response; // parses JSON response into native JavaScript objects
 }
 
-export { postData };
+async function showResponse(response, command, showSuccess) {
+  if (!response.ok) {
+    toast.error(`Game server failed to return for ${command}`);
+  } else {
+    const res = await response.json();
+    if (res.failed === true) {
+      toast.warning(`Last command failed: ${command}`);
+    } else if (showSuccess === true) {
+      toast.success(`Done: ${command}`);
+    }
+    return res;
+  }
+  return response.json();
+}
+
+export { postData, showResponse };

@@ -4,6 +4,8 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import PlayerView from "./components/PlayerView";
 import useStyles from "./components/useStyles";
+import Grid from "@material-ui/core/Grid";
+import Logs from './components/LogsView/logs'
 
 function App() {
   const classes = useStyles();
@@ -11,7 +13,14 @@ function App() {
   return (
     <div className={"App " + classes.root}>
       <ToastContainer />
-      <PlayerView classes={classes} />
+      <Grid container spacing={1}>
+        <Grid item sm={12} md={6}>
+          <PlayerView classes={classes} />
+        </Grid>
+        <Grid item sm={12} md={6}>
+          <Logs classes={classes} />
+        </Grid>
+      </Grid>
     </div>
   );
 }

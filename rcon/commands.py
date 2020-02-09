@@ -189,8 +189,14 @@ class ServerCtl:
     def get_admin_groups(self):
         return self._get("admingroups", True, can_fail=False)
 
+    @_auto_retry
     def get_logs(self, since_min_ago, filter_=''):
-        return self._request(f'showlog {since_min_ago}')
+        res = self._request(f'showlog {since_min_ago}')
+        for i in range(30):
+            if res[-1] == '\n':
+                break
+            res += self.conn.receive().decode()
+        return res
 
     def get_idle_autokick_time(self):
         return self._get("idletime", can_fail=False)
