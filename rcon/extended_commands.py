@@ -84,17 +84,17 @@ class Rcon(ServerCtl):
         }
 
     def get_bans(self):
-        bans = [
+        temp_bans = [
             self._struct_ban(b, 'temp')
             for b in self.get_temp_bans()
         ]
-        bans.extend([
+        bans = [
             self._struct_ban(b, 'perma')
             for b in self.get_perma_bans()
-        ])
+        ]
         # Most recent first
         bans.reverse()
-        return bans
+        return temp_bans + bans
 
     @ttl_cache(ttl=60 * 60)
     def get_vip_ids(self):
