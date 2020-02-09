@@ -25,10 +25,11 @@ def invalidates(*cached_funcs):
 class Rcon(ServerCtl):
     @ttl_cache(ttl=60 * 60)
     def get_player_info(self, player):
-        raw = super().get_player_info(player)
         try:
+            raw = super().get_player_info(player)
             name, steam_id_64 = raw.split('\n')
-        except ValueError:
+        except:
+            logger.exception("Player info failed")
             self._reconnect()
             return {
                 NAME: player,
