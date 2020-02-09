@@ -1,5 +1,6 @@
 import random
-
+from contextlib import contextmanager
+from datetime import datetime
 from cachetools.func import ttl_cache
 
 from rcon.commands import ServerCtl, CommandFailedError
@@ -8,6 +9,13 @@ from rcon.commands import ServerCtl, CommandFailedError
 STEAMID = "steam_id_64"
 NAME = "name"
 ROLE = "role"
+
+
+@contextmanager
+def invalidates(*cached_funcs):
+    yield None
+    for f in cached_funcs:
+        f.cache_clear()
 
 
 class Rcon(ServerCtl):
@@ -42,12 +50,47 @@ class Rcon(ServerCtl):
             )
         return admins
 
+    @ttl_cache(ttl=5)
     def get_players(self):
+        # We need a centralized cache or a
+        # mutliprocess safe one to be able to invalidate the cache on
+        # kick/ban actions
         names = super().get_players()
         return [
             self.get_player_info(n)
             for n in names
         ]
+
+    @ttl_cache(ttl=60 * 5)
+    def get_perma_bans(self):
+        return super().get_perma_bans()
+
+    @ttl_cache(ttl=60)
+    def get_temp_bans(self):
+        return super().get_temp_bans()
+
+    def _struct_ban(self, ban, type_):
+        name, time =  ban.split(', banned on ')
+        return {
+            'type': type_,
+            'name': name,
+            # TODO check which timezone the server is using. Assuming UTC here.
+            'timestamp': datetime.strptime(time, "%Y.%m.%d-%H.%M.%S").timestamp(),
+            'raw': ban
+        }
+
+    def get_bans(self):
+        bans = [
+            self._struct_ban(b, 'temp')
+            for b in self.get_temp_bans()
+        ]
+        bans.extend([
+            self._struct_ban(b, 'perma')
+            for b in self.get_perma_bans()
+        ])
+        # Most recent first
+        bans.reverse()
+        return bans
 
     @ttl_cache(ttl=60 * 60)
     def get_vip_ids(self):
@@ -63,7 +106,6 @@ class Rcon(ServerCtl):
             l.append(dict(zip((STEAMID, NAME), (steam_id_64, name))))
 
         return l
-
 
     @ttl_cache(ttl=60)
     def get_status(self):
@@ -84,6 +126,18 @@ class Rcon(ServerCtl):
             s: getattr(self, f'get_{s}')()
             for s in settings
         }
+
+    def do_kick(self, player, reason):
+        with invalidates(self.get_players):
+            return super().do_kick(player, reason)
+
+    def do_temp_ban(self, player, reason):
+        with invalidates(self.get_players, self.get_temp_bans):
+            return super().do_temp_ban(player, reason)
+
+    def do_perma_ban(self, player, reason):
+        with invalidates(self.get_players, self.get_perma_bans):
+            return super().do_perma_ban(player, reason)
 
     def do_randomize_map_rotation(self, maps=None):
         maps = maps or self.get_maps()

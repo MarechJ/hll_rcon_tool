@@ -8,12 +8,14 @@ import useStyles from "../useStyles";
 import Button from "@material-ui/core/Button";
 import Link from "@material-ui/core/Link";
 import { toast } from "react-toastify";
+import ButtonGroup from '@material-ui/core/ButtonGroup';
 
 const AutoRefreshBar = ({
   intervalFunction,
   everyMs,
   refreshIntevalMs,
-  onGroupActionClick
+  onGroupActionClick,
+  onUnbanClick
 }) => {
   const classes = useStyles();
   const [completed, setCompleted] = React.useState(0);
@@ -45,8 +47,15 @@ const AutoRefreshBar = ({
               <h1>Players view</h1>
             </Grid>
             <Grid item xs={6} style={{ textAlign: "right"}}>
-              <h1>
+             
+              <ButtonGroup
+              className={classes.margin}
+        orientation="vertical"
+        color="primary"
+        aria-label="vertical outlined primary button group"
+      >
                 <Button
+                  
                   variant="contained"
                   color="primary"
                   disableElevation
@@ -54,7 +63,13 @@ const AutoRefreshBar = ({
                 >
                   Group action
                 </Button>
-              </h1>
+                <Button
+                  disableElevation
+                  onClick={onUnbanClick}
+                >
+                  Unban
+                </Button>
+                </ButtonGroup>
             </Grid>
           </Grid>
         </Grid>

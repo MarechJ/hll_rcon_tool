@@ -9,12 +9,14 @@ import TextInputBar from "./textInputBar";
 import CompactList from "./playerList";
 import { ReasonDialog } from "./playerActions";
 import GroupActions from "./groupActions";
+import Unban from './unban';
 
 class PlayerView extends Component {
   constructor(props) {
     super();
     this.state = {
       selectedPlayers: [],
+      bannedPlayers: null,
       players: [],
       filteredPlayerNames: [],
       filterPlayerSteamIDs: [],
@@ -23,7 +25,8 @@ class PlayerView extends Component {
       actionMessage: "",
       doConfirm: false,
       alphaSort: false,
-      openGroupAction: false
+      openGroupAction: false,
+      openUnban: false,
     };
 
     this.onPlayerSelected = this.onPlayerSelected.bind(this);
@@ -31,6 +34,18 @@ class PlayerView extends Component {
     this.filterChange = this.filterChange.bind(this);
     this.loadPlayers = this.loadPlayers.bind(this);
     this.handleAction = this.handleAction.bind(this);
+    this.loadBans = this.loadBans.bind(this);
+    this.unBan = this.unBan.bind(this);
+  }
+
+  unBan (ban) {
+    postData(`${process.env.REACT_APP_API_URL}do_remove_${ban.type}_ban`, {
+      ban_log: ban.raw
+    })
+      .then(response =>
+        this.showResponse(response, `Remove ${ban.type} ban for ${ban.name}`, true)
+      )
+      .then(this.loadBans);
   }
 
   handleAction(actionType, player, message = null) {
@@ -71,12 +86,16 @@ class PlayerView extends Component {
     return response.json();
   }
 
+  async load(command, callback) {
+    return fetch(`${process.env.REACT_APP_API_URL}${command}`)
+      .then(response => this.showResponse(response, command))
+      .then(data => callback(data))
+      .catch((error) => toast.error("Unable to connect to API " + error));
+  }
+
   loadPlayers() {
-    console.log("Loading players");
-    return fetch(`${process.env.REACT_APP_API_URL}get_players`)
-      .then(response => this.showResponse(response, "get_players"))
-      .then(data => {
-       
+    return this.load('get_players',
+      data => {
         this.setState(
           { players: data.result === null ? [] : data.result },
           () => {
@@ -85,7 +104,10 @@ class PlayerView extends Component {
         );
         return data;
       })
-      .catch((error) => toast.error("Unable to connect to API " + error));
+  }
+
+  loadBans() {
+    return this.load('get_bans', data => this.setState({bannedPlayers: data.result}))
   }
 
   componentDidMount() {
@@ -121,12 +143,14 @@ class PlayerView extends Component {
     const { classes } = this.props;
     const {
       openGroupAction,
+      openUnban,
       players,
       filteredPlayerNames,
       filterPlayerSteamIDs,
       actionMessage,
       doConfirm,
-      alphaSort
+      alphaSort,
+      bannedPlayers,
     } = this.state;
 
     return (
@@ -137,6 +161,7 @@ class PlayerView extends Component {
             everyMs={15000}
             refreshIntevalMs={100}
             onGroupActionClick={() => this.setState({ openGroupAction: true })}
+            onUnbanClick={() => { this.loadBans(); this.setState({ openUnban: true }) }}
           />
           <TextInputBar
             classes={classes}
@@ -171,6 +196,7 @@ class PlayerView extends Component {
             players={players}
             handleAction={this.handleAction}
           />
+          <Unban open={openUnban} onReload={this.loadBans} handleUnban={this.unBan} bannedPlayers={bannedPlayers} classes={classes} onClose={() => this.setState({ openUnban: false })} />
         </Grid>
         <ReasonDialog
           open={doConfirm}

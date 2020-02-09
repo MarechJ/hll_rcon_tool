@@ -106,17 +106,9 @@ class ServerCtl:
 
         return result
 
-    @_auto_retry
-    def _get(self, item, is_list=False, can_fail=True):
-        res = self._request(f"get {item}", can_fail)
+    def _read_list(self, raw):
+        res = raw.split('\t')
 
-        if not is_list:
-            return res
-
-        res = res.split('\t')
-        if res[-1] == '':
-            # There's a trailin \t
-            res = res[:-1]
         try:
             expected_len = int(res[0])
         except ValueError:
@@ -124,13 +116,33 @@ class ServerCtl:
                 "Unexpected response from server."
                 "Unable to get list length"
             )
-        actual_len = len(res) - 1
-        if expected_len != actual_len:
+
+        # Max 30 tries
+        for i in range(30):
+            if expected_len <= len(res) - 1:
+                break
+            raw += self.conn.receive().decode()
+            res = raw.split('\t')
+
+        if res[-1] == '':
+            # There's a trailin \t
+            res = res[:-1]
+        if expected_len < len(res) - 1:
             raise HLLServerError(
-                f"Server returned incomplete list,"
-                f" expected {expected_len} got {actual_len}"
+                "Server returned incomplete list,"
+                f" expected {expected_len} got {len(res) - 1}"
             )
+
         return res[1:]
+
+    @_auto_retry
+    def _get(self, item, is_list=False, can_fail=True):
+        res = self._request(f"get {item}", can_fail)
+
+        if not is_list:
+            return res
+
+        return self._read_list(res)
 
     def get_name(self):
         return self._get("name", can_fail=False)
