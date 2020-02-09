@@ -2,7 +2,7 @@ version: '3.1'
 
 services:
   broadcast:
-    image: backend
+    build: .
     environment:
       HLL_HOST: ${HLL_HOST}
       HLL_PORT: ${HLL_PORT}
