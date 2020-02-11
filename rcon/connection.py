@@ -24,8 +24,6 @@ class HLLConnection:
     def connect(self, host, port, password: str):
         self.sock.connect((host, port))
         self.xorkey = self.sock.recv(MSGLEN)
-        if not self.xorkey:
-            raise RuntimeError("The game server did not return a key")
         self.send(f"login {password}".encode())
         result = self.receive()
         if result != b'SUCCESS':
@@ -42,6 +40,8 @@ class HLLConnection:
 
     def _xor(self, msg):
         n = []
+        if not self.xorkey:
+            raise RuntimeError("The game server did not return a key")
         for i in range(len(msg)):
             n.append(msg[i] ^ self.xorkey[i % len(self.xorkey)])
 
