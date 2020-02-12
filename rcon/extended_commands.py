@@ -138,6 +138,9 @@ class Rcon(ServerCtl):
             return from_ - timedelta(milliseconds=int(time))
         if unit == 'sec':
             return from_ - timedelta(seconds=float(time))
+        if unit == 'min':
+            minutes, seconds = time.split(':')
+            return from_ - timedelta(minutes=float(minutes), seconds=float(seconds))
         if unit == 'hours':
             hours, minutes, seconds = time.split(':')
             return from_ - timedelta(
@@ -145,6 +148,7 @@ class Rcon(ServerCtl):
                 minutes=int(minutes),
                 seconds=int(seconds)
             )
+
 
     def get_structured_logs(self, since_min_ago, filter_action=None, filter_player=None):
         raw = super().get_logs(since_min_ago)
@@ -175,9 +179,12 @@ class Rcon(ServerCtl):
                 raise
             if filter_action and action != filter_action:
                 continue
+            if filter_player and filter_player not in line:
+                continue
 
             res.append({
-                'time': time,
+                'timestamp_ms': int(time.timestamp() * 1000),
+                'relative_time_ms':  (time - now).total_seconds() * 1000,
                 'raw': line,
                 'action': action,
                 'player': player,

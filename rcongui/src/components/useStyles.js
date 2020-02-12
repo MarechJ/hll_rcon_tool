@@ -16,6 +16,20 @@ const useStyles = makeStyles(theme => ({
   marginLeft: {
     marginLeft: theme.spacing(1)
   },
+  marginRight: {
+    marginRight: theme.spacing(1)
+  },
+  paperLogs: {
+    textAlign: "left",
+    padding: theme.spacing(2),
+  },
+  logs: {
+    margin: 0
+  },
+  logsControl: {
+    width: "100%",
+    height: "100%",
+  },
   textLeft: {
     textAlign: "left",
     paddingLeft: theme.spacing(2)
