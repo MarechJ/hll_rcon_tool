@@ -14,6 +14,7 @@ import TextField from "@material-ui/core/TextField";
 import RefreshIcon from "@material-ui/icons/Refresh";
 import Paper from "@material-ui/core/Paper";
 import moment from "moment";
+import withWidth from "@material-ui/core/withWidth";
 
 const Selector = ({
   classes,
@@ -90,7 +91,7 @@ class Logs extends React.Component {
   }
 
   render() {
-    const { classes } = this.props;
+    const { classes, width } = this.props;
     const {
       logs,
       players,
@@ -105,11 +106,11 @@ class Logs extends React.Component {
       <React.Fragment>
         <Grid container justify="flex-start">
           <Grid item xs={12} className={classes.textLeft}>
-            <h1>Logs view</h1>
+            <h1>Logs view {width}</h1>
           </Grid>
         </Grid>
-        <Grid container justify="space-around">
-          <Grid item xs={12} sm={3} lg={2}>
+        <Grid container justify="space-around" className={classes.marginBottom}>
+          <Grid item md={12} lg={3} xl={2}>
             <Selector
               classes={classes}
               values={minutesOptions}
@@ -120,7 +121,7 @@ class Logs extends React.Component {
               kind="Show last N minutes"
             />
           </Grid>
-          <Grid item xs={12} sm={3} lg={2}>
+          <Grid item md={12} lg={3} xl={2}>
             <Selector
               classes={classes}
               values={actions}
@@ -133,7 +134,7 @@ class Logs extends React.Component {
               defaultText="ALL"
             />
           </Grid>
-          <Grid item xs={12} sm={3} lg={2}>
+          <Grid item md={12} lg={4} xl={2}>
             <Autocomplete
               id="tags-outlined"
               options={players.sort()}
@@ -155,7 +156,7 @@ class Logs extends React.Component {
               )}
             />
           </Grid>
-          <Grid item xs={12} sm={3} lg={2}>
+          <Grid item md={12} lg={2} xl={2}>
             <Button
               className={classes.logsControl}
               disableElevation
@@ -181,4 +182,5 @@ class Logs extends React.Component {
   }
 }
 
-export default Logs;
+export default withWidth()(Logs);
+

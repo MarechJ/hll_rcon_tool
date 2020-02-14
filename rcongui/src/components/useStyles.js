@@ -24,7 +24,8 @@ const useStyles = makeStyles(theme => ({
     padding: theme.spacing(2),
   },
   logs: {
-    margin: 0
+    margin: 0,
+    whiteSpace: 'pre-wrap'
   },
   logsControl: {
     width: "100%",
