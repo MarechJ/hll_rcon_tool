@@ -9,14 +9,12 @@ from rcon.extended_commands import Rcon
 from rcon.commands import CommandFailedError
 from rcon.settings import SERVER_INFO
 
-# Create your views here.
-logger = logging.getLogger('django')
 
 
 def wrap_method(func, parameters):
     @csrf_exempt
     def wrapper(request):
-
+        logger = logging.getLogger('rconweb')
         arguments = {}
         data = {}
         failure = False

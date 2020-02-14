@@ -19,6 +19,7 @@ services:
       HLL_PORT: ${HLL_PORT}
       HLL_PASSWORD: ${HLL_PASSWORD}
       LOGGING_PATH: /logs/backend.log
+      DJANGO_LOGGING_PATH: /logs/django.log
     restart: always
     volumes:
       - .:/logs
