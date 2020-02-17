@@ -39,6 +39,9 @@ const useStyles = makeStyles(theme => ({
     textAlign: "right",
     paddingRight: theme.spacing(2)
   },
+  padding: {
+    padding: theme.spacing(1)
+  },
   fab: {
     margin: "0px",
     top: "auto",
