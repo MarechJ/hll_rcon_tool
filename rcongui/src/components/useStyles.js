@@ -42,6 +42,22 @@ const useStyles = makeStyles(theme => ({
   padding: {
     padding: theme.spacing(1)
   },
+  menuButton: {
+    marginRight: theme.spacing(2),
+  },
+  appBar: {
+    borderBottom: `1px solid ${theme.palette.divider}`,
+  },
+  link: {
+    margin: theme.spacing(1, 1.5),
+  },
+  firstLink: {
+    margin: theme.spacing(1, 1.5),
+    marginLeft: 0,
+  },
+  toolbar: {
+    flexWrap: 'wrap',
+  },
   fab: {
     margin: "0px",
     top: "auto",
