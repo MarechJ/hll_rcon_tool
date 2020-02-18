@@ -7,7 +7,7 @@ services:
       HLL_HOST: ${HLL_HOST}
       HLL_PORT: ${HLL_PORT}
       HLL_PASSWORD: ${HLL_PASSWORD}
-      BROADCAST_PATH: /conf
+      BROADCAST_PATH: /conf/
     restart: always
     volumes:
       - .:/conf

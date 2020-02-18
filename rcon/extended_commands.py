@@ -111,8 +111,16 @@ class Rcon(ServerCtl):
             l.append(dict(zip((STEAMID, NAME), (steam_id_64, name))))
 
         return l
-
+    
     @ttl_cache(ttl=60)
+    def get_next_map(self):
+        current = self.get_map()
+        rotation = self.get_map_rotation()
+        next_id = rotation.index(current)
+
+        return rotation[next_id]
+
+    @ttl_cache(ttl=15)
     def get_status(self):
         return {
             'map': self.get_map(),

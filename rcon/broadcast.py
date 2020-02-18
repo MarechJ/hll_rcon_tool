@@ -1,20 +1,22 @@
 import os
 import time
 
-from rcon.commands import ServerCtl
+from rcon.extended_commands import Rcon
 from rcon.settings import SERVER_INFO
 
 if __name__ == '__main__':
-    ctl = ServerCtl(
+    ctl = Rcon(
         SERVER_INFO
     )
     mount_path = os.getenv("BROADCAST_PATH", '')
     
-    with open(f"{mount_path}/broadcasts.txt") as f: 
+    with open(f"{mount_path}broadcasts.txt") as f: 
         msgs = [l.split(' ', 1) for l in f] 
  
     while True: 
-        for time_min, msg in msgs:
-            print(f"{time_min}minute(s): {msg}")
-            ctl.set_broadcast(msg) 
-            time.sleep(int(time_min) * 60) 
+        for time_sec, msg in msgs:
+            if msg == '/nextmap\n':
+                msg = "Next map: {}".format(ctl.get_next_map())
+            print(f"{time_sec} second(s): {msg}")
+            #ctl.set_broadcast(msg) 
+            time.sleep(int(time_sec)) 
