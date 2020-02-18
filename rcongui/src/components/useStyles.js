@@ -58,6 +58,9 @@ const useStyles = makeStyles(theme => ({
   toolbar: {
     flexWrap: 'wrap',
   },
+  grow: {
+    flexGrow: 1,
+  },
   fab: {
     margin: "0px",
     top: "auto",

@@ -19,7 +19,7 @@ function ButtonAppBar() {
   const classes = useStyles();
 
   return (
-    <div className={classes.root}>
+    <div className={classes.grow}>
       <AppBar
         position="static"
         
@@ -66,10 +66,10 @@ function App() {
     <div className={"App " + classes.root}>
       <CssBaseline />
       <ToastContainer />
-      <Grid container spacing={1}>
-        <Grid item sm={12} md={12}>
+      <Grid container className={classes.grow}>
+
           <ButtonAppBar />
-        </Grid>
+      
       </Grid>
       <Grid container spacing={1}>
         <Grid item sm={12} md={6}>
