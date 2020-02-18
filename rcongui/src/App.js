@@ -14,43 +14,39 @@ import IconButton from "@material-ui/core/IconButton";
 import MenuIcon from "@material-ui/icons/Menu";
 import Link from "@material-ui/core/Link";
 import CssBaseline from "@material-ui/core/CssBaseline";
+import {
+  HashRouter as Router,
+  Switch,
+  Route,
+  Link as RouterLink
+} from "react-router-dom";
 
 function ButtonAppBar() {
   const classes = useStyles();
 
   return (
     <div className={classes.grow}>
-      <AppBar
-        position="static"
-        
-        elevation={0}
-        className={classes.appBar}
-      >
+      <AppBar position="static" elevation={0} className={classes.appBar}>
         <Toolbar className={classes.toolbar}>
           <nav>
             <Link
               variant="button"
               color="inherit"
-              href="#"
               className={classes.firstLink}
+              component={RouterLink}
+              to="/"
             >
-              Live
+             Live
             </Link>
+
             <Link
               variant="button"
               color="inherit"
-              href="#"
               className={classes.link}
+              component={RouterLink}
+              to="/settings"
             >
               Settings
-            </Link>
-            <Link
-              variant="button"
-              color="inherit"
-              href="#"
-              className={classes.link}
-            >
-              Services
             </Link>
           </nav>
         </Toolbar>
@@ -59,6 +55,17 @@ function ButtonAppBar() {
   );
 }
 
+const Live = ({ classes }) => (
+  <Grid container spacing={1}>
+    <Grid item sm={12} md={6}>
+      <PlayerView classes={classes} />
+    </Grid>
+    <Grid item sm={12} md={6}>
+      <Logs classes={classes} />
+    </Grid>
+  </Grid>
+);
+
 function App() {
   const classes = useStyles();
 
@@ -66,19 +73,45 @@ function App() {
     <div className={"App " + classes.root}>
       <CssBaseline />
       <ToastContainer />
-      <Grid container className={classes.grow}>
+      <Router>
+        <Grid container className={classes.grow}>
+        <div className={classes.grow}>
+      <AppBar position="static" elevation={0} className={classes.appBar}>
+        <Toolbar className={classes.toolbar}>
+          <nav>
+            <Link
+              variant="button"
+              color="inherit"
+              className={classes.firstLink}
+              component={RouterLink}
+              to="/"
+            >
+             Live
+            </Link>
 
-          <ButtonAppBar />
-      
-      </Grid>
-      <Grid container spacing={1}>
-        <Grid item sm={12} md={6}>
-          <PlayerView classes={classes} />
+            <Link
+              variant="button"
+              color="inherit"
+              className={classes.link}
+              component={RouterLink}
+              to="/settings"
+            >
+              Settings
+            </Link>
+          </nav>
+        </Toolbar>
+      </AppBar>
+    </div>
         </Grid>
-        <Grid item sm={12} md={6}>
-          <Logs classes={classes} />
-        </Grid>
-      </Grid>
+        <Switch>
+          <Route path="/" exact >
+            <Live classes={classes} />
+          </Route>
+          <Route path="/settings">
+            <h1>Under construction</h1>
+          </Route>
+        </Switch>
+      </Router>
     </div>
   );
 }
