@@ -7,6 +7,10 @@ const useStyles = makeStyles(theme => ({
   paper: {
     padding: theme.spacing(2)
   },
+  slider: {
+   
+    textAlign: "left"
+  },
   margin: {
     marginTop: theme.spacing(3)
   },
@@ -30,6 +34,9 @@ const useStyles = makeStyles(theme => ({
   logsControl: {
     width: "100%",
     height: "100%",
+  },
+  alignLeft: {
+    textAlign: "left"
   },
   textLeft: {
     textAlign: "left",

@@ -106,11 +106,11 @@ class Logs extends React.Component {
       <React.Fragment>
         <Grid container justify="flex-start">
           <Grid item xs={12} className={classes.textLeft}>
-            <h1>Logs view</h1>
+    <h1>Logs view {width}</h1>
           </Grid>
         </Grid>
         <Grid container justify="space-around" className={classes.marginBottom}>
-          <Grid className={classes.padding} item xs={12} sm={12} md={12} lg={3} xl={2}>
+          <Grid className={classes.padding} item xs={12} sm={12} md={12} lg={3}>
             <Selector
               classes={classes}
               values={minutesOptions}
@@ -121,7 +121,7 @@ class Logs extends React.Component {
               kind="Show last N minutes"
             />
           </Grid>
-          <Grid className={classes.padding} item xs={12} sm={12} md={12} lg={3} xl={2}>
+          <Grid className={classes.padding} item xs={12} sm={12} md={12} lg={3}>
             <Selector
               classes={classes}
               values={actions}
@@ -134,7 +134,7 @@ class Logs extends React.Component {
               defaultText="ALL"
             />
           </Grid>
-          <Grid className={classes.padding} item xs={12} sm={12} md={12} lg={4} xl={2}>
+          <Grid className={classes.padding} item xs={12} sm={12} md={12} lg={4}>
             <Autocomplete
               id="tags-outlined"
               options={players.sort()}
@@ -156,7 +156,7 @@ class Logs extends React.Component {
               )}
             />
           </Grid>
-          <Grid className={classes.padding} item xs={12} sm={12} md={12} lg={2} xl={2}>
+          <Grid className={classes.padding} item xs={12} sm={12} md={12} lg={2}>
             <Button
               className={classes.logsControl}
               disableElevation

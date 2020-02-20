@@ -14,6 +14,7 @@ import IconButton from "@material-ui/core/IconButton";
 import MenuIcon from "@material-ui/icons/Menu";
 import Link from "@material-ui/core/Link";
 import CssBaseline from "@material-ui/core/CssBaseline";
+import HLLSettings from "./components/SettingsView/hllSettings";
 import {
   HashRouter as Router,
   Switch,
@@ -36,7 +37,7 @@ function ButtonAppBar() {
               component={RouterLink}
               to="/"
             >
-             Live
+              Live
             </Link>
 
             <Link
@@ -75,40 +76,44 @@ function App() {
       <ToastContainer />
       <Router>
         <Grid container className={classes.grow}>
-        <div className={classes.grow}>
-      <AppBar position="static" elevation={0} className={classes.appBar}>
-        <Toolbar className={classes.toolbar}>
-          <nav>
-            <Link
-              variant="button"
-              color="inherit"
-              className={classes.firstLink}
-              component={RouterLink}
-              to="/"
-            >
-             Live
-            </Link>
+          <div className={classes.grow}>
+            <AppBar position="static" elevation={0} className={classes.appBar}>
+              <Toolbar className={classes.toolbar}>
+                <nav>
+                  <Link
+                    variant="button"
+                    color="inherit"
+                    className={classes.firstLink}
+                    component={RouterLink}
+                    to="/"
+                  >
+                    Live
+                  </Link>
 
-            <Link
-              variant="button"
-              color="inherit"
-              className={classes.link}
-              component={RouterLink}
-              to="/settings"
-            >
-              Settings
-            </Link>
-          </nav>
-        </Toolbar>
-      </AppBar>
-    </div>
+                  <Link
+                    variant="button"
+                    color="inherit"
+                    className={classes.link}
+                    component={RouterLink}
+                    to="/settings"
+                  >
+                    Settings
+                  </Link>
+                </nav>
+              </Toolbar>
+            </AppBar>
+          </div>
         </Grid>
         <Switch>
-          <Route path="/" exact >
+          <Route path="/" exact>
             <Live classes={classes} />
           </Route>
           <Route path="/settings">
-            <h1>Under construction</h1>
+            <Grid container>
+              <Grid item sm={12} lg={6}>
+                <HLLSettings classes={classes} />
+              </Grid>
+            </Grid>
           </Route>
         </Switch>
       </Router>
