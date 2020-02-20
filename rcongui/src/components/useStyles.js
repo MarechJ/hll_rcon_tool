@@ -7,6 +7,10 @@ const useStyles = makeStyles(theme => ({
   paper: {
     padding: theme.spacing(2)
   },
+  slider: {
+   
+    textAlign: "left"
+  },
   margin: {
     marginTop: theme.spacing(3)
   },
@@ -16,6 +20,24 @@ const useStyles = makeStyles(theme => ({
   marginLeft: {
     marginLeft: theme.spacing(1)
   },
+  marginRight: {
+    marginRight: theme.spacing(1)
+  },
+  paperLogs: {
+    textAlign: "left",
+    padding: theme.spacing(2),
+  },
+  logs: {
+    margin: 0,
+    whiteSpace: 'pre-wrap'
+  },
+  logsControl: {
+    width: "100%",
+    height: "100%",
+  },
+  alignLeft: {
+    textAlign: "left"
+  },
   textLeft: {
     textAlign: "left",
     paddingLeft: theme.spacing(2)
@@ -23,6 +45,28 @@ const useStyles = makeStyles(theme => ({
   textRight: {
     textAlign: "right",
     paddingRight: theme.spacing(2)
+  },
+  padding: {
+    padding: theme.spacing(1)
+  },
+  menuButton: {
+    marginRight: theme.spacing(2),
+  },
+  appBar: {
+    borderBottom: `1px solid ${theme.palette.divider}`,
+  },
+  link: {
+    margin: theme.spacing(1, 1.5),
+  },
+  firstLink: {
+    margin: theme.spacing(1, 1.5),
+    marginLeft: 0,
+  },
+  toolbar: {
+    flexWrap: 'wrap',
+  },
+  grow: {
+    flexGrow: 1,
   },
   fab: {
     margin: "0px",

@@ -113,6 +113,17 @@ class Rcon(ServerCtl):
         return l
 
     @ttl_cache(ttl=60)
+    def get_next_map(self):
+        current = self.get_map()
+        rotation = self.get_map_rotation()
+        next_id = rotation.index(current)
+        next_id += 1
+        if next_id == len(rotation):
+            next_id = 0
+
+        return rotation[next_id]
+
+    @ttl_cache(ttl=15)
     def get_status(self):
         return {
             'map': self.get_map(),
@@ -138,6 +149,9 @@ class Rcon(ServerCtl):
             return from_ - timedelta(milliseconds=int(time))
         if unit == 'sec':
             return from_ - timedelta(seconds=float(time))
+        if unit == 'min':
+            minutes, seconds = time.split(':')
+            return from_ - timedelta(minutes=float(minutes), seconds=float(seconds))
         if unit == 'hours':
             hours, minutes, seconds = time.split(':')
             return from_ - timedelta(
@@ -145,6 +159,7 @@ class Rcon(ServerCtl):
                 minutes=int(minutes),
                 seconds=int(seconds)
             )
+
 
     def get_structured_logs(self, since_min_ago, filter_action=None, filter_player=None):
         raw = super().get_logs(since_min_ago)
@@ -175,9 +190,12 @@ class Rcon(ServerCtl):
                 raise
             if filter_action and action != filter_action:
                 continue
+            if filter_player and filter_player not in line:
+                continue
 
             res.append({
-                'time': time,
+                'timestamp_ms': int(time.timestamp() * 1000),
+                'relative_time_ms':  (time - now).total_seconds() * 1000,
                 'raw': line,
                 'action': action,
                 'player': player,

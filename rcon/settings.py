@@ -1,8 +1,48 @@
 import logging
 from logging.config import dictConfig
-
 import os
 
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'console': {
+            'format': '[%(asctime)s][%(levelname)s] %(name)s '
+                      '%(filename)s:%(funcName)s:%(lineno)d | %(message)s',
+            },
+    },
+    'handlers': {
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'console'
+            },
+        'file': {
+            'level': 'DEBUG',
+            'formatter': 'console',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'filename':  os.getenv('DJANGO_LOGGING_PATH', f"{__package__}.log"),
+            'when': 'D',
+            'backupCount': 5
+            },
+        },
+
+    'loggers': {
+        'rconweb': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        '__main__': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        }
+    }
+}
+
+
+dictConfig(LOGGING)
 # TODO: Use a config style that is not required at import time
 try:
     SERVER_INFO = {
@@ -20,7 +60,7 @@ for k, v in SERVER_INFO.items():
 
 LOGGING = {
     'version': 1,
-    'disable_existing_loggers': True,
+    'disable_existing_loggers': False,
     'formatters': {
         'console': {
             'format': '[%(asctime)s][%(levelname)s] %(name)s '
