@@ -151,9 +151,8 @@ class ServerCtl:
     def get_players(self):
         return self._get("players", True, can_fail=False)
 
-    @_escape_params
     def get_player_info(self, player):
-        return self._request(f"playerinfo {player}")
+        return self._request(f'playerinfo {player}')
 
     def get_admin_ids(self):
         return self._get("adminids", True, can_fail=False)
