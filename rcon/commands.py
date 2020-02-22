@@ -87,7 +87,7 @@ class ServerCtl:
         try:
             self.conn.send(command.encode())
             result = self.conn.receive().decode()
-        except (RuntimeError, BrokenPipeError, socket.timeout):
+        except (RuntimeError, BrokenPipeError, socket.timeout, ConnectionResetError):
             logger.exception("Failed request")
             raise HLLServerError(command)
 
