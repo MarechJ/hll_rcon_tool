@@ -9,21 +9,14 @@ from rcon.connection import HLLConnection
 
 logger = logging.getLogger(__name__)
 
-
 def escape_string(s):
     """ Logic taken from the official rcon client.
     There's probably plenty of nicer and more bulletproof ones
     """
-    quoted = ""
-    for idx, char in enumerate(s):
-        if char != '"':
-            if char != '\\':
-                quoted += char
-            else:
-                quoted += "\\\\"
-        else:
-            quoted += "\\\""
-    return quoted
+    st = ""
+    for index in range(len(s)):
+        st = (st + s[index] if s[index] != '\\' else st + "\\\\") if s[index] != '"' else st + "\\\""
+    return st
 
 
 def _escape_params(func):
@@ -31,10 +24,10 @@ def _escape_params(func):
     def wrapper(*args, **kwargs):
         return func(
             args[0],
-            *[escape_string for a in args[1:]],
-            **{k: v for k, v in kwargs.items()}
+            *[escape_string(a) for a in args[1:]],
+            **{k: escape_string(v) for k, v in kwargs.items()}
         )
-    return func
+    return wrapper
 
 
 class CommandFailedError(Exception):
@@ -94,7 +87,7 @@ class ServerCtl:
         try:
             self.conn.send(command.encode())
             result = self.conn.receive().decode()
-        except (RuntimeError, BrokenPipeError, socket.timeout):
+        except (RuntimeError, BrokenPipeError, socket.timeout, ConnectionResetError):
             logger.exception("Failed request")
             raise HLLServerError(command)
 
@@ -158,9 +151,8 @@ class ServerCtl:
     def get_players(self):
         return self._get("players", True, can_fail=False)
 
-    @_escape_params
     def get_player_info(self, player):
-        return self._request(f"playerinfo {player}")
+        return self._request(f'playerinfo {player}')
 
     def get_admin_ids(self):
         return self._get("adminids", True, can_fail=False)
@@ -301,7 +293,5 @@ if __name__ == '__main__':
         SERVER_INFO
     )
 
-    print(ctl.get_map())
-    maps = ctl.get_map_rotation()
-    #print(ctl.set_map(maps[2]))
-    print(ctl.get_map())
+    player = '[CFr] Dr.WeeD "blah"'
+    print(ctl.do_kick(player, "test"))
