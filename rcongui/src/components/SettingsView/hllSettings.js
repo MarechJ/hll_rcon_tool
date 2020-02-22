@@ -67,7 +67,7 @@ class HLLSettings extends React.Component {
     return (
       <Grid container spacing={3} className={classes.paper}>
         <Grid item className={classes.paper} xs={12}>
-          <h1>This is not wire yet. Changing values won't have any effect</h1>
+          <h1>This is not wired yet. Changing values won't have any effect</h1>
         </Grid>
         <Grid item className={classes.paper} xs={12}>
           <TextField
