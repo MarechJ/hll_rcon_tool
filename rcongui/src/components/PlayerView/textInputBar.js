@@ -7,12 +7,13 @@ import ToggleButtonGroup from "@material-ui/lab/ToggleButtonGroup";
 import SortByAlphaIcon from "@material-ui/icons/SortByAlpha";
 import QueryBuilderIcon from "@material-ui/icons/QueryBuilder";
 
-const Reason = ({ handleMessageChange, extraClasses, helperText = "Leave blank if you want a confirmation popup" }) => (
+const Reason = ({ handleMessageChange, extraClasses, helperText = "Leave blank if you want a confirmation popup", message }) => (
   <TextField
     id="filled-full-width"
     label="Punish/Kick/Ban message"
     helperText={helperText}
     fullWidth
+    value={message}
     className={extraClasses}
     onChange={event => {
       event.preventDefault();
@@ -72,4 +73,4 @@ const TextInputBar = ({
 };
 
 export default TextInputBar;
-export {TextInputBar, Reason}
+export { TextInputBar, Reason }

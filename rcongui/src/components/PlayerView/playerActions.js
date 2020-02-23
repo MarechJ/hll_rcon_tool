@@ -97,21 +97,21 @@ const PlayerActions = ({ size, handleAction, displayCount = 3, disable = false }
 
   return (
     <React.Fragment>
-      <ButtonGroup  size={size} aria-label="small outlined button group">
+      <ButtonGroup size={size} aria-label="small outlined button group">
         {_.range(show).map(idx => (
           <Button disabled={disable && !actions[idx][0].startsWith("switch")} onClick={() => handleAction(actions[idx][0])}>
             {actions[idx][1]}
           </Button>
         ))}
         {show < actions.length ?
-        <Button
-          disabled={disable}
-          aria-controls="simple-menu"
-          aria-haspopup="true"
-          onClick={handleClick}
-        >
-          <ArrowDropDownIcon />
-        </Button> : ""}
+          <Button
+            disabled={disable}
+            aria-controls="simple-menu"
+            aria-haspopup="true"
+            onClick={handleClick}
+          >
+            <ArrowDropDownIcon />
+          </Button> : ""}
       </ButtonGroup>
       {show < actions.length ? (
         <Menu
@@ -133,8 +133,8 @@ const PlayerActions = ({ size, handleAction, displayCount = 3, disable = false }
           ))}
         </Menu>
       ) : (
-        ""
-      )}
+          ""
+        )}
     </React.Fragment>
   );
 };

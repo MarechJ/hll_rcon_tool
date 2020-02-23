@@ -6,23 +6,33 @@ import ListItemText from "@material-ui/core/ListItemText";
 import _ from "lodash";
 import "react-toastify/dist/ReactToastify.css";
 import { PlayerActions } from "./playerActions";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faSteam } from '@fortawesome/free-brands-svg-icons'
+import Link from '@material-ui/core/Link';
+import withWidth from "@material-ui/core/withWidth";
 
-const PlayerItem = ({ name, steamID64, handleAction }) => (
-  <ListItem key={name} role={undefined} dense>
+const PlayerItem = ({ classes, name, steamID64, handleAction, nbButtons }) => (
+  <ListItem button component="a" href={`https://steamcommunity.com/profiles/${steamID64}`} target="_blank" key={name} dense>
     <ListItemText
       id={`checkbox-list-label-${steamID64}`}
       primary={name}
       secondary={steamID64}
     />
     <ListItemSecondaryAction>
-      <PlayerActions size="small" handleAction={handleAction} />
+      <Link className={classes.marginRight} target="_blank" color="inherit" href={`https://steamcommunity.com/profiles/${steamID64}`}>
+        <FontAwesomeIcon icon={faSteam} /></Link>
+      <PlayerActions size="small" handleAction={handleAction} displayCount={nbButtons} />
     </ListItemSecondaryAction>
   </ListItem>
 );
 
+
 class CompactList extends React.Component {
   shouldComponentUpdate(nextProps, nextState) {
-    if (nextProps.playerSteamIDs.length !== this.props.playerSteamIDs.length 
+    if (nextProps.width !== this.props.width) {
+      return true
+    }
+    if (nextProps.playerSteamIDs.length !== this.props.playerSteamIDs.length
       || nextProps.alphaSort !== this.props.alphaSort) {
       return true;
     }
@@ -34,8 +44,8 @@ class CompactList extends React.Component {
   }
 
   render() {
-    const { playerNames, playerSteamIDs, classes, handleAction, alphaSort } = this.props;
-    let players = _.zip(playerNames, playerSteamIDs); 
+    const { playerNames, playerSteamIDs, classes, handleAction, alphaSort, width } = this.props;
+    let players = _.zip(playerNames, playerSteamIDs);
     if (alphaSort === true) {
       players = _.sortBy(players, (p) => p[0].toLowerCase())
     }
@@ -43,6 +53,8 @@ class CompactList extends React.Component {
       <List className={classes.root}>
         {players.map(player => (
           <PlayerItem
+            classes={classes}
+            nbButtons={width === 'xs' ? 1 : width === 'xl' ? 10 : 4}
             name={player[0]}
             steamID64={player[1]}
             key={player.steam_id_64}
@@ -54,4 +66,4 @@ class CompactList extends React.Component {
   }
 }
 
-export default CompactList;
+export default withWidth()(CompactList);

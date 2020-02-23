@@ -25,26 +25,26 @@ const Selector = ({
   onChange,
   kind
 }) => (
-  <FormControl className={classes.logsControl}>
-    <InputLabel shrink>{kind}</InputLabel>
-    <Select
-      value={currentValue}
-      onChange={e => onChange(e.target.value)}
-      displayEmpty
-    >
-      {defaultValue !== undefined ? (
-        <MenuItem value={defaultValue}>
-          <em>{defaultText}</em>
-        </MenuItem>
-      ) : (
-        ""
-      )}
-      {values.map(a => (
-        <MenuItem value={a}>{a}</MenuItem>
-      ))}
-    </Select>
-  </FormControl>
-);
+    <FormControl className={classes.logsControl}>
+      <InputLabel shrink>{kind}</InputLabel>
+      <Select
+        value={currentValue}
+        onChange={e => onChange(e.target.value)}
+        displayEmpty
+      >
+        {defaultValue !== undefined ? (
+          <MenuItem value={defaultValue}>
+            <em>{defaultText}</em>
+          </MenuItem>
+        ) : (
+            ""
+          )}
+        {values.map(a => (
+          <MenuItem value={a}>{a}</MenuItem>
+        ))}
+      </Select>
+    </FormControl>
+  );
 
 class Logs extends React.Component {
   constructor(props) {
@@ -106,7 +106,7 @@ class Logs extends React.Component {
       <React.Fragment>
         <Grid container justify="flex-start">
           <Grid item xs={12} className={classes.textLeft}>
-    <h1>Logs view {width}</h1>
+            <h1>Logs view</h1>
           </Grid>
         </Grid>
         <Grid container justify="space-around" className={classes.marginBottom}>

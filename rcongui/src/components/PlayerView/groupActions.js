@@ -57,6 +57,7 @@ const GroupActions = ({
         <Grid container>
           <Grid item xs={12} xl={12} className={classes.marginBottom}>
             <Reason
+              message={message}
               handleMessageChange={setMessage}
               helperText={"A message is mandatory"}
             />
@@ -68,6 +69,7 @@ const GroupActions = ({
                   handleAction(actionType, p.name, message)
                 )
               }
+              message={message}
               disable={message === ""}
               displayCount={nbButton}
             />
