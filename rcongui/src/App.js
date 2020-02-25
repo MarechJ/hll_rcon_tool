@@ -28,6 +28,54 @@ import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Checkbox from '@material-ui/core/Checkbox';
 import Brightness4OutlinedIcon from '@material-ui/icons/Brightness4Outlined';
 
+function rgba2hex(orig) {
+  var a, isPercent,
+    rgb = orig.replace(/\s/g, '').match(/^rgba?\((\d+),(\d+),(\d+),?([^,\s)]+)?/i),
+    alpha = (rgb && rgb[4] || "").trim(),
+    hex = rgb ?
+      (rgb[1] | 1 << 8).toString(16).slice(1) +
+      (rgb[2] | 1 << 8).toString(16).slice(1) +
+      (rgb[3] | 1 << 8).toString(16).slice(1) : orig;
+
+  if (alpha !== "") {
+    a = alpha;
+  } else {
+    a = "01";
+  }
+  // multiply before convert to HEX
+  a = ((a * 255) | 1 << 8).toString(16).slice(1)
+  hex = hex + a;
+
+  return hex;
+}
+
+class BattleMetrics extends React.Component {
+  componentDidMount() {
+    window.addEventListener(
+      'message',
+      function (e) {
+        if (e.data.uid && e.data.type === 'sizeUpdate') {
+          var i = document.querySelector('iframe[name="' + e.data.uid + '"]');
+          i.style.width = e.data.payload.width; i.style.height = e.data.payload.height;
+        }
+      });
+
+  }
+
+  render() {
+    const { classes, serverId, theme } = this.props;
+    window.theme = theme
+    return (
+      serverId ?
+        <iframe style={{ border: 0 }
+        }
+          src={`https://cdn.battlemetrics.com/b/horizontal500x80px/${serverId}.html?foreground=%23${theme.palette.primary.contrastText.replace('#', '')}&background=%23${theme.palette.primary.main.replace('#', '')}&lines=%23${theme.palette.primary.contrastText.replace('#', '')}&linkColor=%23${theme.palette.secondary.contrastText.replace('#', '')}&chartColor=%23${theme.palette.error.light.replace('#', '')}`
+          }
+          frameborder={0} name="cervz" ></iframe>
+        : ''
+    )
+  }
+}
 
 const Live = ({ classes }) => (
   <Grid container spacing={1}>
@@ -57,10 +105,11 @@ const lightTheme = createMuiTheme({
 function App() {
   const classes = useStyles();
   const [dark, setDark] = React.useState(false)
-
+  const theme = dark ? darkTheme : lightTheme
+  console.log(theme.palette)
   return (
     <div className={"App " + classes.root}>
-      <ThemeProvider theme={dark ? darkTheme : lightTheme} >
+      <ThemeProvider theme={theme} >
         <CssBaseline />
         <ToastContainer />
         <Router>
@@ -68,7 +117,8 @@ function App() {
             <div className={classes.grow}>
               <AppBar position="static" elevation={0} className={classes.appBar}>
                 <Toolbar className={classes.toolbar}>
-                  <nav>
+
+                  <nav className={classes.title}>
                     <Link
                       variant="button"
                       color="inherit"
@@ -88,8 +138,16 @@ function App() {
                     >
                       Settings
                   </Link>
+                    <Checkbox icon={<Brightness4Icon />} checkedIcon={<Brightness4OutlinedIcon />} checked={dark ? true : false} color="default" onChange={(e, val) => setDark(val)} />
                   </nav>
-                  <Checkbox icon={<Brightness4Icon />} checkedIcon={<Brightness4OutlinedIcon />} checked={dark ? true : false} onChange={(e, val) => setDark(val)} />
+
+                  <div className={classes.battleMetrics}>
+                    <BattleMetrics
+                      classes={classes}
+                      theme={theme}
+                      serverId={process.env.REACT_APP_BATTLEMETRICS_SERVERID}
+                    />
+                  </div>
                 </Toolbar>
               </AppBar>
             </div>

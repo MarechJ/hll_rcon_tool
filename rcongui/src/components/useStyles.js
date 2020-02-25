@@ -7,8 +7,24 @@ const useStyles = makeStyles(theme => ({
   paper: {
     padding: theme.spacing(2)
   },
+  battleMetrics: {
+    position: 'relative',
+    marginLeft: 0,
+    width: '100%',
+    [theme.breakpoints.up('sm')]: {
+      marginLeft: theme.spacing(1),
+      width: 'auto',
+    },
+    [theme.breakpoints.down('xs')]: {
+      display: "none"
+    },
+  },
+  title: {
+    flexGrow: 1,
+    display: 'block',
+    textAlign: 'left'
+  },
   slider: {
-   
     textAlign: "left"
   },
   margin: {
@@ -64,6 +80,7 @@ const useStyles = makeStyles(theme => ({
   },
   toolbar: {
     flexWrap: 'wrap',
+    paddingLeft: 0,
   },
   grow: {
     flexGrow: 1,

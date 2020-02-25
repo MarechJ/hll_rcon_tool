@@ -1,6 +1,7 @@
 import logging
 import socket
 from functools import wraps
+import time
 
 from dataclasses import dataclass
 from functools import wraps
@@ -46,11 +47,10 @@ def _auto_retry(method):
         except HLLServerError:
             if not self.auto_retry:
                 raise
-            logger.warning(
+            logger.exception(
                 "Auto retrying %s %s %s", method.__name__, args, kwargs
             )
             self._reconnect()
-            logger.exception(self)
             return method(self, *args, **kwargs)
             # TODO loop and counter implement counter
 
@@ -79,6 +79,7 @@ class ServerCtl:
     def _reconnect(self):
         logger.warning("reconnecting")
         self.conn.close()
+        time.sleep(1)
         self._connect()
 
     @_auto_retry

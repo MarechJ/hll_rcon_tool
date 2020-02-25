@@ -25,6 +25,8 @@ services:
       - .:/logs
   frontend:
     build: ./rcongui
+    environment:
+      REACT_APP_BATTLEMETRICS_SERVERID: ${BATTLEMETRICS_SERVERID}
     ports:
       - 8010:80
     links:
