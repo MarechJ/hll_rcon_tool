@@ -24,9 +24,10 @@ services:
     volumes:
       - .:/logs
   frontend:
-    build: ./rcongui
-    environment:
-      REACT_APP_BATTLEMETRICS_SERVERID: ${REACT_APP_BATTLEMETRICS_SERVERID}
+    build: 
+      context: ./rcongui
+      args:
+        REACT_APP_BATTLEMETRICS_SERVERID: ${REACT_APP_BATTLEMETRICS_SERVERID}
     ports:
       - 8010:80
     links:
@@ -34,3 +35,4 @@ services:
     restart: always
     volumes:
       - ./pw:/pw
+      - .:/node_cache
