@@ -50,6 +50,14 @@ function rgba2hex(orig) {
 }
 
 class BattleMetrics extends React.Component {
+  constructor (props) {
+    super(props)
+
+    this.state = {
+      tick: 0
+    }
+  }
+
   componentDidMount() {
     window.addEventListener(
       'message',
@@ -60,6 +68,9 @@ class BattleMetrics extends React.Component {
         }
       });
 
+      setInterval(() => {
+        this.setState({tick: this.state.tick + 1})
+      }, 16000);
   }
 
   render() {
@@ -69,7 +80,7 @@ class BattleMetrics extends React.Component {
       serverId ?
         <iframe style={{ border: 0 }
         }
-          src={`https://cdn.battlemetrics.com/b/horizontal500x80px/${serverId}.html?foreground=%23${theme.palette.primary.contrastText.replace('#', '')}&background=%23${theme.palette.primary.main.replace('#', '')}&lines=%23${theme.palette.primary.contrastText.replace('#', '')}&linkColor=%23${theme.palette.secondary.contrastText.replace('#', '')}&chartColor=%23${theme.palette.error.light.replace('#', '')}`
+          src={`https://cdn.battlemetrics.com/b/horizontal500x80px/${serverId}.html?foreground=%23${theme.palette.primary.contrastText.replace('#', '')}&background=%23${theme.palette.primary.main.replace('#', '')}&lines=%23${theme.palette.primary.contrastText.replace('#', '')}&linkColor=%23${theme.palette.secondary.contrastText.replace('#', '')}&chartColor=%23${theme.palette.error.light.replace('#', '')}&tick=${this.state.tick}`
           }
           frameborder={0} name="cervz" ></iframe>
         : ''
