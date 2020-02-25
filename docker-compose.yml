@@ -24,7 +24,7 @@ services:
     volumes:
       - .:/logs
   frontend:
-    build: 
+    build:
       context: ./rcongui
       args:
         REACT_APP_BATTLEMETRICS_SERVERID: ${REACT_APP_BATTLEMETRICS_SERVERID}
@@ -35,4 +35,3 @@ services:
     restart: always
     volumes:
       - ./pw:/pw
-      - .:/node_cache
