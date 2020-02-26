@@ -79,9 +79,10 @@ To update to the latest version:
     # Create a file at the root of the repo
     touch broadcasts.txt
     # Edit the file to look like the below
-    cat -e broadcasts.txt
-    60 /nextmap$
-    30 This message will be displayed for 30 secs$
+    cat broadcasts.txt
+    
+    60 /nextmap
+    30 This message will be displayed for 30 secs
 
 The integer at the beginning is the time in seconds the message should be diplayed.
 /nextmap is a special message that will show the next map to come

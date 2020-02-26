@@ -65,6 +65,12 @@ const useStyles = makeStyles(theme => ({
   padding: {
     padding: theme.spacing(1)
   },
+  paddingLeft: {
+    paddingLeft: theme.spacing(1),
+  },
+  paddingRight: {
+    paddingRight: theme.spacing(1)
+  },
   menuButton: {
     marginRight: theme.spacing(2),
   },

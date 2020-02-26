@@ -68,11 +68,15 @@ class BattleMetrics extends React.Component {
         }
       });
 
-      setInterval(() => {
+      this.interval = setInterval(() => {
         this.setState({tick: this.state.tick + 1})
       }, 16000);
   }
 
+  componentWillUnmount () {
+    clearInterval(this.interval)
+  }
+  
   render() {
     const { classes, serverId, theme } = this.props;
     window.theme = theme

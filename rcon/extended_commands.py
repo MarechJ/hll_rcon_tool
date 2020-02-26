@@ -105,12 +105,23 @@ class Rcon(ServerCtl):
         for item in res:
             try:
                 steam_id_64, name = item.split(" ", 1)
+                name = name.replace('"', "")
+                name = name.replace("\n", "")
+                name = name.strip()
             except ValueError:
                 self._reconnect()
                 raise
             l.append(dict(zip((STEAMID, NAME), (steam_id_64, name))))
 
         return l
+
+    def do_remove_vip(self, steam_id_64):
+        with invalidates(self.get_vip_ids):
+            return super().do_remove_vip(steam_id_64)
+
+    def do_add_vip(self, name, steam_id_64):
+        with invalidates(self.get_vip_ids):
+            return super().do_add_vip(steam_id_64, name)
 
     @ttl_cache(ttl=60)
     def get_next_map(self):

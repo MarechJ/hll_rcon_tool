@@ -1,6 +1,15 @@
 import React from "react";
-import { Grid, TextField, Slider, Typography } from "@material-ui/core";
+import clsx from 'clsx';
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
+import {
+  Grid, TextField, Slider, Typography, List, ListItem,
+  ListItemText, ListItemSecondaryAction, IconButton, ListSubheader, Card, CardHeader, CardContent, Collapse
+} from "@material-ui/core";
 import { range } from "lodash/util";
+import DeleteIcon from '@material-ui/icons/Delete';
+import AddIcon from '@material-ui/icons/Add';
+import { showResponse, postData } from '../../utils/fetchUtils'
+import { toast } from "react-toastify";
 
 function valuetext(value) {
   return `${value}`;
@@ -16,28 +25,97 @@ const NumSlider = ({
   step = 1,
   setValue
 }) => (
-  <div className={classes.slider}>
-    {/*  <TextField
-    fullWidth
-    type="number"
-    label="Autobalance threshold"
-    helperText="The maximum difference in number of players between the two teams"
-  /> */}
-    <Typography id="discrete-slider-always" color="textSecondary" gutterBottom>
-      {text}
-    </Typography>
-    <Slider
-      value={value}
-      onChange={(e, newVal) => setValue(newVal)}
-      aria-labelledby="discrete-slider-always"
-      step={step}
-      marks={marks}
-      min={min}
-      max={max}
-      valueLabelDisplay="auto"
-    />
-  </div>
-);
+    <div className={classes.slider}>
+      <Typography variant="h5" id="discrete-slider-always" gutterBottom>
+        {text}
+      </Typography>
+      <Slider
+        value={value}
+        onChange={(e, newVal) => setValue(newVal)}
+        aria-labelledby="discrete-slider-always"
+        step={step}
+        marks={marks}
+        min={min}
+        max={max}
+        valueLabelDisplay="auto"
+      />
+    </div>
+  );
+
+const CollapseCard = ({ classes, title, children, onExpand }) => {
+  const [expanded, setExpanded] = React.useState(false);
+  const handleExpandClick = () => {
+    setExpanded(!expanded);
+    onExpand();
+  };
+
+  return <Card>
+    <CardHeader title={title} action={
+      <IconButton
+        className={clsx(classes.expand, {
+          [classes.expandOpen]: expanded,
+        })}
+        onClick={handleExpandClick}
+        aria-expanded={expanded}
+        aria-label="show more"
+      >
+        <ExpandMoreIcon />
+      </IconButton>
+    } />
+    <Collapse in={expanded} unmountOnExit>
+      <CardContent>
+        {children}
+      </CardContent>
+    </Collapse>
+  </Card>
+}
+
+const AddPersonItem = ({ classes, name, setName, steamID64, setSteamID64, onAdd }) => (
+  <ListItem>
+    <Grid container>
+      <Grid item xs={6} className={classes.paddingRight}>
+        <TextField InputLabelProps={{
+          shrink: true,
+        }} label="Name" value={name} onChange={(e) => setName(e.target.value)} />
+      </Grid>
+      <Grid item xs={6} className={classes.paddingLeft} >
+        <TextField InputLabelProps={{
+          shrink: true,
+        }} label="SteamID64" value={steamID64} onChange={(e) => setSteamID64(e.target.value)} />
+      </Grid>
+    </Grid>
+    <ListItemSecondaryAction>
+      <IconButton edge="end" aria-label="delete" onClick={() => onAdd(name, steamID64).then(() => {setName(""); setSteamID64("")})}>
+        <AddIcon />
+      </IconButton>
+    </ListItemSecondaryAction>
+  </ListItem>
+)
+
+const PeopleEditableList = ({ classes, peopleList, onDelete, onAdd }) => {
+  const [name, setName] = React.useState("")
+  const [steamID64, setSteamID64] = React.useState("")
+
+  return <React.Fragment>
+    <List dense>
+      <AddPersonItem classes={classes} name={name} setName={setName} steamID64={steamID64} setSteamID64={setSteamID64} onAdd={onAdd} />
+      {peopleList.map(obj => (
+        <ListItem key={obj.steam_id_64}>
+          <ListItemText
+            primary={obj.name}
+            secondary={obj.steam_id_64}
+          />
+          <ListItemSecondaryAction>
+            <IconButton edge="end" aria-label="delete" onClick={() => onDelete(obj.name, obj.steam_id_64)}>
+              <DeleteIcon />
+            </IconButton>
+          </ListItemSecondaryAction>
+        </ListItem>
+      ))}
+      <AddPersonItem classes={classes} name={name} setName={setName} steamID64={steamID64} setSteamID64={setSteamID64} onAdd={onAdd} />
+    </List>
+  </React.Fragment>
+};
 
 class HLLSettings extends React.Component {
   constructor(props) {
@@ -49,8 +127,29 @@ class HLLSettings extends React.Component {
       idleAutokickMin: 5,
       maxPingMs: 500,
       queueLength: 5,
-      vipSlots: 2
+      vipSlots: 2,
+      vips: []
     };
+
+    this.loadVips = this.loadVips.bind(this)
+    this.sendAction = this.sendAction.bind(this)
+  }
+
+  componentDidMount() {
+    this.loadVips()
+  }
+
+  loadVips() {
+    fetch(`${process.env.REACT_APP_API_URL}get_vip_ids`)
+      .then((res) => showResponse(res, "get_vip_ids", false))
+      .then(data => this.setState({ vips: data.result }))
+      .catch(error => toast.error("Unable to connect to API " + error));
+  }
+
+  sendAction(command, parameters) {
+    return postData(`${process.env.REACT_APP_API_URL}${command}`, parameters).then(
+      (res) => showResponse(res, command, true)
+    ).catch(error => toast.error("Unable to connect to API " + error));
   }
 
   render() {
@@ -60,7 +159,8 @@ class HLLSettings extends React.Component {
       idleAutokickMin,
       maxPingMs,
       queueLength,
-      vipSlots
+      vipSlots,
+      vips
     } = this.state;
     const { classes } = this.props;
 
@@ -73,8 +173,25 @@ class HLLSettings extends React.Component {
           <TextField
             fullWidth
             label="Server name"
+            disabled
             helperText="The server name as displayed in the server browser"
           />
+        </Grid>
+        <Grid item className={classes.paper} xs={12} md={6}>
+          <CollapseCard title="Manage VIPs" classes={classes} onExpand={this.loadVips}>
+            <PeopleEditableList peopleList={vips} classes={classes} 
+            onAdd={
+              (name, steamID64) => (
+                this.sendAction("do_add_vip", { "steam_id_64": steamID64, "name": name }).then(this.loadVips)
+              )
+            } 
+            onDelete={
+              (name, steamID64) => (
+                this.sendAction("do_remove_vip", { "steam_id_64": steamID64}).then(this.loadVips)
+              )
+            }
+            />
+          </CollapseCard>
         </Grid>
         <Grid item className={classes.paper} xs={12} md={6}>
           <NumSlider
