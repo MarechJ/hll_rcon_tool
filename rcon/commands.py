@@ -230,7 +230,7 @@ class ServerCtl:
     def set_queue_length(self, num):
         return self._request(f"setmaxqueuedplayers {num}")
 
-    def set_vip_slots(self, num):
+    def set_vip_slots_num(self, num):
         return self._request(f"setnumvipslots {num}")
 
     @_escape_params

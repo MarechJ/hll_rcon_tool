@@ -23,6 +23,13 @@ def invalidates(*cached_funcs):
 
 
 class Rcon(ServerCtl):
+    settings = (
+        ('name', str), ('team_switch_cooldown', int),
+        ('autobalance_threshold', int), 
+        ('idle_autokick_time', int), ('max_ping_autokick', int),
+        ('queue_length', int), ('vip_slots_num', int)
+    )
+
     @ttl_cache(ttl=60 * 60)
     def get_player_info(self, player):
         try:
@@ -150,18 +157,20 @@ class Rcon(ServerCtl):
             'nb_players': self.get_slots().split('/')[0]
         }
 
+
     @ttl_cache(ttl=60 * 10)
     def get_server_settings(self):
-        settings = [
-            'name', 'team_switch_cooldown',
-            'autobalance_threshold', 'map_rotation',
-            'idle_autokick_time', 'max_ping_autokick',
-            'queue_length', 'vip_slots_num'
-        ]
         return {
-            s: getattr(self, f'get_{s}')()
-            for s in settings
+            name: type_(getattr(self, f'get_{name}')())
+            for name, type_ in self.settings
         }
+
+    def do_save_setting(self, name, value):
+        if not name in dict(self.settings):
+            raise ValueError(f"'{name}' can't be save with this method")
+
+        with invalidates(self.get_server_settings):
+            return getattr(self, f'set_{name}')(value)
 
     def _convert_relative_time(self, from_, time_str):
         time, unit  = time_str.split(' ')
