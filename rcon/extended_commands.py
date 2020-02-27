@@ -55,6 +55,15 @@ class Rcon(ServerCtl):
             )
         return admins
 
+    def do_add_admin(self, steam_id_64, role, name):
+        with invalidates(self.get_admin_ids):
+            return super().do_add_admin(steam_id_64, role, name)
+
+    def do_remove_admin(self, steam_id_64):
+        with invalidates(self.get_admin_ids):
+            return super().do_remove_admin(steam_id_64)
+
+
     @ttl_cache(ttl=5)
     def get_players(self):
         # We need a centralized cache or a

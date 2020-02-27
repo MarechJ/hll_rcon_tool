@@ -169,7 +169,6 @@ class HLLSettings extends React.Component {
         </Grid>
         <Grid item className={classes.paper} xs={12} md={6}>
           <CollapseCard title="Manage Console admins" classes={classes} onExpand={this.loadAdmins}>
-            <p>Changes won't be visible immediately</p>
             <AdminsEditableList peopleList={admins} roles={adminRoles} classes={classes}
               onAdd={
                 (name, steamID64, role) => (
