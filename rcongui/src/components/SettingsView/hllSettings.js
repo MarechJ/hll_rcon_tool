@@ -4,7 +4,7 @@ import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import {
   Grid, TextField, Slider, Typography,
   IconButton, Card, CardHeader, CardContent,
-  Collapse, Button
+  Collapse, Button, Switch
 } from "@material-ui/core";
 import { range } from "lodash/util";
 import DeleteIcon from '@material-ui/icons/Delete';
@@ -14,6 +14,7 @@ import { toast } from "react-toastify";
 import VipEditableList from "./vips"
 import AdminsEditableList from "./admins";
 import _ from 'lodash'
+import MapRotationTransferList from "./mapRotation";
 
 function valuetext(value) {
   return `${value}`;
@@ -89,6 +90,7 @@ class HLLSettings extends React.Component {
       queueLength: 0,
       vipSlots: 0,
       mapRotation: [],
+      availableMaps: [],
       vips: [],
       admins: [],
       adminRoles: ["owner", "senior", "junior"],
@@ -96,22 +98,24 @@ class HLLSettings extends React.Component {
 
     this.loadVips = this.loadVips.bind(this)
     this.loadAdmins = this.loadAdmins.bind(this)
+    this.loadAdminRoles = this.loadAdminRoles.bind(this)
     this.sendAction = this.sendAction.bind(this)
     this.saveSetting = this.saveSetting.bind(this)
     this.loadSettings = this.loadSettings.bind(this)
   }
 
   componentDidMount() {
-    this.loadAdminRoles()
-    this.loadSettings()
+    this.loadMapRotation().then(this.loadAllMaps())
+    this.loadSettings().then(this.loadAdminRoles)
     this.settingsInterval = setInterval(
       this.loadSettings
-    , 30000); 
+      , 30000);
   }
 
   componentWillMount() {
-
+    clearInterval(this.settingsInterval)
   }
+
   async loadSettings() {
     return fetch(`${process.env.REACT_APP_API_URL}get_server_settings`)
       .then((res) => showResponse(res, "get_server_settings", true))
@@ -126,35 +130,40 @@ class HLLSettings extends React.Component {
       }))
   }
 
-  async loadVips() {
-    return fetch(`${process.env.REACT_APP_API_URL}get_vip_ids`)
-      .then((res) => showResponse(res, "get_vip_ids", false))
-      .then(data => this.setState({ vips: data.result }))
+  async _loadToState(command, showSuccess, stateSetter) {
+    return fetch(`${process.env.REACT_APP_API_URL}${command}`)
+      .then((res) => showResponse(res, command, showSuccess))
+      .then(stateSetter)
       .catch(error => toast.error("Unable to connect to API " + error));
+  }
+
+  async loadVips() {
+    return this._loadToState("get_vip_ids", false, data => this.setState({ vips: data.result }))
   }
 
   async loadAdminRoles() {
-    return fetch(`${process.env.REACT_APP_API_URL}get_admin_groups`)
-      .then((res) => showResponse(res, "get_admin_groups", false))
-      .then(data => this.setState({ adminRoles: data.result }))
-      .catch(error => toast.error("Unable to connect to API " + error));
+    return this._loadToState("get_admin_groups", false, data => this.setState({ adminRoles: data.result }))
   }
 
   async loadAdmins() {
-    return fetch(`${process.env.REACT_APP_API_URL}get_admin_ids`)
-      .then((res) => showResponse(res, "get_admin_ids", false))
-      .then(data => this.setState({ admins: data.result }))
-      .catch(error => toast.error("Unable to connect to API " + error));
+    return this._loadToState("get_admin_ids", false, data => this.setState({ admins: data.result }))
+  }
+
+  async loadMapRotation() {
+    return this._loadToState("get_map_rotation", true, data => this.setState({ mapRotation: data.result }))
+  }
+
+  async loadAllMaps() {
+    return this._loadToState("get_maps", true, data => this.setState({ availableMaps: data.result }))
   }
 
   async saveSetting(name, value) {
-    return postData(`${process.env.REACT_APP_API_URL}do_save_setting`,  { "name": name, "value": value }).then(
+    return postData(`${process.env.REACT_APP_API_URL}do_save_setting`, { "name": name, "value": value }).then(
       (res) => showResponse(res, `do_save_setting ${name} ${value}`, true)
     ).catch(error => toast.error("Unable to connect to API " + error));
   }
 
   async sendAction(command, parameters) {
-  
     return postData(`${process.env.REACT_APP_API_URL}${command}`, parameters).then(
       (res) => showResponse(res, command, true)
     ).catch(error => toast.error("Unable to connect to API " + error));
@@ -170,7 +179,9 @@ class HLLSettings extends React.Component {
       vipSlots,
       vips,
       admins,
-      adminRoles
+      adminRoles,
+      mapRotation,
+      availableMaps
     } = this.state;
     const { classes } = this.props;
 
@@ -307,6 +318,17 @@ class HLLSettings extends React.Component {
             setValue={val => this.setState({ vipSlots: val })}
             saveValue={val => this.setState({ vipSlots: val }, () => this.saveSetting("vip_slots_num", val))}
           />
+        </Grid>
+        <Grid container xs={6}>
+        <Grid item xs={12}>
+          <Typography variant="caption" display="block" gutterBottom>Due to the HLL server limitations we can't know if the autobalance is on or off</Typography>
+          </Grid>
+          <Grid item xs={6}><Button fullWidth variant="outlined" onClick={() => this.sendAction("set_autobalance", {bool_str: "on"})}>Activate autobalance</Button></Grid>
+          <Grid item xs={6}><Button fullWidth variant="outlined" onClick={() => this.sendAction("set_autobalance", {bool_str: "off"})}>Desactivate autobalance</Button></Grid>
+          </Grid>
+          <Grid item className={classes.paper} xs={12}>
+          {/* <MapRotationTransferList classes={classes} mapRotation={mapRotation} availableMaps={_.difference(availableMaps, mapRotation)}   
+          /> */}
         </Grid>
       </Grid>
     );

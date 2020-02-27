@@ -74,8 +74,6 @@ class PlayerView extends Component {
     this.setState({ selectedPlayers: players });
   }
 
-
-
   async load(command, callback) {
     return fetch(`${process.env.REACT_APP_API_URL}${command}`)
       .then(response => showResponse(response, command))

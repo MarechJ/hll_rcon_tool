@@ -98,7 +98,15 @@ const useStyles = makeStyles(theme => ({
     bottom: "20px",
     left: "auto",
     position: "fixed",
-}
+  },
+  transferList: {
+    width: 300,
+    height: 400,
+    overflow: 'auto',
+  },
+  transferListButton: {
+    margin: theme.spacing(0.5, 0),
+  },
 }));
 
 export default useStyles;

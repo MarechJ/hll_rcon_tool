@@ -12,7 +12,7 @@ import Link from '@material-ui/core/Link';
 import withWidth from "@material-ui/core/withWidth";
 
 const PlayerItem = ({ classes, name, steamID64, handleAction, nbButtons }) => (
-  <ListItem button component="a" href={`https://steamcommunity.com/profiles/${steamID64}`} target="_blank" key={name} dense>
+  <ListItem key={name} dense>
     <ListItemText
       id={`checkbox-list-label-${steamID64}`}
       primary={name}

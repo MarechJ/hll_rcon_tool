@@ -25,7 +25,7 @@ def invalidates(*cached_funcs):
 class Rcon(ServerCtl):
     settings = (
         ('name', str), ('team_switch_cooldown', int),
-        ('autobalance_threshold', int), 
+        ('autobalance_threshold', int),
         ('idle_autokick_time', int), ('max_ping_autokick', int),
         ('queue_length', int), ('vip_slots_num', int)
     )
@@ -157,6 +157,9 @@ class Rcon(ServerCtl):
             'nb_players': self.get_slots().split('/')[0]
         }
 
+    @ttl_cache(ttl=60 * 60)
+    def get_maps(self):
+        return super().get_maps()
 
     @ttl_cache(ttl=60 * 10)
     def get_server_settings(self):
