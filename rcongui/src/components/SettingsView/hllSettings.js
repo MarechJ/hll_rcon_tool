@@ -2,14 +2,16 @@ import React from "react";
 import clsx from 'clsx';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import {
-  Grid, TextField, Slider, Typography, List, ListItem,
-  ListItemText, ListItemSecondaryAction, IconButton, ListSubheader, Card, CardHeader, CardContent, Collapse
+  Grid, TextField, Slider, Typography,
+  IconButton, Card, CardHeader, CardContent, Collapse
 } from "@material-ui/core";
 import { range } from "lodash/util";
 import DeleteIcon from '@material-ui/icons/Delete';
 import AddIcon from '@material-ui/icons/Add';
 import { showResponse, postData } from '../../utils/fetchUtils'
 import { toast } from "react-toastify";
+import VipEditableList from "./vips"
+import AdminsEditableList from "./admins";
 
 function valuetext(value) {
   return `${value}`;
@@ -70,53 +72,6 @@ const CollapseCard = ({ classes, title, children, onExpand }) => {
   </Card>
 }
 
-const AddPersonItem = ({ classes, name, setName, steamID64, setSteamID64, onAdd }) => (
-  <ListItem>
-    <Grid container>
-      <Grid item xs={6} className={classes.paddingRight}>
-        <TextField InputLabelProps={{
-          shrink: true,
-        }} label="Name" value={name} onChange={(e) => setName(e.target.value)} />
-      </Grid>
-      <Grid item xs={6} className={classes.paddingLeft} >
-        <TextField InputLabelProps={{
-          shrink: true,
-        }} label="SteamID64" value={steamID64} onChange={(e) => setSteamID64(e.target.value)} />
-      </Grid>
-    </Grid>
-    <ListItemSecondaryAction>
-      <IconButton edge="end" aria-label="delete" onClick={() => onAdd(name, steamID64).then(() => {setName(""); setSteamID64("")})}>
-        <AddIcon />
-      </IconButton>
-    </ListItemSecondaryAction>
-  </ListItem>
-)
-
-const PeopleEditableList = ({ classes, peopleList, onDelete, onAdd }) => {
-  const [name, setName] = React.useState("")
-  const [steamID64, setSteamID64] = React.useState("")
-
-  return <React.Fragment>
-    <List dense>
-      <AddPersonItem classes={classes} name={name} setName={setName} steamID64={steamID64} setSteamID64={setSteamID64} onAdd={onAdd} />
-      {peopleList.map(obj => (
-        <ListItem key={obj.steam_id_64}>
-          <ListItemText
-            primary={obj.name}
-            secondary={obj.steam_id_64}
-          />
-          <ListItemSecondaryAction>
-            <IconButton edge="end" aria-label="delete" onClick={() => onDelete(obj.name, obj.steam_id_64)}>
-              <DeleteIcon />
-            </IconButton>
-          </ListItemSecondaryAction>
-        </ListItem>
-      ))}
-      <AddPersonItem classes={classes} name={name} setName={setName} steamID64={steamID64} setSteamID64={setSteamID64} onAdd={onAdd} />
-    </List>
-  </React.Fragment>
-};
-
 class HLLSettings extends React.Component {
   constructor(props) {
     super(props);
@@ -128,15 +83,18 @@ class HLLSettings extends React.Component {
       maxPingMs: 500,
       queueLength: 5,
       vipSlots: 2,
-      vips: []
+      vips: [],
+      admins: [], 
+      adminRoles: [],
     };
 
     this.loadVips = this.loadVips.bind(this)
+    this.loadAdmins = this.loadAdmins.bind(this)
     this.sendAction = this.sendAction.bind(this)
   }
 
   componentDidMount() {
-    this.loadVips()
+    this.loadAdminRoles()
   }
 
   loadVips() {
@@ -144,6 +102,20 @@ class HLLSettings extends React.Component {
       .then((res) => showResponse(res, "get_vip_ids", false))
       .then(data => this.setState({ vips: data.result }))
       .catch(error => toast.error("Unable to connect to API " + error));
+  }
+
+  loadAdminRoles() {
+    fetch(`${process.env.REACT_APP_API_URL}get_admin_groups`)
+    .then((res) => showResponse(res, "get_admin_groups", false))
+    .then(data => this.setState({ adminRoles: data.result }))
+    .catch(error => toast.error("Unable to connect to API " + error));
+  }
+
+  loadAdmins() {
+    fetch(`${process.env.REACT_APP_API_URL}get_admin_ids`)
+    .then((res) => showResponse(res, "get_admin_ids", false))
+    .then(data => this.setState({ admins: data.result }))
+    .catch(error => toast.error("Unable to connect to API " + error));
   }
 
   sendAction(command, parameters) {
@@ -160,7 +132,9 @@ class HLLSettings extends React.Component {
       maxPingMs,
       queueLength,
       vipSlots,
-      vips
+      vips, 
+      admins, 
+      adminRoles
     } = this.state;
     const { classes } = this.props;
 
@@ -179,17 +153,34 @@ class HLLSettings extends React.Component {
         </Grid>
         <Grid item className={classes.paper} xs={12} md={6}>
           <CollapseCard title="Manage VIPs" classes={classes} onExpand={this.loadVips}>
-            <PeopleEditableList peopleList={vips} classes={classes} 
-            onAdd={
-              (name, steamID64) => (
-                this.sendAction("do_add_vip", { "steam_id_64": steamID64, "name": name }).then(this.loadVips)
-              )
-            } 
-            onDelete={
-              (name, steamID64) => (
-                this.sendAction("do_remove_vip", { "steam_id_64": steamID64}).then(this.loadVips)
-              )
-            }
+            <VipEditableList peopleList={vips} classes={classes}
+              onAdd={
+                (name, steamID64) => (
+                  this.sendAction("do_add_vip", { "steam_id_64": steamID64, "name": name }).then(this.loadVips)
+                )
+              }
+              onDelete={
+                (name, steamID64) => (
+                  this.sendAction("do_remove_vip", { "steam_id_64": steamID64 }).then(this.loadVips)
+                )
+              }
+            />
+          </CollapseCard>
+        </Grid>
+        <Grid item className={classes.paper} xs={12} md={6}>
+          <CollapseCard title="Manage Console admins" classes={classes} onExpand={this.loadAdmins}>
+            <p>Changes won't be visible immediately</p>
+            <AdminsEditableList peopleList={admins} roles={adminRoles} classes={classes}
+              onAdd={
+                (name, steamID64, role) => (
+                  this.sendAction("do_add_admin", { "steam_id_64": steamID64, "name": name , "role": role}).then(this.loadAdmins)
+                )
+              }
+              onDelete={
+                (name, steamID64, role) => (
+                  this.sendAction("do_remove_admin", { "steam_id_64": steamID64}).then(this.loadAdmins)
+                )
+              }
             />
           </CollapseCard>
         </Grid>
