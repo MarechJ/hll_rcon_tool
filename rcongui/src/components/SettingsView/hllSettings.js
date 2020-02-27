@@ -98,13 +98,20 @@ class HLLSettings extends React.Component {
     this.loadAdmins = this.loadAdmins.bind(this)
     this.sendAction = this.sendAction.bind(this)
     this.saveSetting = this.saveSetting.bind(this)
+    this.loadSettings = this.loadSettings.bind(this)
   }
 
   componentDidMount() {
     this.loadAdminRoles()
     this.loadSettings()
+    this.settingsInterval = setInterval(
+      this.loadSettings
+    , 30000); 
   }
 
+  componentWillMount() {
+
+  }
   async loadSettings() {
     return fetch(`${process.env.REACT_APP_API_URL}get_server_settings`)
       .then((res) => showResponse(res, "get_server_settings", true))
@@ -170,7 +177,8 @@ class HLLSettings extends React.Component {
     return (
       <Grid container spacing={3} className={classes.paper}>
         <Grid item xs={12}>
-          <h2>HLL Game Server settings</h2>
+          <h2>HLL Game Server settings </h2>
+          <small>(30 sec autorefresh)</small>
         </Grid>
         <Grid item className={classes.paper} xs={12}>
           <TextField
