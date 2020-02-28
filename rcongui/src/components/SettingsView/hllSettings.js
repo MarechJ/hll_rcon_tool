@@ -15,6 +15,45 @@ import VipEditableList from "./vips"
 import AdminsEditableList from "./admins";
 import _ from 'lodash'
 import MapRotationTransferList from "./mapRotation";
+import LinearProgress from "@material-ui/core/LinearProgress";
+
+const AutoRefreshLine = ({
+  intervalFunction,
+  classes,
+  execEveryMs,
+  statusRefreshIntervalMs = 1000,
+}) => {
+  const [completed, setCompleted] = React.useState(0);
+
+  React.useEffect(() => {
+    function progress() {
+      setCompleted(oldCompleted => {
+        if (oldCompleted === 100) {
+          console.log("Running")
+          intervalFunction();
+          return 0;
+        }
+
+        return Math.min(oldCompleted + (statusRefreshIntervalMs / execEveryMs) * 100, 100);
+      });
+    }
+
+    const timer = setInterval(progress, statusRefreshIntervalMs);
+    return () => {
+      clearInterval(timer);
+    };
+  }, [execEveryMs, intervalFunction, statusRefreshIntervalMs]);
+
+  return (
+    <React.Fragment>
+      <LinearProgress
+        variant="determinate"
+        value={completed}
+        className={classes.marginBottom}
+      />
+    </React.Fragment>
+  );
+};
 
 function valuetext(value) {
   return `${value}`;
@@ -107,13 +146,6 @@ class HLLSettings extends React.Component {
   componentDidMount() {
     this.loadMapRotation().then(this.loadAllMaps())
     this.loadSettings().then(this.loadAdminRoles)
-    this.settingsInterval = setInterval(
-      this.loadSettings
-      , 30000);
-  }
-
-  componentWillMount() {
-    clearInterval(this.settingsInterval)
   }
 
   async loadSettings() {
@@ -190,6 +222,8 @@ class HLLSettings extends React.Component {
         <Grid item xs={12}>
           <h2>HLL Game Server settings </h2>
           <small>(30 sec autorefresh)</small>
+          <AutoRefreshLine intervalFunction={this.loadSettings} execEveryMs={30000}
+            statusRefreshIntervalMs={500} classes={classes} />
         </Grid>
         <Grid item className={classes.paper} xs={12}>
           <TextField
@@ -320,13 +354,13 @@ class HLLSettings extends React.Component {
           />
         </Grid>
         <Grid container xs={6}>
-        <Grid item xs={12}>
-          <Typography variant="caption" display="block" gutterBottom>Due to the HLL server limitations we can't know if the autobalance is on or off</Typography>
+          <Grid item xs={12}>
+            <Typography variant="caption" display="block" gutterBottom>Due to the HLL server limitations we can't know if the autobalance is on or off</Typography>
           </Grid>
-          <Grid item xs={6}><Button fullWidth variant="outlined" onClick={() => this.sendAction("set_autobalance", {bool_str: "on"})}>Activate autobalance</Button></Grid>
-          <Grid item xs={6}><Button fullWidth variant="outlined" onClick={() => this.sendAction("set_autobalance", {bool_str: "off"})}>Desactivate autobalance</Button></Grid>
-          </Grid>
-          <Grid item className={classes.paper} xs={12}>
+          <Grid item xs={6}><Button fullWidth variant="outlined" onClick={() => this.sendAction("set_autobalance", { bool_str: "on" })}>Activate autobalance</Button></Grid>
+          <Grid item xs={6}><Button fullWidth variant="outlined" onClick={() => this.sendAction("set_autobalance", { bool_str: "off" })}>Desactivate autobalance</Button></Grid>
+        </Grid>
+        <Grid item className={classes.paper} xs={12}>
           {/* <MapRotationTransferList classes={classes} mapRotation={mapRotation} availableMaps={_.difference(availableMaps, mapRotation)}   
           /> */}
         </Grid>
