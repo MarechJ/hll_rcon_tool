@@ -234,7 +234,7 @@ class HLLSettings extends React.Component {
         <Grid item xs={12}>
           <h2>HLL Game Server settings </h2>
           <small>(30 sec autorefresh)</small>
-          <AutoRefreshLine intervalFunction={this.loadSettings} execEveryMs={30000}
+          <AutoRefreshLine intervalFunction={() => this.loadSettings().then(this.loadMapRotation)} execEveryMs={30000}
             statusRefreshIntervalMs={500} classes={classes} />
         </Grid>
         <Grid item className={classes.paper} xs={12}>
