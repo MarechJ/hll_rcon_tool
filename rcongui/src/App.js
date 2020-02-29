@@ -119,7 +119,8 @@ const lightTheme = createMuiTheme({
 
 function App() {
   const classes = useStyles();
-  const [dark, setDark] = React.useState(false)
+  const [dark, setDark] = React.useState(localStorage.getItem('darKTheme'))
+  const setSaveDark = (bool) => {localStorage.setItem('darKTheme', bool); setDark(bool)}
   const theme = dark ? darkTheme : lightTheme
   console.log(theme.palette)
   return (
@@ -153,7 +154,9 @@ function App() {
                     >
                       Settings
                   </Link>
-                    <Checkbox icon={<Brightness4Icon />} checkedIcon={<Brightness4OutlinedIcon />} checked={dark ? true : false} color="default" onChange={(e, val) => setDark(val)} />
+                    <Checkbox icon={<Brightness4Icon />} 
+                      checkedIcon={<Brightness4OutlinedIcon />} 
+                      checked={dark ? true : false} color="default" onChange={(e, val) => setSaveDark(val)} />
                   </nav>
 
                   <div className={classes.battleMetrics}>
