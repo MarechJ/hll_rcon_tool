@@ -244,10 +244,10 @@ class ServerCtl:
         return self._request(f'switchteamnow {player}')
 
     def do_add_map_to_rotation(self, map_name):
-        return self._request(f"rotadd {map_name}")
+        return self._request(f"rotadd {map_name}", can_fail=False)
 
     def do_remove_map_from_rotation(self, map_name):
-        return self._request(f"rotdel {map_name}")
+        return self._request(f"rotdel {map_name}", can_fail=False)
 
     @_escape_params
     def do_punish(self, player, reason):

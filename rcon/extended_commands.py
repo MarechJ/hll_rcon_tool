@@ -254,6 +254,29 @@ class Rcon(ServerCtl):
         with invalidates(self.get_players, self.get_perma_bans):
             return super().do_perma_ban(player, reason)
 
+    @ttl_cache(5)  # TODO cache longer
+    def get_map_rotation(self):
+        return super().get_map_rotation()
+
+    def do_add_map_to_rotation(self, map_name):
+        return self.do_add_maps_to_rotation([map_name])
+
+    def do_remove_map_from_rotation(self, map_name):
+        return self.do_remove_maps_from_rotation([map_name])
+
+    def do_remove_maps_from_rotation(self, maps):
+        with invalidates(self.get_map_rotation):
+            for map_name in maps:
+                super().do_remove_map_from_rotation(map_name)
+            return 'SUCCESS'
+
+    def do_add_maps_to_rotation(self, maps):
+        with invalidates(self.get_map_rotation):
+            for map_name in maps:
+                super().do_add_map_to_rotation(map_name)
+            return 'SUCCESS'
+
+
     def do_randomize_map_rotation(self, maps=None):
         maps = maps or self.get_maps()
         current = self.get_map_rotation()
@@ -262,8 +285,8 @@ class Rcon(ServerCtl):
 
         for m in maps:
             if m in current:
-                print(self.do_remove_map_from_rotation(m))
-            print(self.do_add_map_to_rotation(m))
+                self.do_remove_map_from_rotation(m)
+            self.do_add_map_to_rotation(m)
 
         return maps
 

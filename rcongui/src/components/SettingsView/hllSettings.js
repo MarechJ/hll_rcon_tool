@@ -4,7 +4,7 @@ import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import {
   Grid, TextField, Slider, Typography,
   IconButton, Card, CardHeader, CardContent,
-  Collapse, Button, Switch
+  Collapse, Button, Switch, Divider
 } from "@material-ui/core";
 import { range } from "lodash/util";
 import DeleteIcon from '@material-ui/icons/Delete';
@@ -138,9 +138,12 @@ class HLLSettings extends React.Component {
     this.loadVips = this.loadVips.bind(this)
     this.loadAdmins = this.loadAdmins.bind(this)
     this.loadAdminRoles = this.loadAdminRoles.bind(this)
+    this.loadMapRotation = this.loadMapRotation.bind(this)
+    this.loadSettings = this.loadSettings.bind(this)
     this.sendAction = this.sendAction.bind(this)
     this.saveSetting = this.saveSetting.bind(this)
-    this.loadSettings = this.loadSettings.bind(this)
+    this.addMapsToRotation = this.addMapsToRotation.bind(this)
+    this.removeMapsFromRotation = this.removeMapsFromRotation.bind(this)
   }
 
   componentDidMount() {
@@ -200,6 +203,15 @@ class HLLSettings extends React.Component {
       (res) => showResponse(res, command, true)
     ).catch(error => toast.error("Unable to connect to API " + error));
   }
+
+  async addMapsToRotation(maps) {
+    return this.sendAction("do_add_maps_to_rotation", { maps: maps }).then(this.loadMapRotation)
+  }
+
+  async removeMapsFromRotation(maps) {
+    return this.sendAction("do_remove_maps_from_rotation", { maps: maps }).then(this.loadMapRotation)
+  }
+
 
   render() {
     const {
@@ -353,16 +365,36 @@ class HLLSettings extends React.Component {
             saveValue={val => this.setState({ vipSlots: val }, () => this.saveSetting("vip_slots_num", val))}
           />
         </Grid>
-        <Grid container xs={6}>
+        <Grid container xs={12} className={classes.paddingBottom}>
           <Grid item xs={12}>
             <Typography variant="caption" display="block" gutterBottom>Due to the HLL server limitations we can't know if the autobalance is on or off</Typography>
           </Grid>
           <Grid item xs={6}><Button fullWidth variant="outlined" onClick={() => this.sendAction("set_autobalance", { bool_str: "on" })}>Activate autobalance</Button></Grid>
           <Grid item xs={6}><Button fullWidth variant="outlined" onClick={() => this.sendAction("set_autobalance", { bool_str: "off" })}>Desactivate autobalance</Button></Grid>
         </Grid>
-        <Grid item className={classes.paper} xs={12}>
-          {/* <MapRotationTransferList classes={classes} mapRotation={mapRotation} availableMaps={_.difference(availableMaps, mapRotation)}   
-          /> */}
+        <Grid container className={classes.paddingTop} justify="center" xs={12}>
+          <Grid item>
+            <Typography variant="h5" gutterBottom>
+              Configure map rotation
+            </Typography>
+          </Grid>
+        </Grid>
+        <Grid container className={classes.paper} xs={12}>
+          <MapRotationTransferList
+            classes={classes}
+            mapRotation={mapRotation}
+            availableMaps={_.difference(availableMaps, mapRotation)}
+            addToRotation={this.addMapsToRotation}
+            removeFromRotation={this.removeMapsFromRotation}
+          />
+        </Grid>
+        <Grid container className={classes.paper} justify="center" xs={12}>
+          <Grid item xs={5} className={classes.padding}>
+            <Button variant="outlined" fullWidth onClick={() => this.sendAction('do_randomize_map_rotation', {}).then(this.loadMapRotation)}>Randomize all</Button>
+          </Grid>
+          <Grid item xs={5} className={classes.padding}>
+            <Button variant="outlined" fullWidth onClick={() => this.sendAction('do_randomize_map_rotation', { maps: mapRotation }).then(this.loadMapRotation)}>Randomize current</Button>
+          </Grid>
         </Grid>
       </Grid>
     );

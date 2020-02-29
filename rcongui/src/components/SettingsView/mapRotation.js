@@ -7,6 +7,7 @@ import ListItemText from '@material-ui/core/ListItemText';
 import Checkbox from '@material-ui/core/Checkbox';
 import Button from '@material-ui/core/Button';
 import Paper from '@material-ui/core/Paper';
+import Divider from '@material-ui/core/Divider'
 
 function not(a, b) {
   return a.filter(value => b.indexOf(value) === -1);
@@ -36,24 +37,20 @@ const MapRotationTransferList = ({classes, availableMaps, mapRotation, addToRota
   };
 
   const handleCheckedRight = () => {
-    addToRotation(mapRotation.concat(leftChecked));
-    removeFromRotation(not(availableMaps, leftChecked));
+    addToRotation(leftChecked);
+    console.log("Left", leftChecked)
     setChecked(not(checked, leftChecked));
   };
 
   const handleCheckedLeft = () => {
-    removeFromRotation(availableMaps.concat(rightChecked));
-    addToRotation(not(mapRotation, rightChecked));
+    removeFromRotation(rightChecked);
     setChecked(not(checked, rightChecked));
   };
 
-  const handleAllLeft = () => {
-    //removeFromRotation(availableMaps.concat(mapRotation));
-    //addToRotation([]);
-  };
-
-  const customList = items => (
+  const customList = (items, title) => (
     <Paper className={classes.transferList}>
+      <h4>{title}</h4>
+      <Divider />
       <List dense component="div" role="list">
         {items.map(value => {
           const labelId = `transfer-list-item-${value}-label`;
@@ -79,7 +76,7 @@ const MapRotationTransferList = ({classes, availableMaps, mapRotation, addToRota
 
   return (
     <Grid container spacing={2} justify="center" alignItems="center">
-      <Grid item>{customList(availableMaps)}</Grid>
+      <Grid item>{customList(availableMaps, "Remaining unused maps")}</Grid>
       <Grid item>
         <Grid container direction="column" alignItems="center">
           <Button
@@ -102,19 +99,9 @@ const MapRotationTransferList = ({classes, availableMaps, mapRotation, addToRota
           >
             &lt;
           </Button>
-          <Button
-            variant="outlined"
-            size="small"
-            className={classes.transferListButton}
-            onClick={handleAllLeft}
-            disabled={mapRotation.length === 0}
-            aria-label="move all left"
-          >
-            ≪
-          </Button>
         </Grid>
       </Grid>
-      <Grid item>{customList(mapRotation)}</Grid>
+      <Grid item>{customList(mapRotation, "Current map rotation")}</Grid>
     </Grid>
   );
 }

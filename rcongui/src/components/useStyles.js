@@ -62,6 +62,9 @@ const useStyles = makeStyles(theme => ({
     textAlign: "right",
     paddingRight: theme.spacing(2)
   },
+  textCenter: {
+    textAlign: "center"
+  },
   padding: {
     padding: theme.spacing(1)
   },
@@ -70,6 +73,12 @@ const useStyles = makeStyles(theme => ({
   },
   paddingRight: {
     paddingRight: theme.spacing(1)
+  },
+  paddingTop: {
+    paddingTop: theme.spacing(1)
+  },
+  paddingBottom: {
+    paddingBottom: theme.spacing(1)
   },
   menuButton: {
     marginRight: theme.spacing(2),
@@ -101,7 +110,7 @@ const useStyles = makeStyles(theme => ({
   },
   transferList: {
     width: 300,
-    height: 400,
+    height: 600,
     overflow: 'auto',
   },
   transferListButton: {

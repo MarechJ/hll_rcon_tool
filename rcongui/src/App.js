@@ -179,6 +179,10 @@ function App() {
                 <Grid item sm={12} lg={6}>
                   <HLLSettings classes={classes} />
                 </Grid>
+                <Grid item sm={12} lg={6}>
+                    <h2>Advanced RCON settings</h2>
+                    <small>Coming soon</small>
+                </Grid>
               </Grid>
             </Route>
           </Switch>
