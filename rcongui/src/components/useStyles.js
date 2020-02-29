@@ -109,7 +109,6 @@ const useStyles = makeStyles(theme => ({
     position: "fixed",
   },
   transferList: {
-    width: 300,
     height: 600,
     overflow: 'auto',
   },
