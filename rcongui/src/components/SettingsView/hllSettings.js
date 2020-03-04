@@ -237,14 +237,14 @@ class HLLSettings extends React.Component {
           <AutoRefreshLine intervalFunction={() => this.loadSettings().then(this.loadMapRotation)} execEveryMs={30000}
             statusRefreshIntervalMs={500} classes={classes} />
         </Grid>
-        <Grid item className={classes.paper} xs={12}>
+        {/* <Grid item className={classes.paper} xs={12}>
           <TextField
             fullWidth
             label="Server name"
             disabled
             helperText="The server name as displayed in the server browser"
           />
-        </Grid>
+        </Grid> */}
         <Grid item className={classes.paper} xs={12} md={6}>
           <CollapseCard title="Manage VIPs" classes={classes} onExpand={this.loadVips}>
             <p>Changes are applied immediately</p>
