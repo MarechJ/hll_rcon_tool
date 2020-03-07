@@ -1,7 +1,7 @@
 Flask==1.1.1
 Click==7.0
 cachetools==4.0.0
-Django==3.0.2
+Django==3.0.3
 django-cors-headers==3.2.1
 redis==3.4.1
 simplejson==3.17.0
