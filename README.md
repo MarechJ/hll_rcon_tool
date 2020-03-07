@@ -98,6 +98,7 @@ Don't forget to add a line return after the last line
 
 - We logs are completely empty the game server will fail to respond to the request causing an error to show in the API/GUI
 
+- The RCON api server truncates the name of players to a maximum of 20 charcheters even though, up to 32 characters are displayed in game. Bottom line you don't always see the full name
 
 
 

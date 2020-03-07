@@ -42,7 +42,7 @@ def wrap_method(func, parameters):
         except CommandFailedError:
             failure = True
             res = None
-        logger.debug("%s %s -> %s", func.__name__, arguments, res)
+        #logger.debug("%s %s -> %s", func.__name__, arguments, res)
         return JsonResponse({
             "result": res,
             "command": func.__name__,

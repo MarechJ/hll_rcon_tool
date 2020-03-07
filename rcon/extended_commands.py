@@ -1,9 +1,9 @@
 import random
 from contextlib import contextmanager
 from datetime import datetime, timedelta
-from cachetools.func import ttl_cache
 import logging
 
+from rcon.cache_utils import ttl_cache
 from rcon.commands import ServerCtl, CommandFailedError
 
 

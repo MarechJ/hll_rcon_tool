@@ -20,9 +20,12 @@ services:
       HLL_PASSWORD: ${HLL_PASSWORD}
       LOGGING_PATH: /logs/backend.log
       DJANGO_LOGGING_PATH: /logs/django.log
+      REDIS_URL: redis://redis:6379/0
     restart: always
     volumes:
       - .:/logs
+    links:
+      - "redis:redis"
   frontend:
     build:
       context: ./rcongui
@@ -35,3 +38,8 @@ services:
     restart: always
     volumes:
       - ./pw:/pw
+  redis:
+    image: redis:5
+    ports: # Exposing ports is only useful for local development
+      - 6379:6379
+    restart: always
