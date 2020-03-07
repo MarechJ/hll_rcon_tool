@@ -31,19 +31,19 @@ __From here all the commands assume that you are at the root of the repo you jus
     # Your rcon password
     export HLL_PASSWORD=mypassword
 
-For convenience you could add these lines to you `~/.bashrc` or `~/.zshrc` OR edit the `docker-compose.yml` to add them directly in there.
+For convenience you could add these lines to your `~/.bashrc` or `~/.zshrc` OR edit the `docker-compose.yml` to add them directly in there.
 
 ##### If you want the battlemetrics banner
 
     export REACT_APP_BATTLEMETRICS_SERVERID=<your server ID>
 
-You can find you server id at the end of the URL when browsing battlemetrics. E.g:
+You can find your server id at the end of the URL when browsing battlemetrics. E.g:
 
 https://www.battlemetrics.com/servers/hll/3768733
 
 The CFr server ID is 3768733
 
-##### Create a .htpasswd to protect you RCON from the public
+##### Create a .htpasswd to protect your RCON from the public
 
     mkdir pw
     cd pw
@@ -126,7 +126,7 @@ More or less in order of priorities
 ##### Build the image
     $ docker build . -t rcon
 
-##### Set you server info as environement variables and run the cli
+##### Set your server info as environement variables and run the cli
     $ docker run -it -e HLL_HOST=1.1.1.1 -e HLL_PORT=20300 -e HLL_PASSWORD=mypassword rcon python -m rcon.cli
      
      Usage: cli.py [OPTIONS] COMMAND [ARGS]...
