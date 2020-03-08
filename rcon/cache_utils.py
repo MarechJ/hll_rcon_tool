@@ -64,7 +64,8 @@ class RedisCached:
     def clear_all(self):
         try:
             keys = list(self.red.scan_iter(match=f"{self.key_prefix}*"))
-            self.red.delete(*keys)
+            if keys:
+                self.red.delete(*keys)
         except redis.exceptions.RedisError:
             logger.exception("Unable to clear cache")
         else:
