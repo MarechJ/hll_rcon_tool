@@ -1,21 +1,19 @@
-import React from "react";
-import clsx from 'clsx';
-import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
+import React from "react"
 import {
-  Grid, TextField, Slider, Typography,
-  IconButton, Card, CardHeader, CardContent,
-  Collapse, Button, Switch, Divider
-} from "@material-ui/core";
-import { range } from "lodash/util";
-import DeleteIcon from '@material-ui/icons/Delete';
-import AddIcon from '@material-ui/icons/Add';
+  Grid, Typography, Button
+} from "@material-ui/core"
+import { range } from "lodash/util"
 import { showResponse, postData } from '../../utils/fetchUtils'
-import { toast } from "react-toastify";
+import { toast } from "react-toastify"
 import VipEditableList from "./vips"
-import AdminsEditableList from "./admins";
+import AdminsEditableList from "./admins"
 import _ from 'lodash'
-import MapRotationTransferList from "./mapRotation";
-import LinearProgress from "@material-ui/core/LinearProgress";
+import MapRotationTransferList from "./mapRotation"
+import LinearProgress from "@material-ui/core/LinearProgress"
+import CollapseCard from '../collapseCard'
+import ServerMessage from './serverMessage'
+import NumSlider from './numSlider'
+
 
 const AutoRefreshLine = ({
   intervalFunction,
@@ -59,84 +57,6 @@ function valuetext(value) {
   return `${value}`;
 }
 
-const NumSlider = ({
-  classes,
-  text,
-  min = 0,
-  max,
-  value,
-  marks = true,
-  step = 1,
-  setValue,
-  saveValue,
-}) => (
-    <div className={classes.slider}>
-      <Typography variant="h5" id="discrete-slider-always" gutterBottom>
-        {text}
-      </Typography>
-      <Slider
-        value={value}
-        onChange={(e, newVal) => setValue(newVal)}
-        onChangeCommitted={(e, newVal) => saveValue(newVal)}
-        aria-labelledby="discrete-slider-always"
-        step={step}
-        marks={marks}
-        min={min}
-        max={max}
-        valueLabelDisplay="auto"
-      />
-    </div>
-  );
-
-
-const ServerMessage = ({ classes, type, value, setValue, onSave }) => (
-  <Grid container xs={12}>
-    <Grid item xs={12} className={classes.paddingBottom}>
-      <TextField
-        fullWidth
-        label={type}
-        multiline
-        rows="4"
-        variant="outlined"
-        helperText={`Due to HLL limitations we can't know the current ${type}`}
-        value={value}
-        onChange={e => setValue(e.target.value)}
-      />
-    </Grid>
-    <Grid item xs={12}>
-      <Button fullWidth variant="outlined" onClick={() => onSave(value)}>Set {type}</Button>
-    </Grid>
-  </Grid>
-)
-
-const CollapseCard = ({ classes, title, children, onExpand }) => {
-  const [expanded, setExpanded] = React.useState(false);
-  const handleExpandClick = () => {
-    setExpanded(!expanded);
-    onExpand();
-  };
-
-  return <Card>
-    <CardHeader title={title} action={
-      <IconButton
-        className={clsx(classes.expand, {
-          [classes.expandOpen]: expanded,
-        })}
-        onClick={handleExpandClick}
-        aria-expanded={expanded}
-        aria-label="show more"
-      >
-        <ExpandMoreIcon />
-      </IconButton>
-    } />
-    <Collapse in={expanded} unmountOnExit>
-      <CardContent>
-        {children}
-      </CardContent>
-    </Collapse>
-  </Card>
-}
-
 class HLLSettings extends React.Component {
   constructor(props) {
     super(props);
@@ -176,7 +96,7 @@ class HLLSettings extends React.Component {
 
   async loadSettings() {
     return fetch(`${process.env.REACT_APP_API_URL}get_server_settings`)
-      .then((res) => showResponse(res, "get_server_settings", true))
+      .then((res) => showResponse(res, "get_server_settings", false))
       .then(data => this.setState({
         name: data.result.name,
         autoBalanceThres: data.result.autobalance_threshold,
@@ -208,11 +128,11 @@ class HLLSettings extends React.Component {
   }
 
   async loadMapRotation() {
-    return this._loadToState("get_map_rotation", true, data => this.setState({ mapRotation: data.result }))
+    return this._loadToState("get_map_rotation", false, data => this.setState({ mapRotation: data.result }))
   }
 
   async loadAllMaps() {
-    return this._loadToState("get_maps", true, data => this.setState({ availableMaps: data.result }))
+    return this._loadToState("get_maps", false, data => this.setState({ availableMaps: data.result }))
   }
 
   async saveSetting(name, value) {
