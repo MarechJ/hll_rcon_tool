@@ -88,6 +88,27 @@ const NumSlider = ({
     </div>
   );
 
+
+const ServerMessage = ({ classes, type, value, setValue, onSave }) => (
+  <Grid container xs={12}>
+    <Grid item xs={12} className={classes.paddingBottom}>
+      <TextField
+        fullWidth
+        label={type}
+        multiline
+        rows="4"
+        variant="outlined"
+        helperText={`Due to HLL limitations we can't know the current ${type}`}
+        value={value}
+        onChange={e => setValue(e.target.value)}
+      />
+    </Grid>
+    <Grid item xs={12}>
+      <Button fullWidth variant="outlined" onClick={() => onSave(value)}>Set {type}</Button>
+    </Grid>
+  </Grid>
+)
+
 const CollapseCard = ({ classes, title, children, onExpand }) => {
   const [expanded, setExpanded] = React.useState(false);
   const handleExpandClick = () => {
@@ -133,6 +154,8 @@ class HLLSettings extends React.Component {
       vips: [],
       admins: [],
       adminRoles: ["owner", "senior", "junior"],
+      welcomeMessage: "",
+      broadcastMessage: ""
     };
 
     this.loadVips = this.loadVips.bind(this)
@@ -225,7 +248,9 @@ class HLLSettings extends React.Component {
       admins,
       adminRoles,
       mapRotation,
-      availableMaps
+      availableMaps,
+      welcomeMessage,
+      broadcastMessage
     } = this.state;
     const { classes } = this.props;
 
@@ -236,6 +261,24 @@ class HLLSettings extends React.Component {
           <small>(30 sec autorefresh)</small>
           <AutoRefreshLine intervalFunction={() => this.loadSettings().then(this.loadMapRotation)} execEveryMs={30000}
             statusRefreshIntervalMs={500} classes={classes} />
+        </Grid>
+        <Grid item className={classes.paper} sm={6} xs={12}>
+          <ServerMessage
+            type="Welcome message"
+            classes={classes}
+            value={welcomeMessage}
+            setValue={(val) => this.setState({ welcomeMessage: val })}
+            onSave={(val) => this.setState({ welcomeMessage: val }, () => this.sendAction("set_welcome_message", { msg: val }))}
+          />
+        </Grid>
+        <Grid item className={classes.paper} sm={6} xs={12}>
+          <ServerMessage
+            type="Broadcast message"
+            classes={classes}
+            value={broadcastMessage}
+            setValue={(val) => this.setState({ broadcastMessage: val })}
+            onSave={(val) => this.setState({ broadcastMessage: val }, () => this.sendAction("set_broadcast", { msg: val }))}
+          />
         </Grid>
         {/* <Grid item className={classes.paper} xs={12}>
           <TextField
