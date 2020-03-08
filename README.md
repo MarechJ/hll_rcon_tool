@@ -56,7 +56,7 @@ Some additional info: https://docs.nginx.com/nginx/admin-guide/security-controls
 
 ##### RUN it!
 
-    docker-compose build frontend backend && docker-compose up -d frontend backend
+    docker-compose build frontend backend && docker-compose up -d frontend backend redis
 
 The web application will be available on `<your server ip>:8010`
 Feel free to change the port to your likings in the docker-compose.yml:

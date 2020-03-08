@@ -44,7 +44,7 @@ LOGGING = {
     'loggers': {
         __package__: {
             'handlers': ['console', 'file'],
-            'level': 'DEBUG',
+            'level': os.getenv('LOGGING_LEVEL', 'DEBUG'),
             'propagate': False,
         },
         '__main__': {
