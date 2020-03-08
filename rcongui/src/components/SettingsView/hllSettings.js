@@ -13,7 +13,7 @@ import LinearProgress from "@material-ui/core/LinearProgress"
 import CollapseCard from '../collapseCard'
 import ServerMessage from './serverMessage'
 import NumSlider from './numSlider'
-
+import ChangeMap from './changeMap'
 
 const AutoRefreshLine = ({
   intervalFunction,
@@ -87,6 +87,7 @@ class HLLSettings extends React.Component {
     this.saveSetting = this.saveSetting.bind(this)
     this.addMapsToRotation = this.addMapsToRotation.bind(this)
     this.removeMapsFromRotation = this.removeMapsFromRotation.bind(this)
+    this.changeMap = this.changeMap.bind(this)
   }
 
   componentDidMount() {
@@ -155,6 +156,12 @@ class HLLSettings extends React.Component {
     return this.sendAction("do_remove_maps_from_rotation", { maps: maps }).then(this.loadMapRotation)
   }
 
+  async changeMap(map_name) {
+    // TODO handle throttle response
+    return postData(`${process.env.REACT_APP_API_URL}set_map`, {map_name: map_name}).then(
+      (res) => showResponse(res, `command: ${map_name}`, true)
+    ).catch(error => toast.error("Unable to connect to API " + error));
+  }
 
   render() {
     const {
@@ -181,6 +188,11 @@ class HLLSettings extends React.Component {
           <small>(30 sec autorefresh)</small>
           <AutoRefreshLine intervalFunction={() => this.loadSettings().then(this.loadMapRotation)} execEveryMs={30000}
             statusRefreshIntervalMs={500} classes={classes} />
+        </Grid>
+        <Grid container xs={12} className={classes.paddingBottom} justify="center">
+          <Grid item xs={12}>
+            <ChangeMap classes={classes} availableMaps={availableMaps} changeMap={this.changeMap}/>
+          </Grid>
         </Grid>
         <Grid item className={classes.paper} sm={6} xs={12}>
           <ServerMessage

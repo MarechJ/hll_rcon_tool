@@ -1,6 +1,7 @@
 import React from "react";
 import clsx from 'clsx';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
+import ExpandLessIcon from '@material-ui/icons/ExpandLess'
 import {
   IconButton, Card, CardHeader, CardContent,
   Collapse
@@ -24,7 +25,7 @@ const CollapseCard = ({ classes, title, children, onExpand }) => {
           aria-expanded={expanded}
           aria-label="show more"
         >
-          <ExpandMoreIcon />
+          { expanded ? <ExpandLessIcon/> : <ExpandMoreIcon /> }
         </IconButton>
       } />
       <Collapse in={expanded} unmountOnExit>
