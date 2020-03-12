@@ -4,7 +4,8 @@ import click
 
 from rcon.settings import SERVER_INFO
 from rcon.extended_commands import Rcon
-
+from rcon import game_logs
+from rcon.models import init_db
 
 @click.group()
 def cli():
@@ -13,6 +14,10 @@ def cli():
 ctl = Rcon(
     SERVER_INFO
 )
+
+@cli.command(name='log_loop')
+def run_logs_eventloop():
+    game_logs.event_loop()
 
 def do_print(func):
     def wrap(*args, **kwargs):

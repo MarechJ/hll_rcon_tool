@@ -192,7 +192,7 @@ class Rcon(ServerCtl):
                 seconds=int(seconds)
             )
 
-
+    @ttl_cache(ttl=10)
     def get_structured_logs(self, since_min_ago, filter_action=None, filter_player=None):
         raw = super().get_logs(since_min_ago)
         now = datetime.now()
