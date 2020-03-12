@@ -61,7 +61,7 @@ class Rcon(ServerCtl):
                 }
             )
         return admins
-
+        
     def do_add_admin(self, steam_id_64, role, name):
         with invalidates(self.get_admin_ids):
             return super().do_add_admin(steam_id_64, role, name)
@@ -69,7 +69,6 @@ class Rcon(ServerCtl):
     def do_remove_admin(self, steam_id_64):
         with invalidates(self.get_admin_ids):
             return super().do_remove_admin(steam_id_64)
-
 
     @ttl_cache(ttl=5)
     def get_players(self):
@@ -91,7 +90,7 @@ class Rcon(ServerCtl):
         return super().get_temp_bans()
 
     def _struct_ban(self, ban, type_):
-        name, time =  ban.split(', banned on ')
+        name, time = ban.split(', banned on ')
         return {
             'type': type_,
             'name': name,
@@ -176,7 +175,7 @@ class Rcon(ServerCtl):
             return getattr(self, f'set_{name}')(value)
 
     def _convert_relative_time(self, from_, time_str):
-        time, unit  = time_str.split(' ')
+        time, unit = time_str.split(' ')
         if unit == 'ms':
             return from_ - timedelta(milliseconds=int(time))
         if unit == 'sec':
@@ -275,7 +274,6 @@ class Rcon(ServerCtl):
             for map_name in maps:
                 super().do_add_map_to_rotation(map_name)
             return 'SUCCESS'
-
 
     def do_randomize_map_rotation(self, maps=None):
         maps = maps or self.get_maps()

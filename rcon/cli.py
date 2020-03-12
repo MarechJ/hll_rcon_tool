@@ -19,6 +19,10 @@ ctl = Rcon(
 def run_logs_eventloop():
     game_logs.event_loop()
 
+@cli.command(name="init_db")
+def init():
+    init_db()
+
 def do_print(func):
     def wrap(*args, **kwargs):
         res = func(*args, **kwargs)

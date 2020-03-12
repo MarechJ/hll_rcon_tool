@@ -23,7 +23,7 @@ def get_engine():
     if _ENGINE:
         return _ENGINE
     url = os.getenv('DB_URL')
-    if not urL:
+    if not url:
         url = 'sqlite:///rcon.db'
         logger.warning("No $DB_URL specified, falling back to SQLlite in rundir")
     
