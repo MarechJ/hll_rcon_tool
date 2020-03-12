@@ -37,17 +37,17 @@ class PlayerSteamID(Base):
     id = Column(Integer, primary_key=True)
     steam_id_64  = Column(String, nullable=False, index=True, unique=True)
     created = Column(DateTime, default=datetime.utcnow)
-    addresses = relationship("PlayerName", backref="steamid")
+    names = relationship("PlayerName", backref="steamid", uselist=True)
 
 class PlayerName(Base):
     __tablename__ = 'player_names'
     __table_args__ = (UniqueConstraint('playersteamid_id', 'name', name='unique_name_steamid'),)
 
     id = Column(Integer, primary_key=True)
-    playersteamid_id = Column(Integer, ForeignKey('steam_id_64.id'))
+    playersteamid_id = Column(Integer, ForeignKey('steam_id_64.id'), nullable=False)
     name = Column(String, nullable=False)
     created = Column(DateTime, default=datetime.utcnow)
-   
+    
 
 def init_db():
     # create tables
@@ -55,14 +55,18 @@ def init_db():
     Base.metadata.create_all(bind=engine)
 
 
-@contextmanager
-def session():
+def get_session_maker():
     engine = get_engine()
-    session = sessionmaker()
-    session.configure(bind=engine)
+    sess = sessionmaker()
+    sess.configure(bind=engine)
+    return sess
+
+@contextmanager
+def enter_session():
+    sess = get_session_maker()
 
     try:
-        sess = session()
+        sess = sess()
         yield sess
     finally:
         sess.commit()

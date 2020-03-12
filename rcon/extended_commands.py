@@ -30,18 +30,14 @@ class Rcon(ServerCtl):
         ('queue_length', int), ('vip_slots_num', int)
     )
 
-    @ttl_cache(ttl=60 * 60)
+    @ttl_cache(ttl=60 * 60, cache_falsy=False)
     def get_player_info(self, player):
         try:
             raw = super().get_player_info(player)
             name, steam_id_64 = raw.split('\n')
-        except:
-            logger.exception("Player info failed")
-            self._reconnect()
-            return {
-                NAME: player,
-                STEAMID: None
-            }
+        except CommandFailedError:
+            logger.exception("Can't get player info for %s", player)
+            return {}
         return {
             NAME: name.split(": ", 1)[-1],
             STEAMID: steam_id_64.split(": ", 1)[-1],
@@ -77,7 +73,7 @@ class Rcon(ServerCtl):
         # kick/ban actions
         names = super().get_players()
         return [
-            self.get_player_info(n)
+            {NAME: n, STEAMID: self.get_player_info(n).get(STEAMID)}
             for n in names
         ]
 

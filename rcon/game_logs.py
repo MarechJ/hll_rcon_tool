@@ -3,6 +3,7 @@ import logging
 from rcon.extended_commands import Rcon
 from rcon.settings import SERVER_INFO
 import time
+import sys
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +51,7 @@ def event_loop():
 
     logger.info("Registered hooks: %s", HOOKS)
     while True:
-        since = min(min(time.time() - last_run, 60) / 60, 180)
+        since = max(min((time.time() - last_run) / 60, 180), 1)
         struct_logs = rcon.get_structured_logs(int(since))
  
         for log in struct_logs['logs']:
@@ -62,7 +63,9 @@ def event_loop():
             for hook in hooks:
                 try:
                     hook(rcon, log)
-                except:
+                except KeyboardInterrupt:
+                    sys.exit(0)
+                except Exception:
                     logger.exception("Hook '%s' for type '%s' returned an error", hook.__name__, log['action'])
 
         last_run = time.time()

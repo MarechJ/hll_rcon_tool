@@ -12,13 +12,14 @@ _REDIS_POOL = None
 
 
 class RedisCached:
-    def __init__(self, pool, ttl_seconds, function, is_method=False, serializer=simplejson.dumps, deserializer=simplejson.loads):
+    def __init__(self, pool, ttl_seconds, function, is_method=False, cache_falsy=True, serializer=simplejson.dumps, deserializer=simplejson.loads):
         self.red = redis.Redis(connection_pool=pool)
         self.function = function
         self.serializer = serializer
         self.deserializer = deserializer
         self.ttl_seconds = ttl_seconds
         self.is_method = is_method
+        self.cache_falsy = cache_falsy
 
     @property
     def key_prefix(self):
@@ -53,6 +54,10 @@ class RedisCached:
         logger.debug("Cache MISS for %s", self.key(*args, **kwargs))
         val = self.function(*args, **kwargs)
 
+        if not val and not self.cache_falsy:
+            logger.debug("Caching falsy result is disabled for %s", self.__name__)
+            return val 
+
         try:
             self.red.setex(key, self.ttl_seconds, self.serializer(val))
             logger.debug("Cache SET for %s", self.key(*args, **kwargs))
@@ -72,7 +77,7 @@ class RedisCached:
             logger.debug("Cache CLEARED for %s", keys)
 
 
-def ttl_cache(ttl, *args, is_method=True, **kwargs):
+def ttl_cache(ttl, *args, is_method=True, cache_falsy=True, **kwargs):
     global _REDIS_POOL
     redis_url = os.getenv('REDIS_URL')
     if not redis_url:
@@ -87,7 +92,7 @@ def ttl_cache(ttl, *args, is_method=True, **kwargs):
 
     def decorator(func):
         cached_func = RedisCached(
-            _REDIS_POOL, ttl, function=func, is_method=is_method)
+            _REDIS_POOL, ttl, function=func, is_method=is_method, cache_falsy=cache_falsy)
 
         def wrapper(*args, **kwargs):
             # Re-wrapping to preserve function signature
