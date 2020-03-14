@@ -4,7 +4,7 @@ import os
 from contextlib import contextmanager
 
 from sqlalchemy import create_engine
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Boolean
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.declarative import declarative_base
@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 _ENGINE = None
 
+
 def get_engine():
     global _ENGINE
 
@@ -25,33 +26,83 @@ def get_engine():
     url = os.getenv('DB_URL')
     if not url:
         url = 'sqlite:///rcon.db'
-        logger.warning("No $DB_URL specified, falling back to SQLlite in rundir")
-    
+        logger.warning(
+            "No $DB_URL specified, falling back to SQLlite in rundir")
+
     _ENGINE = create_engine(url)
     return _ENGINE
 
+
 Base = declarative_base()
+
 
 class PlayerSteamID(Base):
     __tablename__ = 'steam_id_64'
     id = Column(Integer, primary_key=True)
-    steam_id_64  = Column(String, nullable=False, index=True, unique=True)
+    steam_id_64 = Column(String, nullable=False, index=True, unique=True)
     created = Column(DateTime, default=datetime.utcnow)
-    names = relationship("PlayerName", backref="steamid", uselist=True)
+    blacklisted = Column(Boolean, default=False)
+    names = relationship("PlayerName", backref="steamid",
+                         uselist=True, order_by="desc(PlayerName.created)")
+    sessions = relationship("PlayerSession", backref="steamid",
+                            uselist=True, order_by="desc(PlayerSession.end)")
+
+    def to_dict(self, limit_sessions=5):
+        return dict(
+            id=self.id,
+            steam_id_64=self.steam_id_64,
+            created=self.created,
+            names=[name.to_dict() for name in self.names],
+            sessions=[session.to_dict()
+                      for session in self.sessions][:limit_sessions]
+        )
+
 
 class PlayerName(Base):
     __tablename__ = 'player_names'
-    __table_args__ = (UniqueConstraint('playersteamid_id', 'name', name='unique_name_steamid'),)
+    __table_args__ = (UniqueConstraint('playersteamid_id',
+                                       'name', name='unique_name_steamid'),)
 
     id = Column(Integer, primary_key=True)
-    playersteamid_id = Column(Integer, ForeignKey('steam_id_64.id'), nullable=False)
+    playersteamid_id = Column(Integer, ForeignKey(
+        'steam_id_64.id'), nullable=False, index=True)
     name = Column(String, nullable=False)
     created = Column(DateTime, default=datetime.utcnow)
-    
 
-def init_db():
+    def to_dict(self):
+        return dict(
+            id=self.id,
+            name=self.name,
+            steam_id_64=self.steamid.steam_id_64,
+            created=self.created
+        )
+
+
+class PlayerSession(Base):
+    __tablename__ = 'player_sessions'
+
+    id = Column(Integer, primary_key=True)
+    playersteamid_id = Column(Integer, ForeignKey(
+        'steam_id_64.id'), nullable=False, index=True)
+    start = Column(DateTime)
+    end = Column(DateTime)
+    created = Column(DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return dict(
+            id=self.id,
+            steam_id_64=self.steamid.steam_id_64,
+            start=self.start,
+            end=self.end,
+            created=self.created
+        )
+
+
+def init_db(force=False):
     # create tables
     engine = get_engine()
+    if force is True:
+        Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
 
 
@@ -60,6 +111,7 @@ def get_session_maker():
     sess = sessionmaker()
     sess.configure(bind=engine)
     return sess
+
 
 @contextmanager
 def enter_session():

@@ -2,7 +2,7 @@ import random
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 import logging
-
+import socket
 from rcon.cache_utils import ttl_cache
 from rcon.commands import ServerCtl, CommandFailedError
 
@@ -30,11 +30,13 @@ class Rcon(ServerCtl):
         ('queue_length', int), ('vip_slots_num', int)
     )
 
-    @ttl_cache(ttl=60 * 60, cache_falsy=False)
+    @ttl_cache(ttl=60 * 60 * 24, cache_falsy=False)
     def get_player_info(self, player):
         try:
             raw = super().get_player_info(player)
             name, steam_id_64 = raw.split('\n')
+            if not steam_id_64:
+                return {}
         except CommandFailedError:
             logger.exception("Can't get player info for %s", player)
             return {}
@@ -189,7 +191,12 @@ class Rcon(ServerCtl):
 
     @ttl_cache(ttl=10)
     def get_structured_logs(self, since_min_ago, filter_action=None, filter_player=None):
-        raw = super().get_logs(since_min_ago)
+        try:
+            raw = super().get_logs(since_min_ago)
+        except socket.timeout:
+            # The hll server just hangs when there are no logs for the requested time
+            raw = ''
+
         now = datetime.now()
         res = []
         actions = set()

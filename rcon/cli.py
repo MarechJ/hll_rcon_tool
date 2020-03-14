@@ -20,8 +20,9 @@ def run_logs_eventloop():
     game_logs.event_loop()
 
 @cli.command(name="init_db")
-def init():
-    init_db()
+@click.option('--force', default=False, is_flag=True)
+def init(force):
+    init_db(force)
 
 def do_print(func):
     def wrap(*args, **kwargs):

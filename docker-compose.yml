@@ -12,6 +12,19 @@ services:
     volumes:
       - .:/conf
     command: python -m rcon.broadcast
+  logs_event_loop:
+    build: .
+    command: python -m rcon.cli init_db && python -m rcon.cli log_loop
+    restart: always
+    environment: 
+      HLL_HOST: ${HLL_HOST}
+      HLL_PORT: ${HLL_PORT}
+      HLL_PASSWORD: ${HLL_PASSWORD}
+      DB_URL: 'postgres://rcon:${HLL_DB_PASSWORD}@postgres:5432'
+      LOGGING_LEVEL: INFO
+      LOGGING_PATH: /logs/logs_event_loop.log
+    volumes: 
+      - .:/logs
   backend:
     build: .
     environment:
@@ -43,3 +56,16 @@ services:
     ports: # Exposing ports is only useful for local development
       - 127.0.0.1:6379:6379
     restart: always
+  postgres:
+    image: postgres:12
+    environment: 
+      # If a password is not defined this container will fail to create
+      POSTGRES_PASSWORD: ${HLL_DB_PASSWORD}
+      POSTGRES_USER: rcon
+      POSTGRES_DB: rcon
+      PGDATA: /data
+    ports: # Exposing ports is only useful for local development
+      - 127.0.0.1:5432:5432
+    volumes: 
+      - ${HLL_DB_DATADIR:-${PWD}/db_data}
+
