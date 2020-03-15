@@ -231,8 +231,8 @@ class PlayersHistory extends React.Component {
 
         // There's a bug in the autocomplete code, if there's a boolean in the object it makes it match against
         // "false" or "true" so essentially, everything matches to "F" or "T"
-        each(playersHistory, e => e.blacklisted = e.blacklisted.toString())
-
+        each(playersHistory, e => e.blacklisted = "")
+        console.log(playersHistory)
         return <Grid container className={classes.padding}>
             <Grid item xs={12}>
                 <FilterPlayer
