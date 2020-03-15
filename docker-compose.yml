@@ -75,5 +75,3 @@ services:
       PGDATA: /data
     volumes:
       - ${PWD}/db_data:/data
-    ports:
-      - 127.0.0.1:5432:5432
