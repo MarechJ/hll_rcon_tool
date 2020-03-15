@@ -78,4 +78,4 @@ services:
     volumes:
       - ${PWD}/db_data:/data
     ports:
-      - 127.0.0.1:5432:5432
+      - 127.0.0.1:${HLL_DB_HOST_PORT:-5432}:5432
