@@ -22,23 +22,24 @@ def get_players_by_appearance(page=1, page_size=1000):
         raise ValueError('page_size needs to be >= 1')
 
     with enter_session() as sess:
-        query = sess.query(
-            PlayerSession, 
-            func.min(func.coalesce(PlayerSession.start, PlayerSession.created)), 
-            func.max(func.coalesce(PlayerSession.end, PlayerSession.created))
-        ).group_by(PlayerSession.playersteamid_id)
-        players = query.order_by(func.max(PlayerSession.end).desc()).limit(page_size).offset((page - 1) * page_size).all()
+        sub = sess.query(
+            PlayerSession.playersteamid_id, 
+            func.min(func.coalesce(PlayerSession.start, PlayerSession.created)).label('first'), 
+            func.max(func.coalesce(PlayerSession.end, PlayerSession.created)).label('last')
+        ).group_by(PlayerSession.playersteamid_id).subquery()
+        query = sess.query(PlayerSteamID, sub.c.first, sub.c.last).join(sub, sub.c.playersteamid_id == PlayerSteamID.id)
+        players = query.order_by(sub.c.last.desc()).limit(page_size).offset((page - 1) * page_size).all()
         total = query.count()
-        
+
         return {
             'total': total,
             'players': [
                 {
-                    'steam_id_64': p[0].steamid.steam_id_64,
-                    'names': [n.name for n in p[0].steamid.names],
+                    'steam_id_64': p[0].steam_id_64,
+                    'names': [n.name for n in p[0].names],
                     'first_seen_timestamp_ms': int(p[1].timestamp() * 1000),
                     'last_seen_timestamp_ms': int(p[2].timestamp() * 1000),
-                    'blacklisted': p[0].steamid.blacklisted
+                    'blacklisted': p[0].blacklisted
                 }
                 for p in players
             ],
