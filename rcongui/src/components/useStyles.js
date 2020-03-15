@@ -68,6 +68,9 @@ const useStyles = makeStyles(theme => ({
   padding: {
     padding: theme.spacing(1)
   },
+  doublePadding: {
+    padding: theme.spacing(2)
+  },
   paddingLeft: {
     paddingLeft: theme.spacing(1),
   },
@@ -79,6 +82,29 @@ const useStyles = makeStyles(theme => ({
   },
   paddingBottom: {
     paddingBottom: theme.spacing(1)
+  },
+  noPaddingMargin: {
+    padding: 0,
+    margin: 0
+  },
+  ellipsis: {
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    '&:hover': {
+      whiteSpace: "break-spaces",
+      overflowWrap: "anywhere",
+      overflow: "visible",
+   },
+  },
+  pagination: {
+    '& > ul': {
+      justifyContent: "center"
+    }
+  },
+  noPaddingMarginBottom: {
+    paddingBottom: 0,
+    marginBottom: 0
   },
   menuButton: {
     marginRight: theme.spacing(2),
@@ -114,6 +140,9 @@ const useStyles = makeStyles(theme => ({
   },
   transferListButton: {
     margin: theme.spacing(0.5, 0),
+  },
+  popover: {
+    pointerEvents: 'none',
   },
 }));
 

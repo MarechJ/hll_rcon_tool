@@ -10,6 +10,12 @@ import { ReasonDialog } from "./playerActions";
 import GroupActions from "./groupActions";
 import Unban from "./unban";
 
+function stripDiacritics(string) {
+  return typeof string.normalize !== 'undefined'
+    ? string.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    : string;
+}
+
 class PlayerView extends Component {
   constructor(props) {
     super();
@@ -120,7 +126,7 @@ class PlayerView extends Component {
     }
     const filteredPlayers = _.filter(
       players,
-      p => p.name.toLowerCase().indexOf(filter.toLowerCase()) >= 0
+      p => stripDiacritics(p.name).toLowerCase().indexOf(filter.toLowerCase()) >= 0
     );
 
     const filteredPlayerNames = filteredPlayers.map(p => p.name);

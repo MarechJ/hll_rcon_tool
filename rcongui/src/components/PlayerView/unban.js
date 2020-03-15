@@ -28,9 +28,11 @@ const Unban = ({ bannedPlayers, classes, width, handleUnban, onReload, onClose, 
         <Autocomplete
           className={classes.marginBottom}
           multiple
+         
           id="tags-outlined"
           options={bannedPlayers}
-          getOptionLabel={option => `${option.name} [${option.type}] ${moment.unix(option.timestamp)}`}
+          renderOption={option => `${option.name} [${option.type}] ${moment.unix(option.timestamp)}`}
+          getOptionLabel={option => option.name}
           filterSelectedOptions
           onChange={(e, val) => setSelectedPlayers(val)}
           renderInput={params => (

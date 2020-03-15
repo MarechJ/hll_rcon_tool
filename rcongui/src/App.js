@@ -22,27 +22,8 @@ import { createMuiTheme } from '@material-ui/core/styles';
 import Brightness4Icon from '@material-ui/icons/Brightness4';
 import Checkbox from '@material-ui/core/Checkbox';
 import Brightness4OutlinedIcon from '@material-ui/icons/Brightness4Outlined';
-
-function rgba2hex(orig) {
-  var a, isPercent,
-    rgb = orig.replace(/\s/g, '').match(/^rgba?\((\d+),(\d+),(\d+),?([^,\s)]+)?/i),
-    alpha = (rgb && rgb[4] || "").trim(),
-    hex = rgb ?
-      (rgb[1] | 1 << 8).toString(16).slice(1) +
-      (rgb[2] | 1 << 8).toString(16).slice(1) +
-      (rgb[3] | 1 << 8).toString(16).slice(1) : orig;
-
-  if (alpha !== "") {
-    a = alpha;
-  } else {
-    a = "01";
-  }
-  // multiply before convert to HEX
-  a = ((a * 255) | 1 << 8).toString(16).slice(1)
-  hex = hex + a;
-
-  return hex;
-}
+import UseAutcomplete from './components/PlayersHistory'
+import PlayersHistory from "./components/PlayersHistory";
 
 class BattleMetrics extends React.Component {
   constructor (props) {
@@ -139,7 +120,15 @@ function App() {
                     >
                       Live
                   </Link>
-
+                  <Link
+                      variant="button"
+                      color="inherit"
+                      className={classes.link}
+                      component={RouterLink}
+                      to="/history"
+                    >
+                      History
+                  </Link>
                     <Link
                       variant="button"
                       color="inherit"
@@ -168,6 +157,13 @@ function App() {
           <Switch>
             <Route path="/" exact>
               <Live classes={classes} />
+            </Route>
+            <Route path="/history">
+              <Grid container>
+                <Grid item sm={12} lg={12}>
+                  <PlayersHistory classes={classes} />
+                 </Grid>
+              </Grid>
             </Route>
             <Route path="/settings">
               <Grid container>

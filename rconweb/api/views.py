@@ -8,8 +8,29 @@ from django.views.decorators.csrf import csrf_exempt
 from rcon.extended_commands import Rcon
 from rcon.commands import CommandFailedError
 from rcon.settings import SERVER_INFO
+from rcon.player_history import get_players_by_appearance
 
+@csrf_exempt
+def players_history(request):
+    logger = logging.getLogger('rconweb')
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        data = request.GET
+    try:
+        res = get_players_by_appearance(int(data.get('page', 1)), int(data.get('page_size', 200)))
+        failed = False
+    except:
+        logger.exception("Unable to get player history")
+        res = {}
+        failed = True
 
+    return JsonResponse({
+        "result": res,
+        "command": "players_history",
+        "arguments": data,
+        "failed": failed
+    })
 
 def wrap_method(func, parameters):
     @csrf_exempt
@@ -61,7 +82,9 @@ PREFIXES_TO_EXPOSE = [
     'get_', 'set_', 'do_'
 ]
 
-commands = []
+commands = [
+    ("players_history", players_history)
+]
 
 # Dynamically register all the methods from ServerCtl
 for name, func in inspect.getmembers(ctl):

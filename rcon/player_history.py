@@ -15,35 +15,36 @@ def get_player(sess, steam_id_64):
        PlayerSteamID.steam_id_64 == steam_id_64
        ).one_or_none()
 
-def get_players_by_appearance(sess, page=1, page_size=1000):
+def get_players_by_appearance(page=1, page_size=1000):
     if page <= 0:
         raise ValueError('page needs to be >= 1')
     if page_size <= 0:
         raise ValueError('page_size needs to be >= 1')
 
-    query = sess.query(
-        PlayerSession, 
-        func.min(func.coalesce(PlayerSession.start, PlayerSession.created)), 
-        func.max(func.coalesce(PlayerSession.end, PlayerSession.created))
-    ).group_by(PlayerSession.playersteamid_id)
-    players = query.order_by(func.max(PlayerSession.end)).limit(page_size).offset((page - 1) * page_size).all()
-    total = query.count()
-    
-    return {
-        'total': total,
-        'players': [
-            {
-                'steam_id_64': p[0].steamid.steam_id_64,
-                'names': [n.name for n in p[0].steamid.names],
-                'first_seen_timestamp_ms': int(p[1].timestamp() * 1000),
-                'last_seen_timestamp_ms': int(p[2].timestamp() * 1000),
-                'blacklisted': p[0].steamid.blacklisted
-            }
-            for p in players
-        ],
-        'page': page,
-        'page_size': page_size
-    }
+    with enter_session() as sess:
+        query = sess.query(
+            PlayerSession, 
+            func.min(func.coalesce(PlayerSession.start, PlayerSession.created)), 
+            func.max(func.coalesce(PlayerSession.end, PlayerSession.created))
+        ).group_by(PlayerSession.playersteamid_id)
+        players = query.order_by(func.max(PlayerSession.end).desc()).limit(page_size).offset((page - 1) * page_size).all()
+        total = query.count()
+        
+        return {
+            'total': total,
+            'players': [
+                {
+                    'steam_id_64': p[0].steamid.steam_id_64,
+                    'names': [n.name for n in p[0].steamid.names],
+                    'first_seen_timestamp_ms': int(p[1].timestamp() * 1000),
+                    'last_seen_timestamp_ms': int(p[2].timestamp() * 1000),
+                    'blacklisted': p[0].steamid.blacklisted
+                }
+                for p in players
+            ],
+            'page': page,
+            'page_size': page_size
+        }
 
 def _save_steam_id(sess, steam_id_64):
     steamid = get_player(sess, steam_id_64)
@@ -163,8 +164,13 @@ if __name__ == '__main__':
         '76561198172574911', 
         int((datetime.datetime.now() + datetime.timedelta(minutes=30)).timestamp() * 1000)
     ) 
-
+    save_player('Second Achile5115', '76561198172574911')
     save_player('Dr.WeeD', '4242')
+    save_player('Dr.WeeD2', '4242')
+    save_player('Dr.WeeD3', '4242')
+    save_player('Dr.WeeD4', '4242')
+    save_player('Dr.WeeD5', '4242')
+    save_player('Dr.WeeD6', '4242')
     save_start_player_session(
         '4242', datetime.datetime.now().timestamp()
     )
@@ -178,5 +184,4 @@ if __name__ == '__main__':
     ) 
 
     import pprint
-    with enter_session() as sess:
-        pprint.pprint(get_players_by_appearance(sess))
+    pprint.pprint(get_players_by_appearance())
