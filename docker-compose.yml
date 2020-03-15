@@ -42,6 +42,7 @@ services:
       LOGGING_PATH: /logs/backend.log
       DJANGO_LOGGING_PATH: /logs/django.log
       REDIS_URL: redis://redis:6379/0
+      DB_URL: 'postgres://rcon:${HLL_DB_PASSWORD}@postgres:5432'
     restart: always
     volumes:
       - .:/logs
