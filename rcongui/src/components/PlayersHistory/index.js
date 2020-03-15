@@ -89,7 +89,7 @@ const PlayerItem = ({ classes, names, steamId64, firstSeen, lastSeen, compact = 
                 <Grid container justify="space-between" spacing={0} style={extraneous} className={classes.padding}>
                     <Grid item xs={6}>
                         <WithPopver classes={classes} popoverContent={<p>{first_seen.format('LLLL')}</p>}>
-                            <small>Firt seen {moment.duration(now.diff(first_seen)).humanize()} ago</small>
+                            <small>First seen {moment.duration(now.diff(first_seen)).humanize()} ago</small>
                         </WithPopver>
                     </Grid>
                     <Grid item xs={6}>
@@ -179,11 +179,11 @@ const FilterPlayer = ({ classes, playersHistory, pageSize, total, page, setPageS
                         />
                     </Grid>
                 ))}
-                  <Grid item xs={12}>
+                <Grid item xs={12}>
                     <MyPagination classes={classes} pageSize={pageSize} page={page} setPage={setPage} total={total} />
                 </Grid>
             </Grid>
-            
+
         </div>
     );
 }
