@@ -7,9 +7,10 @@ import { toast } from "react-toastify";
 import { join, each, reduce, get } from 'lodash'
 import Autocomplete from "@material-ui/lab/Autocomplete";
 import Pagination from '@material-ui/lab/Pagination';
-import { Paper, Grid, Chip, Divider, Popover, Badge, Button, TextField, FormControl, InputLabel, MenuItem, Select } from '@material-ui/core'
+import { Paper, Icon, Grid, Chip, Divider, Popover, Badge, Button, TextField, FormControl, InputLabel, MenuItem, Select } from '@material-ui/core'
 import moment from 'moment'
-
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faSkullCrossbones } from '@fortawesome/free-solid-svg-icons'
 
 const show_names = (names) => (
     join(names, ' · ')
@@ -83,7 +84,7 @@ const PlayerItem = ({ classes, names, steamId64, firstSeen, lastSeen, compact = 
                         </Grid>
                     </Grid>
                     <Grid item xs={4}>
-                        <Button variant="outlined" color="secondary" disabled>Blackist</Button>
+                        <Button variant="outlined" color="secondary" >Blacklist <FontAwesomeIcon icon={faSkullCrossbones}/></Button>
                     </Grid>
                 </Grid>
                 <Grid container justify="space-between" spacing={0} style={extraneous} className={classes.padding}>
@@ -132,9 +133,14 @@ const FilterPlayer = ({ classes, playersHistory, pageSize, total, page, setPageS
         getOptionProps,
         groupedOptions,
     } = useAutocomplete({
-        forcePopupIcon: false,
+        forcePopupIcon: true,
+        freeSolo: true,
         disableOpenOnFocus: true,
+        selectOnFocus: true,
+        disableCloseOnSelect: true,
+        blurOnSelect: false,
         options: playersHistory,
+        onInputChange: (event, value, reason) => (console.log(event, value, reason)),
         getOptionLabel: option => option.names[0],
     });
 
@@ -144,7 +150,7 @@ const FilterPlayer = ({ classes, playersHistory, pageSize, total, page, setPageS
         <div>
             <Grid container {...getRootProps()} alignContent="flex-start" alignItems="center" spacing={2}>
                 <Grid item xs={12} md={6}>
-                    <TextField fullWidth {...getInputProps()} label="Filter current selection" InputLabelProps={{ shrink: true }} />
+                    <TextField fullWidth inputProps={{...getInputProps()}} label="Filter current selection" InputLabelProps={{ shrink: true }} />
                 </Grid>
                 <Grid item xs={12} md={6}>
                     <FormControl fullWidth>

@@ -15,7 +15,7 @@ def get_player(sess, steam_id_64):
        PlayerSteamID.steam_id_64 == steam_id_64
        ).one_or_none()
 
-def get_players_by_appearance(page=1, page_size=1000):
+def get_players_by_appearance(page=1, page_size=1000, last_seen_from=None, last_seen_till=None):
     if page <= 0:
         raise ValueError('page needs to be >= 1')
     if page_size <= 0:
