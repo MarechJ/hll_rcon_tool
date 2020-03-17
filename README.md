@@ -49,7 +49,7 @@ Some additional info: https://docs.nginx.com/nginx/admin-guide/security-controls
 
 ##### RUN it!
 
-    docker-compose build frontend backend logs_event_loop && docker-compose up -d frontend backend redis postgres
+    docker-compose build && docker-compose up -d 
 
 The web application will be available on `<your server ip>:8010`
 Feel free to change the port to your likings in the docker-compose.yml:
@@ -65,7 +65,7 @@ Feel free to change the port to your likings in the docker-compose.yml:
 To update to the latest version:
 
     git pull
-    docker-compose build frontend backend logs_event_loop && docker-compose up -d frontend backend logs_event_loop
+    docker-compose build && docker-compose up -d
 
 ##### If you want the auto broadcasts
 
