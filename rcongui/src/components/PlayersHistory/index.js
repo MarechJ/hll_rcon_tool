@@ -177,6 +177,9 @@ const FilterPlayer = ({ classes, playersHistory, pageSize, total, page, setPageS
                             <MenuItem value={30}>30</MenuItem>
                             <MenuItem value={40}>40</MenuItem>
                             <MenuItem value={50}>50</MenuItem>
+                            <MenuItem value={50}>100</MenuItem>
+                            <MenuItem value={50}>200</MenuItem>
+                            <MenuItem value={50}>500</MenuItem>
                         </Select>
                     </FormControl>
                 </Grid>
