@@ -48,7 +48,6 @@ const MapRotationTransferList = ({classes, availableMaps, mapRotation, addToRota
 
   const handleCheckedRight = () => {
     addToRotation(leftChecked);
-    console.log("Left", leftChecked)
     setChecked(not(checked, leftChecked));
   };
 

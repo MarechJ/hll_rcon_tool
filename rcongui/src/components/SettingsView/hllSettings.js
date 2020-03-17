@@ -27,7 +27,6 @@ const AutoRefreshLine = ({
     function progress() {
       setCompleted(oldCompleted => {
         if (oldCompleted === 100) {
-          console.log("Running")
           intervalFunction();
           return 0;
         }
@@ -158,7 +157,7 @@ class HLLSettings extends React.Component {
 
   async changeMap(map_name) {
     // TODO handle throttle response
-    return postData(`${process.env.REACT_APP_API_URL}set_map`, {map_name: map_name}).then(
+    return postData(`${process.env.REACT_APP_API_URL}set_map`, { map_name: map_name }).then(
       (res) => showResponse(res, `command: ${map_name}`, true)
     ).catch(error => toast.error("Unable to connect to API " + error));
   }
@@ -191,7 +190,7 @@ class HLLSettings extends React.Component {
         </Grid>
         <Grid container xs={12} className={classes.paddingBottom} justify="center">
           <Grid item xs={12}>
-            <ChangeMap classes={classes} availableMaps={availableMaps} changeMap={this.changeMap}/>
+            <ChangeMap classes={classes} availableMaps={availableMaps} changeMap={this.changeMap} />
           </Grid>
         </Grid>
         <Grid item className={classes.paper} sm={6} xs={12}>

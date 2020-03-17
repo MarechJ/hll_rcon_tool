@@ -1,6 +1,7 @@
 import inspect
 import logging
 import json
+from functools import wraps
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -8,11 +9,60 @@ from django.views.decorators.csrf import csrf_exempt
 from rcon.extended_commands import Rcon
 from rcon.commands import CommandFailedError
 from rcon.settings import SERVER_INFO
-from rcon.player_history import get_players_by_appearance
+from rcon.player_history import (
+    get_players_by_appearance, 
+    add_player_to_blacklist, 
+    remove_player_from_blacklist
+)
+
+logger = logging.getLogger('rconweb')
+
+def _get_data(request):
+    try:
+        return json.loads(request.body)
+    except json.JSONDecodeError:
+        return request.GET
+
+@csrf_exempt
+def blacklist_player(request):
+    data = _get_data(request)
+    res = {}
+    try:
+        add_player_to_blacklist(data['steam_id_64'], data['reason'])
+        failed = False
+    except:
+        logger.exception("Unable to blacklist player")
+        failed = True
+
+    return JsonResponse({
+        "result": res,
+        "command": "players_history",
+        "arguments": data,
+        "failed": failed
+    })
+
+
+@csrf_exempt
+def unblacklist_player(request):
+    data = _get_data(request)
+    res = {}
+    try:
+        remove_player_from_blacklist(data['steam_id_64'])
+        failed = False
+    except:
+        logger.exception("Unable to unblacklist player")
+        failed = True
+
+    return JsonResponse({
+        "result": res,
+        "command": "players_history",
+        "arguments": data,
+        "failed": failed
+    })
+
 
 @csrf_exempt
 def players_history(request):
-    logger = logging.getLogger('rconweb')
     try:
         data = json.loads(request.body)
     except json.JSONDecodeError:
@@ -31,6 +81,7 @@ def players_history(request):
         "arguments": data,
         "failed": failed
     })
+
 
 def wrap_method(func, parameters):
     @csrf_exempt
@@ -83,7 +134,9 @@ PREFIXES_TO_EXPOSE = [
 ]
 
 commands = [
-    ("players_history", players_history)
+    ("players_history", players_history),
+    ("blacklist_player", blacklist_player),
+    ("unblacklist_player", unblacklist_player)
 ]
 
 # Dynamically register all the methods from ServerCtl

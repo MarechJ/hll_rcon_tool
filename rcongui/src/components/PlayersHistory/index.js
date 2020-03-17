@@ -11,6 +11,10 @@ import { Paper, Icon, Grid, Chip, Divider, Popover, Badge, Button, TextField, Fo
 import moment from 'moment'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSkullCrossbones } from '@fortawesome/free-solid-svg-icons'
+import { ReasonDialog } from "../PlayerView/playerActions";
+import RefreshIcon from '@material-ui/icons/Refresh';
+
+
 
 const show_names = (names) => (
     join(names, ' · ')
@@ -60,7 +64,7 @@ const WithPopver = ({ classes, popoverContent, children }) => {
     );
 }
 
-const PlayerItem = ({ classes, names, steamId64, firstSeen, lastSeen, compact = true }) => {
+const PlayerItem = ({ classes, names, steamId64, firstSeen, lastSeen, blacklisted, onBlacklist, onUnBlacklist, compact = true }) => {
     const now = moment()
     const last_seen = moment(lastSeen)
     const first_seen = moment(firstSeen)
@@ -71,7 +75,7 @@ const PlayerItem = ({ classes, names, steamId64, firstSeen, lastSeen, compact = 
         <Grid item xs={12}>
             <Paper>
                 <Grid container justify="flex-start" alignItems="center" className={`${classes.doublePadding} ${classes.paddingBottom}`}>
-                    <Grid item xs={8}>
+                    <Grid item xs={8} sm={7}>
                         <Grid container alignContent="flex-start">
                             <Grid item xs={12}>
                                 <h4 style={{ display: "flex" }} className={`${classes.noPaddingMargin} ${classes.ellipsis}`}>
@@ -83,8 +87,11 @@ const PlayerItem = ({ classes, names, steamId64, firstSeen, lastSeen, compact = 
                             </Grid>
                         </Grid>
                     </Grid>
-                    <Grid item xs={4}>
-                        <Button variant="outlined" color="secondary" >Blacklist <FontAwesomeIcon icon={faSkullCrossbones}/></Button>
+                    <Grid item xs={4} sm={5}>
+                        {blacklisted
+                            ? <Button variant="outlined" onClick={onUnBlacklist}>Unblacklist</Button>
+                            : <Button variant="outlined" color="secondary" onClick={onBlacklist} >Blacklist <FontAwesomeIcon icon={faSkullCrossbones} /></Button>
+                        }
                     </Grid>
                 </Grid>
                 <Grid container justify="space-between" spacing={0} style={extraneous} className={classes.padding}>
@@ -124,7 +131,7 @@ const MyPagination = ({ classes, pageSize, total, page, setPage }) => (
 )
 
 
-const FilterPlayer = ({ classes, playersHistory, pageSize, total, page, setPageSize, setPage }) => {
+const FilterPlayer = ({ classes, playersHistory, pageSize, total, page, setPageSize, setPage, onUnBlacklist, onBlacklist, onRefresh, namesIndex }) => {
     const {
         getRootProps,
         getInputLabelProps,
@@ -135,24 +142,30 @@ const FilterPlayer = ({ classes, playersHistory, pageSize, total, page, setPageS
     } = useAutocomplete({
         forcePopupIcon: true,
         freeSolo: true,
-        disableOpenOnFocus: true,
         selectOnFocus: true,
-        disableCloseOnSelect: true,
         blurOnSelect: false,
-        options: playersHistory,
-        onInputChange: (event, value, reason) => (console.log(event, value, reason)),
-        getOptionLabel: option => option.names[0],
+        disableOpenOnFocus: true,
+        disableCloseOnSelect: true,
+        disableClearable: true,
+        disableListWrap: true,
+        disableRestoreFocus: true,
+        disablePortal: true,
+        autoSelect: true, 
+        debug: true,
+        options: namesIndex,
+        getOptionLabel: option => option.names ? option.names : option,
     });
 
-    const playerList = groupedOptions.length > 0 ? groupedOptions : playersHistory
-
+    const [doConfirmPlayer, setDoConfirmPlayer] = React.useState(false)
+    const playerList = groupedOptions.length > 0 ? groupedOptions : namesIndex
+ 
     return (
         <div>
             <Grid container {...getRootProps()} alignContent="flex-start" alignItems="center" spacing={2}>
                 <Grid item xs={12} md={6}>
-                    <TextField fullWidth inputProps={{...getInputProps()}} label="Filter current selection" InputLabelProps={{ shrink: true }} />
+                    <TextField fullWidth inputProps={{ ...getInputProps() }} label="Filter current selection" InputLabelProps={{ shrink: true }} />
                 </Grid>
-                <Grid item xs={12} md={6}>
+                <Grid item xs={12} md={5}>
                     <FormControl fullWidth>
                         <InputLabel >Page size</InputLabel>
                         <Select
@@ -167,13 +180,17 @@ const FilterPlayer = ({ classes, playersHistory, pageSize, total, page, setPageS
                         </Select>
                     </FormControl>
                 </Grid>
+                <Grid item xs={12} md={1}>
+                    <Button variant="outlined" onClick={onRefresh}><RefreshIcon /></Button>
+                </Grid>
                 <Grid item xs={12}>
                     <MyPagination classes={classes} pageSize={pageSize} page={page} setPage={setPage} total={total} />
                 </Grid>
             </Grid>
             <Grid container {...getListboxProps()} spacing={2}>
-                {playerList.map((player, index) => (
-                    <Grid key={player.steam_id_64} /*style={{display: displayMap[player.steam_id_64] ? "block": "none"}}*/ item xs={12} sm={6} md={4} lg={3} xl={2}>
+                {playerList.map(nameIndex => {
+                    const player = playersHistory[nameIndex.idx]
+                    return <Grid key={player.steam_id_64} /*style={{display: displayMap[player.steam_id_64] ? "block": "none"}}*/ item xs={12} sm={6} md={4} lg={3} xl={2}>
                         <PlayerItem
                             key={player.steam_id_64}
                             classes={classes}
@@ -182,14 +199,24 @@ const FilterPlayer = ({ classes, playersHistory, pageSize, total, page, setPageS
                             firstSeen={player.first_seen_timestamp_ms}
                             lastSeen={player.last_seen_timestamp_ms}
                             compact={false}
+                            blacklisted={player.blacklisted}
+                            onBlacklist={() => setDoConfirmPlayer({ player: player.steam_id_64, actionType: "blacklist" })}
+                            onUnBlacklist={() => onUnBlacklist(player.steam_id_64)}
                         />
                     </Grid>
-                ))}
+                })}
                 <Grid item xs={12}>
                     <MyPagination classes={classes} pageSize={pageSize} page={page} setPage={setPage} total={total} />
                 </Grid>
             </Grid>
-
+            <ReasonDialog
+                open={doConfirmPlayer}
+                handleClose={() => setDoConfirmPlayer(false)}
+                handleConfirm={(actionType, steamId64, reason) => {
+                    onBlacklist(steamId64, reason)
+                    setDoConfirmPlayer(false);
+                }}
+            />
         </div>
     );
 }
@@ -207,6 +234,8 @@ class PlayersHistory extends React.Component {
         }
 
         this.getPlayerHistory = this.getPlayerHistory.bind(this)
+        this.blacklistPlayer = this.blacklistPlayer.bind(this)
+        this.unblacklistPlayer = this.unblacklistPlayer.bind(this)
     }
 
     getPlayerHistory() {
@@ -227,6 +256,38 @@ class PlayersHistory extends React.Component {
             .catch(error => toast.error("Unable to connect to API " + error));
     }
 
+    blacklistPlayer(steamId64, reason) {
+        postData(`${process.env.REACT_APP_API_URL}blacklist_player`, {
+            steam_id_64: steamId64,
+            reason: reason
+        })
+            .then(response =>
+                showResponse(
+                    response,
+                    `PlayerID ${steamId64} blacklist for ${reason}`,
+                    true
+                )
+            ).then(
+                this.getPlayerHistory()
+            )
+    }
+
+    unblacklistPlayer(steamId64) {
+        postData(`${process.env.REACT_APP_API_URL}unblacklist_player`, {
+            steam_id_64: steamId64,
+        })
+            .then(response =>
+                showResponse(
+                    response,
+                    `PlayerID ${steamId64} removed from blacklist`,
+                    true
+                )
+            ).then(
+                this.getPlayerHistory()
+            )
+    }
+
+
     componentDidMount() {
         this.getPlayerHistory()
     }
@@ -237,18 +298,22 @@ class PlayersHistory extends React.Component {
 
         // There's a bug in the autocomplete code, if there's a boolean in the object it makes it match against
         // "false" or "true" so essentially, everything matches to "F" or "T"
-        each(playersHistory, e => e.blacklisted = "")
-        console.log(playersHistory)
+        // That's why we remap the list
+   
         return <Grid container className={classes.padding}>
             <Grid item xs={12}>
                 <FilterPlayer
                     classes={classes}
                     playersHistory={playersHistory}
+                    namesIndex={playersHistory.map((el, idx) => ({names: join(el.names, ','), idx: idx}))}
                     pageSize={pageSize}
                     setPageSize={(pageSize) => this.setState({ pageSize: pageSize }, this.getPlayerHistory)}
                     total={total}
                     page={page}
                     setPage={(page) => this.setState({ page: page }, this.getPlayerHistory)}
+                    onBlacklist={this.blacklistPlayer}
+                    onUnBlacklist={this.unblacklistPlayer}
+                    onRefresh={this.getPlayerHistory}
                 />
             </Grid>
         </Grid>

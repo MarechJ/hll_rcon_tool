@@ -99,7 +99,7 @@ function App() {
   const [dark, setDark] = React.useState(localStorage.getItem('darKTheme'))
   const setSaveDark = (bool) => {localStorage.setItem('darKTheme', bool); setDark(bool)}
   const theme = dark ? darkTheme : lightTheme
-  console.log(theme.palette)
+ 
   return (
     <div className={"App " + classes.root}>
       <ThemeProvider theme={theme} >

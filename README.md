@@ -30,18 +30,11 @@ __From here all the commands assume that you are at the root of the repo you jus
     export HLL_PORT=20310
     # Your rcon password
     export HLL_PASSWORD=mypassword
+    # Choose a password for your Database
+    export HLL_DB_PASSWORD=mydatabasepassword
 
 For convenience you could add these lines to your `~/.bashrc` or `~/.zshrc` OR edit the `docker-compose.yml` to add them directly in there.
-
-##### If you want the battlemetrics banner
-
-    export REACT_APP_BATTLEMETRICS_SERVERID=<your server ID>
-
-You can find your server id at the end of the URL when browsing battlemetrics. E.g:
-
-https://www.battlemetrics.com/servers/hll/3768733
-
-The CFr server ID is 3768733
+Alternatively you can also specify them in the command line or create a .env file. More details: https://docs.docker.com/compose/environment-variables/#set-environment-variables-with-docker-compose-run
 
 ##### Create a .htpasswd to protect your RCON from the public
 
@@ -56,7 +49,7 @@ Some additional info: https://docs.nginx.com/nginx/admin-guide/security-controls
 
 ##### RUN it!
 
-    docker-compose build frontend backend && docker-compose up -d frontend backend redis
+    docker-compose build frontend backend logs_event_loop && docker-compose up -d frontend backend redis postgres
 
 The web application will be available on `<your server ip>:8010`
 Feel free to change the port to your likings in the docker-compose.yml:
@@ -72,7 +65,7 @@ Feel free to change the port to your likings in the docker-compose.yml:
 To update to the latest version:
 
     git pull
-    docker-compose build frontend backend && docker-compose up -d frontend backend
+    docker-compose build frontend backend logs_event_loop && docker-compose up -d frontend backend logs_event_loop
 
 ##### If you want the auto broadcasts
 

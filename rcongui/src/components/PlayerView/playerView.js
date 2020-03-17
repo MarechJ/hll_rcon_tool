@@ -58,7 +58,6 @@ class PlayerView extends Component {
   }
 
   handleAction(actionType, player, message = null) {
-    console.log(actionType, player, message);
     if (message === null) {
       message = this.state.actionMessage;
     }
@@ -158,7 +157,7 @@ class PlayerView extends Component {
           onUnbanClick={() => {
             this.loadBans();
             this.setState({ openUnban: true });
-          }}
+        }}
         />
         <TextInputBar
           classes={classes}

@@ -3,17 +3,19 @@ import datetime
 from functools import wraps
 from sqlalchemy import func
 
-from rcon.models import init_db, enter_session, PlayerName, PlayerSteamID, PlayerSession
+from rcon.models import init_db, enter_session, PlayerName, PlayerSteamID, PlayerSession, BlacklistedPlayer
 from rcon.game_logs import on_connected, on_disconnected
 from rcon.extended_commands import Rcon
+from rcon.commands import CommandFailedError
 
 logger = logging.getLogger(__name__)
 
 
 def get_player(sess, steam_id_64):
-  return sess.query(PlayerSteamID).filter(
-       PlayerSteamID.steam_id_64 == steam_id_64
-       ).one_or_none()
+    return sess.query(PlayerSteamID).filter(
+        PlayerSteamID.steam_id_64 == steam_id_64
+    ).one_or_none()
+
 
 def get_players_by_appearance(page=1, page_size=1000, last_seen_from=None, last_seen_till=None):
     if page <= 0:
@@ -23,12 +25,16 @@ def get_players_by_appearance(page=1, page_size=1000, last_seen_from=None, last_
 
     with enter_session() as sess:
         sub = sess.query(
-            PlayerSession.playersteamid_id, 
-            func.min(func.coalesce(PlayerSession.start, PlayerSession.created)).label('first'), 
-            func.max(func.coalesce(PlayerSession.end, PlayerSession.created)).label('last')
+            PlayerSession.playersteamid_id,
+            func.min(func.coalesce(PlayerSession.start,
+                                   PlayerSession.created)).label('first'),
+            func.max(func.coalesce(PlayerSession.end,
+                                   PlayerSession.created)).label('last')
         ).group_by(PlayerSession.playersteamid_id).subquery()
-        query = sess.query(PlayerSteamID, sub.c.first, sub.c.last).join(sub, sub.c.playersteamid_id == PlayerSteamID.id)
-        players = query.order_by(sub.c.last.desc()).limit(page_size).offset((page - 1) * page_size).all()
+        query = sess.query(PlayerSteamID, sub.c.first, sub.c.last).join(
+            sub, sub.c.playersteamid_id == PlayerSteamID.id)
+        players = query.order_by(sub.c.last.desc()).limit(
+            page_size).offset((page - 1) * page_size).all()
         total = query.count()
 
         return {
@@ -39,13 +45,14 @@ def get_players_by_appearance(page=1, page_size=1000, last_seen_from=None, last_
                     'names': [n.name for n in p[0].names],
                     'first_seen_timestamp_ms': int(p[1].timestamp() * 1000),
                     'last_seen_timestamp_ms': int(p[2].timestamp() * 1000),
-                    'blacklisted': p[0].blacklisted
+                    'blacklisted': p[0].blacklist.is_blacklisted if p[0].blacklist else False
                 }
                 for p in players
             ],
             'page': page,
             'page_size': page_size
         }
+
 
 def _save_steam_id(sess, steam_id_64):
     steamid = get_player(sess, steam_id_64)
@@ -95,9 +102,10 @@ def save_start_player_session(steam_id_64, timestamp_ms):
                 start=datetime.datetime.fromtimestamp(timestamp_ms/1000)
             )
         )
-        logger.info("Recorded player %s session start at %s", 
-            steam_id_64, datetime.datetime.fromtimestamp(timestamp_ms/1000)
-        )
+        logger.info("Recorded player %s session start at %s",
+                    steam_id_64, datetime.datetime.fromtimestamp(
+                        timestamp_ms/1000)
+                    )
         sess.commit()
 
 
@@ -114,14 +122,66 @@ def save_end_player_session(steam_id_64, timestamp_ms):
         ).order_by(PlayerSession.created.desc()).first()
 
         if last_session.end:
-            logger.warning("Last session was already ended for %s. Creating a new one instead", steam_id_64)
+            logger.warning(
+                "Last session was already ended for %s. Creating a new one instead", steam_id_64)
             last_session = PlayerSession(
                 steamid=player,
             )
         last_session.end = datetime.datetime.fromtimestamp(
             timestamp_ms / 1000
         )
-        logger.info("Recorded player %s session end at %s", steam_id_64, last_session.end)
+        logger.info("Recorded player %s session end at %s",
+                    steam_id_64, last_session.end)
+        sess.commit()
+
+
+def ban_if_blacklisted(rcon, steam_id_64, name):
+    with enter_session() as sess:
+        player = get_player(sess, steam_id_64)
+        if not player:
+            logger.error(
+                "Can't check blacklist, player not found %s", steam_id_64)
+            return
+        if player.blacklist and player.blacklist.is_blacklisted:
+            logger.warning("Player %s was banned due blacklist, reason: %s", str(
+                player), player.blacklist.reason)
+            rcon.do_perma_ban(name, player.blacklist.reason)
+
+
+def add_player_to_blacklist(steam_id_64, reason):
+    with enter_session() as sess:
+        player = get_player(sess, steam_id_64)
+        if not player:
+            raise CommandFailedError(
+                f"Player with steam id {steam_id_64} not found")
+
+        if player.blacklist:
+            if player.blacklist.is_blacklisted:
+                logger.warning("Player %s was already blacklisted with %s, updating reason to %s", str(
+                    player), player.blacklist.reason, reason)
+            player.blacklist.is_blacklisted = True
+            player.blacklist.reason = reason
+        else:
+            logger.info("Player %s blacklisted for %s", str(player), reason)
+            sess.add(
+                BlacklistedPlayer(
+                    steamid=player, is_blacklisted=True, reason=reason)
+            )
+
+        sess.commit()
+
+
+def remove_player_from_blacklist(steam_id_64):
+    with enter_session() as sess:
+        player = get_player(sess, steam_id_64)
+        if not player:
+            raise CommandFailedError(
+                f"Player with steam id {steam_id_64} not found")
+
+        if not player.blacklist:
+            raise CommandFailedError(f"Player {player} was not blacklisted")
+
+        player.blacklist.is_blacklisted = False
         sess.commit()
 
 
@@ -144,6 +204,7 @@ def inject_steam_id_64(func):
 def handle_on_connect(rcon: Rcon, struct_log, steam_id_64):
     save_player(struct_log['player'], steam_id_64)
     save_start_player_session(steam_id_64, struct_log['timestamp_ms'])
+    ban_if_blacklisted(rcon, steam_id_64, struct_log['player'])
 
 
 @on_disconnected
@@ -158,13 +219,13 @@ if __name__ == '__main__':
         '76561198172574911', datetime.datetime.now().timestamp()
     )
     save_end_player_session(
-        '76561198172574911', 
+        '76561198172574911',
         int((datetime.datetime.now() + datetime.timedelta(minutes=30)).timestamp() * 1000)
-    ) 
+    )
     save_end_player_session(
-        '76561198172574911', 
+        '76561198172574911',
         int((datetime.datetime.now() + datetime.timedelta(minutes=30)).timestamp() * 1000)
-    ) 
+    )
     save_player('Second Achile5115', '76561198172574911')
     save_player('Dr.WeeD', '4242')
     save_player('Dr.WeeD2', '4242')
@@ -176,13 +237,15 @@ if __name__ == '__main__':
         '4242', datetime.datetime.now().timestamp()
     )
     save_end_player_session(
-        '4242', 
+        '4242',
         int((datetime.datetime.now() + datetime.timedelta(minutes=30)).timestamp() * 1000)
-    ) 
+    )
     save_end_player_session(
-        '4242', 
+        '4242',
         int((datetime.datetime.now() + datetime.timedelta(minutes=30)).timestamp() * 1000)
-    ) 
+    )
+
+    remove_player_from_blacklist("4242")
 
     import pprint
     pprint.pprint(get_players_by_appearance())

@@ -80,7 +80,6 @@ class Logs extends React.Component {
     return fetch(`${process.env.REACT_APP_API_URL}get_structured_logs${qs}`)
       .then(response => showResponse(response, "get_logs"))
       .then(data => {
-        console.log(data);
         this.setState({
           logs: data.result.logs,
           actions: data.result.actions,

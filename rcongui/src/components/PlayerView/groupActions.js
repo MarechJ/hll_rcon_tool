@@ -23,7 +23,6 @@ const GroupActions = ({
 
   const nbButton = ["xs"].indexOf(width) != -1 ? 3 : 6;
 
-  console.log("buttons:", width, nbButton, width in ["sm", "xs"]);
   return (
     <Dialog
       onClose={onClose}

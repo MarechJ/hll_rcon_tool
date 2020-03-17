@@ -41,11 +41,12 @@ class PlayerSteamID(Base):
     id = Column(Integer, primary_key=True)
     steam_id_64 = Column(String, nullable=False, index=True, unique=True)
     created = Column(DateTime, default=datetime.utcnow)
-    blacklisted = Column(Boolean, default=False)
     names = relationship("PlayerName", backref="steamid",
                          uselist=True, order_by="desc(PlayerName.created)")
     sessions = relationship("PlayerSession", backref="steamid",
                             uselist=True, order_by="desc(PlayerSession.end)")
+    blacklist = relationship("BlacklistedPlayer", backref="steamid",
+                             uselist=False)
 
     def to_dict(self, limit_sessions=5):
         return dict(
@@ -54,8 +55,13 @@ class PlayerSteamID(Base):
             created=self.created,
             names=[name.to_dict() for name in self.names],
             sessions=[session.to_dict()
-                      for session in self.sessions][:limit_sessions]
+                      for session in self.sessions][:limit_sessions],
+            blacklist=self.blacklist.to_dict() if self.blacklist else None
         )
+
+    def __str__(self):
+        aka = ' | '.join([n.name for n in self.names])
+        return f"{self.steam_id_64} {aka}"
 
 
 class PlayerName(Base):
@@ -95,6 +101,26 @@ class PlayerSession(Base):
             start=self.start,
             end=self.end,
             created=self.created
+        )
+
+
+class BlacklistedPlayer(Base):
+    __tablename__ = 'player_blacklist'
+
+    id = Column(Integer, primary_key=True)
+    playersteamid_id = Column(
+        Integer, ForeignKey('steam_id_64.id'),
+        nullable=False, index=True,
+        unique=True
+    )
+    is_blacklisted = Column(Boolean, default=False)
+    reason = Column(String)
+
+    def to_dict(self):
+        return dict(
+            steam_id_64=self.steamid.steam_id_64,
+            is_blacklisted=self.is_blacklisted,
+            reason=self.reason
         )
 
 
