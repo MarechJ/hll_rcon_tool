@@ -28,7 +28,7 @@ const Unban = ({ bannedPlayers, classes, width, handleUnban, onReload, onClose, 
         <Autocomplete
           className={classes.marginBottom}
           multiple
-         
+          clearOnEscape
           id="tags-outlined"
           options={bannedPlayers}
           renderOption={option => `${option.name} [${option.type}] ${moment.unix(option.timestamp)}`}

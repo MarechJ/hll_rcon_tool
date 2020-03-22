@@ -20,21 +20,31 @@ Pre-requistes:
     git clone https://github.com/MarechJ/hll_rcon_tool.git
     cd hll_rcon_tool
 
+Note: If you have several servers, clone it multiple times in different directories like so:
+
+    git clone https://github.com/MarechJ/hll_rcon_tool.git hll_rcon_tool_server_number_2
+    cd hll_rcon_tool_server_number_2
+
 __From here all the commands assume that you are at the root of the repo you just cloned__
 
-##### Export the game server connection informations
+##### Set your server informations. Edit the .env and fill in the blanks (for all your servers) like so:
+
 
     # Ip address of the game server
-    export HLL_HOST=22.33.44.55
+    HLL_HOST=22.33.44.55
     # Rcon port (not the query one!)
-    export HLL_PORT=20310
+    HLL_PORT=20310
     # Your rcon password
-    export HLL_PASSWORD=mypassword
+    HLL_PASSWORD=mypassword
     # Choose a password for your Database
-    export HLL_DB_PASSWORD=mydatabasepassword
+    HLL_DB_PASSWORD=mydatabasepassword
 
-For convenience you could add these lines to your `~/.bashrc` or `~/.zshrc` OR edit the `docker-compose.yml` to add them directly in there.
-Alternatively you can also specify them in the command line or create a .env file. More details: https://docs.docker.com/compose/environment-variables/#set-environment-variables-with-docker-compose-run
+    # If you have multiple servers, also change this line (each server must have a different port, just increment the number)
+    RCONWEB_PORT=8011
+
+You could also just export the variables in you terminal before running the docker-compose commands
+OR edit the `docker-compose.yml` and replace the `${variable}` directly in there, however you might have a conflic next time you update the sources.
+Alternatively you can also specify them in the command line. More details: https://docs.docker.com/compose/environment-variables/#set-environment-variables-with-docker-compose-run
 
 ##### Create a .htpasswd to protect your RCON from the public
 

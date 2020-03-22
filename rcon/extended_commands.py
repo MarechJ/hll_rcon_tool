@@ -79,11 +79,11 @@ class Rcon(ServerCtl):
             for n in names
         ]
 
-    @ttl_cache(ttl=60 * 5)
+    @ttl_cache(ttl=60 * 60)
     def get_perma_bans(self):
         return super().get_perma_bans()
 
-    @ttl_cache(ttl=60)
+    @ttl_cache(ttl=60 * 60)
     def get_temp_bans(self):
         return super().get_temp_bans()
 
@@ -252,9 +252,18 @@ class Rcon(ServerCtl):
         with invalidates(self.get_players, self.get_temp_bans):
             return super().do_temp_ban(player, reason)
 
+    def do_remove_temp_ban(self, ban_log):
+        with invalidates(self.get_temp_bans):
+            return super().do_remove_temp_ban(ban_log)
+
+    def do_remove_perma_ban(self, ban_log):
+        with invalidates(self.get_perma_bans):
+            return super().do_remove_perma_ban(ban_log)
+
     def do_perma_ban(self, player, reason):
         with invalidates(self.get_players, self.get_perma_bans):
             return super().do_perma_ban(player, reason)
+
 
     @ttl_cache(5)  # TODO cache longer
     def get_map_rotation(self):

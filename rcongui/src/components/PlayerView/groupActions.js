@@ -39,6 +39,7 @@ const GroupActions = ({
           autoFocus
           className={classes.marginBottom}
           multiple
+          clearOnEscape
           id="tags-outlined"
           options={_.sortBy(players, p => p.name.toLowerCase())}
           getOptionLabel={option => option.name}
