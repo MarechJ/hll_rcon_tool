@@ -156,7 +156,6 @@ class HLLSettings extends React.Component {
   }
 
   async changeMap(map_name) {
-    // TODO handle throttle response
     return postData(`${process.env.REACT_APP_API_URL}set_map`, { map_name: map_name }).then(
       (res) => showResponse(res, `command: ${map_name}`, true)
     ).catch(error => toast.error("Unable to connect to API " + error));

@@ -24,50 +24,8 @@ import Checkbox from '@material-ui/core/Checkbox';
 import Brightness4OutlinedIcon from '@material-ui/icons/Brightness4Outlined';
 import UseAutcomplete from './components/PlayersHistory'
 import PlayersHistory from "./components/PlayersHistory";
+import Header from "./components/Header";
 
-
-class BattleMetrics extends React.Component {
-  constructor (props) {
-    super(props)
-
-    this.state = {
-      tick: 0
-    }
-  }
-
-  componentDidMount() {
-    window.addEventListener(
-      'message',
-      function (e) {
-        if (e.data.uid && e.data.type === 'sizeUpdate') {
-          var i = document.querySelector('iframe[name="' + e.data.uid + '"]');
-          i.style.width = e.data.payload.width; i.style.height = e.data.payload.height;
-        }
-      });
-
-      this.interval = setInterval(() => {
-        this.setState({tick: this.state.tick + 1})
-      }, 16000);
-  }
-
-  componentWillUnmount () {
-    clearInterval(this.interval)
-  }
-  
-  render() {
-    const { classes, serverId, theme } = this.props;
-    window.theme = theme
-    return (
-      serverId ?
-        <iframe style={{ border: 0 }
-        }
-          src={`https://cdn.battlemetrics.com/b/horizontal500x80px/${serverId}.html?foreground=%23${theme.palette.primary.contrastText.replace('#', '')}&background=%23${theme.palette.primary.main.replace('#', '')}&lines=%23${theme.palette.primary.contrastText.replace('#', '')}&linkColor=%23${theme.palette.secondary.contrastText.replace('#', '')}&chartColor=%23${theme.palette.error.light.replace('#', '')}&tick=${this.state.tick}`
-          }
-          frameborder={0} name="cervz" ></iframe>
-        : ''
-    )
-  }
-}
 
 const Live = ({ classes }) => (
   <Grid container spacing={1}>
@@ -106,55 +64,7 @@ function App() {
         <CssBaseline />
         <ToastContainer />
         <Router>
-          <Grid container className={classes.grow}>
-            <div className={classes.grow}>
-              <AppBar position="static" elevation={0} className={classes.appBar}>
-                <Toolbar className={classes.toolbar}>
-
-                  <nav className={classes.title}>
-                    <Link
-                      variant="button"
-                      color="inherit"
-                      className={classes.firstLink}
-                      component={RouterLink}
-                      to="/"
-                    >
-                      Live
-                  </Link>
-                  <Link
-                      variant="button"
-                      color="inherit"
-                      className={classes.link}
-                      component={RouterLink}
-                      to="/history"
-                    >
-                      History
-                  </Link>
-                    <Link
-                      variant="button"
-                      color="inherit"
-                      className={classes.link}
-                      component={RouterLink}
-                      to="/settings"
-                    >
-                      Settings
-                  </Link>
-                    <Checkbox icon={<Brightness4Icon />} 
-                      checkedIcon={<Brightness4OutlinedIcon />} 
-                      checked={dark ? true : false} color="default" onChange={(e, val) => setSaveDark(val)} />
-                  </nav>
-
-                  <div className={classes.battleMetrics}>
-                    <BattleMetrics
-                      classes={classes}
-                      theme={theme}
-                      serverId={process.env.REACT_APP_BATTLEMETRICS_SERVERID}
-                    />
-                  </div>
-                </Toolbar>
-              </AppBar>
-            </div>
-          </Grid>
+          <Header classes={classes} setSaveDark={setSaveDark} dark={dark}/>
           <Switch>
             <Route path="/" exact>
               <Live classes={classes} />

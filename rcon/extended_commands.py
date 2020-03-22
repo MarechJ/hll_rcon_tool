@@ -147,11 +147,30 @@ class Rcon(ServerCtl):
 
         return rotation[next_id]
 
-    @ttl_cache(ttl=15)
+    def set_map(self, map_name):
+        with invalidates(self.get_map):
+            res = super().set_map(map_name)
+            if res != 'SUCCESS':
+                raise CommandFailedError(res)
+
+    @ttl_cache(ttl=60 * 5)
+    def get_map(self):
+        return super().get_map()
+
+    @ttl_cache(ttl=60 * 60)
+    def get_name(self):
+        return super().get_name()
+
+    @ttl_cache(ttl=10)
+    def get_slots(self):
+        return super().get_slots()
+
+    @ttl_cache(ttl=15, cache_falsy=False)
     def get_status(self):
         return {
+            'name': self.get_name(),
             'map': self.get_map(),
-            'nb_players': self.get_slots().split('/')[0]
+            'nb_players': self.get_slots()
         }
 
     @ttl_cache(ttl=60 * 60)
