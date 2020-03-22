@@ -53,8 +53,6 @@ services:
   frontend:
     build:
       context: ./rcongui
-      args:
-        REACT_APP_BATTLEMETRICS_SERVERID: ${REACT_APP_BATTLEMETRICS_SERVERID}
     ports:
       - ${RCONWEB_PORT}:80
     links:
