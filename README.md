@@ -39,10 +39,13 @@ __From here all the commands assume that you are at the root of the repo you jus
     # Choose a password for your Database
     HLL_DB_PASSWORD=mydatabasepassword
 
-    # If you have multiple servers, also change this line (each server must have a different port, just increment the number)
+    # If you have multiple servers, also change these lines (each server must have a different port, just increment the number)
     RCONWEB_PORT=8011
+    HLL_DB_HOST_PORT=5433
+    HLL_REDIS_HOST_PORT=6380
 
-You could also just export the variables in you terminal before running the docker-compose commands
+
+You could also just export the variables in your terminal before running the docker-compose commands
 OR edit the `docker-compose.yml` and replace the `${variable}` directly in there, however you might have a conflic next time you update the sources.
 Alternatively you can also specify them in the command line. More details: https://docs.docker.com/compose/environment-variables/#set-environment-variables-with-docker-compose-run
 
