@@ -46,12 +46,12 @@ class ServerStatus extends React.Component {
         const { classes } = this.props
 
         return <React.Fragment>
-            <Grid container  alignContent="flex-start" spacing={1}>
-                <Grid item xs={12}>
-                    <strong style={{ display: "flex" }} className={classes.ellipsis}>{name}</strong>
-                </Grid>
-                <Grid item xs={12} style={{ display: "flex" }}>
-                    <small>{nbPlayers} - {map}</small>
+            <Grid container className={classes.alignLeft} spacing={1}>
+                <Grid item>
+                    <strong style={{ display: "block" }} className={`${classes.ellipsis}`}>
+    {name}
+                    </strong>
+                    <small style={{ display: "block" }}>{nbPlayers} - {map}</small>
                 </Grid>
             </Grid>
         </React.Fragment>

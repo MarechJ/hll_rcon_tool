@@ -19,6 +19,11 @@ const useStyles = makeStyles(theme => ({
       display: "none"
     },
   },
+  paddingXs: {
+    [theme.breakpoints.down('xs')]: {
+      paddingTop: theme.spacing(2),
+    },
+  },
   title: {
     flexGrow: 1,
     display: 'block',
@@ -71,6 +76,9 @@ const useStyles = makeStyles(theme => ({
   doublePadding: {
     padding: theme.spacing(2)
   },
+  doublePaddingLeft: {
+    paddingLeft: theme.spacing(2)
+  },
   paddingLeft: {
     paddingLeft: theme.spacing(1),
   },
@@ -122,6 +130,12 @@ const useStyles = makeStyles(theme => ({
   toolbar: {
     flexWrap: 'wrap',
     paddingLeft: 0,
+    width: 'fit-content',
+  
+    '& hr': {
+      border: `1px solid black`, // ${theme.palette.divider}`,
+      margin: theme.spacing(0, 0.5),
+    },
   },
   grow: {
     flexGrow: 1,

@@ -4,12 +4,14 @@ import Grid from "@material-ui/core/Grid";
 import AppBar from "@material-ui/core/AppBar";
 import Toolbar from "@material-ui/core/Toolbar";
 import Link from "@material-ui/core/Link";
+import Divider from "@material-ui/core/Divider"
 import {
     Link as RouterLink
 } from "react-router-dom";
 import Brightness4Icon from '@material-ui/icons/Brightness4';
 import Checkbox from '@material-ui/core/Checkbox';
 import Brightness4OutlinedIcon from '@material-ui/icons/Brightness4Outlined';
+import ChevronRight from '@material-ui/icons/ChevronRight';
 
 import ServerStatus from './serverStatus'
 
@@ -18,11 +20,12 @@ export default ({ classes, setSaveDark, dark }) => (
         <div className={classes.grow}>
             <AppBar position="static" elevation={0} className={classes.appBar}>
                 <Toolbar className={classes.toolbar}>
-                    <Grid container alignContent="flex-start" spacing={1}>
-                        <Grid item xs={12} md={4} lg={3} xl={2}>
-                        <ServerStatus classes={classes} />
+                    <Grid container alignContent="flex-start" alignItems="center">
+                        <Grid item>
+                            <ServerStatus classes={classes} />
                         </Grid>
-                        <Grid item className={classes.paddingLeft}>
+                        <Grid item className={classes.doublePaddingLeft}></Grid>
+                        <Grid item className={classes.doublePaddingLeft}>
                             <nav className={classes.title}>
                                 <Link
                                     variant="button"
