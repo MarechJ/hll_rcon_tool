@@ -226,6 +226,7 @@ class Rcon(ServerCtl):
             try:
                 time, rest = line.split('] ', 1)
                 try:
+                    # Bug: '[1:34:22 hours] DISCONNECTED ᚱ A V И E Ν : .',
                     action, content = rest.split(': ', 1)
                 except ValueError:
                     action, content = rest.split(' ', 1)

@@ -206,7 +206,7 @@ class ServerCtl:
     def get_vip_slots_num(self):
         return self._get("numvipslots", can_fail=False)
 
-    def set_autobalance(self, bool_str):
+    def set_autobalance(self, bool_str, log_info=True):
         """
         String bool is on / off
         """

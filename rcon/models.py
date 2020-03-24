@@ -11,7 +11,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.engine.url import URL
 from sqlalchemy.orm import relationship
 from sqlalchemy.schema import UniqueConstraint
-
+from sqlalchemy.dialects.postgresql import JSONB
 
 logger = logging.getLogger(__name__)
 
@@ -63,6 +63,19 @@ class PlayerSteamID(Base):
         aka = ' | '.join([n.name for n in self.names])
         return f"{self.steam_id_64} {aka}"
 
+
+class UserConfig(Base):
+    __tablename__ = 'user_config'
+
+    id = Column(Integer, primary_key=True)
+    key = Column(String, unique=True, index=True)
+    value = Column(JSONB)
+
+    def to_dict(self):
+        return {
+            self.key: self.value
+        }
+        
 
 class PlayerName(Base):
     __tablename__ = 'player_names'

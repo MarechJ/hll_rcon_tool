@@ -6,6 +6,7 @@ from rcon.settings import SERVER_INFO
 from rcon.extended_commands import Rcon
 from rcon import game_logs
 from rcon.models import init_db
+from rcon.user_config import seed_default_config
 
 @click.group()
 def cli():
@@ -23,6 +24,8 @@ def run_logs_eventloop():
 @click.option('--force', default=False, is_flag=True)
 def init(force):
     init_db(force)
+    seed_default_config()
+
 
 def do_print(func):
     def wrap(*args, **kwargs):
