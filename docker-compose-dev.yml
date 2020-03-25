@@ -2,7 +2,7 @@ version: '3.1'
 
 services:
   broadcast:
-    image: maresh/hll_rcon:latest
+    build: .
     environment:
       HLL_HOST: ${HLL_HOST}
       HLL_PORT: ${HLL_PORT}
@@ -17,7 +17,7 @@ services:
       - .:/conf
     command: python -m rcon.broadcast
   logs_event_loop:
-    image: maresh/hll_rcon:latest
+    build: .
     command: bash -c "python -m rcon.cli init_db && python -m rcon.cli log_loop"
     restart: always
     environment:
@@ -34,7 +34,7 @@ services:
       - "redis:redis"
       - "postgres:postgres"
   backend:
-    image: maresh/hll_rcon:latest
+    build: .
     environment:
       HLL_HOST: ${HLL_HOST}
       HLL_PORT: ${HLL_PORT}
@@ -50,8 +50,9 @@ services:
     links:
       - "redis:redis"
       - "postgres:postgres"
-  frontend:    
-    image: maresh/hll_rcon_frontend:latest
+  frontend:
+    build:
+      context: ./rcongui
     ports:
       - ${RCONWEB_PORT}:80
     links:
