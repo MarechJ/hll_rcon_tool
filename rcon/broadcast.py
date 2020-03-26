@@ -1,8 +1,10 @@
 import os
 import time
+import random
 
 from rcon.extended_commands import Rcon
 from rcon.settings import SERVER_INFO
+from rcon.user_config import get_user_config
 
 if __name__ == '__main__':
     ctl = Rcon(
@@ -15,9 +17,11 @@ if __name__ == '__main__':
         msgs = [m for m in msgs if len(m) == 2] # filtering out badly formated lines
  
     while True: 
+        if get_user_config('RANDOMIZE_BROADCAST'):
+            random.shuffle(msgs)
+
         for time_sec, msg in msgs:
-            if msg == '/nextmap\n':
-                msg = "Next map: {}".format(ctl.get_next_map())
+            msg = msg.rstrip("\n").format(nextmap=ctl.get_next_map())
             print(f"{time_sec} second(s): {msg}")
             ctl.set_broadcast(msg) 
             time.sleep(int(time_sec)) 
