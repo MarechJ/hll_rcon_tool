@@ -262,6 +262,7 @@ class HLLSettings extends React.Component {
               value: val,
               label: `${val}`
             }))}
+            helpText="0 to disable"
             getAriaValueText={valuetext}
             setValue={val => this.setState({ teamSwitchCooldownMin: val })}
             saveValue={val => this.setState({ teamSwitchCooldownMin: val }, () => this.saveSetting("team_switch_cooldown", val))}
@@ -277,6 +278,7 @@ class HLLSettings extends React.Component {
               value: val,
               label: `${val}`
             }))}
+            helpText="0 to disable"
             setValue={val => this.setState({ autoBalanceThres: val })}
             saveValue={val => this.setState({ autoBalanceThres: val }, () => this.saveSetting("autobalance_threshold", val))}
           />
@@ -285,9 +287,10 @@ class HLLSettings extends React.Component {
           <NumSlider
             classes={classes}
             text="Idle autokick (minutes)"
-            max={100}
+            max={200}
             step={5}
-            marks={range(0, 120, 20).map(val => ({
+            helpText="200 to (virtually) disable"
+            marks={range(0, 200, 20).map(val => ({
               value: val,
               label: `${val}`
             }))}

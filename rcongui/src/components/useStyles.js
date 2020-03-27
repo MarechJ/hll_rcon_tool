@@ -95,6 +95,9 @@ const useStyles = makeStyles(theme => ({
     padding: 0,
     margin: 0
   },
+  helpText: {
+    color: theme.palette.text.disabled
+  },
   ellipsis: {
     whiteSpace: "nowrap",
     overflow: "hidden",

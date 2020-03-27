@@ -14,11 +14,13 @@ const NumSlider = ({
     step = 1,
     setValue,
     saveValue,
+    helpText
   }) => (
       <div className={classes.slider}>
         <Typography variant="h5" id="discrete-slider-always" gutterBottom>
-          {text}
+          {text} 
         </Typography>
+        <Typography variant="caption" color="textSecondary">{helpText}</Typography>
         <Slider
           value={value}
           onChange={(e, newVal) => setValue(newVal)}

@@ -16,7 +16,11 @@ def _add_conf(sess, key, val):
 
 def set_user_config(key, object_):
     with enter_session() as sess:
-        _add_conf(sess, key, object_)
+        conf = _get_conf(sess, key)
+        if conf is None:
+            _add_conf(sess, key, object_)
+        else:
+            conf.value = object_
         sess.commit()
 
 
