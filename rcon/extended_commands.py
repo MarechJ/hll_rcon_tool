@@ -286,14 +286,14 @@ class Rcon(ServerCtl):
             return super().do_perma_ban(player, reason)
 
     def set_randomMessages(self, bool_str, log_info=True):
-        random = True if bool_str == 'on' else False
+        random = True if bool_str == 'true' else False
         return set_user_config('randomize_broadcast', random)
 
     def get_randomMessages(self):
         return get_user_config('randomize_broadcast')
 
-    def get_randomMessagesActive(self):
-        return get_user_config('randomize_broadcast_active')
+    def get_randomMessagesAvailable(self):
+        return get_user_config('randomize_broadcast_available', False)
 
     @ttl_cache(5)  # TODO cache longer
     def get_map_rotation(self):
