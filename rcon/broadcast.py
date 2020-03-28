@@ -16,8 +16,7 @@ if __name__ == '__main__':
  
     while True: 
         for time_sec, msg in msgs:
-            if msg == '/nextmap\n':
-                msg = "Next map: {}".format(ctl.get_next_map())
+            msg = msg.rstrip("\r\n").format(nextmap=ctl.get_next_map())
             print(f"{time_sec} second(s): {msg}")
             ctl.set_broadcast(msg) 
             time.sleep(int(time_sec)) 
