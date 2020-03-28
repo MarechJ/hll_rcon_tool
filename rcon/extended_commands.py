@@ -5,6 +5,7 @@ import logging
 import socket
 from rcon.cache_utils import ttl_cache
 from rcon.commands import ServerCtl, CommandFailedError
+from rcon.user_config import set_user_config, get_user_config
 
 
 STEAMID = "steam_id_64"
@@ -284,6 +285,15 @@ class Rcon(ServerCtl):
         with invalidates(self.get_players, self.get_perma_bans):
             return super().do_perma_ban(player, reason)
 
+    def set_randomMessages(self, bool_str, log_info=True):
+        random = True if bool_str == 'on' else False
+        return set_user_config('randomize_broadcast', random)
+
+    def get_randomMessages(self):
+        return get_user_config('randomize_broadcast')
+
+    def get_randomMessagesActive(self):
+        return get_user_config('randomize_broadcast_active')
 
     @ttl_cache(5)  # TODO cache longer
     def get_map_rotation(self):
