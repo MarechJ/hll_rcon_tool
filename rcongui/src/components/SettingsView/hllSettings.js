@@ -15,6 +15,7 @@ import ServerMessage from './serverMessage'
 import NumSlider from './numSlider'
 import ChangeMap from './changeMap'
 import Padlock from './padlock'
+import RandomBroadcast from './randomBroadcasts'
 
 const AutoRefreshLine = ({
   intervalFunction,
@@ -90,6 +91,7 @@ class HLLSettings extends React.Component {
     this.removeMapsFromRotation = this.removeMapsFromRotation.bind(this)
     this.changeMap = this.changeMap.bind(this)
     this.toggleLockSliders = this.toggleLockSliders.bind(this)
+    this.randomBroadcasts = this.randomBroadcasts.bind(this)
   }
 
   componentDidMount() {
@@ -168,6 +170,10 @@ class HLLSettings extends React.Component {
     ).catch(error => toast.error("Unable to connect to API " + error));
   }
 
+  async randomBroadcasts(value) {
+    return this.sendAction("set_randomMessages", { bool_str: value });
+  }
+
   render() {
     const {
       autoBalanceThres,
@@ -218,6 +224,15 @@ class HLLSettings extends React.Component {
             onSave={(val) => this.setState({ broadcastMessage: val }, () => this.sendAction("set_broadcast", { msg: val }))}
           />
         </Grid>
+        <RandomBroadcast classes={classes} broadcastChange={this.randomBroadcasts} />
+        {/* <Grid item className={classes.paper} xs={12}>
+          <TextField
+            fullWidth
+            label="Server name"
+            disabled
+            helperText="The server name as displayed in the server browser"
+          />
+        </Grid> */}
         <Grid item className={classes.paper} xs={12} md={6}>
           <CollapseCard title="Manage VIPs" classes={classes} onExpand={this.loadVips}>
             <p>Changes are applied immediately</p>
