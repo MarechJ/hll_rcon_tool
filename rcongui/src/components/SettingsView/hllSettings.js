@@ -14,6 +14,7 @@ import CollapseCard from '../collapseCard'
 import ServerMessage from './serverMessage'
 import NumSlider from './numSlider'
 import ChangeMap from './changeMap'
+import Padlock from './padlock'
 
 const AutoRefreshLine = ({
   intervalFunction,
@@ -74,7 +75,8 @@ class HLLSettings extends React.Component {
       admins: [],
       adminRoles: ["owner", "senior", "junior"],
       welcomeMessage: "",
-      broadcastMessage: ""
+      broadcastMessage: "",
+      lockedSliders: true
     };
 
     this.loadVips = this.loadVips.bind(this)
@@ -87,11 +89,16 @@ class HLLSettings extends React.Component {
     this.addMapsToRotation = this.addMapsToRotation.bind(this)
     this.removeMapsFromRotation = this.removeMapsFromRotation.bind(this)
     this.changeMap = this.changeMap.bind(this)
+    this.toggleLockSliders = this.toggleLockSliders.bind(this)
   }
 
   componentDidMount() {
     this.loadMapRotation().then(this.loadAllMaps())
     this.loadSettings().then(this.loadAdminRoles)
+  }
+
+  toggleLockSliders() {
+    this.setState({lockedSliders: !this.state.lockedSliders})
   }
 
   async loadSettings() {
@@ -175,7 +182,8 @@ class HLLSettings extends React.Component {
       mapRotation,
       availableMaps,
       welcomeMessage,
-      broadcastMessage
+      broadcastMessage,
+      lockedSliders
     } = this.state;
     const { classes } = this.props;
 
@@ -210,14 +218,6 @@ class HLLSettings extends React.Component {
             onSave={(val) => this.setState({ broadcastMessage: val }, () => this.sendAction("set_broadcast", { msg: val }))}
           />
         </Grid>
-        {/* <Grid item className={classes.paper} xs={12}>
-          <TextField
-            fullWidth
-            label="Server name"
-            disabled
-            helperText="The server name as displayed in the server browser"
-          />
-        </Grid> */}
         <Grid item className={classes.paper} xs={12} md={6}>
           <CollapseCard title="Manage VIPs" classes={classes} onExpand={this.loadVips}>
             <p>Changes are applied immediately</p>
@@ -252,9 +252,15 @@ class HLLSettings extends React.Component {
             />
           </CollapseCard>
         </Grid>
+        <Grid container className={classes.paper} xs={12} alignContent="center" justify="center">
+          <Grid item>
+            <Padlock checked={lockedSliders} handleChange={this.toggleLockSliders} classes={classes} label="Locked sliders" />
+          </Grid>   
+        </Grid>
         <Grid item className={classes.paper} xs={12} md={6}>
           <NumSlider
             classes={classes}
+            disabled={lockedSliders}
             text="Teamswitch cooldown (minutes)"
             max={100}
             value={teamSwitchCooldownMin}
@@ -271,6 +277,7 @@ class HLLSettings extends React.Component {
         <Grid item className={classes.paper} xs={12} md={6}>
           <NumSlider
             classes={classes}
+            disabled={lockedSliders}
             text="Autobalance threshold"
             max={50}
             value={autoBalanceThres}
@@ -278,7 +285,7 @@ class HLLSettings extends React.Component {
               value: val,
               label: `${val}`
             }))}
-            helpText="0 to disable"
+            helpText="0 means the teams must match exactly"
             setValue={val => this.setState({ autoBalanceThres: val })}
             saveValue={val => this.setState({ autoBalanceThres: val }, () => this.saveSetting("autobalance_threshold", val))}
           />
@@ -286,25 +293,28 @@ class HLLSettings extends React.Component {
         <Grid item className={classes.paper} xs={12} md={6}>
           <NumSlider
             classes={classes}
+            disabled={lockedSliders}
             text="Idle autokick (minutes)"
             max={200}
             step={5}
-            helpText="200 to (virtually) disable"
+            helpText="0 to disable"
             marks={range(0, 200, 20).map(val => ({
               value: val,
               label: `${val}`
             }))}
-            value={idleAutokickMin}
+            value={idleAutokickMin == 9999 ? 0 : idleAutokickMin}
             setValue={val => this.setState({ idleAutokickMin: val })}
-            saveValue={val => this.setState({ idleAutokickMin: val }, () => this.saveSetting("idle_autokick_time", val))}
+            saveValue={val => this.setState({ idleAutokickMin: val }, () => this.saveSetting("idle_autokick_time", val == 0 ? 9999 : val))}
           />
         </Grid>
         <Grid item className={classes.paper} xs={12} md={6}>
           <NumSlider
             classes={classes}
+            disabled={lockedSliders}
             text="Maximum ping (ms)"
+            helpText="0 to disable"
             max={2000}
-            min={10}
+            min={0}
             step={10}
             value={maxPingMs}
             marks={range(0, 2500, 500).map(val => ({
@@ -318,7 +328,9 @@ class HLLSettings extends React.Component {
         <Grid item className={classes.paper} xs={12} md={6}>
           <NumSlider
             classes={classes}
+            disabled={lockedSliders}
             text="Max queue length"
+            helpText="Maximum # of people waiting"
             max={5}
             min={1}
             value={queueLength}
@@ -330,7 +342,9 @@ class HLLSettings extends React.Component {
         <Grid item className={classes.paper} xs={12} md={6}>
           <NumSlider
             classes={classes}
+            disabled={lockedSliders}
             text="Vip slots"
+            helpText="# slots reserved"
             max={100}
             value={vipSlots}
             marks={range(0, 120, 20).map(val => ({

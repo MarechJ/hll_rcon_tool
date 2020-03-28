@@ -14,7 +14,8 @@ const NumSlider = ({
     step = 1,
     setValue,
     saveValue,
-    helpText
+    helpText,
+    disabled
   }) => (
       <div className={classes.slider}>
         <Typography variant="h5" id="discrete-slider-always" gutterBottom>
@@ -30,6 +31,7 @@ const NumSlider = ({
           marks={marks}
           min={min}
           max={max}
+          disabled={disabled}
           valueLabelDisplay="auto"
         />
       </div>
