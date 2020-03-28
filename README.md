@@ -62,7 +62,7 @@ Some additional info: https://docs.nginx.com/nginx/admin-guide/security-controls
 
 ##### RUN it!
 
-    docker-compose build && docker-compose up -d 
+    docker-compose up -d 
 
 The web application will be available on `<your server ip>:8010`
 Feel free to change the port to your likings in the docker-compose.yml:
@@ -75,10 +75,28 @@ Feel free to change the port to your likings in the docker-compose.yml:
         # --> here <---
         - 8010:80  
 
-To update to the latest version:
+##### To update to the latest version:
 
-    git pull
-    docker-compose build && docker-compose up -d
+    docker-compose pull && docker-compose up -d
+
+##### To ROLLBACK (in case of issue) to a previous version:
+
+Check the availabe versions numbers on docker hub (or github releases):
+https://hub.docker.com/r/maresh/hll_rcon/tags
+https://github.com/MarechJ/hll_rcon_tool/releases
+
+Edit you docker-compose.yml and change all the images from:
+
+    image: maresh/hll_rcon:latest
+    ...
+    image: maresh/hll_rcon_frontend:latest
+
+To the version you want (here we use v1.1.0)
+
+    image: maresh/hll_rcon:v1.1.0
+    ...
+    image: maresh/hll_rcon_frontend:v1.1.0
+
 
 ##### If you want the auto broadcasts
 
