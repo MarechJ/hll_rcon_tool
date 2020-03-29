@@ -150,7 +150,7 @@ def text_scoreboard(request):
     scoreboard = ctl.get_scoreboard(180, "(real) kills")
     text2 = make_table(scoreboard)
     return HttpResponse(
-        f'<div><h1>Scoreboard (last 180 min)</h1><div style="float:left; margin-right:20px"><h3>By Ratio</h3><pre>{text}</pre></div><div style="float:left; margin-left:20px"><h3>By Kills</h3><pre>{text2}</pre></div></div>'
+        f'<div><h1>Scoreboard (last 180 min)</h1><h6>Real death only (redeploy / suicides not included). Kills counted only if player is not revived</h6><div style="float:left; margin-right:20px"><h3>By Ratio</h3><pre>{text}</pre></div><div style="float:left; margin-left:20px"><h3>By Kills</h3><pre>{text2}</pre></div></div>'
     )
 
 PREFIXES_TO_EXPOSE = [
