@@ -15,18 +15,16 @@ fetch(`${process.env.REACT_APP_API_URL}get_randomMessagesAvailable`)
     .then(data => active = data.result)
       .catch(error => toast.error("Unable to connect to API " + error));
 
-const button = {
-  "values": [
-        {
-            name: "Random Order",
-            value: "true"
-        },
-        {
-            name: "Sequential Order",
-            value: "false"
-        }
-    ]
-};
+const buttons = [
+  {
+    name: "Sequential Order",
+    value: "false"
+  },
+  {
+    name: "Random Order",
+    value: "true"
+  }
+];
 
 const Selector = ({
     classes,
@@ -61,8 +59,9 @@ const Selector = ({
 class RandomBroadcast extends React.Component {
     constructor(props) {
         super(props);
+
         this.state = {
-          status: false
+          random: false
         };
     }
 
@@ -73,13 +72,13 @@ class RandomBroadcast extends React.Component {
     async load(command) {
         return fetch(`${process.env.REACT_APP_API_URL}get_randomMessages`)
           .then(response => showResponse(response, command))
-            .then(data => this.state.status = data.result)
+            .then(data => this.state.random = data.result)
             .catch(error => toast.error("Unable to connect to API " + error));
     }
 
     handler(value)
     {
-      this.setState({ current: value })
+      this.setState({ random: value })
 
       this.props.broadcastChange(value)
     }
@@ -87,22 +86,22 @@ class RandomBroadcast extends React.Component {
     render() {
         if (!active) return null;
 
-        const {
-          status
-        } = this.state;
-
         const { classes, width } = this.props;
+
+        const {
+          random
+        } = this.state;
 
         return (
             <React.Fragment>
                 <Grid item className={classes.paper} md={12} xs={12}>
                     <Selector
                         classes={classes}
-                        values={button.values}
+                        values={buttons}
                         onChange={value => 
                           this.handler(value)
                         }
-                        currentValue={status}
+                        currentValue={random}
                         kind="Broadcast Messages are running in "
                     />
                 </Grid>
