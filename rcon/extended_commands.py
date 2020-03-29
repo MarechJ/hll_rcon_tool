@@ -24,7 +24,7 @@ def invalidates(*cached_funcs):
 
 class Rcon(ServerCtl):
     settings = (
-        ('name', str), ('team_switch_cooldown', int),
+        ('team_switch_cooldown', int),
         ('autobalance_threshold', int),
         ('idle_autokick_time', int), ('max_ping_autokick', int),
         ('queue_length', int), ('vip_slots_num', int)
@@ -161,11 +161,59 @@ class Rcon(ServerCtl):
     def get_name(self):
         return super().get_name()
 
-    @ttl_cache(ttl=10)
+    @ttl_cache(ttl=60 * 60)
+    def get_team_switch_cooldown(self):
+        return int(super().get_team_switch_cooldown())
+
+    def set_team_switch_cooldown(self, minutes):
+        with invalidates(self.get_team_switch_cooldown):
+            return super().set_team_switch_cooldown(minutes)
+    
+    @ttl_cache(ttl=60 * 60)
+    def get_autobalance_threshold(self):
+        return int(super().get_autobalance_threshold())
+
+    def set_autobalance_threshold(self, max_diff):
+        with invalidates(self.get_autobalance_threshold):
+            return super().set_autobalance_threshold(max_diff)
+    
+    @ttl_cache(ttl=60 * 60)
+    def get_idle_autokick_time(self):
+        return int(super().get_idle_autokick_time())
+
+    def set_idle_autokick_time(self, minutes):
+        with invalidates(self.get_idle_autokick_time):
+            return super().set_idle_autokick_time(minutes)
+    
+    @ttl_cache(ttl=60 * 60)
+    def get_max_ping_autokick(self):
+        return int(super().get_max_ping_autokick())
+
+    def set_max_ping_autokick(self, max_ms):
+        with invalidates(self.get_max_ping_autokick):
+            return super().set_max_ping_autokick(max_ms)
+
+    @ttl_cache(ttl=60 * 60)
+    def get_queue_length(self):
+        return int(super().get_queue_length())
+
+    def set_queue_length(self, num):
+        with invalidates(self.get_queue_length):
+            return super().set_queue_length(num)
+
+    @ttl_cache(ttl=60 * 60)
+    def get_vip_slots_num(self):
+        return super().get_vip_slots_num()
+
+    def set_vip_slots_num(self, num):
+        with invalidates(self.get_vip_slots_num):
+            return int(super().set_vip_slots_num(num))
+
+    @ttl_cache(ttl=20)
     def get_slots(self):
         return super().get_slots()
 
-    @ttl_cache(ttl=15, cache_falsy=False)
+    @ttl_cache(ttl=5, cache_falsy=False)
     def get_status(self):
         return {
             'name': self.get_name(),
@@ -173,16 +221,21 @@ class Rcon(ServerCtl):
             'nb_players': self.get_slots()
         }
 
-    @ttl_cache(ttl=60 * 60)
+    @ttl_cache(ttl=60 * 60 * 24)
     def get_maps(self):
         return super().get_maps()
 
-    @ttl_cache(ttl=60 * 10)
+    @ttl_cache(ttl=60 * 10, cache_falsy=False)
     def get_server_settings(self):
-        return {
-            name: type_(getattr(self, f'get_{name}')())
-            for name, type_ in self.settings
-        }
+        settings = {}
+        for name, type_ in self.settings:
+            try:
+                settings[name] = type_(getattr(self, f'get_{name}')())
+            except: 
+                logger.exception("Failed to retrieve settings %s", name)
+                raise
+        return settings
+
 
     def do_save_setting(self, name, value):
         if not name in dict(self.settings):

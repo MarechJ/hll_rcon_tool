@@ -62,7 +62,6 @@ class HLLSettings extends React.Component {
     super(props);
 
     this.state = {
-      name: "",
       autoBalanceThres: 0,
       teamSwitchCooldownMin: 0,
       idleAutokickMin: 0,
@@ -105,7 +104,6 @@ class HLLSettings extends React.Component {
     return fetch(`${process.env.REACT_APP_API_URL}get_server_settings`)
       .then((res) => showResponse(res, "get_server_settings", false))
       .then(data => this.setState({
-        name: data.result.name,
         autoBalanceThres: data.result.autobalance_threshold,
         teamSwitchCooldownMin: data.result.team_switch_cooldown,
         idleAutokickMin: data.result.idle_autokick_time,
@@ -191,8 +189,8 @@ class HLLSettings extends React.Component {
       <Grid container spacing={3} className={classes.paper}>
         <Grid item xs={12}>
           <h2>HLL Game Server settings </h2>
-          <small>(30 sec autorefresh)</small>
-          <AutoRefreshLine intervalFunction={() => this.loadSettings().then(this.loadMapRotation)} execEveryMs={30000}
+          <small>(1min autorefresh)</small>
+          <AutoRefreshLine intervalFunction={() => this.loadSettings().then(this.loadMapRotation)} execEveryMs={60000}
             statusRefreshIntervalMs={500} classes={classes} />
         </Grid>
         <Grid container xs={12} className={classes.paddingBottom} justify="center">
