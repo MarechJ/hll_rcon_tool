@@ -17,13 +17,15 @@ if __name__ == '__main__':
     
     if os.path.isfile(f"{mount_path}broadcasts.txt"):
         with open(f"{mount_path}broadcasts.txt") as f: 
-            msgs = [l.split(' ', 1) for l in f]
-            msgs = [m for m in msgs if len(m) == 2] # filtering out badly formated lines
+            default_msgs = [l.split(' ', 1) for l in f]
+            default_msgs = [m for m in default_msgs if len(m) == 2] # filtering out badly formated lines
 
-        if type(msgs) is list:
+        if type(default_msgs) is list:
             set_user_config('randomize_broadcast_available', True)
 
-            while True: 
+            while True:
+                msgs = default_msgs.copy()
+
                 if get_user_config('randomize_broadcast'):
                     random.shuffle(msgs)
 
