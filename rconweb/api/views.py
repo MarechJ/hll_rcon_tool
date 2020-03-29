@@ -5,7 +5,7 @@ from functools import wraps
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-
+from django.http import HttpResponse
 from rcon.extended_commands import Rcon
 from rcon.commands import CommandFailedError
 from rcon.settings import SERVER_INFO
@@ -16,6 +16,9 @@ from rcon.player_history import (
 )
 
 logger = logging.getLogger('rconweb')
+
+
+
 
 def _get_data(request):
     try:
@@ -128,6 +131,27 @@ ctl = Rcon(
     SERVER_INFO
 )
 
+def make_table(scoreboard):
+    return '\n'.join(
+        ["Rank  Name                  Ratio Kills Death"] + [
+        f"{('#'+ str(idx+1)).ljust(6)}{obj['player'].ljust(22)}{obj['ratio'].ljust(6)}{str(obj['(real) kills']).ljust(6)}{str(obj['(real) death']).ljust(5)}"  
+        for idx, obj in enumerate(scoreboard)]
+    )
+
+@csrf_exempt
+def text_scoreboard(request):
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        data = request.GET
+
+    scoreboard = ctl.get_scoreboard(180, "ratio")
+    text = make_table(scoreboard)
+    scoreboard = ctl.get_scoreboard(180, "(real) kills")
+    text2 = make_table(scoreboard)
+    return HttpResponse(
+        f'<div><h1>Scoreboard (last 180 min)</h1><div style="float:left; margin-right:20px"><h3>By Ratio</h3><pre>{text}</pre></div><div style="float:left; margin-left:20px"><h3>By Kills</h3><pre>{text2}</pre></div></div>'
+    )
 
 PREFIXES_TO_EXPOSE = [
     'get_', 'set_', 'do_'
@@ -136,7 +160,8 @@ PREFIXES_TO_EXPOSE = [
 commands = [
     ("players_history", players_history),
     ("blacklist_player", blacklist_player),
-    ("unblacklist_player", unblacklist_player)
+    ("unblacklist_player", unblacklist_player),
+    ("text_scoreboard", text_scoreboard)
 ]
 
 # Dynamically register all the methods from ServerCtl

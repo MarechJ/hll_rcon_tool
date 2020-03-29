@@ -373,6 +373,36 @@ class Rcon(ServerCtl):
 
         return maps
 
+    @ttl_cache(ttl=60 * 2)
+    def get_scoreboard(self, minutes=180, sort='ratio'):
+        logs = self.get_structured_logs(minutes, 'KILL')
+        scoreboard = []
+        for player in logs['players']:
+            if not player:
+                continue
+            kills = 0
+            death = 0
+            for log in logs['logs']:
+                if log['player'] == player:
+                    kills += 1
+                elif log['player2'] == player:
+                    death += 1
+            if kills == 0 and death == 0:
+                continue
+            scoreboard.append({ 
+                'player': player,
+                '(real) kills': kills,
+                '(real) death': death,
+                'ratio': kills / max(death, 1)
+            })
+
+        scoreboard = sorted(
+            scoreboard, key=lambda o: o[sort], reverse=True
+        )
+        for o in scoreboard:
+            o["ratio"] = "%.2f" % o["ratio"]
+
+        return scoreboard
 
 if __name__ == '__main__':
     from rcon.settings import SERVER_INFO
