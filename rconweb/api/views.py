@@ -141,16 +141,32 @@ def make_table(scoreboard):
 @csrf_exempt
 def text_scoreboard(request):
     try:
-        data = json.loads(request.body)
-    except json.JSONDecodeError:
-        data = request.GET
+        minutes = abs(int(request.GET.get('minutes')))
+    except (ValueError, KeyError, TypeError):
+        minutes = 180
 
-    scoreboard = ctl.get_scoreboard(180, "ratio")
+    name = ctl.get_name()
+    scoreboard = ctl.get_scoreboard(minutes, "ratio")
     text = make_table(scoreboard)
-    scoreboard = ctl.get_scoreboard(180, "(real) kills")
+    scoreboard = ctl.get_scoreboard(minutes, "(real) kills")
     text2 = make_table(scoreboard)
+
     return HttpResponse(
-        f'<div><h1>Live scoreboard (last 180 min. 2min delay)</h1><h6>Real death only (redeploy / suicides not included). Kills counted only if player is not revived</h6><div style="float:left; margin-right:20px"><h3>By Ratio</h3><pre>{text}</pre></div><div style="float:left; margin-left:20px"><h3>By Kills</h3><pre>{text2}</pre></div></div>'
+        f'''<div>
+        <h1>{name}</h1>
+        <h1>Scoreboard (last {minutes} min. 2min delay)</h1>
+        <h6>Real death only (redeploy / suicides not included). Kills counted only if player is not revived</h6>
+        <p>
+        See for last:
+        <a href="/api/scoreboard?minutes=120">120 min</a>
+        <a href="/api/scoreboard?minutes=90">90 min</a>
+        <a href="/api/scoreboard?minutes=60">60 min</a>
+        <a href="/api/scoreboard?minutes=30">30 min</a>
+        </p>
+        <div style="float:left; margin-right:20px"><h3>By Ratio</h3><pre>{text}</pre></div>
+        <div style="float:left; margin-left:20px"><h3>By Kills</h3><pre>{text2}</pre></div>
+        </div>
+        '''
     )
 
 PREFIXES_TO_EXPOSE = [
@@ -161,7 +177,7 @@ commands = [
     ("players_history", players_history),
     ("blacklist_player", blacklist_player),
     ("unblacklist_player", unblacklist_player),
-    ("text_scoreboard", text_scoreboard)
+    ("scoreboard", text_scoreboard)
 ]
 
 # Dynamically register all the methods from ServerCtl
