@@ -6,7 +6,6 @@ import socket
 from rcon.cache_utils import ttl_cache
 from rcon.commands import ServerCtl, CommandFailedError
 
-
 STEAMID = "steam_id_64"
 NAME = "name"
 ROLE = "role"

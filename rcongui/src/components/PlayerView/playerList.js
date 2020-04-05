@@ -11,12 +11,17 @@ import { faSteam } from '@fortawesome/free-brands-svg-icons'
 import Link from '@material-ui/core/Link';
 import withWidth from "@material-ui/core/withWidth";
 
+
 const PlayerItem = ({ classes, name, steamID64, handleAction, nbButtons }) => (
   <ListItem key={name} dense>
     <ListItemText
       id={`checkbox-list-label-${steamID64}`}
       primary={name}
-      secondary={steamID64}
+      secondary={
+        <Link target="_blank" color="inherit"href={`${process.env.REACT_APP_API_URL}player?steam_id_64=${steamID64}`}>
+          {steamID64}
+        </Link>
+      }
     />
     <ListItemSecondaryAction>
       <Link className={classes.marginRight} target="_blank" color="inherit" href={`https://steamcommunity.com/profiles/${steamID64}`}>

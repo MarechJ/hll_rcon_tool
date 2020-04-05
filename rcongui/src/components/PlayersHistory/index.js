@@ -7,7 +7,7 @@ import { toast } from "react-toastify";
 import { join, each, reduce, get } from 'lodash'
 import Autocomplete from "@material-ui/lab/Autocomplete";
 import Pagination from '@material-ui/lab/Pagination';
-import { Paper, Icon, Grid, Chip, Divider, Popover, Badge, Button, TextField, FormControl, InputLabel, MenuItem, Select } from '@material-ui/core'
+import { Paper, Icon, Grid, Link, Divider, Popover, Badge, Button, TextField, FormControl, InputLabel, MenuItem, Select } from '@material-ui/core'
 import moment from 'moment'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSkullCrossbones } from '@fortawesome/free-solid-svg-icons'
@@ -64,7 +64,7 @@ const WithPopver = ({ classes, popoverContent, children }) => {
     );
 }
 
-const PlayerItem = ({ classes, names, steamId64, firstSeen, lastSeen, blacklisted, onBlacklist, onUnBlacklist, compact = true }) => {
+const PlayerItem = ({ classes, names, steamId64, firstSeen, lastSeen, blacklisted, punish, kick, tempban, permaban, onBlacklist, onUnBlacklist, compact = true }) => {
     const now = moment()
     const last_seen = moment(lastSeen)
     const first_seen = moment(firstSeen)
@@ -83,7 +83,11 @@ const PlayerItem = ({ classes, names, steamId64, firstSeen, lastSeen, blackliste
                                 </h4>
                             </Grid>
                             <Grid item xs={12}>
-                                <small style={{ display: "flex" }}>{steamId64}</small>
+                                <small style={{ display: "flex" }}>
+                                <Link target="_blank" color="inherit"href={`${process.env.REACT_APP_API_URL}player?steam_id_64=${steamId64}`}>
+                                    {steamId64}
+                                </Link>
+                                </small>
                             </Grid>
                         </Grid>
                     </Grid>
@@ -106,16 +110,16 @@ const PlayerItem = ({ classes, names, steamId64, firstSeen, lastSeen, blackliste
                         </WithPopver>
                     </Grid>
                     <Grid item xs={6}>
-                        <small># Punish: N/A </small>
+                        <small># Punish: {punish} </small>
                     </Grid>
                     <Grid item xs={6}>
-                        <small># Kick: N/A </small>
+                        <small># Kick: {kick} </small>
                     </Grid>
                     <Grid item xs={6}>
-                        <small># Tempban: N/A </small>
+                        <small># Tempban: {tempban} </small>
                     </Grid>
                     <Grid item xs={6}>
-                        <small># Permaban: N/A </small>
+                        <small># Permaban: {permaban} </small>
                     </Grid>
                 </Grid>
             </Paper>
@@ -190,7 +194,7 @@ const FilterPlayer = ({ classes, playersHistory, pageSize, total, page, setPageS
                     <MyPagination classes={classes} pageSize={pageSize} page={page} setPage={setPage} total={total} />
                 </Grid>
             </Grid>
-            <Grid container {...getListboxProps()} spacing={2}>
+            <Grid container spacing={2}>
                 {playerList.map(nameIndex => {
                     const player = playersHistory[nameIndex.idx]
                     return <Grid key={player.steam_id_64} /*style={{display: displayMap[player.steam_id_64] ? "block": "none"}}*/ item xs={12} sm={6} md={4} lg={3} xl={2}>
@@ -201,6 +205,10 @@ const FilterPlayer = ({ classes, playersHistory, pageSize, total, page, setPageS
                             steamId64={player.steam_id_64}
                             firstSeen={player.first_seen_timestamp_ms}
                             lastSeen={player.last_seen_timestamp_ms}
+                            punish={player.penalty_count.PUNISH}
+                            kick={player.penalty_count.KICK}
+                            tempban={player.penalty_count.TEMPBAN}
+                            permaban={player.penalty_count.PERMABAN}
                             compact={false}
                             blacklisted={player.blacklisted}
                             onBlacklist={() => setDoConfirmPlayer({ player: player.steam_id_64, actionType: "blacklist" })}

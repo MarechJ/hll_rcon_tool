@@ -3,7 +3,11 @@ import datetime
 from functools import wraps
 from sqlalchemy import func
 
-from rcon.models import init_db, enter_session, PlayerName, PlayerSteamID, PlayerSession, BlacklistedPlayer
+from rcon.models import (
+    init_db, enter_session, PlayerName, 
+    PlayerSteamID, PlayerSession, BlacklistedPlayer, 
+    PlayersAction
+)
 from rcon.game_logs import on_connected, on_disconnected
 from rcon.extended_commands import Rcon
 from rcon.commands import CommandFailedError
@@ -15,6 +19,25 @@ def get_player(sess, steam_id_64):
     return sess.query(PlayerSteamID).filter(
         PlayerSteamID.steam_id_64 == steam_id_64
     ).one_or_none()
+
+
+def get_player_profile(steam_id_64, nb_sessions):
+    with enter_session() as sess:
+        player = sess.query(PlayerSteamID).filter(
+            PlayerSteamID.steam_id_64 == steam_id_64
+        ).one_or_none()
+        if player is None:
+            return
+        return player.to_dict(limit_sessions=nb_sessions)
+
+
+def _get_set_player(sess, player_name, steam_id_64):
+    player = get_player(sess, steam_id_64)
+    if player is None:
+        _save_steam_id(sess, steam_id_64)
+    _save_player_alias(sess, player, player_name)
+
+    return player
 
 
 def get_players_by_appearance(page=1, page_size=1000, last_seen_from=None, last_seen_till=None):
@@ -45,6 +68,7 @@ def get_players_by_appearance(page=1, page_size=1000, last_seen_from=None, last_
                     'names': [n.name for n in p[0].names],
                     'first_seen_timestamp_ms': int(p[1].timestamp() * 1000),
                     'last_seen_timestamp_ms': int(p[2].timestamp() * 1000),
+                    'penalty_count': p[0].get_penalty_count(),
                     'blacklisted': p[0].blacklist.is_blacklisted if p[0].blacklist else False
                 }
                 for p in players
@@ -87,6 +111,26 @@ def save_player(player_name, steam_id_64):
         steamid = _save_steam_id(sess, steam_id_64)
         _save_player_alias(sess, steamid, player_name)
 
+
+def save_player_action(rcon, action_type, player_name, by, reason=''):
+    with enter_session() as sess:
+        steam_id_64 = rcon.get_player_info(player_name)['steam_id_64']
+        player = _get_set_player(sess, player_name, steam_id_64)
+        sess.add(
+            PlayersAction(
+                action_type=action_type.upper(),
+                steamid=player,
+                reason=reason,
+                by=by
+            )
+        )
+
+def safe_save_player_action(rcon, action_type, player_name, by, reason=''):
+    try:
+        return save_player_action(rcon, action_type, player_name, by, reason)
+    except Exception as e:
+        logger.exception("Failed to record player action: %s %s", action_type, player_name)
+        return False
 
 def save_start_player_session(steam_id_64, timestamp_ms):
     with enter_session() as sess:

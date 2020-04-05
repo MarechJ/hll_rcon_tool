@@ -25,9 +25,9 @@ def get_engine():
         return _ENGINE
     url = os.getenv('DB_URL')
     if not url:
-        url = 'sqlite:///rcon.db'
-        logger.warning(
-            "No $DB_URL specified, falling back to SQLlite in rundir")
+        msg = "No $DB_URL specified. Can't use database features"
+        logger.error(msg)
+        raise ValueError(msg)
 
     _ENGINE = create_engine(url)
     return _ENGINE
@@ -45,8 +45,19 @@ class PlayerSteamID(Base):
                          uselist=True, order_by="desc(PlayerName.created)")
     sessions = relationship("PlayerSession", backref="steamid",
                             uselist=True, order_by="desc(PlayerSession.end)")
+    received_actions = relationship("PlayersAction", backref="steamid",
+                                    uselist=True, order_by="desc(PlayersAction.time)")
     blacklist = relationship("BlacklistedPlayer", backref="steamid",
                              uselist=False)
+
+    def get_penalty_count(self):
+        penalities_type = {'KICK', 'PUNISH', 'TEMPBAN', 'PERMABAN'}
+        counts = dict.fromkeys(penalities_type, 0)
+        for action in self.received_actions:
+            if action.action_type in penalities_type:
+                counts[action.action_type] +=  1
+
+        return counts
 
     def to_dict(self, limit_sessions=5):
         return dict(
@@ -56,6 +67,11 @@ class PlayerSteamID(Base):
             names=[name.to_dict() for name in self.names],
             sessions=[session.to_dict()
                       for session in self.sessions][:limit_sessions],
+            received_actions=[
+                action.to_dict()
+                for action in self.received_actions
+            ],
+            penalty_count=self.get_penalty_count(),
             blacklist=self.blacklist.to_dict() if self.blacklist else None
         )
 
@@ -136,6 +152,27 @@ class BlacklistedPlayer(Base):
             reason=self.reason
         )
 
+
+class PlayersAction(Base):
+    __tablename__ = 'players_actions'
+
+    id = Column(Integer, primary_key=True)
+    action_type = Column(String, nullable=False)
+    playersteamid_id = Column(
+        Integer, ForeignKey('steam_id_64.id'),
+        nullable=False, index=True,
+    )
+    reason = Column(String)
+    by = Column(String)
+    time = Column(DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return dict(
+            action_type=self.action_type,
+            reason=self.reason,
+            by=self.by,
+            time=self.time
+        )
 
 def init_db(force=False):
     # create tables

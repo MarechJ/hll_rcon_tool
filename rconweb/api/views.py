@@ -6,25 +6,52 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
-from rcon.extended_commands import Rcon
+from rcon.recorded_commands import RecordedRcon
 from rcon.commands import CommandFailedError
 from rcon.settings import SERVER_INFO
 from rcon.player_history import (
     get_players_by_appearance, 
     add_player_to_blacklist, 
-    remove_player_from_blacklist
+    remove_player_from_blacklist,
+    get_player_profile
 )
 
 logger = logging.getLogger('rconweb')
 
-
-
+def get_client_ip(request):
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0]
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    return ip
 
 def _get_data(request):
     try:
-        return json.loads(request.body)
+        data = json.loads(request.body)
     except json.JSONDecodeError:
-        return request.GET
+        data = request.GET
+    return data
+
+
+@csrf_exempt
+def get_player(request):
+    data = _get_data(request)
+    res = {}
+    try:
+        res = get_player_profile(data['steam_id_64'], nb_sessions=data.get('nb_sessions'))
+        failed = bool(res)
+    except:
+        logger.exception("Unable to get player %s", data)
+        failed = True
+
+    return JsonResponse({
+        "result": res,
+        "command": "get_player_profile",
+        "arguments": data,
+        "failed": failed
+    })
+
 
 @csrf_exempt
 def blacklist_player(request):
@@ -94,15 +121,14 @@ def wrap_method(func, parameters):
         data = {}
         failure = False
 
-        try:
-            data = json.loads(request.body)
-        except json.JSONDecodeError:
-            data = request.GET
-
+        data = _get_data(request)
         logger.info("%s %s", func.__name__, data)
 
         for pname, param in parameters.items():
-            if param.default != inspect._empty:
+            if pname == 'by':
+                # TODO: replace by account id when we have user layer
+                arguments[pname] = get_client_ip(request)
+            elif param.default != inspect._empty:
                 arguments[pname] = data.get(pname)
             else:
                 try:
@@ -127,7 +153,7 @@ def wrap_method(func, parameters):
     return wrapper
 
 
-ctl = Rcon(
+ctl = RecordedRcon(
     SERVER_INFO
 )
 
@@ -174,6 +200,7 @@ PREFIXES_TO_EXPOSE = [
 ]
 
 commands = [
+    ("player", get_player),
     ("players_history", players_history),
     ("blacklist_player", blacklist_player),
     ("unblacklist_player", unblacklist_player),
