@@ -184,7 +184,7 @@ More or less in order of priorities
 
 First a quick overview of how the software is structured:
 
-![GitHub Logo](/images/logo.png)
+![Components overview](/images/overview.png)
 
 The backbone of the application is HLLConnection + ServerCtl it is what binds the HLL Server rcon commands to the application.
 The `Rcon` and `RecordedRcon` provide some wrapping around the raw results of the game server. And expose some new commands that are a combination of basic commands.
