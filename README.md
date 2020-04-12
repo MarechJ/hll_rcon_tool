@@ -197,13 +197,13 @@ This is a bit hackish, but it saved me a lot of time a the begining, it also rem
 
 ### Start a development instance
 
-##### First boot up the dependancies. I use docker for that but you can also install Redis and Postgres natively if you prefer
+#### First boot up the dependancies. I use docker for that but you can also install Redis and Postgres natively if you prefer
 
     docker-compose -f docker-compose-dev.yml up -d redis postgres
 
 This will make redis and postgres available on you localhost with their default ports. If you need different port bindings refer to the `docker-compose-dev.yml` file
 
-##### Then run an API using Django's development server:
+#### Then run an API using Django's development server:
 
 **Note**: remember that you need to define some environment variables:
 
@@ -229,7 +229,7 @@ Hitting http://127.0.0.1:8000/api/ with Django DEBUG set to true will show you a
 All endpoints accept GET querystring parameters OR (not both at the same time) a json payload. The parameters are the same as the parameter names of the `Rcon` methodds (all that is auto generated remember).
 It is not best practice to have endpoints that do write operations accept a GET with query string parameters but it was just easier that way. 
 
-##### Now start the frontend:
+#### Now start the frontend:
 
     # from the root of the repo
     cd rcongui/
@@ -238,7 +238,7 @@ It is not best practice to have endpoints that do write operations accept a GET 
 
 The GUI should now be available on http://localhost:3000/ it auto refreshes on code changes
 
-##### General notes:
+#### General notes:
 
 If you have problems with dependancies or versions of python or nodejs please refer to the respective Dockerfile that can act as a guide on how to setup a development environment.
 If you need a refresher on which process needs what variables have a look at the docker-compose file.
