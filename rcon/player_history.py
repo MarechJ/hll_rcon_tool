@@ -2,6 +2,7 @@ import logging
 import datetime
 from functools import wraps
 from sqlalchemy import func
+import math
 
 from rcon.models import (
     init_db, enter_session, PlayerName, 
@@ -9,7 +10,6 @@ from rcon.models import (
     PlayersAction
 )
 from rcon.game_logs import on_connected, on_disconnected
-from rcon.extended_commands import Rcon
 from rcon.commands import CommandFailedError
 
 logger = logging.getLogger(__name__)
@@ -56,10 +56,11 @@ def get_players_by_appearance(page=1, page_size=1000, last_seen_from=None, last_
         ).group_by(PlayerSession.playersteamid_id).subquery()
         query = sess.query(PlayerSteamID, sub.c.first, sub.c.last).join(
             sub, sub.c.playersteamid_id == PlayerSteamID.id)
+        total = query.count()
+        page = min(math.ceil(total / page_size), page) 
         players = query.order_by(sub.c.last.desc()).limit(
             page_size).offset((page - 1) * page_size).all()
-        total = query.count()
-
+       
         return {
             'total': total,
             'players': [
@@ -132,6 +133,7 @@ def safe_save_player_action(rcon, action_type, player_name, by, reason=''):
         logger.exception("Failed to record player action: %s %s", action_type, player_name)
         return False
 
+
 def save_start_player_session(steam_id_64, timestamp_ms):
     with enter_session() as sess:
         player = get_player(sess, steam_id_64)
@@ -190,9 +192,14 @@ def ban_if_blacklisted(rcon, steam_id_64, name):
             logger.warning("Player %s was banned due blacklist, reason: %s", str(
                 player), player.blacklist.reason)
             rcon.do_perma_ban(name, player.blacklist.reason)
+            # TODO save author of blacklist
+            safe_save_player_action(
+                rcon=rcon, player_name=player, action_type="PERMABAN", reason=player.blacklist.reason, by='BLACKLIST'
+            )
 
 
 def add_player_to_blacklist(steam_id_64, reason):
+    # TODO save author of blacklist
     with enter_session() as sess:
         player = get_player(sess, steam_id_64)
         if not player:
@@ -245,7 +252,7 @@ def inject_steam_id_64(func):
 
 @on_connected
 @inject_steam_id_64
-def handle_on_connect(rcon: Rcon, struct_log, steam_id_64):
+def handle_on_connect(rcon, struct_log, steam_id_64):
     save_player(struct_log['player'], steam_id_64)
     save_start_player_session(steam_id_64, struct_log['timestamp_ms'])
     ban_if_blacklisted(rcon, steam_id_64, struct_log['player'])
@@ -253,7 +260,7 @@ def handle_on_connect(rcon: Rcon, struct_log, steam_id_64):
 
 @on_disconnected
 @inject_steam_id_64
-def handle_on_disconnect(rcon: Rcon, struct_log, steam_id_64):
+def handle_on_disconnect(rcon, struct_log, steam_id_64):
     save_end_player_session(steam_id_64, struct_log['timestamp_ms'])
 
 
