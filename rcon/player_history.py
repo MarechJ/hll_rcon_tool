@@ -57,7 +57,7 @@ def get_players_by_appearance(page=1, page_size=1000, last_seen_from=None, last_
         query = sess.query(PlayerSteamID, sub.c.first, sub.c.last).join(
             sub, sub.c.playersteamid_id == PlayerSteamID.id)
         total = query.count()
-        page = min(math.ceil(total / page_size), page) 
+        page = min(max(math.ceil(total / page_size), 1), page) 
         players = query.order_by(sub.c.last.desc()).limit(
             page_size).offset((page - 1) * page_size).all()
        
