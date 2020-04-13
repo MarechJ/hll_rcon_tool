@@ -40,7 +40,7 @@ def _get_set_player(sess, player_name, steam_id_64):
     return player
 
 
-def get_players_by_appearance(page=1, page_size=1000, last_seen_from=None, last_seen_till=None):
+def get_players_by_appearance(page=1, page_size=1000, last_seen_from: datetime.datetime = None, last_seen_till: datetime.datetime = None):
     if page <= 0:
         raise ValueError('page needs to be >= 1')
     if page_size <= 0:
@@ -56,6 +56,10 @@ def get_players_by_appearance(page=1, page_size=1000, last_seen_from=None, last_
         ).group_by(PlayerSession.playersteamid_id).subquery()
         query = sess.query(PlayerSteamID, sub.c.first, sub.c.last).join(
             sub, sub.c.playersteamid_id == PlayerSteamID.id)
+        if last_seen_from:
+            query = query.filter(sub.c.last >= last_seen_from)
+        if last_seen_till:
+            query = query.filter(sub.c.last <= last_seen_till)
         total = query.count()
         page = min(max(math.ceil(total / page_size), 1), page) 
         players = query.order_by(sub.c.last.desc()).limit(
