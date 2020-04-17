@@ -15,6 +15,7 @@ from rcon.player_history import (
     remove_player_from_blacklist,
     get_player_profile
 )
+from rcon.user_config import AutoBroadcasts, InvalidConfigurationError
 
 logger = logging.getLogger('rconweb')
 
@@ -32,6 +33,56 @@ def _get_data(request):
     except json.JSONDecodeError:
         data = request.GET
     return data
+
+
+@csrf_exempt
+def get_auto_broadcasts_config(request):
+    failed = False
+    config = None
+    
+    try:
+        broadcasts = AutoBroadcasts()
+        config = {
+            'messages': broadcasts.get_messages(),
+            'randomized': broadcasts.get_randomize(),
+            'enabled': broadcasts.get_enabled()
+        }
+    except:
+        logger.exception("Error fetch broadcasts config")
+        failed = True
+
+    return JsonResponse({
+        "result": config,
+        "command": "get_auto_broadcasts_config",
+        "arguments": None,
+        "failed": failed
+    })
+
+@csrf_exempt
+def set_auto_broadcasts_config(request):
+    failed = False
+    res = None
+    data = _get_data(request)
+    broadcasts = AutoBroadcasts()
+    config_keys = {
+        'messages': broadcasts.set_messages, 
+        'randomized': broadcasts.set_randomize, 
+        'enabled': broadcasts.set_enabled,
+    }
+    try:
+        for k, v in data.items():
+            if k in config_keys:
+                config_keys[k](v)
+    except InvalidConfigurationError as e:
+        failed = True
+        res = str(e)
+
+    return JsonResponse({
+        "result": res,
+        "command": "set_auto_broadcasts_config",
+        "arguments": data,
+        "failed": failed
+    })
 
 
 @csrf_exempt
@@ -204,7 +255,9 @@ commands = [
     ("players_history", players_history),
     ("blacklist_player", blacklist_player),
     ("unblacklist_player", unblacklist_player),
-    ("scoreboard", text_scoreboard)
+    ("scoreboard", text_scoreboard),
+    ("get_auto_broadcasts_config", get_auto_broadcasts_config),
+    ("set_auto_broadcasts_config", set_auto_broadcasts_config),
 ]
 
 # Dynamically register all the methods from ServerCtl

@@ -25,7 +25,7 @@ import Brightness4OutlinedIcon from '@material-ui/icons/Brightness4Outlined';
 import UseAutcomplete from './components/PlayersHistory'
 import PlayersHistory from "./components/PlayersHistory";
 import Header from "./components/Header";
-
+import RconSettings from './components/RconSettings';
 
 const Live = ({ classes }) => (
   <Grid container spacing={1}>
@@ -82,8 +82,7 @@ function App() {
                   <HLLSettings classes={classes} />
                 </Grid>
                 <Grid item sm={12} lg={6}>
-                    <h2>Advanced RCON settings</h2>
-                    <small>Coming soon</small>
+                  <RconSettings classes={classes} />
                 </Grid>
               </Grid>
             </Route>
