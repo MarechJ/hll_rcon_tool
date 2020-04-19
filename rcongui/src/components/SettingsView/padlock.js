@@ -11,7 +11,7 @@ export default function Padlock({handleChange, checked, label}) {
         control={
           <Switch
             checked={checked}
-            onChange={handleChange}
+            onChange={e => handleChange(e.target.checked)}
             name={label}
             color="primary"
           />

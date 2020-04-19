@@ -9,10 +9,10 @@ def get_user_config(key, default=None):
         return res.value if res else default
     
 def _add_conf(sess, key, val):
-    res = sess.add(UserConfig(
-            key=key,
-            value=val
-        ))
+    return sess.add(UserConfig(
+        key=key,
+        value=val
+    ))
 
 def set_user_config(key, object_):
     with enter_session() as sess:
@@ -50,6 +50,8 @@ class AutoBroadcasts:
         msgs = []
 
         for m in messages:
+            if isinstance(m, str):
+                m = m.split(' ', 1)
             if len(m) != 2:
                 raise InvalidConfigurationError(
                     "Broacast message must be tuples (<int: seconds>, <str: message>)"
@@ -63,6 +65,7 @@ class AutoBroadcasts:
                 raise InvalidConfigurationError(
                     "Time must be an positive integer"
                 ) from e
+            msgs.append((time, msg))
 
         set_user_config(self.BROADCASTS_MESSAGES, msgs)
         
@@ -81,6 +84,7 @@ class AutoBroadcasts:
         if not isinstance(bool_, bool):
             raise InvalidConfigurationError("Enabled must be a boolean")
         return set_user_config(self.BROADCASTS_ENABLED, bool_)
+
 
 def seed_default_config():
     with enter_session() as sess:

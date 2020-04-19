@@ -43,7 +43,7 @@ def get_auto_broadcasts_config(request):
     try:
         broadcasts = AutoBroadcasts()
         config = {
-            'messages': broadcasts.get_messages(),
+            'messages': ["{} {}".format(m[0], m[1]) for m in broadcasts.get_messages()],
             'randomized': broadcasts.get_randomize(),
             'enabled': broadcasts.get_enabled()
         }
