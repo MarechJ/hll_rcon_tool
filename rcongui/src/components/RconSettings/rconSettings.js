@@ -35,11 +35,12 @@ class RconSettings extends React.Component {
     }
 
     async saveBroadcastsSettings(data) {
+        
         return postData(`${process.env.REACT_APP_API_URL}set_auto_broadcasts_config`, 
            data
         )
-            .then((res) => showResponse(res, "get_auto_broadcasts_config", true))
-            .then(this.loadBroadcastsSettings())
+            .then((res) => showResponse(res, "set_auto_broadcasts_config", true))
+            .then(res => !res.failed && this.setState(data))
     }
 
     validate_messages() {
