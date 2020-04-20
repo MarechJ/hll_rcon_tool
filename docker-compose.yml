@@ -9,13 +9,14 @@ services:
       HLL_PASSWORD: ${HLL_PASSWORD}
       BROADCAST_PATH: /conf/
       REDIS_URL: redis://redis:6379/0
+      DB_URL: 'postgres://rcon:${HLL_DB_PASSWORD}@postgres:5432'
     restart: always
     links:
       - "redis:redis"
       - "postgres:postgres"
     volumes:
       - .:/conf
-    command: python -m rcon.broadcast
+    command: bash -c "python -m rcon.cli init_db && python -m rcon.broadcast"
   logs_event_loop:
     image: maresh/hll_rcon:latest
     command: bash -c "python -m rcon.cli init_db && python -m rcon.cli log_loop"
