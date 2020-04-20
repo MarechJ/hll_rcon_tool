@@ -59,6 +59,19 @@ class Rcon(ServerCtl):
             )
         return admins
         
+
+    def get_online_admins(self):
+        admins = self.get_admin_ids()
+        players = self.get_players()
+        online = []
+        admins_ids = set(a['steam_id_64'] for a in admins)
+        
+        for player in players:
+            if player['steam_id_64'] in admins_ids:
+                online.append(player['name'])
+        
+        return online
+
     def do_add_admin(self, steam_id_64, role, name):
         with invalidates(self.get_admin_ids):
             return super().do_add_admin(steam_id_64, role, name)
@@ -337,7 +350,7 @@ class Rcon(ServerCtl):
             return super().do_perma_ban(player, reason)
 
 
-    @ttl_cache(5)  # TODO cache longer
+    @ttl_cache(60 * 5)
     def get_map_rotation(self):
         return super().get_map_rotation()
 
