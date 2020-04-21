@@ -77,7 +77,7 @@ Feel free to change the port to your likings in the docker-compose.yml:
 
 ##### To update to the latest version:
 
-    docker-compose pull && docker-compose up -d
+    git pull && docker-compose pull && docker-compose up -d
 
 ##### To ROLLBACK (in case of issue) to a previous version:
 
