@@ -98,22 +98,6 @@ To the version you want (here we use v1.1.0)
     image: maresh/hll_rcon_frontend:v1.1.0
 
 
-##### If you want the auto broadcasts
-
-    # Create a file at the root of the repo
-    touch broadcasts.txt
-    # Edit the file to look like the below
-    cat broadcasts.txt
-    
-    60 /nextmap
-    30 This message will be displayed for 30 secs
-
-The integer at the beginning is the time in seconds the message should be diplayed.
-/nextmap is a special message that will show the next map to come
-You can have as many messages as you want, they run in a loop starting from the first one.
-Don't forget to add a line return after the last line
-
-
 ## Known issues and limitations
 
 - After a sometime without being used the API will lose the connection to the game server so when you open the GUI the first time you might see an error that it can't fetch the list of players. However this will recover on its own just refresh or wait til the next auto refresh
