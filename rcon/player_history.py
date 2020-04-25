@@ -2,6 +2,7 @@ import logging
 import datetime
 from functools import wraps
 from sqlalchemy import func
+from sqlalchemy.orm import contains_eager
 import math
 
 from rcon.models import (
@@ -32,15 +33,16 @@ def get_player_profile(steam_id_64, nb_sessions):
 
 
 def _get_set_player(sess, player_name, steam_id_64):
-    player = get_player(sess, steam_id_64)
+    player = _get_player(sess, steam_id_64)
     if player is None:
         _save_steam_id(sess, steam_id_64)
-    _save_player_alias(sess, player, player_name)
+    if player_name:
+        _save_player_alias(sess, player, player_name)
 
     return player
 
 
-def get_players_by_appearance(page=1, page_size=1000, last_seen_from: datetime.datetime = None, last_seen_till: datetime.datetime = None):
+def get_players_by_appearance(page=1, page_size=1000, last_seen_from: datetime.datetime = None, last_seen_till: datetime.datetime = None, player_name = None):
     if page <= 0:
         raise ValueError('page needs to be >= 1')
     if page_size <= 0:
@@ -56,10 +58,14 @@ def get_players_by_appearance(page=1, page_size=1000, last_seen_from: datetime.d
         ).group_by(PlayerSession.playersteamid_id).subquery()
         query = sess.query(PlayerSteamID, sub.c.first, sub.c.last).join(
             sub, sub.c.playersteamid_id == PlayerSteamID.id)
+
+        if player_name:
+            query = query.join(PlayerSteamID.names).filter(PlayerName.name.ilike("%{}%".format(player_name))).options(contains_eager(PlayerSteamID.names))
         if last_seen_from:
             query = query.filter(sub.c.last >= last_seen_from)
         if last_seen_till:
             query = query.filter(sub.c.last <= last_seen_till)
+
         total = query.count()
         page = min(max(math.ceil(total / page_size), 1), page) 
         players = query.order_by(sub.c.last.desc()).limit(
@@ -205,10 +211,7 @@ def ban_if_blacklisted(rcon, steam_id_64, name):
 def add_player_to_blacklist(steam_id_64, reason):
     # TODO save author of blacklist
     with enter_session() as sess:
-        player = get_player(sess, steam_id_64)
-        if not player:
-            raise CommandFailedError(
-                f"Player with steam id {steam_id_64} not found")
+        player = _get_set_player(sess, None, steam_id_64)
 
         if player.blacklist:
             if player.blacklist.is_blacklisted:
