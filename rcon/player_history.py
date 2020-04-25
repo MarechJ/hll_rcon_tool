@@ -42,7 +42,7 @@ def _get_set_player(sess, player_name, steam_id_64):
     return player
 
 
-def get_players_by_appearance(page=1, page_size=1000, last_seen_from: datetime.datetime = None, last_seen_till: datetime.datetime = None, player_name = None):
+def get_players_by_appearance(page=1, page_size=1000, last_seen_from: datetime.datetime = None, last_seen_till: datetime.datetime = None, player_name = None, blacklisted = None):
     if page <= 0:
         raise ValueError('page needs to be >= 1')
     if page_size <= 0:
@@ -61,6 +61,8 @@ def get_players_by_appearance(page=1, page_size=1000, last_seen_from: datetime.d
 
         if player_name:
             query = query.join(PlayerSteamID.names).filter(PlayerName.name.ilike("%{}%".format(player_name))).options(contains_eager(PlayerSteamID.names))
+        if blacklisted is True:
+            query = query.join(PlayerSteamID.blacklist).filter(BlacklistedPlayer.is_blacklisted == True).options(contains_eager(PlayerSteamID.blacklist))
         if last_seen_from:
             query = query.filter(sub.c.last >= last_seen_from)
         if last_seen_till:
