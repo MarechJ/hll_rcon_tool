@@ -46,7 +46,7 @@ __From here all the commands assume that you are at the root of the repo you jus
 
 
 You could also just export the variables in your terminal before running the docker-compose commands
-OR edit the `docker-compose.yml` and replace the `${variable}` directly in there, however you might have a conflic next time you update the sources.
+OR edit the `docker-compose.yml` and replace the `${variable}` directly in there, however you might have a merge conflict next time you update the sources.
 Alternatively you can also specify them in the command line. More details: https://docs.docker.com/compose/environment-variables/#set-environment-variables-with-docker-compose-run
 
 ##### Create a .htpasswd to protect your RCON from the public
@@ -64,20 +64,13 @@ Some additional info: https://docs.nginx.com/nginx/admin-guide/security-controls
 
     docker-compose up -d 
 
-The web application will be available on `<your server ip>:8010`
-Feel free to change the port to your likings in the docker-compose.yml:
+The web application will be available on `<your server ip>:$RCONWEB_PORT` 
 
-    frontend:
-      build: ./rcongui
-      environment:
-        REACT_APP_BATTLEMETRICS_SERVERID: ${BATTLEMETRICS_SERVERID}
-      ports:
-        # --> here <---
-        - 8010:80  
 
 ##### To update to the latest version:
 
     git pull && docker-compose pull && docker-compose up -d
+
 
 ##### To ROLLBACK (in case of issue) to a previous version:
 
@@ -104,10 +97,9 @@ To the version you want (here we use v1.1.0)
 
 - The game server in rare case fails to return the steam ID of a player. 
 
-- We logs are completely empty the game server will fail to respond to the request causing an error to show in the API/GUI
+- When logs are completely empty the game server will fail to respond to the request causing an error to show in the API/GUI
 
 - The RCON api server truncates the name of players to a maximum of 20 charcheters even though, up to 32 characters are displayed in game. Bottom line you don't always see the full name
-
 
 
 ## How to use

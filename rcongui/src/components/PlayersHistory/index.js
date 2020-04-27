@@ -4,16 +4,18 @@ import useAutocomplete from '@material-ui/lab/useAutocomplete';
 import { makeStyles } from '@material-ui/core/styles';
 import { postData, showResponse } from "../../utils/fetchUtils";
 import { toast } from "react-toastify";
-import { join, each, reduce, get } from 'lodash'
+import { join, each, reduce, get, map } from 'lodash'
 import Autocomplete from "@material-ui/lab/Autocomplete";
 import Pagination from '@material-ui/lab/Pagination';
-import { Paper, Icon, Grid, Link, Divider, Popover, Badge, Button, TextField, FormControl, InputLabel, MenuItem, Select } from '@material-ui/core'
+import { Paper, Icon, Grid, Link, Divider, Popover, Badge, Button, TextField, FormControl, InputLabel, MenuItem, Select, FormControlLabel, Switch } from '@material-ui/core'
 import moment from 'moment'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSkullCrossbones } from '@fortawesome/free-solid-svg-icons'
 import { ReasonDialog } from "../PlayerView/playerActions";
 import RefreshIcon from '@material-ui/icons/Refresh';
+import MomentUtils from '@date-io/moment';
 
+import SearchBar from './searchBar'
 
 
 const show_names = (names) => (
@@ -84,9 +86,9 @@ const PlayerItem = ({ classes, names, steamId64, firstSeen, lastSeen, blackliste
                             </Grid>
                             <Grid item xs={12}>
                                 <small style={{ display: "flex" }}>
-                                <Link target="_blank" color="inherit"href={`${process.env.REACT_APP_API_URL}player?steam_id_64=${steamId64}`}>
-                                    {steamId64}
-                                </Link>
+                                    <Link target="_blank" color="inherit" href={`${process.env.REACT_APP_API_URL}player?steam_id_64=${steamId64}`}>
+                                        {steamId64}
+                                    </Link>
                                 </small>
                             </Grid>
                         </Grid>
@@ -154,7 +156,7 @@ const FilterPlayer = ({ classes, playersHistory, pageSize, total, page, setPageS
         disableListWrap: true,
         disableRestoreFocus: true,
         disablePortal: true,
-        autoSelect: true, 
+        autoSelect: true,
         debug: true,
         options: namesIndex,
         getOptionLabel: option => option.names ? option.names : option,
@@ -162,31 +164,14 @@ const FilterPlayer = ({ classes, playersHistory, pageSize, total, page, setPageS
 
     const [doConfirmPlayer, setDoConfirmPlayer] = React.useState(false)
     const playerList = groupedOptions.length > 0 ? groupedOptions : namesIndex
- 
+
     return (
         <div>
             <Grid container {...getRootProps()} alignContent="flex-start" alignItems="center" spacing={2}>
                 <Grid item xs={12} md={6}>
                     <TextField fullWidth inputProps={{ ...getInputProps() }} label="Filter current selection" InputLabelProps={{ shrink: true }} />
                 </Grid>
-                <Grid item xs={12} md={5}>
-                    <FormControl fullWidth>
-                        <InputLabel >Page size</InputLabel>
-                        <Select
-                            value={pageSize}
-                            onChange={e => setPageSize(e.target.value)}
-                        >
-                            <MenuItem value={10}>10</MenuItem>
-                            <MenuItem value={20}>20</MenuItem>
-                            <MenuItem value={30}>30</MenuItem>
-                            <MenuItem value={40}>40</MenuItem>
-                            <MenuItem value={50}>50</MenuItem>
-                            <MenuItem value={100}>100</MenuItem>
-                            <MenuItem value={200}>200</MenuItem>
-                            <MenuItem value={500}>500</MenuItem>
-                        </Select>
-                    </FormControl>
-                </Grid>
+                
                 <Grid item xs={12} md={1}>
                     <Button variant="outlined" onClick={onRefresh}><RefreshIcon /></Button>
                 </Grid>
@@ -197,7 +182,7 @@ const FilterPlayer = ({ classes, playersHistory, pageSize, total, page, setPageS
             <Grid container spacing={2}>
                 {playerList.map(nameIndex => {
                     const player = playersHistory[nameIndex.idx]
-                    return <Grid key={player.steam_id_64} /*style={{display: displayMap[player.steam_id_64] ? "block": "none"}}*/ item xs={12} sm={6} md={4} lg={3} xl={2}>
+                    return <Grid key={player.steam_id_64} item xs={12} sm={6} md={4} lg={3} xl={2}>
                         <PlayerItem
                             key={player.steam_id_64}
                             classes={classes}
@@ -241,7 +226,12 @@ class PlayersHistory extends React.Component {
             playersHistory: [],
             total: 0,
             pageSize: 50,
-            page: 1
+            page: 1,
+            byName: "",
+            bySteamId: "",
+            blacklistedOnly: false,
+            lastSeenFrom: null,//new MomentUtils().addDays(new MomentUtils().date(), -7),
+            lastSeenUntil: null, //new MomentUtils().addDays(new MomentUtils().date(), 1),
         }
 
         this.getPlayerHistory = this.getPlayerHistory.bind(this)
@@ -305,18 +295,30 @@ class PlayersHistory extends React.Component {
 
     render() {
         const { classes } = this.props
-        let { playersHistory, pageSize, page, total } = this.state
+        const { playersHistory, pageSize, page, total, byName, bySteamId, blacklistedOnly, lastSeenFrom, lastSeenUntil } = this.state
+
 
         // There's a bug in the autocomplete code, if there's a boolean in the object it makes it match against
         // "false" or "true" so essentially, everything matches to "F" or "T"
         // That's why we remap the list
-   
+
         return <Grid container className={classes.padding}>
+            <Grid item xs={12}>
+                <SearchBar 
+                    pageSize={pageSize} setPageSize={v => this.setState({pageSize: v})} 
+                    lastSeenFrom={lastSeenFrom} setLastSeenFrom={v => this.setState({lastSeenFrom: v})}
+                    lastSeenUntil={lastSeenUntil} setLastSeenUntil={v => this.setState({lastSeenUntil: v})}
+                    name={byName} setName={v => this.setState({byName: v})}
+                    steamId={bySteamId} setSteamId={v => this.setState({bySteamId: v})}
+                    blacklistedOnly={blacklistedOnly} setBlacklistedOnly={v => this.setState({blacklistedOnly: v})}
+                    onSearch={this.getPlayerHistory}
+                />
+            </Grid>
             <Grid item xs={12}>
                 <FilterPlayer
                     classes={classes}
                     playersHistory={playersHistory}
-                    namesIndex={playersHistory.map((el, idx) => ({names: join(el.names, ','), idx: idx}))}
+                    namesIndex={playersHistory.map((el, idx) => ({ names: join(el.names, ','), idx: idx }))}
                     pageSize={pageSize}
                     setPageSize={(pageSize) => this.setState({ pageSize: pageSize }, this.getPlayerHistory)}
                     total={total}
