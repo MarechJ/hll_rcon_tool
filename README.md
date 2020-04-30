@@ -64,8 +64,11 @@ Some additional info: https://docs.nginx.com/nginx/admin-guide/security-controls
 
     docker-compose up -d 
 
-The web application will be available on `<your server ip>:8010`
-Feel free to change the port to your likings in the docker-compose.yml:
+**IMPORTANT** If you are using a Raspberry Pi or any other ARM 32 bits you need to use the alternative docker-compose file:
+
+    docker-compose -f docker-compose-arm32.yml up -d
+
+The web application will be available on `<your server ip>:$RCONWEB_PORT` 
 
     frontend:
       build: ./rcongui
