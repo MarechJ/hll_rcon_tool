@@ -60,7 +60,7 @@ services:
   frontend:
     build:
       context: ./rcongui
-      dockerfile: ./rcongui/Dockerfile-arm32
+      dockerfile: Dockerfile-arm32
     ports:
       - ${RCONWEB_PORT}:80
     links:
