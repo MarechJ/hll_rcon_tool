@@ -12,13 +12,27 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 import os
 import logging
 from logging.config import dictConfig
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
+from sentry_sdk.integrations.logging import LoggingIntegration
+from rcon.extended_commands import Rcon
+from rcon.settings import SERVER_INFO
+import re
+from sentry_sdk import configure_scope
+
+
+
+try:
+    ENVIRONMENT = re.sub('[^0-9a-zA-Z]+', '', (Rcon(SERVER_INFO).get_name() or "default").strip())[:64]
+except:
+    ENVIRONMENT = "undefined"
 
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
         'console': {
-            'format': '[%(asctime)s][%(levelname)s] %(name)s '
+            'format': f'[%(asctime)s][%(levelname)s][{ENVIRONMENT}] %(name)s '
                       '%(filename)s:%(funcName)s:%(lineno)d | %(message)s',
             },
     },
@@ -39,12 +53,17 @@ LOGGING = {
     'loggers': {
         'rconweb': {
             'handlers': ['console', 'file'],
-            'level': 'DEBUG',
+            'level': os.getenv('LOGGING_LEVEL', 'DEBUG'),
+            'propagate': False,
+        },
+        'django': {
+            'handlers': ['console', 'file'],
+            'level': 'WARNING',
             'propagate': True,
         },
         '__main__': {
             'handlers': ['console', 'file'],
-            'level': 'DEBUG',
+            'level': os.getenv('LOGGING_LEVEL', 'DEBUG'),
             'propagate': True,
         }
     }
@@ -53,13 +72,41 @@ LOGGING = {
 
 dictConfig(LOGGING)
 
+sentry_logging = LoggingIntegration(
+    level=logging.DEBUG,       # Capture debug and above as breadcrumbs
+    event_level=logging.ERROR  # Send errors as events
+)
+
+# Switch to public integration if possible
+sentry_sdk.init(
+    dsn="https://78c97168e38343e9aba5435aebd94b2b@o60943.ingest.sentry.io/5220965",
+    integrations=[DjangoIntegration(), sentry_logging],
+    release=os.getenv("RELEASE_TAG", "dev"),
+    send_default_pii=True
+)
+
+with configure_scope() as scope:
+    scope.set_extra("instance", ENVIRONMENT)
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
+
+sentry_sdk.init(
+    dsn="https://78c97168e38343e9aba5435aebd94b2b@o60943.ingest.sentry.io/5220965",
+    integrations=[DjangoIntegration()],
+
+    # If you wish to associate users to errors (assuming you are using
+    # django.contrib.auth) you may enable sending PII data.
+    send_default_pii=True
+)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
 
+# TODO: move that to env. We don't need it yet but we might
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = '9*i9zm1jx(5y-ns=*r6p%#6-q!bst98u3o3pw6joyf#-e(bh(0'
 

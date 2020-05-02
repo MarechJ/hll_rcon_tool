@@ -9,6 +9,7 @@ services:
       HLL_PASSWORD: ${HLL_PASSWORD}
       BROADCAST_PATH: /conf/
       REDIS_URL: redis://redis:6379/0
+      LOGGING_LEVEL: DEBUG
       DB_URL: 'postgres://rcon:${HLL_DB_PASSWORD}@postgres:5432'
     restart: always
     links:
@@ -27,7 +28,7 @@ services:
       HLL_PASSWORD: ${HLL_PASSWORD}
       DB_URL: 'postgres://rcon:${HLL_DB_PASSWORD}@postgres:5432'
       REDIS_URL: redis://redis:6379/0
-      LOGGING_LEVEL: INFO
+      LOGGING_LEVEL: DEBUG
       LOGGING_PATH: /logs/logs_event_loop.log
     volumes:
       - .:/logs
@@ -41,7 +42,7 @@ services:
       HLL_PORT: ${HLL_PORT}
       HLL_PASSWORD: ${HLL_PASSWORD}
       LOGGING_PATH: /logs/backend.log
-      LOGGING_LEVEL: INFO
+      LOGGING_LEVEL: DEBUG
       DJANGO_LOGGING_PATH: /logs/django.log
       REDIS_URL: redis://redis:6379/0
       DB_URL: 'postgres://rcon:${HLL_DB_PASSWORD}@postgres:5432'
