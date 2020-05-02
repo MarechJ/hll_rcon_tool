@@ -19,6 +19,9 @@ from rcon.user_config import AutoBroadcasts, InvalidConfigurationError
 
 logger = logging.getLogger('rconweb')
 
+
+# TODO this does not work if's there a second reverse proxy on the host of docker
+# TODO Remove when user accounts are implemented
 def get_client_ip(request):
     x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
     if x_forwarded_for:
@@ -166,12 +169,12 @@ def players_history(request):
 
 def wrap_method(func, parameters):
     @csrf_exempt
+    @wraps(func)
     def wrapper(request):
         logger = logging.getLogger('rconweb')
         arguments = {}
         data = {}
         failure = False
-
         data = _get_data(request)
         logger.info("%s %s", func.__name__, data)
 

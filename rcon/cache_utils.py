@@ -5,7 +5,6 @@ import os
 import functools
 from cachetools.func import ttl_cache as cachetools_ttl_cache
 
-#REDIS_POOL = redis.BlockingConnectionPool(max_connections=20, host='localhost', port=6379, db=0)
 logger = logging.getLogger(__name__)
 
 _REDIS_POOL = None
