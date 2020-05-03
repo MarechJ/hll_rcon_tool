@@ -26,6 +26,8 @@ import UseAutcomplete from './components/PlayersHistory'
 import PlayersHistory from "./components/PlayersHistory";
 import Header from "./components/Header";
 import RconSettings from './components/RconSettings';
+import {pink, red} from '@material-ui/core/colors';
+
 
 const Live = ({ classes }) => (
   <Grid container spacing={1}>
@@ -48,15 +50,38 @@ const darkTheme = createMuiTheme({
 const lightTheme = createMuiTheme({
   palette: {
     type: 'light',
-  },
+  }
 });
+
+const withLove = createMuiTheme({
+  palette: {
+    primary: pink,
+    secondary: red,
+    background: {
+      paper: pink
+    }
+  },
+  overrides: {
+    MuiCssBaseline: {
+      "@global": {
+        body: {
+          backgroundSize: "cover",
+          backgroundImage:
+            'url("jk.jpg")'
+        }
+      }
+    }
+  }
+});
+
 
 
 function App() {
   const classes = useStyles();
   const [dark, setDark] = React.useState(localStorage.getItem('darKTheme'))
+  console.log("dark: ", dark)
   const setSaveDark = (bool) => {localStorage.setItem('darKTheme', bool); setDark(bool)}
-  const theme = dark ? darkTheme : lightTheme
+  const theme = dark == "dark" ? darkTheme : dark == '<3' ? withLove : lightTheme
  
   return (
     <div className={"App " + classes.root}>

@@ -37,7 +37,10 @@ class ServerStatus extends React.Component {
     async load(command) {
         return fetch(`${process.env.REACT_APP_API_URL}get_status`)
             .then(response => showResponse(response, command))
-            .then(data => this.setState({ name: data.result.name, map: data.result.map, nbPlayers: data.result.nb_players }))
+            .then(data => {
+                this.setState({ name: data.result.name, map: data.result.map, nbPlayers: data.result.nb_players })
+                if (data.result.name.indexOf('CFr') >= 0 && data.result.name.indexOf('Training') == -1) {this.props.doJk()}
+            })
             .catch(error => toast.error("Unable to connect to API " + error));
     }
 
