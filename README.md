@@ -1,43 +1,63 @@
 # Hell Let Loose (HLL) advanced RCON  
 
-CLI (Python), an HTTP API (Python) and a friendly GUI (React)
+An extended RCON tool for Hell Let loose.
+It's composed of HTTP Api, a friendly GUI and if you need it a cli or use it as a library to build you own client.
 
-Feel free to contribute. There's some ironing out and lots of features to do :)
+Please join us on discord if you use it, for feedback, troubleshooting and informations about updates: https://discord.gg/tVhGYxb
 
-## How to install the APP
+Feel free to contribute, some parts would need a rewrite (I single-handedly built it so I took some shortcuts).
+There's a LOT of new cool features that could be added, I'd be happy to walk through the code with you if you want to get involved.
 
-### With docker compose
+Here's a small sample:
+![Live view page](/images/homepage.png)
 
-Pre-requistes:
-  - Having a dedicated server (Linux or Windows)
-  - Docker Engine (Community) installed: https://docs.docker.com/install/
-  - Docker Compose installed: https://docs.docker.com/compose/install/
+# How to install the APP
 
-#### Install steps
+### Pre-requistes:
 
-##### Get the sources
+  - Having some basic shell (command prompt) skills. Feel free to ask for help on the Discord
+  - Having a dedicated server - This app is meant to run 24/7 (it's a website with attached services)
+  - The below isntalled on the server where you install it:
+     - (Otionnal but recommanded) GIT: https://git-scm.com/downloads
+     - Docker Engine (Community) installed: https://docs.docker.com/install/
+     - Docker Compose installed: https://docs.docker.com/compose/install/
+
+## Install steps
+
+### 1. Get the sources
 
     git clone https://github.com/MarechJ/hll_rcon_tool.git
     cd hll_rcon_tool
 
-Note: If you have several servers, clone it multiple times in different directories like so:
+If you don't have git you can also download the [latest zip release](https://github.com/MarechJ/hll_rcon_tool/releases/latest), however it's much less practical for updating.
+
+Note: If you have several servers, clone it multiple times in different directories like below (if you'd like your servers to share a DB for Blacklists contact us on discord)
 
     git clone https://github.com/MarechJ/hll_rcon_tool.git hll_rcon_tool_server_number_2
     cd hll_rcon_tool_server_number_2
 
+
 __From here all the commands assume that you are at the root of the repo you just cloned__
 
-##### Set your server informations. Edit the .env and fill in the blanks (for all your servers) like so:
+### 2. Set your server informations. Edit the `.env` file and fill in the blanks (for all your servers) like so:
 
+Note if you don't see the `.env` file you need to activate the show hidden files option on windows. On linux don't forget the `-a`: `ls -a`
 
     # Ip address of the game server
     HLL_HOST=22.33.44.55
     # Rcon port (not the query one!)
     HLL_PORT=20310
-    # Your rcon password
+    # Your rcon password (the one you use with your current Rcon)
     HLL_PASSWORD=mypassword
-    # Choose a password for your Database
+    # Choose a password for your Database (you probably won't need it)
     HLL_DB_PASSWORD=mydatabasepassword
+
+    # The two below are the username and password that will be required to access the ronc website. 
+    # I recommand using a different password that the RCON one
+    # If you want to change it later, just change it here then run the command to start the app
+    RCONWEB_USERNAME=myteam
+    RCONWEB_PASSWORD=mynewpassword
+ 
 
     # If you have multiple servers, also change these lines (each server must have a different port, just increment the number)
     RCONWEB_PORT=8011
@@ -45,44 +65,42 @@ __From here all the commands assume that you are at the root of the repo you jus
     HLL_REDIS_HOST_PORT=6380
 
 
+Note for power users:
+
 You could also just export the variables in your terminal before running the docker-compose commands
 OR edit the `docker-compose.yml` and replace the `${variable}` directly in there, however you might have a conflic next time you update the sources.
-Alternatively you can also specify them in the command line. More details: https://docs.docker.com/compose/environment-variables/#set-environment-variables-with-docker-compose-run
+Alternatively you can also specify them in the command line. [More details](https://docs.docker.com/compose/environment-variables/#set-environment-variables-with-docker-compose-run)
 
-##### Create a .htpasswd to protect your RCON from the public
+### 3. RUN it!
 
-    mkdir pw
-    cd pw
-    htpasswd -c .htpasswd <username>
-      New password:
-      Re-type new password:
-      Adding password for user <username>
-
-Some additional info: https://docs.nginx.com/nginx/admin-guide/security-controls/configuring-http-basic-authentication/
-
-##### RUN it!
+#### Linux
 
     docker-compose up -d 
 
-**IMPORTANT** If you are using a Raspberry Pi or any other ARM 32 bits you need to use the alternative docker-compose file:
+#### Windows
 
-    docker-compose -f docker-compose-arm32.yml up -d
+    docker-compose -f docker-compose.yml -f docker-compose.windows.yml up -d 
 
-The web application will be available on `<your server ip>:$RCONWEB_PORT` 
+#### Raspberry-Pi or any ARM32v7
 
-    frontend:
-      build: ./rcongui
-      environment:
-        REACT_APP_BATTLEMETRICS_SERVERID: ${BATTLEMETRICS_SERVERID}
-      ports:
-        # --> here <---
-        - 8010:80  
+    docker-compose -f docker-compose.yml -f docker-compose.arm32v7.yml  up -d 
 
-##### To update to the latest version:
+
+The web application will be available on `<your server ip>:$RCONWEB_PORT` (you can use http://localhost:8010 if you test from the machine where it's installed)
+
+Note: If you are running it on Windows prior to 10 docker runs in a virtual machine, so you have to [find the IP](https://devilbox.readthedocs.io/en/latest/howto/docker-toolbox/find-docker-toolbox-ip-address.html) of that VM.
+
+You're done, ENJOY!
+
+### To update to the latest version:
 
     git pull && docker-compose pull && docker-compose up -d
 
-##### To ROLLBACK (in case of issue) to a previous version:
+Or download the [latest zip release](https://github.com/MarechJ/hll_rcon_tool/releases/latest)
+
+Note that it's important you get the sources every time, or at least the docker-compose files, as new dependancies might be introduced
+
+### To downgrade (in case of issue) to a previous version:
 
 Check the availabe versions numbers on docker hub (or github releases):
 https://hub.docker.com/r/maresh/hll_rcon/tags
@@ -94,28 +112,26 @@ Edit you docker-compose.yml and change all the images from:
     ...
     image: maresh/hll_rcon_frontend:latest
 
-To the version you want (here we use v1.1.0)
+To the version you want (here we use v1.9)
 
-    image: maresh/hll_rcon:v1.1.0
+    image: maresh/hll_rcon:v1.9
     ...
-    image: maresh/hll_rcon_frontend:v1.1.0
+    image: maresh/hll_rcon_frontend:v1.9
 
 
 ## Known issues and limitations
 
 - After a sometime without being used the API will lose the connection to the game server so when you open the GUI the first time you might see an error that it can't fetch the list of players. However this will recover on its own just refresh or wait til the next auto refresh
-
 - The game server in rare case fails to return the steam ID of a player. 
-
-- We logs are completely empty the game server will fail to respond to the request causing an error to show in the API/GUI
-
+- When logs are completely empty the game server will fail to respond to the request causing an error to show in the API/GUI
 - The RCON api server truncates the name of players to a maximum of 20 charcheters even though, up to 32 characters are displayed in game. Bottom line you don't always see the full name
-
 
 
 ## How to use
 
 Demo video coming soon
+
+There's a public endpoint available to anybody without password on http://<yourip>:<yourport>/api/scoreboard
 
 ## Features to come 
 
@@ -123,22 +139,22 @@ More or less in order of priorities
 
 - Individual moderators accounts
 - Audit trail
-- Players sessions history (with records of actions applied to players)
-- Deferred bans (from a blacklist)
+- ~~Players sessions history (with records of actions applied to players)~~
+- ~~Deferred bans (from a blacklist)~~
 - Custom preset punish/kick/ban messages
-- Performance improvements for the player list view
+- ~~Performance improvements for the player list view~~
 - Auto randomisation of map rotation (scheduling of the endpoint: /api/do_randomize_map_rotation)
-- Integration with Nitrado
 - Full log history (stored permanently)
-- Action hooks on chart messages and players connect / disconnect
+- ~~Action hooks on chat messages and players connect / disconnect~~
 - Integration with Discord 
 
 ## USAGE of the CLI with docker
 
-##### Build the image
+### Build the image
     $ docker build . -t rcon
 
-##### Set your server info as environement variables and run the cli
+### Set your server info as environement variables and run the cli
+
     $ docker run -it -e HLL_HOST=1.1.1.1 -e HLL_PORT=20300 -e HLL_PASSWORD=mypassword rcon python -m rcon.cli
      
      Usage: cli.py [OPTIONS] COMMAND [ARGS]...
@@ -162,9 +178,10 @@ More or less in order of priorities
        set_welcome_message
        ...
 
-    $ docker run -it -e HLL_HOST=1.1.1.1 -e HLL_PORT=20300 -e HLL_PASSWORD=mypassword rcon python -m rcon.cli get_name
+    $ docker run -it -e HLL_HOST=1.1.1.1 -e HLL_PORT=20300 -e HLL_PASSWORD=mypassword rcon python -m rcon.cli get_maps
 
-      [FR]-[CFr]CorpsFranc https://discordapp.com/invite/wX2K2uG
+      [2020-05-03 17:15:00,508][DEBUG] rcon.commands commands.py:_request:90 | get mapsforrotation
+    ['foy_warfare', 'stmariedumont_warfare', 'hurtgenforest_warfare', 'utahbeach_warfare', 'omahabeach_offensive_us', 'stmereeglise_warfare', 'stmereeglise_offensive_ger', 'foy_offensive_ger', 'purpleheartlane_warfare', 'purpleheartlane_offensive_us', 'hill400_warfare', 'hill400_offensive_US']
 
 
 ## Development environment
@@ -186,7 +203,7 @@ This is a bit hackish, but it saved me a lot of time a the begining, it also rem
 
 #### First boot up the dependancies. I use docker for that but you can also install Redis and Postgres natively if you prefer
 
-    docker-compose -f docker-compose-dev.yml up -d redis postgres
+    docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d redis postgres
 
 This will make redis and postgres available on you localhost with their default ports. If you need different port bindings refer to the `docker-compose-dev.yml` file
 
@@ -203,7 +220,7 @@ This will make redis and postgres available on you localhost with their default 
     export DB_URL=postgres://rcon:developmentpassword@localhost:5432
     export REDIS_URL=redis://localhost:6379/0
 
-Run a server
+#### Run a server
 
     # from the root of the repo
     pip install -r requirements.txt
@@ -224,6 +241,14 @@ It is not best practice to have endpoints that do write operations accept a GET 
     npm start
 
 The GUI should now be available on http://localhost:3000/ it auto refreshes on code changes
+
+
+#### To test you changes will work with the prod setup, start the whole stack 
+
+    docker-compose -f docker-compose.yml -f docker-compose.dev.yml build
+    docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+
+Now test on http://localhost:8010
 
 #### General notes:
 
