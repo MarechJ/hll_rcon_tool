@@ -219,7 +219,7 @@ class Rcon(ServerCtl):
 
     def set_vip_slots_num(self, num):
         with invalidates(self.get_vip_slots_num):
-            return int(super().set_vip_slots_num(num))
+            return super().set_vip_slots_num(num)
 
     @ttl_cache(ttl=20)
     def get_slots(self):
