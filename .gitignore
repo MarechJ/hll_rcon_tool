@@ -10,6 +10,9 @@ pw/
 # C extensions
 *.so
 *.log.*
+.vscode/
+
+*.tar
 
 # Distribution / packaging
 .Python

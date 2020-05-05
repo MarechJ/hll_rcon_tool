@@ -1,0 +1,23 @@
+version: '3.5'
+
+services:
+  broadcast:
+    build: 
+      context: .
+      dockerfile: Dockerfile-arm32
+  logs_event_loop:
+    build: 
+      context: .
+      dockerfile: Dockerfile-arm32
+  backend:
+    build: 
+      context: .
+      dockerfile: Dockerfile-arm32
+  frontend:
+    build:
+      context: ./rcongui
+      dockerfile: Dockerfile-arm32
+  redis:
+    image: arm32v7/redis:5
+  postgres:
+    image: arm32v7/postgres:12

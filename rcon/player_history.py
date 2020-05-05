@@ -35,7 +35,7 @@ def get_player_profile(steam_id_64, nb_sessions):
 def _get_set_player(sess, player_name, steam_id_64):
     player = _get_player(sess, steam_id_64)
     if player is None:
-        _save_steam_id(sess, steam_id_64)
+        player = _save_steam_id(sess, steam_id_64)
     if player_name:
         _save_player_alias(sess, player, player_name)
 
@@ -56,7 +56,7 @@ def get_players_by_appearance(page=1, page_size=1000, last_seen_from: datetime.d
             func.max(func.coalesce(PlayerSession.end,
                                    PlayerSession.created)).label('last')
         ).group_by(PlayerSession.playersteamid_id).subquery()
-        query = sess.query(PlayerSteamID, sub.c.first, sub.c.last).join(
+        query = sess.query(PlayerSteamID, sub.c.first, sub.c.last).outerjoin(
             sub, sub.c.playersteamid_id == PlayerSteamID.id)
 
         if steam_id_64:
@@ -81,8 +81,8 @@ def get_players_by_appearance(page=1, page_size=1000, last_seen_from: datetime.d
                 {
                     'steam_id_64': p[0].steam_id_64,
                     'names': [n.name for n in p[0].names],
-                    'first_seen_timestamp_ms': int(p[1].timestamp() * 1000),
-                    'last_seen_timestamp_ms': int(p[2].timestamp() * 1000),
+                    'first_seen_timestamp_ms': int(p[1].timestamp() * 1000) if p[1] else None,
+                    'last_seen_timestamp_ms': int(p[2].timestamp() * 1000) if p[1] else None,
                     'penalty_count': p[0].get_penalty_count(),
                     'blacklisted': p[0].blacklist.is_blacklisted if p[0].blacklist else False
                 }
@@ -198,10 +198,12 @@ def save_end_player_session(steam_id_64, timestamp_ms):
 def ban_if_blacklisted(rcon, steam_id_64, name):
     with enter_session() as sess:
         player = get_player(sess, steam_id_64)
+        
         if not player:
             logger.error(
                 "Can't check blacklist, player not found %s", steam_id_64)
             return
+
         if player.blacklist and player.blacklist.is_blacklisted:
             logger.warning("Player %s was banned due blacklist, reason: %s", str(
                 player), player.blacklist.reason)
@@ -212,10 +214,17 @@ def ban_if_blacklisted(rcon, steam_id_64, name):
             )
 
 
-def add_player_to_blacklist(steam_id_64, reason):
+def add_player_to_blacklist(steam_id_64, reason, name=None):
     # TODO save author of blacklist
     with enter_session() as sess:
+<<<<<<< HEAD
         player = _get_set_player(sess, None, steam_id_64)
+=======
+        player = _get_set_player(sess, steam_id_64=steam_id_64, player_name=name)
+        if not player:
+            raise CommandFailedError(
+                f"Player with steam id {steam_id_64} not found")
+>>>>>>> 6a77482c06a83a2611861d6d9c5b5d66c457362d
 
         if player.blacklist:
             if player.blacklist.is_blacklisted:
