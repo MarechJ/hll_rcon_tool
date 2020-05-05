@@ -3,7 +3,7 @@
 An extended RCON tool for Hell Let loose.
 It's composed of HTTP Api, a friendly GUI and if you need it a cli or use it as a library to build you own client.
 
-Please join us on discord if you use it, for feedback, troubleshooting and informations about updates: https://discord.gg/tVhGYxb
+Please join us on discord if you use it, for feedback, troubleshooting and informations about updates: https://discord.gg/hZx6gn3
 
 Feel free to contribute, some parts would need a rewrite (I single-handedly built it so I took some shortcuts).
 There's a LOT of new cool features that could be added, I'd be happy to walk through the code with you if you want to get involved.
