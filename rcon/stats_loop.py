@@ -98,8 +98,8 @@ if __name__ == '__main__':
     registered_series = [
         PlayerCount(red)
     ]
-
-    prev_time = 0
+    for series in registered_series:
+        series.migrate()
 
     while True:
         for series in registered_series:

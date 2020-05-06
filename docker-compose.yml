@@ -1,57 +1,40 @@
-version: '3.5'
+version: '2.4'
 
 services:
   broadcast:
-    image: maresh/hll_rcon:latest
-    environment:
-      HLL_HOST: ${HLL_HOST}
-      HLL_PORT: ${HLL_PORT}
-      HLL_PASSWORD: ${HLL_PASSWORD}
-      BROADCAST_PATH: /conf/
-      LOGGING_LEVEL: 'INFO'
-      REDIS_URL: redis://redis:6379/0
-      DB_URL: 'postgres://rcon:${HLL_DB_PASSWORD}@postgres:5432'
-    restart: always
+    extends: 
+      file: docker-compose-common-components.yml
+      service: python
+    command: bash -c "python -m rcon.cli init_db && python -m rcon.broadcast"
     links:
       - "redis:redis"
       - "postgres:postgres"
-    volumes:
-      - .:/conf
-    command: bash -c "python -m rcon.cli init_db && python -m rcon.broadcast"
+  stats:
+    extends: 
+      file: docker-compose-common-components.yml
+      service: python
+    command: bash -c "python -m rcon.cli init_db && python -m rcon.stats_loop"
+    links:
+      - "redis:redis"
+      - "postgres:postgres"
   logs_event_loop:
-    image: maresh/hll_rcon:latest
+    extends: 
+      file: docker-compose-common-components.yml
+      service: python
     command: bash -c "python -m rcon.cli init_db && python -m rcon.cli log_loop"
-    restart: always
-    environment:
-      HLL_HOST: ${HLL_HOST}
-      HLL_PORT: ${HLL_PORT}
-      HLL_PASSWORD: ${HLL_PASSWORD}
-      DB_URL: 'postgres://rcon:${HLL_DB_PASSWORD}@postgres:5432'
-      REDIS_URL: redis://redis:6379/0
-      LOGGING_LEVEL: INFO
-      LOGGING_PATH: /logs/logs_event_loop.log
-    volumes:
-      - .:/logs
     links:
       - "redis:redis"
       - "postgres:postgres"
   backend:
     image: maresh/hll_rcon:latest
-    environment:
-      HLL_HOST: ${HLL_HOST}
-      HLL_PORT: ${HLL_PORT}
-      HLL_PASSWORD: ${HLL_PASSWORD}
-      LOGGING_PATH: /logs/backend.log
-      LOGGING_LEVEL: INFO
-      DJANGO_LOGGING_PATH: /logs/django.log
-      REDIS_URL: redis://redis:6379/0
-      DB_URL: 'postgres://rcon:${HLL_DB_PASSWORD}@postgres:5432'
-    restart: always
-    volumes:
-      - .:/logs
+    extends: 
+      file: docker-compose-common-components.yml
+      service: python
     links:
       - "redis:redis"
       - "postgres:postgres"
+    volumes:
+      - .:/logs
   frontend:    
     image: maresh/hll_rcon_frontend:latest
     ports:

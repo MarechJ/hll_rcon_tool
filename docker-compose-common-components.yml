@@ -1,0 +1,13 @@
+version: '2.4'
+
+services:
+    python:
+        image: maresh/hll_rcon:latest
+        environment:
+            HLL_HOST: ${HLL_HOST}
+            HLL_PORT: ${HLL_PORT}
+            HLL_PASSWORD: ${HLL_PASSWORD}
+            LOGGING_LEVEL: 'INFO'
+            REDIS_URL: redis://redis:6379/0
+            DB_URL: 'postgres://rcon:${HLL_DB_PASSWORD}@postgres:5432'
+        restart: always
