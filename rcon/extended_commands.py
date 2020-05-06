@@ -165,7 +165,7 @@ class Rcon(ServerCtl):
             if res != 'SUCCESS':
                 raise CommandFailedError(res)
 
-    @ttl_cache(ttl=60 * 5)
+    @ttl_cache(ttl=60)
     def get_map(self):
         return super().get_map()
 

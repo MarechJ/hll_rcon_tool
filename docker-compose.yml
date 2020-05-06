@@ -63,10 +63,12 @@ services:
       RCONWEB_PASSWORD: ${RCONWEB_PASSWORD}
       RCONWEB_USERNAME: ${RCONWEB_USERNAME}
   redis:
-    image: redis:5
+    image: redislabs/redistimeseries
     ports: # Exposing ports is only useful for local development
       - 127.0.0.1:${HLL_REDIS_HOST_PORT:-6379}:6379
     restart: always
+    volumes:
+      - ./redis_data:/data
   postgres:
     image: postgres:12
     restart: always

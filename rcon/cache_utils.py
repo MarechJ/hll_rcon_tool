@@ -76,7 +76,7 @@ class RedisCached:
             logger.debug("Cache CLEARED for %s", keys)
 
 
-def ttl_cache(ttl, *args, is_method=True, cache_falsy=True, **kwargs):
+def get_redis_pool():
     global _REDIS_POOL
     redis_url = os.getenv('REDIS_URL')
     if not redis_url:
@@ -89,9 +89,12 @@ def ttl_cache(ttl, *args, is_method=True, cache_falsy=True, **kwargs):
             socket_timeout=5, decode_responses=True
         )
 
+def ttl_cache(ttl, *args, is_method=True, cache_falsy=True, **kwargs):
+    pool = get_redis_pool()
+
     def decorator(func):
         cached_func = RedisCached(
-            _REDIS_POOL, ttl, function=func, is_method=is_method, cache_falsy=cache_falsy)
+            pool, ttl, function=func, is_method=is_method, cache_falsy=cache_falsy)
 
         def wrapper(*args, **kwargs):
             # Re-wrapping to preserve function signature
