@@ -63,7 +63,6 @@ class Series:
 
     def run_on_time(self, rcon):
         now = time.time()
-        print(now, self.last_run_time, self.min_resolution_ms)
         if now - self.last_run_time <= self.min_resolution_ms:
             return
         logger.debug("Taking snaphost for %s", self.NAME)

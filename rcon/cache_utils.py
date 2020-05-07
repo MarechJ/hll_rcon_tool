@@ -11,6 +11,8 @@ _REDIS_POOL = None
 
 
 class RedisCached:
+    PREFIX = 'cached_'
+
     def __init__(self, pool, ttl_seconds, function, is_method=False, cache_falsy=True, serializer=simplejson.dumps, deserializer=simplejson.loads):
         self.red = redis.Redis(connection_pool=pool)
         self.function = function
@@ -20,9 +22,18 @@ class RedisCached:
         self.is_method = is_method
         self.cache_falsy = cache_falsy
 
+    @staticmethod
+    def clear_all_caches(pool):
+        red = redis.Redis(connection_pool=pool)
+        keys = list(red.scan_iter(match=f"{RedisCached.PREFIX}*"))
+        logger.warning("Wiping cached values %s", keys)
+        if not keys:
+            return
+        return red.delete(*keys)
+
     @property
     def key_prefix(self):
-        return self.function.__name__
+        return f'{self.PREFIX}{self.function.__name__}'
 
     def key(self, *args, **kwargs):
         if self.is_method:
@@ -80,8 +91,8 @@ def get_redis_pool():
     global _REDIS_POOL
     redis_url = os.getenv('REDIS_URL')
     if not redis_url:
-        logger.warning("REDIS_URL is not set falling back to memory cache")
-        return cachetools_ttl_cache(*args, ttl=ttl, **kwargs)
+        return None
+ 
     if _REDIS_POOL is None:
         logger.warning("Redis pool initializing")
         _REDIS_POOL = redis.ConnectionPool.from_url(
@@ -89,8 +100,13 @@ def get_redis_pool():
             socket_timeout=5, decode_responses=True
         )
 
+    return _REDIS_POOL
+
 def ttl_cache(ttl, *args, is_method=True, cache_falsy=True, **kwargs):
     pool = get_redis_pool()
+    if not pool:
+        logger.warning("REDIS_URL is not set falling back to memory cache")
+        return cachetools_ttl_cache(*args, ttl=ttl, **kwargs)
 
     def decorator(func):
         cached_func = RedisCached(

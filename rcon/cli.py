@@ -7,6 +7,7 @@ from rcon.extended_commands import Rcon
 from rcon import game_logs
 from rcon.models import init_db
 from rcon.user_config import seed_default_config
+from rcon.cache_utils import RedisCached, get_redis_pool
 
 @click.group()
 def cli():
@@ -26,6 +27,14 @@ def init(force):
     init_db(force)
     seed_default_config()
 
+@cli.command(name="set_maprotation")
+@click.argument('maps', nargs=-1)
+def maprot(maps):
+    ctl.set_maprotation(list(maps))
+
+@cli.command(name="clear_cache")
+def clear():
+    RedisCached.clear_all_caches(get_redis_pool())
 
 def do_print(func):
     def wrap(*args, **kwargs):
@@ -39,9 +48,13 @@ PREFIXES_TO_EXPOSE = [
     'get_', 'set_', 'do_'
 ]
 
+EXCLUDED = {
+    'set_maprotation'
+}
+
 # Dynamically register all the methods from ServerCtl
 for name, func in inspect.getmembers(ctl):
-    if not any(name.startswith(prefix) for prefix in PREFIXES_TO_EXPOSE):
+    if not any(name.startswith(prefix) for prefix in PREFIXES_TO_EXPOSE) or name in EXCLUDED:
         continue
     wrapped = do_print(func)
 

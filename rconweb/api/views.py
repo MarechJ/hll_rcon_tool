@@ -16,6 +16,7 @@ from rcon.player_history import (
     get_player_profile
 )
 from rcon.user_config import AutoBroadcasts, InvalidConfigurationError
+from rcon.cache_utils import RedisCached, get_redis_pool
 
 logger = logging.getLogger('rconweb')
 
@@ -37,6 +38,15 @@ def _get_data(request):
         data = request.GET
     return data
 
+@csrf_exempt
+def clear_cache(request):
+    res = RedisCached.clear_all_caches(get_redis_pool())
+    return JsonResponse({
+        "result": res,
+        "command": "clear_cache",
+        "arguments": None,
+        "failed": res is None
+    })
 
 @csrf_exempt
 def get_auto_broadcasts_config(request):
@@ -261,6 +271,7 @@ commands = [
     ("scoreboard", text_scoreboard),
     ("get_auto_broadcasts_config", get_auto_broadcasts_config),
     ("set_auto_broadcasts_config", set_auto_broadcasts_config),
+    ("clear_cache", clear_cache),
 ]
 
 # Dynamically register all the methods from ServerCtl

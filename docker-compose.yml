@@ -1,46 +1,34 @@
 version: '2.4'
 
+
+
 services:
   broadcast:
     extends: 
       file: docker-compose-common-components.yml
       service: python
     command: bash -c "python -m rcon.cli init_db && python -m rcon.broadcast"
-    links:
-      - "redis:redis"
-      - "postgres:postgres"
   stats:
     extends: 
       file: docker-compose-common-components.yml
       service: python
     command: bash -c "python -m rcon.cli init_db && python -m rcon.stats_loop"
-    links:
-      - "redis:redis"
-      - "postgres:postgres"
   logs_event_loop:
     extends: 
       file: docker-compose-common-components.yml
       service: python
     command: bash -c "python -m rcon.cli init_db && python -m rcon.cli log_loop"
-    links:
-      - "redis:redis"
-      - "postgres:postgres"
   backend:
     image: maresh/hll_rcon:latest
     extends: 
       file: docker-compose-common-components.yml
       service: python
-    links:
-      - "redis:redis"
-      - "postgres:postgres"
     volumes:
       - .:/logs
   frontend:    
     image: maresh/hll_rcon_frontend:latest
     ports:
       - ${RCONWEB_PORT}:80
-    links:
-      - "backend:backend"
     restart: always
     environment: 
       RCONWEB_PASSWORD: ${RCONWEB_PASSWORD}

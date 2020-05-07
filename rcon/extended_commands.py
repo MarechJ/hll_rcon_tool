@@ -37,7 +37,9 @@ class Rcon(ServerCtl):
             if not steam_id_64:
                 return {}
         except CommandFailedError:
-            logger.exception("Can't get player info for %s", player)
+            # Making that debug instead of exception as it's way to spammy
+            logger.debug("Can't get player info for %s", player)
+            # logger.exception("Can't get player info for %s", player)
             return {}
         return {
             NAME: name.split(": ", 1)[-1],
@@ -384,6 +386,18 @@ class Rcon(ServerCtl):
             self.do_add_map_to_rotation(m)
 
         return maps
+
+    def set_maprotation(self, rotation):
+        if not rotation:
+            raise CommandFailedError("Empty rotation")
+        first = rotation.pop(0)
+
+        with invalidates(self.get_map_rotation):
+            current = set(self.get_map_rotation())
+            self.do_remove_maps_from_rotation(current - set([first]))
+            self.do_add_maps_to_rotation(rotation)
+
+        return [first] + rotation
 
     @ttl_cache(ttl=60 * 2)
     def get_scoreboard(self, minutes=180, sort='ratio'):
