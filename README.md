@@ -1,7 +1,7 @@
 # Hell Let Loose (HLL) advanced RCON  
 
 An extended RCON tool for Hell Let loose.
-It's composed of HTTP Api, a friendly GUI and if you need it a cli or use it as a library to build you own client.
+It's composed of HTTP Api, a friendly GUI and if you need it a cli or use it as a library to build your own client.
 
 Please join us on discord if you use it, for feedback, troubleshooting and informations about updates: https://discord.gg/hZx6gn3
 
@@ -11,7 +11,7 @@ There's a LOT of new cool features that could be added, I'd be happy to walk thr
 Here's a small sample:
 ![Live view page](/images/homepage.png)
 
-# How to install the APP
+# How to install the App
 
 ### Pre-requistes:
 
@@ -83,6 +83,7 @@ Alternatively you can also specify them in the command line. [More details](http
 
 #### Raspberry-Pi or any ARM32v7
 
+    docker-compose -f docker-compose.yml -f docker-compose.arm32v7.yml build
     docker-compose -f docker-compose.yml -f docker-compose.arm32v7.yml  up -d 
 
 
@@ -94,7 +95,35 @@ You're done, ENJOY!
 
 ### To update to the latest version:
 
-    git pull && docker-compose pull && docker-compose up -d
+#### In case it says your local changes the `.env` would be overriden when you git pull:
+
+You can do 
+
+   git stash && git pull
+
+Then either: `git stash apply` edit to remove the conflit then `git reset .env`
+Or just fill the `.env` manually again.
+Then run the docker-compose commands.
+This won't happen for every updates.
+
+
+
+#### Linux
+
+    git pull
+    docker-compose pull && docker-compose up -d
+
+
+#### Windows
+
+    git pull 
+    docker-compose pull && docker-compose -f docker-compose.yml -f docker-compose.windows.yml up -d 
+
+#### Raspberry-Pi or any ARM32v7
+
+    git pull 
+    docker-compose -f docker-compose.yml -f docker-compose.arm32v7.yml build
+    docker-compose -f docker-compose.yml -f docker-compose.arm32v7.yml  up -d 
 
 Or download the [latest zip release](https://github.com/MarechJ/hll_rcon_tool/releases/latest)
 
@@ -243,7 +272,7 @@ It is not best practice to have endpoints that do write operations accept a GET 
 The GUI should now be available on http://localhost:3000/ it auto refreshes on code changes
 
 
-#### To test you changes will work with the prod setup, start the whole stack 
+#### To test your changes will work with the prod setup, start the whole stack 
 
     docker-compose -f docker-compose.yml -f docker-compose.dev.yml build
     docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
