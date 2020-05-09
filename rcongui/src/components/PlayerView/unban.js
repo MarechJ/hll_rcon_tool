@@ -7,6 +7,7 @@ import Dialog from "@material-ui/core/Dialog";
 import {DialogTitle, DialogContent, DialogActions} from '../dialog'
 import withWidth from "@material-ui/core/withWidth";
 import moment from 'moment'
+import FormHelperText from '@material-ui/core/FormHelperText';
 
 const Unban = ({ bannedPlayers, classes, width, handleUnban, onReload, onClose, open }) => {
   const [message, setMessage] = React.useState("");
@@ -44,7 +45,8 @@ const Unban = ({ bannedPlayers, classes, width, handleUnban, onReload, onClose, 
             />
           )}
         /> : 'Unable to show bans. Please retry'}
-        <Button autoFocus onClick={onReload} variant="outlined" color="primary">
+        <FormHelperText className={classes.paddingBottom}>Don't forget to remove the Blacklisting as well for permabans</FormHelperText>
+        <Button className={classes.margin} autoFocus onClick={onReload} variant="outlined" color="primary">
           RELOAD LIST
         </Button>
       </DialogContent>
