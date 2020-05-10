@@ -60,7 +60,7 @@ class MetricCondition:
                 ('set_team_switch_cooldown', {'minutes': 15}),
             ]),
             ('between', (70, 90), [
-                ('set_idle_autokick_time', {'minutes': 10}),
+                ('set_idle_autokick_time', {'minutes': 20}),
                 ('set_autobalance_threshold', {'max_diff': 2}),
                 ('set_max_ping_autokick', {'max_ms': 500}),
                 ('set_team_switch_cooldown', {'minutes': 15}),
@@ -95,4 +95,4 @@ if __name__ == "__main__":
     while True:
         for c in conditions:
             c.apply()
-        time.sleep(60)
+        time.sleep(60 * 3)
