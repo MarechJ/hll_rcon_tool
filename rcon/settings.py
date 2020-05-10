@@ -1,7 +1,7 @@
 import logging
 from logging.config import dictConfig
 import os
-
+import socket
 
 # TODO: Use a config style that is not required at import time
 try:
@@ -37,7 +37,10 @@ LOGGING = {
             'level': 'DEBUG',
             'formatter': 'console',
             'class': 'logging.FileHandler',
-            'filename':  os.getenv('LOGGING_PATH', f"{__package__}.log"),
+            'filename':  os.path.join(
+                os.getenv('LOGGING_PATH', ""),
+                os.getenv("LOGGING_FILENAME", f"{socket.gethostname()}.log")
+            )
             },
         },
 

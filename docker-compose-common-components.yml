@@ -8,6 +8,10 @@ services:
             HLL_PORT: ${HLL_PORT}
             HLL_PASSWORD: ${HLL_PASSWORD}
             LOGGING_LEVEL: 'INFO'
+            LOGGING_PATH: /logs/
             REDIS_URL: redis://redis:6379/0
             DB_URL: 'postgres://rcon:${HLL_DB_PASSWORD}@postgres:5432'
         restart: always
+        volumes: 
+            - ./logs:/logs/
+            - ./servicediscovery:/servicediscovery

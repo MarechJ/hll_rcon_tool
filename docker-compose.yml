@@ -4,27 +4,29 @@ version: '2.4'
 
 services:
   broadcast:
+    hostname: broadcast
     extends: 
       file: docker-compose-common-components.yml
       service: python
     command: bash -c "python -m rcon.cli init_db && python -m rcon.broadcast"
   stats:
+    hostname: stats
     extends: 
       file: docker-compose-common-components.yml
       service: python
     command: bash -c "python -m rcon.cli init_db && python -m rcon.stats_loop"
   logs_event_loop:
+    hostname: logs_event_loop
     extends: 
       file: docker-compose-common-components.yml
       service: python
     command: bash -c "python -m rcon.cli init_db && python -m rcon.cli log_loop"
   backend:
+    hostname: api
     image: maresh/hll_rcon:latest
     extends: 
       file: docker-compose-common-components.yml
-      service: python
-    volumes:
-      - .:/logs
+      service: python 
   frontend:    
     image: maresh/hll_rcon_frontend:latest
     ports:
@@ -53,3 +55,4 @@ services:
       - ./db_data:/data
     ports:
       - 127.0.0.1:${HLL_DB_HOST_PORT:-5432}:5432
+

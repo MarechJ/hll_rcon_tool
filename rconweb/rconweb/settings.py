@@ -19,7 +19,7 @@ from rcon.extended_commands import Rcon
 from rcon.settings import SERVER_INFO
 import re
 from sentry_sdk import configure_scope
-
+import socket
 
 
 try:
@@ -46,7 +46,10 @@ LOGGING = {
             'level': 'DEBUG',
             'formatter': 'console',
             'class': 'logging.FileHandler',
-            'filename':  os.getenv('DJANGO_LOGGING_PATH', f"{__package__}.log"),
+            'filename':  os.path.join(
+                os.getenv('LOGGING_PATH', ""),
+                os.getenv("LOGGING_FILENAME", f"django.log")
+            )
             },
         },
 

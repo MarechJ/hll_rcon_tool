@@ -32,6 +32,16 @@ def init(force):
 def maprot(maps):
     ctl.set_maprotation(list(maps))
 
+@cli.command(name="import_vips")
+@click.argument('file', type=click.File('r'))
+@click.option('-p', '--prefix', default='')
+def importvips(file, prefix):
+    for line in file:
+        line = line.strip()
+        steamid, name = line.split(' ', 1)
+        ctl.do_add_vip(name=f'{prefix}{name}', steam_id_64=steamid)
+
+
 @cli.command(name="clear_cache")
 def clear():
     RedisCached.clear_all_caches(get_redis_pool())
