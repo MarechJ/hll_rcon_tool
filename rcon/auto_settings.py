@@ -86,7 +86,7 @@ if __name__ == "__main__":
     conditions = [MetricCondition(
         'player_count',
         lambda: PlayerCount().get_last()[1],
-        default_commands=[('set_idle_autokick_time', {'minutes': 5}),
+        default_commands=[('set_idle_autokick_time', {'minutes': 10}),
                 ('set_autobalance_threshold', {'max_diff': 2}),
                 ('set_max_ping_autokick', {'max_ms': 500}),
                 ('set_team_switch_cooldown', {'minutes': 15})]
