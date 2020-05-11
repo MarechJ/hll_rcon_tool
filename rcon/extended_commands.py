@@ -239,7 +239,6 @@ class Rcon(ServerCtl):
     def get_maps(self):
         return super().get_maps()
 
-    @ttl_cache(ttl=60 * 10, cache_falsy=False)
     def get_server_settings(self):
         settings = {}
         for name, type_ in self.settings:
@@ -255,8 +254,7 @@ class Rcon(ServerCtl):
         if not name in dict(self.settings):
             raise ValueError(f"'{name}' can't be save with this method")
 
-        with invalidates(self.get_server_settings):
-            return getattr(self, f'set_{name}')(value)
+        return getattr(self, f'set_{name}')(value)
 
     def _convert_relative_time(self, from_, time_str):
         time, unit = time_str.split(' ')
