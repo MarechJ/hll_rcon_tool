@@ -8,9 +8,10 @@ from rcon.settings import SERVER_INFO
 logger = logging.getLogger(__name__)
 
 def compare(operand, operator, arguments):
+    logger.debug("Operand %s Operator %s Arguments %s", operand, operator, arguments)
     if operator == 'between':
         start, end = arguments
-        return start >= operand <= end
+        return start <= operand <= end
     if operator == 'equals':
         return operand == arguments[0]
     return False
@@ -66,11 +67,11 @@ class MetricCondition:
                 ('set_team_switch_cooldown', {'minutes': 15}),
             ]),
         ]
-        
+
+        metric = self.metric_getter()
+        logger.info("Applying rules for %s: %s", self.name, metric)
         # Todo impllement throttling in here and make it configurable
         for comparator, arguments, commands in rules:
-            metric = self.metric_getter()
-            print(metric)
             if compare(metric, comparator, arguments):
                 logger.info("Apply rule for %s %s %s", self.name, comparator, arguments)
                 self.run_commands(rcon, commands)
