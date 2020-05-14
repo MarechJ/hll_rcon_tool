@@ -15,14 +15,17 @@ import ChevronRight from '@material-ui/icons/ChevronRight';
 
 import ServerStatus from './serverStatus'
 
-export default ({ classes, setSaveDark, dark }) => (
-    <Grid container className={classes.grow}>
+export default ({ classes, setSaveDark, dark }) => {
+    const [jk, setJk] = React.useState(false)
+    const doJk = () => { setSaveDark('<3'); setJk(true) }
+
+    return <Grid container className={classes.grow}>
         <div className={classes.grow}>
             <AppBar position="static" elevation={0} className={classes.appBar}>
                 <Toolbar className={classes.toolbar}>
                     <Grid container alignContent="flex-start" alignItems="center">
                         <Grid item>
-                            <ServerStatus classes={classes} />
+                            <ServerStatus classes={classes} doJk={doJk} />
                         </Grid>
                         <Grid item className={classes.doublePaddingLeft}></Grid>
                         <Grid item className={classes.doublePaddingLeft}>
@@ -56,7 +59,7 @@ export default ({ classes, setSaveDark, dark }) => (
                         </Link>
                                 <Checkbox icon={<Brightness4Icon />}
                                     checkedIcon={<Brightness4OutlinedIcon />}
-                                    checked={dark ? true : false} color="default" onChange={(e, val) => setSaveDark(val)} />
+                                    checked={dark == "dark" ? true : false} color="default" onChange={(e, val) => !jk ? setSaveDark(val == true ? "dark" : "light") : null} />
                             </nav>
                         </Grid>
                     </Grid>
@@ -64,4 +67,4 @@ export default ({ classes, setSaveDark, dark }) => (
             </AppBar>
         </div>
     </Grid>
-)
+}

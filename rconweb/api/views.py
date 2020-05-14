@@ -1,11 +1,15 @@
 import inspect
 import logging
 import json
+import datetime
 from functools import wraps
+
+from dateutil import parser
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
+
 from rcon.recorded_commands import RecordedRcon
 from rcon.commands import CommandFailedError
 from rcon.settings import SERVER_INFO
@@ -161,8 +165,25 @@ def players_history(request):
         data = json.loads(request.body)
     except json.JSONDecodeError:
         data = request.GET
+
+    type_map = {
+        "last_seen_from": parser.parse,
+        "last_seen_till": parser.parse,
+        "player_name": str, 
+        "blacklisted": bool, 
+        "steam_id_64": str,
+        "page": int,
+        "page_size": int
+    }
+
     try:
-        res = get_players_by_appearance(int(data.get('page', 1)), int(data.get('page_size', 200)))
+        arguments = {}
+        for k, v in data.items():
+            if k not in type_map:
+                continue
+            arguments[k] = type_map[k](v)
+
+        res = get_players_by_appearance(**arguments)
         failed = False
     except:
         logger.exception("Unable to get player history")
@@ -177,6 +198,7 @@ def players_history(request):
     })
 
 
+# This is were all the RCON commands are turned into HTTP endpoints
 def wrap_method(func, parameters):
     @csrf_exempt
     @wraps(func)

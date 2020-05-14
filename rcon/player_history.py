@@ -2,6 +2,7 @@ import logging
 import datetime
 from functools import wraps
 from sqlalchemy import func
+from sqlalchemy.orm import contains_eager
 import math
 
 from rcon.models import (
@@ -41,7 +42,7 @@ def _get_set_player(sess, player_name, steam_id_64):
     return player
 
 
-def get_players_by_appearance(page=1, page_size=1000, last_seen_from: datetime.datetime = None, last_seen_till: datetime.datetime = None):
+def get_players_by_appearance(page=1, page_size=500, last_seen_from: datetime.datetime = None, last_seen_till: datetime.datetime = None, player_name = None, blacklisted = None, steam_id_64 = None):
     if page <= 0:
         raise ValueError('page needs to be >= 1')
     if page_size <= 0:
@@ -57,10 +58,18 @@ def get_players_by_appearance(page=1, page_size=1000, last_seen_from: datetime.d
         ).group_by(PlayerSession.playersteamid_id).subquery()
         query = sess.query(PlayerSteamID, sub.c.first, sub.c.last).outerjoin(
             sub, sub.c.playersteamid_id == PlayerSteamID.id)
+
+        if steam_id_64:
+            query = query.filter(PlayerSteamID.steam_id_64.ilike("%{}%".format(steam_id_64)))
+        if player_name:
+            query = query.join(PlayerSteamID.names).filter(PlayerName.name.ilike("%{}%".format(player_name))).options(contains_eager(PlayerSteamID.names))
+        if blacklisted is True:
+            query = query.join(PlayerSteamID.blacklist).filter(BlacklistedPlayer.is_blacklisted == True).options(contains_eager(PlayerSteamID.blacklist))
         if last_seen_from:
             query = query.filter(sub.c.last >= last_seen_from)
         if last_seen_till:
             query = query.filter(sub.c.last <= last_seen_till)
+
         total = query.count()
         page = min(max(math.ceil(total / page_size), 1), page) 
         players = query.order_by(sub.c.last.desc()).limit(

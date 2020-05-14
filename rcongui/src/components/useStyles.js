@@ -29,6 +29,9 @@ const useStyles = makeStyles(theme => ({
     display: 'block',
     textAlign: 'left'
   },
+  loading: {
+    height: "200px"
+  },
   slider: {
     textAlign: "left"
   },
