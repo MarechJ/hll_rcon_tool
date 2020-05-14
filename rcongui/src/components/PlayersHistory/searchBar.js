@@ -60,7 +60,7 @@ const SearchBar = ({ name, steamId, lastSeenFrom, lastSeenUntil, blacklistedOnly
                         <MenuItem value={100}>100</MenuItem>
                         <MenuItem value={200}>200</MenuItem>
                         <MenuItem value={500}>500</MenuItem>
-                        <MenuItem value={500}>1000</MenuItem>
+                        <MenuItem value={1000}>1000</MenuItem>
                     </Select>
                 </FormControl>
             </Grid>
