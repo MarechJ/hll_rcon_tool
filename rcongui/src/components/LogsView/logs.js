@@ -56,7 +56,7 @@ class Logs extends React.Component {
       playersFilter: "",
       actionsFilter: "",
       minutes: 30,
-      minutesOptions: [15, 30, 60, 120, 180]
+      minutesOptions: [15, 30, 60, 90, 120, 180]
     };
 
     this.loadLogs = this.loadLogs.bind(this);
