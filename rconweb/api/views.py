@@ -21,6 +21,7 @@ from rcon.player_history import (
 )
 from rcon.user_config import AutoBroadcasts, InvalidConfigurationError
 from rcon.cache_utils import RedisCached, get_redis_pool
+from .discord import send_to_discord_audit
 
 logger = logging.getLogger('rconweb')
 
@@ -126,6 +127,7 @@ def blacklist_player(request):
     data = _get_data(request)
     res = {}
     try:
+        send_to_discord_audit("Blacklist '{}' for ''".format(data['steam_id_64'], data['reason']), get_client_ip(request))
         add_player_to_blacklist(data['steam_id_64'], data['reason'])
         failed = False
     except:
@@ -145,6 +147,7 @@ def unblacklist_player(request):
     data = _get_data(request)
     res = {}
     try:
+        send_to_discord_audit("Unblacklist '{}' for ''".format(data['steam_id_64']), get_client_ip(request))
         remove_player_from_blacklist(data['steam_id_64'])
         failed = False
     except:
@@ -198,6 +201,21 @@ def players_history(request):
     })
 
 
+def audit(func_name, request, arguments):
+    to_audit = [
+        'do_',
+        'set_',
+        'switch'
+    ]
+
+    try:
+        if any(func_name.startswith(s) for s in to_audit):
+            send_to_discord_audit("{} {}".format(func_name, arguments), get_client_ip(request))
+        else:
+            logger.debug("%s is not set for audit", func_name)
+    except:
+        logger.exception("Can't send audit log")
+        
 # This is were all the RCON commands are turned into HTTP endpoints
 def wrap_method(func, parameters):
     @csrf_exempt
@@ -209,7 +227,7 @@ def wrap_method(func, parameters):
         failure = False
         data = _get_data(request)
         logger.info("%s %s", func.__name__, data)
-
+ 
         for pname, param in parameters.items():
             if pname == 'by':
                 # TODO: replace by account id when we have user layer
@@ -229,6 +247,8 @@ def wrap_method(func, parameters):
         except CommandFailedError:
             failure = True
             res = None
+
+        audit(func.__name__, request, arguments)
         #logger.debug("%s %s -> %s", func.__name__, arguments, res)
         return JsonResponse({
             "result": res,

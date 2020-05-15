@@ -11,6 +11,7 @@ services:
             LOGGING_PATH: /logs/
             REDIS_URL: redis://redis:6379/0
             DB_URL: 'postgres://rcon:${HLL_DB_PASSWORD}@postgres:5432'
+            DISCORD_WEBHOOK_AUDIT_LOG: ${DISCORD_WEBHOOK_AUDIT_LOG}
         restart: always
         volumes: 
             - ./logs:/logs/

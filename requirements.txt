@@ -10,3 +10,4 @@ psycopg2-binary
 sentry-sdk==0.14.3
 redistimeseries==0.8.0
 python-dateutil==2.8.1
+discord-webhook==0.8.0
