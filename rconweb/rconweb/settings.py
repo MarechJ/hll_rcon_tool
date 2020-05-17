@@ -95,17 +95,6 @@ with configure_scope() as scope:
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-import sentry_sdk
-from sentry_sdk.integrations.django import DjangoIntegration
-
-sentry_sdk.init(
-    dsn="https://78c97168e38343e9aba5435aebd94b2b@o60943.ingest.sentry.io/5220965",
-    integrations=[DjangoIntegration()],
-
-    # If you wish to associate users to errors (assuming you are using
-    # django.contrib.auth) you may enable sending PII data.
-    send_default_pii=True
-)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
@@ -117,10 +106,18 @@ SECRET_KEY = '9*i9zm1jx(5y-ns=*r6p%#6-q!bst98u3o3pw6joyf#-e(bh(0'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DJANGO_DEBUG", False)
 
-ALLOWED_HOSTS = ['backend:8000', 'backend', '127.0.0.1', 'localhost']
+ALLOWED_HOSTS = ['backend:8000', 'backend', '127.0.0.1',  '127.0.0.1:3000', 'localhost', 'localhost:3000']
+CORS_ORIGIN_WHITELIST = [
+    'http://{}'.format(h)
+    for h in ALLOWED_HOSTS
+] + [
+    'https://{}'.format(h)
+    for h in ALLOWED_HOSTS
+]
+CORS_ALLOW_CREDENTIALS = True
 
 # TODO: You might not want that. Think XSS
-CORS_ORIGIN_ALLOW_ALL = True
+CORS_ORIGIN_ALLOW_ALL = False
 # Application definition
 
 INSTALLED_APPS = [

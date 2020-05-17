@@ -136,7 +136,7 @@ const useStyles = makeStyles(theme => ({
   toolbar: {
     flexWrap: 'wrap',
     paddingLeft: 0,
-    width: 'fit-content',
+    //width: 'fit-content',
   
     '& hr': {
       border: `1px solid black`, // ${theme.palette.divider}`,

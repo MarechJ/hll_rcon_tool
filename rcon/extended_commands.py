@@ -1,4 +1,5 @@
 import random
+import os
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 import logging
@@ -231,6 +232,7 @@ class Rcon(ServerCtl):
     def get_status(self):
         return {
             'name': self.get_name(),
+            'alias': os.getenv('RCON_INSTANCE_NAME', 'HLL RCON'),
             'map': self.get_map(),
             'nb_players': self.get_slots()
         }
