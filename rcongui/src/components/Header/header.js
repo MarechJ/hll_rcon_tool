@@ -15,7 +15,7 @@ import ChevronRight from '@material-ui/icons/ChevronRight';
 import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
 import ServerStatus from './serverStatus'
-import { postData, showResponse } from "../../utils/fetchUtils";
+import { postData, showResponse, get } from "../../utils/fetchUtils";
 import { toast } from "react-toastify"
 import Modal from '@material-ui/core/Modal';
 import Dialog from "@material-ui/core/Dialog";
@@ -126,6 +126,9 @@ export default ({ classes, setSaveDark, dark }) => {
                             <Grid container className={classes.root} spacing={1} alignContent="flex-start" alignItems="center" justify="flex-end">
                                 <Grid item>
                                     <Button variant="outlined" size="medium" onClick={() => setOpen(true)}>Login</Button>
+                                </Grid>
+                                <Grid item>
+                                    <Button variant="outlined" size="medium" onClick={() => get('logout')}>Logout</Button>
                                 </Grid>
                             </Grid>
                         </Grid>

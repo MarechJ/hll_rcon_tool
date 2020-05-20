@@ -22,6 +22,7 @@ from rcon.player_history import (
 from rcon.user_config import AutoBroadcasts, InvalidConfigurationError
 from rcon.cache_utils import RedisCached, get_redis_pool
 from .discord import send_to_discord_audit
+from .auth import login_required
 
 logger = logging.getLogger('rconweb')
 
@@ -44,6 +45,7 @@ def _get_data(request):
     return data
 
 @csrf_exempt
+@login_required
 def clear_cache(request):
     res = RedisCached.clear_all_caches(get_redis_pool())
     return JsonResponse({
@@ -54,6 +56,7 @@ def clear_cache(request):
     })
 
 @csrf_exempt
+@login_required
 def get_auto_broadcasts_config(request):
     failed = False
     config = None
@@ -77,6 +80,7 @@ def get_auto_broadcasts_config(request):
     })
 
 @csrf_exempt
+@login_required
 def set_auto_broadcasts_config(request):
     failed = False
     res = None
@@ -104,6 +108,7 @@ def set_auto_broadcasts_config(request):
 
 
 @csrf_exempt
+@login_required
 def get_player(request):
     data = _get_data(request)
     res = {}
@@ -123,6 +128,7 @@ def get_player(request):
 
 
 @csrf_exempt
+@login_required
 def blacklist_player(request):
     data = _get_data(request)
     res = {}
@@ -143,6 +149,7 @@ def blacklist_player(request):
 
 
 @csrf_exempt
+@login_required
 def unblacklist_player(request):
     data = _get_data(request)
     res = {}
@@ -163,6 +170,7 @@ def unblacklist_player(request):
 
 
 @csrf_exempt
+@login_required
 def players_history(request):
     try:
         data = json.loads(request.body)
@@ -219,6 +227,7 @@ def audit(func_name, request, arguments):
 # This is were all the RCON commands are turned into HTTP endpoints
 def wrap_method(func, parameters):
     @csrf_exempt
+    @login_required
     @wraps(func)
     def wrapper(request):
         logger = logging.getLogger('rconweb')

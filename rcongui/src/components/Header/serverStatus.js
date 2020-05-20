@@ -1,7 +1,7 @@
 import React from "react";
 import "react-toastify/dist/ReactToastify.css";
 import Grid from "@material-ui/core/Grid";
-import { showResponse } from "../../utils/fetchUtils";
+import { showResponse, get } from "../../utils/fetchUtils";
 import { toast } from "react-toastify";
 
 import debounce from 'lodash/debounce'
@@ -35,7 +35,7 @@ class ServerStatus extends React.Component {
     }
 
     async load(command) {
-        return fetch(`${process.env.REACT_APP_API_URL}get_status`)
+        return get(`get_status`)
             .then(response => showResponse(response, command))
             .then(data => {
                 this.setState({ name: data.result.name, map: data.result.map, nbPlayers: data.result.nb_players })

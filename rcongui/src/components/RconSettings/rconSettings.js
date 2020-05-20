@@ -3,7 +3,7 @@ import {
     Grid, Typography, Button, TextField
 } from "@material-ui/core"
 import { range } from "lodash/util"
-import { showResponse, postData } from '../../utils/fetchUtils'
+import { showResponse, postData, get } from '../../utils/fetchUtils'
 import { toast } from "react-toastify"
 import _ from 'lodash'
 import LinearProgress from "@material-ui/core/LinearProgress"
@@ -27,7 +27,7 @@ class RconSettings extends React.Component {
     }
 
     async loadBroadcastsSettings() {
-        return fetch(`${process.env.REACT_APP_API_URL}get_auto_broadcasts_config`)
+        return get(`get_auto_broadcasts_config`)
             .then((res) => showResponse(res, "get_auto_broadcasts_config", false))
             .then(data => !data.failed && this.setState({
                 messages: data.result.messages,

@@ -3,7 +3,7 @@ import {
   Grid, Typography, Button
 } from "@material-ui/core"
 import { range } from "lodash/util"
-import { showResponse, postData } from '../../utils/fetchUtils'
+import { showResponse, postData, get } from '../../utils/fetchUtils'
 import { toast } from "react-toastify"
 import VipEditableList from "./vips"
 import AdminsEditableList from "./admins"
@@ -101,22 +101,22 @@ class HLLSettings extends React.Component {
   }
 
   async loadSettings() {
-    return fetch(`${process.env.REACT_APP_API_URL}get_server_settings`)
+    return get(`get_server_settings`)
       .then((res) => showResponse(res, "get_server_settings", false))
-      .then(data => this.setState({
+      .then(data => data.failed === false ? this.setState({
         autoBalanceThres: data.result.autobalance_threshold,
         teamSwitchCooldownMin: data.result.team_switch_cooldown,
         idleAutokickMin: data.result.idle_autokick_time,
         maxPingMs: data.result.max_ping_autokick,
         queueLength: data.result.queue_length,
         vipSlots: data.result.vip_slots_num,
-      }))
+      }) : null)
   }
 
   async _loadToState(command, showSuccess, stateSetter) {
-    return fetch(`${process.env.REACT_APP_API_URL}${command}`)
+    return get(command)
       .then((res) => showResponse(res, command, showSuccess))
-      .then(stateSetter)
+      .then(res => res.failed === false ? stateSetter(res) : null)
       .catch(error => toast.error("Unable to connect to API " + error));
   }
 

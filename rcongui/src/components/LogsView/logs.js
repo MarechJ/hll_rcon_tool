@@ -1,6 +1,6 @@
 import React from "react";
 import { toast } from "react-toastify";
-import { postData, showResponse } from "../../utils/fetchUtils";
+import { postData, showResponse, get } from "../../utils/fetchUtils";
 import InputLabel from "@material-ui/core/InputLabel";
 import MenuItem from "@material-ui/core/MenuItem";
 import FormHelperText from "@material-ui/core/FormHelperText";
@@ -77,7 +77,7 @@ class Logs extends React.Component {
       qs += `&filter_player=${playersFilter}`;
     }
 
-    return fetch(`${process.env.REACT_APP_API_URL}get_structured_logs${qs}`)
+    return get(`get_structured_logs${qs}`)
       .then(response => showResponse(response, "get_logs"))
       .then(data => {
         this.setState({

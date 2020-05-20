@@ -119,6 +119,12 @@ CORS_ALLOW_CREDENTIALS = True
 # TODO: You might not want that. Think XSS
 CORS_ORIGIN_ALLOW_ALL = False
 # Application definition
+CSRF_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_SAMESITE = 'Lax'   
+
+if DEBUG:
+    CSRF_COOKIE_SAMESITE = None
+    SESSION_COOKIE_SAMESITE = None
 
 INSTALLED_APPS = [
     'django.contrib.admin',
