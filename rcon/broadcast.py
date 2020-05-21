@@ -42,6 +42,8 @@ if __name__ == '__main__':
             random.shuffle(msgs)
 
         for time_sec, msg in msgs:
+            if not config.get_enabled():
+                break
             subs = {
                 'nextmap': safe(ctl.get_next_map, "")(),
                 'maprotation': ' -> '.join(safe(ctl.get_map_rotation, [])()),
