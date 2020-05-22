@@ -2,7 +2,7 @@
 import React from 'react';
 import useAutocomplete from '@material-ui/lab/useAutocomplete';
 import { makeStyles } from '@material-ui/core/styles';
-import { postData, showResponse } from "../../utils/fetchUtils";
+import { postData, showResponse, handle_http_errors } from "../../utils/fetchUtils";
 import { toast } from "react-toastify";
 import { join, each, reduce, get, map } from 'lodash'
 import Autocomplete from "@material-ui/lab/Autocomplete";
@@ -269,7 +269,7 @@ class PlayersHistory extends React.Component {
                     page: data.result.page
                 })
             })
-            .catch(error => toast.error("Unable to connect to API " + error));
+            .catch(handle_http_errors)
     }
 
     blacklistPlayer(steamId64, reason) {
@@ -285,7 +285,7 @@ class PlayersHistory extends React.Component {
                 )
             ).then(
                 this.getPlayerHistory()
-            )
+            ).catch(handle_http_errors)
     }
 
     unblacklistPlayer(steamId64) {
@@ -300,7 +300,7 @@ class PlayersHistory extends React.Component {
                 )
             ).then(
                 this.getPlayerHistory()
-            )
+            ).catch(handle_http_errors)
     }
 
 

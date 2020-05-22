@@ -15,7 +15,7 @@ import ChevronRight from '@material-ui/icons/ChevronRight';
 import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
 import ServerStatus from './serverStatus'
-import { postData, showResponse, get } from "../../utils/fetchUtils";
+import { postData, showResponse, get, handle_http_errors } from "../../utils/fetchUtils";
 import { toast } from "react-toastify"
 import Modal from '@material-ui/core/Modal';
 import Dialog from "@material-ui/core/Dialog";
@@ -70,7 +70,7 @@ export default ({ classes, setSaveDark, dark }) => {
             (res) => showResponse(res, `login ${username}`, true)
         ).then(
             data => { if (data.failed === false) { setOpen(false); setPassword("") }}
-        ).catch(error => toast.error("Unable to connect to API " + error))
+        ).catch(handle_http_errors)
     )
 
     const [open, setOpen] = React.useState(false);

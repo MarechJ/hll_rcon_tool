@@ -3,7 +3,7 @@ import {
   Grid, Typography, Button
 } from "@material-ui/core"
 import { range } from "lodash/util"
-import { showResponse, postData, get } from '../../utils/fetchUtils'
+import { showResponse, postData, get, handle_http_errors } from '../../utils/fetchUtils'
 import { toast } from "react-toastify"
 import VipEditableList from "./vips"
 import AdminsEditableList from "./admins"
@@ -111,13 +111,14 @@ class HLLSettings extends React.Component {
         queueLength: data.result.queue_length,
         vipSlots: data.result.vip_slots_num,
       }) : null)
+      .catch(handle_http_errors)
   }
 
   async _loadToState(command, showSuccess, stateSetter) {
     return get(command)
       .then((res) => showResponse(res, command, showSuccess))
       .then(res => res.failed === false ? stateSetter(res) : null)
-      .catch(error => toast.error("Unable to connect to API " + error));
+      .catch(handle_http_errors)
   }
 
   async loadVips() {
@@ -143,13 +144,13 @@ class HLLSettings extends React.Component {
   async saveSetting(name, value) {
     return postData(`${process.env.REACT_APP_API_URL}do_save_setting`, { "name": name, "value": value }).then(
       (res) => showResponse(res, `do_save_setting ${name} ${value}`, true)
-    ).catch(error => toast.error("Unable to connect to API " + error));
+    ).catch(handle_http_errors)
   }
 
   async sendAction(command, parameters) {
     return postData(`${process.env.REACT_APP_API_URL}${command}`, parameters).then(
       (res) => showResponse(res, command, true)
-    ).catch(error => toast.error("Unable to connect to API " + error));
+    ).catch(handle_http_errors)
   }
 
   async addMapsToRotation(maps) {
@@ -163,7 +164,7 @@ class HLLSettings extends React.Component {
   async changeMap(map_name) {
     return postData(`${process.env.REACT_APP_API_URL}set_map`, { map_name: map_name }).then(
       (res) => showResponse(res, `command: ${map_name}`, true)
-    ).catch(error => toast.error("Unable to connect to API " + error));
+    ).catch(handle_http_errors)
   }
 
   render() {

@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import _ from "lodash";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { postData, showResponse, get } from "../../utils/fetchUtils";
+import { postData, showResponse, get, handle_http_errors } from "../../utils/fetchUtils";
 import AutoRefreshBar from "./header";
 import TextInputBar from "./textInputBar";
 import CompactList from "./playerList";
@@ -54,7 +54,8 @@ class PlayerView extends Component {
           true
         )
       )
-      .then(this.loadBans);
+      .then(this.loadBans)
+      .catch(handle_http_errors)
   }
 
   handleAction(actionType, player, message = null) {
@@ -71,7 +72,8 @@ class PlayerView extends Component {
         .then(response =>
           showResponse(response, `${actionType} ${player}`, true)
         )
-        .then(this.loadPlayers);
+        .then(this.loadPlayers)
+        .catch(handle_http_errors)
     }
   }
 
@@ -83,7 +85,7 @@ class PlayerView extends Component {
     return get(command)
       .then(response => showResponse(response, command))
       .then(data => callback(data))
-      .catch(error => toast.error("Unable to connect to API " + error));
+      .catch(handle_http_errors);
   }
 
   loadPlayers() {

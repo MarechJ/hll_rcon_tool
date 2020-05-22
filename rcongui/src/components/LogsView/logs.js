@@ -1,6 +1,6 @@
 import React from "react";
 import { toast } from "react-toastify";
-import { postData, showResponse, get } from "../../utils/fetchUtils";
+import { postData, showResponse, get, handle_http_errors } from "../../utils/fetchUtils";
 import InputLabel from "@material-ui/core/InputLabel";
 import MenuItem from "@material-ui/core/MenuItem";
 import FormHelperText from "@material-ui/core/FormHelperText";
@@ -86,7 +86,7 @@ class Logs extends React.Component {
           players: !data.result.players ? [] : data.result.players
         });
       })
-      .catch(error => toast.error("Unable to connect to API " + error));
+      .catch(handle_http_errors);
   }
 
   render() {

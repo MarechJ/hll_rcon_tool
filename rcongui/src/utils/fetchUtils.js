@@ -1,6 +1,47 @@
 import { toast } from "react-toastify";
 
 
+function LoginError(message) {
+  this.message = message;
+  this.name = 'LoginError';
+}
+
+function PermissionError(message) {
+  this.message = message;
+  this.name = 'PermissionError';
+}
+
+
+async function handle_response_status(response) {
+  if (response.status === 401) {
+
+    throw new LoginError("You must be logged in!")
+  }
+
+  if (response.status === 403) {
+    throw new PermissionError("You are not authorized to do this!")
+  }
+  return response
+}
+
+
+async function handle_http_errors(error) {
+  if (error.name === 'LoginError') {
+    toast.warn("Please login!", {
+      toastId: "Must login",
+      position: toast.POSITION.BOTTOM_RIGHT,
+    })
+  }
+  else if (error.name == 'PermissionError') {
+    toast.warn("You are not allowed to do this", {
+      toastId: "Not allowed",
+    })
+  }
+  else {
+    toast.error("Unable to connect to API " + error)
+  }
+}
+
 async function get(path) {
   const response = await fetch(`${process.env.REACT_APP_API_URL}${path}`, {
     method: "GET", // *GET, POST, PUT, DELETE, etc.
@@ -10,7 +51,8 @@ async function get(path) {
     redirect: "follow", // manual, *follow, error
     referrerPolicy: "origin", // no-referrer, *client
   });
-  return response;
+
+  return handle_response_status(response)
 }
 
 async function postData(url = "", data = {}) {
@@ -23,12 +65,13 @@ async function postData(url = "", data = {}) {
     headers: {
       "Content-Type": "application/json"
     },
-    
+
     redirect: "follow", // manual, *follow, error
     referrerPolicy: "origin", // no-referrer, *client
     body: JSON.stringify(data) // body data type must match "Content-Type" header
   });
-  return response; // parses JSON response into native JavaScript objects
+
+  return handle_response_status(response); // parses JSON response into native JavaScript objects
 }
 
 async function showResponse(response, command, showSuccess) {
@@ -46,6 +89,6 @@ async function showResponse(response, command, showSuccess) {
   return response.json();
 }
 
-export { postData, showResponse, get };
+export { postData, showResponse, get, handle_http_errors, PermissionError, LoginError };
 
 
