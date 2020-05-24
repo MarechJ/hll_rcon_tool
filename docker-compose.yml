@@ -26,6 +26,8 @@ services:
     ports:
       - ${RCONWEB_PORT}:80
     restart: always
+    volumes: 
+      - ./static:/static/
     environment: 
       RCONWEB_PASSWORD: ${RCONWEB_PASSWORD}
       RCONWEB_USERNAME: ${RCONWEB_USERNAME}
