@@ -226,4 +226,4 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
 STATIC_URL = '/djangostatic/'
-STATIC_ROOT = '/djangostatic/'
+STATIC_ROOT = '/static/'
