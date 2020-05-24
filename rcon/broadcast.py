@@ -2,11 +2,14 @@ import os
 import time
 import logging
 import random
+from functools import partial
 
 from rcon.extended_commands import Rcon
 from rcon.settings import SERVER_INFO
 from rcon.user_config import AutoBroadcasts
+from rcon.audit import online_mods, get_registered_mods
 from functools import wraps
+
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +24,7 @@ def safe(func, default=None):
             logger.exception("Unable to get data for broacasts")
             return default
     return wrapper
+
 
 if __name__ == '__main__':
     ctl = Rcon(
@@ -48,7 +52,8 @@ if __name__ == '__main__':
                 'nextmap': safe(ctl.get_next_map, "")(),
                 'maprotation': ' -> '.join(safe(ctl.get_map_rotation, [])()),
                 'servername': safe(ctl.get_name, "")(),
-                'onlineadmins': ', '.join(safe(ctl.get_online_admins, [])())
+                'onlineadmins': safe(online_mods, "")(),
+                'ingameadmins': safe(ctl.get_ingame_mods(get_registered_mods())) 
             }
             formatted = msg.format(**subs)
             logger.debug("Broadcasting for %s seconds: %s", time_sec, formatted)

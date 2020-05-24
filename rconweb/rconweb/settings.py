@@ -101,7 +101,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # TODO: move that to env. We don't need it yet but we might
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '9*i9zm1jx(5y-ns=*r6p%#6-q!bst98u3o3pw6joyf#-e(bh(0'
+SECRET_KEY = os.getenv('RCONWEB_API_SECRET', None) or '9*i9zm1jx(5y-ns=*r6p%#6-q!bst98u3o3pw6joyf#-e(bh(0'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DJANGO_DEBUG", False)
@@ -134,6 +134,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'corsheaders',
+    'api'
 ]
 
 MIDDLEWARE = [
@@ -171,10 +172,19 @@ WSGI_APPLICATION = 'rconweb.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 
+from urllib.parse import urlparse
+
+db_info = urlparse(os.getenv("DB_URL"))
+
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'django.db.backends.postgresql',
+        'USER': db_info.username,
+        'PASSWORD': db_info.password,
+        'HOST': db_info.hostname,
+        'PORT': db_info.port,
+        'NAME': 'rcon',
     }
 }
 

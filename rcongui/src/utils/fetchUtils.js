@@ -1,3 +1,5 @@
+import React from 'react'
+
 import { toast } from "react-toastify";
 
 
@@ -11,10 +13,13 @@ function PermissionError(message) {
   this.name = 'PermissionError';
 }
 
+function InvalidLogin(message) {
+  this.message = message;
+  this.name = 'InvalidLogin';
+}
 
 async function handle_response_status(response) {
   if (response.status === 401) {
-
     throw new LoginError("You must be logged in!")
   }
 
@@ -36,8 +41,11 @@ async function handle_http_errors(error) {
     toast.warn("You are not allowed to do this", {
       toastId: "Not allowed",
     })
-  }
-  else {
+  } else if (error.name == 'InvalidLogin') {
+    toast.warn(<img src="https://media.giphy.com/media/wSSooF0fJM97W/giphy.gif"/>, {
+      toastId: "Bad loging",
+    })
+  } else {
     toast.error("Unable to connect to API " + error)
   }
 }
@@ -71,6 +79,9 @@ async function postData(url = "", data = {}) {
     body: JSON.stringify(data) // body data type must match "Content-Type" header
   });
 
+  if (url.endsWith('login') && response.status === 401) {
+    throw new InvalidLogin("bad login")
+  }
   return handle_response_status(response); // parses JSON response into native JavaScript objects
 }
 

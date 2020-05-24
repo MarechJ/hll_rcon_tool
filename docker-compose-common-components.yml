@@ -12,6 +12,8 @@ services:
             REDIS_URL: redis://redis:6379/0
             DB_URL: 'postgres://rcon:${HLL_DB_PASSWORD}@postgres:5432'
             DISCORD_WEBHOOK_AUDIT_LOG: ${DISCORD_WEBHOOK_AUDIT_LOG}
+            SERVER_SHORT_NAME: ${SERVER_SHORT_NAME}
+            API_SECRET_KEY: ${API_SECRET_KEY}
         restart: always
         volumes: 
             - ./logs:/logs/

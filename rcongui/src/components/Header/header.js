@@ -22,6 +22,7 @@ import Dialog from "@material-ui/core/Dialog";
 import DialogActions from "@material-ui/core/DialogActions";
 import DialogContent from "@material-ui/core/DialogContent";
 import DialogTitle from "@material-ui/core/DialogTitle";
+import { throttle } from 'lodash/function'
 
 
 const LoginModal = ({ open, password, username, handleClose, setPassword, setUsername, login }) => (
@@ -32,12 +33,12 @@ const LoginModal = ({ open, password, username, handleClose, setPassword, setUse
         <DialogContent>
             <Grid container spacing={1}>
                 <Grid item>
-                    <TextField size="small" value={username} onChange={e => setUsername(e.target.value)} label="Username" variant="standard" />
-                </Grid>
-                <Grid item>
+                    <form >
+                    <TextField autoFocus size="small" value={username} onChange={e => setUsername(e.target.value)} label="Username" variant="standard" />
+               
                     <TextField size="small" value={password} onChange={e => setPassword(e.target.value)} label="Password" inputProps={{ type: "password" }} variant="standard" />
+                    </form>
                 </Grid>
-
             </Grid>
         </DialogContent>
         <DialogActions>
@@ -58,22 +59,74 @@ const LoginModal = ({ open, password, username, handleClose, setPassword, setUse
 )
 
 
+class LoginBox extends React.Component {
+
+    constructor(props) {
+        super(props)
+
+        this.state = {
+            username: "",
+            password: "",
+            open: false,
+            isLoggedIn: false,
+            interval: null,
+        }
+
+        this.login = this.login.bind(this)
+        this.logout = this.logout.bind(this)
+        this.isLoggedIn = this.isLoggedIn.bind(this)
+    }
+
+    componentDidMount() {
+        const f = throttle(this.isLoggedIn, 1000 * 55)
+        this.isLoggedIn()
+        this.setState(
+            {
+                interval: setInterval(f, 1000 * 60)
+            }
+        )
+    }
+
+    componentWillMount() {
+        clearInterval(this.state.interval)
+    }
+
+    isLoggedIn() {
+        return get('is_logged_in').then(response => response.json()).then(res => this.setState({isLoggedIn: res.result})).catch(handle_http_errors)
+    }
+
+    login() {
+        return postData(`${process.env.REACT_APP_API_URL}login`, { "username": this.state.username, "password": this.state.password }).then(
+            (res) => showResponse(res, `login ${this.state.username}`, true)
+        ).then(
+            data => { if (data.failed === false) { this.setState({ isLoggedIn: true, open: false, password: "" }) } }
+        ).catch(handle_http_errors)
+    }
+
+    logout() {
+        return get('logout').then(this.setState({isLoggedIn: false})).catch(handle_http_errors)
+    }
+
+    render() {
+        const { open, username, password, isLoggedIn } = this.state
+        const { classes } = this.props
+
+        return <Grid container className={classes.root} spacing={1} alignContent="flex-start" alignItems="center" justify="flex-end">
+            <Grid item>
+            { isLoggedIn === true
+                ?  <Button variant="outlined" size="medium" onClick={this.logout}>Logout</Button>
+                :  <Button variant="outlined" size="medium" onClick={() => this.setState({ open: true })}>Login</Button>
+            }     
+            </Grid>
+            <LoginModal open={open} handleClose={() => this.setState({ open: false })} login={this.login} password={password} setPassword={password => this.setState({ password: password })} username={username} setUsername={username => this.setState({ username: username })} />
+        </Grid>
+    }
+}
+
+
 export default ({ classes, setSaveDark, dark }) => {
     const [jk, setJk] = React.useState(false)
-    const [username, setUsername] = React.useState("")
-    const [password, setPassword] = React.useState("")
     const doJk = () => { setSaveDark('<3'); setJk(true) }
-
-    const login = () => (
-        // TODO clear password
-        postData(`${process.env.REACT_APP_API_URL}login`, { "username": username, "password": password }).then(
-            (res) => showResponse(res, `login ${username}`, true)
-        ).then(
-            data => { if (data.failed === false) { setOpen(false); setPassword("") }}
-        ).catch(handle_http_errors)
-    )
-
-    const [open, setOpen] = React.useState(false);
 
     return <Grid container className={classes.grow}>
         <div className={classes.grow}>
@@ -123,19 +176,12 @@ export default ({ classes, setSaveDark, dark }) => {
                             </Grid>
                         </Grid>
                         <Grid item xs={2}>
-                            <Grid container className={classes.root} spacing={1} alignContent="flex-start" alignItems="center" justify="flex-end">
-                                <Grid item>
-                                    <Button variant="outlined" size="medium" onClick={() => setOpen(true)}>Login</Button>
-                                </Grid>
-                                <Grid item>
-                                    <Button variant="outlined" size="medium" onClick={() => get('logout')}>Logout</Button>
-                                </Grid>
-                            </Grid>
+                            <LoginBox classes={classes} />
                         </Grid>
                     </Grid>
                 </Toolbar>
             </AppBar>
-            <LoginModal open={open} handleClose={() => setOpen(false)} login={login} password={password} setPassword={setPassword} username={username} setUsername={setUsername}/>
+
         </div>
     </Grid>
 }
