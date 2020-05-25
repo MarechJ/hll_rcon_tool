@@ -30,7 +30,7 @@ const LoginModal = ({ open, password, username, handleClose, setPassword, setUse
         <DialogTitle id="form-dialog-title">
             Moderator login
         </DialogTitle>
-        <form onSubmit={login}>
+        <form onSubmit={(e) => {e.preventDefault(); login()}}>
             <DialogContent>
                 <Grid container spacing={1}>
                     <Grid item>
@@ -48,13 +48,13 @@ const LoginModal = ({ open, password, username, handleClose, setPassword, setUse
                     color="primary"
                 >
                     Cancel
-      </Button>
-                <Button
-                    type="submit"
-                    color="primary"
-                >
-                    login
-      </Button>
+                </Button>
+                    <Button
+                        type="submit"
+                        color="primary"
+                    >
+                        login
+                </Button>
             </DialogActions>
         </form>
     </Dialog>
