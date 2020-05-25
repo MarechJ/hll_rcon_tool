@@ -43,25 +43,31 @@ class MetricCondition:
             ]),
             ('between', (10, 20), [
                 ('set_idle_autokick_time', {'minutes': 9999}),
-                ('set_autobalance_threshold', {'max_diff': 1}),
+                ('set_autobalance_threshold', {'max_diff': 0}),
                 ('set_max_ping_autokick', {'max_ms': 700}),
                 ('set_team_switch_cooldown', {'minutes': 5}),
             ]),
             ('between', (20, 50), [
                 ('set_idle_autokick_time', {'minutes': 120}),
-                ('set_autobalance_threshold', {'max_diff': 2}),
+                ('set_autobalance_threshold', {'max_diff': 1}),
                 ('set_max_ping_autokick', {'max_ms': 600}),
                 ('set_team_switch_cooldown', {'minutes': 10}),
             ]),
             ('between', (50, 70), [
-                ('set_idle_autokick_time', {'minutes': 30}),
-                ('set_autobalance_threshold', {'max_diff': 2}),
+                ('set_idle_autokick_time', {'minutes': 60}),
+                ('set_autobalance_threshold', {'max_diff': 1}),
                 ('set_max_ping_autokick', {'max_ms': 500}),
                 ('set_team_switch_cooldown', {'minutes': 15}),
             ]),
-            ('between', (70, 90), [
+            ('between', (70, 95), [
                 ('set_idle_autokick_time', {'minutes': 20}),
-                ('set_autobalance_threshold', {'max_diff': 2}),
+                ('set_autobalance_threshold', {'max_diff': 1}),
+                ('set_max_ping_autokick', {'max_ms': 500}),
+                ('set_team_switch_cooldown', {'minutes': 15}),
+            ]),
+            ('between', (95, 100), [
+                ('set_idle_autokick_time', {'minutes': 10}),
+                ('set_autobalance_threshold', {'max_diff': 0}),
                 ('set_max_ping_autokick', {'max_ms': 500}),
                 ('set_team_switch_cooldown', {'minutes': 15}),
             ]),
