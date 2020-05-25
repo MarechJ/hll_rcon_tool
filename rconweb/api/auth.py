@@ -74,10 +74,15 @@ def is_logged_in(request):
     res = request.user.is_authenticated
     if res:
         try:
-            heartbeat(request.user.username, request.user.steam_id_64)
+            steam_id = None
+            try:
+                steam_id = request.user.steamplayer.steam_id_64
+            except:
+                logger.warning("%s's steam id is not set ", request.user.username)
+            heartbeat(request.user.username, steam_id)
             set_registered_mods([u.steam_id_64 for u in SteamPlayer.objects.all()])
         except:
-            logger.warning("Can't record heartbeat")
+            logger.exception("Can't record heartbeat")
 
     return api_response(
         result=res,
@@ -117,6 +122,7 @@ def login_required(func):
         try:
             return func(request, *args, **kwargs)
         except Exception as e:
+            logger.exception("Unexpected error")
             return api_response(
                 command=request.path,
                 error=repr(e),

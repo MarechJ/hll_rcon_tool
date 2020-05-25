@@ -27,7 +27,8 @@ def online_mods():
 # Ideally we'd extract the services (i.e. broadcast, logs_event, etc) in a separated package, and let them
 # user a service account to talk the the API. 
 def set_registered_mods(steam_ids):
-    _red().sadd(KNOWN_MODS_KEY, *steam_ids)
+    if steam_ids:
+        _red().sadd(KNOWN_MODS_KEY, *steam_ids)
 
 def get_registered_mods():
     return  _red().smembers(KNOWN_MODS_KEY)

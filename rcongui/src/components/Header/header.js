@@ -30,31 +30,33 @@ const LoginModal = ({ open, password, username, handleClose, setPassword, setUse
         <DialogTitle id="form-dialog-title">
             Moderator login
         </DialogTitle>
-        <DialogContent>
-            <Grid container spacing={1}>
-                <Grid item>
-                    <form >
-                    <TextField autoFocus size="small" value={username} onChange={e => setUsername(e.target.value)} label="Username" variant="standard" />
-               
-                    <TextField size="small" value={password} onChange={e => setPassword(e.target.value)} label="Password" inputProps={{ type: "password" }} variant="standard" />
-                    </form>
+        <form onSubmit={login}>
+            <DialogContent>
+                <Grid container spacing={1}>
+                    <Grid item>
+
+                        <TextField autoFocus size="small" value={username} onChange={e => setUsername(e.target.value)} label="Username" variant="standard" />
+
+                        <TextField size="small" value={password} onChange={e => setPassword(e.target.value)} label="Password" inputProps={{ type: "password" }} variant="standard" />
+
+                    </Grid>
                 </Grid>
-            </Grid>
-        </DialogContent>
-        <DialogActions>
-            <Button
-                onClick={handleClose}
-                color="primary"
-            >
-                Cancel
+            </DialogContent>
+            <DialogActions>
+                <Button
+                    onClick={handleClose}
+                    color="primary"
+                >
+                    Cancel
       </Button>
-            <Button
-                onClick={login}
-                color="primary"
-            >
-                login
+                <Button
+                    type="submit"
+                    color="primary"
+                >
+                    login
       </Button>
-        </DialogActions>
+            </DialogActions>
+        </form>
     </Dialog>
 )
 
@@ -92,7 +94,7 @@ class LoginBox extends React.Component {
     }
 
     isLoggedIn() {
-        return get('is_logged_in').then(response => response.json()).then(res => this.setState({isLoggedIn: res.result})).catch(handle_http_errors)
+        return get('is_logged_in').then(response => response.json()).then(res => this.setState({ isLoggedIn: res.result })).catch(handle_http_errors)
     }
 
     login() {
@@ -104,7 +106,7 @@ class LoginBox extends React.Component {
     }
 
     logout() {
-        return get('logout').then(this.setState({isLoggedIn: false})).catch(handle_http_errors)
+        return get('logout').then(this.setState({ isLoggedIn: false })).catch(handle_http_errors)
     }
 
     render() {
@@ -113,10 +115,10 @@ class LoginBox extends React.Component {
 
         return <Grid container className={classes.root} spacing={1} alignContent="flex-start" alignItems="center" justify="flex-end">
             <Grid item>
-            { isLoggedIn === true
-                ?  <Button variant="outlined" size="medium" onClick={this.logout}>Logout</Button>
-                :  <Button variant="outlined" size="medium" onClick={() => this.setState({ open: true })}>Login</Button>
-            }     
+                {isLoggedIn === true
+                    ? <Button variant="outlined" size="medium" onClick={this.logout}>Logout</Button>
+                    : <Button variant="outlined" size="medium" onClick={() => this.setState({ open: true })}>Login</Button>
+                }
             </Grid>
             <LoginModal open={open} handleClose={() => this.setState({ open: false })} login={this.login} password={password} setPassword={password => this.setState({ password: password })} username={username} setUsername={username => this.setState({ username: username })} />
         </Grid>

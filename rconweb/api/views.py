@@ -27,6 +27,8 @@ from .auth import login_required
 logger = logging.getLogger('rconweb')
 
 
+
+
 # TODO this does not work if's there a second reverse proxy on the host of docker
 # TODO Remove when user accounts are implemented
 def get_client_ip(request):
@@ -48,6 +50,7 @@ def _get_data(request):
 @login_required
 def clear_cache(request):
     res = RedisCached.clear_all_caches(get_redis_pool())
+    send_to_discord_audit("Clear cache", request.user.username)
     return JsonResponse({
         "result": res,
         "command": "clear_cache",
@@ -95,6 +98,7 @@ def set_auto_broadcasts_config(request):
         for k, v in data.items():
             if k in config_keys:
                 config_keys[k](v)
+                send_to_discord_audit("Auto broadcast {}: {}".format(k, v), request.user.username)
     except InvalidConfigurationError as e:
         failed = True
         res = str(e)
@@ -133,7 +137,7 @@ def blacklist_player(request):
     data = _get_data(request)
     res = {}
     try:
-        send_to_discord_audit("Blacklist '{}' for '{}'".format(data['steam_id_64'], data['reason']), get_client_ip(request))
+        send_to_discord_audit("Blacklist '{}' for '{}'".format(data['steam_id_64'], data['reason']), request.user.username)
         add_player_to_blacklist(data['steam_id_64'], data['reason'])
         failed = False
     except:
@@ -154,7 +158,7 @@ def unblacklist_player(request):
     data = _get_data(request)
     res = {}
     try:
-        send_to_discord_audit("Unblacklist '{}' for ''".format(data['steam_id_64']), get_client_ip(request))
+        send_to_discord_audit("Unblacklist '{}' for ''".format(data['steam_id_64']), request.user.username)
         remove_player_from_blacklist(data['steam_id_64'])
         failed = False
     except:
@@ -218,7 +222,7 @@ def audit(func_name, request, arguments):
 
     try:
         if any(func_name.startswith(s) for s in to_audit):
-            send_to_discord_audit("{} {}".format(func_name, arguments), get_client_ip(request))
+            send_to_discord_audit("{} {}".format(func_name, arguments), request.user.username)
         else:
             logger.debug("%s is not set for audit", func_name)
     except:
@@ -235,12 +239,10 @@ def wrap_method(func, parameters):
         data = {}
         failure = False
         data = _get_data(request)
-        logger.info("%s %s", func.__name__, data)
  
         for pname, param in parameters.items():
             if pname == 'by':
-                # TODO: replace by account id when we have user layer
-                arguments[pname] = get_client_ip(request)
+                arguments[pname] = request.user.username
             elif param.default != inspect._empty:
                 arguments[pname] = data.get(pname)
             else:
