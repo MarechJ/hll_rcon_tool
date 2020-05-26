@@ -37,8 +37,6 @@ services:
       RCONWEB_USERNAME: ${RCONWEB_USERNAME}
   redis:
     image: redislabs/redistimeseries
-    ports: # Exposing ports is only useful for local development
-      - 127.0.0.1:${HLL_REDIS_HOST_PORT:-6379}:6379
     restart: always
     volumes:
       - ./redis_data:/data
@@ -53,6 +51,4 @@ services:
       PGDATA: /data
     volumes:
       - ./db_data:/data
-    ports:
-      - 127.0.0.1:${HLL_DB_HOST_PORT:-5432}:5432
 

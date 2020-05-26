@@ -12,3 +12,10 @@ services:
   frontend:
     build:
       context: ./rcongui
+  redis:
+    ports: 
+      - 6379:6379
+  postgres:
+    ports:
+      - 5432:5432
+    
