@@ -8,7 +8,7 @@ import math
 from rcon.models import (
     init_db, enter_session, PlayerName, 
     PlayerSteamID, PlayerSession, BlacklistedPlayer, 
-    PlayersAction
+    PlayersAction, PlayerFlag
 )
 from rcon.game_logs import on_connected, on_disconnected
 from rcon.commands import CommandFailedError
@@ -75,6 +75,8 @@ def get_players_by_appearance(page=1, page_size=500, last_seen_from: datetime.da
         players = query.order_by(sub.c.last.desc()).limit(
             page_size).offset((page - 1) * page_size).all()
        
+        # TODO: Why not returning the whole player dict + the extra aggregated fields?
+        # Perf maybe a bit crappier but that's not too much of a concern here
         return {
             'total': total,
             'players': [
@@ -84,7 +86,8 @@ def get_players_by_appearance(page=1, page_size=500, last_seen_from: datetime.da
                     'first_seen_timestamp_ms': int(p[1].timestamp() * 1000) if p[1] else None,
                     'last_seen_timestamp_ms': int(p[2].timestamp() * 1000) if p[1] else None,
                     'penalty_count': p[0].get_penalty_count(),
-                    'blacklisted': p[0].blacklist.is_blacklisted if p[0].blacklist else False
+                    'blacklisted': p[0].blacklist.is_blacklisted if p[0].blacklist else False,
+                    'flags': [f.to_dict() for f in p[0].flags]
                 }
                 for p in players
             ],
@@ -214,6 +217,32 @@ def ban_if_blacklisted(rcon, steam_id_64, name):
             )
 
 
+def add_flag_to_player(steam_id_64, flag, comment=None, player_name=None):
+    with enter_session() as sess:
+        player = _get_set_player(sess, player_name=player_name, steam_id_64=steam_id_64)
+        exits = sess.query(PlayerFlag).filter(PlayerFlag.playersteamid_id == player.id, PlayerFlag.flag == flag).all()
+        if exits:
+            logger.warning("Flag already exists")
+            raise CommandFailedError("Flag already exists")
+        sess.add(PlayerFlag(flag=flag, comment=comment, steamid=player))
+        sess.commit()
+        res = player.to_dict()
+    return res
+    
+
+def remove_flag(flag_id):
+    with enter_session() as sess:
+        exits = sess.query(PlayerFlag).filter(PlayerFlag.id == int(flag_id)).one_or_none()
+        if not exits:
+            logger.warning("Flag does not exists")
+            raise CommandFailedError("Flag not exists")
+        res = exits.to_dict()
+        sess.delete(exits)
+        sess.commit()
+
+    return res
+    
+
 def add_player_to_blacklist(steam_id_64, reason, name=None):
     # TODO save author of blacklist
     with enter_session() as sess:
@@ -311,8 +340,11 @@ if __name__ == '__main__':
         '4242',
         int((datetime.datetime.now() + datetime.timedelta(minutes=30)).timestamp() * 1000)
     )
-
+    add_player_to_blacklist("4242", "test")
     remove_player_from_blacklist("4242")
 
     import pprint
     pprint.pprint(get_players_by_appearance())
+
+    add_flag_to_player("76561198156263725", "🐷")
+

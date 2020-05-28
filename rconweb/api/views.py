@@ -17,7 +17,9 @@ from rcon.player_history import (
     get_players_by_appearance, 
     add_player_to_blacklist, 
     remove_player_from_blacklist,
-    get_player_profile
+    get_player_profile,
+    add_flag_to_player,
+    remove_flag,
 )
 from rcon.user_config import AutoBroadcasts, InvalidConfigurationError
 from rcon.cache_utils import RedisCached, get_redis_pool
@@ -123,11 +125,53 @@ def get_player(request):
 
 
 @csrf_exempt
+def flag_player(request):
+    data = _get_data(request)
+    res = None
+    try:
+        res = add_flag_to_player(steam_id_64=data['steam_id_64'], flag=data['flag'])
+        send_to_discord_audit("Flagged '{steamid}' '{names}' with '{flag}': '{comment}'".format(
+            data['steam_id_64']), get_client_ip(request))
+    except KeyError:
+        logger.warning("Missing parameters")
+        # TODO return 400
+    except CommandFailedError:
+        logger.exception("Failed to flag")
+    return JsonResponse({
+        "result": res,
+        "command": "flag_player",
+        "arguments": data,
+        "failed": not res
+    })
+   
+@csrf_exempt
+def unflag_player(request):
+    # Note is this really not restful
+    data = _get_data(request)
+    res = None
+    try:
+        res = remove_flag(data['flag_id'])
+        send_to_discord_audit("Remove flag '{}'".format(
+            data['flag_id']), get_client_ip(request))
+    except KeyError:
+        logger.warning("Missing parameters")
+        # TODO return 400
+    except CommandFailedError:
+        logger.exception("Failed to remove flag")
+    return JsonResponse({
+        "result": res,
+        "command": "flag_player",
+        "arguments": data,
+        "failed": not res
+    })
+   
+
+@csrf_exempt
 def blacklist_player(request):
     data = _get_data(request)
     res = {}
     try:
-        send_to_discord_audit("Blacklist '{}' for '{}'".format(data['steam_id_64'], data['reason']), get_client_ip(request))
+        created=self.created
         add_player_to_blacklist(data['steam_id_64'], data['reason'])
         failed = False
     except:
@@ -314,6 +358,8 @@ commands = [
     ("get_auto_broadcasts_config", get_auto_broadcasts_config),
     ("set_auto_broadcasts_config", set_auto_broadcasts_config),
     ("clear_cache", clear_cache),
+    ("flag_player", flag_player),
+    ("unflag_player", unflag_player)
 ]
 
 # Dynamically register all the methods from ServerCtl
