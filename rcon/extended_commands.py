@@ -1,5 +1,6 @@
 import random
 import os
+import re
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 import logging
@@ -29,6 +30,7 @@ class Rcon(ServerCtl):
         ('idle_autokick_time', int), ('max_ping_autokick', int),
         ('queue_length', int), ('vip_slots_num', int)
     )
+    slots_regexp = re.compile('\d{1,2}/\d{2}')
 
     @ttl_cache(ttl=60 * 60 * 24, cache_falsy=False)
     def get_player_info(self, player):
@@ -85,9 +87,6 @@ class Rcon(ServerCtl):
 
     @ttl_cache(ttl=5)
     def get_players(self):
-        # We need a centralized cache or a
-        # mutliprocess safe one to be able to invalidate the cache on
-        # kick/ban actions
         names = super().get_players()
         players = []
         for n in names:
@@ -229,7 +228,10 @@ class Rcon(ServerCtl):
 
     @ttl_cache(ttl=20)
     def get_slots(self):
-        return super().get_slots()
+        res = super().get_slots()
+        if not self.slots_regexp.match(res):
+            raise CommandFailedError("Server returned crap")
+        return res
 
     @ttl_cache(ttl=5, cache_falsy=False)
     def get_status(self):
