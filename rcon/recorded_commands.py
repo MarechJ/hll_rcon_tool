@@ -62,4 +62,9 @@ class RecordedRcon(Rcon):
         )
         return res
 
- 
+    @ttl_cache(ttl=5, cache_falsy=False)
+    def get_players(self, player):
+        # TODO redefined here to make sure it's cached with the right qualified name
+        return super().get_players()
+
+    
