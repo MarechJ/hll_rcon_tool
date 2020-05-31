@@ -3,7 +3,7 @@ import {
     Grid, Typography, Button, TextField
 } from "@material-ui/core"
 import { range } from "lodash/util"
-import { showResponse, postData } from '../../utils/fetchUtils'
+import { showResponse, postData, get, handle_http_errors } from '../../utils/fetchUtils'
 import { toast } from "react-toastify"
 import _ from 'lodash'
 import LinearProgress from "@material-ui/core/LinearProgress"
@@ -27,13 +27,14 @@ class RconSettings extends React.Component {
     }
 
     async loadBroadcastsSettings() {
-        return fetch(`${process.env.REACT_APP_API_URL}get_auto_broadcasts_config`)
+        return get(`get_auto_broadcasts_config`)
             .then((res) => showResponse(res, "get_auto_broadcasts_config", false))
             .then(data => !data.failed && this.setState({
                 messages: data.result.messages,
                 randomized: data.result.randomized,
                 enabled: data.result.enabled
             }))
+            .catch(handle_http_errors)
     }
 
     async saveBroadcastsSettings(data) {
@@ -42,11 +43,13 @@ class RconSettings extends React.Component {
         )
             .then((res) => showResponse(res, "set_auto_broadcasts_config", true))
             .then(res => !res.failed && this.setState(data))
+            .catch(handle_http_errors)
     }
 
     async clearCache() {
         return postData(`${process.env.REACT_APP_API_URL}clear_cache`, {})
             .then((res) => showResponse(res, "clear_cache", true))
+            .catch(handle_http_errors)
     }
 
     validate_messages() {
@@ -74,7 +77,7 @@ class RconSettings extends React.Component {
 
     render() {
         const { messages, enabled, randomized } = this.state
-        const { classes } = this.props 
+        const { classes } = this.props
 
         return (
             <Grid container >
@@ -112,7 +115,7 @@ class RconSettings extends React.Component {
                 </Grid>
                 <Grid container spacing={1} alignContent="center" justify="center" alignItems="center" className={classes.root}>
                     <Grid item xs={4} className={`${classes.padding} ${classes.margin}`}>
-                        <Button fullWidth color="secondary" variant="outlined"  onClick={this.clearCache}>Clear application cache</Button>
+                        <Button fullWidth color="secondary" variant="outlined" onClick={this.clearCache}>Clear application cache</Button>
                     </Grid>
                 </Grid>
             </Grid>

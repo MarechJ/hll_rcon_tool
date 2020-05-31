@@ -3,7 +3,7 @@ import {
   Grid, Typography, Button
 } from "@material-ui/core"
 import { range } from "lodash/util"
-import { showResponse, postData } from '../../utils/fetchUtils'
+import { showResponse, postData, get, handle_http_errors } from '../../utils/fetchUtils'
 import { toast } from "react-toastify"
 import VipEditableList from "./vips"
 import AdminsEditableList from "./admins"
@@ -101,23 +101,24 @@ class HLLSettings extends React.Component {
   }
 
   async loadSettings() {
-    return fetch(`${process.env.REACT_APP_API_URL}get_server_settings`)
+    return get(`get_server_settings`)
       .then((res) => showResponse(res, "get_server_settings", false))
-      .then(data => this.setState({
+      .then(data => data.failed === false ? this.setState({
         autoBalanceThres: data.result.autobalance_threshold,
         teamSwitchCooldownMin: data.result.team_switch_cooldown,
         idleAutokickMin: data.result.idle_autokick_time,
         maxPingMs: data.result.max_ping_autokick,
         queueLength: data.result.queue_length,
         vipSlots: data.result.vip_slots_num,
-      }))
+      }) : null)
+      .catch(handle_http_errors)
   }
 
   async _loadToState(command, showSuccess, stateSetter) {
-    return fetch(`${process.env.REACT_APP_API_URL}${command}`)
+    return get(command)
       .then((res) => showResponse(res, command, showSuccess))
-      .then(stateSetter)
-      .catch(error => toast.error("Unable to connect to API " + error));
+      .then(res => res.failed === false ? stateSetter(res) : null)
+      .catch(handle_http_errors)
   }
 
   async loadVips() {
@@ -143,13 +144,13 @@ class HLLSettings extends React.Component {
   async saveSetting(name, value) {
     return postData(`${process.env.REACT_APP_API_URL}do_save_setting`, { "name": name, "value": value }).then(
       (res) => showResponse(res, `do_save_setting ${name} ${value}`, true)
-    ).catch(error => toast.error("Unable to connect to API " + error));
+    ).catch(handle_http_errors)
   }
 
   async sendAction(command, parameters) {
     return postData(`${process.env.REACT_APP_API_URL}${command}`, parameters).then(
       (res) => showResponse(res, command, true)
-    ).catch(error => toast.error("Unable to connect to API " + error));
+    ).catch(handle_http_errors)
   }
 
   async addMapsToRotation(maps) {
@@ -163,7 +164,7 @@ class HLLSettings extends React.Component {
   async changeMap(map_name) {
     return postData(`${process.env.REACT_APP_API_URL}set_map`, { map_name: map_name }).then(
       (res) => showResponse(res, `command: ${map_name}`, true)
-    ).catch(error => toast.error("Unable to connect to API " + error));
+    ).catch(handle_http_errors)
   }
 
   render() {
@@ -358,7 +359,7 @@ class HLLSettings extends React.Component {
             <Typography variant="caption" display="block" gutterBottom>Due to the HLL server limitations we can't know if the autobalance is on or off</Typography>
           </Grid>
           <Grid item xs={6}><Button fullWidth variant="outlined" onClick={() => this.sendAction("set_autobalance", { bool_str: "on" })}>Activate autobalance</Button></Grid>
-          <Grid item xs={6}><Button fullWidth variant="outlined" onClick={() => this.sendAction("set_autobalance", { bool_str: "off" })}>Desactivate autobalance</Button></Grid>
+          <Grid item xs={6}><Button fullWidth variant="outlined" onClick={() => this.sendAction("set_autobalance", { bool_str: "off" })}>Deactivate autobalance</Button></Grid>
         </Grid>
         <Grid container className={classes.paddingTop} justify="center" xs={12}>
           <Grid item>

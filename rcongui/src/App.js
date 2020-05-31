@@ -75,6 +75,8 @@ const withLove = createMuiTheme({
 });
 
 
+const ThemeContext = React.createContext('light');
+
 
 function App() {
   const classes = useStyles();

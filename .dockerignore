@@ -1,0 +1,7 @@
+db_data/
+logs/
+servicediscovery/
+redis_data/
+*.yml
+*.log
+

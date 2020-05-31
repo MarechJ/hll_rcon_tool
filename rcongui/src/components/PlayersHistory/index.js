@@ -2,7 +2,7 @@
 import React from 'react';
 import useAutocomplete from '@material-ui/lab/useAutocomplete';
 import { makeStyles } from '@material-ui/core/styles';
-import { postData, showResponse } from "../../utils/fetchUtils";
+import { postData, showResponse, handle_http_errors } from "../../utils/fetchUtils";
 import { toast } from "react-toastify";
 import { join, each, reduce, get, map } from 'lodash'
 import Autocomplete from "@material-ui/lab/Autocomplete";
@@ -133,7 +133,7 @@ const PlayerItem = ({ classes, names, steamId64, firstSeen, lastSeen, blackliste
     const last_seen = moment(lastSeen)
     const first_seen = moment(firstSeen)
     const extraneous = compact ? { display: 'none' } : {}
-    console.log(flags)
+
     return <Grid container>
         <Grid item xs={12}>
             <Paper>
@@ -254,7 +254,7 @@ const FilterPlayer = ({ classes, constPlayersHistory, pageSize, total, page, set
             <Grid container spacing={2}>
                 {playerList.map(nameIndex => {
                     const player = playersHistory[nameIndex.idx]
-                    console.log(player)
+                
                     return <Grid key={player.steam_id_64} item xs={12} sm={6} md={4} lg={3} xl={2}>
                         <PlayerItem
                             key={player.steam_id_64}
@@ -340,7 +340,7 @@ class PlayersHistory extends React.Component {
         }, v => !v)
 
         this.setState({ isLoading: true })
-        console.log(params)
+ 
         return postData(`${process.env.REACT_APP_API_URL}players_history`, params)
             .then(response => showResponse(response, 'player_history'))
             .then(data => {
@@ -356,7 +356,7 @@ class PlayersHistory extends React.Component {
                     page: data.result.page
                 })
             })
-            .catch(error => toast.error("Unable to connect to API " + error));
+            .catch(handle_http_errors)
     }
 
     _reloadOnSuccess = data => {

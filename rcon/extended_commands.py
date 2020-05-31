@@ -62,8 +62,15 @@ class Rcon(ServerCtl):
             )
         return admins
         
+    def get_ingame_mods(self, steam_ids):
+        players = self.get_players()
+        return [
+            player 
+            for player in players
+            if player['steam_id_64'] in steam_ids
+        ]
 
-    def get_online_admins(self):
+    def get_online_console_admins(self):
         admins = self.get_admin_ids()
         players = self.get_players()
         online = []
@@ -235,6 +242,7 @@ class Rcon(ServerCtl):
     def get_status(self):
         return {
             'name': self.get_name(),
+            'alias': os.getenv('RCON_INSTANCE_NAME', 'HLL RCON'),
             'map': self.get_map(),
             'nb_players': self.get_slots()
         }
