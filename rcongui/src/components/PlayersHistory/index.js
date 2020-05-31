@@ -254,7 +254,7 @@ const FilterPlayer = ({ classes, constPlayersHistory, pageSize, total, page, set
             <Grid container spacing={2}>
                 {playerList.map(nameIndex => {
                     const player = playersHistory[nameIndex.idx]
-                    console.log(player)
+                
                     return <Grid key={player.steam_id_64} item xs={12} sm={6} md={4} lg={3} xl={2}>
                         <PlayerItem
                             key={player.steam_id_64}
@@ -340,7 +340,6 @@ class PlayersHistory extends React.Component {
         }, v => !v)
 
         this.setState({ isLoading: true })
-        console.log(params)
         return postData(`${process.env.REACT_APP_API_URL}players_history`, params)
             .then(response => showResponse(response, 'player_history'))
             .then(data => {
