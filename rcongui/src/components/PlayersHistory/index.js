@@ -340,7 +340,7 @@ class PlayersHistory extends React.Component {
         }, v => !v)
 
         this.setState({ isLoading: true })
- 
+        
         return postData(`${process.env.REACT_APP_API_URL}players_history`, params)
             .then(response => showResponse(response, 'player_history'))
             .then(data => {
