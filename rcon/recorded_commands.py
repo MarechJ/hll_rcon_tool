@@ -1,7 +1,8 @@
 from logging import getLogger
 
-from rcon.player_history import safe_save_player_action, add_player_to_blacklist
-from rcon.extended_commands import Rcon
+from rcon.player_history import safe_save_player_action, add_player_to_blacklist, get_player_profile
+from rcon.extended_commands import Rcon, STEAMID, NAME
+from rcon.cache_utils import ttl_cache
 
 logger = getLogger(__name__)
 
@@ -50,3 +51,15 @@ class RecordedRcon(Rcon):
             rcon=self, player_name=player, action_type="SWITCHTEAMNOW", reason='', by=by
         )
         return res
+
+    @ttl_cache(ttl=60, cache_falsy=False)
+    def get_player_info(self, player):
+        res = super().get_player_info(player)
+        if not res:
+            return res
+        res.update(
+            {'profile': get_player_profile(res[STEAMID], 0) or {}}
+        )
+        return res
+
+ 

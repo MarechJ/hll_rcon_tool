@@ -329,6 +329,7 @@ if __name__ == '__main__':
     save_player('Dr.WeeD4', '4242')
     save_player('Dr.WeeD5', '4242')
     save_player('Dr.WeeD6', '4242')
+    save_player("test", '76561197984877751')
     save_start_player_session(
         '4242', datetime.datetime.now().timestamp()
     )

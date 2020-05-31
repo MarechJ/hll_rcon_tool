@@ -19,13 +19,13 @@ import SearchBar from './searchBar'
 import { Map, List } from 'immutable'
 import FlagIcon from '@material-ui/icons/Flag';
 import 'emoji-mart/css/emoji-mart.css'
-import { getEmojiDataFromNative, Emoji, Picker } from 'emoji-mart'
-import data from 'emoji-mart/data/all.json'
+import { Picker } from 'emoji-mart'
+
 import Dialog from "@material-ui/core/Dialog";
 import DialogActions from "@material-ui/core/DialogActions";
 import DialogContent from "@material-ui/core/DialogContent";
 import DialogTitle from "@material-ui/core/DialogTitle";
-
+import { getEmojiFlag } from '../../utils/emoji'
 
 class FlagDialog extends React.Component {
     constructor(props) {
@@ -128,16 +128,7 @@ const WithPopver = ({ classes, popoverContent, children }) => {
     );
 }
 
-function getEmojiFlag(flag) {
-    const emo = getEmojiDataFromNative(flag, 'apple', data)
-    console.log(emo)
-    if (emo) {
-        return <Emoji emoji={emo} set='apple' size={24} />
-    }
-    return flag
-}
-
-const PlayerItem = ({ classes, names, steamId64, firstSeen, lastSeen, blacklisted, punish, kick, tempban, permaban, onBlacklist, onUnBlacklist, flags, onflag, compact = true }) => {
+const PlayerItem = ({ classes, names, steamId64, firstSeen, lastSeen, blacklisted, punish, kick, tempban, permaban, onBlacklist, onUnBlacklist, flags, onflag, onDeleteFlag, compact = true }) => {
     const now = moment()
     const last_seen = moment(lastSeen)
     const first_seen = moment(firstSeen)
@@ -146,7 +137,7 @@ const PlayerItem = ({ classes, names, steamId64, firstSeen, lastSeen, blackliste
     return <Grid container>
         <Grid item xs={12}>
             <Paper>
-                <Grid container justify="flex-start" alignItems="center" className={`${classes.doublePadding} ${classes.paddingBottom}`}>
+                <Grid container justify="flex-start" alignItems="center" className={`${classes.doublePadding} ${classes.paddingBottom}`} style={{paddingRight: 0}}>
                     <Grid item xs={8} sm={7}>
                         <Grid container alignContent="flex-start">
                             <Grid item xs={12}>
@@ -171,15 +162,15 @@ const PlayerItem = ({ classes, names, steamId64, firstSeen, lastSeen, blackliste
                     </Grid>
                 </Grid>
                 <Grid container justify="space-around" alignContent="center" alignItems="center" spacing={0} style={extraneous} className={classes.padding}>
-                    <Grid item xs={2}>Flags: </Grid>
-                    <Grid item xs={7}>
-                        <Grid container justify="flex-start" alignContent="center" alignItems="center" spacing={0} style={extraneous} className={classes.padding}>
+                    <Grid item xs={3}><Button size="small" variant="outlined" onClick={onflag}><FlagIcon /></Button></Grid>
+                    <Grid item xs={9}>
+                        <Grid container justify="flex-start" alignContent="center" alignItems="center" spacing={0} className={classes.paddingTop}>
+                            {!flags || flags.isEmpty() ? 'No flags to display' : ''}
                             {flags.map(d => 
-                               <Grid item>{getEmojiFlag(d.get('flag'))}</Grid>
+                               <Grid item className={classes.noPaddingMargin}><Link onClick={() => window.confirm("Delete flag?") ? onDeleteFlag(d.get('id')) : '' }>{getEmojiFlag(d.get('flag'))}</Link></Grid>
                             )}
                         </Grid>
                     </Grid>
-                    <Grid item xs={3}><Button size="small" variant="outlined" onClick={onflag}><FlagIcon /></Button></Grid>
                 </Grid>
                 <Grid container justify="space-between" spacing={0} style={extraneous} className={classes.padding}>
                     <Grid item xs={6}>
@@ -218,7 +209,7 @@ const MyPagination = ({ classes, pageSize, total, page, setPage }) => (
 )
 
 
-const FilterPlayer = ({ classes, constPlayersHistory, pageSize, total, page, setPage, onUnBlacklist, onBlacklist, constNamesIndex, onAddFlag }) => {
+const FilterPlayer = ({ classes, constPlayersHistory, pageSize, total, page, setPage, onUnBlacklist, onBlacklist, constNamesIndex, onAddFlag, onDeleteFlag }) => {
 
     const playersHistory = constPlayersHistory.toJS()
     const namesIndex = constNamesIndex.toJS()
@@ -282,6 +273,7 @@ const FilterPlayer = ({ classes, constPlayersHistory, pageSize, total, page, set
                             onflag={() => setDoFlag(player)}
                             onBlacklist={() => setDoConfirmPlayer({ player: player.steam_id_64, actionType: "blacklist" })}
                             onUnBlacklist={() => onUnBlacklist(player.steam_id_64)}
+                            onDeleteFlag={onDeleteFlag}
                         />
                     </Grid>
                 })}
@@ -332,6 +324,7 @@ class PlayersHistory extends React.Component {
         this.blacklistPlayer = this.blacklistPlayer.bind(this)
         this.unblacklistPlayer = this.unblacklistPlayer.bind(this)
         this.addFlagToPlayer = this.addFlagToPlayer.bind(this)
+        this.deleteFlag = this.deleteFlag.bind(this)
     }
 
     getPlayerHistory() {
@@ -366,17 +359,28 @@ class PlayersHistory extends React.Component {
             .catch(error => toast.error("Unable to connect to API " + error));
     }
 
+    _reloadOnSuccess = data => {
+            if (data.failed) {
+                return
+            }
+            this.getPlayerHistory()
+    }
+
     addFlagToPlayer(playerObj, flag, comment = null) {
         return postData(`${process.env.REACT_APP_API_URL}flag_player`, {
             steam_id_64: playerObj.steam_id_64, flag: flag, comment: comment
         })
             .then(response => showResponse(response, 'flag_player'))
-            .then(data => {
-                if (data.failed) {
-                    return
-                }
-                this.getPlayerHistory()
-            })
+            .then(this._reloadOnSuccess)
+            .catch(error => toast.error("Unable to connect to API " + error));
+    }
+
+    deleteFlag(flag_id) {
+        return postData(`${process.env.REACT_APP_API_URL}unflag_player`, {
+            flag_id: flag_id
+        })
+            .then(response => showResponse(response, 'flag_player'))
+            .then(this._reloadOnSuccess)
             .catch(error => toast.error("Unable to connect to API " + error));
     }
 
@@ -391,9 +395,7 @@ class PlayersHistory extends React.Component {
                     `PlayerID ${steamId64} blacklist for ${reason}`,
                     true
                 )
-            ).then(
-                this.getPlayerHistory()
-            )
+            ).then(this._reloadOnSuccess).catch(error => toast.error("Unable to connect to API " + error));
     }
 
     unblacklistPlayer(steamId64) {
@@ -406,9 +408,7 @@ class PlayersHistory extends React.Component {
                     `PlayerID ${steamId64} removed from blacklist`,
                     true
                 )
-            ).then(
-                this.getPlayerHistory()
-            )
+            ).then(this._reloadOnSuccess).catch(error => toast.error("Unable to connect to API " + error));
     }
 
 
@@ -453,6 +453,7 @@ class PlayersHistory extends React.Component {
                         onBlacklist={this.blacklistPlayer}
                         onUnBlacklist={this.unblacklistPlayer}
                         onAddFlag={this.addFlagToPlayer}
+                        onDeleteFlag={this.deleteFlag}
                     />}
             </Grid>
         </Grid>

@@ -89,10 +89,13 @@ class Rcon(ServerCtl):
         # mutliprocess safe one to be able to invalidate the cache on
         # kick/ban actions
         names = super().get_players()
-        return [
-            {NAME: n, STEAMID: self.get_player_info(n).get(STEAMID)}
-            for n in names
-        ]
+        players = []
+        for n in names:
+            player = {NAME: n}
+            player.update(self.get_player_info(n))
+            players.append(player)
+
+        return players    
 
     @ttl_cache(ttl=60 * 60)
     def get_perma_bans(self):

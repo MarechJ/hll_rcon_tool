@@ -1,5 +1,6 @@
 import redis
 import simplejson
+import pickle
 import logging
 import os
 import functools
@@ -33,17 +34,19 @@ class RedisCached:
 
     @property
     def key_prefix(self):
-        return f'{self.PREFIX}{self.function.__name__}'
+        return f'{self.PREFIX}{self.function.__qualname__}'
 
     def key(self, *args, **kwargs):
         if self.is_method:
             args = args[1:]
         params = self.serializer({'args': args, "kwargs": kwargs})
+        if isinstance(params, bytes):
+            return self.key_prefix.encode() + b'__' + params
         return f"{self.key_prefix}__{params}"
 
     @property
     def __name__(self):
-        return self.function.__name__
+        return self.function.__qualname__
 
     @property
     def __wrapped__(self):
@@ -87,7 +90,7 @@ class RedisCached:
             logger.debug("Cache CLEARED for %s", keys)
 
 
-def get_redis_pool():
+def get_redis_pool(decode_responses=True):
     global _REDIS_POOL
     redis_url = os.getenv('REDIS_URL')
     if not redis_url:
@@ -97,20 +100,20 @@ def get_redis_pool():
         logger.warning("Redis pool initializing")
         _REDIS_POOL = redis.ConnectionPool.from_url(
             redis_url, max_connections=10, socket_connect_timeout=5,
-            socket_timeout=5, decode_responses=True
+            socket_timeout=5, decode_responses=decode_responses
         )
 
     return _REDIS_POOL
 
 def ttl_cache(ttl, *args, is_method=True, cache_falsy=True, **kwargs):
-    pool = get_redis_pool()
+    pool = get_redis_pool(decode_responses=False)
     if not pool:
         logger.warning("REDIS_URL is not set falling back to memory cache")
         return cachetools_ttl_cache(*args, ttl=ttl, **kwargs)
 
     def decorator(func):
         cached_func = RedisCached(
-            pool, ttl, function=func, is_method=is_method, cache_falsy=cache_falsy)
+            pool, ttl, function=func, is_method=is_method, cache_falsy=cache_falsy, serializer=pickle.dumps, deserializer=pickle.loads)
 
         def wrapper(*args, **kwargs):
             # Re-wrapping to preserve function signature

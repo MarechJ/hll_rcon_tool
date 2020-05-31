@@ -9,6 +9,7 @@ import CompactList from "./playerList";
 import { ReasonDialog } from "./playerActions";
 import GroupActions from "./groupActions";
 import Unban from "./unban";
+import { Map, fromJS } from 'immutable'
 
 function stripDiacritics(string) {
   return typeof string.normalize !== 'undefined'
@@ -24,7 +25,8 @@ class PlayerView extends Component {
       bannedPlayers: null,
       players: [],
       filteredPlayerNames: [],
-      filterPlayerSteamIDs: [],
+      filteredPlayerSteamIDs: [],
+      filteredPlayerProfiles: [],
       filter: "",
       filterTimeout: null,
       actionMessage: "",
@@ -117,11 +119,14 @@ class PlayerView extends Component {
   }
 
   filterPlayers() {
+    // TODO this is shit. The point was to prevent uncessary refreshes to save perf
+    // But we could just switch to immutables for that
     const { filter, players } = this.state;
     if (!filter) {
       const filteredPlayerNames = players.map(p => p.name);
-      const filterPlayerSteamIDs = players.map(p => p.steam_id_64);
-      return this.setState({ filterPlayerSteamIDs, filteredPlayerNames });
+      const filteredPlayerSteamIDs = players.map(p => p.steam_id_64);
+      const filteredPlayerProfiles = players.map(p => fromJS(p.profile));
+      return this.setState({ filteredPlayerSteamIDs, filteredPlayerNames, filteredPlayerProfiles });
     }
     const filteredPlayers = _.filter(
       players,
@@ -129,8 +134,9 @@ class PlayerView extends Component {
     );
 
     const filteredPlayerNames = filteredPlayers.map(p => p.name);
-    const filterPlayerSteamIDs = filteredPlayers.map(p => p.steam_id_64);
-    this.setState({ filteredPlayerNames, filterPlayerSteamIDs });
+    const filteredPlayerSteamIDs = filteredPlayers.map(p => p.steam_id_64);
+    const filteredPlayerProfiles = filteredPlayers.map(p => fromJS(p.profile))
+    this.setState({ filteredPlayerNames, filteredPlayerSteamIDs, filteredPlayerProfiles });
   }
 
   render() {
@@ -140,7 +146,8 @@ class PlayerView extends Component {
       openUnban,
       players,
       filteredPlayerNames,
-      filterPlayerSteamIDs,
+      filteredPlayerSteamIDs,
+      filteredPlayerProfiles,
       actionMessage,
       doConfirm,
       alphaSort,
@@ -174,7 +181,8 @@ class PlayerView extends Component {
             classes={classes}
             alphaSort={alphaSort}
             playerNames={filteredPlayerNames}
-            playerSteamIDs={filterPlayerSteamIDs}
+            playerSteamIDs={filteredPlayerSteamIDs}
+            playerProfiles={filteredPlayerProfiles}
             handleAction={(actionType, player) =>
               this.handleAction(actionType, player)
             }
