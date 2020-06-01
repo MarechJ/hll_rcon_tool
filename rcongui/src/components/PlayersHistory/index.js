@@ -20,12 +20,20 @@ import { Map, List } from 'immutable'
 import FlagIcon from '@material-ui/icons/Flag';
 import 'emoji-mart/css/emoji-mart.css'
 import { Picker } from 'emoji-mart'
-
 import Dialog from "@material-ui/core/Dialog";
 import DialogActions from "@material-ui/core/DialogActions";
 import DialogContent from "@material-ui/core/DialogContent";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import { getEmojiFlag } from '../../utils/emoji'
+
+const PlayerSummary = ({player, flag}) => (
+    <React.Fragment>
+        <p>Add flag: {flag ? getEmojiFlag(flag) : <small>Please choose</small>}</p>
+        <p>To: {player.names ? player.names.map(n => <Chip label={n} />) : 'No name recorded'}</p>
+        <p>Steamd id: {player.steam_id_64}</p>
+    </React.Fragment>
+)
+
 
 class FlagDialog extends React.Component {
     constructor(props) {
@@ -33,25 +41,16 @@ class FlagDialog extends React.Component {
         this.state = {
             flag: null
         };
-
-        this.onChange = this.onChange.bind(this);
-    }
-
-    onChange(e) {
-        e.preventDefault();
-        this.setState({ reason: e.target.value });
     }
 
     render() {
-        const { open, handleClose, handleConfirm } = this.props;
+        const { open, handleClose, handleConfirm, SummaryRenderer } = this.props;
         const { flag } = this.state;
 
         return (
             <Dialog open={open} aria-labelledby="form-dialog-title">
                 <DialogTitle id="form-dialog-title">
-                    <p>Add flag: {flag ? getEmojiFlag(flag) : <small>Please choose</small>}</p>
-                    <p>To: {open.names ? open.names.map(n => <Chip label={n} />) : 'No name recorded'}</p>
-                    <p>Steamd id: {open.steam_id_64}</p>
+                    <SummaryRenderer player={open} flag={flag} />
                 </DialogTitle>
                 <DialogContent>
                     <Picker onSelect={emoji => this.setState({ flag: emoji.native })} />
@@ -80,6 +79,7 @@ class FlagDialog extends React.Component {
         );
     }
 }
+
 const show_names = (names) => (
     join(names, ' · ')
 )
@@ -128,16 +128,18 @@ const WithPopver = ({ classes, popoverContent, children }) => {
     );
 }
 
+const FlagButton = ({ classes, onflag }) => (<Button size="small" variant="outlined" onClick={onflag}><FlagIcon /></Button>)
+
 const PlayerItem = ({ classes, names, steamId64, firstSeen, lastSeen, blacklisted, punish, kick, tempban, permaban, onBlacklist, onUnBlacklist, flags, onflag, onDeleteFlag, compact = true }) => {
     const now = moment()
     const last_seen = moment(lastSeen)
     const first_seen = moment(firstSeen)
     const extraneous = compact ? { display: 'none' } : {}
-    console.log(flags)
+
     return <Grid container>
         <Grid item xs={12}>
             <Paper>
-                <Grid container justify="flex-start" alignItems="center" className={`${classes.doublePadding} ${classes.paddingBottom}`} style={{paddingRight: 0}}>
+                <Grid container justify="flex-start" alignItems="center" className={`${classes.doublePadding} ${classes.paddingBottom}`} style={{ paddingRight: 0 }}>
                     <Grid item xs={8} sm={7}>
                         <Grid container alignContent="flex-start">
                             <Grid item xs={12}>
@@ -162,12 +164,12 @@ const PlayerItem = ({ classes, names, steamId64, firstSeen, lastSeen, blackliste
                     </Grid>
                 </Grid>
                 <Grid container justify="space-around" alignContent="center" alignItems="center" spacing={0} style={extraneous} className={classes.padding}>
-                    <Grid item xs={3}><Button size="small" variant="outlined" onClick={onflag}><FlagIcon /></Button></Grid>
+                    <Grid item xs={3}><FlagButton classes={classes} onflag={onflag} /></Grid>
                     <Grid item xs={9}>
                         <Grid container justify="flex-start" alignContent="center" alignItems="center" spacing={0} className={classes.paddingTop}>
                             {!flags || flags.isEmpty() ? 'No flags to display' : ''}
-                            {flags.map(d => 
-                               <Grid item className={classes.noPaddingMargin}><Link onClick={() => window.confirm("Delete flag?") ? onDeleteFlag(d.get('id')) : '' }>{getEmojiFlag(d.get('flag'))}</Link></Grid>
+                            {flags.map(d =>
+                                <Grid item className={classes.noPaddingMargin}><Link onClick={() => window.confirm("Delete flag?") ? onDeleteFlag(d.get('id')) : ''}>{getEmojiFlag(d.get('flag'))}</Link></Grid>
                             )}
                         </Grid>
                     </Grid>
@@ -207,7 +209,6 @@ const MyPagination = ({ classes, pageSize, total, page, setPage }) => (
         variant="outlined" color="default" showFirstButton showLastButton className={classes.pagination} />
 
 )
-
 
 const FilterPlayer = ({ classes, constPlayersHistory, pageSize, total, page, setPage, onUnBlacklist, onBlacklist, constNamesIndex, onAddFlag, onDeleteFlag }) => {
 
@@ -254,7 +255,7 @@ const FilterPlayer = ({ classes, constPlayersHistory, pageSize, total, page, set
             <Grid container spacing={2}>
                 {playerList.map(nameIndex => {
                     const player = playersHistory[nameIndex.idx]
-                
+
                     return <Grid key={player.steam_id_64} item xs={12} sm={6} md={4} lg={3} xl={2}>
                         <PlayerItem
                             key={player.steam_id_64}
@@ -296,6 +297,7 @@ const FilterPlayer = ({ classes, constPlayersHistory, pageSize, total, page, set
                     onAddFlag(playerObj, theFlag, null)
                     setDoFlag(false);
                 }}
+                SummaryRenderer={PlayerSummary}
             />
         </div>
     );
@@ -359,10 +361,10 @@ class PlayersHistory extends React.Component {
     }
 
     _reloadOnSuccess = data => {
-            if (data.failed) {
-                return
-            }
-            this.getPlayerHistory()
+        if (data.failed) {
+            return
+        }
+        this.getPlayerHistory()
     }
 
     addFlagToPlayer(playerObj, flag, comment = null) {
@@ -378,7 +380,7 @@ class PlayersHistory extends React.Component {
         return postData(`${process.env.REACT_APP_API_URL}unflag_player`, {
             flag_id: flag_id
         })
-            .then(response => showResponse(response, 'flag_player'))
+            .then(response => showResponse(response, 'unflag_player'))
             .then(this._reloadOnSuccess)
             .catch(error => toast.error("Unable to connect to API " + error));
     }
@@ -460,3 +462,4 @@ class PlayersHistory extends React.Component {
 }
 
 export default PlayersHistory
+export { FlagDialog, FlagButton, PlayersHistory }

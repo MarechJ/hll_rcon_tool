@@ -17,7 +17,7 @@ import { getEmojiFlag } from '../../utils/emoji'
 import { Map } from 'immutable'
 
 
-const PlayerItem = ({ classes, name, steamID64, profile, handleAction, nbButtons }) => (
+const PlayerItem = ({ classes, name, steamID64, profile, handleAction, nbButtons, onFlag, onDeleteFlag }) => (
   <ListItem key={name} dense>
     <ListItemText
       id={`checkbox-list-label-${steamID64}`}
@@ -29,7 +29,7 @@ const PlayerItem = ({ classes, name, steamID64, profile, handleAction, nbButtons
           </Link>
           <p className={classes.noPaddingMargin}>
              {profile.get('flags', []).map(d =>
-                getEmojiFlag(d.get('flag'), 20)
+                <Link onClick={() => window.confirm("Delete flag?") ? onDeleteFlag(d.get('id')) : ''}>{getEmojiFlag(d.get('flag'))}</Link>
               )}
             
           </p>
@@ -39,7 +39,7 @@ const PlayerItem = ({ classes, name, steamID64, profile, handleAction, nbButtons
     <ListItemSecondaryAction>
       <Link className={classes.marginRight} target="_blank" color="inherit" href={`https://steamcommunity.com/profiles/${steamID64}`}>
         <FontAwesomeIcon icon={faSteam} /></Link>
-      <PlayerActions size="small" handleAction={handleAction} displayCount={nbButtons} penaltyCount={profile.get('penalty_count', Map())}  />
+      <PlayerActions size="small" handleAction={handleAction} onFlag={onFlag} displayCount={nbButtons} penaltyCount={profile.get('penalty_count', Map())}  />
     </ListItemSecondaryAction>
   </ListItem>
 );
@@ -47,7 +47,7 @@ const PlayerItem = ({ classes, name, steamID64, profile, handleAction, nbButtons
 
 class CompactList extends React.Component {
   render() {
-    const { playerNames, playerSteamIDs, playerProfiles, classes, handleAction, alphaSort, width } = this.props;
+    const { playerNames, playerSteamIDs, playerProfiles, classes, handleAction, alphaSort, width, onFlag, onDeleteFlag } = this.props;
     let players = _.zip(playerNames, playerSteamIDs, playerProfiles);
     if (alphaSort === true) {
       players = _.sortBy(players, (p) => p[0].toLowerCase())
@@ -64,6 +64,8 @@ class CompactList extends React.Component {
             key={player[1]}
             profile={player[2]}
             handleAction={actionType => handleAction(actionType, player[0])}
+            onFlag={() => onFlag(player[2])}
+            onDeleteFlag={onDeleteFlag}
           />
         ))}
       </List>

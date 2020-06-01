@@ -6,16 +6,30 @@ import { postData, showResponse } from "../../utils/fetchUtils";
 import AutoRefreshBar from "./header";
 import TextInputBar from "./textInputBar";
 import CompactList from "./playerList";
+import Chip from '@material-ui/core/Chip'
 import { ReasonDialog } from "./playerActions";
 import GroupActions from "./groupActions";
 import Unban from "./unban";
 import { Map, fromJS } from 'immutable'
+import { FlagDialog } from '../PlayersHistory'
+import { getEmojiFlag } from '../../utils/emoji'
 
 function stripDiacritics(string) {
   return typeof string.normalize !== 'undefined'
     ? string.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     : string;
 }
+
+const PlayerSummary = ({player, flag}) => {
+  return player ? 
+  <React.Fragment>
+      <p>Add flag: {flag ? getEmojiFlag(flag) : <small>Please choose</small>}</p>
+      <p>To: {player.get('names') ? player.get('names', []).map(n => <Chip label={n.get('name')} />) : 'No name recorded'}</p>
+      <p>Steamd id: {player.get('steam_id_64', '')}</p>
+  </React.Fragment> : ''
+}
+
+
 
 class PlayerView extends Component {
   constructor(props) {
@@ -33,7 +47,8 @@ class PlayerView extends Component {
       doConfirm: false,
       alphaSort: false,
       openGroupAction: false,
-      openUnban: false
+      openUnban: false,
+      flag: false,
     };
 
     this.onPlayerSelected = this.onPlayerSelected.bind(this);
@@ -43,7 +58,29 @@ class PlayerView extends Component {
     this.handleAction = this.handleAction.bind(this);
     this.loadBans = this.loadBans.bind(this);
     this.unBan = this.unBan.bind(this);
+    this.addFlagToPlayer = this.addFlagToPlayer.bind(this)
+    this.deleteFlag = this.deleteFlag.bind(this)
   }
+
+  addFlagToPlayer(playerObj, flag, comment = null) {
+    return postData(`${process.env.REACT_APP_API_URL}flag_player`, {
+      steam_id_64: playerObj.get('steam_id_64'), flag: flag, comment: comment
+    })
+      .then(response => showResponse(response, 'flag_player', true))
+      .then(() => this.setState({flag: false}))
+      .then(this.loadPlayers)
+      .catch(error => toast.error("Unable to connect to API " + error));
+  }
+
+  deleteFlag(flag_id) {
+    return postData(`${process.env.REACT_APP_API_URL}unflag_player`, {
+      flag_id: flag_id
+    })
+      .then(response => showResponse(response, 'unflag_player', true))
+      .then(this.loadPlayers)
+      .catch(error => toast.error("Unable to connect to API " + error));
+  }
+
 
   unBan(ban) {
     postData(`${process.env.REACT_APP_API_URL}do_remove_${ban.type}_ban`, {
@@ -151,7 +188,8 @@ class PlayerView extends Component {
       actionMessage,
       doConfirm,
       alphaSort,
-      bannedPlayers
+      bannedPlayers,
+      flag
     } = this.state;
 
     return (
@@ -164,7 +202,7 @@ class PlayerView extends Component {
           onUnbanClick={() => {
             this.loadBans();
             this.setState({ openUnban: true });
-        }}
+          }}
         />
         <TextInputBar
           classes={classes}
@@ -176,21 +214,21 @@ class PlayerView extends Component {
           handleToggleAlphaSort={bool => this.setState({ alphaSort: bool })}
         />
 
-        {players ? (
-          <CompactList
-            classes={classes}
-            alphaSort={alphaSort}
-            playerNames={filteredPlayerNames}
-            playerSteamIDs={filteredPlayerSteamIDs}
-            playerProfiles={filteredPlayerProfiles}
-            handleAction={(actionType, player) =>
-              this.handleAction(actionType, player)
-            }
-            handleToggle={() => 1}
-          />
-        ) : (
-          <p>"No players to show"</p>
-        )}
+    
+        <CompactList
+          classes={classes}
+          alphaSort={alphaSort}
+          playerNames={filteredPlayerNames}
+          playerSteamIDs={filteredPlayerSteamIDs}
+          playerProfiles={filteredPlayerProfiles}
+          handleAction={(actionType, player) =>
+            this.handleAction(actionType, player)
+          }
+          handleToggle={() => 1}
+          onFlag={(player) => this.setState({ flag: player})}
+          onDeleteFlag={(flagId) => this.deleteFlag(flagId)}
+        />
+        
         <GroupActions
           onClose={() => this.setState({ openGroupAction: false })}
           open={openGroupAction}
@@ -213,6 +251,11 @@ class PlayerView extends Component {
             this.handleAction(action, player, reason);
             this.setState({ doConfirm: false });
           }}
+        />
+        <FlagDialog open={flag} 
+              handleClose={() => this.setState({flag: false})} 
+              handleConfirm={this.addFlagToPlayer}
+              SummaryRenderer={PlayerSummary}
         />
       </React.Fragment>
     );

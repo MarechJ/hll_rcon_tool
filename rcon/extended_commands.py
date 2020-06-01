@@ -78,11 +78,11 @@ class Rcon(ServerCtl):
         return online
 
     def do_add_admin(self, steam_id_64, role, name):
-        with invalidates(self.get_admin_ids):
+        with invalidates(Rcon.get_admin_ids):
             return super().do_add_admin(steam_id_64, role, name)
 
     def do_remove_admin(self, steam_id_64):
-        with invalidates(self.get_admin_ids):
+        with invalidates(Rcon.get_admin_ids):
             return super().do_remove_admin(steam_id_64)
 
     @ttl_cache(ttl=5)
@@ -146,11 +146,11 @@ class Rcon(ServerCtl):
         return l
 
     def do_remove_vip(self, steam_id_64):
-        with invalidates(self.get_vip_ids):
+        with invalidates(Rcon.get_vip_ids):
             return super().do_remove_vip(steam_id_64)
 
     def do_add_vip(self, name, steam_id_64):
-        with invalidates(self.get_vip_ids):
+        with invalidates(Rcon.get_vip_ids):
             return super().do_add_vip(steam_id_64, name)
 
     @ttl_cache(ttl=60)
@@ -165,7 +165,7 @@ class Rcon(ServerCtl):
         return rotation[next_id]
 
     def set_map(self, map_name):
-        with invalidates(self.get_map):
+        with invalidates(Rcon.get_map):
             res = super().set_map(map_name)
             if res != 'SUCCESS':
                 raise CommandFailedError(res)
@@ -183,7 +183,7 @@ class Rcon(ServerCtl):
         return int(super().get_team_switch_cooldown())
 
     def set_team_switch_cooldown(self, minutes):
-        with invalidates(self.get_team_switch_cooldown):
+        with invalidates(Rcon.get_team_switch_cooldown):
             return super().set_team_switch_cooldown(minutes)
     
     @ttl_cache(ttl=60 * 60)
@@ -191,7 +191,7 @@ class Rcon(ServerCtl):
         return int(super().get_autobalance_threshold())
 
     def set_autobalance_threshold(self, max_diff):
-        with invalidates(self.get_autobalance_threshold):
+        with invalidates(Rcon.get_autobalance_threshold):
             return super().set_autobalance_threshold(max_diff)
     
     @ttl_cache(ttl=60 * 60)
@@ -199,7 +199,7 @@ class Rcon(ServerCtl):
         return int(super().get_idle_autokick_time())
 
     def set_idle_autokick_time(self, minutes):
-        with invalidates(self.get_idle_autokick_time):
+        with invalidates(Rcon.get_idle_autokick_time):
             return super().set_idle_autokick_time(minutes)
     
     @ttl_cache(ttl=60 * 60)
@@ -207,7 +207,7 @@ class Rcon(ServerCtl):
         return int(super().get_max_ping_autokick())
 
     def set_max_ping_autokick(self, max_ms):
-        with invalidates(self.get_max_ping_autokick):
+        with invalidates(Rcon.get_max_ping_autokick):
             return super().set_max_ping_autokick(max_ms)
 
     @ttl_cache(ttl=60 * 60)
@@ -215,7 +215,7 @@ class Rcon(ServerCtl):
         return int(super().get_queue_length())
 
     def set_queue_length(self, num):
-        with invalidates(self.get_queue_length):
+        with invalidates(Rcon.get_queue_length):
             return super().set_queue_length(num)
 
     @ttl_cache(ttl=60 * 60)
@@ -223,7 +223,7 @@ class Rcon(ServerCtl):
         return super().get_vip_slots_num()
 
     def set_vip_slots_num(self, num):
-        with invalidates(self.get_vip_slots_num):
+        with invalidates(Rcon.get_vip_slots_num):
             return super().set_vip_slots_num(num)
 
     @ttl_cache(ttl=20)
@@ -336,23 +336,23 @@ class Rcon(ServerCtl):
         }
 
     def do_kick(self, player, reason):
-        with invalidates(self.get_players):
+        with invalidates(Rcon.get_players):
             return super().do_kick(player, reason)
 
     def do_temp_ban(self, player, reason):
-        with invalidates(self.get_players, self.get_temp_bans):
+        with invalidates(Rcon.get_players, Rcon.get_temp_bans):
             return super().do_temp_ban(player, reason)
 
     def do_remove_temp_ban(self, ban_log):
-        with invalidates(self.get_temp_bans):
+        with invalidates(Rcon.get_temp_bans):
             return super().do_remove_temp_ban(ban_log)
 
     def do_remove_perma_ban(self, ban_log):
-        with invalidates(self.get_perma_bans):
+        with invalidates(Rcon.get_perma_bans):
             return super().do_remove_perma_ban(ban_log)
 
     def do_perma_ban(self, player, reason):
-        with invalidates(self.get_players, self.get_perma_bans):
+        with invalidates(Rcon.get_players, Rcon.get_perma_bans):
             return super().do_perma_ban(player, reason)
 
 
@@ -367,13 +367,13 @@ class Rcon(ServerCtl):
         return self.do_remove_maps_from_rotation([map_name])
 
     def do_remove_maps_from_rotation(self, maps):
-        with invalidates(self.get_map_rotation):
+        with invalidates(Rcon.get_map_rotation):
             for map_name in maps:
                 super().do_remove_map_from_rotation(map_name)
             return 'SUCCESS'
 
     def do_add_maps_to_rotation(self, maps):
-        with invalidates(self.get_map_rotation):
+        with invalidates(Rcon.get_map_rotation):
             for map_name in maps:
                 super().do_add_map_to_rotation(map_name)
             return 'SUCCESS'
@@ -396,7 +396,7 @@ class Rcon(ServerCtl):
             raise CommandFailedError("Empty rotation")
         first = rotation.pop(0)
 
-        with invalidates(self.get_map_rotation):
+        with invalidates(Rcon.get_map_rotation):
             current = set(self.get_map_rotation())
             self.do_remove_maps_from_rotation(current - set([first]))
             self.do_add_maps_to_rotation(rotation)
