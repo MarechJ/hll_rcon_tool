@@ -21,7 +21,7 @@ def get_player(sess, steam_id_64):
         PlayerSteamID.steam_id_64 == steam_id_64
     ).one_or_none()
 
-
+# TODO: cache that, this is getting expensive as we do it on 100 players, 1 at a time...
 def get_player_profile(steam_id_64, nb_sessions):
     with enter_session() as sess:
         player = sess.query(PlayerSteamID).filter(
@@ -224,10 +224,11 @@ def add_flag_to_player(steam_id_64, flag, comment=None, player_name=None):
         if exits:
             logger.warning("Flag already exists")
             raise CommandFailedError("Flag already exists")
-        sess.add(PlayerFlag(flag=flag, comment=comment, steamid=player))
+        new = PlayerFlag(flag=flag, comment=comment, steamid=player)
+        sess.add(new)
         sess.commit()
         res = player.to_dict()
-    return res
+        return res, new.to_dict()
     
 
 def remove_flag(flag_id):
@@ -235,12 +236,13 @@ def remove_flag(flag_id):
         exits = sess.query(PlayerFlag).filter(PlayerFlag.id == int(flag_id)).one_or_none()
         if not exits:
             logger.warning("Flag does not exists")
-            raise CommandFailedError("Flag not exists")
-        res = exits.to_dict()
+            raise CommandFailedError("Flag does not exists")
+        player = exits.steamid.to_dict()
+        flag = exits.to_dict()
         sess.delete(exits)
         sess.commit()
 
-    return res
+    return player, flag
     
 
 def add_player_to_blacklist(steam_id_64, reason, name=None):

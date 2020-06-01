@@ -139,9 +139,16 @@ def flag_player(request):
     data = _get_data(request)
     res = None
     try:
-        res = add_flag_to_player(steam_id_64=data['steam_id_64'], flag=data['flag'])
-        send_to_discord_audit("Flagged '{steamid}' '{names}' with '{flag}': '{comment}'".format(
-            data['steam_id_64']), get_client_ip(request))
+        player, flag = add_flag_to_player(steam_id_64=data['steam_id_64'], flag=data['flag'])
+        res = flag
+        send_to_discord_audit(
+            "Flagged '{}' '{}' with '{}'".format(
+                data['steam_id_64'], 
+                ' | '.join(n['name'] for n in player['names']),
+                flag['flag']
+            ), 
+            get_client_ip(request)
+        )
     except KeyError:
         logger.warning("Missing parameters")
         # TODO return 400
@@ -161,9 +168,10 @@ def unflag_player(request):
     data = _get_data(request)
     res = None
     try:
-        res = remove_flag(data['flag_id'])
-        send_to_discord_audit("Remove flag '{}'".format(
-            data['flag_id']), get_client_ip(request))
+        player, flag = remove_flag(data['flag_id'])
+        res = flag
+        send_to_discord_audit("Remove flag '{}' from '{}'".format(
+            flag['flag'], ' | '.join(n['name'] for n in player['names'])), get_client_ip(request))
     except KeyError:
         logger.warning("Missing parameters")
         # TODO return 400

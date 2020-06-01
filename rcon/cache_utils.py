@@ -46,7 +46,8 @@ class RedisCached:
 
     @property
     def __name__(self):
-        return self.function.__qualname__
+        return self.function.__name__
+
 
     @property
     def __wrapped__(self):

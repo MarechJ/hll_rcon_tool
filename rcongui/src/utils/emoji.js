@@ -4,7 +4,6 @@ import data from 'emoji-mart/data/all.json'
 
 export function getEmojiFlag(flag, size=22) {
     const emo = getEmojiDataFromNative(flag, 'apple', data)
-    console.log(emo)
     if (emo) {
         return <Emoji emoji={emo} set='apple' size={size} />
     }
