@@ -31,7 +31,7 @@ class MetricCondition:
                 rcon.__getattribute__(command)(**params)
             except:
                 logger.exception('Unable to apply %s %s', command, params)
-            time.sleep(2) # go easy on the server
+            time.sleep(10) # go easy on the server
 
     def apply(self, rcon):
         rules = [
@@ -99,7 +99,7 @@ def run():
     while True:
         for c in conditions:
             c.apply(rcon)
-        time.sleep(60 * 3)
+        time.sleep(60 * 5)
 
 
 if __name__ == "__main__":
