@@ -6,10 +6,9 @@ RUN pip install -r requirements.txt
 RUN pip install gunicorn
 COPY rcon rcon
 COPY rconweb rconweb
+COPY manage.py .
+COPY entrypoint.sh .
 ENV FLASK_APP rcon.connection
-ENV HLL_HOST ''
-ENV HLL_PORT ''
-ENV HLL_PASSWORD ''
 ENV PYTHONPATH /code/
 
-CMD cd rconweb && gunicorn -w 4 -b 0.0.0.0 rconweb.wsgi
+ENTRYPOINT [ "/code/entrypoint.sh" ]
