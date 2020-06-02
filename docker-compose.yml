@@ -1,25 +1,11 @@
 version: '2.4'
 
 services:
-<<<<<<< HEAD
-  stats:
-    hostname: stats
-    extends:
-      file: docker-compose-common-components.yml
-      service: python
-    command: bash -c "python -m rcon.cli init_db && python -m rcon.stats_loop"
-  broadcast:
-=======
   broadcast: &broadcast
->>>>>>> feature/player_flags
     hostname: broadcast
     extends: 
       file: docker-compose-common-components.yml
       service: python
-<<<<<<< HEAD
-    command: bash -c "python -m rcon.cli init_db && python -m rcon.broadcast"
-  logs_event_loop:
-=======
     command: broadcast_loop
     depends_on: 
       - postgres
@@ -34,7 +20,6 @@ services:
       - postgres
       - redis
   logs_event_loop: &logs_event_loop
->>>>>>> feature/player_flags
     hostname: logs_event_loop
     extends: 
       file: docker-compose-common-components.yml
