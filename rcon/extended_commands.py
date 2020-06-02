@@ -30,7 +30,7 @@ class Rcon(ServerCtl):
         ('idle_autokick_time', int), ('max_ping_autokick', int),
         ('queue_length', int), ('vip_slots_num', int)
     )
-    slots_regexp = re.compile('\d{1,2}/\d{2}')
+    slots_regexp = re.compile('\d{1,3}/\d{2,3}')
 
     @ttl_cache(ttl=60 * 60 * 24, cache_falsy=False)
     def get_player_info(self, player):

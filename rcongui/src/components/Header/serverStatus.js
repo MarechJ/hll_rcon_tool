@@ -36,10 +36,9 @@ class ServerStatus extends React.Component {
 
     async load(command) {
         return fetch(`${process.env.REACT_APP_API_URL}get_status`)
-            .then(response => showResponse(response, command))
+            .then(response => showResponse(response, "get_status", false))
             .then(data => {
                 this.setState({ name: data.result.name, map: data.result.map, nbPlayers: data.result.nb_players })
-                if (data.result.name.toLowerCase().indexOf('cfr') >= 0 && data.result.name.indexOf('Training') == -1) {this.props.doJk()}
             })
             .catch(error => toast.error("Unable to connect to API " + error));
     }
@@ -52,7 +51,7 @@ class ServerStatus extends React.Component {
             <Grid container className={classes.alignLeft} spacing={1}>
                 <Grid item>
                     <strong style={{ display: "block" }} className={`${classes.ellipsis}`}>
-    {name}
+                    {name}
                     </strong>
                     <small style={{ display: "block" }}>{nbPlayers} - {map}</small>
                 </Grid>

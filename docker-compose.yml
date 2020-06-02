@@ -1,7 +1,5 @@
 version: '2.4'
 
-
-
 services:
   broadcast: &broadcast
     hostname: broadcast
