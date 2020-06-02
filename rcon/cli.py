@@ -29,7 +29,7 @@ def run_broadcast_loop():
 def run_stats_loop():
     stats_loop.run()
 
-@cli.command(name='stats_loop')
+@cli.command(name='auto_settings')
 def auto_settings_loop():
     auto_settings.run()
 
