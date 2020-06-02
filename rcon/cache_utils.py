@@ -109,7 +109,7 @@ def get_redis_pool(decode_responses=True):
 def ttl_cache(ttl, *args, is_method=True, cache_falsy=True, **kwargs):
     pool = get_redis_pool(decode_responses=False)
     if not pool:
-        logger.warning("REDIS_URL is not set falling back to memory cache")
+        logger.debug("REDIS_URL is not set falling back to memory cache")
         return cachetools_ttl_cache(*args, ttl=ttl, **kwargs)
 
     def decorator(func):

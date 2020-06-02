@@ -26,7 +26,7 @@ def safe(func, default=None):
     return wrapper
 
 
-if __name__ == '__main__':
+def run():
     ctl = Rcon(
         SERVER_INFO
     )
@@ -61,3 +61,7 @@ if __name__ == '__main__':
             time.sleep(int(time_sec)) 
         # Clear state in case next next iteration disables 
         ctl.set_broadcast('') 
+
+
+if __name__ == "__main__":
+    run()

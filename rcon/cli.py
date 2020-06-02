@@ -4,7 +4,7 @@ import click
 
 from rcon.settings import SERVER_INFO
 from rcon.extended_commands import Rcon
-from rcon import game_logs
+from rcon import game_logs, broadcast, stats_loop
 from rcon.models import init_db
 from rcon.user_config import seed_default_config
 from rcon.cache_utils import RedisCached, get_redis_pool
@@ -21,11 +21,22 @@ ctl = Rcon(
 def run_logs_eventloop():
     game_logs.event_loop()
 
-@cli.command(name="init_db")
-@click.option('--force', default=False, is_flag=True)
-def init(force):
+@cli.command(name='broadcast_loop')
+def run_broadcast_loop():
+    broadcast.run()
+
+@cli.command(name='stats_loop')
+def run_stats_loop():
+    stats_loop.run()
+
+def init(force=False):
     init_db(force)
     seed_default_config()
+
+@cli.command(name="init_db")
+@click.option('--force', default=False, is_flag=True)
+def do_init(force):
+    init(force)
 
 @cli.command(name="set_maprotation")
 @click.argument('maps', nargs=-1)
