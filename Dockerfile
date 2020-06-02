@@ -10,5 +10,7 @@ COPY manage.py .
 COPY entrypoint.sh .
 ENV FLASK_APP rcon.connection
 ENV PYTHONPATH /code/
+RUN chmod +x entrypoint.sh
+RUN chmod +x manage.py
 
 ENTRYPOINT [ "/code/entrypoint.sh" ]
