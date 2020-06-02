@@ -33,7 +33,7 @@ class MetricCondition:
                 logger.exception('Unable to apply %s %s', command, params)
             time.sleep(2) # go easy on the server
 
-    def apply(self):
+    def apply(self, rcon):
         rules = [
             ('between', (0, 10), [
                 ('set_idle_autokick_time', {'minutes': 9999}),
@@ -98,7 +98,7 @@ def run():
 
     while True:
         for c in conditions:
-            c.apply()
+            c.apply(rcon)
         time.sleep(60 * 3)
 
 
