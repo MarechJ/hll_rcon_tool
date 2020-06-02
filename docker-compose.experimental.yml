@@ -7,4 +7,4 @@ services:
         extends:
           file: docker-compose-common-components.yml
           service: python
-        command: bash -c "python -m rcon.cli init_db && python -m rcon.auto_settings"
+        command: auto_settings

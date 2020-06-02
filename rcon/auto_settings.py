@@ -85,8 +85,7 @@ class MetricCondition:
         return self.run_commands(rcon, self.default_commands)
         
 
-
-if __name__ == "__main__":
+def run():
     rcon = Rcon(SERVER_INFO)
     conditions = [MetricCondition(
         'player_count',
@@ -101,3 +100,7 @@ if __name__ == "__main__":
         for c in conditions:
             c.apply()
         time.sleep(60 * 3)
+
+
+if __name__ == "__main__":
+    run()
