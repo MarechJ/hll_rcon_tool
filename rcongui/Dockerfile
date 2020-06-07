@@ -1,18 +1,29 @@
 FROM node:13-stretch
 
-WORKDIR /var/www
+WORKDIR /code
 
 RUN apt-get update -y && apt-get install -y nginx apache2-utils
 COPY nginx.conf /etc/nginx/sites-available/default
 
 RUN mkdir /pw
 
-COPY . .
+COPY package.json .
+COPY package-lock.json .
 
 RUN npm install
 
 ENV REACT_APP_API_URL /api/
 
+COPY src/ src/
+COPY public/ public/
+
 RUN npm run build
 
-CMD bash -c 'htpasswd -cb /pw/.htpasswd "$RCONWEB_USERNAME" "$RCONWEB_PASSWORD" && nginx -g "daemon off;"'
+COPY entrypoint.sh .
+RUN chmod +x /code/entrypoint.sh
+
+WORKDIR /var/www
+
+RUN mv /code/build /var/www/
+
+ENTRYPOINT [ "/code/entrypoint.sh" ]

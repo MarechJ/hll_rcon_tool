@@ -2,9 +2,12 @@
 
 if [ $1 == 'web' ] 
 then
+  if [ "$HLL_HOST" == '' ] 
+  then
+      exit 0
+  fi
   cd rconweb 
   gunicorn -w 8 -b 0.0.0.0 rconweb.wsgi
-  saved=$?
 else
   ./manage.py $*
   saved=$?
@@ -13,5 +16,4 @@ if [ "$HLL_HOST" == '' ]
 then
     exit 0
 fi
-
 exit $saved

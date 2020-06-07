@@ -6,7 +6,7 @@ services:
   logs_event_loop:
     build: .
   stats:
-      build: .
+    build: .
   backend:
     build: .
   frontend:
