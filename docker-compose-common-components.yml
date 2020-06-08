@@ -16,4 +16,4 @@ services:
         volumes: 
             - ./logs:/logs/
             - ./servicediscovery:/servicediscovery
-        
+    

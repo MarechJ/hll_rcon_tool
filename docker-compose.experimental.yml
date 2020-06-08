@@ -8,3 +8,12 @@ services:
           file: docker-compose-common-components.yml
           service: python
         command: auto_settings
+    stats: &stats
+      hostname: stats
+      extends: 
+        file: docker-compose-common-components.yml
+        service: python
+      command: stats_loop
+      depends_on: 
+        - postgres
+        - redis
