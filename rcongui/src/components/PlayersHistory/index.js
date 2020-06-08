@@ -7,7 +7,7 @@ import { toast } from "react-toastify";
 import { join, each, reduce, get, map } from 'lodash'
 import Autocomplete from "@material-ui/lab/Autocomplete";
 import Pagination from '@material-ui/lab/Pagination';
-import { Paper, Icon, Grid, Link, Divider, Popover, Badge, Button, TextField, FormControl, InputLabel, MenuItem, Select, FormControlLabel, Switch, LinearProgress, Chip } from '@material-ui/core'
+import { Paper, Icon, Typography, Grid, Link, Divider, Popover, Badge, Button, TextField, FormControl, InputLabel, MenuItem, Select, FormControlLabel, Switch, LinearProgress, Chip } from '@material-ui/core'
 import moment from 'moment'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSkullCrossbones } from '@fortawesome/free-solid-svg-icons'
@@ -26,7 +26,7 @@ import DialogContent from "@material-ui/core/DialogContent";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import { getEmojiFlag } from '../../utils/emoji'
 
-const PlayerSummary = ({player, flag}) => (
+const PlayerSummary = ({ player, flag }) => (
     <React.Fragment>
         <p>Add flag: {flag ? getEmojiFlag(flag) : <small>Please choose</small>}</p>
         <p>To: {player.names ? player.names.map(n => <Chip label={n} />) : 'No name recorded'}</p>
@@ -39,13 +39,14 @@ class FlagDialog extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            flag: null
-        };
+            flag: null,
+            comment: "",
+        }
     }
 
     render() {
         const { open, handleClose, handleConfirm, SummaryRenderer } = this.props;
-        const { flag } = this.state;
+        const { flag, comment } = this.state;
 
         return (
             <Dialog open={open} aria-labelledby="form-dialog-title">
@@ -53,7 +54,12 @@ class FlagDialog extends React.Component {
                     <SummaryRenderer player={open} flag={flag} />
                 </DialogTitle>
                 <DialogContent>
-                    <Picker onSelect={emoji => this.setState({ flag: emoji.native })} />
+                    <Grid container alignContent="center" alignItems="center" justify="center" spacing={2}>
+                        <Grid item xs={12}><TextField label="Comment" value={comment} onChange={e => this.setState({ comment: e.target.value })} /></Grid>
+                    </Grid>
+                    <Grid container alignContent="center" alignItems="center" justify="center" spacing={2}>
+                        <Grid item xs={12}><Picker onSelect={emoji => this.setState({ flag: emoji.native })} /></Grid>
+                    </Grid>
                 </DialogContent>
                 <DialogActions>
                     <Button
@@ -67,8 +73,8 @@ class FlagDialog extends React.Component {
                     </Button>
                     <Button
                         onClick={() => {
-                            handleConfirm(open, flag);
-                            this.setState({ flag: "" });
+                            handleConfirm(open, flag, comment);
+                            this.setState({ flag: "", comment: "" });
                         }}
                         color="primary"
                     >
@@ -139,13 +145,13 @@ const PlayerItem = ({ classes, names, steamId64, firstSeen, lastSeen, blackliste
     return <Grid container>
         <Grid item xs={12}>
             <Paper>
-                <Grid container justify="flex-start" alignItems="center" className={`${classes.doublePadding} ${classes.paddingBottom}`} style={{ paddingRight: 0 }}>
+                <Grid container spacing={0} justify="flex-start" alignItems="center" className={`${classes.doublePadding} ${classes.paddingBottom}`} style={{ paddingRight: 0 }}>
                     <Grid item xs={8} sm={7}>
-                        <Grid container alignContent="flex-start">
+                        <Grid container alignContent="flex-start" spacin={0}>
                             <Grid item xs={12}>
-                                <h4 style={{ display: "flex" }} className={`${classes.noPaddingMargin} ${classes.ellipsis}`}>
+                                <Typography variant="subtitle1" style={{ display: "flex" }} className={`${classes.noPaddingMargin} ${classes.ellipsis}`}>
                                     {names}
-                                </h4>
+                                </Typography >
                             </Grid>
                             <Grid item xs={12}>
                                 <small style={{ display: "flex" }}>
@@ -158,8 +164,8 @@ const PlayerItem = ({ classes, names, steamId64, firstSeen, lastSeen, blackliste
                     </Grid>
                     <Grid item xs={4} sm={5}>
                         {blacklisted
-                            ? <Button variant="outlined" onClick={onUnBlacklist}>Unblacklist</Button>
-                            : <Button variant="outlined" color="secondary" onClick={onBlacklist} >Blacklist <FontAwesomeIcon icon={faSkullCrossbones} /></Button>
+                            ? <Button size="small" variant="outlined" onClick={onUnBlacklist}>Unblacklist</Button>
+                            : <Button size="small" variant="outlined" color="secondary" onClick={onBlacklist} >Blacklist <FontAwesomeIcon icon={faSkullCrossbones} /></Button>
                         }
                     </Grid>
                 </Grid>
@@ -293,8 +299,8 @@ const FilterPlayer = ({ classes, constPlayersHistory, pageSize, total, page, set
             <FlagDialog
                 open={doFlag}
                 handleClose={() => setDoFlag(false)}
-                handleConfirm={(playerObj, theFlag) => {
-                    onAddFlag(playerObj, theFlag, null)
+                handleConfirm={(playerObj, theFlag, theComment) => {
+                    onAddFlag(playerObj, theFlag, theComment)
                     setDoFlag(false);
                 }}
                 SummaryRenderer={PlayerSummary}

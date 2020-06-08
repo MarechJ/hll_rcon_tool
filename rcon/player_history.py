@@ -72,7 +72,7 @@ def get_players_by_appearance(page=1, page_size=500, last_seen_from: datetime.da
 
         total = query.count()
         page = min(max(math.ceil(total / page_size), 1), page) 
-        players = query.order_by(sub.c.last.desc()).limit(
+        players = query.order_by(func.coalesce(sub.c.last, PlayerSteamID.created).desc()).limit(
             page_size).offset((page - 1) * page_size).all()
        
         # TODO: Why not returning the whole player dict + the extra aggregated fields?
@@ -84,7 +84,7 @@ def get_players_by_appearance(page=1, page_size=500, last_seen_from: datetime.da
                     'steam_id_64': p[0].steam_id_64,
                     'names': [n.name for n in p[0].names],
                     'first_seen_timestamp_ms': int(p[1].timestamp() * 1000) if p[1] else None,
-                    'last_seen_timestamp_ms': int(p[2].timestamp() * 1000) if p[1] else None,
+                    'last_seen_timestamp_ms': int(p[2].timestamp() * 1000) if p[2] else None,
                     'penalty_count': p[0].get_penalty_count(),
                     'blacklisted': p[0].blacklist.is_blacklisted if p[0].blacklist else False,
                     'flags': [f.to_dict() for f in p[0].flags]

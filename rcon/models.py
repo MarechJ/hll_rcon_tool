@@ -103,7 +103,7 @@ class PlayerFlag(Base):
     id = Column(Integer, primary_key=True)
     playersteamid_id = Column(Integer, ForeignKey(
         'steam_id_64.id'), nullable=False, index=True)
-    flag = Column(String, nullable=False)
+    flag = Column(String, nullable=False, index=True)
     comment = Column(String, nullable=True)
     modified = Column(DateTime, default=datetime.utcnow)
 

@@ -80,6 +80,11 @@ class RedisCached:
 
         return val
 
+    def clear_for(self, *args, **kwargs):
+        key = self.key(*args, **kwargs)
+        if key:
+            self.red.delete(key)
+
     def clear_all(self):
         try:
             keys = list(self.red.scan_iter(match=f"{self.key_prefix}*"))

@@ -30,7 +30,9 @@ class Rcon(ServerCtl):
         ('idle_autokick_time', int), ('max_ping_autokick', int),
         ('queue_length', int), ('vip_slots_num', int)
     )
-    slots_regexp = re.compile('\d{1,3}/\d{2,3}')
+    slots_regexp = re.compile(r'^\d{1,3}/\d{2,3}$')
+    map_regexp = re.compile(r'^(\w+_?)+$') 
+    MAX_SERV_NAME_LEN = 1024  # I totally made up that number. Unable to test
 
     @ttl_cache(ttl=60 * 60 * 24, cache_falsy=False)
     def get_player_info(self, player):
@@ -179,11 +181,17 @@ class Rcon(ServerCtl):
 
     @ttl_cache(ttl=60)
     def get_map(self):
-        return super().get_map()
+        current_map = super().get_map()
+        if not self.map_regexp.match(current_map):
+            raise CommandFailedError("Server returned wrong data")
+        return current_map
 
     @ttl_cache(ttl=60 * 60)
     def get_name(self):
-        return super().get_name()
+        name = super().get_name()
+        if len(name) > self.MAX_SERV_NAME_LEN:
+            raise CommandFailedError("Server returned wrong data")
+        return name
 
     @ttl_cache(ttl=60 * 60)
     def get_team_switch_cooldown(self):
