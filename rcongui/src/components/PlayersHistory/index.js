@@ -26,7 +26,7 @@ import DialogContent from "@material-ui/core/DialogContent";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import { getEmojiFlag } from '../../utils/emoji'
 
-const PlayerSummary = ({player, flag}) => (
+const PlayerSummary = ({ player, flag }) => (
     <React.Fragment>
         <p>Add flag: {flag ? getEmojiFlag(flag) : <small>Please choose</small>}</p>
         <p>To: {player.names ? player.names.map(n => <Chip label={n} />) : 'No name recorded'}</p>
@@ -39,13 +39,14 @@ class FlagDialog extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            flag: null
-        };
+            flag: null,
+            comment: "",
+        }
     }
 
     render() {
         const { open, handleClose, handleConfirm, SummaryRenderer } = this.props;
-        const { flag } = this.state;
+        const { flag, comment } = this.state;
 
         return (
             <Dialog open={open} aria-labelledby="form-dialog-title">
@@ -53,7 +54,12 @@ class FlagDialog extends React.Component {
                     <SummaryRenderer player={open} flag={flag} />
                 </DialogTitle>
                 <DialogContent>
-                    <Picker onSelect={emoji => this.setState({ flag: emoji.native })} />
+                    <Grid container alignContent="center" alignItems="center" justify="center" spacing={2}>
+                        <Grid item xs={12}><TextField label="Comment" value={comment} onChange={e => this.setState({ comment: e.target.value })} /></Grid>
+                    </Grid>
+                    <Grid container alignContent="center" alignItems="center" justify="center" spacing={2}>
+                        <Grid item xs={12}><Picker onSelect={emoji => this.setState({ flag: emoji.native })} /></Grid>
+                    </Grid>
                 </DialogContent>
                 <DialogActions>
                     <Button
@@ -67,8 +73,8 @@ class FlagDialog extends React.Component {
                     </Button>
                     <Button
                         onClick={() => {
-                            handleConfirm(open, flag);
-                            this.setState({ flag: "" });
+                            handleConfirm(open, flag, comment);
+                            this.setState({ flag: "", comment: "" });
                         }}
                         color="primary"
                     >
@@ -293,8 +299,8 @@ const FilterPlayer = ({ classes, constPlayersHistory, pageSize, total, page, set
             <FlagDialog
                 open={doFlag}
                 handleClose={() => setDoFlag(false)}
-                handleConfirm={(playerObj, theFlag) => {
-                    onAddFlag(playerObj, theFlag, null)
+                handleConfirm={(playerObj, theFlag, theComment) => {
+                    onAddFlag(playerObj, theFlag, theComment)
                     setDoFlag(false);
                 }}
                 SummaryRenderer={PlayerSummary}

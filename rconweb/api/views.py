@@ -129,13 +129,14 @@ def flag_player(request):
     data = _get_data(request)
     res = None
     try:
-        player, flag = add_flag_to_player(steam_id_64=data['steam_id_64'], flag=data['flag'])
+        player, flag = add_flag_to_player(steam_id_64=data['steam_id_64'], flag=data['flag'], comment=data.get('comment'))
         res = flag
         send_to_discord_audit(
-            "Flagged '{}' '{}' with '{}'".format(
+            "Flagged '{}' '{}' with '{}' '{}'".format(
                 data['steam_id_64'], 
                 ' | '.join(n['name'] for n in player['names']),
-                flag['flag']
+                flag['flag'],
+                data.get('comment', '')
             ), 
             get_client_ip(request)
         )

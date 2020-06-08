@@ -14,7 +14,7 @@ import withWidth from "@material-ui/core/withWidth";
 import Icon from '@material-ui/core/Icon';
 import OpenInNewIcon from '@material-ui/icons/OpenInNew';
 import { getEmojiFlag } from '../../utils/emoji'
-import { Map } from 'immutable'
+import { Map, List as IList } from 'immutable'
 
 
 const PlayerItem = ({ classes, name, steamID64, profile, handleAction, nbButtons, onFlag, onDeleteFlag }) => (
@@ -28,10 +28,10 @@ const PlayerItem = ({ classes, name, steamID64, profile, handleAction, nbButtons
             {steamID64} <Icon component={OpenInNewIcon} fontSize="inherit" />
           </Link>
           <p className={classes.noPaddingMargin}>
-             {profile.get('flags', []).map(d =>
-                <Link onClick={() => window.confirm("Delete flag?") ? onDeleteFlag(d.get('id')) : ''}>{getEmojiFlag(d.get('flag'))}</Link>
-              )}
-            
+            {profile.get('flags', []).map(d =>
+              <Link onClick={() => window.confirm("Delete flag?") ? onDeleteFlag(d.get('id')) : ''}>{getEmojiFlag(d.get('flag'))}</Link>
+            )}
+
           </p>
         </React.Fragment>
       }
@@ -39,7 +39,7 @@ const PlayerItem = ({ classes, name, steamID64, profile, handleAction, nbButtons
     <ListItemSecondaryAction>
       <Link className={classes.marginRight} target="_blank" color="inherit" href={`https://steamcommunity.com/profiles/${steamID64}`}>
         <FontAwesomeIcon icon={faSteam} /></Link>
-      <PlayerActions size="small" handleAction={handleAction} onFlag={onFlag} displayCount={nbButtons} penaltyCount={profile.get('penalty_count', Map())}  />
+      <PlayerActions size="small" handleAction={handleAction} onFlag={onFlag} displayCount={nbButtons} penaltyCount={profile.get('penalty_count', Map())} />
     </ListItemSecondaryAction>
   </ListItem>
 );
@@ -64,7 +64,11 @@ class CompactList extends React.Component {
             key={player[1]}
             profile={player[2]}
             handleAction={actionType => handleAction(actionType, player[0])}
-            onFlag={() => onFlag(player[2])}
+            onFlag={() => onFlag(Map({
+              'steam_id_64': player[2].get('steam_id_64', player[1]), 'names': player[2].get('names', IList([
+                Map({ 'name': player[0] })
+              ]))
+            }))}
             onDeleteFlag={onDeleteFlag}
           />
         ))}
