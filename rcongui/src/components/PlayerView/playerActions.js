@@ -115,7 +115,7 @@ const PlayerActions = ({ size, handleAction, onFlag, displayCount = 3, disable =
             <Badge size="small" color="secondary" max={9} badgeContent={penaltyCount.get(remap_penalties[actions[idx][0]], 0)}>{actions[idx][1]}</Badge>
           </Button>
         ))}
-        <Button size="small" onClick={onFlag}><FlagOutlinedIcon fontSize="small" /></Button>
+        { onFlag ? <Button size="small" onClick={onFlag}><FlagOutlinedIcon fontSize="small" /></Button> : ''}
         {show < actions.length ?
           <Button
             disabled={disable}
