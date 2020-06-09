@@ -43,8 +43,9 @@ class PlayerSteamID(Base):
     created = Column(DateTime, default=datetime.utcnow)
     names = relationship("PlayerName", backref="steamid",
                          uselist=True, order_by="desc(PlayerName.created)")
+    # If you ever change the ordering of sessions make sure you change the playtime calc code
     sessions = relationship("PlayerSession", backref="steamid",
-                            uselist=True, order_by="desc(PlayerSession.end)")
+                            uselist=True, order_by="desc(PlayerSession.created)")
     received_actions = relationship("PlayersAction", backref="steamid",
                                     uselist=True, order_by="desc(PlayersAction.time)")
     blacklist = relationship("BlacklistedPlayer", backref="steamid",
@@ -60,6 +61,22 @@ class PlayerSteamID(Base):
 
         return counts
 
+    def get_total_playtime_seconds(self):
+        total = 0
+
+        for i, s in enumerate(self.sessions):
+            if not s.end and s.start and i == 0:
+                total += (datetime.now() - s.start).total_seconds()
+            elif s.end and s.start:
+                total += (s.end - s.start).total_seconds()
+
+        return int(total) 
+
+    def get_current_playtime_seconds(self):
+        if self.sessions:
+            return int((datetime.now() - self.sessions[0].start).total_seconds())
+        return 0
+
     def to_dict(self, limit_sessions=5):
         return dict(
             id=self.id,
@@ -68,6 +85,9 @@ class PlayerSteamID(Base):
             names=[name.to_dict() for name in self.names],
             sessions=[session.to_dict()
                       for session in self.sessions][:limit_sessions],
+            sessions_count=len(self.sessions),
+            total_playtime_seconds=self.get_total_playtime_seconds(),
+            current_playtime_seconds=self.get_current_playtime_seconds(),
             received_actions=[
                 action.to_dict()
                 for action in self.received_actions
