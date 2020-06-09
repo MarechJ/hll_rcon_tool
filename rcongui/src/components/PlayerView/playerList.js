@@ -15,23 +15,32 @@ import Icon from '@material-ui/core/Icon';
 import OpenInNewIcon from '@material-ui/icons/OpenInNew';
 import { getEmojiFlag } from '../../utils/emoji'
 import { Map, List as IList } from 'immutable'
+import ScheduleIcon from '@material-ui/icons/Schedule';
 
+const zeroPad = (num, places) => String(num).padStart(places, '0')
+
+function seconds_to_time(seconds) {
+  const hours = Math.trunc(seconds / 60 / 60)
+  const minutes = Math.trunc((seconds / 60) - (hours * 60))
+
+  return `${zeroPad(hours, 2)}:${zeroPad(minutes, 2)}`
+}
 
 const PlayerItem = ({ classes, name, steamID64, profile, handleAction, nbButtons, onFlag, onDeleteFlag }) => (
   <ListItem key={name} dense>
     <ListItemText
       id={`checkbox-list-label-${steamID64}`}
-      primary={name}
+      primary={`${name}`}
       secondary={
         <React.Fragment>
-          <Link target="_blank" color="inherit" href={`${process.env.REACT_APP_API_URL}player?steam_id_64=${steamID64}`}>
+           <span>{seconds_to_time(profile.get('current_playtime_seconds'))} - #{profile.get('sessions_count')} - </span> <Link target="_blank" color="inherit" href={`${process.env.REACT_APP_API_URL}player?steam_id_64=${steamID64}`}>
             {steamID64} <Icon component={OpenInNewIcon} fontSize="inherit" />
           </Link>
           <p className={classes.noPaddingMargin}>
-            {profile.get('flags', []).map(d =>
-              <Link onClick={() => window.confirm("Delete flag?") ? onDeleteFlag(d.get('id')) : ''}>{getEmojiFlag(d.get('flag'))}</Link>
-            )}
-
+              {profile.get('flags', []).map(d =>
+                <Link onClick={() => window.confirm("Delete flag?") ? onDeleteFlag(d.get('id')) : ''}>{getEmojiFlag(d.get('flag'), 22)}</Link>
+              )}
+   
           </p>
         </React.Fragment>
       }

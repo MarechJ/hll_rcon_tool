@@ -5,6 +5,7 @@ import logging
 import os
 import functools
 from cachetools.func import ttl_cache as cachetools_ttl_cache
+from contextlib import contextmanager
 
 logger = logging.getLogger(__name__)
 
@@ -129,3 +130,10 @@ def ttl_cache(ttl, *args, is_method=True, cache_falsy=True, **kwargs):
         wrapper.cache_clear = cached_func.clear_all
         return wrapper
     return decorator
+
+
+@contextmanager
+def invalidates(*cached_funcs):
+    yield None
+    for f in cached_funcs:
+        f.cache_clear()

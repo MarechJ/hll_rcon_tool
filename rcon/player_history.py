@@ -12,6 +12,7 @@ from rcon.models import (
 )
 from rcon.game_logs import on_connected, on_disconnected
 from rcon.commands import CommandFailedError
+from rcon.cache_utils import ttl_cache, invalidates
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +22,7 @@ def get_player(sess, steam_id_64):
         PlayerSteamID.steam_id_64 == steam_id_64
     ).one_or_none()
 
-# TODO: cache that, this is getting expensive as we do it on 100 players, 1 at a time...
+
 def get_player_profile(steam_id_64, nb_sessions):
     with enter_session() as sess:
         player = sess.query(PlayerSteamID).filter(
@@ -31,6 +32,14 @@ def get_player_profile(steam_id_64, nb_sessions):
             return
         return player.to_dict(limit_sessions=nb_sessions)
 
+
+def get_profiles(steam_ids, nb_sessions=0):
+    with enter_session() as sess:
+        players = sess.query(PlayerSteamID).filter(
+            PlayerSteamID.steam_id_64.in_(steam_ids)
+        ).all()
+
+        return [p.to_dict(limit_sessions=nb_sessions) for p in players]
 
 def _get_set_player(sess, player_name, steam_id_64):
     player = get_player(sess, steam_id_64)

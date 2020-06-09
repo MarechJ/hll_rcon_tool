@@ -9,6 +9,20 @@ import withWidth from "@material-ui/core/withWidth";
 import { Reason } from "./textInputBar";
 import Grid from "@material-ui/core/Grid";
 import { DialogTitle, DialogContent, DialogActions } from "../dialog";
+import { join } from 'lodash/array';
+
+const compactProfile = (player) => {
+  let s = ""
+  if (!player || !player.profile) {
+    return s
+  }
+  s += ": "
+  if (player.profile.flags) {
+    s += join(player.profile.flags.map(f => f.flag), '')
+  }
+
+  return s
+}
 
 const GroupActions = ({
   players,
@@ -42,7 +56,7 @@ const GroupActions = ({
           clearOnEscape
           id="tags-outlined"
           options={_.sortBy(players, p => p.name.toLowerCase())}
-          getOptionLabel={option => option.name}
+          getOptionLabel={option => `${option.name}${compactProfile(option)}`}
           filterSelectedOptions
           onChange={(e, val) => setSelectedPlayers(val)}
           renderInput={params => (
