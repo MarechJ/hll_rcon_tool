@@ -4,6 +4,15 @@ const useStyles = makeStyles(theme => ({
   root: {
     flexGrow: 1
   },
+  high: {
+    color: theme.palette.secondary.main
+  },
+  mid: {
+    color: theme.palette.error.main
+  },
+  low: {
+    color: theme.palette.warning.main
+  },
   paper: {
     padding: theme.spacing(2)
   },
@@ -102,6 +111,7 @@ const useStyles = makeStyles(theme => ({
     color: theme.palette.text.disabled
   },
   ellipsis: {
+    textAlign: "left",
     whiteSpace: "nowrap",
     overflow: "hidden",
     textOverflow: "ellipsis",

@@ -30,7 +30,8 @@ const PlayerItem = ({ classes, name, steamID64, profile, handleAction, nbButtons
   <ListItem key={name} dense>
     <ListItemText
       id={`checkbox-list-label-${steamID64}`}
-      primary={`${name}`}
+      primary={<React.Fragment>{name} <Link className={classes.marginRight} target="_blank" color="inherit" href={`https://steamcommunity.com/profiles/${steamID64}`}>
+      <FontAwesomeIcon icon={faSteam} /></Link></React.Fragment>}
       secondary={
         <React.Fragment>
            <span>{seconds_to_time(profile.get('current_playtime_seconds'))} - #{profile.get('sessions_count')} - </span> <Link target="_blank" color="inherit" href={`${process.env.REACT_APP_API_URL}player?steam_id_64=${steamID64}`}>
@@ -40,14 +41,12 @@ const PlayerItem = ({ classes, name, steamID64, profile, handleAction, nbButtons
               {profile.get('flags', []).map(d =>
                 <Link onClick={() => window.confirm("Delete flag?") ? onDeleteFlag(d.get('id')) : ''}>{getEmojiFlag(d.get('flag'), 22)}</Link>
               )}
-   
           </p>
         </React.Fragment>
       }
     />
     <ListItemSecondaryAction>
-      <Link className={classes.marginRight} target="_blank" color="inherit" href={`https://steamcommunity.com/profiles/${steamID64}`}>
-        <FontAwesomeIcon icon={faSteam} /></Link>
+     
       <PlayerActions size="small" handleAction={handleAction} onFlag={onFlag} displayCount={nbButtons} penaltyCount={profile.get('penalty_count', Map())} />
     </ListItemSecondaryAction>
   </ListItem>
