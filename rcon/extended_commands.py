@@ -1,11 +1,10 @@
 import random
 import os
 import re
-from contextlib import contextmanager
 from datetime import datetime, timedelta
 import logging
 import socket
-from rcon.cache_utils import ttl_cache
+from rcon.cache_utils import ttl_cache, invalidates
 from rcon.commands import ServerCtl, CommandFailedError
 
 STEAMID = "steam_id_64"
@@ -14,13 +13,6 @@ ROLE = "role"
 
 
 logger = logging.getLogger(__name__)
-
-
-@contextmanager
-def invalidates(*cached_funcs):
-    yield None
-    for f in cached_funcs:
-        f.cache_clear()
 
 
 class Rcon(ServerCtl):

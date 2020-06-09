@@ -1,6 +1,6 @@
 from logging import getLogger
 
-from rcon.player_history import safe_save_player_action, add_player_to_blacklist, get_player_profile
+from rcon.player_history import safe_save_player_action, add_player_to_blacklist, get_profiles
 from rcon.extended_commands import Rcon, STEAMID, NAME, invalidates
 from rcon.cache_utils import ttl_cache
 from rcon.commands import ServerCtl
@@ -56,12 +56,12 @@ class RecordedRcon(Rcon):
     def get_players(self):
         players = super().get_players()
 
+        steam_ids = [p.get(STEAMID) for p in players if p.get(STEAMID)]
+        profiles = {p['steam_id_64']: p for p in get_profiles(steam_ids)}
+
         for p in players:
-            profile = None
-            if steam_id_64 := p.get(STEAMID):
-                profile = get_player_profile(steam_id_64, 0)
             p.update(
-                {'profile': profile}
+                {'profile': profiles.get(p.get(STEAMID))}
             )
 
         return players

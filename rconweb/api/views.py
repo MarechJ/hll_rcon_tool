@@ -110,7 +110,7 @@ def get_player(request):
     data = _get_data(request)
     res = {}
     try:
-        res = get_player_profile(data['steam_id_64'], nb_sessions=data.get('nb_sessions'))
+        res = get_player_profile(data['steam_id_64'], nb_sessions=data.get('nb_sessions', 10))
         failed = bool(res)
     except:
         logger.exception("Unable to get player %s", data)
