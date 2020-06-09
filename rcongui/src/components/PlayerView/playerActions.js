@@ -112,7 +112,7 @@ const PlayerActions = ({ size, handleAction, onFlag, displayCount = 3, disable =
 
         {_.range(show).map(idx => (
           <Button disabled={disable && !actions[idx][0].startsWith("switch")} onClick={() => handleAction(actions[idx][0])}>
-            <Badge size="small" color="secondary" max={9} badgeContent={penaltyCount.get(remap_penalties[actions[idx][0]], 0)}>{actions[idx][1]}</Badge>
+            <Badge size="small" color="primary" max={9} badgeContent={penaltyCount.get(remap_penalties[actions[idx][0]], 0)}>{actions[idx][1]}</Badge>
           </Button>
         ))}
         { onFlag ? <Button size="small" onClick={onFlag}><FlagOutlinedIcon fontSize="small" /></Button> : ''}
@@ -142,7 +142,7 @@ const PlayerActions = ({ size, handleAction, onFlag, displayCount = 3, disable =
                 handleClose();
               }}
             >
-              {actions[idx][1]}{count > 0 ? <Chip size="small" color="secondary" label={count} /> : ''}
+              {actions[idx][1]}{count > 0 ? <Chip size="small" color="primary" label={count} /> : ''}
             </MenuItem>
           })}
         </Menu>
