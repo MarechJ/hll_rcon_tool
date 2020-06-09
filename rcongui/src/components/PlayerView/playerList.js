@@ -62,12 +62,20 @@ class CompactList extends React.Component {
       players = _.sortBy(players, (p) => p[0].toLowerCase())
     }
 
+    const sizes = {
+      'xs': 0,
+      'sm': 3,
+      'md': 1,
+      'lg': 4,
+      'xl': 10,
+    }
+
     return (
       <List className={classes.root}>
         {players.map(player => (
           <PlayerItem
             classes={classes}
-            nbButtons={width === 'xs' ? 1 : width === 'xl' ? 10 : 4}
+            nbButtons={sizes[width]}
             name={player[0]}
             steamID64={player[1]}
             key={player[1]}
