@@ -25,6 +25,8 @@ def safe(func, default=None):
             return default
     return wrapper
 
+def ingame_admins(ctl):
+    return ctl.get_ingame_mods(get_registered_mods())
 
 def run():
     ctl = Rcon(
@@ -53,7 +55,7 @@ def run():
                 'maprotation': ' -> '.join(safe(ctl.get_map_rotation, [])()),
                 'servername': safe(ctl.get_name, "")(),
                 'onlineadmins': safe(online_mods, "")(),
-                'ingameadmins': safe(ctl.get_ingame_mods(get_registered_mods())) 
+                'ingameadmins': safe(ingame_admins, "")(ctl) 
             }
             formatted = msg.format(**subs)
             logger.debug("Broadcasting for %s seconds: %s", time_sec, formatted)
