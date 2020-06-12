@@ -48,7 +48,7 @@ LOGGING = {
             'class': 'logging.FileHandler',
             'filename':  os.path.join(
                 os.getenv('LOGGING_PATH', ""),
-                os.getenv("LOGGING_FILENAME", f"django.log")
+                os.getenv("LOGGING_FILENAME", f"{socket.gethostname()}.log")
             )
             },
         },

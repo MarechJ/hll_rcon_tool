@@ -17,7 +17,9 @@ from rcon.player_history import (
     get_players_by_appearance, 
     add_player_to_blacklist, 
     remove_player_from_blacklist,
-    get_player_profile
+    get_player_profile,
+    add_flag_to_player,
+    remove_flag,
 )
 from rcon.user_config import AutoBroadcasts, InvalidConfigurationError
 from rcon.cache_utils import RedisCached, get_redis_pool
@@ -108,7 +110,7 @@ def get_player(request):
     data = _get_data(request)
     res = {}
     try:
-        res = get_player_profile(data['steam_id_64'], nb_sessions=data.get('nb_sessions'))
+        res = get_player_profile(data['steam_id_64'], nb_sessions=data.get('nb_sessions', 10))
         failed = bool(res)
     except:
         logger.exception("Unable to get player %s", data)
@@ -121,6 +123,57 @@ def get_player(request):
         "failed": failed
     })
 
+
+@csrf_exempt
+def flag_player(request):
+    data = _get_data(request)
+    res = None
+    try:
+        player, flag = add_flag_to_player(steam_id_64=data['steam_id_64'], flag=data['flag'], comment=data.get('comment'))
+        res = flag
+        send_to_discord_audit(
+            "Flagged '{}' '{}' with '{}' '{}'".format(
+                data['steam_id_64'], 
+                ' | '.join(n['name'] for n in player['names']),
+                flag['flag'],
+                data.get('comment', '')
+            ), 
+            get_client_ip(request)
+        )
+    except KeyError:
+        logger.warning("Missing parameters")
+        # TODO return 400
+    except CommandFailedError:
+        logger.exception("Failed to flag")
+    return JsonResponse({
+        "result": res,
+        "command": "flag_player",
+        "arguments": data,
+        "failed": not res
+    })
+   
+@csrf_exempt
+def unflag_player(request):
+    # Note is this really not restful
+    data = _get_data(request)
+    res = None
+    try:
+        player, flag = remove_flag(data['flag_id'])
+        res = flag
+        send_to_discord_audit("Remove flag '{}' from '{}'".format(
+            flag['flag'], ' | '.join(n['name'] for n in player['names'])), get_client_ip(request))
+    except KeyError:
+        logger.warning("Missing parameters")
+        # TODO return 400
+    except CommandFailedError:
+        logger.exception("Failed to remove flag")
+    return JsonResponse({
+        "result": res,
+        "command": "flag_player",
+        "arguments": data,
+        "failed": not res
+    })
+   
 
 @csrf_exempt
 def blacklist_player(request):
@@ -140,6 +193,7 @@ def blacklist_player(request):
         "arguments": data,
         "failed": failed
     })
+
 
 
 @csrf_exempt
@@ -314,6 +368,8 @@ commands = [
     ("get_auto_broadcasts_config", get_auto_broadcasts_config),
     ("set_auto_broadcasts_config", set_auto_broadcasts_config),
     ("clear_cache", clear_cache),
+    ("flag_player", flag_player),
+    ("unflag_player", unflag_player)
 ]
 
 # Dynamically register all the methods from ServerCtl

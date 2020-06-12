@@ -2,6 +2,16 @@ version: '2.4'
 
 services:
     postgres:
-      volumes: []
+      environment:
+        PGDATA: /data
+      volumes:
+        - postgres_data:/data
     redis: 
-      volumes: []
+      volumes:
+        - redis_data:/data
+
+volumes:
+  postgres_data:
+    external: true
+  redis_data:
+    external: true

@@ -8,10 +8,11 @@ import math
 from rcon.models import (
     init_db, enter_session, PlayerName, 
     PlayerSteamID, PlayerSession, BlacklistedPlayer, 
-    PlayersAction
+    PlayersAction, PlayerFlag
 )
 from rcon.game_logs import on_connected, on_disconnected
 from rcon.commands import CommandFailedError
+from rcon.cache_utils import ttl_cache, invalidates
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +32,14 @@ def get_player_profile(steam_id_64, nb_sessions):
             return
         return player.to_dict(limit_sessions=nb_sessions)
 
+
+def get_profiles(steam_ids, nb_sessions=0):
+    with enter_session() as sess:
+        players = sess.query(PlayerSteamID).filter(
+            PlayerSteamID.steam_id_64.in_(steam_ids)
+        ).all()
+
+        return [p.to_dict(limit_sessions=nb_sessions) for p in players]
 
 def _get_set_player(sess, player_name, steam_id_64):
     player = get_player(sess, steam_id_64)
@@ -72,9 +81,11 @@ def get_players_by_appearance(page=1, page_size=500, last_seen_from: datetime.da
 
         total = query.count()
         page = min(max(math.ceil(total / page_size), 1), page) 
-        players = query.order_by(sub.c.last.desc()).limit(
+        players = query.order_by(func.coalesce(sub.c.last, PlayerSteamID.created).desc()).limit(
             page_size).offset((page - 1) * page_size).all()
        
+        # TODO: Why not returning the whole player dict + the extra aggregated fields?
+        # Perf maybe a bit crappier but that's not too much of a concern here
         return {
             'total': total,
             'players': [
@@ -82,9 +93,10 @@ def get_players_by_appearance(page=1, page_size=500, last_seen_from: datetime.da
                     'steam_id_64': p[0].steam_id_64,
                     'names': [n.name for n in p[0].names],
                     'first_seen_timestamp_ms': int(p[1].timestamp() * 1000) if p[1] else None,
-                    'last_seen_timestamp_ms': int(p[2].timestamp() * 1000) if p[1] else None,
+                    'last_seen_timestamp_ms': int(p[2].timestamp() * 1000) if p[2] else None,
                     'penalty_count': p[0].get_penalty_count(),
-                    'blacklisted': p[0].blacklist.is_blacklisted if p[0].blacklist else False
+                    'blacklisted': p[0].blacklist.is_blacklisted if p[0].blacklist else False,
+                    'flags': [f.to_dict() for f in p[0].flags]
                 }
                 for p in players
             ],
@@ -214,6 +226,34 @@ def ban_if_blacklisted(rcon, steam_id_64, name):
             )
 
 
+def add_flag_to_player(steam_id_64, flag, comment=None, player_name=None):
+    with enter_session() as sess:
+        player = _get_set_player(sess, player_name=player_name, steam_id_64=steam_id_64)
+        exits = sess.query(PlayerFlag).filter(PlayerFlag.playersteamid_id == player.id, PlayerFlag.flag == flag).all()
+        if exits:
+            logger.warning("Flag already exists")
+            raise CommandFailedError("Flag already exists")
+        new = PlayerFlag(flag=flag, comment=comment, steamid=player)
+        sess.add(new)
+        sess.commit()
+        res = player.to_dict()
+        return res, new.to_dict()
+    
+
+def remove_flag(flag_id):
+    with enter_session() as sess:
+        exits = sess.query(PlayerFlag).filter(PlayerFlag.id == int(flag_id)).one_or_none()
+        if not exits:
+            logger.warning("Flag does not exists")
+            raise CommandFailedError("Flag does not exists")
+        player = exits.steamid.to_dict()
+        flag = exits.to_dict()
+        sess.delete(exits)
+        sess.commit()
+
+    return player, flag
+    
+
 def add_player_to_blacklist(steam_id_64, reason, name=None):
     # TODO save author of blacklist
     with enter_session() as sess:
@@ -300,6 +340,7 @@ if __name__ == '__main__':
     save_player('Dr.WeeD4', '4242')
     save_player('Dr.WeeD5', '4242')
     save_player('Dr.WeeD6', '4242')
+    save_player("test", '76561197984877751')
     save_start_player_session(
         '4242', datetime.datetime.now().timestamp()
     )
@@ -311,8 +352,11 @@ if __name__ == '__main__':
         '4242',
         int((datetime.datetime.now() + datetime.timedelta(minutes=30)).timestamp() * 1000)
     )
-
+    add_player_to_blacklist("4242", "test")
     remove_player_from_blacklist("4242")
 
     import pprint
     pprint.pprint(get_players_by_appearance())
+
+    add_flag_to_player("76561198156263725", "🐷")
+

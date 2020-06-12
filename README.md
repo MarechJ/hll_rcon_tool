@@ -79,6 +79,8 @@ Alternatively you can also specify them in the command line. [More details](http
 
 #### Windows
 
+    docker volume create redis_data
+    docker volume create postgres_data
     docker-compose -f docker-compose.yml -f docker-compose.windows.yml up -d 
 
 #### Raspberry-Pi or any ARM32v7

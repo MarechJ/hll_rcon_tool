@@ -17,7 +17,7 @@ for k, v in SERVER_INFO.items():
     if not v:
         raise ValueError(f"{k} environment variable must be set")
 
-
+# TODO add sentry
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,

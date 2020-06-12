@@ -90,8 +90,7 @@ class PlayerCount(Series):
 
 
 
-
-if __name__ == '__main__':
+def run():
     rcon = Rcon(SERVER_INFO)
     red = Client(connection_pool=get_redis_pool())
     registered_series = [
@@ -104,3 +103,7 @@ if __name__ == '__main__':
         for series in registered_series:
             series.run_on_time(rcon)
         time.sleep(LOOP_FREQUENCY_SEC)
+
+
+if __name__ == '__main__':
+    run()

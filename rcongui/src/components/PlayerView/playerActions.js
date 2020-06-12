@@ -1,8 +1,10 @@
 import React, { Component } from "react";
 import Button from "@material-ui/core/Button";
+import Chip from '@material-ui/core/Chip'
 import ButtonGroup from "@material-ui/core/ButtonGroup";
 import TextField from "@material-ui/core/TextField";
 import _ from "lodash";
+import Badge from '@material-ui/core/Badge';
 import Menu from "@material-ui/core/Menu";
 import MenuItem from "@material-ui/core/MenuItem";
 import ArrowDropDownIcon from "@material-ui/icons/ArrowDropDown";
@@ -12,6 +14,8 @@ import Dialog from "@material-ui/core/Dialog";
 import DialogActions from "@material-ui/core/DialogActions";
 import DialogContent from "@material-ui/core/DialogContent";
 import DialogTitle from "@material-ui/core/DialogTitle";
+import { Map } from 'immutable';
+import FlagOutlinedIcon from '@material-ui/icons/FlagOutlined';
 
 class ReasonDialog extends React.Component {
   constructor(props) {
@@ -76,7 +80,7 @@ const DropMenu = ({ startIdx, actions, handleAction }) => {
   return <React.Fragment></React.Fragment>;
 };
 
-const PlayerActions = ({ size, handleAction, displayCount = 3, disable = false }) => {
+const PlayerActions = ({ size, handleAction, onFlag, displayCount = 3, disable = false, penaltyCount = Map() }) => {
   const classes = useStyles();
   const [anchorEl, setAnchorEl] = React.useState(null);
   const handleClick = event => {
@@ -85,6 +89,13 @@ const PlayerActions = ({ size, handleAction, displayCount = 3, disable = false }
   const handleClose = () => {
     setAnchorEl(null);
   };
+  const remap_penalties = {
+    "perma_ban": 'PERMABAN',
+    'punish': "PUNISH",
+    'kick': "KICK",
+    "temp_ban": "TEMPBAN"
+  }
+
   const actions = [
     ["punish", "PUNISH"],
     ["kick", "KICK"],
@@ -98,11 +109,13 @@ const PlayerActions = ({ size, handleAction, displayCount = 3, disable = false }
   return (
     <React.Fragment>
       <ButtonGroup size={size} aria-label="small outlined button group">
+
         {_.range(show).map(idx => (
           <Button disabled={disable && !actions[idx][0].startsWith("switch")} onClick={() => handleAction(actions[idx][0])}>
-            {actions[idx][1]}
+            <Badge size="small" color="primary" max={9} badgeContent={penaltyCount.get(remap_penalties[actions[idx][0]], 0)}>{actions[idx][1]}</Badge>
           </Button>
         ))}
+        { onFlag ? <Button size="small" onClick={onFlag}><FlagOutlinedIcon fontSize="small" /></Button> : ''}
         {show < actions.length ?
           <Button
             disabled={disable}
@@ -121,16 +134,17 @@ const PlayerActions = ({ size, handleAction, displayCount = 3, disable = false }
           open={Boolean(anchorEl)}
           onClose={handleClose}
         >
-          {_.range(show, actions.length).map(idx => (
-            <MenuItem
+          {_.range(show, actions.length).map(idx => {
+            const count = penaltyCount.get(remap_penalties[actions[idx][0]], 0)
+            return <MenuItem
               onClick={() => {
                 handleAction(actions[idx][0]);
                 handleClose();
               }}
             >
-              {actions[idx][1]}
+              {actions[idx][1]}{count > 0 ? <Chip size="small" color="primary" label={count} /> : ''}
             </MenuItem>
-          ))}
+          })}
         </Menu>
       ) : (
           ""
