@@ -10,21 +10,21 @@ services:
     depends_on: 
       - postgres
       - redis
-  #stats: &stats
-  # hostname: stats
-  #  extends: 
-  #    file: docker-compose-common-components.yml
-  #    service: python
-  #  command: stats_loop
-  #  depends_on: 
-  #    - postgres
-  #    - redis
+  stats: &stats
+   hostname: stats
+    extends: 
+      file: docker-compose-common-components.yml
+      service: python
+    command: stats_loop
+    depends_on: 
+      - postgres
+      - redis
   logs_event_loop: &logs_event_loop
     hostname: logs_event_loop
     extends: 
       file: docker-compose-common-components.yml
       service: python
-    command: log_loop
+      command: log_loop
     depends_on: 
       - postgres
       - redis
