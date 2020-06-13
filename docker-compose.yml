@@ -72,8 +72,6 @@ services:
       - common
   redis:
     image: redislabs/redistimeseries:1.2.6
-    ports: # Exposing ports is only useful for local development
-      - 127.0.0.1:${HLL_REDIS_HOST_PORT:-6379}:6379
     restart: always
     volumes:
       - ./redis_data:/data
@@ -90,8 +88,6 @@ services:
       PGDATA: /data
     volumes:
       - ./db_data:/data
-    ports:
-      - 127.0.0.1:${HLL_DB_HOST_PORT:-5432}:5432
     networks:
       - common
 
@@ -116,12 +112,16 @@ services:
     networks:
       - common
       - server2
+    depends_on:
+      - frontend
   #stats_2:
   #  <<: *stats
   #  hostname: stats_2
   #  environment:
   #    <<: *env2
   #  restart: on-failure
+  #  depends_on:
+  #    - frontend
   logs_event_loop_2:
     <<: *logs_event_loop
     hostname: logs_event_loop_2
@@ -131,6 +131,8 @@ services:
     networks:
       - common
       - server2
+    depends_on:
+      - frontend
   backend_2:
     <<: *backend
     hostname: api_2
@@ -142,6 +144,8 @@ services:
       server2:
         aliases:
           - backend
+    depends_on:
+      - frontend
   frontend_2:
     <<: *frontend
     ports:
@@ -152,6 +156,8 @@ services:
     networks:
       - common
       - server2
+    depends_on:
+      - backend_2
 
   ############ SERVER 3  #############
   broadcast_3:
@@ -174,12 +180,16 @@ services:
     networks:
       - common
       - server3
+    depends_on:
+      - frontend_2
   #stats_3:
   #  <<: *stats
   #  hostname: stats_3
   #  environment:
   #    <<: *env3
   #  restart: on-failure
+  #  depends_on:
+  #    - frontend_2
   logs_event_loop_3:
     <<: *logs_event_loop
     hostname: logs_event_loop_3
@@ -189,6 +199,8 @@ services:
     networks:
       - common
       - server3
+    depends_on:
+      - frontend_2
   backend_3:
     <<: *backend
     hostname: api_3
@@ -200,6 +212,8 @@ services:
       server3:
         aliases:
           - backend
+    depends_on:
+      - frontend_2
   frontend_3:
     <<: *frontend
     ports:
@@ -210,6 +224,8 @@ services:
     networks:
       - common
       - server3
+    depends_on: 
+      - backend_3
 
   ############ SERVER 4  #############
   broadcast_4:
@@ -232,12 +248,16 @@ services:
     networks:
       - common
       - server4
+    depends_on:
+      - frontend_3
   #stats_4:
   #  <<: *stats
   #  hostname: stats_4
   #  environment:
   #    <<: *env4
   #  restart: on-failure
+  #  depends_on:
+  #   - frontend_3
   logs_event_loop_4:
     <<: *logs_event_loop
     hostname: logs_event_loop_4
@@ -247,6 +267,8 @@ services:
     networks:
       - common
       - server4
+    depends_on:
+      - frontend_3
   backend_4:
     <<: *backend
     hostname: api_4
@@ -258,6 +280,8 @@ services:
       server4:
         aliases:
           - backend
+    depends_on:
+      - frontend_3
   frontend_4:
     <<: *frontend
     ports:
@@ -268,3 +292,5 @@ services:
     networks:
       - common
       - server4
+    depends_on:
+      - backend_4

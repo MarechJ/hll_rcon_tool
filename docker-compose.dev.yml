@@ -13,7 +13,7 @@ services:
     build: .
     environment:
       LOGGING_LEVEL: 'DEBUG'
-  backend:
+  backend_1:
     environment:
       DJANGO_DEBUG: 'yes'
       LOGGING_LEVEL: 'DEBUG'
@@ -21,3 +21,9 @@ services:
   frontend:
     build:
       context: ./rcongui
+  redis:
+    ports: 
+      - ${HLL_REDIS_HOST_PORT:-6379}:6379
+  postgres:
+    ports:
+      - ${HLL_DB_HOST_PORT:-5432}:5432
