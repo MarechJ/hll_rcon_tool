@@ -22,7 +22,7 @@ def post_chat_message_to_discord(_, log):
         return
 
     try:
-        message = log["message"]
+        message = f"{log['action']}: {log['message']}"
         message = discord.utils.escape_mentions(message)
         message = discord.utils.escape_markdown(message)
 
