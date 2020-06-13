@@ -1,8 +1,8 @@
 import logging
 import os
-from urllib.parse import urlparse
 
 import discord.utils
+import requests
 from discord import RequestsWebhookAdapter
 from discord import Webhook
 
@@ -31,11 +31,15 @@ def post_chat_message_to_discord(_, log):
 
 
 def parse_webhook_url(url):
+    """Parse and check validity of Discord webhook URL
+    by performing a get request and checking existence
+    of 'id' and 'token' in the JSON response.
+    """
+
     try:
-        parsed = urlparse(url)
-        path = parsed.path.split("/")
-        token = path[-1]
-        _id = int(path[-2])
+        resp = requests.get(url).json()
+        _id = int(resp["id"])
+        token = resp["token"]
         return _id, token
     except Exception as e:
         logger.error("error parsing Discord chat webhook url: %s", e)
