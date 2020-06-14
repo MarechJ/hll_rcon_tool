@@ -1,60 +1,82 @@
 version: '2.4'
 
+networks:
+  server1:
+  server2:
+  server3:
+  server4:
+  common:
+
+
 services:
   broadcast: &broadcast
     hostname: broadcast
-    extends: 
+    extends:
       file: docker-compose-common-components.yml
       service: python
     command: broadcast_loop
-    depends_on: 
+    depends_on:
       - postgres
       - redis
-  stats: &stats
-    hostname: stats
-    extends: 
-      file: docker-compose-common-components.yml
-      service: python
-    command: stats_loop
-    depends_on: 
-      - postgres
-      - redis
+    networks:
+      - server1
+      - common
+  #stats: &stats
+  # hostname: stats
+  #  extends:
+  #    file: docker-compose-common-components.yml
+  #    service: python
+  #  command: stats_loop
+  #  depends_on:
+  #    - postgres
+  #    - redis
   logs_event_loop: &logs_event_loop
     hostname: logs_event_loop
-    extends: 
+    extends:
       file: docker-compose-common-components.yml
       service: python
     command: log_loop
-    depends_on: 
+    depends_on:
       - postgres
       - redis
-  backend: &backend
+    networks:
+      - server1
+      - common
+  backend_1: &backend
     hostname: api
-    extends: 
+    extends:
       file: docker-compose-common-components.yml
-      service: python 
+      service: python
     command: web
-    depends_on: 
+    depends_on:
         - postgres
         - redis
-  frontend: &frontend    
+    networks:
+      server1:
+        aliases:
+          - backend
+      common:
+  frontend: &frontend
     image: maresh/hll_rcon_frontend:latest
     ports:
       - ${RCONWEB_PORT}:80
     restart: always
-    volumes: 
-      - ./static:/static/
-    environment: 
+    environment:
       HLL_HOST: ${HLL_HOST}
       RCONWEB_PASSWORD: ${RCONWEB_PASSWORD}
       RCONWEB_USERNAME: ${RCONWEB_USERNAME}
-    depends_on: 
-        - backend
+    depends_on:
+        - backend_1
+    networks:
+      - server1
+      - common
   redis:
     image: redislabs/redistimeseries:1.2.6
     restart: always
     volumes:
       - ./redis_data:/data
+    networks:
+      - common
   postgres:
     image: postgres:12
     restart: always
@@ -66,7 +88,8 @@ services:
       PGDATA: /data
     volumes:
       - ./db_data:/data
-
+    networks:
+      - common
 
   ############ SERVER 2  #############
   broadcast_2:
@@ -83,29 +106,191 @@ services:
       DISCORD_WEBHOOK_AUDIT_LOG: ${DISCORD_WEBHOOK_AUDIT_LOG_2}
       RCONWEB_PASSWORD: ${RCONWEB_PASSWORD_2}
       RCONWEB_USERNAME: ${RCONWEB_USERNAME_2}
+      RCONWEB_API_SECRET: ${RCONWEB_API_SECRET}
+      SERVER_SHORT_NAME: ${SERVER_SHORT_NAME_2}
     restart: on-failure
-  #stats_2: 
+    networks:
+      - common
+      - server2
+    depends_on:
+      - frontend
+  #stats_2:
   #  <<: *stats
   #  hostname: stats_2
-  #  environment: 
+  #  environment:
   #    <<: *env2
   #  restart: on-failure
-  logs_event_loop_2: 
+  #  depends_on:
+  #    - frontend
+  logs_event_loop_2:
     <<: *logs_event_loop
     hostname: logs_event_loop_2
-    environment: 
+    environment:
       <<: *env2
     restart: on-failure
-  backend_2: 
+    networks:
+      - common
+      - server2
+    depends_on:
+      - frontend
+  backend_2:
     <<: *backend
     hostname: api_2
-    environment: 
+    environment:
       <<: *env2
     restart: on-failure
-  frontend_2: 
-    <<: *frontend    
+    networks:
+      common:
+      server2:
+        aliases:
+          - backend
+    depends_on:
+      - frontend
+  frontend_2:
+    <<: *frontend
     ports:
       - ${RCONWEB_PORT_2}:80
-    environment: 
+    environment:
       <<: *env2
     restart: on-failure
+    networks:
+      - common
+      - server2
+    depends_on:
+      - backend_2
+
+  ############ SERVER 3  #############
+  broadcast_3:
+    <<: *broadcast
+    hostname: broadcast_3
+    environment: &env3
+      HLL_HOST: ${HLL_HOST_3}
+      HLL_PORT: ${HLL_PORT_3}
+      HLL_PASSWORD: ${HLL_PASSWORD_3}
+      LOGGING_LEVEL: 'INFO'
+      LOGGING_PATH: /logs/
+      REDIS_URL: redis://redis:6379/2
+      DB_URL: 'postgres://rcon:${HLL_DB_PASSWORD}@postgres:5432'
+      DISCORD_WEBHOOK_AUDIT_LOG: ${DISCORD_WEBHOOK_AUDIT_LOG_3}
+      RCONWEB_PASSWORD: ${RCONWEB_PASSWORD_3}
+      RCONWEB_USERNAME: ${RCONWEB_USERNAME_3}
+      RCONWEB_API_SECRET: ${RCONWEB_API_SECRET}
+      SERVER_SHORT_NAME: ${SERVER_SHORT_NAME_3}
+    restart: on-failure
+    networks:
+      - common
+      - server3
+    depends_on:
+      - frontend_2
+  #stats_3:
+  #  <<: *stats
+  #  hostname: stats_3
+  #  environment:
+  #    <<: *env3
+  #  restart: on-failure
+  #  depends_on:
+  #    - frontend_2
+  logs_event_loop_3:
+    <<: *logs_event_loop
+    hostname: logs_event_loop_3
+    environment:
+      <<: *env3
+    restart: on-failure
+    networks:
+      - common
+      - server3
+    depends_on:
+      - frontend_2
+  backend_3:
+    <<: *backend
+    hostname: api_3
+    environment:
+      <<: *env3
+    restart: on-failure
+    networks:
+      common:
+      server3:
+        aliases:
+          - backend
+    depends_on:
+      - frontend_2
+  frontend_3:
+    <<: *frontend
+    ports:
+      - ${RCONWEB_PORT_3}:80
+    environment:
+      <<: *env3
+    restart: on-failure
+    networks:
+      - common
+      - server3
+    depends_on: 
+      - backend_3
+
+  ############ SERVER 4  #############
+  broadcast_4:
+    <<: *broadcast
+    hostname: broadcast_4
+    environment: &env4
+      HLL_HOST: ${HLL_HOST_4}
+      HLL_PORT: ${HLL_PORT_4}
+      HLL_PASSWORD: ${HLL_PASSWORD_4}
+      LOGGING_LEVEL: 'INFO'
+      LOGGING_PATH: /logs/
+      REDIS_URL: redis://redis:6379/3
+      DB_URL: 'postgres://rcon:${HLL_DB_PASSWORD}@postgres:5432'
+      DISCORD_WEBHOOK_AUDIT_LOG: ${DISCORD_WEBHOOK_AUDIT_LOG_4}
+      RCONWEB_PASSWORD: ${RCONWEB_PASSWORD_4}
+      RCONWEB_USERNAME: ${RCONWEB_USERNAME_4}
+      RCONWEB_API_SECRET: ${RCONWEB_API_SECRET}
+      SERVER_SHORT_NAME: ${SERVER_SHORT_NAME_4}
+    restart: on-failure
+    networks:
+      - common
+      - server4
+    depends_on:
+      - frontend_3
+  #stats_4:
+  #  <<: *stats
+  #  hostname: stats_4
+  #  environment:
+  #    <<: *env4
+  #  restart: on-failure
+  #  depends_on:
+  #   - frontend_3
+  logs_event_loop_4:
+    <<: *logs_event_loop
+    hostname: logs_event_loop_4
+    environment:
+      <<: *env4
+    restart: on-failure
+    networks:
+      - common
+      - server4
+    depends_on:
+      - frontend_3
+  backend_4:
+    <<: *backend
+    hostname: api_4
+    environment:
+      <<: *env4
+    restart: on-failure
+    networks:
+      common:
+      server4:
+        aliases:
+          - backend
+    depends_on:
+      - frontend_3
+  frontend_4:
+    <<: *frontend
+    ports:
+      - ${RCONWEB_PORT_4}:80
+    environment:
+      <<: *env4
+    restart: on-failure
+    networks:
+      - common
+      - server4
+    depends_on:
+      - backend_4

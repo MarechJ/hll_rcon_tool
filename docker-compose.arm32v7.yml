@@ -9,7 +9,7 @@ services:
     build: 
       context: .
       dockerfile: Dockerfile-arm32
-  backend:
+  backend_1:
     build: 
       context: .
       dockerfile: Dockerfile-arm32

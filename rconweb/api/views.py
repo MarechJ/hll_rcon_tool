@@ -207,6 +207,7 @@ def blacklist_player(request):
     })
 
 
+
 @csrf_exempt
 @login_required
 def unblacklist_player(request):

@@ -3,21 +3,27 @@ version: '2.4'
 services:
   broadcast:
     build: .
+    environment:
+      LOGGING_LEVEL: 'DEBUG'
   logs_event_loop:
     build: .
+    environment:
+      LOGGING_LEVEL: 'DEBUG'
   stats:
     build: .
-  backend:
+    environment:
+      LOGGING_LEVEL: 'DEBUG'
+  backend_1:
+    environment:
+      DJANGO_DEBUG: 'yes'
+      LOGGING_LEVEL: 'DEBUG'
     build: .
-    environment: 
-      DJANGO_DEBUG: "true"
   frontend:
     build:
       context: ./rcongui
   redis:
     ports: 
-      - 6379:6379
+      - ${HLL_REDIS_HOST_PORT:-6379}:6379
   postgres:
     ports:
-      - 5432:5432
-    
+      - ${HLL_DB_HOST_PORT:-5432}:5432
