@@ -15,6 +15,7 @@ services:
             RCONWEB_API_SECRET: ${RCONWEB_API_SECRET}
             SERVER_SHORT_NAME: ${SERVER_SHORT_NAME}
             DISCORD_CHAT_WEBHOOK: ${DISCORD_CHAT_WEBHOOK}
+            DISCORD_CHAT_WEBHOOK_ALLOW_MENTIONS: ${DISCORD_CHAT_WEBHOOK_ALLOW_MENTIONS}
         restart: always
         volumes: 
             - ./logs:/logs/
