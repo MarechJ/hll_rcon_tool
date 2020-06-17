@@ -108,6 +108,7 @@ services:
       RCONWEB_USERNAME: ${RCONWEB_USERNAME_2}
       RCONWEB_API_SECRET: ${RCONWEB_API_SECRET}
       SERVER_SHORT_NAME: ${SERVER_SHORT_NAME_2}
+      DISCORD_CHAT_WEBHOOK: ${DISCORD_CHAT_WEBHOOK_2}
     restart: on-failure
     networks:
       - common
@@ -176,6 +177,7 @@ services:
       RCONWEB_USERNAME: ${RCONWEB_USERNAME_3}
       RCONWEB_API_SECRET: ${RCONWEB_API_SECRET}
       SERVER_SHORT_NAME: ${SERVER_SHORT_NAME_3}
+      DISCORD_CHAT_WEBHOOK: ${DISCORD_CHAT_WEBHOOK_3}
     restart: on-failure
     networks:
       - common
@@ -244,6 +246,7 @@ services:
       RCONWEB_USERNAME: ${RCONWEB_USERNAME_4}
       RCONWEB_API_SECRET: ${RCONWEB_API_SECRET}
       SERVER_SHORT_NAME: ${SERVER_SHORT_NAME_4}
+      DISCORD_CHAT_WEBHOOK: ${DISCORD_CHAT_WEBHOOK_4}
     restart: on-failure
     networks:
       - common
