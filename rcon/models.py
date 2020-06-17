@@ -74,7 +74,8 @@ class PlayerSteamID(Base):
 
     def get_current_playtime_seconds(self):
         if self.sessions:
-            return int((datetime.now() - self.sessions[0].start).total_seconds())
+            start = self.sessions[0].start or self.sessions[0].created
+            return int((datetime.now() - start).total_seconds())
         return 0
 
     def to_dict(self, limit_sessions=5):
