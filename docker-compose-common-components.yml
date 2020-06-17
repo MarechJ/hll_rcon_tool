@@ -14,6 +14,7 @@ services:
             DISCORD_WEBHOOK_AUDIT_LOG: ${DISCORD_WEBHOOK_AUDIT_LOG}
             RCONWEB_API_SECRET: ${RCONWEB_API_SECRET}
             SERVER_SHORT_NAME: ${SERVER_SHORT_NAME}
+            DISCORD_CHAT_WEBHOOK: ${DISCORD_CHAT_WEBHOOK}
         restart: always
         volumes: 
             - ./logs:/logs/
