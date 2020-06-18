@@ -10,6 +10,7 @@ from discord import Webhook
 from rcon.game_logs import on_chat
 
 DISCORD_CHAT_WEBHOOK_URL = os.getenv("DISCORD_CHAT_WEBHOOK")
+ALLOW_MENTIONS = os.getenv("DISCORD_CHAT_WEBHOOK_ALLOW_MENTIONS")
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +23,8 @@ def post_chat_message_to_discord(_, log):
 
     try:
         message = f"{log['action']}: {log['message']}"
-        message = discord.utils.escape_mentions(message)
+        if ALLOW_MENTIONS != 'yes':
+            message = discord.utils.escape_mentions(message)
         message = discord.utils.escape_markdown(message)
 
         webhook = Webhook.partial(
