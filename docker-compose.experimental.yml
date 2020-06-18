@@ -2,18 +2,24 @@ version: '2.4'
 
 services:  
     auto_settings:
-        hostname: auto_settings
-        build: .
-        extends:
-          file: docker-compose-common-components.yml
-          service: python
-        command: auto_settings
+      hostname: auto_settings
+      build: .
+      extends:
+        file: docker-compose-common-components.yml
+        service: python
+      command: auto_settings
+      networks:
+        - server1
+        - common
     stats: &stats
       hostname: stats
       extends: 
         file: docker-compose-common-components.yml
         service: python
       command: stats_loop
+      networks:
+        - server1
+        - common
       depends_on: 
         - postgres
         - redis
