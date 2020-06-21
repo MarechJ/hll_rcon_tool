@@ -13,6 +13,7 @@ services:
         - common
     vote_map:
       hostname: vote_map
+      image: rcon_test
       build: 
         dockerfile: Dockerfile-exp
         context: .
