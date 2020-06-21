@@ -3,6 +3,8 @@ import logging
 import json
 import datetime
 from functools import wraps
+import os
+from redis import StrictRedis
 
 from dateutil import parser
 from django.shortcuts import render
@@ -25,6 +27,7 @@ from rcon.user_config import AutoBroadcasts, InvalidConfigurationError
 from rcon.cache_utils import RedisCached, get_redis_pool
 from .discord import send_to_discord_audit
 from .auth import login_required
+
 
 logger = logging.getLogger('rconweb')
 
