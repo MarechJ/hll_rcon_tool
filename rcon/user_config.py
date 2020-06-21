@@ -50,6 +50,7 @@ class AutoBroadcasts:
         msgs = []
 
         for m in messages:
+            m = m.replace('\\n', '\n')
             if isinstance(m, str):
                 m = m.split(' ', 1)
             if len(m) != 2:
