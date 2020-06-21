@@ -134,6 +134,8 @@ def ttl_cache(ttl, *args, is_method=True, cache_falsy=True, **kwargs):
 
 @contextmanager
 def invalidates(*cached_funcs):
+    for f in cached_funcs:
+        f.cache_clear()
     yield None
     for f in cached_funcs:
         f.cache_clear()

@@ -14,7 +14,7 @@ class Central:
                 'server_name': server_name,
                 'version': version,
                 'group_key': group_key,
-            }, auth=("bearer",self.token))
+            }, auth=("bearer", self.token))
         except:
             pass
     
