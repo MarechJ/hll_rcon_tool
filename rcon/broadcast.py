@@ -84,7 +84,7 @@ def run():
                 'maprotation': ' -> '.join(safe(ctl.get_map_rotation, [])()),
                 'servername': safe(ctl.get_name, "")(),
                 'onlineadmins': safe(online_mods, "")(),
-                'ingameadmins': safe(ingame_admins, "")(ctl) 
+                'ingameadmins': safe(ingame_admins, "")(ctl), 
                 'votenextmap': safe(format_map_vote, '')(ctl)
             }
             formatted = msg.format(**subs)
