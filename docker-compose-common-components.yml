@@ -16,6 +16,7 @@ services:
             SERVER_SHORT_NAME: ${SERVER_SHORT_NAME}
             DISCORD_CHAT_WEBHOOK: ${DISCORD_CHAT_WEBHOOK}
             DISCORD_CHAT_WEBHOOK_ALLOW_MENTIONS: ${DISCORD_CHAT_WEBHOOK_ALLOW_MENTIONS}
+            RCONWEB_PORT: ${RCONWEB_PORT}
         restart: always
         volumes: 
             - ./logs:/logs/
