@@ -174,6 +174,12 @@ const useStyles = makeStyles(theme => ({
   popover: {
     pointerEvents: 'none',
   },
+  serverList:{
+    position: "absolute",
+    right: "24px",
+    marginTop: "8px",
+    minWidth: "120px"
+  },
 }));
 
 export default useStyles;

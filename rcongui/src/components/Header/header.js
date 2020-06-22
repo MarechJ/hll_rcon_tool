@@ -13,7 +13,8 @@ import Checkbox from '@material-ui/core/Checkbox';
 import Brightness4OutlinedIcon from '@material-ui/icons/Brightness4Outlined';
 import ChevronRight from '@material-ui/icons/ChevronRight';
 
-import ServerStatus from './serverStatus'
+import ServerStatus from './serverStatus';
+import ServerList from './serverList';
 
 export default ({ classes, setSaveDark, dark }) => {
     const [jk, setJk] = React.useState(false)
@@ -64,6 +65,7 @@ export default ({ classes, setSaveDark, dark }) => {
                         </Grid>
                     </Grid>
                 </Toolbar>
+                <ServerList classes={classes} />
             </AppBar>
         </div>
     </Grid>

@@ -24,6 +24,7 @@ from rcon.player_history import (
 from rcon.user_config import AutoBroadcasts, InvalidConfigurationError
 from rcon.cache_utils import RedisCached, get_redis_pool
 from .discord import send_to_discord_audit
+from .instances import get_registered_instance
 
 logger = logging.getLogger('rconweb')
 
@@ -254,6 +255,16 @@ def players_history(request):
         "failed": failed
     })
 
+@csrf_exempt
+def get_instances(request):
+    instances = get_registered_instance()
+    return JsonResponse({
+        "result": instances,
+        "command": "get+instances",
+        "arguments": None,
+        "failed": False
+    })
+
 
 def audit(func_name, request, arguments):
     to_audit = [
@@ -369,7 +380,8 @@ commands = [
     ("set_auto_broadcasts_config", set_auto_broadcasts_config),
     ("clear_cache", clear_cache),
     ("flag_player", flag_player),
-    ("unflag_player", unflag_player)
+    ("unflag_player", unflag_player),
+    ("get_instances", get_instances)
 ]
 
 # Dynamically register all the methods from ServerCtl
