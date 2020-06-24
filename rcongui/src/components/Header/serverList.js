@@ -66,7 +66,7 @@ class ServerList extends React.Component {
     {
       if (port)
       {
-        window.location.href = `${window.protocol}//${window.location.hostname}:${port}${window.location.pathname}${window.location.hash}`
+        window.location.href = `${window.location.protocol}//${window.location.hostname}:${port}${window.location.pathname}${window.location.hash}`
       }
       return false;
     }
