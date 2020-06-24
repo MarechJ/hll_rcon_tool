@@ -260,7 +260,7 @@ def get_instances(request):
     instances = get_registered_instance()
     return JsonResponse({
         "result": instances,
-        "command": "get+instances",
+        "command": "get_instances",
         "arguments": None,
         "failed": False
     })
