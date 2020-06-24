@@ -33,7 +33,7 @@ const Selector = ({
           ""
         )}
       {values.map(a => (
-        <MenuItem value={a.port}>{a.title}</MenuItem>
+        <MenuItem key={a.port} value={a.port}>{a.title}</MenuItem>
       ))}
     </Select>
   </FormControl>
@@ -62,26 +62,11 @@ class ServerList extends React.Component {
           .catch(error => toast.error("Unable to connect to API " + error));
     }
 
-    getLocation(servers)
-    {
-      if (servers && servers.length)
-      {
-        for (const key in servers)
-        {
-          if (window.location.port === servers[key].port) return servers[key].port;
-        }
-        return servers[0].port;
-      }
-      return false;
-    }
-
     onClick(port)
     {
       if (port)
       {
-        const parts = window.location.href.split(':');
-
-        window.location.href = parts[0] + ':' + parts[1] + ':' + port + window.location.pathname + window.location.hash;
+        window.location.href = `${window.protocol}//${window.location.hostname}:${port}${window.location.pathname}${window.location.hash}`
       }
       return false;
     }
@@ -99,7 +84,7 @@ class ServerList extends React.Component {
                           classes={classes}
                           values={servers}
                           onChange={value => this.onClick(value)}
-                          currentValue={this.getLocation(servers)}
+                          currentValue={window.location.port}
                           kind="Switch Server"
                       />
                   </Grid>
