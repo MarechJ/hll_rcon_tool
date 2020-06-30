@@ -102,9 +102,9 @@ class RconSettings extends React.Component {
                             label="Auto broadcast messages"
                             multiline
                             rows={8}
-                            value={_.join(messages, '\n')}
+                            value={_.join(messages.map(m => m.replace('\n', '\\n')), '\n')}
                             onChange={(e) => this.setState({ messages: _.split(e.target.value, '\n') })}
-                            placeholder="Insert your messages here, one per line, with format: <number of seconds to display> <a message>"
+                            placeholder="Insert your messages here, one per line, with format: <number of seconds to display> <a message (write: \n if you want a line return)>"
                             variant="outlined"
                             helperText="You can use the following variables in the text (nextmap, maprotation, servername, onlineadmins) using the followin syntax: 60 Welcome to {servername}. The next map is {nextmap}."
                         />
