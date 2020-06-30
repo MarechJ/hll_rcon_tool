@@ -150,7 +150,7 @@ class Rcon(ServerCtl):
     @ttl_cache(ttl=60)
     def get_next_map(self):
         current = self.get_map()
-        current = current.replace('RESTART', '')
+        current = current.replace('_RESTART', '')
         rotation = self.get_map_rotation()
         next_id = rotation.index(current)
         next_id += 1
