@@ -82,8 +82,7 @@ def run():
             logger.debug("Broadcasting for %s seconds: %s", time_sec, formatted)
             ctl.set_broadcast(formatted) 
             time.sleep(int(time_sec)) 
-        # Clear state in case next next iteration disables 
-        ctl.set_broadcast('') 
+
 
 
 if __name__ == "__main__":
