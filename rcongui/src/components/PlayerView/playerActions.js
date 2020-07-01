@@ -16,25 +16,31 @@ import DialogContent from "@material-ui/core/DialogContent";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import { Map } from 'immutable';
 import FlagOutlinedIcon from '@material-ui/icons/FlagOutlined';
+import TextHistory from '../textHistory'
+import Autocomplete from '@material-ui/lab/Autocomplete';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Checkbox from '@material-ui/core/Checkbox';
 
 class ReasonDialog extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      reason: ""
+      reason: "",
+      saveMessage: true
     };
 
     this.onChange = this.onChange.bind(this);
   }
 
-  onChange(e) {
+  onChange(e, value) {
     e.preventDefault();
-    this.setState({ reason: e.target.value });
+    this.setState({ reason: value });
   }
 
   render() {
     const { open, handleClose, handleConfirm } = this.props;
-    const { reason } = this.state;
+    const { reason, saveMessage } = this.state;
+    const textHistory = new TextHistory(open.actionType)
 
     return (
       <Dialog open={open} aria-labelledby="form-dialog-title">
@@ -42,14 +48,26 @@ class ReasonDialog extends React.Component {
           Execute {open.actionType} on {open.player}
         </DialogTitle>
         <DialogContent>
-          <TextField
-            autoFocus
-            margin="dense"
-            id="name"
-            label="Reason"
-            value={reason}
-            onChange={this.onChange}
+          <Autocomplete
+            freeSolo
             fullWidth
+            options={textHistory.getTexts()}
+            inputValue={reason}
+            onInputChange={(e, value) => this.onChange(e, value)}
+            renderInput={(params) => (
+              <TextField {...params} label="Reason" margin="dense" helperText="A message is mandatory" />
+            )}
+          />
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={saveMessage}
+                onChange={() => this.setState({ saveMessage: !saveMessage })}
+                
+                color="primary"
+              />
+            }
+            label="Save message as template"
           />
         </DialogContent>
         <DialogActions>
@@ -63,10 +81,14 @@ class ReasonDialog extends React.Component {
           </Button>
           <Button
             onClick={() => {
+              if (saveMessage) {
+                textHistory.saveText(reason)
+              }
               handleConfirm(open.actionType, open.player, reason);
               this.setState({ reason: "" });
             }}
             color="primary"
+            disabled={!reason}
           >
             Confirm
           </Button>
@@ -115,7 +137,7 @@ const PlayerActions = ({ size, handleAction, onFlag, displayCount = 3, disable =
             <Badge size="small" color="primary" max={9} badgeContent={penaltyCount.get(remap_penalties[actions[idx][0]], 0)}>{actions[idx][1]}</Badge>
           </Button>
         ))}
-        { onFlag ? <Button size="small" onClick={onFlag}><FlagOutlinedIcon fontSize="small" /></Button> : ''}
+        {onFlag ? <Button size="small" onClick={onFlag}><FlagOutlinedIcon fontSize="small" /></Button> : ''}
         {show < actions.length ?
           <Button
             disabled={disable}
