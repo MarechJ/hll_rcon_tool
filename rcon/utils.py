@@ -1,8 +1,22 @@
+def get_current_map(rcon):
+    map_ = rcon.get_map()
+
+    if map_.endswith('_RESTART'):
+        map_ = map_.replace('_RESTART', '')
+
+    return map_
+
 def number_to_map(rcon):
-    return {
-        str(idx): map_
-        for idx, map_ in enumerate(sorted(rcon.get_maps()))
-    }
+    mapping = {}
+    current = get_current_map(rcon)
+
+    for idx, map_ in enumerate(sorted(rcon.get_maps())):
+        if map_ == current:
+            idx = 'x'
+        mapping[str(idx)] = map_
+    
+    return number_to_map
+
 
 
 HUMAN_MAP_NAMES = {
