@@ -15,7 +15,7 @@ def number_to_map(rcon):
             idx = 'x'
         mapping[str(idx)] = map_
     
-    return number_to_map
+    return mapping
 
 
 
