@@ -65,6 +65,8 @@ services:
       HLL_HOST: ${HLL_HOST}
       RCONWEB_PASSWORD: ${RCONWEB_PASSWORD}
       RCONWEB_USERNAME: ${RCONWEB_USERNAME}
+    volumes:
+      - ./static:/static/
     depends_on:
         - backend_1
     networks:
