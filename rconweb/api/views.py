@@ -55,7 +55,7 @@ def _get_data(request):
 @login_required
 def clear_cache(request):
     res = RedisCached.clear_all_caches(get_redis_pool())
-    send_to_discord_audit("Clear cache", request.user.username)
+    audit("clear_cache", request, {})
     return JsonResponse({
         "result": res,
         "command": "clear_cache",
@@ -103,7 +103,7 @@ def set_auto_broadcasts_config(request):
         for k, v in data.items():
             if k in config_keys:
                 config_keys[k](v)
-                send_to_discord_audit("Auto broadcast {}: {}".format(k, v), request.user.username)
+                audit(set_auto_broadcasts_config.__name__, request, {k: v})
     except InvalidConfigurationError as e:
         failed = True
         res = str(e)
@@ -145,13 +145,13 @@ def flag_player(request):
         player, flag = add_flag_to_player(steam_id_64=data['steam_id_64'], flag=data['flag'], comment=data.get('comment'))
         res = flag
         send_to_discord_audit(
-            "Flagged '{}' '{}' with '{}' '{}'".format(
+            "`flag`: steam_id_64: `{}` player: `{}` flag: `{}`comment:`{}`".format(
                 data['steam_id_64'], 
                 ' | '.join(n['name'] for n in player['names']),
                 flag['flag'],
                 data.get('comment', '')
             ), 
-            get_client_ip(request)
+            request.user.username
         )
     except KeyError:
         logger.warning("Missing parameters")
@@ -174,8 +174,8 @@ def unflag_player(request):
     try:
         player, flag = remove_flag(data['flag_id'])
         res = flag
-        send_to_discord_audit("Remove flag '{}' from '{}'".format(
-            flag['flag'], ' | '.join(n['name'] for n in player['names'])), get_client_ip(request))
+        send_to_discord_audit("`unflag`: flag: `{}` player: `{}`".format(
+            flag['flag'], ' | '.join(n['name'] for n in player['names'])), request.user.username)
     except KeyError:
         logger.warning("Missing parameters")
         # TODO return 400
@@ -195,8 +195,8 @@ def blacklist_player(request):
     data = _get_data(request)
     res = {}
     try:
-        send_to_discord_audit("Blacklist '{}' for '{}'".format(data['steam_id_64'], data['reason']), request.user.username)
         add_player_to_blacklist(data['steam_id_64'], data['reason'])
+        audit("Blacklist", request,data)
         failed = False
     except:
         logger.exception("Unable to blacklist player")
@@ -217,8 +217,8 @@ def unblacklist_player(request):
     data = _get_data(request)
     res = {}
     try:
-        send_to_discord_audit("Unblacklist '{}' for ''".format(data['steam_id_64']), request.user.username)
         remove_player_from_blacklist(data['steam_id_64'])
+        audit("unblacklist", request, data)
         failed = False
     except:
         logger.exception("Unable to unblacklist player")
@@ -273,23 +273,21 @@ def players_history(request):
 
 
 def audit(func_name, request, arguments):
-    to_audit = [
-        'do_',
-        'set_',
-        'switch'
+    dont_audit = [
+        'get_'
     ]
 
     try:
-        if any(func_name.startswith(s) for s in to_audit):
-            args = dict(**arguments)
-            try:
-                del args['by']
-            except KeyError:
-                pass
-            arguments = " ".join([f"{k}: `{v}`" for k, v in args.items()])   
-            send_to_discord_audit("`{}`: {}".format(func_name, arguments), request.user.username)
-        else:
+        if any(func_name.startswith(s) for s in dont_audit):
             logger.debug("%s is not set for audit", func_name)
+            return
+        args = dict(**arguments)
+        try:
+            del args['by']
+        except KeyError:
+            pass
+        arguments = " ".join([f"{k}: `{v}`" for k, v in args.items()])   
+        send_to_discord_audit("`{}`: {}".format(func_name, arguments), request.user.username)
     except:
         logger.exception("Can't send audit log")
         
