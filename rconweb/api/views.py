@@ -301,11 +301,11 @@ def wrap_method(func, parameters):
         try:
             logger.debug("%s %s", func.__name__, arguments)
             res = func(**arguments)
+            audit(func.__name__, request, arguments)
         except CommandFailedError:
             failure = True
             res = None
-
-        audit(func.__name__, request, arguments)
+        
         #logger.debug("%s %s -> %s", func.__name__, arguments, res)
         return JsonResponse({
             "result": res,
