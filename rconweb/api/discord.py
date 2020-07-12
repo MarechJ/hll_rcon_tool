@@ -11,7 +11,8 @@ def send_to_discord_audit(message, by=None, silent=True):
     if not webhookurl:
         return
     try:
-        webhook = DiscordWebhook(url=webhookurl, content='[{}][{}][{}] {}'.format(datetime.now().isoformat(), ENVIRONMENT, by, message))
+        server_name = os.getenv('SERVER_SHORT_NAME', ENVIRONMENT)
+        webhook = DiscordWebhook(url=webhookurl, content='[{}][**{}**] {}'.format(server_name, by, message))
         return webhook.execute()
     except:
         logger.exception("Can't send audit log")

@@ -281,7 +281,13 @@ def audit(func_name, request, arguments):
 
     try:
         if any(func_name.startswith(s) for s in to_audit):
-            send_to_discord_audit("{} {}".format(func_name, arguments), request.user.username)
+            args = dict(**arguments)
+            try:
+                del args['by']
+            except KeyError:
+                pass
+            arguments = " ".join([f"{k}: `{v}`" for k, v in args.items()])   
+            send_to_discord_audit("`{}`: {}".format(func_name, arguments), request.user.username)
         else:
             logger.debug("%s is not set for audit", func_name)
     except:
