@@ -47,7 +47,7 @@ def format_by_line_length(possible_votes, max_length=60):
 
 def format_map_vote(rcon):
     vote_dict = number_to_map(rcon)
-    items = [f"[{k}] {HUMAN_MAP_NAMES[v]}"  for k, v in vote_dict.items()]
+    items = [f"[{k}] {HUMAN_MAP_NAMES.get(v, v)}"  for k, v in vote_dict.items()]
     return format_by_line_length(items)
     
 

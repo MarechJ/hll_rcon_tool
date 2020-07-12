@@ -7,16 +7,16 @@ def number_to_map(rcon):
 
 HUMAN_MAP_NAMES = {
     "foy_warfare": "Foy",
-    "stmariedumont_warfare": "St. Marie du Mont",
-    "hurtgenforest_warfare": "Hurtgen Forest", 
-    "utahbeach_warfare": "Utah Beach", 
-    "omahabeach_offensive_us": "Omaha Beach", 
-    "stmereeglise_warfare": "St Mere Eglise",
-    "stmereeglise_offensive_ger": "Off. St Mere Eglise (Ger)", 
+    "stmariedumont_warfare": "St.Marie",
+    "hurtgenforest_warfare": "Hurtgen", 
+    "utahbeach_warfare": "Utah", 
+    "omahabeach_offensive_us": "Omaha", 
+    "stmereeglise_warfare": "SME",
+    "stmereeglise_offensive_ger": "Off. SME(Ger)", 
     "foy_offensive_ger": "Off. Foy", 
-    "purpleheartlane_warfare": "Purple Heart Lane",
-    "purpleheartlane_offensive_us": "Off. Purple Heart Lane",
-    "hill400_warfare": "Hill 400",
-    "hill400_offensive_US": "Off. Hill 400",
-    "stmereeglise_offensive_us": "Off. St Mere Eglise (US)"
+    "purpleheartlane_warfare": "PHL",
+    "purpleheartlane_offensive_us": "Off. PHL",
+    "hill400_warfare": "Hill400",
+    "hill400_offensive_US": "Off. Hill400",
+    "stmereeglise_offensive_us": "Off. SME (US)"
 }
