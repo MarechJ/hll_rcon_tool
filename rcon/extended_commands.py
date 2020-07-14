@@ -289,7 +289,7 @@ class Rcon(ServerCtl):
             # The hll server just hangs when there are no logs for the requested time
             raw = ''
 
-        synthetic_actions = ['CHAT[Allies]', 'CHAT[Axis]']
+        synthetic_actions = ['CHAT[Allies]', 'CHAT[Axis]', 'CHAT']
         now = datetime.now()
         res = []
         actions = set()
