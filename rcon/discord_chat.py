@@ -31,10 +31,14 @@ def post_chat_message_to_discord(_, log):
             id=webhook_id, token=webhook_token, adapter=RequestsWebhookAdapter()
         )
         logger.info("sending chat message len=%s to Discord", len(message))
-        webhook.send(message)
+        action = log['action'].ljust(20)
+        player = log['player'].ljust(25)
+        side = '+' if 'Allies' in action else '-'
+        
+        webhook.send(f"```diff\n{side} {action} {player} [{log['steam_id_64_1']}]:\n{log['sub_content']}```")
 
     except Exception as e:
-        logger.error("error executing chat message webhook: %s", e)
+        logger.exception("error executing chat message webhook: %s", e)
 
 
 @lru_cache
