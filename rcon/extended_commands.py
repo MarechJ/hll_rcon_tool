@@ -299,35 +299,38 @@ class Rcon(ServerCtl):
                 continue
             try:
                 time, rest = line.split('] ', 1)
+                time = self._convert_relative_time(now, time[1:])
+                sub_content = action = player = player2 = weapon = steam_id_64_1 = steam_id_64_2 = None
+                content = rest
                 try:
                     # Bug: '[1:34:22 hours] DISCONNECTED ᚱ A V И E Ν : .',
                     action, content = rest.split(': ', 1)
                 except ValueError:
                     action, content = rest.split(' ', 1)
-                player, player2, weapon = None, None, None
+                
                 if match := self.chat_regexp.match(action):
                     groups = match.groups()
                     scope = groups[0]
                     side = groups[4]
                     player = groups[3]
-                    steam_id_64 = groups[-1]
+                    steam_id_64_1 = groups[-1]
                     action = f'CHAT[{side}][{scope}]'
-                    content = f'{player}({steam_id_64}): {content}'
+                    sub_content = content
+                    content = f'{player}: {content} ({steam_id_64_1})'
+                  
                 if action in {'CONNECTED', 'DISCONNECTED'}:
                     player = content
                 if action in {'KILL', 'TEAM KILL'}:
                     player, player2 = content.split(' -> ', 1)
                     player2, weapon = player2.split(' with ', 1)
-
-                    player = self.player_info_regexp.match(player).groups()[0]
-                    player2 = self.player_info_regexp.match(player2).groups()[0]
-                time = self._convert_relative_time(now, time[1:])
+                    player, *_, steam_id_64_1 = self.player_info_regexp.match(player).groups()
+                    player2, *_, steam_id_64_2 = self.player_info_regexp.match(player2).groups()
+               
                 players.add(player)
                 players.add(player2)
                 actions.add(action)
-            except ValueError:
+            except:
                 logger.exception("Invalid line: '%s'", line)
-                raise
             if filter_action and not action.startswith(filter_action):
                 continue
             if filter_player and filter_player not in line:
@@ -339,9 +342,12 @@ class Rcon(ServerCtl):
                 'raw': line,
                 'action': action,
                 'player': player,
+                'steam_id_64_1': steam_id_64_1,
                 'player2': player2,
+                'steam_id_64_2': steam_id_64_2,
                 'weapon': weapon,
-                'message': content
+                'message': content,
+                'sub_content': sub_content,
             })
 
         res.reverse()
