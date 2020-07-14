@@ -13,7 +13,8 @@ HOOKS = {
     'CONNECTED': [],
     'DISCONNECTED': [],
     'CHAT[Allies]': [],
-    'CHAT[Axis]': []
+    'CHAT[Axis]': [],
+    'CHAT': [],
 }
 
 def on_kill(func):
@@ -25,8 +26,7 @@ def on_tk(func):
     return func
 
 def on_chat(func):
-    HOOKS['CHAT[Allies]'].append(func)
-    HOOKS['CHAT[Axis]'].append(func)
+    HOOKS['CHAT'].append(func)
     return func
 
 def on_chat_axis(func):
@@ -73,11 +73,11 @@ def event_loop(replay=False):
                 #logger.debug("Skipping duplicate %s", f"{log['action']}{log['message']}")
                 continue
             logger.debug("Processing %s", f"{log['action']}{log['message']}")
-            try:
-                hooks = HOOKS[log['action']]
-            except KeyError:
-                logger.error("%s is an unkown type. please update the hooks", log['action'])
-            
+            hooks = []
+            for action_hook, funcs in HOOKS.items():
+                if log['action'].startswith(action_hook):
+                    hooks += funcs
+
             for hook in hooks:
                 try:
                     logger.info("Triggered %s.%s on %s", hook.__module__, hook.__name__, log['raw'])
