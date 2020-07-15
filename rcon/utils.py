@@ -32,5 +32,7 @@ HUMAN_MAP_NAMES = {
     "purpleheartlane_offensive_us": "Off. PHL",
     "hill400_warfare": "Hill400",
     "hill400_offensive_US": "Off. Hill400",
-    "stmereeglise_offensive_us": "Off. SME (US)"
+    "stmereeglise_offensive_us": "Off. SME (US)",
+    "carentan_warfare": "Carentan",
+    "carentan_offensive_us": "Off. Carentan"
 }

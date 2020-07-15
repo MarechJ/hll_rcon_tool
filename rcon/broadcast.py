@@ -34,7 +34,7 @@ def chunks(lst, n):
     for i in range(0, len(lst), n):
         yield lst[i:i + n]
 
-def format_by_line_length(possible_votes, max_length=60):
+def format_by_line_length(possible_votes, max_length=50):
     """
     Note: I've tried to format with a nice aligned table but it's not
     possible to get it right (unless you hardcode it maybe)
