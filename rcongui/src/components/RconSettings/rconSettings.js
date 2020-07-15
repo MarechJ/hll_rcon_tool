@@ -102,7 +102,7 @@ class RconSettings extends React.Component {
                             label="Auto broadcast messages"
                             multiline
                             rows={8}
-                            value={_.join(messages.map(m => m.replace('\n', '\\n')), '\n')}
+                            value={_.join(messages.map(m => m.replace(/\n/g, '\\n')), '\n')}
                             onChange={(e) => this.setState({ messages: _.split(e.target.value, '\n') })}
                             placeholder="Insert your messages here, one per line, with format: <number of seconds to display> <a message (write: \n if you want a line return)>"
                             variant="outlined"
