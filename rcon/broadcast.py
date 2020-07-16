@@ -3,7 +3,12 @@ import time
 import logging
 import random
 from functools import partial
+import json
 
+import redis
+
+import redis
+from rcon.cache_utils import get_redis_pool
 from rcon.extended_commands import Rcon
 from rcon.settings import SERVER_INFO
 from rcon.user_config import AutoBroadcasts
@@ -11,6 +16,20 @@ from rcon.audit import online_mods, get_registered_mods
 from rcon.utils import HUMAN_MAP_NAMES, number_to_map
 from functools import wraps
 
+
+def get_votes_status():
+    try:
+        red = redis.StrictRedis(connection_pool=get_redis_pool())
+        data = red.get("votes")
+        if data:
+            return json.loads(data)
+    except:
+        logger.exception("Unable to retrieve votes")
+    return {'total_votes': 0, "winning_maps": []}
+        
+
+def format_winning_map(winning_maps, display_count=2, default=''):
+    return ', '.join(f'{HUMAN_MAP_NAMES[m]} ({count} vote(s))' for m, count in winning_maps[:display_count])
 
 logger = logging.getLogger(__name__)
 
@@ -79,13 +98,16 @@ def run():
         for time_sec, msg in msgs:
             if not config.get_enabled():
                 break
+            vote_status = get_votes_status()
             subs = {
                 'nextmap': safe(ctl.get_next_map, "")(),
                 'maprotation': ' -> '.join(safe(ctl.get_map_rotation, [])()),
                 'servername': safe(ctl.get_name, "")(),
                 'onlineadmins': safe(online_mods, "")(),
                 'ingameadmins': safe(ingame_admins, "")(ctl), 
-                'votenextmap': safe(format_map_vote, '')(ctl)
+                'votenextmap': safe(format_map_vote, '')(ctl),
+                'total_votes': vote_status['total_votes'],
+                'winning_maps': format_winning_map(vote_status['winnings_maps'])
             }
             formatted = msg.format(**subs)
             logger.debug("Broadcasting for %s seconds: %s", time_sec, formatted)
