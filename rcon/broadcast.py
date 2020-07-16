@@ -29,6 +29,8 @@ def get_votes_status():
         
 
 def format_winning_map(winning_maps, display_count=2, default=''):
+    if not winning_maps:
+        return f'Defaulting to: {default}'
     return ', '.join(f'{HUMAN_MAP_NAMES[m]} ({count} vote(s))' for m, count in winning_maps[:display_count])
 
 logger = logging.getLogger(__name__)
@@ -99,15 +101,16 @@ def run():
             if not config.get_enabled():
                 break
             vote_status = get_votes_status()
+            nextmap = safe(ctl.get_next_map, "")()
             subs = {
-                'nextmap': safe(ctl.get_next_map, "")(),
+                'nextmap': nextmap,
                 'maprotation': ' -> '.join(safe(ctl.get_map_rotation, [])()),
                 'servername': safe(ctl.get_name, "")(),
                 'onlineadmins': safe(online_mods, "")(),
                 'ingameadmins': safe(ingame_admins, "")(ctl), 
                 'votenextmap': safe(format_map_vote, '')(ctl),
                 'total_votes': vote_status['total_votes'],
-                'winning_maps': format_winning_map(vote_status['winnings_maps'])
+                'winning_maps': format_winning_map(vote_status['winning_maps'], default=nextmap)
             }
             formatted = msg.format(**subs)
             logger.debug("Broadcasting for %s seconds: %s", time_sec, formatted)
