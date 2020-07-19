@@ -53,15 +53,10 @@ def parse_webhook_url(url):
     if not url:
         logger.info("no Discord chat webhook URL provided")
         return None
-
-    try:
-        resp = requests.get(url).json()
-        _id = int(resp["id"])
-        token = resp["token"]
-        return _id, token
-    except Exception as e:
-        logger.exception("error parsing Discord chat webhook url: %s", e)
-        return None
+    resp = requests.get(url).json()
+    _id = int(resp["id"])
+    token = resp["token"]
+    return _id, token
 
 
 class DiscordWebhookHandler:
