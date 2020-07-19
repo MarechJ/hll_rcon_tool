@@ -1,3 +1,5 @@
 # Just make sure hooks are imported
+from rcon.discord_chat import DiscordWebhookHandler
 from rcon.player_history import handle_on_connect
-from rcon.discord_chat import post_chat_message_to_discord
+
+DiscordWebhookHandler.init_env_vars()
