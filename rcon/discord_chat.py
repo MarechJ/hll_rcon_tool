@@ -61,7 +61,10 @@ def parse_webhook_url(url):
 
 
 class DiscordWebhookHandler:
-    """TODO: refactor duplicates."""
+    """ RCON Tool -> Discord messaging.
+    TODO: refactor duplicates.
+    TODO: singleton to avoid initializing env vars multiple times?
+    """
 
     INITIALIZED = False
     PING_TRIGGER_WORDS = []
@@ -80,10 +83,14 @@ class DiscordWebhookHandler:
     @classmethod
     def init_ping_trigger_vars(cls):
         try:
-            cls.PING_TRIGGER_WORDS = [word.lower().strip()
-                                      for word in PING_TRIGGER_WORDS.split(",")]
-            cls.PING_TRIGGER_ROLES = [role.strip()
-                                      for role in PING_TRIGGER_ROLES.split(",")]
+            cls.PING_TRIGGER_WORDS = [
+                word.lower().strip()
+                for word in PING_TRIGGER_WORDS.split(",") if word
+            ]
+            cls.PING_TRIGGER_ROLES = [
+                role.strip()
+                for role in PING_TRIGGER_ROLES.split(",") if role
+            ]
             logger.info("ping trigger variables initialized successfully")
         except Exception as e:
             logger.exception("error initializing ping trigger variables: %s", e)
@@ -136,14 +143,17 @@ class DiscordWebhookHandler:
 
             content = None
             if cls.PING_TRIGGER_WORDS:
-                msg_words = [m.lower().strip() for m in message.split() if m]
+                msg_words = message.split()
                 for trigger_word in cls.PING_TRIGGER_WORDS:
-                    if trigger_word in msg_words:
-                        content = " ".join(cls.PING_TRIGGER_ROLES)
-                        break
+                    for i, msg_word in enumerate(msg_words):
+                        if trigger_word == msg_word.lower():
+                            content = " ".join(cls.PING_TRIGGER_ROLES)
+                            msg_words[i] = f"__**{msg_words[i]}**__"
+                            embed.description = " ".join(msg_words)
+                            break  # TODO: handle all trigger words?
 
-            logger.info("sending chat message len=%s to Discord",
-                        len(embed) + len(content) if content else 0)
+            logger.debug("sending chat message len=%s to Discord",
+                         len(embed) + len(content) if content else 0)
             webhook.send(content=content, embed=embed)
 
         except Exception as e:
@@ -175,10 +185,14 @@ class DiscordWebhookHandler:
             victim_id_link = f"[{player2}]({STEAM_PROFILE_URL.format(id64=id_2)})"
 
             color = KILL_ACTION_TO_COLOR[action]
+            killer_field_name = {
+                "KILL": "Killer",
+                "TEAM KILL": "Team Killer",
+            }[action]
 
-            embed = discord.Embed(title=action.title(), color=color)
+            embed = discord.Embed(color=color)
             embed.add_field(
-                name="Killer",
+                name=killer_field_name,
                 value=killer_id_link,
                 inline=True,
             ).add_field(
@@ -193,11 +207,13 @@ class DiscordWebhookHandler:
                 value=log["weapon"],
             )
 
-            logger.info("sending kill message len=%s to Discord", len(embed))
+            logger.debug("sending kill message len=%s to Discord", len(embed))
             webhook.send(embed=embed)
         except Exception as e:
             logger.exception("error executing kill message webhook %s", e)
 
 
+# TODO: Check how to properly decorate class methods with hooks
+#  and move the decorators inside the class.
 DiscordWebhookHandler.send_chat_message = on_chat(DiscordWebhookHandler.send_chat_message)
 DiscordWebhookHandler.send_kill_message = on_kill(on_tk(DiscordWebhookHandler.send_kill_message))
