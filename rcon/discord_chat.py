@@ -8,6 +8,7 @@ from discord import Webhook
 
 from rcon.game_logs import on_chat
 from rcon.game_logs import on_kill
+from rcon.game_logs import on_tk
 
 DISCORD_CHAT_WEBHOOK_URL = os.getenv("DISCORD_CHAT_WEBHOOK")
 DISCORD_KILLS_WEBHOOK_URL = os.getenv("DISCORD_KILLS_WEBHOOK")
@@ -15,7 +16,7 @@ ALLOW_MENTIONS = os.getenv("DISCORD_CHAT_WEBHOOK_ALLOW_MENTIONS")
 PING_TRIGGER_WORDS = os.getenv("DISCORD_PING_TRIGGER_WORDS")
 PING_TRIGGER_ROLES = os.getenv("DISCORD_PING_TRIGGER_ROLES")
 SEND_KILLS = os.getenv("DISCORD_SEND_KILL_UPDATES")
-SEND_TEAM_KILLS = os.getenv("DISCORD_SEND_KILL_UPDATES")
+SEND_TEAM_KILLS = os.getenv("DISCORD_SEND_TEAM_KILL_UPDATES")
 
 STEAM_PROFILE_URL = "http://steamcommunity.com/profiles/{id64}"
 
@@ -26,8 +27,8 @@ LIGHT_BLUE = 0x0099E1
 GREEN = 0x07DA63
 
 KILL_ACTION_TO_COLOR = {
-    "KILL": LIGHT_RED,
-    "TEAM KILL": GREEN,
+    "KILL": GREEN,
+    "TEAM KILL": LIGHT_RED,
 }
 CHAT_ACTION_TO_COLOR = {
     "[Axis][Team]": LIGHT_RED,
@@ -62,6 +63,7 @@ def parse_webhook_url(url):
 class DiscordWebhookHandler:
     """TODO: refactor duplicates."""
 
+    INITIALIZED = False
     PING_TRIGGER_WORDS = []
     PING_TRIGGER_ROLES = []
     CHAT_WEBHOOK = None
@@ -78,7 +80,8 @@ class DiscordWebhookHandler:
     @classmethod
     def init_ping_trigger_vars(cls):
         try:
-            cls.PING_TRIGGER_WORDS = [word.lower() for word in PING_TRIGGER_WORDS]
+            cls.PING_TRIGGER_WORDS = [word.lower().strip()
+                                      for word in PING_TRIGGER_WORDS.split(",")]
             cls.PING_TRIGGER_ROLES = [role.strip()
                                       for role in PING_TRIGGER_ROLES.split(",")]
             logger.info("ping trigger variables initialized successfully")
@@ -104,7 +107,6 @@ class DiscordWebhookHandler:
             logger.exception("error initializing kill variables: %s", e)
 
     @classmethod
-    @on_chat
     def send_chat_message(cls, _, log):
         if not cls.CHAT_WEBHOOK:
             return
@@ -134,7 +136,7 @@ class DiscordWebhookHandler:
 
             content = None
             if cls.PING_TRIGGER_WORDS:
-                msg_words = [m.lower() for m in message.split()]
+                msg_words = [m.lower().strip() for m in message.split() if m]
                 for trigger_word in cls.PING_TRIGGER_WORDS:
                     if trigger_word in msg_words:
                         content = " ".join(cls.PING_TRIGGER_ROLES)
@@ -148,7 +150,6 @@ class DiscordWebhookHandler:
             logger.exception("error executing chat message webhook: %s", e)
 
     @classmethod
-    @on_kill
     def send_kill_message(cls, _, log):
         if not cls.KILLS_WEBHOOK:
             return
@@ -169,30 +170,19 @@ class DiscordWebhookHandler:
             player1 = escape_string(log["player"])
             player2 = escape_string(log["player2"])
             id_1 = log["steam_id_64_1"]
-            killer_id_link = STEAM_PROFILE_URL.format(id_1)
+            killer_id_link = f"[{player1}]({STEAM_PROFILE_URL.format(id64=id_1)})"
             id_2 = log["steam_id_64_2"]
-            victim_id_link = STEAM_PROFILE_URL.format(id_2)
+            victim_id_link = f"[{player2}]({STEAM_PROFILE_URL.format(id64=id_2)})"
 
             color = KILL_ACTION_TO_COLOR[action]
 
             embed = discord.Embed(title=action.title(), color=color)
             embed.add_field(
                 name="Killer",
-                value=player1,
-                inline=True,
-            ).add_field(
-                name="Victim",
-                value=player2,
-                inline=True,
-            ).add_field(
-                name="\u200b",
-                value="\u200b",
-            ).add_field(
-                name="Killer ID",
                 value=killer_id_link,
                 inline=True,
             ).add_field(
-                name="Victim ID",
+                name="Victim",
                 value=victim_id_link,
                 inline=True,
             ).add_field(
@@ -207,3 +197,7 @@ class DiscordWebhookHandler:
             webhook.send(embed=embed)
         except Exception as e:
             logger.exception("error executing kill message webhook %s", e)
+
+
+DiscordWebhookHandler.send_chat_message = on_chat(DiscordWebhookHandler.send_chat_message)
+DiscordWebhookHandler.send_kill_message = on_kill(on_tk(DiscordWebhookHandler.send_kill_message))
