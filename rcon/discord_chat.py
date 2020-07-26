@@ -211,12 +211,12 @@ class DiscordWebhookHandler:
 
     def send_kill_message(self, _, log):
         action = log["action"]
-        if action == "KILL" and not self.send_kills:
+        if action == "KILL" and self.send_kills:
             self.send_generic_kill_message(_, log, action)
 
     def send_tk_message(self, _, log):
         action = log["action"]
-        if action == "TEAM KILL" and not self.send_team_kills:
+        if action == "TEAM KILL" and self.send_team_kills:
             self.send_generic_kill_message(_, log, action)
 
 
