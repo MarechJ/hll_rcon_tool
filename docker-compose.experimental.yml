@@ -11,20 +11,6 @@ services:
       networks:
         - server1
         - common
-    vote_map:
-      hostname: vote_map
-      image: rcon_test
-      build: 
-        dockerfile: Dockerfile-exp
-        context: .
-      extends:
-        file: docker-compose-common-components.yml
-        service: python
-      command: python vote_nextmap.py
-      restart: always
-      networks:
-        - server1
-        - common
     stats: &stats
       hostname: stats
       extends: 
