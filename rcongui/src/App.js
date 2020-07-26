@@ -13,7 +13,7 @@ import CssBaseline from "@material-ui/core/CssBaseline";
 import HLLSettings from "./components/SettingsView/hllSettings";
 import { ThemeProvider } from '@material-ui/styles';
 import {
-  HashRouter as Router,
+  BrowserRouter as Router,
   Switch,
   Route,
   Link as RouterLink
