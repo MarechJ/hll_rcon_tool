@@ -166,6 +166,8 @@ Demo video coming soon
 
 There's a public endpoint available to anybody without password on http://<yourip>:<yourport>/api/scoreboard
 
+See [User Guide](USERGUIDE.md) for more information on how to use certain features of the app. 
+
 ## Features to come 
 
 More or less in order of priorities
@@ -179,7 +181,7 @@ More or less in order of priorities
 - Auto randomisation of map rotation (scheduling of the endpoint: /api/do_randomize_map_rotation)
 - Full log history (stored permanently)
 - ~~Action hooks on chat messages and players connect / disconnect~~
-- Integration with Discord 
+- ~~Integration with Discord~~
 
 ## USAGE of the CLI with docker
 
