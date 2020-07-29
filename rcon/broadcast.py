@@ -42,12 +42,16 @@ def run():
             logger.debug("Auto broadcasts. Radomizing")
             random.shuffle(msgs)
 
+        get_vip_names = lambda: [d['name'] for d in ctl.get_vip_ids()]
+
         for time_sec, msg in msgs:
             subs = {
                 'nextmap': safe(ctl.get_next_map, "")(),
                 'maprotation': ' -> '.join(safe(ctl.get_map_rotation, [])()),
                 'servername': safe(ctl.get_name, "")(),
-                'onlineadmins': ', '.join(safe(ctl.get_online_admins, [])())
+                'onlineadmins': ', '.join(safe(ctl.get_online_admins, [])()),
+                'vips': ', '.join(safe(get_vip_names, [])()),
+                'randomvip': safe(lambda: random.choice(get_vip_names() or [""]), "")()
             }
             formatted = msg.format(**subs)
             logger.debug("Broadcasting for %s seconds: %s", time_sec, formatted)
