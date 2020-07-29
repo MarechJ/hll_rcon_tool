@@ -17,12 +17,16 @@ class RconSettings extends React.Component {
         this.state = {
             messages: [],
             randomized: false,
-            enabled: false
+            enabled: false,
+            blacklist_steam_id: "",
+            blacklist_name: "",
+            blacklist_reason: ""
         }
 
         this.loadBroadcastsSettings = this.loadBroadcastsSettings.bind(this)
         this.validate_messages = this.validate_messages.bind(this)
         this.save_messages = this.save_messages.bind(this)
+        this.blacklistPlayer = this.blacklistPlayer.bind(this)
         this.clearCache = this.clearCache.bind(this)
     }
 
@@ -42,6 +46,16 @@ class RconSettings extends React.Component {
         )
             .then((res) => showResponse(res, "set_auto_broadcasts_config", true))
             .then(res => !res.failed && this.setState(data))
+    }
+
+    async blacklistPlayer() {
+        return postData(`${process.env.REACT_APP_API_URL}blacklist_player`, {
+          "steam_id_64": this.state.blacklist_steam_id,
+          "name": this.state.blacklist_name,
+          "reason": this.state.blacklist_reason
+        })
+        .then((res) => showResponse(res, "blacklist_player", true))
+        .then(res => !res.failed && this.setState({ blacklist_steam_id: "", blacklist_name: "", blacklist_reason: "" }))
     }
 
     async clearCache() {
@@ -73,7 +87,7 @@ class RconSettings extends React.Component {
     }
 
     render() {
-        const { messages, enabled, randomized } = this.state
+        const { messages, enabled, randomized, blacklist_steam_id, blacklist_name, blacklist_reason } = this.state
         const { classes } = this.props 
 
         return (
@@ -110,9 +124,58 @@ class RconSettings extends React.Component {
                         <Button fullWidth onClick={this.save_messages} variant="outlined">Save messages</Button>
                     </Grid>
                 </Grid>
+                <Grid container className={classes.paddingTop} justify="center" xs={12}>
+                  <Grid item>
+                    <Typography variant="h5" gutterBottom>
+                        Blacklist 
+                    </Typography>
+                  </Grid>
+                </Grid>
+                <Grid container alignItems="center">
+                    <Grid item xs={3}>
+                        <TextField
+                          id="steam-id"
+                          label="Steam ID"
+                          helperText="Required"
+                          value={blacklist_steam_id}
+                          fullWidth
+                          onChange={(e) => this.setState({ blacklist_steam_id: e.target.value })}
+                        />
+                    </Grid>
+                    <Grid item xs={3}>
+                        <TextField
+                          id="name"
+                          label="Name"
+                          helperText="Optional"
+                          value={blacklist_name}
+                          fullWidth
+                          onChange={(e) => this.setState({ blacklist_name: e.target.value })}
+                        />
+                    </Grid>
+                    <Grid item xs={4}>
+                        <TextField
+                          id="reason"
+                          label="Reason"
+                          helperText="Reason"
+                          value={blacklist_reason}
+                          fullWidth
+                          onChange={(e) => this.setState({ blacklist_reason: e.target.value })}
+                        />
+                    </Grid>
+                    <Grid item xs={2} spacing={1} alignContent="center" justify="center" alignItems="center">
+                        <Button fullWith color="secondary" variant="outlined" onClick={this.blacklistPlayer}>Blacklist</Button>
+                    </Grid>
+                </Grid>
+                <Grid container className={classes.paddingTop} justify="center" xs={12}>
+                  <Grid item>
+                    <Typography variant="h5" gutterBottom>
+                        More options 
+                    </Typography>
+                  </Grid>
+                </Grid>
                 <Grid container spacing={1} alignContent="center" justify="center" alignItems="center" className={classes.root}>
                     <Grid item xs={4} className={`${classes.padding} ${classes.margin}`}>
-                        <Button fullWidth color="secondary" variant="outlined"  onClick={this.clearCache}>Clear application cache</Button>
+                        <Button fullWidth color="secondary" variant="outlined" onClick={this.clearCache}>Clear application cache</Button>
                     </Grid>
                 </Grid>
             </Grid>

@@ -181,7 +181,10 @@ def blacklist_player(request):
     res = {}
     try:
         send_to_discord_audit("Blacklist '{}' for '{}'".format(data['steam_id_64'], data['reason']), get_client_ip(request))
-        add_player_to_blacklist(data['steam_id_64'], data['reason'])
+        if data['name']:
+            add_player_to_blacklist(data['steam_id_64'], data['reason'], data['name'])
+        else:
+            add_player_to_blacklist(data['steam_id_64'], data['reason'])
         failed = False
     except:
         logger.exception("Unable to blacklist player")
