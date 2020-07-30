@@ -124,7 +124,7 @@ class RconSettings extends React.Component {
                 </Grid>
                 <Grid item className={classes.paddingTop} justify="center" xs={12}>
                   <Typography variant="h5">
-                      Deny player by Steam ID
+                      Blacklist player by Steam ID
                   </Typography>
                 </Grid>
                 <Grid item xs={2}>
@@ -158,12 +158,12 @@ class RconSettings extends React.Component {
                     />
                 </Grid>
                 <Grid item xs={2} spacing={1} className={`${classes.padding} ${classes.margin}`} justify="center" alignContent="center">
-                    <Tooltip fullWidth title="Denied players will instantly be banned when entering the server." arrow>
+                    <Tooltip fullWidth title="Blacklisted players will instantly be banned when entering the server." arrow>
                         <Button 
                                 color="secondary"
                                 variant="outlined"
                                 disabled={blacklist_steam_id == "" || blacklist_reason == ""} onClick={this.blacklistPlayer}>
-                            Deny
+                            Blacklist
                         </Button>
                     </Tooltip>
                 </Grid>
