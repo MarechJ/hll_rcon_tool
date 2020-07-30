@@ -6,6 +6,7 @@ import logging
 import socket
 from rcon.cache_utils import ttl_cache, invalidates
 from rcon.commands import ServerCtl, CommandFailedError
+from rcon.broadcast import format_message
 
 STEAMID = "steam_id_64"
 NAME = "name"
@@ -227,6 +228,14 @@ class Rcon(ServerCtl):
     def set_vip_slots_num(self, num):
         with invalidates(Rcon.get_vip_slots_num):
             return super().set_vip_slots_num(num)
+
+    def set_welcome_message(self, msg):
+        formatted = format_message(self, msg)
+        return super().set_welcome_message(formatted)
+
+    def set_broadcast(self, msg):
+        formatted = format_message(self, msg)
+        return super().set_broadcast(formatted)
 
     @ttl_cache(ttl=20)
     def get_slots(self):
