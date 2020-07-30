@@ -142,28 +142,28 @@ class RconSettings extends React.Component {
                           onChange={(e) => this.setState({ blacklist_steam_id: e.target.value })}
                         />
                     </Grid>
+                    <Grid item xs={4}>
+                        <TextField
+                          id="reason"
+                          label="Reason"
+                          helperText="Required"
+                          value={blacklist_reason}
+                          fullWidth
+                          onChange={(e) => this.setState({ blacklist_reason: e.target.value })}
+                        />
+                    </Grid>
                     <Grid item xs={3}>
                         <TextField
                           id="name"
-                          label="Name"
+                          label="Player name"
                           helperText="Optional"
                           value={blacklist_name}
                           fullWidth
                           onChange={(e) => this.setState({ blacklist_name: e.target.value })}
                         />
                     </Grid>
-                    <Grid item xs={4}>
-                        <TextField
-                          id="reason"
-                          label="Reason"
-                          helperText="Optional"
-                          value={blacklist_reason}
-                          fullWidth
-                          onChange={(e) => this.setState({ blacklist_reason: e.target.value })}
-                        />
-                    </Grid>
                     <Grid item xs={2} justify="center" alignItems="center">
-                        <Button fullWith color="secondary" variant="outlined" size="large" disabled={blacklist_steam_id == ""} onClick={this.blacklistPlayer}>Blacklist</Button>
+                        <Button fullWith color="secondary" variant="outlined" size="large" disabled={blacklist_steam_id == "" || blacklist_reason == ""} onClick={this.blacklistPlayer}>Blacklist</Button>
                     </Grid>
                 </Grid>
                 <Grid container className={classes.paddingTop} justify="center" xs={12}>
