@@ -127,7 +127,7 @@ class RconSettings extends React.Component {
                 <Grid container className={classes.paddingTop} justify="center" xs={12}>
                   <Grid item>
                     <Typography variant="h5" gutterBottom>
-                        Blacklist 
+                        Add player to blacklist by Steam ID
                     </Typography>
                   </Grid>
                 </Grid>
@@ -156,14 +156,14 @@ class RconSettings extends React.Component {
                         <TextField
                           id="reason"
                           label="Reason"
-                          helperText="Reason"
+                          helperText="Optional"
                           value={blacklist_reason}
                           fullWidth
                           onChange={(e) => this.setState({ blacklist_reason: e.target.value })}
                         />
                     </Grid>
                     <Grid item xs={2} justify="center" alignItems="center">
-                        <Button fullWith color="secondary" variant="outlined" size="large" onClick={this.blacklistPlayer}>Blacklist</Button>
+                        <Button fullWith color="secondary" variant="outlined" size="large" disabled={blacklist_steam_id == ""} onClick={this.blacklistPlayer}>Blacklist</Button>
                     </Grid>
                 </Grid>
                 <Grid container className={classes.paddingTop} justify="center" xs={12}>
