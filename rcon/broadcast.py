@@ -82,7 +82,7 @@ def format_message(ctl, msg):
     get_admin_names = lambda: [d['name'] for d in ctl.get_admin_ids()]
     get_owner_names = lambda: [d['name'] for d in ctl.get_admin_ids() if d['role'] == 'owner']
     get_senior_names = lambda: [d['name'] for d in ctl.get_admin_ids() if d['role'] == 'senior']
-    get_junior_names = lambda: [d['name'] for d in ctl.get_admin_ids() if d['role'] == 'junior']\
+    get_junior_names = lambda: [d['name'] for d in ctl.get_admin_ids() if d['role'] == 'junior']
     vote_status = get_votes_status()
 
     subs = {
