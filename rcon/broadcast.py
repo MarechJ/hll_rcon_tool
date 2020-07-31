@@ -82,7 +82,9 @@ def format_message(ctl, msg):
     get_admin_names = lambda: [d['name'] for d in ctl.get_admin_ids()]
     get_owner_names = lambda: [d['name'] for d in ctl.get_admin_ids() if d['role'] == 'owner']
     get_senior_names = lambda: [d['name'] for d in ctl.get_admin_ids() if d['role'] == 'senior']
-    get_junior_names = lambda: [d['name'] for d in ctl.get_admin_ids() if d['role'] == 'junior']
+    get_junior_names = lambda: [d['name'] for d in ctl.get_admin_ids() if d['role'] == 'junior']\
+    vote_status = get_votes_status()
+
     subs = {
         'nextmap': safe(ctl.get_next_map, "")(),
         'maprotation': ' -> '.join(safe(ctl.get_map_rotation, [])()),
@@ -94,7 +96,9 @@ def format_message(ctl, msg):
         'juniors': ','.join(safe(get_junior_names, [])()),
         'vips': ', '.join(safe(get_vip_names, [])()),
         'randomvip': safe(lambda: random.choice(get_vip_names() or [""]), "")(),
-        'votenextmap': safe(format_map_vote, '')(ctl)
+        'votenextmap': safe(format_map_vote, '')(ctl),
+        'total_votes': vote_status['total_votes'],
+        'winning_maps': format_winning_map(vote_status['winning_maps'], default=nextmap)
     }
     return msg.format(**subs)
 
@@ -121,25 +125,10 @@ def run():
             random.shuffle(msgs)
 
         for time_sec, msg in msgs:
-<<<<<<< HEAD
             if not config.get_enabled():
                 break
-            vote_status = get_votes_status()
-            nextmap = safe(ctl.get_next_map, "")()
-            subs = {
-                'nextmap': nextmap,
-                'maprotation': ' -> '.join(safe(ctl.get_map_rotation, [])()),
-                'servername': safe(ctl.get_name, "")(),
-                'onlineadmins': safe(online_mods, "")(),
-                'ingameadmins': safe(ingame_admins, "")(ctl), 
-                'votenextmap': safe(format_map_vote, '')(ctl),
-                'total_votes': vote_status['total_votes'],
-                'winning_maps': format_winning_map(vote_status['winning_maps'], default=nextmap)
-            }
-            formatted = msg.format(**subs)
-=======
+            
             formatted = format_message(ctl, msg)
->>>>>>> various
             logger.debug("Broadcasting for %s seconds: %s", time_sec, formatted)
             ctl.set_broadcast(formatted) 
             time.sleep(int(time_sec)) 
