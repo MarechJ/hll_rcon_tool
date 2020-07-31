@@ -9,6 +9,8 @@ import _ from 'lodash'
 import LinearProgress from "@material-ui/core/LinearProgress"
 import Padlock from '../../components/SettingsView/padlock'
 import WarningIcon from '@material-ui/icons/Warning';
+import TextHistoryManager from './textHistoryManager'
+import TextHistory from '../textHistory'
 
 class RconSettings extends React.Component {
 
@@ -108,6 +110,11 @@ class RconSettings extends React.Component {
                     </Grid>
                     <Grid item xs={12}>
                         <Button fullWidth onClick={this.save_messages} variant="outlined">Save messages</Button>
+                    </Grid>
+                </Grid>
+                <Grid container spacing={1} alignContent="center" justify="center" alignItems="center" className={classes.root}>
+                    <Grid item xs={6} className={`${classes.padding} ${classes.margin}`}>
+                        <TextHistoryManager classes={classes} />
                     </Grid>
                 </Grid>
                 <Grid container spacing={1} alignContent="center" justify="center" alignItems="center" className={classes.root}>

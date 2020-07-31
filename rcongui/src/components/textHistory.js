@@ -1,8 +1,16 @@
 import _ from 'lodash'
+import { startsWith } from 'lodash/string'
+
+
+const PREFIX = "autocomplete_"
+
+const getAllNamespaces = () => (
+    Object.keys(localStorage).filter(e => startsWith(e, PREFIX))
+)
 
 class TextHistory {
     constructor(namespace) {
-        this.namespace = "autocomplete_" + namespace
+        this.namespace = PREFIX + namespace
     }
 
     getTexts() {
@@ -35,3 +43,4 @@ class TextHistory {
 }
 
 export default TextHistory
+export {TextHistory, getAllNamespaces }

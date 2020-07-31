@@ -36,7 +36,7 @@ const GroupActions = ({
   const [message, setMessage] = React.useState("")
   const [selectedPlayers, setSelectedPlayers] = React.useState([])
   const [saveMessage, setSaveMessage] = React.useState(true)
-  const textHistory = new TextHistory("group_action")
+  const textHistory = new TextHistory("punitions")
   const nbButton = ["xs"].indexOf(width) != -1 ? 3 : 6;
 
   return (
