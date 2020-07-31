@@ -4,9 +4,23 @@ import { startsWith } from 'lodash/string'
 
 const PREFIX = "autocomplete_"
 
-const getAllNamespaces = () => (
-    Object.keys(localStorage).filter(e => startsWith(e, PREFIX)).map(v => v.replace(PREFIX, '')).filter(v => !v.includes('undefined'))
-)
+
+
+const getAllNamespaces = () => {
+    let namespaces = Object.keys(localStorage).filter(e => startsWith(e, PREFIX)).map(v => v.replace(PREFIX, ''))
+
+    return namespaces.filter(v => {
+        if (!v || v.includes('undefined')) {
+            return false
+        }
+        const texts = new TextHistory(v).getTexts()
+    
+        if (texts.length === 0)  {
+            return false
+        }
+        return true
+    })   
+}
 
 class TextHistory {
     constructor(namespace) {
