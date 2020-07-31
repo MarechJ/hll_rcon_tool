@@ -13,7 +13,7 @@ const ServerMessage = ({ classes, type, value, setValue, onSave }) => (
           multiline
           rows="4"
           variant="outlined"
-          helperText={`Due to HLL limitations we can't know the current ${type}`}
+          helperText={`Due to HLL limitations we can't know the current ${type}. Supports same variables as for auto broadcasts.`}
           value={value}
           onChange={e => setValue(e.target.value)}
         />
