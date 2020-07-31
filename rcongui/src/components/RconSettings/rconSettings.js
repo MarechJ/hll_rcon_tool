@@ -1,8 +1,9 @@
 import React from 'react'
 import {
-    Grid, Typography, Button, TextField, Tooltip
+    Grid, Typography, Button, TextField
 } from "@material-ui/core"
 import { range } from "lodash/util"
+import Blacklist from "./blacklist"
 import { showResponse, postData } from '../../utils/fetchUtils'
 import { toast } from "react-toastify"
 import _ from 'lodash'
@@ -18,15 +19,11 @@ class RconSettings extends React.Component {
             messages: [],
             randomized: false,
             enabled: false,
-            blacklist_steam_id: "",
-            blacklist_name: "",
-            blacklist_reason: ""
         }
 
         this.loadBroadcastsSettings = this.loadBroadcastsSettings.bind(this)
         this.validate_messages = this.validate_messages.bind(this)
         this.save_messages = this.save_messages.bind(this)
-        this.blacklistPlayer = this.blacklistPlayer.bind(this)
         this.clearCache = this.clearCache.bind(this)
     }
 
@@ -46,16 +43,6 @@ class RconSettings extends React.Component {
         )
             .then((res) => showResponse(res, "set_auto_broadcasts_config", true))
             .then(res => !res.failed && this.setState(data))
-    }
-
-    async blacklistPlayer() {
-        return postData(`${process.env.REACT_APP_API_URL}blacklist_player`, {
-          "steam_id_64": this.state.blacklist_steam_id,
-          "name": this.state.blacklist_name,
-          "reason": this.state.blacklist_reason
-        })
-        .then((res) => showResponse(res, "blacklist_player", true))
-        .then(res => !res.failed && this.setState({ blacklist_steam_id: "", blacklist_name: "", blacklist_reason: "" }))
     }
 
     async clearCache() {
@@ -87,7 +74,7 @@ class RconSettings extends React.Component {
     }
 
     render() {
-        const { messages, enabled, randomized, blacklist_steam_id, blacklist_name, blacklist_reason } = this.state
+        const { messages, enabled, randomized, blacklist_steam_id, blacklist_name, blacklist_reason, blacklist_date } = this.state
         const { classes } = this.props 
 
         return (
@@ -127,46 +114,9 @@ class RconSettings extends React.Component {
                       Blacklist player by Steam ID
                   </Typography>
                 </Grid>
-                <Grid item xs={2}>
-                    <TextField
-                      id="steam-id"
-                      label="Steam ID"
-                      helperText="Required"
-                      value={blacklist_steam_id}
-                      fullWidth
-                      onChange={(e) => this.setState({ blacklist_steam_id: e.target.value })}
-                    />
-                </Grid>
-                <Grid item xs={6} spacing={1}>
-                    <TextField
-                      id="reason"
-                      label="Reason"
-                      helperText="Required"
-                      value={blacklist_reason}
-                      fullWidth
-                      onChange={(e) => this.setState({ blacklist_reason: e.target.value })}
-                    />
-                </Grid>
-                <Grid item xs={2} spacing={1}>
-                    <TextField
-                      id="name"
-                      label="Player name"
-                      helperText="Optional"
-                      value={blacklist_name}
-                      fullWidth
-                      onChange={(e) => this.setState({ blacklist_name: e.target.value })}
-                    />
-                </Grid>
-                <Grid item xs={2} spacing={1} className={`${classes.padding} ${classes.margin}`} justify="center" alignContent="center">
-                    <Tooltip fullWidth title="Blacklisted players will instantly be banned when entering the server." arrow>
-                        <Button 
-                                color="secondary"
-                                variant="outlined"
-                                disabled={blacklist_steam_id == "" || blacklist_reason == ""} onClick={this.blacklistPlayer}>
-                            Blacklist
-                        </Button>
-                    </Tooltip>
-                </Grid>
+                <Blacklist
+                    classes={classes}
+                />
                 <Grid item className={classes.paddingTop} justify="center" xs={12}>
                     <Typography variant="h5">
                         More options 
@@ -176,7 +126,6 @@ class RconSettings extends React.Component {
                         <Button color="secondary" variant="outlined" onClick={this.clearCache}>Clear application cache</Button>
                 </Grid>
             </Grid>
-
         )
     }
 }
