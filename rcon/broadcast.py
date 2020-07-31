@@ -89,7 +89,7 @@ def format_message(ctl, msg):
         'nextmap': safe(ctl.get_next_map, "")(),
         'maprotation': ' -> '.join(safe(ctl.get_map_rotation, [])()),
         'servername': safe(ctl.get_name, "")(),
-        'onlineadmins': ', '.join(safe(ctl.get_online_admins, [])()),
+        #'onlineadmins': ', '.join(safe(ctl.get_online_admins, [])()),
         'admins': ','.join(safe(get_admin_names, [])()),
         'owners': ','.join(safe(get_owner_names, [])()),
         'seniors': ','.join(safe(get_senior_names, [])()),
