@@ -84,7 +84,8 @@ def format_message(ctl, msg):
     get_senior_names = lambda: [d['name'] for d in ctl.get_admin_ids() if d['role'] == 'senior']
     get_junior_names = lambda: [d['name'] for d in ctl.get_admin_ids() if d['role'] == 'junior']
     vote_status = get_votes_status()
-
+    nextmap = safe(ctl.get_next_map, "")()
+    
     subs = {
         'nextmap': safe(ctl.get_next_map, "")(),
         'maprotation': ' -> '.join(safe(ctl.get_map_rotation, [])()),
