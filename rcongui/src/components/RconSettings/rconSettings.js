@@ -113,7 +113,7 @@ class RconSettings extends React.Component {
                     </Grid>
                 </Grid>
                 <Grid container spacing={1} alignContent="center" justify="center" alignItems="center" className={classes.root}>
-                    <Grid item xs={6} className={`${classes.padding} ${classes.margin}`}>
+                    <Grid item xs={12} className={`${classes.padding} ${classes.margin}`}>
                         <TextHistoryManager classes={classes} />
                     </Grid>
                 </Grid>
