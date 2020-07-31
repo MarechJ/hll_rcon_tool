@@ -40,7 +40,7 @@ class ReasonDialog extends React.Component {
   render() {
     const { open, handleClose, handleConfirm } = this.props;
     const { reason, saveMessage } = this.state;
-    const textHistory = new TextHistory(open.actionType)
+    const textHistory = new TextHistory('punitions')
 
     return (
       <Dialog open={open} aria-labelledby="form-dialog-title">

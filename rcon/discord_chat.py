@@ -56,8 +56,7 @@ def parse_webhook_url(url):
     of 'id' and 'token' in the JSON response.
     """
     if not url:
-        logger.info("no Discord chat webhook URL provided")
-        return None
+        return None, None
     resp = requests.get(url).json()
     _id = int(resp["id"])
     token = resp["token"]
@@ -66,6 +65,8 @@ def parse_webhook_url(url):
 
 def make_hook(webhook_url):
     webhook_id, webhook_token = parse_webhook_url(webhook_url)
+    if not all([webhook_id, webhook_token]):
+        return None
     return Webhook.partial(
         id=webhook_id, token=webhook_token, adapter=RequestsWebhookAdapter()
     )
@@ -91,6 +92,16 @@ class DiscordWebhookHandler:
         self.init_kill_vars()
 
     def init_ping_trigger_vars(self):
+        # Not checking PING_TRIGGER_WEBHOOK here on purpose
+        # because it being None is valid (see .env).
+        if not all([PING_TRIGGER_WORDS, PING_TRIGGER_ROLES]):
+            return
+
+        # If PING_TRIGGER_WEBHOOK is not set, DISCORD_CHAT_WEBHOOK_URL
+        # is required because pings are attached to chat messages.
+        if not DISCORD_CHAT_WEBHOOK_URL and not PING_TRIGGER_WEBHOOK:
+            return
+
         try:
             self.ping_trigger_words = [
                 word.lower().strip()
@@ -106,6 +117,9 @@ class DiscordWebhookHandler:
             logger.exception("error initializing ping trigger variables: %s", e)
 
     def init_chat_vars(self):
+        if not DISCORD_CHAT_WEBHOOK_URL:
+            return
+
         try:
             self.chat_webhook = make_hook(DISCORD_CHAT_WEBHOOK_URL)
             logger.info("chat variables initialized successfully")
@@ -113,6 +127,9 @@ class DiscordWebhookHandler:
             logger.exception("error initializing chat variables: %s", e)
 
     def init_kill_vars(self):
+        if not DISCORD_KILLS_WEBHOOK_URL:
+            return
+
         try:
             self.kills_webhook = make_hook(DISCORD_KILLS_WEBHOOK_URL)
             self.send_kills = True if SEND_KILLS == "yes" else False

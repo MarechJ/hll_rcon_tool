@@ -7,7 +7,6 @@ import json
 
 import redis
 
-import redis
 from rcon.cache_utils import get_redis_pool
 from rcon.extended_commands import Rcon
 from rcon.settings import SERVER_INFO
@@ -78,7 +77,31 @@ def format_map_vote(rcon):
     return format_by_line_length(items)
     
 
+def format_message(ctl, msg):
+    get_vip_names = lambda: [d['name'] for d in ctl.get_vip_ids()]
+    get_admin_names = lambda: [d['name'] for d in ctl.get_admin_ids()]
+    get_owner_names = lambda: [d['name'] for d in ctl.get_admin_ids() if d['role'] == 'owner']
+    get_senior_names = lambda: [d['name'] for d in ctl.get_admin_ids() if d['role'] == 'senior']
+    get_junior_names = lambda: [d['name'] for d in ctl.get_admin_ids() if d['role'] == 'junior']
+    subs = {
+        'nextmap': safe(ctl.get_next_map, "")(),
+        'maprotation': ' -> '.join(safe(ctl.get_map_rotation, [])()),
+        'servername': safe(ctl.get_name, "")(),
+        'onlineadmins': ', '.join(safe(ctl.get_online_admins, [])()),
+        'admins': ','.join(safe(get_admin_names, [])()),
+        'owners': ','.join(safe(get_owner_names, [])()),
+        'seniors': ','.join(safe(get_senior_names, [])()),
+        'juniors': ','.join(safe(get_junior_names, [])()),
+        'vips': ', '.join(safe(get_vip_names, [])()),
+        'randomvip': safe(lambda: random.choice(get_vip_names() or [""]), "")(),
+        'votenextmap': safe(format_map_vote, '')(ctl)
+    }
+    return msg.format(**subs)
+
 def run():
+    # avoid circular import
+    from rcon.extended_commands import Rcon
+
     ctl = Rcon(
         SERVER_INFO
     )
@@ -98,6 +121,7 @@ def run():
             random.shuffle(msgs)
 
         for time_sec, msg in msgs:
+<<<<<<< HEAD
             if not config.get_enabled():
                 break
             vote_status = get_votes_status()
@@ -113,6 +137,9 @@ def run():
                 'winning_maps': format_winning_map(vote_status['winning_maps'], default=nextmap)
             }
             formatted = msg.format(**subs)
+=======
+            formatted = format_message(ctl, msg)
+>>>>>>> various
             logger.debug("Broadcasting for %s seconds: %s", time_sec, formatted)
             ctl.set_broadcast(formatted) 
             time.sleep(int(time_sec)) 

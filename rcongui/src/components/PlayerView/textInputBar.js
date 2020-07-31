@@ -12,12 +12,14 @@ import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Checkbox from '@material-ui/core/Checkbox';
 
 const Reason = ({ handleMessageChange, extraClasses, helperText = "Leave blank if you want a confirmation popup", message, label = "Punish/Kick/Ban message", textHistory, saveMessage, setSaveMessage }) => {
+  const autoCompletehistory = textHistory ? textHistory.getTexts() : new TextHistory('punitions').getTexts()
+  
   return < React.Fragment >
     <Autocomplete
       freeSolo
       fullWidth
       className={extraClasses}
-      options={textHistory ? textHistory.getTexts() : []}
+      options={autoCompletehistory}
       inputValue={message}
       onInputChange={(e, value) => { if (e) { e.preventDefault()} ; handleMessageChange(value) }}
       renderInput={(params) => (
