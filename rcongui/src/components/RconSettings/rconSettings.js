@@ -74,7 +74,7 @@ class RconSettings extends React.Component {
     }
 
     render() {
-        const { messages, enabled, randomized, blacklist_steam_id, blacklist_name, blacklist_reason, blacklist_date } = this.state
+        const { messages, enabled, randomized } = this.state
         const { classes } = this.props 
 
         return (
