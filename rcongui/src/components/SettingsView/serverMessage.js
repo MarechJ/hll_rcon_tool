@@ -18,7 +18,8 @@ const ServerMessage = ({ classes, type, value, setValue, onSave }) => {
         inputValue={value}
         onInputChange={(e, value) => setValue(value)}
         renderInput={(params) => (
-          <TextField multiline rows="4" {...params} label={type} margin="normal" variant="outlined" helperText={`Due to HLL limitations we can't know the current ${type}`} />
+          <TextField multiline rows="4" {...params} label={type} margin="normal" variant="outlined" 
+          helperText={`Due to HLL limitations we can't know the current ${type}. Supports same variables as for auto broadcasts.`} />
         )}
       />
     </Grid>

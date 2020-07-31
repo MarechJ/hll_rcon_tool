@@ -6,6 +6,7 @@ import logging
 import socket
 from rcon.cache_utils import ttl_cache, invalidates
 from rcon.commands import ServerCtl, CommandFailedError
+from rcon.broadcast import format_message
 
 STEAMID = "steam_id_64"
 NAME = "name"
@@ -24,6 +25,8 @@ class Rcon(ServerCtl):
     )
     slots_regexp = re.compile(r'^\d{1,3}/\d{2,3}$')
     map_regexp = re.compile(r'^(\w+_?)+$') 
+    chat_regexp = re.compile(r'CHAT\[((Team)|(Unit))\]\[(.*)\(((Allies)|(Axis))/(\d+)\)\]')
+    player_info_regexp = re.compile(r'(.*)\(((Allies)|(Axis))/(\d+)\)')
     MAX_SERV_NAME_LEN = 1024  # I totally made up that number. Unable to test
 
     @ttl_cache(ttl=60 * 60 * 24, cache_falsy=False)
@@ -227,6 +230,14 @@ class Rcon(ServerCtl):
         with invalidates(Rcon.get_vip_slots_num):
             return super().set_vip_slots_num(num)
 
+    def set_welcome_message(self, msg):
+        formatted = format_message(self, msg)
+        return super().set_welcome_message(formatted)
+
+    def set_broadcast(self, msg):
+        formatted = format_message(self, msg)
+        return super().set_broadcast(formatted)
+
     @ttl_cache(ttl=20)
     def get_slots(self):
         res = super().get_slots()
@@ -288,6 +299,7 @@ class Rcon(ServerCtl):
             # The hll server just hangs when there are no logs for the requested time
             raw = ''
 
+        synthetic_actions = ['CHAT[Allies]', 'CHAT[Axis]', 'CHAT']
         now = datetime.now()
         res = []
         actions = set()
@@ -297,24 +309,39 @@ class Rcon(ServerCtl):
                 continue
             try:
                 time, rest = line.split('] ', 1)
+                time = self._convert_relative_time(now, time[1:])
+                sub_content = action = player = player2 = weapon = steam_id_64_1 = steam_id_64_2 = None
+                content = rest
                 try:
                     # Bug: '[1:34:22 hours] DISCONNECTED ᚱ A V И E Ν : .',
                     action, content = rest.split(': ', 1)
                 except ValueError:
                     action, content = rest.split(' ', 1)
-                player, player2 = None, None
+                
+                if match := self.chat_regexp.match(action):
+                    groups = match.groups()
+                    scope = groups[0]
+                    side = groups[4]
+                    player = groups[3]
+                    steam_id_64_1 = groups[-1]
+                    action = f'CHAT[{side}][{scope}]'
+                    sub_content = content
+                    content = f'{player}: {content} ({steam_id_64_1})'
+                  
                 if action in {'CONNECTED', 'DISCONNECTED'}:
                     player = content
                 if action in {'KILL', 'TEAM KILL'}:
                     player, player2 = content.split(' -> ', 1)
-                time = self._convert_relative_time(now, time[1:])
+                    player2, weapon = player2.split(' with ', 1)
+                    player, *_, steam_id_64_1 = self.player_info_regexp.match(player).groups()
+                    player2, *_, steam_id_64_2 = self.player_info_regexp.match(player2).groups()
+               
                 players.add(player)
                 players.add(player2)
                 actions.add(action)
-            except ValueError:
+            except:
                 logger.exception("Invalid line: '%s'", line)
-                raise
-            if filter_action and action != filter_action:
+            if filter_action and not action.startswith(filter_action):
                 continue
             if filter_player and filter_player not in line:
                 continue
@@ -325,13 +352,17 @@ class Rcon(ServerCtl):
                 'raw': line,
                 'action': action,
                 'player': player,
+                'steam_id_64_1': steam_id_64_1,
                 'player2': player2,
-                'message': content
+                'steam_id_64_2': steam_id_64_2,
+                'weapon': weapon,
+                'message': content,
+                'sub_content': sub_content,
             })
 
         res.reverse()
         return {
-            'actions': list(actions),
+            'actions': list(actions) + synthetic_actions,
             'players': list(players),
             'logs': res
         }

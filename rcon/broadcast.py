@@ -3,7 +3,6 @@ import time
 import logging
 import random
 
-from rcon.extended_commands import Rcon
 from rcon.settings import SERVER_INFO
 from rcon.user_config import AutoBroadcasts
 from rcon.utils import HUMAN_MAP_NAMES, number_to_map
@@ -51,7 +50,31 @@ def format_map_vote(rcon):
     return format_by_line_length(items)
     
 
+def format_message(ctl, msg):
+    get_vip_names = lambda: [d['name'] for d in ctl.get_vip_ids()]
+    get_admin_names = lambda: [d['name'] for d in ctl.get_admin_ids()]
+    get_owner_names = lambda: [d['name'] for d in ctl.get_admin_ids() if d['role'] == 'owner']
+    get_senior_names = lambda: [d['name'] for d in ctl.get_admin_ids() if d['role'] == 'senior']
+    get_junior_names = lambda: [d['name'] for d in ctl.get_admin_ids() if d['role'] == 'junior']
+    subs = {
+        'nextmap': safe(ctl.get_next_map, "")(),
+        'maprotation': ' -> '.join(safe(ctl.get_map_rotation, [])()),
+        'servername': safe(ctl.get_name, "")(),
+        'onlineadmins': ', '.join(safe(ctl.get_online_admins, [])()),
+        'admins': ','.join(safe(get_admin_names, [])()),
+        'owners': ','.join(safe(get_owner_names, [])()),
+        'seniors': ','.join(safe(get_senior_names, [])()),
+        'juniors': ','.join(safe(get_junior_names, [])()),
+        'vips': ', '.join(safe(get_vip_names, [])()),
+        'randomvip': safe(lambda: random.choice(get_vip_names() or [""]), "")(),
+        'votenextmap': safe(format_map_vote, '')(ctl)
+    }
+    return msg.format(**subs)
+
 def run():
+    # avoid circular import
+    from rcon.extended_commands import Rcon
+
     ctl = Rcon(
         SERVER_INFO
     )
@@ -71,14 +94,7 @@ def run():
             random.shuffle(msgs)
 
         for time_sec, msg in msgs:
-            subs = {
-                'nextmap': safe(ctl.get_next_map, "")(),
-                'maprotation': ' -> '.join(safe(ctl.get_map_rotation, [])()),
-                'servername': safe(ctl.get_name, "")(),
-                'onlineadmins': ', '.join(safe(ctl.get_online_admins, [])()),
-                'votenextmap': safe(format_map_vote, '')(ctl)
-            }
-            formatted = msg.format(**subs)
+            formatted = format_message(ctl, msg)
             logger.debug("Broadcasting for %s seconds: %s", time_sec, formatted)
             ctl.set_broadcast(formatted) 
             time.sleep(int(time_sec)) 
