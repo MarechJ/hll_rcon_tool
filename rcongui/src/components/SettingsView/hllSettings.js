@@ -261,9 +261,9 @@ class HLLSettings extends React.Component {
             classes={classes}
             disabled={lockedSliders}
             text="Teamswitch cooldown (minutes)"
-            max={100}
+            max={30}
             value={teamSwitchCooldownMin}
-            marks={range(0, 120, 20).map(val => ({
+            marks={range(0, 31, 5).map(val => ({
               value: val,
               label: `${val}`
             }))}
