@@ -24,6 +24,7 @@ import Dialog from "@material-ui/core/Dialog";
 import DialogActions from "@material-ui/core/DialogActions";
 import DialogContent from "@material-ui/core/DialogContent";
 import DialogTitle from "@material-ui/core/DialogTitle";
+import Tooltip from "@material-ui/core/Tooltip";
 import { getEmojiFlag } from '../../utils/emoji'
 import PersonAddDisabledIcon from '@material-ui/icons/PersonAddDisabled';
 import PersonAddIcon from '@material-ui/icons/PersonAdd';
@@ -171,8 +172,8 @@ const PlayerItem = ({ classes, names, steamId64, firstSeen, lastSeen, blackliste
                                 <Grid item >
                                     <IconButton size="small">
                                         {blacklisted
-                                            ? <PersonAddIcon color="primary" onClick={onUnBlacklist} />
-                                            : <PersonAddDisabledIcon onClick={onBlacklist} />
+                                            ? <Tooltip title="Remove the player from the blacklist" arrow><PersonAddIcon color="primary" onClick={onUnBlacklist} /></Tooltip>
+                                            : <Tooltip title="Add the player to the blacklist" arrow><PersonAddDisabledIcon onClick={onBlacklist} /></Tooltip>
                                         }</IconButton></Grid>
                                 <Grid item>
                                     <IconButton size="small"><FlagIcon onClick={onflag} /></IconButton>

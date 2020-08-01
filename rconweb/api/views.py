@@ -195,8 +195,9 @@ def blacklist_player(request):
     data = _get_data(request)
     res = {}
     try:
-        add_player_to_blacklist(data['steam_id_64'], data['reason'])
-        audit("Blacklist", request,data)
+        name = data['name'] if 'name' in data else None
+        add_player_to_blacklist(data['steam_id_64'], data['reason'], name)
+        audit("Blacklist", request, data)
         failed = False
     except:
         logger.exception("Unable to blacklist player")

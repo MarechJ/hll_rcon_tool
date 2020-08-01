@@ -2,13 +2,21 @@ version: '2.4'
 
 services:
   broadcast:
-    image: maresh/hll_rcon_arm
+    build: 
+      context: .
+      dockerfile: Dockerfile-arm32
   logs_event_loop:
-    image: maresh/hll_rcon_arm
+    build: 
+      context: .
+      dockerfile: Dockerfile-arm32
   backend_1:
-    image: maresh/hll_rcon_arm
+    build: 
+      context: .
+      dockerfile: Dockerfile-arm32
   frontend:
-    image: maresh/hll_rcon_frontend_arm
+    build:
+      context: ./rcongui
+      dockerfile: Dockerfile-arm32
   redis:
     image: arm32v7/redis:5
   postgres:
