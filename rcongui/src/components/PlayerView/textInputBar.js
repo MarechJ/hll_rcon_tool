@@ -6,21 +6,40 @@ import ToggleButton from "@material-ui/lab/ToggleButton";
 import ToggleButtonGroup from "@material-ui/lab/ToggleButtonGroup";
 import SortByAlphaIcon from "@material-ui/icons/SortByAlpha";
 import QueryBuilderIcon from "@material-ui/icons/QueryBuilder";
+import TextHistory from '../textHistory'
+import Autocomplete from '@material-ui/lab/Autocomplete';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Checkbox from '@material-ui/core/Checkbox';
 
-const Reason = ({ handleMessageChange, extraClasses, helperText = "Leave blank if you want a confirmation popup", message }) => (
-  <TextField
-    id="filled-full-width"
-    label="Punish/Kick/Ban message"
-    helperText={helperText}
-    fullWidth
-    value={message}
-    className={extraClasses}
-    onChange={event => {
-      event.preventDefault();
-      handleMessageChange(event.target.value);
-    }}
-  />
-);
+const Reason = ({ handleMessageChange, extraClasses, helperText = "Leave blank if you want a confirmation popup", message, label = "Punish/Kick/Ban message", textHistory, saveMessage, setSaveMessage }) => {
+  const autoCompletehistory = textHistory ? textHistory.getTexts() : new TextHistory('punitions').getTexts()
+  
+  return < React.Fragment >
+    <Autocomplete
+      freeSolo
+      fullWidth
+      className={extraClasses}
+      options={autoCompletehistory}
+      inputValue={message}
+      onInputChange={(e, value) => { if (e) { e.preventDefault()} ; handleMessageChange(value) }}
+      renderInput={(params) => (
+        <TextField {...params} label={label} margin="dense" helperText={helperText} />
+      )}
+
+    />
+    {saveMessage !== undefined ?
+      <FormControlLabel
+        control={
+          <Checkbox
+            checked={saveMessage}
+            onChange={() => setSaveMessage(!saveMessage)}
+            color="primary"
+          />
+        }
+        label="Save message as template"
+      /> : ''}
+  </React.Fragment >
+}
 
 const TextInputBar = ({
   classes,

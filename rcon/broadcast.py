@@ -5,6 +5,7 @@ import random
 
 from rcon.settings import SERVER_INFO
 from rcon.user_config import AutoBroadcasts
+from rcon.utils import HUMAN_MAP_NAMES, number_to_map
 from functools import wraps
 
 logger = logging.getLogger(__name__)
@@ -21,6 +22,33 @@ def safe(func, default=None):
             return default
     return wrapper
 
+def chunks(lst, n):
+    """Yield successive n-sized chunks from lst."""
+    for i in range(0, len(lst), n):
+        yield lst[i:i + n]
+
+def format_by_line_length(possible_votes, max_length=60):
+    """
+    Note: I've tried to format with a nice aligned table but it's not
+    possible to get it right (unless you hardcode it maybe)
+    because the font used in the game does not have consistent characters (varying width)
+    """
+    lines = [] 
+    line = "" 
+    for i in possible_votes: 
+        line += i + " " 
+        if len(line) > max_length: 
+            lines.append(line) 
+            line = "" 
+    lines.append(line)       
+    return "\n".join(lines)                                                                                                                                                                                                                                                                             
+
+
+def format_map_vote(rcon):
+    vote_dict = number_to_map(rcon)
+    items = [f"[{k}] {HUMAN_MAP_NAMES.get(v, v)}"  for k, v in vote_dict.items()]
+    return format_by_line_length(items)
+    
 
 def format_message(ctl, msg):
     get_vip_names = lambda: [d['name'] for d in ctl.get_vip_ids()]
@@ -38,7 +66,8 @@ def format_message(ctl, msg):
         'seniors': ','.join(safe(get_senior_names, [])()),
         'juniors': ','.join(safe(get_junior_names, [])()),
         'vips': ', '.join(safe(get_vip_names, [])()),
-        'randomvip': safe(lambda: random.choice(get_vip_names() or [""]), "")()
+        'randomvip': safe(lambda: random.choice(get_vip_names() or [""]), "")(),
+        'votenextmap': safe(format_map_vote, '')(ctl)
     }
     return msg.format(**subs)
 
@@ -69,8 +98,7 @@ def run():
             logger.debug("Broadcasting for %s seconds: %s", time_sec, formatted)
             ctl.set_broadcast(formatted) 
             time.sleep(int(time_sec)) 
-        # Clear state in case next next iteration disables 
-        ctl.set_broadcast('') 
+
 
 
 if __name__ == "__main__":

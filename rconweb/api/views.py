@@ -3,6 +3,8 @@ import logging
 import json
 import datetime
 from functools import wraps
+import os
+from redis import StrictRedis
 
 from dateutil import parser
 from django.shortcuts import render
@@ -24,6 +26,7 @@ from rcon.player_history import (
 from rcon.user_config import AutoBroadcasts, InvalidConfigurationError
 from rcon.cache_utils import RedisCached, get_redis_pool
 from .discord import send_to_discord_audit
+
 
 logger = logging.getLogger('rconweb')
 
@@ -299,11 +302,11 @@ def wrap_method(func, parameters):
         try:
             logger.debug("%s %s", func.__name__, arguments)
             res = func(**arguments)
+            audit(func.__name__, request, arguments)
         except CommandFailedError:
             failure = True
             res = None
-
-        audit(func.__name__, request, arguments)
+        
         #logger.debug("%s %s -> %s", func.__name__, arguments, res)
         return JsonResponse({
             "result": res,

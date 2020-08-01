@@ -6,7 +6,7 @@ import logging
 import socket
 from rcon.cache_utils import ttl_cache, invalidates
 from rcon.commands import ServerCtl, CommandFailedError
-from rcon.broadcast import format_message
+
 
 STEAMID = "steam_id_64"
 NAME = "name"
@@ -153,6 +153,7 @@ class Rcon(ServerCtl):
     @ttl_cache(ttl=60)
     def get_next_map(self):
         current = self.get_map()
+        current = current.replace('_RESTART', '')
         rotation = self.get_map_rotation()
         next_id = rotation.index(current)
         next_id += 1
@@ -230,10 +231,12 @@ class Rcon(ServerCtl):
             return super().set_vip_slots_num(num)
 
     def set_welcome_message(self, msg):
+        from rcon.broadcast import format_message
         formatted = format_message(self, msg)
         return super().set_welcome_message(formatted)
 
     def set_broadcast(self, msg):
+        from rcon.broadcast import format_message
         formatted = format_message(self, msg)
         return super().set_broadcast(formatted)
 
@@ -425,11 +428,37 @@ class Rcon(ServerCtl):
     def set_maprotation(self, rotation):
         if not rotation:
             raise CommandFailedError("Empty rotation")
-        first = rotation.pop(0)
-
+        
+        rotation = list(rotation)
+        logger.info("Apply map rotation %s", rotation)
+        
         with invalidates(Rcon.get_map_rotation):
-            current = set(self.get_map_rotation())
-            self.do_remove_maps_from_rotation(current - set([first]))
+            current = self.get_map_rotation()
+            if rotation == current:
+                logger.debug("Map rotation is the same, nothing to do")
+                return current
+
+            print(rotation, current)
+            
+            
+            if len(current) == 1:
+                logger.debug("Current rotation is a single map")
+                for idx, m in enumerate(rotation):
+                    if m not in current:
+                        self.do_add_map_to_rotation(m)
+                    if m in current and idx != 0:
+                        self.do_remove_map_from_rotation(m)
+                        self.do_add_map_to_rotation(m)
+                if current[0] not in rotation:
+                    self.do_remove_map_from_rotation(m)
+                return rotation
+
+            first = rotation.pop(0)
+            to_remove = set(current) - {first}
+            if to_remove == set(current):
+                self.do_add_map_to_rotation(first)
+
+            self.do_remove_maps_from_rotation(to_remove)
             self.do_add_maps_to_rotation(rotation)
 
         return [first] + rotation

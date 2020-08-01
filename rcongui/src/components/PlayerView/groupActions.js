@@ -10,6 +10,7 @@ import { Reason } from "./textInputBar";
 import Grid from "@material-ui/core/Grid";
 import { DialogTitle, DialogContent, DialogActions } from "../dialog";
 import { join } from 'lodash/array';
+import TextHistory from '../textHistory'
 
 const compactProfile = (player) => {
   let s = ""
@@ -32,9 +33,10 @@ const GroupActions = ({
   onClose,
   open
 }) => {
-  const [message, setMessage] = React.useState("");
-  const [selectedPlayers, setSelectedPlayers] = React.useState([]);
-
+  const [message, setMessage] = React.useState("")
+  const [selectedPlayers, setSelectedPlayers] = React.useState([])
+  const [saveMessage, setSaveMessage] = React.useState(true)
+  const textHistory = new TextHistory("punitions")
   const nbButton = ["xs"].indexOf(width) != -1 ? 3 : 6;
 
   return (
@@ -74,13 +76,20 @@ const GroupActions = ({
               message={message}
               handleMessageChange={setMessage}
               helperText={"A message is mandatory"}
+              saveMessage={saveMessage}
+              setSaveMessage={setSaveMessage}
+              textHistory={textHistory}
             />
           </Grid>
           <Grid item xs={12} xl={12} className={classes.marginTop}>
             <PlayerActions
               handleAction={actionType =>
-                selectedPlayers.map(p =>
+                selectedPlayers.map(p => {
+                  if (saveMessage) {
+                    textHistory.saveText(message)
+                  }
                   handleAction(actionType, p.name, message)
+                }
                 )
               }
               message={message}
