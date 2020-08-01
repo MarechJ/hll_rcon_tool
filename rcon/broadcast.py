@@ -67,6 +67,8 @@ def chunks(lst, n):
 
 def scrolling_votemap(rcon, winning_maps, repeat=10):
     vote_options = format_map_vote(rcon, "line", short_names=False)
+    if not vote_options:
+        return ""
     separator = '    *    '
     options = separator.join([vote_options] * repeat)
     instructions = os.getenv('VOTE_MAP_INSTRUCTIONS', 'To vote write the map number in the chat')
@@ -102,7 +104,7 @@ def join_vote_options(join_char, selection, human_name_map, maps_to_numbers):
 def format_map_vote(rcon, format_type="line", short_names=True):
     selection = get_current_selection()
     if not selection:
-        return "No votes possible"
+        return ""
     human_map = SHORT_HUMAN_MAP_NAMES if short_names else LONG_HUMAN_MAP_NAMES
     human_map_mod = NO_MOD_SHORT_HUMAN_MAP_NAMES if short_names else NO_MOD_LONG_HUMAN_MAP_NAMES
     vote_dict = numbered_maps(selection)
