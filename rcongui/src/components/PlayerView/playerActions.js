@@ -67,6 +67,7 @@ class ReasonDialog extends React.Component {
               this.setState({ reason: "" });
             }}
             color="primary"
+            disabled={reason == ""}
           >
             Confirm
           </Button>
