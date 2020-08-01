@@ -108,10 +108,6 @@ class RconSettings extends React.Component {
                 <Grid item xs={12}>
                     <Button fullWidth onClick={this.save_messages} variant="outlined">Save messages</Button>
                 </Grid>
-                </Grid>
-                <Grid item xs={12}>
-                    <Button fullWidth onClick={this.save_messages} variant="outlined">Save messages</Button>
-                </Grid>
                 <Grid item className={classes.paddingTop} justify="center" xs={12}>
                   <Typography variant="h5">
                       Blacklist player by Steam ID
