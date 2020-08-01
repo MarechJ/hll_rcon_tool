@@ -3,6 +3,7 @@ import {
     Grid, Typography, Button, TextField
 } from "@material-ui/core"
 import { range } from "lodash/util"
+import Blacklist from "./blacklist"
 import { showResponse, postData } from '../../utils/fetchUtils'
 import { toast } from "react-toastify"
 import _ from 'lodash'
@@ -19,7 +20,7 @@ class RconSettings extends React.Component {
         this.state = {
             messages: [],
             randomized: false,
-            enabled: false
+            enabled: false,
         }
 
         this.loadBroadcastsSettings = this.loadBroadcastsSettings.bind(this)
@@ -79,51 +80,58 @@ class RconSettings extends React.Component {
         const { classes } = this.props 
 
         return (
-            <Grid container >
-                <Grid container spacing={1}>
-                    <Grid item xs={12}>
-                        <h2>Advanced RCON settings</h2>
-                    </Grid>
-                    <Grid item xs={12}>
-                        <Grid container justify="space-evenly">
-                            <Grid item>
-                                <Padlock handleChange={v => this.saveBroadcastsSettings({ enabled: v })} checked={enabled} label="Auto broadcast enabled" />
-                            </Grid>
-                            <Grid item>
-                                <Padlock handleChange={v => this.saveBroadcastsSettings({ randomized: v })} checked={randomized} label="Randomized messages" />
-                            </Grid>
+            <Grid container className={classes.paper} spacing={3}>
+                <Grid item xs={12}>
+                    <h2>Advanced RCON settings</h2>
+                </Grid>
+                <Grid item xs={12}>
+                    <Grid container justify="space-evenly">
+                        <Grid item>
+                            <Padlock handleChange={v => this.saveBroadcastsSettings({ enabled: v })} checked={enabled} label="Auto broadcast enabled" />
+                        </Grid>
+                        <Grid item>
+                            <Padlock handleChange={v => this.saveBroadcastsSettings({ randomized: v })} checked={randomized} label="Randomized messages" />
                         </Grid>
                     </Grid>
-
-                    <Grid item xs={12}>
-                        <TextField
-                            fullWidth
-                            label="Auto broadcast messages"
-                            multiline
-                            rows={8}
-                            value={_.join(messages.map(m => m.replace(/\n/g, '\\n')), '\n')}
-                            onChange={(e) => this.setState({ messages: _.split(e.target.value, '\n') })}
-                            placeholder="Insert your messages here, one per line, with format: <number of seconds to display> <a message (write: \n if you want a line return)>"
-                            variant="outlined"
-                            helperText="You can use the following variables in the text (nextmap, maprotation, servername, onlineadmins, admins, owners, seniors, juniors, vips, randomvip) using the following syntax: 60 Welcome to {servername}. The next map is {nextmap}."
-                        />
-                    </Grid>
-                    <Grid item xs={12}>
-                        <Button fullWidth onClick={this.save_messages} variant="outlined">Save messages</Button>
-                    </Grid>
+                </Grid>
+                <Grid item xs={12}>
+                    <TextField
+                        fullWidth
+                        label="Auto broadcast messages"
+                        multiline
+                        rows={8}
+                        value={_.join(messages.map(m => m.replace(/\n/g, '\\n')), '\n')}
+                        onChange={(e) => this.setState({ messages: _.split(e.target.value, '\n') })}
+                        placeholder="Insert your messages here, one per line, with format: <number of seconds to display> <a message (write: \n if you want a line return)>"
+                        variant="outlined"
+                        helperText="You can use the following variables in the text (nextmap, maprotation, servername, onlineadmins, admins, owners, seniors, juniors, vips, randomvip) using the following syntax: 60 Welcome to {servername}. The next map is {nextmap}."
+                    />
+                </Grid>
+                <Grid item xs={12}>
+                    <Button fullWidth onClick={this.save_messages} variant="outlined">Save auto broadcast messages</Button>
                 </Grid>
                 <Grid container spacing={1} alignContent="center" justify="center" alignItems="center" className={classes.root}>
                     <Grid item xs={12} className={`${classes.padding} ${classes.margin}`}>
                         <TextHistoryManager classes={classes} />
                     </Grid>
                 </Grid>
-                <Grid container spacing={1} alignContent="center" justify="center" alignItems="center" className={classes.root}>
-                    <Grid item xs={4} className={`${classes.padding} ${classes.margin}`}>
-                        <Button fullWidth color="secondary" variant="outlined"  onClick={this.clearCache}>Clear application cache</Button>
-                    </Grid>
+                <Grid item className={classes.paddingTop} justify="center" xs={12}>
+                  <Typography variant="h5">
+                      Blacklist player by Steam ID
+                  </Typography>
+                </Grid>
+                <Blacklist
+                    classes={classes}
+                />
+                <Grid item className={classes.paddingTop} justify="center" xs={12}>
+                    <Typography variant="h5">
+                        More options 
+                    </Typography>
+                </Grid>
+                <Grid item xs={12} className={`${classes.padding} ${classes.margin}`} alignContent="center" justify="center" alignItems="center" className={classes.root}>
+                    <Button color="secondary" variant="outlined" onClick={this.clearCache}>Clear application cache</Button>
                 </Grid>
             </Grid>
-
         )
     }
 }
