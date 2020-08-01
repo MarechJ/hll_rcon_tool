@@ -37,7 +37,7 @@ def get_votes_status():
 
 def format_winning_map(winning_maps, display_count=2, default=''):
     if not winning_maps:
-        return f'Defaulting to: {default}'
+        return f'{default}'
     wins = winning_maps[:display_count]
     if display_count == 0:
         wins = winning_maps
