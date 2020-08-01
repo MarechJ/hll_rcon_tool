@@ -107,13 +107,13 @@ class RconSettings extends React.Component {
                         helperText="You can use the following variables in the text (nextmap, maprotation, servername, onlineadmins, admins, owners, seniors, juniors, vips, randomvip) using the following syntax: 60 Welcome to {servername}. The next map is {nextmap}."
                     />
                 </Grid>
+                <Grid item xs={12}>
+                    <Button fullWidth onClick={this.save_messages} variant="outlined">Save auto broadcast messages</Button>
+                </Grid>
                 <Grid container spacing={1} alignContent="center" justify="center" alignItems="center" className={classes.root}>
                     <Grid item xs={12} className={`${classes.padding} ${classes.margin}`}>
                         <TextHistoryManager classes={classes} />
                     </Grid>
-                </Grid>
-                <Grid item xs={12}>
-                    <Button fullWidth onClick={this.save_messages} variant="outlined">Save messages</Button>
                 </Grid>
                 <Grid item className={classes.paddingTop} justify="center" xs={12}>
                   <Typography variant="h5">
