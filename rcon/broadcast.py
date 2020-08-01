@@ -116,8 +116,8 @@ def format_map_vote(rcon, format_type="line", short_names=True):
         return '\n'.join(items)
     if format_type.startswith('by_mod'):
         categorized = categorize_maps(selection)
-        off = join_vote_options(' ', categorized['offensive'], human_map_mod, maps_to_numbers)
-        warfare = join_vote_options(' ', categorized['warfare'], human_map_mod, maps_to_numbers)
+        off = join_vote_options('  ', categorized['offensive'], human_map_mod, maps_to_numbers)
+        warfare = join_vote_options('  ', categorized['warfare'], human_map_mod, maps_to_numbers)
         if format_type == 'by_mod_line':
             return "OFFENSIVE: {} WARFARE: {}".format(off, warfare)
         if format_type == 'by_mod_vertical':
