@@ -65,7 +65,7 @@ def chunks(lst, n):
     for i in range(0, len(lst), n):
         yield lst[i:i + n]
 
-def scrolling_votemap(rcon, winning_maps, repeat=20):
+def scrolling_votemap(rcon, winning_maps, repeat=15):
     vote_options = format_map_vote(rcon, "line", short_names=False)
     separator = '    *    '
     options = separator.join([vote_options] * repeat)
