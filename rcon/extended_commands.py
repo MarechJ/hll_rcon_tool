@@ -400,7 +400,12 @@ class Rcon(ServerCtl):
 
     @ttl_cache(60 * 5)
     def get_map_rotation(self):
-        return super().get_map_rotation()
+        l = super().get_map_rotation()
+
+        for map_ in l:
+            if not self.map_regexp.match(map_):
+                raise CommandFailedError("Server return wrong data")
+        return l
 
     def do_add_map_to_rotation(self, map_name):
         return self.do_add_maps_to_rotation([map_name])
@@ -450,7 +455,7 @@ class Rcon(ServerCtl):
             
             
             if len(current) == 1:
-                logger.debug("Current rotation is a single map")
+                logger.info("Current rotation is a single map")
                 for idx, m in enumerate(rotation):
                     if m not in current:
                         self.do_add_map_to_rotation(m)
