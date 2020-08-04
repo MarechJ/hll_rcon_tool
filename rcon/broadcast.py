@@ -94,10 +94,12 @@ def run():
             random.shuffle(msgs)
 
         for time_sec, msg in msgs:
+            start_time = time.time_ns()
             formatted = format_message(ctl, msg)
             logger.debug("Broadcasting for %s seconds: %s", time_sec, formatted)
             ctl.set_broadcast(formatted) 
-            time.sleep(int(time_sec)) 
+            end_time = time.time_ns()
+            time.sleep(int(time_sec) - (end_time - start_time) / (10 ** 9) ) 
 
 
 
