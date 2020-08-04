@@ -50,6 +50,8 @@ class PlayerSteamID(Base):
                                     uselist=True, order_by="desc(PlayersAction.time)")
     blacklist = relationship("BlacklistedPlayer", backref="steamid",
                              uselist=False)
+    ban_log = relationship("PlayerBanLog", backref="steamid",
+                           uselist=False)
     flags = relationship("PlayerFlag", backref="steamid")
 
     def get_penalty_count(self):
@@ -95,6 +97,7 @@ class PlayerSteamID(Base):
             ],
             penalty_count=self.get_penalty_count(),
             blacklist=self.blacklist.to_dict() if self.blacklist else None,
+            ban_log=self.ban_log.to_dict() if self.ban_log else None,
             flags=[f.to_dict() for f in (self.flags or [])]
         )
 
@@ -195,6 +198,27 @@ class BlacklistedPlayer(Base):
             is_blacklisted=self.is_blacklisted,
             reason=self.reason
         )
+
+
+class PlayerBanLog(Base):
+    __tablename__ = 'player_ban_log'
+
+    id = Column(Integer, primary_key=True)
+    playersteamid_id = Column(
+        Integer, ForeignKey('steam_id_64.id'),
+        nullable=False, index=True,
+        unique=True
+    )
+    ban_log = Column(String, unique=True)
+    created = Column(DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return dict(
+            steam_id_64=self.steamid.steam_id_64,
+            ban_log=self.ban_log,
+            created=self.created
+        )
+
 
 
 class PlayersAction(Base):

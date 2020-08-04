@@ -281,7 +281,15 @@ const FilterPlayer = ({classes, constPlayersHistory, pageSize, total, page, setP
                             blacklisted={player.blacklisted}
                             flags={List(player.flags.map(v => Map(v)))}
                             onflag={() => setDoFlag(player)}
-                            onBlacklist={() => setDoConfirmPlayer({ player: player.steam_id_64, actionType: "blacklist" })}
+                            onBlacklist={
+                              () => setDoConfirmPlayer(
+                                {
+                                  player: player.steam_id_64,
+                                  actionType: "blacklist",
+                                  name: player.names ? player.names[player.names.length - 1] : null
+                                }
+                              )
+                            }
                             onUnBlacklist={() => onUnBlacklist(player.steam_id_64)}
                             onDeleteFlag={onDeleteFlag}
                         />
@@ -294,8 +302,8 @@ const FilterPlayer = ({classes, constPlayersHistory, pageSize, total, page, setP
             <ReasonDialog
                 open={doConfirmPlayer}
                 handleClose={() => setDoConfirmPlayer(false)}
-                handleConfirm={(actionType, steamId64, reason) => {
-                    onBlacklist(steamId64, reason)
+                handleConfirm={(actionType, steamId64, reason, name) => {
+                    onBlacklist(steamId64, reason, name)
                     setDoConfirmPlayer(false);
                 }}
             />
@@ -394,10 +402,11 @@ class PlayersHistory extends React.Component {
             .catch(error => toast.error("Unable to connect to API " + error));
     }
 
-    blacklistPlayer(steamId64, reason) {
+    blacklistPlayer(steamId64, reason, name) {
             postData(`${process.env.REACT_APP_API_URL}blacklist_player`, {
                 steam_id_64: steamId64,
-                reason: reason
+                reason: reason,
+                name: name
             })
                 .then(response =>
                     showResponse(

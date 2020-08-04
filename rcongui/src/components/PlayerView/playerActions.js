@@ -84,7 +84,7 @@ class ReasonDialog extends React.Component {
               if (saveMessage) {
                 textHistory.saveText(reason)
               }
-              handleConfirm(open.actionType, open.player, reason);
+              handleConfirm(open.actionType, open.player, reason, open.name);
               this.setState({ reason: "" });
             }}
             color="primary"

@@ -9,7 +9,7 @@ import { toast } from "react-toastify"
 import _ from 'lodash'
 import LinearProgress from "@material-ui/core/LinearProgress"
 import Padlock from '../../components/SettingsView/padlock'
-import WarningIcon from '@material-ui/icons/Warning';
+import WarningIcon from '@material-ui/icons/Warning'
 import TextHistoryManager from './textHistoryManager'
 import TextHistory from '../textHistory'
 
@@ -45,6 +45,15 @@ class RconSettings extends React.Component {
         )
             .then((res) => showResponse(res, "set_auto_broadcasts_config", true))
             .then(res => !res.failed && this.setState(data))
+    }
+
+    async blacklistPlayer(steamId, name, reason) {
+        return postData(`${process.env.REACT_APP_API_URL}blacklist_player`, {
+          "steam_id_64": steamId,
+          "name": name,
+          "reason": reason,
+        })
+        .then((res) => showResponse(res, "blacklist_player", true))
     }
 
     async clearCache() {
@@ -122,6 +131,7 @@ class RconSettings extends React.Component {
                 </Grid>
                 <Blacklist
                     classes={classes}
+                    submitBlacklistPlayer={this.blacklistPlayer}
                 />
                 <Grid item className={classes.paddingTop} justify="center" xs={12}>
                     <Typography variant="h5">

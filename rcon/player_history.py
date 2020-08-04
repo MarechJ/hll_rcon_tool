@@ -7,7 +7,7 @@ import math
 
 from rcon.models import (
     init_db, enter_session, PlayerName, 
-    PlayerSteamID, PlayerSession, BlacklistedPlayer, 
+    PlayerSteamID, PlayerSession, BlacklistedPlayer, PlayerBanLog,
     PlayersAction, PlayerFlag
 )
 from rcon.game_logs import on_connected, on_disconnected
@@ -207,6 +207,22 @@ def save_end_player_session(steam_id_64, timestamp_ms):
         sess.commit()
 
 
+def add_ban_log(steam_id_64, ban_log):
+    with enter_session() as sess:
+        player = get_player(sess, steam_id_64)
+        if not player.ban_log:
+            sess.add(PlayerBanLog(steamid=steam_id_64, ban_log=ban_entry))
+        else:
+            # for some reason there was already an entry in the playerbanlog, just update it
+            player.ban_log.ban_log = ban_log
+        sess.commit()
+
+
+def ban_and_add_log(rcon, steam_id_64, name, reason):
+    _, ban_log = rcon.do_perma_ban_and_return_ban_log(name, reason, by='BLACKLIST')
+    add_ban_log(steam_id_64, ban_log)
+
+
 def ban_if_blacklisted(rcon, steam_id_64, name):
     with enter_session() as sess:
         player = get_player(sess, steam_id_64)
@@ -217,13 +233,18 @@ def ban_if_blacklisted(rcon, steam_id_64, name):
             return
 
         if player.blacklist and player.blacklist.is_blacklisted:
-            logger.warning("Player %s was banned due blacklist, reason: %s", str(
+            logger.warning("Player %s is blacklisted and has been banned, reason: %s", str(
                 player), player.blacklist.reason)
-            rcon.do_perma_ban(name, player.blacklist.reason)
+            #try:
+            ban_and_add_log(rcon, steam_id_64, name, player.blacklist.reason)
             # TODO save author of blacklist
             safe_save_player_action(
                 rcon=rcon, player_name=player, action_type="PERMABAN", reason=player.blacklist.reason, by='BLACKLIST'
             )
+            sess.commit()
+            #except:
+            #    logger.warning("Something went wrong banning player %s", str(player))
+
 
 
 def add_flag_to_player(steam_id_64, flag, comment=None, player_name=None):
@@ -254,7 +275,7 @@ def remove_flag(flag_id):
     return player, flag
     
 
-def add_player_to_blacklist(steam_id_64, reason, name=None):
+def add_player_to_blacklist(steam_id_64, reason, name=None, rcon=None, ban_if_in_game=False):
     # TODO save author of blacklist
     with enter_session() as sess:
         player = _get_set_player(sess, steam_id_64=steam_id_64, player_name=name)
@@ -264,7 +285,7 @@ def add_player_to_blacklist(steam_id_64, reason, name=None):
 
         if player.blacklist:
             if player.blacklist.is_blacklisted:
-                logger.warning("Player %s was already blacklisted with %s, updating reason to %s", str(
+                logger.info("Player %s was already blacklisted with %s, updating reason to %s", str(
                     player), player.blacklist.reason, reason)
             player.blacklist.is_blacklisted = True
             player.blacklist.reason = reason
@@ -275,10 +296,16 @@ def add_player_to_blacklist(steam_id_64, reason, name=None):
                     steamid=player, is_blacklisted=True, reason=reason)
             )
 
+        if rcon and name and ban_if_in_game:
+            if name in [p['name'] for p in rcon.get_players()]:
+                info = rcon.get_player_info(name)
+                if info['steam_id_64'] == steam_id_64:
+                    ban_and_add_log(rcon, info['steam_id_64'], name, reason)
+
         sess.commit()
 
 
-def remove_player_from_blacklist(steam_id_64):
+def remove_player_from_blacklist(steam_id_64, rcon=None):
     with enter_session() as sess:
         player = get_player(sess, steam_id_64)
         if not player:
@@ -289,7 +316,29 @@ def remove_player_from_blacklist(steam_id_64):
             raise CommandFailedError(f"Player {player} was not blacklisted")
 
         player.blacklist.is_blacklisted = False
+        if player.ban_log and player.ban_log.ban_log:
+            if rcon and player.ban_log.ban_log in rcon.get_perma_bans():
+                rcon.do_remove_perma_ban(player.ban_log.ban_log, 'BLACKLIST_REMOVE')
+            player.ban_log.ban_log = ""
+
         sess.commit()
+
+
+def remove_player_from_blacklist_using_ban_log(ban_log):
+    with enter_session() as sess:
+        player = sess.query(
+          PlayerSteamID
+        ).join(
+          PlayerBanLog
+        ).filter(
+          PlayerBanLog.ban_log == ban_log
+        ).one_or_none()
+
+        if not player:
+            logger.warning("Cannot find a blacklist entry with ban log %s", ban_log)
+            return
+
+        remove_player_from_blacklist(player.steam_id_64)
 
 
 def inject_steam_id_64(func):

@@ -183,9 +183,12 @@ def blacklist_player(request):
     data = _get_data(request)
     res = {}
     try:
+        ctl = RecordedRcon(
+            SERVER_INFO
+        )
         send_to_discord_audit("Blacklist '{}' for '{}'".format(data['steam_id_64'], data['reason']), get_client_ip(request))
         name = data['name'] if 'name' in data else None
-        add_player_to_blacklist(data['steam_id_64'], data['reason'], name)
+        add_player_to_blacklist(data['steam_id_64'], data['reason'], name, ctl, True)
         failed = False
     except:
         logger.exception("Unable to blacklist player")
@@ -205,8 +208,11 @@ def unblacklist_player(request):
     data = _get_data(request)
     res = {}
     try:
+        ctl = RecordedRcon(
+            SERVER_INFO
+        )
         send_to_discord_audit("Unblacklist '{}' for ''".format(data['steam_id_64']), get_client_ip(request))
-        remove_player_from_blacklist(data['steam_id_64'])
+        remove_player_from_blacklist(data['steam_id_64'], ctl)
         failed = False
     except:
         logger.exception("Unable to unblacklist player")

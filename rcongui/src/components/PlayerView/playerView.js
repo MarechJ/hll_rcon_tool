@@ -84,6 +84,7 @@ class PlayerView extends Component {
 
   unBan(ban) {
     postData(`${process.env.REACT_APP_API_URL}do_remove_${ban.type}_ban`, {
+      player: ban.player,
       ban_log: ban.raw
     })
       .then(response =>
