@@ -77,7 +77,7 @@ def event_loop(replay=False):
             for action_hook, funcs in HOOKS.items():
                 if log['action'].startswith(action_hook):
                     hooks += funcs
-
+            
             for hook in hooks:
                 try:
                     logger.info("Triggered %s.%s on %s", hook.__module__, hook.__name__, log['raw'])

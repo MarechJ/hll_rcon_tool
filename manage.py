@@ -56,4 +56,6 @@ if __name__ == "__main__":
     finally:
         if os.getenv("IS_OPTIONNAL_SERVER") == "yes":
             exit(0)
+        else:
+            exit(1)
         
