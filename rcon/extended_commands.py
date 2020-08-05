@@ -389,7 +389,6 @@ class Rcon(ServerCtl):
         with invalidates(Rcon.get_players, Rcon.get_perma_bans):
             return super().do_perma_ban(player, reason)
 
-
     @ttl_cache(60 * 5)
     def get_map_rotation(self):
         return super().get_map_rotation()
@@ -462,6 +461,16 @@ class Rcon(ServerCtl):
             self.do_add_maps_to_rotation(rotation)
 
         return [first] + rotation
+
+    def do_perma_ban_and_return_ban_log(self, player, reason):
+        with invalidates(Rcon.get_players, Rcon.get_perma_bans):
+            logger.info("Doing perma ban and storing ban log")
+            res = super().do_perma_ban(player, reason)
+            bans = self.get_perma_bans()
+            ban_entry = bans[-1]
+            if not ban_entry.startswith(player):
+                raise Exception("Last ban found was not the banned player")
+            return res, ban_entry
 
     @ttl_cache(ttl=60 * 2)
     def get_scoreboard(self, minutes=180, sort='ratio'):

@@ -1,6 +1,6 @@
 from logging import getLogger
 
-from rcon.player_history import safe_save_player_action, add_player_to_blacklist, 
+from rcon.player_history import safe_save_player_action, add_player_to_blacklist, \
                                 get_profiles, add_ban_log, remove_player_from_blacklist_using_ban_log
 from rcon.extended_commands import Rcon, STEAMID, NAME, invalidates
 from rcon.cache_utils import ttl_cache
@@ -35,7 +35,7 @@ class RecordedRcon(Rcon):
         return res
 
     def do_perma_ban(self, player, reason, by):
-        res, ban_entry = self.do_perma_ban_and_return_ban_log(player, reason, by)
+        res, ban_entry = self.do_perma_ban_and_return_ban_log(player, reason)
         safe_save_player_action(
             rcon=self, player_name=player, action_type="PERMABAN", reason=reason, by=by
         )
@@ -47,21 +47,13 @@ class RecordedRcon(Rcon):
             logger.exception("Unable to blacklist")
         return res
 
-    def do_perma_ban_and_return_ban_log(self, player, reason, by):
-        logger.info("Doing perma ban and storing ban log")
-        res = super().do_perma_ban(player, reason)
-        bans = self.get_perma_bans()
-        ban_entry = bans[-1]
-        if not ban_entry.startswith(player):
-            raise Exception("Last ban found was not the banned player")
-        return res, ban_entry
-
-    def do_remove_perma_ban(self, ban_log, by):
+    def do_remove_perma_ban(self, ban_log, by, unblacklist=True):
         res = super().do_remove_perma_ban(ban_log)
-        try:
-            remove_player_from_blacklist_using_ban_log(ban_log)
-        except:
-            logger.exception("Unable to unblacklist player")
+        if unblacklist:
+            try:
+                remove_player_from_blacklist_using_ban_log(ban_log)
+            except:
+                logger.exception("Unable to unblacklist player")
         return res
 
     def do_switch_player_on_death(self, player, by):

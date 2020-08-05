@@ -22,6 +22,8 @@ from rcon.player_history import (
     get_player_profile,
     add_flag_to_player,
     remove_flag,
+    banned_unblacklisted_players,
+    unban_unblacklisted_players as pv_unban_unblacklisted_players
 )
 from rcon.user_config import AutoBroadcasts, InvalidConfigurationError
 from rcon.cache_utils import RedisCached, get_redis_pool
@@ -80,6 +82,42 @@ def get_auto_broadcasts_config(request):
         "arguments": None,
         "failed": failed
     })
+
+@csrf_exempt
+def get_banned_unblacklisted_players(request):
+    failed = False
+    result = None
+
+    ctl = RecordedRcon(
+        SERVER_INFO
+    )
+
+    result = banned_unblacklisted_players(ctl)
+
+    return JsonResponse({
+        "result": result,
+        "command": "get_banned_unblacklisted_players",
+        "arguments": None,
+        "failed": failed
+    })
+
+@csrf_exempt
+def unban_unblacklisted_players(request):
+    failed = False
+
+    ctl = RecordedRcon(
+        SERVER_INFO
+    )
+
+    result = pv_unban_unblacklisted_players(ctl)
+
+    return JsonResponse({
+        "result": result,
+        "command": "unban_unblacklisted_players",
+        "arguments": None,
+        "failed": failed
+    })
+
 
 @csrf_exempt
 def set_auto_broadcasts_config(request):
@@ -379,7 +417,9 @@ commands = [
     ("set_auto_broadcasts_config", set_auto_broadcasts_config),
     ("clear_cache", clear_cache),
     ("flag_player", flag_player),
-    ("unflag_player", unflag_player)
+    ("unflag_player", unflag_player),
+    ("get_banned_unblacklisted_players", get_banned_unblacklisted_players),
+    ("unban_unblacklisted_players", unban_unblacklisted_players)
 ]
 
 # Dynamically register all the methods from ServerCtl

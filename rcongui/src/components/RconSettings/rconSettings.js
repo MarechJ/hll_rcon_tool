@@ -1,6 +1,6 @@
 import React from 'react'
 import {
-    Grid, Typography, Button, TextField
+    Grid, Typography, Button, TextField, Tooltip
 } from "@material-ui/core"
 import { range } from "lodash/util"
 import Blacklist from "./blacklist"
@@ -21,11 +21,14 @@ class RconSettings extends React.Component {
             messages: [],
             randomized: false,
             enabled: false,
+            banned_unblacklisted_players: []
         }
 
         this.loadBroadcastsSettings = this.loadBroadcastsSettings.bind(this)
+        this.getBannedUnblacklistedPlayers = this.getBannedUnblacklistedPlayers.bind(this) 
         this.validate_messages = this.validate_messages.bind(this)
         this.save_messages = this.save_messages.bind(this)
+        this.unbanUnblacklistedPlayers = this.unbanUnblacklistedPlayers.bind(this)
         this.clearCache = this.clearCache.bind(this)
     }
 
@@ -36,6 +39,14 @@ class RconSettings extends React.Component {
                 messages: data.result.messages,
                 randomized: data.result.randomized,
                 enabled: data.result.enabled
+            }))
+    }
+
+    async getBannedUnblacklistedPlayers() {
+        return fetch(`${process.env.REACT_APP_API_URL}get_banned_unblacklisted_players`)
+            .then((res) => showResponse(res, "get_banned_unblacklisted_players", false))
+            .then(data => !data.failed && this.setState({
+                banned_unblacklisted_players: data.result
             }))
     }
 
@@ -54,6 +65,12 @@ class RconSettings extends React.Component {
           "reason": reason,
         })
         .then((res) => showResponse(res, "blacklist_player", true))
+    }
+
+    async unbanUnblacklistedPlayers() {
+        return postData(`${process.env.REACT_APP_API_URL}unban_unblacklisted_players`, {})
+            .then((res) => showResponse(res, "unban_unblacklisted_players", true))
+            .then(res => !res.failed && this.getBannedUnblacklistedPlayers())
     }
 
     async clearCache() {
@@ -82,10 +99,11 @@ class RconSettings extends React.Component {
 
     componentDidMount() {
         this.loadBroadcastsSettings()
+        this.getBannedUnblacklistedPlayers()
     }
 
     render() {
-        const { messages, enabled, randomized } = this.state
+        const { messages, enabled, randomized, banned_unblacklisted_players } = this.state
         const { classes } = this.props 
 
         return (
@@ -138,7 +156,12 @@ class RconSettings extends React.Component {
                         More options 
                     </Typography>
                 </Grid>
-                <Grid item xs={12} className={`${classes.padding} ${classes.margin}`} alignContent="center" justify="center" alignItems="center" className={classes.root}>
+                <Tooltip fullWidth title="This button is active if the server's ban list contains any players who were previously blacklisted. If a player gets unblacklisted an attempt is made to automatically unban the player, but in the case of multiple servers this has to be manually triggered." arrow>
+                    <Grid item xs={6} className={`${classes.padding} ${classes.margin}`} alignContent="center" justify="center" alignItems="center" className={classes.root}>
+                        <Button color="secondary" variant="outlined" disabled={banned_unblacklisted_players.length == 0} onClick={this.unbanUnblacklistedPlayers}>Unban previously blacklisted players ({banned_unblacklisted_players.length})</Button>
+                    </Grid>
+                </Tooltip>
+                <Grid item xs={6} className={`${classes.padding} ${classes.margin}`} alignContent="center" justify="center" alignItems="center" className={classes.root}>
                     <Button color="secondary" variant="outlined" onClick={this.clearCache}>Clear application cache</Button>
                 </Grid>
             </Grid>

@@ -64,22 +64,22 @@ class Blacklist extends React.Component {
               onChange={(e) => this.setState({ name: e.target.value })}
             />
         </Grid>
-        <Grid item xs={2} spacing={1} className={`${classes.padding} ${classes.margin}`} justify="center" alignContent="center">
             <Tooltip fullWidth title="Blacklisted players will instantly be banned when entering the server." arrow>
-                <Button 
-                  color="secondary"
-                  variant="outlined"
-                  disabled={!steam_id || !reason }
-                  onClick={
-                    () => { 
-                      submitBlacklistPlayer(steam_id, name, reason)
-                        .then((res) => !res.failed && this.setState({ steam_id: "", name: "", reason: "" }))
-                    } 
-                  }>
-                    Blacklist
-                </Button>
-            </Tooltip>
-        </Grid>
+                <Grid item xs={2} spacing={1} className={`${classes.padding} ${classes.margin}`} justify="center" alignContent="center">
+                    <Button 
+                       color="secondary"
+                       variant="outlined"
+                       disabled={!steam_id || !reason }
+                       onClick={
+                         () => { 
+                           submitBlacklistPlayer(steam_id, name, reason)
+                             .then((res) => !res.failed && this.setState({ steam_id: "", name: "", reason: "" }))
+                         } 
+                       }>
+                         Blacklist
+                    </Button>
+              </Grid>
+          </Tooltip>
       </Grid>
     )
   }
