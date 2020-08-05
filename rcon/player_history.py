@@ -308,7 +308,7 @@ def _find_and_remove_perma_bans_by_ban_log(rcon, ban_logs, sess):
     perma_bans = rcon.get_perma_bans()
     for ban_log_entry in ban_logs:
         if ban_log_entry.ban_log:
-            if rcon and ban_log_entry.ban_log in perma_bans:
+            if ban_log_entry.ban_log in perma_bans:
                 rcon.do_remove_perma_ban(ban_log_entry.ban_log, 'BLACKLIST_REMOVE', False)
                 sess.delete(ban_log_entry)
                 counter += 1
@@ -326,7 +326,9 @@ def remove_player_from_blacklist(steam_id_64, rcon=None):
             raise CommandFailedError(f"Player {player} was not blacklisted")
 
         player.blacklist.is_blacklisted = False
-        _find_and_remove_perma_bans_by_ban_log(rcon, player.ban_logs, sess)
+
+        if rcon:
+            _find_and_remove_perma_bans_by_ban_log(rcon, player.ban_logs, sess)
 
         sess.commit()
 
