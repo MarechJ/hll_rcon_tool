@@ -464,12 +464,17 @@ class Rcon(ServerCtl):
 
     def do_perma_ban_and_return_ban_log(self, player, reason):
         with invalidates(Rcon.get_players, Rcon.get_perma_bans):
-            logger.info("Doing perma ban and storing ban log")
-            res = super().do_perma_ban(player, reason)
-            bans = self.get_perma_bans()
-            ban_entry = bans[-1]
+            try:
+                logger.info("Banning %s for reason %s and storing the ban log", player, reason)
+                res = super().do_perma_ban(player, reason)
+                bans = self.get_perma_bans()
+                ban_entry = bans[-1]
+            except HLLServerError as err:
+                logger.exception(err)
+                return {}
             if not ban_entry.startswith(player):
-                raise Exception("Last ban found was not the banned player")
+                logger.exception("Last ban entry found was %s, which does not start with banned player name %s", ban_entry, player)
+                return {}
             return res, ban_entry
 
     @ttl_cache(ttl=60 * 2)

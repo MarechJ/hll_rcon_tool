@@ -24,6 +24,10 @@ class Blacklist extends React.Component {
     this.setState({ reason: value });
   }
 
+  reset() {
+    this.setState({ steam_id: "", name: "", reason: "" })
+  }
+
   render() {
     const { steam_id, name, reason, saveMessage } = this.state
     const { classes, submitBlacklistPlayer } = this.props 
@@ -55,31 +59,32 @@ class Blacklist extends React.Component {
           />
         </Grid>
         <Grid item xs={3} spacing={1}>
-            <TextField
-              id="name"
-              label="Player name"
-              helperText="Optional"
-              value={name}
-              fullWidth
-              onChange={(e) => this.setState({ name: e.target.value })}
-            />
+          <TextField
+            id="name"
+            label="Player name"
+            helperText="Optional"
+            value={name}
+            fullWidth
+            onChange={(e) => this.setState({ name: e.target.value })}
+          />
         </Grid>
-            <Tooltip fullWidth title="Blacklisted players will instantly be banned when entering the server." arrow>
-                <Grid item xs={2} spacing={1} className={`${classes.padding} ${classes.margin}`} justify="center" alignContent="center">
-                    <Button 
-                       color="secondary"
-                       variant="outlined"
-                       disabled={!steam_id || !reason }
-                       onClick={
-                         () => { 
-                           submitBlacklistPlayer(steam_id, name, reason)
-                             .then((res) => !res.failed && this.setState({ steam_id: "", name: "", reason: "" }))
-                         } 
-                       }>
-                         Blacklist
-                    </Button>
-              </Grid>
-          </Tooltip>
+        <Tooltip fullWidth title="Blacklisted players will instantly be banned when entering the server." arrow>
+          <Grid item xs={2} spacing={1} className={`${classes.padding} ${classes.margin}`} justify="center" alignContent="center">
+            <Button 
+               color="secondary"
+               variant="outlined"
+               disabled={!steam_id || !reason }
+               onClick={ 
+                 () => {
+                   submitBlacklistPlayer(steam_id, name, reason)
+                   this.reset()
+                 }
+               }
+            >
+                 Blacklist
+            </Button>
+          </Grid>
+        </Tooltip>
       </Grid>
     )
   }

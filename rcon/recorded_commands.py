@@ -52,8 +52,8 @@ class RecordedRcon(Rcon):
         if unblacklist:
             try:
                 remove_player_from_blacklist_using_ban_log(ban_log)
-            except:
-                logger.exception("Unable to unblacklist player")
+            except CommandFailedError as err:
+                logger.exception(err)
         return res
 
     def do_switch_player_on_death(self, player, by):
