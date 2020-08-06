@@ -238,11 +238,11 @@ def ban_if_blacklisted(rcon, steam_id_64, name):
             safe_save_player_action(
                 rcon=rcon, player_name=name, action_type="PERMABAN", reason=player.blacklist.reason, by='BLACKLIST'
             )
-            #try:
-            ban_and_add_log(rcon, steam_id_64, name, player.blacklist.reason)
-            sess.commit()
-            #except:
-            #    logger.warning("Something went wrong banning player %s", str(player))
+            try:
+                ban_and_add_log(rcon, steam_id_64, name, player.blacklist.reason)
+                sess.commit()
+            except:
+                logger.warning("Something went wrong banning player %s", str(player))
 
 
 def add_flag_to_player(steam_id_64, flag, comment=None, player_name=None):
@@ -294,11 +294,14 @@ def add_player_to_blacklist(steam_id_64, reason, name=None, rcon=None, ban_if_in
                     steamid=player, is_blacklisted=True, reason=reason)
             )
 
-        if rcon and name and ban_if_in_game:
-            if name in [p['name'] for p in rcon.get_players()]:
-                info = rcon.get_player_info(name)
-                if info['steam_id_64'] == steam_id_64:
-                    ban_and_add_log(rcon, info['steam_id_64'], name, reason)
+        try:
+            if rcon and name and ban_if_in_game:
+                if name in [p['name'] for p in rcon.get_players()]:
+                    info = rcon.get_player_info(name)
+                    if info['steam_id_64'] == steam_id_64:
+                        ban_and_add_log(rcon, info['steam_id_64'], name, reason)
+        except:
+                logger.warning("Something went wrong banning player with steam id %s", steam_id_64)
 
         sess.commit()
 
@@ -338,13 +341,12 @@ def remove_player_from_blacklist_using_ban_log(ban_log):
         players = sess.query(
           PlayerSteamID
         ).join(
-          PlayerBanLog
+          PlayerSteamID.ban_logs
         ).filter(
           PlayerBanLog.ban_log == ban_log
         ).all()
 
         if not players:
-            logger.warning("Cannot find a blacklist entry with ban log %s", ban_log)
             return
 
         for player in players:
