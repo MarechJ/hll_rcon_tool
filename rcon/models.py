@@ -209,13 +209,11 @@ class PlayerBanLog(Base):
         nullable=False, index=True
     )
     ban_log = Column(String)
-    created = Column(DateTime, default=datetime.utcnow)
 
     def to_dict(self):
         return dict(
             steam_id_64=self.steamid.steam_id_64,
-            ban_log=self.ban_log,
-            created=self.created
+            ban_log=self.ban_log
         )
 
 
