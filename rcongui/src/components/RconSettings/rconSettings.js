@@ -21,7 +21,11 @@ class RconSettings extends React.Component {
             messages: [],
             randomized: false,
             enabled: false,
-            banned_unblacklisted_players: []
+            banned_unblacklisted_players: [],
+            blacklist_player_steam_id: "",
+            blacklist_player_name: "",
+            blacklist_player_reason: "",
+            blacklist_player_save_message: false,
         }
 
         this.loadBroadcastsSettings = this.loadBroadcastsSettings.bind(this)
@@ -30,6 +34,23 @@ class RconSettings extends React.Component {
         this.save_messages = this.save_messages.bind(this)
         this.unbanUnblacklistedPlayers = this.unbanUnblacklistedPlayers.bind(this)
         this.clearCache = this.clearCache.bind(this)
+        this.handleBlacklistPlayerChange = this.handleBlacklistPlayerChange.bind(this)
+        this.blacklistPlayer = this.blacklistPlayer.bind(this)
+    }
+
+    handleBlacklistPlayerChange(steamId, name, reason, saveMessage) {
+      if (steamId !== this.state.blacklist_player_steam_id) {
+        this.setState({blacklist_player_steam_id: steamId})
+      }
+      if (name !== this.state.blacklist_player_name) {
+        this.setState({blacklist_player_name: name})
+      }
+      if (reason !== this.state.blacklist_player_reason) {
+        this.setState({blacklist_player_reason: reason})
+      }
+      if (saveMessage !== this.state.blacklist_player_save_message) {
+        this.setState({blacklist_player_save_message: saveMessage})
+      }
     }
 
     async loadBroadcastsSettings() {
@@ -65,6 +86,7 @@ class RconSettings extends React.Component {
           "reason": reason,
         })
         .then((res) => showResponse(res, "blacklist_player", true))
+        .then(() => this.handleBlacklistPlayerChange("", "", "", false))
     }
 
     async unbanUnblacklistedPlayers() {
@@ -103,7 +125,9 @@ class RconSettings extends React.Component {
     }
 
     render() {
-        const { messages, enabled, randomized, banned_unblacklisted_players } = this.state
+        const { 
+          messages, enabled, randomized, banned_unblacklisted_players,
+          blacklist_player_steam_id, blacklist_player_name, blacklist_player_reason, blacklist_player_save_message } = this.state
         const { classes } = this.props 
 
         return (
@@ -148,6 +172,11 @@ class RconSettings extends React.Component {
                   </Typography>
                 </Grid>
                 <Blacklist
+                    steam_id={blacklist_player_steam_id}
+                    name={blacklist_player_name}
+                    reason={blacklist_player_reason}
+                    save_message={blacklist_player_save_message}
+                    handleChange={this.handleBlacklistPlayerChange.bind(this)}
                     classes={classes}
                     submitBlacklistPlayer={this.blacklistPlayer}
                 />

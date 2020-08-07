@@ -9,28 +9,10 @@ class Blacklist extends React.Component {
 
   constructor(props) {
     super(props)
-    this.state = {
-      steam_id: "",
-      name: "",
-      reason: "",
-      saveMessage: true
-    }
-
-    this.onChange = this.onChange.bind(this);
-  }
-
-  onChange(e, value) {
-    e.preventDefault();
-    this.setState({ reason: value });
-  }
-
-  reset() {
-    this.setState({ steam_id: "", name: "", reason: "" })
   }
 
   render() {
-    const { steam_id, name, reason, saveMessage } = this.state
-    const { classes, submitBlacklistPlayer } = this.props 
+    const { classes, submitBlacklistPlayer, steam_id, name, reason, save_message, handleChange } = this.props 
     const textHistory = new TextHistory('punitions')
 
     return (
@@ -38,21 +20,21 @@ class Blacklist extends React.Component {
         <Grid item xs={3}>
             <TextField
               id="steam-id"
+              value={steam_id}
               label="Steam ID"
               helperText="Required"
-              value={steam_id}
               required
               fullWidth
-              onChange={(e) => this.setState({ steam_id: e.target.value })}
+              onChange={(e) => handleChange(e.target.value, this.props.name, this.props.reason, this.props.save_message)}
             />
         </Grid>
         <Grid item xs={4} spacing={1}>
           <Autocomplete
+            value={reason}
             freeSolo
             fullWidth
             options={textHistory.getTexts()}
-            inputValue={reason}
-            onInputChange={(e, value) => this.onChange(e, value)}
+            onInputChange={(e, value) => handleChange(this.props.steam_id, this.props.name, value, this.props.save_message)}
             renderInput={(params) => (
               <TextField {...params} label="Reason" helperText="A message is mandatory" />
             )}
@@ -61,11 +43,11 @@ class Blacklist extends React.Component {
         <Grid item xs={3} spacing={1}>
           <TextField
             id="name"
+            value={name}
             label="Player name"
             helperText="Optional"
-            value={name}
             fullWidth
-            onChange={(e) => this.setState({ name: e.target.value })}
+            onChange={(e) => handleChange(this.props.steam_id, e.target.value, this.props.reason, this.props.save_message)}
           />
         </Grid>
         <Tooltip fullWidth title="Blacklisted players will instantly be banned when entering the server." arrow>
@@ -77,7 +59,6 @@ class Blacklist extends React.Component {
                onClick={ 
                  () => {
                    submitBlacklistPlayer(steam_id, name, reason)
-                   this.reset()
                  }
                }
             >
