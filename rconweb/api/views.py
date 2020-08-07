@@ -25,7 +25,7 @@ from rcon.player_history import (
     banned_unblacklisted_players,
     unban_unblacklisted_players as pv_unban_unblacklisted_players
 )
-from rcon.user_config import AutoBroadcasts, InvalidConfigurationError
+from rcon.user_config import AutoBroadcasts, WelcomeMessage, InvalidConfigurationError
 from rcon.cache_utils import RedisCached, get_redis_pool
 from .discord import send_to_discord_audit
 
@@ -79,6 +79,32 @@ def get_auto_broadcasts_config(request):
     return JsonResponse({
         "result": config,
         "command": "get_auto_broadcasts_config",
+        "arguments": None,
+        "failed": failed
+    })
+
+
+@csrf_exempt
+def get_welcome_message_config(request):
+    failed = False
+    config = None
+
+    try:
+        welcome_settings = WelcomeMessage()
+        config = {
+            'on_map_change': welcome_settings.get_on_map_change(),
+            'on_interval_switch': welcome_settings.get_on_interval_switch(),
+            'on_interval_period': welcome_settings.get_on_interval_period(),
+            'on_interval_unit': welcome_settings.get_on_interval_unit(),
+            'welcome': welcome_settings.get_welcome()
+        }
+    except:
+        logger.exception("Error fetching welcome message config")
+        failed = True
+
+    return JsonResponse({
+        "result": config,
+        "command": "get_welcome_message_config",
         "arguments": None,
         "failed": failed
     })
@@ -141,6 +167,35 @@ def set_auto_broadcasts_config(request):
     return JsonResponse({
         "result": res,
         "command": "set_auto_broadcasts_config",
+        "arguments": data,
+        "failed": failed
+    })
+
+
+@csrf_exempt
+def set_welcome_message_config(request):
+    failed = False
+    res = None
+    data = _get_data(request)
+    welcome_settings = WelcomeMessage()
+    config_keys = {
+        'on_map_change': welcome_settings.set_on_map_change,
+        'on_interval_switch': welcome_settings.set_on_interval_switch,
+        'on_interval_period': welcome_settings.set_on_interval_period,
+        'on_interval_unit': welcome_settings.set_on_interval_unit,
+        'welcome': welcome_settings.set_welcome
+    }
+    try:
+        for k, v in data.items():
+            if k in config_keys:
+                config_keys[k](v)
+    except InvalidConfigurationError as e:
+        failed = True
+        res = str(e)
+
+    return JsonResponse({
+        "result": res,
+        "command": "set_welcome_message_config",
         "arguments": data,
         "failed": failed
     })
@@ -415,6 +470,8 @@ commands = [
     ("scoreboard", text_scoreboard),
     ("get_auto_broadcasts_config", get_auto_broadcasts_config),
     ("set_auto_broadcasts_config", set_auto_broadcasts_config),
+    ("get_welcome_message_config", get_welcome_message_config),
+    ("set_welcome_message_config", set_welcome_message_config),
     ("clear_cache", clear_cache),
     ("flag_player", flag_player),
     ("unflag_player", unflag_player),

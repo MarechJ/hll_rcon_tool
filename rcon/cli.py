@@ -4,7 +4,7 @@ import click
 
 from rcon.settings import SERVER_INFO
 from rcon.extended_commands import Rcon
-from rcon import game_logs, broadcast, stats_loop, auto_settings
+from rcon import game_logs, broadcast, stats_loop, welcome_message_loop, auto_settings
 from rcon.models import init_db
 from rcon.user_config import seed_default_config
 from rcon.cache_utils import RedisCached, get_redis_pool
@@ -28,6 +28,10 @@ def run_broadcast_loop():
 @cli.command(name='stats_loop')
 def run_stats_loop():
     stats_loop.run()
+
+@cli.command(name='welcome_message_loop')
+def run_broadcast_loop():
+    welcome_message_loop.run()
 
 @cli.command(name='auto_settings')
 def auto_settings_loop():

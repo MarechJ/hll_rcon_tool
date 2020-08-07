@@ -1,6 +1,6 @@
 import React from 'react'
 import {
-    Grid, Typography, Button, TextField, Tooltip
+    Grid, Typography, Button, TextField, Tooltip, Select, Checkbox, FormControlLabel
 } from "@material-ui/core"
 import { range } from "lodash/util"
 import Blacklist from "./blacklist"
@@ -21,7 +21,7 @@ class RconSettings extends React.Component {
             messages: [],
             randomized: false,
             enabled: false,
-            banned_unblacklisted_players: []
+            banned_unblacklisted_players: [],
         }
 
         this.loadBroadcastsSettings = this.loadBroadcastsSettings.bind(this)
@@ -103,13 +103,25 @@ class RconSettings extends React.Component {
     }
 
     render() {
-        const { messages, enabled, randomized, banned_unblacklisted_players } = this.state
+        const { 
+          messages,
+          enabled,
+          randomized,
+          banned_unblacklisted_players,
+          renewWelcomeMessageOnMapChange,
+          renewWelcomeMessagePeriodically,
+          renewWelcomeMessagePeriod,
+          renewWelcomeMessagePeriodUnit
+        } = this.state
         const { classes } = this.props 
 
         return (
             <Grid container className={classes.paper} spacing={3}>
                 <Grid item xs={12}>
                     <h2>Advanced RCON settings</h2>
+                </Grid>
+                <Grid item xs={12}>
+                    <Typography variant="h6">Auto broadcast messages</Typography>
                 </Grid>
                 <Grid item xs={12}>
                     <Grid container justify="space-evenly">
@@ -143,7 +155,7 @@ class RconSettings extends React.Component {
                     </Grid>
                 </Grid>
                 <Grid item className={classes.paddingTop} justify="center" xs={12}>
-                  <Typography variant="h5">
+                  <Typography variant="h6">
                       Blacklist player by Steam ID
                   </Typography>
                 </Grid>
@@ -152,13 +164,13 @@ class RconSettings extends React.Component {
                     submitBlacklistPlayer={this.blacklistPlayer}
                 />
                 <Grid item className={classes.paddingTop} justify="center" xs={12}>
-                    <Typography variant="h5">
+                    <Typography variant="h6">
                         More options 
                     </Typography>
                 </Grid>
                 <Tooltip fullWidth title="This button is active if the server's ban list contains any players who were previously blacklisted. If a player gets unblacklisted an attempt is made to automatically unban the player, but in the case of multiple servers this has to be manually triggered." arrow>
                     <Grid item xs={6} className={`${classes.padding} ${classes.margin}`} alignContent="center" justify="center" alignItems="center" className={classes.root}>
-                        <Button color="secondary" variant="outlined" disabled={banned_unblacklisted_players.length == 0} onClick={this.unbanUnblacklistedPlayers}>Unban previously blacklisted players ({banned_unblacklisted_players.length})</Button>
+                        <Button color="secondary" variant="outlined" disabled={banned_unblacklisted_players.length === 0} onClick={this.unbanUnblacklistedPlayers}>Unban previously blacklisted players ({banned_unblacklisted_players.length})</Button>
                     </Grid>
                 </Tooltip>
                 <Grid item xs={6} className={`${classes.padding} ${classes.margin}`} alignContent="center" justify="center" alignItems="center" className={classes.root}>

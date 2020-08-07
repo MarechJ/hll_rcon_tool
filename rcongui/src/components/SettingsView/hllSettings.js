@@ -1,6 +1,6 @@
 import React from "react"
 import {
-  Grid, Typography, Button
+  Grid, Typography, Button, FormControlLabel, Tooltip, Checkbox, TextField, Select, MenuItem
 } from "@material-ui/core"
 import { range } from "lodash/util"
 import { showResponse, postData } from '../../utils/fetchUtils'
@@ -75,7 +75,11 @@ class HLLSettings extends React.Component {
       adminRoles: ["owner", "senior", "junior"],
       welcomeMessage: "",
       broadcastMessage: "",
-      lockedSliders: true
+      lockedSliders: true,
+      renewWelcomeMessageOnMapChange: false,
+      renewWelcomeMessageOnIntervalSwitch: false,
+      renewWelcomeMessageOnIntervalPeriod: "",
+      renewWelcomeMessageOnIntervalUnit: "minutes",
     };
 
     this.loadVips = this.loadVips.bind(this)
@@ -89,11 +93,14 @@ class HLLSettings extends React.Component {
     this.removeMapsFromRotation = this.removeMapsFromRotation.bind(this)
     this.changeMap = this.changeMap.bind(this)
     this.toggleLockSliders = this.toggleLockSliders.bind(this)
+    this.loadWelcomeMessageSettings = this.loadWelcomeMessageSettings.bind(this)
+    this.saveWelcomeMessageSettings = this.saveWelcomeMessageSettings.bind(this)
   }
 
   componentDidMount() {
     this.loadMapRotation().then(this.loadAllMaps())
     this.loadSettings().then(this.loadAdminRoles)
+    this.loadWelcomeMessageSettings()
   }
 
   toggleLockSliders() {
@@ -111,6 +118,31 @@ class HLLSettings extends React.Component {
         queueLength: data.result.queue_length,
         vipSlots: data.result.vip_slots_num,
       }))
+  }
+
+  async loadWelcomeMessageSettings() {
+    return fetch(`${process.env.REACT_APP_API_URL}get_welcome_message_config`)
+      .then((res) => showResponse(res, "get_welcome_message_config", false))
+      .then(data => !data.failed && this.setState({
+          renewWelcomeMessageOnMapChange: data.result.on_map_change,
+          renewWelcomeMessageOnIntervalSwitch: data.result.on_interval_switch,
+          renewWelcomeMessageOnIntervalPeriod: data.result.on_interval_period,
+          renewWelcomeMessageOnIntervalUnit: data.result.on_interval_unit,
+          welcomeMessage: data.result.welcome
+      }))
+  }
+
+  async saveWelcomeMessageSettings() {
+      return postData(`${process.env.REACT_APP_API_URL}set_welcome_message_config`, {
+        'on_map_change': this.state.renewWelcomeMessageOnMapChange,
+        'on_interval_switch': this.state.renewWelcomeMessageOnIntervalSwitch,
+        'on_interval_period': this.state.renewWelcomeMessageOnIntervalPeriod,
+        'on_interval_unit': this.state.renewWelcomeMessageOnIntervalUnit,
+        'welcome': this.state.welcomeMessage
+      }
+      ).then(
+        (res) => showResponse(res, "set_welcome_message_config", true)
+      )
   }
 
   async _loadToState(command, showSuccess, stateSetter) {
@@ -181,7 +213,11 @@ class HLLSettings extends React.Component {
       availableMaps,
       welcomeMessage,
       broadcastMessage,
-      lockedSliders
+      lockedSliders,
+      renewWelcomeMessageOnMapChange,
+      renewWelcomeMessageOnIntervalSwitch,
+      renewWelcomeMessageOnIntervalPeriod,
+      renewWelcomeMessageOnIntervalUnit
     } = this.state;
     const { classes } = this.props;
 
@@ -199,13 +235,17 @@ class HLLSettings extends React.Component {
           </Grid>
         </Grid>
         <Grid item className={classes.paper} sm={6} xs={12}>
-          <ServerMessage
-            type="Welcome message"
-            classes={classes}
-            value={welcomeMessage}
-            setValue={(val) => this.setState({ welcomeMessage: val })}
-            onSave={(val) => this.setState({ welcomeMessage: val }, () => this.sendAction("set_welcome_message", { msg: val }))}
-          />
+          <Grid item xs={12}>
+            <Grid item xs={12}>
+              <ServerMessage
+                type="Welcome message"
+                classes={classes}
+                value={welcomeMessage}
+                setValue={(val) => this.setState({ welcomeMessage: val })}
+                onSave={(val) => this.setState({ welcomeMessage: val }, () => this.sendAction("set_welcome_message", { msg: val }))}
+              />
+            </Grid>
+          </Grid>
         </Grid>
         <Grid item className={classes.paper} sm={6} xs={12}>
           <ServerMessage
@@ -215,6 +255,78 @@ class HLLSettings extends React.Component {
             setValue={(val) => this.setState({ broadcastMessage: val })}
             onSave={(val) => this.setState({ broadcastMessage: val }, () => this.sendAction("set_broadcast", { msg: val }))}
           />
+        </Grid>
+        <Grid item xs={12}>
+            <Typography variant="h6">Welcome message renewal settings</Typography>
+        </Grid>
+        <Grid container xs={12}>
+          <Grid item xs={6}>
+              <FormControlLabel classes={classes} label="Renew welcome message on map change" control={
+                <Tooltip title="Useful for variables such as {nextmap}">
+                  <Checkbox
+                    checked={renewWelcomeMessageOnMapChange} 
+                    onChange={() => this.setState({renewWelcomeMessageOnMapChange: !renewWelcomeMessageOnMapChange})}
+                  /> 
+                </Tooltip>
+              } />
+          </Grid>
+          <Grid xs={6} container alignItems="center">
+            <Grid xs={8} item>
+              <FormControlLabel classes={classes} label="Renew welcome message every" control={  
+                <Tooltip title="Useful for variables such as {onlineadmins}, {randomvip} and map voting">
+                  <Checkbox
+                    checked={renewWelcomeMessageOnIntervalSwitch}
+                    onChange={
+                      () => this.setState(
+                        {
+                          renewWelcomeMessageOnIntervalSwitch: !renewWelcomeMessageOnIntervalSwitch
+                        }
+                      )
+                    }
+                  />
+                </Tooltip>
+              } />
+            </Grid>
+            <Grid xs={1}>
+              <TextField
+                value={renewWelcomeMessageOnIntervalPeriod} 
+                onChange={
+                  (e) => this.setState(
+                    {
+                      renewWelcomeMessageOnIntervalPeriod: e.target.value
+                    }
+                  )
+                }
+                fullWidth
+              />
+            </Grid>
+            <Grid xs={3}>
+              <Select
+                value={renewWelcomeMessageOnIntervalUnit} 
+                onChange={
+                  (e) => this.setState(
+                    {
+                      renewWelcomeMessageOnIntervalUnit: e.target.value
+                    }
+                  )
+                }
+                fullWidth>
+                <MenuItem value="seconds">Seconds</MenuItem>
+                <MenuItem value="minutes">Minutes</MenuItem>
+                <MenuItem value="hours">Hours</MenuItem>
+              </Select>
+            </Grid>
+          </Grid>
+          <Grid item xs={12}>
+            <Button 
+              fullWidth
+              disabled={renewWelcomeMessageOnIntervalSwitch && (renewWelcomeMessageOnIntervalPeriod === "" || renewWelcomeMessageOnIntervalPeriod === 0)}
+              variant="outlined"
+              onClick={() => this.saveWelcomeMessageSettings()}
+            >
+              Save welcome message renewal settings
+            </Button>
+          </Grid>             
         </Grid>
         <Grid item className={classes.paper} xs={12} md={6}>
           <CollapseCard title="Manage VIPs" classes={classes} onExpand={this.loadVips}>
