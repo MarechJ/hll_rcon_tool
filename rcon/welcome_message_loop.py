@@ -11,7 +11,8 @@ logger = logging.getLogger(__name__)
 
 def publish_welcome_message(rcon, welcome_func):
     welcome_message = format_message(rcon, welcome_func())
-    rcon.set_welcome_message(welcome_message)
+    if welcome_message is not None and len(welcome_message) > 0:
+        rcon.set_welcome_message(welcome_message)
 
 class OnMapChange(Thread):
     def __init__(self, rcon, welcome_func):
