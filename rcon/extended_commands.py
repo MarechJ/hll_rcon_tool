@@ -29,7 +29,7 @@ class Rcon(ServerCtl):
     player_info_regexp = re.compile(r'(.*)\(((Allies)|(Axis))/(\d+)\)')
     MAX_SERV_NAME_LEN = 1024  # I totally made up that number. Unable to test
 
-    @ttl_cache(ttl=60 * 60 * 24, cache_falsy=False)
+    @ttl_cache(ttl=60 * 60 * 2, cache_falsy=False)
     def get_player_info(self, player):
         try:
             raw = super().get_player_info(player)
@@ -41,9 +41,14 @@ class Rcon(ServerCtl):
             logger.debug("Can't get player info for %s", player)
             # logger.exception("Can't get player info for %s", player)
             return {}
+        name = name.split(": ", 1)[-1]
+        steam_id = steam_id_64.split(": ", 1)[-1]
+        if name != player:
+            logger.error("get_player_info('%s') returned for a different name: %s %s", player, name, steam_id)
+            return {}
         return {
-            NAME: name.split(": ", 1)[-1],
-            STEAMID: steam_id_64.split(": ", 1)[-1],
+            NAME: name,
+            STEAMID: steam_id
         }
 
     @ttl_cache(ttl=60 * 60 * 24)

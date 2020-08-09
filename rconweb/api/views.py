@@ -32,8 +32,6 @@ from .auth import login_required
 logger = logging.getLogger('rconweb')
 
 
-
-
 # TODO this does not work if's there a second reverse proxy on the host of docker
 # TODO Remove when user accounts are implemented
 def get_client_ip(request):
