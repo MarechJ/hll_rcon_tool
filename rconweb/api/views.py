@@ -278,7 +278,6 @@ def audit(func_name, request, arguments):
 
     try:
         if any(func_name.startswith(s) for s in dont_audit):
-            logger.debug("%s is not set for audit", func_name)
             return
         args = dict(**arguments)
         try:
