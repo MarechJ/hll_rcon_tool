@@ -55,21 +55,23 @@ class MetricCondition:
             ]),
             ('between', (50, 70), [
                 ('set_idle_autokick_time', {'minutes': 60}),
-                ('set_autobalance_threshold', {'max_diff': 1}),
+                ('set_autobalance_threshold', {'max_diff': 2}),
                 ('set_max_ping_autokick', {'max_ms': 500}),
                 ('set_team_switch_cooldown', {'minutes': 15}),
             ]),
-            ('between', (70, 95), [
+            ('between', (70, 96), [
                 ('set_idle_autokick_time', {'minutes': 20}),
-                ('set_autobalance_threshold', {'max_diff': 1}),
+                ('set_autobalance_threshold', {'max_diff': 2}),
                 ('set_max_ping_autokick', {'max_ms': 500}),
-                ('set_team_switch_cooldown', {'minutes': 15}),
+                ('set_team_switch_cooldown', {'minutes': 30}),
+                ('set_vip_slots_num', {'num': 0}),
             ]),
-            ('between', (95, 100), [
+            ('between', (96, 100), [
                 ('set_idle_autokick_time', {'minutes': 10}),
                 ('set_autobalance_threshold', {'max_diff': 0}),
                 ('set_max_ping_autokick', {'max_ms': 500}),
-                ('set_team_switch_cooldown', {'minutes': 15}),
+                ('set_team_switch_cooldown', {'minutes': 30}),
+                ('set_vip_slots_num', {'num': 1}),
             ]),
         ]
         
@@ -99,7 +101,7 @@ def run():
     while True:
         for c in conditions:
             c.apply(rcon)
-        time.sleep(60 * 5)
+        time.sleep(60 * 3)
 
 
 if __name__ == "__main__":
