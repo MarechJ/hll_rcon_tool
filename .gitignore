@@ -11,6 +11,8 @@ pw/
 *.so
 *.log.*
 .vscode/
+# vim swp files
+*.swp
 
 *.tar
 
