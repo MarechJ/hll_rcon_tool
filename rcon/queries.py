@@ -25,16 +25,15 @@ def get_set_player(sess, player_name, steam_id_64):
 
     return player
 
-def add_player_action(action_type, steamid, reason, by):
-    with enter_session() as sess:
-        sess.add(
-            PlayersAction(
-                action_type=action_type.upper(),
-                steamid=steamid,
-                reason=reason,
-                by=by
-            )
+def add_player_action(sess, action_type, steamid, reason, by):
+    sess.add(
+        PlayersAction(
+            action_type=action_type.upper(),
+            steamid=steamid,
+            reason=reason,
+            by=by
         )
+    )
 
 def save_steam_id(sess, steam_id_64):
     steamid = get_player(sess, steam_id_64)
@@ -64,7 +63,7 @@ def save_player_alias(sess, steamid, player_name):
 
 def save_player(player_name, steam_id_64):
     with enter_session() as sess:
-        steamid = _save_steam_id(sess, steam_id_64)
+        steamid = save_steam_id(sess, steam_id_64)
         save_player_alias(sess, steamid, player_name)
 
 def save_player_action(rcon, action_type, player_name, by, reason='', steam_id_64=None):
@@ -72,7 +71,7 @@ def save_player_action(rcon, action_type, player_name, by, reason='', steam_id_6
         if not steam_id_64:
             steam_id_64 = rcon.get_player_info(player_name)['steam_id_64']
         player = get_set_player(sess, player_name, steam_id_64)
-        add_player_action(action_type, player, reason, by)
+        add_player_action(sess, action_type, player, reason, by)
 
 def safe_save_player_action(rcon, action_type, player_name, by, reason=''):
     try:

@@ -23,7 +23,7 @@ def ban_if_blacklisted(rcon, steam_id_64, name):
             logger.warning("Player %s is blacklisted and has been banned, reason: %s", str(
                 player), player.blacklist.reason)
             # TODO save author of blacklist
-            add_player_action(action_type="PERMABAN", steamid=player, reason=player.blacklist.reason, by='BLACKLIST')
+            add_player_action(sess, action_type="PERMABAN", steamid=player, reason=player.blacklist.reason, by='BLACKLIST')
             try:
                 ban_and_add_log(rcon, steam_id_64, name, player.blacklist.reason)
                 sess.commit()
@@ -57,14 +57,19 @@ def add_player_to_blacklist(steam_id_64, reason, name=None):
 
 def _find_and_remove_perma_bans_by_ban_log(rcon, ban_logs, sess):
     counter = 0
-    perma_bans = rcon.get_perma_bans()
-    for ban_log_entry in ban_logs:
-        if ban_log_entry.ban_log:
-            if ban_log_entry.ban_log in perma_bans:
-                invalidates(Rcon.get_perma_bans)
-                rcon.do_remove_perma_ban(ban_log_entry.ban_log, 'BLACKLIST_REMOVE', False)
-                sess.delete(ban_log_entry)
-                counter += 1
+    try:
+        perma_bans = rcon.get_perma_bans()
+        for ban_log_entry in ban_logs:
+            if ban_log_entry.ban_log:
+                if ban_log_entry.ban_log in perma_bans:
+                    invalidates(Rcon.get_perma_bans)
+                    rcon.do_remove_perma_ban(ban_log_entry.ban_log, 'BLACKLIST_REMOVE', False)
+                    sess.delete(ban_log_entry)
+                    counter += 1
+    except HLLServerError as err:
+        logger.warning("Failed to communicate with the game server while removing ban log %s", ban_log)
+        return -1
+
     return counter
 
 
@@ -81,7 +86,9 @@ def remove_player_from_blacklist(steam_id_64, rcon=None):
         player.blacklist.is_blacklisted = False
 
         if rcon:
-            _find_and_remove_perma_bans_by_ban_log(rcon, player.ban_logs, sess)
+            res = _find_and_remove_perma_bans_by_ban_log(rcon, player.ban_logs, sess)
+            if res == -1:
+                logger.error("Unable to unban player {player}")
 
         sess.commit()
 
@@ -121,12 +128,15 @@ def _banned_unblacklisted_players(rcon, sess):
     return_list = []
     players = _get_players_who_are_not_blacklisted_but_have_ban_log(sess)
 
-    perma_bans = rcon.get_perma_bans()
-    for player in players:
-        for ban_log in [ban_log.ban_log for ban_log in player.ban_logs]:
-            if ban_log in perma_bans:
-                return_list.append(player)
-                break
+    try:
+        perma_bans = rcon.get_perma_bans()
+        for player in players:
+            for ban_log in [ban_log.ban_log for ban_log in player.ban_logs]:
+                if ban_log in perma_bans:
+                    return_list.append(player)
+                    break
+    except HLLServerError as err:
+        logger.exception("Something went wrong while retrieving the perma bans from the server")
 
     return return_list
 
@@ -156,5 +166,8 @@ def add_ban_log(steam_id_64, ban_log):
 
 
 def ban_and_add_log(rcon, steam_id_64, name, reason):
-    _, ban_log = rcon.do_perma_ban_and_return_ban_log(name, reason)
-    add_ban_log(steam_id_64, ban_log)
+    try:
+        _, ban_log = rcon.do_perma_ban_and_return_ban_log(name, reason)
+        add_ban_log(steam_id_64, ban_log)
+    except HLLServerError as err:
+        logger.exception("Something went wrong trying to ban player with steam id {steam_id_64}, name {name} and reason {reason}")
