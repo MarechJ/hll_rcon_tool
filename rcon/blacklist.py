@@ -88,7 +88,7 @@ def remove_player_from_blacklist(steam_id_64, rcon=None):
         if rcon:
             res = _find_and_remove_perma_bans_by_ban_log(rcon, player.ban_logs, sess)
             if res == -1:
-                logger.error("Unable to unban player {player}")
+                logger.error("Unable to unban player %s", str(player))
 
         sess.commit()
 
@@ -170,4 +170,4 @@ def ban_and_add_log(rcon, steam_id_64, name, reason):
         _, ban_log = rcon.do_perma_ban_and_return_ban_log(name, reason)
         add_ban_log(steam_id_64, ban_log)
     except HLLServerError as err:
-        logger.exception("Something went wrong trying to ban player with steam id {steam_id_64}, name {name} and reason {reason}")
+        logger.exception("Something went wrong trying to ban player with steam id %s, name %s and reason %s", str(steam_id_64), name, reason)
