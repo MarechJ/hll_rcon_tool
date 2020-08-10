@@ -133,16 +133,16 @@ class HLLSettings extends React.Component {
   }
 
   async saveWelcomeMessageSettings() {
-      return postData(`${process.env.REACT_APP_API_URL}set_welcome_message_config`, {
-        'on_map_change': this.state.renewWelcomeMessageOnMapChange,
-        'on_interval_switch': this.state.renewWelcomeMessageOnIntervalSwitch,
-        'on_interval_period': this.state.renewWelcomeMessageOnIntervalPeriod,
-        'on_interval_unit': this.state.renewWelcomeMessageOnIntervalUnit,
-        'welcome': this.state.welcomeMessage
-      }
-      ).then(
-        (res) => showResponse(res, "set_welcome_message_config", true)
-      )
+    return postData(`${process.env.REACT_APP_API_URL}set_welcome_message_config`, {
+      'on_map_change': this.state.renewWelcomeMessageOnMapChange,
+      'on_interval_switch': this.state.renewWelcomeMessageOnIntervalSwitch,
+      'on_interval_period': this.state.renewWelcomeMessageOnIntervalPeriod,
+      'on_interval_unit': this.state.renewWelcomeMessageOnIntervalUnit,
+      'welcome': this.state.welcomeMessage
+    }
+    ).then(
+      (res) => showResponse(res, "set_welcome_message_config", true)
+    )
   }
 
   async _loadToState(command, showSuccess, stateSetter) {
@@ -242,7 +242,14 @@ class HLLSettings extends React.Component {
                 classes={classes}
                 value={welcomeMessage}
                 setValue={(val) => this.setState({ welcomeMessage: val })}
-                onSave={(val) => this.setState({ welcomeMessage: val }, () => this.sendAction("set_welcome_message", { msg: val }))}
+                onSave={
+                  (val) => this.setState(
+                    { 
+                      welcomeMessage: val 
+                    }, 
+                    () => this.sendAction("set_welcome_message", { msg: val }).then(this.saveWelcomeMessageSettings)
+                  )
+                }
               />
             </Grid>
           </Grid>
@@ -298,6 +305,7 @@ class HLLSettings extends React.Component {
                   )
                 }
                 fullWidth
+                disabled={!renewWelcomeMessageOnIntervalSwitch}
               />
             </Grid>
             <Grid xs={3}>
@@ -310,6 +318,7 @@ class HLLSettings extends React.Component {
                     }
                   )
                 }
+                disabled={!renewWelcomeMessageOnIntervalSwitch}
                 fullWidth>
                 <MenuItem value="seconds">Seconds</MenuItem>
                 <MenuItem value="minutes">Minutes</MenuItem>

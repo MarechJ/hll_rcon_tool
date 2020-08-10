@@ -69,9 +69,13 @@ class WelcomeMessage:
         return get_user_config(self.ON_INTERVAL_PERIOD)
 
     def set_on_interval_period(self, on_interval_period):
-        if not int(on_interval_period) > 0:
-            raise InvalidConfigurationError("On interval period must be an int bigger than 0")
-        set_user_config(self.ON_INTERVAL_PERIOD, int(on_interval_period))
+        if on_interval_period == "":
+            on_interval_period = 0
+        try:
+            on_interval_period = int(on_interval_period)
+        except ValueError as err:
+            raise InvalidConfigurationError("On interval period must be convertable to int")
+        set_user_config(self.ON_INTERVAL_PERIOD, on_interval_period)
 
     def get_on_interval_unit(self):
         return get_user_config(self.ON_INTERVAL_UNIT)
@@ -79,6 +83,7 @@ class WelcomeMessage:
     def set_on_interval_unit(self, on_interval_unit):
         if not on_interval_unit in ["seconds", "minutes", "hours"]:
             raise InvalidConfigurationError("On interval unit must be seconds, minutes or hours")
+        set_user_config(self.ON_INTERVAL_UNIT, on_interval_unit)
 
     def get_welcome(self):
         return get_user_config(self.WELCOME_MESSAGE)
