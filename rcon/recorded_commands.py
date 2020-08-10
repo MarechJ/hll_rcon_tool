@@ -1,7 +1,7 @@
 from logging import getLogger
 
-from rcon.player_history import safe_save_player_action, add_player_to_blacklist, \
-                                get_profiles, add_ban_log, remove_player_from_blacklist_using_ban_log
+from rcon.queries import safe_save_player_action, get_profiles
+from rcon.blacklist import add_player_to_blacklist, remove_player_from_blacklist_using_ban_log, add_ban_log
 from rcon.extended_commands import Rcon, STEAMID, NAME, invalidates
 from rcon.cache_utils import ttl_cache
 from rcon.commands import ServerCtl
