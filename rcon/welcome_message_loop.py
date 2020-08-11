@@ -20,8 +20,8 @@ class OnMapChange(Thread):
     def __init__(self, rcon, welcome_func):
         super().__init__()
         self.rcon = rcon
-        self.running = False
         self.started = False
+        self.running = False
         self.welcome_func = welcome_func
 
     def run(self):
@@ -31,7 +31,9 @@ class OnMapChange(Thread):
         sleep_time = 10
         while True:
             if not self.running:
+                logger.debug("OnMapChange thread was started before but is currently disabled")
                 time.sleep(10)
+                continue
             start_time = time.time_ns()
             try:
                 current_map = self.rcon.get_map()
@@ -44,7 +46,7 @@ class OnMapChange(Thread):
                 logger.warning("Failed to set welcome message on map change, will retry in %s seconds", sleep_time)
 
             end_time = time.time_ns()
-            time.sleep(sleep_time - (end_time - start_time) / (10 ** 9) ) 
+            time.sleep(max(sleep_time - (end_time - start_time) / (10 ** 9), 0)) 
 
 
 class OnInterval(Thread):
@@ -52,29 +54,36 @@ class OnInterval(Thread):
         super().__init__()
         self.rcon = rcon
         self.interval = None
-        self.running = False
         self.started = False
+        self.running = False
         self.welcome_func = welcome_func
 
     def run(self):
         self.started = True
         self.running = True
+        sleep_time = 10
         if self.interval is None:
             logger.exception("OnInterval thread was started without configuring interval")
             return
         while True:
             if not self.running:
+                logger.debug("OnInterval thread was started before but is currently disabled")
                 time.sleep(10)
                 continue
             start_time = time.time_ns()
             
             try:
+                logger.debug("Publishing welcome message on interval")
                 publish_welcome_message(self.rcon, self.welcome_func)
             except:
                 logger.warning("Failed to set welcome message on interval, will retry in %s seconds", self.interval)
 
             end_time = time.time_ns()
-            time.sleep(self.interval - (end_time - start_time) / (10 ** 9) ) 
+            target_wake_time = self.interval + start_time / (10 ** 9)
+            while time.time_ns() < target_wake_time * 10 ** 9:
+                # recalculate target wake time in case the interval was changed
+                target_wake_time = self.interval + start_time / (10 ** 9)
+                time.sleep(sleep_time) 
 
 
 def run():

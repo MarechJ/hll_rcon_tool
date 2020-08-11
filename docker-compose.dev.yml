@@ -9,6 +9,10 @@ services:
     build: .
     environment:
       LOGGING_LEVEL: 'DEBUG'
+  welcome_message_loop:
+    build: .
+    environment:
+      LOGGING_LEVEL: 'DEBUG'
   stats:
     build: .
     environment:

@@ -306,6 +306,7 @@ class HLLSettings extends React.Component {
                 }
                 fullWidth
                 disabled={!renewWelcomeMessageOnIntervalSwitch}
+                type="number"
               />
             </Grid>
             <Grid xs={3}>
@@ -329,7 +330,7 @@ class HLLSettings extends React.Component {
           <Grid item xs={12}>
             <Button 
               fullWidth
-              disabled={renewWelcomeMessageOnIntervalSwitch && (renewWelcomeMessageOnIntervalPeriod === "" || renewWelcomeMessageOnIntervalPeriod === 0)}
+              disabled={renewWelcomeMessageOnIntervalSwitch && (renewWelcomeMessageOnIntervalPeriod === "" || renewWelcomeMessageOnIntervalPeriod === "0")}
               variant="outlined"
               onClick={() => this.saveWelcomeMessageSettings()}
             >
