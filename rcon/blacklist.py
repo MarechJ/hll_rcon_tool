@@ -136,7 +136,7 @@ def _banned_unblacklisted_players(rcon, sess):
                     return_list.append(player)
                     break
     except HLLServerError as err:
-        logger.exception("Something went wrong while retrieving the perma bans from the server")
+        logger.exception(err)
 
     return return_list
 
@@ -171,3 +171,4 @@ def ban_and_add_log(rcon, steam_id_64, name, reason):
         add_ban_log(steam_id_64, ban_log)
     except HLLServerError as err:
         logger.exception("Something went wrong trying to ban player with steam id %s, name %s and reason %s", str(steam_id_64), name, reason)
+        logger.exception(err)
