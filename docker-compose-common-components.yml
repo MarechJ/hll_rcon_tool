@@ -23,6 +23,7 @@ services:
             DISCORD_KILLS_WEBHOOK: ${DISCORD_KILLS_WEBHOOK}
             DISCORD_SEND_KILL_UPDATES: ${DISCORD_SEND_KILL_UPDATES}
             DISCORD_SEND_TEAM_KILL_UPDATES: ${DISCORD_SEND_TEAM_KILL_UPDATES}
+            STEAM_API_KEY: ${STEAM_API_KEY}
         restart: always
         volumes: 
             - ./logs:/logs/

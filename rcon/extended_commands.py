@@ -6,7 +6,7 @@ import logging
 import socket
 from rcon.cache_utils import ttl_cache, invalidates
 from rcon.commands import ServerCtl, CommandFailedError
-
+from rcon.steam_utils import get_player_country_code, get_player_has_bans
 
 STEAMID = "steam_id_64"
 NAME = "name"
@@ -36,6 +36,10 @@ class Rcon(ServerCtl):
             name, steam_id_64 = raw.split('\n')
             if not steam_id_64:
                 return {}
+
+            country = get_player_country_code(steam_id_64)
+            has_steam_bans = get_player_has_bans(steam_id_64)
+
         except CommandFailedError:
             # Making that debug instead of exception as it's way to spammy
             logger.debug("Can't get player info for %s", player)
@@ -44,6 +48,8 @@ class Rcon(ServerCtl):
         return {
             NAME: name.split(": ", 1)[-1],
             STEAMID: steam_id_64.split(": ", 1)[-1],
+            'country': country,
+            'has_steam_bans': has_steam_bans
         }
 
     @ttl_cache(ttl=60 * 60 * 24)
@@ -343,6 +349,7 @@ class Rcon(ServerCtl):
                 actions.add(action)
             except:
                 logger.exception("Invalid line: '%s'", line)
+                continue
             if filter_action and not action.startswith(filter_action):
                 continue
             if filter_player and filter_player not in line:

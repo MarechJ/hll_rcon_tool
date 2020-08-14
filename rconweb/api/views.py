@@ -14,6 +14,7 @@ from django.http import HttpResponse
 
 from rcon.recorded_commands import RecordedRcon
 from rcon.commands import CommandFailedError
+from rcon.steam_utils import get_steam_profile
 from rcon.settings import SERVER_INFO
 from rcon.player_history import (
     get_players_by_appearance, 
