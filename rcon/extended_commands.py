@@ -52,7 +52,7 @@ class Rcon(ServerCtl):
             return {}
         return {
             NAME: name,
-            STEAMID: steam_id
+            STEAMID: steam_id,
             'country': country,
             'has_steam_bans': has_steam_bans
         }
