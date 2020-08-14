@@ -46,7 +46,7 @@ const getCountry = (profile) => {
   return (
     <img
       alt={country}
-      title={getName(country)}
+      title={country ? getName(country) : ''}
       style={{ height: "12px" }}
       src={`http://catamphetamine.gitlab.io/country-flag-icons/3x2/${country}.svg`}
     />
