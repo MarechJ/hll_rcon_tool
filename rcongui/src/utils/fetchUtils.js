@@ -100,6 +100,15 @@ async function showResponse(response, command, showSuccess) {
   return response.json();
 }
 
-export { postData, showResponse, get, handle_http_errors, PermissionError, LoginError };
+async function sendAction(command, parameters) {
+  return postData(`${process.env.REACT_APP_API_URL}${command}`, parameters).then(
+    (res) => showResponse(res, command, true)
+  ).catch(handle_http_errors)
+}
+
+
+export { postData, showResponse, get, handle_http_errors, PermissionError, LoginError, sendAction };
+
+
 
 

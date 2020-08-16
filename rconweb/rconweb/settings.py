@@ -105,13 +105,15 @@ SECRET_KEY = os.getenv('RCONWEB_API_SECRET', None) or '9*i9zm1jx(5y-ns=*r6p%#6-q
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DJANGO_DEBUG", False) is not False
 
-ALLOWED_HOSTS = ['backend:8000', 'backend', '127.0.0.1',  '127.0.0.1:3000', 'localhost', 'localhost:3000']
+ALLOWED_HOSTS = ['backend:8000', 'backend', '127.0.0.1',  '127.0.0.1:3000', 'localhost', 'localhost:3000' ] + os.getenv('DOMAINS', '').split(',')
 CORS_ORIGIN_WHITELIST = [
     'http://{}'.format(h)
     for h in ALLOWED_HOSTS
+    if h
 ] + [
     'https://{}'.format(h)
     for h in ALLOWED_HOSTS
+    if h
 ]
 CORS_ALLOW_CREDENTIALS = True
 

@@ -97,9 +97,9 @@ class DiscordWebhookHandler:
         if not all([PING_TRIGGER_WORDS, PING_TRIGGER_ROLES]):
             return
 
-        # If PING_TRIGGER_WEBHOOK is not set, DISCORD_CHAT_WEBHOOK_URL
+        # PING_TRIGGER_WEBHOOK
         # is required because pings are attached to chat messages.
-        if not DISCORD_CHAT_WEBHOOK_URL and not PING_TRIGGER_WEBHOOK:
+        if not PING_TRIGGER_WEBHOOK:
             return
 
         try:
@@ -139,8 +139,6 @@ class DiscordWebhookHandler:
             logger.exception("error initializing kill variables: %s", e)
 
     def send_chat_message(self, _, log):
-        if not self.chat_webhook:
-            return
 
         try:
             message = log["sub_content"]
@@ -177,13 +175,13 @@ class DiscordWebhookHandler:
                          len(embed) + len(content))
 
             # Use chat webhook for both.
-            if ((self.ping_trigger_webhook == self.chat_webhook)
-                    or not self.ping_trigger_webhook):
+            if self.ping_trigger_webhook == self.chat_webhook:
                 self.chat_webhook.send(content=content, embed=embed)
             # Use separate webhooks.
             else:
-                self.chat_webhook.send(embed=embed)
-                if triggered:
+                if self.chat_webhook:
+                    self.chat_webhook.send(embed=embed)
+                if triggered and self.ping_trigger_webhook:
                     self.ping_trigger_webhook.send(content=content, embed=embed)
 
         except Exception as e:

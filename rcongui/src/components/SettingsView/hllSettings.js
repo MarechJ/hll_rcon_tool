@@ -3,7 +3,7 @@ import {
   Grid, Typography, Button
 } from "@material-ui/core"
 import { range } from "lodash/util"
-import { showResponse, postData, get, handle_http_errors } from '../../utils/fetchUtils'
+import { showResponse, postData, get, handle_http_errors, sendAction } from '../../utils/fetchUtils'
 import { toast } from "react-toastify"
 import VipEditableList from "./vips"
 import AdminsEditableList from "./admins"
@@ -57,6 +57,7 @@ function valuetext(value) {
   return `${value}`;
 }
 
+
 class HLLSettings extends React.Component {
   constructor(props) {
     super(props);
@@ -83,7 +84,6 @@ class HLLSettings extends React.Component {
     this.loadAdminRoles = this.loadAdminRoles.bind(this)
     this.loadMapRotation = this.loadMapRotation.bind(this)
     this.loadSettings = this.loadSettings.bind(this)
-    this.sendAction = this.sendAction.bind(this)
     this.saveSetting = this.saveSetting.bind(this)
     this.addMapsToRotation = this.addMapsToRotation.bind(this)
     this.removeMapsFromRotation = this.removeMapsFromRotation.bind(this)
@@ -147,18 +147,12 @@ class HLLSettings extends React.Component {
     ).catch(handle_http_errors)
   }
 
-  async sendAction(command, parameters) {
-    return postData(`${process.env.REACT_APP_API_URL}${command}`, parameters).then(
-      (res) => showResponse(res, command, true)
-    ).catch(handle_http_errors)
-  }
-
   async addMapsToRotation(maps) {
-    return this.sendAction("do_add_maps_to_rotation", { maps: maps }).then(this.loadMapRotation)
+    return sendAction("do_add_maps_to_rotation", { maps: maps }).then(this.loadMapRotation)
   }
 
   async removeMapsFromRotation(maps) {
-    return this.sendAction("do_remove_maps_from_rotation", { maps: maps }).then(this.loadMapRotation)
+    return sendAction("do_remove_maps_from_rotation", { maps: maps }).then(this.loadMapRotation)
   }
 
   async changeMap(map_name) {
@@ -205,7 +199,7 @@ class HLLSettings extends React.Component {
             classes={classes}
             value={welcomeMessage}
             setValue={(val) => this.setState({ welcomeMessage: val })}
-            onSave={(val) => this.setState({ welcomeMessage: val }, () => this.sendAction("set_welcome_message", { msg: val }))}
+            onSave={(val) => this.setState({ welcomeMessage: val }, () => sendAction("set_welcome_message", { msg: val }))}
           />
         </Grid>
         <Grid item className={classes.paper} sm={6} xs={12}>
@@ -214,7 +208,7 @@ class HLLSettings extends React.Component {
             classes={classes}
             value={broadcastMessage}
             setValue={(val) => this.setState({ broadcastMessage: val })}
-            onSave={(val) => this.setState({ broadcastMessage: val }, () => this.sendAction("set_broadcast", { msg: val }))}
+            onSave={(val) => this.setState({ broadcastMessage: val }, () => sendAction("set_broadcast", { msg: val }))}
           />
         </Grid>
         <Grid item className={classes.paper} xs={12} md={6}>
@@ -223,12 +217,12 @@ class HLLSettings extends React.Component {
             <VipEditableList peopleList={vips} classes={classes}
               onAdd={
                 (name, steamID64) => (
-                  this.sendAction("do_add_vip", { "steam_id_64": steamID64, "name": name }).then(this.loadVips)
+                  sendAction("do_add_vip", { "steam_id_64": steamID64, "name": name }).then(this.loadVips)
                 )
               }
               onDelete={
                 (name, steamID64) => (
-                  this.sendAction("do_remove_vip", { "steam_id_64": steamID64 }).then(this.loadVips)
+                  sendAction("do_remove_vip", { "steam_id_64": steamID64 }).then(this.loadVips)
                 )
               }
             />
@@ -240,12 +234,12 @@ class HLLSettings extends React.Component {
             <AdminsEditableList peopleList={admins} roles={adminRoles} classes={classes}
               onAdd={
                 (name, steamID64, role) => (
-                  this.sendAction("do_add_admin", { "steam_id_64": steamID64, "name": name, "role": role }).then(this.loadAdmins)
+                  sendAction("do_add_admin", { "steam_id_64": steamID64, "name": name, "role": role }).then(this.loadAdmins)
                 )
               }
               onDelete={
                 (name, steamID64, role) => (
-                  this.sendAction("do_remove_admin", { "steam_id_64": steamID64 }).then(this.loadAdmins)
+                  sendAction("do_remove_admin", { "steam_id_64": steamID64 }).then(this.loadAdmins)
                 )
               }
             />
@@ -358,8 +352,8 @@ class HLLSettings extends React.Component {
           <Grid item xs={12}>
             <Typography variant="caption" display="block" gutterBottom>Due to the HLL server limitations we can't know if the autobalance is on or off</Typography>
           </Grid>
-          <Grid item xs={6}><Button fullWidth variant="outlined" onClick={() => this.sendAction("set_autobalance", { bool_str: "on" })}>Activate autobalance</Button></Grid>
-          <Grid item xs={6}><Button fullWidth variant="outlined" onClick={() => this.sendAction("set_autobalance", { bool_str: "off" })}>Deactivate autobalance</Button></Grid>
+          <Grid item xs={6}><Button fullWidth variant="outlined" onClick={() => sendAction("set_autobalance", { bool_str: "on" })}>Activate autobalance</Button></Grid>
+          <Grid item xs={6}><Button fullWidth variant="outlined" onClick={() => sendAction("set_autobalance", { bool_str: "off" })}>Desactivate autobalance</Button></Grid>
         </Grid>
         <Grid container className={classes.paddingTop} justify="center" xs={12}>
           <Grid item>
@@ -379,10 +373,10 @@ class HLLSettings extends React.Component {
         </Grid>
         <Grid container className={classes.paper} justify="center" xs={12}>
           <Grid item xs={5} className={classes.padding}>
-            <Button variant="outlined" fullWidth onClick={() => this.sendAction('do_randomize_map_rotation', {}).then(this.loadMapRotation)}>Randomize all</Button>
+            <Button variant="outlined" fullWidth onClick={() => sendAction('do_randomize_map_rotation', {}).then(this.loadMapRotation)}>Randomize all</Button>
           </Grid>
           <Grid item xs={5} className={classes.padding}>
-            <Button variant="outlined" fullWidth onClick={() => this.sendAction('do_randomize_map_rotation', { maps: mapRotation }).then(this.loadMapRotation)}>Randomize current</Button>
+            <Button variant="outlined" fullWidth onClick={() => sendAction('do_randomize_map_rotation', { maps: mapRotation }).then(this.loadMapRotation)}>Randomize current</Button>
           </Grid>
         </Grid>
       </Grid>

@@ -1,6 +1,7 @@
 import logging
 import json
 import datetime
+import os
 from functools import wraps
 from dataclasses import dataclass, asdict
 from typing import Any
@@ -122,7 +123,7 @@ def login_required(func):
         try:
             return func(request, *args, **kwargs)
         except Exception as e:
-            logger.exception("Unexpected error")
+            logger.exception("Unexpected error in %s - env: %s", func.__name__, os.environ)
             return api_response(
                 command=request.path,
                 error=repr(e),

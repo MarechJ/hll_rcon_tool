@@ -11,6 +11,7 @@ STEAM_KEY = os.getenv('STEAM_API_KEY')
 if not STEAM_KEY:
     logger.warning("STEAM_API_KEY not set some features will be disabled. %s", os.environ)
 
+
 @ttl_cache(60 * 60 * 24, cache_falsy=False, is_method=False)
 def get_steam_profile(steamd_id):
     if not STEAM_KEY:

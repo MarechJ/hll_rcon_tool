@@ -391,6 +391,8 @@ commands = [
     ("unflag_player", unflag_player)
 ]
 
+logger.info("Initializing endpoint - %s", os.environ)
+
 # Dynamically register all the methods from ServerCtl
 for name, func in inspect.getmembers(ctl):
     if not any(name.startswith(prefix) for prefix in PREFIXES_TO_EXPOSE):
