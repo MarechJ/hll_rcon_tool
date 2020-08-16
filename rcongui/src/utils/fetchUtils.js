@@ -33,4 +33,13 @@ async function showResponse(response, command, showSuccess) {
   return response.json();
 }
 
-export { postData, showResponse };
+async function sendAction(command, parameters) {
+  return postData(`${process.env.REACT_APP_API_URL}${command}`, parameters).then(
+    (res) => showResponse(res, command, true)
+  ).catch(error => toast.error("Unable to connect to API " + error));
+}
+
+
+export { postData, showResponse, sendAction };
+
+
