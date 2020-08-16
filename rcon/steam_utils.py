@@ -52,4 +52,8 @@ def get_player_has_bans(steamd_id):
         logging.exception('Unexpected error while fetching steam profile')
         return None
 
-    return any(bans.get(k) for k in ['VACBanned', 'NumberOfVACBans', 'DaysSinceLastBan', 'NumberOfGameBans'])
+    if not bans:
+        bans = {}
+
+    bans['has_bans'] = any(bans.get(k) for k in ['VACBanned', 'NumberOfVACBans', 'DaysSinceLastBan', 'NumberOfGameBans'])
+    return bans

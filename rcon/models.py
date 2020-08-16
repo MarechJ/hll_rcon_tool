@@ -132,7 +132,7 @@ class PlayerFlag(Base):
         return dict(
             id=self.id,
             flag=self.flag,
-            commment=self.comment,
+            comment=self.comment,
             modified=self.modified
         )
 

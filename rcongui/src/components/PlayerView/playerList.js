@@ -24,8 +24,70 @@ import ScheduleIcon from "@material-ui/icons/Schedule";
 import { Emoji } from "emoji-mart";
 import LockIcon from "@material-ui/icons/Lock";
 import { getName } from "country-list";
+import Popover from "@material-ui/core/Popover";
+import Typography from "@material-ui/core/Typography";
+import { makeStyles } from "@material-ui/core/styles";
 
 const zeroPad = (num, places) => String(num).padStart(places, "0");
+
+const useStyles = makeStyles((theme) => ({
+  popover: {
+    pointerEvents: "none",
+  },
+  paper: {
+    padding: theme.spacing(1),
+  },
+}));
+
+function WithPopOver(props) {
+  const classes = useStyles();
+  const [anchorEl, setAnchorEl] = React.useState(null);
+
+  const handlePopoverOpen = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handlePopoverClose = () => {
+    setAnchorEl(null);
+  };
+
+  const open = Boolean(anchorEl);
+
+  return (
+    <React.Fragment>
+      <Typography
+        style={{ display: "inline" }}
+        aria-owns={open ? "mouse-over-popover" : undefined}
+        aria-haspopup="true"
+        onMouseEnter={handlePopoverOpen}
+        onMouseLeave={handlePopoverClose}
+      >
+        {props.children}
+      </Typography>
+      <Popover
+        id="mouse-over-popover"
+        className={classes.popover}
+        classes={{
+          paper: classes.paper,
+        }}
+        open={open}
+        anchorEl={anchorEl}
+        anchorOrigin={{
+          vertical: "bottom",
+          horizontal: "left",
+        }}
+        transformOrigin={{
+          vertical: "top",
+          horizontal: "left",
+        }}
+        onClose={handlePopoverClose}
+        disableRestoreFocus
+      >
+        <Typography>{props.content}</Typography>
+      </Popover>
+    </React.Fragment>
+  );
+}
 
 function seconds_to_time(seconds) {
   const hours = Math.trunc(seconds / 60 / 60);
@@ -38,15 +100,23 @@ const getCountry = (profile) => {
   const country = profile.get("country");
 
   if (country == "private") {
-    return <FontAwesomeIcon icon={faLock} />;
+    return (
+      <WithPopOver content="Account is private">
+        <FontAwesomeIcon icon={faLock} />
+      </WithPopOver>
+    );
   }
   if (country === "") {
-    return <FontAwesomeIcon icon={faQuestionCircle} />;
+    return (
+      <WithPopOver content="No country specified">
+        <FontAwesomeIcon icon={faQuestionCircle} />
+      </WithPopOver>
+    );
   }
   return (
     <img
       alt={country}
-      title={country ? getName(country) : ''}
+      title={country ? getName(country) : ""}
       style={{ height: "12px" }}
       src={`http://catamphetamine.gitlab.io/country-flag-icons/3x2/${country}.svg`}
     />
@@ -54,11 +124,28 @@ const getCountry = (profile) => {
 };
 
 const getBans = (profile) =>
-  profile.get("has_steam_bans") ? (
-    <React.Fragment><FontAwesomeIcon color="red" icon={faExclamationCircle} /> - </React.Fragment>
+  profile.get("steam_bans", {}) && profile.get("steam_bans", {}).has_bans ? (
+    <WithPopOver
+      content={`Players has bans: ${JSON.stringify(profile.get("steam_bans"))}`}
+    >
+      <FontAwesomeIcon color="red" icon={faExclamationCircle} />
+    </WithPopOver>
   ) : (
     ""
   );
+
+const Flag = ({ data, onDeleteFlag }) => (
+  <Link
+    onClick={() =>
+      window.confirm("Delete flag?") ? onDeleteFlag(data.get("id")) : ""
+    }
+  >
+    <WithPopOver
+      content={`Comment: ${data.get('comment')}`}
+    >{getEmojiFlag(data.get("flag"), 22)}
+    </WithPopOver>
+  </Link>
+);
 
 const PlayerItem = ({
   classes,
@@ -75,7 +162,10 @@ const PlayerItem = ({
       id={`checkbox-list-label-${steamID64}`}
       primary={
         <React.Fragment>
-          {name}{" "}
+          {name}
+          {" - "}
+          {getCountry(profile)}
+          {" - "}
           <Link
             className={classes.marginRight}
             target="_blank"
@@ -90,8 +180,7 @@ const PlayerItem = ({
         <React.Fragment>
           <span>
             {seconds_to_time(profile.get("current_playtime_seconds"))} - #
-            {profile.get("sessions_count")} - {getCountry(profile)} -{" "}
-            {getBans(profile)}
+            {profile.get("sessions_count")} - {getBans(profile)}
           </span>{" "}
           <Link
             target="_blank"
@@ -102,15 +191,7 @@ const PlayerItem = ({
           </Link>
           <p className={classes.noPaddingMargin}>
             {profile.get("flags", []).map((d) => (
-              <Link
-                onClick={() =>
-                  window.confirm("Delete flag?")
-                    ? onDeleteFlag(d.get("id"))
-                    : ""
-                }
-              >
-                {getEmojiFlag(d.get("flag"), 22)}
-              </Link>
+              <Flag data={d} onDeleteFlag={onDeleteFlag} />
             ))}
           </p>
         </React.Fragment>
