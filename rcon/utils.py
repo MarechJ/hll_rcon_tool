@@ -132,7 +132,7 @@ class FixedLenList:
     def __getitem__(self, index):
         if isinstance(index, slice):
             if index.step:
-                raise ValueError("Step is supported")
+                raise ValueError("Step is not supported")
             end = index.stop or -1
             start = index.start or 0
             return [
