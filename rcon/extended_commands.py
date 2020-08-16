@@ -38,7 +38,7 @@ class Rcon(ServerCtl):
                 return {}
 
             country = get_player_country_code(steam_id_64)
-            has_steam_bans = get_player_has_bans(steam_id_64)
+            steam_bans = get_player_has_bans(steam_id_64)
 
         except CommandFailedError:
             # Making that debug instead of exception as it's way to spammy
@@ -54,7 +54,7 @@ class Rcon(ServerCtl):
             NAME: name,
             STEAMID: steam_id,
             'country': country,
-            'has_steam_bans': has_steam_bans
+            'steam_bans': steam_bans
         }
 
     @ttl_cache(ttl=60 * 60 * 24)
