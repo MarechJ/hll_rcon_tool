@@ -27,6 +27,8 @@ import { getName } from "country-list";
 import Popover from "@material-ui/core/Popover";
 import Typography from "@material-ui/core/Typography";
 import { makeStyles } from "@material-ui/core/styles";
+import { join } from "lodash/array";
+import moment from "moment";
 
 const zeroPad = (num, places) => String(num).padStart(places, "0");
 
@@ -140,12 +142,20 @@ const Flag = ({ data, onDeleteFlag }) => (
       window.confirm("Delete flag?") ? onDeleteFlag(data.get("id")) : ""
     }
   >
-    <WithPopOver
-      content={`Comment: ${data.get('comment')}`}
-    >{getEmojiFlag(data.get("flag"), 22)}
+    <WithPopOver content={`Comment: ${data.get("comment")}`}>
+      {getEmojiFlag(data.get("flag"), 22)}
     </WithPopOver>
   </Link>
 );
+
+const formatPunitions = (profile) => {
+  const formatTime = (item) => item.get("time");
+  const lines = profile
+    .get("received_actions", [])
+    .map((item) => `${formatTime(item)} ${item.get('action_type')} by ${item.get('by')}: ${item.get('reason')}`);
+  console.log(lines);
+  return <pre>{lines.join("\n")}</pre>;
+};
 
 const PlayerItem = ({
   classes,
@@ -162,7 +172,7 @@ const PlayerItem = ({
       id={`checkbox-list-label-${steamID64}`}
       primary={
         <React.Fragment>
-          {name}
+          <WithPopOver content={formatPunitions(profile)}>{name}</WithPopOver>
           {" - "}
           {getCountry(profile)}
           {" - "}
