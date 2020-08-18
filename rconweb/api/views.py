@@ -374,6 +374,70 @@ def text_scoreboard(request):
         '''
     )
 
+
+from django.http import HttpResponseRedirect
+from django.shortcuts import render, redirect
+from django import forms
+
+
+class DocumentForm(forms.Form):
+    docfile = forms.FileField(label='Select a file')
+
+
+@csrf_exempt
+def upload_vips(request):
+    message = 'Upload a VIP file!'
+    # Handle file upload
+    if request.method == 'POST':
+        form = DocumentForm(request.POST, request.FILES)
+        if form.is_valid():
+            message = ""
+            vips = ctl.get_vip_ids()
+            for vip in vips:
+                ctl.do_remove_vip(vip['steam_id_64'])
+            message = f"{len(vips)} removed\n"
+            count = 0
+            for name, data in request.FILES.items():
+                if name.endswith('.json'):
+                    message = "JSON is not handled yet"
+                    break
+                else:
+                    for l in data:
+                        try:
+                            l = l.decode()
+                            steam_id, name = l.split(' ', 1)
+                            if len(steam_id) != 17:
+                                raise ValueError
+                            ctl.do_add_vip(name.strip(), steam_id)
+                            count += 1
+                        except UnicodeDecodeError:
+                            message = "File encoding is not supported. Must use UTF8"
+                            break
+                        except ValueError:
+                            message += f"Line: '{l}' is invalid, skipped\n"
+                        except CommandFailedError:
+                            message = "The game serveur returned an error while adding a VIP. You need to upload again"
+                            break
+                      
+                    message += f"{count} added"
+        else:
+            message = 'The form is not valid. Fix the following error:'
+    else:
+        form = DocumentForm()  # An empty, unbound form
+
+    # Render list page with the documents and the form
+    context = {'form': form, 'message': message}
+    return render(request, 'list.html', context)
+
+
+@csrf_exempt
+def download_vips(request):
+    vips = ctl.get_vip_ids()
+    response = HttpResponse("\n".join([f"{vip['steam_id_64']} {vip['name']}" for vip in vips]), content_type="text/plain")
+    response['Content-Disposition'] = f'attachment; filename={datetime.datetime.now().isoformat()}_vips.txt'
+    return response
+
+
 PREFIXES_TO_EXPOSE = [
     'get_', 'set_', 'do_'
 ]
@@ -388,7 +452,9 @@ commands = [
     ("set_auto_broadcasts_config", set_auto_broadcasts_config),
     ("clear_cache", clear_cache),
     ("flag_player", flag_player),
-    ("unflag_player", unflag_player)
+    ("unflag_player", unflag_player),
+    ("upload_vips", upload_vips),
+    ("download_vips", download_vips),
 ]
 
 logger.info("Initializing endpoint - %s", os.environ)
