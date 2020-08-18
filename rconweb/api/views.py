@@ -385,6 +385,7 @@ class DocumentForm(forms.Form):
 
 
 @csrf_exempt
+@login_required
 def upload_vips(request):
     message = 'Upload a VIP file!'
     # Handle file upload
@@ -431,6 +432,7 @@ def upload_vips(request):
 
 
 @csrf_exempt
+@login_required
 def download_vips(request):
     vips = ctl.get_vip_ids()
     response = HttpResponse("\n".join([f"{vip['steam_id_64']} {vip['name']}" for vip in vips]), content_type="text/plain")
