@@ -385,3 +385,11 @@ for name, func in inspect.getmembers(ctl):
     commands.append(
         (name, wrap_method(func, inspect.signature(func).parameters))
     )
+
+
+# Warm the cache as fetching steam profile 1 by 1 takes a while
+try:
+    logger.info("Warming up the cache this may take minutes")
+    ctl.get_players()
+except:
+    logger.exception("Failed to warm the cache %s", os.environ)

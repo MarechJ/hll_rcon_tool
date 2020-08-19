@@ -125,8 +125,9 @@ const getCountry = (profile) => {
   );
 };
 
-const getBans = (profile) =>
-  profile.get("steam_bans", {}) && profile.get("steam_bans", {}).has_bans ? (
+const getBans = (profile) => {
+  console.log(profile)
+  return profile.get("steam_bans", {}) && profile.get("steam_bans", {}).get('has_bans') === true ? (
     <WithPopOver
       content={`Players has bans: ${JSON.stringify(profile.get("steam_bans"))}`}
     >
@@ -134,7 +135,8 @@ const getBans = (profile) =>
     </WithPopOver>
   ) : (
     ""
-  );
+  )
+  }
 
 const Flag = ({ data, onDeleteFlag }) => (
   <Link
