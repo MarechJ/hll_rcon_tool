@@ -14,12 +14,12 @@ const getAllNamespaces = () => {
             return false
         }
         const texts = new TextHistory(v).getTexts()
-    
+
         if (texts.length === 0)  {
             return false
         }
         return true
-    })   
+    })
 }
 
 class TextHistory {
@@ -29,20 +29,22 @@ class TextHistory {
 
     getTexts() {
         let texts = localStorage.getItem(this.namespace)
-        
+
         if (!texts) {
             texts = []
             localStorage.setItem(this.namespace, JSON.stringify(texts))
         } else {
             texts = JSON.parse(texts)
         }
-       
+
+        texts.sort((a, b) => a.toLowerCase() > b.toLowerCase());
+
         return texts
     }
 
     deleteTextByIdx(index) {
         const texts = this.getTexts()
-        console.log("Deleting index", index, texts.splice(index, index + 1))
+        console.log("Deleting index", index, texts.splice(index, 1))
         localStorage.setItem(this.namespace, JSON.stringify(texts))
     }
 
