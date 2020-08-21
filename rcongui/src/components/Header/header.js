@@ -4,20 +4,16 @@ import Grid from "@material-ui/core/Grid";
 import AppBar from "@material-ui/core/AppBar";
 import Toolbar from "@material-ui/core/Toolbar";
 import Link from "@material-ui/core/Link";
-import Divider from "@material-ui/core/Divider"
 import {
     Link as RouterLink
 } from "react-router-dom";
 import Brightness4Icon from '@material-ui/icons/Brightness4';
 import Checkbox from '@material-ui/core/Checkbox';
 import Brightness4OutlinedIcon from '@material-ui/icons/Brightness4Outlined';
-import ChevronRight from '@material-ui/icons/ChevronRight';
 import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
 import ServerStatus from './serverStatus'
 import { postData, showResponse, get, handle_http_errors } from "../../utils/fetchUtils";
-import { toast } from "react-toastify"
-import Modal from '@material-ui/core/Modal';
 import Dialog from "@material-ui/core/Dialog";
 import DialogActions from "@material-ui/core/DialogActions";
 import DialogContent from "@material-ui/core/DialogContent";
@@ -127,9 +123,6 @@ class LoginBox extends React.Component {
 
 
 export default ({ classes, setSaveDark, dark }) => {
-    const [jk, setJk] = React.useState(false)
-    const doJk = () => { setSaveDark('<3'); setJk(true) }
-
     return <Grid container className={classes.grow}>
         <div className={classes.grow}>
             <AppBar position="static" elevation={0} className={classes.appBar}>
@@ -138,7 +131,7 @@ export default ({ classes, setSaveDark, dark }) => {
                         <Grid item xs={10}>
                             <Grid container alignContent="flex-start" alignItems="center">
                                 <Grid item>
-                                    <ServerStatus classes={classes} doJk={doJk} />
+                            <ServerStatus classes={classes} />
                                 </Grid>
                                 <Grid item className={classes.doublePaddingLeft}></Grid>
                                 <Grid item className={classes.doublePaddingLeft}>
@@ -172,7 +165,7 @@ export default ({ classes, setSaveDark, dark }) => {
                                         </Link>
                                         <Checkbox icon={<Brightness4Icon />}
                                             checkedIcon={<Brightness4OutlinedIcon />}
-                                            checked={dark == "dark" ? true : false} color="default" onChange={(e, val) => !jk ? setSaveDark(val == true ? "dark" : "light") : null} />
+                                    checked={dark == "dark"} color="default" onChange={(e, checked) => setSaveDark(checked ? "dark" : "light")} />
                                     </nav>
                                 </Grid>
                             </Grid>
