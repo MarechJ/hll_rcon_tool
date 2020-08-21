@@ -11,7 +11,7 @@ class Blacklist extends React.Component {
     this.state = {
       steam_id: "",
       name: "",
-      rason: "",
+      reason: "",
     }
 
     this.blacklistPlayer = this.blacklistPlayer.bind(this)
@@ -33,7 +33,7 @@ class Blacklist extends React.Component {
 
   render() {
     const { steam_id, name, reason } = this.state
-    const { classes } = this.props 
+    const { classes } = this.props
 
     return (
       <Grid container className={classes.paper} spacing={1}>
@@ -71,7 +71,7 @@ class Blacklist extends React.Component {
         </Grid>
         <Grid item xs={2} spacing={1} className={`${classes.padding} ${classes.margin}`} justify="center" alignContent="center">
             <Tooltip fullWidth title="Blacklisted players will instantly be banned when entering the server." arrow>
-                <Button 
+                <Button
                         color="secondary"
                         variant="outlined"
                         disabled={steam_id == "" || reason == ""} onClick={this.blacklistPlayer}>
