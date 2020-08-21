@@ -159,10 +159,12 @@ class PlayerView extends Component {
     // TODO this is shit. The point was to prevent uncessary refreshes to save perf
     // But we could just switch to immutables for that
     const { filter, players } = this.state;
+    const makeCombinedProfile = players => players.map(p => fromJS({...(p.profile || {}), country: p.country, steam_bans: p.steam_bans}));
+
     if (!filter) {
       const filteredPlayerNames = players.map(p => p.name);
       const filteredPlayerSteamIDs = players.map(p => p.steam_id_64);
-      const filteredPlayerProfiles = players.map(p => fromJS(p.profile || {}));
+      const filteredPlayerProfiles = makeCombinedProfile(players)
       return this.setState({ filteredPlayerSteamIDs, filteredPlayerNames, filteredPlayerProfiles });
     }
     const filteredPlayers = _.filter(
@@ -172,7 +174,7 @@ class PlayerView extends Component {
 
     const filteredPlayerNames = filteredPlayers.map(p => p.name);
     const filteredPlayerSteamIDs = filteredPlayers.map(p => p.steam_id_64);
-    const filteredPlayerProfiles = filteredPlayers.map(p => fromJS(p.profile || {}))
+    const filteredPlayerProfiles =  makeCombinedProfile(filteredPlayers)
     this.setState({ filteredPlayerNames, filteredPlayerSteamIDs, filteredPlayerProfiles });
   }
 
