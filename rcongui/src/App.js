@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React  from "react";
 import "./App.css";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -6,9 +6,6 @@ import PlayerView from "./components/PlayerView";
 import useStyles from "./components/useStyles";
 import Grid from "@material-ui/core/Grid";
 import Logs from "./components/LogsView/logs";
-import AppBar from "@material-ui/core/AppBar";
-import Toolbar from "@material-ui/core/Toolbar";
-import Link from "@material-ui/core/Link";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import HLLSettings from "./components/SettingsView/hllSettings";
 import { ThemeProvider } from '@material-ui/styles';
@@ -16,13 +13,8 @@ import {
   HashRouter as Router,
   Switch,
   Route,
-  Link as RouterLink
 } from "react-router-dom";
 import { createMuiTheme } from '@material-ui/core/styles';
-import Brightness4Icon from '@material-ui/icons/Brightness4';
-import Checkbox from '@material-ui/core/Checkbox';
-import Brightness4OutlinedIcon from '@material-ui/icons/Brightness4Outlined';
-import UseAutcomplete from './components/PlayersHistory'
 import PlayersHistory from "./components/PlayersHistory";
 import Header from "./components/Header";
 import RconSettings from './components/RconSettings';
@@ -83,8 +75,8 @@ function App() {
   const [dark, setDark] = React.useState(localStorage.getItem('darKTheme'))
   console.log("dark: ", dark)
   const setSaveDark = (bool) => {localStorage.setItem('darKTheme', bool); setDark(bool)}
-  const theme = dark == "dark" ? darkTheme : dark == '<3' ? withLove : lightTheme
- 
+  const theme = dark == "dark" ? darkTheme :  lightTheme
+
   return (
     <div className={"App " + classes.root}>
       <ThemeProvider theme={theme} >
