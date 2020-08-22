@@ -29,7 +29,7 @@ class Rcon(ServerCtl):
     player_info_regexp = re.compile(r'(.*)\(((Allies)|(Axis))/(\d+)\)')
     MAX_SERV_NAME_LEN = 1024  # I totally made up that number. Unable to test
 
-    @ttl_cache(ttl=60 * 60 * 24, cache_falsy=False)
+    @ttl_cache(ttl=60 * 60 * 2, cache_falsy=False)
     def get_player_info(self, player):
         try:
             raw = super().get_player_info(player)
@@ -45,9 +45,14 @@ class Rcon(ServerCtl):
             logger.debug("Can't get player info for %s", player)
             # logger.exception("Can't get player info for %s", player)
             return {}
+        name = name.split(": ", 1)[-1]
+        steam_id = steam_id_64.split(": ", 1)[-1]
+        if name != player:
+            logger.error("get_player_info('%s') returned for a different name: %s %s", player, name, steam_id)
+            return {}
         return {
-            NAME: name.split(": ", 1)[-1],
-            STEAMID: steam_id_64.split(": ", 1)[-1],
+            NAME: name,
+            STEAMID: steam_id,
             'country': country,
             'steam_bans': steam_bans
         }
@@ -67,8 +72,15 @@ class Rcon(ServerCtl):
             )
         return admins
         
+    def get_ingame_mods(self, steam_ids):
+        players = self.get_players()
+        return [
+            player 
+            for player in players
+            if player['steam_id_64'] in steam_ids
+        ]
 
-    def get_online_admins(self):
+    def get_online_console_admins(self):
         admins = self.get_admin_ids()
         players = self.get_players()
         online = []
@@ -257,6 +269,7 @@ class Rcon(ServerCtl):
     def get_status(self):
         return {
             'name': self.get_name(),
+            'alias': os.getenv('RCON_INSTANCE_NAME', 'HLL RCON'),
             'map': self.get_map(),
             'nb_players': self.get_slots()
         }
@@ -399,7 +412,12 @@ class Rcon(ServerCtl):
 
     @ttl_cache(60 * 5)
     def get_map_rotation(self):
-        return super().get_map_rotation()
+        l = super().get_map_rotation()
+
+        for map_ in l:
+            if not self.map_regexp.match(map_):
+                raise CommandFailedError("Server return wrong data")
+        return l
 
     def do_add_map_to_rotation(self, map_name):
         return self.do_add_maps_to_rotation([map_name])
@@ -449,7 +467,7 @@ class Rcon(ServerCtl):
             
             
             if len(current) == 1:
-                logger.debug("Current rotation is a single map")
+                logger.info("Current rotation is a single map")
                 for idx, m in enumerate(rotation):
                     if m not in current:
                         self.do_add_map_to_rotation(m)

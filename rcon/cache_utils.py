@@ -63,10 +63,10 @@ class RedisCached:
             logger.exception("Unable to use cache")
 
         if val is not None:
-            logger.debug("Cache HIT for %s", self.key(*args, **kwargs))
+            #logger.debug("Cache HIT for %s", self.key(*args, **kwargs))
             return self.deserializer(val)
 
-        logger.debug("Cache MISS for %s", self.key(*args, **kwargs))
+        #logger.debug("Cache MISS for %s", self.key(*args, **kwargs))
         val = self.function(*args, **kwargs)
 
         if not val and not self.cache_falsy:
@@ -75,7 +75,7 @@ class RedisCached:
 
         try:
             self.red.setex(key, self.ttl_seconds, self.serializer(val))
-            logger.debug("Cache SET for %s", self.key(*args, **kwargs))
+            #logger.debug("Cache SET for %s", self.key(*args, **kwargs))
         except redis.exceptions.RedisError:
             logger.exception("Unable to set cache")
 

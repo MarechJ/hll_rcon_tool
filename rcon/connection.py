@@ -1,7 +1,7 @@
 import socket
 import array
 
-MSGLEN = 1024
+MSGLEN = 8196
 TIMEOUT_SEC = 10
 
 

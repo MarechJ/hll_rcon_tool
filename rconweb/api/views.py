@@ -27,6 +27,7 @@ from rcon.player_history import (
 from rcon.user_config import AutoBroadcasts, InvalidConfigurationError
 from rcon.cache_utils import RedisCached, get_redis_pool
 from .discord import send_to_discord_audit
+from .auth import login_required
 
 
 logger = logging.getLogger('rconweb')
@@ -50,8 +51,10 @@ def _get_data(request):
     return data
 
 @csrf_exempt
+@login_required
 def clear_cache(request):
     res = RedisCached.clear_all_caches(get_redis_pool())
+    audit("clear_cache", request, {})
     return JsonResponse({
         "result": res,
         "command": "clear_cache",
@@ -60,6 +63,7 @@ def clear_cache(request):
     })
 
 @csrf_exempt
+@login_required
 def get_auto_broadcasts_config(request):
     failed = False
     config = None
@@ -83,6 +87,7 @@ def get_auto_broadcasts_config(request):
     })
 
 @csrf_exempt
+@login_required
 def set_auto_broadcasts_config(request):
     failed = False
     res = None
@@ -97,6 +102,7 @@ def set_auto_broadcasts_config(request):
         for k, v in data.items():
             if k in config_keys:
                 config_keys[k](v)
+                audit(set_auto_broadcasts_config.__name__, request, {k: v})
     except InvalidConfigurationError as e:
         failed = True
         res = str(e)
@@ -110,6 +116,7 @@ def set_auto_broadcasts_config(request):
 
 
 @csrf_exempt
+@login_required
 def get_player(request):
     data = _get_data(request)
     res = {}
@@ -129,6 +136,7 @@ def get_player(request):
 
 
 @csrf_exempt
+@login_required
 def flag_player(request):
     data = _get_data(request)
     res = None
@@ -136,13 +144,13 @@ def flag_player(request):
         player, flag = add_flag_to_player(steam_id_64=data['steam_id_64'], flag=data['flag'], comment=data.get('comment'))
         res = flag
         send_to_discord_audit(
-            "Flagged '{}' '{}' with '{}' '{}'".format(
+            "`flag`: steam_id_64: `{}` player: `{}` flag: `{}`comment:`{}`".format(
                 data['steam_id_64'], 
                 ' | '.join(n['name'] for n in player['names']),
                 flag['flag'],
                 data.get('comment', '')
             ), 
-            get_client_ip(request)
+            request.user.username
         )
     except KeyError:
         logger.warning("Missing parameters")
@@ -157,6 +165,7 @@ def flag_player(request):
     })
    
 @csrf_exempt
+@login_required
 def unflag_player(request):
     # Note is this really not restful
     data = _get_data(request)
@@ -164,8 +173,8 @@ def unflag_player(request):
     try:
         player, flag = remove_flag(data['flag_id'])
         res = flag
-        send_to_discord_audit("Remove flag '{}' from '{}'".format(
-            flag['flag'], ' | '.join(n['name'] for n in player['names'])), get_client_ip(request))
+        send_to_discord_audit("`unflag`: flag: `{}` player: `{}`".format(
+            flag['flag'], ' | '.join(n['name'] for n in player['names'])), request.user.username)
     except KeyError:
         logger.warning("Missing parameters")
         # TODO return 400
@@ -180,13 +189,14 @@ def unflag_player(request):
    
 
 @csrf_exempt
+@login_required
 def blacklist_player(request):
     data = _get_data(request)
     res = {}
     try:
-        send_to_discord_audit("Blacklist '{}' for '{}'".format(data['steam_id_64'], data['reason']), get_client_ip(request))
         name = data['name'] if 'name' in data else None
         add_player_to_blacklist(data['steam_id_64'], data['reason'], name)
+        audit("Blacklist", request, data)
         failed = False
     except:
         logger.exception("Unable to blacklist player")
@@ -202,12 +212,13 @@ def blacklist_player(request):
 
 
 @csrf_exempt
+@login_required
 def unblacklist_player(request):
     data = _get_data(request)
     res = {}
     try:
-        send_to_discord_audit("Unblacklist '{}' for ''".format(data['steam_id_64']), get_client_ip(request))
         remove_player_from_blacklist(data['steam_id_64'])
+        audit("unblacklist", request, data)
         failed = False
     except:
         logger.exception("Unable to unblacklist player")
@@ -222,6 +233,7 @@ def unblacklist_player(request):
 
 
 @csrf_exempt
+@login_required
 def players_history(request):
     try:
         data = json.loads(request.body)
@@ -261,23 +273,27 @@ def players_history(request):
 
 
 def audit(func_name, request, arguments):
-    to_audit = [
-        'do_',
-        'set_',
-        'switch'
+    dont_audit = [
+        'get_'
     ]
 
     try:
-        if any(func_name.startswith(s) for s in to_audit):
-            send_to_discord_audit("{} {}".format(func_name, arguments), get_client_ip(request))
-        else:
-            logger.debug("%s is not set for audit", func_name)
+        if any(func_name.startswith(s) for s in dont_audit):
+            return
+        args = dict(**arguments)
+        try:
+            del args['by']
+        except KeyError:
+            pass
+        arguments = " ".join([f"{k}: `{v}`" for k, v in args.items()])   
+        send_to_discord_audit("`{}`: {}".format(func_name, arguments), request.user.username)
     except:
         logger.exception("Can't send audit log")
         
 # This is were all the RCON commands are turned into HTTP endpoints
 def wrap_method(func, parameters):
     @csrf_exempt
+    @login_required
     @wraps(func)
     def wrapper(request):
         logger = logging.getLogger('rconweb')
@@ -285,12 +301,10 @@ def wrap_method(func, parameters):
         data = {}
         failure = False
         data = _get_data(request)
-        logger.info("%s %s", func.__name__, data)
  
         for pname, param in parameters.items():
             if pname == 'by':
-                # TODO: replace by account id when we have user layer
-                arguments[pname] = get_client_ip(request)
+                arguments[pname] = request.user.username
             elif param.default != inspect._empty:
                 arguments[pname] = data.get(pname)
             else:
@@ -360,6 +374,72 @@ def text_scoreboard(request):
         '''
     )
 
+
+from django.http import HttpResponseRedirect
+from django.shortcuts import render, redirect
+from django import forms
+
+
+class DocumentForm(forms.Form):
+    docfile = forms.FileField(label='Select a file')
+
+
+@csrf_exempt
+@login_required
+def upload_vips(request):
+    message = 'Upload a VIP file!'
+    # Handle file upload
+    if request.method == 'POST':
+        form = DocumentForm(request.POST, request.FILES)
+        if form.is_valid():
+            message = ""
+            vips = ctl.get_vip_ids()
+            for vip in vips:
+                ctl.do_remove_vip(vip['steam_id_64'])
+            message = f"{len(vips)} removed\n"
+            count = 0
+            for name, data in request.FILES.items():
+                if name.endswith('.json'):
+                    message = "JSON is not handled yet"
+                    break
+                else:
+                    for l in data:
+                        try:
+                            l = l.decode()
+                            steam_id, name = l.split(' ', 1)
+                            if len(steam_id) != 17:
+                                raise ValueError
+                            ctl.do_add_vip(name.strip(), steam_id)
+                            count += 1
+                        except UnicodeDecodeError:
+                            message = "File encoding is not supported. Must use UTF8"
+                            break
+                        except ValueError:
+                            message += f"Line: '{l}' is invalid, skipped\n"
+                        except CommandFailedError:
+                            message = "The game serveur returned an error while adding a VIP. You need to upload again"
+                            break
+                      
+                    message += f"{count} added"
+        else:
+            message = 'The form is not valid. Fix the following error:'
+    else:
+        form = DocumentForm()  # An empty, unbound form
+
+    # Render list page with the documents and the form
+    context = {'form': form, 'message': message}
+    return render(request, 'list.html', context)
+
+
+@csrf_exempt
+@login_required
+def download_vips(request):
+    vips = ctl.get_vip_ids()
+    response = HttpResponse("\n".join([f"{vip['steam_id_64']} {vip['name']}" for vip in vips]), content_type="text/plain")
+    response['Content-Disposition'] = f'attachment; filename={datetime.datetime.now().isoformat()}_vips.txt'
+    return response
+
+
 PREFIXES_TO_EXPOSE = [
     'get_', 'set_', 'do_'
 ]
@@ -374,8 +454,12 @@ commands = [
     ("set_auto_broadcasts_config", set_auto_broadcasts_config),
     ("clear_cache", clear_cache),
     ("flag_player", flag_player),
-    ("unflag_player", unflag_player)
+    ("unflag_player", unflag_player),
+    ("upload_vips", upload_vips),
+    ("download_vips", download_vips),
 ]
+
+logger.info("Initializing endpoint - %s", os.environ)
 
 # Dynamically register all the methods from ServerCtl
 for name, func in inspect.getmembers(ctl):

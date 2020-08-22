@@ -35,18 +35,24 @@ def get_player_country_code(steamd_id):
     if not profile:
         return None
 
-    is_private = profile.get('communityvisibilitystate', 1) == 1
+    is_private = profile.get('communityvisibilitystate', 1) != 3
     return profile.get('loccountrycode', 'private' if is_private else '')
 
 
 @ttl_cache(60 * 60 * 24, cache_falsy=False, is_method=False)
 def get_player_has_bans(steamd_id):
+    if not STEAM_KEY:
+        return None
+
     api = WebAPI(key=STEAM_KEY)
 
     try:
         bans = api.ISteamUser.GetPlayerBans(steamids=steamd_id)['players'][0]
-    except IndexError:   
-        logger.exception("Steam: no player found")
+    except AttributeError:
+        logger.error("STEAM_API_KEY is invalid, can't fetch steam profile")
+        return None
+    except IndexError:     
+        logger.exception("Steam no player found")
         return None
     except:
         logging.exception('Unexpected error while fetching steam profile')

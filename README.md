@@ -58,6 +58,8 @@ Note if you don't see the `.env` file you need to activate the show hidden files
     RCONWEB_USERNAME=myteam
     RCONWEB_PASSWORD=mynewpassword
  
+    # If you want all (important) actions to be sent to one of you discord channel, add the full webhook url below
+    DISCORD_WEBHOOK_AUDIT_LOG=https://discordapp.com/api/webhooks/71...515/qRfJCT...Q5T
 
     # If you have multiple servers, also change these lines (each server must have a different port, just increment the number)
     RCONWEB_PORT=8011
@@ -257,7 +259,7 @@ This will make redis and postgres available on you localhost with their default 
 
     # from the root of the repo
     pip install -r requirements.txt
-    PYTHONPATH=$PWD ./rconweb/manage.py runserver
+    PYTHONPATH=$PWD  DJANGO_DEBUG=true ./rconweb/manage.py runserver
 
 This will run a development server on http://127.0.0.1:8000/ it auto refreshes on code changes
 If you change the port rember that you will also need to change it in rcongui/.env for the frontend to know where to talk to the API

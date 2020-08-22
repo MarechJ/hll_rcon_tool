@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import _ from "lodash";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { postData, showResponse } from "../../utils/fetchUtils";
+import { postData, showResponse, get, handle_http_errors } from "../../utils/fetchUtils";
 import AutoRefreshBar from "./header";
 import TextInputBar from "./textInputBar";
 import CompactList from "./playerList";
@@ -20,13 +20,13 @@ function stripDiacritics(string) {
     : string;
 }
 
-const PlayerSummary = ({player, flag}) => {
-  return player ? 
-  <React.Fragment>
+const PlayerSummary = ({ player, flag }) => {
+  return player ?
+    <React.Fragment>
       <p>Add flag: {flag ? getEmojiFlag(flag) : <small>Please choose</small>}</p>
       <p>To: {player.get('names') ? player.get('names', []).map(n => <Chip label={n.get('name')} />) : 'No name recorded'}</p>
       <p>Steamd id: {player.get('steam_id_64', '')}</p>
-  </React.Fragment> : ''
+    </React.Fragment> : ''
 }
 
 
@@ -67,9 +67,9 @@ class PlayerView extends Component {
       steam_id_64: playerObj.get('steam_id_64'), flag: flag, comment: comment
     })
       .then(response => showResponse(response, 'flag_player', true))
-      .then(() => this.setState({flag: false}))
+      .then(() => this.setState({ flag: false }))
       .then(this.loadPlayers)
-      .catch(error => toast.error("Unable to connect to API " + error));
+      .catch(handle_http_errors);
   }
 
   deleteFlag(flag_id) {
@@ -78,9 +78,8 @@ class PlayerView extends Component {
     })
       .then(response => showResponse(response, 'unflag_player', true))
       .then(this.loadPlayers)
-      .catch(error => toast.error("Unable to connect to API " + error));
+      .catch(handle_http_errors);
   }
-
 
   unBan(ban) {
     postData(`${process.env.REACT_APP_API_URL}do_remove_${ban.type}_ban`, {
@@ -93,7 +92,8 @@ class PlayerView extends Component {
           true
         )
       )
-      .then(this.loadBans);
+      .then(this.loadBans)
+      .catch(handle_http_errors)
   }
 
   handleAction(actionType, player, message = null) {
@@ -110,7 +110,8 @@ class PlayerView extends Component {
         .then(response =>
           showResponse(response, `${actionType} ${player}`, true)
         )
-        .then(this.loadPlayers);
+        .then(this.loadPlayers)
+        .catch(handle_http_errors)
     }
   }
 
@@ -119,10 +120,10 @@ class PlayerView extends Component {
   }
 
   async load(command, callback) {
-    return fetch(`${process.env.REACT_APP_API_URL}${command}`)
+    return get(command)
       .then(response => showResponse(response, command))
       .then(data => callback(data))
-      .catch(error => toast.error("Unable to connect to API " + error));
+      .catch(handle_http_errors);
   }
 
   loadPlayers() {
@@ -216,7 +217,7 @@ class PlayerView extends Component {
           handleToggleAlphaSort={bool => this.setState({ alphaSort: bool })}
         />
 
-    
+
         <CompactList
           classes={classes}
           alphaSort={alphaSort}
@@ -227,10 +228,10 @@ class PlayerView extends Component {
             this.handleAction(actionType, player)
           }
           handleToggle={() => 1}
-          onFlag={(player) => this.setState({ flag: player})}
+          onFlag={(player) => this.setState({ flag: player })}
           onDeleteFlag={(flagId) => this.deleteFlag(flagId)}
         />
-        
+
         <GroupActions
           onClose={() => this.setState({ openGroupAction: false })}
           open={openGroupAction}
@@ -254,10 +255,10 @@ class PlayerView extends Component {
             this.setState({ doConfirm: false });
           }}
         />
-        <FlagDialog open={flag} 
-              handleClose={() => this.setState({flag: false})} 
-              handleConfirm={this.addFlagToPlayer}
-              SummaryRenderer={PlayerSummary}
+        <FlagDialog open={flag}
+          handleClose={() => this.setState({ flag: false })}
+          handleConfirm={this.addFlagToPlayer}
+          SummaryRenderer={PlayerSummary}
         />
       </React.Fragment>
     );

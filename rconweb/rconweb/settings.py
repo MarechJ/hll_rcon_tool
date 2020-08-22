@@ -20,6 +20,7 @@ from rcon.settings import SERVER_INFO
 import re
 from sentry_sdk import configure_scope
 import socket
+from django.utils.log import DEFAULT_LOGGING
 
 
 try:
@@ -73,8 +74,6 @@ LOGGING = {
 }
 
 
-dictConfig(LOGGING)
-
 sentry_logging = LoggingIntegration(
     level=logging.DEBUG,       # Capture debug and above as breadcrumbs
     event_level=logging.ERROR  # Send errors as events
@@ -101,16 +100,32 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # TODO: move that to env. We don't need it yet but we might
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '9*i9zm1jx(5y-ns=*r6p%#6-q!bst98u3o3pw6joyf#-e(bh(0'
+SECRET_KEY = os.getenv('RCONWEB_API_SECRET', None) or '9*i9zm1jx(5y-ns=*r6p%#6-q!bst98u3o3pw6joyf#-e(bh(0'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv("DJANGO_DEBUG", False)
+DEBUG = os.getenv("DJANGO_DEBUG", False) is not False
 
-ALLOWED_HOSTS = ['backend:8000', 'backend', '127.0.0.1', 'localhost']
+ALLOWED_HOSTS = ['backend:8000', 'backend', '127.0.0.1',  '127.0.0.1:3000', 'localhost', 'localhost:3000' ] + os.getenv('DOMAINS', '').split(',')
+CORS_ORIGIN_WHITELIST = [
+    'http://{}'.format(h)
+    for h in ALLOWED_HOSTS
+    if h
+] + [
+    'https://{}'.format(h)
+    for h in ALLOWED_HOSTS
+    if h
+]
+CORS_ALLOW_CREDENTIALS = True
 
 # TODO: You might not want that. Think XSS
-CORS_ORIGIN_ALLOW_ALL = True
+CORS_ORIGIN_ALLOW_ALL = False
 # Application definition
+CSRF_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_SAMESITE = 'Lax'   
+
+if DEBUG:
+    CSRF_COOKIE_SAMESITE = None
+    SESSION_COOKIE_SAMESITE = None
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -120,6 +135,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'corsheaders',
+    'api'
 ]
 
 MIDDLEWARE = [
@@ -157,10 +173,19 @@ WSGI_APPLICATION = 'rconweb.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 
+from urllib.parse import urlparse
+
+db_info = urlparse(os.getenv("DB_URL"))
+
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'django.db.backends.postgresql',
+        'USER': db_info.username,
+        'PASSWORD': db_info.password,
+        'HOST': db_info.hostname,
+        'PORT': db_info.port,
+        'NAME': 'rcon',
     }
 }
 
@@ -201,4 +226,5 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
-STATIC_URL = '/static/'
+STATIC_URL = '/djangostatic/'
+STATIC_ROOT = '/static/'
