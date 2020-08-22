@@ -3,7 +3,7 @@ FROM node:13-stretch
 WORKDIR /code
 
 RUN apt-get update -y && apt-get install -y nginx apache2-utils
-COPY nginx.conf /etc/nginx/sites-available/default
+
 
 RUN mkdir /pw
 
@@ -21,6 +21,7 @@ COPY entrypoint.sh .
 RUN chmod +x /code/entrypoint.sh
 
 RUN npm run build
+COPY nginx.conf /etc/nginx/sites-available/default
 
 RUN rm -rf src/
 RUN rm -rf public/
