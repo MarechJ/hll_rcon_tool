@@ -95,6 +95,19 @@ The web application will be available on `<your server ip>:$RCONWEB_PORT` (you c
 
 Note: If you are running it on Windows prior to 10 docker runs in a virtual machine, so you have to [find the IP](https://devilbox.readthedocs.io/en/latest/howto/docker-toolbox/find-docker-toolbox-ip-address.html) of that VM.
 
+
+### 4. CHANGE YOUR ADMIN PASSWORD
+
+Using you browser go to `<your server ip>:$RCONWEB_PORT/admin` (8010 is default port) and login with user: `admin` password `admin`
+FIRST THING YOU MUST DO IS CHANGE YOU PASSWORD there: http://prntscr.com/u3t2ms
+After that you can start adding you users with this: http://prntscr.com/u3t2u4 
+Make sure you specify their steam id it will be used in upcoming features: http://prntscr.com/u3t2yq
+Once the user is create you'll end up on that page: http://prntscr.com/u3t3to
+I recommend NOT CHANGING ANYTHING except for a select few of you most trusted staff members you can tick the `Superuser status`.
+Please note that users won't be able to change their password by themselves unless you tick the `staff status` so that they can access this admin page, howe i DO NOT RECOMMEND doing as I won't be maintaining special permissions on admin models on the future.
+
+Please note that the "onlineadmins" variable in the (auto) broadcast is broken due to accounts. It will be fixed and improved later.
+
 You're done, ENJOY!
 
 ### To update to the latest version:
