@@ -105,6 +105,8 @@ Make sure you specify their steam id it will be used in upcoming features: http:
 Once the user is created you'll end up on that page: http://prntscr.com/u3t3to
 I recommend NOT CHANGING ANYTHING except for a select few of your most trusted staff members you can tick the `Superuser status`.
 Please note that users won't be able to change their password by themselves unless you tick the `staff status` so that they can access this admin page, however i DO NOT RECOMMEND doing as I won't be maintaining special permissions on admin models on the future (just manage password for them). 
+To change the password of one of your user, in the users list click on him, then there: http://prntscr.com/u3ytzi
+
 
 Please note that the "onlineadmins" variable in the (auto) broadcast is broken due to accounts. It will be fixed and improved later.
 
