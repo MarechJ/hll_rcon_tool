@@ -9,7 +9,7 @@ then
   cd rconweb 
   ./manage.py migrate
   ./manage.py collectstatic
-  gunicorn -w 8 -b 0.0.0.0 rconweb.wsgi
+  gunicorn -w 8 -k eventlet -t 120 -b 0.0.0.0 rconweb.wsgi
 else
   ./manage.py $*
   saved=$?
