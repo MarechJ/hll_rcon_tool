@@ -296,6 +296,3 @@ if __name__ == '__main__':
     ctl = ServerCtl(
         SERVER_INFO
     )
-
-    player = '[CFr] Dr.WeeD "blah"'
-    print(ctl.do_kick(player, "test"))

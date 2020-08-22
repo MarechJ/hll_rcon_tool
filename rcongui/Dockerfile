@@ -16,11 +16,15 @@ ENV REACT_APP_API_URL /api/
 
 COPY src/ src/
 COPY public/ public/
+COPY entrypoint.sh .
+
+RUN chmod +x /code/entrypoint.sh
 
 RUN npm run build
 
-COPY entrypoint.sh .
-RUN chmod +x /code/entrypoint.sh
+RUN rm -rf src/
+RUN rm -rf public/
+RUN rm -rf node_modules/
 
 WORKDIR /var/www
 
