@@ -4,6 +4,7 @@ WORKDIR /code
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 RUN pip install gunicorn
+RUN pip install gunicorn[eventlet]
 COPY rcon rcon
 COPY rconweb rconweb
 COPY manage.py .
