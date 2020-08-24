@@ -97,11 +97,6 @@ class DiscordWebhookHandler:
         if not all([PING_TRIGGER_WORDS, PING_TRIGGER_ROLES]):
             return
 
-        # PING_TRIGGER_WEBHOOK
-        # is required because pings are attached to chat messages.
-        if not PING_TRIGGER_WEBHOOK:
-            return
-
         try:
             self.ping_trigger_words = [
                 word.lower().strip()
@@ -166,16 +161,17 @@ class DiscordWebhookHandler:
                     for i, msg_word in enumerate(msg_words):
                         if trigger_word == msg_word.lower():
                             triggered = True
-                            content = " ".join(self.ping_trigger_roles)
                             msg_words[i] = f"__**{msg_words[i]}**__"
                 if triggered:
+                    content = " ".join(self.ping_trigger_roles)
                     embed.description = " ".join(msg_words)
 
             logger.debug("sending chat message len=%s to Discord",
                          len(embed) + len(content))
 
             # Use chat webhook for both.
-            if self.ping_trigger_webhook == self.chat_webhook:
+            if (self.ping_trigger_webhook == self.chat_webhook) or (
+                    self.chat_webhook and not self.ping_trigger_webhook):
                 self.chat_webhook.send(content=content, embed=embed)
             # Use separate webhooks.
             else:
