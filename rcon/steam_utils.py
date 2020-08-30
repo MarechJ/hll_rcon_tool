@@ -16,8 +16,8 @@ if not STEAM_KEY:
 def get_steam_profile(steamd_id):
     if not STEAM_KEY:
         return None
-    api = WebAPI(key=STEAM_KEY)
     try:
+        api = WebAPI(key=STEAM_KEY)
         return api.ISteamUser.GetPlayerSummaries(steamids=steamd_id)["response"]["players"][0]
     except AttributeError:
         logger.error("STEAM_API_KEY is invalid, can't fetch steam profile")
@@ -44,9 +44,8 @@ def get_player_has_bans(steamd_id):
     if not STEAM_KEY:
         return None
 
-    api = WebAPI(key=STEAM_KEY)
-
     try:
+        api = WebAPI(key=STEAM_KEY)
         bans = api.ISteamUser.GetPlayerBans(steamids=steamd_id)['players'][0]
     except AttributeError:
         logger.error("STEAM_API_KEY is invalid, can't fetch steam profile")
