@@ -98,8 +98,8 @@ function seconds_to_time(seconds) {
   return `${zeroPad(hours, 2)}:${zeroPad(minutes, 2)}`;
 }
 
-const getCountry = (profile) => {
-  const country = profile.get("country");
+const getCountry = (player) => {
+  const country = player.get("country");
 
   if (country == "private") {
     return (
@@ -127,7 +127,7 @@ const getCountry = (profile) => {
 
 const getBans = (profile) => {
   console.log(profile)
-  return profile.get("steam_bans", {}) && profile.get("steam_bans", {}).get('has_bans') === true ? (
+  return profile.get("steam_bans", {}) && profile.get("steam_bans", new Map()).get('has_bans') === true ? (
     <WithPopOver
       content={`Players has bans: ${JSON.stringify(profile.get("steam_bans"))}`}
     >
@@ -161,22 +161,24 @@ const formatPunitions = (profile) => {
 
 const PlayerItem = ({
   classes,
-  name,
-  steamID64,
-  profile,
+  player,
   handleAction,
   nbButtons,
   onFlag,
   onDeleteFlag,
-}) => (
-  <ListItem key={name} dense>
+}) => {
+  const profile = player.get('profile') ? player.get('profile') : new Map()
+  const name = player.get('name')
+  const steamID64 = player.get('steam_id_64')
+
+  return <ListItem key={name} dense>
     <ListItemText
       id={`checkbox-list-label-${steamID64}`}
       primary={
         <React.Fragment>
           <WithPopOver content={formatPunitions(profile)}>{name}</WithPopOver>
           {" - "}
-          {getCountry(profile)}
+          {getCountry(player)}
           {" - "}
           <Link
             className={classes.marginRight}
@@ -219,11 +221,12 @@ const PlayerItem = ({
       />
     </ListItemSecondaryAction>
   </ListItem>
-);
+};
 
 class CompactList extends React.Component {
   render() {
     const {
+      players,
       playerNames,
       playerSteamIDs,
       playerProfiles,
@@ -234,9 +237,10 @@ class CompactList extends React.Component {
       onFlag,
       onDeleteFlag,
     } = this.props;
-    let players = _.zip(playerNames, playerSteamIDs, playerProfiles);
+    //let players = _.zip(playerNames, playerSteamIDs, playerProfiles);
+    let myPlayers = players
     if (alphaSort === true) {
-      players = _.sortBy(players, (p) => p[0].toLowerCase());
+      myPlayers = players.sortBy((p) => p.get('name').toLowerCase());
     }
 
     const sizes = {
@@ -249,14 +253,12 @@ class CompactList extends React.Component {
 
     return (
       <List className={classes.root}>
-        {players.map((player) => (
+        {myPlayers.map((player) => (
           <PlayerItem
             classes={classes}
             nbButtons={sizes[width]}
-            name={player[0]}
-            steamID64={player[1]}
-            key={player[1]}
-            profile={player[2]}
+            player={player}
+            key={player.steam_id_64}       
             handleAction={(actionType) => handleAction(actionType, player[0])}
             onFlag={() =>
               onFlag(

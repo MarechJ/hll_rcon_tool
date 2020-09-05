@@ -57,7 +57,7 @@ const GroupActions = ({
           multiple
           clearOnEscape
           id="tags-outlined"
-          options={_.sortBy(players, p => p.name.toLowerCase())}
+          options={players.sortBy(p => p.get('name').toLowerCase())}
           getOptionLabel={option => `${option.name}${compactProfile(option)}`}
           filterSelectedOptions
           onChange={(e, val) => setSelectedPlayers(val)}
