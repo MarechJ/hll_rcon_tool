@@ -62,6 +62,7 @@ def clear_cache(request):
         "failed": res is None
     })
 
+
 @csrf_exempt
 @login_required
 def get_auto_broadcasts_config(request):

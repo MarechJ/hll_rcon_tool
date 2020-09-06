@@ -267,11 +267,13 @@ class Rcon(ServerCtl):
 
     @ttl_cache(ttl=5, cache_falsy=False)
     def get_status(self):
+        slots = self.get_slots()
         return {
             'name': self.get_name(),
-            'alias': os.getenv('RCON_INSTANCE_NAME', 'HLL RCON'),
             'map': self.get_map(),
-            'nb_players': self.get_slots()
+            'nb_players': slots,
+            'short_name': os.getenv("SERVER_SHORT_NAME", None) or "HLL Rcon",
+            'player_count': slots.split('/')[0]
         }
 
     @ttl_cache(ttl=60 * 60 * 24)
