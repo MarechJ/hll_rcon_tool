@@ -12,6 +12,7 @@ import {
   faLock,
   faQuestionCircle,
   faExclamationCircle,
+  faStar,
 } from "@fortawesome/free-solid-svg-icons";
 import { faSteam } from "@fortawesome/free-brands-svg-icons";
 import Link from "@material-ui/core/Link";
@@ -29,6 +30,7 @@ import Typography from "@material-ui/core/Typography";
 import { makeStyles } from "@material-ui/core/styles";
 import { join } from "lodash/array";
 import moment from "moment";
+//import StarIcon from '@material-ui/icons/Star';
 
 const zeroPad = (num, places) => String(num).padStart(places, "0");
 
@@ -186,6 +188,7 @@ const PlayerItem = ({
             color="inherit"
             href={`https://steamcommunity.com/profiles/${steamID64}`}
           >
+            {player.get('is_vip') ? <React.Fragment><FontAwesomeIcon icon={faStar}/>{" - "}</React.Fragment> : ""}
             <FontAwesomeIcon icon={faSteam} />
           </Link>
         </React.Fragment>
@@ -227,9 +230,6 @@ class CompactList extends React.Component {
   render() {
     const {
       players,
-      playerNames,
-      playerSteamIDs,
-      playerProfiles,
       classes,
       handleAction,
       alphaSort,

@@ -105,11 +105,13 @@ const DropMenu = ({ startIdx, actions, handleAction }) => {
 const PlayerActions = ({ size, handleAction, onFlag, displayCount = 3, disable = false, penaltyCount = Map() }) => {
   const classes = useStyles();
   const [anchorEl, setAnchorEl] = React.useState(null);
+  const [isOpen, setOpen] = React.useState(false)
   const handleClick = event => {
     setAnchorEl(event.currentTarget);
+    setOpen(true);
   };
   const handleClose = () => {
-    setAnchorEl(null);
+    setOpen(false);
   };
   const remap_penalties = {
     "perma_ban": 'PERMABAN',
@@ -153,7 +155,7 @@ const PlayerActions = ({ size, handleAction, onFlag, displayCount = 3, disable =
           id="simple-menu"
           anchorEl={anchorEl}
           keepMounted
-          open={Boolean(anchorEl)}
+          open={isOpen}
           onClose={handleClose}
         >
           {_.range(show, actions.length).map(idx => {

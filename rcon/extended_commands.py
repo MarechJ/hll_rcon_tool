@@ -40,7 +40,7 @@ class Rcon(ServerCtl):
             country = get_player_country_code(steam_id_64)
             steam_bans = get_player_has_bans(steam_id_64)
 
-        except CommandFailedError:
+        except (CommandFailedError, ValueError):
             # Making that debug instead of exception as it's way to spammy
             logger.debug("Can't get player info for %s", player)
             # logger.exception("Can't get player info for %s", player)
