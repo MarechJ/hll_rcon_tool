@@ -42,7 +42,7 @@ const Footer = () => {
           <Link target="_blank" href="https://discord.gg/zpSQQef">
             the discord
           </Link>{" "}
-          for questions, feedback and support. Dev or docs contributions are
+          for announcements, questions, feedback and support. Dev or docs contributions are
           most welcomed.
         </Typography>
       </Grid>
