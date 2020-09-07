@@ -264,7 +264,7 @@ class CompactList extends React.Component {
               onFlag(
                 Map({
                   steam_id_64: player.get("steam_id_64"),
-                  names: player.get("profile", new Map()).get(
+                  names: (player.get("profile") ? player.get("profile") : new Map()).get(
                     "names",
                     IList([Map({ name: player.get('name') })])
                   ),
