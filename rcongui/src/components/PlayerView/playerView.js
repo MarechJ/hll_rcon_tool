@@ -48,7 +48,7 @@ class PlayerView extends Component {
   constructor(props) {
     super();
     this.state = {
-      selectedPlayers: [],
+      selectedPlayers: new List(),
       bannedPlayers: null,
       players: new List(),
       filteredPlayers: new List(),
@@ -218,6 +218,7 @@ class PlayerView extends Component {
       bannedPlayers,
       flag,
     } = this.state;
+    const playersCopy = players;
 
     return (
       <React.Fragment>
@@ -260,7 +261,7 @@ class PlayerView extends Component {
           onClose={() => this.setState({ openGroupAction: false })}
           open={openGroupAction}
           classes={classes}
-          players={players}
+          players={players} /* Todo handle immuatable */
           handleAction={this.handleAction}
         />
         <Unban

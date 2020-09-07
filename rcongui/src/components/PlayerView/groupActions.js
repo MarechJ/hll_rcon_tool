@@ -11,6 +11,8 @@ import Grid from "@material-ui/core/Grid";
 import { DialogTitle, DialogContent, DialogActions } from "../dialog";
 import { join } from 'lodash/array';
 import TextHistory from '../textHistory'
+import { fromJS, List } from 'immutable'
+import { sortBy } from 'lodash/collection'
 
 const compactProfile = (player) => {
   let s = ""
@@ -38,6 +40,8 @@ const GroupActions = ({
   const [saveMessage, setSaveMessage] = React.useState(true)
   const textHistory = new TextHistory("punitions")
   const nbButton = ["xs"].indexOf(width) != -1 ? 3 : 6;
+  let myPlayers = new List(players)
+  myPlayers = myPlayers.toJS()
 
   return (
     <Dialog
@@ -57,7 +61,7 @@ const GroupActions = ({
           multiple
           clearOnEscape
           id="tags-outlined"
-          options={players.sortBy(p => p.get('name').toLowerCase())}
+          options={sortBy(myPlayers, p => p.name.toLowerCase())}
           getOptionLabel={option => `${option.name}${compactProfile(option)}`}
           filterSelectedOptions
           onChange={(e, val) => setSelectedPlayers(val)}

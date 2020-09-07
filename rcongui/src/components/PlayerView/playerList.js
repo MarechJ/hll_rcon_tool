@@ -259,14 +259,14 @@ class CompactList extends React.Component {
             nbButtons={sizes[width]}
             player={player}
             key={player.steam_id_64}       
-            handleAction={(actionType) => handleAction(actionType, player[0])}
+            handleAction={(actionType) => handleAction(actionType, player.get('name'))}
             onFlag={() =>
               onFlag(
                 Map({
-                  steam_id_64: player[2].get("steam_id_64", player[1]),
-                  names: player[2].get(
+                  steam_id_64: player.get("steam_id_64"),
+                  names: player.get("profile", new Map()).get(
                     "names",
-                    IList([Map({ name: player[0] })])
+                    IList([Map({ name: player.get('name') })])
                   ),
                 })
               )
