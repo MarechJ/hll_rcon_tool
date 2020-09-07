@@ -16,7 +16,7 @@ import {
 } from "react-router-dom";
 import { createMuiTheme } from '@material-ui/core/styles';
 import PlayersHistory from "./components/PlayersHistory";
-import Header from "./components/Header";
+import Header, { Footer } from "./components/Header";
 import RconSettings from './components/RconSettings';
 import {pink, red} from '@material-ui/core/colors';
 
@@ -106,6 +106,7 @@ function App() {
               </Grid>
             </Route>
           </Switch>
+          <Footer />
         </Router>
       </ThemeProvider>
     </div>
