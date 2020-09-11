@@ -31,6 +31,7 @@ async function handle_response_status(response) {
 
 
 async function handle_http_errors(error) {
+  // TODO: uncomment and limit amount of toasts
   if (error.name === 'LoginError') {
     toast.warn("Please login!", {
       toastId: "Must login",
@@ -46,7 +47,7 @@ async function handle_http_errors(error) {
       toastId: "Bad loging",
     })
   } else {
-    toast.error("Unable to connect to API " + error)
+    //toast.error("Unable to connect to API " + error)
   }
 }
 
@@ -86,14 +87,16 @@ async function postData(url = "", data = {}) {
 }
 
 async function showResponse(response, command, showSuccess) {
+  // TODO: limit the amount of toasts
   if (!response.ok) {
-    toast.error(`Game server failed to return for ${command}`);
+    return null // todo remove
+    //toast.error(`Game server failed to return for ${command}`);
   } else {
     const res = await response.json();
     if (res.failed === true) {
-      toast.warning(`Last command failed: ${command} -> ${JSON.stringify(res.result)}`);
+      //toast.warning(`Last command failed: ${command} -> ${JSON.stringify(res.result)}`);
     } else if (showSuccess === true) {
-      toast.success(`Done: ${command}`);
+      //toast.success(`Done: ${command}`);
     }
     return res;
   }
@@ -104,7 +107,7 @@ async function sendAction(command, parameters) {
   return postData(`${process.env.REACT_APP_API_URL}${command}`, parameters).then(
     (res) => showResponse(res, command, true)
   ).catch(handle_http_errors)
-}
+} 
 
 
 export { postData, showResponse, get, handle_http_errors, PermissionError, LoginError, sendAction };

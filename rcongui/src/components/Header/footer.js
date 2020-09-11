@@ -2,7 +2,7 @@ import React from "react";
 import { Grid, Typography, Link } from "@material-ui/core";
 import { join } from "lodash/array";
 
-const Footer = () => {
+const Footer = ({classes}) => {
   const [repoData, setRepoData] = React.useState([]);
   React.useEffect(
     () =>
@@ -14,7 +14,7 @@ const Footer = () => {
 
   return (
     <Grid container>
-      <Grid xs={12}>
+      <Grid className={classes.paddingTop} xs={12}>
         <Typography
           color="textSecondary"
           variant="caption"

@@ -106,7 +106,7 @@ function App() {
               </Grid>
             </Route>
           </Switch>
-          <Footer />
+          <Footer classes={classes} />
         </Router>
       </ThemeProvider>
     </div>
