@@ -120,7 +120,7 @@ const getCountry = (player) => {
   return (
     <img
       alt={country}
-      title={country ? getName(country) : ''}
+      title={country ? getName(country) : ""}
       style={{ height: "12px" }}
       src={`http://catamphetamine.gitlab.io/country-flag-icons/3x2/${country}.svg`}
     />
@@ -128,8 +128,9 @@ const getCountry = (player) => {
 };
 
 const getBans = (profile) => {
-  console.log(profile)
-  return profile.get("steam_bans", {}) && profile.get("steam_bans", new Map()).get('has_bans') === true ? (
+  console.log(profile);
+  return profile.get("steam_bans", {}) &&
+    profile.get("steam_bans", new Map()).get("has_bans") === true ? (
     <WithPopOver
       content={`Players has bans: ${JSON.stringify(profile.get("steam_bans"))}`}
     >
@@ -137,8 +138,8 @@ const getBans = (profile) => {
     </WithPopOver>
   ) : (
     ""
-  )
-  }
+  );
+};
 
 const Flag = ({ data, onDeleteFlag }) => (
   <Link
@@ -156,7 +157,12 @@ const formatPunitions = (profile) => {
   const formatTime = (item) => item.get("time");
   const lines = profile
     .get("received_actions", [])
-    .map((item) => `${formatTime(item)} ${item.get('action_type')} by ${item.get('by')}: ${item.get('reason')}`);
+    .map(
+      (item) =>
+        `${formatTime(item)} ${item.get("action_type")} by ${item.get(
+          "by"
+        )}: ${item.get("reason")}`
+    );
   console.log(lines);
   return <pre>{lines.join("\n")}</pre>;
 };
@@ -169,61 +175,70 @@ const PlayerItem = ({
   onFlag,
   onDeleteFlag,
 }) => {
-  const profile = player.get('profile') ? player.get('profile') : new Map()
-  const name = player.get('name')
-  const steamID64 = player.get('steam_id_64')
+  const profile = player.get("profile") ? player.get("profile") : new Map();
+  const name = player.get("name");
+  const steamID64 = player.get("steam_id_64");
 
-  return <ListItem key={name} dense>
-    <ListItemText
-      id={`checkbox-list-label-${steamID64}`}
-      primary={
-        <React.Fragment>
-          <WithPopOver content={formatPunitions(profile)}>{name}</WithPopOver>
-          {" - "}
-          {getCountry(player)}
-          {" - "}
-          <Link
-            className={classes.marginRight}
-            target="_blank"
-            color="inherit"
-            href={`https://steamcommunity.com/profiles/${steamID64}`}
-          >
-            {player.get('is_vip') ? <React.Fragment><FontAwesomeIcon icon={faStar}/>{" - "}</React.Fragment> : ""}
-            <FontAwesomeIcon icon={faSteam} />
-          </Link>
-        </React.Fragment>
-      }
-      secondary={
-        <React.Fragment>
-          <span>
-            {seconds_to_time(profile.get("current_playtime_seconds"))} - #
-            {profile.get("sessions_count")} - {getBans(profile)}
-          </span>{" "}
-          <Link
-            target="_blank"
-            color="inherit"
-            href={`${process.env.REACT_APP_API_URL}player?steam_id_64=${steamID64}`}
-          >
-            {steamID64} <Icon component={OpenInNewIcon} fontSize="inherit" />
-          </Link>
-          <p className={classes.noPaddingMargin}>
-            {profile.get("flags", []).map((d) => (
-              <Flag data={d} onDeleteFlag={onDeleteFlag} />
-            ))}
-          </p>
-        </React.Fragment>
-      }
-    />
-    <ListItemSecondaryAction>
-      <PlayerActions
-        size="small"
-        handleAction={handleAction}
-        onFlag={onFlag}
-        displayCount={nbButtons}
-        penaltyCount={profile.get("penalty_count", Map())}
+  return (
+    <ListItem key={name} dense>
+      <ListItemText
+        id={`checkbox-list-label-${steamID64}`}
+        primary={
+          <React.Fragment>
+            <WithPopOver content={formatPunitions(profile)}>{name}</WithPopOver>
+            {" - "}
+            {getCountry(player)}
+            {" - "}
+            <Link
+              className={classes.marginRight}
+              target="_blank"
+              color="inherit"
+              href={`https://steamcommunity.com/profiles/${steamID64}`}
+            >
+              {player.get("is_vip") ? (
+                <React.Fragment>
+                  <FontAwesomeIcon icon={faStar} />
+                  {" - "}
+                </React.Fragment>
+              ) : (
+                ""
+              )}
+              <FontAwesomeIcon icon={faSteam} />
+            </Link>
+          </React.Fragment>
+        }
+        secondary={
+          <React.Fragment>
+            <span>
+              {seconds_to_time(profile.get("current_playtime_seconds"))} - #
+              {profile.get("sessions_count")} - {getBans(profile)}
+            </span>{" "}
+            <Link
+              target="_blank"
+              color="inherit"
+              href={`${process.env.REACT_APP_API_URL}player?steam_id_64=${steamID64}`}
+            >
+              {steamID64} <Icon component={OpenInNewIcon} fontSize="inherit" />
+            </Link>
+            <p className={classes.noPaddingMargin}>
+              {profile.get("flags", []).map((d) => (
+                <Flag data={d} onDeleteFlag={onDeleteFlag} />
+              ))}
+            </p>
+          </React.Fragment>
+        }
       />
-    </ListItemSecondaryAction>
-  </ListItem>
+      <ListItemSecondaryAction>
+        <PlayerActions
+          size="small"
+          handleAction={handleAction}
+          onFlag={onFlag}
+          displayCount={nbButtons}
+          penaltyCount={profile.get("penalty_count", Map())}
+        />
+      </ListItemSecondaryAction>
+    </ListItem>
+  );
 };
 
 class CompactList extends React.Component {
@@ -232,15 +247,27 @@ class CompactList extends React.Component {
       players,
       classes,
       handleAction,
-      alphaSort,
+      sortType,
       width,
       onFlag,
       onDeleteFlag,
     } = this.props;
     //let players = _.zip(playerNames, playerSteamIDs, playerProfiles);
-    let myPlayers = players
-    if (alphaSort === true) {
-      myPlayers = players.sortBy((p) => p.get('name').toLowerCase());
+    let myPlayers = players;
+    if (sortType !== "") {
+      if (sortType.endsWith("_alpha")) {
+        myPlayers = players.sortBy((p) => p.get("name").toLowerCase());
+      }
+      if (sortType.endsWith("_time")) {
+        myPlayers = players.sortBy((p) => { 
+          const profile = p.get("profile")
+          if (!profile) { return 999999 }
+          return profile.get("current_playtime_seconds")
+        });
+      }
+      if (sortType.startWith("desc_")) {
+        myPlayers = myPlayers.reverse();
+      }
     }
 
     const sizes = {
@@ -258,16 +285,18 @@ class CompactList extends React.Component {
             classes={classes}
             nbButtons={sizes[width]}
             player={player}
-            key={player.steam_id_64}       
-            handleAction={(actionType) => handleAction(actionType, player.get('name'))}
+            key={player.steam_id_64}
+            handleAction={(actionType) =>
+              handleAction(actionType, player.get("name"))
+            }
             onFlag={() =>
               onFlag(
                 Map({
                   steam_id_64: player.get("steam_id_64"),
-                  names: (player.get("profile") ? player.get("profile") : new Map()).get(
-                    "names",
-                    IList([Map({ name: player.get('name') })])
-                  ),
+                  names: (player.get("profile")
+                    ? player.get("profile")
+                    : new Map()
+                  ).get("names", IList([Map({ name: player.get("name") })])),
                 })
               )
             }

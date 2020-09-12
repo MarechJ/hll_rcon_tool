@@ -59,7 +59,8 @@ class PlayerView extends Component {
       filterTimeout: null,
       actionMessage: "",
       doConfirm: false,
-      alphaSort: false,
+      //alphaSort: false,
+      sortType: "",
       openGroupAction: false,
       openUnban: false,
       flag: false,
@@ -214,7 +215,7 @@ class PlayerView extends Component {
       filteredPlayers,
       actionMessage,
       doConfirm,
-      alphaSort,
+      sortType,
       bannedPlayers,
       flag,
     } = this.state;
@@ -239,12 +240,14 @@ class PlayerView extends Component {
           showCount={filteredPlayers.size}
           handleMessageChange={(text) => this.setState({ actionMessage: text })}
           actionMessage={actionMessage}
-          handleToggleAlphaSort={(bool) => this.setState({ alphaSort: bool })}
+          sortType={sortType}
+          handleSortTypeChange={(sortType) => this.setState({ sortType })}
+          //handleToggleAlphaSort={(bool) => this.setState({ alphaSort: bool })}
         />
 
         <CompactList
           classes={classes}
-          alphaSort={alphaSort}
+          sortType={sortType}
           players={filteredPlayers}
           /*playerNames={filteredPlayerNames}
           playerSteamIDs={filteredPlayerSteamIDs}

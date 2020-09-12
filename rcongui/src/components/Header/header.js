@@ -157,6 +157,7 @@ class LoginBox extends React.Component {
   }
 }
 
+// TODO: Make this reactive, it's causing the view on mobile to be bigger then it should
 export default ({ classes, setSaveDark, dark }) => {
   return (
     <Grid container className={classes.grow}>
