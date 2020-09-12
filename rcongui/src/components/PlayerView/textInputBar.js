@@ -101,20 +101,11 @@ const TextInputBar = ({
               <MenuItem value={"desc_time"}>Desc. Time</MenuItem>
               <MenuItem value={"asc_country"}>Asc. Country</MenuItem>
               <MenuItem value={"desc_country"}>Desc. Country</MenuItem>
+              <MenuItem value={"asc_sessions"}>Asc. #Sessions</MenuItem>
+              <MenuItem value={"desc_sessions"}>Desc. #Sessions</MenuItem>
             </Select>
             <FormHelperText>Sort the player list</FormHelperText>
           </FormControl>
-          {/* <ToggleButtonGroup
-            value={alignment}
-            exclusive
-            size="small"
-            onChange={handleToggle}
-            aria-label="text alignment"
-          >
-            <ToggleButton value="centered">
-              <SortByAlphaIcon />
-            </ToggleButton>
-          </ToggleButtonGroup> */}
         </Grid>
         <Grid item xs={12} md={3} className={classes.textLeft}>
           <TextField

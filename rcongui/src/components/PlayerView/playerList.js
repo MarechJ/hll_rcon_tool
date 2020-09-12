@@ -241,6 +241,36 @@ const PlayerItem = ({
   );
 };
 
+
+const getSortedPlayers = (players, sortType) => {
+  let myPlayers = players;
+  const [direction, type] = sortType.split('_')
+
+  if (!sortType || sortType === "") {
+    return myPlayers
+  }
+
+  const sortFuncs = {
+    "alpha": p => p.get("name").toLowerCase(),
+    "time": p => !p.get("profile") ? 0 : p.get("profile").get("current_playtime_seconds"),
+    "country": p => { 
+      const country = p.get("country")
+      if (!country) { return "" }
+      if (country === "private") return "zzz"
+      return country
+    },
+    "sessions": p => p.get("profile") ? 0 : p.get("profile").get("sessions_count")
+  }
+
+  myPlayers = myPlayers.sortBy(sortFuncs[type])
+ 
+  if (direction === "desc") {
+    myPlayers = myPlayers.reverse();
+  }
+  
+  return myPlayers
+}
+
 class CompactList extends React.Component {
   render() {
     const {
@@ -252,24 +282,9 @@ class CompactList extends React.Component {
       onFlag,
       onDeleteFlag,
     } = this.props;
-    //let players = _.zip(playerNames, playerSteamIDs, playerProfiles);
-    let myPlayers = players;
-    if (sortType !== "") {
-      if (sortType.endsWith("_alpha")) {
-        myPlayers = players.sortBy((p) => p.get("name").toLowerCase());
-      }
-      if (sortType.endsWith("_time")) {
-        myPlayers = players.sortBy((p) => { 
-          const profile = p.get("profile")
-          if (!profile) { return 999999 }
-          return profile.get("current_playtime_seconds")
-        });
-      }
-      if (sortType.startWith("desc_")) {
-        myPlayers = myPlayers.reverse();
-      }
-    }
-
+    
+    const myPlayers = getSortedPlayers(players, sortType)
+   
     const sizes = {
       xs: 0,
       sm: 3,
