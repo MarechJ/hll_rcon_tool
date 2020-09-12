@@ -1,0 +1,23 @@
+version: '2.4'
+
+services:
+  broadcast:
+    build: 
+      context: .
+      dockerfile: Dockerfile-arm64
+  logs_event_loop:
+    build: 
+      context: .
+      dockerfile: Dockerfile-arm64
+  backend_1:
+    build: 
+      context: .
+      dockerfile: Dockerfile-arm64
+  frontend:
+    build:
+      context: ./rcongui
+      dockerfile: Dockerfile-arm64
+  redis:
+    image: arm64v8/redis:5
+  postgres:
+    image: arm64v8/postgres:12
