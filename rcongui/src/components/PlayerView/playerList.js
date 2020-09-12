@@ -28,8 +28,10 @@ import { getName } from "country-list";
 import Popover from "@material-ui/core/Popover";
 import Typography from "@material-ui/core/Typography";
 import { makeStyles } from "@material-ui/core/styles";
-import { join } from "lodash/array";
-import moment from "moment";
+import { sumBy } from "lodash/math";
+import { toPairs } from "lodash/object"
+
+
 //import StarIcon from '@material-ui/icons/Star';
 
 const zeroPad = (num, places) => String(num).padStart(places, "0");
@@ -242,6 +244,17 @@ const PlayerItem = ({
 };
 
 
+const weightedPenalities = (penaltiesMap) => {
+  const weights = {
+    "PUNISH": 1,
+    "KICK": 4,
+    "TEMPBAN": 10,
+    "PERMABAN": 100
+  }
+
+  return sumBy(toPairs(penaltiesMap), item => weights[item[0]] * item[1])
+}
+
 const getSortedPlayers = (players, sortType) => {
   let myPlayers = players;
   const [direction, type] = sortType.split('_')
@@ -259,7 +272,10 @@ const getSortedPlayers = (players, sortType) => {
       if (country === "private") return "zzz"
       return country
     },
-    "sessions": p => p.get("profile") ? 0 : p.get("profile").get("sessions_count")
+    "sessions": p => p.get("profile") ? 0 : p.get("profile").get("sessions_count"),
+    "penalties": p => p.get("profile") ? 0 : weightedPenalities(p.get("profile").get("penalty_countt")),
+    "vips": p => p.get("is_vip"),
+    "nbflags": p => p.get("profile") ? 0 : p.get("profile").get("flags", new List()).size
   }
 
   myPlayers = myPlayers.sortBy(sortFuncs[type])
