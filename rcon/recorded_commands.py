@@ -56,12 +56,16 @@ class RecordedRcon(Rcon):
     def get_players(self):
         players = super().get_players()
 
+        vips = set(v['steam_id_64'] for v in super().get_vip_ids())
         steam_ids = [p.get(STEAMID) for p in players if p.get(STEAMID)]
         profiles = {p['steam_id_64']: p for p in get_profiles(steam_ids)}
 
         for p in players:
             p.update(
-                {'profile': profiles.get(p.get(STEAMID))}
+                {
+                    'profile': profiles.get(p.get(STEAMID)),
+                    'is_vip': p.get(STEAMID) in vips
+                }
             )
 
         return players

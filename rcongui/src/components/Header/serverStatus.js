@@ -39,6 +39,7 @@ class ServerStatus extends React.Component {
             .then(response => showResponse(response, "get_status", false))
             .then(data => {
                 this.setState({ name: data.result.name, map: data.result.map, nbPlayers: data.result.nb_players })
+                document.title = `(${data.result.player_count}) ${data.result.short_name}`
             })
             .catch(handle_http_errors);
     }

@@ -40,7 +40,7 @@ const Selector = ({
             ""
           )}
         {values.map(a => (
-          <MenuItem value={a}>{a}</MenuItem>
+          <MenuItem key={a} value={a}>{a}</MenuItem>
         ))}
       </Select>
     </FormControl>
@@ -171,7 +171,7 @@ class Logs extends React.Component {
           <Grid xs={12}>
             <Paper className={classes.paperLogs}>
               {logs.map(l => (
-                <pre className={classes.logs}>{moment(new Date(l.timestamp_ms)).format("HH:mm:ss - ddd, MMM D") + '\t' + l.action.padEnd(20) + l.message}</pre>
+                <pre key={l.raw} className={classes.logs}>{moment(new Date(l.timestamp_ms)).format("HH:mm:ss - ddd, MMM D") + '\t' + l.action.padEnd(20) + l.message}</pre>
               ))}
             </Paper>
           </Grid>

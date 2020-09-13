@@ -16,7 +16,7 @@ import {
 } from "react-router-dom";
 import { createMuiTheme } from '@material-ui/core/styles';
 import PlayersHistory from "./components/PlayersHistory";
-import Header from "./components/Header";
+import Header, { Footer } from "./components/Header";
 import RconSettings from './components/RconSettings';
 import {pink, red} from '@material-ui/core/colors';
 
@@ -73,7 +73,6 @@ const ThemeContext = React.createContext('light');
 function App() {
   const classes = useStyles();
   const [dark, setDark] = React.useState(localStorage.getItem('darKTheme'))
-  console.log("dark: ", dark)
   const setSaveDark = (bool) => {localStorage.setItem('darKTheme', bool); setDark(bool)}
   const theme = dark == "dark" ? darkTheme :  lightTheme
 
@@ -106,6 +105,7 @@ function App() {
               </Grid>
             </Route>
           </Switch>
+          <Footer classes={classes} />
         </Router>
       </ThemeProvider>
     </div>

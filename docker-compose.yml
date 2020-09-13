@@ -73,7 +73,7 @@ services:
       - server1
       - common
   redis:
-    image: redislabs/redistimeseries:1.2.6
+    image: maresh/hll_redis:latest
     restart: always
     volumes:
       - ./redis_data:/data
