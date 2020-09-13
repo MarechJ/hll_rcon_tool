@@ -73,7 +73,6 @@ const ThemeContext = React.createContext('light');
 function App() {
   const classes = useStyles();
   const [dark, setDark] = React.useState(localStorage.getItem('darKTheme'))
-  console.log("dark: ", dark)
   const setSaveDark = (bool) => {localStorage.setItem('darKTheme', bool); setDark(bool)}
   const theme = dark == "dark" ? darkTheme :  lightTheme
 

@@ -130,7 +130,6 @@ const getCountry = (player) => {
 };
 
 const getBans = (profile) => {
-  console.log(profile);
   return profile.get("steam_bans", {}) &&
     profile.get("steam_bans", new Map()).get("has_bans") === true ? (
     <WithPopOver
@@ -165,7 +164,7 @@ const formatPunitions = (profile) => {
           "by"
         )}: ${item.get("reason")}`
     );
-  console.log(lines);
+
   return <pre>{lines.join("\n")}</pre>;
 };
 

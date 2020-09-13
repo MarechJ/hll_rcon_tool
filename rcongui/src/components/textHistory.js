@@ -44,7 +44,6 @@ class TextHistory {
 
     deleteTextByIdx(index) {
         const texts = this.getTexts()
-        console.log("Deleting index", index, texts.splice(index, 1))
         localStorage.setItem(this.namespace, JSON.stringify(texts))
     }
 
