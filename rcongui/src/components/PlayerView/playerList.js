@@ -271,10 +271,10 @@ const getSortedPlayers = (players, sortType) => {
       if (country === "private") return "zzz"
       return country
     },
-    "sessions": p => p.get("profile") ? 0 : p.get("profile").get("sessions_count"),
-    "penalties": p => p.get("profile") ? 0 : weightedPenalities(p.get("profile").get("penalty_countt")),
+    "sessions": p => !p.get("profile") ? 0 : p.get("profile").get("sessions_count"),
+    "penalties": p => !p.get("profile") ? 0 : weightedPenalities(p.get("profile").get("penalty_countt")),
     "vips": p => p.get("is_vip"),
-    "nbflags": p => p.get("profile") ? 0 : p.get("profile").get("flags", new List()).size
+    "nbflags": p => !p.get("profile") ? 0 : p.get("profile").get("flags", new List()).size
   }
 
   myPlayers = myPlayers.sortBy(sortFuncs[type])
