@@ -250,8 +250,9 @@ const weightedPenalities = (penaltiesMap) => {
     "TEMPBAN": 10,
     "PERMABAN": 100
   }
-
-  return sumBy(toPairs(penaltiesMap), item => weights[item[0]] * item[1])
+  const res = penaltiesMap.reduce((sum, value, key) => sum + (weights[key] * value), 0)
+  console.log("Weighted penalites", res)
+  return res
 }
 
 const getSortedPlayers = (players, sortType) => {
@@ -272,9 +273,8 @@ const getSortedPlayers = (players, sortType) => {
       return country
     },
     "sessions": p => !p.get("profile") ? 0 : p.get("profile").get("sessions_count"),
-    "penalties": p => !p.get("profile") ? 0 : weightedPenalities(p.get("profile").get("penalty_countt")),
+    "penalties": p => !p.get("profile") ? 0 : weightedPenalities(p.get("profile").get("penalty_count")),
     "vips": p => p.get("is_vip"),
-    "nbflags": p => !p.get("profile") ? 0 : p.get("profile").get("flags", new List()).size
   }
 
   myPlayers = myPlayers.sortBy(sortFuncs[type])

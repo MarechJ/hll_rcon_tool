@@ -105,8 +105,6 @@ const TextInputBar = ({
               <MenuItem value={"desc_sessions"}>Desc. #Sessions</MenuItem>
               <MenuItem value={"asc_penalties"}>Asc. penalties</MenuItem>
               <MenuItem value={"desc_penalties"}>Desc. penalties</MenuItem>
-              <MenuItem value={"asc_nbflags"}>Asc. #Flags</MenuItem>
-              <MenuItem value={"desc_nbflags"}>Desc. #Flags</MenuItem>
               <MenuItem value={"asc_vips"}>Asc. VIPs</MenuItem>
               <MenuItem value={"desc_vips"}>Desc. VIPs</MenuItem>
             </Select>
