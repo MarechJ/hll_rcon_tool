@@ -299,8 +299,13 @@ class CompactList extends React.Component {
       onDeleteFlag,
     } = this.props;
     
-    const myPlayers = getSortedPlayers(players, sortType)
-   
+    let myPlayers = players
+    try {
+      myPlayers = getSortedPlayers(players, sortType)
+    } catch(err) {
+      console.log("Unable to sort ", err)
+    }
+      
     const sizes = {
       xs: 0,
       sm: 3,
