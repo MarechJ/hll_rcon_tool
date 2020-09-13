@@ -25,6 +25,7 @@ services:
             DISCORD_SEND_TEAM_KILL_UPDATES: ${DISCORD_SEND_TEAM_KILL_UPDATES}
             VOTE_MAP_INSTRUCTIONS: ${VOTE_MAP_INSTRUCTIONS}
             STEAM_API_KEY: ${STEAM_API_KEY}
+            BAN_ON_VAC_HISTORY: ${BAN_ON_VAC_HISTORY}
         restart: always
         volumes: 
             - ./logs:/logs/

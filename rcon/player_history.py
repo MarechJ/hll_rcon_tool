@@ -1,3 +1,4 @@
+import os
 import logging
 import datetime
 from functools import wraps
@@ -12,6 +13,9 @@ from rcon.models import (
 )
 from rcon.game_logs import on_connected, on_disconnected
 from rcon.commands import CommandFailedError
+
+from rcon.steam_utils import get_player_bans, STEAM_KEY
+AUTOBAN_TRIGGER_THRESHOLD = os.getenv('BAN_ON_VAC_HISTORY')
 
 from rcon.cache_utils import ttl_cache, invalidates
 
@@ -227,6 +231,31 @@ def ban_if_blacklisted(rcon, steam_id_64, name):
             )
 
 
+def ban_if_has_vac_bans(rcon, steam_id_64, name):
+    try:
+        autoban_threshold = int(AUTOBAN_TRIGGER_THRESHOLD)
+    except ValueError: # No (proper) value is given
+        return
+
+    with enter_session() as sess:
+        player = get_player(sess, steam_id_64)
+
+        if not player:
+            logger.error("Can't check VAC history, player not found %s", steam_id_64)
+            return
+
+        bans = get_player_bans(steam_id_64)
+        if bans == {}: return # Player has no bans
+        last_ban = bans['DaysSinceLastBan']
+        if int(last_ban) <= autoban_threshold:
+            reason = f"VAC ban history ({str(last_ban)} days ago)"
+            logger.warning("Player %s was banned due VAC history, last ban: %s days ago", str(player), str(last_ban))
+            rcon.do_perma_ban(name, reason)
+            safe_save_player_action(
+                rcon=rcon, player_name=player, action_type="PERMABAN", reason=reason, by='AUTOBAN'
+            )
+
+
 def add_flag_to_player(steam_id_64, flag, comment=None, player_name=None):
     with enter_session() as sess:
         player = _get_set_player(sess, player_name=player_name, steam_id_64=steam_id_64)
@@ -313,6 +342,7 @@ def handle_on_connect(rcon, struct_log, steam_id_64):
     save_player(struct_log['player'], steam_id_64)
     save_start_player_session(steam_id_64, struct_log['timestamp_ms'])
     ban_if_blacklisted(rcon, steam_id_64, struct_log['player'])
+    ban_if_has_vac_bans(rcon, steam_id_64, struct_log['player'])
 
 
 @on_disconnected

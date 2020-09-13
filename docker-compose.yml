@@ -121,6 +121,7 @@ services:
       DISCORD_SEND_TEAM_KILL_UPDATES: ${DISCORD_SEND_TEAM_KILL_UPDATES_2}
       VOTE_MAP_INSTRUCTIONS: ${VOTE_MAP_INSTRUCTIONS}
       STEAM_API_KEY: ${STEAM_API_KEY}
+      BAN_ON_VAC_HISTORY: ${BAN_ON_VAC_HISTORY}
     restart: on-failure
     networks:
       - common
@@ -200,6 +201,7 @@ services:
       DISCORD_SEND_TEAM_KILL_UPDATES: ${DISCORD_SEND_TEAM_KILL_UPDATES_3}
       VOTE_MAP_INSTRUCTIONS: ${VOTE_MAP_INSTRUCTIONS}
       STEAM_API_KEY: ${STEAM_API_KEY}
+      BAN_ON_VAC_HISTORY: ${BAN_ON_VAC_HISTORY}
     restart: on-failure
     networks:
       - common
@@ -279,6 +281,7 @@ services:
       DISCORD_SEND_TEAM_KILL_UPDATES: ${DISCORD_SEND_TEAM_KILL_UPDATES_4}
       VOTE_MAP_INSTRUCTIONS: ${VOTE_MAP_INSTRUCTIONS}
       STEAM_API_KEY: ${STEAM_API_KEY}
+      BAN_ON_VAC_HISTORY: ${BAN_ON_VAC_HISTORY}
     restart: on-failure
     networks:
       - common
