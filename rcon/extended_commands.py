@@ -29,11 +29,30 @@ class Rcon(ServerCtl):
     player_info_regexp = re.compile(r'(.*)\(((Allies)|(Axis))/(\d+)\)')
     MAX_SERV_NAME_LEN = 1024  # I totally made up that number. Unable to test
 
+
+    def get_playerids(self, as_dict=False):
+        raw_list = super().get_playerids()
+
+        player_list = []
+        player_dict = {}
+        for playerinfo in raw_list:
+            name, steamid = playerinfo.rsplit(':', 1)
+            name = name[:-1]
+            steamid = steamid[1:]
+            player_dict[name] = steamid
+            player_list.append((name, steamid))
+        
+        return player_dict if as_dict else player_list
+
     @ttl_cache(ttl=60 * 60 * 2, cache_falsy=False)
     def get_player_info(self, player):
         try:
-            raw = super().get_player_info(player)
-            name, steam_id_64 = raw.split('\n')
+            try:
+                raw = super().get_player_info(player)
+                name, steam_id_64 = raw.split('\n')
+            except CommandFailedError:
+                name = player
+                steam_id_64 = self.get_playerids(as_dict=True).get(name)
             if not steam_id_64:
                 return {}
 
@@ -42,7 +61,7 @@ class Rcon(ServerCtl):
 
         except (CommandFailedError, ValueError):
             # Making that debug instead of exception as it's way to spammy
-            logger.debug("Can't get player info for %s", player)
+            logger.exception("Can't get player info for %s", player)
             # logger.exception("Can't get player info for %s", player)
             return {}
         name = name.split(": ", 1)[-1]
@@ -102,6 +121,7 @@ class Rcon(ServerCtl):
 
     @ttl_cache(ttl=5)
     def get_players(self):
+        # TODO refactor to use get_playerids. Also bacth call to steam API and find a way to cleverly cache the steam results
         names = super().get_players()
         players = []
         for n in names:

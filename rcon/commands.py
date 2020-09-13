@@ -155,6 +155,9 @@ class ServerCtl:
     def get_players(self):
         return self._get("players", True, can_fail=False)
 
+    def get_playerids(self):
+        return self._get("playerids", True, can_fail=False)
+
     def get_player_info(self, player):
         return self._request(f'playerinfo {player}')
 

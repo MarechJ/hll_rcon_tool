@@ -47,7 +47,7 @@ async function handle_http_errors(error) {
       toastId: "Bad loging",
     })
   } else {
-    //toast.error("Unable to connect to API " + error)
+    toast.error("Unable to connect to API " + error)
   }
 }
 
@@ -90,13 +90,13 @@ async function showResponse(response, command, showSuccess) {
   // TODO: limit the amount of toasts
   if (!response.ok) {
     return null // todo remove
-    //toast.error(`Game server failed to return for ${command}`);
+    toast.error(`Game server failed to return for ${command}`);
   } else {
     const res = await response.json();
     if (res.failed === true) {
-      //toast.warning(`Last command failed: ${command} -> ${JSON.stringify(res.result)}`);
+      toast.warning(`Last command failed: ${command} -> ${JSON.stringify(res.result)}`);
     } else if (showSuccess === true) {
-      //toast.success(`Done: ${command}`);
+      toast.success(`Done: ${command}`);
     }
     return res;
   }
