@@ -268,7 +268,7 @@ const getSortedPlayers = (players, sortType) => {
     "time": p => !p.get("profile") ? 0 : p.get("profile").get("current_playtime_seconds"),
     "country": p => { 
       const country = p.get("country")
-      if (!country) { return "" }
+      if (!country) { return "zzy" }
       if (country === "private") return "zzz"
       return country
     },
