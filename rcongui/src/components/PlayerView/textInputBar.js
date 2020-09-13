@@ -95,7 +95,7 @@ const TextInputBar = ({
             <MenuItem value="">
             <em>None</em>
           </MenuItem>
-              <MenuItem value={"asc_alpha"}>Asc. Aplha</MenuItem>
+              <MenuItem value={"asc_alpha"}>Asc. Alpha</MenuItem>
               <MenuItem value={"desc_alpha"}>Desc. Alpha</MenuItem>
               <MenuItem value={"asc_time"}>Asc. Time</MenuItem>
               <MenuItem value={"desc_time"}>Desc. Time</MenuItem>
@@ -103,8 +103,8 @@ const TextInputBar = ({
               <MenuItem value={"desc_country"}>Desc. Country</MenuItem>
               <MenuItem value={"asc_sessions"}>Asc. #Sessions</MenuItem>
               <MenuItem value={"desc_sessions"}>Desc. #Sessions</MenuItem>
-              <MenuItem value={"asc_penalties"}>Asc. penalties</MenuItem>
-              <MenuItem value={"desc_penalties"}>Desc. penalties</MenuItem>
+              <MenuItem value={"asc_penalties"}>Asc. Penalties</MenuItem>
+              <MenuItem value={"desc_penalties"}>Desc. Penalties</MenuItem>
               <MenuItem value={"asc_vips"}>Asc. VIPs</MenuItem>
               <MenuItem value={"desc_vips"}>Desc. VIPs</MenuItem>
             </Select>

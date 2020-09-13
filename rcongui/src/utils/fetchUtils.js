@@ -89,7 +89,6 @@ async function postData(url = "", data = {}) {
 async function showResponse(response, command, showSuccess) {
   // TODO: limit the amount of toasts
   if (!response.ok) {
-    return null // todo remove
     toast.error(`Game server failed to return for ${command}`);
   } else {
     const res = await response.json();
