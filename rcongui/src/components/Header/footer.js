@@ -25,7 +25,7 @@ const Footer = ({classes}) => {
           {repoData
             .filter((d) => d.type === "User")
             .map((d) => (
-              <Link target="_blank" href={d.html_url}>
+              <Link key={d.login} target="_blank" href={d.html_url}>
                 {`${d.login} (${d.contributions})`},{" "}
               </Link>
             ))}

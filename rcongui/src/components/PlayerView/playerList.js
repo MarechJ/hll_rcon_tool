@@ -112,7 +112,7 @@ const getCountry = (player) => {
       </WithPopOver>
     );
   }
-  if (country === "") {
+  if (country === "" || country === null) {
     return (
       <WithPopOver content="No country specified">
         <FontAwesomeIcon icon={faQuestionCircle} />
@@ -156,16 +156,14 @@ const Flag = ({ data, onDeleteFlag }) => (
 
 const formatPunitions = (profile) => {
   const formatTime = (item) => item.get("time");
-  const lines = profile
+  return profile
     .get("received_actions", [])
     .map(
       (item) =>
-        `${formatTime(item)} ${item.get("action_type")} by ${item.get(
+        <Typography display="block" variant="caption" key={item}>{`${formatTime(item)} ${item.get("action_type")} by ${item.get(
           "by"
-        )}: ${item.get("reason")}`
+        )}: ${item.get("reason")}`}</Typography>
     );
-
-  return <pre>{lines.join("\n")}</pre>;
 };
 
 const PlayerItem = ({
@@ -221,11 +219,11 @@ const PlayerItem = ({
             >
               {steamID64} <Icon component={OpenInNewIcon} fontSize="inherit" />
             </Link>
-            <p className={classes.noPaddingMargin}>
+            <div className={classes.noPaddingMargin}>
               {profile.get("flags", []).map((d) => (
-                <Flag data={d} onDeleteFlag={onDeleteFlag} />
+                <Flag key={d} data={d} onDeleteFlag={onDeleteFlag} />
               ))}
-            </p>
+            </div>
           </React.Fragment>
         }
       />
@@ -320,7 +318,7 @@ class CompactList extends React.Component {
             classes={classes}
             nbButtons={sizes[width]}
             player={player}
-            key={player.steam_id_64}
+            key={player.get("steam_id_64")}
             handleAction={(actionType) =>
               handleAction(actionType, player.get("name"))
             }

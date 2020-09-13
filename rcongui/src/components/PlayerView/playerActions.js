@@ -135,7 +135,7 @@ const PlayerActions = ({ size, handleAction, onFlag, displayCount = 3, disable =
       <ButtonGroup size={size} aria-label="small outlined button group">
 
         {_.range(show).map(idx => (
-          <Button disabled={disable && !actions[idx][0].startsWith("switch")} onClick={() => handleAction(actions[idx][0])}>
+          <Button key={actions[idx][0]} disabled={disable && !actions[idx][0].startsWith("switch")} onClick={() => handleAction(actions[idx][0])}>
             <Badge size="small" color="primary" max={9} badgeContent={penaltyCount.get(remap_penalties[actions[idx][0]], 0)}>{actions[idx][1]}</Badge>
           </Button>
         ))}
@@ -161,6 +161,7 @@ const PlayerActions = ({ size, handleAction, onFlag, displayCount = 3, disable =
           {_.range(show, actions.length).map(idx => {
             const count = penaltyCount.get(remap_penalties[actions[idx][0]], 0)
             return <MenuItem
+              key={actions[idx][0]}
               onClick={() => {
                 handleAction(actions[idx][0]);
                 handleClose();
