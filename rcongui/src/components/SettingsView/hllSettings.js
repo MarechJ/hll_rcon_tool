@@ -324,10 +324,10 @@ class HLLSettings extends React.Component {
             disabled={lockedSliders}
             text="Max queue length"
             helpText="Maximum # of people waiting"
-            max={5}
+            max={6}
             min={1}
             value={queueLength}
-            marks={range(0, 6, 1).map(val => ({ value: val, label: `${val}` }))}
+            marks={range(0, 7, 1).map(val => ({ value: val, label: `${val}` }))}
             setValue={val => this.setState({ queueLength: val })}
             saveValue={val => this.setState({ queueLength: val }, () => this.saveSetting("queue_length", val))}
           />

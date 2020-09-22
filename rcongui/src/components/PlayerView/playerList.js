@@ -29,8 +29,7 @@ import Popover from "@material-ui/core/Popover";
 import Typography from "@material-ui/core/Typography";
 import { makeStyles } from "@material-ui/core/styles";
 import { sumBy } from "lodash/math";
-import { toPairs } from "lodash/object"
-
+import { toPairs } from "lodash/object";
 
 //import StarIcon from '@material-ui/icons/Star';
 
@@ -130,8 +129,8 @@ const getCountry = (player) => {
 };
 
 const getBans = (profile) => {
-  return profile.get("steam_bans", {}) &&
-    profile.get("steam_bans", new Map()).get("has_bans") === true ? (
+  return profile.get("steam_bans") &&
+    profile.get("steam_bans").get("has_bans") === true ? (
     <WithPopOver
       content={`Players has bans: ${JSON.stringify(profile.get("steam_bans"))}`}
     >
@@ -158,12 +157,13 @@ const formatPunitions = (profile) => {
   const formatTime = (item) => item.get("time");
   return profile
     .get("received_actions", [])
-    .map(
-      (item) =>
-        <Typography display="block" variant="caption" key={item}>{`${formatTime(item)} ${item.get("action_type")} by ${item.get(
-          "by"
-        )}: ${item.get("reason")}`}</Typography>
-    );
+    .map((item) => (
+      <Typography display="block" variant="caption" key={item}>{`${formatTime(
+        item
+      )} ${item.get("action_type")} by ${item.get("by")}: ${item.get(
+        "reason"
+      )}`}</Typography>
+    ));
 };
 
 const PlayerItem = ({
@@ -188,20 +188,20 @@ const PlayerItem = ({
             {" - "}
             {getCountry(player)}
             {" - "}
+            {player.get("is_vip") ? (
+              <React.Fragment>
+                <FontAwesomeIcon icon={faStar} />
+                {" - "}
+              </React.Fragment>
+            ) : (
+              ""
+            )}
             <Link
               className={classes.marginRight}
               target="_blank"
               color="inherit"
               href={`https://steamcommunity.com/profiles/${steamID64}`}
             >
-              {player.get("is_vip") ? (
-                <React.Fragment>
-                  <FontAwesomeIcon icon={faStar} />
-                  {" - "}
-                </React.Fragment>
-              ) : (
-                ""
-              )}
               <FontAwesomeIcon icon={faSteam} />
             </Link>
           </React.Fragment>
@@ -210,7 +210,7 @@ const PlayerItem = ({
           <React.Fragment>
             <span>
               {seconds_to_time(profile.get("current_playtime_seconds"))} - #
-              {profile.get("sessions_count")} - {getBans(profile)}
+              {profile.get("sessions_count")} - {getBans(player)}
             </span>{" "}
             <Link
               target="_blank"
@@ -240,49 +240,58 @@ const PlayerItem = ({
   );
 };
 
-
 const weightedPenalities = (penaltiesMap) => {
   const weights = {
-    "PUNISH": 1,
-    "KICK": 4,
-    "TEMPBAN": 10,
-    "PERMABAN": 100
-  }
-  const res = penaltiesMap.reduce((sum, value, key) => sum + (weights[key] * value), 0)
-  console.log("Weighted penalites", res)
-  return res
-}
+    PUNISH: 1,
+    KICK: 4,
+    TEMPBAN: 10,
+    PERMABAN: 100,
+  };
+  const res = penaltiesMap.reduce(
+    (sum, value, key) => sum + weights[key] * value,
+    0
+  );
+  console.log("Weighted penalites", res);
+  return res;
+};
 
 const getSortedPlayers = (players, sortType) => {
   let myPlayers = players;
-  const [direction, type] = sortType.split('_')
+  const [direction, type] = sortType.split("_");
 
   if (!sortType || sortType === "") {
-    return myPlayers
+    return myPlayers;
   }
 
   const sortFuncs = {
-    "alpha": p => p.get("name").toLowerCase(),
-    "time": p => !p.get("profile") ? 0 : p.get("profile").get("current_playtime_seconds"),
-    "country": p => { 
-      const country = p.get("country")
-      if (!country) { return "zzy" }
-      if (country === "private") return "zzz"
-      return country
+    alpha: (p) => p.get("name").toLowerCase(),
+    time: (p) =>
+      !p.get("profile") ? 0 : p.get("profile").get("current_playtime_seconds"),
+    country: (p) => {
+      const country = p.get("country");
+      if (!country) {
+        return "zzy";
+      }
+      if (country === "private") return "zzz";
+      return country;
     },
-    "sessions": p => !p.get("profile") ? 0 : p.get("profile").get("sessions_count"),
-    "penalties": p => !p.get("profile") ? 0 : weightedPenalities(p.get("profile").get("penalty_count")),
-    "vips": p => p.get("is_vip"),
-  }
+    sessions: (p) =>
+      !p.get("profile") ? 0 : p.get("profile").get("sessions_count"),
+    penalties: (p) =>
+      !p.get("profile")
+        ? 0
+        : weightedPenalities(p.get("profile").get("penalty_count")),
+    vips: (p) => p.get("is_vip"),
+  };
 
-  myPlayers = myPlayers.sortBy(sortFuncs[type])
- 
+  myPlayers = myPlayers.sortBy(sortFuncs[type]);
+
   if (direction === "desc") {
     myPlayers = myPlayers.reverse();
   }
-  
-  return myPlayers
-}
+
+  return myPlayers;
+};
 
 class CompactList extends React.Component {
   render() {
@@ -295,14 +304,14 @@ class CompactList extends React.Component {
       onFlag,
       onDeleteFlag,
     } = this.props;
-    
-    let myPlayers = players
+
+    let myPlayers = players;
     try {
-      myPlayers = getSortedPlayers(players, sortType)
-    } catch(err) {
-      console.log("Unable to sort ", err)
+      myPlayers = getSortedPlayers(players, sortType);
+    } catch (err) {
+      console.log("Unable to sort ", err);
     }
-      
+
     const sizes = {
       xs: 0,
       sm: 3,
