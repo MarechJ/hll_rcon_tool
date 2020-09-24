@@ -5,16 +5,18 @@ import {
 import Autocomplete from '@material-ui/lab/Autocomplete';
 import SplitButton from '../splitButton'
 import TextHistory from '../textHistory'
+import { getSharedMessages } from "../../utils/fetchUtils";
 
-
-const ServerMessage = ({ classes, type, value, setValue, onSave }) => {
-  const textHistory = new TextHistory(type)
+const ServerMessage = ({ classes, type, autocompleteKey, value, setValue, onSave }) => {
+  const textHistory = new TextHistory(autocompleteKey)
+  const [sharedMessages, setSharedMessages] = React.useState([])
+  React.useEffect(() => { getSharedMessages(autocompleteKey).then(data => setSharedMessages(data))  }, []);
 
   return <Grid container xs={12}>
     <Grid item xs={12} className={classes.paddingBottom}>
     <Autocomplete
         freeSolo
-        options={textHistory.getTexts()}
+        options={textHistory.getTexts().concat(sharedMessages)}
         inputValue={value}
         onInputChange={(e, value) => setValue(value)}
         renderInput={(params) => (

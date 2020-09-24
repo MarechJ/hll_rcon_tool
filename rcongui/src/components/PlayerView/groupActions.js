@@ -40,6 +40,7 @@ const GroupActions = ({
   const [saveMessage, setSaveMessage] = React.useState(true)
   const textHistory = new TextHistory("punitions")
   const nbButton = ["xs"].indexOf(width) != -1 ? 3 : 6;
+
   let myPlayers = new List(players)
   myPlayers = myPlayers.toJS()
 

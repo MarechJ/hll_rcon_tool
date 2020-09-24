@@ -24,7 +24,7 @@ from rcon.player_history import (
     add_flag_to_player,
     remove_flag,
 )
-from rcon.user_config import AutoBroadcasts, InvalidConfigurationError
+from rcon.user_config import AutoBroadcasts, InvalidConfigurationError, StandardMessages
 from rcon.cache_utils import RedisCached, get_redis_pool
 from .discord import send_to_discord_audit
 from .auth import login_required
@@ -111,6 +111,56 @@ def set_auto_broadcasts_config(request):
     return JsonResponse({
         "result": res,
         "command": "set_auto_broadcasts_config",
+        "arguments": data,
+        "failed": failed
+    })
+
+
+@csrf_exempt
+@login_required
+def get_standard_messages(request):
+    failed = False
+    data = _get_data(request)
+
+    try:
+        msgs = StandardMessages()
+        res = msgs.get_messages(data['message_type'])
+    except CommandFailedError as e:
+        failed = True
+        res = repr(e)
+    except:
+        logger.exception("Error fetching standard messages config")
+        failed = True
+        res = "Error setting standard messages config"
+
+    return JsonResponse({
+        "result": res,
+        "command": "get_standard_messages",
+        "arguments": data,
+        "failed": failed
+    })
+
+
+@csrf_exempt
+@login_required
+def set_standard_messages(request):
+    failed = False
+    data = _get_data(request)
+
+    try:
+        msgs = StandardMessages()
+        res = msgs.set_messages(data['message_type'], data['messages'])
+    except CommandFailedError as e:
+        failed = True
+        res = repr(e)
+    except:
+        logger.exception("Error setting standard messages config")
+        failed = True
+        res = "Error setting standard messages config"
+
+    return JsonResponse({
+        "result": res,
+        "command": "get_standard_messages",
         "arguments": data,
         "failed": failed
     })
@@ -458,6 +508,8 @@ commands = [
     ("unflag_player", unflag_player),
     ("upload_vips", upload_vips),
     ("download_vips", download_vips),
+    ('get_standard_messages', get_standard_messages),
+    ('set_standard_messages', set_standard_messages),
 ]
 
 logger.info("Initializing endpoint - %s", os.environ)

@@ -1,4 +1,5 @@
 from rcon.models import UserConfig, enter_session
+from rcon.commands import CommandFailedError
 
 def _get_conf(sess, key):
     return sess.query(UserConfig).filter(UserConfig.key == key).one_or_none()
@@ -87,7 +88,46 @@ class AutoBroadcasts:
         return set_user_config(self.BROADCASTS_ENABLED, bool_)
 
 
+class StandardMessages:
+    WELCOME = 'standard_messages_welcome'
+    BROADCAST = 'standard_messages_broadcasts'
+    PUNITIONS = 'standard_messages_punitions'
+    
+    def __init__(self):
+        self.message_types = {
+            'welcome': self.WELCOME,
+            'broadcast': self.BROADCAST,
+            'punitions': self.PUNITIONS,
+        }
+
+    def seed_db(self, sess):
+        fields = [self.BROADCAST, self.PUNITIONS, self.WELCOME]
+        for field in fields:
+            if _get_conf(sess, field) is None:
+                _add_conf(sess, field, [])
+
+    def get_messages(self, msg_type):
+        try:
+            return get_user_config(self.message_types[msg_type])
+        except KeyError:
+            raise CommandFailedError("{} is an invalid type".format(msg_type))
+    
+    def set_messages(self, msg_type, messages):
+        msgs = []
+
+        for m in messages:
+            m = m.replace('\\n', '\n')
+            m = m.strip()
+            if m:
+                msgs.append(m)
+        try:
+            set_user_config(self.message_types[msg_type], msgs)
+        except KeyError:
+            raise CommandFailedError("{} is an invalid type".format(msg_type))
+        
+
 def seed_default_config():
     with enter_session() as sess:
         AutoBroadcasts().seed_db(sess)
+        StandardMessages().seed_db(sess)
         sess.commit()

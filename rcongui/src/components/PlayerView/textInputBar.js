@@ -16,6 +16,7 @@ import MenuItem from "@material-ui/core/MenuItem";
 import FormHelperText from "@material-ui/core/FormHelperText";
 import FormControl from "@material-ui/core/FormControl";
 import Select from "@material-ui/core/Select";
+import { getSharedMessages } from "../../utils/fetchUtils";
 
 const Reason = ({
   handleMessageChange,
@@ -31,13 +32,18 @@ const Reason = ({
     ? textHistory.getTexts()
     : new TextHistory("punitions").getTexts();
 
+  const [sharedMessages, setSharedMessages] = React.useState([]);
+  React.useEffect(() => {
+    getSharedMessages("punitions").then((data) => setSharedMessages(data));
+  }, []);
+
   return (
     <React.Fragment>
       <Autocomplete
         freeSolo
         fullWidth
         className={extraClasses}
-        options={autoCompletehistory}
+        options={autoCompletehistory.concat(sharedMessages)}
         inputValue={message}
         onInputChange={(e, value) => {
           if (e) {
@@ -82,8 +88,6 @@ const TextInputBar = ({
   sortType,
   handleSortTypeChange,
 }) => {
-  const [alignment, setAlignment] = React.useState("left");
-
   /* todo refactor */
   return (
     <Grid item xs={12} spacing={2}>
@@ -91,10 +95,13 @@ const TextInputBar = ({
         <Grid item xs={12} md={2}>
           <FormControl className={classes.formControl}>
             <InputLabel>Sort</InputLabel>
-            <Select value={sortType} onChange={e => handleSortTypeChange(e.target.value)}>
-            <MenuItem value="">
-            <em>None</em>
-          </MenuItem>
+            <Select
+              value={sortType}
+              onChange={(e) => handleSortTypeChange(e.target.value)}
+            >
+              <MenuItem value="">
+                <em>None</em>
+              </MenuItem>
               <MenuItem value={"asc_alpha"}>Asc. Alpha</MenuItem>
               <MenuItem value={"desc_alpha"}>Desc. Alpha</MenuItem>
               <MenuItem value={"asc_time"}>Asc. Time</MenuItem>

@@ -1,10 +1,10 @@
 import React, { Component } from "react";
 import Button from "@material-ui/core/Button";
-import Chip from '@material-ui/core/Chip'
+import Chip from "@material-ui/core/Chip";
 import ButtonGroup from "@material-ui/core/ButtonGroup";
 import TextField from "@material-ui/core/TextField";
 import _ from "lodash";
-import Badge from '@material-ui/core/Badge';
+import Badge from "@material-ui/core/Badge";
 import Menu from "@material-ui/core/Menu";
 import MenuItem from "@material-ui/core/MenuItem";
 import ArrowDropDownIcon from "@material-ui/icons/ArrowDropDown";
@@ -14,22 +14,30 @@ import Dialog from "@material-ui/core/Dialog";
 import DialogActions from "@material-ui/core/DialogActions";
 import DialogContent from "@material-ui/core/DialogContent";
 import DialogTitle from "@material-ui/core/DialogTitle";
-import { Map } from 'immutable';
-import FlagOutlinedIcon from '@material-ui/icons/FlagOutlined';
-import TextHistory from '../textHistory'
-import Autocomplete from '@material-ui/lab/Autocomplete';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
-import Checkbox from '@material-ui/core/Checkbox';
+import { Map } from "immutable";
+import FlagOutlinedIcon from "@material-ui/icons/FlagOutlined";
+import TextHistory from "../textHistory";
+import Autocomplete from "@material-ui/lab/Autocomplete";
+import FormControlLabel from "@material-ui/core/FormControlLabel";
+import Checkbox from "@material-ui/core/Checkbox";
+import { getSharedMessages } from "../../utils/fetchUtils";
 
 class ReasonDialog extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
       reason: "",
-      saveMessage: true
+      saveMessage: true,
+      sharedMessages: [],
     };
 
     this.onChange = this.onChange.bind(this);
+  }
+
+  componentDidMount() {
+    getSharedMessages("punitions").then((data) =>
+      this.setState({ sharedMessages: data })
+    );
   }
 
   onChange(e, value) {
@@ -39,8 +47,8 @@ class ReasonDialog extends React.Component {
 
   render() {
     const { open, handleClose, handleConfirm } = this.props;
-    const { reason, saveMessage } = this.state;
-    const textHistory = new TextHistory('punitions')
+    const { reason, saveMessage, sharedMessages } = this.state;
+    const textHistory = new TextHistory("punitions");
 
     return (
       <Dialog open={open} aria-labelledby="form-dialog-title">
@@ -51,11 +59,16 @@ class ReasonDialog extends React.Component {
           <Autocomplete
             freeSolo
             fullWidth
-            options={textHistory.getTexts()}
+            options={textHistory.getTexts().concat(sharedMessages)}
             inputValue={reason}
             onInputChange={(e, value) => this.onChange(e, value)}
             renderInput={(params) => (
-              <TextField {...params} label="Reason" margin="dense" helperText="A message is mandatory" />
+              <TextField
+                {...params}
+                label="Reason"
+                margin="dense"
+                helperText="A message is mandatory"
+              />
             )}
           />
           <FormControlLabel
@@ -63,7 +76,6 @@ class ReasonDialog extends React.Component {
               <Checkbox
                 checked={saveMessage}
                 onChange={() => this.setState({ saveMessage: !saveMessage })}
-                
                 color="primary"
               />
             }
@@ -82,7 +94,7 @@ class ReasonDialog extends React.Component {
           <Button
             onClick={() => {
               if (saveMessage) {
-                textHistory.saveText(reason)
+                textHistory.saveText(reason);
               }
               handleConfirm(open.actionType, open.player, reason);
               this.setState({ reason: "" });
@@ -102,11 +114,18 @@ const DropMenu = ({ startIdx, actions, handleAction }) => {
   return <React.Fragment></React.Fragment>;
 };
 
-const PlayerActions = ({ size, handleAction, onFlag, displayCount = 3, disable = false, penaltyCount = Map() }) => {
+const PlayerActions = ({
+  size,
+  handleAction,
+  onFlag,
+  displayCount = 3,
+  disable = false,
+  penaltyCount = Map(),
+}) => {
   const classes = useStyles();
   const [anchorEl, setAnchorEl] = React.useState(null);
-  const [isOpen, setOpen] = React.useState(false)
-  const handleClick = event => {
+  const [isOpen, setOpen] = React.useState(false);
+  const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
     setOpen(true);
   };
@@ -114,11 +133,11 @@ const PlayerActions = ({ size, handleAction, onFlag, displayCount = 3, disable =
     setOpen(false);
   };
   const remap_penalties = {
-    "perma_ban": 'PERMABAN',
-    'punish': "PUNISH",
-    'kick': "KICK",
-    "temp_ban": "TEMPBAN"
-  }
+    perma_ban: "PERMABAN",
+    punish: "PUNISH",
+    kick: "KICK",
+    temp_ban: "TEMPBAN",
+  };
 
   const actions = [
     ["punish", "PUNISH"],
@@ -126,21 +145,40 @@ const PlayerActions = ({ size, handleAction, onFlag, displayCount = 3, disable =
     ["temp_ban", "2H BAN"],
     ["switch_player_now", "SWITCH"],
     ["switch_player_on_death", "SWITCH ON DEATH"],
-    ["perma_ban", "PERMA BAN"]
+    ["perma_ban", "PERMA BAN"],
   ];
   const show = Math.min(displayCount, actions.length);
 
   return (
     <React.Fragment>
       <ButtonGroup size={size} aria-label="small outlined button group">
-
-        {_.range(show).map(idx => (
-          <Button key={actions[idx][0]} disabled={disable && !actions[idx][0].startsWith("switch")} onClick={() => handleAction(actions[idx][0])}>
-            <Badge size="small" color="primary" max={9} badgeContent={penaltyCount.get(remap_penalties[actions[idx][0]], 0)}>{actions[idx][1]}</Badge>
+        {_.range(show).map((idx) => (
+          <Button
+            key={actions[idx][0]}
+            disabled={disable && !actions[idx][0].startsWith("switch")}
+            onClick={() => handleAction(actions[idx][0])}
+          >
+            <Badge
+              size="small"
+              color="primary"
+              max={9}
+              badgeContent={penaltyCount.get(
+                remap_penalties[actions[idx][0]],
+                0
+              )}
+            >
+              {actions[idx][1]}
+            </Badge>
           </Button>
         ))}
-        {onFlag ? <Button size="small" onClick={onFlag}><FlagOutlinedIcon fontSize="small" /></Button> : ''}
-        {show < actions.length ?
+        {onFlag ? (
+          <Button size="small" onClick={onFlag}>
+            <FlagOutlinedIcon fontSize="small" />
+          </Button>
+        ) : (
+          ""
+        )}
+        {show < actions.length ? (
           <Button
             disabled={disable}
             aria-controls="simple-menu"
@@ -148,7 +186,10 @@ const PlayerActions = ({ size, handleAction, onFlag, displayCount = 3, disable =
             onClick={handleClick}
           >
             <ArrowDropDownIcon />
-          </Button> : ""}
+          </Button>
+        ) : (
+          ""
+        )}
       </ButtonGroup>
       {show < actions.length ? (
         <Menu
@@ -158,22 +199,29 @@ const PlayerActions = ({ size, handleAction, onFlag, displayCount = 3, disable =
           open={isOpen}
           onClose={handleClose}
         >
-          {_.range(show, actions.length).map(idx => {
-            const count = penaltyCount.get(remap_penalties[actions[idx][0]], 0)
-            return <MenuItem
-              key={actions[idx][0]}
-              onClick={() => {
-                handleAction(actions[idx][0]);
-                handleClose();
-              }}
-            >
-              {actions[idx][1]}{count > 0 ? <Chip size="small" color="primary" label={count} /> : ''}
-            </MenuItem>
+          {_.range(show, actions.length).map((idx) => {
+            const count = penaltyCount.get(remap_penalties[actions[idx][0]], 0);
+            return (
+              <MenuItem
+                key={actions[idx][0]}
+                onClick={() => {
+                  handleAction(actions[idx][0]);
+                  handleClose();
+                }}
+              >
+                {actions[idx][1]}
+                {count > 0 ? (
+                  <Chip size="small" color="primary" label={count} />
+                ) : (
+                  ""
+                )}
+              </MenuItem>
+            );
           })}
         </Menu>
       ) : (
-          ""
-        )}
+        ""
+      )}
     </React.Fragment>
   );
 };

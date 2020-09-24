@@ -108,8 +108,19 @@ async function sendAction(command, parameters) {
   ).catch(handle_http_errors)
 } 
 
+async function _checkResult(data) {
+  if (data.result) {
+    return data.result
+  }
+  return []
+}
 
-export { postData, showResponse, get, handle_http_errors, PermissionError, LoginError, sendAction };
+async function getSharedMessages(namespace) {
+  return get(`get_standard_messages?message_type=${namespace}`)
+  .then((res) => res.json()).then(_checkResult)
+}
+
+export { postData, showResponse, get, handle_http_errors, getSharedMessages, PermissionError, LoginError, sendAction };
 
 
 

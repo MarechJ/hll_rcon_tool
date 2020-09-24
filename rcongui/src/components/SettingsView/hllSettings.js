@@ -195,6 +195,7 @@ class HLLSettings extends React.Component {
         </Grid>
         <Grid item className={classes.paper} sm={6} xs={12}>
           <ServerMessage
+            autocompleteKey="welcome"
             type="Welcome message"
             classes={classes}
             value={welcomeMessage}
@@ -204,6 +205,7 @@ class HLLSettings extends React.Component {
         </Grid>
         <Grid item className={classes.paper} sm={6} xs={12}>
           <ServerMessage
+            autocompleteKey="broadcast"
             type="Broadcast message"
             classes={classes}
             value={broadcastMessage}
