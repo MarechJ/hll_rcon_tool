@@ -16,7 +16,7 @@ const ServerMessage = ({ classes, type, autocompleteKey, value, setValue, onSave
     <Grid item xs={12} className={classes.paddingBottom}>
     <Autocomplete
         freeSolo
-        options={textHistory.getTexts().concat(sharedMessages)}
+        options={sharedMessages.concat(textHistory.getTexts())}
         inputValue={value}
         onInputChange={(e, value) => setValue(value)}
         renderInput={(params) => (

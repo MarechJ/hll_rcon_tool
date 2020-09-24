@@ -43,7 +43,7 @@ const Reason = ({
         freeSolo
         fullWidth
         className={extraClasses}
-        options={autoCompletehistory.concat(sharedMessages)}
+        options={sharedMessages.concat(autoCompletehistory)}
         inputValue={message}
         onInputChange={(e, value) => {
           if (e) {

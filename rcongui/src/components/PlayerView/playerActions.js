@@ -59,7 +59,7 @@ class ReasonDialog extends React.Component {
           <Autocomplete
             freeSolo
             fullWidth
-            options={textHistory.getTexts().concat(sharedMessages)}
+            options={sharedMessages.concat(textHistory.getTexts())}
             inputValue={reason}
             onInputChange={(e, value) => this.onChange(e, value)}
             renderInput={(params) => (
