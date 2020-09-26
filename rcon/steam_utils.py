@@ -39,6 +39,7 @@ def get_player_country_code(steamd_id):
     return profile.get('loccountrycode', 'private' if is_private else '')
 
 
+@ttl_cache(60 * 60 * 12, cache_falsy=False, is_method=False)
 def get_player_bans(steamd_id):
     if not STEAM_KEY:
         return None
