@@ -122,6 +122,7 @@ services:
       VOTE_MAP_INSTRUCTIONS: ${VOTE_MAP_INSTRUCTIONS}
       STEAM_API_KEY: ${STEAM_API_KEY}
       BAN_ON_VAC_HISTORY: ${BAN_ON_VAC_HISTORY}
+      BAN_ON_VAC_HISTORY_REASON: ${BAN_ON_VAC_HISTORY_REASON}
     restart: on-failure
     networks:
       - common
@@ -202,6 +203,7 @@ services:
       VOTE_MAP_INSTRUCTIONS: ${VOTE_MAP_INSTRUCTIONS}
       STEAM_API_KEY: ${STEAM_API_KEY}
       BAN_ON_VAC_HISTORY: ${BAN_ON_VAC_HISTORY}
+      BAN_ON_VAC_HISTORY_REASON: ${BAN_ON_VAC_HISTORY_REASON}
     restart: on-failure
     networks:
       - common
@@ -282,6 +284,7 @@ services:
       VOTE_MAP_INSTRUCTIONS: ${VOTE_MAP_INSTRUCTIONS}
       STEAM_API_KEY: ${STEAM_API_KEY}
       BAN_ON_VAC_HISTORY: ${BAN_ON_VAC_HISTORY}
+      BAN_ON_VAC_HISTORY_REASON: ${BAN_ON_VAC_HISTORY_REASON}
     restart: on-failure
     networks:
       - common

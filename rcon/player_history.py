@@ -16,6 +16,7 @@ from rcon.commands import CommandFailedError
 
 from rcon.steam_utils import get_player_bans, STEAM_KEY
 MAX_DAYS_SINCE_BAN = os.getenv('BAN_ON_VAC_HISTORY', 0)
+AUTO_BAN_REASON = os.getenv('BAN_ON_VAC_HISTORY_REASON', 'VAC ban history ({DAYS_SINCE_LAST_BAN} days ago)')
 
 from rcon.cache_utils import ttl_cache, invalidates
 
@@ -256,7 +257,7 @@ def ban_if_has_vac_bans(rcon, steam_id_64, name):
             return
 
         if days_since_last_ban <= max_days_since_ban:
-            reason = f"VAC ban history ({str(days_since_last_ban)} days ago)"
+            reason = AUTO_BAN_REASON.format(DAYS_SINCE_LAST_BAN=str(days_since_last_ban), MAX_DAYS_SINCE_BAN=str(max_days_since_ban))
             logger.info("Player %s was banned due VAC history, last ban: %s days ago", str(player), str(days_since_last_ban))
             rcon.do_perma_ban(name, reason)
             safe_save_player_action(
