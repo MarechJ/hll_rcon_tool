@@ -15,6 +15,8 @@ import RefreshIcon from "@material-ui/icons/Refresh";
 import Paper from "@material-ui/core/Paper";
 import moment from "moment";
 import withWidth from "@material-ui/core/withWidth";
+import AutoRefreshLine from '../autoRefreshLine'
+import ListItemText from "@material-ui/core/ListItemText";
 
 const Selector = ({
   classes,
@@ -63,6 +65,7 @@ class Logs extends React.Component {
     this.setActionFilter = this.setActionFilter.bind(this)
     this.setMinutes = this.setMinutes.bind(this)
   }
+
   componentDidMount() {
     setTimeout(() => {
       this.loadLogs();
@@ -118,6 +121,9 @@ class Logs extends React.Component {
         <Grid container justify="flex-start">
           <Grid item xs={12} className={classes.textLeft}>
             <h1>Logs view</h1>
+            <ListItemText secondary="30s auto refresh" />
+            <AutoRefreshLine intervalFunction={this.loadLogs} execEveryMs={30000}
+            statusRefreshIntervalMs={500} classes={classes} />
           </Grid>
         </Grid>
         <Grid container justify="space-around" className={classes.marginBottom}>

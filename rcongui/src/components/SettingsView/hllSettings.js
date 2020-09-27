@@ -9,49 +9,14 @@ import VipEditableList from "./vips"
 import AdminsEditableList from "./admins"
 import _ from 'lodash'
 import MapRotationTransferList from "./mapRotation"
-import LinearProgress from "@material-ui/core/LinearProgress"
 import CollapseCard from '../collapseCard'
 import ServerMessage from './serverMessage'
 import NumSlider from './numSlider'
 import ChangeMap from './changeMap'
 import Padlock from './padlock'
+import AutoRefreshLine from '../autoRefreshLine'
 
-const AutoRefreshLine = ({
-  intervalFunction,
-  classes,
-  execEveryMs,
-  statusRefreshIntervalMs = 1000,
-}) => {
-  const [completed, setCompleted] = React.useState(0);
 
-  React.useEffect(() => {
-    function progress() {
-      setCompleted(oldCompleted => {
-        if (oldCompleted === 100) {
-          intervalFunction();
-          return 0;
-        }
-
-        return Math.min(oldCompleted + (statusRefreshIntervalMs / execEveryMs) * 100, 100);
-      });
-    }
-
-    const timer = setInterval(progress, statusRefreshIntervalMs);
-    return () => {
-      clearInterval(timer);
-    };
-  }, [execEveryMs, intervalFunction, statusRefreshIntervalMs]);
-
-  return (
-    <React.Fragment>
-      <LinearProgress
-        variant="determinate"
-        value={completed}
-        className={classes.marginBottom}
-      />
-    </React.Fragment>
-  );
-};
 
 function valuetext(value) {
   return `${value}`;
