@@ -139,7 +139,7 @@ def get_ingame_mods():
 
 def safe_list(func):
     try:
-        return ','.join(safe(func, [])())
+        return ', '.join(safe(func, [])())
     except:
         logger.exception("Unable to format variable")
 

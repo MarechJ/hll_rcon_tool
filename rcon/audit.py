@@ -26,9 +26,11 @@ def _red():
 def _heartbeat_key(uniqueid):
     return f"{HEARTBEAT_KEY_PREFIX}{uniqueid}"
 
+
 def heartbeat(username, steam_id_64, timeout=120):
     red = _red()
     return red.setex(_heartbeat_key(username), timeout, json.dumps(dict(username=username, steam_id_64=steam_id_64)))
+
 
 def online_mods():
     red = _red()
@@ -43,6 +45,7 @@ def set_registered_mods(moderators_name_steamids: List[tuple]):
 
     red.hset("moderators", *list(chain(*moderators_name_steamids)))
     
+
 def ingame_mods():
     red = _red()
     mods = red.hgetall("moderators") or {}
