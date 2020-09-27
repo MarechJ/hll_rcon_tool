@@ -47,6 +47,9 @@ const useStyles = makeStyles(theme => ({
   margin: {
     marginTop: theme.spacing(3)
   },
+  marginTop: {
+    marginTop: theme.spacing(1)
+  },
   marginBottom: {
     marginBottom: theme.spacing(1)
   },
@@ -87,6 +90,9 @@ const useStyles = makeStyles(theme => ({
   },
   doublePadding: {
     padding: theme.spacing(2)
+  },
+  doublePaddingBottom: {
+    paddingBottom: theme.spacing(2)
   },
   doublePaddingLeft: {
     paddingLeft: theme.spacing(2)

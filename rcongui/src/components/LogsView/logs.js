@@ -119,10 +119,10 @@ class Logs extends React.Component {
     return (
       <React.Fragment>
         <Grid container justify="flex-start">
-          <Grid item xs={12} className={classes.textLeft}>
-            <h1>Logs view</h1>
-            <ListItemText secondary="30s auto refresh" />
-            <AutoRefreshLine intervalFunction={this.loadLogs} execEveryMs={30000}
+          <Grid item xs={12} className={`${classes.textLeft} ${classes.paddingLeft}`}>
+            <h1 className={classes.marginBottom}>Logs view</h1>
+            <ListItemText  secondary="30s auto refresh" />
+            <AutoRefreshLine className={classes.marginTop} intervalFunction={this.loadLogs} execEveryMs={30000}
             statusRefreshIntervalMs={500} classes={classes} />
           </Grid>
         </Grid>
@@ -182,7 +182,7 @@ class Logs extends React.Component {
           </Grid>
         </Grid>
         <Grid container justify="center" alignItems="center">
-          <Grid xs={12}>
+          <Grid className={classes.padding} xs={12}>
             <Paper className={classes.paperLogs}>
               {logs.map(l => (
                 <pre key={l.raw} className={classes.logs}>{moment(new Date(l.timestamp_ms)).format("HH:mm:ss - ddd, MMM D") + '\t' + l.action.padEnd(20) + l.message}</pre>
