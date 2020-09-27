@@ -47,8 +47,8 @@ class TextHistory {
     localStorage.setItem(this.namespace, JSON.stringify(texts));
   }
 
-  saveText(text) {
-    if (!text) {
+  saveText(text, sharedMessages = []) {
+    if (!text || sharedMessages.includes(text)) {
       return;
     }
     const texts = this.getTexts();

@@ -94,7 +94,7 @@ class ReasonDialog extends React.Component {
           <Button
             onClick={() => {
               if (saveMessage) {
-                textHistory.saveText(reason);
+                textHistory.saveText(reason, sharedMessages);
               }
               handleConfirm(open.actionType, open.player, reason);
               this.setState({ reason: "" });

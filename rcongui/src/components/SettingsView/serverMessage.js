@@ -26,7 +26,7 @@ const ServerMessage = ({ classes, type, autocompleteKey, value, setValue, onSave
       />
     </Grid>
     <Grid item xs={12}>
-      <SplitButton options={[`Set ${type}`, `Set ${type} and save as template`, "Save as template"]} clickHandlers={[() => onSave(value), () => { textHistory.saveText(value); onSave(value)}, () => textHistory.saveText(value)]} buttonProps={{variant: "outlined"}} />
+      <SplitButton options={[`Set ${type}`, `Set ${type} and save as template`, "Save as template"]} clickHandlers={[() => onSave(value), () => { textHistory.saveText(value, sharedMessages); onSave(value)}, () => textHistory.saveText(value, sharedMessages)]} buttonProps={{variant: "outlined"}} />
     </Grid>
   </Grid>
 }

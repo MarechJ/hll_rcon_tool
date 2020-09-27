@@ -150,6 +150,7 @@ def set_standard_messages(request):
     try:
         msgs = StandardMessages()
         res = msgs.set_messages(data['message_type'], data['messages'])
+        send_to_discord_audit("set_standard_messages", request.user.username)
     except CommandFailedError as e:
         failed = True
         res = repr(e)
@@ -439,6 +440,7 @@ class DocumentForm(forms.Form):
 @login_required
 def upload_vips(request):
     message = 'Upload a VIP file!'
+    send_to_discord_audit("upload_vips", request.user.username)
     # Handle file upload
     if request.method == 'POST':
         form = DocumentForm(request.POST, request.FILES)

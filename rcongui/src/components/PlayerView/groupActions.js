@@ -13,6 +13,8 @@ import { join } from 'lodash/array';
 import TextHistory from '../textHistory'
 import { fromJS, List } from 'immutable'
 import { sortBy } from 'lodash/collection'
+import { getSharedMessages } from "../../utils/fetchUtils";
+
 
 const compactProfile = (player) => {
   let s = ""
@@ -40,6 +42,10 @@ const GroupActions = ({
   const [saveMessage, setSaveMessage] = React.useState(true)
   const textHistory = new TextHistory("punitions")
   const nbButton = ["xs"].indexOf(width) != -1 ? 3 : 6;
+  const [sharedMessages, setSharedMessages] = React.useState([]);
+  React.useEffect(() => {
+    getSharedMessages("punitions").then((data) => setSharedMessages(data));
+  }, []);
 
   let myPlayers = new List(players)
   myPlayers = myPlayers.toJS()
@@ -91,7 +97,7 @@ const GroupActions = ({
               handleAction={actionType =>
                 selectedPlayers.map(p => {
                   if (saveMessage) {
-                    textHistory.saveText(message)
+                    textHistory.saveText(message, sharedMessages)
                   }
                   handleAction(actionType, p.name, message)
                 }
