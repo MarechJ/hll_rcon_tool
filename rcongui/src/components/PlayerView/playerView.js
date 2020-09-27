@@ -52,15 +52,11 @@ class PlayerView extends Component {
       bannedPlayers: null,
       players: new List(),
       filteredPlayers: new List(),
-      /*filteredPlayerNames: [],
-      filteredPlayerSteamIDs: [],
-      filteredPlayerProfiles: [], */
       filter: "",
       filterTimeout: null,
       actionMessage: "",
       doConfirm: false,
-      //alphaSort: false,
-      sortType: "",
+      sortType: localStorage.getItem('player_sort') ? localStorage.getItem('player_sort') : "",
       openGroupAction: false,
       openUnban: false,
       flag: false,
@@ -75,6 +71,7 @@ class PlayerView extends Component {
     this.unBan = this.unBan.bind(this);
     this.addFlagToPlayer = this.addFlagToPlayer.bind(this);
     this.deleteFlag = this.deleteFlag.bind(this);
+    this.sortTypeChange = this.sortTypeChange.bind(this);
   }
 
   addFlagToPlayer(playerObj, flag, comment = null) {
@@ -170,28 +167,8 @@ class PlayerView extends Component {
   }
 
   filterPlayers() {
-    // TODO this is shit. The point was to prevent uncessary refreshes to save perf
-    // But we could just switch to immutables for that
     const { filter, players } = this.state;
-    /*
-    const makeCombinedProfile = players => players.map(p => fromJS({...(p.profile || {}), country: p.country, steam_bans: p.steam_bans}));
-
-    if (!filter) {
-      const filteredPlayerNames = players.map(p => p.name);
-      const filteredPlayerSteamIDs = players.map(p => p.steam_id_64);
-      const filteredPlayerProfiles = makeCombinedProfile(players)
-      return this.setState({ filteredPlayerSteamIDs, filteredPlayerNames, filteredPlayerProfiles });
-    }
-    const filteredPlayers = _.filter(
-      players,
-      p => stripDiacritics(p.name).toLowerCase().indexOf(filter.toLowerCase()) >= 0
-    );
-
-    const filteredPlayerNames = filteredPlayers.map(p => p.name);
-    const filteredPlayerSteamIDs = filteredPlayers.map(p => p.steam_id_64);
-    const filteredPlayerProfiles =  makeCombinedProfile(filteredPlayers) 
-    this.setState({ filteredPlayerNames, filteredPlayerSteamIDs, filteredPlayerProfiles });
-    */
+ 
     if (filter) {
       const filteredPlayers = players.filter(
         (p) =>
@@ -204,6 +181,11 @@ class PlayerView extends Component {
     if (!filter) {
       this.setState({ filteredPlayers: players });
     }
+  }
+
+  sortTypeChange(sortType) {
+     this.setState({ sortType })
+     localStorage.setItem('player_sort', sortType)
   }
 
   render() {
@@ -241,17 +223,13 @@ class PlayerView extends Component {
           handleMessageChange={(text) => this.setState({ actionMessage: text })}
           actionMessage={actionMessage}
           sortType={sortType}
-          handleSortTypeChange={(sortType) => this.setState({ sortType })}
-          //handleToggleAlphaSort={(bool) => this.setState({ alphaSort: bool })}
+          handleSortTypeChange={this.sortTypeChange}
         />
 
         <CompactList
           classes={classes}
           sortType={sortType}
           players={filteredPlayers}
-          /*playerNames={filteredPlayerNames}
-          playerSteamIDs={filteredPlayerSteamIDs}
-          playerProfiles={filteredPlayerProfiles}*/
           handleAction={(actionType, player) =>
             this.handleAction(actionType, player)
           }

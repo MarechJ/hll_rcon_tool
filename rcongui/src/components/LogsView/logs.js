@@ -54,12 +54,14 @@ class Logs extends React.Component {
       actions: [],
       players: [],
       playersFilter: "",
-      actionsFilter: "",
-      minutes: 30,
+      actionsFilter: localStorage.getItem("logs_actions") ? localStorage.getItem("logs_actions") : "",
+      minutes: localStorage.getItem("logs_minutes") ? localStorage.getItem("logs_minutes") : 30,
       minutesOptions: [15, 30, 60, 90, 120, 180]
     };
 
     this.loadLogs = this.loadLogs.bind(this);
+    this.setActionFilter = this.setActionFilter.bind(this)
+    this.setMinutes = this.setMinutes.bind(this)
   }
   componentDidMount() {
     setTimeout(() => {
@@ -89,6 +91,16 @@ class Logs extends React.Component {
       .catch(handle_http_errors);
   }
 
+  setActionFilter(actionsFilter) {
+    this.setState({ actionsFilter }, this.loadLogs)
+    localStorage.setItem("logs_actions", actionsFilter)
+  }
+
+  setMinutes(minutes) {
+    this.setState({ minutes }, this.loadLogs)
+    localStorage.setItem("logs_minutes", minutes)
+  } 
+
   render() {
     const { classes, width } = this.props;
     const {
@@ -113,9 +125,7 @@ class Logs extends React.Component {
             <Selector
               classes={classes}
               values={minutesOptions}
-              onChange={value =>
-                this.setState({ minutes: value }, this.loadLogs)
-              }
+              onChange={this.setMinutes}
               currentValue={minutes}
               kind="Show last N minutes"
             />
@@ -124,9 +134,7 @@ class Logs extends React.Component {
             <Selector
               classes={classes}
               values={actions}
-              onChange={value =>
-                this.setState({ actionsFilter: value }, this.loadLogs)
-              }
+              onChange={this.setActionFilter}
               currentValue={actionsFilter}
               kind="Filter by type"
               defaultValue=""
