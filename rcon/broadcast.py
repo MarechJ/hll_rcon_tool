@@ -7,11 +7,11 @@ import json
 
 import redis
 
+from rcon.audit import online_mods, ingame_mods
 from rcon.cache_utils import get_redis_pool
 from rcon.extended_commands import Rcon, CommandFailedError
 from rcon.settings import SERVER_INFO
 from rcon.user_config import AutoBroadcasts
-from rcon.audit import online_mods, get_registered_mods
 from rcon.utils import (
     LONG_HUMAN_MAP_NAMES, 
     SHORT_HUMAN_MAP_NAMES, 
@@ -56,9 +56,6 @@ def safe(func, default=None):
             logger.exception("Unable to get data for broacasts")
             return default
     return wrapper
-
-def ingame_admins(ctl):
-    return ctl.get_ingame_mods(get_registered_mods())
     
 def chunks(lst, n):
     """Yield successive n-sized chunks from lst."""
@@ -131,8 +128,20 @@ def format_map_vote(rcon, format_type="line", short_names=True):
                 join_vote_options('\n', categorized['offensive'], human_map_mod, maps_to_numbers),
                 join_vote_options('\n', categorized['warfare'], human_map_mod, maps_to_numbers)
             )
-    
-    
+
+
+def get_online_mods():
+    return [mod['username'] for mod in online_mods()]
+        
+
+def get_ingame_mods():
+    return [mod['username'] for mod in ingame_mods()]
+
+def safe_list(func):
+    try:
+        return ','.join(safe(func, [])())
+    except:
+        logger.exception("Unable to format variable")
 
 def format_message(ctl, msg):
     get_vip_names = lambda: [d['name'] for d in ctl.get_vip_ids()]
@@ -147,11 +156,10 @@ def format_message(ctl, msg):
         'nextmap': safe(ctl.get_next_map, "")(),
         'maprotation': ' -> '.join(safe(ctl.get_map_rotation, [])()),
         'servername': safe(ctl.get_name, "")(),
-        #'onlineadmins': ', '.join(safe(ctl.get_online_admins, [])()),
-        'admins': ','.join(safe(get_admin_names, [])()),
-        'owners': ','.join(safe(get_owner_names, [])()),
-        'seniors': ','.join(safe(get_senior_names, [])()),
-        'juniors': ','.join(safe(get_junior_names, [])()),
+        'admins': safe_list(get_admin_names),
+        'owners': safe_list(get_owner_names),
+        'seniors': safe_list(get_senior_names),
+        'juniors': safe_list(get_junior_names),
         'vips': ', '.join(safe(get_vip_names, [])()),
         'randomvip': safe(lambda: random.choice(get_vip_names() or [""]), "")(),
         'votenextmap_line': safe(partial(format_map_vote, format_type='line'), '')(ctl),
@@ -164,7 +172,9 @@ def format_message(ctl, msg):
         'total_votes': vote_status['total_votes'],
         'winning_maps_short': format_winning_map(vote_status['winning_maps'], default=nextmap, display_count=2),
         'winning_maps_all': format_winning_map(vote_status['winning_maps'], default=nextmap, display_count=0),
-        'scrolling_votemap': scrolling_votemap(ctl, vote_status['winning_maps'])
+        'scrolling_votemap': scrolling_votemap(ctl, vote_status['winning_maps']),
+        'online_mods': safe_list(get_online_mods),
+        'ingame_mods': safe_list(get_ingame_mods)
     }
     try: 
         return msg.format(**subs)

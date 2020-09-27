@@ -130,7 +130,7 @@ class RconSettings extends React.Component {
                         onChange={(e) => this.setState({ broadcastMessages: _.split(e.target.value, '\n') })}
                         placeholder="Insert your messages here, one per line, with format: <number of seconds to display> <a message (write: \n if you want a line return)>"
                         variant="outlined"
-                        helperText="You can use the following variables in the text (nextmap, maprotation, servername, onlineadmins, admins, owners, seniors, juniors, vips, randomvip) using the following syntax: 60 Welcome to {servername}. The next map is {nextmap}."
+                        helperText="You can use the following variables in the text (nextmap, maprotation, servername, onlineadmins, admins, owners, seniors, juniors, vips, randomvip, ingame_mods, online_mods) using the following syntax: 60 Welcome to {servername}. The next map is {nextmap}."
                     />
                 </Grid>
                 <Grid item xs={12}>

@@ -7,7 +7,7 @@ from dataclasses import dataclass, asdict
 from typing import Any
 
 
-from rcon.audit import heartbeat, online_mods, set_registered_mods
+from rcon.audit import heartbeat, online_mods, set_registered_mods, ingame_mods
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
@@ -80,8 +80,11 @@ def is_logged_in(request):
                 steam_id = request.user.steamplayer.steam_id_64
             except:
                 logger.warning("%s's steam id is not set ", request.user.username)
-            heartbeat(request.user.username, steam_id)
-            set_registered_mods([u.steam_id_64 for u in SteamPlayer.objects.all()])
+            try:
+                heartbeat(request.user.username, steam_id)
+                set_registered_mods([(u.user.username, u.steam_id_64) for u in SteamPlayer.objects.all()])
+            except:
+                logger.exception("Unable to register mods")
         except:
             logger.exception("Can't record heartbeat")
 
@@ -98,15 +101,6 @@ def do_logout(request):
         result=True,
         command="logout",
         failed=False
-    )
-
-
-@csrf_exempt
-def get_online_mods(request):
-    return api_response(
-        command="online_mods",
-        result=online_mods(),
-        failed=False,
     )
 
 
@@ -131,3 +125,22 @@ def login_required(func):
                 status_code=500
             )
     return wrapper
+
+
+# Login required?
+@csrf_exempt
+def get_online_mods(request):
+    return api_response(
+        command="get_online_mods",
+        result=online_mods(),
+        failed=False,
+    )
+
+@csrf_exempt
+def get_ingame_mods(request):
+    logger.error("HERE ---------------------------")
+    return api_response(
+        command="get_ingame_mods",
+        result=ingame_mods(),
+        failed=False,
+    )
