@@ -138,7 +138,6 @@ def get_online_mods(request):
 
 @csrf_exempt
 def get_ingame_mods(request):
-    logger.error("HERE ---------------------------")
     return api_response(
         command="get_ingame_mods",
         result=ingame_mods(),

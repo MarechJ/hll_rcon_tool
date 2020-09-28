@@ -43,7 +43,8 @@ def online_mods():
 def set_registered_mods(moderators_name_steamids: List[tuple]):
     red = _red()
 
-    red.hset("moderators", *list(chain(*moderators_name_steamids)))
+    for k, v in moderators_name_steamids:
+        red.hset("moderators", k, v)
     
 
 def ingame_mods():
