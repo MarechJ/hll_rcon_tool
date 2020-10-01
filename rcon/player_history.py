@@ -313,7 +313,7 @@ def ban_if_has_vac_bans(rcon, steam_id_64, name):
                     number_of_game_bans=bans.get('NumberOfGameBans')
                 )
                 send_to_discord_audit(
-                    f"`VAC/GAME BAN` -> `{dict_to_discord(audit_params)}``", "AUTOBAN")
+                    f"`VAC/GAME BAN` -> {dict_to_discord(audit_params)}", "AUTOBAN")
             except:
                 logger.error("Unable to send vac ban to audit log")
 
