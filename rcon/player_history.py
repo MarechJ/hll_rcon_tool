@@ -241,7 +241,7 @@ def ban_if_blacklisted(rcon, steam_id_64, name):
             )
             try:
                 send_to_discord_audit(
-                    f"`BLACKLIST` -> `{dict_to_discord(dict(player=player, reason=player.blacklist.reason))}``", "AUTOBAN")
+                    f"`BLACKLIST` -> {dict_to_discord(dict(player=player, reason=player.blacklist.reason))}", "AUTOBAN")
             except:
                 logger.error("Unable to send blacklist to audit log")
 
