@@ -26,9 +26,8 @@ from rcon.player_history import (
 )
 from rcon.user_config import AutoBroadcasts, InvalidConfigurationError, StandardMessages
 from rcon.cache_utils import RedisCached, get_redis_pool
-from .discord import send_to_discord_audit
 from .auth import login_required
-
+from rcon.discord import send_to_discord_audit
 
 logger = logging.getLogger('rconweb')
 
