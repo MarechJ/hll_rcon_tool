@@ -241,7 +241,7 @@ def ban_if_blacklisted(rcon, steam_id_64, name):
             )
             try:
                 send_to_discord_audit(
-                    f"`BLACKLIST` -> `{dict_to_discord(dict(player=player))}``", "AUTOBAN")
+                    f"`BLACKLIST` -> `{dict_to_discord(dict(player=player, reason=player.blacklist.reason))}``", "AUTOBAN")
             except:
                 logger.error("Unable to send blacklist to audit log")
 
@@ -272,7 +272,7 @@ def ban_if_has_vac_bans(rcon, steam_id_64, name):
             'inf') if MAX_GAME_BAN_THRESHOLD <= 0 else MAX_GAME_BAN_THRESHOLD
     except ValueError:  # No proper value is given
         logger.error(
-            "Invalid value given for environment variable BAN_ON_VAC_HISTORY or MAX_GAME_BAN_THRESHOLD")
+            "Invalid value given for environment variable BAN_ON_VAC_HISTORY_DAYS or MAX_GAME_BAN_THRESHOLD")
         return
 
     if max_days_since_ban <= 0:
@@ -307,6 +307,7 @@ def ban_if_has_vac_bans(rcon, steam_id_64, name):
                 audit_params = dict(
                     player=player['name'],
                     steam_id_64=player['steam_id_64'],
+                    reason=reason,
                     days_since_last_ban=bans.get('DaysSinceLastBan'),
                     vac_banned=bans.get('VACBanned'),
                     number_of_game_bans=bans.get('NumberOfGameBans')
