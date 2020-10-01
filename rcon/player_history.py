@@ -15,8 +15,9 @@ from rcon.game_logs import on_connected, on_disconnected
 from rcon.commands import CommandFailedError
 
 from rcon.steam_utils import get_player_bans, STEAM_KEY
-MAX_DAYS_SINCE_BAN = os.getenv('BAN_ON_VAC_HISTORY', 0)
+MAX_DAYS_SINCE_BAN = os.getenv('BAN_ON_VAC_HISTORY_DAYS', 0)
 AUTO_BAN_REASON = os.getenv('BAN_ON_VAC_HISTORY_REASON', 'VAC ban history ({DAYS_SINCE_LAST_BAN} days ago)')
+MAX_GAME_BAN_THRESHOLD = os.getenv('MAX_GAME_BAN_THRESHOLD', 0)
 
 from rcon.cache_utils import ttl_cache, invalidates
 
@@ -231,12 +232,30 @@ def ban_if_blacklisted(rcon, steam_id_64, name):
                 rcon=rcon, player_name=player, action_type="PERMABAN", reason=player.blacklist.reason, by='BLACKLIST'
             )
 
+def should_ban(bans, max_game_bans, max_days_since_ban):
+    try:
+        days_since_last_ban = int(bans['DaysSinceLastBan'])
+        number_of_game_bans = int(bans.get('NumberOfGameBans', 0))
+    except ValueError: # In case DaysSinceLastBan can be null
+        return
+
+    has_a_ban = bans.get('VACBanned') == True or number_of_game_bans > max_game_bans
+
+    if days_since_last_ban <= 0:
+        return False
+    
+    if days_since_last_ban <= max_days_since_ban and has_a_ban:
+        return True
+
+    return False
+
 
 def ban_if_has_vac_bans(rcon, steam_id_64, name):
     try:
         max_days_since_ban = int(MAX_DAYS_SINCE_BAN)
+        max_game_bans = float('inf') if MAX_GAME_BAN_THRESHOLD <= 0 else MAX_GAME_BAN_THRESHOLD
     except ValueError: # No proper value is given
-        logger.error("Invalid value given for environment variable BAN_ON_VAC_HISTORY")
+        logger.error("Invalid value given for environment variable BAN_ON_VAC_HISTORY or MAX_GAME_BAN_THRESHOLD")
         return
 
     if max_days_since_ban <= 0: return # Feature is disabled
@@ -249,17 +268,13 @@ def ban_if_has_vac_bans(rcon, steam_id_64, name):
             return
 
         bans = get_player_bans(steam_id_64)
-        if not bans: return # Player couldn't be fetched properly (logged by get_player_bans)
+        if not bans or not isinstance(bans, dict): 
+            logger.warning("Can't fetch Bans for player %s, received %s", steam_id_64, bans)
+            return # Player couldn't be fetched properly (logged by get_player_bans)
 
-        try:
-            days_since_last_ban = int(bans['DaysSinceLastBan'])
-        except ValueError: # In case DaysSinceLastBan can be null
-            logger.warning("Can't fetch DaysSinceLastBan for player %s, received %s", steam_id_64, str(bans['DaysSinceLastBan']))
-            return
-
-        if days_since_last_ban > 0 and days_since_last_ban <= max_days_since_ban:
-            reason = AUTO_BAN_REASON.format(DAYS_SINCE_LAST_BAN=str(days_since_last_ban), MAX_DAYS_SINCE_BAN=str(max_days_since_ban))
-            logger.info("Player %s was banned due VAC history, last ban: %s days ago", str(player), str(days_since_last_ban))
+        if should_ban(bans, max_game_bans, max_days_since_ban):
+            reason = AUTO_BAN_REASON.format(DAYS_SINCE_LAST_BAN=bans.get('DaysSinceLastBan'), MAX_DAYS_SINCE_BAN=str(max_days_since_ban))
+            logger.info("Player %s was banned due VAC history, last ban: %s days ago", str(player), bans.get('DaysSinceLastBan'))
             rcon.do_perma_ban(name, reason)
             safe_save_player_action(
                 rcon=rcon, player_name=player, action_type="PERMABAN", reason=reason, by='AUTOBAN'

@@ -123,6 +123,7 @@ services:
       STEAM_API_KEY: ${STEAM_API_KEY}
       BAN_ON_VAC_HISTORY: ${BAN_ON_VAC_HISTORY}
       BAN_ON_VAC_HISTORY_REASON: ${BAN_ON_VAC_HISTORY_REASON}
+      MAX_GAME_BAN_THRESHOLD: ${MAX_GAME_BAN_THRESHOLD}
     restart: on-failure
     networks:
       - common
@@ -204,6 +205,7 @@ services:
       STEAM_API_KEY: ${STEAM_API_KEY}
       BAN_ON_VAC_HISTORY: ${BAN_ON_VAC_HISTORY}
       BAN_ON_VAC_HISTORY_REASON: ${BAN_ON_VAC_HISTORY_REASON}
+      MAX_GAME_BAN_THRESHOLD: ${MAX_GAME_BAN_THRESHOLD}
     restart: on-failure
     networks:
       - common
@@ -285,6 +287,7 @@ services:
       STEAM_API_KEY: ${STEAM_API_KEY}
       BAN_ON_VAC_HISTORY: ${BAN_ON_VAC_HISTORY}
       BAN_ON_VAC_HISTORY_REASON: ${BAN_ON_VAC_HISTORY_REASON}
+      MAX_GAME_BAN_THRESHOLD: ${MAX_GAME_BAN_THRESHOLD}
     restart: on-failure
     networks:
       - common
