@@ -1,3 +1,4 @@
+import os
 import logging
 import datetime
 from functools import wraps
@@ -12,6 +13,10 @@ from rcon.models import (
 )
 from rcon.game_logs import on_connected, on_disconnected
 from rcon.commands import CommandFailedError
+
+from rcon.steam_utils import get_player_bans, STEAM_KEY
+MAX_DAYS_SINCE_BAN = os.getenv('BAN_ON_VAC_HISTORY', 0)
+AUTO_BAN_REASON = os.getenv('BAN_ON_VAC_HISTORY_REASON', 'VAC ban history ({DAYS_SINCE_LAST_BAN} days ago)')
 
 from rcon.cache_utils import ttl_cache, invalidates
 
@@ -218,12 +223,46 @@ def ban_if_blacklisted(rcon, steam_id_64, name):
             return
 
         if player.blacklist and player.blacklist.is_blacklisted:
-            logger.warning("Player %s was banned due blacklist, reason: %s", str(
+            logger.info("Player %s was banned due blacklist, reason: %s", str(
                 player), player.blacklist.reason)
             rcon.do_perma_ban(name, player.blacklist.reason)
             # TODO save author of blacklist
             safe_save_player_action(
                 rcon=rcon, player_name=player, action_type="PERMABAN", reason=player.blacklist.reason, by='BLACKLIST'
+            )
+
+
+def ban_if_has_vac_bans(rcon, steam_id_64, name):
+    try:
+        max_days_since_ban = int(MAX_DAYS_SINCE_BAN)
+    except ValueError: # No proper value is given
+        logger.error("Invalid value given for environment variable BAN_ON_VAC_HISTORY")
+        return
+
+    if max_days_since_ban <= 0: return # Feature is disabled
+
+    with enter_session() as sess:
+        player = get_player(sess, steam_id_64)
+
+        if not player:
+            logger.error("Can't check VAC history, player not found %s", steam_id_64)
+            return
+
+        bans = get_player_bans(steam_id_64)
+        if not bans: return # Player couldn't be fetched properly (logged by get_player_bans)
+
+        try:
+            days_since_last_ban = int(bans['DaysSinceLastBan'])
+        except ValueError: # In case DaysSinceLastBan can be null
+            logger.warning("Can't fetch DaysSinceLastBan for player %s, received %s", steam_id_64, str(bans['DaysSinceLastBan']))
+            return
+
+        if days_since_last_ban > 0 and days_since_last_ban <= max_days_since_ban:
+            reason = AUTO_BAN_REASON.format(DAYS_SINCE_LAST_BAN=str(days_since_last_ban), MAX_DAYS_SINCE_BAN=str(max_days_since_ban))
+            logger.info("Player %s was banned due VAC history, last ban: %s days ago", str(player), str(days_since_last_ban))
+            rcon.do_perma_ban(name, reason)
+            safe_save_player_action(
+                rcon=rcon, player_name=player, action_type="PERMABAN", reason=reason, by='AUTOBAN'
             )
 
 
@@ -313,6 +352,7 @@ def handle_on_connect(rcon, struct_log, steam_id_64):
     save_player(struct_log['player'], steam_id_64)
     save_start_player_session(steam_id_64, struct_log['timestamp_ms'])
     ban_if_blacklisted(rcon, steam_id_64, struct_log['player'])
+    ban_if_has_vac_bans(rcon, steam_id_64, struct_log['player'])
 
 
 @on_disconnected
