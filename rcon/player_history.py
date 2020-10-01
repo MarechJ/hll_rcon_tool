@@ -237,6 +237,7 @@ def ban_if_has_vac_bans(rcon, steam_id_64, name):
         max_days_since_ban = int(MAX_DAYS_SINCE_BAN)
     except ValueError: # No proper value is given
         logger.error("Invalid value given for environment variable BAN_ON_VAC_HISTORY")
+        return
 
     if max_days_since_ban <= 0: return # Feature is disabled
 
@@ -248,7 +249,7 @@ def ban_if_has_vac_bans(rcon, steam_id_64, name):
             return
 
         bans = get_player_bans(steam_id_64)
-        if not bans: return # Player has no bans
+        if not bans: return # Player couldn't be fetched properly (logged by get_player_bans)
 
         try:
             days_since_last_ban = int(bans['DaysSinceLastBan'])
@@ -256,7 +257,7 @@ def ban_if_has_vac_bans(rcon, steam_id_64, name):
             logger.warning("Can't fetch DaysSinceLastBan for player %s, received %s", steam_id_64, str(bans['DaysSinceLastBan']))
             return
 
-        if days_since_last_ban <= max_days_since_ban:
+        if days_since_last_ban > 0 and days_since_last_ban <= max_days_since_ban:
             reason = AUTO_BAN_REASON.format(DAYS_SINCE_LAST_BAN=str(days_since_last_ban), MAX_DAYS_SINCE_BAN=str(max_days_since_ban))
             logger.info("Player %s was banned due VAC history, last ban: %s days ago", str(player), str(days_since_last_ban))
             rcon.do_perma_ban(name, reason)
