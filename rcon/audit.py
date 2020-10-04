@@ -46,6 +46,8 @@ def set_registered_mods(moderators_name_steamids: List[tuple]):
     red = _red()
 
     logger.warning("Registering mods: %s", moderators_name_steamids)
+
+    red.delete("moderators")
     for k, v in moderators_name_steamids:
         red.hset("moderators", k, v)
     
