@@ -17,6 +17,8 @@ from rcon.game_logs import on_connected, on_disconnected
 from rcon.commands import CommandFailedError
 
 from rcon.steam_utils import get_player_bans, STEAM_KEY
+
+
 MAX_DAYS_SINCE_BAN = os.getenv('BAN_ON_VAC_HISTORY_DAYS', 0)
 AUTO_BAN_REASON = os.getenv(
     'BAN_ON_VAC_HISTORY_REASON', 'VAC ban history ({DAYS_SINCE_LAST_BAN} days ago)')
@@ -254,7 +256,7 @@ def should_ban(bans, max_game_bans, max_days_since_ban):
         return
 
     has_a_ban = bans.get(
-        'VACBanned') == True or number_of_game_bans > max_game_bans
+        'VACBanned') == True or number_of_game_bans >= max_game_bans
 
     if days_since_last_ban <= 0:
         return False
@@ -269,7 +271,7 @@ def ban_if_has_vac_bans(rcon, steam_id_64, name):
     try:
         max_days_since_ban = int(MAX_DAYS_SINCE_BAN)
         max_game_bans = float(
-            'inf') if MAX_GAME_BAN_THRESHOLD <= 0 else MAX_GAME_BAN_THRESHOLD
+            'inf') if int(MAX_GAME_BAN_THRESHOLD) <= 0 else int(MAX_GAME_BAN_THRESHOLD)
     except ValueError:  # No proper value is given
         logger.error(
             "Invalid value given for environment variable BAN_ON_VAC_HISTORY_DAYS or MAX_GAME_BAN_THRESHOLD")
