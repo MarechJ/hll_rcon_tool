@@ -65,5 +65,9 @@ def get_player_bans(steamd_id):
 def get_player_has_bans(steamd_id):
     bans = get_player_bans(steamd_id)
 
-    bans['has_bans'] = any(bans.get(k) for k in ['VACBanned', 'NumberOfVACBans', 'DaysSinceLastBan', 'NumberOfGameBans'])
+    if bans is None:
+        logger.warning("Unable to read bans for %s" % steamd_id)
+        bans = {}
+        
+    bans['has_bans'] = any(bans.get(k) for k in ['VACBanned', 'NumberOfVACBans', 'DaysSinceLastBan', 'NumberOfGameBans']) 
     return bans
