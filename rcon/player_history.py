@@ -154,10 +154,10 @@ def save_player(player_name, steam_id_64):
         _save_player_alias(sess, steamid, player_name)
 
 
-def save_player_action(rcon, action_type, player_name, by, reason=''):
+def save_player_action(rcon, action_type, player_name, by, reason='', steam_id_64=None):
     with enter_session() as sess:
-        steam_id_64 = rcon.get_player_info(player_name)['steam_id_64']
-        player = _get_set_player(sess, player_name, steam_id_64)
+        _steam_id_64 = steam_id_64 or rcon.get_player_info(player_name)['steam_id_64']
+        player = _get_set_player(sess, player_name, _steam_id_64)
         sess.add(
             PlayersAction(
                 action_type=action_type.upper(),
@@ -167,10 +167,9 @@ def save_player_action(rcon, action_type, player_name, by, reason=''):
             )
         )
 
-
-def safe_save_player_action(rcon, action_type, player_name, by, reason=''):
+def safe_save_player_action(rcon, action_type, player_name, by, reason='', steam_id_64=None):
     try:
-        return save_player_action(rcon, action_type, player_name, by, reason)
+        return save_player_action(rcon, action_type, player_name, by, reason, steam_id_64)
     except Exception as e:
         logger.exception("Failed to record player action: %s %s",
                          action_type, player_name)
@@ -239,7 +238,7 @@ def ban_if_blacklisted(rcon, steam_id_64, name):
             rcon.do_perma_ban(name, player.blacklist.reason)
             # TODO save author of blacklist
             safe_save_player_action(
-                rcon=rcon, player_name=player, action_type="PERMABAN", reason=player.blacklist.reason, by='BLACKLIST'
+                rcon=rcon, player_name=player, action_type="PERMABAN", reason=player.blacklist.reason, by='BLACKLIST', steam_id_64=steam_id_64
             )
             try:
                 send_to_discord_audit(
@@ -302,7 +301,7 @@ def ban_if_has_vac_bans(rcon, steam_id_64, name):
                 player), bans.get('DaysSinceLastBan'))
             rcon.do_perma_ban(name, reason)
             safe_save_player_action(
-                rcon=rcon, player_name=player, action_type="PERMABAN", reason=reason, by='AUTOBAN'
+                rcon=rcon, player_name=player, action_type="PERMABAN", reason=reason, by='AUTOBAN', steam_id_64=steam_id_64
             )
 
             try:
@@ -317,7 +316,7 @@ def ban_if_has_vac_bans(rcon, steam_id_64, name):
                 send_to_discord_audit(
                     f"`VAC/GAME BAN` -> {dict_to_discord(audit_params)}", "AUTOBAN")
             except:
-                logger.error("Unable to send vac ban to audit log")
+                logger.exception("Unable to send vac ban to audit log")
 
 
 def add_flag_to_player(steam_id_64, flag, comment=None, player_name=None):
