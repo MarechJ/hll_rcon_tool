@@ -103,6 +103,35 @@ class ServerCtl:
 
         return result
 
+    @_auto_retry
+    def _timed_request(self, command: str, can_fail=True, log_info=False):
+        if log_info:
+            logger.info(command)
+        else:
+            logger.debug(command)
+        try:
+            before_sent, after_sent, _ = self.conn.send(command.encode(), timed=True)
+            before_received, after_received, result = self.conn.receive(timed=True)
+            result = result.decode()
+        except (RuntimeError, BrokenPipeError, socket.timeout, ConnectionResetError, UnicodeDecodeError):
+            logger.exception("Failed request")
+            raise HLLServerError(command)
+
+        if result == 'FAIL':
+            if can_fail:
+                raise CommandFailedError(command)
+            else:
+                raise HLLServerError(f"Got FAIL for {command}")
+
+        return dict(
+            before_sent=before_sent,
+            after_sent=after_sent,
+            before_received=before_received,
+            after_received=after_received,
+            result=result
+        )
+        
+
     def _read_list(self, raw):
         res = raw.split('\t')
 
@@ -195,6 +224,14 @@ class ServerCtl:
             if res[-1] == '\n':
                 break
             res += self.conn.receive().decode()
+        return res
+
+    def get_timed_logs(self, since_min_ago, filter_=''):
+        res = self._timed_request(f'showlog {since_min_ago}')
+        for i in range(30):
+            if res['result'][-1] == '\n':
+                break
+            res['result'] += self.conn.receive().decode()
         return res
 
     def get_idle_autokick_time(self):

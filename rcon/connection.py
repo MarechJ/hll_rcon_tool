@@ -1,5 +1,6 @@
 import socket
 import array
+import time
 
 MSGLEN = 8196
 TIMEOUT_SEC = 10
@@ -32,10 +33,15 @@ class HLLConnection:
     def close(self):
         self.sock.close()
 
-    def send(self, msg):
-        sent = self.sock.send(self._xor(msg))
+    def send(self, msg, timed=False):
+        xored = self._xor(msg)
+        before = time.time()
+        sent = self.sock.send(xored)
+        after = time.time()
         if sent != len(msg):
             raise RuntimeError("socket connection broken")
+        if timed:
+            return before, after, sent
         return sent
 
     def _xor(self, msg):
@@ -47,12 +53,19 @@ class HLLConnection:
 
         return array.array('B', n).tobytes()
 
-    def receive(self, msglen=MSGLEN):
+    def receive(self, msglen=MSGLEN, timed=False):
+        before = time.time()
         buff = self.sock.recv(msglen)
+        
         msg = self._xor(buff)
 
         while len(buff) >= msglen:
-            buff = self.sock.recv(msglen)
+            try:
+                buff = self.sock.recv(msglen)
+            except socket.timeout:
+                break
             msg += self._xor(buff)
-
+        after = time.time()
+        if timed:
+            return before, after, msg
         return msg

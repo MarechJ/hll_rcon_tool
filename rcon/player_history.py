@@ -238,11 +238,11 @@ def ban_if_blacklisted(rcon, steam_id_64, name):
             rcon.do_perma_ban(name, player.blacklist.reason)
             # TODO save author of blacklist
             safe_save_player_action(
-                rcon=rcon, player_name=player, action_type="PERMABAN", reason=player.blacklist.reason, by='BLACKLIST', steam_id_64=steam_id_64
+                rcon=rcon, player_name=name, action_type="PERMABAN", reason=player.blacklist.reason, by='BLACKLIST', steam_id_64=steam_id_64
             )
             try:
                 send_to_discord_audit(
-                    f"`BLACKLIST` -> {dict_to_discord(dict(player=player, reason=player.blacklist.reason))}", "AUTOBAN")
+                    f"`BLACKLIST` -> {dict_to_discord(dict(player=name, reason=player.blacklist.reason))}", "AUTOBAN")
             except:
                 logger.error("Unable to send blacklist to audit log")
 
@@ -301,13 +301,13 @@ def ban_if_has_vac_bans(rcon, steam_id_64, name):
                 player), bans.get('DaysSinceLastBan'))
             rcon.do_perma_ban(name, reason)
             safe_save_player_action(
-                rcon=rcon, player_name=player, action_type="PERMABAN", reason=reason, by='AUTOBAN', steam_id_64=steam_id_64
+                rcon=rcon, player_name=name, action_type="PERMABAN", reason=reason, by='AUTOBAN', steam_id_64=player.steam_id_64
             )
 
             try:
                 audit_params = dict(
-                    player=player['name'],
-                    steam_id_64=player['steam_id_64'],
+                    player=name,
+                    steam_id_64=player.steam_id_64,
                     reason=reason,
                     days_since_last_ban=bans.get('DaysSinceLastBan'),
                     vac_banned=bans.get('VACBanned'),
