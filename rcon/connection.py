@@ -31,6 +31,7 @@ class HLLConnection:
             raise HLLAuthError('Invalid password')
 
     def close(self):
+        self.sock.shutdown(socket.SHUT_RDWR)
         self.sock.close()
 
     def send(self, msg, timed=False):
