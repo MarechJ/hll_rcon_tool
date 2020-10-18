@@ -15,7 +15,6 @@ services:
       LOGGING_LEVEL: 'DEBUG'
   backend_1:
     environment:
-      DJANGO_DEBUG: 'yes'
       LOGGING_LEVEL: 'DEBUG'
     build: .
   frontend:
