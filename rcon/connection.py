@@ -1,10 +1,12 @@
 import socket
 import array
 import time
+import logging
 
 MSGLEN = 8196
 TIMEOUT_SEC = 10
 
+logger = logging.getLogger(__name__)
 
 class HLLAuthError(Exception):
     pass
@@ -31,7 +33,10 @@ class HLLConnection:
             raise HLLAuthError('Invalid password')
 
     def close(self):
-        self.sock.shutdown(socket.SHUT_RDWR)
+        try:
+            self.sock.shutdown(socket.SHUT_RDWR)
+        except OSError:
+            logger.debug("Unable to send socket shutdown")
         self.sock.close()
 
     def send(self, msg, timed=False):
