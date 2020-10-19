@@ -2,6 +2,7 @@ import json
 import redis
 import logging
 from rcon.cache_utils import get_redis_pool
+from datetime import datetime
 
 logger = logging.getLogger('rcon')
 
@@ -152,3 +153,25 @@ class FixedLenList:
 
     def lpush(self, obj):
         self.red.lpush(self.key, self.serializer(obj))
+
+
+class MapsHistory(FixedLenList):
+    def __init__(self):
+        super().__init__("maps_history", 100)
+    
+    def save_map_end(self, old_map):
+        ts = datetime.now().timestamp()
+        logger.info("Saving end of map %s at time %s", old_map, ts)
+        prev = self.lpop() or dict(name=old_map, start=None, end=None)
+        prev['end'] = ts
+        self.lpush(prev)
+
+    def save_new_map(self, new_map):
+        ts = datetime.now().timestamp()
+        logger.info("Saving start of new map %s at time %s", new_map, ts)
+        new = dict(
+            name=new_map, 
+            start=ts,
+            end=None
+        )
+        self.lpush(new)

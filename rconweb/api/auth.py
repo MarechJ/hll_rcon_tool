@@ -6,7 +6,7 @@ from functools import wraps
 from dataclasses import dataclass, asdict
 from typing import Any
 
-
+from rcon.cache_utils import ttl_cache
 from rcon.audit import heartbeat, online_mods, set_registered_mods, ingame_mods
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -70,6 +70,12 @@ def do_login(request):
             status_code=401
         )
 
+
+@ttl_cache(60 * 60, cache_falsy=False)
+def get_moderators_accounts():
+    return [(u.user.username, u.steam_id_64) for u in SteamPlayer.objects.all()]
+
+
 @csrf_exempt
 def is_logged_in(request):
     res = request.user.is_authenticated
@@ -82,7 +88,7 @@ def is_logged_in(request):
                 logger.warning("%s's steam id is not set ", request.user.username)
             try:
                 heartbeat(request.user.username, steam_id)
-                set_registered_mods([(u.user.username, u.steam_id_64) for u in SteamPlayer.objects.all()])
+                set_registered_mods(get_moderators_accounts())
             except:
                 logger.exception("Unable to register mods")
         except:

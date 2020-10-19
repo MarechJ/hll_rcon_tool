@@ -57,7 +57,7 @@ def parse_webhook_url(url):
     """
     if not url:
         return None, None
-    resp = requests.get(url).json()
+    resp = requests.get(url, timeout=10).json()
     _id = int(resp["id"])
     token = resp["token"]
     return _id, token
@@ -134,7 +134,6 @@ class DiscordWebhookHandler:
             logger.exception("error initializing kill variables: %s", e)
 
     def send_chat_message(self, _, log):
-
         try:
             message = log["sub_content"]
 
@@ -231,19 +230,25 @@ class DiscordWebhookHandler:
             self.send_generic_kill_message(_, log, action)
 
 
-HANDLER = DiscordWebhookHandler()
+HANDLER = None
+
+def get_handler():
+    global HANDLER
+    if not HANDLER:
+        HANDLER = DiscordWebhookHandler()
+    return HANDLER
 
 
 @on_chat
 def handle_on_chat(rcon, log):
-    HANDLER.send_chat_message(rcon, log)
+    get_handler().send_chat_message(rcon, log)
 
 
 @on_kill
 def handle_on_kill(rcon, log):
-    HANDLER.send_kill_message(rcon, log)
+    get_handler().send_kill_message(rcon, log)
 
 
 @on_tk
 def handle_on_tk(rcon, log):
-    HANDLER.send_tk_message(rcon, log)
+    get_handler().send_tk_message(rcon, log)
