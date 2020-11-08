@@ -43,6 +43,15 @@ def map_name(map_):
     name, *rest = map_.split('_')
     return name
 
+
+def get_map_side(map_):
+    try:
+        parts = map_.split('_')
+        return parts[2].lower() if parts[2] in ['us', 'ger'] else None
+    except IndexError:
+        return None 
+    
+
 LONG_HUMAN_MAP_NAMES = {
     "foy_warfare": "Foy",
     "stmariedumont_warfare": "St Marie du Mont",
