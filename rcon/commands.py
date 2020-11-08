@@ -44,7 +44,7 @@ def _auto_retry(method):
     def wrap(self, *args, **kwargs):
         try:
             return method(self, *args, **kwargs)
-        except HLLServerError:
+        except (HLLServerError, UnicodeDecodeError):
             if not self.auto_retry:
                 raise
             logger.exception(
@@ -91,6 +91,28 @@ class ServerCtl:
         try:
             self.conn.send(command.encode())
             result = self.conn.receive().decode()
+        except (RuntimeError, BrokenPipeError, socket.timeout, ConnectionResetError, UnicodeDecodeError) as e:
+            logger.exception("Failed request")
+            raise HLLServerError(command) from e
+
+        if result == 'FAIL':
+            if can_fail:
+                raise CommandFailedError(command)
+            else:
+                raise HLLServerError(f"Got FAIL for {command}")
+
+        return result
+
+    @_auto_retry
+    def _timed_request(self, command: str, can_fail=True, log_info=False):
+        if log_info:
+            logger.info(command)
+        else:
+            logger.debug(command)
+        try:
+            before_sent, after_sent, _ = self.conn.send(command.encode(), timed=True)
+            before_received, after_received, result = self.conn.receive(timed=True)
+            result = result.decode()
         except (RuntimeError, BrokenPipeError, socket.timeout, ConnectionResetError, UnicodeDecodeError):
             logger.exception("Failed request")
             raise HLLServerError(command)
@@ -101,7 +123,14 @@ class ServerCtl:
             else:
                 raise HLLServerError(f"Got FAIL for {command}")
 
-        return result
+        return dict(
+            before_sent=before_sent,
+            after_sent=after_sent,
+            before_received=before_received,
+            after_received=after_received,
+            result=result
+        )
+        
 
     def _read_list(self, raw):
         res = raw.split('\t')
@@ -194,7 +223,19 @@ class ServerCtl:
         for i in range(30):
             if res[-1] == '\n':
                 break
-            res += self.conn.receive().decode()
+            try:
+                res += self.conn.receive().decode()
+            except (RuntimeError, BrokenPipeError, socket.timeout, ConnectionResetError, UnicodeDecodeError):
+                logger.exception("Failed request")
+                raise HLLServerError(f'showlog {since_min_ago}')
+        return res
+
+    def get_timed_logs(self, since_min_ago, filter_=''):
+        res = self._timed_request(f'showlog {since_min_ago}')
+        for i in range(30):
+            if res['result'][-1] == '\n':
+                break
+            res['result'] += self.conn.receive().decode()
         return res
 
     def get_idle_autokick_time(self):
