@@ -533,6 +533,43 @@ class Rcon(ServerCtl):
 
         return scoreboard
 
+    @ttl_cache(ttl=60 * 2)
+    def get_teamkills_boards(self, sort='TK Minutes'):
+        logs = self.get_structured_logs(180)
+        scoreboard = []
+        for player in logs['players']:
+            if not player:
+                continue
+            first_timestamp = float('inf')
+            last_timestamp = 0
+            tk = 0  
+            death_by_tk = 0
+            for log in logs['logs']:
+                first_timestamp = min(log['timestamp_ms'], first_timestamp)
+                last_timestamp = max(log['timestamp_ms'], last_timestamp)
+                if log['action'] == 'TEAM KILL':
+                    if log['player'] == player:
+                        tk += 1
+                    elif log['player2'] == player:
+                        death_by_tk += 1
+            if tk == 0 and death_by_tk == 0:
+                continue
+            scoreboard.append({ 
+                'player': player,
+                'Teamkills': tk,
+                'Death by TK': death_by_tk,
+                'Estimated play time (minutes)': (last_timestamp - first_timestamp) // 1000 // 60,
+                'TK Minutes': tk / max((last_timestamp - first_timestamp) // 1000 // 60, 1)
+            })
+
+        scoreboard = sorted(
+            scoreboard, key=lambda o: o[sort], reverse=True
+        )
+        for o in scoreboard:
+            o['TK Minutes'] = "%.2f" % o['TK Minutes']
+
+        return scoreboard
+
 if __name__ == '__main__':
     from rcon.settings import SERVER_INFO
     r = Rcon(SERVER_INFO)

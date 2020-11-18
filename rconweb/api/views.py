@@ -42,8 +42,12 @@ def get_map_history(request):
         res = [
             dict(
                 name=i["name"],
-                start=datetime.datetime.fromtimestamp(i["start"]).isoformat() if i["start"] else None,
-                end=datetime.datetime.fromtimestamp(i["end"]).isoformat() if i["end"] else None,
+                start=datetime.datetime.fromtimestamp(i["start"]).isoformat()
+                if i["start"]
+                else None,
+                end=datetime.datetime.fromtimestamp(i["end"]).isoformat()
+                if i["end"]
+                else None,
             )
             for i in res
         ]
@@ -439,7 +443,33 @@ def make_table(scoreboard):
     return "\n".join(
         ["Rank  Name                  Ratio Kills Death"]
         + [
-            f"{('#'+ str(idx+1)).ljust(6)}{obj['player'].ljust(22)}{obj['ratio'].ljust(6)}{str(obj['(real) kills']).ljust(6)}{str(obj['(real) death']).ljust(5)}"
+            f"{('#'+ str(idx+1)).ljust(6)}{obj['player'].ljust(27)}{obj['ratio'].ljust(6)}{str(obj['(real) kills']).ljust(6)}{str(obj['(real) death']).ljust(5)}"
+            for idx, obj in enumerate(scoreboard)
+        ]
+    )
+
+
+def make_tk_table(scoreboard):
+    justification = [6, 27, 10, 10, 14, 14]
+    headers = ["Rank", "Name", "Time(min)", "Teamkills", "Death-by-TK", "TK/Minutes"]
+    keys = [
+        "idx",
+        "player",
+        "Estimated play time (minutes)",
+        "Teamkills",
+        "Death by TK",
+        "TK Minutes",
+    ]
+
+    return "\n".join(
+        ["".join(h.ljust(justification[idx]) for idx, h in enumerate(headers))]
+        + [
+            "".join(
+                [
+                    str({"idx": f"#{idx}", **obj}[key]).ljust(justification[i])
+                    for i, key in enumerate(keys)
+                ]
+            )
             for idx, obj in enumerate(scoreboard)
         ]
     )
@@ -472,6 +502,24 @@ def text_scoreboard(request):
         </p>
         <div style="float:left; margin-right:20px"><h3>By Ratio</h3><pre>{text}</pre></div>
         <div style="float:left; margin-left:20px"><h3>By Kills</h3><pre>{text2}</pre></div>
+        </div>
+        """
+    )
+
+
+@csrf_exempt
+def text_tk_scoreboard(request):
+    name = ctl.get_name()
+    scoreboard = ctl.get_teamkills_boards()
+    text = make_tk_table(scoreboard)
+    scoreboard = ctl.get_teamkills_boards("Teamkills")
+    text2 = make_tk_table(scoreboard)
+
+    return HttpResponse(
+        f"""<div>
+        <h1>{name}</h1>
+        <div style="float:left; margin-right:20px"><h3>By TK / Minute</h3><pre>{text}</pre></div>
+        <div style="float:left; margin-left:20px"><h3>By Total TK</h3><pre>{text2}</pre></div>
         </div>
         """
     )
@@ -556,6 +604,7 @@ commands = [
     ("blacklist_player", blacklist_player),
     ("unblacklist_player", unblacklist_player),
     ("scoreboard", text_scoreboard),
+    ("tk", text_tk_scoreboard),
     ("get_auto_broadcasts_config", get_auto_broadcasts_config),
     ("set_auto_broadcasts_config", set_auto_broadcasts_config),
     ("clear_cache", clear_cache),
@@ -579,8 +628,9 @@ for name, func in inspect.getmembers(ctl):
 
 
 # Warm the cache as fetching steam profile 1 by 1 takes a while
-try:
-    logger.info("Warming up the cache this may take minutes")
-    ctl.get_players()
-except:
-    logger.exception("Failed to warm the cache %s", os.environ)
+if not os.getenv('DJANGO_DEBUG', None):
+    try:
+        logger.info("Warming up the cache this may take minutes")
+        ctl.get_players()
+    except:
+        logger.exception("Failed to warm the cache %s", os.environ)
