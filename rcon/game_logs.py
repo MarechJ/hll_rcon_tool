@@ -54,7 +54,7 @@ def event_loop(replay=False):
     map_recorder = ThreadMapRecorder()
     map_recorder.start()
     logger.info("Registered hooks: %s", HOOKS)
-    replay_time = 2
+    replay_time = 10
 
     if replay:
         replay_time = 180
