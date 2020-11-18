@@ -66,7 +66,7 @@ def scrolling_votemap(rcon, winning_maps, repeat=10):
     vote_options = format_map_vote(rcon, "line", short_names=False)
     if not vote_options:
         return ""
-    separator = '    *    '
+    separator = '  ///  '
     options = separator.join([vote_options] * repeat)
     instructions = os.getenv('VOTE_MAP_INSTRUCTIONS', 'To vote write the map number in the chat')
     repeat_instructions = max(int(len(options) / (len(instructions) + len(separator))), 1)
