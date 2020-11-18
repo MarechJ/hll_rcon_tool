@@ -4,7 +4,7 @@ import re
 from datetime import datetime, timedelta
 import logging
 import socket
-from rcon.cache_utils import ttl_cache, invalidates
+from rcon.cache_utils import ttl_cache, invalidates, get_redis_client
 from rcon.commands import ServerCtl, CommandFailedError
 from rcon.steam_utils import get_player_country_code, get_player_has_bans
 
@@ -261,6 +261,7 @@ class Rcon(ServerCtl):
             return super().set_vip_slots_num(num)
 
     def set_welcome_message(self, msg):
+        red = get_redis_client()
         from rcon.broadcast import format_message
         formatted = format_message(self, msg)
         return super().set_welcome_message(formatted)
@@ -545,8 +546,9 @@ class Rcon(ServerCtl):
             tk = 0  
             death_by_tk = 0
             for log in logs['logs']:
-                first_timestamp = min(log['timestamp_ms'], first_timestamp)
-                last_timestamp = max(log['timestamp_ms'], last_timestamp)
+                if log['player'] == player or log['player2'] == player:
+                    first_timestamp = min(log['timestamp_ms'], first_timestamp)
+                    last_timestamp = max(log['timestamp_ms'], last_timestamp)
                 if log['action'] == 'TEAM KILL':
                     if log['player'] == player:
                         tk += 1
