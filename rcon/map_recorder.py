@@ -78,12 +78,17 @@ class MapsRecorder:
 class ThreadMapRecorder(Thread, MapsRecorder):
     def __init__(self):
         from rcon.settings import SERVER_INFO
-        super().__init__()
+        super().__init__(daemon=True)
         MapsRecorder.__init__(self, Rcon(SERVER_INFO))
 
     def run(self):
         while True:
-            self.detect_map_change()
+            try:
+                self.detect_map_change()
+            except KeyboardInterrupt:
+                return
+            except Exception:
+                logger.exception("Exception happend in map recorder thread")
             time.sleep(30)
 
 
