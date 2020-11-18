@@ -6,6 +6,25 @@ from datetime import datetime
 
 logger = logging.getLogger('rcon')
 
+ALL_MAPS = (
+    "foy_warfare",
+    "stmariedumont_warfare",
+    "purpleheartlane_offensive_us",
+    "hurtgenforest_warfare",
+    "utahbeach_warfare",
+    "hill400_offensive_US",
+    "stmereeglise_warfare",
+    "carentan_warfare",
+    "stmereeglise_offensive_ger",
+    "purpleheartlane_warfare",
+    "foy_offensive_ger",
+    "hill400_warfare",
+    "omahabeach_offensive_us",
+    "carentan_offensive_us",
+)
+
+
+
 def get_current_map(rcon):
     map_ = rcon.get_map()
 
@@ -165,8 +184,8 @@ class FixedLenList:
 
 
 class MapsHistory(FixedLenList):
-    def __init__(self):
-        super().__init__("maps_history", 100)
+    def __init__(self, key="maps_history", max_len=500):
+        super().__init__(key, max_len)
     
     def save_map_end(self, old_map):
         ts = datetime.now().timestamp()

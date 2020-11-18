@@ -71,3 +71,7 @@ def get_player_has_bans(steamd_id):
         
     bans['has_bans'] = any(bans.get(k) for k in ['VACBanned', 'NumberOfVACBans', 'DaysSinceLastBan', 'NumberOfGameBans']) 
     return bans
+
+
+if __name__ == "__main__":
+    print(get_player_bans('76561198436700508'))
