@@ -27,14 +27,14 @@ class RecordedRcon(Rcon):
         )
         return res
 
-    def do_temp_ban(self, player, reason, by):
-        res = super().do_temp_ban(player, reason)
+    def do_temp_ban(self, player=None, steam_id_64=None, duration_hours=2, reason="", by=""):
+        res = super().do_temp_ban(player, steam_id_64, duration_hours, reason, admin_name=by)
         safe_save_player_action(
             rcon=self, player_name=player, action_type="TEMPBAN", reason=reason, by=by)
         return res
 
-    def do_perma_ban(self, player, reason, by):
-        res = super().do_perma_ban(player, reason)
+    def do_perma_ban(self, player=None, steam_id_64=None, reason="", by=""):
+        res = super().do_perma_ban(player, steam_id_64, reason, admin_name=by)
         safe_save_player_action(
             rcon=self, player_name=player, action_type="PERMABAN", reason=reason, by=by
         )

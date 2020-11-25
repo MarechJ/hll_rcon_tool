@@ -21,6 +21,7 @@ import Autocomplete from "@material-ui/lab/Autocomplete";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import Checkbox from "@material-ui/core/Checkbox";
 import { getSharedMessages } from "../../utils/fetchUtils";
+import { Grid } from "@material-ui/core";
 
 class ReasonDialog extends React.Component {
   constructor(props) {
@@ -28,6 +29,8 @@ class ReasonDialog extends React.Component {
     this.state = {
       reason: "",
       saveMessage: true,
+      duration_number: 2,
+      duration_multiplier: 1,
       sharedMessages: [],
     };
 
@@ -71,6 +74,43 @@ class ReasonDialog extends React.Component {
               />
             )}
           />
+          {open.actionType === 'temp_ban' ? 
+          <Grid container>
+            <Grid xs={12} md={6}>
+              <TextField
+                label="Duration number"
+                type="number"
+                shrink
+                margin="dense"
+                value={this.state.duration_number}
+                onChange={(event) => this.setState({duration_number: event.target.value})}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                style={{ minWidth: "200px" }}
+                select
+                value={this.state.duration_multiplier}
+                onChange={(event) => this.setState({duration_multiplier: event.target.value})}
+                margin="dense"
+                label="Duration unit"
+              >
+                <MenuItem key="hours" value={1}>
+                  hours
+                </MenuItem>
+                <MenuItem key="days" value={24}>
+                  days
+                </MenuItem>
+                <MenuItem key="days" value={24 * 7}>
+                  weeks
+                </MenuItem>
+                <MenuItem key="days" value={24 * 7 * 4}>
+                  months
+                </MenuItem>
+              </TextField>
+            </Grid>
+          </Grid>
+          : ""}
           <FormControlLabel
             control={
               <Checkbox
@@ -96,7 +136,7 @@ class ReasonDialog extends React.Component {
               if (saveMessage) {
                 textHistory.saveText(reason, sharedMessages);
               }
-              handleConfirm(open.actionType, open.player, reason);
+              handleConfirm(open.actionType, open.player, reason, this.state.duration_multiplier * this.duration_number);
               this.setState({ reason: "" });
             }}
             color="primary"

@@ -106,7 +106,7 @@ class PlayerView extends Component {
       .catch(handle_http_errors);
   }
 
-  handleAction(actionType, player, message = null) {
+  handleAction(actionType, player, message = null, duration_hours = 2) {
     if (message === null) {
       message = this.state.actionMessage;
     }
@@ -116,6 +116,7 @@ class PlayerView extends Component {
       postData(`${process.env.REACT_APP_API_URL}do_${actionType}`, {
         player: player,
         reason: message,
+        duration_hours: duration_hours
       })
         .then((response) =>
           showResponse(response, `${actionType} ${player}`, true)
@@ -256,8 +257,8 @@ class PlayerView extends Component {
         <ReasonDialog
           open={doConfirm}
           handleClose={() => this.setState({ doConfirm: false })}
-          handleConfirm={(action, player, reason) => {
-            this.handleAction(action, player, reason);
+          handleConfirm={(action, player, reason, duration_hours = 2) => {
+            this.handleAction(action, player, reason, duration_hours);
             this.setState({ doConfirm: false });
           }}
         />

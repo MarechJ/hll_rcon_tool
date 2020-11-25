@@ -28,7 +28,7 @@ class Rcon(ServerCtl):
     chat_regexp = re.compile(r'CHAT\[((Team)|(Unit))\]\[(.*)\(((Allies)|(Axis))/(\d+)\)\]')
     player_info_regexp = re.compile(r'(.*)\(((Allies)|(Axis))/(\d+)\)')
     MAX_SERV_NAME_LEN = 1024  # I totally made up that number. Unable to test
-
+    log_time_regexp = re.compile(".*\((\d+)\).*")
 
     def get_playerids(self, as_dict=False):
         raw_list = super().get_playerids()
@@ -326,6 +326,17 @@ class Rcon(ServerCtl):
                 seconds=int(seconds)
             )
 
+
+    def _extract_time(self, time_str):
+        groups = self.log_time_regexp.match(time_str)
+        if not groups:
+            raise ValueError("Unable to extract time from '%s'", time_str)
+        try:
+            return datetime.fromtimestamp(int(groups.group(1)))
+        except (ValueError, TypeError) as e:
+            raise ValueError("Time '%s' is not a valid integer", time_str) from e
+
+
     @ttl_cache(ttl=10)
     def get_structured_logs(self, since_min_ago, filter_action=None, filter_player=None):
         try:
@@ -334,34 +345,38 @@ class Rcon(ServerCtl):
             # The hll server just hangs when there are no logs for the requested time
             raw = ''
 
+        return self.parse_logs(raw, filter_action, filter_player)
+
+    def parse_logs(self, raw, filter_action=None, filter_player=None):
         synthetic_actions = ['CHAT[Allies]', 'CHAT[Axis]', 'CHAT']
         now = datetime.now()
         res = []
         actions = set()
         players = set()
+
         for line in raw.split('\n'):
             if not line:
                 continue
             try:
                 time, rest = line.split('] ', 1)
-                time = self._convert_relative_time(now, time[1:])
+                #time = self._convert_relative_time(now, time[1:])
+                time = self._extract_time(time[1:])
                 sub_content = action = player = player2 = weapon = steam_id_64_1 = steam_id_64_2 = None
                 content = rest
-                try:
-                    # Bug: '[1:34:22 hours] DISCONNECTED ᚱ A V И E Ν : .',
-                    action, content = rest.split(': ', 1)
-                except ValueError:
+                if rest.startswith('DISCONNECTED') or rest.startswith('CONNECTED'):
                     action, content = rest.split(' ', 1)
-                
-                if match := self.chat_regexp.match(action):
+                elif rest.startswith('KILL') or rest.startswith('TEAM KILL'):
+                    action, content = rest.split(': ', 1)
+                elif rest.startswith('CHAT'):  
+                    match = self.chat_regexp.match(rest)
                     groups = match.groups()
                     scope = groups[0]
                     side = groups[4]
                     player = groups[3]
-                    steam_id_64_1 = groups[-1]
+                    steam_id_64_1 = groups[-2]
                     action = f'CHAT[{side}][{scope}]'
-                    sub_content = content
-                    content = f'{player}: {content} ({steam_id_64_1})'
+                    sub_content = groups[-1]
+                    content = f'{player}: {sub_content} ({steam_id_64_1})'
                   
                 if action in {'CONNECTED', 'DISCONNECTED'}:
                     player = content
@@ -407,9 +422,9 @@ class Rcon(ServerCtl):
         with invalidates(Rcon.get_players):
             return super().do_kick(player, reason)
 
-    def do_temp_ban(self, player, reason):
+    def do_temp_ban(self, player=None, steam_id_64=None, duration_hours=2, reason="", admin_name=""):
         with invalidates(Rcon.get_players, Rcon.get_temp_bans):
-            return super().do_temp_ban(player, reason)
+            return super().do_temp_ban(player, steam_id_64, duration_hours, reason, admin_name)
 
     def do_remove_temp_ban(self, ban_log):
         with invalidates(Rcon.get_temp_bans):
@@ -419,10 +434,9 @@ class Rcon(ServerCtl):
         with invalidates(Rcon.get_perma_bans):
             return super().do_remove_perma_ban(ban_log)
 
-    def do_perma_ban(self, player, reason):
+    def do_perma_ban(self, player=None, steam_id_64=None, reason="", admin_name=""):
         with invalidates(Rcon.get_players, Rcon.get_perma_bans):
-            return super().do_perma_ban(player, reason)
-
+            return super().do_perma_ban(player, steam_id_64, reason, admin_name)
 
     @ttl_cache(60 * 5)
     def get_map_rotation(self):

@@ -14,6 +14,8 @@ def escape_string(s):
     """ Logic taken from the official rcon client.
     There's probably plenty of nicer and more bulletproof ones
     """
+    if not isinstance(s, str):
+        return s   
     st = ""
     for index in range(len(s)):
         st = (st + s[index] if s[index] != '\\' else st + "\\\\") if s[index] != '"' else st + "\\\""
@@ -305,12 +307,12 @@ class ServerCtl:
         return self._request(f'kick "{player}" "{reason}"', log_info=True)
 
     @_escape_params
-    def do_temp_ban(self, player, reason):
-        return self._request(f'tempban "{player}" "{reason}"', log_info=True)
+    def do_temp_ban(self, player_name=None, steam_id_64=None, duration_hours=2, reason="", admin_name=""):
+        return self._request(f'tempban "{steam_id_64 or player_name}" {duration_hours} "{reason}" "{admin_name}"', log_info=True)
 
     @_escape_params
-    def do_perma_ban(self, player, reason):
-        return self._request(f'permaban "{player}" "{reason}"', log_info=True)
+    def do_perma_ban(self, player_name=None, steam_id_64=None, reason="", admin_name=""):
+        return self._request(f'permaban "{steam_id_64 or player_name}" "{reason}" "{admin_name}"', log_info=True)
 
     def do_remove_temp_ban(self, ban_log):
         return self._request(f"pardontempban {ban_log}", log_info=True)
