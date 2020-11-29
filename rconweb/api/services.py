@@ -6,6 +6,7 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
+from rcon.discord import send_to_discord_audit
 
 from .auth import login_required, api_response
 from .utils import _get_data
@@ -29,7 +30,9 @@ def get_supervisor_client():
 def get_services(request):
     info = {
         "broadcasts": "The automatic broadcasts",
-        "log_event_loop": "Blacklist enforcement, chat/kill forwarding, player history, etc..."
+        "log_event_loop": "Blacklist enforcement, chat/kill forwarding, player history, etc...",
+        "auto_settings": "Applies commands automaticall based on your rules",
+        "cron": "The scheduler, cleans logs and whatever you added there"
     }
     client = get_supervisor_client()
 
@@ -63,6 +66,7 @@ def do_service(request):
 
     try:
         res = actions[action.upper()](service_name)
+        send_to_discord_audit(f"do_service {service_name} {action}", request.user.username)
     except Fault as e:
         error = repr(e)
 

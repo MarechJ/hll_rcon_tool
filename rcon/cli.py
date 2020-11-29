@@ -61,6 +61,10 @@ def importvips(file, prefix):
 def clear():
     RedisCached.clear_all_caches(get_redis_pool())
 
+@cli.command
+def export_vips():
+    print("/n".join(f"{d['steam_id_64']} {d['name']}" for d in  ctl.get_vip_ids()))
+
 def do_print(func):
     def wrap(*args, **kwargs):
         res = func(*args, **kwargs)
