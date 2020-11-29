@@ -93,7 +93,7 @@ async function showResponse(response, command, showSuccess) {
   } else {
     const res = await response.json();
     if (res.failed === true) {
-      toast.warning(`Last command failed: ${command} -> ${JSON.stringify(res.result)}`);
+      toast.warning(`Last command failed: ${command} -> ${JSON.stringify(res.result)}\n\nError: ${res.error}`);
     } else if (showSuccess === true) {
       toast.success(`Done: ${command}`);
     }

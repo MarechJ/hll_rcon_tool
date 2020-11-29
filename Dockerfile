@@ -1,14 +1,17 @@
-FROM python:3.8-slim-buster
+FROM python:3.8-buster
 
 WORKDIR /code
+RUN apt-get update -y && apt-get install -y cron logrotate
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 RUN pip install gunicorn
 RUN pip install gunicorn[eventlet]
+RUN pip install supervisor
 COPY rcon rcon
 COPY rconweb rconweb
 COPY manage.py .
 COPY entrypoint.sh .
+COPY supervisord.conf .
 ENV FLASK_APP rcon.connection
 ENV PYTHONPATH /code/
 RUN chmod +x entrypoint.sh
