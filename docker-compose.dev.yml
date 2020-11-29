@@ -1,7 +1,7 @@
 version: '2.4'
 
 services:
-  supervisor:
+  supervisor_1:
     build: .
     environment:
       LOGGING_LEVEL: 'DEBUG'
