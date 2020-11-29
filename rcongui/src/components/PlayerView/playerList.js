@@ -123,7 +123,7 @@ const getCountry = (player) => {
       alt={country}
       title={country ? getName(country) : ""}
       style={{ height: "12px" }}
-      src={`http://catamphetamine.gitlab.io/country-flag-icons/3x2/${country}.svg`}
+      src={ `https://catamphetamine.gitlab.io/country-flag-icons/3x2/${country}.svg`}
     />
   );
 };
@@ -200,7 +200,7 @@ const PlayerItem = ({
               className={classes.marginRight}
               target="_blank"
               color="inherit"
-              href={`https://steamcommunity.com/profiles/${steamID64}`}
+              href={ `https://steamcommunity.com/profiles/${steamID64}`}
             >
               <FontAwesomeIcon icon={faSteam} />
             </Link>
