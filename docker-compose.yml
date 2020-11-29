@@ -103,6 +103,7 @@ services:
       BAN_ON_VAC_HISTORY_REASON: ${BAN_ON_VAC_HISTORY_REASON}
       MAX_GAME_BAN_THRESHOLD: ${MAX_GAME_BAN_THRESHOLD}
       SUPERVISOR_RPC_URL: http://supervisor:9001/RPC2
+      CONFIG_DIR: /config/
       SERVER_NUMBER: 2
     restart: on-failure
     networks:
@@ -113,6 +114,8 @@ services:
     command: supervisor
     depends_on:
       - frontend
+    ports:
+      - 127.0.0.1:9002:9001
   backend_2:
     <<: *backend
     hostname: api_2
@@ -170,6 +173,7 @@ services:
       BAN_ON_VAC_HISTORY_REASON: ${BAN_ON_VAC_HISTORY_REASON}
       MAX_GAME_BAN_THRESHOLD: ${MAX_GAME_BAN_THRESHOLD}
       SUPERVISOR_RPC_URL: http://supervisor:9001/RPC2
+      CONFIG_DIR: /config/
       SERVER_NUMBER: 3
     restart: on-failure
     command: supervisor
@@ -180,6 +184,8 @@ services:
           - supervisor
     depends_on:
       - frontend_2
+    ports:
+      - 127.0.0.1:9003:9001
   backend_3:
     <<: *backend
     hostname: api_3
