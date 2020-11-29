@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 
 set -e
-if [ $1 == 'web' ] 
+set -x 
+
+env
+if [ "$1" == 'web' ] 
 then
   if [ "$HLL_HOST" == '' ] 
   then

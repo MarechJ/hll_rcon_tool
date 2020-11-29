@@ -51,7 +51,7 @@ const StatusToColor = {
   UNKNOWN: "secondary",
 };
 
-const Process = ({ name, description, status, isOn, onToggle, classes }) => (
+const Process = ({ name, description, upTime, status, isOn, onToggle, classes }) => (
   <Grid
     container
     justify="space-around"
@@ -82,6 +82,11 @@ const Process = ({ name, description, status, isOn, onToggle, classes }) => (
         </Grid>
         <Grid item xs={4}>
           <Chip label={status} color={StatusToColor[status]} />
+          <ListItemText
+                primary=""
+                secondary={upTime}
+                className={classes.noPaddingMargin}
+              />
         </Grid>
         <Grid item xs={2}>
           <Switch checked={isOn} onChange={onToggle} name="Start/Stop" />
@@ -103,15 +108,17 @@ class ServicesList extends React.Component {
     this.getServices = this.getServices.bind(this);
     this.toggleService = this.toggleService.bind(this);
     this.isOK = this.isOK.bind(this);
+    this.poll = this.poll.bind(this);
   }
 
   poll() {
-    const handle = setTimeout(this.getServices().then(this.poll), 1000 * 10)
+    const handle = setTimeout(() => this.getServices().then(this.poll), 1000 * 10)
     return this.setState({pollHandle: handle})
   }
 
   componentDidMount() {
-    this.getServices();    
+    this.getServices();
+    this.poll()
   }
 
   componentWillUnmount() {
@@ -150,6 +157,7 @@ class ServicesList extends React.Component {
               name={s.get("name")}
               description={s.get("info")}
               status={s.get("statename")}
+              upTime={s.get("description", " , ").split(',')[1]}
               isOn={this.isOK(s)}
               onToggle={() =>
                 this.toggleService(

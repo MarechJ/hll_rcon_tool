@@ -12,7 +12,7 @@ services:
     extends:
       file: docker-compose-common-components.yml
       service: python
-    command: broadcast_loop
+    command: supervisor
     depends_on:
       - postgres
       - redis
@@ -21,6 +21,8 @@ services:
       server1:
         aliases: 
           - supervisor
+    ports:
+      - 127.0.0.1:9001:9001
   backend_1: &backend
     hostname: api
     extends:
@@ -108,6 +110,7 @@ services:
       server2:
         aliases: 
           - supervisor
+    command: supervisor
     depends_on:
       - frontend
   backend_2:
@@ -169,6 +172,7 @@ services:
       SUPERVISOR_RPC_URL: http://supervisor:9001/RPC2
       SERVER_NUMBER: 3
     restart: on-failure
+    command: supervisor
     networks:
       common:
       server3:
