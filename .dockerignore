@@ -4,4 +4,6 @@ servicediscovery/
 redis_data/
 *.yml
 *.log
-
+rcongui/
+*.pyc
+events/

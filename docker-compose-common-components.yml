@@ -28,8 +28,12 @@ services:
             BAN_ON_VAC_HISTORY_DAYS: ${BAN_ON_VAC_HISTORY_DAYS}
             BAN_ON_VAC_HISTORY_REASON: ${BAN_ON_VAC_HISTORY_REASON}
             MAX_GAME_BAN_THRESHOLD: ${MAX_GAME_BAN_THRESHOLD}
+            SUPERVISOR_RPC_URL: http://supervisor:9001/RPC2
+            SERVER_NUMBER: 1
+            CONFIG_DIR: /config/
         restart: always
         volumes: 
             - ./logs:/logs/
             - ./servicediscovery:/servicediscovery
             - ./static:/static/
+            - ./config:/config/

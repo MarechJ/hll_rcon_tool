@@ -180,6 +180,10 @@ const useStyles = makeStyles(theme => ({
   popover: {
     pointerEvents: 'none',
   },
+  divider: {
+    width: '100%',
+    backgroundColor: theme.palette.background.paper,
+  },
 }));
 
 export default useStyles;
