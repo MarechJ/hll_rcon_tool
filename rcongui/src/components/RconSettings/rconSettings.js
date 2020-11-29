@@ -1,20 +1,21 @@
 import React from "react";
-import { Grid, Typography, Button, TextField } from "@material-ui/core";
 import { range } from "lodash/util";
+import { Grid, Typography, Button, TextField, Link } from "@material-ui/core";
 import {
-    Grid, Typography, Button, TextField, Link
-} from "@material-ui/core"
-import { range } from "lodash/util"
-import { showResponse, postData, get, handle_http_errors } from '../../utils/fetchUtils'
-import Blacklist from "./blacklist"
-import { toast } from "react-toastify"
-import _ from 'lodash'
-import LinearProgress from "@material-ui/core/LinearProgress"
-import Padlock from '../../components/SettingsView/padlock'
-import WarningIcon from '@material-ui/icons/Warning';
-import TextHistoryManager, { SelectNameSpace } from './textHistoryManager'
-import TextHistory from '../textHistory'
-
+  showResponse,
+  postData,
+  get,
+  handle_http_errors,
+} from "../../utils/fetchUtils";
+import Blacklist from "./blacklist";
+import { toast } from "react-toastify";
+import _ from "lodash";
+import LinearProgress from "@material-ui/core/LinearProgress";
+import Padlock from "../../components/SettingsView/padlock";
+import WarningIcon from "@material-ui/icons/Warning";
+import TextHistoryManager, { SelectNameSpace } from "./textHistoryManager";
+import TextHistory from "../textHistory";
+import ServicesList from "../Services";
 
 class RconSettings extends React.Component {
   constructor(props) {
@@ -252,10 +253,32 @@ class RconSettings extends React.Component {
         <Grid item className={classes.paddingTop} justify="center" xs={12}>
           <Typography variant="h5">More options</Typography>
         </Grid>
-        <Grid item xs={12} className={`${classes.padding} ${classes.margin}`} alignContent="center" justify="center" alignItems="center" className={classes.root}>
-          <Link href="/api/upload_vips" target="_blank">Bulk VIP upload / VIP export</Link>
-          <Link href="/api/scoreboard" target="_blank">Scoreboard (public link)</Link>
-          <Link href="/api/tk" target="_blank">Teamkills overview (public link)</Link>
+        <Grid
+          item
+          xs={12}
+          className={`${classes.padding} ${classes.margin}`}
+          alignContent="center"
+          justify="center"
+          alignItems="center"
+          className={classes.root}
+        >
+          <Grid container justify="space-evenly">
+            <Grid item>
+              <Link href="/api/upload_vips" target="_blank">
+                Bulk VIP upload / VIP export
+              </Link>
+            </Grid>
+            <Grid item>
+              <Link href="/api/scoreboard" target="_blank">
+                Scoreboard (public link)
+              </Link>
+            </Grid>
+            <Grid item>
+              <Link href="/api/tk" target="_blank">
+                Teamkills overview (public link)
+              </Link>
+            </Grid>
+          </Grid>
         </Grid>
         <Grid
           item
