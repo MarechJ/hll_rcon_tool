@@ -28,6 +28,7 @@ from rcon.player_history import (
 from rcon.user_config import AutoBroadcasts, InvalidConfigurationError, StandardMessages
 from rcon.cache_utils import RedisCached, get_redis_pool
 from .auth import login_required, api_response
+from .utils import _get_data
 from rcon.discord import send_to_discord_audit
 
 logger = logging.getLogger("rconweb")
@@ -50,26 +51,6 @@ def get_map_history(request):
     return api_response(
         result=res, command="get_map_history", arguments={}, failed=False
     )
-
-
-# TODO this does not work if's there a second reverse proxy on the host of docker
-# TODO Remove when user accounts are implemented
-def get_client_ip(request):
-    x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
-    if x_forwarded_for:
-        ip = x_forwarded_for.split(",")[0]
-    else:
-        ip = request.META.get("REMOTE_ADDR")
-    return ip
-
-
-def _get_data(request):
-    try:
-        data = json.loads(request.body)
-    except json.JSONDecodeError:
-        data = request.GET
-    return data
-
 
 @csrf_exempt
 @login_required

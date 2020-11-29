@@ -51,11 +51,7 @@ if __name__ == "__main__":
     except ConfigurationError as e:
         print(repr(e))
         logger.error("MISSING Configuration: %s", e.args)
+        exit(1)
     except:
         logger.exception("Unexpected error. Env dump %s", env)
-    finally:
-        if os.getenv("IS_OPTIONNAL_SERVER") == "yes":
-            exit(0)
-        else:
-            exit(1)
-        
+        exit(1)
