@@ -1,12 +1,14 @@
 from typing import List
 from itertools import chain
-
+import logging
 from redis import Redis, BlockingConnectionPool
 
 from rcon.recorded_commands import RecordedRcon
 from rcon.settings import SERVER_INFO
 from rcon.cache_utils import get_redis_pool
 import json
+
+logger = logging.getLogger(__name__)
 
 HEARTBEAT_KEY_PREFIX = 'heartbeat_'
 KNOWN_MODS_KEY = 'mods'
@@ -43,6 +45,9 @@ def online_mods():
 def set_registered_mods(moderators_name_steamids: List[tuple]):
     red = _red()
 
+    logger.warning("Registering mods: %s", moderators_name_steamids)
+
+    red.delete("moderators")
     for k, v in moderators_name_steamids:
         red.hset("moderators", k, v)
     

@@ -58,7 +58,7 @@ class Logs extends React.Component {
       playersFilter: "",
       actionsFilter: localStorage.getItem("logs_actions") ? localStorage.getItem("logs_actions") : "",
       minutes: localStorage.getItem("logs_minutes") ? localStorage.getItem("logs_minutes") : 30,
-      minutesOptions: [15, 30, 60, 90, 120, 180]
+      minutesOptions: [15, 30, 60, 90, 120, 180],
     };
 
     this.loadLogs = this.loadLogs.bind(this);

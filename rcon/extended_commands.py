@@ -4,7 +4,7 @@ import re
 from datetime import datetime, timedelta
 import logging
 import socket
-from rcon.cache_utils import ttl_cache, invalidates
+from rcon.cache_utils import ttl_cache, invalidates, get_redis_client
 from rcon.commands import ServerCtl, CommandFailedError
 from rcon.steam_utils import get_player_country_code, get_player_has_bans
 
@@ -198,7 +198,7 @@ class Rcon(ServerCtl):
             if res != 'SUCCESS':
                 raise CommandFailedError(res)
 
-    @ttl_cache(ttl=60)
+    @ttl_cache(ttl=20)
     def get_map(self):
         current_map = super().get_map()
         if not self.map_regexp.match(current_map):
@@ -261,6 +261,7 @@ class Rcon(ServerCtl):
             return super().set_vip_slots_num(num)
 
     def set_welcome_message(self, msg):
+        red = get_redis_client()
         from rcon.broadcast import format_message
         formatted = format_message(self, msg)
         return super().set_welcome_message(formatted)
@@ -530,6 +531,44 @@ class Rcon(ServerCtl):
         )
         for o in scoreboard:
             o["ratio"] = "%.2f" % o["ratio"]
+
+        return scoreboard
+
+    @ttl_cache(ttl=60 * 2)
+    def get_teamkills_boards(self, sort='TK Minutes'):
+        logs = self.get_structured_logs(180)
+        scoreboard = []
+        for player in logs['players']:
+            if not player:
+                continue
+            first_timestamp = float('inf')
+            last_timestamp = 0
+            tk = 0  
+            death_by_tk = 0
+            for log in logs['logs']:
+                if log['player'] == player or log['player2'] == player:
+                    first_timestamp = min(log['timestamp_ms'], first_timestamp)
+                    last_timestamp = max(log['timestamp_ms'], last_timestamp)
+                if log['action'] == 'TEAM KILL':
+                    if log['player'] == player:
+                        tk += 1
+                    elif log['player2'] == player:
+                        death_by_tk += 1
+            if tk == 0 and death_by_tk == 0:
+                continue
+            scoreboard.append({ 
+                'player': player,
+                'Teamkills': tk,
+                'Death by TK': death_by_tk,
+                'Estimated play time (minutes)': (last_timestamp - first_timestamp) // 1000 // 60,
+                'TK Minutes': tk / max((last_timestamp - first_timestamp) // 1000 // 60, 1)
+            })
+
+        scoreboard = sorted(
+            scoreboard, key=lambda o: o[sort], reverse=True
+        )
+        for o in scoreboard:
+            o['TK Minutes'] = "%.2f" % o['TK Minutes']
 
         return scoreboard
 

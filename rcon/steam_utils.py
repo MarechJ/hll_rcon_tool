@@ -39,8 +39,8 @@ def get_player_country_code(steamd_id):
     return profile.get('loccountrycode', 'private' if is_private else '')
 
 
-@ttl_cache(60 * 60 * 24, cache_falsy=False, is_method=False)
-def get_player_has_bans(steamd_id):
+@ttl_cache(60 * 60 * 12, cache_falsy=False, is_method=False)
+def get_player_bans(steamd_id):
     if not STEAM_KEY:
         return None
 
@@ -59,6 +59,19 @@ def get_player_has_bans(steamd_id):
 
     if not bans:
         bans = {}
-
-    bans['has_bans'] = any(bans.get(k) for k in ['VACBanned', 'NumberOfVACBans', 'DaysSinceLastBan', 'NumberOfGameBans'])
     return bans
+
+@ttl_cache(60 * 60 * 24, cache_falsy=False, is_method=False)
+def get_player_has_bans(steamd_id):
+    bans = get_player_bans(steamd_id)
+
+    if bans is None:
+        logger.warning("Unable to read bans for %s" % steamd_id)
+        bans = {}
+        
+    bans['has_bans'] = any(bans.get(k) for k in ['VACBanned', 'NumberOfVACBans', 'DaysSinceLastBan', 'NumberOfGameBans']) 
+    return bans
+
+
+if __name__ == "__main__":
+    print(get_player_bans('76561198436700508'))

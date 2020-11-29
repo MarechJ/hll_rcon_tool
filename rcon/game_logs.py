@@ -1,9 +1,10 @@
 import logging
-
-from rcon.extended_commands import Rcon
-from rcon.settings import SERVER_INFO
 import time
 import sys
+
+from rcon.map_recorder import ThreadMapRecorder
+from rcon.extended_commands import Rcon
+from rcon.settings import SERVER_INFO
 
 logger = logging.getLogger(__name__)
 
@@ -49,8 +50,11 @@ def event_loop(replay=False):
     rcon = Rcon(SERVER_INFO)
     last_run = 0
     processed = {}
+    logging.info("Starting map recorder thread")
+    map_recorder = ThreadMapRecorder()
+    map_recorder.start()
     logger.info("Registered hooks: %s", HOOKS)
-    replay_time = 2
+    replay_time = 10
 
     if replay:
         replay_time = 180
