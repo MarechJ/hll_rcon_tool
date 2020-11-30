@@ -21,15 +21,10 @@ import Icon from "@material-ui/core/Icon";
 import OpenInNewIcon from "@material-ui/icons/OpenInNew";
 import { getEmojiFlag } from "../../utils/emoji";
 import { Map, List as IList } from "immutable";
-import ScheduleIcon from "@material-ui/icons/Schedule";
-import { Emoji } from "emoji-mart";
-import LockIcon from "@material-ui/icons/Lock";
 import { getName } from "country-list";
 import Popover from "@material-ui/core/Popover";
 import Typography from "@material-ui/core/Typography";
 import { makeStyles } from "@material-ui/core/styles";
-import { sumBy } from "lodash/math";
-import { toPairs } from "lodash/object";
 
 //import StarIcon from '@material-ui/icons/Star';
 

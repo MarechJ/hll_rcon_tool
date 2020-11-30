@@ -92,7 +92,7 @@ const TextInputBar = ({
   return (
     <Grid item xs={12} spacing={2}>
       <Grid container justify="flex-start" direction="row" alignItems="center">
-        <Grid item xs={12} md={2}>
+        <Grid item xs={12} lg={3}>
           <FormControl className={classes.formControl}>
             <InputLabel>Sort</InputLabel>
             <Select
@@ -128,7 +128,7 @@ const TextInputBar = ({
             }}
           />
         </Grid>
-        <Grid item xs={12} md={7} className={classes.textLeft}>
+        <Grid item xs={12} lg={6} className={classes.textLeft}>
           <Reason handleMessageChange={handleMessageChange} />
         </Grid>
       </Grid>

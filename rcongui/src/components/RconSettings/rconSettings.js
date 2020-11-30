@@ -239,7 +239,9 @@ class RconSettings extends React.Component {
         <Grid item className={classes.paddingTop} justify="center" xs={12}>
           <Typography variant="h5">Blacklist player by Steam ID</Typography>
         </Grid>
-        <Blacklist classes={classes} />
+        <Grid item className={classes.paddingTop} justify="center" xs={12}>
+          <Blacklist classes={classes} />
+        </Grid>
         <Grid item className={classes.paddingTop} justify="center" xs={12}>
           <Typography variant="h5">Manage services</Typography>
         </Grid>

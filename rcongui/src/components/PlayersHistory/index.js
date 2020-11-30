@@ -1,8 +1,13 @@
 /* eslint-disable no-use-before-define */
-import React from 'react';
-import useAutocomplete from '@material-ui/lab/useAutocomplete';
-import { makeStyles } from '@material-ui/core/styles';
-import { postData, showResponse, handle_http_errors, sendAction } from "../../utils/fetchUtils";
+import React from "react";
+import useAutocomplete from "@material-ui/lab/useAutocomplete";
+import { makeStyles } from "@material-ui/core/styles";
+import {
+  postData,
+  showResponse,
+  handle_http_errors,
+  sendAction,
+} from "../../utils/fetchUtils";
 import { toast } from "react-toastify";
 import { join, reduce } from "lodash";
 import Pagination from "@material-ui/lab/Pagination";
@@ -181,104 +186,105 @@ const FilterPlayer = ({
   const playerList = groupedOptions.length > 0 ? groupedOptions : namesIndex;
 
   return (
-    <div>
-      <Grid
-        container
-        {...getRootProps()}
-        alignContent="space-between"
-        alignItems="flex-end"
-        spacing={2}
-      >
-        <Grid item xs={12} md={6}>
-          <TextField
-            fullWidth
-            inputProps={{ ...getInputProps() }}
-            label="Filter current selection"
-          />
+    <Grid container>
+      <Grid item xs={12}>
+        <Grid
+          container
+          {...getRootProps()}
+          alignContent="space-between"
+          alignItems="flex-end"
+          spacing={2}
+        >
+          <Grid item xs={12} md={6}>
+            <TextField
+              fullWidth
+              inputProps={{ ...getInputProps() }}
+              label="Filter current selection"
+            />
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <MyPagination
+              classes={classes}
+              pageSize={pageSize}
+              page={page}
+              setPage={setPage}
+              total={total}
+            />
+          </Grid>
         </Grid>
-        <Grid item xs={12} md={6}>
-          <MyPagination
-            classes={classes}
-            pageSize={pageSize}
-            page={page}
-            setPage={setPage}
-            total={total}
-          />
-        </Grid>
-      </Grid>
-      <Grid container spacing={2}>
-          
-        {playerList.map((nameIndex) => {
-          const player = playersHistory[nameIndex.idx];
+        <Grid container spacing={1}>
+          {playerList.map((nameIndex) => {
+            const player = playersHistory[nameIndex.idx];
 
-          return (
-            <Grid
-              key={player.steam_id_64}
-              item
-              xs={12}
-              sm={6}
-              md={4}
-              lg={3}
-              xl={2}
-            >
-              <PlayerItem
+            return (
+              <Grid
                 key={player.steam_id_64}
-                classes={classes}
-                names={show_names(player.names)}
-                steamId64={player.steam_id_64}
-                firstSeen={player.first_seen_timestamp_ms}
-                lastSeen={player.last_seen_timestamp_ms}
-                punish={player.penalty_count.PUNISH}
-                kick={player.penalty_count.KICK}
-                tempban={player.penalty_count.TEMPBAN}
-                permaban={player.penalty_count.PERMABAN}
-                compact={false}
-                blacklisted={player.blacklisted}
-                flags={List(player.flags.map((v) => Map(v)))}
-                onflag={() => setDoFlag(player)}
-                onBlacklist={() =>
-                  setDoConfirmPlayer({
-                    player: player.steam_id_64,
-                    actionType: "blacklist",
-                  })
-                }
-                onUnBlacklist={() => onUnBlacklist(player.steam_id_64)}
-                onDeleteFlag={onDeleteFlag}
-                onAddVip={() => onAddVip(player.names[0], player.steam_id_64)}
-                onDeleteVip={() => onDeleteVip(player.steam_id_64)}
-                isVip={vips[player.steam_id_64]}
-              />
-            </Grid>
-          );
-        })}
-        <Grid item xs={12}>
-          <MyPagination
-            classes={classes}
-            pageSize={pageSize}
-            page={page}
-            setPage={setPage}
-            total={total}
-          />
-        </Grid>
+                item
+                xs={12}
+                sm={12}
+                md={4}
+                lg={3}
+                xl={2}
+              >
+                <PlayerItem
+                  key={player.steam_id_64}
+                  classes={classes}
+                  names={show_names(player.names)}
+                  steamId64={player.steam_id_64}
+                  firstSeen={player.first_seen_timestamp_ms}
+                  lastSeen={player.last_seen_timestamp_ms}
+                  punish={player.penalty_count.PUNISH}
+                  kick={player.penalty_count.KICK}
+                  tempban={player.penalty_count.TEMPBAN}
+                  permaban={player.penalty_count.PERMABAN}
+                  compact={false}
+                  blacklisted={player.blacklisted}
+                  flags={List(player.flags.map((v) => Map(v)))}
+                  onflag={() => setDoFlag(player)}
+                  onBlacklist={() =>
+                    setDoConfirmPlayer({
+                      player: player.steam_id_64,
+                      actionType: "blacklist",
+                    })
+                  }
+                  onUnBlacklist={() => onUnBlacklist(player.steam_id_64)}
+                  onDeleteFlag={onDeleteFlag}
+                  onAddVip={() => onAddVip(player.names[0], player.steam_id_64)}
+                  onDeleteVip={() => onDeleteVip(player.steam_id_64)}
+                  isVip={vips[player.steam_id_64]}
+                />
+              </Grid>
+            );
+          })}
+          </Grid>
+          <Grid item xs={12} className={classes.padding}>
+            <MyPagination
+              classes={classes}
+              pageSize={pageSize}
+              page={page}
+              setPage={setPage}
+              total={total}
+            />
+          </Grid>
+        <ReasonDialog
+          open={doConfirmPlayer}
+          handleClose={() => setDoConfirmPlayer(false)}
+          handleConfirm={(actionType, steamId64, reason) => {
+            onBlacklist(steamId64, reason);
+            setDoConfirmPlayer(false);
+          }}
+        />
+        <FlagDialog
+          open={doFlag}
+          handleClose={() => setDoFlag(false)}
+          handleConfirm={(playerObj, theFlag, theComment) => {
+            onAddFlag(playerObj, theFlag, theComment);
+            setDoFlag(false);
+          }}
+          SummaryRenderer={PlayerSummary}
+        />
       </Grid>
-      <ReasonDialog
-        open={doConfirmPlayer}
-        handleClose={() => setDoConfirmPlayer(false)}
-        handleConfirm={(actionType, steamId64, reason) => {
-          onBlacklist(steamId64, reason);
-          setDoConfirmPlayer(false);
-        }}
-      />
-      <FlagDialog
-        open={doFlag}
-        handleClose={() => setDoFlag(false)}
-        handleConfirm={(playerObj, theFlag, theComment) => {
-          onAddFlag(playerObj, theFlag, theComment);
-          setDoFlag(false);
-        }}
-        SummaryRenderer={PlayerSummary}
-      />
-    </div>
+    </Grid>
   );
 };
 
@@ -338,7 +344,7 @@ class PlayersHistory extends React.Component {
           data.result,
           (acc, val) => {
             acc[val.steam_id_64] = true;
-            return acc
+            return acc;
           },
           {}
         ),
@@ -390,7 +396,7 @@ class PlayersHistory extends React.Component {
           page: data.result.page,
         });
       })
-      .catch(handle_http_errors)
+      .catch(handle_http_errors);
   }
 
   _reloadOnSuccess = (data) => {
@@ -498,12 +504,10 @@ class PlayersHistory extends React.Component {
             onSearch={this.getPlayerHistory}
           />
         </Grid>
-        <Grid item xs={12}>
+        <Grid item xs={12} className={classes.doublePadding}>
           {isLoading ? (
-            <Grid item xs={12} className={classes.doublePadding}>
-              <LinearProgress color="secondary" />
-            </Grid>
-          ) : (
+            <LinearProgress color="secondary" />
+          ) : ""}
             <FilterPlayer
               classes={classes}
               constPlayersHistory={playersHistory}
@@ -522,7 +526,6 @@ class PlayersHistory extends React.Component {
               onDeleteVip={this.onDeleteVip}
               vips={this.state.vips}
             />
-          )}
         </Grid>
       </Grid>
     );
