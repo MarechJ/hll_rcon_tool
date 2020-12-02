@@ -21,8 +21,6 @@ services:
       server1:
         aliases: 
           - supervisor
-    ports:
-      - 127.0.0.1:9001:9001
   backend_1: &backend
     hostname: api
     extends:
@@ -114,8 +112,6 @@ services:
     command: supervisor
     depends_on:
       - frontend
-    ports:
-      - 127.0.0.1:9002:9001
   backend_2:
     <<: *backend
     hostname: api_2
@@ -184,8 +180,6 @@ services:
           - supervisor
     depends_on:
       - frontend_2
-    ports:
-      - 127.0.0.1:9003:9001
   backend_3:
     <<: *backend
     hostname: api_3
