@@ -23,14 +23,59 @@ import Checkbox from "@material-ui/core/Checkbox";
 import { getSharedMessages } from "../../utils/fetchUtils";
 import { Grid } from "@material-ui/core";
 
+const Duration = ({
+  durationNumber,
+  onNumberChange,
+  durationMultiplier,
+  onMultiplierChange,
+  classes,
+}) => (
+  <Grid container spacing={1}>
+    <Grid item>
+      <TextField
+        style={{ minWidth: "200px" }}
+        label="TempBan Duration number"
+        type="number"
+        shrink
+        margin="dense"
+        value={durationNumber}
+        onChange={(event) => onNumberChange(event.target.value)}
+      />
+    </Grid>
+    <Grid item>
+      <TextField
+        style={{ minWidth: "200px" }}
+        select
+        value={durationMultiplier}
+        onChange={(event) => onMultiplierChange(event.target.value)}
+        margin="dense"
+        label="TempBan Duration unit"
+      >
+        <MenuItem key="hours" value={1}>
+          hours
+        </MenuItem>
+        <MenuItem key="days" value={24}>
+          days
+        </MenuItem>
+        <MenuItem key="days" value={24 * 7}>
+          weeks
+        </MenuItem>
+        <MenuItem key="days" value={24 * 7 * 4}>
+          months
+        </MenuItem>
+      </TextField>
+    </Grid>
+  </Grid>
+);
+
 class ReasonDialog extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
       reason: "",
       saveMessage: true,
-      duration_number: 2,
-      duration_multiplier: 1,
+      durationNumber: 2,
+      durationMultiplier: 1,
       sharedMessages: [],
     };
 
@@ -50,7 +95,13 @@ class ReasonDialog extends React.Component {
 
   render() {
     const { open, handleClose, handleConfirm } = this.props;
-    const { reason, saveMessage, sharedMessages } = this.state;
+    const {
+      reason,
+      saveMessage,
+      sharedMessages,
+      durationNumber,
+      durationMultiplier,
+    } = this.state;
     const textHistory = new TextHistory("punitions");
 
     return (
@@ -74,43 +125,20 @@ class ReasonDialog extends React.Component {
               />
             )}
           />
-          {open.actionType === 'temp_ban' ? 
-          <Grid container>
-            <Grid xs={12} md={6}>
-              <TextField
-                label="Duration number"
-                type="number"
-                shrink
-                margin="dense"
-                value={this.state.duration_number}
-                onChange={(event) => this.setState({duration_number: event.target.value})}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                style={{ minWidth: "200px" }}
-                select
-                value={this.state.duration_multiplier}
-                onChange={(event) => this.setState({duration_multiplier: event.target.value})}
-                margin="dense"
-                label="Duration unit"
-              >
-                <MenuItem key="hours" value={1}>
-                  hours
-                </MenuItem>
-                <MenuItem key="days" value={24}>
-                  days
-                </MenuItem>
-                <MenuItem key="days" value={24 * 7}>
-                  weeks
-                </MenuItem>
-                <MenuItem key="days" value={24 * 7 * 4}>
-                  months
-                </MenuItem>
-              </TextField>
-            </Grid>
-          </Grid>
-          : ""}
+          {open.actionType === "temp_ban" ? (
+            <Duration
+              durationNumber={durationNumber}
+              onNumberChange={(number) =>
+                this.setState({ durationNumber: number })
+              }
+              durationMultiplier={durationMultiplier}
+              onMultiplierChange={(multiplier) =>
+                this.setState({ durationMultiplier: multiplier })
+              }
+            />
+          ) : (
+            ""
+          )}
           <FormControlLabel
             control={
               <Checkbox
@@ -136,7 +164,12 @@ class ReasonDialog extends React.Component {
               if (saveMessage) {
                 textHistory.saveText(reason, sharedMessages);
               }
-              handleConfirm(open.actionType, open.player, reason, this.state.duration_multiplier * this.duration_number);
+              handleConfirm(
+                open.actionType,
+                open.player,
+                reason,
+                this.state.duration_multiplier * this.duration_number
+              );
               this.setState({ reason: "" });
             }}
             color="primary"
@@ -182,7 +215,7 @@ const PlayerActions = ({
   const actions = [
     ["punish", "PUNISH"],
     ["kick", "KICK"],
-    ["temp_ban", "2H BAN"],
+    ["temp_ban", "TEMP BAN"],
     ["switch_player_now", "SWITCH"],
     ["switch_player_on_death", "SWITCH ON DEATH"],
     ["perma_ban", "PERMA BAN"],
@@ -266,4 +299,4 @@ const PlayerActions = ({
   );
 };
 
-export { ReasonDialog, PlayerActions };
+export { ReasonDialog, PlayerActions, Duration };
