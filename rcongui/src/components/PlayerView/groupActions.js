@@ -4,7 +4,7 @@ import TextField from "@material-ui/core/TextField";
 import _ from "lodash";
 import Button from "@material-ui/core/Button";
 import Dialog from "@material-ui/core/Dialog";
-import { PlayerActions } from "./playerActions";
+import { PlayerActions, Duration } from "./playerActions";
 import withWidth from "@material-ui/core/withWidth";
 import { Reason } from "./textInputBar";
 import Grid from "@material-ui/core/Grid";
@@ -39,6 +39,8 @@ const GroupActions = ({
 }) => {
   const [message, setMessage] = React.useState("")
   const [selectedPlayers, setSelectedPlayers] = React.useState([])
+  const [durationNumber, setDurationNumber] = React.useState(2)
+  const [durationMultiplier, setDurationMultiplier] = React.useState(1)
   const [saveMessage, setSaveMessage] = React.useState(true)
   const textHistory = new TextHistory("punitions")
   const nbButton = ["xs"].indexOf(width) != -1 ? 3 : 6;
@@ -99,7 +101,7 @@ const GroupActions = ({
                   if (saveMessage) {
                     textHistory.saveText(message, sharedMessages)
                   }
-                  handleAction(actionType, p.name, message)
+                  handleAction(actionType, p.name, message, durationNumber * durationMultiplier)
                 }
                 )
               }
@@ -107,6 +109,9 @@ const GroupActions = ({
               disable={message === ""}
               displayCount={nbButton}
             />
+          </Grid>
+          <Grid item xs={12} xl={12} className={classes.marginTop}>
+            <Duration durationNumber={durationNumber} onNumberChange={(number) => setDurationNumber(number)} durationMultiplier={durationMultiplier} onMultiplierChange={(multiplier) => setDurationMultiplier(multiplier)}/>
           </Grid>
         </Grid>
       </DialogContent>
