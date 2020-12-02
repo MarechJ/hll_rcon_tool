@@ -112,6 +112,12 @@ def get_redis_pool(decode_responses=True):
 
     return _REDIS_POOL
 
+
+def get_redis_client(decode_responses=True):
+    pool = get_redis_pool(decode_responses)
+    return redis.Redis(connection_pool=pool)
+
+
 def ttl_cache(ttl, *args, is_method=True, cache_falsy=True, **kwargs):
     pool = get_redis_pool(decode_responses=False)
     if not pool:

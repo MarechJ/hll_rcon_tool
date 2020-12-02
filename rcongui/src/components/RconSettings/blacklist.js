@@ -3,6 +3,9 @@ import {
     Grid, Button, TextField, Tooltip
 } from "@material-ui/core"
 import { showResponse, postData, get, handle_http_errors } from '../../utils/fetchUtils'
+import Autocomplete from "@material-ui/lab/Autocomplete";
+import { getSharedMessages } from "../../utils/fetchUtils";
+import TextHistory from "../textHistory";
 
 class Blacklist extends React.Component {
 
@@ -12,6 +15,7 @@ class Blacklist extends React.Component {
       steam_id: "",
       name: "",
       reason: "",
+      sharedMessages: [],
     }
 
     this.blacklistPlayer = this.blacklistPlayer.bind(this)
@@ -29,15 +33,19 @@ class Blacklist extends React.Component {
   }
 
   componentDidMount() {
+    getSharedMessages("punitions").then((data) =>
+    this.setState({ sharedMessages: data })
+  );
   }
 
   render() {
-    const { steam_id, name, reason } = this.state
+    const { steam_id, name, reason, sharedMessages } = this.state
     const { classes } = this.props
-
+    const textHistory = new TextHistory("punitions");
+    
     return (
-      <Grid container className={classes.paper} spacing={1}>
-        <Grid item xs={3}>
+      <Grid container spacing={1} justify="space-between">
+        <Grid item xs={6} md={3}>
             <TextField
               id="steam-id"
               label="Steam ID"
@@ -48,18 +56,7 @@ class Blacklist extends React.Component {
               onChange={(e) => this.setState({ steam_id: e.target.value })}
             />
         </Grid>
-        <Grid item xs={4} spacing={1}>
-            <TextField
-              id="reason"
-              label="Reason"
-              helperText="Required"
-              value={reason}
-              required
-              fullWidth
-              onChange={(e) => this.setState({ reason: e.target.value })}
-            />
-        </Grid>
-        <Grid item xs={3} spacing={1}>
+        <Grid item xs={6} md={3}>
             <TextField
               id="name"
               label="Player name"
@@ -69,7 +66,24 @@ class Blacklist extends React.Component {
               onChange={(e) => this.setState({ name: e.target.value })}
             />
         </Grid>
-        <Grid item xs={2} spacing={1} className={`${classes.padding} ${classes.margin}`} justify="center" alignContent="center">
+        <Grid item xs={12} md={4}>
+        <Autocomplete
+            freeSolo
+            fullWidth
+            options={sharedMessages.concat(textHistory.getTexts())}
+            inputValue={reason}
+            required
+            onInputChange={(e, value) => this.setState({ reason: value })}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Reason"
+                helperText="Required"
+              />
+            )}
+          />
+        </Grid>
+        <Grid item xs={12} md={2} className={`${classes.padding} ${classes.margin}`}>
             <Tooltip fullWidth title="Blacklisted players will instantly be banned when entering the server." arrow>
                 <Button
                         color="secondary"

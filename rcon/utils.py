@@ -4,15 +4,35 @@ import logging
 from rcon.cache_utils import get_redis_pool
 from datetime import datetime
 
-logger = logging.getLogger('rcon')
+logger = logging.getLogger("rcon")
+
+ALL_MAPS = (
+    "foy_warfare",
+    "stmariedumont_warfare",
+    "hurtgenforest_warfare",
+    "utahbeach_warfare",
+    "omahabeach_offensive_us",
+    "stmereeglise_warfare",
+    "stmereeglise_offensive_ger",
+    "foy_offensive_ger",
+    "purpleheartlane_warfare",
+    "purpleheartlane_offensive_us",
+    "hill400_warfare",
+    "hill400_offensive_US",
+    "stmereeglise_offensive_us",
+    "carentan_warfare",
+    "carentan_offensive_us",
+)
+
 
 def get_current_map(rcon):
     map_ = rcon.get_map()
 
-    if map_.endswith('_RESTART'):
-        map_ = map_.replace('_RESTART', '')
+    if map_.endswith("_RESTART"):
+        map_ = map_.replace("_RESTART", "")
 
     return map_
+
 
 def get_current_selection():
     red = redis.StrictRedis(connection_pool=get_redis_pool())
@@ -21,105 +41,116 @@ def get_current_selection():
         selection = json.loads(selection)
     return selection
 
+
 def numbered_maps(maps):
-    return  {
-        str(idx): map_
-        for idx, map_ in enumerate(maps)
-    }
-   
+    return {str(idx): map_ for idx, map_ in enumerate(maps)}
+
+
 def categorize_maps(maps):
     warfare_offsensive = {
-        'warfare': [],
-        'offensive': [],
+        "warfare": [],
+        "offensive": [],
     }
     for m in maps:
-        if 'offensive' in m:
-            warfare_offsensive['offensive'].append(m)
-        if 'warfare' in m:
-            warfare_offsensive['warfare'].append(m)
+        if "offensive" in m:
+            warfare_offsensive["offensive"].append(m)
+        if "warfare" in m:
+            warfare_offsensive["warfare"].append(m)
 
     return warfare_offsensive
 
+
 def map_name(map_):
-    name, *rest = map_.split('_')
+    name, *rest = map_.split("_")
     return name
+
+
+def get_map_side(map_):
+    try:
+        parts = map_.split("_")
+        return parts[2].lower() if parts[2] in ["us", "ger"] else None
+    except IndexError:
+        return None
+
 
 LONG_HUMAN_MAP_NAMES = {
     "foy_warfare": "Foy",
     "stmariedumont_warfare": "St Marie du Mont",
-    "hurtgenforest_warfare": "Hurtgen forest", 
-    "utahbeach_warfare": "Utah beach", 
-    "omahabeach_offensive_us": "Offensive Omaha beach", 
+    "hurtgenforest_warfare": "Hurtgen forest",
+    "utahbeach_warfare": "Utah beach",
+    "omahabeach_offensive_us": "Offensive Omaha beach",
     "stmereeglise_warfare": "St Mere Eglise",
-    "stmereeglise_offensive_ger": "Offensive St Mere eglise (Ger)", 
-    "foy_offensive_ger": "Offensive Foy", 
+    "stmereeglise_offensive_ger": "Offensive St Mere eglise (Ger)",
+    "foy_offensive_ger": "Offensive Foy",
     "purpleheartlane_warfare": "Purple Heart Lane",
     "purpleheartlane_offensive_us": "Offensive Purple Heart Lane",
     "hill400_warfare": "Hill 400",
     "hill400_offensive_US": "Offensive Hill 400",
     "stmereeglise_offensive_us": "Offensive St Mere Eglise (US)",
     "carentan_warfare": "Carentan",
-    "carentan_offensive_us": "Offensive Carentan"
+    "carentan_offensive_us": "Offensive Carentan",
 }
 
 SHORT_HUMAN_MAP_NAMES = {
     "foy_warfare": "Foy",
     "stmariedumont_warfare": "St.Marie",
-    "hurtgenforest_warfare": "Hurtgen", 
-    "utahbeach_warfare": "Utah", 
-    "omahabeach_offensive_us": "Off. Omaha", 
+    "hurtgenforest_warfare": "Hurtgen",
+    "utahbeach_warfare": "Utah",
+    "omahabeach_offensive_us": "Off. Omaha",
     "stmereeglise_warfare": "SME",
-    "stmereeglise_offensive_ger": "Off. SME(Ger)", 
-    "foy_offensive_ger": "Off. Foy", 
+    "stmereeglise_offensive_ger": "Off. SME(Ger)",
+    "foy_offensive_ger": "Off. Foy",
     "purpleheartlane_warfare": "PHL",
     "purpleheartlane_offensive_us": "Off. PHL",
     "hill400_warfare": "Hill400",
     "hill400_offensive_US": "Off. Hill400",
     "stmereeglise_offensive_us": "Off. SME (US)",
     "carentan_warfare": "Carentan",
-    "carentan_offensive_us": "Off. Carentan"
+    "carentan_offensive_us": "Off. Carentan",
 }
 
 
 NO_MOD_LONG_HUMAN_MAP_NAMES = {
     "foy_warfare": "Foy",
     "stmariedumont_warfare": "St Marie du Mont",
-    "hurtgenforest_warfare": "Hurtgen orest", 
-    "utahbeach_warfare": "Utah beach", 
-    "omahabeach_offensive_us": "Omaha beach", 
+    "hurtgenforest_warfare": "Hurtgen orest",
+    "utahbeach_warfare": "Utah beach",
+    "omahabeach_offensive_us": "Omaha beach",
     "stmereeglise_warfare": "St Mere Eglise",
-    "stmereeglise_offensive_ger": "St Mere eglise (Ger)", 
-    "foy_offensive_ger": "Foy", 
+    "stmereeglise_offensive_ger": "St Mere eglise (Ger)",
+    "foy_offensive_ger": "Foy",
     "purpleheartlane_warfare": "Purple Heart Lane",
     "purpleheartlane_offensive_us": "Purple Heart Lane",
     "hill400_warfare": "Hill 400",
     "hill400_offensive_US": "Hill 400",
     "stmereeglise_offensive_us": "St Mere Eglise (US)",
     "carentan_warfare": "Carentan",
-    "carentan_offensive_us": "Carentan"
+    "carentan_offensive_us": "Carentan",
 }
 
 NO_MOD_SHORT_HUMAN_MAP_NAMES = {
     "foy_warfare": "Foy",
     "stmariedumont_warfare": "St.Marie",
-    "hurtgenforest_warfare": "Hurtgen", 
-    "utahbeach_warfare": "Utah", 
-    "omahabeach_offensive_us": "Omaha", 
+    "hurtgenforest_warfare": "Hurtgen",
+    "utahbeach_warfare": "Utah",
+    "omahabeach_offensive_us": "Omaha",
     "stmereeglise_warfare": "SME",
-    "stmereeglise_offensive_ger": "SME(Ger)", 
-    "foy_offensive_ger": "Foy", 
+    "stmereeglise_offensive_ger": "SME(Ger)",
+    "foy_offensive_ger": "Foy",
     "purpleheartlane_warfare": "PHL",
     "purpleheartlane_offensive_us": "PHL",
     "hill400_warfare": "Hill400",
     "hill400_offensive_US": "Hill400",
     "stmereeglise_offensive_us": "SME (US)",
     "carentan_warfare": "Carentan",
-    "carentan_offensive_us": "Carentan"
+    "carentan_offensive_us": "Carentan",
 }
 
 
 class FixedLenList:
-    def __init__(self, key, max_len=100, serializer=json.dumps, deserializer=json.loads):
+    def __init__(
+        self, key, max_len=100, serializer=json.dumps, deserializer=json.loads
+    ):
         self.red = redis.StrictRedis(connection_pool=get_redis_pool())
         self.max_len = max_len
         self.serializer = serializer
@@ -136,10 +167,7 @@ class FixedLenList:
                 raise ValueError("Step is not supported")
             end = index.stop or -1
             start = index.start or 0
-            return [
-                self.deserializer(o) 
-                for o in self.red.lrange(self.key, start, end)
-            ]
+            return [self.deserializer(o) for o in self.red.lrange(self.key, start, end)]
         val = self.red.lindex(self.key, index)
         if val is None:
             raise IndexError("Index out of bound")
@@ -156,22 +184,18 @@ class FixedLenList:
 
 
 class MapsHistory(FixedLenList):
-    def __init__(self):
-        super().__init__("maps_history", 100)
-    
+    def __init__(self, key="maps_history", max_len=500):
+        super().__init__(key, max_len)
+
     def save_map_end(self, old_map):
         ts = datetime.now().timestamp()
         logger.info("Saving end of map %s at time %s", old_map, ts)
         prev = self.lpop() or dict(name=old_map, start=None, end=None)
-        prev['end'] = ts
+        prev["end"] = ts
         self.lpush(prev)
 
     def save_new_map(self, new_map):
         ts = datetime.now().timestamp()
         logger.info("Saving start of new map %s at time %s", new_map, ts)
-        new = dict(
-            name=new_map, 
-            start=ts,
-            end=None
-        )
+        new = dict(name=new_map, start=ts, end=None)
         self.lpush(new)

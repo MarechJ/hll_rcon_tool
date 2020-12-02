@@ -1,15 +1,7 @@
 version: '2.4'
 
 services:
-  broadcast:
-    build: .
-    environment:
-      LOGGING_LEVEL: 'DEBUG'
-  logs_event_loop:
-    build: .
-    environment:
-      LOGGING_LEVEL: 'DEBUG'
-  stats:
+  supervisor_1:
     build: .
     environment:
       LOGGING_LEVEL: 'DEBUG'

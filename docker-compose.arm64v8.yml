@@ -1,11 +1,7 @@
 version: '2.4'
 
 services:
-  broadcast:
-    build: 
-      context: .
-      dockerfile: Dockerfile-arm64
-  logs_event_loop:
+  supervisor:
     build: 
       context: .
       dockerfile: Dockerfile-arm64
