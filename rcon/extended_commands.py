@@ -139,12 +139,16 @@ class Rcon(ServerCtl):
         steamd_id_64, rest = ban.split(" :", 1)
         name = rest.split('" banned', 1)[0]
         name = name.split(' nickname "', 1)[-1]
+        groups = re.match(".*(\d{4}\.\d{2}\.\d{2}-\d{2}\.\d{2}.\d{2}).*", ban)
+        if groups and groups.groups():
+            date = groups.groups(1)
         return {
             'type': type_,
             'name': name,
             'steam_id_64': steamd_id_64,
             # TODO FIX
             'timestamp': None,
+            'ban_time': date,
             'raw': ban
         }
 
@@ -559,7 +563,7 @@ class Rcon(ServerCtl):
                 elif rest.startswith('VOTE'): 
                     #[15:49 min (1606998428)] VOTE Player [[fr]ELsass_blitz] Started a vote of type (PVR_Kick_Abuse) against [拢儿]. VoteID: [1]
                     action = 'VOTE'
-                    if rest.startswith('VOTE Player') and 'against' in rest.lower():
+                    if rest.startswith('VOTE Player') and ' against ' in rest.lower():
                         action = 'VOTE STARTED'
                         groups = re.match(r'VOTE Player \[(.*)\].* against \[(.*)\]\. VoteID: \[\d+\]', rest)
                         player = groups[1]
