@@ -25,7 +25,7 @@ class Rcon(ServerCtl):
     )
     slots_regexp = re.compile(r'^\d{1,3}/\d{2,3}$')
     map_regexp = re.compile(r'^(\w+_?)+$') 
-    chat_regexp = re.compile(r'CHAT\[((Team)|(Unit))\]\[(.*)\(((Allies)|(Axis))/(\d+)\)\]')
+    chat_regexp = re.compile(r'CHAT\[((Team)|(Unit))\]\[(.*)\(((Allies)|(Axis))/(\d+)\)\]: (.*)')
     player_info_regexp = re.compile(r'(.*)\(((Allies)|(Axis))/(\d+)\)')
     MAX_SERV_NAME_LEN = 1024  # I totally made up that number. Unable to test
     log_time_regexp = re.compile(".*\((\d+)\).*")
@@ -334,9 +334,9 @@ class Rcon(ServerCtl):
                 seconds=int(seconds)
             )
 
-
-    def _extract_time(self, time_str):
-        groups = self.log_time_regexp.match(time_str)
+    @staticmethod
+    def _extract_time(time_str):
+        groups = Rcon.log_time_regexp.match(time_str)
         if not groups:
             raise ValueError("Unable to extract time from '%s'", time_str)
         try:
@@ -355,79 +355,7 @@ class Rcon(ServerCtl):
 
         return self.parse_logs(raw, filter_action, filter_player)
 
-    def parse_logs(self, raw, filter_action=None, filter_player=None):
-        synthetic_actions = ['CHAT[Allies]', 'CHAT[Axis]', 'CHAT']
-        now = datetime.now()
-        res = []
-        actions = set()
-        players = set()
-
-        for line in raw.split('\n'):
-            if not line:
-                continue
-            try:
-                time, rest = line.split('] ', 1)
-                #time = self._convert_relative_time(now, time[1:])
-                time = self._extract_time(time[1:])
-                sub_content = action = player = player2 = weapon = steam_id_64_1 = steam_id_64_2 = None
-                content = rest
-                if rest.startswith('DISCONNECTED') or rest.startswith('CONNECTED'):
-                    action, content = rest.split(' ', 1)
-                elif rest.startswith('KILL') or rest.startswith('TEAM KILL'):
-                    action, content = rest.split(': ', 1)
-                elif rest.startswith('CHAT'):  
-                    match = self.chat_regexp.match(rest)
-                    groups = match.groups()
-                    scope = groups[0]
-                    side = groups[4]
-                    player = groups[3]
-                    steam_id_64_1 = groups[-2]
-                    action = f'CHAT[{side}][{scope}]'
-                    sub_content = groups[-1]
-                    content = f'{player}: {sub_content} ({steam_id_64_1})'
-                else:
-                    logger.error("Unkown type line: '%s'", line)
-                    continue
-                  
-                if action in {'CONNECTED', 'DISCONNECTED'}:
-                    player = content
-                if action in {'KILL', 'TEAM KILL'}:
-                    player, player2 = content.split(' -> ', 1)
-                    player2, weapon = player2.split(' with ', 1)
-                    player, *_, steam_id_64_1 = self.player_info_regexp.match(player).groups()
-                    player2, *_, steam_id_64_2 = self.player_info_regexp.match(player2).groups()
-               
-                players.add(player)
-                players.add(player2)
-                actions.add(action)
-            except:
-                logger.exception("Invalid line: '%s'", line)
-                continue
-            if filter_action and not action.startswith(filter_action):
-                continue
-            if filter_player and filter_player not in line:
-                continue
-
-            res.append({
-                'timestamp_ms': int(time.timestamp() * 1000),
-                'relative_time_ms':  (time - now).total_seconds() * 1000,
-                'raw': line,
-                'action': action,
-                'player': player,
-                'steam_id_64_1': steam_id_64_1,
-                'player2': player2,
-                'steam_id_64_2': steam_id_64_2,
-                'weapon': weapon,
-                'message': content,
-                'sub_content': sub_content,
-            })
-
-        res.reverse()
-        return {
-            'actions': list(actions) + synthetic_actions,
-            'players': list(players),
-            'logs': res
-        }
+    
 
     def do_kick(self, player, reason):
         with invalidates(Rcon.get_players):
@@ -595,6 +523,89 @@ class Rcon(ServerCtl):
             o['TK Minutes'] = "%.2f" % o['TK Minutes']
 
         return scoreboard
+
+    @staticmethod
+    def parse_logs(raw, filter_action=None, filter_player=None):
+        synthetic_actions = ['CHAT[Allies]', 'CHAT[Axis]', 'CHAT']
+        now = datetime.now()
+        res = []
+        actions = set()
+        players = set()
+
+        for line in raw.split('\n'):
+            if not line:
+                continue
+            try:
+                time, rest = line.split('] ', 1)
+                #time = self._convert_relative_time(now, time[1:])
+                time = Rcon._extract_time(time[1:])
+                sub_content = action = player = player2 = weapon = steam_id_64_1 = steam_id_64_2 = None
+                content = rest
+                if rest.startswith('DISCONNECTED') or rest.startswith('CONNECTED'):
+                    action, content = rest.split(' ', 1)
+                elif rest.startswith('KILL') or rest.startswith('TEAM KILL'):
+                    action, content = rest.split(': ', 1)
+                elif rest.startswith('CHAT'):  
+                    match = Rcon.chat_regexp.match(rest)
+                    groups = match.groups()
+                    scope = groups[0]
+                    side = groups[4]
+                    player = groups[3]
+                    steam_id_64_1 = groups[-2]
+                    action = f'CHAT[{side}][{scope}]'
+                    sub_content = groups[-1]
+                    #import ipdb; ipdb.set_trace()
+                    content = f'{player}: {sub_content} ({steam_id_64_1})'
+                elif rest.startswith('VOTE'): 
+                    #[15:49 min (1606998428)] VOTE Player [[fr]ELsass_blitz] Started a vote of type (PVR_Kick_Abuse) against [拢儿]. VoteID: [1]
+                    action = 'VOTE'
+                    player = ""
+                    player2 = ""
+                    sub_content = rest
+                    content = rest
+                else:
+                    logger.error("Unkown type line: '%s'", line)
+                    continue
+                  
+                if action in {'CONNECTED', 'DISCONNECTED'}:
+                    player = content
+                if action in {'KILL', 'TEAM KILL'}:
+                    player, player2 = content.split(' -> ', 1)
+                    player2, weapon = player2.split(' with ', 1)
+                    player, *_, steam_id_64_1 = Rcon.player_info_regexp.match(player).groups()
+                    player2, *_, steam_id_64_2 = Rcon.player_info_regexp.match(player2).groups()
+               
+                players.add(player)
+                players.add(player2)
+                actions.add(action)
+            except:
+                logger.exception("Invalid line: '%s'", line)
+                continue
+            if filter_action and not action.startswith(filter_action):
+                continue
+            if filter_player and filter_player not in line:
+                continue
+
+            res.append({
+                'timestamp_ms': int(time.timestamp() * 1000),
+                'relative_time_ms':  (time - now).total_seconds() * 1000,
+                'raw': line,
+                'action': action,
+                'player': player,
+                'steam_id_64_1': steam_id_64_1,
+                'player2': player2,
+                'steam_id_64_2': steam_id_64_2,
+                'weapon': weapon,
+                'message': content,
+                'sub_content': sub_content,
+            })
+
+        res.reverse()
+        return {
+            'actions': list(actions) + synthetic_actions,
+            'players': list(players),
+            'logs': res
+        }
 
 if __name__ == '__main__':
     from rcon.settings import SERVER_INFO
