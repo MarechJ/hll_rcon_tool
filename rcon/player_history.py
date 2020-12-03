@@ -351,7 +351,7 @@ def remove_flag(flag_id):
     return player, flag
 
 
-def add_player_to_blacklist(steam_id_64, reason, name=None):
+def add_player_to_blacklist(steam_id_64, reason, name=None, by=None):
     # TODO save author of blacklist
     with enter_session() as sess:
         player = _get_set_player(

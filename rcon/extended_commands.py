@@ -137,8 +137,12 @@ class Rcon(ServerCtl):
         #name, time = ban.split(', banned on ')
         # '76561197984877751 : nickname "Dr.WeeD" banned for 2 hours on 2020.12.03-12.40.08 for "None" by admin "test"'
         steamd_id_64, rest = ban.split(" :", 1)
-        name = rest.split('" banned', 1)[0]
-        name = name.split(' nickname "', 1)[-1]
+        name = None
+       
+        if 'nickname' in rest:
+            name = rest.split('" banned', 1)[0]
+            name = name.split(' nickname "', 1)[-1]
+
         groups = re.match(".*(\d{4}\.\d{2}\.\d{2}-\d{2}\.\d{2}.\d{2}).*", ban)
         if groups and groups.groups():
             date = groups.groups(1)

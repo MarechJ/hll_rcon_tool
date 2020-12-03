@@ -36,14 +36,14 @@ class RecordedRcon(Rcon):
     def do_perma_ban(self, player=None, steam_id_64=None, reason="", by=""):
         res = super().do_perma_ban(player, steam_id_64, reason, admin_name=by)
         safe_save_player_action(
-            rcon=self, player_name=player, action_type="PERMABAN", reason=reason, by=by
+            rcon=self, player_name=player, action_type="PERMABAN", reason=reason, by=by, steam_id_64=steam_id_64
         )
         try:
             if not steam_id_64:
                 info = self.get_player_info(player)
                 steam_id_64 = info['steam_id_64']
             # TODO add author
-            add_player_to_blacklist(info['steam_id_64'], reason)
+            add_player_to_blacklist(steam_id_64, reason, by=by)
         except:
             logger.exception("Unable to blacklist")
         return res
