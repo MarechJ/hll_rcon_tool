@@ -236,7 +236,7 @@ def ban_if_blacklisted(rcon:Rcon, steam_id_64, name):
         if player.blacklist and player.blacklist.is_blacklisted:
             logger.info("Player %s was banned due blacklist, reason: %s", str(
                 player), player.blacklist.reason)
-            rcon.do_perma_ban(steam_id_64=steam_id_64, reason=player.blacklist.reason, by="BLACKLIST")
+            rcon.do_perma_ban(steam_id_64=steam_id_64, reason=player.blacklist.reason, admin_name="BLACKLIST")
             # TODO save author of blacklist
             safe_save_player_action(
                 rcon=rcon, player_name=name, action_type="PERMABAN", reason=player.blacklist.reason, by='BLACKLIST', steam_id_64=steam_id_64
