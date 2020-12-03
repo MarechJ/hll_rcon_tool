@@ -168,7 +168,7 @@ class ReasonDialog extends React.Component {
                 open.actionType,
                 open.player,
                 reason,
-                this.state.duration_multiplier * this.duration_number
+                durationMultiplier * durationNumber
               );
               this.setState({ reason: "" });
             }}

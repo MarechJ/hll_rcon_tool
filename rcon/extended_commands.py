@@ -129,15 +129,22 @@ class Rcon(ServerCtl):
 
     @ttl_cache(ttl=60 * 60)
     def get_temp_bans(self):
-        return super().get_temp_bans()
+        res = super().get_temp_bans()
+        logger.debug(res)
+        return res
 
     def _struct_ban(self, ban, type_):
-        name, time = ban.split(', banned on ')
+        #name, time = ban.split(', banned on ')
+        # '76561197984877751 : nickname "Dr.WeeD" banned for 2 hours on 2020.12.03-12.40.08 for "None" by admin "test"'
+        steamd_id_64, rest = ban.split(" :", 1)
+        name = rest.split('" banned', 1)[0]
+        name = name.split(' nickname "', 1)[-1]
         return {
             'type': type_,
             'name': name,
-            # TODO check which timezone the server is using. Assuming UTC here.
-            'timestamp': datetime.strptime(time, "%Y.%m.%d-%H.%M.%S").timestamp(),
+            'steam_id_64': steamd_id_64,
+            # TODO FIX
+            'timestamp': None,
             'raw': ban
         }
 

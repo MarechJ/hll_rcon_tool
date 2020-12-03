@@ -22,6 +22,9 @@ ALL_MAPS = (
     "stmereeglise_offensive_us",
     "carentan_warfare",
     "carentan_offensive_us",
+    "hurtgenforest_offensive_ger",
+    "hurtgenforest_offensive_US",
+    "hurtgenforest_warfare_V2"
 )
 
 
