@@ -39,7 +39,10 @@ class RecordedRcon(Rcon):
             rcon=self, player_name=player, action_type="PERMABAN", reason=reason, by=by
         )
         try:
-            info = self.get_player_info(player)
+            if not steam_id_64:
+                info = self.get_player_info(player)
+                steam_id_64 = info['steam_id_64']
+            # TODO add author
             add_player_to_blacklist(info['steam_id_64'], reason)
         except:
             logger.exception("Unable to blacklist")
