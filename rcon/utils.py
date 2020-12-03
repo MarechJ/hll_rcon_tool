@@ -79,7 +79,9 @@ def get_map_side(map_):
 LONG_HUMAN_MAP_NAMES = {
     "foy_warfare": "Foy",
     "stmariedumont_warfare": "St Marie du Mont",
-    "hurtgenforest_warfare": "Hurtgen forest",
+    "hurtgenforest_warfare_V2": "Hurtgen forest",
+    "hurtgenforest_offensive_ger": "Offensive Hurtgen forest (Ger)",
+    "hurtgenforest_offensive_US": "Offensive Hurtgen forest (US)",
     "utahbeach_warfare": "Utah beach",
     "omahabeach_offensive_us": "Offensive Omaha beach",
     "stmereeglise_warfare": "St Mere Eglise",
@@ -116,7 +118,10 @@ SHORT_HUMAN_MAP_NAMES = {
 NO_MOD_LONG_HUMAN_MAP_NAMES = {
     "foy_warfare": "Foy",
     "stmariedumont_warfare": "St Marie du Mont",
-    "hurtgenforest_warfare": "Hurtgen orest",
+    "hurtgenforest_warfare": "Hurtgen Forest",
+    "hurtgenforest_warfare_V2": "Hurtgen forest",
+    "hurtgenforest_offensive_ger": "Hurtgen forest",
+    "hurtgenforest_offensive_US": "Hurtgen forest",
     "utahbeach_warfare": "Utah beach",
     "omahabeach_offensive_us": "Omaha beach",
     "stmereeglise_warfare": "St Mere Eglise",

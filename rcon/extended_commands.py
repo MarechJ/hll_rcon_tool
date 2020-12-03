@@ -385,6 +385,9 @@ class Rcon(ServerCtl):
                     action = f'CHAT[{side}][{scope}]'
                     sub_content = groups[-1]
                     content = f'{player}: {sub_content} ({steam_id_64_1})'
+                else:
+                    logger.error("Unkown type line: '%s'", line)
+                    continue
                   
                 if action in {'CONNECTED', 'DISCONNECTED'}:
                     player = content
