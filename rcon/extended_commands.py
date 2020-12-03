@@ -123,11 +123,11 @@ class Rcon(ServerCtl):
 
         return players    
 
-    @ttl_cache(ttl=60 * 60)
+    @ttl_cache(ttl=60)
     def get_perma_bans(self):
         return super().get_perma_bans()
 
-    @ttl_cache(ttl=60 * 60)
+    @ttl_cache(ttl=60)
     def get_temp_bans(self):
         res = super().get_temp_bans()
         logger.debug(res)
@@ -526,7 +526,7 @@ class Rcon(ServerCtl):
 
     @staticmethod
     def parse_logs(raw, filter_action=None, filter_player=None):
-        synthetic_actions = ['CHAT[Allies]', 'CHAT[Axis]', 'CHAT']
+        synthetic_actions = ['CHAT[Allies]', 'CHAT[Axis]', 'CHAT', 'VOTE STARTED', "VOTE COMPLETED"]
         now = datetime.now()
         res = []
         actions = set()
@@ -559,10 +559,25 @@ class Rcon(ServerCtl):
                 elif rest.startswith('VOTE'): 
                     #[15:49 min (1606998428)] VOTE Player [[fr]ELsass_blitz] Started a vote of type (PVR_Kick_Abuse) against [拢儿]. VoteID: [1]
                     action = 'VOTE'
-                    player = ""
-                    player2 = ""
-                    sub_content = rest
-                    content = rest
+                    if rest.startswith('VOTE Player') and 'against' in rest.lower():
+                        action = 'VOTE STARTED'
+                        groups = re.match(r'VOTE Player \[(.*)\].* against \[(.*)\]\. VoteID: \[\d+\]', rest)
+                        player = groups[1]
+                        player2 = groups[2]
+                    elif rest.startswith('VOTE Player') and 'voted' in rest.lower():
+                        groups = re.match(r'VOTE Player \[(.*)\] voted.*', rest)
+                        player = groups[1]
+                    elif "completed" in rest.lower():
+                        action = "VOTE COMPLETED"
+                    elif "kick" in rest.lower():
+                        action = "VOTE COMPLETED"
+                        groups = re.match(r'VOTE Vote Kick \{(.*)\}.*', rest)
+                        player = groups[1]
+                    else:
+                        player = ""
+                        player2 = None
+                    sub_content = rest.split('VOTE')[-1]
+                    content = rest.split('VOTE')[-1]
                 else:
                     logger.error("Unkown type line: '%s'", line)
                     continue
