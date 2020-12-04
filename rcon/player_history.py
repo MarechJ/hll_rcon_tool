@@ -234,9 +234,8 @@ def ban_if_blacklisted(rcon:Rcon, steam_id_64, name):
             return
 
         if player.blacklist and player.blacklist.is_blacklisted:
-            logger.info("Player %s was banned due blacklist, reason: %s", str(
-                player), player.blacklist.reason)
-            rcon.do_perma_ban(steam_id_64=steam_id_64, reason=player.blacklist.reason, admin_name="BLACKLIST")
+            logger.info("Player %s was banned due blacklist, reason: %s", str(name), player.blacklist.reason)
+            rcon.do_perma_ban(player=name, reason=player.blacklist.reason, admin_name="BLACKLIST")
             # TODO save author of blacklist
             safe_save_player_action(
                 rcon=rcon, player_name=name, action_type="PERMABAN", reason=player.blacklist.reason, by='BLACKLIST', steam_id_64=steam_id_64
@@ -300,7 +299,7 @@ def ban_if_has_vac_bans(rcon: Rcon, steam_id_64, name):
                 'DaysSinceLastBan'), MAX_DAYS_SINCE_BAN=str(max_days_since_ban))
             logger.info("Player %s was banned due VAC history, last ban: %s days ago", str(
                 player), bans.get('DaysSinceLastBan'))
-            rcon.do_perma_ban(steam_id_64=steam_id_64, reason=reason, admin_name="A BOT")
+            rcon.do_perma_ban(player=name, reason=reason, admin_name="A BOT")
             safe_save_player_action(
                 rcon=rcon, player_name=name, action_type="PERMABAN", reason=reason, by='AUTOBAN', steam_id_64=player.steam_id_64
             )

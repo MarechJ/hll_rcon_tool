@@ -5,6 +5,7 @@ import sys
 from rcon.map_recorder import ThreadMapRecorder
 from rcon.extended_commands import Rcon
 from rcon.settings import SERVER_INFO
+from rcon.commands import HLLServerError, CommandFailedError
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +47,8 @@ def on_disconnected(func):
     HOOKS['DISCONNECTED'].append(func)
     return func
 
+MAX_FAILS = 10
+
 def event_loop(replay=False):
     rcon = Rcon(SERVER_INFO)
     last_run = 0
@@ -55,13 +58,21 @@ def event_loop(replay=False):
     map_recorder.start()
     logger.info("Registered hooks: %s", HOOKS)
     replay_time = 10  # TODO store last runtime in redis
+    max_fails = MAX_FAILS
 
     if replay:
         replay_time = 180
 
     while True:
         since = max(min((time.time() - last_run) / 60, replay_time), 2)
-        struct_logs = rcon.get_structured_logs(int(since))
+        try:
+            struct_logs = rcon.get_structured_logs(int(since))
+        except (CommandFailedError, HLLServerError) as e:
+            max_fails -= 1
+            time.sleep(20)
+            continue
+            if max_fails <= 0:
+                raise            
  
         for log in struct_logs['logs']:
             # Best effort to remove duplicates
@@ -98,5 +109,5 @@ def event_loop(replay=False):
         }
 
         last_run = time.time()
-        time.sleep(10)
+        time.sleep(15)
     
