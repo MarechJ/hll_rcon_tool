@@ -107,7 +107,13 @@ def test_vote(*mocks):
     assert res["logs"][0]["steam_id_64_1"] == None
     assert res["logs"][0]["steam_id_64_2"] == None
     assert res["logs"][0]["action"] == "VOTE"
-
+    res = Rcon.parse_logs("[2:34:52 hours (1607023963)] VOTE Player [DarKskiN] voted [PV_Against] for VoteID[2]")
+    assert res["logs"][0]["player"] == "DarKskiN"
+    assert res["logs"][0]["player2"] == None
+    # assert res['logs'][0]['sub_content'] == 'thx'
+    assert res["logs"][0]["steam_id_64_1"] == None
+    assert res["logs"][0]["steam_id_64_2"] == None
+    assert res["logs"][0]["action"] == "VOTE"
 
 @mock.patch(
     "rcon.extended_commands.ServerCtl._connect",

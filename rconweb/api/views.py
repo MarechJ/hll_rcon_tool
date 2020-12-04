@@ -271,7 +271,8 @@ def blacklist_player(request):
     res = {}
     try:
         name = data["name"] if "name" in data else None
-        add_player_to_blacklist(data["steam_id_64"], data["reason"], name)
+        ctl.do_perma_ban(steam_id_64=data["steam_id_64"], reason=data["reason"], by=name)
+        #add_player_to_blacklist(data["steam_id_64"], data["reason"], name)
         audit("Blacklist", request, data)
         failed = False
     except:
