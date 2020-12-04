@@ -30,8 +30,15 @@ from rcon.cache_utils import RedisCached, get_redis_pool
 from .auth import login_required, api_response
 from .utils import _get_data
 from rcon.discord import send_to_discord_audit
+from subprocess import run, PIPE
 
 logger = logging.getLogger("rconweb")
+
+
+@csrf_exempt
+def get_version(request):
+    res = run(['git', 'describe', '--tags'], stdout=PIPE, stderr=PIPE)
+    return HttpResponse(res.stdout.decode())
 
 
 @csrf_exempt
@@ -465,10 +472,13 @@ def text_scoreboard(request):
         minutes = 180
 
     name = ctl.get_name()
-    scoreboard = ctl.get_scoreboard(minutes, "ratio")
-    text = make_table(scoreboard)
-    scoreboard = ctl.get_scoreboard(minutes, "(real) kills")
-    text2 = make_table(scoreboard)
+    try:
+        scoreboard = ctl.get_scoreboard(minutes, "ratio")
+        text = make_table(scoreboard)
+        scoreboard = ctl.get_scoreboard(minutes, "(real) kills")
+        text2 = make_table(scoreboard)
+    except CommandFailedError:
+        text, text2 = "No logs"
 
     return HttpResponse(
         f"""<div>
@@ -492,11 +502,14 @@ def text_scoreboard(request):
 @csrf_exempt
 def text_tk_scoreboard(request):
     name = ctl.get_name()
-    scoreboard = ctl.get_teamkills_boards()
-    text = make_tk_table(scoreboard)
-    scoreboard = ctl.get_teamkills_boards("Teamkills")
-    text2 = make_tk_table(scoreboard)
-
+    try:
+        scoreboard = ctl.get_teamkills_boards()
+        text = make_tk_table(scoreboard)
+        scoreboard = ctl.get_teamkills_boards("Teamkills")
+        text2 = make_tk_table(scoreboard)
+    except CommandFailedError:
+        text, text2 = "No logs"
+        
     return HttpResponse(
         f"""<div>
         <h1>{name}</h1>
@@ -597,6 +610,7 @@ commands = [
     ("get_standard_messages", get_standard_messages),
     ("set_standard_messages", set_standard_messages),
     ("get_map_history", get_map_history),
+    ("get_version", get_version),
 ]
 
 logger.info("Initializing endpoint - %s", os.environ)
