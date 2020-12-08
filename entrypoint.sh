@@ -10,6 +10,7 @@ then
   then
       exit 0
   fi
+  ./manage.py init_db
   cd rconweb 
   ./manage.py migrate --noinput
   ./manage.py collectstatic --noinput
@@ -20,7 +21,7 @@ if [ "$HLL_HOST" == '' ]
 then
     exit 0
 fi
-  ./manage.py init_db
+  sleep 10
   supervisord
 fi
 

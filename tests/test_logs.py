@@ -30,6 +30,16 @@ RAW_VOTE = """
 """
 
 
+@mock.patch("rcon.extended_commands.ServerCtl._connect",
+    side_effect=lambda *args: print("Connecting"))
+def test_line(*mocks):
+    res = Rcon.parse_logs(
+        '[54.7 sec (1607457183)] KILL: BlAkStE(Allies/76561198202095713) -> Spaghetti with too m(Axis/76561198372886209) with Thompson'
+    )
+    print(res["logs"])
+    assert len(res["logs"]) == 1
+    assert res["logs"][0]["player2"] == "Spaghetti with too m"
+
 @mock.patch(
     "rcon.extended_commands.ServerCtl._connect",
     side_effect=lambda *args: print("Connecting"),

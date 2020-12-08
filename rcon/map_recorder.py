@@ -2,7 +2,7 @@ import time
 from datetime import datetime, timedelta
 import logging
 from threading import Thread
-
+import os
 import redis
 
 from rcon.discord import send_to_discord_audit, dict_to_discord
@@ -67,12 +67,30 @@ class MapsRecorder:
                 self.prev_map,
                 current_map,
             )
-            send_to_discord_audit(f"map change detected {dict_to_discord(dict(previous=self.prev_map, new=current_map))}", by="MAP_RECORDER", silent=False)
+            if not os.getenv('SILENT_MAP_RECORDER', None):
+                send_to_discord_audit(f"map change detected {dict_to_discord(dict(previous=self.prev_map, new=current_map))}", by="MAP_RECORDER", silent=False)
             self.prev_map = current_map
             self.last_map_change_time = datetime.now()
             return True
 
         return False
+
+
+def run():
+    max_fails = 5
+    from rcon.settings import SERVER_INFO
+    recorder = MapsRecorder(Rcon(SERVER_INFO))
+
+    while True:
+        try:
+            recorder.detect_map_change()
+        except CommandFailedError:
+            logger.debug("Unable to check for map change")
+            max_fails -= 1
+            if max_fails <= 0:
+                logger.exception("Map recorder 5 failures in a row. Stopping")
+                raise
+        time.sleep(30)
 
 
 class ThreadMapRecorder(Thread, MapsRecorder):
@@ -93,6 +111,4 @@ class ThreadMapRecorder(Thread, MapsRecorder):
 
 
 if __name__ == "__main__":
-    t = ThreadMapRecorder()
-    t.start()
-    t.join()
+    run()
