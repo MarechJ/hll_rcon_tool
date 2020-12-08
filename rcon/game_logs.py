@@ -53,9 +53,6 @@ def event_loop(replay=False):
     rcon = Rcon(SERVER_INFO)
     last_run = 0
     processed = {}
-    logging.info("Starting map recorder thread")
-    map_recorder = ThreadMapRecorder()
-    map_recorder.start()
     logger.info("Registered hooks: %s", HOOKS)
     replay_time = 10  # TODO store last runtime in redis
     max_fails = MAX_FAILS
@@ -65,15 +62,8 @@ def event_loop(replay=False):
 
     while True:
         since = max(min((time.time() - last_run) / 60, replay_time), 2)
-        try:
-            struct_logs = rcon.get_structured_logs(int(since))
-        except (CommandFailedError, HLLServerError) as e:
-            max_fails -= 1
-            time.sleep(20)
-            continue
-            if max_fails <= 0:
-                raise            
- 
+        struct_logs = rcon.get_structured_logs(int(since))
+       
         for log in struct_logs['logs']:
             # Best effort to remove duplicates
             # We can't uniquely identify a log line because the HLL server only gives us a relative time

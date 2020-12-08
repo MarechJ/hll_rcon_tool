@@ -26,6 +26,7 @@ class Rcon(ServerCtl):
     slots_regexp = re.compile(r'^\d{1,3}/\d{2,3}$')
     map_regexp = re.compile(r'^(\w+_?)+$') 
     chat_regexp = re.compile(r'CHAT\[((Team)|(Unit))\]\[(.*)\(((Allies)|(Axis))/(\d+)\)\]: (.*)')
+    player_info_pattern = r'(.*)\(((Allies)|(Axis))/(\d+)\)'
     player_info_regexp = re.compile(r'(.*)\(((Allies)|(Axis))/(\d+)\)')
     MAX_SERV_NAME_LEN = 1024  # I totally made up that number. Unable to test
     log_time_regexp = re.compile(".*\((\d+)\).*")
@@ -593,9 +594,11 @@ class Rcon(ServerCtl):
                 if action in {'CONNECTED', 'DISCONNECTED'}:
                     player = content
                 if action in {'KILL', 'TEAM KILL'}:
-                    player, player2 = content.split(' -> ', 1)
-                    player2, weapon = player2.split(' with ', 1)
-                    player, *_, steam_id_64_1 = Rcon.player_info_regexp.match(player).groups()
+                    parts = re.split(Rcon.player_info_pattern + r' -> ', content, 1)
+                    player = parts[1]
+                    steam_id_64_1 = parts[-2]
+                    player2 = parts[-1]
+                    player2, weapon = player2.rsplit(' with ', 1)
                     player2, *_, steam_id_64_2 = Rcon.player_info_regexp.match(player2).groups()
                
                 players.add(player)
