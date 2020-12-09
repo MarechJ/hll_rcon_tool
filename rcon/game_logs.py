@@ -60,8 +60,12 @@ class ChatLoop:
         self.rcon_2 = Rcon(SERVER_INFO)
         self.red = get_redis_client()
         self.duplicate_guard_key = "unique_logs"
-        self.log_history = FixedLenList(key=self.log_history_key, max_len=100000)
+        self.log_history = self.get_log_history_list()
         logger.info("Registered hooks: %s", HOOKS)
+
+    @staticmethod
+    def get_log_history_list():
+        return FixedLenList(key=ChatLoop.log_history_key, max_len=100000)
 
     def run(self, loop_frequency_secs=10, cleanup_frequency_minutes=10):
         since_min = 180
@@ -69,7 +73,7 @@ class ChatLoop:
         last_cleanup_time = datetime.datetime.now()
 
         while True:
-            logs = self.rcon.get_structured_logs(since_min_ago=180)
+            logs = self.rcon.get_structured_logs(since_min_ago=since_min)
             since_min = 10
             for log in logs["logs"]:
                 l = self.record_line(log)
@@ -88,7 +92,7 @@ class ChatLoop:
             return None
 
         logger.info("Recording: %s", id_)
-        self.log_history.add(log)
+        self.log_history.add(log["raw"])
         return log
         
     def cleanup(self):

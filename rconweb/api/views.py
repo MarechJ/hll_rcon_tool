@@ -25,12 +25,14 @@ from rcon.player_history import (
     add_flag_to_player,
     remove_flag,
 )
+from rcon.game_logs import ChatLoop
 from rcon.user_config import AutoBroadcasts, InvalidConfigurationError, StandardMessages
 from rcon.cache_utils import RedisCached, get_redis_pool
 from .auth import login_required, api_response
 from .utils import _get_data
 from rcon.discord import send_to_discord_audit
 from subprocess import run, PIPE
+import unicodedata
 
 logger = logging.getLogger("rconweb")
 
@@ -40,6 +42,52 @@ def get_version(request):
     res = run(['git', 'describe', '--tags'], stdout=PIPE, stderr=PIPE)
     return HttpResponse(res.stdout.decode())
 
+
+def is_player(search_str, player):
+    if not player or not search_str:
+        return None
+
+    if search_str.lower() in player.lower():
+        print(search_str, player)
+        return True
+
+    normalize_search = unicodedata.normalize('NFD', search_str).encode('ascii', 'ignore').decode("utf-8")
+    normalize_player = unicodedata.normalize('NFD', player).encode('ascii', 'ignore').decode("utf-8")
+
+    if normalize_search in normalize_player:
+        print(normalize_search, normalize_player)
+        return True
+
+    return False
+
+
+@csrf_exempt
+@login_required
+def get_log_history(request):
+    data = _get_data(request)
+    print(data)
+    start = int(data.get('start', 0))
+    end = int(data.get('end', 10000))
+    player_search = data.get("player_search")
+    action = data.get("action")
+    print(player_search, action)
+
+    log_list = ChatLoop.get_log_history_list()
+    all_logs = log_list[start:min(end, len(log_list))]
+    logs = []
+    if player_search or action:
+        for l in all_logs:
+            if player_search and (is_player(player_search, l["player"]) or is_player(player_search, l["player2"])):
+                if action and not l["action"].lower().startswith(action.lower()):
+                    continue
+                logs.append(l)
+            elif action and l["action"].lower().startswith(action.lower()):
+                logs.append(l)
+    else:
+        logs = all_logs
+    return api_response(
+        result=logs, command="get_log_history", arguments=dict(start=start, end=end, player_search=player_search, action=action), failed=False
+    )
 
 @csrf_exempt
 @login_required
@@ -611,6 +659,7 @@ commands = [
     ("set_standard_messages", set_standard_messages),
     ("get_map_history", get_map_history),
     ("get_version", get_version),
+    ("get_log_history", get_log_history),
 ]
 
 logger.info("Initializing endpoint - %s", os.environ)
