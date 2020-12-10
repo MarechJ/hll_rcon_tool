@@ -75,7 +75,7 @@ class ChatLoop:
         while True:
             logs = self.rcon.get_structured_logs(since_min_ago=since_min)
             since_min = 10
-            for log in logs["logs"]:
+            for log in reversed(logs["logs"]):
                 l = self.record_line(log)
                 if l:
                     self.process_hooks(l)
