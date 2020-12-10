@@ -616,6 +616,7 @@ class Rcon(ServerCtl):
                 'timestamp_ms': int(time.timestamp() * 1000),
                 'relative_time_ms':  (time - now).total_seconds() * 1000,
                 'raw': line,
+                'line_without_time': rest,
                 'action': action,
                 'player': player,
                 'steam_id_64_1': steam_id_64_1,

@@ -1,13 +1,16 @@
 import inspect
-
+import logging
 import click
 
 from rcon.settings import SERVER_INFO
 from rcon.extended_commands import Rcon
 from rcon import game_logs, broadcast, stats_loop, auto_settings, map_recorder
+from rcon.game_logs import ChatLoop
 from rcon.models import init_db
 from rcon.user_config import seed_default_config
 from rcon.cache_utils import RedisCached, get_redis_pool
+
+logger = logging.getLogger(__name__)
 
 @click.group()
 def cli():
@@ -17,7 +20,14 @@ ctl = Rcon(
     SERVER_INFO
 )
 
-@cli.command(name='log_loop')
+@cli.command(name="log_loop")
+def run_chat_recorder():
+    try:
+        ChatLoop().run()
+    except:
+        logger.exception("Chat recorder stopped")
+
+@cli.command(name='deprecated_log_loop')
 def run_logs_eventloop():
     game_logs.event_loop()
 

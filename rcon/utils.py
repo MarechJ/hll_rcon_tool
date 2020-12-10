@@ -192,6 +192,9 @@ class FixedLenList:
     def lpush(self, obj):
         self.red.lpush(self.key, self.serializer(obj))
 
+    def __len__(self):
+        return self.red.llen(self.key)
+
 
 class MapsHistory(FixedLenList):
     def __init__(self, key="maps_history", max_len=500):
