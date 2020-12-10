@@ -1,6 +1,7 @@
 import inspect
 import logging
 import click
+import sys
 
 from rcon.settings import SERVER_INFO
 from rcon.extended_commands import Rcon
@@ -26,6 +27,7 @@ def run_chat_recorder():
         ChatLoop().run()
     except:
         logger.exception("Chat recorder stopped")
+        sys.exit(1)
 
 @cli.command(name='deprecated_log_loop')
 def run_logs_eventloop():
