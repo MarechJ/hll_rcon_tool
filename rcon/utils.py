@@ -191,6 +191,10 @@ class FixedLenList:
     def lpush(self, obj):
         self.red.lpush(self.key, self.serializer(obj))
 
+    def __iter__(self):
+        for o in self.red.lrange(self.key, 0, -1):
+            yield self.deserializer(o)
+
     def __len__(self):
         return self.red.llen(self.key)
 

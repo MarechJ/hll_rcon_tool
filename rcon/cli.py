@@ -22,7 +22,7 @@ ctl = Rcon(
 )
 
 @cli.command(name="log_loop")
-def run_chat_recorder():
+def run_log_loop():
     try:
         ChatLoop().run()
     except:
@@ -46,8 +46,16 @@ def auto_settings_loop():
     auto_settings.run()
 
 @cli.command(name='map_recorder')
-def auto_settings_loop():
+def run_map_recorder():
     map_recorder.run()
+
+
+@cli.command(name='log_recorder')
+@click.option('-t', '--frequency-min', default=5)
+@click.option('-n', '--now', is_flag=True)
+def run_log_recorder(frequency_min, now):
+    game_logs.ChatRecorder(frequency_min, now).run()
+
 
 def init(force=False):
     init_db(force)

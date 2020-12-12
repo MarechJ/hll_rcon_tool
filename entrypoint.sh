@@ -22,6 +22,6 @@ then
     exit 0
 fi
   sleep 10
-  supervisord
+  supervisord -c /config/supervisord_$SERVER_NUMBER.conf || supervisord -c /config/supervisord.conf
 fi
 
