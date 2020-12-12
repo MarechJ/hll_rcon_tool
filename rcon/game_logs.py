@@ -13,44 +13,53 @@ from rcon.commands import HLLServerError, CommandFailedError
 logger = logging.getLogger(__name__)
 
 HOOKS = {
-    'KILL': [],
-    'TEAM KILL': [],
-    'CONNECTED': [],
-    'DISCONNECTED': [],
-    'CHAT[Allies]': [],
-    'CHAT[Axis]': [],
-    'CHAT': [],
+    "KILL": [],
+    "TEAM KILL": [],
+    "CONNECTED": [],
+    "DISCONNECTED": [],
+    "CHAT[Allies]": [],
+    "CHAT[Axis]": [],
+    "CHAT": [],
 }
 
+
 def on_kill(func):
-    HOOKS['KILL'].append(func)
+    HOOKS["KILL"].append(func)
     return func
+
 
 def on_tk(func):
-    HOOKS['TEAM KILL'].append(func)
+    HOOKS["TEAM KILL"].append(func)
     return func
+
 
 def on_chat(func):
-    HOOKS['CHAT'].append(func)
+    HOOKS["CHAT"].append(func)
     return func
+
 
 def on_chat_axis(func):
-    HOOKS['CHAT[Axis]'].append(func)
+    HOOKS["CHAT[Axis]"].append(func)
     return func
+
 
 def on_chat_allies(func):
-    HOOKS['CHAT[Allies]'].append(func)
+    HOOKS["CHAT[Allies]"].append(func)
     return func
+
 
 def on_connected(func):
-    HOOKS['CONNECTED'].append(func)
+    HOOKS["CONNECTED"].append(func)
     return func
+
 
 def on_disconnected(func):
-    HOOKS['DISCONNECTED'].append(func)
+    HOOKS["DISCONNECTED"].append(func)
     return func
 
+
 MAX_FAILS = 10
+
 
 class ChatLoop:
     log_history_key = "log_history"
@@ -79,12 +88,14 @@ class ChatLoop:
                 l = self.record_line(log)
                 if l:
                     self.process_hooks(l)
-            if (datetime.datetime.now() - last_cleanup_time).total_seconds() >= cleanup_frequency_minutes * 60:
+            if (
+                datetime.datetime.now() - last_cleanup_time
+            ).total_seconds() >= cleanup_frequency_minutes * 60:
                 self.cleanup()
                 last_cleanup_time = datetime.datetime.now()
 
             time.sleep(loop_frequency_secs)
-        
+
     def record_line(self, log):
         id_ = f"{log['timestamp_ms']}|{log['line_without_time']}"
         if not self.red.sadd(self.duplicate_guard_key, id_):
@@ -92,14 +103,14 @@ class ChatLoop:
             return None
 
         logger.info("Recording: %s", id_)
-        self.log_history.add(log["raw"])
+        self.log_history.add(log)
         return log
-        
+
     def cleanup(self):
         logger.info("Starting cleanup")
         for k in self.red.sscan_iter(self.duplicate_guard_key):
             try:
-                ts, _ = k.decode().split('|', 1)
+                ts, _ = k.decode().split("|", 1)
             except ValueError:
                 logger.exception("Invalid key %s", k)
                 continue

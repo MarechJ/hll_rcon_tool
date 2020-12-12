@@ -613,6 +613,7 @@ class Rcon(ServerCtl):
                 continue
 
             res.append({
+                'version': 1,
                 'timestamp_ms': int(time.timestamp() * 1000),
                 'relative_time_ms':  (time - now).total_seconds() * 1000,
                 'raw': line,

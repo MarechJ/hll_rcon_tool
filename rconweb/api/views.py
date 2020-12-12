@@ -74,6 +74,8 @@ def get_log_history(request):
     # flatten that shit
     if player_search or action:
         for l in all_logs:
+            if not isinstance(l, dict):
+                continue
             if player_search:
                 if is_player(player_search, l["player"]) or is_player(player_search, l["player2"]):
                     if action and not l["action"].lower().startswith(action.lower()):

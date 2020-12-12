@@ -53,5 +53,5 @@ if __name__ == "__main__":
         logger.error("MISSING Configuration: %s", e.args)
         exit(1)
     except:
-        logger.exception("Unexpected error. Env dump %s", env)
+        logger.exception("Unexpected error.")
         exit(1)
