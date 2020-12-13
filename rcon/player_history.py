@@ -44,6 +44,14 @@ def get_player_profile(steam_id_64, nb_sessions):
             return
         return player.to_dict(limit_sessions=nb_sessions)
 
+def get_player_profile_by_id(id, nb_sessions):
+    with enter_session() as sess:
+        player = sess.query(PlayerSteamID).filter(
+            PlayerSteamID.id == id
+        ).one_or_none()
+        if player is None:
+            return
+        return player.to_dict(limit_sessions=nb_sessions)
 
 def get_profiles(steam_ids, nb_sessions=0):
     with enter_session() as sess:

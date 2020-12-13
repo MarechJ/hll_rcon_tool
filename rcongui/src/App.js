@@ -14,6 +14,7 @@ import {
   Switch,
   Route,
 } from "react-router-dom";
+import LogsHistory from './components/LogsHistory'
 import { createMuiTheme } from '@material-ui/core/styles';
 import PlayersHistory from "./components/PlayersHistory";
 import Header, { Footer } from "./components/Header";
@@ -108,6 +109,13 @@ function App() {
               <Grid container>
                 <Grid item sm={12} lg={12}>
                   <ServicesList classes={classes} />
+                </Grid>
+              </Grid>
+            </Route>
+            <Route path="/logs">
+              <Grid container>
+                <Grid item sm={12} lg={12}>
+                  <LogsHistory classes={classes} />
                 </Grid>
               </Grid>
             </Route>

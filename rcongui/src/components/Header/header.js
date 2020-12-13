@@ -22,6 +22,8 @@ import DialogActions from "@material-ui/core/DialogActions";
 import DialogContent from "@material-ui/core/DialogContent";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import { throttle } from "lodash/function";
+import Menu from "@material-ui/core/Menu";
+import MenuItem from "@material-ui/core/MenuItem";
 
 const LoginModal = ({
   open,
@@ -135,30 +137,45 @@ class LoginBox extends React.Component {
     const { open, username, password, isLoggedIn } = this.state;
     const { classes, component } = this.props;
 
-    return <React.Fragment><Link
-      variant="button"
-      color="inherit"
-      className={classes.link}
-      component={RouterLink}
-      onClick={() => isLoggedIn === true ? this.logout() : this.setState({ open: true })}
-    >
-      {isLoggedIn === true ? "Logout" : "Login"}
-    </Link>
-    <LoginModal
-        open={open}
-        handleClose={() => this.setState({ open: false })}
-        login={this.login}
-        password={password}
-        setPassword={(password) => this.setState({ password: password })}
-        username={username}
-        setUsername={(username) => this.setState({ username: username })}
-      />
-    </React.Fragment>
+    return (
+      <React.Fragment>
+        <Link
+          variant="button"
+          color="inherit"
+          className={classes.link}
+          component={RouterLink}
+          onClick={() =>
+            isLoggedIn === true ? this.logout() : this.setState({ open: true })
+          }
+        >
+          {isLoggedIn === true ? "Logout" : "Login"}
+        </Link>
+        <LoginModal
+          open={open}
+          handleClose={() => this.setState({ open: false })}
+          login={this.login}
+          password={password}
+          setPassword={(password) => this.setState({ password: password })}
+          username={username}
+          setUsername={(username) => this.setState({ username: username })}
+        />
+      </React.Fragment>
+    );
   }
 }
 
 // TODO: Make this reactive, it's causing the view on mobile to be bigger then it should
-export default ({ classes, setSaveDark, dark }) => {
+const Header = ({ classes, setSaveDark, dark }) => {
+  const [anchorEl, setAnchorEl] = React.useState(null);
+
+  const handleClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
   return (
     <Grid container className={classes.grow}>
       <div className={classes.grow}>
@@ -186,11 +203,26 @@ export default ({ classes, setSaveDark, dark }) => {
                         variant="button"
                         color="inherit"
                         className={classes.link}
-                        component={RouterLink}
-                        to="/history"
+                        onClick={handleClick}
                       >
                         History
                       </Link>
+                      <Menu
+                        id="simple-menu"
+                        anchorEl={anchorEl}
+                        keepMounted
+                        open={Boolean(anchorEl)}
+                        onClose={handleClose}
+                      >
+                        <MenuItem onClick={handleClose}>
+                          <Link component={RouterLink} to="/history">
+                            Players
+                          </Link>
+                        </MenuItem>
+                        <MenuItem onClick={handleClose}><Link component={RouterLink} to="/logs">
+                            Logs
+                          </Link></MenuItem>
+                      </Menu>
                       <Link
                         variant="button"
                         color="inherit"
@@ -221,3 +253,5 @@ export default ({ classes, setSaveDark, dark }) => {
     </Grid>
   );
 };
+
+export default Header;

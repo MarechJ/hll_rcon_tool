@@ -221,7 +221,7 @@ class PlayersAction(Base):
 class LogLine(Base):
     __tablename__ = 'log_lines'
     __table_args__ = (UniqueConstraint('event_time',
-                                       'text', name='unique_log_line'),)
+                                       'raw', name='unique_log_line'),)
 
     id = Column(Integer, primary_key=True)
     version = Column(Integer, default=1)
@@ -238,7 +238,8 @@ class LogLine(Base):
         Integer, ForeignKey('steam_id_64.id'),
         nullable=True, index=True,
     )
-    text = Column(String)
+    raw = Column(String, nullable=False)
+    content = Column(String)
     steamid1 = relationship("PlayerSteamID", foreign_keys=[player1_steamid])
     steamid2 = relationship("PlayerSteamID", foreign_keys=[player2_steamid])
     
@@ -249,11 +250,12 @@ class LogLine(Base):
             creation_time=self.creation_time,
             event_time=self.event_time,
             type=self.type,
-            player_name=self.player_name,
-            player1_id=self.player1_id,
+            player_name=self.player1_name,
+            player1_id=self.player1_steamid,
             player2_name=self.player2_name,
-            player2_id=self.player2_id,
-            text=self.text
+            player2_id=self.player1_steamid,
+            raw=self.raw,
+            content=self.content,
         )
 
 

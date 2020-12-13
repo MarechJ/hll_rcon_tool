@@ -160,7 +160,7 @@ class ChatRecorder:
             .limit(1)
             .one_or_none()
         )
-        logger.info("Getting new logs from %s", last_log.event_time)
+        logger.info("Getting new logs from %s", last_log.event_time if last_log else 0)
         for log in ChatLoop.get_log_history_list():
             if not isinstance(log, dict):
                 logger.warning("Log is invalid, not a dict: %s", log)
@@ -203,7 +203,8 @@ class ChatRecorder:
                         player2_name=log["player2"],
                         steamid1=steamid_1,
                         steamid2=steamid_2,
-                        text=log["raw"],
+                        raw=log["raw"],
+                        content=log["message"],
                     )
                 )
                 sess.commit()

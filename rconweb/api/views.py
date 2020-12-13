@@ -22,6 +22,7 @@ from rcon.player_history import (
     add_player_to_blacklist,
     remove_player_from_blacklist,
     get_player_profile,
+    get_player_profile_by_id,
     add_flag_to_player,
     remove_flag,
 )
@@ -39,9 +40,8 @@ logger = logging.getLogger("rconweb")
 
 @csrf_exempt
 def get_version(request):
-    res = run(['git', 'describe', '--tags'], stdout=PIPE, stderr=PIPE)
+    res = run(["git", "describe", "--tags"], stdout=PIPE, stderr=PIPE)
     return HttpResponse(res.stdout.decode())
-
 
 def is_player(search_str, player):
     if not player or not search_str:
@@ -50,8 +50,14 @@ def is_player(search_str, player):
     if search_str.lower() in player.lower():
         return True
 
-    normalize_search = unicodedata.normalize('NFD', search_str).encode('ascii', 'ignore').decode("utf-8")
-    normalize_player = unicodedata.normalize('NFD', player).encode('ascii', 'ignore').decode("utf-8")
+    normalize_search = (
+        unicodedata.normalize("NFD", search_str)
+        .encode("ascii", "ignore")
+        .decode("utf-8")
+    )
+    normalize_player = (
+        unicodedata.normalize("NFD", player).encode("ascii", "ignore").decode("utf-8")
+    )
 
     if normalize_search in normalize_player:
         return True
@@ -59,17 +65,98 @@ def is_player(search_str, player):
     return False
 
 
+from rcon.models import LogLine, PlayerSteamID, PlayerName, enter_session
+from sqlalchemy import or_, and_
+
+
+@csrf_exempt
+@login_required
+def get_historical_logs(request):
+    data = _get_data(request)
+    player_name = data.get("player_name")
+    action = data.get("log_type")
+    steam_id_64 = data.get("steam_id_64")
+    limit = int(data.get("limit", 1000))
+    from_ = data.get("from")
+    till = data.get("till")
+
+    with enter_session() as sess:
+        names = []
+        name_filters = []
+        # Alias search
+        # if player_name:
+        #     names = (
+        #         sess.query(PlayerName)
+        #         .filter(PlayerName.name.ilike("%{}%".format(player_name)))
+        #         .all()
+        #     )
+        # if names:
+        #     name_filters.extend(
+        #         [
+        #             LogLine.player1_steamid.in_(
+        #                 [name.playersteamid_id for name in names]
+        #             ),
+        #             LogLine.player2_steamid.in_(
+        #                 [name.playersteamid_id for name in names]
+        #             ),
+        #         ]
+        #     )
+
+        q = sess.query(LogLine)
+        if action:
+            q = q.filter(LogLine.type.ilike(f"%{action}%"))
+        
+        time_filter = []
+        if from_:
+            from_ = parser.parse(from_)
+            time_filter.append(LogLine.event_time >= from_)
+        
+        if till:
+            till = parser.parse(till)
+            time_filter.append(LogLine.event_time <= till)
+        
+        q = q.filter(and_(*time_filter))
+
+        if steam_id_64:
+            # Handle not found
+            player = sess.query(PlayerSteamID).filter(PlayerSteamID.steam_id_64 == steam_id_64).one_or_none()
+            id_ = player.id if player else 0
+            q = q.filter(or_(LogLine.player1_steamid == id_, LogLine.player2_steamid == id_))
+
+        if player_name:
+            name_filters.extend(
+                [
+                    LogLine.player1_name.ilike("%{}%".format(player_name)),
+                    LogLine.player2_name.ilike("%{}%".format(player_name)),
+                ]
+            )
+        if name_filters:
+            q = q.filter(or_(*name_filters))
+        res = q.limit(limit).all()
+        lines = []
+        for r in res:
+            r = r.to_dict()
+            r["event_time"] = r["event_time"].timestamp()
+            lines.append(r)
+        return api_response(
+            lines,
+            command="get_historical_logs",
+            arguments=dict(limit=limit, player_name=player_name, action=action),
+            failed=False,
+        )
+
+
 @csrf_exempt
 @login_required
 def get_log_history(request):
     data = _get_data(request)
-    start = int(data.get('start', 0))
-    end = int(data.get('end', 10000))
+    start = int(data.get("start", 0))
+    end = int(data.get("end", 10000))
     player_search = data.get("player_search")
     action = data.get("action")
 
     log_list = ChatLoop.get_log_history_list()
-    all_logs = log_list[start:min(end, len(log_list))]
+    all_logs = log_list[start : min(end, len(log_list))]
     logs = []
     # flatten that shit
     if player_search or action:
@@ -77,7 +164,9 @@ def get_log_history(request):
             if not isinstance(l, dict):
                 continue
             if player_search:
-                if is_player(player_search, l["player"]) or is_player(player_search, l["player2"]):
+                if is_player(player_search, l["player"]) or is_player(
+                    player_search, l["player2"]
+                ):
                     if action and not l["action"].lower().startswith(action.lower()):
                         continue
                     logs.append(l)
@@ -86,8 +175,14 @@ def get_log_history(request):
     else:
         logs = all_logs
     return api_response(
-        result=logs, command="get_log_history", arguments=dict(start=start, end=end, player_search=player_search, action=action), failed=False
+        result=logs,
+        command="get_log_history",
+        arguments=dict(
+            start=start, end=end, player_search=player_search, action=action
+        ),
+        failed=False,
     )
+
 
 @csrf_exempt
 @login_required
@@ -110,6 +205,7 @@ def get_map_history(request):
     return api_response(
         result=res, command="get_map_history", arguments={}, failed=False
     )
+
 
 @csrf_exempt
 @login_required
@@ -245,9 +341,14 @@ def get_player(request):
     data = _get_data(request)
     res = {}
     try:
-        res = get_player_profile(
-            data["steam_id_64"], nb_sessions=data.get("nb_sessions", 10)
-        )
+        if s := data.get("steam_id_64"):
+            res = get_player_profile(
+                s, nb_sessions=data.get("nb_sessions", 10)
+            )
+        else:
+            res = get_player_profile_by_id(
+                data['id'], nb_sessions=data.get("nb_sessions", 10)
+            )
         failed = bool(res)
     except:
         logger.exception("Unable to get player %s", data)
@@ -326,8 +427,10 @@ def blacklist_player(request):
     res = {}
     try:
         name = data["name"] if "name" in data else None
-        ctl.do_perma_ban(steam_id_64=data["steam_id_64"], reason=data["reason"], by=name)
-        #add_player_to_blacklist(data["steam_id_64"], data["reason"], name)
+        ctl.do_perma_ban(
+            steam_id_64=data["steam_id_64"], reason=data["reason"], by=name
+        )
+        # add_player_to_blacklist(data["steam_id_64"], data["reason"], name)
         audit("Blacklist", request, data)
         failed = False
     except:
@@ -557,7 +660,7 @@ def text_tk_scoreboard(request):
         text2 = make_tk_table(scoreboard)
     except CommandFailedError:
         text, text2 = "No logs"
-        
+
     return HttpResponse(
         f"""<div>
         <h1>{name}</h1>
@@ -660,6 +763,7 @@ commands = [
     ("get_map_history", get_map_history),
     ("get_version", get_version),
     ("get_log_history", get_log_history),
+    ("get_historical_logs", get_historical_logs),
 ]
 
 logger.info("Initializing endpoint - %s", os.environ)
@@ -673,7 +777,7 @@ for name, func in inspect.getmembers(ctl):
 
 
 # Warm the cache as fetching steam profile 1 by 1 takes a while
-if not os.getenv('DJANGO_DEBUG', None):
+if not os.getenv("DJANGO_DEBUG", None):
     try:
         logger.info("Warming up the cache this may take minutes")
         ctl.get_players()
