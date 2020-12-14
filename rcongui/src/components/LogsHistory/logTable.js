@@ -35,7 +35,7 @@ export default function LogsTable({logs}) {
         <TableBody>
           {logs.map((row) => (
             <TableRow key={row.id}>
-              <TableCell>{moment.unix(row.event_time).format("MM/DD/YYYY HH:mm:ss")}</TableCell>
+              <TableCell>{moment.unix(row.event_time).format("ddd Do MMM HH:mm:ss")}</TableCell>
               <TableCell>{row.type}</TableCell>
               <TableCell>{row.content}</TableCell>
               <TableCell>{row.player1_id ? <Link color="inherit" target="_blank" href={`/api/player?id=${row.player2_id}`}>{row.player_name}</Link> : row.player_name}</TableCell>

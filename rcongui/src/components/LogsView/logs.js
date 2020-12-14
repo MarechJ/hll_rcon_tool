@@ -57,13 +57,13 @@ class Logs extends React.Component {
       players: [],
       playersFilter: "",
       actionsFilter: localStorage.getItem("logs_actions") ? localStorage.getItem("logs_actions") : "",
-      minutes: localStorage.getItem("logs_minutes") ? localStorage.getItem("logs_minutes") : 30,
-      minutesOptions: [15, 30, 60, 90, 120, 180],
+      limit: localStorage.getItem("logs_limit") ? localStorage.getItem("logs_limit") : 100,
+      limitOptions: [100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000, 100000],
     };
 
     this.loadLogs = this.loadLogs.bind(this);
     this.setActionFilter = this.setActionFilter.bind(this)
-    this.setMinutes = this.setMinutes.bind(this)
+    this.setLimit = this.setLimit.bind(this)
   }
 
   componentDidMount() {
@@ -73,8 +73,10 @@ class Logs extends React.Component {
   }
 
   loadLogs() {
-    const { actionsFilter, playersFilter, minutes } = this.state;
-    let qs = `?since_min_ago=${minutes}`;
+    const { actionsFilter, playersFilter, limit } = this.state;
+    // Old endpoint
+    // let qs = `?since_min_ago=${minutes}`;
+    let qs = `?end=${limit}`
     if (actionsFilter !== "") {
       qs += `&filter_action=${actionsFilter}`;
     }
@@ -82,7 +84,9 @@ class Logs extends React.Component {
       qs += `&filter_player=${playersFilter}`;
     }
 
-    return get(`get_structured_logs${qs}`)
+    // "native" api 
+    // get(`get_structured_logs${qs}`)
+    return get(`get_recent_logs${qs}`)
       .then(response => showResponse(response, "get_logs"))
       .then(data => {
         this.setState({
@@ -99,9 +103,9 @@ class Logs extends React.Component {
     localStorage.setItem("logs_actions", actionsFilter)
   }
 
-  setMinutes(minutes) {
-    this.setState({ minutes }, this.loadLogs)
-    localStorage.setItem("logs_minutes", minutes)
+  setLimit(limit) {
+    this.setState({ limit }, this.loadLogs)
+    localStorage.setItem("logs_minutes", limit)
   } 
 
   render() {
@@ -111,8 +115,8 @@ class Logs extends React.Component {
       players,
       actions,
       actionsFilter,
-      minutes,
-      minutesOptions
+      limit,
+      limitOptions
     } = this.state;
 
     const now = moment();
@@ -130,10 +134,10 @@ class Logs extends React.Component {
           <Grid className={classes.padding} item xs={12} sm={12} md={12} lg={3}>
             <Selector
               classes={classes}
-              values={minutesOptions}
-              onChange={this.setMinutes}
-              currentValue={minutes}
-              kind="Show last N minutes"
+              values={limitOptions}
+              onChange={this.setLimit}
+              currentValue={limit}
+              kind="Show last N lines"
             />
           </Grid>
           <Grid className={classes.padding} item xs={12} sm={12} md={12} lg={3}>

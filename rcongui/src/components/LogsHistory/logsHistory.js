@@ -13,6 +13,10 @@ import LogsTable from "./logTable";
 import MomentUtils from "@date-io/moment";
 import { DateTimePicker, MuiPickersUtilsProvider } from "@material-ui/pickers";
 import { Button, TextField } from "@material-ui/core";
+import InputLabel from "@material-ui/core/InputLabel";
+import MenuItem from "@material-ui/core/MenuItem";
+import FormControl from "@material-ui/core/FormControl";
+import Select from "@material-ui/core/Select";
 
 const useStyles = makeStyles((theme) => ({
   flexContainer: {
@@ -32,6 +36,7 @@ const LogsFilter = ({ onSubmit }) => {
   const [from, setFrom] = React.useState(null);
   const [till, setTill] = React.useState(null);
   const [limit, setLimit] = React.useState(1000);
+  const [order, setOrder] = React.useState("desc");
 
   return (
     <Grid container spacing={1}>
@@ -88,15 +93,34 @@ const LogsFilter = ({ onSubmit }) => {
               </MuiPickersUtilsProvider>
             </Grid>
             <Grid item>
+              <FormControl className={classes.formControl}>
+                <InputLabel id="time_sort_label">Time sort</InputLabel>
+                <Select
+                  labelId="time_sort_label"
+                  value={order}
+                  onChange={e => setOrder(e.target.value)}
+                >
+                  <MenuItem value={'desc'}>Descending</MenuItem>
+                  <MenuItem value={'asc'}>Ascending</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item>
               <Button
                 variant="contained"
                 color="primary"
                 size="large"
                 type="sumbit"
-                onSubmit={(e) => {e.preventDefault(); onSubmit(name, type, steamId64, from, till, limit)}}
-                onClick={(e) => {e.preventDefault(); onSubmit(name, type, steamId64, from, till, limit)}}
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  onSubmit(name, type, steamId64, from, till, limit, order);
+                }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  onSubmit(name, type, steamId64, from, till, limit, order);
+                }}
               >
-                filter
+                load
               </Button>
             </Grid>
           </Grid>
@@ -124,6 +148,7 @@ class LogsHistory extends React.Component {
     from = null,
     till = null,
     limit = 1000,
+    time_sort = 'desc',
   ) {
     postData(`${process.env.REACT_APP_API_URL}get_historical_logs`, {
       player_name: name,
@@ -132,6 +157,7 @@ class LogsHistory extends React.Component {
       from: from,
       till: till,
       limit: limit,
+      time_sort: time_sort,
     })
       .then((res) => showResponse(res, "get_historical_logs", false))
       .then((res) => {

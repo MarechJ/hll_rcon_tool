@@ -43,6 +43,7 @@ def get_version(request):
     res = run(["git", "describe", "--tags"], stdout=PIPE, stderr=PIPE)
     return HttpResponse(res.stdout.decode())
 
+
 def is_player(search_str, player):
     if not player or not search_str:
         return None
@@ -79,49 +80,38 @@ def get_historical_logs(request):
     limit = int(data.get("limit", 1000))
     from_ = data.get("from")
     till = data.get("till")
+    time_sort = data.get("time_sort", "desc")
 
     with enter_session() as sess:
         names = []
         name_filters = []
-        # Alias search
-        # if player_name:
-        #     names = (
-        #         sess.query(PlayerName)
-        #         .filter(PlayerName.name.ilike("%{}%".format(player_name)))
-        #         .all()
-        #     )
-        # if names:
-        #     name_filters.extend(
-        #         [
-        #             LogLine.player1_steamid.in_(
-        #                 [name.playersteamid_id for name in names]
-        #             ),
-        #             LogLine.player2_steamid.in_(
-        #                 [name.playersteamid_id for name in names]
-        #             ),
-        #         ]
-        #     )
 
         q = sess.query(LogLine)
         if action:
             q = q.filter(LogLine.type.ilike(f"%{action}%"))
-        
+
         time_filter = []
         if from_:
             from_ = parser.parse(from_)
             time_filter.append(LogLine.event_time >= from_)
-        
+
         if till:
             till = parser.parse(till)
             time_filter.append(LogLine.event_time <= till)
-        
+
         q = q.filter(and_(*time_filter))
 
         if steam_id_64:
             # Handle not found
-            player = sess.query(PlayerSteamID).filter(PlayerSteamID.steam_id_64 == steam_id_64).one_or_none()
+            player = (
+                sess.query(PlayerSteamID)
+                .filter(PlayerSteamID.steam_id_64 == steam_id_64)
+                .one_or_none()
+            )
             id_ = player.id if player else 0
-            q = q.filter(or_(LogLine.player1_steamid == id_, LogLine.player2_steamid == id_))
+            q = q.filter(
+                or_(LogLine.player1_steamid == id_, LogLine.player2_steamid == id_)
+            )
 
         if player_name:
             name_filters.extend(
@@ -130,9 +120,20 @@ def get_historical_logs(request):
                     LogLine.player2_name.ilike("%{}%".format(player_name)),
                 ]
             )
+
         if name_filters:
             q = q.filter(or_(*name_filters))
-        res = q.limit(limit).all()
+
+        res = (
+            q.order_by(
+                LogLine.event_time.desc()
+                if time_sort == "desc"
+                else LogLine.event_time.asc()
+            )
+            .limit(limit)
+            .all()
+        )
+
         lines = []
         for r in res:
             r = r.to_dict()
@@ -148,37 +149,48 @@ def get_historical_logs(request):
 
 @csrf_exempt
 @login_required
-def get_log_history(request):
+def get_recent_logs(request):
     data = _get_data(request)
     start = int(data.get("start", 0))
     end = int(data.get("end", 10000))
-    player_search = data.get("player_search")
-    action = data.get("action")
+    player_search = data.get("filter_player")
+    action_filter = data.get("filter_action")
 
     log_list = ChatLoop.get_log_history_list()
     all_logs = log_list[start : min(end, len(log_list))]
     logs = []
+    all_players = set()
+    actions = set(['CHAT[Allies]', 'CHAT[Axis]', 'CHAT', 'VOTE STARTED', "VOTE COMPLETED"])
     # flatten that shit
-    if player_search or action:
-        for l in all_logs:
-            if not isinstance(l, dict):
-                continue
-            if player_search:
-                if is_player(player_search, l["player"]) or is_player(
-                    player_search, l["player2"]
-                ):
-                    if action and not l["action"].lower().startswith(action.lower()):
-                        continue
-                    logs.append(l)
-            elif action and l["action"].lower().startswith(action.lower()):
+    for l in all_logs:
+        if not isinstance(l, dict):
+            continue
+        if player_search:
+            if is_player(player_search, l["player"]) or is_player(
+                player_search, l["player2"]
+            ):
+                if action_filter and not l["action"].lower().startswith(action_filter.lower()):
+                    continue
                 logs.append(l)
-    else:
-        logs = all_logs
+        elif action_filter and l["action"].lower().startswith(action_filter.lower()):
+            logs.append(l)
+        elif not player_search and not action_filter:
+            logs.append(l)
+        if p1 := l['player']:
+            all_players.add(p1)
+        if p2 := l['player2']:
+            all_players.add(p2)
+        actions.add(l['action'])
+
     return api_response(
-        result=logs,
+        result={
+            "actions": list(actions),
+            "players": list(all_players),
+            "logs": logs,
+        },
         command="get_log_history",
         arguments=dict(
-            start=start, end=end, player_search=player_search, action=action
+            start=start, end=end, filter_player=player_search, filter_action=action_filter
         ),
         failed=False,
     )
@@ -342,12 +354,10 @@ def get_player(request):
     res = {}
     try:
         if s := data.get("steam_id_64"):
-            res = get_player_profile(
-                s, nb_sessions=data.get("nb_sessions", 10)
-            )
+            res = get_player_profile(s, nb_sessions=data.get("nb_sessions", 10))
         else:
             res = get_player_profile_by_id(
-                data['id'], nb_sessions=data.get("nb_sessions", 10)
+                data["id"], nb_sessions=data.get("nb_sessions", 10)
             )
         failed = bool(res)
     except:
@@ -762,7 +772,7 @@ commands = [
     ("set_standard_messages", set_standard_messages),
     ("get_map_history", get_map_history),
     ("get_version", get_version),
-    ("get_log_history", get_log_history),
+    ("get_recent_logs", get_recent_logs),
     ("get_historical_logs", get_historical_logs),
 ]
 
