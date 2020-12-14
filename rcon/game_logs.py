@@ -173,7 +173,7 @@ class ChatRecorder:
             if (
                 last_log
                 and not log["timestamp_ms"] / 1000 == last_log.event_time.timestamp()
-                and last_log.text == log["raw"]
+                and last_log.raw == log["raw"]
             ):
                 logger.info("New logs collection at: %s", log)
                 return to_store
