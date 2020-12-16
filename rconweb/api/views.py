@@ -26,6 +26,7 @@ from rcon.player_history import (
     add_flag_to_player,
     remove_flag,
 )
+from rcon import game_logs
 from rcon.game_logs import ChatLoop
 from rcon.user_config import AutoBroadcasts, InvalidConfigurationError, StandardMessages
 from rcon.cache_utils import RedisCached, get_redis_pool
@@ -42,28 +43,6 @@ logger = logging.getLogger("rconweb")
 def get_version(request):
     res = run(["git", "describe", "--tags"], stdout=PIPE, stderr=PIPE)
     return HttpResponse(res.stdout.decode())
-
-
-def is_player(search_str, player):
-    if not player or not search_str:
-        return None
-
-    if search_str.lower() in player.lower():
-        return True
-
-    normalize_search = (
-        unicodedata.normalize("NFD", search_str)
-        .encode("ascii", "ignore")
-        .decode("utf-8")
-    )
-    normalize_player = (
-        unicodedata.normalize("NFD", player).encode("ascii", "ignore").decode("utf-8")
-    )
-
-    if normalize_search in normalize_player:
-        return True
-
-    return False
 
 
 from rcon.models import LogLine, PlayerSteamID, PlayerName, enter_session
@@ -156,44 +135,25 @@ def get_recent_logs(request):
     player_search = data.get("filter_player")
     action_filter = data.get("filter_action")
 
-    log_list = ChatLoop.get_log_history_list()
-    all_logs = log_list[start : min(end, len(log_list))]
-    logs = []
-    all_players = set()
-    actions = set(['CHAT[Allies]', 'CHAT[Axis]', 'CHAT', 'VOTE STARTED', "VOTE COMPLETED"])
-    # flatten that shit
-    for l in all_logs:
-        if not isinstance(l, dict):
-            continue
-        if player_search:
-            if is_player(player_search, l["player"]) or is_player(
-                player_search, l["player2"]
-            ):
-                if action_filter and not l["action"].lower().startswith(action_filter.lower()):
-                    continue
-                logs.append(l)
-        elif action_filter and l["action"].lower().startswith(action_filter.lower()):
-            logs.append(l)
-        elif not player_search and not action_filter:
-            logs.append(l)
-        if p1 := l['player']:
-            all_players.add(p1)
-        if p2 := l['player2']:
-            all_players.add(p2)
-        actions.add(l['action'])
-
     return api_response(
-        result={
-            "actions": list(actions),
-            "players": list(all_players),
-            "logs": logs,
-        },
-        command="get_log_history",
+        result=game_logs.get_recent_logs(
+            start=start,
+            end=end,
+            player_search=player_search,
+            action_filter=action_filter,
+        ),
+        command="get_recent_logs",
         arguments=dict(
-            start=start, end=end, filter_player=player_search, filter_action=action_filter
+            start=start,
+            end=end,
+            filter_player=player_search,
+            filter_action=action_filter,
         ),
         failed=False,
     )
+
+
+
 
 
 @csrf_exempt

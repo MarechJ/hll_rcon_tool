@@ -12,6 +12,7 @@ from rcon.commands import HLLServerError, CommandFailedError
 from sqlalchemy import desc
 from sqlalchemy.exc import IntegrityError, InvalidRequestError
 from rcon.models import LogLine, enter_session, PlayerSteamID, PlayerName
+import unicodedata
 
 logger = logging.getLogger(__name__)
 
@@ -118,7 +119,7 @@ class ChatLoop:
                 logger.exception("Invalid key %s", k)
                 continue
             t = datetime.datetime.fromtimestamp(int(ts) / 1000)
-            if (datetime.datetime.now() - t).total_seconds() > 180 * 60:
+            if (datetime.datetime.now() - t).total_seconds() > 280 * 60:
                 logger.debug("Older than 180min, removing: %s", k)
                 self.red.srem(self.duplicate_guard_key, k)
         logger.info("Cleanup done")
@@ -232,3 +233,65 @@ class ChatRecorder:
                 last_run = datetime.datetime.now()
 
 
+def is_player(search_str, player):
+    if not player or not search_str:
+        return None
+
+    if search_str.lower() in player.lower():
+        return True
+
+    normalize_search = (
+        unicodedata.normalize("NFD", search_str)
+        .encode("ascii", "ignore")
+        .decode("utf-8")
+    )
+    normalize_player = (
+        unicodedata.normalize("NFD", player).encode("ascii", "ignore").decode("utf-8")
+    )
+
+    if normalize_search in normalize_player:
+        return True
+
+    return False
+
+
+def get_recent_logs(
+    start=0, end=100000, player_search=None, action_filter=None, min_timestamp=None
+):
+    log_list = ChatLoop.get_log_history_list()
+    all_logs = log_list[start : min(end, len(log_list))]
+    logs = []
+    all_players = set()
+    actions = set(
+        ["CHAT[Allies]", "CHAT[Axis]", "CHAT", "VOTE STARTED", "VOTE COMPLETED"]
+    )
+    # flatten that shit
+    for l in all_logs:
+        if not isinstance(l, dict):
+            continue
+        if min_timestamp and l['timestamp_ms'] / 1000 > min_timestamp:
+            break
+        if player_search:
+            if is_player(player_search, l["player"]) or is_player(
+                player_search, l["player2"]
+            ):
+                if action_filter and not l["action"].lower().startswith(
+                    action_filter.lower()
+                ):
+                    continue
+                logs.append(l)
+        elif action_filter and l["action"].lower().startswith(action_filter.lower()):
+            logs.append(l)
+        elif not player_search and not action_filter:
+            logs.append(l)
+        if p1 := l["player"]:
+            all_players.add(p1)
+        if p2 := l["player2"]:
+            all_players.add(p2)
+        actions.add(l["action"])
+
+    return {
+        "actions": list(actions),
+        "players": list(all_players),
+        "logs": logs,
+    }
