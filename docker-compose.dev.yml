@@ -18,7 +18,7 @@ services:
     command: debug
     networks:
       - common
-  frontend:
+  frontend_1:
     build:
       context: ./rcongui
   redis:
