@@ -324,7 +324,7 @@ class CompactList extends React.Component {
             player={player}
             key={player.get("steam_id_64")}
             handleAction={(actionType) =>
-              handleAction(actionType, player.get("name"))
+              handleAction(actionType, player.get("name"), null, 2, player.get('steam_id_64'))
             }
             onFlag={() =>
               onFlag(

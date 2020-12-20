@@ -371,6 +371,9 @@ class Rcon(ServerCtl):
             return super().do_kick(player, reason)
 
     def do_temp_ban(self, player=None, steam_id_64=None, duration_hours=2, reason="", admin_name=""):
+        if player and player in super().get_players():
+            # When banning a player by steam id, if he is currently in game he won't be banned immedietly
+            steam_id_64 = None
         with invalidates(Rcon.get_players, Rcon.get_temp_bans):
             return super().do_temp_ban(player, steam_id_64, duration_hours, reason, admin_name)
 
@@ -383,6 +386,9 @@ class Rcon(ServerCtl):
             return super().do_remove_perma_ban(ban_log)
 
     def do_perma_ban(self, player=None, steam_id_64=None, reason="", admin_name=""):
+        if player and player in super().get_players():
+            # When banning a player by steam id, if he is currently in game he won't be banned immedietly
+            steam_id_64 = None
         with invalidates(Rcon.get_players, Rcon.get_perma_bans):
             return super().do_perma_ban(player, steam_id_64, reason, admin_name)
 

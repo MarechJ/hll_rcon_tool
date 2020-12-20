@@ -6,6 +6,7 @@ from functools import wraps
 from dataclasses import dataclass, asdict
 from typing import Any
 
+from rcon.utils import ApiKey
 from rcon.cache_utils import ttl_cache
 from rcon.audit import heartbeat, online_mods, set_registered_mods, ingame_mods
 from django.http import JsonResponse
@@ -29,6 +30,7 @@ class RconResponse:
     arguments: dict = None
     failed: bool = True
     error: str = None
+    forwards_results: Any = None
 
     def to_dict(self):
         return asdict(self)

@@ -57,10 +57,10 @@ const Duration = ({
         <MenuItem key="days" value={24}>
           days
         </MenuItem>
-        <MenuItem key="days" value={24 * 7}>
+        <MenuItem key="weeks" value={24 * 7}>
           weeks
         </MenuItem>
-        <MenuItem key="days" value={24 * 7 * 4}>
+        <MenuItem key="months" value={24 * 7 * 4}>
           months
         </MenuItem>
       </TextField>
@@ -103,7 +103,7 @@ class ReasonDialog extends React.Component {
       durationMultiplier,
     } = this.state;
     const textHistory = new TextHistory("punitions");
-
+    console.log(open)
     return (
       <Dialog open={open} aria-labelledby="form-dialog-title">
         <DialogTitle id="form-dialog-title">
@@ -168,7 +168,8 @@ class ReasonDialog extends React.Component {
                 open.actionType,
                 open.player,
                 reason,
-                durationMultiplier * durationNumber
+                durationMultiplier * durationNumber,
+                open.steam_id_64,
               );
               this.setState({ reason: "" });
             }}
@@ -183,9 +184,6 @@ class ReasonDialog extends React.Component {
   }
 }
 
-const DropMenu = ({ startIdx, actions, handleAction }) => {
-  return <React.Fragment></React.Fragment>;
-};
 
 const PlayerActions = ({
   size,

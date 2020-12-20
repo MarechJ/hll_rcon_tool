@@ -9,6 +9,15 @@ services:
     environment:
       LOGGING_LEVEL: 'DEBUG'
     build: .
+  debug_1:
+    environment:
+      LOGGING_LEVEL: 'DEBUG'
+    build: .
+    ports:
+      - 8000:8000
+    command: debug
+    networks:
+      - common
   frontend:
     build:
       context: ./rcongui

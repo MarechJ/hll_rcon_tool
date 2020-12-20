@@ -40,9 +40,9 @@ def pre_flight_checks(env):
 
 if __name__ == "__main__":
     env = os.environ
-
+    
     try:
-        pre_flight_checks(env)
+        #pre_flight_checks(env)
         from rcon.cli import cli, init
         init()
         cli()

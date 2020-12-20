@@ -35,7 +35,7 @@ services:
         aliases:
           - backend
       common:
-  frontend: &frontend
+  frontend_1: &frontend
     image: maresh/hll_rcon_frontend:latest
     ports:
       - ${RCONWEB_PORT}:80
@@ -109,7 +109,7 @@ services:
           - supervisor
     command: supervisor
     depends_on:
-      - frontend
+      - frontend_1
   backend_2:
     <<: *backend
     hostname: api_2

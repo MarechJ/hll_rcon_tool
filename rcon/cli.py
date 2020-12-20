@@ -4,6 +4,7 @@ import click
 import sys
 
 from rcon.settings import SERVER_INFO
+from rcon.utils import ApiKey
 from rcon.extended_commands import Rcon
 from rcon import game_logs, broadcast, stats_loop, auto_settings, map_recorder
 from rcon.game_logs import ChatLoop
@@ -29,21 +30,26 @@ def run_log_loop():
         logger.exception("Chat recorder stopped")
         sys.exit(1)
 
+
 @cli.command(name='deprecated_log_loop')
 def run_logs_eventloop():
     game_logs.event_loop()
+
 
 @cli.command(name='broadcast_loop')
 def run_broadcast_loop():
     broadcast.run()
 
+
 @cli.command(name='stats_loop')
 def run_stats_loop():
     stats_loop.run()
 
+
 @cli.command(name='auto_settings')
 def auto_settings_loop():
     auto_settings.run()
+
 
 @cli.command(name='map_recorder')
 def run_map_recorder():
@@ -61,15 +67,28 @@ def init(force=False):
     init_db(force)
     seed_default_config()
 
+
 @cli.command(name="init_db")
 @click.option('--force', default=False, is_flag=True)
 def do_init(force):
     init(force)
 
+
 @cli.command(name="set_maprotation")
 @click.argument('maps', nargs=-1)
 def maprot(maps):
     ctl.set_maprotation(list(maps))
+
+
+@cli.command(name="register_api")
+def register():
+    ApiKey().generate_key()
+
+
+@cli.command(name="unregister_api")
+def unregister():
+    ApiKey().delete_key()
+
 
 @cli.command(name="import_vips")
 @click.argument('file', type=click.File('r'))

@@ -32,6 +32,7 @@ from rcon.user_config import AutoBroadcasts, InvalidConfigurationError, Standard
 from rcon.cache_utils import RedisCached, get_redis_pool
 from .auth import login_required, api_response
 from .utils import _get_data
+from .multi_servers import forward_request
 from rcon.discord import send_to_discord_audit
 from subprocess import run, PIPE
 import unicodedata
@@ -511,6 +512,7 @@ def wrap_method(func, parameters):
         arguments = {}
         data = {}
         failure = False
+        others = None
         data = _get_data(request)
 
         for pname, param in parameters.items():
@@ -532,16 +534,20 @@ def wrap_method(func, parameters):
         except CommandFailedError:
             failure = True
             res = None
-
+        
+        if data.get('forward'):
+            try:
+                others = forward_request(request)
+            except: 
+                logger.exception("Unexpected error while forwarding request")
         # logger.debug("%s %s -> %s", func.__name__, arguments, res)
-        return JsonResponse(
-            {
-                "result": res,
-                "command": func.__name__,
-                "arguments": data,
-                "failed": failure,
-            }
-        )
+        return JsonResponse(dict(
+            result=res,
+            command=func.__name__,
+            arguments=data,
+            failed=failure,
+            forwards_results=others,
+        ))
 
     return wrapper
 
@@ -712,6 +718,12 @@ def download_vips(request):
     return response
 
 
+@login_required
+@csrf_exempt
+def get_connection_info(request):
+    return api_response({'name': ctl.get_name(), 'port': os.getenv('RCONWEB_PORT')})
+
+
 PREFIXES_TO_EXPOSE = ["get_", "set_", "do_"]
 
 commands = [
@@ -734,6 +746,7 @@ commands = [
     ("get_version", get_version),
     ("get_recent_logs", get_recent_logs),
     ("get_historical_logs", get_historical_logs),
+    ("get_connection_info", get_connection_info),
 ]
 
 logger.info("Initializing endpoint - %s", os.environ)
@@ -752,4 +765,4 @@ if not os.getenv("DJANGO_DEBUG", None):
         logger.info("Warming up the cache this may take minutes")
         ctl.get_players()
     except:
-        logger.exception("Failed to warm the cache %s", os.environ)
+        logger.exception("Failed to warm the cache")
