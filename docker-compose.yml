@@ -122,7 +122,7 @@ services:
         aliases:
           - backend
     depends_on:
-      - frontend
+      - frontend_1
   frontend_2:
     <<: *frontend
     ports:
