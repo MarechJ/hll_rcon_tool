@@ -61,14 +61,18 @@ def get_historical_logs(request):
     from_ = data.get("from")
     till = data.get("till")
     time_sort = data.get("time_sort", "desc")
+    exact_player_match = data.get("exact_player", False)
+    exact_action = data.get("exact_action", True)
 
     with enter_session() as sess:
         names = []
         name_filters = []
 
         q = sess.query(LogLine)
-        if action:
+        if action and not exact_action:
             q = q.filter(LogLine.type.ilike(f"%{action}%"))
+        elif action and exact_action:
+            q = q.filter(LogLine.type == action)
 
         time_filter = []
         if from_:
@@ -93,11 +97,18 @@ def get_historical_logs(request):
                 or_(LogLine.player1_steamid == id_, LogLine.player2_steamid == id_)
             )
 
-        if player_name:
+        if player_name and not exact_player_match:
             name_filters.extend(
                 [
                     LogLine.player1_name.ilike("%{}%".format(player_name)),
                     LogLine.player2_name.ilike("%{}%".format(player_name)),
+                ]
+            )
+        elif player_name and exact_player_match:
+            name_filters.extend(
+                [
+                    LogLine.player1_name == player_name,
+                    LogLine.player2_name == player_name,
                 ]
             )
 
@@ -135,6 +146,9 @@ def get_recent_logs(request):
     end = int(data.get("end", 10000))
     player_search = data.get("filter_player")
     action_filter = data.get("filter_action")
+    exact_player_match = data.get("exact_player_match", True)
+    exact_action = data.get("exact_action", False)
+    
 
     return api_response(
         result=game_logs.get_recent_logs(
@@ -142,6 +156,8 @@ def get_recent_logs(request):
             end=end,
             player_search=player_search,
             action_filter=action_filter,
+            exact_player_match=exact_player_match,
+            exact_action=exact_action
         ),
         command="get_recent_logs",
         arguments=dict(
@@ -152,9 +168,6 @@ def get_recent_logs(request):
         ),
         failed=False,
     )
-
-
-
 
 
 @csrf_exempt

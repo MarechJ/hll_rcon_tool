@@ -17,6 +17,8 @@ import InputLabel from "@material-ui/core/InputLabel";
 import MenuItem from "@material-ui/core/MenuItem";
 import FormControl from "@material-ui/core/FormControl";
 import Select from "@material-ui/core/Select";
+import FormControlLabel from "@material-ui/core/FormControlLabel";
+import Switch from "@material-ui/core/Switch";
 
 const useStyles = makeStyles((theme) => ({
   flexContainer: {
@@ -30,12 +32,14 @@ const useStyles = makeStyles((theme) => ({
 
 const LogsFilter = ({ onSubmit }) => {
   const classes = useStyles();
-  const [name, setName] = React.useState(null);
-  const [steamId64, setSteamId64] = React.useState(null);
-  const [type, setType] = React.useState(null);
+  const [name, setName] = React.useState("");
+  const [steamId64, setSteamId64] = React.useState("");
+  const [type, setType] = React.useState("");
   const [from, setFrom] = React.useState(null);
   const [till, setTill] = React.useState(null);
   const [limit, setLimit] = React.useState(1000);
+  const [exactPlayer, setExactPlayer] = React.useState(false);
+  const [exactAction, setExactAction] = React.useState(false);
   const [order, setOrder] = React.useState("desc");
 
   return (
@@ -48,6 +52,15 @@ const LogsFilter = ({ onSubmit }) => {
                 label="Name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+              />
+              <FormControlLabel
+                value={exactPlayer}
+                onChange={(event) => setExactPlayer(event.target.checked)}
+                control={<Switch color="primary" />}
+                label="Exact"
+                color="Secondary"
+                labelPlacement="top"
+                className="MuiFormLabel-root"
               />
             </Grid>
             <Grid item>
@@ -63,7 +76,17 @@ const LogsFilter = ({ onSubmit }) => {
                 value={type}
                 onChange={(e) => setType(e.target.value)}
               />
+              <FormControlLabel
+                value={exactAction}
+                onChange={(event) => setExactAction(event.target.checked)}
+                control={<Switch color="primary" />}
+                label="Exact"
+                color="Secondary"
+                labelPlacement="top"
+                className="MuiFormLabel-root"
+              />
             </Grid>
+
             <Grid item>
               <TextField
                 label="Limit"
@@ -98,10 +121,10 @@ const LogsFilter = ({ onSubmit }) => {
                 <Select
                   labelId="time_sort_label"
                   value={order}
-                  onChange={e => setOrder(e.target.value)}
+                  onChange={(e) => setOrder(e.target.value)}
                 >
-                  <MenuItem value={'desc'}>Descending</MenuItem>
-                  <MenuItem value={'asc'}>Ascending</MenuItem>
+                  <MenuItem value={"desc"}>Descending</MenuItem>
+                  <MenuItem value={"asc"}>Ascending</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -113,11 +136,31 @@ const LogsFilter = ({ onSubmit }) => {
                 type="sumbit"
                 onSubmit={(e) => {
                   e.preventDefault();
-                  onSubmit(name, type, steamId64, from, till, limit, order);
+                  onSubmit(
+                    name,
+                    type,
+                    steamId64,
+                    from,
+                    till,
+                    limit,
+                    order,
+                    exactPlayer,
+                    exactAction
+                  );
                 }}
                 onClick={(e) => {
                   e.preventDefault();
-                  onSubmit(name, type, steamId64, from, till, limit, order);
+                  onSubmit(
+                    name,
+                    type,
+                    steamId64,
+                    from,
+                    till,
+                    limit,
+                    order,
+                    exactPlayer,
+                    exactAction
+                  );
                 }}
               >
                 load
@@ -148,7 +191,9 @@ class LogsHistory extends React.Component {
     from = null,
     till = null,
     limit = 1000,
-    time_sort = 'desc',
+    timeSort = "desc",
+    exactPlayer = false,
+    exactAction = false
   ) {
     postData(`${process.env.REACT_APP_API_URL}get_historical_logs`, {
       player_name: name,
@@ -157,7 +202,9 @@ class LogsHistory extends React.Component {
       from: from,
       till: till,
       limit: limit,
-      time_sort: time_sort,
+      time_sort: timeSort,
+      exact_player: exactPlayer,
+      exact_action: exactAction,
     })
       .then((res) => showResponse(res, "get_historical_logs", false))
       .then((res) => {
