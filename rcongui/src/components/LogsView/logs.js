@@ -69,7 +69,7 @@ class Logs extends React.Component {
         : "",
       limit: localStorage.getItem("logs_limit")
         ? localStorage.getItem("logs_limit")
-        : 100,
+        : 500,
       limitOptions: [
         100,
         250,
@@ -128,7 +128,7 @@ class Logs extends React.Component {
 
   setLimit(limit) {
     this.setState({ limit }, this.loadLogs);
-    localStorage.setItem("logs_minutes", limit);
+    localStorage.setItem("logs_limit", limit);
   }
 
   render() {
