@@ -56,7 +56,9 @@ class PlayerView extends Component {
       filterTimeout: null,
       actionMessage: "",
       doConfirm: false,
-      sortType: localStorage.getItem('player_sort') ? localStorage.getItem('player_sort') : "",
+      sortType: localStorage.getItem("player_sort")
+        ? localStorage.getItem("player_sort")
+        : "",
       openGroupAction: false,
       openUnban: false,
       flag: false,
@@ -96,8 +98,12 @@ class PlayerView extends Component {
   }
 
   unBan(ban) {
-    postData(`${process.env.REACT_APP_API_URL}do_remove_${ban.type}_ban`, {
-      ban_log: ban.raw,
+    // Legacy way
+    // postData(`${process.env.REACT_APP_API_URL}do_remove_${ban.type}_ban`, {
+    //  ban_log: ban.raw,
+    // })
+    postData(`${process.env.REACT_APP_API_URL}unban`, {
+      steam_id_64: ban.steam_id_64,
     })
       .then((response) =>
         showResponse(response, `Remove ${ban.type} ban for ${ban.name}`, true)
@@ -106,21 +112,33 @@ class PlayerView extends Component {
       .catch(handle_http_errors);
   }
 
-  handleAction(actionType, player_name, message = null, duration_hours = 2, steam_id_64 = null) {
+  handleAction(
+    actionType,
+    player_name,
+    message = null,
+    duration_hours = 2,
+    steam_id_64 = null
+  ) {
     if (message === null) {
       message = this.state.actionMessage;
     }
     if (message === "" && !actionType.startsWith("switch_")) {
-      this.setState({ doConfirm: { player: player_name, actionType: actionType, steam_id_64: steam_id_64 } });
+      this.setState({
+        doConfirm: {
+          player: player_name,
+          actionType: actionType,
+          steam_id_64: steam_id_64,
+        },
+      });
     } else {
       const data = {
         player: player_name,
         steam_id_64: steam_id_64,
         reason: message,
         duration_hours: duration_hours,
-      }
+      };
       if (actionType === "temp_ban") {
-        data["forward"] = "yes"
+        data["forward"] = "yes";
       }
       postData(`${process.env.REACT_APP_API_URL}do_${actionType}`, data)
         .then((response) =>
@@ -174,12 +192,13 @@ class PlayerView extends Component {
 
   filterPlayers() {
     const { filter, players } = this.state;
- 
+
     if (filter) {
       const filteredPlayers = players.filter(
         (p) =>
-          stripDiacritics(p.get('name')).toLowerCase().indexOf(filter.toLowerCase()) >=
-          0
+          stripDiacritics(p.get("name"))
+            .toLowerCase()
+            .indexOf(filter.toLowerCase()) >= 0
       );
       this.setState({ filteredPlayers: filteredPlayers });
     }
@@ -190,8 +209,8 @@ class PlayerView extends Component {
   }
 
   sortTypeChange(sortType) {
-     this.setState({ sortType })
-     localStorage.setItem('player_sort', sortType)
+    this.setState({ sortType });
+    localStorage.setItem("player_sort", sortType);
   }
 
   render() {
@@ -236,8 +255,20 @@ class PlayerView extends Component {
           classes={classes}
           sortType={sortType}
           players={filteredPlayers}
-          handleAction={(actionType, player, message = null, duration_hours = 2, steam_id_64 = null) =>
-            this.handleAction(actionType, player, message, duration_hours, steam_id_64)
+          handleAction={(
+            actionType,
+            player,
+            message = null,
+            duration_hours = 2,
+            steam_id_64 = null
+          ) =>
+            this.handleAction(
+              actionType,
+              player,
+              message,
+              duration_hours,
+              steam_id_64
+            )
           }
           handleToggle={() => 1}
           onFlag={(player) => this.setState({ flag: player })}
@@ -262,8 +293,20 @@ class PlayerView extends Component {
         <ReasonDialog
           open={doConfirm}
           handleClose={() => this.setState({ doConfirm: false })}
-          handleConfirm={(action, player, reason, duration_hours = 2, steam_id_64 = null) => {
-            this.handleAction(action, player, reason, duration_hours, steam_id_64);
+          handleConfirm={(
+            action,
+            player,
+            reason,
+            duration_hours = 2,
+            steam_id_64 = null
+          ) => {
+            this.handleAction(
+              action,
+              player,
+              reason,
+              duration_hours,
+              steam_id_64
+            );
             this.setState({ doConfirm: false });
           }}
         />

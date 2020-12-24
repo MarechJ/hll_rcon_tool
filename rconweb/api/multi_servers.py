@@ -1,5 +1,6 @@
 import requests
 import logging
+from copy import deepcopy
 from functools import wraps
 import json
 from rcon.utils import ApiKey
@@ -52,10 +53,53 @@ def forward_request(request):
                 data = None
             logger.info("Forwarding request: %s %s %s", url, params, data)
             res = requests.get(url, params=params, json=data, cookies=dict(sessionid=request.COOKIES.get('sessionid')))
+            if res.ok:
+                r = {'host': host,'response': res.json()}
+                results.append(r)
+                logger.info(r)
+            else:
+                # todo add failure to results
+                logger.warning(f"Forwarding to {host} failed %s", res.text)
         except requests.exceptions.RequestException:
             logger.warning(f"Unable to connect with {host}")
-        if res.ok:
-            results.append({'host': host,'response': res.json()})
+
+    return results
+
+def forward_command(path, params=None, json=None, sessionid=None):
+    api_key = ApiKey()
+    keys = api_key.get_all_keys()
+    my_key = api_key.get_key()
+    params = deepcopy(params) or {}
+    data = deepcopy(json) or {}
+    results = []
+
+    if 'forwarded' in params or 'forwarded' in data:
+        logger.debug("The request was already forwarded")
+        return []
+    if params:
+        params.pop('forward', None)
+        params['forwarded'] = "yes"
+    if data:
+        data.pop('forward', None)
+        data['forwarded'] = "yes"
+
+    for host, key in keys.items():
+        if key == my_key:
+            continue
+        try:
+            url = f'http://{host}{path}'
+
+            logger.info("Forwarding request: %s %s %s", url, params, data)
+            res = requests.get(url, params=params, json=data, cookies=dict(sessionid=sessionid))
+            if res.ok:
+                r = {'host': host,'response': res.json()}
+                results.append(r)
+                logger.info(r)
+            else:
+                # todo add failure to results
+                logger.warning(f"Forwarding to {host} failed %s", res.text)
+        except requests.exceptions.RequestException:
+            logger.warning(f"Unable to connect with {host}")
     
     return results
 

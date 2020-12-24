@@ -32,7 +32,7 @@ const Unban = ({ bannedPlayers, classes, width, handleUnban, onReload, onClose, 
           clearOnEscape
           id="tags-outlined"
           options={bannedPlayers}
-          renderOption={option => `${option.steam_id_64} ${option.name} [${option.type}] ${option.ban_time}`}
+          renderOption={option => `[${option.type}] ${option.raw}`}
           getOptionLabel={option => `${option.name} ${option.steam_id_64}`}
           filterSelectedOptions
           onChange={(e, val) => setSelectedPlayers(val)}

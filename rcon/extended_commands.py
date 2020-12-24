@@ -139,14 +139,22 @@ class Rcon(ServerCtl):
         # '76561197984877751 : nickname "Dr.WeeD" banned for 2 hours on 2020.12.03-12.40.08 for "None" by admin "test"'
         steamd_id_64, rest = ban.split(" :", 1)
         name = None
-       
+        reason = None
+        by = None
+
         if 'nickname' in rest:
             name = rest.split('" banned', 1)[0]
             name = name.split(' nickname "', 1)[-1]
 
-        groups = re.match(".*(\d{4}\.\d{2}\.\d{2}-\d{2}\.\d{2}.\d{2}).*", ban)
+        groups = re.match(".*(\d{4}\.\d{2}\.\d{2}-\d{2}\.\d{2}.\d{2}) (.*)", ban)
         if groups and groups.groups():
-            date = groups.groups(1)
+            date = groups.group(1)
+            try:
+                reason = groups.group(2)
+            except:
+                logger.error("Unable to extract reason from ban")
+        by = ban.split(" by admin ", -1)[-1]
+
         return {
             'type': type_,
             'name': name,
@@ -154,6 +162,8 @@ class Rcon(ServerCtl):
             # TODO FIX
             'timestamp': None,
             'ban_time': date,
+            'reason': reason,
+            'by': by.replace('"', ""),
             'raw': ban
         }
 
@@ -169,6 +179,18 @@ class Rcon(ServerCtl):
         # Most recent first
         bans.reverse()
         return temp_bans + bans
+
+
+    def do_unban(self, steam_id_64):
+        bans = self.get_bans()
+        type_to_func = {
+            "temp": self.do_remove_temp_ban,
+            "perma": self.do_remove_perma_ban
+        }
+        for b in bans:
+            if b.get("steam_id_64") == steam_id_64:
+                type_to_func[b["type"]](b["raw"])
+        
 
     @ttl_cache(ttl=60 * 60)
     def get_vip_ids(self):
@@ -469,6 +491,7 @@ class Rcon(ServerCtl):
             self.do_add_maps_to_rotation(rotation)
 
         return [first] + rotation
+
 
     @ttl_cache(ttl=60 * 2)
     def get_scoreboard(self, minutes=180, sort='ratio'):
