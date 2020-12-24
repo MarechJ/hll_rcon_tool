@@ -75,9 +75,6 @@ const TextHistoryManager = ({ classes }) => {
 
     return (
         <Grid container>
-            <Grid lg={12} className={classes.padding}>
-                <Typography variant="h6">Manage your personal text history</Typography>
-            </Grid>
             {nameSpaces.length > 0 ?
             <React.Fragment>
                 <Grid lg={12}>

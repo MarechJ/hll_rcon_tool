@@ -165,7 +165,7 @@ class LoginBox extends React.Component {
 }
 
 // TODO: Make this reactive, it's causing the view on mobile to be bigger then it should
-const Header = ({ classes, setSaveDark, dark }) => {
+const Header = ({ classes }) => {
   const [anchorEl, setAnchorEl] = React.useState(null);
 
   const handleClick = (event) => {
@@ -233,15 +233,6 @@ const Header = ({ classes, setSaveDark, dark }) => {
                         Settings
                       </Link>
                       <LoginBox classes={classes} component={RouterLink} />
-                      <Checkbox
-                        icon={<Brightness4Icon />}
-                        checkedIcon={<Brightness4OutlinedIcon />}
-                        checked={dark == "dark"}
-                        color="default"
-                        onChange={(e, checked) =>
-                          setSaveDark(checked ? "dark" : "light")
-                        }
-                      />
                     </nav>
                   </Grid>
                 </Grid>

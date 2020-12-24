@@ -16,6 +16,11 @@ import WarningIcon from "@material-ui/icons/Warning";
 import TextHistoryManager, { SelectNameSpace } from "./textHistoryManager";
 import TextHistory from "../textHistory";
 import ServicesList from "../Services";
+import InputLabel from '@material-ui/core/InputLabel';
+import MenuItem from '@material-ui/core/MenuItem';
+import FormHelperText from '@material-ui/core/FormHelperText';
+import FormControl from '@material-ui/core/FormControl';
+import Select from '@material-ui/core/Select';
 
 class RconSettings extends React.Component {
   constructor(props) {
@@ -124,12 +129,31 @@ class RconSettings extends React.Component {
       enabled,
       randomized,
     } = this.state;
-    const { classes } = this.props;
+    const { classes, theme, themes, setTheme } = this.props;
 
     return (
       <Grid container className={classes.paper} spacing={3}>
         <Grid item xs={12}>
           <h2>Advanced RCON settings</h2>
+        </Grid>
+        <Grid item xs={12} className={classes.padding}>
+          <Typography variant="h6">Your RCON color theme</Typography>
+        </Grid>
+        <Grid item xs={12} className={classes.padding}>
+          <FormControl style={{minWidth: '200px'}} >
+            <InputLabel>Pick your theme</InputLabel>
+            <Select
+              value={theme}
+              onChange={event => setTheme(event.target.value)}
+            >
+              {themes.map(t => (
+                <MenuItem key={t} value={t}>{t}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+        <Grid item xs={12} className={classes.padding}>
+          <Typography variant="h6">Automated broadcast cycle</Typography>
         </Grid>
         <Grid item xs={12}>
           <Grid container justify="space-evenly">
@@ -181,6 +205,9 @@ class RconSettings extends React.Component {
           >
             Save auto broadcast messages
           </Button>
+        </Grid>
+        <Grid item xs={12} className={classes.padding}>
+          <Typography variant="h6">Manage your personal text history</Typography>
         </Grid>
         <Grid
           container
