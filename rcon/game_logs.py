@@ -107,6 +107,14 @@ class ChatLoop:
             return None
 
         logger.info("Recording: %s", id_)
+        try:
+            last_line = self.log_history[0]
+        except IndexError:
+            last_line = None
+        if last_line and last_line['timestamp_ms'] > log['timestamp_ms']:
+            logger.error("Received old log record, ignoring")
+            return None
+
         self.log_history.add(log)
         return log
 
@@ -233,7 +241,10 @@ class ChatRecorder:
                 last_run = datetime.datetime.now()
 
 
-def is_player(search_str, player):
+def is_player(search_str, player, exact_match=False):
+    if exact_match:
+        return search_str == player
+
     if not player or not search_str:
         return None
 
@@ -254,33 +265,46 @@ def is_player(search_str, player):
 
     return False
 
+def is_action(action_filter, action, exact_match=False):
+    if not action_filter or not action:
+        return None
+
+    if not exact_match:
+        return action.lower().startswith(action_filter.lower())
+    
+    return action_filter == action
+
 
 def get_recent_logs(
-    start=0, end=100000, player_search=None, action_filter=None, min_timestamp=None
+    start=0, end=100000, player_search=None, action_filter=None, min_timestamp=None, exact_player_match=False, exact_action=False
 ):
     log_list = ChatLoop.get_log_history_list()
-    all_logs = log_list[start : min(end, len(log_list))]
+    all_logs = log_list
+    if start != 0:
+        all_logs = log_list[start : min(end, len(log_list))]
     logs = []
     all_players = set()
     actions = set(
         ["CHAT[Allies]", "CHAT[Axis]", "CHAT", "VOTE STARTED", "VOTE COMPLETED"]
     )
     # flatten that shit
-    for l in all_logs:
+    for idx, l in enumerate(all_logs):
+        if idx >= end - start:
+            break
         if not isinstance(l, dict):
             continue
-        if min_timestamp and l['timestamp_ms'] / 1000 > min_timestamp:
+        if min_timestamp and l['timestamp_ms'] / 1000 < min_timestamp:
             break
         if player_search:
-            if is_player(player_search, l["player"]) or is_player(
-                player_search, l["player2"]
+            if is_player(player_search, l["player"], exact_player_match) or is_player(
+                player_search, l["player2"], exact_player_match
             ):
                 if action_filter and not l["action"].lower().startswith(
                     action_filter.lower()
                 ):
                     continue
                 logs.append(l)
-        elif action_filter and l["action"].lower().startswith(action_filter.lower()):
+        elif action_filter and is_action(action_filter, l['action'], exact_action):
             logs.append(l)
         elif not player_search and not action_filter:
             logs.append(l)

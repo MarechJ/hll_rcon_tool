@@ -3,6 +3,7 @@ from django.urls import path
 from . import views
 from . import auth
 from . import services
+from . import multi_servers
 
 urlpatterns = [
     path(name, func, name='name')
@@ -14,5 +15,6 @@ urlpatterns = [
     path('get_online_mods', auth.get_online_mods),
     path('get_ingame_mods', auth.get_ingame_mods),
     path('get_services', services.get_services),
-    path('do_service', services.do_service)
+    path('do_service', services.do_service),
+    path('server_list',  multi_servers.get_server_list),
 ]

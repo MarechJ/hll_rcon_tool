@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from functools import wraps
 
 from rcon.connection import HLLConnection
+from rcon.settings import check_config
 
 logger = logging.getLogger(__name__)
 
@@ -67,16 +68,23 @@ class ServerCtl:
     """
     def __init__(self, config, auto_retry=1):
         self.config = config
-        self._connect()
+        self.conn = None
+        #self._connect()
         self.auto_retry = auto_retry
 
     def _connect(self):
         self.conn = HLLConnection()
-        self.conn.connect(
-            self.config['host'],
-            self.config['port'],
-            self.config['password']
-        )
+        try:
+            self.conn.connect(
+                self.config['host'],
+                int(self.config['port']),
+                self.config['password']
+            )
+        except ValueError as e:
+            raise ValueError("HLL_PORT must be an integer") from e
+        except TypeError as e:
+            logger.critical("Invalid connection information")
+            raise
 
     def _reconnect(self):
         logger.warning("reconnecting")
@@ -86,6 +94,8 @@ class ServerCtl:
 
     @_auto_retry
     def _request(self, command: str, can_fail=True, log_info=False):
+        if not self.conn:
+            self._connect()
         if log_info:
             logger.info(command)
         else:

@@ -6,3 +6,4 @@ def _get_data(request):
     except json.JSONDecodeError:
         data = request.GET
     return data
+

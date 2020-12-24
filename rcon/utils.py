@@ -1,8 +1,15 @@
 import json
 import redis
 import logging
-from rcon.cache_utils import get_redis_pool
+import os
+import secrets
 from datetime import datetime
+from urllib.parse import urlparse
+
+import redis
+
+from rcon.cache_utils import get_redis_pool, get_redis_client
+
 
 logger = logging.getLogger("rcon")
 
@@ -215,3 +222,35 @@ class MapsHistory(FixedLenList):
         logger.info("Saving start of new map %s at time %s", new_map, ts)
         new = dict(name=new_map, start=ts, end=None)
         self.lpush(new)
+
+
+class ApiKey:
+    def __init__(self):
+        num = os.getenv('SERVER_NUMBER')
+        if not num:
+            raise ValueError("SERVER_NUMBER variable is not set, can't start")
+
+        parts = urlparse(os.getenv("REDIS_URL"))
+        self.red = redis.StrictRedis(host=parts.hostname, port=parts.port, db=0)
+        self.key_prefix = "frontend_"
+        self.key = f"{self.key_prefix}{num}"
+
+    def generate_key(self):
+        api_key = secrets.token_urlsafe(64)
+        self.red.set(self.key, api_key)
+        return api_key
+
+    def get_key(self):
+        key = self.red.get(self.key)
+        if key:
+            return key.decode()
+        return key
+
+    def delete_key(self):
+        self.red.delete(self.key)
+
+    def get_all_keys(self):
+        return {
+            k.decode(): self.red.get(k.decode()).decode()
+            for k in self.red.keys(f"{self.key_prefix}*")
+        }

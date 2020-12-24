@@ -1,6 +1,11 @@
 import React from "react";
 import { toast } from "react-toastify";
-import { postData, showResponse, get, handle_http_errors } from "../../utils/fetchUtils";
+import {
+  postData,
+  showResponse,
+  get,
+  handle_http_errors,
+} from "../../utils/fetchUtils";
 import InputLabel from "@material-ui/core/InputLabel";
 import MenuItem from "@material-ui/core/MenuItem";
 import FormHelperText from "@material-ui/core/FormHelperText";
@@ -15,8 +20,9 @@ import RefreshIcon from "@material-ui/icons/Refresh";
 import Paper from "@material-ui/core/Paper";
 import moment from "moment";
 import withWidth from "@material-ui/core/withWidth";
-import AutoRefreshLine from '../autoRefreshLine'
+import AutoRefreshLine from "../autoRefreshLine";
 import ListItemText from "@material-ui/core/ListItemText";
+
 
 const Selector = ({
   classes,
@@ -25,28 +31,30 @@ const Selector = ({
   values,
   currentValue,
   onChange,
-  kind
+  kind,
 }) => (
-    <FormControl className={classes.logsControl}>
-      <InputLabel shrink>{kind}</InputLabel>
-      <Select
-        value={currentValue}
-        onChange={e => onChange(e.target.value)}
-        displayEmpty
-      >
-        {defaultValue !== undefined ? (
-          <MenuItem value={defaultValue}>
-            <em>{defaultText}</em>
-          </MenuItem>
-        ) : (
-            ""
-          )}
-        {values.map(a => (
-          <MenuItem key={a} value={a}>{a}</MenuItem>
-        ))}
-      </Select>
-    </FormControl>
-  );
+  <FormControl className={classes.logsControl}>
+    <InputLabel shrink>{kind}</InputLabel>
+    <Select
+      value={currentValue}
+      onChange={(e) => onChange(e.target.value)}
+      displayEmpty
+    >
+      {defaultValue !== undefined ? (
+        <MenuItem value={defaultValue}>
+          <em>{defaultText}</em>
+        </MenuItem>
+      ) : (
+        ""
+      )}
+      {values.map((a) => (
+        <MenuItem key={a} value={a}>
+          {a}
+        </MenuItem>
+      ))}
+    </Select>
+  </FormControl>
+);
 
 class Logs extends React.Component {
   constructor(props) {
@@ -56,14 +64,29 @@ class Logs extends React.Component {
       actions: [],
       players: [],
       playersFilter: "",
-      actionsFilter: localStorage.getItem("logs_actions") ? localStorage.getItem("logs_actions") : "",
-      limit: localStorage.getItem("logs_limit") ? localStorage.getItem("logs_limit") : 100,
-      limitOptions: [100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000, 100000],
+      actionsFilter: localStorage.getItem("logs_actions")
+        ? localStorage.getItem("logs_actions")
+        : "",
+      limit: localStorage.getItem("logs_limit")
+        ? localStorage.getItem("logs_limit")
+        : 500,
+      limitOptions: [
+        100,
+        250,
+        500,
+        1000,
+        2500,
+        5000,
+        10000,
+        25000,
+        50000,
+        100000,
+      ],
     };
 
     this.loadLogs = this.loadLogs.bind(this);
-    this.setActionFilter = this.setActionFilter.bind(this)
-    this.setLimit = this.setLimit.bind(this)
+    this.setActionFilter = this.setActionFilter.bind(this);
+    this.setLimit = this.setLimit.bind(this);
   }
 
   componentDidMount() {
@@ -76,7 +99,7 @@ class Logs extends React.Component {
     const { actionsFilter, playersFilter, limit } = this.state;
     // Old endpoint
     // let qs = `?since_min_ago=${minutes}`;
-    let qs = `?end=${limit}`
+    let qs = `?end=${limit}`;
     if (actionsFilter !== "") {
       qs += `&filter_action=${actionsFilter}`;
     }
@@ -84,29 +107,29 @@ class Logs extends React.Component {
       qs += `&filter_player=${playersFilter}`;
     }
 
-    // "native" api 
+    // "native" api
     // get(`get_structured_logs${qs}`)
     return get(`get_recent_logs${qs}`)
-      .then(response => showResponse(response, "get_logs"))
-      .then(data => {
+      .then((response) => showResponse(response, "get_logs"))
+      .then((data) => {
         this.setState({
           logs: data.result.logs,
           actions: data.result.actions,
-          players: !data.result.players ? [] : data.result.players
+          players: !data.result.players ? [] : data.result.players,
         });
       })
       .catch(handle_http_errors);
   }
 
   setActionFilter(actionsFilter) {
-    this.setState({ actionsFilter }, this.loadLogs)
-    localStorage.setItem("logs_actions", actionsFilter)
+    this.setState({ actionsFilter }, this.loadLogs);
+    localStorage.setItem("logs_actions", actionsFilter);
   }
 
   setLimit(limit) {
-    this.setState({ limit }, this.loadLogs)
-    localStorage.setItem("logs_minutes", limit)
-  } 
+    this.setState({ limit }, this.loadLogs);
+    localStorage.setItem("logs_limit", limit);
+  }
 
   render() {
     const { classes, width } = this.props;
@@ -116,18 +139,27 @@ class Logs extends React.Component {
       actions,
       actionsFilter,
       limit,
-      limitOptions
+      limitOptions,
     } = this.state;
 
     const now = moment();
     return (
       <React.Fragment>
         <Grid container justify="flex-start">
-          <Grid item xs={12} className={`${classes.textLeft} ${classes.paddingLeft}`}>
+          <Grid
+            item
+            xs={12}
+            className={`${classes.textLeft} ${classes.paddingLeft}`}
+          >
             <h1 className={classes.marginBottom}>Logs view</h1>
-            <ListItemText  secondary="30s auto refresh" />
-            <AutoRefreshLine className={classes.marginTop} intervalFunction={this.loadLogs} execEveryMs={30000}
-            statusRefreshIntervalMs={500} classes={classes} />
+            <ListItemText secondary="30s auto refresh" />
+            <AutoRefreshLine
+              className={classes.marginTop}
+              intervalFunction={this.loadLogs}
+              execEveryMs={30000}
+              statusRefreshIntervalMs={500}
+              classes={classes}
+            />
           </Grid>
         </Grid>
         <Grid container justify="space-around" className={classes.marginBottom}>
@@ -155,7 +187,7 @@ class Logs extends React.Component {
             <Autocomplete
               id="tags-outlined"
               options={players.sort()}
-              getOptionLabel={option => option}
+              getOptionLabel={(option) => option}
               filterSelectedOptions
               onChange={(e, value) =>
                 this.setState(
@@ -163,7 +195,7 @@ class Logs extends React.Component {
                   this.loadLogs
                 )
               }
-              renderInput={params => (
+              renderInput={(params) => (
                 <TextField
                   className={classes.logsControl}
                   {...params}
@@ -188,8 +220,15 @@ class Logs extends React.Component {
         <Grid container justify="center" alignItems="center">
           <Grid className={classes.padding} xs={12}>
             <Paper className={classes.paperLogs}>
-              {logs.map(l => (
-                <pre key={l.raw} className={classes.logs}>{moment(new Date(l.timestamp_ms)).format("HH:mm:ss - ddd, MMM D") + '\t' + l.action.padEnd(20) + l.message}</pre>
+              {logs.map((l) => (
+                <pre key={l.raw} className={classes.logs}>
+                  {moment(new Date(l.timestamp_ms)).format(
+                    "HH:mm:ss - ddd, MMM D"
+                  ) +
+                    "\t" +
+                    l.action.padEnd(20) +
+                    l.message}
+                </pre>
               ))}
             </Paper>
           </Grid>
@@ -200,4 +239,3 @@ class Logs extends React.Component {
 }
 
 export default withWidth()(Logs);
-

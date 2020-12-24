@@ -32,6 +32,7 @@ from rcon.user_config import AutoBroadcasts, InvalidConfigurationError, Standard
 from rcon.cache_utils import RedisCached, get_redis_pool
 from .auth import login_required, api_response
 from .utils import _get_data
+from .multi_servers import forward_request
 from rcon.discord import send_to_discord_audit
 from subprocess import run, PIPE
 import unicodedata
@@ -60,14 +61,18 @@ def get_historical_logs(request):
     from_ = data.get("from")
     till = data.get("till")
     time_sort = data.get("time_sort", "desc")
+    exact_player_match = data.get("exact_player", False)
+    exact_action = data.get("exact_action", True)
 
     with enter_session() as sess:
         names = []
         name_filters = []
 
         q = sess.query(LogLine)
-        if action:
+        if action and not exact_action:
             q = q.filter(LogLine.type.ilike(f"%{action}%"))
+        elif action and exact_action:
+            q = q.filter(LogLine.type == action)
 
         time_filter = []
         if from_:
@@ -92,11 +97,18 @@ def get_historical_logs(request):
                 or_(LogLine.player1_steamid == id_, LogLine.player2_steamid == id_)
             )
 
-        if player_name:
+        if player_name and not exact_player_match:
             name_filters.extend(
                 [
                     LogLine.player1_name.ilike("%{}%".format(player_name)),
                     LogLine.player2_name.ilike("%{}%".format(player_name)),
+                ]
+            )
+        elif player_name and exact_player_match:
+            name_filters.extend(
+                [
+                    LogLine.player1_name == player_name,
+                    LogLine.player2_name == player_name,
                 ]
             )
 
@@ -134,6 +146,9 @@ def get_recent_logs(request):
     end = int(data.get("end", 10000))
     player_search = data.get("filter_player")
     action_filter = data.get("filter_action")
+    exact_player_match = data.get("exact_player_match", True)
+    exact_action = data.get("exact_action", False)
+    
 
     return api_response(
         result=game_logs.get_recent_logs(
@@ -141,6 +156,8 @@ def get_recent_logs(request):
             end=end,
             player_search=player_search,
             action_filter=action_filter,
+            exact_player_match=exact_player_match,
+            exact_action=exact_action
         ),
         command="get_recent_logs",
         arguments=dict(
@@ -151,9 +168,6 @@ def get_recent_logs(request):
         ),
         failed=False,
     )
-
-
-
 
 
 @csrf_exempt
@@ -511,6 +525,7 @@ def wrap_method(func, parameters):
         arguments = {}
         data = {}
         failure = False
+        others = None
         data = _get_data(request)
 
         for pname, param in parameters.items():
@@ -532,16 +547,20 @@ def wrap_method(func, parameters):
         except CommandFailedError:
             failure = True
             res = None
-
+        
+        if data.get('forward'):
+            try:
+                others = forward_request(request)
+            except: 
+                logger.exception("Unexpected error while forwarding request")
         # logger.debug("%s %s -> %s", func.__name__, arguments, res)
-        return JsonResponse(
-            {
-                "result": res,
-                "command": func.__name__,
-                "arguments": data,
-                "failed": failure,
-            }
-        )
+        return JsonResponse(dict(
+            result=res,
+            command=func.__name__,
+            arguments=data,
+            failed=failure,
+            forwards_results=others,
+        ))
 
     return wrapper
 
@@ -712,6 +731,12 @@ def download_vips(request):
     return response
 
 
+@login_required
+@csrf_exempt
+def get_connection_info(request):
+    return api_response({'name': ctl.get_name(), 'port': os.getenv('RCONWEB_PORT')})
+
+
 PREFIXES_TO_EXPOSE = ["get_", "set_", "do_"]
 
 commands = [
@@ -734,6 +759,7 @@ commands = [
     ("get_version", get_version),
     ("get_recent_logs", get_recent_logs),
     ("get_historical_logs", get_historical_logs),
+    ("get_connection_info", get_connection_info),
 ]
 
 logger.info("Initializing endpoint - %s", os.environ)
@@ -752,4 +778,4 @@ if not os.getenv("DJANGO_DEBUG", None):
         logger.info("Warming up the cache this may take minutes")
         ctl.get_players()
     except:
-        logger.exception("Failed to warm the cache %s", os.environ)
+        logger.exception("Failed to warm the cache")

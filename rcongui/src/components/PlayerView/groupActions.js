@@ -101,7 +101,7 @@ const GroupActions = ({
                   if (saveMessage) {
                     textHistory.saveText(message, sharedMessages)
                   }
-                  handleAction(actionType, p.name, message, durationNumber * durationMultiplier)
+                  handleAction(actionType, p.name, message, durationNumber * durationMultiplier, p.steam_id_64)
                 }
                 )
               }
