@@ -103,7 +103,7 @@ class ChatLoop:
     def record_line(self, log):
         id_ = f"{log['timestamp_ms']}|{log['line_without_time']}"
         if not self.red.sadd(self.duplicate_guard_key, id_):
-            logger.debug("Skipping duplicate: %s", id_)
+            #logger.debug("Skipping duplicate: %s", id_)
             return None
 
         logger.info("Recording: %s", id_)
