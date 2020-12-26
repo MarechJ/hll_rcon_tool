@@ -208,10 +208,14 @@ def unblacklist_player(request):
     try:
         remove_player_from_blacklist(data["steam_id_64"])
         audit("unblacklist", request, data)
-        if get_config()['BANS']['unblacklist_does_unban']:
+        if get_config()["BANS"]["unblacklist_does_unban"]:
             ctl.do_unban(data["steam_id_64"])  # also remove bans
-            if get_config()['MULTI_SERVERS']['broadcast_unbans']:
-                forward_command('/api/do_unban', json=data, sessionid=request.COOKIES.get('sessionid'))
+            if get_config()["MULTI_SERVERS"]["broadcast_unbans"]:
+                forward_command(
+                    "/api/do_unban",
+                    json=data,
+                    sessionid=request.COOKIES.get("sessionid"),
+                )
         failed = False
     except:
         logger.exception("Unable to unblacklist player")
@@ -235,9 +239,11 @@ def unban(request):
     try:
         ctl.do_unban(data["steam_id_64"])  # also remove bans
         audit("unblacklist", request, data)
-        if get_config()['MULTI_SERVERS']['broadcast_unbans']:
-            forward_command('/api/do_unban', json=data, sessionid=request.COOKIES.get('sessionid'))
-        if get_config()['BANS']['unban_does_unblacklist']:
+        if get_config()["MULTI_SERVERS"]["broadcast_unbans"]:
+            forward_command(
+                "/api/do_unban", json=data, sessionid=request.COOKIES.get("sessionid")
+            )
+        if get_config()["BANS"]["unban_does_unblacklist"]:
             try:
                 remove_player_from_blacklist(data["steam_id_64"])
             except CommandFailedError:
@@ -334,7 +340,11 @@ ctl = RecordedRcon(SERVER_INFO)
 @login_required
 @csrf_exempt
 def get_connection_info(request):
-    return api_response({"name": ctl.get_name(), "port": os.getenv("RCONWEB_PORT")})
+    return api_response(
+        {"name": ctl.get_name(), "port": os.getenv("RCONWEB_PORT")},
+        failed=False,
+        command="get_connection_info",
+    )
 
 
 PREFIXES_TO_EXPOSE = ["get_", "set_", "do_"]
@@ -349,7 +359,7 @@ commands = [
     ("set_standard_messages", set_standard_messages),
     ("get_version", get_version),
     ("get_connection_info", get_connection_info),
-    ("unban", unban)
+    ("unban", unban),
 ]
 
 logger.info("Initializing endpoint - %s", os.environ)
