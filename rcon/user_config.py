@@ -1,3 +1,5 @@
+import os
+
 from rcon.models import UserConfig, enter_session
 from rcon.commands import CommandFailedError
 
@@ -29,12 +31,12 @@ class InvalidConfigurationError(Exception):
     pass
 
 class AutoBroadcasts:
-    BROADCASTS_RANDOMIZE = 'broadcasts_randomize'
-    BROADCASTS_MESSAGES = 'broadcasts_messages'
-    BROADCASTS_ENABLED = 'broadcasts_enabled'
-    
     def __init__(self):
-        pass
+        server_number = os.getenv('SERVER_NUMBER', 0)
+        self.BROADCASTS_RANDOMIZE = f'{server_number}_broadcasts_randomize'
+        self.BROADCASTS_MESSAGES = f'{server_number}_broadcasts_messages'
+        self.BROADCASTS_ENABLED = f'{server_number}_broadcasts_enabled'
+    
 
     def seed_db(self, sess):
         if _get_conf(sess, self.BROADCASTS_RANDOMIZE) is None:
