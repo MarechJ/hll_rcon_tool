@@ -23,7 +23,7 @@ def get_server_list(request):
         if key == my_key:
             continue
         try:
-            res = requests.get(f'http://{host}/api/get_connection_info', cookies=dict(sessionid=request.COOKIES.get('sessionid')))
+            res = requests.get(f'http://{host}/api/get_connection_info', timeout=5, cookies=dict(sessionid=request.COOKIES.get('sessionid')))
             if res.ok:
                 names.append(res.json()['result'])
         except requests.exceptions.RequestException:
@@ -52,7 +52,7 @@ def forward_request(request):
             except json.JSONDecodeError:
                 data = None
             logger.info("Forwarding request: %s %s %s", url, params, data)
-            res = requests.get(url, params=params, json=data, cookies=dict(sessionid=request.COOKIES.get('sessionid')))
+            res = requests.get(url, params=params, json=data, timeout=5, cookies=dict(sessionid=request.COOKIES.get('sessionid')))
             if res.ok:
                 r = {'host': host,'response': res.json()}
                 results.append(r)
@@ -90,7 +90,7 @@ def forward_command(path, params=None, json=None, sessionid=None):
             url = f'http://{host}{path}'
 
             logger.info("Forwarding request: %s %s %s", url, params, data)
-            res = requests.get(url, params=params, json=data, cookies=dict(sessionid=sessionid))
+            res = requests.get(url, params=params, json=data, timeout=5, cookies=dict(sessionid=sessionid))
             if res.ok:
                 r = {'host': host,'response': res.json()}
                 results.append(r)

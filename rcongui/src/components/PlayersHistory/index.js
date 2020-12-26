@@ -153,6 +153,7 @@ const FilterPlayer = ({
   onDeleteFlag,
   onAddVip,
   onDeleteVip,
+  onUnban,
   vips,
 }) => {
   const playersHistory = constPlayersHistory.toJS();
@@ -237,6 +238,7 @@ const FilterPlayer = ({
                   kick={player.penalty_count.KICK}
                   tempban={player.penalty_count.TEMPBAN}
                   permaban={player.penalty_count.PERMABAN}
+                  onUnban={() => onUnban(player.steam_id_64)}
                   compact={false}
                   blacklisted={player.blacklisted}
                   flags={List(player.flags.map((v) => Map(v)))}
@@ -315,6 +317,7 @@ class PlayersHistory extends React.Component {
     this.loadVips = this.loadVips.bind(this);
     this.onAddVip = this.onAddVip.bind(this);
     this.onDeleteVip = this.onDeleteVip.bind(this);
+    this.unBanPlayer = this.unBanPlayer.bind(this);
   }
 
   onAddVip(name, steamID64) {
@@ -458,6 +461,21 @@ class PlayersHistory extends React.Component {
       .catch((error) => toast.error("Unable to connect to API " + error));
   }
 
+  unBanPlayer(steamId64) {
+    postData(`${process.env.REACT_APP_API_URL}unban`, {
+      steam_id_64: steamId64,
+    })
+      .then((response) =>
+        showResponse(
+          response,
+          `PlayerID ${steamId64} unbanned`,
+          true
+        )
+      )
+      .then(this._reloadOnSuccess)
+      .catch((error) => toast.error("Unable to connect to API " + error));
+  }
+
   componentDidMount() {
     this.getPlayerHistory();
     this.loadVips();
@@ -523,6 +541,7 @@ class PlayersHistory extends React.Component {
               onAddFlag={this.addFlagToPlayer}
               onDeleteFlag={this.deleteFlag}
               onAddVip={this.onAddVip}
+              onUnban={this.unBanPlayer}
               onDeleteVip={this.onDeleteVip}
               vips={this.state.vips}
             />
