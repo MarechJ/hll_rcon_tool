@@ -237,10 +237,10 @@ def unban(request):
     data = _get_data(request)
     res = {}
     results = None
-    
+
     try:
         ctl.do_unban(data["steam_id_64"])  # also remove bans
-        audit("unblacklist", request, data)
+        audit("unban", request, data)
         if get_config()["MULTI_SERVERS"]["broadcast_unbans"]:
             results = forward_command(
                 "/api/do_unban", json=data, sessionid=request.COOKIES.get("sessionid")
