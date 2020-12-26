@@ -271,7 +271,6 @@ function App() {
     "PurplePink": PurplePinkTheme,
     "CamoDark": CamoDarkTheme,
     "CamoLight": CamoLight,
-    "WithLove": withLove,
   }
   const theme = themes[userTheme] ? themes[userTheme] : lightTheme
 
