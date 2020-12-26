@@ -111,6 +111,9 @@ class ChatLoop:
             last_line = self.log_history[0]
         except IndexError:
             last_line = None
+        if not isinstance(last_line, dict) or not isinstance(log, dict):
+            logger.error("Can't record line of invalid format %s %s", log, last_line)
+            return None
         if last_line and last_line['timestamp_ms'] > log['timestamp_ms']:
             logger.error("Received old log record, ignoring")
             return None
@@ -176,12 +179,12 @@ class ChatRecorder:
                 continue
             if (
                 not last_log
-                or log["timestamp_ms"] / 1000 > last_log.event_time.timestamp()
+                or int(log["timestamp_ms"]) / 1000 > last_log.event_time.timestamp()
             ):
                 to_store.append(log)
             if (
                 last_log
-                and not log["timestamp_ms"] / 1000 == last_log.event_time.timestamp()
+                and not int(log["timestamp_ms"]) / 1000 == last_log.event_time.timestamp()
                 and last_log.raw == log["raw"]
             ):
                 logger.info("New logs collection at: %s", log)
