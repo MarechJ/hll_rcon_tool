@@ -1,4 +1,4 @@
-FROM node:15-stretch
+FROM arm32v7/node:15-stretch
 
 WORKDIR /code
 
