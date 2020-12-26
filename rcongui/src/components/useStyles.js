@@ -184,6 +184,14 @@ const useStyles = makeStyles(theme => ({
     width: '100%',
     backgroundColor: theme.palette.background.paper,
   },
+  inlineFormControl: {
+    margin: theme.spacing(1),
+    minWidth: 120,
+    display: "inline",
+  },
+  selectEmpty: {
+    marginTop: theme.spacing(2),
+  },
 }));
 
 export default useStyles;

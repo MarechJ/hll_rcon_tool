@@ -24,12 +24,12 @@ def get_server_list(request):
             continue
         try:
             res = requests.get(f'http://{host}/api/get_connection_info', cookies=dict(sessionid=request.COOKIES.get('sessionid')))
+            if res.ok:
+                names.append(res.json()['result'])
         except requests.exceptions.RequestException:
             logger.warning(f"Unable to connect with {host}")
-        if res.ok:
-            names.append(res.json()['result'])
     
-    return api_response(names)
+    return api_response(names, failed=False, command="server_list")
         
 
 def forward_request(request):
