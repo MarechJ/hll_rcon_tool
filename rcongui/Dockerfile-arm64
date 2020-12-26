@@ -1,9 +1,9 @@
-FROM arm64v8/node:14-stretch
+FROM node:15-stretch
 
 WORKDIR /code
 
 RUN apt-get update -y && apt-get install -y nginx apache2-utils
-COPY nginx.conf /etc/nginx/sites-available/default
+
 
 RUN mkdir /pw
 
@@ -16,11 +16,16 @@ ENV REACT_APP_API_URL /api/
 
 COPY src/ src/
 COPY public/ public/
+COPY entrypoint.sh .
+
+RUN chmod +x /code/entrypoint.sh
 
 RUN npm run build
+COPY nginx.conf /etc/nginx/sites-available/default
 
-COPY entrypoint.sh .
-RUN chmod +x /code/entrypoint.sh
+RUN rm -rf src/
+RUN rm -rf public/
+RUN rm -rf node_modules/
 
 WORKDIR /var/www
 
