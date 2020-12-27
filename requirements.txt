@@ -14,4 +14,4 @@ discord-webhook==0.8.0
 discord>=1.0.1
 requests>=2.21.0
 steam==1.0.2
-pyaml==20.4.0
+pyaml==20.4.0alembic==1.4.3

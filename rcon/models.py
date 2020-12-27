@@ -147,6 +147,7 @@ class PlayerName(Base):
         'steam_id_64.id'), nullable=False, index=True)
     name = Column(String, nullable=False)
     created = Column(DateTime, default=datetime.utcnow)
+    last_seen = Column(DateTime, default=datetime.utcnow)
 
     def to_dict(self):
         return dict(
