@@ -189,6 +189,7 @@ class BlacklistedPlayer(Base):
     )
     is_blacklisted = Column(Boolean, default=False)
     reason = Column(String)
+    by = Column(String)
 
     def to_dict(self):
         return dict(
@@ -243,6 +244,7 @@ class LogLine(Base):
     content = Column(String)
     steamid1 = relationship("PlayerSteamID", foreign_keys=[player1_steamid])
     steamid2 = relationship("PlayerSteamID", foreign_keys=[player2_steamid])
+    server = Column(String)
     
     def to_dict(self):
         return dict(
@@ -257,6 +259,7 @@ class LogLine(Base):
             player2_id=self.player1_steamid,
             raw=self.raw,
             content=self.content,
+            server=self.server
         )
 
 

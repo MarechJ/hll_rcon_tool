@@ -217,6 +217,7 @@ class ChatRecorder:
                         steamid2=steamid_2,
                         raw=log["raw"],
                         content=log["message"],
+                        server=os.getenv("SERVER_NUMBER"),
                     )
                 )
                 sess.commit()

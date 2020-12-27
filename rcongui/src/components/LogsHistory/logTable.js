@@ -30,6 +30,7 @@ export default function LogsTable({logs}) {
             <TableCell>Log</TableCell>
             <TableCell>Name 1</TableCell>
             <TableCell>Name 2</TableCell>
+            <TableCell>Server</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -40,6 +41,7 @@ export default function LogsTable({logs}) {
               <TableCell>{row.content}</TableCell>
               <TableCell>{row.player1_id ? <Link color="inherit" target="_blank" href={`/api/player?id=${row.player2_id}`}>{row.player_name}</Link> : row.player_name}</TableCell>
               <TableCell>{row.player2_id ? <Link color="inherit" target="_blank" href={`/api/player?id=${row.player2_id}`}>{row.player2_name}</Link> : row.player2_name}</TableCell>
+              <TableCell>{row.server}</TableCell>
             </TableRow>
           ))}
         </TableBody>

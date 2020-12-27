@@ -35,6 +35,7 @@ const LogsFilter = ({ onSubmit }) => {
   const [name, setName] = React.useState("");
   const [steamId64, setSteamId64] = React.useState("");
   const [type, setType] = React.useState("");
+  const [server, setServer] = React.useState("");
   const [from, setFrom] = React.useState(null);
   const [till, setTill] = React.useState(null);
   const [limit, setLimit] = React.useState(1000);
@@ -47,6 +48,13 @@ const LogsFilter = ({ onSubmit }) => {
       <Grid item xs={12} className={classes.margin}>
         <form className={classes.flexContainer}>
           <Grid container spacing={1} justify="space-evenly">
+            <Grid item>
+              <TextField
+                label="Steam id"
+                value={steamId64}
+                onChange={(e) => setSteamId64(e.target.value)}
+              />
+            </Grid>
             <Grid item>
               <TextField
                 label="Name"
@@ -65,13 +73,6 @@ const LogsFilter = ({ onSubmit }) => {
             </Grid>
             <Grid item>
               <TextField
-                label="Steam id"
-                value={steamId64}
-                onChange={(e) => setSteamId64(e.target.value)}
-              />
-            </Grid>
-            <Grid item>
-              <TextField
                 label="Type"
                 value={type}
                 onChange={(e) => setType(e.target.value)}
@@ -86,7 +87,13 @@ const LogsFilter = ({ onSubmit }) => {
                 className="MuiFormLabel-root"
               />
             </Grid>
-
+            <Grid item>
+              <TextField
+                label="Server filter"
+                value={server}
+                onChange={(e) => setServer(e.target.value)}
+              />
+            </Grid>
             <Grid item>
               <TextField
                 label="Limit"

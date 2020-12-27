@@ -183,7 +183,7 @@ def blacklist_player(request):
         # ctl.do_perma_ban(
         #     steam_id_64=data["steam_id_64"], reason=data["reason"], by=name
         # )
-        add_player_to_blacklist(data["steam_id_64"], data["reason"], name)
+        add_player_to_blacklist(data["steam_id_64"], data["reason"], name, request.user.username)
         audit("Blacklist", request, data)
         failed = False
     except:

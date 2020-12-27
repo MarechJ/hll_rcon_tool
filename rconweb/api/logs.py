@@ -29,6 +29,7 @@ def get_historical_logs(request):
     time_sort = data.get("time_sort", "desc")
     exact_player_match = data.get("exact_player", False)
     exact_action = data.get("exact_action", True)
+    server_filter = data.get("server_filter")
 
     with enter_session() as sess:
         names = []
@@ -80,6 +81,9 @@ def get_historical_logs(request):
 
         if name_filters:
             q = q.filter(or_(*name_filters))
+
+        if server_filter:
+            q = q.filter(LogLine.server == server_filter)
 
         res = (
             q.order_by(
