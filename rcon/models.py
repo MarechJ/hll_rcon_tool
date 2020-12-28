@@ -42,7 +42,7 @@ class PlayerSteamID(Base):
     steam_id_64 = Column(String, nullable=False, index=True, unique=True)
     created = Column(DateTime, default=datetime.utcnow)
     names = relationship("PlayerName", backref="steamid",
-                         uselist=True, order_by="desc(PlayerName.created)")
+                         uselist=True, order_by="desc(PlayerName.last_seen)")
     # If you ever change the ordering of sessions make sure you change the playtime calc code
     sessions = relationship("PlayerSession", backref="steamid",
                             uselist=True, order_by="desc(PlayerSession.created)")
