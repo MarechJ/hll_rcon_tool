@@ -115,7 +115,7 @@ const LogsFilter = ({ onSubmit }) => {
             <Grid item>
               <MuiPickersUtilsProvider utils={MomentUtils}>
                 <DateTimePicker
-                  label="Last seen until"
+                  label="Till time"
                   format="YYYY/MM/DD HH:mm"
                   value={till}
                   onChange={setTill}
