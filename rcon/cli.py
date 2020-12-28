@@ -64,7 +64,7 @@ def run_log_recorder(frequency_min, now):
 
 
 def init(force=False):
-    init_db(force)
+    #init_db(force)
     seed_default_config()
 
 

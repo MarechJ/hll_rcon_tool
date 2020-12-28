@@ -141,26 +141,30 @@ def _save_steam_id(sess, steam_id_64):
     return steamid
 
 
-def _save_player_alias(sess, steamid, player_name):
+def _save_player_alias(sess, steamid, player_name, timestamp_ms):
     name = sess.query(PlayerName).filter(
         PlayerName.name == player_name,
         PlayerName.steamid == steamid
     ).one_or_none()
 
+    dt = datetime.datetime.fromtimestamp(timestamp_ms)
     if not name:
-        name = PlayerName(name=player_name, steamid=steamid)
+        name = PlayerName(name=player_name, steamid=steamid, last_seen=dt)
         sess.add(name)
         logger.info("Adding player %s with new name %s",
                     steamid.steam_id_64, player_name)
+        sess.commit()
+    else:
+        name.last_seen = dt
         sess.commit()
 
     return name
 
 
-def save_player(player_name, steam_id_64):
+def save_player(player_name, steam_id_64, timestamp_ms):
     with enter_session() as sess:
         steamid = _save_steam_id(sess, steam_id_64)
-        _save_player_alias(sess, steamid, player_name)
+        _save_player_alias(sess, steamid, player_name, timestamp_ms)
 
 
 def save_player_action(rcon, action_type, player_name, by, reason='', steam_id_64=None):
@@ -243,10 +247,9 @@ def ban_if_blacklisted(rcon:Rcon, steam_id_64, name):
 
         if player.blacklist and player.blacklist.is_blacklisted:
             logger.info("Player %s was banned due blacklist, reason: %s", str(name), player.blacklist.reason)
-            rcon.do_perma_ban(player=name, reason=player.blacklist.reason, admin_name="BLACKLIST")
-            # TODO save author of blacklist
+            rcon.do_perma_ban(player=name, reason=player.blacklist.reason, admin_name=f"BLACKLIST: {player.blacklist.by}")
             safe_save_player_action(
-                rcon=rcon, player_name=name, action_type="PERMABAN", reason=player.blacklist.reason, by='BLACKLIST', steam_id_64=steam_id_64
+                rcon=rcon, player_name=name, action_type="PERMABAN", reason=player.blacklist.reason, by=f"BLACKLIST: {player.blacklist.by}", steam_id_64=steam_id_64
             )
             try:
                 send_to_discord_audit(
@@ -373,11 +376,12 @@ def add_player_to_blacklist(steam_id_64, reason, name=None, by=None):
                     player), player.blacklist.reason, reason)
             player.blacklist.is_blacklisted = True
             player.blacklist.reason = reason
+            player.blacklist.by = by
         else:
             logger.info("Player %s blacklisted for %s", str(player), reason)
             sess.add(
                 BlacklistedPlayer(
-                    steamid=player, is_blacklisted=True, reason=reason)
+                    steamid=player, is_blacklisted=True, reason=reasonm, by=bytearray)
             )
 
         sess.commit()
@@ -414,7 +418,7 @@ def inject_steam_id_64(func):
 @on_connected
 @inject_steam_id_64
 def handle_on_connect(rcon, struct_log, steam_id_64):
-    save_player(struct_log['player'], steam_id_64)
+    save_player(struct_log['player'], steam_id_64, timestamp_ms=int(struct_log['timestamp_ms']) / 1000)
     save_start_player_session(steam_id_64, struct_log['timestamp_ms'])
     ban_if_blacklisted(rcon, steam_id_64, struct_log['player'])
     ban_if_has_vac_bans(rcon, steam_id_64, struct_log['player'])

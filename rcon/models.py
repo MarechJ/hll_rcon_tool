@@ -195,7 +195,8 @@ class BlacklistedPlayer(Base):
         return dict(
             steam_id_64=self.steamid.steam_id_64,
             is_blacklisted=self.is_blacklisted,
-            reason=self.reason
+            reason=self.reason,
+            by=self.by
         )
 
 

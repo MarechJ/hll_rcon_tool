@@ -20,6 +20,8 @@ import { faSteam } from "@fortawesome/free-brands-svg-icons";
 import StarIcon from "@material-ui/icons/Star";
 import StarBorder from "@material-ui/icons/StarBorder";
 import HowToRegIcon from "@material-ui/icons/HowToReg";
+import AccessTimeIcon from '@material-ui/icons/AccessTime';
+import BlockIcon from '@material-ui/icons/Block';
 
 const WithPopver = ({ classes, popoverContent, children }) => {
   const [anchorEl, setAnchorEl] = React.useState(null);
@@ -83,6 +85,7 @@ const PlayerItem = ({
   onDeleteFlag,
   onAddVip,
   onDeleteVip,
+  onTempBan,
   isVip,
   compact = true,
 }) => {
@@ -150,16 +153,23 @@ const PlayerItem = ({
                           title="Remove the player from the blacklist"
                           arrow
                         >
-                          <PersonAddIcon
+                          <BlockIcon
                             color="primary"
                             onClick={onUnBlacklist}
                           />
                         </Tooltip>
                       ) : (
                         <Tooltip title="Add the player to the blacklist" arrow>
-                          <PersonAddDisabledIcon onClick={onBlacklist} />
+                          <BlockIcon onClick={onBlacklist} />
                         </Tooltip>
                       )}
+                    </IconButton>
+                  </Grid>
+                  <Grid item>
+                    <IconButton size="small">
+                      <Tooltip title="Apply temp ban to player (time will start now)" arrow>
+                        <AccessTimeIcon onClick={onTempBan} />
+                      </Tooltip>
                     </IconButton>
                   </Grid>
                   <Grid item>

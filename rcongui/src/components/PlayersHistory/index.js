@@ -154,6 +154,7 @@ const FilterPlayer = ({
   onAddVip,
   onDeleteVip,
   onUnban,
+  onTempBan,
   vips,
 }) => {
   const playersHistory = constPlayersHistory.toJS();
@@ -247,6 +248,14 @@ const FilterPlayer = ({
                     setDoConfirmPlayer({
                       player: player.steam_id_64,
                       actionType: "blacklist",
+                      steam_id_64: player.steam_id_64,
+                    })
+                  }
+                  onTempBan={() =>
+                    setDoConfirmPlayer({
+                      player: player.steam_id_64,
+                      actionType: "temp_ban",
+                      steam_id_64: player.steam_id_64,
                     })
                   }
                   onUnBlacklist={() => onUnBlacklist(player.steam_id_64)}
@@ -271,8 +280,12 @@ const FilterPlayer = ({
         <ReasonDialog
           open={doConfirmPlayer}
           handleClose={() => setDoConfirmPlayer(false)}
-          handleConfirm={(actionType, steamId64, reason) => {
-            onBlacklist(steamId64, reason);
+          handleConfirm={(actionType, player, reason, durationHours, steamId64) => {
+            if (actionType === "blacklist") {
+              onBlacklist(steamId64, reason);
+            } else if (actionType === "temp_ban") {
+              onTempBan(steamId64, reason, durationHours)
+            }
             setDoConfirmPlayer(false);
           }}
         />
@@ -318,7 +331,26 @@ class PlayersHistory extends React.Component {
     this.onAddVip = this.onAddVip.bind(this);
     this.onDeleteVip = this.onDeleteVip.bind(this);
     this.unBanPlayer = this.unBanPlayer.bind(this);
+    this.onTempBan = this.onTempBan.bind(this);
   }
+
+  onTempBan(steamId64, reason, durationHours) {
+    postData(`${process.env.REACT_APP_API_URL}do_temp_ban`, {
+      steam_id_64: steamId64,
+      reason: reason,
+      duration_hours: durationHours,
+    })
+      .then((response) =>
+        showResponse(
+          response,
+          `PlayerID ${steamId64} temp banned ${durationHours} for ${reason}`,
+          true
+        )
+      )
+      .then(this._reloadOnSuccess)
+      .catch((error) => toast.error("Unable to connect to API " + error));
+  }
+
 
   onAddVip(name, steamID64) {
     return sendAction("do_add_vip", {
@@ -543,6 +575,7 @@ class PlayersHistory extends React.Component {
               onAddVip={this.onAddVip}
               onUnban={this.unBanPlayer}
               onDeleteVip={this.onDeleteVip}
+              onTempBan={this.onTempBan}
               vips={this.state.vips}
             />
         </Grid>

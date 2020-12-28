@@ -103,7 +103,7 @@ class ReasonDialog extends React.Component {
       durationMultiplier,
     } = this.state;
     const textHistory = new TextHistory("punitions");
-    console.log(open)
+ 
     return (
       <Dialog open={open} aria-labelledby="form-dialog-title">
         <DialogTitle id="form-dialog-title">

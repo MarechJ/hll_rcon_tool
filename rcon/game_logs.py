@@ -2,6 +2,7 @@ import logging
 import time
 import sys
 import datetime
+import os
 
 from rcon.map_recorder import ThreadMapRecorder
 from rcon.extended_commands import Rcon
