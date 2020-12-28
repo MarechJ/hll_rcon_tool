@@ -111,10 +111,9 @@ class ChatLoop:
             last_line = self.log_history[0]
         except IndexError:
             last_line = None
-        if not isinstance(last_line, dict) or not isinstance(log, dict):
-            logger.error("Can't record line of invalid format %s %s", log, last_line)
-            return None
-        if last_line and last_line['timestamp_ms'] > log['timestamp_ms']:
+        if not isinstance(last_line, dict):
+            logger.error("Can't check against last_line, invalid_format %s", last_line)
+        elif last_line and last_line['timestamp_ms'] > log['timestamp_ms']:
             logger.error("Received old log record, ignoring")
             return None
 
