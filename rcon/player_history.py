@@ -381,7 +381,7 @@ def add_player_to_blacklist(steam_id_64, reason, name=None, by=None):
             logger.info("Player %s blacklisted for %s", str(player), reason)
             sess.add(
                 BlacklistedPlayer(
-                    steamid=player, is_blacklisted=True, reason=reasonm, by=bytearray)
+                    steamid=player, is_blacklisted=True, reason=reason, by=bytearray)
             )
 
         sess.commit()
