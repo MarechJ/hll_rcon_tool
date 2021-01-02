@@ -199,7 +199,7 @@ class LogsHistory extends React.Component {
     steamId64 = null,
     from = null,
     till = null,
-    limit = 1000,
+    limit = 10000,
     timeSort = "desc",
     exactPlayer = false,
     exactAction = false,
