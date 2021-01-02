@@ -62,12 +62,12 @@ def get_profiles(steam_ids, nb_sessions=0):
         return [p.to_dict(limit_sessions=nb_sessions) for p in players]
 
 
-def _get_set_player(sess, player_name, steam_id_64):
+def _get_set_player(sess, player_name, steam_id_64, timestamp=None):
     player = get_player(sess, steam_id_64)
     if player is None:
         player = _save_steam_id(sess, steam_id_64)
     if player_name:
-        _save_player_alias(sess, player, player_name)
+        _save_player_alias(sess, player, player_name, timestamp or datetime.datetime.now().timestamp())
 
     return player
 
@@ -141,13 +141,16 @@ def _save_steam_id(sess, steam_id_64):
     return steamid
 
 
-def _save_player_alias(sess, steamid, player_name, timestamp_ms):
+def _save_player_alias(sess, steamid, player_name, timestamp=None):
     name = sess.query(PlayerName).filter(
         PlayerName.name == player_name,
         PlayerName.steamid == steamid
     ).one_or_none()
 
-    dt = datetime.datetime.fromtimestamp(timestamp_ms)
+    if timestamp:
+        dt = datetime.datetime.fromtimestamp(timestamp)
+    else:
+        dt = datetime.datetime.now()
     if not name:
         name = PlayerName(name=player_name, steamid=steamid, last_seen=dt)
         sess.add(name)
@@ -161,16 +164,16 @@ def _save_player_alias(sess, steamid, player_name, timestamp_ms):
     return name
 
 
-def save_player(player_name, steam_id_64, timestamp_ms):
+def save_player(player_name, steam_id_64, timestamp=None):
     with enter_session() as sess:
         steamid = _save_steam_id(sess, steam_id_64)
-        _save_player_alias(sess, steamid, player_name, timestamp_ms)
+        _save_player_alias(sess, steamid, player_name, timestamp or datetime.datetime.now())
 
 
-def save_player_action(rcon, action_type, player_name, by, reason='', steam_id_64=None):
+def save_player_action(rcon, action_type, player_name, by, reason='', steam_id_64=None, timestamp=None):
     with enter_session() as sess:
         _steam_id_64 = steam_id_64 or rcon.get_player_info(player_name)['steam_id_64']
-        player = _get_set_player(sess, player_name, _steam_id_64)
+        player = _get_set_player(sess, player_name, _steam_id_64, timestamp=timestamp)
         sess.add(
             PlayersAction(
                 action_type=action_type.upper(),
@@ -189,7 +192,7 @@ def safe_save_player_action(rcon, action_type, player_name, by, reason='', steam
         return False
 
 
-def save_start_player_session(steam_id_64, timestamp_ms):
+def save_start_player_session(steam_id_64, timestamp):
     with enter_session() as sess:
         player = get_player(sess, steam_id_64)
         if not player:
@@ -200,17 +203,17 @@ def save_start_player_session(steam_id_64, timestamp_ms):
         sess.add(
             PlayerSession(
                 steamid=player,
-                start=datetime.datetime.fromtimestamp(timestamp_ms/1000)
+                start=datetime.datetime.fromtimestamp(timestamp)
             )
         )
         logger.info("Recorded player %s session start at %s",
                     steam_id_64, datetime.datetime.fromtimestamp(
-                        timestamp_ms/1000)
+                        timestamp)
                     )
         sess.commit()
 
 
-def save_end_player_session(steam_id_64, timestamp_ms):
+def save_end_player_session(steam_id_64, timestamp):
     with enter_session() as sess:
         player = get_player(sess, steam_id_64)
         if not player:
@@ -229,7 +232,7 @@ def save_end_player_session(steam_id_64, timestamp_ms):
                 steamid=player,
             )
         last_session.end = datetime.datetime.fromtimestamp(
-            timestamp_ms / 1000
+            timestamp
         )
         logger.info("Recorded player %s session end at %s",
                     steam_id_64, last_session.end)
@@ -418,8 +421,9 @@ def inject_steam_id_64(func):
 @on_connected
 @inject_steam_id_64
 def handle_on_connect(rcon, struct_log, steam_id_64):
-    save_player(struct_log['player'], steam_id_64, timestamp_ms=int(struct_log['timestamp_ms']) / 1000)
-    save_start_player_session(steam_id_64, struct_log['timestamp_ms'])
+    timestamp = int(struct_log['timestamp_ms']) / 1000
+    save_player(struct_log['player'], steam_id_64, timestamp=int(struct_log['timestamp_ms']) / 1000)
+    save_start_player_session(steam_id_64, timestamp=timestamp)
     ban_if_blacklisted(rcon, steam_id_64, struct_log['player'])
     ban_if_has_vac_bans(rcon, steam_id_64, struct_log['player'])
 
@@ -427,7 +431,7 @@ def handle_on_connect(rcon, struct_log, steam_id_64):
 @on_disconnected
 @inject_steam_id_64
 def handle_on_disconnect(rcon, struct_log, steam_id_64):
-    save_end_player_session(steam_id_64, struct_log['timestamp_ms'])
+    save_end_player_session(steam_id_64, struct_log['timestamp_ms'] / 1000)
 
 
 if __name__ == '__main__':

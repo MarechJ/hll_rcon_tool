@@ -17,7 +17,7 @@ then
   ./manage.py migrate --noinput
   ./manage.py collectstatic --noinput
   echo "from django.contrib.auth.models import User; User.objects.create_superuser('admin', 'admin@example.com', 'admin') if not User.objects.filter(username='admin').first() else None" | python manage.py shell
-  gunicorn -w 8 -t 120 -b 0.0.0.0 rconweb.wsgi
+  gunicorn -w $NB_API_WORKERS -t 120 -b 0.0.0.0 rconweb.wsgi
   cd ..
   ./manage.py unregister_api
 else

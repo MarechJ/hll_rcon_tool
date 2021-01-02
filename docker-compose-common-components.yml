@@ -31,6 +31,7 @@ services:
             SILENT_MAP_RECORDER: ${SILENT_MAP_RECORDER}
             SUPERVISOR_RPC_URL: http://supervisor:9001/RPC2
             SERVER_NUMBER: 1
+            NB_API_WORKER: ${NB_API_WORKER}
             CONFIG_DIR: /config/
         restart: always
         volumes: 
