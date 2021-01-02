@@ -154,7 +154,8 @@ class PlayerName(Base):
             id=self.id,
             name=self.name,
             steam_id_64=self.steamid.steam_id_64,
-            created=self.created
+            created=self.created,
+            last_seen=self.last_seen,
         )
 
 
