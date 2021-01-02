@@ -1,6 +1,7 @@
 import logging
 import os
 from functools import lru_cache
+import re
 
 import discord.utils
 import requests
@@ -155,7 +156,7 @@ class DiscordWebhookHandler:
             content = ""
             triggered = False
             if self.ping_trigger_words:
-                msg_words = message.split()
+                msg_words = re.split('[^a-zA-Z]', message)
                 for trigger_word in self.ping_trigger_words:
                     for i, msg_word in enumerate(msg_words):
                         if trigger_word == msg_word.lower():
