@@ -72,12 +72,18 @@ class ServerStatus extends React.Component {
       map: "",
       serverList: List(),
       refreshIntervalSec: 10,
+      listRefreshIntervalSec: 30,
       interval: null,
+      intervalLoadList: null,
     };
 
     this.debouncedLoad = debounce(
       this.load.bind(this),
       this.state.refreshIntervalSec
+    );
+    this.debouncedLoadList = debounce(
+      this.loadServerList.bind(this),
+      this.state.listRefreshIntervalSec
     );
   }
 
@@ -89,14 +95,21 @@ class ServerStatus extends React.Component {
         this.state.refreshIntervalSec * 1000
       ),
     });
+    this.setState({
+      interval: setInterval(
+        this.debouncedLoadList,
+        this.state.listRefreshIntervalSec * 1000
+      ),
+    });
     this.loadServerList();
   }
 
   componentWillUnmount() {
     clearInterval(this.state.interval);
+    clearInterval(this.state.intervalLoadList);
   }
 
-  async load(command) {
+  async load() {
     return get(`get_status`)
       .then((response) => showResponse(response, "get_status", false))
       .then((data) => {

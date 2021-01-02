@@ -152,7 +152,8 @@ const LogsFilter = ({ onSubmit }) => {
                     limit,
                     order,
                     exactPlayer,
-                    exactAction
+                    exactAction,
+                    server
                   );
                 }}
                 onClick={(e) => {
@@ -166,7 +167,8 @@ const LogsFilter = ({ onSubmit }) => {
                     limit,
                     order,
                     exactPlayer,
-                    exactAction
+                    exactAction,
+                    server
                   );
                 }}
               >
@@ -200,7 +202,8 @@ class LogsHistory extends React.Component {
     limit = 1000,
     timeSort = "desc",
     exactPlayer = false,
-    exactAction = false
+    exactAction = false,
+    server = null,
   ) {
     postData(`${process.env.REACT_APP_API_URL}get_historical_logs`, {
       player_name: name,
@@ -212,6 +215,7 @@ class LogsHistory extends React.Component {
       time_sort: timeSort,
       exact_player: exactPlayer,
       exact_action: exactAction,
+      server_filter: server,
     })
       .then((res) => showResponse(res, "get_historical_logs", false))
       .then((res) => {

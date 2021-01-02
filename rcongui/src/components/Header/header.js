@@ -102,7 +102,7 @@ class LoginBox extends React.Component {
     });
   }
 
-  componentWillMount() {
+  componentWillUnmount() {
     clearInterval(this.state.interval);
   }
 

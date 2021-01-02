@@ -80,9 +80,7 @@ class ServerCtl:
                 int(self.config['port']),
                 self.config['password']
             )
-        except ValueError as e:
-            raise ValueError("HLL_PORT must be an integer") from e
-        except TypeError as e:
+        except (TypeError, ValueError) as e:
             logger.critical("Invalid connection information")
             raise
 

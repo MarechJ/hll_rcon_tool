@@ -365,7 +365,7 @@ commands = [
     ("unban", unban),
 ]
 
-logger.info("Initializing endpoint - %s", os.environ)
+logger.info("Initializing endpoint")
 
 # Dynamically register all the methods from ServerCtl
 for name, func in inspect.getmembers(ctl):
@@ -380,5 +380,6 @@ if not os.getenv("DJANGO_DEBUG", None):
     try:
         logger.info("Warming up the cache this may take minutes")
         ctl.get_players()
+        logger.info("Cache warm up done")
     except:
         logger.exception("Failed to warm the cache")
