@@ -330,7 +330,7 @@ def wrap_method(func, parameters):
                 command=func.__name__,
                 arguments=data,
                 failed=failure,
-                forwards_results=others,
+                forward_results=others,
             )
         )
 
