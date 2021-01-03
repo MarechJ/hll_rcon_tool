@@ -163,11 +163,15 @@ class ChatRecorder:
     def __init__(self, dump_frequency_min=5, run_immediately=False):
         self.dump_frequency_min = dump_frequency_min
         self.run_immediately = run_immediately
+        self.server_id = os.getenv("SERVER_NUMBER")
+        if not self.server_id:
+            raise ValueError("SERVER_NUMBER is not set, can't record logs")
 
     def _get_new_logs(self, sess):
         to_store = []
         last_log = (
             sess.query(LogLine)
+            .filter(LogLine.server == self.server_id)
             .order_by(desc(LogLine.event_time))
             .limit(1)
             .one_or_none()
