@@ -339,6 +339,7 @@ class PlayersHistory extends React.Component {
       steam_id_64: steamId64,
       reason: reason,
       duration_hours: durationHours,
+      forward: true,
     })
       .then((response) =>
         showResponse(
