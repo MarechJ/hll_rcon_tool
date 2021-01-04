@@ -95,8 +95,7 @@ Alternatively you can also specify them in the command line. [More details](http
 
 #### Raspberry-Pi or any ARM32v7
 
-    docker-compose -f docker-compose.yml -f docker-compose.arm32v7.yml build
-    docker-compose -f docker-compose.yml -f docker-compose.arm32v7.yml  up -d 
+    docker-compose -f docker-compose.yml -f docker-compose.arm32v7.yml  up -d --build
 
 
 The web application will be available on `<your server ip>:$RCONWEB_PORT` (you can use http://localhost:8010 if you test from the machine where it's installed)
