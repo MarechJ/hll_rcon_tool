@@ -140,19 +140,18 @@ This won't happen for every updates.
 #### Linux
 
     git pull
-    docker-compose pull && docker-compose up -d
+    docker-compose pull && docker-compose up -d --force-recreate --remove-orphans
 
 
 #### Windows
 
     git pull 
-    docker-compose pull && docker-compose -f docker-compose.yml -f docker-compose.windows.yml up -d 
+    docker-compose pull && docker-compose -f docker-compose.yml -f docker-compose.windows.yml up -d --force-recreate --remove-orphans
 
 #### Raspberry-Pi or any ARM32v7
 
     git pull 
-    docker-compose -f docker-compose.yml -f docker-compose.arm32v7.yml build
-    docker-compose -f docker-compose.yml -f docker-compose.arm32v7.yml  up -d 
+    docker-compose -f docker-compose.yml -f docker-compose.arm32v7.yml up --build -d --force-recreate --remove-orphans
 
 Or download the [latest zip release](https://github.com/MarechJ/hll_rcon_tool/releases/latest)
 
