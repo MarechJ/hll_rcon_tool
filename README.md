@@ -8,8 +8,11 @@ Please join us on discord if you use it, for feedback, troubleshooting and infor
 Feel free to contribute, some parts would need a rewrite (I single-handedly built it so I took some shortcuts).
 There's a LOT of new cool features that could be added, I'd be happy to walk through the code with you if you want to get involved.
 
-Here's a small sample:
-![Live view page](/images/homepage.png)
+Here's a sample:
+![Live view page](/images/Rcon.png)
+![Settings](/images/Rcon2.png)
+![Player history overview](/images/Rcon3.png)
+![Historical logs](/images/Rcon4.png)
 
 # How to install the App
 
