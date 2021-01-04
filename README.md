@@ -1,12 +1,20 @@
 # Hell Let Loose (HLL) advanced RCON  
 
-An extended RCON tool for Hell Let loose.
-It's composed of HTTP Api, a friendly GUI and if you need it a cli or use it as a library to build your own client.
+An extended RCON tool for Hell Let loose, meant to replace and go WAY beyhond the official tool.
 
-Please join us on discord if you use it, for feedback, troubleshooting and informations about updates: https://discord.gg/hZx6gn3
+It is essentially a website that you can self host (or if you ask around the discord, some people can probably host it for you)
 
-Feel free to contribute, some parts would need a rewrite (I single-handedly built it so I took some shortcuts).
-There's a LOT of new cool features that could be added, I'd be happy to walk through the code with you if you want to get involved.
+> Why a website?
+- It's running 24/7 so you have A LOT features that you couldn't get with a simple desktop app (recording and forwarding of logs, discord alerts, player profile etc..)
+- It's more secure / convenient, a website is centralized, meaning that all actions have to go through it, you don't need to give the real RCON password to you moderators, all activity is recorded in one place, you can share configuration with other, etc...
+- It does not require any installation on the client side, you just need a browser
+
+> Yes but I don't know anything about console commands, coding and such?
+
+It's a 2 steps installation (5 if you include the pre-requistes), many not so technical people managed so you probably can too.
+The community grew quite big so if you still don't understand what to do after reading this just go and ask on discord :)
+
+**Join us on discord if you use it, for feedback, troubleshooting and informations about updates:** https://discord.gg/hZx6gn3
 
 Here's a small sample:
 ![Live view page](/images/homepage.png)
@@ -15,10 +23,10 @@ Here's a small sample:
 
 ### Pre-requistes:
 
-  - Having some basic shell (command prompt) skills. Feel free to ask for help on the Discord
-  - Having a dedicated server - This app is meant to run 24/7 (it's a website with attached services)
-  - The below isntalled on the server where you install it:
-     - (Otionnal but recommanded) GIT: https://git-scm.com/downloads
+  - Having some very basic shell (command prompt) skills. Feel free to ask for help on the Discord!
+  - Having a dedicated server - This app is meant to run 24/7 - (If you don't have that, you can just run a cheap Virtual Private Server)
+  - The below need to be installed on the server where the rcon will run:
+     - (Otionnal but recommanded) GIT: https://git-scm.com/downloads  (if you don't use git you need to download the releases)
      - Docker Engine (Community) installed: https://docs.docker.com/install/
      - Docker Compose installed: https://docs.docker.com/compose/install/
 
