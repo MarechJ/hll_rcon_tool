@@ -122,11 +122,13 @@ You're done, ENJOY!
 
 ### To update to the latest version:
 
+Please join the discord and follow annoucements, sometimes the update instructions vary from standard.
+
 #### In case it says your local changes the `.env` would be overriden when you git pull:
 
 You can do 
 
-   git stash && git pull
+    git stash && git pull
 
 Then either: `git stash apply` edit to remove the conflit then `git reset .env`
 Or just fill the `.env` manually again.
