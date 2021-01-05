@@ -386,7 +386,33 @@ class Rcon(ServerCtl):
 
         return self.parse_logs(raw, filter_action, filter_player)
 
-    
+    @ttl_cache(ttl=60 * 60)
+    def get_profanities(self):
+        return super().get_profanities()
+
+    def set_profanities(self, profanities):
+        current = self.get_profanities()
+        with invalidates(self.get_profanities):
+            removed = set(current) - set(profanities)
+            added = set(profanities) - set(current)
+            if removed:
+                self.do_unban_profanities(list(removed))
+            if added:
+                self.do_ban_profanities(list(added))
+        
+        return profanities
+
+    def do_unban_profanities(self, profanities):
+        if not isinstance(profanities, list):
+            profanities = [profanities]
+        with invalidates(self.get_profanities):
+            return super().do_unban_profanities(','.join(profanities))
+
+    def do_ban_profanities(self, profanities):
+        if not isinstance(profanities, list):
+            profanities = [profanities]
+        with invalidates(self.get_profanities):
+            return super().do_ban_profanities(','.join(profanities))
 
     def do_kick(self, player, reason):
         with invalidates(Rcon.get_players):

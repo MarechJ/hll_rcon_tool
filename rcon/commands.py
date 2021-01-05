@@ -180,6 +180,15 @@ class ServerCtl:
 
         return self._read_list(res)
 
+    def get_profanities(self):
+        return self._get("profanity", is_list=True, can_fail=False)
+
+    def do_ban_profanities(self, profanities_csv):
+        return self._request(f"BanProfanity {profanities_csv}")
+
+    def do_unban_profanities(self, profanities_csv):
+        return self._request(f"UnbanProfanity {profanities_csv}")
+
     def get_name(self):
         return self._get("name", can_fail=False)
 
