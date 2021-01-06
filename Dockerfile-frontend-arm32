@@ -1,4 +1,4 @@
-FROM node:15-stretch
+FROM arm32v7/node:15-stretch
 
 WORKDIR /code
 
@@ -7,21 +7,22 @@ RUN apt-get update -y && apt-get install -y nginx apache2-utils
 
 RUN mkdir /pw
 
-COPY package.json .
-COPY package-lock.json .
+COPY rcongui/package.json .
+COPY rcongui/package-lock.json .
 
 RUN npm install
 
 ENV REACT_APP_API_URL /api/
 
-COPY src/ src/
-COPY public/ public/
-COPY entrypoint.sh .
+COPY rcongui/src/ src/
+COPY rcongui/public/ public/
+COPY rcongui/entrypoint.sh .
 
 RUN chmod +x /code/entrypoint.sh
 
 RUN npm run build
-COPY nginx.conf /etc/nginx/sites-available/default
+COPY rcongui/nginx.conf /etc/nginx/sites-available/default
+COPY .git/ .git/
 
 RUN rm -rf src/
 RUN rm -rf public/

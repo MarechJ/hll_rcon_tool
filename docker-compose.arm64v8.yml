@@ -11,8 +11,8 @@ services:
       dockerfile: Dockerfile-arm64
   frontend:
     build:
-      context: ./rcongui
-      dockerfile: Dockerfile-arm64
+      context: .
+      dockerfile: Dockerfile-frontend-arm64
   redis:
     image: arm64v8/redis:5
   postgres:
