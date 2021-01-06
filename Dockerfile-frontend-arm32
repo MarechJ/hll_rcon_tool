@@ -7,8 +7,8 @@ RUN apt-get update -y && apt-get install -y nginx apache2-utils
 
 RUN mkdir /pw
 
-COPY rcongui/package.json .
-COPY rcongui/package-lock.json .
+COPY rcongui/package.json package.json
+COPY rcongui/package-lock.json package-lock.json
 
 RUN npm install
 
@@ -16,11 +16,11 @@ ENV REACT_APP_API_URL /api/
 
 COPY rcongui/src/ src/
 COPY rcongui/public/ public/
-COPY rcongui/entrypoint.sh .
+COPY rcongui/entrypoint.sh entrypoint.sh
 
 RUN chmod +x /code/entrypoint.sh
 
-COPY ./.git/ .git/
+COPY .git/ .git/
 RUN npm run build
 COPY rcongui/nginx.conf /etc/nginx/sites-available/default
 
