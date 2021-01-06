@@ -9,7 +9,7 @@ services:
     build: 
       context: .
       dockerfile: Dockerfile-arm32
-  frontend:
+  frontend_1:
     build:
       context: ./rcongui
       dockerfile: Dockerfile-arm32
