@@ -1,11 +1,11 @@
 import React from "react";
 import {
     Grid, TextField, List, ListItem,
-    ListItemText, ListItemSecondaryAction, IconButton
+    ListItemText, ListItemSecondaryAction, IconButton, Button, Link
 } from "@material-ui/core";
 import DeleteIcon from '@material-ui/icons/Delete';
 import AddIcon from '@material-ui/icons/Add';
-
+import { ForwardCheckBox } from '../commonComponent'
 
 const AddVipItem = ({ classes, name, setName, steamID64, setSteamID64, onAdd }) => (
     <ListItem>
@@ -29,12 +29,13 @@ const AddVipItem = ({ classes, name, setName, steamID64, setSteamID64, onAdd }) 
     </ListItem>
 )
 
-const VipEditableList = ({ classes, peopleList, onDelete, onAdd }) => {
+const VipEditableList = ({ classes, peopleList, onDelete, onAdd, forward, onFowardChange }) => {
     const [name, setName] = React.useState("")
     const [steamID64, setSteamID64] = React.useState("")
 
     return <React.Fragment>
         <List dense>
+            <ForwardCheckBox bool={forward} onChange={onFowardChange} />
             <AddVipItem classes={classes} name={name} setName={setName} steamID64={steamID64} setSteamID64={setSteamID64} onAdd={onAdd} />
             {peopleList.map(obj => (
                 <ListItem key={obj.steam_id_64}>
@@ -50,6 +51,7 @@ const VipEditableList = ({ classes, peopleList, onDelete, onAdd }) => {
                 </ListItem>
             ))}
             <AddVipItem classes={classes} name={name} setName={setName} steamID64={steamID64} setSteamID64={setSteamID64} onAdd={onAdd} />
+            <ForwardCheckBox bool={forward} onChange={onFowardChange} />
         </List>
     </React.Fragment>
 };

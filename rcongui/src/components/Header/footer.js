@@ -1,16 +1,26 @@
 import React from "react";
 import { Grid, Typography, Link } from "@material-ui/core";
 import { join } from "lodash/array";
+import { get } from "immutable";
+import {
+  get as apiGet,
+  showResponse,
+  handle_http_errors,
+} from "../../utils/fetchUtils";
 
-const Footer = ({classes}) => {
+const Footer = ({ classes }) => {
   const [repoData, setRepoData] = React.useState([]);
-  React.useEffect(
-    () =>
-      fetch("https://api.github.com/repos/MarechJ/hll_rcon_tool/contributors")
-        .then((response) => response.json())
-        .then((data) => setRepoData(data)),
-    []
-  );
+  const [apiVersion, setApiVersion] = React.useState("N/A");
+
+  React.useEffect(() => {
+    fetch("https://api.github.com/repos/MarechJ/hll_rcon_tool/contributors")
+      .then((response) => response.json())
+      .then((data) => setRepoData(data));
+    apiGet("get_version")
+      .then((res) => showResponse(res, "get_version", false))
+      .then((data) => setApiVersion(data.result))
+      .catch(handle_http_errors);
+  }, []);
 
   return (
     <Grid container>
@@ -21,7 +31,8 @@ const Footer = ({classes}) => {
           display="block"
           gutterBottom
         >
-          Brought to you by Dr.WeeD,{" "}
+          UI Version: {process.env.REACT_APP_VERSION} API Version: {apiVersion}{" "}
+          - Brought to you by Dr.WeeD,{" "}
           {repoData
             .filter((d) => d.type === "User")
             .map((d) => (
@@ -42,8 +53,8 @@ const Footer = ({classes}) => {
           <Link target="_blank" href="https://discord.gg/zpSQQef">
             the discord
           </Link>{" "}
-          for announcements, questions, feedback and support. Dev or docs contributions are
-          most welcomed.
+          for announcements, questions, feedback and support. Dev or docs
+          contributions are most welcomed.
         </Typography>
       </Grid>
     </Grid>

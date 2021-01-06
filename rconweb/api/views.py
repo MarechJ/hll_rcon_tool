@@ -39,7 +39,7 @@ logger = logging.getLogger("rconweb")
 @csrf_exempt
 def get_version(request):
     res = run(["git", "describe", "--tags"], stdout=PIPE, stderr=PIPE)
-    return HttpResponse(res.stdout.decode())
+    return api_response(res.stdout.decode(), failed=False, command="get_version")
 
 
 @csrf_exempt

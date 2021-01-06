@@ -1,5 +1,10 @@
 import React from "react";
-import { Grid, Typography, Button } from "@material-ui/core";
+import {
+  Grid,
+  Typography,
+  Button,
+  Link,
+} from "@material-ui/core";
 import { range } from "lodash/util";
 import {
   showResponse,
@@ -19,11 +24,17 @@ import NumSlider from "./numSlider";
 import ChangeMap from "./changeMap";
 import Padlock from "./padlock";
 import AutoRefreshLine from "../autoRefreshLine";
-import Chip from "@material-ui/core/Chip";
-import Autocomplete from "@material-ui/lab/Autocomplete";
-import TextField from "@material-ui/core/TextField";
+import { ForwardCheckBox, WordList } from '../commonComponent'
 
-const ProfanityFiler = ({ words, onWordsChange, onSave }) => (
+
+
+const ProfanityFiler = ({
+  words,
+  onWordsChange,
+  onSave,
+  forward,
+  onFowardChange,
+}) => (
   <Grid container>
     <Grid xs={12}>
       <WordList
@@ -33,6 +44,7 @@ const ProfanityFiler = ({ words, onWordsChange, onSave }) => (
         placeholder="A bad word"
         helperText="Type some text and hit enter to submit it. The words you add here will be censored in the game chat"
       />
+      <ForwardCheckBox bool={forward} onChange={onFowardChange} />
       <Button variant="outlined" color="secondary" onClick={onSave}>
         Save
       </Button>
@@ -40,30 +52,13 @@ const ProfanityFiler = ({ words, onWordsChange, onSave }) => (
   </Grid>
 );
 
-const WordList = ({ words, onWordsChange, label, placeholder, helperText }) => {
-  return (
-    <Autocomplete
-      multiple
-      freeSolo
-      options={[]}
-      onChange={(e, val) => onWordsChange(val)}
-      value={words}
-      renderTags={(value, getTagProps) =>
-        value.map((option, index) => (
-          <Chip variant="default" label={option} {...getTagProps({ index })} />
-        ))
-      }
-      renderInput={(params) => (
-        <TextField
-          {...params}
-          label={label}
-          placeholder={placeholder}
-          helperText={helperText}
-        />
-      )}
-    />
-  );
-};
+
+function makeBool(text) {
+  if (text === null) {
+    return false
+  }
+  return text === "true" 
+}
 
 function valuetext(value) {
   return `${value}`;
@@ -87,8 +82,15 @@ class HLLSettings extends React.Component {
       adminRoles: ["owner", "senior", "junior"],
       welcomeMessage: "",
       broadcastMessage: "",
-      lockedSliders: true,
+      lockedSliders: window.localStorage.getItem("lockedSliders") === null ? true : makeBool(window.localStorage.getItem("lockedSliders")),
+      sildersShowValues: makeBool(window.localStorage.getItem("sildersShowValues")),
       profanities: [],
+      forwardProfanities: makeBool(window.localStorage.getItem("forwardProfanities")),
+      forwardSettings: makeBool(window.localStorage.getItem("forwardSettings")),
+      forwardVIP: makeBool(window.localStorage.getItem("forwardVIP")),
+      forwardBroadcast: makeBool(window.localStorage.getItem("forwardBroadcast")),
+      forwardWelcome: makeBool(window.localStorage.getItem("forwardWelcome")),
+      forwardRotation: makeBool(window.localStorage.getItem("forwardRotation")),
     };
 
     this.loadVips = this.loadVips.bind(this);
@@ -103,6 +105,13 @@ class HLLSettings extends React.Component {
     this.toggleLockSliders = this.toggleLockSliders.bind(this);
     this.loadProfanities = this.loadProfanities.bind(this);
     this.setProfanities = this.setProfanities.bind(this);
+    this.toggle = this.toggle.bind(this);
+  }
+
+  toggle(name) {
+    const bool = !this.state[name];
+    window.localStorage.setItem(name, bool);
+    this.setState({ [name]: bool });
   }
 
   componentDidMount() {
@@ -112,12 +121,13 @@ class HLLSettings extends React.Component {
   }
 
   toggleLockSliders() {
-    this.setState({ lockedSliders: !this.state.lockedSliders });
+    this.toggle('lockedSliders');
   }
 
   setProfanities() {
     postData(`${process.env.REACT_APP_API_URL}set_profanities`, {
       profanities: this.state.profanities,
+      forward: this.state.forwardProfanities,
     })
       .then((res) => showResponse(res, `set_profanities`, true))
       .catch(handle_http_errors);
@@ -188,6 +198,7 @@ class HLLSettings extends React.Component {
     return postData(`${process.env.REACT_APP_API_URL}do_save_setting`, {
       name: name,
       value: value,
+      forward: this.state.forwardSettings,
     })
       .then((res) =>
         showResponse(res, `do_save_setting ${name} ${value}`, true)
@@ -232,6 +243,13 @@ class HLLSettings extends React.Component {
       broadcastMessage,
       lockedSliders,
       profanities,
+      forwardProfanities,
+      forwardSettings,
+      forwardVIP,
+      forwardBroadcast,
+      forwardWelcome,
+      forwardRotation,
+      sildersShowValues,
     } = this.state;
     const { classes } = this.props;
 
@@ -268,11 +286,13 @@ class HLLSettings extends React.Component {
             autocompleteKey="welcome"
             type="Welcome message"
             classes={classes}
+            forward={forwardWelcome}
+            onForwardChange={() => this.toggle('forwardWelcome')}
             value={welcomeMessage}
             setValue={(val) => this.setState({ welcomeMessage: val })}
             onSave={(val) =>
               this.setState({ welcomeMessage: val }, () =>
-                sendAction("set_welcome_message", { msg: val })
+                sendAction("set_welcome_message", { msg: val, forward: forwardWelcome })
               )
             }
           />
@@ -283,7 +303,9 @@ class HLLSettings extends React.Component {
             type="Broadcast message"
             classes={classes}
             value={broadcastMessage}
-            setValue={(val) => this.setState({ broadcastMessage: val })}
+            forward={forwardBroadcast}
+            onForwardChange={() => this.toggle('forwardBroadcast')}
+            setValue={(val) => this.setState({ broadcastMessage: val, forward: forwardBroadcast })}
             onSave={(val) =>
               this.setState({ broadcastMessage: val }, () =>
                 sendAction("set_broadcast", { msg: val })
@@ -297,18 +319,22 @@ class HLLSettings extends React.Component {
             classes={classes}
             onExpand={this.loadVips}
           >
+            <Link href={`${process.env.REACT_APP_API_URL}download_vips`} target="_blank" >Download VIPs</Link>
             <p>Changes are applied immediately</p>
             <VipEditableList
               peopleList={vips}
               classes={classes}
+              forward={forwardVIP}
+              onFowardChange={() => this.toggle('forwardVIP')}
               onAdd={(name, steamID64) =>
                 sendAction("do_add_vip", {
                   steam_id_64: steamID64,
                   name: name,
+                  forward: forwardVIP,
                 }).then(this.loadVips)
               }
               onDelete={(name, steamID64) =>
-                sendAction("do_remove_vip", { steam_id_64: steamID64 }).then(
+                sendAction("do_remove_vip", { steam_id_64: steamID64, forward: forwardVIP, }).then(
                   this.loadVips
                 )
               }
@@ -351,9 +377,25 @@ class HLLSettings extends React.Component {
           <Grid item>
             <Padlock
               checked={lockedSliders}
-              handleChange={this.toggleLockSliders}
+              handleChange={() => this.toggle('lockedSliders')}
               classes={classes}
               label="Locked sliders"
+            />
+          </Grid>
+          <Grid item>
+            <Padlock
+              checked={sildersShowValues}
+              handleChange={() => this.toggle('sildersShowValues')}
+              classes={classes}
+              label="Show all values"
+            />
+          </Grid>
+          <Grid item>
+            <Padlock
+              checked={forwardSettings}
+              handleChange={() => this.toggle('forwardSettings')}
+              classes={classes}
+              label="Forward settings changes to all servers"
             />
           </Grid>
         </Grid>
@@ -361,6 +403,7 @@ class HLLSettings extends React.Component {
           <NumSlider
             classes={classes}
             disabled={lockedSliders}
+            showValue={sildersShowValues}
             text="Teamswitch cooldown (minutes)"
             max={30}
             value={teamSwitchCooldownMin}
@@ -382,6 +425,7 @@ class HLLSettings extends React.Component {
           <NumSlider
             classes={classes}
             disabled={lockedSliders}
+            showValue={sildersShowValues}
             text="Autobalance threshold"
             max={50}
             value={autoBalanceThres}
@@ -402,6 +446,7 @@ class HLLSettings extends React.Component {
           <NumSlider
             classes={classes}
             disabled={lockedSliders}
+            showValue={sildersShowValues}
             text="Idle autokick (minutes)"
             max={200}
             step={5}
@@ -423,6 +468,7 @@ class HLLSettings extends React.Component {
           <NumSlider
             classes={classes}
             disabled={lockedSliders}
+            showValue={sildersShowValues}
             text="Maximum ping (ms)"
             helpText="0 to disable"
             max={2000}
@@ -445,6 +491,7 @@ class HLLSettings extends React.Component {
           <NumSlider
             classes={classes}
             disabled={lockedSliders}
+            showValue={sildersShowValues}
             text="Max queue length"
             helpText="Maximum # of people waiting"
             max={6}
@@ -466,6 +513,7 @@ class HLLSettings extends React.Component {
           <NumSlider
             classes={classes}
             disabled={lockedSliders}
+            showValue={sildersShowValues}
             text="Vip slots"
             helpText="# slots reserved"
             max={100}
@@ -564,6 +612,8 @@ class HLLSettings extends React.Component {
             words={profanities}
             onWordsChange={(words) => this.setState({ profanities: words })}
             onSave={() => this.setProfanities(profanities)}
+            forward={forwardProfanities}
+            onFowardChange={() => this.toggle("forwardProfanities")}
           />
         </Grid>
       </Grid>
