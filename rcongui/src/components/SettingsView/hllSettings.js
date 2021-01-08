@@ -308,7 +308,7 @@ class HLLSettings extends React.Component {
             setValue={(val) => this.setState({ broadcastMessage: val, forward: forwardBroadcast })}
             onSave={(val) =>
               this.setState({ broadcastMessage: val }, () =>
-                sendAction("set_broadcast", { msg: val, forward: forwardMessage })
+                sendAction("set_broadcast", { msg: val, forward: forwardBroadcast })
               )
             }
           />
