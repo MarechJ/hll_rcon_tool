@@ -51,9 +51,11 @@ def get_votes_status():
     return {'total_votes': 0, "winning_maps": []}
 
 
-def format_winning_map(ctl, winning_maps, display_count=2):
+def format_winning_map(ctl, winning_maps, display_count=2, default=None):
     nextmap = ctl.get_next_map()
     if not winning_maps:
+        if default:
+            return str(default)
         return f'{nextmap}'
     wins = winning_maps[:display_count]
     if display_count == 0:
