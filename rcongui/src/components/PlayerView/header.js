@@ -51,17 +51,13 @@ const AutoRefreshBar = ({
                 className={classes.margin}
                 orientation="vertical"
                 color="primary"
+                variant="contained"
                 aria-label="vertical outlined primary button group"
               >
-                <Button
-                  variant="contained"
-                  color="primary"
-                  disableElevation
-                  onClick={onGroupActionClick}
-                >
+                <Button onClick={onGroupActionClick}>
                   Group action
                 </Button>
-                <Button disableElevation onClick={onUnbanClick}>
+                <Button onClick={onUnbanClick}>
                   Unban
                 </Button>
               </ButtonGroup>

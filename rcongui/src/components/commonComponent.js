@@ -31,7 +31,7 @@ export const ForwardCheckBox = ({ bool, onChange }) => (
         value={words}
         renderTags={(value, getTagProps) =>
           value.map((option, index) => (
-            <Chip variant="default" label={option} {...getTagProps({ index })} />
+            <Chip color="primary" variant="outlined" label={option} {...getTagProps({ index })} />
           ))
         }
         renderInput={(params) => (
