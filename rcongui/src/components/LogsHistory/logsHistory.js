@@ -12,7 +12,7 @@ import _ from "lodash";
 import LogsTable from "./logTable";
 import MomentUtils from "@date-io/moment";
 import { DateTimePicker, MuiPickersUtilsProvider } from "@material-ui/pickers";
-import { Button, TextField } from "@material-ui/core";
+import { Button, LinearProgress, TextField } from "@material-ui/core";
 import InputLabel from "@material-ui/core/InputLabel";
 import MenuItem from "@material-ui/core/MenuItem";
 import FormControl from "@material-ui/core/FormControl";
@@ -188,6 +188,7 @@ class LogsHistory extends React.Component {
 
     this.state = {
       logs: [],
+      isLoading: false,
     };
 
     this.getHistoricalLogs = this.getHistoricalLogs.bind(this);
@@ -203,8 +204,9 @@ class LogsHistory extends React.Component {
     timeSort = "desc",
     exactPlayer = false,
     exactAction = false,
-    server = null,
+    server = null
   ) {
+    this.setState({isLoading: true})
     postData(`${process.env.REACT_APP_API_URL}get_historical_logs`, {
       player_name: name,
       log_type: type,
@@ -221,6 +223,7 @@ class LogsHistory extends React.Component {
       .then((res) => {
         console.log(res);
         this.setState({ logs: res.result ? res.result : [] });
+        this.setState({isLoading: false})
       });
   }
 
@@ -229,13 +232,21 @@ class LogsHistory extends React.Component {
   }
 
   render() {
-    console.log(this.state.logs);
+    const { classes } = this.props;
+    const { isLoading } = this.state;
 
     return (
       <Grid container>
         <Grid item xs={12}>
           <LogsFilter onSubmit={this.getHistoricalLogs} />
         </Grid>
+        {isLoading ? (
+          <Grid itemx xs={12} className={classes.doublePadding}>
+            <LinearProgress color="secondary" />
+          </Grid>
+        ) : (
+          ""
+        )}
         <Grid item xs={12}>
           <LogsTable logs={this.state.logs} />
         </Grid>
