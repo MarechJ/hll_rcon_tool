@@ -47,8 +47,11 @@ There's also a Wiki made by the community (Thanks [2.Fjg]bn.hall): https://githu
 
 **Join us on discord if you use it, for feedback, troubleshooting and informations about updates:** https://discord.gg/hZx6gn3
 
-Here's a small sample:
-![Live view page](/images/homepage.png)
+Here's a sample:
+![Live view page](/images/Rcon.png)
+![Settings](/images/Rcon2.png)
+![Player history overview](/images/Rcon3.png)
+![Historical logs](/images/Rcon4.png)
 
 # How to install the App
 
