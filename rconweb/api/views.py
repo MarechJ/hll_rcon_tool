@@ -3,6 +3,7 @@ import logging
 from functools import wraps
 import os
 from subprocess import run, PIPE
+from dataclasses import asdict
 
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -47,7 +48,7 @@ def get_version(request):
 @login_required
 def get_hooks(request):
     return api_response(
-        result=DiscordHookConfig.get_all_hook_types(),
+        result=DiscordHookConfig.get_all_hook_types(as_dict=True),
         command='get_hooks',
         failed=False,
     )

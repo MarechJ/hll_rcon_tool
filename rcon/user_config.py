@@ -71,12 +71,12 @@ class DiscordHookConfig:
         self.HOOKS_KEY = f'{server_number}_{self.hooks_key}_{for_type}'
  
     @staticmethod
-    def get_all_hook_types():
+    def get_all_hook_types(as_dict=False):
         hooks = []
         with enter_session() as sess:
             for name in DiscordHookConfig.expected_hook_types:
                 hooks.append(
-                    DiscordHookConfig(for_type=name).get_hooks()
+                    asdict(DiscordHookConfig(for_type=name).get_hooks())
                 )
             return hooks
         

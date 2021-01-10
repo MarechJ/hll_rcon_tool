@@ -16,11 +16,78 @@ import WarningIcon from "@material-ui/icons/Warning";
 import TextHistoryManager, { SelectNameSpace } from "./textHistoryManager";
 import TextHistory from "../textHistory";
 import ServicesList from "../Services";
-import InputLabel from '@material-ui/core/InputLabel';
-import MenuItem from '@material-ui/core/MenuItem';
-import FormHelperText from '@material-ui/core/FormHelperText';
-import FormControl from '@material-ui/core/FormControl';
-import Select from '@material-ui/core/Select';
+import InputLabel from "@material-ui/core/InputLabel";
+import MenuItem from "@material-ui/core/MenuItem";
+import FormHelperText from "@material-ui/core/FormHelperText";
+import FormControl from "@material-ui/core/FormControl";
+import Select from "@material-ui/core/Select";
+import { ForwardCheckBox, WordList } from "../commonComponent";
+
+const Hook = ({ hook = "", roles = [] }) => {
+  const [myHook, setMyHook] = React.useState(hook);
+  const [myRoles, setMyRoles] = React.useState(roles);
+
+  return (
+    <Grid container spacing={1}>
+      <Grid item xs={4} >
+        <TextField
+          id="standard-basic"
+          label="webhook url"
+          fullWidth
+          value={myHook}
+          onChange={(e) => setMyHook(e.target.value)}
+        />
+        </Grid>
+        <Grid item xs={5}>
+        <WordList
+          label="Roles"
+          helperText="Add roles to be pinged, hit enter to validate"
+          placeholder="<@&111117777888889999>"
+          onWordsChange={setMyRoles}
+        />
+        
+      </Grid>
+      <Grid item xs={3}><Button>Add hook</Button></Grid>
+    </Grid>
+  );
+};
+
+const WebhooksConfig = () => {
+  const [hooks, setHooks] = React.useState([]);
+  React.useEffect(
+    () =>
+      get("get_hooks")
+        .then((res) => showResponse(res, "get_hooks", false))
+        .then((res) => setHooks(res.result))
+        .catch(handle_http_errors),
+    []
+  );
+
+  return (
+    <Grid container>
+      {hooks.map((hook) => (
+        <Grid item>
+          <Typography variant="h6">{hook.name}</Typography>
+          <Grid container>
+            {hook.hooks.length ? (
+              <Grid item xs={12}>
+                <TextField id="standard-basic" label="Webhook url" />
+                <WordList
+                  label="Roles"
+                  helperText="Add roles to be pinged, hit enter to validate"
+                  placeholder="<@&111117777888889999>"
+                />
+              </Grid>
+            ) : (
+              <Typography>{`No hooks defined for: ${hook.name}`}</Typography>
+            )}
+          </Grid>
+        </Grid>
+      ))}
+      <Grid item xs={12}><Hook /></Grid>
+    </Grid>
+  );
+};
 
 class RconSettings extends React.Component {
   constructor(props) {
@@ -140,14 +207,16 @@ class RconSettings extends React.Component {
           <Typography variant="h6">Your RCON color theme</Typography>
         </Grid>
         <Grid item xs={12} className={classes.padding}>
-          <FormControl style={{minWidth: '200px'}} >
+          <FormControl style={{ minWidth: "200px" }}>
             <InputLabel>Pick your theme</InputLabel>
             <Select
               value={theme}
-              onChange={event => setTheme(event.target.value)}
+              onChange={(event) => setTheme(event.target.value)}
             >
-              {themes.map(t => (
-                <MenuItem key={t} value={t}>{t}</MenuItem>
+              {themes.map((t) => (
+                <MenuItem key={t} value={t}>
+                  {t}
+                </MenuItem>
               ))}
             </Select>
           </FormControl>
@@ -207,7 +276,9 @@ class RconSettings extends React.Component {
           </Button>
         </Grid>
         <Grid item xs={12} className={classes.padding}>
-          <Typography variant="h6">Manage your personal text history</Typography>
+          <Typography variant="h6">
+            Manage your personal text history
+          </Typography>
         </Grid>
         <Grid
           container
@@ -308,6 +379,17 @@ class RconSettings extends React.Component {
               </Link>
             </Grid>
           </Grid>
+        </Grid>
+        <Grid
+          item
+          xs={12}
+          className={`${classes.padding} ${classes.margin}`}
+          alignContent="center"
+          justify="center"
+          alignItems="center"
+          className={classes.root}
+        >
+          <WebhooksConfig classes={classes} />
         </Grid>
         <Grid
           item
