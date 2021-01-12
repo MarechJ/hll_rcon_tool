@@ -62,7 +62,7 @@ class PlayerSteamID(Base):
     )
     blacklist = relationship("BlacklistedPlayer", backref="steamid", uselist=False)
     flags = relationship("PlayerFlag", backref="steamid")
-    watchlist = relationship("WatchList", backref="steamid")
+    watchlist = relationship("WatchList", backref="steamid", uselist=False)
 
     def get_penalty_count(self):
         penalities_type = {"KICK", "PUNISH", "TEMPBAN", "PERMABAN"}

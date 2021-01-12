@@ -391,6 +391,7 @@ commands = [
     ("get_connection_info", get_connection_info),
     ("unban", unban),
     ("get_hooks", get_hooks),
+    ("set_hooks", set_hooks)
 ]
 
 logger.info("Initializing endpoint")

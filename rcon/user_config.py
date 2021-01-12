@@ -79,9 +79,8 @@ class DiscordHookConfig:
                     asdict(DiscordHookConfig(for_type=name).get_hooks())
                 )
             return hooks
-        
 
-    def get_hooks(self):
+    def get_hooks(self) -> Hooks:
         conf = get_user_config(self.HOOKS_KEY, None)
         if conf:
             return Hooks.from_dict(conf)

@@ -1,6 +1,13 @@
 import React from "react";
 import { range } from "lodash/util";
-import { Grid, Typography, Button, TextField, Link } from "@material-ui/core";
+import {
+  Grid,
+  Typography,
+  Button,
+  TextField,
+  Link,
+  IconButton,
+} from "@material-ui/core";
 import {
   showResponse,
   postData,
@@ -22,32 +29,63 @@ import FormHelperText from "@material-ui/core/FormHelperText";
 import FormControl from "@material-ui/core/FormControl";
 import Select from "@material-ui/core/Select";
 import { ForwardCheckBox, WordList } from "../commonComponent";
+import DeleteIcon from "@material-ui/icons/Delete";
+import AddIcon from "@material-ui/icons/Add";
+import SaveIcon from "@material-ui/icons/Save";
 
-const Hook = ({ hook = "", roles = [] }) => {
+const Hook = ({
+  hook = "",
+  roles = [],
+  onAddHook,
+  onDeleteHook,
+  onUpdateHook,
+  actionType,
+}) => {
   const [myHook, setMyHook] = React.useState(hook);
   const [myRoles, setMyRoles] = React.useState(roles);
-
+  console.log("Roles:", roles);
   return (
     <Grid container spacing={1}>
-      <Grid item xs={4} >
+      <Grid item xs={4}>
         <TextField
-          id="standard-basic"
           label="webhook url"
           fullWidth
           value={myHook}
           onChange={(e) => setMyHook(e.target.value)}
+          helperText="Discord hook url"
         />
-        </Grid>
-        <Grid item xs={5}>
+      </Grid>
+      <Grid item xs={6}>
         <WordList
           label="Roles"
           helperText="Add roles to be pinged, hit enter to validate"
           placeholder="<@&111117777888889999>"
+          words={myRoles}
           onWordsChange={setMyRoles}
         />
-        
       </Grid>
-      <Grid item xs={3}><Button>Add hook</Button></Grid>
+      <Grid item xs={2}>
+        {actionType === "delete" ? (
+          <React.Fragment>
+            <IconButton
+              edge="end"
+              onClick={() => onDeleteHook(myHook, myRoles)}
+            >
+              <DeleteIcon />
+            </IconButton>
+            <IconButton
+              edge="end"
+              onClick={() => onUpdateHook(myHook, myRoles)}
+            >
+              <SaveIcon />
+            </IconButton>
+          </React.Fragment>
+        ) : (
+          <IconButton edge="end" onClick={() => onAddHook(myHook, myRoles)}>
+            <AddIcon />
+          </IconButton>
+        )}
+      </Grid>
     </Grid>
   );
 };
@@ -63,29 +101,55 @@ const WebhooksConfig = () => {
     []
   );
 
+  const setHookConfig = (hookConfig) =>
+    postData(`${process.env.REACT_APP_API_URL}set_hooks`, {
+      name: hookConfig.name,
+      hooks: hookConfig.hooks,
+    })
+      .then((res) => showResponse(res, `set_hooks ${hookConfig.name}`, true))
+      .then((res) => setHooks(res.result))
+      .catch(handle_http_errors);
+
   return (
-    <Grid container>
-      {hooks.map((hook) => (
-        <Grid item>
-          <Typography variant="h6">{hook.name}</Typography>
-          <Grid container>
-            {hook.hooks.length ? (
-              <Grid item xs={12}>
-                <TextField id="standard-basic" label="Webhook url" />
-                <WordList
-                  label="Roles"
-                  helperText="Add roles to be pinged, hit enter to validate"
-                  placeholder="<@&111117777888889999>"
-                />
-              </Grid>
-            ) : (
-              <Typography>{`No hooks defined for: ${hook.name}`}</Typography>
-            )}
+    <React.Fragment>
+      {hooks.map((hookConfig) => (
+        <Grid container>
+          <Grid item>
+            <Typography variant="h6">{hookConfig.name}</Typography>
+            <Grid container>
+              {hookConfig.hooks.length ? (
+                hookConfig.hooks.map((o, idx) => (
+                  <Hook
+                    hook={o.hook}
+                    roles={o.roles}
+                    actionType="delete"
+                    onDeleteHook={() => {
+                      hookConfig.hooks.splice(idx, 1);
+                      setHookConfig(hookConfig)
+                    }}
+                    onUpdateHook={(hook, roles) => {
+                      hookConfig.hooks[idx] = { hook: hook, roles: roles };
+                      setHookConfig(hookConfig)
+                    }}
+                  />
+                ))
+              ) : (
+                <Typography>{`No hooks defined for: ${hookConfig.name}`}</Typography>
+              )}
+            </Grid>
+          </Grid>
+          <Grid item xs={12}>
+            <Hook
+              actionType="add"
+              onAddHook={(hook, roles) => {
+                hookConfig.hooks.push({ hook: hook, roles: roles });
+                setHookConfig(hookConfig)
+              }}
+            />
           </Grid>
         </Grid>
       ))}
-      <Grid item xs={12}><Hook /></Grid>
-    </Grid>
+    </React.Fragment>
   );
 };
 
