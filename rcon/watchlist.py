@@ -38,7 +38,7 @@ def get_prepared_watch_hooks() -> List[DiscordWebhook]:
 
 @on_connected
 def watchdog(rcon: Rcon, log):
-    steam_id_64 = rcon.get_player_info(log["player"])
+    steam_id_64 = rcon.get_player_info(log["player"])['steam_id_64']
     watcher = PlayerWatch(steam_id_64)
     if watcher.is_watched():
         if hooks := get_prepared_watch_hooks():

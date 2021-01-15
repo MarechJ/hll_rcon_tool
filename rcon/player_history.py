@@ -112,7 +112,8 @@ def get_players_by_appearance(page=1, page_size=500, last_seen_from: datetime.da
             'total': total,
             'players': [
                 {
-                    **p[0].to_dict(),
+                    # TODO the lazyloading here makes it super slow on large limit
+                    **p[0].to_dict(limit_sessions=0),
                     'first_seen_timestamp_ms': int(p[1].timestamp() * 1000) if p[1] else None,
                     'last_seen_timestamp_ms': int(p[2].timestamp() * 1000) if p[2] else None,
                 }
