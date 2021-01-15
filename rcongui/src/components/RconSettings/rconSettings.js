@@ -92,14 +92,12 @@ const Hook = ({
 
 const WebhooksConfig = () => {
   const [hooks, setHooks] = React.useState([]);
-  React.useEffect(
-    () =>
-      get("get_hooks")
-        .then((res) => showResponse(res, "get_hooks", false))
-        .then((res) => setHooks(res.result))
-        .catch(handle_http_errors),
-    []
-  );
+  React.useEffect(() => {
+    get("get_hooks")
+      .then((res) => showResponse(res, "get_hooks", false))
+      .then((res) => setHooks(res.result))
+      .catch(handle_http_errors);
+  }, []);
 
   const setHookConfig = (hookConfig) =>
     postData(`${process.env.REACT_APP_API_URL}set_hooks`, {
@@ -125,11 +123,11 @@ const WebhooksConfig = () => {
                     actionType="delete"
                     onDeleteHook={() => {
                       hookConfig.hooks.splice(idx, 1);
-                      setHookConfig(hookConfig)
+                      setHookConfig(hookConfig);
                     }}
                     onUpdateHook={(hook, roles) => {
                       hookConfig.hooks[idx] = { hook: hook, roles: roles };
-                      setHookConfig(hookConfig)
+                      setHookConfig(hookConfig);
                     }}
                   />
                 ))
@@ -143,7 +141,7 @@ const WebhooksConfig = () => {
               actionType="add"
               onAddHook={(hook, roles) => {
                 hookConfig.hooks.push({ hook: hook, roles: roles });
-                setHookConfig(hookConfig)
+                setHookConfig(hookConfig);
               }}
             />
           </Grid>
