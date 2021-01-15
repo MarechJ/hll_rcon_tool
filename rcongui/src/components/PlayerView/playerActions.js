@@ -22,6 +22,7 @@ import FormControlLabel from "@material-ui/core/FormControlLabel";
 import Checkbox from "@material-ui/core/Checkbox";
 import { getSharedMessages } from "../../utils/fetchUtils";
 import { Grid } from "@material-ui/core";
+import VisibilityIcon from "@material-ui/icons/Visibility";
 
 const Duration = ({
   durationNumber,
@@ -103,7 +104,7 @@ class ReasonDialog extends React.Component {
       durationMultiplier,
     } = this.state;
     const textHistory = new TextHistory("punitions");
- 
+
     return (
       <Dialog open={open} aria-labelledby="form-dialog-title">
         <DialogTitle id="form-dialog-title">
@@ -169,7 +170,7 @@ class ReasonDialog extends React.Component {
                 open.player,
                 reason,
                 durationMultiplier * durationNumber,
-                open.steam_id_64,
+                open.steam_id_64
               );
               this.setState({ reason: "" });
             }}
@@ -184,11 +185,11 @@ class ReasonDialog extends React.Component {
   }
 }
 
-
 const PlayerActions = ({
   size,
   handleAction,
   onFlag,
+  isWatched,
   displayCount = 3,
   disable = false,
   penaltyCount = Map(),
@@ -223,6 +224,16 @@ const PlayerActions = ({
   return (
     <React.Fragment>
       <ButtonGroup size={size} aria-label="small outlined button group">
+        <Button
+          color={isWatched ? "primary" : "default"}
+          variant={isWatched ? "contained" : "outlined"}
+          size="small"
+          onClick={() =>
+            handleAction(isWatched ? "unwatch_player" : "watch_player")
+          }
+        >
+          <VisibilityIcon fontSize="small" />
+        </Button>
         {_.range(show).map((idx) => (
           <Button
             key={actions[idx][0]}
@@ -249,6 +260,7 @@ const PlayerActions = ({
         ) : (
           ""
         )}
+
         {show < actions.length ? (
           <Button
             disabled={disable}

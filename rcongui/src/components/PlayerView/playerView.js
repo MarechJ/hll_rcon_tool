@@ -98,10 +98,6 @@ class PlayerView extends Component {
   }
 
   unBan(ban) {
-    // Legacy way
-    // postData(`${process.env.REACT_APP_API_URL}do_remove_${ban.type}_ban`, {
-    //  ban_log: ban.raw,
-    // })
     postData(`${process.env.REACT_APP_API_URL}unban`, {
       steam_id_64: ban.steam_id_64,
     })
@@ -122,7 +118,8 @@ class PlayerView extends Component {
     if (message === null) {
       message = this.state.actionMessage;
     }
-    if (message === "" && !actionType.startsWith("switch_")) {
+    
+    if (message === "" && !actionType.startsWith("switch_") &&  !actionType.startsWith("unwatch_")) {
       this.setState({
         doConfirm: {
           player: player_name,

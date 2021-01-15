@@ -118,7 +118,7 @@ class FlagDialog extends React.Component {
   }
 }
 
-const show_names = (names) => join(names, " · ");
+const show_names = (names) => join(names.map(obj => obj.name), " · ");
 
 const FlagButton = ({ classes, onflag }) => (
   <Button variant="outlined" onClick={onflag}>
@@ -155,6 +155,8 @@ const FilterPlayer = ({
   onDeleteVip,
   onUnban,
   onTempBan,
+  addToWatchlist,
+  onRemoveFromWatchList,
   vips,
 }) => {
   const playersHistory = constPlayersHistory.toJS();
@@ -180,7 +182,7 @@ const FilterPlayer = ({
     autoSelect: true,
     debug: true,
     options: namesIndex,
-    getOptionLabel: (option) => (option.names ? option.names : option),
+    getOptionLabel: (option) => (option.names ? option.names.map(obj => obj.name) : option),
   });
 
   const [doFlag, setDoFlag] = React.useState(false);
@@ -217,7 +219,7 @@ const FilterPlayer = ({
         <Grid container spacing={1}>
           {playerList.map((nameIndex) => {
             const player = playersHistory[nameIndex.idx];
-
+            console.log(player)
             return (
               <Grid
                 key={player.steam_id_64}
@@ -241,7 +243,7 @@ const FilterPlayer = ({
                   permaban={player.penalty_count.PERMABAN}
                   onUnban={() => onUnban(player.steam_id_64)}
                   compact={false}
-                  blacklisted={player.blacklisted}
+                  blacklisted={player.blacklist ? player.blacklist.is_blacklisted : false}
                   flags={List(player.flags.map((v) => Map(v)))}
                   onflag={() => setDoFlag(player)}
                   onBlacklist={() =>
@@ -262,6 +264,13 @@ const FilterPlayer = ({
                   onDeleteFlag={onDeleteFlag}
                   onAddVip={() => onAddVip(player.names[0], player.steam_id_64)}
                   onDeleteVip={() => onDeleteVip(player.steam_id_64)}
+                  isWatched={player.watchlist ? player.watchlist.is_watched : false}
+                  onAddToWatchList={() => setDoConfirmPlayer({
+                      player: player.steam_id_64,
+                      actionType: "watchlist",
+                      steam_id_64: player.steam_id_64,
+                  })}
+                  onRemoveFromWatchList={() => onRemoveFromWatchList(player.steam_id_64)}
                   isVip={vips[player.steam_id_64]}
                 />
               </Grid>
@@ -285,6 +294,8 @@ const FilterPlayer = ({
               onBlacklist(steamId64, reason);
             } else if (actionType === "temp_ban") {
               onTempBan(steamId64, reason, durationHours)
+            } else if (actionType === 'watchlist') {
+              addToWatchlist(steamId64, reason)
             }
             setDoConfirmPlayer(false);
           }}
@@ -332,6 +343,8 @@ class PlayersHistory extends React.Component {
     this.onDeleteVip = this.onDeleteVip.bind(this);
     this.unBanPlayer = this.unBanPlayer.bind(this);
     this.onTempBan = this.onTempBan.bind(this);
+    this.addToWatchlist = this.addToWatchlist.bind(this);
+    this.removeFromWatchList = this.removeFromWatchList.bind(this);
   }
 
   onTempBan(steamId64, reason, durationHours) {
@@ -509,6 +522,38 @@ class PlayersHistory extends React.Component {
       .catch((error) => toast.error("Unable to connect to API " + error));
   }
 
+  addToWatchlist(steamId64, reason, comment) {
+    postData(`${process.env.REACT_APP_API_URL}do_watch_player`, {
+      steam_id_64: steamId64,
+      reason: reason,
+      comment: comment
+    })
+      .then((response) =>
+        showResponse(
+          response,
+          `PlayerID ${steamId64} watched`,
+          true
+        )
+      )
+      .then(this._reloadOnSuccess)
+      .catch(handle_http_errors);
+  }
+
+  removeFromWatchList(steamId64) {
+    postData(`${process.env.REACT_APP_API_URL}do_unwatch_player`, {
+      steam_id_64: steamId64,
+    })
+      .then((response) =>
+        showResponse(
+          response,
+          `PlayerID ${steamId64} unwatched`,
+          true
+        )
+      )
+      .then(this._reloadOnSuccess)
+      .catch(handle_http_errors);
+  }
+
   componentDidMount() {
     this.getPlayerHistory();
     this.loadVips();
@@ -577,6 +622,8 @@ class PlayersHistory extends React.Component {
               onUnban={this.unBanPlayer}
               onDeleteVip={this.onDeleteVip}
               onTempBan={this.onTempBan}
+              addToWatchlist={this.addToWatchlist}
+              onRemoveFromWatchList={this.removeFromWatchList}
               vips={this.state.vips}
             />
         </Grid>

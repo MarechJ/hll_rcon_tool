@@ -81,6 +81,8 @@ class PlayerWatch:
             if player.watchlist:
                 player.watchlist.is_watched = False
 
+        return True
+
     def watch(self, reason, comment, player_name=""):
         with enter_session() as sess:
             player = _get_set_player(
@@ -94,3 +96,5 @@ class PlayerWatch:
                 )
                 sess.add(watch)
                 sess.commit()
+                
+        return True
