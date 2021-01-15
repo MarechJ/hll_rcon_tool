@@ -228,7 +228,7 @@ const PlayerItem = ({
           handleAction={handleAction}
           onFlag={onFlag}
           displayCount={nbButtons}
-          isWatched={profile.get('watchlist', new Map()).get('is_watched', false)}
+          isWatched={profile.get('watchlist') ? profile.get('watchlist').get('is_watched', false) : false}
           penaltyCount={profile.get("penalty_count", Map())}
         />
       </ListItemSecondaryAction>
