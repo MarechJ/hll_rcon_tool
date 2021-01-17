@@ -9,7 +9,7 @@ services:
     build: 
       context: .
       dockerfile: Dockerfile-arm64
-  frontend:
+  frontend_1:
     build:
       context: .
       dockerfile: Dockerfile-frontend-arm64

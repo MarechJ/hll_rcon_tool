@@ -4,7 +4,6 @@ import sys
 import datetime
 import os
 
-from rcon.map_recorder import ThreadMapRecorder
 from rcon.extended_commands import Rcon
 from rcon.cache_utils import get_redis_client
 from rcon.utils import FixedLenList
@@ -107,7 +106,7 @@ class ChatLoop:
             #logger.debug("Skipping duplicate: %s", id_)
             return None
 
-        logger.info("Recording: %s", id_)
+        logger.info("Caching line: %s", id_)
         try:
             last_line = self.log_history[0]
         except IndexError:

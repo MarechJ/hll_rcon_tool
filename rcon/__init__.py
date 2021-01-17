@@ -4,3 +4,4 @@ from rcon.discord_chat import handle_on_kill
 from rcon.discord_chat import handle_on_tk
 from rcon.player_history import handle_on_connect
 from rcon.watchlist import watchdog
+from rcon.auto_kick import auto_kick
