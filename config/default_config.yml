@@ -25,3 +25,5 @@ NAME_KICKS:
   reason: "Your nickname is invalid"
   # If left unset, the webhook default to your audit log webhook
   discord_webhook_url: ""
+  whitelist_flags: 
+    - ✅
