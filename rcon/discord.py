@@ -9,8 +9,8 @@ def dict_to_discord(d):
     return "   ".join([f"{k}: `{v}`" for k, v in d.items()])
 
 
-def send_to_discord_audit(message, by=None, silent=True):
-    webhookurl = os.getenv('DISCORD_WEBHOOK_AUDIT_LOG', None)
+def send_to_discord_audit(message, by=None, silent=True, webhookurl=None):
+    webhookurl = webhookurl or os.getenv('DISCORD_WEBHOOK_AUDIT_LOG', None)
     logger.info("Audit: [%s] %s", by, message)
     if not webhookurl:
         logger.debug("No webhook set for audit log")
