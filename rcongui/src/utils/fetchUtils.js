@@ -141,6 +141,19 @@ async function getSharedMessages(namespace) {
     .then(_checkResult);
 }
 
+async function addPlayerToWatchList(steam_id_64, reason, comment=null, player_name=null) {
+  return postData(`${process.env.REACT_APP_API_URL}do_watch_player`, {
+    steam_id_64: steam_id_64,
+    reason: reason,
+    comment: comment,
+    name: player_name
+  })
+    .then((response) =>
+      showResponse(response, `PlayerID ${steam_id_64} watched`, true)
+    )
+    .catch(handle_http_errors);
+}
+
 export {
   postData,
   showResponse,
@@ -150,4 +163,5 @@ export {
   PermissionError,
   LoginError,
   sendAction,
+  addPlayerToWatchList,
 };

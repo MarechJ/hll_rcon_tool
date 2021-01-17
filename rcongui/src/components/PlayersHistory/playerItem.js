@@ -67,6 +67,7 @@ const WithPopver = ({ classes, popoverContent, children }) => {
   );
 };
 
+
 const PlayerItem = ({
   classes,
   names,
@@ -150,7 +151,7 @@ const PlayerItem = ({
                   spacing={0}
                   className={classes.paddingTop}
                 >
-                  <Grid item>
+                  <Grid item> 
                     <IconButton size="small">
                       {blacklisted ? (
                         <Tooltip

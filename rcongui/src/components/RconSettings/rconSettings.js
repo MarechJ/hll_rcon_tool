@@ -13,6 +13,7 @@ import {
   postData,
   get,
   handle_http_errors,
+  addPlayerToWatchList,
 } from "../../utils/fetchUtils";
 import Blacklist from "./blacklist";
 import { toast } from "react-toastify";
@@ -32,6 +33,37 @@ import { ForwardCheckBox, WordList } from "../commonComponent";
 import DeleteIcon from "@material-ui/icons/Delete";
 import AddIcon from "@material-ui/icons/Add";
 import SaveIcon from "@material-ui/icons/Save";
+import { ManualPlayerInput } from "../commonComponent";
+import { getSharedMessages } from "../../utils/fetchUtils";
+
+const ManualWatchList = ({ classes }) => {
+  const [name, setName] = React.useState("");
+  const [steamId64, setSteamId64] = React.useState("");
+  const [reason, setReason] = React.useState("");
+  const [sharedMessages, setSharedMessages] = React.useState([]);
+
+  React.useEffect(() => {
+    getSharedMessages("punitions").then((data) => setSharedMessages(data));
+  }, []);
+  const textHistory = new TextHistory("watchlist");
+
+  return (
+    <ManualPlayerInput
+      name={name}
+      setName={setName}
+      steam_id={steamId64}
+      setSteamId={setSteamId64}
+      reason={reason}
+      setReason={setReason}
+      textHistory={textHistory}
+      sharedMessages={sharedMessages}
+      classes={classes}
+      actionName="Add"
+      tooltipText="You will get a notification on you watchlist discord hook when this player enters your server"
+      onSubmit={() => addPlayerToWatchList(steamId64, reason, null, name)}
+    />
+  );
+};
 
 const Hook = ({
   hook = "",
@@ -68,20 +100,20 @@ const Hook = ({
         {actionType === "delete" ? (
           <React.Fragment>
             <IconButton
-              edge="end"
+              edge="start"
               onClick={() => onDeleteHook(myHook, myRoles)}
             >
               <DeleteIcon />
             </IconButton>
             <IconButton
-              edge="end"
+              edge="start"
               onClick={() => onUpdateHook(myHook, myRoles)}
             >
               <SaveIcon />
             </IconButton>
           </React.Fragment>
         ) : (
-          <IconButton edge="end" onClick={() => onAddHook(myHook, myRoles)}>
+          <IconButton edge="start" onClick={() => onAddHook(myHook, myRoles)}>
             <AddIcon />
           </IconButton>
         )}
@@ -112,8 +144,10 @@ const WebhooksConfig = () => {
     <React.Fragment>
       {hooks.map((hookConfig) => (
         <Grid container>
-          <Grid item>
-            <Typography variant="h6">{hookConfig.name}</Typography>
+          <Grid item xs={12}>
+            <Typography variant="h6" style={{ "text-transform": "capitalize" }}>
+              For: {hookConfig.name}
+            </Typography>
             <Grid container>
               {hookConfig.hooks.length ? (
                 hookConfig.hooks.map((o, idx) => (
@@ -403,6 +437,10 @@ class RconSettings extends React.Component {
           <Blacklist classes={classes} />
         </Grid>
         <Grid item className={classes.paddingTop} justify="center" xs={12}>
+          <Typography variant="h5">Add player to watchlist</Typography>
+        </Grid>
+        <Grid item xs={12}><ManualWatchList classes={classes} /></Grid>
+        <Grid item className={classes.paddingTop} justify="center" xs={12}>
           <Typography variant="h5">Manage services</Typography>
         </Grid>
         <Grid item className={classes.paddingTop} justify="center" xs={12}>
@@ -412,8 +450,23 @@ class RconSettings extends React.Component {
             </Grid>
           </Grid>
         </Grid>
+        
         <Grid item className={classes.paddingTop} justify="center" xs={12}>
-          <Typography variant="h5">More options</Typography>
+          <Typography variant="h5">Discord Webhooks configuration</Typography>
+        </Grid>
+        <Grid
+          item
+          xs={12}
+          className={`${classes.padding} ${classes.margin}`}
+          alignContent="center"
+          justify="center"
+          alignItems="center"
+          className={classes.root}
+        >
+          <WebhooksConfig classes={classes} />
+        </Grid>
+        <Grid item className={classes.paddingTop} justify="center" xs={12}>
+          <Typography variant="h5">Misc. options</Typography>
         </Grid>
         <Grid
           item
@@ -441,17 +494,6 @@ class RconSettings extends React.Component {
               </Link>
             </Grid>
           </Grid>
-        </Grid>
-        <Grid
-          item
-          xs={12}
-          className={`${classes.padding} ${classes.margin}`}
-          alignContent="center"
-          justify="center"
-          alignItems="center"
-          className={classes.root}
-        >
-          <WebhooksConfig classes={classes} />
         </Grid>
         <Grid
           item

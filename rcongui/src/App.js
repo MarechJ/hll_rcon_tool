@@ -21,6 +21,7 @@ import Header, { Footer } from "./components/Header";
 import RconSettings from './components/RconSettings';
 import { pink, red } from '@material-ui/core/colors';
 import ServicesList from './components/Services';
+import PlayerGrid from './components/playerGrid'
 import { isNull } from "lodash";
 
 
@@ -313,6 +314,13 @@ function App() {
               <Grid container>
                 <Grid item sm={12} lg={12}>
                   <LogsHistory classes={classes} />
+                </Grid>
+              </Grid>
+            </Route>
+            <Route path="/grid">
+              <Grid container>
+                <Grid item sm={12} lg={12}>
+                  <PlayerGrid classes={classes} />
                 </Grid>
               </Grid>
             </Route>

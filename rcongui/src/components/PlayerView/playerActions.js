@@ -224,6 +224,7 @@ const PlayerActions = ({
   return (
     <React.Fragment>
       <ButtonGroup size={size} aria-label="small outlined button group">
+        {show > 1 ?
         <Button
           color={isWatched ? "primary" : "default"}
           variant={isWatched ? "contained" : "outlined"}
@@ -233,7 +234,7 @@ const PlayerActions = ({
           }
         >
           <VisibilityIcon fontSize="small" />
-        </Button>
+        </Button> : ""}
         {_.range(show).map((idx) => (
           <Button
             key={actions[idx][0]}
@@ -282,6 +283,15 @@ const PlayerActions = ({
           open={isOpen}
           onClose={handleClose}
         >
+           {show <= 1 ?
+        <MenuItem
+          size="small"
+          onClick={() =>
+            handleAction(isWatched ? "unwatch_player" : "watch_player")
+          }
+        >
+          <VisibilityIcon color={isWatched ? "primary" : "default"} fontSize="small" />
+        </MenuItem> : ""}
           {_.range(show, actions.length).map((idx) => {
             const count = penaltyCount.get(remap_penalties[actions[idx][0]], 0);
             return (

@@ -11,7 +11,7 @@ from rcon.extended_commands import Rcon
 from rcon.models import (
     init_db, enter_session, PlayerName,
     PlayerSteamID, PlayerSession, BlacklistedPlayer,
-    PlayersAction, PlayerFlag
+    PlayersAction, PlayerFlag, WatchList
 )
 from rcon.discord import send_to_discord_audit, dict_to_discord
 from rcon.game_logs import on_connected, on_disconnected
@@ -72,7 +72,7 @@ def _get_set_player(sess, player_name, steam_id_64, timestamp=None):
     return player
 
 
-def get_players_by_appearance(page=1, page_size=500, last_seen_from: datetime.datetime = None, last_seen_till: datetime.datetime = None, player_name=None, blacklisted=None, steam_id_64=None):
+def get_players_by_appearance(page=1, page_size=500, last_seen_from: datetime.datetime = None, last_seen_till: datetime.datetime = None, player_name=None, blacklisted=None, steam_id_64=None, is_watched=None):
     if page <= 0:
         raise ValueError('page needs to be >= 1')
     if page_size <= 0:
@@ -98,6 +98,9 @@ def get_players_by_appearance(page=1, page_size=500, last_seen_from: datetime.da
         if blacklisted is True:
             query = query.join(PlayerSteamID.blacklist).filter(
                 BlacklistedPlayer.is_blacklisted == True).options(contains_eager(PlayerSteamID.blacklist))
+        if is_watched is True:
+            query = query.join(PlayerSteamID.watchlist).filter(
+                WatchList.is_watched == True).options(contains_eager(PlayerSteamID.watchlist))
         if last_seen_from:
             query = query.filter(sub.c.last >= last_seen_from)
         if last_seen_till:

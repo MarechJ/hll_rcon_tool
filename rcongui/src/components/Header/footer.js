@@ -14,8 +14,8 @@ const Footer = ({ classes }) => {
 
   React.useEffect(() => {
     fetch("https://api.github.com/repos/MarechJ/hll_rcon_tool/contributors")
-      .then((response) => response.json())
-      .then((data) => setRepoData(data));
+      .then((response) => { if (response.status === 200) { return response.json() } else { throw "rate limited" }})
+      .then((data) => setRepoData(data)).catch(() => null);
     apiGet("get_version")
       .then((res) => showResponse(res, "get_version", false))
       .then((data) => setApiVersion(data.result))

@@ -7,6 +7,7 @@ import {
   showResponse,
   handle_http_errors,
   sendAction,
+  addPlayerToWatchList,
 } from "../../utils/fetchUtils";
 import { toast } from "react-toastify";
 import { join, reduce } from "lodash";
@@ -118,7 +119,11 @@ class FlagDialog extends React.Component {
   }
 }
 
-const show_names = (names) => join(names.map(obj => obj.name), " · ");
+const show_names = (names) =>
+  join(
+    names.map((obj) => obj.name),
+    " · "
+  );
 
 const FlagButton = ({ classes, onflag }) => (
   <Button variant="outlined" onClick={onflag}>
@@ -160,53 +165,12 @@ const FilterPlayer = ({
   vips,
 }) => {
   const playersHistory = constPlayersHistory.toJS();
-  const namesIndex = constNamesIndex.toJS();
-  const {
-    getRootProps,
-    getInputLabelProps,
-    getInputProps,
-    getListboxProps,
-    getOptionProps,
-    groupedOptions,
-  } = useAutocomplete({
-    forcePopupIcon: true,
-    freeSolo: true,
-    selectOnFocus: true,
-    blurOnSelect: false,
-    disableOpenOnFocus: true,
-    disableCloseOnSelect: true,
-    disableClearable: true,
-    disableListWrap: true,
-    disableRestoreFocus: true,
-    disablePortal: true,
-    autoSelect: true,
-    debug: true,
-    options: namesIndex,
-    getOptionLabel: (option) => (option.names ? option.names.map(obj => obj.name) : option),
-  });
-
   const [doFlag, setDoFlag] = React.useState(false);
   const [doConfirmPlayer, setDoConfirmPlayer] = React.useState(false);
-  const playerList = groupedOptions.length > 0 ? groupedOptions : namesIndex;
 
   return (
-    <Grid container>
+    <Grid container spacing={1}>
       <Grid item xs={12}>
-        <Grid
-          container
-          {...getRootProps()}
-          alignContent="space-between"
-          alignItems="flex-end"
-          spacing={2}
-        >
-          <Grid item xs={12} md={6}>
-            <TextField
-              fullWidth
-              inputProps={{ ...getInputProps() }}
-              label="Filter current selection"
-            />
-          </Grid>
-          <Grid item xs={12} md={6}>
             <MyPagination
               classes={classes}
               pageSize={pageSize}
@@ -215,11 +179,7 @@ const FilterPlayer = ({
               total={total}
             />
           </Grid>
-        </Grid>
-        <Grid container spacing={1}>
-          {playerList.map((nameIndex) => {
-            const player = playersHistory[nameIndex.idx];
-            console.log(player)
+          {playersHistory.map((player) => {
             return (
               <Grid
                 key={player.steam_id_64}
@@ -243,7 +203,9 @@ const FilterPlayer = ({
                   permaban={player.penalty_count.PERMABAN}
                   onUnban={() => onUnban(player.steam_id_64)}
                   compact={false}
-                  blacklisted={player.blacklist ? player.blacklist.is_blacklisted : false}
+                  blacklisted={
+                    player.blacklist ? player.blacklist.is_blacklisted : false
+                  }
                   flags={List(player.flags.map((v) => Map(v)))}
                   onflag={() => setDoFlag(player)}
                   onBlacklist={() =>
@@ -264,38 +226,49 @@ const FilterPlayer = ({
                   onDeleteFlag={onDeleteFlag}
                   onAddVip={() => onAddVip(player.names[0], player.steam_id_64)}
                   onDeleteVip={() => onDeleteVip(player.steam_id_64)}
-                  isWatched={player.watchlist ? player.watchlist.is_watched : false}
-                  onAddToWatchList={() => setDoConfirmPlayer({
+                  isWatched={
+                    player.watchlist ? player.watchlist.is_watched : false
+                  }
+                  onAddToWatchList={() =>
+                    setDoConfirmPlayer({
                       player: player.steam_id_64,
                       actionType: "watchlist",
                       steam_id_64: player.steam_id_64,
-                  })}
-                  onRemoveFromWatchList={() => onRemoveFromWatchList(player.steam_id_64)}
+                    })
+                  }
+                  onRemoveFromWatchList={() =>
+                    onRemoveFromWatchList(player.steam_id_64)
+                  }
                   isVip={vips[player.steam_id_64]}
                 />
               </Grid>
             );
           })}
-          </Grid>
-          <Grid item xs={12} className={classes.padding}>
-            <MyPagination
-              classes={classes}
-              pageSize={pageSize}
-              page={page}
-              setPage={setPage}
-              total={total}
-            />
-          </Grid>
+        <Grid item xs={12} className={classes.padding}>
+          <MyPagination
+            classes={classes}
+            pageSize={pageSize}
+            page={page}
+            setPage={setPage}
+            total={total}
+          />
+        </Grid>
         <ReasonDialog
           open={doConfirmPlayer}
           handleClose={() => setDoConfirmPlayer(false)}
-          handleConfirm={(actionType, player, reason, durationHours, steamId64) => {
+          handleConfirm={(
+            actionType,
+            player,
+            reason,
+            durationHours,
+            steamId64
+          ) => {
             if (actionType === "blacklist") {
               onBlacklist(steamId64, reason);
             } else if (actionType === "temp_ban") {
-              onTempBan(steamId64, reason, durationHours)
-            } else if (actionType === 'watchlist') {
-              addToWatchlist(steamId64, reason)
+              onTempBan(steamId64, reason, durationHours);
+            } else if (actionType === "watchlist") {
+              addToWatchlist(steamId64, reason);
             }
             setDoConfirmPlayer(false);
           }}
@@ -310,7 +283,6 @@ const FilterPlayer = ({
           SummaryRenderer={PlayerSummary}
         />
       </Grid>
-    </Grid>
   );
 };
 
@@ -330,6 +302,7 @@ class PlayersHistory extends React.Component {
       lastSeenFrom: null,
       lastSeenUntil: null,
       isLoading: true,
+      isWatchedOnly: false,
       vips: {},
     };
 
@@ -364,7 +337,6 @@ class PlayersHistory extends React.Component {
       .then(this._reloadOnSuccess)
       .catch((error) => toast.error("Unable to connect to API " + error));
   }
-
 
   onAddVip(name, steamID64) {
     return sendAction("do_add_vip", {
@@ -410,6 +382,7 @@ class PlayersHistory extends React.Component {
       blacklistedOnly,
       lastSeenFrom,
       lastSeenUntil,
+      isWatchedOnly,
     } = this.state;
     const params = omitBy(
       {
@@ -420,6 +393,7 @@ class PlayersHistory extends React.Component {
         blacklisted: blacklistedOnly,
         last_seen_from: lastSeenFrom,
         last_seen_until: lastSeenUntil,
+        is_watched: isWatchedOnly,
       },
       (v) => !v
     );
@@ -443,6 +417,7 @@ class PlayersHistory extends React.Component {
           total: data.result.total,
           pageSize: data.result.page_size,
           page: data.result.page,
+
         });
       })
       .catch(handle_http_errors);
@@ -512,31 +487,14 @@ class PlayersHistory extends React.Component {
       steam_id_64: steamId64,
     })
       .then((response) =>
-        showResponse(
-          response,
-          `PlayerID ${steamId64} unbanned`,
-          true
-        )
+        showResponse(response, `PlayerID ${steamId64} unbanned`, true)
       )
       .then(this._reloadOnSuccess)
       .catch((error) => toast.error("Unable to connect to API " + error));
   }
 
   addToWatchlist(steamId64, reason, comment) {
-    postData(`${process.env.REACT_APP_API_URL}do_watch_player`, {
-      steam_id_64: steamId64,
-      reason: reason,
-      comment: comment
-    })
-      .then((response) =>
-        showResponse(
-          response,
-          `PlayerID ${steamId64} watched`,
-          true
-        )
-      )
-      .then(this._reloadOnSuccess)
-      .catch(handle_http_errors);
+   return addPlayerToWatchList(steamId64, reason, comment).then(this._reloadOnSuccess)
   }
 
   removeFromWatchList(steamId64) {
@@ -544,11 +502,7 @@ class PlayersHistory extends React.Component {
       steam_id_64: steamId64,
     })
       .then((response) =>
-        showResponse(
-          response,
-          `PlayerID ${steamId64} unwatched`,
-          true
-        )
+        showResponse(response, `PlayerID ${steamId64} unwatched`, true)
       )
       .then(this._reloadOnSuccess)
       .catch(handle_http_errors);
@@ -573,6 +527,7 @@ class PlayersHistory extends React.Component {
       lastSeenUntil,
       isLoading,
       namesIndex,
+      isWatchedOnly,
     } = this.state;
 
     // There's a bug in the autocomplete code, if there's a boolean in the object it makes it match against
@@ -585,6 +540,7 @@ class PlayersHistory extends React.Component {
       <Grid container className={classes.padding}>
         <Grid item xs={12}>
           <SearchBar
+            classes={classes}
             pageSize={pageSize}
             setPageSize={(v) => this.setState({ pageSize: v })}
             lastSeenFrom={lastSeenFrom}
@@ -597,35 +553,35 @@ class PlayersHistory extends React.Component {
             setSteamId={(v) => this.setState({ bySteamId: v })}
             blacklistedOnly={blacklistedOnly}
             setBlacklistedOnly={(v) => this.setState({ blacklistedOnly: v })}
+            isWatchedOnly={isWatchedOnly}
+            setIsWatchedOnly={(v) => this.setState({ isWatchedOnly: v })}
             onSearch={this.getPlayerHistory}
           />
         </Grid>
         <Grid item xs={12} className={classes.doublePadding}>
-          {isLoading ? (
-            <LinearProgress color="secondary" />
-          ) : ""}
-            <FilterPlayer
-              classes={classes}
-              constPlayersHistory={playersHistory}
-              constNamesIndex={namesIndex}
-              pageSize={pageSize}
-              total={total}
-              page={page}
-              setPage={(page) =>
-                this.setState({ page: page }, this.getPlayerHistory)
-              }
-              onBlacklist={this.blacklistPlayer}
-              onUnBlacklist={this.unblacklistPlayer}
-              onAddFlag={this.addFlagToPlayer}
-              onDeleteFlag={this.deleteFlag}
-              onAddVip={this.onAddVip}
-              onUnban={this.unBanPlayer}
-              onDeleteVip={this.onDeleteVip}
-              onTempBan={this.onTempBan}
-              addToWatchlist={this.addToWatchlist}
-              onRemoveFromWatchList={this.removeFromWatchList}
-              vips={this.state.vips}
-            />
+          {isLoading ? <LinearProgress color="secondary" /> : ""}
+          <FilterPlayer
+            classes={classes}
+            constPlayersHistory={playersHistory}
+            constNamesIndex={namesIndex}
+            pageSize={pageSize}
+            total={total}
+            page={page}
+            setPage={(page) =>
+              this.setState({ page: page }, this.getPlayerHistory)
+            }
+            onBlacklist={this.blacklistPlayer}
+            onUnBlacklist={this.unblacklistPlayer}
+            onAddFlag={this.addFlagToPlayer}
+            onDeleteFlag={this.deleteFlag}
+            onAddVip={this.onAddVip}
+            onUnban={this.unBanPlayer}
+            onDeleteVip={this.onDeleteVip}
+            onTempBan={this.onTempBan}
+            addToWatchlist={this.addToWatchlist}
+            onRemoveFromWatchList={this.removeFromWatchList}
+            vips={this.state.vips}
+          />
         </Grid>
       </Grid>
     );
