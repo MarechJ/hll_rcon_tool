@@ -8,8 +8,8 @@ MULTI_SERVERS:
   # This option when turned on will forward your temp ban to all your servers
   # When it is off the temp ban is only applied on the serveur where the command was received
   broadcast_temp_bans: yes
-  # This option when turned on will forward the unban to all your servers
-  # When it is off unbanning a player will only apply on the serveur where the command was received
+  # This option when turn on will forward the unban to all your servers
+  # When is off unbanning a player will only apply on the serveur where the command was received
   broadcast_unbans: yes
 
 # Config related to bans
@@ -18,3 +18,10 @@ BANS:
   unban_does_unblacklist: yes
   # Same as above but the other way around, remove a player from the blacklist will unban him
   unblacklist_does_unban: yes
+
+# You can test your regex there: https://regex101.com/ set it to "Python"
+NAME_KICKS: 
+  regexps: []
+  reason: "Your nickname is invalid"
+  # If left unset, the webhook default to your audit log webhook
+  discord_webhook_url: ""
