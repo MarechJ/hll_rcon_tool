@@ -30,3 +30,4 @@ def auto_kick(_, log):
                 send_to_discord_audit(f"`{name}` kicked from regexp `{r}`", by="NAME_KICK", webhookurl=config.get("discord_webhook_url"))
             except Exception:
                 logger.error("Unable to send to audit_log")
+            return
