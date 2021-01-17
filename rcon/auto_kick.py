@@ -1,6 +1,7 @@
 import logging
 import re
 
+from rcon.player_history import get_player_profile
 from rcon.recorded_commands import RecordedRcon
 from rcon.discord import send_to_discord_audit
 from rcon.config import get_config
@@ -23,6 +24,13 @@ def auto_kick(_, log):
 
     for r in config['regexps']:
         name = log["player"]
+        info = recorded_rcon.get_player_info(name)
+        profile = get_player_profile(info["steam_id_64"], 0)
+
+        if set(config.get("whitelist_flags", [])) & set(profile["flags"]):
+            logger.debug("Not checking nickname validity for whitelisted player %s (%s)", name, info["steam_id_64"])
+            return
+
         if re.match(r, name):
             logger.info("%s matched player %s", r, name)
             recorded_rcon.do_kick(player=name, reason=config["reason"], by="NAME_KICK")
@@ -30,3 +38,4 @@ def auto_kick(_, log):
                 send_to_discord_audit(f"`{name}` kicked from regexp `{r}`", by="NAME_KICK", webhookurl=config.get("discord_webhook_url"))
             except Exception:
                 logger.error("Unable to send to audit_log")
+            return
