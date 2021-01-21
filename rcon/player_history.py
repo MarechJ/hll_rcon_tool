@@ -18,7 +18,11 @@ from rcon.game_logs import on_connected, on_disconnected
 from rcon.commands import CommandFailedError
 
 from rcon.steam_utils import get_player_bans, STEAM_KEY
+from sqlalchemy.sql.functions import ReturnTypeFromArgs
 
+class unaccent(ReturnTypeFromArgs):
+    pass
+    
 
 MAX_DAYS_SINCE_BAN = os.getenv('BAN_ON_VAC_HISTORY_DAYS', 0)
 AUTO_BAN_REASON = os.getenv(
@@ -72,7 +76,7 @@ def _get_set_player(sess, player_name, steam_id_64, timestamp=None):
     return player
 
 
-def get_players_by_appearance(page=1, page_size=500, last_seen_from: datetime.datetime = None, last_seen_till: datetime.datetime = None, player_name=None, blacklisted=None, steam_id_64=None, is_watched=None):
+def get_players_by_appearance(page=1, page_size=500, last_seen_from: datetime.datetime = None, last_seen_till: datetime.datetime = None, player_name=None, blacklisted=None, steam_id_64=None, is_watched=None, exact_name_match=False, ignore_accent=True):
     if page <= 0:
         raise ValueError('page needs to be >= 1')
     if page_size <= 0:
@@ -93,8 +97,16 @@ def get_players_by_appearance(page=1, page_size=500, last_seen_from: datetime.da
             query = query.filter(PlayerSteamID.steam_id_64.ilike(
                 "%{}%".format(steam_id_64)))
         if player_name:
-            query = query.join(PlayerSteamID.names).filter(PlayerName.name.ilike(
-                "%{}%".format(player_name))).options(contains_eager(PlayerSteamID.names))
+            search = PlayerName.name
+            if ignore_accent:
+                search = unaccent(PlayerName.name)
+            if not exact_name_match:
+                query = query.join(PlayerSteamID.names).filter(search.ilike(
+                    "%{}%".format(player_name)))
+            else:
+                query = query.join(PlayerSteamID.names).filter(search == player_name)
+            
+        
         if blacklisted is True:
             query = query.join(PlayerSteamID.blacklist).filter(
                 BlacklistedPlayer.is_blacklisted == True).options(contains_eager(PlayerSteamID.blacklist))
@@ -111,6 +123,7 @@ def get_players_by_appearance(page=1, page_size=500, last_seen_from: datetime.da
         players = query.order_by(func.coalesce(sub.c.last, PlayerSteamID.created).desc()).limit(
             page_size).offset((page - 1) * page_size).all()
 
+      
         return {
             'total': total,
             'players': [

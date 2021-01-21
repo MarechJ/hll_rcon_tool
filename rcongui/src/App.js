@@ -21,7 +21,7 @@ import Header, { Footer } from "./components/Header";
 import RconSettings from './components/RconSettings';
 import { pink, red } from '@material-ui/core/colors';
 import ServicesList from './components/Services';
-import PlayerGrid from './components/playerGrid'
+import PlayerGrid from './components/PlayersHistory/playerGrid'
 import { isNull } from "lodash";
 
 

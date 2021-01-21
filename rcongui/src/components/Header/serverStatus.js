@@ -128,7 +128,7 @@ class ServerStatus extends React.Component {
       .then((response) => showResponse(response, "server_list", false))
       .then((data) => {
         this.setState({
-          serverList: fromJS(data.result),
+          serverList: fromJS(data.result || []),
         });
       })
       .catch(handle_http_errors);

@@ -8,6 +8,7 @@ import {
   handle_http_errors,
   sendAction,
   addPlayerToWatchList,
+  get
 } from "../../utils/fetchUtils";
 import { toast } from "react-toastify";
 import { join, reduce } from "lodash";
@@ -18,11 +19,12 @@ import {
   TextField,
   LinearProgress,
   Chip,
+  Typography,
 } from "@material-ui/core";
 import { ReasonDialog } from "../PlayerView/playerActions";
 import { omitBy } from "lodash/object";
 import SearchBar from "./searchBar";
-import { Map, List } from "immutable";
+import { Map, List, fromJS } from "immutable";
 import FlagIcon from "@material-ui/icons/Flag";
 import "emoji-mart/css/emoji-mart.css";
 import { Picker } from "emoji-mart";
@@ -32,17 +34,18 @@ import DialogContent from "@material-ui/core/DialogContent";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import { getEmojiFlag } from "../../utils/emoji";
 import PlayerItem from "./playerItem";
+import PlayerGrid from "./playerGrid";
 
 const PlayerSummary = ({ player, flag }) => (
   <React.Fragment>
-    <p>Add flag: {flag ? getEmojiFlag(flag) : <small>Please choose</small>}</p>
-    <p>
+    <Typography variant="body2">Add flag: {flag ? getEmojiFlag(flag) : <small>Please choose</small>}</Typography>
+    <Typography variant="body2">
       To:{" "}
-      {player.names
-        ? player.names.map((n) => <Chip label={n} />)
+      {player && player.get('names')
+        ? player.get('names').map((n) => <Chip label={n.get('name')} />)
         : "No name recorded"}
-    </p>
-    <p>Steamd id: {player.steam_id_64}</p>
+    </Typography>
+    <Typography variant="body2">Steamd id: {player ? player.get("steam_id_64") : ""}</Typography>
   </React.Fragment>
 );
 
@@ -171,118 +174,47 @@ const FilterPlayer = ({
   return (
     <Grid container spacing={1}>
       <Grid item xs={12}>
-            <MyPagination
-              classes={classes}
-              pageSize={pageSize}
-              page={page}
-              setPage={setPage}
-              total={total}
-            />
-          </Grid>
-          {playersHistory.map((player) => {
-            return (
-              <Grid
-                key={player.steam_id_64}
-                item
-                xs={12}
-                sm={12}
-                md={4}
-                lg={3}
-                xl={2}
-              >
-                <PlayerItem
-                  key={player.steam_id_64}
-                  classes={classes}
-                  names={show_names(player.names)}
-                  steamId64={player.steam_id_64}
-                  firstSeen={player.first_seen_timestamp_ms}
-                  lastSeen={player.last_seen_timestamp_ms}
-                  punish={player.penalty_count.PUNISH}
-                  kick={player.penalty_count.KICK}
-                  tempban={player.penalty_count.TEMPBAN}
-                  permaban={player.penalty_count.PERMABAN}
-                  onUnban={() => onUnban(player.steam_id_64)}
-                  compact={false}
-                  blacklisted={
-                    player.blacklist ? player.blacklist.is_blacklisted : false
-                  }
-                  flags={List(player.flags.map((v) => Map(v)))}
-                  onflag={() => setDoFlag(player)}
-                  onBlacklist={() =>
-                    setDoConfirmPlayer({
-                      player: player.steam_id_64,
-                      actionType: "blacklist",
-                      steam_id_64: player.steam_id_64,
-                    })
-                  }
-                  onTempBan={() =>
-                    setDoConfirmPlayer({
-                      player: player.steam_id_64,
-                      actionType: "temp_ban",
-                      steam_id_64: player.steam_id_64,
-                    })
-                  }
-                  onUnBlacklist={() => onUnBlacklist(player.steam_id_64)}
-                  onDeleteFlag={onDeleteFlag}
-                  onAddVip={() => onAddVip(player.names[0], player.steam_id_64)}
-                  onDeleteVip={() => onDeleteVip(player.steam_id_64)}
-                  isWatched={
-                    player.watchlist ? player.watchlist.is_watched : false
-                  }
-                  onAddToWatchList={() =>
-                    setDoConfirmPlayer({
-                      player: player.steam_id_64,
-                      actionType: "watchlist",
-                      steam_id_64: player.steam_id_64,
-                    })
-                  }
-                  onRemoveFromWatchList={() =>
-                    onRemoveFromWatchList(player.steam_id_64)
-                  }
-                  isVip={vips[player.steam_id_64]}
-                />
-              </Grid>
-            );
-          })}
-        <Grid item xs={12} className={classes.padding}>
-          <MyPagination
-            classes={classes}
-            pageSize={pageSize}
-            page={page}
-            setPage={setPage}
-            total={total}
-          />
-        </Grid>
-        <ReasonDialog
-          open={doConfirmPlayer}
-          handleClose={() => setDoConfirmPlayer(false)}
-          handleConfirm={(
-            actionType,
-            player,
-            reason,
-            durationHours,
-            steamId64
-          ) => {
-            if (actionType === "blacklist") {
-              onBlacklist(steamId64, reason);
-            } else if (actionType === "temp_ban") {
-              onTempBan(steamId64, reason, durationHours);
-            } else if (actionType === "watchlist") {
-              addToWatchlist(steamId64, reason);
-            }
-            setDoConfirmPlayer(false);
-          }}
-        />
-        <FlagDialog
-          open={doFlag}
-          handleClose={() => setDoFlag(false)}
-          handleConfirm={(playerObj, theFlag, theComment) => {
-            onAddFlag(playerObj, theFlag, theComment);
-            setDoFlag(false);
-          }}
-          SummaryRenderer={PlayerSummary}
+        <MyPagination
+          classes={classes}
+          pageSize={pageSize}
+          page={page}
+          setPage={setPage}
+          total={total}
         />
       </Grid>
+      {playersHistory.map((player) => {
+        return (
+          <Grid
+            key={player.get("steam_id_64")}
+            item
+            xs={12}
+            sm={12}
+            md={4}
+            lg={3}
+            xl={2}
+          >
+            <PlayerItem
+              key={player.get("steam_id_64")}
+              classes={classes}
+              names={show_names(player.names)}
+              steamId64={player.get("steam_id_64")}
+              firstSeen={player.first_seen_timestamp_ms}
+              lastSeen={player.last_seen_timestamp_ms}
+              punish={player.penalty_count.PUNISH}
+              kick={player.penalty_count.KICK}
+              tempban={player.penalty_count.TEMPBAN}
+              permaban={player.penalty_count.PERMABAN}
+              compact={false}
+              blacklisted={
+                player.blacklist ? player.blacklist.is_blacklisted : false
+              }
+              flags={List(player.flags.map((v) => Map(v)))}
+            />
+          </Grid>
+        );
+      })}
+     
+    </Grid>
   );
 };
 
@@ -292,7 +224,6 @@ class PlayersHistory extends React.Component {
 
     this.state = {
       playersHistory: List(),
-      namesIndex: List(),
       total: 0,
       pageSize: 50,
       page: 1,
@@ -303,7 +234,9 @@ class PlayersHistory extends React.Component {
       lastSeenUntil: null,
       isLoading: true,
       isWatchedOnly: false,
-      vips: {},
+      vips: new Map(),
+      doFlag: false,
+      doConfirmPlayer: false,
     };
 
     this.getPlayerHistory = this.getPlayerHistory.bind(this);
@@ -315,12 +248,25 @@ class PlayersHistory extends React.Component {
     this.onAddVip = this.onAddVip.bind(this);
     this.onDeleteVip = this.onDeleteVip.bind(this);
     this.unBanPlayer = this.unBanPlayer.bind(this);
-    this.onTempBan = this.onTempBan.bind(this);
+    this.tempBan = this.tempBan.bind(this);
     this.addToWatchlist = this.addToWatchlist.bind(this);
     this.removeFromWatchList = this.removeFromWatchList.bind(this);
+    this.setDoFlag = this.setDoFlag.bind(this);
+    this.setDoConfirmPlayer = this.setDoConfirmPlayer.bind(this);
+
+    this.onBlacklist = this.onBlacklist.bind(this)
+    this.onUnBlacklist = this.onUnBlacklist.bind(this)
+    this.deleteFlag = this.deleteFlag.bind(this)
+    this.removeFromWatchList = this.removeFromWatchList.bind(this)
+    this.onUnban = this.onUnban.bind(this)
+    this.onTempBan = this.onTempBan.bind(this)
+    this.onAddVip = this.onAddVip.bind(this)
+    this.onDeleteVip = this.onDeleteVip.bind(this)
+    this.onAddToWatchList = this.onAddToWatchList.bind(this)
+    this.onRemoveFromWatchList = this.onRemoveFromWatchList.bind(this)
   }
 
-  onTempBan(steamId64, reason, durationHours) {
+  tempBan(steamId64, reason, durationHours) {
     postData(`${process.env.REACT_APP_API_URL}do_temp_ban`, {
       steam_id_64: steamId64,
       reason: reason,
@@ -352,23 +298,23 @@ class PlayersHistory extends React.Component {
   }
 
   _loadToState(command, showSuccess, stateSetter) {
-    return fetch(`${process.env.REACT_APP_API_URL}${command}`)
+    return get(command)
       .then((res) => showResponse(res, command, showSuccess))
       .then(stateSetter)
-      .catch((error) => toast.error("Unable to connect to API " + error));
+      .catch(handle_http_errors);
   }
 
   loadVips() {
     return this._loadToState("get_vip_ids", false, (data) =>
       this.setState({
-        vips: reduce(
+        vips: fromJS(reduce(
           data.result,
           (acc, val) => {
             acc[val.steam_id_64] = true;
             return acc;
           },
           {}
-        ),
+        )),
       })
     );
   }
@@ -407,17 +353,10 @@ class PlayersHistory extends React.Component {
           return;
         }
         this.setState({
-          playersHistory: List(data.result.players),
-          namesIndex: List(
-            data.result.players.map((el, idx) => ({
-              names: join(el.names, ","),
-              idx: idx,
-            }))
-          ),
+          playersHistory: fromJS(data.result.players),
           total: data.result.total,
           pageSize: data.result.page_size,
           page: data.result.page,
-
         });
       })
       .catch(handle_http_errors);
@@ -427,13 +366,12 @@ class PlayersHistory extends React.Component {
     if (data.failed) {
       return;
     }
-    this.getPlayerHistory();
-    this.loadVips();
+    this.getPlayerHistory().then(this.loadVips);
   };
 
   addFlagToPlayer(playerObj, flag, comment = null) {
     return postData(`${process.env.REACT_APP_API_URL}flag_player`, {
-      steam_id_64: playerObj.steam_id_64,
+      steam_id_64: playerObj.get("steam_id_64"),
       flag: flag,
       comment: comment,
     })
@@ -494,7 +432,9 @@ class PlayersHistory extends React.Component {
   }
 
   addToWatchlist(steamId64, reason, comment) {
-   return addPlayerToWatchList(steamId64, reason, comment).then(this._reloadOnSuccess)
+    return addPlayerToWatchList(steamId64, reason, comment).then(
+      this._reloadOnSuccess
+    );
   }
 
   removeFromWatchList(steamId64) {
@@ -513,6 +453,52 @@ class PlayersHistory extends React.Component {
     this.loadVips();
   }
 
+  setDoFlag(playerToFlag) {
+    return this.setState({ doFlag: playerToFlag });
+  }
+
+  setDoConfirmPlayer(confirmPlayer) {
+    return this.setState({ doConfirmPlayer: confirmPlayer });
+  }
+
+  /* Shortcut function for the grid list */
+  onBlacklist(player) {
+    return this.setDoConfirmPlayer({
+      player: player.get("steam_id_64"),
+      actionType: "blacklist",
+      steam_id_64: player.get("steam_id_64"),
+    })
+  }
+
+  onUnBlacklist(player) {
+    return this.unblacklistPlayer(player.get("steam_id_64"))
+  }
+
+  onUnban(player) {return this.unBanPlayer(player.get("steam_id_64"))}
+
+  onTempBan(player) {
+    return this.setDoConfirmPlayer({
+      player: player.get("steam_id_64"),
+      actionType: "temp_ban",
+      steam_id_64: player.get("steam_id_64"),
+    })
+  }
+  onAddVip(player) {
+    return this.onAddVip(player.get('names').get(0), player.get("steam_id_64"))
+  }
+
+  onDeleteVip(player) { return this.onDeleteVip(player.get("steam_id_64"))}
+  onAddToWatchList(player) {
+    return this.setDoConfirmPlayer({
+      player: player.get("steam_id_64"),
+      actionType: "watchlist",
+      steam_id_64: player.get("steam_id_64"),
+    })
+  }
+  onRemoveFromWatchList(player) {
+    return this.removeFromWatchList(player.get("steam_id_64"))
+  }
+
   render() {
     const { classes } = this.props;
     const {
@@ -526,18 +512,16 @@ class PlayersHistory extends React.Component {
       lastSeenFrom,
       lastSeenUntil,
       isLoading,
-      namesIndex,
       isWatchedOnly,
+      doFlag,
+      doConfirmPlayer,
+      vips,
     } = this.state;
-
-    // There's a bug in the autocomplete code, if there's a boolean in the object it makes it match against
-    // "false" or "true" so essentially, everything matches to "F" or "T"
-    // That's why we remap the list
 
     // Perfomance is crappy. It's less crappy after switcing to immutables but still...
     // It should be refactored so that the search bar does not trigger useless renderings
     return (
-      <Grid container className={classes.padding}>
+      <Grid container spacing={1} >
         <Grid item xs={12}>
           <SearchBar
             classes={classes}
@@ -558,31 +542,78 @@ class PlayersHistory extends React.Component {
             onSearch={this.getPlayerHistory}
           />
         </Grid>
-        <Grid item xs={12} className={classes.doublePadding}>
+        <Grid item xs={12}>
+        <MyPagination
+          classes={classes}
+          pageSize={pageSize}
+          page={page}
+          setPage={page => this.setState({page: page})}
+          total={total}
+        />
+      </Grid>
+        <Grid item xs={12}>
           {isLoading ? <LinearProgress color="secondary" /> : ""}
-          <FilterPlayer
+          <PlayerGrid
             classes={classes}
-            constPlayersHistory={playersHistory}
-            constNamesIndex={namesIndex}
-            pageSize={pageSize}
+            players={playersHistory}
+            /* pageSize={pageSize}
             total={total}
             page={page}
             setPage={(page) =>
               this.setState({ page: page }, this.getPlayerHistory)
-            }
-            onBlacklist={this.blacklistPlayer}
-            onUnBlacklist={this.unblacklistPlayer}
-            onAddFlag={this.addFlagToPlayer}
+            } */
+            onBlacklist={this.onBlacklist}
+            onUnBlacklist={this.onUnBlacklist}
             onDeleteFlag={this.deleteFlag}
-            onAddVip={this.onAddVip}
-            onUnban={this.unBanPlayer}
-            onDeleteVip={this.onDeleteVip}
-            onTempBan={this.onTempBan}
-            addToWatchlist={this.addToWatchlist}
             onRemoveFromWatchList={this.removeFromWatchList}
-            vips={this.state.vips}
+            vips={vips}
+            onflag={this.setDoFlag}
+            onUnban={this.onUnban}
+            onTempBan={this.onTempBan}
+            onAddVip={this.onAddVip}
+            onDeleteVip={this.onDeleteVip}
+            onAddToWatchList={this.onAddToWatchList}
+            onRemoveFromWatchList={this.onRemoveFromWatchList}
           />
         </Grid>
+        <Grid item xs={12} className={classes.padding}>
+        <MyPagination
+          classes={classes}
+          pageSize={pageSize}
+          page={page}
+          setPage={page => this.setState({page: page})}
+          total={total}
+        />
+      </Grid>
+        <ReasonDialog
+          open={doConfirmPlayer}
+          handleClose={() => this.setDoConfirmPlayer(false)}
+          handleConfirm={(
+            actionType,
+            player,
+            reason,
+            durationHours,
+            steamId64
+          ) => {
+            if (actionType === "blacklist") {
+              this.blacklistPlayer(steamId64, reason);
+            } else if (actionType === "temp_ban") {
+              this.tempBan(steamId64, reason, durationHours);
+            } else if (actionType === "watchlist") {
+              this.addToWatchlist(steamId64, reason);
+            }
+            this.setDoConfirmPlayer(false);
+          }}
+        />
+        <FlagDialog
+          open={doFlag}
+          handleClose={() => this.setDoFlag(false)}
+          handleConfirm={(playerObj, theFlag, theComment) => {
+            this.addFlagToPlayer(playerObj, theFlag, theComment);
+            this. setDoFlag(false);
+          }}
+          SummaryRenderer={PlayerSummary}
+        />
       </Grid>
     );
   }

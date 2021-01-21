@@ -3,7 +3,57 @@ import { FormControlLabel, Checkbox } from "@material-ui/core";
 import Chip from "@material-ui/core/Chip";
 import Autocomplete from "@material-ui/lab/Autocomplete";
 import TextField from "@material-ui/core/TextField";
-import { Grid, Button, Tooltip } from "@material-ui/core";
+import {
+  Grid,
+  Button,
+  Tooltip,
+  Paper,
+  Popover,
+  IconButton,
+} from "@material-ui/core";
+
+export const WithPopver = ({ classes, popoverContent, children }) => {
+  const [anchorEl, setAnchorEl] = React.useState(null);
+
+  const handlePopoverOpen = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handlePopoverClose = () => {
+    setAnchorEl(null);
+  };
+
+  const open = Boolean(anchorEl);
+
+  return (
+    <React.Fragment>
+      <div onMouseEnter={handlePopoverOpen} onMouseLeave={handlePopoverClose}>
+        {children}
+      </div>
+      <Popover
+        id="mouse-over-popover"
+        className={classes.popover}
+        classes={{
+          paper: classes.paper,
+        }}
+        open={open}
+        anchorEl={anchorEl}
+        anchorOrigin={{
+          vertical: "bottom",
+          horizontal: "left",
+        }}
+        transformOrigin={{
+          vertical: "top",
+          horizontal: "left",
+        }}
+        onClose={handlePopoverClose}
+        disableRestoreFocus
+      >
+        {popoverContent}
+      </Popover>
+    </React.Fragment>
+  );
+};
 
 export const ManualPlayerInput = ({
   name,
@@ -65,7 +115,10 @@ export const ManualPlayerInput = ({
           color="secondary"
           variant="outlined"
           disabled={steam_id == "" || reason == ""}
-          onClick={() => { onSubmit(); textHistory.saveText(reason); }}
+          onClick={() => {
+            onSubmit();
+            textHistory.saveText(reason);
+          }}
         >
           {actionName}
         </Button>
