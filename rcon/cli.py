@@ -8,7 +8,7 @@ from rcon.utils import ApiKey
 from rcon.extended_commands import Rcon
 from rcon import game_logs, broadcast, stats_loop, auto_settings, map_recorder
 from rcon.game_logs import ChatLoop
-from rcon.models import init_db
+from rcon.models import init_db, install_unaccent
 from rcon.user_config import seed_default_config
 from rcon.cache_utils import RedisCached, get_redis_pool
 
@@ -65,6 +65,7 @@ def run_log_recorder(frequency_min, now):
 
 def init(force=False):
     #init_db(force)
+    install_unaccent()
     seed_default_config()
 
 

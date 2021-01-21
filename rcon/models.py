@@ -304,6 +304,11 @@ def init_db(force=False):
     Base.metadata.create_all(bind=engine)
 
 
+def install_unaccent():
+    with enter_session() as sess:
+        sess.execute("CREATE EXTENSION IF NOT EXISTS unaccent;")
+
+
 def get_session_maker():
     engine = get_engine()
     sess = sessionmaker()
