@@ -180,8 +180,8 @@ class PlayersHistory extends React.Component {
     this.addFlagToPlayer = this.addFlagToPlayer.bind(this);
     this.deleteFlag = this.deleteFlag.bind(this);
     this.loadVips = this.loadVips.bind(this);
-    this.onAddVip = this.onAddVip.bind(this);
-    this.onDeleteVip = this.onDeleteVip.bind(this);
+    this.addVip = this.addVip.bind(this);
+    this.deleteVip = this.deleteVip.bind(this);
     this.unBanPlayer = this.unBanPlayer.bind(this);
     this.tempBan = this.tempBan.bind(this);
     this.addToWatchlist = this.addToWatchlist.bind(this);
@@ -221,14 +221,14 @@ class PlayersHistory extends React.Component {
       .catch((error) => toast.error("Unable to connect to API " + error));
   }
 
-  onAddVip(name, steamID64) {
+  addVip(name, steamID64) {
     return sendAction("do_add_vip", {
       steam_id_64: steamID64,
       name: name,
     }).then(this.loadVips);
   }
 
-  onDeleteVip(steamID64) {
+  deleteVip(steamID64) {
     return sendAction("do_remove_vip", { steam_id_64: steamID64 }).then(
       this.loadVips
     );
@@ -437,11 +437,11 @@ class PlayersHistory extends React.Component {
     });
   }
   onAddVip(player) {
-    return this.onAddVip(player.get("names").get(0), player.get("steam_id_64"));
+    return this.addVip(player.get("names").get(0), player.get("steam_id_64"));
   }
 
   onDeleteVip(player) {
-    return this.onDeleteVip(player.get("steam_id_64"));
+    return this.deleteVip(player.get("steam_id_64"));
   }
   onAddToWatchList(player) {
     return this.setDoConfirmPlayer({
