@@ -1,9 +1,4 @@
-import {
-  Grid,
-  GridList,
-  GridListTile,
-  makeStyles,
-} from "@material-ui/core";
+import { Grid, GridList, GridListTile, makeStyles } from "@material-ui/core";
 import React from "react";
 import { fromJS } from "immutable";
 import "emoji-mart/css/emoji-mart.css";
@@ -12,9 +7,9 @@ import { PlayerHeader } from "./PlayerTile/PlayerHeader";
 import { PlayerFlags } from "./PlayerTile/PlayerFlags";
 import { PlayerSighthings } from "./PlayerTile/PlayerSighthings";
 import { PlayerPenalties } from "./PlayerTile/PlayerPenalties";
-import withWidth from '@material-ui/core/withWidth';
-import { pure } from 'recompose'
-import { sizing } from '@material-ui/system';
+import withWidth from "@material-ui/core/withWidth";
+import { pure } from "recompose";
+import { sizing } from "@material-ui/system";
 
 const result = {
   result: {
@@ -760,85 +755,95 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
+const PlayerGrid = withWidth()(
+  ({
+    classes,
+    players,
+    onBlacklist,
+    onUnBlacklist,
+    onUnban,
+    onflag,
+    onDeleteFlag,
+    onAddVip,
+    onDeleteVip,
+    onTempBan,
+    onAddToWatchList,
+    onRemoveFromWatchList,
+    width,
+    vips,
+  }) => {
+    //const players = fromJS(result.result.players);
+    const myClasses = useStyles();
 
-const PlayerGrid = withWidth()(({
-  classes,
-  players,
-  onBlacklist,
-  onUnBlacklist,
-  onUnban,
-  onflag,
-  onDeleteFlag,
-  onAddVip,
-  onDeleteVip,
-  onTempBan,
-  onAddToWatchList,
-  onRemoveFromWatchList,
-  width,
-  vips,
-}) => {
-  //const players = fromJS(result.result.players);
-  const myClasses = useStyles();
+    const size = {
+      xs: 1,
+      sm: 2,
+      md: 3,
+      lg: 4,
+      xl: 5,
+    }[width];
 
-  const size = {
-    xs: 1,
-    sm: 2,
-    md: 3,
-    lg: 4,
-    xl: 5
-  }[width]
-
-  return (
-    <Grid container>
-      <Grid item xs={12}>
-        <GridList cols={size} cellHeight={200} spacing={12}>
-          {players.map((player) => {
-      
-            return (
-              <GridListTile key={player.get("steam_id_64")} style={{ minHeight: "100%" }}>
-                <Grid
-                  container
-                  className={myClasses.paperTile}
-                  direction="column"
-                  justify="space-between"
+    return (
+      <Grid container>
+        <Grid item xs={12}>
+          <GridList cols={size} cellHeight={210} spacing={12}>
+            {players.map((player) => {
+              return (
+                <GridListTile
+                  key={player.get("steam_id_64")}
+                  style={{ minHeight: "100%" }}
                 >
-                  <PlayerHeader classes={classes} player={player} />
-                  <PlayerFlags
-                    player={player}
-                    classes={classes}
-                    onDeleteFlag={onDeleteFlag}
-                  />
-                  <PlayerSighthings classes={classes} player={player} />
-                  <PlayerPenalties classes={classes} player={player} />
-                  <Grid container justify="center">
-                    <Grid item>
-                      <ActionButton
-                        blacklisted={player.get('blacklist') && player.get('blacklist').get('is_blacklisted')}
-                        onUnBlacklist={() => onUnBlacklist(player)}
-                        onBlacklist={() => onBlacklist(player)}
-                        onTempBan={() => onTempBan(player)}
-                        onUnban={() => onUnban(player)}
-                        onflag={() => onflag(player)}
-                        isVip={vips.get(player.get('steam_id_64'))}
-                        onAddVip={() => onAddVip(player)}
-                        onDeleteVip={() => onDeleteVip(player)}
-                        isWatched={player.get('watchlist') && player.get('watchlist').get('is_watched')}
-                        onAddToWatchList={() => onAddToWatchList(player)}
-                        onRemoveFromWatchList={() => onRemoveFromWatchList(player)}
-                      />
-                    </Grid>
+                  <Grid
+                    container
+                    className={myClasses.paperTile}
+                    direction="column"
+                    justify="space-between"
+                  >
+                    <PlayerHeader classes={classes} player={player} />
+                      <React.Fragment>
+                        <PlayerFlags
+                          player={player}
+                          classes={classes}
+                          onDeleteFlag={onDeleteFlag}
+                        />
+                        <PlayerSighthings classes={classes} player={player} />
+                        <PlayerPenalties classes={classes} player={player} />
+                        <Grid container justify="center">
+                          <Grid item>
+                            <ActionButton
+                              blacklisted={
+                                player.get("blacklist") &&
+                                player.get("blacklist").get("is_blacklisted")
+                              }
+                              onUnBlacklist={() => onUnBlacklist(player)}
+                              onBlacklist={() => onBlacklist(player)}
+                              onTempBan={() => onTempBan(player)}
+                              onUnban={() => onUnban(player)}
+                              onflag={() => onflag(player)}
+                              isVip={vips.get(player.get("steam_id_64"))}
+                              onAddVip={() => onAddVip(player)}
+                              onDeleteVip={() => onDeleteVip(player)}
+                              isWatched={
+                                player.get("watchlist") &&
+                                player.get("watchlist").get("is_watched")
+                              }
+                              onAddToWatchList={() => onAddToWatchList(player)}
+                              onRemoveFromWatchList={() =>
+                                onRemoveFromWatchList(player)
+                              }
+                            />
+                          </Grid>
+                        </Grid>
+                      </React.Fragment>
                   </Grid>
-                </Grid>
-              </GridListTile>
-            );
-          })}
-        </GridList>
+                </GridListTile>
+              );
+            })}
+          </GridList>
+        </Grid>
       </Grid>
-    </Grid>
-  );
-});
+    );
+  }
+);
 
 export default pure(PlayerGrid);
-
-
-

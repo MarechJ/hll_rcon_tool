@@ -2,10 +2,11 @@ from rcon.cache_utils import ttl_cache, invalidates
 import os
 import logging
 import datetime
-from functools import wraps
+from functools import wraps, cmp_to_key
 from sqlalchemy import func
 from sqlalchemy.orm import contains_eager
 import math
+import unicodedata
 
 from rcon.extended_commands import Rcon
 from rcon.models import (
@@ -19,6 +20,7 @@ from rcon.commands import CommandFailedError
 
 from rcon.steam_utils import get_player_bans, STEAM_KEY
 from sqlalchemy.sql.functions import ReturnTypeFromArgs
+
 
 class unaccent(ReturnTypeFromArgs):
     pass
@@ -75,6 +77,8 @@ def _get_set_player(sess, player_name, steam_id_64, timestamp=None):
 
     return player
 
+def remove_accent(s):
+    return unicodedata.normalize("NFD", s).encode("ascii", "ignore").decode("utf-8")
 
 def get_players_by_appearance(page=1, page_size=500, last_seen_from: datetime.datetime = None, last_seen_till: datetime.datetime = None, player_name=None, blacklisted=None, steam_id_64=None, is_watched=None, exact_name_match=False, ignore_accent=True):
     if page <= 0:
@@ -96,10 +100,12 @@ def get_players_by_appearance(page=1, page_size=500, last_seen_from: datetime.da
         if steam_id_64:
             query = query.filter(PlayerSteamID.steam_id_64.ilike(
                 "%{}%".format(steam_id_64)))
+
         if player_name:
             search = PlayerName.name
             if ignore_accent:
                 search = unaccent(PlayerName.name)
+                player_name = remove_accent(player_name)
             if not exact_name_match:
                 query = query.join(PlayerSteamID.names).filter(search.ilike(
                     "%{}%".format(player_name)))
@@ -123,6 +129,22 @@ def get_players_by_appearance(page=1, page_size=500, last_seen_from: datetime.da
         players = query.order_by(func.coalesce(sub.c.last, PlayerSteamID.created).desc()).limit(
             page_size).offset((page - 1) * page_size).all()
 
+
+        def sort_name_match(v, v2):
+            if not player_name:
+                 return 0
+            search = player_name.lower()
+            v = v.lower()
+            v2 = v2.lower()
+            if ignore_accent:
+                v = remove_accent(v)
+                v2 = remove_accent(v2)
+
+            if search in v and search in v2:
+                return 0
+            if search in v:
+                return -1
+            return 1
       
         return {
             'total': total,
@@ -130,6 +152,7 @@ def get_players_by_appearance(page=1, page_size=500, last_seen_from: datetime.da
                 {
                     # TODO the lazyloading here makes it super slow on large limit
                     **p[0].to_dict(limit_sessions=0),
+                    'names_by_match': sorted((n.name for n in p[0].names), key=cmp_to_key(sort_name_match)),
                     'first_seen_timestamp_ms': int(p[1].timestamp() * 1000) if p[1] else None,
                     'last_seen_timestamp_ms': int(p[2].timestamp() * 1000) if p[2] else None,
                 }

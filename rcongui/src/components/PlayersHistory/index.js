@@ -8,7 +8,7 @@ import {
   handle_http_errors,
   sendAction,
   addPlayerToWatchList,
-  get
+  get,
 } from "../../utils/fetchUtils";
 import { toast } from "react-toastify";
 import { join, reduce } from "lodash";
@@ -38,14 +38,18 @@ import PlayerGrid from "./playerGrid";
 
 const PlayerSummary = ({ player, flag }) => (
   <React.Fragment>
-    <Typography variant="body2">Add flag: {flag ? getEmojiFlag(flag) : <small>Please choose</small>}</Typography>
+    <Typography variant="body2">
+      Add flag: {flag ? getEmojiFlag(flag) : <small>Please choose</small>}
+    </Typography>
     <Typography variant="body2">
       To:{" "}
-      {player && player.get('names')
-        ? player.get('names').map((n) => <Chip label={n.get('name')} />)
+      {player && player.get("names")
+        ? player.get("names").map((n) => <Chip label={n.get("name")} />)
         : "No name recorded"}
     </Typography>
-    <Typography variant="body2">Steamd id: {player ? player.get("steam_id_64") : ""}</Typography>
+    <Typography variant="body2">
+      Steamd id: {player ? player.get("steam_id_64") : ""}
+    </Typography>
   </React.Fragment>
 );
 
@@ -147,77 +151,6 @@ const MyPagination = ({ classes, pageSize, total, page, setPage }) => (
   />
 );
 
-const FilterPlayer = ({
-  classes,
-  constPlayersHistory,
-  pageSize,
-  total,
-  page,
-  setPage,
-  onUnBlacklist,
-  onBlacklist,
-  constNamesIndex,
-  onAddFlag,
-  onDeleteFlag,
-  onAddVip,
-  onDeleteVip,
-  onUnban,
-  onTempBan,
-  addToWatchlist,
-  onRemoveFromWatchList,
-  vips,
-}) => {
-  const playersHistory = constPlayersHistory.toJS();
-  const [doFlag, setDoFlag] = React.useState(false);
-  const [doConfirmPlayer, setDoConfirmPlayer] = React.useState(false);
-
-  return (
-    <Grid container spacing={1}>
-      <Grid item xs={12}>
-        <MyPagination
-          classes={classes}
-          pageSize={pageSize}
-          page={page}
-          setPage={setPage}
-          total={total}
-        />
-      </Grid>
-      {playersHistory.map((player) => {
-        return (
-          <Grid
-            key={player.get("steam_id_64")}
-            item
-            xs={12}
-            sm={12}
-            md={4}
-            lg={3}
-            xl={2}
-          >
-            <PlayerItem
-              key={player.get("steam_id_64")}
-              classes={classes}
-              names={show_names(player.names)}
-              steamId64={player.get("steam_id_64")}
-              firstSeen={player.first_seen_timestamp_ms}
-              lastSeen={player.last_seen_timestamp_ms}
-              punish={player.penalty_count.PUNISH}
-              kick={player.penalty_count.KICK}
-              tempban={player.penalty_count.TEMPBAN}
-              permaban={player.penalty_count.PERMABAN}
-              compact={false}
-              blacklisted={
-                player.blacklist ? player.blacklist.is_blacklisted : false
-              }
-              flags={List(player.flags.map((v) => Map(v)))}
-            />
-          </Grid>
-        );
-      })}
-     
-    </Grid>
-  );
-};
-
 class PlayersHistory extends React.Component {
   constructor(props) {
     super(props);
@@ -237,6 +170,8 @@ class PlayersHistory extends React.Component {
       vips: new Map(),
       doFlag: false,
       doConfirmPlayer: false,
+      ignoreAccent: true,
+      exactMatch: false
     };
 
     this.getPlayerHistory = this.getPlayerHistory.bind(this);
@@ -253,17 +188,19 @@ class PlayersHistory extends React.Component {
     this.removeFromWatchList = this.removeFromWatchList.bind(this);
     this.setDoFlag = this.setDoFlag.bind(this);
     this.setDoConfirmPlayer = this.setDoConfirmPlayer.bind(this);
+    this.setIgnoreAccent = this.setIgnoreAccent.bind(this);
+    this.setExactMatch = this.setExactMatch.bind(this);
 
-    this.onBlacklist = this.onBlacklist.bind(this)
-    this.onUnBlacklist = this.onUnBlacklist.bind(this)
-    this.deleteFlag = this.deleteFlag.bind(this)
-    this.removeFromWatchList = this.removeFromWatchList.bind(this)
-    this.onUnban = this.onUnban.bind(this)
-    this.onTempBan = this.onTempBan.bind(this)
-    this.onAddVip = this.onAddVip.bind(this)
-    this.onDeleteVip = this.onDeleteVip.bind(this)
-    this.onAddToWatchList = this.onAddToWatchList.bind(this)
-    this.onRemoveFromWatchList = this.onRemoveFromWatchList.bind(this)
+    this.onBlacklist = this.onBlacklist.bind(this);
+    this.onUnBlacklist = this.onUnBlacklist.bind(this);
+    this.deleteFlag = this.deleteFlag.bind(this);
+    this.removeFromWatchList = this.removeFromWatchList.bind(this);
+    this.onUnban = this.onUnban.bind(this);
+    this.onTempBan = this.onTempBan.bind(this);
+    this.onAddVip = this.onAddVip.bind(this);
+    this.onDeleteVip = this.onDeleteVip.bind(this);
+    this.onAddToWatchList = this.onAddToWatchList.bind(this);
+    this.onRemoveFromWatchList = this.onRemoveFromWatchList.bind(this);
   }
 
   tempBan(steamId64, reason, durationHours) {
@@ -307,14 +244,16 @@ class PlayersHistory extends React.Component {
   loadVips() {
     return this._loadToState("get_vip_ids", false, (data) =>
       this.setState({
-        vips: fromJS(reduce(
-          data.result,
-          (acc, val) => {
-            acc[val.steam_id_64] = true;
-            return acc;
-          },
-          {}
-        )),
+        vips: fromJS(
+          reduce(
+            data.result,
+            (acc, val) => {
+              acc[val.steam_id_64] = true;
+              return acc;
+            },
+            {}
+          )
+        ),
       })
     );
   }
@@ -329,6 +268,8 @@ class PlayersHistory extends React.Component {
       lastSeenFrom,
       lastSeenUntil,
       isWatchedOnly,
+      exactMatch,
+      ignoreAccent,
     } = this.state;
     const params = omitBy(
       {
@@ -340,8 +281,10 @@ class PlayersHistory extends React.Component {
         last_seen_from: lastSeenFrom,
         last_seen_until: lastSeenUntil,
         is_watched: isWatchedOnly,
+        exact_name_match: exactMatch,
+        ignore_accent: ignoreAccent,
       },
-      (v) => !v
+      (v) => v === null || v === "" || v === undefined
     );
 
     this.setState({ isLoading: true });
@@ -461,42 +404,54 @@ class PlayersHistory extends React.Component {
     return this.setState({ doConfirmPlayer: confirmPlayer });
   }
 
+  setIgnoreAccent(ignoreAccent) {
+    return this.setState({ ignoreAccent });
+  }
+
+  setExactMatch(exactMatch) {
+    return this.setState({ exactMatch });
+  }
+
   /* Shortcut function for the grid list */
   onBlacklist(player) {
     return this.setDoConfirmPlayer({
       player: player.get("steam_id_64"),
       actionType: "blacklist",
       steam_id_64: player.get("steam_id_64"),
-    })
+    });
   }
 
   onUnBlacklist(player) {
-    return this.unblacklistPlayer(player.get("steam_id_64"))
+    return this.unblacklistPlayer(player.get("steam_id_64"));
   }
 
-  onUnban(player) {return this.unBanPlayer(player.get("steam_id_64"))}
+  onUnban(player) {
+    return this.unBanPlayer(player.get("steam_id_64"));
+  }
 
   onTempBan(player) {
     return this.setDoConfirmPlayer({
       player: player.get("steam_id_64"),
       actionType: "temp_ban",
       steam_id_64: player.get("steam_id_64"),
-    })
+    });
   }
   onAddVip(player) {
-    return this.onAddVip(player.get('names').get(0), player.get("steam_id_64"))
+    return this.onAddVip(player.get("names").get(0), player.get("steam_id_64"));
   }
 
-  onDeleteVip(player) { return this.onDeleteVip(player.get("steam_id_64"))}
+  onDeleteVip(player) {
+    return this.onDeleteVip(player.get("steam_id_64"));
+  }
   onAddToWatchList(player) {
     return this.setDoConfirmPlayer({
       player: player.get("steam_id_64"),
       actionType: "watchlist",
       steam_id_64: player.get("steam_id_64"),
-    })
+    });
   }
   onRemoveFromWatchList(player) {
-    return this.removeFromWatchList(player.get("steam_id_64"))
+    return this.removeFromWatchList(player.get("steam_id_64"));
   }
 
   render() {
@@ -516,12 +471,14 @@ class PlayersHistory extends React.Component {
       doFlag,
       doConfirmPlayer,
       vips,
+      ignoreAccent,
+      exactMatch,
     } = this.state;
 
     // Perfomance is crappy. It's less crappy after switcing to immutables but still...
     // It should be refactored so that the search bar does not trigger useless renderings
     return (
-      <Grid container spacing={1} >
+      <Grid container spacing={1}>
         <Grid item xs={12}>
           <SearchBar
             classes={classes}
@@ -540,17 +497,21 @@ class PlayersHistory extends React.Component {
             isWatchedOnly={isWatchedOnly}
             setIsWatchedOnly={(v) => this.setState({ isWatchedOnly: v })}
             onSearch={this.getPlayerHistory}
+            exactMatch={exactMatch}
+            setExactMatch={this.setExactMatch}
+            ignoreAccent={ignoreAccent}
+            setIgnoreAccent={this.setIgnoreAccent}
           />
         </Grid>
         <Grid item xs={12}>
-        <MyPagination
-          classes={classes}
-          pageSize={pageSize}
-          page={page}
-          setPage={page => this.setState({page: page})}
-          total={total}
-        />
-      </Grid>
+          <MyPagination
+            classes={classes}
+            pageSize={pageSize}
+            page={page}
+            setPage={(page) => this.setState({ page: page })}
+            total={total}
+          />
+        </Grid>
         <Grid item xs={12}>
           {isLoading ? <LinearProgress color="secondary" /> : ""}
           <PlayerGrid
@@ -577,14 +538,14 @@ class PlayersHistory extends React.Component {
           />
         </Grid>
         <Grid item xs={12} className={classes.padding}>
-        <MyPagination
-          classes={classes}
-          pageSize={pageSize}
-          page={page}
-          setPage={page => this.setState({page: page})}
-          total={total}
-        />
-      </Grid>
+          <MyPagination
+            classes={classes}
+            pageSize={pageSize}
+            page={page}
+            setPage={(page) => this.setState({ page: page })}
+            total={total}
+          />
+        </Grid>
         <ReasonDialog
           open={doConfirmPlayer}
           handleClose={() => this.setDoConfirmPlayer(false)}
@@ -610,7 +571,7 @@ class PlayersHistory extends React.Component {
           handleClose={() => this.setDoFlag(false)}
           handleConfirm={(playerObj, theFlag, theComment) => {
             this.addFlagToPlayer(playerObj, theFlag, theComment);
-            this. setDoFlag(false);
+            this.setDoFlag(false);
           }}
           SummaryRenderer={PlayerSummary}
         />

@@ -36,6 +36,10 @@ const SearchBar = ({
   setIsWatchedOnly,
   onSearch,
   classes,
+  ignoreAccent,
+  setIgnoreAccent,
+  exactMatch,
+  setExactMatch,
 }) => (
   <form className={classes.flexContainer}>
     <Grid
@@ -45,11 +49,38 @@ const SearchBar = ({
       alignItems="center"
       justify="space-evenly"
     >
+     
       <Grid item>
         <TextField
           label="Search by Name"
           value={name}
           onChange={(e) => setName(e.target.value)}
+        />
+      </Grid>
+      <Grid item>
+        <FormControlLabel
+          control={
+            <Switch
+              checked={ignoreAccent}
+              onChange={(e) => setIgnoreAccent(e.target.checked)}
+              color="primary"
+            />
+          }
+          label="Ignore Accents"
+          labelPlacement="top"
+        />
+      </Grid>
+      <Grid item>
+        <FormControlLabel
+          control={
+            <Switch
+              checked={exactMatch}
+              onChange={(e) => setExactMatch(e.target.checked)}
+              color="primary"
+            />
+          }
+          label="Exact match"
+          labelPlacement="top"
         />
       </Grid>
       <Grid item>
@@ -81,18 +112,26 @@ const SearchBar = ({
       </Grid>
       <Grid item>
         <FormControlLabel
-          value={blacklistedOnly}
-          onChange={(e) => setBlacklistedOnly(e.target.checked)}
-          control={<Switch color="primary" />}
+          control={
+            <Switch
+              checked={blacklistedOnly}
+              onChange={(e) => setBlacklistedOnly(e.target.checked)}
+              color="primary"
+            />
+          }
           label="Blacklisted only"
           labelPlacement="top"
         />
       </Grid>
       <Grid item>
         <FormControlLabel
-          value={isWatchedOnly}
-          onChange={(e) => setIsWatchedOnly(e.target.checked)}
-          control={<Switch color="primary" />}
+          control={
+            <Switch
+              checked={isWatchedOnly}
+              onChange={(e) => setIsWatchedOnly(e.target.checked)}
+              color="primary"
+            />
+          }
           label="Watched only"
           labelPlacement="top"
         />

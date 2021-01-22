@@ -12,6 +12,7 @@ from sqlalchemy.engine.url import URL
 from sqlalchemy.orm import relationship
 from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.sql.expression import nullslast
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +46,7 @@ class PlayerSteamID(Base):
         "PlayerName",
         backref="steamid",
         uselist=True,
-        order_by="desc(PlayerName.last_seen)",
+        order_by="nullslast(desc(PlayerName.last_seen))",
     )
     # If you ever change the ordering of sessions make sure you change the playtime calc code
     sessions = relationship(

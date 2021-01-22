@@ -62,9 +62,13 @@ const LogsFilter = ({ onSubmit }) => {
                 onChange={(e) => setName(e.target.value)}
               />
               <FormControlLabel
-                value={exactPlayer}
-                onChange={(event) => setExactPlayer(event.target.checked)}
-                control={<Switch color="primary" />}
+                control={
+                  <Switch
+                    checked={exactPlayer}
+                    onChange={(event) => setExactPlayer(event.target.checked)}
+                    color="primary"
+                  />
+                }
                 label="Exact"
                 color="Secondary"
                 labelPlacement="top"
@@ -78,9 +82,13 @@ const LogsFilter = ({ onSubmit }) => {
                 onChange={(e) => setType(e.target.value)}
               />
               <FormControlLabel
-                value={exactAction}
-                onChange={(event) => setExactAction(event.target.checked)}
-                control={<Switch color="primary" />}
+                control={
+                  <Switch
+                    checked={exactAction}
+                    onChange={(event) => setExactAction(event.target.checked)}
+                    color="primary"
+                  />
+                }
                 label="Exact"
                 color="Secondary"
                 labelPlacement="top"
@@ -206,7 +214,7 @@ class LogsHistory extends React.Component {
     exactAction = false,
     server = null
   ) {
-    this.setState({isLoading: true})
+    this.setState({ isLoading: true });
     postData(`${process.env.REACT_APP_API_URL}get_historical_logs`, {
       player_name: name,
       log_type: type,
@@ -223,7 +231,7 @@ class LogsHistory extends React.Component {
       .then((res) => {
         console.log(res);
         this.setState({ logs: res.result ? res.result : [] });
-        this.setState({isLoading: false})
+        this.setState({ isLoading: false });
       });
   }
 

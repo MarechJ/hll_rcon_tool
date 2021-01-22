@@ -153,6 +153,8 @@ def players_history(request):
         "steam_id_64": str,
         "page": int,
         "page_size": int,
+        "ignore_accent": bool,
+        "exact_name_match": bool,
     }
 
     try:
