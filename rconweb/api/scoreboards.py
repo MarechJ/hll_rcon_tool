@@ -1,3 +1,5 @@
+import datetime
+
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 
@@ -9,6 +11,7 @@ from rcon.settings import SERVER_INFO
 from rcon import game_logs
 from rcon.models import LogLine, PlayerSteamID, PlayerName, enter_session
 from rcon.discord import send_to_discord_audit
+from .logs import historical_logs
 
 from .views import ctl
 
@@ -58,9 +61,18 @@ def text_scoreboard(request):
 
     name = ctl.get_name()
     try:
-        scoreboard = ctl.get_scoreboard(minutes, "ratio")
+        from_ = datetime.datetime(year=2021, day=13, month=1, hour=20, minute=0).isoformat()
+        print(from_)
+        kill_logs = historical_logs(from_=from_, action='KILL', server_filter='2', limit=100000)
+ 
+        players = list(set([l["player_name"] for l in kill_logs]))
+        kill_logs = {
+            "players": players,
+            "logs": kill_logs
+        }
+        scoreboard = ctl.get_scoreboard(kill_logs, minutes, "ratio")
         text = make_table(scoreboard)
-        scoreboard = ctl.get_scoreboard(minutes, "(real) kills")
+        scoreboard = ctl.get_scoreboard(kill_logs, minutes, "(real) kills")
         text2 = make_table(scoreboard)
     except CommandFailedError:
         text, text2 = "No logs"
@@ -88,9 +100,19 @@ def text_scoreboard(request):
 def text_tk_scoreboard(request):
     name = ctl.get_name()
     try:
-        scoreboard = ctl.get_teamkills_boards()
+        from_ = datetime.datetime(year=2021, day=13, month=1, hour=19, minute=30).isoformat()
+        till_ = datetime.datetime(year=2021, day=13, month=1, hour=20, minute=5).isoformat()
+        print(from_)
+        logs = historical_logs(from_=from_, till=till_, server_filter='2', limit=100000)
+ 
+        players = list(set([l["player_name"] for l in logs]))
+        logs = {
+            "players": players,
+            "logs": logs
+        }
+        scoreboard = ctl.get_teamkills_boards(logs)
         text = make_tk_table(scoreboard)
-        scoreboard = ctl.get_teamkills_boards("Teamkills")
+        scoreboard = ctl.get_teamkills_boards(logs, "Teamkills")
         text2 = make_tk_table(scoreboard)
     except CommandFailedError:
         text, text2 = "No logs"

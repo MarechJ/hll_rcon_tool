@@ -318,11 +318,11 @@ def wrap_method(func, parameters):
             failure = True
             res = None
 
-        if data.get("forward"):
-            try:
+        try:
+            if data.get("forward"):
                 others = forward_request(request)
-            except:
-                logger.exception("Unexpected error while forwarding request")
+        except:
+            logger.exception("Unexpected error while forwarding request")
         # logger.debug("%s %s -> %s", func.__name__, arguments, res)
         return JsonResponse(
             dict(

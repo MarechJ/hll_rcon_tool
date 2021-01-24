@@ -520,8 +520,8 @@ class Rcon(ServerCtl):
 
 
     @ttl_cache(ttl=60 * 2)
-    def get_scoreboard(self, minutes=180, sort='ratio'):
-        logs = self.get_structured_logs(minutes, 'KILL')
+    def get_scoreboard(self, kill_logs, minutes=180, sort='ratio'):
+        logs = kill_logs
         scoreboard = []
         for player in logs['players']:
             if not player:
@@ -529,9 +529,9 @@ class Rcon(ServerCtl):
             kills = 0
             death = 0
             for log in logs['logs']:
-                if log['player'] == player:
+                if log['player_name'] == player:
                     kills += 1
-                elif log['player2'] == player:
+                elif log['player2_name'] == player:
                     death += 1
             if kills == 0 and death == 0:
                 continue
@@ -551,8 +551,7 @@ class Rcon(ServerCtl):
         return scoreboard
 
     @ttl_cache(ttl=60 * 2)
-    def get_teamkills_boards(self, sort='TK Minutes'):
-        logs = self.get_structured_logs(180)
+    def get_teamkills_boards(self, logs, sort='TK Minutes'):
         scoreboard = []
         for player in logs['players']:
             if not player:
@@ -562,13 +561,13 @@ class Rcon(ServerCtl):
             tk = 0  
             death_by_tk = 0
             for log in logs['logs']:
-                if log['player'] == player or log['player2'] == player:
-                    first_timestamp = min(log['timestamp_ms'], first_timestamp)
-                    last_timestamp = max(log['timestamp_ms'], last_timestamp)
-                if log['action'] == 'TEAM KILL':
-                    if log['player'] == player:
+                if log['player_name'] == player or log['player2_name'] == player:
+                    first_timestamp = min(log['event_time'], first_timestamp)
+                    last_timestamp = max(log['event_time'], last_timestamp)
+                if log['type'] == 'TEAM KILL':
+                    if log['player_name'] == player:
                         tk += 1
-                    elif log['player2'] == player:
+                    elif log['player2_name'] == player:
                         death_by_tk += 1
             if tk == 0 and death_by_tk == 0:
                 continue
@@ -576,8 +575,8 @@ class Rcon(ServerCtl):
                 'player': player,
                 'Teamkills': tk,
                 'Death by TK': death_by_tk,
-                'Estimated play time (minutes)': (last_timestamp - first_timestamp) // 1000 // 60,
-                'TK Minutes': tk / max((last_timestamp - first_timestamp) // 1000 // 60, 1)
+                'Estimated play time (minutes)': (last_timestamp - first_timestamp) // 60,
+                'TK Minutes': tk / max((last_timestamp - first_timestamp) // 60, 1)
             })
 
         scoreboard = sorted(

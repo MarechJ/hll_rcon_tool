@@ -1,4 +1,3 @@
-
 from dateutil import parser
 from django.views.decorators.csrf import csrf_exempt
 
@@ -15,22 +14,18 @@ from rcon.models import LogLine, PlayerSteamID, PlayerName, enter_session
 from sqlalchemy import or_, and_
 
 
-
-@csrf_exempt
-@login_required
-def get_historical_logs(request):
-    data = _get_data(request)
-    player_name = data.get("player_name")
-    action = data.get("log_type")
-    steam_id_64 = data.get("steam_id_64")
-    limit = int(data.get("limit", 1000))
-    from_ = data.get("from")
-    till = data.get("till")
-    time_sort = data.get("time_sort", "desc")
-    exact_player_match = data.get("exact_player", False)
-    exact_action = data.get("exact_action", True)
-    server_filter = data.get("server_filter")
-
+def historical_logs(
+    player_name=None,
+    action=None,
+    steam_id_64=None,
+    limit=1000,
+    from_=None,
+    till=None,
+    time_sort="desc",
+    exact_player_match=False,
+    exact_action=True,
+    server_filter=None,
+):
     with enter_session() as sess:
         names = []
         name_filters = []
@@ -100,12 +95,43 @@ def get_historical_logs(request):
             r = r.to_dict()
             r["event_time"] = r["event_time"].timestamp()
             lines.append(r)
-        return api_response(
-            lines,
-            command="get_historical_logs",
-            arguments=dict(limit=limit, player_name=player_name, action=action),
-            failed=False,
-        )
+
+        return lines
+
+
+@csrf_exempt
+@login_required
+def get_historical_logs(request):
+    data = _get_data(request)
+    player_name = data.get("player_name")
+    action = data.get("log_type")
+    steam_id_64 = data.get("steam_id_64")
+    limit = int(data.get("limit", 1000))
+    from_ = data.get("from")
+    till = data.get("till")
+    time_sort = data.get("time_sort", "desc")
+    exact_player_match = data.get("exact_player", False)
+    exact_action = data.get("exact_action", True)
+    server_filter = data.get("server_filter")
+
+    lines = historical_logs(
+        player_name=player_name,
+        action=action,
+        steam_id_64=steam_id_64,
+        limit=limit,
+        from_=from_,
+        till=till,
+        time_sort=time_sort,
+        exact_player_match=exact_player_match,
+        exact_action=exact_action,
+        server_filter=server_filter,
+    )
+    return api_response(
+        lines,
+        command="get_historical_logs",
+        arguments=dict(limit=limit, player_name=player_name, action=action),
+        failed=False,
+    )
 
 
 @csrf_exempt
@@ -118,7 +144,6 @@ def get_recent_logs(request):
     action_filter = data.get("filter_action")
     exact_player_match = data.get("exact_player_match", True)
     exact_action = data.get("exact_action", False)
-    
 
     return api_response(
         result=game_logs.get_recent_logs(
@@ -127,7 +152,7 @@ def get_recent_logs(request):
             player_search=player_search,
             action_filter=action_filter,
             exact_player_match=exact_player_match,
-            exact_action=exact_action
+            exact_action=exact_action,
         ),
         command="get_recent_logs",
         arguments=dict(
