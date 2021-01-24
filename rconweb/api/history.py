@@ -149,9 +149,12 @@ def players_history(request):
         "last_seen_till": parser.parse,
         "player_name": str,
         "blacklisted": bool,
+        "is_watched": bool,
         "steam_id_64": str,
         "page": int,
         "page_size": int,
+        "ignore_accent": bool,
+        "exact_name_match": bool,
     }
 
     try:

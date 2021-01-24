@@ -1,7 +1,13 @@
 import os
+from dataclasses import dataclass, field, asdict
+from typing import List
+import logging
 
 from rcon.models import UserConfig, enter_session
 from rcon.commands import CommandFailedError
+
+logger = logging.getLogger(__name__)
+
 
 def _get_conf(sess, key):
     return sess.query(UserConfig).filter(UserConfig.key == key).one_or_none()
@@ -10,6 +16,7 @@ def get_user_config(key, default=None):
     with enter_session() as sess:
         res = _get_conf(sess, key)
         return res.value if res else default
+
     
 def _add_conf(sess, key, val):
     return sess.add(UserConfig(
@@ -29,6 +36,66 @@ def set_user_config(key, object_):
 
 class InvalidConfigurationError(Exception):
     pass
+
+
+@dataclass
+class Hook:
+    roles: List[str] = field(default_factory=list)
+    hook: str = None
+
+@dataclass
+class Hooks:
+    name: str
+    hooks: List[Hook] = field(default_factory=list)
+
+    @classmethod
+    def from_dict(cls, dict_):
+        hooks = [Hook(**h) for h in dict_.pop('hooks', [])]
+        return cls(hooks=hooks, **dict_)
+
+class DiscordHookConfig:
+    hooks_key = "discord_hooks"
+    expected_hook_types = (
+        'watchlist',
+        # TODO
+        #chat
+        #kill
+        #audit
+    )
+
+    def __init__(self, for_type):
+        if for_type not in self.expected_hook_types:
+            raise ValueError("Using unexpected hook type %s", for_type)
+        server_number = os.getenv('SERVER_NUMBER', 0)
+        self.for_type = for_type
+        self.HOOKS_KEY = f'{server_number}_{self.hooks_key}_{for_type}'
+ 
+    @staticmethod
+    def get_all_hook_types(as_dict=False):
+        hooks = []
+        with enter_session() as sess:
+            for name in DiscordHookConfig.expected_hook_types:
+                hooks.append(
+                    asdict(DiscordHookConfig(for_type=name).get_hooks())
+                )
+            return hooks
+
+    def get_hooks(self) -> Hooks:
+        conf = get_user_config(self.HOOKS_KEY, None)
+        if conf:
+            return Hooks.from_dict(conf)
+        return Hooks(name=self.for_type)
+
+    def set_hooks(self, hooks):
+        if not isinstance(hooks, list):
+            raise InvalidConfigurationError(
+                    "%s must be a list", self.HOOKS_KEY
+                )
+        hooks = Hooks(name=self.for_type, hooks=[Hook(**h) for h in hooks])
+        set_user_config(self.HOOKS_KEY, asdict(hooks))
+
+
+
 
 class AutoBroadcasts:
     def __init__(self):

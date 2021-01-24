@@ -3,6 +3,7 @@ import logging
 from functools import wraps
 import os
 from subprocess import run, PIPE
+from dataclasses import asdict
 
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -27,6 +28,8 @@ from rcon.discord import send_to_discord_audit
 from rcon.game_logs import ChatLoop
 from rcon.user_config import AutoBroadcasts, InvalidConfigurationError, StandardMessages
 from rcon.cache_utils import RedisCached, get_redis_pool
+from rcon.user_config import DiscordHookConfig
+from rcon.watchlist import PlayerWatch
 
 from .auth import login_required, api_response
 from .utils import _get_data
@@ -40,6 +43,77 @@ logger = logging.getLogger("rconweb")
 def get_version(request):
     res = run(["git", "describe", "--tags"], stdout=PIPE, stderr=PIPE)
     return api_response(res.stdout.decode(), failed=False, command="get_version")
+
+
+@csrf_exempt
+@login_required
+def get_hooks(request):
+    return api_response(
+        result=DiscordHookConfig.get_all_hook_types(as_dict=True),
+        command="get_hooks",
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required
+def set_hooks(request):
+    data = _get_data(request)
+
+    hook_config = DiscordHookConfig(for_type=data["name"])
+    hook_config.set_hooks(data["hooks"])
+
+    return api_response(
+        result=DiscordHookConfig.get_all_hook_types(),
+        command="get_hooks",
+        failed=False,
+    )
+
+
+def _do_watch(request, add: bool):
+    data = _get_data(request)
+    error = None
+    failed = True
+    result = None
+
+    try:
+        watcher = PlayerWatch(data["steam_id_64"])
+        if add:
+            params = dict(
+                reason=data["reason"],
+                comment=data.get("comment"),
+                player_name=data.get("player_name"),
+            )
+            result = watcher.watch(**params)
+            audit("do_watch_player", request, params)
+        else:
+            result = watcher.unwatch()
+            audit("do_unwatch_player", request, dict(steam_id_64=data["steam_id_64"]))
+        failed = False
+    except KeyError as e:
+        error = f"No {e.args} provided"
+    except CommandFailedError as e:
+        error = e.args[0]
+
+    return api_response(
+        result=result,
+        arguments=data,
+        error=error,
+        command="do_watch_player",
+        failed=failed,
+    )
+
+
+@csrf_exempt
+@login_required
+def do_watch_player(request):
+    return _do_watch(request, add=True)
+
+
+@csrf_exempt
+@login_required
+def do_unwatch_player(request):
+    return _do_watch(request, add=False)
 
 
 @csrf_exempt
@@ -183,7 +257,9 @@ def blacklist_player(request):
         # ctl.do_perma_ban(
         #     steam_id_64=data["steam_id_64"], reason=data["reason"], by=name
         # )
-        add_player_to_blacklist(data["steam_id_64"], data["reason"], name, request.user.username)
+        add_player_to_blacklist(
+            data["steam_id_64"], data["reason"], name, request.user.username
+        )
         audit("Blacklist", request, data)
         failed = False
     except:
@@ -261,7 +337,7 @@ def unban(request):
             "command": "unban_player",
             "arguments": data,
             "failed": failed,
-            "forward_results": results
+            "forward_results": results,
         }
     )
 
@@ -363,6 +439,10 @@ commands = [
     ("get_version", get_version),
     ("get_connection_info", get_connection_info),
     ("unban", unban),
+    ("get_hooks", get_hooks),
+    ("set_hooks", set_hooks),
+    ("do_unwatch_player", do_unwatch_player),
+    ("do_watch_player", do_watch_player),
 ]
 
 logger.info("Initializing endpoint")

@@ -14,7 +14,7 @@ It is essentially a website that you can self host (or if you ask around the dis
 - Trigger word that when written in the ingame chat will create an alert (tag a person(s) or a role(s) on discord) such as: !admin or just anyword you want (insults if you want to chase those)
 - Flag player with any emoji / icons you want + comment attached
 - Auto loading of player's country from steam and displayed in live view
-- History of players and player profile: All game sessions of players are recorded, all the names they used in the passed, punitions they received and by which admin \
+- History of players and player profile: All game sessions of players are recorded, all the names they used in the passed, punitions they received and by which admin, etc
 - Apply actions on players even if they are not online anymore, from the player history you can flag, permaban, temp ban, lift all bans, add to VIP
 - Permanent logs, a seacrh tool to look at the entire history of the game logs of your server, export logs as CSV
 - Multi server support, you can host the rcon for mutliple servers and they will share the same player database, you can apply temp and perma bans to all server with only one action, synch VIP, settings, broadcast messages etc...
@@ -29,6 +29,7 @@ It is essentially a website that you can self host (or if you ask around the dis
 - Backup and restore of VIPs
 - All the basic settings, map rotation management, sliders for Idle kick time, max ping etc..
 - For power users and coders: You can add anything you want in the cron server or in the supervisor service so it's easy to code you own plugin (I myself have a votemap plugin and a bot that verifies players), an http API to use all the features above and a CLI for a subset of those
+- Put player on a watch list and be notified when they enter your server
 
 
 > Why a website?
@@ -152,6 +153,9 @@ To change the password of one of your user, in the users list click on him, then
 Please note that the "onlineadmins" variable in the (auto) broadcast is broken due to accounts. It will be fixed and improved later.
 
 You're done, ENJOY!
+
+If you feel generous you can donate, the money will be use to reward contributing developer or content creator to create video tutorial, demos, documentation, etc.
+[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/donate?hosted_button_id=56MYGQ2966V7J)
 
 ### To update to the latest version:
 

@@ -39,13 +39,16 @@ services:
     image: maresh/hll_rcon_frontend:latest
     ports:
       - ${RCONWEB_PORT}:80
+      - ${RCONWEB_PORT_HTTPS}:443
     restart: always
     environment:
+      RCONWEB_EXTERNAL_ADDRESS: ${RCONWEB_EXTERNAL_ADDRESS}
       HLL_HOST: ${HLL_HOST}
     volumes:
       - ./static:/static/
+      - ./certs:/certs/
     depends_on:
-        - backend_1
+      - backend_1
     networks:
       - server1
       - common
@@ -127,6 +130,7 @@ services:
     <<: *frontend
     ports:
       - ${RCONWEB_PORT_2}:80
+      - ${RCONWEB_PORT_HTTPS_2}:443
     environment:
       <<: *env2
     restart: on-failure
@@ -193,6 +197,7 @@ services:
     <<: *frontend
     ports:
       - ${RCONWEB_PORT_3}:80
+      - ${RCONWEB_PORT_HTTPS_3}:443
     environment:
       <<: *env3
     restart: on-failure
