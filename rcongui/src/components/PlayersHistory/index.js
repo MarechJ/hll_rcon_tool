@@ -508,7 +508,7 @@ class PlayersHistory extends React.Component {
             classes={classes}
             pageSize={pageSize}
             page={page}
-            setPage={(page) => this.setState({ page: page })}
+            setPage={(page) => this.setState({ page: page }, this.getPlayerHistory)}
             total={total}
           />
         </Grid>
@@ -542,7 +542,7 @@ class PlayersHistory extends React.Component {
             classes={classes}
             pageSize={pageSize}
             page={page}
-            setPage={(page) => this.setState({ page: page })}
+            setPage={(page) => this.setState({ page: page }, this.getPlayerHistory)}
             total={total}
           />
         </Grid>

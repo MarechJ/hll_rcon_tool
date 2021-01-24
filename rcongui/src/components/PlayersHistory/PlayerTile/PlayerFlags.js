@@ -17,7 +17,7 @@ export const PlayerFlags = ({ player, classes, onDeleteFlag }) => {
         className={classes.noPaddingMargin}
         style={{ height: "22px" }}
       >
-        <Tooltip title={d.get("comment")} arrow>
+        <Tooltip title={d.get("comment") ? d.get("comment") : "<empty>"} arrow>
           <Link
             onClick={() => window.confirm("Delete flag?")
               ? onDeleteFlag(d.get("id"))

@@ -25,14 +25,22 @@ export const PlayerHeader = pure(({ classes, player }) => {
   return (
     <ListItem alignItems="flex-start">
       <ListItemAvatar>
-        <Avatar>
-          {
-            player
-              .get("names", new List())
-              .get(0, new Map())
-              .get("name", "?")[0]
-          }
-        </Avatar>
+        <Link
+          target="_blank"
+          color="inherit"
+          href={`https://steamcommunity.com/profiles/${player.get(
+            "steam_id_64"
+          )}`}
+        >
+          <Avatar>
+            {
+              player
+                .get("names", new List())
+                .get(0, new Map())
+                .get("name", "?")[0]
+            }
+          </Avatar>
+        </Link>
       </ListItemAvatar>
       <ListItemText
         primary={
@@ -73,7 +81,15 @@ export const PlayerHeader = pure(({ classes, player }) => {
             )}
           </React.Fragment>
         }
-        secondary={player.get("steam_id_64")}
+        secondary={
+          <Link
+            target="_blank"
+            color="inherit"
+            href={`${process.env.REACT_APP_API_URL}player?steam_id_64=${player.get("steam_id_64")}`}
+          >
+            {player.get("steam_id_64")}
+          </Link>
+        }
       />
       <ListItemSecondaryAction>
         <Tooltip title="Copy steam id to clipboard">
@@ -83,6 +99,10 @@ export const PlayerHeader = pure(({ classes, player }) => {
               size="small"
               style={{ cursor: "pointer" }}
               onClick={() => {
+                if (navigator.clipboard === undefined) {
+                  alert("This feature only works if your rcon uses HTTPS");
+                  return;
+                }
                 var text = player.get("steam_id_64");
                 navigator.clipboard.writeText(text).then(
                   function () {
@@ -114,15 +134,23 @@ export const PlayerHeader = pure(({ classes, player }) => {
                 )}\nSteam URL: https://steamcommunity.com/profiles/${player.get(
                   "steam_id_64"
                 )}\nType of issue:\nDescription:\nEvidence:`;
-
-                navigator.clipboard.writeText(text).then(
-                  function () {
-                    console.log("Async: Copying to clipboard was successful!");
-                  },
-                  function (err) {
-                    console.error("Async: Could not copy text: ", err);
-                  }
-                );
+                if (navigator.clipboard === undefined) {
+                  alert(`This feature only works if your rcon uses HTTPS.`);
+                  return;
+                }
+                if (navigator.clipboard === undefined) {
+                } else {
+                  navigator.clipboard.writeText(text).then(
+                    function () {
+                      console.log(
+                        "Async: Copying to clipboard was successful!"
+                      );
+                    },
+                    function (err) {
+                      console.error("Async: Could not copy text: ", err);
+                    }
+                  );
+                }
               }}
             />
           </Typography>
