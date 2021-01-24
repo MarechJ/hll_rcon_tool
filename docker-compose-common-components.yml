@@ -34,6 +34,7 @@ services:
             NB_API_WORKERS: ${NB_API_WORKERS}
             CONFIG_DIR: /config/
             RCONWEB_EXTERNAL_ADDRESS: ${RCONWEB_EXTERNAL_ADDRESS}
+            RCONWEB_SERVER_URL: ${RCONWEB_SERVER_URL}
         restart: always
         volumes: 
             - ./logs:/logs/

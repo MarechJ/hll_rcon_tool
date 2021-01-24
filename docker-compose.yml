@@ -104,6 +104,7 @@ services:
       SUPERVISOR_RPC_URL: http://supervisor:9001/RPC2
       CONFIG_DIR: /config/
       SERVER_NUMBER: 2
+      RCONWEB_SERVER_URL: ${RCONWEB_SERVER_URL_2}
     restart: on-failure
     networks:
       common:
@@ -171,6 +172,7 @@ services:
       SUPERVISOR_RPC_URL: http://supervisor:9001/RPC2
       CONFIG_DIR: /config/
       SERVER_NUMBER: 3
+      RCONWEB_SERVER_URL: ${RCONWEB_SERVER_URL_3}
     restart: on-failure
     command: supervisor
     networks:

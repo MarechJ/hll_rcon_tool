@@ -45,13 +45,17 @@ const Status = ({ classes, name, nbPlayers, map, serverList }) => {
             open={Boolean(anchorEl)}
             onClose={handleClose}
           >
-            {serverList.map((s) => (
-              <MenuItem onClick={handleClose}>
-                <Link color="inherit" href={`${window.location.protocol}//${window.location.hostname}:${s.get('port')}${window.location.pathname}${window.location.hash}`}>
+            {serverList.map((s) => {
+              let link = `${window.location.protocol}//${window.location.hostname}:${s.get('port')}${window.location.pathname}${window.location.hash}`
+              if (s.get('link')) {
+                link = s.get('link')
+              }
+              return <MenuItem onClick={handleClose}>
+                <Link color="inherit" href={link}>
                   {s.get("name")}
                 </Link>
               </MenuItem>
-            ))}
+          })}
           </Menu>
           <small style={{ display: "block" }}>
             {nbPlayers} - {map}

@@ -420,7 +420,7 @@ ctl = RecordedRcon(SERVER_INFO)
 @csrf_exempt
 def get_connection_info(request):
     return api_response(
-        {"name": ctl.get_name(), "port": os.getenv("RCONWEB_PORT")},
+        {"name": ctl.get_name(), "port": os.getenv("RCONWEB_PORT"), "link": os.getenv("RCONWEB_SERVER_URL")},
         failed=False,
         command="get_connection_info",
     )
