@@ -437,7 +437,7 @@ class PlayersHistory extends React.Component {
     });
   }
   onAddVip(player) {
-    return this.addVip(player.get("names").get(0), player.get("steam_id_64"));
+    return this.addVip(player.get("names").get(0).get("name"), player.get("steam_id_64"));
   }
 
   onDeleteVip(player) {
