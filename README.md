@@ -155,7 +155,7 @@ Please note that the "onlineadmins" variable in the (auto) broadcast is broken d
 You're done, ENJOY!
 
 If you feel generous you can donate, the money will be use to reward contributing developer or content creator to create video tutorial, demos, documentation, etc.
-[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/donate?hosted_button_id=BG8V5944JYTKE)
+[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/donate?hosted_button_id=56MYGQ2966V7J)
 
 ### To update to the latest version:
 
