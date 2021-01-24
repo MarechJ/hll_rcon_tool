@@ -164,7 +164,7 @@ class DiscordWebhookHandler:
                             msg_words[i] = f"__**{msg_words[i]}**__"
                 if triggered:
                     content = " ".join(self.ping_trigger_roles)
-                    embed.description = " ".join(msg_words)
+                    embed.description = "".join(msg_words)
 
             logger.debug("sending chat message len=%s to Discord",
                          len(embed) + len(content))
