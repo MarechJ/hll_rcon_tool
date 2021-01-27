@@ -9,7 +9,7 @@ import {
   IconButton,
 } from "@material-ui/core";
 import React from "react";
-import { List } from "immutable";
+import { List, Map } from "immutable";
 import Tooltip from "@material-ui/core/Tooltip";
 import FileCopyIcon from "@material-ui/icons/FileCopy";
 import AnnouncementIcon from "@material-ui/icons/Announcement";
@@ -21,6 +21,11 @@ import { pure } from "recompose";
 export const PlayerHeader = pure(({ classes, player }) => {
   const [showAll, setShowAll] = React.useState(false);
   const hasMultipleName = player.get("names") && player.get("names").size > 1;
+
+  const playerNames = player.get("names", null) ? player.get("names") : new List();
+  const firstName = playerNames.get(0, null) ? playerNames.get(0) : new Map()
+  const firstNameLetter = firstName.get("name", "?")[0]
+  const namesByMatch = player.get("names_by_match", null) ? player.get("names_by_match") : new List()
 
   return (
     <ListItem alignItems="flex-start">
@@ -34,10 +39,7 @@ export const PlayerHeader = pure(({ classes, player }) => {
         >
           <Avatar>
             {
-              player
-                .get("names", new List())
-                .get(0, new Map())
-                .get("name", "?")[0]
+              firstNameLetter
             }
           </Avatar>
         </Link>
@@ -56,29 +58,28 @@ export const PlayerHeader = pure(({ classes, player }) => {
                     <KeyboardArrowUpIcon fontSize="inherit" />
                   </IconButton>
                 ) : (
-                  ""
-                )}
-                {player
-                  .get("names", new List())
+                    ""
+                  )}
+                {playerNames
                   .map((n) => n.get("name"))
                   .join(" | ")}
               </Typography>
             ) : (
-              <Typography variant="body1">
-                {hasMultipleName ? (
-                  <IconButton
-                    size="small"
-                    color="primary"
-                    onClick={() => setShowAll(true)}
-                  >
-                    <KeyboardArrowDownIcon fontSize="inherit" />
-                  </IconButton>
-                ) : (
-                  ""
-                )}
-                {player.get("names_by_match", new List()).get(0, "")}
-              </Typography>
-            )}
+                <Typography variant="body1">
+                  {hasMultipleName ? (
+                    <IconButton
+                      size="small"
+                      color="primary"
+                      onClick={() => setShowAll(true)}
+                    >
+                      <KeyboardArrowDownIcon fontSize="inherit" />
+                    </IconButton>
+                  ) : (
+                      ""
+                    )}
+                  {namesByMatch.get(0, "")}
+                </Typography>
+              )}
           </React.Fragment>
         }
         secondary={
@@ -127,13 +128,13 @@ export const PlayerHeader = pure(({ classes, player }) => {
                   .get("names")
                   .first()
                   .get("name")}\nAliases: ${player
-                  .get("names", new List())
-                  .map((n) => n.get("name"))
-                  .join(" | ")}\nSteamID: ${player.get(
-                  "steam_id_64"
-                )}\nSteam URL: https://steamcommunity.com/profiles/${player.get(
-                  "steam_id_64"
-                )}\nType of issue:\nDescription:\nEvidence:`;
+                    .get("names", new List())
+                    .map((n) => n.get("name"))
+                    .join(" | ")}\nSteamID: ${player.get(
+                      "steam_id_64"
+                    )}\nSteam URL: https://steamcommunity.com/profiles/${player.get(
+                      "steam_id_64"
+                    )}\nType of issue:\nDescription:\nEvidence:`;
                 if (navigator.clipboard === undefined) {
                   alert(`This feature only works if your rcon uses HTTPS.`);
                   return;
