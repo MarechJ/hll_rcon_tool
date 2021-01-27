@@ -156,7 +156,7 @@ class DiscordWebhookHandler:
             content = ""
             triggered = False
             if self.ping_trigger_words:
-                msg_words = re.split('[^a-zA-Z!@]', message)
+                msg_words = re.split('([^a-zA-Z!@])', message)
                 for trigger_word in self.ping_trigger_words:
                     for i, msg_word in enumerate(msg_words):
                         if trigger_word == msg_word.lower():
@@ -164,7 +164,7 @@ class DiscordWebhookHandler:
                             msg_words[i] = f"__**{msg_words[i]}**__"
                 if triggered:
                     content = " ".join(self.ping_trigger_roles)
-                    embed.description = " ".join(msg_words)
+                    embed.description = "".join(msg_words)
 
             logger.debug("sending chat message len=%s to Discord",
                          len(embed) + len(content))

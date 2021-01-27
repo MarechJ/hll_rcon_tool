@@ -28,6 +28,21 @@ def get_steam_profile(steamd_id):
         logging.exception('Unexpected error while fetching steam profile')
         return None
 
+@ttl_cache(60 * 60 * 24, cache_falsy=False, is_method=False)
+def get_steam_profiles(steamd_ids):
+    if not STEAM_KEY:
+        return None
+    try:
+        api = WebAPI(key=STEAM_KEY)
+        return api.ISteamUser.GetPlayerSummaries(steamids=steamd_ids)["response"]["players"][0]
+    except AttributeError:
+        logger.error("STEAM_API_KEY is invalid, can't fetch steam profile")
+        return None
+    except IndexError:
+        logger.exception("Steam: no player found")
+    except:
+        logging.exception('Unexpected error while fetching steam profile')
+        return None
 
 def get_player_country_code(steamd_id):
     profile = get_steam_profile(steamd_id)

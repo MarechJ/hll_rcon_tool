@@ -1,11 +1,19 @@
 import React from "react";
 import { range } from "lodash/util";
-import { Grid, Typography, Button, TextField, Link } from "@material-ui/core";
+import {
+  Grid,
+  Typography,
+  Button,
+  TextField,
+  Link,
+  IconButton,
+} from "@material-ui/core";
 import {
   showResponse,
   postData,
   get,
   handle_http_errors,
+  addPlayerToWatchList,
 } from "../../utils/fetchUtils";
 import Blacklist from "./blacklist";
 import { toast } from "react-toastify";
@@ -16,11 +24,166 @@ import WarningIcon from "@material-ui/icons/Warning";
 import TextHistoryManager, { SelectNameSpace } from "./textHistoryManager";
 import TextHistory from "../textHistory";
 import ServicesList from "../Services";
-import InputLabel from '@material-ui/core/InputLabel';
-import MenuItem from '@material-ui/core/MenuItem';
-import FormHelperText from '@material-ui/core/FormHelperText';
-import FormControl from '@material-ui/core/FormControl';
-import Select from '@material-ui/core/Select';
+import InputLabel from "@material-ui/core/InputLabel";
+import MenuItem from "@material-ui/core/MenuItem";
+import FormHelperText from "@material-ui/core/FormHelperText";
+import FormControl from "@material-ui/core/FormControl";
+import Select from "@material-ui/core/Select";
+import { ForwardCheckBox, WordList } from "../commonComponent";
+import DeleteIcon from "@material-ui/icons/Delete";
+import AddIcon from "@material-ui/icons/Add";
+import SaveIcon from "@material-ui/icons/Save";
+import { ManualPlayerInput } from "../commonComponent";
+import { getSharedMessages } from "../../utils/fetchUtils";
+
+const ManualWatchList = ({ classes }) => {
+  const [name, setName] = React.useState("");
+  const [steamId64, setSteamId64] = React.useState("");
+  const [reason, setReason] = React.useState("");
+  const [sharedMessages, setSharedMessages] = React.useState([]);
+
+  React.useEffect(() => {
+    getSharedMessages("punitions").then((data) => setSharedMessages(data));
+  }, []);
+  const textHistory = new TextHistory("watchlist");
+
+  return (
+    <ManualPlayerInput
+      name={name}
+      setName={setName}
+      steam_id={steamId64}
+      setSteamId={setSteamId64}
+      reason={reason}
+      setReason={setReason}
+      textHistory={textHistory}
+      sharedMessages={sharedMessages}
+      classes={classes}
+      actionName="Add"
+      tooltipText="You will get a notification on you watchlist discord hook when this player enters your server"
+      onSubmit={() => addPlayerToWatchList(steamId64, reason, null, name)}
+    />
+  );
+};
+
+const Hook = ({
+  hook = "",
+  roles = [],
+  onAddHook,
+  onDeleteHook,
+  onUpdateHook,
+  actionType,
+}) => {
+  const [myHook, setMyHook] = React.useState(hook);
+  const [myRoles, setMyRoles] = React.useState(roles);
+  console.log("Roles:", roles);
+  return (
+    <Grid container spacing={1}>
+      <Grid item xs={4}>
+        <TextField
+          label="webhook url"
+          fullWidth
+          value={myHook}
+          onChange={(e) => setMyHook(e.target.value)}
+          helperText="Discord hook url"
+        />
+      </Grid>
+      <Grid item xs={6}>
+        <WordList
+          label="Roles"
+          helperText="Add roles to be pinged, hit enter to validate"
+          placeholder="<@&111117777888889999>"
+          words={myRoles}
+          onWordsChange={setMyRoles}
+        />
+      </Grid>
+      <Grid item xs={2}>
+        {actionType === "delete" ? (
+          <React.Fragment>
+            <IconButton
+              edge="start"
+              onClick={() => onDeleteHook(myHook, myRoles)}
+            >
+              <DeleteIcon />
+            </IconButton>
+            <IconButton
+              edge="start"
+              onClick={() => onUpdateHook(myHook, myRoles)}
+            >
+              <SaveIcon />
+            </IconButton>
+          </React.Fragment>
+        ) : (
+          <IconButton edge="start" onClick={() => onAddHook(myHook, myRoles)}>
+            <AddIcon />
+          </IconButton>
+        )}
+      </Grid>
+    </Grid>
+  );
+};
+
+const WebhooksConfig = () => {
+  const [hooks, setHooks] = React.useState([]);
+  React.useEffect(() => {
+    get("get_hooks")
+      .then((res) => showResponse(res, "get_hooks", false))
+      .then((res) => setHooks(res.result))
+      .catch(handle_http_errors);
+  }, []);
+
+  const setHookConfig = (hookConfig) =>
+    postData(`${process.env.REACT_APP_API_URL}set_hooks`, {
+      name: hookConfig.name,
+      hooks: hookConfig.hooks,
+    })
+      .then((res) => showResponse(res, `set_hooks ${hookConfig.name}`, true))
+      .then((res) => setHooks(res.result))
+      .catch(handle_http_errors);
+
+  return (
+    <React.Fragment>
+      {hooks.map((hookConfig) => (
+        <Grid container>
+          <Grid item xs={12}>
+            <Typography variant="h6" style={{ "text-transform": "capitalize" }}>
+              For: {hookConfig.name}
+            </Typography>
+            <Grid container>
+              {hookConfig.hooks.length ? (
+                hookConfig.hooks.map((o, idx) => (
+                  <Hook
+                    hook={o.hook}
+                    roles={o.roles}
+                    actionType="delete"
+                    onDeleteHook={() => {
+                      hookConfig.hooks.splice(idx, 1);
+                      setHookConfig(hookConfig);
+                    }}
+                    onUpdateHook={(hook, roles) => {
+                      hookConfig.hooks[idx] = { hook: hook, roles: roles };
+                      setHookConfig(hookConfig);
+                    }}
+                  />
+                ))
+              ) : (
+                <Typography>{`No hooks defined for: ${hookConfig.name}`}</Typography>
+              )}
+            </Grid>
+          </Grid>
+          <Grid item xs={12}>
+            <Hook
+              actionType="add"
+              onAddHook={(hook, roles) => {
+                hookConfig.hooks.push({ hook: hook, roles: roles });
+                setHookConfig(hookConfig);
+              }}
+            />
+          </Grid>
+        </Grid>
+      ))}
+    </React.Fragment>
+  );
+};
 
 class RconSettings extends React.Component {
   constructor(props) {
@@ -140,14 +303,16 @@ class RconSettings extends React.Component {
           <Typography variant="h6">Your RCON color theme</Typography>
         </Grid>
         <Grid item xs={12} className={classes.padding}>
-          <FormControl style={{minWidth: '200px'}} >
+          <FormControl style={{ minWidth: "200px" }}>
             <InputLabel>Pick your theme</InputLabel>
             <Select
               value={theme}
-              onChange={event => setTheme(event.target.value)}
+              onChange={(event) => setTheme(event.target.value)}
             >
-              {themes.map(t => (
-                <MenuItem key={t} value={t}>{t}</MenuItem>
+              {themes.map((t) => (
+                <MenuItem key={t} value={t}>
+                  {t}
+                </MenuItem>
               ))}
             </Select>
           </FormControl>
@@ -207,7 +372,9 @@ class RconSettings extends React.Component {
           </Button>
         </Grid>
         <Grid item xs={12} className={classes.padding}>
-          <Typography variant="h6">Manage your personal text history</Typography>
+          <Typography variant="h6">
+            Manage your personal text history
+          </Typography>
         </Grid>
         <Grid
           container
@@ -270,6 +437,10 @@ class RconSettings extends React.Component {
           <Blacklist classes={classes} />
         </Grid>
         <Grid item className={classes.paddingTop} justify="center" xs={12}>
+          <Typography variant="h5">Add player to watchlist</Typography>
+        </Grid>
+        <Grid item xs={12}><ManualWatchList classes={classes} /></Grid>
+        <Grid item className={classes.paddingTop} justify="center" xs={12}>
           <Typography variant="h5">Manage services</Typography>
         </Grid>
         <Grid item className={classes.paddingTop} justify="center" xs={12}>
@@ -279,8 +450,23 @@ class RconSettings extends React.Component {
             </Grid>
           </Grid>
         </Grid>
+        
         <Grid item className={classes.paddingTop} justify="center" xs={12}>
-          <Typography variant="h5">More options</Typography>
+          <Typography variant="h5">Discord Webhooks configuration</Typography>
+        </Grid>
+        <Grid
+          item
+          xs={12}
+          className={`${classes.padding} ${classes.margin}`}
+          alignContent="center"
+          justify="center"
+          alignItems="center"
+          className={classes.root}
+        >
+          <WebhooksConfig classes={classes} />
+        </Grid>
+        <Grid item className={classes.paddingTop} justify="center" xs={12}>
+          <Typography variant="h5">Misc. options</Typography>
         </Grid>
         <Grid
           item

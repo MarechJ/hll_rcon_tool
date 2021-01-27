@@ -7,21 +7,21 @@ RUN apt-get update -y && apt-get install -y nginx apache2-utils
 
 RUN mkdir /pw
 
-COPY package.json .
-COPY package-lock.json .
+COPY rcongui/package.json package.json
+COPY rcongui/package-lock.json package-lock.json
 
 RUN npm install
 
 ENV REACT_APP_API_URL /api/
 
-COPY src/ src/
-COPY public/ public/
-COPY entrypoint.sh .
+COPY rcongui/src/ src/
+COPY rcongui/public/ public/
 
-RUN chmod +x /code/entrypoint.sh
 
+COPY .git/ .git/
 RUN npm run build
-COPY nginx.conf /etc/nginx/sites-available/default
+COPY rcongui/nginx.conf /etc/nginx/sites-available/default
+
 
 RUN rm -rf src/
 RUN rm -rf public/
@@ -30,5 +30,9 @@ RUN rm -rf node_modules/
 WORKDIR /var/www
 
 RUN mv /code/build /var/www/
+
+VOLUME /certs
+COPY rcongui/entrypoint.sh /code/entrypoint.sh
+RUN chmod +x /code/entrypoint.sh
 
 ENTRYPOINT [ "/code/entrypoint.sh" ]

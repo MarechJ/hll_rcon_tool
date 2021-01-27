@@ -20,8 +20,9 @@ import { faSteam } from "@fortawesome/free-brands-svg-icons";
 import StarIcon from "@material-ui/icons/Star";
 import StarBorder from "@material-ui/icons/StarBorder";
 import HowToRegIcon from "@material-ui/icons/HowToReg";
-import AccessTimeIcon from '@material-ui/icons/AccessTime';
-import BlockIcon from '@material-ui/icons/Block';
+import AccessTimeIcon from "@material-ui/icons/AccessTime";
+import BlockIcon from "@material-ui/icons/Block";
+import VisibilityIcon from "@material-ui/icons/Visibility";
 
 const WithPopver = ({ classes, popoverContent, children }) => {
   const [anchorEl, setAnchorEl] = React.useState(null);
@@ -66,6 +67,7 @@ const WithPopver = ({ classes, popoverContent, children }) => {
   );
 };
 
+
 const PlayerItem = ({
   classes,
   names,
@@ -87,6 +89,9 @@ const PlayerItem = ({
   onDeleteVip,
   onTempBan,
   isVip,
+  isWatched,
+  onAddToWatchList,
+  onRemoveFromWatchList,
   compact = true,
 }) => {
   const now = moment();
@@ -146,17 +151,14 @@ const PlayerItem = ({
                   spacing={0}
                   className={classes.paddingTop}
                 >
-                  <Grid item>
+                  <Grid item> 
                     <IconButton size="small">
                       {blacklisted ? (
                         <Tooltip
                           title="Remove the player from the blacklist"
                           arrow
                         >
-                          <BlockIcon
-                            color="primary"
-                            onClick={onUnBlacklist}
-                          />
+                          <BlockIcon color="primary" onClick={onUnBlacklist} />
                         </Tooltip>
                       ) : (
                         <Tooltip title="Add the player to the blacklist" arrow>
@@ -167,7 +169,10 @@ const PlayerItem = ({
                   </Grid>
                   <Grid item>
                     <IconButton size="small">
-                      <Tooltip title="Apply temp ban to player (time will start now)" arrow>
+                      <Tooltip
+                        title="Apply temp ban to player (time will start now)"
+                        arrow
+                      >
                         <AccessTimeIcon onClick={onTempBan} />
                       </Tooltip>
                     </IconButton>
@@ -190,11 +195,27 @@ const PlayerItem = ({
                     <IconButton size="small">
                       {isVip ? (
                         <Tooltip title="Remove player from VIPs." arrow>
-                          <StarBorder onClick={onDeleteVip} />
+                          <StarBorder color="primary" onClick={onDeleteVip} />
                         </Tooltip>
                       ) : (
                         <Tooltip title="Add player to VIPs." arrow>
                           <StarIcon onClick={onAddVip} />
+                        </Tooltip>
+                      )}
+                    </IconButton>
+                  </Grid>
+                  <Grid item>
+                    <IconButton size="small">
+                      {isWatched ? (
+                        <Tooltip title="Remove player from watchlist" arrow>
+                          <VisibilityIcon
+                            color="primary"
+                            onClick={onRemoveFromWatchList}
+                          />
+                        </Tooltip>
+                      ) : (
+                        <Tooltip title="Add player to watchlist" arrow>
+                          <VisibilityIcon onClick={onAddToWatchList} />
                         </Tooltip>
                       )}
                     </IconButton>

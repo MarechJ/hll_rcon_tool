@@ -13,16 +13,32 @@ from rcon.extended_commands import Rcon, CommandFailedError
 from rcon.settings import SERVER_INFO
 from rcon.user_config import AutoBroadcasts
 from rcon.utils import (
-    LONG_HUMAN_MAP_NAMES, 
-    SHORT_HUMAN_MAP_NAMES, 
-    NO_MOD_LONG_HUMAN_MAP_NAMES, 
-    NO_MOD_SHORT_HUMAN_MAP_NAMES, 
-    numbered_maps, 
-    categorize_maps, 
-    get_current_selection 
+    LONG_HUMAN_MAP_NAMES,
+    SHORT_HUMAN_MAP_NAMES,
+    NO_MOD_LONG_HUMAN_MAP_NAMES,
+    NO_MOD_SHORT_HUMAN_MAP_NAMES,
+    numbered_maps,
+    categorize_maps,
+    get_current_selection
 )
 from functools import wraps
 
+
+class LazyPrinter:
+    def __init__(self, func, default='', is_list=False, list_separator=', '):
+        self.func = func
+        self.is_list = is_list
+        self.default = default
+        self.list_separator = list_separator
+
+    def __str__(self):
+        try:
+            if self.is_list:
+                return self.list_separator.join(self.func())
+            return str(self.func())
+        except:
+            logger.exception("Unable to get data for broacasts")
+            return self.default
 
 def get_votes_status():
     try:
@@ -33,11 +49,14 @@ def get_votes_status():
     except:
         logger.exception("Unable to retrieve votes")
     return {'total_votes': 0, "winning_maps": []}
-        
 
-def format_winning_map(winning_maps, display_count=2, default=''):
+
+def format_winning_map(ctl, winning_maps, display_count=2, default=None):
+    nextmap = ctl.get_next_map()
     if not winning_maps:
-        return f'{default}'
+        if default:
+            return str(default)
+        return f'{nextmap}'
     wins = winning_maps[:display_count]
     if display_count == 0:
         wins = winning_maps
@@ -47,16 +66,7 @@ logger = logging.getLogger(__name__)
 
 CHECK_INTERVAL = 20
 
-def safe(func, default=None):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        try:
-            return func(*args, **kwargs)
-        except:
-            logger.exception("Unable to get data for broacasts")
-            return default
-    return wrapper
-    
+
 def chunks(lst, n):
     """Yield successive n-sized chunks from lst."""
     for i in range(0, len(lst), n):
@@ -72,7 +82,7 @@ def scrolling_votemap(rcon, winning_maps, repeat=10):
     repeat_instructions = max(int(len(options) / (len(instructions) + len(separator))), 1)
     instructions = separator.join([instructions] * repeat_instructions)
 
-    winning_maps = format_winning_map(winning_maps, display_count=0, default='No votes recorded')
+    winning_maps = format_winning_map(rcon, winning_maps, display_count=0, default='No votes recorded')
     repeat_winning_maps = max(int(len(options) / (len(winning_maps) + len(separator))), 1)
     winning_maps = separator.join([winning_maps] * repeat_winning_maps)
 
@@ -85,15 +95,15 @@ def format_by_line_length(possible_votes, max_length=50):
     possible to get it right (unless you hardcode it maybe)
     because the font used in the game does not have consistent characters (varying width)
     """
-    lines = [] 
-    line = "" 
-    for i in possible_votes: 
-        line += i + " " 
-        if len(line) > max_length: 
-            lines.append(line) 
-            line = "" 
-    lines.append(line)       
-    return "\n".join(lines)                                                                                                                                                                                                                                                                             
+    lines = []
+    line = ""
+    for i in possible_votes:
+        line += i + " "
+        if len(line) > max_length:
+            lines.append(line)
+            line = ""
+    lines.append(line)
+    return "\n".join(lines)
 
 def join_vote_options(join_char, selection, human_name_map, maps_to_numbers):
     return join_char.join(f"[{maps_to_numbers[m]}] {human_name_map[m]}" for m in selection)
@@ -132,51 +142,51 @@ def format_map_vote(rcon, format_type="line", short_names=True):
 
 def get_online_mods():
     return [mod['username'] for mod in online_mods()]
-        
+
 
 def get_ingame_mods():
     return [mod['username'] for mod in ingame_mods()]
 
-def safe_list(func):
-    try:
-        return ', '.join(safe(func, [])())
-    except:
-        logger.exception("Unable to format variable")
 
-def format_message(ctl, msg):
+def _get_vars(ctl):
     get_vip_names = lambda: [d['name'] for d in ctl.get_vip_ids()]
     get_admin_names = lambda: [d['name'] for d in ctl.get_admin_ids()]
     get_owner_names = lambda: [d['name'] for d in ctl.get_admin_ids() if d['role'] == 'owner']
     get_senior_names = lambda: [d['name'] for d in ctl.get_admin_ids() if d['role'] == 'senior']
     get_junior_names = lambda: [d['name'] for d in ctl.get_admin_ids() if d['role'] == 'junior']
     vote_status = get_votes_status()
-    nextmap = safe(ctl.get_next_map, "")()
-    
+
     subs = {
-        'nextmap': safe(ctl.get_next_map, "")(),
-        'maprotation': ' -> '.join(safe(ctl.get_map_rotation, [])()),
-        'servername': safe(ctl.get_name, "")(),
-        'admins': safe_list(get_admin_names),
-        'owners': safe_list(get_owner_names),
-        'seniors': safe_list(get_senior_names),
-        'juniors': safe_list(get_junior_names),
-        'vips': ', '.join(safe(get_vip_names, [])()),
-        'randomvip': safe(lambda: random.choice(get_vip_names() or [""]), "")(),
-        'votenextmap_line': safe(partial(format_map_vote, format_type='line'), '')(ctl),
-        'votenextmap_noscroll': safe(partial(format_map_vote, format_type='max_length'), '')(ctl),
-        'votenextmap_vertical': safe(partial(format_map_vote, format_type='vertical'), '')(ctl),
-        'votenextmap_by_mod_line': safe(partial(format_map_vote, format_type='by_mod_line'), '')(ctl),
-        'votenextmap_by_mod_vertical': safe(partial(format_map_vote, format_type='by_mod_vertical'), '')(ctl),
-        'votenextmap_by_mod_vertical_all': safe(partial(format_map_vote, format_type='by_mod_vertical_all'), '')(ctl),
-        'votenextmap_by_mod_split': safe(partial(format_map_vote, format_type='by_mod_split'), '')(ctl),
+        'nextmap': LazyPrinter(ctl.get_next_map),
+        'maprotation': LazyPrinter(ctl.get_map_rotation, is_list=True, list_separator=' -> '),
+        'servername': LazyPrinter(ctl.get_name),
+        'admins': LazyPrinter(get_admin_names, is_list=True),
+        'owners': LazyPrinter(get_owner_names, is_list=True),
+        'seniors': LazyPrinter(get_senior_names, is_list=True),
+        'juniors': LazyPrinter(get_junior_names, is_list=True),
+        'vips': LazyPrinter(get_vip_names, is_list=True),
+        'randomvip': LazyPrinter(lambda: random.choice(get_vip_names() or [""])),
+        'votenextmap_line': LazyPrinter(partial(format_map_vote, ctl, format_type='line')),
+        'votenextmap_noscroll': LazyPrinter(partial(format_map_vote, ctl, format_type='max_length')),
+        'votenextmap_vertical': LazyPrinter(partial(format_map_vote, ctl, format_type='vertical')),
+        'votenextmap_by_mod_line': LazyPrinter(partial(format_map_vote, ctl, format_type='by_mod_line')),
+        'votenextmap_by_mod_vertical': LazyPrinter(partial(format_map_vote, ctl, format_type='by_mod_vertical')),
+        'votenextmap_by_mod_vertical_all': LazyPrinter(partial(format_map_vote, ctl, format_type='by_mod_vertical_all')),
+        'votenextmap_by_mod_split': LazyPrinter(partial(format_map_vote, ctl, format_type='by_mod_split')),
         'total_votes': vote_status['total_votes'],
-        'winning_maps_short': format_winning_map(vote_status['winning_maps'], default=nextmap, display_count=2),
-        'winning_maps_all': format_winning_map(vote_status['winning_maps'], default=nextmap, display_count=0),
-        'scrolling_votemap': scrolling_votemap(ctl, vote_status['winning_maps']),
-        'online_mods': safe_list(get_online_mods),
-        'ingame_mods': safe_list(get_ingame_mods)
+        'winning_maps_short': format_winning_map(ctl, vote_status['winning_maps'], display_count=2),
+        'winning_maps_all': format_winning_map(ctl, vote_status['winning_maps'], display_count=0),
+        'scrolling_votemap': LazyPrinter(partial(scrolling_votemap, ctl, vote_status['winning_maps'])),
+        'online_mods': LazyPrinter(get_online_mods, is_list=True),
+        'ingame_mods': LazyPrinter(get_ingame_mods, is_list=True)
     }
-    try: 
+
+    return subs
+
+def format_message(ctl, msg):
+    subs = _get_vars(ctl)
+
+    try:
         return msg.format(**subs)
     except KeyError as e:
         logger.warning("Can't broadcast message correctly, variable does not exists %s", e)
@@ -192,14 +202,14 @@ def run():
 
     config = AutoBroadcasts()
 
-    while True: 
+    while True:
         msgs = config.get_messages()
 
         if not config.get_enabled() or not msgs:
             logger.debug("Auto broadcasts are disabled. Sleeping %s seconds", CHECK_INTERVAL)
             time.sleep(CHECK_INTERVAL)
             continue
-     
+
         if config.get_randomize():
             logger.debug("Auto broadcasts. Radomizing")
             random.shuffle(msgs)
@@ -207,14 +217,14 @@ def run():
         for time_sec, msg in msgs:
             if not config.get_enabled():
                 break
-            
+
             formatted = format_message(ctl, msg)
             logger.debug("Broadcasting for %s seconds: %s", time_sec, formatted)
             try:
-                ctl.set_broadcast(formatted) 
+                ctl.set_broadcast(formatted)
             except CommandFailedError:
                 logger.exception("Unable to broadcast %s", msg)
-            time.sleep(int(time_sec)) 
+            time.sleep(int(time_sec))
 
 
 
