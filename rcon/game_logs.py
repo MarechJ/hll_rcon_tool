@@ -376,6 +376,6 @@ def auto_ban_if_tks_right_after_connection(rcon, log):
                 reason=reason,
                 by=author,
             )
-            send_to_discord_audit(discord_msg.format(player_name), by=author, webhookurl=webhook)
+            send_to_discord_audit(discord_msg.format(player=player_name), by=author, webhookurl=webhook)
         elif not log['action'].startswith("CHAT") and not log['action'].startswith("VOTE"):
             last_action_is_connect = False
