@@ -18,6 +18,7 @@ import KeyboardArrowUpIcon from "@material-ui/icons/KeyboardArrowUp";
 import KeyboardArrowDownIcon from "@material-ui/icons/KeyboardArrowDown";
 import { pure } from "recompose";
 
+/*
 const getCountry = (country) => {
   if (country == "private") {
     return ""
@@ -33,7 +34,7 @@ const getCountry = (country) => {
       src={ `https://catamphetamine.gitlab.io/country-flag-icons/3x2/${country}.svg`}
     />
   );
-};
+};*/
 
 export const PlayerHeader = pure(({ classes, player }) => {
   const [showAll, setShowAll] = React.useState(false);
