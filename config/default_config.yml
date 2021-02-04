@@ -28,3 +28,12 @@ NAME_KICKS:
   whitelist_flags: 
     - ✅
 
+BAN_TK_ON_CONNECT:
+  enabled: no
+  message: "Your first action on the server was a TEAM KILL you were banned as a result"
+  author_name: "HATERS GONNA HATE"
+  # if set to yes, then Teamkills done with a weapon reported as None won't coun't, so it would exclude arty, tanks and road accidents
+  exclude_none_weapons: yes
+  # If left unset, the webhook default to your audit log webhook
+  discord_webhook_url: ""
+  discord_webhook_message: "{player} banned for TK right after connecting"

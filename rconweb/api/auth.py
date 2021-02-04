@@ -49,6 +49,7 @@ def do_login(request):
     try:
         data = json.loads(request.body)
     except json.JSONDecodeError:
+        logger.debug("Login attempt without data")
         raise PermissionDenied("No data")
 
     name = data.get('username')
@@ -57,6 +58,7 @@ def do_login(request):
         user = authenticate(request, username=name, password=password)
         if user is not None:
             login(request, user)
+            logger.info("Successful login: %s", name)
             return api_response(
                 result=True,
                 command="login",
@@ -64,8 +66,10 @@ def do_login(request):
                 failed=False
             )
         else:
+            logger.warning("Failed login attempt %s", data)
             raise PermissionDenied("Invalid login")
     except PermissionDenied:
+        logger.warning("Failed login attempt %s", data)
         return api_response(
             command="login",
             arguments=name,

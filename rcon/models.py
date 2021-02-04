@@ -64,6 +64,7 @@ class PlayerSteamID(Base):
     blacklist = relationship("BlacklistedPlayer", backref="steamid", uselist=False)
     flags = relationship("PlayerFlag", backref="steamid")
     watchlist = relationship("WatchList", backref="steamid", uselist=False)
+    steaminfo = relationship("SteamInfo", backref="steamid", uselist=False)
 
     def get_penalty_count(self):
         penalities_type = {"KICK", "PUNISH", "TEMPBAN", "PERMABAN"}
@@ -106,11 +107,36 @@ class PlayerSteamID(Base):
             blacklist=self.blacklist.to_dict() if self.blacklist else None,
             flags=[f.to_dict() for f in (self.flags or [])],
             watchlist=self.watchlist.to_dict() if self.watchlist else None,
+            steaminfo=self.steaminfo.to_dict() if self.steaminfo else None,
         )
 
     def __str__(self):
         aka = " | ".join([n.name for n in self.names])
         return f"{self.steam_id_64} {aka}"
+
+
+class SteamInfo(Base):
+    __tablename__ = "steam_info"
+
+    id = Column(Integer, primary_key=True)
+    playersteamid_id = Column(
+        Integer, ForeignKey("steam_id_64.id"), nullable=False, index=True, unique=True
+    )
+    created = Column(DateTime, default=datetime.utcnow)
+    updated = Column(DateTime, onupdate=datetime.utcnow)
+    profile = Column(JSONB)
+    country = Column(String, index=True)
+    bans = Column(JSONB)
+ 
+    def to_dict(self):
+        return dict(
+            id=self.id,
+            created=self.created,
+            updated= self.updated,
+            profile=self.profile,
+            country=self.country,
+            bans=self.bans,
+        )
 
 
 class WatchList(Base):

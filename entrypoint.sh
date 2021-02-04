@@ -31,6 +31,7 @@ then
     exit 0
 fi
   sleep 10
+  env >> /etc/environment
   supervisord -c /config/supervisord_$SERVER_NUMBER.conf || supervisord -c /config/supervisord.conf
 fi
 

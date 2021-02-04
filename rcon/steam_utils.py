@@ -1,5 +1,8 @@
 import os
 import logging
+import datetime
+import math
+import time
 
 from steam.webapi import WebAPI
 
@@ -14,11 +17,16 @@ if not STEAM_KEY:
 
 @ttl_cache(60 * 60 * 24, cache_falsy=False, is_method=False)
 def get_steam_profile(steamd_id):
+    return get_steam_profiles([steamd_id])[0]
+
+
+@ttl_cache(60 * 60 * 24, cache_falsy=False, is_method=False)
+def get_steam_profiles(steam_ids):
     if not STEAM_KEY:
         return None
     try:
         api = WebAPI(key=STEAM_KEY)
-        return api.ISteamUser.GetPlayerSummaries(steamids=steamd_id)["response"]["players"][0]
+        return api.ISteamUser.GetPlayerSummaries(steamids=','.join(steam_ids))["response"]["players"]
     except AttributeError:
         logger.error("STEAM_API_KEY is invalid, can't fetch steam profile")
         return None
@@ -28,21 +36,6 @@ def get_steam_profile(steamd_id):
         logging.exception('Unexpected error while fetching steam profile')
         return None
 
-@ttl_cache(60 * 60 * 24, cache_falsy=False, is_method=False)
-def get_steam_profiles(steamd_ids):
-    if not STEAM_KEY:
-        return None
-    try:
-        api = WebAPI(key=STEAM_KEY)
-        return api.ISteamUser.GetPlayerSummaries(steamids=steamd_ids)["response"]["players"][0]
-    except AttributeError:
-        logger.error("STEAM_API_KEY is invalid, can't fetch steam profile")
-        return None
-    except IndexError:
-        logger.exception("Steam: no player found")
-    except:
-        logging.exception('Unexpected error while fetching steam profile')
-        return None
 
 def get_player_country_code(steamd_id):
     profile = get_steam_profile(steamd_id)
@@ -88,5 +81,43 @@ def get_player_has_bans(steamd_id):
     return bans
 
 
+def enrich_db_users(chunk_size=100, update_from_days_old=30):
+    from rcon.models import enter_session, SteamInfo, PlayerSteamID
+    from sqlalchemy import or_
+
+    max_age = datetime.datetime.utcnow() - datetime.timedelta(days=update_from_days_old)
+    with enter_session() as sess:
+        query = sess.query(
+            PlayerSteamID
+        ).outerjoin(
+            SteamInfo
+        ).filter(
+            or_(PlayerSteamID.steaminfo == None, SteamInfo.updated <= max_age)
+        )
+        
+        pages = math.ceil(query.count() / chunk_size)
+        for page in range(pages):
+            by_ids = {p.steam_id_64: p for p in query.limit(chunk_size).all()}
+            profiles = get_steam_profiles(list(by_ids.keys()))
+            logger.info("Updating steam profiles page %s of %s - result count (query) %s - result count (steam) %s", 
+                        page + 1, pages, len(by_ids), len(profiles))
+            if not by_ids:
+                logger.warning("Empty query results")
+                continue
+            for p in profiles:
+                player = by_ids.get(p['steamid'])
+                if not player:
+                    logger.warning("Unable to find player %s", p["steamid"])
+                    continue
+                #logger.debug("Saving info for %s: %s", player.steam_id_64, p)
+                if not player.steaminfo:
+                    player.steaminfo = SteamInfo()
+                player.steaminfo.profile = p
+                player.steaminfo.country = p.get('loccountrycode')
+            sess.commit()
+           
+
+            
+
 if __name__ == "__main__":
-    print(get_player_bans('76561198436700508'))
+    enrich_db_users()

@@ -1,4 +1,5 @@
 import logging
+from logging import config
 import time
 import sys
 import datetime
@@ -13,6 +14,9 @@ from sqlalchemy import desc
 from sqlalchemy.exc import IntegrityError, InvalidRequestError
 from rcon.models import LogLine, enter_session, PlayerSteamID, PlayerName
 import unicodedata
+
+from rcon.config import get_config
+from rcon.discord import send_to_discord_audit
 
 logger = logging.getLogger(__name__)
 
@@ -69,8 +73,11 @@ class ChatLoop:
     log_history_key = "log_history"
 
     def __init__(self):
+        # Circular import comming from playerhistory's import of on_connect needs refactor
+        from rcon.recorded_commands import RecordedRcon
+
         self.rcon = Rcon(SERVER_INFO)
-        self.rcon_2 = Rcon(SERVER_INFO)
+        self.rcon_2 = RecordedRcon(SERVER_INFO)
         self.red = get_redis_client()
         self.duplicate_guard_key = "unique_logs"
         self.log_history = self.get_log_history_list()
@@ -103,7 +110,7 @@ class ChatLoop:
     def record_line(self, log):
         id_ = f"{log['timestamp_ms']}|{log['line_without_time']}"
         if not self.red.sadd(self.duplicate_guard_key, id_):
-            #logger.debug("Skipping duplicate: %s", id_)
+            # logger.debug("Skipping duplicate: %s", id_)
             return None
 
         logger.info("Caching line: %s", id_)
@@ -113,7 +120,7 @@ class ChatLoop:
             last_line = None
         if not isinstance(last_line, dict):
             logger.error("Can't check against last_line, invalid_format %s", last_line)
-        elif last_line and last_line['timestamp_ms'] > log['timestamp_ms']:
+        elif last_line and last_line["timestamp_ms"] > log["timestamp_ms"]:
             logger.error("Received old log record, ignoring")
             return None
 
@@ -187,7 +194,8 @@ class ChatRecorder:
                 to_store.append(log)
             if (
                 last_log
-                and not int(log["timestamp_ms"]) / 1000 == last_log.event_time.timestamp()
+                and not int(log["timestamp_ms"]) / 1000
+                == last_log.event_time.timestamp()
                 and last_log.raw == log["raw"]
             ):
                 logger.info("New logs collection at: %s", log)
@@ -242,9 +250,9 @@ class ChatRecorder:
             with enter_session() as sess:
                 to_store = self._get_new_logs(sess)
                 logger.info("%s log lines to record", len(to_store))
-             
+
                 self._save_logs(sess, to_store)
-                 
+
                 last_run = datetime.datetime.now()
 
 
@@ -272,18 +280,25 @@ def is_player(search_str, player, exact_match=False):
 
     return False
 
+
 def is_action(action_filter, action, exact_match=False):
     if not action_filter or not action:
         return None
 
     if not exact_match:
         return action.lower().startswith(action_filter.lower())
-    
+
     return action_filter == action
 
 
 def get_recent_logs(
-    start=0, end=100000, player_search=None, action_filter=None, min_timestamp=None, exact_player_match=False, exact_action=False
+    start=0,
+    end=100000,
+    player_search=None,
+    action_filter=None,
+    min_timestamp=None,
+    exact_player_match=False,
+    exact_action=False,
 ):
     log_list = ChatLoop.get_log_history_list()
     all_logs = log_list
@@ -300,7 +315,7 @@ def get_recent_logs(
             break
         if not isinstance(l, dict):
             continue
-        if min_timestamp and l['timestamp_ms'] / 1000 < min_timestamp:
+        if min_timestamp and l["timestamp_ms"] / 1000 < min_timestamp:
             break
         if player_search:
             if is_player(player_search, l["player"], exact_player_match) or is_player(
@@ -311,7 +326,7 @@ def get_recent_logs(
                 ):
                     continue
                 logs.append(l)
-        elif action_filter and is_action(action_filter, l['action'], exact_action):
+        elif action_filter and is_action(action_filter, l["action"], exact_action):
             logs.append(l)
         elif not player_search and not action_filter:
             logs.append(l)
@@ -326,3 +341,41 @@ def get_recent_logs(
         "players": list(all_players),
         "logs": logs,
     }
+
+
+@on_tk
+def auto_ban_if_tks_right_after_connection(rcon, log):
+    config = get_config()
+    config = config.get("BAN_TK_ON_CONNECT")
+    if not config or not config.get("enabled"):
+        return
+    
+    player_name = log["player"]
+    last_logs = get_recent_logs(
+        end=1000, player_search=player_name, exact_player_match=True
+    )
+    logger.debug("Checking TK from %s", player_name)
+    author = config.get("author_name", "Automation")
+    reason = config.get("message", "No reasons provided")
+    discord_msg = config.get("discord_webhook_message", "No message provided")
+    webhook = config.get("discord_webhook_url")
+    last_action_is_connect = False
+    exclude_none_weapons = config.get("exclude_none_weapons", False)
+
+    for log in reversed(last_logs["logs"]):
+        print(log)
+        if log["action"] == "CONNECTED":
+            last_action_is_connect = log
+            continue
+        if log["action"] == "TEAM KILL" and last_action_is_connect:
+            if exclude_none_weapons and log["weapon"] == "None":
+                continue
+            logger.info("Banning player %s for TEAMKILL after connect %s", player_name, log)
+            rcon.do_perma_ban(
+                player=player_name,
+                reason=reason,
+                by=author,
+            )
+            send_to_discord_audit(discord_msg.format(player_name), by=author, webhookurl=webhook)
+        elif not log['action'].startswith("CHAT") and not log['action'].startswith("VOTE"):
+            last_action_is_connect = False

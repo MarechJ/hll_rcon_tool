@@ -1,7 +1,5 @@
 /* eslint-disable no-use-before-define */
 import React from "react";
-import useAutocomplete from "@material-ui/lab/useAutocomplete";
-import { makeStyles } from "@material-ui/core/styles";
 import {
   postData,
   showResponse,
@@ -33,7 +31,6 @@ import DialogActions from "@material-ui/core/DialogActions";
 import DialogContent from "@material-ui/core/DialogContent";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import { getEmojiFlag } from "../../utils/emoji";
-import PlayerItem from "./playerItem";
 import PlayerGrid from "./playerGrid";
 
 const PlayerSummary = ({ player, flag }) => (
@@ -126,11 +123,6 @@ class FlagDialog extends React.Component {
   }
 }
 
-const show_names = (names) =>
-  join(
-    names.map((obj) => obj.name),
-    " · "
-  );
 
 const FlagButton = ({ classes, onflag }) => (
   <Button variant="outlined" onClick={onflag}>
