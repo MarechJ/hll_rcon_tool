@@ -25,11 +25,15 @@ def auto_kick(_, log):
     for r in config['regexps']:
         name = log["player"]
         info = recorded_rcon.get_player_info(name)
-        profile = get_player_profile(info["steam_id_64"], 0)
+        try:
+            profile = get_player_profile(info["steam_id_64"], 0)
+            flags = profile["flags"]
 
-        if set(config.get("whitelist_flags", [])) & set(profile["flags"]):
-            logger.debug("Not checking nickname validity for whitelisted player %s (%s)", name, info["steam_id_64"])
-            return
+            if flags and set(config.get("whitelist_flags", [])) & set(f["flag"] in flags):
+                logger.debug("Not checking nickname validity for whitelisted player %s (%s)", name, info["steam_id_64"])
+                return
+        except:
+            logger.exception("Unable to check player profile")
 
         if re.match(r, name):
             logger.info("%s matched player %s", r, name)
