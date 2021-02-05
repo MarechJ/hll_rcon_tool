@@ -363,7 +363,9 @@ def auto_ban_if_tks_right_after_connection(rcon, log):
     exclude_none_weapons = config.get("exclude_none_weapons", False)
 
     for log in reversed(last_logs["logs"]):
-        print(log)
+        logger.debug(log)
+        if log['player'] != player_name:
+            continue
         if log["action"] == "CONNECTED":
             last_action_is_connect = log
             continue
