@@ -283,17 +283,19 @@ def ban_if_blacklisted(rcon:Rcon, steam_id_64, name):
             return
 
         if player.blacklist and player.blacklist.is_blacklisted:
-            logger.info("Player %s was banned due blacklist, reason: %s", str(name), player.blacklist.reason)
-            rcon.do_perma_ban(player=name, reason=player.blacklist.reason, admin_name=f"BLACKLIST: {player.blacklist.by}")
-            safe_save_player_action(
-                rcon=rcon, player_name=name, action_type="PERMABAN", reason=player.blacklist.reason, by=f"BLACKLIST: {player.blacklist.by}", steam_id_64=steam_id_64
-            )
             try:
-                send_to_discord_audit(
-                    f"`BLACKLIST` -> {dict_to_discord(dict(player=name, reason=player.blacklist.reason))}", "BLACKLIST")
+                logger.info("Player %s was banned due blacklist, reason: %s", str(name), player.blacklist.reason)
+                rcon.do_perma_ban(player=name, reason=player.blacklist.reason, by=f"BLACKLIST: {player.blacklist.by}")
+                safe_save_player_action(
+                   rcon=rcon, player_name=name, action_type="PERMABAN", reason=player.blacklist.reason, by=f"BLACKLIST: {player.blacklist.by}", steam_id_64=steam_id_64
+                )
+                try:
+                    send_to_discord_audit(
+                        f"`BLACKLIST` -> {dict_to_discord(dict(player=name, reason=player.blacklist.reason))}", "BLACKLIST")
+                except:
+                    logger.error("Unable to send blacklist to audit log")
             except:
-                logger.error("Unable to send blacklist to audit log")
-
+                send_to_discord_audit("Failed to apply ban on blacklisted players, please check the logs and report the error", "ERROR")
 
 def should_ban(bans, max_game_bans, max_days_since_ban):
     try:
