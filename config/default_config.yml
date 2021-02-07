@@ -32,8 +32,26 @@ BAN_TK_ON_CONNECT:
   enabled: no
   message: "Your first action on the server was a TEAM KILL you were banned as a result"
   author_name: "HATERS GONNA HATE"
-  # if set to yes, then Teamkills done with a weapon reported as None won't coun't, so it would exclude arty, tanks and road accidents
-  exclude_none_weapons: yes
+  # Exlude TK with certain weapons from triggering the ban, adding "None" by default so it will exclude arty, tanks and road accidents
+  # The weapon name should be as found in your game logs (case insensitive), know weapons at the time of writing: 'SMine M2 Kar98_Sniper M43 M1911 MK2_Grenade Satchel_M37 None P38 M24_Grenade M1A1 MP40 Kar98 STG44 Thompson MG42 Garand Tellermine43 Luger Satchel_3KG Panzershreck M1918A2_BAR M1919 G43 M1903 SMG_M3_GreaseGun M1_Carbine Bazooka'
+  # To not exclude any weapons write exclude_weapons: [] 
+  exclude_weapons: 
+    - None
+    - MK2_Grenade
+    - M24_Grenade
+  # TK after connect only counts as an offense for the first N minute after connecting, N is the number you set below
+  max_time_after_connect_minutes: 5
+  # A TK after connecting will be ignored if there's N kills before it
+  ignore_tk_after_n_kills: 1
+  # A TK after connecting will be ignored if there's death before it
+  ignore_tk_after_n_death: 2
   # If left unset, the webhook default to your audit log webhook
   discord_webhook_url: ""
   discord_webhook_message: "{player} banned for TK right after connecting"
+  # If any of the conditions below are true the player won't be inspected upon TK
+  whitelist_players:
+    has_flag:
+      - ✅
+    is_vip: yes
+    # Set to 0 for infinite
+    has_at_least_n_sessions: 10

@@ -10,11 +10,13 @@ from rcon.cache_utils import get_redis_client
 from rcon.utils import FixedLenList
 from rcon.settings import SERVER_INFO
 from rcon.commands import HLLServerError, CommandFailedError
+from rcon.player_history import get_player_profile, player_has_flag
 from sqlalchemy import desc
 from sqlalchemy.exc import IntegrityError, InvalidRequestError
 from rcon.models import LogLine, enter_session, PlayerSteamID, PlayerName
 import unicodedata
 
+from rcon.recorded_commands import RecordedRcon
 from rcon.config import get_config
 from rcon.discord import send_to_discord_audit
 
@@ -73,9 +75,6 @@ class ChatLoop:
     log_history_key = "log_history"
 
     def __init__(self):
-        # Circular import comming from playerhistory's import of on_connect needs refactor
-        from rcon.recorded_commands import RecordedRcon
-
         self.rcon = Rcon(SERVER_INFO)
         self.rcon_2 = RecordedRcon(SERVER_INFO)
         self.red = get_redis_client()
@@ -343,14 +342,33 @@ def get_recent_logs(
     }
 
 
+def is_player_death(player, log):
+    return log['action'] == 'KILL' and player["name"] == log["player2"]
+
+def is_player_kill(player, log):
+    return log['action'] == 'KILL' and player["name"] == log["player"]
+
+
 @on_tk
-def auto_ban_if_tks_right_after_connection(rcon, log):
+def auto_ban_if_tks_right_after_connection(rcon: RecordedRcon, log):
     config = get_config()
     config = config.get("BAN_TK_ON_CONNECT")
     if not config or not config.get("enabled"):
         return
-    
+
     player_name = log["player"]
+    player_steam_id = log["steam_id_64_1"]
+    player_profile = None
+    vips = {}
+    try:
+        player_profile = get_player_profile(player_steam_id)
+    except:
+        logger.exception("Unable to get player profile")
+    try:
+        vips = set(v['steam_id_64'] for v in rcon.get_vips_ids())
+    except:
+        logger.exception("Unable to get VIPS")
+
     last_logs = get_recent_logs(
         end=1000, player_search=player_name, exact_player_match=True
     )
@@ -359,18 +377,51 @@ def auto_ban_if_tks_right_after_connection(rcon, log):
     reason = config.get("message", "No reasons provided")
     discord_msg = config.get("discord_webhook_message", "No message provided")
     webhook = config.get("discord_webhook_url")
-    last_action_is_connect = False
-    exclude_none_weapons = config.get("exclude_none_weapons", False)
+    max_time_minute = config.get("max_time_after_connect_minutes", 5)
+    excluded_weapons = config.get("exclude_weapons", [])
+    ignore_after_kill = config.get("ignore_tk_after_n_kills", 1)
+    ignore_after_death = config.get("ignore_tk_after_n_death", 1)
+    whitelist_players = config.get("whitelist_players", {})
 
+    if player_profile:
+        if whitelist_players.get('is_vip') and player_steam_id in vips:
+            logger.debug("Not checking player because he's VIP")
+            return
+
+        if whitelist_players.get('has_at_least_n_sessions') and player_profile['sessions_count'] >= whitelist_players.get('has_at_least_n_sessions'):
+            logger.debug("Not checking player because he has %s sessions", player_profile['sessions_count'])
+            return
+
+        flags = whitelist_players.get('has_flag', [])
+        if not isinstance(flags, list):
+            flags = [flags]
+        
+        for f in flags:
+            if player_has_flag(player_profile, f):
+                logger.debug("Not checking player because he has flag %s", f)
+                return
+                
+
+
+    last_action_is_connect = False
+    last_connect_time = None
+    kill_counter = 0
+    death_counter = 0
     for log in reversed(last_logs["logs"]):
         logger.debug(log)
-        if log['player'] != player_name:
-            continue
+
         if log["action"] == "CONNECTED":
             last_action_is_connect = log
+            last_connect_time = log["timestamp_ms"] 
+            kill_counter = 0
+            death_counter = 0
             continue
-        if log["action"] == "TEAM KILL" and last_action_is_connect:
-            if exclude_none_weapons and log["weapon"] == "None":
+        if log["action"] == "TEAM KILL" and log['player'] == player_name and last_action_is_connect:
+            if excluded_weapons and log["weapon"].lower() in excluded_weapons:
+                logger.debug("Not counting TK as offense due to weapon exclusion")
+                continue
+            if log['timestamp_ms'] - last_connect_time > max_time_minute * 60 * 1000:
+                logger.debug("Not counting TK as offense due to elapsed time exclusion, last connection time %s, tk time %s", datetime.datetime.fromtimestamp(last_connect_time/1000), datetime.datetime.fromtimestamp(log["timestamp_ms"]))
                 continue
             logger.info("Banning player %s for TEAMKILL after connect %s", player_name, log)
             rcon.do_perma_ban(
@@ -379,5 +430,11 @@ def auto_ban_if_tks_right_after_connection(rcon, log):
                 by=author,
             )
             send_to_discord_audit(discord_msg.format(player=player_name), by=author, webhookurl=webhook)
-        elif not log['action'].startswith("CHAT") and not log['action'].startswith("VOTE"):
-            last_action_is_connect = False
+        elif is_player_death(player_name, log):
+            death_counter += 1
+            if death_counter >= ignore_after_death:
+                last_action_is_connect = False
+        elif is_player_kill(player_name, log):
+            kill_counter += 1
+            if kill_counter >= ignore_after_kill:
+                last_action_is_connect = False

@@ -1,7 +1,7 @@
 import logging
 import re
 
-from rcon.player_history import get_player_profile
+from rcon.player_history import get_player_profile, player_has_flag
 from rcon.recorded_commands import RecordedRcon
 from rcon.discord import send_to_discord_audit
 from rcon.config import get_config
@@ -27,11 +27,10 @@ def auto_kick(_, log):
         info = recorded_rcon.get_player_info(name)
         try:
             profile = get_player_profile(info["steam_id_64"], 0)
-            flags = profile["flags"]
-
-            if flags and set(config.get("whitelist_flags", [])) & set(f["flag"] in flags):
-                logger.debug("Not checking nickname validity for whitelisted player %s (%s)", name, info["steam_id_64"])
-                return
+            for f in config.get("whitelist_flags", []):
+                if player_has_flag(profile, f):
+                    logger.debug("Not checking nickname validity for whitelisted player %s (%s)", name, info["steam_id_64"])
+                    return
         except:
             logger.exception("Unable to check player profile")
 
