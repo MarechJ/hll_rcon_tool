@@ -343,10 +343,10 @@ def get_recent_logs(
 
 
 def is_player_death(player, log):
-    return log['action'] == 'KILL' and player["name"] == log["player2"]
+    return log['action'] == 'KILL' and player == log["player2"]
 
 def is_player_kill(player, log):
-    return log['action'] == 'KILL' and player["name"] == log["player"]
+    return log['action'] == 'KILL' and player == log["player"]
 
 
 @on_tk
@@ -361,7 +361,7 @@ def auto_ban_if_tks_right_after_connection(rcon: RecordedRcon, log):
     player_profile = None
     vips = {}
     try:
-        player_profile = get_player_profile(player_steam_id)
+        player_profile = get_player_profile(player_steam_id, 0)
     except:
         logger.exception("Unable to get player profile")
     try:
@@ -378,7 +378,7 @@ def auto_ban_if_tks_right_after_connection(rcon: RecordedRcon, log):
     discord_msg = config.get("discord_webhook_message", "No message provided")
     webhook = config.get("discord_webhook_url")
     max_time_minute = config.get("max_time_after_connect_minutes", 5)
-    excluded_weapons = config.get("exclude_weapons", [])
+    excluded_weapons = [w.lower() for w in config.get("exclude_weapons", [])]
     ignore_after_kill = config.get("ignore_tk_after_n_kills", 1)
     ignore_after_death = config.get("ignore_tk_after_n_death", 1)
     whitelist_players = config.get("whitelist_players", {})
