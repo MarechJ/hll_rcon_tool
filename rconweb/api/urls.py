@@ -9,6 +9,7 @@ from . import vips
 from . import scoreboards
 from . import history
 
+
 urlpatterns = [
     path(name, func, name='name')
     for name, func in views.commands
@@ -26,6 +27,7 @@ urlpatterns = [
     path("upload_vips", vips.upload_vips),
     path("download_vips", vips.download_vips),
     path("scoreboard", scoreboards.text_scoreboard),
+    path("live_scoreboard", scoreboards.live_scoreboard),
     path("tk", scoreboards.text_tk_scoreboard),
     path("players_history", history.players_history),
     path("flag_player", history.flag_player),

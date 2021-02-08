@@ -1,3 +1,5 @@
+from os import error
+import logging
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 
@@ -9,9 +11,12 @@ from rcon.settings import SERVER_INFO
 from rcon import game_logs
 from rcon.models import LogLine, PlayerSteamID, PlayerName, enter_session
 from rcon.discord import send_to_discord_audit
+from rcon.scoreboard import LiveStats
 
 from .views import ctl
+from .auth import api_response, login_required
 
+logger = logging.getLogger('rconweb')
 
 def make_table(scoreboard):
     return "\n".join(
@@ -104,3 +109,25 @@ def text_tk_scoreboard(request):
         """
     )
 
+
+@csrf_exempt
+def live_scoreboard(request):
+    stats = LiveStats()
+
+    try:
+        result = stats.get_current_players_stats()
+        result = list(result.values())
+        error = None,
+        failed = False
+    except Exception as e:
+        logger.exception("Unable to produce live stats")
+        result = []
+        error = repr(e)
+        failed=True
+
+    return api_response(
+        result=result,
+        error=error,
+        failed=failed,
+        command="live_scoreboard"
+    )

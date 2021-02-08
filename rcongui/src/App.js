@@ -23,6 +23,7 @@ import { pink, red } from '@material-ui/core/colors';
 import ServicesList from './components/Services';
 import PlayerGrid from './components/PlayersHistory/playerGrid'
 import { isNull } from "lodash";
+import { LiveScore } from './components/Scoreboard'
 
 
 const Live = ({ classes }) => (
@@ -283,6 +284,9 @@ function App() {
         <Router>
           <Header classes={classes} />
           <Switch>
+            <Route path="/livescore" >
+              <LiveScore classes={classes} />
+            </Route>
             <Route path="/" exact>
               <Live classes={classes} />
             </Route>

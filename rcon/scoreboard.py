@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from rcon.recorded_commands import RecordedRcon
 from rcon.settings import SERVER_INFO
 from rcon.game_logs import get_recent_logs
-
+from rcon.cache_utils import ttl_cache
 
 logger = logging.getLogger(__name__)
 
@@ -21,8 +21,8 @@ class Streaks:
 class LiveStats:
     def __init__(self):
         self.rcon = RecordedRcon(SERVER_INFO)
-        self.voted_yes_regex = re.compile('.*PV_FAVOR.*')
-        self.voted_no_regex = re.compile('.*PV_AGAINST.*')
+        self.voted_yes_regex = re.compile('.*PV_Favour.*')
+        self.voted_no_regex = re.compile('.*PV_Against.*')
 
     def _get_player_session_time(self, player):
         if not player or not player.get('profile'):
@@ -102,6 +102,7 @@ class LiveStats:
             if self._is_player_death(player, log):
                 streaks.deaths_by_tk += 1
 
+    @ttl_cache(30)
     def get_current_players_stats(self):
         players = self.rcon.get_players()
         if not players:
@@ -115,7 +116,6 @@ class LiveStats:
         indexed_players = {p["name"]: p for p in players}
         indexed_logs = self._get_indexed_logs_by_player_for_session(now, indexed_players, logs['logs'])      
         stats_by_player = {}
-        print(indexed_logs)
 
         actions_processors = {
             'KILL': self._add_kill,
@@ -126,6 +126,9 @@ class LiveStats:
         for p in players:
             player_logs = indexed_logs.get(p["name"], [])
             stats = {
+                "player": p["name"],
+                "steam_id_64": p["steam_id_64"],
+                "steaminfo": p.get("steaminfo"),
                 'kills': 0,
                 'kills_streak': 0,
                 'deaths': 0,
@@ -149,15 +152,16 @@ class LiveStats:
                 self._streaks_accumulator(p, l, stats, streaks)
 
             #stats = self._compute_stats(stats)
-            stats_by_player[p["name"]] = stats
+            stats_by_player[p["name"]] = self._compute_stats(stats)
 
         return stats_by_player
 
     def _compute_stats(self, stats):
         new_stats = dict(**stats)
-        new_stats['kills_per_minute'] = stats['kills'] / min(stats['time_seconds'] / 60, 1)
-        new_stats['deatsh_per_minute'] = stats['deaths'] / min(stats['time_seconds'] / 60, 1)
-
+        new_stats['kills_per_minute'] = round(stats['kills'] / max(stats['time_seconds'] / 60, 1), 2)
+        new_stats['deaths_per_minute'] = round(stats['deaths'] / max(stats['time_seconds'] / 60, 1), 2)
+        new_stats["kill_death_ratio"] = round(stats['kills'] / max(stats['deaths'], 1), 2)
+        return new_stats
 
 if __name__ == '__main__':
     from pprint import pprint

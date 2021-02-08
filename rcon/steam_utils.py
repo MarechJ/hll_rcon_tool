@@ -17,7 +17,11 @@ if not STEAM_KEY:
 
 @ttl_cache(60 * 60 * 24, cache_falsy=False, is_method=False)
 def get_steam_profile(steamd_id):
-    return get_steam_profiles([steamd_id])[0]
+    profiles = get_steam_profiles([steamd_id])
+    if not profiles or len(profiles) == 0:
+        return None
+    return profiles[0]
+
 
 
 @ttl_cache(60 * 60 * 24, cache_falsy=False, is_method=False)
