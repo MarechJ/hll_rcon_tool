@@ -101,13 +101,6 @@ def importvips(file, prefix):
         ctl.do_add_vip(name=f'{prefix}{name}', steam_id_64=steamid)
 
 
-@cli.command(name="remove_all_vips")
-def remove_all_vips():
-    vips = ctl.get_vip_ids()
-    for vip in vips:
-        ctl.do_remove_vip(vip['steam_id_64'])
-
-
 @cli.command(name="clear_cache")
 def clear():
     RedisCached.clear_all_caches(get_redis_pool())
