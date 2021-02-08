@@ -218,19 +218,16 @@ class Rcon(ServerCtl):
         with invalidates(Rcon.get_vip_ids):
             return super().do_add_vip(steam_id_64, name)
 
+    def do_remove_all_vips(self):
+        vips = self.get_vip_ids()
+        for vip in vips:
+            try:
+                self.do_remove_vip(vip['steam_id_64'])
+            except (CommandFailedError, ValueError):
+                self._reconnect()
+                raise
 
-    @ttl_cache(ttl=60)
-    def remove_all_vips(self):
-        with invalidates(Rcon.get_vip_ids):
-            vips = self.get_vip_ids()
-            for vip in vips:
-                try:
-                    self.do_remove_vip(vip['steam_id_64'])
-                except ValueError:
-                    self._reconnect()
-                    raise
-
-            return 'SUCCESS'
+        return 'SUCCESS'
 
 
     @ttl_cache(ttl=60)
