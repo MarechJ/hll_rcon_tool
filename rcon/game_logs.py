@@ -365,7 +365,7 @@ def auto_ban_if_tks_right_after_connection(rcon: RecordedRcon, log):
     except:
         logger.exception("Unable to get player profile")
     try:
-        vips = set(v['steam_id_64'] for v in rcon.get_vips_ids())
+        vips = set(v['steam_id_64'] for v in rcon.get_vip_ids())
     except:
         logger.exception("Unable to get VIPS")
 
@@ -400,8 +400,6 @@ def auto_ban_if_tks_right_after_connection(rcon: RecordedRcon, log):
             if player_has_flag(player_profile, f):
                 logger.debug("Not checking player because he has flag %s", f)
                 return
-                
-
 
     last_action_is_connect = False
     last_connect_time = None

@@ -34,7 +34,7 @@ MAX_GAME_BAN_THRESHOLD = os.getenv('MAX_GAME_BAN_THRESHOLD', 0)
 logger = logging.getLogger(__name__)
 
 def player_has_flag(player_dict, flag):
-    flags = player.get("flags") or []
+    flags = player_dict.get("flags") or []
 
     return flag in {flag['flag'] for flag in flags}
 
