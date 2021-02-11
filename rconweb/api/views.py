@@ -16,13 +16,8 @@ from rcon.commands import CommandFailedError
 from rcon.steam_utils import get_steam_profile
 from rcon.settings import SERVER_INFO
 from rcon.player_history import (
-    get_players_by_appearance,
     add_player_to_blacklist,
     remove_player_from_blacklist,
-    get_player_profile,
-    get_player_profile_by_id,
-    add_flag_to_player,
-    remove_flag,
 )
 from rcon.broadcast import get_votes_status
 from rcon.discord import send_to_discord_audit

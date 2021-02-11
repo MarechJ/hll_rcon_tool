@@ -10,7 +10,7 @@ import redis
 
 from rcon.audit import online_mods, ingame_mods
 from rcon.cache_utils import get_redis_pool
-from rcon.extended_commands import Rcon, CommandFailedError
+from rcon.commands import CommandFailedError
 from rcon.settings import SERVER_INFO
 from rcon.user_config import AutoBroadcasts
 from rcon.utils import (
