@@ -26,7 +26,7 @@ from rcon.player_history import (
 )
 from rcon.broadcast import get_votes_status
 from rcon.discord import send_to_discord_audit
-from rcon.game_logs import ChatLoop
+from rcon.game_logs import LogLoop
 from rcon.user_config import AutoBroadcasts, InvalidConfigurationError, StandardMessages
 from rcon.cache_utils import RedisCached, get_redis_pool
 from rcon.user_config import DiscordHookConfig

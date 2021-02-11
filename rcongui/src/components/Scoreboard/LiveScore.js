@@ -1,7 +1,7 @@
-import { AppBar, Avatar, Grid, List, ListItem, ListItemSecondaryAction, ListItemAvatar, ListItemText, Toolbar, Typography, makeStyles, Paper, Divider, Card, CardContent, CardMedia } from '@material-ui/core'
+import { AppBar, Avatar, Grid, List, ListItem, ListItemSecondaryAction, ListItemAvatar, ListItemText, Toolbar, Typography, makeStyles, Paper, Divider, Card, CardContent, CardMedia, LinearProgress } from '@material-ui/core'
 import React from 'react'
 import { get, handle_http_errors, showResponse } from '../../utils/fetchUtils'
-import { List as iList, Map, fromJS } from 'immutable'
+import { List as iList, Map, fromJS, set } from 'immutable'
 import moment from 'moment'
 
 const useStyles = makeStyles((theme) => ({
@@ -117,16 +117,23 @@ const LiveScore = ({ classes }) => {
     const styles = useStyles();
     const [stats, setStats] = React.useState(new iList())
     const [serverState, setServerState] = React.useState(new Map())
+    const [isLoading, setIsLoading] = React.useState(true)
     const durationToHour = (val) => moment.utc(moment.duration(val, 'seconds').as('milliseconds')).format('hh:mm')
     const scores = stats.get("stats", new iList())
-    const lastRefresh = stats.get("snapshot_timestamp") ? moment.unix(stats.get("snapshot_timestamp")).toNow(true) : "N/A"
+    const lastRefresh = stats.get("snapshot_timestamp") ? moment.unix(stats.get("snapshot_timestamp")).format() : "N/A"
+
+    const getData = () => {
+        setIsLoading(true)
+        console.log("Loading data")
+        get('public_info').then((res) => showResponse(res, "public_info", false)).then(data => setServerState(fromJS(data.result))).then(() => setIsLoading(false)).catch(handle_http_errors)
+        get('live_scoreboard').then((res) => showResponse(res, "livescore", false)).then(data => setStats(fromJS(data.result))).catch(handle_http_errors)
+    }
 
     React.useEffect(
         () => {
-            get('public_info').then((res) => showResponse(res, "public_info", false)).then(data => setServerState(fromJS(data.result))).catch(handle_http_errors)
-            get('live_scoreboard').then((res) => showResponse(res, "livescore", false)).then(data => setStats(fromJS(data.result))).catch(handle_http_errors)
-        },
-        []
+            const interval = setInterval(getData, 10000);
+            return () => clearInterval(interval);
+        }, []
     )
 
 
@@ -147,7 +154,7 @@ const LiveScore = ({ classes }) => {
                             backgroundImage: `url(${map_to_pict[serverState.get("current_map", new Map()).get("just_name", "foy")]})`, minHeight: "150px"
                         }} >
                             <Paper elevation={0} className={styles.transparentPaper}><Typography variant="caption">Current map</Typography></Paper>
-                            <Paper elevation={0} className={styles.transparentPaper}><Typography variant="h5">{serverState.get("current_map", new Map()).get("human_name", "N/A")}</Typography></Paper>
+                            <Paper elevation={0} className={styles.transparentPaper}><Typography variant="h6">{serverState.get("current_map", new Map()).get("human_name", "N/A")}</Typography></Paper>
                             <Paper elevation={0} className={styles.transparentPaper}><Typography variant="caption">Duration: {started}</Typography></Paper>
                             <Paper elevation={0} className={styles.transparentPaper}><Typography variant="caption">Players: {serverState.get("nb_players")}</Typography></Paper>
                         </Grid>
@@ -163,7 +170,11 @@ const LiveScore = ({ classes }) => {
                                 </Grid>
                             </Grid>
                         </Grid>
+                        <Grid item xs={12}>
+                            <LinearProgress style={{visibility: isLoading ? "visible" : "hidden"}} className={classes.grow} color="secondary" /> 
+                        </Grid>
                     </Grid>
+                    
                 </Toolbar>
             </AppBar>
         </Grid>

@@ -71,7 +71,7 @@ def on_disconnected(func):
 MAX_FAILS = 10
 
 
-class ChatLoop:
+class LogLoop:
     log_history_key = "log_history"
 
     def __init__(self):
@@ -84,7 +84,7 @@ class ChatLoop:
 
     @staticmethod
     def get_log_history_list():
-        return FixedLenList(key=ChatLoop.log_history_key, max_len=100000)
+        return FixedLenList(key=LogLoop.log_history_key, max_len=100000)
 
     def run(self, loop_frequency_secs=10, cleanup_frequency_minutes=10):
         since_min = 180
@@ -164,7 +164,7 @@ class ChatLoop:
                 )
 
 
-class ChatRecorder:
+class LogRecorder:
     def __init__(self, dump_frequency_min=5, run_immediately=False):
         self.dump_frequency_min = dump_frequency_min
         self.run_immediately = run_immediately
@@ -182,7 +182,7 @@ class ChatRecorder:
             .one_or_none()
         )
         logger.info("Getting new logs from %s", last_log.event_time if last_log else 0)
-        for log in ChatLoop.get_log_history_list():
+        for log in LogLoop.get_log_history_list():
             if not isinstance(log, dict):
                 logger.warning("Log is invalid, not a dict: %s", log)
                 continue
@@ -299,7 +299,7 @@ def get_recent_logs(
     exact_player_match=False,
     exact_action=False,
 ):
-    log_list = ChatLoop.get_log_history_list()
+    log_list = LogLoop.get_log_history_list()
     all_logs = log_list
     if start != 0:
         all_logs = log_list[start : min(end, len(log_list))]
@@ -315,6 +315,7 @@ def get_recent_logs(
         if not isinstance(l, dict):
             continue
         if min_timestamp and l["timestamp_ms"] / 1000 < min_timestamp:
+            logger.debug("Stopping log read due to old timestamp at index %s", idx)
             break
         if player_search:
             if is_player(player_search, l["player"], exact_player_match) or is_player(

@@ -8,7 +8,7 @@ from rcon.settings import SERVER_INFO
 from rcon.utils import ApiKey
 from rcon.extended_commands import Rcon
 from rcon import game_logs, broadcast, stats_loop, auto_settings, map_recorder
-from rcon.game_logs import ChatLoop
+from rcon.game_logs import LogLoop
 from rcon.models import init_db, install_unaccent
 from rcon.user_config import seed_default_config
 from rcon.cache_utils import RedisCached, get_redis_pool
@@ -46,7 +46,7 @@ def run_enrich_db_users():
 @cli.command(name="log_loop")
 def run_log_loop():
     try:
-        ChatLoop().run()
+        LogLoop().run()
     except:
         logger.exception("Chat recorder stopped")
         sys.exit(1)
@@ -76,7 +76,7 @@ def run_map_recorder():
 @click.option('-t', '--frequency-min', default=5)
 @click.option('-n', '--now', is_flag=True)
 def run_log_recorder(frequency_min, now):
-    game_logs.ChatRecorder(frequency_min, now).run()
+    game_logs.LogRecorder(frequency_min, now).run()
 
 
 def init(force=False):

@@ -20,7 +20,7 @@ from rcon.player_history import (
     add_flag_to_player,
     remove_flag,
 )
-from rcon.game_logs import ChatLoop
+from rcon.game_logs import LogLoop
 from rcon.user_config import AutoBroadcasts, InvalidConfigurationError, StandardMessages
 from rcon.cache_utils import RedisCached, get_redis_pool
 from .auth import login_required, api_response

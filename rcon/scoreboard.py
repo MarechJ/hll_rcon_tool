@@ -111,13 +111,18 @@ class LiveStats:
     def get_current_players_stats(self):
         players = self.rcon.get_players()
         if not players:
+            logger.debug("No players")
             return {}
 
         profiles_by_id = {profile["steam_id_64"]: profile for profile in get_profiles([p["steam_id_64"] for p in players], nb_sessions=0)}
+        logger.info("%s players, %s profiles loaded", len(players), len(profiles_by_id))
         oldest_session_seconds = self._get_player_session_time(max(players, key=self._get_player_session_time))
+        logger.debug("Oldest session: %s", oldest_session_seconds)
         now = datetime.datetime.now()
         min_timestamp = (now - datetime.timedelta(seconds=oldest_session_seconds)).timestamp()
+        logger.debug("Min timestamp: %s", min_timestamp)
         logs = get_recent_logs(min_timestamp=min_timestamp)
+        logger.info("%s log lines to process", len(logs['logs']))
 
         indexed_players = {p["name"]: p for p in players}
         indexed_logs = self._get_indexed_logs_by_player_for_session(now, indexed_players, logs['logs'])      
@@ -130,11 +135,12 @@ class LiveStats:
             'VOTE': self._add_vote,
         }
         for p in players:
+            #logger.debug("Crunching stats for %s", p)
             player_logs = indexed_logs.get(p["name"], [])
             stats = {
                 "player": p["name"],
-                "steam_id_64": p["steam_id_64"],
-                "steaminfo": profiles_by_id.get(p["steam_id_64"], {}).get("steaminfo"),
+                "steam_id_64": p.get("steam_id_64"),
+                "steaminfo": profiles_by_id.get(p.get("steam_id_64"), {}).get("steaminfo"),
                 'kills': 0,
                 'kills_streak': 0,
                 'deaths': 0,
