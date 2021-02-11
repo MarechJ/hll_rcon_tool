@@ -109,19 +109,26 @@ def text_tk_scoreboard(request):
         """
     )
 
+@csrf_exempt
+def live_info(request):
+    status = ctl.get_status()
+
 
 @csrf_exempt
 def live_scoreboard(request):
     stats = LiveStats()
 
     try:
-        result = stats.get_current_players_stats()
-        result = list(result.values())
+        result = stats.get_cached_stats()
+        result = {
+            "snapshot_timestamp": result["snapshot_timestamp"],
+            "stats": list(result["stats"].values())
+        }
         error = None,
         failed = False
     except Exception as e:
         logger.exception("Unable to produce live stats")
-        result = []
+        result = {}
         error = repr(e)
         failed=True
 

@@ -55,3 +55,9 @@ BAN_TK_ON_CONNECT:
     is_vip: yes
     # Set to 0 for infinite
     has_at_least_n_sessions: 10
+
+
+  LIVE_STATS:
+    # A stats refresh is quite intensive on CPU, DISK and BANDWIDTH
+    # smaller machines should choose at the very least 30 seconds, if not 60 to 120
+    refresh_stats_seconds: 15

@@ -42,6 +42,7 @@ const Footer = ({ classes }) => {
             ))}
         </Typography>
       </Grid>
+      {!process.env.REACT_APP_PUBLIC_BUILD ?
       <Grid xs={12}>
         <Typography
           color="textSecondary"
@@ -56,7 +57,7 @@ const Footer = ({ classes }) => {
           for announcements, questions, feedback and support. Dev or docs
           contributions are most welcomed.
         </Typography>
-      </Grid>
+      </Grid> : ""}
     </Grid>
   );
 };

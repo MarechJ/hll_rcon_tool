@@ -1,12 +1,17 @@
 import datetime
+import pickle
+from rcon.player_history import get_player_profile
 import re
 import logging
+import time
 from dataclasses import dataclass
 
 from rcon.recorded_commands import RecordedRcon
 from rcon.settings import SERVER_INFO
 from rcon.game_logs import get_recent_logs
-from rcon.cache_utils import ttl_cache
+from rcon.cache_utils import ttl_cache, get_redis_client
+from rcon.player_history import get_profiles
+from rcon.config import get_config
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +28,7 @@ class LiveStats:
         self.rcon = RecordedRcon(SERVER_INFO)
         self.voted_yes_regex = re.compile('.*PV_Favour.*')
         self.voted_no_regex = re.compile('.*PV_Against.*')
+        self.red = get_redis_client()
 
     def _get_player_session_time(self, player):
         if not player or not player.get('profile'):
@@ -102,12 +108,12 @@ class LiveStats:
             if self._is_player_death(player, log):
                 streaks.deaths_by_tk += 1
 
-    @ttl_cache(30)
     def get_current_players_stats(self):
         players = self.rcon.get_players()
         if not players:
             return {}
 
+        profiles_by_id = {profile["steam_id_64"]: profile for profile in get_profiles([p["steam_id_64"] for p in players], nb_sessions=0)}
         oldest_session_seconds = self._get_player_session_time(max(players, key=self._get_player_session_time))
         now = datetime.datetime.now()
         min_timestamp = (now - datetime.timedelta(seconds=oldest_session_seconds)).timestamp()
@@ -128,7 +134,7 @@ class LiveStats:
             stats = {
                 "player": p["name"],
                 "steam_id_64": p["steam_id_64"],
-                "steaminfo": p.get("steaminfo"),
+                "steaminfo": profiles_by_id.get(p["steam_id_64"], {}).get("steaminfo"),
                 'kills': 0,
                 'kills_streak': 0,
                 'deaths': 0,
@@ -156,12 +162,39 @@ class LiveStats:
 
         return stats_by_player
 
+    def set_live_stats(self):
+        snapshot_ts = datetime.datetime.now().timestamp()
+        stats = self.get_current_players_stats()
+        self.red.set('LIVE_STATS', pickle.dumps(dict(snapshot_timestamp=snapshot_ts, stats=stats)))
+
+    def get_cached_stats(self):
+        stats = self.red.get('LIVE_STATS')
+        if stats:
+            stats = pickle.loads(stats)
+        return stats
+
     def _compute_stats(self, stats):
         new_stats = dict(**stats)
         new_stats['kills_per_minute'] = round(stats['kills'] / max(stats['time_seconds'] / 60, 1), 2)
         new_stats['deaths_per_minute'] = round(stats['deaths'] / max(stats['time_seconds'] / 60, 1), 2)
         new_stats["kill_death_ratio"] = round(stats['kills'] / max(stats['deaths'], 1), 2)
         return new_stats
+
+
+def live_stats_loop():
+    live = LiveStats()
+    config = get_config()
+    sleep_seconds = config.get('LIVE_STATS', {}).get('refresh_stats_seconds', 30)
+
+    while True:
+        try:
+            live.set_live_stats()
+            logger.debug("Refreshed")
+        except Exception:
+            logger.exception("Error while producing stats")
+            raise
+        time.sleep(sleep_seconds)
+
 
 if __name__ == '__main__':
     from pprint import pprint

@@ -119,6 +119,7 @@ def enrich_db_users(chunk_size=100, update_from_days_old=30):
                 player.steaminfo.profile = p
                 player.steaminfo.country = p.get('loccountrycode')
             sess.commit()
+            time.sleep(5)
            
 
             

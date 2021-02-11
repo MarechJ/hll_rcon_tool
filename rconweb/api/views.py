@@ -24,13 +24,14 @@ from rcon.player_history import (
     add_flag_to_player,
     remove_flag,
 )
+from rcon.broadcast import get_votes_status
 from rcon.discord import send_to_discord_audit
 from rcon.game_logs import ChatLoop
 from rcon.user_config import AutoBroadcasts, InvalidConfigurationError, StandardMessages
 from rcon.cache_utils import RedisCached, get_redis_pool
 from rcon.user_config import DiscordHookConfig
 from rcon.watchlist import PlayerWatch
-
+from rcon.utils import LONG_HUMAN_MAP_NAMES, map_name
 from .auth import login_required, api_response
 from .utils import _get_data
 from .multi_servers import forward_request, forward_command
@@ -43,6 +44,33 @@ logger = logging.getLogger("rconweb")
 def get_version(request):
     res = run(["git", "describe", "--tags"], stdout=PIPE, stderr=PIPE)
     return api_response(res.stdout.decode(), failed=False, command="get_version")
+
+
+@csrf_exempt
+def public_info(request):
+    status = ctl.get_status()
+    try:
+        current_map = MapsHistory()[0]
+    except IndexError:
+        logger.error("Can't get current map time, map_recorder is probably offline")
+        current_map = {"name": status["map"], "start": None, "end": None}
+    current_map = dict(
+        just_name=map_name(current_map["name"]),
+        human_name=LONG_HUMAN_MAP_NAMES.get(current_map["name"], current_map["name"]),
+        **current_map,
+    )
+    vote_status = get_votes_status(none_on_fail=True)
+    next_map = ctl.get_next_map()
+    return api_response(
+        result=dict(
+            current_map=current_map,
+            **status,
+            vote_status=vote_status,
+            next_map=next_map,
+        ),
+        failed=False,
+        command="public_info",
+    )
 
 
 @csrf_exempt
@@ -420,7 +448,11 @@ ctl = RecordedRcon(SERVER_INFO)
 @csrf_exempt
 def get_connection_info(request):
     return api_response(
-        {"name": ctl.get_name(), "port": os.getenv("RCONWEB_PORT"), "link": os.getenv("RCONWEB_SERVER_URL")},
+        {
+            "name": ctl.get_name(),
+            "port": os.getenv("RCONWEB_PORT"),
+            "link": os.getenv("RCONWEB_SERVER_URL"),
+        },
         failed=False,
         command="get_connection_info",
     )
@@ -443,6 +475,7 @@ commands = [
     ("set_hooks", set_hooks),
     ("do_unwatch_player", do_unwatch_player),
     ("do_watch_player", do_watch_player),
+    ("public_info", public_info),
 ]
 
 logger.info("Initializing endpoint")

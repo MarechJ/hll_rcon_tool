@@ -229,6 +229,44 @@ const CamoLight = createMuiTheme({
   },
 });
 
+const hll = createMuiTheme({
+  palette: {
+    primary: {
+      light: '#484848',
+      main: '#212121',
+      dark: '#000000',
+      contrastText: '#fff',
+    },
+    secondary: {
+      light: '#ffac42',
+      main: '#f47b00',
+      dark: '#ba4c00',
+      contrastText: '#000',
+    },
+    background: {
+      default: '#343434',
+      paper: '#424242'
+    },
+    text: {
+      primary: '#ffffff',
+      secondary: ' rgba(0, 0, 0, 0.7)',
+      disabled: 'rgba(0, 0, 0, 0.5)'
+    }
+  },
+  overrides: {
+    MuiCssBaseline: {
+      "@global": {
+        body: {
+          backgroundRepeat: "no-repeat",
+          backgroundAttachment: "fixed",
+          backgroundSize: "cover",
+          backgroundImage:
+            'url("hll.jpg")'
+        }
+      }
+    }
+  }
+});
 
 
 const withLove = createMuiTheme({
@@ -259,8 +297,8 @@ const ThemeContext = React.createContext('light');
 function App() {
   const classes = useStyles();
   const [userTheme, setThemeName] = React.useState(localStorage.getItem('theme'))
-  const setTheme = (name) => {setThemeName(name); localStorage.setItem('theme', name)}
-  
+  const setTheme = (name) => { setThemeName(name); localStorage.setItem('theme', name) }
+
   const themes = {
     "Dark": darkTheme,
     "Light": lightTheme,
@@ -273,8 +311,12 @@ function App() {
     "PurplePink": PurplePinkTheme,
     "CamoDark": CamoDarkTheme,
     "CamoLight": CamoLight,
+    "hll": hll,
   }
-  const theme = themes[userTheme] ? themes[userTheme] : lightTheme
+
+
+  const theme = process.env.REACT_APP_PUBLIC_BUILD ? hll : themes[userTheme] ? themes[userTheme] : lightTheme
+
 
   return (
     <div className={"App " + classes.root}>
@@ -282,53 +324,53 @@ function App() {
         <CssBaseline />
         <ToastContainer />
         <Router>
-          <Header classes={classes} />
+          {!process.env.REACT_APP_PUBLIC_BUILD ?
+
+            <Header classes={classes} /> : ""}
           <Switch>
-            <Route path="/livescore" >
+            <Route path="/livescore" default>
               <LiveScore classes={classes} />
             </Route>
-            <Route path="/" exact>
-              <Live classes={classes} />
-            </Route>
-            <Route path="/history">
-              <Grid container>
-                <Grid item sm={12} lg={12}>
-                  <PlayersHistory classes={classes} />
-                </Grid>
-              </Grid>
-            </Route>
-            <Route path="/settings">
-              <Grid container>
-                <Grid item sm={12} lg={6}>
-                  <HLLSettings classes={classes} />
-                </Grid>
-                <Grid item sm={12} lg={6}>
-                  <RconSettings classes={classes} theme={userTheme ? userTheme : "Light"} themes={Object.keys(themes)} setTheme={setTheme} />
-                </Grid>
-              </Grid>
-            </Route>
-            <Route path="/services">
-              <Grid container>
-                <Grid item sm={12} lg={12}>
-                  <ServicesList classes={classes} />
-                </Grid>
-              </Grid>
-            </Route>
-            <Route path="/logs">
-              <Grid container>
-                <Grid item sm={12} lg={12}>
-                  <LogsHistory classes={classes} />
-                </Grid>
-              </Grid>
-            </Route>
-            <Route path="/grid">
-              <Grid container>
-                <Grid item sm={12} lg={12}>
-                  <PlayerGrid classes={classes} />
-                </Grid>
-              </Grid>
-            </Route>
+            {!process.env.REACT_APP_PUBLIC_BUILD ?
+              <React.Fragment>
+                <Route path="/" exact>
+                  <Live classes={classes} />
+                </Route>
+                <Route path="/history">
+                  <Grid container>
+                    <Grid item sm={12} lg={12}>
+                      <PlayersHistory classes={classes} />
+                    </Grid>
+                  </Grid>
+                </Route>
+                <Route path="/settings">
+                  <Grid container>
+                    <Grid item sm={12} lg={6}>
+                      <HLLSettings classes={classes} />
+                    </Grid>
+                    <Grid item sm={12} lg={6}>
+                      <RconSettings classes={classes} theme={userTheme ? userTheme : "Light"} themes={Object.keys(themes)} setTheme={setTheme} />
+                    </Grid>
+                  </Grid>
+                </Route>
+                <Route path="/services">
+                  <Grid container>
+                    <Grid item sm={12} lg={12}>
+                      <ServicesList classes={classes} />
+                    </Grid>
+                  </Grid>
+                </Route>
+                <Route path="/logs">
+                  <Grid container>
+                    <Grid item sm={12} lg={12}>
+                      <LogsHistory classes={classes} />
+                    </Grid>
+                  </Grid>
+                </Route>
+              </React.Fragment>
+              : ""}
           </Switch>
+
           <Footer classes={classes} />
         </Router>
       </ThemeProvider>

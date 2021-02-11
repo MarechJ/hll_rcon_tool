@@ -19,17 +19,22 @@ COPY rcongui/public/ public/
 
 
 COPY .git/ .git/
+# Normal build
 RUN npm run build
-COPY rcongui/nginx.conf /etc/nginx/sites-available/default
 
+RUN mv /code/build /var/www/
+# Public build
+ENV REACT_APP_PUBLIC_BUILD on
+RUN npm run build
+RUN mkdir /var/www_public/
+RUN mv /code/build /var/www_public/
 
 RUN rm -rf src/
 RUN rm -rf public/
 RUN rm -rf node_modules/
 
+COPY rcongui/nginx.conf /etc/nginx/sites-available/default
 WORKDIR /var/www
-
-RUN mv /code/build /var/www/
 
 VOLUME /certs
 COPY rcongui/entrypoint.sh /code/entrypoint.sh

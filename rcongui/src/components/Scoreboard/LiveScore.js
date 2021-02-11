@@ -1,20 +1,82 @@
-import { AppBar, Avatar, Grid, List, ListItem, ListItemSecondaryAction, ListItemAvatar, ListItemText, Toolbar, Typography, makeStyles, Paper, Divider } from '@material-ui/core'
+import { AppBar, Avatar, Grid, List, ListItem, ListItemSecondaryAction, ListItemAvatar, ListItemText, Toolbar, Typography, makeStyles, Paper, Divider, Card, CardContent, CardMedia } from '@material-ui/core'
 import React from 'react'
 import { get, handle_http_errors, showResponse } from '../../utils/fetchUtils'
 import { List as iList, Map, fromJS } from 'immutable'
+import moment from 'moment'
 
 const useStyles = makeStyles((theme) => ({
 
     paper: {
         backgroundColor: theme.palette.background.paper,
     },
-
+    transparentPaper: {
+        backgroundColor: theme.palette.background.paper,
+        opacity: "0.7",
+        borderRadius: "0px"
+    },
+    root: {
+        display: 'flex',
+    },
+    details: {
+        display: 'flex',
+        flexDirection: 'column',
+    },
+    content: {
+        flex: '1 0 auto',
+    },
+    cover: {
+        width: 200,
+    },
+    controls: {
+        display: 'flex',
+        alignItems: 'center',
+        paddingLeft: theme.spacing(1),
+        paddingBottom: theme.spacing(1),
+    },
+    playIcon: {
+        height: 38,
+        width: 38,
+    },
 }));
 
+const map_to_pict = {
+    'carentan': 'maps/carentan.webp',
+    'foy': 'maps/foy.webp',
+    'hill400': 'maps/hill400.webp',
+    'hurtgenforest': 'maps/hurtgen.webp',
+    'omahabeach': 'maps/omaha.webp',
+    'purpleheartlane': 'maps/omaha.webp',
+    'stmariedumont': 'maps/smdm.webp',
+    'stmereeglise': 'maps/sme.webp',
+    'utahbeach': 'maps/utah.webp'
+}
 
-const TopList = ({ scores, statType, statKey, reversed }) => {
+const PlayerItem = ({score, rank, postProcess, statKey}) => {
+    const steamProfile = score.get('steaminfo') ? score.get("steaminfo").get("profile") : new Map()
+    const avatarUrl = steamProfile.get("avatar", null)
+
+    return <React.Fragment>
+    <Divider variant="middle" component="li" />
+    <ListItem>
+        <ListItemAvatar>
+            <Avatar src={avatarUrl}></Avatar>
+        </ListItemAvatar>
+        <ListItemText
+            primary={score.get('player')}
+            secondary={`#${rank}`}
+        />
+        <ListItemSecondaryAction>
+            <Typography variant="h6" color="secondary">{postProcess(score.get(statKey))}</Typography>
+        </ListItemSecondaryAction>
+    </ListItem>
+</React.Fragment>
+}
+
+const TopList = ({ scores, statType, statKey, reversed, postProcessFunc }) => {
     const compareFunc = reversed ? (a, b) => a > b ? -1 : a == b ? 0 : 1 : undefined
-
+    const postProcess = postProcessFunc ? postProcessFunc : val => val
+  
+    
     return <List>
         <React.Fragment>
             <ListItem>
@@ -31,83 +93,119 @@ const TopList = ({ scores, statType, statKey, reversed }) => {
 
         </React.Fragment>
         {scores.sortBy((s) => s.get(statKey), compareFunc).slice(0, 20).map((s, idx) => (
-            <React.Fragment>
-                <Divider variant="middle" component="li" />
-                <ListItem>
-                    <ListItemAvatar>
-                        <Avatar></Avatar>
-                    </ListItemAvatar>
-                    <ListItemText
-                        primary={s.get('player')}
-                        secondary={`#${idx+1}`}
-                    />
-                    <ListItemSecondaryAction>
-                        <Typography variant="h6" color="primary">{s.get(statKey)}</Typography>
-                    </ListItemSecondaryAction>
-                </ListItem>
-            </React.Fragment>
+           <PlayerItem score={s} rank={idx + 1} postProcess={postProcess} statKey={statKey} />
         ))}
     </List>
 }
 
-const RankBoard = ({ classes, scores, title, statType, statKey, reversed }) => (
+const RankBoard = ({ classes, scores, title, statType, statKey, reversed, postProcessFunc }) => (
     <React.Fragment>
-        <AppBar position="relative" >
-            <Toolbar>
+        <AppBar position="relative" style={{ minHeight: "144px" }} >
+            <Toolbar style={{ minHeight: "inherit" }}>
                 <Typography variant="h2" align="center" className={classes.grow} display="block">{title}</Typography>
             </Toolbar>
         </AppBar>
         <Paper elevation={3}>
-            <TopList scores={scores} statType={statType} statKey={statKey} reversed={reversed} />
+            <TopList scores={scores} statType={statType} statKey={statKey} reversed={reversed} postProcessFunc={postProcessFunc} />
         </Paper>
     </React.Fragment>
 
 )
 
+
 const LiveScore = ({ classes }) => {
     const styles = useStyles();
-    const [scores, setScores] = React.useState(new iList())
-
+    const [stats, setStats] = React.useState(new iList())
+    const [serverState, setServerState] = React.useState(new Map())
+    const durationToHour = (val) => moment.utc(moment.duration(val, 'seconds').as('milliseconds')).format('hh:mm')
+    const scores = stats.get("stats", new iList())
+    const lastRefresh = stats.get("snapshot_timestamp") ? moment.unix(stats.get("snapshot_timestamp")).toNow(true) : "N/A"
 
     React.useEffect(
-        () => (
-            get('live_scoreboard').then((res) => showResponse(res, "livescore", false)).then(data => setScores(fromJS(data.result))).catch(handle_http_errors)
-        ),
+        () => {
+            get('public_info').then((res) => showResponse(res, "public_info", false)).then(data => setServerState(fromJS(data.result))).catch(handle_http_errors)
+            get('live_scoreboard').then((res) => showResponse(res, "livescore", false)).then(data => setStats(fromJS(data.result))).catch(handle_http_errors)
+        },
         []
     )
 
-    return <Grid container spacing={2} className={classes.padding}>
-        <Grid item xs={12} md={6} lg={3} xs={2}>
-            <RankBoard classes={classes} scores={scores} title="TOP KILLERS" statKey="kills" statType="kills" reversed/>
-        </Grid>
-        <Grid item xs={12} md={6} lg={3} xs={2}>
-            <RankBoard classes={classes} scores={scores} title="TOP RATIO" statType="kill/death" statKey="kill_death_ratio" reversed />
-        </Grid>
-        <Grid item xs={12} md={6} lg={3} xs={2}>
-            <RankBoard classes={classes} scores={scores} title="TOP EFFIENCY" statType="kill/minute" statKey="kills_per_minute" reversed />
-        </Grid>
-        <Grid item xs={12} md={6} lg={3} xs={2}>
-            <RankBoard classes={classes} scores={scores} title="TRY HARDERS" statType="death/minute" statKey="deaths_per_minute" reversed />
-        </Grid>
-        <Grid item xs={12} md={6} lg={3} xs={2}>
-            <RankBoard classes={classes} scores={scores} title="TOP PERSITENCY" statType="deaths" statKey="deaths" reversed />
-        </Grid>
-        <Grid item xs={12} md={6} lg={3} xs={2}>
-            <RankBoard classes={classes} scores={scores} title="TOP KILL STREAK" statType="kill streak" statKey="kills_streak" reversed />
-        </Grid>
-        <Grid item xs={12} md={6} lg={3} xs={2}>
-            <RankBoard classes={classes} scores={scores} title="NEVER GIVE UP" statType="death without kill streak" statKey="deaths_without_kill_streak" reversed />
-        </Grid>
-        <Grid item xs={12} md={6} lg={3} xs={2}>
-            <RankBoard classes={classes} scores={scores} title="TOP MOST PATIENT" statType="death by teamkill" statKey="deaths_by_tk" reversed />
-        </Grid>
-        <Grid item xs={12} md={6} lg={3} xs={2}>
-            <RankBoard classes={classes} scores={scores} title="YES I'M CLUMSY" statType="teamkills" statKey="teamkills" reversed />
-        </Grid>
-        <Grid item xs={12} md={6} lg={3} xs={2}>
-            <RankBoard classes={classes} scores={scores} title="I LOVE DEMOCRACY" statType="# vote started" statKey="nb_vote_started" reversed />
+
+    let started = serverState.get("current_map", new Map()).get("start")
+    started = started ? moment.unix(started).toNow(true) : "N/A"
+
+    return <React.Fragment><Grid container spacing={2}
+        justify="center"
+        className={classes.padding}>
+        <Grid xs={12} md={10} lg={10} xl={8} className={classes.doublePadding}>
+            <AppBar position="relative" style={{ minHeight: "144px" }} >
+                <Toolbar className={classes.doublePadding} >
+                    <Grid container justify="flex-start" alignItems="flex-start" alignContent="flex=start" spacing={1}>
+                        <Grid item xs={3} md={2} lg={2} alignContent="center" alignItems="center" justify="center" style={{
+                            flex: "grow",
+                            backgroundRepeat: "no-repeat",
+                            backgroundSize: "auto 150px",
+                            backgroundImage: `url(${map_to_pict[serverState.get("current_map", new Map()).get("just_name", "foy")]})`, minHeight: "150px"
+                        }} >
+                            <Paper elevation={0} className={styles.transparentPaper}><Typography variant="caption">Current map</Typography></Paper>
+                            <Paper elevation={0} className={styles.transparentPaper}><Typography variant="h5">{serverState.get("current_map", new Map()).get("human_name", "N/A")}</Typography></Paper>
+                            <Paper elevation={0} className={styles.transparentPaper}><Typography variant="caption">Duration: {started}</Typography></Paper>
+                            <Paper elevation={0} className={styles.transparentPaper}><Typography variant="caption">Players: {serverState.get("nb_players")}</Typography></Paper>
+                        </Grid>
+                        <Grid item xs={9}>
+                            <Grid container spacing={1}>
+                                <Grid item xs={12}> <Typography variant="h4"  color="secondary">LIVE STATS</Typography></Grid>
+                                <Grid item xs={12}><Typography variant="h4">{serverState.get('name')}</Typography></Grid>
+                                <Grid item xs={12}>
+                                    <Typography variant="caption">Only players that are currently in-game are shown. Stats are reset on disconnection, not on map change</Typography>
+                                </Grid>
+                                <Grid item xs={12}>
+                                    <Typography variant="caption">Last update: {lastRefresh}</Typography>
+                                </Grid>
+                            </Grid>
+                        </Grid>
+                    </Grid>
+                </Toolbar>
+            </AppBar>
         </Grid>
     </Grid>
+        <Grid container spacing={2}
+            justify="center"
+            className={classes.padding}>
+            <Grid item xs={12} md={6} lg={3} xl={2}>
+                <RankBoard classes={classes} scores={scores} title="TOP KILLERS" statKey="kills" statType="kills" reversed />
+            </Grid>
+            <Grid item xs={12} md={6} lg={3} xl={2}>
+                <RankBoard classes={classes} scores={scores} title="TOP RATIO" statType="kill/death" statKey="kill_death_ratio" reversed />
+            </Grid>
+            <Grid item xs={12} md={6} lg={3} xl={2}>
+                <RankBoard classes={classes} scores={scores} title="TOP EFFIENCY" statType="kill/minute" statKey="kills_per_minute" reversed />
+            </Grid>
+            <Grid item xs={12} md={6} lg={3} xl={2}>
+                <RankBoard classes={classes} scores={scores} title="TRY HARDERS" statType="death/minute" statKey="deaths_per_minute" reversed />
+            </Grid>
+            <Grid item xs={12} md={6} lg={3} xl={2}>
+                <RankBoard classes={classes} scores={scores} title="TOP STAMINA" statType="deaths" statKey="deaths" reversed />
+            </Grid>
+            <Grid item xs={12} md={6} lg={3} xl={2}>
+                <RankBoard classes={classes} scores={scores} title="TOP KILL STREAK" statType="kill streak" statKey="kills_streak" reversed />
+            </Grid>
+            <Grid item xs={12} md={6} lg={3} xl={2}>
+                <RankBoard classes={classes} scores={scores} title="NEVER GIVE UP" statType="death streak" statKey="deaths_without_kill_streak" reversed />
+            </Grid>
+            <Grid item xs={12} md={6} lg={3} xl={2}>
+                <RankBoard classes={classes} scores={scores} title="MOST PATIENT" statType="death by teamkill" statKey="deaths_by_tk" reversed />
+            </Grid>
+            <Grid item xs={12} md={6} lg={3} xl={2}>
+                <RankBoard classes={classes} scores={scores} title="YES I'M CLUMSY" statType="teamkills" statKey="teamkills" reversed />
+            </Grid>
+            <Grid item xs={12} md={6} lg={3} xl={2}>
+                <RankBoard classes={classes} scores={scores} title="I &#10084; VOTING" statType="# vote started" statKey="nb_vote_started" reversed />
+            </Grid>
+            <Grid item xs={12} md={6} lg={3} xl={2}>
+                <RankBoard classes={classes} scores={scores} title="What is a break?" statType="Ingame time" statKey="time_seconds" reversed postProcessFunc={durationToHour} />
+            </Grid>
+        </Grid >
+    </React.Fragment>
 }
 
 export default LiveScore

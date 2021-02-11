@@ -7,6 +7,7 @@ import json
 
 import redis
 
+
 from rcon.audit import online_mods, ingame_mods
 from rcon.cache_utils import get_redis_pool
 from rcon.extended_commands import Rcon, CommandFailedError
@@ -40,7 +41,7 @@ class LazyPrinter:
             logger.exception("Unable to get data for broacasts")
             return self.default
 
-def get_votes_status():
+def get_votes_status(none_on_fail=False):
     try:
         red = redis.StrictRedis(connection_pool=get_redis_pool())
         data = red.get("votes")
@@ -48,6 +49,8 @@ def get_votes_status():
             return json.loads(data)
     except:
         logger.exception("Unable to retrieve votes")
+        if none_on_fail:
+            return None
     return {'total_votes': 0, "winning_maps": []}
 
 
