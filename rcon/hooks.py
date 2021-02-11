@@ -92,7 +92,7 @@ def ban_if_has_vac_bans(rcon: RecordedRcon, steam_id_64, name):
                 'DaysSinceLastBan'), MAX_DAYS_SINCE_BAN=str(max_days_since_ban))
             logger.info("Player %s was banned due VAC history, last ban: %s days ago", str(
                 player), bans.get('DaysSinceLastBan'))
-            rcon.do_perma_ban(player=name, reason=reason, admin_name="A BOT")
+            rcon.do_perma_ban(player=name, reason=reason, by="A BOT")
             safe_save_player_action(
                 rcon=rcon, player_name=name, action_type="PERMABAN", reason=reason, by='AUTOBAN', steam_id_64=player.steam_id_64
             )
