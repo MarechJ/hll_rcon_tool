@@ -1,4 +1,4 @@
 # Don't forget to add an empty line at the end of this file or it won't start
 5 * * * * /bin/bash /config/do_logrotate.sh
 # Example Backup VIPs once per day at 23h
-1 23,02 * * * /code/manage.py enrich_db_users
+1 23,2 * * * /code/manage.py enrich_db_users
