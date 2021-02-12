@@ -245,7 +245,7 @@ const hll = createMuiTheme({
     },
     background: {
       default: '#343434',
-      paper: '#424242'
+      paper: '#5b5b5b'
     },
     text: {
       primary: '#ffffff',

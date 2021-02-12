@@ -1,8 +1,11 @@
-import { AppBar, Avatar, Grid, List, ListItem, ListItemSecondaryAction, ListItemAvatar, ListItemText, Toolbar, Typography, makeStyles, Paper, Divider, Card, CardContent, CardMedia, LinearProgress } from '@material-ui/core'
+import { AppBar, Link, Avatar, Grid, List, ListItem, ListItemSecondaryAction, ListItemAvatar, ListItemText, Toolbar, Typography, makeStyles, Paper, Divider, Card, CardContent, CardMedia, LinearProgress, Select, FormControl, InputLabel, MenuItem, IconButton } from '@material-ui/core'
 import React from 'react'
 import { get, handle_http_errors, showResponse } from '../../utils/fetchUtils'
 import { List as iList, Map, fromJS, set } from 'immutable'
 import moment from 'moment'
+import AddIcon from '@material-ui/icons/Add';
+import RemoveIcon from '@material-ui/icons/Remove';
+
 
 const useStyles = makeStyles((theme) => ({
 
@@ -11,7 +14,7 @@ const useStyles = makeStyles((theme) => ({
     },
     transparentPaper: {
         backgroundColor: theme.palette.background.paper,
-        opacity: "0.7",
+        opacity: "0.6",
         borderRadius: "0px"
     },
     root: {
@@ -51,37 +54,41 @@ const map_to_pict = {
     'utahbeach': 'maps/utah.webp'
 }
 
-const PlayerItem = ({score, rank, postProcess, statKey}) => {
+const PlayerItem = ({ score, rank, postProcess, statKey }) => {
     const steamProfile = score.get('steaminfo') ? score.get("steaminfo").get("profile") : new Map()
     const avatarUrl = steamProfile.get("avatar", null)
 
     return <React.Fragment>
-    <Divider variant="middle" component="li" />
-    <ListItem>
-        <ListItemAvatar>
-            <Avatar src={avatarUrl}></Avatar>
-        </ListItemAvatar>
-        <ListItemText
-            primary={score.get('player')}
-            secondary={`#${rank}`}
-        />
-        <ListItemSecondaryAction>
-            <Typography variant="h6" color="secondary">{postProcess(score.get(statKey))}</Typography>
-        </ListItemSecondaryAction>
-    </ListItem>
-</React.Fragment>
+        <Divider variant="middle" component="li" />
+        <ListItem>
+            <ListItemAvatar>
+                <Avatar src={avatarUrl}></Avatar>
+            </ListItemAvatar>
+            <ListItemText
+                primary={score.get('player')}
+                secondary={`#${rank}`}
+            />
+            <ListItemSecondaryAction>
+                <Typography variant="h6" color="secondary">{postProcess(score.get(statKey))}</Typography>
+            </ListItemSecondaryAction>
+        </ListItem>
+    </React.Fragment>
 }
 
-const TopList = ({ scores, statType, statKey, reversed, postProcessFunc }) => {
+const TopList = ({ iconUrl, scores, statType, statKey, reversed, postProcessFunc }) => {
     const compareFunc = reversed ? (a, b) => a > b ? -1 : a == b ? 0 : 1 : undefined
     const postProcess = postProcessFunc ? postProcessFunc : val => val
-  
-    
+    const defaultNum = 10
+    const [top, setTop] = React.useState(defaultNum)
+    const toggle = () => top == 100 ? setTop(defaultNum) : setTop(100)
+    const show = top == 100 ? "Show less" : "Show all"
+    const showButton = top == 100 ? <RemoveIcon/> : <AddIcon />
+
     return <List>
         <React.Fragment>
             <ListItem>
-                <ListItemAvatar style={{ visibility: "hidden" }}>
-                    <Avatar></Avatar>
+                <ListItemAvatar style={{ visibility: "visible" }}>
+                    <Avatar src={iconUrl}>#</Avatar>
                 </ListItemAvatar>
                 <ListItemText
                     primary={<Typography variant="h6">name</Typography>}
@@ -92,13 +99,26 @@ const TopList = ({ scores, statType, statKey, reversed, postProcessFunc }) => {
             </ListItem>
 
         </React.Fragment>
-        {scores.sortBy((s) => s.get(statKey), compareFunc).slice(0, 20).map((s, idx) => (
-           <PlayerItem score={s} rank={idx + 1} postProcess={postProcess} statKey={statKey} />
+        {scores.sortBy((s) => s.get(statKey), compareFunc).slice(0, top).map((s, idx) => (
+            <PlayerItem score={s} rank={idx + 1} postProcess={postProcess} statKey={statKey} />
         ))}
+        <ListItem>
+                <ListItemAvatar style={{ visibility: "hidden" }}>
+                    <Avatar>#</Avatar>
+                </ListItemAvatar>
+                <ListItemText
+                    primary={<Link onClick={toggle}>{show}</Link>}
+                />
+                <ListItemSecondaryAction>
+                    <IconButton onClick={toggle} color="secondary">
+                        {showButton}
+                    </IconButton>
+                </ListItemSecondaryAction>
+                </ListItem>
     </List>
 }
 
-const RankBoard = ({ classes, scores, title, statType, statKey, reversed, postProcessFunc }) => (
+const RankBoard = ({ classes, iconUrl, scores, title, statType, statKey, reversed, postProcessFunc }) => (
     <React.Fragment>
         <AppBar position="relative" style={{ minHeight: "144px" }} >
             <Toolbar style={{ minHeight: "inherit" }}>
@@ -106,7 +126,7 @@ const RankBoard = ({ classes, scores, title, statType, statKey, reversed, postPr
             </Toolbar>
         </AppBar>
         <Paper elevation={3}>
-            <TopList scores={scores} statType={statType} statKey={statKey} reversed={reversed} postProcessFunc={postProcessFunc} />
+            <TopList iconUrl={iconUrl} scores={scores} statType={statType} statKey={statKey} reversed={reversed} postProcessFunc={postProcessFunc} />
         </Paper>
     </React.Fragment>
 
@@ -138,7 +158,7 @@ const LiveScore = ({ classes }) => {
 
 
     let started = serverState.get("current_map", new Map()).get("start")
-    started = started ? moment.unix(started).toNow(true) : "N/A"
+    started = started ? new Date(Date.now() - new Date(started * 1000)).toISOString().substr(11, 8) : "N/A"
 
     return <React.Fragment><Grid container spacing={2}
         justify="center"
@@ -149,18 +169,19 @@ const LiveScore = ({ classes }) => {
                     <Grid container justify="flex-start" alignItems="flex-start" alignContent="flex=start" spacing={1}>
                         <Grid item xs={3} md={2} lg={2} alignContent="center" alignItems="center" justify="center" style={{
                             flex: "grow",
+                            maxWidth: "220px",
                             backgroundRepeat: "no-repeat",
                             backgroundSize: "auto 150px",
                             backgroundImage: `url(${map_to_pict[serverState.get("current_map", new Map()).get("just_name", "foy")]})`, minHeight: "150px"
                         }} >
                             <Paper elevation={0} className={styles.transparentPaper}><Typography variant="caption">Current map</Typography></Paper>
                             <Paper elevation={0} className={styles.transparentPaper}><Typography variant="h6">{serverState.get("current_map", new Map()).get("human_name", "N/A")}</Typography></Paper>
-                            <Paper elevation={0} className={styles.transparentPaper}><Typography variant="caption">Duration: {started}</Typography></Paper>
+                            <Paper elevation={0} className={styles.transparentPaper}><Typography variant="caption">Elapsed: {started}</Typography></Paper>
                             <Paper elevation={0} className={styles.transparentPaper}><Typography variant="caption">Players: {serverState.get("nb_players")}</Typography></Paper>
                         </Grid>
                         <Grid item xs={9}>
                             <Grid container spacing={1}>
-                                <Grid item xs={12}> <Typography variant="h4"  color="secondary">LIVE STATS</Typography></Grid>
+                                <Grid item xs={12}> <Typography variant="h4" display="inline" color="secondary">LIVE STATS</Typography></Grid>
                                 <Grid item xs={12}><Typography variant="h4">{serverState.get('name')}</Typography></Grid>
                                 <Grid item xs={12}>
                                     <Typography variant="caption">Only players that are currently in-game are shown. Stats are reset on disconnection, not on map change</Typography>
@@ -171,10 +192,10 @@ const LiveScore = ({ classes }) => {
                             </Grid>
                         </Grid>
                         <Grid item xs={12}>
-                            <LinearProgress style={{visibility: isLoading ? "visible" : "hidden"}} className={classes.grow} color="secondary" /> 
+                            <LinearProgress style={{ visibility: isLoading ? "visible" : "hidden" }} className={classes.grow} color="secondary" />
                         </Grid>
                     </Grid>
-                    
+
                 </Toolbar>
             </AppBar>
         </Grid>
@@ -183,37 +204,40 @@ const LiveScore = ({ classes }) => {
             justify="center"
             className={classes.padding}>
             <Grid item xs={12} md={6} lg={3} xl={2}>
-                <RankBoard classes={classes} scores={scores} title="TOP KILLERS" statKey="kills" statType="kills" reversed />
+                <RankBoard classes={classes} iconUrl={"icons/bomb.png"} scores={scores} title="TOP KILLERS" statKey="kills" statType="kills" reversed />
             </Grid>
             <Grid item xs={12} md={6} lg={3} xl={2}>
-                <RankBoard classes={classes} scores={scores} title="TOP RATIO" statType="kill/death" statKey="kill_death_ratio" reversed />
+                <RankBoard classes={classes} iconUrl={"icons/invincible.webp"} scores={scores} title="TOP RATIO" statType="kill/death" statKey="kill_death_ratio" reversed />
             </Grid>
             <Grid item xs={12} md={6} lg={3} xl={2}>
-                <RankBoard classes={classes} scores={scores} title="TOP EFFIENCY" statType="kill/minute" statKey="kills_per_minute" reversed />
+                <RankBoard classes={classes} iconUrl={"icons/efficiency.png"} scores={scores} title="TOP EFFIENCY" statType="kill/minute" statKey="kills_per_minute" reversed />
             </Grid>
             <Grid item xs={12} md={6} lg={3} xl={2}>
-                <RankBoard classes={classes} scores={scores} title="TRY HARDERS" statType="death/minute" statKey="deaths_per_minute" reversed />
+                <RankBoard classes={classes} iconUrl={"icons/tryhard.png"} scores={scores} title="TRY HARDERS" statType="death/minute" statKey="deaths_per_minute" reversed />
             </Grid>
             <Grid item xs={12} md={6} lg={3} xl={2}>
-                <RankBoard classes={classes} scores={scores} title="TOP STAMINA" statType="deaths" statKey="deaths" reversed />
+                <RankBoard classes={classes} iconUrl={"icons/stamina.png"} scores={scores} title="TOP STAMINA" statType="deaths" statKey="deaths" reversed />
             </Grid>
             <Grid item xs={12} md={6} lg={3} xl={2}>
-                <RankBoard classes={classes} scores={scores} title="TOP KILL STREAK" statType="kill streak" statKey="kills_streak" reversed />
+                <RankBoard classes={classes} iconUrl={"icons/streak_line.png"} scores={scores} title="TOP KILL STREAK" statType="kill streak" statKey="kills_streak" reversed />
             </Grid>
             <Grid item xs={12} md={6} lg={3} xl={2}>
-                <RankBoard classes={classes} scores={scores} title="NEVER GIVE UP" statType="death streak" statKey="deaths_without_kill_streak" reversed />
+                <RankBoard classes={classes} iconUrl={"icons/nevergiveup.png"} scores={scores} title="I NEVER GIVE UP" statType="death streak" statKey="deaths_without_kill_streak" reversed />
             </Grid>
             <Grid item xs={12} md={6} lg={3} xl={2}>
-                <RankBoard classes={classes} scores={scores} title="MOST PATIENT" statType="death by teamkill" statKey="deaths_by_tk" reversed />
+                <RankBoard classes={classes} iconUrl={"icons/patience.png"} scores={scores} title="MOST PATIENT" statType="death by teamkill" statKey="deaths_by_tk" reversed />
             </Grid>
             <Grid item xs={12} md={6} lg={3} xl={2}>
-                <RankBoard classes={classes} scores={scores} title="YES I'M CLUMSY" statType="teamkills" statKey="teamkills" reversed />
+                <RankBoard classes={classes} iconUrl={"icons/clumsy.png"} scores={scores} title="YES I'M CLUMSY" statType="teamkills" statKey="teamkills" reversed />
             </Grid>
             <Grid item xs={12} md={6} lg={3} xl={2}>
-                <RankBoard classes={classes} scores={scores} title="I &#10084; VOTING" statType="# vote started" statKey="nb_vote_started" reversed />
+                <RankBoard classes={classes} iconUrl={"icons/glasses.png"} scores={scores} title="I NEED GLASSES" statType="teamkills streak" statKey="teamkills_streak" reversed />
             </Grid>
             <Grid item xs={12} md={6} lg={3} xl={2}>
-                <RankBoard classes={classes} scores={scores} title="What is a break?" statType="Ingame time" statKey="time_seconds" reversed postProcessFunc={durationToHour} />
+                <RankBoard classes={classes} iconUrl={"icons/vote.ico"} scores={scores} title="I &#10084; VOTING" statType="# vote started" statKey="nb_vote_started" reversed />
+            </Grid>
+            <Grid item xs={12} md={6} lg={3} xl={2}>
+                <RankBoard classes={classes} iconUrl={"icons/sleep.png"} scores={scores} title="What is a break?" statType="Ingame time" statKey="time_seconds" reversed postProcessFunc={durationToHour} />
             </Grid>
         </Grid >
     </React.Fragment>
