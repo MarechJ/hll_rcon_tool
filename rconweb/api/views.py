@@ -5,7 +5,7 @@ import os
 from subprocess import run, PIPE
 from dataclasses import asdict
 
-from django.http import JsonResponse
+from django.http import JsonResponse, response
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
 
@@ -385,7 +385,7 @@ def audit(func_name, request, arguments):
 
 
 # This is were all the RCON commands are turned into HTTP endpoints
-def wrap_method(func, parameters):
+def wrap_method(func, parameters, command_name):
     @csrf_exempt
     @login_required
     @wraps(func)
@@ -417,13 +417,7 @@ def wrap_method(func, parameters):
             failure = True
             res = None
 
-        if data.get("forward"):
-            try:
-                others = forward_request(request)
-            except:
-                logger.exception("Unexpected error while forwarding request")
-        # logger.debug("%s %s -> %s", func.__name__, arguments, res)
-        return JsonResponse(
+        response = JsonResponse(
             dict(
                 result=res,
                 command=func.__name__,
@@ -432,6 +426,16 @@ def wrap_method(func, parameters):
                 forward_results=others,
             )
         )
+        if data.get("forward"):
+            if command_name == "do_temp_ban"and not get_config().get("MULTI_SERVERS", {}).get("broadcast_temp_bans", True):
+                logger.debug("Not broadcasting temp ban due to settings")
+                return response
+            try:
+                others = forward_request(request)
+            except:
+                logger.exception("Unexpected error while forwarding request")
+        # logger.debug("%s %s -> %s", func.__name__, arguments, res)
+        return response
 
     return wrapper
 
@@ -480,7 +484,7 @@ for name, func in inspect.getmembers(ctl):
     if not any(name.startswith(prefix) for prefix in PREFIXES_TO_EXPOSE):
         continue
 
-    commands.append((name, wrap_method(func, inspect.signature(func).parameters)))
+    commands.append((name, wrap_method(func, inspect.signature(func).parameters, name)))
 
 
 # Warm the cache as fetching steam profile 1 by 1 takes a while
