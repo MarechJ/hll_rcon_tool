@@ -210,7 +210,7 @@ const LiveScore = ({ classes }) => {
                 <RankBoard classes={classes} iconUrl={"icons/invincible.webp"} scores={scores} title="TOP RATIO" statType="kill/death" statKey="kill_death_ratio" reversed />
             </Grid>
             <Grid item xs={12} md={6} lg={3} xl={2}>
-                <RankBoard classes={classes} iconUrl={"icons/efficiency.png"} scores={scores} title="TOP EFFIENCY" statType="kill/minute" statKey="kills_per_minute" reversed />
+                <RankBoard classes={classes} iconUrl={"icons/efficiency.png"} scores={scores} title="TOP PERF." statType="kill/minute" statKey="kills_per_minute" reversed />
             </Grid>
             <Grid item xs={12} md={6} lg={3} xl={2}>
                 <RankBoard classes={classes} iconUrl={"icons/tryhard.png"} scores={scores} title="TRY HARDERS" statType="death/minute" statKey="deaths_per_minute" reversed />
