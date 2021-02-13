@@ -317,7 +317,6 @@ function App() {
 
   const theme = process.env.REACT_APP_PUBLIC_BUILD ? hll : themes[userTheme] ? themes[userTheme] : lightTheme
 
-
   return (
     <div className={"App " + classes.root}>
       <ThemeProvider theme={theme} >

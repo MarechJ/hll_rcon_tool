@@ -1,4 +1,4 @@
-import { AppBar, Link, Avatar, Grid, List, ListItem, ListItemSecondaryAction, ListItemAvatar, ListItemText, Toolbar, Typography, makeStyles, Paper, Divider, Card, CardContent, CardMedia, LinearProgress, Select, FormControl, InputLabel, MenuItem, IconButton } from '@material-ui/core'
+import { AppBar, Link, Avatar, Grid, List, ListItem, ListItemSecondaryAction, ListItemAvatar, ListItemText, Toolbar, Typography, makeStyles, Paper, Divider, Card, CardContent, CardMedia, LinearProgress, Select, FormControl, InputLabel, MenuItem, IconButton, Chip } from '@material-ui/core'
 import React from 'react'
 import { get, handle_http_errors, showResponse } from '../../utils/fetchUtils'
 import { List as iList, Map, fromJS, set } from 'immutable'
@@ -138,6 +138,8 @@ const LiveScore = ({ classes }) => {
     const [stats, setStats] = React.useState(new iList())
     const [serverState, setServerState] = React.useState(new Map())
     const [isLoading, setIsLoading] = React.useState(true)
+    const [isPaused, setPaused] = React.useState(false)
+    const [refreshIntervalSec, setRefreshIntervalSec] = React.useState(10)
     const durationToHour = (val) => moment.utc(moment.duration(val, 'seconds').as('milliseconds')).format('hh:mm')
     const scores = stats.get("stats", new iList())
     const lastRefresh = stats.get("snapshot_timestamp") ? moment.unix(stats.get("snapshot_timestamp")).format() : "N/A"
@@ -151,12 +153,15 @@ const LiveScore = ({ classes }) => {
 
     React.useEffect(
         () => {
-            const interval = setInterval(getData, 10000);
-            return () => clearInterval(interval);
-        }, []
+            if (!isPaused) {
+                const interval = setInterval(getData, refreshIntervalSec * 1000);
+                return () => clearInterval(interval);
+            }
+            
+        }, [isPaused]
     )
 
-
+    document.title = serverState.get('name', "HLL Stats")
     let started = serverState.get("current_map", new Map()).get("start")
     started = started ? new Date(Date.now() - new Date(started * 1000)).toISOString().substr(11, 8) : "N/A"
 
@@ -187,7 +192,7 @@ const LiveScore = ({ classes }) => {
                                     <Typography variant="caption">Only players that are currently in-game are shown. Stats are reset on disconnection, not on map change</Typography>
                                 </Grid>
                                 <Grid item xs={12}>
-                                    <Typography variant="caption">Last update: {lastRefresh}</Typography>
+                                    <Typography variant="caption">Last update: {lastRefresh} - Auto-refresh {refreshIntervalSec} sec: <Link onClick={() => setPaused(!isPaused)} color="secondary">{isPaused ? "unpause" : "pause"}</Link></Typography>
                                 </Grid>
                             </Grid>
                         </Grid>
