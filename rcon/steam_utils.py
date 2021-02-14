@@ -5,7 +5,7 @@ import math
 import time
 
 from steam.webapi import WebAPI
-
+from rcon.models import PlayerSteamID, SteamInfo
 from rcon.cache_utils import ttl_cache
 
 logger = logging.getLogger(__name__)
@@ -85,6 +85,13 @@ def get_player_has_bans(steamd_id):
     return bans
 
 
+def update_db_player_info(player: PlayerSteamID, steam_profile):
+    if not player.steaminfo:
+        player.steaminfo = SteamInfo()
+    player.steaminfo.profile = steam_profile
+    player.steaminfo.country = steam_profile.get('loccountrycode')
+
+
 def enrich_db_users(chunk_size=100, update_from_days_old=30):
     from rcon.models import enter_session, SteamInfo, PlayerSteamID
     from sqlalchemy import or_
@@ -114,10 +121,8 @@ def enrich_db_users(chunk_size=100, update_from_days_old=30):
                     logger.warning("Unable to find player %s", p["steamid"])
                     continue
                 #logger.debug("Saving info for %s: %s", player.steam_id_64, p)
-                if not player.steaminfo:
-                    player.steaminfo = SteamInfo()
-                player.steaminfo.profile = p
-                player.steaminfo.country = p.get('loccountrycode')
+                update_db_player_info(player=player, steam_profile=p)
+
             sess.commit()
             time.sleep(5)
            

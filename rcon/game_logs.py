@@ -154,7 +154,6 @@ class LogLoop:
                 hook(self.rcon_2, log)
             except KeyboardInterrupt:
                 sys.exit(0)
-                raise
             except Exception:
                 logger.exception(
                     "Hook '%s.%s' for '%s' returned an error",

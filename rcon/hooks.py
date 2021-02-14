@@ -2,11 +2,11 @@ import logging
 import os
 from functools import wraps
 from rcon.recorded_commands import RecordedRcon
-from rcon.player_history import save_player, save_start_player_session, save_end_player_session, safe_save_player_action, get_player
+from rcon.player_history import save_player, save_start_player_session, save_end_player_session, safe_save_player_action, get_player, _get_set_player
 from rcon.game_logs import on_connected, on_disconnected
-from rcon.models import enter_session
+from rcon.models import enter_session, PlayerSteamID, SteamInfo, enter_session
 from rcon.discord import send_to_discord_audit, dict_to_discord
-from rcon.steam_utils import get_player_bans, STEAM_KEY
+from rcon.steam_utils import get_player_bans, STEAM_KEY, get_steam_profile, update_db_player_info
 
 logger = logging.getLogger(__name__)
 
@@ -109,13 +109,16 @@ def ban_if_has_vac_bans(rcon: RecordedRcon, steam_id_64, name):
                 logger.exception("Unable to send vac ban to audit log")
 
 
-
 def inject_steam_id_64(func):
     @wraps(func)
     def wrapper(rcon, struct_log):
-        name = struct_log['player']
-        info = rcon.get_player_info(name)
-        steam_id_64 = info.get('steam_id_64')
+        try:
+            name = struct_log['player']
+            info = rcon.get_player_info(name)
+            steam_id_64 = info.get('steam_id_64')
+        except KeyError:
+            logger.exception("Unable to inject steamid %s", struct_log)
+            raise
         if not steam_id_64:
             logger.warning("Can't get player steam_id for %s", name)
             return
@@ -138,3 +141,21 @@ def handle_on_connect(rcon, struct_log, steam_id_64):
 @inject_steam_id_64
 def handle_on_disconnect(rcon, struct_log, steam_id_64):
     save_end_player_session(steam_id_64, struct_log['timestamp_ms'] / 1000)
+
+
+
+@on_connected
+@inject_steam_id_64
+def update_player_steaminfo_on_connect(rcon, struct_log, steam_id_64):
+    if not steam_id_64:
+        logger.error("Can't update steam info, no steam id available for %s", struct_log.get("player"))
+        return
+    profile = get_steam_profile(steam_id_64)
+    if not profile:
+        logger.error("Can't update steam info, no steam profile returned for %s", struct_log.get("player"))
+
+    logger.info("Updating steam profile for player %s", struct_log['player'])
+    with enter_session() as sess:
+        player = _get_set_player(sess, player_name=struct_log['player'], steam_id_64=steam_id_64)
+        update_player_steaminfo(player, profile)
+        sess.commit()
