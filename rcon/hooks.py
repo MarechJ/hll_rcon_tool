@@ -157,5 +157,5 @@ def update_player_steaminfo_on_connect(rcon, struct_log, steam_id_64):
     logger.info("Updating steam profile for player %s", struct_log['player'])
     with enter_session() as sess:
         player = _get_set_player(sess, player_name=struct_log['player'], steam_id_64=steam_id_64)
-        update_player_steaminfo(player, profile)
+        update_db_player_info(player, profile)
         sess.commit()
