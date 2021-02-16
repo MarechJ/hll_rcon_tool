@@ -24,18 +24,24 @@ import ServicesList from './components/Services';
 import PlayerGrid from './components/PlayersHistory/playerGrid'
 import { isNull } from "lodash";
 import { LiveScore } from './components/Scoreboard'
+import { Typography } from "@material-ui/core";
 
 
-const Live = ({ classes }) => (
-  <Grid container spacing={1}>
-    <Grid item sm={12} md={6}>
-      <PlayerView classes={classes} />
+const Live = ({ classes }) => {
+  const [mdSize, setMdSize] = React.useState(6)
+  const [ direction, setDirection ] = React.useState("")
+  const isFullScreen = () => mdSize !== 6
+  const toggleMdSize = () => isFullScreen() ? setMdSize(6) : setMdSize(12)
+
+  return <Grid container spacing={1} direction={direction}>
+    <Grid item sm={12} md={mdSize}>
+      <PlayerView classes={classes} onFullScreen={() => { setDirection(""); toggleMdSize()}} isFullScreen={isFullScreen()} />
     </Grid>
-    <Grid item sm={12} md={6}>
-      <Logs classes={classes} />
+    <Grid item sm={12} md={mdSize}>
+      <Logs classes={classes} onFullScreen={() => {direction == "column-reverse" ? setDirection("") : setDirection("column-reverse"); toggleMdSize()}} isFullScreen={isFullScreen()} />
     </Grid>
   </Grid>
-);
+};
 
 // Easy way to make ugly ass themes: https://material.io/resources/color/#!/?view.left=0&view.right=0&primary.color=33691E&secondary.color=3E2723
 const darkTheme = createMuiTheme({
@@ -366,6 +372,23 @@ function App() {
                     </Grid>
                   </Grid>
                 </Route>
+                <Route path="/combined_history">
+                  <Grid container spacing={2}>
+                  <Grid item sm={12} >
+                      <Typography variant="h4">Players</Typography>
+                    </Grid>
+                  <Grid item sm={12}>
+                      <PlayersHistory classes={classes} />
+                    </Grid>
+                    <Grid item sm={12}>
+                      <Typography variant="h4">Historical Logs</Typography>
+                    </Grid>
+                    <Grid item sm={12} >
+                      <LogsHistory classes={classes} />
+                    </Grid>
+                  </Grid>
+                </Route>
+
               </React.Fragment>
               : ""}
           </Switch>

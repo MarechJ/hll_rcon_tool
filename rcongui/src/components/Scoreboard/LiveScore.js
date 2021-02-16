@@ -189,7 +189,7 @@ const LiveScore = ({ classes }) => {
                                 <Grid item xs={12}> <Typography variant="h4" display="inline" color="secondary">LIVE STATS</Typography></Grid>
                                 <Grid item xs={12}><Typography variant="h4">{serverState.get('name')}</Typography></Grid>
                                 <Grid item xs={12}>
-                                    <Typography variant="caption">Only players that are currently in-game are shown. Stats are reset on disconnection, not on map change</Typography>
+                                    <Typography variant="caption">Only ingame players are shown. Stats reset on disconnection, not per game. Real deaths only (excludes redeploys / revives)</Typography>
                                 </Grid>
                                 <Grid item xs={12}>
                                     <Typography variant="caption">Last update: {lastRefresh} - Auto-refresh {refreshIntervalSec} sec: <Link onClick={() => setPaused(!isPaused)} color="secondary">{isPaused ? "unpause" : "pause"}</Link></Typography>
