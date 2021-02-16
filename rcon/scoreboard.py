@@ -174,9 +174,7 @@ class LiveStats:
             "VOTE": self._add_vote,
         }
         for p in players:
-            if not p["name"] == "Dr.WeeD":
-                continue
-            # logger.debug("Crunching stats for %s", p)
+            logger.debug("Crunching stats for %s", p)
             player_logs = indexed_logs.get(p["name"], [])
             stats = {
                 "player": p["name"],
