@@ -69,7 +69,7 @@ class PlayerWatch:
 
     def is_watched(self):
         watch = self.get_watch()
-        return watch and watch["watchlist"]["is_watched"]
+        return watch and watch["watchlist"] and watch["watchlist"]["is_watched"]
 
     def unwatch(self):
         with enter_session() as sess:

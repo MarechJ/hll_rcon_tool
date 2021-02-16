@@ -1,7 +1,5 @@
 /* eslint-disable no-use-before-define */
 import React from "react";
-import useAutocomplete from "@material-ui/lab/useAutocomplete";
-import { makeStyles } from "@material-ui/core/styles";
 import {
   postData,
   showResponse,
@@ -33,8 +31,8 @@ import DialogActions from "@material-ui/core/DialogActions";
 import DialogContent from "@material-ui/core/DialogContent";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import { getEmojiFlag } from "../../utils/emoji";
-import PlayerItem from "./playerItem";
 import PlayerGrid from "./playerGrid";
+
 
 const PlayerSummary = ({ player, flag }) => (
   <React.Fragment>
@@ -126,11 +124,6 @@ class FlagDialog extends React.Component {
   }
 }
 
-const show_names = (names) =>
-  join(
-    names.map((obj) => obj.name),
-    " · "
-  );
 
 const FlagButton = ({ classes, onflag }) => (
   <Button variant="outlined" onClick={onflag}>
@@ -171,7 +164,9 @@ class PlayersHistory extends React.Component {
       doFlag: false,
       doConfirmPlayer: false,
       ignoreAccent: true,
-      exactMatch: false
+      exactMatch: false,
+      flags: "",
+      country: "",
     };
 
     this.getPlayerHistory = this.getPlayerHistory.bind(this);
@@ -190,6 +185,8 @@ class PlayersHistory extends React.Component {
     this.setDoConfirmPlayer = this.setDoConfirmPlayer.bind(this);
     this.setIgnoreAccent = this.setIgnoreAccent.bind(this);
     this.setExactMatch = this.setExactMatch.bind(this);
+    this.setFlags = this.setFlags.bind(this);
+    this.setCountry = this.setCountry.bind(this);
 
     this.onBlacklist = this.onBlacklist.bind(this);
     this.onUnBlacklist = this.onUnBlacklist.bind(this);
@@ -270,6 +267,8 @@ class PlayersHistory extends React.Component {
       isWatchedOnly,
       exactMatch,
       ignoreAccent,
+      flags,
+      country
     } = this.state;
     const params = omitBy(
       {
@@ -283,6 +282,8 @@ class PlayersHistory extends React.Component {
         is_watched: isWatchedOnly,
         exact_name_match: exactMatch,
         ignore_accent: ignoreAccent,
+        flags: flags,
+        country: country,
       },
       (v) => v === null || v === "" || v === undefined
     );
@@ -412,6 +413,14 @@ class PlayersHistory extends React.Component {
     return this.setState({ exactMatch });
   }
 
+  setFlags(flags) {
+    return this.setState({ flags });
+  }
+
+  setCountry(country) {
+    return this.setState({ country });
+  }
+
   /* Shortcut function for the grid list */
   onBlacklist(player) {
     return this.setDoConfirmPlayer({
@@ -473,6 +482,8 @@ class PlayersHistory extends React.Component {
       vips,
       ignoreAccent,
       exactMatch,
+      flags,
+      country
     } = this.state;
 
     // Perfomance is crappy. It's less crappy after switcing to immutables but still...
@@ -501,6 +512,10 @@ class PlayersHistory extends React.Component {
             setExactMatch={this.setExactMatch}
             ignoreAccent={ignoreAccent}
             setIgnoreAccent={this.setIgnoreAccent}
+            country={country}
+            setCountry={this.setCountry}
+            flags={flags}
+            setFlags={this.setFlags}
           />
         </Grid>
         <Grid item xs={12}>

@@ -40,6 +40,8 @@ services:
     ports:
       - ${RCONWEB_PORT}:80
       - ${RCONWEB_PORT_HTTPS}:443
+      - ${PUBLIC_STATS_PORT}:81
+      - ${PUBLIC_STATS_PORT_HTTPS}:444
     restart: always
     environment:
       RCONWEB_EXTERNAL_ADDRESS: ${RCONWEB_EXTERNAL_ADDRESS}
@@ -132,6 +134,8 @@ services:
     ports:
       - ${RCONWEB_PORT_2}:80
       - ${RCONWEB_PORT_HTTPS_2}:443
+      - ${PUBLIC_STATS_PORT_2}:81
+      - ${PUBLIC_STATS_PORT_HTTPS_2}:444
     environment:
       <<: *env2
     restart: on-failure
@@ -200,6 +204,8 @@ services:
     ports:
       - ${RCONWEB_PORT_3}:80
       - ${RCONWEB_PORT_HTTPS_3}:443
+      - ${PUBLIC_STATS_PORT_3}:81
+      - ${PUBLIC_STATS_PORT_HTTPS_3}:444
     environment:
       <<: *env3
     restart: on-failure

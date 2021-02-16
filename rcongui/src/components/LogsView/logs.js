@@ -22,7 +22,9 @@ import moment from "moment";
 import withWidth from "@material-ui/core/withWidth";
 import AutoRefreshLine from "../autoRefreshLine";
 import ListItemText from "@material-ui/core/ListItemText";
-
+import FullscreenIcon from '@material-ui/icons/Fullscreen';
+import FullscreenExitIcon from '@material-ui/icons/FullscreenExit';
+import { IconButton } from "@material-ui/core";
 
 const Selector = ({
   classes,
@@ -132,7 +134,7 @@ class Logs extends React.Component {
   }
 
   render() {
-    const { classes, width } = this.props;
+    const { classes, isFullScreen, onFullScreen } = this.props;
     const {
       logs,
       players,
@@ -151,7 +153,7 @@ class Logs extends React.Component {
             xs={12}
             className={`${classes.textLeft} ${classes.paddingLeft}`}
           >
-            <h1 className={classes.marginBottom}>Logs view</h1>
+            <h1 className={classes.marginBottom}>Logs view  <IconButton onClick={onFullScreen}>{isFullScreen ? <FullscreenExitIcon /> : <FullscreenIcon />}</IconButton></h1>
             <ListItemText secondary="30s auto refresh" />
             <AutoRefreshLine
               className={classes.marginTop}
@@ -159,6 +161,7 @@ class Logs extends React.Component {
               execEveryMs={30000}
               statusRefreshIntervalMs={500}
               classes={classes}
+              
             />
           </Grid>
         </Grid>

@@ -211,7 +211,7 @@ class PlayerView extends Component {
   }
 
   render() {
-    const { classes } = this.props;
+    const { classes, isFullScreen, onFullScreen } = this.props;
     const {
       openGroupAction,
       openUnban,
@@ -236,6 +236,8 @@ class PlayerView extends Component {
             this.loadBans();
             this.setState({ openUnban: true });
           }}
+          isFullScreen={isFullScreen}
+          onFullScreenClick={onFullScreen}
         />
         <TextInputBar
           classes={classes}

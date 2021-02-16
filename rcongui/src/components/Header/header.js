@@ -222,6 +222,9 @@ const Header = ({ classes }) => {
                         <MenuItem onClick={handleClose}><Link color="inherit" component={RouterLink} to="/logs">
                             Logs
                           </Link></MenuItem>
+                          <MenuItem onClick={handleClose}><Link color="inherit" component={RouterLink} to="/combined_history">
+                            Combined
+                          </Link></MenuItem>
                       </Menu>
                       <Link
                         variant="button"
@@ -231,6 +234,15 @@ const Header = ({ classes }) => {
                         to="/settings"
                       >
                         Settings
+                      </Link>
+                      <Link
+                        variant="button"
+                        color="inherit"
+                        className={classes.link}
+                        component={RouterLink}
+                        to="/livescore"
+                      >
+                        Scores
                       </Link>
                       <LoginBox classes={classes} component={RouterLink} />
                     </nav>

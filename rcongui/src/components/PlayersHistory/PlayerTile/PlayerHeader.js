@@ -17,6 +17,21 @@ import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
 import KeyboardArrowUpIcon from "@material-ui/icons/KeyboardArrowUp";
 import KeyboardArrowDownIcon from "@material-ui/icons/KeyboardArrowDown";
 import { pure } from "recompose";
+import { getName } from "country-list";
+
+const getCountry = (country) => {
+  if (country === "" || country === null) {
+    return ""
+  }
+  return (
+    <img
+      alt={country}
+      title={country ? getName(country) : ""}
+      style={{ height: "12px" }}
+      src={ `https://catamphetamine.gitlab.io/country-flag-icons/3x2/${country}.svg`}
+    />
+  );
+};
 
 export const PlayerHeader = pure(({ classes, player }) => {
   const [showAll, setShowAll] = React.useState(false);
@@ -26,6 +41,9 @@ export const PlayerHeader = pure(({ classes, player }) => {
   const firstName = playerNames.get(0, null) ? playerNames.get(0) : new Map()
   const firstNameLetter = firstName.get("name", "?")[0]
   const namesByMatch = player.get("names_by_match", null) ? player.get("names_by_match") : new List()
+  const steamProfile = player.get('steaminfo') ? player.get("steaminfo").get("profile") : new Map()
+  const avatarUrl = steamProfile ? steamProfile.get("avatar", null) : null
+  const country = player.get('steaminfo') ? player.get('steaminfo') .get("country", "") : ""
 
   return (
     <ListItem alignItems="flex-start">
@@ -37,10 +55,8 @@ export const PlayerHeader = pure(({ classes, player }) => {
             "steam_id_64"
           )}`}
         >
-          <Avatar>
-            {
-              firstNameLetter
-            }
+          <Avatar src={avatarUrl}>
+            {firstNameLetter}
           </Avatar>
         </Link>
       </ListItemAvatar>
@@ -77,7 +93,7 @@ export const PlayerHeader = pure(({ classes, player }) => {
                   ) : (
                       ""
                     )}
-                  {namesByMatch.get(0, "")}
+                  {namesByMatch.get(0, "")}  {getCountry(country)}
                 </Typography>
               )}
           </React.Fragment>

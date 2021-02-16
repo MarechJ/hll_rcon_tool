@@ -5,7 +5,7 @@ import os
 from subprocess import run, PIPE
 from dataclasses import asdict
 
-from django.http import JsonResponse
+from django.http import JsonResponse, response
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
 
@@ -16,21 +16,17 @@ from rcon.commands import CommandFailedError
 from rcon.steam_utils import get_steam_profile
 from rcon.settings import SERVER_INFO
 from rcon.player_history import (
-    get_players_by_appearance,
     add_player_to_blacklist,
     remove_player_from_blacklist,
-    get_player_profile,
-    get_player_profile_by_id,
-    add_flag_to_player,
-    remove_flag,
 )
+from rcon.broadcast import get_votes_status
 from rcon.discord import send_to_discord_audit
-from rcon.game_logs import ChatLoop
+from rcon.game_logs import LogLoop
 from rcon.user_config import AutoBroadcasts, InvalidConfigurationError, StandardMessages
 from rcon.cache_utils import RedisCached, get_redis_pool
 from rcon.user_config import DiscordHookConfig
 from rcon.watchlist import PlayerWatch
-
+from rcon.utils import LONG_HUMAN_MAP_NAMES, map_name
 from .auth import login_required, api_response
 from .utils import _get_data
 from .multi_servers import forward_request, forward_command
@@ -43,6 +39,33 @@ logger = logging.getLogger("rconweb")
 def get_version(request):
     res = run(["git", "describe", "--tags"], stdout=PIPE, stderr=PIPE)
     return api_response(res.stdout.decode(), failed=False, command="get_version")
+
+
+@csrf_exempt
+def public_info(request):
+    status = ctl.get_status()
+    try:
+        current_map = MapsHistory()[0]
+    except IndexError:
+        logger.error("Can't get current map time, map_recorder is probably offline")
+        current_map = {"name": status["map"], "start": None, "end": None}
+    current_map = dict(
+        just_name=map_name(current_map["name"]),
+        human_name=LONG_HUMAN_MAP_NAMES.get(current_map["name"], current_map["name"]),
+        **current_map,
+    )
+    vote_status = get_votes_status(none_on_fail=True)
+    next_map = ctl.get_next_map()
+    return api_response(
+        result=dict(
+            current_map=current_map,
+            **status,
+            vote_status=vote_status,
+            next_map=next_map,
+        ),
+        failed=False,
+        command="public_info",
+    )
 
 
 @csrf_exempt
@@ -362,7 +385,7 @@ def audit(func_name, request, arguments):
 
 
 # This is were all the RCON commands are turned into HTTP endpoints
-def wrap_method(func, parameters):
+def wrap_method(func, parameters, command_name):
     @csrf_exempt
     @login_required
     @wraps(func)
@@ -394,13 +417,7 @@ def wrap_method(func, parameters):
             failure = True
             res = None
 
-        if data.get("forward"):
-            try:
-                others = forward_request(request)
-            except:
-                logger.exception("Unexpected error while forwarding request")
-        # logger.debug("%s %s -> %s", func.__name__, arguments, res)
-        return JsonResponse(
+        response = JsonResponse(
             dict(
                 result=res,
                 command=func.__name__,
@@ -409,6 +426,16 @@ def wrap_method(func, parameters):
                 forward_results=others,
             )
         )
+        if data.get("forward"):
+            if command_name == "do_temp_ban"and not get_config().get("MULTI_SERVERS", {}).get("broadcast_temp_bans", True):
+                logger.debug("Not broadcasting temp ban due to settings")
+                return response
+            try:
+                others = forward_request(request)
+            except:
+                logger.exception("Unexpected error while forwarding request")
+        # logger.debug("%s %s -> %s", func.__name__, arguments, res)
+        return response
 
     return wrapper
 
@@ -420,7 +447,11 @@ ctl = RecordedRcon(SERVER_INFO)
 @csrf_exempt
 def get_connection_info(request):
     return api_response(
-        {"name": ctl.get_name(), "port": os.getenv("RCONWEB_PORT"), "link": os.getenv("RCONWEB_SERVER_URL")},
+        {
+            "name": ctl.get_name(),
+            "port": os.getenv("RCONWEB_PORT"),
+            "link": os.getenv("RCONWEB_SERVER_URL"),
+        },
         failed=False,
         command="get_connection_info",
     )
@@ -443,6 +474,7 @@ commands = [
     ("set_hooks", set_hooks),
     ("do_unwatch_player", do_unwatch_player),
     ("do_watch_player", do_watch_player),
+    ("public_info", public_info),
 ]
 
 logger.info("Initializing endpoint")
@@ -452,7 +484,7 @@ for name, func in inspect.getmembers(ctl):
     if not any(name.startswith(prefix) for prefix in PREFIXES_TO_EXPOSE):
         continue
 
-    commands.append((name, wrap_method(func, inspect.signature(func).parameters)))
+    commands.append((name, wrap_method(func, inspect.signature(func).parameters, name)))
 
 
 # Warm the cache as fetching steam profile 1 by 1 takes a while

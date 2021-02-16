@@ -2,15 +2,18 @@ import inspect
 import logging
 import click
 import sys
+import time
 
 from rcon.settings import SERVER_INFO
 from rcon.utils import ApiKey
 from rcon.extended_commands import Rcon
 from rcon import game_logs, broadcast, stats_loop, auto_settings, map_recorder
-from rcon.game_logs import ChatLoop
+from rcon.game_logs import LogLoop
 from rcon.models import init_db, install_unaccent
 from rcon.user_config import seed_default_config
 from rcon.cache_utils import RedisCached, get_redis_pool
+from rcon.scoreboard import live_stats_loop
+from rcon.steam_utils import enrich_db_users
 
 logger = logging.getLogger(__name__)
 
@@ -22,10 +25,28 @@ ctl = Rcon(
     SERVER_INFO
 )
 
+@cli.command(name="live_stats_loop")
+def run_stats_loop():
+    try:
+        live_stats_loop()
+    except:
+        logger.exception("Stats loop stopped")
+        sys.exit(1)
+
+
+@cli.command(name="enrich_db_users")
+def run_enrich_db_users():
+    try:
+        enrich_db_users()
+    except:
+        logger.exception("DB users enrichment stopped")
+        sys.exit(1)
+
+
 @cli.command(name="log_loop")
 def run_log_loop():
     try:
-        ChatLoop().run()
+        LogLoop().run()
     except:
         logger.exception("Chat recorder stopped")
         sys.exit(1)
@@ -39,11 +60,6 @@ def run_logs_eventloop():
 @cli.command(name='broadcast_loop')
 def run_broadcast_loop():
     broadcast.run()
-
-
-@cli.command(name='stats_loop')
-def run_stats_loop():
-    stats_loop.run()
 
 
 @cli.command(name='auto_settings')
@@ -60,7 +76,7 @@ def run_map_recorder():
 @click.option('-t', '--frequency-min', default=5)
 @click.option('-n', '--now', is_flag=True)
 def run_log_recorder(frequency_min, now):
-    game_logs.ChatRecorder(frequency_min, now).run()
+    game_logs.LogRecorder(frequency_min, now).run()
 
 
 def init(force=False):

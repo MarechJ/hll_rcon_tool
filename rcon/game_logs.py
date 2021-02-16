@@ -1,4 +1,5 @@
 import logging
+from logging import config
 import time
 import sys
 import datetime
@@ -9,10 +10,15 @@ from rcon.cache_utils import get_redis_client
 from rcon.utils import FixedLenList
 from rcon.settings import SERVER_INFO
 from rcon.commands import HLLServerError, CommandFailedError
+from rcon.player_history import get_player_profile, player_has_flag
 from sqlalchemy import desc
 from sqlalchemy.exc import IntegrityError, InvalidRequestError
 from rcon.models import LogLine, enter_session, PlayerSteamID, PlayerName
 import unicodedata
+
+from rcon.recorded_commands import RecordedRcon
+from rcon.config import get_config
+from rcon.discord import send_to_discord_audit
 
 logger = logging.getLogger(__name__)
 
@@ -65,12 +71,12 @@ def on_disconnected(func):
 MAX_FAILS = 10
 
 
-class ChatLoop:
+class LogLoop:
     log_history_key = "log_history"
 
     def __init__(self):
         self.rcon = Rcon(SERVER_INFO)
-        self.rcon_2 = Rcon(SERVER_INFO)
+        self.rcon_2 = RecordedRcon(SERVER_INFO)
         self.red = get_redis_client()
         self.duplicate_guard_key = "unique_logs"
         self.log_history = self.get_log_history_list()
@@ -78,7 +84,7 @@ class ChatLoop:
 
     @staticmethod
     def get_log_history_list():
-        return FixedLenList(key=ChatLoop.log_history_key, max_len=100000)
+        return FixedLenList(key=LogLoop.log_history_key, max_len=100000)
 
     def run(self, loop_frequency_secs=10, cleanup_frequency_minutes=10):
         since_min = 180
@@ -103,7 +109,7 @@ class ChatLoop:
     def record_line(self, log):
         id_ = f"{log['timestamp_ms']}|{log['line_without_time']}"
         if not self.red.sadd(self.duplicate_guard_key, id_):
-            #logger.debug("Skipping duplicate: %s", id_)
+            # logger.debug("Skipping duplicate: %s", id_)
             return None
 
         logger.info("Caching line: %s", id_)
@@ -113,7 +119,7 @@ class ChatLoop:
             last_line = None
         if not isinstance(last_line, dict):
             logger.error("Can't check against last_line, invalid_format %s", last_line)
-        elif last_line and last_line['timestamp_ms'] > log['timestamp_ms']:
+        elif last_line and last_line["timestamp_ms"] > log["timestamp_ms"]:
             logger.error("Received old log record, ignoring")
             return None
 
@@ -148,7 +154,6 @@ class ChatLoop:
                 hook(self.rcon_2, log)
             except KeyboardInterrupt:
                 sys.exit(0)
-                raise
             except Exception:
                 logger.exception(
                     "Hook '%s.%s' for '%s' returned an error",
@@ -158,7 +163,7 @@ class ChatLoop:
                 )
 
 
-class ChatRecorder:
+class LogRecorder:
     def __init__(self, dump_frequency_min=5, run_immediately=False):
         self.dump_frequency_min = dump_frequency_min
         self.run_immediately = run_immediately
@@ -176,7 +181,7 @@ class ChatRecorder:
             .one_or_none()
         )
         logger.info("Getting new logs from %s", last_log.event_time if last_log else 0)
-        for log in ChatLoop.get_log_history_list():
+        for log in LogLoop.get_log_history_list():
             if not isinstance(log, dict):
                 logger.warning("Log is invalid, not a dict: %s", log)
                 continue
@@ -187,7 +192,8 @@ class ChatRecorder:
                 to_store.append(log)
             if (
                 last_log
-                and not int(log["timestamp_ms"]) / 1000 == last_log.event_time.timestamp()
+                and not int(log["timestamp_ms"]) / 1000
+                == last_log.event_time.timestamp()
                 and last_log.raw == log["raw"]
             ):
                 logger.info("New logs collection at: %s", log)
@@ -242,9 +248,9 @@ class ChatRecorder:
             with enter_session() as sess:
                 to_store = self._get_new_logs(sess)
                 logger.info("%s log lines to record", len(to_store))
-             
+
                 self._save_logs(sess, to_store)
-                 
+
                 last_run = datetime.datetime.now()
 
 
@@ -272,20 +278,27 @@ def is_player(search_str, player, exact_match=False):
 
     return False
 
+
 def is_action(action_filter, action, exact_match=False):
     if not action_filter or not action:
         return None
 
     if not exact_match:
         return action.lower().startswith(action_filter.lower())
-    
+
     return action_filter == action
 
 
 def get_recent_logs(
-    start=0, end=100000, player_search=None, action_filter=None, min_timestamp=None, exact_player_match=False, exact_action=False
+    start=0,
+    end=100000,
+    player_search=None,
+    action_filter=None,
+    min_timestamp=None,
+    exact_player_match=False,
+    exact_action=False,
 ):
-    log_list = ChatLoop.get_log_history_list()
+    log_list = LogLoop.get_log_history_list()
     all_logs = log_list
     if start != 0:
         all_logs = log_list[start : min(end, len(log_list))]
@@ -300,7 +313,8 @@ def get_recent_logs(
             break
         if not isinstance(l, dict):
             continue
-        if min_timestamp and l['timestamp_ms'] / 1000 < min_timestamp:
+        if min_timestamp and l["timestamp_ms"] / 1000 < min_timestamp:
+            logger.debug("Stopping log read due to old timestamp at index %s", idx)
             break
         if player_search:
             if is_player(player_search, l["player"], exact_player_match) or is_player(
@@ -311,7 +325,7 @@ def get_recent_logs(
                 ):
                     continue
                 logs.append(l)
-        elif action_filter and is_action(action_filter, l['action'], exact_action):
+        elif action_filter and is_action(action_filter, l["action"], exact_action):
             logs.append(l)
         elif not player_search and not action_filter:
             logs.append(l)
@@ -326,3 +340,103 @@ def get_recent_logs(
         "players": list(all_players),
         "logs": logs,
     }
+
+
+def is_player_death(player, log):
+    return log['action'] == 'KILL' and player == log["player2"]
+
+def is_player_kill(player, log):
+    return log['action'] == 'KILL' and player == log["player"]
+
+
+@on_tk
+def auto_ban_if_tks_right_after_connection(rcon: RecordedRcon, log):
+    config = get_config()
+    config = config.get("BAN_TK_ON_CONNECT")
+    if not config or not config.get("enabled"):
+        return
+
+    player_name = log["player"]
+    player_steam_id = log["steam_id_64_1"]
+    player_profile = None
+    vips = {}
+    try:
+        player_profile = get_player_profile(player_steam_id, 0)
+    except:
+        logger.exception("Unable to get player profile")
+    try:
+        vips = set(v['steam_id_64'] for v in rcon.get_vip_ids())
+    except:
+        logger.exception("Unable to get VIPS")
+
+    last_logs = get_recent_logs(
+        end=1000, player_search=player_name, exact_player_match=True
+    )
+    logger.debug("Checking TK from %s", player_name)
+    author = config.get("author_name", "Automation")
+    reason = config.get("message", "No reasons provided")
+    discord_msg = config.get("discord_webhook_message", "No message provided")
+    webhook = config.get("discord_webhook_url")
+    max_time_minute = config.get("max_time_after_connect_minutes", 5)
+    excluded_weapons = [w.lower() for w in config.get("exclude_weapons", [])]
+    ignore_after_kill = config.get("ignore_tk_after_n_kills", 1)
+    ignore_after_death = config.get("ignore_tk_after_n_death", 1)
+    whitelist_players = config.get("whitelist_players", {})
+    tk_tolerance_count = config.get("teamkill_tolerance_count", 1)
+
+    if player_profile:
+        if whitelist_players.get('is_vip') and player_steam_id in vips:
+            logger.debug("Not checking player because he's VIP")
+            return
+
+        if whitelist_players.get('has_at_least_n_sessions') and player_profile['sessions_count'] >= whitelist_players.get('has_at_least_n_sessions'):
+            logger.debug("Not checking player because he has %s sessions", player_profile['sessions_count'])
+            return
+
+        flags = whitelist_players.get('has_flag', [])
+        if not isinstance(flags, list):
+            flags = [flags]
+        
+        for f in flags:
+            if player_has_flag(player_profile, f):
+                logger.debug("Not checking player because he has flag %s", f)
+                return
+
+    last_action_is_connect = False
+    last_connect_time = None
+    kill_counter = 0
+    death_counter = 0
+    tk_counter = 0
+    for log in reversed(last_logs["logs"]):
+        logger.debug(log)
+
+        if log["action"] == "CONNECTED":
+            last_action_is_connect = log
+            last_connect_time = log["timestamp_ms"] 
+            kill_counter = 0
+            death_counter = 0
+            continue
+        if log["action"] == "TEAM KILL" and log['player'] == player_name and last_action_is_connect:
+            if excluded_weapons and log["weapon"].lower() in excluded_weapons:
+                logger.debug("Not counting TK as offense due to weapon exclusion")
+                continue
+            if log['timestamp_ms'] - last_connect_time > max_time_minute * 60 * 1000:
+                logger.debug("Not counting TK as offense due to elapsed time exclusion, last connection time %s, tk time %s", datetime.datetime.fromtimestamp(last_connect_time/1000), datetime.datetime.fromtimestamp(log["timestamp_ms"]))
+                continue
+            logger.info("Banning player %s for TEAMKILL after connect %s", player_name, log)
+            tk_counter += 1
+            if tk_counter > tk_tolerance_count:
+                rcon.do_perma_ban(
+                    player=player_name,
+                    reason=reason,
+                    by=author,
+                )
+                send_to_discord_audit(discord_msg.format(player=player_name), by=author, webhookurl=webhook)
+        elif is_player_death(player_name, log):
+            death_counter += 1
+            if death_counter >= ignore_after_death:
+                last_action_is_connect = False
+        elif is_player_kill(player_name, log):
+            kill_counter += 1
+            if kill_counter >= ignore_after_kill:
+                last_action_is_connect = False
