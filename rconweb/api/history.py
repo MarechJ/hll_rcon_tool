@@ -148,6 +148,8 @@ def players_history(request):
         "page_size": int,
         "ignore_accent": bool,
         "exact_name_match": bool,
+        "country": str,
+        "flags": lambda s: [f for f in s.split(",") if f] if s else "",
     }
 
     try:

@@ -17,12 +17,9 @@ import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
 import KeyboardArrowUpIcon from "@material-ui/icons/KeyboardArrowUp";
 import KeyboardArrowDownIcon from "@material-ui/icons/KeyboardArrowDown";
 import { pure } from "recompose";
+import { getName } from "country-list";
 
-/*
 const getCountry = (country) => {
-  if (country == "private") {
-    return ""
-  }
   if (country === "" || country === null) {
     return ""
   }
@@ -34,7 +31,7 @@ const getCountry = (country) => {
       src={ `https://catamphetamine.gitlab.io/country-flag-icons/3x2/${country}.svg`}
     />
   );
-};*/
+};
 
 export const PlayerHeader = pure(({ classes, player }) => {
   const [showAll, setShowAll] = React.useState(false);
@@ -45,8 +42,8 @@ export const PlayerHeader = pure(({ classes, player }) => {
   const firstNameLetter = firstName.get("name", "?")[0]
   const namesByMatch = player.get("names_by_match", null) ? player.get("names_by_match") : new List()
   const steamProfile = player.get('steaminfo') ? player.get("steaminfo").get("profile") : new Map()
-  const avatarUrl = steamProfile.get("avatar", null)
-  const country = player.get("steaninfo") ? player.get("country", "") : ""
+  const avatarUrl = steamProfile ? steamProfile.get("avatar", null) : null
+  const country = player.get('steaminfo') ? player.get('steaminfo') .get("country", "") : ""
 
   return (
     <ListItem alignItems="flex-start">
@@ -96,7 +93,7 @@ export const PlayerHeader = pure(({ classes, player }) => {
                   ) : (
                       ""
                     )}
-                  {namesByMatch.get(0, "")}
+                  {namesByMatch.get(0, "")}  {getCountry(country)}
                 </Typography>
               )}
           </React.Fragment>

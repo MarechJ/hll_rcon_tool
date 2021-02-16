@@ -55,8 +55,8 @@ const map_to_pict = {
 }
 
 const PlayerItem = ({ score, rank, postProcess, statKey }) => {
-    const steamProfile = score.get('steaminfo') ? score.get("steaminfo").get("profile") : new Map()
-    const avatarUrl = steamProfile.get("avatar", null)
+    const steamProfile = score.get('steaminfo') ? score.get("steaminfo", new Map()).get("profile", new Map()) : new Map()
+    const avatarUrl = steamProfile ? steamProfile.get("avatar", null) : null
 
     return <React.Fragment>
         <Divider variant="middle" component="li" />
@@ -140,7 +140,7 @@ const LiveScore = ({ classes }) => {
     const [isLoading, setIsLoading] = React.useState(true)
     const [isPaused, setPaused] = React.useState(false)
     const [refreshIntervalSec, setRefreshIntervalSec] = React.useState(10)
-    const durationToHour = (val) => moment.utc(moment.duration(val, 'seconds').as('milliseconds')).format('hh:mm')
+    const durationToHour = (val) => new Date(val * 1000).toISOString().substr(11, 8) 
     const scores = stats.get("stats", new iList())
     const lastRefresh = stats.get("snapshot_timestamp") ? moment.unix(stats.get("snapshot_timestamp")).format() : "N/A"
 

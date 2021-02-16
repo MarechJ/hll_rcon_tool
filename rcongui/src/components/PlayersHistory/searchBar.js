@@ -16,8 +16,14 @@ import {
   Select,
   FormControlLabel,
   Switch,
+  Card,
+  CardHeader,
+  IconButton,
+  CardContent,
 } from "@material-ui/core";
+import CloseIcon from '@material-ui/icons/Close';
 import { DateTimePicker, MuiPickersUtilsProvider } from "@material-ui/pickers";
+import { Picker } from "emoji-mart";
 
 const SearchBar = ({
   name,
@@ -40,8 +46,15 @@ const SearchBar = ({
   setIgnoreAccent,
   exactMatch,
   setExactMatch,
-}) => (
-  <form className={classes.flexContainer}>
+  flags,
+  setFlags,
+  country,
+  setCountry
+}) => {
+  const [showEmojiPicker, setShowEmojiPicker] = React.useState(false)
+  //const toggleEmojis = () => setShowEmojiPicker(!showEmojiPicker)
+
+  return <form className={classes.flexContainer}>
     <Grid
       container
       spacing={1}
@@ -49,7 +62,7 @@ const SearchBar = ({
       alignItems="center"
       justify="space-evenly"
     >
-     
+
       <Grid item>
         <TextField
           label="Search by Name"
@@ -88,6 +101,34 @@ const SearchBar = ({
           label="Search by Steam ID"
           value={steamId}
           onChange={(e) => setSteamId(e.target.value)}
+        />
+      </Grid>
+      <Grid item>
+        <TextField
+          label="Flag"
+          value={flags}
+          onChange={(e) => setFlags(e.target.value)}
+          onFocus={() => setShowEmojiPicker(true)}
+        />
+        {showEmojiPicker ?
+          <Card>
+            <CardHeader title="Pick emojis"
+              action={<IconButton onClick={() => setShowEmojiPicker(false)}><CloseIcon /></IconButton>} />
+            <CardContent>
+              <Picker
+                onSelect={(emoji) => setFlags(flags + emoji.native + ',')}
+              />
+            </CardContent>
+          </Card>
+
+          : ""}
+      </Grid>
+
+      <Grid item>
+        <TextField
+          label="Steam country (iso)"
+          value={country}
+          onChange={(e) => setCountry(e.target.value)}
         />
       </Grid>
       <Grid item>
@@ -171,6 +212,6 @@ const SearchBar = ({
       </Grid>
     </Grid>
   </form>
-);
+};
 
 export default SearchBar;
