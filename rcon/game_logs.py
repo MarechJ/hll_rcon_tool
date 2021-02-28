@@ -23,13 +23,13 @@ from rcon.discord import send_to_discord_audit
 logger = logging.getLogger(__name__)
 
 HOOKS = {
-    "KILL": [],
     "TEAM KILL": [],
     "CONNECTED": [],
     "DISCONNECTED": [],
     "CHAT[Allies]": [],
     "CHAT[Axis]": [],
     "CHAT": [],
+    "KILL": [],
 }
 
 
@@ -370,7 +370,7 @@ def auto_ban_if_tks_right_after_connection(rcon: RecordedRcon, log):
         logger.exception("Unable to get VIPS")
 
     last_logs = get_recent_logs(
-        end=1000, player_search=player_name, exact_player_match=True
+        end=500, player_search=player_name, exact_player_match=True
     )
     logger.debug("Checking TK from %s", player_name)
     author = config.get("author_name", "Automation")
