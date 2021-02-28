@@ -388,7 +388,7 @@ class Rcon(ServerCtl):
             raise ValueError("Time '%s' is not a valid integer", time_str) from e
 
 
-    @ttl_cache(ttl=10)
+    @ttl_cache(ttl=1)
     def get_structured_logs(self, since_min_ago, filter_action=None, filter_player=None):
         try:
             raw = super().get_logs(since_min_ago)
