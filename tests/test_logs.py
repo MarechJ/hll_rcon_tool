@@ -35,17 +35,18 @@ RAW_VOTE = """
 )
 def test_admin_cam_log(*mocks):
     res = Rcon.parse_logs(
-        "[15:49 min (1606998428)] Player [bananacocoo(Allies/76561198003251789)] Entered Admin Camera",
-        "[15:49 min (1606998428)] Player [bananacocoo(Allies/76561198003251789)] Left Admin Camera "
+        """[15:49 min (1606998428)] Player [bananacocoo(Allies/76561198003251789)] Entered Admin Camera
+[15:49 min (1606998428)] Player [bananacocoo(Allies/76561198003251789)] Left Admin Camera"""
     )
 
+    assert res["logs"][0]["action"] == "CAMERA"
+    assert res["logs"][0]["timestamp_ms"] == 1606998428000
     assert res["logs"][0]["player"] == "bananacocoo"
     assert res["logs"][0]["player2"] == None
     # assert res['logs'][0]['sub_content'] == 'thx'
     assert res["logs"][0]["steam_id_64_1"] == "76561198003251789"
     assert res["logs"][0]["steam_id_64_2"] == None
-    assert res["logs"][0]["action"] == "Player"
-    assert res["logs"][0]["timestamp_ms"] == 1606998428000
+
 
 
 

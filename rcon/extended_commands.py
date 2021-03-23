@@ -710,6 +710,9 @@ class Rcon(ServerCtl):
                         player2 = None
                     sub_content = rest.split("VOTE")[-1]
                     content = rest.split("VOTE")[-1]
+                elif rest.upper().startswith("PLAYER"):
+                    action = "CAMERA"
+                    _, content = rest.split(' ', 1)
                 else:
                     logger.error("Unkown type line: '%s'", line)
                     continue
