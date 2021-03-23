@@ -1,5 +1,7 @@
 ![Website](https://img.shields.io/website?down_color=red&up_color=orange&up_message=hllrcon.app&url=https%3A%2F%2Fhllrcon.app) ![Discord](https://img.shields.io/discord/685692524442026020?color=%237289da&label=discord)
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/marechj/hll_rcon_tool) ![Docker Cloud Automated build](https://img.shields.io/docker/cloud/automated/maresh/hll_rcon) ![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/maresh/hll_rcon) ![Docker Pulls](https://img.shields.io/docker/pulls/maresh/hll_rcon)
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/T6T83KY8H)
  
  
 # Hell Let Loose (HLL) advanced RCON  

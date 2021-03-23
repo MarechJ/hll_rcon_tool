@@ -12,6 +12,8 @@ class RecordedRcon(Rcon):
     """
     Note beware of using the cache in this layer
     """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
     def do_punish(self, player, reason, by):
         res = super().do_punish(player, reason)

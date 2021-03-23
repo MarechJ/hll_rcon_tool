@@ -4,6 +4,7 @@ import {
   Typography,
   Button,
   Link,
+  TextField,
 } from "@material-ui/core";
 import { range } from "lodash/util";
 import {
@@ -57,7 +58,7 @@ function makeBool(text) {
   if (text === null) {
     return false
   }
-  return text === "true" 
+  return text === "true"
 }
 
 function valuetext(value) {
@@ -91,6 +92,9 @@ class HLLSettings extends React.Component {
       forwardBroadcast: makeBool(window.localStorage.getItem("forwardBroadcast")),
       forwardWelcome: makeBool(window.localStorage.getItem("forwardWelcome")),
       forwardRotation: makeBool(window.localStorage.getItem("forwardRotation")),
+      votekickEnabled: false,
+      votekickThreshold: "",
+      autobalanceEnabled: false,
     };
 
     this.loadVips = this.loadVips.bind(this);
@@ -106,6 +110,9 @@ class HLLSettings extends React.Component {
     this.loadProfanities = this.loadProfanities.bind(this);
     this.setProfanities = this.setProfanities.bind(this);
     this.toggle = this.toggle.bind(this);
+    this.saveVotekickThreshold = this.saveVotekickThreshold.bind(this)
+    this.resetVotekickThreshold = this.resetVotekickThreshold.bind(this)
+    this.loadVotekickThreshold = this.loadVotekickThreshold.bind(this)
   }
 
   toggle(name) {
@@ -117,6 +124,7 @@ class HLLSettings extends React.Component {
   componentDidMount() {
     this.loadMapRotation().then(this.loadAllMaps());
     this.loadSettings().then(this.loadAdminRoles);
+    this.loadVotekickThreshold()
     this.loadProfanities();
   }
 
@@ -145,13 +153,16 @@ class HLLSettings extends React.Component {
       .then((data) =>
         data.failed === false
           ? this.setState({
-              autoBalanceThres: data.result.autobalance_threshold,
-              teamSwitchCooldownMin: data.result.team_switch_cooldown,
-              idleAutokickMin: data.result.idle_autokick_time,
-              maxPingMs: data.result.max_ping_autokick,
-              queueLength: data.result.queue_length,
-              vipSlots: data.result.vip_slots_num,
-            })
+            autoBalanceThres: data.result.autobalance_threshold,
+            teamSwitchCooldownMin: data.result.team_switch_cooldown,
+            idleAutokickMin: data.result.idle_autokick_time,
+            maxPingMs: data.result.max_ping_autokick,
+            queueLength: data.result.queue_length,
+            vipSlots: data.result.vip_slots_num,
+            autobalanceEnabled: data.result.autobalance_enabled,
+            votekickEnabled: data.result.votekick_enabled,
+          
+          })
           : null
       )
       .catch(handle_http_errors);
@@ -167,6 +178,12 @@ class HLLSettings extends React.Component {
   async loadVips() {
     return this._loadToState("get_vip_ids", false, (data) =>
       this.setState({ vips: data.result })
+    );
+  }
+
+  async loadVotekickThreshold() {
+    return this._loadToState("get_votekick_threshold", false, (data) =>
+      this.setState({ votekickThreshold: data.result })
     );
   }
 
@@ -203,6 +220,24 @@ class HLLSettings extends React.Component {
       .then((res) =>
         showResponse(res, `do_save_setting ${name} ${value}`, true)
       )
+      .catch(handle_http_errors);
+  }
+
+  async saveVotekickThreshold() {
+    return postData(`${process.env.REACT_APP_API_URL}set_votekick_threshold`, {
+      threshold_pairs: this.state.votekickThreshold,
+    })
+      .then((res) => showResponse(res, "set_votekick_threshold", true))
+      .then(this.loadVotekickThreshold)
+      .catch(handle_http_errors);
+  }
+
+  async resetVotekickThreshold() {
+    return postData(`${process.env.REACT_APP_API_URL}do_reset_votekick_threshold`, {
+      threshold_pairs: this.state.votekickThreshold,
+    })
+      .then((res) => showResponse(res, "do_reset_votekick_threshold", true))
+      .then(this.loadVotekickThreshold)
       .catch(handle_http_errors);
   }
 
@@ -250,6 +285,9 @@ class HLLSettings extends React.Component {
       forwardWelcome,
       forwardRotation,
       sildersShowValues,
+      votekickEnabled,
+      votekickThreshold,
+      autobalanceEnabled,
     } = this.state;
     const { classes } = this.props;
 
@@ -530,7 +568,29 @@ class HLLSettings extends React.Component {
             }
           />
         </Grid>
-        <Grid container xs={12} className={classes.paddingBottom}>
+
+        <Grid item className={classes.paper} xs={12} md={6}>
+          <Padlock label="Auto balance enabled" checked={autobalanceEnabled} color="secondary" handleChange={v => this.saveSetting('autobalance_enabled', v).then(this.loadSettings)} />
+        </Grid>
+        <Grid item className={classes.paper} xs={12} md={6}>
+          <Padlock label="Vote kicks allowed" checked={votekickEnabled} color="secondary" handleChange={v => this.saveSetting('votekick_enabled', v).then(this.loadSettings)} />
+        </Grid>
+        <Grid item xs={12}>
+          <Grid container spacing={1}>
+            <Grid item xs={12}>
+              <TextField fullWidth label="Vote kick threshold" value={votekickThreshold} onChange={e => this.setState({ votekickThreshold: e.target.value })} helperText="Use the following format, Error: First entry must be for 0 Players (you can add as many pairs as you want): player count,votekick threshold... example: 20,10,30,15,50,25,100,50" />
+            </Grid>
+            <Grid item xs={6}>
+              <Button fullWidth variant="outlined" onClick={e => this.saveVotekickThreshold().then(this.loadVotekickThreshold)}>SAVE</Button>
+            </Grid>
+            <Grid item xs={6}>
+              <Button fullWidth variant="outlined" onClick={e => this.resetVotekickThreshold().then(this.loadVotekickThreshold)}>RESET</Button>
+            </Grid>
+          </Grid>
+        </Grid>
+
+
+        {/*     <Grid container xs={12} className={classes.paddingBottom}>
           <Grid item xs={12}>
             <Typography variant="caption" display="block" gutterBottom>
               Due to the HLL server limitations we can't know if the autobalance
@@ -554,8 +614,8 @@ class HLLSettings extends React.Component {
             >
               Deactivate autobalance
             </Button>
-          </Grid>
-        </Grid>
+          </Grid> 
+        </Grid> */}
         <Grid container className={classes.paddingTop} justify="center" xs={12}>
           <Grid item>
             <Typography variant="h5" gutterBottom>
