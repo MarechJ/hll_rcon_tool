@@ -112,6 +112,7 @@ class HLLSettings extends React.Component {
     this.toggle = this.toggle.bind(this);
     this.saveVotekickThreshold = this.saveVotekickThreshold.bind(this)
     this.resetVotekickThreshold = this.resetVotekickThreshold.bind(this)
+    this.loadVotekickThreshold = this.loadVotekickThreshold.bind(this)
   }
 
   toggle(name) {
