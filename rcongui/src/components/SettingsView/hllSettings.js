@@ -578,7 +578,7 @@ class HLLSettings extends React.Component {
         <Grid item xs={12}>
           <Grid container spacing={1}>
             <Grid item xs={12}>
-              <TextField fullWidth label="Vote kick threshold" value={votekickThreshold} onChange={e => this.setState({ votekickThreshold: e.target.value })} helperText="Use the following format, Error: First entry must be for 0 Players (you can add as many pairs as you want): player count,votekick threshold... example: 20,10,30,15,50,25,100,50" />
+              <TextField fullWidth label="Vote kick threshold" value={votekickThreshold} onChange={e => this.setState({ votekickThreshold: e.target.value })} helperText="Use the following format, Error: First entry must be for 0 Players (you can add as many pairs as you want): player count,votekick threshold... example: 0,1,10,5,25,12,50,20" />
             </Grid>
             <Grid item xs={6}>
               <Button fullWidth variant="outlined" onClick={e => this.saveVotekickThreshold().then(this.loadVotekickThreshold)}>SAVE</Button>
