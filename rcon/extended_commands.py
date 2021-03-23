@@ -38,6 +38,9 @@ class Rcon(ServerCtl):
     MAX_SERV_NAME_LEN = 1024  # I totally made up that number. Unable to test
     log_time_regexp = re.compile(".*\((\d+)\).*")
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
     def get_playerids(self, as_dict=False):
         raw_list = super().get_playerids()
 
@@ -402,28 +405,20 @@ class Rcon(ServerCtl):
 
     @ttl_cache(ttl=60 * 60)
     def get_autobalance_enabled(self):
-        try:
-            return super().get_autobalance_enabled() == "on"
-        except HLLServerError:
-            logger.exception("Failed to get autbalance toggle state")
-            return True
+        return super().get_autobalance_enabled() == "on"
+
 
     @ttl_cache(ttl=60 * 60)
     def get_votekick_enabled(self):
-        try:
-            return super().get_votekick_enabled() == "on"
-        except HLLServerError:
-            # TODO remove after update
-            logger.exception("Failed to get votekick toggle state")
-            return True
+        return super().get_votekick_enabled() == "on"
+
 
     @ttl_cache(ttl=60 * 60)
     def get_votekick_threshold(self):
-        try:
-            return super().get_votekick_threshold()
-        except HLLServerError:
-            # TODO remove after update
-            return "error"
+        res = super().get_votekick_threshold()
+        if isinstance(res, str):
+            return res.strip()
+        return res
 
     def set_autobalance_enabled(self, bool_):
         with invalidates(self.get_autobalance_enabled):
@@ -436,7 +431,12 @@ class Rcon(ServerCtl):
     def set_votekick_threshold(self, threshold_pairs):
         # Todo use proper data structure
         with invalidates(self.get_votekick_threshold):
-            return super().set_votekick_threshold(threshold_pairs)
+            res = super().set_votekick_threshold(threshold_pairs)
+            print(f"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! {res}")
+            logger.error("Threshold res %s", res)
+            if res.lower().startswith('error'):
+                logger.error("Unable to set votekick threshold: %s", res)
+                raise CommandFailedError(res)
 
     def do_reset_votekick_threshold(self):
         with invalidates(self.get_votekick_threshold):
