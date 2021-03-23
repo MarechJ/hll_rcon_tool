@@ -30,7 +30,9 @@ ALL_MAPS = (
     "carentan_offensive_us",
     "hurtgenforest_offensive_ger",
     "hurtgenforest_offensive_US",
-    "hurtgenforest_warfare_V2"
+    "hurtgenforest_warfare_V2",
+    "utahbeach_offensive_ger",
+    "utahbeach_offensive_us",
 )
 
 
