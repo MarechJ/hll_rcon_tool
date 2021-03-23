@@ -570,21 +570,21 @@ class HLLSettings extends React.Component {
         </Grid>
 
         <Grid item className={classes.paper} xs={12} md={6}>
-          <Padlock label="Auto balance enabled" checked={autobalanceEnabled} color="secondary" handleChange={v => this.saveSetting('autobalance_enabled', v)} />
+          <Padlock label="Auto balance enabled" checked={autobalanceEnabled} color="secondary" handleChange={v => this.saveSetting('autobalance_enabled', v).then(this.loadSettings)} />
         </Grid>
         <Grid item className={classes.paper} xs={12} md={6}>
-          <Padlock label="Vote kicks allowed" checked={votekickEnabled} color="secondary" handleChange={v => this.saveSetting('votekick_enabled', v)} />
+          <Padlock label="Vote kicks allowed" checked={votekickEnabled} color="secondary" handleChange={v => this.saveSetting('votekick_enabled', v).then(this.loadSettings)} />
         </Grid>
         <Grid item xs={12}>
           <Grid container spacing={1}>
             <Grid item xs={12}>
-              <TextField fullWidth label="Vote kick threshold" value={votekickThreshold} onChange={e => this.setState({ votekickThreshold: e.target.value })} helperText="Use the following format (you can add as many pairs as you want): player count,votekick threshold... example: 20,10,30,15,50,25,100,50" />
+              <TextField fullWidth label="Vote kick threshold" value={votekickThreshold} onChange={e => this.setState({ votekickThreshold: e.target.value })} helperText="Use the following format, Error: First entry must be for 0 Players (you can add as many pairs as you want): player count,votekick threshold... example: 20,10,30,15,50,25,100,50" />
             </Grid>
             <Grid item xs={6}>
-              <Button fullWidth variant="outlined" onClick={this.saveVotekickThreshold}>SAVE</Button>
+              <Button fullWidth variant="outlined" onClick={e => this.saveVotekickThreshold().then(this.loadVotekickThreshold)}>SAVE</Button>
             </Grid>
             <Grid item xs={6}>
-              <Button fullWidth variant="outlined" onClick={this.resetVotekickThreshold}>RESET</Button>
+              <Button fullWidth variant="outlined" onClick={e => this.resetVotekickThreshold().then(this.loadVotekickThreshold)}>RESET</Button>
             </Grid>
           </Grid>
         </Grid>

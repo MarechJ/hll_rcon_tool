@@ -395,6 +395,7 @@ def wrap_method(func, parameters, command_name):
         data = {}
         failure = False
         others = None
+        error = ""
         data = _get_data(request)
 
         for pname, param in parameters.items():
@@ -413,8 +414,9 @@ def wrap_method(func, parameters, command_name):
             logger.debug("%s %s", func.__name__, arguments)
             res = func(**arguments)
             audit(func.__name__, request, arguments)
-        except CommandFailedError:
+        except CommandFailedError as e:
             failure = True
+            error = e.args[0] if e.args else None
             res = None
 
         response = JsonResponse(
@@ -423,6 +425,7 @@ def wrap_method(func, parameters, command_name):
                 command=func.__name__,
                 arguments=data,
                 failed=failure,
+                error=error,
                 forward_results=others,
             )
         )
