@@ -450,7 +450,7 @@ class RconSettings extends React.Component {
             </Grid>
           </Grid>
         </Grid>
-        
+
         <Grid item className={classes.paddingTop} justify="center" xs={12}>
           <Typography variant="h5">Discord Webhooks configuration</Typography>
         </Grid>
