@@ -48,7 +48,7 @@ const Status = ({ classes, name, nbPlayers, map, serverList }) => {
             {serverList.map((s) => {
               let link = `${window.location.protocol}//${window.location.hostname}:${s.get('port')}${window.location.pathname}${window.location.hash}`
               if (s.get('link')) {
-                link = s.get('link')
+                link = `${s.get('link')}${window.location.pathname}${window.location.hash}`
               }
               return <MenuItem onClick={handleClose}>
                 <Link color="inherit" href={link}>

@@ -1,9 +1,40 @@
 import logging
+import re
+from typing import List
 from datetime import datetime
 from discord_webhook import DiscordWebhook
 import os
+from rcon.user_config import DiscordHookConfig
 
 logger = logging.getLogger(__name__)
+
+
+def make_allowed_mentions(roles):
+    allowed_mentions = {}
+    for r in roles:
+        if match := re.match(r'<@\!(\d+)>', r):
+            allowed_mentions.setdefault("users", []).append(match.group(1))
+        if match := re.match(r'<@&(\d+)>', r):
+            allowed_mentions.setdefault("roles", []).append(match.group(1))
+        if r == '@everyone' or r == '@here':
+            allowed_mentions['parse'] = r.replace('@', '')
+    print(allowed_mentions)
+    allowed_mentions = {"parse": ["users"]}
+    return allowed_mentions
+
+
+def get_prepared_discord_hooks(type) -> List[DiscordWebhook]:
+    config = DiscordHookConfig(type)
+    hooks = config.get_hooks()
+
+    return [
+        DiscordWebhook(
+            url=hook.hook,
+            allowed_mentions=make_allowed_mentions(hook.roles),
+            content=" ".join(hook.roles),
+        )
+        for hook in hooks.hooks
+    ]
 
 def dict_to_discord(d):
     return "   ".join([f"{k}: `{v}`" for k, v in d.items()])
