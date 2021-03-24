@@ -713,6 +713,11 @@ class Rcon(ServerCtl):
                 elif rest.upper().startswith("PLAYER"):
                     action = "CAMERA"
                     _, content = rest.split(' ', 1)
+                    matches = re.match('\[(.*)\s{1}\((\d+)\)\]', content)
+                    if matches and len(matches.groups()) == 2:
+                        player, steam_id_64_1 = matches.groups()
+                    else:
+                        logger.error("Unable to parse line: %s", line)
                 else:
                     logger.error("Unkown type line: '%s'", line)
                     continue
