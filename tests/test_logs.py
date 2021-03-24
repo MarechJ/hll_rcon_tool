@@ -35,8 +35,7 @@ RAW_VOTE = """
 )
 def test_admin_cam_log(*mocks):
     res = Rcon.parse_logs(
-        """[15:49 min (1606998428)] Player [bananacocoo(Allies/76561198003251789)] Entered Admin Camera
-[15:49 min (1606998428)] Player [bananacocoo(Allies/76561198003251789)] Left Admin Camera"""
+        """[15:49 min (1606998428)] Player [bananacocoo (76561198003251789)] Entered Admin Camera"""
     )
 
     assert res["logs"][0]["action"] == "CAMERA"

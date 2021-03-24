@@ -7,7 +7,7 @@ import time
 from rcon.settings import SERVER_INFO
 from rcon.utils import ApiKey
 from rcon.extended_commands import Rcon
-from rcon import game_logs, broadcast, stats_loop, auto_settings, map_recorder
+from rcon import game_logs, broadcast, stats_loop, auto_settings, routines
 from rcon.game_logs import LogLoop
 from rcon.models import init_db, install_unaccent
 from rcon.user_config import seed_default_config
@@ -67,9 +67,9 @@ def auto_settings_loop():
     auto_settings.run()
 
 
-@cli.command(name='map_recorder')
-def run_map_recorder():
-    map_recorder.run()
+@cli.command(name='routines')
+def run_routines():
+    routines.run()
 
 
 @cli.command(name='log_recorder')

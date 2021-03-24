@@ -64,10 +64,14 @@ def get_config(filename):
 
 def run():
     rcon = Rcon(SERVER_INFO)
-    config = get_config("auto_settings.json")
+    server_number = os.getenv("SERVER_NUMBER")
+    config = get_config(f"auto_settings_{server_number}.json")
+    if not config:
+        logger.warning("No config for server number, falling back to common one")
+        config = get_config("auto_settings.json")
     if not config:
         logger.warning("Config 'auto_settings.json' not found. Falling back to default")
-    config = get_config("auto_settings.default.json")
+        config = get_config("auto_settings.default.json")
     if not config:
         logger.fatal("Couldn't use default config 'auto_settings.default.json' exiting")
         exit(1)

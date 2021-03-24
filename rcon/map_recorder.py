@@ -6,7 +6,8 @@ import os
 import redis
 
 from rcon.discord import send_to_discord_audit, dict_to_discord
-from rcon.extended_commands import Rcon, CommandFailedError
+from rcon.recorded_commands import RecordedRcon
+from rcon.extended_commands import CommandFailedError
 from rcon.utils import (
     categorize_maps,
     numbered_maps,
@@ -24,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 
 class MapsRecorder:
-    def __init__(self, rcon: Rcon):
+    def __init__(self, rcon: RecordedRcon):
         self.rcon = rcon
         self.red = redis.Redis(connection_pool=get_redis_pool())
         self.maps_history = MapsHistory()
@@ -75,39 +76,6 @@ class MapsRecorder:
 
         return False
 
-
-def run():
-    max_fails = 5
-    from rcon.settings import SERVER_INFO
-    recorder = MapsRecorder(Rcon(SERVER_INFO))
-
-    while True:
-        try:
-            recorder.detect_map_change()
-        except CommandFailedError:
-            logger.debug("Unable to check for map change")
-            max_fails -= 1
-            if max_fails <= 0:
-                logger.exception("Map recorder 5 failures in a row. Stopping")
-                raise
-        time.sleep(30)
-
-
-class ThreadMapRecorder(Thread, MapsRecorder):
-    def __init__(self):
-        from rcon.settings import SERVER_INFO
-        super().__init__(daemon=True)
-        MapsRecorder.__init__(self, Rcon(SERVER_INFO))
-
-    def run(self):
-        while True:
-            try:
-                self.detect_map_change()
-            except KeyboardInterrupt:
-                return
-            except Exception:
-                logger.exception("Exception happend in map recorder thread")
-            time.sleep(30)
 
 
 if __name__ == "__main__":

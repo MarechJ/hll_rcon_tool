@@ -176,9 +176,9 @@ def _get_vars(ctl):
         'votenextmap_by_mod_vertical': LazyPrinter(partial(format_map_vote, ctl, format_type='by_mod_vertical')),
         'votenextmap_by_mod_vertical_all': LazyPrinter(partial(format_map_vote, ctl, format_type='by_mod_vertical_all')),
         'votenextmap_by_mod_split': LazyPrinter(partial(format_map_vote, ctl, format_type='by_mod_split')),
-        'total_votes': vote_status['total_votes'],
-        'winning_maps_short': format_winning_map(ctl, vote_status['winning_maps'], display_count=2),
-        'winning_maps_all': format_winning_map(ctl, vote_status['winning_maps'], display_count=0),
+        'total_votes': vote_status.get('total_votes'),
+        'winning_maps_short': LazyPrinter(partial(format_winning_map, ctl, vote_status['winning_maps'], display_count=2)),
+        'winning_maps_all': LazyPrinter(partial(format_winning_map, ctl, vote_status['winning_maps'], display_count=0)),
         'scrolling_votemap': LazyPrinter(partial(scrolling_votemap, ctl, vote_status['winning_maps'])),
         'online_mods': LazyPrinter(get_online_mods, is_list=True),
         'ingame_mods': LazyPrinter(get_ingame_mods, is_list=True)

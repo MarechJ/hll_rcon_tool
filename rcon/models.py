@@ -225,6 +225,8 @@ class PlayerSession(Base):
     start = Column(DateTime)
     end = Column(DateTime)
     created = Column(DateTime, default=datetime.utcnow)
+    server_number = Column(Integer)
+    server_name = Column(String)
 
     def to_dict(self):
         return dict(

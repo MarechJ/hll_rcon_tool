@@ -315,13 +315,22 @@ class Rcon(ServerCtl):
         red = get_redis_client()
         from rcon.broadcast import format_message
 
-        formatted = format_message(self, msg)
+        try:
+            formatted = format_message(self, msg)
+        except Exception:
+            logger.exception("Unable to format message")
+            formatted = msg
+            
         return super().set_welcome_message(formatted)
 
     def set_broadcast(self, msg):
         from rcon.broadcast import format_message
 
-        formatted = format_message(self, msg)
+        try:
+            formatted = format_message(self, msg)
+        except Exception:
+            logger.exception("Unable to format message")
+            formatted = msg
         return super().set_broadcast(formatted)
 
     @ttl_cache(ttl=20)
@@ -387,7 +396,7 @@ class Rcon(ServerCtl):
         except (ValueError, TypeError) as e:
             raise ValueError("Time '%s' is not a valid integer", time_str) from e
 
-    @ttl_cache(ttl=10)
+    @ttl_cache(ttl=5)
     def get_structured_logs(
         self, since_min_ago, filter_action=None, filter_player=None
     ):
@@ -713,6 +722,12 @@ class Rcon(ServerCtl):
                 elif rest.upper().startswith("PLAYER"):
                     action = "CAMERA"
                     _, content = rest.split(' ', 1)
+                    matches = re.match('\[(.*)\s{1}\((\d+)\)\]', content)
+                    if matches and len(matches.groups()) == 2:
+                        player, steam_id_64_1 = matches.groups()
+                        _, sub_content = content.rsplit(']', 1)
+                    else:
+                        logger.error("Unable to parse line: %s", line)
                 else:
                     logger.error("Unkown type line: '%s'", line)
                     continue
