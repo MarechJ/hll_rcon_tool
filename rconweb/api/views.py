@@ -22,7 +22,7 @@ from rcon.player_history import (
 from rcon.broadcast import get_votes_status
 from rcon.discord import send_to_discord_audit
 from rcon.game_logs import LogLoop
-from rcon.user_config import AutoBroadcasts, InvalidConfigurationError, StandardMessages
+from rcon.user_config import AutoBroadcasts, CameraConfig, InvalidConfigurationError, StandardMessages
 from rcon.cache_utils import RedisCached, get_redis_pool
 from rcon.user_config import DiscordHookConfig
 from rcon.watchlist import PlayerWatch
@@ -86,9 +86,54 @@ def set_hooks(request):
     hook_config = DiscordHookConfig(for_type=data["name"])
     hook_config.set_hooks(data["hooks"])
 
+    audit("set_hooks", request, data)
     return api_response(
         result=DiscordHookConfig.get_all_hook_types(),
         command="get_hooks",
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required
+def get_camera_config(request):
+    config = CameraConfig()
+    return api_response(
+        result={
+            "broadcast": config.is_broadcast(),
+            "welcome": config.is_welcome(),
+        },
+        command="get_camera_config",
+        failed=False,
+    )
+
+@csrf_exempt
+@login_required
+def set_camera_config(request):
+    config = CameraConfig()
+    data = _get_data(request)
+
+    funcs = {
+        "broadcast": config.set_broadcast,
+        "welcome": config.set_welcome,
+    }
+
+    for k, v in data.items():
+        if not isinstance(v, bool):
+            return api_response(error="Values must be boolean", command="set_camera_config")
+        try:
+            funcs[k](v)
+        except KeyError:
+            return api_response(error="{} invalid key".format(k), command="set_camera_config")
+    
+        audit("set_camera_config", request, {k: v})
+
+    return api_response(
+        result={
+            "broadcast": config.is_broadcast(),
+            "welcome": config.is_welcome(),
+        },
+        command="set_camera_config",
         failed=False,
     )
 
@@ -478,6 +523,8 @@ commands = [
     ("do_unwatch_player", do_unwatch_player),
     ("do_watch_player", do_watch_player),
     ("public_info", public_info),
+    ("set_camera_config", set_camera_config),
+    ("get_camera_config", get_camera_config),
 ]
 
 logger.info("Initializing endpoint")

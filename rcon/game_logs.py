@@ -30,6 +30,7 @@ HOOKS = {
     "CHAT[Axis]": [],
     "CHAT": [],
     "KILL": [],
+    "CAMERA": [],
 }
 
 
@@ -47,11 +48,13 @@ def on_chat(func):
     HOOKS["CHAT"].append(func)
     return func
 
+def on_camera(func):
+    HOOKS["CAMERA"].append(func)
+    return func
 
 def on_chat_axis(func):
     HOOKS["CHAT[Axis]"].append(func)
     return func
-
 
 def on_chat_allies(func):
     HOOKS["CHAT[Allies]"].append(func)

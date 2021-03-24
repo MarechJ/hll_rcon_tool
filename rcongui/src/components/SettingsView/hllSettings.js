@@ -588,34 +588,6 @@ class HLLSettings extends React.Component {
             </Grid>
           </Grid>
         </Grid>
-
-
-        {/*     <Grid container xs={12} className={classes.paddingBottom}>
-          <Grid item xs={12}>
-            <Typography variant="caption" display="block" gutterBottom>
-              Due to the HLL server limitations we can't know if the autobalance
-              is on or off
-            </Typography>
-          </Grid>
-          <Grid item xs={6}>
-            <Button
-              fullWidth
-              variant="outlined"
-              onClick={() => sendAction("set_autobalance", { bool_str: "on" })}
-            >
-              Activate autobalance
-            </Button>
-          </Grid>
-          <Grid item xs={6}>
-            <Button
-              fullWidth
-              variant="outlined"
-              onClick={() => sendAction("set_autobalance", { bool_str: "off" })}
-            >
-              Deactivate autobalance
-            </Button>
-          </Grid> 
-        </Grid> */}
         <Grid container className={classes.paddingTop} justify="center" xs={12}>
           <Grid item>
             <Typography variant="h5" gutterBottom>

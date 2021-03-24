@@ -58,7 +58,7 @@ const ManualWatchList = ({ classes }) => {
       textHistory={textHistory}
       sharedMessages={sharedMessages}
       classes={classes}
-      actionName="Add"
+      actionName="Watch"
       tooltipText="You will get a notification on you watchlist discord hook when this player enters your server"
       onSubmit={() => addPlayerToWatchList(steamId64, reason, null, name)}
     />
@@ -75,7 +75,7 @@ const Hook = ({
 }) => {
   const [myHook, setMyHook] = React.useState(hook);
   const [myRoles, setMyRoles] = React.useState(roles);
-  console.log("Roles:", roles);
+
   return (
     <Grid container spacing={1}>
       <Grid item xs={4}>
@@ -113,7 +113,7 @@ const Hook = ({
             </IconButton>
           </React.Fragment>
         ) : (
-          <IconButton edge="start" onClick={() => onAddHook(myHook, myRoles)}>
+          <IconButton edge="start" onClick={() => { onAddHook(myHook, myRoles); setMyRoles(""); setMyHook("") }}>
             <AddIcon />
           </IconButton>
         )}
@@ -138,7 +138,6 @@ const WebhooksConfig = () => {
     })
       .then((res) => showResponse(res, `set_hooks ${hookConfig.name}`, true))
       .then((res) => setHooks(res.result))
-      .catch(handle_http_errors);
 
   return (
     <React.Fragment>
@@ -194,6 +193,8 @@ class RconSettings extends React.Component {
       standardMessagesType: "punitions",
       randomized: false,
       enabled: false,
+      camera_broadcast: false,
+      camera_welcome: false
     };
 
     this.loadBroadcastsSettings = this.loadBroadcastsSettings.bind(this);
@@ -202,7 +203,25 @@ class RconSettings extends React.Component {
     this.loadStandardMessages = this.loadStandardMessages.bind(this);
     this.saveStandardMessages = this.saveStandardMessages.bind(this);
     this.clearCache = this.clearCache.bind(this);
+    this.loadCameraConfig = this.loadCameraConfig.bind(this)
+    this.saveCameraConfig = this.saveCameraConfig.bind(this)
   }
+
+  async loadCameraConfig() {
+    return get(`get_camera_config`)
+      .then((res) => showResponse(res, "get_camera_config", false))
+      .then((data) => !data.failed && this.setState({ camera_broadcast: data.result.broadcast, camera_welcome: data.result.welcome })).catch(handle_http_errors);
+  }
+
+  async saveCameraConfig(data) {
+    return postData(
+      `${process.env.REACT_APP_API_URL}set_camera_config`,
+      data
+    )
+      .then((res) => showResponse(res, "set_camera_config", true))
+      .then(this.loadCameraConfig).catch(handle_http_errors);
+  }
+
 
   async loadBroadcastsSettings() {
     return get(`get_auto_broadcasts_config`)
@@ -282,6 +301,7 @@ class RconSettings extends React.Component {
   componentDidMount() {
     this.loadBroadcastsSettings();
     this.loadStandardMessages();
+    this.loadCameraConfig();
   }
 
   render() {
@@ -291,6 +311,8 @@ class RconSettings extends React.Component {
       standardMessagesType,
       enabled,
       randomized,
+      camera_broadcast,
+      camera_welcome
     } = this.state;
     const { classes, theme, themes, setTheme } = this.props;
 
@@ -464,6 +486,21 @@ class RconSettings extends React.Component {
           className={classes.root}
         >
           <WebhooksConfig classes={classes} />
+        </Grid>
+        <Grid item className={classes.paddingTop} justify="center" xs={12}>
+          <Typography variant="h5">Camera notification config</Typography>
+        </Grid>
+        <Grid
+          container
+
+          className={`${classes.padding} ${classes.margin}`}
+          alignContent="center"
+          justify="center"
+          alignItems="center"
+          className={classes.root}
+        >
+          <Padlock label="broadcast" checked={camera_broadcast} handleChange={v => this.saveCameraConfig({ broadcast: v })} />
+          <Padlock label="set welcome message" checked={camera_welcome} handleChange={v => this.saveCameraConfig({ welcome: v })} />
         </Grid>
         <Grid item className={classes.paddingTop} justify="center" xs={12}>
           <Typography variant="h5">Misc. options</Typography>

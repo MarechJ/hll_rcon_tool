@@ -53,10 +53,13 @@ class Hooks:
         hooks = [Hook(**h) for h in dict_.pop('hooks', [])]
         return cls(hooks=hooks, **dict_)
 
+
+
 class DiscordHookConfig:
     hooks_key = "discord_hooks"
     expected_hook_types = (
         'watchlist',
+        'camera',
         # TODO
         #chat
         #kill
@@ -94,6 +97,30 @@ class DiscordHookConfig:
         hooks = Hooks(name=self.for_type, hooks=[Hook(**h) for h in hooks])
         set_user_config(self.HOOKS_KEY, asdict(hooks))
 
+
+class CameraConfig:
+    def __init__(self):
+        server_number = os.getenv('SERVER_NUMBER', 0)
+        self.BROADCAST = f'{server_number}_broadcast_camera'
+        self.WELCOME = f'{server_number}_say_camera'
+
+    def seed_db(self, sess):
+        if _get_conf(sess, self.BROADCAST) is None:
+            _add_conf(sess, self.BROADCAST, False)
+        if _get_conf(sess, self.WELCOME) is None:
+            _add_conf(sess, self.WELCOME, False)
+
+    def is_broadcast(self):
+        return get_user_config(self.BROADCAST)
+    
+    def is_welcome(self):
+        return get_user_config(self.WELCOME)
+
+    def set_broadcast(self, bool_):
+        return set_user_config(self.BROADCAST, bool(bool_))
+    
+    def set_welcome(self, bool_):
+        return set_user_config(self.WELCOME, bool(bool_))
 
 
 
@@ -199,4 +226,5 @@ def seed_default_config():
     with enter_session() as sess:
         AutoBroadcasts().seed_db(sess)
         StandardMessages().seed_db(sess)
+        CameraConfig().seed_db(sess)
         sess.commit()
