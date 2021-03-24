@@ -22,7 +22,7 @@ from rcon.player_history import (
 from rcon.broadcast import get_votes_status
 from rcon.discord import send_to_discord_audit
 from rcon.game_logs import LogLoop
-from rcon.user_config import AutoBroadcasts, CameraConfig, InvalidConfigurationError, StandardMessages
+from rcon.user_config import AutoBroadcasts, AutoVoteKickConfig, CameraConfig, InvalidConfigurationError, StandardMessages
 from rcon.cache_utils import RedisCached, get_redis_pool
 from rcon.user_config import DiscordHookConfig
 from rcon.watchlist import PlayerWatch
@@ -106,6 +106,49 @@ def get_camera_config(request):
         command="get_camera_config",
         failed=False,
     )
+
+
+@csrf_exempt
+@login_required
+def get_votekick_autotoggle_config(request):
+    config = AutoVoteKickConfig()
+    return api_response(
+        result={
+            "min_ingame_mods": config.get_min_ingame_mods(),
+            "min_online_mods": config.get_min_online_mods(),
+            "is_enabled": config.is_enabled(),
+            "condition_type": config.get_condition_type()
+        },
+        command="get_votekick_autotoggle_config",
+        failed=False,
+    )
+
+@csrf_exempt
+@login_required
+def set_votekick_autotoggle_config(request):
+    config = AutoVoteKickConfig()
+    data = _get_data(request)
+    funcs = {
+        "min_ingame_mods": config.set_min_ingame_mods,
+        "min_online_mods": config.set_min_online_mods,
+        "is_enabled": config.set_is_enabled,
+        "condition_type": config.set_condition_type
+    }
+
+    for k, v in data.items():
+        try:
+            funcs[k](v)
+        except KeyError:
+            return api_response(error="{} invalid key".format(k), command="set_votekick_autotoggle_config")
+    
+        audit("set_votekick_autotoggle_config", request, {k: v})
+
+    return api_response(
+     
+        command="set_votekick_autotoggle_config",
+        failed=False,
+    )
+
 
 @csrf_exempt
 @login_required
@@ -525,6 +568,8 @@ commands = [
     ("public_info", public_info),
     ("set_camera_config", set_camera_config),
     ("get_camera_config", get_camera_config),
+    ("set_votekick_autotoggle_config", set_votekick_autotoggle_config),
+    ("get_votekick_autotoggle_config", get_votekick_autotoggle_config)
 ]
 
 logger.info("Initializing endpoint")

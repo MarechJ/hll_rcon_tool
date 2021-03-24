@@ -193,8 +193,12 @@ class RconSettings extends React.Component {
       standardMessagesType: "punitions",
       randomized: false,
       enabled: false,
-      camera_broadcast: false,
-      camera_welcome: false
+      cameraBroadcast: false,
+      cameraWelcome: false,
+      autovotekickEnabled: false,
+      autovotekickMinIngameMods: 0,
+      autovotekickMinOnlineMods: 0,
+      autovotekickConditionType: 'OR',
     };
 
     this.loadBroadcastsSettings = this.loadBroadcastsSettings.bind(this);
@@ -205,12 +209,14 @@ class RconSettings extends React.Component {
     this.clearCache = this.clearCache.bind(this);
     this.loadCameraConfig = this.loadCameraConfig.bind(this)
     this.saveCameraConfig = this.saveCameraConfig.bind(this)
+    this.saveAutoVotekickConfig = this.saveAutoVotekickConfig.bind(this)
+    this.loadAutoVotekickConfig = this.loadAutoVotekickConfig.bind(this)
   }
 
   async loadCameraConfig() {
     return get(`get_camera_config`)
       .then((res) => showResponse(res, "get_camera_config", false))
-      .then((data) => !data.failed && this.setState({ camera_broadcast: data.result.broadcast, camera_welcome: data.result.welcome })).catch(handle_http_errors);
+      .then((data) => !data.failed && this.setState({ cameraBroadcast: data.result.broadcast, cameraWelcome: data.result.welcome })).catch(handle_http_errors);
   }
 
   async saveCameraConfig(data) {
@@ -222,6 +228,25 @@ class RconSettings extends React.Component {
       .then(this.loadCameraConfig).catch(handle_http_errors);
   }
 
+  async loadAutoVotekickConfig() {
+    return get(`get_votekick_autotoggle_config`)
+      .then((res) => showResponse(res, "get_votekick_autotoggle_config", false))
+      .then((data) => !data.failed && this.setState({
+        autovotekickEnabled: data.result.is_enabled,
+        autovotekickMinIngameMods: data.result.min_ingame_mods,
+        autovotekickMinOnlineMods: data.result.min_online_mods,
+        autovotekickConditionType: data.result.condition_type
+      })).catch(handle_http_errors);
+  }
+
+  async saveAutoVotekickConfig(data) {
+    return postData(
+      `${process.env.REACT_APP_API_URL}set_votekick_autotoggle_config`,
+      data
+    )
+      .then((res) => showResponse(res, "set_votekick_autotoggle_config", true))
+      .then(this.loadAutoVotekickConfig).catch(handle_http_errors);
+  }
 
   async loadBroadcastsSettings() {
     return get(`get_auto_broadcasts_config`)
@@ -302,6 +327,7 @@ class RconSettings extends React.Component {
     this.loadBroadcastsSettings();
     this.loadStandardMessages();
     this.loadCameraConfig();
+    this.loadAutoVotekickConfig()
   }
 
   render() {
@@ -311,8 +337,12 @@ class RconSettings extends React.Component {
       standardMessagesType,
       enabled,
       randomized,
-      camera_broadcast,
-      camera_welcome
+      cameraBroadcast,
+      cameraWelcome,
+      autovotekickEnabled,
+      autovotekickMinIngameMods,
+      autovotekickMinOnlineMods,
+      autovotekickConditionType,
     } = this.state;
     const { classes, theme, themes, setTheme } = this.props;
 
@@ -487,6 +517,51 @@ class RconSettings extends React.Component {
         >
           <WebhooksConfig classes={classes} />
         </Grid>
+
+        <Grid item className={classes.paddingTop} justify="center" xs={12}>
+          <Typography variant="h5">Auto votekick toggle</Typography>
+          <Typography variant="body1">Turn off votekick if</Typography>
+        </Grid>
+        <Grid
+          container
+          className={`${classes.padding} ${classes.margin}`}
+          alignContent="center"
+          justify="center"
+          alignItems="center"
+          spacing={1}
+        >
+
+          <Grid item xs={12}>
+            <TextField 
+              type="number" 
+              label="# ingame moderator" 
+              value={autovotekickMinIngameMods} 
+              onChange={(e) => this.saveAutoVotekickConfig({ min_ingame_mods: e.target.value })}
+              helperText="Number of moderator in game is greater or equal" />
+            <FormControl>
+              <InputLabel>Condition</InputLabel>
+              <Select
+                native
+                value={autovotekickConditionType}
+                onChange={(e) => this.saveAutoVotekickConfig({ condition_type: e.target.value })}
+              >
+                <option value="OR">OR</option>
+                <option value="AND">AND</option>
+              </Select>
+              <FormHelperText>and / or</FormHelperText>
+            </FormControl>
+            <TextField
+              type="number"
+              label="# online moderator"
+              value={autovotekickMinOnlineMods}
+              onChange={(e) => this.saveAutoVotekickConfig({ min_online_mods: e.target.value })}
+              helperText="number of moderator with the rcon openned" />
+          </Grid>
+          <Grid item>
+            <Padlock label="Auto votekick toggle enabled" checked={autovotekickEnabled} handleChange={(v) => this.saveAutoVotekickConfig({ is_enabled: v })} ></Padlock>
+          </Grid>
+        </Grid>
+
         <Grid item className={classes.paddingTop} justify="center" xs={12}>
           <Typography variant="h5">Camera notification config</Typography>
         </Grid>
@@ -499,8 +574,8 @@ class RconSettings extends React.Component {
           alignItems="center"
           className={classes.root}
         >
-          <Padlock label="broadcast" checked={camera_broadcast} handleChange={v => this.saveCameraConfig({ broadcast: v })} />
-          <Padlock label="set welcome message" checked={camera_welcome} handleChange={v => this.saveCameraConfig({ welcome: v })} />
+          <Padlock label="broadcast" checked={cameraBroadcast} handleChange={v => this.saveCameraConfig({ broadcast: v })} />
+          <Padlock label="set welcome message" checked={cameraWelcome} handleChange={v => this.saveCameraConfig({ welcome: v })} />
         </Grid>
         <Grid item className={classes.paddingTop} justify="center" xs={12}>
           <Typography variant="h5">Misc. options</Typography>
