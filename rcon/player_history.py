@@ -1,6 +1,7 @@
 from rcon.cache_utils import ttl_cache, invalidates
 import logging
 import datetime
+import os
 from functools import wraps, cmp_to_key
 from sqlalchemy import func
 from sqlalchemy.orm import contains_eager, joinedload, defaultload
@@ -312,7 +313,7 @@ def safe_save_player_action(
         return False
 
 
-def save_start_player_session(steam_id_64, timestamp):
+def save_start_player_session(steam_id_64, timestamp, server_name=None):
     with enter_session() as sess:
         player = get_player(sess, steam_id_64)
         if not player:
@@ -323,7 +324,7 @@ def save_start_player_session(steam_id_64, timestamp):
 
         sess.add(
             PlayerSession(
-                steamid=player, start=datetime.datetime.fromtimestamp(timestamp)
+                steamid=player, start=datetime.datetime.fromtimestamp(timestamp), server_number=os.getenv("SERVER_NUMBER", None), server_name=server_name
             )
         )
         logger.info(

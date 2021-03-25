@@ -1,6 +1,6 @@
 import React from "react";
 import {
-  Grid, TextField, Button, jssPreset
+  Grid, TextField, Button, jssPreset, TextareaAutosize
 } from "@material-ui/core";
 import Autocomplete from '@material-ui/lab/Autocomplete';
 import SplitButton from '../splitButton'
@@ -22,7 +22,7 @@ const ServerMessage = ({ classes, type, autocompleteKey, value, setValue, onSave
         inputValue={value}
         onInputChange={(e, value) => setValue(value)}
         renderInput={(params) => (
-          <TextField multiline rows="4" {...params} label={type} margin="normal" variant="outlined" 
+          <TextField multiline rows={4} rowsMax={40} {...params} label={type} margin="normal" variant="outlined" 
           helperText={`Due to HLL limitations we can't know the current ${type}. Supports same variables as for auto broadcasts.`} />
         )}
       />

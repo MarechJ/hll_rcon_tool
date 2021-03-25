@@ -30,7 +30,9 @@ ALL_MAPS = (
     "carentan_offensive_us",
     "hurtgenforest_offensive_ger",
     "hurtgenforest_offensive_US",
-    "hurtgenforest_warfare_V2"
+    "hurtgenforest_warfare_V2",
+    "utahbeach_offensive_ger",
+    "utahbeach_offensive_us",
 )
 
 
@@ -100,6 +102,8 @@ LONG_HUMAN_MAP_NAMES = {
     "stmereeglise_offensive_us": "Offensive St Mere Eglise (US)",
     "carentan_warfare": "Carentan",
     "carentan_offensive_us": "Offensive Carentan",
+    "utahbeach_offensive_us": "Offensive Utah beach (US)",
+    "utahbeach_offensive_ger": "Offensive Utah beach (GER)",
 }
 
 SHORT_HUMAN_MAP_NAMES = {
@@ -118,6 +122,10 @@ SHORT_HUMAN_MAP_NAMES = {
     "stmereeglise_offensive_us": "Off. SME (US)",
     "carentan_warfare": "Carentan",
     "carentan_offensive_us": "Off. Carentan",
+    "hurtgenforest_offensive_ger": "Off. Hurtgen (Ger)",
+    "hurtgenforest_offensive_US": "Off. Hurtgen (US)",
+    "utahbeach_offensive_us": "Off. Utah (US)",
+    "utahbeach_offensive_ger": "Off. Utah (GER)",
 }
 
 
@@ -140,6 +148,8 @@ NO_MOD_LONG_HUMAN_MAP_NAMES = {
     "stmereeglise_offensive_us": "St Mere Eglise (US)",
     "carentan_warfare": "Carentan",
     "carentan_offensive_us": "Carentan",
+    "utahbeach_offensive_us": "Utah beach (US)",
+    "utahbeach_offensive_ger": "Utah beach (GER)",
 }
 
 NO_MOD_SHORT_HUMAN_MAP_NAMES = {
@@ -160,6 +170,8 @@ NO_MOD_SHORT_HUMAN_MAP_NAMES = {
     "stmereeglise_offensive_us": "SME (US)",
     "carentan_warfare": "Carentan",
     "carentan_offensive_us": "Carentan",
+    "utahbeach_offensive_us": "Utah",
+    "utahbeach_offensive_ger": "Utah",
 }
 
 

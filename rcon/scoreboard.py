@@ -394,7 +394,6 @@ def live_stats_loop():
             logger.debug("Refreshed")
         except Exception:
             logger.exception("Error while producing stats")
-            raise
         time.sleep(sleep_seconds)
 
 

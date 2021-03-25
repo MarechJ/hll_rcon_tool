@@ -51,7 +51,7 @@ def set_registered_mods(moderators_name_steamids: List[tuple]):
         red.hset("moderators", k, v)
     
 
-def ingame_mods():
+def ingame_mods(rcon=None):
     from rcon.recorded_commands import RecordedRcon
     red = _red()
     mods = red.hgetall("moderators") or {}
@@ -59,7 +59,7 @@ def ingame_mods():
     if not mods:
         return []
 
-    rcon = RecordedRcon(SERVER_INFO)
+    rcon = rcon or RecordedRcon(SERVER_INFO)
     players = rcon.get_players()
     mods_ids = set(v.decode() for v in mods.values())
     ig_mods = []

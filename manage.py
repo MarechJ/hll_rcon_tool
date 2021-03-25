@@ -2,7 +2,8 @@
 import os
 import logging
 
-logger = logging.getLogger('rcon')
+
+
 
 class ConfigurationError(Exception):
     pass
@@ -31,16 +32,15 @@ def pre_flight_checks(env):
     errors = _get_missing_env(required, env)
     warnings = _get_missing_env(optionnal, env)
 
-    if warnings:
-        logger.warn
-
+    print(warnings)
     if errors:
+        print(errors)
         raise ConfigurationError('\n'.join(errors))
     
 
 if __name__ == "__main__":
     env = os.environ
-    
+    logger = logging.getLogger('rcon')
     try:
         #pre_flight_checks(env)
         from rcon.cli import cli, init
@@ -53,6 +53,7 @@ if __name__ == "__main__":
         print(repr(e))
         logger.error("MISSING Configuration: %s", e.args)
         exit(1)
-    except:
+    except Exception as e:
+        print(repr(e))
         logger.exception("Unexpected error.")
         exit(1)

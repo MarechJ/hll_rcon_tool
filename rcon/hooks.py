@@ -1,12 +1,19 @@
 import logging
 import os
 from functools import wraps
+
+from discord_webhook import DiscordEmbed
+
 from rcon.recorded_commands import RecordedRcon
 from rcon.player_history import save_player, save_start_player_session, save_end_player_session, safe_save_player_action, get_player, _get_set_player
-from rcon.game_logs import on_connected, on_disconnected
+from rcon.game_logs import on_connected, on_disconnected, on_camera
 from rcon.models import enter_session, PlayerSteamID, SteamInfo, enter_session
 from rcon.discord import send_to_discord_audit, dict_to_discord
 from rcon.steam_utils import get_player_bans, STEAM_KEY, get_steam_profile, update_db_player_info
+from rcon.discord import send_to_discord_audit
+from rcon.user_config import CameraConfig
+from rcon.discord import get_prepared_discord_hooks, send_to_discord_audit
+
 
 logger = logging.getLogger(__name__)
 
@@ -159,3 +166,28 @@ def update_player_steaminfo_on_connect(rcon, struct_log, steam_id_64):
         player = _get_set_player(sess, player_name=struct_log['player'], steam_id_64=steam_id_64)
         update_db_player_info(player, profile)
         sess.commit()
+
+
+@on_camera
+def notify_camera(rcon: RecordedRcon, struct_log):
+    send_to_discord_audit(message=struct_log['message'], by=struct_log['player'])
+    
+    try:
+        if hooks := get_prepared_discord_hooks("camera"):
+            embeded = DiscordEmbed(
+                    title=f'{struct_log["player"]}  - {struct_log["steam_id_64_1"]}',
+                    description=struct_log["sub_content"],
+                    color=242424,
+                )
+            for h in hooks:
+                h.add_embed(embeded)
+                h.execute()
+    except Exception:
+        logger.exception("Unable to forward to hooks")
+
+    config = CameraConfig()
+    if config.is_broadcast():
+        rcon.set_broadcast(struct_log['message'])
+
+    if config.is_welcome():
+        rcon.set_welcome_message(struct_log['message'])

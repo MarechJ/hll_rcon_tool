@@ -1,4 +1,12 @@
+SHELL=/bin/bash
+PATH=/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 # Don't forget to add an empty line at the end of this file or it won't start
+# You can test your schedule there: https://crontab.guru/
+# Restart the "cron" service after adding or modifying things
 5 * * * * /bin/bash /config/do_logrotate.sh
-# Example Backup VIPs once per day at 23h
+# This routine updates your database every night, pull steam profiles older than 30 days
 1 23,2 * * * /code/manage.py enrich_db_users
+# Below is an exmaple show how to set your map to hill 400 at 9 am every day, remove the # to enable
+# 0 9 * * * /code/manage.py set_map hill400_warfare >> /config/cronout 2>&1
+# Below is an exmaple show how to set your welcome message to Hello (line break) toto... at 23h15 every day, you can use the same variables as in the UI
+# 15 23 * * * /code/manage.py set_welcome_message $'Hello\ntoto\n\nWelcome to {servername}'

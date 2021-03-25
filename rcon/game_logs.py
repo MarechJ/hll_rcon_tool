@@ -23,13 +23,14 @@ from rcon.discord import send_to_discord_audit
 logger = logging.getLogger(__name__)
 
 HOOKS = {
-    "KILL": [],
     "TEAM KILL": [],
     "CONNECTED": [],
     "DISCONNECTED": [],
     "CHAT[Allies]": [],
     "CHAT[Axis]": [],
     "CHAT": [],
+    "KILL": [],
+    "CAMERA": [],
 }
 
 
@@ -47,11 +48,13 @@ def on_chat(func):
     HOOKS["CHAT"].append(func)
     return func
 
+def on_camera(func):
+    HOOKS["CAMERA"].append(func)
+    return func
 
 def on_chat_axis(func):
     HOOKS["CHAT[Axis]"].append(func)
     return func
-
 
 def on_chat_allies(func):
     HOOKS["CHAT[Allies]"].append(func)
@@ -86,14 +89,14 @@ class LogLoop:
     def get_log_history_list():
         return FixedLenList(key=LogLoop.log_history_key, max_len=100000)
 
-    def run(self, loop_frequency_secs=10, cleanup_frequency_minutes=10):
+    def run(self, loop_frequency_secs=5, cleanup_frequency_minutes=10):
         since_min = 180
         self.cleanup()
         last_cleanup_time = datetime.datetime.now()
 
         while True:
             logs = self.rcon.get_structured_logs(since_min_ago=since_min)
-            since_min = 10
+            since_min = 5
             for log in reversed(logs["logs"]):
                 l = self.record_line(log)
                 if l:
@@ -371,7 +374,7 @@ def auto_ban_if_tks_right_after_connection(rcon: RecordedRcon, log):
         logger.exception("Unable to get VIPS")
 
     last_logs = get_recent_logs(
-        end=1000, player_search=player_name, exact_player_match=True
+        end=500, player_search=player_name, exact_player_match=True
     )
     logger.debug("Checking TK from %s", player_name)
     author = config.get("author_name", "Automation")
