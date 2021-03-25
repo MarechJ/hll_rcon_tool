@@ -3,7 +3,7 @@ import FormGroup from '@material-ui/core/FormGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Switch from '@material-ui/core/Switch';
 
-export default function Padlock({handleChange, checked, label}) {
+export default function Padlock({ handleChange, checked, label, color }) {
 
   return (
     <FormGroup row>
@@ -13,7 +13,7 @@ export default function Padlock({handleChange, checked, label}) {
             checked={checked}
             onChange={e => handleChange(e.target.checked)}
             name={label}
-            color="primary"
+            color={color ? color : "primary"}
           />
         }
         label={label}

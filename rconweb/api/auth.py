@@ -18,10 +18,20 @@ from django.contrib.auth import authenticate, login, logout
 from django.forms.models import model_to_dict
 from .models import SteamPlayer
 from django.conf import settings
+from django.contrib.auth.models import User
+from django.db.models.signals import post_save, post_delete
 
 
 logger = logging.getLogger('rconweb')
 
+
+def update_mods(sender, instance, **kwargs):
+    set_registered_mods(get_moderators_accounts())
+
+post_save.connect(update_mods, sender=User)
+post_delete.connect(update_mods, sender=User)
+post_save.connect(update_mods, sender=SteamPlayer)
+post_delete.connect(update_mods, sender=SteamPlayer)
 
 @dataclass
 class RconResponse:
@@ -94,7 +104,6 @@ def is_logged_in(request):
                 logger.warning("%s's steam id is not set ", request.user.username)
             try:
                 heartbeat(request.user.username, steam_id)
-                set_registered_mods(get_moderators_accounts())
             except:
                 logger.exception("Unable to register mods")
         except:
