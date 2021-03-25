@@ -244,6 +244,12 @@ const LiveScore = ({ classes }) => {
             <Grid item xs={12} md={6} lg={3} xl={2}>
                 <RankBoard classes={classes} iconUrl={"icons/sleep.png"} scores={scores} title="What is a break?" statType="Ingame time" statKey="time_seconds" reversed postProcessFunc={durationToHour} />
             </Grid>
+            <Grid item xs={12} md={6} lg={3} xl={2}>
+                <RankBoard classes={classes} iconUrl={"icons/sleep.png"} scores={scores} title="SURVIVOR" statType="Longest life" statKey="longest_life_secs" reversed  />
+            </Grid>
+            <Grid item xs={12} md={6} lg={3} xl={2}>
+                <RankBoard classes={classes} iconUrl={"icons/sleep.png"} scores={scores} title="YOU'RE STILL A MAN" statType="Shortest life" statKey="longest_life_secs" reversed />
+            </Grid>
         </Grid >
     </React.Fragment>
 }

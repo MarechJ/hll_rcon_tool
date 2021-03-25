@@ -127,12 +127,12 @@ class SteamInfo(Base):
     profile = Column(JSONB)
     country = Column(String, index=True)
     bans = Column(JSONB)
- 
+
     def to_dict(self):
         return dict(
             id=self.id,
             created=self.created,
-            updated= self.updated,
+            updated=self.updated,
             profile=self.profile,
             country=self.country,
             bans=self.bans,
@@ -322,6 +322,45 @@ class LogLine(Base):
             server=self.server,
         )
 
+    def compatible_dict(self):
+        weapon = None
+        if self.type.upper() in ["KILL", "TEAM KILL"]:
+            try:
+                weapon = self.raw.rsplit(" with ", 1)[-1]
+            except IndexError:
+                pass
+
+        return {
+            "id": self.id,
+            "version": self.version,
+            "timestamp_ms": int(self.event_time.timestamp() * 1000),
+            "event_time": self.event_time,
+            "relative_time_ms": None,  # TODO
+            "raw": self.raw,
+            "line_without_time": None,  # TODO
+            "action": self.type,
+            "player": self.player1_name,
+            "steam_id_64_1": self.steamid1.steam_id_64 if self.steamid1 else None,
+            "player1_id": self.player1_steamid,
+            "player2_id": self.player1_steamid,
+            "player2": self.player2_name,
+            "steam_id_64_2": self.steamid2.steam_id_64 if self.steamid2 else None,
+            "weapon": weapon,
+            "message": self.content,
+            "sub_content": None,  # TODO
+        }
+
+
+class Maps(Base):
+    __tablename__ = "map_history"
+
+    id = Column(Integer, primary_key=True)
+
+    creation_time = Column(TIMESTAMP, default=datetime.utcnow)
+    start = Column(DateTime, nullable=False, index=True)
+    end = Column(DateTime, index=True)
+    server_number = Column(Integer, index=True)
+    map_name = Column(String, nullable=False, index=True)
 
 def init_db(force=False):
     # create tables

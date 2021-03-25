@@ -12,7 +12,7 @@ from rcon.utils import (
     numbered_maps,
     FixedLenList,
     map_name,
-    get_current_selection,
+    get_current_selection, 
     get_map_side,
     MapsHistory,
     ALL_MAPS
@@ -55,13 +55,12 @@ class MapsRecorder:
         except CommandFailedError:
             logger.info("Faied to get current map. Skipping")
             return 
-        logger.debug("Checking for map change current: %s prev: %s", current_map, self.prev_map)
+        #logger.debug("Checking for map change current: %s prev: %s", current_map, self.prev_map)
         if self.prev_map != current_map:
-            if self.prev_map in ALL_MAPS:
-                self.maps_history.save_map_end(self.prev_map)
-            if current_map in ALL_MAPS:
-                self.maps_history.save_new_map(current_map)
-
+            if self.prev_map and self.prev_map.replace('_RESTART', '') in ALL_MAPS:
+                self.maps_history.save_map_end(self.prev_map.replace('_RESTART', ''))
+            if current_map and current_map.replace('_RESTART', '') in ALL_MAPS:
+                self.maps_history.save_new_map(current_map.replace('_RESTART', ''))
             logger.info(
                 "Map change detected updating state. Prev map %s New Map %s",
                 self.prev_map,
@@ -90,7 +89,7 @@ def run():
             if max_fails <= 0:
                 logger.exception("Map recorder 5 failures in a row. Stopping")
                 raise
-        time.sleep(30)
+        time.sleep(2)
 
 
 class ThreadMapRecorder(Thread, MapsRecorder):
