@@ -403,9 +403,9 @@ if __name__ == "__main__":
 
     # pprint(LiveStats().get_current_players_stats())
 
-    # print(TimeWindowStats().get_players_stats_at_time(
-    #    datetime.datetime(2021, 2, 27, 16, 30, 44, 793000),
-    #    datetime.datetime(2021, 2, 27, 17, 30, 44, 793000),
-    # ))
+    print(TimeWindowStats().get_players_stats_at_time(
+        datetime.datetime(2021, 2, 27, 16, 30, 44, 793000),
+        datetime.datetime(2021, 2, 27, 17, 30, 44, 793000),
+    ))
 
-    LiveStats().get_current_players_stats()
+    #LiveStats().get_current_players_stats()
