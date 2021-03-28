@@ -53,7 +53,7 @@ class MapsRecorder:
     def detect_map_change(self):
         try:
             current_map = self.rcon.get_map()
-        except CommandFailedError:
+        except Exception:
             logger.info("Faied to get current map. Skipping")
             return 
         #logger.debug("Checking for map change current: %s prev: %s", current_map, self.prev_map)
