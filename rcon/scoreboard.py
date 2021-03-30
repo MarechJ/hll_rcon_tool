@@ -6,7 +6,7 @@ import logging
 import time
 from dataclasses import dataclass
 
-from rcon.models import enter_session
+from rcon.models import SteamInfo, enter_session
 from rcon.recorded_commands import RecordedRcon
 from rcon.settings import SERVER_INFO
 from rcon.game_logs import get_recent_logs, get_historical_logs_records
@@ -166,8 +166,8 @@ class BaseStats:
             }
 
             streaks = Streaks()
-            player_p = p
-            import ipdb; ipdb.set_trace()
+            #player_p = p
+            #import ipdb; ipdb.set_trace()
             for l in player_logs:
                 action = l["action"]
                 processor = actions_processors.get(action, lambda **kargs: None)
@@ -210,6 +210,7 @@ class LiveStats(BaseStats):
 
         player_sessions = player.get("profile", {}).get("sessions")
         if not player_sessions:
+            logger.warning("No sessions in player profile")
             return -1
 
         return player_sessions[0].get("start")
@@ -305,7 +306,7 @@ class TimeWindowStats(BaseStats):
             if log["action"] == "CONNECTED":
                 players_times.setdefault(player, {"start": [], "end": []})[
                     "start"
-                ].append(datetime.datetime.fromtimestamp(log["event_time"] / 1000))
+                ].append(log["event_time"])
             elif player not in players_times and log["action"] != "DISCONNECTED":
                 players_times.setdefault(player, {"start": [], "end": []})[
                     "start"
@@ -313,15 +314,22 @@ class TimeWindowStats(BaseStats):
             if player in players_times and log["action"] == "DISCONNECTED":
                 players_times.setdefault(player, {"start": [], "end": []})[
                     "end"
-                ].append(datetime.datetime.fromtimestamp(log["event_time"] / 1000))
+                ].append(log["event_time"])
 
     def _get_player_session_time(self, player):
         # TODO: Make safe
-        return self.times[player["name"]]["total"]
+        try:
+            return self.times[player["name"]]["total"]
+        except KeyError:
+            logger.warning("Unable to get session time for %s", player.get('name'))
+            return 0
 
     def _get_player_first_appearance(self, player):
-        # TODO: Make safe
-        return self.times[player["name"]]["start"][0]
+        try:
+            return self.times[player["name"]]["start"][0]
+        except KeyError:
+            logger.warning("Unable to get first appearance time for %s", player.get('name'))
+            return 0
 
     def get_players_stats_at_time(self, from_, until):
         with enter_session() as sess:
@@ -403,9 +411,9 @@ if __name__ == "__main__":
 
     # pprint(LiveStats().get_current_players_stats())
 
-    print(TimeWindowStats().get_players_stats_at_time(
-        datetime.datetime(2021, 2, 27, 16, 30, 44, 793000),
-        datetime.datetime(2021, 2, 27, 17, 30, 44, 793000),
-    ))
+    #pprint(TimeWindowStats().get_players_stats_at_time(
+    #    datetime.datetime(2021, 3, 28, 16, 30, 44, 793000),
+    #    datetime.datetime(2021, 3, 28, 17, 30, 44, 793000),
+    #))
 
-    #LiveStats().get_current_players_stats()
+    LiveStats().get_current_players_stats()

@@ -88,7 +88,7 @@ def get_player_profile_by_id(id, nb_sessions):
 def _get_profiles(sess, steam_ids, nb_sessions=0):
     return sess.query(PlayerSteamID).filter(PlayerSteamID.steam_id_64.in_(steam_ids)).all()
 
-def get_profiles(steam_ids, nb_sessions=0):
+def get_profiles(steam_ids, nb_sessions=1):
     with enter_session() as sess:
         players = _get_profiles(sess, steam_ids, nb_sessions)
 
