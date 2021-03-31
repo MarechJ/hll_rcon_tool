@@ -60,11 +60,10 @@ class MapsRecorder:
         
         logger.debug("Checking for map change current: %s prev: %s", current_map, self.prev_map)
         if self.prev_map != current_map:
-            if self.prev_map and self.prev_map.replace('_RESTART', '') in ALL_MAPS:
+            if self.prev_map and self.prev_map.replace('_RESTART', '') in ALL_MAPS and current_map and current_map.replace('_RESTART', '') in ALL_MAPS:
                 self.maps_history.save_map_end(self.prev_map)
             if current_map and current_map.replace('_RESTART', '') in ALL_MAPS:
                 self.maps_history.save_new_map(current_map)
-
                 logger.info(
                     "Map change detected updating state. Prev map %s New Map %s",
                     self.prev_map,
