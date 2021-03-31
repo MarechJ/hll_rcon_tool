@@ -144,14 +144,14 @@ def live_scoreboard(request):
 def date_scoreboard(request):
 
     try:
-        start = datetime.datetime.fromtimestamp(request.GET.get["start"]).isoformat()
+        start = datetime.fromtimestamp(request.GET.get["start"]).isoformat()
     except (ValueError, KeyError, TypeError):
         start = None
 
     try:
-        end = datetime.datetime.fromtimestamp(request.GET.get["end"]).isoformat()
+        end = datetime.fromtimestamp(request.GET.get["end"]).isoformat()
     except (ValueError, KeyError, TypeError):
-        end = None
+        end = datetime.now()
 
     stats = TimeWindowStats()
 
