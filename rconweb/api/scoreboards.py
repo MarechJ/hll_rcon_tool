@@ -1,3 +1,4 @@
+from datetime import datetime
 from os import error
 import logging
 from django.http import HttpResponse
@@ -11,7 +12,7 @@ from rcon.settings import SERVER_INFO
 from rcon import game_logs
 from rcon.models import LogLine, PlayerSteamID, PlayerName, enter_session
 from rcon.discord import send_to_discord_audit
-from rcon.scoreboard import LiveStats
+from rcon.scoreboard import LiveStats, TimeWindowStats
 
 from .views import ctl
 from .auth import api_response, login_required
@@ -137,4 +138,28 @@ def live_scoreboard(request):
         error=error,
         failed=failed,
         command="live_scoreboard"
+    )
+
+@csrf_exempt
+def date_scoreboard(request):
+    stats = TimeWindowStats()
+
+    try:
+        result = stats.get_players_stats_at_time(
+           datetime(2021, 2, 27, 16, 30, 44, 793000),
+           datetime(2021, 2, 27, 17, 30, 44, 793000),
+        )
+        error_= None,
+        failed = False
+    except Exception as e:
+        logger.exception("Unable to produce date stats")
+        result = {}
+        error_ = ""
+        failed=True
+
+    return api_response(
+        result=result,
+        error=error_,
+        failed=failed,
+        command="date_scoreboard"
     )
