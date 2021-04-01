@@ -144,14 +144,13 @@ def live_scoreboard(request):
 def date_scoreboard(request):
 
     try:
-        start = datetime.fromtimestamp(request.GET.get["start"]).isoformat()
+        start = datetime.fromtimestamp(int(request.GET.get("start"))).isoformat()
     except (ValueError, KeyError, TypeError):
         start = None
-
     try:
-        end = datetime.fromtimestamp(request.GET.get["end"]).isoformat()
+        end = datetime.fromtimestamp(int(request.GET.get("end"))).isoformat()
     except (ValueError, KeyError, TypeError):
-        end = datetime.now()
+        end = None
 
     stats = TimeWindowStats()
 
@@ -159,11 +158,12 @@ def date_scoreboard(request):
         result = stats.get_players_stats_at_time(start, end)
         error_ = None,
         failed = False
+
     except Exception as e:
         logger.exception("Unable to produce date stats")
         result = {}
         error_ = ""
-        failed=True
+        failed = True
 
     return api_response(
         result=result,
