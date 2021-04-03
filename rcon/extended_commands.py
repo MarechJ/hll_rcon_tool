@@ -311,9 +311,23 @@ class Rcon(ServerCtl):
         with invalidates(Rcon.get_vip_slots_num):
             return super().set_vip_slots_num(num)
 
-    def set_welcome_message(self, msg):
+    def get_welcome_message(self):
         red = get_redis_client()
+        msg = red.get("WELCOME_MESSAGE")
+        if msg:
+            return msg.decode()
+        return msg
+
+    def set_welcome_message(self, msg):
         from rcon.broadcast import format_message
+        prev = None
+
+        try:
+            red = get_redis_client()
+            prev = red.getset("WELCOME_MESSAGE", msg)
+            red.expire("WELCOME_MESSAGE", 60 * 60 * 24)
+        except Exception:
+            logger.exception("Can't save message in redis: %s", msg)
 
         try:
             formatted = format_message(self, msg)
@@ -321,17 +335,35 @@ class Rcon(ServerCtl):
             logger.exception("Unable to format message")
             formatted = msg
             
-        return super().set_welcome_message(formatted)
+        super().set_welcome_message(formatted)
+        return prev.decode() if prev else None
+
+    def get_broadcast_message(self):
+        red = get_redis_client()
+        msg = red.get("BROADCAST_MESSAGE")
+        if msg:
+            return msg.decode()
+        return msg
 
     def set_broadcast(self, msg):
         from rcon.broadcast import format_message
+        prev = None
 
+        try:
+            red = get_redis_client()
+            prev = red.getset("BROADCAST_MESSAGE", msg)
+            red.expire("BROADCAST_MESSAGE", 60 * 30)
+        except Exception:
+            logger.exception("Can't save message in redis: %s", msg)
+            
         try:
             formatted = format_message(self, msg)
         except Exception:
             logger.exception("Unable to format message")
             formatted = msg
-        return super().set_broadcast(formatted)
+
+        super().set_broadcast(formatted)
+        return prev
 
     @ttl_cache(ttl=20)
     def get_slots(self):

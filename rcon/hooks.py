@@ -27,7 +27,7 @@ from rcon.user_config import CameraConfig
 from rcon.discord import get_prepared_discord_hooks, send_to_discord_audit
 from rcon.map_recorder import VoteMap
 from rcon.user_config import VoteMapConfig
-
+from rcon.workers import temporary_broadcast
 
 logger = logging.getLogger(__name__)
 
@@ -40,11 +40,12 @@ def count_vote(rcon: RecordedRcon, struct_log):
     v = VoteMap()
     if vote := v.is_vote(struct_log.get("sub_content")):
         logger.debug("Vote chat detected: %s", struct_log["message"])
-        v.register_vote(
+        map_name = v.register_vote(
             struct_log["player"],
             struct_log["timestamp_ms"] / 1000,
             vote
         )
+        temporary_broadcast(rcon, f"Merci {struct_log['player']} vote enregisté pour:\n{map_name}", 10)
         v.apply_with_retry(nb_retry=2)
 
 

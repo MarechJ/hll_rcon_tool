@@ -27,12 +27,41 @@ from rcon.cache_utils import RedisCached, get_redis_pool
 from rcon.user_config import DiscordHookConfig
 from rcon.watchlist import PlayerWatch
 from rcon.utils import LONG_HUMAN_MAP_NAMES, map_name
+from rcon.workers import temporary_broadcast, temporary_welcome
 from .auth import login_required, api_response
 from .utils import _get_data
 from .multi_servers import forward_request, forward_command
 
 
 logger = logging.getLogger("rconweb")
+
+def set_temp_msg(request, func, name):
+    data = _get_data(request)
+    failed = False
+    error = None
+    try:
+        func(ctl, data["msg"], data["seconds"])
+    except Exception as e:
+        failed = True
+        error = repr(e)
+    
+    return api_response(
+        failed=failed,
+        error=error,
+        result=None,
+        command=name
+    )
+
+@csrf_exempt
+@login_required
+def set_temp_broadcast(request):
+    return set_temp_msg(request, temporary_broadcast, "set_temp_broadcast")
+
+@csrf_exempt
+@login_required
+def set_temp_welcome(request):
+    return set_temp_msg(request, temporary_welcome, "set_temp_welcome")
+
 
 
 @csrf_exempt
