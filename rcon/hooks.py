@@ -26,6 +26,7 @@ from rcon.discord import send_to_discord_audit
 from rcon.user_config import CameraConfig
 from rcon.discord import get_prepared_discord_hooks, send_to_discord_audit
 from rcon.map_recorder import VoteMap
+from rcon.user_config import VoteMapConfig
 
 
 logger = logging.getLogger(__name__)
@@ -33,6 +34,9 @@ logger = logging.getLogger(__name__)
 
 @on_chat
 def count_vote(rcon: RecordedRcon, struct_log):
+    if not VoteMapConfig().get_vote_enabled():
+        return
+        
     v = VoteMap()
     if vote := v.is_vote(struct_log.get("sub_content")):
         logger.debug("Vote chat detected: %s", struct_log["message"])

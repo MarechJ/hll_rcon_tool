@@ -20,31 +20,12 @@ from rcon.utils import (
     MapsHistory,
     ALL_MAPS,
 )
+from rcon.user_config import VoteMapConfig, DefaultMethods
 from rcon.cache_utils import get_redis_client, get_redis_pool
 import enum
 import random
 
 logger = logging.getLogger(__name__)
-
-
-class DefaultMethods(enum.Enum):
-    least_played_suggestions = "least_played_from_suggestions"
-    least_played_all_maps = "least_played_from_all_map"
-    random_suggestions = "random_from_suggestions"
-    random_all_maps = "random_from_all_maps"
-    random_rotation = "random_from_default_rotation"
-
-
-# Options
-DEFAULT_METHOD = DefaultMethods.least_played_suggestions
-VOTEMAP_NUMBER_OF_OPTIONS = 5
-VOTEMAP_RATIO_OF_OFFENSIVES_TO_OFFER = 0.5
-VOTEMAP_NUMBER_OF_LAST_PLAYED_MAP_TO_EXCLUDE = 3
-VOTEMAP_CONSIDER_OFFENSIVE_AS_SAME_MAP = False
-VOTEMAP_ALLOW_CONSECUTIVE_OFFENSIVES = True  # TODO
-VOTEMAP_ALLOW_CONSECUTIVE_OFFENSIVES_OF_OPPOSITE_SIDE = False
-VOTEMAP_DEFAULT_METHOD = DefaultMethods("least_played_from_suggestions")
-VOTEMAP_ALLOW_DEFAULT_TO_OFFSENSIVE = False
 
 
 def _get_random_map_selection(maps, nb_to_return, history=None):
@@ -169,14 +150,16 @@ class VoteMap:
                 f"Vote must be a number between 0 and {len(selection) - 1}"
             )
 
-        logger.info(f"Registered vote from {player_name=} for {selected_map=} - {vote_content=}")
+        logger.info(
+            f"Registered vote from {player_name=} for {selected_map=} - {vote_content=}"
+        )
         return selected_map
 
     def get_vote_overview(self):
         try:
             votes = self.get_votes()
             maps = Counter(votes.values()).most_common()
-            return {'total_votes': len(votes), "winning_maps": maps}
+            return {"total_votes": len(votes), "winning_maps": maps}
         except Exception:
             logger.exception("Can't produce vote overview")
 
@@ -198,27 +181,29 @@ class VoteMap:
         return map_
 
     def gen_selection(self):
-        logger.debug(f"""Generating new map selection for vote map with the following criteria:
+        config = VoteMapConfig()
+
+        logger.debug(
+            f"""Generating new map selection for vote map with the following criteria:
             {ALL_MAPS}
-            {DEFAULT_METHOD=}
-            {VOTEMAP_NUMBER_OF_OPTIONS=} 
-            {VOTEMAP_RATIO_OF_OFFENSIVES_TO_OFFER=} 
-            {VOTEMAP_NUMBER_OF_LAST_PLAYED_MAP_TO_EXCLUDE=} 
-            {VOTEMAP_CONSIDER_OFFENSIVE_AS_SAME_MAP=} 
-            {VOTEMAP_ALLOW_CONSECUTIVE_OFFENSIVES=} 
-            {VOTEMAP_ALLOW_CONSECUTIVE_OFFENSIVES_OF_OPPOSITE_SIDE=} 
-            {VOTEMAP_DEFAULT_METHOD=}
-            {VOTEMAP_ALLOW_DEFAULT_TO_OFFSENSIVE=} 
-        """)
+            {config.get_votemap_number_of_options()=} 
+            {config.get_votemap_ratio_of_offensives_to_offer()=} 
+            {config.get_votemap_number_of_last_played_map_to_exclude()=} 
+            {config.get_votemap_consider_offensive_as_same_map()=} 
+            {config.get_votemap_allow_consecutive_offensives()=} 
+            {config.get_votemap_allow_consecutive_offensives_of_opposite_side()=} 
+            {config.get_votemap_default_method()=}
+        """
+        )
         selection = suggest_next_maps(
             MapsHistory(),
             ALL_MAPS,
-            selection_size=VOTEMAP_NUMBER_OF_OPTIONS,
-            exclude_last_n=VOTEMAP_NUMBER_OF_LAST_PLAYED_MAP_TO_EXCLUDE,
-            offsensive_ratio=VOTEMAP_RATIO_OF_OFFENSIVES_TO_OFFER,
-            consider_offensive_as_same_map=VOTEMAP_CONSIDER_OFFENSIVE_AS_SAME_MAP,
-            allow_consecutive_offensive=VOTEMAP_ALLOW_CONSECUTIVE_OFFENSIVES,
-            allow_consecutive_offensives_of_opposite_side=VOTEMAP_ALLOW_CONSECUTIVE_OFFENSIVES_OF_OPPOSITE_SIDE,
+            selection_size=config.get_votemap_number_of_options(),
+            exclude_last_n=config.get_votemap_number_of_last_played_map_to_exclude(),
+            offsensive_ratio=config.get_votemap_ratio_of_offensives_to_offer(),
+            consider_offensive_as_same_map=config.get_votemap_consider_offensive_as_same_map(),
+            allow_consecutive_offensive=config.get_votemap_allow_consecutive_offensives(),
+            allow_consecutive_offensives_of_opposite_side=config.get_votemap_allow_consecutive_offensives_of_opposite_side(),
             current_map=self.get_current_map(),
         )
         self.red.delete("MAP_SELECTION")
@@ -248,9 +233,12 @@ class VoteMap:
     def pick_default_next_map(self):
         selection = self.get_selection()
         maps_history = MapsHistory()
+        config = VoteMapConfig()
 
-        if not VOTEMAP_ALLOW_DEFAULT_TO_OFFSENSIVE:
-            logger.debug("Not allowing default to offensive, removing all offensive maps")
+        if not config.get_votemap_allow_default_to_offsensive():
+            logger.debug(
+                "Not allowing default to offensive, removing all offensive maps"
+            )
             selection = [m for m in selection if not "offensive" in m]
             all_maps = [m for m in ALL_MAPS if not "offensive" in m]
 
@@ -258,22 +246,31 @@ class VoteMap:
             raise ValueError("Map history is empty")
 
         return {
-            DefaultMethods.least_played_suggestions: partial(self.pick_least_played_map, selection),
-            DefaultMethods.least_played_all_maps: partial(self.pick_least_played_map, all_maps),
+            DefaultMethods.least_played_suggestions: partial(
+                self.pick_least_played_map, selection
+            ),
+            DefaultMethods.least_played_all_maps: partial(
+                self.pick_least_played_map, all_maps
+            ),
             DefaultMethods.random_all_maps: lambda: random.choice(
                 list(set(all_maps) - set([maps_history[0]["name"]]))
             ),
             DefaultMethods.random_suggestions: lambda: random.choice(
                 list(set(selection) - set([maps_history[0]["name"]]))
-            )
-        }[DEFAULT_METHOD]()
+            ),
+        }[config.get_default_method()]()
 
     def apply_results(self):
+        config = VoteMapConfig()
         votes = self.get_votes()
         first = Counter(votes.values()).most_common(1)
         if not first:
             next_map = self.pick_default_next_map()
-            logger.warning("No votes recorded, defaulting with %s using default winning map %s", DEFAULT_METHOD, next_map)
+            logger.warning(
+                "No votes recorded, defaulting with %s using default winning map %s",
+                config.get_votemap_default_method(),
+                next_map,
+            )
         else:
             logger.info(f"{votes=}")
             next_map = first[0][0]
@@ -289,7 +286,9 @@ class VoteMap:
         rcon = RecordedRcon(SERVER_INFO)
         current_map = rcon.get_map()
         if current_map.replace("_RESTART", "") not in ALL_MAPS:
-            raise ValueError(f"{current_map=} is not part of the all map list {ALL_MAPS=}")
+            raise ValueError(
+                f"{current_map=} is not part of the all map list {ALL_MAPS=}"
+            )
 
         try:
             history_current_map = MapsHistory()[0]["name"]
@@ -297,22 +296,32 @@ class VoteMap:
             raise ValueError("History is empty")
 
         if current_map != history_current_map:
-            raise ValueError(f"{current_map=} does not match history map {history_current_map=}")
+            raise ValueError(
+                f"{current_map=} does not match history map {history_current_map=}"
+            )
 
         # Apply rotation safely
         current_rotation = rcon.get_map_rotation()
         try:
-            current_map_idx = current_rotation.index(current_map.replace("_RESTART", ""))
+            current_map_idx = current_rotation.index(
+                current_map.replace("_RESTART", "")
+            )
         except ValueError:
-            logger.warning(f"{current_map=} is not in {current_rotation=} will try to add")
+            logger.warning(
+                f"{current_map=} is not in {current_rotation=} will try to add"
+            )
             rcon.do_add_map_to_rotation(current_map.replace("_RESTART", ""))
 
         current_rotation = rcon.get_map_rotation()
         try:
-            current_map_idx = current_rotation.index(current_map.replace("_RESTART", ""))
+            current_map_idx = current_rotation.index(
+                current_map.replace("_RESTART", "")
+            )
         except ValueError as e:
-            raise ValueError(f"{current_map=} is not in {current_rotation=} addint it failed") from e
-        
+            raise ValueError(
+                f"{current_map=} is not in {current_rotation=} addint it failed"
+            ) from e
+
         try:
             next_map_idx = current_rotation.index(next_map)
         except ValueError:
@@ -320,10 +329,12 @@ class VoteMap:
             rcon.do_add_map_to_rotation(next_map)
         else:
             if next_map_idx < current_map_idx:
-                logger.info(f"{next_map=} is before {current_map=} removing and re-adding")
+                logger.info(
+                    f"{next_map=} is before {current_map=} removing and re-adding"
+                )
                 rcon.do_remove_map_from_rotation(next_map)
-                rcon.do_add_map_to_rotation(next_map)     
-        
+                rcon.do_add_map_to_rotation(next_map)
+
         current_rotation = rcon.get_map_rotation()
 
         try:
@@ -333,9 +344,9 @@ class VoteMap:
         except ValueError as e:
             raise ValueError(f"{next_map=} failed to be added to {current_rotation=}")
 
-        maps_to_remove = current_rotation[current_map_idx+1:next_map_idx]
+        maps_to_remove = current_rotation[current_map_idx + 1 : next_map_idx]
         logger.debug(f"{current_map=} {current_rotation=} - {maps_to_remove=}")
-        
+
         for map in maps_to_remove:
             # Remove the maps that are in between the current map and the desired next map
             rcon.do_remove_map_from_rotation(map)
@@ -345,10 +356,17 @@ class VoteMap:
 
         # Check that it worked
         current_rotation = rcon.get_map_rotation()
-        if not current_rotation[current_map_idx] == current_map and current_rotation[current_map_idx+1] == next_map:
-            raise ValueError(f"Applying the winning map {next_map=} after the {current_map=} failed: {current_rotation=}")
+        if (
+            not current_rotation[current_map_idx] == current_map
+            and current_rotation[current_map_idx + 1] == next_map
+        ):
+            raise ValueError(
+                f"Applying the winning map {next_map=} after the {current_map=} failed: {current_rotation=}"
+            )
 
-        logger.info(f"Successfully applied winning mapp {next_map=}, new rotation {current_rotation=}")
+        logger.info(
+            f"Successfully applied winning mapp {next_map=}, new rotation {current_rotation=}"
+        )
         return True
 
     def apply_with_retry(self, nb_retry=2):
@@ -366,12 +384,13 @@ class VoteMap:
             logger.warning("Falling back to adding all maps to the rotation")
             RecordedRcon(SERVER_INFO).set_maprotation(ALL_MAPS)
 
+
 def on_map_change(old_map_info, new_map_info):
-    votemap = VoteMap()
-    votemap.gen_selection()
-    votemap.clear_votes()
-    votemap.apply_with_retry()
-   
+    if VoteMapConfig().get_vote_enabled():
+        votemap = VoteMap()
+        votemap.gen_selection()
+        votemap.clear_votes()
+        votemap.apply_with_retry()
 
 
 class MapsRecorder:
@@ -437,7 +456,6 @@ class MapsRecorder:
                     )
                 on_map_change(self.prev_map, current_map)
                 self.prev_map = current_map
-                
 
             return True
 
