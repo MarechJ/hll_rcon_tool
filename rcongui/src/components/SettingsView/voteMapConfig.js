@@ -1,4 +1,4 @@
-import { FormControl, Grid, InputLabel, NativeSelect, TextField, Typography } from '@material-ui/core'
+import { Button, FormControl, Grid, InputLabel, NativeSelect, TextField, Typography } from '@material-ui/core'
 import React from 'react'
 import { Map, fromJS, List } from 'immutable'
 import {
@@ -29,6 +29,14 @@ const VoteMapConfig = () => {
             .then(data => data.failed ? "" : setConfig(fromJS(data.result)))
             .catch(handle_http_errors)
     }
+
+    const resetVotes = () => (
+        postData(`${process.env.REACT_APP_API_URL}reset_votemap_state`)
+        .then(res => showResponse(res, "reset_votemap_state", true))
+        .then(res => res.failed ? "" : setStatus(fromJS(res.result)))
+        .catch(handle_http_errors)
+    )
+    
     React.useEffect(() => {
         loadData();
         const handle = setInterval(loadData, 60000)
@@ -133,7 +141,9 @@ const VoteMapConfig = () => {
                             (o) => `${o.get(0)}: ${o.get(1)} vote(s)\n`
                         )}</pre>
                 </Grid>
+                <Grid xs={12}><Button variant="outlined" color="secondary" onClick={() => {if (window.confirm("Are you sure?") === true) { resetVotes() }}} >RESET SELECTION & VOTES</Button></Grid>
             </Grid>
+            
         </Grid>
 
     </Grid>

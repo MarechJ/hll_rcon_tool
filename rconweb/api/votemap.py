@@ -3,7 +3,8 @@ from rcon.map_recorder import VoteMap, VoteMapConfig
 
 from .auth import login_required, api_response
 from .utils import _get_data
-
+from .views import audit
+from rcon.discord import send_to_discord_audit
 
 def votemap_config():
     config = VoteMapConfig()
@@ -52,6 +53,7 @@ def set_votemap_config(request):
     for k, v in data.items():
         try:
             setters[k](v)
+            audit("set_votemap_config", request, {k: v})
         except KeyError:
             return api_response(error="{} invalid key".format(k), command="set_votemap_config")
 
@@ -73,5 +75,34 @@ def get_votemap_status(request):
             "results": v.get_vote_overview(),
         },
         command="set_votemap_config"
+    )
+    
+
+@csrf_exempt
+@login_required
+def reset_votemap_state(request):
+    if request.method != 'POST':
+        return api_response(
+            failed=True,
+            result={
+                "votes": v.get_votes(),
+                "selection": v.get_selection(),
+                "results": v.get_vote_overview(),
+            },
+            command="reset_votemap_state"
+        )
+    audit("reset_votemap_state", request, {})
+    v = VoteMap()
+    v.clear_votes()
+    v.gen_selection()
+    v.apply_results()
+    return api_response(
+        failed=False,
+        result={
+            "votes": v.get_votes(),
+            "selection": v.get_selection(),
+            "results": v.get_vote_overview(),
+        },
+        command="reset_votemap_state"
     )
     

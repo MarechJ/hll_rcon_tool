@@ -234,6 +234,7 @@ class VoteMap:
         selection = self.get_selection()
         maps_history = MapsHistory()
         config = VoteMapConfig()
+        all_maps = ALL_MAPS
 
         if not config.get_votemap_allow_default_to_offsensive():
             logger.debug(
@@ -258,7 +259,7 @@ class VoteMap:
             DefaultMethods.random_suggestions: lambda: random.choice(
                 list(set(selection) - set([maps_history[0]["name"]]))
             ),
-        }[config.get_default_method()]()
+        }[config.get_votemap_default_method()]()
 
     def apply_results(self):
         config = VoteMapConfig()
