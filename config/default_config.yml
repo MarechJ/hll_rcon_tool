@@ -32,6 +32,12 @@ BAN_TK_ON_CONNECT:
   enabled: no
   message: "Your first action on the server was a TEAM KILL you were banned as a result"
   author_name: "HATERS GONNA HATE"
+  # The punishment taken when the treshold is passed
+  # Available options are "ban", "kick" and "punish"
+  punishment: ban
+  # If punishment is ban, the duration the ban will last for in hours
+  # Ban will be permanent when equal or below 0, or unspecified
+  ban_duration_in_hours: 0
   # Exlude TK with certain weapons from triggering the ban, adding "None" by default so it will exclude arty, tanks and road accidents
   # The weapon name should be as found in your game logs (case insensitive), know weapons at the time of writing: 'SMine M2 Kar98_Sniper M43 M1911 MK2_Grenade Satchel_M37 None P38 M24_Grenade M1A1 MP40 Kar98 STG44 Thompson MG42 Garand Tellermine43 Luger Satchel_3KG Panzershreck M1918A2_BAR M1919 G43 M1903 SMG_M3_GreaseGun M1_Carbine Bazooka'
   # To not exclude any weapons write exclude_weapons: [] 
@@ -57,7 +63,7 @@ BAN_TK_ON_CONNECT:
   teamkill_tolerance_count: 1
   # If left unset, the webhook default to your audit log webhook
   discord_webhook_url: ""
-  discord_webhook_message: "{player} banned for TK right after connecting"
+  discord_webhook_message: "{player} received {punishment} for TK right after connecting"
 
 
   LIVE_STATS:

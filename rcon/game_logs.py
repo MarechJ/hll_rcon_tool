@@ -386,6 +386,11 @@ def auto_ban_if_tks_right_after_connection(rcon: RecordedRcon, log):
     ignore_after_death = config.get("ignore_tk_after_n_death", 1)
     whitelist_players = config.get("whitelist_players", {})
     tk_tolerance_count = config.get("teamkill_tolerance_count", 1)
+    punishment = config.get("punishment", "ban").lower()
+    if punishment not in ["ban", "kick", "punish"]:
+        logger.error("Punishment %s not recognized, defaulting to \"ban\"" % punishment)
+        punishment = "ban"
+    ban_duration = config.get("ban_duration_in_hours", 0)
 
     if player_profile:
         if whitelist_players.get('is_vip') and player_steam_id in vips:
@@ -426,15 +431,38 @@ def auto_ban_if_tks_right_after_connection(rcon: RecordedRcon, log):
             if log['timestamp_ms'] - last_connect_time > max_time_minute * 60 * 1000:
                 logger.debug("Not counting TK as offense due to elapsed time exclusion, last connection time %s, tk time %s", datetime.datetime.fromtimestamp(last_connect_time/1000), datetime.datetime.fromtimestamp(log["timestamp_ms"]))
                 continue
-            logger.info("Banning player %s for TEAMKILL after connect %s", player_name, log)
             tk_counter += 1
             if tk_counter > tk_tolerance_count:
-                rcon.do_perma_ban(
-                    player=player_name,
-                    reason=reason,
-                    by=author,
-                )
-                send_to_discord_audit(discord_msg.format(player=player_name), by=author, webhookurl=webhook)
+                if punishment == "ban":
+                    logger.info("Banning player %s for TEAMKILL after connect %s", player_name, log)
+                    if ban_duration > 0:
+                        rcon.do_temp_ban(
+                            player=player_name,
+                            duration_hours=ban_duration,
+                            reason=reason,
+                            by=author,
+                        )
+                    else:
+                        rcon.do_perma_ban(
+                            player=player_name,
+                            reason=reason,
+                            by=author,
+                        )
+                elif punishment == "kick":
+                    logger.info("Kicking player %s for TEAMKILL after connect %s", player_name, log)
+                    rcon.do_kick(
+                        player=player_name,
+                        reason=reason,
+                        by=author,
+                    )
+                elif punishment == "punish":
+                    logger.info("Punishing player %s for TEAMKILL after connect %s", player_name, log)
+                    rcon.do_punish(
+                        player=player_name,
+                        reason=reason,
+                        by=author,
+                    )
+                send_to_discord_audit(discord_msg.format(player=player_name, punishment=punishment.upper()), by=author, webhookurl=webhook)
         elif is_player_death(player_name, log):
             death_counter += 1
             if death_counter >= ignore_after_death:
