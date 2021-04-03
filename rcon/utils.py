@@ -45,14 +45,6 @@ def get_current_map(rcon):
     return map_
 
 
-def get_current_selection():
-    red = redis.StrictRedis(connection_pool=get_redis_pool())
-    selection = red.get("votemap_selection")
-    if selection:
-        selection = json.loads(selection)
-    return selection
-
-
 def numbered_maps(maps):
     return {str(idx): map_ for idx, map_ in enumerate(maps)}
 

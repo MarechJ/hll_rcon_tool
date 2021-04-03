@@ -20,8 +20,8 @@ from rcon.utils import (
     NO_MOD_SHORT_HUMAN_MAP_NAMES,
     numbered_maps,
     categorize_maps,
-    get_current_selection
 )
+from rcon.map_recorder import VoteMap
 from functools import wraps
 
 
@@ -42,17 +42,7 @@ class LazyPrinter:
             return self.default
 
 def get_votes_status(none_on_fail=False):
-    try:
-        red = redis.StrictRedis(connection_pool=get_redis_pool())
-        data = red.get("votes")
-        if data:
-            return json.loads(data)
-    except:
-        logger.exception("Unable to retrieve votes")
-        if none_on_fail:
-            return None
-    return {'total_votes': 0, "winning_maps": []}
-
+    return VoteMap().get_vote_overview()
 
 def format_winning_map(ctl, winning_maps, display_count=2, default=None):
     nextmap = ctl.get_next_map()
@@ -112,7 +102,7 @@ def join_vote_options(join_char, selection, human_name_map, maps_to_numbers):
     return join_char.join(f"[{maps_to_numbers[m]}] {human_name_map[m]}" for m in selection)
 
 def format_map_vote(rcon, format_type="line", short_names=True):
-    selection = get_current_selection()
+    selection = VoteMap().get_selection()
     if not selection:
         return ""
     human_map = SHORT_HUMAN_MAP_NAMES if short_names else LONG_HUMAN_MAP_NAMES

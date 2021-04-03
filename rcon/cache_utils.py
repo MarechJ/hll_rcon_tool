@@ -93,8 +93,8 @@ class RedisCached:
                 self.red.delete(*keys)
         except redis.exceptions.RedisError:
             logger.exception("Unable to clear cache")
-        else:
-            logger.debug("Cache CLEARED for %s", keys)
+        #else:
+        #   logger.debug("Cache CLEARED for %s", keys)
 
 
 def get_redis_pool(decode_responses=True):
