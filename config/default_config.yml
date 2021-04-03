@@ -34,7 +34,7 @@ BAN_TK_ON_CONNECT:
   author_name: "HATERS GONNA HATE"
   # The punishment taken when the treshold is passed
   # Available options are "ban", "kick" and "punish"
-  punishment: ban
+  punishment: "ban"
   # If punishment is ban, the duration the ban will last for in hours
   # Ban will be permanent when equal or below 0, or unspecified
   ban_duration_in_hours: 0
