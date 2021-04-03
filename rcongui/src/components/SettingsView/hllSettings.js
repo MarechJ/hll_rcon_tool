@@ -26,7 +26,7 @@ import ChangeMap from "./changeMap";
 import Padlock from "./padlock";
 import AutoRefreshLine from "../autoRefreshLine";
 import { ForwardCheckBox, WordList } from '../commonComponent'
-
+import VoteMapConfig from './voteMapConfig'
 
 
 const ProfanityFiler = ({
@@ -588,10 +588,24 @@ class HLLSettings extends React.Component {
             </Grid>
           </Grid>
         </Grid>
+
+        <Grid container className={classes.paddingTop} justify="center" xs={12}>
+          <Grid item>
+            <Typography variant="h5" gutterBottom>
+              Vote Map config
+            </Typography>
+          </Grid>
+        </Grid>
+        <Grid container className={classes.paper} xs={12}>
+          <VoteMapConfig />
+        </Grid>
         <Grid container className={classes.paddingTop} justify="center" xs={12}>
           <Grid item>
             <Typography variant="h5" gutterBottom>
               Configure map rotation
+            </Typography>
+            <Typography variant="caption" gutterBottom>
+              Map sure the vote map is disabled if you want to change your rotation
             </Typography>
           </Grid>
         </Grid>

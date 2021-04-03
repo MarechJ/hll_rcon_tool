@@ -210,7 +210,7 @@ class Rcon(ServerCtl):
                 raise
             l.append(dict(zip((STEAMID, NAME), (steam_id_64, name))))
 
-        return l
+        return sorted(l, key=lambda d: d[NAME])
 
     def do_remove_vip(self, steam_id_64):
         with invalidates(Rcon.get_vip_ids):
@@ -552,14 +552,11 @@ class Rcon(ServerCtl):
         rotation = list(rotation)
         logger.info("Apply map rotation %s", rotation)
 
+        current = self.get_map_rotation()
+        if rotation == current:
+            logger.debug("Map rotation is the same, nothing to do")
+            return current
         with invalidates(Rcon.get_map_rotation):
-            current = self.get_map_rotation()
-            if rotation == current:
-                logger.debug("Map rotation is the same, nothing to do")
-                return current
-
-            print(rotation, current)
-
             if len(current) == 1:
                 logger.info("Current rotation is a single map")
                 for idx, m in enumerate(rotation):
