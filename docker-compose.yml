@@ -4,44 +4,23 @@ networks:
   server1:
   server2:
   server3:
-  server4:
   common:
 
 
 services:
-  broadcast: &broadcast
-    hostname: broadcast
+  supervisor_1: &supervisor
     extends:
       file: docker-compose-common-components.yml
       service: python
-    command: broadcast_loop
+    command: supervisor
     depends_on:
       - postgres
       - redis
     networks:
-      - server1
-      - common
-  #stats: &stats
-  # hostname: stats
-  #  extends:
-  #    file: docker-compose-common-components.yml
-  #    service: python
-  #  command: stats_loop
-  #  depends_on:
-  #    - postgres
-  #    - redis
-  logs_event_loop: &logs_event_loop
-    hostname: logs_event_loop
-    extends:
-      file: docker-compose-common-components.yml
-      service: python
-    command: log_loop
-    depends_on:
-      - postgres
-      - redis
-    networks:
-      - server1
-      - common
+      common:
+      server1:
+        aliases: 
+          - supervisor
   backend_1: &backend
     hostname: api
     extends:
@@ -56,24 +35,27 @@ services:
         aliases:
           - backend
       common:
-  frontend: &frontend
+  frontend_1: &frontend
     image: maresh/hll_rcon_frontend:latest
     ports:
       - ${RCONWEB_PORT}:80
+      - ${RCONWEB_PORT_HTTPS}:443
+      - ${PUBLIC_STATS_PORT}:81
+      - ${PUBLIC_STATS_PORT_HTTPS}:444
     restart: always
     environment:
+      RCONWEB_EXTERNAL_ADDRESS: ${RCONWEB_EXTERNAL_ADDRESS}
       HLL_HOST: ${HLL_HOST}
-      RCONWEB_PASSWORD: ${RCONWEB_PASSWORD}
-      RCONWEB_USERNAME: ${RCONWEB_USERNAME}
     volumes:
       - ./static:/static/
+      - ./certs:/certs/
     depends_on:
-        - backend_1
+      - backend_1
     networks:
       - server1
       - common
   redis:
-    image: redislabs/redistimeseries:1.2.6
+    image: maresh/hll_redis:latest
     restart: always
     volumes:
       - ./redis_data:/data
@@ -94,9 +76,8 @@ services:
       - common
 
   ############ SERVER 2  #############
-  broadcast_2:
-    <<: *broadcast
-    hostname: broadcast_2
+  supervisor_2:
+    <<: *supervisor
     environment: &env2
       HLL_HOST: ${HLL_HOST_2}
       HLL_PORT: ${HLL_PORT_2}
@@ -106,8 +87,6 @@ services:
       REDIS_URL: redis://redis:6379/1
       DB_URL: 'postgres://rcon:${HLL_DB_PASSWORD}@postgres:5432'
       DISCORD_WEBHOOK_AUDIT_LOG: ${DISCORD_WEBHOOK_AUDIT_LOG_2}
-      RCONWEB_PASSWORD: ${RCONWEB_PASSWORD_2}
-      RCONWEB_USERNAME: ${RCONWEB_USERNAME_2}
       RCONWEB_API_SECRET: ${RCONWEB_API_SECRET}
       SERVER_SHORT_NAME: ${SERVER_SHORT_NAME_2}
       DISCORD_CHAT_WEBHOOK: ${DISCORD_CHAT_WEBHOOK_2}
@@ -121,31 +100,22 @@ services:
       DISCORD_SEND_TEAM_KILL_UPDATES: ${DISCORD_SEND_TEAM_KILL_UPDATES_2}
       VOTE_MAP_INSTRUCTIONS: ${VOTE_MAP_INSTRUCTIONS}
       STEAM_API_KEY: ${STEAM_API_KEY}
+      BAN_ON_VAC_HISTORY_DAYS: ${BAN_ON_VAC_HISTORY_DAYS}
+      BAN_ON_VAC_HISTORY_REASON: ${BAN_ON_VAC_HISTORY_REASON}
+      MAX_GAME_BAN_THRESHOLD: ${MAX_GAME_BAN_THRESHOLD}
+      SUPERVISOR_RPC_URL: http://supervisor:9001/RPC2
+      CONFIG_DIR: /config/
+      SERVER_NUMBER: 2
+      RCONWEB_SERVER_URL: ${RCONWEB_SERVER_URL_2}
     restart: on-failure
     networks:
-      - common
-      - server2
+      common:
+      server2:
+        aliases: 
+          - supervisor
+    command: supervisor
     depends_on:
-      - frontend
-  #stats_2:
-  #  <<: *stats
-  #  hostname: stats_2
-  #  environment:
-  #    <<: *env2
-  #  restart: on-failure
-  #  depends_on:
-  #    - frontend
-  logs_event_loop_2:
-    <<: *logs_event_loop
-    hostname: logs_event_loop_2
-    environment:
-      <<: *env2
-    restart: on-failure
-    networks:
-      - common
-      - server2
-    depends_on:
-      - frontend
+      - frontend_1
   backend_2:
     <<: *backend
     hostname: api_2
@@ -158,11 +128,14 @@ services:
         aliases:
           - backend
     depends_on:
-      - frontend
+      - frontend_1
   frontend_2:
     <<: *frontend
     ports:
       - ${RCONWEB_PORT_2}:80
+      - ${RCONWEB_PORT_HTTPS_2}:443
+      - ${PUBLIC_STATS_PORT_2}:81
+      - ${PUBLIC_STATS_PORT_HTTPS_2}:444
     environment:
       <<: *env2
     restart: on-failure
@@ -173,9 +146,8 @@ services:
       - backend_2
 
   ############ SERVER 3  #############
-  broadcast_3:
-    <<: *broadcast
-    hostname: broadcast_3
+  supervisor_3:
+    <<: *supervisor
     environment: &env3
       HLL_HOST: ${HLL_HOST_3}
       HLL_PORT: ${HLL_PORT_3}
@@ -185,8 +157,6 @@ services:
       REDIS_URL: redis://redis:6379/2
       DB_URL: 'postgres://rcon:${HLL_DB_PASSWORD}@postgres:5432'
       DISCORD_WEBHOOK_AUDIT_LOG: ${DISCORD_WEBHOOK_AUDIT_LOG_3}
-      RCONWEB_PASSWORD: ${RCONWEB_PASSWORD_3}
-      RCONWEB_USERNAME: ${RCONWEB_USERNAME_3}
       RCONWEB_API_SECRET: ${RCONWEB_API_SECRET}
       SERVER_SHORT_NAME: ${SERVER_SHORT_NAME_3}
       DISCORD_CHAT_WEBHOOK: ${DISCORD_CHAT_WEBHOOK_3}
@@ -200,29 +170,20 @@ services:
       DISCORD_SEND_TEAM_KILL_UPDATES: ${DISCORD_SEND_TEAM_KILL_UPDATES_3}
       VOTE_MAP_INSTRUCTIONS: ${VOTE_MAP_INSTRUCTIONS}
       STEAM_API_KEY: ${STEAM_API_KEY}
+      BAN_ON_VAC_HISTORY_DAYS: ${BAN_ON_VAC_HISTORY_DAYS}
+      BAN_ON_VAC_HISTORY_REASON: ${BAN_ON_VAC_HISTORY_REASON}
+      MAX_GAME_BAN_THRESHOLD: ${MAX_GAME_BAN_THRESHOLD}
+      SUPERVISOR_RPC_URL: http://supervisor:9001/RPC2
+      CONFIG_DIR: /config/
+      SERVER_NUMBER: 3
+      RCONWEB_SERVER_URL: ${RCONWEB_SERVER_URL_3}
     restart: on-failure
+    command: supervisor
     networks:
-      - common
-      - server3
-    depends_on:
-      - frontend_2
-  #stats_3:
-  #  <<: *stats
-  #  hostname: stats_3
-  #  environment:
-  #    <<: *env3
-  #  restart: on-failure
-  #  depends_on:
-  #    - frontend_2
-  logs_event_loop_3:
-    <<: *logs_event_loop
-    hostname: logs_event_loop_3
-    environment:
-      <<: *env3
-    restart: on-failure
-    networks:
-      - common
-      - server3
+      common:
+      server3:
+        aliases: 
+          - supervisor
     depends_on:
       - frontend_2
   backend_3:
@@ -242,6 +203,9 @@ services:
     <<: *frontend
     ports:
       - ${RCONWEB_PORT_3}:80
+      - ${RCONWEB_PORT_HTTPS_3}:443
+      - ${PUBLIC_STATS_PORT_3}:81
+      - ${PUBLIC_STATS_PORT_HTTPS_3}:444
     environment:
       <<: *env3
     restart: on-failure
@@ -250,82 +214,3 @@ services:
       - server3
     depends_on: 
       - backend_3
-
-  ############ SERVER 4  #############
-  broadcast_4:
-    <<: *broadcast
-    hostname: broadcast_4
-    environment: &env4
-      HLL_HOST: ${HLL_HOST_4}
-      HLL_PORT: ${HLL_PORT_4}
-      HLL_PASSWORD: ${HLL_PASSWORD_4}
-      LOGGING_LEVEL: 'INFO'
-      LOGGING_PATH: /logs/
-      REDIS_URL: redis://redis:6379/3
-      DB_URL: 'postgres://rcon:${HLL_DB_PASSWORD}@postgres:5432'
-      DISCORD_WEBHOOK_AUDIT_LOG: ${DISCORD_WEBHOOK_AUDIT_LOG_4}
-      RCONWEB_PASSWORD: ${RCONWEB_PASSWORD_4}
-      RCONWEB_USERNAME: ${RCONWEB_USERNAME_4}
-      RCONWEB_API_SECRET: ${RCONWEB_API_SECRET}
-      SERVER_SHORT_NAME: ${SERVER_SHORT_NAME_4}
-      DISCORD_CHAT_WEBHOOK: ${DISCORD_CHAT_WEBHOOK_4}
-      DISCORD_CHAT_WEBHOOK_ALLOW_MENTIONS: ${DISCORD_CHAT_WEBHOOK_ALLOW_MENTIONS}
-      RCONWEB_PORT: ${RCONWEB_PORT_4}
-      DISCORD_PING_TRIGGER_WORDS: ${DISCORD_PING_TRIGGER_WORDS_4}
-      DISCORD_PING_TRIGGER_ROLES: ${DISCORD_PING_TRIGGER_ROLES_4}
-      DISCORD_PING_TRIGGER_WEBHOOK: ${DISCORD_PING_TRIGGER_WEBHOOK_4}
-      DISCORD_KILLS_WEBHOOK: ${DISCORD_KILLS_WEBHOOK_4}
-      DISCORD_SEND_KILL_UPDATES: ${DISCORD_SEND_KILL_UPDATES_4}
-      DISCORD_SEND_TEAM_KILL_UPDATES: ${DISCORD_SEND_TEAM_KILL_UPDATES_4}
-      VOTE_MAP_INSTRUCTIONS: ${VOTE_MAP_INSTRUCTIONS}
-      STEAM_API_KEY: ${STEAM_API_KEY}
-    restart: on-failure
-    networks:
-      - common
-      - server4
-    depends_on:
-      - frontend_3
-  #stats_4:
-  #  <<: *stats
-  #  hostname: stats_4
-  #  environment:
-  #    <<: *env4
-  #  restart: on-failure
-  #  depends_on:
-  #   - frontend_3
-  logs_event_loop_4:
-    <<: *logs_event_loop
-    hostname: logs_event_loop_4
-    environment:
-      <<: *env4
-    restart: on-failure
-    networks:
-      - common
-      - server4
-    depends_on:
-      - frontend_3
-  backend_4:
-    <<: *backend
-    hostname: api_4
-    environment:
-      <<: *env4
-    restart: on-failure
-    networks:
-      common:
-      server4:
-        aliases:
-          - backend
-    depends_on:
-      - frontend_3
-  frontend_4:
-    <<: *frontend
-    ports:
-      - ${RCONWEB_PORT_4}:80
-    environment:
-      <<: *env4
-    restart: on-failure
-    networks:
-      - common
-      - server4
-    depends_on:
-      - backend_4

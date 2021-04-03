@@ -1,30 +1,37 @@
 import React from "react";
 import {
-  Grid, TextField, Button, jssPreset
+  Grid, TextField, Button, jssPreset, TextareaAutosize
 } from "@material-ui/core";
 import Autocomplete from '@material-ui/lab/Autocomplete';
 import SplitButton from '../splitButton'
 import TextHistory from '../textHistory'
+import { getSharedMessages } from "../../utils/fetchUtils";
+import { ForwardCheckBox } from '../commonComponent'
 
 
-const ServerMessage = ({ classes, type, value, setValue, onSave }) => {
-  const textHistory = new TextHistory(type)
+const ServerMessage = ({ classes, type, autocompleteKey, value, setValue, onSave, forward, onForwardChange }) => {
+  const textHistory = new TextHistory(autocompleteKey)
+  const [sharedMessages, setSharedMessages] = React.useState([])
+  React.useEffect(() => { getSharedMessages(autocompleteKey).then(data => setSharedMessages(data))  }, []);
 
-  return <Grid container xs={12}>
+  return <Grid container xs={12} alignItems="center" alignContent="center" justify="center">
     <Grid item xs={12} className={classes.paddingBottom}>
     <Autocomplete
         freeSolo
-        options={textHistory.getTexts()}
+        options={sharedMessages.concat(textHistory.getTexts())}
         inputValue={value}
         onInputChange={(e, value) => setValue(value)}
         renderInput={(params) => (
-          <TextField multiline rows="4" {...params} label={type} margin="normal" variant="outlined" 
+          <TextField multiline rows={4} rowsMax={40} {...params} label={type} margin="normal" variant="outlined" 
           helperText={`Due to HLL limitations we can't know the current ${type}. Supports same variables as for auto broadcasts.`} />
         )}
       />
     </Grid>
-    <Grid item xs={12}>
-      <SplitButton options={[`Set ${type}`, `Set ${type} and save as template`, "Save as template"]} clickHandlers={[() => onSave(value), () => { textHistory.saveText(value); onSave(value)}, () => textHistory.saveText(value)]} buttonProps={{variant: "outlined"}} />
+    <Grid item>
+      <ForwardCheckBox bool={forward} onChange={onForwardChange} />
+    </Grid>
+    <Grid item>
+      <SplitButton options={[`Set ${type}`, `Set ${type} and save as template`, "Save as template"]} clickHandlers={[() => onSave(value), () => { textHistory.saveText(value, sharedMessages); onSave(value)}, () => textHistory.saveText(value, sharedMessages)]} buttonProps={{variant: "outlined"}} />
     </Grid>
   </Grid>
 }

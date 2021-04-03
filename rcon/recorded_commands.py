@@ -12,6 +12,8 @@ class RecordedRcon(Rcon):
     """
     Note beware of using the cache in this layer
     """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
     def do_punish(self, player, reason, by):
         res = super().do_punish(player, reason)
@@ -27,20 +29,23 @@ class RecordedRcon(Rcon):
         )
         return res
 
-    def do_temp_ban(self, player, reason, by):
-        res = super().do_temp_ban(player, reason)
+    def do_temp_ban(self, player=None, steam_id_64=None, duration_hours=2, reason="", by=""):
+        res = super().do_temp_ban(player, steam_id_64, duration_hours, reason, admin_name=by)
         safe_save_player_action(
-            rcon=self, player_name=player, action_type="TEMPBAN", reason=reason, by=by)
+            rcon=self, player_name=player, action_type="TEMPBAN", reason=reason, by=by, steam_id_64=steam_id_64)
         return res
 
-    def do_perma_ban(self, player, reason, by):
-        res = super().do_perma_ban(player, reason)
+    def do_perma_ban(self, player=None, steam_id_64=None, reason="", by=""):
+        res = super().do_perma_ban(player, steam_id_64, reason, admin_name=by)
         safe_save_player_action(
-            rcon=self, player_name=player, action_type="PERMABAN", reason=reason, by=by
+            rcon=self, player_name=player, action_type="PERMABAN", reason=reason, by=by, steam_id_64=steam_id_64
         )
         try:
-            info = self.get_player_info(player)
-            add_player_to_blacklist(info['steam_id_64'], reason)
+            if not steam_id_64:
+                info = self.get_player_info(player)
+                steam_id_64 = info['steam_id_64']
+            # TODO add author
+            add_player_to_blacklist(steam_id_64, reason, by=by)
         except:
             logger.exception("Unable to blacklist")
         return res
@@ -56,12 +61,16 @@ class RecordedRcon(Rcon):
     def get_players(self):
         players = super().get_players()
 
+        vips = set(v['steam_id_64'] for v in super().get_vip_ids())
         steam_ids = [p.get(STEAMID) for p in players if p.get(STEAMID)]
         profiles = {p['steam_id_64']: p for p in get_profiles(steam_ids)}
 
         for p in players:
             p.update(
-                {'profile': profiles.get(p.get(STEAMID))}
+                {
+                    'profile': profiles.get(p.get(STEAMID)),
+                    'is_vip': p.get(STEAMID) in vips
+                }
             )
 
         return players

@@ -1,29 +1,30 @@
 version: '2.4'
 
 services:
-  broadcast:
-    build: .
-    environment:
-      LOGGING_LEVEL: 'DEBUG'
-  logs_event_loop:
-    build: .
-    environment:
-      LOGGING_LEVEL: 'DEBUG'
-  stats:
+  supervisor_1:
     build: .
     environment:
       LOGGING_LEVEL: 'DEBUG'
   backend_1:
     environment:
-      DJANGO_DEBUG: 'yes'
       LOGGING_LEVEL: 'DEBUG'
     build: .
-  frontend:
+  debug_1:
+    environment:
+      LOGGING_LEVEL: 'DEBUG'
+    build: .
+    ports:
+      - 8000:8000
+    command: debug
+    networks:
+      - common
+  frontend_1:
     build:
-      context: ./rcongui
+      context: .
+      dockerfile: Dockerfile-frontend
   redis:
     ports: 
-      - ${HLL_REDIS_HOST_PORT:-6379}:6379
+      - 127.0.0.1:${HLL_REDIS_HOST_PORT:-6379}:6379
   postgres:
     ports:
       - ${HLL_DB_HOST_PORT:-5432}:5432

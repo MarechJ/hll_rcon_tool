@@ -25,8 +25,19 @@ services:
             DISCORD_SEND_TEAM_KILL_UPDATES: ${DISCORD_SEND_TEAM_KILL_UPDATES}
             VOTE_MAP_INSTRUCTIONS: ${VOTE_MAP_INSTRUCTIONS}
             STEAM_API_KEY: ${STEAM_API_KEY}
+            BAN_ON_VAC_HISTORY_DAYS: ${BAN_ON_VAC_HISTORY_DAYS}
+            BAN_ON_VAC_HISTORY_REASON: ${BAN_ON_VAC_HISTORY_REASON}
+            MAX_GAME_BAN_THRESHOLD: ${MAX_GAME_BAN_THRESHOLD}
+            SILENT_MAP_RECORDER: ${SILENT_MAP_RECORDER}
+            SUPERVISOR_RPC_URL: http://supervisor:9001/RPC2
+            SERVER_NUMBER: 1
+            NB_API_WORKERS: ${NB_API_WORKERS}
+            CONFIG_DIR: /config/
+            RCONWEB_EXTERNAL_ADDRESS: ${RCONWEB_EXTERNAL_ADDRESS}
+            RCONWEB_SERVER_URL: ${RCONWEB_SERVER_URL}
         restart: always
         volumes: 
             - ./logs:/logs/
             - ./servicediscovery:/servicediscovery
             - ./static:/static/
+            - ./config:/config/

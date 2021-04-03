@@ -1,24 +1,73 @@
+![Website](https://img.shields.io/website?down_color=red&up_color=orange&up_message=hllrcon.app&url=https%3A%2F%2Fhllrcon.app) ![Discord](https://img.shields.io/discord/685692524442026020?color=%237289da&label=discord)
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/marechj/hll_rcon_tool) ![Docker Cloud Automated build](https://img.shields.io/docker/cloud/automated/maresh/hll_rcon) ![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/maresh/hll_rcon) ![Docker Pulls](https://img.shields.io/docker/pulls/maresh/hll_rcon)
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/T6T83KY8H)
+ 
+ 
 # Hell Let Loose (HLL) advanced RCON  
 
-An extended RCON tool for Hell Let loose.
-It's composed of HTTP Api, a friendly GUI and if you need it a cli or use it as a library to build your own client.
+An extended RCON tool for Hell Let loose, meant to replace and go WAY beyhond the official tool.
 
-Please join us on discord if you use it, for feedback, troubleshooting and informations about updates: https://discord.gg/hZx6gn3
+It is essentially a website that you can self host (or if you ask around the discord, some people can probably host it for you)
 
-Feel free to contribute, some parts would need a rewrite (I single-handedly built it so I took some shortcuts).
-There's a LOT of new cool features that could be added, I'd be happy to walk through the code with you if you want to get involved.
+## Included features:
 
-Here's a small sample:
-![Live view page](/images/homepage.png)
+- Live view on players + all expected actions: punish, kick, temporary ban (choose the time), permanent ban. Search for players, and sort by play time, punition, name etc etc
+- User account and audit logs, each moderator has it's own account so you know who did what on whom and when, all the rcon actions can get forwarded to your discord (change of settings included)
+- Group actions - Easily apply the same action on multiple players with one click (say you want to switch or kick a whole squad)
+- Live logs + filtering by type (kill, chat, vote, etc..), filtering by players
+- Discord webhooks support, so that the chat, TK and kills can be forward to your discord server
+- Trigger word that when written in the ingame chat will create an alert (tag a person(s) or a role(s) on discord) such as: !admin or just anyword you want (insults if you want to chase those)
+- Flag player with any emoji / icons you want + comment attached
+- Auto loading of player's country from steam and displayed in live view
+- History of players and player profile: All game sessions of players are recorded, all the names they used in the passed, punitions they received and by which admin, etc
+- Apply actions on players even if they are not online anymore, from the player history you can flag, permaban, temp ban, lift all bans, add to VIP
+- Permanent logs, a seacrh tool to look at the entire history of the game logs of your server, export logs as CSV
+- Multi server support, you can host the rcon for mutliple servers and they will share the same player database, you can apply temp and perma bans to all server with only one action, synch VIP, settings, broadcast messages etc...
+- Automated broadcast loops
+- Automated settings based on the player count of you server (will add auto settings based on time too soon)
+- Shared text for punitions and various messages that you can preset so that you never have to type the reason for the kick anymore. It also remember new text you type if you want it (to autocomplete it the next time)
+- Search through bans by name, reason or steamid (for quick unbanning)
+- Backup of your bans so that if you ever change your game server or add one the bans will be re-applied on the fly if the banned dude try to join your new server
+- Recording of you map history, you see which map were played and how long they lasted
+- Ban people even if they never set foot on your server yet
+- Basic scoreboard showing you total kills / death / TK / death by TK for the last N minutes
+- Backup and restore of VIPs
+- All the basic settings, map rotation management, sliders for Idle kick time, max ping etc..
+- For power users and coders: You can add anything you want in the cron server or in the supervisor service so it's easy to code you own plugin (I myself have a votemap plugin and a bot that verifies players), an http API to use all the features above and a CLI for a subset of those
+- Put player on a watch list and be notified when they enter your server
+
+
+> Why a website?
+- It's running 24/7 so you have A LOT features that you couldn't get with a simple desktop app (recording and forwarding of logs, discord alerts, player profile etc..)
+- It's more secure / convenient, a website is centralized, meaning that all actions have to go through it, you don't need to give the real RCON password to you moderators, all activity is recorded in one place, you can share configuration with other, etc...
+- It does not require any installation on the client side, you just need a browser
+
+> Yes but I don't know anything about console commands, coding and such?
+
+It's a 2 steps installation (5 if you include the pre-requistes), many not so technical people managed so you probably can too.
+The community grew quite big so if you still don't understand what to do after reading this just go and ask on discord :)
+
+There's also a Wiki made by the community (Thanks [2.Fjg]bn.hall): https://github.com/MarechJ/hll_rcon_tool/wiki
+
+
+
+**Join us on discord if you use it, for feedback, troubleshooting and informations about updates:** https://discord.gg/hZx6gn3
+
+Here's a sample:
+![Live view page](/images/Rcon.png)
+![Settings](/images/Rcon2.png)
+![Player history overview](/images/Rcon3.png)
+![Historical logs](/images/Rcon4.png)
 
 # How to install the App
 
 ### Pre-requistes:
 
-  - Having some basic shell (command prompt) skills. Feel free to ask for help on the Discord
-  - Having a dedicated server - This app is meant to run 24/7 (it's a website with attached services)
-  - The below isntalled on the server where you install it:
-     - (Otionnal but recommanded) GIT: https://git-scm.com/downloads
+  - Having some very basic shell (command prompt) skills. Feel free to ask for help on the Discord!
+  - Having a dedicated server - This app is meant to run 24/7 - (If you don't have that, you can just run a cheap Virtual Private Server)
+  - The below need to be installed on the server where the rcon will run:
+     - (Otionnal but recommanded) GIT: https://git-scm.com/downloads  (if you don't use git you need to download the releases)
      - Docker Engine (Community) installed: https://docs.docker.com/install/
      - Docker Compose installed: https://docs.docker.com/compose/install/
 
@@ -70,7 +119,7 @@ Note if you don't see the `.env` file you need to activate the show hidden files
 Note for power users:
 
 You could also just export the variables in your terminal before running the docker-compose commands
-OR edit the `docker-compose.yml` and replace the `${variable}` directly in there, however you might have a conflic next time you update the sources.
+OR edit the `docker-compose.yml` and replace the `${variable}` directly in there, however you might have a conflict next time you update the sources.
 Alternatively you can also specify them in the command line. [More details](https://docs.docker.com/compose/environment-variables/#set-environment-variables-with-docker-compose-run)
 
 ### 3. RUN it!
@@ -87,8 +136,7 @@ Alternatively you can also specify them in the command line. [More details](http
 
 #### Raspberry-Pi or any ARM32v7
 
-    docker-compose -f docker-compose.yml -f docker-compose.arm32v7.yml build
-    docker-compose -f docker-compose.yml -f docker-compose.arm32v7.yml  up -d 
+    docker-compose -f docker-compose.yml -f docker-compose.arm32v7.yml up -d --build
 
 
 The web application will be available on `<your server ip>:$RCONWEB_PORT` (you can use http://localhost:8010 if you test from the machine where it's installed)
@@ -105,18 +153,25 @@ Make sure you specify their steam id it will be used in upcoming features: http:
 Once the user is created you'll end up on that page: http://prntscr.com/u3t3to
 I recommend NOT CHANGING ANYTHING except for a select few of your most trusted staff members you can tick the `Superuser status`.
 Please note that users won't be able to change their password by themselves unless you tick the `staff status` so that they can access this admin page, however i DO NOT RECOMMEND doing as I won't be maintaining special permissions on admin models on the future (just manage password for them). 
+To change the password of one of your user, in the users list click on him, then there: http://prntscr.com/u3ytzi
+
 
 Please note that the "onlineadmins" variable in the (auto) broadcast is broken due to accounts. It will be fixed and improved later.
 
 You're done, ENJOY!
 
+If you feel generous you can donate, the money will be use to reward contributing developer or content creator to create video tutorial, demos, documentation, etc.
+[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/donate?hosted_button_id=56MYGQ2966V7J)
+
 ### To update to the latest version:
+
+Please join the discord and follow annoucements, sometimes the update instructions vary from standard.
 
 #### In case it says your local changes the `.env` would be overriden when you git pull:
 
 You can do 
 
-   git stash && git pull
+    git stash && git pull
 
 Then either: `git stash apply` edit to remove the conflit then `git reset .env`
 Or just fill the `.env` manually again.
@@ -128,19 +183,18 @@ This won't happen for every updates.
 #### Linux
 
     git pull
-    docker-compose pull && docker-compose up -d
+    docker-compose pull && docker-compose up -d --force-recreate --remove-orphans
 
 
 #### Windows
 
     git pull 
-    docker-compose pull && docker-compose -f docker-compose.yml -f docker-compose.windows.yml up -d 
+    docker-compose pull && docker-compose -f docker-compose.yml -f docker-compose.windows.yml up -d --force-recreate --remove-orphans
 
 #### Raspberry-Pi or any ARM32v7
 
     git pull 
-    docker-compose -f docker-compose.yml -f docker-compose.arm32v7.yml build
-    docker-compose -f docker-compose.yml -f docker-compose.arm32v7.yml  up -d 
+    docker-compose -f docker-compose.yml -f docker-compose.arm32v7.yml up --build -d --force-recreate --remove-orphans
 
 Or download the [latest zip release](https://github.com/MarechJ/hll_rcon_tool/releases/latest)
 

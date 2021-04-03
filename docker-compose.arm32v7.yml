@@ -1,11 +1,7 @@
 version: '2.4'
 
 services:
-  broadcast:
-    build: 
-      context: .
-      dockerfile: Dockerfile-arm32
-  logs_event_loop:
+  supervisor:
     build: 
       context: .
       dockerfile: Dockerfile-arm32
@@ -13,10 +9,10 @@ services:
     build: 
       context: .
       dockerfile: Dockerfile-arm32
-  frontend:
+  frontend_1:
     build:
-      context: ./rcongui
-      dockerfile: Dockerfile-arm32
+      context: .
+      dockerfile: Dockerfile-frontend-arm32
   redis:
     image: arm32v7/redis:5
   postgres:

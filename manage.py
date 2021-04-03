@@ -2,7 +2,8 @@
 import os
 import logging
 
-logger = logging.getLogger('rcon')
+
+
 
 class ConfigurationError(Exception):
     pass
@@ -31,18 +32,17 @@ def pre_flight_checks(env):
     errors = _get_missing_env(required, env)
     warnings = _get_missing_env(optionnal, env)
 
-    if warnings:
-        logger.warn
-
+    print(warnings)
     if errors:
+        print(errors)
         raise ConfigurationError('\n'.join(errors))
     
 
 if __name__ == "__main__":
     env = os.environ
-
+    logger = logging.getLogger('rcon')
     try:
-        pre_flight_checks(env)
+        #pre_flight_checks(env)
         from rcon.cli import cli, init
         init()
         cli()
@@ -51,11 +51,8 @@ if __name__ == "__main__":
     except ConfigurationError as e:
         print(repr(e))
         logger.error("MISSING Configuration: %s", e.args)
-    except:
-        logger.exception("Unexpected error. Env dump %s", env)
-    finally:
-        if os.getenv("IS_OPTIONNAL_SERVER") == "yes":
-            exit(0)
-        else:
-            exit(1)
-        
+        exit(1)
+    except Exception as e:
+        print(repr(e))
+        logger.exception("Unexpected error.")
+        exit(1)

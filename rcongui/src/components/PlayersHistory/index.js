@@ -1,8 +1,13 @@
 /* eslint-disable no-use-before-define */
-import React from 'react';
-import useAutocomplete from '@material-ui/lab/useAutocomplete';
-import { makeStyles } from '@material-ui/core/styles';
-import { postData, showResponse, handle_http_errors, sendAction } from "../../utils/fetchUtils";
+import React from "react";
+import {
+  postData,
+  showResponse,
+  handle_http_errors,
+  sendAction,
+  addPlayerToWatchList,
+  get,
+} from "../../utils/fetchUtils";
 import { toast } from "react-toastify";
 import { join, reduce } from "lodash";
 import Pagination from "@material-ui/lab/Pagination";
@@ -12,11 +17,12 @@ import {
   TextField,
   LinearProgress,
   Chip,
+  Typography,
 } from "@material-ui/core";
 import { ReasonDialog } from "../PlayerView/playerActions";
 import { omitBy } from "lodash/object";
 import SearchBar from "./searchBar";
-import { Map, List } from "immutable";
+import { Map, List, fromJS } from "immutable";
 import FlagIcon from "@material-ui/icons/Flag";
 import "emoji-mart/css/emoji-mart.css";
 import { Picker } from "emoji-mart";
@@ -25,18 +31,23 @@ import DialogActions from "@material-ui/core/DialogActions";
 import DialogContent from "@material-ui/core/DialogContent";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import { getEmojiFlag } from "../../utils/emoji";
-import PlayerItem from "./playerItem";
+import PlayerGrid from "./playerGrid";
+
 
 const PlayerSummary = ({ player, flag }) => (
   <React.Fragment>
-    <p>Add flag: {flag ? getEmojiFlag(flag) : <small>Please choose</small>}</p>
-    <p>
+    <Typography variant="body2">
+      Add flag: {flag ? getEmojiFlag(flag) : <small>Please choose</small>}
+    </Typography>
+    <Typography variant="body2">
       To:{" "}
-      {player.names
-        ? player.names.map((n) => <Chip label={n} />)
+      {player && player.get("names")
+        ? player.get("names").map((n) => <Chip label={n.get("name")} />)
         : "No name recorded"}
-    </p>
-    <p>Steamd id: {player.steam_id_64}</p>
+    </Typography>
+    <Typography variant="body2">
+      Steamd id: {player ? player.get("steam_id_64") : ""}
+    </Typography>
   </React.Fragment>
 );
 
@@ -113,7 +124,6 @@ class FlagDialog extends React.Component {
   }
 }
 
-const show_names = (names) => join(names, " · ");
 
 const FlagButton = ({ classes, onflag }) => (
   <Button variant="outlined" onClick={onflag}>
@@ -134,161 +144,12 @@ const MyPagination = ({ classes, pageSize, total, page, setPage }) => (
   />
 );
 
-const FilterPlayer = ({
-  classes,
-  constPlayersHistory,
-  pageSize,
-  total,
-  page,
-  setPage,
-  onUnBlacklist,
-  onBlacklist,
-  constNamesIndex,
-  onAddFlag,
-  onDeleteFlag,
-  onAddVip,
-  onDeleteVip,
-  vips,
-}) => {
-  const playersHistory = constPlayersHistory.toJS();
-  const namesIndex = constNamesIndex.toJS();
-  const {
-    getRootProps,
-    getInputLabelProps,
-    getInputProps,
-    getListboxProps,
-    getOptionProps,
-    groupedOptions,
-  } = useAutocomplete({
-    forcePopupIcon: true,
-    freeSolo: true,
-    selectOnFocus: true,
-    blurOnSelect: false,
-    disableOpenOnFocus: true,
-    disableCloseOnSelect: true,
-    disableClearable: true,
-    disableListWrap: true,
-    disableRestoreFocus: true,
-    disablePortal: true,
-    autoSelect: true,
-    debug: true,
-    options: namesIndex,
-    getOptionLabel: (option) => (option.names ? option.names : option),
-  });
-
-  const [doFlag, setDoFlag] = React.useState(false);
-  const [doConfirmPlayer, setDoConfirmPlayer] = React.useState(false);
-  const playerList = groupedOptions.length > 0 ? groupedOptions : namesIndex;
-
-  return (
-    <div>
-      <Grid
-        container
-        {...getRootProps()}
-        alignContent="space-between"
-        alignItems="flex-end"
-        spacing={2}
-      >
-        <Grid item xs={12} md={6}>
-          <TextField
-            fullWidth
-            inputProps={{ ...getInputProps() }}
-            label="Filter current selection"
-          />
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <MyPagination
-            classes={classes}
-            pageSize={pageSize}
-            page={page}
-            setPage={setPage}
-            total={total}
-          />
-        </Grid>
-      </Grid>
-      <Grid container spacing={2}>
-          
-        {playerList.map((nameIndex) => {
-          const player = playersHistory[nameIndex.idx];
-
-          return (
-            <Grid
-              key={player.steam_id_64}
-              item
-              xs={12}
-              sm={6}
-              md={4}
-              lg={3}
-              xl={2}
-            >
-              <PlayerItem
-                key={player.steam_id_64}
-                classes={classes}
-                names={show_names(player.names)}
-                steamId64={player.steam_id_64}
-                firstSeen={player.first_seen_timestamp_ms}
-                lastSeen={player.last_seen_timestamp_ms}
-                punish={player.penalty_count.PUNISH}
-                kick={player.penalty_count.KICK}
-                tempban={player.penalty_count.TEMPBAN}
-                permaban={player.penalty_count.PERMABAN}
-                compact={false}
-                blacklisted={player.blacklisted}
-                flags={List(player.flags.map((v) => Map(v)))}
-                onflag={() => setDoFlag(player)}
-                onBlacklist={() =>
-                  setDoConfirmPlayer({
-                    player: player.steam_id_64,
-                    actionType: "blacklist",
-                  })
-                }
-                onUnBlacklist={() => onUnBlacklist(player.steam_id_64)}
-                onDeleteFlag={onDeleteFlag}
-                onAddVip={() => onAddVip(player.names[0], player.steam_id_64)}
-                onDeleteVip={() => onDeleteVip(player.steam_id_64)}
-                isVip={vips[player.steam_id_64]}
-              />
-            </Grid>
-          );
-        })}
-        <Grid item xs={12}>
-          <MyPagination
-            classes={classes}
-            pageSize={pageSize}
-            page={page}
-            setPage={setPage}
-            total={total}
-          />
-        </Grid>
-      </Grid>
-      <ReasonDialog
-        open={doConfirmPlayer}
-        handleClose={() => setDoConfirmPlayer(false)}
-        handleConfirm={(actionType, steamId64, reason) => {
-          onBlacklist(steamId64, reason);
-          setDoConfirmPlayer(false);
-        }}
-      />
-      <FlagDialog
-        open={doFlag}
-        handleClose={() => setDoFlag(false)}
-        handleConfirm={(playerObj, theFlag, theComment) => {
-          onAddFlag(playerObj, theFlag, theComment);
-          setDoFlag(false);
-        }}
-        SummaryRenderer={PlayerSummary}
-      />
-    </div>
-  );
-};
-
 class PlayersHistory extends React.Component {
   constructor(props) {
     super(props);
 
     this.state = {
       playersHistory: List(),
-      namesIndex: List(),
       total: 0,
       pageSize: 50,
       page: 1,
@@ -298,7 +159,14 @@ class PlayersHistory extends React.Component {
       lastSeenFrom: null,
       lastSeenUntil: null,
       isLoading: true,
-      vips: {},
+      isWatchedOnly: false,
+      vips: new Map(),
+      doFlag: false,
+      doConfirmPlayer: false,
+      ignoreAccent: true,
+      exactMatch: false,
+      flags: "",
+      country: "",
     };
 
     this.getPlayerHistory = this.getPlayerHistory.bind(this);
@@ -307,40 +175,81 @@ class PlayersHistory extends React.Component {
     this.addFlagToPlayer = this.addFlagToPlayer.bind(this);
     this.deleteFlag = this.deleteFlag.bind(this);
     this.loadVips = this.loadVips.bind(this);
+    this.addVip = this.addVip.bind(this);
+    this.deleteVip = this.deleteVip.bind(this);
+    this.unBanPlayer = this.unBanPlayer.bind(this);
+    this.tempBan = this.tempBan.bind(this);
+    this.addToWatchlist = this.addToWatchlist.bind(this);
+    this.removeFromWatchList = this.removeFromWatchList.bind(this);
+    this.setDoFlag = this.setDoFlag.bind(this);
+    this.setDoConfirmPlayer = this.setDoConfirmPlayer.bind(this);
+    this.setIgnoreAccent = this.setIgnoreAccent.bind(this);
+    this.setExactMatch = this.setExactMatch.bind(this);
+    this.setFlags = this.setFlags.bind(this);
+    this.setCountry = this.setCountry.bind(this);
+
+    this.onBlacklist = this.onBlacklist.bind(this);
+    this.onUnBlacklist = this.onUnBlacklist.bind(this);
+    this.deleteFlag = this.deleteFlag.bind(this);
+    this.removeFromWatchList = this.removeFromWatchList.bind(this);
+    this.onUnban = this.onUnban.bind(this);
+    this.onTempBan = this.onTempBan.bind(this);
     this.onAddVip = this.onAddVip.bind(this);
     this.onDeleteVip = this.onDeleteVip.bind(this);
+    this.onAddToWatchList = this.onAddToWatchList.bind(this);
+    this.onRemoveFromWatchList = this.onRemoveFromWatchList.bind(this);
   }
 
-  onAddVip(name, steamID64) {
+  tempBan(steamId64, reason, durationHours) {
+    postData(`${process.env.REACT_APP_API_URL}do_temp_ban`, {
+      steam_id_64: steamId64,
+      reason: reason,
+      duration_hours: durationHours,
+      forward: true,
+    })
+      .then((response) =>
+        showResponse(
+          response,
+          `PlayerID ${steamId64} temp banned ${durationHours} for ${reason}`,
+          true
+        )
+      )
+      .then(this._reloadOnSuccess)
+      .catch((error) => toast.error("Unable to connect to API " + error));
+  }
+
+  addVip(name, steamID64) {
     return sendAction("do_add_vip", {
       steam_id_64: steamID64,
       name: name,
     }).then(this.loadVips);
   }
 
-  onDeleteVip(steamID64) {
+  deleteVip(steamID64) {
     return sendAction("do_remove_vip", { steam_id_64: steamID64 }).then(
       this.loadVips
     );
   }
 
   _loadToState(command, showSuccess, stateSetter) {
-    return fetch(`${process.env.REACT_APP_API_URL}${command}`)
+    return get(command)
       .then((res) => showResponse(res, command, showSuccess))
       .then(stateSetter)
-      .catch((error) => toast.error("Unable to connect to API " + error));
+      .catch(handle_http_errors);
   }
 
   loadVips() {
     return this._loadToState("get_vip_ids", false, (data) =>
       this.setState({
-        vips: reduce(
-          data.result,
-          (acc, val) => {
-            acc[val.steam_id_64] = true;
-            return acc
-          },
-          {}
+        vips: fromJS(
+          reduce(
+            data.result,
+            (acc, val) => {
+              acc[val.steam_id_64] = true;
+              return acc;
+            },
+            {}
+          )
         ),
       })
     );
@@ -355,6 +264,11 @@ class PlayersHistory extends React.Component {
       blacklistedOnly,
       lastSeenFrom,
       lastSeenUntil,
+      isWatchedOnly,
+      exactMatch,
+      ignoreAccent,
+      flags,
+      country
     } = this.state;
     const params = omitBy(
       {
@@ -365,8 +279,13 @@ class PlayersHistory extends React.Component {
         blacklisted: blacklistedOnly,
         last_seen_from: lastSeenFrom,
         last_seen_until: lastSeenUntil,
+        is_watched: isWatchedOnly,
+        exact_name_match: exactMatch,
+        ignore_accent: ignoreAccent,
+        flags: flags,
+        country: country,
       },
-      (v) => !v
+      (v) => v === null || v === "" || v === undefined
     );
 
     this.setState({ isLoading: true });
@@ -378,32 +297,25 @@ class PlayersHistory extends React.Component {
           return;
         }
         this.setState({
-          playersHistory: List(data.result.players),
-          namesIndex: List(
-            data.result.players.map((el, idx) => ({
-              names: join(el.names, ","),
-              idx: idx,
-            }))
-          ),
+          playersHistory: fromJS(data.result.players),
           total: data.result.total,
           pageSize: data.result.page_size,
           page: data.result.page,
         });
       })
-      .catch(handle_http_errors)
+      .catch(handle_http_errors);
   }
 
   _reloadOnSuccess = (data) => {
     if (data.failed) {
       return;
     }
-    this.getPlayerHistory();
-    this.loadVips();
+    this.getPlayerHistory().then(this.loadVips);
   };
 
   addFlagToPlayer(playerObj, flag, comment = null) {
     return postData(`${process.env.REACT_APP_API_URL}flag_player`, {
-      steam_id_64: playerObj.steam_id_64,
+      steam_id_64: playerObj.get("steam_id_64"),
       flag: flag,
       comment: comment,
     })
@@ -452,9 +364,103 @@ class PlayersHistory extends React.Component {
       .catch((error) => toast.error("Unable to connect to API " + error));
   }
 
+  unBanPlayer(steamId64) {
+    postData(`${process.env.REACT_APP_API_URL}unban`, {
+      steam_id_64: steamId64,
+    })
+      .then((response) =>
+        showResponse(response, `PlayerID ${steamId64} unbanned`, true)
+      )
+      .then(this._reloadOnSuccess)
+      .catch((error) => toast.error("Unable to connect to API " + error));
+  }
+
+  addToWatchlist(steamId64, reason, comment) {
+    return addPlayerToWatchList(steamId64, reason, comment).then(
+      this._reloadOnSuccess
+    );
+  }
+
+  removeFromWatchList(steamId64) {
+    postData(`${process.env.REACT_APP_API_URL}do_unwatch_player`, {
+      steam_id_64: steamId64,
+    })
+      .then((response) =>
+        showResponse(response, `PlayerID ${steamId64} unwatched`, true)
+      )
+      .then(this._reloadOnSuccess)
+      .catch(handle_http_errors);
+  }
+
   componentDidMount() {
     this.getPlayerHistory();
     this.loadVips();
+  }
+
+  setDoFlag(playerToFlag) {
+    return this.setState({ doFlag: playerToFlag });
+  }
+
+  setDoConfirmPlayer(confirmPlayer) {
+    return this.setState({ doConfirmPlayer: confirmPlayer });
+  }
+
+  setIgnoreAccent(ignoreAccent) {
+    return this.setState({ ignoreAccent });
+  }
+
+  setExactMatch(exactMatch) {
+    return this.setState({ exactMatch });
+  }
+
+  setFlags(flags) {
+    return this.setState({ flags });
+  }
+
+  setCountry(country) {
+    return this.setState({ country });
+  }
+
+  /* Shortcut function for the grid list */
+  onBlacklist(player) {
+    return this.setDoConfirmPlayer({
+      player: player.get("steam_id_64"),
+      actionType: "blacklist",
+      steam_id_64: player.get("steam_id_64"),
+    });
+  }
+
+  onUnBlacklist(player) {
+    return this.unblacklistPlayer(player.get("steam_id_64"));
+  }
+
+  onUnban(player) {
+    return this.unBanPlayer(player.get("steam_id_64"));
+  }
+
+  onTempBan(player) {
+    return this.setDoConfirmPlayer({
+      player: player.get("steam_id_64"),
+      actionType: "temp_ban",
+      steam_id_64: player.get("steam_id_64"),
+    });
+  }
+  onAddVip(player) {
+    return this.addVip(player.get("names").get(0).get("name"), player.get("steam_id_64"));
+  }
+
+  onDeleteVip(player) {
+    return this.deleteVip(player.get("steam_id_64"));
+  }
+  onAddToWatchList(player) {
+    return this.setDoConfirmPlayer({
+      player: player.get("steam_id_64"),
+      actionType: "watchlist",
+      steam_id_64: player.get("steam_id_64"),
+    });
+  }
+  onRemoveFromWatchList(player) {
+    return this.removeFromWatchList(player.get("steam_id_64"));
   }
 
   render() {
@@ -470,19 +476,23 @@ class PlayersHistory extends React.Component {
       lastSeenFrom,
       lastSeenUntil,
       isLoading,
-      namesIndex,
+      isWatchedOnly,
+      doFlag,
+      doConfirmPlayer,
+      vips,
+      ignoreAccent,
+      exactMatch,
+      flags,
+      country
     } = this.state;
-
-    // There's a bug in the autocomplete code, if there's a boolean in the object it makes it match against
-    // "false" or "true" so essentially, everything matches to "F" or "T"
-    // That's why we remap the list
 
     // Perfomance is crappy. It's less crappy after switcing to immutables but still...
     // It should be refactored so that the search bar does not trigger useless renderings
     return (
-      <Grid container className={classes.padding}>
+      <Grid container spacing={1}>
         <Grid item xs={12}>
           <SearchBar
+            classes={classes}
             pageSize={pageSize}
             setPageSize={(v) => this.setState({ pageSize: v })}
             lastSeenFrom={lastSeenFrom}
@@ -495,35 +505,91 @@ class PlayersHistory extends React.Component {
             setSteamId={(v) => this.setState({ bySteamId: v })}
             blacklistedOnly={blacklistedOnly}
             setBlacklistedOnly={(v) => this.setState({ blacklistedOnly: v })}
+            isWatchedOnly={isWatchedOnly}
+            setIsWatchedOnly={(v) => this.setState({ isWatchedOnly: v })}
             onSearch={this.getPlayerHistory}
+            exactMatch={exactMatch}
+            setExactMatch={this.setExactMatch}
+            ignoreAccent={ignoreAccent}
+            setIgnoreAccent={this.setIgnoreAccent}
+            country={country}
+            setCountry={this.setCountry}
+            flags={flags}
+            setFlags={this.setFlags}
           />
         </Grid>
         <Grid item xs={12}>
-          {isLoading ? (
-            <Grid item xs={12} className={classes.doublePadding}>
-              <LinearProgress color="secondary" />
-            </Grid>
-          ) : (
-            <FilterPlayer
-              classes={classes}
-              constPlayersHistory={playersHistory}
-              constNamesIndex={namesIndex}
-              pageSize={pageSize}
-              total={total}
-              page={page}
-              setPage={(page) =>
-                this.setState({ page: page }, this.getPlayerHistory)
-              }
-              onBlacklist={this.blacklistPlayer}
-              onUnBlacklist={this.unblacklistPlayer}
-              onAddFlag={this.addFlagToPlayer}
-              onDeleteFlag={this.deleteFlag}
-              onAddVip={this.onAddVip}
-              onDeleteVip={this.onDeleteVip}
-              vips={this.state.vips}
-            />
-          )}
+          <MyPagination
+            classes={classes}
+            pageSize={pageSize}
+            page={page}
+            setPage={(page) => this.setState({ page: page }, this.getPlayerHistory)}
+            total={total}
+          />
         </Grid>
+        <Grid item xs={12}>
+          {isLoading ? <LinearProgress color="secondary" /> : ""}
+          <PlayerGrid
+            classes={classes}
+            players={playersHistory}
+            /* pageSize={pageSize}
+            total={total}
+            page={page}
+            setPage={(page) =>
+              this.setState({ page: page }, this.getPlayerHistory)
+            } */
+            onBlacklist={this.onBlacklist}
+            onUnBlacklist={this.onUnBlacklist}
+            onDeleteFlag={this.deleteFlag}
+            onRemoveFromWatchList={this.removeFromWatchList}
+            vips={vips}
+            onflag={this.setDoFlag}
+            onUnban={this.onUnban}
+            onTempBan={this.onTempBan}
+            onAddVip={this.onAddVip}
+            onDeleteVip={this.onDeleteVip}
+            onAddToWatchList={this.onAddToWatchList}
+            onRemoveFromWatchList={this.onRemoveFromWatchList}
+          />
+        </Grid>
+        <Grid item xs={12} className={classes.padding}>
+          <MyPagination
+            classes={classes}
+            pageSize={pageSize}
+            page={page}
+            setPage={(page) => this.setState({ page: page }, this.getPlayerHistory)}
+            total={total}
+          />
+        </Grid>
+        <ReasonDialog
+          open={doConfirmPlayer}
+          handleClose={() => this.setDoConfirmPlayer(false)}
+          handleConfirm={(
+            actionType,
+            player,
+            reason,
+            durationHours,
+            steamId64
+          ) => {
+            if (actionType === "blacklist") {
+              this.blacklistPlayer(steamId64, reason);
+            } else if (actionType === "temp_ban") {
+              this.tempBan(steamId64, reason, durationHours);
+            } else if (actionType === "watchlist") {
+              this.addToWatchlist(steamId64, reason);
+            }
+            this.setDoConfirmPlayer(false);
+          }}
+        />
+        <FlagDialog
+          open={doFlag}
+          handleClose={() => this.setDoFlag(false)}
+          handleConfirm={(playerObj, theFlag, theComment) => {
+            this.addFlagToPlayer(playerObj, theFlag, theComment);
+            this.setDoFlag(false);
+          }}
+          SummaryRenderer={PlayerSummary}
+        />
       </Grid>
     );
   }

@@ -4,13 +4,17 @@ import TextField from "@material-ui/core/TextField";
 import _ from "lodash";
 import Button from "@material-ui/core/Button";
 import Dialog from "@material-ui/core/Dialog";
-import { PlayerActions } from "./playerActions";
+import { PlayerActions, Duration } from "./playerActions";
 import withWidth from "@material-ui/core/withWidth";
 import { Reason } from "./textInputBar";
 import Grid from "@material-ui/core/Grid";
 import { DialogTitle, DialogContent, DialogActions } from "../dialog";
 import { join } from 'lodash/array';
 import TextHistory from '../textHistory'
+import { fromJS, List } from 'immutable'
+import { sortBy } from 'lodash/collection'
+import { getSharedMessages } from "../../utils/fetchUtils";
+
 
 const compactProfile = (player) => {
   let s = ""
@@ -35,9 +39,18 @@ const GroupActions = ({
 }) => {
   const [message, setMessage] = React.useState("")
   const [selectedPlayers, setSelectedPlayers] = React.useState([])
+  const [durationNumber, setDurationNumber] = React.useState(2)
+  const [durationMultiplier, setDurationMultiplier] = React.useState(1)
   const [saveMessage, setSaveMessage] = React.useState(true)
   const textHistory = new TextHistory("punitions")
   const nbButton = ["xs"].indexOf(width) != -1 ? 3 : 6;
+  const [sharedMessages, setSharedMessages] = React.useState([]);
+  React.useEffect(() => {
+    getSharedMessages("punitions").then((data) => setSharedMessages(data));
+  }, []);
+
+  let myPlayers = new List(players)
+  myPlayers = myPlayers.toJS()
 
   return (
     <Dialog
@@ -57,7 +70,7 @@ const GroupActions = ({
           multiple
           clearOnEscape
           id="tags-outlined"
-          options={_.sortBy(players, p => p.name.toLowerCase())}
+          options={sortBy(myPlayers, p => p.name.toLowerCase())}
           getOptionLabel={option => `${option.name}${compactProfile(option)}`}
           filterSelectedOptions
           onChange={(e, val) => setSelectedPlayers(val)}
@@ -86,9 +99,9 @@ const GroupActions = ({
               handleAction={actionType =>
                 selectedPlayers.map(p => {
                   if (saveMessage) {
-                    textHistory.saveText(message)
+                    textHistory.saveText(message, sharedMessages)
                   }
-                  handleAction(actionType, p.name, message)
+                  handleAction(actionType, p.name, message, durationNumber * durationMultiplier, p.steam_id_64)
                 }
                 )
               }
@@ -96,6 +109,9 @@ const GroupActions = ({
               disable={message === ""}
               displayCount={nbButton}
             />
+          </Grid>
+          <Grid item xs={12} xl={12} className={classes.marginTop}>
+            <Duration durationNumber={durationNumber} onNumberChange={(number) => setDurationNumber(number)} durationMultiplier={durationMultiplier} onMultiplierChange={(multiplier) => setDurationMultiplier(multiplier)}/>
           </Grid>
         </Grid>
       </DialogContent>

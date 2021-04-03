@@ -72,12 +72,9 @@ class TextHistoryList extends React.Component {
 const TextHistoryManager = ({ classes }) => {
     const [namespace, setNamespace] = React.useState("");
     const nameSpaces = getAllNamespaces();
-    console.log("Namespace", nameSpaces)
+
     return (
         <Grid container>
-            <Grid lg={12} className={classes.padding}>
-                <Typography variant="h6">Manage text history</Typography>
-            </Grid>
             {nameSpaces.length > 0 ?
             <React.Fragment>
                 <Grid lg={12}>
@@ -99,3 +96,4 @@ const TextHistoryManager = ({ classes }) => {
 };
 
 export default TextHistoryManager;
+export { SelectNameSpace }
