@@ -34,18 +34,26 @@ logger = logging.getLogger(__name__)
 
 @on_chat
 def count_vote(rcon: RecordedRcon, struct_log):
-    if not VoteMapConfig().get_vote_enabled():
+    config = VoteMapConfig()
+    if not config.get_vote_enabled():
         return
-        
+
     v = VoteMap()
     if vote := v.is_vote(struct_log.get("sub_content")):
         logger.debug("Vote chat detected: %s", struct_log["message"])
         map_name = v.register_vote(
-            struct_log["player"],
-            struct_log["timestamp_ms"] / 1000,
-            vote
+            struct_log["player"], struct_log["timestamp_ms"] / 1000, vote
         )
-        temporary_broadcast(rcon, f"Merci {struct_log['player']} vote enregistré pour:\n{map_name}", 10)
+        try:
+            temporary_broadcast(
+                rcon,
+                config.get_votemap_thank_you_text().format(
+                    player_name=struct_log["player"], map_name=map_name
+                ),
+                10
+            )
+        except Exception:
+            logger.warning("Unable to output thank you message")
         v.apply_with_retry(nb_retry=2)
 
 

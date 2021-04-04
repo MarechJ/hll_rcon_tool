@@ -388,13 +388,15 @@ class VoteMap:
 
 
 def on_map_change(old_map_info, new_map_info):
-    if VoteMapConfig().get_vote_enabled():
+    config = VoteMapConfig()
+
+    if config.get_vote_enabled():
         votemap = VoteMap()
         votemap.gen_selection()
         votemap.clear_votes()
         votemap.apply_with_retry(nb_retry=4)
         temporary_welcome_in(
-            "Votez pour la carte suivante!!\nEcrivez dans le chat: !votemap <numero>\nExample: !votemap 2\n{votenextmap_vertical}", 
+            "%s{votenextmap_vertical}" % config.get_votemap_instruction_text(), 
             seconds=60 * 20,
             restore_after_seconds=60 * 5,
         )

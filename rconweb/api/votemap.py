@@ -18,7 +18,9 @@ def votemap_config():
             "votemap_allow_consecutive_offensives_of_opposite_side": config.get_votemap_allow_consecutive_offensives_of_opposite_side(),
             "votemap_default_method": config.get_votemap_default_method().value,
             "votemap_allow_default_to_offsensive": config.get_votemap_allow_default_to_offsensive(),
-            "votemap_instruction_text": config.get_votemap_instruction_text()
+            "votemap_instruction_text": config.get_votemap_instruction_text(),
+            "votemap_thank_you_text": config.get_votemap_thank_you_text(),
+            "votemap_no_vote_text": config.get_votemap_no_vote_text(),
         }
 
 @csrf_exempt
@@ -47,7 +49,9 @@ def set_votemap_config(request):
             "votemap_allow_consecutive_offensives_of_opposite_side": config.set_votemap_allow_consecutive_offensives_of_opposite_side,
             "votemap_default_method": config.set_votemap_default_method,
             "votemap_allow_default_to_offsensive": config.set_votemap_allow_default_to_offsensive,
-            "votemap_instruction_text": config.set_votemap_instruction_text
+            "votemap_instruction_text": config.set_votemap_instruction_text,
+            "votemap_thank_you_text": config.set_votemap_thank_you_text,
+            "votemap_no_vote_text": config.set_votemap_no_vote_text,
         }
 
     for k, v in data.items():

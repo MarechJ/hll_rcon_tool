@@ -52,8 +52,27 @@ const VoteMapConfig = () => {
                 label="Text to explain how to vote"
                 helperText="The text shown in some preformated broadcasts"
                 value={config.get("votemap_instruction_text", "")}
-                onChange={e => setConfig({ ...config, votemap_instruction_text: e.target.value })}
+                onChange={e => setConfig(config.set("votemap_instruction_text", e.target.value))}
             />
+        </Grid>
+        <Grid item>
+            <TextField 
+                label="Thank you for voting message"
+                helperText="Text shown in broadcast for 10 secs when someone votes. You can use {player_name} and {map_name}"
+                value={config.get("votemap_thank_you_text", "")}
+                onChange={e => setConfig(config.set("votemap_thank_you_text", e.target.value))}
+            />
+        </Grid>
+        <Grid item>
+            <TextField 
+                label="No votes recorded text"
+                helperText="Text shown in scrolling broadcast when votes are empty"
+                value={config.get("votemap_no_vote_text", "")}
+                onChange={e => setConfig(config.set("votemap_no_vote_text", e.target.value))}
+            />
+        </Grid>
+        <Grid item>
+            <Button onClick={() => saveConfig(config)}>Save texts</Button>
         </Grid>
         <Grid item>
             <TextField type="number" inputProps={{ min: 2, max: 10 }}
@@ -127,14 +146,14 @@ const VoteMapConfig = () => {
                         )}
                     </pre>
                 </Grid>
-                <Grid item xs={12} sm={4}>
+                <Grid item xs={6} sm={4}>
                     <Typography variant="body1">Map selection:</Typography>
                     <pre>
                         {status.get("selection", new List()).map(
                             (v) => `${v}\n`
                         )}</pre>
                 </Grid>
-                <Grid item xs={12} sm={4}>
+                <Grid item xs={6} sm={4}>
                     <Typography variant="body1">Results:</Typography>
                     <pre>
                         {status.get("results", new Map()).get("winning_maps", new List()).map(

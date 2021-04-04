@@ -12,7 +12,7 @@ from rcon.audit import online_mods, ingame_mods
 from rcon.cache_utils import get_redis_pool
 from rcon.commands import CommandFailedError
 from rcon.settings import SERVER_INFO
-from rcon.user_config import AutoBroadcasts
+from rcon.user_config import AutoBroadcasts, VoteMapConfig
 from rcon.utils import (
     LONG_HUMAN_MAP_NAMES,
     SHORT_HUMAN_MAP_NAMES,
@@ -66,16 +66,17 @@ def chunks(lst, n):
         yield lst[i:i + n]
 
 def scrolling_votemap(rcon, winning_maps, repeat=10):
+    config = VoteMapConfig()
     vote_options = format_map_vote(rcon, "line", short_names=False)
     if not vote_options:
         return ""
     separator = '  ***  '
     options = separator.join([vote_options] * repeat)
-    instructions = os.getenv('VOTE_MAP_INSTRUCTIONS', 'To vote write the map number in the chat')
+    instructions = config.get_votemap_instruction_text()
     repeat_instructions = max(int(len(options) / (len(instructions) + len(separator))), 1)
     instructions = separator.join([instructions] * repeat_instructions)
 
-    winning_maps = format_winning_map(rcon, winning_maps, display_count=0, default='No votes recorded')
+    winning_maps = format_winning_map(rcon, winning_maps, display_count=0, default=config.get_votemap_no_vote_text())
     repeat_winning_maps = max(int(len(options) / (len(winning_maps) + len(separator))), 1)
     winning_maps = separator.join([winning_maps] * repeat_winning_maps)
 

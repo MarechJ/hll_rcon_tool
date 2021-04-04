@@ -291,11 +291,19 @@ class VoteMapConfig:
             f"{server_number}_votemap_VOTEMAP_ALLOW_DEFAULT_TO_OFFSENSIVE"
         )
         self.VOTEMAP_INSTRUCTION_TEXT = (
-            f"{server_number}_votemap_VOTEMAP_ALLOW_DEFAULT_TO_OFFSENSIVE"
+            f"{server_number}_votemap_VOTEMAP_INSTRUCTION_TEXT"
         )
+        self.VOTEMAP_THANK_YOU_TEXT = f"{server_number}_votemap_VOTEMAP_THANK_YOU_TEXT"
+        self.VOTEMAP_NO_VOTE_TEXT = f"{server_number}_votemap_VOTEMAP_NO_VOTE_TEXT"
 
     def set_votemap_instruction_text(self, value):
         return set_user_config(self.VOTEMAP_INSTRUCTION_TEXT, value)
+
+    def set_votemap_thank_you_text(self, value):
+        return set_user_config(self.VOTEMAP_THANK_YOU_TEXT, value)
+
+    def set_votemap_no_vote_text(self, value):
+        return set_user_config(self.VOTEMAP_NO_VOTE_TEXT, value)
 
     def set_vote_enabled(self, value):
         return set_user_config(self.VOTE_ENABLED, value)
@@ -324,11 +332,17 @@ class VoteMapConfig:
         v = DefaultMethods(value)
         return set_user_config(self.VOTEMAP_DEFAULT_METHOD, v.value)
 
+    def set_votemap_allow_default_to_offsensive(self, value):
+        return set_user_config(self.VOTEMAP_ALLOW_DEFAULT_TO_OFFSENSIVE, value)
+
     def get_votemap_instruction_text(self):
         return get_user_config(self.VOTEMAP_INSTRUCTION_TEXT)
 
-    def set_votemap_allow_default_to_offsensive(self, value):
-        return set_user_config(self.VOTEMAP_ALLOW_DEFAULT_TO_OFFSENSIVE, value)
+    def get_votemap_thank_you_text(self):
+        return get_user_config(self.VOTEMAP_THANK_YOU_TEXT)
+
+    def get_votemap_no_vote_text(self):
+        return get_user_config(self.VOTEMAP_NO_VOTE_TEXT)
 
     def get_vote_enabled(self):
         return get_user_config(self.VOTE_ENABLED)
@@ -349,7 +363,9 @@ class VoteMapConfig:
         return get_user_config(self.VOTEMAP_ALLOW_CONSECUTIVE_OFFENSIVES)
 
     def get_votemap_allow_consecutive_offensives_of_opposite_side(self):
-        return get_user_config(self.VOTEMAP_ALLOW_CONSECUTIVE_OFFENSIVES_OF_OPPOSITE_SIDE)
+        return get_user_config(
+            self.VOTEMAP_ALLOW_CONSECUTIVE_OFFENSIVES_OF_OPPOSITE_SIDE
+        )
 
     def get_votemap_default_method(self):
         val = get_user_config(self.VOTEMAP_DEFAULT_METHOD)
@@ -360,16 +376,35 @@ class VoteMapConfig:
 
     def seed_db(self, sess):
         _set_default(sess, self.VOTE_ENABLED, False)
-        _set_default(sess, self.VOTEMAP_DEFAULT_METHOD, DefaultMethods.least_played_suggestions.value)
+        _set_default(
+            sess,
+            self.VOTEMAP_DEFAULT_METHOD,
+            DefaultMethods.least_played_suggestions.value,
+        )
         _set_default(sess, self.VOTEMAP_NUMBER_OF_OPTIONS, 5)
         _set_default(sess, self.VOTEMAP_RATIO_OF_OFFENSIVES_TO_OFFER, 0.5)
         _set_default(sess, self.VOTEMAP_NUMBER_OF_LAST_PLAYED_MAP_TO_EXCLUDE, 3)
         _set_default(sess, self.VOTEMAP_CONSIDER_OFFENSIVE_AS_SAME_MAP, True)
         _set_default(sess, self.VOTEMAP_ALLOW_CONSECUTIVE_OFFENSIVES, True)
-        _set_default(sess, self.VOTEMAP_ALLOW_CONSECUTIVE_OFFENSIVES_OF_OPPOSITE_SIDE, False)
+        _set_default(
+            sess, self.VOTEMAP_ALLOW_CONSECUTIVE_OFFENSIVES_OF_OPPOSITE_SIDE, False
+        )
         _set_default(sess, self.VOTEMAP_ALLOW_DEFAULT_TO_OFFSENSIVE, False)
-        _set_default(sess, self.VOTEMAP_INSTRUCTION_TEXT, "Vote for the nextmap:\nType in the chat !votemap <map number>")
-
+        _set_default(
+            sess,
+            self.VOTEMAP_INSTRUCTION_TEXT,
+            "Vote for the nextmap:\nType in the chat !votemap <map number>",
+        )
+        _set_default(
+            sess,
+            self.VOTEMAP_THANK_YOU_TEXT,
+            "Thanks {player_name}, vote registered for:\n{map_name}",
+        )
+        _set_default(
+            sess,
+            self.VOTEMAP_NO_VOTE_TEXT,
+            "No votes recorded yet",
+        )
 
 
 def seed_default_config():
