@@ -390,7 +390,10 @@ def auto_ban_if_tks_right_after_connection(rcon: RecordedRcon, log):
     if punishment not in ["ban", "kick", "punish"]:
         logger.error("Punishment %s not recognized, defaulting to \"ban\"" % punishment)
         punishment = "ban"
-    ban_duration = config.get("ban_duration_in_hours", 0)
+    try: ban_duration = int(config.get("ban_duration_in_hours", 0))
+    except ValueError:
+        logger.error("Ban duration expected int, received \"%s\". Defaulting to 0" % ban_duration)
+        ban_duration = 0
 
     if player_profile:
         if whitelist_players.get('is_vip') and player_steam_id in vips:
