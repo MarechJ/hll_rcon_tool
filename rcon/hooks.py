@@ -45,7 +45,7 @@ def count_vote(rcon: RecordedRcon, struct_log):
             struct_log["timestamp_ms"] / 1000,
             vote
         )
-        temporary_broadcast(rcon, f"Merci {struct_log['player']} vote enregisté pour:\n{map_name}", 10)
+        temporary_broadcast(rcon, f"Merci {struct_log['player']} vote enregistré pour:\n{map_name}", 10)
         v.apply_with_retry(nb_retry=2)
 
 

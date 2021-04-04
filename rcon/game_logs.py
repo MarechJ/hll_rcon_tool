@@ -89,7 +89,7 @@ class LogLoop:
     def get_log_history_list():
         return FixedLenList(key=LogLoop.log_history_key, max_len=100000)
 
-    def run(self, loop_frequency_secs=5, cleanup_frequency_minutes=10):
+    def run(self, loop_frequency_secs=2, cleanup_frequency_minutes=10):
         since_min = 180
         self.cleanup()
         last_cleanup_time = datetime.datetime.now()

@@ -127,14 +127,14 @@ const VoteMapConfig = () => {
                         )}
                     </pre>
                 </Grid>
-                <Grid item xs={6} sm={4}>
+                <Grid item xs={12} sm={4}>
                     <Typography variant="body1">Map selection:</Typography>
                     <pre>
                         {status.get("selection", new List()).map(
                             (v) => `${v}\n`
                         )}</pre>
                 </Grid>
-                <Grid item xs={6} sm={4}>
+                <Grid item xs={12} sm={4}>
                     <Typography variant="body1">Results:</Typography>
                     <pre>
                         {status.get("results", new Map()).get("winning_maps", new List()).map(
