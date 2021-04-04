@@ -327,7 +327,7 @@ class Rcon(ServerCtl):
             if save:
                 prev = red.getset("WELCOME_MESSAGE", msg)
             else:
-                prev = red.get("WELCOME_MESSAGE", msg)
+                prev = red.get("WELCOME_MESSAGE")
             red.expire("WELCOME_MESSAGE", 60 * 60 * 24)
         except Exception:
             logger.exception("Can't save message in redis: %s", msg)
@@ -339,7 +339,7 @@ class Rcon(ServerCtl):
             formatted = msg
             
         super().set_welcome_message(formatted)
-        return prev.decode() if prev else None
+        return prev.decode() if prev else ""
 
     def get_broadcast_message(self):
         red = get_redis_client()
@@ -357,7 +357,7 @@ class Rcon(ServerCtl):
             if save:
                 prev = red.getset("BROADCAST_MESSAGE", msg)
             else:
-                prev = red.get("BROADCAST_MESSAGE", msg)
+                prev = red.get("BROADCAST_MESSAGE")
             red.expire("BROADCAST_MESSAGE", 60 * 30)
         except Exception:
             logger.exception("Can't save message in redis: %s", msg)
@@ -369,7 +369,7 @@ class Rcon(ServerCtl):
             formatted = msg
 
         super().set_broadcast(formatted)
-        return prev.decode() if prev else None
+        return prev.decode() if prev else ""
 
     @ttl_cache(ttl=20)
     def get_slots(self):
