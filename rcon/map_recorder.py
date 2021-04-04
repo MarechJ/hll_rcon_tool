@@ -1,4 +1,5 @@
 from functools import partial
+from rcon.workers import temp_welcome_standalone, temporary_welcome, temporary_welcome_in
 from typing import Counter
 from rcon.settings import SERVER_INFO
 import time
@@ -358,7 +359,7 @@ class VoteMap:
         # Check that it worked
         current_rotation = rcon.get_map_rotation()
         if (
-            not current_rotation[current_map_idx] == current_map
+            not current_rotation[current_map_idx] == current_map.replace('_RESTART', '')
             and current_rotation[current_map_idx + 1] == next_map
         ):
             raise ValueError(
@@ -391,7 +392,12 @@ def on_map_change(old_map_info, new_map_info):
         votemap = VoteMap()
         votemap.gen_selection()
         votemap.clear_votes()
-        votemap.apply_with_retry()
+        votemap.apply_with_retry(nb_retry=4)
+        temporary_welcome_in(
+            "Votez pour la carte suivante!!\nEcrivez dans le chat: !votemap <numero>\nExample: !votemap 2\n{votenextmap_vertical}", 
+            seconds=60 * 20,
+            restore_after_seconds=60 * 5,
+        )
 
 
 class MapsRecorder:

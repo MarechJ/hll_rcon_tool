@@ -133,6 +133,8 @@ class DiscordWebhookHandler:
             logger.exception("error initializing kill variables: %s", e)
 
     def send_chat_message(self, _, log):
+        if not self.ping_trigger_webhook and not self.chat_webhook:
+            return
         try:
             message = log["sub_content"]
 
@@ -169,7 +171,7 @@ class DiscordWebhookHandler:
             )
 
             # Use chat webhook for both.
-            if (self.ping_trigger_webhook == self.chat_webhook) or (
+            if (self.ping_trigger_webhook and self.ping_trigger_webhook == self.chat_webhook) or (
                 self.chat_webhook and not self.ping_trigger_webhook
             ):
                 self.chat_webhook.send(content=content, embed=embed)
@@ -182,6 +184,7 @@ class DiscordWebhookHandler:
 
         except Exception as e:
             logger.exception("error executing chat message webhook: %s", e)
+            raise
 
     def send_generic_kill_message(self, _, log, action):
         if not self.kills_webhook:
