@@ -52,7 +52,7 @@ const VoteMapConfig = () => {
                 label="Text to explain how to vote"
                 helperText="The text shown in some preformated broadcasts"
                 value={config.get("votemap_instruction_text", "")}
-                onChange={e => saveConfig({ votemap_instruction_text: e.target.value })}
+                onChange={e => setConfig({ ...config, votemap_instruction_text: e.target.value })}
             />
         </Grid>
         <Grid item>
