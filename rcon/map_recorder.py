@@ -80,7 +80,10 @@ def suggest_next_maps(
 
     # Handle case if all maps got excluded
     categorized_maps = categorize_maps(remaining_maps)
-    nb_offensive = round(offsensive_ratio * selection_size)
+    if offsensive_ratio == 0:
+        nb_offensive = 0
+    else:
+        nb_offensive = round(offsensive_ratio * selection_size)
     warfares = []
 
     offensives = _get_random_map_selection(categorized_maps["offensive"], nb_offensive)

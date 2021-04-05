@@ -306,26 +306,26 @@ class VoteMapConfig:
         return set_user_config(self.VOTEMAP_NO_VOTE_TEXT, value)
 
     def set_vote_enabled(self, value):
-        return set_user_config(self.VOTE_ENABLED, value)
+        return set_user_config(self.VOTE_ENABLED, bool(value))
 
     def set_votemap_number_of_options(self, value):
-        return set_user_config(self.VOTEMAP_NUMBER_OF_OPTIONS, value)
+        return set_user_config(self.VOTEMAP_NUMBER_OF_OPTIONS, int(value))
 
     def set_votemap_ratio_of_offensives_to_offer(self, value):
-        return set_user_config(self.VOTEMAP_RATIO_OF_OFFENSIVES_TO_OFFER, value)
+        return set_user_config(self.VOTEMAP_RATIO_OF_OFFENSIVES_TO_OFFER, float(value))
 
     def set_votemap_number_of_last_played_map_to_exclude(self, value):
-        return set_user_config(self.VOTEMAP_NUMBER_OF_LAST_PLAYED_MAP_TO_EXCLUDE, value)
+        return set_user_config(self.VOTEMAP_NUMBER_OF_LAST_PLAYED_MAP_TO_EXCLUDE, int(value))
 
     def set_votemap_consider_offensive_as_same_map(self, value):
-        return set_user_config(self.VOTEMAP_CONSIDER_OFFENSIVE_AS_SAME_MAP, value)
+        return set_user_config(self.VOTEMAP_CONSIDER_OFFENSIVE_AS_SAME_MAP, bool(value))
 
     def set_votemap_allow_consecutive_offensives(self, value):
-        return set_user_config(self.VOTEMAP_ALLOW_CONSECUTIVE_OFFENSIVES, value)
+        return set_user_config(self.VOTEMAP_ALLOW_CONSECUTIVE_OFFENSIVES, bool(value))
 
     def set_votemap_allow_consecutive_offensives_of_opposite_side(self, value):
         return set_user_config(
-            self.VOTEMAP_ALLOW_CONSECUTIVE_OFFENSIVES_OF_OPPOSITE_SIDE, value
+            self.VOTEMAP_ALLOW_CONSECUTIVE_OFFENSIVES_OF_OPPOSITE_SIDE, bool(value)
         )
 
     def set_votemap_default_method(self, value):
@@ -333,7 +333,7 @@ class VoteMapConfig:
         return set_user_config(self.VOTEMAP_DEFAULT_METHOD, v.value)
 
     def set_votemap_allow_default_to_offsensive(self, value):
-        return set_user_config(self.VOTEMAP_ALLOW_DEFAULT_TO_OFFSENSIVE, value)
+        return set_user_config(self.VOTEMAP_ALLOW_DEFAULT_TO_OFFSENSIVE, bool(value))
 
     def get_votemap_instruction_text(self):
         return get_user_config(self.VOTEMAP_INSTRUCTION_TEXT)
