@@ -70,16 +70,11 @@ const VoteMapConfig = () => {
         <Grid item xs={12}>
           <TextField
             fullWidth
-<<<<<<< HEAD
             multiline
             rows={2}
             rowsMax={4}
             label="Text to explain how to vote"
             helperText="The text shown in some preformated broadcasts."
-=======
-            label="Text to explain how to vote"
-            helperText="The text shown in some preformated broadcasts. Use \n for line breaks"
->>>>>>> a67d44a29e14103d09698eeecac8b22c94f6663b
             value={config.get("votemap_instruction_text", "")}
             onChange={(e) =>
               setConfig(config.set("votemap_instruction_text", e.target.value))
@@ -89,12 +84,9 @@ const VoteMapConfig = () => {
         <Grid item xs={6}>
           <TextField
           fullWidth
-<<<<<<< HEAD
           multiline
           rows={2}
           rowsMax={4}
-=======
->>>>>>> a67d44a29e14103d09698eeecac8b22c94f6663b
             label="Thank you for voting message"
             helperText="Text shown in broadcast for 10 secs when someone votes. You can use {player_name} and {map_name}"
             value={config.get("votemap_thank_you_text", "")}
@@ -106,12 +98,9 @@ const VoteMapConfig = () => {
         <Grid item xs={6}>
           <TextField
           fullWidth
-<<<<<<< HEAD
           multiline
           rows={2}
           rowsMax={4}
-=======
->>>>>>> a67d44a29e14103d09698eeecac8b22c94f6663b
             label="No votes recorded text"
             helperText="Text shown in scrolling broadcast when votes are empty"
             value={config.get("votemap_no_vote_text", "")}
