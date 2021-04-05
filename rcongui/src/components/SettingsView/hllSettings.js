@@ -116,7 +116,7 @@ class HLLSettings extends React.Component {
     this.loadVotekickThreshold = this.loadVotekickThreshold.bind(this);
     this.loadBroadcast = this.loadBroadcast.bind(this);
     this.loadWelcome = this.loadWelcome.bind(this);
-    this.loadAll = this.loadAll.bind(this)
+    this.loadAll = this.loadAll.bind(this);
   }
 
   loadAll() {
@@ -135,7 +135,7 @@ class HLLSettings extends React.Component {
   }
 
   componentDidMount() {
-    this.loadAll()
+    this.loadAll();
   }
 
   toggleLockSliders() {
@@ -321,9 +321,7 @@ class HLLSettings extends React.Component {
           <h2>HLL Game Server settings </h2>
           <small>(1min autorefresh)</small>
           <AutoRefreshLine
-            intervalFunction={() =>
-              this.loadAll()
-            }
+            intervalFunction={() => this.loadAll()}
             execEveryMs={60000}
             statusRefreshIntervalMs={500}
             classes={classes}
@@ -640,7 +638,7 @@ class HLLSettings extends React.Component {
                 onChange={(e) =>
                   this.setState({ votekickThreshold: e.target.value })
                 }
-                helperText="Use the following format, Error: First entry must be for 0 Players (you can add as many pairs as you want): player count,votekick threshold... example: 20,10,30,15,50,25,100,50"
+                helperText="Use the following format, Error: First entry must be for 0 Players (you can add as many pairs as you want): player count,votekick threshold... example: 0,1,10,5,25,12,50,20"
               />
             </Grid>
             <Grid item xs={6}>
