@@ -42,10 +42,11 @@ def temp_welcome_standalone(msg, seconds):
 
     rcon = RecordedRcon(SERVER_INFO)
     prev = rcon.set_welcome_message(msg, save=False)
-    time.sleep(seconds)
-    rcon.set_welcome_message(prev)
-    
+    queue = get_queue()
+    queue.enqueue_in(timedelta(seconds), welcome, prev)
+
 
 def temporary_welcome_in(message, seconds, restore_after_seconds):
     queue = get_queue()
     queue.enqueue_in(timedelta(seconds=seconds), temp_welcome_standalone, message, restore_after_seconds)
+
