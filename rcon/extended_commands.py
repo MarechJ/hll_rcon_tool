@@ -434,7 +434,7 @@ class Rcon(ServerCtl):
         except (ValueError, TypeError) as e:
             raise ValueError("Time '%s' is not a valid integer", time_str) from e
 
-    @ttl_cache(ttl=5)
+    @ttl_cache(ttl=2)
     def get_structured_logs(
         self, since_min_ago, filter_action=None, filter_player=None
     ):
