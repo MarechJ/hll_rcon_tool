@@ -1,11 +1,5 @@
 import React from "react";
-import {
-  Grid,
-  Typography,
-  Button,
-  Link,
-  TextField,
-} from "@material-ui/core";
+import { Grid, Typography, Button, Link, TextField } from "@material-ui/core";
 import { range } from "lodash/util";
 import {
   showResponse,
@@ -25,9 +19,8 @@ import NumSlider from "./numSlider";
 import ChangeMap from "./changeMap";
 import Padlock from "./padlock";
 import AutoRefreshLine from "../autoRefreshLine";
-import { ForwardCheckBox, WordList } from '../commonComponent'
-import VoteMapConfig from './voteMapConfig'
-
+import { ForwardCheckBox, WordList } from "../commonComponent";
+import VoteMapConfig from "./voteMapConfig";
 
 const ProfanityFiler = ({
   words,
@@ -53,12 +46,11 @@ const ProfanityFiler = ({
   </Grid>
 );
 
-
 function makeBool(text) {
   if (text === null) {
-    return false
+    return false;
   }
-  return text === "true"
+  return text === "true";
 }
 
 function valuetext(value) {
@@ -83,13 +75,22 @@ class HLLSettings extends React.Component {
       adminRoles: ["owner", "senior", "junior"],
       welcomeMessage: "",
       broadcastMessage: "",
-      lockedSliders: window.localStorage.getItem("lockedSliders") === null ? true : makeBool(window.localStorage.getItem("lockedSliders")),
-      sildersShowValues: makeBool(window.localStorage.getItem("sildersShowValues")),
+      lockedSliders:
+        window.localStorage.getItem("lockedSliders") === null
+          ? true
+          : makeBool(window.localStorage.getItem("lockedSliders")),
+      sildersShowValues: makeBool(
+        window.localStorage.getItem("sildersShowValues")
+      ),
       profanities: [],
-      forwardProfanities: makeBool(window.localStorage.getItem("forwardProfanities")),
+      forwardProfanities: makeBool(
+        window.localStorage.getItem("forwardProfanities")
+      ),
       forwardSettings: makeBool(window.localStorage.getItem("forwardSettings")),
       forwardVIP: makeBool(window.localStorage.getItem("forwardVIP")),
-      forwardBroadcast: makeBool(window.localStorage.getItem("forwardBroadcast")),
+      forwardBroadcast: makeBool(
+        window.localStorage.getItem("forwardBroadcast")
+      ),
       forwardWelcome: makeBool(window.localStorage.getItem("forwardWelcome")),
       forwardRotation: makeBool(window.localStorage.getItem("forwardRotation")),
       votekickEnabled: false,
@@ -110,9 +111,21 @@ class HLLSettings extends React.Component {
     this.loadProfanities = this.loadProfanities.bind(this);
     this.setProfanities = this.setProfanities.bind(this);
     this.toggle = this.toggle.bind(this);
-    this.saveVotekickThreshold = this.saveVotekickThreshold.bind(this)
-    this.resetVotekickThreshold = this.resetVotekickThreshold.bind(this)
-    this.loadVotekickThreshold = this.loadVotekickThreshold.bind(this)
+    this.saveVotekickThreshold = this.saveVotekickThreshold.bind(this);
+    this.resetVotekickThreshold = this.resetVotekickThreshold.bind(this);
+    this.loadVotekickThreshold = this.loadVotekickThreshold.bind(this);
+    this.loadBroadcast = this.loadBroadcast.bind(this);
+    this.loadWelcome = this.loadWelcome.bind(this);
+    this.loadAll = this.loadAll.bind(this)
+  }
+
+  loadAll() {
+    this.loadMapRotation().then(this.loadAllMaps());
+    this.loadSettings().then(this.loadAdminRoles);
+    this.loadVotekickThreshold();
+    this.loadProfanities();
+    this.loadWelcome();
+    this.loadBroadcast();
   }
 
   toggle(name) {
@@ -122,14 +135,11 @@ class HLLSettings extends React.Component {
   }
 
   componentDidMount() {
-    this.loadMapRotation().then(this.loadAllMaps());
-    this.loadSettings().then(this.loadAdminRoles);
-    this.loadVotekickThreshold()
-    this.loadProfanities();
+    this.loadAll()
   }
 
   toggleLockSliders() {
-    this.toggle('lockedSliders');
+    this.toggle("lockedSliders");
   }
 
   setProfanities() {
@@ -153,16 +163,15 @@ class HLLSettings extends React.Component {
       .then((data) =>
         data.failed === false
           ? this.setState({
-            autoBalanceThres: data.result.autobalance_threshold,
-            teamSwitchCooldownMin: data.result.team_switch_cooldown,
-            idleAutokickMin: data.result.idle_autokick_time,
-            maxPingMs: data.result.max_ping_autokick,
-            queueLength: data.result.queue_length,
-            vipSlots: data.result.vip_slots_num,
-            autobalanceEnabled: data.result.autobalance_enabled,
-            votekickEnabled: data.result.votekick_enabled,
-          
-          })
+              autoBalanceThres: data.result.autobalance_threshold,
+              teamSwitchCooldownMin: data.result.team_switch_cooldown,
+              idleAutokickMin: data.result.idle_autokick_time,
+              maxPingMs: data.result.max_ping_autokick,
+              queueLength: data.result.queue_length,
+              vipSlots: data.result.vip_slots_num,
+              autobalanceEnabled: data.result.autobalance_enabled,
+              votekickEnabled: data.result.votekick_enabled,
+            })
           : null
       )
       .catch(handle_http_errors);
@@ -173,6 +182,18 @@ class HLLSettings extends React.Component {
       .then((res) => showResponse(res, command, showSuccess))
       .then((res) => (res.failed === false ? stateSetter(res) : null))
       .catch(handle_http_errors);
+  }
+
+  async loadWelcome() {
+    return this._loadToState("get_welcome_message", false, (data) =>
+      this.setState({ welcomeMessage: data.result || "" })
+    );
+  }
+
+  async loadBroadcast() {
+    return this._loadToState("get_broadcast_message", false, (data) =>
+      this.setState({ broadcastMessage: data.result || "" })
+    );
   }
 
   async loadVips() {
@@ -233,9 +254,12 @@ class HLLSettings extends React.Component {
   }
 
   async resetVotekickThreshold() {
-    return postData(`${process.env.REACT_APP_API_URL}do_reset_votekick_threshold`, {
-      threshold_pairs: this.state.votekickThreshold,
-    })
+    return postData(
+      `${process.env.REACT_APP_API_URL}do_reset_votekick_threshold`,
+      {
+        threshold_pairs: this.state.votekickThreshold,
+      }
+    )
       .then((res) => showResponse(res, "do_reset_votekick_threshold", true))
       .then(this.loadVotekickThreshold)
       .catch(handle_http_errors);
@@ -298,7 +322,7 @@ class HLLSettings extends React.Component {
           <small>(1min autorefresh)</small>
           <AutoRefreshLine
             intervalFunction={() =>
-              this.loadSettings().then(this.loadMapRotation)
+              this.loadAll()
             }
             execEveryMs={60000}
             statusRefreshIntervalMs={500}
@@ -325,12 +349,15 @@ class HLLSettings extends React.Component {
             type="Welcome message"
             classes={classes}
             forward={forwardWelcome}
-            onForwardChange={() => this.toggle('forwardWelcome')}
+            onForwardChange={() => this.toggle("forwardWelcome")}
             value={welcomeMessage}
             setValue={(val) => this.setState({ welcomeMessage: val })}
             onSave={(val) =>
               this.setState({ welcomeMessage: val }, () =>
-                sendAction("set_welcome_message", { msg: val, forward: forwardWelcome })
+                sendAction("set_welcome_message", {
+                  msg: val,
+                  forward: forwardWelcome,
+                })
               )
             }
           />
@@ -342,11 +369,19 @@ class HLLSettings extends React.Component {
             classes={classes}
             value={broadcastMessage}
             forward={forwardBroadcast}
-            onForwardChange={() => this.toggle('forwardBroadcast')}
-            setValue={(val) => this.setState({ broadcastMessage: val, forward: forwardBroadcast })}
+            onForwardChange={() => this.toggle("forwardBroadcast")}
+            setValue={(val) =>
+              this.setState({
+                broadcastMessage: val,
+                forward: forwardBroadcast,
+              })
+            }
             onSave={(val) =>
               this.setState({ broadcastMessage: val }, () =>
-                sendAction("set_broadcast", { msg: val, forward: forwardBroadcast })
+                sendAction("set_broadcast", {
+                  msg: val,
+                  forward: forwardBroadcast,
+                })
               )
             }
           />
@@ -357,13 +392,18 @@ class HLLSettings extends React.Component {
             classes={classes}
             onExpand={this.loadVips}
           >
-            <Link href={`${process.env.REACT_APP_API_URL}download_vips`} target="_blank" >Download VIPs</Link>
+            <Link
+              href={`${process.env.REACT_APP_API_URL}download_vips`}
+              target="_blank"
+            >
+              Download VIPs
+            </Link>
             <p>Changes are applied immediately</p>
             <VipEditableList
               peopleList={vips}
               classes={classes}
               forward={forwardVIP}
-              onFowardChange={() => this.toggle('forwardVIP')}
+              onFowardChange={() => this.toggle("forwardVIP")}
               onAdd={(name, steamID64) =>
                 sendAction("do_add_vip", {
                   steam_id_64: steamID64,
@@ -372,9 +412,10 @@ class HLLSettings extends React.Component {
                 }).then(this.loadVips)
               }
               onDelete={(name, steamID64) =>
-                sendAction("do_remove_vip", { steam_id_64: steamID64, forward: forwardVIP, }).then(
-                  this.loadVips
-                )
+                sendAction("do_remove_vip", {
+                  steam_id_64: steamID64,
+                  forward: forwardVIP,
+                }).then(this.loadVips)
               }
             />
           </CollapseCard>
@@ -415,7 +456,7 @@ class HLLSettings extends React.Component {
           <Grid item>
             <Padlock
               checked={lockedSliders}
-              handleChange={() => this.toggle('lockedSliders')}
+              handleChange={() => this.toggle("lockedSliders")}
               classes={classes}
               label="Locked sliders"
             />
@@ -423,7 +464,7 @@ class HLLSettings extends React.Component {
           <Grid item>
             <Padlock
               checked={sildersShowValues}
-              handleChange={() => this.toggle('sildersShowValues')}
+              handleChange={() => this.toggle("sildersShowValues")}
               classes={classes}
               label="Show all values"
             />
@@ -431,7 +472,7 @@ class HLLSettings extends React.Component {
           <Grid item>
             <Padlock
               checked={forwardSettings}
-              handleChange={() => this.toggle('forwardSettings')}
+              handleChange={() => this.toggle("forwardSettings")}
               classes={classes}
               label="Forward settings changes to all servers"
             />
@@ -570,21 +611,59 @@ class HLLSettings extends React.Component {
         </Grid>
 
         <Grid item className={classes.paper} xs={12} md={6}>
-          <Padlock label="Auto balance enabled" checked={autobalanceEnabled} color="secondary" handleChange={v => this.saveSetting('autobalance_enabled', v).then(this.loadSettings)} />
+          <Padlock
+            label="Auto balance enabled"
+            checked={autobalanceEnabled}
+            color="secondary"
+            handleChange={(v) =>
+              this.saveSetting("autobalance_enabled", v).then(this.loadSettings)
+            }
+          />
         </Grid>
         <Grid item className={classes.paper} xs={12} md={6}>
-          <Padlock label="Vote kicks allowed" checked={votekickEnabled} color="secondary" handleChange={v => this.saveSetting('votekick_enabled', v).then(this.loadSettings)} />
+          <Padlock
+            label="Vote kicks allowed"
+            checked={votekickEnabled}
+            color="secondary"
+            handleChange={(v) =>
+              this.saveSetting("votekick_enabled", v).then(this.loadSettings)
+            }
+          />
         </Grid>
         <Grid item xs={12}>
           <Grid container spacing={1}>
             <Grid item xs={12}>
-              <TextField fullWidth label="Vote kick threshold" value={votekickThreshold} onChange={e => this.setState({ votekickThreshold: e.target.value })} helperText="Use the following format, Error: First entry must be for 0 Players (you can add as many pairs as you want): player count,votekick threshold... example: 20,10,30,15,50,25,100,50" />
+              <TextField
+                fullWidth
+                label="Vote kick threshold"
+                value={votekickThreshold}
+                onChange={(e) =>
+                  this.setState({ votekickThreshold: e.target.value })
+                }
+                helperText="Use the following format, Error: First entry must be for 0 Players (you can add as many pairs as you want): player count,votekick threshold... example: 20,10,30,15,50,25,100,50"
+              />
             </Grid>
             <Grid item xs={6}>
-              <Button fullWidth variant="outlined" onClick={e => this.saveVotekickThreshold().then(this.loadVotekickThreshold)}>SAVE</Button>
+              <Button
+                fullWidth
+                variant="outlined"
+                onClick={(e) =>
+                  this.saveVotekickThreshold().then(this.loadVotekickThreshold)
+                }
+              >
+                SAVE
+              </Button>
             </Grid>
             <Grid item xs={6}>
-              <Button fullWidth variant="outlined" onClick={e => this.resetVotekickThreshold().then(this.loadVotekickThreshold)}>RESET</Button>
+              <Button
+                fullWidth
+                variant="outlined"
+                onClick={(e) =>
+                  this.resetVotekickThreshold().then(this.loadVotekickThreshold)
+                }
+              >
+                RESET
+              </Button>
             </Grid>
           </Grid>
         </Grid>
@@ -605,7 +684,8 @@ class HLLSettings extends React.Component {
               Configure map rotation
             </Typography>
             <Typography variant="caption" gutterBottom>
-              Map sure the vote map is disabled if you want to change your rotation
+              Map sure the vote map is disabled if you want to change your
+              rotation
             </Typography>
           </Grid>
         </Grid>

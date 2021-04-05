@@ -160,7 +160,7 @@ const VoteMapConfig = () => {
                             (o) => `${o.get(0)}: ${o.get(1)} vote(s)\n`
                         )}</pre>
                 </Grid>
-                <Grid xs={12}><Button variant="outlined" color="secondary" onClick={() => {if (window.confirm("Are you sure?") === true) { resetVotes() }}} >RESET SELECTION & VOTES</Button></Grid>
+                <Grid xs={12}><Button variant="outlined" color="secondary" onClick={() => {if (window.confirm("Are you sure?") === true) { resetVotes().then(loadData) }}} >RESET SELECTION & VOTES</Button></Grid>
             </Grid>
             
         </Grid>

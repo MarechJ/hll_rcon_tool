@@ -529,7 +529,7 @@ def wrap_method(func, parameters, command_name):
             if pname == "by":
                 arguments[pname] = request.user.username
             elif param.default != inspect._empty:
-                arguments[pname] = data.get(pname)
+                arguments[pname] = data.get(pname, param.default)
             else:
                 try:
                     arguments[pname] = data[pname]

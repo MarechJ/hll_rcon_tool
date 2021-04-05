@@ -72,7 +72,7 @@ def scrolling_votemap(rcon, winning_maps, repeat=10):
         return ""
     separator = '  ***  '
     options = separator.join([vote_options] * repeat)
-    instructions = config.get_votemap_instruction_text()
+    instructions = config.get_votemap_instruction_text().replace('\n', ' ')
     repeat_instructions = max(int(len(options) / (len(instructions) + len(separator))), 1)
     instructions = separator.join([instructions] * repeat_instructions)
 
