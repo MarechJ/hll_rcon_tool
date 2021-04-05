@@ -50,7 +50,7 @@ def count_vote(rcon: RecordedRcon, struct_log):
                 config.get_votemap_thank_you_text().format(
                     player_name=struct_log["player"], map_name=map_name
                 ),
-                10
+                5
             )
         except Exception:
             logger.warning("Unable to output thank you message")
