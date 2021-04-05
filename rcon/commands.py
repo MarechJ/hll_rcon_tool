@@ -304,7 +304,7 @@ class ServerCtl:
         return self._request(f"setautobalanceenabled {bool_str}")
 
     def set_welcome_message(self, msg):
-        return self._request(f"say {msg}", log_info=True)
+        return self._request(f"say {msg}", log_info=True, can_fail=False)
 
     def set_map(self, map_name):
         return self._request(f"map {map_name}", log_info=True)
@@ -329,7 +329,7 @@ class ServerCtl:
 
     @_escape_params
     def set_broadcast(self, msg):
-        return self._request(f'broadcast "{msg}"', log_info=True)
+        return self._request(f'broadcast "{msg}"', log_info=True, can_fail=False)
 
     def set_votekick_enabled(self, bool_str):
         """

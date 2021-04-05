@@ -23,7 +23,7 @@ const ServerMessage = ({ classes, type, autocompleteKey, value, setValue, onSave
         onInputChange={(e, value) => setValue(value)}
         renderInput={(params) => (
           <TextField multiline rows={4} rowsMax={40} {...params} label={type} margin="normal" variant="outlined" 
-          helperText={`Due to HLL limitations we can't know the current ${type}. Supports same variables as for auto broadcasts.`} />
+          helperText={`Due to HLL limitations we can't know the current ${type}, what you see here is the best guess based on the last message set. Supports same variables as for auto broadcasts.`} />
         )}
       />
     </Grid>

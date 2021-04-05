@@ -8,6 +8,7 @@ from . import logs
 from . import vips
 from . import scoreboards
 from . import history
+from . import votemap
 
 
 urlpatterns = [
@@ -34,4 +35,8 @@ urlpatterns = [
     path("unflag_player", history.unflag_player),
     path("player", history.get_player),
     path("get_map_history", history.get_map_history),
+    path("get_votemap_config", votemap.get_votemap_config),
+    path("set_votemap_config", votemap.set_votemap_config),
+    path("get_votemap_status", votemap.get_votemap_status),
+    path("reset_votemap_state", votemap.reset_votemap_state),
 ]
