@@ -27,7 +27,7 @@ from rcon.user_config import CameraConfig
 from rcon.discord import get_prepared_discord_hooks, send_to_discord_audit
 from rcon.map_recorder import VoteMap
 from rcon.user_config import VoteMapConfig
-from rcon.workers import temporary_broadcast
+from rcon.workers import temporary_broadcast, temporary_welcome
 
 logger = logging.getLogger(__name__)
 
@@ -267,7 +267,7 @@ def notify_camera(rcon: RecordedRcon, struct_log):
 
     config = CameraConfig()
     if config.is_broadcast():
-        rcon.set_broadcast(struct_log["message"])
+        temporary_broadcast(rcon, struct_log["message"], 60)
 
     if config.is_welcome():
-        rcon.set_welcome_message(struct_log["message"])
+        temporary_welcome(rcon, struct_log["message"], 60)
