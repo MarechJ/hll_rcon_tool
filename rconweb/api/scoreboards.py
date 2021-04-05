@@ -1,6 +1,7 @@
 from datetime import datetime
 from os import error
 import logging
+
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 
@@ -18,6 +19,7 @@ from .views import ctl
 from .auth import api_response, login_required
 
 logger = logging.getLogger('rconweb')
+
 
 def make_table(scoreboard):
     return "\n".join(
@@ -110,6 +112,7 @@ def text_tk_scoreboard(request):
         """
     )
 
+
 @csrf_exempt
 def live_info(request):
     status = ctl.get_status()
@@ -140,17 +143,19 @@ def live_scoreboard(request):
         command="live_scoreboard"
     )
 
+
 @csrf_exempt
+@login_required
 def date_scoreboard(request):
 
     try:
-        start = datetime.fromtimestamp(int(request.GET.get("start"))).isoformat()
-    except (ValueError, KeyError, TypeError):
+        start = datetime.fromtimestamp(request.GET.get("start"))
+    except (ValueError, KeyError, TypeError) as e:
         start = None
     try:
-        end = datetime.fromtimestamp(int(request.GET.get("end"))).isoformat()
-    except (ValueError, KeyError, TypeError):
-        end = None
+        end = datetime.fromtimestamp(request.GET.get("end"))
+    except (ValueError, KeyError, TypeError)as e:
+        end = datetime.now()
 
     stats = TimeWindowStats()
 
