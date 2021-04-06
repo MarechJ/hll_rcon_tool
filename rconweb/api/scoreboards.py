@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from os import error
 import logging
 
@@ -151,7 +151,7 @@ def date_scoreboard(request):
     try:
         start = datetime.fromtimestamp(request.GET.get("start"))
     except (ValueError, KeyError, TypeError) as e:
-        start = None
+        start = datetime.now() - timedelta(minutes=60)
     try:
         end = datetime.fromtimestamp(request.GET.get("end"))
     except (ValueError, KeyError, TypeError)as e:
