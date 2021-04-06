@@ -1,5 +1,7 @@
+from datetime import datetime, timedelta
 from os import error
 import logging
+
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 
@@ -11,12 +13,13 @@ from rcon.settings import SERVER_INFO
 from rcon import game_logs
 from rcon.models import LogLine, PlayerSteamID, PlayerName, enter_session
 from rcon.discord import send_to_discord_audit
-from rcon.scoreboard import LiveStats
+from rcon.scoreboard import LiveStats, TimeWindowStats
 
 from .views import ctl
 from .auth import api_response, login_required
 
 logger = logging.getLogger('rconweb')
+
 
 def make_table(scoreboard):
     return "\n".join(
@@ -109,6 +112,7 @@ def text_tk_scoreboard(request):
         """
     )
 
+
 @csrf_exempt
 def live_info(request):
     status = ctl.get_status()
@@ -137,4 +141,38 @@ def live_scoreboard(request):
         error=error,
         failed=failed,
         command="live_scoreboard"
+    )
+
+
+@csrf_exempt
+@login_required
+def date_scoreboard(request):
+
+    try:
+        start = datetime.fromtimestamp(request.GET.get("start"))
+    except (ValueError, KeyError, TypeError) as e:
+        start = datetime.now() - timedelta(minutes=60)
+    try:
+        end = datetime.fromtimestamp(request.GET.get("end"))
+    except (ValueError, KeyError, TypeError)as e:
+        end = datetime.now()
+
+    stats = TimeWindowStats()
+
+    try:
+        result = stats.get_players_stats_at_time(start, end)
+        error_ = None,
+        failed = False
+
+    except Exception as e:
+        logger.exception("Unable to produce date stats")
+        result = {}
+        error_ = ""
+        failed = True
+
+    return api_response(
+        result=result,
+        error=error_,
+        failed=failed,
+        command="date_scoreboard"
     )
