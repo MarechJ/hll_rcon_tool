@@ -344,7 +344,7 @@ class Rcon(ServerCtl):
     def get_broadcast_message(self):
         red = get_redis_client()
         msg = red.get("BROADCAST_MESSAGE")
-        if msg:
+        if isinstance(msg, str):
             return msg.decode()
         return msg
 
