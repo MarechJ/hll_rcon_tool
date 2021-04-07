@@ -10,12 +10,11 @@ from rcon.cache_utils import get_redis_client
 from rcon.utils import FixedLenList
 from rcon.settings import SERVER_INFO
 from rcon.commands import HLLServerError, CommandFailedError
-from rcon.player_history import get_player_profile, player_has_flag
 from sqlalchemy import desc, and_, or_
+from rcon.player_history import get_player_profile, player_has_flag, add_player_to_blacklist
 from sqlalchemy.exc import IntegrityError, InvalidRequestError
 from rcon.models import LogLine, enter_session, PlayerSteamID, PlayerName
 import unicodedata
-
 from rcon.recorded_commands import RecordedRcon
 from rcon.config import get_config
 from rcon.discord import send_to_discord_audit
@@ -89,7 +88,7 @@ class LogLoop:
     def get_log_history_list():
         return FixedLenList(key=LogLoop.log_history_key, max_len=100000)
 
-    def run(self, loop_frequency_secs=5, cleanup_frequency_minutes=10):
+    def run(self, loop_frequency_secs=2, cleanup_frequency_minutes=10):
         since_min = 180
         self.cleanup()
         last_cleanup_time = datetime.datetime.now()
@@ -440,21 +439,21 @@ def auto_ban_if_tks_right_after_connection(rcon: RecordedRcon, log):
                     datetime.datetime.fromtimestamp(log["timestamp_ms"]),
                 )
                 continue
-            logger.info(
-                "Banning player %s for TEAMKILL after connect %s", player_name, log
-            )
+            
             tk_counter += 1
             if tk_counter > tk_tolerance_count:
-                rcon.do_perma_ban(
-                    player=player_name,
-                    reason=reason,
-                    by=author,
-                )
-                send_to_discord_audit(
-                    discord_msg.format(player=player_name),
-                    by=author,
-                    webhookurl=webhook,
-                )
+                logger.info("Banning player %s for TEAMKILL after connect %s", player_name, log)
+                try:
+                    rcon.do_perma_ban(
+                        player=player_name,
+                        reason=reason,
+                        by=author,
+                    )
+                except:
+                    logger.exception("Can't perma, trying blacklist")
+                    add_player_to_blacklist(player_steam_id, reason, by=author)
+                logger.info("Banned player %s for TEAMKILL after connect %s", player_name, log)
+                send_to_discord_audit(discord_msg.format(player=player_name), by=author, webhookurl=webhook)
         elif is_player_death(player_name, log):
             death_counter += 1
             if death_counter >= ignore_after_death:

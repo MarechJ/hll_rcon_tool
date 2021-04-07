@@ -210,7 +210,7 @@ class Rcon(ServerCtl):
                 raise
             l.append(dict(zip((STEAMID, NAME), (steam_id_64, name))))
 
-        return l
+        return sorted(l, key=lambda d: d[NAME])
 
     def do_remove_vip(self, steam_id_64):
         with invalidates(Rcon.get_vip_ids):
@@ -311,9 +311,26 @@ class Rcon(ServerCtl):
         with invalidates(Rcon.get_vip_slots_num):
             return super().set_vip_slots_num(num)
 
-    def set_welcome_message(self, msg):
+    def get_welcome_message(self):
         red = get_redis_client()
+        msg = red.get("WELCOME_MESSAGE")
+        if msg:
+            return msg.decode()
+        return msg
+
+    def set_welcome_message(self, msg, save=True):
         from rcon.broadcast import format_message
+        prev = None
+
+        try:
+            red = get_redis_client()
+            if save:
+                prev = red.getset("WELCOME_MESSAGE", msg)
+            else:
+                prev = red.get("WELCOME_MESSAGE")
+            red.expire("WELCOME_MESSAGE", 60 * 60 * 24)
+        except Exception:
+            logger.exception("Can't save message in redis: %s", msg)
 
         try:
             formatted = format_message(self, msg)
@@ -321,17 +338,38 @@ class Rcon(ServerCtl):
             logger.exception("Unable to format message")
             formatted = msg
             
-        return super().set_welcome_message(formatted)
+        super().set_welcome_message(formatted)
+        return prev.decode() if prev else ""
 
-    def set_broadcast(self, msg):
+    def get_broadcast_message(self):
+        red = get_redis_client()
+        msg = red.get("BROADCAST_MESSAGE")
+        if isinstance(msg, (str, bytes)):
+            return msg.decode()
+        return msg
+
+    def set_broadcast(self, msg, save=True):
         from rcon.broadcast import format_message
+        prev = None
 
+        try:
+            red = get_redis_client()
+            if save:
+                prev = red.getset("BROADCAST_MESSAGE", msg)
+            else:
+                prev = red.get("BROADCAST_MESSAGE")
+            red.expire("BROADCAST_MESSAGE", 60 * 30)
+        except Exception:
+            logger.exception("Can't save message in redis: %s", msg)
+            
         try:
             formatted = format_message(self, msg)
         except Exception:
             logger.exception("Unable to format message")
             formatted = msg
-        return super().set_broadcast(formatted)
+
+        super().set_broadcast(formatted)
+        return prev.decode() if prev else ""
 
     @ttl_cache(ttl=20)
     def get_slots(self):
@@ -396,7 +434,7 @@ class Rcon(ServerCtl):
         except (ValueError, TypeError) as e:
             raise ValueError("Time '%s' is not a valid integer", time_str) from e
 
-    @ttl_cache(ttl=5)
+    @ttl_cache(ttl=2)
     def get_structured_logs(
         self, since_min_ago, filter_action=None, filter_player=None
     ):
@@ -552,14 +590,11 @@ class Rcon(ServerCtl):
         rotation = list(rotation)
         logger.info("Apply map rotation %s", rotation)
 
+        current = self.get_map_rotation()
+        if rotation == current:
+            logger.debug("Map rotation is the same, nothing to do")
+            return current
         with invalidates(Rcon.get_map_rotation):
-            current = self.get_map_rotation()
-            if rotation == current:
-                logger.debug("Map rotation is the same, nothing to do")
-                return current
-
-            print(rotation, current)
-
             if len(current) == 1:
                 logger.info("Current rotation is a single map")
                 for idx, m in enumerate(rotation):

@@ -120,9 +120,11 @@ class ReasonDialog extends React.Component {
             renderInput={(params) => (
               <TextField
                 {...params}
+                multiline rows={4} rowsMax={10}
                 label="Reason"
+                variant="outlined"
                 margin="dense"
-                helperText="A message is mandatory"
+                helperText="The message that will be displayed to the player. A message is mandatory"
               />
             )}
           />
