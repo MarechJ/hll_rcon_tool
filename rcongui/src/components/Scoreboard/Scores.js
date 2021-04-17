@@ -261,7 +261,7 @@ const Scores = ({ classes, scores, durationToHour }) => {
       <Grid item xs={12} md={6} lg={3} xl={2}>
         <RankBoard
           classes={classes}
-          iconUrl={"icons/sleep.png"}
+          iconUrl={"icons/survivor.png"}
           scores={scores}
           title="SURVIVOR"
           statType="Longest life"
@@ -271,9 +271,9 @@ const Scores = ({ classes, scores, durationToHour }) => {
       <Grid item xs={12} md={6} lg={3} xl={2}>
         <RankBoard
           classes={classes}
-          iconUrl={"icons/sleep.png"}
+          iconUrl={"icons/early.png"}
           scores={scores}
-          title="YOU'RE STILL A MAN"
+          title="U'R STILL A MAN"
           statType="Shortest life"
           statKey="longest_life_secs"
           reversed />

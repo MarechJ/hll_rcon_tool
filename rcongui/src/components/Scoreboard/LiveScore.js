@@ -6,23 +6,16 @@ import {
   Typography,
   makeStyles,
   Paper,
-  Card,
-  CardContent,
-  CardMedia,
   LinearProgress,
-  Select,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Chip,
 } from "@material-ui/core";
 import React, { Fragment } from "react";
 import { get, handle_http_errors, showResponse } from "../../utils/fetchUtils";
 import { List as iList, Map, fromJS, set } from "immutable";
 import moment from "moment";
-import useMediaQuery from '@material-ui/core/useMediaQuery';
-import { useTheme } from '@material-ui/core/styles';
+import useMediaQuery from "@material-ui/core/useMediaQuery";
+import { useTheme } from "@material-ui/core/styles";
 import Scores from "./Scores";
+
 
 const useStyles = makeStyles((theme) => ({
   paper: {
@@ -57,6 +50,7 @@ const useStyles = makeStyles((theme) => ({
     width: 38,
   },
 }));
+
 
 const map_to_pict = {
   carentan: "maps/carentan.webp",
@@ -161,8 +155,8 @@ const LiveHeader = ({
   isLoading,
 }) => {
   const theme = useTheme();
-  const isXs = useMediaQuery(theme.breakpoints.down('sm'));
-  
+  const isXs = useMediaQuery(theme.breakpoints.down("sm"));
+
   return (
     <AppBar position="relative" style={{ minHeight: "144px" }}>
       <Toolbar className={classes.doublePadding}>
@@ -171,7 +165,6 @@ const LiveHeader = ({
           justify={isXs ? "center" : "flex-start"}
           alignItems="flex-start"
           alignContent="flex=start"
-        
           spacing={1}
         >
           <Grid
@@ -230,8 +223,8 @@ const LiveHeader = ({
               </Grid>
               <Grid item xs={12}>
                 <Typography variant="caption">
-                  Only ingame players are shown. Stats reset on disconnection, not per
-                  game.Real deaths only (excludes redeploys / revives)
+                  Only ingame players are shown. Stats reset on disconnection,
+                  not per game.Real deaths only (excludes redeploys / revives)
                 </Typography>
               </Grid>
               <Grid item xs={12}>
@@ -257,6 +250,5 @@ const LiveHeader = ({
     </AppBar>
   );
 };
-
 
 export default LiveScore;

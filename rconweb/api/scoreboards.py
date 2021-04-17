@@ -145,9 +145,7 @@ def live_scoreboard(request):
 
 
 @csrf_exempt
-@login_required
 def date_scoreboard(request):
-
     try:
         start = datetime.fromtimestamp(request.GET.get("start"))
     except (ValueError, KeyError, TypeError) as e:
