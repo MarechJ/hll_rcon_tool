@@ -77,9 +77,15 @@ def get_player(request):
 
 
 
+
 @csrf_exempt
 @login_required
 def get_player_ban(request):
+    """
+    get all punishments on a player
+    @param request: steam_id_64 of the player
+    @return: a list of punishments
+    """
     data = _get_data(request)
     res = {}
     try:

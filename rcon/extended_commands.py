@@ -195,6 +195,11 @@ class Rcon(ServerCtl):
                 type_to_func[b["type"]](b["raw"])
 
     def get_ban(self, steam_id_64):
+        """
+        get all bans from steam_id_64
+        @param steam_id_64: steam_id_64 of a user
+        @return: a array of bans
+        """
         bans = self.get_bans()
         return filter(lambda x: x.get("steam_id_64") == steam_id_64, bans)
 

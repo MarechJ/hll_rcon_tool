@@ -129,9 +129,12 @@ class PlayerInfo extends React.Component {
         }
     }
 
-    fetchPlayerBan = (steamId64) => {
+    /**
+     * fetch bans that currently affect the steamId64
+     * @param steamId64
+     */
+    #fetchPlayerBan = (steamId64) => {
         get(`get_ban?steam_id_64=${steamId64}`)
-            .then((response) => showResponse(response, "get_ban", false))
             .then((data) => {
                 const temp = data.result.find((ban, index) => {
                     if (ban.type === "temp")
@@ -151,7 +154,11 @@ class PlayerInfo extends React.Component {
             .catch(handle_http_errors);
     }
 
-    fetchPlayer = (steamId64) => {
+    /**
+     * fetch Player data
+     * @param steamId64
+     */
+    #fetchPlayer = (steamId64) => {
         get(`player?steam_id_64=${steamId64}`)
             .then((response) => showResponse(response, "get_user", false))
             .then((data) => {
@@ -178,16 +185,16 @@ class PlayerInfo extends React.Component {
     componentWillReceiveProps(nextProps){
         const { steamId64 } = nextProps.match.params
         if(steamId64 !== undefined){
-            this.fetchPlayer(steamId64)
-            this.fetchPlayerBan(steamId64)
+            this.#fetchPlayer(steamId64)
+            this.#fetchPlayerBan(steamId64)
         }
     }
 
     componentDidMount() {
         const { steamId64 } = this.props.match.params
         if(steamId64 !== undefined){
-            this.fetchPlayer(steamId64)
-            this.fetchPlayerBan(steamId64)
+            this.#fetchPlayer(steamId64)
+            this.#fetchPlayerBan(steamId64)
         }
     }
 
