@@ -219,12 +219,21 @@ const Header = ({ classes }) => {
                             Players
                           </Link>
                         </MenuItem>
-                        <MenuItem onClick={handleClose}><Link color="inherit" component={RouterLink} to="/logs">
+                        <MenuItem onClick={handleClose}>
+                          <Link color="inherit" component={RouterLink} to="/logs">
                             Logs
-                          </Link></MenuItem>
-                          <MenuItem onClick={handleClose}><Link color="inherit" component={RouterLink} to="/combined_history">
+                          </Link>
+                        </MenuItem>
+                        <MenuItem onClick={handleClose}>
+                          <Link color="inherit" component={RouterLink} to="/combined_history">
                             Combined
-                          </Link></MenuItem>
+                          </Link>
+                        </MenuItem>
+                        <MenuItem>
+                          <Link color="inherit" component={RouterLink} to="/player">
+
+                          </Link>
+                        </MenuItem>
                       </Menu>
                       <Link
                         variant="button"

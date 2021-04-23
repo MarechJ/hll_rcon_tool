@@ -194,6 +194,11 @@ class Rcon(ServerCtl):
             if b.get("steam_id_64") == steam_id_64:
                 type_to_func[b["type"]](b["raw"])
 
+    def get_ban(self, steam_id_64):
+        bans = self.get_bans()
+        return filter(lambda x: x.get("steam_id_64") == steam_id_64, bans)
+
+
     @ttl_cache(ttl=60 * 60)
     def get_vip_ids(self):
         res = super().get_vip_ids()

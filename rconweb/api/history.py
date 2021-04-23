@@ -6,6 +6,7 @@ from dateutil import parser
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
+from rcon.recorded_commands import RecordedRcon
 from rcon.utils import MapsHistory
 
 from rcon.commands import CommandFailedError
@@ -19,9 +20,10 @@ from rcon.player_history import (
 from .auth import login_required, api_response
 from .utils import _get_data
 from rcon.discord import send_to_discord_audit
-
+from rcon.settings import SERVER_INFO
 
 logger = logging.getLogger("rconweb")
+ctl = RecordedRcon(SERVER_INFO)
 
 @csrf_exempt
 @login_required
@@ -73,6 +75,29 @@ def get_player(request):
         }
     )
 
+
+
+@csrf_exempt
+@login_required
+def get_player_ban(request):
+    data = _get_data(request)
+    res = {}
+    try:
+        if s := data.get("steam_id_64"):
+            res = ctl.get_ban(s)
+        failed = bool(res)
+    except:
+        logger.exception("Unable to get player %s", data)
+        failed = True
+
+    return JsonResponse(
+        {
+            "result": res,
+            "command": "get_player_ban",
+            "arguments": data,
+            "failed": failed,
+        }
+    )
 
 @csrf_exempt
 @login_required
