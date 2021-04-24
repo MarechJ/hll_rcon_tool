@@ -154,7 +154,7 @@ class PlayerInfo extends React.Component {
         get(`player?steam_id_64=${steamId64}`)
             .then((response) => showResponse(response, "get_user", false))
             .then((data) => {
-                if (data.result === undefined || Object.keys(data.result).length === 0) {
+                if (data.result !== undefined && data.result !== null && Object.keys(data.result).length !== 0) {
                     this.setState({
                         created: data.result.created,
                         names: data.result.names,
