@@ -5,7 +5,6 @@ import Typography from "@material-ui/core/Typography";
 import {ExpandMore} from "@material-ui/icons";
 import moment from "moment";
 import MUIDataTable from "mui-datatables";
-import PropTypes from 'prop-types';
 import {withRouter} from "react-router";
 
 const NamePopOver = ({names}) => {
@@ -25,7 +24,7 @@ const NamePopOver = ({names}) => {
     return (
         <Grid item>
             <Button endIcon={<ExpandMore/>} onClick={handleClick}>
-                <Typography variant={"h5"}>{names[0].name}</Typography>
+                <Typography variant="h5">{names[0].name}</Typography>
             </Button>
             <Popover
                 id={id}
@@ -81,7 +80,7 @@ const Punishment = ({punishments}) => {
 
     return (
         <MUIDataTable
-            title={"Punishments"}
+            title="Punishments"
             data={punishments}
             columns={columns}
             options={options}
@@ -90,11 +89,6 @@ const Punishment = ({punishments}) => {
 }
 
 class PlayerInfo extends React.Component {
-    static propTypes = {
-        match: PropTypes.object.isRequired,
-        location: PropTypes.object.isRequired,
-        history: PropTypes.object.isRequired
-    }
 
     constructor(props) {
         super(props);
@@ -197,25 +191,25 @@ class PlayerInfo extends React.Component {
                     <Grid item sm={12} className={classes.marginTop}>
                         <Grid container>
                             <Grid item sm={2}>
-                                <Grid container justify={"center"} alignContent={"center"} wrap={"wrap"}
-                                      direction={"column"} spacing={3}>
+                                <Grid container justify="center" alignContent="center" wrap="wrap"
+                                      direction="column" spacing={3}>
                                     <Grid item>
                                         <Avatar style={{height: '150px', width: '150px', fontSize: '5rem'}}
-                                                variant={"square"} className={classes.square}
+                                                variant="square" className={classes.square}
                                                 src={this.state.steaminfo?.profile?.avatarfull}>
                                             {this.state.names[0]?.name[0].toUpperCase()}
                                         </Avatar>
                                     </Grid>
                                     <Grid item>
-                                        <Typography variant={"h6"}>Last connection</Typography>
+                                        <Typography variant="h6">Last connection</Typography>
                                         <Typography>{moment(this.state.sessions[0]?.end).format("ddd Do MMM HH:mm:ss")}</Typography>
                                     </Grid>
                                     <Grid item>
-                                        <Typography variant={"h6"}>Total play time</Typography>
+                                        <Typography variant="h6">Total play time</Typography>
                                         <Typography>{moment.duration(this.state.total_playtime_seconds, "seconds").humanize()}</Typography>
                                     </Grid>
                                     <Grid item>
-                                        <Typography variant={"h6"}>Player penalties</Typography>
+                                        <Typography variant="h6">Player penalties</Typography>
                                         <Typography>Perma ban: {this.state.penalty_count.PERMABAN}</Typography>
                                         <Typography>Temp ban: {this.state.penalty_count.TEMPBAN}</Typography>
                                         <Typography>Kick: {this.state.penalty_count.KICK}</Typography>
@@ -225,25 +219,25 @@ class PlayerInfo extends React.Component {
                             </Grid>
 
                             <Grid item sm={9}>
-                                <Grid container spacing={3} justify={"flex-start"} alignItems={"flex-start"}
-                                      alignContent={"flex-start"}>
+                                <Grid container spacing={3} justify="flex-start" alignItems="flex-start"
+                                      alignContent="flex-start">
                                     <Grid item sm={12}>
-                                        <Grid container justify={"flex-start"} alignItems={"flex-start"}
-                                              alignContent={"flex-start"}>
+                                        <Grid container justify="flex-start" alignItems="flex-start"
+                                              alignContent="flex-start">
                                             <NamePopOver names={this.state.names}/>
                                         </Grid>
                                     </Grid>
                                     <Grid item sm={4}>
-                                        <Grid container sm={12} justify={"space-between"}>
+                                        <Grid container sm={12} justify="space-between">
                                             <Grid item><Typography color={this.state.vip ? "primary" : ""}
-                                                                   variant={"button"}>VIP</Typography></Grid>
+                                                                   variant="button">VIP</Typography></Grid>
                                             <Grid item><Typography color={this.state.perma ? "error" : ""}
-                                                                   variant={"button"}>PERMABAN</Typography></Grid>
+                                                                   variant="button">PERMABAN</Typography></Grid>
                                             <Grid item><Typography color={this.state.temp ? "error" : ""}
-                                                                   variant={"button"}>TEMPBAN</Typography></Grid>
+                                                                   variant="button">TEMPBAN</Typography></Grid>
                                             <Grid item><Typography
                                                 color={this.state.blacklist?.is_blacklisted ? "error" : ""}
-                                                variant={"button"}>BLACKLISTED</Typography></Grid>
+                                                variant="button">BLACKLISTED</Typography></Grid>
                                         </Grid>
                                     </Grid>
                                     <Grid item sm={12}>
