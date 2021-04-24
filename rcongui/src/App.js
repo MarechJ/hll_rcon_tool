@@ -1,6 +1,6 @@
 import React from "react";
 import "./App.css";
-import { ToastContainer } from "react-toastify";
+import {ToastContainer} from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import PlayerView from "./components/PlayerView";
 import useStyles from "./components/useStyles";
@@ -8,23 +8,17 @@ import Grid from "@material-ui/core/Grid";
 import Logs from "./components/LogsView/logs";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import HLLSettings from "./components/SettingsView/hllSettings";
-import { ThemeProvider } from '@material-ui/styles';
-import {
-  HashRouter as Router,
-  Switch,
-  Route,
-} from "react-router-dom";
+import {ThemeProvider} from '@material-ui/styles';
+import {HashRouter as Router, Route, Switch,} from "react-router-dom";
 import LogsHistory from './components/LogsHistory'
-import { createMuiTheme } from '@material-ui/core/styles';
+import {createMuiTheme} from '@material-ui/core/styles';
 import PlayersHistory from "./components/PlayersHistory";
-import Header, { Footer } from "./components/Header";
+import Header, {Footer} from "./components/Header";
 import RconSettings from './components/RconSettings';
-import { pink, red } from '@material-ui/core/colors';
 import ServicesList from './components/Services';
-import PlayerGrid from './components/PlayersHistory/playerGrid'
-import { isNull } from "lodash";
-import { LiveScore } from './components/Scoreboard'
-import { Typography } from "@material-ui/core";
+import {LiveScore} from './components/Scoreboard'
+import {Typography} from "@material-ui/core";
+import PlayerInfo from "./components/PlayerInfo";
 
 
 const Live = ({ classes }) => {
@@ -38,7 +32,7 @@ const Live = ({ classes }) => {
       <PlayerView classes={classes} onFullScreen={() => { setDirection(""); toggleMdSize()}} isFullScreen={isFullScreen()} />
     </Grid>
     <Grid item sm={12} md={mdSize}>
-      <Logs classes={classes} onFullScreen={() => {direction == "column-reverse" ? setDirection("") : setDirection("column-reverse"); toggleMdSize()}} isFullScreen={isFullScreen()} />
+      <Logs classes={classes} onFullScreen={() => {direction === "column-reverse" ? setDirection("") : setDirection("column-reverse"); toggleMdSize()}} isFullScreen={isFullScreen()} />
     </Grid>
   </Grid>
 };
@@ -274,29 +268,6 @@ const hll = createMuiTheme({
   }
 });
 
-
-const withLove = createMuiTheme({
-  palette: {
-    primary: pink,
-    secondary: red,
-    background: {
-      paper: pink
-    }
-  },
-  overrides: {
-    MuiCssBaseline: {
-      "@global": {
-        body: {
-          backgroundSize: "cover",
-          backgroundImage:
-            'url("jk.jpg")'
-        }
-      }
-    }
-  }
-});
-
-
 const ThemeContext = React.createContext('light');
 
 
@@ -315,7 +286,6 @@ function App() {
     "GreyBlue": GreyBlueTheme,
     "CamoDark": CamoDarkTheme,
     "PurplePink": PurplePinkTheme,
-    "CamoDark": CamoDarkTheme,
     "CamoLight": CamoLight,
     "hll": hll,
   }

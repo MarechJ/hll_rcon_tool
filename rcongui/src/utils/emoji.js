@@ -1,5 +1,5 @@
 import React from 'react'
-import { getEmojiDataFromNative, Emoji, Picker } from 'emoji-mart'
+import {Emoji, getEmojiDataFromNative} from 'emoji-mart'
 import data from 'emoji-mart/data/all.json'
 
 export function getEmojiFlag(flag, size=22) {

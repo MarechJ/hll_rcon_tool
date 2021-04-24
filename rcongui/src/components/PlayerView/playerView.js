@@ -1,23 +1,16 @@
-import React, { Component } from "react";
-import _ from "lodash";
-import { toast } from "react-toastify";
+import React, {Component} from "react";
 import "react-toastify/dist/ReactToastify.css";
-import {
-  postData,
-  showResponse,
-  get,
-  handle_http_errors,
-} from "../../utils/fetchUtils";
+import {get, handle_http_errors, postData, showResponse,} from "../../utils/fetchUtils";
 import AutoRefreshBar from "./header";
 import TextInputBar from "./textInputBar";
 import CompactList from "./playerList";
 import Chip from "@material-ui/core/Chip";
-import { ReasonDialog } from "./playerActions";
+import {ReasonDialog} from "./playerActions";
 import GroupActions from "./groupActions";
 import Unban from "./unban";
-import { Map, List, fromJS } from "immutable";
-import { FlagDialog } from "../PlayersHistory";
-import { getEmojiFlag } from "../../utils/emoji";
+import {fromJS, List} from "immutable";
+import {FlagDialog} from "../PlayersHistory";
+import {getEmojiFlag} from "../../utils/emoji";
 
 function stripDiacritics(string) {
   return typeof string.normalize !== "undefined"
@@ -223,7 +216,6 @@ class PlayerView extends Component {
       bannedPlayers,
       flag,
     } = this.state;
-    const playersCopy = players;
 
     return (
       <React.Fragment>

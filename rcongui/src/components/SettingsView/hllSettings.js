@@ -1,14 +1,7 @@
 import React from "react";
-import { Grid, Typography, Button, Link, TextField } from "@material-ui/core";
-import { range } from "lodash/util";
-import {
-  showResponse,
-  postData,
-  get,
-  handle_http_errors,
-  sendAction,
-} from "../../utils/fetchUtils";
-import { toast } from "react-toastify";
+import {Button, Grid, Link, TextField, Typography} from "@material-ui/core";
+import {range} from "lodash/util";
+import {get, handle_http_errors, postData, sendAction, showResponse,} from "../../utils/fetchUtils";
 import VipEditableList from "./vips";
 import AdminsEditableList from "./admins";
 import _ from "lodash";
@@ -19,7 +12,7 @@ import NumSlider from "./numSlider";
 import ChangeMap from "./changeMap";
 import Padlock from "./padlock";
 import AutoRefreshLine from "../autoRefreshLine";
-import { ForwardCheckBox, WordList } from "../commonComponent";
+import {ForwardCheckBox, WordList} from "../commonComponent";
 import VoteMapConfig from "./voteMapConfig";
 
 const ProfanityFiler = ({
@@ -307,7 +300,6 @@ class HLLSettings extends React.Component {
       forwardVIP,
       forwardBroadcast,
       forwardWelcome,
-      forwardRotation,
       sildersShowValues,
       votekickEnabled,
       votekickThreshold,
@@ -532,11 +524,11 @@ class HLLSettings extends React.Component {
               value: val,
               label: `${val}`,
             }))}
-            value={idleAutokickMin == 9999 ? 0 : idleAutokickMin}
+            value={idleAutokickMin === 9999 ? 0 : idleAutokickMin}
             setValue={(val) => this.setState({ idleAutokickMin: val })}
             saveValue={(val) =>
               this.setState({ idleAutokickMin: val }, () =>
-                this.saveSetting("idle_autokick_time", val == 0 ? 9999 : val)
+                this.saveSetting("idle_autokick_time", val === 0 ? 9999 : val)
               )
             }
           />

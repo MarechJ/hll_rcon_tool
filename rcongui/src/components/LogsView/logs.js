@@ -1,20 +1,12 @@
 import React from "react";
-import { toast } from "react-toastify";
-import {
-  postData,
-  showResponse,
-  get,
-  handle_http_errors,
-} from "../../utils/fetchUtils";
+import {get, handle_http_errors, showResponse,} from "../../utils/fetchUtils";
 import InputLabel from "@material-ui/core/InputLabel";
 import MenuItem from "@material-ui/core/MenuItem";
-import FormHelperText from "@material-ui/core/FormHelperText";
 import FormControl from "@material-ui/core/FormControl";
 import Select from "@material-ui/core/Select";
 import Grid from "@material-ui/core/Grid";
-import { Button } from "@material-ui/core";
+import {Button, IconButton} from "@material-ui/core";
 import Autocomplete from "@material-ui/lab/Autocomplete";
-import _ from "lodash";
 import TextField from "@material-ui/core/TextField";
 import RefreshIcon from "@material-ui/icons/Refresh";
 import Paper from "@material-ui/core/Paper";
@@ -24,7 +16,6 @@ import AutoRefreshLine from "../autoRefreshLine";
 import ListItemText from "@material-ui/core/ListItemText";
 import FullscreenIcon from '@material-ui/icons/Fullscreen';
 import FullscreenExitIcon from '@material-ui/icons/FullscreenExit';
-import { IconButton } from "@material-ui/core";
 
 const Selector = ({
   classes,
@@ -144,7 +135,6 @@ class Logs extends React.Component {
       limitOptions,
     } = this.state;
 
-    const now = moment();
     return (
       <React.Fragment>
         <Grid container justify="flex-start">
