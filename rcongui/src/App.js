@@ -25,6 +25,7 @@ import PlayerGrid from './components/PlayersHistory/playerGrid'
 import { isNull } from "lodash";
 import { LiveScore } from './components/Scoreboard'
 import { Typography } from "@material-ui/core";
+import PlayerInfo from "./components/PlayerInfo";
 
 
 const Live = ({ classes }) => {
@@ -346,6 +347,11 @@ function App() {
                     <Grid item sm={12} lg={12}>
                       <PlayersHistory classes={classes} />
                     </Grid>
+                  </Grid>
+                </Route>
+                <Route path="/player/:steamId64">
+                  <Grid container>
+                    <PlayerInfo classes={classes}/>
                   </Grid>
                 </Route>
                 <Route path="/settings">
