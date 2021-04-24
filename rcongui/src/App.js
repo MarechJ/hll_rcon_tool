@@ -18,7 +18,6 @@ import RconSettings from './components/RconSettings';
 import ServicesList from './components/Services';
 import {LiveScore} from './components/Scoreboard'
 import {Typography} from "@material-ui/core";
-import PlayerInfo from "./components/PlayerInfo";
 
 
 const Live = ({ classes }) => {
