@@ -136,12 +136,11 @@ class PlayerInfo extends React.Component {
         get(`get_ban?steam_id_64=${steamId64}`)
             .then((data) => {
                 const temp = data.result.find((ban, index) => {
-                    if (ban.type === "temp")
-                        return true
+                    return ban.type === "temp";
+
                 })
                 const perma = data.result.find((ban, index) => {
-                    if (ban.type === "perma")
-                        return true
+                    return ban.type === "perma";
                 })
                 if (temp !== undefined) {
                     this.setState({temp: true})
