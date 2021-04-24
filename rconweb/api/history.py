@@ -1,15 +1,13 @@
 import datetime
-import logging
 import json
+import logging
 
 from dateutil import parser
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
-from rcon.recorded_commands import RecordedRcon
-from rcon.utils import MapsHistory
-
 from rcon.commands import CommandFailedError
+from rcon.discord import send_to_discord_audit
 from rcon.player_history import (
     get_players_by_appearance,
     get_player_profile,
@@ -17,13 +15,14 @@ from rcon.player_history import (
     add_flag_to_player,
     remove_flag,
 )
+from rcon.utils import MapsHistory
+from . import views
 from .auth import login_required, api_response
 from .utils import _get_data
-from rcon.discord import send_to_discord_audit
-from rcon.settings import SERVER_INFO
+
 
 logger = logging.getLogger("rconweb")
-ctl = RecordedRcon(SERVER_INFO)
+
 
 @csrf_exempt
 @login_required
@@ -46,7 +45,6 @@ def get_map_history(request):
     return api_response(
         result=res, command="get_map_history", arguments={}, failed=False
     )
-
 
 
 @csrf_exempt
@@ -76,8 +74,6 @@ def get_player(request):
     )
 
 
-
-
 @csrf_exempt
 @login_required
 def get_player_ban(request):
@@ -90,7 +86,7 @@ def get_player_ban(request):
     res = {}
     try:
         if s := data.get("steam_id_64"):
-            res = ctl.get_ban(s)
+            res = views.ctl.get_ban(s)
         failed = bool(res)
     except:
         logger.exception("Unable to get player %s", data)
@@ -104,6 +100,7 @@ def get_player_ban(request):
             "failed": failed,
         }
     )
+
 
 @csrf_exempt
 @login_required
@@ -159,6 +156,7 @@ def unflag_player(request):
     return JsonResponse(
         {"result": res, "command": "flag_player", "arguments": data, "failed": not res}
     )
+
 
 @csrf_exempt
 @login_required
