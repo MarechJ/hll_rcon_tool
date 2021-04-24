@@ -154,22 +154,23 @@ class PlayerInfo extends React.Component {
         get(`player?steam_id_64=${steamId64}`)
             .then((response) => showResponse(response, "get_user", false))
             .then((data) => {
-                this.setState({
-                    created: data.result.created,
-                    names: data.result.names,
-                    sessions: data.result.sessions,
-                    sessions_count: data.result.sessions_count,
-                    total_playtime_seconds: data.result.total_playtime_seconds,
-                    current_playtime_seconds: data.result.current_playtime_seconds,
-                    received_actions: data.result.received_actions,
-                    penalty_count: data.result.penalty_count,
-                    blacklist: data.result.blacklist,
-                    flags: data.result.flags,
-                    watchlist: data.result.watchlist,
-                    steaminfo: data.result.steaminfo,
-                    loaded: true
-                })
-
+                if (data.result === undefined || Object.keys(data.result).length === 0) {
+                    this.setState({
+                        created: data.result.created,
+                        names: data.result.names,
+                        sessions: data.result.sessions,
+                        sessions_count: data.result.sessions_count,
+                        total_playtime_seconds: data.result.total_playtime_seconds,
+                        current_playtime_seconds: data.result.current_playtime_seconds,
+                        received_actions: data.result.received_actions,
+                        penalty_count: data.result.penalty_count,
+                        blacklist: data.result.blacklist,
+                        flags: data.result.flags,
+                        watchlist: data.result.watchlist,
+                        steaminfo: data.result.steaminfo,
+                        loaded: true
+                    })
+                }
             })
             .catch(handle_http_errors);
     }
@@ -229,15 +230,30 @@ class PlayerInfo extends React.Component {
                                     </Grid>
                                     <Grid item sm={4}>
                                         <Grid container sm={12} justify="space-between">
-                                            <Grid item><Typography color={this.state.vip ? "primary" : ""}
-                                                                   variant="button">VIP</Typography></Grid>
-                                            <Grid item><Typography color={this.state.perma ? "error" : ""}
-                                                                   variant="button">PERMABAN</Typography></Grid>
-                                            <Grid item><Typography color={this.state.temp ? "error" : ""}
-                                                                   variant="button">TEMPBAN</Typography></Grid>
-                                            <Grid item><Typography
-                                                color={this.state.blacklist?.is_blacklisted ? "error" : ""}
-                                                variant="button">BLACKLISTED</Typography></Grid>
+                                            <Grid item>
+                                                <Typography color={this.state.vip ? "primary" : ""}
+                                                            style={this.state.perma ? "" : {opacity: 0.2}}
+                                                            variant="button">VIP
+                                                </Typography>
+                                            </Grid>
+                                            <Grid item>
+                                                <Typography color={this.state.perma ? "error" : ""}
+                                                            style={this.state.perma ? "" : {opacity: 0.2}}
+                                                            variant="button">PERMABAN
+                                                </Typography>
+                                            </Grid>
+                                            <Grid item>
+                                                <Typography color={this.state.temp ? "error" : ""}
+                                                            style={this.state.perma ? "" : {opacity: 0.2}}
+                                                            variant="button">TEMPBAN
+                                                </Typography>
+                                            </Grid>
+                                            <Grid item>
+                                                <Typography color={this.state.blacklist?.is_blacklisted ? "error" : ""}
+                                                            style={this.state.perma ? "" : {opacity: 0.2}}
+                                                            variant="button">BLACKLISTED
+                                                </Typography>
+                                            </Grid>
                                         </Grid>
                                     </Grid>
                                     <Grid item sm={12}>
