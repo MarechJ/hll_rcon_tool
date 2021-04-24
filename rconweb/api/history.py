@@ -16,7 +16,6 @@ from rcon.player_history import (
     remove_flag,
 )
 from rcon.utils import MapsHistory
-from . import views
 from .auth import login_required, api_response
 from .utils import _get_data
 
@@ -68,34 +67,6 @@ def get_player(request):
         {
             "result": res,
             "command": "get_player_profile",
-            "arguments": data,
-            "failed": failed,
-        }
-    )
-
-
-@csrf_exempt
-@login_required
-def get_player_ban(request):
-    """
-    get all punishments on a player
-    @param request: steam_id_64 of the player
-    @return: a list of punishments
-    """
-    data = _get_data(request)
-    res = {}
-    try:
-        if s := data.get("steam_id_64"):
-            res = views.ctl.get_ban(s)
-        failed = bool(res)
-    except:
-        logger.exception("Unable to get player %s", data)
-        failed = True
-
-    return JsonResponse(
-        {
-            "result": res,
-            "command": "get_player_ban",
             "arguments": data,
             "failed": failed,
         }
