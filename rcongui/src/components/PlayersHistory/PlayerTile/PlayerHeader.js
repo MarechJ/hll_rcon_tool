@@ -10,7 +10,6 @@ import KeyboardArrowUpIcon from "@material-ui/icons/KeyboardArrowUp";
 import KeyboardArrowDownIcon from "@material-ui/icons/KeyboardArrowDown";
 import {pure} from "recompose";
 import {getName} from "country-list";
-import {useHistory} from "react-router";
 
 const getCountry = (country) => {
   if (country === "" || country === null) {
@@ -27,7 +26,6 @@ const getCountry = (country) => {
 };
 
 export const PlayerHeader = pure(({ classes, player }) => {
-    const history = useHistory();
   const [showAll, setShowAll] = React.useState(false);
   const hasMultipleName = player.get("names") && player.get("names").size > 1;
 
