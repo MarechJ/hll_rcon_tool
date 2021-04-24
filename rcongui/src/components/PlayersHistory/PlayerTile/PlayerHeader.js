@@ -1,23 +1,15 @@
-import {
-  Avatar,
-  Grid,
-  Typography,
-  Link,
-  ListItem,
-  ListItemAvatar,
-  ListItemText,
-  IconButton,
-} from "@material-ui/core";
+import {Avatar, IconButton, Link, ListItem, ListItemAvatar, ListItemText, Typography,} from "@material-ui/core";
+import {Link as RouterLink} from 'react-router-dom';
 import React from "react";
-import { List, Map } from "immutable";
+import {List, Map} from "immutable";
 import Tooltip from "@material-ui/core/Tooltip";
 import FileCopyIcon from "@material-ui/icons/FileCopy";
 import AnnouncementIcon from "@material-ui/icons/Announcement";
 import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
 import KeyboardArrowUpIcon from "@material-ui/icons/KeyboardArrowUp";
 import KeyboardArrowDownIcon from "@material-ui/icons/KeyboardArrowDown";
-import { pure } from "recompose";
-import { getName } from "country-list";
+import {pure} from "recompose";
+import {getName} from "country-list";
 import {useHistory} from "react-router";
 
 const getCountry = (country) => {
@@ -103,7 +95,8 @@ export const PlayerHeader = pure(({ classes, player }) => {
         secondary={
           <Link
             color="inherit"
-            onClick={() => history.push(`/player/${player.get("steam_id_64")}`)}
+            component={RouterLink}
+            to={`/player/${player.get("steam_id_64")}`}
           >
             {player.get("steam_id_64")}
           </Link>
