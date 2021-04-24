@@ -1,12 +1,6 @@
 import React from "react";
-import { Grid, Typography, Link } from "@material-ui/core";
-import { join } from "lodash/array";
-import { get } from "immutable";
-import {
-  get as apiGet,
-  showResponse,
-  handle_http_errors,
-} from "../../utils/fetchUtils";
+import {Grid, Link, Typography} from "@material-ui/core";
+import {get as apiGet, handle_http_errors, showResponse,} from "../../utils/fetchUtils";
 
 const Footer = ({ classes }) => {
   const [repoData, setRepoData] = React.useState([]);
@@ -14,7 +8,13 @@ const Footer = ({ classes }) => {
 
   React.useEffect(() => {
     fetch("https://api.github.com/repos/MarechJ/hll_rcon_tool/contributors")
-      .then((response) => { if (response.status === 200) { return response.json() } else { throw "rate limited" }})
+      .then((response) => {
+        if (response.status === 200) {
+          return response.json()
+        } else {
+          throw new Error("rate limited")
+        }
+      })
       .then((data) => setRepoData(data)).catch(() => null);
     apiGet("get_version")
       .then((res) => showResponse(res, "get_version", false))

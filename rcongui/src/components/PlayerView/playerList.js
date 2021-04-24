@@ -1,32 +1,24 @@
-import React, { Component } from "react";
+import React from "react";
 import List from "@material-ui/core/List";
-import { Grid } from "@material-ui/core";
 import ListItem from "@material-ui/core/ListItem";
 import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
 import ListItemText from "@material-ui/core/ListItemText";
 import _ from "lodash";
 import "react-toastify/dist/ReactToastify.css";
-import { PlayerActions } from "./playerActions";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faLock,
-  faQuestionCircle,
-  faExclamationCircle,
-  faStar,
-} from "@fortawesome/free-solid-svg-icons";
-import { faSteam } from "@fortawesome/free-brands-svg-icons";
+import {PlayerActions} from "./playerActions";
+import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
+import {faExclamationCircle, faLock, faQuestionCircle, faStar,} from "@fortawesome/free-solid-svg-icons";
+import {faSteam} from "@fortawesome/free-brands-svg-icons";
 import Link from "@material-ui/core/Link";
 import withWidth from "@material-ui/core/withWidth";
 import Icon from "@material-ui/core/Icon";
 import OpenInNewIcon from "@material-ui/icons/OpenInNew";
-import { getEmojiFlag } from "../../utils/emoji";
-import { Map, List as IList } from "immutable";
-import { getName } from "country-list";
+import {getEmojiFlag} from "../../utils/emoji";
+import {List as IList, Map} from "immutable";
+import {getName} from "country-list";
 import Popover from "@material-ui/core/Popover";
 import Typography from "@material-ui/core/Typography";
-import { makeStyles } from "@material-ui/core/styles";
-
-//import StarIcon from '@material-ui/icons/Star';
+import {makeStyles} from "@material-ui/core/styles";
 
 const zeroPad = (num, places) => String(num).padStart(places, "0");
 
@@ -99,7 +91,7 @@ function seconds_to_time(seconds) {
 const getCountry = (player) => {
   const country = player.get("country");
 
-  if (country == "private") {
+  if (country === "private") {
     return (
       <WithPopOver content="Account is private">
         <FontAwesomeIcon icon={faLock} />

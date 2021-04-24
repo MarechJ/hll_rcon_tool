@@ -1,11 +1,7 @@
-import React, { Component } from "react";
+import React from "react";
 import Grid from "@material-ui/core/Grid";
 import TextField from "@material-ui/core/TextField";
 import "react-toastify/dist/ReactToastify.css";
-import ToggleButton from "@material-ui/lab/ToggleButton";
-import ToggleButtonGroup from "@material-ui/lab/ToggleButtonGroup";
-import SortByAlphaIcon from "@material-ui/icons/SortByAlpha";
-import QueryBuilderIcon from "@material-ui/icons/QueryBuilder";
 import TextHistory from "../textHistory";
 import Autocomplete from "@material-ui/lab/Autocomplete";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
@@ -16,7 +12,7 @@ import MenuItem from "@material-ui/core/MenuItem";
 import FormHelperText from "@material-ui/core/FormHelperText";
 import FormControl from "@material-ui/core/FormControl";
 import Select from "@material-ui/core/Select";
-import { getSharedMessages } from "../../utils/fetchUtils";
+import {getSharedMessages} from "../../utils/fetchUtils";
 
 const Reason = ({
   handleMessageChange,
@@ -80,7 +76,6 @@ const Reason = ({
 
 const TextInputBar = ({
   classes,
-  filter,
   handleChange,
   total,
   showCount,

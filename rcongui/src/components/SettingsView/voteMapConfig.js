@@ -1,21 +1,7 @@
-import {
-  Button,
-  FormControl,
-  Grid,
-  InputLabel,
-  NativeSelect,
-  TextField,
-  Typography,
-} from "@material-ui/core";
+import {Button, FormControl, Grid, InputLabel, NativeSelect, TextField, Typography,} from "@material-ui/core";
 import React from "react";
-import { Map, fromJS, List } from "immutable";
-import {
-  showResponse,
-  postData,
-  get,
-  handle_http_errors,
-  sendAction,
-} from "../../utils/fetchUtils";
+import {fromJS, List, Map} from "immutable";
+import {get, handle_http_errors, postData, showResponse,} from "../../utils/fetchUtils";
 import Padlock from "./padlock";
 
 const VoteMapConfig = () => {

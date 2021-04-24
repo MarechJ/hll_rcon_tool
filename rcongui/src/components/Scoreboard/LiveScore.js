@@ -1,7 +1,24 @@
-import { AppBar, Link, Avatar, Grid, List, ListItem, ListItemSecondaryAction, ListItemAvatar, ListItemText, Toolbar, Typography, makeStyles, Paper, Divider, Card, CardContent, CardMedia, LinearProgress, Select, FormControl, InputLabel, MenuItem, IconButton, Chip } from '@material-ui/core'
+import {
+    AppBar,
+    Avatar,
+    Divider,
+    Grid,
+    IconButton,
+    LinearProgress,
+    Link,
+    List,
+    ListItem,
+    ListItemAvatar,
+    ListItemSecondaryAction,
+    ListItemText,
+    makeStyles,
+    Paper,
+    Toolbar,
+    Typography
+} from '@material-ui/core'
 import React from 'react'
-import { get, handle_http_errors, showResponse } from '../../utils/fetchUtils'
-import { List as iList, Map, fromJS, set } from 'immutable'
+import {get, handle_http_errors, showResponse} from '../../utils/fetchUtils'
+import {fromJS, List as iList, Map} from 'immutable'
 import moment from 'moment'
 import AddIcon from '@material-ui/icons/Add';
 import RemoveIcon from '@material-ui/icons/Remove';
@@ -62,7 +79,7 @@ const PlayerItem = ({ score, rank, postProcess, statKey }) => {
         <Divider variant="middle" component="li" />
         <ListItem>
             <ListItemAvatar>
-                <Avatar src={avatarUrl}></Avatar>
+                <Avatar src={avatarUrl}/>
             </ListItemAvatar>
             <ListItemText
                 primary={score.get('player')}
@@ -76,13 +93,13 @@ const PlayerItem = ({ score, rank, postProcess, statKey }) => {
 }
 
 const TopList = ({ iconUrl, scores, statType, statKey, reversed, postProcessFunc }) => {
-    const compareFunc = reversed ? (a, b) => a > b ? -1 : a == b ? 0 : 1 : undefined
+    const compareFunc = reversed ? (a, b) => a > b ? -1 : a === b ? 0 : 1 : undefined
     const postProcess = postProcessFunc ? postProcessFunc : val => val
     const defaultNum = 10
     const [top, setTop] = React.useState(defaultNum)
-    const toggle = () => top == 100 ? setTop(defaultNum) : setTop(100)
-    const show = top == 100 ? "Show less" : "Show all"
-    const showButton = top == 100 ? <RemoveIcon/> : <AddIcon />
+    const toggle = () => top === 100 ? setTop(defaultNum) : setTop(100)
+    const show = top === 100 ? "Show less" : "Show all"
+    const showButton = top === 100 ? <RemoveIcon/> : <AddIcon />
 
     return <List>
         <React.Fragment>
@@ -139,7 +156,7 @@ const LiveScore = ({ classes }) => {
     const [serverState, setServerState] = React.useState(new Map())
     const [isLoading, setIsLoading] = React.useState(true)
     const [isPaused, setPaused] = React.useState(false)
-    const [refreshIntervalSec, setRefreshIntervalSec] = React.useState(10)
+    const [refreshIntervalSec] = React.useState(10)
     const durationToHour = (val) => new Date(val * 1000).toISOString().substr(11, 5) 
     const scores = stats.get("stats", new iList())
     const lastRefresh = stats.get("snapshot_timestamp") ? moment.unix(stats.get("snapshot_timestamp")).format() : "N/A"

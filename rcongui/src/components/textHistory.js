@@ -1,6 +1,4 @@
 import _ from "lodash";
-import { startsWith } from "lodash/string";
-import { get, showResponse } from "../utils/fetchUtils";
 
 const PREFIX = "autocomplete_";
 

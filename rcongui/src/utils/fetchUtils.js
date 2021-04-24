@@ -1,6 +1,6 @@
 import React from "react";
 
-import { toast } from "react-toastify";
+import {toast} from "react-toastify";
 
 function LoginError(message) {
   this.message = message;
@@ -35,15 +35,15 @@ async function handle_http_errors(error) {
       toastId: "Must login",
       position: toast.POSITION.BOTTOM_RIGHT,
     });
-  } else if (error.name == "PermissionError") {
+  } else if (error.name === "PermissionError") {
     toast.warn("You are not allowed to do this", {
       toastId: "Not allowed",
     });
-  } else if (error.name == "InvalidLogin") {
+  } else if (error.name === "InvalidLogin") {
     toast.warn(
-      <img src="https://media.giphy.com/media/wSSooF0fJM97W/giphy.gif" />,
+      <img src="https://media.giphy.com/media/wSSooF0fJM97W/giphy.gif"  alt="bad login"/>,
       {
-        toastId: "Bad loging",
+        toastId: "Bad login",
       }
     );
   } else {
@@ -105,13 +105,13 @@ async function showResponse(response, command, showSuccess) {
     }
     try {
       if (res.forward_results) {
-        res.forward_results.map((r) => {
+        res.forward_results.forEach(r => {
           if (r.response.failed === true) {
             toast.warning(`${r.host} Last command failed: ${command}`);
           } else if (r.response.failed === false && showSuccess === true) {
             toast.success(`${r.host} Done: ${command}`);
           }
-        });
+        })
       }
     } catch (error) {
       console.log("Error checking forwards status", error)

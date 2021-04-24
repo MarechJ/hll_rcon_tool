@@ -1,14 +1,7 @@
 import React from "react";
-import {
-  showResponse,
-  postData,
-  get,
-  handle_http_errors,
-} from "../../utils/fetchUtils";
-import Autocomplete from "@material-ui/lab/Autocomplete";
-import { getSharedMessages } from "../../utils/fetchUtils";
+import {getSharedMessages, handle_http_errors, postData, showResponse,} from "../../utils/fetchUtils";
 import TextHistory from "../textHistory";
-import { ManualPlayerInput } from "../commonComponent"
+import {ManualPlayerInput} from "../commonComponent"
 
 class Blacklist extends React.Component {
   constructor(props) {

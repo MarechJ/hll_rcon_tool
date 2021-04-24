@@ -1,16 +1,8 @@
 import React from "react";
-import { FormControlLabel, Checkbox } from "@material-ui/core";
+import {Button, Checkbox, FormControlLabel, Grid, Popover, Tooltip} from "@material-ui/core";
 import Chip from "@material-ui/core/Chip";
 import Autocomplete from "@material-ui/lab/Autocomplete";
 import TextField from "@material-ui/core/TextField";
-import {
-  Grid,
-  Button,
-  Tooltip,
-  Paper,
-  Popover,
-  IconButton,
-} from "@material-ui/core";
 
 export const WithPopver = ({ classes, popoverContent, children }) => {
   const [anchorEl, setAnchorEl] = React.useState(null);
@@ -114,7 +106,7 @@ export const ManualPlayerInput = ({
         <Button
           color="secondary"
           variant="outlined"
-          disabled={steam_id == "" || reason == ""}
+          disabled={steam_id === "" || reason === ""}
           onClick={() => {
             onSubmit();
             textHistory.saveText(reason);

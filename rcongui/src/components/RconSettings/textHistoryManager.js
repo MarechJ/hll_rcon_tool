@@ -1,24 +1,10 @@
 import React from "react";
-import {
-    Grid,
-    TextField,
-    List,
-    ListItem,
-    ListItemText,
-    ListItemSecondaryAction,
-    IconButton,
-    Typography,
-} from "@material-ui/core";
+import {Grid, IconButton, List, ListItem, ListItemSecondaryAction, ListItemText,} from "@material-ui/core";
 import DeleteIcon from "@material-ui/icons/Delete";
-import AddIcon from "@material-ui/icons/Add";
-import CollapseCard from "../collapseCard";
-import TextHistory, { getAllNamespaces } from "../textHistory";
+import TextHistory, {getAllNamespaces} from "../textHistory";
 import InputLabel from "@material-ui/core/InputLabel";
-import FormHelperText from "@material-ui/core/FormHelperText";
 import FormControl from "@material-ui/core/FormControl";
 import Select from "@material-ui/core/Select";
-import NativeSelect from "@material-ui/core/NativeSelect";
-import { capitalize } from "lodash";
 
 const SelectNameSpace = ({ value, values, handleChange }) => (
     <FormControl>
