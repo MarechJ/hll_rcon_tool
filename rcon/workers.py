@@ -12,6 +12,7 @@ from rcon.settings import SERVER_INFO
 from rcon.models import enter_session, Maps, PlayerStats
 from rcon.scoreboard import TimeWindowStats
 from rcon.player_history import get_player
+from sqlalchemy import and_
 
 logger = logging.getLogger("rcon")
 
@@ -66,6 +67,20 @@ def temporary_welcome_in(message, seconds, restore_after_seconds):
     )
 
 
+def get_or_create_map(sess, start, end, server_number, map_name):
+    map = sess.query(Maps).filter(and_(start==start, end==end, server_number==server_number, map_name==map_name)).one_or_none()
+    if map:
+        return map
+    map = Maps(
+            start=start,
+            end=end,
+            server_number=server_number,
+            map_name=map_name,
+        )
+    sess.add(map)
+    sess.commit()
+    return map
+
 def record_stats(map_info):
     stats = TimeWindowStats()
 
@@ -77,24 +92,18 @@ def record_stats(map_info):
         return
 
     with enter_session() as sess:
-        map = Maps(
-            start=start,
-            end=end,
-            server_number=os.getenv("SERVER_NUMBER"),
-            map_name=map_info["name"],
-        )
-        sess.add(map)
-        sess.commit()
-        player_stats = stats.get_players_stats_at_time(from_=start, till=end)
-        for stats in player_stats.items():
-            if steam_id_64 := stats.get("76561198035079986"):
+        map = get_or_create_map(sess=sess, start=start, end=end, server_number=os.getenv("SERVER_NUMBER"), map_name=map_info["name"])
+        player_stats = stats.get_players_stats_at_time(from_=start, until=end)
+        for player, stats in player_stats.items():
+            if steam_id_64 := stats.get("steam_id_64"):
                 player_record = get_player(sess, steam_id_64=steam_id_64)
                 if not player_record:
                     logger.error("Can't find DB record for %s", steam_id_64)
                     continue
                 
-                player_stats = dict(playersteamid_id=player_record.id,
-                    map=map,
+                player_stats = dict(
+                    playersteamid_id=player_record.id,
+                    map_id=map.id,
                     kills=stats.get("kills"),
                     kills_streak=stats.get("kills_streak"),
                     death=stats.get("death"),
@@ -113,7 +122,7 @@ def record_stats(map_info):
                 )
                 logger.debug(f"Saving stats %s", player_stats)
                 player_stat_record = PlayerStats(
-                   **stats
+                   **player_stats
                 )
                 sess.add(player_stat_record)
             else:

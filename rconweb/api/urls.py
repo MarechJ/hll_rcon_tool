@@ -1,3 +1,4 @@
+from rcon import scoreboard
 from django.urls import path
 
 from . import views
@@ -30,6 +31,7 @@ urlpatterns = [
     path("scoreboard", scoreboards.text_scoreboard),
     path("live_scoreboard", scoreboards.live_scoreboard),
     path("date_scoreboard", scoreboards.date_scoreboard),
+    path("get_scoreboard_maps", scoreboards.get_scoreboard_maps),
     path("tk", scoreboards.text_tk_scoreboard),
     path("players_history", history.players_history),
     path("flag_player", history.flag_player),

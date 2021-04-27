@@ -2,9 +2,19 @@ from datetime import datetime
 import logging
 import os
 from contextlib import contextmanager
+from rcon.utils import map_name
 
 from sqlalchemy import create_engine
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Boolean, TIMESTAMP, Float
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    DateTime,
+    ForeignKey,
+    Boolean,
+    TIMESTAMP,
+    Float,
+)
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.declarative import declarative_base
@@ -355,7 +365,11 @@ class LogLine(Base):
 
 class Maps(Base):
     __tablename__ = "map_history"
-    __table_args__ = (UniqueConstraint("start", "end", "server_number", "map_name",  name="unique_map"),)
+    __table_args__ = (
+        UniqueConstraint(
+            "start", "end", "server_number", "map_name", name="unique_map"
+        ),
+    )
 
     id = Column(Integer, primary_key=True)
 
@@ -367,10 +381,25 @@ class Maps(Base):
 
     player_stats = relationship("PlayerStats", backref="map", uselist=False)
 
+    def to_dict(self, with_stats=False):
+        return dict(
+            id=self.id,
+            creation_time=self.creation_time,
+            start=self.start,
+            end=self.end,
+            server_number=self.server_number,
+            map_name=self.map_name,
+            player_stats=[]
+            if not with_stats or not self.player_stats
+            else [s.to_dict() for s in self.player_stats],
+        )
+
 
 class PlayerStats(Base):
     __tablename__ = "player_stats"
-    __table_args__ = (UniqueConstraint("playersteamid_id", "map_id",  name="unique_map_player"),)
+    __table_args__ = (
+        UniqueConstraint("playersteamid_id", "map_id", name="unique_map_player"),
+    )
 
     id = Column(Integer, primary_key=True)
     playersteamid_id = Column(
@@ -400,7 +429,6 @@ class PlayerStats(Base):
     kills_per_minute = Column(Float)
     deaths_per_minute = Column(Float)
     kill_death_ratio = Column(Float)
-
 
 
 def init_db(force=False):

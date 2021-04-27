@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from os import error
+import os
 import logging
 
 from django.http import HttpResponse
@@ -11,11 +11,11 @@ from rcon.commands import CommandFailedError
 from rcon.steam_utils import get_steam_profile
 from rcon.settings import SERVER_INFO
 from rcon import game_logs
-from rcon.models import LogLine, PlayerSteamID, PlayerName, enter_session
+from rcon.models import LogLine, PlayerSteamID, PlayerName, enter_session, Maps, PlayerStats
 from rcon.discord import send_to_discord_audit
 from rcon.scoreboard import LiveStats, TimeWindowStats
 
-from .views import ctl
+from .views import ctl, _get_data
 from .auth import api_response, login_required
 
 logger = logging.getLogger('rconweb')
@@ -114,11 +114,6 @@ def text_tk_scoreboard(request):
 
 
 @csrf_exempt
-def live_info(request):
-    status = ctl.get_status()
-
-
-@csrf_exempt
 def live_scoreboard(request):
     stats = LiveStats()
 
@@ -143,8 +138,32 @@ def live_scoreboard(request):
         command="live_scoreboard"
     )
 
+@csrf_exempt
+def get_scoreboard_maps(request):
+    data = _get_data(request)
+
+    page_size = min(int(data.get("limit", 100)), 1000)
+    page = max(1, int(data.get("page", 1)))
+    server_number = data.get("server_number", os.getenv("SERVER_NUMBER"))
+
+    with enter_session() as sess:
+        query = sess.query(Maps).filter(server_number==server_number)
+        total = query.count()
+        res = query.limit(page_size).offset((page - 1) * page_size).all()
+    
+        return api_response(
+            result={
+                "page": page,
+                "page_size": page_size,
+                "total": total,
+                "maps": [r.to_dict() for r in res],
+            },
+            failed=False,
+            command="get_scoreboard_maps"
+        )
 
 @csrf_exempt
+@login_required
 def date_scoreboard(request):
     try:
         start = datetime.fromtimestamp(request.GET.get("start"))
