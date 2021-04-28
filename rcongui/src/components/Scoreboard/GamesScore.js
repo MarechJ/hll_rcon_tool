@@ -15,12 +15,12 @@ import {
   tileData,
   Button,
 } from "@material-ui/core";
+import useMediaQuery from '@material-ui/core/useMediaQuery';
 import VisibilityIcon from '@material-ui/icons/Visibility';
 import React, { Fragment } from "react";
 import { get, handle_http_errors, showResponse } from "../../utils/fetchUtils";
-import { List as iList, Map, fromJS, set } from "immutable";
+import { List as iList, Map, fromJS, set, List } from "immutable";
 import moment from "moment";
-import useMediaQuery from "@material-ui/core/useMediaQuery";
 import { useTheme } from "@material-ui/core/styles";
 import Scores from "./Scores";
 
@@ -92,7 +92,14 @@ const GamesScore = ({ classes }) => {
   const [serverState, setServerState] = React.useState(new Map());
   const [isLoading, setIsLoading] = React.useState(true);
   const [isPaused, setPaused] = React.useState(false);
+  const [maps, setMaps] = React.useState(new List());
+  const [mapsPage, setMapsPage] = React.useState(1)
+  const [mapsPageSize, setMapsPageSize] = React.useState(30)
   const [refreshIntervalSec, setRefreshIntervalSec] = React.useState(10);
+  const theme = useTheme()
+  const md = useMediaQuery(theme.breakpoints.up('sm'));
+  const lg = useMediaQuery(theme.breakpoints.up('md'));
+  const xl = useMediaQuery(theme.breakpoints.up('lg'));
   const durationToHour = (val) =>
     new Date(val * 1000).toISOString().substr(11, 5);
   const scores = stats.get("stats", new iList());
@@ -108,8 +115,8 @@ const GamesScore = ({ classes }) => {
       .then((data) => setServerState(fromJS(data.result)))
       .then(() => setIsLoading(false))
       .catch(handle_http_errors);
-    get("date_scoreboard")
-      .then((res) => showResponse(res, "date_scoreboard", false))
+    get("get_scoreboard_maps")
+      .then((res) => showResponse(res, "get_scoreboard_maps", false))
       .then((data) => setStats(fromJS(data.result)))
       .catch(handle_http_errors);
   };
@@ -131,7 +138,7 @@ const GamesScore = ({ classes }) => {
       <Grid container spacing={2} justify="center" className={classes.padding}>
         <Grid xs={12} className={`${classes.doublePadding}`}>
           <div className={styles.singleLine}>
-            <GridList cols={8} className={styles.gridList}>
+            <GridList cols={xl ? 8 : lg ? 6 : md ? 4 : 2} className={styles.gridList}>
               {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13].map((e) => (
                 <GridListTile>
                   <img src="maps/carentan.webp" />
