@@ -68,18 +68,19 @@ def temporary_welcome_in(message, seconds, restore_after_seconds):
 
 
 def get_or_create_map(sess, start, end, server_number, map_name):
-    map = sess.query(Maps).filter(and_(start==start, end==end, server_number==server_number, map_name==map_name)).one_or_none()
-    if map:
-        return map
-    map = Maps(
+    map_ = sess.query(Maps).filter(and_(Maps.start == start, Maps.end == end, Maps.server_number == server_number, Maps.map_name == map_name)).one_or_none()
+    if map_:
+        logger.warning("Map already exists %s", map_.to_dict())
+        return map_
+    map_ = Maps(
             start=start,
             end=end,
             server_number=server_number,
             map_name=map_name,
         )
-    sess.add(map)
+    sess.add(map_)
     sess.commit()
-    return map
+    return map_
 
 def record_stats(map_info):
     stats = TimeWindowStats()

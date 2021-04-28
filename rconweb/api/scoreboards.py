@@ -11,14 +11,22 @@ from rcon.commands import CommandFailedError
 from rcon.steam_utils import get_steam_profile
 from rcon.settings import SERVER_INFO
 from rcon import game_logs
-from rcon.models import LogLine, PlayerSteamID, PlayerName, enter_session, Maps, PlayerStats
+from rcon.models import (
+    LogLine,
+    PlayerSteamID,
+    PlayerName,
+    enter_session,
+    Maps,
+    PlayerStats,
+)
 from rcon.discord import send_to_discord_audit
 from rcon.scoreboard import LiveStats, TimeWindowStats
 
 from .views import ctl, _get_data
 from .auth import api_response, login_required
+from rcon.utils import map_name, LONG_HUMAN_MAP_NAMES
 
-logger = logging.getLogger('rconweb')
+logger = logging.getLogger("rconweb")
 
 
 def make_table(scoreboard):
@@ -121,22 +129,20 @@ def live_scoreboard(request):
         result = stats.get_cached_stats()
         result = {
             "snapshot_timestamp": result["snapshot_timestamp"],
-            "stats": list(result["stats"].values())
+            "stats": list(result["stats"].values()),
         }
-        error = None,
+        error = (None,)
         failed = False
     except Exception as e:
         logger.exception("Unable to produce live stats")
         result = {}
         error = ""
-        failed=True
+        failed = True
 
     return api_response(
-        result=result,
-        error=error,
-        failed=failed,
-        command="live_scoreboard"
+        result=result, error=error, failed=failed, command="live_scoreboard"
     )
+
 
 @csrf_exempt
 def get_scoreboard_maps(request):
@@ -147,20 +153,32 @@ def get_scoreboard_maps(request):
     server_number = data.get("server_number", os.getenv("SERVER_NUMBER"))
 
     with enter_session() as sess:
-        query = sess.query(Maps).filter(server_number==server_number)
+        query = (
+            sess.query(Maps)
+            .filter(Maps.server_number == server_number)
+            .order_by(Maps.start.desc())
+        )
         total = query.count()
         res = query.limit(page_size).offset((page - 1) * page_size).all()
-    
+
         return api_response(
             result={
                 "page": page,
                 "page_size": page_size,
                 "total": total,
-                "maps": [r.to_dict() for r in res],
+                "maps": [
+                    dict(
+                        just_name=map_name(r.map_name),
+                        long_name=LONG_HUMAN_MAP_NAMES.get(r.map_name, r.map_name),
+                        **r.to_dict(),
+                    )
+                    for r in res
+                ],
             },
             failed=False,
-            command="get_scoreboard_maps"
+            command="get_scoreboard_maps",
         )
+
 
 @csrf_exempt
 @login_required
@@ -171,14 +189,14 @@ def date_scoreboard(request):
         start = datetime.now() - timedelta(minutes=60)
     try:
         end = datetime.fromtimestamp(request.GET.get("end"))
-    except (ValueError, KeyError, TypeError)as e:
+    except (ValueError, KeyError, TypeError) as e:
         end = datetime.now()
 
     stats = TimeWindowStats()
 
     try:
         result = stats.get_players_stats_at_time(start, end)
-        error_ = None,
+        error_ = (None,)
         failed = False
 
     except Exception as e:
@@ -188,8 +206,5 @@ def date_scoreboard(request):
         failed = True
 
     return api_response(
-        result=result,
-        error=error_,
-        failed=failed,
-        command="date_scoreboard"
+        result=result, error=error_, failed=failed, command="date_scoreboard"
     )

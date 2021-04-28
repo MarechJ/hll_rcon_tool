@@ -15,7 +15,7 @@ import moment from "moment";
 import useMediaQuery from "@material-ui/core/useMediaQuery";
 import { useTheme } from "@material-ui/core/styles";
 import Scores from "./Scores";
-
+import map_to_pict from './utils'
 
 const useStyles = makeStyles((theme) => ({
   paper: {
@@ -51,18 +51,6 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-
-const map_to_pict = {
-  carentan: "maps/carentan.webp",
-  foy: "maps/foy.webp",
-  hill400: "maps/hill400.webp",
-  hurtgenforest: "maps/hurtgen.webp",
-  omahabeach: "maps/omaha.webp",
-  purpleheartlane: "maps/omaha.webp",
-  stmariedumont: "maps/smdm.webp",
-  stmereeglise: "maps/sme.webp",
-  utahbeach: "maps/utah.webp",
-};
 
 const LiveScore = ({ classes }) => {
   const styles = useStyles();

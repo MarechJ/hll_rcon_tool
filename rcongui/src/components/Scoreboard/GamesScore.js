@@ -23,6 +23,8 @@ import { List as iList, Map, fromJS, set, List } from "immutable";
 import moment from "moment";
 import { useTheme } from "@material-ui/core/styles";
 import Scores from "./Scores";
+import map_to_pict from './utils'
+
 
 const useStyles = makeStyles((theme) => ({
   singleLine: {
@@ -40,6 +42,10 @@ const useStyles = makeStyles((theme) => ({
   titleBar: {
     background:
       "linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 70%, rgba(0,0,0,0) 100%)",
+  },
+  titleBarTop: {
+    background:
+      "linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 70%, rgba(0,0,0,0) 100%)",
   },
   paper: {
     backgroundColor: theme.palette.background.paper,
@@ -74,17 +80,6 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const map_to_pict = {
-  carentan: "maps/carentan.webp",
-  foy: "maps/foy.webp",
-  hill400: "maps/hill400.webp",
-  hurtgenforest: "maps/hurtgen.webp",
-  omahabeach: "maps/omaha.webp",
-  purpleheartlane: "maps/omaha.webp",
-  stmariedumont: "maps/smdm.webp",
-  stmereeglise: "maps/sme.webp",
-  utahbeach: "maps/utah.webp",
-};
 
 const GamesScore = ({ classes }) => {
   const styles = useStyles();
@@ -95,11 +90,12 @@ const GamesScore = ({ classes }) => {
   const [maps, setMaps] = React.useState(new List());
   const [mapsPage, setMapsPage] = React.useState(1)
   const [mapsPageSize, setMapsPageSize] = React.useState(30)
+  const [mapsTotal, setMapsTotal] = React.useState(0)
   const [refreshIntervalSec, setRefreshIntervalSec] = React.useState(10);
   const theme = useTheme()
-  const md = useMediaQuery(theme.breakpoints.up('sm'));
-  const lg = useMediaQuery(theme.breakpoints.up('md'));
-  const xl = useMediaQuery(theme.breakpoints.up('lg'));
+  const md = useMediaQuery(theme.breakpoints.up('md'));
+  const lg = useMediaQuery(theme.breakpoints.up('lg'));
+  const xl = useMediaQuery(theme.breakpoints.up('xl'));
   const durationToHour = (val) =>
     new Date(val * 1000).toISOString().substr(11, 5);
   const scores = stats.get("stats", new iList());
@@ -107,6 +103,7 @@ const GamesScore = ({ classes }) => {
     ? moment.unix(stats.get("snapshot_timestamp")).format()
     : "N/A";
 
+  moment.relativeTimeThreshold('m', 120)
   const getData = () => {
     setIsLoading(true);
     console.log("Loading data");
@@ -117,7 +114,13 @@ const GamesScore = ({ classes }) => {
       .catch(handle_http_errors);
     get("get_scoreboard_maps")
       .then((res) => showResponse(res, "get_scoreboard_maps", false))
-      .then((data) => setStats(fromJS(data.result)))
+      .then((data) => {
+        if (data.failed) {return}
+        setMapsPage(data.result.page)
+        setMapsPageSize(data.result.page_size)
+        setMapsTotal(data.result.total)
+        setMaps(fromJS(data.result.maps))
+      })
       .catch(handle_http_errors);
   };
 
@@ -138,18 +141,28 @@ const GamesScore = ({ classes }) => {
       <Grid container spacing={2} justify="center" className={classes.padding}>
         <Grid xs={12} className={`${classes.doublePadding}`}>
           <div className={styles.singleLine}>
-            <GridList cols={xl ? 8 : lg ? 6 : md ? 4 : 2} className={styles.gridList}>
-              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13].map((e) => (
-                <GridListTile>
-                  <img src="maps/carentan.webp" />
+            <GridList cols={xl ? 8.5 : lg ? 5.5 : md ? 3.5 : 2.5} className={styles.gridList}>
+              {maps.map((m) => {
+                const start = moment(m.get("start"))
+                const end = moment(m.get("end"))
+                const duration = moment.duration(end - start)
+
+                return <GridListTile>
+                  <img src={map_to_pict[m.get("just_name")]} />
+                  <GridListTileBar
+                    className={styles.titleBarTop}
+                    title={`${m.get("long_name")}`}
+                    subtitle={`${duration.humanize()}`}
+                    titlePosition="top"
+                  />
                   <GridListTileBar
                     className={styles.titleBar}
-                    title="Carentan"
-                    subtitle="2020/04/18"
-                    actionIcon={<IconButton color={e === 1 ? "secondary" : "inherit"}><VisibilityIcon/></IconButton>}
+                    title={`${start.format("dddd, MMM Do ")}`}
+                    subtitle={`Started at: ${start.format("HH:mm")}`}
+                    actionIcon={<IconButton color="inherit"><VisibilityIcon/></IconButton>}
                   />
                 </GridListTile>
-              ))}
+              })}
             </GridList>
           </div>
         </Grid>
