@@ -343,12 +343,12 @@ function App() {
           {!process.env.REACT_APP_PUBLIC_BUILD ? (
             <Header classes={classes} />
           ) : (
-            ""
+            <ScoreMenu classes={classes} />
           )}
-          <ScoreMenu classes={classes} />
+          
           <Switch>
             
-            <Route path="/" default exact>
+            <Route path={process.env.REACT_APP_PUBLIC_BUILD ? "/" : "/livescore"} default={process.env.REACT_APP_PUBLIC_BUILD} exact>
               <LiveScore classes={classes} />
             </Route>
             <Route path="/gamescoreboard">
