@@ -391,19 +391,26 @@ class VoteMap:
 
 
 def on_map_change(old_map_info, new_map_info):
-    config = VoteMapConfig()
+    logger.info("Running on_map_change hooks with %s %s", old_map_info, new_map_info)
+    try:
+        config = VoteMapConfig()
 
-    if config.get_vote_enabled():
-        votemap = VoteMap()
-        votemap.gen_selection()
-        votemap.clear_votes()
-        votemap.apply_with_retry(nb_retry=4)
-        #temporary_welcome_in(
-        #    "%s{votenextmap_vertical}" % config.get_votemap_instruction_text(), 
-        #    seconds=60 * 20,
-        #    restore_after_seconds=60 * 5,
-        #)
-    record_stats_worker(old_map_info)
+        if config.get_vote_enabled():
+            votemap = VoteMap()
+            votemap.gen_selection()
+            votemap.clear_votes()
+            votemap.apply_with_retry(nb_retry=4)
+            #temporary_welcome_in(
+            #    "%s{votenextmap_vertical}" % config.get_votemap_instruction_text(), 
+            #    seconds=60 * 20,
+            #    restore_after_seconds=60 * 5,
+            #)
+    except Exception:
+        logger.exception("Unexpected error while running vote map")
+    try:
+        record_stats_worker(old_map_info)
+    except Exception:
+        logger.exception("Unexpected error while running stats worker")
 
 class MapsRecorder:
     def __init__(self, rcon: RecordedRcon):

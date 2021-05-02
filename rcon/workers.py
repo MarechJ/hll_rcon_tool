@@ -88,6 +88,14 @@ def record_stats_worker(map_info):
 
 
 def record_stats(map_info):
+    logger.info("Recording stats for %s", map_info)
+    try: 
+        _record_stats(map_info)
+        logger.info("Done recording stats for %s", map_info)
+    except Exception:
+        logger.exception("Unexpected error while recording stats for %s", map_info)
+
+def _record_stats(map_info):
     stats = TimeWindowStats()
 
     start = datetime.datetime.fromtimestamp(map_info.get('start'))
