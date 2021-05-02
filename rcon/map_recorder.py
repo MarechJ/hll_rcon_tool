@@ -1,5 +1,5 @@
 from functools import partial
-from rcon.workers import temp_welcome_standalone, temporary_welcome, temporary_welcome_in
+from rcon.workers import record_stats, record_stats_worker, temp_welcome_standalone, temporary_welcome, temporary_welcome_in
 from typing import Counter
 from rcon.settings import SERVER_INFO
 import time
@@ -403,7 +403,7 @@ def on_map_change(old_map_info, new_map_info):
         #    seconds=60 * 20,
         #    restore_after_seconds=60 * 5,
         #)
-
+    record_stats_worker(old_map_info)
 
 class MapsRecorder:
     def __init__(self, rcon: RecordedRcon):

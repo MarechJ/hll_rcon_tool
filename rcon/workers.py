@@ -5,7 +5,7 @@ import os
 from rcon.utils import map_name
 import time
 from redis import Redis
-from rq import Queue
+from rq import Queue, queue
 from datetime import timedelta
 from rcon.cache_utils import get_redis_client
 from rcon.settings import SERVER_INFO
@@ -81,6 +81,11 @@ def get_or_create_map(sess, start, end, server_number, map_name):
     sess.add(map_)
     sess.commit()
     return map_
+
+def record_stats_worker(map_info):
+    queue = get_queue()
+    queue.enqueue(record_stats, map_info)
+
 
 def record_stats(map_info):
     stats = TimeWindowStats()
