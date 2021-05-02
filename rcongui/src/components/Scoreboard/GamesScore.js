@@ -14,17 +14,17 @@ import {
   StarBorderIcon,
   tileData,
   Button,
+  Box,
 } from "@material-ui/core";
-import useMediaQuery from '@material-ui/core/useMediaQuery';
-import VisibilityIcon from '@material-ui/icons/Visibility';
+import useMediaQuery from "@material-ui/core/useMediaQuery";
+import VisibilityIcon from "@material-ui/icons/Visibility";
 import React, { Fragment } from "react";
 import { get, handle_http_errors, showResponse } from "../../utils/fetchUtils";
 import { List as iList, Map, fromJS, set, List } from "immutable";
 import moment from "moment";
 import { useTheme } from "@material-ui/core/styles";
 import Scores from "./Scores";
-import map_to_pict from './utils'
-
+import map_to_pict from "./utils";
 
 const useStyles = makeStyles((theme) => ({
   singleLine: {
@@ -32,12 +32,14 @@ const useStyles = makeStyles((theme) => ({
     flexWrap: "wrap",
     justifyContent: "space-around",
     overflow: "hidden",
-    backgroundColor: theme.palette.background.paper,
   },
   gridList: {
     flexWrap: "nowrap",
     // Promote the list into his own layer on Chrome. This cost memory but helps keeping high FPS.
     transform: "translateZ(0)",
+  },
+  selectedMap: {
+    color: theme.palette.secondary.main
   },
   titleBar: {
     background:
@@ -80,30 +82,30 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-
 const GamesScore = ({ classes }) => {
   const styles = useStyles();
-  const [stats, setStats] = React.useState(new iList());
+  const [scores, setScores] = React.useState(new iList());
   const [serverState, setServerState] = React.useState(new Map());
   const [isLoading, setIsLoading] = React.useState(true);
   const [isPaused, setPaused] = React.useState(false);
   const [maps, setMaps] = React.useState(new List());
-  const [mapsPage, setMapsPage] = React.useState(1)
-  const [mapsPageSize, setMapsPageSize] = React.useState(30)
-  const [mapsTotal, setMapsTotal] = React.useState(0)
+  const [mapsPage, setMapsPage] = React.useState(1);
+  const [mapsPageSize, setMapsPageSize] = React.useState(30);
+  const [mapsTotal, setMapsTotal] = React.useState(0);
+  const [currentMapId, setCurrentMapId] = React.useState(null);
   const [refreshIntervalSec, setRefreshIntervalSec] = React.useState(10);
-  const theme = useTheme()
-  const md = useMediaQuery(theme.breakpoints.up('md'));
-  const lg = useMediaQuery(theme.breakpoints.up('lg'));
-  const xl = useMediaQuery(theme.breakpoints.up('xl'));
+  const theme = useTheme();
+  const md = useMediaQuery(theme.breakpoints.up("md"));
+  const lg = useMediaQuery(theme.breakpoints.up("lg"));
+  const xl = useMediaQuery(theme.breakpoints.up("xl"));
   const durationToHour = (val) =>
     new Date(val * 1000).toISOString().substr(11, 5);
-  const scores = stats.get("stats", new iList());
-  const lastRefresh = stats.get("snapshot_timestamp")
-    ? moment.unix(stats.get("snapshot_timestamp")).format()
+
+  const lastRefresh = scores.get("snapshot_timestamp")
+    ? moment.unix(scores.get("snapshot_timestamp")).format()
     : "N/A";
 
-  moment.relativeTimeThreshold('m', 120)
+  moment.relativeTimeThreshold("m", 120);
   const getData = () => {
     setIsLoading(true);
     console.log("Loading data");
@@ -115,14 +117,30 @@ const GamesScore = ({ classes }) => {
     get("get_scoreboard_maps")
       .then((res) => showResponse(res, "get_scoreboard_maps", false))
       .then((data) => {
-        if (data.failed) {return}
-        setMapsPage(data.result.page)
-        setMapsPageSize(data.result.page_size)
-        setMapsTotal(data.result.total)
-        setMaps(fromJS(data.result.maps))
+        if (data.failed) {
+          return;
+        }
+        setMapsPage(data.result.page);
+        setMapsPageSize(data.result.page_size);
+        setMapsTotal(data.result.total);
+        setMaps(fromJS(data.result.maps));
+        if (data.result.maps && currentMapId === null) {
+          setCurrentMapId(data.result.maps[0].id);
+        }
       })
       .catch(handle_http_errors);
   };
+
+  const getStatsFromMap = React.useMemo(() => {
+    if (!currentMapId) { return }
+    get(`get_map_scoreboard?map_id=${currentMapId}`)
+      .then((res) => showResponse(res, "get_map_scoreboard", false))
+      .then((data) =>
+        data.result ? setScores(fromJS(data.result.player_stats)) : ""
+      )
+      .then(() => setIsLoading(false))
+      .catch(handle_http_errors);
+  }, [currentMapId]);
 
   React.useEffect(() => {
     getData();
@@ -139,29 +157,66 @@ const GamesScore = ({ classes }) => {
   return (
     <React.Fragment>
       <Grid container spacing={2} justify="center" className={classes.padding}>
+        {!maps.size ? (
+          <Grid item className={styles.paper}>
+            <Typography variant="h2">No games recorded yet</Typography>
+          </Grid>
+        ) : (
+          ""
+        )}
         <Grid xs={12} className={`${classes.doublePadding}`}>
           <div className={styles.singleLine}>
-            <GridList cols={xl ? 8.5 : lg ? 5.5 : md ? 3.5 : 2.5} className={styles.gridList}>
+            <GridList
+              cols={
+                xl
+                  ? Math.min(maps.size, 8.5)
+                  : lg
+                  ? Math.min(maps.size, 5.5)
+                  : md
+                  ? Math.min(maps.size, 3.5)
+                  : Math.min(maps.size, 2.5)
+              }
+              className={styles.gridList}
+            >
               {maps.map((m) => {
-                const start = moment(m.get("start"))
-                const end = moment(m.get("end"))
-                const duration = moment.duration(end - start)
+                const start = moment(m.get("start"));
+                const end = moment(m.get("end"));
+                const duration = moment.duration(end - start);
 
-                return <GridListTile>
-                  <img src={map_to_pict[m.get("just_name")]} />
-                  <GridListTileBar
-                    className={styles.titleBarTop}
-                    title={`${m.get("long_name")}`}
-                    subtitle={`${duration.humanize()}`}
-                    titlePosition="top"
-                  />
-                  <GridListTileBar
-                    className={styles.titleBar}
-                    title={`${start.format("dddd, MMM Do ")}`}
-                    subtitle={`Started at: ${start.format("HH:mm")}`}
-                    actionIcon={<IconButton color="inherit"><VisibilityIcon/></IconButton>}
-                  />
-                </GridListTile>
+                return (
+                  <GridListTile
+                    key={`${m.get("name")}${m.get("start")}${m.get("end")}`}
+            
+                  >
+                    <img src={map_to_pict[m.get("just_name")]} />
+                    
+                    <GridListTileBar
+                      className={styles.titleBarTop}
+                      title={m.get("long_name")}
+                      subtitle={`${duration.humanize()}`}
+                      classes={m.get("id") === currentMapId ? {
+                        title: styles.selectedMap,
+                      } : {}}
+                      titlePosition="top"
+                      // hidden icon, just to keep alignment consistent with the bottom one
+                      actionIcon={
+                        <IconButton style={{visibility:"hidden"}} color="inherit">
+                          <VisibilityIcon  />
+                        </IconButton>
+                      }
+                    />
+                    <GridListTileBar
+                      className={styles.titleBar}
+                      title={`${start.format("dddd, MMM Do ")}`}
+                      subtitle={`Started at: ${start.format("HH:mm")}`}
+                      actionIcon={
+                        <IconButton color="inherit">
+                          <VisibilityIcon color={m.get("id") === currentMapId ?  "secondary" : "inherit"} onClick={() => setCurrentMapId(m.get("id"))}/>
+                        </IconButton>
+                      }
+                    />
+                  </GridListTile>
+                );
               })}
             </GridList>
           </div>

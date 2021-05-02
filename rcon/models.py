@@ -75,6 +75,7 @@ class PlayerSteamID(Base):
     flags = relationship("PlayerFlag", backref="steamid")
     watchlist = relationship("WatchList", backref="steamid", uselist=False)
     steaminfo = relationship("SteamInfo", backref="steamid", uselist=False)
+    stats = relationship("PlayerStats", backref="steamid", uselist=False)
 
     def get_penalty_count(self):
         penalities_type = {"KICK", "PUNISH", "TEMPBAN", "PERMABAN"}
@@ -379,7 +380,7 @@ class Maps(Base):
     server_number = Column(Integer, index=True)
     map_name = Column(String, nullable=False, index=True)
 
-    player_stats = relationship("PlayerStats", backref="map", uselist=False)
+    player_stats = relationship("PlayerStats", backref="map", uselist=True)
 
     def to_dict(self, with_stats=False):
         return dict(
@@ -429,6 +430,29 @@ class PlayerStats(Base):
     kills_per_minute = Column(Float)
     deaths_per_minute = Column(Float)
     kill_death_ratio = Column(Float)
+
+    def to_dict(self):
+        return dict(
+            id=self.id,
+            player_id=self.playersteamid_id,
+            steaminfo=self.steamid.steaminfo.to_dict() if self.steamid.steaminfo else None,
+            map_id=self.map_id,
+            kills=self.kills,
+            kills_streak=self.kills_streak,
+            death=self.death,
+            deaths_without_kill_streak=self.deaths_without_kill_streak,
+            teamkills=self.teamkills,
+            teamkills_streak=self.teamkills_streak,
+            deaths_by_tk=self.deaths_by_tk,
+            deaths_by_tk_streak=self.deaths_by_tk_streak,
+            nb_vote_started=self.nb_vote_started,
+            nb_voted_yes=self.nb_voted_yes,
+            nb_voted_no=self.nb_voted_no,
+            time_seconds=self.time_seconds,
+            kills_per_minute=self.kills_per_minute,
+            deaths_per_minute=self.deaths_per_minute,
+            kill_death_ratio=self.kill_death_ratio,
+        )
 
 
 def init_db(force=False):

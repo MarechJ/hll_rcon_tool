@@ -179,7 +179,33 @@ def get_scoreboard_maps(request):
             command="get_scoreboard_maps",
         )
 
+@csrf_exempt
+def get_map_scoreboard(request):
+    data = _get_data(request)
+    error = None
+    failed = False
+    game = None
 
+    try:
+        map_id = int(data.get("map_id", None))
+        with enter_session() as sess:
+            game = sess.query(Maps).filter(Maps.id == map_id).one_or_none()
+            #import ipdb; ipdb.set_trace()
+            if not game:
+                error = "No map for this ID"
+                failed = True
+            else:
+                game = game.to_dict(with_stats=True)
+    except Exception as e:
+        game = None
+        error = repr(e)
+        failed = True
+    
+    return api_response(
+        result=game, error=error, failed=failed, command="get_map_scoreboard"
+    )
+
+    
 @csrf_exempt
 @login_required
 def date_scoreboard(request):

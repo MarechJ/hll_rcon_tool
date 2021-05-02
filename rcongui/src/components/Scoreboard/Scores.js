@@ -32,7 +32,7 @@ import {
           <ListItemAvatar>
             <Avatar src={avatarUrl}></Avatar>
           </ListItemAvatar>
-          <ListItemText primary={score.get("player")} secondary={`#${rank}`} />
+          <ListItemText primary={score.get("player") || steamProfile.get("personaname")} secondary={`#${rank}`} />
           <ListItemSecondaryAction>
             <Typography variant="h6" color="secondary">
               {postProcess(score.get(statKey))}
