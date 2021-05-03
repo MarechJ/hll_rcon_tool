@@ -201,7 +201,7 @@ class Rcon(ServerCtl):
         @return: a array of bans
         """
         bans = self.get_bans()
-        return filter(lambda x: x.get("steam_id_64") == steam_id_64, bans)
+        return list(filter(lambda x: x.get("steam_id_64") == steam_id_64, bans))
 
 
     @ttl_cache(ttl=60 * 60)

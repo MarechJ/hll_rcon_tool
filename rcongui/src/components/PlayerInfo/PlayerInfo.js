@@ -6,6 +6,7 @@ import {ExpandMore} from "@material-ui/icons";
 import moment from "moment";
 import MUIDataTable from "mui-datatables";
 import {withRouter} from "react-router";
+import "./PlayerInfo.css"
 
 const NamePopOver = ({names}) => {
     const [anchorEl, setAnchorEl] = React.useState(null);
@@ -89,7 +90,7 @@ const Punishment = ({punishments}) => {
 }
 
 class PlayerInfo extends React.Component {
-
+    _mounted = false;
     constructor(props) {
         super(props);
         this.state = {
@@ -128,18 +129,23 @@ class PlayerInfo extends React.Component {
      */
     fetchPlayerBan(steamId64) {
         get(`get_ban?steam_id_64=${steamId64}`)
+            .then((response) => showResponse(response, "get_ban", false))
             .then((data) => {
+                console.log(data.result)
                 const temp = data.result.find((ban, index) => {
+                    console.log('TEMP')
                     return ban.type === "temp";
 
                 })
                 const perma = data.result.find((ban, index) => {
+                    console.log('PERMA')
                     return ban.type === "perma";
                 })
-                if (temp !== undefined) {
+                console.log(temp, perma)
+                if (temp !== undefined && this._mounted) {
                     this.setState({temp: true})
                 }
-                if (perma !== undefined) {
+                if (perma !== undefined && this._mounted) {
                     this.setState({perma: true})
                 }
             })
@@ -176,11 +182,19 @@ class PlayerInfo extends React.Component {
     }
 
     componentDidMount() {
+        this._mounted = true;
         const {steamId64} = this.props.match.params
         if (steamId64 !== undefined) {
             this.fetchPlayer(steamId64)
             this.fetchPlayerBan(steamId64)
         }
+    }
+
+    componentWillUnmount() {
+        this._mounted = false;
+        this.setState = (state,callback)=>{
+            return;
+        };
     }
 
     render() {
@@ -232,25 +246,25 @@ class PlayerInfo extends React.Component {
                                         <Grid container sm={12} justify="space-between">
                                             <Grid item>
                                                 <Typography color={this.state.vip ? "primary" : ""}
-                                                            style={this.state.perma ? "" : {opacity: 0.2}}
+                                                            className={this.state.vip ? "" : "inactive"}
                                                             variant="button">VIP
                                                 </Typography>
                                             </Grid>
                                             <Grid item>
                                                 <Typography color={this.state.perma ? "error" : ""}
-                                                            style={this.state.perma ? "" : {opacity: 0.2}}
+                                                            className={this.state.perma ? "" : "inactive"}
                                                             variant="button">PERMABAN
                                                 </Typography>
                                             </Grid>
                                             <Grid item>
                                                 <Typography color={this.state.temp ? "error" : ""}
-                                                            style={this.state.perma ? "" : {opacity: 0.2}}
+                                                            className={this.state.temp ? "" : "inactive"}
                                                             variant="button">TEMPBAN
                                                 </Typography>
                                             </Grid>
                                             <Grid item>
                                                 <Typography color={this.state.blacklist?.is_blacklisted ? "error" : ""}
-                                                            style={this.state.perma ? "" : {opacity: 0.2}}
+                                                            className={this.state.blacklist?.is_blacklisted ? "" : "inactive"}
                                                             variant="button">BLACKLISTED
                                                 </Typography>
                                             </Grid>

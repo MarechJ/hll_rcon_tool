@@ -1,19 +1,16 @@
-
 from dateutil import parser
 from django.views.decorators.csrf import csrf_exempt
-
 
 from rcon.utils import MapsHistory
 from rcon.recorded_commands import RecordedRcon
 from rcon.commands import CommandFailedError
 from rcon.steam_utils import get_steam_profile
 from rcon.settings import SERVER_INFO
-from .auth import login_required, api_response
+from .auth import login_required, api_response, api_csv_response
 from .utils import _get_data
 from rcon import game_logs
 from rcon.models import LogLine, PlayerSteamID, PlayerName, enter_session
 from sqlalchemy import or_, and_
-
 
 
 @csrf_exempt
@@ -30,6 +27,7 @@ def get_historical_logs(request):
     exact_player_match = data.get("exact_player", False)
     exact_action = data.get("exact_action", True)
     server_filter = data.get("server_filter")
+    output = data.get("output")
 
     with enter_session() as sess:
         names = []
@@ -56,8 +54,8 @@ def get_historical_logs(request):
             # Handle not found
             player = (
                 sess.query(PlayerSteamID)
-                .filter(PlayerSteamID.steam_id_64 == steam_id_64)
-                .one_or_none()
+                    .filter(PlayerSteamID.steam_id_64 == steam_id_64)
+                    .one_or_none()
             )
             id_ = player.id if player else 0
             q = q.filter(
@@ -90,22 +88,33 @@ def get_historical_logs(request):
                 LogLine.event_time.desc()
                 if time_sort == "desc"
                 else LogLine.event_time.asc()
-            )
-            .limit(limit)
-            .all()
+            ).limit(limit).all()
         )
 
         lines = []
         for r in res:
             r = r.to_dict()
-            r["event_time"] = r["event_time"].timestamp()
+            if output != "CSV" and output != "csv":
+                r["event_time"] = r["event_time"].timestamp()
+            else:
+                del r["id"]
+                del r["version"]
+                del r["creation_time"]
+                del r["raw"]
+                print(r)
             lines.append(r)
-        return api_response(
-            lines,
-            command="get_historical_logs",
-            arguments=dict(limit=limit, player_name=player_name, action=action),
-            failed=False,
-        )
+
+        if output != "CSV" and output != "csv":
+            return api_response(
+                lines,
+                command="get_historical_logs",
+                arguments=dict(limit=limit, player_name=player_name, action=action),
+                failed=False,
+            )
+
+        return api_csv_response(lines, "log.csv",
+                                ["event_time", "type", "player_name", "player1_id",
+                                 "player2_name", "player2_id", "content", "server"])
 
 
 @csrf_exempt
@@ -118,7 +127,6 @@ def get_recent_logs(request):
     action_filter = data.get("filter_action")
     exact_player_match = data.get("exact_player_match", True)
     exact_action = data.get("exact_action", False)
-    
 
     return api_response(
         result=game_logs.get_recent_logs(
