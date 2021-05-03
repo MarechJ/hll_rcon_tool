@@ -390,8 +390,8 @@ class VoteMap:
             RecordedRcon(SERVER_INFO).set_maprotation(ALL_MAPS)
 
 
-def on_map_change(old_map_info, new_map_info):
-    logger.info("Running on_map_change hooks with %s %s", old_map_info, new_map_info)
+def on_map_change(old_map: str, new_map: str):
+    logger.info("Running on_map_change hooks with %s %s", old_map, new_map)
     try:
         config = VoteMapConfig()
 
@@ -408,7 +408,7 @@ def on_map_change(old_map_info, new_map_info):
     except Exception:
         logger.exception("Unexpected error while running vote map")
     try:
-        record_stats_worker(old_map_info)
+        record_stats_worker(MapsHistory()[1])
     except Exception:
         logger.exception("Unexpected error while running stats worker")
 
