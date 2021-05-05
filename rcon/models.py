@@ -417,7 +417,7 @@ class PlayerStats(Base):
     )
     kills = Column(Integer)
     kills_streak = Column(Integer)
-    death = Column(Integer)
+    deaths = Column(Integer)
     deaths_without_kill_streak = Column(Integer)
     teamkills = Column(Integer)
     teamkills_streak = Column(Integer)
@@ -441,7 +441,7 @@ class PlayerStats(Base):
             map_id=self.map_id,
             kills=self.kills,
             kills_streak=self.kills_streak,
-            death=self.death,
+            deaths=self.deaths,
             deaths_without_kill_streak=self.deaths_without_kill_streak,
             teamkills=self.teamkills,
             teamkills_streak=self.teamkills_streak,
