@@ -430,6 +430,8 @@ class PlayerStats(Base):
     kills_per_minute = Column(Float)
     deaths_per_minute = Column(Float)
     kill_death_ratio = Column(Float)
+    longest_life_secs = Column(Integer)
+    shortest_life_secs = Column(Integer)
 
     def to_dict(self):
         return dict(

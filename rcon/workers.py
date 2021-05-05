@@ -120,7 +120,7 @@ def _record_stats(map_info):
                     map_id=map.id,
                     kills=stats.get("kills"),
                     kills_streak=stats.get("kills_streak"),
-                    death=stats.get("death"),
+                    death=stats.get("deaths"),
                     deaths_without_kill_streak=stats.get("deaths_without_kill_streak"),
                     teamkills=stats.get("teamkills"),
                     teamkills_streak=stats.get("teamkills_streak"),
@@ -132,7 +132,9 @@ def _record_stats(map_info):
                     time_seconds=stats.get("time_seconds"),
                     kills_per_minute=stats.get("kills_per_minute"),
                     deaths_per_minute=stats.get("deaths_per_minute"),
-                    kill_death_ratio=stats.get("kill_death_ratio")
+                    kill_death_ratio=stats.get("kill_death_ratio"),
+                    longest_life_secs=stats.get("longest_life_secs"),
+                    shortest_life_secs=stats.get("shortest_life_secs"),
                 )
                 logger.debug(f"Saving stats %s", player_stats)
                 player_stat_record = PlayerStats(
