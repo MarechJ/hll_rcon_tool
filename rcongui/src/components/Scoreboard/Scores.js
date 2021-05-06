@@ -21,7 +21,7 @@ import {
   
   const PlayerItem = ({ score, rank, postProcess, statKey }) => {
     const steamProfile = score.get("steaminfo")
-      ? score.get("steaminfo", new Map()).get("profile", new Map())
+      ? (score.get("steaminfo", new Map()).get("profile") ?  score.get("steaminfo", new Map()).get("profile") : new Map())
       : new Map();
     const avatarUrl = steamProfile ? steamProfile.get("avatar", null) : null;
   
@@ -32,7 +32,7 @@ import {
           <ListItemAvatar>
             <Avatar src={avatarUrl}></Avatar>
           </ListItemAvatar>
-          <ListItemText primary={score.get("player") || steamProfile.get("personaname")} secondary={`#${rank}`} />
+          <ListItemText primary={score.get("player") || steamProfile.get("personaname", `<missing_profile> ID: ${score.get("player_id")}`)} secondary={`#${rank}`} />
           <ListItemSecondaryAction>
             <Typography variant="h6" color="secondary">
               {postProcess(score.get(statKey))}
