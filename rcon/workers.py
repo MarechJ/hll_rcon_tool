@@ -120,7 +120,7 @@ def _record_stats(map_info):
                     map_id=map.id,
                     kills=stats.get("kills"),
                     kills_streak=stats.get("kills_streak"),
-                    death=stats.get("deaths"),
+                    deaths=stats.get("deaths"),
                     deaths_without_kill_streak=stats.get("deaths_without_kill_streak"),
                     teamkills=stats.get("teamkills"),
                     teamkills_streak=stats.get("teamkills_streak"),
