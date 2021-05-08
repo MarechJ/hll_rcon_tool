@@ -264,8 +264,9 @@ const Scores = ({ classes, scores, durationToHour }) => {
           iconUrl={"icons/survivor.png"}
           scores={scores}
           title="SURVIVOR"
-          statType="Longest life"
+          statType="Longest life min."
           statKey="longest_life_secs"
+          postProcessFunc={v => (v / 60).toFixed(2)}
           reversed />
       </Grid>
       <Grid item xs={12} md={6} lg={3} xl={2}>
@@ -274,9 +275,10 @@ const Scores = ({ classes, scores, durationToHour }) => {
           iconUrl={"icons/early.png"}
           scores={scores}
           title="U'R STILL A MAN"
-          statType="Shortest life"
-          statKey="longest_life_secs"
-          reversed />
+          statType="Shortest life min."
+          statKey="shortest_life_secs"
+          postProcessFunc={v => (v / 60).toFixed(2)}
+           />
       </Grid>
     </React.Fragment>
   );

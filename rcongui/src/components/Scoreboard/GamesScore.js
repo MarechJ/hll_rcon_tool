@@ -33,6 +33,9 @@ const useStyles = makeStyles((theme) => ({
     justifyContent: "space-around",
     overflow: "hidden",
   },
+  clickable: {
+    cursor: "pointer"
+  },
   gridList: {
     flexWrap: "nowrap",
     // Promote the list into his own layer on Chrome. This cost memory but helps keeping high FPS.
@@ -48,6 +51,14 @@ const useStyles = makeStyles((theme) => ({
   titleBarTop: {
     background:
       "linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 70%, rgba(0,0,0,0) 100%)",
+  },
+  selectedTitleBar: {
+    background:
+      "linear-gradient(to top, rgba(244,123,0,0.3) 0%, rgba(0,0,0,0)  70%, rgba(0,0,0,0) 100%)",
+  },
+  selectedTitleBarTop: {
+    background:
+      "linear-gradient(to bottom, rgba(244,123,0,0.3) 0%, rgba(0,0,0,0) 70%, rgba(0,0,0,0) 100%)",
   },
   paper: {
     backgroundColor: theme.palette.background.paper,
@@ -156,13 +167,15 @@ const GamesScore = ({ classes }) => {
 
   return (
     <React.Fragment>
-      <Grid container spacing={2} justify="center" className={classes.padding}>
+      <Grid container spacing={1} justify="center" className={classes.padding}>
         {!maps.size ? (
           <Grid item className={styles.paper}>
             <Typography variant="h2">No games recorded yet</Typography>
           </Grid>
         ) : (
-          ""
+          <Grid item>
+          <Typography variant="caption">Select a game</Typography>
+        </Grid>
         )}
         <Grid xs={12} className={`${classes.doublePadding}`}>
           <div className={styles.singleLine}>
@@ -179,40 +192,33 @@ const GamesScore = ({ classes }) => {
               className={styles.gridList}
             >
               {maps.map((m) => {
-                const start = moment(m.get("start"));
-                const end = moment(m.get("end"));
+                const start = moment(m.get("start") + 'Z');
+                const end = moment(m.get("end") + 'Z');
                 const duration = moment.duration(end - start);
+                const isSelected = (isReturn, isNotReturn) => m.get("id") === currentMapId ? isReturn : isNotReturn
 
                 return (
                   <GridListTile
+                    class={styles.clickable}
+                    onClick={() => setCurrentMapId(m.get("id"))}
                     key={`${m.get("name")}${m.get("start")}${m.get("end")}`}
-            
                   >
                     <img src={map_to_pict[m.get("just_name")]} />
                     
                     <GridListTileBar
-                      className={styles.titleBarTop}
+                      className={isSelected(styles.selectedTitleBarTop, styles.titleBarTop)}
                       title={m.get("long_name")}
                       subtitle={`${duration.humanize()}`}
-                      classes={m.get("id") === currentMapId ? {
-                        title: styles.selectedMap,
-                      } : {}}
                       titlePosition="top"
-                      // hidden icon, just to keep alignment consistent with the bottom one
-                      actionIcon={
-                        <IconButton style={{visibility:"hidden"}} color="inherit">
-                          <VisibilityIcon  />
-                        </IconButton>
-                      }
                     />
                     <GridListTileBar
-                      className={styles.titleBar}
+                      className={isSelected(styles.selectedTitleBar, styles.titleBar)}
                       title={`${start.format("dddd, MMM Do ")}`}
                       subtitle={`Started at: ${start.format("HH:mm")}`}
                       actionIcon={
-                        <IconButton color="inherit">
-                          <VisibilityIcon color={m.get("id") === currentMapId ?  "secondary" : "inherit"} onClick={() => setCurrentMapId(m.get("id"))}/>
-                        </IconButton>
+                        isSelected("", <IconButton color="inherit">
+                          <VisibilityIcon color="inherit" onClick={() => setCurrentMapId(m.get("id"))}/>
+                        </IconButton>)
                       }
                     />
                   </GridListTile>

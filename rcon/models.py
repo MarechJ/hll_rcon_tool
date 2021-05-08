@@ -454,6 +454,8 @@ class PlayerStats(Base):
             kills_per_minute=self.kills_per_minute,
             deaths_per_minute=self.deaths_per_minute,
             kill_death_ratio=self.kill_death_ratio,
+            longest_life_secs=self.longest_life_secs,
+            shortest_life_secs=self.shortest_life_secs,
         )
 
 

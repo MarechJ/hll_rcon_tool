@@ -69,14 +69,14 @@ const LiveScore = ({ classes }) => {
   const getData = () => {
     setIsLoading(true);
     console.log("Loading data");
+    get("live_scoreboard")
+      .then((res) => showResponse(res, "livescore", false))
+      .then((data) => setStats(fromJS(data.result)))
+      .catch(handle_http_errors);
     get("public_info")
       .then((res) => showResponse(res, "public_info", false))
       .then((data) => setServerState(fromJS(data.result)))
       .then(() => setIsLoading(false))
-      .catch(handle_http_errors);
-    get("live_scoreboard")
-      .then((res) => showResponse(res, "livescore", false))
-      .then((data) => setStats(fromJS(data.result)))
       .catch(handle_http_errors);
   };
 
