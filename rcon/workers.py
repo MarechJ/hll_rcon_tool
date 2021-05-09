@@ -118,6 +118,7 @@ def _record_stats(map_info):
                 player_stats = dict(
                     playersteamid_id=player_record.id,
                     map_id=map.id,
+                    name=state.get("player"),
                     kills=stats.get("kills"),
                     kills_streak=stats.get("kills_streak"),
                     deaths=stats.get("deaths"),
@@ -135,6 +136,9 @@ def _record_stats(map_info):
                     kill_death_ratio=stats.get("kill_death_ratio"),
                     longest_life_secs=stats.get("longest_life_secs"),
                     shortest_life_secs=stats.get("shortest_life_secs"),
+                    weapons=stats.get("weapons"),
+                    most_killed=stats.get("most_killed"),
+                    death_by=stats.get("death_by")
                 )
                 logger.debug(f"Saving stats %s", player_stats)
                 player_stat_record = PlayerStats(

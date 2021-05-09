@@ -52,6 +52,11 @@ class BaseStats:
 
     def _add_kill(self, stats, player, log):
         self._add_kd("kills", "deaths", stats, player, log)
+        if self._is_player_kill(player, log):
+            stats["weapons"][log["weapon"]] = stats["weapons"].get(log["weapon"], 0) + 1
+            stats["most_killed"][log["player2"]] = stats["most_killed"].get(log["player2"], 0) + 1
+        if self._is_player_death(player, log):
+            stats["death_by"][log["player"]] = stats["death_by"].get(log["player"], 0) + 1
 
     def _add_tk(self, stats, player, log):
         self._add_kd("teamkills", "deaths_by_tk", stats, player, log)
@@ -163,6 +168,9 @@ class BaseStats:
                 "shortest_life_secs": 9999,
                 "last_spawn": self._get_player_first_appearance(p),
                 "time_seconds": self._get_player_session_time(p),
+                "weapons": {},
+                "death_by": {},
+                "most_killed": {},
             }
 
             streaks = Streaks()
@@ -411,9 +419,9 @@ if __name__ == "__main__":
 
     # pprint(LiveStats().get_current_players_stats())
 
-    #pprint(TimeWindowStats().get_players_stats_at_time(
-    #    datetime.datetime(2021, 3, 28, 16, 30, 44, 793000),
-    #    datetime.datetime(2021, 3, 28, 17, 30, 44, 793000),
-    #))
+    pprint(TimeWindowStats().get_players_stats_at_time(
+        datetime.datetime(2021, 3, 28, 16, 30, 44, 793000),
+        datetime.datetime(2021, 3, 28, 17, 30, 44, 793000),
+    ))
 
-    LiveStats().get_current_players_stats()
+    #LiveStats().get_current_players_stats()

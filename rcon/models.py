@@ -313,11 +313,24 @@ class LogLine(Base):
         nullable=True,
         index=True,
     )
+    weapon = Column(String)
     raw = Column(String, nullable=False)
     content = Column(String)
     steamid1 = relationship("PlayerSteamID", foreign_keys=[player1_steamid])
     steamid2 = relationship("PlayerSteamID", foreign_keys=[player2_steamid])
     server = Column(String)
+
+    def get_weapon(self):
+        if self.weapon:
+            return self.weapon
+        # Backward compatibility for logs before weapon was added
+        if self.type and self.type.lower() in ('kill', 'team kill'):
+            try:
+                return self.raw.rsplit(' with ', 1)[-1]
+            except:
+                logger.exception("Unable to extract weapon")
+            
+        return None
 
     def to_dict(self):
         return dict(
@@ -333,16 +346,10 @@ class LogLine(Base):
             raw=self.raw,
             content=self.content,
             server=self.server,
+            weapon=self.get_weapon()
         )
 
     def compatible_dict(self):
-        weapon = None
-        if self.type.upper() in ["KILL", "TEAM KILL"]:
-            try:
-                weapon = self.raw.rsplit(" with ", 1)[-1]
-            except IndexError:
-                pass
-
         return {
             "id": self.id,
             "version": self.version,
@@ -358,7 +365,7 @@ class LogLine(Base):
             "player2_id": self.player1_steamid,
             "player2": self.player2_name,
             "steam_id_64_2": self.steamid2.steam_id_64 if self.steamid2 else None,
-            "weapon": weapon,
+            "weapon": self.get_weapon(),
             "message": self.content,
             "sub_content": None,  # TODO
         }
@@ -415,6 +422,7 @@ class PlayerStats(Base):
         nullable=False,
         index=True,
     )
+    name = Column(String)
     kills = Column(Integer)
     kills_streak = Column(Integer)
     deaths = Column(Integer)
@@ -432,6 +440,10 @@ class PlayerStats(Base):
     kill_death_ratio = Column(Float)
     longest_life_secs = Column(Integer)
     shortest_life_secs = Column(Integer)
+    most_killed = Column(JSONB)
+    death_by = Column(JSONB)
+    weapons = Column(JSONB)
+
 
     def to_dict(self):
         return dict(
@@ -456,6 +468,9 @@ class PlayerStats(Base):
             kill_death_ratio=self.kill_death_ratio,
             longest_life_secs=self.longest_life_secs,
             shortest_life_secs=self.shortest_life_secs,
+            most_killed=self.most_killed,
+            death_by=self.death_by,
+            weapons=self.weapons,
         )
 
 
