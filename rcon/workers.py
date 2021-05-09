@@ -118,7 +118,7 @@ def _record_stats(map_info):
                 player_stats = dict(
                     playersteamid_id=player_record.id,
                     map_id=map.id,
-                    name=state.get("player"),
+                    name=stats.get("player"),
                     kills=stats.get("kills"),
                     kills_streak=stats.get("kills_streak"),
                     deaths=stats.get("deaths"),
