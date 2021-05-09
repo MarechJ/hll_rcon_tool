@@ -17,7 +17,7 @@ from rcon.models import (
     PlayersAction,
     PlayerFlag,
     WatchList,
-    SteamInfo, PlayerComment
+    PlayerComment
 )
 
 from rcon.commands import CommandFailedError
