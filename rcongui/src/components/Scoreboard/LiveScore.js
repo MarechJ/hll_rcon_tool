@@ -80,6 +80,8 @@ const LiveScore = ({ classes }) => {
       .catch(handle_http_errors);
   };
 
+  React.useEffect(getData, []);
+
   React.useEffect(() => {
     if (!isPaused) {
       const interval = setInterval(getData, refreshIntervalSec * 1000);
