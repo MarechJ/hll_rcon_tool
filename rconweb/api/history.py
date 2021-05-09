@@ -13,12 +13,11 @@ from rcon.player_history import (
     get_player_profile,
     get_player_profile_by_id,
     add_flag_to_player,
-    remove_flag,
+    remove_flag, get_player_comments, post_player_comments,
 )
 from rcon.utils import MapsHistory
 from .auth import login_required, api_response
 from .utils import _get_data
-
 
 logger = logging.getLogger("rconweb")
 
@@ -174,3 +173,38 @@ def players_history(request):
             "failed": failed,
         }
     )
+
+
+@csrf_exempt
+@login_required
+def get_player_comment(request):
+    data = _get_data(request)
+    res = None
+    try:
+        res = get_player_comments(steam_id_64=data["steam_id_64"])
+    except:
+        logger.exception("Unable to get player comments")
+
+    return JsonResponse(
+        {"result": res, "command": "player_comments", "arguments": data, "failed": not res}
+    )
+
+@csrf_exempt
+@login_required
+def post_player_comment(request):
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        data = request.GET
+
+    try:
+        post_player_comments(steam_id_64=data["steam_id_64"], comment=data["comment"])
+        failed = False
+    except:
+        failed = True
+        logger.exception("Unable to get player comments")
+
+    return JsonResponse(
+        {"result": "", "command": "player_comments", "arguments": data, "failed": failed}
+    )
+

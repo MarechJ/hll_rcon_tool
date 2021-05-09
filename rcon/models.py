@@ -65,6 +65,7 @@ class PlayerSteamID(Base):
     flags = relationship("PlayerFlag", backref="steamid")
     watchlist = relationship("WatchList", backref="steamid", uselist=False)
     steaminfo = relationship("SteamInfo", backref="steamid", uselist=False)
+    comments = relationship("PlayerComment", back_populates="player")
 
     def get_penalty_count(self):
         penalities_type = {"KICK", "PUNISH", "TEMPBAN", "PERMABAN"}
@@ -336,6 +337,8 @@ class PlayerComment(Base):
         index=True,
     )
     content = Column(String, nullable=False)
+
+    player = relationship("PlayerSteamID", back_populates="comments")
 
     def to_dict(self):
         return dict(
