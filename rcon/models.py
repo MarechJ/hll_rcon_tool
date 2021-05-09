@@ -127,12 +127,12 @@ class SteamInfo(Base):
     profile = Column(JSONB)
     country = Column(String, index=True)
     bans = Column(JSONB)
- 
+
     def to_dict(self):
         return dict(
             id=self.id,
             created=self.created,
-            updated= self.updated,
+            updated=self.updated,
             profile=self.profile,
             country=self.country,
             bans=self.bans,
@@ -322,6 +322,27 @@ class LogLine(Base):
             raw=self.raw,
             content=self.content,
             server=self.server,
+        )
+
+
+class PlayerComment(Base):
+    __tablename__ = "player_comments"
+    id = Column(Integer, primary_key=True)
+    creation_time = Column(TIMESTAMP, default=datetime.utcnow())
+    playersteamid_id = Column(
+        Integer,
+        ForeignKey("steam_id_64.id"),
+        nullable=False,
+        index=True,
+    )
+    content = Column(String, nullable=False)
+
+    def to_dict(self):
+        return dict(
+            id=self.id,
+            creation_time=self.creation_time,
+            playersteamid_id=self.playersteamid_id,
+            content=self.content
         )
 
 
