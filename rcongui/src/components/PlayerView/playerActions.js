@@ -94,10 +94,16 @@ class ReasonDialog extends React.Component {
     this.setState({ reason: value });
   }
 
+  onChangeComment(e, value) {
+    e.preventDefault();
+    this.setState({ comment: value });
+  }
+
   render() {
     const { open, handleClose, handleConfirm } = this.props;
     const {
       reason,
+      comment,
       saveMessage,
       sharedMessages,
       durationNumber,
@@ -127,6 +133,23 @@ class ReasonDialog extends React.Component {
                 helperText="The message that will be displayed to the player. A message is mandatory"
               />
             )}
+          />
+          <Autocomplete
+              freeSolo
+              fullWidth
+              options={sharedMessages.concat(textHistory.getTexts())}
+              inputValue={comment}
+              onInputChange={(e, value) => this.onChangeComment(e, value)}
+              renderInput={(params) => (
+                  <TextField
+                      {...params}
+                      multiline rows={4} rowsMax={10}
+                      label="Comment"
+                      variant="outlined"
+                      margin="dense"
+                      helperText="A comment that will NOT be displayed to the player"
+                  />
+              )}
           />
           {open.actionType === "temp_ban" ? (
             <Duration
@@ -171,6 +194,7 @@ class ReasonDialog extends React.Component {
                 open.actionType,
                 open.player,
                 reason,
+                comment,
                 durationMultiplier * durationNumber,
                 open.steam_id_64
               );

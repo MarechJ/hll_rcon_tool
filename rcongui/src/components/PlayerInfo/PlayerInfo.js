@@ -1,12 +1,14 @@
-import {get, handle_http_errors, showResponse} from "../../utils/fetchUtils";
+import {get, handle_http_errors, postData, showResponse} from "../../utils/fetchUtils";
 import React from "react";
-import {Avatar, Button, Grid, Popover} from "@material-ui/core";
+import {Avatar, Button, Grid, Popover, TextField} from "@material-ui/core";
 import Typography from "@material-ui/core/Typography";
 import {ExpandMore} from "@material-ui/icons";
 import moment from "moment";
 import MUIDataTable from "mui-datatables";
 import {withRouter} from "react-router";
 import "./PlayerInfo.css"
+import ChatWidget from "../ChatWidget";
+import {toast} from "react-toastify";
 
 const NamePopOver = ({names}) => {
     const [anchorEl, setAnchorEl] = React.useState(null);
@@ -41,8 +43,8 @@ const NamePopOver = ({names}) => {
                     horizontal: 'center',
                 }}
             >
-                {names.map((name) => {
-                    return <Typography>{name.name}</Typography>;
+                {names.map((name, index) => {
+                    return <Typography key={index}>{name.name}</Typography>;
                 })}
             </Popover>
         </Grid>
@@ -51,11 +53,11 @@ const NamePopOver = ({names}) => {
 
 const Punishment = ({punishments}) => {
     const [myRowPerPage, setRowPerPage] = React.useState(
-        window.localStorage.getItem("punishments_row_per_page") || 50
+        Number(window.localStorage.getItem("punishments_row_per_page")) || 50
     );
     const saveRowsPerPage = (rowPerPage) => {
         window.localStorage.setItem("punishments_row_per_page", rowPerPage);
-        setRowPerPage(rowPerPage);
+        setRowPerPage(Number(rowPerPage));
     };
     const columns = [
         {name: "action_type", label: "Type"},
@@ -119,8 +121,10 @@ class PlayerInfo extends React.Component {
             perma: false,
             temp: false,
             vip: false,
-            loaded: false
+            loaded: false,
+            comments: undefined
         }
+        this.handleNewComment = this.handleNewComment.bind(this)
     }
 
     /**
@@ -131,17 +135,12 @@ class PlayerInfo extends React.Component {
         get(`get_ban?steam_id_64=${steamId64}`)
             .then((response) => showResponse(response, "get_ban", false))
             .then((data) => {
-                console.log(data.result)
                 const temp = data.result.find((ban, index) => {
-                    console.log('TEMP')
                     return ban.type === "temp";
-
                 })
                 const perma = data.result.find((ban, index) => {
-                    console.log('PERMA')
                     return ban.type === "perma";
                 })
-                console.log(temp, perma)
                 if (temp !== undefined && this._mounted) {
                     this.setState({temp: true})
                 }
@@ -181,12 +180,38 @@ class PlayerInfo extends React.Component {
             .catch(handle_http_errors);
     }
 
+    fetchPlayerComments(steamId64) {
+        get(`get_player_comment?steam_id_64=${steamId64}`)
+            .then((response) => showResponse(response, "get_player_comments", false))
+            .then((data) => {
+                if (data.result !== undefined && data.result !== null && Object.keys(data.result).length !== 0) {
+                    this.setState({comments: data.result})
+                }
+            })
+            .catch(handle_http_errors);
+    }
+
+    handleNewComment(newComment) {
+        const {steamId64} = this.props.match.params
+        postData(`${process.env.REACT_APP_API_URL}post_player_comment`, {
+            steam_id_64: steamId64,
+            comment: newComment
+        }).then((response) => {
+            return showResponse(response, "post_player_comments", false)
+        }).then(() => {
+            this.fetchPlayerComments(steamId64)
+        }).catch((error) => toast.error("Unable to connect to API " + error));
+
+
+    }
+
     componentDidMount() {
         this._mounted = true;
         const {steamId64} = this.props.match.params
         if (steamId64 !== undefined) {
             this.fetchPlayer(steamId64)
             this.fetchPlayerBan(steamId64)
+            this.fetchPlayerComments(steamId64)
         }
     }
 
@@ -232,7 +257,6 @@ class PlayerInfo extends React.Component {
                                     </Grid>
                                 </Grid>
                             </Grid>
-
                             <Grid item sm={9}>
                                 <Grid container spacing={3} justify="flex-start" alignItems="flex-start"
                                       alignContent="flex-start">
@@ -243,27 +267,27 @@ class PlayerInfo extends React.Component {
                                         </Grid>
                                     </Grid>
                                     <Grid item sm={4}>
-                                        <Grid container sm={12} justify="space-between">
+                                        <Grid container justify="space-between">
                                             <Grid item>
-                                                <Typography color={this.state.vip ? "primary" : ""}
+                                                <Typography color={this.state.vip ? "primary" : 'textSecondary'}
                                                             className={this.state.vip ? "" : "inactive"}
                                                             variant="button">VIP
                                                 </Typography>
                                             </Grid>
                                             <Grid item>
-                                                <Typography color={this.state.perma ? "error" : ""}
+                                                <Typography color={this.state.perma ? "error" : "textSecondary"}
                                                             className={this.state.perma ? "" : "inactive"}
                                                             variant="button">PERMABAN
                                                 </Typography>
                                             </Grid>
                                             <Grid item>
-                                                <Typography color={this.state.temp ? "error" : ""}
+                                                <Typography color={this.state.temp ? "error" : "textSecondary"}
                                                             className={this.state.temp ? "" : "inactive"}
                                                             variant="button">TEMPBAN
                                                 </Typography>
                                             </Grid>
                                             <Grid item>
-                                                <Typography color={this.state.blacklist?.is_blacklisted ? "error" : ""}
+                                                <Typography color={this.state.blacklist?.is_blacklisted ? "error" : "textSecondary"}
                                                             className={this.state.blacklist?.is_blacklisted ? "" : "inactive"}
                                                             variant="button">BLACKLISTED
                                                 </Typography>
@@ -276,6 +300,8 @@ class PlayerInfo extends React.Component {
                                 </Grid>
                             </Grid>
                         </Grid>
+                        <ChatWidget data={this.state.comments} handleMessageSend={this.handleNewComment} />
+
                     </Grid>
 
                     :
