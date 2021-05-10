@@ -449,6 +449,7 @@ class PlayerStats(Base):
         return dict(
             id=self.id,
             player_id=self.playersteamid_id,
+            player=self.name,
             steaminfo=self.steamid.steaminfo.to_dict() if self.steamid.steaminfo else None,
             map_id=self.map_id,
             kills=self.kills,
