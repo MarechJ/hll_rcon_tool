@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React from "react";
 import Button from "@material-ui/core/Button";
 import Chip from "@material-ui/core/Chip";
 import ButtonGroup from "@material-ui/core/ButtonGroup";
@@ -9,27 +9,25 @@ import Menu from "@material-ui/core/Menu";
 import MenuItem from "@material-ui/core/MenuItem";
 import ArrowDropDownIcon from "@material-ui/icons/ArrowDropDown";
 import "react-toastify/dist/ReactToastify.css";
-import useStyles from "../useStyles";
 import Dialog from "@material-ui/core/Dialog";
 import DialogActions from "@material-ui/core/DialogActions";
 import DialogContent from "@material-ui/core/DialogContent";
 import DialogTitle from "@material-ui/core/DialogTitle";
-import { Map } from "immutable";
+import {Map} from "immutable";
 import FlagOutlinedIcon from "@material-ui/icons/FlagOutlined";
 import TextHistory from "../textHistory";
 import Autocomplete from "@material-ui/lab/Autocomplete";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import Checkbox from "@material-ui/core/Checkbox";
-import { getSharedMessages } from "../../utils/fetchUtils";
-import { Grid } from "@material-ui/core";
+import {getSharedMessages} from "../../utils/fetchUtils";
+import {Grid} from "@material-ui/core";
 import VisibilityIcon from "@material-ui/icons/Visibility";
 
 const Duration = ({
   durationNumber,
   onNumberChange,
   durationMultiplier,
-  onMultiplierChange,
-  classes,
+  onMultiplierChange
 }) => (
   <Grid container spacing={1}>
     <Grid item>
@@ -196,7 +194,6 @@ const PlayerActions = ({
   disable = false,
   penaltyCount = Map(),
 }) => {
-  const classes = useStyles();
   const [anchorEl, setAnchorEl] = React.useState(null);
   const [isOpen, setOpen] = React.useState(false);
   const handleClick = (event) => {

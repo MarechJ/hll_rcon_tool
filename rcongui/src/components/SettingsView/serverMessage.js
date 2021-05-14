@@ -1,12 +1,10 @@
 import React from "react";
-import {
-  Grid, TextField, Button, jssPreset, TextareaAutosize
-} from "@material-ui/core";
+import {Grid, TextField} from "@material-ui/core";
 import Autocomplete from '@material-ui/lab/Autocomplete';
 import SplitButton from '../splitButton'
 import TextHistory from '../textHistory'
-import { getSharedMessages } from "../../utils/fetchUtils";
-import { ForwardCheckBox } from '../commonComponent'
+import {getSharedMessages} from "../../utils/fetchUtils";
+import {ForwardCheckBox} from '../commonComponent'
 
 
 const ServerMessage = ({ classes, type, autocompleteKey, value, setValue, onSave, forward, onForwardChange }) => {

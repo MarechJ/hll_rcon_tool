@@ -4,24 +4,16 @@ import Grid from "@material-ui/core/Grid";
 import AppBar from "@material-ui/core/AppBar";
 import Toolbar from "@material-ui/core/Toolbar";
 import Link from "@material-ui/core/Link";
-import { Link as RouterLink } from "react-router-dom";
-import Brightness4Icon from "@material-ui/icons/Brightness4";
-import Checkbox from "@material-ui/core/Checkbox";
-import Brightness4OutlinedIcon from "@material-ui/icons/Brightness4Outlined";
+import {Link as RouterLink} from "react-router-dom";
 import TextField from "@material-ui/core/TextField";
 import Button from "@material-ui/core/Button";
 import ServerStatus from "./serverStatus";
-import {
-  postData,
-  showResponse,
-  get,
-  handle_http_errors,
-} from "../../utils/fetchUtils";
+import {get, handle_http_errors, postData, showResponse,} from "../../utils/fetchUtils";
 import Dialog from "@material-ui/core/Dialog";
 import DialogActions from "@material-ui/core/DialogActions";
 import DialogContent from "@material-ui/core/DialogContent";
 import DialogTitle from "@material-ui/core/DialogTitle";
-import { throttle } from "lodash/function";
+import {throttle} from "lodash/function";
 import Menu from "@material-ui/core/Menu";
 import MenuItem from "@material-ui/core/MenuItem";
 
@@ -135,7 +127,7 @@ class LoginBox extends React.Component {
 
   render() {
     const { open, username, password, isLoggedIn } = this.state;
-    const { classes, component } = this.props;
+    const { classes } = this.props;
 
     return (
       <React.Fragment>

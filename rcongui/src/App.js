@@ -1,6 +1,6 @@
 import React from "react";
 import "./App.css";
-import { ToastContainer } from "react-toastify";
+import {ToastContainer} from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import PlayerView from "./components/PlayerView";
 import useStyles from "./components/useStyles";
@@ -8,21 +8,18 @@ import Grid from "@material-ui/core/Grid";
 import Logs from "./components/LogsView/logs";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import HLLSettings from "./components/SettingsView/hllSettings";
-import { ThemeProvider } from "@material-ui/styles";
-import { HashRouter as Router, Switch, Route } from "react-router-dom";
-import LogsHistory from "./components/LogsHistory";
-import { createMuiTheme } from "@material-ui/core/styles";
+import {ThemeProvider} from '@material-ui/styles';
+import {HashRouter as Router, Route, Switch,} from "react-router-dom";
+import LogsHistory from './components/LogsHistory'
+import {createMuiTheme} from '@material-ui/core/styles';
 import PlayersHistory from "./components/PlayersHistory";
-import Header, { Footer } from "./components/Header";
-import RconSettings from "./components/RconSettings";
-import { pink, red } from "@material-ui/core/colors";
-import ServicesList from "./components/Services";
-import PlayerGrid from "./components/PlayersHistory/playerGrid";
-import { isNull } from "lodash";
-import { LiveScore } from "./components/Scoreboard";
-import { Typography } from "@material-ui/core";
+import Header, {Footer} from "./components/Header";
+import RconSettings from './components/RconSettings';
+import ServicesList from './components/Services';
+import {Typography} from "@material-ui/core";
 import ScoreMenu from './components/Scoreboard/ScoreMenu'
 import GamesScore from "./components/Scoreboard/GamesScore";
+
 
 const Live = ({ classes }) => {
   const [mdSize, setMdSize] = React.useState(6);

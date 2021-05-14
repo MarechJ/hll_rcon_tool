@@ -16,8 +16,8 @@ import AnnouncementIcon from "@material-ui/icons/Announcement";
 import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
 import KeyboardArrowUpIcon from "@material-ui/icons/KeyboardArrowUp";
 import KeyboardArrowDownIcon from "@material-ui/icons/KeyboardArrowDown";
-import { pure } from "recompose";
-import { getName } from "country-list";
+import {pure} from "recompose";
+import {getName} from "country-list";
 
 const getCountry = (country) => {
   if (country === "" || country === null) {
@@ -43,7 +43,7 @@ export const PlayerHeader = pure(({ classes, player }) => {
   const namesByMatch = player.get("names_by_match", null) ? player.get("names_by_match") : new List()
   const steamProfile = player.get('steaminfo') ? player.get("steaminfo").get("profile") : new Map()
   const avatarUrl = steamProfile ? steamProfile.get("avatar", null) : null
-  const country = player.get('steaminfo') ? player.get('steaminfo') .get("country", "") : ""
+  const country = player.get('steaminfo') ? player.get('steaminfo').get("country", "") : ""
 
   return (
     <ListItem alignItems="flex-start">
