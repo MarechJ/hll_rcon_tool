@@ -1,6 +1,5 @@
 import {
   Avatar,
-  Grid,
   Typography,
   Link,
   ListItem,

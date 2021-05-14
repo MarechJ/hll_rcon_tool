@@ -3,7 +3,6 @@ import List from "@material-ui/core/List";
 import ListItem from "@material-ui/core/ListItem";
 import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
 import ListItemText from "@material-ui/core/ListItemText";
-import _ from "lodash";
 import "react-toastify/dist/ReactToastify.css";
 import {PlayerActions} from "./playerActions";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";

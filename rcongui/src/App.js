@@ -19,7 +19,7 @@ import ServicesList from './components/Services';
 import {Typography} from "@material-ui/core";
 import ScoreMenu from './components/Scoreboard/ScoreMenu'
 import GamesScore from "./components/Scoreboard/GamesScore";
-
+import LiveScore from "./components/Scoreboard/LiveScore"
 
 const Live = ({ classes }) => {
   const [mdSize, setMdSize] = React.useState(6);
@@ -43,7 +43,7 @@ const Live = ({ classes }) => {
         <Logs
           classes={classes}
           onFullScreen={() => {
-            direction == "column-reverse"
+            direction === "column-reverse"
               ? setDirection("")
               : setDirection("column-reverse");
             toggleMdSize();
@@ -283,27 +283,6 @@ const hll = createMuiTheme({
   },
 });
 
-const withLove = createMuiTheme({
-  palette: {
-    primary: pink,
-    secondary: red,
-    background: {
-      paper: pink,
-    },
-  },
-  overrides: {
-    MuiCssBaseline: {
-      "@global": {
-        body: {
-          backgroundSize: "cover",
-          backgroundImage: 'url("jk.jpg")',
-        },
-      },
-    },
-  },
-});
-
-const ThemeContext = React.createContext("light");
 
 function App() {
   const classes = useStyles();
@@ -325,7 +304,6 @@ function App() {
     GreyBlue: GreyBlueTheme,
     CamoDark: CamoDarkTheme,
     PurplePink: PurplePinkTheme,
-    CamoDark: CamoDarkTheme,
     CamoLight: CamoLight,
     hll: hll,
   };

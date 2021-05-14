@@ -5,7 +5,6 @@ import {
   Toolbar,
   Typography,
   makeStyles,
-  Paper,
   LinearProgress,
   GridList,
   GridListTile,
@@ -71,7 +70,7 @@ const LiveScore = ({ classes }) => {
   const [serverState, setServerState] = React.useState(new Map());
   const [isLoading, setIsLoading] = React.useState(true);
   const [isPaused, setPaused] = React.useState(false);
-  const [refreshIntervalSec, setRefreshIntervalSec] = React.useState(10);
+  const refreshIntervalSec = 10;
   const durationToHour = (val) =>
     new Date(val * 1000).toISOString().substr(11, 5);
   const scores = stats.get("stats", new iList());
@@ -219,6 +218,7 @@ const LiveHeader = ({
           </GridListTile>
           <GridListTile>
             <img
+              alt="Map"
               src={
                 map_to_pict[
                   serverState

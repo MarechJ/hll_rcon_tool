@@ -1,5 +1,5 @@
 import React from "react";
-import { List as iList, Map, fromJS, set } from "immutable";
+import { List as iList, Map } from "immutable";
 import {
   Grid,
   AppBar,
@@ -73,22 +73,23 @@ const TopList = pure(
     onPlayerClick,
     playersFilter,
   }) => {
-    const compareFunc = reversed
-      ? (a, b) => (a > b ? -1 : a == b ? 0 : 1)
-      : undefined;
+    
     const postProcess = postProcessFunc ? postProcessFunc : (val) => val;
     const defaultNum = playersFilter.size !== 0 ? 100 : 10;
     const [top, setTop] = React.useState(defaultNum);
-    const toggle = () => (top == 100 ? setTop(defaultNum) : setTop(100));
-    const show = top == 100 ? "Show less" : "Show all";
-    const showButton = top == 100 ? <RemoveIcon /> : <AddIcon />;
+    const toggle = () => (top ===100 ? setTop(defaultNum) : setTop(100));
+    const show = top === 100 ? "Show less" : "Show all";
+    const showButton = top === 100 ? <RemoveIcon /> : <AddIcon />;
     const sortedScore = React.useMemo(() => {
+      const compareFunc = reversed
+      ? (a, b) => (a > b ? -1 : a === b ? 0 : 1)
+      : undefined;
       if (playersFilter.size !== 0) {
         return scores.sortBy((s) => s.get(statKey), compareFunc);
       } else {
         return scores.sortBy((s) => s.get(statKey), compareFunc).slice(0, top);
       }
-    }, [top, playersFilter, scores]);
+    }, [top, playersFilter, scores, reversed, statKey]);
 
     return (
       <List>

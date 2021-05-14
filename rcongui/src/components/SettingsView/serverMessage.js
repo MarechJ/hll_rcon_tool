@@ -10,7 +10,7 @@ import {ForwardCheckBox} from '../commonComponent'
 const ServerMessage = ({ classes, type, autocompleteKey, value, setValue, onSave, forward, onForwardChange }) => {
   const textHistory = new TextHistory(autocompleteKey)
   const [sharedMessages, setSharedMessages] = React.useState([])
-  React.useEffect(() => { getSharedMessages(autocompleteKey).then(data => setSharedMessages(data))  }, []);
+  React.useEffect(() => { getSharedMessages(autocompleteKey).then(data => setSharedMessages(data))  }, [autocompleteKey]);
 
   return <Grid container xs={12} alignItems="center" alignContent="center" justify="center">
     <Grid item xs={12} className={classes.paddingBottom}>

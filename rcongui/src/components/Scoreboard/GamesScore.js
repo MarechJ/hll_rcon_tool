@@ -59,10 +59,6 @@ const useStyles = makeStyles((theme) => ({
   paper: {
     backgroundColor: theme.palette.background.paper,
   },
- transparentPaper: {
-    backgroundColor: fade(theme.palette.background.paper, 0.6),
-    borderRadius: "0px",
-  },
   root: {
     display: "flex",
   },
@@ -99,7 +95,7 @@ const GamesScore = ({ classes }) => {
   const [mapsPageSize, setMapsPageSize] = React.useState(30);
   const [mapsTotal, setMapsTotal] = React.useState(0);
   const [currentMapId, setCurrentMapId] = React.useState(null);
-  const [refreshIntervalSec, setRefreshIntervalSec] = React.useState(10);
+  const refreshIntervalSec = 10;
   const theme = useTheme();
   const sm = useMediaQuery(theme.breakpoints.up("sm"));
   const md = useMediaQuery(theme.breakpoints.up("md"));
@@ -138,7 +134,7 @@ const GamesScore = ({ classes }) => {
       .catch(handle_http_errors);
   };
 
-  const getStatsFromMap = React.useMemo(() => {
+  React.useEffect(() => {
     if (!currentMapId) {
       return;
     }
@@ -215,7 +211,7 @@ const GamesScore = ({ classes }) => {
                     onClick={() => setCurrentMapId(m.get("id"))}
                     key={`${m.get("name")}${m.get("start")}${m.get("end")}`}
                   >
-                    <img src={map_to_pict[m.get("just_name")]} />
+                    <img alt="Map" src={map_to_pict[m.get("just_name")]} />
 
                     <GridListTileBar
                       className={isSelected(
