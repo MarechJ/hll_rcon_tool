@@ -16,6 +16,7 @@ import moment from "moment";
 import { useTheme } from "@material-ui/core/styles";
 import Scores from "./Scores";
 import map_to_pict from "./utils";
+import { fade } from '@material-ui/core/styles/colorManipulator';
 
 const useStyles = makeStyles((theme) => ({
   singleLine: {
@@ -24,8 +25,12 @@ const useStyles = makeStyles((theme) => ({
     justifyContent: "space-around",
     overflow: "hidden",
   },
+  transparentPaper: {
+    backgroundColor: fade(theme.palette.background.paper, 0.6),
+    borderRadius: "0px",
+  },
   clickable: {
-    cursor: "pointer"
+    cursor: "pointer",
   },
   gridList: {
     flexWrap: "nowrap",
@@ -33,7 +38,7 @@ const useStyles = makeStyles((theme) => ({
     transform: "translateZ(0)",
   },
   selectedMap: {
-    color: theme.palette.secondary.main
+    color: theme.palette.secondary.main,
   },
   titleBar: {
     background:
@@ -54,9 +59,8 @@ const useStyles = makeStyles((theme) => ({
   paper: {
     backgroundColor: theme.palette.background.paper,
   },
-  transparentPaper: {
-    backgroundColor: theme.palette.background.paper,
-    opacity: "0.6",
+ transparentPaper: {
+    backgroundColor: fade(theme.palette.background.paper, 0.6),
     borderRadius: "0px",
   },
   root: {
@@ -135,7 +139,9 @@ const GamesScore = ({ classes }) => {
   };
 
   const getStatsFromMap = React.useMemo(() => {
-    if (!currentMapId) { return }
+    if (!currentMapId) {
+      return;
+    }
     get(`get_map_scoreboard?map_id=${currentMapId}`)
       .then((res) => showResponse(res, "get_map_scoreboard", false))
       .then((data) =>
@@ -159,15 +165,26 @@ const GamesScore = ({ classes }) => {
 
   return (
     <React.Fragment>
-      <Grid container spacing={1} justify="center" className={classes.padding}>
+      <Grid container spacing={2} justify="center" className={classes.padding}>
+        <Grid
+          item
+          xs={12}
+          className={`${classes.doublePadding} ${styles.transparentPaper}`}
+        >
+          <Typography color="secondary" variant="h4">
+            {serverState.get("name")}
+          </Typography>
+        </Grid>
         {!maps.size ? (
           <Grid item className={styles.paper}>
             <Typography variant="h2">No games recorded yet</Typography>
           </Grid>
         ) : (
           <Grid item>
-          <Typography variant="caption">Select a game below to see its stats</Typography>
-        </Grid>
+            <Typography variant="caption">
+              Select a game below to see its stats
+            </Typography>
+          </Grid>
         )}
         <Grid item xs={12} className={`${classes.doublePadding}`}>
           <div className={styles.singleLine}>
@@ -179,17 +196,18 @@ const GamesScore = ({ classes }) => {
                   ? Math.min(maps.size, 5.5)
                   : md
                   ? Math.min(maps.size, 3.5)
-                  : sm 
+                  : sm
                   ? Math.min(maps.size, 2.5)
                   : Math.min(maps.size, 1.5)
               }
               className={styles.gridList}
             >
               {maps.map((m) => {
-                const start = moment(m.get("start") + 'Z');
-                const end = moment(m.get("end") + 'Z');
+                const start = moment(m.get("start") + "Z");
+                const end = moment(m.get("end") + "Z");
                 const duration = moment.duration(end - start);
-                const isSelected = (isReturn, isNotReturn) => m.get("id") === currentMapId ? isReturn : isNotReturn
+                const isSelected = (isReturn, isNotReturn) =>
+                  m.get("id") === currentMapId ? isReturn : isNotReturn;
 
                 return (
                   <GridListTile
@@ -198,22 +216,32 @@ const GamesScore = ({ classes }) => {
                     key={`${m.get("name")}${m.get("start")}${m.get("end")}`}
                   >
                     <img src={map_to_pict[m.get("just_name")]} />
-                    
+
                     <GridListTileBar
-                      className={isSelected(styles.selectedTitleBarTop, styles.titleBarTop)}
+                      className={isSelected(
+                        styles.selectedTitleBarTop,
+                        styles.titleBarTop
+                      )}
                       title={m.get("long_name")}
                       subtitle={`${duration.humanize()}`}
                       titlePosition="top"
                     />
                     <GridListTileBar
-                      className={isSelected(styles.selectedTitleBar, styles.titleBar)}
+                      className={isSelected(
+                        styles.selectedTitleBar,
+                        styles.titleBar
+                      )}
                       title={`${start.format("dddd, MMM Do ")}`}
                       subtitle={`Started at: ${start.format("HH:mm")}`}
-                      actionIcon={
-                        isSelected("", <IconButton color="inherit" onClick={() => setCurrentMapId(m.get("id"))}>
+                      actionIcon={isSelected(
+                        "",
+                        <IconButton
+                          color="inherit"
+                          onClick={() => setCurrentMapId(m.get("id"))}
+                        >
                           <VisibilityIcon color="inherit" />
-                        </IconButton>)
-                      }
+                        </IconButton>
+                      )}
                     />
                   </GridListTile>
                 );
