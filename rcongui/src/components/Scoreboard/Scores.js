@@ -86,7 +86,6 @@ const TopList = pure(
       if (playersFilter.size !== 0) {
         return scores.sortBy((s) => s.get(statKey), compareFunc);
       } else {
-        console.log("Filter is 0");
         return scores.sortBy((s) => s.get(statKey), compareFunc).slice(0, top);
       }
     }, [top, playersFilter, scores]);
@@ -113,6 +112,7 @@ const TopList = pure(
               s.get("steaminfo")?.get("profile")?.get("personaname")
           ) ? (
             <PlayerItem
+              key={statKey + idx}
               score={s}
               rank={idx + 1}
               postProcess={postProcess}
@@ -187,7 +187,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const Scores = pure(({ classes, scores, durationToHour }) => {
+const Scores = pure(({ classes, scores, durationToHour, type }) => {
   const [highlight, setHighlight] = React.useState(null);
   const doHighlight = (playerScore) => {
     setHighlight(playerScore);
@@ -206,7 +206,7 @@ const Scores = pure(({ classes, scores, durationToHour }) => {
       )}
       <Grid item xs={12}>
         <Grid container>
-          <Grid xs={12} className={`${styles.black} ${classes.doublePadding}`}>
+          <Grid item xs={12} className={`${styles.black} ${classes.doublePadding}`}>
             <Paper>
               <Autocomplete
                 multiple
@@ -229,7 +229,7 @@ const Scores = pure(({ classes, scores, durationToHour }) => {
           </Grid>
         </Grid>
       </Grid>
-      <Grid xs={12} className={classes.doublePadding}>
+      <Grid item xs={12} className={classes.doublePadding}>
         <Typography variant="caption">
           You can click on a player to see his details
         </Typography>
@@ -392,33 +392,39 @@ const Scores = pure(({ classes, scores, durationToHour }) => {
           postProcessFunc={durationToHour}
         />
       </Grid>
-      <Grid item xs={12} md={6} lg={3} xl={2}>
-        <RankBoard
-          classes={classes}
-          iconUrl={"icons/survivor.png"}
-          scores={scores}
-          title="SURVIVOR"
-          statType="Longest life min."
-          statKey="longest_life_secs"
-          postProcessFunc={(v) => (v / 60).toFixed(2)}
-          onPlayerClick={doHighlight}
-          playersFilter={playersFilter}
-          reversed
-        />
-      </Grid>
-      <Grid item xs={12} md={6} lg={3} xl={2}>
-        <RankBoard
-          classes={classes}
-          iconUrl={"icons/early.png"}
-          scores={scores}
-          title="U'R STILL A MAN"
-          statType="Shortest life min."
-          statKey="shortest_life_secs"
-          postProcessFunc={(v) => (v / 60).toFixed(2)}
-          onPlayerClick={doHighlight}
-          playersFilter={playersFilter}
-        />
-      </Grid>
+      {type === "live" ? (
+        ""
+      ) : (
+        <React.Fragment>
+          <Grid item xs={12} md={6} lg={3} xl={2}>
+            <RankBoard
+              classes={classes}
+              iconUrl={"icons/survivor.png"}
+              scores={scores}
+              title="SURVIVOR"
+              statType="Longest life min."
+              statKey="longest_life_secs"
+              postProcessFunc={(v) => (v / 60).toFixed(2)}
+              onPlayerClick={doHighlight}
+              playersFilter={playersFilter}
+              reversed
+            />
+          </Grid>
+          <Grid item xs={12} md={6} lg={3} xl={2}>
+            <RankBoard
+              classes={classes}
+              iconUrl={"icons/early.png"}
+              scores={scores}
+              title="U'R STILL A MAN"
+              statType="Shortest life min."
+              statKey="shortest_life_secs"
+              postProcessFunc={(v) => (v / 60).toFixed(2)}
+              onPlayerClick={doHighlight}
+              playersFilter={playersFilter}
+            />
+          </Grid>
+        </React.Fragment>
+      )}
     </React.Fragment>
   );
 });

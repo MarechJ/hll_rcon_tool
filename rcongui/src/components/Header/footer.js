@@ -24,7 +24,7 @@ const Footer = ({ classes }) => {
 
   return (
     <Grid container>
-      <Grid className={classes.paddingTop} xs={12}>
+      <Grid item className={classes.paddingTop} xs={12}>
         <Typography
           color="textSecondary"
           variant="caption"
@@ -43,7 +43,7 @@ const Footer = ({ classes }) => {
         </Typography>
       </Grid>
       {!process.env.REACT_APP_PUBLIC_BUILD ?
-      <Grid xs={12}>
+      <Grid item xs={12}>
         <Typography
           color="textSecondary"
           variant="caption"

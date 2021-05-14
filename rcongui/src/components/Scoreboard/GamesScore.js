@@ -1,26 +1,17 @@
 import {
-  AppBar,
-  Link,
   Grid,
-  Toolbar,
   Typography,
   makeStyles,
-  Paper,
-  LinearProgress,
   GridList,
   GridListTile,
   GridListTileBar,
   IconButton,
-  StarBorderIcon,
-  tileData,
-  Button,
-  Box,
 } from "@material-ui/core";
 import useMediaQuery from "@material-ui/core/useMediaQuery";
 import VisibilityIcon from "@material-ui/icons/Visibility";
-import React, { Fragment } from "react";
+import React from "react";
 import { get, handle_http_errors, showResponse } from "../../utils/fetchUtils";
-import { List as iList, Map, fromJS, set, List } from "immutable";
+import { List as iList, Map, fromJS, List } from "immutable";
 import moment from "moment";
 import { useTheme } from "@material-ui/core/styles";
 import Scores from "./Scores";
@@ -106,6 +97,7 @@ const GamesScore = ({ classes }) => {
   const [currentMapId, setCurrentMapId] = React.useState(null);
   const [refreshIntervalSec, setRefreshIntervalSec] = React.useState(10);
   const theme = useTheme();
+  const sm = useMediaQuery(theme.breakpoints.up("sm"));
   const md = useMediaQuery(theme.breakpoints.up("md"));
   const lg = useMediaQuery(theme.breakpoints.up("lg"));
   const xl = useMediaQuery(theme.breakpoints.up("xl"));
@@ -177,7 +169,7 @@ const GamesScore = ({ classes }) => {
           <Typography variant="caption">Select a game below to see its stats</Typography>
         </Grid>
         )}
-        <Grid xs={12} className={`${classes.doublePadding}`}>
+        <Grid item xs={12} className={`${classes.doublePadding}`}>
           <div className={styles.singleLine}>
             <GridList
               cols={
@@ -187,7 +179,9 @@ const GamesScore = ({ classes }) => {
                   ? Math.min(maps.size, 5.5)
                   : md
                   ? Math.min(maps.size, 3.5)
-                  : Math.min(maps.size, 2.5)
+                  : sm 
+                  ? Math.min(maps.size, 2.5)
+                  : Math.min(maps.size, 1.5)
               }
               className={styles.gridList}
             >
@@ -199,7 +193,7 @@ const GamesScore = ({ classes }) => {
 
                 return (
                   <GridListTile
-                    class={styles.clickable}
+                    className={styles.clickable}
                     onClick={() => setCurrentMapId(m.get("id"))}
                     key={`${m.get("name")}${m.get("start")}${m.get("end")}`}
                   >
@@ -216,8 +210,8 @@ const GamesScore = ({ classes }) => {
                       title={`${start.format("dddd, MMM Do ")}`}
                       subtitle={`Started at: ${start.format("HH:mm")}`}
                       actionIcon={
-                        isSelected("", <IconButton color="inherit">
-                          <VisibilityIcon color="inherit" onClick={() => setCurrentMapId(m.get("id"))}/>
+                        isSelected("", <IconButton color="inherit" onClick={() => setCurrentMapId(m.get("id"))}>
+                          <VisibilityIcon color="inherit" />
                         </IconButton>)
                       }
                     />

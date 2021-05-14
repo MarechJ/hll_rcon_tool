@@ -8,9 +8,9 @@ import {
   Paper,
   LinearProgress,
 } from "@material-ui/core";
-import React, { Fragment } from "react";
+import React from "react";
 import { get, handle_http_errors, showResponse } from "../../utils/fetchUtils";
-import { List as iList, Map, fromJS, set } from "immutable";
+import { List as iList, Map, fromJS } from "immutable";
 import moment from "moment";
 import useMediaQuery from "@material-ui/core/useMediaQuery";
 import { useTheme } from "@material-ui/core/styles";
@@ -127,6 +127,7 @@ const LiveScore = ({ classes }) => {
           isLoading={isLoading}
           scores={scores}
           durationToHour={durationToHour}
+          type="live"
         />
       </Grid>
     </React.Fragment>
