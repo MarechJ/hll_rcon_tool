@@ -64,6 +64,7 @@ export const PlayerStatProfile = pure(({ playerScore, onClose }) => {
                 playerScore={playerScore}
                 dataMapKey="weapons"
                 title="Kills by weapons"
+                subtitle="'None' means Tank, Arty or roadkill"
                 openDefault />
               <SubList
                 playerScore={playerScore}

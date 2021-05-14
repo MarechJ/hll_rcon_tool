@@ -21,7 +21,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 export const SubList = pure(
-  ({ playerScore, dataMapKey, title, openDefault }) => {
+  ({ playerScore, dataMapKey, title, subtitle, openDefault }) => {
     const data = dataMapKey
       ? playerScore.get(dataMapKey) || new Map()
       : playerScore;
@@ -33,6 +33,7 @@ export const SubList = pure(
         <ListItem button onClick={() => setOpen(!open)}>
           <ListItemText
             primary={<Typography variant="h5">{title}</Typography>}
+            secondary={subtitle}
           />
           <ListItemSecondaryAction>
             <IconButton onClick={() => setOpen(!open)}>
