@@ -4,12 +4,13 @@ import datetime
 import os
 from functools import wraps, cmp_to_key
 from sqlalchemy import func
-from sqlalchemy.orm import contains_eager
+from sqlalchemy.orm import contains_eager, joinedload, defaultload
 import math
 import unicodedata
 
 from rcon.models import (
-    SteamInfo, enter_session,
+    SteamInfo,
+    enter_session,
     PlayerName,
     PlayerSteamID,
     PlayerSession,
@@ -17,7 +18,7 @@ from rcon.models import (
     PlayersAction,
     PlayerFlag,
     WatchList,
-    SteamInfo
+    SteamInfo,
 )
 
 from rcon.commands import CommandFailedError
@@ -59,6 +60,24 @@ def get_player_profile(steam_id_64, nb_sessions):
         return player.to_dict(limit_sessions=nb_sessions)
 
 
+def get_player_profile_by_ids(sess, ids):
+    eager_load = [
+        PlayerSteamID.names,
+        PlayerSteamID.received_actions,
+        PlayerSteamID.blacklist,
+        PlayerSteamID.flags,
+        PlayerSteamID.watchlist,
+        PlayerSteamID.steaminfo,
+    ]
+
+    return (
+        sess.query(PlayerSteamID)
+        .filter(PlayerSteamID.id.in_(ids))
+        .options(defaultload(*eager_load))
+        .all()
+    )
+
+
 def get_player_profile_by_id(id, nb_sessions):
     with enter_session() as sess:
         player = sess.query(PlayerSteamID).filter(PlayerSteamID.id == id).one_or_none()
@@ -66,14 +85,12 @@ def get_player_profile_by_id(id, nb_sessions):
             return
         return player.to_dict(limit_sessions=nb_sessions)
 
+def _get_profiles(sess, steam_ids, nb_sessions=0):
+    return sess.query(PlayerSteamID).filter(PlayerSteamID.steam_id_64.in_(steam_ids)).all()
 
-def get_profiles(steam_ids, nb_sessions=0):
+def get_profiles(steam_ids, nb_sessions=1):
     with enter_session() as sess:
-        players = (
-            sess.query(PlayerSteamID)
-            .filter(PlayerSteamID.steam_id_64.in_(steam_ids))
-            .all()
-        )
+        players = _get_profiles(sess, steam_ids, nb_sessions)
 
         return [p.to_dict(limit_sessions=nb_sessions) for p in players]
 
@@ -106,7 +123,7 @@ def get_players_by_appearance(
     exact_name_match=False,
     ignore_accent=True,
     flags=None,
-    country=None
+    country=None,
 ):
     if page <= 0:
         raise ValueError("page needs to be >= 1")
@@ -164,15 +181,11 @@ def get_players_by_appearance(
         if flags:
             if not isinstance(flags, list):
                 flags = [flags]
-            query = (
-                query.join(PlayerSteamID.flags)
-                .filter(PlayerFlag.flag.in_(flags))
-            )
+            query = query.join(PlayerSteamID.flags).filter(PlayerFlag.flag.in_(flags))
 
         if country:
-            query = (
-                query.join(PlayerSteamID.steaminfo)
-                .filter(SteamInfo.country == country.upper())
+            query = query.join(PlayerSteamID.steaminfo).filter(
+                SteamInfo.country == country.upper()
             )
 
         if last_seen_from:
@@ -300,7 +313,10 @@ def safe_save_player_action(
         return False
 
 
-def save_start_player_session(steam_id_64, timestamp, server_name=None):
+def save_start_player_session(steam_id_64, timestamp, server_name=None, server_number=None):
+    server_name = server_name or os.getenv("SERVER_SHORT_NAME")
+    server_number = server_number or os.getenv("SERVER_NUMBER")
+
     with enter_session() as sess:
         player = get_player(sess, steam_id_64)
         if not player:
@@ -311,7 +327,7 @@ def save_start_player_session(steam_id_64, timestamp, server_name=None):
 
         sess.add(
             PlayerSession(
-                steamid=player, start=datetime.datetime.fromtimestamp(timestamp), server_number=os.getenv("SERVER_NUMBER", None), server_name=server_name
+                steamid=player, start=datetime.datetime.fromtimestamp(timestamp), server_name=server_name, server_number=server_number
             )
         )
         logger.info(

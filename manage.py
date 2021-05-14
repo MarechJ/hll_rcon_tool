@@ -46,8 +46,9 @@ if __name__ == "__main__":
         from rcon.cli import cli, init
         init()
         cli()
-    except SystemExit:
-        pass
+    except SystemExit as e:
+        logger.error("Program requested exit")
+        exit(e.args[0])
     except ConfigurationError as e:
         print(repr(e))
         logger.error("MISSING Configuration: %s", e.args)

@@ -1,5 +1,5 @@
 from functools import partial
-from rcon.workers import temp_welcome_standalone, temporary_welcome, temporary_welcome_in
+from rcon.workers import record_stats, record_stats_worker, temp_welcome_standalone, temporary_welcome, temporary_welcome_in
 from typing import Counter
 from rcon.settings import SERVER_INFO
 import time
@@ -390,20 +390,27 @@ class VoteMap:
             RecordedRcon(SERVER_INFO).set_maprotation(ALL_MAPS)
 
 
-def on_map_change(old_map_info, new_map_info):
-    config = VoteMapConfig()
+def on_map_change(old_map: str, new_map: str):
+    logger.info("Running on_map_change hooks with %s %s", old_map, new_map)
+    try:
+        config = VoteMapConfig()
 
-    if config.get_vote_enabled():
-        votemap = VoteMap()
-        votemap.gen_selection()
-        votemap.clear_votes()
-        votemap.apply_with_retry(nb_retry=4)
-        #temporary_welcome_in(
-        #    "%s{votenextmap_vertical}" % config.get_votemap_instruction_text(), 
-        #    seconds=60 * 20,
-        #    restore_after_seconds=60 * 5,
-        #)
-
+        if config.get_vote_enabled():
+            votemap = VoteMap()
+            votemap.gen_selection()
+            votemap.clear_votes()
+            votemap.apply_with_retry(nb_retry=4)
+            #temporary_welcome_in(
+            #    "%s{votenextmap_vertical}" % config.get_votemap_instruction_text(), 
+            #    seconds=60 * 20,
+            #    restore_after_seconds=60 * 5,
+            #)
+    except Exception:
+        logger.exception("Unexpected error while running vote map")
+    try:
+        record_stats_worker(MapsHistory()[1])
+    except Exception:
+        logger.exception("Unexpected error while running stats worker")
 
 class MapsRecorder:
     def __init__(self, rcon: RecordedRcon):
@@ -472,7 +479,3 @@ class MapsRecorder:
             return True
 
         return False
-
-
-if __name__ == "__main__":
-    run()

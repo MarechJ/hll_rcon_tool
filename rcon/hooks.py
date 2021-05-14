@@ -238,7 +238,8 @@ def update_player_steaminfo_on_connect(rcon, struct_log, steam_id_64):
             "Can't update steam info, no steam profile returned for %s",
             struct_log.get("player"),
         )
-
+        return 
+        
     logger.info("Updating steam profile for player %s", struct_log["player"])
     with enter_session() as sess:
         player = _get_set_player(

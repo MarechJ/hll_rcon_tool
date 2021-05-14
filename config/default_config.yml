@@ -59,8 +59,18 @@ BAN_TK_ON_CONNECT:
   discord_webhook_url: ""
   discord_webhook_message: "{player} banned for TK right after connecting"
 
+LIVE_STATS:
+  # A stats refresh is quite intensive on CPU, DISK and BANDWIDTH
+  # smaller machines should choose at the very least 30 seconds, if not 60 to 120
+  refresh_stats_seconds: 15
 
-  LIVE_STATS:
-    # A stats refresh is quite intensive on CPU, DISK and BANDWIDTH
-    # smaller machines should choose at the very least 30 seconds, if not 60 to 120
-    refresh_stats_seconds: 15
+# The below is not effective yet. 
+# Here you can set your custom urls (if you have any)
+# Make sure you set them in the same order as your server numbers
+# Leave empty if you don't have any custom urls / domains, the default will be used
+SERVER_URLS: []
+# Example with custom urls:
+# SERVER_URLS:
+#   - http://server1.mydomain.com/
+#   - http://server2.mydomain.com/
+#   - http://server3.mydomain.com/
