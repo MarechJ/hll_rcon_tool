@@ -174,7 +174,7 @@ const GamesScore = ({ classes }) => {
           </Grid>
         ) : (
           <Grid item>
-          <Typography variant="caption">Select a game</Typography>
+          <Typography variant="caption">Select a game below to see its stats</Typography>
         </Grid>
         )}
         <Grid xs={12} className={`${classes.doublePadding}`}>

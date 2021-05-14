@@ -1,5 +1,5 @@
 import React from "react";
-import { List as iList, Map, fromJS, set, Set } from "immutable";
+import { List as iList, Map, fromJS, set } from "immutable";
 import {
   Grid,
   AppBar,
@@ -15,23 +15,23 @@ import {
   Paper,
   Divider,
   IconButton,
-  Collapse,
+  TextField,
 } from "@material-ui/core";
+import Autocomplete from "@material-ui/lab/Autocomplete";
 import { makeStyles } from "@material-ui/core/styles";
 import AddIcon from "@material-ui/icons/Add";
 import RemoveIcon from "@material-ui/icons/Remove";
-import ExpandLess from "@material-ui/icons/ExpandLess";
-import ExpandMore from "@material-ui/icons/ExpandMore";
-import CancelIcon from '@material-ui/icons/Cancel';
+import { pure } from "recompose";
+import { PlayerStatProfile } from "./PlayerStatProfile";
 
-const safeGetSteamProfile = (scoreObj) =>
+export const safeGetSteamProfile = (scoreObj) =>
   scoreObj.get("steaminfo")
     ? scoreObj.get("steaminfo", new Map()).get("profile")
       ? scoreObj.get("steaminfo", new Map()).get("profile")
       : new Map()
     : new Map();
 
-const PlayerItem = ({ score, rank, postProcess, statKey, onClick }) => {
+const PlayerItem = pure(({ score, rank, postProcess, statKey, onClick }) => {
   const steamProfile = safeGetSteamProfile(score);
   const avatarUrl = steamProfile ? steamProfile.get("avatar", null) : null;
 
@@ -60,222 +60,181 @@ const PlayerItem = ({ score, rank, postProcess, statKey, onClick }) => {
       </ListItem>
     </React.Fragment>
   );
-};
-const TopList = ({
-  iconUrl,
-  scores,
-  statType,
-  statKey,
-  reversed,
-  postProcessFunc,
-  onPlayerClick
-}) => {
-  const compareFunc = reversed
-    ? (a, b) => (a > b ? -1 : a == b ? 0 : 1)
-    : undefined;
-  const postProcess = postProcessFunc ? postProcessFunc : (val) => val;
-  const defaultNum = 10;
-  const [top, setTop] = React.useState(defaultNum);
-  const toggle = () => (top == 100 ? setTop(defaultNum) : setTop(100));
-  const show = top == 100 ? "Show less" : "Show all";
-  const showButton = top == 100 ? <RemoveIcon /> : <AddIcon />;
+});
 
-  return (
-    <List>
-      <React.Fragment>
+const TopList = pure(
+  ({
+    iconUrl,
+    scores,
+    statType,
+    statKey,
+    reversed,
+    postProcessFunc,
+    onPlayerClick,
+    playersFilter,
+  }) => {
+    const compareFunc = reversed
+      ? (a, b) => (a > b ? -1 : a == b ? 0 : 1)
+      : undefined;
+    const postProcess = postProcessFunc ? postProcessFunc : (val) => val;
+    const defaultNum = playersFilter.size !== 0 ? 100 : 10;
+    const [top, setTop] = React.useState(defaultNum);
+    const toggle = () => (top == 100 ? setTop(defaultNum) : setTop(100));
+    const show = top == 100 ? "Show less" : "Show all";
+    const showButton = top == 100 ? <RemoveIcon /> : <AddIcon />;
+    const sortedScore = React.useMemo(() => {
+      if (playersFilter.size !== 0) {
+        return scores.sortBy((s) => s.get(statKey), compareFunc);
+      } else {
+        console.log("Filter is 0");
+        return scores.sortBy((s) => s.get(statKey), compareFunc).slice(0, top);
+      }
+    }, [top, playersFilter, scores]);
+
+    return (
+      <List>
+        <React.Fragment>
+          <ListItem>
+            <ListItemAvatar style={{ visibility: "visible" }}>
+              <Avatar src={iconUrl}>#</Avatar>
+            </ListItemAvatar>
+            <ListItemText
+              primary={<Typography variant="h6">name</Typography>}
+            />
+            <ListItemSecondaryAction>
+              <Typography variant="h6">{statType}</Typography>
+            </ListItemSecondaryAction>
+          </ListItem>
+        </React.Fragment>
+        {sortedScore.map((s, idx) =>
+          playersFilter.size === 0 ||
+          playersFilter.includes(
+            s.get("player") ||
+              s.get("steaminfo")?.get("profile")?.get("personaname")
+          ) ? (
+            <PlayerItem
+              score={s}
+              rank={idx + 1}
+              postProcess={postProcess}
+              statKey={statKey}
+              onClick={() => onPlayerClick(s)}
+            />
+          ) : (
+            ""
+          )
+        )}
         <ListItem>
-          <ListItemAvatar style={{ visibility: "visible" }}>
-            <Avatar src={iconUrl}>#</Avatar>
+          <ListItemAvatar style={{ visibility: "hidden" }}>
+            <Avatar>#</Avatar>
           </ListItemAvatar>
-          <ListItemText primary={<Typography variant="h6">name</Typography>} />
+          <ListItemText primary={<Link onClick={toggle}>{show}</Link>} />
           <ListItemSecondaryAction>
-            <Typography variant="h6">{statType}</Typography>
+            <IconButton onClick={toggle} color="secondary">
+              {showButton}
+            </IconButton>
           </ListItemSecondaryAction>
         </ListItem>
-      </React.Fragment>
-      {scores
-        .sortBy((s) => s.get(statKey), compareFunc)
-        .slice(0, top)
-        .map((s, idx) => (
-          <PlayerItem
-            score={s}
-            rank={idx + 1}
-            postProcess={postProcess}
-            statKey={statKey}
-            onClick={() => onPlayerClick(s)}
-          />
-        ))}
-      <ListItem>
-        <ListItemAvatar style={{ visibility: "hidden" }}>
-          <Avatar>#</Avatar>
-        </ListItemAvatar>
-        <ListItemText primary={<Link onClick={toggle}>{show}</Link>} />
-        <ListItemSecondaryAction>
-          <IconButton onClick={toggle} color="secondary">
-            {showButton}
-          </IconButton>
-        </ListItemSecondaryAction>
-      </ListItem>
-    </List>
-  );
-};
+      </List>
+    );
+  }
+);
 
-const RankBoard = ({
-  classes,
-  iconUrl,
-  scores,
-  title,
-  statType,
-  statKey,
-  reversed,
-  postProcessFunc,
-  onPlayerClick,
-}) => (
-  <React.Fragment>
-    <AppBar position="relative" style={{ minHeight: "144px" }}>
-      <Toolbar style={{ minHeight: "inherit" }}>
-        <Typography
-          variant="h2"
-          align="center"
-          className={classes.grow}
-          display="block"
-        >
-          {title}
-        </Typography>
-      </Toolbar>
-    </AppBar>
-    <Paper elevation={3}>
-      <TopList
-        iconUrl={iconUrl}
-        scores={scores}
-        statType={statType}
-        statKey={statKey}
-        reversed={reversed}
-        postProcessFunc={postProcessFunc}
-        onPlayerClick={onPlayerClick}
-      />
-    </Paper>
-  </React.Fragment>
+const RankBoard = pure(
+  ({
+    classes,
+    iconUrl,
+    scores,
+    title,
+    statType,
+    statKey,
+    reversed,
+    postProcessFunc,
+    onPlayerClick,
+    playersFilter,
+  }) => (
+    <React.Fragment>
+      <AppBar position="relative" style={{ minHeight: "144px" }}>
+        <Toolbar style={{ minHeight: "inherit" }}>
+          <Typography
+            variant="h2"
+            align="center"
+            className={classes.grow}
+            display="block"
+          >
+            {title}
+          </Typography>
+        </Toolbar>
+      </AppBar>
+      <Paper elevation={3}>
+        <TopList
+          iconUrl={iconUrl}
+          scores={scores}
+          statType={statType}
+          statKey={statKey}
+          reversed={reversed}
+          postProcessFunc={postProcessFunc}
+          onPlayerClick={onPlayerClick}
+          playersFilter={playersFilter}
+        />
+      </Paper>
+    </React.Fragment>
+  )
 );
 
 const useStyles = makeStyles((theme) => ({
-  nested: {
-    paddingLeft: theme.spacing(4),
+  black: {
+    backgroundColor: theme.palette.primary.main,
   },
 }));
 
-const SubList = ({ playerScore, dataMapKey, title, openDefault }) => {
-  const data = dataMapKey
-    ? playerScore.get(dataMapKey) || new Map()
-    : playerScore;
+const Scores = pure(({ classes, scores, durationToHour }) => {
+  const [highlight, setHighlight] = React.useState(null);
+  const doHighlight = (playerScore) => {
+    setHighlight(playerScore);
+    window.scrollTo(0, 0);
+  };
+  const [playersFilter, setPlayersFilter] = React.useState(new iList());
+  const undoHighlight = () => setHighlight(null);
   const styles = useStyles();
-  const [open, setOpen] = React.useState(openDefault);
 
   return (
     <React.Fragment>
-      <ListItem button onClick={() => setOpen(!open)}>
-        <ListItemText primary={<Typography variant="h5">{title}</Typography>} />
-        <ListItemSecondaryAction>
-          <IconButton onClick={() => setOpen(!open)}>{open ? <ExpandLess /> : <ExpandMore />}</IconButton>
-          </ListItemSecondaryAction>
-      </ListItem>
-      <Collapse in={open} timeout="auto" unmountOnExit>
-        <List component="div" disablePadding dense>
-          {data
-            .sort()
-            .reverse()
-            .entrySeq()
-            .map(([key, value]) => (
-              <ListItem className={styles.nested}>
-                <ListItemText primary={key} />
-                <ListItemSecondaryAction>
-                  <Typography variant="h6" color="secondary">
-                    {value}
-                  </Typography>
-                </ListItemSecondaryAction>
-              </ListItem>
-            ))}
-        </List>
-      </Collapse>
-    </React.Fragment>
-  );
-};
-
-const PlayerStatProfile = ({ playerScore, onClose }) => {
-  const steamProfile = safeGetSteamProfile(playerScore);
-  const excludedKeys = new Set([
-    "player_id",
-    "id",
-    "steaminfo",
-    "map_id",
-    "most_killed",
-    "weapons",
-    "death_by",
-  ]);
-
-  return (
-    <Grid item xs={12}>
-      <Grid container justify="center">
-        <Grid item xs={12} md={6} lg={4} xl={2}>
-          <Paper>
-            <List>
-              <ListItem divider>
-                <ListItemAvatar>
-                  <Avatar src={steamProfile.get("avatar")}></Avatar>
-                </ListItemAvatar>
-                <ListItemText
-                  primary={
-                    <Typography variant="h4">
-                     <Link color="inherit" href={steamProfile.get("profileurl")} target="_blank">{playerScore.get("player") ||
-                        steamProfile.get("personaname")}</Link> 
-                    </Typography>
-                  }
-                />
-                <ListItemSecondaryAction>
-                  <IconButton onClick={onClose}><CancelIcon/></IconButton>
-                </ListItemSecondaryAction>
-              </ListItem>
-              <SubList
-                playerScore={playerScore}
-                dataMapKey="weapons"
-                title="Kills by weapons"
-                openDefault
-                
-              />
-              <SubList
-                playerScore={playerScore}
-                dataMapKey="most_killed"
-                title="Kills by player"
-              />
-              <SubList
-                playerScore={playerScore}
-                dataMapKey="death_by"
-                title="Deaths by player"
-              />
-              <SubList
-                playerScore={playerScore.filterNot((v, k) =>
-                  excludedKeys.has(k)
+      {highlight ? (
+        <PlayerStatProfile playerScore={highlight} onClose={undoHighlight} />
+      ) : (
+        ""
+      )}
+      <Grid item xs={12}>
+        <Grid container>
+          <Grid xs={12} className={`${styles.black} ${classes.doublePadding}`}>
+            <Paper>
+              <Autocomplete
+                multiple
+                onChange={(e, val) => setPlayersFilter(new iList(val))}
+                options={scores
+                  .toJS()
+                  .map(
+                    (v) => v?.player || v.steaminfo?.profile?.personaname || ""
+                  )}
+                filterSelectedOptions
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    variant="outlined"
+                    placeholder="Quickly find players by name here (start typing)"
+                  />
                 )}
-                title="Raw stats"
               />
-            </List>
-          </Paper>
+            </Paper>
+          </Grid>
         </Grid>
       </Grid>
-    </Grid>
-  );
-};
-
-const Scores = ({ classes, scores, durationToHour }) => {
-  const [highlight, setHighlight] = React.useState(null)
-  const doHighlight = (playerScore) => {setHighlight(playerScore); window.scrollTo(0, 0);} 
-  const undoHighlight = () => setHighlight(null)
-  return (
-    <React.Fragment>
-      {highlight ? <PlayerStatProfile playerScore={highlight} onClose={undoHighlight} /> : ""}
-      <Grid item xs={12}>
-        <Typography variant="caption">Click on a plyer to see details</Typography>
+      <Grid xs={12} className={classes.doublePadding}>
+        <Typography variant="caption">
+          You can click on a player to see his details
+        </Typography>
       </Grid>
+
       <Grid item xs={12} md={6} lg={3} xl={2}>
         <RankBoard
           classes={classes}
@@ -285,6 +244,7 @@ const Scores = ({ classes, scores, durationToHour }) => {
           statKey="kills"
           statType="kills"
           onPlayerClick={doHighlight}
+          playersFilter={playersFilter}
           reversed
         />
       </Grid>
@@ -297,6 +257,7 @@ const Scores = ({ classes, scores, durationToHour }) => {
           statType="kill/death"
           statKey="kill_death_ratio"
           onPlayerClick={doHighlight}
+          playersFilter={playersFilter}
           reversed
         />
       </Grid>
@@ -309,6 +270,7 @@ const Scores = ({ classes, scores, durationToHour }) => {
           statType="kill/minute"
           statKey="kills_per_minute"
           onPlayerClick={doHighlight}
+          playersFilter={playersFilter}
           reversed
         />
       </Grid>
@@ -321,6 +283,7 @@ const Scores = ({ classes, scores, durationToHour }) => {
           statType="death/minute"
           statKey="deaths_per_minute"
           onPlayerClick={doHighlight}
+          playersFilter={playersFilter}
           reversed
         />
       </Grid>
@@ -333,6 +296,7 @@ const Scores = ({ classes, scores, durationToHour }) => {
           statType="deaths"
           statKey="deaths"
           onPlayerClick={doHighlight}
+          playersFilter={playersFilter}
           reversed
         />
       </Grid>
@@ -345,6 +309,7 @@ const Scores = ({ classes, scores, durationToHour }) => {
           statType="kill streak"
           statKey="kills_streak"
           onPlayerClick={doHighlight}
+          playersFilter={playersFilter}
           reversed
         />
       </Grid>
@@ -357,6 +322,7 @@ const Scores = ({ classes, scores, durationToHour }) => {
           statType="death streak"
           statKey="deaths_without_kill_streak"
           onPlayerClick={doHighlight}
+          playersFilter={playersFilter}
           reversed
         />
       </Grid>
@@ -369,6 +335,7 @@ const Scores = ({ classes, scores, durationToHour }) => {
           statType="death by teamkill"
           statKey="deaths_by_tk"
           onPlayerClick={doHighlight}
+          playersFilter={playersFilter}
           reversed
         />
       </Grid>
@@ -381,6 +348,7 @@ const Scores = ({ classes, scores, durationToHour }) => {
           statType="teamkills"
           statKey="teamkills"
           onPlayerClick={doHighlight}
+          playersFilter={playersFilter}
           reversed
         />
       </Grid>
@@ -393,6 +361,7 @@ const Scores = ({ classes, scores, durationToHour }) => {
           statType="teamkills streak"
           statKey="teamkills_streak"
           onPlayerClick={doHighlight}
+          playersFilter={playersFilter}
           reversed
         />
       </Grid>
@@ -405,6 +374,7 @@ const Scores = ({ classes, scores, durationToHour }) => {
           statType="# vote started"
           statKey="nb_vote_started"
           onPlayerClick={doHighlight}
+          playersFilter={playersFilter}
           reversed
         />
       </Grid>
@@ -417,6 +387,7 @@ const Scores = ({ classes, scores, durationToHour }) => {
           statType="Ingame time"
           statKey="time_seconds"
           onPlayerClick={doHighlight}
+          playersFilter={playersFilter}
           reversed
           postProcessFunc={durationToHour}
         />
@@ -431,6 +402,7 @@ const Scores = ({ classes, scores, durationToHour }) => {
           statKey="longest_life_secs"
           postProcessFunc={(v) => (v / 60).toFixed(2)}
           onPlayerClick={doHighlight}
+          playersFilter={playersFilter}
           reversed
         />
       </Grid>
@@ -444,10 +416,11 @@ const Scores = ({ classes, scores, durationToHour }) => {
           statKey="shortest_life_secs"
           postProcessFunc={(v) => (v / 60).toFixed(2)}
           onPlayerClick={doHighlight}
+          playersFilter={playersFilter}
         />
       </Grid>
     </React.Fragment>
   );
-};
+});
 
 export default Scores;

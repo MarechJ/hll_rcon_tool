@@ -255,7 +255,7 @@ const hll = createMuiTheme({
       light: "#ffac42",
       main: "#f47b00",
       dark: "#ba4c00",
-      contrastText: "#000",
+      contrastText: "#fff",
     },
     background: {
       default: "#343434",
@@ -268,6 +268,11 @@ const hll = createMuiTheme({
     },
   },
   overrides: {
+    MuiChip: {
+      deleteIcon: {
+        color: '#212121',
+      }
+    },
     MuiCssBaseline: {
       "@global": {
         body: {
@@ -333,7 +338,7 @@ function App() {
     : themes[userTheme]
     ? themes[userTheme]
     : lightTheme;
-
+  
   return (
     <div className={"App " + classes.root}>
       <ThemeProvider theme={theme}>
