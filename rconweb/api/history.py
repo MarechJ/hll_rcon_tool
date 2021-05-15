@@ -23,7 +23,7 @@ logger = logging.getLogger("rconweb")
 
 
 @csrf_exempt
-@login_required
+#@login_required
 def get_map_history(request):
     data = _get_data(request)
     res = MapsHistory()[:]

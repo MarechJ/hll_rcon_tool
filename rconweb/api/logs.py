@@ -29,82 +29,24 @@ def get_historical_logs(request):
     server_filter = data.get("server_filter")
     output = data.get("output")
 
-    with enter_session() as sess:
-        names = []
-        name_filters = []
+    if till:
+        till = parser.parse(till)
+    if from_:
+        from_ = parser.parse(from_)
 
-        q = sess.query(LogLine)
-        if action and not exact_action:
-            q = q.filter(LogLine.type.ilike(f"%{action}%"))
-        elif action and exact_action:
-            q = q.filter(LogLine.type == action)
-
-        time_filter = []
-        if from_:
-            from_ = parser.parse(from_)
-            time_filter.append(LogLine.event_time >= from_)
-
-        if till:
-            till = parser.parse(till)
-            time_filter.append(LogLine.event_time <= till)
-
-        q = q.filter(and_(*time_filter))
-
-        if steam_id_64:
-            # Handle not found
-            player = (
-                sess.query(PlayerSteamID)
-                    .filter(PlayerSteamID.steam_id_64 == steam_id_64)
-                    .one_or_none()
-            )
-            id_ = player.id if player else 0
-            q = q.filter(
-                or_(LogLine.player1_steamid == id_, LogLine.player2_steamid == id_)
-            )
-
-        if player_name and not exact_player_match:
-            name_filters.extend(
-                [
-                    LogLine.player1_name.ilike("%{}%".format(player_name)),
-                    LogLine.player2_name.ilike("%{}%".format(player_name)),
-                ]
-            )
-        elif player_name and exact_player_match:
-            name_filters.extend(
-                [
-                    LogLine.player1_name == player_name,
-                    LogLine.player2_name == player_name,
-                ]
-            )
-
-        if name_filters:
-            q = q.filter(or_(*name_filters))
-
-        if server_filter:
-            q = q.filter(LogLine.server == server_filter)
-
-        res = (
-            q.order_by(
-                LogLine.event_time.desc()
-                if time_sort == "desc"
-                else LogLine.event_time.asc()
-            ).limit(limit).all()
-        )
-
-        lines = []
-        for r in res:
-            r = r.to_dict()
-            if output != "CSV" and output != "csv":
-                r["event_time"] = r["event_time"].timestamp()
-            else:
-                del r["id"]
-                del r["version"]
-                del r["creation_time"]
-                del r["raw"]
-                print(r)
-            lines.append(r)
-
-        if output != "CSV" and output != "csv":
+    lines = game_logs.get_historical_logs(
+        player_name=player_name,
+        action=action,
+        steam_id_64=steam_id_64,
+        limit=limit,
+        from_=from_,
+        till=till,
+        time_sort=time_sort,
+        exact_player_match=exact_player_match,
+        exact_action=exact_action,
+        server_filter=server_filter,
+    )
+   if output != "CSV" and output != "csv":
             return api_response(
                 lines,
                 command="get_historical_logs",
@@ -112,11 +54,10 @@ def get_historical_logs(request):
                 failed=False,
             )
 
-        return api_csv_response(lines, "log.csv",
-                                ["event_time", "type", "player_name", "player1_id",
-                                 "player2_name", "player2_id", "content", "server"])
-
-
+    return api_csv_response(lines, "log.csv",
+                        ["event_time", "type", "player_name", "player1_id",
+                        "player2_name", "player2_id", "content", "server"])
+     
 @csrf_exempt
 @login_required
 def get_recent_logs(request):
@@ -135,7 +76,7 @@ def get_recent_logs(request):
             player_search=player_search,
             action_filter=action_filter,
             exact_player_match=exact_player_match,
-            exact_action=exact_action
+            exact_action=exact_action,
         ),
         command="get_recent_logs",
         arguments=dict(

@@ -259,7 +259,7 @@ class Rcon(ServerCtl):
             if res != "SUCCESS":
                 raise CommandFailedError(res)
 
-    @ttl_cache(ttl=20)
+    @ttl_cache(ttl=10)
     def get_map(self):
         current_map = super().get_map()
         if not self.map_regexp.match(current_map):

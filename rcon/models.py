@@ -4,7 +4,7 @@ import os
 from contextlib import contextmanager
 
 from sqlalchemy import create_engine
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Boolean, TIMESTAMP
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Boolean, TIMESTAMP, Float
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.declarative import declarative_base
@@ -12,7 +12,7 @@ from sqlalchemy.engine.url import URL
 from sqlalchemy.orm import relationship
 from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.sql.expression import nullslast
+from sqlalchemy.sql.expression import nullslast, true
 
 logger = logging.getLogger(__name__)
 
@@ -324,6 +324,84 @@ class LogLine(Base):
             content=self.content,
             server=self.server,
         )
+
+    def compatible_dict(self):
+        weapon = None
+        if self.type.upper() in ["KILL", "TEAM KILL"]:
+            try:
+                weapon = self.raw.rsplit(" with ", 1)[-1]
+            except IndexError:
+                pass
+
+        return {
+            "id": self.id,
+            "version": self.version,
+            "timestamp_ms": int(self.event_time.timestamp() * 1000),
+            "event_time": self.event_time,
+            "relative_time_ms": None,  # TODO
+            "raw": self.raw,
+            "line_without_time": None,  # TODO
+            "action": self.type,
+            "player": self.player1_name,
+            "steam_id_64_1": self.steamid1.steam_id_64 if self.steamid1 else None,
+            "player1_id": self.player1_steamid,
+            "player2_id": self.player1_steamid,
+            "player2": self.player2_name,
+            "steam_id_64_2": self.steamid2.steam_id_64 if self.steamid2 else None,
+            "weapon": weapon,
+            "message": self.content,
+            "sub_content": None,  # TODO
+        }
+
+
+class Maps(Base):
+    __tablename__ = "map_history"
+    __table_args__ = (UniqueConstraint("start", "end", "server_number", "map_name",  name="unique_map"),)
+
+    id = Column(Integer, primary_key=True)
+
+    creation_time = Column(TIMESTAMP, default=datetime.utcnow)
+    start = Column(DateTime, nullable=False, index=True)
+    end = Column(DateTime, index=True)
+    server_number = Column(Integer, index=True)
+    map_name = Column(String, nullable=False, index=True)
+
+    player_stats = relationship("PlayerStats", backref="map", uselist=False)
+
+
+class PlayerStats(Base):
+    __tablename__ = "player_stats"
+    __table_args__ = (UniqueConstraint("playersteamid_id", "map_id",  name="unique_map_player"),)
+
+    id = Column(Integer, primary_key=True)
+    playersteamid_id = Column(
+        Integer,
+        ForeignKey("steam_id_64.id"),
+        nullable=False,
+        index=True,
+    )
+    map_id = Column(
+        Integer,
+        ForeignKey("map_history.id"),
+        nullable=False,
+        index=True,
+    )
+    kills = Column(Integer)
+    kills_streak = Column(Integer)
+    death = Column(Integer)
+    deaths_without_kill_streak = Column(Integer)
+    teamkills = Column(Integer)
+    teamkills_streak = Column(Integer)
+    deaths_by_tk = Column(Integer)
+    deaths_by_tk_streak = Column(Integer)
+    nb_vote_started = Column(Integer)
+    nb_voted_yes = Column(Integer)
+    nb_voted_no = Column(Integer)
+    time_seconds = Column(Integer)
+    kills_per_minute = Column(Float)
+    deaths_per_minute = Column(Float)
+    kill_death_ratio = Column(Float)
+
 
 
 class PlayerComment(Base):
