@@ -45,6 +45,7 @@ def get_historical_logs(request):
         exact_player_match=exact_player_match,
         exact_action=exact_action,
         server_filter=server_filter,
+        output=output
     )
     if output != "CSV" and output != "csv":
         return api_response(
@@ -54,15 +55,10 @@ def get_historical_logs(request):
             failed=False,
         )
 
-    l = []
-
-    for r in lines:
-        r["event_time"] = r["event_time"].timestamp()
-        l.append(r)
-
-    return api_csv_response(l, "log.csv",
+    print(lines[0])
+    return api_csv_response(lines, "log.csv",
                         ["event_time", "type", "player_name", "player1_id",
-                        "player2_name", "player2_id", "content", "server"])
+                        "player2_name", "player2_id", "content", "server", "weapon"])
      
 @csrf_exempt
 @login_required
