@@ -54,8 +54,6 @@ def get_historical_logs(request):
             arguments=dict(limit=limit, player_name=player_name, action=action),
             failed=False,
         )
-
-    print(lines[0])
     return api_csv_response(lines, "log.csv",
                         ["event_time", "type", "player_name", "player1_id",
                         "player2_name", "player2_id", "content", "server", "weapon"])
