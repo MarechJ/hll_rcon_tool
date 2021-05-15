@@ -96,7 +96,7 @@ const MapRotationTransferList = ({classes, availableMaps, mapRotation, addToRota
             disabled={leftChecked.length === 0}
             aria-label="move selected right"
           >
-            { width == 'xs' ? <KeyboardArrowDownIcon /> : <KeyboardArrowRightIcon /> }
+            { width === 'xs' ? <KeyboardArrowDownIcon /> : <KeyboardArrowRightIcon /> }
           </Button>
           <Button
             variant="outlined"
@@ -106,7 +106,7 @@ const MapRotationTransferList = ({classes, availableMaps, mapRotation, addToRota
             disabled={rightChecked.length === 0}
             aria-label="move selected left"
           >
-            { width == 'xs' ? <KeyboardArrowUpIcon /> : <KeyboardArrowLeftIcon /> }
+            { width === 'xs' ? <KeyboardArrowUpIcon /> : <KeyboardArrowLeftIcon /> }
           </Button>
         </Grid>
       </Grid>

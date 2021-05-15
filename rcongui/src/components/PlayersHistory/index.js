@@ -1,36 +1,28 @@
-/* eslint-disable no-use-before-define */
 import React from "react";
 import {
-  postData,
-  showResponse,
-  handle_http_errors,
-  sendAction,
   addPlayerToWatchList,
   get,
+  handle_http_errors,
+  postData,
+  sendAction,
+  showResponse,
 } from "../../utils/fetchUtils";
-import { toast } from "react-toastify";
-import { join, reduce } from "lodash";
+import {toast} from "react-toastify";
+import {reduce} from "lodash";
 import Pagination from "@material-ui/lab/Pagination";
-import {
-  Grid,
-  Button,
-  TextField,
-  LinearProgress,
-  Chip,
-  Typography,
-} from "@material-ui/core";
-import { ReasonDialog } from "../PlayerView/playerActions";
-import { omitBy } from "lodash/object";
+import {Button, Chip, Grid, LinearProgress, TextField, Typography,} from "@material-ui/core";
+import {ReasonDialog} from "../PlayerView/playerActions";
+import {omitBy} from "lodash/object";
 import SearchBar from "./searchBar";
-import { Map, List, fromJS } from "immutable";
+import {fromJS, List, Map} from "immutable";
 import FlagIcon from "@material-ui/icons/Flag";
 import "emoji-mart/css/emoji-mart.css";
-import { Picker } from "emoji-mart";
+import {Picker} from "emoji-mart";
 import Dialog from "@material-ui/core/Dialog";
 import DialogActions from "@material-ui/core/DialogActions";
 import DialogContent from "@material-ui/core/DialogContent";
 import DialogTitle from "@material-ui/core/DialogTitle";
-import { getEmojiFlag } from "../../utils/emoji";
+import {getEmojiFlag} from "../../utils/emoji";
 import PlayerGrid from "./playerGrid";
 
 
@@ -573,7 +565,6 @@ class PlayersHistory extends React.Component {
             onAddVip={this.onAddVip}
             onDeleteVip={this.onDeleteVip}
             onAddToWatchList={this.onAddToWatchList}
-            onRemoveFromWatchList={this.onRemoveFromWatchList}
           />
         </Grid>
         <Grid item xs={12} className={classes.padding}>

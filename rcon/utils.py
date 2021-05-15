@@ -220,13 +220,14 @@ class MapsHistory(FixedLenList):
         prev = self.lpop() or dict(name=old_map, start=None, end=None)
         prev["end"] = ts
         self.lpush(prev)
+        return prev
 
     def save_new_map(self, new_map):
         ts = datetime.now().timestamp()
         logger.info("Saving start of new map %s at time %s", new_map, ts)
         new = dict(name=new_map, start=ts, end=None)
         self.lpush(new)
-
+        return new
 
 class ApiKey:
     def __init__(self):

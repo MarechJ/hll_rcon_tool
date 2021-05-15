@@ -35,7 +35,7 @@ export const PlayerHeader = pure(({ classes, player }) => {
   const namesByMatch = player.get("names_by_match", null) ? player.get("names_by_match") : new List()
   const steamProfile = player.get('steaminfo') ? player.get("steaminfo").get("profile") : new Map()
   const avatarUrl = steamProfile ? steamProfile.get("avatar", null) : null
-  const country = player.get('steaminfo') ? player.get('steaminfo') .get("country", "") : ""
+  const country = player.get('steaminfo') ? player.get('steaminfo').get("country", "") : ""
 
   return (
     <ListItem alignItems="flex-start">

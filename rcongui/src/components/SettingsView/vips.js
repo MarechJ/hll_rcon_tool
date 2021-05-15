@@ -1,11 +1,8 @@
 import React from "react";
-import {
-    Grid, TextField, List, ListItem,
-    ListItemText, ListItemSecondaryAction, IconButton, Button, Link
-} from "@material-ui/core";
+import {Grid, IconButton, List, ListItem, ListItemSecondaryAction, ListItemText, TextField} from "@material-ui/core";
 import DeleteIcon from '@material-ui/icons/Delete';
 import AddIcon from '@material-ui/icons/Add';
-import { ForwardCheckBox } from '../commonComponent'
+import {ForwardCheckBox} from '../commonComponent'
 
 const AddVipItem = ({ classes, name, setName, steamID64, setSteamID64, onAdd }) => (
     <ListItem>

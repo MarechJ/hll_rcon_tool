@@ -1,6 +1,6 @@
 import React from "react";
 import "./App.css";
-import { ToastContainer } from "react-toastify";
+import {ToastContainer} from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import PlayerView from "./components/PlayerView";
 import useStyles from "./components/useStyles";
@@ -8,22 +8,19 @@ import Grid from "@material-ui/core/Grid";
 import Logs from "./components/LogsView/logs";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import HLLSettings from "./components/SettingsView/hllSettings";
-import { ThemeProvider } from "@material-ui/styles";
-import { HashRouter as Router, Switch, Route } from "react-router-dom";
-import LogsHistory from "./components/LogsHistory";
-import { createMuiTheme } from "@material-ui/core/styles";
+import {ThemeProvider} from '@material-ui/styles';
+import {HashRouter as Router, Route, Switch,} from "react-router-dom";
+import LogsHistory from './components/LogsHistory'
+import {createMuiTheme} from '@material-ui/core/styles';
 import PlayersHistory from "./components/PlayersHistory";
-import Header, { Footer } from "./components/Header";
-import RconSettings from "./components/RconSettings";
-import { pink, red } from "@material-ui/core/colors";
-import ServicesList from "./components/Services";
-import PlayerGrid from "./components/PlayersHistory/playerGrid";
-import { isNull } from "lodash";
-import { LiveScore } from "./components/Scoreboard";
-import { Typography } from "@material-ui/core";
+import Header, {Footer} from "./components/Header";
+import RconSettings from './components/RconSettings';
+import ServicesList from './components/Services';
+import {Typography} from "@material-ui/core";
 import ScoreMenu from './components/Scoreboard/ScoreMenu'
 import GamesScore from "./components/Scoreboard/GamesScore";
 import PlayerInfo from "./components/PlayerInfo";
+import LiveScore from "./components/Scoreboard/LiveScore"
 
 const Live = ({ classes }) => {
   const [mdSize, setMdSize] = React.useState(6);
@@ -47,7 +44,7 @@ const Live = ({ classes }) => {
         <Logs
           classes={classes}
           onFullScreen={() => {
-            direction == "column-reverse"
+            direction === "column-reverse"
               ? setDirection("")
               : setDirection("column-reverse");
             toggleMdSize();
@@ -256,7 +253,7 @@ const hll = createMuiTheme({
       light: "#ffac42",
       main: "#f47b00",
       dark: "#ba4c00",
-      contrastText: "#000",
+      contrastText: "#fff",
     },
     background: {
       default: "#343434",
@@ -269,6 +266,11 @@ const hll = createMuiTheme({
     },
   },
   overrides: {
+    MuiChip: {
+      deleteIcon: {
+        color: '#212121',
+      }
+    },
     MuiCssBaseline: {
       "@global": {
         body: {
@@ -282,27 +284,6 @@ const hll = createMuiTheme({
   },
 });
 
-const withLove = createMuiTheme({
-  palette: {
-    primary: pink,
-    secondary: red,
-    background: {
-      paper: pink,
-    },
-  },
-  overrides: {
-    MuiCssBaseline: {
-      "@global": {
-        body: {
-          backgroundSize: "cover",
-          backgroundImage: 'url("jk.jpg")',
-        },
-      },
-    },
-  },
-});
-
-const ThemeContext = React.createContext("light");
 
 function App() {
   const classes = useStyles();
@@ -324,7 +305,6 @@ function App() {
     GreyBlue: GreyBlueTheme,
     CamoDark: CamoDarkTheme,
     PurplePink: PurplePinkTheme,
-    CamoDark: CamoDarkTheme,
     CamoLight: CamoLight,
     hll: hll,
   };
@@ -334,7 +314,7 @@ function App() {
     : themes[userTheme]
     ? themes[userTheme]
     : lightTheme;
-
+  
   return (
     <div className={"App " + classes.root}>
       <ThemeProvider theme={theme}>
@@ -344,12 +324,12 @@ function App() {
           {!process.env.REACT_APP_PUBLIC_BUILD ? (
             <Header classes={classes} />
           ) : (
-            ""
+            <ScoreMenu classes={classes} />
           )}
-          <ScoreMenu classes={classes} />
+          
           <Switch>
             
-            <Route path="/" default exact>
+            <Route path={process.env.REACT_APP_PUBLIC_BUILD ? "/" : "/livescore"} default={process.env.REACT_APP_PUBLIC_BUILD} exact>
               <LiveScore classes={classes} />
             </Route>
             <Route path="/gamescoreboard">

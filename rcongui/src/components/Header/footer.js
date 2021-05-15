@@ -1,12 +1,6 @@
 import React from "react";
-import { Grid, Typography, Link } from "@material-ui/core";
-import { join } from "lodash/array";
-import { get } from "immutable";
-import {
-  get as apiGet,
-  showResponse,
-  handle_http_errors,
-} from "../../utils/fetchUtils";
+import {Grid, Link, Typography} from "@material-ui/core";
+import {get as apiGet, handle_http_errors, showResponse,} from "../../utils/fetchUtils";
 
 const Footer = ({ classes }) => {
   const [repoData, setRepoData] = React.useState([]);
@@ -14,7 +8,13 @@ const Footer = ({ classes }) => {
 
   React.useEffect(() => {
     fetch("https://api.github.com/repos/MarechJ/hll_rcon_tool/contributors")
-      .then((response) => { if (response.status === 200) { return response.json() } else { throw "rate limited" }})
+      .then((response) => {
+        if (response.status === 200) {
+          return response.json()
+        } else {
+          throw new Error("rate limited")
+        }
+      })
       .then((data) => setRepoData(data)).catch(() => null);
     apiGet("get_version")
       .then((res) => showResponse(res, "get_version", false))
@@ -24,7 +24,7 @@ const Footer = ({ classes }) => {
 
   return (
     <Grid container>
-      <Grid className={classes.paddingTop} xs={12}>
+      <Grid item className={classes.paddingTop} xs={12}>
         <Typography
           color="textSecondary"
           variant="caption"
@@ -43,7 +43,7 @@ const Footer = ({ classes }) => {
         </Typography>
       </Grid>
       {!process.env.REACT_APP_PUBLIC_BUILD ?
-      <Grid xs={12}>
+      <Grid item xs={12}>
         <Typography
           color="textSecondary"
           variant="caption"

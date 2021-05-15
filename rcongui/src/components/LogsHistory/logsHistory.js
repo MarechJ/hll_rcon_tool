@@ -7,12 +7,11 @@ import {
   handle_http_errors,
 } from "../../utils/fetchUtils";
 import Grid from "@material-ui/core/Grid";
-import { makeStyles } from "@material-ui/core/styles";
-import _ from "lodash";
+import {makeStyles} from "@material-ui/core/styles";
 import LogsTable from "./logTable";
 import MomentUtils from "@date-io/moment";
-import { DateTimePicker, MuiPickersUtilsProvider } from "@material-ui/pickers";
-import { Button, LinearProgress, TextField } from "@material-ui/core";
+import {DateTimePicker, MuiPickersUtilsProvider} from "@material-ui/pickers";
+import {Button, LinearProgress, TextField} from "@material-ui/core";
 import InputLabel from "@material-ui/core/InputLabel";
 import MenuItem from "@material-ui/core/MenuItem";
 import FormControl from "@material-ui/core/FormControl";

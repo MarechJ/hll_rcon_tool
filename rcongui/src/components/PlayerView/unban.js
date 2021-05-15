@@ -1,16 +1,13 @@
 import React from "react";
 import Autocomplete from "@material-ui/lab/Autocomplete";
 import TextField from "@material-ui/core/TextField";
-import _ from "lodash";
 import Button from "@material-ui/core/Button";
 import Dialog from "@material-ui/core/Dialog";
-import {DialogTitle, DialogContent, DialogActions} from '../dialog'
+import {DialogActions, DialogContent, DialogTitle} from '../dialog'
 import withWidth from "@material-ui/core/withWidth";
-import moment from 'moment'
 import FormHelperText from '@material-ui/core/FormHelperText';
 
 const Unban = ({ bannedPlayers, classes, width, handleUnban, onReload, onClose, open }) => {
-  const [message, setMessage] = React.useState("");
   const [selectedPlayers, setSelectedPlayers] = React.useState([])
  
   return (
