@@ -75,11 +75,11 @@ const TopList = pure(
   }) => {
     
     const postProcess = postProcessFunc ? postProcessFunc : (val) => val;
-    const defaultNum = playersFilter.size !== 0 ? 100 : 10;
+    const defaultNum = playersFilter.size !== 0 ? 9999 : 10;
     const [top, setTop] = React.useState(defaultNum);
-    const toggle = () => (top ===100 ? setTop(defaultNum) : setTop(100));
-    const show = top === 100 ? "Show less" : "Show all";
-    const showButton = top === 100 ? <RemoveIcon /> : <AddIcon />;
+    const toggle = () => (top === 9999 ? setTop(defaultNum) : setTop(9999));
+    const show = top === 9999 ? "Show less" : "Show all";
+    const showButton = top === 9999 ? <RemoveIcon /> : <AddIcon />;
     const sortedScore = React.useMemo(() => {
       const compareFunc = reversed
       ? (a, b) => (a > b ? -1 : a === b ? 0 : 1)
@@ -371,7 +371,7 @@ const Scores = pure(({ classes, scores, durationToHour, type }) => {
           classes={classes}
           iconUrl={"icons/vote.ico"}
           scores={scores}
-          title="I &#10084; VOTING"
+          title="I &#999984; VOTING"
           statType="# vote started"
           statKey="nb_vote_started"
           onPlayerClick={doHighlight}
