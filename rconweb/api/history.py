@@ -13,7 +13,7 @@ from rcon.player_history import (
     get_player_profile,
     get_player_profile_by_id,
     add_flag_to_player,
-    remove_flag, get_player_comments, post_player_comments,
+    remove_flag, get_player_comments, add_player_comment,
 )
 from rcon.utils import MapsHistory
 from .auth import login_required, api_response

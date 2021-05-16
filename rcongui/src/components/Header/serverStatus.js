@@ -98,7 +98,7 @@ class ServerStatus extends React.Component {
       ),
     });
     this.setState({
-      interval: setInterval(
+      intervalLoadList: setInterval(
         this.debouncedLoadList,
         this.state.listRefreshIntervalSec * 1000
       ),

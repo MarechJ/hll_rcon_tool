@@ -2,6 +2,7 @@ import datetime
 import pickle
 from rcon.player_history import get_player_profile
 import re
+import os
 import logging
 import time
 from dataclasses import dataclass
@@ -339,10 +340,11 @@ class TimeWindowStats(BaseStats):
             logger.warning("Unable to get first appearance time for %s", player.get('name'))
             return 0
 
-    def get_players_stats_at_time(self, from_, until):
+    def get_players_stats_at_time(self, from_, until, server_number=None):
+        server_numer = server_number or os.getenv('SERVER_NUMBER')
         with enter_session() as sess:
             rows = get_historical_logs_records(
-                sess, from_=from_, till=until, time_sort="asc"
+                sess, from_=from_, till=until, time_sort="asc", server_filter=server_numer
             )
 
             indexed_logs = {}
