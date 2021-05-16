@@ -451,7 +451,7 @@ def get_player_comments(steam_id_64):
         return [c.to_dict() for c in player.comments]
 
 
-def post_player_comments(steam_id_64, comment):
+def add_player_comment(steam_id_64, comment):
     with enter_session() as sess:
         player = sess.query(PlayerSteamID).filter_by(steam_id_64=steam_id_64).one()
         player.comments.append(PlayerComment(content=comment))

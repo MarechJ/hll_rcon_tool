@@ -12,7 +12,7 @@ import MenuItem from "@material-ui/core/MenuItem";
 import FormHelperText from "@material-ui/core/FormHelperText";
 import FormControl from "@material-ui/core/FormControl";
 import Select from "@material-ui/core/Select";
-import {getSharedMessages} from "../../utils/fetchUtils";
+import { getSharedMessages } from "../../utils/fetchUtils";
 
 const Reason = ({
   handleMessageChange,
@@ -51,6 +51,9 @@ const Reason = ({
           <TextField
             {...params}
             label={label}
+            multiline
+            rows={1}
+            rowsMax={10}
             margin="dense"
             helperText={helperText}
           />

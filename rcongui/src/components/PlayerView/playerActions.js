@@ -13,21 +13,21 @@ import Dialog from "@material-ui/core/Dialog";
 import DialogActions from "@material-ui/core/DialogActions";
 import DialogContent from "@material-ui/core/DialogContent";
 import DialogTitle from "@material-ui/core/DialogTitle";
-import {Map} from "immutable";
+import { Map } from "immutable";
 import FlagOutlinedIcon from "@material-ui/icons/FlagOutlined";
 import TextHistory from "../textHistory";
 import Autocomplete from "@material-ui/lab/Autocomplete";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import Checkbox from "@material-ui/core/Checkbox";
-import {getSharedMessages} from "../../utils/fetchUtils";
-import {Grid} from "@material-ui/core";
+import { getSharedMessages } from "../../utils/fetchUtils";
+import { Grid } from "@material-ui/core";
 import VisibilityIcon from "@material-ui/icons/Visibility";
 
 const Duration = ({
   durationNumber,
   onNumberChange,
   durationMultiplier,
-  onMultiplierChange
+  onMultiplierChange,
 }) => (
   <Grid container spacing={1}>
     <Grid item>
@@ -72,6 +72,7 @@ class ReasonDialog extends React.Component {
     super(props);
     this.state = {
       reason: "",
+      comment: "",
       saveMessage: true,
       durationNumber: 2,
       durationMultiplier: 1,
@@ -88,13 +89,10 @@ class ReasonDialog extends React.Component {
   }
 
   onChange(e, value) {
-    e.preventDefault();
+    if (e) {
+      e.preventDefault();
+    }
     this.setState({ reason: value });
-  }
-
-  onChangeComment(e, value) {
-    e.preventDefault();
-    this.setState({ comment: value });
   }
 
   render() {
@@ -124,7 +122,9 @@ class ReasonDialog extends React.Component {
             renderInput={(params) => (
               <TextField
                 {...params}
-                multiline rows={4} rowsMax={10}
+                multiline
+                rows={4}
+                rowsMax={10}
                 label="Reason"
                 variant="outlined"
                 margin="dense"
@@ -132,23 +132,20 @@ class ReasonDialog extends React.Component {
               />
             )}
           />
-          <Autocomplete
-              freeSolo
-              fullWidth
-              options={sharedMessages.concat(textHistory.getTexts())}
-              inputValue={comment}
-              onInputChange={(e, value) => this.onChangeComment(e, value)}
-              renderInput={(params) => (
-                  <TextField
-                      {...params}
-                      multiline rows={4} rowsMax={10}
-                      label="Comment"
-                      variant="outlined"
-                      margin="dense"
-                      helperText="A comment that will NOT be displayed to the player"
-                  />
-              )}
+          
+          <TextField
+            multiline
+            rows={4}
+            rowsMax={10}
+            fullWidth
+            value={comment}
+            onChange={(e) => this.setState({ comment: e.target.value })}
+            label="Comment"
+            variant="outlined"
+            margin="dense"
+            helperText="A comment that will NOT be displayed to the player"
           />
+          
           {open.actionType === "temp_ban" ? (
             <Duration
               durationNumber={durationNumber}
@@ -247,17 +244,20 @@ const PlayerActions = ({
   return (
     <React.Fragment>
       <ButtonGroup size={size} aria-label="small outlined button group">
-        {show > 1 ?
-        <Button
-          color={isWatched ? "primary" : "default"}
-          variant={isWatched ? "contained" : "outlined"}
-          size="small"
-          onClick={() =>
-            handleAction(isWatched ? "unwatch_player" : "watch_player")
-          }
-        >
-          <VisibilityIcon fontSize="small" />
-        </Button> : ""}
+        {show > 1 ? (
+          <Button
+            color={isWatched ? "primary" : "default"}
+            variant={isWatched ? "contained" : "outlined"}
+            size="small"
+            onClick={() =>
+              handleAction(isWatched ? "unwatch_player" : "watch_player")
+            }
+          >
+            <VisibilityIcon fontSize="small" />
+          </Button>
+        ) : (
+          ""
+        )}
         {_.range(show).map((idx) => (
           <Button
             key={actions[idx][0]}
@@ -306,15 +306,21 @@ const PlayerActions = ({
           open={isOpen}
           onClose={handleClose}
         >
-           {show <= 1 ?
-        <MenuItem
-          size="small"
-          onClick={() =>
-            handleAction(isWatched ? "unwatch_player" : "watch_player")
-          }
-        >
-          <VisibilityIcon color={isWatched ? "primary" : "default"} fontSize="small" />
-        </MenuItem> : ""}
+          {show <= 1 ? (
+            <MenuItem
+              size="small"
+              onClick={() =>
+                handleAction(isWatched ? "unwatch_player" : "watch_player")
+              }
+            >
+              <VisibilityIcon
+                color={isWatched ? "primary" : "default"}
+                fontSize="small"
+              />
+            </MenuItem>
+          ) : (
+            ""
+          )}
           {_.range(show, actions.length).map((idx) => {
             const count = penaltyCount.get(remap_penalties[actions[idx][0]], 0);
             return (

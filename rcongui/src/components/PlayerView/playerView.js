@@ -105,6 +105,7 @@ class PlayerView extends Component {
     actionType,
     player_name,
     message = null,
+    comment = null,
     duration_hours = 2,
     steam_id_64 = null
   ) {
@@ -125,6 +126,7 @@ class PlayerView extends Component {
         player: player_name,
         steam_id_64: steam_id_64,
         reason: message,
+        comment: comment,
         duration_hours: duration_hours,
       };
       if (actionType === "temp_ban") {
@@ -137,6 +139,26 @@ class PlayerView extends Component {
         .then(this.loadPlayers)
         .catch(handle_http_errors);
     }
+    // Work around to the fact that the steam is not always know in this scope (as is changes the behaviour of the temp / perma ban commands)
+    if (comment) {
+      let steamid = steam_id_64
+      if (!steamid) {
+        try {
+          console.log(this.state.players)
+          steamid = this.state.players.filter(p => p.get("name") === player_name).get(0).get('steam_id_64')
+          console.log(steamid)
+        } catch (err) {
+          console.log("Unable to get steamId", err)
+        }
+      }
+      postData(`${process.env.REACT_APP_API_URL}post_player_comment`, {"steam_id_64": steamid, "comment": comment})
+      .then((response) =>
+        showResponse(response, `post_player_comment ${player_name}`, true)
+      )
+      .then(this.loadPlayers)
+      .catch(handle_http_errors);
+    }
+
   }
 
   onPlayerSelected(players) {
@@ -203,6 +225,9 @@ class PlayerView extends Component {
     localStorage.setItem("player_sort", sortType);
   }
 
+  componentDidMount() {
+    this.loadPlayers()
+  }
   render() {
     const { classes, isFullScreen, onFullScreen } = this.props;
     const {
@@ -288,6 +313,7 @@ class PlayerView extends Component {
             action,
             player,
             reason,
+            comment,
             duration_hours = 2,
             steam_id_64 = null
           ) => {
@@ -295,6 +321,7 @@ class PlayerView extends Component {
               action,
               player,
               reason,
+              comment,
               duration_hours,
               steam_id_64
             );

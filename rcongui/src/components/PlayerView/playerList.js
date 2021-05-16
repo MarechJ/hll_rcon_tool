@@ -4,22 +4,27 @@ import ListItem from "@material-ui/core/ListItem";
 import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
 import ListItemText from "@material-ui/core/ListItemText";
 import "react-toastify/dist/ReactToastify.css";
-import {PlayerActions} from "./playerActions";
-import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
-import {faExclamationCircle, faLock, faQuestionCircle, faStar,} from "@fortawesome/free-solid-svg-icons";
-import {faSteam} from "@fortawesome/free-brands-svg-icons";
+import { PlayerActions } from "./playerActions";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faExclamationCircle,
+  faLock,
+  faQuestionCircle,
+  faStar,
+} from "@fortawesome/free-solid-svg-icons";
+import { faSteam } from "@fortawesome/free-brands-svg-icons";
 import Link from "@material-ui/core/Link";
 import withWidth from "@material-ui/core/withWidth";
 import Icon from "@material-ui/core/Icon";
 import OpenInNewIcon from "@material-ui/icons/OpenInNew";
-import {getEmojiFlag} from "../../utils/emoji";
-import {List as IList, Map} from "immutable";
-import {getName} from "country-list";
+import { getEmojiFlag } from "../../utils/emoji";
+import { List as IList, Map } from "immutable";
+import { getName } from "country-list";
 import Popover from "@material-ui/core/Popover";
 import Typography from "@material-ui/core/Typography";
 import { makeStyles } from "@material-ui/core/styles";
-import {Link as RouterLink} from "react-router-dom";
-
+import { Link as RouterLink } from "react-router-dom";
+import { pure } from 'recompose';
 
 const zeroPad = (num, places) => String(num).padStart(places, "0");
 
@@ -111,7 +116,7 @@ const getCountry = (player) => {
       alt={country}
       title={country ? getName(country) : ""}
       style={{ height: "12px" }}
-      src={ `https://catamphetamine.gitlab.io/country-flag-icons/3x2/${country}.svg`}
+      src={`https://catamphetamine.gitlab.io/country-flag-icons/3x2/${country}.svg`}
     />
   );
 };
@@ -188,7 +193,7 @@ const PlayerItem = ({
               className={classes.marginRight}
               target="_blank"
               color="inherit"
-              href={ `https://steamcommunity.com/profiles/${steamID64}`}
+              href={`https://steamcommunity.com/profiles/${steamID64}`}
             >
               <FontAwesomeIcon icon={faSteam} />
             </Link>
@@ -201,9 +206,9 @@ const PlayerItem = ({
               {profile.get("sessions_count")} - {getBans(player)}
             </span>{" "}
             <Link
-                color="inherit"
-                component={RouterLink}
-                to={`/player/${player.get("steam_id_64")}`}
+              color="inherit"
+              component={RouterLink}
+              to={`/player/${player.get("steam_id_64")}`}
             >
               {steamID64} <Icon component={OpenInNewIcon} fontSize="inherit" />
             </Link>
@@ -221,7 +226,11 @@ const PlayerItem = ({
           handleAction={handleAction}
           onFlag={onFlag}
           displayCount={nbButtons}
-          isWatched={profile.get('watchlist') ? profile.get('watchlist').get('is_watched', false) : false}
+          isWatched={
+            profile.get("watchlist")
+              ? profile.get("watchlist").get("is_watched", false)
+              : false
+          }
           penaltyCount={profile.get("penalty_count", Map())}
         />
       </ListItemSecondaryAction>
@@ -282,61 +291,66 @@ const getSortedPlayers = (players, sortType) => {
   return myPlayers;
 };
 
-class CompactList extends React.Component {
-  render() {
-    const {
-      players,
-      classes,
-      handleAction,
-      sortType,
-      width,
-      onFlag,
-      onDeleteFlag,
-    } = this.props;
-
+const CompactList = ({
+  players,
+  classes,
+  handleAction,
+  sortType,
+  width,
+  onFlag,
+  onDeleteFlag,
+}) => {
+  const myPlayers = React.useMemo(() => {
     let myPlayers = players;
     try {
       myPlayers = getSortedPlayers(players, sortType);
     } catch (err) {
       console.log("Unable to sort ", err);
     }
+    return myPlayers;
+  }, [players, sortType]);
 
-    const sizes = {
-      xs: 0,
-      sm: 3,
-      md: 1,
-      lg: 4,
-      xl: 10,
-    };
+  const sizes = {
+    xs: 0,
+    sm: 3,
+    md: 1,
+    lg: 4,
+    xl: 10,
+  };
 
-    return (
-      <List className={classes.root}>
-        {myPlayers.map((player) => (
-          <PlayerItem
-            classes={classes}
-            nbButtons={sizes[width]}
-            player={player}
-            key={player.get("steam_id_64")}
-            handleAction={(actionType) =>
-              handleAction(actionType, player.get("name"), null, 2, player.get('steam_id_64'))
-            }
-            onFlag={() =>
-              onFlag(
-                Map({
-                  steam_id_64: player.get("steam_id_64"),
-                  names: (player.get("profile")
-                    ? player.get("profile")
-                    : new Map()
-                  ).get("names", IList([Map({ name: player.get("name") })])),
-                })
-              )
-            }
-            onDeleteFlag={onDeleteFlag}
-          />
-        ))}
-      </List>
-    );
-  }
-}
+  return (
+    <List className={classes.root}>
+      {myPlayers.map((player) => (
+        <PlayerItem
+          classes={classes}
+          nbButtons={sizes[width]}
+          player={player}
+          key={player.get("steam_id_64")}
+          handleAction={(actionType) =>
+            handleAction(
+              actionType,
+              player.get("name"),
+              null,
+              2,
+              player.get("steam_id_64")
+            )
+          }
+          onFlag={() =>
+            onFlag(
+              Map({
+                steam_id_64: player.get("steam_id_64"),
+                names: (player.get("profile")
+                  ? player.get("profile")
+                  : new Map()
+                ).get("names", IList([Map({ name: player.get("name") })])),
+              })
+            )
+          }
+          onDeleteFlag={onDeleteFlag}
+        />
+      ))}
+    </List>
+  );
+};
 
-export default withWidth()(CompactList);
+export default withWidth()(pure(CompactList));
