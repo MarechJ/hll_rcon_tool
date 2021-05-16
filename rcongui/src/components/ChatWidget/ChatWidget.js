@@ -9,7 +9,6 @@ import moment from "moment";
 const useStyles = makeStyles((theme) => ({
   message: {
     whiteSpace: "pre-wrap",
-    textAlign: "left",
     marginTop: '5px',
     marginBottom: '5px',
   },
@@ -61,7 +60,7 @@ const ChatContent = ({ data, handleMessageSend }) => {
                   style={{ height: "auto", paddingTop: "-10px" }}
                   color="primary"
                   variant="default"
-                  label={<p className={classes.message}>{message.content}</p>}
+                  label={<Typography align="left" className={classes.message}>{message.content}</Typography>}
                 />
               </Grid>
               <Grid item>
