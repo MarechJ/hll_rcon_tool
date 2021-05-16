@@ -81,7 +81,7 @@ const ChatWidget = ({data, handleMessageSend}) => {
                         return (
                             <div key={index}>
                                 <Typography className={classes.comment}>{message.content}</Typography>
-                                <Box color="text.disabled"><Typography >{moment(message.creation_time).format("ddd Do MMM HH:mm:ss")}</Typography></Box>
+                                <Box color="text.disabled"><Typography >{moment(message.creation_time).format("ddd Do MMM HH:mm:ss")} by {message.by}</Typography></Box>
                             </div>
                         )
                     })}

@@ -201,7 +201,7 @@ def post_player_comment(request):
         data = request.GET
 
     try:
-        post_player_comments(steam_id_64=data["steam_id_64"], comment=data["comment"])
+        post_player_comments(steam_id_64=data["steam_id_64"], comment=data["comment"], user=request.user.username)
         failed = False
     except:
         failed = True

@@ -480,6 +480,7 @@ class PlayerComment(Base):
     __tablename__ = "player_comments"
     id = Column(Integer, primary_key=True)
     creation_time = Column(TIMESTAMP, default=datetime.utcnow())
+    by = Column(String)
     playersteamid_id = Column(
         Integer,
         ForeignKey("steam_id_64.id"),
@@ -495,7 +496,8 @@ class PlayerComment(Base):
             id=self.id,
             creation_time=self.creation_time,
             playersteamid_id=self.playersteamid_id,
-            content=self.content
+            content=self.content,
+            by=self.by
         )
 
 
