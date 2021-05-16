@@ -371,7 +371,7 @@ const Scores = pure(({ classes, scores, durationToHour, type }) => {
           classes={classes}
           iconUrl={"icons/vote.ico"}
           scores={scores}
-          title="I &#999984; VOTING"
+          title="I ❤ VOTING"
           statType="# vote started"
           statKey="nb_vote_started"
           onPlayerClick={doHighlight}
