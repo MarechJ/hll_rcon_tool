@@ -78,7 +78,7 @@ const ChatContent = ({ data, handleMessageSend }) => {
                   display="block"
                   className={classes.date}
                 >
-                  {moment.utc(message.creation_time).local().format("ddd Do MMM HH:mm:ss")}
+                  {moment.utc(message.creation_time).local().format("ddd Do MMM HH:mm:ss")} by {message.by}
                 </Typography>
               </Grid>
             </Grid>
@@ -90,7 +90,6 @@ const ChatContent = ({ data, handleMessageSend }) => {
         <AlwaysScrollToBottom />
       </Grid>
       </Grid>
-
         <Grid
           container
           justify="flex-start"
@@ -121,8 +120,6 @@ const ChatContent = ({ data, handleMessageSend }) => {
             </Button>
           </Grid>
         </Grid>
-
-  
     </React.Fragment>
   );
 };
