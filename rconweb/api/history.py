@@ -57,7 +57,7 @@ def get_player(request):
             res = get_player_profile_by_id(
                 data["id"], nb_sessions=data.get("nb_sessions", 10)
             )
-        failed = not bool(res)
+        failed = False
     except:
         logger.exception("Unable to get player %s", data)
         failed = True
