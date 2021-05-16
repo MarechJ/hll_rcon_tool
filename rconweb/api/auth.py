@@ -1,26 +1,20 @@
-import logging
 import json
-import datetime
-import os
-from functools import wraps
+import logging
 from dataclasses import dataclass, asdict
+from functools import wraps
 from typing import Any
 
-from rcon.utils import ApiKey
-from rcon.cache_utils import ttl_cache
-from rcon.audit import heartbeat, online_mods, set_registered_mods, ingame_mods
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.http import HttpResponse
-from django.contrib.auth.models import User
 from django.contrib.auth import PermissionDenied
 from django.contrib.auth import authenticate, login, logout
-from django.forms.models import model_to_dict
-from .models import SteamPlayer
-from django.conf import settings
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save, post_delete
+from django.http import JsonResponse, HttpResponse
+from django.views.decorators.csrf import csrf_exempt
 
+from rcon.audit import heartbeat, online_mods, set_registered_mods, ingame_mods
+from rcon.cache_utils import ttl_cache
+from .models import SteamPlayer
+import csv
 
 logger = logging.getLogger('rconweb')
 
@@ -28,10 +22,12 @@ logger = logging.getLogger('rconweb')
 def update_mods(sender, instance, **kwargs):
     set_registered_mods(get_moderators_accounts())
 
+
 post_save.connect(update_mods, sender=User)
 post_delete.connect(update_mods, sender=User)
 post_save.connect(update_mods, sender=SteamPlayer)
 post_delete.connect(update_mods, sender=SteamPlayer)
+
 
 @dataclass
 class RconResponse:
@@ -52,6 +48,18 @@ def api_response(*args, **kwargs):
         RconResponse(*args, **kwargs).to_dict(),
         status=status_code
     )
+
+
+def api_csv_response(content, name, header):
+    response = HttpResponse(
+        content_type='text/csv',
+    )
+    response['Content-Disposition'] = 'attachment; filename="%s"' % name
+
+    writer = csv.DictWriter(response, fieldnames=header, dialect='excel')
+    writer.writerows(content)
+
+    return response
 
 
 @csrf_exempt
@@ -115,6 +123,7 @@ def is_logged_in(request):
         failed=False
     )
 
+
 @csrf_exempt
 def do_logout(request):
     logout(request)
@@ -130,11 +139,11 @@ def login_required(func):
     def wrapper(request, *args, **kwargs):
         if not request.user.is_authenticated:
             return api_response(
-                    command=request.path,
-                    error="You must be logged in to use this",
-                    failed=True,
-                    status_code=401
-                )
+                command=request.path,
+                error="You must be logged in to use this",
+                failed=True,
+                status_code=401
+            )
         try:
             return func(request, *args, **kwargs)
         except Exception as e:
@@ -145,6 +154,7 @@ def login_required(func):
                 failed=True,
                 status_code=500
             )
+
     return wrapper
 
 
@@ -156,6 +166,7 @@ def get_online_mods(request):
         result=online_mods(),
         failed=False,
     )
+
 
 @csrf_exempt
 def get_ingame_mods(request):

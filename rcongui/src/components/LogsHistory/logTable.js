@@ -5,7 +5,7 @@ import { Grid } from "@material-ui/core";
 
 import MUIDataTable from "mui-datatables";
 
-export default function LogsTable({ logs }) {
+export default function LogsTable({ logs, downloadCSV }) {
   const [myRowPerPage, setRowPerPage] = React.useState(
     window.localStorage.getItem("logs_row_per_page") || 50
   );
@@ -67,6 +67,10 @@ export default function LogsTable({ logs }) {
     selectableRows: "none",
     rowsPerPageOptions: [10, 25, 50, 100, 250, 500, 1000],
     onChangeRowsPerPage: saveRowsPerPage,
+    onDownload: () => {
+      downloadCSV().bind(this);
+      return false;
+    }
   };
 
   return (

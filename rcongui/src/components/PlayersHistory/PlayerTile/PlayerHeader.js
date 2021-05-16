@@ -1,14 +1,7 @@
-import {
-  Avatar,
-  Typography,
-  Link,
-  ListItem,
-  ListItemAvatar,
-  ListItemText,
-  IconButton,
-} from "@material-ui/core";
+import {Avatar, IconButton, Link, ListItem, ListItemAvatar, ListItemText, Typography,} from "@material-ui/core";
+import {Link as RouterLink} from 'react-router-dom';
 import React from "react";
-import { List, Map } from "immutable";
+import {List, Map} from "immutable";
 import Tooltip from "@material-ui/core/Tooltip";
 import FileCopyIcon from "@material-ui/icons/FileCopy";
 import AnnouncementIcon from "@material-ui/icons/Announcement";
@@ -99,9 +92,9 @@ export const PlayerHeader = pure(({ classes, player }) => {
         }
         secondary={
           <Link
-            target="_blank"
             color="inherit"
-            href={`${process.env.REACT_APP_API_URL}player?steam_id_64=${player.get("steam_id_64")}`}
+            component={RouterLink}
+            to={`/player/${player.get("steam_id_64")}`}
           >
             {player.get("steam_id_64")}
           </Link>

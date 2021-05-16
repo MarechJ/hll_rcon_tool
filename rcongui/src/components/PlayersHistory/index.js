@@ -192,7 +192,8 @@ class PlayersHistory extends React.Component {
     this.onRemoveFromWatchList = this.onRemoveFromWatchList.bind(this);
   }
 
-  tempBan(steamId64, reason, durationHours) {
+  tempBan(steamId64, reason, durationHours, comment) {
+    this.postComment(steamId64, comment, `PlayerID ${steamId64} temp banned ${durationHours} for ${reason}`);
     postData(`${process.env.REACT_APP_API_URL}do_temp_ban`, {
       steam_id_64: steamId64,
       reason: reason,
@@ -325,7 +326,27 @@ class PlayersHistory extends React.Component {
       .catch((error) => toast.error("Unable to connect to API " + error));
   }
 
-  blacklistPlayer(steamId64, reason) {
+  postComment(steamId64, comment, action) {
+    postData(`${process.env.REACT_APP_API_URL}post_player_comment`, {
+      steam_id_64: steamId64,
+      comment: action
+    }).then((response) => {
+      return showResponse(response, "post_player_comments", false)
+    }).then(() => {
+      if (comment && comment !== "" && comment !== null) {
+        postData(`${process.env.REACT_APP_API_URL}post_player_comment`, {
+          steam_id_64: steamId64,
+          comment: comment
+        }).then((response) => {
+          return showResponse(response, "post_player_comments", false)
+        }).catch((error) => toast.error("Unable to connect to API " + error));
+      }
+    }).catch((error) => toast.error("Unable to connect to API " + error));
+
+  }
+
+  blacklistPlayer(steamId64, reason, comment) {
+    this.postComment(steamId64, comment, `PlayerID ${steamId64} blacklist for ${reason}`);
     postData(`${process.env.REACT_APP_API_URL}blacklist_player`, {
       steam_id_64: steamId64,
       reason: reason,
@@ -342,6 +363,7 @@ class PlayersHistory extends React.Component {
   }
 
   unblacklistPlayer(steamId64) {
+    this.postComment(steamId64, null, `PlayerID ${steamId64} removed from blacklist`);
     postData(`${process.env.REACT_APP_API_URL}unblacklist_player`, {
       steam_id_64: steamId64,
     })
@@ -357,6 +379,7 @@ class PlayersHistory extends React.Component {
   }
 
   unBanPlayer(steamId64) {
+    this.postComment(steamId64, null, `PlayerID ${steamId64} unbanned`);
     postData(`${process.env.REACT_APP_API_URL}unban`, {
       steam_id_64: steamId64,
     })
@@ -368,7 +391,8 @@ class PlayersHistory extends React.Component {
   }
 
   addToWatchlist(steamId64, reason, comment) {
-    return addPlayerToWatchList(steamId64, reason, comment).then(
+    this.postComment(steamId64, comment, `PlayerID ${steamId64} watched`);
+    return addPlayerToWatchList(steamId64, reason, null).then(
       this._reloadOnSuccess
     );
   }
@@ -559,15 +583,16 @@ class PlayersHistory extends React.Component {
             actionType,
             player,
             reason,
+            comment,
             durationHours,
             steamId64
           ) => {
             if (actionType === "blacklist") {
-              this.blacklistPlayer(steamId64, reason);
+              this.blacklistPlayer(steamId64, reason, comment);
             } else if (actionType === "temp_ban") {
-              this.tempBan(steamId64, reason, durationHours);
+              this.tempBan(steamId64, reason, durationHours, comment);
             } else if (actionType === "watchlist") {
-              this.addToWatchlist(steamId64, reason);
+              this.addToWatchlist(steamId64, reason, comment);
             }
             this.setDoConfirmPlayer(false);
           }}

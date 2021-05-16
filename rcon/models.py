@@ -75,6 +75,7 @@ class PlayerSteamID(Base):
     flags = relationship("PlayerFlag", backref="steamid")
     watchlist = relationship("WatchList", backref="steamid", uselist=False)
     steaminfo = relationship("SteamInfo", backref="steamid", uselist=False)
+    comments = relationship("PlayerComment", back_populates="player")
     stats = relationship("PlayerStats", backref="steamid", uselist=False)
 
     def get_penalty_count(self):
@@ -472,6 +473,29 @@ class PlayerStats(Base):
             most_killed=self.most_killed,
             death_by=self.death_by,
             weapons=self.weapons,
+        )
+
+
+class PlayerComment(Base):
+    __tablename__ = "player_comments"
+    id = Column(Integer, primary_key=True)
+    creation_time = Column(TIMESTAMP, default=datetime.utcnow())
+    playersteamid_id = Column(
+        Integer,
+        ForeignKey("steam_id_64.id"),
+        nullable=False,
+        index=True,
+    )
+    content = Column(String, nullable=False)
+
+    player = relationship("PlayerSteamID", back_populates="comments")
+
+    def to_dict(self):
+        return dict(
+            id=self.id,
+            creation_time=self.creation_time,
+            playersteamid_id=self.playersteamid_id,
+            content=self.content
         )
 
 

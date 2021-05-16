@@ -17,7 +17,9 @@ import {List as IList, Map} from "immutable";
 import {getName} from "country-list";
 import Popover from "@material-ui/core/Popover";
 import Typography from "@material-ui/core/Typography";
-import {makeStyles} from "@material-ui/core/styles";
+import { makeStyles } from "@material-ui/core/styles";
+import {Link as RouterLink} from "react-router-dom";
+
 
 const zeroPad = (num, places) => String(num).padStart(places, "0");
 
@@ -199,9 +201,9 @@ const PlayerItem = ({
               {profile.get("sessions_count")} - {getBans(player)}
             </span>{" "}
             <Link
-              target="_blank"
-              color="inherit"
-              href={`${process.env.REACT_APP_API_URL}player?steam_id_64=${steamID64}`}
+                color="inherit"
+                component={RouterLink}
+                to={`/player/${player.get("steam_id_64")}`}
             >
               {steamID64} <Icon component={OpenInNewIcon} fontSize="inherit" />
             </Link>

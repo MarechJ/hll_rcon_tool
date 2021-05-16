@@ -19,6 +19,7 @@ import ServicesList from './components/Services';
 import {Typography} from "@material-ui/core";
 import ScoreMenu from './components/Scoreboard/ScoreMenu'
 import GamesScore from "./components/Scoreboard/GamesScore";
+import PlayerInfo from "./components/PlayerInfo";
 import LiveScore from "./components/Scoreboard/LiveScore"
 
 const Live = ({ classes }) => {
@@ -344,6 +345,11 @@ function App() {
                     <Grid item sm={12} lg={12}>
                       <PlayersHistory classes={classes} />
                     </Grid>
+                  </Grid>
+                </Route>
+                <Route path="/player/:steamId64">
+                  <Grid container>
+                    <PlayerInfo classes={classes}/>
                   </Grid>
                 </Route>
                 <Route path="/settings">

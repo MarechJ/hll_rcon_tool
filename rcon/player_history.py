@@ -19,10 +19,10 @@ from rcon.models import (
     PlayerFlag,
     WatchList,
     SteamInfo,
+    PlayerComment
 )
 
 from rcon.commands import CommandFailedError
-
 
 from sqlalchemy.sql.functions import ReturnTypeFromArgs
 
@@ -442,6 +442,19 @@ def remove_player_from_blacklist(steam_id_64):
             raise CommandFailedError(f"Player {player} was not blacklisted")
 
         player.blacklist.is_blacklisted = False
+        sess.commit()
+
+
+def get_player_comments(steam_id_64):
+    with enter_session() as sess:
+        player = sess.query(PlayerSteamID).filter_by(steam_id_64=steam_id_64).one()
+        return [c.to_dict() for c in player.comments]
+
+
+def post_player_comments(steam_id_64, comment):
+    with enter_session() as sess:
+        player = sess.query(PlayerSteamID).filter_by(steam_id_64=steam_id_64).one()
+        player.comments.append(PlayerComment(content=comment))
         sess.commit()
 
 

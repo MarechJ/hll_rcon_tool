@@ -1,27 +1,23 @@
 import inspect
 import logging
-from functools import wraps
 import os
+from functools import wraps
 from subprocess import run, PIPE
-from dataclasses import asdict
 
-from django.http import JsonResponse, response
+from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.http import HttpResponse
 
-from rcon.config import get_config
-from rcon.utils import MapsHistory
-from rcon.recorded_commands import RecordedRcon
+from rcon.broadcast import get_votes_status
+from rcon.cache_utils import RedisCached, get_redis_pool
 from rcon.commands import CommandFailedError
-from rcon.steam_utils import get_steam_profile
-from rcon.settings import SERVER_INFO
+from rcon.config import get_config
+from rcon.discord import send_to_discord_audit
 from rcon.player_history import (
     add_player_to_blacklist,
     remove_player_from_blacklist,
 )
-from rcon.broadcast import get_votes_status
-from rcon.discord import send_to_discord_audit
-from rcon.game_logs import LogLoop
+from rcon.recorded_commands import RecordedRcon
+from rcon.settings import SERVER_INFO
 from rcon.user_config import (
     AutoBroadcasts,
     AutoVoteKickConfig,
@@ -29,17 +25,17 @@ from rcon.user_config import (
     InvalidConfigurationError,
     StandardMessages,
 )
-from rcon.cache_utils import RedisCached, get_redis_pool
 from rcon.user_config import DiscordHookConfig
-from rcon.watchlist import PlayerWatch
 from rcon.utils import LONG_HUMAN_MAP_NAMES, map_name
+from rcon.utils import MapsHistory
+from rcon.watchlist import PlayerWatch
 from rcon.workers import temporary_broadcast, temporary_welcome
 from .auth import login_required, api_response
-from .utils import _get_data
 from .multi_servers import forward_request, forward_command
-
+from .utils import _get_data
 
 logger = logging.getLogger("rconweb")
+ctl = RecordedRcon(SERVER_INFO)
 
 
 def set_temp_msg(request, func, name):
@@ -570,9 +566,6 @@ def wrap_method(func, parameters, command_name):
         return response
 
     return wrapper
-
-
-ctl = RecordedRcon(SERVER_INFO)
 
 
 @login_required

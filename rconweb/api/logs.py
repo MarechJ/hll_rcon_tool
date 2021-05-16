@@ -1,13 +1,12 @@
 from dateutil import parser
 from django.views.decorators.csrf import csrf_exempt
 
-
 from rcon.utils import MapsHistory
 from rcon.recorded_commands import RecordedRcon
 from rcon.commands import CommandFailedError
 from rcon.steam_utils import get_steam_profile
 from rcon.settings import SERVER_INFO
-from .auth import login_required, api_response
+from .auth import login_required, api_response, api_csv_response
 from .utils import _get_data
 from rcon import game_logs
 from rcon.models import LogLine, PlayerSteamID, PlayerName, enter_session
@@ -28,6 +27,7 @@ def get_historical_logs(request):
     exact_player_match = data.get("exact_player", False)
     exact_action = data.get("exact_action", True)
     server_filter = data.get("server_filter")
+    output = data.get("output")
 
     if till:
         till = parser.parse(till)
@@ -45,16 +45,19 @@ def get_historical_logs(request):
         exact_player_match=exact_player_match,
         exact_action=exact_action,
         server_filter=server_filter,
+        output=output
     )
-
-    return api_response(
-        lines,
-        command="get_historical_logs",
-        arguments=dict(limit=limit, player_name=player_name, action=action),
-        failed=False,
-    )
-
-
+    if output != "CSV" and output != "csv":
+        return api_response(
+            lines,
+            command="get_historical_logs",
+            arguments=dict(limit=limit, player_name=player_name, action=action),
+            failed=False,
+        )
+    return api_csv_response(lines, "log.csv",
+                        ["event_time", "type", "player_name", "player1_id",
+                        "player2_name", "player2_id", "content", "server", "weapon"])
+     
 @csrf_exempt
 @login_required
 def get_recent_logs(request):

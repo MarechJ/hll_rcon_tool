@@ -1,5 +1,11 @@
-import React from "react";
-import {postData, showResponse,} from "../../utils/fetchUtils";
+import React, {useEffect} from "react";
+import { toast } from "react-toastify";
+import {
+  postData,
+  showResponse,
+  get,
+  handle_http_errors,
+} from "../../utils/fetchUtils";
 import Grid from "@material-ui/core/Grid";
 import {makeStyles} from "@material-ui/core/styles";
 import LogsTable from "./logTable";
@@ -12,6 +18,9 @@ import FormControl from "@material-ui/core/FormControl";
 import Select from "@material-ui/core/Select";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import Switch from "@material-ui/core/Switch";
+import MUIDataTable from "mui-datatables";
+import moment from "moment";
+import Link from "@material-ui/core/Link";
 
 const useStyles = makeStyles((theme) => ({
   flexContainer: {
@@ -23,7 +32,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const LogsFilter = ({ onSubmit }) => {
+const LogsFilter = ({ onSubmit, onChange }) => {
   const classes = useStyles();
   const [name, setName] = React.useState("");
   const [steamId64, setSteamId64] = React.useState("");
@@ -190,10 +199,89 @@ class LogsHistory extends React.Component {
     this.state = {
       logs: [],
       isLoading: false,
+      name : null,
+      type : null,
+      steamId64 : null,
+      from : null,
+      till : null,
+      limit : 10000,
+      timeSort : "desc",
+      exactPlayer : false,
+      exactAction : false,
+      server : null,
+      myRowPerPage: window.localStorage.getItem("logs_row_per_page") || 50
     };
+
+
+
 
     this.getHistoricalLogs = this.getHistoricalLogs.bind(this);
   }
+
+  saveRowsPerPage = (rowPerPage) => {
+    window.localStorage.setItem("logs_row_per_page", rowPerPage);
+    this.setState({myRowPerPage: rowPerPage})
+  };
+
+  columns = [
+    {
+      name: "event_time",
+      label: "Time",
+      options: {
+        customBodyRenderLite: (dataIndex) =>
+            moment.unix(this.state.logs[dataIndex].event_time).format("ddd Do MMM HH:mm:ss"),
+      },
+    },
+    { name: "type", label: "Type" },
+    { name: "content", label: "Content" },
+    {
+      name: "player1_id",
+      label: "Name 1",
+      options: {
+        customBodyRenderLite: (dataIndex) => {
+          let id = this.state.logs[dataIndex].player1_id;
+          let name = this.state.logs[dataIndex].player_name;
+          return id ? (
+              <Link color="inherit" target="_blank" href={`/api/player?id=${id}`}>
+                {name}
+              </Link>
+          ) : (
+              name
+          );
+        },
+      },
+    },
+    {
+      name: "player2_id",
+      label: "Name 2",
+      options: {
+        customBodyRenderLite: (dataIndex) => {
+          let id = this.state.logs[dataIndex].player2_id;
+          let name = this.state.logs[dataIndex].player2_name;
+          return id ? (
+              <Link color="inherit" target="_blank" href={`/api/player?id=${id}`}>
+                {name}
+              </Link>
+          ) : (
+              name
+          );
+        },
+      },
+    },
+    { name: "server", label: "Server" },
+  ];
+
+  options = {
+    filter: false,
+    rowsPerPage: 10,
+    selectableRows: "none",
+    rowsPerPageOptions: [10, 25, 50, 100, 250, 500, 1000],
+    onChangeRowsPerPage: this.saveRowsPerPage,
+    onDownload: () => {
+      this.handleDownload()
+      return false;
+    }
+  };
 
   getHistoricalLogs(
     name = null,
@@ -205,9 +293,22 @@ class LogsHistory extends React.Component {
     timeSort = "desc",
     exactPlayer = false,
     exactAction = false,
-    server = null
+    server = null,
+    output = null
   ) {
-    this.setState({ isLoading: true });
+    this.setState({ 
+      isLoading: true,
+      name: name,
+      type: type,
+      steamId64: steamId64,
+      from: from,
+      till: till,
+      limit: limit,
+      timeSort: timeSort,
+      exactPlayer: exactPlayer,
+      exactAction: exactAction,
+      server: server
+    });
     postData(`${process.env.REACT_APP_API_URL}get_historical_logs`, {
       player_name: name,
       log_type: type,
@@ -219,27 +320,55 @@ class LogsHistory extends React.Component {
       exact_player: exactPlayer,
       exact_action: exactAction,
       server_filter: server,
+      output: output
     })
       .then((res) => showResponse(res, "get_historical_logs", false))
       .then((res) => {
-        console.log(res);
         this.setState({ logs: res.result ? res.result : [] });
         this.setState({ isLoading: false });
       });
+  }
+
+  handleDownload() {
+    postData(`${process.env.REACT_APP_API_URL}get_historical_logs`, {
+      player_name: this.statename,
+      log_type: this.state.type,
+      steam_id_64: this.state.steamId64,
+      from: this.state.from,
+      till: this.state.till,
+      limit: this.state.limit,
+      time_sort: this.state.timeSort,
+      exact_player: this.state.exactPlayer,
+      exact_action: this.state.exactAction,
+      server_filter: this.state.server,
+      output: "csv"
+    })
+        .then((res) => res.blob())
+        .then((blob) => {
+          const url = window.URL.createObjectURL(new Blob([blob]));
+          const link = document.createElement('a');
+          link.href = url;
+          link.setAttribute('download', `log.csv`);
+          document.body.appendChild(link);
+          link.click();
+          link.parentNode.removeChild(link);
+        });
   }
 
   componentDidMount() {
     this.getHistoricalLogs();
   }
 
+
   render() {
     const { classes } = this.props;
     const { isLoading } = this.state;
 
+
     return (
       <Grid container>
         <Grid item xs={12}>
-          <LogsFilter onSubmit={this.getHistoricalLogs} />
+          <LogsFilter onSubmit={this.getHistoricalLogs}/>
         </Grid>
         {isLoading ? (
           <Grid itemx xs={12} className={classes.doublePadding}>
@@ -249,7 +378,20 @@ class LogsHistory extends React.Component {
           ""
         )}
         <Grid item xs={12}>
-          <LogsTable logs={this.state.logs} />
+          <Grid container justify="center">
+            <Grid item>
+              <Grid container justify="center">
+                <Grid item>
+                  <MUIDataTable
+                      title={"Game logs"}
+                      data={this.state.logs}
+                      columns={this.columns}
+                      options={this.options}
+                  />
+                </Grid>
+              </Grid>
+            </Grid>
+          </Grid>
         </Grid>
       </Grid>
     );

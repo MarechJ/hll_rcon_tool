@@ -43,4 +43,6 @@ urlpatterns = [
     path("set_votemap_config", votemap.set_votemap_config),
     path("get_votemap_status", votemap.get_votemap_status),
     path("reset_votemap_state", votemap.reset_votemap_state),
+    path("get_player_comment", history.get_player_comment),
+    path("post_player_comment", history.post_player_comment)
 ]
