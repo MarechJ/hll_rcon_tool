@@ -78,7 +78,7 @@ const ChatContent = ({ data, handleMessageSend }) => {
                   display="block"
                   className={classes.date}
                 >
-                  {moment.utc(message.creation_time).local().format("ddd Do MMM HH:mm:ss")} by {message.by}</Typography>
+                  {moment.utc(message.creation_time).local().format("ddd Do MMM HH:mm:ss")} by {message.by}
                 </Typography>
               </Grid>
             </Grid>
