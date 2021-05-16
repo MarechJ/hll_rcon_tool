@@ -1,15 +1,7 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, {useEffect, useRef, useState} from "react";
 import Badge from "@material-ui/core/Badge";
-import { Comment, Send } from "@material-ui/icons";
-import {
-  Chip,
-  Drawer,
-  Grid,
-  makeStyles,
-  TextField,
-  Button,
-  Fab
-} from "@material-ui/core";
+import {Comment, Send} from "@material-ui/icons";
+import {Box, Button, Chip, Drawer, Grid, makeStyles, TextField} from "@material-ui/core";
 import IconButton from "@material-ui/core/IconButton";
 import Typography from "@material-ui/core/Typography";
 import moment from "moment";
@@ -17,19 +9,18 @@ import moment from "moment";
 const useStyles = makeStyles((theme) => ({
   message: {
     whiteSpace: "pre-wrap",
-    textAlign: "left"
+    textAlign: "left",
+    marginTop: '5px',
+    marginBottom: '5px',
   },
   date: {
-    color: theme.palette.disabledTextColor,
+    color: theme.palette.disabledColor,
   },
-  chatPosition: {
-    position: 'fixed',
-    right: '2rem',
-    bottom: '2rem',
-},
-padding: {
-    padding: theme.spacing(1)
-}
+  padding: {
+    padding: theme.spacing(1),
+    overflow: "auto",
+    maxHeight: '68vh'
+  },
 }));
 
 const AlwaysScrollToBottom = () => {
@@ -50,12 +41,12 @@ const ChatContent = ({ data, handleMessageSend }) => {
       alignContent="flex-start"
       alignItems="flex-start"
       direction="column"
-      spacing={1}
       className={classes.padding}
+      wrap="nowrap"
     >
       {data?.map((message, index) => {
         return (
-          <Grid item key={index}>
+          <Grid item key={index} xs={12}>
             <Grid
               container
               justify="flex-start"
@@ -65,8 +56,7 @@ const ChatContent = ({ data, handleMessageSend }) => {
             >
               <Grid item xs={12}>
                 <Chip
-                  style={{ height: "auto" }}
-                  variant="body2"
+                  style={{ height: "auto", paddingTop: "-10px" }}
                   color="primary"
                   variant="default"
                   label={<p className={classes.message}>{message.content}</p>}
@@ -77,8 +67,9 @@ const ChatContent = ({ data, handleMessageSend }) => {
                   variant="caption"
                   display="block"
                   className={classes.date}
+                  color="textSecondary"
                 >
-                  {moment.utc(message.creation_time).local().format("ddd Do MMM HH:mm:ss")} by {message.by}
+                 {moment.utc(message.creation_time).local().format("ddd Do MMM HH:mm:ss")} by {message.by}
                 </Typography>
               </Grid>
             </Grid>
@@ -95,7 +86,6 @@ const ChatContent = ({ data, handleMessageSend }) => {
           justify="flex-start"
           alignContent="flex-start"
           alignItems="flex-start"
-          spacing={1}
           className={classes.padding}
         >
           <Grid item xs={12}>
@@ -110,14 +100,17 @@ const ChatContent = ({ data, handleMessageSend }) => {
             />
           </Grid>
           <Grid item xs={12}>
-            <Button
-              variant="contained"
-              fullWidth
-              color="secondary"
-              onClick={e => {handleMessageSend(comment); setComment("")}}
-            >
-              <Send />
-            </Button>
+            <Box paddingTop={1}>
+              <Button
+                variant="contained"
+                fullWidth
+                color="secondary"
+                onClick={e => {handleMessageSend(comment); setComment("")}}
+
+              >
+                Add comment <Send />
+              </Button>
+            </Box>
           </Grid>
         </Grid>
     </React.Fragment>
