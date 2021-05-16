@@ -86,7 +86,7 @@ const ChatContent = ({ data, handleMessageSend }) => {
           container
           justify="flex-start"
           alignContent="flex-start"
-          alignItems="flex-end"
+          alignItems="center"
           className={classes.padding}
         >
           <Grid item xs={10}>
@@ -106,7 +106,6 @@ const ChatContent = ({ data, handleMessageSend }) => {
                   variant="contained"
                   fullWidth
                   color="secondary"
-                  style={{marginBottom: '10px'}}
                   onClick={e => {handleMessageSend(comment); setComment("")}}
               >
                 <Send />
