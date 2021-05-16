@@ -57,10 +57,11 @@ def get_player(request):
             res = get_player_profile_by_id(
                 data["id"], nb_sessions=data.get("nb_sessions", 10)
             )
-        failed = bool(res)
+        failed = not bool(res)
     except:
         logger.exception("Unable to get player %s", data)
         failed = True
+
 
     return JsonResponse(
         {
@@ -182,11 +183,13 @@ def get_player_comment(request):
     res = None
     try:
         res = get_player_comments(steam_id_64=data["steam_id_64"])
+        failed = False
     except:
         logger.exception("Unable to get player comments")
+        failed = True
 
     return JsonResponse(
-        {"result": res, "command": "player_comments", "arguments": data, "failed": not res}
+        {"result": res, "command": "player_comments", "arguments": data, "failed": failed}
     )
 
 @csrf_exempt
