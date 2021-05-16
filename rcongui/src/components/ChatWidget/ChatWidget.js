@@ -34,27 +34,29 @@ const ChatContent = ({ data, handleMessageSend }) => {
   const [comment, setComment] = React.useState("")
 
   return (
-      <React.Fragment>
+    <React.Fragment>
+      <Box paddingLeft={2}>
     <Grid
       container
       justify="flex-start"
       alignContent="flex-start"
-      alignItems="flex-start"
+      alignItems="flex-end"
       direction="column"
       className={classes.padding}
       wrap="nowrap"
+
     >
       {data?.map((message, index) => {
         return (
-          <Grid item key={index} xs={12}>
+          <Grid item key={index}>
             <Grid
               container
               justify="flex-start"
               alignContent="flex-start"
-              alignItems="flex-start"
+              alignItems="flex-end"
               direction="column"
             >
-              <Grid item xs={12}>
+              <Grid item>
                 <Chip
                   style={{ height: "auto", paddingTop: "-10px" }}
                   color="primary"
@@ -62,7 +64,7 @@ const ChatContent = ({ data, handleMessageSend }) => {
                   label={<p className={classes.message}>{message.content}</p>}
                 />
               </Grid>
-              <Grid item xs={12}>
+              <Grid item>
                 <Typography
                   variant="caption"
                   display="block"
@@ -85,10 +87,10 @@ const ChatContent = ({ data, handleMessageSend }) => {
           container
           justify="flex-start"
           alignContent="flex-start"
-          alignItems="flex-start"
+          alignItems="flex-end"
           className={classes.padding}
         >
-          <Grid item xs={12}>
+          <Grid item xs={10}>
             <TextField
               id="message"
               label="Add comment"
@@ -99,20 +101,21 @@ const ChatContent = ({ data, handleMessageSend }) => {
               onChange={e => setComment(e.target.value)}
             />
           </Grid>
-          <Grid item xs={12}>
-            <Box paddingTop={1}>
+          <Grid item xs={2}>
+            <Box paddingLeft={1}>
               <Button
-                variant="contained"
-                fullWidth
-                color="secondary"
-                onClick={e => {handleMessageSend(comment); setComment("")}}
-
+                  variant="contained"
+                  fullWidth
+                  color="secondary"
+                  style={{marginBottom: '10px'}}
+                  onClick={e => {handleMessageSend(comment); setComment("")}}
               >
-                Add comment <Send />
+                <Send />
               </Button>
             </Box>
           </Grid>
         </Grid>
+      </Box>
     </React.Fragment>
   );
 };
