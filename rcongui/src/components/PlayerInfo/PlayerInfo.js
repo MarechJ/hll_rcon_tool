@@ -1,19 +1,14 @@
-import {
-  get,
-  handle_http_errors,
-  postData,
-  showResponse,
-} from "../../utils/fetchUtils";
+import {get, handle_http_errors, postData, showResponse,} from "../../utils/fetchUtils";
 import React from "react";
-import { Avatar, Button, Grid, Popover, makeStyles } from "@material-ui/core";
+import {Avatar, Button, Grid, makeStyles, Popover} from "@material-ui/core";
 import Typography from "@material-ui/core/Typography";
-import { ExpandMore } from "@material-ui/icons";
+import {ExpandMore} from "@material-ui/icons";
 import moment from "moment";
 import MUIDataTable from "mui-datatables";
-import { withRouter } from "react-router";
+import {withRouter} from "react-router";
 import "./PlayerInfo.css";
-import { ChatContent, ChatWidget } from "../ChatWidget";
-import { toast } from "react-toastify";
+import {ChatContent} from "../ChatWidget";
+import {toast} from "react-toastify";
 
 const useStyles = makeStyles((theme) => ({
   padding: {
@@ -259,7 +254,7 @@ class PlayerInfo extends React.Component {
         {this.state.loaded ? (
           <Grid item sm={12} className={classes.marginTop}>
             <Grid container>
-              <Grid item sm={2}>
+              <Grid item xl={2} lg={2} md={2} sm={3} xs={12}>
                 <Grid
                   container
                   justify="center"
@@ -315,7 +310,7 @@ class PlayerInfo extends React.Component {
                   </Grid>
                 </Grid>
               </Grid>
-              <Grid item sm={9}>
+              <Grid item xl={7} lg={7} md={7} sm={5} xs={12}>
                 <Grid
                   container
                   spacing={3}
@@ -333,13 +328,13 @@ class PlayerInfo extends React.Component {
                       <NamePopOver names={this.state.names} />
                     </Grid>
                   </Grid>
-                  <Grid item sm={4}>
-                    <Grid container justify="space-between">
+                  <Grid item sm={12}>
+                    <Grid container spacing={2}>
                       <Grid item>
                         <Typography
-                          color={this.state.vip ? "primary" : "textSecondary"}
-                          className={this.state.vip ? "" : "inactive"}
-                          variant="button"
+                            color={this.state.vip ? "primary" : "textSecondary"}
+                            className={this.state.vip ? "" : "inactive"}
+                            variant="button"
                         >
                           VIP
                         </Typography>
@@ -353,7 +348,7 @@ class PlayerInfo extends React.Component {
                           PERMABAN
                         </Typography>
                       </Grid>
-                      <Grid item>
+                      <Grid item spacing={1}>
                         <Typography
                           color={this.state.temp ? "error" : "textSecondary"}
                           className={this.state.temp ? "" : "inactive"}
@@ -384,15 +379,18 @@ class PlayerInfo extends React.Component {
                   <Grid item sm={12}>
                     <Punishment punishments={this.state.received_actions} />
                   </Grid>
-                  <Grid item xs={12}>
-                    <Typography variant="h3">Comments</Typography>
-                  </Grid>
-                  <Grid item xs={12}>
-                    <ChatContent
+
+                </Grid>
+              </Grid>
+              <Grid item xl={3} lg={3} md={3} sm={4} xs={12}>
+                <Grid item xs={12}>
+                  <Typography variant="h3">Comments</Typography>
+                </Grid>
+                <Grid item xs={12}>
+                  <ChatContent
                       data={this.state.comments}
                       handleMessageSend={this.handleNewComment}
-                    />
-                  </Grid>
+                  />
                 </Grid>
               </Grid>
             </Grid>
