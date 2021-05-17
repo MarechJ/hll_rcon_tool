@@ -226,7 +226,7 @@ class MapsHistory(FixedLenList):
         ts = datetime.now().timestamp()
         logger.info("Saving start of new map %s at time %s", new_map, ts)
         new = dict(name=new_map, start=ts, end=None)
-        self.lpush(new)
+        self.add(new)
         return new
 
 class ApiKey:
