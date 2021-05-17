@@ -344,7 +344,7 @@ class TimeWindowStats(BaseStats):
         server_numer = server_number or os.getenv('SERVER_NUMBER')
         with enter_session() as sess:
             rows = get_historical_logs_records(
-                sess, from_=from_, till=until, time_sort="asc", server_filter=server_numer
+                sess, from_=from_, till=until, time_sort="asc", server_filter=server_numer, limit=99999999
             )
 
             indexed_logs = {}

@@ -98,8 +98,8 @@ def record_stats(map_info):
 def _record_stats(map_info):
     stats = TimeWindowStats()
 
-    start = datetime.datetime.fromtimestamp(map_info.get('start'))
-    end = datetime.datetime.fromtimestamp(map_info.get('end'))
+    start = datetime.datetime.utcfromtimestamp(map_info.get('start'))
+    end = datetime.datetime.utcfromtimestamp(map_info.get('end'))
 
     if not start or not end:
         logger.error("Can't record stats, no time info for %s", map_info)
@@ -147,3 +147,5 @@ def _record_stats(map_info):
                 sess.add(player_stat_record)
             else:
                 logger.error("Stat object does not contain a steam id: %s", stats)
+
+
