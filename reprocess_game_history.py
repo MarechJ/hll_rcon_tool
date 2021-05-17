@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 from sqlalchemy.orm import with_expression
 from rcon.models import enter_session
 from rcon.workers import _record_stats
