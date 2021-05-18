@@ -5,6 +5,7 @@ import logging
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 
+from rcon.config import get_config
 from rcon.utils import MapsHistory
 from rcon.recorded_commands import RecordedRcon
 from rcon.commands import CommandFailedError
@@ -124,11 +125,13 @@ def text_tk_scoreboard(request):
 @csrf_exempt
 def live_scoreboard(request):
     stats = LiveStats()
+    config = get_config()
 
     try:
         result = stats.get_cached_stats()
         result = {
             "snapshot_timestamp": result["snapshot_timestamp"],
+            "refresh_interval_sec": config.get('LIVE_STATS', {}).get('refresh_stats_seconds', 30),
             "stats": list(result["stats"].values()),
         }
         error = (None,)

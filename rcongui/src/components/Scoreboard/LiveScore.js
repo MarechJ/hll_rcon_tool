@@ -70,7 +70,7 @@ const LiveScore = ({ classes }) => {
   const [serverState, setServerState] = React.useState(new Map());
   const [isLoading, setIsLoading] = React.useState(true);
   const [isPaused, setPaused] = React.useState(false);
-  const refreshIntervalSec = 10;
+  const [refreshIntervalSec, setRefreshIntervalSec] = React.useState(10);
   const durationToHour = (val) =>
     new Date(val * 1000).toISOString().substr(11, 5);
   const scores = stats.get("stats", new iList());
@@ -83,7 +83,12 @@ const LiveScore = ({ classes }) => {
     console.log("Loading data");
     get("live_scoreboard")
       .then((res) => showResponse(res, "livescore", false))
-      .then((data) => setStats(fromJS(data.result)))
+      .then((data) => {
+        const map_ = fromJS(data.result)
+        setStats(map_)
+        setRefreshIntervalSec(map_.get('refresh_interval_sec', 10))
+        // TODO add code to sync the refresh time with one of the server by checking the last refresh timestamp
+      })
       .catch(handle_http_errors);
     get("public_info")
       .then((res) => showResponse(res, "public_info", false))
