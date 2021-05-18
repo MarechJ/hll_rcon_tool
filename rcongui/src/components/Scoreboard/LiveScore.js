@@ -196,7 +196,7 @@ const LiveHeader = ({
                 <Typography variant="body2">
                   Only ingame players are shown. Stats are reset on
                   disconnection, not per game, check the{" "}
-                  <Link color="secondary" href="/gamescoreboard">
+                  <Link color="secondary" href="#/gamescoreboard">
                     past games
                   </Link>{" "}
                   for historical data. Real deaths only are counted (e.g. not
