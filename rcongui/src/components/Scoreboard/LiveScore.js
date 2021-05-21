@@ -104,7 +104,7 @@ const LiveScore = ({ classes }) => {
       const interval = setInterval(getData, refreshIntervalSec * 1000);
       return () => clearInterval(interval);
     }
-  }, [isPaused]);
+  }, [isPaused, refreshIntervalSec]);
 
   document.title = serverState.get("name", "HLL Stats");
   let started = serverState.get("current_map", new Map()).get("start");
