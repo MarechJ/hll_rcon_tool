@@ -193,7 +193,7 @@ class ReasonDialog extends React.Component {
                 durationMultiplier * durationNumber,
                 open.steam_id_64
               );
-              this.setState({ reason: "" });
+              this.setState({ reason: "", comment: "" });
             }}
             color="primary"
             disabled={!reason}
