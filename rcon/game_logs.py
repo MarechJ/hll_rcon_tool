@@ -5,6 +5,8 @@ import sys
 import datetime
 import os
 
+from sqlalchemy.sql.expression import false, true
+
 from rcon.extended_commands import Rcon
 from rcon.cache_utils import get_redis_client
 from rcon.utils import FixedLenList
@@ -284,11 +286,17 @@ def is_player(search_str, player, exact_match=False):
 def is_action(action_filter, action, exact_match=False):
     if not action_filter or not action:
         return None
+    if not isinstance(action_filter, list):
+        action_filter = [action_filter]
 
-    if not exact_match:
-        return action.lower().startswith(action_filter.lower())
+    for filter_ in action_filter:
+        if not exact_match:
+            if action.lower().startswith(filter_.lower()):
+                return True
+        elif filter_ == action:
+            return True
 
-    return action_filter == action
+    return False
 
 
 def get_recent_logs(
