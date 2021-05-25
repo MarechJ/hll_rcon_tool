@@ -275,6 +275,7 @@ class PlayerView extends Component {
             actionType,
             player,
             message = null,
+            comment = null,
             duration_hours = 2,
             steam_id_64 = null
           ) =>
@@ -282,6 +283,7 @@ class PlayerView extends Component {
               actionType,
               player,
               message,
+              comment,
               duration_hours,
               steam_id_64
             )

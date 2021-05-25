@@ -331,6 +331,7 @@ const CompactList = ({
               actionType,
               player.get("name"),
               null,
+              null,
               2,
               player.get("steam_id_64")
             )

@@ -309,6 +309,8 @@ def get_recent_logs(
     actions = set(
         ["CHAT[Allies]", "CHAT[Axis]", "CHAT", "VOTE STARTED", "VOTE COMPLETED"]
     )
+    if player_search and not isinstance(player_search, list):
+        player_search = [player_search]
     # flatten that shit
     for idx, l in enumerate(all_logs):
         if idx >= end - start:
@@ -319,14 +321,14 @@ def get_recent_logs(
             logger.debug("Stopping log read due to old timestamp at index %s", idx)
             break
         if player_search:
-            if is_player(player_search, l["player"], exact_player_match) or is_player(
-                player_search, l["player2"], exact_player_match
-            ):
-                if action_filter and not l["action"].lower().startswith(
-                    action_filter.lower()
+            for player_name_search in player_search:
+                if is_player(player_name_search, l["player"], exact_player_match) or is_player(
+                    player_name_search, l["player2"], exact_player_match
                 ):
-                    continue
-                logs.append(l)
+                    
+                    if action_filter and not is_action(action_filter, l["action"], exact_action):
+                        continue
+                    logs.append(l)
         elif action_filter and is_action(action_filter, l["action"], exact_action):
             logs.append(l)
         elif not player_search and not action_filter:
