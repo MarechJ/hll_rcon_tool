@@ -1,44 +1,12 @@
-import React, { Component } from "react";
-import List from "@material-ui/core/List";
-import { Grid } from "@material-ui/core";
-import ListItem from "@material-ui/core/ListItem";
-import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
+import React from "react";
+import {Grid} from "@material-ui/core";
 import ListItemText from "@material-ui/core/ListItemText";
-import _ from "lodash";
 import "react-toastify/dist/ReactToastify.css";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faLock,
-  faQuestionCircle,
-  faExclamationCircle,
-  faStar,
-} from "@fortawesome/free-solid-svg-icons";
-import { faSteam } from "@fortawesome/free-brands-svg-icons";
-import Link from "@material-ui/core/Link";
-import withWidth from "@material-ui/core/withWidth";
-import Icon from "@material-ui/core/Icon";
-import OpenInNewIcon from "@material-ui/icons/OpenInNew";
-import { getEmojiFlag } from "../../utils/emoji";
-import { Map, List as IList, fromJS } from "immutable";
-import ScheduleIcon from "@material-ui/icons/Schedule";
-import { Emoji } from "emoji-mart";
-import LockIcon from "@material-ui/icons/Lock";
-import { getName } from "country-list";
-import Popover from "@material-ui/core/Popover";
+import {fromJS, List as IList} from "immutable";
 import Typography from "@material-ui/core/Typography";
-import { makeStyles } from "@material-ui/core/styles";
-import { sumBy } from "lodash/math";
-import { toPairs } from "lodash/object";
 import Switch from "@material-ui/core/Switch";
 import Chip from "@material-ui/core/Chip";
-import Divider from "@material-ui/core/Divider";
-import {
-  postData,
-  showResponse,
-  handle_http_errors,
-  sendAction,
-  get,
-} from "../../utils/fetchUtils";
+import {get, postData, showResponse,} from "../../utils/fetchUtils";
 
 const StatusToColor = {
   RUNNING: "primary",

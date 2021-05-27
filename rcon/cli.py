@@ -29,9 +29,12 @@ ctl = Rcon(
 def run_stats_loop():
     try:
         live_stats_loop()
+    except KeyboardInterrupt:
+        sys.exit(0)
     except:
         logger.exception("Stats loop stopped")
         sys.exit(1)
+    
 
 
 @cli.command(name="enrich_db_users")

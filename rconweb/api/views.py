@@ -1,38 +1,66 @@
 import inspect
 import logging
-from functools import wraps
 import os
+from functools import wraps
 from subprocess import run, PIPE
-from dataclasses import asdict
 
-from django.http import JsonResponse, response
+from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.http import HttpResponse
 
-from rcon.config import get_config
-from rcon.utils import MapsHistory
-from rcon.recorded_commands import RecordedRcon
+from rcon.broadcast import get_votes_status
+from rcon.cache_utils import RedisCached, get_redis_pool
 from rcon.commands import CommandFailedError
-from rcon.steam_utils import get_steam_profile
-from rcon.settings import SERVER_INFO
+from rcon.config import get_config
+from rcon.discord import send_to_discord_audit
 from rcon.player_history import (
     add_player_to_blacklist,
     remove_player_from_blacklist,
 )
-from rcon.broadcast import get_votes_status
-from rcon.discord import send_to_discord_audit
-from rcon.game_logs import LogLoop
-from rcon.user_config import AutoBroadcasts, AutoVoteKickConfig, CameraConfig, InvalidConfigurationError, StandardMessages
-from rcon.cache_utils import RedisCached, get_redis_pool
+from rcon.recorded_commands import RecordedRcon
+from rcon.settings import SERVER_INFO
+from rcon.user_config import (
+    AutoBroadcasts,
+    AutoVoteKickConfig,
+    CameraConfig,
+    InvalidConfigurationError,
+    StandardMessages,
+)
 from rcon.user_config import DiscordHookConfig
-from rcon.watchlist import PlayerWatch
 from rcon.utils import LONG_HUMAN_MAP_NAMES, map_name
+from rcon.utils import MapsHistory
+from rcon.watchlist import PlayerWatch
+from rcon.workers import temporary_broadcast, temporary_welcome
 from .auth import login_required, api_response
-from .utils import _get_data
 from .multi_servers import forward_request, forward_command
-
+from .utils import _get_data
 
 logger = logging.getLogger("rconweb")
+ctl = RecordedRcon(SERVER_INFO)
+
+
+def set_temp_msg(request, func, name):
+    data = _get_data(request)
+    failed = False
+    error = None
+    try:
+        func(ctl, data["msg"], data["seconds"])
+    except Exception as e:
+        failed = True
+        error = repr(e)
+
+    return api_response(failed=failed, error=error, result=None, command=name)
+
+
+@csrf_exempt
+@login_required
+def set_temp_broadcast(request):
+    return set_temp_msg(request, temporary_broadcast, "set_temp_broadcast")
+
+
+@csrf_exempt
+@login_required
+def set_temp_welcome(request):
+    return set_temp_msg(request, temporary_welcome, "set_temp_welcome")
 
 
 @csrf_exempt
@@ -117,11 +145,12 @@ def get_votekick_autotoggle_config(request):
             "min_ingame_mods": config.get_min_ingame_mods(),
             "min_online_mods": config.get_min_online_mods(),
             "is_enabled": config.is_enabled(),
-            "condition_type": config.get_condition_type()
+            "condition_type": config.get_condition_type(),
         },
         command="get_votekick_autotoggle_config",
         failed=False,
     )
+
 
 @csrf_exempt
 @login_required
@@ -132,19 +161,21 @@ def set_votekick_autotoggle_config(request):
         "min_ingame_mods": config.set_min_ingame_mods,
         "min_online_mods": config.set_min_online_mods,
         "is_enabled": config.set_is_enabled,
-        "condition_type": config.set_condition_type
+        "condition_type": config.set_condition_type,
     }
 
     for k, v in data.items():
         try:
             funcs[k](v)
         except KeyError:
-            return api_response(error="{} invalid key".format(k), command="set_votekick_autotoggle_config")
-    
+            return api_response(
+                error="{} invalid key".format(k),
+                command="set_votekick_autotoggle_config",
+            )
+
         audit("set_votekick_autotoggle_config", request, {k: v})
 
     return api_response(
-     
         command="set_votekick_autotoggle_config",
         failed=False,
     )
@@ -163,12 +194,16 @@ def set_camera_config(request):
 
     for k, v in data.items():
         if not isinstance(v, bool):
-            return api_response(error="Values must be boolean", command="set_camera_config")
+            return api_response(
+                error="Values must be boolean", command="set_camera_config"
+            )
         try:
             funcs[k](v)
         except KeyError:
-            return api_response(error="{} invalid key".format(k), command="set_camera_config")
-    
+            return api_response(
+                error="{} invalid key".format(k), command="set_camera_config"
+            )
+
         audit("set_camera_config", request, {k: v})
 
     return api_response(
@@ -490,7 +525,7 @@ def wrap_method(func, parameters, command_name):
             if pname == "by":
                 arguments[pname] = request.user.username
             elif param.default != inspect._empty:
-                arguments[pname] = data.get(pname)
+                arguments[pname] = data.get(pname, param.default)
             else:
                 try:
                     arguments[pname] = data[pname]
@@ -518,7 +553,9 @@ def wrap_method(func, parameters, command_name):
             )
         )
         if data.get("forward"):
-            if command_name == "do_temp_ban"and not get_config().get("MULTI_SERVERS", {}).get("broadcast_temp_bans", True):
+            if command_name == "do_temp_ban" and not get_config().get(
+                "MULTI_SERVERS", {}
+            ).get("broadcast_temp_bans", True):
                 logger.debug("Not broadcasting temp ban due to settings")
                 return response
             try:
@@ -529,9 +566,6 @@ def wrap_method(func, parameters, command_name):
         return response
 
     return wrapper
-
-
-ctl = RecordedRcon(SERVER_INFO)
 
 
 @login_required
@@ -569,7 +603,7 @@ commands = [
     ("set_camera_config", set_camera_config),
     ("get_camera_config", get_camera_config),
     ("set_votekick_autotoggle_config", set_votekick_autotoggle_config),
-    ("get_votekick_autotoggle_config", get_votekick_autotoggle_config)
+    ("get_votekick_autotoggle_config", get_votekick_autotoggle_config),
 ]
 
 logger.info("Initializing endpoint")

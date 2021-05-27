@@ -1,29 +1,23 @@
 import React from "react";
 import MomentUtils from "@date-io/moment";
 import {
-  Paper,
-  Icon,
-  Grid,
-  Link,
-  Divider,
-  Popover,
-  Badge,
   Button,
-  TextField,
+  Card,
+  CardContent,
+  CardHeader,
   FormControl,
+  FormControlLabel,
+  Grid,
+  IconButton,
   InputLabel,
   MenuItem,
   Select,
-  FormControlLabel,
   Switch,
-  Card,
-  CardHeader,
-  IconButton,
-  CardContent,
+  TextField,
 } from "@material-ui/core";
 import CloseIcon from '@material-ui/icons/Close';
-import { DateTimePicker, MuiPickersUtilsProvider } from "@material-ui/pickers";
-import { Picker } from "emoji-mart";
+import {DateTimePicker, MuiPickersUtilsProvider} from "@material-ui/pickers";
+import {Picker} from "emoji-mart";
 
 const SearchBar = ({
   name,

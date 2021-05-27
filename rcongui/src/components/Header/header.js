@@ -4,24 +4,16 @@ import Grid from "@material-ui/core/Grid";
 import AppBar from "@material-ui/core/AppBar";
 import Toolbar from "@material-ui/core/Toolbar";
 import Link from "@material-ui/core/Link";
-import { Link as RouterLink } from "react-router-dom";
-import Brightness4Icon from "@material-ui/icons/Brightness4";
-import Checkbox from "@material-ui/core/Checkbox";
-import Brightness4OutlinedIcon from "@material-ui/icons/Brightness4Outlined";
+import {Link as RouterLink} from "react-router-dom";
 import TextField from "@material-ui/core/TextField";
 import Button from "@material-ui/core/Button";
 import ServerStatus from "./serverStatus";
-import {
-  postData,
-  showResponse,
-  get,
-  handle_http_errors,
-} from "../../utils/fetchUtils";
+import {get, handle_http_errors, postData, showResponse,} from "../../utils/fetchUtils";
 import Dialog from "@material-ui/core/Dialog";
 import DialogActions from "@material-ui/core/DialogActions";
 import DialogContent from "@material-ui/core/DialogContent";
 import DialogTitle from "@material-ui/core/DialogTitle";
-import { throttle } from "lodash/function";
+import {throttle} from "lodash/function";
 import Menu from "@material-ui/core/Menu";
 import MenuItem from "@material-ui/core/MenuItem";
 
@@ -135,7 +127,7 @@ class LoginBox extends React.Component {
 
   render() {
     const { open, username, password, isLoggedIn } = this.state;
-    const { classes, component } = this.props;
+    const { classes } = this.props;
 
     return (
       <React.Fragment>
@@ -167,7 +159,7 @@ class LoginBox extends React.Component {
 // TODO: Make this reactive, it's causing the view on mobile to be bigger then it should
 const Header = ({ classes }) => {
   const [anchorEl, setAnchorEl] = React.useState(null);
-
+  const [anchorElScores, setAnchorElScores] = React.useState(null);
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
   };
@@ -215,16 +207,33 @@ const Header = ({ classes }) => {
                         onClose={handleClose}
                       >
                         <MenuItem onClick={handleClose}>
-                          <Link color="inherit" component={RouterLink} to="/history">
+                          <Link
+                            color="inherit"
+                            component={RouterLink}
+                            to="/history"
+                          >
                             Players
                           </Link>
                         </MenuItem>
-                        <MenuItem onClick={handleClose}><Link color="inherit" component={RouterLink} to="/logs">
+                        <MenuItem onClick={handleClose}>
+
+                          <Link
+                            color="inherit"
+                            component={RouterLink}
+                            to="/logs"
+                          >
                             Logs
-                          </Link></MenuItem>
-                          <MenuItem onClick={handleClose}><Link color="inherit" component={RouterLink} to="/combined_history">
+                          </Link>
+                        </MenuItem>
+                        <MenuItem onClick={handleClose}>
+                          <Link
+                            color="inherit"
+                            component={RouterLink}
+                            to="/combined_history"
+                          >
                             Combined
-                          </Link></MenuItem>
+                          </Link>
+                        </MenuItem>
                       </Menu>
                       <Link
                         variant="button"
@@ -239,11 +248,41 @@ const Header = ({ classes }) => {
                         variant="button"
                         color="inherit"
                         className={classes.link}
-                        component={RouterLink}
-                        to="/livescore"
+                        onClick={(e) => setAnchorElScores(e.currentTarget)}
                       >
-                        Scores
+                        Score
                       </Link>
+                      <Menu
+                        id="score-menu"
+                        anchorEl={anchorElScores}
+                        keepMounted
+                        open={Boolean(anchorElScores)}
+                        onClose={() => setAnchorElScores(null)}
+                      >
+                        <MenuItem onClick={() => setAnchorElScores(null)}>
+                          <Link
+                            variant="button"
+                            color="inherit"
+                            className={classes.link}
+                            component={RouterLink}
+                            to="/livescore"
+                          >
+                            Live
+                          </Link>
+                        </MenuItem>
+                        <MenuItem onClick={() => setAnchorElScores(null)}>
+                          <Link
+                            variant="button"
+                            color="inherit"
+                            className={classes.link}
+                            component={RouterLink}
+                            to="/gamescoreboard"
+                          >
+                            Games
+                          </Link>
+                        </MenuItem>
+                      </Menu>
+
                       <LoginBox classes={classes} component={RouterLink} />
                     </nav>
                   </Grid>

@@ -1,36 +1,28 @@
-/* eslint-disable no-use-before-define */
 import React from "react";
 import {
-  postData,
-  showResponse,
-  handle_http_errors,
-  sendAction,
   addPlayerToWatchList,
   get,
+  handle_http_errors,
+  postData,
+  sendAction,
+  showResponse,
 } from "../../utils/fetchUtils";
-import { toast } from "react-toastify";
-import { join, reduce } from "lodash";
+import {toast} from "react-toastify";
+import {reduce} from "lodash";
 import Pagination from "@material-ui/lab/Pagination";
-import {
-  Grid,
-  Button,
-  TextField,
-  LinearProgress,
-  Chip,
-  Typography,
-} from "@material-ui/core";
-import { ReasonDialog } from "../PlayerView/playerActions";
-import { omitBy } from "lodash/object";
+import {Button, Chip, Grid, LinearProgress, TextField, Typography,} from "@material-ui/core";
+import {ReasonDialog} from "../PlayerView/playerActions";
+import {omitBy} from "lodash/object";
 import SearchBar from "./searchBar";
-import { Map, List, fromJS } from "immutable";
+import {fromJS, List, Map} from "immutable";
 import FlagIcon from "@material-ui/icons/Flag";
 import "emoji-mart/css/emoji-mart.css";
-import { Picker } from "emoji-mart";
+import {Picker} from "emoji-mart";
 import Dialog from "@material-ui/core/Dialog";
 import DialogActions from "@material-ui/core/DialogActions";
 import DialogContent from "@material-ui/core/DialogContent";
 import DialogTitle from "@material-ui/core/DialogTitle";
-import { getEmojiFlag } from "../../utils/emoji";
+import {getEmojiFlag} from "../../utils/emoji";
 import PlayerGrid from "./playerGrid";
 
 
@@ -200,7 +192,8 @@ class PlayersHistory extends React.Component {
     this.onRemoveFromWatchList = this.onRemoveFromWatchList.bind(this);
   }
 
-  tempBan(steamId64, reason, durationHours) {
+  tempBan(steamId64, reason, durationHours, comment) {
+    this.postComment(steamId64, comment, `PlayerID ${steamId64} temp banned ${durationHours} for ${reason}`);
     postData(`${process.env.REACT_APP_API_URL}do_temp_ban`, {
       steam_id_64: steamId64,
       reason: reason,
@@ -333,7 +326,27 @@ class PlayersHistory extends React.Component {
       .catch((error) => toast.error("Unable to connect to API " + error));
   }
 
-  blacklistPlayer(steamId64, reason) {
+  postComment(steamId64, comment, action) {
+    postData(`${process.env.REACT_APP_API_URL}post_player_comment`, {
+      steam_id_64: steamId64,
+      comment: action
+    }).then((response) => {
+      return showResponse(response, "post_player_comments", false)
+    }).then(() => {
+      if (comment && comment !== "" && comment !== null) {
+        postData(`${process.env.REACT_APP_API_URL}post_player_comment`, {
+          steam_id_64: steamId64,
+          comment: comment
+        }).then((response) => {
+          return showResponse(response, "post_player_comments", false)
+        }).catch((error) => toast.error("Unable to connect to API " + error));
+      }
+    }).catch((error) => toast.error("Unable to connect to API " + error));
+
+  }
+
+  blacklistPlayer(steamId64, reason, comment) {
+    this.postComment(steamId64, comment, `PlayerID ${steamId64} blacklist for ${reason}`);
     postData(`${process.env.REACT_APP_API_URL}blacklist_player`, {
       steam_id_64: steamId64,
       reason: reason,
@@ -350,6 +363,7 @@ class PlayersHistory extends React.Component {
   }
 
   unblacklistPlayer(steamId64) {
+    this.postComment(steamId64, null, `PlayerID ${steamId64} removed from blacklist`);
     postData(`${process.env.REACT_APP_API_URL}unblacklist_player`, {
       steam_id_64: steamId64,
     })
@@ -365,6 +379,7 @@ class PlayersHistory extends React.Component {
   }
 
   unBanPlayer(steamId64) {
+    this.postComment(steamId64, null, `PlayerID ${steamId64} unbanned`);
     postData(`${process.env.REACT_APP_API_URL}unban`, {
       steam_id_64: steamId64,
     })
@@ -376,7 +391,8 @@ class PlayersHistory extends React.Component {
   }
 
   addToWatchlist(steamId64, reason, comment) {
-    return addPlayerToWatchList(steamId64, reason, comment).then(
+    this.postComment(steamId64, comment, `PlayerID ${steamId64} watched`);
+    return addPlayerToWatchList(steamId64, reason, null).then(
       this._reloadOnSuccess
     );
   }
@@ -549,7 +565,6 @@ class PlayersHistory extends React.Component {
             onAddVip={this.onAddVip}
             onDeleteVip={this.onDeleteVip}
             onAddToWatchList={this.onAddToWatchList}
-            onRemoveFromWatchList={this.onRemoveFromWatchList}
           />
         </Grid>
         <Grid item xs={12} className={classes.padding}>
@@ -568,15 +583,16 @@ class PlayersHistory extends React.Component {
             actionType,
             player,
             reason,
+            comment,
             durationHours,
             steamId64
           ) => {
             if (actionType === "blacklist") {
-              this.blacklistPlayer(steamId64, reason);
+              this.blacklistPlayer(steamId64, reason, comment);
             } else if (actionType === "temp_ban") {
-              this.tempBan(steamId64, reason, durationHours);
+              this.tempBan(steamId64, reason, durationHours, comment);
             } else if (actionType === "watchlist") {
-              this.addToWatchlist(steamId64, reason);
+              this.addToWatchlist(steamId64, reason, comment);
             }
             this.setDoConfirmPlayer(false);
           }}

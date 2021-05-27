@@ -1,30 +1,29 @@
 import datetime
-import logging
 import json
+import logging
 
 from dateutil import parser
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
-from rcon.utils import MapsHistory
-
 from rcon.commands import CommandFailedError
+from rcon.discord import send_to_discord_audit
 from rcon.player_history import (
     get_players_by_appearance,
     get_player_profile,
     get_player_profile_by_id,
     add_flag_to_player,
-    remove_flag,
+    remove_flag, get_player_comments, post_player_comments,
 )
+from rcon.utils import MapsHistory
 from .auth import login_required, api_response
 from .utils import _get_data
-from rcon.discord import send_to_discord_audit
-
 
 logger = logging.getLogger("rconweb")
 
+
 @csrf_exempt
-@login_required
+#@login_required
 def get_map_history(request):
     data = _get_data(request)
     res = MapsHistory()[:]
@@ -46,7 +45,6 @@ def get_map_history(request):
     )
 
 
-
 @csrf_exempt
 @login_required
 def get_player(request):
@@ -59,10 +57,11 @@ def get_player(request):
             res = get_player_profile_by_id(
                 data["id"], nb_sessions=data.get("nb_sessions", 10)
             )
-        failed = bool(res)
+        failed = False
     except:
         logger.exception("Unable to get player %s", data)
         failed = True
+
 
     return JsonResponse(
         {
@@ -129,6 +128,7 @@ def unflag_player(request):
         {"result": res, "command": "flag_player", "arguments": data, "failed": not res}
     )
 
+
 @csrf_exempt
 @login_required
 def players_history(request):
@@ -174,3 +174,40 @@ def players_history(request):
             "failed": failed,
         }
     )
+
+
+@csrf_exempt
+@login_required
+def get_player_comment(request):
+    data = _get_data(request)
+    res = None
+    try:
+        res = get_player_comments(steam_id_64=data["steam_id_64"])
+        failed = False
+    except:
+        logger.exception("Unable to get player comments")
+        failed = True
+
+    return JsonResponse(
+        {"result": res, "command": "player_comments", "arguments": data, "failed": failed}
+    )
+
+@csrf_exempt
+@login_required
+def post_player_comment(request):
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        data = request.GET
+
+    try:
+        post_player_comments(steam_id_64=data["steam_id_64"], comment=data["comment"], user=request.user.username)
+        failed = False
+    except:
+        failed = True
+        logger.exception("Unable to get player comments")
+
+    return JsonResponse(
+        {"result": "", "command": "player_comments", "arguments": data, "failed": failed}
+    )
+

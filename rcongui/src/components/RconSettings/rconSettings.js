@@ -1,27 +1,18 @@
 import React from "react";
-import { range } from "lodash/util";
+import {Button, Grid, IconButton, Link, TextField, Typography,} from "@material-ui/core";
 import {
-  Grid,
-  Typography,
-  Button,
-  TextField,
-  Link,
-  IconButton,
-} from "@material-ui/core";
-import {
-  showResponse,
-  postData,
-  get,
-  handle_http_errors,
-  addPlayerToWatchList,
+    addPlayerToWatchList,
+    get,
+    getSharedMessages,
+    handle_http_errors,
+    postData,
+    showResponse,
 } from "../../utils/fetchUtils";
 import Blacklist from "./blacklist";
-import { toast } from "react-toastify";
+import {toast} from "react-toastify";
 import _ from "lodash";
-import LinearProgress from "@material-ui/core/LinearProgress";
 import Padlock from "../../components/SettingsView/padlock";
-import WarningIcon from "@material-ui/icons/Warning";
-import TextHistoryManager, { SelectNameSpace } from "./textHistoryManager";
+import TextHistoryManager, {SelectNameSpace} from "./textHistoryManager";
 import TextHistory from "../textHistory";
 import ServicesList from "../Services";
 import InputLabel from "@material-ui/core/InputLabel";
@@ -29,12 +20,10 @@ import MenuItem from "@material-ui/core/MenuItem";
 import FormHelperText from "@material-ui/core/FormHelperText";
 import FormControl from "@material-ui/core/FormControl";
 import Select from "@material-ui/core/Select";
-import { ForwardCheckBox, WordList } from "../commonComponent";
+import {ManualPlayerInput, WordList} from "../commonComponent";
 import DeleteIcon from "@material-ui/icons/Delete";
 import AddIcon from "@material-ui/icons/Add";
 import SaveIcon from "@material-ui/icons/Save";
-import { ManualPlayerInput } from "../commonComponent";
-import { getSharedMessages } from "../../utils/fetchUtils";
 
 const ManualWatchList = ({ classes }) => {
   const [name, setName] = React.useState("");
@@ -113,7 +102,14 @@ const Hook = ({
             </IconButton>
           </React.Fragment>
         ) : (
-          <IconButton edge="start" onClick={() => { onAddHook(myHook, myRoles); setMyRoles(""); setMyHook("") }}>
+          <IconButton
+            edge="start"
+            onClick={() => {
+              onAddHook(myHook, myRoles);
+              setMyRoles("");
+              setMyHook("");
+            }}
+          >
             <AddIcon />
           </IconButton>
         )}
@@ -137,8 +133,15 @@ const WebhooksConfig = () => {
       hooks: hookConfig.hooks,
     })
       .then((res) => showResponse(res, `set_hooks ${hookConfig.name}`, true))
-      .then((res) => setHooks(res.result))
+      .then((res) => {console.log(res);setHooks(res.result); });
 
+    if (hooks === null) {
+        return (
+            <React.Fragment>
+                <p>no hooks found</p>
+            </React.Fragment>
+        )
+    }
   return (
     <React.Fragment>
       {hooks.map((hookConfig) => (
@@ -198,7 +201,7 @@ class RconSettings extends React.Component {
       autovotekickEnabled: false,
       autovotekickMinIngameMods: 0,
       autovotekickMinOnlineMods: 0,
-      autovotekickConditionType: 'OR',
+      autovotekickConditionType: "OR",
     };
 
     this.loadBroadcastsSettings = this.loadBroadcastsSettings.bind(this);
@@ -207,36 +210,47 @@ class RconSettings extends React.Component {
     this.loadStandardMessages = this.loadStandardMessages.bind(this);
     this.saveStandardMessages = this.saveStandardMessages.bind(this);
     this.clearCache = this.clearCache.bind(this);
-    this.loadCameraConfig = this.loadCameraConfig.bind(this)
-    this.saveCameraConfig = this.saveCameraConfig.bind(this)
-    this.saveAutoVotekickConfig = this.saveAutoVotekickConfig.bind(this)
-    this.loadAutoVotekickConfig = this.loadAutoVotekickConfig.bind(this)
+    this.loadCameraConfig = this.loadCameraConfig.bind(this);
+    this.saveCameraConfig = this.saveCameraConfig.bind(this);
+    this.saveAutoVotekickConfig = this.saveAutoVotekickConfig.bind(this);
+    this.loadAutoVotekickConfig = this.loadAutoVotekickConfig.bind(this);
   }
 
   async loadCameraConfig() {
     return get(`get_camera_config`)
       .then((res) => showResponse(res, "get_camera_config", false))
-      .then((data) => !data.failed && this.setState({ cameraBroadcast: data.result.broadcast, cameraWelcome: data.result.welcome })).catch(handle_http_errors);
+      .then(
+        (data) =>
+          !data.failed &&
+          this.setState({
+            cameraBroadcast: data.result.broadcast,
+            cameraWelcome: data.result.welcome,
+          })
+      )
+      .catch(handle_http_errors);
   }
 
   async saveCameraConfig(data) {
-    return postData(
-      `${process.env.REACT_APP_API_URL}set_camera_config`,
-      data
-    )
+    return postData(`${process.env.REACT_APP_API_URL}set_camera_config`, data)
       .then((res) => showResponse(res, "set_camera_config", true))
-      .then(this.loadCameraConfig).catch(handle_http_errors);
+      .then(this.loadCameraConfig)
+      .catch(handle_http_errors);
   }
 
   async loadAutoVotekickConfig() {
     return get(`get_votekick_autotoggle_config`)
       .then((res) => showResponse(res, "get_votekick_autotoggle_config", false))
-      .then((data) => !data.failed && this.setState({
-        autovotekickEnabled: data.result.is_enabled,
-        autovotekickMinIngameMods: data.result.min_ingame_mods,
-        autovotekickMinOnlineMods: data.result.min_online_mods,
-        autovotekickConditionType: data.result.condition_type
-      })).catch(handle_http_errors);
+      .then(
+        (data) =>
+          !data.failed &&
+          this.setState({
+            autovotekickEnabled: data.result.is_enabled,
+            autovotekickMinIngameMods: data.result.min_ingame_mods,
+            autovotekickMinOnlineMods: data.result.min_online_mods,
+            autovotekickConditionType: data.result.condition_type,
+          })
+      )
+      .catch(handle_http_errors);
   }
 
   async saveAutoVotekickConfig(data) {
@@ -245,7 +259,8 @@ class RconSettings extends React.Component {
       data
     )
       .then((res) => showResponse(res, "set_votekick_autotoggle_config", true))
-      .then(this.loadAutoVotekickConfig).catch(handle_http_errors);
+      .then(this.loadAutoVotekickConfig)
+      .catch(handle_http_errors);
   }
 
   async loadBroadcastsSettings() {
@@ -327,7 +342,7 @@ class RconSettings extends React.Component {
     this.loadBroadcastsSettings();
     this.loadStandardMessages();
     this.loadCameraConfig();
-    this.loadAutoVotekickConfig()
+    this.loadAutoVotekickConfig();
   }
 
   render() {
@@ -399,7 +414,8 @@ class RconSettings extends React.Component {
             fullWidth
             label="Auto broadcast messages"
             multiline
-            rows={8}
+            rows={4}
+            rowsMax={30}
             value={_.join(
               broadcastMessages.map((m) => m.replace(/\n/g, "\\n")),
               "\n"
@@ -411,7 +427,10 @@ class RconSettings extends React.Component {
             }
             placeholder="Insert your messages here, one per line, with format: <number of seconds to display> <a message (write: \n if you want a line return)>"
             variant="outlined"
-            helperText="You can use the following variables in the text (nextmap, maprotation, servername, vips, randomvip, ingame_mods, online_mods) using the following syntax: 60 Welcome to {servername}. The next map is {nextmap}."
+            helperText="You can use the following variables in the text using the following syntax: '60 Welcome to {servername}. The next map is {nextmap}.'
+              (nextmap, maprotation, servername, vips, randomvip, votenextmap_line, votenextmap_line, votenextmap_noscroll, votenextmap_vertical,
+              votenextmap_by_mod_line, votenextmap_by_mod_vertical, votenextmap_by_mod_vertical_all, votenextmap_by_mod_split, total_votes,
+              winning_maps_short, winning_maps_all, scrolling_votemap, online_mods, ingame_mods)"
           />
         </Grid>
         <Grid item xs={12}>
@@ -460,7 +479,8 @@ class RconSettings extends React.Component {
             fullWidth
             label="Shared standard messages"
             multiline
-            rows={8}
+            rowsMax={30}
+            rows={4}
             value={_.join(
               standardMessages.map((m) => m.replace(/\n/g, "\\n")),
               "\n"
@@ -491,7 +511,9 @@ class RconSettings extends React.Component {
         <Grid item className={classes.paddingTop} justify="center" xs={12}>
           <Typography variant="h5">Add player to watchlist</Typography>
         </Grid>
-        <Grid item xs={12}><ManualWatchList classes={classes} /></Grid>
+        <Grid item xs={12}>
+          <ManualWatchList classes={classes} />
+        </Grid>
         <Grid item className={classes.paddingTop} justify="center" xs={12}>
           <Typography variant="h5">Manage services</Typography>
         </Grid>
@@ -509,11 +531,10 @@ class RconSettings extends React.Component {
         <Grid
           item
           xs={12}
-          className={`${classes.padding} ${classes.margin}`}
+          className={`${classes.padding} ${classes.margin} ${classes.root}`}
           alignContent="center"
           justify="center"
           alignItems="center"
-          className={classes.root}
         >
           <WebhooksConfig classes={classes} />
         </Grid>
@@ -530,20 +551,26 @@ class RconSettings extends React.Component {
           alignItems="center"
           spacing={1}
         >
-
           <Grid item xs={12}>
-            <TextField 
-              type="number" 
-              label="# ingame moderator" 
-              value={autovotekickMinIngameMods} 
-              onChange={(e) => this.saveAutoVotekickConfig({ min_ingame_mods: e.target.value })}
-              helperText="Number of moderator in game is greater or equal" />
+            <TextField
+              type="number"
+              label="# ingame moderator"
+              value={autovotekickMinIngameMods}
+              onChange={(e) =>
+                this.saveAutoVotekickConfig({ min_ingame_mods: e.target.value })
+              }
+              helperText="Number of moderator in game is greater or equal"
+            />
             <FormControl>
               <InputLabel>Condition</InputLabel>
               <Select
                 native
                 value={autovotekickConditionType}
-                onChange={(e) => this.saveAutoVotekickConfig({ condition_type: e.target.value })}
+                onChange={(e) =>
+                  this.saveAutoVotekickConfig({
+                    condition_type: e.target.value,
+                  })
+                }
               >
                 <option value="OR">OR</option>
                 <option value="AND">AND</option>
@@ -554,11 +581,20 @@ class RconSettings extends React.Component {
               type="number"
               label="# online moderator"
               value={autovotekickMinOnlineMods}
-              onChange={(e) => this.saveAutoVotekickConfig({ min_online_mods: e.target.value })}
-              helperText="number of moderator with the rcon openned" />
+              onChange={(e) =>
+                this.saveAutoVotekickConfig({ min_online_mods: e.target.value })
+              }
+              helperText="number of moderator with the rcon openned"
+            />
           </Grid>
           <Grid item>
-            <Padlock label="Auto votekick toggle enabled" checked={autovotekickEnabled} handleChange={(v) => this.saveAutoVotekickConfig({ is_enabled: v })} ></Padlock>
+            <Padlock
+              label="Auto votekick toggle enabled"
+              checked={autovotekickEnabled}
+              handleChange={(v) =>
+                this.saveAutoVotekickConfig({ is_enabled: v })
+              }
+            />
           </Grid>
         </Grid>
 
@@ -567,15 +603,21 @@ class RconSettings extends React.Component {
         </Grid>
         <Grid
           container
-
-          className={`${classes.padding} ${classes.margin}`}
+          className={`${classes.padding} ${classes.margin} ${classes.root}`}
           alignContent="center"
           justify="center"
           alignItems="center"
-          className={classes.root}
         >
-          <Padlock label="broadcast" checked={cameraBroadcast} handleChange={v => this.saveCameraConfig({ broadcast: v })} />
-          <Padlock label="set welcome message" checked={cameraWelcome} handleChange={v => this.saveCameraConfig({ welcome: v })} />
+          <Padlock
+            label="broadcast"
+            checked={cameraBroadcast}
+            handleChange={(v) => this.saveCameraConfig({ broadcast: v })}
+          />
+          <Padlock
+            label="set welcome message"
+            checked={cameraWelcome}
+            handleChange={(v) => this.saveCameraConfig({ welcome: v })}
+          />
         </Grid>
         <Grid item className={classes.paddingTop} justify="center" xs={12}>
           <Typography variant="h5">Misc. options</Typography>
@@ -583,11 +625,10 @@ class RconSettings extends React.Component {
         <Grid
           item
           xs={12}
-          className={`${classes.padding} ${classes.margin}`}
+          className={`${classes.padding} ${classes.margin} ${classes.root}`}
           alignContent="center"
           justify="center"
           alignItems="center"
-          className={classes.root}
         >
           <Grid container justify="space-evenly">
             <Grid item>
@@ -610,11 +651,10 @@ class RconSettings extends React.Component {
         <Grid
           item
           xs={12}
-          className={`${classes.padding} ${classes.margin}`}
+          className={`${classes.padding} ${classes.margin} ${classes.root}`}
           alignContent="center"
           justify="center"
           alignItems="center"
-          className={classes.root}
         >
           <Button
             color="secondary"

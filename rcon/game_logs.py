@@ -5,17 +5,18 @@ import sys
 import datetime
 import os
 
+from sqlalchemy.sql.expression import false, true
+
 from rcon.extended_commands import Rcon
 from rcon.cache_utils import get_redis_client
 from rcon.utils import FixedLenList
 from rcon.settings import SERVER_INFO
 from rcon.commands import HLLServerError, CommandFailedError
-from rcon.player_history import get_player_profile, player_has_flag
-from sqlalchemy import desc
+from sqlalchemy import desc, and_, or_
+from rcon.player_history import get_player_profile, player_has_flag, add_player_to_blacklist
 from sqlalchemy.exc import IntegrityError, InvalidRequestError
 from rcon.models import LogLine, enter_session, PlayerSteamID, PlayerName
 import unicodedata
-
 from rcon.recorded_commands import RecordedRcon
 from rcon.config import get_config
 from rcon.discord import send_to_discord_audit
@@ -89,7 +90,7 @@ class LogLoop:
     def get_log_history_list():
         return FixedLenList(key=LogLoop.log_history_key, max_len=100000)
 
-    def run(self, loop_frequency_secs=5, cleanup_frequency_minutes=10):
+    def run(self, loop_frequency_secs=2, cleanup_frequency_minutes=10):
         since_min = 180
         self.cleanup()
         last_cleanup_time = datetime.datetime.now()
@@ -285,11 +286,17 @@ def is_player(search_str, player, exact_match=False):
 def is_action(action_filter, action, exact_match=False):
     if not action_filter or not action:
         return None
+    if not isinstance(action_filter, list):
+        action_filter = [action_filter]
 
-    if not exact_match:
-        return action.lower().startswith(action_filter.lower())
+    for filter_ in action_filter:
+        if not exact_match:
+            if action.lower().startswith(filter_.lower()):
+                return True
+        elif filter_ == action:
+            return True
 
-    return action_filter == action
+    return False
 
 
 def get_recent_logs(
@@ -310,6 +317,8 @@ def get_recent_logs(
     actions = set(
         ["CHAT[Allies]", "CHAT[Axis]", "CHAT", "VOTE STARTED", "VOTE COMPLETED"]
     )
+    if player_search and not isinstance(player_search, list):
+        player_search = [player_search]
     # flatten that shit
     for idx, l in enumerate(all_logs):
         if idx >= end - start:
@@ -320,14 +329,14 @@ def get_recent_logs(
             logger.debug("Stopping log read due to old timestamp at index %s", idx)
             break
         if player_search:
-            if is_player(player_search, l["player"], exact_player_match) or is_player(
-                player_search, l["player2"], exact_player_match
-            ):
-                if action_filter and not l["action"].lower().startswith(
-                    action_filter.lower()
+            for player_name_search in player_search:
+                if is_player(player_name_search, l["player"], exact_player_match) or is_player(
+                    player_name_search, l["player2"], exact_player_match
                 ):
-                    continue
-                logs.append(l)
+                    
+                    if action_filter and not is_action(action_filter, l["action"], exact_action):
+                        continue
+                    logs.append(l)
         elif action_filter and is_action(action_filter, l["action"], exact_action):
             logs.append(l)
         elif not player_search and not action_filter:
@@ -346,10 +355,11 @@ def get_recent_logs(
 
 
 def is_player_death(player, log):
-    return log['action'] == 'KILL' and player == log["player2"]
+    return log["action"] == "KILL" and player == log["player2"]
+
 
 def is_player_kill(player, log):
-    return log['action'] == 'KILL' and player == log["player"]
+    return log["action"] == "KILL" and player == log["player"]
 
 
 @on_tk
@@ -368,7 +378,7 @@ def auto_ban_if_tks_right_after_connection(rcon: RecordedRcon, log):
     except:
         logger.exception("Unable to get player profile")
     try:
-        vips = set(v['steam_id_64'] for v in rcon.get_vip_ids())
+        vips = set(v["steam_id_64"] for v in rcon.get_vip_ids())
     except:
         logger.exception("Unable to get VIPS")
 
@@ -388,18 +398,23 @@ def auto_ban_if_tks_right_after_connection(rcon: RecordedRcon, log):
     tk_tolerance_count = config.get("teamkill_tolerance_count", 1)
 
     if player_profile:
-        if whitelist_players.get('is_vip') and player_steam_id in vips:
+        if whitelist_players.get("is_vip") and player_steam_id in vips:
             logger.debug("Not checking player because he's VIP")
             return
 
-        if whitelist_players.get('has_at_least_n_sessions') and player_profile['sessions_count'] >= whitelist_players.get('has_at_least_n_sessions'):
-            logger.debug("Not checking player because he has %s sessions", player_profile['sessions_count'])
+        if whitelist_players.get("has_at_least_n_sessions") and player_profile[
+            "sessions_count"
+        ] >= whitelist_players.get("has_at_least_n_sessions"):
+            logger.debug(
+                "Not checking player because he has %s sessions",
+                player_profile["sessions_count"],
+            )
             return
 
-        flags = whitelist_players.get('has_flag', [])
+        flags = whitelist_players.get("has_flag", [])
         if not isinstance(flags, list):
             flags = [flags]
-        
+
         for f in flags:
             if player_has_flag(player_profile, f):
                 logger.debug("Not checking player because he has flag %s", f)
@@ -415,25 +430,39 @@ def auto_ban_if_tks_right_after_connection(rcon: RecordedRcon, log):
 
         if log["action"] == "CONNECTED":
             last_action_is_connect = log
-            last_connect_time = log["timestamp_ms"] 
+            last_connect_time = log["timestamp_ms"]
             kill_counter = 0
             death_counter = 0
             continue
-        if log["action"] == "TEAM KILL" and log['player'] == player_name and last_action_is_connect:
+        if (
+            log["action"] == "TEAM KILL"
+            and log["player"] == player_name
+            and last_action_is_connect
+        ):
             if excluded_weapons and log["weapon"].lower() in excluded_weapons:
                 logger.debug("Not counting TK as offense due to weapon exclusion")
                 continue
-            if log['timestamp_ms'] - last_connect_time > max_time_minute * 60 * 1000:
-                logger.debug("Not counting TK as offense due to elapsed time exclusion, last connection time %s, tk time %s", datetime.datetime.fromtimestamp(last_connect_time/1000), datetime.datetime.fromtimestamp(log["timestamp_ms"]))
+            if log["timestamp_ms"] - last_connect_time > max_time_minute * 60 * 1000:
+                logger.debug(
+                    "Not counting TK as offense due to elapsed time exclusion, last connection time %s, tk time %s",
+                    datetime.datetime.fromtimestamp(last_connect_time / 1000),
+                    datetime.datetime.fromtimestamp(log["timestamp_ms"]),
+                )
                 continue
-            logger.info("Banning player %s for TEAMKILL after connect %s", player_name, log)
+            
             tk_counter += 1
             if tk_counter > tk_tolerance_count:
-                rcon.do_perma_ban(
-                    player=player_name,
-                    reason=reason,
-                    by=author,
-                )
+                logger.info("Banning player %s for TEAMKILL after connect %s", player_name, log)
+                try:
+                    rcon.do_perma_ban(
+                        player=player_name,
+                        reason=reason,
+                        by=author,
+                    )
+                except:
+                    logger.exception("Can't perma, trying blacklist")
+                    add_player_to_blacklist(player_steam_id, reason, by=author)
+                logger.info("Banned player %s for TEAMKILL after connect %s", player_name, log)
                 send_to_discord_audit(discord_msg.format(player=player_name), by=author, webhookurl=webhook)
         elif is_player_death(player_name, log):
             death_counter += 1
@@ -443,3 +472,118 @@ def auto_ban_if_tks_right_after_connection(rcon: RecordedRcon, log):
             kill_counter += 1
             if kill_counter >= ignore_after_kill:
                 last_action_is_connect = False
+
+
+def get_historical_logs_records(
+    sess,
+    player_name=None,
+    action=None,
+    steam_id_64=None,
+    limit=1000,
+    from_=None,
+    till=None,
+    time_sort="desc",
+    exact_player_match=False,
+    exact_action=True,
+    server_filter=None,
+):
+    names = []
+    name_filters = []
+
+    q = sess.query(LogLine)
+    if action and not exact_action:
+        q = q.filter(LogLine.type.ilike(f"%{action}%"))
+    elif action and exact_action:
+        q = q.filter(LogLine.type == action)
+
+    time_filter = []
+    if from_:
+        time_filter.append(LogLine.event_time >= from_)
+
+    if till:
+        time_filter.append(LogLine.event_time <= till)
+
+    q = q.filter(and_(*time_filter))
+
+    if steam_id_64:
+        # Handle not found
+        player = (
+            sess.query(PlayerSteamID)
+            .filter(PlayerSteamID.steam_id_64 == steam_id_64)
+            .one_or_none()
+        )
+        id_ = player.id if player else 0
+        q = q.filter(
+            or_(LogLine.player1_steamid == id_, LogLine.player2_steamid == id_)
+        )
+
+    if player_name and not exact_player_match:
+        name_filters.extend(
+            [
+                LogLine.player1_name.ilike("%{}%".format(player_name)),
+                LogLine.player2_name.ilike("%{}%".format(player_name)),
+            ]
+        )
+    elif player_name and exact_player_match:
+        name_filters.extend(
+            [
+                LogLine.player1_name == player_name,
+                LogLine.player2_name == player_name,
+            ]
+        )
+
+    if name_filters:
+        q = q.filter(or_(*name_filters))
+
+    if server_filter:
+        q = q.filter(LogLine.server == server_filter)
+
+    if time_sort:
+        q = q.order_by(
+            LogLine.event_time.desc()
+            if time_sort == "desc"
+            else LogLine.event_time.asc()
+        ).limit(limit)
+
+    return q.all()
+
+
+def get_historical_logs(
+    player_name=None,
+    action=None,
+    steam_id_64=None,
+    limit=1000,
+    from_=None,
+    till=None,
+    time_sort="desc",
+    exact_player_match=False,
+    exact_action=True,
+    server_filter=None,
+    output=None
+):
+    with enter_session() as sess:
+        res = get_historical_logs_records(
+            sess,
+            player_name,
+            action,
+            steam_id_64,
+            limit,
+            from_,
+            till,
+            time_sort,
+            exact_player_match,
+            exact_action,
+            server_filter,
+        )
+        lines = []
+        for r in res:
+            r = r.to_dict()
+            if output != "CSV" and output != "csv":
+                r["event_time"] = r["event_time"].timestamp()
+            else:
+                del r["id"]
+                del r["version"]
+                del r["creation_time"]
+                del r["raw"]
+            lines.append(r)
+        return lines

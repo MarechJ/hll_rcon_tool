@@ -1,23 +1,15 @@
-import {
-  Avatar,
-  Grid,
-  Typography,
-  Link,
-  ListItem,
-  ListItemAvatar,
-  ListItemText,
-  IconButton,
-} from "@material-ui/core";
+import {Avatar, IconButton, Link, ListItem, ListItemAvatar, ListItemText, Typography,} from "@material-ui/core";
+import {Link as RouterLink} from 'react-router-dom';
 import React from "react";
-import { List, Map } from "immutable";
+import {List, Map} from "immutable";
 import Tooltip from "@material-ui/core/Tooltip";
 import FileCopyIcon from "@material-ui/icons/FileCopy";
 import AnnouncementIcon from "@material-ui/icons/Announcement";
 import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
 import KeyboardArrowUpIcon from "@material-ui/icons/KeyboardArrowUp";
 import KeyboardArrowDownIcon from "@material-ui/icons/KeyboardArrowDown";
-import { pure } from "recompose";
-import { getName } from "country-list";
+import {pure} from "recompose";
+import {getName} from "country-list";
 
 const getCountry = (country) => {
   if (country === "" || country === null) {
@@ -43,7 +35,7 @@ export const PlayerHeader = pure(({ classes, player }) => {
   const namesByMatch = player.get("names_by_match", null) ? player.get("names_by_match") : new List()
   const steamProfile = player.get('steaminfo') ? player.get("steaminfo").get("profile") : new Map()
   const avatarUrl = steamProfile ? steamProfile.get("avatar", null) : null
-  const country = player.get('steaminfo') ? player.get('steaminfo') .get("country", "") : ""
+  const country = player.get('steaminfo') ? player.get('steaminfo').get("country", "") : ""
 
   return (
     <ListItem alignItems="flex-start">
@@ -100,9 +92,9 @@ export const PlayerHeader = pure(({ classes, player }) => {
         }
         secondary={
           <Link
-            target="_blank"
             color="inherit"
-            href={`${process.env.REACT_APP_API_URL}player?steam_id_64=${player.get("steam_id_64")}`}
+            component={RouterLink}
+            to={`/player/${player.get("steam_id_64")}`}
           >
             {player.get("steam_id_64")}
           </Link>

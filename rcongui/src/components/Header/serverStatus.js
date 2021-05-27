@@ -1,17 +1,15 @@
 import React from "react";
 import "react-toastify/dist/ReactToastify.css";
 import Grid from "@material-ui/core/Grid";
-import { showResponse, get, handle_http_errors } from "../../utils/fetchUtils";
-import { toast } from "react-toastify";
+import {get, handle_http_errors, showResponse} from "../../utils/fetchUtils";
 
 import debounce from "lodash/debounce";
-import { useTheme } from "@material-ui/core/styles";
+import {useTheme} from "@material-ui/core/styles";
 import useMediaQuery from "@material-ui/core/useMediaQuery";
 import Menu from "@material-ui/core/Menu";
 import MenuItem from "@material-ui/core/MenuItem";
 import Link from "@material-ui/core/Link";
-import { Link as RouterLink } from "react-router-dom";
-import { fromJS, List } from "immutable";
+import {fromJS, List} from "immutable";
 
 const Status = ({ classes, name, nbPlayers, map, serverList }) => {
   const theme = useTheme();
@@ -100,7 +98,7 @@ class ServerStatus extends React.Component {
       ),
     });
     this.setState({
-      interval: setInterval(
+      intervalLoadList: setInterval(
         this.debouncedLoadList,
         this.state.listRefreshIntervalSec * 1000
       ),

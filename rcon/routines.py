@@ -12,6 +12,9 @@ logger = logging.getLogger(__name__)
 def toggle_votekick(rcon: RecordedRcon):
     config = AutoVoteKickConfig()
 
+    if not config.is_enabled():
+        return
+
     condition_type = config.get_condition_type().upper()
     min_online = config.get_min_online_mods()
     min_ingame = config.get_min_ingame_mods()
