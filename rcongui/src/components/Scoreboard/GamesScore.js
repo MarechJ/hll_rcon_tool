@@ -6,9 +6,13 @@ import {
   GridListTile,
   GridListTileBar,
   IconButton,
+  Button,
+  Paper
 } from "@material-ui/core";
 import useMediaQuery from "@material-ui/core/useMediaQuery";
 import VisibilityIcon from "@material-ui/icons/Visibility";
+import LinkIcon from '@material-ui/icons/Link';
+import CheckIcon from '@material-ui/icons/Check';
 import React from "react";
 import { get, handle_http_errors, showResponse } from "../../utils/fetchUtils";
 import { List as iList, Map, fromJS, List } from "immutable";
@@ -17,6 +21,7 @@ import { useTheme } from "@material-ui/core/styles";
 import Scores from "./Scores";
 import map_to_pict from "./utils";
 import { fade } from '@material-ui/core/styles/colorManipulator';
+import { CopyToClipboard } from "react-copy-to-clipboard";
 
 const useStyles = makeStyles((theme) => ({
   singleLine: {
@@ -108,6 +113,25 @@ const GamesScore = ({ classes }) => {
     ? moment.unix(scores.get("snapshot_timestamp")).format()
     : "N/A";
 
+  const hashString = window.location.hash;
+  const queryString = hashString.substr(hashString.indexOf('?')+1);
+  const queryParams = queryString.split('&').reduce(function (res, item) {
+    var parts = item.split('=');
+    res[parts[0]] = parts[1];
+    return res;
+  }, {});
+
+  const getShareableLink = () => {
+    return window.location.href.split('?')[0] + `?map_id=${currentMapId}`;
+  };
+  const [hasCopiedLink, setHasCopiedLink] = React.useState(false);
+  const onCopyLink = () => {
+    setHasCopiedLink(true);
+    setTimeout(() => {
+      setHasCopiedLink(false);
+    }, 1000);
+  };
+  
   moment.relativeTimeThreshold("m", 120);
   const getData = () => {
     setIsLoading(true);
@@ -135,6 +159,11 @@ const GamesScore = ({ classes }) => {
   };
 
   React.useEffect(() => {
+    if ("map_id" in queryParams) {
+      const currentMapIdFromURL = parseInt(queryParams["map_id"]);
+      setCurrentMapId(currentMapIdFromURL);
+      console.log(`Using ID ${currentMapIdFromURL} from URL`);
+    }
     if (!currentMapId) {
       return;
     }
@@ -230,7 +259,11 @@ const GamesScore = ({ classes }) => {
                       title={`${start.format("dddd, MMM Do ")}`}
                       subtitle={`Started at: ${start.format("HH:mm")}`}
                       actionIcon={isSelected(
-                        "",
+                        <IconButton color="inherit">
+                          <CopyToClipboard text={getShareableLink()} onCopy={onCopyLink}>
+                            {hasCopiedLink ? <CheckIcon color="inherit" /> : <LinkIcon color="inherit" />}
+                          </CopyToClipboard>
+                        </IconButton>,
                         <IconButton
                           color="inherit"
                           onClick={() => setCurrentMapId(m.get("id"))}
