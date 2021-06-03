@@ -205,8 +205,8 @@ def inject_steam_id_64(func):
 
 
 @on_connected
-def handle_on_connect(rcon, struct_log, steam_id_64):
-    steam_id_64 = rcon.get_player_info.get_cached_value_for(name)
+def handle_on_connect(rcon, struct_log):
+    steam_id_64 = rcon.get_player_info.get_cached_value_for(struct_log["player"])
 
     try:
         rcon.get_player_info.clear_for(struct_log["player"])
