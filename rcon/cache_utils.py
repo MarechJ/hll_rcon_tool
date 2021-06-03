@@ -81,6 +81,9 @@ class RedisCached:
 
         return val
 
+    def get_cached_value_for(self, *args, **kwargs):
+        return self.red.get(self.key(*args, **kwargs))
+
     def clear_for(self, *args, **kwargs):
         key = self.key(*args, **kwargs)
         if key:
@@ -134,6 +137,8 @@ def ttl_cache(ttl, *args, is_method=True, cache_falsy=True, **kwargs):
 
         functools.update_wrapper(wrapper, func)
         wrapper.cache_clear = cached_func.clear_all
+        wrapper.get_cached_value_for = cached_func.get_cached_value_for
+        wrapper.clear_for = cached_func.clear_for
         return wrapper
     return decorator
 

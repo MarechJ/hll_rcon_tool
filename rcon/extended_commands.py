@@ -55,7 +55,7 @@ class Rcon(ServerCtl):
 
         return player_dict if as_dict else player_list
 
-    @ttl_cache(ttl=60 * 60 * 2, cache_falsy=False)
+    @ttl_cache(ttl=60 * 60 * 24, cache_falsy=False)
     def get_player_info(self, player):
         try:
             try:
