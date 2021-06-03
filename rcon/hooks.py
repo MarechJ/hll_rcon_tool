@@ -1,6 +1,7 @@
 import logging
 import os
 from functools import wraps
+from rcon.commands import CommandFailedError
 
 from discord_webhook import DiscordEmbed
 
@@ -50,7 +51,7 @@ def count_vote(rcon: RecordedRcon, struct_log):
                 config.get_votemap_thank_you_text().format(
                     player_name=struct_log["player"], map_name=map_name
                 ),
-                5
+                5,
             )
         except Exception:
             logger.warning("Unable to output thank you message")
@@ -204,8 +205,27 @@ def inject_steam_id_64(func):
 
 
 @on_connected
-@inject_steam_id_64
 def handle_on_connect(rcon, struct_log, steam_id_64):
+    steam_id_64 = rcon.get_player_info.get_cached_value_for(name)
+
+    try:
+        rcon.get_player_info.clear_for(struct_log["player"])
+    except Exception:
+        logger.exception("Unable to clear cache for %s", steam_id_64)
+    try:
+        info = rcon.get_player_info(struct_log["player"])
+        steam_id_64 = info.get("steam_id_64")
+    except (CommandFailedError, KeyError):
+        if not steam_id_64:
+            logger.exception("Unable to get player steam ID for %s", struct_log)
+            raise
+        else:
+            logger.error(
+                "Unable to get player steam ID for %s, falling back to cached value %s",
+                struct_log,
+                steam_id_64,
+            )
+
     timestamp = int(struct_log["timestamp_ms"]) / 1000
     save_player(
         struct_log["player"],
@@ -238,8 +258,8 @@ def update_player_steaminfo_on_connect(rcon, struct_log, steam_id_64):
             "Can't update steam info, no steam profile returned for %s",
             struct_log.get("player"),
         )
-        return 
-        
+        return
+
     logger.info("Updating steam profile for player %s", struct_log["player"])
     with enter_session() as sess:
         player = _get_set_player(
