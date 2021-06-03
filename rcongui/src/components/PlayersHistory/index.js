@@ -557,7 +557,7 @@ class PlayersHistory extends React.Component {
             onBlacklist={this.onBlacklist}
             onUnBlacklist={this.onUnBlacklist}
             onDeleteFlag={this.deleteFlag}
-            onRemoveFromWatchList={this.removeFromWatchList}
+            onRemoveFromWatchList={this.onRemoveFromWatchList}
             vips={vips}
             onflag={this.setDoFlag}
             onUnban={this.onUnban}

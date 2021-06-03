@@ -479,7 +479,7 @@ class PlayerStats(Base):
 class PlayerComment(Base):
     __tablename__ = "player_comments"
     id = Column(Integer, primary_key=True)
-    creation_time = Column(TIMESTAMP, default=datetime.utcnow())
+    creation_time = Column(TIMESTAMP, default=datetime.utcnow)
     by = Column(String)
     playersteamid_id = Column(
         Integer,

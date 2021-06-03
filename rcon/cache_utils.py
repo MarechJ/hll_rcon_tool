@@ -81,6 +81,9 @@ class RedisCached:
 
         return val
 
+    def get_cached_value_for(self, *args, **kwargs):
+        return self.red.get(self.key(*args, **kwargs))
+
     def clear_for(self, *args, **kwargs):
         key = self.key(*args, **kwargs)
         if key:

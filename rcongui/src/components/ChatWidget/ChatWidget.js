@@ -77,10 +77,6 @@ const ChatContent = ({ data, handleMessageSend }) => {
           </Grid>
         );
       })}
-
-      <Grid item>
-        <AlwaysScrollToBottom />
-      </Grid>
       </Grid>
         <Grid
           container
