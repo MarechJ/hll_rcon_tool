@@ -6,7 +6,6 @@ import {
   GridListTile,
   GridListTileBar,
   IconButton,
-  Button,
   Paper
 } from "@material-ui/core";
 import useMediaQuery from "@material-ui/core/useMediaQuery";
@@ -87,6 +86,9 @@ const useStyles = makeStyles((theme) => ({
     height: 38,
     width: 38,
   },
+  black: {
+    backgroundColor: theme.palette.primary.main,
+  },
 }));
 
 const GamesScore = ({ classes }) => {
@@ -113,17 +115,19 @@ const GamesScore = ({ classes }) => {
     ? moment.unix(scores.get("snapshot_timestamp")).format()
     : "N/A";
 
-  const hashString = window.location.hash;
-  const queryString = hashString.substr(hashString.indexOf('?')+1);
-  const queryParams = queryString.split('&').reduce(function (res, item) {
-    var parts = item.split('=');
-    res[parts[0]] = parts[1];
-    return res;
-  }, {});
-
-  const getShareableLink = () => {
-    return window.location.href.split('?')[0] + `?map_id=${currentMapId}`;
+  const queryParams = new URLSearchParams(window.location.search)
+  const doSelectNewMap = (map_id) => {
+    if (queryParams.has('map_id')) {
+      queryParams.set('map_id', map_id);
+      window.location.replace(window.location.origin + window.location.pathname + '?' + queryParams.toString() + window.location.hash);
+    } else {
+      setCurrentMapId(map_id);
+    };
   };
+  const getShareableLink = () => {
+    return window.location.origin + window.location.pathname + `?map_id=${currentMapId}` + window.location.hash;
+  };
+
   const [hasCopiedLink, setHasCopiedLink] = React.useState(false);
   const onCopyLink = () => {
     setHasCopiedLink(true);
@@ -159,8 +163,8 @@ const GamesScore = ({ classes }) => {
   };
 
   React.useEffect(() => {
-    if ("map_id" in queryParams) {
-      const currentMapIdFromURL = parseInt(queryParams["map_id"]);
+    if (queryParams.has("map_id")) {
+      const currentMapIdFromURL = parseInt(queryParams.get("map_id"));
       setCurrentMapId(currentMapIdFromURL);
       console.log(`Using ID ${currentMapIdFromURL} from URL`);
     }
@@ -237,7 +241,7 @@ const GamesScore = ({ classes }) => {
                 return (
                   <GridListTile
                     className={styles.clickable}
-                    onClick={() => setCurrentMapId(m.get("id"))}
+                    onClick={() => doSelectNewMap(m.get("id"))}
                     key={`${m.get("name")}${m.get("start")}${m.get("end")}`}
                   >
                     <img alt="Map" src={map_to_pict[m.get("just_name")]} />
@@ -266,7 +270,7 @@ const GamesScore = ({ classes }) => {
                         </IconButton>,
                         <IconButton
                           color="inherit"
-                          onClick={() => setCurrentMapId(m.get("id"))}
+                          onClick={() => doSelectNewMap(m.get("id"))}
                         >
                           <VisibilityIcon color="inherit" />
                         </IconButton>
@@ -278,6 +282,24 @@ const GamesScore = ({ classes }) => {
             </GridList>
           </div>
         </Grid>
+        {currentMapId ? (
+          <Grid item xs={6} justify="center" className={`${styles.black}`}>
+            <Grid container justify="center" alignItems="center">
+              <Grid item xs={11} zeroMinWidth>
+                <Paper>
+                  <Typography variant="h5" noWrap>{getShareableLink()}</Typography>
+                </Paper>
+              </Grid>
+              <Grid item xs={1}>
+                <IconButton color="inherit">
+                  <CopyToClipboard text={getShareableLink()} onCopy={onCopyLink}>
+                    {hasCopiedLink ? <CheckIcon color="secondary" /> : <LinkIcon color="secondary" />}
+                  </CopyToClipboard>
+                </IconButton>
+              </Grid>
+            </Grid>
+          </Grid>
+        ) : ""}
       </Grid>
       <Grid container spacing={2} justify="center" className={classes.padding}>
         <Scores
