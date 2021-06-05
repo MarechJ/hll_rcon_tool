@@ -55,6 +55,7 @@ class RedisCached:
         return self.function
 
     def __call__(self, *args, **kwargs):
+        
         val = None
         key = self.key(*args, **kwargs)
         try:
@@ -82,10 +83,18 @@ class RedisCached:
         return val
 
     def get_cached_value_for(self, *args, **kwargs):
-        return self.red.get(self.key(*args, **kwargs))
+        if self.is_method:
+            key = self.key(None, *args, **kwargs)
+        else:
+            key = self.key(*args, **kwargs)
+        return self.red.get(key)
 
     def clear_for(self, *args, **kwargs):
-        key = self.key(*args, **kwargs)
+        if self.is_method:
+            key = self.key(None, *args, **kwargs)
+        else:
+            key = self.key(*args, **kwargs)
+        logger.debug("Invalidating cache for %s", key)
         if key:
             self.red.delete(key)
 
@@ -139,6 +148,7 @@ def ttl_cache(ttl, *args, is_method=True, cache_falsy=True, **kwargs):
         wrapper.cache_clear = cached_func.clear_all
         wrapper.get_cached_value_for = cached_func.get_cached_value_for
         wrapper.clear_for = cached_func.clear_for
+        wrapper.cache = cached_func
         return wrapper
     return decorator
 

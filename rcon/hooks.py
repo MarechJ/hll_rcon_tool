@@ -209,7 +209,12 @@ def handle_on_connect(rcon, struct_log):
     steam_id_64 = rcon.get_player_info.get_cached_value_for(struct_log["player"])
 
     try:
+        if type(rcon) == RecordedRcon:
+            rcon.invalidate_player_list_cache()
+        else:
+            rcon.get_player.cache_clear()
         rcon.get_player_info.clear_for(struct_log["player"])
+        rcon.get_player_info.clear_for(player=struct_log["player"])
     except Exception:
         logger.exception("Unable to clear cache for %s", steam_id_64)
     try:
