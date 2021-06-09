@@ -224,7 +224,7 @@ To the version you want (here we use v1.9)
 - After a sometime without being used the API will lose the connection to the game server so when you open the GUI the first time you might see an error that it can't fetch the list of players. However this will recover on its own just refresh or wait til the next auto refresh
 - The game server in rare case fails to return the steam ID of a player. 
 - When logs are completely empty the game server will fail to respond to the request causing an error to show in the API/GUI
-- The RCON api server truncates the name of players to a maximum of 20 charcheters even though, up to 32 characters are displayed in game. Bottom line you don't always see the full name
+- The RCON api server truncates the name of players to a maximum of 20 characters even though, up to 32 characters are displayed in game. Bottom line you don't always see the full name.
 
 
 ## How to use
