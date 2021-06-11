@@ -128,7 +128,7 @@ class ReasonDialog extends React.Component {
                 label="Reason"
                 variant="outlined"
                 margin="dense"
-                helperText="The message that will be displayed to the player. A message is mandatory"
+                helperText="The message that will be displayed when the `Watchlist` is triggered. A message is mandatory."
               />
             )}
           />
@@ -143,7 +143,7 @@ class ReasonDialog extends React.Component {
             label="Comment"
             variant="outlined"
             margin="dense"
-            helperText="A comment that will NOT be displayed to the player"
+            helperText="Extra info attached to the players profile regarding the `Watchlist`."
           />
           
           {open.actionType === "temp_ban" ? (
