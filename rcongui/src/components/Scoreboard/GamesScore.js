@@ -21,6 +21,7 @@ import Scores from "./Scores";
 import map_to_pict from "./utils";
 import { fade } from '@material-ui/core/styles/colorManipulator';
 import { CopyToClipboard } from "react-copy-to-clipboard";
+import { useParams } from "react-router-dom";
 
 const useStyles = makeStyles((theme) => ({
   singleLine: {
@@ -111,21 +112,19 @@ const GamesScore = ({ classes }) => {
   const durationToHour = (val) =>
     new Date(val * 1000).toISOString().substr(11, 5);
 
+  let { slug } = useParams();
+
   const lastRefresh = scores.get("snapshot_timestamp")
     ? moment.unix(scores.get("snapshot_timestamp")).format()
     : "N/A";
 
-  const queryParams = new URLSearchParams(window.location.search)
-  const doSelectNewMap = (map_id) => {
-    if (queryParams.has('map_id')) {
-      queryParams.set('map_id', map_id);
-      window.location.replace(window.location.origin + window.location.pathname + '?' + queryParams.toString() + window.location.hash);
-    } else {
-      setCurrentMapId(map_id);
-    };
-  };
   const getShareableLink = () => {
-    return window.location.origin + window.location.pathname + `?map_id=${currentMapId}` + window.location.hash;
+    return window.location.href;
+  };
+  const doSelectMap = (map_id) => {
+    window.location.hash = `#/gamescoreboard/${map_id}`;
+    setCurrentMapId(map_id)
+    console.log(`Change to ${map_id}`);
   };
 
   const [hasCopiedLink, setHasCopiedLink] = React.useState(false);
@@ -163,14 +162,16 @@ const GamesScore = ({ classes }) => {
   };
 
   React.useEffect(() => {
-    if (queryParams.has("map_id")) {
-      const currentMapIdFromURL = parseInt(queryParams.get("map_id"));
-      setCurrentMapId(currentMapIdFromURL);
-      console.log(`Using ID ${currentMapIdFromURL} from URL`);
-    }
     if (!currentMapId) {
       return;
     }
+    if (!parseInt(slug)) {
+      window.location.hash = `#/gamescoreboard/${currentMapId}`
+      console.log(`No ID supplied, redirecting to ${window.location.hash}`);
+    } else {
+      setCurrentMapId(parseInt(slug));
+    };
+
     get(`get_map_scoreboard?map_id=${currentMapId}`)
       .then((res) => showResponse(res, "get_map_scoreboard", false))
       .then((data) =>
@@ -241,7 +242,7 @@ const GamesScore = ({ classes }) => {
                 return (
                   <GridListTile
                     className={styles.clickable}
-                    onClick={() => doSelectNewMap(m.get("id"))}
+                    onClick={() => doSelectMap(m.get("id"))}
                     key={`${m.get("name")}${m.get("start")}${m.get("end")}`}
                   >
                     <img alt="Map" src={map_to_pict[m.get("just_name")]} />
@@ -270,7 +271,7 @@ const GamesScore = ({ classes }) => {
                         </IconButton>,
                         <IconButton
                           color="inherit"
-                          onClick={() => doSelectNewMap(m.get("id"))}
+                          onClick={() => doSelectMap(m.get("id"))}
                         >
                           <VisibilityIcon color="inherit" />
                         </IconButton>

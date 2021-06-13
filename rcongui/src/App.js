@@ -332,6 +332,9 @@ function App() {
             <Route path={process.env.REACT_APP_PUBLIC_BUILD ? "/" : "/livescore"} default={process.env.REACT_APP_PUBLIC_BUILD} exact>
               <LiveScore classes={classes} />
             </Route>
+            <Route path="/gamescoreboard/:slug">
+              <GamesScore classes={classes} />
+            </Route>
             <Route path="/gamescoreboard">
               <GamesScore classes={classes} />
             </Route>
