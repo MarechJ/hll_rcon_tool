@@ -283,24 +283,6 @@ const GamesScore = ({ classes }) => {
             </GridList>
           </div>
         </Grid>
-        {currentMapId ? (
-          <Grid item xs={6} justify="center" className={`${styles.black}`}>
-            <Grid container justify="center" alignItems="center">
-              <Grid item xs={11} zeroMinWidth>
-                <Paper>
-                  <Typography variant="h5" noWrap>{getShareableLink()}</Typography>
-                </Paper>
-              </Grid>
-              <Grid item xs={1}>
-                <IconButton color="inherit">
-                  <CopyToClipboard text={getShareableLink()} onCopy={onCopyLink}>
-                    {hasCopiedLink ? <CheckIcon color="secondary" /> : <LinkIcon color="secondary" />}
-                  </CopyToClipboard>
-                </IconButton>
-              </Grid>
-            </Grid>
-          </Grid>
-        ) : ""}
       </Grid>
       <Grid container spacing={2} justify="center" className={classes.padding}>
         <Scores
