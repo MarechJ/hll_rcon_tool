@@ -1,4 +1,5 @@
-if [ "$ENV_SERVER_NUMBER" == '1' ]
+if [ "$SERVER_NUMBER" == '1' ]
 then
-/usr/sbin/logrotate /config/logrotate.conf
+chown root:root /config/logrotate.conf
+/usr/sbin/logrotate -f /config/logrotate.conf
 fi 

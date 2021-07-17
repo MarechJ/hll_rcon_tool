@@ -12,7 +12,7 @@ from rcon.recorded_commands import RecordedRcon
 from rcon.settings import SERVER_INFO
 from rcon.game_logs import get_recent_logs, get_historical_logs_records
 from rcon.cache_utils import ttl_cache, get_redis_client
-from rcon.player_history import _get_profiles, get_player_profile_by_ids
+from rcon.player_history import _get_profiles, get_player_profile_by_steam_ids
 from rcon.config import get_config
 
 logger = logging.getLogger(__name__)
@@ -317,21 +317,29 @@ class LiveStats(BaseStats):
 
 
 class TimeWindowStats(BaseStats):
-    def _set_start_end_times(self, player, players_times, log, from_):
+    def _set_start_end_times(self, player, players_times, log, from_, offset_warmup_time_seconds=120):
         if not player:
             return
+        # A CONNECT means the begining of a session for the player
         if log["action"] == "CONNECTED":
             players_times.setdefault(player, {"start": [], "end": []})["start"].append(
-                log["event_time"]
+                # Event time is a key only avaible in the dict coming from the DB and is already a datetime
+                log.get("event_time", datetime.datetime.fromtimestamp(log["timestamp_ms"] // 1000))
             )
+        # if the player is not already in the times record we add the start of the stats window as his session start time
+        # we didn't see a CONNECTED before, so it means that the player was here before the current window.
+        # For those we remove the game warmup time to have a more accurate kill / min
         elif player not in players_times and log["action"] != "DISCONNECTED":
             players_times.setdefault(player, {"start": [], "end": []})["start"].append(
-                from_
+                from_ - datetime.timedelta(seconds=offset_warmup_time_seconds)
             )
+        # if the player was already in the time record and we see a disconnect we log it as the end of his session
         if player in players_times and log["action"] == "DISCONNECTED":
             players_times.setdefault(player, {"start": [], "end": []})["end"].append(
-                log["event_time"]
+                log.get("event_time", datetime.datetime.fromtimestamp(log["timestamp_ms"] // 1000))
             )
+        # if we had a player that disconnected but was not in the time record it means he did have any kill / death or other actions like chat, vote
+        # This player won't have a session time (most likely and AFK one)
 
     def _get_player_session_time(self, player):
         # TODO: Make safe
@@ -350,6 +358,78 @@ class TimeWindowStats(BaseStats):
             )
             return 0
 
+    def _get_players_stats_for_logs(self, logs, from_, until, offset_warmup_time_seconds=120, offset_cooldown_time_seconds=100):
+        indexed_logs = {}
+        players = set()
+        players_times = {}
+
+        for log in logs:
+            # player is the player name
+            if player := log.get("player"):
+                # Check if this log line in a disconnect / connect and stores it it is
+                self._set_start_end_times(player, players_times, log, from_)
+                # index logs by player names, so that you can fetch all logs for a given player easily
+                indexed_logs.setdefault(player, []).append(log)
+                
+                # Create a list of dict for players, for backward compatibility with the parent class that holds the computation logic
+                if steamid := log.get("steam_id_64_1"):
+                    players.add((player, steamid))
+
+            if player2 := log.get("player2"):
+                self._set_start_end_times(player2, players_times, log, from_)
+                indexed_logs.setdefault(player2, []).append(log)
+                
+                if steamid2 := log.get("steam_id_64_2"):
+                    players.add((player2, steamid2))
+
+        # Convert the unique set of players into a list of dict for compatibility with parent class
+        players = [dict(name=player_name, steam_id_64=player_steamid) for player_name, player_steamid in players]
+        # Here we massage the session times for a player. 1 session should be a pair of times a start and an end
+        for player, times in players_times.items():
+            starts = times["start"]
+            ends = times["end"]
+            times["total"] = 0
+            # This is an error check, it should never happend to not have a start time
+            # If the player connected prior to the time window we're computing the start for, then the start time should be the start of that window
+            if len(starts) == 0:
+                logger.error("No start time for  %s - %s", player, times)
+            # If there's 1 start more that there are ends, it means that the player did not leave the game, and therefore we add the end of the session as the end of the window we're computing the stats for
+            # We discount the cooldown time at the end of the game to get a more accurate kill / min
+            elif len(starts) == len(ends) + 1:
+                logger.debug("Adding end time to end of range for %s", player)
+                ends.append(until - datetime.timedelta(seconds=offset_cooldown_time_seconds))
+            # If starts and ends don't match something's probably wrong the the code
+            if len(starts) != len(ends):
+                logger.error("Sessions time don't match for %s - %s", player, times)
+                continue
+
+            # We loop over the pairs of start and ends (chronologically in the order we encountered them)
+            # and we compute the total play time of the player for the window we're looking at
+            for pair in zip(starts, ends):
+                start, end = pair
+                time = end - start
+                times["total"] += time.total_seconds()
+
+        self.times = players_times
+
+        logger.debug("Indexing profiles by id")
+        # we create and hashmap where the key is the steam ID of a player and the value his DB profile.
+        # The DB rows are eagerly loaded (at least the ones we need later on) if you need more rows make sure to eager load them as well otherwise it will add significan slowness
+        # The profiles are attached to the current DB session
+        with enter_session() as sess:
+            profiles_by_id = {
+                profile.steam_id_64: profile
+                for profile in get_player_profile_by_steam_ids(sess, [p['steam_id_64'] for p in players])
+            }
+
+            logger.debug("Computing stats")
+            # we delegate the stats computation to the parent class
+            return self.get_stats_by_player(
+                indexed_logs=indexed_logs,
+                players=players,
+                profiles_by_id=profiles_by_id,
+            )
+
     def get_players_stats_at_time(self, from_, until, server_number=None):
         server_number = server_number or os.getenv("SERVER_NUMBER")
         with enter_session() as sess:
@@ -362,76 +442,13 @@ class TimeWindowStats(BaseStats):
                 server_filter=server_number,
                 limit=99999999,
             )
+            
+            return self._get_players_stats_for_logs(self, [row.compatible_dict() for row in rows], from_, until)
 
-            indexed_logs = {}
-            players = []
-            players_times = {}
-            ids = set()
-            for row in rows:
-                # Turn the log in a datastructure that matches the non-DB logs (the live ones stored in redis)
-                log = row.compatible_dict()
-                # player is the player name
-                if player := log.get("player"):
-                    # Check if this log line in a disconnect / connect and stores it it is
-                    self._set_start_end_times(player, players_times, log, from_)
-                    # index logs by player names, so that you can fetch all logs for a given player easily
-                    indexed_logs.setdefault(player, []).append(log)
-                    # We store the database primary key of that player so we can fetch their profiles later
-                    ids.add(log.get("player1_id"))
-                    # Create a list of dict for players, for backward compatibility with the parent class that holds the computation logic
-                    if steamid := log.get("steam_id_64_1"):
-                        players.append(dict(name=player, steam_id_64=steamid))
-
-                if player2 := log.get("player2"):
-                    self._set_start_end_times(player2, players_times, log, from_)
-                    indexed_logs.setdefault(player2, []).append(log)
-                    ids.add(log.get("player2_id"))
-                    if steamid2 := log.get("steam_id_64_2"):
-                        players.append(dict(name=player2, steam_id_64=steamid2))
-
-            # Here we massage the session times for a player. 1 session should be a pair of times a start and an end
-            for player, times in players_times.items():
-                starts = times["start"]
-                ends = times["end"]
-                times["total"] = 0
-                # This is an error check, it should never happend to not have a start time
-                # If the player connected prior to the time window we're computing the start for, then the start time should be the start of that window
-                if len(starts) == 0:
-                    logger.error("No start time for  %s - %s", player, times)
-                # If there's 1 start more that there are ends, it means that the player did not leave the game, and therefore we add the end of the session as the end of the window we're computing the stats for
-                elif len(starts) == len(ends) + 1:
-                    logger.debug("Adding end time to end of range for %s", player)
-                    ends.append(until)
-                # If starts and ends don't match something's probably wrong the the code
-                if len(starts) != len(ends):
-                    logger.error("Sessions time don't match for %s - %s", player, times)
-                    continue
-
-                # We loop over the pairs of start and ends (chronologically in the order we encountered them)
-                # and we compute the total play time of the player for the window we're looking at
-                for pair in zip(starts, ends):
-                    start, end = pair
-                    time = end - start
-                    times["total"] += time.total_seconds()
-
-            self.times = players_times
-
-            logger.debug("Indexing profiles by id")
-            # we create and hashmap where the key is the steam ID of a player and the value his DB profile.
-            # The DB rows are eagerly loaded (at least the ones we need later on) if you need more rows make sure to eager load them as well otherwise it will add significan slowness
-            # The profiles are attached to the current DB session
-            profiles_by_id = {
-                profile.steam_id_64: profile
-                for profile in get_player_profile_by_ids(sess, ids)
-            }
-
-            logger.debug("Computing stats")
-            # we delegate the stats computation to the parent class
-            return self.get_stats_by_player(
-                indexed_logs=indexed_logs,
-                players=players,
-                profiles_by_id=profiles_by_id,
-            )
+    def get_players_stats_from_time(self, from_timestamp):
+        logs = get_recent_logs(min_timestamp=from_timestamp)
+        print(logs)
+        return self._get_players_stats_for_logs(logs.get("logs"), datetime.datetime.utcfromtimestamp(from_timestamp), datetime.datetime.utcnow(), offset_cooldown_time_seconds=0)
 
 
 def live_stats_loop():
@@ -453,11 +470,9 @@ if __name__ == "__main__":
     from dateutil import tz
 
     # pprint(LiveStats().get_current_players_stats())
-
     pprint(
-        TimeWindowStats().get_players_stats_at_time(
-            datetime.datetime(2021, 3, 28, 16, 30, 44, 793000),
-            datetime.datetime(2021, 3, 28, 17, 30, 44, 793000),
+        TimeWindowStats().get_players_stats_from_time(
+            datetime.datetime(2021, 7, 16, 23, 30, 44, 793000).timestamp()
         )
     )
 

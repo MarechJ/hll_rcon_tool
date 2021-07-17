@@ -264,7 +264,6 @@ class DefaultMethods(enum.Enum):
     random_suggestions = "random_from_suggestions"
     random_all_maps = "random_from_all_maps"
 
-
 class VoteMapConfig:
     def __init__(self):
         server_number = os.getenv("SERVER_NUMBER", 0)
@@ -406,6 +405,39 @@ class VoteMapConfig:
             "No votes recorded yet",
         )
 
+
+class BaseConfig:
+    def __init__(self):
+        self.server_number = os.getenv("SERVER_NUMBER", 0)
+
+    def prefix(self, config_key_name, namespace=None):
+        namespace = namespace or self.__class__.__name__
+        return f'{self.server_number}_{namespace}_{config_key_name}'
+
+    def auto_generate_attr(self, fields, namespace=None):
+        for field in fields:
+            getter_name = f'get_{field.lower()}'
+            setter_name = f'set_{field.lower()}'
+            # Do not override existing methods
+            if not getter_name in self.__dict__:
+                self.__setattr__(getter_name, lambda: get_user_config(self.prefix(field, namespace)))
+            if not setter_name in self.__dict__:
+                self.__setattr__(setter_name, lambda v: set_user_config(self.prefix(field, namespace), v))
+                
+class ZombieConfig:
+    def __init__(self):
+        server_number = os.getenv("SERVER_NUMBER", 0)
+        self.ZOMBIE_ENABLED = f'{server_number}_ZOMBIE_ENABLED'
+        self.ZOMBIE_SIDE = f'{server_number}_ZOMBIE_SIDE'
+        self.ZOMBIE_ALLOWED_WEAPONS = f'{server_number}_ZOMBIE_ALLOWED_WEAPONS'
+        self.ZOMBIE_HUMAN_ALLOWED_WEAPONS = f'{server_number}_ZOMBIE_HUMAN_ALLOWED_WEAPONS'
+        self.ZOMBIE_WEAPON_PUNISHMENT = f'{server_number}_ZOMBIE_WEAPON_PUNISHMENT'
+        self.ZOMBIE_HUMAN_NB_LIFE = f'{server_number}_ZOMBIE_HUMAN_NB_LIFE'
+        self.ZOMBIE_NB_LIFE = f'{server_number}_ZOMBIE_NB_LIFE'
+        self.ZOMBIE_ON_HUMAN_PERMA_DEATH = f'{server_number}_ZOMBIE_ON_HUMAN_PERMA_DEATH'
+        self.ZOMBIE_ON_ZOMBIE_PERMA_DEATH = f'{server_number}_ZOMBIE_ON_ZOMBIE_PERMA_DEATH'
+
+    
 
 def seed_default_config():
     with enter_session() as sess:
