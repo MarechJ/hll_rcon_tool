@@ -90,6 +90,8 @@ def public_info(request):
             **status,
             vote_status=vote_status,
             next_map=next_map,
+            public_stats_port=os.getenv('PUBLIC_STATS_PORT', "Not defined"),
+            public_stats_port_https=os.getenv('PUBLIC_STATS_PORT_HTTPS', "Not defined")
         ),
         failed=False,
         command="public_info",

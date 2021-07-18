@@ -20,6 +20,7 @@ import Scores from "./Scores";
 import map_to_pict from "./utils";
 import { fade } from "@material-ui/core/styles/colorManipulator";
 import { Link as RouterLink } from "react-router-dom";
+import { Https } from "@material-ui/icons";
 
 const useStyles = makeStyles((theme) => ({
   padRight: {
@@ -188,10 +189,14 @@ const LiveScore = ({ classes, endpoint, explainText, title }) => {
           xs={12}
           className={`${classes.doublePadding} ${styles.transparentPaper}`}
         >
+          {process.env.REACT_APP_PUBLIC_BUILD ? 
           <Typography color="secondary" variant="h4">
             {serverState.get("name")}
-          </Typography>
+          </Typography> : 
+          <Link href={`http://${window.location.hostname}:${serverState.get("public_stats_port")}`} target="_blank">Public version on port {serverState.get("public_stats_port")} - https: {serverState.get("public_stats_port_https")}</Link>
+          }
         </Grid>
+        {process.env.REACT_APP_PUBLIC_BUILD ? 
         <Grid xs={12} md={10} lg={10} xl={8} className={classes.doublePadding}>
           <LiveHeader
             classes={classes}
@@ -207,6 +212,7 @@ const LiveScore = ({ classes, endpoint, explainText, title }) => {
             title={title}
           />
         </Grid>
+        : ""}
       </Grid>
       <Grid container spacing={2} justify="center" className={classes.padding}>
         <Scores
