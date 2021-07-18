@@ -14,6 +14,8 @@ from rcon.game_logs import get_recent_logs, get_historical_logs_records
 from rcon.cache_utils import ttl_cache, get_redis_client
 from rcon.player_history import _get_profiles, get_player_profile_by_steam_ids
 from rcon.config import get_config
+from rcon.utils import MapsHistory
+from rcon.cache_utils import get_redis_client
 
 logger = logging.getLogger(__name__)
 
@@ -454,15 +456,50 @@ class TimeWindowStats(BaseStats):
 def live_stats_loop():
     live = LiveStats()
     config = get_config()
-    sleep_seconds = config.get("LIVE_STATS", {}).get("refresh_stats_seconds", 30)
+    last_loop = datetime.datetime(year=2020, month=1, day=1)
+    live_session_sleep_seconds = config.get("LIVE_STATS", {}).get("refresh_stats_seconds", 30)
+    live_game_sleep_seconds = config.get("LIVE_STATS", {}).get("refresh_current_game_stats_seconds", 5)
+    red = get_redis_client()
 
     while True:
-        try:
-            live.set_live_stats()
-            logger.debug("Refreshed")
-        except Exception:
-            logger.exception("Error while producing stats")
-        time.sleep(sleep_seconds)
+        last_loop_seconds = (datetime.datetime.now() - last_loop).total_seconds()
+        
+        if last_loop_seconds >= live_session_sleep_seconds:
+            try:
+                live.set_live_stats()
+                logger.debug("Refreshed")
+            except Exception:
+                logger.exception("Error while producing stats")
+        
+        if last_loop_seconds >= live_game_sleep_seconds:
+            try:
+                snapshot_ts = datetime.datetime.now().timestamp()
+                stats = current_game_stats()
+                red.set(
+                    "LIVE_GAME_STATS",
+                    pickle.dumps(dict(snapshot_timestamp=snapshot_ts, stats=stats)),
+                )
+            except Exception:
+                logger.exception("Failed to compute live game stats")
+
+        time.sleep(0.1)
+
+
+def current_game_stats():
+    try:
+        current_map = MapsHistory()[0]
+    except IndexError:
+        logger.error("No maps information available")
+        return {}
+
+    return TimeWindowStats().get_players_stats_from_time(current_map["start"])
+
+def get_cached_live_game_stats():
+    red = get_redis_client()
+    stats = red.get("LIVE_GAME_STATS")
+    if stats:
+        stats = pickle.loads(stats)
+    return stats
 
 
 if __name__ == "__main__":

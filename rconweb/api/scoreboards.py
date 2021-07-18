@@ -21,7 +21,7 @@ from rcon.models import (
     PlayerStats,
 )
 from rcon.discord import send_to_discord_audit
-from rcon.scoreboard import LiveStats, TimeWindowStats
+from rcon.scoreboard import LiveStats, TimeWindowStats, get_cached_live_game_stats, current_game_stats
 
 from .views import ctl, _get_data
 from .auth import api_response, login_required
@@ -208,6 +208,22 @@ def get_map_scoreboard(request):
         result=game, error=error, failed=failed, command="get_map_scoreboard"
     )
 
+@csrf_exempt
+def get_live_game_stats(request):
+    stats = None 
+    error_ = None
+    failed = True
+
+    try:
+        stats = get_cached_live_game_stats()
+        failed = False
+    except Exception as e:
+        logger.exception("Failed to get live game stats")
+        error_ = repr(e)
+
+    return api_response(
+        result=stats, error=error_, failed=failed, command="get_live_game_stats"
+    )
     
 @csrf_exempt
 @login_required
