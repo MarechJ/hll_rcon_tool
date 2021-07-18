@@ -27,6 +27,7 @@
     "react-router-dom": "^5.1.2",
     "react-scripts": "3.4.4",
     "react-toastify": "^5.5.0",
+    "react-copy-to-clipboard": "^5.0.3",
     "recompose": "^0.30.0"
   },
   "scripts": {
