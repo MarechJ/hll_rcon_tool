@@ -393,9 +393,6 @@ const Scores = pure(({ classes, scores, durationToHour, type }) => {
           postProcessFunc={durationToHour}
         />
       </Grid>
-      {type === "live" ? (
-        ""
-      ) : (
         <React.Fragment>
           <Grid item xs={12} md={6} lg={3} xl={2}>
             <RankBoard
@@ -425,7 +422,6 @@ const Scores = pure(({ classes, scores, durationToHour, type }) => {
             />
           </Grid>
         </React.Fragment>
-      )}
     </React.Fragment>
   );
 });
