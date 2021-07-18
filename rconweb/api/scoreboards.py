@@ -132,7 +132,7 @@ def live_scoreboard(request):
         result = {
             "snapshot_timestamp": result["snapshot_timestamp"],
             "refresh_interval_sec": config.get('LIVE_STATS', {}).get('refresh_stats_seconds', 30),
-            "stats": list(result["stats"].values()),
+            "stats": result["stats"],
         }
         error = (None,)
         failed = False
