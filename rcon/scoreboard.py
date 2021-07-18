@@ -298,7 +298,7 @@ class LiveStats(BaseStats):
 
             indexed_players = {p["name"]: p for p in players}
             indexed_logs = self._get_indexed_logs_by_player_for_session(
-                now, indexed_players, logs["logs"]
+                now, indexed_players, reversed(logs["logs"])
             )
 
             return self.get_stats_by_player(indexed_logs, players, profiles_by_id)
@@ -308,7 +308,7 @@ class LiveStats(BaseStats):
         stats = self.get_current_players_stats()
         self.red.set(
             "LIVE_STATS",
-            pickle.dumps(dict(snapshot_timestamp=snapshot_ts, stats=stats)),
+            pickle.dumps(dict(snapshot_timestamp=snapshot_ts, stats=list(stats.values()))),
         )
 
     def get_cached_stats(self):
@@ -320,25 +320,26 @@ class LiveStats(BaseStats):
 
 class TimeWindowStats(BaseStats):
     def _set_start_end_times(self, player, players_times, log, from_, offset_warmup_time_seconds=120):
+        
         if not player:
             return
         # A CONNECT means the begining of a session for the player
         if log["action"] == "CONNECTED":
             players_times.setdefault(player, {"start": [], "end": []})["start"].append(
                 # Event time is a key only avaible in the dict coming from the DB and is already a datetime
-                log.get("event_time", datetime.datetime.fromtimestamp(log["timestamp_ms"] // 1000))
+                log.get("event_time", datetime.datetime.utcfromtimestamp(log["timestamp_ms"] // 1000))
             )
         # if the player is not already in the times record we add the start of the stats window as his session start time
         # we didn't see a CONNECTED before, so it means that the player was here before the current window.
-        # For those we remove the game warmup time to have a more accurate kill / min
+        # For those we add the game warmup time to have a more accurate kill / min
         elif player not in players_times and log["action"] != "DISCONNECTED":
             players_times.setdefault(player, {"start": [], "end": []})["start"].append(
-                from_ - datetime.timedelta(seconds=offset_warmup_time_seconds)
+                from_ + datetime.timedelta(seconds=offset_warmup_time_seconds)
             )
         # if the player was already in the time record and we see a disconnect we log it as the end of his session
         if player in players_times and log["action"] == "DISCONNECTED":
             players_times.setdefault(player, {"start": [], "end": []})["end"].append(
-                log.get("event_time", datetime.datetime.fromtimestamp(log["timestamp_ms"] // 1000))
+                log.get("event_time", datetime.datetime.utcfromtimestamp(log["timestamp_ms"] // 1000))
             )
         # if we had a player that disconnected but was not in the time record it means he did have any kill / death or other actions like chat, vote
         # This player won't have a session time (most likely and AFK one)
@@ -449,8 +450,7 @@ class TimeWindowStats(BaseStats):
 
     def get_players_stats_from_time(self, from_timestamp):
         logs = get_recent_logs(min_timestamp=from_timestamp)
-        print(logs)
-        return self._get_players_stats_for_logs(logs.get("logs"), datetime.datetime.utcfromtimestamp(from_timestamp), datetime.datetime.utcnow(), offset_cooldown_time_seconds=0)
+        return self._get_players_stats_for_logs(reversed(logs.get("logs", [])), datetime.datetime.utcfromtimestamp(from_timestamp), datetime.datetime.utcnow(), offset_cooldown_time_seconds=0)
 
 
 def live_stats_loop():
@@ -477,7 +477,7 @@ def live_stats_loop():
                 stats = current_game_stats()
                 red.set(
                     "LIVE_GAME_STATS",
-                    pickle.dumps(dict(snapshot_timestamp=snapshot_ts, stats=stats)),
+                    pickle.dumps(dict(snapshot_timestamp=snapshot_ts, stats=list(stats.values()), refresh_interval_sec=live_game_sleep_seconds)),
                 )
             except Exception:
                 logger.exception("Failed to compute live game stats")

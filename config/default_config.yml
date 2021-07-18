@@ -62,7 +62,11 @@ BAN_TK_ON_CONNECT:
 LIVE_STATS:
   # A stats refresh is quite intensive on CPU, DISK and BANDWIDTH
   # smaller machines should choose at the very least 30 seconds, if not 60 to 120
+  # The below is to compute live stats based on session (from the last connection) accross all games
   refresh_stats_seconds: 15
+  # The below is to compute live stats for the current game and starts at the begining of the game, even if the 
+  # player disconnect and reconnected multiple times, all his/her stats are counted
+  refresh_current_game_stats_seconds: 5
 
 # The below is not effective yet. 
 # Here you can set your custom urls (if you have any)

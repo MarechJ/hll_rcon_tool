@@ -6,14 +6,23 @@ const ScoreMenu = ({classes}) => (
   <AppBar position="static">
     <Toolbar>
     <nav className={classes.title}>
-      <Link
+    <Link
         variant="button"
         color="inherit"
         className={classes.firstLink}
         component={RouterLink}
         to="/"
       >
-        Live
+        Live game
+      </Link>
+      <Link
+        variant="button"
+        color="inherit"
+        className={classes.firstLink}
+        component={RouterLink}
+        to="/livescore"
+      >
+        Live sessions
       </Link>
       <Link
         variant="button"

@@ -267,7 +267,18 @@ const Header = ({ classes }) => {
                             component={RouterLink}
                             to="/livescore"
                           >
-                            Live
+                            Live Sessions
+                          </Link>
+                        </MenuItem>
+                        <MenuItem onClick={() => setAnchorElScores(null)}>
+                          <Link
+                            variant="button"
+                            color="inherit"
+                            className={classes.link}
+                            component={RouterLink}
+                            to="/livegamescore"
+                          >
+                            Live Game
                           </Link>
                         </MenuItem>
                         <MenuItem onClick={() => setAnchorElScores(null)}>
