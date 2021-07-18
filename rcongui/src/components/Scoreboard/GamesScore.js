@@ -171,7 +171,7 @@ const GamesScore = ({ classes }) => {
     get(`get_map_scoreboard?map_id=${slug}`)
       .then((res) => showResponse(res, "get_map_scoreboard", false))
       .then((data) =>
-        data.result ? setScores(fromJS(data.result.player_stats)) : ""
+        data.result && data.result.player_stats ? setScores(fromJS(data.result.player_stats)) : ""
       )
       .then(() => setIsLoading(false))
       .catch(handle_http_errors);
