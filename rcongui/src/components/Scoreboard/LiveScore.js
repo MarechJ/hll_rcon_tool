@@ -196,7 +196,7 @@ const LiveScore = ({ classes, endpoint, explainText, title }) => {
           <Link href={`http://${window.location.hostname}:${serverState.get("public_stats_port")}`} target="_blank">Public version on port {serverState.get("public_stats_port")} - https: {serverState.get("public_stats_port_https")}</Link>
           }
         </Grid>
-        <MUIDataTable 
+      {/*   <MUIDataTable 
           options={{
             filter: false,
             rowsPerPage: 10,
@@ -212,7 +212,7 @@ const LiveScore = ({ classes, endpoint, explainText, title }) => {
            { name: "deaths_without_kill_streak", label: "Max death streak"},
            { name: "teamkills", label: "Max TK streak" },
            { name: "deaths_by_tk", label: "Death by TK"},
-        ]} />
+        ]} /> */}
         {process.env.REACT_APP_PUBLIC_BUILD ? 
         <Grid xs={12} md={10} lg={10} xl={8} className={classes.doublePadding}>
           <LiveHeader
