@@ -199,6 +199,7 @@ const RawScores = pure(({ classes, scores }) => {
       : 1
   );
   const styles = useStyles();
+  const [rowsPerPage, setRowsPerPage] = React.useState(50)
 
   return (
     <Grid container spacing={2} className={classes.padding}>
@@ -218,9 +219,10 @@ const RawScores = pure(({ classes, scores }) => {
           <MUIDataTable
             options={{
               filter: false,
-              rowsPerPage: 50,
+              rowsPerPage: rowsPerPage,
               selectableRows: "none",
               rowsPerPageOptions: [10, 25, 50, 100, 250, 500, 1000],
+              onChangeRowsPerPage: (v) => setRowsPerPage(v),
             }}
             data={scores ? scores.toJS() : []}
             columns={[
