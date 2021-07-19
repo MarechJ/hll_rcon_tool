@@ -23,6 +23,7 @@ import AddIcon from "@material-ui/icons/Add";
 import RemoveIcon from "@material-ui/icons/Remove";
 import { pure } from "recompose";
 import { PlayerStatProfile } from "./PlayerStatProfile";
+import MUIDataTable from "mui-datatables";
 
 export const safeGetSteamProfile = (scoreObj) =>
   scoreObj.get("steaminfo")
@@ -196,6 +197,7 @@ const Scores = pure(({ classes, scores, durationToHour, type }) => {
   const [playersFilter, setPlayersFilter] = React.useState(new iList());
   const undoHighlight = () => setHighlight(null);
   const styles = useStyles();
+  
 
   return (
     <React.Fragment>
@@ -206,6 +208,26 @@ const Scores = pure(({ classes, scores, durationToHour, type }) => {
       )}
       {scores && scores.size ? (
         <React.Fragment>
+{/*            <MUIDataTable 
+          options={{
+            filter: false,
+            rowsPerPage: 50,
+            selectableRows: "none",
+            rowsPerPageOptions: [10, 25, 50, 100, 250, 500, 1000],
+          }}
+          data={scores ? scores.toJS() : []} 
+          columns={[
+           { name: "player", label: "Name" },
+           { name: "kills", label: "Kills" },
+           { name: "deaths", label: "Deaths"},
+           { name: "kills_streak", label: "Max kill streak"},
+           { name: "deaths_without_kill_streak", label: "Max death streak"},
+           { name: "teamkills", label: "Max TK streak" },
+           { name: "deaths_by_tk", label: "Death by TK"},
+           { name: "deaths_by_tk_streak", label: "Death by TK Streak"}, 
+           { name: "longest_life_secs", label: "(aprox.) Longest life secs."},
+           { name: "shortest_life_secs", label: "(aprox.) Shortest life secs."}
+        ]} />  */}
           <Grid item xs={12}>
             <Grid container>
               <Grid
