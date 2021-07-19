@@ -338,7 +338,7 @@ class Rcon(ServerCtl):
                 prev = red.getset("WELCOME_MESSAGE", msg)
             else:
                 prev = red.get("WELCOME_MESSAGE")
-            red.expire("WELCOME_MESSAGE", 60 * 60 * 24)
+            red.expire("WELCOME_MESSAGE", 60 * 60 * 24 * 7)
         except Exception:
             logger.exception("Can't save message in redis: %s", msg)
 
