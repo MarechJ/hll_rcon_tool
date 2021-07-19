@@ -272,7 +272,7 @@ class PlayerInfo extends React.Component {
   render() {
     // TODO Fix mobile responsiveness
     const { classes } = this.props;
-    const { steam_id_64 } = this.state;
+    const { steamId64 } = this.props.match.params;
 
     return (
       <Grid container className={classes.root}>
@@ -338,7 +338,7 @@ class PlayerInfo extends React.Component {
                   <Grid item>
                     <Typography variant="h6">
                       <Link
-                        href={`${process.env.REACT_APP_API_URL}player?steam_id_64=${steam_id_64}`}
+                        href={`${process.env.REACT_APP_API_URL}player?steam_id_64=${steamId64}`}
                       >
                         Raw profile
                       </Link>
