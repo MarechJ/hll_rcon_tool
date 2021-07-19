@@ -446,7 +446,7 @@ class TimeWindowStats(BaseStats):
                 limit=99999999,
             )
             
-            return self._get_players_stats_for_logs(self, [row.compatible_dict() for row in rows], from_, until)
+            return self._get_players_stats_for_logs([row.compatible_dict() for row in rows], from_, until)
 
     def get_players_stats_from_time(self, from_timestamp):
         logs = get_recent_logs(min_timestamp=from_timestamp)

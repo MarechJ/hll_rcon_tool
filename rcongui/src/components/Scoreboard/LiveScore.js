@@ -20,7 +20,7 @@ import Scores from "./Scores";
 import map_to_pict from "./utils";
 import { fade } from "@material-ui/core/styles/colorManipulator";
 import { Link as RouterLink } from "react-router-dom";
-import { Https } from "@material-ui/icons";
+import MUIDataTable from "mui-datatables";
 
 const useStyles = makeStyles((theme) => ({
   padRight: {
@@ -196,6 +196,23 @@ const LiveScore = ({ classes, endpoint, explainText, title }) => {
           <Link href={`http://${window.location.hostname}:${serverState.get("public_stats_port")}`} target="_blank">Public version on port {serverState.get("public_stats_port")} - https: {serverState.get("public_stats_port_https")}</Link>
           }
         </Grid>
+        <MUIDataTable 
+          options={{
+            filter: false,
+            rowsPerPage: 10,
+            selectableRows: "none",
+            rowsPerPageOptions: [10, 25, 50, 100, 250, 500, 1000],
+          }}
+          data={scores ? scores.toJS() : []} 
+          columns={[
+           { name: "player", label: "Name" },
+           { name: "kills", label: "Kills" },
+           { name: "deaths", label: "Deaths"},
+           { name: "kills_streak", label: "Max kill streak"},
+           { name: "deaths_without_kill_streak", label: "Max death streak"},
+           { name: "teamkills", label: "Max TK streak" },
+           { name: "deaths_by_tk", label: "Death by TK"},
+        ]} />
         {process.env.REACT_APP_PUBLIC_BUILD ? 
         <Grid xs={12} md={10} lg={10} xl={8} className={classes.doublePadding}>
           <LiveHeader
