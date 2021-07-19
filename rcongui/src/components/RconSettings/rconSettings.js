@@ -636,16 +636,6 @@ class RconSettings extends React.Component {
                 Bulk VIP upload / VIP export
               </Link>
             </Grid>
-            <Grid item>
-              <Link href="/api/scoreboard" target="_blank">
-                Scoreboard (public link)
-              </Link>
-            </Grid>
-            <Grid item>
-              <Link href="/api/tk" target="_blank">
-                Teamkills overview (public link)
-              </Link>
-            </Grid>
           </Grid>
         </Grid>
         <Grid

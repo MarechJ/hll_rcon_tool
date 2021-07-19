@@ -24,6 +24,7 @@ import RemoveIcon from "@material-ui/icons/Remove";
 import { pure } from "recompose";
 import { PlayerStatProfile } from "./PlayerStatProfile";
 import MUIDataTable from "mui-datatables";
+import { Button } from "@material-ui/core";
 
 export const safeGetSteamProfile = (scoreObj) =>
   scoreObj.get("steaminfo")
@@ -188,6 +189,81 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
+const RawScores = pure(({ classes, scores }) => {
+  const lastState = window.localStorage.getItem("rawStats");
+  const [show, setShow] = React.useState(
+    lastState !== null
+      ? parseInt(lastState)
+      : process.env.REACT_APP_PUBLIC_BUILD
+      ? 0
+      : 1
+  );
+  const styles = useStyles();
+
+  return (
+    <Grid container spacing={2} className={classes.padding}>
+      <Grid item xs={12}>
+        <Button
+          onClick={() => {
+            window.localStorage.setItem("rawStats", show === 0 ? 1 : 0);
+            setShow(show === 0 ? 1 : 0);
+          }}
+          variant="outlined"
+        >
+          {show ? "hide" : "show"} raw stats
+        </Button>
+      </Grid>{" "}
+      {show ? (
+        <Grid item xs={12}>
+          <MUIDataTable
+            options={{
+              filter: false,
+              rowsPerPage: 50,
+              selectableRows: "none",
+              rowsPerPageOptions: [10, 25, 50, 100, 250, 500, 1000],
+            }}
+            data={scores ? scores.toJS() : []}
+            columns={[
+              { name: "player", label: "Name" },
+              { name: "kills", label: "Kills" },
+              { name: "kill_death_ratio", label: "K/D" },
+              { name: "deaths", label: "Deaths" },
+              { name: "kills_streak", label: "Max kill streak" },
+              { name: "kills_per_minute", label: "Kill(s) / minute" },
+              { name: "deaths_per_minute", label: "Death(s) / minute" },
+              {
+                name: "deaths_without_kill_streak",
+                label: "Max death streak",
+              },
+              { name: "teamkills", label: "Max TK streak" },
+              { name: "deaths_by_tk", label: "Death by TK" },
+              { name: "deaths_by_tk_streak", label: "Death by TK Streak" },
+              {
+                name: "longest_life_secs",
+                label: "(aprox.) Longest life min.",
+                options: {
+                  customBodyRender: (value, tableMeta, updateValue) =>
+                    Math.round(parseInt(value) / 60).toFixed(2),
+                },
+              },
+              {
+                name: "shortest_life_secs",
+                label: "(aprox.) Shortest life secs.",
+                options: {
+                  customBodyRender: (value, tableMeta, updateValue) =>
+                    Math.round(parseInt(value) / 60).toFixed(2),
+                },
+              },
+            ]}
+          />
+        </Grid>
+      ) : (
+        ""
+      )}
+    </Grid>
+  );
+});
+
 const Scores = pure(({ classes, scores, durationToHour, type }) => {
   const [highlight, setHighlight] = React.useState(null);
   const doHighlight = (playerScore) => {
@@ -197,7 +273,6 @@ const Scores = pure(({ classes, scores, durationToHour, type }) => {
   const [playersFilter, setPlayersFilter] = React.useState(new iList());
   const undoHighlight = () => setHighlight(null);
   const styles = useStyles();
-  
 
   return (
     <React.Fragment>
@@ -208,26 +283,14 @@ const Scores = pure(({ classes, scores, durationToHour, type }) => {
       )}
       {scores && scores.size ? (
         <React.Fragment>
-{/*            <MUIDataTable 
-          options={{
-            filter: false,
-            rowsPerPage: 50,
-            selectableRows: "none",
-            rowsPerPageOptions: [10, 25, 50, 100, 250, 500, 1000],
-          }}
-          data={scores ? scores.toJS() : []} 
-          columns={[
-           { name: "player", label: "Name" },
-           { name: "kills", label: "Kills" },
-           { name: "deaths", label: "Deaths"},
-           { name: "kills_streak", label: "Max kill streak"},
-           { name: "deaths_without_kill_streak", label: "Max death streak"},
-           { name: "teamkills", label: "Max TK streak" },
-           { name: "deaths_by_tk", label: "Death by TK"},
-           { name: "deaths_by_tk_streak", label: "Death by TK Streak"}, 
-           { name: "longest_life_secs", label: "(aprox.) Longest life secs."},
-           { name: "shortest_life_secs", label: "(aprox.) Shortest life secs."}
-        ]} />  */}
+          {process.env.REACT_APP_PUBLIC_BUILD ? (
+            ""
+          ) : (
+            <Grid item xs={12}>
+              <RawScores scores={scores} classes={classes} />{" "}
+            </Grid>
+          )}
+
           <Grid item xs={12}>
             <Grid container>
               <Grid
@@ -449,6 +512,13 @@ const Scores = pure(({ classes, scores, durationToHour, type }) => {
                 playersFilter={playersFilter}
               />
             </Grid>
+            {process.env.REACT_APP_PUBLIC_BUILD ? (
+              <Grid item xs={12}>
+                <RawScores scores={scores} classes={classes} />{" "}
+              </Grid>
+            ) : (
+              ""
+            )}
           </React.Fragment>
         </React.Fragment>
       ) : (
