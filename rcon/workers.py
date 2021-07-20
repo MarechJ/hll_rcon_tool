@@ -13,6 +13,8 @@ from rcon.models import enter_session, Maps, PlayerStats
 from rcon.scoreboard import TimeWindowStats
 from rcon.player_history import get_player
 from sqlalchemy import and_
+from rcon.recorded_commands import RecordedRcon
+from rcon.extended_commands import CommandFailedError
 
 logger = logging.getLogger("rcon")
 
@@ -147,5 +149,25 @@ def _record_stats(map_info):
                 sess.add(player_stat_record)
             else:
                 logger.error("Stat object does not contain a steam id: %s", stats)
+
+
+def worker_bulk_vip(name_ids, mode="override"):
+    queue = get_queue()
+    queue.enqueue(bluk_vip, name_ids=name_ids, mode=mode)
+
+
+def bluk_vip(name_ids, mode="override"):
+    errors = []
+    ctl = RecordedRcon(SERVER_INFO)
+    vips = ctl.get_vip_ids()
+    for vip in vips:
+        ctl.do_remove_vip(vip["steam_id_64"])
+
+    for name, steam_id in name_ids:
+        try:
+            ctl.do_add_vip(name.strip(), steam_id)
+        except CommandFailedError:
+            errors.append(f"Failed to add {name} {steam_id}")
+            
 
 

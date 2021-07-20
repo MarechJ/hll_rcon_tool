@@ -1,8 +1,14 @@
 import React from "react";
-import {Button, Grid, Link, TextField, Typography} from "@material-ui/core";
-import {range} from "lodash/util";
-import {get, handle_http_errors, postData, sendAction, showResponse,} from "../../utils/fetchUtils";
-import VipEditableList from "./vips";
+import { Button, Grid, Link, TextField, Typography } from "@material-ui/core";
+import { range } from "lodash/util";
+import {
+  get,
+  handle_http_errors,
+  postData,
+  sendAction,
+  showResponse,
+} from "../../utils/fetchUtils";
+import VipEditableList, { VipUpload } from "./vips";
 import AdminsEditableList from "./admins";
 import _ from "lodash";
 import MapRotationTransferList from "./mapRotation";
@@ -12,7 +18,7 @@ import NumSlider from "./numSlider";
 import ChangeMap from "./changeMap";
 import Padlock from "./padlock";
 import AutoRefreshLine from "../autoRefreshLine";
-import {ForwardCheckBox, WordList} from "../commonComponent";
+import { ForwardCheckBox, WordList } from "../commonComponent";
 import VoteMapConfig from "./voteMapConfig";
 
 const ProfanityFiler = ({
@@ -382,12 +388,8 @@ class HLLSettings extends React.Component {
             classes={classes}
             onExpand={this.loadVips}
           >
-            <Link
-              href={`${process.env.REACT_APP_API_URL}download_vips`}
-              target="_blank"
-            >
-              Download VIPs
-            </Link>
+           
+            <VipUpload classes={classes} />
             <p>Changes are applied immediately</p>
             <VipEditableList
               peopleList={vips}
