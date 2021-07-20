@@ -1,6 +1,9 @@
 import datetime
+from re import escape
+from django.forms.utils import ErrorList
 
 from django.http import HttpResponse
+from django.http.response import JsonResponse
 from django.shortcuts import render
 from django import forms
 from django.views.decorators.csrf import csrf_exempt
@@ -13,7 +16,7 @@ from rcon.settings import SERVER_INFO
 from rcon import game_logs
 from rcon.models import LogLine, PlayerSteamID, PlayerName, enter_session
 from rcon.discord import send_to_discord_audit
-
+from rcon.workers import worker_bulk_vip
 from .auth import login_required, api_response
 from .views import ctl
 
@@ -69,6 +72,46 @@ def upload_vips(request):
     context = {"form": form, "message": message}
     return render(request, "list.html", context)
 
+@csrf_exempt
+@login_required
+def async_upload_vips(request):
+    errors = []
+    send_to_discord_audit("upload_vips", request.user.username)
+    # Handle file upload
+    vips = []
+    if request.method == "POST":
+        for name, data in request.FILES.items():
+            for l in data:
+                try:
+                    l = l.decode()
+                    if not l:
+                        continue
+                    steam_id, name = l.split(" ", 1)
+                    if len(steam_id) != 17:
+                        errors.append(f"{l} has an invalid steam id, expecter length of 17")
+                        continue
+                    if not name:
+                        errors.append(f"{l} doesn't have a name attached to the steamid")
+                        continue
+                    vips.append((name, steam_id))
+                except UnicodeDecodeError:
+                    errors.append("File encoding is not supported. Must use UTF8")
+                    break
+    else:
+        return api_response(error="Bad method", status_code=400)
+
+    if vips:
+        worker_bulk_vip(vips, mode="override")
+    else:
+        errors.append("No vips submitted")
+
+    # Render list page with the documents and the form
+    return api_response(
+        result="Job submitted, will take several minutes",
+        failed=bool(errors),
+        error="\n".join(errors),
+        command="async_upload_vips",
+    )
 
 @csrf_exempt
 @login_required
