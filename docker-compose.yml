@@ -21,6 +21,8 @@ services:
       server1:
         aliases: 
           - supervisor
+    volumes:
+      - ./supervisor_data:/data
   backend_1: &backend
     hostname: api
     extends:
