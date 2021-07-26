@@ -19,3 +19,4 @@ alembic==1.4.3
 rq==1.8.0
 paramiko==2.7.2
 rq-scheduler==0.11.0
+ftpretty==0.4.0
