@@ -78,3 +78,25 @@ SERVER_URLS: []
 #   - http://server1.mydomain.com/
 #   - http://server2.mydomain.com/
 #   - http://server3.mydomain.com/
+
+# The below is relevant only if your game server is hosted at GTX
+# Filling those values will allow you to change your server name directly from the RCON
+# The name change is visible in HLL after a map change, no need to restart the server
+# You must fill you sftp information as well as credentials that have the right to access the sftp
+# Don't forget to put your IP in quote, e.g: "42.42.42.42"
+GTX:
+  server_1:
+    ip: "42.42.42.42"
+    port: 42
+    username: null
+    password: null
+  server_2:
+    ip: null
+    port: null
+    username: null
+    password: null
+  server_3:
+    ip: null
+    port: null
+    username: null
+    password: null
