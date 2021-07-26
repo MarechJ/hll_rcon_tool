@@ -17,3 +17,4 @@ steam==1.0.2
 pyaml==20.4.0
 alembic==1.4.3
 rq==1.8.0
+paramiko==2.7.2

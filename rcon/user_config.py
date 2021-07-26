@@ -3,8 +3,9 @@ from dataclasses import dataclass, field, asdict
 from typing import List
 import logging
 import enum
+from dataclasses import dataclass, fields
 
-from sqlalchemy.sql.expression import false
+from sqlalchemy.sql.expression import false, true
 
 from rcon.models import UserConfig, enter_session
 from rcon.commands import CommandFailedError
@@ -405,25 +406,39 @@ class VoteMapConfig:
             "No votes recorded yet",
         )
 
-
+@dataclass
 class BaseConfig:
-    def __init__(self):
-        self.server_number = os.getenv("SERVER_NUMBER", 0)
 
-    def prefix(self, config_key_name, namespace=None):
-        namespace = namespace or self.__class__.__name__
-        return f'{self.server_number}_{namespace}_{config_key_name}'
+    def prefix(self, config_key_name):
+        namespace = self.__class__.__name__.lower()
+        return f'{os.getenv("SERVER_NUMBER", "0")}_{namespace}_{config_key_name}'
 
-    def auto_generate_attr(self, fields, namespace=None):
-        for field in fields:
-            getter_name = f'get_{field.lower()}'
-            setter_name = f'set_{field.lower()}'
+    def seed_db(self):
+        self.auto_generate_attr(initialise=False)
+        for field in fields(self):
+            setter = self.__getattribute__(f"set_{field.name}") 
+            setter(self.__getattribute__(field.name))
+
+    def auto_generate_attr(self, initialise=True):
+        for field in fields(self):
+            getter_name = f'get_{field.name.lower()}'
+            setter_name = f'set_{field.name.lower()}'
             # Do not override existing methods
             if not getter_name in self.__dict__:
-                self.__setattr__(getter_name, lambda: get_user_config(self.prefix(field, namespace)))
+                getter = lambda: get_user_config(self.prefix(field))
+                self.__setattr__(getter_name, getter)
+                if initialise:
+                    self.__setattr__(field.name, getter()) 
             if not setter_name in self.__dict__:
-                self.__setattr__(setter_name, lambda v: set_user_config(self.prefix(field, namespace), v))
+                def setter(v):
+                    if isinstance(v, field.type):
+                        set_user_config(self.prefix(field), v)
+                    else:
+                        raise TypeError(f"Wrong value {v} for {field}")
+                print("Setting ", setter_name)
+                self.__setattr__(setter_name, setter)
                 
+
 class ZombieConfig:
     def __init__(self):
         server_number = os.getenv("SERVER_NUMBER", 0)
@@ -437,7 +452,20 @@ class ZombieConfig:
         self.ZOMBIE_ON_HUMAN_PERMA_DEATH = f'{server_number}_ZOMBIE_ON_HUMAN_PERMA_DEATH'
         self.ZOMBIE_ON_ZOMBIE_PERMA_DEATH = f'{server_number}_ZOMBIE_ON_ZOMBIE_PERMA_DEATH'
 
-    
+
+@dataclass(init=True)
+class RealVipConfig(BaseConfig):
+    enabled : bool = False
+    desired_total_number_vips : int = 5
+    minimum_number_vip_slot : int = 1
+
+    def __init__(self, *args, **kwargs):
+        #super().__init__(*args, **kwargs)
+        BaseConfig.__init__(self, *args, **kwargs)
+
+    def __post_init__(self):
+        self.auto_generate_attr()
+
 
 def seed_default_config():
     with enter_session() as sess:
@@ -446,4 +474,5 @@ def seed_default_config():
         CameraConfig().seed_db(sess)
         AutoVoteKickConfig().seed_db(sess)
         VoteMapConfig().seed_db(sess)
+        RealVipConfig().seed_db()
         sess.commit()
