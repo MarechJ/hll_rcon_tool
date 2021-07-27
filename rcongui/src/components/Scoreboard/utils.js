@@ -8,6 +8,8 @@ const map_to_pict = {
   stmariedumont: "maps/smdm.webp",
   stmereeglise: "maps/sme.webp",
   utahbeach: "maps/utah.webp",
+  kursk: "maps/kursk.webp",
+  stalingrad: "maps/stalingrad.webp",
 };
 
 export default map_to_pict;
