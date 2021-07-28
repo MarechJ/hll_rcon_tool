@@ -102,7 +102,7 @@ const VipUpload = ({ classes }) => {
   };
 
   const getResult = () => get('async_upload_vips_result').then(res => showResponse(res, "async_upload_vips_result", false)).then(res => {setResult(JSON.stringify(res.result, null, 2)); console.log(res); })
-  const pollResult = () => getResult() && setIntervalLimited(getResult, 2000, 200)
+  const pollResult = () => getResult() && setIntervalLimited(getResult, 2000, 500)
 
   return (
     <Grid container spacing={1}>
@@ -131,7 +131,7 @@ const VipUpload = ({ classes }) => {
       </Grid>
       {result ? 
       <Grid item xs={12}>
-        <Typography variant="body2" color="secondary">The job may take a while, here's the current status: </Typography>
+        <Typography variant="body2" color="secondary">The job may take a while, here's the current status, do not resubmit unless you see a "finished" or "failed" status: </Typography>
         <pre>
           {result}
         </pre>
