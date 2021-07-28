@@ -167,7 +167,8 @@ def get_job_results(job_key):
         "result": job.result if job.get_status() == "finished" else None,
         "started_at": job.started_at,
         "ended_at": job.ended_at,
-        "func_name": job.func_name
+        "func_name": job.func_name,
+        "check_timestamp": datetime.datetime.now().timestamp(),
     }
 
 
