@@ -16,9 +16,10 @@ from rcon.settings import SERVER_INFO
 from rcon import game_logs
 from rcon.models import LogLine, PlayerSteamID, PlayerName, enter_session
 from rcon.discord import send_to_discord_audit
-from rcon.workers import worker_bulk_vip
+from rcon.workers import worker_bulk_vip, get_job_results
 from .auth import login_required, api_response
 from .views import ctl
+import os
 
 
 class DocumentForm(forms.Form):
@@ -101,7 +102,7 @@ def async_upload_vips(request):
         return api_response(error="Bad method", status_code=400)
 
     if vips:
-        worker_bulk_vip(vips, mode="override")
+        worker_bulk_vip(vips, job_key=f"upload_vip_{os.getenv('SERVER_NUMBER')}", mode="override")
     else:
         errors.append("No vips submitted")
 
@@ -112,6 +113,16 @@ def async_upload_vips(request):
         error="\n".join(errors),
         command="async_upload_vips",
     )
+
+@csrf_exempt
+@login_required
+def async_upload_vips_result(request):
+    return api_response(
+        result=get_job_results(f"upload_vip_{os.getenv('SERVER_NUMBER')}"),
+        failed=False,
+        command="async_upload_vips_result"
+    )
+
 
 @csrf_exempt
 @login_required

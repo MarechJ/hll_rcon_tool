@@ -10,11 +10,13 @@ import {
   Input,
   Button,
   Tooltip,
+  Typography,
 } from "@material-ui/core";
 import DeleteIcon from "@material-ui/icons/Delete";
 import AddIcon from "@material-ui/icons/Add";
 import { ForwardCheckBox } from "../commonComponent";
-import { handle_http_errors, showResponse } from "../../utils/fetchUtils";
+import { get, handle_http_errors, showResponse } from "../../utils/fetchUtils";
+import { result } from "lodash";
 
 const AddVipItem = ({
   classes,
@@ -64,9 +66,18 @@ const AddVipItem = ({
   </ListItem>
 );
 
+function setIntervalLimited(callback, interval, x) {
+
+  for (var i = 0; i < x; i++) {
+      setTimeout(callback, i * interval);
+  }
+
+}
+
 const VipUpload = ({ classes }) => {
   const [selectedFile, setSelectedFile] = React.useState();
   const [isFilePicked, setIsFilePicked] = React.useState(false);
+  const [result, setResult] = React.useState(null);
 
   const changeHandler = (event) => {
     setSelectedFile(event.target.files[0]);
@@ -84,10 +95,14 @@ const VipUpload = ({ classes }) => {
       cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
       credentials: "include", // include, *same-origin, omit
     })
-      .then(res => showResponse(res, "upload_vip", true))
+      .then(res => showResponse(res, "upload_vip", true)).then(res => !res.failed ? pollResult() : "")
       .catch(handle_http_errors)
     setIsFilePicked(false);
+
   };
+
+  const getResult = () => get('async_upload_vips_result').then(res => showResponse(res, "async_upload_vips_result", false)).then(res => {setResult(JSON.stringify(res.result, null, 2)); console.log(res); })
+  const pollResult = () => getResult() && setIntervalLimited(getResult, 2000, 200)
 
   return (
     <Grid container spacing={1}>
@@ -114,6 +129,14 @@ const VipUpload = ({ classes }) => {
           </Tooltip>
         )}
       </Grid>
+      {result ? 
+      <Grid item xs={12}>
+        <Typography variant="body2" color="secondary">The job may take a while, here's the current status: </Typography>
+        <pre>
+          {result}
+        </pre>
+      </Grid>
+      : ""}
     </Grid>
   );
 };

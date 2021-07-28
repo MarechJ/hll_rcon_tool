@@ -28,6 +28,7 @@ urlpatterns = [
     path("get_historical_logs", logs.get_historical_logs),
     path("upload_vips", vips.upload_vips),
     path("async_upload_vips", vips.async_upload_vips),
+    path("async_upload_vips_result", vips.async_upload_vips_result),
     path("download_vips", vips.download_vips),
     path("live_scoreboard", scoreboards.live_scoreboard),
     path("date_scoreboard", scoreboards.date_scoreboard),
