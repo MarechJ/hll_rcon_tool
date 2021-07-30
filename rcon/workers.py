@@ -174,7 +174,7 @@ def get_job_results(job_key):
 
 def worker_bulk_vip(name_ids, job_key, mode="override"):
     queue = get_queue()
-    return queue.enqueue(bluk_vip, name_ids=name_ids, mode=mode, result_ttl=6000, job_timeout=600, job_id=job_key)
+    return queue.enqueue(bluk_vip, name_ids=name_ids, mode=mode, result_ttl=6000, job_timeout=1200, job_id=job_key)
 
 
 def bluk_vip(name_ids, mode="override"):

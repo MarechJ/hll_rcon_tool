@@ -51,7 +51,10 @@ def suggest_next_maps(
     allow_consecutive_offensives_of_opposite_side=False,
     current_map=None,
 ):
-    last_n_map = set(m["name"] for m in maps_history[:exclude_last_n])
+    if exclude_last_n > 0:
+        last_n_map = set(m["name"] for m in maps_history[:exclude_last_n])
+    else:
+        last_n_map = set()
     logger.info("Excluding last %s player maps: %s", exclude_last_n, last_n_map)
     remaining_maps = set(all_maps) - last_n_map
     logger.info("Remaining maps to suggest from: %s", remaining_maps)
@@ -71,11 +74,11 @@ def suggest_next_maps(
         logger.info("Remaining maps to suggest from: %s", remaining_maps)
 
     if not allow_consecutive_offensives_of_opposite_side and current_side:
-        opposite_side = "us" if current_side == "ger" else "ger"
+        opposite_side = ["us", "rus"] if current_side == "ger" else ["ger"]
         logger.info(
             "Not allowing consecutive offensive with opposite side: %s", opposite_side
         )
-        remaining_maps = [m for m in remaining_maps if get_map_side(m) != opposite_side]
+        remaining_maps = [m for m in remaining_maps if get_map_side(m) not in opposite_side]
         logger.info("Remaining maps to suggest from: %s", remaining_maps)
 
     # Handle case if all maps got excluded
@@ -117,9 +120,9 @@ class VoteMap:
         self.red = get_redis_client()
 
     def is_vote(self, message):
-        match = re.match("(\d)", message)
+        match = re.match(r"(\d)", message)
         if not match:
-            match = re.match("!votemap\s*(.*)", message)
+            match = re.match(r"!votemap\s*(.*)", message)
         if not match:
             return False
         if not match.groups():

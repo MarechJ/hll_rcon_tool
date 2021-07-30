@@ -79,7 +79,7 @@ def map_name(map_):
 def get_map_side(map_):
     try:
         parts = map_.split("_")
-        return parts[2].lower() if parts[2] in ["us", "ger"] else None
+        return parts[2].lower() if parts[2] in ["us", "ger", "rus"] else None
     except IndexError:
         return None
 
