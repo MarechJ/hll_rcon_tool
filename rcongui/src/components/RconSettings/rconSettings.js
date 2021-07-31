@@ -635,10 +635,6 @@ class RconSettings extends React.Component {
             handleChange={(v) => this.saveCameraConfig({ welcome: v })}
           />
         </Grid>
-        <Grid item className={classes.paddingTop} justify="center" xs={12}>
-          <Typography variant="h5">Misc. options</Typography>
-        </Grid>
-        ]{" "}
         <Grid
           container
           className={`${classes.padding} ${classes.margin} ${classes.root}`}
