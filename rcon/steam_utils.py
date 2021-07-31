@@ -10,6 +10,7 @@ from rcon.cache_utils import ttl_cache
 
 logger = logging.getLogger(__name__)
 
+HLL_STEAM_APP_ID = 686810
 STEAM_KEY = os.getenv('STEAM_API_KEY')
 if not STEAM_KEY:
     logger.warning("STEAM_API_KEY not set some features will be disabled.")
@@ -18,8 +19,12 @@ if not STEAM_KEY:
 @ttl_cache(60 * 60 * 24, cache_falsy=False, is_method=False)
 def get_steam_profile(steamd_id):
     profiles = get_steam_profiles([steamd_id])
+
     if not profiles or len(profiles) == 0:
         return None
+    
+    time_played = get_hll_playtime_in_hours(steam_id=steamd_id)
+    profiles[0]['hll_game_playtime'] = time_played
     return profiles[0]
 
 
@@ -40,6 +45,38 @@ def get_steam_profiles(steam_ids):
         logging.exception('Unexpected error while fetching steam profile')
         return None
 
+@ttl_cache(60 * 5, cache_falsy=False, is_method=False)
+def get_hll_playtime_in_hours(steam_id):
+    if not STEAM_KEY:
+        return None
+    try:
+        api = WebAPI(key=STEAM_KEY)
+        # https://developer.valvesoftware.com/wiki/Steam_Web_API#GetOwnedGames_.28v0001.29
+
+        
+        response = api.IPlayerService.GetOwnedGames_v1(
+            steamid=steam_id, 
+            include_appinfo=True, 
+            include_played_free_games=False, 
+            appids_filter=[HLL_STEAM_APP_ID], # hardcode HLL steam appid
+            include_free_sub=False)['response']
+
+        print ("api_repos", HLL_STEAM_APP_ID, steam_id)
+        print ("respo", response)
+        if not response or len(response) == 0:
+            return None
+        
+        # get playtime in minutes
+        hll_game_playtime = response['games'][0]['playtime_forever']
+        # return playtime in hours
+        return round(hll_game_playtime*1.0/60)
+
+    except AttributeError:
+        logger.error("STEAM_API_KEY is invalid, can't fetch steam profile")
+        return None
+    except:
+        logging.exception('Unexpected error while fetching steam profile')
+        return None
 
 def get_player_country_code(steamd_id):
     profile = get_steam_profile(steamd_id)

@@ -31,7 +31,6 @@ _ENGINE = None
 
 def get_engine():
     global _ENGINE
-
     if _ENGINE:
         return _ENGINE
     url = os.getenv("DB_URL")
@@ -138,6 +137,7 @@ class SteamInfo(Base):
     updated = Column(DateTime, onupdate=datetime.utcnow)
     profile = Column(JSONB)
     country = Column(String, index=True)
+    hll_game_playtime = Column(Integer)
     bans = Column(JSONB)
 
     def to_dict(self):
@@ -148,6 +148,7 @@ class SteamInfo(Base):
             profile=self.profile,
             country=self.country,
             bans=self.bans,
+            hll_game_playtime=self.hll_game_playtime
         )
 
 
