@@ -45,5 +45,7 @@ urlpatterns = [
     path("get_votemap_status", votemap.get_votemap_status),
     path("reset_votemap_state", votemap.reset_votemap_state),
     path("get_player_comment", history.get_player_comment),
-    path("post_player_comment", history.post_player_comment)
+    path("post_player_comment", history.post_player_comment),
+    path("get_real_vip_config", vips.get_real_vip_config),
+    path("set_real_vip_config", vips.set_real_vip_config),
 ]

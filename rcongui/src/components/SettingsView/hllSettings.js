@@ -1,5 +1,5 @@
 import React from "react";
-import { Button, Grid, Link, TextField, Typography } from "@material-ui/core";
+import { Button, Grid, Link, TextField, Typography, Tooltip } from "@material-ui/core";
 import { range } from "lodash/util";
 import {
   get,
@@ -20,6 +20,7 @@ import Padlock from "./padlock";
 import AutoRefreshLine from "../autoRefreshLine";
 import { ForwardCheckBox, WordList } from "../commonComponent";
 import VoteMapConfig from "./voteMapConfig";
+import HelpIcon from "@material-ui/icons/Help";
 
 const ProfanityFiler = ({
   words,
@@ -388,7 +389,6 @@ class HLLSettings extends React.Component {
             classes={classes}
             onExpand={this.loadVips}
           >
-           
             <VipUpload classes={classes} />
             <p>Changes are applied immediately</p>
             <VipEditableList
@@ -663,7 +663,10 @@ class HLLSettings extends React.Component {
         <Grid container className={classes.paddingTop} justify="center" xs={12}>
           <Grid item>
             <Typography variant="h5" gutterBottom>
-              Vote Map config
+              Vote Map config{" "}
+              <Tooltip title="When enabled this feature will managed you map rotation automatically. To display the voting options to the players you must set one of the 'votemap_' variables in your automatic broadcasts">
+                <HelpIcon fontSize="small" />
+              </Tooltip>
             </Typography>
           </Grid>
         </Grid>

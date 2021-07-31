@@ -55,6 +55,19 @@ class Rcon(ServerCtl):
 
         return player_dict if as_dict else player_list
 
+     
+    def get_vips_count(self):
+        players = self.get_playerids()
+
+        vips = {v['steam_id_64'] for v in self.get_vip_ids()}
+        vip_count = 0
+        for _, steamid in players:
+            if steamid in vips:
+                vip_count += 1
+        
+        return vip_count
+
+
     @ttl_cache(ttl=60 * 60 * 24, cache_falsy=False)
     def get_player_info(self, player):
         try:

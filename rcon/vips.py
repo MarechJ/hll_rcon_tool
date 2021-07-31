@@ -32,34 +32,7 @@ def get_prunable_vips(days_of_inactivity=30):
                 AKAs: {'  ||  '.join(n["name"] for n in player["names"])}
             """)
 
- 
-
-def compare_vips():
-    from rcon.commands import ServerCtl
-    from rcon.extended_commands import invalidates, Rcon
-    rcon_2 = Rcon({"host": "176.57.171.159", "port": 28316, "password": ""})
-    rcon_1 = Rcon({"host": "37.187.25.13", "port": 27662, "password": ""})
-
-    with invalidates(Rcon.get_vip_ids):
-        vip_1 = rcon_1.get_vip_ids()
-        vip_2 = rcon_2.get_vip_ids()
-
-    for vip in vip_1:
-        if vip not in vip_2:
-            print(vip)
-            rcon_2.do_add_vip(name=vip["name"], steam_id_64=vip["steam_id_64"])
-
-    for vip in vip_2:
-        if vip not in vip_1:
-            print(vip)
-            rcon_1.do_add_vip(name=vip["name"], steam_id_64=vip["steam_id_64"])
-    #id_1 = set(vip_1)
-    #id_2 = set(vip_2)
-
-    #print(id_1.difference(id_2))
-    #print(id_2.difference(id_1))
-
 
 if __name__ == '__main__':
     #print(get_prunable_vips())
-    compare_vips()
+    light_get_vips_count(RecordedRcon(SERVER_INFO))
