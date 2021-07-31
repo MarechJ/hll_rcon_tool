@@ -64,7 +64,7 @@ AUTO_BAN_REASON = os.getenv(
     "BAN_ON_VAC_HISTORY_REASON", "VAC ban history ({DAYS_SINCE_LAST_BAN} days ago)"
 )
 MAX_GAME_BAN_THRESHOLD = os.getenv("MAX_GAME_BAN_THRESHOLD", 0)
-MIN_HLL_PLAYTIME_HOURS = int(os.getenv("MIN_HLL_PLAYTIME_HOURS", 600))
+MIN_HLL_PLAYTIME_HOURS = int(os.getenv("MIN_HLL_PLAYTIME_HOURS", -1))
 
 def ban_if_blacklisted(rcon: RecordedRcon, steam_id_64, name):
     with enter_session() as sess:
