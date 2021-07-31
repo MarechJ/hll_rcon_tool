@@ -21,6 +21,7 @@ from rcon.steam_utils import (
     get_player_bans,
     STEAM_KEY,
     get_steam_profile,
+    get_hll_playtime_in_hours,
     update_db_player_info,
 )
 from rcon.discord import send_to_discord_audit
@@ -63,7 +64,7 @@ AUTO_BAN_REASON = os.getenv(
     "BAN_ON_VAC_HISTORY_REASON", "VAC ban history ({DAYS_SINCE_LAST_BAN} days ago)"
 )
 MAX_GAME_BAN_THRESHOLD = os.getenv("MAX_GAME_BAN_THRESHOLD", 0)
-
+MIN_HLL_PLAYTIME_HOURS = int(os.getenv("MIN_HLL_PLAYTIME_HOURS", -1))
 
 def ban_if_blacklisted(rcon: RecordedRcon, steam_id_64, name):
     with enter_session() as sess:
@@ -206,6 +207,7 @@ def inject_steam_id_64(func):
 
 @on_connected
 def handle_on_connect(rcon, struct_log):
+    
     steam_id_64 = rcon.get_player_info.get_cached_value_for(struct_log["player"])
 
     try:
@@ -232,6 +234,16 @@ def handle_on_connect(rcon, struct_log):
             )
 
     timestamp = int(struct_log["timestamp_ms"]) / 1000
+
+
+    hll_timm_played = get_hll_playtime_in_hours(steam_id_64)
+
+    if hll_timm_played is None or hll_timm_played < MIN_HLL_PLAYTIME_HOURS:
+        logger.info(
+            f"Kicking player %s for having less than {MIN_HLL_PLAYTIME_HOURS} hours played ({hll_timm_played})"
+        )
+        rcon.do_kick(player=struct_log["player"], reason=f"Playtime < {MIN_HLL_PLAYTIME_HOURS} hours or Steam Profile not public", by="VLL Admin")
+
     save_player(
         struct_log["player"],
         steam_id_64,
