@@ -64,7 +64,7 @@ AUTO_BAN_REASON = os.getenv(
     "BAN_ON_VAC_HISTORY_REASON", "VAC ban history ({DAYS_SINCE_LAST_BAN} days ago)"
 )
 MAX_GAME_BAN_THRESHOLD = os.getenv("MAX_GAME_BAN_THRESHOLD", 0)
-MIN_HLL_PLAYTIME_HOURS = int(os.getenv("MIN_HLL_PLAYTIME_HOURS", -1))
+MIN_HLL_PLAYTIME_HOURS = int(os.getenv("MIN_HLL_PLAYTIME_HOURS", 600))
 
 def ban_if_blacklisted(rcon: RecordedRcon, steam_id_64, name):
     with enter_session() as sess:
@@ -185,6 +185,13 @@ def ban_if_has_vac_bans(rcon: RecordedRcon, steam_id_64, name):
             except:
                 logger.exception("Unable to send vac ban to audit log")
 
+def kick_if_low_playtime(rcon, struct_log, steam_id_64):    
+    hll_timm_played = get_hll_playtime_in_hours(steam_id_64)
+    if hll_timm_played is None or hll_timm_played < MIN_HLL_PLAYTIME_HOURS:
+        logger.info(
+            f"Kicking player %s for having less than {MIN_HLL_PLAYTIME_HOURS} hours played ({hll_timm_played})"
+        )
+        rcon.do_kick(player=struct_log["player"], reason=f"Playtime < {MIN_HLL_PLAYTIME_HOURS} hours or Steam Profile not public", by="VLL Admin")
 
 def inject_steam_id_64(func):
     @wraps(func)
@@ -235,14 +242,7 @@ def handle_on_connect(rcon, struct_log):
 
     timestamp = int(struct_log["timestamp_ms"]) / 1000
 
-
-    hll_timm_played = get_hll_playtime_in_hours(steam_id_64)
-
-    if hll_timm_played is None or hll_timm_played < MIN_HLL_PLAYTIME_HOURS:
-        logger.info(
-            f"Kicking player %s for having less than {MIN_HLL_PLAYTIME_HOURS} hours played ({hll_timm_played})"
-        )
-        rcon.do_kick(player=struct_log["player"], reason=f"Playtime < {MIN_HLL_PLAYTIME_HOURS} hours or Steam Profile not public", by="VLL Admin")
+    kick_if_low_playtime(rcon=rcon, struct_log=struct_log, steam_id_64=steam_id_64)
 
     save_player(
         struct_log["player"],
@@ -252,7 +252,6 @@ def handle_on_connect(rcon, struct_log):
     save_start_player_session(steam_id_64, timestamp=timestamp)
     ban_if_blacklisted(rcon, steam_id_64, struct_log["player"])
     ban_if_has_vac_bans(rcon, steam_id_64, struct_log["player"])
-
 
 @on_disconnected
 @inject_steam_id_64
