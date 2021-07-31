@@ -274,8 +274,7 @@ def update_player_steaminfo_on_connect(rcon, struct_log, steam_id_64):
         sess.commit()
 
 
-@on_connected
-def real_vips(rcon: RecordedRcon, struct_log):
+def _set_real_vips(rcon: RecordedRcon, struct_log):
     config = RealVipConfig()
     if not config.get_enabled():
         logger.debug("Real VIP is disabled")
@@ -288,6 +287,16 @@ def real_vips(rcon: RecordedRcon, struct_log):
     remaining_vip_slots = max(desired_nb_vips - vip_count, max(min_vip_slot, 0))
     rcon.set_vip_slots_num(remaining_vip_slots)
     logger.info("Real VIP set slots to %s", remaining_vip_slots)
+
+
+@on_connected
+def do_real_vips(rcon: RecordedRcon, struct_log):
+    _set_real_vips(rcon, struct_log)
+
+
+@on_disconnected
+def undo_real_vips(rcon: RecordedRcon, struct_log):
+    _set_real_vips(rcon, struct_log)
 
 
 @on_camera
