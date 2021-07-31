@@ -1,5 +1,4 @@
 import datetime
-from rcon.hooks import real_vips
 from re import escape
 from django.forms.utils import ErrorList
 
