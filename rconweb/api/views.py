@@ -33,6 +33,7 @@ from rcon.workers import temporary_broadcast, temporary_welcome
 from .auth import login_required, api_response
 from .multi_servers import forward_request, forward_command
 from .utils import _get_data
+from rcon.gtx import GTXFtp
 
 logger = logging.getLogger("rconweb")
 ctl = RecordedRcon(SERVER_INFO)
@@ -49,6 +50,22 @@ def set_temp_msg(request, func, name):
         error = repr(e)
 
     return api_response(failed=failed, error=error, result=None, command=name)
+
+
+@csrf_exempt
+@login_required
+def set_name(request):
+    data = _get_data(request)
+    failed = False
+    error = None
+    try:
+        gtx = GTXFtp.from_config()
+        gtx.change_server_name(data["name"])
+    except Exception as e:
+        failed = True
+        error = repr(e)
+    return api_response(failed=failed, error=error, result=None, command="set_server_name")
+
 
 
 @csrf_exempt
@@ -606,6 +623,7 @@ commands = [
     ("get_camera_config", get_camera_config),
     ("set_votekick_autotoggle_config", set_votekick_autotoggle_config),
     ("get_votekick_autotoggle_config", get_votekick_autotoggle_config),
+    ("set_name", set_name),
 ]
 
 logger.info("Initializing endpoint")

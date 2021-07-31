@@ -34,6 +34,7 @@ import AddIcon from "@material-ui/icons/Add";
 import SaveIcon from "@material-ui/icons/Save";
 import RealVip from "./realVip";
 import HelpIcon from "@material-ui/icons/Help";
+import ServerName from "./serverName";
 
 const ManualWatchList = ({ classes }) => {
   const [name, setName] = React.useState("");
@@ -551,11 +552,12 @@ class RconSettings extends React.Component {
           <WebhooksConfig classes={classes} />
         </Grid>
         <Grid item className={classes.paddingTop} justify="center" xs={12}>
-          <Typography variant="h5">Auto votekick toggle  <Tooltip
-                title="When enabled this feature manages the votekicks ingame by turning it off if the conditions you set below are met, and turning it back on if they are NOT met"
-              >
-                <HelpIcon fontSize="small" />
-              </Tooltip></Typography>
+          <Typography variant="h5">
+            Auto votekick toggle{" "}
+            <Tooltip title="When enabled this feature manages the votekicks ingame by turning it off if the conditions you set below are met, and turning it back on if they are NOT met">
+              <HelpIcon fontSize="small" />
+            </Tooltip>
+          </Typography>
           <Typography variant="body1">Turn off votekick if</Typography>
         </Grid>
         <Grid
@@ -661,6 +663,25 @@ class RconSettings extends React.Component {
           </Grid>
           <Grid item xs={12}>
             <RealVip classes={classes} />
+          </Grid>
+        </Grid>
+        <Grid
+          container
+          className={`${classes.padding} ${classes.margin} ${classes.root}`}
+          alignContent="center"
+          justify="center"
+          alignItems="center"
+        >
+          <Grid item xs={12}>
+            <Typography variant="h5">
+              Server Name
+              <Tooltip title="Only users with a GTX server can use this, it won't work for others. GTX users must set extra info in config/config.yml for it to work. The name change is only applied after a change of map">
+                <HelpIcon fontSize="small" />
+              </Tooltip>{" "}
+            </Typography>
+          </Grid>
+          <Grid item xs={12}>
+            <ServerName classes={classes} />
           </Grid>
         </Grid>
         <Grid

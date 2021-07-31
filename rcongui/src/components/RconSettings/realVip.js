@@ -11,9 +11,7 @@ import {
   FormControlLabel,
 } from "@material-ui/core";
 import {
-  addPlayerToWatchList,
   get,
-  getSharedMessages,
   handle_http_errors,
   postData,
   showResponse,
