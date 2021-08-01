@@ -92,7 +92,11 @@ def async_upload_vips(request):
                     l = l.decode()
                     if not l:
                         continue
-                    steam_id, name = l.split(" ", 1)
+                    try:
+                        steam_id, name = l.split(" ", 1)
+                    except ValueError:
+                        steam_id, name = l.split("\t", 1)
+
                     if len(steam_id) != 17:
                         errors.append(
                             f"{l} has an invalid steam id, expecter length of 17"
@@ -107,6 +111,8 @@ def async_upload_vips(request):
                 except UnicodeDecodeError:
                     errors.append("File encoding is not supported. Must use UTF8")
                     break
+                except Exception as e:
+                    errors.append(f"Error on line {l} {repr(2)}")
     else:
         return api_response(error="Bad method", status_code=400)
 
