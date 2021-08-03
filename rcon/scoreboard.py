@@ -456,25 +456,33 @@ class TimeWindowStats(BaseStats):
 def live_stats_loop():
     live = LiveStats()
     config = get_config()
-    last_loop = datetime.datetime(year=2020, month=1, day=1)
+    last_loop_session = datetime.datetime(year=2020, month=1, day=1)
+    last_loop_game = datetime.datetime(year=2020, month=1, day=1)
     live_session_sleep_seconds = config.get("LIVE_STATS", {}).get("refresh_stats_seconds", 30)
     live_game_sleep_seconds = config.get("LIVE_STATS", {}).get("refresh_current_game_stats_seconds", 5)
+    logger.debug("live_session_sleep_seconds: {}".format(live_session_sleep_seconds))
+    logger.debug("live_game_sleep_seconds: {}".format(live_game_sleep_seconds))
     red = get_redis_client()
 
     while True:
-        last_loop_seconds = (datetime.datetime.now() - last_loop).total_seconds()
+        # Keep track of session and game timers seperately
+        last_loop_session_seconds = (datetime.datetime.now() - last_loop_session).total_seconds()
+        last_loop_game_seconds = (datetime.datetime.now() - last_loop_game).total_seconds()
         
-        if last_loop_seconds >= live_session_sleep_seconds:
+        if last_loop_session_seconds >= live_session_sleep_seconds:
+            last_loop_session = datetime.datetime.now()
             try:
                 live.set_live_stats()
-                logger.debug("Refreshed")
+                logger.debug("Refreshed set_live_stats")
             except Exception:
                 logger.exception("Error while producing stats")
         
-        if last_loop_seconds >= live_game_sleep_seconds:
+        if last_loop_game_seconds >= live_game_sleep_seconds:
+            last_loop_game = datetime.datetime.now()
             try:
                 snapshot_ts = datetime.datetime.now().timestamp()
                 stats = current_game_stats()
+                logger.debug("Refreshed current_game_stats")
                 red.set(
                     "LIVE_GAME_STATS",
                     pickle.dumps(dict(snapshot_timestamp=snapshot_ts, stats=list(stats.values()), refresh_interval_sec=live_game_sleep_seconds)),

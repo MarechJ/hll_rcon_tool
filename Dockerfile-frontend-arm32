@@ -10,9 +10,11 @@ RUN mkdir /pw
 COPY rcongui/package.json package.json
 COPY rcongui/package-lock.json package-lock.json
 
+
 ENV GENERATE_SOURCEMAP false
 
-RUN npm install
+RUN npm ci
+
 
 ENV REACT_APP_API_URL /api/
 
