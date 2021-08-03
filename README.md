@@ -288,7 +288,7 @@ More or less in order of priorities
 
 ## Development environment
 
-First a quick overview of how the software is structured:
+First a quick overview of how the software is structured (this is outdated):
 
 ![Components overview](/images/overview.png)
 
@@ -343,12 +343,21 @@ It is not best practice to have endpoints that do write operations accept a GET 
     npm start
 
 The GUI should now be available on http://localhost:3000/ it auto refreshes on code changes
+**IMPORTANT** The cookies are not saved properly on chrome, it will keep asking to login, so use Firefox for dev.
 
+#### If you want logs or to test your logs hooks, or live stats, etc you need to run the other services too (remember to export the same ENV variables)
+
+    ./manage.py live_stats_loop
+    ./manage.py log_loop
+    # If you want logs to be saved in the DB
+    ./manage.py log_recorder 
+
+Those service are run by supervisor in the prod setup, so if you want more info check `config/supervisor.con`
 
 #### To test your changes will work with the prod setup, start the whole stack 
 
     docker-compose -f docker-compose.yml -f docker-compose.dev.yml build
-    docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+    docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d --force-recreate
 
 Now test on http://localhost:8010
 

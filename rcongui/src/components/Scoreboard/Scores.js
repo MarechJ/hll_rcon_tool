@@ -25,6 +25,7 @@ import { pure } from "recompose";
 import { PlayerStatProfile } from "./PlayerStatProfile";
 import MUIDataTable from "mui-datatables";
 import { Button } from "@material-ui/core";
+import {toPairs, sortBy} from 'lodash'
 
 export const safeGetSteamProfile = (scoreObj) =>
   scoreObj.get("steaminfo")
@@ -228,8 +229,8 @@ const RawScores = pure(({ classes, scores }) => {
             columns={[
               { name: "player", label: "Name" },
               { name: "kills", label: "Kills" },
-              { name: "kill_death_ratio", label: "K/D" },
               { name: "deaths", label: "Deaths" },
+              { name: "kill_death_ratio", label: "K/D" },
               { name: "kills_streak", label: "Max kill streak" },
               { name: "kills_per_minute", label: "Kill(s) / minute" },
               { name: "deaths_per_minute", label: "Death(s) / minute" },
@@ -254,6 +255,36 @@ const RawScores = pure(({ classes, scores }) => {
                 options: {
                   customBodyRender: (value, tableMeta, updateValue) =>
                     Math.round(parseInt(value) / 60).toFixed(2),
+                },
+              },
+              {
+                name: "death_by",
+                label: "Nemesis",
+                options: {
+                  customBodyRender: (value, tableMeta, updateValue) => {
+                  const pairs = toPairs(value)
+                  return sortBy(pairs, v => -v[1]).map(v => `${v[0]}: ${v[1]}`)[0]
+                  }
+                },
+              },
+              {
+                name: "most_killed",
+                label: "Victim",
+                options: {
+                  customBodyRender: (value, tableMeta, updateValue) => {
+                  const pairs = toPairs(value)
+                  return sortBy(pairs, v => -v[1]).map(v => `${v[0]}: ${v[1]}`)[0]
+                  }
+                },
+              },
+              {
+                name: "weapons",
+                label: "Weapons",
+                options: {
+                  customBodyRender: (value, tableMeta, updateValue) => {
+                    const pairs = toPairs(value)
+                    return sortBy(pairs, v => -v[1]).map(v => `${v[0]}: ${v[1]}`).join(', ')
+                  }
                 },
               },
             ]}
