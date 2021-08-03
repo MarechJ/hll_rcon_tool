@@ -32,10 +32,11 @@ It is essentially a website that you can self host (or if you ask around the dis
 - Recording of you map history, you see which map were played and how long they lasted
 - Ban people even if they never set foot on your server yet
 - Basic scoreboard showing you total kills / death / TK / death by TK for the last N minutes
-- Backup and restore of VIPs
+- Backup and restore/import of VIPs
 - All the basic settings, map rotation management, sliders for Idle kick time, max ping etc..
 - For power users and coders: You can add anything you want in the cron server or in the supervisor service so it's easy to code you own plugin (I myself have a votemap plugin and a bot that verifies players), an http API to use all the features above and a CLI for a subset of those
 - Put player on a watch list and be notified when they enter your server
+- Live stats, per game or per session with a friendly public version, as well as historical games (bookmarkable)
 
 
 > Why a website?
@@ -219,13 +220,19 @@ To the version you want (here we use v1.9)
     image: maresh/hll_rcon_frontend:v1.9
 
 
-## Known issues and limitations
+### Note for multi servers beyond 3 server
 
-- After a sometime without being used the API will lose the connection to the game server so when you open the GUI the first time you might see an error that it can't fetch the list of players. However this will recover on its own just refresh or wait til the next auto refresh
-- The game server in rare case fails to return the steam ID of a player. 
-- When logs are completely empty the game server will fail to respond to the request causing an error to show in the API/GUI
-- The RCON api server truncates the name of players to a maximum of 20 characters even though, up to 32 characters are displayed in game. Bottom line you don't always see the full name.
+You can copy the the last server section in the docker-compose.yml file and paste it, while replacing all the _3 by _4, also add the required variable in your .env (copy a whole section and replace the _3 to _4 suffix)
+Also note that you must add this extra keys in your docker-compose.yml after REDIS_URL. And mind the DB number that should change with each server
 
+```
+      ....
+      REDIS_URL: redis://redis:6379/1
+      REDIS_HOST: redis 
+      REDIS_PORT: 6379
+      REDIS_DB: 1
+      ....
+```
 
 ## How to use
 
@@ -239,16 +246,18 @@ See [User Guide](USERGUIDE.md) for more information on how to use certain featur
 
 More or less in order of priorities
 
-- Individual moderators accounts
+- ~~Individual moderators accounts~~
 - Audit trail
 - ~~Players sessions history (with records of actions applied to players)~~
 - ~~Deferred bans (from a blacklist)~~
-- Custom preset punish/kick/ban messages
+- ~~Custom preset punish/kick/ban messages~~
 - ~~Performance improvements for the player list view~~
-- Auto randomisation of map rotation (scheduling of the endpoint: /api/do_randomize_map_rotation)
-- Full log history (stored permanently)
+- ~~Auto randomisation of map rotation (scheduling of the endpoint: /api/do_randomize_map_rotation)~~
+- ~~Full log history (stored permanently)~~
 - ~~Action hooks on chat messages and players connect / disconnect~~
 - ~~Integration with Discord~~
+- Leaderboard and all time stats
+
 
 ## USAGE of the CLI with docker
 
@@ -256,6 +265,8 @@ More or less in order of priorities
     $ docker build . -t rcon
 
 ### Set your server info as environement variables and run the cli
+
+Note that is might be outdated and you might need redis up and running.
 
     $ docker run -it -e HLL_HOST=1.1.1.1 -e HLL_PORT=20300 -e HLL_PASSWORD=mypassword rcon python -m rcon.cli
      
