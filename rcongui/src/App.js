@@ -1,6 +1,6 @@
 import React from "react";
 import "./App.css";
-import {ToastContainer} from "react-toastify";
+import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import PlayerView from "./components/PlayerView";
 import useStyles from "./components/useStyles";
@@ -8,19 +8,23 @@ import Grid from "@material-ui/core/Grid";
 import Logs from "./components/LogsView/logs";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import HLLSettings from "./components/SettingsView/hllSettings";
-import {ThemeProvider} from '@material-ui/styles';
-import {HashRouter as Router, Route, Switch,} from "react-router-dom";
-import LogsHistory from './components/LogsHistory'
-import {createMuiTheme} from '@material-ui/core/styles';
+import { ThemeProvider } from "@material-ui/styles";
+import { HashRouter as Router, Route, Switch } from "react-router-dom";
+import LogsHistory from "./components/LogsHistory";
+import { createMuiTheme } from "@material-ui/core/styles";
 import PlayersHistory from "./components/PlayersHistory";
-import Header, {Footer} from "./components/Header";
-import RconSettings from './components/RconSettings';
-import ServicesList from './components/Services';
-import {Typography} from "@material-ui/core";
-import ScoreMenu from './components/Scoreboard/ScoreMenu'
+import Header, { Footer } from "./components/Header";
+import RconSettings from "./components/RconSettings";
+import ServicesList from "./components/Services";
+import { Typography } from "@material-ui/core";
+import ScoreMenu from "./components/Scoreboard/ScoreMenu";
 import GamesScore from "./components/Scoreboard/GamesScore";
 import PlayerInfo from "./components/PlayerInfo";
-import {LiveGameScore, LiveSessionScore} from "./components/Scoreboard/LiveScore"
+import {
+  LiveGameScore,
+  LiveSessionScore,
+} from "./components/Scoreboard/LiveScore";
+import ServerInfo from "./components/Embeds/ServerInfo";
 
 const Live = ({ classes }) => {
   const [mdSize, setMdSize] = React.useState(6);
@@ -268,8 +272,8 @@ const hll = createMuiTheme({
   overrides: {
     MuiChip: {
       deleteIcon: {
-        color: '#212121',
-      }
+        color: "#212121",
+      },
     },
     MuiCssBaseline: {
       "@global": {
@@ -284,8 +288,41 @@ const hll = createMuiTheme({
   },
 });
 
+const hllNoBg = createMuiTheme({
+  palette: {
+    primary: {
+      light: "#484848",
+      main: "#212121",
+      dark: "#000000",
+      contrastText: "#fff",
+    },
+    secondary: {
+      light: "#ffac42",
+      main: "#f47b00",
+      dark: "#ba4c00",
+      contrastText: "#fff",
+    },
+    background: {
+      default: "#343434",
+      paper: "#5b5b5b",
+    },
+    text: {
+      primary: "#ffffff",
+      secondary: " rgba(0, 0, 0, 0.7)",
+      disabled: "rgba(0, 0, 0, 0.5)",
+    },
+  },
+  overrides: {
+    MuiChip: {
+      deleteIcon: {
+        color: "#212121",
+      },
+    },
+  },
+});
 
 function App() {
+  const [isEmbed, setIsEmbed] = React.useState(false);
   const classes = useStyles();
   const [userTheme, setThemeName] = React.useState(
     localStorage.getItem("theme")
@@ -294,6 +331,12 @@ function App() {
     setThemeName(name);
     localStorage.setItem("theme", name);
   };
+
+  React.useEffect(() => {
+    const serarchParams = new URLSearchParams(window.location.search);
+
+    setIsEmbed(serarchParams.has("embed"));
+  }, [window.location.search]);
 
   const themes = {
     Dark: darkTheme,
@@ -310,29 +353,40 @@ function App() {
   };
 
   const theme = process.env.REACT_APP_PUBLIC_BUILD
-    ? hll
+    ? (isEmbed ? hllNoBg : hll)
     : themes[userTheme]
     ? themes[userTheme]
     : lightTheme;
-  
+
   return (
     <div className={"App " + classes.root}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <ToastContainer />
         <Router>
-          {!process.env.REACT_APP_PUBLIC_BUILD ? (
+          {isEmbed ? (
+            ""
+          ) : !process.env.REACT_APP_PUBLIC_BUILD ? (
             <Header classes={classes} />
           ) : (
             <ScoreMenu classes={classes} />
           )}
-          
           <Switch>
-            
-            <Route path="/livescore" default={process.env.REACT_APP_PUBLIC_BUILD} exact>
+            <Route path="/serverinfo" exact>
+              <ServerInfo classes={classes} />
+            </Route>
+            <Route
+              path="/livescore"
+              default={process.env.REACT_APP_PUBLIC_BUILD}
+              exact
+            >
               <LiveSessionScore classes={classes} />
             </Route>
-            <Route path={process.env.REACT_APP_PUBLIC_BUILD ? "/" : "/livegamescore"} default={process.env.REACT_APP_PUBLIC_BUILD} exact>
+            <Route
+              path={process.env.REACT_APP_PUBLIC_BUILD ? "/" : "/livegamescore"}
+              default={process.env.REACT_APP_PUBLIC_BUILD}
+              exact
+            >
               <LiveGameScore classes={classes} />
             </Route>
             <Route path="/gamescoreboard/:slug">
@@ -355,7 +409,7 @@ function App() {
                 </Route>
                 <Route path="/player/:steamId64">
                   <Grid container>
-                    <PlayerInfo classes={classes}/>
+                    <PlayerInfo classes={classes} />
                   </Grid>
                 </Route>
                 <Route path="/settings">
@@ -408,8 +462,7 @@ function App() {
               ""
             )}
           </Switch>
-
-          <Footer classes={classes} />
+          {isEmbed ? "" : <Footer classes={classes} />}
         </Router>
       </ThemeProvider>
     </div>
