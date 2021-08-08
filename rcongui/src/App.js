@@ -9,7 +9,7 @@ import Logs from "./components/LogsView/logs";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import HLLSettings from "./components/SettingsView/hllSettings";
 import { ThemeProvider } from "@material-ui/styles";
-import { HashRouter as Router, Route, Switch } from "react-router-dom";
+import { HashRouter, Route, Switch, BrowserRouter } from "react-router-dom";
 import LogsHistory from "./components/LogsHistory";
 import { createMuiTheme } from "@material-ui/core/styles";
 import PlayersHistory from "./components/PlayersHistory";
@@ -353,15 +353,19 @@ function App() {
   };
 
   const theme = process.env.REACT_APP_PUBLIC_BUILD
-    ? (isEmbed ? hllNoBg : hll)
+    ? isEmbed
+      ? hllNoBg
+      : hll
     : themes[userTheme]
     ? themes[userTheme]
     : lightTheme;
 
+  const Router = isEmbed ? BrowserRouter : HashRouter;
+
   return (
     <div className={"App " + classes.root}>
       <ThemeProvider theme={theme}>
-        <CssBaseline />
+        {isEmbed ? "" : <CssBaseline />}
         <ToastContainer />
         <Router>
           {isEmbed ? (
@@ -371,6 +375,7 @@ function App() {
           ) : (
             <ScoreMenu classes={classes} />
           )}
+
           <Switch>
             <Route path="/serverinfo" exact>
               <ServerInfo classes={classes} />
