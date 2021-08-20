@@ -165,7 +165,7 @@ def get_embeds(server_info, stats):
         ),
     }
     stats_display = {
-        k: v for k, v in stats_display.items() if k in STATS_KEYS_TO_DISPLAY
+        k: v for k, v in stats_display.items() if CONFIG[k] in STATS_KEYS_TO_DISPLAY
     }
 
     current_embed = Embed(
