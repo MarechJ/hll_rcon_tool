@@ -141,31 +141,31 @@ def get_embeds(server_info, stats):
     embeds.append(get_header_embed(server_info))
 
     stats_display = {
-        TOP_KILLERS: get_stat(stats, "kills"),
-        TOP_RATIO: get_stat(stats, "kill_death_ratio"),
-        TOP_PERFORMANCE: get_stat(stats, "kills_per_minute"),
-        TRY_HARDERS: get_stat(stats, "deaths_per_minute"),
-        TOP_STAMINA: get_stat(stats, "deaths"),
-        TOP_KILL_STREAK: get_stat(stats, "kills_streak"),
-        I_NEVER_GIVE_UP: get_stat(stats, "deaths_without_kill_streak"),
-        MOST_PATIENT: get_stat(stats, "deaths_by_tk"),
-        I_M_CLUMSY: get_stat(stats, "teamkills"),
-        I_NEED_GLASSES: get_stat(stats, "teamkills_streak"),
-        I_LOVE_VOTING: get_stat(stats, "nb_vote_started"),
-        WHAT_IS_A_BREAK: get_stat(
+        "TOP_KILLERS": get_stat(stats, "kills"),
+        "TOP_RATIO": get_stat(stats, "kill_death_ratio"),
+        "TOP_PERFORMANCE": get_stat(stats, "kills_per_minute"),
+        "TRY_HARDERS": get_stat(stats, "deaths_per_minute"),
+        "TOP_STAMINA": get_stat(stats, "deaths"),
+        "TOP_KILL_STREAK": get_stat(stats, "kills_streak"),
+        "I_NEVER_GIVE_UP": get_stat(stats, "deaths_without_kill_streak"),
+        "MOST_PATIENT": get_stat(stats, "deaths_by_tk"),
+        "I_M_CLUMSY": get_stat(stats, "teamkills"),
+        "I_NEED_GLASSES": get_stat(stats, "teamkills_streak"),
+        "I_LOVE_VOTING": get_stat(stats, "nb_vote_started"),
+        "WHAT_IS_A_BREAK": get_stat(
             stats, "time_seconds", post_process=lambda v: round(v / 60, 2)
         ),
-        SURVIVORS: get_stat(
+        "SURVIVORS": get_stat(
             stats, "longest_life_secs", post_process=lambda v: round(v / 60, 2)
         ),
-        U_R_STILL_A_MAN: get_stat(
+        "U_R_STILL_A_MAN": get_stat(
             stats,
             "shortest_life_secs",
             reverse=False,
         ),
     }
     stats_display = {
-        k: v for k, v in stats_display.items() if CONFIG[k] in STATS_KEYS_TO_DISPLAY
+        CONFIG[k]: v for k, v in stats_display.items() if k in STATS_KEYS_TO_DISPLAY
     }
 
     current_embed = Embed(
