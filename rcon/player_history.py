@@ -77,6 +77,24 @@ def get_player_profile_by_ids(sess, ids):
         .all()
     )
 
+def get_player_profile_by_steam_ids(sess, steam_ids):
+    eager_load = [
+        PlayerSteamID.names,
+        PlayerSteamID.received_actions,
+        PlayerSteamID.blacklist,
+        PlayerSteamID.flags,
+        PlayerSteamID.watchlist,
+        PlayerSteamID.steaminfo,
+    ]
+
+    return (
+        sess.query(PlayerSteamID)
+        .filter(PlayerSteamID.steam_id_64.in_(steam_ids))
+        .options(defaultload(*eager_load))
+        .all()
+    )
+
+
 
 def get_player_profile_by_id(id, nb_sessions):
     with enter_session() as sess:

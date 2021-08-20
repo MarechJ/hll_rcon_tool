@@ -1,8 +1,14 @@
 import React from "react";
-import {Button, Grid, Link, TextField, Typography} from "@material-ui/core";
-import {range} from "lodash/util";
-import {get, handle_http_errors, postData, sendAction, showResponse,} from "../../utils/fetchUtils";
-import VipEditableList from "./vips";
+import { Button, Grid, Link, TextField, Typography, Tooltip } from "@material-ui/core";
+import { range } from "lodash/util";
+import {
+  get,
+  handle_http_errors,
+  postData,
+  sendAction,
+  showResponse,
+} from "../../utils/fetchUtils";
+import VipEditableList, { VipUpload } from "./vips";
 import AdminsEditableList from "./admins";
 import _ from "lodash";
 import MapRotationTransferList from "./mapRotation";
@@ -12,8 +18,9 @@ import NumSlider from "./numSlider";
 import ChangeMap from "./changeMap";
 import Padlock from "./padlock";
 import AutoRefreshLine from "../autoRefreshLine";
-import {ForwardCheckBox, WordList} from "../commonComponent";
+import { ForwardCheckBox, WordList } from "../commonComponent";
 import VoteMapConfig from "./voteMapConfig";
+import HelpIcon from "@material-ui/icons/Help";
 
 const ProfanityFiler = ({
   words,
@@ -382,12 +389,7 @@ class HLLSettings extends React.Component {
             classes={classes}
             onExpand={this.loadVips}
           >
-            <Link
-              href={`${process.env.REACT_APP_API_URL}download_vips`}
-              target="_blank"
-            >
-              Download VIPs
-            </Link>
+            <VipUpload classes={classes} />
             <p>Changes are applied immediately</p>
             <VipEditableList
               peopleList={vips}
@@ -661,7 +663,10 @@ class HLLSettings extends React.Component {
         <Grid container className={classes.paddingTop} justify="center" xs={12}>
           <Grid item>
             <Typography variant="h5" gutterBottom>
-              Vote Map config
+              Vote Map config{" "}
+              <Tooltip title="When enabled this feature will managed you map rotation automatically. To display the voting options to the players you must set one of the 'votemap_' variables in your automatic broadcasts">
+                <HelpIcon fontSize="small" />
+              </Tooltip>
             </Typography>
           </Grid>
         </Grid>

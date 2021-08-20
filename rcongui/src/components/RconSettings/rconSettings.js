@@ -1,18 +1,26 @@
 import React from "react";
-import {Button, Grid, IconButton, Link, TextField, Typography,} from "@material-ui/core";
 import {
-    addPlayerToWatchList,
-    get,
-    getSharedMessages,
-    handle_http_errors,
-    postData,
-    showResponse,
+  Button,
+  Grid,
+  IconButton,
+  Link,
+  TextField,
+  Typography,
+  Tooltip,
+} from "@material-ui/core";
+import {
+  addPlayerToWatchList,
+  get,
+  getSharedMessages,
+  handle_http_errors,
+  postData,
+  showResponse,
 } from "../../utils/fetchUtils";
 import Blacklist from "./blacklist";
-import {toast} from "react-toastify";
+import { toast } from "react-toastify";
 import _ from "lodash";
 import Padlock from "../../components/SettingsView/padlock";
-import TextHistoryManager, {SelectNameSpace} from "./textHistoryManager";
+import TextHistoryManager, { SelectNameSpace } from "./textHistoryManager";
 import TextHistory from "../textHistory";
 import ServicesList from "../Services";
 import InputLabel from "@material-ui/core/InputLabel";
@@ -20,10 +28,13 @@ import MenuItem from "@material-ui/core/MenuItem";
 import FormHelperText from "@material-ui/core/FormHelperText";
 import FormControl from "@material-ui/core/FormControl";
 import Select from "@material-ui/core/Select";
-import {ManualPlayerInput, WordList} from "../commonComponent";
+import { ManualPlayerInput, WordList } from "../commonComponent";
 import DeleteIcon from "@material-ui/icons/Delete";
 import AddIcon from "@material-ui/icons/Add";
 import SaveIcon from "@material-ui/icons/Save";
+import RealVip from "./realVip";
+import HelpIcon from "@material-ui/icons/Help";
+import ServerName from "./serverName";
 
 const ManualWatchList = ({ classes }) => {
   const [name, setName] = React.useState("");
@@ -133,15 +144,18 @@ const WebhooksConfig = () => {
       hooks: hookConfig.hooks,
     })
       .then((res) => showResponse(res, `set_hooks ${hookConfig.name}`, true))
-      .then((res) => {console.log(res);setHooks(res.result); });
+      .then((res) => {
+        console.log(res);
+        setHooks(res.result);
+      });
 
-    if (hooks === null) {
-        return (
-            <React.Fragment>
-                <p>no hooks found</p>
-            </React.Fragment>
-        )
-    }
+  if (hooks === null) {
+    return (
+      <React.Fragment>
+        <p>no hooks found</p>
+      </React.Fragment>
+    );
+  }
   return (
     <React.Fragment>
       {hooks.map((hookConfig) => (
@@ -524,7 +538,6 @@ class RconSettings extends React.Component {
             </Grid>
           </Grid>
         </Grid>
-
         <Grid item className={classes.paddingTop} justify="center" xs={12}>
           <Typography variant="h5">Discord Webhooks configuration</Typography>
         </Grid>
@@ -538,9 +551,13 @@ class RconSettings extends React.Component {
         >
           <WebhooksConfig classes={classes} />
         </Grid>
-
         <Grid item className={classes.paddingTop} justify="center" xs={12}>
-          <Typography variant="h5">Auto votekick toggle</Typography>
+          <Typography variant="h5">
+            Auto votekick toggle{" "}
+            <Tooltip title="When enabled this feature manages the votekicks ingame by turning it off if the conditions you set below are met, and turning it back on if they are NOT met">
+              <HelpIcon fontSize="small" />
+            </Tooltip>
+          </Typography>
           <Typography variant="body1">Turn off votekick if</Typography>
         </Grid>
         <Grid
@@ -597,7 +614,6 @@ class RconSettings extends React.Component {
             />
           </Grid>
         </Grid>
-
         <Grid item className={classes.paddingTop} justify="center" xs={12}>
           <Typography variant="h5">Camera notification config</Typography>
         </Grid>
@@ -619,33 +635,49 @@ class RconSettings extends React.Component {
             handleChange={(v) => this.saveCameraConfig({ welcome: v })}
           />
         </Grid>
-        <Grid item className={classes.paddingTop} justify="center" xs={12}>
-          <Typography variant="h5">Misc. options</Typography>
-        </Grid>
         <Grid
-          item
-          xs={12}
+          container
           className={`${classes.padding} ${classes.margin} ${classes.root}`}
           alignContent="center"
           justify="center"
           alignItems="center"
         >
-          <Grid container justify="space-evenly">
-            <Grid item>
-              <Link href="/api/upload_vips" target="_blank">
-                Bulk VIP upload / VIP export
-              </Link>
-            </Grid>
-            <Grid item>
-              <Link href="/api/scoreboard" target="_blank">
-                Scoreboard (public link)
-              </Link>
-            </Grid>
-            <Grid item>
-              <Link href="/api/tk" target="_blank">
-                Teamkills overview (public link)
-              </Link>
-            </Grid>
+          <Grid item xs={12}>
+            <Typography variant="h5">
+              Real VIP slots{" "}
+              <Tooltip
+                title=" When enabled each VIP that enters the servers takes 1 VIP slot that is
+            not release until a VIP leaves. This is done by dynaically settings
+            the number of VIP slots based on (Max num of VIP slots - current
+            number of vips in game). The number of VIP slots will never fall below
+            'Min num of VIP slot', you can set that to 0 to have a hard cap. 
+            If you use the autoSettings don't forget not set the VIPs in there or it will override the realVip system"
+              >
+                <HelpIcon fontSize="small" />
+              </Tooltip>{" "}
+            </Typography>
+          </Grid>
+          <Grid item xs={12}>
+            <RealVip classes={classes} />
+          </Grid>
+        </Grid>
+        <Grid
+          container
+          className={`${classes.padding} ${classes.margin} ${classes.root}`}
+          alignContent="center"
+          justify="center"
+          alignItems="center"
+        >
+          <Grid item xs={12}>
+            <Typography variant="h5">
+              Server Name
+              <Tooltip title="Only users with a GTX server can use this, it won't work for others. GTX users must set extra info in config/config.yml for it to work. The name change is only applied after a change of map">
+                <HelpIcon fontSize="small" />
+              </Tooltip>{" "}
+            </Typography>
+          </Grid>
+          <Grid item xs={12}>
+            <ServerName classes={classes} />
           </Grid>
         </Grid>
         <Grid

@@ -4,8 +4,8 @@ import datetime
 import os
 from rcon.utils import map_name
 import time
-from redis import Redis
-from rq import Queue, queue
+from rq import Queue
+from rq.job import Job
 from datetime import timedelta
 from rcon.cache_utils import get_redis_client
 from rcon.settings import SERVER_INFO
@@ -13,6 +13,8 @@ from rcon.models import enter_session, Maps, PlayerStats
 from rcon.scoreboard import TimeWindowStats
 from rcon.player_history import get_player
 from sqlalchemy import and_
+from rcon.recorded_commands import RecordedRcon
+from rcon.extended_commands import CommandFailedError
 
 logger = logging.getLogger("rcon")
 
@@ -148,4 +150,54 @@ def _record_stats(map_info):
             else:
                 logger.error("Stat object does not contain a steam id: %s", stats)
 
+
+def get_job_results(job_key):
+    job = Job.fetch(job_key, connection=get_redis_client())
+    if not job:
+        return {
+            "status": "Job not found or expired",
+            "result": None,
+            "started_at": None,
+            "ended_at": None,
+            "func_name": None
+        }
+    return {
+        "status": job.get_status(),
+        # avoid showing previous' job result if they use the same id
+        "result": job.result if job.get_status() == "finished" else None,
+        "started_at": job.started_at,
+        "ended_at": job.ended_at,
+        "func_name": job.func_name,
+        "check_timestamp": datetime.datetime.now().timestamp(),
+    }
+
+
+def worker_bulk_vip(name_ids, job_key, mode="override"):
+    queue = get_queue()
+    return queue.enqueue(bluk_vip, name_ids=name_ids, mode=mode, result_ttl=6000, job_timeout=1200, job_id=job_key)
+
+
+def bluk_vip(name_ids, mode="override"):
+    errors = []
+    ctl = RecordedRcon(SERVER_INFO)
+    vips = ctl.get_vip_ids()
+    for vip in vips:
+        ctl.do_remove_vip(vip["steam_id_64"])
+
+    for name, steam_id in name_ids:
+        try:
+            ctl.do_add_vip(name.strip(), steam_id)
+        except CommandFailedError:
+            error = "Failed to add {name} {steam_id}"
+            logger.warning("Retrying once for: %s", error)
+            time.sleep(1)
+            try:
+               ctl.do_add_vip(name.strip(), steam_id) 
+            except Exception:
+                logger.exception(error)
+                errors.append(error)
+            
+    if not errors:
+        errors.append("ALL OK")
+    return errors
 

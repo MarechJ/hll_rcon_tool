@@ -3,8 +3,9 @@ from dataclasses import dataclass, field, asdict
 from typing import List
 import logging
 import enum
+from dataclasses import dataclass, fields
 
-from sqlalchemy.sql.expression import false
+from sqlalchemy.sql.expression import false, true
 
 from rcon.models import UserConfig, enter_session
 from rcon.commands import CommandFailedError
@@ -17,10 +18,12 @@ def _get_conf(sess, key):
 
 
 def get_user_config(key, default=None):
+    logger.debug("Getting user config for %s", key)
     with enter_session() as sess:
         res = _get_conf(sess, key)
-        return res.value if res else default
-
+        res = res.value if res else default
+        logger.debug("User config for %s is %s", key, res)
+        return res
 
 def _add_conf(sess, key, val):
     return sess.add(UserConfig(key=key, value=val))
@@ -33,6 +36,7 @@ def _set_default(sess, key, val):
 
 
 def set_user_config(key, object_):
+    logger.debug("Setting user config for %s with %s", key, object_)
     with enter_session() as sess:
         conf = _get_conf(sess, key)
         if conf is None:
@@ -264,7 +268,6 @@ class DefaultMethods(enum.Enum):
     random_suggestions = "random_from_suggestions"
     random_all_maps = "random_from_all_maps"
 
-
 class VoteMapConfig:
     def __init__(self):
         server_number = os.getenv("SERVER_NUMBER", 0)
@@ -406,6 +409,69 @@ class VoteMapConfig:
             "No votes recorded yet",
         )
 
+@dataclass
+class BaseConfig:
+
+    def prefix(self, config_key_name):
+        namespace = self.__class__.__name__.lower()
+        return f'{os.getenv("SERVER_NUMBER", "0")}_{namespace}_{config_key_name}'
+
+    def seed_db(self, sess):
+        for field in fields(self):
+            _set_default(sess, self.prefix(field.name), field.default)
+
+    def _make_setter(self, field):
+        def setter(v):
+            if isinstance(v, field.type):
+                print("setting ", field, v)
+                set_user_config(self.prefix(field.name), v)
+            else:
+                raise TypeError(f"Wrong value {v} for {field}")
+        return setter
+    
+    def _make_getter(self, field):
+        def getter():
+            print("getting", field)
+            return get_user_config(self.prefix(field.name))
+        return getter
+
+    def auto_generate_attr(self):
+        """
+        We auto generate the getters and setters functions that are used to query the DB
+        """
+        for field in fields(self):
+            getter_name = f'get_{field.name.lower()}'
+            setter_name = f'set_{field.name.lower()}'
+            # Do not override existing methods
+            if not getter_name in self.__dict__:
+                self.__setattr__(getter_name, self._make_getter(field))
+            if not setter_name in self.__dict__:
+                self.__setattr__(setter_name, self._make_setter(field))
+                
+    def __post_init__(self):
+        self.auto_generate_attr()
+
+class ZombieConfig:
+    def __init__(self):
+        server_number = os.getenv("SERVER_NUMBER", 0)
+        self.ZOMBIE_ENABLED = f'{server_number}_ZOMBIE_ENABLED'
+        self.ZOMBIE_SIDE = f'{server_number}_ZOMBIE_SIDE'
+        self.ZOMBIE_ALLOWED_WEAPONS = f'{server_number}_ZOMBIE_ALLOWED_WEAPONS'
+        self.ZOMBIE_HUMAN_ALLOWED_WEAPONS = f'{server_number}_ZOMBIE_HUMAN_ALLOWED_WEAPONS'
+        self.ZOMBIE_WEAPON_PUNISHMENT = f'{server_number}_ZOMBIE_WEAPON_PUNISHMENT'
+        self.ZOMBIE_HUMAN_NB_LIFE = f'{server_number}_ZOMBIE_HUMAN_NB_LIFE'
+        self.ZOMBIE_NB_LIFE = f'{server_number}_ZOMBIE_NB_LIFE'
+        self.ZOMBIE_ON_HUMAN_PERMA_DEATH = f'{server_number}_ZOMBIE_ON_HUMAN_PERMA_DEATH'
+        self.ZOMBIE_ON_ZOMBIE_PERMA_DEATH = f'{server_number}_ZOMBIE_ON_ZOMBIE_PERMA_DEATH'
+
+
+@dataclass(init=True)
+class RealVipConfig(BaseConfig):
+    enabled : bool = False
+    desired_total_number_vips : int = 5
+    minimum_number_vip_slot : int = 1
+
+
 
 def seed_default_config():
     with enter_session() as sess:
@@ -414,4 +480,5 @@ def seed_default_config():
         CameraConfig().seed_db(sess)
         AutoVoteKickConfig().seed_db(sess)
         VoteMapConfig().seed_db(sess)
+        RealVipConfig().seed_db(sess)
         sess.commit()

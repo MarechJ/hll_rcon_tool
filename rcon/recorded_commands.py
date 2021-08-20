@@ -58,6 +58,10 @@ class RecordedRcon(Rcon):
         res = super().do_switch_player_now(player)
         return res
 
+    def invalidate_player_list_cache(self):
+        super().get_players.cache_clear()
+        
+        
     def get_players(self):
         players = super().get_players()
 

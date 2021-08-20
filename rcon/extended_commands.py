@@ -55,7 +55,20 @@ class Rcon(ServerCtl):
 
         return player_dict if as_dict else player_list
 
-    @ttl_cache(ttl=60 * 60 * 2, cache_falsy=False)
+     
+    def get_vips_count(self):
+        players = self.get_playerids()
+
+        vips = {v['steam_id_64'] for v in self.get_vip_ids()}
+        vip_count = 0
+        for _, steamid in players:
+            if steamid in vips:
+                vip_count += 1
+        
+        return vip_count
+
+
+    @ttl_cache(ttl=60 * 60 * 24, cache_falsy=False)
     def get_player_info(self, player):
         try:
             try:
@@ -338,7 +351,7 @@ class Rcon(ServerCtl):
                 prev = red.getset("WELCOME_MESSAGE", msg)
             else:
                 prev = red.get("WELCOME_MESSAGE")
-            red.expire("WELCOME_MESSAGE", 60 * 60 * 24)
+            red.expire("WELCOME_MESSAGE", 60 * 60 * 24 * 7)
         except Exception:
             logger.exception("Can't save message in redis: %s", msg)
 

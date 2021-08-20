@@ -20,7 +20,7 @@ import {Typography} from "@material-ui/core";
 import ScoreMenu from './components/Scoreboard/ScoreMenu'
 import GamesScore from "./components/Scoreboard/GamesScore";
 import PlayerInfo from "./components/PlayerInfo";
-import LiveScore from "./components/Scoreboard/LiveScore"
+import {LiveGameScore, LiveSessionScore} from "./components/Scoreboard/LiveScore"
 
 const Live = ({ classes }) => {
   const [mdSize, setMdSize] = React.useState(6);
@@ -329,8 +329,14 @@ function App() {
           
           <Switch>
             
-            <Route path={process.env.REACT_APP_PUBLIC_BUILD ? "/" : "/livescore"} default={process.env.REACT_APP_PUBLIC_BUILD} exact>
-              <LiveScore classes={classes} />
+            <Route path="/livescore" default={process.env.REACT_APP_PUBLIC_BUILD} exact>
+              <LiveSessionScore classes={classes} />
+            </Route>
+            <Route path={process.env.REACT_APP_PUBLIC_BUILD ? "/" : "/livegamescore"} default={process.env.REACT_APP_PUBLIC_BUILD} exact>
+              <LiveGameScore classes={classes} />
+            </Route>
+            <Route path="/gamescoreboard/:slug">
+              <GamesScore classes={classes} />
             </Route>
             <Route path="/gamescoreboard">
               <GamesScore classes={classes} />

@@ -21,6 +21,8 @@ services:
       server1:
         aliases: 
           - supervisor
+    volumes:
+      - ./supervisor_data:/data
   backend_1: &backend
     hostname: api
     extends:
@@ -85,6 +87,9 @@ services:
       LOGGING_LEVEL: 'INFO'
       LOGGING_PATH: /logs/
       REDIS_URL: redis://redis:6379/1
+      REDIS_HOST: redis 
+      REDIS_PORT: 6379
+      REDIS_DB: 1
       DB_URL: 'postgres://rcon:${HLL_DB_PASSWORD}@postgres:5432'
       DISCORD_WEBHOOK_AUDIT_LOG: ${DISCORD_WEBHOOK_AUDIT_LOG_2}
       RCONWEB_API_SECRET: ${RCONWEB_API_SECRET}
@@ -107,6 +112,8 @@ services:
       CONFIG_DIR: /config/
       SERVER_NUMBER: 2
       RCONWEB_SERVER_URL: ${RCONWEB_SERVER_URL_2}
+      PUBLIC_STATS_PORT: ${PUBLIC_STATS_PORT_2}
+      PUBLIC_STATS_PORT_HTTPS: ${PUBLIC_STATS_PORT_HTTPS_2}
     restart: on-failure
     networks:
       common:
@@ -155,6 +162,9 @@ services:
       LOGGING_LEVEL: 'INFO'
       LOGGING_PATH: /logs/
       REDIS_URL: redis://redis:6379/2
+      REDIS_HOST: redis 
+      REDIS_PORT: 6379
+      REDIS_DB: 2
       DB_URL: 'postgres://rcon:${HLL_DB_PASSWORD}@postgres:5432'
       DISCORD_WEBHOOK_AUDIT_LOG: ${DISCORD_WEBHOOK_AUDIT_LOG_3}
       RCONWEB_API_SECRET: ${RCONWEB_API_SECRET}
@@ -177,6 +187,8 @@ services:
       CONFIG_DIR: /config/
       SERVER_NUMBER: 3
       RCONWEB_SERVER_URL: ${RCONWEB_SERVER_URL_3}
+      PUBLIC_STATS_PORT: ${PUBLIC_STATS_PORT_3}
+      PUBLIC_STATS_PORT_HTTPS: ${PUBLIC_STATS_PORT_HTTPS_3}
     restart: on-failure
     command: supervisor
     networks:

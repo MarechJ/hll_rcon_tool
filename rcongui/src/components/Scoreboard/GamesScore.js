@@ -6,9 +6,12 @@ import {
   GridListTile,
   GridListTileBar,
   IconButton,
+  Paper
 } from "@material-ui/core";
 import useMediaQuery from "@material-ui/core/useMediaQuery";
 import VisibilityIcon from "@material-ui/icons/Visibility";
+import LinkIcon from '@material-ui/icons/Link';
+import CheckIcon from '@material-ui/icons/Check';
 import React from "react";
 import { get, handle_http_errors, showResponse } from "../../utils/fetchUtils";
 import { List as iList, Map, fromJS, List } from "immutable";
@@ -17,6 +20,9 @@ import { useTheme } from "@material-ui/core/styles";
 import Scores from "./Scores";
 import map_to_pict from "./utils";
 import { fade } from '@material-ui/core/styles/colorManipulator';
+import { CopyToClipboard } from "react-copy-to-clipboard";
+import { useParams } from "react-router-dom";
+import {toast} from "react-toastify";
 
 const useStyles = makeStyles((theme) => ({
   singleLine: {
@@ -82,9 +88,15 @@ const useStyles = makeStyles((theme) => ({
     height: 38,
     width: 38,
   },
+  black: {
+    backgroundColor: theme.palette.primary.main,
+  },
 }));
 
 const GamesScore = ({ classes }) => {
+  let { slug } = useParams();
+  slug = parseInt(slug)
+  console.log("Slug ", slug)
   const styles = useStyles();
   const [scores, setScores] = React.useState(new iList());
   const [serverState, setServerState] = React.useState(new Map());
@@ -94,7 +106,7 @@ const GamesScore = ({ classes }) => {
   const [mapsPage, setMapsPage] = React.useState(1);
   const [mapsPageSize, setMapsPageSize] = React.useState(30);
   const [mapsTotal, setMapsTotal] = React.useState(0);
-  const [currentMapId, setCurrentMapId] = React.useState(null);
+
   const refreshIntervalSec = 10;
   const theme = useTheme();
   const sm = useMediaQuery(theme.breakpoints.up("sm"));
@@ -108,10 +120,27 @@ const GamesScore = ({ classes }) => {
     ? moment.unix(scores.get("snapshot_timestamp")).format()
     : "N/A";
 
+  const getShareableLink = () => {
+    return window.location.href;
+  };
+  const doSelectMap = (map_id) => {
+    window.location.hash = `#/gamescoreboard/${map_id}`;
+    console.log(`Change to ${map_id}`);
+  };
+
+  const [hasCopiedLink, setHasCopiedLink] = React.useState(false);
+  const onCopyLink = () => {
+    setHasCopiedLink(true);
+    setTimeout(() => {
+      setHasCopiedLink(false);
+    }, 1000);
+    toast.success("Link copied to clipboard")
+  };
+  
   moment.relativeTimeThreshold("m", 120);
   const getData = () => {
     setIsLoading(true);
-    console.log("Loading data");
+
     get("public_info")
       .then((res) => showResponse(res, "public_info", false))
       .then((data) => setServerState(fromJS(data.result)))
@@ -127,25 +156,26 @@ const GamesScore = ({ classes }) => {
         setMapsPageSize(data.result.page_size);
         setMapsTotal(data.result.total);
         setMaps(fromJS(data.result.maps));
-        if (data.result.maps && currentMapId === null) {
-          setCurrentMapId(data.result.maps[0].id);
+        if (data.result.maps && !slug) {
+          window.location.hash = `#/gamescoreboard/${data.result.maps[0].id}`;
         }
       })
       .catch(handle_http_errors);
   };
 
   React.useEffect(() => {
-    if (!currentMapId) {
+    if (!slug) {
       return;
     }
-    get(`get_map_scoreboard?map_id=${currentMapId}`)
+
+    get(`get_map_scoreboard?map_id=${slug}`)
       .then((res) => showResponse(res, "get_map_scoreboard", false))
       .then((data) =>
-        data.result ? setScores(fromJS(data.result.player_stats)) : ""
+        data.result && data.result.player_stats ? setScores(fromJS(data.result.player_stats)) : ""
       )
       .then(() => setIsLoading(false))
       .catch(handle_http_errors);
-  }, [currentMapId]);
+  }, [slug]);
 
   React.useEffect(() => {
     getData();
@@ -203,12 +233,12 @@ const GamesScore = ({ classes }) => {
                 const end = moment(m.get("end") + "Z");
                 const duration = moment.duration(end - start);
                 const isSelected = (isReturn, isNotReturn) =>
-                  m.get("id") === currentMapId ? isReturn : isNotReturn;
+                  m.get("id") === slug ? isReturn : isNotReturn;
 
                 return (
                   <GridListTile
                     className={styles.clickable}
-                    onClick={() => setCurrentMapId(m.get("id"))}
+                    onClick={() => doSelectMap(m.get("id"))}
                     key={`${m.get("name")}${m.get("start")}${m.get("end")}`}
                   >
                     <img alt="Map" src={map_to_pict[m.get("just_name")]} />
@@ -230,10 +260,14 @@ const GamesScore = ({ classes }) => {
                       title={`${start.format("dddd, MMM Do ")}`}
                       subtitle={`Started at: ${start.format("HH:mm")}`}
                       actionIcon={isSelected(
-                        "",
+                        <IconButton color="inherit">
+                          <CopyToClipboard text={getShareableLink()} onCopy={onCopyLink}>
+                            {hasCopiedLink ? <CheckIcon color="inherit" /> : <LinkIcon color="inherit" />}
+                          </CopyToClipboard>
+                        </IconButton>,
                         <IconButton
                           color="inherit"
-                          onClick={() => setCurrentMapId(m.get("id"))}
+                          onClick={() => doSelectMap(m.get("id"))}
                         >
                           <VisibilityIcon color="inherit" />
                         </IconButton>

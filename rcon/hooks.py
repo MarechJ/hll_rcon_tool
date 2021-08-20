@@ -1,6 +1,7 @@
 import logging
 import os
 from functools import wraps
+from rcon.commands import CommandFailedError
 
 from discord_webhook import DiscordEmbed
 
@@ -23,7 +24,7 @@ from rcon.steam_utils import (
     update_db_player_info,
 )
 from rcon.discord import send_to_discord_audit
-from rcon.user_config import CameraConfig
+from rcon.user_config import CameraConfig, RealVipConfig
 from rcon.discord import get_prepared_discord_hooks, send_to_discord_audit
 from rcon.map_recorder import VoteMap
 from rcon.user_config import VoteMapConfig
@@ -50,7 +51,7 @@ def count_vote(rcon: RecordedRcon, struct_log):
                 config.get_votemap_thank_you_text().format(
                     player_name=struct_log["player"], map_name=map_name
                 ),
-                5
+                5,
             )
         except Exception:
             logger.warning("Unable to output thank you message")
@@ -204,8 +205,32 @@ def inject_steam_id_64(func):
 
 
 @on_connected
-@inject_steam_id_64
-def handle_on_connect(rcon, struct_log, steam_id_64):
+def handle_on_connect(rcon, struct_log):
+    steam_id_64 = rcon.get_player_info.get_cached_value_for(struct_log["player"])
+
+    try:
+        if type(rcon) == RecordedRcon:
+            rcon.invalidate_player_list_cache()
+        else:
+            rcon.get_player.cache_clear()
+        rcon.get_player_info.clear_for(struct_log["player"])
+        rcon.get_player_info.clear_for(player=struct_log["player"])
+    except Exception:
+        logger.exception("Unable to clear cache for %s", steam_id_64)
+    try:
+        info = rcon.get_player_info(struct_log["player"])
+        steam_id_64 = info.get("steam_id_64")
+    except (CommandFailedError, KeyError):
+        if not steam_id_64:
+            logger.exception("Unable to get player steam ID for %s", struct_log)
+            raise
+        else:
+            logger.error(
+                "Unable to get player steam ID for %s, falling back to cached value %s",
+                struct_log,
+                steam_id_64,
+            )
+
     timestamp = int(struct_log["timestamp_ms"]) / 1000
     save_player(
         struct_log["player"],
@@ -238,8 +263,8 @@ def update_player_steaminfo_on_connect(rcon, struct_log, steam_id_64):
             "Can't update steam info, no steam profile returned for %s",
             struct_log.get("player"),
         )
-        return 
-        
+        return
+
     logger.info("Updating steam profile for player %s", struct_log["player"])
     with enter_session() as sess:
         player = _get_set_player(
@@ -247,6 +272,31 @@ def update_player_steaminfo_on_connect(rcon, struct_log, steam_id_64):
         )
         update_db_player_info(player, profile)
         sess.commit()
+
+
+def _set_real_vips(rcon: RecordedRcon, struct_log):
+    config = RealVipConfig()
+    if not config.get_enabled():
+        logger.debug("Real VIP is disabled")
+        return
+    
+    desired_nb_vips = config.get_desired_total_number_vips()
+    min_vip_slot = config.get_minimum_number_vip_slot()
+    vip_count = rcon.get_vips_count()
+
+    remaining_vip_slots = max(desired_nb_vips - vip_count, max(min_vip_slot, 0))
+    rcon.set_vip_slots_num(remaining_vip_slots)
+    logger.info("Real VIP set slots to %s", remaining_vip_slots)
+
+
+@on_connected
+def do_real_vips(rcon: RecordedRcon, struct_log):
+    _set_real_vips(rcon, struct_log)
+
+
+@on_disconnected
+def undo_real_vips(rcon: RecordedRcon, struct_log):
+    _set_real_vips(rcon, struct_log)
 
 
 @on_camera
@@ -272,3 +322,9 @@ def notify_camera(rcon: RecordedRcon, struct_log):
 
     if config.is_welcome():
         temporary_welcome(rcon, struct_log["message"], 60)
+
+
+if __name__ == "__main__":
+    from rcon.settings import SERVER_INFO
+    log = {'version': 1, 'timestamp_ms': 1627734269000, 'relative_time_ms': 221.212, 'raw': '[543 ms (1627734269)] CONNECTED Dr.WeeD', 'line_without_time': 'CONNECTED Dr.WeeD', 'action': 'CONNECTED', 'player': 'Dr.WeeD', 'steam_id_64_1': None, 'player2': None, 'steam_id_64_2': None, 'weapon': None, 'message': 'Dr.WeeD', 'sub_content': None}
+    real_vips(RecordedRcon(SERVER_INFO), struct_log=log)

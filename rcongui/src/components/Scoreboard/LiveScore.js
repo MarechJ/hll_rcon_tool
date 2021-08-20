@@ -18,7 +18,9 @@ import useMediaQuery from "@material-ui/core/useMediaQuery";
 import { useTheme } from "@material-ui/core/styles";
 import Scores from "./Scores";
 import map_to_pict from "./utils";
-import { fade } from '@material-ui/core/styles/colorManipulator';
+import { fade } from "@material-ui/core/styles/colorManipulator";
+import { Link as RouterLink } from "react-router-dom";
+
 
 const useStyles = makeStyles((theme) => ({
   padRight: {
@@ -64,7 +66,72 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const LiveScore = ({ classes }) => {
+const LiveSessionScore = ({ classes }) => (
+  <LiveScore
+    classes={classes}
+    endpoint="live_scoreboard"
+    title="LIVE SESSIONS"
+    explainText={
+      <React.Fragment>
+        Only ingame players are shown. Stats are reset on disconnection, not per
+        game, check the{" "}
+        <Link
+          variant="button"
+          color="inherit"
+          component={RouterLink}
+          to="/livegamescore"
+        >
+          Live Game
+        </Link>{" "}
+        or{" "}
+        <Link
+          variant="button"
+          color="inherit"
+          component={RouterLink}
+          to="/gamescoreboard"
+        >
+          Past games
+        </Link>{" "}
+        for historical data. Real deaths only are counted (e.g. not redeploys /
+        revives)
+      </React.Fragment>
+    }
+  />
+);
+
+const LiveGameScore = ({ classes }) => (
+  <LiveScore
+    classes={classes}
+    endpoint="get_live_game_stats"
+    title="CURRENT GAME"
+    explainText={
+      <React.Fragment>
+        All players that are or were in the game are shown, check the{" "}
+        <Link
+          variant="button"
+          color="inherit"
+          component={RouterLink}
+          to="/livescore"
+        >
+          Live Sessions
+        </Link>{" "}for live stats accross several games
+        or{" "}
+        <Link
+          variant="button"
+          color="inherit"
+          component={RouterLink}
+          to="/gamescoreboard"
+        >
+          Past games
+        </Link>{" "}
+        for historical data. Real deaths only are counted (e.g. not redeploys /
+        revives)
+      </React.Fragment>
+    }
+  />
+);
+
+const LiveScore = ({ classes, endpoint, explainText, title }) => {
   const styles = useStyles();
   const [stats, setStats] = React.useState(new iList());
   const [serverState, setServerState] = React.useState(new Map());
@@ -81,12 +148,12 @@ const LiveScore = ({ classes }) => {
   const getData = () => {
     setIsLoading(true);
     console.log("Loading data");
-    get("live_scoreboard")
-      .then((res) => showResponse(res, "livescore", false))
+    get(endpoint)
+      .then((res) => showResponse(res, endpoint, false))
       .then((data) => {
-        const map_ = fromJS(data.result)
-        setStats(map_)
-        setRefreshIntervalSec(map_.get('refresh_interval_sec', 10))
+        const map_ = fromJS(data.result || new iList());
+        setStats(map_);
+        setRefreshIntervalSec(map_.get("refresh_interval_sec", 10));
         // TODO add code to sync the refresh time with one of the server by checking the last refresh timestamp
       })
       .catch(handle_http_errors);
@@ -117,9 +184,20 @@ const LiveScore = ({ classes }) => {
   return (
     <React.Fragment>
       <Grid container spacing={2} justify="center" className={classes.padding}>
-        <Grid item xs={12} className={`${classes.doublePadding} ${styles.transparentPaper}`}>
-          <Typography color="secondary" variant="h4">{serverState.get("name")}</Typography>
+        <Grid
+          item
+          xs={12}
+          className={`${classes.doublePadding} ${styles.transparentPaper}`}
+        >
+          {process.env.REACT_APP_PUBLIC_BUILD ? 
+          <Typography color="secondary" variant="h4">
+            {serverState.get("name")}
+          </Typography> : 
+          <Link href={`http://${window.location.hostname}:${serverState.get("public_stats_port")}`} target="_blank">Public version on port {serverState.get("public_stats_port")} - https: {serverState.get("public_stats_port_https")}</Link>
+          }
         </Grid>
+       
+        {process.env.REACT_APP_PUBLIC_BUILD ? 
         <Grid xs={12} md={10} lg={10} xl={8} className={classes.doublePadding}>
           <LiveHeader
             classes={classes}
@@ -131,8 +209,11 @@ const LiveScore = ({ classes }) => {
             setPaused={setPaused}
             isPaused={isPaused}
             isLoading={isLoading}
+            explainText={explainText}
+            title={title}
           />
         </Grid>
+        : ""}
       </Grid>
       <Grid container spacing={2} justify="center" className={classes.padding}>
         <Scores
@@ -164,6 +245,8 @@ const LiveHeader = ({
   setPaused,
   isPaused,
   isLoading,
+  explainText,
+  title
 }) => {
   const theme = useTheme();
   const isXs = useMediaQuery(theme.breakpoints.down("sm"));
@@ -189,19 +272,11 @@ const LiveHeader = ({
             <Grid container spacing={1} className={styles.padRight}>
               <Grid item xs={12}>
                 <Typography variant="h4" display="inline" color="inherit">
-                  LIVE STATS
+                  {title}
                 </Typography>
               </Grid>
               <Grid item xs={12}>
-                <Typography variant="body2">
-                  Only ingame players are shown. Stats are reset on
-                  disconnection, not per game, check the{" "}
-                  <Link color="secondary" href="#/gamescoreboard">
-                    past games
-                  </Link>{" "}
-                  for historical data. Real deaths only are counted (e.g. not
-                  redeploys / revives)
-                </Typography>
+                <Typography variant="body2">{explainText}</Typography>
               </Grid>
               <Grid item xs={12}>
                 <Typography variant="caption">
@@ -250,99 +325,9 @@ const LiveHeader = ({
             />
           </GridListTile>
         </GridList>
-
-        {/* <Grid
-          container
-          justify={isXs ? "center" : "flex-start"}
-          alignItems="flex-start"
-          alignContent="flex=start"
-          spacing={1}
-        >
-         
-          <Grid
-            item
-            xs={12}
-            sm={3}
-            md={2}
-            lg={2}
-            alignContent="center"
-            alignItems="center"
-            justify="center"
-            style={{
-              flex: "grow",
-              maxWidth: "220px",
-              backgroundRepeat: "no-repeat",
-              backgroundSize: "auto 150px",
-              backgroundImage: `url(${
-                map_to_pict[
-                  serverState
-                    .get("current_map", new Map())
-                    .get("just_name", "foy")
-                ]
-              })`,
-              minHeight: "150px",
-            }}
-          >
-            <Paper elevation={0} className={styles.transparentPaper}>
-              <Typography variant="caption">Current map</Typography>
-            </Paper>
-            <Paper elevation={0} className={styles.transparentPaper}>
-              <Typography variant="h6">
-                {serverState
-                  .get("current_map", new Map())
-                  .get("human_name", "N/A")}
-              </Typography>
-            </Paper>
-            <Paper elevation={0} className={styles.transparentPaper}>
-              <Typography variant="caption">Elapsed: {started}</Typography>
-            </Paper>
-            <Paper elevation={0} className={styles.transparentPaper}>
-              <Typography variant="caption">
-                Players: {serverState.get("nb_players")}
-              </Typography>
-            </Paper>
-          </Grid>  
-          <Grid item sm={9} xs={12}>
-            <Grid container spacing={1}>
-              <Grid item xs={12}>
-                {" "}
-                <Typography variant="h4" display="inline" color="secondary">
-                  LIVE STATS
-                </Typography>
-              </Grid>
-              <Grid item xs={12}>
-                <Typography variant="h4">{serverState.get("name")}</Typography>
-              </Grid>
-              <Grid item xs={12}>
-                <Typography variant="caption">
-                  Only ingame players are shown. Stats reset on disconnection,
-                  not per game.Real deaths only (excludes redeploys / revives)
-                </Typography>
-              </Grid>
-              <Grid item xs={12}>
-                <Typography variant="caption">
-                  Last update: {lastRefresh} - Auto-refresh {refreshIntervalSec}{" "}
-                  sec:{" "}
-                  <Link onClick={() => setPaused(!isPaused)} color="secondary">
-                    {isPaused ? "unpause" : "pause"}
-                  </Link>
-                </Typography>
-              </Grid>
-            </Grid>
-          </Grid>
-        </Grid>
-        
-          <Grid item xs={12}>
-            <LinearProgress
-              style={{ visibility: isLoading ? "visible" : "hidden" }}
-              className={classes.grow}
-              color="secondary"
-            />
-          </Grid>
-        */}
       </Toolbar>
     </AppBar>
   );
 };
 
-export default LiveScore;
+export { LiveGameScore, LiveSessionScore };

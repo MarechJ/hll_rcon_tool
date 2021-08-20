@@ -142,16 +142,20 @@ def get_ingame_mods():
     return [mod['username'] for mod in ingame_mods()]
 
 
+
 def _get_vars(ctl):
     get_vip_names = lambda: [d['name'] for d in ctl.get_vip_ids()]
     get_admin_names = lambda: [d['name'] for d in ctl.get_admin_ids()]
     get_owner_names = lambda: [d['name'] for d in ctl.get_admin_ids() if d['role'] == 'owner']
     get_senior_names = lambda: [d['name'] for d in ctl.get_admin_ids() if d['role'] == 'senior']
     get_junior_names = lambda: [d['name'] for d in ctl.get_admin_ids() if d['role'] == 'junior']
+    def get_next_map():
+        m = ctl.get_next_map()
+        return LONG_HUMAN_MAP_NAMES.get(m, m)
     vote_status = get_votes_status()
 
     subs = {
-        'nextmap': LazyPrinter(ctl.get_next_map),
+        'nextmap': LazyPrinter(get_next_map),
         'maprotation': LazyPrinter(ctl.get_map_rotation, is_list=True, list_separator=' -> '),
         'servername': LazyPrinter(ctl.get_name),
         'admins': LazyPrinter(get_admin_names, is_list=True),

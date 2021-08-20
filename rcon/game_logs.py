@@ -337,6 +337,7 @@ def get_recent_logs(
                     if action_filter and not is_action(action_filter, l["action"], exact_action):
                         continue
                     logs.append(l)
+                    break
         elif action_filter and is_action(action_filter, l["action"], exact_action):
             logs.append(l)
         elif not player_search and not action_filter:
