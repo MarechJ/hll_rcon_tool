@@ -1,7 +1,15 @@
+######################################################################################
+######################################################################################
+######################################################################################
+######################################################################################
+######################################################################################
 # DO NOT change or delete this file
 # Instead, to define your own config, copy it and rename it: "config.yml"
 # Your own config will override the defaults
-
+######################################################################################
+######################################################################################
+######################################################################################
+######################################################################################
 
 # Multi server related config, you can safe ignore those if you only have 1 server
 MULTI_SERVERS:
@@ -100,3 +108,90 @@ GTX:
     port: null
     username: null
     password: null
+
+# Set your custom text or transalation for each of the below keys. Logo urls and prefered stats and such
+# If you have more that 3 server copy the whole SERVER_1 section 
+SCOREBOT:
+  SERVER_1:
+    # Don't forget to replace with your IP:port or url, leave the /api/get_live_game_stats 
+    STATS_URL: "https://<rcon IP or url>/api/get_live_game_stats"
+    # Don't forget to replace with your IP:port or url, leave the /api/public_info
+    INFO_URL: "https://<rcon IP or url>/api/public_info"
+    # This is the public url
+    SCOREBOARD_PUBLIC_URL: "https://stats1.hllfrance.org/"
+    # The last slash matters
+    SCORBOARD_BASE_PATH: "https://stats1.hllfrance.org/"
+    # This is the public url
+    PAST_GAMES_URL: "https://stats1.hllfrance.org/#/gamescoreboard"
+    WEBHOOK_URL: "https://discord.com/api/webhooks/86....40/qlh....Ie3"
+  
+  SERVER_2:
+    STATS_URL: "https://<rcon IP or url>/api/get_live_game_stats"
+    INFO_URL: "https://<rcon IP or url>/api/public_info"
+    # This is the public url
+    SCOREBOARD_PUBLIC_URL: "https://stats2.hllfrance.org/"
+    # The last slash matters
+    SCORBOARD_BASE_PATH: "https://stats2.hllfrance.org/"
+    # This is the public url
+    PAST_GAMES_URL: "https://stats2.hllfrance.org/#/gamescoreboard"
+    WEBHOOK_URL: "https://discord.com/api/webhooks/86....40/qlh....Ie3"
+
+  SERVER_3:
+    STATS_URL: "https://<rcon IP or url>/api/get_live_game_stats"
+    INFO_URL: "https://<rcon IP or url>/api/public_info"
+    # This is the public url
+    SCOREBOARD_PUBLIC_URL: "https://stats2.hllfrance.org/"
+    # The last slash matters
+    SCORBOARD_BASE_PATH: "https://stats2.hllfrance.org/"
+    # This is the public url
+    PAST_GAMES_URL: "https://stats2.hllfrance.org/#/gamescoreboard"
+    WEBHOOK_URL: "https://discord.com/api/webhooks/86....40/qlh....Ie3"
+
+
+  COMMON:
+    ALL_STATS_TEXT: "All stats on: "
+    AUTHOR_NAME: "STATS LIVE HLL FRANCE - click here"
+    AUTHOR_ICON_URL: "https://static.wixstatic.com/media/da3421_111b24ae66f64f73aa94efeb80b08f58~mv2.png/v1/fit/w_2500,h_1330,al_c/da3421_111b24ae66f64f73aa94efeb80b08f58~mv2.png"
+    ELAPSED_TIME: "Game time: "
+    # The number of top players to display from 1 to 100
+    TOP_LIMIT: 10
+    FOOTER_ICON_URL: "https://static.wixstatic.com/media/da3421_111b24ae66f64f73aa94efeb80b08f58~mv2.png/v1/fit/w_2500,h_1330,al_c/da3421_111b24ae66f64f73aa94efeb80b08f58~mv2.png"
+    NO_STATS_AVAILABLE: "No stats recorded for that game yet"
+    FIND_PAST_STATS: "Stats of past games on: "
+    NEXT_MAP_TEXT: "Next map"
+    VOTE: "vote(s)"
+    PLAYERS: "players"
+    ELAPSED_TIME: "Elasped game time: "
+
+    # Discord markup is supported, you can add emoji too, TOP_KILLERS as an example of custom emoji. Do \<the emoji> on your discord to get that id
+    TOP_KILLERS: "<:HLLBomb:868256234439073802> TOP KILLERS\n*kills* <:HLLBomb:868256234439073802>"
+    TOP_RATIO: "TOP RATIO\n*kills/death*"
+    TOP_PERFORMANCE: "TOP PERFORMANCE\n*kills/minute*"
+    TRY_HARDERS: "TRY HARDERS\n*deaths/minute*"
+    TOP_STAMINA: "TOP STAMINA\n*deaths*"
+    TOP_KILL_STREAK: "TOP KILL STREAK\n*kill streak*"
+    MOST_PATIENT: "MOST PATIENT\n*death by teamkill*"
+    I_NEVER_GIVE_UP: "I NEVER GIVE UP\n*death streak*"
+    I_M_CLUMSY: "YES I'M CLUMSY\n*teamkills*"
+    I_NEED_GLASSES: "I NEED GLASSES\n*teamkill streak*"
+    I_LOVE_VOTING: "I ❤ VOTING\n*num. votes started*"
+    WHAT_IS_A_BREAK: "WHAT IS A BREAK?\n*ingame time*"
+    SURVIVORS: "SURVIVORS\n*longest life (min.)*"
+    U_R_STILL_A_MAN: "U'R STILL A MAN\n*shortest life (min.)*"
+
+    # The stats items you an to display. I recommend you comment the line you don't want by adding a # at the beginning (before the -)
+    STATS_TO_DISPLAY:
+      - TOP_KILLERS
+      - TOP_RATIO
+      - TOP_PERFORMANCE
+      - TRY_HARDERS
+      - TOP_STAMINA
+      - TOP_KILL_STREAK
+      - I_NEVER_GIVE_UP
+      - MOST_PATIENT
+      - I_M_CLUMSY
+      - I_NEED_GLASSES
+      - I_LOVE_VOTING
+      - WHAT_IS_A_BREAK
+      - SURVIVORS
+      - U_R_STILL_A_MAN
