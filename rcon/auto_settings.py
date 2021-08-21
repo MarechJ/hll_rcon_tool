@@ -20,6 +20,7 @@ def compare(operand, operator, arguments):
 METRICS = {"player_count": lambda rcon: int(rcon.get_slots().split('/')[0])}
 CONFIG_DIR = os.getenv('CONFIG_DIR', 'config/')
 
+
 class MetricCondition:
     def __init__(self, name, metric_getter, config):
         self.metric_getter = metric_getter
@@ -50,15 +51,17 @@ class MetricCondition:
         return self.run_commands(rcon, self.default_commands)
 
 
-def get_config(filename):
+def get_config(filename, silent=False):
+    logger_func = logger.info if silent else logger.exception
+
     try:
         with open("%s%s" % (CONFIG_DIR, filename)) as f:
             return json.load(f)
     except FileNotFoundError:
-        logger.exception("Invlid JSON in config `config/%s`", filename)
+        logger_func("Couldn't find config `config/%s`", filename)
         return None
     except json.JSONDecodeError:
-        logger.exception("Couldn't find config `config/%s`", filename)
+        logger_func("Invlid JSON in config `config/%s`", filename)
         return None
 
 

@@ -35,6 +35,8 @@ import SaveIcon from "@material-ui/icons/Save";
 import RealVip from "./realVip";
 import HelpIcon from "@material-ui/icons/Help";
 import ServerName from "./serverName";
+import AutoSettings from "./autoSettings";
+
 
 const ManualWatchList = ({ classes }) => {
   const [name, setName] = React.useState("");
@@ -201,6 +203,13 @@ const WebhooksConfig = () => {
   );
 };
 
+function makeBool(text) {
+  if (text === null) {
+    return false;
+  }
+  return text === "true";
+}
+
 class RconSettings extends React.Component {
   constructor(props) {
     super(props);
@@ -216,6 +225,10 @@ class RconSettings extends React.Component {
       autovotekickMinIngameMods: 0,
       autovotekickMinOnlineMods: 0,
       autovotekickConditionType: "OR",
+      autosettings: "{}",
+      forwardAutoSettings: makeBool(
+        window.localStorage.getItem("forwardAutoSettings")
+      ),
     };
 
     this.loadBroadcastsSettings = this.loadBroadcastsSettings.bind(this);
@@ -228,6 +241,8 @@ class RconSettings extends React.Component {
     this.saveCameraConfig = this.saveCameraConfig.bind(this);
     this.saveAutoVotekickConfig = this.saveAutoVotekickConfig.bind(this);
     this.loadAutoVotekickConfig = this.loadAutoVotekickConfig.bind(this);
+    this.saveAutoSettings = this.saveAutoSettings.bind(this);
+    this.loadAutoSettings = this.loadAutoSettings.bind(this);
   }
 
   async loadCameraConfig() {
@@ -327,6 +342,28 @@ class RconSettings extends React.Component {
       .catch(handle_http_errors);
   }
 
+  async loadAutoSettings() {
+    return get(`get_auto_settings`)
+      .then((res) => showResponse(res, "get_auto_settings", false))
+      .then(
+        (data) =>
+          !data.failed &&
+          this.setState({
+            autosettings: JSON.stringify(data.result, null, 2)
+          })
+      )
+      .catch(handle_http_errors);
+  }
+
+  async saveAutoSettings() {
+    return postData(`${process.env.REACT_APP_API_URL}set_auto_settings`, {
+      forward: this.state.forwardAutoSettings,
+      settings: JSON.stringify(JSON.parse(this.state.autosettings)),
+    })
+      .then((res) => showResponse(res, `set_auto_settings`, true))
+      .catch(handle_http_errors);
+  }
+
   async clearCache() {
     return postData(`${process.env.REACT_APP_API_URL}clear_cache`, {})
       .then((res) => showResponse(res, "clear_cache", true))
@@ -357,6 +394,13 @@ class RconSettings extends React.Component {
     this.loadStandardMessages();
     this.loadCameraConfig();
     this.loadAutoVotekickConfig();
+    this.loadAutoSettings();
+  }
+
+  toggle(name) {
+    const bool = !this.state[name];
+    window.localStorage.setItem(name, bool);
+    this.setState({ [name]: bool });
   }
 
   render() {
@@ -372,6 +416,8 @@ class RconSettings extends React.Component {
       autovotekickMinIngameMods,
       autovotekickMinOnlineMods,
       autovotekickConditionType,
+      autosettings,
+      forwardAutoSettings,
     } = this.state;
     const { classes, theme, themes, setTheme } = this.props;
 
@@ -680,6 +726,30 @@ class RconSettings extends React.Component {
             <ServerName classes={classes} />
           </Grid>
         </Grid>
+
+        <Grid
+          container
+          className={`${classes.padding} ${classes.margin} ${classes.root}`}
+          alignContent="center"
+          justify="center"
+          alignItems="center"
+        >
+          <Grid item xs={12}>
+            <Typography variant="h5" gutterBottom>
+              Auto settings
+            </Typography>
+          </Grid>
+        </Grid>
+        <Grid item xs={12}>
+          <AutoSettings
+            words={autosettings}
+            onWordsChange={(words) => this.setState({ autosettings: words.target.value })}
+            onSave={() => this.saveAutoSettings(autosettings)}
+            forward={forwardAutoSettings}
+            onFowardChange={() => this.toggle("forwardAutoSettings")}
+          />
+        </Grid>
+
         <Grid
           item
           xs={12}

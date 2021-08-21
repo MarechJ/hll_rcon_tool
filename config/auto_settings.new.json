@@ -1,0 +1,59 @@
+{
+    "defaults": {
+        "set_idle_autokick_time": {
+            "minutes": 10
+        },
+        "set_autobalance_threshold": {
+            "max_diff": 2
+        },
+        "set_max_ping_autokick": {
+            "max_ms": 500
+        },
+        "set_team_switch_cooldown": {
+            "minutes": 15
+        }
+    },
+    "rules": [
+        {
+            "conditions": {
+                "player_count": {
+                    "min": 0,
+                    "max": 10
+                }
+            },
+            "functions": {
+                "set_idle_autokick_time": { "minutes": 9999 },
+                "set_autobalance_threshold": { "max_diff": 0 },
+                "set_max_ping_autokick": { "max_ms": 1000 },
+                "set_team_switch_cooldown": { "minutes": 0 }
+            }
+        },
+        {
+            "conditions": {
+                "player_count": {
+                    "min": 50
+                },
+                "time_of_day": {
+                    "min": "15:00",
+                    "max": "18:00",
+                    "timezone": "UTC"
+                }
+            },
+            "functions": {
+                "set_idle_autokick_time": {
+                    "minutes": 9999
+                },
+                "set_autobalance_threshold": {
+                    "max_diff": 0
+                },
+                "set_max_ping_autokick": {
+                    "max_ms": 1000
+                },
+                "set_team_switch_cooldown": {
+                    "minutes": 0
+                }
+            }
+        }
+    ]
+}
+
