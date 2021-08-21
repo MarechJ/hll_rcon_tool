@@ -48,6 +48,7 @@ urlpatterns = [
     path("get_player_comment", history.get_player_comment),
     path("post_player_comment", history.post_player_comment),
     path("get_real_vip_config", vips.get_real_vip_config),
+    path("set_real_vip_config", vips.set_real_vip_config),
     path("get_auto_settings", auto_settings.get_auto_settings),
     path("set_auto_settings", auto_settings.set_auto_settings),
 ]
