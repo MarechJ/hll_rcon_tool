@@ -358,7 +358,7 @@ class RconSettings extends React.Component {
   async saveAutoSettings() {
     return postData(`${process.env.REACT_APP_API_URL}set_auto_settings`, {
       forward: this.state.forwardAutoSettings,
-      settings: JSON.stringify(JSON.parse(this.state.autosettings)),
+      settings: this.state.autosettings,
     })
       .then((res) => showResponse(res, `set_auto_settings`, true))
       .catch(handle_http_errors);
@@ -716,7 +716,7 @@ class RconSettings extends React.Component {
         >
           <Grid item xs={12}>
             <Typography variant="h5">
-              Server Name
+              Server Name{" "}
               <Tooltip title="Only users with a GTX server can use this, it won't work for others. GTX users must set extra info in config/config.yml for it to work. The name change is only applied after a change of map">
                 <HelpIcon fontSize="small" />
               </Tooltip>{" "}
@@ -737,6 +737,9 @@ class RconSettings extends React.Component {
           <Grid item xs={12}>
             <Typography variant="h5" gutterBottom>
               Auto settings
+            </Typography>
+            <Typography variant="body1">
+              Can be turned On and Off under "Manage services"
             </Typography>
           </Grid>
         </Grid>
