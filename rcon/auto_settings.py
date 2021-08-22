@@ -65,7 +65,7 @@ class IngameModsCondition(OnlineModsCondition):
         self.metric_name = "ingame_mods"
         self.metric_source = None
 class CurrentMapCondition(BaseCondition):
-    def __init__(self, maps=[], inverse=False):
+    def __init__(self, maps=[], inverse=False, *args, **kwargs): # Avoid unexpected arguments
         self.maps = maps
         self.inverse = inverse
         self.metric_name = "current_map"
@@ -79,7 +79,7 @@ class CurrentMapCondition(BaseCondition):
         if self.inverse: return not res
         else: return res
 class TimeOfDayCondition(BaseCondition):
-    def __init__(self, min="00:00", max="24:00", timezone='utc', inverse=False):
+    def __init__(self, min="00:00", max="24:00", timezone='utc', inverse=False, *args, **kwargs): # Avoid unexpected arguments
         self.min = str(min)
         self.max = str(max)
         self.inverse = bool(inverse)
@@ -127,7 +127,7 @@ def create_condition(name, **kwargs):
     elif name == 'time_of_day': return TimeOfDayCondition(**kwargs)
     else: raise ValueError('Invalid condition type: %s' % name)
 
-def run_commands(rcon, commands):
+def do_run_commands(rcon, commands):
     for command, params in commands.items():
         try:
             logger.info("Applying %s %s", command, params)
@@ -151,8 +151,9 @@ def run():
         exit(1)
 
     while True:
-
-        use_defaults = True
+        commands = config.get('defaults', {})
+        saved_commands = {name: params for (name, params) in commands.items() if name.startswith('set_')}
+        do_run_commands(rcon, {name: params for (name, params) in commands.items() if not name.startswith('set_')})
         for rule in config['rules']:
             conditions = []
             commands = rule.get('commands', {})
@@ -165,15 +166,12 @@ def run():
                     logger.exception("Invalid timezone for condition %s %s, ignoring...", c_name, c_params)
             
             if all([c.is_valid(rcon=rcon) for c in conditions]):
-                run_commands(rcon, commands)
-                use_defaults = False
+                saved_commands = {**saved_commands, **{name: params for (name, params) in commands.items() if name.startswith('set_')}}
+                do_run_commands(rcon, {name: params for (name, params) in commands.items() if not name.startswith('set_')})
                 break
             logger.info('Rule validation failed, moving to next one.')
-        if use_defaults:
-            logger.info('No rules left, using defaults.')
-            commands = config.get('defaults', {})
-            run_commands(rcon, commands)
 
+        do_run_commands(rcon, saved_commands)
         time.sleep(60)
 
 

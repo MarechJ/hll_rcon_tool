@@ -3,13 +3,8 @@ import {
   Button,
   Grid,
   TextField,
+  Typography
 } from "@material-ui/core";
-import {
-  get,
-  handle_http_errors,
-  postData,
-  showResponse,
-} from "../../utils/fetchUtils";
 import { ForwardCheckBox } from "../commonComponent";
 
 
@@ -26,14 +21,18 @@ const AutoSettings = ({
         fullWidth
         label="Current auto settings"
         multiline
-        rowsMax={30}
+        rowsMax={32}
         rows={4}
         value={words}
         onChange={onWordsChange}
-        placeholder="For more info on how to use Auto Settings see https://placeholder.com"
+        placeholder="Wait! Where did all the code go? :("
         variant="outlined"
-        helperText="For more info on how to use Auto Settings see https://placeholder.com"
       />
+    </Grid>
+    <Typography variant="caption" align="left" color="textSecondary">
+      For more info on how to use Auto Settings see <a href="https://youtu.be/2IKZwHj9PJw">this video</a>
+    </Typography>
+    <Grid xs={12}>
       <ForwardCheckBox bool={forward} onChange={onFowardChange} />
       <Button variant="outlined" color="secondary" onClick={onSave}>
         Save
