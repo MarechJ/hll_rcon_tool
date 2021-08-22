@@ -151,9 +151,15 @@ def run():
         exit(1)
 
     while True:
-        commands = config.get('defaults', {})
-        saved_commands = {name: params for (name, params) in commands.items() if name.startswith('set_')}
-        do_run_commands(rcon, {name: params for (name, params) in commands.items() if not name.startswith('set_')})
+        always_apply_defaults = config.get('always_apply_defaults', False)
+        default_commands = config.get('defaults', {})
+        rule_matched = False
+        if always_apply_defaults:
+            # First run defaults so they can be overwritten. Save "set" commands so
+            # we prevent them from being sent more than once in the same iteration.
+            saved_commands = {name: params for (name, params) in default_commands.items() if name.startswith('set_')}
+            do_run_commands(rcon, {name: params for (name, params) in default_commands.items() if not name.startswith('set_')})
+
         for rule in config['rules']:
             conditions = []
             commands = rule.get('commands', {})
@@ -166,12 +172,21 @@ def run():
                     logger.exception("Invalid timezone for condition %s %s, ignoring...", c_name, c_params)
             
             if all([c.is_valid(rcon=rcon) for c in conditions]):
-                saved_commands = {**saved_commands, **{name: params for (name, params) in commands.items() if name.startswith('set_')}}
-                do_run_commands(rcon, {name: params for (name, params) in commands.items() if not name.startswith('set_')})
+                if always_apply_defaults:
+                    # Overwrites the saved commands in case they're duplicate
+                    do_run_commands(rcon, {**saved_commands, **commands})
+                else:
+                    do_run_commands(rcon, commands)
+                rule_matched = True
                 break
             logger.info('Rule validation failed, moving to next one.')
 
-        do_run_commands(rcon, saved_commands)
+        if not rule_matched:
+            if always_apply_defaults:
+                # The saved commands were never ran yet, so we do that here
+                do_run_commands(rcon, saved_commands)
+            else:
+                do_run_commands(rcon, default_commands)
         time.sleep(60)
 
 

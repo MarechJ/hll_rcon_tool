@@ -28,6 +28,7 @@ for filename in os.listdir(CONFIG_DIR):
                 config = json.load(f)
 
             new = dict(
+                always_apply_defaults=False,
                 defaults={command: params for (command, params) in config['player_count']['defaults']},
                 rules=[]
             )
