@@ -746,7 +746,7 @@ class RconSettings extends React.Component {
         <Grid item xs={12}>
           <AutoSettings
             words={autosettings}
-            onWordsChange={(words) => this.setState({ autosettings: words.target.value })}
+            onWordsChange={(words, event) => this.setState({ autosettings: words })}
             onSave={() => this.saveAutoSettings(autosettings)}
             forward={forwardAutoSettings}
             onFowardChange={() => this.toggle("forwardAutoSettings")}

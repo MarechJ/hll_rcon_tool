@@ -6,6 +6,7 @@ import {
   Typography
 } from "@material-ui/core";
 import { ForwardCheckBox } from "../commonComponent";
+import Editor from "@monaco-editor/react";
 
 
 const AutoSettings = ({
@@ -17,16 +18,14 @@ const AutoSettings = ({
 }) => (
   <Grid container>
     <Grid xs={12}>
-      <TextField
-        fullWidth
-        label="Current auto settings"
-        multiline
-        rowsMax={32}
-        rows={4}
-        value={words}
+      <Editor
+        height="90vh"
+        defaultLanguage="json"
+        defaultValue={words}
         onChange={onWordsChange}
-        placeholder="Wait! Where did all the code go? :("
-        variant="outlined"
+        options={{
+          minimap: { enabled: false }
+        }}
       />
     </Grid>
     <Typography variant="caption" align="left" color="textSecondary">
