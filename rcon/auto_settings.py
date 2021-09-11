@@ -1,13 +1,12 @@
 import logging
 import time
-import json
 import os
 from rcon.extended_commands import Rcon
 from rcon.settings import SERVER_INFO
 from rcon.audit import online_mods, ingame_mods
+from rcon.user_config import AutoSettingsConfig
 from datetime import datetime
 import pytz
-from dateutil import tz, parser
 
 logger = logging.getLogger(__name__)
 
@@ -104,20 +103,6 @@ class TimeOfDayCondition(BaseCondition):
         if self.inverse: return not res
         else: return res
 
-
-def get_config(filename, silent=False):
-    logger_func = logger.info if silent else logger.exception
-
-    try:
-        with open("%s%s" % (CONFIG_DIR, filename)) as f:
-            return json.load(f)
-    except FileNotFoundError:
-        logger_func("Couldn't find config `config/%s`", filename)
-        return None
-    except json.JSONDecodeError:
-        logger_func("Invlid JSON in config `config/%s`", filename)
-        return None
-
 def create_condition(name, **kwargs):
     kwargs['inverse'] = kwargs.get('not', False) # Using "not" would cause issues later
     if name == 'player_count': return PlayerCountCondition(**kwargs)
@@ -138,17 +123,7 @@ def do_run_commands(rcon, commands):
 
 def run():
     rcon = Rcon(SERVER_INFO)
-    server_number = os.getenv("SERVER_NUMBER")
-    config = get_config(f"auto_settings_{server_number}.json")
-    if not config:
-        logger.warning("No config for server number, falling back to common one")
-        config = get_config("auto_settings.json")
-    if not config:
-        logger.warning("Config 'auto_settings.json' not found. Falling back to default")
-        config = get_config("auto_settings.default.json")
-    if not config:
-        logger.fatal("Couldn't use default config 'auto_settings.default.json' exiting")
-        exit(1)
+    config = AutoSettingsConfig().get_settings()
 
     while True:
         always_apply_defaults = config.get('always_apply_defaults', False)
