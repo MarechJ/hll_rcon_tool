@@ -8,7 +8,7 @@ from .utils import _get_data
 from .multi_servers import forward_request
 from .services import get_supervisor_client
 
-AUTO_SETTINGS_KEY_ORDER = ["always_apply_defaults", "defaults", "rules"]
+AUTO_SETTINGS_KEY_ORDER = ["always_apply_defaults", "defaults", "rules", "_available_commands", "_available_conditions"]
 AUTO_SETTINGS_KEY_INDEX_MAP = {v: i for i, v in enumerate(AUTO_SETTINGS_KEY_ORDER)}
 
 @csrf_exempt
