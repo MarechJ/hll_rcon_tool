@@ -230,6 +230,8 @@ class RconSettings extends React.Component {
         window.localStorage.getItem("forwardAutoSettings")
       ),
     };
+    this.editorRef = React.createRef();
+    this.handleEditorDidMount = this.handleEditorDidMount.bind(this);
 
     this.loadBroadcastsSettings = this.loadBroadcastsSettings.bind(this);
     this.validate_messages = this.validate_messages.bind(this);
@@ -350,7 +352,7 @@ class RconSettings extends React.Component {
           !data.failed &&
           this.setState({
             autosettings: JSON.stringify(data.result, null, 2)
-          })
+          }, () => this.editorRef.current && this.editorRef.current.setValue(this.state.autosettings))
       )
       .catch(handle_http_errors);
   }
@@ -387,6 +389,10 @@ class RconSettings extends React.Component {
     if (this.validate_messages()) {
       this.saveBroadcastsSettings({ messages: this.state.broadcastMessages });
     }
+  }
+
+  handleEditorDidMount(editor, monaco) {
+    this.editorRef.current = editor; 
   }
 
   componentDidMount() {
@@ -750,6 +756,7 @@ class RconSettings extends React.Component {
             onSave={() => this.saveAutoSettings(autosettings)}
             forward={forwardAutoSettings}
             onFowardChange={() => this.toggle("forwardAutoSettings")}
+            onEditorMount={this.handleEditorDidMount}
           />
         </Grid>
 
