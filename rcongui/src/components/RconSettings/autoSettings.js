@@ -25,7 +25,8 @@ const AutoSettings = ({
         defaultValue={words}
         onChange={onWordsChange}
         options={{
-          minimap: { enabled: false }
+          minimap: { enabled: false },
+          tabSize: 2
         }}
         onMount={onEditorMount}
       />
