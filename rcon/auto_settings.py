@@ -78,9 +78,10 @@ class CurrentMapCondition(BaseCondition):
         if self.inverse: return not res
         else: return res
 class TimeOfDayCondition(BaseCondition):
-    def __init__(self, min="00:00", max="24:00", timezone='utc', inverse=False, *args, **kwargs): # Avoid unexpected arguments
+    def __init__(self, min="00:00", max="23:59", timezone='utc', inverse=False, *args, **kwargs): # Avoid unexpected arguments
         self.min = str(min)
         self.max = str(max)
+        if self.max in ['24:00', '0:00']: self.max = '23:59'
         self.inverse = bool(inverse)
         if timezone.lower() == 'utc': self.tz = pytz.UTC
         else: self.tz = pytz.timezone(timezone)
@@ -94,9 +95,8 @@ class TimeOfDayCondition(BaseCondition):
             min = datetime.now(tz=self.tz).replace(hour=min_h, minute=min_m)
             max = datetime.now(tz=self.tz).replace(hour=max_h, minute=max_m)
         except:
-            # Ignore this condition
-            logger.error('Time Of Day condition is invalid and is ignored')
-            return True
+            logger.exception('Time Of Day condition is invalid and is ignored')
+            return False # The condition should fail
         comparand = datetime.now(tz=self.tz)
         res = min <= comparand <= max
         logger.info('Applying condition %s: %s <= %s:%s <= %s = %s. Inverse: %s', self.metric_name, self.min, comparand.hour, comparand.minute, self.max, res, self.inverse)
