@@ -635,7 +635,7 @@ def seed_default_config():
             AutoVoteKickConfig().seed_db(sess)
             VoteMapConfig().seed_db(sess)
             RealVipConfig().seed_db(sess)
-            #AutoSettingsConfig().seed_db(sess)
+            AutoSettingsConfig().seed_db(sess)
             sess.commit()
     except Exception as e:
         logger.exception('Failed to seed DB')
