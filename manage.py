@@ -47,7 +47,7 @@ if __name__ == "__main__":
         init()
         cli()
     except SystemExit as e:
-        logger.error("Program requested exit")
+        logger.info("Program requested exit %s", repr(e))
         exit(e.args[0])
     except ConfigurationError as e:
         print(repr(e))
