@@ -35,6 +35,8 @@ import SaveIcon from "@material-ui/icons/Save";
 import RealVip from "./realVip";
 import HelpIcon from "@material-ui/icons/Help";
 import ServerName from "./serverName";
+import AutoSettings from "./autoSettings";
+
 
 const ManualWatchList = ({ classes }) => {
   const [name, setName] = React.useState("");
@@ -201,6 +203,13 @@ const WebhooksConfig = () => {
   );
 };
 
+function makeBool(text) {
+  if (text === null) {
+    return false;
+  }
+  return text === "true";
+}
+
 class RconSettings extends React.Component {
   constructor(props) {
     super(props);
@@ -216,7 +225,13 @@ class RconSettings extends React.Component {
       autovotekickMinIngameMods: 0,
       autovotekickMinOnlineMods: 0,
       autovotekickConditionType: "OR",
+      autosettings: "{}",
+      forwardAutoSettings: makeBool(
+        window.localStorage.getItem("forwardAutoSettings")
+      ),
     };
+    this.editorRef = React.createRef();
+    this.handleEditorDidMount = this.handleEditorDidMount.bind(this);
 
     this.loadBroadcastsSettings = this.loadBroadcastsSettings.bind(this);
     this.validate_messages = this.validate_messages.bind(this);
@@ -228,6 +243,8 @@ class RconSettings extends React.Component {
     this.saveCameraConfig = this.saveCameraConfig.bind(this);
     this.saveAutoVotekickConfig = this.saveAutoVotekickConfig.bind(this);
     this.loadAutoVotekickConfig = this.loadAutoVotekickConfig.bind(this);
+    this.saveAutoSettings = this.saveAutoSettings.bind(this);
+    this.loadAutoSettings = this.loadAutoSettings.bind(this);
   }
 
   async loadCameraConfig() {
@@ -327,6 +344,28 @@ class RconSettings extends React.Component {
       .catch(handle_http_errors);
   }
 
+  async loadAutoSettings() {
+    return get(`get_auto_settings`)
+      .then((res) => showResponse(res, "get_auto_settings", false))
+      .then(
+        (data) =>
+          !data.failed &&
+          this.setState({
+            autosettings: JSON.stringify(data.result, null, 2)
+          }, () => this.editorRef.current && this.editorRef.current.setValue(this.state.autosettings))
+      )
+      .catch(handle_http_errors);
+  }
+
+  async saveAutoSettings() {
+    return postData(`${process.env.REACT_APP_API_URL}set_auto_settings`, {
+      forward: this.state.forwardAutoSettings,
+      settings: this.state.autosettings,
+    })
+      .then((res) => showResponse(res, `set_auto_settings`, true))
+      .catch(handle_http_errors);
+  }
+
   async clearCache() {
     return postData(`${process.env.REACT_APP_API_URL}clear_cache`, {})
       .then((res) => showResponse(res, "clear_cache", true))
@@ -352,11 +391,22 @@ class RconSettings extends React.Component {
     }
   }
 
+  handleEditorDidMount(editor, monaco) {
+    this.editorRef.current = editor; 
+  }
+
   componentDidMount() {
     this.loadBroadcastsSettings();
     this.loadStandardMessages();
     this.loadCameraConfig();
     this.loadAutoVotekickConfig();
+    this.loadAutoSettings();
+  }
+
+  toggle(name) {
+    const bool = !this.state[name];
+    window.localStorage.setItem(name, bool);
+    this.setState({ [name]: bool });
   }
 
   render() {
@@ -372,6 +422,8 @@ class RconSettings extends React.Component {
       autovotekickMinIngameMods,
       autovotekickMinOnlineMods,
       autovotekickConditionType,
+      autosettings,
+      forwardAutoSettings,
     } = this.state;
     const { classes, theme, themes, setTheme } = this.props;
 
@@ -670,7 +722,7 @@ class RconSettings extends React.Component {
         >
           <Grid item xs={12}>
             <Typography variant="h5">
-              Server Name
+              Server Name{" "}
               <Tooltip title="Only users with a GTX server can use this, it won't work for others. GTX users must set extra info in config/config.yml for it to work. The name change is only applied after a change of map">
                 <HelpIcon fontSize="small" />
               </Tooltip>{" "}
@@ -680,6 +732,34 @@ class RconSettings extends React.Component {
             <ServerName classes={classes} />
           </Grid>
         </Grid>
+
+        <Grid
+          container
+          className={`${classes.padding} ${classes.margin} ${classes.root}`}
+          alignContent="center"
+          justify="center"
+          alignItems="center"
+        >
+          <Grid item xs={12}>
+            <Typography variant="h5" gutterBottom>
+              Auto settings
+            </Typography>
+            <Typography variant="body1">
+              Can be turned On and Off under "Manage services"
+            </Typography>
+          </Grid>
+        </Grid>
+        <Grid item xs={12}>
+          <AutoSettings
+            words={autosettings}
+            onWordsChange={(words, event) => this.setState({ autosettings: words })}
+            onSave={() => this.saveAutoSettings(autosettings)}
+            forward={forwardAutoSettings}
+            onFowardChange={() => this.toggle("forwardAutoSettings")}
+            onEditorMount={this.handleEditorDidMount}
+          />
+        </Grid>
+
         <Grid
           item
           xs={12}

@@ -184,7 +184,7 @@ def get_embeds(server_info, stats):
                 )
 
     embeds[-1].add_field(name="\u200b", value=f"{ALL_STATS_TEXT}{SCOREBOARD_PUBLIC_URL}" , inline=False)
-    embeds[-1].set_footer(icon_url=FOOTER_ICON_URL, text="Community Rcon base stats by Dr.WeeD")
+    embeds[-1].set_footer(icon_url=FOOTER_ICON_URL, text="Community RCon based stats by Dr.WeeD")
     print(embeds)
     return embeds
 
