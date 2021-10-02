@@ -66,7 +66,7 @@ def get_player_bans(steamd_id):
         logger.exception("Steam no player found")
         return None
     except:
-        logging.exception('Unexpected error while fetching steam profile')
+        logging.exception('Unexpected error while fetching steam bans')
         return None
 
     if not bans:
