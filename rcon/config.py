@@ -15,7 +15,7 @@ def get_config():
     user_config = {}
     try:
         with default_config_path.open() as f:
-            config = yaml.load(f)
+            config = yaml.safe_load(stream=f)
     except FileNotFoundError:
         logger.error("Unable to open default config at %s", str(default_config_path))
         raise
@@ -24,7 +24,7 @@ def get_config():
         raise
     try:
         with user_config_path.open() as f:
-            user_config = yaml.load(f)
+            user_config = yaml.safe_load(stream=f)
     except FileNotFoundError:
         logger.warning("No user config found, defaults only are loaded")
     except yaml.YAMLError:
