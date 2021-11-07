@@ -234,7 +234,7 @@ const PlayerInfoFunc = ({ classes }) => {
   };
 
   const handleNewComment = (newComment) => {
-    const { steamId64 } = this.props.match.params;
+    // const { steamId64 } = this.props.match.params;
     postData(`${process.env.REACT_APP_API_URL}post_player_comment`, {
       steam_id_64: steamId64,
       comment: newComment,
