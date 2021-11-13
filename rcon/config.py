@@ -1,4 +1,5 @@
 import yaml
+from yaml.error import YAMLError
 import logging
 import os
 from pathlib import Path
@@ -27,7 +28,7 @@ def get_config():
             user_config = yaml.load(f)
     except FileNotFoundError:
         logger.warning("No user config found, defaults only are loaded")
-    except yaml.ParserError:
+    except YAMLError:
         logger.error("User config at '%s' is invalid YAML", str(user_config_path))
         raise
 
