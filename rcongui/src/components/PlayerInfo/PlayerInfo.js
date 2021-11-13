@@ -175,11 +175,11 @@ const PlayerInfoFunc = ({ classes }) => {
         const perma = data.result.find((ban, index) => {
           return ban.type === "perma";
         });
-        if (temp !== undefined && this._mounted) {
-          this.setState({ temp: true });
+        if (temp !== undefined) {
+          setTemp(true);
         }
-        if (perma !== undefined && this._mounted) {
-          this.setState({ perma: true });
+        if (perma !== undefined) {
+          setPerma(true);
         }
       })
       .catch(handle_http_errors);
@@ -227,14 +227,13 @@ const PlayerInfoFunc = ({ classes }) => {
           data.result !== null &&
           Object.keys(data.result).length !== 0
         ) {
-          this.setState({ comments: data.result });
+          setComments(data.result);
         }
       })
       .catch(handle_http_errors);
   };
 
   const handleNewComment = (newComment) => {
-    const { steamId64 } = this.props.match.params;
     postData(`${process.env.REACT_APP_API_URL}post_player_comment`, {
       steam_id_64: steamId64,
       comment: newComment,
@@ -243,7 +242,7 @@ const PlayerInfoFunc = ({ classes }) => {
         return showResponse(response, "post_player_comments", false);
       })
       .then(() => {
-        this.fetchPlayerComments(steamId64);
+        fetchPlayerComments(steamId64);
       })
       .catch((error) => toast.error("Unable to connect to API " + error));
   };
