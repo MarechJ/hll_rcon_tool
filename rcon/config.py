@@ -20,7 +20,7 @@ def get_config():
     except FileNotFoundError:
         logger.error("Unable to open default config at %s", str(default_config_path))
         raise
-    except yaml.ParserError:
+    except YAMLError:
         logger.error("Default config is invalid YAML")
         raise
     try:
