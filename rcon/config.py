@@ -1,5 +1,4 @@
 import yaml
-from yaml.error import YAMLError
 import logging
 import os
 from pathlib import Path
@@ -16,19 +15,18 @@ def get_config():
     user_config = {}
     try:
         with default_config_path.open() as f:
-            config = yaml.load(f)
+            config = yaml.safe_load(stream=f)
     except FileNotFoundError:
         logger.error("Unable to open default config at %s", str(default_config_path))
         raise
-    except YAMLError:
+    except yaml.YAMLError:
         logger.error("Default config is invalid YAML")
         raise
     try:
         with user_config_path.open() as f:
-            user_config = yaml.load(f)
+            user_config = yaml.safe_load(stream=f)
     except FileNotFoundError:
         logger.warning("No user config found, defaults only are loaded")
-    except YAMLError:
         logger.error("User config at '%s' is invalid YAML", str(user_config_path))
         raise
 
