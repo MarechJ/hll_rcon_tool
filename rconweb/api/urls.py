@@ -11,6 +11,7 @@ from . import scoreboards
 from . import history
 from . import votemap
 from . import auto_settings
+from . import server_stats
 
 
 urlpatterns = [
@@ -51,4 +52,5 @@ urlpatterns = [
     path("set_real_vip_config", vips.set_real_vip_config),
     path("get_auto_settings", auto_settings.get_auto_settings),
     path("set_auto_settings", auto_settings.set_auto_settings),
+    path("get_server_stats", server_stats.get_server_stats),
 ]
