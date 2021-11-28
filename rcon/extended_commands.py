@@ -55,18 +55,16 @@ class Rcon(ServerCtl):
 
         return player_dict if as_dict else player_list
 
-     
     def get_vips_count(self):
         players = self.get_playerids()
 
-        vips = {v['steam_id_64'] for v in self.get_vip_ids()}
+        vips = {v["steam_id_64"] for v in self.get_vip_ids()}
         vip_count = 0
         for _, steamid in players:
             if steamid in vips:
                 vip_count += 1
-        
-        return vip_count
 
+        return vip_count
 
     @ttl_cache(ttl=60 * 60 * 24, cache_falsy=False)
     def get_player_info(self, player):
@@ -216,7 +214,6 @@ class Rcon(ServerCtl):
         bans = self.get_bans()
         return list(filter(lambda x: x.get("steam_id_64") == steam_id_64, bans))
 
-
     @ttl_cache(ttl=60 * 60)
     def get_vip_ids(self):
         res = super().get_vip_ids()
@@ -259,12 +256,18 @@ class Rcon(ServerCtl):
         current = self.get_map()
         current = current.replace("_RESTART", "")
         rotation = self.get_map_rotation()
-        next_id = rotation.index(current)
-        next_id += 1
-        if next_id == len(rotation):
-            next_id = 0
-
-        return rotation[next_id]
+        try:
+            next_id = rotation.index(current)
+            next_id += 1
+            if next_id == len(rotation):
+                next_id = 0
+            return rotation[next_id]
+        except ValueError:
+            logger.error(
+                "Can't find %s in rotation, assuming next map as first map of rotation",
+                current,
+            )
+            return rotation[0]
 
     def set_map(self, map_name):
         with invalidates(Rcon.get_map):
@@ -343,6 +346,7 @@ class Rcon(ServerCtl):
 
     def set_welcome_message(self, msg, save=True):
         from rcon.broadcast import format_message
+
         prev = None
 
         try:
@@ -360,7 +364,7 @@ class Rcon(ServerCtl):
         except Exception:
             logger.exception("Unable to format message")
             formatted = msg
-            
+
         super().set_welcome_message(formatted)
         return prev.decode() if prev else ""
 
@@ -373,6 +377,7 @@ class Rcon(ServerCtl):
 
     def set_broadcast(self, msg, save=True):
         from rcon.broadcast import format_message
+
         prev = None
 
         try:
@@ -384,7 +389,7 @@ class Rcon(ServerCtl):
             red.expire("BROADCAST_MESSAGE", 60 * 30)
         except Exception:
             logger.exception("Can't save message in redis: %s", msg)
-            
+
         try:
             formatted = format_message(self, msg)
         except Exception:
@@ -477,11 +482,9 @@ class Rcon(ServerCtl):
     def get_autobalance_enabled(self):
         return super().get_autobalance_enabled() == "on"
 
-
     @ttl_cache(ttl=60 * 60)
     def get_votekick_enabled(self):
         return super().get_votekick_enabled() == "on"
-
 
     @ttl_cache(ttl=60 * 60)
     def get_votekick_threshold(self):
@@ -504,7 +507,7 @@ class Rcon(ServerCtl):
             res = super().set_votekick_threshold(threshold_pairs)
             print(f"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! {res}")
             logger.error("Threshold res %s", res)
-            if res.lower().startswith('error'):
+            if res.lower().startswith("error"):
                 logger.error("Unable to set votekick threshold: %s", res)
                 raise CommandFailedError(res)
 
@@ -779,11 +782,11 @@ class Rcon(ServerCtl):
                     content = rest.split("VOTE")[-1]
                 elif rest.upper().startswith("PLAYER"):
                     action = "CAMERA"
-                    _, content = rest.split(' ', 1)
-                    matches = re.match('\[(.*)\s{1}\((\d+)\)\]', content)
+                    _, content = rest.split(" ", 1)
+                    matches = re.match("\[(.*)\s{1}\((\d+)\)\]", content)
                     if matches and len(matches.groups()) == 2:
                         player, steam_id_64_1 = matches.groups()
-                        _, sub_content = content.rsplit(']', 1)
+                        _, sub_content = content.rsplit("]", 1)
                     else:
                         logger.error("Unable to parse line: %s", line)
                 else:

@@ -628,19 +628,22 @@ commands = [
 
 logger.info("Initializing endpoint")
 
-# Dynamically register all the methods from ServerCtl
-for name, func in inspect.getmembers(ctl):
-    if not any(name.startswith(prefix) for prefix in PREFIXES_TO_EXPOSE):
-        continue
+try:
+    # Dynamically register all the methods from ServerCtl
+    for name, func in inspect.getmembers(ctl):
+        if not any(name.startswith(prefix) for prefix in PREFIXES_TO_EXPOSE):
+            continue
 
-    commands.append((name, wrap_method(func, inspect.signature(func).parameters, name)))
-
+        commands.append((name, wrap_method(func, inspect.signature(func).parameters, name)))
+except:
+    logger.exception("Failed to initialized endpoints - Most likely bad configuration")
+    raise
 
 # Warm the cache as fetching steam profile 1 by 1 takes a while
 if not os.getenv("DJANGO_DEBUG", None):
     try:
-        logger.info("Warming up the cache this may take minutes")
+        logger.warning("Warming up the cache this may take minutes")
         ctl.get_players()
-        logger.info("Cache warm up done")
+        logger.warning("Cache warm up done")
     except:
         logger.exception("Failed to warm the cache")

@@ -1,7 +1,7 @@
 Flask==1.1.2
 Click==7.1.2
 cachetools==4.0.0
-Django==3.1.12
+Django==3.1.13
 django-cors-headers==3.5.0
 redis==3.5.3
 simplejson==3.17.0
@@ -14,7 +14,7 @@ git+https://github.com/MarechJ/python-discord-webhook.git@36b420749258fc03c8f816
 discord>=1.0.1
 requests>=2.21.0
 steam==1.0.2
-pyaml==20.4.0
+pyaml==21.10.1
 alembic==1.4.3
 rq==1.8.0
 paramiko==2.7.2

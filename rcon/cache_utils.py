@@ -116,7 +116,7 @@ def get_redis_pool(decode_responses=True):
         return None
  
     if _REDIS_POOL is None:
-        logger.warning("Redis pool initializing")
+        logger.info("Redis pool initializing")
         _REDIS_POOL = redis.ConnectionPool.from_url(
             redis_url, max_connections=10, socket_connect_timeout=5,
             socket_timeout=5, decode_responses=decode_responses
