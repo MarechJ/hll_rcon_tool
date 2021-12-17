@@ -25,6 +25,8 @@ import {
   LiveSessionScore,
 } from "./components/Scoreboard/LiveScore";
 import ServerInfo from "./components/Embeds/ServerInfo";
+import ServerStatsPage from "./components/ServerStats"; 
+
 
 const Live = ({ classes }) => {
   const [mdSize, setMdSize] = React.useState(6);
@@ -459,6 +461,14 @@ function App() {
                     </Grid>
                     <Grid item sm={12}>
                       <LogsHistory classes={classes} />
+                    </Grid>
+                  </Grid>
+                  
+                </Route>
+                <Route path="/server">
+                  <Grid container>
+                    <Grid item sm={12} lg={12}>
+                      <ServerStatsPage classes={classes} />
                     </Grid>
                   </Grid>
                 </Route>
