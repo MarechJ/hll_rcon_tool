@@ -20,6 +20,7 @@
     "chartjs-adapter-moment": "^1.0.0",
     "country-list": "^2.2.0",
     "emoji-mart": "^3.0.0",
+    "google-palette": "^1.1.0",
     "immutable": "^4.0.0-rc.12",
     "lodash": "^4.17.19",
     "material-ui": "^0.20.2",
