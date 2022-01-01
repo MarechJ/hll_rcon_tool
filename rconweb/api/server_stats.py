@@ -26,33 +26,45 @@ def trunc_datetime_to_hour(dt):
     return dt.replace(second=0, microsecond=0, minute=0)
 
 
-def index_map_per_hour(maps):
+def index_range_objs_per_hours(time_range_objects):
     """
     To quickly lookup which map was running at a certain time we index them by hours
     """
-    indexed_map_by_hours = {}
+    indexed_objs_by_hours = {}
 
-    for map_ in maps:
-        start_hour = trunc_datetime_to_hour(map_.start)
-        end_hour = trunc_datetime_to_hour(map_.end)
-        indexed_map_by_hours.setdefault(start_hour, []).append(map_)
+    for obj in time_range_objects:
+        start_hour = trunc_datetime_to_hour(obj.start)
+        end_hour = trunc_datetime_to_hour(obj.end or datetime.datetime.now())
+        indexed_objs_by_hours.setdefault(start_hour, []).append(obj)
         if start_hour != end_hour:
             # add entries for all hours in the range.
             # This is necessary for map that strech several hours (mostly when server is empty)
             delta = end_hour - start_hour
             for h in range(1, math.ceil(delta.total_seconds() / 60 / 60)):
-                indexed_map_by_hours.setdefault(
+                indexed_objs_by_hours.setdefault(
                     start_hour + datetime.timedelta(hours=h), []
-                ).append(map_)
-            indexed_map_by_hours.setdefault(end_hour, []).append(map_)
+                ).append(obj)
+            indexed_objs_by_hours.setdefault(end_hour, []).append(obj)
 
-    return indexed_map_by_hours
+    return indexed_objs_by_hours
 
 
-@ttl_cache(60)
+def get_obj_for_minute(minute, indexed_objs, first_only=True):
+    matches = []
+    for o in indexed_objs.get(trunc_datetime_to_hour(minute), []):
+        end = o.end or datetime.datetime.now()
+        if o.start <= minute <= end:
+            if first_only:
+                return o
+            matches.append(o)
+
+    return matches
+       
+
+@ttl_cache(60 * 10)
 def _get_server_stats(start=None, end=None, by_map=False):
     if start is None:
-        start = datetime.datetime.now() - datetime.timedelta(hours=60)
+        start = datetime.datetime.now() - datetime.timedelta(hours=24)
     if end is None:
         end = datetime.datetime.now() - datetime.timedelta(hours=0)
 
@@ -73,7 +85,7 @@ def _get_server_stats(start=None, end=None, by_map=False):
             .filter(or_(Maps.start.between(start, end), Maps.end.between(start, end)))
             .all()
         )
-        indexed_map_hours = index_map_per_hour(maps)
+        indexed_map_hours = index_range_objs_per_hours(maps)
 
         # Get all players withing the time window
         q = (
@@ -86,7 +98,7 @@ def _get_server_stats(start=None, end=None, by_map=False):
             )
             .options(joinedload(PlayerSession.steamid))
         )
-        sessions = q.all()
+        indexed_sessions = index_range_objs_per_hours(q.all())
 
         stats = []
         if by_map:
@@ -96,20 +108,22 @@ def _get_server_stats(start=None, end=None, by_map=False):
             # The map, and all the players that had a session at that minute
             # This algo is quite crappy but it works decently enough
             present_players = []
-            map_ = None
+            map_ = get_obj_for_minute(minute, indexed_map_hours)
             # find the map that was running at that minute
-            for m in indexed_map_hours.get(trunc_datetime_to_hour(minute), []):
-                if m.start <= minute <= m.end:
-                    map_ = m
-                    break
+            # for m in indexed_map_hours.get(trunc_datetime_to_hour(minute), []):
+            #     if m.start <= minute <= m.end:
+            #         map_ = m
+            #         break
 
-            for player_session in sessions:
-                if not player_session.start:
-                    # TODO handle current players
-                    continue
-                session_end = player_session.end or end
-                if player_session.start <= minute <= session_end:
-                    present_players.append(player_session.steamid.names[0].name)
+            # for player_session in sessions:
+            #     if not player_session.start:
+            #         # TODO handle current players
+            #         continue
+            #     session_end = player_session.end or end
+            #     if player_session.start <= minute <= session_end:
+            #         present_players.append(player_session.steamid.names[0].name)
+            for player_session in get_obj_for_minute(minute, indexed_sessions, first_only=False):
+                present_players.append((player_session.steamid.names[0].name, player_session.steamid.steam_id_64))
 
             map_name = map_.map_name if map_ else None
             item = {
@@ -122,5 +136,4 @@ def _get_server_stats(start=None, end=None, by_map=False):
                 stats.setdefault(map_name, []).append(item)
             else:
                 stats.append(item)
-    print(stats)
     return stats
