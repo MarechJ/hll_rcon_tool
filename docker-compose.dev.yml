@@ -20,10 +20,11 @@ services:
       - common
   frontend_1:
     build:
-      context: ./rcongui
+      context: .
+      dockerfile: Dockerfile-frontend
   redis:
     ports: 
       - 127.0.0.1:${HLL_REDIS_HOST_PORT:-6379}:6379
   postgres:
     ports:
-      - ${HLL_DB_HOST_PORT:-5432}:5432
+      - 127.0.0.1:${HLL_DB_HOST_PORT:-5432}:5432

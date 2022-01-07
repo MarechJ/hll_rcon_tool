@@ -55,6 +55,7 @@ class RedisCached:
         return self.function
 
     def __call__(self, *args, **kwargs):
+        
         val = None
         key = self.key(*args, **kwargs)
         try:
@@ -81,8 +82,19 @@ class RedisCached:
 
         return val
 
+    def get_cached_value_for(self, *args, **kwargs):
+        if self.is_method:
+            key = self.key(None, *args, **kwargs)
+        else:
+            key = self.key(*args, **kwargs)
+        return self.red.get(key)
+
     def clear_for(self, *args, **kwargs):
-        key = self.key(*args, **kwargs)
+        if self.is_method:
+            key = self.key(None, *args, **kwargs)
+        else:
+            key = self.key(*args, **kwargs)
+        logger.debug("Invalidating cache for %s", key)
         if key:
             self.red.delete(key)
 
@@ -93,8 +105,8 @@ class RedisCached:
                 self.red.delete(*keys)
         except redis.exceptions.RedisError:
             logger.exception("Unable to clear cache")
-        else:
-            logger.debug("Cache CLEARED for %s", keys)
+        #else:
+        #   logger.debug("Cache CLEARED for %s", keys)
 
 
 def get_redis_pool(decode_responses=True):
@@ -104,7 +116,7 @@ def get_redis_pool(decode_responses=True):
         return None
  
     if _REDIS_POOL is None:
-        logger.warning("Redis pool initializing")
+        logger.info("Redis pool initializing")
         _REDIS_POOL = redis.ConnectionPool.from_url(
             redis_url, max_connections=10, socket_connect_timeout=5,
             socket_timeout=5, decode_responses=decode_responses
@@ -134,6 +146,9 @@ def ttl_cache(ttl, *args, is_method=True, cache_falsy=True, **kwargs):
 
         functools.update_wrapper(wrapper, func)
         wrapper.cache_clear = cached_func.clear_all
+        wrapper.get_cached_value_for = cached_func.get_cached_value_for
+        wrapper.clear_for = cached_func.clear_for
+        wrapper.cache = cached_func
         return wrapper
     return decorator
 

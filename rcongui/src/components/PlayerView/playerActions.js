@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React from "react";
 import Button from "@material-ui/core/Button";
 import Chip from "@material-ui/core/Chip";
 import ButtonGroup from "@material-ui/core/ButtonGroup";
@@ -9,7 +9,6 @@ import Menu from "@material-ui/core/Menu";
 import MenuItem from "@material-ui/core/MenuItem";
 import ArrowDropDownIcon from "@material-ui/icons/ArrowDropDown";
 import "react-toastify/dist/ReactToastify.css";
-import useStyles from "../useStyles";
 import Dialog from "@material-ui/core/Dialog";
 import DialogActions from "@material-ui/core/DialogActions";
 import DialogContent from "@material-ui/core/DialogContent";
@@ -22,13 +21,13 @@ import FormControlLabel from "@material-ui/core/FormControlLabel";
 import Checkbox from "@material-ui/core/Checkbox";
 import { getSharedMessages } from "../../utils/fetchUtils";
 import { Grid } from "@material-ui/core";
+import VisibilityIcon from "@material-ui/icons/Visibility";
 
 const Duration = ({
   durationNumber,
   onNumberChange,
   durationMultiplier,
   onMultiplierChange,
-  classes,
 }) => (
   <Grid container spacing={1}>
     <Grid item>
@@ -73,6 +72,7 @@ class ReasonDialog extends React.Component {
     super(props);
     this.state = {
       reason: "",
+      comment: "",
       saveMessage: true,
       durationNumber: 2,
       durationMultiplier: 1,
@@ -89,7 +89,9 @@ class ReasonDialog extends React.Component {
   }
 
   onChange(e, value) {
-    e.preventDefault();
+    if (e) {
+      e.preventDefault();
+    }
     this.setState({ reason: value });
   }
 
@@ -97,13 +99,14 @@ class ReasonDialog extends React.Component {
     const { open, handleClose, handleConfirm } = this.props;
     const {
       reason,
+      comment,
       saveMessage,
       sharedMessages,
       durationNumber,
       durationMultiplier,
     } = this.state;
     const textHistory = new TextHistory("punitions");
-    console.log(open)
+
     return (
       <Dialog open={open} aria-labelledby="form-dialog-title">
         <DialogTitle id="form-dialog-title">
@@ -119,12 +122,30 @@ class ReasonDialog extends React.Component {
             renderInput={(params) => (
               <TextField
                 {...params}
+                multiline
+                rows={4}
+                rowsMax={10}
                 label="Reason"
+                variant="outlined"
                 margin="dense"
-                helperText="A message is mandatory"
+                helperText="The message that will be displayed to the player. A message is mandatory"
               />
             )}
           />
+          
+          <TextField
+            multiline
+            rows={4}
+            rowsMax={10}
+            fullWidth
+            value={comment}
+            onChange={(e) => this.setState({ comment: e.target.value })}
+            label="Comment"
+            variant="outlined"
+            margin="dense"
+            helperText="A comment that will NOT be displayed to the player"
+          />
+          
           {open.actionType === "temp_ban" ? (
             <Duration
               durationNumber={durationNumber}
@@ -168,10 +189,11 @@ class ReasonDialog extends React.Component {
                 open.actionType,
                 open.player,
                 reason,
+                comment,
                 durationMultiplier * durationNumber,
-                open.steam_id_64,
+                open.steam_id_64
               );
-              this.setState({ reason: "" });
+              this.setState({ reason: "", comment: "" });
             }}
             color="primary"
             disabled={!reason}
@@ -184,16 +206,15 @@ class ReasonDialog extends React.Component {
   }
 }
 
-
 const PlayerActions = ({
   size,
   handleAction,
   onFlag,
+  isWatched,
   displayCount = 3,
   disable = false,
   penaltyCount = Map(),
 }) => {
-  const classes = useStyles();
   const [anchorEl, setAnchorEl] = React.useState(null);
   const [isOpen, setOpen] = React.useState(false);
   const handleClick = (event) => {
@@ -223,6 +244,20 @@ const PlayerActions = ({
   return (
     <React.Fragment>
       <ButtonGroup size={size} aria-label="small outlined button group">
+        {show > 1 ? (
+          <Button
+            color={isWatched ? "primary" : "default"}
+            variant={isWatched ? "contained" : "outlined"}
+            size="small"
+            onClick={() =>
+              handleAction(isWatched ? "unwatch_player" : "watch_player")
+            }
+          >
+            <VisibilityIcon fontSize="small" />
+          </Button>
+        ) : (
+          ""
+        )}
         {_.range(show).map((idx) => (
           <Button
             key={actions[idx][0]}
@@ -249,6 +284,7 @@ const PlayerActions = ({
         ) : (
           ""
         )}
+
         {show < actions.length ? (
           <Button
             disabled={disable}
@@ -270,6 +306,21 @@ const PlayerActions = ({
           open={isOpen}
           onClose={handleClose}
         >
+          {show <= 1 ? (
+            <MenuItem
+              size="small"
+              onClick={() =>
+                handleAction(isWatched ? "unwatch_player" : "watch_player")
+              }
+            >
+              <VisibilityIcon
+                color={isWatched ? "primary" : "default"}
+                fontSize="small"
+              />
+            </MenuItem>
+          ) : (
+            ""
+          )}
           {_.range(show, actions.length).map((idx) => {
             const count = penaltyCount.get(remap_penalties[actions[idx][0]], 0);
             return (

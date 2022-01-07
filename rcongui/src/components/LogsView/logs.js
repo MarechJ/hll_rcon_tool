@@ -1,20 +1,12 @@
 import React from "react";
-import { toast } from "react-toastify";
-import {
-  postData,
-  showResponse,
-  get,
-  handle_http_errors,
-} from "../../utils/fetchUtils";
+import {get, handle_http_errors, postData, showResponse,} from "../../utils/fetchUtils";
 import InputLabel from "@material-ui/core/InputLabel";
 import MenuItem from "@material-ui/core/MenuItem";
-import FormHelperText from "@material-ui/core/FormHelperText";
 import FormControl from "@material-ui/core/FormControl";
 import Select from "@material-ui/core/Select";
 import Grid from "@material-ui/core/Grid";
-import { Button } from "@material-ui/core";
+import {Button, IconButton} from "@material-ui/core";
 import Autocomplete from "@material-ui/lab/Autocomplete";
-import _ from "lodash";
 import TextField from "@material-ui/core/TextField";
 import RefreshIcon from "@material-ui/icons/Refresh";
 import Paper from "@material-ui/core/Paper";
@@ -22,7 +14,8 @@ import moment from "moment";
 import withWidth from "@material-ui/core/withWidth";
 import AutoRefreshLine from "../autoRefreshLine";
 import ListItemText from "@material-ui/core/ListItemText";
-
+import FullscreenIcon from '@material-ui/icons/Fullscreen';
+import FullscreenExitIcon from '@material-ui/icons/FullscreenExit';
 
 const Selector = ({
   classes,
@@ -32,6 +25,7 @@ const Selector = ({
   currentValue,
   onChange,
   kind,
+  multiple,
 }) => (
   <FormControl className={classes.logsControl}>
     <InputLabel shrink>{kind}</InputLabel>
@@ -39,6 +33,7 @@ const Selector = ({
       value={currentValue}
       onChange={(e) => onChange(e.target.value)}
       displayEmpty
+      multiple={multiple}
     >
       {defaultValue !== undefined ? (
         <MenuItem value={defaultValue}>
@@ -63,10 +58,8 @@ class Logs extends React.Component {
       logs: [],
       actions: [],
       players: [],
-      playersFilter: "",
-      actionsFilter: localStorage.getItem("logs_actions")
-        ? localStorage.getItem("logs_actions")
-        : "",
+      playersFilter: [],
+      actionsFilter: [],
       limit: localStorage.getItem("logs_limit")
         ? localStorage.getItem("logs_limit")
         : 500,
@@ -97,19 +90,9 @@ class Logs extends React.Component {
 
   loadLogs() {
     const { actionsFilter, playersFilter, limit } = this.state;
-    // Old endpoint
-    // let qs = `?since_min_ago=${minutes}`;
-    let qs = `?end=${limit}`;
-    if (actionsFilter !== "") {
-      qs += `&filter_action=${actionsFilter}`;
-    }
-    if (playersFilter !== "") {
-      qs += `&filter_player=${playersFilter}`;
-    }
 
-    // "native" api
-    // get(`get_structured_logs${qs}`)
-    return get(`get_recent_logs${qs}`)
+
+    return postData(`${process.env.REACT_APP_API_URL}get_recent_logs`, {end: limit, filter_action: actionsFilter, filter_player: playersFilter})
       .then((response) => showResponse(response, "get_logs"))
       .then((data) => {
         this.setState({
@@ -132,7 +115,7 @@ class Logs extends React.Component {
   }
 
   render() {
-    const { classes, width } = this.props;
+    const { classes, isFullScreen, onFullScreen } = this.props;
     const {
       logs,
       players,
@@ -142,7 +125,6 @@ class Logs extends React.Component {
       limitOptions,
     } = this.state;
 
-    const now = moment();
     return (
       <React.Fragment>
         <Grid container justify="flex-start">
@@ -151,7 +133,7 @@ class Logs extends React.Component {
             xs={12}
             className={`${classes.textLeft} ${classes.paddingLeft}`}
           >
-            <h1 className={classes.marginBottom}>Logs view</h1>
+            <h1 className={classes.marginBottom}>Logs view  <IconButton onClick={onFullScreen}>{isFullScreen ? <FullscreenExitIcon /> : <FullscreenIcon />}</IconButton></h1>
             <ListItemText secondary="30s auto refresh" />
             <AutoRefreshLine
               className={classes.marginTop}
@@ -159,6 +141,7 @@ class Logs extends React.Component {
               execEveryMs={30000}
               statusRefreshIntervalMs={500}
               classes={classes}
+              
             />
           </Grid>
         </Grid>
@@ -173,19 +156,30 @@ class Logs extends React.Component {
             />
           </Grid>
           <Grid className={classes.padding} item xs={12} sm={12} md={12} lg={3}>
-            <Selector
-              classes={classes}
-              values={actions}
-              onChange={this.setActionFilter}
-              currentValue={actionsFilter}
-              kind="Filter by type"
-              defaultValue=""
-              defaultText="ALL"
+           
+             <Autocomplete
+              id="tags-outlined"
+              multiple
+              options={actions}
+              getOptionLabel={(option) => option}
+              filterSelectedOptions
+              onChange={(e, value) =>
+                this.setActionFilter(value)
+              }
+              renderInput={(params) => (
+                <TextField
+                  className={classes.logsControl}
+                  {...params}
+                  variant="outlined"
+                  label="Filter by type"
+                />
+              )}
             />
           </Grid>
           <Grid className={classes.padding} item xs={12} sm={12} md={12} lg={4}>
             <Autocomplete
               id="tags-outlined"
+              multiple
               options={players.sort()}
               getOptionLabel={(option) => option}
               filterSelectedOptions

@@ -21,6 +21,8 @@ services:
       server1:
         aliases: 
           - supervisor
+    volumes:
+      - ./supervisor_data:/data
   backend_1: &backend
     hostname: api
     extends:
@@ -39,13 +41,18 @@ services:
     image: maresh/hll_rcon_frontend:latest
     ports:
       - ${RCONWEB_PORT}:80
+      - ${RCONWEB_PORT_HTTPS}:443
+      - ${PUBLIC_STATS_PORT}:81
+      - ${PUBLIC_STATS_PORT_HTTPS}:444
     restart: always
     environment:
+      RCONWEB_EXTERNAL_ADDRESS: ${RCONWEB_EXTERNAL_ADDRESS}
       HLL_HOST: ${HLL_HOST}
     volumes:
       - ./static:/static/
+      - ./certs:/certs/
     depends_on:
-        - backend_1
+      - backend_1
     networks:
       - server1
       - common
@@ -80,6 +87,9 @@ services:
       LOGGING_LEVEL: 'INFO'
       LOGGING_PATH: /logs/
       REDIS_URL: redis://redis:6379/1
+      REDIS_HOST: redis 
+      REDIS_PORT: 6379
+      REDIS_DB: 1
       DB_URL: 'postgres://rcon:${HLL_DB_PASSWORD}@postgres:5432'
       DISCORD_WEBHOOK_AUDIT_LOG: ${DISCORD_WEBHOOK_AUDIT_LOG_2}
       RCONWEB_API_SECRET: ${RCONWEB_API_SECRET}
@@ -101,6 +111,9 @@ services:
       SUPERVISOR_RPC_URL: http://supervisor:9001/RPC2
       CONFIG_DIR: /config/
       SERVER_NUMBER: 2
+      RCONWEB_SERVER_URL: ${RCONWEB_SERVER_URL_2}
+      PUBLIC_STATS_PORT: ${PUBLIC_STATS_PORT_2}
+      PUBLIC_STATS_PORT_HTTPS: ${PUBLIC_STATS_PORT_HTTPS_2}
     restart: on-failure
     networks:
       common:
@@ -127,6 +140,9 @@ services:
     <<: *frontend
     ports:
       - ${RCONWEB_PORT_2}:80
+      - ${RCONWEB_PORT_HTTPS_2}:443
+      - ${PUBLIC_STATS_PORT_2}:81
+      - ${PUBLIC_STATS_PORT_HTTPS_2}:444
     environment:
       <<: *env2
     restart: on-failure
@@ -146,6 +162,9 @@ services:
       LOGGING_LEVEL: 'INFO'
       LOGGING_PATH: /logs/
       REDIS_URL: redis://redis:6379/2
+      REDIS_HOST: redis 
+      REDIS_PORT: 6379
+      REDIS_DB: 2
       DB_URL: 'postgres://rcon:${HLL_DB_PASSWORD}@postgres:5432'
       DISCORD_WEBHOOK_AUDIT_LOG: ${DISCORD_WEBHOOK_AUDIT_LOG_3}
       RCONWEB_API_SECRET: ${RCONWEB_API_SECRET}
@@ -167,6 +186,9 @@ services:
       SUPERVISOR_RPC_URL: http://supervisor:9001/RPC2
       CONFIG_DIR: /config/
       SERVER_NUMBER: 3
+      RCONWEB_SERVER_URL: ${RCONWEB_SERVER_URL_3}
+      PUBLIC_STATS_PORT: ${PUBLIC_STATS_PORT_3}
+      PUBLIC_STATS_PORT_HTTPS: ${PUBLIC_STATS_PORT_HTTPS_3}
     restart: on-failure
     command: supervisor
     networks:
@@ -193,6 +215,9 @@ services:
     <<: *frontend
     ports:
       - ${RCONWEB_PORT_3}:80
+      - ${RCONWEB_PORT_HTTPS_3}:443
+      - ${PUBLIC_STATS_PORT_3}:81
+      - ${PUBLIC_STATS_PORT_HTTPS_3}:444
     environment:
       <<: *env3
     restart: on-failure

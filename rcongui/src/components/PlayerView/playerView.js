@@ -1,23 +1,16 @@
-import React, { Component } from "react";
-import _ from "lodash";
-import { toast } from "react-toastify";
+import React, {Component} from "react";
 import "react-toastify/dist/ReactToastify.css";
-import {
-  postData,
-  showResponse,
-  get,
-  handle_http_errors,
-} from "../../utils/fetchUtils";
+import {get, handle_http_errors, postData, showResponse,} from "../../utils/fetchUtils";
 import AutoRefreshBar from "./header";
 import TextInputBar from "./textInputBar";
 import CompactList from "./playerList";
 import Chip from "@material-ui/core/Chip";
-import { ReasonDialog } from "./playerActions";
+import {ReasonDialog} from "./playerActions";
 import GroupActions from "./groupActions";
 import Unban from "./unban";
-import { Map, List, fromJS } from "immutable";
-import { FlagDialog } from "../PlayersHistory";
-import { getEmojiFlag } from "../../utils/emoji";
+import {fromJS, List} from "immutable";
+import {FlagDialog} from "../PlayersHistory";
+import {getEmojiFlag} from "../../utils/emoji";
 
 function stripDiacritics(string) {
   return typeof string.normalize !== "undefined"
@@ -98,10 +91,6 @@ class PlayerView extends Component {
   }
 
   unBan(ban) {
-    // Legacy way
-    // postData(`${process.env.REACT_APP_API_URL}do_remove_${ban.type}_ban`, {
-    //  ban_log: ban.raw,
-    // })
     postData(`${process.env.REACT_APP_API_URL}unban`, {
       steam_id_64: ban.steam_id_64,
     })
@@ -116,13 +105,15 @@ class PlayerView extends Component {
     actionType,
     player_name,
     message = null,
+    comment = null,
     duration_hours = 2,
     steam_id_64 = null
   ) {
     if (message === null) {
       message = this.state.actionMessage;
     }
-    if (message === "" && !actionType.startsWith("switch_")) {
+    
+    if (message === "" && !actionType.startsWith("switch_") &&  !actionType.startsWith("unwatch_")) {
       this.setState({
         doConfirm: {
           player: player_name,
@@ -135,6 +126,7 @@ class PlayerView extends Component {
         player: player_name,
         steam_id_64: steam_id_64,
         reason: message,
+        comment: comment,
         duration_hours: duration_hours,
       };
       if (actionType === "temp_ban") {
@@ -147,6 +139,26 @@ class PlayerView extends Component {
         .then(this.loadPlayers)
         .catch(handle_http_errors);
     }
+    // Work around to the fact that the steam is not always know in this scope (as is changes the behaviour of the temp / perma ban commands)
+    if (comment) {
+      let steamid = steam_id_64
+      if (!steamid) {
+        try {
+          console.log(this.state.players)
+          steamid = this.state.players.filter(p => p.get("name") === player_name).get(0).get('steam_id_64')
+          console.log(steamid)
+        } catch (err) {
+          console.log("Unable to get steamId", err)
+        }
+      }
+      postData(`${process.env.REACT_APP_API_URL}post_player_comment`, {"steam_id_64": steamid, "comment": comment})
+      .then((response) =>
+        showResponse(response, `post_player_comment ${player_name}`, true)
+      )
+      .then(this.loadPlayers)
+      .catch(handle_http_errors);
+    }
+
   }
 
   onPlayerSelected(players) {
@@ -213,8 +225,11 @@ class PlayerView extends Component {
     localStorage.setItem("player_sort", sortType);
   }
 
+  componentDidMount() {
+    this.loadPlayers()
+  }
   render() {
-    const { classes } = this.props;
+    const { classes, isFullScreen, onFullScreen } = this.props;
     const {
       openGroupAction,
       openUnban,
@@ -226,7 +241,6 @@ class PlayerView extends Component {
       bannedPlayers,
       flag,
     } = this.state;
-    const playersCopy = players;
 
     return (
       <React.Fragment>
@@ -239,6 +253,8 @@ class PlayerView extends Component {
             this.loadBans();
             this.setState({ openUnban: true });
           }}
+          isFullScreen={isFullScreen}
+          onFullScreenClick={onFullScreen}
         />
         <TextInputBar
           classes={classes}
@@ -259,6 +275,7 @@ class PlayerView extends Component {
             actionType,
             player,
             message = null,
+            comment = null,
             duration_hours = 2,
             steam_id_64 = null
           ) =>
@@ -266,6 +283,7 @@ class PlayerView extends Component {
               actionType,
               player,
               message,
+              comment,
               duration_hours,
               steam_id_64
             )
@@ -297,6 +315,7 @@ class PlayerView extends Component {
             action,
             player,
             reason,
+            comment,
             duration_hours = 2,
             steam_id_64 = null
           ) => {
@@ -304,6 +323,7 @@ class PlayerView extends Component {
               action,
               player,
               reason,
+              comment,
               duration_hours,
               steam_id_64
             );

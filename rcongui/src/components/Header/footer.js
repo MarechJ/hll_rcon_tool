@@ -1,27 +1,38 @@
 import React from "react";
-import { Grid, Typography, Link } from "@material-ui/core";
-import { join } from "lodash/array";
+import {Grid, Link, Typography} from "@material-ui/core";
+import {get as apiGet, handle_http_errors, showResponse,} from "../../utils/fetchUtils";
 
-const Footer = ({classes}) => {
+const Footer = ({ classes }) => {
   const [repoData, setRepoData] = React.useState([]);
-  React.useEffect(
-    () =>
-      fetch("https://api.github.com/repos/MarechJ/hll_rcon_tool/contributors")
-        .then((response) => response.json())
-        .then((data) => setRepoData(data)),
-    []
-  );
+  const [apiVersion, setApiVersion] = React.useState("N/A");
+
+  React.useEffect(() => {
+    fetch("https://api.github.com/repos/MarechJ/hll_rcon_tool/contributors")
+      .then((response) => {
+        if (response.status === 200) {
+          return response.json()
+        } else {
+          throw new Error("rate limited")
+        }
+      })
+      .then((data) => setRepoData(data)).catch(() => null);
+    apiGet("get_version")
+      .then((res) => showResponse(res, "get_version", false))
+      .then((data) => setApiVersion(data.result))
+      .catch(handle_http_errors);
+  }, []);
 
   return (
     <Grid container>
-      <Grid className={classes.paddingTop} xs={12}>
+      <Grid item className={classes.paddingTop} xs={12}>
         <Typography
           color="textSecondary"
           variant="caption"
           display="block"
           gutterBottom
         >
-          Brought to you by Dr.WeeD,{" "}
+          UI Version: {process.env.REACT_APP_VERSION} API Version: {apiVersion}{" "}
+          - Brought to you by Dr.WeeD,{" "}
           {repoData
             .filter((d) => d.type === "User")
             .map((d) => (
@@ -31,7 +42,8 @@ const Footer = ({classes}) => {
             ))}
         </Typography>
       </Grid>
-      <Grid xs={12}>
+      {!process.env.REACT_APP_PUBLIC_BUILD ?
+      <Grid item xs={12}>
         <Typography
           color="textSecondary"
           variant="caption"
@@ -42,10 +54,10 @@ const Footer = ({classes}) => {
           <Link target="_blank" href="https://discord.gg/zpSQQef">
             the discord
           </Link>{" "}
-          for announcements, questions, feedback and support. Dev or docs contributions are
-          most welcomed.
+          for announcements, questions, feedback and support. Dev or docs
+          contributions are most welcomed.
         </Typography>
-      </Grid>
+      </Grid> : ""}
     </Grid>
   );
 };

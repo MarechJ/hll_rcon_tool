@@ -12,6 +12,8 @@ class RecordedRcon(Rcon):
     """
     Note beware of using the cache in this layer
     """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
     def do_punish(self, player, reason, by):
         res = super().do_punish(player, reason)
@@ -30,7 +32,7 @@ class RecordedRcon(Rcon):
     def do_temp_ban(self, player=None, steam_id_64=None, duration_hours=2, reason="", by=""):
         res = super().do_temp_ban(player, steam_id_64, duration_hours, reason, admin_name=by)
         safe_save_player_action(
-            rcon=self, player_name=player, action_type="TEMPBAN", reason=reason, by=by)
+            rcon=self, player_name=player, action_type="TEMPBAN", reason=reason, by=by, steam_id_64=steam_id_64)
         return res
 
     def do_perma_ban(self, player=None, steam_id_64=None, reason="", by=""):
@@ -56,6 +58,10 @@ class RecordedRcon(Rcon):
         res = super().do_switch_player_now(player)
         return res
 
+    def invalidate_player_list_cache(self):
+        super().get_players.cache_clear()
+        
+        
     def get_players(self):
         players = super().get_players()
 

@@ -1,14 +1,17 @@
-import React, { Component } from "react";
+import React from "react";
 import Grid from "@material-ui/core/Grid";
 import ListItemText from "@material-ui/core/ListItemText";
-import _ from "lodash";
 import LinearProgress from "@material-ui/core/LinearProgress";
 import "react-toastify/dist/ReactToastify.css";
 import useStyles from "../useStyles";
 import Button from "@material-ui/core/Button";
 import Link from "@material-ui/core/Link";
-import { toast } from "react-toastify";
+import {toast} from "react-toastify";
 import ButtonGroup from "@material-ui/core/ButtonGroup";
+import FullscreenIcon from '@material-ui/icons/Fullscreen';
+import FullscreenExitIcon from '@material-ui/icons/FullscreenExit';
+import {IconButton} from "@material-ui/core";
+
 
 const AutoRefreshBar = ({
   intervalFunction,
@@ -16,6 +19,8 @@ const AutoRefreshBar = ({
   refreshIntevalMs,
   onGroupActionClick,
   onUnbanClick,
+  onFullScreenClick,
+  isFullScreen,
 }) => {
   const classes = useStyles();
   const [completed, setCompleted] = React.useState(0);
@@ -44,24 +49,20 @@ const AutoRefreshBar = ({
         <Grid item xs={12}>
           <Grid container justify="space-between">
             <Grid style={{ textAlign: "left" }} item xs={6}>
-              <h1>Players view</h1>
+              <h1>Players view <IconButton onClick={onFullScreenClick}>{isFullScreen ? <FullscreenExitIcon /> : <FullscreenIcon />}</IconButton></h1>
             </Grid>
             <Grid item xs={6} style={{ textAlign: "right" }}>
               <ButtonGroup
                 className={classes.margin}
                 orientation="vertical"
                 color="primary"
+                variant="contained"
                 aria-label="vertical outlined primary button group"
               >
-                <Button
-                  variant="contained"
-                  color="primary"
-                  disableElevation
-                  onClick={onGroupActionClick}
-                >
+                <Button onClick={onGroupActionClick}>
                   Group action
                 </Button>
-                <Button disableElevation onClick={onUnbanClick}>
+                <Button onClick={onUnbanClick}>
                   Unban
                 </Button>
               </ButtonGroup>

@@ -15,22 +15,36 @@ logger = logging.getLogger("rcon")
 
 ALL_MAPS = (
     "foy_warfare",
+    "foy_offensive_ger",
+    "foy_offensive_us",
     "stmariedumont_warfare",
     "utahbeach_warfare",
+    "utahbeach_offensive_ger",
+    "utahbeach_offensive_us",
     "omahabeach_offensive_us",
     "stmereeglise_warfare",
+    "stmereeglise_offensive_us",
     "stmereeglise_offensive_ger",
-    "foy_offensive_ger",
     "purpleheartlane_warfare",
     "purpleheartlane_offensive_us",
+    "purpleheartlane_offensive_ger",
     "hill400_warfare",
     "hill400_offensive_US",
-    "stmereeglise_offensive_us",
+    "hill400_offensive_ger",
     "carentan_warfare",
     "carentan_offensive_us",
-    "hurtgenforest_offensive_ger",
+    "carentan_offensive_ger",
+    "hurtgenforest_warfare_V2",
     "hurtgenforest_offensive_US",
-    "hurtgenforest_warfare_V2"
+    "hurtgenforest_offensive_ger",
+    'kursk_warfare',
+    'kursk_offensive_rus',
+    'kursk_offensive_ger',
+    'stalingrad_warfare',
+    'stalingrad_offensive_rus',
+    'stalingrad_offensive_ger',
+    'stmariedumont_off_us',
+    'stmariedumont_off_ger',
 )
 
 
@@ -41,14 +55,6 @@ def get_current_map(rcon):
         map_ = map_.replace("_RESTART", "")
 
     return map_
-
-
-def get_current_selection():
-    red = redis.StrictRedis(connection_pool=get_redis_pool())
-    selection = red.get("votemap_selection")
-    if selection:
-        selection = json.loads(selection)
-    return selection
 
 
 def numbered_maps(maps):
@@ -77,89 +83,146 @@ def map_name(map_):
 def get_map_side(map_):
     try:
         parts = map_.split("_")
-        return parts[2].lower() if parts[2] in ["us", "ger"] else None
+        return parts[2].lower() if parts[2] in ["us", "ger", "rus"] else None
     except IndexError:
         return None
 
 
 LONG_HUMAN_MAP_NAMES = {
     "foy_warfare": "Foy",
+    "foy_offensive_ger": "Foy Offensive (GER)",
+    "foy_offensive_us": "Foy Offensive (US)",
     "stmariedumont_warfare": "St Marie du Mont",
-    "hurtgenforest_warfare_V2": "Hurtgen forest",
-    "hurtgenforest_offensive_ger": "Offensive Hurtgen forest (Ger)",
-    "hurtgenforest_offensive_US": "Offensive Hurtgen forest (US)",
+    'stmariedumont_off_us': "St Marie Du Mont Offensive (US)",
+    'stmariedumont_off_ger': "St Marie Du Mont Offensive (GER)",
+    "hurtgenforest_warfare_V2": "Hurtgen Forest",
+    "hurtgenforest_offensive_ger": "Hurtgen Forest Offensive (GER)",
+    "hurtgenforest_offensive_US": "Hurtgen Forest Offensive (US)",
     "utahbeach_warfare": "Utah beach",
-    "omahabeach_offensive_us": "Offensive Omaha beach",
+    "utahbeach_offensive_us": "Utah Beach Offensive (US)",
+    "utahbeach_offensive_ger": "Utah Beach Offensive (GER)",
+    "omahabeach_offensive_us": "Offensive Omaha Beach",
     "stmereeglise_warfare": "St Mere Eglise",
-    "stmereeglise_offensive_ger": "Offensive St Mere eglise (Ger)",
-    "foy_offensive_ger": "Offensive Foy",
+    "stmereeglise_offensive_ger": "St Mere Eglise Offensive (GER)",
+    "stmereeglise_offensive_us": "St Mere Eglise Offensive (US)",
     "purpleheartlane_warfare": "Purple Heart Lane",
-    "purpleheartlane_offensive_us": "Offensive Purple Heart Lane",
+    "purpleheartlane_offensive_us": "Purple Heart Lane Offensive (US)",
+    "purpleheartlane_offensive_ger": "Purple Heart Lane Offensive (GER)",
     "hill400_warfare": "Hill 400",
-    "hill400_offensive_US": "Offensive Hill 400",
-    "stmereeglise_offensive_us": "Offensive St Mere Eglise (US)",
+    "hill400_offensive_US": "Hill 400 Offensive (US)",
+    "hill400_offensive_ger": "Hill 400 Offensive (GER)",
     "carentan_warfare": "Carentan",
-    "carentan_offensive_us": "Offensive Carentan",
+    "carentan_offensive_us": "Carentan Offensive (US)",
+    "carentan_offensive_ger": "Carentan Offensive (GER)",
+    'kursk_warfare': "Kursk",
+    'kursk_offensive_rus': "Kursk Offensive (RUS)",
+    'kursk_offensive_ger': "Kursk Offensive (GER)",
+    'stalingrad_warfare': "Stalingrad",
+    'stalingrad_offensive_rus': "Stalingrad Offensive (RUS)",
+    'stalingrad_offensive_ger': "Stalingrad Offensive (GER)",
 }
 
 SHORT_HUMAN_MAP_NAMES = {
     "foy_warfare": "Foy",
-    "stmariedumont_warfare": "St.Marie",
-    "hurtgenforest_warfare": "Hurtgen",
+    "foy_offensive_ger": "Foy Off. (GER)",
+    "foy_offensive_us": "Foy Off. (US)",
+    "stmariedumont_warfare": "SMDM",
+    'stmariedumont_off_us': "SMDM Off. (US)",
+    'stmariedumont_off_ger': "SMDM Off. (GER)",
+    "hurtgenforest_warfare_V2": "Hurtgen",
+    "hurtgenforest_offensive_ger": "Hurtgen Off. (GER)",
+    "hurtgenforest_offensive_US": "Hurtgen Off. (US)",
     "utahbeach_warfare": "Utah",
+    "utahbeach_offensive_us": "Utah Off. (US)",
+    "utahbeach_offensive_ger": "Utah Off. (GER)",
     "omahabeach_offensive_us": "Off. Omaha",
     "stmereeglise_warfare": "SME",
-    "stmereeglise_offensive_ger": "Off. SME(Ger)",
-    "foy_offensive_ger": "Off. Foy",
+    "stmereeglise_offensive_ger": "SME Off. (GER)",
+    "stmereeglise_offensive_us": "SME Off. (US)",
     "purpleheartlane_warfare": "PHL",
-    "purpleheartlane_offensive_us": "Off. PHL",
+    "purpleheartlane_offensive_us": "PHL Off. (US)",
+    "purpleheartlane_offensive_ger": "PHL Off. (GER)",
     "hill400_warfare": "Hill400",
-    "hill400_offensive_US": "Off. Hill400",
-    "stmereeglise_offensive_us": "Off. SME (US)",
+    "hill400_offensive_US": "Hill400 Off. (US)",
+    "hill400_offensive_ger": "Hill400 Off. (GER)",
     "carentan_warfare": "Carentan",
-    "carentan_offensive_us": "Off. Carentan",
+    "carentan_offensive_us": "Carentan Off. (US)",
+    "carentan_offensive_ger": "Carentan Off. (GER)",
+    'kursk_warfare': "Kursk",
+    'kursk_offensive_rus': "Kursk Off. (RUS)",
+    'kursk_offensive_ger': "Kursk Off. (GER)",
+    'stalingrad_warfare': "Stalingrad",
+    'stalingrad_offensive_rus': "Stalingrad Off. (RUS)",
+    'stalingrad_offensive_ger': "Stalingrad Off. (GER)",
 }
 
 
 NO_MOD_LONG_HUMAN_MAP_NAMES = {
     "foy_warfare": "Foy",
-    "stmariedumont_warfare": "St Marie du Mont",
-    "hurtgenforest_warfare": "Hurtgen Forest",
-    "hurtgenforest_warfare_V2": "Hurtgen forest",
-    "hurtgenforest_offensive_ger": "Hurtgen forest (Ger)",
-    "hurtgenforest_offensive_US": "Hurtgen forest (US)",
-    "utahbeach_warfare": "Utah beach",
-    "omahabeach_offensive_us": "Omaha beach",
+    "foy_offensive_us": "Foy (US)",
+    "foy_offensive_ger": "Foy (GER)",
+    "stmariedumont_warfare": "St Marie Du Mont",
+    'stmariedumont_off_us': "St Marie Du Mont (US)",
+    'stmariedumont_off_ger': "St Marie Du Mont (GER)",
+    "hurtgenforest_warfare_V2": "Hurtgen Forest",
+    "hurtgenforest_offensive_ger": "Hurtgen Forest (GER)",
+    "hurtgenforest_offensive_US": "Hurtgen Forest (US)",
+    "utahbeach_warfare": "Utah Beach",
+    "utahbeach_offensive_us": "Utah Beach (US)",
+    "utahbeach_offensive_ger": "Utah Beach (GER)",
+    "omahabeach_offensive_us": "Omaha Beach (US)",
     "stmereeglise_warfare": "St Mere Eglise",
-    "stmereeglise_offensive_ger": "St Mere eglise (Ger)",
-    "foy_offensive_ger": "Foy",
-    "purpleheartlane_warfare": "Purple Heart Lane",
-    "purpleheartlane_offensive_us": "Purple Heart Lane",
-    "hill400_warfare": "Hill 400",
-    "hill400_offensive_US": "Hill 400",
+    "stmereeglise_offensive_ger": "St Mere Eglise (GER)",
     "stmereeglise_offensive_us": "St Mere Eglise (US)",
+    "purpleheartlane_warfare": "Purple Heart Lane",
+    "purpleheartlane_offensive_us": "Purple Heart Lane (US)",
+    "purpleheartlane_offensive_ger": "Purple Heart Lane (GER)",
+    "hill400_warfare": "Hill 400",
+    "hill400_offensive_US": "Hill 400 (US)",
+    "hill400_offensive_ger": "Hill 400 (GER)",
     "carentan_warfare": "Carentan",
-    "carentan_offensive_us": "Carentan",
+    "carentan_offensive_us": "Carentan (US)",
+    "carentan_offensive_ger": "Carentan (GER)",
+    'kursk_warfare': "Kursk",
+    'kursk_offensive_rus': "Kursk (RUS)",
+    'kursk_offensive_ger': "Kursk (GER)",
+    'stalingrad_warfare': "Stalingrad",
+    'stalingrad_offensive_rus': "Stalingrad (RUS)",
+    'stalingrad_offensive_ger': "Stalingrad (GER)",
 }
 
 NO_MOD_SHORT_HUMAN_MAP_NAMES = {
     "foy_warfare": "Foy",
-    "stmariedumont_warfare": "St.Marie",
+    "foy_offensive_us": "Foy (US)",
+    "foy_offensive_ger": "Foy (GER)",
+    "stmariedumont_warfare": "SMDM",
+    'stmariedumont_off_us': "SMDM (US)",
+    'stmariedumont_off_ger': "SMDM (GER)",
     "hurtgenforest_warfare_V2": "Hurtgen",
-    "hurtgenforest_offensive_ger": "Hurtgen (Ger)",
+    "hurtgenforest_offensive_ger": "Hurtgen (GER)",
     "hurtgenforest_offensive_US": "Hurtgen (US)",
     "utahbeach_warfare": "Utah",
+    "utahbeach_offensive_us": "Utah (US)",
+    "utahbeach_offensive_ger": "Utah (GER)",
     "omahabeach_offensive_us": "Omaha",
     "stmereeglise_warfare": "SME",
-    "stmereeglise_offensive_ger": "SME (Ger)",
-    "foy_offensive_ger": "Foy",
-    "purpleheartlane_warfare": "PHL",
-    "purpleheartlane_offensive_us": "PHL",
-    "hill400_warfare": "Hill400",
-    "hill400_offensive_US": "Hill400",
     "stmereeglise_offensive_us": "SME (US)",
+    "stmereeglise_offensive_ger": "SME (GER)",
+    "purpleheartlane_warfare": "PHL",
+    "purpleheartlane_offensive_us": "PHL (US)",
+    "purpleheartlane_offensive_ger": "PHL (GER)",
+    "hill400_warfare": "Hill400",
+    "hill400_offensive_US": "Hill400 (US)",
+    "hill400_offensive_ger": "Hill400 (GER)",
     "carentan_warfare": "Carentan",
-    "carentan_offensive_us": "Carentan",
+    "carentan_offensive_us": "Carentan (US)",
+    "carentan_offensive_ger": "Carentan (GER)",
+    'kursk_warfare': "Kursk",
+    'kursk_offensive_rus': "Kursk (RUS)",
+    'kursk_offensive_ger': "Kursk (GER)",
+    'stalingrad_warfare': "Stalingrad",
+    'stalingrad_offensive_rus': "Stalingrad (RUS)",
+    'stalingrad_offensive_ger': "Stalingrad (GER)",
 }
 
 
@@ -216,13 +279,14 @@ class MapsHistory(FixedLenList):
         prev = self.lpop() or dict(name=old_map, start=None, end=None)
         prev["end"] = ts
         self.lpush(prev)
+        return prev
 
     def save_new_map(self, new_map):
         ts = datetime.now().timestamp()
         logger.info("Saving start of new map %s at time %s", new_map, ts)
         new = dict(name=new_map, start=ts, end=None)
-        self.lpush(new)
-
+        self.add(new)
+        return new
 
 class ApiKey:
     def __init__(self):

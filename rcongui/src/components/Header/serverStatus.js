@@ -1,17 +1,15 @@
 import React from "react";
 import "react-toastify/dist/ReactToastify.css";
 import Grid from "@material-ui/core/Grid";
-import { showResponse, get, handle_http_errors } from "../../utils/fetchUtils";
-import { toast } from "react-toastify";
+import {get, handle_http_errors, showResponse} from "../../utils/fetchUtils";
 
 import debounce from "lodash/debounce";
-import { useTheme } from "@material-ui/core/styles";
+import {useTheme} from "@material-ui/core/styles";
 import useMediaQuery from "@material-ui/core/useMediaQuery";
 import Menu from "@material-ui/core/Menu";
 import MenuItem from "@material-ui/core/MenuItem";
 import Link from "@material-ui/core/Link";
-import { Link as RouterLink } from "react-router-dom";
-import { fromJS, List } from "immutable";
+import {fromJS, List} from "immutable";
 
 const Status = ({ classes, name, nbPlayers, map, serverList }) => {
   const theme = useTheme();
@@ -45,13 +43,17 @@ const Status = ({ classes, name, nbPlayers, map, serverList }) => {
             open={Boolean(anchorEl)}
             onClose={handleClose}
           >
-            {serverList.map((s) => (
-              <MenuItem onClick={handleClose}>
-                <Link color="inherit" href={`${window.location.protocol}//${window.location.hostname}:${s.get('port')}${window.location.pathname}${window.location.hash}`}>
+            {serverList.map((s) => {
+              let link = `${window.location.protocol}//${window.location.hostname}:${s.get('port')}${window.location.pathname}${window.location.hash}`
+              if (s.get('link')) {
+                link = `${s.get('link')}${window.location.pathname}${window.location.hash}`
+              }
+              return <MenuItem onClick={handleClose}>
+                <Link color="inherit" href={link}>
                   {s.get("name")}
                 </Link>
               </MenuItem>
-            ))}
+          })}
           </Menu>
           <small style={{ display: "block" }}>
             {nbPlayers} - {map}
@@ -72,12 +74,18 @@ class ServerStatus extends React.Component {
       map: "",
       serverList: List(),
       refreshIntervalSec: 10,
+      listRefreshIntervalSec: 30,
       interval: null,
+      intervalLoadList: null,
     };
 
     this.debouncedLoad = debounce(
       this.load.bind(this),
       this.state.refreshIntervalSec
+    );
+    this.debouncedLoadList = debounce(
+      this.loadServerList.bind(this),
+      this.state.listRefreshIntervalSec
     );
   }
 
@@ -89,14 +97,21 @@ class ServerStatus extends React.Component {
         this.state.refreshIntervalSec * 1000
       ),
     });
+    this.setState({
+      intervalLoadList: setInterval(
+        this.debouncedLoadList,
+        this.state.listRefreshIntervalSec * 1000
+      ),
+    });
     this.loadServerList();
   }
 
   componentWillUnmount() {
     clearInterval(this.state.interval);
+    clearInterval(this.state.intervalLoadList);
   }
 
-  async load(command) {
+  async load() {
     return get(`get_status`)
       .then((response) => showResponse(response, "get_status", false))
       .then((data) => {
@@ -115,7 +130,7 @@ class ServerStatus extends React.Component {
       .then((response) => showResponse(response, "server_list", false))
       .then((data) => {
         this.setState({
-          serverList: fromJS(data.result),
+          serverList: fromJS(data.result || []),
         });
       })
       .catch(handle_http_errors);

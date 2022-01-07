@@ -1,3 +1,4 @@
+from rcon import scoreboard
 from django.urls import path
 
 from . import views
@@ -8,6 +9,9 @@ from . import logs
 from . import vips
 from . import scoreboards
 from . import history
+from . import votemap
+from . import auto_settings
+
 
 urlpatterns = [
     path(name, func, name='name')
@@ -24,12 +28,27 @@ urlpatterns = [
     path("get_recent_logs", logs.get_recent_logs),
     path("get_historical_logs", logs.get_historical_logs),
     path("upload_vips", vips.upload_vips),
+    path("async_upload_vips", vips.async_upload_vips),
+    path("async_upload_vips_result", vips.async_upload_vips_result),
     path("download_vips", vips.download_vips),
-    path("scoreboard", scoreboards.text_scoreboard),
-    path("tk", scoreboards.text_tk_scoreboard),
+    path("live_scoreboard", scoreboards.live_scoreboard),
+    path("date_scoreboard", scoreboards.date_scoreboard),
+    path("get_scoreboard_maps", scoreboards.get_scoreboard_maps),
+    path("get_map_scoreboard", scoreboards.get_map_scoreboard),
+    path("get_live_game_stats", scoreboards.get_live_game_stats),
     path("players_history", history.players_history),
     path("flag_player", history.flag_player),
     path("unflag_player", history.unflag_player),
     path("player", history.get_player),
     path("get_map_history", history.get_map_history),
+    path("get_votemap_config", votemap.get_votemap_config),
+    path("set_votemap_config", votemap.set_votemap_config),
+    path("get_votemap_status", votemap.get_votemap_status),
+    path("reset_votemap_state", votemap.reset_votemap_state),
+    path("get_player_comment", history.get_player_comment),
+    path("post_player_comment", history.post_player_comment),
+    path("get_real_vip_config", vips.get_real_vip_config),
+    path("set_real_vip_config", vips.set_real_vip_config),
+    path("get_auto_settings", auto_settings.get_auto_settings),
+    path("set_auto_settings", auto_settings.set_auto_settings),
 ]

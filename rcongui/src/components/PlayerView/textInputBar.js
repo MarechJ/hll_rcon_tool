@@ -1,11 +1,7 @@
-import React, { Component } from "react";
+import React from "react";
 import Grid from "@material-ui/core/Grid";
 import TextField from "@material-ui/core/TextField";
 import "react-toastify/dist/ReactToastify.css";
-import ToggleButton from "@material-ui/lab/ToggleButton";
-import ToggleButtonGroup from "@material-ui/lab/ToggleButtonGroup";
-import SortByAlphaIcon from "@material-ui/icons/SortByAlpha";
-import QueryBuilderIcon from "@material-ui/icons/QueryBuilder";
 import TextHistory from "../textHistory";
 import Autocomplete from "@material-ui/lab/Autocomplete";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
@@ -55,6 +51,9 @@ const Reason = ({
           <TextField
             {...params}
             label={label}
+            multiline
+            rows={1}
+            rowsMax={10}
             margin="dense"
             helperText={helperText}
           />
@@ -80,7 +79,6 @@ const Reason = ({
 
 const TextInputBar = ({
   classes,
-  filter,
   handleChange,
   total,
   showCount,

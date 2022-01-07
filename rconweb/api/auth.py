@@ -1,26 +1,32 @@
-import logging
 import json
-import datetime
-import os
-from functools import wraps
+import logging
 from dataclasses import dataclass, asdict
+from functools import wraps
 from typing import Any
 
-from rcon.utils import ApiKey
-from rcon.cache_utils import ttl_cache
-from rcon.audit import heartbeat, online_mods, set_registered_mods, ingame_mods
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.http import HttpResponse
-from django.contrib.auth.models import User
 from django.contrib.auth import PermissionDenied
 from django.contrib.auth import authenticate, login, logout
-from django.forms.models import model_to_dict
-from .models import SteamPlayer
-from django.conf import settings
+from django.contrib.auth.models import User
+from django.db.models.signals import post_save, post_delete
+from django.http import JsonResponse, HttpResponse
+from django.views.decorators.csrf import csrf_exempt
 
+from rcon.audit import heartbeat, online_mods, set_registered_mods, ingame_mods
+from rcon.cache_utils import ttl_cache
+from .models import SteamPlayer
+import csv
 
 logger = logging.getLogger('rconweb')
+
+
+def update_mods(sender, instance, **kwargs):
+    set_registered_mods(get_moderators_accounts())
+
+
+post_save.connect(update_mods, sender=User)
+post_delete.connect(update_mods, sender=User)
+post_save.connect(update_mods, sender=SteamPlayer)
+post_delete.connect(update_mods, sender=SteamPlayer)
 
 
 @dataclass
@@ -44,11 +50,24 @@ def api_response(*args, **kwargs):
     )
 
 
+def api_csv_response(content, name, header):
+    response = HttpResponse(
+        content_type='text/csv',
+    )
+    response['Content-Disposition'] = 'attachment; filename="%s"' % name
+
+    writer = csv.DictWriter(response, fieldnames=header, dialect='excel')
+    writer.writerows(content)
+
+    return response
+
+
 @csrf_exempt
 def do_login(request):
     try:
         data = json.loads(request.body)
     except json.JSONDecodeError:
+        logger.debug("Login attempt without data")
         raise PermissionDenied("No data")
 
     name = data.get('username')
@@ -57,6 +76,7 @@ def do_login(request):
         user = authenticate(request, username=name, password=password)
         if user is not None:
             login(request, user)
+            logger.info("Successful login: %s", name)
             return api_response(
                 result=True,
                 command="login",
@@ -64,8 +84,10 @@ def do_login(request):
                 failed=False
             )
         else:
+            logger.warning("Failed login attempt %s", data)
             raise PermissionDenied("Invalid login")
     except PermissionDenied:
+        logger.warning("Failed login attempt %s", data)
         return api_response(
             command="login",
             arguments=name,
@@ -90,7 +112,6 @@ def is_logged_in(request):
                 logger.warning("%s's steam id is not set ", request.user.username)
             try:
                 heartbeat(request.user.username, steam_id)
-                set_registered_mods(get_moderators_accounts())
             except:
                 logger.exception("Unable to register mods")
         except:
@@ -101,6 +122,7 @@ def is_logged_in(request):
         command="is_logged_in",
         failed=False
     )
+
 
 @csrf_exempt
 def do_logout(request):
@@ -117,21 +139,22 @@ def login_required(func):
     def wrapper(request, *args, **kwargs):
         if not request.user.is_authenticated:
             return api_response(
-                    command=request.path,
-                    error="You must be logged in to use this",
-                    failed=True,
-                    status_code=401
-                )
+                command=request.path,
+                error="You must be logged in to use this",
+                failed=True,
+                status_code=401
+            )
         try:
             return func(request, *args, **kwargs)
         except Exception as e:
-            logger.exception("Unexpected error in %s", func.__name__, os.environ)
+            logger.exception("Unexpected error in %s", func.__name__)
             return api_response(
                 command=request.path,
                 error=repr(e),
                 failed=True,
                 status_code=500
             )
+
     return wrapper
 
 
@@ -143,6 +166,7 @@ def get_online_mods(request):
         result=online_mods(),
         failed=False,
     )
+
 
 @csrf_exempt
 def get_ingame_mods(request):

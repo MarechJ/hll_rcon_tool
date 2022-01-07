@@ -1,11 +1,9 @@
 import _ from "lodash";
-import { startsWith } from "lodash/string";
-import { get, showResponse } from "../utils/fetchUtils";
 
 const PREFIX = "autocomplete_";
 
 const getAllNamespaces = () => {
-  let namespaces = ["punitions", "welcome", "broadcast"];
+  let namespaces = ["punitions", "welcome", "broadcast", "watchlist"];
 
   return namespaces.filter((v) => {
     if (!v || v.includes("undefined")) {

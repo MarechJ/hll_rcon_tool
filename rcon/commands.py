@@ -11,15 +11,20 @@ from rcon.settings import check_config
 
 logger = logging.getLogger(__name__)
 
+
 def escape_string(s):
-    """ Logic taken from the official rcon client.
+    """Logic taken from the official rcon client.
     There's probably plenty of nicer and more bulletproof ones
     """
     if not isinstance(s, str):
-        return s   
+        return s
     st = ""
     for index in range(len(s)):
-        st = (st + s[index] if s[index] != '\\' else st + "\\\\") if s[index] != '"' else st + "\\\""
+        st = (
+            (st + s[index] if s[index] != "\\" else st + "\\\\")
+            if s[index] != '"'
+            else st + '\\"'
+        )
     return st
 
 
@@ -29,8 +34,9 @@ def _escape_params(func):
         return func(
             args[0],
             *[escape_string(a) for a in args[1:]],
-            **{k: escape_string(v) for k, v in kwargs.items()}
+            **{k: escape_string(v) for k, v in kwargs.items()},
         )
+
     return wrapper
 
 
@@ -50,9 +56,7 @@ def _auto_retry(method):
         except (HLLServerError, UnicodeDecodeError):
             if not self.auto_retry:
                 raise
-            logger.exception(
-                "Auto retrying %s %s %s", method.__name__, args, kwargs
-            )
+            logger.exception("Auto retrying %s %s %s", method.__name__, args, kwargs)
             self._reconnect()
             return method(self, *args, **kwargs)
             # TODO loop and counter implement counter
@@ -66,23 +70,20 @@ class ServerCtl:
 
     set password not implemented on purpose
     """
+
     def __init__(self, config, auto_retry=1):
         self.config = config
         self.conn = None
-        #self._connect()
+        # self._connect()
         self.auto_retry = auto_retry
 
     def _connect(self):
         self.conn = HLLConnection()
         try:
             self.conn.connect(
-                self.config['host'],
-                int(self.config['port']),
-                self.config['password']
+                self.config["host"], int(self.config["port"]), self.config["password"]
             )
-        except ValueError as e:
-            raise ValueError("HLL_PORT must be an integer") from e
-        except TypeError as e:
+        except (TypeError, ValueError) as e:
             logger.critical("Invalid connection information")
             raise
 
@@ -103,11 +104,17 @@ class ServerCtl:
         try:
             self.conn.send(command.encode())
             result = self.conn.receive().decode()
-        except (RuntimeError, BrokenPipeError, socket.timeout, ConnectionResetError, UnicodeDecodeError) as e:
+        except (
+            RuntimeError,
+            BrokenPipeError,
+            socket.timeout,
+            ConnectionResetError,
+            UnicodeDecodeError,
+        ) as e:
             logger.exception("Failed request")
             raise HLLServerError(command) from e
 
-        if result == 'FAIL':
+        if result == "FAIL":
             if can_fail:
                 raise CommandFailedError(command)
             else:
@@ -125,11 +132,17 @@ class ServerCtl:
             before_sent, after_sent, _ = self.conn.send(command.encode(), timed=True)
             before_received, after_received, result = self.conn.receive(timed=True)
             result = result.decode()
-        except (RuntimeError, BrokenPipeError, socket.timeout, ConnectionResetError, UnicodeDecodeError):
+        except (
+            RuntimeError,
+            BrokenPipeError,
+            socket.timeout,
+            ConnectionResetError,
+            UnicodeDecodeError,
+        ):
             logger.exception("Failed request")
             raise HLLServerError(command)
 
-        if result == 'FAIL':
+        if result == "FAIL":
             if can_fail:
                 raise CommandFailedError(command)
             else:
@@ -140,19 +153,17 @@ class ServerCtl:
             after_sent=after_sent,
             before_received=before_received,
             after_received=after_received,
-            result=result
+            result=result,
         )
-        
 
     def _read_list(self, raw):
-        res = raw.split('\t')
+        res = raw.split("\t")
 
         try:
             expected_len = int(res[0])
         except ValueError:
             raise HLLServerError(
-                "Unexpected response from server."
-                "Unable to get list length"
+                "Unexpected response from server." "Unable to get list length"
             )
 
         # Max 30 tries
@@ -160,9 +171,9 @@ class ServerCtl:
             if expected_len <= len(res) - 1:
                 break
             raw += self.conn.receive().decode()
-            res = raw.split('\t')
+            res = raw.split("\t")
 
-        if res[-1] == '':
+        if res[-1] == "":
             # There's a trailin \t
             res = res[:-1]
         if expected_len < len(res) - 1:
@@ -182,6 +193,15 @@ class ServerCtl:
 
         return self._read_list(res)
 
+    def get_profanities(self):
+        return self._get("profanity", is_list=True, can_fail=False)
+
+    def do_ban_profanities(self, profanities_csv):
+        return self._request(f"BanProfanity {profanities_csv}")
+
+    def do_unban_profanities(self, profanities_csv):
+        return self._request(f"UnbanProfanity {profanities_csv}")
+
     def get_name(self):
         return self._get("name", can_fail=False)
 
@@ -200,7 +220,7 @@ class ServerCtl:
         return self._get("playerids", True, can_fail=False)
 
     def get_player_info(self, player):
-        return self._request(f'playerinfo {player}')
+        return self._request(f"playerinfo {player}")
 
     def get_admin_ids(self):
         return self._get("adminids", True, can_fail=False)
@@ -217,8 +237,14 @@ class ServerCtl:
     def get_autobalance_threshold(self):
         return self._get("autobalancethreshold", can_fail=False)
 
+    def get_votekick_enabled(self):
+        return self._get("votekickenabled", can_fail=False)
+
+    def get_votekick_threshold(self):
+        return self._get("votekickthreshold", can_fail=False)
+
     def get_map_rotation(self):
-        return self._request('rotlist', can_fail=False).split('\n')[:-1]
+        return self._request("rotlist", can_fail=False).split("\n")[:-1]
 
     def get_slots(self):
         return self._get("slots", can_fail=False)
@@ -229,32 +255,41 @@ class ServerCtl:
     def get_admin_groups(self):
         return self._get("admingroups", True, can_fail=False)
 
+    def get_autobalance_enabled(self):
+        return self._get("autobalanceenabled", can_fail=False)
+
     @_auto_retry
-    def get_logs(self, since_min_ago, filter_=''):
-        res = self._request(f'showlog {since_min_ago}')
+    def get_logs(self, since_min_ago, filter_=""):
+        res = self._request(f"showlog {since_min_ago}")
         for i in range(30):
-            if res[-1] == '\n':
+            if res[-1] == "\n":
                 break
             try:
                 res += self.conn.receive().decode()
-            except (RuntimeError, BrokenPipeError, socket.timeout, ConnectionResetError, UnicodeDecodeError):
+            except (
+                RuntimeError,
+                BrokenPipeError,
+                socket.timeout,
+                ConnectionResetError,
+                UnicodeDecodeError,
+            ):
                 logger.exception("Failed request")
-                raise HLLServerError(f'showlog {since_min_ago}')
+                raise HLLServerError(f"showlog {since_min_ago}")
         return res
 
-    def get_timed_logs(self, since_min_ago, filter_=''):
-        res = self._timed_request(f'showlog {since_min_ago}')
+    def get_timed_logs(self, since_min_ago, filter_=""):
+        res = self._timed_request(f"showlog {since_min_ago}")
         for i in range(30):
-            if res['result'][-1] == '\n':
+            if res["result"][-1] == "\n":
                 break
-            res['result'] += self.conn.receive().decode()
+            res["result"] += self.conn.receive().decode()
         return res
 
     def get_idle_autokick_time(self):
         return self._get("idletime", can_fail=False)
 
     def get_max_ping_autokick(self):
-        return self._get('highping', can_fail=False)
+        return self._get("highping", can_fail=False)
 
     def get_queue_length(self):
         return self._get("maxqueuedplayers", can_fail=False)
@@ -262,14 +297,14 @@ class ServerCtl:
     def get_vip_slots_num(self):
         return self._get("numvipslots", can_fail=False)
 
-    def set_autobalance(self, bool_str, log_info=True):
+    def set_autobalance_enabled(self, bool_str):
         """
         String bool is on / off
         """
-        return self._request(f'setautobalanceenabled {bool_str}')
+        return self._request(f"setautobalanceenabled {bool_str}")
 
     def set_welcome_message(self, msg):
-        return self._request(f"say {msg}", log_info=True)
+        return self._request(f"say {msg}", log_info=True, can_fail=False)
 
     def set_map(self, map_name):
         return self._request(f"map {map_name}", log_info=True)
@@ -294,13 +329,28 @@ class ServerCtl:
 
     @_escape_params
     def set_broadcast(self, msg):
-        return self._request(f'broadcast "{msg}"', log_info=True)
+        return self._request(f'broadcast "{msg}"', log_info=True, can_fail=False)
+
+    def set_votekick_enabled(self, bool_str):
+        """
+        String bool is on / off
+        """
+        return self._request(f"setvotekickenabled {bool_str}")
+
+    def set_votekick_threshold(self, threshold_pairs_str):
+        """
+        PlayerCount,Threshold[,PlayerCount,Threshold,...]
+        """
+        return self._request(f"setvotekickthreshold {threshold_pairs_str}")
+
+    def do_reset_votekick_threshold(self):
+        return self._request(f"resetvotekickthreshold", log_info=True)
 
     def do_switch_player_on_death(self, player):
-        return self._request(f'switchteamondeath {player}', log_info=True)
+        return self._request(f"switchteamondeath {player}", log_info=True)
 
     def do_switch_player_now(self, player):
-        return self._request(f'switchteamnow {player}', log_info=True)
+        return self._request(f"switchteamnow {player}", log_info=True)
 
     def do_add_map_to_rotation(self, map_name):
         return self._request(f"rotadd {map_name}", can_fail=False, log_info=True)
@@ -317,12 +367,27 @@ class ServerCtl:
         return self._request(f'kick "{player}" "{reason}"', log_info=True)
 
     @_escape_params
-    def do_temp_ban(self, player_name=None, steam_id_64=None, duration_hours=2, reason="", admin_name=""):
-        return self._request(f'tempban "{steam_id_64 or player_name}" {duration_hours} "{reason}" "{admin_name}"', log_info=True)
+    def do_temp_ban(
+        self,
+        player_name=None,
+        steam_id_64=None,
+        duration_hours=2,
+        reason="",
+        admin_name="",
+    ):
+        return self._request(
+            f'tempban "{steam_id_64 or player_name}" {duration_hours} "{reason}" "{admin_name}"',
+            log_info=True,
+        )
 
     @_escape_params
-    def do_perma_ban(self, player_name=None, steam_id_64=None, reason="", admin_name=""):
-        return self._request(f'permaban "{steam_id_64 or player_name}" "{reason}" "{admin_name}"', log_info=True)
+    def do_perma_ban(
+        self, player_name=None, steam_id_64=None, reason="", admin_name=""
+    ):
+        return self._request(
+            f'permaban "{steam_id_64 or player_name}" "{reason}" "{admin_name}"',
+            log_info=True,
+        )
 
     def do_remove_temp_ban(self, ban_log):
         return self._request(f"pardontempban {ban_log}", log_info=True)
@@ -332,23 +397,23 @@ class ServerCtl:
 
     @_escape_params
     def do_add_admin(self, steam_id_64, role, name):
-        return self._request(f'adminadd "{steam_id_64}" "{role}" "{name}"', log_info=True)
+        return self._request(
+            f'adminadd "{steam_id_64}" "{role}" "{name}"', log_info=True
+        )
 
     def do_remove_admin(self, steam_id_64):
-        return self._request(f'admindel {steam_id_64}', log_info=True)
+        return self._request(f"admindel {steam_id_64}", log_info=True)
 
     @_escape_params
     def do_add_vip(self, steam_id_64, name):
         return self._request(f'vipadd {steam_id_64} "{name}"', log_info=True)
 
     def do_remove_vip(self, steam_id_64):
-        return self._request(f'vipdel {steam_id_64}', log_info=True)
+        return self._request(f"vipdel {steam_id_64}", log_info=True)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import os
     from rcon.settings import SERVER_INFO
 
-    ctl = ServerCtl(
-        SERVER_INFO
-    )
+    ctl = ServerCtl(SERVER_INFO)
