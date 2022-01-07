@@ -1,4 +1,4 @@
-db_data/
+db_data*/
 logs/
 servicediscovery/
 redis_data/
@@ -6,3 +6,7 @@ redis_data/
 *.log
 *.pyc
 events/
+rcongui/node_modules/
+*.tar
+*.gz
+db_data_bu/
