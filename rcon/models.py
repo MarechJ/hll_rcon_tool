@@ -516,8 +516,26 @@ class ServerCount(Base):
         index=True,
     )
     count = Column(Integer, nullable=False)
-
     players = relationship("PlayerAtCount", back_populates="data_point")
+    map = relationship("Maps")
+
+    def to_dict(self, players_as_tuple=False):
+        players = []
+        if self.players:
+            for p in self.players:
+                p = p.to_dict()
+                if players_as_tuple:
+                    players.append((p["name"], p["steam_id_64"]))
+                else:
+                    players.append(p)
+
+        return dict(
+            server_number=self.server_number,
+            minute=self.datapoint_time,
+            count=self.count,
+            players=players,
+            map=self.map.map_name
+        )
 
 class PlayerAtCount(Base):
     __tablename__ = "player_at_count"
@@ -538,7 +556,18 @@ class PlayerAtCount(Base):
         index=True,
     )
     data_point = relationship("ServerCount", back_populates="players")
+    steamid = relationship("PlayerSteamID", lazy="joined")
 
+    def to_dict(self):
+        try:
+            name = self.steamid.names[0].name
+        except:
+            logger.exception("Unable to load name for %s", self.steamid.steam_id_64)
+            name = ""
+        return dict(
+            steam_id_64=self.steamid.steam_id_64,
+            name=name
+        )
 
 def init_db(force=False):
     # create tables

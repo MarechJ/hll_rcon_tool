@@ -13,7 +13,7 @@ import datetime
 import pandas as pd
 import math
 from sqlalchemy import and_, or_, func
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, subqueryload
 from rcon.extended_commands import Rcon
 from rcon.settings import SERVER_INFO
 from rcon.cache_utils import ttl_cache
@@ -61,11 +61,11 @@ def get_obj_for_minute(minute, indexed_objs, first_only=True):
     return matches
 
 
-def save_server_stats_for_last_hours(hours=24):
+def save_server_stats_for_last_hours(hours=24, skip_last_hours=2):
     start = datetime.datetime.now() - datetime.timedelta(hours=hours)
-    end = datetime.datetime.now() - datetime.timedelta(hours=1)
-    start.replace(minute=0, second=0, microsecond=0)
-    end.replace(minute=0, second=0, microsecond=0)
+    end = datetime.datetime.now() - datetime.timedelta(hours=skip_last_hours)
+    start = start.replace(minute=0, second=0, microsecond=0)
+    end = end.replace(minute=0, second=0, microsecond=0)
     series = pd.date_range(start=start, end=end, freq="H")
     server_number = os.getenv("SERVER_NUMBER")
 
@@ -77,6 +77,7 @@ def save_server_stats_for_last_hours(hours=24):
             .group_by(func.date_trunc("hour", ServerCount.datapoint_time))
             .all()
         )
+        existing_hours = {dt for dt, in existing_hours}
         logger.debug("Existing hourly data points: %s", existing_hours)
         for hour in series.to_list():
             if hour in existing_hours:
@@ -91,20 +92,75 @@ def save_server_stats_for_last_hours(hours=24):
                 return_models=True,
             )
             for item in stats:
-                server_count = ServerCount(
-                    server_number=server_number,
-                    map_id=item["map"].id,  # TODO that might be None and crash
-                    count=item["count"],
-                    datapoint_time=item["minute"],
+                if not item.get("map"):
+                    # logger.debug("No map info can't record %s", item)
+                    if item.get("count") > 0:
+                        logger.warning(
+                            "No map info despite positive player count can't record %s",
+                            item,
+                        )
+                    continue
+                try:
+                    server_count = ServerCount(
+                        server_number=server_number,
+                        map_id=item["map"].id,  # TODO that might be None and crash
+                        count=item["count"],
+                        datapoint_time=item["minute"],
+                    )
+
+                    sess.add(server_count)
+                    sess.commit()
+                    players_at_counts = [
+                        PlayerAtCount(
+                            servercount_id=server_count.id, playersteamid_id=player.id
+                        )
+                        for player in item["players"]
+                    ]
+                    sess.bulk_save_objects(players_at_counts)
+                    sess.commit()
+                except Exception as e:
+                    # TODO An exception of duplicate key is always raise on round hours
+                    logger.exception("Unable to add count item %s", item)
+                    sess.rollback()
+
+
+def get_db_server_stats_for_range(
+    start=None, end=None, by_map=True, server_number=None, players_as_tuple=True, fill_with_live_data=True
+):
+    if server_number is None:
+        server_number = os.getenv("SERVER_NUMBER")
+    with enter_session() as sess:
+        query = (
+            sess.query(ServerCount)
+            .filter(
+                and_(
+                    ServerCount.datapoint_time >= start,
+                    ServerCount.datapoint_time <= end,
+                    ServerCount.server_number == server_number,
                 )
-                sess.add(server_count)
-                sess.commit()
-                players_at_counts = [
-                    PlayerAtCount(servercount_id=server_count.id, playersteamid_id=player.id)
-                    for player in item["players"]
-                ]
-                sess.bulk_save_objects(players_at_counts)
-                sess.commit()
+            )
+            .order_by(ServerCount.datapoint_time.asc())
+        ).options(subqueryload(ServerCount.players))
+        last_datapoint = None
+        if by_map:
+            data = {}
+            for item in query.all():
+                item = item.to_dict(players_as_tuple=players_as_tuple) 
+                data.setdefault(item["map"], []).append(item)
+                last_datapoint = item
+        else:
+            data = [item.to_dict(players_as_tuple=players_as_tuple) for item in query.all()]
+            last_datapoint = data[-1] if data else None
+     
+        if last_datapoint and last_datapoint["minute"] < (end - datetime.timedelta(minutes=10)):
+            live_stats = get_db_server_stats_for_range(start=last_datapoint["minute"] + datetime.timedelta(minutes=1), end=end, by_map=False)
+            if by_map:
+                for item in live_stats: 
+                    data.setdefault(item["map"], []).append(item)
+            else:
+                data.extend(live_stats)
+                
+        return data
 
 
 # @ttl_cache(60 * 10)
@@ -117,8 +173,8 @@ def get_server_stats_for_range(start=None, end=None, by_map=False):
     if start > end:
         raise ValueError("Start time can't be after end time")
 
-    start.replace(second=0, microsecond=0)
-    end.replace(second=0, microsecond=0)
+    start = start.replace(second=0, microsecond=0)
+    end = end.replace(second=0, microsecond=0)
 
     with enter_session() as sess:
         return _get_server_stats(sess, start, end, by_map)
@@ -188,7 +244,7 @@ def _get_server_stats(sess, start, end, by_map, return_models=False):
         map_name = map_.map_name if map_ else None
         item = {
             "minute": minute,
-            "map": map_name if not return_models else map_,
+            "map": map_name if not return_models else (map_ or None),
             "count": len(present_players),
             "players": present_players,
         }
@@ -200,4 +256,5 @@ def _get_server_stats(sess, start, end, by_map, return_models=False):
 
 
 if __name__ == "__main__":
-    save_server_stats_for_last_hours()
+    #save_server_stats_for_last_hours(hours=72)
+    print(get_db_server_stats_for_range(datetime.datetime.now() - datetime.timedelta(hours=48), datetime.datetime.now()))
