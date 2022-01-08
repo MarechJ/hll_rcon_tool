@@ -84,22 +84,25 @@ def save_server_stats_for_last_hours(hours=24, skip_last_hours=2):
                 logger.debug("%s is already in the DB. Skipping", hour)
                 continue
             # TODO catch failure per hour, not to block the whole batch
+            logger.debug("Getting server stats for %s", hour)
             stats = _get_server_stats(
                 sess,
                 start=hour,
-                end=hour + datetime.timedelta(hours=1),
+                end=hour + datetime.timedelta(minutes=59, seconds=59, microseconds=999),
                 by_map=False,
                 return_models=True,
             )
+            logger.info("Saving server stats for %s", hour)
             for item in stats:
                 if not item.get("map"):
-                    # logger.debug("No map info can't record %s", item)
+                    logger.debug("No map info can't record %s", item)
                     if item.get("count") > 0:
                         logger.warning(
                             "No map info despite positive player count can't record %s",
                             item,
                         )
                     continue
+                
                 try:
                     server_count = ServerCount(
                         server_number=server_number,
@@ -180,8 +183,8 @@ def get_server_stats_for_range(start=None, end=None, by_map=False):
         return _get_server_stats(sess, start, end, by_map)
 
 
-def _get_server_stats(sess, start, end, by_map, return_models=False):
-
+def _get_server_stats(sess, start, end, by_map, return_models=False, server_number=None):
+    server_number = server_number or os.getenv("SERVER_NUMBER")
     # Crete a list of minutes for the given time window
     # Bear in mind that a huge window will impact perf a lot
     series = pd.date_range(start=start, end=end, freq="T")
@@ -189,7 +192,7 @@ def _get_server_stats(sess, start, end, by_map, return_models=False):
 
     maps = (
         sess.query(Maps)
-        .filter(or_(Maps.start.between(start, end), Maps.end.between(start, end)))
+        .filter(and_(Maps.server_number == server_number, or_(Maps.start.between(start, end), Maps.end.between(start, end))))
         .all()
     )
     indexed_map_hours = index_range_objs_per_hours(maps)
@@ -200,6 +203,7 @@ def _get_server_stats(sess, start, end, by_map, return_models=False):
         .filter(
             and_(
                 PlayerSession.start >= start,
+                PlayerSession.server_number == server_number,
                 or_(PlayerSession.end <= end, PlayerSession.end == None),
             )
         )
@@ -256,5 +260,5 @@ def _get_server_stats(sess, start, end, by_map, return_models=False):
 
 
 if __name__ == "__main__":
-    #save_server_stats_for_last_hours(hours=72)
+    save_server_stats_for_last_hours(hours=72)
     print(get_db_server_stats_for_range(datetime.datetime.now() - datetime.timedelta(hours=48), datetime.datetime.now()))
