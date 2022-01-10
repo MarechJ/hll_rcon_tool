@@ -95,12 +95,13 @@ def save_server_stats_for_last_hours(hours=24, skip_last_hours=2):
             logger.info("Saving server stats for %s", hour)
             for item in stats:
                 if not item.get("map"):
-                    logger.debug("No map info can't record %s", item)
                     if item.get("count") > 0:
                         logger.warning(
                             "No map info despite positive player count can't record, minute: %s",
                             item["minute"]
                         )
+                    else: 
+                        logger.debug("No map info can't record %s", item)
                     continue
                 
                 try:
@@ -198,7 +199,7 @@ def _get_server_stats(sess, start, end, by_map, return_models=False, server_numb
                 or_(
                     Maps.start.between(start, end), 
                     Maps.end.between(start, end),
-                    and_(Maps.start >= start, end <= Maps.end)
+                    and_(Maps.start <= start, end <= Maps.end)
                 ), 
             )
         )
@@ -214,7 +215,7 @@ def _get_server_stats(sess, start, end, by_map, return_models=False, server_numb
                 or_(
                     PlayerSession.start.between(start, end), 
                     PlayerSession.end.between(start, end),
-                    and_(PlayerSession.start >= start, PlayerSession.end <= end)
+                    and_(PlayerSession.start <= start, PlayerSession.end <= end)
                 ),    
                 PlayerSession.server_number == server_number,
                 
