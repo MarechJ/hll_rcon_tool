@@ -192,7 +192,16 @@ def _get_server_stats(sess, start, end, by_map, return_models=False, server_numb
 
     maps = (
         sess.query(Maps)
-        .filter(and_(Maps.server_number == server_number, or_(Maps.start.between(start, end), Maps.end.between(start, end))))
+        .filter(
+            and_(
+                Maps.server_number == server_number,
+                or_(
+                    Maps.start.between(start, end), 
+                    Maps.end.between(start, end),
+                    and_(Maps.start >= start, end <= Maps.end)
+                ), 
+            )
+        )
         .all()
     )
     indexed_map_hours = index_range_objs_per_hours(maps)
@@ -202,14 +211,19 @@ def _get_server_stats(sess, start, end, by_map, return_models=False, server_numb
         sess.query(PlayerSession)
         .filter(
             and_(
-                PlayerSession.start >= start,
+                or_(
+                    PlayerSession.start.between(start, end), 
+                    PlayerSession.end.between(start, end),
+                    and_(PlayerSession.start >= start, PlayerSession.end <= end)
+                ),    
                 PlayerSession.server_number == server_number,
-                or_(PlayerSession.end <= end, PlayerSession.end == None),
+                
             )
         )
         .options(joinedload(PlayerSession.steamid))
     )
     indexed_sessions = index_range_objs_per_hours(q.all())
+    
 
     stats = []
     if by_map:

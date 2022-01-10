@@ -18,10 +18,10 @@ def get_server_stats(request):
         end = parser.parse(end)
     else:
         end = datetime.datetime.now()
-    return api_response(
-        result=get_db_server_stats_for_range(start=start, end=end, by_map=True), error=None, failed=False, command="get_server_stats"
-    )
     #return api_response(
-    #    result=get_server_stats_for_range(start=start, end=end, by_map=True), error=None, failed=False, command="get_server_stats"
+    #    result=get_db_server_stats_for_range(start=start, end=end, by_map=True), error=None, failed=False, command="get_server_stats"
     #)
+    return api_response(
+        result=get_server_stats_for_range(start=start, end=end, by_map=True), error=None, failed=False, command="get_server_stats"
+    )
 
