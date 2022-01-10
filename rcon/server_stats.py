@@ -98,8 +98,8 @@ def save_server_stats_for_last_hours(hours=24, skip_last_hours=2):
                     logger.debug("No map info can't record %s", item)
                     if item.get("count") > 0:
                         logger.warning(
-                            "No map info despite positive player count can't record %s",
-                            item,
+                            "No map info despite positive player count can't record, minute: %s",
+                            item["minute"]
                         )
                     continue
                 
