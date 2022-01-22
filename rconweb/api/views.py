@@ -635,6 +635,7 @@ try:
             continue
 
         commands.append((name, wrap_method(func, inspect.signature(func).parameters, name)))
+    logger.info("Done Initializing endpoint")
 except:
     logger.exception("Failed to initialized endpoints - Most likely bad configuration")
     raise

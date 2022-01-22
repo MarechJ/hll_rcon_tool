@@ -1,3 +1,4 @@
+from curses import echo
 from datetime import datetime
 import logging
 import os
@@ -40,7 +41,7 @@ def get_engine():
         logger.error(msg)
         raise ValueError(msg)
 
-    _ENGINE = create_engine(url)
+    _ENGINE = create_engine(url, echo=False)
     return _ENGINE
 
 

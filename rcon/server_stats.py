@@ -199,7 +199,7 @@ def _get_server_stats(sess, start, end, by_map, return_models=False, server_numb
                 or_(
                     Maps.start.between(start, end), 
                     Maps.end.between(start, end),
-                    and_(Maps.start <= start, end <= Maps.end)
+                    and_(Maps.start <= start, end <= Maps.end).self_group()  # Self group adds parenthesis around that AND condidtion
                 ), 
             )
         )
@@ -215,15 +215,17 @@ def _get_server_stats(sess, start, end, by_map, return_models=False, server_numb
                 or_(
                     PlayerSession.start.between(start, end), 
                     PlayerSession.end.between(start, end),
-                    and_(PlayerSession.start <= start, PlayerSession.end <= end)
+                    and_(PlayerSession.start <= start, end <= PlayerSession.end).self_group()
+                   
                 ),    
                 PlayerSession.server_number == server_number,
-                
             )
         )
-        .options(joinedload(PlayerSession.steamid))
+        #.options(joinedload(PlayerSession.steamid))
     )
-    indexed_sessions = index_range_objs_per_hours(q.all())
+    q = q.all()
+    print("Found players: ", len(q))
+    indexed_sessions = index_range_objs_per_hours(q)
     
 
     stats = []
