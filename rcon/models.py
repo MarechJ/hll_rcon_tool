@@ -1,6 +1,7 @@
 from curses import echo
 from datetime import datetime
 import logging
+from operator import index
 import os
 from contextlib import contextmanager
 from rcon.utils import map_name
@@ -509,7 +510,7 @@ class ServerCount(Base):
     id = Column(Integer, primary_key=True)
     server_number = Column(Integer)
     creation_time = Column(TIMESTAMP, default=datetime.utcnow)
-    datapoint_time = Column(TIMESTAMP, unique=True)
+    datapoint_time = Column(TIMESTAMP, unique=True, index=True)
     map_id = Column(
         Integer,
         ForeignKey("map_history.id"),
@@ -517,16 +518,18 @@ class ServerCount(Base):
         index=True,
     )
     count = Column(Integer, nullable=False)
+    vip_count = Column(Integer, nullable=False)
     players = relationship("PlayerAtCount", back_populates="data_point")
-    map = relationship("Maps")
+    map = relationship("Maps", lazy="joined")
 
-    def to_dict(self, players_as_tuple=False):
+    def to_dict(self, players_as_tuple=False, with_player_list=True):
         players = []
-        if self.players:
+
+        if with_player_list and self.players:
             for p in self.players:
                 p = p.to_dict()
                 if players_as_tuple:
-                    players.append((p["name"], p["steam_id_64"]))
+                    players.append((p["name"], p["steam_id_64"], p["vip"]))
                 else:
                     players.append(p)
 
@@ -535,7 +538,8 @@ class ServerCount(Base):
             minute=self.datapoint_time,
             count=self.count,
             players=players,
-            map=self.map.map_name
+            map=self.map.map_name,
+            vip_count=self.vip_count
         )
 
 class PlayerAtCount(Base):
@@ -556,6 +560,7 @@ class PlayerAtCount(Base):
         nullable=False,
         index=True,
     )
+    vip = Column(Boolean)
     data_point = relationship("ServerCount", back_populates="players")
     steamid = relationship("PlayerSteamID", lazy="joined")
 
@@ -567,7 +572,8 @@ class PlayerAtCount(Base):
             name = ""
         return dict(
             steam_id_64=self.steamid.steam_id_64,
-            name=name
+            name=name,
+            vip=self.vip
         )
 
 def init_db(force=False):

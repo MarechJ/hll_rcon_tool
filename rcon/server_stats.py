@@ -98,17 +98,18 @@ def save_server_stats_for_last_hours(hours=24, skip_last_hours=2):
                     if item.get("count") > 0:
                         logger.warning(
                             "No map info despite positive player count can't record, minute: %s",
-                            item["minute"]
+                            item["minute"],
                         )
-                    else: 
+                    else:
                         logger.debug("No map info can't record %s", item)
                     continue
-                
+
                 try:
                     server_count = ServerCount(
                         server_number=server_number,
                         map_id=item["map"].id,  # TODO that might be None and crash
                         count=item["count"],
+                        vip_count=item["vip_count"],
                         datapoint_time=item["minute"],
                     )
 
@@ -116,9 +117,9 @@ def save_server_stats_for_last_hours(hours=24, skip_last_hours=2):
                     sess.commit()
                     players_at_counts = [
                         PlayerAtCount(
-                            servercount_id=server_count.id, playersteamid_id=player.id
+                            servercount_id=server_count.id, playersteamid_id=player.id, vip=is_vip
                         )
-                        for player in item["players"]
+                        for player, is_vip in item["players"]
                     ]
                     sess.bulk_save_objects(players_at_counts)
                     sess.commit()
@@ -129,11 +130,22 @@ def save_server_stats_for_last_hours(hours=24, skip_last_hours=2):
 
 
 def get_db_server_stats_for_range(
-    start=None, end=None, by_map=True, server_number=None, players_as_tuple=True, fill_with_live_data=True
+    start,
+    end,
+    by_map=True,
+    server_number=None,
+    players_as_tuple=True,
+    fill_with_live_data=True,
+    with_player_list=False,
 ):
     if server_number is None:
         server_number = os.getenv("SERVER_NUMBER")
+
+    # Turn the timestamps back to naive
+    start = datetime.datetime.fromtimestamp(start.timestamp())
+    end = datetime.datetime.fromtimestamp(end.timestamp())
     with enter_session() as sess:
+        t = datetime.datetime.now()
         query = (
             sess.query(ServerCount)
             .filter(
@@ -144,26 +156,52 @@ def get_db_server_stats_for_range(
                 )
             )
             .order_by(ServerCount.datapoint_time.asc())
-        ).options(subqueryload(ServerCount.players))
+        )
+
+        if with_player_list:
+            query = query.options(
+                joinedload(ServerCount.players)
+                .joinedload(PlayerAtCount.steamid)
+                .joinedload(PlayerSteamID.names)
+            )
         last_datapoint = None
         if by_map:
             data = {}
-            for item in query.all():
-                item = item.to_dict(players_as_tuple=players_as_tuple) 
+            items = query.all()
+            print(f"Query took {(datetime.datetime.now() - t).total_seconds()} seconds")
+            t = datetime.datetime.now()
+            # import ipdb; ipdb.set_trace();
+            for item in items:
+                item = item.to_dict(
+                    players_as_tuple=players_as_tuple, with_player_list=with_player_list
+                )
                 data.setdefault(item["map"], []).append(item)
                 last_datapoint = item
+            print(
+                f"Iteration took {(datetime.datetime.now() - t).total_seconds()} seconds"
+            )
         else:
-            data = [item.to_dict(players_as_tuple=players_as_tuple) for item in query.all()]
+            data = [
+                item.to_dict(
+                    players_as_tuple=players_as_tuple, with_player_list=with_player_list
+                )
+                for item in query.all()
+            ]
             last_datapoint = data[-1] if data else None
-     
-        if last_datapoint and last_datapoint["minute"] < (end - datetime.timedelta(minutes=10)):
-            live_stats = get_db_server_stats_for_range(start=last_datapoint["minute"] + datetime.timedelta(minutes=1), end=end, by_map=False)
+
+        if last_datapoint and last_datapoint["minute"] < (
+            end - datetime.timedelta(minutes=5)
+        ):
+            live_stats = get_db_server_stats_for_range(
+                start=last_datapoint["minute"] + datetime.timedelta(minutes=1),
+                end=end,
+                by_map=by_map,
+            )
             if by_map:
-                for item in live_stats: 
+                for item in live_stats:
                     data.setdefault(item["map"], []).append(item)
             else:
                 data.extend(live_stats)
-                
         return data
 
 
@@ -184,10 +222,19 @@ def get_server_stats_for_range(start=None, end=None, by_map=False):
         return _get_server_stats(sess, start, end, by_map)
 
 
-def _get_server_stats(sess, start, end, by_map, return_models=False, server_number=None):
+def _get_server_stats(
+    sess, start, end, by_map, return_models=False, server_number=None
+):
     server_number = server_number or os.getenv("SERVER_NUMBER")
     # Crete a list of minutes for the given time window
     # Bear in mind that a huge window will impact perf a lot
+    try:
+        vips = Rcon(SERVER_INFO).get_vip_ids()
+        vips = {d["steam_id_64"] for d in vips}
+    except:
+        logger.warning("Unable to get VIP list")
+        vips = set()
+
     series = pd.date_range(start=start, end=end, freq="T")
     series = series.to_list()
 
@@ -197,10 +244,12 @@ def _get_server_stats(sess, start, end, by_map, return_models=False, server_numb
             and_(
                 Maps.server_number == server_number,
                 or_(
-                    Maps.start.between(start, end), 
+                    Maps.start.between(start, end),
                     Maps.end.between(start, end),
-                    and_(Maps.start <= start, end <= Maps.end).self_group()  # Self group adds parenthesis around that AND condidtion
-                ), 
+                    and_(
+                        Maps.start <= start, end <= Maps.end
+                    ).self_group(),  # Self group adds parenthesis around that AND condidtion
+                ),
             )
         )
         .all()
@@ -213,20 +262,20 @@ def _get_server_stats(sess, start, end, by_map, return_models=False, server_numb
         .filter(
             and_(
                 or_(
-                    PlayerSession.start.between(start, end), 
+                    PlayerSession.start.between(start, end),
                     PlayerSession.end.between(start, end),
-                    and_(PlayerSession.start <= start, end <= PlayerSession.end).self_group()
-                   
-                ),    
+                    and_(
+                        PlayerSession.start <= start, end <= PlayerSession.end
+                    ).self_group(),
+                ),
                 PlayerSession.server_number == server_number,
             )
         )
-        #.options(joinedload(PlayerSession.steamid))
+        .options(joinedload(PlayerSession.steamid).joinedload(PlayerSteamID.names))
     )
     q = q.all()
     print("Found players: ", len(q))
     indexed_sessions = index_range_objs_per_hours(q)
-    
 
     stats = []
     if by_map:
@@ -236,6 +285,7 @@ def _get_server_stats(sess, start, end, by_map, return_models=False, server_numb
         # The map, and all the players that had a session at that minute
         # This algo is quite crappy but it works decently enough
         present_players = []
+        vip_count = 0
         map_ = get_obj_for_minute(minute, indexed_map_hours)
         # find the map that was running at that minute
         # for m in indexed_map_hours.get(trunc_datetime_to_hour(minute), []):
@@ -258,15 +308,19 @@ def _get_server_stats(sess, start, end, by_map, return_models=False, server_numb
                     (
                         player_session.steamid.names[0].name,
                         player_session.steamid.steam_id_64,
+                        player_session.steamid.steam_id_64 in vips,
                     )
                 )
+                if player_session.steamid.steam_id_64 in vips:
+                    vip_count += 1
             else:
-                present_players.append(player_session.steamid)
+                present_players.append((player_session.steamid, player_session.steamid.steam_id_64 in vips))
         map_name = map_.map_name if map_ else None
         item = {
             "minute": minute,
             "map": map_name if not return_models else (map_ or None),
             "count": len(present_players),
+            "vip_count": vip_count,
             "players": present_players,
         }
         if by_map:
@@ -278,4 +332,9 @@ def _get_server_stats(sess, start, end, by_map, return_models=False, server_numb
 
 if __name__ == "__main__":
     save_server_stats_for_last_hours(hours=72)
-    print(get_db_server_stats_for_range(datetime.datetime.now() - datetime.timedelta(hours=48), datetime.datetime.now()))
+    print(
+        get_db_server_stats_for_range(
+            datetime.datetime.now() - datetime.timedelta(hours=48),
+            datetime.datetime.now(),
+        )
+    )
