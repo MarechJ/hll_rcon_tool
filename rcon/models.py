@@ -42,7 +42,7 @@ def get_engine():
         logger.error(msg)
         raise ValueError(msg)
 
-    _ENGINE = create_engine(url, echo=True)
+    _ENGINE = create_engine(url, echo=False)
     return _ENGINE
 
 

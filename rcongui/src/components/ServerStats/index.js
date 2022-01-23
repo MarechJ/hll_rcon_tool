@@ -11,8 +11,8 @@ import {
   Legend,
   registerables,
 } from "chart.js";
-import StarIcon from '@material-ui/icons/Star';
-import LinearProgress from '@material-ui/core/LinearProgress';
+import StarIcon from "@material-ui/icons/Star";
+import LinearProgress from "@material-ui/core/LinearProgress";
 import Switch from "@material-ui/core/Switch";
 import FormGroup from "@material-ui/core/FormGroup";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
@@ -84,13 +84,15 @@ const ServerStatsPage = ({ classes }) => {
   const [datasetElementIndex, setDatasetElementIndex] = React.useState(null);
   const [from, setFrom] = React.useState(new Date(new Date() - 1 * 86400000));
   const [till, setTill] = React.useState(new Date());
-  const [withPlayer, _setWithPlayer] = React.useState(window.localStorage.getItem("stats_with_players") == "true");
+  const [withPlayer, _setWithPlayer] = React.useState(
+    window.localStorage.getItem("stats_with_players") == "true"
+  );
   const [dataLoading, setDataLoading] = React.useState(true);
 
-  const setWithPlayer = (event) => { 
-    _setWithPlayer(event.target.checked)
-    window.localStorage.setItem("stats_with_players", event.target.checked)
-  }
+  const setWithPlayer = (event) => {
+    _setWithPlayer(event.target.checked);
+    window.localStorage.setItem("stats_with_players", event.target.checked);
+  };
 
   const colors = React.useMemo(
     () =>
@@ -106,14 +108,33 @@ const ServerStatsPage = ({ classes }) => {
   const styles = useStyles();
   const datasets = React.useMemo(
     () =>
-      Object.keys(stats).map((mapName, i) => ({
-        grouped: true,
-        label: mapName,
-        data: stats[mapName],
-        backgroundColor: colors[i],
-        borderColor: colors[i],
-        fill: true,
-      })),
+      Object.keys(stats)
+        .map((mapName, i) => ({
+          grouped: false,
+          label: mapName,
+          data: stats[mapName],
+          backgroundColor: colors[i],
+          borderColor: colors[i],
+          fill: true,
+          parsing: {
+            xAxisKey: "minute",
+            yAxisKey: "count",
+          },
+        }))
+        .concat(
+          Object.keys(stats).map((mapName, i) => ({
+            grouped: false,
+            label: "vip",
+            data: stats[mapName],
+            parsing: {
+              xAxisKey: "minute",
+              yAxisKey: "vip_count",
+            },
+            backgroundColor: "#000000",
+            borderColor: "#000000",
+            fill: true,
+          }))
+        ),
     [stats, colors]
   );
 
@@ -178,9 +199,9 @@ const ServerStatsPage = ({ classes }) => {
         return data.result && data.result ? setStats(data.result) : "";
       })
       .catch(handle_http_errors);
-  }
+  };
   React.useEffect(() => {
-    loadData()
+    loadData();
   }, []);
 
   return stats ? (
@@ -201,12 +222,16 @@ const ServerStatsPage = ({ classes }) => {
           <React.Fragment>
             <DialogContent>
               <DialogContentText>
-                {dataPoint.minute} - {dataPoint.count} players ({dataPoint.vip_count} VIPs) 
+                {dataPoint.minute} - {dataPoint.count} players (
+                {dataPoint.vip_count} VIPs)
               </DialogContentText>
               <ul>
                 {dataPoint.players.map((el) => (
                   <li key={el[1]}>
-                    <Typography variant="body2"><Link href={`#/player/${el[1]}`}> {el[0]}</Link>{el[1]} {el[2] ? <StarIcon fontSize="inherit"/> : ""}</Typography> 
+                    <Typography variant="body2">
+                      <Link href={`#/player/${el[1]}`}> {el[0]}</Link>
+                      {el[1]} {el[2] ? <StarIcon fontSize="inherit" /> : ""}
+                    </Typography>
                   </li>
                 ))}
               </ul>
@@ -235,7 +260,14 @@ const ServerStatsPage = ({ classes }) => {
           "No data"
         )}
       </Dialog>
-      <Grid container spacing={2} className={classes.doublePadding} justifyContent="center" alignContent="center" alignItems="center">
+      <Grid
+        container
+        spacing={2}
+        className={classes.doublePadding}
+        justifyContent="center"
+        alignContent="center"
+        alignItems="center"
+      >
         <Grid item>
           <MuiPickersUtilsProvider utils={MomentUtils}>
             <DateTimePicker
@@ -272,7 +304,7 @@ const ServerStatsPage = ({ classes }) => {
         </Grid>
         <Grid item>
           <Button onClick={loadData} variant="contained" color="primary">
-                Load data
+            Load data
           </Button>
         </Grid>
         <Grid item xs={12}>
@@ -281,6 +313,7 @@ const ServerStatsPage = ({ classes }) => {
         <Grid item xs={12}>
           <Bar
             options={{
+              
               onClick: (e, el) => {
                 if (el.length > 0) {
                   console.log(el);
@@ -292,6 +325,14 @@ const ServerStatsPage = ({ classes }) => {
                 }
               },
               plugins: {
+                legend: {
+                  labels: {
+                    filter: function (item, chart) {
+                      // Logic to remove a particular legend item goes here
+                      return !item.text.includes('vip');
+                    },
+                  },
+                },
                 tooltip: {
                   callbacks: {
                     afterTitle: function (context) {
@@ -316,13 +357,10 @@ const ServerStatsPage = ({ classes }) => {
                 },
               },
               scales: {
-                x: { type: "time", stacked: true },
-                y: { min: 0, max: 100, stacked: true },
+                x: { type: "time", stacked: false },
+                y: { min: 0, max: 100, stacked: false },
               },
-              parsing: {
-                xAxisKey: "minute",
-                yAxisKey: "count",
-              },
+              
             }}
             data={{
               datasets: datasets,
