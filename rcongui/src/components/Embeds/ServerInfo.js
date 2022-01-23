@@ -30,6 +30,7 @@ const useStyles = makeStyles((theme) => ({
   },
   root: {
     display: "flex",
+    overflow: "hidden"
   },
   details: {
     display: "flex",
