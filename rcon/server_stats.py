@@ -302,7 +302,9 @@ def _get_server_stats(
         #         present_players.append(player_session.steamid.names[0].name)
         for player_session in get_obj_for_minute(
             minute, indexed_sessions, first_only=False
-        ):
+        ):  
+            if not player_session.steamid:
+                continue
             if not return_models:
                 present_players.append(
                     (
