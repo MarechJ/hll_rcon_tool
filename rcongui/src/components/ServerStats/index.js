@@ -205,8 +205,8 @@ const ServerStatsPage = ({ classes }) => {
               </DialogContentText>
               <ul>
                 {dataPoint.players.map((el) => (
-                  <li>
-                    <Link href={`#/player/${el[1]}`}>{el[0]}</Link> {el[1]} {el[2] ? <StarIcon /> : ""}
+                  <li key={el[1]}>
+                    <Typography variant="body2"><Link href={`#/player/${el[1]}`}> {el[0]}</Link>{el[1]} {el[2] ? <StarIcon fontSize="inherit"/> : ""}</Typography> 
                   </li>
                 ))}
               </ul>

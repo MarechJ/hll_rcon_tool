@@ -313,10 +313,10 @@ def _get_server_stats(
                         player_session.steamid.steam_id_64 in vips,
                     )
                 )
-                if player_session.steamid.steam_id_64 in vips:
-                    vip_count += 1
             else:
                 present_players.append((player_session.steamid, player_session.steamid.steam_id_64 in vips))
+            if player_session.steamid.steam_id_64 in vips:
+                vip_count += 1
         map_name = map_.map_name if map_ else None
         item = {
             "minute": minute,
