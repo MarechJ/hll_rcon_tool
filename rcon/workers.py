@@ -98,6 +98,7 @@ def record_stats(map_info):
         logger.exception("Unexpected error while recording stats for %s", map_info)
 
 def _record_stats(map_info):
+    time.sleep(60 * 6)  # Waiting 6min to make sure that all recent logs are recorded in the DB
     stats = TimeWindowStats()
 
     start = datetime.datetime.utcfromtimestamp(map_info.get('start'))
