@@ -21,7 +21,7 @@ logger = logging.getLogger("rcon")
 
 def get_queue(redis_client=None):
     red = get_redis_client()
-    return Queue(connection=red)
+    return Queue(connection=red, default_timeout=60 * 20)
 
 
 def broadcast(msg):
@@ -86,7 +86,7 @@ def get_or_create_map(sess, start, end, server_number, map_name):
 
 def record_stats_worker(map_info):
     queue = get_queue()
-    queue.enqueue(record_stats, map_info)
+    queue.enqueue_in(timedelta(seconds=60 * 6), record_stats, map_info)
 
 
 def record_stats(map_info):
@@ -98,7 +98,6 @@ def record_stats(map_info):
         logger.exception("Unexpected error while recording stats for %s", map_info)
 
 def _record_stats(map_info):
-    time.sleep(60 * 6)  # Waiting 6min to make sure that all recent logs are recorded in the DB
     stats = TimeWindowStats()
 
     start = datetime.datetime.utcfromtimestamp(map_info.get('start'))
