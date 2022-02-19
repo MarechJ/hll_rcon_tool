@@ -43,9 +43,9 @@ def save_stats():
 
 
 @cli.command(name="record_server_stats")
-def save_stats():
+def save_recent_stats():
     save_server_stats_for_last_hours()
-    
+
 
 @cli.command(name="enrich_db_users")
 def run_enrich_db_users():
