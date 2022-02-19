@@ -54,12 +54,12 @@ function hexToRgb(hex) {
   var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   return result
     ? "rgb(" +
-        parseInt(result[1], 16) +
-        "," +
-        parseInt(result[2], 16) +
-        "," +
-        parseInt(result[3], 16) +
-        ")"
+    parseInt(result[1], 16) +
+    "," +
+    parseInt(result[2], 16) +
+    "," +
+    parseInt(result[3], 16) +
+    ")"
     : null;
 }
 
@@ -99,8 +99,8 @@ function DetailsDialog({
       <DialogTitle>{dataPoint.map}</DialogTitle>
 
       {datasetElementIndex !== null &&
-      datasetsIndex !== null &&
-      Object.keys(dataPoint).length > 0 ? (
+        datasetsIndex !== null &&
+        Object.keys(dataPoint).length > 0 ? (
         <React.Fragment>
           <DialogContent>
             <DialogContentText>
@@ -186,6 +186,7 @@ function MetricsParams({
       <Grid item>
         <Grid container direction="column">
           <Link
+            component="button"
             onClick={() => {
               setTill(new Date());
               setFrom(new Date(new Date() - 1 * 86400000));
@@ -194,6 +195,7 @@ function MetricsParams({
             Last 24h
           </Link>
           <Link
+            component="button"
             onClick={() => {
               setTill(new Date());
               setFrom(new Date(new Date() - 3 * 86400000));
@@ -202,6 +204,7 @@ function MetricsParams({
             Last 72h
           </Link>
           <Link
+            component="button"
             onClick={() => {
               setTill(new Date());
               setFrom(new Date(new Date() - 7 * 86400000));

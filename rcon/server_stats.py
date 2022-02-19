@@ -206,9 +206,10 @@ def get_db_server_stats_for_range(
                 end=end,
                 by_map=by_map,
             )
+            #import ipdb; ipdb.set_trace();
             if by_map:
-                for item in live_stats:
-                    data.setdefault(item["map"], []).append(item)
+                for m, items in live_stats.items():
+                    data.setdefault(m, []).extend(items)
             else:
                 data.extend(live_stats)
         return data
