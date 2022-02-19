@@ -14,6 +14,7 @@ from rcon.user_config import seed_default_config
 from rcon.cache_utils import RedisCached, get_redis_pool
 from rcon.scoreboard import live_stats_loop
 from rcon.steam_utils import enrich_db_users
+from rcon.server_stats import save_server_stats_since_inception, save_server_stats_for_last_hours
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +37,15 @@ def run_stats_loop():
         sys.exit(1)
     
 
+@cli.command(name="record_server_stats_inception")
+def save_stats():
+    save_server_stats_since_inception()
+
+
+@cli.command(name="record_server_stats")
+def save_stats():
+    save_server_stats_for_last_hours()
+    
 
 @cli.command(name="enrich_db_users")
 def run_enrich_db_users():

@@ -77,6 +77,166 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
+function DetailsDialog({
+  datasetElementIndex,
+  datasetsIndex,
+  dataPoint,
+  unsetDatapoint,
+  setPrevDataPoint,
+  hasPrevDataPoint,
+  setNextDataPoint,
+  hasNextDataPoint,
+}) {
+  return (
+    <Dialog
+      open={
+        datasetElementIndex !== null &&
+        datasetsIndex !== null &&
+        Object.keys(dataPoint).length > 0
+      }
+      onClose={unsetDatapoint}
+    >
+      <DialogTitle>{dataPoint.map}</DialogTitle>
+
+      {datasetElementIndex !== null &&
+      datasetsIndex !== null &&
+      Object.keys(dataPoint).length > 0 ? (
+        <React.Fragment>
+          <DialogContent>
+            <DialogContentText>
+              {dataPoint.minute} - {dataPoint.count} players (
+              {dataPoint.vip_count} VIPs)
+            </DialogContentText>
+            <ul>
+              {dataPoint.players.map((el) => (
+                <li key={el[1]}>
+                  <Typography variant="body2">
+                    <Link href={`#/player/${el[1]}`}> {el[0]}</Link>
+                    {el[1]} {el[2] ? <StarIcon fontSize="inherit" /> : ""}
+                  </Typography>
+                </li>
+              ))}
+            </ul>
+          </DialogContent>
+          <DialogActions>
+            <Button
+              onClick={setPrevDataPoint}
+              disabled={!hasPrevDataPoint()}
+              color="primary"
+            >
+              Prev
+            </Button>
+            <Button
+              onClick={setNextDataPoint}
+              disabled={!hasNextDataPoint()}
+              color="primary"
+            >
+              Next
+            </Button>
+            <Button onClick={unsetDatapoint} color="primary">
+              Close
+            </Button>
+          </DialogActions>
+        </React.Fragment>
+      ) : (
+        "No data"
+      )}
+    </Dialog>
+  );
+}
+
+function MetricsParams({
+  from,
+  setFrom,
+  till,
+  setTill,
+  withPlayer,
+  setWithPlayer,
+  loadData,
+  toggleShowControls,
+}) {
+  return (
+    <Grid
+      container
+      alignContent="center"
+      alignItems="center"
+      justify="center"
+      spacing={2}
+    >
+      <Grid item>
+        <MuiPickersUtilsProvider utils={MomentUtils}>
+          <DateTimePicker
+            label="From time"
+            format="YYYY/MM/DD HH:mm"
+            value={from}
+            onChange={setFrom}
+          />
+        </MuiPickersUtilsProvider>
+      </Grid>
+      <Grid item>
+        <MuiPickersUtilsProvider utils={MomentUtils}>
+          <DateTimePicker
+            label="Till time"
+            format="YYYY/MM/DD HH:mm"
+            value={till}
+            onChange={setTill}
+          />
+        </MuiPickersUtilsProvider>
+      </Grid>
+      <Grid item>
+        <Grid container direction="column">
+          <Link
+            onClick={() => {
+              setTill(new Date());
+              setFrom(new Date(new Date() - 1 * 86400000));
+            }}
+          >
+            Last 24h
+          </Link>
+          <Link
+            onClick={() => {
+              setTill(new Date());
+              setFrom(new Date(new Date() - 3 * 86400000));
+            }}
+          >
+            Last 72h
+          </Link>
+          <Link
+            onClick={() => {
+              setTill(new Date());
+              setFrom(new Date(new Date() - 7 * 86400000));
+            }}
+          >
+            Last 7d
+          </Link>
+        </Grid>
+      </Grid>
+      <Grid item>
+        <FormControl component="fieldset">
+          <FormGroup aria-label="position" row>
+            <FormControlLabel
+              value="With player list (slower load)"
+              control={<Switch checked={withPlayer} onChange={setWithPlayer} />}
+              label="With player list (slower load)"
+              labelPlacement="top"
+            />
+          </FormGroup>
+        </FormControl>
+      </Grid>
+      <Grid item>
+        <Button onClick={loadData} variant="contained" color="primary">
+          Load data
+        </Button>
+      </Grid>
+      <Grid item>
+        <Button onClick={toggleShowControls} variant="text">
+          Hide controls
+        </Button>
+      </Grid>
+    </Grid>
+  );
+}
+
 const ServerStatsPage = ({ classes }) => {
   const [stats, setStats] = React.useState({});
   const [dataPoint, setDatapoint] = React.useState({});
@@ -88,10 +248,19 @@ const ServerStatsPage = ({ classes }) => {
     window.localStorage.getItem("stats_with_players") == "true"
   );
   const [dataLoading, setDataLoading] = React.useState(true);
+  const [showControls, _setShowControls] = React.useState(
+    window.localStorage.getItem("stats_show_controls") == "true"
+  );
 
   const setWithPlayer = (event) => {
     _setWithPlayer(event.target.checked);
     window.localStorage.setItem("stats_with_players", event.target.checked);
+  };
+
+  const toggleShowControls = () => {
+    const show = !showControls;
+    _setShowControls(show);
+    window.localStorage.setItem("stats_show_controls", show);
   };
 
   const colors = React.useMemo(
@@ -206,114 +375,50 @@ const ServerStatsPage = ({ classes }) => {
 
   return stats ? (
     <React.Fragment>
-      <Dialog
-        open={
-          datasetElementIndex !== null &&
-          datasetsIndex !== null &&
-          Object.keys(dataPoint).length > 0
-        }
-        onClose={unsetDatapoint}
-      >
-        <DialogTitle>{dataPoint.map}</DialogTitle>
-
-        {datasetElementIndex !== null &&
-        datasetsIndex !== null &&
-        Object.keys(dataPoint).length > 0 ? (
-          <React.Fragment>
-            <DialogContent>
-              <DialogContentText>
-                {dataPoint.minute} - {dataPoint.count} players (
-                {dataPoint.vip_count} VIPs)
-              </DialogContentText>
-              <ul>
-                {dataPoint.players.map((el) => (
-                  <li key={el[1]}>
-                    <Typography variant="body2">
-                      <Link href={`#/player/${el[1]}`}> {el[0]}</Link>
-                      {el[1]} {el[2] ? <StarIcon fontSize="inherit" /> : ""}
-                    </Typography>
-                  </li>
-                ))}
-              </ul>
-            </DialogContent>
-            <DialogActions>
-              <Button
-                onClick={setPrevDataPoint}
-                disabled={!hasPrevDataPoint()}
-                color="primary"
-              >
-                Prev
-              </Button>
-              <Button
-                onClick={setNextDataPoint}
-                disabled={!hasNextDataPoint()}
-                color="primary"
-              >
-                Next
-              </Button>
-              <Button onClick={unsetDatapoint} color="primary">
-                Close
-              </Button>
-            </DialogActions>
-          </React.Fragment>
-        ) : (
-          "No data"
-        )}
-      </Dialog>
+      <DetailsDialog
+        datasetElementIndex={datasetElementIndex}
+        datasetsIndex={datasetsIndex}
+        dataPoint={dataPoint}
+        unsetDatapoint={unsetDatapoint}
+        setPrevDataPoint={setPrevDataPoint}
+        hasPrevDataPoint={hasPrevDataPoint}
+        setNextDataPoint={setNextDataPoint}
+        hasNextDataPoint={hasNextDataPoint}
+      />
+      <Grid container>
+        <Grid item xs={12}>
+          {showControls ? (
+            <MetricsParams
+              from={from}
+              setFrom={setFrom}
+              till={till}
+              setTill={setTill}
+              withPlayer={withPlayer}
+              setWithPlayer={setWithPlayer}
+              loadData={loadData}
+              toggleShowControls={toggleShowControls}
+            />
+          ) : (
+            <Link variant="text" size="small" onClick={toggleShowControls}>
+              Show controls
+            </Link>
+          )}
+        </Grid>
+      </Grid>
       <Grid
         container
         spacing={2}
         className={classes.doublePadding}
-        justifyContent="center"
         alignContent="center"
         alignItems="center"
+        style={{ paddingTop: 0 }}
       >
-        <Grid item>
-          <MuiPickersUtilsProvider utils={MomentUtils}>
-            <DateTimePicker
-              label="From time"
-              format="YYYY/MM/DD HH:mm"
-              value={from}
-              onChange={setFrom}
-            />
-          </MuiPickersUtilsProvider>
-        </Grid>
-        <Grid item>
-          <MuiPickersUtilsProvider utils={MomentUtils}>
-            <DateTimePicker
-              label="Till time"
-              format="YYYY/MM/DD HH:mm"
-              value={till}
-              onChange={setTill}
-            />
-          </MuiPickersUtilsProvider>
-        </Grid>
-        <Grid item>
-          <FormControl component="fieldset">
-            <FormGroup aria-label="position" row>
-              <FormControlLabel
-                value="With player list (slower load)"
-                control={
-                  <Switch checked={withPlayer} onChange={setWithPlayer} />
-                }
-                label="With player list (slower load)"
-                labelPlacement="top"
-              />
-            </FormGroup>
-          </FormControl>
-        </Grid>
-        <Grid item>
-          <Button onClick={loadData} variant="contained" color="primary">
-            Load data
-          </Button>
-        </Grid>
         <Grid item xs={12}>
           {dataLoading ? <LinearProgress color="secondary" /> : ""}
         </Grid>
         <Grid item xs={12}>
           <Bar
             options={{
-              
               onClick: (e, el) => {
                 if (el.length > 0) {
                   console.log(el);
@@ -329,7 +434,7 @@ const ServerStatsPage = ({ classes }) => {
                   labels: {
                     filter: function (item, chart) {
                       // Logic to remove a particular legend item goes here
-                      return !item.text.includes('vip');
+                      return !item.text.includes("vip");
                     },
                   },
                 },
@@ -360,7 +465,6 @@ const ServerStatsPage = ({ classes }) => {
                 x: { type: "time", stacked: false },
                 y: { min: 0, max: 100, stacked: false },
               },
-              
             }}
             data={{
               datasets: datasets,
