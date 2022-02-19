@@ -201,7 +201,7 @@ def get_db_server_stats_for_range(
         if last_datapoint and last_datapoint["minute"] < (
             end - datetime.timedelta(minutes=5)
         ):
-            live_stats = get_db_server_stats_for_range(
+            live_stats = get_server_stats_for_range(
                 start=last_datapoint["minute"] + datetime.timedelta(minutes=1),
                 end=end,
                 by_map=by_map,
