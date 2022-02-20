@@ -60,7 +60,7 @@ def get_obj_for_minute(minute, indexed_objs, first_only=True):
     return matches
 
 
-def save_server_stats_for_last_hours(hours=24, skip_last_hours=2):
+def save_server_stats_for_last_hours(hours=24, skip_last_hours=1):
     start = datetime.datetime.now() - datetime.timedelta(hours=hours)
     end = datetime.datetime.now() - datetime.timedelta(hours=skip_last_hours)
     return save_server_stats_for_range(start, end)
