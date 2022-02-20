@@ -31,7 +31,8 @@ then
     exit 0
 fi
   sleep 10
-  python -m rcon.cli record_server_stats
+  python -m rcon.cli record_server_stats_inception &
+  python -m rcon.cli record_server_stats &
   env >> /etc/environment
   supervisord -c /config/supervisord_$SERVER_NUMBER.conf || supervisord -c /config/supervisord.conf
 fi
