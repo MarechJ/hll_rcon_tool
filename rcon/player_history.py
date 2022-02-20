@@ -133,8 +133,7 @@ def remove_accent(s):
     return unicodedata.normalize("NFD", s).encode("ascii", "ignore").decode("utf-8")
 
 
-def get_players_by_time(
-    sess,
+def get_players_by_appearance(
     page=1,
     page_size=500,
     last_seen_from: datetime.datetime = None,
@@ -153,109 +152,76 @@ def get_players_by_time(
     if page_size <= 0:
         raise ValueError("page_size needs to be >= 1")
 
-    sub = (
-        sess.query(
-            PlayerSession.playersteamid_id,
-            func.min(func.coalesce(PlayerSession.start, PlayerSession.created)).label(
-                "first"
-            ),
-            func.max(func.coalesce(PlayerSession.end, PlayerSession.created)).label(
-                "last"
-            ),
-        )
-        .group_by(PlayerSession.playersteamid_id)
-        .subquery()
-    )
-    query = sess.query(PlayerSteamID, sub.c.first, sub.c.last).outerjoin(
-        sub, sub.c.playersteamid_id == PlayerSteamID.id
-    )
-
-    if steam_id_64:
-        query = query.filter(
-            PlayerSteamID.steam_id_64.ilike("%{}%".format(steam_id_64))
-        )
-
-    if player_name:
-        search = PlayerName.name
-        if ignore_accent:
-            search = unaccent(PlayerName.name)
-            player_name = remove_accent(player_name)
-        if not exact_name_match:
-            query = query.join(PlayerSteamID.names).filter(
-                search.ilike("%{}%".format(player_name))
-            )
-        else:
-            query = query.join(PlayerSteamID.names).filter(search == player_name)
-
-    if blacklisted is True:
-        query = (
-            query.join(PlayerSteamID.blacklist)
-            .filter(BlacklistedPlayer.is_blacklisted == True)
-            .options(contains_eager(PlayerSteamID.blacklist))
-        )
-    if is_watched is True:
-        query = (
-            query.join(PlayerSteamID.watchlist)
-            .filter(WatchList.is_watched == True)
-            .options(contains_eager(PlayerSteamID.watchlist))
-        )
-
-    if flags:
-        if not isinstance(flags, list):
-            flags = [flags]
-        query = query.join(PlayerSteamID.flags).filter(PlayerFlag.flag.in_(flags))
-
-    if country:
-        query = query.join(PlayerSteamID.steaminfo).filter(
-            SteamInfo.country == country.upper()
-        )
-
-    if last_seen_from:
-        query = query.filter(sub.c.last >= last_seen_from)
-    if last_seen_till:
-        query = query.filter(sub.c.last <= last_seen_till)
-
-    total = query.count()
-    page = min(max(math.ceil(total / page_size), 1), page)
-    players = (
-        query.order_by(func.coalesce(sub.c.last, PlayerSteamID.created).desc())
-        .limit(page_size)
-        .offset((page - 1) * page_size)
-        .all()
-    )
-
-    return players
-
-def get_players_by_appearance(
-    page=1,
-    page_size=500,
-    last_seen_from: datetime.datetime = None,
-    last_seen_till: datetime.datetime = None,
-    player_name=None,
-    blacklisted=None,
-    steam_id_64=None,
-    is_watched=None,
-    exact_name_match=False,
-    ignore_accent=True,
-    flags=None,
-    country=None,
-):
-
     with enter_session() as sess:
-        players = get_players_by_time(
-            sess,
-            page,
-            page_size,
-            last_seen_from,
-            last_seen_till,
-            player_name,
-            blacklisted,
-            steam_id_64,
-            is_watched,
-            exact_name_match,
-            ignore_accent,
-            flags,
-            country,
+        sub = (
+            sess.query(
+                PlayerSession.playersteamid_id,
+                func.min(
+                    func.coalesce(PlayerSession.start, PlayerSession.created)
+                ).label("first"),
+                func.max(func.coalesce(PlayerSession.end, PlayerSession.created)).label(
+                    "last"
+                ),
+            )
+            .group_by(PlayerSession.playersteamid_id)
+            .subquery()
+        )
+        query = sess.query(PlayerSteamID, sub.c.first, sub.c.last).outerjoin(
+            sub, sub.c.playersteamid_id == PlayerSteamID.id
+        )
+
+        if steam_id_64:
+            query = query.filter(
+                PlayerSteamID.steam_id_64.ilike("%{}%".format(steam_id_64))
+            )
+
+        if player_name:
+            search = PlayerName.name
+            if ignore_accent:
+                search = unaccent(PlayerName.name)
+                player_name = remove_accent(player_name)
+            if not exact_name_match:
+                query = query.join(PlayerSteamID.names).filter(
+                    search.ilike("%{}%".format(player_name))
+                )
+            else:
+                query = query.join(PlayerSteamID.names).filter(search == player_name)
+
+        if blacklisted is True:
+            query = (
+                query.join(PlayerSteamID.blacklist)
+                .filter(BlacklistedPlayer.is_blacklisted == True)
+                .options(contains_eager(PlayerSteamID.blacklist))
+            )
+        if is_watched is True:
+            query = (
+                query.join(PlayerSteamID.watchlist)
+                .filter(WatchList.is_watched == True)
+                .options(contains_eager(PlayerSteamID.watchlist))
+            )
+
+        if flags:
+            if not isinstance(flags, list):
+                flags = [flags]
+            query = query.join(PlayerSteamID.flags).filter(PlayerFlag.flag.in_(flags))
+
+        if country:
+            query = query.join(PlayerSteamID.steaminfo).filter(
+                SteamInfo.country == country.upper()
+            )
+
+        if last_seen_from:
+            query = query.filter(sub.c.last >= last_seen_from)
+        if last_seen_till:
+            query = query.filter(sub.c.last <= last_seen_till)
+
+        total = query.count()
+        page = min(max(math.ceil(total / page_size), 1), page)
+        players = (
+            query.order_by(func.coalesce(sub.c.last, PlayerSteamID.created).desc())
+            .limit(page_size)
+            .offset((page - 1) * page_size)
+            .all()
         )
 
         def sort_name_match(v, v2):

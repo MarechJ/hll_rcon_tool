@@ -1,5 +1,4 @@
 import os
-from rcon.player_history import get_players_by_time
 from rcon.models import (
     Maps,
     enter_session,
