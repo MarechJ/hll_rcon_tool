@@ -1,5 +1,6 @@
 SHELL=/bin/bash
 PATH=/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+LOGGING_FILENAME=cron.log
 # Don't forget to add an empty line at the end of this file or it won't start
 # You can test your schedule there: https://crontab.guru/
 # Restart the "cron" service after adding or modifying things
