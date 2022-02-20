@@ -1,4 +1,4 @@
-db_data*/
+db_data/
 logs/
 servicediscovery/
 redis_data/
@@ -10,3 +10,4 @@ rcongui/node_modules/
 *.tar
 *.gz
 db_data_bu/
+config/
