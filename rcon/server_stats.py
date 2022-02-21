@@ -17,6 +17,7 @@ from rcon.extended_commands import Rcon
 from rcon.settings import SERVER_INFO
 from rcon.cache_utils import ttl_cache
 import logging
+from sqlalchemy.sql.functions import coalesce
 
 logger = logging.getLogger(__name__)
 
@@ -70,6 +71,7 @@ def save_server_stats_since_inception():
     with enter_session() as sess:
         start, = sess.query(func.min(Maps.start)).one()
     save_server_stats_for_range(start, datetime.datetime.now() - datetime.timedelta(hours=2))
+    
     
 def save_server_stats_for_range(start, end):
     start = start.replace(minute=0, second=0, microsecond=0)
@@ -256,7 +258,7 @@ def _get_server_stats(
                     Maps.start.between(start, end),
                     Maps.end.between(start, end),
                     and_(
-                        Maps.start <= start, end <= Maps.end
+                        Maps.start <= start, end <= coalesce(Maps.end, end)
                     ).self_group(),  # Self group adds parenthesis around that AND condidtion
                 ),
             )
@@ -274,7 +276,7 @@ def _get_server_stats(
                     PlayerSession.start.between(start, end),
                     PlayerSession.end.between(start, end),
                     and_(
-                        PlayerSession.start <= start, end <= PlayerSession.end
+                        PlayerSession.start <= start, end <= coalesce(PlayerSession.end, end)
                     ).self_group(),
                 ),
                 PlayerSession.server_number == server_number,
