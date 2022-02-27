@@ -17,6 +17,7 @@ from rcon.player_history import get_player_profile, player_has_flag, add_player_
 from sqlalchemy.exc import IntegrityError, InvalidRequestError
 from rcon.models import LogLine, enter_session, PlayerSteamID, PlayerName
 import unicodedata
+from rcon.extended_commands import LOG_ACTIONS
 from rcon.recorded_commands import RecordedRcon
 from rcon.config import get_config
 from rcon.discord import send_to_discord_audit
@@ -32,6 +33,10 @@ HOOKS = {
     "CHAT": [],
     "KILL": [],
     "CAMERA": [],
+    "TK": [],
+    "MATCH": [],
+    "MATCH START": [],
+    "MATCH ENDED": []
 }
 
 
@@ -315,7 +320,7 @@ def get_recent_logs(
     logs = []
     all_players = set()
     actions = set(
-        ["CHAT[Allies]", "CHAT[Axis]", "CHAT", "VOTE STARTED", "VOTE COMPLETED"]
+        LOG_ACTIONS
     )
     if player_search and not isinstance(player_search, list):
         player_search = [player_search]

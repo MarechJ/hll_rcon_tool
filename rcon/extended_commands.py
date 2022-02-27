@@ -11,8 +11,29 @@ from rcon.steam_utils import get_player_country_code, get_player_has_bans
 STEAMID = "steam_id_64"
 NAME = "name"
 ROLE = "role"
-
-
+# ["CHAT[Allies]", "CHAT[Axis]", "CHAT", "VOTE STARTED", "VOTE COMPLETED"]
+LOG_ACTIONS = [
+    "DISCONNECTED",
+    "CHAT[Allies]",
+    "CHAT[Axis]",
+    "CHAT[Allies][Unit]",
+    "KILL",
+    "CONNECTED",
+    "CHAT[Allies][Team]",
+    "CHAT[Axis][Team]",
+    "CHAT[Axis][Unit]",
+    "CHAT",
+    "VOTE COMPLETED",
+    "VOTE STARTED",
+    "VOTE",
+    "TEAMSWITCH",
+    "TK",
+    "TK KICKED",
+    "TK BANNED FOR 2 HOURS",
+    "MATCH",
+    "MATCH START",
+    "MATCH ENDED",
+]
 logger = logging.getLogger(__name__)
 
 
@@ -72,7 +93,7 @@ class Rcon(ServerCtl):
             try:
                 raw = super().get_player_info(player)
                 name, steam_id_64 = raw.split("\n")
-            except CommandFailedError:
+            except (CommandFailedError, Exception):
                 name = player
                 steam_id_64 = self.get_playerids(as_dict=True).get(name)
             if not steam_id_64:
@@ -717,13 +738,7 @@ class Rcon(ServerCtl):
 
     @staticmethod
     def parse_logs(raw, filter_action=None, filter_player=None):
-        synthetic_actions = [
-            "CHAT[Allies]",
-            "CHAT[Axis]",
-            "CHAT",
-            "VOTE STARTED",
-            "VOTE COMPLETED",
-        ]
+        synthetic_actions = LOG_ACTIONS
         now = datetime.now()
         res = []
         actions = set()
@@ -783,12 +798,35 @@ class Rcon(ServerCtl):
                 elif rest.upper().startswith("PLAYER"):
                     action = "CAMERA"
                     _, content = rest.split(" ", 1)
-                    matches = re.match("\[(.*)\s{1}\((\d+)\)\]", content)
+                    matches = re.match(r"\[(.*)\s{1}\((\d+)\)\]", content)
                     if matches and len(matches.groups()) == 2:
                         player, steam_id_64_1 = matches.groups()
                         _, sub_content = content.rsplit("]", 1)
                     else:
                         logger.error("Unable to parse line: %s", line)
+                elif rest.upper().startswith("TEAMSWITCH"):
+                    action = "TEAMSWITCH"
+                    matches = re.match(r"TEAMSWITCH\s(.*)\s\(((.*)\s>\s(.*))\)", rest)
+                    if matches and len(matches.groups()) == 4:
+                        player, sub_content, *_ = matches.groups()
+                    else:
+                        logger.error("Unable to parse line: %s", line)
+                elif rest.upper().startswith("KICK"):
+                    matches = re.match(
+                        r"KICK:\s\[(.*)\]\s(has been kicked. \[((KICKED)|(BANNED FOR 2 HOURS)) FOR TEAM KILLING!\])",
+                        rest,
+                    )
+                    if matches and len(matches.groups()) == 5:
+                        player, sub_content, type_, *_ = matches.groups()
+                        action = f"TK {type_}"
+                    else:
+                        logger.error("Unable to parse line: %s", line)
+                elif rest.upper().startswith("MATCH START"):
+                    action = "MATCH START"
+                    _, sub_content = rest.split("MATCH START ")
+                elif rest.upper().startswith("MATCH ENDED"):
+                    action = "MATCH ENDED"
+                    _, sub_content = rest.split("MATCH ENDED ")
                 else:
                     logger.error("Unkown type line: '%s'", line)
                     continue
