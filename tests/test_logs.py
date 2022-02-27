@@ -13,6 +13,12 @@ RAW_LOGS = """
 [29:59 min (1606340690)] CHAT[Unit][bananacocoo : toto(Allies/76561198003251789)]: Blah
 [29:59 min (1606340690)] CHAT[Unit][[bananacocoo(Axis/76561198003251789)]: Blah
 [29:59 min (1606340690)] CHAT[Team][]bananacocoo(Axis/76561198003251789)]: Blah
+[8.23 sec (1645012372)] TEAMSWITCH T17 Scott (Axis > None)
+[6.14 sec (1645012374)] TEAMSWITCH T17 Scott (None > Allies)
+[41.9 sec (1645012996)] KICK: [T17 Scott] has been kicked. [KICKED FOR TEAM KILLING!]
+[1:03 min (1645012776)] KICK: [T17 Scott] has been kicked. [BANNED FOR 2 HOURS FOR TEAM KILLING!]
+[128 sec (1645012281)] MATCH START UTAH BEACH OFFENSIVE
+[6.06 sec (16250121723)] MATCH ENDED `UTAH BEACH OFFENSIVE` ALLIED (1 - 4) AXIS
 """
 RAW_VOTE = """
 [15:49 min (1606998428)] VOTE Player [[fr]ELsass_blitz] Started a vote of type (PVR_Kick_Abuse) against [拢儿]. VoteID: [1]
@@ -28,6 +34,79 @@ RAW_VOTE = """
 [5:11 min (1606999065)] VOTE Vote [3] completed. Result: PVR_Passed
 [5:11 min (1606999065)] VOTE Vote Kick {Jesse Pingman} successfully passed. [For: 2/0 - Against: 0]
 """
+
+@mock.patch(
+    "rcon.extended_commands.ServerCtl._connect",
+    side_effect=lambda *args: print("Connecting"),
+)
+def test_match_log(*mocks):
+    res = Rcon.parse_logs(
+        """
+        [128 sec (1645012281)] MATCH START UTAH BEACH OFFENSIVE
+        [6.06 sec (16250121723)] MATCH ENDED `UTAH BEACH OFFENSIVE` ALLIED (1 - 4) AXIS
+        """
+    )
+
+    assert len(res["logs"]) == 2
+    assert res["logs"][0]["action"] == "MATCH ENDED"
+    assert res["logs"][0]["timestamp_ms"] == 16250121723000
+    assert res["logs"][0]["player"] == None
+    assert res["logs"][0]["player2"] == None
+    assert res['logs'][0]['sub_content'] == "`UTAH BEACH OFFENSIVE` ALLIED (1 - 4) AXIS"
+    assert res["logs"][0]["steam_id_64_1"] == None
+    assert res["logs"][0]["steam_id_64_2"] == None
+
+    assert res["logs"][1]["action"] == "MATCH START"
+    assert res['logs'][1]['sub_content'] == "UTAH BEACH OFFENSIVE"
+
+@mock.patch(
+    "rcon.extended_commands.ServerCtl._connect",
+    side_effect=lambda *args: print("Connecting"),
+)
+def test_teamswitch_log(*mocks):
+    res = Rcon.parse_logs(
+        """
+        [8.23 sec (1645012372)] TEAMSWITCH T17 Scott (Axis > None)
+        [6.14 sec (1645012374)] TEAMSWITCH T17 Scott (None > Allies)
+        """
+    )
+
+    assert len(res["logs"]) == 2
+    assert res["logs"][0]["action"] == "TEAMSWITCH"
+    assert res["logs"][0]["timestamp_ms"] == 1645012374000
+    assert res["logs"][0]["player"] == "T17 Scott"
+    assert res["logs"][0]["player2"] == None
+    assert res['logs'][0]['sub_content'] == "None > Allies"
+    assert res["logs"][0]["steam_id_64_1"] == None
+    assert res["logs"][0]["steam_id_64_2"] == None
+
+    assert res['logs'][1]['sub_content'] == "Axis > None"
+
+@mock.patch(
+    "rcon.extended_commands.ServerCtl._connect",
+    side_effect=lambda *args: print("Connecting"),
+)
+def test_teamkill_kick_log(*mocks):
+    res = Rcon.parse_logs(
+        """
+        [1:03 min (1645012776)] KICK: [T17 Scott] has been kicked. [BANNED FOR 2 HOURS FOR TEAM KILLING!]
+        [41.9 sec (1645012996)] KICK: [T17 Scott] has been kicked. [KICKED FOR TEAM KILLING!]
+        """
+    )
+
+    assert len(res["logs"]) == 2
+    assert res["logs"][0]["action"] == "TK KICKED"
+    assert res["logs"][0]["timestamp_ms"] == 1645012996000
+    assert res["logs"][0]["player"] == "T17 Scott"
+    assert res["logs"][0]["player2"] == None
+    assert res['logs'][0]['sub_content'] == "has been kicked. [KICKED FOR TEAM KILLING!]"
+    assert res["logs"][0]["steam_id_64_1"] == None
+    assert res["logs"][0]["steam_id_64_2"] == None
+
+    assert res['logs'][1]['sub_content'] == "has been kicked. [BANNED FOR 2 HOURS FOR TEAM KILLING!]"
+    assert res["logs"][1]["action"] == "TK BANNED FOR 2 HOURS"
+
+
 
 @mock.patch(
     "rcon.extended_commands.ServerCtl._connect",
@@ -170,6 +249,13 @@ def test_log_parsing(*mocks):
                 "VOTE COMPLETED",
                 "VOTE STARTED",
                 "VOTE",
+                "TEAMSWITCH",
+                "TK KICKED",
+                "TK BANNED FOR 2 HOURS",
+                "TK",
+                "MATCH START",
+                "MATCH ENDED",
+                "MATCH"
             ]
         )
         assert set(res["players"]) == set(
@@ -196,6 +282,7 @@ def test_log_parsing(*mocks):
                 "Galiat",
                 "[TGF] AstroHeap",
                 "Jesse Pingman",
+                "T17 Scott"
             ]
         )
         assert set(l["timestamp_ms"] for l in res["logs"]) == {
@@ -210,6 +297,12 @@ def test_log_parsing(*mocks):
             1606999058000,
             1606998434000,
             1606998575000,
+            1645012372000,
+            1645012374000,
+            1645012996000,
+            1645012776000,
+            1645012281000,
+            16250121723000,
         }
 
         res = Rcon({}).get_structured_logs(30, filter_action="CHAT")
