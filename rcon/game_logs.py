@@ -32,6 +32,10 @@ HOOKS = {
     "CHAT": [],
     "KILL": [],
     "CAMERA": [],
+    "MATCH STARTED": [],
+    "MATCH ENDED": [],
+    "KICK": [],
+    "TEAMSWITCH": [],
 }
 
 
@@ -69,6 +73,22 @@ def on_connected(func):
 
 def on_disconnected(func):
     HOOKS["DISCONNECTED"].append(func)
+    return func
+
+def on_match_started(func):
+    HOOKS["MATCH STARTED"].append(func)
+    return func
+
+def on_match_ended(func):
+    HOOKS["MATCH ENDED"].append(func)
+    return func
+
+def on_teamkill_kick(func):
+    HOOKS["KICK"].append(func)
+    return func
+
+def on_teamswitch(func):
+    HOOKS["TEAMSWITCH"].append(func)
     return func
 
 

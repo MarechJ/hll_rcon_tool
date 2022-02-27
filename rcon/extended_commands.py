@@ -36,7 +36,10 @@ class Rcon(ServerCtl):
     player_info_pattern = r"(.*)\(((Allies)|(Axis))/(\d+)\)"
     player_info_regexp = re.compile(r"(.*)\(((Allies)|(Axis))/(\d+)\)")
     MAX_SERV_NAME_LEN = 1024  # I totally made up that number. Unable to test
-    log_time_regexp = re.compile(".*\((\d+)\).*")
+    log_time_regexp = re.compile(r".*\((\d+)\).*")
+    match_end_regexp = re.compile(r"MATCH ENDED `(.*)` ALLIED \((\d+) - (\d+)\) AXIS")
+    player_kick_regexp = re.compile(r"KICK: \[(.*)\] has been kicked: \[([\w\W]*)\]")
+    teamswitch_regexp = re.compile(r"TEAMSWITCH ((.*) \((.*) > (.*)\))")
 
     playerinfo_cmd_regexp = re.compile(r"Name: (.*)\nsteamID64: (\d{17})\nTeam: (Allies|Axis|None)\nRole: (.*)\nUnit: (.*)\nLoadout: (.*)\nKills: (\d+) - Deaths: (\d+)\nScore: C (\d+), O (\d+), D (\d+), S (\d+)\nLevel: (\d+)")
 
@@ -84,9 +87,10 @@ class Rcon(ServerCtl):
         Level: 34
         """
         
-        data = Rcon.playerinfo_cmd_regexp.search(raw)
-        if not data:
+        match = Rcon.playerinfo_cmd_regexp.search(raw)
+        if not match:
             raise CommandFailedError("Regex string doesn't match raw response")
+        data = match.groups()
         
         name, steam_id = data[0:1]
         if name != player:
@@ -824,6 +828,36 @@ class Rcon(ServerCtl):
                         _, sub_content = content.rsplit("]", 1)
                     else:
                         logger.error("Unable to parse line: %s", line)
+                elif rest.startswith("MATCH START"):
+                    # MATCH START UTAH BEACH OFFENSIVE
+                    action = "MATCH START"
+                    content = rest.split("MATCH START ", 1)[-1]
+                elif rest.startswith("MATCH ENDED"):
+                    # MATCH ENDED `UTAH BEACH OFFENSIVE` ALLIED (1 - 4) AXIS
+                    action = "MATCH ENDED"
+                    match = Rcon.match_end_regexp.match(rest)
+                    groups = match.groups()
+                    map_name = groups[0]
+                    allies_score = int(groups[1])
+                    axis_score = int(groups[2])
+                    content = f"{map_name}: Allies ({allies_score} - {axis_score}) Axis"
+                elif rest.startswith("KICK"):
+                    # KICK: [T17 Scott] has been kicked: [BANNED FOR 2 HOURS FOR TEAMKILLING!]
+                    action = "KICK"
+                    match = Rcon.player_kick_regexp.match(rest)
+                    groups = match.groups()
+                    player = groups[0]
+                    reason = groups[1]
+                    content = player + ": " + reason
+                elif rest.startswith("TEAMSWITCH"):
+                    # TEAMSWITCH T17 Scott (Axis > None)
+                    action = "TEAMSWITCH"
+                    match = Rcon.teamswitch_regexp.match(rest)
+                    groups = match.groups()
+                    content = groups[0]
+                    player = groups[1]
+                    from_team = groups[2] if groups[2] != "None" else None
+                    to_team = groups[3] if groups[3] != "None" else None
                 else:
                     logger.error("Unkown type line: '%s'", line)
                     continue
