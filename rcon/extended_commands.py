@@ -38,6 +38,8 @@ class Rcon(ServerCtl):
     MAX_SERV_NAME_LEN = 1024  # I totally made up that number. Unable to test
     log_time_regexp = re.compile(".*\((\d+)\).*")
 
+    playerinfo_cmd_regexp = re.compile(r"Name: (.*)\nsteamID64: (\d{17})\nTeam: (Allies|Axis|None)\nRole: (.*)\nUnit: (.*)\nLoadout: (.*)\nKills: (\d+) - Deaths: (\d+)\nScore: C (\d+), O (\d+), D (\d+), S (\d+)\nLevel: (\d+)")
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -66,42 +68,75 @@ class Rcon(ServerCtl):
 
         return vip_count
 
-    @ttl_cache(ttl=60 * 60 * 24, cache_falsy=False)
+    @ttl_cache(ttl=60, cache_falsy=False)
     def get_player_info(self, player):
-        try:
-            try:
-                raw = super().get_player_info(player)
-                name, steam_id_64 = raw.split("\n")
-            except CommandFailedError:
-                name = player
-                steam_id_64 = self.get_playerids(as_dict=True).get(name)
-            if not steam_id_64:
-                return {}
+        raw = super().get_player_info(player)
 
-            country = get_player_country_code(steam_id_64)
-            steam_bans = get_player_has_bans(steam_id_64)
-
-        except (CommandFailedError, ValueError):
-            # Making that debug instead of exception as it's way to spammy
-            logger.exception("Can't get player info for %s", player)
-            # logger.exception("Can't get player info for %s", player)
-            return {}
-        name = name.split(": ", 1)[-1]
-        steam_id = steam_id_64.split(": ", 1)[-1]
+        """
+        Name: T17 Scott
+        steamID64: 01234567890123456
+        Team: Allies
+        Role: Officer
+        Unit: 0 - Able
+        Loadout: NCO
+        Kills: 0 - Deaths: 0
+        Score: C 50, O 0, D 40, S 10
+        Level: 34
+        """
+        
+        data = Rcon.playerinfo_cmd_regexp.search(raw)
+        if not data:
+            raise CommandFailedError("Regex string doesn't match raw response")
+        
+        name, steam_id = data[0:1]
         if name != player:
-            logger.error(
+            raise CommandFailedError(
                 "get_player_info('%s') returned for a different name: %s %s",
                 player,
                 name,
                 steam_id,
             )
-            return {}
-        return {
+
+        steam_data = self.get_player_steam_info(steam_id)
+
+        team, role, unit, loadout, kills, deaths, combat_score, offense_score, defense_score, support_score, level = (val if val != "None" else None for val in data[2:9])
+        if unit:
+            unit_id, unit_name = unit.split(' - ', 1)
+        else:
+            unit_id = None
+            unit_name = None
+
+        res = {
             NAME: name,
             STEAMID: steam_id,
-            "country": country,
-            "steam_bans": steam_bans,
+            "team": team,
+            "role": role,
+            "unit_id": int(unit_id),
+            "unit_name": unit_name,
+            "loadout": loadout,
+            "kills": int(kills),
+            "deaths": int(deaths),
+            "combat_score": int(combat_score),
+            "offense_score": int(offense_score),
+            "defense_score": int(defense_score),
+            "support_score": int(support_score),
+            "level": int(level)
         }
+        res.update(steam_data)
+        return res
+
+    @ttl_cache(ttl=60 * 60 * 24)
+    def get_player_steam_info(self, steam_id_64):
+        try:
+            country = get_player_country_code(steam_id_64)
+            steam_bans = get_player_has_bans(steam_id_64)
+        except ValueError:
+            raise CommandFailedError("No Steam data received for %s" % steam_id_64)
+
+        return dict(
+            country=country,
+            steam_bans=steam_bans,
+        )
 
     @ttl_cache(ttl=60 * 60 * 24)
     def get_admin_ids(self):
