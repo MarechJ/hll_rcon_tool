@@ -6,3 +6,4 @@ redis_data/
 *.log
 *.pyc
 events/
+config/
