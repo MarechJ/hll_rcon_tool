@@ -92,7 +92,7 @@ class Rcon(ServerCtl):
         try:
             try:
                 raw = super().get_player_info(player)
-                name, steam_id_64 = raw.split("\n")
+                name, steam_id_64, *rest = raw.split("\n")
             except (CommandFailedError, Exception):
                 name = player
                 steam_id_64 = self.get_playerids(as_dict=True).get(name)
