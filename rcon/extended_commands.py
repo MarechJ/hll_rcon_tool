@@ -71,8 +71,58 @@ class Rcon(ServerCtl):
 
         return vip_count
 
-    @ttl_cache(ttl=60, cache_falsy=False)
+    @ttl_cache(ttl=60 * 60 * 24, cache_falsy=False)
     def get_player_info(self, player):
+        try:
+            try:
+                raw = super().get_player_info(player)
+                name, steam_id_64 = raw.split("\n")[:2]
+            except CommandFailedError:
+                name = player
+                steam_id_64 = self.get_playerids(as_dict=True).get(name)
+            if not steam_id_64:
+                return {}
+
+            steam_data = self.get_player_steam_info(steam_id_64)
+
+        except (CommandFailedError, ValueError):
+            # Making that debug instead of exception as it's way to spammy
+            logger.exception("Can't get player info for %s", player)
+            # logger.exception("Can't get player info for %s", player)
+            return {}
+        name = name.split(": ", 1)[-1]
+        steam_id = steam_id_64.split(": ", 1)[-1]
+        if name != player:
+            logger.error(
+                "get_player_info('%s') returned for a different name: %s %s",
+                player,
+                name,
+                steam_id,
+            )
+            return {}
+        res = {
+            NAME: name,
+            STEAMID: steam_id,
+        }
+        res.update(steam_data)
+        return res
+
+
+    @ttl_cache(ttl=60 * 60 * 24)
+    def get_player_steam_info(self, steam_id_64):
+        try:
+            country = get_player_country_code(steam_id_64)
+            steam_bans = get_player_has_bans(steam_id_64)
+        except ValueError:
+            raise CommandFailedError("No Steam data received for %s" % steam_id_64)
+
+        return dict(
+            country=country,
+            steam_bans=steam_bans,
+        )
+    
+    @ttl_cache(ttl=60, cache_falsy=False)
+    def get_detailed_player_info(self, player):
         raw = super().get_player_info(player)
 
         """
@@ -128,19 +178,6 @@ class Rcon(ServerCtl):
         }
         res.update(steam_data)
         return res
-
-    @ttl_cache(ttl=60 * 60 * 24)
-    def get_player_steam_info(self, steam_id_64):
-        try:
-            country = get_player_country_code(steam_id_64)
-            steam_bans = get_player_has_bans(steam_id_64)
-        except ValueError:
-            raise CommandFailedError("No Steam data received for %s" % steam_id_64)
-
-        return dict(
-            country=country,
-            steam_bans=steam_bans,
-        )
 
     @ttl_cache(ttl=60 * 60 * 24)
     def get_admin_ids(self):
