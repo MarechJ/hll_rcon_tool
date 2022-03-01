@@ -220,20 +220,23 @@ const PlayerItem = ({
           </React.Fragment>
         }
       />
-      <ListItemSecondaryAction>
-        <PlayerActions
-          size="small"
-          handleAction={handleAction}
-          onFlag={onFlag}
-          displayCount={nbButtons}
-          isWatched={
-            profile.get("watchlist")
-              ? profile.get("watchlist").get("is_watched", false)
-              : false
-          }
-          penaltyCount={profile.get("penalty_count", Map())}
-        />
-      </ListItemSecondaryAction>
+      {handleAction ?
+        <ListItemSecondaryAction>
+
+          <PlayerActions
+            size="small"
+            handleAction={handleAction}
+            onFlag={onFlag}
+            displayCount={nbButtons}
+            isWatched={
+              profile.get("watchlist")
+                ? profile.get("watchlist").get("is_watched", false)
+                : false
+            }
+            penaltyCount={profile.get("penalty_count", Map())}
+          />
+        </ListItemSecondaryAction>
+        : ""}
     </ListItem>
   );
 };
@@ -354,4 +357,6 @@ const CompactList = ({
   );
 };
 
+
 export default withWidth()(pure(CompactList));
+export { PlayerItem, CompactList };
