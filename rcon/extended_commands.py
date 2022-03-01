@@ -89,6 +89,14 @@ class Rcon(ServerCtl):
 
         return vip_count
 
+    def get_players_roles(self):
+        l = []
+        for player in super().get_players():
+            info = super().get_player_info(player)
+            l.append(" ".join(info.split('\n')))
+        
+        return l
+
     @ttl_cache(ttl=60 * 60 * 24, cache_falsy=False)
     def get_player_info(self, player):
         try:

@@ -43,9 +43,6 @@ const useStyles = makeStyles((theme) => ({
     width: theme.spacing(3),
     height: theme.spacing(3),
   },
-  alignRight: {
-    textAlign: "right"
-  }
 }));
 
 
@@ -135,6 +132,10 @@ const samplePLayer = fromJS({
   "is_vip": false
 })
 
+const PlayerInfo = ({ classes: globalClasses }) => {
+
+}
+
 const GameView = ({ classes: globalClasses }) => {
   const classes = useStyles();
   const [open, setOpen] = React.useState(true);
@@ -163,7 +164,6 @@ const GameView = ({ classes: globalClasses }) => {
             </Avatar>
           </ListItemIcon>
           <ListItemText primary="Able" />
-          <ListItemText className={classes.alignRight} primary="3/6" />
           <ListItemSecondaryAction>
             <Checkbox
               edge="end"
@@ -174,6 +174,11 @@ const GameView = ({ classes: globalClasses }) => {
         <Collapse in={open} timeout="auto" unmountOnExit>
           <List component="div" disablePadding>
             <PlayerItem 
+              classes={globalClasses} 
+              player={samplePLayer} 
+              onDeleteFlag={() => (null)}
+            />
+             <PlayerItem 
               classes={globalClasses} 
               player={samplePLayer} 
               onDeleteFlag={() => (null)}

@@ -192,6 +192,15 @@ const useStyles = makeStyles(theme => ({
   selectEmpty: {
     marginTop: theme.spacing(2),
   },
+  alignRight: {
+    textAlign: "right"
+  },
+  paperBackground: {
+    backgroundColor: theme.palette.background.paper,
+  },
+  darkBackground: {
+    backgroundColor: "grey"
+  }
 }));
 
 export default useStyles;

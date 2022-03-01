@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Fragment } from "react";
 import List from "@material-ui/core/List";
 import ListItem from "@material-ui/core/ListItem";
 import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
@@ -25,6 +25,7 @@ import Typography from "@material-ui/core/Typography";
 import { makeStyles } from "@material-ui/core/styles";
 import { Link as RouterLink } from "react-router-dom";
 import { pure } from 'recompose';
+import { Avatar, Badge, Checkbox, Chip, Grid, ListItemAvatar } from "@material-ui/core";
 
 const zeroPad = (num, places) => String(num).padStart(places, "0");
 
@@ -166,6 +167,7 @@ const PlayerItem = ({
   nbButtons,
   onFlag,
   onDeleteFlag,
+  playerExtraInfo,
 }) => {
   const profile = player.get("profile") ? player.get("profile") : new Map();
   const name = player.get("name");
@@ -173,6 +175,15 @@ const PlayerItem = ({
 
   return (
     <ListItem key={name} dense>
+      <ListItemAvatar>
+        <Badge badgeContent={132} max={999} color="primary" anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'left',
+        }}>
+          <Avatar variant="square" className={classes.darkBackground} src={`icons/roles/officer.png`}></Avatar>
+        </Badge>
+      </ListItemAvatar>
+
       <ListItemText
         id={`checkbox-list-label-${steamID64}`}
         primary={
@@ -220,6 +231,40 @@ const PlayerItem = ({
           </React.Fragment>
         }
       />
+      {/*  "KD 1/2, C 21, O 0, D 180, S 25" */}
+      <ListItemText className={classes.alignRight}
+        primary={
+          <Grid container spacing={1}>
+            <Grid item>
+              <Chip size="small" variant="outlined" avatar={<Avatar className={classes.darkBackground} alt="Combat" src="icons/roles/score_combat.png" />} label="1200" />
+            </Grid>
+            <Grid item>
+              <Chip size="small" variant="outlined" avatar={<Avatar className={classes.darkBackground} alt="Combat" src="icons/roles/score_offensive.png" />} label="1200" />
+            </Grid>
+            <Grid item>
+              <Chip size="small" variant="outlined" avatar={<Avatar className={classes.darkBackground} alt="Combat" src="icons/roles/score_defensive.png" />} label="1200" />
+            </Grid>
+            <Grid item>
+              <Chip size="small" variant="outlined" avatar={<Avatar className={classes.darkBackground} alt="Combat" src="icons/roles/score_support.png" />} label="1200" />
+            </Grid>
+          </Grid>} secondary={
+            <Grid container spacing={1}>
+              <Grid item>
+                <Chip size="small" variant="outlined"  label="K: 13" />
+              </Grid>
+              <Grid item>
+                <Chip size="small" variant="outlined"  label="D: 5" />
+              </Grid>
+              <Grid item>
+                <Chip size="small" variant="outlined"  label="KD: 1.5" />
+              </Grid>
+              <Grid item>
+                <Chip size="small" label="grenadier" />
+              </Grid>
+
+            </Grid>
+          } />
+
       {handleAction ?
         <ListItemSecondaryAction>
 

@@ -19,6 +19,13 @@ RAW_LOGS = """
 [1:03 min (1645012776)] KICK: [T17 Scott] has been kicked. [BANNED FOR 2 HOURS FOR TEAM KILLING!]
 [128 sec (1645012281)] MATCH START UTAH BEACH OFFENSIVE
 [6.06 sec (16250121723)] MATCH ENDED `UTAH BEACH OFFENSIVE` ALLIED (1 - 4) AXIS
+[2:00 min (1646137918)] BAN: [(WTH) Abusify] has been banned. [BANNED FOR 2 HOURS BY THE ADMINISTRATOR!
+
+Test message]
+[2:00 min (1646137918)] KICK: [(WTH) Abusify] has been kicked. [BANNED FOR 2 HOURS BY THE ADMINISTRATOR!
+
+Test message]
+[2:00 min (1646137918)] DISCONNECTED (WTH) Abusify
 """
 RAW_VOTE = """
 [15:49 min (1606998428)] VOTE Player [[fr]ELsass_blitz] Started a vote of type (PVR_Kick_Abuse) against [拢儿]. VoteID: [1]
@@ -282,7 +289,8 @@ def test_log_parsing(*mocks):
                 "Galiat",
                 "[TGF] AstroHeap",
                 "Jesse Pingman",
-                "T17 Scott"
+                "T17 Scott",
+                '(WTH) Abusify'
             ]
         )
         assert set(l["timestamp_ms"] for l in res["logs"]) == {
@@ -303,6 +311,8 @@ def test_log_parsing(*mocks):
             1645012776000,
             1645012281000,
             16250121723000,
+            1646137918000,
+            1646137918000,
         }
 
         res = Rcon({}).get_structured_logs(30, filter_action="CHAT")
