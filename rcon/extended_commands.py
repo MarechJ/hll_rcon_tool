@@ -883,7 +883,7 @@ class Rcon(ServerCtl):
                         player, sub_content, *_ = matches.groups()
                     else:
                         logger.error("Unable to parse line: %s", line)
-                elif rest.upper().startswith("KICK"):
+                elif rest.upper().startswith("KICK") and "FOR TEAM KILLING" in rest:
                     matches = re.match(
                         r"KICK:\s\[(.*)\]\s(has been kicked. \[((KICKED)|(BANNED FOR 2 HOURS)) FOR TEAM KILLING!\])",
                         rest,
