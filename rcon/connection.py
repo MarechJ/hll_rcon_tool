@@ -4,13 +4,12 @@ import time
 import logging
 
 MSGLEN = 8196
-TIMEOUT_SEC = 10
+TIMEOUT_SEC = 20
 
 logger = logging.getLogger(__name__)
 
 class HLLAuthError(Exception):
     pass
-
 
 class HLLConnection:
     """demonstration class only
@@ -22,7 +21,7 @@ class HLLConnection:
         self.sock = socket.socket(
             socket.AF_INET, socket.SOCK_STREAM
         )
-        self.sock.settimeout(10)
+        self.sock.settimeout(TIMEOUT_SEC)
 
     def connect(self, host, port, password: str):
         self.sock.connect((host, port))

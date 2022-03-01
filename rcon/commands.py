@@ -56,9 +56,13 @@ def _auto_retry(method):
         except (HLLServerError, UnicodeDecodeError):
             if not self.auto_retry:
                 raise
+            time.sleep(5)
             logger.exception("Auto retrying %s %s %s", method.__name__, args, kwargs)
-            self._reconnect()
-            return method(self, *args, **kwargs)
+            
+            try: 
+                return method(self, *args, **kwargs)
+            except (HLLServerError, UnicodeDecodeError):
+                self._reconnect()
             # TODO loop and counter implement counter
 
     return wrap
@@ -89,8 +93,9 @@ class ServerCtl:
 
     def _reconnect(self):
         logger.warning("reconnecting")
+
         self.conn.close()
-        time.sleep(1)
+        time.sleep(2)
         self._connect()
 
     @_auto_retry
@@ -220,7 +225,7 @@ class ServerCtl:
         return self._get("playerids", True, can_fail=False)
 
     def get_player_info(self, player):
-        return self._request(f"playerinfo {player}")
+        return self._request(f"playerinfo {player}", can_fail=False)
 
     def get_admin_ids(self):
         return self._get("adminids", True, can_fail=False)

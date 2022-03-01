@@ -1,9 +1,12 @@
+from cmath import inf
 import random
 import os
 import re
 from datetime import datetime, timedelta
 import logging
 import socket
+from time import sleep
+from rcon.player_history import get_profiles
 from rcon.cache_utils import ttl_cache, invalidates, get_redis_client
 from rcon.commands import HLLServerError, ServerCtl, CommandFailedError
 from rcon.steam_utils import get_player_country_code, get_player_has_bans
@@ -87,13 +90,54 @@ class Rcon(ServerCtl):
 
         return vip_count
 
-    def get_players_roles(self):
-        l = []
+    def get_team_view(self):
+        teams = {}
+        players_by_id = {}
         for player in super().get_players():
-            info = super().get_player_info(player)
-            l.append(" ".join(info.split('\n')))
-        
-        return l
+            try:
+                info = self.get_detailed_player_info(player)
+            except (HLLServerError, CommandFailedError):
+                logger.exception("Unable to get %s info", player)
+                try:
+                    steam_id_64 = self.get_playerids(as_dict=True).get(player)
+                    info = self._get_default_info_dict(player)
+                    info[STEAMID] = steam_id_64
+                except Exception:
+                    logger.exception("Unable to get %s info with playerids either", player)
+                    continue
+
+            players_by_id[info.get(STEAMID)] = info
+            
+        logger.debug("Getting DB profiles")
+        steam_profiles = get_profiles(list(players_by_id.keys()))
+        logger.debug("Getting VIP list")
+        vips = set(v[STEAMID] for v in self.get_vip_ids())
+        for profile in steam_profiles:
+            steam_id_64 = profile[STEAMID]
+            player = players_by_id.get(steam_id_64)
+            if not player:
+                logger.error("Can't get player for profile %s", profile)
+                continue
+            player["profile"] = profile
+            player["is_vip"] = steam_id_64 in vips
+            player["country"] = profile.get("steaminfo", {}).get("country", "private")
+            # TODO refresh ban info and store into DB to avoid IOs here
+            player["steam_bans"] = get_player_has_bans(steam_id_64)
+            teams.setdefault(player.get("team"), {}).setdefault(player.get("unit_name"), {}).setdefault("players", []).append(player)    
+
+        for team, squads in teams.items():
+            if team is None:
+                continue
+            for squad_name, squad in squads.items():
+                try:
+                    squad["combat"] = sum(p["combat"] for p in squad['players'])
+                    squad["offense"] = sum(p["offense"] for p in squad['players'])
+                    squad["defense"] = sum(p["defense"] for p in squad['players'])
+                    squad["support"] = sum(p["support"] for p in squad['players'])
+                except Exception as e:
+                    logger.exception()
+
+        return teams
 
     @ttl_cache(ttl=60 * 60 * 24, cache_falsy=False)
     def get_player_info(self, player):
@@ -132,7 +176,25 @@ class Rcon(ServerCtl):
             steam_bans: steam_bans,
         }
     
-    @ttl_cache(ttl=60, cache_falsy=False)
+    def _get_default_info_dict(self, player):
+        return dict(
+            name=player,
+            steam_id_64=None,
+            unit_id=None,
+            unit_name=None,
+            loadout=None,
+            team=None,
+            role=None,
+            kills=0,
+            deaths=0,
+            combat=0,
+            offense=0,
+            defense=0,
+            support=0,
+            level=0,
+        )
+
+    @ttl_cache(ttl=10, cache_falsy=False)
     def get_detailed_player_info(self, player):
         raw = super().get_player_info(player)
 
@@ -149,65 +211,42 @@ class Rcon(ServerCtl):
 
         """
 
-        data = dict(
-            name=player,
-            unit_id=None,
-            unit_name=None,
-            loadout=None,
-        )
-  
+        data = self._get_default_info_dict(player)
+        raw_data = {}
+
         for line in raw.split("\n"):
+            if not line:
+                continue
             if ": " not in line:
+                logger.warning("Invalid info line: %s", line)
                 continue
 
             key, val = line.split(": ", 1)
-            key = key.lower()
+            raw_data[key.lower()] = val
 
-            if key == "steamid64":
-                key = "steam_id_64"
-            
-            elif key == "team":
-                if val == "None":
-                    val = None
+        # Remap keys and parse values
+        data[STEAMID] = raw_data.get("steamid64")
+        data["team"] = raw_data.get("team", "None")
+        data["unit_id"], data['unit_name'] = raw_data.get("unit").split(' - ') if raw_data.get("unit") else ("None", None)
+        data["kills"], raw_data["deaths"] = raw_data.get("kills").split(' - Deaths: ') if raw_data.get("kills") else (0, 0)
+        for k in ["role", "loadout", "level"]:
+            data[k] = raw_data.get(k)
 
-            elif key == "unit":
-                unit_id, unit_name = val.split(' - ')
-                data['unit_id'] = int(unit_id)
-                data['unit_name'] = unit_name.lower()
-                continue
+        scores = dict([score.split(" ", 1) for score in raw_data.get("score", "C 0, O 0, D 0, S 0").split(", ")])
+        map_score = {"C": "combat", "O": "offense", "D": "defense", "S": "support"}
+        for key, val in map_score.items():
+            data[map_score[key]] = scores.get(key, 0)
 
-            elif key == "kills":
-                val, other = val.split(" - ", 1)
-                data[key] = val
-                key, val = other.lower().split(': ', 1)
+        # Typecast values
+        for key in ["team", "unit_name", "role", "loadout"]:
+            data[key] = data[key].lower() if data.get(key) else None
+   
+        for key in ["kills", "deaths", "level", "combat", "offense", "defense", "support", "unit_id"]:
+            try:
+                data[key] = int(data[key])
+            except (ValueError, TypeError):
+                data[key] = 0
 
-            elif key == "score":
-                pairs = val.split(", ")
-                scores = dict()
-                for pair in pairs:
-                    key, val = pair.split(" ")
-                    if key == "C":
-                        key = "combat"
-                    elif key == "O":
-                        key = "offense"
-                    elif key == "D":
-                        key = "defense"
-                    elif key == "S":
-                        key = "support"
-                    else:
-                        continue
-                    scores[key] = int(val)
-                key = "score"
-                val = scores
-            
-            if key in ("kills", "deaths", "level"): 
-                val = int(val)
-            
-            if key in ("role", "loadout"):
-                val = val.lower()
-
-            data[key] = val
-        
         return data
 
     @ttl_cache(ttl=60 * 60 * 24)
