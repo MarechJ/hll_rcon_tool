@@ -59,8 +59,6 @@ class Rcon(ServerCtl):
     MAX_SERV_NAME_LEN = 1024  # I totally made up that number. Unable to test
     log_time_regexp = re.compile(".*\((\d+)\).*")
 
-    playerinfo_cmd_regexp = re.compile(r"Name: (.*)\nsteamID64: (\d{17})\nTeam: (Allies|Axis|None)\nRole: (.*)\nUnit: (.*)\nLoadout: (.*)\nKills: (\d+) - Deaths: (\d+)\nScore: C (\d+), O (\d+), D (\d+), S (\d+)\nLevel: (\d+)")
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -95,13 +93,14 @@ class Rcon(ServerCtl):
             try:
                 raw = super().get_player_info(player)
                 name, steam_id_64, *rest = raw.split("\n")
-            except (CommandFailedError, Exception):
+            except CommandFailedError:
                 name = player
                 steam_id_64 = self.get_playerids(as_dict=True).get(name)
             if not steam_id_64:
                 return {}
 
-            steam_data = self.get_player_steam_info(steam_id_64)
+            country = get_player_country_code(steam_id_64)
+            steam_bans = get_player_has_bans(steam_id_64)
 
         except (CommandFailedError, ValueError):
             # Making that debug instead of exception as it's way to spammy
@@ -118,26 +117,12 @@ class Rcon(ServerCtl):
                 steam_id,
             )
             return {}
-        res = {
+        return {
             NAME: name,
             STEAMID: steam_id,
+            country: country,
+            steam_bans: steam_bans,
         }
-        res.update(steam_data)
-        return res
-
-
-    @ttl_cache(ttl=60 * 60 * 24)
-    def get_player_steam_info(self, steam_id_64):
-        try:
-            country = get_player_country_code(steam_id_64)
-            steam_bans = get_player_has_bans(steam_id_64)
-        except ValueError:
-            raise CommandFailedError("No Steam data received for %s" % steam_id_64)
-
-        return dict(
-            country=country,
-            steam_bans=steam_bans,
-        )
     
     @ttl_cache(ttl=60, cache_falsy=False)
     def get_detailed_player_info(self, player):
@@ -146,55 +131,76 @@ class Rcon(ServerCtl):
         """
         Name: T17 Scott
         steamID64: 01234567890123456
-        Team: Allies
-        Role: Officer
-        Unit: 0 - Able
-        Loadout: NCO
+        Team: Allies            # "None" when not in team
+        Role: Officer           
+        Unit: 0 - Able          # Absent when not in unit
+        Loadout: NCO            # Absent when not in team
         Kills: 0 - Deaths: 0
         Score: C 50, O 0, D 40, S 10
         Level: 34
+
         """
+
+        data = dict(
+            name=player,
+            unit_id=None,
+            unit_name=None,
+            loadout=None,
+        )
+  
+        for line in raw.split("\n"):
+            if ": " not in line:
+                continue
+
+            key, val = line.split(": ", 1)
+            key = key.lower()
+
+            if key == "steamid64":
+                key = "steam_id_64"
+            
+            elif key == "team":
+                if val == "None":
+                    val = None
+
+            elif key == "unit":
+                unit_id, unit_name = val.split(' - ')
+                data['unit_id'] = int(unit_id)
+                data['unit_name'] = unit_name.lower()
+                continue
+
+            elif key == "kills":
+                val, other = val.split(" - ", 1)
+                data[key] = val
+                key, val = other.lower().split(': ', 1)
+
+            elif key == "score":
+                pairs = val.split(", ")
+                scores = dict()
+                for pair in pairs:
+                    key, val = pair.split(" ")
+                    if key == "C":
+                        key = "combat"
+                    elif key == "O":
+                        key = "offense"
+                    elif key == "D":
+                        key = "defense"
+                    elif key == "S":
+                        key = "support"
+                    else:
+                        continue
+                    scores[key] = int(val)
+                key = "score"
+                val = scores
+            
+            if key in ("kills", "deaths", "level"): 
+                val = int(val)
+            
+            if key in ("role", "loadout"):
+                val = val.lower()
+
+            data[key] = val
         
-        data = Rcon.playerinfo_cmd_regexp.search(raw)
-        if not data:
-            raise CommandFailedError("Regex string doesn't match raw response")
-        
-        name, steam_id = data[0:1]
-        if name != player:
-            raise CommandFailedError(
-                "get_player_info('%s') returned for a different name: %s %s",
-                player,
-                name,
-                steam_id,
-            )
-
-        steam_data = self.get_player_steam_info(steam_id)
-
-        team, role, unit, loadout, kills, deaths, combat_score, offense_score, defense_score, support_score, level = (val if val != "None" else None for val in data[2:9])
-        if unit:
-            unit_id, unit_name = unit.split(' - ', 1)
-        else:
-            unit_id = None
-            unit_name = None
-
-        res = {
-            NAME: name,
-            STEAMID: steam_id,
-            "team": team,
-            "role": role,
-            "unit_id": int(unit_id),
-            "unit_name": unit_name,
-            "loadout": loadout,
-            "kills": int(kills),
-            "deaths": int(deaths),
-            "combat_score": int(combat_score),
-            "offense_score": int(offense_score),
-            "defense_score": int(defense_score),
-            "support_score": int(support_score),
-            "level": int(level)
-        }
-        res.update(steam_data)
-        return res
+        return data
 
     @ttl_cache(ttl=60 * 60 * 24)
     def get_admin_ids(self):
