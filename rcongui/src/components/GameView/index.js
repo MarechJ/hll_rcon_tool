@@ -71,7 +71,7 @@ const Squad = ({ classes: globalClasses, squadName, squadData, doOpen }) => {
 
   if (squadName === "commander") return "";
 
-  return <Fragment>
+  return squadData ? <Fragment>
     <ListItem button onClick={handleClick}      >
       <ListItemIcon>
         <Avatar variant="rounded" className={classes.primaryBackground} alt={squadData.get("type", "na")} src={`icons/roles/${squadData.get("type")}.png`}>
@@ -108,7 +108,7 @@ const Squad = ({ classes: globalClasses, squadName, squadData, doOpen }) => {
         )}
       </List>
     </Collapse>
-  </Fragment>
+  </Fragment> : ""
 }
 
 const Team = ({ classes: globalClasses, teamName, teamData }) => {
@@ -116,7 +116,7 @@ const Team = ({ classes: globalClasses, teamName, teamData }) => {
   const [openAll, setOpenAll] = React.useState(false)
   const onOpenAll = () => openAll ? setOpenAll(false) : setOpenAll(true)
 
-  return <List
+  return teamData ? <List
     dense
     component="nav"
     subheader={
@@ -140,7 +140,7 @@ const Team = ({ classes: globalClasses, teamName, teamData }) => {
         <Squad squadName={key} squadData={value} classes={globalClasses} doOpen={openAll} />
       )
     )}
-  </List>
+  </List> : ""
 }
 
 const GameView = ({ classes: globalClasses }) => {
