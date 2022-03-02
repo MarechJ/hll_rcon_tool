@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import "./App.css";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -324,7 +324,6 @@ const hllNoBg = createMuiTheme({
 
 function App() {
   const [isEmbed, setIsEmbed] = React.useState(false);
-  const classes = useStyles();
   const [userTheme, setThemeName] = React.useState(
     localStorage.getItem("theme")
   );
@@ -360,6 +359,7 @@ function App() {
     : themes[userTheme]
     ? themes[userTheme]
     : lightTheme;
+  const classes = useStyles();
 
   const Router = isEmbed ? BrowserRouter : HashRouter;
 

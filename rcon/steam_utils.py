@@ -41,7 +41,7 @@ def get_steam_profiles(steam_ids):
         return None
 
 
-@ttl_cache(60 * 60 * 24 * 7, cache_falsy=False, is_method=False)
+@ttl_cache(60 * 60 * 24 * 7, cache_falsy=True, is_method=False)
 def get_player_country_code(steamd_id):
     profile = get_steam_profile(steamd_id)
  

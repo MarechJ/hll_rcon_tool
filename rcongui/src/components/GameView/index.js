@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Fragment } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -13,9 +13,11 @@ import {
   TextareaAutosize,
   Avatar,
   ListItemSecondaryAction,
-  Checkbox
+  Checkbox,
+  LinearProgress
 } from "@material-ui/core";
-import { fromJS } from "immutable";
+import WarningIcon from '@material-ui/icons/Warning';
+import { fromJS, Map, List as IList } from "immutable";
 import { makeStyles } from '@material-ui/core/styles';
 import ListSubheader from '@material-ui/core/ListSubheader';
 import List from '@material-ui/core/List';
@@ -29,167 +31,156 @@ import SendIcon from '@material-ui/icons/Send';
 import ExpandLess from '@material-ui/icons/ExpandLess';
 import ExpandMore from '@material-ui/icons/ExpandMore';
 import StarBorder from '@material-ui/icons/StarBorder';
-import { PlayerItem } from '../PlayerView/playerList'
+import { PlayerItem, KDChips, ScoreChips } from '../PlayerView/playerList'
+import reactRouterDom from "react-router-dom";
+import { get, handle_http_errors, postData, showResponse, } from "../../utils/fetchUtils";
 
 const useStyles = makeStyles((theme) => ({
   root: {
-  
+
     backgroundColor: theme.palette.background.paper,
   },
   nested: {
-    paddingLeft: theme.spacing(4),
+    paddingLeft: theme.spacing(2),
   },
   small: {
     width: theme.spacing(3),
     height: theme.spacing(3),
   },
+  large: {
+    width: theme.spacing(7),
+    height: theme.spacing(7),
+  },
+  primaryBackground: {
+    backgroundColor: theme.palette.primary.dark
+  },
 }));
 
 
-const samplePLayer = fromJS({
-  "name": "Noperator",
-  "steam_id_64": "76561199137886650",
-  "country": "private",
-  "steam_bans": {
-    "SteamId": "76561199137886650",
-    "CommunityBanned": false,
-    "VACBanned": false,
-    "NumberOfVACBans": 0,
-    "DaysSinceLastBan": 0,
-    "NumberOfGameBans": 0,
-    "EconomyBan": "none",
-    "has_bans": false
-  },
-  "profile": {
-    "id": 34463,
-    "steam_id_64": "76561199137886650",
-    "created": "2021-02-06T20:30:52.757",
-    "names": [
-      {
-        "id": 72789,
-        "name": "Noperator",
-        "steam_id_64": "76561199137886650",
-        "created": "2021-05-04T22:08:13.329",
-        "last_seen": "2022-02-28T15:22:53.242"
-      },
-      {
-        "id": 35561,
-        "name": "Notperator",
-        "steam_id_64": "76561199137886650",
-        "created": "2021-02-06T20:30:52.776",
-        "last_seen": "2021-02-15T13:20:57"
+const Squad = ({ classes: globalClasses, squadName, squadData, doOpen }) => {
+  const classes = useStyles();
+  const [open, setOpen] = React.useState(false);
+  const handleClick = () => {
+    setOpen(!open);
+  };
+  const sizes = {
+    armor: 3,
+    infantry: 6,
+    recon: 2
+  }
+
+  if (squadName === "commander") return "";
+
+  return <Fragment>
+    <ListItem button onClick={handleClick}      >
+      <ListItemIcon>
+        <Avatar variant="rounded" className={classes.primaryBackground} alt={squadData.get("type", "na")} src={`icons/roles/${squadData.get("type")}.png`}>
+          {squadName[0].toUpperCase()}
+        </Avatar>
+      </ListItemIcon>
+      <ListItemText primary={
+
+        <Typography variant="h6">
+          {`${squadName.toUpperCase()} - ${squadData.get("players", new IList()).size}/${sizes[squadData.get("type", "infantry")]}`} {squadData.get("has_leader", false) ? "" : <WarningIcon style={{ verticalAlign: "middle" }} fontSize="small" color="error" />}
+        </Typography>
+
       }
-    ],
-    "sessions": [
-      {
-        "id": 596581,
-        "steam_id_64": "76561199137886650",
-        "start": "2022-02-28T15:22:47",
-        "end": null,
-        "created": "2022-02-28T15:22:51.856"
-      }
-    ],
-    "sessions_count": 23,
-    "total_playtime_seconds": 102960,
-    "current_playtime_seconds": 11779,
-    "received_actions": [
-      {
-        "action_type": "KICK",
-        "reason": "Teamkilling",
-        "by": "Heavenly",
-        "time": "2021-08-12T01:08:51.443"
-      }
-    ],
-    "penalty_count": {
-      "PERMABAN": 0,
-      "TEMPBAN": 0,
-      "PUNISH": 0,
-      "KICK": 1
-    },
-    "blacklist": null,
-    "flags": [],
-    "watchlist": null,
-    "steaminfo": {
-      "id": 45436,
-      "created": "2021-03-24T02:18:12.490",
-      "updated": null,
-      "profile": {
-        "avatar": "https://steamcdn-a.akamaihd.net/steamcommunity/public/images/avatars/04/048a8f3b3c485ef56de940d94d7da0abc96758b6.jpg",
-        "steamid": "76561199137886650",
-        "avatarfull": "https://steamcdn-a.akamaihd.net/steamcommunity/public/images/avatars/04/048a8f3b3c485ef56de940d94d7da0abc96758b6_full.jpg",
-        "avatarhash": "048a8f3b3c485ef56de940d94d7da0abc96758b6",
-        "profileurl": "https://steamcommunity.com/profiles/76561199137886650/",
-        "personaname": "Noperator",
-        "avatarmedium": "https://steamcdn-a.akamaihd.net/steamcommunity/public/images/avatars/04/048a8f3b3c485ef56de940d94d7da0abc96758b6_medium.jpg",
-        "personastate": 0,
-        "profilestate": 1,
-        "communityvisibilitystate": 2
-      },
-      "country": null,
-      "bans": null
+        secondary={<Grid container spacing={1}><ScoreChips backgroundClass={classes.primaryBackground} player={squadData} /><KDChips classes={classes} player={squadData} /></Grid>} />
+
+      {/*<ListItemSecondaryAction>
+        <Checkbox
+          edge="end"
+        />
+      </ListItemSecondaryAction> */}
+
+    </ListItem>
+    <Collapse in={open || doOpen} timeout="auto" unmountOnExit>
+      <List component="div" disablePadding className={classes.nested}>
+        {squadData.get("players", new IList()).map(
+          (player) => (
+            <PlayerItem
+              classes={globalClasses}
+              player={player}
+              playerHasExtraInfo={true}
+              onDeleteFlag={() => (null)}
+            />
+          )
+        )}
+      </List>
+    </Collapse>
+  </Fragment>
+}
+
+const Team = ({ classes: globalClasses, teamName, teamData }) => {
+  const classes = useStyles();
+  const [openAll, setOpenAll] = React.useState(false)
+  const onOpenAll = () => openAll ? setOpenAll(false) : setOpenAll(true)
+
+  return <List
+    dense
+    component="nav"
+    subheader={
+      <ListSubheader component="div" id="nested-list-subheader">
+        <Typography variant="h4">{teamName} {teamData.get("count", 0)}/50 <Link onClick={onOpenAll} component="button">{openAll ? "Collapse" : "Expand"} all</Link></Typography>
+
+      </ListSubheader>
     }
-  },
-  "is_vip": false
-})
-
-const PlayerInfo = ({ classes: globalClasses }) => {
-
+    className={classes.root}
+  >
+    {teamData.get("commander") ?
+      <PlayerItem
+        classes={globalClasses}
+        player={teamData.get("commander")}
+        playerHasExtraInfo={true}
+        onDeleteFlag={() => (null)}
+        avatarBackround={classes.primaryBackground}
+      /> : ""}
+    {teamData.get("squads", new Map()).toOrderedMap().sortBy((v, k) => k).entrySeq().map(
+      ([key, value]) => (
+        <Squad squadName={key} squadData={value} classes={globalClasses} doOpen={openAll} />
+      )
+    )}
+  </List>
 }
 
 const GameView = ({ classes: globalClasses }) => {
   const classes = useStyles();
-  const [open, setOpen] = React.useState(true);
+  const [isLoading, setIsLoading] = React.useState(false)
+  const [teamView, setTeamView] = React.useState(null)
 
-  const handleClick = () => {
-    setOpen(!open);
-  };
+  const loadData = () => {
+    setIsLoading(true)
+    get("get_team_view")
+    .then((response) => showResponse(response, "get_team_view"))
+    .then((data) => {setIsLoading(false); if (data.result) {setTeamView(fromJS(data.result))}})
+    .catch(handle_http_errors);
+  }
 
-  return <Grid container>
-    <Grid item xs={12} md={6}>
-      <List
-        dense
-        component="nav"
-        aria-labelledby="nested-list-subheader"
-        subheader={
-          <ListSubheader component="div" id="nested-list-subheader">
-            Nested List Items
-          </ListSubheader>
-        }
-        className={classes.root}
-      >
-        <ListItem button onClick={handleClick}>
-          <ListItemIcon>
-            <Avatar className={classes.small}>
-              A
-            </Avatar>
-          </ListItemIcon>
-          <ListItemText primary="Able" />
-          <ListItemSecondaryAction>
-            <Checkbox
-              edge="end"
-            />
-          </ListItemSecondaryAction>
+  React.useEffect(() => {
+    loadData();
+    const handle = setInterval(loadData, 30000)
+    return () => clearInterval(handle)
+  }, [])
 
-        </ListItem>
-        <Collapse in={open} timeout="auto" unmountOnExit>
-          <List component="div" disablePadding>
-            <PlayerItem 
-              classes={globalClasses} 
-              player={samplePLayer} 
-              onDeleteFlag={() => (null)}
-            />
-             <PlayerItem 
-              classes={globalClasses} 
-              player={samplePLayer} 
-              onDeleteFlag={() => (null)}
-            />
-          </List>
-        </Collapse>
-      </List>
 
-    </Grid>
-    <Grid item xs={12} md={6}>Team 2</Grid>
-  </Grid>
+
+  return <Grid container spacing={2} className={globalClasses.padding}>
+    {teamView ?
+      <Fragment>
+        { isLoading ? <Grid item xs={12} className={globalClasses.doublePadding}><LinearProgress /></Grid> : ""}
+        <Grid item xs={12} md={6}>
+          <Team classes={globalClasses} teamName="Axis" teamData={teamView.get("axis")} />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <Team classes={globalClasses} teamName="Allies" teamData={teamView.get("allies")} />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <Team classes={globalClasses} teamName="Unassigned" teamData={teamView.get("none")} />
+        </Grid>
+      </Fragment>
+
+      : <Grid item xs={12} className={globalClasses.doublePadding}><LinearProgress /></Grid>}
+  </Grid >
 }
 
 export default GameView;

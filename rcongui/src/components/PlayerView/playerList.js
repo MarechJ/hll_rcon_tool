@@ -36,6 +36,20 @@ const useStyles = makeStyles((theme) => ({
   paper: {
     padding: theme.spacing(1),
   },
+  paperBackground: {
+
+    backgroundColor: theme.palette.type == "dark" ? "" : "grey",
+  },
+  darkBackground: {
+    backgroundColor: theme.palette.type == "dark" ? "" : "grey"
+  },
+  primaryBackground: {
+    backgroundColor: theme.palette.primary.dark
+  },
+  customBadge: {
+    backgroundColor: "grey",
+    color: "white"
+  }
 }));
 
 function WithPopOver(props) {
@@ -160,6 +174,51 @@ const formatPunitions = (profile) => {
     ));
 };
 
+const ScoreChips = ({ player, backgroundClass }) => {
+  return <Fragment>
+    <Grid item>
+      <Chip size="small" variant="outlined" avatar={<Avatar className={backgroundClass} alt="Combat" src="icons/roles/score_combat.png" />} label={player.get("combat", 0)} />
+    </Grid>
+    <Grid item>
+      <Chip size="small" variant="outlined" avatar={<Avatar className={backgroundClass} alt="Offensive" src="icons/roles/score_offensive.png" />} label={player.get("offense", 0)} />
+    </Grid>
+    <Grid item>
+      <Chip size="small" variant="outlined" avatar={<Avatar className={backgroundClass} alt="Defensive" src="icons/roles/score_defensive.png" />} label={player.get("defense", 0)} />
+    </Grid>
+    <Grid item>
+      <Chip size="small" variant="outlined" avatar={<Avatar className={backgroundClass} alt="Support" src="icons/roles/score_support.png" />} label={player.get("support", 0)} />
+    </Grid>
+  </Fragment>
+}
+
+const KDChips = ({ classes, player }) => {
+  const localClasses = useStyles();
+
+  return <Fragment>
+    <Grid item>
+      <Chip size="small" variant="outlined" label={`K: ${player.get("kills")}`} />
+    </Grid>
+    <Grid item>
+      <Chip size="small" variant="outlined" label={`D: ${player.get("deaths")}`} />
+    </Grid>
+    <Grid item>
+      <Chip size="small" variant="outlined" label={`KD: ${player.get("kills", 0) / Math.max(player.get("deaths", 1), 1)}`} />
+    </Grid>
+    {player.get("loadout") ?
+      <Grid item>
+        <Chip size="small" label={player.get("loadout", "")} />
+      </Grid> : ""}
+  </Fragment>
+}
+
+const ScoreListText = ({ classes, player }) => {
+  const localClasses = useStyles();
+
+  return <ListItemText className={localClasses.alignRight}
+    primary={<Grid container spacing={1}><ScoreChips backgroundClass={localClasses.darkBackground} player={player}  /></Grid>}
+    secondary={<Grid container spacing={1}><KDChips classes={classes} player={player} /></Grid>} />
+}
+
 const PlayerItem = ({
   classes,
   player,
@@ -167,22 +226,26 @@ const PlayerItem = ({
   nbButtons,
   onFlag,
   onDeleteFlag,
-  playerExtraInfo,
+  playerHasExtraInfo,
+  avatarBackround,
 }) => {
   const profile = player.get("profile") ? player.get("profile") : new Map();
   const name = player.get("name");
   const steamID64 = player.get("steam_id_64");
+  const localClasses = useStyles();
 
   return (
     <ListItem key={name} dense>
-      <ListItemAvatar>
-        <Badge badgeContent={132} max={999} color="primary" anchorOrigin={{
-          vertical: 'bottom',
-          horizontal: 'left',
-        }}>
-          <Avatar variant="square" className={classes.darkBackground} src={`icons/roles/officer.png`}></Avatar>
-        </Badge>
-      </ListItemAvatar>
+      {playerHasExtraInfo ?
+        <ListItemAvatar>
+          <Badge badgeContent={player.get("level", 0)} max={999} classes={{ badge: localClasses.customBadge }} anchorOrigin={{
+            vertical: 'bottom',
+            horizontal: 'right',
+          }}>
+            <Avatar variant="square" className={avatarBackround || localClasses.darkBackground} src={`icons/roles/${player.get("role", "rifleman")}.png`}></Avatar>
+          </Badge>
+        </ListItemAvatar>
+        : ""}
 
       <ListItemText
         id={`checkbox-list-label-${steamID64}`}
@@ -231,39 +294,9 @@ const PlayerItem = ({
           </React.Fragment>
         }
       />
-      {/*  "KD 1/2, C 21, O 0, D 180, S 25" */}
-      <ListItemText className={classes.alignRight}
-        primary={
-          <Grid container spacing={1}>
-            <Grid item>
-              <Chip size="small" variant="outlined" avatar={<Avatar className={classes.darkBackground} alt="Combat" src="icons/roles/score_combat.png" />} label="1200" />
-            </Grid>
-            <Grid item>
-              <Chip size="small" variant="outlined" avatar={<Avatar className={classes.darkBackground} alt="Combat" src="icons/roles/score_offensive.png" />} label="1200" />
-            </Grid>
-            <Grid item>
-              <Chip size="small" variant="outlined" avatar={<Avatar className={classes.darkBackground} alt="Combat" src="icons/roles/score_defensive.png" />} label="1200" />
-            </Grid>
-            <Grid item>
-              <Chip size="small" variant="outlined" avatar={<Avatar className={classes.darkBackground} alt="Combat" src="icons/roles/score_support.png" />} label="1200" />
-            </Grid>
-          </Grid>} secondary={
-            <Grid container spacing={1}>
-              <Grid item>
-                <Chip size="small" variant="outlined"  label="K: 13" />
-              </Grid>
-              <Grid item>
-                <Chip size="small" variant="outlined"  label="D: 5" />
-              </Grid>
-              <Grid item>
-                <Chip size="small" variant="outlined"  label="KD: 1.5" />
-              </Grid>
-              <Grid item>
-                <Chip size="small" label="grenadier" />
-              </Grid>
-
-            </Grid>
-          } />
+      {playerHasExtraInfo ?
+        <ScoreListText classes={classes} player={player} />
+        : ""}
 
       {handleAction ?
         <ListItemSecondaryAction>
@@ -404,4 +437,4 @@ const CompactList = ({
 
 
 export default withWidth()(pure(CompactList));
-export { PlayerItem, CompactList };
+export { PlayerItem, CompactList, ScoreListText, ScoreChips, KDChips };

@@ -1,6 +1,7 @@
 import { makeStyles } from "@material-ui/core/styles";
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles(theme => {
+  return {
   root: {
     flexGrow: 1
   },
@@ -195,12 +196,6 @@ const useStyles = makeStyles(theme => ({
   alignRight: {
     textAlign: "right"
   },
-  paperBackground: {
-    backgroundColor: theme.palette.background.paper,
-  },
-  darkBackground: {
-    backgroundColor: "grey"
-  }
-}));
+}});
 
 export default useStyles;
