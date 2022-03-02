@@ -99,6 +99,7 @@ const Squad = ({ classes: globalClasses, squadName, squadData, doOpen }) => {
         {squadData.get("players", new IList()).map(
           (player) => (
             <PlayerItem
+              key={player.get("name")}
               classes={globalClasses}
               player={player}
               playerHasExtraInfo={true}
@@ -137,7 +138,7 @@ const Team = ({ classes: globalClasses, teamName, teamData }) => {
       /> : ""}
     {teamData.get("squads", new Map()).toOrderedMap().sortBy((v, k) => k).entrySeq().map(
       ([key, value]) => (
-        <Squad squadName={key} squadData={value} classes={globalClasses} doOpen={openAll} />
+        <Squad key={key} squadName={key} squadData={value} classes={globalClasses} doOpen={openAll} />
       )
     )}
   </List> : ""

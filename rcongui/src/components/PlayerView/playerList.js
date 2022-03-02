@@ -202,7 +202,7 @@ const KDChips = ({ classes, player }) => {
       <Chip size="small" variant="outlined" label={`D: ${player.get("deaths")}`} />
     </Grid>
     <Grid item>
-      <Chip size="small" variant="outlined" label={`KD: ${player.get("kills", 0) / Math.max(player.get("deaths", 1), 1)}`} />
+      <Chip size="small" variant="outlined" label={`KD: ${(player.get("kills", 0) / Math.max(player.get("deaths", 1), 1)).toFixed(2)}`} />
     </Grid>
     {player.get("loadout") ?
       <Grid item>
