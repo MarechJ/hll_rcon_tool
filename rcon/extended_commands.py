@@ -31,9 +31,11 @@ LOG_ACTIONS = [
     "VOTE STARTED",
     "VOTE",
     "TEAMSWITCH",
-    "TK",
-    "TK KICKED",
-    "TK BANNED FOR 2 HOURS",
+    "TK AUTO",
+    "TK AUTO KICKED",
+    "TK AUTO BANNED",
+    "ADMIN KICKED",
+    "ADMIN BANNED",
     "MATCH",
     "MATCH START",
     "MATCH ENDED",
@@ -61,7 +63,7 @@ class Rcon(ServerCtl):
     player_info_pattern = r"(.*)\(((Allies)|(Axis))/(\d+)\)"
     player_info_regexp = re.compile(r"(.*)\(((Allies)|(Axis))/(\d+)\)")
     MAX_SERV_NAME_LEN = 1024  # I totally made up that number. Unable to test
-    log_time_regexp = re.compile(".*\((\d+)\).*")
+    log_time_regexp = re.compile(r".*\((\d+)\).*")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -375,7 +377,7 @@ class Rcon(ServerCtl):
             name = rest.split('" banned', 1)[0]
             name = name.split(' nickname "', 1)[-1]
 
-        groups = re.match(".*(\d{4}\.\d{2}\.\d{2}-\d{2}\.\d{2}.\d{2}) (.*)", ban)
+        groups = re.match(r".*(\d{4}\.\d{2}\.\d{2}-\d{2}\.\d{2}.\d{2}) (.*)", ban)
         if groups and groups.groups():
             date = groups.group(1)
             try:
@@ -957,25 +959,25 @@ class Rcon(ServerCtl):
                     sub_content = groups[-1]
                     # import ipdb; ipdb.set_trace()
                     content = f"{player}: {sub_content} ({steam_id_64_1})"
-                elif rest.startswith("VOTE"):
+                elif rest.startswith("VOTESYS"):
                     # [15:49 min (1606998428)] VOTE Player [[fr]ELsass_blitz] Started a vote of type (PVR_Kick_Abuse) against [拢儿]. VoteID: [1]
                     action = "VOTE"
-                    if rest.startswith("VOTE Player") and " against " in rest.lower():
+                    if rest.startswith("VOTESYS Player") and " against " in rest.lower():
                         action = "VOTE STARTED"
                         groups = re.match(
-                            r"VOTE Player \[(.*)\].* against \[(.*)\]\. VoteID: \[\d+\]",
+                            r"VOTESYS Player \[(.*)\].* against \[(.*)\]\. VoteID: \[\d+\]",
                             rest,
                         )
                         player = groups[1]
                         player2 = groups[2]
-                    elif rest.startswith("VOTE Player") and "voted" in rest.lower():
-                        groups = re.match(r"VOTE Player \[(.*)\] voted.*", rest)
+                    elif rest.startswith("VOTESYS Player") and "voted" in rest.lower():
+                        groups = re.match(r"VOTESYS Player \[(.*)\] voted.*", rest)
                         player = groups[1]
                     elif "completed" in rest.lower():
                         action = "VOTE COMPLETED"
                     elif "kick" in rest.lower():
                         action = "VOTE COMPLETED"
-                        groups = re.match(r"VOTE Vote Kick \{(.*)\}.*", rest)
+                        groups = re.match(r"VOTESYS Vote Kick \{(.*)\}.*", rest)
                         player = groups[1]
                     else:
                         player = ""
@@ -998,14 +1000,20 @@ class Rcon(ServerCtl):
                         player, sub_content, *_ = matches.groups()
                     else:
                         logger.error("Unable to parse line: %s", line)
-                elif rest.upper().startswith("KICK") and "FOR TEAM KILLING" in rest:
+                elif rest.startswith('KICK') or rest.startswith('BAN'):
+                    if "FOR TEAM KILLING" in rest:
+                        action = "TK AUTO"
+                    else:
+                        action = "ADMIN"
                     matches = re.match(
-                        r"KICK:\s\[(.*)\]\s(has been kicked. \[((KICKED)|(BANNED FOR 2 HOURS)) FOR TEAM KILLING!\])",
+                        r"(.*):\s\[(.*)\]\s(.*\[(KICKED|BANNED|PERMANENTLY)\s.*)",
                         rest,
                     )
-                    if matches and len(matches.groups()) == 5:
-                        player, sub_content, type_, *_ = matches.groups()
-                        action = f"TK {type_}"
+                    if matches and len(matches.groups()) == 4:
+                        _, player, sub_content, type_ = matches.groups()
+                        if type_ == "PERMANENTLY":
+                            type_ = "BANNED"
+                        action = f"{action} {type_}"
                     else:
                         logger.error("Unable to parse line: %s", line)
                 elif rest.upper().startswith("MATCH START"):
