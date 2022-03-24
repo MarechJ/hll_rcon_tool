@@ -3,8 +3,9 @@ import logging
 import os
 from functools import wraps
 from subprocess import run, PIPE
+import traceback
 
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 
 from rcon.broadcast import get_votes_status
@@ -600,6 +601,23 @@ def get_connection_info(request):
         command="get_connection_info",
     )
 
+@csrf_exempt
+@login_required
+def run_raw_command(request):
+    data = _get_data(request)
+    command = data.get('command')
+    if not command:
+        res = "Parameter \"command\" must not be none"
+    else:
+        try:
+            res = ctl._request(command, can_fail=True, log_info=True)
+        except CommandFailedError:
+            res = "Command returned FAIL"
+        except:
+            logging.exception("Internal error when executing raw command")
+            res = "Internal error!\n\n" + traceback.format_exc()
+    return HttpResponse(res, content_type="text/plain")
+
 
 PREFIXES_TO_EXPOSE = ["get_", "set_", "do_"]
 
@@ -624,6 +642,7 @@ commands = [
     ("set_votekick_autotoggle_config", set_votekick_autotoggle_config),
     ("get_votekick_autotoggle_config", get_votekick_autotoggle_config),
     ("set_name", set_name),
+    ("run_raw_command", run_raw_command),
 ]
 
 logger.info("Initializing endpoint")
