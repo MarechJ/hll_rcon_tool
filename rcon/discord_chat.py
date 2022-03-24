@@ -2,6 +2,7 @@ import logging
 import os
 from functools import lru_cache
 import re
+from datetime import datetime
 
 import discord.utils
 import requests
@@ -20,6 +21,8 @@ PING_TRIGGER_WORDS = os.getenv("DISCORD_PING_TRIGGER_WORDS")
 PING_TRIGGER_ROLES = os.getenv("DISCORD_PING_TRIGGER_ROLES")
 SEND_KILLS = os.getenv("DISCORD_SEND_KILL_UPDATES")
 SEND_TEAM_KILLS = os.getenv("DISCORD_SEND_TEAM_KILL_UPDATES")
+
+SERVER_SHORT_NAME = os.getenv("SERVER_SHORT_NAME")
 
 STEAM_PROFILE_URL = "http://steamcommunity.com/profiles/{id64}"
 
@@ -148,10 +151,11 @@ class DiscordWebhookHandler:
             action = action.split("CHAT")[1]
             color = CHAT_ACTION_TO_COLOR[action]
 
-            embed = discord.Embed(description=message, color=color)
+            embed = discord.Embed(description=message, color=color, timestamp=datetime.utcnow())
             embed.set_author(
                 name=f"{player} {action}", url=STEAM_PROFILE_URL.format(id64=steam_id)
             )
+            embed.set_footer(text=SERVER_SHORT_NAME)
 
             content = ""
             triggered = False
