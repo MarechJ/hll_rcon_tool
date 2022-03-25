@@ -22,6 +22,7 @@ RAW_LOGS = """
 [4:48 min (1646331637)] KICK: [VegaBond] has been kicked. [BANNED FOR 1 HOURS BY THE ADMINISTRATOR!
 [27.8 sec (1646334121)] KICK: [GinPick]ledYak] has been kicked. [PERMANENTLY BANNED BY THE ADMINISTRATOR!
 [2:00 min (1646137918)] BAN: [(WTH) Abusify] has been banned. [BANNED FOR 2 HOURS BY THE ADMINISTRATOR!
+[2:00 min (1646137918)] KICK: [adamtfitz] has been kicked. [YOU WERE KICKED FOR BEING IDLE]
 
 Test message]
 [2:00 min (1646137918)] KICK: [(WTH) Abusify] has been kicked. [BANNED FOR 2 HOURS BY THE ADMINISTRATOR!
@@ -55,6 +56,7 @@ def test_kicks(*mocks):
         [4:48 min (1646331637)] KICK: [VegaBond] has been kicked. [BANNED FOR 1 HOURS BY THE ADMINISTRATOR!
         [27.8 sec (1646334121)] KICK: [GinPick]ledYak] has been kicked. [PERMANENTLY BANNED BY THE ADMINISTRATOR!
         [2:00 min (1646137918)] BAN: [(WTH) Abusify] has been banned. [BANNED FOR 2 HOURS BY THE ADMINISTRATOR!
+        [2:00 min (1646137918)] KICK: [adamtfitz] has been kicked. [YOU WERE KICKED FOR BEING IDLE]
         """
     )
 
