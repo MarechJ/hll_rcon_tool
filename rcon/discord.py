@@ -1,9 +1,11 @@
 import logging
-import re
-from typing import List
-from datetime import datetime
-from discord_webhook import DiscordWebhook
 import os
+import re
+from datetime import datetime
+from typing import List
+
+from discord_webhook import DiscordWebhook
+
 from rcon.user_config import DiscordHookConfig
 
 logger = logging.getLogger(__name__)
@@ -19,7 +21,7 @@ def make_allowed_mentions(roles):
         if r == '@everyone' or r == '@here':
             allowed_mentions['parse'] = r.replace('@', '')
     print(allowed_mentions)
-    allowed_mentions = {"parse": ["users"]}
+    #allowed_mentions = {"parse": ["users"]}
     return allowed_mentions
 
 
