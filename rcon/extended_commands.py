@@ -1,15 +1,16 @@
-from cmath import inf
+import logging
+import os
 import profile
 import random
-import os
 import re
-from datetime import datetime, timedelta
-import logging
 import socket
+from cmath import inf
+from datetime import datetime, timedelta
 from time import sleep
+
+from rcon.cache_utils import get_redis_client, invalidates, ttl_cache
+from rcon.commands import CommandFailedError, HLLServerError, ServerCtl
 from rcon.player_history import get_profiles
-from rcon.cache_utils import ttl_cache, invalidates, get_redis_client
-from rcon.commands import HLLServerError, ServerCtl, CommandFailedError
 from rcon.steam_utils import get_player_country_code, get_player_has_bans
 
 STEAMID = "steam_id_64"
@@ -142,7 +143,7 @@ class Rcon(ServerCtl):
 
         for player in players_by_id.values():
             steam_id_64 = player[STEAMID]
-            profile = steam_profiles.get(player.get("steam_id_64"), {})
+            profile = steam_profiles.get(player.get("steam_id_64"), {}) or {}
             player["profile"] = profile
             player["is_vip"] = steam_id_64 in vips
             player["country"] = profile.get("steaminfo", {}).get("country", "private")
