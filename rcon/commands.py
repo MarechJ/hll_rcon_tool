@@ -1,8 +1,6 @@
 import logging
 import socket
-from functools import wraps
 import time
-
 from dataclasses import dataclass
 from functools import wraps
 
@@ -63,6 +61,7 @@ def _auto_retry(method):
                 return method(self, *args, **kwargs)
             except (HLLServerError, UnicodeDecodeError):
                 self._reconnect()
+                raise
             # TODO loop and counter implement counter
 
     return wrap
@@ -419,6 +418,7 @@ class ServerCtl:
 
 if __name__ == "__main__":
     import os
+
     from rcon.settings import SERVER_INFO
 
     ctl = ServerCtl(SERVER_INFO)

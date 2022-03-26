@@ -145,7 +145,7 @@ class Rcon(ServerCtl):
 
         for player in players_by_id.values():
             steam_id_64 = player[STEAMID]
-            profile = steam_profiles.get(player.get("steam_id_64"), {})
+            profile = steam_profiles.get(player.get("steam_id_64"), {}) or {}
             player["profile"] = profile
             player["is_vip"] = steam_id_64 in vips
             player["country"] = profile.get("steaminfo", {}).get("country", "private")
