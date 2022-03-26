@@ -2,7 +2,6 @@ from unittest import mock
 
 from rcon.extended_commands import Rcon
 
-
 RAW_LOGS = """
 [1.89 sec (1606340677)] CHAT[Team][bananacocoo(Allies/76561198003251789)]: pas jouable la map
 [29:55 min (1606340690)] KILL: Karadoc(Axis/76561198080212634) -> Bullitt-FR(Allies/76561198000776367) with G43
@@ -53,21 +52,26 @@ RAW_VOTE = """
 def test_kicks(*mocks):
     res = Rcon.parse_logs(
         """
+        [4:48 min (1646331637)] KICK: [VegaBond]] has been kicked. [BANNED FOR 1 HOURS BY THE ADMINISTRATOR!
         [4:48 min (1646331637)] KICK: [VegaBond] has been kicked. [BANNED FOR 1 HOURS BY THE ADMINISTRATOR!
         [27.8 sec (1646334121)] KICK: [GinPick]ledYak] has been kicked. [PERMANENTLY BANNED BY THE ADMINISTRATOR!
         [2:00 min (1646137918)] BAN: [(WTH) Abusify] has been banned. [BANNED FOR 2 HOURS BY THE ADMINISTRATOR!
-        [2:00 min (1646137918)] KICK: [adamtfitz] has been kicked. [YOU WERE KICKED FOR BEING IDLE]
+        [2:00 min (1646137918)] KICK: [adamtfitz] has been kicked. [YOU WERE KICKED FOR BEING IDLE]       
         """
     )
 
-    assert len(res["logs"]) == 3
-    assert res["logs"][0]["action"] == "ADMIN BANNED"
-    assert res["logs"][1]["action"] == "ADMIN BANNED"
-    assert res["logs"][2]["action"] == "ADMIN BANNED"
+    print(res)
+    assert len(res["logs"]) == 5
+    assert res["logs"][0]["action"] == "ADMIN IDLE", res["logs"][0]
+    assert res["logs"][1]["action"] == "ADMIN BANNED", res["logs"][1]
+    assert res["logs"][2]["action"] == "ADMIN PERMA BANNED", res["logs"][2]
+    assert res["logs"][3]["action"] == "ADMIN BANNED", res["logs"][3]
 
-    assert res["logs"][0]["player"] == "(WTH) Abusify"
-    assert res["logs"][1]["player"] == "GinPick]ledYak"
-    assert res["logs"][2]["player"] == "VegaBond"
+    assert res["logs"][0]["player"] == "adamtfitz"
+    assert res["logs"][1]["player"] == "(WTH) Abusify"
+    assert res["logs"][2]["player"] == "GinPick]ledYak"
+    assert res["logs"][3]["player"] == "VegaBond"
+    assert res["logs"][4]["player"] == "VegaBond]"
 
 
 @mock.patch(
@@ -298,8 +302,10 @@ def test_log_parsing(*mocks):
                 "TK AUTO",
                 "TK AUTO KICKED",
                 "TK AUTO BANNED",
+                "ADMIN IDLE",
                 "ADMIN KICKED",
                 "ADMIN BANNED",
+                "ADMIN PERMA BANNED",
                 "MATCH START",
                 "MATCH ENDED",
                 "MATCH",
@@ -333,6 +339,7 @@ def test_log_parsing(*mocks):
                 "(WTH) Abusify",
                 "GinPick]ledYak",
                 "VegaBond",
+                "adamtfitz"
             ]
         )
         assert set(l["timestamp_ms"] for l in res["logs"]) == {

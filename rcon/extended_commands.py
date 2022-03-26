@@ -1,15 +1,16 @@
-from cmath import inf
+import logging
+import os
 import profile
 import random
-import os
 import re
-from datetime import datetime, timedelta
-import logging
 import socket
+from cmath import inf
+from datetime import datetime, timedelta
 from time import sleep
+
+from rcon.cache_utils import get_redis_client, invalidates, ttl_cache
+from rcon.commands import CommandFailedError, HLLServerError, ServerCtl
 from rcon.player_history import get_profiles
-from rcon.cache_utils import ttl_cache, invalidates, get_redis_client
-from rcon.commands import HLLServerError, ServerCtl, CommandFailedError
 from rcon.steam_utils import get_player_country_code, get_player_has_bans
 
 STEAMID = "steam_id_64"
@@ -1006,13 +1007,15 @@ class Rcon(ServerCtl):
                     else:
                         action = "ADMIN"
                     matches = re.match(
-                        r"(.*):\s\[(.*)\]\s(.*\[(KICKED|BANNED|PERMANENTLY)\s.*)",
+                        r"(.*):\s\[(.*)\]\s(.*\[(KICKED|BANNED|PERMANENTLY|YOU)\s.*)",
                         rest,
                     )
                     if matches and len(matches.groups()) == 4:
                         _, player, sub_content, type_ = matches.groups()
                         if type_ == "PERMANENTLY":
-                            type_ = "BANNED"
+                            type_ = "PERMA BANNED"
+                        if type_ == "YOU":
+                            type_ = "IDLE"
                         action = f"{action} {type_}"
                     else:
                         logger.error("Unable to parse line: %s", line)
