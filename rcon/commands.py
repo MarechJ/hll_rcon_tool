@@ -1,8 +1,6 @@
 import logging
 import socket
-from functools import wraps
 import time
-
 from dataclasses import dataclass
 from functools import wraps
 
@@ -63,6 +61,7 @@ def _auto_retry(method):
                 return method(self, *args, **kwargs)
             except (HLLServerError, UnicodeDecodeError):
                 self._reconnect()
+                raise
             # TODO loop and counter implement counter
 
     return wrap
@@ -355,7 +354,7 @@ class ServerCtl:
         return self._request(f"switchteamondeath {player}", log_info=True)
 
     def do_switch_player_now(self, player):
-        return self._request(f"switchteamnow {player}", log_info=True)
+        return self._request(f'switchteamnow "{player}"', log_info=True)
 
     def do_add_map_to_rotation(self, map_name):
         return self._request(f"rotadd {map_name}", can_fail=False, log_info=True)
@@ -419,6 +418,7 @@ class ServerCtl:
 
 if __name__ == "__main__":
     import os
+
     from rcon.settings import SERVER_INFO
 
     ctl = ServerCtl(SERVER_INFO)
