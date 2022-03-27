@@ -354,7 +354,7 @@ class ServerCtl:
         return self._request(f"switchteamondeath {player}", log_info=True)
 
     def do_switch_player_now(self, player):
-        return self._request(f'switchteamnow "{player}"', log_info=True)
+        return self._request(f'switchteamnow {player}', log_info=True)
 
     def do_add_map_to_rotation(self, map_name):
         return self._request(f"rotadd {map_name}", can_fail=False, log_info=True)
