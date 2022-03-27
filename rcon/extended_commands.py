@@ -148,7 +148,8 @@ class Rcon(ServerCtl):
             profile = steam_profiles.get(player.get("steam_id_64"), {}) or {}
             player["profile"] = profile
             player["is_vip"] = steam_id_64 in vips
-            player["country"] = profile.get("steaminfo", {}).get("country", "private")
+            steaminfo = profile.get("steaminfo", {}) or {}
+            player["country"] = steaminfo.get("country", "private")
             # TODO refresh ban info and store into DB to avoid IOs here
             player["steam_bans"] = get_player_has_bans(steam_id_64)
             teams.setdefault(player.get("team"), {}).setdefault(player.get("unit_name"), {}).setdefault("players", []).append(player)    
