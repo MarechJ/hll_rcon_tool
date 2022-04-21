@@ -101,7 +101,7 @@ class LoginBox extends React.Component {
   isLoggedIn() {
     return get("is_logged_in")
       .then((response) => response.json())
-      .then((res) => this.setState({ isLoggedIn: res.result }))
+      .then((res) => this.setState({ isLoggedIn: res.result.authenticated }))
       .catch(handle_http_errors);
   }
 

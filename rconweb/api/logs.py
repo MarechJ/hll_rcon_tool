@@ -14,7 +14,7 @@ from sqlalchemy import or_, and_
 
 
 @csrf_exempt
-@login_required
+@login_required()
 def get_historical_logs(request):
     data = _get_data(request)
     player_name = data.get("player_name")
@@ -59,7 +59,7 @@ def get_historical_logs(request):
                         "player2_name", "player2_id", "content", "server", "weapon"])
      
 @csrf_exempt
-@login_required
+@login_required()
 def get_recent_logs(request):
     data = _get_data(request)
     start = int(data.get("start", 0))

@@ -10,7 +10,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 logger = logging.getLogger('rcon')
 
-@login_required
+@login_required()
 @csrf_exempt
 def get_server_list(request):
     api_key = ApiKey()

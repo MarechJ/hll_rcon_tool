@@ -31,7 +31,7 @@ class DocumentForm(forms.Form):
 
 
 @csrf_exempt
-@login_required
+@login_required(True)
 def upload_vips(request):
     message = "Upload a VIP file!"
     send_to_discord_audit("upload_vips", request.user.username)
@@ -79,7 +79,7 @@ def upload_vips(request):
 
 
 @csrf_exempt
-@login_required
+@login_required(True)
 def async_upload_vips(request):
     errors = []
     send_to_discord_audit("upload_vips", request.user.username)
@@ -133,7 +133,7 @@ def async_upload_vips(request):
 
 
 @csrf_exempt
-@login_required
+@login_required(True)
 def async_upload_vips_result(request):
     return api_response(
         result=get_job_results(f"upload_vip_{os.getenv('SERVER_NUMBER')}"),
@@ -143,7 +143,7 @@ def async_upload_vips_result(request):
 
 
 @csrf_exempt
-@login_required
+@login_required(True)
 def download_vips(request):
     vips = ctl.get_vip_ids()
     response = HttpResponse(
@@ -166,7 +166,7 @@ def _get_real_vip_config():
 
 
 @csrf_exempt
-@login_required
+@login_required(True)
 def get_real_vip_config(request):
     error = None
     try:
@@ -182,7 +182,7 @@ def get_real_vip_config(request):
 
 
 @csrf_exempt
-@login_required
+@login_required(True)
 def set_real_vip_config(request):
     error = None
     data = _get_data(request)
