@@ -280,7 +280,7 @@ const Header = ({ classes }) => {
                         className={classes.link}
                         onClick={(e) => setAnchorElScores(e.currentTarget)}
                       >
-                        Score
+                        Stats
                       </Link>
                       <Menu
                         id="score-menu"
@@ -320,6 +320,17 @@ const Header = ({ classes }) => {
                         >
                           <MenuItem onClick={() => setAnchorElScores(null)}>
                             Games
+                          </MenuItem>
+                        </Link>
+                        <Link
+                          variant="button"
+                          color="inherit"
+                          className={classes.link}
+                          component={RouterLink}
+                          to="/server"
+                        >
+                          <MenuItem onClick={() => setAnchorElScores(null)}>
+                            Server
                           </MenuItem>
                         </Link>
                       </Menu>

@@ -656,6 +656,7 @@ try:
         require_perms = name not in MOD_ALLOWED_CMDS
 
         commands.append((name, wrap_method(func, inspect.signature(func).parameters, name, require_perms=require_perms)))
+    logger.info("Done Initializing endpoint")
 except:
     logger.exception("Failed to initialized endpoints - Most likely bad configuration")
     raise

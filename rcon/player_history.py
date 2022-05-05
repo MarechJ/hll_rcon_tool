@@ -19,7 +19,7 @@ from rcon.models import (
     PlayerFlag,
     WatchList,
     SteamInfo,
-    PlayerComment
+    PlayerComment,
 )
 
 from rcon.commands import CommandFailedError
@@ -77,6 +77,7 @@ def get_player_profile_by_ids(sess, ids):
         .all()
     )
 
+
 def get_player_profile_by_steam_ids(sess, steam_ids):
     eager_load = [
         PlayerSteamID.names,
@@ -95,7 +96,6 @@ def get_player_profile_by_steam_ids(sess, steam_ids):
     )
 
 
-
 def get_player_profile_by_id(id, nb_sessions):
     with enter_session() as sess:
         player = sess.query(PlayerSteamID).filter(PlayerSteamID.id == id).one_or_none()
@@ -103,8 +103,12 @@ def get_player_profile_by_id(id, nb_sessions):
             return
         return player.to_dict(limit_sessions=nb_sessions)
 
+
 def _get_profiles(sess, steam_ids, nb_sessions=0):
-    return sess.query(PlayerSteamID).filter(PlayerSteamID.steam_id_64.in_(steam_ids)).all()
+    return (
+        sess.query(PlayerSteamID).filter(PlayerSteamID.steam_id_64.in_(steam_ids)).all()
+    )
+
 
 
 def get_profiles(steam_ids, nb_sessions=1):
@@ -332,7 +336,9 @@ def safe_save_player_action(
         return False
 
 
-def save_start_player_session(steam_id_64, timestamp, server_name=None, server_number=None):
+def save_start_player_session(
+    steam_id_64, timestamp, server_name=None, server_number=None
+):
     server_name = server_name or os.getenv("SERVER_SHORT_NAME")
     server_number = server_number or os.getenv("SERVER_NUMBER")
 
@@ -346,7 +352,10 @@ def save_start_player_session(steam_id_64, timestamp, server_name=None, server_n
 
         sess.add(
             PlayerSession(
-                steamid=player, start=datetime.datetime.fromtimestamp(timestamp), server_name=server_name, server_number=server_number
+                steamid=player,
+                start=datetime.datetime.fromtimestamp(timestamp),
+                server_name=server_name,
+                server_number=server_number,
             )
         )
         logger.info(
@@ -468,7 +477,6 @@ def get_player_comments(steam_id_64):
     with enter_session() as sess:
         player = sess.query(PlayerSteamID).filter_by(steam_id_64=steam_id_64).one()
         return [c.to_dict() for c in player.comments]
-
 
 
 def post_player_comments(steam_id_64, comment, user="Bot"):
