@@ -1,20 +1,25 @@
 import inspect
 import logging
-import click
 import sys
 import time
+from datetime import datetime, timedelta
+from email.policy import default
+from operator import and_
+from tracemalloc import start
 
-from rcon.settings import SERVER_INFO
-from rcon.utils import ApiKey
+import click
+
+from rcon import auto_settings, broadcast, game_logs, routines, stats_loop
+from rcon.cache_utils import RedisCached, get_redis_pool
 from rcon.extended_commands import Rcon
-from rcon import game_logs, broadcast, stats_loop, auto_settings, routines
 from rcon.game_logs import LogLoop
 from rcon.models import init_db, install_unaccent
-from rcon.user_config import seed_default_config
-from rcon.cache_utils import RedisCached, get_redis_pool
 from rcon.scoreboard import live_stats_loop
+from rcon.settings import SERVER_INFO
 from rcon.steam_utils import enrich_db_users
 from rcon.server_stats import save_server_stats_since_inception, save_server_stats_for_last_hours
+from rcon.user_config import seed_default_config
+from rcon.utils import ApiKey
 
 logger = logging.getLogger(__name__)
 
@@ -140,10 +145,47 @@ def export_vips():
 
 def do_print(func):
     def wrap(*args, **kwargs):
+        from pprint import pprint
         res = func(*args, **kwargs)
-        print(res)
+        pprint(res)
         return res
     return wrap
+
+
+@cli.command(name="reprocess-games")
+@click.argument('start_day_offset', type=int)
+@click.option("--end-day-offset", type=int, default=0, help="The number of days relative to now at which you want the reprocessing to end. For example if you set 1, the reprocessing will stop at yesterday")
+@click.option("--force", is_flag=True, default=False, help="Set this flag if you want the existing stats to be overriden. Otherwise they will just log an error and we move on to the next")
+def process_games(start_day_offset, end_day_offset=0, force=False):
+    from sqlalchemy import and_
+    from sqlalchemy.exc import IntegrityError
+
+    from rcon.models import Maps, PlayerStats, enter_session
+    from rcon.workers import record_stats_from_map
+
+    start_date = datetime.now() - timedelta(days=start_day_offset)
+    start_date = start_date.replace(hour=0, minute=0, second=0, microsecond=0)
+    end_date = datetime.now() - timedelta(days=end_day_offset)
+    end_date = end_date.replace(hour=23, minute=59, second=59, microsecond=999)
+
+    print("Reprocessing date range: ", start_date, end_date)
+    with enter_session() as sess:
+        all_maps = sess.query(Maps).filter(and_(Maps.start > start_date, Maps.start < end_date)).all()
+        print("Found %s games to reprocess" % len(all_maps))
+        for map_ in all_maps:
+            print("Reprocessing map: ", map_.to_dict())
+            if force:
+                sess.query(PlayerStats).filter(PlayerStats.map_id == map_.id).delete()
+                sess.commit()
+            try:
+                record_stats_from_map(sess, map_)
+                sess.commit()
+                print("Done")
+            except IntegrityError as e:
+                sess.rollback()
+                #logger.exception("Failed")
+                print("Can't re-process stats. Probably already exist. Set force flag to override. Error msg: ", repr(e))
+                continue
 
 
 PREFIXES_TO_EXPOSE = [

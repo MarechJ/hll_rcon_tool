@@ -1,6 +1,7 @@
 import { makeStyles } from "@material-ui/core/styles";
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles(theme => {
+  return {
   root: {
     flexGrow: 1
   },
@@ -192,6 +193,9 @@ const useStyles = makeStyles(theme => ({
   selectEmpty: {
     marginTop: theme.spacing(2),
   },
-}));
+  alignRight: {
+    textAlign: "right"
+  },
+}});
 
 export default useStyles;

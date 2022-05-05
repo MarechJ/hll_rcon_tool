@@ -4,16 +4,16 @@ import Grid from "@material-ui/core/Grid";
 import AppBar from "@material-ui/core/AppBar";
 import Toolbar from "@material-ui/core/Toolbar";
 import Link from "@material-ui/core/Link";
-import {Link as RouterLink} from "react-router-dom";
+import { Link as RouterLink } from "react-router-dom";
 import TextField from "@material-ui/core/TextField";
 import Button from "@material-ui/core/Button";
 import ServerStatus from "./serverStatus";
-import {get, handle_http_errors, postData, showResponse,} from "../../utils/fetchUtils";
+import { get, handle_http_errors, postData, showResponse, } from "../../utils/fetchUtils";
 import Dialog from "@material-ui/core/Dialog";
 import DialogActions from "@material-ui/core/DialogActions";
 import DialogContent from "@material-ui/core/DialogContent";
 import DialogTitle from "@material-ui/core/DialogTitle";
-import {throttle} from "lodash/function";
+import { throttle } from "lodash/function";
 import Menu from "@material-ui/core/Menu";
 import MenuItem from "@material-ui/core/MenuItem";
 
@@ -101,7 +101,7 @@ class LoginBox extends React.Component {
   isLoggedIn() {
     return get("is_logged_in")
       .then((response) => response.json())
-      .then((res) => this.setState({ isLoggedIn: res.result }))
+      .then((res) => this.setState({ isLoggedIn: res.result.authenticated }))
       .catch(handle_http_errors);
   }
 
@@ -160,6 +160,7 @@ class LoginBox extends React.Component {
 const Header = ({ classes }) => {
   const [anchorEl, setAnchorEl] = React.useState(null);
   const [anchorElScores, setAnchorElScores] = React.useState(null);
+  const [anchorElLive, setAnchorElLive] = React.useState(null);
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
   };
@@ -186,11 +187,41 @@ const Header = ({ classes }) => {
                         variant="button"
                         color="inherit"
                         className={classes.firstLink}
-                        component={RouterLink}
-                        to="/"
+                        onClick={(e) => setAnchorElLive(e.currentTarget)}
                       >
                         Live
                       </Link>
+                      <Menu
+                        id="live-menu"
+                        anchorEl={anchorElLive}
+                        keepMounted
+                        open={Boolean(anchorElLive)}
+                        onClose={() => setAnchorElLive(null)}
+                      >
+                        <Link
+                          variant="button"
+                          color="inherit"
+                          
+                          component={RouterLink}
+                          to="/"
+                        >
+                          <MenuItem onClick={() => setAnchorElLive(null)}>
+                            Live
+                          </MenuItem>
+                        </Link>
+                        <Link
+                          variant="button"
+                          color="inherit"
+                          
+                          component={RouterLink}
+                          to="/gameview"
+                        >
+                          <MenuItem onClick={() => setAnchorElLive(null)}>
+                            Game view
+                          </MenuItem>
+                        </Link>
+
+                      </Menu>
                       <Link
                         variant="button"
                         color="inherit"
@@ -206,34 +237,33 @@ const Header = ({ classes }) => {
                         open={Boolean(anchorEl)}
                         onClose={handleClose}
                       >
-                        <MenuItem onClick={handleClose}>
-                          <Link
-                            color="inherit"
-                            component={RouterLink}
-                            to="/history"
-                          >
+                        <Link
+                          color="inherit"
+                          component={RouterLink}
+                          to="/history"
+                        >
+                          <MenuItem onClick={handleClose}>
                             Players
-                          </Link>
-                        </MenuItem>
-                        <MenuItem onClick={handleClose}>
-
-                          <Link
-                            color="inherit"
-                            component={RouterLink}
-                            to="/logs"
-                          >
+                          </MenuItem>
+                        </Link>
+                        <Link
+                          color="inherit"
+                          component={RouterLink}
+                          to="/logs"
+                        >
+                          <MenuItem onClick={handleClose}>
                             Logs
-                          </Link>
-                        </MenuItem>
-                        <MenuItem onClick={handleClose}>
-                          <Link
-                            color="inherit"
-                            component={RouterLink}
-                            to="/combined_history"
-                          >
+                          </MenuItem>
+                        </Link>
+                        <Link
+                          color="inherit"
+                          component={RouterLink}
+                          to="/combined_history"
+                        >
+                          <MenuItem onClick={handleClose}>
                             Combined
-                          </Link>
-                        </MenuItem>
+                          </MenuItem>
+                        </Link>
                       </Menu>
                       <Link
                         variant="button"
@@ -259,50 +289,50 @@ const Header = ({ classes }) => {
                         open={Boolean(anchorElScores)}
                         onClose={() => setAnchorElScores(null)}
                       >
-                        <MenuItem onClick={() => setAnchorElScores(null)}>
-                          <Link
-                            variant="button"
-                            color="inherit"
-                            className={classes.link}
-                            component={RouterLink}
-                            to="/livescore"
-                          >
+                        <Link
+                          variant="button"
+                          color="inherit"
+                          
+                          component={RouterLink}
+                          to="/livescore"
+                        >
+                          <MenuItem onClick={() => setAnchorElScores(null)}>
                             Live Sessions
-                          </Link>
-                        </MenuItem>
-                        <MenuItem onClick={() => setAnchorElScores(null)}>
-                          <Link
-                            variant="button"
-                            color="inherit"
-                            className={classes.link}
-                            component={RouterLink}
-                            to="/livegamescore"
-                          >
+                          </MenuItem>
+                        </Link>
+                        <Link
+                          variant="button"
+                          color="inherit"
+                          
+                          component={RouterLink}
+                          to="/livegamescore"
+                        >
+                          <MenuItem onClick={() => setAnchorElScores(null)}>
                             Live Game
-                          </Link>
-                        </MenuItem>
-                        <MenuItem onClick={() => setAnchorElScores(null)}>
-                          <Link
-                            variant="button"
-                            color="inherit"
-                            className={classes.link}
-                            component={RouterLink}
-                            to="/gamescoreboard"
-                          >
+                          </MenuItem>
+                        </Link>
+                        <Link
+                          variant="button"
+                          color="inherit"
+                          
+                          component={RouterLink}
+                          to="/gamescoreboard"
+                        >
+                          <MenuItem onClick={() => setAnchorElScores(null)}>
                             Games
-                          </Link>
-                        </MenuItem>
-                        <MenuItem onClick={() => setAnchorElScores(null)}>
-                          <Link
-                            variant="button"
-                            color="inherit"
-                            className={classes.link}
-                            component={RouterLink}
-                            to="/server"
-                          >
+                          </MenuItem>
+                        </Link>
+                        <Link
+                          variant="button"
+                          color="inherit"
+                          className={classes.link}
+                          component={RouterLink}
+                          to="/server"
+                        >
+                          <MenuItem onClick={() => setAnchorElScores(null)}>
                             Server
-                          </Link>
-                        </MenuItem>
+                          </MenuItem>
+                        </Link>
                       </Menu>
 
                       <LoginBox classes={classes} component={RouterLink} />

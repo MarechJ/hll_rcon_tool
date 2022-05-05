@@ -19,6 +19,7 @@ COPY rcongui/public/ public/
 
 
 COPY .git/ .git/
+RUN npx browserslist@latest --update-db
 # Normal build
 RUN npm run build
 

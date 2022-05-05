@@ -23,6 +23,7 @@ logger = logging.getLogger("rconweb")
 
 
 @csrf_exempt
+#@login_required()
 def get_map_history(request):
     data = _get_data(request)
     res = MapsHistory()[:]
@@ -45,7 +46,7 @@ def get_map_history(request):
 
 
 @csrf_exempt
-@login_required
+@login_required()
 def get_player(request):
     data = _get_data(request)
     res = {}
@@ -73,7 +74,7 @@ def get_player(request):
 
 
 @csrf_exempt
-@login_required
+@login_required()
 def flag_player(request):
     data = _get_data(request)
     res = None
@@ -104,7 +105,7 @@ def flag_player(request):
 
 
 @csrf_exempt
-@login_required
+@login_required()
 def unflag_player(request):
     # Note is this really not restful
     data = _get_data(request)
@@ -129,7 +130,7 @@ def unflag_player(request):
 
 
 @csrf_exempt
-@login_required
+@login_required()
 def players_history(request):
     try:
         data = json.loads(request.body)
@@ -176,7 +177,7 @@ def players_history(request):
 
 
 @csrf_exempt
-@login_required
+@login_required()
 def get_player_comment(request):
     data = _get_data(request)
     res = None
@@ -192,7 +193,7 @@ def get_player_comment(request):
     )
 
 @csrf_exempt
-@login_required
+@login_required()
 def post_player_comment(request):
     try:
         data = json.loads(request.body)

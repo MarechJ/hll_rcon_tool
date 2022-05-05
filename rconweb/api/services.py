@@ -26,7 +26,7 @@ def get_supervisor_client():
 
 
 @csrf_exempt
-@login_required
+@login_required(True)
 def get_services(request):
     info = {
         "broadcasts": "The automatic broadcasts.",
@@ -45,7 +45,7 @@ def get_services(request):
     )
 
 @csrf_exempt
-@login_required
+@login_required(True)
 def do_service(request):
     data = _get_data(request)
     client = get_supervisor_client()

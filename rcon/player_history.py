@@ -110,6 +110,7 @@ def _get_profiles(sess, steam_ids, nb_sessions=0):
     )
 
 
+
 def get_profiles(steam_ids, nb_sessions=1):
     with enter_session() as sess:
         players = _get_profiles(sess, steam_ids, nb_sessions)
