@@ -784,6 +784,18 @@ class Rcon(ServerCtl):
             return super().do_ban_profanities(",".join(profanities))
 
     @mod_users_allowed
+    def do_punish(self, player, reason):
+        return super().do_punish(player, reason)
+    
+    @mod_users_allowed
+    def do_switch_player_now(self, player):
+        return super().do_switch_player_now(player)
+    
+    @mod_users_allowed
+    def do_switch_player_on_death(self, player):
+        return super().do_switch_player_on_death(player)
+
+    @mod_users_allowed
     def do_kick(self, player, reason):
         with invalidates(Rcon.get_players):
             return super().do_kick(player, reason)
