@@ -1,23 +1,24 @@
-from datetime import datetime, timedelta
-from email.policy import default
 import inspect
 import logging
-from operator import and_
-from tracemalloc import start
-import click
 import sys
 import time
+from datetime import datetime, timedelta
+from email.policy import default
+from operator import and_
+from tracemalloc import start
 
-from rcon.settings import SERVER_INFO
-from rcon.utils import ApiKey
+import click
+
+from rcon import auto_settings, broadcast, game_logs, routines, stats_loop
+from rcon.cache_utils import RedisCached, get_redis_pool
 from rcon.extended_commands import Rcon
-from rcon import game_logs, broadcast, stats_loop, auto_settings, routines
 from rcon.game_logs import LogLoop
 from rcon.models import init_db, install_unaccent
-from rcon.user_config import seed_default_config
-from rcon.cache_utils import RedisCached, get_redis_pool
 from rcon.scoreboard import live_stats_loop
+from rcon.settings import SERVER_INFO
 from rcon.steam_utils import enrich_db_users
+from rcon.user_config import seed_default_config
+from rcon.utils import ApiKey
 
 logger = logging.getLogger(__name__)
 
@@ -134,8 +135,9 @@ def export_vips():
 
 def do_print(func):
     def wrap(*args, **kwargs):
+        from pprint import pprint
         res = func(*args, **kwargs)
-        print(res)
+        pprint(res)
         return res
     return wrap
 
@@ -145,10 +147,11 @@ def do_print(func):
 @click.option("--end-day-offset", type=int, default=0, help="The number of days relative to now at which you want the reprocessing to end. For example if you set 1, the reprocessing will stop at yesterday")
 @click.option("--force", is_flag=True, default=False, help="Set this flag if you want the existing stats to be overriden. Otherwise they will just log an error and we move on to the next")
 def process_games(start_day_offset, end_day_offset=0, force=False):
-    from rcon.models import enter_session, Maps, PlayerStats
     from sqlalchemy import and_
-    from rcon.workers import record_stats_from_map
     from sqlalchemy.exc import IntegrityError
+
+    from rcon.models import Maps, PlayerStats, enter_session
+    from rcon.workers import record_stats_from_map
 
     start_date = datetime.now() - timedelta(days=start_day_offset)
     start_date = start_date.replace(hour=0, minute=0, second=0, microsecond=0)
