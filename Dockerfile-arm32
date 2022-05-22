@@ -1,7 +1,9 @@
 FROM arm32v7/python:3.8.12-bullseye
 
 WORKDIR /code
-RUN apt-get update -y && apt-get install -y cron logrotate cargo
+RUN apt-get update -y && apt-get install -y cron logrotate
+RUN curl https://sh.rustup.rs -sSf | nohup sh -s -- -y
+ENV PATH="/root/.cargo/bin:${PATH}"
 COPY requirements.txt .
 RUN pip install -U pip
 RUN pip install -r requirements.txt
