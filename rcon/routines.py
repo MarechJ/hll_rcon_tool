@@ -4,8 +4,7 @@ import time
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from faulthandler import disable
-from typing import List
+from typing import List, Mapping
 
 import redis
 
@@ -46,12 +45,10 @@ def toggle_votekick(rcon: RecordedRcon):
         )
         rcon.set_votekick_enabled(True)
 
-
 @dataclass
 class WatchStatus:
     warned: List[datetime] = field(default_factory=list)
-    punished: List[datetime] = field(default_factory=dict)
-
+    punished: Mapping[str, List[datetime]] = field(default_factory=dict)
 
 from enum import Enum, auto
 
@@ -80,12 +77,16 @@ class NoLeaderConfig:
     kick_after_max_punish: bool = False
     disable_kick_below_server_player_count: int = 60
     min_squad_players_for_kick: int = 3
+    kick_grace_period_seconds: int = 120
     # roles: 'officer', 'antitank', 'automaticrifleman', 'assault', 'heavymachinegunner', 'support', 'sniper', 'spotter', 'rifleman', 'crewman', 'tankcommander', 'engineer', 'medic'
     immuned_roles: List[str] = field(default_factory=lambda: ["support", "sniper"])
     immuned_level_up_to: int = 15
 
 
 class SquadHasLeader(Exception):
+    pass
+
+class SquadCycleOver(Exception):
     pass
 
 
@@ -101,8 +102,8 @@ def watch_state(red: redis.StrictRedis, team: str, squad_name: str):
 
     try:
         yield watch_status
-    except SquadHasLeader:
-        # logger.debug("Squad %s - %s has a leader, clearing state", team, squad_name)
+    except (SquadHasLeader, SquadCycleOver):
+        logger.debug("Squad %s - %s has a leader, clearing state", team, squad_name)
         red.delete(redis_key)
     else:
         # logger.debug("Saving watch status: %s %s", redis_key, watch_status)
@@ -112,57 +113,66 @@ def watch_state(red: redis.StrictRedis, team: str, squad_name: str):
 def num_or_inf(number):
     return "infinity" if number == -1 else number
 
+
 def is_time(times: List[datetime], interval_seconds: int):
     try:
         last_time = times[-1]
     except IndexError:
         last_time = datetime(year=1988, month=1, day=1)
-    
+
     if datetime.now() - last_time < timedelta(seconds=interval_seconds):
         return False
     return True
 
 
 def should_warn_squad(watch_status: WatchStatus, config: NoLeaderConfig, team, squad_name):
-    # We first check if warnings have been issues
     if config.number_of_warning == 0:
+        logger.debug("Warnings are disabled. number_of_warning is set to 0")
         return PunishStepState.disabled
 
-    if not is_time(watch_status.warned, config.warning_interval_seconds):
+    warnings = watch_status.warned
+
+    if not is_time(warnings, config.warning_interval_seconds):
+        logger.info("Waiting to warn: %s", squad_name)
         return PunishStepState.wait
 
-    if len(watch_status.warned) < config.number_of_warning or config.number_of_warning == -1:
+    if len(warnings) < config.number_of_warning or config.number_of_warning == -1:
         logger.info(
             "Warning squad %s - %s. got %s/%s warning at time: %s",
             team,
             squad_name,
-            len(watch_status.warned),
+            len(warnings),
             num_or_inf(config.number_of_warning),
             watch_status.warned,
         )
 
-        watch_status.warned.append(datetime.now())
+        warnings.append(datetime.now())
         return PunishStepState.apply
 
     logger.info(
         "Squad %s - %s already got warned %s times. Moving on to punish.",
         team,
         squad_name,
-        len(watch_status.warned),
+        len(warnings),
     )
     return PunishStepState.go_to_next_step
 
 
-def should_punish_player(watch_status: WatchStatus, config: NoLeaderConfig, team_view, team, squad_name, squad, player):
+def should_punish_player(
+    watch_status: WatchStatus, config: NoLeaderConfig, team_view, team, squad_name, squad, player
+):
     if config.number_of_punish == 0:
         return PunishStepState.disabled
 
-    if len(team_view["allies"]) + len(team_view["axis"]) < config.disable_punish_below_server_player_count:
+    if (
+        len(team_view["allies"]) + len(team_view["axis"])
+        < config.disable_punish_below_server_player_count
+    ):
         return PunishStepState.wait
 
     if len(squad["players"]) < config.min_squad_players_for_punish:
         return PunishStepState.wait
-    
+
     if (
         int(player["level"]) <= config.immuned_level_up_to
         or player["role"] in config.immuned_roles
@@ -174,11 +184,11 @@ def should_punish_player(watch_status: WatchStatus, config: NoLeaderConfig, team
             player["role"],
         )
         return PunishStepState.immuned
-    
+
     punishes = watch_status.punished.setdefault(player["name"], [])
-    
+
     if not is_time(punishes, config.punish_interval_seconds):
-        return PunishStepState.wait    
+        return PunishStepState.wait
 
     if len(punishes) < config.number_of_punish or config.number_of_punish == -1:
         logger.info(
@@ -203,13 +213,56 @@ def should_punish_player(watch_status: WatchStatus, config: NoLeaderConfig, team
     return PunishStepState.go_to_next_step
 
 
+def should_kick_player(
+    watch_status: WatchStatus, config: NoLeaderConfig, team_view, team, squad_name, squad, player
+):
+    if not config.kick_after_max_punish:
+        return PunishStepState.disabled
+
+    if (
+        len(team_view["allies"]) + len(team_view["axis"])
+        < config.disable_kick_below_server_player_count
+    ):
+        return PunishStepState.wait
+
+    if len(squad["players"]) < config.min_squad_players_for_kick:
+        return PunishStepState.wait
+
+    if (
+        int(player["level"]) <= config.immuned_level_up_to
+        or player["role"] in config.immuned_roles
+    ):
+        logger.info(
+            "Player: %s Level: %s Role: %s is immuned to punishment",
+            player["name"],
+            player["level"],
+            player["role"],
+        )
+        return PunishStepState.immuned
+
+    try:
+        last_time = watch_status.punished.get(player["name"], [])[-1]
+    except IndexError:
+        logger.error("Trying to kick player without prior punishes")
+        return PunishStepState.disabled
+
+    if datetime.now() - last_time < timedelta(seconds=config.kick_grace_period_seconds):
+        return PunishStepState.wait
+
+    return PunishStepState.apply
+
+@dataclass
+class PunitionsToApply:
+    warning: Mapping[str, List[str]] = field(default_factory=lambda: {"allies": [], "axis": []})
+    punish: List[str] = field(default_factory=list)
+    kick: List[str] = field(default_factory=list)
+
+
 def punish_squads_without_leaders(rcon, config: NoLeaderConfig):
     logger.debug("Getting team info")
     team_view = rcon.get_team_view_fast()
     red = get_redis_client()
-    to_warn = {"allies": [], "axis": []}
-    to_punish = []
-    to_kick = []
+    punitions_to_apply = PunitionsToApply()
 
     logger.debug("Started watch round")
     for team in ["allies", "axis"]:
@@ -220,27 +273,27 @@ def punish_squads_without_leaders(rcon, config: NoLeaderConfig):
 
                 logger.info("Squad %s - %s doesn't have leader", team, squad_name)
 
-                state = should_warn_squad(
-                    watch_status, config, team_view, team, squad_name, squad
-                )
+                state = should_warn_squad(watch_status, config, team, squad_name)
+
+                if state == PunishStepState.apply:
+                    punitions_to_apply.warning[team].append(squad_name)
+                if state != PunishStepState.go_to_next_step:
+                    continue
+
+                for player in squad["players"]:
+                    state = should_punish_player(watch_status, config, team_view, team, squad_name, squad, player)
+
+                    if state == PunishStepState.apply:
+                        punitions_to_apply.punish.append(player["name"])
+                    if state != PunishStepState.go_to_next_step:
+                        continue
+
+                    state = should_kick_player(watch_status, config, team_view, team, squad_name, squad, player)
+                    if state == PunishStepState.apply:
+                        punitions_to_apply.kick.append(player["name"])               
                 
 
-                
-
-                for player in squad["players"]:  
-                    if config.kick_after_max_punish:
-                        logger.info(
-                            "Player: %s will be kicked",
-                            player["name"],
-                        )
-                        to_kick.append(player["name"])
-                    else:
-                        logger.info(
-                            "Kicking players disabled not kicking player: %s",
-                            player["name"],
-                        )
-                   
-                       
+    return punitions_to_apply
 
 
 LEADER_WATCH_RESET_SECS = 60 * 10

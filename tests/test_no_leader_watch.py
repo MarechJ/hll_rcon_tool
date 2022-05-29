@@ -1,10 +1,19 @@
 import time
+from contextlib import contextmanager
+from datetime import datetime
+from textwrap import wrap
+from unittest import mock
 
 from pytest import fixture
 from rcon.routines import (
     NoLeaderConfig,
     PunishStepState,
+    PunitionsToApply,
+    SquadCycleOver,
+    SquadHasLeader,
     WatchStatus,
+    punish_squads_without_leaders,
+    should_kick_player,
     should_punish_player,
     should_warn_squad,
     watch_state,
@@ -57,7 +66,7 @@ def team_view():
                             "defense": 600,
                             "is_vip": False,
                             "kills": 7,
-                            "level": 122,
+                            "level": 20,
                             "loadout": "standard issue",
                             "name": "xRONINx6",
                             "offense": 100,
@@ -361,7 +370,7 @@ def team_view():
                     "combat": 304,
                     "deaths": 60,
                     "defense": 1780,
-                    "has_leader": True,
+                    "has_leader": False,
                     "kills": 33,
                     "offense": 780,
                     "players": [
@@ -472,7 +481,7 @@ def team_view():
                             "defense": 40,
                             "is_vip": False,
                             "kills": 4,
-                            "level": 29,
+                            "level": 10,
                             "loadout": "standard issue",
                             "name": "Dr.FishShitz",
                             "offense": 40,
@@ -493,7 +502,7 @@ def team_view():
                     "combat": 135,
                     "deaths": 10,
                     "defense": 600,
-                    "has_leader": True,
+                    "has_leader": False,
                     "kills": 12,
                     "offense": 960,
                     "players": [
@@ -619,6 +628,7 @@ def test_punish_wait(team_view):
         punish_interval_seconds=60,
         min_squad_players_for_punish=0,
         disable_punish_below_server_player_count=0,
+        immuned_level_up_to=10,
         immuned_roles=[],
     )
 
@@ -649,6 +659,7 @@ def test_punish_twice(team_view):
         punish_interval_seconds=1,
         min_squad_players_for_punish=0,
         disable_punish_below_server_player_count=0,
+        immuned_level_up_to=10,
         immuned_roles=[],
     )
 
@@ -699,6 +710,7 @@ def test_punish_too_little_players(team_view):
         punish_interval_seconds=60,
         min_squad_players_for_punish=0,
         disable_punish_below_server_player_count=60,
+        immuned_level_up_to=10,
         immuned_roles=[],
     )
 
@@ -720,6 +732,7 @@ def test_punish_small_squad(team_view):
         punish_interval_seconds=60,
         min_squad_players_for_punish=7,
         disable_punish_below_server_player_count=0,
+        immuned_level_up_to=10,
         immuned_roles=[],
     )
 
@@ -735,12 +748,14 @@ def test_punish_small_squad(team_view):
     )
 
 
+
 def test_punish_disabled(team_view):
     config = NoLeaderConfig(
         number_of_punish=0,
         punish_interval_seconds=0,
         min_squad_players_for_punish=0,
         disable_punish_below_server_player_count=0,
+        immuned_level_up_to=10,
         immuned_roles=[],
     )
 
@@ -756,12 +771,13 @@ def test_punish_disabled(team_view):
     )
 
 
-def test_punish_immuned(team_view):
+def test_punish_immuned_role(team_view):
     config = NoLeaderConfig(
         number_of_punish=2,
         punish_interval_seconds=0,
         min_squad_players_for_punish=0,
         disable_punish_below_server_player_count=0,
+        immuned_level_up_to=10,
         immuned_roles=["antitank"],
     )
 
@@ -781,6 +797,7 @@ def test_punish_immuned(team_view):
         punish_interval_seconds=0,
         min_squad_players_for_punish=0,
         disable_punish_below_server_player_count=0,
+        immuned_level_up_to=10,
         immuned_roles=["antitank", "support"],
     )
 
@@ -794,3 +811,406 @@ def test_punish_immuned(team_view):
         team_view["allies"]["squads"]["able"],
         team_view["allies"]["squads"]["able"]["players"][0],
     )
+
+
+def test_punish_immuned_lvl(team_view):
+    config = NoLeaderConfig(
+        number_of_punish=2,
+        punish_interval_seconds=0,
+        min_squad_players_for_punish=0,
+        disable_punish_below_server_player_count=0,
+        immuned_level_up_to=50,
+        immuned_roles=[],
+    )
+
+    watch_status = WatchStatus()
+    assert PunishStepState.immuned == should_punish_player(
+        watch_status,
+        config,
+        team_view,
+        "allies",
+        "able",
+        team_view["allies"]["squads"]["able"],
+        team_view["allies"]["squads"]["able"]["players"][0],
+    )
+
+
+def test_shouldnt_kick_without_punish(team_view):
+    config = NoLeaderConfig(
+        kick_after_max_punish=True,
+        kick_grace_period_seconds=0,
+        min_squad_players_for_kick=0,
+        disable_kick_below_server_player_count=0,
+        immuned_level_up_to=10,
+        immuned_roles=["support"],
+    )
+
+    watch_status = WatchStatus()
+    player = team_view["allies"]["squads"]["able"]["players"][0]
+    assert PunishStepState.disabled == should_kick_player(
+        watch_status,
+        config,
+        team_view,
+        "allies",
+        "able",
+        team_view["allies"]["squads"]["able"],
+        player,
+    )
+    watch_status.punished.setdefault(player["name"], []).append(datetime.now())
+    assert PunishStepState.apply == should_kick_player(
+        watch_status,
+        config,
+        team_view,
+        "allies",
+        "able",
+        team_view["allies"]["squads"]["able"],
+        player,
+    )
+
+
+def test_shouldnt_kick_immuned(team_view):
+    config = NoLeaderConfig(
+        kick_after_max_punish=True,
+        kick_grace_period_seconds=0,
+        min_squad_players_for_kick=0,
+        disable_kick_below_server_player_count=0,
+        immuned_level_up_to=10,
+        immuned_roles=["antitank"],
+    )
+    watch_status = WatchStatus()
+    player = team_view["allies"]["squads"]["able"]["players"][0]
+    watch_status.punished.setdefault(player["name"], []).append(datetime.now())
+
+    assert PunishStepState.immuned == should_kick_player(
+        watch_status,
+        config,
+        team_view,
+        "allies",
+        "able",
+        team_view["allies"]["squads"]["able"],
+        player,
+    )
+
+
+def test_shouldnt_kick_immuned_lvl(team_view):
+    config = NoLeaderConfig(
+        kick_after_max_punish=True,
+        kick_grace_period_seconds=0,
+        min_squad_players_for_kick=0,
+        disable_kick_below_server_player_count=0,
+        immuned_level_up_to=50,
+        immuned_roles=[],
+    )
+    watch_status = WatchStatus()
+    player = team_view["allies"]["squads"]["able"]["players"][0]
+    watch_status.punished.setdefault(player["name"], []).append(datetime.now())
+
+    assert PunishStepState.immuned == should_kick_player(
+        watch_status,
+        config,
+        team_view,
+        "allies",
+        "able",
+        team_view["allies"]["squads"]["able"],
+        player,
+    )
+
+
+def test_shouldnt_kick_small_squad(team_view):
+    config = NoLeaderConfig(
+        kick_after_max_punish=True,
+        kick_grace_period_seconds=0,
+        min_squad_players_for_kick=7,
+        disable_kick_below_server_player_count=0,
+        immuned_level_up_to=10,
+        immuned_roles=[],
+    )
+    watch_status = WatchStatus()
+    player = team_view["allies"]["squads"]["able"]["players"][0]
+    watch_status.punished.setdefault(player["name"], []).append(datetime.now())
+
+    assert PunishStepState.wait == should_kick_player(
+        watch_status,
+        config,
+        team_view,
+        "allies",
+        "able",
+        team_view["allies"]["squads"]["able"],
+        player,
+    )
+
+
+def test_shouldnt_kick_small_game(team_view):
+    config = NoLeaderConfig(
+        kick_after_max_punish=True,
+        kick_grace_period_seconds=0,
+        min_squad_players_for_kick=0,
+        disable_kick_below_server_player_count=50,
+        immuned_level_up_to=10,
+        immuned_roles=[],
+    )
+    watch_status = WatchStatus()
+    player = team_view["allies"]["squads"]["able"]["players"][0]
+    watch_status.punished.setdefault(player["name"], []).append(datetime.now())
+
+    assert PunishStepState.wait == should_kick_player(
+        watch_status,
+        config,
+        team_view,
+        "allies",
+        "able",
+        team_view["allies"]["squads"]["able"],
+        player,
+    )
+
+
+def test_shouldnt_kick_disabled(team_view):
+    config = NoLeaderConfig(
+        kick_after_max_punish=False,
+        kick_grace_period_seconds=0,
+        min_squad_players_for_kick=0,
+        disable_kick_below_server_player_count=0,
+        immuned_level_up_to=10,
+        immuned_roles=[],
+    )
+    watch_status = WatchStatus()
+    player = team_view["allies"]["squads"]["able"]["players"][0]
+    watch_status.punished.setdefault(player["name"], []).append(datetime.now())
+
+    assert PunishStepState.disabled == should_kick_player(
+        watch_status,
+        config,
+        team_view,
+        "allies",
+        "able",
+        team_view["allies"]["squads"]["able"],
+        player,
+    )
+
+
+def test_should_wait_kick(team_view):
+    config = NoLeaderConfig(
+        kick_after_max_punish=True,
+        kick_grace_period_seconds=1,
+        min_squad_players_for_kick=0,
+        disable_kick_below_server_player_count=0,
+        immuned_level_up_to=10,
+        immuned_roles=[],
+    )
+    watch_status = WatchStatus()
+    player = team_view["allies"]["squads"]["able"]["players"][0]
+    watch_status.punished.setdefault(player["name"], []).append(datetime.now())
+
+    assert PunishStepState.wait == should_kick_player(
+        watch_status,
+        config,
+        team_view,
+        "allies",
+        "able",
+        team_view["allies"]["squads"]["able"],
+        player,
+    )
+    assert PunishStepState.wait == should_kick_player(
+        watch_status,
+        config,
+        team_view,
+        "allies",
+        "able",
+        team_view["allies"]["squads"]["able"],
+        player,
+    )
+    time.sleep(1)
+    assert PunishStepState.apply == should_kick_player(
+        watch_status,
+        config,
+        team_view,
+        "allies",
+        "able",
+        team_view["allies"]["squads"]["able"],
+        player,
+    )
+
+
+def test_watcher(team_view):
+    config = NoLeaderConfig(
+        number_of_warning=1,
+        warning_interval_seconds=3,
+        number_of_punish=2,
+        punish_interval_seconds=4,
+        min_squad_players_for_punish=0,
+        disable_punish_below_server_player_count=0,
+        kick_after_max_punish=True,
+        kick_grace_period_seconds=1,
+        min_squad_players_for_kick=0,
+        disable_kick_below_server_player_count=0,
+        immuned_level_up_to=10,
+        immuned_roles=[],
+    )
+
+    state = {}
+
+    @contextmanager
+    def fake_state(red, team, squad_name):
+        try:
+            yield state.setdefault(f"{team}{squad_name}", WatchStatus())
+        except (SquadCycleOver, SquadHasLeader):
+            del state[f"{team}{squad_name}"]
+            
+    with mock.patch("rcon.routines.watch_state", wraps=fake_state), mock.patch(
+        "rcon.routines.get_redis_client"
+    ):
+        rcon = mock.MagicMock()
+        rcon.get_team_view_fast.return_value = team_view
+        expected_players = [
+                "Lawless",
+                "Major_Winters",
+                "Toomz",
+                "Zones (BEL)",
+                "Pavooloni",
+                "Kjjuj",
+                "emfoor",
+                "Makaj",
+                "tinner2115",
+                "Cuervo",
+                "capitanodrew",
+                # lvl 1- should be excluded
+                # "Dr.FishShitz",
+                "WilliePeter",
+                "DarkVisionary",
+            ]
+
+        # 1st warning
+        assert PunitionsToApply(
+            warning={"allies": ["baker"], "axis": ["able", "baker"]}, punish=[], kick=[]
+        ) == punish_squads_without_leaders(rcon, config)
+        assert PunitionsToApply(
+            warning={"allies": [], "axis": []}, punish=[], kick=[]
+        ) == punish_squads_without_leaders(rcon, config)
+        time.sleep(config.warning_interval_seconds)
+        
+        # 1st punish
+        assert PunitionsToApply(
+            warning={"allies": [], "axis": []},
+            punish=expected_players,
+            kick=[],
+        ) == punish_squads_without_leaders(rcon, config)
+        assert PunitionsToApply(
+            warning={"allies": [], "axis": []}, punish=[], kick=[]
+        ) == punish_squads_without_leaders(rcon, config)
+        time.sleep(config.punish_interval_seconds)
+        
+        # 2nd punsi
+        assert PunitionsToApply(
+            warning={"allies": [], "axis": []},
+            punish=expected_players,
+            kick=[],
+        ) == punish_squads_without_leaders(rcon, config)
+        assert PunitionsToApply(
+            warning={"allies": [], "axis": []}, punish=[], kick=[]
+        ) == punish_squads_without_leaders(rcon, config)
+        time.sleep(config.punish_interval_seconds)
+
+        # kick, final
+        assert PunitionsToApply(
+            warning={"allies": [], "axis": []},
+            kick=expected_players,
+            punish=[],
+        ) == punish_squads_without_leaders(rcon, config)
+
+        # State should be clear
+        #assert PunitionsToApply(
+        #    warning={"allies": [], "axis": []}, punish=[], kick=[]
+        #) == punish_squads_without_leaders(rcon, config)
+
+
+
+def test_watcher_2(team_view):
+    config = NoLeaderConfig(
+        number_of_warning=1,
+        warning_interval_seconds=3,
+        number_of_punish=2,
+        punish_interval_seconds=4,
+        min_squad_players_for_punish=3,
+        disable_punish_below_server_player_count=0,
+        kick_after_max_punish=True,
+        kick_grace_period_seconds=1,
+        min_squad_players_for_kick=3,
+        disable_kick_below_server_player_count=0,
+        immuned_level_up_to=1,
+        immuned_roles=[],
+    )
+
+    state = {}
+
+    @contextmanager
+    def fake_state(red, team, squad_name):
+        try:
+            yield state.setdefault(f"{team}{squad_name}", WatchStatus())
+        except (SquadCycleOver, SquadHasLeader):
+            del state[f"{team}{squad_name}"]
+
+
+    with mock.patch("rcon.routines.watch_state", wraps=fake_state), mock.patch(
+        "rcon.routines.get_redis_client"
+    ):
+        rcon = mock.MagicMock()
+        rcon.get_team_view_fast.return_value = team_view
+        expected_players = [
+                "Lawless",
+                "Major_Winters",
+                "Toomz",
+                "Zones (BEL)",
+                "Pavooloni",
+                "Kjjuj",
+                "emfoor",
+                "Makaj",
+                "tinner2115",
+                "Cuervo",
+                "capitanodrew",
+                "Dr.FishShitz",
+                # "WilliePeter",
+                # "DarkVisionary",
+            ]
+
+        # 1st warning
+        assert PunitionsToApply(
+            warning={"allies": ["baker"], "axis": ["able", "baker"]}, punish=[], kick=[]
+        ) == punish_squads_without_leaders(rcon, config)
+        assert PunitionsToApply(
+            warning={"allies": [], "axis": []}, punish=[], kick=[]
+        ) == punish_squads_without_leaders(rcon, config)
+        time.sleep(config.warning_interval_seconds)
+        
+        # 1st punish
+        assert PunitionsToApply(
+            warning={"allies": [], "axis": []},
+            punish=expected_players,
+            kick=[],
+        ) == punish_squads_without_leaders(rcon, config)
+        assert PunitionsToApply(
+            warning={"allies": [], "axis": []}, punish=[], kick=[]
+        ) == punish_squads_without_leaders(rcon, config)
+        time.sleep(config.punish_interval_seconds)
+        
+        # 2nd punish
+        assert PunitionsToApply(
+            warning={"allies": [], "axis": []},
+            punish=expected_players,
+            kick=[],
+        ) == punish_squads_without_leaders(rcon, config)
+        assert PunitionsToApply(
+            warning={"allies": [], "axis": []}, punish=[], kick=[]
+        ) == punish_squads_without_leaders(rcon, config)
+        time.sleep(config.punish_interval_seconds)
+
+        # kick, final
+        assert PunitionsToApply(
+            warning={"allies": [], "axis": []},
+            kick=expected_players,
+            punish=[],
+        ) == punish_squads_without_leaders(rcon, config)
+
+        # State should be clear
+        #assert PunitionsToApply(
+        #    warning={"allies": [], "axis": []}, punish=[], kick=[]
+        #) == punish_squads_without_leaders(rcon, config)
