@@ -12,7 +12,8 @@ from rcon.routines import (
     SquadCycleOver,
     SquadHasLeader,
     WatchStatus,
-    punish_squads_without_leaders,
+    get_punitions_to_apply,
+    get_warning_message,
     should_kick_player,
     should_punish_player,
     should_warn_squad,
@@ -1055,7 +1056,7 @@ def test_watcher(team_view):
             yield state.setdefault(f"{team}{squad_name}", WatchStatus())
         except (SquadCycleOver, SquadHasLeader):
             del state[f"{team}{squad_name}"]
-            
+
     with mock.patch("rcon.routines.watch_state", wraps=fake_state), mock.patch(
         "rcon.routines.get_redis_client"
     ):
@@ -1080,12 +1081,20 @@ def test_watcher(team_view):
             ]
 
         # 1st warning
+        to_apply = get_punitions_to_apply(rcon, config)
         assert PunitionsToApply(
             warning={"allies": ["baker"], "axis": ["able", "baker"]}, punish=[], kick=[]
-        ) == punish_squads_without_leaders(rcon, config)
+        ) == to_apply
+        assert """Warning squads must have an Officer.
+You will be punished then kicked
+allies: BAKER 1/1 /!\\
+axis: ABLE 1/1 /!\\, BAKER 1/1 /!\\
+Next check in 3s
+""" == get_warning_message(to_apply, config)
+
         assert PunitionsToApply(
             warning={"allies": [], "axis": []}, punish=[], kick=[]
-        ) == punish_squads_without_leaders(rcon, config)
+        ) == get_punitions_to_apply(rcon, config)
         time.sleep(config.warning_interval_seconds)
         
         # 1st punish
@@ -1093,10 +1102,10 @@ def test_watcher(team_view):
             warning={"allies": [], "axis": []},
             punish=expected_players,
             kick=[],
-        ) == punish_squads_without_leaders(rcon, config)
+        ) == get_punitions_to_apply(rcon, config)
         assert PunitionsToApply(
             warning={"allies": [], "axis": []}, punish=[], kick=[]
-        ) == punish_squads_without_leaders(rcon, config)
+        ) == get_punitions_to_apply(rcon, config)
         time.sleep(config.punish_interval_seconds)
         
         # 2nd punsi
@@ -1104,10 +1113,10 @@ def test_watcher(team_view):
             warning={"allies": [], "axis": []},
             punish=expected_players,
             kick=[],
-        ) == punish_squads_without_leaders(rcon, config)
+        ) == get_punitions_to_apply(rcon, config)
         assert PunitionsToApply(
             warning={"allies": [], "axis": []}, punish=[], kick=[]
-        ) == punish_squads_without_leaders(rcon, config)
+        ) == get_punitions_to_apply(rcon, config)
         time.sleep(config.punish_interval_seconds)
 
         # kick, final
@@ -1115,13 +1124,7 @@ def test_watcher(team_view):
             warning={"allies": [], "axis": []},
             kick=expected_players,
             punish=[],
-        ) == punish_squads_without_leaders(rcon, config)
-
-        # State should be clear
-        #assert PunitionsToApply(
-        #    warning={"allies": [], "axis": []}, punish=[], kick=[]
-        #) == punish_squads_without_leaders(rcon, config)
-
+        ) == get_punitions_to_apply(rcon, config)
 
 
 def test_watcher_2(team_view):
@@ -1175,10 +1178,10 @@ def test_watcher_2(team_view):
         # 1st warning
         assert PunitionsToApply(
             warning={"allies": ["baker"], "axis": ["able", "baker"]}, punish=[], kick=[]
-        ) == punish_squads_without_leaders(rcon, config)
+        ) == get_punitions_to_apply(rcon, config)
         assert PunitionsToApply(
             warning={"allies": [], "axis": []}, punish=[], kick=[]
-        ) == punish_squads_without_leaders(rcon, config)
+        ) == get_punitions_to_apply(rcon, config)
         time.sleep(config.warning_interval_seconds)
         
         # 1st punish
@@ -1186,10 +1189,10 @@ def test_watcher_2(team_view):
             warning={"allies": [], "axis": []},
             punish=expected_players,
             kick=[],
-        ) == punish_squads_without_leaders(rcon, config)
+        ) == get_punitions_to_apply(rcon, config)
         assert PunitionsToApply(
             warning={"allies": [], "axis": []}, punish=[], kick=[]
-        ) == punish_squads_without_leaders(rcon, config)
+        ) == get_punitions_to_apply(rcon, config)
         time.sleep(config.punish_interval_seconds)
         
         # 2nd punish
@@ -1197,10 +1200,10 @@ def test_watcher_2(team_view):
             warning={"allies": [], "axis": []},
             punish=expected_players,
             kick=[],
-        ) == punish_squads_without_leaders(rcon, config)
+        ) == get_punitions_to_apply(rcon, config)
         assert PunitionsToApply(
             warning={"allies": [], "axis": []}, punish=[], kick=[]
-        ) == punish_squads_without_leaders(rcon, config)
+        ) == get_punitions_to_apply(rcon, config)
         time.sleep(config.punish_interval_seconds)
 
         # kick, final
@@ -1208,9 +1211,179 @@ def test_watcher_2(team_view):
             warning={"allies": [], "axis": []},
             kick=expected_players,
             punish=[],
-        ) == punish_squads_without_leaders(rcon, config)
+        ) == get_punitions_to_apply(rcon, config)
 
-        # State should be clear
-        #assert PunitionsToApply(
-        #    warning={"allies": [], "axis": []}, punish=[], kick=[]
-        #) == punish_squads_without_leaders(rcon, config)
+
+def test_watcher_no_kick(team_view):
+    config = NoLeaderConfig(
+        number_of_warning=1,
+        warning_interval_seconds=3,
+        number_of_punish=2,
+        punish_interval_seconds=4,
+        min_squad_players_for_punish=3,
+        disable_punish_below_server_player_count=0,
+        kick_after_max_punish=False,
+        kick_grace_period_seconds=1,
+        min_squad_players_for_kick=3,
+        disable_kick_below_server_player_count=0,
+        immuned_level_up_to=1,
+        immuned_roles=[],
+    )
+
+    state = {}
+
+    @contextmanager
+    def fake_state(red, team, squad_name):
+        try:
+            yield state.setdefault(f"{team}{squad_name}", WatchStatus())
+        except (SquadCycleOver, SquadHasLeader):
+            del state[f"{team}{squad_name}"]
+
+
+    with mock.patch("rcon.routines.watch_state", wraps=fake_state), mock.patch(
+        "rcon.routines.get_redis_client"
+    ):
+        rcon = mock.MagicMock()
+        rcon.get_team_view_fast.return_value = team_view
+        expected_players = [
+                "Lawless",
+                "Major_Winters",
+                "Toomz",
+                "Zones (BEL)",
+                "Pavooloni",
+                "Kjjuj",
+                "emfoor",
+                "Makaj",
+                "tinner2115",
+                "Cuervo",
+                "capitanodrew",
+                "Dr.FishShitz",
+                # "WilliePeter",
+                # "DarkVisionary",
+            ]
+
+        # 1st warning
+        assert PunitionsToApply(
+            warning={"allies": ["baker"], "axis": ["able", "baker"]}, punish=[], kick=[]
+        ) == get_punitions_to_apply(rcon, config)
+        assert PunitionsToApply(
+            warning={"allies": [], "axis": []}, punish=[], kick=[]
+        ) == get_punitions_to_apply(rcon, config)
+        time.sleep(config.warning_interval_seconds)
+        
+        # 1st punish
+        assert PunitionsToApply(
+            warning={"allies": [], "axis": []},
+            punish=expected_players,
+            kick=[],
+        ) == get_punitions_to_apply(rcon, config)
+        assert PunitionsToApply(
+            warning={"allies": [], "axis": []}, punish=[], kick=[]
+        ) == get_punitions_to_apply(rcon, config)
+        time.sleep(config.punish_interval_seconds)
+        
+        # 2nd punish
+        assert PunitionsToApply(
+            warning={"allies": [], "axis": []},
+            punish=expected_players,
+            kick=[],
+        ) == get_punitions_to_apply(rcon, config)
+        assert PunitionsToApply(
+            warning={"allies": [], "axis": []}, punish=[], kick=[]
+        ) == get_punitions_to_apply(rcon, config)
+        time.sleep(config.punish_interval_seconds)
+
+        # no kick, final
+        assert PunitionsToApply(
+            warning={"allies": [], "axis": []},
+            kick=[],
+            punish=[],
+        ) == get_punitions_to_apply(rcon, config)
+
+
+def test_watcher_resets(team_view):
+    config = NoLeaderConfig(
+        number_of_warning=0,
+        warning_interval_seconds=3,
+        number_of_punish=1,
+        punish_interval_seconds=4,
+        min_squad_players_for_punish=3,
+        disable_punish_below_server_player_count=0,
+        kick_after_max_punish=False,
+        kick_grace_period_seconds=1,
+        min_squad_players_for_kick=3,
+        disable_kick_below_server_player_count=0,
+        immuned_level_up_to=1,
+        immuned_roles=[],
+    )
+
+    state = {}
+
+    @contextmanager
+    def fake_state(red, team, squad_name):
+        try:
+            yield state.setdefault(f"{team}{squad_name}", WatchStatus())
+        except (SquadCycleOver, SquadHasLeader):
+            del state[f"{team}{squad_name}"]
+
+
+    with mock.patch("rcon.routines.watch_state", wraps=fake_state), mock.patch(
+        "rcon.routines.get_redis_client"
+    ):
+        rcon = mock.MagicMock()
+        rcon.get_team_view_fast.return_value = team_view
+        expected_players = [
+                "Lawless",
+                "Major_Winters",
+                "Toomz",
+                "Zones (BEL)",
+                "Pavooloni",
+                "Kjjuj",
+                "emfoor",
+                "Makaj",
+                "tinner2115",
+                "Cuervo",
+                "capitanodrew",
+                "Dr.FishShitz",
+                # "WilliePeter",
+                # "DarkVisionary",
+            ]
+
+        # 1st punish
+        assert PunitionsToApply(
+            warning={"allies": [], "axis": []},
+            punish=expected_players,
+            kick=[],
+        ) == get_punitions_to_apply(rcon, config)
+        assert PunitionsToApply(
+            warning={"allies": [], "axis": []}, punish=[], kick=[]
+        ) == get_punitions_to_apply(rcon, config)
+        time.sleep(config.punish_interval_seconds)
+        
+        # Nothing should happen
+        assert PunitionsToApply(
+            warning={"allies": [], "axis": []},
+            punish=[],
+            kick=[],
+        ) == get_punitions_to_apply(rcon, config)
+
+        assert "alliesbaker" in state
+        team_view["allies"]["squads"]["baker"]["has_leader"] = True
+        team_view["axis"]["squads"]["able"]["has_leader"] = True
+        team_view["axis"]["squads"]["baker"]["has_leader"] = True
+        assert PunitionsToApply(
+            warning={"allies": [], "axis": []},
+            kick=[],
+            punish=[],
+        ) == get_punitions_to_apply(rcon, config)
+        # state should be reset now
+        assert "alliesbaker" not in state
+        team_view["allies"]["squads"]["baker"]["has_leader"] = False
+        team_view["axis"]["squads"]["able"]["has_leader"] = False
+        team_view["axis"]["squads"]["baker"]["has_leader"] = False
+        # punish again
+        assert PunitionsToApply(
+            warning={"allies": [], "axis": []},
+            punish=expected_players,
+            kick=[],
+        ) == get_punitions_to_apply(rcon, config)

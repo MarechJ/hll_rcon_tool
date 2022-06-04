@@ -38,6 +38,7 @@ def get_prepared_discord_hooks(type) -> List[DiscordWebhook]:
         for hook in hooks.hooks
     ]
 
+
 def dict_to_discord(d):
     return "   ".join([f"{k}: `{v}`" for k, v in d.items()])
 
