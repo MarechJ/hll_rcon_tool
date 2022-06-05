@@ -1,12 +1,12 @@
 import logging
 import re
 
+from rcon.config import get_config
+from rcon.discord import send_to_discord_audit
+from rcon.game_logs import on_connected
 from rcon.player_history import get_player_profile, player_has_flag
 from rcon.recorded_commands import RecordedRcon
-from rcon.discord import send_to_discord_audit
-from rcon.config import get_config
 from rcon.settings import SERVER_INFO
-from rcon.game_logs import on_connected
 
 logger = logging.getLogger(__name__)
 

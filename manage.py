@@ -1,8 +1,6 @@
 #!/usr/bin/env python
-import os
 import logging
-
-
+import os
 
 
 class ConfigurationError(Exception):

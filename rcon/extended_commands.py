@@ -73,7 +73,7 @@ class Rcon(ServerCtl):
     MAX_SERV_NAME_LEN = 1024  # I totally made up that number. Unable to test
     log_time_regexp = re.compile(r".*\((\d+)\).*")
 
-    def __init__(self, *args, pool_size=10, **kwargs):
+    def __init__(self, *args, pool_size=20, **kwargs):
         super().__init__(*args, **kwargs)
         self.pool_size = pool_size
 
@@ -226,11 +226,8 @@ class Rcon(ServerCtl):
 
         return game
 
-    @ttl_cache(ttl=10, cache_falsy=False)
+    @ttl_cache(ttl=2, cache_falsy=False)
     def get_team_view_fast(self):
-        #with open("get_team_view.json") as f:
-        #    import json
-        #    return json.load(f)["result"]
         teams = {}
         players_by_id = {}
         players = self.get_players_fast()
@@ -239,7 +236,7 @@ class Rcon(ServerCtl):
         for future in as_completed(futures):
             try:
                 player_data = future.result()
-            except:
+            except Exception:
                 logger.exception("Failed to get info for %s", futures[future])
                 player_data = self._get_default_info_dict(futures[future][NAME])
             player = futures[future]

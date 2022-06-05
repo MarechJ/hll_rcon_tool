@@ -1,13 +1,15 @@
-from discord_webhook import DiscordEmbed
-from typing import List
 import re
+from typing import List
 
-from rcon.models import PlayerSteamID, WatchList, enter_session
+from discord_webhook import DiscordEmbed
+
 from rcon.config import get_config
-from rcon.player_history import _get_set_player, get_player
+from rcon.discord import get_prepared_discord_hooks
 from rcon.extended_commands import CommandFailedError, Rcon
 from rcon.game_logs import on_connected
-from rcon.discord import get_prepared_discord_hooks
+from rcon.models import PlayerSteamID, WatchList, enter_session
+from rcon.player_history import _get_set_player, get_player
+
 
 @on_connected
 def watchdog(rcon: Rcon, log):

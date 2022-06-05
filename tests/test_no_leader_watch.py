@@ -5,19 +5,22 @@ from textwrap import wrap
 from unittest import mock
 
 from pytest import fixture
-from rcon.routines import (
-    NoLeaderConfig,
-    PunishStepState,
-    PunitionsToApply,
-    SquadCycleOver,
-    SquadHasLeader,
-    WatchStatus,
+from rcon.config import get_config
+from rcon.squad_automod.automod import (
     get_punitions_to_apply,
     get_warning_message,
     should_kick_player,
     should_punish_player,
     should_warn_squad,
     watch_state,
+)
+from rcon.squad_automod.models import (
+    NoLeaderConfig,
+    PunishStepState,
+    PunitionsToApply,
+    SquadCycleOver,
+    SquadHasLeader,
+    WatchStatus,
 )
 
 
@@ -559,7 +562,8 @@ def team_view():
 
 def test_should_warn_first_time(team_view):
     config = NoLeaderConfig(
-        number_of_warning=2, warning_interval_seconds=60, warn_message="Pas bien"
+        number_of_warning=2,
+        warning_interval_seconds=60,
     )
     watch_status = WatchStatus()
 
@@ -568,7 +572,9 @@ def test_should_warn_first_time(team_view):
 
 
 def test_should_not_warn(team_view):
-    config = NoLeaderConfig(number_of_warning=0, warn_message="Pas bien")
+    config = NoLeaderConfig(
+        number_of_warning=0,
+    )
     watch_status = WatchStatus()
 
     assert PunishStepState.disabled == should_warn_squad(watch_status, config, "allies", "able")
@@ -578,7 +584,8 @@ def test_should_not_warn(team_view):
 
 def test_should_warn_twice(team_view):
     config = NoLeaderConfig(
-        number_of_warning=2, warning_interval_seconds=1, warn_message="Pas bien"
+        number_of_warning=2,
+        warning_interval_seconds=1,
     )
     watch_status = WatchStatus()
 
@@ -595,7 +602,8 @@ def test_should_warn_twice(team_view):
 
 def test_should_warn_infinite(team_view):
     config = NoLeaderConfig(
-        number_of_warning=-1, warning_interval_seconds=0, warn_message="Pas bien"
+        number_of_warning=-1,
+        warning_interval_seconds=0,
     )
     watch_status = WatchStatus()
 
@@ -747,7 +755,6 @@ def test_punish_small_squad(team_view):
         team_view["allies"]["squads"]["able"],
         team_view["allies"]["squads"]["able"]["players"][0],
     )
-
 
 
 def test_punish_disabled(team_view):
@@ -1057,46 +1064,51 @@ def test_watcher(team_view):
         except (SquadCycleOver, SquadHasLeader):
             del state[f"{team}{squad_name}"]
 
-    with mock.patch("rcon.routines.watch_state", wraps=fake_state), mock.patch(
-        "rcon.routines.get_redis_client"
+    with mock.patch("rcon.squad_automod.automod.watch_state", wraps=fake_state), mock.patch(
+        "rcon.squad_automod.automod.get_redis_client"
     ):
         rcon = mock.MagicMock()
         rcon.get_team_view_fast.return_value = team_view
         expected_players = [
-                "Lawless",
-                "Major_Winters",
-                "Toomz",
-                "Zones (BEL)",
-                "Pavooloni",
-                "Kjjuj",
-                "emfoor",
-                "Makaj",
-                "tinner2115",
-                "Cuervo",
-                "capitanodrew",
-                # lvl 1- should be excluded
-                # "Dr.FishShitz",
-                "WilliePeter",
-                "DarkVisionary",
-            ]
+            "Lawless",
+            "Major_Winters",
+            "Toomz",
+            "Zones (BEL)",
+            "Pavooloni",
+            "Kjjuj",
+            "emfoor",
+            "Makaj",
+            "tinner2115",
+            "Cuervo",
+            "capitanodrew",
+            # lvl 1- should be excluded
+            # "Dr.FishShitz",
+            "WilliePeter",
+            "DarkVisionary",
+        ]
 
         # 1st warning
         to_apply = get_punitions_to_apply(rcon, config)
-        assert PunitionsToApply(
-            warning={"allies": ["baker"], "axis": ["able", "baker"]}, punish=[], kick=[]
-        ) == to_apply
+        assert (
+            PunitionsToApply(
+                warning={"allies": ["baker"], "axis": ["able", "baker"]}, punish=[], kick=[]
+            )
+            == to_apply
+        )
         assert """Warning squads must have an Officer.
 You will be punished then kicked
 allies: BAKER 1/1 /!\\
 axis: ABLE 1/1 /!\\, BAKER 1/1 /!\\
-Next check in 3s
-""" == get_warning_message(to_apply, config)
+Next check will happen automatically in 60s
+""" == get_warning_message(
+            to_apply, config
+        )
 
         assert PunitionsToApply(
             warning={"allies": [], "axis": []}, punish=[], kick=[]
         ) == get_punitions_to_apply(rcon, config)
         time.sleep(config.warning_interval_seconds)
-        
+
         # 1st punish
         assert PunitionsToApply(
             warning={"allies": [], "axis": []},
@@ -1107,7 +1119,7 @@ Next check in 3s
             warning={"allies": [], "axis": []}, punish=[], kick=[]
         ) == get_punitions_to_apply(rcon, config)
         time.sleep(config.punish_interval_seconds)
-        
+
         # 2nd punsi
         assert PunitionsToApply(
             warning={"allies": [], "axis": []},
@@ -1152,28 +1164,27 @@ def test_watcher_2(team_view):
         except (SquadCycleOver, SquadHasLeader):
             del state[f"{team}{squad_name}"]
 
-
-    with mock.patch("rcon.routines.watch_state", wraps=fake_state), mock.patch(
-        "rcon.routines.get_redis_client"
+    with mock.patch("rcon.squad_automod.automod.watch_state", wraps=fake_state), mock.patch(
+        "rcon.squad_automod.automod.get_redis_client"
     ):
         rcon = mock.MagicMock()
         rcon.get_team_view_fast.return_value = team_view
         expected_players = [
-                "Lawless",
-                "Major_Winters",
-                "Toomz",
-                "Zones (BEL)",
-                "Pavooloni",
-                "Kjjuj",
-                "emfoor",
-                "Makaj",
-                "tinner2115",
-                "Cuervo",
-                "capitanodrew",
-                "Dr.FishShitz",
-                # "WilliePeter",
-                # "DarkVisionary",
-            ]
+            "Lawless",
+            "Major_Winters",
+            "Toomz",
+            "Zones (BEL)",
+            "Pavooloni",
+            "Kjjuj",
+            "emfoor",
+            "Makaj",
+            "tinner2115",
+            "Cuervo",
+            "capitanodrew",
+            "Dr.FishShitz",
+            # "WilliePeter",
+            # "DarkVisionary",
+        ]
 
         # 1st warning
         assert PunitionsToApply(
@@ -1183,7 +1194,7 @@ def test_watcher_2(team_view):
             warning={"allies": [], "axis": []}, punish=[], kick=[]
         ) == get_punitions_to_apply(rcon, config)
         time.sleep(config.warning_interval_seconds)
-        
+
         # 1st punish
         assert PunitionsToApply(
             warning={"allies": [], "axis": []},
@@ -1194,7 +1205,7 @@ def test_watcher_2(team_view):
             warning={"allies": [], "axis": []}, punish=[], kick=[]
         ) == get_punitions_to_apply(rcon, config)
         time.sleep(config.punish_interval_seconds)
-        
+
         # 2nd punish
         assert PunitionsToApply(
             warning={"allies": [], "axis": []},
@@ -1239,28 +1250,27 @@ def test_watcher_no_kick(team_view):
         except (SquadCycleOver, SquadHasLeader):
             del state[f"{team}{squad_name}"]
 
-
-    with mock.patch("rcon.routines.watch_state", wraps=fake_state), mock.patch(
-        "rcon.routines.get_redis_client"
+    with mock.patch("rcon.squad_automod.automod.watch_state", wraps=fake_state), mock.patch(
+        "rcon.squad_automod.automod.get_redis_client"
     ):
         rcon = mock.MagicMock()
         rcon.get_team_view_fast.return_value = team_view
         expected_players = [
-                "Lawless",
-                "Major_Winters",
-                "Toomz",
-                "Zones (BEL)",
-                "Pavooloni",
-                "Kjjuj",
-                "emfoor",
-                "Makaj",
-                "tinner2115",
-                "Cuervo",
-                "capitanodrew",
-                "Dr.FishShitz",
-                # "WilliePeter",
-                # "DarkVisionary",
-            ]
+            "Lawless",
+            "Major_Winters",
+            "Toomz",
+            "Zones (BEL)",
+            "Pavooloni",
+            "Kjjuj",
+            "emfoor",
+            "Makaj",
+            "tinner2115",
+            "Cuervo",
+            "capitanodrew",
+            "Dr.FishShitz",
+            # "WilliePeter",
+            # "DarkVisionary",
+        ]
 
         # 1st warning
         assert PunitionsToApply(
@@ -1270,7 +1280,7 @@ def test_watcher_no_kick(team_view):
             warning={"allies": [], "axis": []}, punish=[], kick=[]
         ) == get_punitions_to_apply(rcon, config)
         time.sleep(config.warning_interval_seconds)
-        
+
         # 1st punish
         assert PunitionsToApply(
             warning={"allies": [], "axis": []},
@@ -1281,7 +1291,7 @@ def test_watcher_no_kick(team_view):
             warning={"allies": [], "axis": []}, punish=[], kick=[]
         ) == get_punitions_to_apply(rcon, config)
         time.sleep(config.punish_interval_seconds)
-        
+
         # 2nd punish
         assert PunitionsToApply(
             warning={"allies": [], "axis": []},
@@ -1326,28 +1336,27 @@ def test_watcher_resets(team_view):
         except (SquadCycleOver, SquadHasLeader):
             del state[f"{team}{squad_name}"]
 
-
-    with mock.patch("rcon.routines.watch_state", wraps=fake_state), mock.patch(
-        "rcon.routines.get_redis_client"
+    with mock.patch("rcon.squad_automod.automod.watch_state", wraps=fake_state), mock.patch(
+        "rcon.squad_automod.automod.get_redis_client"
     ):
         rcon = mock.MagicMock()
         rcon.get_team_view_fast.return_value = team_view
         expected_players = [
-                "Lawless",
-                "Major_Winters",
-                "Toomz",
-                "Zones (BEL)",
-                "Pavooloni",
-                "Kjjuj",
-                "emfoor",
-                "Makaj",
-                "tinner2115",
-                "Cuervo",
-                "capitanodrew",
-                "Dr.FishShitz",
-                # "WilliePeter",
-                # "DarkVisionary",
-            ]
+            "Lawless",
+            "Major_Winters",
+            "Toomz",
+            "Zones (BEL)",
+            "Pavooloni",
+            "Kjjuj",
+            "emfoor",
+            "Makaj",
+            "tinner2115",
+            "Cuervo",
+            "capitanodrew",
+            "Dr.FishShitz",
+            # "WilliePeter",
+            # "DarkVisionary",
+        ]
 
         # 1st punish
         assert PunitionsToApply(
@@ -1359,7 +1368,7 @@ def test_watcher_resets(team_view):
             warning={"allies": [], "axis": []}, punish=[], kick=[]
         ) == get_punitions_to_apply(rcon, config)
         time.sleep(config.punish_interval_seconds)
-        
+
         # Nothing should happen
         assert PunitionsToApply(
             warning={"allies": [], "axis": []},
@@ -1387,3 +1396,10 @@ def test_watcher_resets(team_view):
             punish=expected_players,
             kick=[],
         ) == get_punitions_to_apply(rcon, config)
+
+
+def test_default_config():
+    config = get_config()
+    config = NoLeaderConfig(**config["NOLEADER_AUTO_MOD"])
+
+    assert config.enabled == False

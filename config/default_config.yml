@@ -112,7 +112,15 @@ GTX:
 
 NOLEADER_AUTO_MOD:
   # Set to true to enable the auto moderation of squads without officers
-  enable: false
+  # This auto-moderator has 3 steps, 1. warning via broadcast (N times), 2. Punish (N times) 3. kick
+  # Note that the state cycle for a given squad only resets once it finally has an officer. So for example if you
+  # disabled the kick and have 3 punishes configured, once the 3 punishes are 
+  # through that's it, nothing will happen anymore for that squad even if they still dont have an officer. 
+  # 
+  # Note 2: punishes and kicks are tracked individual per player, not at the squad level.
+  # So if a player joins a squad that already received 3 punishes and will be kicked next, the new player will 
+  # start at the first punish regardless (so he won't be kick), howver he won't have a warning broadcast message as those are issued and tracked per squad)
+  enabled: false
   # If this is set to true no warning / punish / kick will be applied for real 
   # It turns the code into a "simulation" mode and only send what it would do to your discord audit log webhook
   dry_run: true

@@ -1,4 +1,5 @@
 from unittest import mock
+
 from rcon.game_logs import auto_ban_if_tks_right_after_connection
 
 

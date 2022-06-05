@@ -1,6 +1,7 @@
 import os
+from urllib.parse import urljoin
+
 import requests
-from urllib.parse import urljoin 
 
 
 # TODO finish this stuff

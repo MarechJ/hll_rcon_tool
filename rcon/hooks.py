@@ -1,33 +1,23 @@
 import logging
 import os
 from functools import wraps
-from rcon.commands import CommandFailedError
 
 from discord_webhook import DiscordEmbed
 
-from rcon.recorded_commands import RecordedRcon
-from rcon.player_history import (
-    save_player,
-    save_start_player_session,
-    save_end_player_session,
-    safe_save_player_action,
-    get_player,
-    _get_set_player,
-)
-from rcon.game_logs import on_connected, on_disconnected, on_camera, on_chat
-from rcon.models import enter_session, PlayerSteamID, SteamInfo, enter_session
-from rcon.discord import send_to_discord_audit, dict_to_discord
-from rcon.steam_utils import (
-    get_player_bans,
-    STEAM_KEY,
-    get_steam_profile,
-    update_db_player_info,
-)
-from rcon.discord import send_to_discord_audit
-from rcon.user_config import CameraConfig, RealVipConfig
-from rcon.discord import get_prepared_discord_hooks, send_to_discord_audit
+from rcon.commands import CommandFailedError
+from rcon.discord import (dict_to_discord, get_prepared_discord_hooks,
+                          send_to_discord_audit)
+from rcon.game_logs import on_camera, on_chat, on_connected, on_disconnected
 from rcon.map_recorder import VoteMap
-from rcon.user_config import VoteMapConfig
+from rcon.models import PlayerSteamID, SteamInfo, enter_session
+from rcon.player_history import (_get_set_player, get_player,
+                                 safe_save_player_action,
+                                 save_end_player_session, save_player,
+                                 save_start_player_session)
+from rcon.recorded_commands import RecordedRcon
+from rcon.steam_utils import (STEAM_KEY, get_player_bans, get_steam_profile,
+                              update_db_player_info)
+from rcon.user_config import CameraConfig, RealVipConfig, VoteMapConfig
 from rcon.workers import temporary_broadcast, temporary_welcome
 
 logger = logging.getLogger(__name__)

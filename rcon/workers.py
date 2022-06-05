@@ -1,20 +1,22 @@
-from logging import Logger
-import logging
 import datetime
+import logging
 import os
-from rcon.utils import map_name
 import time
+from datetime import timedelta
+from logging import Logger
+
 from rq import Queue
 from rq.job import Job
-from datetime import timedelta
-from rcon.cache_utils import get_redis_client
-from rcon.settings import SERVER_INFO
-from rcon.models import enter_session, Maps, PlayerStats
-from rcon.scoreboard import TimeWindowStats
-from rcon.player_history import get_player
 from sqlalchemy import and_
-from rcon.recorded_commands import RecordedRcon
+
+from rcon.cache_utils import get_redis_client
 from rcon.extended_commands import CommandFailedError
+from rcon.models import Maps, PlayerStats, enter_session
+from rcon.player_history import get_player
+from rcon.recorded_commands import RecordedRcon
+from rcon.scoreboard import TimeWindowStats
+from rcon.settings import SERVER_INFO
+from rcon.utils import map_name
 
 logger = logging.getLogger("rcon")
 

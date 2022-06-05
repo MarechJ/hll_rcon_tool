@@ -1,30 +1,19 @@
-from rcon.cache_utils import ttl_cache, invalidates
-import logging
 import datetime
-import os
-from functools import wraps, cmp_to_key
-from sqlalchemy import func
-from sqlalchemy.orm import contains_eager, joinedload, defaultload
+import logging
 import math
+import os
 import unicodedata
+from functools import cmp_to_key, wraps
 
-from rcon.models import (
-    SteamInfo,
-    enter_session,
-    PlayerName,
-    PlayerSteamID,
-    PlayerSession,
-    BlacklistedPlayer,
-    PlayersAction,
-    PlayerFlag,
-    WatchList,
-    SteamInfo,
-    PlayerComment
-)
-
-from rcon.commands import CommandFailedError
-
+from sqlalchemy import func
+from sqlalchemy.orm import contains_eager, defaultload, joinedload
 from sqlalchemy.sql.functions import ReturnTypeFromArgs
+
+from rcon.cache_utils import invalidates, ttl_cache
+from rcon.commands import CommandFailedError
+from rcon.models import (BlacklistedPlayer, PlayerComment, PlayerFlag,
+                         PlayerName, PlayersAction, PlayerSession,
+                         PlayerSteamID, SteamInfo, WatchList, enter_session)
 
 
 class unaccent(ReturnTypeFromArgs):

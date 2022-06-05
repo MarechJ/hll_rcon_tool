@@ -1,6 +1,7 @@
 import json
 from functools import wraps
 
+
 def _get_data(request):
     try:
         data = json.loads(request.body)

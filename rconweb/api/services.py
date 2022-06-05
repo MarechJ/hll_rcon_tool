@@ -1,14 +1,14 @@
-from xmlrpc.client import ServerProxy, Fault
 import os
 from functools import partial
+from xmlrpc.client import Fault, ServerProxy
 
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
-from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.http import HttpResponse
+
 from rcon.discord import send_to_discord_audit
 
-from .auth import login_required, api_response
+from .auth import api_response, login_required
 from .utils import _get_data
 
 supervisor_client = None
