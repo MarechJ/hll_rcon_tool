@@ -55,11 +55,15 @@ LOGGING = {
             "level": os.getenv("LOGGING_LEVEL", "DEBUG"),
             "propagate": False,
         },
-        "rcon.extended_commands": {"level": "WARNING"},
-        "rcon.commands": {"level": "WARNING"},
-        "rcon.automod": {"level": "DEBUG"},
+        "rcon.extended_commands": {"level": os.getenv("COMMANDS_LOGLEVEL", "INFO")},
+        "rcon.recorded_commands": {"level": os.getenv("COMMANDS_LOGLEVEL", "INFO")},
+        "rcon.commands": {"level": os.getenv("COMMANDS_LOGLEVEL", "INFO")},
+        "rcon.squad_automod.automod": {
+            "handlers": ["console", "file"],
+            "level": os.getenv("LOGGING_LEVEL", "DEBUG"),
+            "propagate": False,
+        }
     },
 }
-
 
 dictConfig(LOGGING)
