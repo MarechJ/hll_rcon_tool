@@ -44,6 +44,7 @@ class PunishStepState(Enum):
 class NoLeaderConfig:
     enabled: bool = False
     dry_run: bool = True
+    discord_webhook_url: str = ''
     warn_message_header: str = "Warning squads must have an Officer.\nYou will be punished then kicked"
     warn_message_footer: str = "Next check will happen automatically in 60s"
     # Set to 0 to disable, -1 for infinite warnings (will never go to punishes)

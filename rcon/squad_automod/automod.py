@@ -304,17 +304,25 @@ def punish_squads_without_leaders(rcon: RecordedRcon):
 
     if punition_to_apply.warning.get("allies") or punition_to_apply.warning.get("axis"):
         msg = get_warning_message(punition_to_apply, config)
-        send_to_discord_audit(f"Warning issued: {msg}", by="NoLeaderWatch")
+        audit(config, f"Warning issued: {msg}")
         if not config.dry_run:
             rcon.set_broadcast(msg)
 
     if punition_to_apply.punish:
-        send_to_discord_audit(f"Punishing: {punition_to_apply.punish}", by="NoLeaderWatch")
+        audit(config, f"Punishing: {punition_to_apply.punish}")
         _do_punitions(red, config, rcon, "punish", config.punish_message, punition_to_apply.punish)
 
     if punition_to_apply.kick:
-        send_to_discord_audit(f"Kicking: {punition_to_apply.punish}", by="NoLeaderWatch")
+        audit(config, f"Kicking: {punition_to_apply.punish}")
         _do_punitions(red, config, rcon, "kick", config.kick_message, punition_to_apply.kick)
+
+
+def audit(cfg: NoLeaderConfig, msg: str):
+    webhook_url = None
+    if cfg.discord_webhook_url is not None and cfg.discord_webhook_url != '':
+        webhook_url = cfg.discord_webhook_url
+
+    send_to_discord_audit(msg, by="NoLeaderWatch", webhookurl=webhook_url)
 
 
 def run():
