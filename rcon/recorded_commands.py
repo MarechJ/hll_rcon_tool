@@ -61,8 +61,7 @@ class RecordedRcon(Rcon):
 
     def invalidate_player_list_cache(self):
         super().get_players.cache_clear()
-        
-        
+              
     def get_players(self):
         players = super().get_players()
 

@@ -57,6 +57,7 @@ LOGGING = {
         },
         "rcon.extended_commands": {"level": "WARNING"},
         "rcon.commands": {"level": "WARNING"},
+        "rcon.automod": {"level": "DEBUG"},
     },
 }
 

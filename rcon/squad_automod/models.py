@@ -72,10 +72,17 @@ class NoLeaderConfig:
 
 
 @dataclass
+class APlayer:
+    player: str
+    squad: str
+    team: str
+
+
+@dataclass
 class PunitionsToApply:
     warning: Mapping[str, List[str]] = field(default_factory=lambda: {"allies": [], "axis": []})
-    punish: List[str] = field(default_factory=list)
-    kick: List[str] = field(default_factory=list)
+    punish: List[APlayer] = field(default_factory=list)
+    kick: List[APlayer] = field(default_factory=list)
 
     def __bool__(self):
         return any([self.warning.get("allies"), self.warning.get("axis"), self.kick, self.punish])

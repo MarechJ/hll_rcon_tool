@@ -21,6 +21,7 @@ from rcon.squad_automod.models import (
     SquadCycleOver,
     SquadHasLeader,
     WatchStatus,
+    APlayer
 )
 
 
@@ -1070,21 +1071,21 @@ def test_watcher(team_view):
         rcon = mock.MagicMock()
         rcon.get_team_view_fast.return_value = team_view
         expected_players = [
-            "Lawless",
-            "Major_Winters",
-            "Toomz",
-            "Zones (BEL)",
-            "Pavooloni",
-            "Kjjuj",
-            "emfoor",
-            "Makaj",
-            "tinner2115",
-            "Cuervo",
-            "capitanodrew",
+            APlayer(player="Lawless", squad="baker", team="allies"),
+            APlayer(player="Major_Winters", squad="baker", team="allies"),
+            APlayer(player="Toomz", squad="baker", team="allies"),
+            APlayer(player="Zones (BEL)", squad="baker", team="allies"),
+            APlayer(player="Pavooloni", squad="baker", team="allies"),
+            APlayer(player="Kjjuj", squad="baker", team="allies"),
+            APlayer(player="emfoor", squad="able", team="axis"),
+            APlayer(player="Makaj", squad="able", team="axis"),
+            APlayer(player="tinner2115", squad="able", team="axis"),
+            APlayer(player="Cuervo", squad="able", team="axis"),
+            APlayer(player="capitanodrew", squad="able", team="axis"),
+            APlayer(player="Dr.FishShitz", squad="able", team="axis"),
             # lvl 1- should be excluded
-            # "Dr.FishShitz",
-            "WilliePeter",
-            "DarkVisionary",
+            # APlayer(player="Dr.DarkVisionary",
+            # APlayer(player= "WilliePeter",
         ]
 
         # 1st warning
@@ -1170,20 +1171,20 @@ def test_watcher_2(team_view):
         rcon = mock.MagicMock()
         rcon.get_team_view_fast.return_value = team_view
         expected_players = [
-            "Lawless",
-            "Major_Winters",
-            "Toomz",
-            "Zones (BEL)",
-            "Pavooloni",
-            "Kjjuj",
-            "emfoor",
-            "Makaj",
-            "tinner2115",
-            "Cuervo",
-            "capitanodrew",
-            "Dr.FishShitz",
-            # "WilliePeter",
-            # "DarkVisionary",
+            APlayer(player="Lawless", squad="baker", team="allies"),
+            APlayer(player="Major_Winters", squad="baker", team="allies"),
+            APlayer(player="Toomz", squad="baker", team="allies"),
+            APlayer(player="Zones (BEL)", squad="baker", team="allies"),
+            APlayer(player="Pavooloni", squad="baker", team="allies"),
+            APlayer(player="Kjjuj", squad="baker", team="allies"),
+            APlayer(player="emfoor", squad="able", team="axis"),
+            APlayer(player="Makaj", squad="able", team="axis"),
+            APlayer(player="tinner2115", squad="able", team="axis"),
+            APlayer(player="Cuervo", squad="able", team="axis"),
+            APlayer(player="capitanodrew", squad="able", team="axis"),
+            APlayer(player="Dr.FishShitz", squad="able", team="axis"),
+            # APlayer(player="WilliePeter",
+            # APlayer(player="DarkVisionary",
         ]
 
         # 1st warning
@@ -1256,20 +1257,20 @@ def test_watcher_no_kick(team_view):
         rcon = mock.MagicMock()
         rcon.get_team_view_fast.return_value = team_view
         expected_players = [
-            "Lawless",
-            "Major_Winters",
-            "Toomz",
-            "Zones (BEL)",
-            "Pavooloni",
-            "Kjjuj",
-            "emfoor",
-            "Makaj",
-            "tinner2115",
-            "Cuervo",
-            "capitanodrew",
-            "Dr.FishShitz",
-            # "WilliePeter",
-            # "DarkVisionary",
+            APlayer(player="Lawless", squad="baker", team="allies"),
+            APlayer(player="Major_Winters", squad="baker", team="allies"),
+            APlayer(player="Toomz", squad="baker", team="allies"),
+            APlayer(player="Zones (BEL)", squad="baker", team="allies"),
+            APlayer(player="Pavooloni", squad="baker", team="allies"),
+            APlayer(player="Kjjuj", squad="baker", team="allies"),
+            APlayer(player="emfoor", squad="able", team="axis"),
+            APlayer(player="Makaj", squad="able", team="axis"),
+            APlayer(player="tinner2115", squad="able", team="axis"),
+            APlayer(player="Cuervo", squad="able", team="axis"),
+            APlayer(player="capitanodrew", squad="able", team="axis"),
+            APlayer(player="Dr.FishShitz", squad="able", team="axis"),
+            # APlayer(player="WilliePeter",
+            # APlayer(player="DarkVisionary",
         ]
 
         # 1st warning
@@ -1342,20 +1343,20 @@ def test_watcher_resets(team_view):
         rcon = mock.MagicMock()
         rcon.get_team_view_fast.return_value = team_view
         expected_players = [
-            "Lawless",
-            "Major_Winters",
-            "Toomz",
-            "Zones (BEL)",
-            "Pavooloni",
-            "Kjjuj",
-            "emfoor",
-            "Makaj",
-            "tinner2115",
-            "Cuervo",
-            "capitanodrew",
-            "Dr.FishShitz",
-            # "WilliePeter",
-            # "DarkVisionary",
+            APlayer(player="Lawless", squad="baker", team="allies"),
+            APlayer(player="Major_Winters", squad="baker", team="allies"),
+            APlayer(player="Toomz", squad="baker", team="allies"),
+            APlayer(player="Zones (BEL)", squad="baker", team="allies"),
+            APlayer(player="Pavooloni", squad="baker", team="allies"),
+            APlayer(player="Kjjuj", squad="baker", team="allies"),
+            APlayer(player="emfoor", squad="able", team="axis"),
+            APlayer(player="Makaj", squad="able", team="axis"),
+            APlayer(player="tinner2115", squad="able", team="axis"),
+            APlayer(player="Cuervo", squad="able", team="axis"),
+            APlayer(player="capitanodrew", squad="able", team="axis"),
+            APlayer(player="Dr.FishShitz", squad="able", team="axis"),
+            # APlayer(player="WilliePeter",
+            # APlayer(player="DarkVisionary",
         ]
 
         # 1st punish

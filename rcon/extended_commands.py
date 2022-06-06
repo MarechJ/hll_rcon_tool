@@ -140,9 +140,6 @@ class Rcon(ServerCtl):
 
     @ttl_cache(ttl=60, cache_falsy=False)
     def get_team_view(self):
-        #with open("get_team_view.json") as f:
-        #    import json
-        #    return json.load(f)["result"]
         teams = {}
         players_by_id = {}
         for player in super().get_players():
@@ -450,7 +447,7 @@ class Rcon(ServerCtl):
         with invalidates(Rcon.get_admin_ids):
             return super().do_remove_admin(steam_id_64)
 
-    @ttl_cache(ttl=5)
+    @ttl_cache(ttl=2)
     def get_players_fast(self):        
         players = {}
         ids = []
@@ -474,7 +471,9 @@ class Rcon(ServerCtl):
 
     @ttl_cache(ttl=5)
     def get_players(self):
-        # TODO refactor to use get_playerids. Also bacth call to steam API and find a way to cleverly cache the steam results
+        return self.get_players_fast()
+
+        # Below is legacy
         names = super().get_players()
         players = []
         for n in names:

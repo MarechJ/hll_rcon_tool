@@ -12,6 +12,7 @@ from rcon.discord import send_to_discord_audit
 from rcon.recorded_commands import RecordedRcon
 from rcon.settings import SERVER_INFO
 from rcon.squad_automod.models import (
+    APlayer,
     NoLeaderConfig,
     PunishStepState,
     PunitionsToApply,
@@ -217,7 +218,7 @@ def get_punitions_to_apply(rcon, config: NoLeaderConfig) -> PunitionsToApply:
                     )
 
                     if state == PunishStepState.apply:
-                        punitions_to_apply.punish.append(player["name"])
+                        punitions_to_apply.punish.append(APlayer(player=player["name"], team=team, squad=squad_name))
                     if state != PunishStepState.go_to_next_step:
                         continue
 
@@ -225,7 +226,7 @@ def get_punitions_to_apply(rcon, config: NoLeaderConfig) -> PunitionsToApply:
                         watch_status, config, team_view, team, squad_name, squad, player
                     )
                     if state == PunishStepState.apply:
-                        punitions_to_apply.kick.append(player["name"])
+                        punitions_to_apply.kick.append(APlayer(player=player["name"], team=team, squad=squad_name))
 
     return punitions_to_apply
 
@@ -255,15 +256,25 @@ def get_warning_message(punition_to_apply: PunitionsToApply, config: NoLeaderCon
 """
 
 
-def _do_punitions(config: NoLeaderConfig, method: Callable, message: str, players: List[str]):
+def _do_punitions(red, config: NoLeaderConfig, rcon: RecordedRcon, method: str, message: str, players: List[APlayer]):
     if config.dry_run:
         logger.info("Dry run is enabled, skipping real punitions")
         return
-    for player in players:
+    for aplayer in players:
         try:
-            method(player, config.punish_message, by="NoLeaderWatch")
+            if method == "punish":
+                rcon.do_punish(aplayer.player, config.punish_message, by="NoLeaderWatch")
+            elif method == "kick":
+                rcon.do_kick(aplayer.player, config.kick_message, by="NoLeaderWatch")
         except Exception:
-            logger.exception("Failed to %s %s", method, player)
+            logger.exception("Failed to %s %s", method, repr(aplayer))
+            if method == "punish":
+                with watch_state(red, aplayer.team, aplayer.squad) as watch_state:
+                    try:
+                        if punishes := watch_state.punished.get(aplayer.player):
+                            del punishes[-1]
+                    except:
+                        logger.exception("tried to cleanup punished time but failed")
 
 
 def punish_squads_without_leaders(rcon: RecordedRcon):
@@ -278,6 +289,7 @@ def punish_squads_without_leaders(rcon: RecordedRcon):
         logger.debug("Squad automod is disabled")
         return
 
+    red = get_redis_client()
     punition_to_apply = get_punitions_to_apply(rcon, config)
     if punition_to_apply:
         logger.info("Squad Automod will apply the following punitions %s", repr(punition_to_apply))
@@ -292,11 +304,11 @@ def punish_squads_without_leaders(rcon: RecordedRcon):
 
     if punition_to_apply.punish:
         send_to_discord_audit(f"Punishing: {punition_to_apply.punish}", by="NoLeaderWatch")
-        _do_punitions(config, rcon.do_punish, config.punish_message, punition_to_apply.punish)
+        _do_punitions(red, config, rcon, "punish", config.punish_message, punition_to_apply.punish)
 
     if punition_to_apply.kick:
         send_to_discord_audit(f"Kicking: {punition_to_apply.punish}", by="NoLeaderWatch")
-        _do_punitions(config, rcon.do_kick, config.kick_message, punition_to_apply.kick)
+        _do_punitions(red, config, rcon, "kick", config.kick_message, punition_to_apply.kick)
 
 
 def run():
@@ -310,26 +322,3 @@ def run():
             logger.exception("Squad automod: Something unexpected happened")
             raise
 
-
-if __name__ == "__main__":
-    import time
-
-    from rcon.extended_commands import Rcon
-    from rcon.settings import SERVER_INFO
-
-    rcon = Rcon(SERVER_INFO)
-
-    while True:
-        logger.debug("starting watch")
-        punish_squads_without_leaders(
-            rcon,
-            NoLeaderConfig(
-                warn_message="",
-                number_of_warning=3,
-                warning_interval_seconds=60,  # TODO
-                number_of_punish=5,
-                kick_after_max_punish=True,
-                immuned_level_up_to=10,
-            ),
-        )
-        time.sleep(30)
