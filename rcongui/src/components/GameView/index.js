@@ -152,14 +152,14 @@ const GameView = ({ classes: globalClasses }) => {
   const loadData = () => {
     setIsLoading(true)
     get("get_team_view")
-    .then((response) => showResponse(response, "get_team_view"))
+    .then((response) => showResponse(response, "get_team_view_fast"))
     .then((data) => {setIsLoading(false); if (data.result) {setTeamView(fromJS(data.result))}})
     .catch(handle_http_errors);
   }
 
   React.useEffect(() => {
     loadData();
-    const handle = setInterval(loadData, 30000)
+    const handle = setInterval(loadData, 15000)
     return () => clearInterval(handle)
   }, [])
 
