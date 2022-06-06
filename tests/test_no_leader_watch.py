@@ -1082,10 +1082,8 @@ def test_watcher(team_view):
             APlayer(player="tinner2115", squad="able", team="axis"),
             APlayer(player="Cuervo", squad="able", team="axis"),
             APlayer(player="capitanodrew", squad="able", team="axis"),
-            APlayer(player="Dr.FishShitz", squad="able", team="axis"),
-            # lvl 1- should be excluded
-            # APlayer(player="Dr.DarkVisionary",
-            # APlayer(player= "WilliePeter",
+            APlayer(player='WilliePeter', squad='baker', team='axis'),
+            APlayer(player='DarkVisionary', squad='baker', team='axis')
         ]
 
         # 1st warning

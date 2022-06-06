@@ -98,15 +98,18 @@ def should_punish_player(
     watch_status: WatchStatus, config: NoLeaderConfig, team_view, team, squad_name, squad, player
 ):
     if config.number_of_punish == 0:
+        logger.debug("Punish is disabled")
         return PunishStepState.disabled
 
     if (
         len(team_view["allies"]) + len(team_view["axis"])
         < config.disable_punish_below_server_player_count
     ):
+        logger.debug("Server below min player count for punish")
         return PunishStepState.wait
 
     if len(squad["players"]) < config.min_squad_players_for_punish:
+        logger.debug("Squad %s below min player count for punish", squad_name)
         return PunishStepState.wait
 
     if (
@@ -124,6 +127,7 @@ def should_punish_player(
     punishes = watch_status.punished.setdefault(player["name"], [])
 
     if not is_time(punishes, config.punish_interval_seconds):
+        logger.debug("Waiting to punish %s", squad_name)
         return PunishStepState.wait
 
     if len(punishes) < config.number_of_punish or config.number_of_punish == -1:
@@ -159,9 +163,11 @@ def should_kick_player(
         len(team_view["allies"]) + len(team_view["axis"])
         < config.disable_kick_below_server_player_count
     ):
+        logger.debug("Server below min player count for punish")
         return PunishStepState.wait
 
     if len(squad["players"]) < config.min_squad_players_for_kick:
+        logger.debug("Squad %s below min player count for punish", squad_name)
         return PunishStepState.wait
 
     if (
