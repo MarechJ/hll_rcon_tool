@@ -303,10 +303,10 @@ class Rcon(ServerCtl):
         return game
 
     @ttl_cache(ttl=60 * 60 * 24, cache_falsy=False)
-    def get_player_info(self, player):
+    def get_player_info(self, player, can_fail=False):
         try:
             try:
-                raw = super().get_player_info(player)
+                raw = super().get_player_info(player, can_fail=can_fail)
                 name, steam_id_64, *rest = raw.split("\n")
             except (CommandFailedError, Exception):
                 sleep(2)
