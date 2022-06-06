@@ -24,7 +24,7 @@ def auto_kick(_, log):
 
     for r in config['regexps']:
         name = log["player"]
-        info = recorded_rcon.get_player_info(name)
+        info = recorded_rcon.get_player_info(name, can_fail=True)
         try:
             profile = get_player_profile(info["steam_id_64"], 0)
             for f in config.get("whitelist_flags", []):

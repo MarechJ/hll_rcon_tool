@@ -298,7 +298,7 @@ def save_player_action(
     rcon, action_type, player_name, by, reason="", steam_id_64=None, timestamp=None
 ):
     with enter_session() as sess:
-        _steam_id_64 = steam_id_64 or rcon.get_player_info(player_name)["steam_id_64"]
+        _steam_id_64 = steam_id_64 or rcon.get_player_info(player_name, can_fail=True)["steam_id_64"]
         player = _get_set_player(sess, player_name, _steam_id_64, timestamp=timestamp)
         sess.add(
             PlayersAction(
