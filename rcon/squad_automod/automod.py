@@ -95,6 +95,10 @@ def should_warn_squad(watch_status: WatchStatus, config: NoLeaderConfig, team, s
     return PunishStepState.go_to_next_step
 
 
+def _get_team_count(team_view, team):
+    return sum(len(s.get("players", [])) for s in team_view[team].get("squads", {}).values())  
+
+
 def should_punish_player(
     watch_status: WatchStatus, config: NoLeaderConfig, team_view, team, squad_name, squad, player
 ):
@@ -103,7 +107,7 @@ def should_punish_player(
         return PunishStepState.disabled
 
     if (
-        len(team_view["allies"]) + len(team_view["axis"])
+        (_get_team_count(team_view, "allies") + _get_team_count(team_view, "axis"))
         < config.disable_punish_below_server_player_count
     ):
         logger.debug("Server below min player count for punish")
@@ -161,7 +165,7 @@ def should_kick_player(
         return PunishStepState.disabled
 
     if (
-        len(team_view["allies"]) + len(team_view["axis"])
+        (_get_team_count(team_view, "allies") + _get_team_count(team_view, "axis"))
         < config.disable_kick_below_server_player_count
     ):
         logger.debug("Server below min player count for punish")
@@ -322,7 +326,7 @@ def audit(cfg: NoLeaderConfig, msg: str):
     webhook_url = None
     if cfg.discord_webhook_url is not None and cfg.discord_webhook_url != '':
         webhook_url = cfg.discord_webhook_url
-        send_to_discord_audit(msg, by="NoLeaderWatch", webhookurl=webhook_url)
+        send_to_discord_audit(msg, by="NoLeaderWatch", webhookurl=webhook_url, silent=False)
 
 
 def run():

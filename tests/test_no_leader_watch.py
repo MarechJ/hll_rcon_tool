@@ -616,7 +616,7 @@ def test_should_punish(team_view):
     config = NoLeaderConfig(
         number_of_punish=2,
         min_squad_players_for_punish=0,
-        disable_punish_below_server_player_count=1,
+        disable_punish_below_server_player_count=10,
         immuned_roles=["support"],
     )
 
