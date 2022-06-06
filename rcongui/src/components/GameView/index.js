@@ -151,7 +151,7 @@ const GameView = ({ classes: globalClasses }) => {
 
   const loadData = () => {
     setIsLoading(true)
-    get("get_team_view")
+    get("get_team_view_fast")
     .then((response) => showResponse(response, "get_team_view_fast"))
     .then((data) => {setIsLoading(false); if (data.result) {setTeamView(fromJS(data.result))}})
     .catch(handle_http_errors);
