@@ -180,7 +180,7 @@ def inject_steam_id_64(func):
     def wrapper(rcon, struct_log):
         try:
             name = struct_log["player"]
-            info = rcon.get_player_info(name)
+            info = rcon.get_player_info(name, can_fail=True)
             steam_id_64 = info.get("steam_id_64")
         except KeyError:
             logger.exception("Unable to inject steamid %s", struct_log)
@@ -208,7 +208,7 @@ def handle_on_connect(rcon, struct_log):
     except Exception:
         logger.exception("Unable to clear cache for %s", steam_id_64)
     try:
-        info = rcon.get_player_info(struct_log["player"])
+        info = rcon.get_player_info(struct_log["player"], can_fail=True)
         steam_id_64 = info.get("steam_id_64")
     except (CommandFailedError, KeyError):
         if not steam_id_64:
