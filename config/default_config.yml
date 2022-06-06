@@ -124,6 +124,9 @@ NOLEADER_AUTO_MOD:
   # If this is set to true no warning / punish / kick will be applied for real 
   # It turns the code into a "simulation" mode and only send what it would do to your discord audit log webhook
   dry_run: true
+  # Discord Webhook URL where audit logs should be sent. If not specified, the envrionment variable DISCORD_WEBHOOK_AUDIT_LOG
+  # will be used, instead.
+  discord_webhook_url: ''
   # The first step of the auto-moderation is to send a broadcast warning the squads that don't have an officer
   # set to 0 to disable (this it will move to punish directly), -1 for infinite warnings (will never go to punishes)
   # set to 1 or N to warn squad N times before we move on to the punish step
