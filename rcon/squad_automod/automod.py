@@ -194,7 +194,11 @@ def get_punitions_to_apply(rcon, config: NoLeaderConfig) -> PunitionsToApply:
     punitions_to_apply = PunitionsToApply()
 
     for team in ["allies", "axis"]:
-        for squad_name, squad in team_view[team]["squads"].items():
+        team = team_view[team]
+        if team is None:
+            continue
+
+        for squad_name, squad in team["squads"].items():
             with watch_state(red, team, squad_name) as watch_status:
                 if squad["has_leader"]:  # The squad has a leader, clearing punishments plan
                     raise SquadHasLeader()
