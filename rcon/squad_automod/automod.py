@@ -5,6 +5,7 @@ from contextlib import contextmanager
 from datetime import datetime, timedelta
 from typing import Callable, List
 
+
 import redis
 from rcon.cache_utils import get_redis_client
 from rcon.config import get_config
@@ -321,8 +322,7 @@ def audit(cfg: NoLeaderConfig, msg: str):
     webhook_url = None
     if cfg.discord_webhook_url is not None and cfg.discord_webhook_url != '':
         webhook_url = cfg.discord_webhook_url
-
-    send_to_discord_audit(msg, by="NoLeaderWatch", webhookurl=webhook_url)
+        send_to_discord_audit(msg, by="NoLeaderWatch", webhookurl=webhook_url)
 
 
 def run():

@@ -2,10 +2,11 @@ import logging
 import pickle
 import time
 from contextlib import contextmanager
-from dataclasses import dataclass, field
+from dataclasses import field
 from datetime import datetime, timedelta
 from enum import Enum, auto
 from typing import Callable, List, Mapping
+from pydantic.dataclasses import dataclass
 
 import redis
 from rcon.audit import ingame_mods, online_mods
