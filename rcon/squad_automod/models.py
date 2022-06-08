@@ -6,9 +6,9 @@ from dataclasses import field
 from datetime import datetime, timedelta
 from enum import Enum, auto
 from typing import Callable, List, Mapping
-from pydantic.dataclasses import dataclass
 
 import redis
+from pydantic.dataclasses import dataclass
 from rcon.audit import ingame_mods, online_mods
 from rcon.cache_utils import get_redis_client
 from rcon.config import get_config
@@ -78,6 +78,8 @@ class APlayer:
     player: str
     squad: str
     team: str
+    role: str = None
+    lvl: int = None
 
 
 @dataclass
@@ -85,6 +87,8 @@ class PunitionsToApply:
     warning: Mapping[str, List[str]] = field(default_factory=lambda: {"allies": [], "axis": []})
     punish: List[APlayer] = field(default_factory=list)
     kick: List[APlayer] = field(default_factory=list)
+    squads_state: List[dict] = field(default_factory=list)
 
     def __bool__(self):
         return any([self.warning.get("allies"), self.warning.get("axis"), self.kick, self.punish])
+

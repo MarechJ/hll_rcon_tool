@@ -15,13 +15,13 @@ from rcon.squad_automod.automod import (
     watch_state,
 )
 from rcon.squad_automod.models import (
+    APlayer,
     NoLeaderConfig,
     PunishStepState,
     PunitionsToApply,
     SquadCycleOver,
     SquadHasLeader,
     WatchStatus,
-    APlayer
 )
 
 
@@ -1071,37 +1071,24 @@ def test_watcher(team_view):
         rcon = mock.MagicMock()
         rcon.get_team_view_fast.return_value = team_view
         expected_players = [
-            APlayer(player="Lawless", squad="baker", team="allies"),
-            APlayer(player="Major_Winters", squad="baker", team="allies"),
-            APlayer(player="Toomz", squad="baker", team="allies"),
-            APlayer(player="Zones (BEL)", squad="baker", team="allies"),
-            APlayer(player="Pavooloni", squad="baker", team="allies"),
-            APlayer(player="Kjjuj", squad="baker", team="allies"),
-            APlayer(player="emfoor", squad="able", team="axis"),
-            APlayer(player="Makaj", squad="able", team="axis"),
-            APlayer(player="tinner2115", squad="able", team="axis"),
-            APlayer(player="Cuervo", squad="able", team="axis"),
-            APlayer(player="capitanodrew", squad="able", team="axis"),
-            APlayer(player='WilliePeter', squad='baker', team='axis'),
-            APlayer(player='DarkVisionary', squad='baker', team='axis')
+            APlayer(player="Lawless", squad="baker", team="allies", role='heavymachinegunner', lvl=88),
+            APlayer(player="Major_Winters", squad="baker", team="allies", role='rifleman', lvl=82),
+            APlayer(player="Toomz", squad="baker", team="allies", role='assault', lvl=69),
+            APlayer(player="Zones (BEL)", squad="baker", team="allies", role='engineer', lvl=59),
+            APlayer(player="Pavooloni", squad="baker", team="allies", role='antitank', lvl=71),
+            APlayer(player="Kjjuj", squad="baker", team="allies", role='rifleman', lvl=102),
+            APlayer(player="emfoor", squad="able", team="axis", role='assault', lvl=110),
+            APlayer(player="Makaj", squad="able", team="axis", role='officer', lvl=43),
+            APlayer(player="tinner2115", squad="able", team="axis", role='engineer', lvl=170),
+            APlayer(player="Cuervo", squad="able", team="axis", role='antitank', lvl=129),
+            APlayer(player="capitanodrew", squad="able", team="axis", role='heavymachinegunner', lvl=67),
+            APlayer(player='WilliePeter', squad='baker', team='axis', role='spotter', lvl=123),
+            APlayer(player='DarkVisionary', squad='baker', team='axis', role='sniper', lvl=184)
         ]
 
         # 1st warning
         to_apply = get_punitions_to_apply(rcon, config)
-        assert (
-            PunitionsToApply(
-                warning={"allies": ["baker"], "axis": ["able", "baker"]}, punish=[], kick=[]
-            )
-            == to_apply
-        )
-        assert """Warning squads must have an Officer.
-You will be punished then kicked
-allies: BAKER 1/1 /!\\
-axis: ABLE 1/1 /!\\, BAKER 1/1 /!\\
-Next check will happen automatically in 60s
-""" == get_warning_message(
-            to_apply, config
-        )
+        assert {"allies": ["baker"], "axis": ["able", "baker"]} == to_apply.warning
 
         assert PunitionsToApply(
             warning={"allies": [], "axis": []}, punish=[], kick=[]
@@ -1109,33 +1096,21 @@ Next check will happen automatically in 60s
         time.sleep(config.warning_interval_seconds)
 
         # 1st punish
-        assert PunitionsToApply(
-            warning={"allies": [], "axis": []},
-            punish=expected_players,
-            kick=[],
-        ) == get_punitions_to_apply(rcon, config)
+        assert expected_players == get_punitions_to_apply(rcon, config).punish
         assert PunitionsToApply(
             warning={"allies": [], "axis": []}, punish=[], kick=[]
         ) == get_punitions_to_apply(rcon, config)
         time.sleep(config.punish_interval_seconds)
 
         # 2nd punsi
-        assert PunitionsToApply(
-            warning={"allies": [], "axis": []},
-            punish=expected_players,
-            kick=[],
-        ) == get_punitions_to_apply(rcon, config)
+        assert expected_players == get_punitions_to_apply(rcon, config).punish
         assert PunitionsToApply(
             warning={"allies": [], "axis": []}, punish=[], kick=[]
         ) == get_punitions_to_apply(rcon, config)
         time.sleep(config.punish_interval_seconds)
 
         # kick, final
-        assert PunitionsToApply(
-            warning={"allies": [], "axis": []},
-            kick=expected_players,
-            punish=[],
-        ) == get_punitions_to_apply(rcon, config)
+        assert expected_players == get_punitions_to_apply(rcon, config).kick
 
 
 def test_watcher_2(team_view):
@@ -1169,59 +1144,46 @@ def test_watcher_2(team_view):
         rcon = mock.MagicMock()
         rcon.get_team_view_fast.return_value = team_view
         expected_players = [
-            APlayer(player="Lawless", squad="baker", team="allies"),
-            APlayer(player="Major_Winters", squad="baker", team="allies"),
-            APlayer(player="Toomz", squad="baker", team="allies"),
-            APlayer(player="Zones (BEL)", squad="baker", team="allies"),
-            APlayer(player="Pavooloni", squad="baker", team="allies"),
-            APlayer(player="Kjjuj", squad="baker", team="allies"),
-            APlayer(player="emfoor", squad="able", team="axis"),
-            APlayer(player="Makaj", squad="able", team="axis"),
-            APlayer(player="tinner2115", squad="able", team="axis"),
-            APlayer(player="Cuervo", squad="able", team="axis"),
-            APlayer(player="capitanodrew", squad="able", team="axis"),
-            APlayer(player="Dr.FishShitz", squad="able", team="axis"),
+            APlayer(player="Lawless", squad="baker", team="allies", role='heavymachinegunner', lvl=88),
+            APlayer(player="Major_Winters", squad="baker", team="allies", role='rifleman', lvl=82),
+            APlayer(player="Toomz", squad="baker", team="allies", role='assault', lvl=69),
+            APlayer(player="Zones (BEL)", squad="baker", team="allies", role='engineer', lvl=59),
+            APlayer(player="Pavooloni", squad="baker", team="allies", role='antitank', lvl=71),
+            APlayer(player="Kjjuj", squad="baker", team="allies", role='rifleman', lvl=102),
+            APlayer(player="emfoor", squad="able", team="axis", role='assault', lvl=110),
+            APlayer(player="Makaj", squad="able", team="axis", role='officer', lvl=43),
+            APlayer(player="tinner2115", squad="able", team="axis", role='engineer', lvl=170),
+            APlayer(player="Cuervo", squad="able", team="axis", role='antitank', lvl=129),
+            APlayer(player="capitanodrew", squad="able", team="axis", role='heavymachinegunner', lvl=67),
+            APlayer(player="Dr.FishShitz", squad="able", team="axis", role='automaticrifleman', lvl=10),
             # APlayer(player="WilliePeter",
             # APlayer(player="DarkVisionary",
         ]
 
         # 1st warning
-        assert PunitionsToApply(
-            warning={"allies": ["baker"], "axis": ["able", "baker"]}, punish=[], kick=[]
-        ) == get_punitions_to_apply(rcon, config)
+        assert {"allies": ["baker"], "axis": ["able", "baker"]} == get_punitions_to_apply(rcon, config).warning
         assert PunitionsToApply(
             warning={"allies": [], "axis": []}, punish=[], kick=[]
         ) == get_punitions_to_apply(rcon, config)
         time.sleep(config.warning_interval_seconds)
 
         # 1st punish
-        assert PunitionsToApply(
-            warning={"allies": [], "axis": []},
-            punish=expected_players,
-            kick=[],
-        ) == get_punitions_to_apply(rcon, config)
+        assert expected_players == get_punitions_to_apply(rcon, config).punish
+        assert [] == get_punitions_to_apply(rcon, config).kick
         assert PunitionsToApply(
             warning={"allies": [], "axis": []}, punish=[], kick=[]
         ) == get_punitions_to_apply(rcon, config)
         time.sleep(config.punish_interval_seconds)
 
         # 2nd punish
-        assert PunitionsToApply(
-            warning={"allies": [], "axis": []},
-            punish=expected_players,
-            kick=[],
-        ) == get_punitions_to_apply(rcon, config)
+        assert expected_players == get_punitions_to_apply(rcon, config).punish
         assert PunitionsToApply(
             warning={"allies": [], "axis": []}, punish=[], kick=[]
         ) == get_punitions_to_apply(rcon, config)
         time.sleep(config.punish_interval_seconds)
 
         # kick, final
-        assert PunitionsToApply(
-            warning={"allies": [], "axis": []},
-            kick=expected_players,
-            punish=[],
-        ) == get_punitions_to_apply(rcon, config)
+        assert expected_players == get_punitions_to_apply(rcon, config).kick
 
 
 def test_watcher_no_kick(team_view):
@@ -1255,48 +1217,40 @@ def test_watcher_no_kick(team_view):
         rcon = mock.MagicMock()
         rcon.get_team_view_fast.return_value = team_view
         expected_players = [
-            APlayer(player="Lawless", squad="baker", team="allies"),
-            APlayer(player="Major_Winters", squad="baker", team="allies"),
-            APlayer(player="Toomz", squad="baker", team="allies"),
-            APlayer(player="Zones (BEL)", squad="baker", team="allies"),
-            APlayer(player="Pavooloni", squad="baker", team="allies"),
-            APlayer(player="Kjjuj", squad="baker", team="allies"),
-            APlayer(player="emfoor", squad="able", team="axis"),
-            APlayer(player="Makaj", squad="able", team="axis"),
-            APlayer(player="tinner2115", squad="able", team="axis"),
-            APlayer(player="Cuervo", squad="able", team="axis"),
-            APlayer(player="capitanodrew", squad="able", team="axis"),
-            APlayer(player="Dr.FishShitz", squad="able", team="axis"),
+            APlayer(player="Lawless", squad="baker", team="allies", role='heavymachinegunner', lvl=88),
+            APlayer(player="Major_Winters", squad="baker", team="allies", role='rifleman', lvl=82),
+            APlayer(player="Toomz", squad="baker", team="allies", role='assault', lvl=69),
+            APlayer(player="Zones (BEL)", squad="baker", team="allies", role='engineer', lvl=59),
+            APlayer(player="Pavooloni", squad="baker", team="allies", role='antitank', lvl=71),
+            APlayer(player="Kjjuj", squad="baker", team="allies", role='rifleman', lvl=102),
+            APlayer(player="emfoor", squad="able", team="axis", role='assault', lvl=110),
+            APlayer(player="Makaj", squad="able", team="axis", role='officer', lvl=43),
+            APlayer(player="tinner2115", squad="able", team="axis", role='engineer', lvl=170),
+            APlayer(player="Cuervo", squad="able", team="axis", role='antitank', lvl=129),
+            APlayer(player="capitanodrew", squad="able", team="axis", role='heavymachinegunner', lvl=67),
+            APlayer(player="Dr.FishShitz", squad="able", team="axis", role='automaticrifleman', lvl=10),
             # APlayer(player="WilliePeter",
             # APlayer(player="DarkVisionary",
         ]
 
         # 1st warning
-        assert PunitionsToApply(
-            warning={"allies": ["baker"], "axis": ["able", "baker"]}, punish=[], kick=[]
-        ) == get_punitions_to_apply(rcon, config)
+        assert {"allies": ["baker"], "axis": ["able", "baker"]} == get_punitions_to_apply(rcon, config).warning
+        assert [] == get_punitions_to_apply(rcon, config).punish
+        assert [] == get_punitions_to_apply(rcon, config).kick
         assert PunitionsToApply(
             warning={"allies": [], "axis": []}, punish=[], kick=[]
         ) == get_punitions_to_apply(rcon, config)
         time.sleep(config.warning_interval_seconds)
 
         # 1st punish
-        assert PunitionsToApply(
-            warning={"allies": [], "axis": []},
-            punish=expected_players,
-            kick=[],
-        ) == get_punitions_to_apply(rcon, config)
+        assert expected_players == get_punitions_to_apply(rcon, config).punish
         assert PunitionsToApply(
             warning={"allies": [], "axis": []}, punish=[], kick=[]
         ) == get_punitions_to_apply(rcon, config)
         time.sleep(config.punish_interval_seconds)
 
         # 2nd punish
-        assert PunitionsToApply(
-            warning={"allies": [], "axis": []},
-            punish=expected_players,
-            kick=[],
-        ) == get_punitions_to_apply(rcon, config)
+        assert expected_players == get_punitions_to_apply(rcon, config).punish
         assert PunitionsToApply(
             warning={"allies": [], "axis": []}, punish=[], kick=[]
         ) == get_punitions_to_apply(rcon, config)
@@ -1341,28 +1295,25 @@ def test_watcher_resets(team_view):
         rcon = mock.MagicMock()
         rcon.get_team_view_fast.return_value = team_view
         expected_players = [
-            APlayer(player="Lawless", squad="baker", team="allies"),
-            APlayer(player="Major_Winters", squad="baker", team="allies"),
-            APlayer(player="Toomz", squad="baker", team="allies"),
-            APlayer(player="Zones (BEL)", squad="baker", team="allies"),
-            APlayer(player="Pavooloni", squad="baker", team="allies"),
-            APlayer(player="Kjjuj", squad="baker", team="allies"),
-            APlayer(player="emfoor", squad="able", team="axis"),
-            APlayer(player="Makaj", squad="able", team="axis"),
-            APlayer(player="tinner2115", squad="able", team="axis"),
-            APlayer(player="Cuervo", squad="able", team="axis"),
-            APlayer(player="capitanodrew", squad="able", team="axis"),
-            APlayer(player="Dr.FishShitz", squad="able", team="axis"),
+            APlayer(player="Lawless", squad="baker", team="allies", role='heavymachinegunner', lvl=88),
+            APlayer(player="Major_Winters", squad="baker", team="allies", role='rifleman', lvl=82),
+            APlayer(player="Toomz", squad="baker", team="allies", role='assault', lvl=69),
+            APlayer(player="Zones (BEL)", squad="baker", team="allies", role='engineer', lvl=59),
+            APlayer(player="Pavooloni", squad="baker", team="allies", role='antitank', lvl=71),
+            APlayer(player="Kjjuj", squad="baker", team="allies", role='rifleman', lvl=102),
+            APlayer(player="emfoor", squad="able", team="axis", role='assault', lvl=110),
+            APlayer(player="Makaj", squad="able", team="axis", role='officer', lvl=43),
+            APlayer(player="tinner2115", squad="able", team="axis", role='engineer', lvl=170),
+            APlayer(player="Cuervo", squad="able", team="axis", role='antitank', lvl=129),
+            APlayer(player="capitanodrew", squad="able", team="axis", role='heavymachinegunner', lvl=67),
+            APlayer(player="Dr.FishShitz", squad="able", team="axis", role='automaticrifleman', lvl=10),
             # APlayer(player="WilliePeter",
             # APlayer(player="DarkVisionary",
         ]
 
         # 1st punish
-        assert PunitionsToApply(
-            warning={"allies": [], "axis": []},
-            punish=expected_players,
-            kick=[],
-        ) == get_punitions_to_apply(rcon, config)
+        assert expected_players == get_punitions_to_apply(rcon, config).punish
+        assert [] == get_punitions_to_apply(rcon, config).kick
         assert PunitionsToApply(
             warning={"allies": [], "axis": []}, punish=[], kick=[]
         ) == get_punitions_to_apply(rcon, config)
@@ -1390,11 +1341,7 @@ def test_watcher_resets(team_view):
         team_view["axis"]["squads"]["able"]["has_leader"] = False
         team_view["axis"]["squads"]["baker"]["has_leader"] = False
         # punish again
-        assert PunitionsToApply(
-            warning={"allies": [], "axis": []},
-            punish=expected_players,
-            kick=[],
-        ) == get_punitions_to_apply(rcon, config)
+        assert expected_players == get_punitions_to_apply(rcon, config).punish
 
 
 def test_default_config():

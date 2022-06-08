@@ -358,7 +358,7 @@ class Rcon(ServerCtl):
             level=0,
         )
 
-    @ttl_cache(ttl=10, cache_falsy=False)
+    @ttl_cache(ttl=2, cache_falsy=False)
     def get_detailed_player_info(self, player):
         raw = super().get_player_info(player)
         if not raw:

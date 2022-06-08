@@ -3,8 +3,7 @@ import pickle
 import time
 from contextlib import contextmanager
 from datetime import datetime, timedelta
-from typing import Callable, List
-
+from typing import Callable, List, Tuple
 
 import redis
 from rcon.cache_utils import get_redis_client
@@ -96,7 +95,7 @@ def should_warn_squad(watch_status: WatchStatus, config: NoLeaderConfig, team, s
 
 
 def _get_team_count(team_view, team):
-    return sum(len(s.get("players", [])) for s in team_view[team].get("squads", {}).values())  
+    return sum(len(s.get("players", [])) for s in team_view[team].get("squads", {}).values())
 
 
 def should_punish_player(
@@ -107,9 +106,8 @@ def should_punish_player(
         return PunishStepState.disabled
 
     if (
-        (_get_team_count(team_view, "allies") + _get_team_count(team_view, "axis"))
-        < config.disable_punish_below_server_player_count
-    ):
+        _get_team_count(team_view, "allies") + _get_team_count(team_view, "axis")
+    ) < config.disable_punish_below_server_player_count:
         logger.debug("Server below min player count for punish")
         return PunishStepState.wait
 
@@ -165,9 +163,8 @@ def should_kick_player(
         return PunishStepState.disabled
 
     if (
-        (_get_team_count(team_view, "allies") + _get_team_count(team_view, "axis"))
-        < config.disable_kick_below_server_player_count
-    ):
+        _get_team_count(team_view, "allies") + _get_team_count(team_view, "axis")
+    ) < config.disable_kick_below_server_player_count:
         logger.debug("Server below min player count for punish")
         return PunishStepState.wait
 
@@ -215,7 +212,11 @@ def get_punitions_to_apply(rcon, config: NoLeaderConfig) -> PunitionsToApply:
                     raise SquadHasLeader()
 
                 if squad_name is None or squad is None:
-                    logger.warning("Team view appears to be invalid, none squads in team %s. See\n%s", team, team_view)
+                    logger.warning(
+                        "Team view appears to be invalid, none squads in team %s. See\n%s",
+                        team,
+                        team_view,
+                    )
 
                 logger.info("Squad %s - %s doesn't have leader", team, squad_name)
 
@@ -223,6 +224,7 @@ def get_punitions_to_apply(rcon, config: NoLeaderConfig) -> PunitionsToApply:
 
                 if state == PunishStepState.apply:
                     punitions_to_apply.warning[team].append(squad_name)
+                    punitions_to_apply.squads_state.append(squad)
                 if state != PunishStepState.go_to_next_step and state != PunishStepState.disabled:
                     continue
 
@@ -232,7 +234,16 @@ def get_punitions_to_apply(rcon, config: NoLeaderConfig) -> PunitionsToApply:
                     )
 
                     if state == PunishStepState.apply:
-                        punitions_to_apply.punish.append(APlayer(player=player["name"], team=team, squad=squad_name))
+                        punitions_to_apply.punish.append(
+                            APlayer(
+                                player=player["name"],
+                                team=team,
+                                squad=squad_name,
+                                role=player.get("role"),
+                                lvl=player.get("level"),
+                            )
+                        )
+                        punitions_to_apply.squads_state.append(squad)
                     if state != PunishStepState.go_to_next_step:
                         continue
 
@@ -240,7 +251,16 @@ def get_punitions_to_apply(rcon, config: NoLeaderConfig) -> PunitionsToApply:
                         watch_status, config, team_view, team, squad_name, squad, player
                     )
                     if state == PunishStepState.apply:
-                        punitions_to_apply.kick.append(APlayer(player=player["name"], team=team, squad=squad_name))
+                        punitions_to_apply.kick.append(
+                            APlayer(
+                                player=player["name"],
+                                team=team,
+                                squad=squad_name,
+                                role=player.get("role"),
+                                lvl=player.get("level"),
+                            )
+                        )
+                        punitions_to_apply.squads_state.append(squad)
 
     return punitions_to_apply
 
@@ -262,15 +282,24 @@ def _build_warning_str(punition_to_apply: PunitionsToApply, config: NoLeaderConf
     return f"{start}{', '.join(squads)}"
 
 
-def get_warning_message(punition_to_apply: PunitionsToApply, config: NoLeaderConfig) -> str:
+def get_warning_message(punition_to_apply: PunitionsToApply, config: NoLeaderConfig) -> Tuple[str, str]:
+    allies = _build_warning_str(punition_to_apply, config, "allies")
+    axis = _build_warning_str(punition_to_apply, config, "axis")
     return f"""{config.warn_message_header}
-{_build_warning_str(punition_to_apply, config, "allies")}
-{_build_warning_str(punition_to_apply, config, "axis")}
+{allies}
+{axis}
 {config.warn_message_footer}
-"""
+""", f"{allies} {axis}"
 
 
-def _do_punitions(red, config: NoLeaderConfig, rcon: RecordedRcon, method: str, message: str, players: List[APlayer]):
+def _do_punitions(
+    red,
+    config: NoLeaderConfig,
+    rcon: RecordedRcon,
+    method: str,
+    message: str,
+    players: List[APlayer],
+):
     if config.dry_run:
         logger.info("Dry run is enabled, skipping real punitions")
         return
@@ -283,9 +312,9 @@ def _do_punitions(red, config: NoLeaderConfig, rcon: RecordedRcon, method: str, 
         except Exception:
             logger.exception("Failed to %s %s", method, repr(aplayer))
             if method == "punish":
-                with watch_state(red, aplayer.team, aplayer.squad) as watch_state:
+                with watch_state(red, aplayer.team, aplayer.squad) as watch_status:
                     try:
-                        if punishes := watch_state.punished.get(aplayer.player):
+                        if punishes := watch_status.punished.get(aplayer.player):
                             del punishes[-1]
                     except:
                         logger.exception("tried to cleanup punished time but failed")
@@ -311,23 +340,23 @@ def punish_squads_without_leaders(rcon: RecordedRcon):
         logger.debug("Squad Automod did not suggest any punitions")
 
     if punition_to_apply.warning.get("allies") or punition_to_apply.warning.get("axis"):
-        msg = get_warning_message(punition_to_apply, config)
-        audit(config, f"Warning issued: {msg}")
+        msg, short_msg = get_warning_message(punition_to_apply, config)
+        audit(config, f"Warnings: {short_msg}")
         if not config.dry_run:
             rcon.set_broadcast(msg)
 
     if punition_to_apply.punish:
-        audit(config, f"Punishing: {punition_to_apply.punish}")
+        audit(config, f"--> PUNISHING: {punition_to_apply.punish}")
         _do_punitions(red, config, rcon, "punish", config.punish_message, punition_to_apply.punish)
 
     if punition_to_apply.kick:
-        audit(config, f"Kicking: {punition_to_apply.punish}")
+        audit(config, f"---> KICKING <---: {punition_to_apply.punish}")
         _do_punitions(red, config, rcon, "kick", config.kick_message, punition_to_apply.kick)
 
 
 def audit(cfg: NoLeaderConfig, msg: str):
     webhook_url = None
-    if cfg.discord_webhook_url is not None and cfg.discord_webhook_url != '':
+    if cfg.discord_webhook_url is not None and cfg.discord_webhook_url != "":
         webhook_url = cfg.discord_webhook_url
         send_to_discord_audit(msg, by="NoLeaderWatch", webhookurl=webhook_url, silent=False)
 
@@ -342,4 +371,3 @@ def run():
         except Exception:
             logger.exception("Squad automod: Something unexpected happened")
             raise
-
