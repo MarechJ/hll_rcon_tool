@@ -306,18 +306,23 @@ def _do_punitions(
     for aplayer in players:
         try:
             if method == "punish":
+                audit(config, f"--> PUNISHING: {aplayer}")
                 rcon.do_punish(aplayer.player, config.punish_message, by="NoLeaderWatch")
             elif method == "kick":
+                audit(config, f"---> KICKING <---: {aplayer}")
                 rcon.do_kick(aplayer.player, config.kick_message, by="NoLeaderWatch")
         except Exception:
             logger.exception("Failed to %s %s", method, repr(aplayer))
             if method == "punish":
+                audit(config, f"--> PUNISH FAILED, will retry: {aplayer}")
                 with watch_state(red, aplayer.team, aplayer.squad) as watch_status:
                     try:
                         if punishes := watch_status.punished.get(aplayer.player):
                             del punishes[-1]
                     except:
                         logger.exception("tried to cleanup punished time but failed")
+            elif method == "kick":
+                audit(config, f"---> KICK FAILED, will retry <---: {aplayer}")
 
 
 def punish_squads_without_leaders(rcon: RecordedRcon):
@@ -346,11 +351,9 @@ def punish_squads_without_leaders(rcon: RecordedRcon):
             rcon.set_broadcast(msg)
 
     if punition_to_apply.punish:
-        audit(config, f"--> PUNISHING: {punition_to_apply.punish}")
         _do_punitions(red, config, rcon, "punish", config.punish_message, punition_to_apply.punish)
 
     if punition_to_apply.kick:
-        audit(config, f"---> KICKING <---: {punition_to_apply.punish}")
         _do_punitions(red, config, rcon, "kick", config.kick_message, punition_to_apply.kick)
 
 
