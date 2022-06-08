@@ -224,7 +224,7 @@ def get_punitions_to_apply(rcon, config: NoLeaderConfig) -> PunitionsToApply:
 
                 if state == PunishStepState.apply:
                     punitions_to_apply.warning[team].append(squad_name)
-                    punitions_to_apply.squads_state.append(squad)
+                    punitions_to_apply.add_squad_state(squad_name, squad)
                 if state != PunishStepState.go_to_next_step and state != PunishStepState.disabled:
                     continue
 
@@ -243,7 +243,7 @@ def get_punitions_to_apply(rcon, config: NoLeaderConfig) -> PunitionsToApply:
                                 lvl=player.get("level"),
                             )
                         )
-                        punitions_to_apply.squads_state.append(squad)
+                        punitions_to_apply.add_squad_state(squad_name, squad)
                     if state != PunishStepState.go_to_next_step:
                         continue
 
@@ -260,7 +260,7 @@ def get_punitions_to_apply(rcon, config: NoLeaderConfig) -> PunitionsToApply:
                                 lvl=player.get("level"),
                             )
                         )
-                        punitions_to_apply.squads_state.append(squad)
+                        punitions_to_apply.add_squad_state(squad_name, squad)
 
     return punitions_to_apply
 

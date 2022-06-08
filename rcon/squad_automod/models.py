@@ -1,22 +1,13 @@
+
 import logging
-import pickle
-import time
-from contextlib import contextmanager
 from dataclasses import field
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum, auto
 from typing import Callable, List, Mapping
 
-import redis
 from pydantic.dataclasses import dataclass
-from rcon.audit import ingame_mods, online_mods
-from rcon.cache_utils import get_redis_client
-from rcon.config import get_config
-from rcon.discord import send_to_discord_audit
-from rcon.extended_commands import CommandFailedError
-from rcon.map_recorder import MapsRecorder
-from rcon.recorded_commands import RecordedRcon
-from rcon.user_config import AutoVoteKickConfig
+
+logger = logging.getLogger(__name__)
 
 
 class SquadHasLeader(Exception):
@@ -83,11 +74,28 @@ class APlayer:
 
 
 @dataclass
+class ASquad:
+    name: str
+    players: List[APlayer] = field(default_factory=list)
+
+@dataclass
 class PunitionsToApply:
     warning: Mapping[str, List[str]] = field(default_factory=lambda: {"allies": [], "axis": []})
     punish: List[APlayer] = field(default_factory=list)
     kick: List[APlayer] = field(default_factory=list)
     squads_state: List[dict] = field(default_factory=list)
+
+    def add_squad_state(self, squad_name: str, squad: dict):
+        try:
+            self.squads_state.append(ASquad(
+                name=squad_name,
+                players=[
+                    APlayer(player=p.get("name"), squad=p.get("unit_name"), team=p.get("team"), role=p.get("role"), lvl=p.get("level"))
+                    for p in squad.get("players", [])
+                ]
+            ))
+        except:
+            logger.exception("Unable to add squad info")
 
     def __bool__(self):
         return any([self.warning.get("allies"), self.warning.get("axis"), self.kick, self.punish])

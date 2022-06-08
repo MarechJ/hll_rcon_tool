@@ -3,8 +3,17 @@ import os
 from contextlib import contextmanager
 from datetime import datetime
 
-from sqlalchemy import (TIMESTAMP, Boolean, Column, DateTime, Float,
-                        ForeignKey, Integer, String, create_engine)
+from sqlalchemy import (
+    TIMESTAMP,
+    Boolean,
+    Column,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    create_engine,
+)
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.engine.url import URL
 from sqlalchemy.exc import SQLAlchemyError
