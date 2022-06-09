@@ -1,4 +1,4 @@
-from rcon.watchlist import watchdog, PlayerWatch
+from rcon.watchlist import PlayerWatch, watchdog
 
 
 def test_watchlist_hook():

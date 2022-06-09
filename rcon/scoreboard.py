@@ -1,21 +1,20 @@
 import datetime
-import pickle
-from rcon.player_history import get_player_profile
-import re
-import os
 import logging
+import os
+import pickle
+import re
 import time
 from dataclasses import dataclass
 
+from rcon.cache_utils import get_redis_client, ttl_cache
+from rcon.config import get_config
+from rcon.game_logs import get_historical_logs_records, get_recent_logs
 from rcon.models import SteamInfo, enter_session
+from rcon.player_history import (_get_profiles, get_player_profile,
+                                 get_player_profile_by_steam_ids)
 from rcon.recorded_commands import RecordedRcon
 from rcon.settings import SERVER_INFO
-from rcon.game_logs import get_recent_logs, get_historical_logs_records
-from rcon.cache_utils import ttl_cache, get_redis_client
-from rcon.player_history import _get_profiles, get_player_profile_by_steam_ids
-from rcon.config import get_config
 from rcon.utils import MapsHistory
-from rcon.cache_utils import get_redis_client
 
 logger = logging.getLogger(__name__)
 
@@ -512,6 +511,7 @@ def get_cached_live_game_stats():
 
 if __name__ == "__main__":
     from pprint import pprint
+
     from dateutil import tz
 
     # pprint(LiveStats().get_current_players_stats())

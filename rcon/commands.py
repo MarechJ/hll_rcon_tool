@@ -223,8 +223,8 @@ class ServerCtl:
     def get_playerids(self):
         return self._get("playerids", True, can_fail=False)
 
-    def get_player_info(self, player):
-        return self._request(f"playerinfo {player}", can_fail=False)
+    def get_player_info(self, player, can_fail=False):
+        return self._request(f"playerinfo {player}", can_fail=can_fail)
 
     def get_admin_ids(self):
         return self._get("adminids", True, can_fail=False)

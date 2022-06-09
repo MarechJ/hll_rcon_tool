@@ -1,30 +1,27 @@
-from functools import partial
-from rcon.workers import record_stats, record_stats_worker, temp_welcome_standalone, temporary_welcome, temporary_welcome_in
-from typing import Counter
-from rcon.settings import SERVER_INFO
+import enum
+import logging
+import os
+import random
+import re
 import time
 from datetime import datetime, timedelta
-import logging
+from functools import partial
 from threading import Thread
-import os
+from typing import Counter
+
 import redis
-import re
-from rcon.discord import send_to_discord_audit, dict_to_discord
-from rcon.recorded_commands import RecordedRcon
-from rcon.extended_commands import CommandFailedError
-from rcon.utils import (
-    categorize_maps,
-    numbered_maps,
-    FixedLenList,
-    map_name,
-    get_map_side,
-    MapsHistory,
-    ALL_MAPS,
-)
-from rcon.user_config import VoteMapConfig, DefaultMethods
+
 from rcon.cache_utils import get_redis_client, get_redis_pool
-import enum
-import random
+from rcon.discord import dict_to_discord, send_to_discord_audit
+from rcon.extended_commands import CommandFailedError
+from rcon.recorded_commands import RecordedRcon
+from rcon.settings import SERVER_INFO
+from rcon.user_config import DefaultMethods, VoteMapConfig
+from rcon.utils import (ALL_MAPS, FixedLenList, MapsHistory, categorize_maps,
+                        get_map_side, map_name, numbered_maps)
+from rcon.workers import (record_stats, record_stats_worker,
+                          temp_welcome_standalone, temporary_welcome,
+                          temporary_welcome_in)
 
 logger = logging.getLogger(__name__)
 

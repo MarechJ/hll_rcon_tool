@@ -1,11 +1,12 @@
-import redis
-import simplejson
-import pickle
+import functools
 import logging
 import os
-import functools
-from cachetools.func import ttl_cache as cachetools_ttl_cache
+import pickle
 from contextlib import contextmanager
+
+import redis
+import simplejson
+from cachetools.func import ttl_cache as cachetools_ttl_cache
 
 logger = logging.getLogger(__name__)
 
@@ -118,7 +119,7 @@ def get_redis_pool(decode_responses=True):
     if _REDIS_POOL is None:
         logger.info("Redis pool initializing")
         _REDIS_POOL = redis.ConnectionPool.from_url(
-            redis_url, max_connections=10, socket_connect_timeout=5,
+            redis_url, max_connections=1000, socket_connect_timeout=5,
             socket_timeout=5, decode_responses=decode_responses
         )
 

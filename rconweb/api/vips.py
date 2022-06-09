@@ -1,28 +1,28 @@
 import datetime
+import logging
+import os
 from re import escape
-from django.forms.utils import ErrorList
 
+from django import forms
+from django.forms.utils import ErrorList
 from django.http import HttpResponse
 from django.http.response import JsonResponse
 from django.shortcuts import render
-from django import forms
 from django.views.decorators.csrf import csrf_exempt
 
-from rcon.utils import MapsHistory
-from rcon.recorded_commands import RecordedRcon
-from rcon.commands import CommandFailedError
-from rcon.steam_utils import get_steam_profile
-from rcon.settings import SERVER_INFO
 from rcon import game_logs
-from rcon.models import LogLine, PlayerSteamID, PlayerName, enter_session
+from rcon.commands import CommandFailedError
 from rcon.discord import dict_to_discord, send_to_discord_audit
-from rcon.workers import worker_bulk_vip, get_job_results
-from .auth import login_required, api_response
-from .views import ctl
-from .views import _get_data
-import os
+from rcon.models import LogLine, PlayerName, PlayerSteamID, enter_session
+from rcon.recorded_commands import RecordedRcon
+from rcon.settings import SERVER_INFO
+from rcon.steam_utils import get_steam_profile
 from rcon.user_config import RealVipConfig
-import logging
+from rcon.utils import MapsHistory
+from rcon.workers import get_job_results, worker_bulk_vip
+
+from .auth import api_response, login_required
+from .views import _get_data, ctl
 
 logger = logging.getLogger("rconweb")
 

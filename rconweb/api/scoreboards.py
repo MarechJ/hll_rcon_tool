@@ -1,31 +1,25 @@
-from datetime import datetime, timedelta
-import os
 import logging
+import os
+from datetime import datetime, timedelta
 
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 
-from rcon.config import get_config
-from rcon.utils import MapsHistory
-from rcon.recorded_commands import RecordedRcon
-from rcon.commands import CommandFailedError
-from rcon.steam_utils import get_steam_profile
-from rcon.settings import SERVER_INFO
 from rcon import game_logs
-from rcon.models import (
-    LogLine,
-    PlayerSteamID,
-    PlayerName,
-    enter_session,
-    Maps,
-    PlayerStats,
-)
+from rcon.commands import CommandFailedError
+from rcon.config import get_config
 from rcon.discord import send_to_discord_audit
-from rcon.scoreboard import LiveStats, TimeWindowStats, get_cached_live_game_stats, current_game_stats
+from rcon.models import (LogLine, Maps, PlayerName, PlayerStats, PlayerSteamID,
+                         enter_session)
+from rcon.recorded_commands import RecordedRcon
+from rcon.scoreboard import (LiveStats, TimeWindowStats, current_game_stats,
+                             get_cached_live_game_stats)
+from rcon.settings import SERVER_INFO
+from rcon.steam_utils import get_steam_profile
+from rcon.utils import LONG_HUMAN_MAP_NAMES, MapsHistory, map_name
 
-from .views import ctl, _get_data
 from .auth import api_response, login_required
-from rcon.utils import map_name, LONG_HUMAN_MAP_NAMES
+from .views import _get_data, ctl
 
 logger = logging.getLogger("rconweb")
 

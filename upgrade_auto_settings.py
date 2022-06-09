@@ -1,11 +1,14 @@
 #!/usr/bin/env python
 
-import os, json, sys
+import json
+# Setup logger
+import logging
+import os
+import sys
+
 from rcon.auto_settings import CONFIG_DIR
 from rcon.user_config import AutoSettingsConfig
 
-# Setup logger
-import logging
 logging.basicConfig(format='[%(levelname)s] %(message)s', level=logging.INFO)
 logging.info('Upgrading auto settings...')
 

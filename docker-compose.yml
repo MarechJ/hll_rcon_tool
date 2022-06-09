@@ -57,10 +57,12 @@ services:
       - server1
       - common
   redis:
-    image: maresh/hll_redis:latest
+    image: redis:latest
     restart: always
+    command: redis-server /usr/local/etc/redis/redis.conf
     volumes:
       - ./redis_data:/data
+      - ./config:/usr/local/etc/redis
     networks:
       - common
   postgres:

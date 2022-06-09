@@ -1,6 +1,8 @@
 from rcon import broadcast
 from rcon.extended_commands import Rcon
 from rcon.settings import SERVER_INFO
+
+
 # This test requires an actual connection to the game server
 def test_smoke_all_variables():
     ctl = Rcon(SERVER_INFO)

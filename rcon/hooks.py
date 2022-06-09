@@ -1,33 +1,34 @@
 import logging
 import os
 from functools import wraps
-from rcon.commands import CommandFailedError
 
 from discord_webhook import DiscordEmbed
 
-from rcon.recorded_commands import RecordedRcon
+from rcon.commands import CommandFailedError
+from rcon.discord import (
+    dict_to_discord,
+    get_prepared_discord_hooks,
+    send_to_discord_audit,
+)
+from rcon.game_logs import on_camera, on_chat, on_connected, on_disconnected
+from rcon.map_recorder import VoteMap
+from rcon.models import PlayerSteamID, SteamInfo, enter_session
 from rcon.player_history import (
+    _get_set_player,
+    get_player,
+    safe_save_player_action,
+    save_end_player_session,
     save_player,
     save_start_player_session,
-    save_end_player_session,
-    safe_save_player_action,
-    get_player,
-    _get_set_player,
 )
-from rcon.game_logs import on_connected, on_disconnected, on_camera, on_chat
-from rcon.models import enter_session, PlayerSteamID, SteamInfo, enter_session
-from rcon.discord import send_to_discord_audit, dict_to_discord
+from rcon.recorded_commands import RecordedRcon
 from rcon.steam_utils import (
-    get_player_bans,
     STEAM_KEY,
+    get_player_bans,
     get_steam_profile,
     update_db_player_info,
 )
-from rcon.discord import send_to_discord_audit
-from rcon.user_config import CameraConfig, RealVipConfig
-from rcon.discord import get_prepared_discord_hooks, send_to_discord_audit
-from rcon.map_recorder import VoteMap
-from rcon.user_config import VoteMapConfig
+from rcon.user_config import CameraConfig, RealVipConfig, VoteMapConfig
 from rcon.workers import temporary_broadcast, temporary_welcome
 
 logger = logging.getLogger(__name__)
@@ -190,7 +191,7 @@ def inject_steam_id_64(func):
     def wrapper(rcon, struct_log):
         try:
             name = struct_log["player"]
-            info = rcon.get_player_info(name)
+            info = rcon.get_player_info(name, can_fail=True)
             steam_id_64 = info.get("steam_id_64")
         except KeyError:
             logger.exception("Unable to inject steamid %s", struct_log)
@@ -218,7 +219,7 @@ def handle_on_connect(rcon, struct_log):
     except Exception:
         logger.exception("Unable to clear cache for %s", steam_id_64)
     try:
-        info = rcon.get_player_info(struct_log["player"])
+        info = rcon.get_player_info(struct_log["player"], can_fail=True)
         steam_id_64 = info.get("steam_id_64")
     except (CommandFailedError, KeyError):
         if not steam_id_64:
@@ -232,6 +233,12 @@ def handle_on_connect(rcon, struct_log):
             )
 
     timestamp = int(struct_log["timestamp_ms"]) / 1000
+    if not steam_id_64:
+        logger.error(
+            "Unable to get player steam ID for %s, can't process connection",
+            struct_log,
+        )
+        return
     save_player(
         struct_log["player"],
         steam_id_64,
@@ -279,7 +286,7 @@ def _set_real_vips(rcon: RecordedRcon, struct_log):
     if not config.get_enabled():
         logger.debug("Real VIP is disabled")
         return
-    
+
     desired_nb_vips = config.get_desired_total_number_vips()
     min_vip_slot = config.get_minimum_number_vip_slot()
     vip_count = rcon.get_vips_count()
@@ -326,5 +333,20 @@ def notify_camera(rcon: RecordedRcon, struct_log):
 
 if __name__ == "__main__":
     from rcon.settings import SERVER_INFO
-    log = {'version': 1, 'timestamp_ms': 1627734269000, 'relative_time_ms': 221.212, 'raw': '[543 ms (1627734269)] CONNECTED Dr.WeeD', 'line_without_time': 'CONNECTED Dr.WeeD', 'action': 'CONNECTED', 'player': 'Dr.WeeD', 'steam_id_64_1': None, 'player2': None, 'steam_id_64_2': None, 'weapon': None, 'message': 'Dr.WeeD', 'sub_content': None}
+
+    log = {
+        "version": 1,
+        "timestamp_ms": 1627734269000,
+        "relative_time_ms": 221.212,
+        "raw": "[543 ms (1627734269)] CONNECTED Dr.WeeD",
+        "line_without_time": "CONNECTED Dr.WeeD",
+        "action": "CONNECTED",
+        "player": "Dr.WeeD",
+        "steam_id_64_1": None,
+        "player2": None,
+        "steam_id_64_2": None,
+        "weapon": None,
+        "message": "Dr.WeeD",
+        "sub_content": None,
+    }
     real_vips(RecordedRcon(SERVER_INFO), struct_log=log)

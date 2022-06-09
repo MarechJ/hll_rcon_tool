@@ -1,5 +1,4 @@
 import json
-import redis
 import logging
 import os
 import secrets
@@ -8,8 +7,7 @@ from urllib.parse import urlparse
 
 import redis
 
-from rcon.cache_utils import get_redis_pool, get_redis_client
-
+from rcon.cache_utils import get_redis_client, get_redis_pool
 
 logger = logging.getLogger("rcon")
 
