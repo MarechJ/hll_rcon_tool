@@ -55,9 +55,9 @@ LOGGING = {
             "level": os.getenv("LOGGING_LEVEL", "DEBUG"),
             "propagate": False,
         },
-        "rcon.extended_commands": {"level": os.getenv("COMMANDS_LOGLEVEL", "INFO")},
-        "rcon.recorded_commands": {"level": os.getenv("COMMANDS_LOGLEVEL", "INFO")},
-        "rcon.commands": {"level": os.getenv("COMMANDS_LOGLEVEL", "INFO")},
+        "rcon.extended_commands": {"level": os.getenv("COMMANDS_LOGLEVEL", os.getenv("LOGGING_LEVEL", "INFO"))},
+        "rcon.recorded_commands": {"level": os.getenv("COMMANDS_LOGLEVEL", os.getenv("LOGGING_LEVEL", "INFO"))},
+        "rcon.commands": {"level": os.getenv("COMMANDS_LOGLEVEL", os.getenv("LOGGING_LEVEL", "INFO"))},
         # TODO fix that
         "rcon.squad_automod.automod": {
             "handlers": ["console", "file"],

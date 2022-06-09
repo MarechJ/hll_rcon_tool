@@ -69,7 +69,7 @@ def should_warn_squad(watch_status: WatchStatus, config: NoLeaderConfig, team, s
     warnings = watch_status.warned
 
     if not is_time(warnings, config.warning_interval_seconds):
-        logger.info("Waiting to warn: %s", squad_name)
+        logger.debug("Waiting to warn: %s", squad_name)
         return PunishStepState.wait
 
     if len(warnings) < config.number_of_warning or config.number_of_warning == -1:
