@@ -1,7 +1,7 @@
-import socket
 import array
-import time
 import logging
+import socket
+import time
 
 MSGLEN = 8196
 TIMEOUT_SEC = 20

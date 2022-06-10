@@ -1,12 +1,14 @@
-import os, json
+import json
+import os
 
 from django.views.decorators.csrf import csrf_exempt
+
 from rcon.user_config import AutoSettingsConfig
 
-from .auth import login_required, api_response
-from .utils import _get_data
+from .auth import api_response, login_required
 from .multi_servers import forward_request
 from .services import get_supervisor_client
+from .utils import _get_data
 
 AUTO_SETTINGS_KEY_ORDER = ["always_apply_defaults", "defaults", "rules", "_available_commands", "_available_conditions"]
 AUTO_SETTINGS_KEY_INDEX_MAP = {v: i for i, v in enumerate(AUTO_SETTINGS_KEY_ORDER)}

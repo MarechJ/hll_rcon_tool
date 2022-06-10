@@ -1,17 +1,14 @@
 import logging
 import os
-from functools import lru_cache
 import re
 from datetime import datetime
+from functools import lru_cache
 
 import discord.utils
 import requests
-from discord import RequestsWebhookAdapter
-from discord import Webhook
+from discord import RequestsWebhookAdapter, Webhook
 
-from rcon.game_logs import on_chat
-from rcon.game_logs import on_kill
-from rcon.game_logs import on_tk
+from rcon.game_logs import on_chat, on_kill, on_tk
 
 DISCORD_CHAT_WEBHOOK_URL = os.getenv("DISCORD_CHAT_WEBHOOK")
 DISCORD_KILLS_WEBHOOK_URL = os.getenv("DISCORD_KILLS_WEBHOOK")

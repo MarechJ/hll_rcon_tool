@@ -1,28 +1,21 @@
-import os
-import time
-import logging
-import random
-from functools import partial
 import json
+import logging
+import os
+import random
+import time
+from functools import partial, wraps
 
 import redis
 
-
-from rcon.audit import online_mods, ingame_mods
+from rcon.audit import ingame_mods, online_mods
 from rcon.cache_utils import get_redis_pool
 from rcon.commands import CommandFailedError
+from rcon.map_recorder import VoteMap
 from rcon.settings import SERVER_INFO
 from rcon.user_config import AutoBroadcasts, VoteMapConfig
-from rcon.utils import (
-    LONG_HUMAN_MAP_NAMES,
-    SHORT_HUMAN_MAP_NAMES,
-    NO_MOD_LONG_HUMAN_MAP_NAMES,
-    NO_MOD_SHORT_HUMAN_MAP_NAMES,
-    numbered_maps,
-    categorize_maps,
-)
-from rcon.map_recorder import VoteMap
-from functools import wraps
+from rcon.utils import (LONG_HUMAN_MAP_NAMES, NO_MOD_LONG_HUMAN_MAP_NAMES,
+                        NO_MOD_SHORT_HUMAN_MAP_NAMES, SHORT_HUMAN_MAP_NAMES,
+                        categorize_maps, numbered_maps)
 
 
 class LazyPrinter:

@@ -1,11 +1,11 @@
 import inspect
 import logging
 import os
-from functools import wraps
-from subprocess import run, PIPE
 import traceback
+from functools import wraps
+from subprocess import PIPE, run
 
-from django.http import JsonResponse, HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
 from rcon.broadcast import get_votes_status
@@ -13,28 +13,21 @@ from rcon.cache_utils import RedisCached, get_redis_pool
 from rcon.commands import CommandFailedError
 from rcon.config import get_config
 from rcon.discord import send_to_discord_audit
-from rcon.player_history import (
-    add_player_to_blacklist,
-    remove_player_from_blacklist,
-)
+from rcon.gtx import GTXFtp
+from rcon.player_history import (add_player_to_blacklist,
+                                 remove_player_from_blacklist)
 from rcon.recorded_commands import RecordedRcon
 from rcon.settings import SERVER_INFO
-from rcon.user_config import (
-    AutoBroadcasts,
-    AutoVoteKickConfig,
-    CameraConfig,
-    InvalidConfigurationError,
-    StandardMessages,
-)
-from rcon.user_config import DiscordHookConfig
-from rcon.utils import LONG_HUMAN_MAP_NAMES, map_name
-from rcon.utils import MapsHistory
+from rcon.user_config import (AutoBroadcasts, AutoVoteKickConfig, CameraConfig,
+                              DiscordHookConfig, InvalidConfigurationError,
+                              StandardMessages)
+from rcon.utils import LONG_HUMAN_MAP_NAMES, MapsHistory, map_name
 from rcon.watchlist import PlayerWatch
 from rcon.workers import temporary_broadcast, temporary_welcome
-from .auth import login_required, api_response
-from .multi_servers import forward_request, forward_command
+
+from .auth import api_response, login_required
+from .multi_servers import forward_command, forward_request
 from .utils import _get_data
-from rcon.gtx import GTXFtp
 
 logger = logging.getLogger("rconweb")
 ctl = RecordedRcon(SERVER_INFO)

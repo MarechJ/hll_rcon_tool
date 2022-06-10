@@ -1,6 +1,5 @@
 import random
 
-
 maps = ["foy_warfare", "stmariedumont_warfare", "hurtgenforest_warfare", 
 "utahbeach_warfare", "omahabeach_offensive_us", "stmereeglise_warfare", 
 "stmereeglise_offensive_ger", "foy_offensive_ger", "purpleheartlane_warfare", 

@@ -9,19 +9,20 @@ https://docs.djangoproject.com/en/3.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.0/ref/settings/
 """
-import os
 import logging
+import os
+import re
+import socket
 from logging.config import dictConfig
+
 import sentry_sdk
+from django.utils.log import DEFAULT_LOGGING
+from sentry_sdk import configure_scope
 from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
+
 from rcon.extended_commands import Rcon
 from rcon.settings import SERVER_INFO
-import re
-from sentry_sdk import configure_scope
-import socket
-from django.utils.log import DEFAULT_LOGGING
-
 
 try:
     ENVIRONMENT = re.sub('[^0-9a-zA-Z]+', '', (Rcon(SERVER_INFO).get_name() or "default").strip())[:64]
