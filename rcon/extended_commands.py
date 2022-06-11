@@ -343,7 +343,6 @@ class Rcon(ServerCtl):
     def _get_default_info_dict(self, player):
         return dict(
             name=player,
-            steam_id_64=None,
             unit_id=None,
             unit_name=None,
             loadout=None,
