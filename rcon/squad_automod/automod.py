@@ -212,12 +212,8 @@ def get_punitions_to_apply(rcon, config: NoLeaderConfig) -> PunitionsToApply:
                     raise SquadHasLeader()
 
                 if squad_name is None or squad is None:
-                    logger.warning(
-                        "Team view appears to be invalid, none squads in team %s. See\n%s",
-                        team,
-                        team_view,
-                    )
-
+                    continue
+                
                 logger.info("Squad %s - %s doesn't have leader", team, squad_name)
 
                 state = should_warn_squad(watch_status, config, team, squad_name)
