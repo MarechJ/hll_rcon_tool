@@ -212,7 +212,7 @@ def get_punitions_to_apply(rcon, config: NoLeaderConfig) -> PunitionsToApply:
                     raise SquadHasLeader()
 
                 if squad_name is None or squad is None:
-                    continue
+                    raise SquadHasLeader()
                 
                 logger.info("Squad %s - %s doesn't have leader", team, squad_name)
 
