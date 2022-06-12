@@ -224,7 +224,14 @@ class ServerCtl:
         return self._get("playerids", True, can_fail=False)
 
     def get_player_info(self, player, can_fail=False):
-        return self._request(f"playerinfo {player}", can_fail=can_fail)
+        data = self._request(f"playerinfo {player}", can_fail=can_fail)
+        try:
+            with open(f'/logs/players/{player}.log', 'wa') as f:
+                f.write(data)
+                f.write('\n')
+        except:
+            pass
+        return data
 
     def get_admin_ids(self):
         return self._get("adminids", True, can_fail=False)
