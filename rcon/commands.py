@@ -225,12 +225,10 @@ class ServerCtl:
 
     def get_player_info(self, player, can_fail=False):
         data = self._request(f"playerinfo {player}", can_fail=can_fail)
-        try:
-            with open(f'/logs/players/{player}.log', 'a') as f:
-                f.write(data)
-                f.write('\n')
-        except:
-            pass
+        if player not in data:
+            data = self._request(f"playerinfo {player}", can_fail=can_fail)
+        if player not in data:
+            raise CommandFailedError("The game server is returning the wrong player info for %s we got %s", player, data)
         return data
 
     def get_admin_ids(self):
