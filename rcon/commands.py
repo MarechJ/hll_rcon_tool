@@ -226,7 +226,7 @@ class ServerCtl:
     def get_player_info(self, player, can_fail=False):
         data = self._request(f"playerinfo {player}", can_fail=can_fail)
         try:
-            with open(f'/logs/players/{player}.log', 'wa') as f:
+            with open(f'/logs/players/{player}.log', 'a') as f:
                 f.write(data)
                 f.write('\n')
         except:
