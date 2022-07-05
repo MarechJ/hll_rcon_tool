@@ -68,7 +68,7 @@ Here's a sample:
   - Having some very basic shell (command prompt) skills. Feel free to ask for help on the Discord!
   - Having a dedicated server - This app is meant to run 24/7 - (If you don't have that, you can just run a cheap Virtual Private Server)
   - The below need to be installed on the server where the rcon will run:
-     - (Otionnal but recommanded) GIT: https://git-scm.com/downloads  (if you don't use git you need to download the releases)
+     - (Optional but recommanded) GIT: https://git-scm.com/downloads  (if you don't use git you need to download the releases)
      - Docker Engine (Community) installed: https://docs.docker.com/install/
      - Docker Compose installed: https://docs.docker.com/compose/install/
 
