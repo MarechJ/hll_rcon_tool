@@ -410,7 +410,9 @@ def autobalance_teams(rcon_hook: RecordedRcon):
             else rcon_hook.do_switch_player_now
         )
         for player in players_to_swap:
-            switch_function(player["name"])
+            switch_function(
+                player["name"], None
+            )  # this function has a unused 'by' argument
             logger.info(
                 f"player {player['name']}/{player['steam_id_64']} was autobalanced."
             )
