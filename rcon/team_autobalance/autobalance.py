@@ -14,7 +14,7 @@ from rcon.commands import HLLServerError
 from rcon.config import get_config
 from rcon.player_history import get_player
 from rcon.recorded_commands import RecordedRcon
-from rcon.squad_automod.automod import _get_team_count
+from rcon.settings import SERVER_INFO
 from rcon.team_autobalance.models import AutoBalanceConfig
 
 # TODO: Move these to some shared constants file
@@ -61,10 +61,10 @@ VALID_TEAMS = (AXIS_TEAM, ALLIED_TEAM)
 logger = logging.getLogger(__name__)
 
 
-def get_player_name_by_steam_id_64(rcon: RecordedRcon, steam_id_64: str) -> str:
+def get_player_name_by_steam_id_64(rcon_hook: RecordedRcon, steam_id_64: str) -> str:
     """Return the player name for the given steam_id_64."""
     # TODO: Move this up to the RCON API layer?
-    players = rcon.get_playerids()
+    players = rcon_hook.get_playerids()
     player_name: str = None
 
     try:
@@ -121,7 +121,8 @@ def is_valid_role(role: str, valid_roles=VALID_ROLES) -> bool:
     return True
 
 
-def get_player_role(rcon, *player_name: str, steam_id_64: str) -> str:
+# Force the steam_id_64 and player_name to be keyword only to prevent player name/steam ID confusion when calling
+def get_player_role(rcon_hook, *, player_name: str, steam_id_64: str) -> str:
     """Look up a players current role given their steam_id_64 or player name."""
 
     player_found = False
@@ -132,10 +133,10 @@ def get_player_role(rcon, *player_name: str, steam_id_64: str) -> str:
         logger.error(NO_PLAYER_OR_STEAM_ID_64_ERROR_MSG.format(player_name))
 
     if steam_id_64:
-        player_name = get_player_name_by_steam_id_64(rcon, steam_id_64)
+        player_name = get_player_name_by_steam_id_64(rcon_hook, steam_id_64)
 
     try:
-        detailed_player = rcon.get_detailed_player_info(player_name)
+        detailed_player = rcon_hook.get_detailed_player_info(player_name)
         player_found = True
         player_role = detailed_player["role"]
     except HLLServerError:
@@ -421,7 +422,8 @@ def autobalance_teams(rcon_hook: RecordedRcon):
 
 
 def run():
-    pass
+    rcon_hook = RecordedRcon(SERVER_INFO)
+    autobalance_teams(rcon_hook)
 
 
 if __name__ == "__main__":
