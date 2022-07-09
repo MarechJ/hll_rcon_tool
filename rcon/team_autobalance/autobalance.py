@@ -266,6 +266,7 @@ def get_players_on_team(team) -> List[Tuple[str, str]]:
 
 
 def select_players_randomly(players, num_to_select):
+    # TODO: implement this
     pass
 
 
