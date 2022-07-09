@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field  # TODO: replace with pydantic data classes
+from typing import List, Callable
 
 VALID_AUTOBALANCE_METHODS = ("random", "arrival_most_recent", "arrival_least_recent")
 
@@ -17,4 +18,6 @@ class AutoBalanceConfig:
     swap_on_death: bool = True
     include_teamless_players: bool = False
     immuned_level_up_to: int = 0
-    immuned_roles = field(default_factory=tuple)  # TODO: add type annotation
+    immuned_roles: Callable[[], List[str]] = field(
+        default_factory=tuple
+    )  # TODO: fix type annotation
