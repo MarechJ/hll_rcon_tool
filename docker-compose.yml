@@ -80,151 +80,151 @@ services:
       - common
 
   ############ SERVER 2  #############
-  supervisor_2:
-    <<: *supervisor
-    environment: &env2
-      HLL_HOST: ${HLL_HOST_2}
-      HLL_PORT: ${HLL_PORT_2}
-      HLL_PASSWORD: ${HLL_PASSWORD_2}
-      LOGGING_LEVEL: 'INFO'
-      LOGGING_PATH: /logs/
-      REDIS_URL: redis://redis:6379/1
-      REDIS_HOST: redis 
-      REDIS_PORT: 6379
-      REDIS_DB: 1
-      DB_URL: 'postgres://rcon:${HLL_DB_PASSWORD}@postgres:5432'
-      DISCORD_WEBHOOK_AUDIT_LOG: ${DISCORD_WEBHOOK_AUDIT_LOG_2}
-      RCONWEB_API_SECRET: ${RCONWEB_API_SECRET}
-      SERVER_SHORT_NAME: ${SERVER_SHORT_NAME_2}
-      DISCORD_CHAT_WEBHOOK: ${DISCORD_CHAT_WEBHOOK_2}
-      DISCORD_CHAT_WEBHOOK_ALLOW_MENTIONS: ${DISCORD_CHAT_WEBHOOK_ALLOW_MENTIONS}
-      RCONWEB_PORT: ${RCONWEB_PORT_2}
-      DISCORD_PING_TRIGGER_WORDS: ${DISCORD_PING_TRIGGER_WORDS_2}
-      DISCORD_PING_TRIGGER_ROLES: ${DISCORD_PING_TRIGGER_ROLES_2}
-      DISCORD_PING_TRIGGER_WEBHOOK: ${DISCORD_PING_TRIGGER_WEBHOOK_2}
-      DISCORD_KILLS_WEBHOOK: ${DISCORD_KILLS_WEBHOOK_2}
-      DISCORD_SEND_KILL_UPDATES: ${DISCORD_SEND_KILL_UPDATES_2}
-      DISCORD_SEND_TEAM_KILL_UPDATES: ${DISCORD_SEND_TEAM_KILL_UPDATES_2}
-      VOTE_MAP_INSTRUCTIONS: ${VOTE_MAP_INSTRUCTIONS}
-      STEAM_API_KEY: ${STEAM_API_KEY}
-      BAN_ON_VAC_HISTORY_DAYS: ${BAN_ON_VAC_HISTORY_DAYS}
-      BAN_ON_VAC_HISTORY_REASON: ${BAN_ON_VAC_HISTORY_REASON}
-      MAX_GAME_BAN_THRESHOLD: ${MAX_GAME_BAN_THRESHOLD}
-      SUPERVISOR_RPC_URL: http://supervisor:9001/RPC2
-      CONFIG_DIR: /config/
-      SERVER_NUMBER: 2
-      RCONWEB_SERVER_URL: ${RCONWEB_SERVER_URL_2}
-      PUBLIC_STATS_PORT: ${PUBLIC_STATS_PORT_2}
-      PUBLIC_STATS_PORT_HTTPS: ${PUBLIC_STATS_PORT_HTTPS_2}
-    restart: on-failure
-    networks:
-      common:
-      server2:
-        aliases: 
-          - supervisor
-    command: supervisor
-    depends_on:
-      - frontend_1
-  backend_2:
-    <<: *backend
-    hostname: api_2
-    environment:
-      <<: *env2
-    restart: on-failure
-    networks:
-      common:
-      server2:
-        aliases:
-          - backend
-    depends_on:
-      - frontend_1
-  frontend_2:
-    <<: *frontend
-    ports:
-      - ${RCONWEB_PORT_2}:80
-      - ${RCONWEB_PORT_HTTPS_2}:443
-      - ${PUBLIC_STATS_PORT_2}:81
-      - ${PUBLIC_STATS_PORT_HTTPS_2}:444
-    environment:
-      <<: *env2
-    restart: on-failure
-    networks:
-      - common
-      - server2
-    depends_on:
-      - backend_2
+  # supervisor_2:
+  #   <<: *supervisor
+  #   environment: &env2
+  #     HLL_HOST: ${HLL_HOST_2}
+  #     HLL_PORT: ${HLL_PORT_2}
+  #     HLL_PASSWORD: ${HLL_PASSWORD_2}
+  #     LOGGING_LEVEL: 'INFO'
+  #     LOGGING_PATH: /logs/
+  #     REDIS_URL: redis://redis:6379/1
+  #     REDIS_HOST: redis 
+  #     REDIS_PORT: 6379
+  #     REDIS_DB: 1
+  #     DB_URL: 'postgres://rcon:${HLL_DB_PASSWORD}@postgres:5432'
+  #     DISCORD_WEBHOOK_AUDIT_LOG: ${DISCORD_WEBHOOK_AUDIT_LOG_2}
+  #     RCONWEB_API_SECRET: ${RCONWEB_API_SECRET}
+  #     SERVER_SHORT_NAME: ${SERVER_SHORT_NAME_2}
+  #     DISCORD_CHAT_WEBHOOK: ${DISCORD_CHAT_WEBHOOK_2}
+  #     DISCORD_CHAT_WEBHOOK_ALLOW_MENTIONS: ${DISCORD_CHAT_WEBHOOK_ALLOW_MENTIONS}
+  #     RCONWEB_PORT: ${RCONWEB_PORT_2}
+  #     DISCORD_PING_TRIGGER_WORDS: ${DISCORD_PING_TRIGGER_WORDS_2}
+  #     DISCORD_PING_TRIGGER_ROLES: ${DISCORD_PING_TRIGGER_ROLES_2}
+  #     DISCORD_PING_TRIGGER_WEBHOOK: ${DISCORD_PING_TRIGGER_WEBHOOK_2}
+  #     DISCORD_KILLS_WEBHOOK: ${DISCORD_KILLS_WEBHOOK_2}
+  #     DISCORD_SEND_KILL_UPDATES: ${DISCORD_SEND_KILL_UPDATES_2}
+  #     DISCORD_SEND_TEAM_KILL_UPDATES: ${DISCORD_SEND_TEAM_KILL_UPDATES_2}
+  #     VOTE_MAP_INSTRUCTIONS: ${VOTE_MAP_INSTRUCTIONS}
+  #     STEAM_API_KEY: ${STEAM_API_KEY}
+  #     BAN_ON_VAC_HISTORY_DAYS: ${BAN_ON_VAC_HISTORY_DAYS}
+  #     BAN_ON_VAC_HISTORY_REASON: ${BAN_ON_VAC_HISTORY_REASON}
+  #     MAX_GAME_BAN_THRESHOLD: ${MAX_GAME_BAN_THRESHOLD}
+  #     SUPERVISOR_RPC_URL: http://supervisor:9001/RPC2
+  #     CONFIG_DIR: /config/
+  #     SERVER_NUMBER: 2
+  #     RCONWEB_SERVER_URL: ${RCONWEB_SERVER_URL_2}
+  #     PUBLIC_STATS_PORT: ${PUBLIC_STATS_PORT_2}
+  #     PUBLIC_STATS_PORT_HTTPS: ${PUBLIC_STATS_PORT_HTTPS_2}
+  #   restart: on-failure
+  #   networks:
+  #     common:
+  #     server2:
+  #       aliases: 
+  #         - supervisor
+  #   command: supervisor
+  #   depends_on:
+  #     - frontend_1
+  # backend_2:
+  #   <<: *backend
+  #   hostname: api_2
+  #   environment:
+  #     <<: *env2
+  #   restart: on-failure
+  #   networks:
+  #     common:
+  #     server2:
+  #       aliases:
+  #         - backend
+  #   depends_on:
+  #     - frontend_1
+  # frontend_2:
+  #   <<: *frontend
+  #   ports:
+  #     - ${RCONWEB_PORT_2}:80
+  #     - ${RCONWEB_PORT_HTTPS_2}:443
+  #     - ${PUBLIC_STATS_PORT_2}:81
+  #     - ${PUBLIC_STATS_PORT_HTTPS_2}:444
+  #   environment:
+  #     <<: *env2
+  #   restart: on-failure
+  #   networks:
+  #     - common
+  #     - server2
+  #   depends_on:
+  #     - backend_2
 
-  ############ SERVER 3  #############
-  supervisor_3:
-    <<: *supervisor
-    environment: &env3
-      HLL_HOST: ${HLL_HOST_3}
-      HLL_PORT: ${HLL_PORT_3}
-      HLL_PASSWORD: ${HLL_PASSWORD_3}
-      LOGGING_LEVEL: 'INFO'
-      LOGGING_PATH: /logs/
-      REDIS_URL: redis://redis:6379/2
-      REDIS_HOST: redis 
-      REDIS_PORT: 6379
-      REDIS_DB: 2
-      DB_URL: 'postgres://rcon:${HLL_DB_PASSWORD}@postgres:5432'
-      DISCORD_WEBHOOK_AUDIT_LOG: ${DISCORD_WEBHOOK_AUDIT_LOG_3}
-      RCONWEB_API_SECRET: ${RCONWEB_API_SECRET}
-      SERVER_SHORT_NAME: ${SERVER_SHORT_NAME_3}
-      DISCORD_CHAT_WEBHOOK: ${DISCORD_CHAT_WEBHOOK_3}
-      DISCORD_CHAT_WEBHOOK_ALLOW_MENTIONS: ${DISCORD_CHAT_WEBHOOK_ALLOW_MENTIONS}
-      RCONWEB_PORT: ${RCONWEB_PORT_3}
-      DISCORD_PING_TRIGGER_WORDS: ${DISCORD_PING_TRIGGER_WORDS_3}
-      DISCORD_PING_TRIGGER_ROLES: ${DISCORD_PING_TRIGGER_ROLES_3}
-      DISCORD_PING_TRIGGER_WEBHOOK: ${DISCORD_PING_TRIGGER_WEBHOOK_3}
-      DISCORD_KILLS_WEBHOOK: ${DISCORD_KILLS_WEBHOOK_3}
-      DISCORD_SEND_KILL_UPDATES: ${DISCORD_SEND_KILL_UPDATES_3}
-      DISCORD_SEND_TEAM_KILL_UPDATES: ${DISCORD_SEND_TEAM_KILL_UPDATES_3}
-      VOTE_MAP_INSTRUCTIONS: ${VOTE_MAP_INSTRUCTIONS}
-      STEAM_API_KEY: ${STEAM_API_KEY}
-      BAN_ON_VAC_HISTORY_DAYS: ${BAN_ON_VAC_HISTORY_DAYS}
-      BAN_ON_VAC_HISTORY_REASON: ${BAN_ON_VAC_HISTORY_REASON}
-      MAX_GAME_BAN_THRESHOLD: ${MAX_GAME_BAN_THRESHOLD}
-      SUPERVISOR_RPC_URL: http://supervisor:9001/RPC2
-      CONFIG_DIR: /config/
-      SERVER_NUMBER: 3
-      RCONWEB_SERVER_URL: ${RCONWEB_SERVER_URL_3}
-      PUBLIC_STATS_PORT: ${PUBLIC_STATS_PORT_3}
-      PUBLIC_STATS_PORT_HTTPS: ${PUBLIC_STATS_PORT_HTTPS_3}
-    restart: on-failure
-    command: supervisor
-    networks:
-      common:
-      server3:
-        aliases: 
-          - supervisor
-    depends_on:
-      - frontend_2
-  backend_3:
-    <<: *backend
-    hostname: api_3
-    environment:
-      <<: *env3
-    restart: on-failure
-    networks:
-      common:
-      server3:
-        aliases:
-          - backend
-    depends_on:
-      - frontend_2
-  frontend_3:
-    <<: *frontend
-    ports:
-      - ${RCONWEB_PORT_3}:80
-      - ${RCONWEB_PORT_HTTPS_3}:443
-      - ${PUBLIC_STATS_PORT_3}:81
-      - ${PUBLIC_STATS_PORT_HTTPS_3}:444
-    environment:
-      <<: *env3
-    restart: on-failure
-    networks:
-      - common
-      - server3
-    depends_on: 
-      - backend_3
+  # ############ SERVER 3  #############
+  # supervisor_3:
+  #   <<: *supervisor
+  #   environment: &env3
+  #     HLL_HOST: ${HLL_HOST_3}
+  #     HLL_PORT: ${HLL_PORT_3}
+  #     HLL_PASSWORD: ${HLL_PASSWORD_3}
+  #     LOGGING_LEVEL: 'INFO'
+  #     LOGGING_PATH: /logs/
+  #     REDIS_URL: redis://redis:6379/2
+  #     REDIS_HOST: redis 
+  #     REDIS_PORT: 6379
+  #     REDIS_DB: 2
+  #     DB_URL: 'postgres://rcon:${HLL_DB_PASSWORD}@postgres:5432'
+  #     DISCORD_WEBHOOK_AUDIT_LOG: ${DISCORD_WEBHOOK_AUDIT_LOG_3}
+  #     RCONWEB_API_SECRET: ${RCONWEB_API_SECRET}
+  #     SERVER_SHORT_NAME: ${SERVER_SHORT_NAME_3}
+  #     DISCORD_CHAT_WEBHOOK: ${DISCORD_CHAT_WEBHOOK_3}
+  #     DISCORD_CHAT_WEBHOOK_ALLOW_MENTIONS: ${DISCORD_CHAT_WEBHOOK_ALLOW_MENTIONS}
+  #     RCONWEB_PORT: ${RCONWEB_PORT_3}
+  #     DISCORD_PING_TRIGGER_WORDS: ${DISCORD_PING_TRIGGER_WORDS_3}
+  #     DISCORD_PING_TRIGGER_ROLES: ${DISCORD_PING_TRIGGER_ROLES_3}
+  #     DISCORD_PING_TRIGGER_WEBHOOK: ${DISCORD_PING_TRIGGER_WEBHOOK_3}
+  #     DISCORD_KILLS_WEBHOOK: ${DISCORD_KILLS_WEBHOOK_3}
+  #     DISCORD_SEND_KILL_UPDATES: ${DISCORD_SEND_KILL_UPDATES_3}
+  #     DISCORD_SEND_TEAM_KILL_UPDATES: ${DISCORD_SEND_TEAM_KILL_UPDATES_3}
+  #     VOTE_MAP_INSTRUCTIONS: ${VOTE_MAP_INSTRUCTIONS}
+  #     STEAM_API_KEY: ${STEAM_API_KEY}
+  #     BAN_ON_VAC_HISTORY_DAYS: ${BAN_ON_VAC_HISTORY_DAYS}
+  #     BAN_ON_VAC_HISTORY_REASON: ${BAN_ON_VAC_HISTORY_REASON}
+  #     MAX_GAME_BAN_THRESHOLD: ${MAX_GAME_BAN_THRESHOLD}
+  #     SUPERVISOR_RPC_URL: http://supervisor:9001/RPC2
+  #     CONFIG_DIR: /config/
+  #     SERVER_NUMBER: 3
+  #     RCONWEB_SERVER_URL: ${RCONWEB_SERVER_URL_3}
+  #     PUBLIC_STATS_PORT: ${PUBLIC_STATS_PORT_3}
+  #     PUBLIC_STATS_PORT_HTTPS: ${PUBLIC_STATS_PORT_HTTPS_3}
+  #   restart: on-failure
+  #   command: supervisor
+  #   networks:
+  #     common:
+  #     server3:
+  #       aliases: 
+  #         - supervisor
+  #   depends_on:
+  #     - frontend_2
+  # backend_3:
+  #   <<: *backend
+  #   hostname: api_3
+  #   environment:
+  #     <<: *env3
+  #   restart: on-failure
+  #   networks:
+  #     common:
+  #     server3:
+  #       aliases:
+  #         - backend
+  #   depends_on:
+  #     - frontend_2
+  # frontend_3:
+  #   <<: *frontend
+  #   ports:
+  #     - ${RCONWEB_PORT_3}:80
+  #     - ${RCONWEB_PORT_HTTPS_3}:443
+  #     - ${PUBLIC_STATS_PORT_3}:81
+  #     - ${PUBLIC_STATS_PORT_HTTPS_3}:444
+  #   environment:
+  #     <<: *env3
+  #   restart: on-failure
+  #   networks:
+  #     - common
+  #     - server3
+  #   depends_on: 
+  #     - backend_3
