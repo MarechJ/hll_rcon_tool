@@ -286,7 +286,7 @@ SCOREBOT:
     NEXT_MAP_TEXT: "Next map"
     VOTE: "vote(s)"
     PLAYERS: "players"
-    ELAPSED_TIME: "Elasped game time: "
+    ELAPSED_TIME: "Elapsed game time: "
 
     # Discord markup is supported, you can add emoji too, TOP_KILLERS as an example of custom emoji. Do \<the emoji> on your discord to get that id
     TOP_KILLERS: "<:HLLBomb:868256234439073802> TOP KILLERS\n*kills* <:HLLBomb:868256234439073802>"
