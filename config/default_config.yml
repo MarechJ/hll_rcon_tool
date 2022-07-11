@@ -11,6 +11,11 @@
 ######################################################################################
 ######################################################################################
 
+# If you set this to true your public website for stats won't work anymore
+# This will request a login for all the stats endpoints
+# To lock set to: true
+LOCK_STATS_API: false
+
 # Multi server related config, you can safe ignore those if you only have 1 server
 MULTI_SERVERS:
   # This option when turned on will forward your temp ban to all your servers

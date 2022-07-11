@@ -5,6 +5,7 @@ import logging
 from dateutil import parser
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+import rcon
 
 from rcon.commands import CommandFailedError
 from rcon.discord import send_to_discord_audit
@@ -14,14 +15,14 @@ from rcon.player_history import (add_flag_to_player, get_player_comments,
                                  post_player_comments, remove_flag)
 from rcon.utils import MapsHistory
 
-from .auth import api_response, login_required
+from .auth import api_response, login_required, stats_login_required
 from .utils import _get_data
 
 logger = logging.getLogger("rconweb")
 
 
 @csrf_exempt
-#@login_required
+@stats_login_required
 def get_map_history(request):
     data = _get_data(request)
     res = MapsHistory()[:]
