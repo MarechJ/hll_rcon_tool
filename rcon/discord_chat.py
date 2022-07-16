@@ -15,6 +15,7 @@ DISCORD_KILLS_WEBHOOK_URL = os.getenv("DISCORD_KILLS_WEBHOOK")
 PING_TRIGGER_WEBHOOK = os.getenv("DISCORD_PING_TRIGGER_WEBHOOK")
 ALLOW_MENTIONS = os.getenv("DISCORD_CHAT_WEBHOOK_ALLOW_MENTIONS")
 PING_TRIGGER_WORDS = os.getenv("DISCORD_PING_TRIGGER_WORDS")
+PING_TRIGGER_START_WORDS = os.getenv("DISCORD_PING_START_TRIGGER_WORDS")
 PING_TRIGGER_ROLES = os.getenv("DISCORD_PING_TRIGGER_ROLES")
 SEND_KILLS = os.getenv("DISCORD_SEND_KILL_UPDATES")
 SEND_TEAM_KILLS = os.getenv("DISCORD_SEND_TEAM_KILL_UPDATES")
@@ -79,6 +80,7 @@ class DiscordWebhookHandler:
     def __init__(self):
         # TODO: take config as argument if modularity is desired.
         self.ping_trigger_words = []
+        self.ping_trigger_start_words = []
         self.ping_trigger_roles = []
         self.chat_webhook = None
         self.kills_webhook = None
@@ -101,6 +103,9 @@ class DiscordWebhookHandler:
         try:
             self.ping_trigger_words = [
                 word.lower().strip() for word in PING_TRIGGER_WORDS.split(",") if word
+            ]
+            self.ping_trigger_start_words = [
+                word.lower().strip() for word in PING_TRIGGER_START_WORDS.split(",") if word
             ]
             self.ping_trigger_roles = [
                 role.strip() for role in PING_TRIGGER_ROLES.split(",") if role
@@ -156,16 +161,23 @@ class DiscordWebhookHandler:
 
             content = ""
             triggered = False
+            msg_words = re.split("([^a-zA-Z!@])", message)
+            if self.ping_trigger_start_words and len(msg_words) >= 1:
+                for trigger_word in self.ping_trigger_start_words:
+                    if trigger_word == msg_words[0]:
+                        triggered = True
+                        msg_words[0] = f"__**{msg_words[0]}**__"
+
             if self.ping_trigger_words:
-                msg_words = re.split("([^a-zA-Z!@])", message)
                 for trigger_word in self.ping_trigger_words:
                     for i, msg_word in enumerate(msg_words):
                         if trigger_word == msg_word.lower():
                             triggered = True
                             msg_words[i] = f"__**{msg_words[i]}**__"
-                if triggered:
-                    content = " ".join(self.ping_trigger_roles)
-                    embed.description = "".join(msg_words)
+
+            if triggered:
+                content = " ".join(self.ping_trigger_roles)
+                embed.description = "".join(msg_words)
 
             logger.debug(
                 "sending chat message len=%s to Discord", len(embed) + len(content)
