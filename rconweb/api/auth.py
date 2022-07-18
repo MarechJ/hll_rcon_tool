@@ -1,20 +1,21 @@
+import csv
 import json
 import logging
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from functools import wraps
 from typing import Any
 
-from django.contrib.auth import PermissionDenied
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import PermissionDenied, authenticate, login, logout
 from django.contrib.auth.models import User
-from django.db.models.signals import post_save, post_delete
-from django.http import JsonResponse, HttpResponse
+from django.db.models.signals import post_delete, post_save
+from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
-from rcon.audit import heartbeat, online_mods, set_registered_mods, ingame_mods
+from rcon.audit import heartbeat, ingame_mods, online_mods, set_registered_mods
 from rcon.cache_utils import ttl_cache
+from rcon.config import get_config
+
 from .models import SteamPlayer
-import csv
 
 logger = logging.getLogger('rconweb')
 
@@ -174,6 +175,35 @@ def login_required(also_require_perms=False):
 
         return wrapper
     return decorator
+
+def stats_login_required(func):
+    config = get_config()
+
+    if not config.get("LOCK_STATS_API"):
+        return func
+
+    @wraps(func)
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return api_response(
+                command=request.path,
+                error="You must be logged in to use this",
+                failed=True,
+                status_code=401
+            )
+        try:
+            return func(request, *args, **kwargs)
+        except Exception as e:
+            logger.exception("Unexpected error in %s", func.__name__)
+            return api_response(
+                command=request.path,
+                error=repr(e),
+                failed=True,
+                status_code=500
+            )
+
+    return wrapper
+
 
 # Login required?
 @csrf_exempt

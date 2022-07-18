@@ -1,8 +1,8 @@
 import datetime
 
+from rcon.player_history import get_profiles
 from rcon.recorded_commands import RecordedRcon
 from rcon.settings import SERVER_INFO
-from rcon.player_history import get_profiles
 
 
 def get_prunable_vips(days_of_inactivity=30):

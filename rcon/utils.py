@@ -1,5 +1,4 @@
 import json
-import redis
 import logging
 import os
 import secrets
@@ -8,8 +7,7 @@ from urllib.parse import urlparse
 
 import redis
 
-from rcon.cache_utils import get_redis_pool, get_redis_client
-
+from rcon.cache_utils import get_redis_client, get_redis_pool
 
 logger = logging.getLogger("rcon")
 
@@ -45,6 +43,16 @@ ALL_MAPS = (
     'stalingrad_offensive_ger',
     'stmariedumont_off_us',
     'stmariedumont_off_ger',
+    "remagen_warfare",
+    "remagen_offensive_ger",
+    "remagen_offensive_us",
+    "foy_warfare_night",
+    "hurtgenforest_warfare_v2_night",
+    "kursk_warfare_night",
+    "purpleheartlane_warfare_night",
+    "remagen_warfare_night",
+    "omahabeach_warfare",
+    "omahabeach_offensive_ger",
 )
 
 
@@ -101,7 +109,7 @@ LONG_HUMAN_MAP_NAMES = {
     "utahbeach_warfare": "Utah beach",
     "utahbeach_offensive_us": "Utah Beach Offensive (US)",
     "utahbeach_offensive_ger": "Utah Beach Offensive (GER)",
-    "omahabeach_offensive_us": "Offensive Omaha Beach",
+    "omahabeach_offensive_us": "Omaha Beach Offensive (US)",
     "stmereeglise_warfare": "St Mere Eglise",
     "stmereeglise_offensive_ger": "St Mere Eglise Offensive (GER)",
     "stmereeglise_offensive_us": "St Mere Eglise Offensive (US)",
@@ -120,6 +128,16 @@ LONG_HUMAN_MAP_NAMES = {
     'stalingrad_warfare': "Stalingrad",
     'stalingrad_offensive_rus': "Stalingrad Offensive (RUS)",
     'stalingrad_offensive_ger': "Stalingrad Offensive (GER)",
+    "remagen_warfare": "Remagen",
+    "remagen_offensive_ger": "Remagen Offensive (GER)",
+    "remagen_offensive_us": "Remagen Offensive (US)",
+    "foy_warfare_night": "Foy (Night)",
+    "hurtgenforest_warfare_v2_night": "Hurtgen Forest (Night)",
+    "kursk_warfare_night": "Kursk (Night)",
+    "purpleheartlane_warfare_night": "Purpleheartlane (Night)",
+    "remagen_warfare_night": "Remagen (Night)",
+    "omahabeach_warfare": "Omaha Beach",
+    "omahabeach_offensive_ger": " Omaha Beach Offensive (GER)",
 }
 
 SHORT_HUMAN_MAP_NAMES = {
@@ -135,7 +153,7 @@ SHORT_HUMAN_MAP_NAMES = {
     "utahbeach_warfare": "Utah",
     "utahbeach_offensive_us": "Utah Off. (US)",
     "utahbeach_offensive_ger": "Utah Off. (GER)",
-    "omahabeach_offensive_us": "Off. Omaha",
+    "omahabeach_offensive_us": "Omaha Off. (US)",
     "stmereeglise_warfare": "SME",
     "stmereeglise_offensive_ger": "SME Off. (GER)",
     "stmereeglise_offensive_us": "SME Off. (US)",
@@ -154,6 +172,16 @@ SHORT_HUMAN_MAP_NAMES = {
     'stalingrad_warfare': "Stalingrad",
     'stalingrad_offensive_rus': "Stalingrad Off. (RUS)",
     'stalingrad_offensive_ger': "Stalingrad Off. (GER)",
+    "remagen_warfare": "Remagen",
+    "remagen_offensive_ger": "Remagen Off. (GER)",
+    "remagen_offensive_us": "Remagen Off. (US)",
+    "foy_warfare_night": "Foy (Night)",
+    "hurtgenforest_warfare_v2_night": "Hurtgen (Night)",
+    "kursk_warfare_night": "Kursk (Night)",
+    "purpleheartlane_warfare_night": "PHL (Night)",
+    "remagen_warfare_night": "Remagen (Night)",
+    "omahabeach_warfare": "Omaha",
+    "omahabeach_offensive_ger": " Omaha Off. (GER)",
 }
 
 
@@ -189,6 +217,16 @@ NO_MOD_LONG_HUMAN_MAP_NAMES = {
     'stalingrad_warfare': "Stalingrad",
     'stalingrad_offensive_rus': "Stalingrad (RUS)",
     'stalingrad_offensive_ger': "Stalingrad (GER)",
+    "remagen_warfare": "Remagen",
+    "remagen_offensive_ger": "Remagen (GER)",
+    "remagen_offensive_us": "Remagen (US)",
+    "foy_warfare_night": "Foy (Night)",
+    "hurtgenforest_warfare_v2_night": "Hurtgen forest (Night)",
+    "kursk_warfare_night": "Kursk (Night)",
+    "purpleheartlane_warfare_night": "Purple Heart Lane  (Night)",
+    "remagen_warfare_night": "Remagen (Night)",
+    "omahabeach_warfare": "Omaha Beach",
+    "omahabeach_offensive_ger": " Omaha (GER)",
 }
 
 NO_MOD_SHORT_HUMAN_MAP_NAMES = {
@@ -223,6 +261,16 @@ NO_MOD_SHORT_HUMAN_MAP_NAMES = {
     'stalingrad_warfare': "Stalingrad",
     'stalingrad_offensive_rus': "Stalingrad (RUS)",
     'stalingrad_offensive_ger': "Stalingrad (GER)",
+    "remagen_warfare": "Remagen",
+    "remagen_offensive_ger": "Remagen (GER)",
+    "remagen_offensive_us": "Remagen (US)",
+    "foy_warfare_night": "Foy (Night)",
+    "hurtgenforest_warfare_v2_night": "Hurtgen (Night)",
+    "kursk_warfare_night": "Kursk (Night)",
+    "purpleheartlane_warfare_night": "PHL (Night)",
+    "remagen_warfare_night": "Remagen (Night)",
+    "omahabeach_warfare": "Omaha",
+    "omahabeach_offensive_ger": " Omaha (GER)",
 }
 
 

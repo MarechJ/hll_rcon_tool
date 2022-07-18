@@ -1,15 +1,16 @@
 import logging
-from logging.config import dictConfig
 import os
 import socket
+from logging.config import dictConfig
 
 # TODO: Use a config style that is not required at import time
 
 SERVER_INFO = {
     "host": os.getenv("HLL_HOST"),
     "port": os.getenv("HLL_PORT"),
-    "password": os.getenv("HLL_PASSWORD")
+    "password": os.getenv("HLL_PASSWORD"),
 }
+
 
 def check_config():
     for k, v in SERVER_INFO.items():
@@ -21,48 +22,49 @@ def check_config():
         raise ValueError("HLL_PORT must be an integer") from e
 
 
-
-
 # TODO add sentry
 LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'console': {
-            'format': '[%(asctime)s][%(levelname)s] %(name)s '
-                      '%(filename)s:%(funcName)s:%(lineno)d | %(message)s',
-            },
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "console": {
+            "format": "[%(asctime)s][%(levelname)s] %(name)s "
+            "%(filename)s:%(funcName)s:%(lineno)d | %(message)s",
+        },
     },
-    'handlers': {
-        'console': {
-            'level': 'DEBUG',
-            'class': 'logging.StreamHandler',
-            'formatter': 'console'
-            },
-        'file': {
-            'level': 'DEBUG',
-            'formatter': 'console',
-            'class': 'logging.FileHandler',
-            'filename':  os.path.join(
-                os.getenv('LOGGING_PATH', ""),
-                os.getenv("LOGGING_FILENAME", f"{socket.gethostname()}.log")
-            )
-            },
+    "handlers": {
+        "console": {"level": "DEBUG", "class": "logging.StreamHandler", "formatter": "console"},
+        "file": {
+            "level": "DEBUG",
+            "formatter": "console",
+            "class": "logging.FileHandler",
+            "filename": os.path.join(
+                os.getenv("LOGGING_PATH", ""),
+                os.getenv("LOGGING_FILENAME", f"{socket.gethostname()}.log"),
+            ),
         },
-
-    'loggers': {
+    },
+    "loggers": {
         __package__: {
-            'handlers': ['console', 'file'],
-            'level': os.getenv('LOGGING_LEVEL', 'DEBUG'),
-            'propagate': False,
+            "handlers": ["console", "file"],
+            "level": os.getenv("LOGGING_LEVEL", "DEBUG"),
+            "propagate": False,
         },
-        '__main__': {
-            'handlers': ['console', 'file'],
-            'level': os.getenv('LOGGING_LEVEL', 'DEBUG'),
-            'propagate': False,
+        "__main__": {
+            "handlers": ["console", "file"],
+            "level": os.getenv("LOGGING_LEVEL", "DEBUG"),
+            "propagate": False,
+        },
+        "rcon.extended_commands": {"level": os.getenv("COMMANDS_LOGLEVEL", os.getenv("LOGGING_LEVEL", "INFO"))},
+        "rcon.recorded_commands": {"level": os.getenv("COMMANDS_LOGLEVEL", os.getenv("LOGGING_LEVEL", "INFO"))},
+        "rcon.commands": {"level": os.getenv("COMMANDS_LOGLEVEL", os.getenv("LOGGING_LEVEL", "INFO"))},
+        # TODO fix that
+        "rcon.squad_automod.automod": {
+            "handlers": ["console", "file"],
+            "level": os.getenv("LOGGING_LEVEL", "DEBUG"),
+            "propagate": False,
         }
-    }
+    },
 }
-
 
 dictConfig(LOGGING)

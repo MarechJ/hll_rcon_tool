@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 
-from sqlalchemy.orm import with_expression
-from rcon.models import enter_session
-from rcon.workers import _record_stats
-from rcon.utils import MapsHistory
 import sys
+
+from sqlalchemy.orm import with_expression
+
+from rcon.models import enter_session
+from rcon.utils import MapsHistory
+from rcon.workers import _record_stats
 
 with enter_session() as sess:
     if not sys.argv[-1] == 'skiperase':

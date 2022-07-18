@@ -1,12 +1,15 @@
-import requests
+import json
 import logging
 from copy import deepcopy
 from functools import wraps
-import json
-from rcon.utils import ApiKey
-from .auth import login_required, api_response
-from .utils import _get_data
+
+import requests
 from django.views.decorators.csrf import csrf_exempt
+
+from rcon.utils import ApiKey
+
+from .auth import api_response, login_required
+from .utils import _get_data
 
 logger = logging.getLogger('rcon')
 
@@ -103,16 +106,3 @@ def forward_command(path, params=None, json=None, sessionid=None):
     
     return results
 
-
-""" def forwardable_requet(func):
-    def wrapper(request, *args, **kwargs):
-        data = _get_data(request)
-        
-        others = None
-        res = func(request, *args, **kwargs)
-        if data.get('forward'):
-            try:
-                others = forward_request(request)
-            except: 
-                logger.exception("Unexpected error while forwarding request")
-            res. """

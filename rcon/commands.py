@@ -1,6 +1,7 @@
 import logging
 import socket
 import time
+import re
 from dataclasses import dataclass
 from functools import wraps
 
@@ -223,8 +224,21 @@ class ServerCtl:
     def get_playerids(self):
         return self._get("playerids", True, can_fail=False)
 
-    def get_player_info(self, player):
-        return self._request(f"playerinfo {player}", can_fail=False)
+    def _is_info_correct(self, player, raw_data):
+        try:
+            lines = raw_data.split('\n')
+            return lines[0] == f"Name: {player}"
+        except Exception:
+            logger.exception("Bad playerinfo data")
+            return False
+
+    def get_player_info(self, player, can_fail=False):
+        data = self._request(f"playerinfo {player}", can_fail=can_fail)
+        if not self._is_info_correct(player, data):
+            data = self._request(f"playerinfo {player}", can_fail=can_fail)
+        if not self._is_info_correct(player, data):
+            raise CommandFailedError("The game server is returning the wrong player info for %s we got %s", player, data)
+        return data
 
     def get_admin_ids(self):
         return self._get("adminids", True, can_fail=False)

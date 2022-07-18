@@ -8,12 +8,12 @@ from logging.config import dictConfig
 from sqlite3.dbapi2 import connect
 from urllib.parse import urljoin
 
-import discord
 import requests
-from discord.embeds import Embed
-from discord.errors import HTTPException
 from requests.exceptions import ConnectionError, RequestException
 
+import discord
+from discord.embeds import Embed
+from discord.errors import HTTPException
 from rcon.config import get_config
 
 logger = logging.getLogger(__name__)
@@ -206,7 +206,7 @@ def get_stats():
 
 def run():
     try:
-        path = os.getenv("DISCORD_BOT_DATA_PATH", "")
+        path = os.getenv("DISCORD_BOT_DATA_PATH", "/data")
         path = pathlib.Path(path) / pathlib.Path("scorebot.db")
         print(str(path))
         conn = sqlite3.connect(str(path))

@@ -1,30 +1,21 @@
-from rcon.cache_utils import ttl_cache, invalidates
-import logging
 import datetime
-import os
-from functools import wraps, cmp_to_key
-from sqlalchemy import func
-from sqlalchemy.orm import contains_eager, joinedload, defaultload
+import logging
 import math
+import os
 import unicodedata
-
-from rcon.models import (
-    SteamInfo,
-    enter_session,
-    PlayerName,
-    PlayerSteamID,
-    PlayerSession,
-    BlacklistedPlayer,
-    PlayersAction,
-    PlayerFlag,
-    WatchList,
-    SteamInfo,
-    PlayerComment,
-)
+from functools import cmp_to_key, wraps
 
 from rcon.commands import CommandFailedError
 
+from sqlalchemy import func
+from sqlalchemy.orm import contains_eager, defaultload, joinedload
 from sqlalchemy.sql.functions import ReturnTypeFromArgs
+
+from rcon.cache_utils import invalidates, ttl_cache
+from rcon.commands import CommandFailedError
+from rcon.models import (BlacklistedPlayer, PlayerComment, PlayerFlag,
+                         PlayerName, PlayersAction, PlayerSession,
+                         PlayerSteamID, SteamInfo, WatchList, enter_session)
 
 
 class unaccent(ReturnTypeFromArgs):
@@ -313,7 +304,7 @@ def save_player_action(
     rcon, action_type, player_name, by, reason="", steam_id_64=None, timestamp=None
 ):
     with enter_session() as sess:
-        _steam_id_64 = steam_id_64 or rcon.get_player_info(player_name)["steam_id_64"]
+        _steam_id_64 = steam_id_64 or rcon.get_player_info(player_name, can_fail=True)["steam_id_64"]
         player = _get_set_player(sess, player_name, _steam_id_64, timestamp=timestamp)
         sess.add(
             PlayersAction(

@@ -1,11 +1,12 @@
-from typing import List
-from itertools import chain
-import logging
-from redis import Redis, BlockingConnectionPool
-
-from rcon.settings import SERVER_INFO
-from rcon.cache_utils import get_redis_pool
 import json
+import logging
+from itertools import chain
+from typing import List
+
+from redis import BlockingConnectionPool, Redis
+
+from rcon.cache_utils import get_redis_pool
+from rcon.settings import SERVER_INFO
 
 logger = logging.getLogger(__name__)
 

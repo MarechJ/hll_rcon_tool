@@ -1,36 +1,41 @@
-from datetime import datetime, timedelta
-import os
 import logging
+import os
+from datetime import datetime, timedelta
 
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 
-from rcon.config import get_config
-from rcon.utils import MapsHistory
-from rcon.recorded_commands import RecordedRcon
-from rcon.commands import CommandFailedError
-from rcon.steam_utils import get_steam_profile
-from rcon.settings import SERVER_INFO
 from rcon import game_logs
+from rcon.commands import CommandFailedError
+from rcon.config import get_config
+from rcon.discord import send_to_discord_audit
 from rcon.models import (
     LogLine,
-    PlayerSteamID,
-    PlayerName,
-    enter_session,
     Maps,
+    PlayerName,
     PlayerStats,
+    PlayerSteamID,
+    enter_session,
 )
-from rcon.discord import send_to_discord_audit
-from rcon.scoreboard import LiveStats, TimeWindowStats, get_cached_live_game_stats, current_game_stats
+from rcon.recorded_commands import RecordedRcon
+from rcon.scoreboard import (
+    LiveStats,
+    TimeWindowStats,
+    current_game_stats,
+    get_cached_live_game_stats,
+)
+from rcon.settings import SERVER_INFO
+from rcon.steam_utils import get_steam_profile
+from rcon.utils import LONG_HUMAN_MAP_NAMES, MapsHistory, map_name
 
-from .views import ctl, _get_data
-from .auth import api_response, login_required
-from rcon.utils import map_name, LONG_HUMAN_MAP_NAMES
+from .auth import api_response, login_required, stats_login_required
+from .views import _get_data, ctl
 
 logger = logging.getLogger("rconweb")
 
 
 @csrf_exempt
+@stats_login_required
 def live_scoreboard(request):
     stats = LiveStats()
     config = get_config()
@@ -39,7 +44,9 @@ def live_scoreboard(request):
         result = stats.get_cached_stats()
         result = {
             "snapshot_timestamp": result["snapshot_timestamp"],
-            "refresh_interval_sec": config.get('LIVE_STATS', {}).get('refresh_stats_seconds', 30),
+            "refresh_interval_sec": config.get("LIVE_STATS", {}).get(
+                "refresh_stats_seconds", 30
+            ),
             "stats": result["stats"],
         }
         error = (None,)
@@ -56,6 +63,7 @@ def live_scoreboard(request):
 
 
 @csrf_exempt
+@stats_login_required
 def get_scoreboard_maps(request):
     data = _get_data(request)
 
@@ -90,7 +98,9 @@ def get_scoreboard_maps(request):
             command="get_scoreboard_maps",
         )
 
+
 @csrf_exempt
+@stats_login_required
 def get_map_scoreboard(request):
     data = _get_data(request)
     error = None
@@ -101,7 +111,7 @@ def get_map_scoreboard(request):
         map_id = int(data.get("map_id", None))
         with enter_session() as sess:
             game = sess.query(Maps).filter(Maps.id == map_id).one_or_none()
-            #import ipdb; ipdb.set_trace()
+            # import ipdb; ipdb.set_trace()
             if not game:
                 error = "No map for this ID"
                 failed = True
@@ -111,14 +121,16 @@ def get_map_scoreboard(request):
         game = None
         error = repr(e)
         failed = True
-    
+
     return api_response(
         result=game, error=error, failed=failed, command="get_map_scoreboard"
     )
 
+
 @csrf_exempt
+@stats_login_required
 def get_live_game_stats(request):
-    stats = None 
+    stats = None
     error_ = None
     failed = True
 
@@ -132,7 +144,8 @@ def get_live_game_stats(request):
     return api_response(
         result=stats, error=error_, failed=failed, command="get_live_game_stats"
     )
-    
+
+
 @csrf_exempt
 @login_required()
 def date_scoreboard(request):

@@ -1,11 +1,7 @@
 import inspect
 import logging
 import sys
-import time
 from datetime import datetime, timedelta
-from email.policy import default
-from operator import and_
-from tracemalloc import start
 
 import click
 
@@ -13,9 +9,10 @@ from rcon import auto_settings, broadcast, game_logs, routines, stats_loop
 from rcon.cache_utils import RedisCached, get_redis_pool
 from rcon.extended_commands import Rcon
 from rcon.game_logs import LogLoop
-from rcon.models import init_db, install_unaccent
+from rcon.models import install_unaccent
 from rcon.scoreboard import live_stats_loop
 from rcon.settings import SERVER_INFO
+from rcon.squad_automod import automod
 from rcon.steam_utils import enrich_db_users
 from rcon.server_stats import save_server_stats_since_inception, save_server_stats_for_last_hours
 from rcon.user_config import seed_default_config
@@ -88,6 +85,11 @@ def auto_settings_loop():
 @cli.command(name='routines')
 def run_routines():
     routines.run()
+
+
+@cli.command(name='noleaders')
+def run_squad_automod():
+    automod.run()
 
 
 @cli.command(name='log_recorder')

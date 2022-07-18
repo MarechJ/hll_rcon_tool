@@ -1,18 +1,9 @@
-from rcon import scoreboard
 from django.urls import path
 
-from . import views
-from . import auth
-from . import services
-from . import multi_servers
-from . import logs
-from . import vips
-from . import scoreboards
-from . import history
-from . import votemap
-from . import auto_settings
-from . import server_stats
+from rcon import scoreboard
 
+from . import (auth, auto_settings, history, logs, multi_servers, scoreboards,
+               services, views, vips, votemap)
 
 urlpatterns = [
     path(name, func, name='name')
