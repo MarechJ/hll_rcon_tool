@@ -221,6 +221,9 @@ def get_punitions_to_apply(rcon, config: NoLeaderConfig) -> PunitionsToApply:
                 if state == PunishStepState.apply:
                     punitions_to_apply.warning[team].append(squad_name)
                     punitions_to_apply.add_squad_state(squad_name, squad)
+                if state == PunishStepState.wait:
+                    punitions_to_apply.pending_warnings[team].append(squad_name)
+                    punitions_to_apply.add_squad_state(squad_name, squad)
                 if state != PunishStepState.go_to_next_step and state != PunishStepState.disabled:
                     continue
 
@@ -265,7 +268,8 @@ def _build_warning_str(punition_to_apply: PunitionsToApply, config: NoLeaderConf
     to_apply = punition_to_apply.warning[team]
     if not to_apply:
         return ""
-
+    # Since we're going to broadcast anyways we also add the squads got warned already but are still without lead
+    to_apply += punition_to_apply.pending_warnings[team]
     red = get_redis_client()
     start = f"{team}: "
     squads = []
@@ -279,8 +283,8 @@ def _build_warning_str(punition_to_apply: PunitionsToApply, config: NoLeaderConf
 
 
 def get_warning_message(punition_to_apply: PunitionsToApply, config: NoLeaderConfig) -> Tuple[str, str]:
-    allies = _build_warning_str(punition_to_apply, config, "allies")
-    axis = _build_warning_str(punition_to_apply, config, "axis")
+    allies = _build_warning_str(punition_to_apply, config, "ALLIES")
+    axis = _build_warning_str(punition_to_apply, config, "AXIS")
     return f"""{config.warn_message_header}
 {allies}
 {axis}
