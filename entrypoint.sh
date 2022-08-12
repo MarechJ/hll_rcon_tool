@@ -27,7 +27,6 @@ then
 fi
 if [ "$HLL_HOST" == '' ] 
 then
-    ./manage.py unregister_api
     exit 0
 fi
   sleep 10

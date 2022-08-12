@@ -13,6 +13,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from rcon.audit import heartbeat, ingame_mods, online_mods, set_registered_mods
 from rcon.cache_utils import ttl_cache
+from rcon.config import get_config
 
 from .models import SteamPlayer
 
@@ -135,6 +136,35 @@ def do_logout(request):
 
 
 def login_required(func):
+    @wraps(func)
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return api_response(
+                command=request.path,
+                error="You must be logged in to use this",
+                failed=True,
+                status_code=401
+            )
+        try:
+            return func(request, *args, **kwargs)
+        except Exception as e:
+            logger.exception("Unexpected error in %s", func.__name__)
+            return api_response(
+                command=request.path,
+                error=repr(e),
+                failed=True,
+                status_code=500
+            )
+
+    return wrapper
+
+
+def stats_login_required(func):
+    config = get_config()
+
+    if not config.get("LOCK_STATS_API"):
+        return func
+
     @wraps(func)
     def wrapper(request, *args, **kwargs):
         if not request.user.is_authenticated:

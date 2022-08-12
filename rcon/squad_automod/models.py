@@ -81,6 +81,7 @@ class ASquad:
 @dataclass
 class PunitionsToApply:
     warning: Mapping[str, List[str]] = field(default_factory=lambda: {"allies": [], "axis": []})
+    pending_warnings: Mapping[str, List[str]] = field(default_factory=lambda: {"allies": [], "axis": []})
     punish: List[APlayer] = field(default_factory=list)
     kick: List[APlayer] = field(default_factory=list)
     squads_state: List[dict] = field(default_factory=list)
