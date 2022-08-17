@@ -265,11 +265,11 @@ def get_punitions_to_apply(rcon, config: NoLeaderConfig) -> PunitionsToApply:
 
 
 def _build_warning_str(punition_to_apply: PunitionsToApply, config: NoLeaderConfig, team: str):
-    to_apply = punition_to_apply.warning[team]
+    to_apply = punition_to_apply.warning.get(team.lower(), [])
     if not to_apply:
         return ""
     # Since we're going to broadcast anyways we also add the squads got warned already but are still without lead
-    to_apply += punition_to_apply.pending_warnings[team]
+    to_apply += punition_to_apply.pending_warnings.get(team.lower(), [])
     red = get_redis_client()
     start = f"{team}: "
     squads = []
