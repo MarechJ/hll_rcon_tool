@@ -8,10 +8,9 @@ VALID_AUTOBALANCE_METHODS = ("random", "arrival_most_recent", "arrival_least_rec
 class AutoBalanceConfig:
     """Represents the config options in config/config.yml"""
 
-    enabled: bool = False
     discord_webhook_url: str = ""
     min_players_for_balance: int = 0
-    # min_seconds_between_team_balances: int = 0
+    min_seconds_between_team_balances: int = 0
     min_seconds_between_player_swaps: int = 0
     player_count_threshold: int = 0
     auto_rebalance_method: str = "arrival_most_recent"  # TODO: add field validation
