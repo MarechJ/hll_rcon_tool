@@ -190,13 +190,8 @@ NOLEADER_AUTO_MOD:
 
 
 TEAM_AUTOBALANCE:
-  # Set to true to enable the auto balancing of teams when the difference in player numbers exceeds the limit
-  # TODO: May not need this since it's not set as a service anymore
-  enabled: true
-  
   # Discord Webhook URL where audit logs should be sent. If not specified, the envrionment variable DISCORD_WEBHOOK_AUDIT_LOG
   # will be used, instead.
-  # TODO: set this up
   discord_webhook_url: ''
   
   # If the server has fewer players than the number you set below (> not >=), auto balancing will not happen
@@ -204,9 +199,10 @@ TEAM_AUTOBALANCE:
   
   # The minimum amount of time in seconds that must pass between team balancing being triggered to prevent excessive swaps
   # TODO: set this up
-  # min_seconds_between_team_balances: 120
+  min_seconds_between_team_balances: 5
 
   # The minimum amount of time in seconds that must pass before a player is eligible to be swapped again, set to 0 to allow immediate swaps
+  # This does NOT take into consideration the time a player was swapped via RCON or when they last swapped themselves, only the last time this swapped them
   min_seconds_between_player_swaps: 120
 
   # The difference in number of players on each team must exceed (> not >=) this limit for auto balancing to occur
@@ -227,7 +223,7 @@ TEAM_AUTOBALANCE:
   
   # miscellaneous 
   # If the level of the player is less than this number (1 to 500) he/she will be immune to auto balancing
-  immuned_level_up_to: 1
+  immuned_level_up_to: 0
   
   # You can some role that are immuned to punish and kick (this must be a list, the syntax is important)
   # Available roles are: 'armycommander', 'tankcommander', 'crewman', 'spotter', 'sniper', 'officer', 'rifleman', 'assault', 'automaticrifleman','medic', 'support', 'heavymachinegunner', 'antitank', 'engineer'
@@ -237,7 +233,6 @@ TEAM_AUTOBALANCE:
     - crewman
     - spotter
     - sniper
-    
 
 # Set your custom text or transalation for each of the below keys. Logo urls and prefered stats and such
 # If you have more that 3 server copy the whole SERVER_1 section 
