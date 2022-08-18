@@ -11,12 +11,27 @@ from rcon.cache_utils import get_redis_client
 from rcon.commands import HLLServerError
 from rcon.config import get_config
 from rcon.discord import send_to_discord_audit
-from rcon.player_history import get_player
+from rcon.player_history import get_player_profile
 from rcon.recorded_commands import RecordedRcon
 from rcon.settings import SERVER_INFO
 from rcon.team_autobalance.models import AutoBalanceConfig
 
 DetailedPlayerInfo = NewType("DetailedPlayerInfo", Dict[str, Any])
+"""
+        rcon.extended_commands.get_detailed_player_info()
+        
+        Name: T17 Scott
+        steamID64: 01234567890123456
+        Team: Allies            # "None" when not in team
+        Role: Officer           
+        Unit: 0 - Able          # Absent when not in unit
+        Loadout: NCO            # Absent when not in team
+        Kills: 0 - Deaths: 0
+        Score: C 50, O 0, D 40, S 10
+        Level: 34
+
+        """
+
 
 # TODO: Move these to some shared constants file
 AXIS_TEAM = "axis"
@@ -341,7 +356,7 @@ def get_players_on_team(
     return team_players
 
 
-def select_players_randomly(players, num_to_select: int):
+def select_players_randomly(players: Iterable[DetailedPlayerInfo], num_to_select: int):
     """Select up to num_to_select players randomly from the given list of players"""
     shuffled_players = players[:]
     random.shuffle(shuffled_players)
@@ -359,15 +374,28 @@ def select_players_randomly(players, num_to_select: int):
 
 
 # Force the selection method to be keyword only to avoid confusion when calling
-def select_players_arrival_time(players, num_to_select, *, most_recent=True):
+def select_players_arrival_time(
+    players: Iterable[DetailedPlayerInfo],
+    num_to_select: int,
+    *,
+    most_recent: bool = True,
+):
+    # returns DetailedPlayerInfo but augmented with their most recent session
     """Select up to num_to_select players based on arrival time to the server."""
 
-    # Looks like we can rely on snagging the first session start time
-    # to find when they most recently joined the server
     # TODO: Should probably move this to the DB layer
+
+    player_sessions = {
+        p["steam_id_64"]: get_player_profile(p["steam_id_64"], 1) for p in players
+    }
+
+    # Update each DetailedPlayerInfo player to include their most recent session
+    for p in players:
+        p["history"] = player_sessions[p["steam_id_64"]]
+
     ordered_players = sorted(
         players,
-        key=lambda p: p["profile"]["sessions"][0]["start"],
+        key=lambda p: p["history"]["sessions"][0]["start"],
         reverse=most_recent,
     )
 
@@ -501,7 +529,9 @@ def autobalance_teams(rcon_hook: RecordedRcon):
             else rcon_hook.do_switch_player_now
         )
         for player in players_to_swap:
-            switch_function(player["name"])  # this function has a unused 'by' argument
+            switch_function(
+                player["name"], None
+            )  # this function has a unused 'by' argument
             set_player_autobalance_timestamp(
                 redis_store, steam_id_64=player["steam_id_64"]
             )
