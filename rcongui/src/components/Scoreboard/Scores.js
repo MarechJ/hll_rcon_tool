@@ -25,7 +25,7 @@ import { pure } from "recompose";
 import { PlayerStatProfile } from "./PlayerStatProfile";
 import MUIDataTable from "mui-datatables";
 import { Button } from "@material-ui/core";
-import {toPairs, sortBy} from 'lodash'
+import { toPairs, sortBy } from "lodash";
 
 export const safeGetSteamProfile = (scoreObj) =>
   scoreObj.get("steaminfo")
@@ -200,8 +200,7 @@ const RawScores = pure(({ classes, scores }) => {
       : 1
   );
   const styles = useStyles();
-  const [rowsPerPage, setRowsPerPage] = React.useState(50)
-
+  const [rowsPerPage, setRowsPerPage] = React.useState(50);
   return (
     <Grid container spacing={2} className={classes.padding}>
       <Grid item xs={12}>
