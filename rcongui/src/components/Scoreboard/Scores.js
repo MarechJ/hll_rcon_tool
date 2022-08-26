@@ -227,6 +227,7 @@ const RawScores = pure(({ classes, scores }) => {
             }}
             data={scores ? scores.toJS() : []}
             columns={[
+              { name: "steam_id_64", label: "Steam ID" },
               { name: "player", label: "Name" },
               { name: "kills", label: "Kills" },
               { name: "deaths", label: "Deaths" },
