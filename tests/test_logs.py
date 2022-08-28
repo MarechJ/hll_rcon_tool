@@ -2,6 +2,15 @@ from unittest import mock
 
 from rcon.extended_commands import Rcon
 
+#  Unable to parse line: [4:48 min (1659278057)] KICK: [|||™ Marcraƒt] has been kicked. [Host closed the connection.]
+# TODO: Unable to parse line: [4:54 min (1659283019)] KICK: [[BC] Gimrrin] has been kicked. [Host closed the connection.]
+# TODO:  Invalid line: '[3:48 min (1659282046)] VOTESYS: Player [lat-ouf-ordo] Started a vote of type (PVR_Kick_Abuse) against [Ajax Telamônios]. VoteID: [15]'
+# Traceback (most recent call last):
+#  File "/code/rcon/extended_commands.py", line 1157, in parse_logs
+#    player = groups[1]
+#TypeError: 'NoneType' object is not subscriptable
+
+
 RAW_LOGS = """
 [1.89 sec (1606340677)] CHAT[Team][bananacocoo(Allies/76561198003251789)]: pas jouable la map
 [29:55 min (1606340690)] KILL: Karadoc(Axis/76561198080212634) -> Bullitt-FR(Allies/76561198000776367) with G43

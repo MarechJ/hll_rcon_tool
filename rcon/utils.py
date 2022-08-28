@@ -85,6 +85,8 @@ def categorize_maps(maps):
 
 def map_name(map_):
     name, *rest = map_.split("_")
+    if "night" in map_:
+        return f"{name}_night"
     return name
 
 
