@@ -16,6 +16,7 @@ from rcon.squad_automod.automod import (
 )
 from rcon.squad_automod.models import (
     APlayer,
+    ASquad,
     NoLeaderConfig,
     PunishStepState,
     PunitionsToApply,
@@ -1090,22 +1091,24 @@ def test_watcher(team_view):
         to_apply = get_punitions_to_apply(rcon, config)
         assert {"allies": ["baker"], "axis": ["able", "baker"]} == to_apply.warning
 
+        expected_squad_state = [ASquad(name='baker', players=[APlayer(player='Lawless', squad='baker', team='allies', role='heavymachinegunner', lvl=88), APlayer(player='Major_Winters', squad='baker', team='allies', role='rifleman', lvl=82), APlayer(player='Toomz', squad='baker', team='allies', role='assault', lvl=69), APlayer(player='Zones (BEL)', squad='baker', team='allies', role='engineer', lvl=59), APlayer(player='Pavooloni', squad='baker', team='allies', role='antitank', lvl=71), APlayer(player='Kjjuj', squad='baker', team='allies', role='rifleman', lvl=102)]), ASquad(name='able', players=[APlayer(player='emfoor', squad='able', team='axis', role='assault', lvl=110), APlayer(player='Makaj', squad='able', team='axis', role='officer', lvl=43), APlayer(player='tinner2115', squad='able', team='axis', role='engineer', lvl=170), APlayer(player='Cuervo', squad='able', team='axis', role='antitank', lvl=129), APlayer(player='capitanodrew', squad='able', team='axis', role='heavymachinegunner', lvl=67), APlayer(player='Dr.FishShitz', squad='able', team='axis', role='automaticrifleman', lvl=10)]), ASquad(name='baker', players=[APlayer(player='WilliePeter', squad='baker', team='axis', role='spotter', lvl=123), APlayer(player='DarkVisionary', squad='baker', team='axis', role='sniper', lvl=184)])]
+
         assert PunitionsToApply(
-            warning={"allies": [], "axis": []}, punish=[], kick=[]
+            warning={"allies": [], "axis": []}, punish=[], kick=[], pending_warnings={"allies": ["baker"], "axis": ["able", "baker"]}, squads_state=expected_squad_state
         ) == get_punitions_to_apply(rcon, config)
         time.sleep(config.warning_interval_seconds)
 
         # 1st punish
         assert expected_players == get_punitions_to_apply(rcon, config).punish
         assert PunitionsToApply(
-            warning={"allies": [], "axis": []}, punish=[], kick=[]
+            warning={"allies": [], "axis": []}, punish=[], kick=[], pending_warnings={"allies": [], "axis": []}, squads_state=[]
         ) == get_punitions_to_apply(rcon, config)
         time.sleep(config.punish_interval_seconds)
 
         # 2nd punsi
         assert expected_players == get_punitions_to_apply(rcon, config).punish
         assert PunitionsToApply(
-            warning={"allies": [], "axis": []}, punish=[], kick=[]
+            warning={"allies": [], "axis": []}, punish=[], kick=[], pending_warnings={"allies": [], "axis": []}, squads_state=[]
         ) == get_punitions_to_apply(rcon, config)
         time.sleep(config.punish_interval_seconds)
 

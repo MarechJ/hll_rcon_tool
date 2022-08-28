@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 @contextmanager
 def watch_state(red: redis.StrictRedis, team: str, squad_name: str):
-    redis_key = f"no_leader_watch{team}{squad_name}"
+    redis_key = f"no_leader_watch{team.lower()}{squad_name.lower()}"
     watch_status = red.get(redis_key)
     if watch_status:
         watch_status = pickle.loads(watch_status)
@@ -274,7 +274,7 @@ def _build_warning_str(punition_to_apply: PunitionsToApply, config: NoLeaderConf
     start = f"{team}: "
     squads = []
     for idx, squad_name in enumerate(to_apply):
-        with watch_state(red, team, squad_name) as squad_state:
+        with watch_state(red, team.lower(), squad_name) as squad_state:
             nb = len(squad_state.warned)
             total = config.number_of_warning
             squads.append(f"{str(squad_name).upper()} {nb}/{total} /!\\")

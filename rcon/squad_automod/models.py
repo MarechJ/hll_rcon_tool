@@ -84,7 +84,7 @@ class PunitionsToApply:
     pending_warnings: Mapping[str, List[str]] = field(default_factory=lambda: {"allies": [], "axis": []})
     punish: List[APlayer] = field(default_factory=list)
     kick: List[APlayer] = field(default_factory=list)
-    squads_state: List[dict] = field(default_factory=list)
+    squads_state: List[ASquad] = field(default_factory=list)
 
     def add_squad_state(self, squad_name: str, squad: dict):
         try:
