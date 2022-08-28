@@ -224,9 +224,24 @@ const RawScores = pure(({ classes, scores }) => {
               selectableRows: "none",
               rowsPerPageOptions: [10, 25, 50, 100, 250, 500, 1000],
               onChangeRowsPerPage: (v) => setRowsPerPage(v),
+              onDownload: (buildHead, buildBody, columns, data) => {
+                // Convert any column values that are objects to JSON so they display in the csv as data instead of [object Object]
+                const expandedData = data.map((row) => {
+                  return {
+                    index: row.index,
+                    data: row.data.map((colValue) =>
+                      typeof colValue === "object"
+                        ? JSON.stringify(colValue)
+                        : colValue
+                    ),
+                  };
+                });
+                return buildHead(columns) + buildBody(expandedData);
+              },
             }}
             data={scores ? scores.toJS() : []}
             columns={[
+              { name: "steam_id_64", label: "Steam ID" },
               { name: "player", label: "Name" },
               { name: "kills", label: "Kills" },
               { name: "deaths", label: "Deaths" },
