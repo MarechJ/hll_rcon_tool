@@ -331,7 +331,7 @@ class LogsHistory extends React.Component {
 
   handleDownload() {
     postData(`${process.env.REACT_APP_API_URL}get_historical_logs`, {
-      player_name: this.statename,
+      player_name: this.state.name,
       log_type: this.state.type,
       steam_id_64: this.state.steamId64,
       from: this.state.from,
