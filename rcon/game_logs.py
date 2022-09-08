@@ -16,8 +16,11 @@ from rcon.config import get_config
 from rcon.discord import send_to_discord_audit
 from rcon.extended_commands import LOG_ACTIONS, Rcon
 from rcon.models import LogLine, PlayerName, PlayerSteamID, enter_session
-from rcon.player_history import (add_player_to_blacklist, get_player_profile,
-                                 player_has_flag)
+from rcon.player_history import (
+    add_player_to_blacklist,
+    get_player_profile,
+    player_has_flag,
+)
 from rcon.recorded_commands import RecordedRcon
 from rcon.settings import SERVER_INFO
 from rcon.utils import FixedLenList
@@ -36,7 +39,7 @@ HOOKS = {
     "TK": [],
     "MATCH": [],
     "MATCH START": [],
-    "MATCH ENDED": []
+    "MATCH ENDED": [],
 }
 
 
@@ -54,13 +57,16 @@ def on_chat(func):
     HOOKS["CHAT"].append(func)
     return func
 
+
 def on_camera(func):
     HOOKS["CAMERA"].append(func)
     return func
 
+
 def on_chat_axis(func):
     HOOKS["CHAT[Axis]"].append(func)
     return func
+
 
 def on_chat_allies(func):
     HOOKS["CHAT[Allies]"].append(func)
@@ -319,9 +325,7 @@ def get_recent_logs(
         all_logs = log_list[start : min(end, len(log_list))]
     logs = []
     all_players = set()
-    actions = set(
-        LOG_ACTIONS
-    )
+    actions = set(LOG_ACTIONS)
     if player_search and not isinstance(player_search, list):
         player_search = [player_search]
     # flatten that shit
@@ -335,11 +339,13 @@ def get_recent_logs(
             break
         if player_search:
             for player_name_search in player_search:
-                if is_player(player_name_search, l["player"], exact_player_match) or is_player(
-                    player_name_search, l["player2"], exact_player_match
-                ):
-                    
-                    if action_filter and not is_action(action_filter, l["action"], exact_action):
+                if is_player(
+                    player_name_search, l["player"], exact_player_match
+                ) or is_player(player_name_search, l["player2"], exact_player_match):
+
+                    if action_filter and not is_action(
+                        action_filter, l["action"], exact_action
+                    ):
                         continue
                     logs.append(l)
                     break
@@ -455,10 +461,12 @@ def auto_ban_if_tks_right_after_connection(rcon: RecordedRcon, log):
                     datetime.datetime.fromtimestamp(log["timestamp_ms"]),
                 )
                 continue
-            
+
             tk_counter += 1
             if tk_counter > tk_tolerance_count:
-                logger.info("Banning player %s for TEAMKILL after connect %s", player_name, log)
+                logger.info(
+                    "Banning player %s for TEAMKILL after connect %s", player_name, log
+                )
                 try:
                     rcon.do_perma_ban(
                         player=player_name,
@@ -468,8 +476,14 @@ def auto_ban_if_tks_right_after_connection(rcon: RecordedRcon, log):
                 except:
                     logger.exception("Can't perma, trying blacklist")
                     add_player_to_blacklist(player_steam_id, reason, by=author)
-                logger.info("Banned player %s for TEAMKILL after connect %s", player_name, log)
-                send_to_discord_audit(discord_msg.format(player=player_name), by=author, webhookurl=webhook)
+                logger.info(
+                    "Banned player %s for TEAMKILL after connect %s", player_name, log
+                )
+                send_to_discord_audit(
+                    discord_msg.format(player=player_name),
+                    by=author,
+                    webhookurl=webhook,
+                )
         elif is_player_death(player_name, log):
             death_counter += 1
             if death_counter >= ignore_after_death:
@@ -565,7 +579,7 @@ def get_historical_logs(
     exact_player_match=False,
     exact_action=True,
     server_filter=None,
-    output=None
+    output=None,
 ):
     with enter_session() as sess:
         res = get_historical_logs_records(
