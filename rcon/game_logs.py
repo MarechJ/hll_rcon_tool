@@ -294,7 +294,8 @@ def is_player(search_str, player, exact_match=False):
     return False
 
 
-def is_action(action_filter, action, exact_match=False):
+def is_action(action_filter, action, exact_match=False, actions_filter_in=True):
+    """Test whether the passed in log line `action` is in `action_filter`."""
     if not action_filter or not action:
         return None
     if not isinstance(action_filter, list):
@@ -318,7 +319,12 @@ def get_recent_logs(
     min_timestamp=None,
     exact_player_match=False,
     exact_action=False,
+    actions_filter_in=True,
 ):
+    # The default behavior is to only show log lines with actions in `actions_filter`
+    # actions_filter_in=True retains this default behavior
+    # actions_filter_out=False will do the opposite, show all lines except what is passed in
+    # `actions_filter`
     log_list = LogLoop.get_log_history_list()
     all_logs = log_list
     if start != 0:
@@ -329,35 +335,53 @@ def get_recent_logs(
     if player_search and not isinstance(player_search, list):
         player_search = [player_search]
     # flatten that shit
-    for idx, l in enumerate(all_logs):
+    for idx, line in enumerate(all_logs):
         if idx >= end - start:
             break
-        if not isinstance(l, dict):
+        if not isinstance(line, dict):
             continue
-        if min_timestamp and l["timestamp_ms"] / 1000 < min_timestamp:
+        if min_timestamp and line["timestamp_ms"] / 1000 < min_timestamp:
             logger.debug("Stopping log read due to old timestamp at index %s", idx)
             break
         if player_search:
             for player_name_search in player_search:
                 if is_player(
-                    player_name_search, l["player"], exact_player_match
-                ) or is_player(player_name_search, l["player2"], exact_player_match):
-
-                    if action_filter and not is_action(
-                        action_filter, l["action"], exact_action
+                    player_name_search, line["player"], exact_player_match
+                ) or is_player(player_name_search, line["player2"], exact_player_match):
+                    # Filter out anything that isn't in action_filter
+                    if (
+                        action_filter
+                        and actions_filter_in
+                        and is_action(action_filter, line["action"], exact_action)
                     ):
-                        continue
-                    logs.append(l)
-                    break
-        elif action_filter and is_action(action_filter, l["action"], exact_action):
-            logs.append(l)
+                        logs.append(line)
+                        break
+                    # Filter out any action in action_filter
+                    elif (
+                        action_filter
+                        and not actions_filter_in
+                        and not is_action(action_filter, line["action"], exact_action)
+                    ):
+                        logs.append(line)
+                        break
+        elif action_filter:
+            # Filter out anything that isn't in action_filter
+            if actions_filter_in and is_action(
+                action_filter, line["action"], exact_action
+            ):
+                logs.append(line)
+            # Filter out any action in action_filter
+            elif not actions_filter_in and not is_action(
+                action_filter, line["action"], exact_action
+            ):
+                logs.append(line)
         elif not player_search and not action_filter:
-            logs.append(l)
-        if p1 := l["player"]:
+            logs.append(line)
+        if p1 := line["player"]:
             all_players.add(p1)
-        if p2 := l["player2"]:
+        if p2 := line["player2"]:
             all_players.add(p2)
-        actions.add(l["action"])
+        actions.add(line["action"])
 
     return {
         "actions": list(actions),

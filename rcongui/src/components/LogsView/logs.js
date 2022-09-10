@@ -16,6 +16,7 @@ import AutoRefreshLine from "../autoRefreshLine";
 import ListItemText from "@material-ui/core/ListItemText";
 import FullscreenIcon from '@material-ui/icons/Fullscreen';
 import FullscreenExitIcon from '@material-ui/icons/FullscreenExit';
+import Padlock from "../SettingsView/padlock";
 
 const Selector = ({
   classes,
@@ -60,6 +61,7 @@ class Logs extends React.Component {
       players: [],
       playersFilter: [],
       actionsFilter: [],
+      actionsFilterInEnabled: true,
       limit: localStorage.getItem("logs_limit")
         ? localStorage.getItem("logs_limit")
         : 500,
@@ -79,6 +81,7 @@ class Logs extends React.Component {
 
     this.loadLogs = this.loadLogs.bind(this);
     this.setActionFilter = this.setActionFilter.bind(this);
+    this.setActionsFilterIn = this.setActionsFilterIn.bind(this);
     this.setLimit = this.setLimit.bind(this);
   }
 
@@ -89,10 +92,10 @@ class Logs extends React.Component {
   }
 
   loadLogs() {
-    const { actionsFilter, playersFilter, limit } = this.state;
+    const { actionsFilter, playersFilter, limit, actionsFilterInEnabled } = this.state;
 
 
-    return postData(`${process.env.REACT_APP_API_URL}get_recent_logs`, {end: limit, filter_action: actionsFilter, filter_player: playersFilter})
+    return postData(`${process.env.REACT_APP_API_URL}get_recent_logs`, {end: limit, filter_action: actionsFilter, filter_player: playersFilter, actions_filter_in: actionsFilterInEnabled})
       .then((response) => showResponse(response, "get_logs"))
       .then((data) => {
         this.setState({
@@ -109,6 +112,10 @@ class Logs extends React.Component {
     localStorage.setItem("logs_actions", actionsFilter);
   }
 
+  setActionsFilterIn() {
+    this.setState({ actionsFilterInEnabled: !this.state.actionsFilterInEnabled }, this.loadLogs);
+  }
+
   setLimit(limit) {
     this.setState({ limit }, this.loadLogs);
     localStorage.setItem("logs_limit", limit);
@@ -121,6 +128,7 @@ class Logs extends React.Component {
       players,
       actions,
       actionsFilter,
+      actionsFilterInEnabled,
       limit,
       limitOptions,
     } = this.state;
@@ -156,7 +164,7 @@ class Logs extends React.Component {
             />
           </Grid>
           <Grid className={classes.padding} item xs={12} sm={12} md={12} lg={3}>
-           
+            
              <Autocomplete
               id="tags-outlined"
               multiple
@@ -175,6 +183,7 @@ class Logs extends React.Component {
                 />
               )}
             />
+            <Padlock handleChange={() => this.setActionsFilterIn()} checked={actionsFilterInEnabled} label="Filter out/in"/>
           </Grid>
           <Grid className={classes.padding} item xs={12} sm={12} md={12} lg={4}>
             <Autocomplete

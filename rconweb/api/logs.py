@@ -46,7 +46,7 @@ def get_historical_logs(request):
         exact_player_match=exact_player_match,
         exact_action=exact_action,
         server_filter=server_filter,
-        output=output
+        output=output,
     )
     if output != "CSV" and output != "csv":
         return api_response(
@@ -55,10 +55,23 @@ def get_historical_logs(request):
             arguments=dict(limit=limit, player_name=player_name, action=action),
             failed=False,
         )
-    return api_csv_response(lines, "log.csv",
-                        ["event_time", "type", "player_name", "player1_id",
-                        "player2_name", "player2_id", "content", "server", "weapon"])
-     
+    return api_csv_response(
+        lines,
+        "log.csv",
+        [
+            "event_time",
+            "type",
+            "player1_name",
+            "player1_id",
+            "player2_name",
+            "player2_id",
+            "content",
+            "server",
+            "weapon",
+        ],
+    )
+
+
 @csrf_exempt
 @login_required
 def get_recent_logs(request):
@@ -67,6 +80,7 @@ def get_recent_logs(request):
     end = int(data.get("end", 10000))
     player_search = data.get("filter_player")
     action_filter = data.get("filter_action")
+    actions_filter_in = data.get("actions_filter_in")
     exact_player_match = data.get("exact_player_match", True)
     exact_action = data.get("exact_action", False)
 
@@ -78,6 +92,7 @@ def get_recent_logs(request):
             action_filter=action_filter,
             exact_player_match=exact_player_match,
             exact_action=exact_action,
+            actions_filter_in=actions_filter_in,
         ),
         command="get_recent_logs",
         arguments=dict(
@@ -85,6 +100,7 @@ def get_recent_logs(request):
             end=end,
             filter_player=player_search,
             filter_action=action_filter,
+            actions_filter_in=actions_filter_in,
         ),
         failed=False,
     )
