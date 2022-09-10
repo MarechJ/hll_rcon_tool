@@ -11,7 +11,7 @@ sentry-sdk==0.17.1
 redistimeseries==0.8.0
 python-dateutil==2.8.1
 git+https://github.com/MarechJ/python-discord-webhook.git@36b420749258fc03c8f8163cc105997e0baba8f3
-discord>=1.0.1
+discord==1.7.3
 requests>=2.21.0
 steam==1.0.2
 pyaml==21.10.1
@@ -22,3 +22,4 @@ rq-scheduler==0.11.0
 ftpretty==0.4.0
 pytz>=2021.1
 pydantic==1.9.1
+discord.py==1.7.3
