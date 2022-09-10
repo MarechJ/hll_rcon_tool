@@ -189,51 +189,6 @@ NOLEADER_AUTO_MOD:
   immuned_level_up_to: 15
 
 
-TEAM_AUTOBALANCE:
-  # Discord Webhook URL where audit logs should be sent. If not specified, the envrionment variable DISCORD_WEBHOOK_AUDIT_LOG
-  # will be used, instead.
-  discord_webhook_url: ''
-  
-  # If the server has fewer players than the number you set below (> not >=), auto balancing will not happen
-  min_players_for_balance: 0
-  
-  # The minimum amount of time in seconds that must pass between team balancing being triggered to prevent excessive swaps
-  # TODO: set this up
-  min_seconds_between_team_balances: 5
-
-  # The minimum amount of time in seconds that must pass before a player is eligible to be swapped again, set to 0 to allow immediate swaps
-  # This does NOT take into consideration the time a player was swapped via RCON or when they last swapped themselves, only the last time this swapped them
-  min_seconds_between_player_swaps: 120
-
-  # The difference in number of players on each team must exceed (> not >=) this limit for auto balancing to occur
-  player_count_threshold: 1
-
-  # The method by which players are selected for balancing, you must choose only one 
-  # Available options are: random, arrival_most_recent, arrival_least_recent
-  # random: randomly selected player
-  # arrival_most_recent: start with the player that most recently joined the team and so forth
-  # arrival_least_recent: start with the player that least recently joined the team and so forth
-  auto_rebalance_method: arrival_most_recent
-
-  # Set to true to swap players when dead, false to swap immediately
-  swap_on_death: false
-
-  # If true players who have not yet picked a team (potentially AFK) will be included in the shuffle
-  include_teamless_players: false
-  
-  # miscellaneous 
-  # If the level of the player is less than this number (1 to 500) he/she will be immune to auto balancing
-  immuned_level_up_to: 0
-  
-  # You can some role that are immuned to punish and kick (this must be a list, the syntax is important)
-  # Available roles are: 'armycommander', 'tankcommander', 'crewman', 'spotter', 'sniper', 'officer', 'rifleman', 'assault', 'automaticrifleman','medic', 'support', 'heavymachinegunner', 'antitank', 'engineer'
-  immuned_roles: 
-    - armycommander
-    - tankcommander
-    - crewman
-    - spotter
-    - sniper
-
 # Set your custom text or transalation for each of the below keys. Logo urls and prefered stats and such
 # If you have more that 3 server copy the whole SERVER_1 section 
 SCOREBOT:
@@ -286,7 +241,7 @@ SCOREBOT:
     NEXT_MAP_TEXT: "Next map"
     VOTE: "vote(s)"
     PLAYERS: "players"
-    ELAPSED_TIME: "Elapsed game time: "
+    ELAPSED_TIME: "Elasped game time: "
 
     # Discord markup is supported, you can add emoji too, TOP_KILLERS as an example of custom emoji. Do \<the emoji> on your discord to get that id
     TOP_KILLERS: "<:HLLBomb:868256234439073802> TOP KILLERS\n*kills* <:HLLBomb:868256234439073802>"

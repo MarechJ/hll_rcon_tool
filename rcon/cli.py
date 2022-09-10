@@ -13,7 +13,6 @@ from rcon.models import install_unaccent
 from rcon.scoreboard import live_stats_loop
 from rcon.settings import SERVER_INFO
 from rcon.squad_automod import automod
-from rcon.team_autobalance import autobalance
 from rcon.steam_utils import enrich_db_users
 from rcon.user_config import seed_default_config
 from rcon.utils import ApiKey
@@ -81,10 +80,6 @@ def run_routines():
 @cli.command(name='noleaders')
 def run_squad_automod():
     automod.run()
-
-@cli.command(name='autobalance')
-def run_team_autobalance():
-    autobalance.run()
 
 
 @cli.command(name='log_recorder')
