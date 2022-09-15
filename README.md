@@ -100,6 +100,7 @@ Note if you don't see the `.env` file you need to activate the show hidden files
     # Your rcon password (the one you use with your current Rcon)
     HLL_PASSWORD=mypassword
     # Choose a password for your Database (you probably won't need it)
+    # Prohibited characters for HLL_DB_PASSWORD: %#
     HLL_DB_PASSWORD=mydatabasepassword
 
     # The two below are the username and password that will be required to access the ronc website. 
