@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 @contextmanager
 def watch_state(red: redis.StrictRedis, team: str, squad_name: str):
-    redis_key = f"no_leader_watch{team.lower()}{squad_name.lower()}"
+    redis_key = f"no_leader_watch{team.lower()}{str(squad_name).lower()}"
     watch_status = red.get(redis_key)
     if watch_status:
         watch_status = pickle.loads(watch_status)
@@ -207,6 +207,9 @@ def get_punitions_to_apply(rcon, config: NoLeaderConfig) -> PunitionsToApply:
             continue
 
         for squad_name, squad in team_view[team]["squads"].items():
+            if not squad_name:
+                logger.info("Skipping None or empty squad %s %s", squad_name, squad)
+                continue
             with watch_state(red, team, squad_name) as watch_status:
                 if squad["has_leader"]:  # The squad has a leader, clearing punishments plan
                     raise SquadHasLeader()
