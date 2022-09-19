@@ -80,7 +80,7 @@ def get_recent_logs(request):
     end = int(data.get("end", 10000))
     player_search = data.get("filter_player")
     action_filter = data.get("filter_action")
-    actions_filter_in = data.get("actions_filter_in")
+    inclusive_filter = data.get("inclusive_filter")
     exact_player_match = data.get("exact_player_match", True)
     exact_action = data.get("exact_action", False)
 
@@ -92,7 +92,7 @@ def get_recent_logs(request):
             action_filter=action_filter,
             exact_player_match=exact_player_match,
             exact_action=exact_action,
-            actions_filter_in=actions_filter_in,
+            inclusive_filter=inclusive_filter,
         ),
         command="get_recent_logs",
         arguments=dict(
@@ -100,7 +100,7 @@ def get_recent_logs(request):
             end=end,
             filter_player=player_search,
             filter_action=action_filter,
-            actions_filter_in=actions_filter_in,
+            actions_filter_in=inclusive_filter,
         ),
         failed=False,
     )

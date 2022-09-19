@@ -319,11 +319,11 @@ def get_recent_logs(
     min_timestamp=None,
     exact_player_match=False,
     exact_action=False,
-    actions_filter_in=True,
+    inclusive_filter=True,
 ):
     # The default behavior is to only show log lines with actions in `actions_filter`
-    # actions_filter_in=True retains this default behavior
-    # actions_filter_out=False will do the opposite, show all lines except what is passed in
+    # inclusive_filter=True retains this default behavior
+    # inclusive_filter=False will do the opposite, show all lines except what is passed in
     # `actions_filter`
     log_list = LogLoop.get_log_history_list()
     all_logs = log_list
@@ -351,7 +351,7 @@ def get_recent_logs(
                     # Filter out anything that isn't in action_filter
                     if (
                         action_filter
-                        and actions_filter_in
+                        and inclusive_filter
                         and is_action(action_filter, line["action"], exact_action)
                     ):
                         logs.append(line)
@@ -359,19 +359,19 @@ def get_recent_logs(
                     # Filter out any action in action_filter
                     elif (
                         action_filter
-                        and not actions_filter_in
+                        and not inclusive_filter
                         and not is_action(action_filter, line["action"], exact_action)
                     ):
                         logs.append(line)
                         break
         elif action_filter:
             # Filter out anything that isn't in action_filter
-            if actions_filter_in and is_action(
+            if inclusive_filter and is_action(
                 action_filter, line["action"], exact_action
             ):
                 logs.append(line)
             # Filter out any action in action_filter
-            elif not actions_filter_in and not is_action(
+            elif not inclusive_filter and not is_action(
                 action_filter, line["action"], exact_action
             ):
                 logs.append(line)
