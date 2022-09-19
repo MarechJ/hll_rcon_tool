@@ -61,7 +61,7 @@ def get_historical_logs(request):
         [
             "event_time",
             "type",
-            "player1_name",
+            "player_name",
             "player1_id",
             "player2_name",
             "player2_id",
