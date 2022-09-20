@@ -60,7 +60,7 @@ class Logs extends React.Component {
       players: [],
       playersFilter: [],
       actionsFilter: [],
-      inclusiveFilter: { label: "Inclusive", value: true },
+      inclusiveFilter: true,
       limit: localStorage.getItem("logs_limit")
         ? localStorage.getItem("logs_limit")
         : 500,
@@ -94,7 +94,7 @@ class Logs extends React.Component {
     const { actionsFilter, playersFilter, limit, inclusiveFilter } = this.state;
 
 
-    return postData(`${process.env.REACT_APP_API_URL}get_recent_logs`, { end: limit, filter_action: actionsFilter, filter_player: playersFilter, inclusive_filter: inclusiveFilter.value })
+    return postData(`${process.env.REACT_APP_API_URL}get_recent_logs`, { end: limit, filter_action: actionsFilter, filter_player: playersFilter, inclusive_filter: inclusiveFilter })
       .then((response) => showResponse(response, "get_logs"))
       .then((data) => {
         this.setState({
