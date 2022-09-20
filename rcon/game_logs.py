@@ -294,7 +294,7 @@ def is_player(search_str, player, exact_match=False):
     return False
 
 
-def is_action(action_filter, action, exact_match=False, actions_filter_in=True):
+def is_action(action_filter, action, exact_match=False):
     """Test whether the passed in log line `action` is in `action_filter`."""
     if not action_filter or not action:
         return None
