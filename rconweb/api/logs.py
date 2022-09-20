@@ -100,7 +100,7 @@ def get_recent_logs(request):
             end=end,
             filter_player=player_search,
             filter_action=action_filter,
-            actions_filter_in=inclusive_filter,
+            inclusive_filter=inclusive_filter,
         ),
         failed=False,
     )
