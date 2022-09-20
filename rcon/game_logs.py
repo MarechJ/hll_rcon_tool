@@ -364,6 +364,9 @@ def get_recent_logs(
                     ):
                         logs.append(line)
                         break
+                    # Handle action_filter being empty
+                    elif not action_filter:
+                        logs.append(line)
         elif action_filter:
             # Filter out anything that isn't in action_filter
             if inclusive_filter and is_action(
