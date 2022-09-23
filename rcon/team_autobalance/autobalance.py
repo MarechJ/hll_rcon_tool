@@ -4,9 +4,10 @@ import logging
 import pickle
 import random
 from datetime import datetime
-from typing import Iterable, List, Tuple, Optional, NewType, Dict, Any
+from typing import Any, Dict, Iterable, List, NewType, Optional, Tuple
 
 import redis
+
 from rcon.cache_utils import get_redis_client
 from rcon.commands import HLLServerError
 from rcon.config import get_config
