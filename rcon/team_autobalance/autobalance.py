@@ -4,10 +4,11 @@ import logging
 import pickle
 import random
 from datetime import datetime
-from typing import Any, Dict, Iterable, List, NewType, Optional, Tuple
+from typing import Iterable, List, Optional, Tuple
 
 import redis
 
+import rcon.team_autobalance.constants as constants
 from rcon.cache_utils import get_redis_client
 from rcon.commands import HLLServerError
 from rcon.config import get_config
@@ -15,69 +16,7 @@ from rcon.discord import send_to_discord_audit
 from rcon.player_history import get_player_profile
 from rcon.recorded_commands import RecordedRcon
 from rcon.settings import SERVER_INFO
-from rcon.team_autobalance.models import AutoBalanceConfig
-
-DetailedPlayerInfo = NewType("DetailedPlayerInfo", Dict[str, Any])
-"""
-        rcon.extended_commands.get_detailed_player_info()
-        
-        Name: T17 Scott
-        steamID64: 01234567890123456
-        Team: Allies            # "None" when not in team
-        Role: Officer           
-        Unit: 0 - Able          # Absent when not in unit
-        Loadout: NCO            # Absent when not in team
-        Kills: 0 - Deaths: 0
-        Score: C 50, O 0, D 40, S 10
-        Level: 34
-
-        """
-
-
-# TODO: Move these to some shared constants file
-AXIS_TEAM = "axis"
-ALLIED_TEAM = "allies"
-
-EMPTY_TEAM = "none"
-
-AUTOBALANCE_CONFIG_KEY = "TEAM_AUTOBALANCE"
-
-# TODO: put all these error messages in one container
-INVALID_CONFIG_ERROR_MSG = (
-    f"Invalid {AUTOBALANCE_CONFIG_KEY} check your config/config.yml"
-)
-INVALID_ROLE_ERROR_MSG = "{0} is not a valid role."
-INVALID_BALANCE_METHOD_ERROR_MSG = "{0} is not a valid rebalance method."
-PLAYER_NOT_FOUND_ERROR_MSG = "{0} was not found."
-STEAM_ID_64_NOT_FOUND_ERROR_MSG = "{0} was not found."
-NO_PLAYER_OR_STEAM_ID_64_ERROR_MSG = "Failed to provide a player name or steam_id_64"
-AUTOBALANCE_DISABLED_MSG = "Team auto-balancing is disabled."
-NOT_SWAPPED_TOO_RECENT_ERROR_MSG = "player was swapped {0} seconds ago"
-NOT_SWAPPED_IMMUNE_LEVEL_ERROR_MSG = "player level {0} is below immune level of {1}"
-NOT_SWAPPED_IMMUNE_ROLE_ERROR_MSG = "player is playing an immune role {0}"
-NOT_SWAPPED_SWAPPED_RECENTLY_ERROR_MSG = (
-    "player was swapped too recently {0} seconds ago, configured limit is {1} seconds."
-)
-
-TEAM_NAME_NOT_FOUND_ERROR_MSG = "{0} was not a valid team name."
-VALID_ROLES = (
-    "armycommander",
-    "tankcommander",
-    "crewman",
-    "spotter",
-    "sniper",
-    "officer",
-    "rifleman",
-    "assault",
-    "automaticrifleman",
-    "medic",
-    "support",
-    "heavymachinegunner",
-    "antitank",
-    "engineer",
-)
-VALID_TEAMS = (AXIS_TEAM, ALLIED_TEAM)
-
+from rcon.team_autobalance.models import AutoBalanceConfig, DetailedPlayerInfo
 
 logger = logging.getLogger(__name__)
 
@@ -93,7 +32,7 @@ def get_player_name_by_steam_id_64(
     try:
         player_name = [name for name, _id in players if _id == steam_id_64][0]
     except IndexError:
-        logger.exception(STEAM_ID_64_NOT_FOUND_ERROR_MSG.format(steam_id_64))
+        logger.exception(constants.STEAM_ID_64_NOT_FOUND_ERROR_MSG.format(steam_id_64))
 
     return player_name
 
@@ -173,10 +112,10 @@ def get_last_autobalance_timestamp(redis_store: redis.StrictRedis) -> datetime:
     return last_swap
 
 
-def is_valid_role(role: str, valid_roles=VALID_ROLES) -> bool:
+def is_valid_role(role: str, valid_roles=constants.VALID_ROLES) -> bool:
     """This should never fail, including it as a sanity check."""
     if role not in valid_roles:
-        logger.error(INVALID_ROLE_ERROR_MSG.format(role))
+        logger.error(constants.INVALID_ROLE_ERROR_MSG.format(role))
         return False
 
     return True
@@ -193,7 +132,7 @@ def get_player_role(
 
     if not player_name and not steam_id_64:
         # Failed to provide a player name or steam_id_64
-        logger.error(NO_PLAYER_OR_STEAM_ID_64_ERROR_MSG.format(player_name))
+        logger.error(constants.NO_PLAYER_OR_STEAM_ID_64_ERROR_MSG.format(player_name))
 
     if steam_id_64:
         player_name = get_player_name_by_steam_id_64(rcon_hook, steam_id_64)
@@ -205,7 +144,7 @@ def get_player_role(
         player_found = True
         player_role = detailed_player["role"]
     except HLLServerError:
-        logger.exception(PLAYER_NOT_FOUND_ERROR_MSG.format(player_name))
+        logger.exception(constants.PLAYER_NOT_FOUND_ERROR_MSG.format(player_name))
 
     if player_found:
         return player_role
@@ -249,19 +188,21 @@ def is_player_swappable(
 
     if role in immune_roles:
         is_swappable = False
-        not_swapped_reasons.append(NOT_SWAPPED_IMMUNE_ROLE_ERROR_MSG.format(role))
+        not_swapped_reasons.append(
+            constants.NOT_SWAPPED_IMMUNE_ROLE_ERROR_MSG.format(role)
+        )
 
     if level < immune_level:
         is_swappable = False
         not_swapped_reasons.append(
-            NOT_SWAPPED_IMMUNE_LEVEL_ERROR_MSG.format(level, immune_level)
+            constants.NOT_SWAPPED_IMMUNE_LEVEL_ERROR_MSG.format(level, immune_level)
         )
 
     seconds_since_last_swap = int((datetime.now() - last_swap).total_seconds())
     if seconds_since_last_swap < time_between_swaps_threshold:
         is_swappable = False
         not_swapped_reasons.append(
-            NOT_SWAPPED_SWAPPED_RECENTLY_ERROR_MSG.format(
+            constants.NOT_SWAPPED_SWAPPED_RECENTLY_ERROR_MSG.format(
                 seconds_since_last_swap, time_between_swaps_threshold
             )
         )
@@ -294,12 +235,12 @@ def is_min_player_count_exceeded(
     team_view, min_count: int = 0, include_teamless_players: bool = False
 ) -> bool:
     """Return the total number of players on both teams, plus teamless players if chosen."""
-    total = get_team_player_count(team_view, AXIS_TEAM) + get_team_player_count(
-        team_view, ALLIED_TEAM
-    )
+    total = get_team_player_count(
+        team_view, constants.AXIS_TEAM
+    ) + get_team_player_count(team_view, constants.ALLIED_TEAM)
 
     if include_teamless_players:
-        total += get_team_player_count(team_view, EMPTY_TEAM)
+        total += get_team_player_count(team_view, constants.EMPTY_TEAM)
 
     return total > min_count
 
@@ -321,8 +262,8 @@ def is_team_player_delta_exceeded(team_view, threshold: int = 0) -> bool:
     """Test if the player number difference between teams exceeds (not inclusive) the given threshold."""
 
     # Shouldn't need to use .get() here, I don't think this can ever fail
-    axis_team_count = get_team_player_count(team_view, AXIS_TEAM)
-    allied_team_count = get_team_player_count(team_view, ALLIED_TEAM)
+    axis_team_count = get_team_player_count(team_view, constants.AXIS_TEAM)
+    allied_team_count = get_team_player_count(team_view, constants.ALLIED_TEAM)
 
     delta = abs(axis_team_count - allied_team_count)
 
@@ -331,13 +272,13 @@ def is_team_player_delta_exceeded(team_view, threshold: int = 0) -> bool:
 
 def find_larger_team_name(team_view) -> str:
     """Return the team name of the team that has more players (axis if tied)."""
-    axis_player_count = get_team_player_count(team_view, AXIS_TEAM)
-    allied_player_count = get_team_player_count(team_view, ALLIED_TEAM)
+    axis_player_count = get_team_player_count(team_view, constants.AXIS_TEAM)
+    allied_player_count = get_team_player_count(team_view, constants.ALLIED_TEAM)
 
     if axis_player_count >= allied_player_count:
-        return AXIS_TEAM
+        return constants.AXIS_TEAM
     else:
-        return ALLIED_TEAM
+        return constants.ALLIED_TEAM
 
 
 def get_players_on_team(
@@ -416,9 +357,9 @@ def autobalance_teams(rcon_hook: RecordedRcon):
     """Verify if criteria for autobalancing has been met and then swap players."""
     try:
         config = get_config()
-        config = AutoBalanceConfig(**config[AUTOBALANCE_CONFIG_KEY])
+        config = AutoBalanceConfig(**config[constants.AUTOBALANCE_CONFIG_KEY])
     except Exception:
-        logger.exception(INVALID_CONFIG_ERROR_MSG)
+        logger.exception(constants.INVALID_CONFIG_ERROR_MSG)
         raise
 
     redis_store = get_redis_client()
@@ -472,7 +413,11 @@ def autobalance_teams(rcon_hook: RecordedRcon):
         set_last_autobalance_timestamp(redis_store)
 
         larger_team_name = find_larger_team_name(team_view)
-        smaller_team_name = ALLIED_TEAM if larger_team_name == AXIS_TEAM else AXIS_TEAM
+        smaller_team_name = (
+            constants.ALLIED_TEAM
+            if larger_team_name == constants.AXIS_TEAM
+            else constants.AXIS_TEAM
+        )
 
         larger_team_players = get_players_on_team(rcon_hook, larger_team_name)
         swappable_players = [
@@ -517,10 +462,14 @@ def autobalance_teams(rcon_hook: RecordedRcon):
         else:
             # Should never happen unless config.yml is wrong
             logger.warning(
-                INVALID_BALANCE_METHOD_ERROR_MSG.format(config.auto_rebalance_method)
+                constants.INVALID_BALANCE_METHOD_ERROR_MSG.format(
+                    config.auto_rebalance_method
+                )
             )
             raise ValueError(
-                INVALID_BALANCE_METHOD_ERROR_MSG.format(config.auto_rebalance_method)
+                constants.INVALID_BALANCE_METHOD_ERROR_MSG.format(
+                    config.auto_rebalance_method
+                )
             )
 
         # Perform a swap action on each selected player
