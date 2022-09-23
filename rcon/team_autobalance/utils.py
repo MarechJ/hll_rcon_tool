@@ -1,5 +1,9 @@
 import logging
+import pickle
+from datetime import datetime
 from typing import Optional, List
+
+import redis
 
 from rcon.recorded_commands import RecordedRcon
 import rcon.team_autobalance.constants as constants
@@ -102,3 +106,55 @@ def get_players_on_team(
             team_players.append(player)
 
     return team_players
+
+
+# Force the steam_id_64 to be keyword only to prevent player name/steam ID confusion when calling
+def set_player_swap_timestamp(
+    redis_store: redis.StrictRedis,
+    time_stamp: Optional[datetime] = None,
+    *,
+    steam_id_64: str,
+    swap: str,
+) -> None:
+    """Set the given player's last autobalance swap time to the given time_stamp or current time by default."""
+    if swap not in constants.SWAP_TYPES:
+        raise ValueError(f"Invalid swap type for redis key {swap}")
+
+    redis_key = f"player_balance_timestamp:{swap}:{steam_id_64}"
+    # TODO: Standardize on whatever timezone method RCON uses
+    time_stamp = time_stamp or datetime.now()
+
+    # TODO: check for failed sets
+    redis_store.set(redis_key, pickle.dumps(time_stamp))
+
+
+# Force the steam_id_64 to be keyword only to prevent player name/steam ID confusion when calling
+def get_player_last_swap_timestamp(
+    redis_store: redis.StrictRedis, *, steam_id_64: str, swap: str
+) -> datetime:
+    """Track persistent state for the last time a player was swapped by steam_id_64."""
+    # Blatantly ripped off from squad_automod.watch_state
+    if swap not in constants.SWAP_TYPES:
+        raise ValueError(f"Invalid swap type for redis key {swap}")
+
+    # TODO: Change this to a redis hash or something so we don't pollute the store with a ton of key/value pairs
+    redis_key = f"player_balance_timestamp{swap}:{steam_id_64}"
+
+    # Use January 1st of year 1 as a sentinel date if this player hasn't been swapped before
+    impossibly_old_datetime = datetime(1, 1, 1)
+
+    # TODO: check for failed gets
+    last_swap = redis_store.get(redis_key)
+    if last_swap:
+        last_swap = pickle.loads(last_swap)
+    else:
+        # Haven't seen this player before, store the sentinel value
+        set_player_swap_timestamp(
+            redis_store,
+            time_stamp=impossibly_old_datetime,
+            steam_id_64=steam_id_64,
+            swap=swap,
+        )
+        last_swap = impossibly_old_datetime
+
+    return last_swap

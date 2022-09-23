@@ -6,6 +6,10 @@ EMPTY_TEAM = "none"
 
 AUTOBALANCE_CONFIG_KEY = "TEAM_AUTOBALANCE"
 
+SWAP_TYPE_BALANCE = "balance"
+SWAP_TYPE_SHUFFLE = "shuffle"
+SWAP_TYPES = (SWAP_TYPE_SHUFFLE, SWAP_TYPE_BALANCE)
+
 # TODO: put all these error messages in one container
 INVALID_CONFIG_ERROR_MSG = (
     f"Invalid {AUTOBALANCE_CONFIG_KEY} check your config/config.yml"
