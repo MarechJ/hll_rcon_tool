@@ -16,8 +16,11 @@ from rcon.config import get_config
 from rcon.discord import send_to_discord_audit
 from rcon.extended_commands import LOG_ACTIONS, Rcon
 from rcon.models import LogLine, PlayerName, PlayerSteamID, enter_session
-from rcon.player_history import (add_player_to_blacklist, get_player_profile,
-                                 player_has_flag)
+from rcon.player_history import (
+    add_player_to_blacklist,
+    get_player_profile,
+    player_has_flag,
+)
 from rcon.recorded_commands import RecordedRcon
 from rcon.settings import SERVER_INFO
 from rcon.utils import FixedLenList
@@ -36,7 +39,7 @@ HOOKS = {
     "TK": [],
     "MATCH": [],
     "MATCH START": [],
-    "MATCH ENDED": []
+    "MATCH ENDED": [],
 }
 
 
@@ -54,13 +57,16 @@ def on_chat(func):
     HOOKS["CHAT"].append(func)
     return func
 
+
 def on_camera(func):
     HOOKS["CAMERA"].append(func)
     return func
 
+
 def on_chat_axis(func):
     HOOKS["CHAT[Axis]"].append(func)
     return func
+
 
 def on_chat_allies(func):
     HOOKS["CHAT[Allies]"].append(func)
@@ -289,6 +295,7 @@ def is_player(search_str, player, exact_match=False):
 
 
 def is_action(action_filter, action, exact_match=False):
+    """Test whether the passed in log line `action` is in `action_filter`."""
     if not action_filter or not action:
         return None
     if not isinstance(action_filter, list):
@@ -312,46 +319,72 @@ def get_recent_logs(
     min_timestamp=None,
     exact_player_match=False,
     exact_action=False,
+    inclusive_filter=True,
 ):
+    # The default behavior is to only show log lines with actions in `actions_filter`
+    # inclusive_filter=True retains this default behavior
+    # inclusive_filter=False will do the opposite, show all lines except what is passed in
+    # `actions_filter`
     log_list = LogLoop.get_log_history_list()
     all_logs = log_list
     if start != 0:
         all_logs = log_list[start : min(end, len(log_list))]
     logs = []
     all_players = set()
-    actions = set(
-        LOG_ACTIONS
-    )
+    actions = set(LOG_ACTIONS)
     if player_search and not isinstance(player_search, list):
         player_search = [player_search]
     # flatten that shit
-    for idx, l in enumerate(all_logs):
+    for idx, line in enumerate(all_logs):
         if idx >= end - start:
             break
-        if not isinstance(l, dict):
+        if not isinstance(line, dict):
             continue
-        if min_timestamp and l["timestamp_ms"] / 1000 < min_timestamp:
+        if min_timestamp and line["timestamp_ms"] / 1000 < min_timestamp:
             logger.debug("Stopping log read due to old timestamp at index %s", idx)
             break
         if player_search:
             for player_name_search in player_search:
-                if is_player(player_name_search, l["player"], exact_player_match) or is_player(
-                    player_name_search, l["player2"], exact_player_match
-                ):
-                    
-                    if action_filter and not is_action(action_filter, l["action"], exact_action):
-                        continue
-                    logs.append(l)
-                    break
-        elif action_filter and is_action(action_filter, l["action"], exact_action):
-            logs.append(l)
+                if is_player(
+                    player_name_search, line["player"], exact_player_match
+                ) or is_player(player_name_search, line["player2"], exact_player_match):
+                    # Filter out anything that isn't in action_filter
+                    if (
+                        action_filter
+                        and inclusive_filter
+                        and is_action(action_filter, line["action"], exact_action)
+                    ):
+                        logs.append(line)
+                        break
+                    # Filter out any action in action_filter
+                    elif (
+                        action_filter
+                        and not inclusive_filter
+                        and not is_action(action_filter, line["action"], exact_action)
+                    ):
+                        logs.append(line)
+                        break
+                    # Handle action_filter being empty
+                    elif not action_filter:
+                        logs.append(line)
+        elif action_filter:
+            # Filter out anything that isn't in action_filter
+            if inclusive_filter and is_action(
+                action_filter, line["action"], exact_action
+            ):
+                logs.append(line)
+            # Filter out any action in action_filter
+            elif not inclusive_filter and not is_action(
+                action_filter, line["action"], exact_action
+            ):
+                logs.append(line)
         elif not player_search and not action_filter:
-            logs.append(l)
-        if p1 := l["player"]:
+            logs.append(line)
+        if p1 := line["player"]:
             all_players.add(p1)
-        if p2 := l["player2"]:
+        if p2 := line["player2"]:
             all_players.add(p2)
-        actions.add(l["action"])
+        actions.add(line["action"])
 
     return {
         "actions": list(actions),
@@ -455,10 +488,12 @@ def auto_ban_if_tks_right_after_connection(rcon: RecordedRcon, log):
                     datetime.datetime.fromtimestamp(log["timestamp_ms"]),
                 )
                 continue
-            
+
             tk_counter += 1
             if tk_counter > tk_tolerance_count:
-                logger.info("Banning player %s for TEAMKILL after connect %s", player_name, log)
+                logger.info(
+                    "Banning player %s for TEAMKILL after connect %s", player_name, log
+                )
                 try:
                     rcon.do_perma_ban(
                         player=player_name,
@@ -468,8 +503,14 @@ def auto_ban_if_tks_right_after_connection(rcon: RecordedRcon, log):
                 except:
                     logger.exception("Can't perma, trying blacklist")
                     add_player_to_blacklist(player_steam_id, reason, by=author)
-                logger.info("Banned player %s for TEAMKILL after connect %s", player_name, log)
-                send_to_discord_audit(discord_msg.format(player=player_name), by=author, webhookurl=webhook)
+                logger.info(
+                    "Banned player %s for TEAMKILL after connect %s", player_name, log
+                )
+                send_to_discord_audit(
+                    discord_msg.format(player=player_name),
+                    by=author,
+                    webhookurl=webhook,
+                )
         elif is_player_death(player_name, log):
             death_counter += 1
             if death_counter >= ignore_after_death:
@@ -565,7 +606,7 @@ def get_historical_logs(
     exact_player_match=False,
     exact_action=True,
     server_filter=None,
-    output=None
+    output=None,
 ):
     with enter_session() as sess:
         res = get_historical_logs_records(
