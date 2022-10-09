@@ -60,6 +60,7 @@ class Logs extends React.Component {
       players: [],
       playersFilter: [],
       actionsFilter: [],
+      inclusiveFilter: true,
       limit: localStorage.getItem("logs_limit")
         ? localStorage.getItem("logs_limit")
         : 500,
@@ -79,6 +80,7 @@ class Logs extends React.Component {
 
     this.loadLogs = this.loadLogs.bind(this);
     this.setActionFilter = this.setActionFilter.bind(this);
+    this.setActionsFilterInclusivity = this.setActionsFilterInclusivity.bind(this);
     this.setLimit = this.setLimit.bind(this);
   }
 
@@ -89,10 +91,10 @@ class Logs extends React.Component {
   }
 
   loadLogs() {
-    const { actionsFilter, playersFilter, limit } = this.state;
+    const { actionsFilter, playersFilter, limit, inclusiveFilter } = this.state;
 
 
-    return postData(`${process.env.REACT_APP_API_URL}get_recent_logs`, {end: limit, filter_action: actionsFilter, filter_player: playersFilter})
+    return postData(`${process.env.REACT_APP_API_URL}get_recent_logs`, { end: limit, filter_action: actionsFilter, filter_player: playersFilter, inclusive_filter: inclusiveFilter })
       .then((response) => showResponse(response, "get_logs"))
       .then((data) => {
         this.setState({
@@ -107,6 +109,10 @@ class Logs extends React.Component {
   setActionFilter(actionsFilter) {
     this.setState({ actionsFilter }, this.loadLogs);
     localStorage.setItem("logs_actions", actionsFilter);
+  }
+
+  setActionsFilterInclusivity(e) {
+    this.setState({ inclusiveFilter: e.target.value }, this.loadLogs);
   }
 
   setLimit(limit) {
@@ -141,12 +147,12 @@ class Logs extends React.Component {
               execEveryMs={30000}
               statusRefreshIntervalMs={500}
               classes={classes}
-              
+
             />
           </Grid>
         </Grid>
         <Grid container justify="space-around" className={classes.marginBottom}>
-          <Grid className={classes.padding} item xs={12} sm={12} md={12} lg={3}>
+          <Grid className={classes.padding} item xs={12} sm={12} md={12} lg={2}>
             <Selector
               classes={classes}
               values={limitOptions}
@@ -155,9 +161,17 @@ class Logs extends React.Component {
               kind="Show last N lines"
             />
           </Grid>
+          <Grid className={classes.padding} item xs={12} sm={12} md={12} lg={2}>
+            <FormControl fullWidth>
+              <InputLabel shrink>Inclusive/Exclusive</InputLabel>
+              <Select onChange={this.setActionsFilterInclusivity} defaultValue={true}>
+                <MenuItem value={true}>Inclusive</MenuItem>
+                <MenuItem value={false}>Exclusive</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
           <Grid className={classes.padding} item xs={12} sm={12} md={12} lg={3}>
-           
-             <Autocomplete
+            <Autocomplete
               id="tags-outlined"
               multiple
               options={actions}
@@ -175,6 +189,7 @@ class Logs extends React.Component {
                 />
               )}
             />
+
           </Grid>
           <Grid className={classes.padding} item xs={12} sm={12} md={12} lg={4}>
             <Autocomplete
@@ -199,7 +214,7 @@ class Logs extends React.Component {
               )}
             />
           </Grid>
-          <Grid className={classes.padding} item xs={12} sm={12} md={12} lg={2}>
+          <Grid className={classes.padding} item xs={12} sm={12} md={12} lg={1}>
             <Button
               className={classes.logsControl}
               disableElevation
@@ -207,7 +222,7 @@ class Logs extends React.Component {
               variant="outlined"
               onClick={this.loadLogs}
             >
-              Refresh <RefreshIcon />
+              <RefreshIcon />
             </Button>
           </Grid>
         </Grid>
