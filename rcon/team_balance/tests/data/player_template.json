@@ -1,0 +1,56 @@
+{
+  "name": "NoodleArms",
+  "steam_id_64": "76561198004895814",
+  "country": null,
+  "steam_bans": null,
+  "unit_id": 0,
+  "unit_name": null,
+  "loadout": null,
+  "team": "none",
+  "role": "rifleman",
+  "kills": 0,
+  "deaths": 0,
+  "combat": 0,
+  "offense": 0,
+  "defense": 0,
+  "support": 0,
+  "level": 227,
+  "profile": {
+    "id": 2,
+    "steam_id_64": "76561198004895814",
+    "created": "2022-07-19T11:08:48.182",
+    "names": [
+      {
+        "id": 2,
+        "name": "NoodleArms",
+        "steam_id_64": "76561198004895814",
+        "created": "2022-07-19T11:08:48.188",
+        "last_seen": "2022-09-30T18:07:52"
+      }
+    ],
+    "sessions": [
+      {
+        "id": 113,
+        "steam_id_64": "76561198004895814",
+        "start": "2022-09-30T18:07:52",
+        "end": null,
+        "created": "2022-09-30T18:08:48.414"
+      }
+    ],
+    "sessions_count": 18,
+    "total_playtime_seconds": 22991,
+    "current_playtime_seconds": 89,
+    "received_actions": [],
+    "penalty_count": {
+      "PERMABAN": 0,
+      "PUNISH": 0,
+      "KICK": 0,
+      "TEMPBAN": 0
+    },
+    "blacklist": null,
+    "flags": [],
+    "watchlist": null,
+    "steaminfo": null
+  },
+  "is_vip": true
+}

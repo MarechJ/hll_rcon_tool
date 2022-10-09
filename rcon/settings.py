@@ -43,6 +43,18 @@ LOGGING = {
                 os.getenv("LOGGING_FILENAME", f"{socket.gethostname()}.log"),
             ),
         },
+        "team_balance_file": {
+            "level": "DEBUG",
+            "formatter": "console",
+            "class": "logging.FileHandler",
+            "filename": os.path.join(
+                os.getenv("LOGGING_PATH", "./logs"),
+                os.getenv(
+                    "LOGGING_FILENAME",
+                    f"team_balance_{os.getenv('ENV_SERVER_NUMBER', '')}.log",
+                ),
+            ),
+        },
     },
     "loggers": {
         __package__: {
@@ -63,7 +75,13 @@ LOGGING = {
             "handlers": ["console", "file"],
             "level": os.getenv("LOGGING_LEVEL", "DEBUG"),
             "propagate": False,
-        }
+        },
+        "rcon.team_balance": {
+            "handlers": ["console", "team_balance_file"],
+            "level": os.getenv("LOGGING_LEVEL", "DEBUG"),
+            "filename": "rcon.team_balance",
+            "propagate": False,
+        },
     },
 }
 

@@ -1,0 +1,13 @@
+{
+  "none": {
+    "squads": {},
+    "commander": null,
+    "combat": 0,
+    "offense": 0,
+    "defense": 0,
+    "support": 0,
+    "kills": 0,
+    "deaths": 0,
+    "count": 1
+  }
+}

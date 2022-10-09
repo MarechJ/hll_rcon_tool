@@ -1,0 +1,11 @@
+"null": {
+    "players": [{}],
+    "type": "infantry",
+    "has_leader": false,
+    "combat": 0,
+    "offense": 0,
+    "defense": 0,
+    "support": 0,
+    "kills": 0,
+    "deaths": 0
+  }
