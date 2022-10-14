@@ -47,7 +47,7 @@ You can stop reading here if you don't care how I plan on actually implementing 
 
 1. Add a new table `player_vip` with the following fields/types.
     1. `id` - `integer` - `primary key` 
-    2. `steam_id_64` - `character varying` - `foreign key` to table `steam_id_64`
+    2. `id` - `inter` - `foreign key` to table `steam_id_64.id`
     3. `expiration` - `timestamp with timezone`
 
 The Postgres [timestamp with timezone type](https://www.postgresql.org/docs/9.1/datatype-datetime.html) stores a date and time with time zone information and has much more precision (1 microsecond) than required. It also includes a handy shortcut `infinity` that is treated as `later than all other time stamps` which we can use for VIPs that don't expire without needing special comparison logic or nulled fields.
