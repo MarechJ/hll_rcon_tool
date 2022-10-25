@@ -1,5 +1,12 @@
 import React from "react";
-import {Button, Checkbox, FormControlLabel, Grid, Popover, Tooltip} from "@material-ui/core";
+import {
+  Button,
+  Checkbox,
+  FormControlLabel,
+  Grid,
+  Popover,
+  Tooltip,
+} from "@material-ui/core";
 import Chip from "@material-ui/core/Chip";
 import Autocomplete from "@material-ui/lab/Autocomplete";
 import TextField from "@material-ui/core/TextField";
@@ -130,6 +137,20 @@ export const ForwardCheckBox = ({ bool, onChange }) => (
       />
     }
     label="Forward to all servers"
+  />
+);
+
+export const ExpiringVIPCheckBox = ({ bool, onChange }) => (
+  <FormControlLabel
+    control={
+      <Checkbox
+        checked={bool}
+        onChange={(e) => {
+          onChange(e.target.checked);
+        }}
+      />
+    }
+    label="Include Expiration Dates"
   />
 );
 
