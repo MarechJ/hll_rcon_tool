@@ -1,0 +1,151 @@
+import React, { useEffect, useState } from "react";
+import {
+  Button,
+  ButtonGroup,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Grid,
+} from "@material-ui/core";
+
+import { DateTimePicker, MuiPickersUtilsProvider } from "@material-ui/pickers";
+import MomentUtils from "@date-io/moment";
+import moment from "moment";
+
+export function VipExpirationDialog(props) {
+  const {
+    open,
+    vips,
+    onDeleteVip,
+    handleClose,
+    handleConfirm,
+    SummaryRenderer,
+  } = props;
+  const [expirationTimestamp, setExpirationTimestamp] = useState();
+  const [isVip, setIsVip] = useState();
+
+  /* open is either a boolean or the passed in player Map */
+  useEffect(() => {
+    if (!(typeof open === "boolean")) {
+      if (open && open.get("vip_expiration")) {
+        setExpirationTimestamp(open.get("vip_expiration"));
+        console.log(`isVip = ${vips.get(open.get("steam_id_64"))}`);
+        setIsVip(vips.get(open.get("steam_id_64")) ? true : false);
+      }
+    }
+  }, [open]);
+
+  const adjustTimestamp = (amount, unit) =>
+    setExpirationTimestamp(
+      moment(expirationTimestamp).add(amount, unit).format()
+    );
+
+  return (
+    <Dialog open={open} aria-labelledby="form-dialog-title">
+      <DialogTitle id="form-dialog-title">
+        Add / Remove / Update VIP Expiration Date
+      </DialogTitle>
+      <DialogContent>
+        <SummaryRenderer player={open} isVip={isVip} />
+        <Grid container>
+          <Grid item xs={12}>
+            <ButtonGroup variant="contained">
+              <Button
+                type="primary"
+                onClick={() => adjustTimestamp(30, "days")}
+              >
+                + 30 Days
+              </Button>
+              <Button
+                type="primary"
+                onClick={() => adjustTimestamp(-30, "days")}
+              >
+                - 30 Days
+              </Button>
+            </ButtonGroup>
+          </Grid>
+          <Grid item xs={12}>
+            <ButtonGroup variant="contained">
+              <Button
+                type="primary"
+                onClick={() => adjustTimestamp(60, "days")}
+              >
+                + 60 Days
+              </Button>
+              <Button
+                type="primary"
+                onClick={() => adjustTimestamp(-60, "days")}
+              >
+                - 60 Days
+              </Button>
+            </ButtonGroup>
+          </Grid>
+          <Grid item xs={12}>
+            <ButtonGroup variant="contained">
+              <Button
+                type="primary"
+                onClick={() => adjustTimestamp(90, "days")}
+              >
+                + 90 Days
+              </Button>
+              <Button
+                type="primary"
+                onClick={() => adjustTimestamp(-90, "days")}
+              >
+                - 90 Days
+              </Button>
+            </ButtonGroup>
+          </Grid>
+          <Grid item xs={12}>
+            <MuiPickersUtilsProvider utils={MomentUtils}>
+              <DateTimePicker
+                label="New VIP Expiration"
+                value={expirationTimestamp}
+                onChange={(value) => {
+                  setExpirationTimestamp(value.format());
+                }}
+                format="YYYY/MM/DD HH:mm"
+              />
+            </MuiPickersUtilsProvider>
+          </Grid>
+        </Grid>
+      </DialogContent>
+      <DialogActions>
+        <Button
+          onClick={() => {
+            handleConfirm(open, moment().add(200, "years").format());
+          }}
+          color="primary"
+        >
+          Indefinite VIP
+        </Button>
+        <Button
+          color="secondary"
+          onClick={() => {
+            onDeleteVip(open);
+            handleClose();
+          }}
+        >
+          Remove VIP
+        </Button>
+        <Button
+          color="primary"
+          onClick={() => {
+            handleClose();
+          }}
+        >
+          Cancel
+        </Button>
+        <Button
+          onClick={() => {
+            handleConfirm(open, expirationTimestamp);
+          }}
+          color="primary"
+        >
+          Confirm
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
