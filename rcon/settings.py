@@ -48,10 +48,10 @@ LOGGING = {
             "formatter": "console",
             "class": "logging.FileHandler",
             "filename": os.path.join(
-                os.getenv("LOGGING_PATH", "./logs"),
+                os.getenv("LOGGING_PATH", ""),
                 os.getenv(
                     "LOGGING_FILENAME",
-                    f"team_balance_{os.getenv('ENV_SERVER_NUMBER', '')}.log",
+                    f"team_balance_{os.getenv('SERVER_NUMBER', '')}.log",
                 ),
             ),
         },
