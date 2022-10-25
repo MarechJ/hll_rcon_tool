@@ -1,30 +1,25 @@
 import datetime
 import logging
 import os
-from re import escape
+from collections import defaultdict
+from typing import Dict, List
 
+from dateutil import parser, relativedelta
 from django import forms
-from django.forms.utils import ErrorList
 from django.http import HttpResponse
-from django.http.response import JsonResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
-
-from rcon import game_logs
 from rcon.commands import CommandFailedError
 from rcon.discord import dict_to_discord, send_to_discord_audit
-from rcon.models import LogLine, PlayerName, PlayerSteamID, enter_session
-from rcon.recorded_commands import RecordedRcon
-from rcon.settings import SERVER_INFO
-from rcon.steam_utils import get_steam_profile
+from rcon.models import PlayerSteamID, PlayerVIP, enter_session
 from rcon.user_config import RealVipConfig
-from rcon.utils import MapsHistory
 from rcon.workers import get_job_results, worker_bulk_vip
 
 from .auth import api_response, login_required
 from .views import _get_data, ctl
 
 logger = logging.getLogger("rconweb")
+
 
 class DocumentForm(forms.Form):
     docfile = forms.FileField(label="Select a file")
@@ -86,33 +81,51 @@ def async_upload_vips(request):
     # Handle file upload
     vips = []
     if request.method == "POST":
+        if request.POST["processExpiringVIPs"] == "true":
+            process_vip_expirations = True
+        else:
+            process_vip_expirations = False
+
         for name, data in request.FILES.items():
-            for l in data:
+            for line in data:
+                expiration_timestamp = None
                 try:
-                    l = l.decode()
-                    if not l:
+                    line = line.decode()
+                    if not line:
                         continue
-                    try:
-                        steam_id, name = l.split(" ", 1)
-                    except ValueError:
-                        steam_id, name = l.split("\t", 1)
+
+                    if process_vip_expirations:
+                        steam_id, *name_chunks, possible_timestamp = line.split(" ")
+                        # This will collapse whitespace that was originally in a player's name
+                        name = " ".join(name_chunks)
+                        try:
+                            expiration_timestamp = parser.parse(possible_timestamp)
+                        except:
+                            logger.warning(
+                                f"Unable to parse {possible_timestamp=} for {name=} {steam_id=}"
+                            )
+                    else:
+                        try:
+                            steam_id, name = line.split(" ", 1)
+                        except ValueError:
+                            steam_id, name = line.split("\t", 1)
 
                     if len(steam_id) != 17:
                         errors.append(
-                            f"{l} has an invalid steam id, expecter length of 17"
+                            f"{line} has an invalid steam id, expected length of 17"
                         )
                         continue
                     if not name:
                         errors.append(
-                            f"{l} doesn't have a name attached to the steamid"
+                            f"{line} doesn't have a name attached to the steamid"
                         )
                         continue
-                    vips.append((name, steam_id))
+                    vips.append((name, steam_id, expiration_timestamp))
                 except UnicodeDecodeError:
                     errors.append("File encoding is not supported. Must use UTF8")
                     break
                 except Exception as e:
-                    errors.append(f"Error on line {l} {repr(2)}")
+                    errors.append(f"Error on line {line} {repr(2)}")
     else:
         return api_response(error="Bad method", status_code=400)
 
@@ -145,11 +158,36 @@ def async_upload_vips_result(request):
 @csrf_exempt
 @login_required
 def download_vips(request):
+    if request.GET["processExpiringVIPs"] == "true":
+        process_vip_expirations = True
+    else:
+        process_vip_expirations = False
+
     vips = ctl.get_vip_ids()
+    vip_lines: List[str]
+
+    # Treating anyone without an explicit expiration date as having indefinite VIP access
+    expiration_lookup: Dict[str, datetime.datetime] = defaultdict(
+        lambda: datetime.datetime.utcnow() + relativedelta.relativedelta(years=200)
+    )
+    if process_vip_expirations:
+        with enter_session() as session:
+            players = session.query(PlayerSteamID).join(PlayerVIP).all()
+            for player in players:
+                expiration_lookup[player.steam_id_64] = player.vip.expiration
+
+        vip_lines = [
+            f"{vip['steam_id_64']} {vip['name']} {expiration_lookup[vip['steam_id_64']].isoformat()}"
+            for vip in vips
+        ]
+    else:
+        vip_lines = [f"{vip['steam_id_64']} {vip['name']}" for vip in vips]
+
     response = HttpResponse(
-        "\n".join([f"{vip['steam_id_64']} {vip['name']}" for vip in vips]),
+        "\n".join(vip_lines),
         content_type="text/plain",
     )
+
     response[
         "Content-Disposition"
     ] = f"attachment; filename={datetime.datetime.now().isoformat()}_vips.txt"
@@ -196,7 +234,9 @@ def set_real_vip_config(request):
         for k, v in data.items():
             if k in real_vip_config:
                 cast, setter = real_vip_config[k]
-                send_to_discord_audit(f"RealVIP set {dict_to_discord({k: v})}", request.user.username)
+                send_to_discord_audit(
+                    f"RealVIP set {dict_to_discord({k: v})}", request.user.username
+                )
                 setter(cast(v))
     except Exception as e:
         logger.exception("Failed to set realvip config")
