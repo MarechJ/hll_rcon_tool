@@ -21,7 +21,12 @@ def upgrade():
         "player_vip",
         sa.Column("id", sa.Integer, primary_key=True),
         sa.Column("expiration", sa.TIMESTAMP(timezone=True), nullable=False),
-        sa.Column("playersteamid_id", sa.Integer, sa.ForeignKey("steam_id_64.id")),
+        sa.Column(
+            "playersteamid_id",
+            sa.Integer,
+            sa.ForeignKey("steam_id_64.id"),
+            nullable=False,
+        ),
     )
 
 

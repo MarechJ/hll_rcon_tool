@@ -77,7 +77,12 @@ class PlayerSteamID(Base):
     steaminfo = relationship("SteamInfo", backref="steamid", uselist=False)
     comments = relationship("PlayerComment", back_populates="player")
     stats = relationship("PlayerStats", backref="steamid", uselist=False)
-    vip = relationship("PlayerVIP", backref="steamid", uselist=False)
+    vip = relationship(
+        "PlayerVIP",
+        back_populates="steamid",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
 
     def get_penalty_count(self):
         penalities_type = {"KICK", "PUNISH", "TEMPBAN", "PERMABAN"}
