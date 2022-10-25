@@ -320,3 +320,13 @@ SCOREBOT:
       - WHAT_IS_A_BREAK
       - SURVIVORS
       - U_R_STILL_A_MAN
+
+
+REMOVE_EXPIRED_VIPS:
+  # Set to true to automatically remove any expired VIPs
+  enabled: true
+  # The number of minutes between checking for expired VIPs
+  interval: 60
+  # Discord Webhook URL where audit logs should be sent. If not specified, the envrionment variable DISCORD_WEBHOOK_AUDIT_LOG
+  # will be used, instead.
+  discord_webhook_url: ''
