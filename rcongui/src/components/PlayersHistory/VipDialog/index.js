@@ -51,6 +51,19 @@ export function VipExpirationDialog(props) {
         <Grid container>
           <Grid item xs={12}>
             <ButtonGroup variant="contained">
+              <Button type="primary" onClick={() => adjustTimestamp(7, "days")}>
+                + 7 Days
+              </Button>
+              <Button
+                type="primary"
+                onClick={() => adjustTimestamp(-7, "days")}
+              >
+                - 7 Days
+              </Button>
+            </ButtonGroup>
+          </Grid>
+          <Grid item xs={12}>
+            <ButtonGroup variant="contained">
               <Button
                 type="primary"
                 onClick={() => adjustTimestamp(30, "days")}
@@ -106,6 +119,7 @@ export function VipExpirationDialog(props) {
                   setExpirationTimestamp(value.format());
                 }}
                 format="YYYY/MM/DD HH:mm"
+                maxDate={moment("2300-01-01")}
               />
             </MuiPickersUtilsProvider>
           </Grid>
@@ -123,6 +137,7 @@ export function VipExpirationDialog(props) {
         <Button
           color="secondary"
           onClick={() => {
+            setExpirationTimestamp(moment().format());
             onDeleteVip(open);
             handleClose();
           }}
