@@ -108,4 +108,4 @@ The team shuffle feature provides server admins some tools to shuffle teams that
 * Random Shuffle
    * Randomly shuffle the entire server, every player has an equal chance to be swapped to the opposite team.
 * By Player Level
-   * Players are sorted by their level and then distributed to whichever team has the lowest mean player level, or to the smaller team if team sizes are not equal.  **Please note** that player skill is not a super great judge of skill, or a good judge of who will build spawns and defend objectives.
+   * Players are sorted by their level and then distributed to whichever team has the lowest mean player level, or to the smaller team if team sizes are not equal.  **Please note** that player level is not a super great judge of skill, or a good judge of who will build spawns and defend objectives.
