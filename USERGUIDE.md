@@ -58,6 +58,8 @@ This is entirely optional, you can disable automatic removal, configure how ofte
 If you are upgrading from an older version of RCON you will have to add the `REMOVE_EXPIRED_VIPS` section from `default_config.yml` to your `config.yml`.
 
 If you want expired VIPs to automatically be removed **you have to** set `enabled: true` here.
+
+You can set whatever timeframe you want to check for and remove expiring VIPs, I'd suggest hourly or every several hours if you are very concerned about removing expired VIPs, for instance if you set it to once a day (1,440 minutes) and someones VIP expires one minute after the check, they would have it for an additional 24 hours.
 #### Service
 After updating `config.yml` you must also enable the `expiring_vips` service under `Manage services` in your RCON Settings.
 
