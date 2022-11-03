@@ -2,7 +2,7 @@ import logging
 import time
 from datetime import datetime
 from dateutil import relativedelta
-from typing import Optional
+from typing import Optional, List
 
 from pydantic import BaseModel, ValidationError, conint
 
@@ -27,7 +27,7 @@ def remove_expired_vips(rcon_hook: RecordedRcon, webhookurl: Optional[str] = Non
 
     count = 0
     with enter_session() as session:
-        expired_vips = (
+        expired_vips: List[PlayerVIP] = (
             session.query(PlayerVIP)
             .filter(PlayerVIP.expiration < datetime.utcnow())
             .all()
