@@ -47,70 +47,77 @@ export function VipExpirationDialog(props) {
         Add / Remove / Update VIP Expiration Date
       </DialogTitle>
       <DialogContent>
-        <SummaryRenderer player={open} isVip={isVip} />
-        <Grid container>
-          <Grid item xs={12}>
-            <ButtonGroup variant="contained">
-              <Button type="primary" onClick={() => adjustTimestamp(7, "days")}>
-                + 7 Days
-              </Button>
-              <Button
-                type="primary"
-                onClick={() => adjustTimestamp(-7, "days")}
-              >
-                - 7 Days
-              </Button>
-            </ButtonGroup>
+        <Grid container spacing={2}>
+          <Grid item>
+            <SummaryRenderer player={open} isVip={isVip} />
           </Grid>
-          <Grid item xs={12}>
-            <ButtonGroup variant="contained">
-              <Button
-                type="primary"
-                onClick={() => adjustTimestamp(30, "days")}
-              >
-                + 30 Days
-              </Button>
-              <Button
-                type="primary"
-                onClick={() => adjustTimestamp(-30, "days")}
-              >
-                - 30 Days
-              </Button>
-            </ButtonGroup>
+          <Grid item container spacing={2}>
+            <Grid item xs={12}>
+              <ButtonGroup variant="contained">
+                <Button
+                  type="primary"
+                  onClick={() => adjustTimestamp(7, "days")}
+                >
+                  + 7 Days
+                </Button>
+                <Button
+                  type="primary"
+                  onClick={() => adjustTimestamp(-7, "days")}
+                >
+                  - 7 Days
+                </Button>
+              </ButtonGroup>
+            </Grid>
+            <Grid item xs={12}>
+              <ButtonGroup variant="contained">
+                <Button
+                  type="primary"
+                  onClick={() => adjustTimestamp(30, "days")}
+                >
+                  + 30 Days
+                </Button>
+                <Button
+                  type="primary"
+                  onClick={() => adjustTimestamp(-30, "days")}
+                >
+                  - 30 Days
+                </Button>
+              </ButtonGroup>
+            </Grid>
+            <Grid item xs={12}>
+              <ButtonGroup variant="contained">
+                <Button
+                  type="primary"
+                  onClick={() => adjustTimestamp(60, "days")}
+                >
+                  + 60 Days
+                </Button>
+                <Button
+                  type="primary"
+                  onClick={() => adjustTimestamp(-60, "days")}
+                >
+                  - 60 Days
+                </Button>
+              </ButtonGroup>
+            </Grid>
+            <Grid item xs={12}>
+              <ButtonGroup variant="contained">
+                <Button
+                  type="primary"
+                  onClick={() => adjustTimestamp(90, "days")}
+                >
+                  + 90 Days
+                </Button>
+                <Button
+                  type="primary"
+                  onClick={() => adjustTimestamp(-90, "days")}
+                >
+                  - 90 Days
+                </Button>
+              </ButtonGroup>
+            </Grid>
           </Grid>
-          <Grid item xs={12}>
-            <ButtonGroup variant="contained">
-              <Button
-                type="primary"
-                onClick={() => adjustTimestamp(60, "days")}
-              >
-                + 60 Days
-              </Button>
-              <Button
-                type="primary"
-                onClick={() => adjustTimestamp(-60, "days")}
-              >
-                - 60 Days
-              </Button>
-            </ButtonGroup>
-          </Grid>
-          <Grid item xs={12}>
-            <ButtonGroup variant="contained">
-              <Button
-                type="primary"
-                onClick={() => adjustTimestamp(90, "days")}
-              >
-                + 90 Days
-              </Button>
-              <Button
-                type="primary"
-                onClick={() => adjustTimestamp(-90, "days")}
-              >
-                - 90 Days
-              </Button>
-            </ButtonGroup>
-          </Grid>
-          <Grid item xs={12}>
+          <Grid item>
             <MuiPickersUtilsProvider utils={MomentUtils}>
               <DateTimePicker
                 label="New VIP Expiration"
