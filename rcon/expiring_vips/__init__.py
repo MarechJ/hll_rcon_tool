@@ -66,8 +66,13 @@ def remove_expired_vips(rcon_hook: RecordedRcon, webhookurl: Optional[str] = Non
                 )
                 player.vip = vip_record
 
+                try:
+                    name = player.names[0].name
+                except:
+                    name = "No name found"
+
                 logger.info(
-                    f"Creating missing VIP expiration (indefinite) record for {player.name} / {player.steam_id_64}"
+                    f"Creating missing VIP expiration (indefinite) record for {name} / {player.steam_id_64}"
                 )
             else:
                 logger.info(
