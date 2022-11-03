@@ -95,9 +95,7 @@ const VipUpload = ({ classes }) => {
   const [processExpiringVIPs, setProcessExpiringVIPs] = React.useState(false);
 
   const getUrl = () => {
-    let url = new URL(`${process.env.REACT_APP_API_URL}download_vips`);
-    url.searchParams.set("processExpiringVIPs", processExpiringVIPs);
-    return url;
+    return `${process.env.REACT_APP_API_URL}download_vips?processExpiringVIPs=${processExpiringVIPs}`;
   };
 
   const changeHandler = (event) => {
