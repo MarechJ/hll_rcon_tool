@@ -164,11 +164,11 @@ class RecordedRcon(Rcon):
                         expiration=expiration_date, playersteamid_id=None
                     )
                     player.vip = vip_record
-                    print(f"Added new PlayerVIP record {expiration_date=}")
+                    logger.info(f"Added new PlayerVIP record {expiration_date=}")
                 else:
                     previous_expiration = player.vip.expiration.isoformat()
                     player.vip.expiration = expiration_date
-                    print(
+                    logger.info(
                         f"Created new PlayerVIP record {expiration_date=} {previous_expiration=}"
                     )
 
