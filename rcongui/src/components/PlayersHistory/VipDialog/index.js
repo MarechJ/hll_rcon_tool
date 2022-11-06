@@ -30,7 +30,6 @@ export function VipExpirationDialog(props) {
     if (!(typeof open === "boolean")) {
       if (open && open.get("vip_expiration")) {
         setExpirationTimestamp(open.get("vip_expiration"));
-        console.log(`isVip = ${vips.get(open.get("steam_id_64"))}`);
         setIsVip(vips.get(open.get("steam_id_64")) ? true : false);
       }
     }
@@ -161,7 +160,10 @@ export function VipExpirationDialog(props) {
         </Button>
         <Button
           onClick={() => {
-            handleConfirm(open, expirationTimestamp);
+            handleConfirm(
+              open,
+              moment.utc(expirationTimestamp).format("YYYY-MM-DD HH:MM:SSZ")
+            );
           }}
           color="primary"
         >
