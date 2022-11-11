@@ -57,8 +57,8 @@ def _auto_retry(method):
                 raise
             time.sleep(5)
             logger.exception("Auto retrying %s %s %s", method.__name__, args, kwargs)
-            
-            try: 
+
+            try:
                 return method(self, *args, **kwargs)
             except (HLLServerError, UnicodeDecodeError):
                 self._reconnect()
@@ -226,7 +226,7 @@ class ServerCtl:
 
     def _is_info_correct(self, player, raw_data):
         try:
-            lines = raw_data.split('\n')
+            lines = raw_data.split("\n")
             return lines[0] == f"Name: {player}"
         except Exception:
             logger.exception("Bad playerinfo data")
@@ -237,7 +237,11 @@ class ServerCtl:
         if not self._is_info_correct(player, data):
             data = self._request(f"playerinfo {player}", can_fail=can_fail)
         if not self._is_info_correct(player, data):
-            raise CommandFailedError("The game server is returning the wrong player info for %s we got %s", player, data)
+            raise CommandFailedError(
+                "The game server is returning the wrong player info for %s we got %s",
+                player,
+                data,
+            )
         return data
 
     def get_admin_ids(self):
@@ -368,7 +372,7 @@ class ServerCtl:
         return self._request(f"switchteamondeath {player}", log_info=True)
 
     def do_switch_player_now(self, player):
-        return self._request(f'switchteamnow {player}', log_info=True)
+        return self._request(f"switchteamnow {player}", log_info=True)
 
     def do_add_map_to_rotation(self, map_name):
         return self._request(f"rotadd {map_name}", can_fail=False, log_info=True)
@@ -428,6 +432,13 @@ class ServerCtl:
 
     def do_remove_vip(self, steam_id_64):
         return self._request(f"vipdel {steam_id_64}", log_info=True)
+
+    @_escape_params
+    def do_message_player(self, player_name=None, steam_id_64=None, message=""):
+        return self._request(
+            f'message "{steam_id_64 or player_name}" "{message}"',
+            log_info=True,
+        )
 
 
 if __name__ == "__main__":
