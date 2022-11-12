@@ -4,6 +4,7 @@ import time
 import re
 from dataclasses import dataclass
 from functools import wraps
+from typing import List
 
 from rcon.connection import HLLConnection
 from rcon.settings import check_config
@@ -439,6 +440,17 @@ class ServerCtl:
             f'message "{steam_id_64 or player_name}" "{message}"',
             log_info=True,
         )
+
+    def get_gamestate(self) -> List[str]:
+        """
+        Players: Allied: 0 - Axis: 1
+        Score: Allied: 2 - Axis: 2
+        Remaining Time: 0:11:51
+        Map: foy_warfare
+        Next Map: stmariedumont_warfare
+
+        """
+        return self._request("gamestate", can_fail=False).split("\n")[:-1]
 
 
 if __name__ == "__main__":
