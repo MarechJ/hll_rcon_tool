@@ -275,3 +275,57 @@ SCOREBOT:
       - WHAT_IS_A_BREAK
       - SURVIVORS
       - U_R_STILL_A_MAN
+
+
+# This allows you to subscribe any number of Discord webhooks and optional roles and/or users to mention
+# which will be used to send the matching log lines to the webhooks
+# You must include the server number for each hook or it won't be processed
+# This allows you to subscribe to different log events for different servers if you run more than one
+
+# Review USERGUIDE.md for information on how to get webhooks and role/user IDs from Discord
+
+# A more general log event type will trigger for all sub types, for instance the CHAT event will trigger
+# for any kind of chat
+# A more specific log event type will only trigger for that type, for instance Chat[Axis][Unit] would not
+# trigger for Axis team chat, or any Allied chats
+# If you subscribe to a general event type, such as CHAT you should not subscribe to anymore specific event
+# or you'll receive duplicates
+
+# This can get very spammy very quickly, especially if you mention users/roles, please plan accordingly
+
+# For example:
+# - URL: https://discord.com/api/...etc
+#   MENTIONS:
+#     - <@&1234567891234567891>
+#     - <@987654321987654321>
+#   SERVERS:
+#   - 1
+#   - 2
+LOG_LINE_WEBHOOKS:
+  ADMIN BANNED:
+  ADMIN KICKED:
+  CAMERA:
+  CHAT:
+  CHAT[Allies]:
+  CHAT[Allies][Team]:
+  CHAT[Allies][Unit]:
+  CHAT[Axis]:
+  CHAT[Axis][Team]:
+  CHAT[Axis][Unit]:
+  CONNECTED:
+  DISCONNECTED:
+  KILL:
+  MATCH:
+  MATCH START:
+  MATCH ENDED:
+  TEAM KILL:
+  TEAMSWITCH:
+  # Automatic kicks for team kills
+  TK:
+  TK AUTO:
+  TK AUTO BANNED:
+  TK AUTO KICKED:
+  # Vote kicks
+  VOTE:
+  VOTE STARTED:
+  VOTE COMPLETED:

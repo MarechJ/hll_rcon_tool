@@ -4,42 +4,50 @@ import os
 import sys
 import time
 import unicodedata
-from logging import config
+from typing import Callable, Dict, List
 
 from sqlalchemy import and_, desc, or_
-from sqlalchemy.exc import IntegrityError, InvalidRequestError
-from sqlalchemy.sql.expression import false, true
+from sqlalchemy.exc import IntegrityError
 
 from rcon.cache_utils import get_redis_client
-from rcon.commands import CommandFailedError, HLLServerError
 from rcon.config import get_config
 from rcon.discord import send_to_discord_audit
 from rcon.extended_commands import LOG_ACTIONS, Rcon
-from rcon.models import LogLine, PlayerName, PlayerSteamID, enter_session
-from rcon.player_history import (
-    add_player_to_blacklist,
-    get_player_profile,
-    player_has_flag,
-)
+from rcon.models import LogLine, PlayerSteamID, enter_session
+from rcon.player_history import (add_player_to_blacklist, get_player_profile,
+                                 player_has_flag)
 from rcon.recorded_commands import RecordedRcon
 from rcon.settings import SERVER_INFO
 from rcon.utils import FixedLenList
 
 logger = logging.getLogger(__name__)
 
-HOOKS = {
-    "TEAM KILL": [],
+HOOKS: Dict[str, List[Callable]] = {
+    "ADMIN BANNED": [],
+    "ADMIN KICKED": [],
+    "CAMERA": [],
+    "CHAT": [],
+    "CHAT[Allies]": [],
+    "CHAT[Allies][Team]": [],
+    "CHAT[Allies][Unit]": [],
+    "CHAT[Axis]": [],
+    "CHAT[Axis][Team]": [],
+    "CHAT[Axis][Unit]": [],
     "CONNECTED": [],
     "DISCONNECTED": [],
-    "CHAT[Allies]": [],
-    "CHAT[Axis]": [],
-    "CHAT": [],
     "KILL": [],
-    "CAMERA": [],
-    "TK": [],
-    "MATCH": [],
     "MATCH START": [],
     "MATCH ENDED": [],
+    "MATCH": [],
+    "TEAM KILL": [],
+    "TEAMSWITCH": [],
+    "TK": [],
+    "TK AUTO": [],
+    "TK AUTO BANNED": [],
+    "TK AUTO KICKED": [],
+    "VOTE": [],
+    "VOTE STARTED": [],
+    "VOTE COMPLETED": [],
 }
 
 
@@ -83,6 +91,12 @@ def on_disconnected(func):
     return func
 
 
+def on_generic(key, func) -> Callable:
+    """Dynamically register hooks from config.yml LOG_LINE_WEBHOOKS"""
+    HOOKS[key].append(func)
+    return func
+
+
 MAX_FAILS = 10
 
 
@@ -95,6 +109,7 @@ class LogLoop:
         self.red = get_redis_client()
         self.duplicate_guard_key = "unique_logs"
         self.log_history = self.get_log_history_list()
+
         logger.info("Registered hooks: %s", HOOKS)
 
     @staticmethod
