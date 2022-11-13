@@ -450,7 +450,7 @@ class ServerCtl:
         Next Map: stmariedumont_warfare
 
         """
-        return self._request("gamestate", can_fail=False).split("\n")[:-1]
+        return self._get("gamestate", can_fail=False).split("\n")[:-1]
 
 
 if __name__ == "__main__":
