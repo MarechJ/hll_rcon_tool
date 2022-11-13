@@ -366,7 +366,6 @@ def send_log_line_webhook_message(
 
     SERVER_SHORT_NAME = os.getenv("SERVER_SHORT_NAME", "No Server Name Set")
 
-    # Include a Discord aware timestamp ex: https://hammertime.cyou/
     content = " ".join(mentions)
     description = log_line["line_without_time"]
     embed = discord.Embed(

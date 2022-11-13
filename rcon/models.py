@@ -533,7 +533,7 @@ def enter_session():
 
 
 class LogLineWebHookField(pydantic.BaseModel):
-    """Represents a Discord Webhook URL and optional roles to ping for log events
+    """A Discord Webhook URL and optional roles to ping for log events and applicable servers
 
     LOG_LINE_WEBHOOKS in config.yml
     """
