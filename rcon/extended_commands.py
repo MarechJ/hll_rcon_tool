@@ -8,8 +8,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
 from functools import cached_property
 from time import sleep
-from typing import Any, Tuple
-from dataclasses import dataclass
+from typing import Dict, Tuple, Union
 
 from rcon.cache_utils import get_redis_client, invalidates, ttl_cache
 from rcon.commands import CommandFailedError, HLLServerError, ServerCtl
@@ -50,17 +49,6 @@ LOG_ACTIONS = [
     "MATCH ENDED",
 ]
 logger = logging.getLogger(__name__)
-
-
-@dataclass
-class GameStateResult:
-    allied_team_size: int
-    axis_team_size: int
-    allied_score: int
-    axis_score: int
-    time_remaining: timedelta
-    current_map: str
-    next_map: str
 
 
 class Rcon(ServerCtl):
@@ -654,7 +642,7 @@ class Rcon(ServerCtl):
     Map: foy_warfare
     Next Map: stmariedumont_warfare"""
 
-    def get_gamestate(self) -> GameStateResult:
+    def get_gamestate(self) -> Dict[str, Union[str, int, timedelta]]:
         with invalidates(Rcon.get_team_sizes, Rcon.get_round_time_remaining):
             (
                 raw_team_size,
@@ -677,37 +665,40 @@ class Rcon(ServerCtl):
         current_map = raw_current_map.split(":")[1]
         next_map = raw_next_map.split(": ")[1]
 
-        return GameStateResult(
-            int(num_allied_players),
-            int(num_axis_players),
-            int(allied_score),
-            int(axis_score),
-            timedelta(hours=float(hours), minutes=float(mins), seconds=float(secs)),
-            current_map,
-            next_map,
-        )
+        return {
+            "num_allied_players": int(num_allied_players),
+            "num_axis_players": int(num_axis_players),
+            "allied_score": int(allied_score),
+            "axis_score": int(axis_score),
+            "time_remaining": timedelta(
+                hours=float(hours), minutes=float(mins), seconds=float(secs)
+            ),
+            "current_map": current_map,
+            "next_map": next_map,
+        }
 
     @ttl_cache(ttl=2, cache_falsy=False)
     def get_team_sizes(self) -> Tuple[int, int]:
         """Returns the number of allied/axis players respectively"""
         result = self.get_gamestate()
 
-        return result.allied_team_size, result.axis_team_size
+        return result["num_allied_players"], result["num_axis_players"]
 
     def get_team_objective_scores(self) -> Tuple[int, int]:
         """Returns the number of objectives held by the allied/axis team respectively"""
         result = self.get_gamestate()
 
-        return result.allied_score, result.axis_score
+        return result["allied_score"], result["axis_score"]
 
-    def get_round_time_remaining(self):
+    def get_round_time_remaining(self) -> timedelta:
         """Returns the amount of time left in the round as a timedelta"""
         result = self.get_gamestate()
 
-        return result.time_remaining
+        return result["time_remaining"]
 
     @ttl_cache(ttl=60)
     def get_next_map(self):
+        # TODO: think about whether or not the new gamestate command can simplify this
         current = self.get_map()
         current = current.replace("_RESTART", "")
         rotation = self.get_map_rotation()
@@ -732,6 +723,7 @@ class Rcon(ServerCtl):
 
     @ttl_cache(ttl=10)
     def get_map(self):
+        # TODO: think about whether or not the new gamestate command can simplify this
         current_map = super().get_map()
         if not self.map_regexp.match(current_map):
             raise CommandFailedError("Server returned wrong data")
