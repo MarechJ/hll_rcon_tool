@@ -3,9 +3,10 @@ import pickle
 import time
 from contextlib import contextmanager
 from datetime import datetime, timedelta
-from typing import Callable, List, Tuple
+from typing import List
 
 import redis
+
 from rcon.cache_utils import get_redis_client
 from rcon.config import get_config
 from rcon.discord import send_to_discord_audit
@@ -22,6 +23,7 @@ from rcon.squad_automod.models import (
 )
 
 LEADER_WATCH_RESET_SECS = 120
+AutomodUsername = "NoLeaderWatch"
 
 logger = logging.getLogger(__name__)
 
@@ -61,35 +63,36 @@ def is_time(times: List[datetime], interval_seconds: int):
     return True
 
 
-def should_warn_squad(watch_status: WatchStatus, config: NoLeaderConfig, team, squad_name):
+def should_warn_player(watch_status: WatchStatus, config: NoLeaderConfig, squad_name, player):
     if config.number_of_warning == 0:
         logger.debug("Warnings are disabled. number_of_warning is set to 0")
         return PunishStepState.disabled
 
-    warnings = watch_status.warned
+    warnings = watch_status.warned.setdefault(player["name"], [])
 
     if not is_time(warnings, config.warning_interval_seconds):
-        logger.debug("Waiting to warn: %s", squad_name)
+        logger.debug("Waiting to warn: %s in %s", player, squad_name)
         return PunishStepState.wait
 
     if len(warnings) < config.number_of_warning or config.number_of_warning == -1:
         logger.info(
-            "Warning squad %s - %s. got %s/%s warning at time: %s",
-            team,
-            squad_name,
+            "Player: %s Level: %s Role: %s Will be warned (%s/%s)",
+            player["name"],
+            player["level"],
+            player["role"],
             len(warnings),
             num_or_inf(config.number_of_warning),
-            watch_status.warned,
         )
-
         warnings.append(datetime.now())
         return PunishStepState.apply
 
     logger.info(
-        "Squad %s - %s already got warned %s times. Moving on to punish.",
-        team,
-        squad_name,
+        "Player: %s Level: %s Role: %s Max warnings reached (%s/%s). Moving on to punish.",
+        player["name"],
+        player["level"],
+        player["role"],
         len(warnings),
+        config.number_of_warning,
     )
     return PunishStepState.go_to_next_step
 
@@ -99,7 +102,7 @@ def _get_team_count(team_view, team):
 
 
 def should_punish_player(
-    watch_status: WatchStatus, config: NoLeaderConfig, team_view, team, squad_name, squad, player
+    watch_status: WatchStatus, config: NoLeaderConfig, team_view, squad_name, squad, player
 ):
     if config.number_of_punish == 0:
         logger.debug("Punish is disabled")
@@ -157,7 +160,7 @@ def should_punish_player(
 
 
 def should_kick_player(
-    watch_status: WatchStatus, config: NoLeaderConfig, team_view, team, squad_name, squad, player
+    watch_status: WatchStatus, config: NoLeaderConfig, team_view, squad_name, squad, player
 ):
     if not config.kick_after_max_punish:
         return PunishStepState.disabled
@@ -219,80 +222,59 @@ def get_punitions_to_apply(rcon, config: NoLeaderConfig) -> PunitionsToApply:
                 
                 logger.info("Squad %s - %s doesn't have leader", team, squad_name)
 
-                state = should_warn_squad(watch_status, config, team, squad_name)
-
-                if state == PunishStepState.apply:
-                    punitions_to_apply.warning[team].append(squad_name)
-                    punitions_to_apply.add_squad_state(squad_name, squad)
-                if state == PunishStepState.wait:
-                    punitions_to_apply.pending_warnings[team].append(squad_name)
-                    punitions_to_apply.add_squad_state(squad_name, squad)
-                if state != PunishStepState.go_to_next_step and state != PunishStepState.disabled:
-                    continue
-
+                state_added = False
                 for player in squad["players"]:
+                    a_player = APlayer(
+                        steam_id_64=player["steam_id_64"],
+                        player=player["name"],
+                        team=team,
+                        squad=squad_name,
+                        role=player.get("role"),
+                        lvl=player.get("level"),
+                    )
+
+                    state = should_warn_player(watch_status, config, squad_name, player)
+
+                    if state == PunishStepState.apply:
+                        punitions_to_apply.warning.append(a_player)
+                        if not state_added:
+                            punitions_to_apply.add_squad_state(squad_name, squad)
+                            state_added = True
+                        continue
+
+                    if state == PunishStepState.wait:
+                        punitions_to_apply.pending_warnings.append(a_player)
+                        if not state_added:
+                            punitions_to_apply.add_squad_state(squad_name, squad)
+                            state_added = True
+                        continue
+
                     state = should_punish_player(
-                        watch_status, config, team_view, team, squad_name, squad, player
+                        watch_status, config, team_view, squad_name, squad, player
                     )
 
                     if state == PunishStepState.apply:
-                        punitions_to_apply.punish.append(
-                            APlayer(
-                                player=player["name"],
-                                team=team,
-                                squad=squad_name,
-                                role=player.get("role"),
-                                lvl=player.get("level"),
-                            )
-                        )
+                        punitions_to_apply.punish.append(a_player)
                         punitions_to_apply.add_squad_state(squad_name, squad)
                     if state != PunishStepState.go_to_next_step:
                         continue
 
                     state = should_kick_player(
-                        watch_status, config, team_view, team, squad_name, squad, player
+                        watch_status, config, team_view, squad_name, squad, player
                     )
                     if state == PunishStepState.apply:
-                        punitions_to_apply.kick.append(
-                            APlayer(
-                                player=player["name"],
-                                team=team,
-                                squad=squad_name,
-                                role=player.get("role"),
-                                lvl=player.get("level"),
-                            )
-                        )
+                        punitions_to_apply.kick.append(a_player)
                         punitions_to_apply.add_squad_state(squad_name, squad)
 
     return punitions_to_apply
 
 
-def _build_warning_str(punition_to_apply: PunitionsToApply, config: NoLeaderConfig, team: str):
-    to_apply = punition_to_apply.warning.get(team.lower(), [])
-    if not to_apply:
-        return ""
-    # Since we're going to broadcast anyways we also add the squads got warned already but are still without lead
-    to_apply += punition_to_apply.pending_warnings.get(team.lower(), [])
-    red = get_redis_client()
-    start = f"{team}: "
-    squads = []
-    for idx, squad_name in enumerate(to_apply):
-        with watch_state(red, team.lower(), squad_name) as squad_state:
-            nb = len(squad_state.warned)
-            total = config.number_of_warning
-            squads.append(f"{str(squad_name).upper()} {nb}/{total} /!\\")
-
-    return f"{start}{', '.join(squads)}"
-
-
-def get_warning_message(punition_to_apply: PunitionsToApply, config: NoLeaderConfig) -> Tuple[str, str]:
-    allies = _build_warning_str(punition_to_apply, config, "ALLIES")
-    axis = _build_warning_str(punition_to_apply, config, "AXIS")
-    return f"""{config.warn_message_header}
-{allies}
-{axis}
-{config.warn_message_footer}
-""", f"{allies} {axis}"
+def get_warning_message(config: NoLeaderConfig) -> str:
+    if config.warn_message_header != "" or config.warn_message_footer != "":
+        return f"""{config.warn_message_header}
+{config.warn_message_footer}"""
+    else:
+        return config.warning_message
 
 
 def _do_punitions(
@@ -308,12 +290,15 @@ def _do_punitions(
         return
     for aplayer in players:
         try:
-            if method == "punish":
+            if method == "message":
+                audit(config, f"Warnings: {message}")
+                rcon.do_message_player(aplayer.player, aplayer.steam_id_64, message, by=AutomodUsername)
+            elif method == "punish":
                 audit(config, f"--> PUNISHING: {aplayer}")
-                rcon.do_punish(aplayer.player, config.punish_message, by="NoLeaderWatch")
+                rcon.do_punish(aplayer.player, message, by=AutomodUsername)
             elif method == "kick":
                 audit(config, f"---> KICKING <---: {aplayer}")
-                rcon.do_kick(aplayer.player, config.kick_message, by="NoLeaderWatch")
+                rcon.do_kick(aplayer.player, message, by=AutomodUsername)
         except Exception:
             logger.exception("Failed to %s %s", method, repr(aplayer))
             if method == "punish":
@@ -347,11 +332,10 @@ def punish_squads_without_leaders(rcon: RecordedRcon):
     else:
         logger.debug("Squad Automod did not suggest any punitions")
 
-    if punition_to_apply.warning.get("allies") or punition_to_apply.warning.get("axis"):
-        msg, short_msg = get_warning_message(punition_to_apply, config)
-        audit(config, f"Warnings: {short_msg}")
+    if punition_to_apply.warning:
         if not config.dry_run:
-            rcon.set_broadcast(msg)
+            msg = get_warning_message(config)
+            _do_punitions(red, config, rcon, "message", msg, punition_to_apply.punish)
 
     if punition_to_apply.punish:
         _do_punitions(red, config, rcon, "punish", config.punish_message, punition_to_apply.punish)
