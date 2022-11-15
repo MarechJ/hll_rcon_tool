@@ -3,12 +3,11 @@ import os
 import random
 import re
 import socket
-from cmath import inf
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
 from functools import cached_property
 from time import sleep
-from typing import Dict, Tuple, Union
+from typing import Tuple, TypedDict
 
 from rcon.cache_utils import get_redis_client, invalidates, ttl_cache
 from rcon.commands import CommandFailedError, HLLServerError, ServerCtl
@@ -49,6 +48,18 @@ LOG_ACTIONS = [
     "MATCH ENDED",
 ]
 logger = logging.getLogger(__name__)
+
+
+class GameState(TypedDict):
+    """TypedDict for Rcon.get_gamestate"""
+
+    num_allied_players: int
+    num_axis_players: int
+    allied_score: int
+    axis_score: int
+    time_remaining: timedelta
+    current_map: str
+    next_map: str
 
 
 class Rcon(ServerCtl):
@@ -635,15 +646,18 @@ class Rcon(ServerCtl):
 
         return "SUCCESS"
 
-    """
-    Players: Allied: 0 - Axis: 1
-    Score: Allied: 2 - Axis: 2
-    Remaining Time: 0:11:51
-    Map: foy_warfare
-    Next Map: stmariedumont_warfare"""
+    def get_gamestate(self) -> GameState:
+        """
+        Returns player counts, team scores, remaining match time and current/next map
 
-    def get_gamestate(self) -> Dict[str, Union[str, int, timedelta]]:
-        with invalidates(Rcon.get_team_sizes, Rcon.get_round_time_remaining):
+        Players: Allied: 0 - Axis: 1
+        Score: Allied: 2 - Axis: 2
+        Remaining Time: 0:11:51
+        Map: foy_warfare
+        Next Map: stmariedumont_warfare"""
+        with invalidates(
+            Rcon.team_sizes, Rcon.team_objective_scores, Rcon.round_time_remaining
+        ):
             (
                 raw_team_size,
                 raw_score,
@@ -678,19 +692,21 @@ class Rcon(ServerCtl):
         }
 
     @ttl_cache(ttl=2, cache_falsy=False)
-    def get_team_sizes(self) -> Tuple[int, int]:
+    def team_sizes(self) -> Tuple[int, int]:
         """Returns the number of allied/axis players respectively"""
         result = self.get_gamestate()
 
         return result["num_allied_players"], result["num_axis_players"]
 
-    def get_team_objective_scores(self) -> Tuple[int, int]:
+    @ttl_cache(ttl=2, cache_falsy=False)
+    def team_objective_scores(self) -> Tuple[int, int]:
         """Returns the number of objectives held by the allied/axis team respectively"""
         result = self.get_gamestate()
 
         return result["allied_score"], result["axis_score"]
 
-    def get_round_time_remaining(self) -> timedelta:
+    @ttl_cache(ttl=2, cache_falsy=False)
+    def round_time_remaining(self) -> timedelta:
         """Returns the amount of time left in the round as a timedelta"""
         result = self.get_gamestate()
 
