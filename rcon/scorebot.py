@@ -19,9 +19,8 @@ from rcon.config import get_config
 logger = logging.getLogger(__name__)
 
 try:
-    SERVER_CONFIG = get_config()['SCOREBOT'][f'SERVER_{os.getenv("SERVER_NUMBER")}']
-    CONFIG = get_config()['SCOREBOT']['COMMON']
-
+    SERVER_CONFIG = get_config()["SCOREBOT"][f'SERVER_{os.getenv("SERVER_NUMBER")}']
+    CONFIG = get_config()["SCOREBOT"]["COMMON"]
 
     STATS_URL = SERVER_CONFIG["STATS_URL"]
     INFO_URL = SERVER_CONFIG["INFO_URL"]
@@ -58,8 +57,7 @@ try:
     U_R_STILL_A_MAN = CONFIG["U_R_STILL_A_MAN"]
     ELAPSED_TIME = CONFIG["ELAPSED_TIME"]
 
-
-    STATS_KEYS_TO_DISPLAY = CONFIG['STATS_TO_DISPLAY']
+    STATS_KEYS_TO_DISPLAY = CONFIG["STATS_TO_DISPLAY"]
 except Exception as e:
     logger.exception(f"There's an error in your scorebot config: {repr(e)}")
     raise
@@ -77,6 +75,7 @@ map_to_pict = {
     "utahbeach": "maps/utah.webp",
     "kursk": "maps/kursk.webp",
     "stalingrad": "maps/stalingrad.webp",
+    "kharkov": "maps/kharkov.webp",
 }
 
 
@@ -177,7 +176,9 @@ def get_embeds(server_info, stats):
         color=13734400,
     )
     if not stats:
-        current_embed.add_field(name=NO_STATS_AVAILABLE, value=f"{FIND_PAST_STATS}{PAST_GAMES_URL}")
+        current_embed.add_field(
+            name=NO_STATS_AVAILABLE, value=f"{FIND_PAST_STATS}{PAST_GAMES_URL}"
+        )
         embeds.append(current_embed)
     else:
         for idx, (name, value) in enumerate(stats_display.items(), start=0):
@@ -188,8 +189,12 @@ def get_embeds(server_info, stats):
                     color=13734400,
                 )
 
-    embeds[-1].add_field(name="\u200b", value=f"{ALL_STATS_TEXT}{SCOREBOARD_PUBLIC_URL}" , inline=False)
-    embeds[-1].set_footer(icon_url=FOOTER_ICON_URL, text="Community RCon based stats by Dr.WeeD")
+    embeds[-1].add_field(
+        name="\u200b", value=f"{ALL_STATS_TEXT}{SCOREBOARD_PUBLIC_URL}", inline=False
+    )
+    embeds[-1].set_footer(
+        icon_url=FOOTER_ICON_URL, text="Community RCon based stats by Dr.WeeD"
+    )
     print(embeds)
     return embeds
 
