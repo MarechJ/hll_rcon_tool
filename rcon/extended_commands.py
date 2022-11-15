@@ -676,7 +676,7 @@ class Rcon(ServerCtl):
             r"Remaining Time: (\d):(\d{2}):(\d{2})", raw_time_remaining
         ).groups()
 
-        current_map = raw_current_map.split(":")[1]
+        current_map = raw_current_map.split(": ")[1]
         next_map = raw_next_map.split(": ")[1]
 
         return {
