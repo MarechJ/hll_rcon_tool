@@ -92,34 +92,34 @@ def public_info(request):
 
     def explode_map_info(game_map: str, start) -> dict:
         return dict(
-            just_name = map_name(game_map),
-            human_name = LONG_HUMAN_MAP_NAMES.get(game_map, game_map),
-            name = game_map,
-            start = start
+            just_name=map_name(game_map),
+            human_name=LONG_HUMAN_MAP_NAMES.get(game_map, game_map),
+            name=game_map,
+            start=start
         )
 
     return api_response(
         result = dict(
-            current_map = explode_map_info(gamestate["current_map"], current_map_start),
-            next_map = explode_map_info(ctl.get_next_map(), None),
-            player_count = curr_players,
-            max_player_count = max_players,
-            players = dict(
-                allied = gamestate["num_allied_players"],
-                axis = gamestate["num_axis_players"]
+            current_map=explode_map_info(gamestate["current_map"], current_map_start),
+            next_map=explode_map_info(ctl.get_next_map(), None),
+            player_count=curr_players,
+            max_player_count=max_players,
+            players=dict(
+                allied=gamestate["num_allied_players"],
+                axis=gamestate["num_axis_players"]
             ),
-            score = dict(
-                allied = gamestate["allied_score"],
-                axis = gamestate["axis_score"]
+            score=dict(
+                allied=gamestate["allied_score"],
+                axis=gamestate["axis_score"]
             ),
-            vote_status = get_votes_status(none_on_fail=True),
-            name = ctl.get_name(),
-            short_name = os.getenv("SERVER_SHORT_NAME", "HLL RCON"),
+            vote_status=get_votes_status(none_on_fail=True),
+            name=ctl.get_name(),
+            short_name=os.getenv("SERVER_SHORT_NAME", "HLL RCON"),
             public_stats_port=os.getenv('PUBLIC_STATS_PORT', "Not defined"),
             public_stats_port_https=os.getenv('PUBLIC_STATS_PORT_HTTPS', "Not defined")
         ),
-        failed = False,
-        command = "public_info",
+        failed=False,
+        command="public_info",
     )
 
 
