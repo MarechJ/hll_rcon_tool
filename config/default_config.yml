@@ -142,7 +142,7 @@ NOLEADER_AUTO_MOD:
   warn_message_footer: "Next check will happen automatically in 60s"
 
   # This is the text that will be displayed to warn players.
-  warning_message: "Warning! Your squad does not have an officer. Players of squads without an officer will be punished, then kicked.\nNext check will happen automatically in 60s."
+  warning_message: "Warning, {player_name}! Your squad ({squad_name}) does not have an officer. Players of squads without an officer will be punished after {max_warnings} (you already {received_warnings}), then kicked.\nNext check will happen automatically in {next_check_seconds}s."
   # This is the number of seconds this auto-mod will wait until moving to 
   # the next warning or to the punish if the number of warning was reached
   warning_interval_seconds: 60

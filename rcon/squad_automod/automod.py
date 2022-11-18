@@ -219,10 +219,9 @@ def get_punitions_to_apply(rcon, config: NoLeaderConfig) -> PunitionsToApply:
 
                 if squad_name is None or squad is None:
                     raise SquadHasLeader()
-                
+
                 logger.info("Squad %s - %s doesn't have leader", team, squad_name)
 
-                state_added = False
                 for player in squad["players"]:
                     a_player = APlayer(
                         steam_id_64=player["steam_id_64"],
@@ -237,16 +236,10 @@ def get_punitions_to_apply(rcon, config: NoLeaderConfig) -> PunitionsToApply:
 
                     if state == PunishStepState.apply:
                         punitions_to_apply.warning.append(a_player)
-                        if not state_added:
-                            punitions_to_apply.add_squad_state(squad_name, squad)
-                            state_added = True
+                        punitions_to_apply.add_squad_state(team, squad_name, squad)
                         continue
-
                     if state == PunishStepState.wait:
-                        punitions_to_apply.pending_warnings.append(a_player)
-                        if not state_added:
-                            punitions_to_apply.add_squad_state(squad_name, squad)
-                            state_added = True
+                        punitions_to_apply.add_squad_state(team, squad_name, squad)
                         continue
 
                     state = should_punish_player(
@@ -255,7 +248,7 @@ def get_punitions_to_apply(rcon, config: NoLeaderConfig) -> PunitionsToApply:
 
                     if state == PunishStepState.apply:
                         punitions_to_apply.punish.append(a_player)
-                        punitions_to_apply.add_squad_state(squad_name, squad)
+                        punitions_to_apply.add_squad_state(team, squad_name, squad)
                     if state != PunishStepState.go_to_next_step:
                         continue
 
@@ -264,17 +257,26 @@ def get_punitions_to_apply(rcon, config: NoLeaderConfig) -> PunitionsToApply:
                     )
                     if state == PunishStepState.apply:
                         punitions_to_apply.kick.append(a_player)
-                        punitions_to_apply.add_squad_state(squad_name, squad)
+                        punitions_to_apply.add_squad_state(team, squad_name, squad)
 
     return punitions_to_apply
 
 
-def get_warning_message(config: NoLeaderConfig) -> str:
+def get_warning_message(config: NoLeaderConfig, aplayer: APlayer) -> str:
+    with watch_state(get_redis_client(), aplayer.team, aplayer.squad) as watch_status:
+        warnings = len(watch_status.warned.get(aplayer.player))
+
     if config.warn_message_header != "" or config.warn_message_footer != "":
         return f"""{config.warn_message_header}
 {config.warn_message_footer}"""
     else:
-        return config.warning_message
+        return config.warning_message.format(
+            player_name=aplayer.player,
+            sqaud_name=aplayer.squad,
+            received_warnings=warnings,
+            max_warnings=config.number_of_warning,
+            next_check_seconds=config.warning_interval_seconds,
+        )
 
 
 def _do_punitions(
@@ -282,8 +284,8 @@ def _do_punitions(
     config: NoLeaderConfig,
     rcon: RecordedRcon,
     method: str,
-    message: str,
     players: List[APlayer],
+    message: str or None = None,
 ):
     if config.dry_run:
         logger.info("Dry run is enabled, skipping real punitions")
@@ -291,8 +293,9 @@ def _do_punitions(
     for aplayer in players:
         try:
             if method == "message":
-                audit(config, f"Warnings: {message}")
-                rcon.do_message_player(aplayer.player, aplayer.steam_id_64, message, by=AutomodUsername)
+                msg = get_warning_message(config, aplayer)
+                audit(config, f"Warnings: {msg}")
+                rcon.do_message_player(aplayer.player, aplayer.steam_id_64, msg, by=AutomodUsername)
             elif method == "punish":
                 audit(config, f"--> PUNISHING: {aplayer}")
                 rcon.do_punish(aplayer.player, message, by=AutomodUsername)
@@ -332,16 +335,15 @@ def punish_squads_without_leaders(rcon: RecordedRcon):
     else:
         logger.debug("Squad Automod did not suggest any punitions")
 
-    if punition_to_apply.warning:
-        if not config.dry_run:
-            msg = get_warning_message(config)
-            _do_punitions(red, config, rcon, "message", msg, punition_to_apply.punish)
-
     if punition_to_apply.punish:
-        _do_punitions(red, config, rcon, "punish", config.punish_message, punition_to_apply.punish)
+        _do_punitions(red, config, rcon, "punish", punition_to_apply.punish, config.punish_message)
 
     if punition_to_apply.kick:
-        _do_punitions(red, config, rcon, "kick", config.kick_message, punition_to_apply.kick)
+        _do_punitions(red, config, rcon, "kick", punition_to_apply.kick, config.kick_message)
+
+    if punition_to_apply.warning:
+        if not config.dry_run:
+            _do_punitions(red, config, rcon, "message", punition_to_apply.warning)
 
 
 def audit(cfg: NoLeaderConfig, msg: str):

@@ -1070,41 +1070,41 @@ def test_watcher(team_view):
         to_apply = get_punitions_to_apply(rcon, config)
         assert expected_warned_players == to_apply.warning
 
-        expected_squad_state = [ASquad(name='baker', players=[
+        expected_squad_state = [ASquad(team="allies", name='baker', players=[
             APlayer(steam_id_64="76561198055458575", player='Lawless', squad='baker', team='allies', role='heavymachinegunner', lvl=88),
             APlayer(steam_id_64="76561198985998769", player='Major_Winters', squad='baker', team='allies', role='rifleman', lvl=82),
             APlayer(steam_id_64="76561198393093210", player='Toomz', squad='baker', team='allies', role='assault', lvl=69),
             APlayer(steam_id_64="76561198026310990", player='Zones (BEL)', squad='baker', team='allies', role='engineer', lvl=59),
             APlayer(steam_id_64="76561198198563101", player='Pavooloni', squad='baker', team='allies', role='antitank', lvl=71),
             APlayer(steam_id_64="76561198028236925", player='Kjjuj', squad='baker', team='allies', role='rifleman', lvl=102)
-        ]), ASquad(name='able', players=[
+        ]), ASquad(team="axis", name='able', players=[
             APlayer(steam_id_64="76561198979089668", player='emfoor', squad='able', team='axis', role='assault', lvl=110),
             APlayer(steam_id_64="76561198041823654", player='Makaj', squad='able', team='axis', role='officer', lvl=43),
             APlayer(steam_id_64="76561198892700816", player='tinner2115', squad='able', team='axis', role='engineer', lvl=170),
             APlayer(steam_id_64="76561198354354474", player='Cuervo', squad='able', team='axis', role='antitank', lvl=129),
             APlayer(steam_id_64="76561198046677517", player='capitanodrew', squad='able', team='axis', role='heavymachinegunner', lvl=67),
             APlayer(steam_id_64='76561199027409370', player='Dr.FishShitz', squad='able', team='axis', role='automaticrifleman', lvl=10)
-        ]), ASquad(name='baker', players=[
+        ]), ASquad(team="axis", name='baker', players=[
             APlayer(steam_id_64="76561198206929555", player='WilliePeter', squad='baker', team='axis', role='spotter', lvl=123),
             APlayer(steam_id_64="76561199166765040", player='DarkVisionary', squad='baker', team='axis', role='sniper', lvl=184)
         ])]
 
         assert PunitionsToApply(
-            warning=[], punish=[], kick=[], pending_warnings=expected_warned_players, squads_state=expected_squad_state
+            warning=[], punish=[], kick=[], squads_state=expected_squad_state
         ) == get_punitions_to_apply(rcon, config)
         time.sleep(config.warning_interval_seconds)
 
         # 1st punish
         assert expected_punished_players == get_punitions_to_apply(rcon, config).punish
         assert PunitionsToApply(
-            warning=[], punish=[], kick=[], pending_warnings=[], squads_state=[]
+            warning=[], punish=[], kick=[], squads_state=[]
         ) == get_punitions_to_apply(rcon, config)
         time.sleep(config.punish_interval_seconds)
 
         # 2nd punish
         assert expected_punished_players == get_punitions_to_apply(rcon, config).punish
         assert PunitionsToApply(
-            warning=[], punish=[], kick=[], pending_warnings=[], squads_state=[]
+            warning=[], punish=[], kick=[], squads_state=[]
         ) == get_punitions_to_apply(rcon, config)
         time.sleep(config.punish_interval_seconds)
 

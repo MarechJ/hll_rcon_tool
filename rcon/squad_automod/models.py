@@ -77,20 +77,23 @@ class APlayer:
 
 @dataclass
 class ASquad:
+    team: str
     name: str
     players: List[APlayer] = field(default_factory=list)
 
 @dataclass
 class PunitionsToApply:
     warning: List[APlayer] = field(default_factory=list)
-    pending_warnings: List[APlayer] = field(default_factory=list)
     punish: List[APlayer] = field(default_factory=list)
     kick: List[APlayer] = field(default_factory=list)
     squads_state: List[ASquad] = field(default_factory=list)
 
-    def add_squad_state(self, squad_name: str, squad: dict):
+    def add_squad_state(self, team: str, squad_name: str, squad: dict):
         try:
+            if any(s.team == team and s.name == squad_name for s in self.squads_state):
+                return
             self.squads_state.append(ASquad(
+                team=team,
                 name=squad_name,
                 players=[
                     APlayer(steam_id_64=p.get("steam_id_64"), player=p.get("name"), squad=p.get("unit_name"), team=p.get("team"), role=p.get("role"), lvl=p.get("level"))
