@@ -292,6 +292,7 @@ SCOREBOT:
 # or you'll receive duplicates
 
 # This can get very spammy very quickly, especially if you mention users/roles, please plan accordingly
+# and be aware of both CPU usage on your server and Discord rate limiting for webhooks
 
 # For example:
 # - URL: https://discord.com/api/...etc
