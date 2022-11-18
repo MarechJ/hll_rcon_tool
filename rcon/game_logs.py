@@ -14,8 +14,11 @@ from rcon.config import get_config
 from rcon.discord import send_to_discord_audit
 from rcon.extended_commands import LOG_ACTIONS, Rcon
 from rcon.models import LogLine, PlayerSteamID, enter_session
-from rcon.player_history import (add_player_to_blacklist, get_player_profile,
-                                 player_has_flag)
+from rcon.player_history import (
+    add_player_to_blacklist,
+    get_player_profile,
+    player_has_flag,
+)
 from rcon.recorded_commands import RecordedRcon
 from rcon.settings import SERVER_INFO
 from rcon.utils import FixedLenList
@@ -23,6 +26,13 @@ from rcon.utils import FixedLenList
 logger = logging.getLogger(__name__)
 
 HOOKS: Dict[str, List[Callable]] = {
+    "TEAM KILL": [],
+    "CONNECTED": [],
+    "DISCONNECTED": [],
+    "TK": [],
+    "TK AUTO": [],
+    "TK AUTO BANNED": [],
+    "TK AUTO KICKED": [],
     "ADMIN BANNED": [],
     "ADMIN KICKED": [],
     "CAMERA": [],
@@ -33,18 +43,11 @@ HOOKS: Dict[str, List[Callable]] = {
     "CHAT[Axis]": [],
     "CHAT[Axis][Team]": [],
     "CHAT[Axis][Unit]": [],
-    "CONNECTED": [],
-    "DISCONNECTED": [],
     "KILL": [],
     "MATCH START": [],
     "MATCH ENDED": [],
     "MATCH": [],
-    "TEAM KILL": [],
     "TEAMSWITCH": [],
-    "TK": [],
-    "TK AUTO": [],
-    "TK AUTO BANNED": [],
-    "TK AUTO KICKED": [],
     "VOTE": [],
     "VOTE STARTED": [],
     "VOTE COMPLETED": [],
