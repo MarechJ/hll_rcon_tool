@@ -78,3 +78,10 @@ class RecordedRcon(Rcon):
             )
 
         return players
+
+    def do_message_player(self, player_name=None, steam_id_64=None, message="", by=""):
+        res = super().do_message_player(player_name, steam_id_64, message)
+        safe_save_player_action(
+            rcon=self, player_name=player_name, action_type="MESSAGE", reason=message, by=by
+        )
+        return res
