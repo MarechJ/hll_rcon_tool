@@ -95,7 +95,7 @@ def get_header_embed(public_info):
 
     embed = discord.Embed(
         title=f"{public_info['name']}",
-        description=f"**{public_info['current_map']['human_name']} - {ELAPSED_TIME}{round(elapsed_time_minutes)} min. - {public_info['nb_players']} {PLAYERS}**",
+        description=f"**{public_info['current_map']['human_name']} - {ELAPSED_TIME}{round(elapsed_time_minutes)} min. - {public_info['player_count']}/{public_info['max_player_count']} {PLAYERS}**",
         color=13734400,
         timestamp=datetime.datetime.utcnow(),
         url=SCOREBOARD_PUBLIC_URL,
@@ -106,7 +106,7 @@ def get_header_embed(public_info):
         winning_map_votes = public_info["vote_status"]["winning_maps"][0][1]
 
     embed.add_field(
-        name=f"{NEXT_MAP_TEXT} {public_info['next_map']}",
+        name=f"{NEXT_MAP_TEXT} {public_info['next_map']['human_name']}",
         value=f"{winning_map_votes}/{total_votes} {VOTE}",
     )
     embed.set_author(

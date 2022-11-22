@@ -862,7 +862,7 @@ class Rcon(ServerCtl):
         super().set_broadcast(formatted)
         return prev.decode() if prev else ""
 
-    @ttl_cache(ttl=20)
+    @ttl_cache(ttl=5)
     def get_slots(self):
         res = super().get_slots()
         if not self.slots_regexp.match(res):

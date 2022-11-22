@@ -256,7 +256,7 @@ const LiveHeader = ({
       ?.get("winning_maps")
       ?.get(0) || ["", 0];
     const totalVotes = serverState.get("vote_status")?.get("total_votes");
-    const nextMap = serverState.get("next_map");
+    const nextMap = serverState.get("next_map")?.get("name");
 
     if (map === nextMap) {
       return `Nextmap ${nextMap} with ${nbVotes} out of ${totalVotes} votes`;
@@ -317,9 +317,7 @@ const LiveHeader = ({
             />
             <GridListTileBar
               className={styles.titleBarBottom}
-              title={`Elapsed: ${started} - Players: ${serverState.get(
-                "nb_players"
-              )}`}
+              title={`Elapsed: ${started} - Players: ${serverState.get("player_count")}/${serverState.get("max_player_count")}`}
               subtitle={nextMapString}
               titlePosition="bottom"
             />
