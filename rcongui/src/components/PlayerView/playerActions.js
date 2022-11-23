@@ -21,6 +21,8 @@ import FormControlLabel from "@material-ui/core/FormControlLabel";
 import Checkbox from "@material-ui/core/Checkbox";
 import { getSharedMessages } from "../../utils/fetchUtils";
 import { Grid } from "@material-ui/core";
+import Tooltip from "@material-ui/core/Tooltip";
+import MessageIcon from "@material-ui/icons/Message";
 import VisibilityIcon from "@material-ui/icons/Visibility";
 
 const Duration = ({
@@ -92,7 +94,27 @@ class ReasonDialog extends React.Component {
     if (e) {
       e.preventDefault();
     }
+
     this.setState({ reason: value });
+  }
+
+  mapActionToText(actionType, playerName) {
+    switch (actionType) {
+      case "watch_player":
+        return `Add a watch to ${playerName}`;
+      case "punish":
+        return `Punish (kill in game) ${playerName}`;
+      case "kick":
+        return `Kick ${playerName} from the game`;
+      case "temp_ban":
+        return `Temporary Ban ${playerName}`;
+      case "perma_ban":
+        return `Permanently Ban ${playerName}`;
+      case "message_player":
+        return `Message ${playerName}`;
+      default:
+        return "";
+    }
   }
 
   render() {
@@ -106,11 +128,12 @@ class ReasonDialog extends React.Component {
       durationMultiplier,
     } = this.state;
     const textHistory = new TextHistory("punitions");
-
+    const actionType = open.actionType;
+    const playerName = open.player;
     return (
       <Dialog open={open} aria-labelledby="form-dialog-title">
         <DialogTitle id="form-dialog-title">
-          Execute {open.actionType} on {open.player}
+          {this.mapActionToText(actionType, playerName)}
         </DialogTitle>
         <DialogContent>
           <Autocomplete
@@ -125,27 +148,31 @@ class ReasonDialog extends React.Component {
                 multiline
                 rows={4}
                 rowsMax={10}
-                label="Reason"
+                label={actionType === "message_player" ? "Message" : "Reason"}
                 variant="outlined"
                 margin="dense"
                 helperText="The message that will be displayed to the player. A message is mandatory"
               />
             )}
           />
-          
-          <TextField
-            multiline
-            rows={4}
-            rowsMax={10}
-            fullWidth
-            value={comment}
-            onChange={(e) => this.setState({ comment: e.target.value })}
-            label="Comment"
-            variant="outlined"
-            margin="dense"
-            helperText="A comment that will NOT be displayed to the player"
-          />
-          
+
+          {open.actionType !== "message_player" ? (
+            <TextField
+              multiline
+              rows={4}
+              rowsMax={10}
+              fullWidth
+              value={comment}
+              onChange={(e) => this.setState({ comment: e.target.value })}
+              label="Comment"
+              variant="outlined"
+              margin="dense"
+              helperText="A comment that will NOT be displayed to the player"
+            />
+          ) : (
+            ""
+          )}
+
           {open.actionType === "temp_ban" ? (
             <Duration
               durationNumber={durationNumber}
@@ -244,17 +271,24 @@ const PlayerActions = ({
   return (
     <React.Fragment>
       <ButtonGroup size={size} aria-label="small outlined button group">
-        {show > 1 ? (
-          <Button
-            color={isWatched ? "primary" : "default"}
-            variant={isWatched ? "contained" : "outlined"}
-            size="small"
-            onClick={() =>
-              handleAction(isWatched ? "unwatch_player" : "watch_player")
-            }
-          >
-            <VisibilityIcon fontSize="small" />
+        <Tooltip title="Message Player">
+          <Button onClick={() => handleAction("message_player")}>
+            <MessageIcon />
           </Button>
+        </Tooltip>
+        {show > 1 ? (
+          <Tooltip title="Watch Player">
+            <Button
+              color={isWatched ? "primary" : "default"}
+              variant={isWatched ? "contained" : "outlined"}
+              size="small"
+              onClick={() =>
+                handleAction(isWatched ? "unwatch_player" : "watch_player")
+              }
+            >
+              <VisibilityIcon fontSize="small" />
+            </Button>
+          </Tooltip>
         ) : (
           ""
         )}
@@ -278,9 +312,11 @@ const PlayerActions = ({
           </Button>
         ))}
         {onFlag ? (
-          <Button size="small" onClick={onFlag}>
-            <FlagOutlinedIcon fontSize="small" />
-          </Button>
+          <Tooltip title="Flag Player">
+            <Button size="small" onClick={onFlag}>
+              <FlagOutlinedIcon fontSize="small" />
+            </Button>
+          </Tooltip>
         ) : (
           ""
         )}
