@@ -9,11 +9,11 @@ def install(session):
     session.install("-r", "requirements-dev.txt")
 
 
-@nox.session(tags=["style"])
+@nox.session(tags=["style", "black"])
 def black(session):
     session.run("black", *source_dirs)
 
 
-@nox.session(tags=["isort"])
+@nox.session(tags=["style", "isort"])
 def isort(session):
     session.run("isort", *source_dirs)
