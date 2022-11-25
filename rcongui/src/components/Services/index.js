@@ -1,3 +1,3 @@
-import ServicesList from './ServicesList'
+import ServicesList from "./ServicesList";
 
-export default ServicesList
+export default ServicesList;

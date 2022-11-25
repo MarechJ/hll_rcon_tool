@@ -10,8 +10,11 @@ from rcon.cache_utils import get_redis_client, ttl_cache
 from rcon.config import get_config
 from rcon.game_logs import get_historical_logs_records, get_recent_logs
 from rcon.models import SteamInfo, enter_session
-from rcon.player_history import (_get_profiles, get_player_profile,
-                                 get_player_profile_by_steam_ids)
+from rcon.player_history import (
+    _get_profiles,
+    get_player_profile,
+    get_player_profile_by_steam_ids,
+)
 from rcon.recorded_commands import RecordedRcon
 from rcon.settings import SERVER_INFO
 from rcon.utils import MapsHistory
@@ -307,7 +310,9 @@ class LiveStats(BaseStats):
         stats = self.get_current_players_stats()
         self.red.set(
             "LIVE_STATS",
-            pickle.dumps(dict(snapshot_timestamp=snapshot_ts, stats=list(stats.values()))),
+            pickle.dumps(
+                dict(snapshot_timestamp=snapshot_ts, stats=list(stats.values()))
+            ),
         )
 
     def get_cached_stats(self):
@@ -318,15 +323,20 @@ class LiveStats(BaseStats):
 
 
 class TimeWindowStats(BaseStats):
-    def _set_start_end_times(self, player, players_times, log, from_, offset_warmup_time_seconds=180):
-        
+    def _set_start_end_times(
+        self, player, players_times, log, from_, offset_warmup_time_seconds=180
+    ):
+
         if not player:
             return
         # A CONNECT means the begining of a session for the player
         if log["action"] == "CONNECTED":
             players_times.setdefault(player, {"start": [], "end": []})["start"].append(
                 # Event time is a key only avaible in the dict coming from the DB and is already a datetime
-                log.get("event_time", datetime.datetime.utcfromtimestamp(log["timestamp_ms"] // 1000))
+                log.get(
+                    "event_time",
+                    datetime.datetime.utcfromtimestamp(log["timestamp_ms"] // 1000),
+                )
             )
         # if the player is not already in the times record we add the start of the stats window as his session start time
         # we didn't see a CONNECTED before, so it means that the player was here before the current window.
@@ -338,7 +348,10 @@ class TimeWindowStats(BaseStats):
         # if the player was already in the time record and we see a disconnect we log it as the end of his session
         if player in players_times and log["action"] == "DISCONNECTED":
             players_times.setdefault(player, {"start": [], "end": []})["end"].append(
-                log.get("event_time", datetime.datetime.utcfromtimestamp(log["timestamp_ms"] // 1000))
+                log.get(
+                    "event_time",
+                    datetime.datetime.utcfromtimestamp(log["timestamp_ms"] // 1000),
+                )
             )
         # if we had a player that disconnected but was not in the time record it means he did have any kill / death or other actions like chat, vote
         # This player won't have a session time (most likely and AFK one)
@@ -360,7 +373,14 @@ class TimeWindowStats(BaseStats):
             )
             return 0
 
-    def _get_players_stats_for_logs(self, logs, from_, until, offset_warmup_time_seconds=120, offset_cooldown_time_seconds=100):
+    def _get_players_stats_for_logs(
+        self,
+        logs,
+        from_,
+        until,
+        offset_warmup_time_seconds=120,
+        offset_cooldown_time_seconds=100,
+    ):
         indexed_logs = {}
         players = set()
         players_times = {}
@@ -372,7 +392,7 @@ class TimeWindowStats(BaseStats):
                 self._set_start_end_times(player, players_times, log, from_)
                 # index logs by player names, so that you can fetch all logs for a given player easily
                 indexed_logs.setdefault(player, []).append(log)
-                
+
                 # Create a list of dict for players, for backward compatibility with the parent class that holds the computation logic
                 if steamid := log.get("steam_id_64_1"):
                     players.add((player, steamid))
@@ -380,12 +400,15 @@ class TimeWindowStats(BaseStats):
             if player2 := log.get("player2"):
                 self._set_start_end_times(player2, players_times, log, from_)
                 indexed_logs.setdefault(player2, []).append(log)
-                
+
                 if steamid2 := log.get("steam_id_64_2"):
                     players.add((player2, steamid2))
 
         # Convert the unique set of players into a list of dict for compatibility with parent class
-        players = [dict(name=player_name, steam_id_64=player_steamid) for player_name, player_steamid in players]
+        players = [
+            dict(name=player_name, steam_id_64=player_steamid)
+            for player_name, player_steamid in players
+        ]
         # Here we massage the session times for a player. 1 session should be a pair of times a start and an end
         for player, times in players_times.items():
             starts = times["start"]
@@ -399,7 +422,9 @@ class TimeWindowStats(BaseStats):
             # We discount the cooldown time at the end of the game to get a more accurate kill / min
             elif len(starts) == len(ends) + 1:
                 logger.debug("Adding end time to end of range for %s", player)
-                ends.append(until - datetime.timedelta(seconds=offset_cooldown_time_seconds))
+                ends.append(
+                    until - datetime.timedelta(seconds=offset_cooldown_time_seconds)
+                )
             # If starts and ends don't match something's probably wrong the the code
             if len(starts) != len(ends):
                 logger.error("Sessions time don't match for %s - %s", player, times)
@@ -421,7 +446,9 @@ class TimeWindowStats(BaseStats):
         with enter_session() as sess:
             profiles_by_id = {
                 profile.steam_id_64: profile
-                for profile in get_player_profile_by_steam_ids(sess, [p['steam_id_64'] for p in players])
+                for profile in get_player_profile_by_steam_ids(
+                    sess, [p["steam_id_64"] for p in players]
+                )
             }
 
             logger.debug("Computing stats")
@@ -444,12 +471,19 @@ class TimeWindowStats(BaseStats):
                 server_filter=server_number,
                 limit=99999999,
             )
-            
-            return self._get_players_stats_for_logs([row.compatible_dict() for row in rows], from_, until)
+
+            return self._get_players_stats_for_logs(
+                [row.compatible_dict() for row in rows], from_, until
+            )
 
     def get_players_stats_from_time(self, from_timestamp):
         logs = get_recent_logs(min_timestamp=from_timestamp)
-        return self._get_players_stats_for_logs(reversed(logs.get("logs", [])), datetime.datetime.utcfromtimestamp(from_timestamp), datetime.datetime.utcnow(), offset_cooldown_time_seconds=0)
+        return self._get_players_stats_for_logs(
+            reversed(logs.get("logs", [])),
+            datetime.datetime.utcfromtimestamp(from_timestamp),
+            datetime.datetime.utcnow(),
+            offset_cooldown_time_seconds=0,
+        )
 
 
 def live_stats_loop():
@@ -457,17 +491,25 @@ def live_stats_loop():
     config = get_config()
     last_loop_session = datetime.datetime(year=2020, month=1, day=1)
     last_loop_game = datetime.datetime(year=2020, month=1, day=1)
-    live_session_sleep_seconds = config.get("LIVE_STATS", {}).get("refresh_stats_seconds", 30)
-    live_game_sleep_seconds = config.get("LIVE_STATS", {}).get("refresh_current_game_stats_seconds", 5)
+    live_session_sleep_seconds = config.get("LIVE_STATS", {}).get(
+        "refresh_stats_seconds", 30
+    )
+    live_game_sleep_seconds = config.get("LIVE_STATS", {}).get(
+        "refresh_current_game_stats_seconds", 5
+    )
     logger.debug("live_session_sleep_seconds: {}".format(live_session_sleep_seconds))
     logger.debug("live_game_sleep_seconds: {}".format(live_game_sleep_seconds))
     red = get_redis_client()
 
     while True:
         # Keep track of session and game timers seperately
-        last_loop_session_seconds = (datetime.datetime.now() - last_loop_session).total_seconds()
-        last_loop_game_seconds = (datetime.datetime.now() - last_loop_game).total_seconds()
-        
+        last_loop_session_seconds = (
+            datetime.datetime.now() - last_loop_session
+        ).total_seconds()
+        last_loop_game_seconds = (
+            datetime.datetime.now() - last_loop_game
+        ).total_seconds()
+
         if last_loop_session_seconds >= live_session_sleep_seconds:
             last_loop_session = datetime.datetime.now()
             try:
@@ -475,7 +517,7 @@ def live_stats_loop():
                 logger.debug("Refreshed set_live_stats")
             except Exception:
                 logger.exception("Error while producing stats")
-        
+
         if last_loop_game_seconds >= live_game_sleep_seconds:
             last_loop_game = datetime.datetime.now()
             try:
@@ -484,7 +526,13 @@ def live_stats_loop():
                 logger.debug("Refreshed current_game_stats")
                 red.set(
                     "LIVE_GAME_STATS",
-                    pickle.dumps(dict(snapshot_timestamp=snapshot_ts, stats=list(stats.values()), refresh_interval_sec=live_game_sleep_seconds)),
+                    pickle.dumps(
+                        dict(
+                            snapshot_timestamp=snapshot_ts,
+                            stats=list(stats.values()),
+                            refresh_interval_sec=live_game_sleep_seconds,
+                        )
+                    ),
                 )
             except Exception:
                 logger.exception("Failed to compute live game stats")
@@ -500,6 +548,7 @@ def current_game_stats():
         return {}
 
     return TimeWindowStats().get_players_stats_from_time(current_map["start"])
+
 
 def get_cached_live_game_stats():
     red = get_redis_client()

@@ -10,7 +10,7 @@ const map_to_pict = {
   utahbeach: "/maps/utah.webp",
   kursk: "/maps/kursk.webp",
   stalingrad: "/maps/stalingrad.webp",
-  remagen: "/maps/remagen.webp"
+  remagen: "/maps/remagen.webp",
 };
 
 export default map_to_pict;

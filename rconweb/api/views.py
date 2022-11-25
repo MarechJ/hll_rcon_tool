@@ -14,13 +14,17 @@ from rcon.commands import CommandFailedError
 from rcon.config import get_config
 from rcon.discord import send_to_discord_audit
 from rcon.gtx import GTXFtp
-from rcon.player_history import (add_player_to_blacklist,
-                                 remove_player_from_blacklist)
+from rcon.player_history import add_player_to_blacklist, remove_player_from_blacklist
 from rcon.recorded_commands import RecordedRcon
 from rcon.settings import SERVER_INFO
-from rcon.user_config import (AutoBroadcasts, AutoVoteKickConfig, CameraConfig,
-                              DiscordHookConfig, InvalidConfigurationError,
-                              StandardMessages)
+from rcon.user_config import (
+    AutoBroadcasts,
+    AutoVoteKickConfig,
+    CameraConfig,
+    DiscordHookConfig,
+    InvalidConfigurationError,
+    StandardMessages,
+)
 from rcon.utils import LONG_HUMAN_MAP_NAMES, MapsHistory, map_name
 from rcon.watchlist import PlayerWatch
 from rcon.workers import temporary_broadcast, temporary_welcome
@@ -58,8 +62,9 @@ def set_name(request):
     except Exception as e:
         failed = True
         error = repr(e)
-    return api_response(failed=failed, error=error, result=None, command="set_server_name")
-
+    return api_response(
+        failed=failed, error=error, result=None, command="set_server_name"
+    )
 
 
 @csrf_exempt
@@ -101,8 +106,8 @@ def public_info(request):
             **status,
             vote_status=vote_status,
             next_map=next_map,
-            public_stats_port=os.getenv('PUBLIC_STATS_PORT', "Not defined"),
-            public_stats_port_https=os.getenv('PUBLIC_STATS_PORT_HTTPS', "Not defined")
+            public_stats_port=os.getenv("PUBLIC_STATS_PORT", "Not defined"),
+            public_stats_port_https=os.getenv("PUBLIC_STATS_PORT_HTTPS", "Not defined"),
         ),
         failed=False,
         command="public_info",
@@ -594,13 +599,14 @@ def get_connection_info(request):
         command="get_connection_info",
     )
 
+
 @csrf_exempt
 @login_required
 def run_raw_command(request):
     data = _get_data(request)
-    command = data.get('command')
+    command = data.get("command")
     if not command:
-        res = "Parameter \"command\" must not be none"
+        res = 'Parameter "command" must not be none'
     else:
         try:
             res = ctl._request(command, can_fail=True, log_info=True)
@@ -646,7 +652,9 @@ try:
         if not any(name.startswith(prefix) for prefix in PREFIXES_TO_EXPOSE):
             continue
 
-        commands.append((name, wrap_method(func, inspect.signature(func).parameters, name)))
+        commands.append(
+            (name, wrap_method(func, inspect.signature(func).parameters, name))
+        )
 except:
     logger.exception("Failed to initialized endpoints - Most likely bad configuration")
     raise

@@ -26,12 +26,12 @@ const RealVip = ({ classes }) => {
   React.useEffect(() => {
     get("get_real_vip_config")
       .then((res) => showResponse(res, "get_real_vip_config", false))
-      .then((res) => { 
-          if (!res.failed && res.result) {
-              setEnabled(res.result.enabled)
-              setMaxVipSlot(res.result.desired_total_number_vips)
-              setMinVipSlot(res.result.minimum_number_vip_slot)
-          }
+      .then((res) => {
+        if (!res.failed && res.result) {
+          setEnabled(res.result.enabled);
+          setMaxVipSlot(res.result.desired_total_number_vips);
+          setMinVipSlot(res.result.minimum_number_vip_slot);
+        }
       });
   }, []);
 
@@ -45,7 +45,7 @@ const RealVip = ({ classes }) => {
         .then((res) => showResponse(res, "set_real_vip_config", true))
         .catch(handle_http_errors);
     } else if (enabled !== null && maxVipSlot !== -1 && minVipSlot !== -1) {
-        isFirstRender.current = false;
+      isFirstRender.current = false;
     }
   }, [enabled, maxVipSlot, minVipSlot]);
 
