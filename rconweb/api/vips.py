@@ -9,6 +9,7 @@ from django import forms
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
+
 from rcon.commands import CommandFailedError
 from rcon.discord import dict_to_discord, send_to_discord_audit
 from rcon.models import PlayerSteamID, PlayerVIP, enter_session
@@ -81,11 +82,6 @@ def async_upload_vips(request):
     # Handle file upload
     vips = []
     if request.method == "POST":
-        if request.POST["processExpiringVIPs"] == "true":
-            process_vip_expirations = True
-        else:
-            process_vip_expirations = False
-
         for name, data in request.FILES.items():
             for line in data:
                 expiration_timestamp = None
@@ -94,21 +90,15 @@ def async_upload_vips(request):
                     if not line:
                         continue
 
-                    if process_vip_expirations:
-                        steam_id, *name_chunks, possible_timestamp = line.split(" ")
-                        # This will collapse whitespace that was originally in a player's name
-                        name = " ".join(name_chunks)
-                        try:
-                            expiration_timestamp = parser.parse(possible_timestamp)
-                        except:
-                            logger.warning(
-                                f"Unable to parse {possible_timestamp=} for {name=} {steam_id=}"
-                            )
-                    else:
-                        try:
-                            steam_id, name = line.split(" ", 1)
-                        except ValueError:
-                            steam_id, name = line.split("\t", 1)
+                    steam_id, *name_chunks, possible_timestamp = line.split(" ")
+                    # This will collapse whitespace that was originally in a player's name
+                    name = " ".join(name_chunks)
+                    try:
+                        expiration_timestamp = parser.parse(possible_timestamp)
+                    except:
+                        logger.warning(
+                            f"Unable to parse {possible_timestamp=} for {name=} {steam_id=}"
+                        )
 
                     if len(steam_id) != 17:
                         errors.append(
@@ -158,11 +148,6 @@ def async_upload_vips_result(request):
 @csrf_exempt
 @login_required
 def download_vips(request):
-    if request.GET["processExpiringVIPs"] == "true":
-        process_vip_expirations = True
-    else:
-        process_vip_expirations = False
-
     vips = ctl.get_vip_ids()
     vip_lines: List[str]
 
@@ -170,18 +155,15 @@ def download_vips(request):
     expiration_lookup: Dict[str, datetime.datetime] = defaultdict(
         lambda: datetime.datetime.utcnow() + relativedelta.relativedelta(years=200)
     )
-    if process_vip_expirations:
-        with enter_session() as session:
-            players = session.query(PlayerSteamID).join(PlayerVIP).all()
-            for player in players:
-                expiration_lookup[player.steam_id_64] = player.vip.expiration
+    with enter_session() as session:
+        players = session.query(PlayerSteamID).join(PlayerVIP).all()
+        for player in players:
+            expiration_lookup[player.steam_id_64] = player.vip.expiration
 
-        vip_lines = [
-            f"{vip['steam_id_64']} {vip['name']} {expiration_lookup[vip['steam_id_64']].isoformat()}"
-            for vip in vips
-        ]
-    else:
-        vip_lines = [f"{vip['steam_id_64']} {vip['name']}" for vip in vips]
+    vip_lines = [
+        f"{vip['steam_id_64']} {vip['name']} {expiration_lookup[vip['steam_id_64']].isoformat()}"
+        for vip in vips
+    ]
 
     response = HttpResponse(
         "\n".join(vip_lines),

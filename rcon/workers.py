@@ -3,9 +3,8 @@ import logging
 import os
 import time
 from datetime import timedelta
-from logging import Logger
-from dateutil import relativedelta
 
+from dateutil import relativedelta
 from rq import Queue
 from rq.job import Job
 from sqlalchemy import and_
@@ -17,7 +16,6 @@ from rcon.player_history import get_player
 from rcon.recorded_commands import RecordedRcon
 from rcon.scoreboard import TimeWindowStats
 from rcon.settings import SERVER_INFO
-from rcon.utils import map_name
 
 logger = logging.getLogger("rcon")
 

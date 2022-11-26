@@ -641,7 +641,7 @@ class PlayersHistory extends React.Component {
             this.addFlagToPlayer(playerObj, theFlag, theComment);
             this.setDoFlag(false);
           }}
-          SummaryRenderer={PlayerFlagSummary}
+          SummaryRenderer={PlayerSummary}
         />
         <VipExpirationDialog
           open={doVIPPlayer}

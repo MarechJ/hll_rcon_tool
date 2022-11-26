@@ -140,20 +140,6 @@ export const ForwardCheckBox = ({ bool, onChange }) => (
   />
 );
 
-export const ExpiringVIPCheckBox = ({ bool, onChange }) => (
-  <FormControlLabel
-    control={
-      <Checkbox
-        checked={bool}
-        onChange={(e) => {
-          onChange(e.target.checked);
-        }}
-      />
-    }
-    label="Include Expiration Dates"
-  />
-);
-
 export const WordList = ({
   words,
   onWordsChange,

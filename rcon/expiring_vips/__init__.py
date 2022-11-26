@@ -1,14 +1,14 @@
 import logging
 import time
 from datetime import datetime
-from dateutil import relativedelta
-from typing import Optional, List
+from typing import List, Optional
 
+from dateutil import relativedelta
 from pydantic import BaseModel, ValidationError, conint
 
 from rcon.config import get_config
 from rcon.discord import send_to_discord_audit
-from rcon.models import PlayerVIP, enter_session, PlayerSteamID
+from rcon.models import PlayerSteamID, PlayerVIP, enter_session
 from rcon.recorded_commands import RecordedRcon
 from rcon.settings import SERVER_INFO
 

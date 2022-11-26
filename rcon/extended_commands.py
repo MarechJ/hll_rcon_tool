@@ -8,10 +8,11 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
 from functools import cached_property
 from time import sleep
-from typing import List, Dict, Optional, Union
+from typing import Dict, List, Optional, Union
 
 from rcon.cache_utils import get_redis_client, invalidates, ttl_cache
 from rcon.commands import CommandFailedError, HLLServerError, ServerCtl
+from rcon.models import PlayerSteamID, PlayerVIP, enter_session
 from rcon.player_history import get_profiles
 from rcon.steam_utils import (
     get_player_country_code,
@@ -19,8 +20,6 @@ from rcon.steam_utils import (
     get_players_country_code,
     get_players_have_bans,
 )
-
-from rcon.models import enter_session, PlayerSteamID, PlayerVIP
 
 STEAMID = "steam_id_64"
 NAME = "name"

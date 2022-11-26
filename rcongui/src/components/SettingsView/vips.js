@@ -7,14 +7,13 @@ import {
   ListItemSecondaryAction,
   ListItemText,
   TextField,
-  Input,
   Button,
   Tooltip,
   Typography,
 } from "@material-ui/core";
 import DeleteIcon from "@material-ui/icons/Delete";
 import AddIcon from "@material-ui/icons/Add";
-import { ForwardCheckBox, ExpiringVIPCheckBox } from "../commonComponent";
+import { ForwardCheckBox } from "../commonComponent";
 import { get, handle_http_errors, showResponse } from "../../utils/fetchUtils";
 import { DateTimePicker, MuiPickersUtilsProvider } from "@material-ui/pickers";
 import MomentUtils from "@date-io/moment";
@@ -92,11 +91,6 @@ const VipUpload = ({ classes }) => {
   const [selectedFile, setSelectedFile] = React.useState();
   const [isFilePicked, setIsFilePicked] = React.useState(false);
   const [result, setResult] = React.useState(null);
-  const [processExpiringVIPs, setProcessExpiringVIPs] = React.useState(false);
-
-  const getUrl = () => {
-    return `${process.env.REACT_APP_API_URL}download_vips?processExpiringVIPs=${processExpiringVIPs}`;
-  };
 
   const changeHandler = (event) => {
     setSelectedFile(event.target.files[0]);
@@ -106,7 +100,6 @@ const VipUpload = ({ classes }) => {
   const handleSubmission = () => {
     const formData = new FormData();
     formData.append("File", selectedFile);
-    formData.append("processExpiringVIPs", processExpiringVIPs);
 
     fetch(`${process.env.REACT_APP_API_URL}async_upload_vips`, {
       method: "POST",
@@ -133,18 +126,12 @@ const VipUpload = ({ classes }) => {
 
   return (
     <Grid container spacing={1}>
-      <Grid item xs={12}>
-        <ExpiringVIPCheckBox
-          bool={processExpiringVIPs}
-          onChange={setProcessExpiringVIPs}
-        />
-      </Grid>
       <Grid item xs={6}>
         <Button
           fullWidth
           type="link"
           variant="outlined"
-          href={getUrl()}
+          href={`${process.env.REACT_APP_API_URL}download_vips`}
           target="_blank"
         >
           Download VIPs
@@ -200,14 +187,13 @@ const VipEditableList = ({
   );
 
   const formatExpirationDate = (player) => {
-    if (player.expiration) {
-      let date = moment(player.expiration);
-
+    if (player.vip_expiration) {
+      let date = moment(player.vip_expiration);
       /* For display purposes, show dates really far in the future as indefinite */
       if (date.isSameOrAfter(moment().add(100, "years"))) {
         return "Never";
       } else {
-        moment(player.expiration).format("YYYY-MM-DD");
+        return moment(player.vip_expiration).format("YYYY-MM-DD HH:MM:SSZ");
       }
     } else {
       return "Never";

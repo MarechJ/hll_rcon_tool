@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 
 import click
 
+import rcon.expiring_vips
 from rcon import auto_settings, broadcast, game_logs, routines, stats_loop
 from rcon.cache_utils import RedisCached, get_redis_pool
 from rcon.extended_commands import Rcon
@@ -13,7 +14,6 @@ from rcon.models import install_unaccent
 from rcon.scoreboard import live_stats_loop
 from rcon.settings import SERVER_INFO
 from rcon.squad_automod import automod
-import rcon.expiring_vips
 from rcon.steam_utils import enrich_db_users
 from rcon.user_config import seed_default_config
 from rcon.utils import ApiKey
