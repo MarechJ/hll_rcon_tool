@@ -34,7 +34,7 @@ import PlayerGrid from "./playerGrid";
 import { VipExpirationDialog } from "./VipDialog";
 import { PlayerVipSummary } from "./VipDialog/PlayerVipSummary";
 
-const PlayerFlagSummary = ({ player, flag }) => (
+const PlayerSummary = ({ player, flag }) => (
   <React.Fragment>
     <Typography variant="body2">
       Add flag: {flag ? getEmojiFlag(flag) : <small>Please choose</small>}

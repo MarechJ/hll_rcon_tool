@@ -70,7 +70,7 @@ export default function LogsTable({ logs, downloadCSV }) {
     onDownload: () => {
       downloadCSV().bind(this);
       return false;
-    }
+    },
   };
 
   return (

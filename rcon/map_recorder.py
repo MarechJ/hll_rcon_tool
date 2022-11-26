@@ -17,11 +17,22 @@ from rcon.extended_commands import CommandFailedError
 from rcon.recorded_commands import RecordedRcon
 from rcon.settings import SERVER_INFO
 from rcon.user_config import DefaultMethods, VoteMapConfig
-from rcon.utils import (ALL_MAPS, FixedLenList, MapsHistory, categorize_maps,
-                        get_map_side, map_name, numbered_maps)
-from rcon.workers import (record_stats, record_stats_worker,
-                          temp_welcome_standalone, temporary_welcome,
-                          temporary_welcome_in)
+from rcon.utils import (
+    ALL_MAPS,
+    FixedLenList,
+    MapsHistory,
+    categorize_maps,
+    get_map_side,
+    map_name,
+    numbered_maps,
+)
+from rcon.workers import (
+    record_stats,
+    record_stats_worker,
+    temp_welcome_standalone,
+    temporary_welcome,
+    temporary_welcome_in,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -75,7 +86,9 @@ def suggest_next_maps(
         logger.info(
             "Not allowing consecutive offensive with opposite side: %s", opposite_side
         )
-        remaining_maps = [m for m in remaining_maps if get_map_side(m) not in opposite_side]
+        remaining_maps = [
+            m for m in remaining_maps if get_map_side(m) not in opposite_side
+        ]
         logger.info("Remaining maps to suggest from: %s", remaining_maps)
 
     # Handle case if all maps got excluded
@@ -362,7 +375,7 @@ class VoteMap:
         # Check that it worked
         current_rotation = rcon.get_map_rotation()
         if (
-            not current_rotation[current_map_idx] == current_map.replace('_RESTART', '')
+            not current_rotation[current_map_idx] == current_map.replace("_RESTART", "")
             and current_rotation[current_map_idx + 1] == next_map
         ):
             raise ValueError(
@@ -400,17 +413,18 @@ def on_map_change(old_map: str, new_map: str):
             votemap.gen_selection()
             votemap.clear_votes()
             votemap.apply_with_retry(nb_retry=4)
-            #temporary_welcome_in(
-            #    "%s{votenextmap_vertical}" % config.get_votemap_instruction_text(), 
+            # temporary_welcome_in(
+            #    "%s{votenextmap_vertical}" % config.get_votemap_instruction_text(),
             #    seconds=60 * 20,
             #    restore_after_seconds=60 * 5,
-            #)
+            # )
     except Exception:
         logger.exception("Unexpected error while running vote map")
     try:
         record_stats_worker(MapsHistory()[1])
     except Exception:
         logger.exception("Unexpected error while running stats worker")
+
 
 class MapsRecorder:
     def __init__(self, rcon: RecordedRcon):

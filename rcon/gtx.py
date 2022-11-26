@@ -15,12 +15,13 @@ from rcon.extended_commands import Rcon, invalidates
 
 logger = logging.getLogger(__name__)
 
+
 class FTPAdapter:
     def __init__(self, ip, port, username, password) -> None:
         self.conn = ftpretty(ip, username, password, port=port)
 
     def get_base_path(self):
-        return self.conn.list('.')[0]
+        return self.conn.list(".")[0]
 
     def get_file(self, remote_path, fp):
         return self.conn.get(remote_path, fp)
@@ -31,6 +32,7 @@ class FTPAdapter:
         except ftplib.error_temp as e:
             # TODO there's a but in FTPlib when it tries to go back to the original directory
             logger.error(repr(e))
+
 
 class SFTPAdapter:
     def __init__(self, ip, port, username, password) -> None:
@@ -86,5 +88,3 @@ class GTXFtp:
             f = BytesIO(temp_f.getvalue().encode())
             self.adapter.put_file(f, remote_path)
             logger.info("Updated name to %s", new_name)
-
-

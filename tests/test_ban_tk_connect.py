@@ -126,7 +126,7 @@ def test_ban_success(*args):
         auto_ban_if_tks_right_after_connection(rcon, tk_log)
         rcon.do_perma_ban.assert_called()
 
-    
+
 @mock.patch("rcon.game_logs.get_player_profile", autospec=True, return_value=None)
 @mock.patch(
     "rcon.game_logs.get_config",
@@ -164,18 +164,18 @@ def test_ban_ignored_kill(*args):
     }
     logs = [
         tk_log,
-         {
-        "version": 1,
-        "timestamp_ms": 1612695641000,
-        "action": "KILL",
-        "player": "[ARC] DYDSO ★ツ",
-        "steam_id_64_1": 76561198091327692,
-        "player2": "Francky Mc Fly",
-        "steam_id_64_1": 76561198091327692,
-        "weapon": "G43",
-        "raw": "[646 ms (1612695641)] TEAM KILL: [ARC] DYDSO ★ツ(Axis/76561198091327692) -> Francky Mc Fly(Axis/76561198133214514) with None",
-        "content": "[ARC] DYDSO ★ツ(Axis/76561198091327692) -> Francky Mc Fly(Axis/76561198133214514) with None",
-          },
+        {
+            "version": 1,
+            "timestamp_ms": 1612695641000,
+            "action": "KILL",
+            "player": "[ARC] DYDSO ★ツ",
+            "steam_id_64_1": 76561198091327692,
+            "player2": "Francky Mc Fly",
+            "steam_id_64_1": 76561198091327692,
+            "weapon": "G43",
+            "raw": "[646 ms (1612695641)] TEAM KILL: [ARC] DYDSO ★ツ(Axis/76561198091327692) -> Francky Mc Fly(Axis/76561198133214514) with None",
+            "content": "[ARC] DYDSO ★ツ(Axis/76561198091327692) -> Francky Mc Fly(Axis/76561198133214514) with None",
+        },
         {
             "id": 1381028,
             "version": 1,
@@ -238,18 +238,18 @@ def test_ban_count_one_death(*args):
     }
     logs = [
         tk_log,
-         {
-        "version": 1,
-        "timestamp_ms": 1612695641000,
-        "action": "KILL",
-        "player2": "[ARC] DYDSO ★ツ",
-        "steam_id_64_2": 76561198091327692,
-        "player": "Francky Mc Fly",
-        "steam_id_64_1": 76561198091327692,
-        "weapon": "G43",
-        "raw": "[646 ms (1612695641)] TEAM KILL: [ARC] DYDSO ★ツ(Axis/76561198091327692) -> Francky Mc Fly(Axis/76561198133214514) with None",
-        "content": "[ARC] DYDSO ★ツ(Axis/76561198091327692) -> Francky Mc Fly(Axis/76561198133214514) with None",
-          },
+        {
+            "version": 1,
+            "timestamp_ms": 1612695641000,
+            "action": "KILL",
+            "player2": "[ARC] DYDSO ★ツ",
+            "steam_id_64_2": 76561198091327692,
+            "player": "Francky Mc Fly",
+            "steam_id_64_1": 76561198091327692,
+            "weapon": "G43",
+            "raw": "[646 ms (1612695641)] TEAM KILL: [ARC] DYDSO ★ツ(Axis/76561198091327692) -> Francky Mc Fly(Axis/76561198133214514) with None",
+            "content": "[ARC] DYDSO ★ツ(Axis/76561198091327692) -> Francky Mc Fly(Axis/76561198133214514) with None",
+        },
         {
             "id": 1381028,
             "version": 1,
@@ -312,30 +312,30 @@ def test_ban_ignored_2_death(*args):
     }
     logs = [
         tk_log,
-               {
-        "version": 1,
-        "timestamp_ms": 1612695641000,
-        "action": "KILL",
-        "player2": "[ARC] DYDSO ★ツ",
-        "steam_id_64_2": 76561198091327692,
-        "player": "Francky Mc Fly",
-        "steam_id_64_1": 76561198091327692,
-        "weapon": "G43",
-        "raw": "[646 ms (1612695641)] TEAM KILL: [ARC] DYDSO ★ツ(Axis/76561198091327692) -> Francky Mc Fly(Axis/76561198133214514) with None",
-        "content": "[ARC] DYDSO ★ツ(Axis/76561198091327692) -> Francky Mc Fly(Axis/76561198133214514) with None",
-         },
-         {
-        "version": 1,
-        "timestamp_ms": 1612695641000,
-        "action": "KILL",
-        "player2": "[ARC] DYDSO ★ツ",
-        "steam_id_64_2": 76561198091327692,
-        "player": "Francky Mc Fly",
-        "steam_id_64_1": 76561198091327692,
-        "weapon": "G43",
-        "raw": "[646 ms (1612695641)] TEAM KILL: [ARC] DYDSO ★ツ(Axis/76561198091327692) -> Francky Mc Fly(Axis/76561198133214514) with None",
-        "content": "[ARC] DYDSO ★ツ(Axis/76561198091327692) -> Francky Mc Fly(Axis/76561198133214514) with None",
-         },
+        {
+            "version": 1,
+            "timestamp_ms": 1612695641000,
+            "action": "KILL",
+            "player2": "[ARC] DYDSO ★ツ",
+            "steam_id_64_2": 76561198091327692,
+            "player": "Francky Mc Fly",
+            "steam_id_64_1": 76561198091327692,
+            "weapon": "G43",
+            "raw": "[646 ms (1612695641)] TEAM KILL: [ARC] DYDSO ★ツ(Axis/76561198091327692) -> Francky Mc Fly(Axis/76561198133214514) with None",
+            "content": "[ARC] DYDSO ★ツ(Axis/76561198091327692) -> Francky Mc Fly(Axis/76561198133214514) with None",
+        },
+        {
+            "version": 1,
+            "timestamp_ms": 1612695641000,
+            "action": "KILL",
+            "player2": "[ARC] DYDSO ★ツ",
+            "steam_id_64_2": 76561198091327692,
+            "player": "Francky Mc Fly",
+            "steam_id_64_1": 76561198091327692,
+            "weapon": "G43",
+            "raw": "[646 ms (1612695641)] TEAM KILL: [ARC] DYDSO ★ツ(Axis/76561198091327692) -> Francky Mc Fly(Axis/76561198133214514) with None",
+            "content": "[ARC] DYDSO ★ツ(Axis/76561198091327692) -> Francky Mc Fly(Axis/76561198133214514) with None",
+        },
         {
             "id": 1381028,
             "version": 1,

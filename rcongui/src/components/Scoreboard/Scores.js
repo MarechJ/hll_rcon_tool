@@ -276,9 +276,11 @@ const RawScores = pure(({ classes, scores }) => {
                 label: "Nemesis",
                 options: {
                   customBodyRender: (value, tableMeta, updateValue) => {
-                  const pairs = toPairs(value)
-                  return sortBy(pairs, v => -v[1]).map(v => `${v[0]}: ${v[1]}`)[0]
-                  }
+                    const pairs = toPairs(value);
+                    return sortBy(pairs, (v) => -v[1]).map(
+                      (v) => `${v[0]}: ${v[1]}`
+                    )[0];
+                  },
                 },
               },
               {
@@ -286,9 +288,11 @@ const RawScores = pure(({ classes, scores }) => {
                 label: "Victim",
                 options: {
                   customBodyRender: (value, tableMeta, updateValue) => {
-                  const pairs = toPairs(value)
-                  return sortBy(pairs, v => -v[1]).map(v => `${v[0]}: ${v[1]}`)[0]
-                  }
+                    const pairs = toPairs(value);
+                    return sortBy(pairs, (v) => -v[1]).map(
+                      (v) => `${v[0]}: ${v[1]}`
+                    )[0];
+                  },
                 },
               },
               {
@@ -296,9 +300,11 @@ const RawScores = pure(({ classes, scores }) => {
                 label: "Weapons",
                 options: {
                   customBodyRender: (value, tableMeta, updateValue) => {
-                    const pairs = toPairs(value)
-                    return sortBy(pairs, v => -v[1]).map(v => `${v[0]}: ${v[1]}`).join(', ')
-                  }
+                    const pairs = toPairs(value);
+                    return sortBy(pairs, (v) => -v[1])
+                      .map((v) => `${v[0]}: ${v[1]}`)
+                      .join(", ");
+                  },
                 },
               },
             ]}
