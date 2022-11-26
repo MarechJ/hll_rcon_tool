@@ -8,19 +8,19 @@ TIMEOUT_SEC = 20
 
 logger = logging.getLogger(__name__)
 
+
 class HLLAuthError(Exception):
     pass
 
+
 class HLLConnection:
     """demonstration class only
-      - coded for clarity, not efficiency
+    - coded for clarity, not efficiency
     """
 
     def __init__(self):
         self.xorkey = None
-        self.sock = socket.socket(
-            socket.AF_INET, socket.SOCK_STREAM
-        )
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.settimeout(TIMEOUT_SEC)
 
     def connect(self, host, port, password: str):
@@ -28,8 +28,8 @@ class HLLConnection:
         self.xorkey = self.sock.recv(MSGLEN)
         self.send(f"login {password}".encode())
         result = self.receive()
-        if result != b'SUCCESS':
-            raise HLLAuthError('Invalid password')
+        if result != b"SUCCESS":
+            raise HLLAuthError("Invalid password")
 
     def close(self):
         try:
@@ -56,12 +56,12 @@ class HLLConnection:
         for i in range(len(msg)):
             n.append(msg[i] ^ self.xorkey[i % len(self.xorkey)])
 
-        return array.array('B', n).tobytes()
+        return array.array("B", n).tobytes()
 
     def receive(self, msglen=MSGLEN, timed=False):
         before = time.time()
         buff = self.sock.recv(msglen)
-        
+
         msg = self._xor(buff)
 
         while len(buff) >= msglen:

@@ -1,4 +1,3 @@
-
 import logging
 from dataclasses import field
 from datetime import datetime
@@ -36,8 +35,10 @@ class PunishStepState(Enum):
 class NoLeaderConfig:
     enabled: bool = False
     dry_run: bool = True
-    discord_webhook_url: str = ''
-    warn_message_header: str = "Warning squads must have an Officer.\nYou will be punished then kicked"
+    discord_webhook_url: str = ""
+    warn_message_header: str = (
+        "Warning squads must have an Officer.\nYou will be punished then kicked"
+    )
     warn_message_footer: str = "Next check will happen automatically in 60s"
     # Set to 0 to disable, -1 for infinite warnings (will never go to punishes)
     number_of_warning: int = 2
@@ -48,9 +49,7 @@ class NoLeaderConfig:
     punish_interval_seconds: int = 60
     min_squad_players_for_punish: int = 3
     disable_punish_below_server_player_count: int = 60
-    punish_message: str = (
-        "Squads must have an officer.\nYou're being punished by a bot.\nNext check in 60seconds"
-    )
+    punish_message: str = "Squads must have an officer.\nYou're being punished by a bot.\nNext check in 60seconds"
 
     kick_after_max_punish: bool = False
     disable_kick_below_server_player_count: int = 60
@@ -78,26 +77,45 @@ class ASquad:
     name: str
     players: List[APlayer] = field(default_factory=list)
 
+
 @dataclass
 class PunitionsToApply:
-    warning: Mapping[str, List[str]] = field(default_factory=lambda: {"allies": [], "axis": []})
-    pending_warnings: Mapping[str, List[str]] = field(default_factory=lambda: {"allies": [], "axis": []})
+    warning: Mapping[str, List[str]] = field(
+        default_factory=lambda: {"allies": [], "axis": []}
+    )
+    pending_warnings: Mapping[str, List[str]] = field(
+        default_factory=lambda: {"allies": [], "axis": []}
+    )
     punish: List[APlayer] = field(default_factory=list)
     kick: List[APlayer] = field(default_factory=list)
     squads_state: List[ASquad] = field(default_factory=list)
 
     def add_squad_state(self, squad_name: str, squad: dict):
         try:
-            self.squads_state.append(ASquad(
-                name=squad_name,
-                players=[
-                    APlayer(player=p.get("name"), squad=p.get("unit_name"), team=p.get("team"), role=p.get("role"), lvl=p.get("level"))
-                    for p in squad.get("players", [])
-                ]
-            ))
+            self.squads_state.append(
+                ASquad(
+                    name=squad_name,
+                    players=[
+                        APlayer(
+                            player=p.get("name"),
+                            squad=p.get("unit_name"),
+                            team=p.get("team"),
+                            role=p.get("role"),
+                            lvl=p.get("level"),
+                        )
+                        for p in squad.get("players", [])
+                    ],
+                )
+            )
         except:
             logger.exception("Unable to add squad info")
 
     def __bool__(self):
-        return any([self.warning.get("allies"), self.warning.get("axis"), self.kick, self.punish])
-
+        return any(
+            [
+                self.warning.get("allies"),
+                self.warning.get("axis"),
+                self.kick,
+                self.punish,
+            ]
+        )

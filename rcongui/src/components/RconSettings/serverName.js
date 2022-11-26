@@ -36,7 +36,9 @@ const ServerName = ({ classes }) => {
         />
       </Grid>
       <Grid item xs={2}>
-          <Button variant="outlined" onClick={save}>SAVE</Button>
+        <Button variant="outlined" onClick={save}>
+          SAVE
+        </Button>
       </Grid>
     </Grid>
   );

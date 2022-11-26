@@ -17,22 +17,28 @@ def get_prunable_vips(days_of_inactivity=30):
         try:
             last_session = player["sessions"][0]
         except IndexError:
-            print(f"""
+            print(
+                f"""
                 VIP Name: {vips_by_steam_id[player["steam_id_64"]]}
                 Last seen: N/A
                 AKAs: {'  ||  '.join(n["name"] for n in player["names"])}
-            """)
+            """
+            )
             continue
-        last_session = last_session["start"] or last_session["end"] or last_session["created"]
+        last_session = (
+            last_session["start"] or last_session["end"] or last_session["created"]
+        )
         # TODO: Handle no sessions
-        if  last_session < age_limit:
-            print(f"""
+        if last_session < age_limit:
+            print(
+                f"""
                 VIP Name: {vips_by_steam_id[player["steam_id_64"]]}
                 Last seen: {last_session.isoformat()}
                 AKAs: {'  ||  '.join(n["name"] for n in player["names"])}
-            """)
+            """
+            )
 
 
-if __name__ == '__main__':
-    #print(get_prunable_vips())
+if __name__ == "__main__":
+    # print(get_prunable_vips())
     light_get_vips_count(RecordedRcon(SERVER_INFO))
