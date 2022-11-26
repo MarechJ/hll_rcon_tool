@@ -588,15 +588,7 @@ class Rcon(ServerCtl):
         }
         for b in bans:
             if b.get("steam_id_64") == steam_id_64:
-                # The game server will report expired temporary bans (verified as of 10 Aug 2022 U12 Hotfix)
-                # which will prevent removing permanent bans if we don't catch the failed removal
-                try:
-                    type_to_func[b["type"]](b["raw"])
-                except CommandFailedError:
-                    logger.error(
-                        f"Unable to remove {b['type']} ban from {steam_id_64}",
-                        exc_info=True,
-                    )
+                type_to_func[b["type"]](b["raw"])
 
     def get_ban(self, steam_id_64):
         """
