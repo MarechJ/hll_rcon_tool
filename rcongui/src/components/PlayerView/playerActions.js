@@ -132,7 +132,7 @@ class ReasonDialog extends React.Component {
               />
             )}
           />
-          
+
           <TextField
             multiline
             rows={4}
@@ -145,7 +145,7 @@ class ReasonDialog extends React.Component {
             margin="dense"
             helperText="A comment that will NOT be displayed to the player"
           />
-          
+
           {open.actionType === "temp_ban" ? (
             <Duration
               durationNumber={durationNumber}

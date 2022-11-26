@@ -26,6 +26,7 @@ from .views import _get_data, ctl
 
 logger = logging.getLogger("rconweb")
 
+
 class DocumentForm(forms.Form):
     docfile = forms.FileField(label="Select a file")
 
@@ -196,7 +197,9 @@ def set_real_vip_config(request):
         for k, v in data.items():
             if k in real_vip_config:
                 cast, setter = real_vip_config[k]
-                send_to_discord_audit(f"RealVIP set {dict_to_discord({k: v})}", request.user.username)
+                send_to_discord_audit(
+                    f"RealVIP set {dict_to_discord({k: v})}", request.user.username
+                )
                 setter(cast(v))
     except Exception as e:
         logger.exception("Failed to set realvip config")

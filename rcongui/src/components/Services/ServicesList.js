@@ -1,12 +1,12 @@
 import React from "react";
-import {Grid} from "@material-ui/core";
+import { Grid } from "@material-ui/core";
 import ListItemText from "@material-ui/core/ListItemText";
 import "react-toastify/dist/ReactToastify.css";
-import {fromJS, List as IList} from "immutable";
+import { fromJS, List as IList } from "immutable";
 import Typography from "@material-ui/core/Typography";
 import Switch from "@material-ui/core/Switch";
 import Chip from "@material-ui/core/Chip";
-import {get, postData, showResponse,} from "../../utils/fetchUtils";
+import { get, postData, showResponse } from "../../utils/fetchUtils";
 
 const StatusToColor = {
   RUNNING: "primary",
@@ -19,7 +19,15 @@ const StatusToColor = {
   UNKNOWN: "secondary",
 };
 
-const Process = ({ name, description, upTime, status, isOn, onToggle, classes }) => (
+const Process = ({
+  name,
+  description,
+  upTime,
+  status,
+  isOn,
+  onToggle,
+  classes,
+}) => (
   <Grid
     container
     justify="space-around"
@@ -51,10 +59,10 @@ const Process = ({ name, description, upTime, status, isOn, onToggle, classes })
         <Grid item xs={4}>
           <Chip label={status} color={StatusToColor[status]} />
           <ListItemText
-                primary=""
-                secondary={upTime}
-                className={classes.noPaddingMargin}
-              />
+            primary=""
+            secondary={upTime}
+            className={classes.noPaddingMargin}
+          />
         </Grid>
         <Grid item xs={2}>
           <Switch checked={isOn} onChange={onToggle} name="Start/Stop" />
@@ -70,7 +78,7 @@ class ServicesList extends React.Component {
 
     this.state = {
       services: IList(),
-      pollHandle: null, 
+      pollHandle: null,
     };
 
     this.getServices = this.getServices.bind(this);
@@ -80,17 +88,20 @@ class ServicesList extends React.Component {
   }
 
   poll() {
-    const handle = setTimeout(() => this.getServices().then(this.poll), 1000 * 10)
-    return this.setState({pollHandle: handle})
+    const handle = setTimeout(
+      () => this.getServices().then(this.poll),
+      1000 * 10
+    );
+    return this.setState({ pollHandle: handle });
   }
 
   componentDidMount() {
     this.getServices();
-    this.poll()
+    this.poll();
   }
 
   componentWillUnmount() {
-      clearTimeout(this.state.pollHandle)
+    clearTimeout(this.state.pollHandle);
   }
 
   async getServices() {
@@ -105,11 +116,14 @@ class ServicesList extends React.Component {
     return postData(`${process.env.REACT_APP_API_URL}do_service`, {
       service_name: serviceName,
       action: start ? "START" : "STOP",
-    }).then(res => showResponse(res, "do_service", true));
+    }).then((res) => showResponse(res, "do_service", true));
   }
 
   isOK(processInfo) {
-    return processInfo.get("statename") === "RUNNING" || processInfo.get("statename") === "STARTING"
+    return (
+      processInfo.get("statename") === "RUNNING" ||
+      processInfo.get("statename") === "STARTING"
+    );
   }
 
   render() {
@@ -125,13 +139,12 @@ class ServicesList extends React.Component {
               name={s.get("name")}
               description={s.get("info")}
               status={s.get("statename")}
-              upTime={s.get("description", " , ").split(',')[1]}
+              upTime={s.get("description", " , ").split(",")[1]}
               isOn={this.isOK(s)}
               onToggle={() =>
-                this.toggleService(
-                  s.get("name"),
-                  !this.isOK(s)
-                ).then(this.getServices)
+                this.toggleService(s.get("name"), !this.isOK(s)).then(
+                  this.getServices
+                )
               }
             />
           ))}

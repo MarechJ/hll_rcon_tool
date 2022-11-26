@@ -1,3 +1,3 @@
-import LiveScore from './LiveScore'
+import LiveScore from "./LiveScore";
 
-export { LiveScore }
+export { LiveScore };

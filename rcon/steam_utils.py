@@ -32,9 +32,9 @@ def get_steam_profiles(steam_ids):
         return None
     try:
         api = WebAPI(key=STEAM_KEY)
-        return api.ISteamUser.GetPlayerSummaries(steamids=",".join(steam_ids))["response"][
-            "players"
-        ]
+        return api.ISteamUser.GetPlayerSummaries(steamids=",".join(steam_ids))[
+            "response"
+        ]["players"]
     except AttributeError:
         logger.error("STEAM_API_KEY is invalid, can't fetch steam profile")
         return None
@@ -128,7 +128,12 @@ def get_players_have_bans(steamd_ids: List) -> Mapping:
     for bans in player_bans:
         bans["has_bans"] = any(
             bans.get(k)
-            for k in ["VACBanned", "NumberOfVACBans", "DaysSinceLastBan", "NumberOfGameBans"]
+            for k in [
+                "VACBanned",
+                "NumberOfVACBans",
+                "DaysSinceLastBan",
+                "NumberOfGameBans",
+            ]
         )
         result[bans["SteamId"]]["steam_bans"] = bans
         del bans["SteamId"]
@@ -146,7 +151,12 @@ def get_player_has_bans(steamd_id):
 
     bans["has_bans"] = any(
         bans.get(k)
-        for k in ["VACBanned", "NumberOfVACBans", "DaysSinceLastBan", "NumberOfGameBans"]
+        for k in [
+            "VACBanned",
+            "NumberOfVACBans",
+            "DaysSinceLastBan",
+            "NumberOfGameBans",
+        ]
     )
     return bans
 
