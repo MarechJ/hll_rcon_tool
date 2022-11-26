@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from typing import Callable, List, Tuple
 
 import redis
+
 from rcon.cache_utils import get_redis_client
 from rcon.config import get_config
 from rcon.discord import send_to_discord_audit
@@ -61,7 +62,9 @@ def is_time(times: List[datetime], interval_seconds: int):
     return True
 
 
-def should_warn_squad(watch_status: WatchStatus, config: NoLeaderConfig, team, squad_name):
+def should_warn_squad(
+    watch_status: WatchStatus, config: NoLeaderConfig, team, squad_name
+):
     if config.number_of_warning == 0:
         logger.debug("Warnings are disabled. number_of_warning is set to 0")
         return PunishStepState.disabled
@@ -95,11 +98,19 @@ def should_warn_squad(watch_status: WatchStatus, config: NoLeaderConfig, team, s
 
 
 def _get_team_count(team_view, team):
-    return sum(len(s.get("players", [])) for s in team_view[team].get("squads", {}).values())
+    return sum(
+        len(s.get("players", [])) for s in team_view[team].get("squads", {}).values()
+    )
 
 
 def should_punish_player(
-    watch_status: WatchStatus, config: NoLeaderConfig, team_view, team, squad_name, squad, player
+    watch_status: WatchStatus,
+    config: NoLeaderConfig,
+    team_view,
+    team,
+    squad_name,
+    squad,
+    player,
 ):
     if config.number_of_punish == 0:
         logger.debug("Punish is disabled")
@@ -157,7 +168,13 @@ def should_punish_player(
 
 
 def should_kick_player(
-    watch_status: WatchStatus, config: NoLeaderConfig, team_view, team, squad_name, squad, player
+    watch_status: WatchStatus,
+    config: NoLeaderConfig,
+    team_view,
+    team,
+    squad_name,
+    squad,
+    player,
 ):
     if not config.kick_after_max_punish:
         return PunishStepState.disabled
@@ -211,12 +228,14 @@ def get_punitions_to_apply(rcon, config: NoLeaderConfig) -> PunitionsToApply:
                 logger.info("Skipping None or empty squad %s %s", squad_name, squad)
                 continue
             with watch_state(red, team, squad_name) as watch_status:
-                if squad["has_leader"]:  # The squad has a leader, clearing punishments plan
+                if squad[
+                    "has_leader"
+                ]:  # The squad has a leader, clearing punishments plan
                     raise SquadHasLeader()
 
                 if squad_name is None or squad is None:
                     raise SquadHasLeader()
-                
+
                 logger.info("Squad %s - %s doesn't have leader", team, squad_name)
 
                 state = should_warn_squad(watch_status, config, team, squad_name)
@@ -227,7 +246,10 @@ def get_punitions_to_apply(rcon, config: NoLeaderConfig) -> PunitionsToApply:
                 if state == PunishStepState.wait:
                     punitions_to_apply.pending_warnings[team].append(squad_name)
                     punitions_to_apply.add_squad_state(squad_name, squad)
-                if state != PunishStepState.go_to_next_step and state != PunishStepState.disabled:
+                if (
+                    state != PunishStepState.go_to_next_step
+                    and state != PunishStepState.disabled
+                ):
                     continue
 
                 for player in squad["players"]:
@@ -267,7 +289,9 @@ def get_punitions_to_apply(rcon, config: NoLeaderConfig) -> PunitionsToApply:
     return punitions_to_apply
 
 
-def _build_warning_str(punition_to_apply: PunitionsToApply, config: NoLeaderConfig, team: str):
+def _build_warning_str(
+    punition_to_apply: PunitionsToApply, config: NoLeaderConfig, team: str
+):
     to_apply = punition_to_apply.warning.get(team.lower(), [])
     if not to_apply:
         return ""
@@ -285,14 +309,19 @@ def _build_warning_str(punition_to_apply: PunitionsToApply, config: NoLeaderConf
     return f"{start}{', '.join(squads)}"
 
 
-def get_warning_message(punition_to_apply: PunitionsToApply, config: NoLeaderConfig) -> Tuple[str, str]:
+def get_warning_message(
+    punition_to_apply: PunitionsToApply, config: NoLeaderConfig
+) -> Tuple[str, str]:
     allies = _build_warning_str(punition_to_apply, config, "ALLIES")
     axis = _build_warning_str(punition_to_apply, config, "AXIS")
-    return f"""{config.warn_message_header}
+    return (
+        f"""{config.warn_message_header}
 {allies}
 {axis}
 {config.warn_message_footer}
-""", f"{allies} {axis}"
+""",
+        f"{allies} {axis}",
+    )
 
 
 def _do_punitions(
@@ -310,7 +339,9 @@ def _do_punitions(
         try:
             if method == "punish":
                 audit(config, f"--> PUNISHING: {aplayer}")
-                rcon.do_punish(aplayer.player, config.punish_message, by="NoLeaderWatch")
+                rcon.do_punish(
+                    aplayer.player, config.punish_message, by="NoLeaderWatch"
+                )
             elif method == "kick":
                 audit(config, f"---> KICKING <---: {aplayer}")
                 rcon.do_kick(aplayer.player, config.kick_message, by="NoLeaderWatch")
@@ -343,7 +374,10 @@ def punish_squads_without_leaders(rcon: RecordedRcon):
     red = get_redis_client()
     punition_to_apply = get_punitions_to_apply(rcon, config)
     if punition_to_apply:
-        logger.info("Squad Automod will apply the following punitions %s", repr(punition_to_apply))
+        logger.info(
+            "Squad Automod will apply the following punitions %s",
+            repr(punition_to_apply),
+        )
     else:
         logger.debug("Squad Automod did not suggest any punitions")
 
@@ -354,17 +388,23 @@ def punish_squads_without_leaders(rcon: RecordedRcon):
             rcon.set_broadcast(msg)
 
     if punition_to_apply.punish:
-        _do_punitions(red, config, rcon, "punish", config.punish_message, punition_to_apply.punish)
+        _do_punitions(
+            red, config, rcon, "punish", config.punish_message, punition_to_apply.punish
+        )
 
     if punition_to_apply.kick:
-        _do_punitions(red, config, rcon, "kick", config.kick_message, punition_to_apply.kick)
+        _do_punitions(
+            red, config, rcon, "kick", config.kick_message, punition_to_apply.kick
+        )
 
 
 def audit(cfg: NoLeaderConfig, msg: str):
     webhook_url = None
     if cfg.discord_webhook_url is not None and cfg.discord_webhook_url != "":
         webhook_url = cfg.discord_webhook_url
-        send_to_discord_audit(msg, by="NoLeaderWatch", webhookurl=webhook_url, silent=False)
+        send_to_discord_audit(
+            msg, by="NoLeaderWatch", webhookurl=webhook_url, silent=False
+        )
 
 
 def run():
