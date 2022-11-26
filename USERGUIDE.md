@@ -51,11 +51,11 @@ This is entirely optional, you can disable automatic removal, configure how ofte
 
 **Please note** that expiration dates are stored in RCON as [UTC](https://en.wikipedia.org/wiki/Coordinated_Universal_Time) timestamps, when you pick a date/time in your browser it is your local system time and converted when it's sent to RCON. Time zones and daylight savings time are complicated, if you set an expiration timestamp and time zone definitions change, or day light savings happens a players VIP may expire +/- 1 hour different than you expect.
 
-**Please note** that if there are errors, or you add VIP status that is already in the past, or anything weird, they will still be added as VIP on the game server, even if it will be removed the next time expired VIPs are pruned.
+**Please note** that if there are errors, or you set an expiration timestamp that is already in the past, or anything weird, they will still be added as VIP on the game server, even if it will be removed the next time expired VIPs are pruned.
 
 ### Enabling Expiring VIPs
 #### config.yml
-If you are upgrading from an older version of RCON you will have to add the `REMOVE_EXPIRED_VIPS` section from `default_config.yml` to your `config.yml`.
+If you are upgrading from an older version of RCON **you will have to** add the `REMOVE_EXPIRED_VIPS` section from `default_config.yml` to your `config.yml`.
 
 If you want expired VIPs to automatically be removed **you have to** set `enabled: true` here.
 
@@ -79,17 +79,13 @@ An individual player can also be added/deleted through the `Manage VIPs` UI on t
 
 Updating a player is easier to do through `History > Players`.
 ### Uploading/Downloading a VIP List
-A VIP list can be uploaded/downloaded either **with** or **without** expiration time stamps.  You **must** check the `Include Expiration Dates` checkbox if you want to include timestamps with a download, or to parse an uploaded file that includes timestamps.
-
-**Please note** that care should be taken, if you upload a file and the checkbox is not checked, everyone on the list gets VIP status that **never expires** which will overwrite any existing expiration timestamps.
-
 If you upload a file and want to include expiration dates, the expiration date must be the last portion of the line and it must be separated from the players name with whitespace. You should use an [ISO-8601](https://en.wikipedia.org/wiki/ISO_8601) timestamp, but *you should* be able to use anything that can be parsed by Python's [dateutil parser](https://dateutil.readthedocs.io/en/stable/parser.html) can understand.
 
 For example: `12345678912345678 NoodleArms 2023-01-23T11:48:36+00:00`
 
-If you mess up the format, VIP status will still be added if a name and steam ID can be parsed, but they'll be granted VIP status that **never expires**.
+If you mess up the format or don't include an expiration, VIP status will still be added if a name and steam ID can be parsed, but they'll be granted VIP status that **never expires**.
 
 ### Logging
-A `expiring_vips.log` file is created per server and is found in your `./logs` directory. Removal of expired VIPs is logged here.
+An `expiring_vips.log` file is created per server and is found in your `./logs` directory. Removal of expired VIPs is logged here.
 ### Discord Webhooks
 An optional webhook is available in `config.yml` which will report to Discord anytime an expired VIP is removed.
