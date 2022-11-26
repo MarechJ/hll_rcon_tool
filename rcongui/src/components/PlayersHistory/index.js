@@ -7,24 +7,30 @@ import {
   sendAction,
   showResponse,
 } from "../../utils/fetchUtils";
-import {toast} from "react-toastify";
-import {reduce} from "lodash";
+import { toast } from "react-toastify";
+import { reduce } from "lodash";
 import Pagination from "@material-ui/lab/Pagination";
-import {Button, Chip, Grid, LinearProgress, TextField, Typography,} from "@material-ui/core";
-import {ReasonDialog} from "../PlayerView/playerActions";
-import {omitBy} from "lodash/object";
+import {
+  Button,
+  Chip,
+  Grid,
+  LinearProgress,
+  TextField,
+  Typography,
+} from "@material-ui/core";
+import { ReasonDialog } from "../PlayerView/playerActions";
+import { omitBy } from "lodash/object";
 import SearchBar from "./searchBar";
-import {fromJS, List, Map} from "immutable";
+import { fromJS, List, Map } from "immutable";
 import FlagIcon from "@material-ui/icons/Flag";
 import "emoji-mart/css/emoji-mart.css";
-import {Picker} from "emoji-mart";
+import { Picker } from "emoji-mart";
 import Dialog from "@material-ui/core/Dialog";
 import DialogActions from "@material-ui/core/DialogActions";
 import DialogContent from "@material-ui/core/DialogContent";
 import DialogTitle from "@material-ui/core/DialogTitle";
-import {getEmojiFlag} from "../../utils/emoji";
+import { getEmojiFlag } from "../../utils/emoji";
 import PlayerGrid from "./playerGrid";
-
 
 const PlayerSummary = ({ player, flag }) => (
   <React.Fragment>
@@ -116,7 +122,6 @@ class FlagDialog extends React.Component {
   }
 }
 
-
 const FlagButton = ({ classes, onflag }) => (
   <Button variant="outlined" onClick={onflag}>
     <FlagIcon />
@@ -193,7 +198,11 @@ class PlayersHistory extends React.Component {
   }
 
   tempBan(steamId64, reason, durationHours, comment) {
-    this.postComment(steamId64, comment, `PlayerID ${steamId64} temp banned ${durationHours} for ${reason}`);
+    this.postComment(
+      steamId64,
+      comment,
+      `PlayerID ${steamId64} temp banned ${durationHours} for ${reason}`
+    );
     postData(`${process.env.REACT_APP_API_URL}do_temp_ban`, {
       steam_id_64: steamId64,
       reason: reason,
@@ -261,7 +270,7 @@ class PlayersHistory extends React.Component {
       exactMatch,
       ignoreAccent,
       flags,
-      country
+      country,
     } = this.state;
     const params = omitBy(
       {
@@ -329,24 +338,32 @@ class PlayersHistory extends React.Component {
   postComment(steamId64, comment, action) {
     postData(`${process.env.REACT_APP_API_URL}post_player_comment`, {
       steam_id_64: steamId64,
-      comment: action
-    }).then((response) => {
-      return showResponse(response, "post_player_comments", false)
-    }).then(() => {
-      if (comment && comment !== "" && comment !== null) {
-        postData(`${process.env.REACT_APP_API_URL}post_player_comment`, {
-          steam_id_64: steamId64,
-          comment: comment
-        }).then((response) => {
-          return showResponse(response, "post_player_comments", false)
-        }).catch((error) => toast.error("Unable to connect to API " + error));
-      }
-    }).catch((error) => toast.error("Unable to connect to API " + error));
-
+      comment: action,
+    })
+      .then((response) => {
+        return showResponse(response, "post_player_comments", false);
+      })
+      .then(() => {
+        if (comment && comment !== "" && comment !== null) {
+          postData(`${process.env.REACT_APP_API_URL}post_player_comment`, {
+            steam_id_64: steamId64,
+            comment: comment,
+          })
+            .then((response) => {
+              return showResponse(response, "post_player_comments", false);
+            })
+            .catch((error) => toast.error("Unable to connect to API " + error));
+        }
+      })
+      .catch((error) => toast.error("Unable to connect to API " + error));
   }
 
   blacklistPlayer(steamId64, reason, comment) {
-    this.postComment(steamId64, comment, `PlayerID ${steamId64} blacklist for ${reason}`);
+    this.postComment(
+      steamId64,
+      comment,
+      `PlayerID ${steamId64} blacklist for ${reason}`
+    );
     postData(`${process.env.REACT_APP_API_URL}blacklist_player`, {
       steam_id_64: steamId64,
       reason: reason,
@@ -363,7 +380,11 @@ class PlayersHistory extends React.Component {
   }
 
   unblacklistPlayer(steamId64) {
-    this.postComment(steamId64, null, `PlayerID ${steamId64} removed from blacklist`);
+    this.postComment(
+      steamId64,
+      null,
+      `PlayerID ${steamId64} removed from blacklist`
+    );
     postData(`${process.env.REACT_APP_API_URL}unblacklist_player`, {
       steam_id_64: steamId64,
     })
@@ -462,7 +483,10 @@ class PlayersHistory extends React.Component {
     });
   }
   onAddVip(player) {
-    return this.addVip(player.get("names").get(0).get("name"), player.get("steam_id_64"));
+    return this.addVip(
+      player.get("names").get(0).get("name"),
+      player.get("steam_id_64")
+    );
   }
 
   onDeleteVip(player) {
@@ -499,7 +523,7 @@ class PlayersHistory extends React.Component {
       ignoreAccent,
       exactMatch,
       flags,
-      country
+      country,
     } = this.state;
 
     // Perfomance is crappy. It's less crappy after switcing to immutables but still...
@@ -539,7 +563,9 @@ class PlayersHistory extends React.Component {
             classes={classes}
             pageSize={pageSize}
             page={page}
-            setPage={(page) => this.setState({ page: page }, this.getPlayerHistory)}
+            setPage={(page) =>
+              this.setState({ page: page }, this.getPlayerHistory)
+            }
             total={total}
           />
         </Grid>
@@ -572,7 +598,9 @@ class PlayersHistory extends React.Component {
             classes={classes}
             pageSize={pageSize}
             page={page}
-            setPage={(page) => this.setState({ page: page }, this.getPlayerHistory)}
+            setPage={(page) =>
+              this.setState({ page: page }, this.getPlayerHistory)
+            }
             total={total}
           />
         </Grid>

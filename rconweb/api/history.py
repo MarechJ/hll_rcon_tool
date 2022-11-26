@@ -5,14 +5,19 @@ import logging
 from dateutil import parser
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-import rcon
 
+import rcon
 from rcon.commands import CommandFailedError
 from rcon.discord import send_to_discord_audit
-from rcon.player_history import (add_flag_to_player, get_player_comments,
-                                 get_player_profile, get_player_profile_by_id,
-                                 get_players_by_appearance,
-                                 post_player_comments, remove_flag)
+from rcon.player_history import (
+    add_flag_to_player,
+    get_player_comments,
+    get_player_profile,
+    get_player_profile_by_id,
+    get_players_by_appearance,
+    post_player_comments,
+    remove_flag,
+)
 from rcon.utils import MapsHistory
 
 from .auth import api_response, login_required, stats_login_required
@@ -60,7 +65,6 @@ def get_player(request):
     except:
         logger.exception("Unable to get player %s", data)
         failed = True
-
 
     return JsonResponse(
         {
@@ -188,8 +192,14 @@ def get_player_comment(request):
         failed = True
 
     return JsonResponse(
-        {"result": res, "command": "player_comments", "arguments": data, "failed": failed}
+        {
+            "result": res,
+            "command": "player_comments",
+            "arguments": data,
+            "failed": failed,
+        }
     )
+
 
 @csrf_exempt
 @login_required
@@ -200,13 +210,21 @@ def post_player_comment(request):
         data = request.GET
 
     try:
-        post_player_comments(steam_id_64=data["steam_id_64"], comment=data["comment"], user=request.user.username)
+        post_player_comments(
+            steam_id_64=data["steam_id_64"],
+            comment=data["comment"],
+            user=request.user.username,
+        )
         failed = False
     except:
         failed = True
         logger.exception("Unable to get player comments")
 
     return JsonResponse(
-        {"result": "", "command": "player_comments", "arguments": data, "failed": failed}
+        {
+            "result": "",
+            "command": "player_comments",
+            "arguments": data,
+            "failed": failed,
+        }
     )
-

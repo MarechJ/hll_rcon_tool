@@ -6,12 +6,11 @@ import "react-toastify/dist/ReactToastify.css";
 import useStyles from "../useStyles";
 import Button from "@material-ui/core/Button";
 import Link from "@material-ui/core/Link";
-import {toast} from "react-toastify";
+import { toast } from "react-toastify";
 import ButtonGroup from "@material-ui/core/ButtonGroup";
-import FullscreenIcon from '@material-ui/icons/Fullscreen';
-import FullscreenExitIcon from '@material-ui/icons/FullscreenExit';
-import {IconButton} from "@material-ui/core";
-
+import FullscreenIcon from "@material-ui/icons/Fullscreen";
+import FullscreenExitIcon from "@material-ui/icons/FullscreenExit";
+import { IconButton } from "@material-ui/core";
 
 const AutoRefreshBar = ({
   intervalFunction,
@@ -49,7 +48,12 @@ const AutoRefreshBar = ({
         <Grid item xs={12}>
           <Grid container justify="space-between">
             <Grid style={{ textAlign: "left" }} item xs={6}>
-              <h1>Players view <IconButton onClick={onFullScreenClick}>{isFullScreen ? <FullscreenExitIcon /> : <FullscreenIcon />}</IconButton></h1>
+              <h1>
+                Players view{" "}
+                <IconButton onClick={onFullScreenClick}>
+                  {isFullScreen ? <FullscreenExitIcon /> : <FullscreenIcon />}
+                </IconButton>
+              </h1>
             </Grid>
             <Grid item xs={6} style={{ textAlign: "right" }}>
               <ButtonGroup
@@ -59,12 +63,8 @@ const AutoRefreshBar = ({
                 variant="contained"
                 aria-label="vertical outlined primary button group"
               >
-                <Button onClick={onGroupActionClick}>
-                  Group action
-                </Button>
-                <Button onClick={onUnbanClick}>
-                  Unban
-                </Button>
+                <Button onClick={onGroupActionClick}>Group action</Button>
+                <Button onClick={onUnbanClick}>Unban</Button>
               </ButtonGroup>
             </Grid>
           </Grid>

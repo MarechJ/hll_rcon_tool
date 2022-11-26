@@ -93,7 +93,11 @@ class Rcon(ServerCtl):
 
     def run_in_pool(self, process_number: int, function_name: str, *args, **kwargs):
         return self.thread_pool.submit(
-            getattr(self.connection_pool[process_number % self.pool_size], function_name), *args, **kwargs
+            getattr(
+                self.connection_pool[process_number % self.pool_size], function_name
+            ),
+            *args,
+            **kwargs,
         )
 
     def get_playerids(self, as_dict=False):
@@ -129,7 +133,7 @@ class Rcon(ServerCtl):
                 return "recon"
             if player.get("role") in ["armycommander"]:
                 return "commander"
-        
+
         return "infantry"
 
     def _has_leader(self, squad):
@@ -153,13 +157,18 @@ class Rcon(ServerCtl):
                     info = self._get_default_info_dict(player)
                     info[STEAMID] = steam_id_64
                 except Exception:
-                    logger.exception("Unable to get %s info with playerids either", player)
+                    logger.exception(
+                        "Unable to get %s info with playerids either", player
+                    )
                     continue
 
             players_by_id[info.get(STEAMID)] = info
-            
+
         logger.debug("Getting DB profiles")
-        steam_profiles = {profile[STEAMID]: profile for profile in get_profiles(list(players_by_id.keys()))}
+        steam_profiles = {
+            profile[STEAMID]: profile
+            for profile in get_profiles(list(players_by_id.keys()))
+        }
         logger.debug("Getting VIP list")
         try:
             vips = set(v[STEAMID] for v in self.get_vip_ids())
@@ -176,22 +185,24 @@ class Rcon(ServerCtl):
             player["country"] = steaminfo.get("country", "private")
             # TODO refresh ban info and store into DB to avoid IOs here
             player["steam_bans"] = get_player_has_bans(steam_id_64)
-            teams.setdefault(player.get("team"), {}).setdefault(player.get("unit_name"), {}).setdefault("players", []).append(player)    
+            teams.setdefault(player.get("team"), {}).setdefault(
+                player.get("unit_name"), {}
+            ).setdefault("players", []).append(player)
 
         for team, squads in teams.items():
             if team is None:
                 continue
             for squad_name, squad in squads.items():
-                squad["type"] = self._guess_squad_type(squad)  
-                squad["has_leader"] = self._has_leader(squad)  
-               
+                squad["type"] = self._guess_squad_type(squad)
+                squad["has_leader"] = self._has_leader(squad)
+
                 try:
-                    squad["combat"] = sum(p["combat"] for p in squad['players'])
-                    squad["offense"] = sum(p["offense"] for p in squad['players'])
-                    squad["defense"] = sum(p["defense"] for p in squad['players'])
-                    squad["support"] = sum(p["support"] for p in squad['players'])
-                    squad["kills"] = sum(p["kills"] for p in squad['players'])
-                    squad["deaths"] = sum(p["deaths"] for p in squad['players'])
+                    squad["combat"] = sum(p["combat"] for p in squad["players"])
+                    squad["offense"] = sum(p["offense"] for p in squad["players"])
+                    squad["defense"] = sum(p["defense"] for p in squad["players"])
+                    squad["support"] = sum(p["support"] for p in squad["players"])
+                    squad["kills"] = sum(p["kills"] for p in squad["players"])
+                    squad["deaths"] = sum(p["deaths"] for p in squad["players"])
                 except Exception as e:
                     logger.exception()
 
@@ -199,16 +210,20 @@ class Rcon(ServerCtl):
         for team, squads in teams.items():
             if team is None:
                 continue
-            commander = [squad for _, squad in squads.items() if squad["type"] == "commander"]
+            commander = [
+                squad for _, squad in squads.items() if squad["type"] == "commander"
+            ]
             if not commander:
                 commander = None
             else:
-                commander = commander[0]["players"][0] if commander[0].get("players") else None
+                commander = (
+                    commander[0]["players"][0] if commander[0].get("players") else None
+                )
 
             game[team] = {
                 "squads": {
-                    squad_name: squad 
-                    for squad_name, squad in squads.items() 
+                    squad_name: squad
+                    for squad_name, squad in squads.items()
                     if squad["type"] != "commander"
                 },
                 "commander": commander,
@@ -218,7 +233,7 @@ class Rcon(ServerCtl):
                 "support": sum(s["support"] for s in squads.values()),
                 "kills": sum(s["kills"] for s in squads.values()),
                 "deaths": sum(s["deaths"] for s in squads.values()),
-                "count": sum(len(s["players"]) for s in squads.values())
+                "count": sum(len(s["players"]) for s in squads.values()),
             }
 
         return game
@@ -229,7 +244,10 @@ class Rcon(ServerCtl):
         players_by_id = {}
         players = self.get_players_fast()
 
-        futures = {self.run_in_pool(idx, "get_detailed_player_info", player[NAME]): player for idx, player in enumerate(players)}
+        futures = {
+            self.run_in_pool(idx, "get_detailed_player_info", player[NAME]): player
+            for idx, player in enumerate(players)
+        }
         for future in as_completed(futures):
             try:
                 player_data = future.result()
@@ -241,7 +259,10 @@ class Rcon(ServerCtl):
             players_by_id[player[STEAMID]] = player
 
         logger.debug("Getting DB profiles")
-        steam_profiles = {profile[STEAMID]: profile for profile in get_profiles(list(players_by_id.keys()))}
+        steam_profiles = {
+            profile[STEAMID]: profile
+            for profile in get_profiles(list(players_by_id.keys()))
+        }
         logger.debug("Getting VIP list")
         try:
             vips = set(v[STEAMID] for v in self.get_vip_ids())
@@ -255,22 +276,24 @@ class Rcon(ServerCtl):
             player["profile"] = profile
             player["is_vip"] = steam_id_64 in vips
 
-            teams.setdefault(player.get("team"), {}).setdefault(player.get("unit_name"), {}).setdefault("players", []).append(player)    
+            teams.setdefault(player.get("team"), {}).setdefault(
+                player.get("unit_name"), {}
+            ).setdefault("players", []).append(player)
 
         for team, squads in teams.items():
             if team is None:
                 continue
             for squad_name, squad in squads.items():
-                squad["type"] = self._guess_squad_type(squad)  
-                squad["has_leader"] = self._has_leader(squad)  
-               
+                squad["type"] = self._guess_squad_type(squad)
+                squad["has_leader"] = self._has_leader(squad)
+
                 try:
-                    squad["combat"] = sum(p["combat"] for p in squad['players'])
-                    squad["offense"] = sum(p["offense"] for p in squad['players'])
-                    squad["defense"] = sum(p["defense"] for p in squad['players'])
-                    squad["support"] = sum(p["support"] for p in squad['players'])
-                    squad["kills"] = sum(p["kills"] for p in squad['players'])
-                    squad["deaths"] = sum(p["deaths"] for p in squad['players'])
+                    squad["combat"] = sum(p["combat"] for p in squad["players"])
+                    squad["offense"] = sum(p["offense"] for p in squad["players"])
+                    squad["defense"] = sum(p["defense"] for p in squad["players"])
+                    squad["support"] = sum(p["support"] for p in squad["players"])
+                    squad["kills"] = sum(p["kills"] for p in squad["players"])
+                    squad["deaths"] = sum(p["deaths"] for p in squad["players"])
                 except Exception as e:
                     logger.exception()
 
@@ -278,16 +301,20 @@ class Rcon(ServerCtl):
         for team, squads in teams.items():
             if team is None:
                 continue
-            commander = [squad for _, squad in squads.items() if squad["type"] == "commander"]
+            commander = [
+                squad for _, squad in squads.items() if squad["type"] == "commander"
+            ]
             if not commander:
                 commander = None
             else:
-                commander = commander[0]["players"][0] if commander[0].get("players") else None
+                commander = (
+                    commander[0]["players"][0] if commander[0].get("players") else None
+                )
 
             game[team] = {
                 "squads": {
-                    squad_name: squad 
-                    for squad_name, squad in squads.items() 
+                    squad_name: squad
+                    for squad_name, squad in squads.items()
                     if squad["type"] != "commander"
                 },
                 "commander": commander,
@@ -297,7 +324,7 @@ class Rcon(ServerCtl):
                 "support": sum(s["support"] for s in squads.values()),
                 "kills": sum(s["kills"] for s in squads.values()),
                 "deaths": sum(s["deaths"] for s in squads.values()),
-                "count": sum(len(s["players"]) for s in squads.values())
+                "count": sum(len(s["players"]) for s in squads.values()),
             }
 
         return game
@@ -339,7 +366,7 @@ class Rcon(ServerCtl):
             "country": country,
             "steam_bans": steam_bans,
         }
-    
+
     def _get_default_info_dict(self, player):
         return dict(
             name=player,
@@ -385,7 +412,7 @@ class Rcon(ServerCtl):
             if ": " not in line:
                 logger.warning("Invalid info line: %s", line)
                 continue
-            
+
             key, val = line.split(": ", 1)
             raw_data[key.lower()] = val
 
@@ -393,28 +420,50 @@ class Rcon(ServerCtl):
         # Remap keys and parse values
         data[STEAMID] = raw_data.get("steamid64")
         data["team"] = raw_data.get("team", "None")
-        data["unit_id"], data['unit_name'] = raw_data.get("unit").split(' - ') if raw_data.get("unit") else ("None", None)
-        data["kills"], data["deaths"] = raw_data.get("kills").split(' - Deaths: ') if raw_data.get("kills") else ('0', '0')
+        data["unit_id"], data["unit_name"] = (
+            raw_data.get("unit").split(" - ")
+            if raw_data.get("unit")
+            else ("None", None)
+        )
+        data["kills"], data["deaths"] = (
+            raw_data.get("kills").split(" - Deaths: ")
+            if raw_data.get("kills")
+            else ("0", "0")
+        )
         for k in ["role", "loadout", "level"]:
             data[k] = raw_data.get(k)
 
-        scores = dict([score.split(" ", 1) for score in raw_data.get("score", "C 0, O 0, D 0, S 0").split(", ")])
+        scores = dict(
+            [
+                score.split(" ", 1)
+                for score in raw_data.get("score", "C 0, O 0, D 0, S 0").split(", ")
+            ]
+        )
         map_score = {"C": "combat", "O": "offense", "D": "defense", "S": "support"}
         for key, val in map_score.items():
-            data[map_score[key]] = scores.get(key, '0')
+            data[map_score[key]] = scores.get(key, "0")
 
         # Typecast values
         # cast strings to lower
         for key in ["team", "unit_name", "role", "loadout"]:
             data[key] = data[key].lower() if data.get(key) else None
-   
+
         # cast string numbers to ints
-        for key in ["kills", "deaths", "level", "combat", "offense", "defense", "support", "unit_id"]:
+        for key in [
+            "kills",
+            "deaths",
+            "level",
+            "combat",
+            "offense",
+            "defense",
+            "support",
+            "unit_id",
+        ]:
             try:
                 data[key] = int(data[key])
             except (ValueError, TypeError):
                 data[key] = 0
-        
+
         return data
 
     @ttl_cache(ttl=60 * 60 * 24)
@@ -447,20 +496,17 @@ class Rcon(ServerCtl):
             return super().do_remove_admin(steam_id_64)
 
     @ttl_cache(ttl=2)
-    def get_players_fast(self):        
+    def get_players_fast(self):
         players = {}
         ids = []
 
         for name, steam_id_64 in self.get_playerids():
-            players[steam_id_64] = {
-                NAME: name,
-                STEAMID: steam_id_64
-            }
+            players[steam_id_64] = {NAME: name, STEAMID: steam_id_64}
             ids.append(steam_id_64)
 
         countries = self.thread_pool.submit(get_players_country_code, ids)
         bans = self.thread_pool.submit(get_players_have_bans, ids)
-        
+
         for future in as_completed([countries, bans]):
             d = future.result()
             for steamid, data in d.items():
@@ -885,10 +931,12 @@ class Rcon(ServerCtl):
         self, player=None, steam_id_64=None, duration_hours=2, reason="", admin_name=""
     ):
         with invalidates(Rcon.get_players, Rcon.get_temp_bans):
-            if player and re.match(r'\d+', player):
+            if player and re.match(r"\d+", player):
                 info = self.get_player_info(player)
                 steam_id_64 = info.get(STEAMID, None)
-                return super().do_temp_ban(None, steam_id_64, duration_hours, reason, admin_name)
+                return super().do_temp_ban(
+                    None, steam_id_64, duration_hours, reason, admin_name
+                )
 
             return super().do_temp_ban(
                 player, steam_id_64, duration_hours, reason, admin_name
@@ -904,13 +952,12 @@ class Rcon(ServerCtl):
 
     def do_perma_ban(self, player=None, steam_id_64=None, reason="", admin_name=""):
         with invalidates(Rcon.get_players, Rcon.get_perma_bans):
-            if player and re.match(r'\d+', player):
+            if player and re.match(r"\d+", player):
                 info = self.get_player_info(player)
                 steam_id_64 = info.get(STEAMID, None)
                 return super().do_perma_ban(None, steam_id_64, reason, admin_name)
-            
-            return super().do_perma_ban(player, steam_id_64, reason, admin_name)
 
+            return super().do_perma_ban(player, steam_id_64, reason, admin_name)
 
     @ttl_cache(60 * 5)
     def get_map_rotation(self):
@@ -1095,7 +1142,10 @@ class Rcon(ServerCtl):
                 elif rest.startswith("VOTESYS"):
                     # [15:49 min (1606998428)] VOTE Player [[fr]ELsass_blitz] Started a vote of type (PVR_Kick_Abuse) against [拢儿]. VoteID: [1]
                     action = "VOTE"
-                    if rest.startswith("VOTESYS Player") and " against " in rest.lower():
+                    if (
+                        rest.startswith("VOTESYS Player")
+                        and " against " in rest.lower()
+                    ):
                         action = "VOTE STARTED"
                         groups = re.match(
                             r"VOTESYS Player \[(.*)\].* against \[(.*)\]\. VoteID: \[\d+\]",
@@ -1133,7 +1183,7 @@ class Rcon(ServerCtl):
                         player, sub_content, *_ = matches.groups()
                     else:
                         logger.error("Unable to parse line: %s", line)
-                elif rest.startswith('KICK') or rest.startswith('BAN'):
+                elif rest.startswith("KICK") or rest.startswith("BAN"):
                     if "FOR TEAM KILLING" in rest:
                         action = "TK AUTO"
                     else:

@@ -198,21 +198,19 @@ const PlayerInfoFunc = ({ classes }) => {
           data.result !== null &&
           Object.keys(data.result).length !== 0
         ) {
-          
-            setCreated(data.result.created)
-            setNames(data.result.names)
-            setSessions(data.result.sessions)
-            setSessionsCount(data.result.sessions_count)
-            setTotalPlaytimeSeconds(data.result.total_playtime_seconds)
-            setCurrentPlaytimeSeconds(data.result.current_playtime_seconds)
-            setReceivedActions(data.result.received_actions)
-            setPenaltyCount(data.result.penalty_count)
-            setBlacklist(data.result.blacklist)
-            setFlags(data.result.flags)
-            setWatchlist(data.result.watchlist)
-            setSteaminfo(data.result.steaminfo)
-            setLoaded(true)
-        
+          setCreated(data.result.created);
+          setNames(data.result.names);
+          setSessions(data.result.sessions);
+          setSessionsCount(data.result.sessions_count);
+          setTotalPlaytimeSeconds(data.result.total_playtime_seconds);
+          setCurrentPlaytimeSeconds(data.result.current_playtime_seconds);
+          setReceivedActions(data.result.received_actions);
+          setPenaltyCount(data.result.penalty_count);
+          setBlacklist(data.result.blacklist);
+          setFlags(data.result.flags);
+          setWatchlist(data.result.watchlist);
+          setSteaminfo(data.result.steaminfo);
+          setLoaded(true);
         }
       })
       .catch(handle_http_errors);
@@ -284,10 +282,9 @@ const PlayerInfoFunc = ({ classes }) => {
                 <Grid item>
                   <Typography variant="h6">Last connection</Typography>
                   <Typography>
-                    {moment(
-                      sessions[0]?.end ||
-                        sessions[0]?.start
-                    ).format("ddd Do MMM HH:mm:ss")}
+                    {moment(sessions[0]?.end || sessions[0]?.start).format(
+                      "ddd Do MMM HH:mm:ss"
+                    )}
                   </Typography>
                 </Grid>
                 <Grid item>
@@ -301,16 +298,10 @@ const PlayerInfoFunc = ({ classes }) => {
 
                 <Grid item>
                   <Typography variant="h6">Player penalties</Typography>
-                  <Typography>
-                    Perma ban: {penaltyCount.PERMABAN}
-                  </Typography>
-                  <Typography>
-                    Temp ban: {penaltyCount.TEMPBAN}
-                  </Typography>
+                  <Typography>Perma ban: {penaltyCount.PERMABAN}</Typography>
+                  <Typography>Temp ban: {penaltyCount.TEMPBAN}</Typography>
                   <Typography>Kick: {penaltyCount.KICK}</Typography>
-                  <Typography>
-                    Punish: {penaltyCount.PUNISH}
-                  </Typography>
+                  <Typography>Punish: {penaltyCount.PUNISH}</Typography>
                 </Grid>
                 <Grid item>
                   <Typography variant="h6">

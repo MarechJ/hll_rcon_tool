@@ -385,6 +385,7 @@ def get_recent_logs(
                     # Handle action_filter being empty
                     elif not action_filter:
                         logs.append(line)
+                        break
         elif action_filter:
             # Filter out anything that isn't in action_filter
             if inclusive_filter and is_action(
@@ -398,6 +399,7 @@ def get_recent_logs(
                 logs.append(line)
         elif not player_search and not action_filter:
             logs.append(line)
+
         if p1 := line["player"]:
             all_players.add(p1)
         if p2 := line["player2"]:

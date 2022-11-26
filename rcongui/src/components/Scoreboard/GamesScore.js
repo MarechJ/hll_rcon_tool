@@ -6,12 +6,12 @@ import {
   GridListTile,
   GridListTileBar,
   IconButton,
-  Paper
+  Paper,
 } from "@material-ui/core";
 import useMediaQuery from "@material-ui/core/useMediaQuery";
 import VisibilityIcon from "@material-ui/icons/Visibility";
-import LinkIcon from '@material-ui/icons/Link';
-import CheckIcon from '@material-ui/icons/Check';
+import LinkIcon from "@material-ui/icons/Link";
+import CheckIcon from "@material-ui/icons/Check";
 import React from "react";
 import { get, handle_http_errors, showResponse } from "../../utils/fetchUtils";
 import { List as iList, Map, fromJS, List } from "immutable";
@@ -19,10 +19,10 @@ import moment from "moment";
 import { useTheme } from "@material-ui/core/styles";
 import Scores from "./Scores";
 import map_to_pict from "./utils";
-import { fade } from '@material-ui/core/styles/colorManipulator';
+import { fade } from "@material-ui/core/styles/colorManipulator";
 import { CopyToClipboard } from "react-copy-to-clipboard";
 import { useParams } from "react-router-dom";
-import {toast} from "react-toastify";
+import { toast } from "react-toastify";
 
 const useStyles = makeStyles((theme) => ({
   singleLine: {
@@ -95,8 +95,8 @@ const useStyles = makeStyles((theme) => ({
 
 const GamesScore = ({ classes }) => {
   let { slug } = useParams();
-  slug = parseInt(slug)
-  console.log("Slug ", slug)
+  slug = parseInt(slug);
+  console.log("Slug ", slug);
   const styles = useStyles();
   const [scores, setScores] = React.useState(new iList());
   const [serverState, setServerState] = React.useState(new Map());
@@ -134,9 +134,9 @@ const GamesScore = ({ classes }) => {
     setTimeout(() => {
       setHasCopiedLink(false);
     }, 1000);
-    toast.success("Link copied to clipboard")
+    toast.success("Link copied to clipboard");
   };
-  
+
   moment.relativeTimeThreshold("m", 120);
   const getData = () => {
     setIsLoading(true);
@@ -171,7 +171,9 @@ const GamesScore = ({ classes }) => {
     get(`get_map_scoreboard?map_id=${slug}`)
       .then((res) => showResponse(res, "get_map_scoreboard", false))
       .then((data) =>
-        data.result && data.result.player_stats ? setScores(fromJS(data.result.player_stats)) : ""
+        data.result && data.result.player_stats
+          ? setScores(fromJS(data.result.player_stats))
+          : ""
       )
       .then(() => setIsLoading(false))
       .catch(handle_http_errors);
@@ -261,8 +263,15 @@ const GamesScore = ({ classes }) => {
                       subtitle={`Started at: ${start.format("HH:mm")}`}
                       actionIcon={isSelected(
                         <IconButton color="inherit">
-                          <CopyToClipboard text={getShareableLink()} onCopy={onCopyLink}>
-                            {hasCopiedLink ? <CheckIcon color="inherit" /> : <LinkIcon color="inherit" />}
+                          <CopyToClipboard
+                            text={getShareableLink()}
+                            onCopy={onCopyLink}
+                          >
+                            {hasCopiedLink ? (
+                              <CheckIcon color="inherit" />
+                            ) : (
+                              <LinkIcon color="inherit" />
+                            )}
                           </CopyToClipboard>
                         </IconButton>,
                         <IconButton

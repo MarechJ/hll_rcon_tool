@@ -37,7 +37,6 @@ import HelpIcon from "@material-ui/icons/Help";
 import ServerName from "./serverName";
 import AutoSettings from "./autoSettings";
 
-
 const ManualWatchList = ({ classes }) => {
   const [name, setName] = React.useState("");
   const [steamId64, setSteamId64] = React.useState("");
@@ -350,9 +349,14 @@ class RconSettings extends React.Component {
       .then(
         (data) =>
           !data.failed &&
-          this.setState({
-            autosettings: JSON.stringify(data.result, null, 2)
-          }, () => this.editorRef.current && this.editorRef.current.setValue(this.state.autosettings))
+          this.setState(
+            {
+              autosettings: JSON.stringify(data.result, null, 2),
+            },
+            () =>
+              this.editorRef.current &&
+              this.editorRef.current.setValue(this.state.autosettings)
+          )
       )
       .catch(handle_http_errors);
   }
@@ -392,7 +396,7 @@ class RconSettings extends React.Component {
   }
 
   handleEditorDidMount(editor, monaco) {
-    this.editorRef.current = editor; 
+    this.editorRef.current = editor;
   }
 
   componentDidMount() {
@@ -752,7 +756,9 @@ class RconSettings extends React.Component {
         <Grid item xs={12}>
           <AutoSettings
             words={autosettings}
-            onWordsChange={(words, event) => this.setState({ autosettings: words })}
+            onWordsChange={(words, event) =>
+              this.setState({ autosettings: words })
+            }
             onSave={() => this.saveAutoSettings(autosettings)}
             forward={forwardAutoSettings}
             onFowardChange={() => this.toggle("forwardAutoSettings")}

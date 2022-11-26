@@ -1,11 +1,16 @@
 import React from "react";
-import {get, handle_http_errors, postData, showResponse,} from "../../utils/fetchUtils";
+import {
+  get,
+  handle_http_errors,
+  postData,
+  showResponse,
+} from "../../utils/fetchUtils";
 import InputLabel from "@material-ui/core/InputLabel";
 import MenuItem from "@material-ui/core/MenuItem";
 import FormControl from "@material-ui/core/FormControl";
 import Select from "@material-ui/core/Select";
 import Grid from "@material-ui/core/Grid";
-import {Button, IconButton} from "@material-ui/core";
+import { Button, IconButton } from "@material-ui/core";
 import Autocomplete from "@material-ui/lab/Autocomplete";
 import TextField from "@material-ui/core/TextField";
 import RefreshIcon from "@material-ui/icons/Refresh";
@@ -14,8 +19,8 @@ import moment from "moment";
 import withWidth from "@material-ui/core/withWidth";
 import AutoRefreshLine from "../autoRefreshLine";
 import ListItemText from "@material-ui/core/ListItemText";
-import FullscreenIcon from '@material-ui/icons/Fullscreen';
-import FullscreenExitIcon from '@material-ui/icons/FullscreenExit';
+import FullscreenIcon from "@material-ui/icons/Fullscreen";
+import FullscreenExitIcon from "@material-ui/icons/FullscreenExit";
 
 const Selector = ({
   classes,
@@ -65,22 +70,14 @@ class Logs extends React.Component {
         ? localStorage.getItem("logs_limit")
         : 500,
       limitOptions: [
-        100,
-        250,
-        500,
-        1000,
-        2500,
-        5000,
-        10000,
-        25000,
-        50000,
-        100000,
+        100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000, 100000,
       ],
     };
 
     this.loadLogs = this.loadLogs.bind(this);
     this.setActionFilter = this.setActionFilter.bind(this);
-    this.setActionsFilterInclusivity = this.setActionsFilterInclusivity.bind(this);
+    this.setActionsFilterInclusivity =
+      this.setActionsFilterInclusivity.bind(this);
     this.setLimit = this.setLimit.bind(this);
   }
 
@@ -93,8 +90,12 @@ class Logs extends React.Component {
   loadLogs() {
     const { actionsFilter, playersFilter, limit, inclusiveFilter } = this.state;
 
-
-    return postData(`${process.env.REACT_APP_API_URL}get_recent_logs`, { end: limit, filter_action: actionsFilter, filter_player: playersFilter, inclusive_filter: inclusiveFilter })
+    return postData(`${process.env.REACT_APP_API_URL}get_recent_logs`, {
+      end: limit,
+      filter_action: actionsFilter,
+      filter_player: playersFilter,
+      inclusive_filter: inclusiveFilter,
+    })
       .then((response) => showResponse(response, "get_logs"))
       .then((data) => {
         this.setState({
@@ -122,14 +123,8 @@ class Logs extends React.Component {
 
   render() {
     const { classes, isFullScreen, onFullScreen } = this.props;
-    const {
-      logs,
-      players,
-      actions,
-      actionsFilter,
-      limit,
-      limitOptions,
-    } = this.state;
+    const { logs, players, actions, actionsFilter, limit, limitOptions } =
+      this.state;
 
     return (
       <React.Fragment>
@@ -139,7 +134,12 @@ class Logs extends React.Component {
             xs={12}
             className={`${classes.textLeft} ${classes.paddingLeft}`}
           >
-            <h1 className={classes.marginBottom}>Logs view  <IconButton onClick={onFullScreen}>{isFullScreen ? <FullscreenExitIcon /> : <FullscreenIcon />}</IconButton></h1>
+            <h1 className={classes.marginBottom}>
+              Logs view{" "}
+              <IconButton onClick={onFullScreen}>
+                {isFullScreen ? <FullscreenExitIcon /> : <FullscreenIcon />}
+              </IconButton>
+            </h1>
             <ListItemText secondary="30s auto refresh" />
             <AutoRefreshLine
               className={classes.marginTop}
@@ -147,7 +147,6 @@ class Logs extends React.Component {
               execEveryMs={30000}
               statusRefreshIntervalMs={500}
               classes={classes}
-
             />
           </Grid>
         </Grid>
@@ -164,7 +163,10 @@ class Logs extends React.Component {
           <Grid className={classes.padding} item xs={12} sm={12} md={12} lg={2}>
             <FormControl fullWidth>
               <InputLabel shrink>Inclusive/Exclusive</InputLabel>
-              <Select onChange={this.setActionsFilterInclusivity} defaultValue={true}>
+              <Select
+                onChange={this.setActionsFilterInclusivity}
+                defaultValue={true}
+              >
                 <MenuItem value={true}>Inclusive</MenuItem>
                 <MenuItem value={false}>Exclusive</MenuItem>
               </Select>
@@ -177,9 +179,7 @@ class Logs extends React.Component {
               options={actions}
               getOptionLabel={(option) => option}
               filterSelectedOptions
-              onChange={(e, value) =>
-                this.setActionFilter(value)
-              }
+              onChange={(e, value) => this.setActionFilter(value)}
               renderInput={(params) => (
                 <TextField
                   className={classes.logsControl}
@@ -189,7 +189,6 @@ class Logs extends React.Component {
                 />
               )}
             />
-
           </Grid>
           <Grid className={classes.padding} item xs={12} sm={12} md={12} lg={4}>
             <Autocomplete

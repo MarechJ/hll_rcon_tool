@@ -24,6 +24,7 @@ def get_user_config(key, default=None):
         logger.debug("User config for %s is %s", key, res)
         return res
 
+
 def _add_conf(sess, key, val):
     return sess.add(UserConfig(key=key, value=val))
 
@@ -267,6 +268,7 @@ class DefaultMethods(enum.Enum):
     random_suggestions = "random_from_suggestions"
     random_all_maps = "random_from_all_maps"
 
+
 class VoteMapConfig:
     def __init__(self):
         server_number = os.getenv("SERVER_NUMBER", 0)
@@ -317,7 +319,9 @@ class VoteMapConfig:
         return set_user_config(self.VOTEMAP_RATIO_OF_OFFENSIVES_TO_OFFER, float(value))
 
     def set_votemap_number_of_last_played_map_to_exclude(self, value):
-        return set_user_config(self.VOTEMAP_NUMBER_OF_LAST_PLAYED_MAP_TO_EXCLUDE, int(value))
+        return set_user_config(
+            self.VOTEMAP_NUMBER_OF_LAST_PLAYED_MAP_TO_EXCLUDE, int(value)
+        )
 
     def set_votemap_consider_offensive_as_same_map(self, value):
         return set_user_config(self.VOTEMAP_CONSIDER_OFFENSIVE_AS_SAME_MAP, bool(value))
@@ -408,9 +412,9 @@ class VoteMapConfig:
             "No votes recorded yet",
         )
 
+
 @dataclass
 class BaseConfig:
-
     def prefix(self, config_key_name):
         namespace = self.__class__.__name__.lower()
         return f'{os.getenv("SERVER_NUMBER", "0")}_{namespace}_{config_key_name}'
@@ -426,12 +430,14 @@ class BaseConfig:
                 set_user_config(self.prefix(field.name), v)
             else:
                 raise TypeError(f"Wrong value {v} for {field}")
+
         return setter
-    
+
     def _make_getter(self, field):
         def getter():
             print("getting", field)
             return get_user_config(self.prefix(field.name))
+
         return getter
 
     def auto_generate_attr(self):
@@ -439,36 +445,44 @@ class BaseConfig:
         We auto generate the getters and setters functions that are used to query the DB
         """
         for field in fields(self):
-            getter_name = f'get_{field.name.lower()}'
-            setter_name = f'set_{field.name.lower()}'
+            getter_name = f"get_{field.name.lower()}"
+            setter_name = f"set_{field.name.lower()}"
             # Do not override existing methods
             if not getter_name in self.__dict__:
                 self.__setattr__(getter_name, self._make_getter(field))
             if not setter_name in self.__dict__:
                 self.__setattr__(setter_name, self._make_setter(field))
-                
+
     def __post_init__(self):
         self.auto_generate_attr()
+
 
 class ZombieConfig:
     def __init__(self):
         server_number = os.getenv("SERVER_NUMBER", 0)
-        self.ZOMBIE_ENABLED = f'{server_number}_ZOMBIE_ENABLED'
-        self.ZOMBIE_SIDE = f'{server_number}_ZOMBIE_SIDE'
-        self.ZOMBIE_ALLOWED_WEAPONS = f'{server_number}_ZOMBIE_ALLOWED_WEAPONS'
-        self.ZOMBIE_HUMAN_ALLOWED_WEAPONS = f'{server_number}_ZOMBIE_HUMAN_ALLOWED_WEAPONS'
-        self.ZOMBIE_WEAPON_PUNISHMENT = f'{server_number}_ZOMBIE_WEAPON_PUNISHMENT'
-        self.ZOMBIE_HUMAN_NB_LIFE = f'{server_number}_ZOMBIE_HUMAN_NB_LIFE'
-        self.ZOMBIE_NB_LIFE = f'{server_number}_ZOMBIE_NB_LIFE'
-        self.ZOMBIE_ON_HUMAN_PERMA_DEATH = f'{server_number}_ZOMBIE_ON_HUMAN_PERMA_DEATH'
-        self.ZOMBIE_ON_ZOMBIE_PERMA_DEATH = f'{server_number}_ZOMBIE_ON_ZOMBIE_PERMA_DEATH'
+        self.ZOMBIE_ENABLED = f"{server_number}_ZOMBIE_ENABLED"
+        self.ZOMBIE_SIDE = f"{server_number}_ZOMBIE_SIDE"
+        self.ZOMBIE_ALLOWED_WEAPONS = f"{server_number}_ZOMBIE_ALLOWED_WEAPONS"
+        self.ZOMBIE_HUMAN_ALLOWED_WEAPONS = (
+            f"{server_number}_ZOMBIE_HUMAN_ALLOWED_WEAPONS"
+        )
+        self.ZOMBIE_WEAPON_PUNISHMENT = f"{server_number}_ZOMBIE_WEAPON_PUNISHMENT"
+        self.ZOMBIE_HUMAN_NB_LIFE = f"{server_number}_ZOMBIE_HUMAN_NB_LIFE"
+        self.ZOMBIE_NB_LIFE = f"{server_number}_ZOMBIE_NB_LIFE"
+        self.ZOMBIE_ON_HUMAN_PERMA_DEATH = (
+            f"{server_number}_ZOMBIE_ON_HUMAN_PERMA_DEATH"
+        )
+        self.ZOMBIE_ON_ZOMBIE_PERMA_DEATH = (
+            f"{server_number}_ZOMBIE_ON_ZOMBIE_PERMA_DEATH"
+        )
 
 
 @dataclass(init=True)
 class RealVipConfig(BaseConfig):
-    enabled : bool = False
-    desired_total_number_vips : int = 5
-    minimum_number_vip_slot : int = 1
+    enabled: bool = False
+    desired_total_number_vips: int = 5
+    minimum_number_vip_slot: int = 1
+
 
 class AutoSettingsConfig:
     def __init__(self):
@@ -486,146 +500,117 @@ class AutoSettingsConfig:
 
 
 DEFAULT_AUTO_SETTINGS = {
-  "always_apply_defaults": False,
-  "defaults": {
-    "set_idle_autokick_time": {
-      "minutes": 10
+    "always_apply_defaults": False,
+    "defaults": {
+        "set_idle_autokick_time": {"minutes": 10},
+        "set_autobalance_threshold": {"max_diff": 3},
+        "set_max_ping_autokick": {"max_ms": 500},
+        "set_team_switch_cooldown": {"minutes": 15},
     },
-    "set_autobalance_threshold": {
-      "max_diff": 3
-    },
-    "set_max_ping_autokick": {
-      "max_ms": 500
-    },
-    "set_team_switch_cooldown": {
-      "minutes": 15
-    }
-  },
-  "rules": [
-    {
-      "conditions": {
-        "player_count": {
-          "min": 0,
-          "max": 30
-        }
-      },
-      "commands": {
-        "set_idle_autokick_time": {
-          "minutes": 0
+    "rules": [
+        {
+            "conditions": {"player_count": {"min": 0, "max": 30}},
+            "commands": {
+                "set_idle_autokick_time": {"minutes": 0},
+                "set_autobalance_threshold": {"max_diff": 1},
+                "set_max_ping_autokick": {"max_ms": 0},
+                "set_team_switch_cooldown": {"minutes": 5},
+            },
         },
-        "set_autobalance_threshold": {
-          "max_diff": 1
+        {
+            "conditions": {"player_count": {"min": 30, "max": 50}},
+            "commands": {
+                "set_idle_autokick_time": {"minutes": 0},
+                "set_autobalance_threshold": {"max_diff": 2},
+                "set_max_ping_autokick": {"max_ms": 1000},
+                "set_team_switch_cooldown": {"minutes": 10},
+            },
         },
-        "set_max_ping_autokick": {
-          "max_ms": 0
+    ],
+    "_available_commands": {
+        "do_ban_profanities": {"profanities": ["word1", "word2"]},
+        "do_unban_profanities": {"profanities": ["word1", "word2"]},
+        "set_profanities": {"profanities": ["word1", "word2"]},
+        "set_autobalance_enabled": {"bool_str": "on/off"},
+        "set_welcome_message": {"msg": "A welcome message", "save": True},
+        "set_map": {"map_name": "stmariedumont_warfare"},
+        "set_idle_autokick_time": {"minutes": 0},
+        "set_max_ping_autokick": {"max_ms": 0},
+        "set_autobalance_threshold": {"max_diff": 0},
+        "set_team_switch_cooldown": {"minutes": 0},
+        "set_queue_length": {"num": 6},
+        "set_vip_slots_num": {"num": 1},
+        "set_broadcast": {"msg": "A broadcast message", "save": True},
+        "set_votekick_enabled": {"bool_str": "on/off"},
+        "set_votekick_threshold": {
+            "threshold_pairs_str": "PlayerCount,Threshold[,PlayerCount,Threshold,...]"
         },
-        "set_team_switch_cooldown": {
-          "minutes": 5
-        }
-      }
-    },
-    {
-      "conditions": {
-        "player_count": {
-          "min": 30,
-          "max": 50
-        }
-      },
-      "commands": {
-        "set_idle_autokick_time": {
-          "minutes": 0
+        "do_reset_votekick_threshold": {},
+        "do_switch_player_on_death": {"player": "12345678901234567"},
+        "do_switch_player_now": {"player": "12345678901234567"},
+        "do_add_map_to_rotation": {"map_name": "stmariedumont_warfare"},
+        "do_add_maps_to_rotation": {
+            "maps": ["stmariedumont_warfare", "kursk_offensive_rus"]
         },
-        "set_autobalance_threshold": {
-          "max_diff": 2
+        "do_remove_map_from_rotation": {"map_name": "stmariedumont_warfare"},
+        "do_remove_maps_from_rotation": {
+            "maps": ["stmariedumont_warfare", "kursk_offensive_rus"]
         },
-        "set_max_ping_autokick": {
-          "max_ms": 1000
+        "do_randomize_map_rotation": {
+            "maps": [
+                "An optional list of maps",
+                "that will replace the current rotation",
+            ]
         },
-        "set_team_switch_cooldown": {
-          "minutes": 10
-        }
-      }
-    }
-  ],
-  "_available_commands": {
-    "do_ban_profanities": { "profanities": ["word1", "word2"] },
-    "do_unban_profanities": { "profanities": ["word1", "word2"] },
-    "set_profanities": { "profanities": ["word1", "word2"]},
-    "set_autobalance_enabled": { "bool_str": "on/off" },
-    "set_welcome_message": { "msg": "A welcome message", "save": True },
-    "set_map": { "map_name": "stmariedumont_warfare" },
-    "set_idle_autokick_time": { "minutes": 0 },
-    "set_max_ping_autokick": { "max_ms": 0 },
-    "set_autobalance_threshold": { "max_diff": 0 },
-    "set_team_switch_cooldown": { "minutes": 0 },
-    "set_queue_length": { "num": 6 },
-    "set_vip_slots_num": { "num": 1 },
-    "set_broadcast": { "msg": "A broadcast message", "save": True },
-    "set_votekick_enabled": { "bool_str": "on/off" },
-    "set_votekick_threshold": { "threshold_pairs_str": "PlayerCount,Threshold[,PlayerCount,Threshold,...]" },
-    "do_reset_votekick_threshold": {},
-    "do_switch_player_on_death": { "player": "12345678901234567" },
-    "do_switch_player_now": { "player": "12345678901234567" },
-    "do_add_map_to_rotation": { "map_name": "stmariedumont_warfare" },
-    "do_add_maps_to_rotation": { "maps": ["stmariedumont_warfare", "kursk_offensive_rus"] },
-    "do_remove_map_from_rotation": { "map_name": "stmariedumont_warfare" },
-    "do_remove_maps_from_rotation": { "maps": ["stmariedumont_warfare", "kursk_offensive_rus"] },
-    "do_randomize_map_rotation": { "maps": ["An optional list of maps", "that will replace the current rotation"] },
-    "set_maprotation": { "maps": ["Overwrites the current rotation", "Yes the spelling is intentional"] },
-    "do_punish": { "player": "12345678901234567", "reason": "Get rekt" },
-    "do_kick": { "player": "12345678901234567", "reason": "Get rekt" },
-    "do_temp_ban": {
-      "player_name": "Optional, a player's name", 
-      "steam_id_64": "Required if player_name not provided, a player's steam64id",
-      "duration_hours": "Optional, defaults to 2",
-      "reason": "Optional, defaults to nothing",
-      "admin_name": "Optional, defaults to nothing"
+        "set_maprotation": {
+            "maps": [
+                "Overwrites the current rotation",
+                "Yes the spelling is intentional",
+            ]
+        },
+        "do_punish": {"player": "12345678901234567", "reason": "Get rekt"},
+        "do_kick": {"player": "12345678901234567", "reason": "Get rekt"},
+        "do_temp_ban": {
+            "player_name": "Optional, a player's name",
+            "steam_id_64": "Required if player_name not provided, a player's steam64id",
+            "duration_hours": "Optional, defaults to 2",
+            "reason": "Optional, defaults to nothing",
+            "admin_name": "Optional, defaults to nothing",
+        },
+        "do_perma_ban": {
+            "player_name": "Optional, a player's name",
+            "steam_id_64": "Required if player_name not provided, a player's steam64id",
+            "reason": "Optional, defaults to nothing",
+            "admin_name": "Optional, defaults to nothing",
+        },
+        "do_unban": {"steam_id_64": "12345678901234567"},
+        "do_add_admin": {
+            "steam_id_64": "1234567890123456",
+            "role": "senior",
+            "name": "A comment",
+        },
+        "do_remove_admin": {"steam_id_64": "1234567890123456"},
+        "do_add_vip": {"steam_id_64": "1234567890123456", "name": "A comment"},
+        "do_remove_vip": {"steam_id_64": "1234567890123456"},
+        "do_remove_all_vips": {},
     },
-    "do_perma_ban": {
-      "player_name": "Optional, a player's name", 
-      "steam_id_64": "Required if player_name not provided, a player's steam64id",
-      "reason": "Optional, defaults to nothing",
-      "admin_name": "Optional, defaults to nothing"
+    "_available_conditions": {
+        "player_count": {"min": 0, "max": 100, "not": False},
+        "time_of_day": {
+            "min": "00:00",
+            "max": "24:00",
+            "timezone": "UTC",
+            "not": False,
+        },
+        "online_mods": {"min": 0, "max": 100, "not": False},
+        "ingame_mods": {"min": 0, "max": 100, "not": False},
+        "current_map": {"maps": ["stmariedumont_warfare", "..."], "not": False},
     },
-    "do_unban": { "steam_id_64": "12345678901234567" },
-    "do_add_admin": { "steam_id_64": "1234567890123456", "role": "senior", "name": "A comment" },
-    "do_remove_admin": { "steam_id_64": "1234567890123456" },
-    "do_add_vip": { "steam_id_64": "1234567890123456", "name": "A comment" },
-    "do_remove_vip": { "steam_id_64": "1234567890123456" },
-    "do_remove_all_vips": {}
-  },
-  "_available_conditions": {
-    "player_count": {
-      "min": 0,
-      "max": 100,
-      "not": False
-    },
-    "time_of_day": {
-      "min": "00:00",
-      "max": "24:00",
-      "timezone": "UTC",
-      "not": False
-    },
-    "online_mods": {
-      "min": 0,
-      "max": 100,
-      "not": False
-    },
-    "ingame_mods": {
-      "min": 0,
-      "max": 100,
-      "not": False
-    },
-    "current_map": {
-      "maps": [ "stmariedumont_warfare", "..." ],
-      "not": False
-    }
-  }
 }
 
 
 def seed_default_config():
-    logger.info('Seeding DB')
+    logger.info("Seeding DB")
     try:
         with enter_session() as sess:
             AutoBroadcasts().seed_db(sess)
@@ -637,4 +622,4 @@ def seed_default_config():
             AutoSettingsConfig().seed_db(sess)
             sess.commit()
     except Exception as e:
-        logger.exception('Failed to seed DB')
+        logger.exception("Failed to seed DB")
