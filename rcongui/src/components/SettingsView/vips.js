@@ -69,7 +69,7 @@ const AddVipItem = ({
         edge="end"
         aria-label="delete"
         onClick={() =>
-          onAdd(name, steamID64).then(() => {
+          onAdd(name, steamID64, expirationTimestamp).then(() => {
             setName("");
             setSteamID64("");
           })
