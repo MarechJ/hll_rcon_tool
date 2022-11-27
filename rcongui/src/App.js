@@ -26,6 +26,7 @@ import {
 } from "./components/Scoreboard/LiveScore";
 import ServerInfo from "./components/Embeds/ServerInfo";
 import GameView from "./components/GameView"
+import MapRotation from "./components/MapManager";
 
 const Live = ({ classes }) => {
   const [mdSize, setMdSize] = React.useState(6);
