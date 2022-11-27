@@ -90,15 +90,22 @@ def async_upload_vips(request):
                     if not line:
                         continue
 
-                    steam_id, *name_chunks, possible_timestamp = line.split(" ")
-                    # This will collapse whitespace that was originally in a player's name
-                    name = " ".join(name_chunks)
-                    try:
-                        expiration_timestamp = parser.parse(possible_timestamp)
-                    except:
-                        logger.warning(
-                            f"Unable to parse {possible_timestamp=} for {name=} {steam_id=}"
-                        )
+                    steam_id, *name_chunks, possible_timestamp = line.strip().split()
+                    # No possible time stamp if name_chunks is empty (only a 2 element list)
+                    if not name_chunks:
+                        name = possible_timestamp
+                        possible_timestamp = None
+                    else:
+                        # This will collapse whitespace that was originally in a player's name
+                        name = " ".join(name_chunks)
+                        try:
+                            expiration_timestamp = parser.parse(possible_timestamp)
+                        except:
+                            logger.warning(
+                                f"Unable to parse {possible_timestamp=} for {name=} {steam_id=}"
+                            )
+                            # The last chunk should be treated as part of the players name if it's not a valid date
+                            name += possible_timestamp
 
                     if len(steam_id) != 17:
                         errors.append(
