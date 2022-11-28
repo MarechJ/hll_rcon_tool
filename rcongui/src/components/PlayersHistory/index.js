@@ -31,6 +31,8 @@ import DialogContent from "@material-ui/core/DialogContent";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import { getEmojiFlag } from "../../utils/emoji";
 import PlayerGrid from "./playerGrid";
+import { VipExpirationDialog } from "./VipDialog";
+import { PlayerVipSummary } from "./VipDialog/PlayerVipSummary";
 
 const PlayerSummary = ({ player, flag }) => (
   <React.Fragment>
@@ -160,6 +162,7 @@ class PlayersHistory extends React.Component {
       vips: new Map(),
       doFlag: false,
       doConfirmPlayer: false,
+      doVIPPlayer: false,
       ignoreAccent: true,
       exactMatch: false,
       flags: "",
@@ -180,6 +183,7 @@ class PlayersHistory extends React.Component {
     this.removeFromWatchList = this.removeFromWatchList.bind(this);
     this.setDoFlag = this.setDoFlag.bind(this);
     this.setDoConfirmPlayer = this.setDoConfirmPlayer.bind(this);
+    this.setDoVIPPlayer = this.setDoVIPPlayer.bind(this);
     this.setIgnoreAccent = this.setIgnoreAccent.bind(this);
     this.setExactMatch = this.setExactMatch.bind(this);
     this.setFlags = this.setFlags.bind(this);
@@ -220,16 +224,20 @@ class PlayersHistory extends React.Component {
       .catch((error) => toast.error("Unable to connect to API " + error));
   }
 
-  addVip(name, steamID64) {
+  addVip(player, expirationTimestamp) {
+    const steamID64 = player.get("steam_id_64");
+    const name = player.get("names").get(0).get("name");
+
     return sendAction("do_add_vip", {
       steam_id_64: steamID64,
       name: name,
-    }).then(this.loadVips);
+      expiration: expirationTimestamp,
+    }).then(this._reloadOnSuccess);
   }
 
   deleteVip(steamID64) {
     return sendAction("do_remove_vip", { steam_id_64: steamID64 }).then(
-      this.loadVips
+      this._reloadOnSuccess
     );
   }
 
@@ -442,6 +450,12 @@ class PlayersHistory extends React.Component {
     return this.setState({ doConfirmPlayer: confirmPlayer });
   }
 
+  setDoVIPPlayer(doVIPPlayer) {
+    return this.setState({
+      doVIPPlayer,
+    });
+  }
+
   setIgnoreAccent(ignoreAccent) {
     return this.setState({ ignoreAccent });
   }
@@ -482,11 +496,11 @@ class PlayersHistory extends React.Component {
       steam_id_64: player.get("steam_id_64"),
     });
   }
+
   onAddVip(player) {
-    return this.addVip(
-      player.get("names").get(0).get("name"),
-      player.get("steam_id_64")
-    );
+    return this.setDoVIPPlayer({
+      player,
+    });
   }
 
   onDeleteVip(player) {
@@ -519,6 +533,7 @@ class PlayersHistory extends React.Component {
       isWatchedOnly,
       doFlag,
       doConfirmPlayer,
+      doVIPPlayer,
       vips,
       ignoreAccent,
       exactMatch,
@@ -574,12 +589,6 @@ class PlayersHistory extends React.Component {
           <PlayerGrid
             classes={classes}
             players={playersHistory}
-            /* pageSize={pageSize}
-            total={total}
-            page={page}
-            setPage={(page) =>
-              this.setState({ page: page }, this.getPlayerHistory)
-            } */
             onBlacklist={this.onBlacklist}
             onUnBlacklist={this.onUnBlacklist}
             onDeleteFlag={this.deleteFlag}
@@ -588,7 +597,7 @@ class PlayersHistory extends React.Component {
             onflag={this.setDoFlag}
             onUnban={this.onUnban}
             onTempBan={this.onTempBan}
-            onAddVip={this.onAddVip}
+            onAddVip={this.setDoVIPPlayer}
             onDeleteVip={this.onDeleteVip}
             onAddToWatchList={this.onAddToWatchList}
           />
@@ -633,6 +642,17 @@ class PlayersHistory extends React.Component {
             this.setDoFlag(false);
           }}
           SummaryRenderer={PlayerSummary}
+        />
+        <VipExpirationDialog
+          open={doVIPPlayer}
+          vips={vips}
+          onDeleteVip={this.onDeleteVip}
+          handleClose={() => this.setDoVIPPlayer(false)}
+          handleConfirm={(playerObj, expirationTimestamp) => {
+            this.addVip(playerObj, expirationTimestamp);
+            this.setDoVIPPlayer(false);
+          }}
+          SummaryRenderer={PlayerVipSummary}
         />
       </Grid>
     );

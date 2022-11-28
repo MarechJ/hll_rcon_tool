@@ -77,6 +77,12 @@ class PlayerSteamID(Base):
     steaminfo = relationship("SteamInfo", backref="steamid", uselist=False)
     comments = relationship("PlayerComment", back_populates="player")
     stats = relationship("PlayerStats", backref="steamid", uselist=False)
+    vip = relationship(
+        "PlayerVIP",
+        back_populates="steamid",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
 
     def get_penalty_count(self):
         penalities_type = {"KICK", "PUNISH", "TEMPBAN", "PERMABAN"}
@@ -500,6 +506,22 @@ class PlayerComment(Base):
             content=self.content,
             by=self.by,
         )
+
+
+class PlayerVIP(Base):
+    __tablename__: str = "player_vip"
+
+    id = Column(Integer, primary_key=True)
+    expiration = Column(TIMESTAMP(timezone=True), nullable=False)
+
+    playersteamid_id = Column(
+        Integer,
+        ForeignKey("steam_id_64.id"),
+        nullable=False,
+        index=True,
+    )
+
+    steamid = relationship("PlayerSteamID", back_populates="vip")
 
 
 def init_db(force=False):

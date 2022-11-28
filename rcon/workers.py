@@ -3,8 +3,8 @@ import logging
 import os
 import time
 from datetime import timedelta
-from logging import Logger
 
+from dateutil import relativedelta
 from rq import Queue
 from rq.job import Job
 from sqlalchemy import and_
@@ -16,7 +16,6 @@ from rcon.player_history import get_player
 from rcon.recorded_commands import RecordedRcon
 from rcon.scoreboard import TimeWindowStats
 from rcon.settings import SERVER_INFO
-from rcon.utils import map_name
 
 logger = logging.getLogger("rcon")
 
@@ -200,7 +199,7 @@ def get_job_results(job_key):
 def worker_bulk_vip(name_ids, job_key, mode="override"):
     queue = get_queue()
     return queue.enqueue(
-        bluk_vip,
+        bulk_vip,
         name_ids=name_ids,
         mode=mode,
         result_ttl=6000,
@@ -209,16 +208,25 @@ def worker_bulk_vip(name_ids, job_key, mode="override"):
     )
 
 
-def bluk_vip(name_ids, mode="override"):
+def bulk_vip(name_ids, mode="override"):
     errors = []
     ctl = RecordedRcon(SERVER_INFO)
     vips = ctl.get_vip_ids()
     for vip in vips:
         ctl.do_remove_vip(vip["steam_id_64"])
 
-    for name, steam_id in name_ids:
+    for name, steam_id, expiration_timestamp in name_ids:
+
+        if not expiration_timestamp:
+            expiration_timestamp = (
+                datetime.datetime.utcnow() + relativedelta.relativedelta(years=200)
+            ).isoformat()
+        else:
+            expiration_timestamp = expiration_timestamp.isoformat()
+
         try:
-            ctl.do_add_vip(name.strip(), steam_id)
+            print(f"worker adding {name=} {steam_id=} {expiration_timestamp=}")
+            ctl.do_add_vip(name.strip(), steam_id, expiration_timestamp)
         except CommandFailedError:
             error = "Failed to add {name} {steam_id}"
             logger.warning("Retrying once for: %s", error)
