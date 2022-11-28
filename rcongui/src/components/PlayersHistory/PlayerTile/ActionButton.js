@@ -67,7 +67,7 @@ export const ActionButton = ({
       <Button>
         {isVip ? (
           <Tooltip title="Remove player from VIPs." arrow>
-            <StarBorder color="primary" onClick={onDeleteVip} />
+            <StarBorder color="primary" onClick={onAddVip} />
           </Tooltip>
         ) : (
           <Tooltip title="Add player to VIPs." arrow>

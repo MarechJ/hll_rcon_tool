@@ -7,7 +7,6 @@ import {
   ListItemSecondaryAction,
   ListItemText,
   TextField,
-  Input,
   Button,
   Tooltip,
   Typography,
@@ -16,7 +15,11 @@ import DeleteIcon from "@material-ui/icons/Delete";
 import AddIcon from "@material-ui/icons/Add";
 import { ForwardCheckBox } from "../commonComponent";
 import { get, handle_http_errors, showResponse } from "../../utils/fetchUtils";
+import { DateTimePicker, MuiPickersUtilsProvider } from "@material-ui/pickers";
+import MomentUtils from "@date-io/moment";
+
 import { result } from "lodash";
+import moment from "moment";
 
 const AddVipItem = ({
   classes,
@@ -24,11 +27,13 @@ const AddVipItem = ({
   setName,
   steamID64,
   setSteamID64,
+  expirationTimestamp,
+  setExpirationTimestamp,
   onAdd,
 }) => (
   <ListItem>
     <Grid container>
-      <Grid item xs={6} className={classes.paddingRight}>
+      <Grid item xs={4} className={classes.paddingRight}>
         <TextField
           InputLabelProps={{
             shrink: true,
@@ -38,7 +43,7 @@ const AddVipItem = ({
           onChange={(e) => setName(e.target.value)}
         />
       </Grid>
-      <Grid item xs={6} className={classes.paddingLeft}>
+      <Grid item xs={4} className={classes.paddingLeft}>
         <TextField
           InputLabelProps={{
             shrink: true,
@@ -48,13 +53,23 @@ const AddVipItem = ({
           onChange={(e) => setSteamID64(e.target.value)}
         />
       </Grid>
+      <Grid item xs={4}>
+        <MuiPickersUtilsProvider utils={MomentUtils}>
+          <DateTimePicker
+            label="Expiration"
+            value={expirationTimestamp}
+            onChange={setExpirationTimestamp}
+            format="YYYY/MM/DD HH:mm"
+          />
+        </MuiPickersUtilsProvider>
+      </Grid>
     </Grid>
     <ListItemSecondaryAction>
       <IconButton
         edge="end"
         aria-label="delete"
         onClick={() =>
-          onAdd(name, steamID64).then(() => {
+          onAdd(name, steamID64, expirationTimestamp).then(() => {
             setName("");
             setSteamID64("");
           })
@@ -141,6 +156,7 @@ const VipUpload = ({ classes }) => {
           </Tooltip>
         )}
       </Grid>
+
       {result ? (
         <Grid item xs={12}>
           <Typography variant="body2" color="secondary">
@@ -166,6 +182,23 @@ const VipEditableList = ({
 }) => {
   const [name, setName] = React.useState("");
   const [steamID64, setSteamID64] = React.useState("");
+  const [expirationTimestamp, setExpirationTimestamp] = React.useState(
+    moment().add(30, "days").format()
+  );
+
+  const formatExpirationDate = (player) => {
+    if (player.vip_expiration) {
+      let date = moment(player.vip_expiration);
+      /* For display purposes, show dates really far in the future as indefinite */
+      if (date.isSameOrAfter(moment().add(100, "years"))) {
+        return "Never";
+      } else {
+        return moment(player.vip_expiration).format("YYYY-MM-DD HH:MM:SSZ");
+      }
+    } else {
+      return "Never";
+    }
+  };
 
   return (
     <React.Fragment>
@@ -177,11 +210,16 @@ const VipEditableList = ({
           setName={setName}
           steamID64={steamID64}
           setSteamID64={setSteamID64}
+          expirationTimestamp={expirationTimestamp}
+          setExpirationTimestamp={setExpirationTimestamp}
           onAdd={onAdd}
         />
         {peopleList.map((obj) => (
           <ListItem key={obj.steam_id_64}>
-            <ListItemText primary={obj.name} secondary={obj.steam_id_64} />
+            <ListItemText
+              primary={obj.name}
+              secondary={obj.steam_id_64 + " " + formatExpirationDate(obj)}
+            />
             <ListItemSecondaryAction>
               <IconButton
                 edge="end"
@@ -199,6 +237,8 @@ const VipEditableList = ({
           setName={setName}
           steamID64={steamID64}
           setSteamID64={setSteamID64}
+          expirationTimestamp={expirationTimestamp}
+          setExpirationTimestamp={setExpirationTimestamp}
           onAdd={onAdd}
         />
         <ForwardCheckBox bool={forward} onChange={onFowardChange} />
