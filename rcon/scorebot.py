@@ -14,7 +14,7 @@ from requests.exceptions import ConnectionError, RequestException
 
 import discord
 from discord.embeds import Embed
-from discord.errors import HTTPException
+from discord.errors import HTTPException, NotFound
 from rcon.config import get_config
 
 logger = logging.getLogger(__name__)
@@ -265,13 +265,13 @@ def run():
             stats = get_stats()
             try:
                 webhook.edit_message(message_id, embeds=get_embeds(public_info, stats))
-            except (HTTPException, RequestException, ConnectionError) as e:
-                if isinstance(e, HTTPException) and e.code == 404:
-                    logger.exception("Message with ID in our records does not exist, cleaning up and restarting")
-                    cleanup_orphaned_messages(conn, server_number)
-                else:
-                    logger.exception("Temporary failure when trying to edit message")
-                    time.sleep(5)
+            except NotFound as ex:
+                logger.exception("Message with ID in our records does not exist, cleaning up and restarting")
+                cleanup_orphaned_messages(conn, server_number)
+                raise ex
+            except (HTTPException, RequestException, ConnectionError):
+                logger.exception("Temporary failure when trying to edit message")
+                time.sleep(5)
             except Exception as e:
                 logger.exception("Unable to edit message. Deleting record", e)
                 cleanup_orphaned_messages(conn, server_number)
