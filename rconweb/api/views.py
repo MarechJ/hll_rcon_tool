@@ -4,6 +4,7 @@ import os
 import traceback
 from functools import wraps
 from subprocess import PIPE, run
+from typing import List
 
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -445,18 +446,25 @@ def blacklist_player(request):
 def unblacklist_player(request):
     data = _get_data(request)
     res = {}
+
+    potential_failed_unbans: List[str] = []
     try:
         remove_player_from_blacklist(data["steam_id_64"])
         audit("unblacklist", request, data)
         if get_config()["BANS"]["unblacklist_does_unban"]:
-            ctl.do_unban(data["steam_id_64"])  # also remove bans
+            # also remove bans
+            potential_failed_unbans = ctl.do_unban(data["steam_id_64"])
             if get_config()["MULTI_SERVERS"]["broadcast_unbans"]:
                 forward_command(
                     "/api/do_unban",
                     json=data,
                     sessionid=request.COOKIES.get("sessionid"),
                 )
+
         failed = False
+
+        if potential_failed_unbans:
+            raise CommandFailedError(", ".join(potential_failed_unbans))
     except:
         logger.exception("Unable to unblacklist player")
         failed = True
@@ -467,6 +475,7 @@ def unblacklist_player(request):
             "command": "unblacklist_player",
             "arguments": data,
             "failed": failed,
+            "error": ", ".join(potential_failed_unbans),
         }
     )
 
@@ -478,8 +487,10 @@ def unban(request):
     res = {}
     results = None
 
+    potential_failed_unbans: List[str] = []
     try:
-        ctl.do_unban(data["steam_id_64"])  # also remove bans
+        # also remove bans
+        potential_failed_unbans = ctl.do_unban(data["steam_id_64"])
         audit("unban", request, data)
         if get_config()["MULTI_SERVERS"]["broadcast_unbans"]:
             results = forward_command(
@@ -491,6 +502,10 @@ def unban(request):
             except CommandFailedError:
                 logger.warning("Player %s was not on blacklist", data["steam_id_64"])
         failed = False
+
+        if potential_failed_unbans:
+            raise CommandFailedError(", ".join(potential_failed_unbans))
+
     except:
         logger.exception("Unable to unban player")
         failed = True
@@ -501,6 +516,7 @@ def unban(request):
             "command": "unban_player",
             "arguments": data,
             "failed": failed,
+            "error": ", ".join(potential_failed_unbans),
             "forward_results": results,
         }
     )
