@@ -5,6 +5,7 @@ import pathlib
 import sqlite3
 import time
 from logging.config import dictConfig
+from sqlite3 import Connection
 from sqlite3.dbapi2 import connect
 from urllib.parse import urljoin
 
@@ -13,7 +14,7 @@ from requests.exceptions import ConnectionError, RequestException
 
 import discord
 from discord.embeds import Embed
-from discord.errors import HTTPException
+from discord.errors import HTTPException, NotFound
 from rcon.config import get_config
 
 logger = logging.getLogger(__name__)
@@ -208,6 +209,13 @@ def get_stats():
     return stats
 
 
+def cleanup_orphaned_messages(conn: Connection, server_number: int):
+    conn.execute(
+        "DELETE FROM stats_messages WHERE server_number = ? AND message_type = ? AND webhook = ?",
+        (server_number, "live", WEBHOOK_URL),
+    )
+    conn.commit()
+
 def run():
     try:
         path = os.getenv("DISCORD_BOT_DATA_PATH", "/data")
@@ -257,20 +265,20 @@ def run():
             stats = get_stats()
             try:
                 webhook.edit_message(message_id, embeds=get_embeds(public_info, stats))
+            except NotFound as ex:
+                logger.exception("Message with ID in our records does not exist, cleaning up and restarting")
+                cleanup_orphaned_messages(conn, server_number)
+                raise ex
             except (HTTPException, RequestException, ConnectionError):
                 logger.exception("Temporary failure when trying to edit message")
                 time.sleep(5)
             except Exception as e:
-                logger.exception("Unable to edit message. Deleting record")
-                conn.execute(
-                    "DELETE FROM stats_messages WHERE server_number = ? AND message_type = ? AND webhook = ?",
-                    (server_number, "live", WEBHOOK_URL),
-                )
-                conn.commit()
-                raise
+                logger.exception("Unable to edit message. Deleting record", e)
+                cleanup_orphaned_messages(conn, server_number)
+                raise e
             time.sleep(1)
     except Exception as e:
-        logger.exception("The bot stopped")
+        logger.exception("The bot stopped", e)
         raise
 
 
