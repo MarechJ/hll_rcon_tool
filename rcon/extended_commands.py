@@ -3,6 +3,7 @@ import os
 import random
 import re
 import socket
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
 from functools import cached_property
@@ -1075,6 +1076,7 @@ class Rcon(ServerCtl):
         logger.info("Apply map rotation %s", rotation)
 
         current = self.get_map_rotation()
+        logger.info("Current rotation: %s", current)
         if rotation == current:
             logger.debug("Map rotation is the same, nothing to do")
             return current
@@ -1082,8 +1084,11 @@ class Rcon(ServerCtl):
             # we remove all but the first
             for map_ in current[1:]:
                 map_without_number = map_.rsplit(" ")[:1]
+                logger.info("Removing from rotation: '%s'", map_without_number)
                 super().do_remove_map_from_rotation(map_without_number)
+
             for map_ in rotation:
+                logger.info("Adding to rotation: '%s'", map_)
                 super().do_add_map_to_rotation(map_)
 
             # No we can remove the first from the previous rotation

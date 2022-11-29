@@ -31,20 +31,21 @@ const MapRotation = ({ classes }) => {
 
   const saveRotation = () => {
     setRotationIsSaving(true);
-    return postData(`${process.env.REACT_APP_API_URL}set_rotation`, {
+    return postData(`${process.env.REACT_APP_API_URL}set_maprotation`, {
       rotation: rotation,
     })
       .then((res) => {
-        showResponse(res, `set_rotation`, true);
+        showResponse(res, `set_maprotation`, true);
         setRotationIsSaving(false);
+        loadMapRotation()
       })
       .catch(handle_http_errors);
   };
 
   const loadMapRotation = () => {
     return loadToState("get_map_rotation", false, (data) => {
-      setCurrentRotation(data.result);
-      setRotation(data.result);
+      setCurrentRotation(Array.from(data.result));
+      setRotation(Array.from(data.result));
     });
   };
 
@@ -66,10 +67,17 @@ const MapRotation = ({ classes }) => {
     setRotation(newRotation);
   };
 
+  const onRemoveItem = (index) => {
+    rotation.splice(index, 1)
+    setRotation(Array.from(rotation));
+  };
+
+  const hasChanged = React.useMemo(() => currentRotation.toString() === rotation.toString(), [currentRotation, rotation] )
+
   return (
     <Grid container spacing={2} className={classes.doublePadding}>
       <Grid item xs={12}>
-        <DraggableList items={rotation} onDragEnd={onDragEnd} />
+        <DraggableList items={rotation} onDragEnd={onDragEnd} onRemove={onRemoveItem} />
       </Grid>
       <Grid item xs={12}>
         <Grid container spacing={1} alignItems="stretch">
@@ -107,7 +115,7 @@ const MapRotation = ({ classes }) => {
           variant="outlined"
           fullWidth
           disabled={
-            currentRotation.toString() === rotation.toString() ||
+            hasChanged ||
             rotationIsSaving
           }
           onClick={saveRotation}

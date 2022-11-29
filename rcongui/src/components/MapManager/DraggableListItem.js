@@ -5,24 +5,53 @@ import makeStyles from "@material-ui/core/styles/makeStyles";
 import ListItem from "@material-ui/core/ListItem";
 import ListItemAvatar from "@material-ui/core/ListItemAvatar";
 import ListItemText from "@material-ui/core/ListItemText";
+import {
+  ListItemSecondaryAction,
+  IconButton,
+  Chip,
+  Typography,
+} from "@material-ui/core";
 import Avatar from "@material-ui/core/Avatar";
-import InboxIcon from "@material-ui/icons/Inbox";
+import DeleteIcon from "@material-ui/icons/Delete";
 import map_to_pict from "../Scoreboard/utils";
 
 const useStyles = makeStyles({
   draggingListItem: {
     background: "rgb(235,235,235)",
   },
+  noDot: {
+    listStyleType: "none",
+  },
 });
 
-const DraggableListItem = ({ item, index }) => {
-    
+const DraggableListItem = ({ item, index, onRemove }) => {
   const getMapName = (fullName) => {
     const parts = fullName.split("_");
     if (parts && parts.length > 0) {
       return parts[0];
     }
     return "foy";
+  };
+
+  const getLabels = (fullName) => {
+    const labels = [];
+
+    if (fullName.search("offensive") !== -1) {
+      labels.push("offensive");
+    } else {
+      labels.push("warfare");
+    }
+    if (fullName.search("night") !== -1) {
+      labels.push("night");
+    }
+
+    return labels;
+  };
+
+  const labelsColors = {
+    offensive: "primary",
+    night: "secondary",
+    warfare: "default",
   };
 
   const classes = useStyles();
@@ -33,12 +62,38 @@ const DraggableListItem = ({ item, index }) => {
           ref={provided.innerRef}
           {...provided.draggableProps}
           {...provided.dragHandleProps}
-          className={snapshot.isDragging ? classes.draggingListItem : ""}
+          className={
+            snapshot.isDragging
+              ? classes.draggingListItem + " " + classes.noDot
+              : classes.noDot
+          }
         >
           <ListItemAvatar>
             <Avatar src={map_to_pict[getMapName(item)]} />
           </ListItemAvatar>
-          <ListItemText primary={item} />
+          <ListItemText
+            primary={
+              <>
+                <Typography display="inline" variant="h6">
+                  {getMapName(item)}{" "}
+                  {getLabels(item).map((e) => (
+                  <Chip size="small" color={labelsColors[e]} label={e} />
+                ))}
+                </Typography>
+               
+              </>
+            }
+            secondary={<>{item}</>}
+          />
+          <ListItemSecondaryAction>
+            <IconButton
+              edge="end"
+              aria-label="delete"
+              onClick={() => onRemove(index)}
+            >
+              <DeleteIcon />
+            </IconButton>
+          </ListItemSecondaryAction>
         </ListItem>
       )}
     </Draggable>
