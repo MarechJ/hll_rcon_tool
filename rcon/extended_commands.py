@@ -3,6 +3,7 @@ import os
 import random
 import re
 import socket
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
 from functools import cached_property
@@ -862,7 +863,7 @@ class Rcon(ServerCtl):
         super().set_broadcast(formatted)
         return prev.decode() if prev else ""
 
-    @ttl_cache(ttl=20)
+    @ttl_cache(ttl=5)
     def get_slots(self):
         res = super().get_slots()
         if not self.slots_regexp.match(res):
@@ -1047,11 +1048,13 @@ class Rcon(ServerCtl):
                 raise CommandFailedError("Server return wrong data")
         return l
 
-    def do_add_map_to_rotation(self, map_name):
-        return self.do_add_maps_to_rotation([map_name])
+    def do_add_map_to_rotation(self, map_name, after_map_name: str = None, after_map_name_number: str = None):
+        with invalidates(Rcon.get_map_rotation):
+            super().do_add_map_to_rotation(map_name, after_map_name, after_map_name_number)
 
-    def do_remove_map_from_rotation(self, map_name):
-        return self.do_remove_maps_from_rotation([map_name])
+    def do_remove_map_from_rotation(self, map_name, map_number: str = None):
+        with invalidates(Rcon.get_map_rotation):
+            super().do_remove_map_from_rotation(map_name, map_number)
 
     def do_remove_maps_from_rotation(self, maps):
         with invalidates(Rcon.get_map_rotation):
@@ -1065,19 +1068,6 @@ class Rcon(ServerCtl):
                 super().do_add_map_to_rotation(map_name)
             return "SUCCESS"
 
-    def do_randomize_map_rotation(self, maps=None):
-        maps = maps or self.get_maps()
-        current = self.get_map_rotation()
-
-        random.shuffle(maps)
-
-        for m in maps:
-            if m in current:
-                self.do_remove_map_from_rotation(m)
-            self.do_add_map_to_rotation(m)
-
-        return maps
-
     def set_maprotation(self, rotation):
         if not rotation:
             raise CommandFailedError("Empty rotation")
@@ -1086,31 +1076,25 @@ class Rcon(ServerCtl):
         logger.info("Apply map rotation %s", rotation)
 
         current = self.get_map_rotation()
+        logger.info("Current rotation: %s", current)
         if rotation == current:
             logger.debug("Map rotation is the same, nothing to do")
             return current
         with invalidates(Rcon.get_map_rotation):
-            if len(current) == 1:
-                logger.info("Current rotation is a single map")
-                for idx, m in enumerate(rotation):
-                    if m not in current:
-                        self.do_add_map_to_rotation(m)
-                    if m in current and idx != 0:
-                        self.do_remove_map_from_rotation(m)
-                        self.do_add_map_to_rotation(m)
-                if current[0] not in rotation:
-                    self.do_remove_map_from_rotation(m)
-                return rotation
+            # we remove all but the first
+            for map_ in current[1:]:
+                map_without_number = map_.rsplit(" ")[:1]
+                logger.info("Removing from rotation: '%s'", map_without_number)
+                super().do_remove_map_from_rotation(map_without_number)
 
-            first = rotation.pop(0)
-            to_remove = set(current) - {first}
-            if to_remove == set(current):
-                self.do_add_map_to_rotation(first)
+            for map_ in rotation:
+                logger.info("Adding to rotation: '%s'", map_)
+                super().do_add_map_to_rotation(map_)
 
-            self.do_remove_maps_from_rotation(to_remove)
-            self.do_add_maps_to_rotation(rotation)
+            # No we can remove the first from the previous rotation
+            super().do_remove_map_from_rotation(current[0])
 
-        return [first] + rotation
+        return self.get_map_rotation()
 
     @ttl_cache(ttl=60 * 2)
     def get_scoreboard(self, minutes=180, sort="ratio"):
