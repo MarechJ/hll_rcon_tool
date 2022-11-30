@@ -36,15 +36,23 @@ const DraggableListItem = ({ item, index, onRemove }) => {
   const getLabels = (fullName) => {
     const labels = [];
 
-    if (fullName.search("offensive") !== -1) {
+    if (fullName.search("offensive") !== -1 || fullName.search("off") !== -1) {
       labels.push("offensive");
     } else {
       labels.push("warfare");
     }
+    if (
+      fullName.toLowerCase().endsWith("us") ||
+      fullName.toLowerCase().endsWith("rus")
+    ) {
+      labels.push("allies");
+    }
+    if (fullName.toLowerCase().endsWith("ger")) {
+      labels.push("axis");
+    }
     if (fullName.search("night") !== -1) {
       labels.push("night");
     }
-
     return labels;
   };
 
@@ -52,6 +60,16 @@ const DraggableListItem = ({ item, index, onRemove }) => {
     offensive: "primary",
     night: "secondary",
     warfare: "default",
+    allies: "primary",
+    axis: "secondary",
+  };
+
+  const labelsVariant = {
+    offensive: "default",
+    night: "default",
+    warfare: "default",
+    axis: "outlined",
+    allies: "outlined",
   };
 
   const classes = useStyles();
@@ -77,10 +95,14 @@ const DraggableListItem = ({ item, index, onRemove }) => {
                 <Typography display="inline" variant="h6">
                   {getMapName(item)}{" "}
                   {getLabels(item).map((e) => (
-                  <Chip size="small" color={labelsColors[e]} label={e} />
-                ))}
+                    <Chip
+                      size="small"
+                      variant={labelsVariant[e]}
+                      color={labelsColors[e]}
+                      label={e}
+                    />
+                  ))}
                 </Typography>
-               
               </>
             }
             secondary={<>{item}</>}

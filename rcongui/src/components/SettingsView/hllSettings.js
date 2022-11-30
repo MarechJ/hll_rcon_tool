@@ -1,5 +1,12 @@
 import React from "react";
-import { Button, Grid, Link, TextField, Typography, Tooltip } from "@material-ui/core";
+import {
+  Button,
+  Grid,
+  Link,
+  TextField,
+  Typography,
+  Tooltip,
+} from "@material-ui/core";
 import { range } from "lodash/util";
 import {
   get,
@@ -677,9 +684,11 @@ class HLLSettings extends React.Component {
         <Grid container className={classes.paddingTop} justify="center">
           <Grid item xs={12}>
             <Typography variant="h5">Map rotation</Typography>
+
             <MapRotation classes={classes} />
           </Grid>
         </Grid>
+        {/* LEGACY ROTATION GUI 
         <Grid container className={classes.paddingTop} justify="center" xs={12}>
           <Grid item>
             <Typography variant="h5" gutterBottom>
@@ -735,6 +744,7 @@ class HLLSettings extends React.Component {
             </Typography>
           </Grid>
         </Grid>
+            END LEGACY ROTATION UI */}
         <Grid item xs={12}>
           <ProfanityFiler
             words={profanities}
