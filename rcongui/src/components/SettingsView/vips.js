@@ -15,11 +15,11 @@ import DeleteIcon from "@material-ui/icons/Delete";
 import AddIcon from "@material-ui/icons/Add";
 import { ForwardCheckBox } from "../commonComponent";
 import { get, handle_http_errors, showResponse } from "../../utils/fetchUtils";
-import { DateTimePicker, MuiPickersUtilsProvider } from "@material-ui/pickers";
-import MomentUtils from "@date-io/moment";
 
-import { result } from "lodash";
 import moment from "moment";
+import {VipExpirationDialog} from "../VipDialog";
+import {fromJS} from "immutable";
+import {vipListFromServer} from "../VipDialog/vipFromServer";
 
 const AddVipItem = ({
   classes,
@@ -27,13 +27,11 @@ const AddVipItem = ({
   setName,
   steamID64,
   setSteamID64,
-  expirationTimestamp,
-  setExpirationTimestamp,
   onAdd,
 }) => (
   <ListItem>
     <Grid container>
-      <Grid item xs={4} className={classes.paddingRight}>
+      <Grid item xs={6} className={classes.paddingRight}>
         <TextField
           InputLabelProps={{
             shrink: true,
@@ -43,7 +41,7 @@ const AddVipItem = ({
           onChange={(e) => setName(e.target.value)}
         />
       </Grid>
-      <Grid item xs={4} className={classes.paddingLeft}>
+      <Grid item xs={6} className={classes.paddingLeft}>
         <TextField
           InputLabelProps={{
             shrink: true,
@@ -53,27 +51,12 @@ const AddVipItem = ({
           onChange={(e) => setSteamID64(e.target.value)}
         />
       </Grid>
-      <Grid item xs={4}>
-        <MuiPickersUtilsProvider utils={MomentUtils}>
-          <DateTimePicker
-            label="Expiration"
-            value={expirationTimestamp}
-            onChange={setExpirationTimestamp}
-            format="YYYY/MM/DD HH:mm"
-          />
-        </MuiPickersUtilsProvider>
-      </Grid>
     </Grid>
     <ListItemSecondaryAction>
       <IconButton
         edge="end"
         aria-label="delete"
-        onClick={() =>
-          onAdd(name, steamID64, expirationTimestamp).then(() => {
-            setName("");
-            setSteamID64("");
-          })
-        }
+        onClick={() => onAdd(name, steamID64)}
       >
         <AddIcon />
       </IconButton>
@@ -172,6 +155,14 @@ const VipUpload = ({ classes }) => {
   );
 };
 
+function nameOf(playerObj) {
+    const names = playerObj.get("names");
+    if (names.size === 0) {
+        return "";
+    }
+    return playerObj.get("names").get(0).get("name");
+}
+
 const VipEditableList = ({
   classes,
   peopleList,
@@ -182,9 +173,7 @@ const VipEditableList = ({
 }) => {
   const [name, setName] = React.useState("");
   const [steamID64, setSteamID64] = React.useState("");
-  const [expirationTimestamp, setExpirationTimestamp] = React.useState(
-    moment().add(30, "days").format()
-  );
+  const [VIPPlayer, setVIPPlayer] = React.useState(false);
 
   const formatExpirationDate = (player) => {
     if (player.vip_expiration) {
@@ -200,6 +189,15 @@ const VipEditableList = ({
     }
   };
 
+  function onOpenAddVipDialog(name, steamId64) {
+      return setVIPPlayer(fromJS({
+          names: [{
+              name: name,
+          }],
+          steam_id_64: steamId64,
+      }));
+  }
+
   return (
     <React.Fragment>
       <List dense>
@@ -210,9 +208,7 @@ const VipEditableList = ({
           setName={setName}
           steamID64={steamID64}
           setSteamID64={setSteamID64}
-          expirationTimestamp={expirationTimestamp}
-          setExpirationTimestamp={setExpirationTimestamp}
-          onAdd={onAdd}
+          onAdd={onOpenAddVipDialog}
         />
         {peopleList.map((obj) => (
           <ListItem key={obj.steam_id_64}>
@@ -237,11 +233,19 @@ const VipEditableList = ({
           setName={setName}
           steamID64={steamID64}
           setSteamID64={setSteamID64}
-          expirationTimestamp={expirationTimestamp}
-          setExpirationTimestamp={setExpirationTimestamp}
-          onAdd={onAdd}
+          onAdd={onOpenAddVipDialog}
         />
         <ForwardCheckBox bool={forward} onChange={onFowardChange} />
+        <VipExpirationDialog
+            open={VIPPlayer}
+            vips={vipListFromServer(peopleList)}
+            onDeleteVip={(playerObj) => onDelete(nameOf(playerObj), playerObj.get("steam_id_64"))}
+            handleClose={() => setVIPPlayer(false)}
+            handleConfirm={(playerObj, expirationTimestamp) => {
+              onAdd(nameOf(playerObj), playerObj.get("steam_id_64"), expirationTimestamp);
+              setVIPPlayer(false);
+            }}
+        />
       </List>
     </React.Fragment>
   );

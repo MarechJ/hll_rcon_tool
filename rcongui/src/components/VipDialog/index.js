@@ -12,6 +12,7 @@ import {
 import { DateTimePicker, MuiPickersUtilsProvider } from "@material-ui/pickers";
 import MomentUtils from "@date-io/moment";
 import moment from "moment";
+import {PlayerVipSummary} from "./PlayerVipSummary";
 
 export function VipExpirationDialog(props) {
   const {
@@ -20,17 +21,16 @@ export function VipExpirationDialog(props) {
     onDeleteVip,
     handleClose,
     handleConfirm,
-    SummaryRenderer,
   } = props;
   const [expirationTimestamp, setExpirationTimestamp] = useState();
-  const [isVip, setIsVip] = useState();
+  const [isVip, setIsVip] = useState(false);
 
   /* open is either a boolean or the passed in player Map */
   useEffect(() => {
-    if (!(typeof open === "boolean")) {
-      if (open && open.get("vip_expiration")) {
+    if (!(typeof open === "boolean") && open) {
+      setIsVip(!!vips.get(open.get("steam_id_64")));
+      if (open.get("vip_expiration")) {
         setExpirationTimestamp(open.get("vip_expiration"));
-        setIsVip(vips.get(open.get("steam_id_64")) ? true : false);
       }
     }
   }, [open]);
@@ -48,7 +48,7 @@ export function VipExpirationDialog(props) {
       <DialogContent>
         <Grid container spacing={2}>
           <Grid item>
-            <SummaryRenderer player={open} isVip={isVip} />
+            <PlayerVipSummary player={open} isVip={isVip} />
           </Grid>
           <Grid item container spacing={2}>
             <Grid item xs={12}>
