@@ -1083,15 +1083,15 @@ class Rcon(ServerCtl):
         with invalidates(Rcon.get_map_rotation):
             # we remove all but the first
             for map_ in current[1:]:
-                map_without_number = map_.rsplit(" ")[:1]
+                map_without_number = map_.rsplit(" ")[0]
                 logger.info("Removing from rotation: '%s'", map_without_number)
                 super().do_remove_map_from_rotation(map_without_number)
 
-            for map_ in rotation:
+            for map_ in rotation:  
                 logger.info("Adding to rotation: '%s'", map_)
                 super().do_add_map_to_rotation(map_)
 
-            # No we can remove the first from the previous rotation
+            # Now we can remove the first from the previous rotation
             super().do_remove_map_from_rotation(current[0])
 
         return self.get_map_rotation()

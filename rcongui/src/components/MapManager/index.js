@@ -10,7 +10,7 @@ import {
   sendAction,
   showResponse,
 } from "../../utils/fetchUtils";
-import { Button, CircularProgress, Grid } from "@material-ui/core";
+import { Button, CircularProgress, Grid, Typography } from "@material-ui/core";
 import Chip from "@material-ui/core/Chip";
 import Autocomplete from "@material-ui/lab/Autocomplete";
 import TextField from "@material-ui/core/TextField";
@@ -21,6 +21,8 @@ const MapRotation = ({ classes }) => {
   const [rotation, setRotation] = React.useState([]);
   const [mapsToAdd, setMapsToAdd] = React.useState([]);
   const [rotationIsSaving, setRotationIsSaving] = React.useState(false);
+  const [voteMapConfig, setVoteMapConfig] = React.useState({})
+  const [lastRefresh, setLastRefresh] = React.useState(null)
 
   const loadToState = (command, showSuccess, stateSetter) => {
     return get(command)
@@ -39,8 +41,15 @@ const MapRotation = ({ classes }) => {
         setRotationIsSaving(false);
         loadMapRotation()
       })
-      .catch(handle_http_errors);
+      .catch((e) => {handle_http_errors(e); loadMapRotation(); setRotationIsSaving(false);});
   };
+
+  const getVoteMapConfig = () => {
+    get("get_votemap_config")
+    .then((res) => showResponse(res, "get_votemap_config", false))
+    .then((data) => (data.failed ? "" : setVoteMapConfig(data.result)))
+    .catch(handle_http_errors);
+  }
 
   const loadMapRotation = () => {
     return loadToState("get_map_rotation", false, (data) => {
@@ -53,9 +62,18 @@ const MapRotation = ({ classes }) => {
     return loadToState("get_maps", false, (data) => setMaps(data.result));
   };
 
-  React.useEffect(() => {
+  const loadAllData = () => {
+    getVoteMapConfig();
     loadMapRotation();
     loadAllMaps();
+    setLastRefresh(new Date())
+  }
+
+  React.useEffect(() => {
+   loadAllData();
+   const handle = setInterval(getVoteMapConfig, 10000);
+
+   return () => clearInterval(handle)
   }, []);
 
   const onDragEnd = ({ destination, source }) => {
@@ -76,6 +94,8 @@ const MapRotation = ({ classes }) => {
 
   return (
     <Grid container spacing={2} className={classes.doublePadding}>
+      <Grid item xs={12}><Typography variant="caption">Drag and drop to reorder</Typography></Grid>
+      <Grid item xs={12}><Button variant="text" onClick={loadAllData}><Typography variant="caption">Refresh</Typography> </Button></Grid>
       <Grid item xs={12}>
         <DraggableList items={rotation} onDragEnd={onDragEnd} onRemove={onRemoveItem} />
       </Grid>
@@ -84,6 +104,7 @@ const MapRotation = ({ classes }) => {
           <Grid item xs={10}>
             <Autocomplete
               multiple
+              disableCloseOnSelect
               options={maps}
               onChange={(e, v) => setMapsToAdd(v)}
               renderInput={(params) => (
@@ -116,11 +137,11 @@ const MapRotation = ({ classes }) => {
           fullWidth
           disabled={
             hasChanged ||
-            rotationIsSaving
+            rotationIsSaving || voteMapConfig.vote_enabled
           }
           onClick={saveRotation}
         >
-          {rotationIsSaving ? <CircularProgress /> : "Save rotation"}
+          {rotationIsSaving ? <CircularProgress /> : voteMapConfig.vote_enabled ? "You can't change the rotation while votemap is on" : "Save rotation"}
         </Button>
       </Grid>
     </Grid>
