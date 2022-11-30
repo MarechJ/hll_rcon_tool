@@ -140,16 +140,19 @@ export function VipExpirationDialog(props) {
         >
           Indefinite VIP
         </Button>
-        <Button
-          color="secondary"
-          onClick={() => {
-            setExpirationTimestamp(moment().format());
-            onDeleteVip(open);
-            handleClose();
-          }}
-        >
-          Remove VIP
-        </Button>
+        {
+            isVip &&
+            <Button
+                color="secondary"
+                onClick={() => {
+                  setExpirationTimestamp(moment().format());
+                  onDeleteVip(open);
+                  handleClose();
+                }}
+            >
+              Remove VIP
+            </Button>
+        }
         <Button
           color="primary"
           onClick={() => {
