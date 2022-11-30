@@ -20,8 +20,10 @@ import MUIDataTable from "mui-datatables";
 import { withRouter } from "react-router";
 import "./PlayerInfo.css";
 import { ChatContent } from "../ChatWidget";
+import MessageHistory from "../MessageHistory";
 import { toast } from "react-toastify";
 import { useParams } from "react-router-dom";
+import CollapseCard from "../collapseCard";
 
 const useStyles = makeStyles((theme) => ({
   padding: {
@@ -160,6 +162,7 @@ const PlayerInfoFunc = ({ classes }) => {
   const [vip, setVip] = React.useState(false);
   const [loaded, setLoaded] = React.useState(false);
   const [comments, setComments] = React.useState(undefined);
+  const [messages, setMessages] = React.useState(undefined);
 
   /**
    * fetch bans that currently affect the steamId64
@@ -198,21 +201,34 @@ const PlayerInfoFunc = ({ classes }) => {
           data.result !== null &&
           Object.keys(data.result).length !== 0
         ) {
-          
-            setCreated(data.result.created)
-            setNames(data.result.names)
-            setSessions(data.result.sessions)
-            setSessionsCount(data.result.sessions_count)
-            setTotalPlaytimeSeconds(data.result.total_playtime_seconds)
-            setCurrentPlaytimeSeconds(data.result.current_playtime_seconds)
-            setReceivedActions(data.result.received_actions)
-            setPenaltyCount(data.result.penalty_count)
-            setBlacklist(data.result.blacklist)
-            setFlags(data.result.flags)
-            setWatchlist(data.result.watchlist)
-            setSteaminfo(data.result.steaminfo)
-            setLoaded(true)
-        
+          setCreated(data.result.created);
+          setNames(data.result.names);
+          setSessions(data.result.sessions);
+          setSessionsCount(data.result.sessions_count);
+          setTotalPlaytimeSeconds(data.result.total_playtime_seconds);
+          setCurrentPlaytimeSeconds(data.result.current_playtime_seconds);
+          setReceivedActions(data.result.received_actions);
+          setPenaltyCount(data.result.penalty_count);
+          setBlacklist(data.result.blacklist);
+          setFlags(data.result.flags);
+          setWatchlist(data.result.watchlist);
+          setSteaminfo(data.result.steaminfo);
+          setLoaded(true);
+        }
+      })
+      .catch(handle_http_errors);
+  };
+
+  const fetchMessages = (steamId64) => {
+    get(`get_player_message?steam_id_64=${steamId64}`)
+      .then((response) => showResponse(response, "get_player_messages", false))
+      .then((data) => {
+        if (
+          data.result !== undefined &&
+          data.result !== null &&
+          Object.keys(data.result).length !== 0
+        ) {
+          setMessages(data.result);
         }
       })
       .catch(handle_http_errors);
@@ -250,6 +266,7 @@ const PlayerInfoFunc = ({ classes }) => {
   React.useEffect(() => {
     fetchPlayer(steamId64);
     fetchPlayerBan(steamId64);
+    fetchMessages(steamId64);
     fetchPlayerComments(steamId64);
   }, [steamId64]);
 
@@ -257,7 +274,7 @@ const PlayerInfoFunc = ({ classes }) => {
     <Grid container className={classes.root}>
       {loaded ? (
         <Grid item sm={12} className={classes.marginTop}>
-          <Grid container>
+          <Grid container spacing={2}>
             <Grid item xl={2} lg={2} md={2} sm={3} xs={12}>
               <Grid
                 container
@@ -284,10 +301,9 @@ const PlayerInfoFunc = ({ classes }) => {
                 <Grid item>
                   <Typography variant="h6">Last connection</Typography>
                   <Typography>
-                    {moment(
-                      sessions[0]?.end ||
-                        sessions[0]?.start
-                    ).format("ddd Do MMM HH:mm:ss")}
+                    {moment(sessions[0]?.end || sessions[0]?.start).format(
+                      "ddd Do MMM HH:mm:ss"
+                    )}
                   </Typography>
                 </Grid>
                 <Grid item>
@@ -301,16 +317,10 @@ const PlayerInfoFunc = ({ classes }) => {
 
                 <Grid item>
                   <Typography variant="h6">Player penalties</Typography>
-                  <Typography>
-                    Perma ban: {penaltyCount.PERMABAN}
-                  </Typography>
-                  <Typography>
-                    Temp ban: {penaltyCount.TEMPBAN}
-                  </Typography>
+                  <Typography>Perma ban: {penaltyCount.PERMABAN}</Typography>
+                  <Typography>Temp ban: {penaltyCount.TEMPBAN}</Typography>
                   <Typography>Kick: {penaltyCount.KICK}</Typography>
-                  <Typography>
-                    Punish: {penaltyCount.PUNISH}
-                  </Typography>
+                  <Typography>Punish: {penaltyCount.PUNISH}</Typography>
                 </Grid>
                 <Grid item>
                   <Typography variant="h6">
@@ -358,15 +368,23 @@ const PlayerInfoFunc = ({ classes }) => {
                 </Grid>
               </Grid>
             </Grid>
-            <Grid item xl={3} lg={3} md={3} sm={4} xs={12}>
+            <Grid item xl={3} lg={3} md={3} sm={4} xs={12} container>
               <Grid item xs={12}>
-                <Typography variant="h3">Comments</Typography>
+                <CollapseCard title="Comments" classes={classes} startOpen>
+                  <ChatContent
+                    data={comments}
+                    handleMessageSend={handleNewComment}
+                  />
+                </CollapseCard>
               </Grid>
               <Grid item xs={12}>
-                <ChatContent
-                  data={comments}
-                  handleMessageSend={handleNewComment}
-                />
+                <CollapseCard
+                  title="Message History"
+                  classes={classes}
+                  startOpen
+                >
+                  <MessageHistory data={messages} />
+                </CollapseCard>
               </Grid>
             </Grid>
           </Grid>
@@ -410,6 +428,7 @@ class PlayerInfo extends React.Component {
       vip: false,
       loaded: false,
       comments: undefined,
+      messages: undefined,
     };
     this.handleNewComment = this.handleNewComment.bind(this);
   }

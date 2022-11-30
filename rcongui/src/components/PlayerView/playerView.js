@@ -112,7 +112,8 @@ class PlayerView extends Component {
     message = null,
     comment = null,
     duration_hours = 2,
-    steam_id_64 = null
+    steam_id_64 = null,
+    save_message = true
   ) {
     if (message === null) {
       message = this.state.actionMessage;
@@ -138,6 +139,7 @@ class PlayerView extends Component {
         comment: comment,
         duration_hours: duration_hours,
         message: message,
+        save_message: save_message,
       };
       if (actionType === "temp_ban") {
         data["forward"] = "yes";
