@@ -3,15 +3,15 @@ import os
 import random
 import re
 import socket
-from cmath import inf
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
 from functools import cached_property
 from time import sleep
-from typing import Any
+from typing import Dict, List, Optional, Union
 
 from rcon.cache_utils import get_redis_client, invalidates, ttl_cache
 from rcon.commands import CommandFailedError, HLLServerError, ServerCtl
+from rcon.models import PlayerSteamID, PlayerVIP, enter_session
 from rcon.player_history import get_profiles
 from rcon.steam_utils import (
     get_player_country_code,
@@ -579,15 +579,29 @@ class Rcon(ServerCtl):
         bans.reverse()
         return temp_bans + bans
 
-    def do_unban(self, steam_id_64):
+    def do_unban(self, steam_id_64) -> List[str]:
+        """Remove all temporary and permanent bans from the steam_id_64"""
         bans = self.get_bans()
         type_to_func = {
             "temp": self.do_remove_temp_ban,
             "perma": self.do_remove_perma_ban,
         }
+        failed_ban_removals: List[str] = []
         for b in bans:
             if b.get("steam_id_64") == steam_id_64:
-                type_to_func[b["type"]](b["raw"])
+                # The game server will sometimes continue to report expired temporary bans
+                # (verified as of 10 Aug 2022 U12 Hotfix)
+                # which will prevent removing permanent bans if we don't catch the failed removal
+
+                # We swallow exceptions here and test for failed unbans in views.py
+                try:
+                    type_to_func[b["type"]](b["raw"])
+                except CommandFailedError:
+                    message = f"Unable to remove {b['type']} ban from {steam_id_64}"
+                    logger.exception(message)
+                    failed_ban_removals.append(message)
+
+        return failed_ban_removals
 
     def get_ban(self, steam_id_64):
         """
@@ -599,9 +613,16 @@ class Rcon(ServerCtl):
         return list(filter(lambda x: x.get("steam_id_64") == steam_id_64, bans))
 
     @ttl_cache(ttl=60 * 60)
-    def get_vip_ids(self):
+    def get_vip_ids(self) -> List[Dict[str, Union[str, Optional[datetime]]]]:
         res = super().get_vip_ids()
         l = []
+
+        vip_expirations: Dict[str, datetime]
+        with enter_session() as session:
+            players = session.query(PlayerSteamID).join(PlayerVIP).all()
+            vip_expirations = {
+                player.steam_id_64: player.vip.expiration for player in players
+            }
 
         for item in res:
             try:
@@ -612,7 +633,9 @@ class Rcon(ServerCtl):
             except ValueError:
                 self._reconnect()
                 raise
-            l.append(dict(zip((STEAMID, NAME), (steam_id_64, name))))
+            player = dict(zip((STEAMID, NAME), (steam_id_64, name)))
+            player["vip_expiration"] = vip_expirations.get(steam_id_64, None)
+            l.append(player)
 
         return sorted(l, key=lambda d: d[NAME])
 

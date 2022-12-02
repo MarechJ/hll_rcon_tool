@@ -7,7 +7,6 @@ import {
   ListItemSecondaryAction,
   ListItemText,
   TextField,
-  Input,
   Button,
   Tooltip,
   Typography,
@@ -16,7 +15,11 @@ import DeleteIcon from "@material-ui/icons/Delete";
 import AddIcon from "@material-ui/icons/Add";
 import { ForwardCheckBox } from "../commonComponent";
 import { get, handle_http_errors, showResponse } from "../../utils/fetchUtils";
-import { result } from "lodash";
+
+import moment from "moment";
+import {VipExpirationDialog} from "../VipDialog";
+import {fromJS} from "immutable";
+import {vipListFromServer} from "../VipDialog/vipFromServer";
 
 const AddVipItem = ({
   classes,
@@ -53,12 +56,7 @@ const AddVipItem = ({
       <IconButton
         edge="end"
         aria-label="delete"
-        onClick={() =>
-          onAdd(name, steamID64).then(() => {
-            setName("");
-            setSteamID64("");
-          })
-        }
+        onClick={() => onAdd(name, steamID64)}
       >
         <AddIcon />
       </IconButton>
@@ -141,6 +139,7 @@ const VipUpload = ({ classes }) => {
           </Tooltip>
         )}
       </Grid>
+
       {result ? (
         <Grid item xs={12}>
           <Typography variant="body2" color="secondary">
@@ -156,6 +155,14 @@ const VipUpload = ({ classes }) => {
   );
 };
 
+function nameOf(playerObj) {
+    const names = playerObj.get("names");
+    if (names.size === 0) {
+        return "";
+    }
+    return playerObj.get("names").get(0).get("name");
+}
+
 const VipEditableList = ({
   classes,
   peopleList,
@@ -166,6 +173,30 @@ const VipEditableList = ({
 }) => {
   const [name, setName] = React.useState("");
   const [steamID64, setSteamID64] = React.useState("");
+  const [VIPPlayer, setVIPPlayer] = React.useState(false);
+
+  const formatExpirationDate = (player) => {
+    if (player.vip_expiration) {
+      let date = moment(player.vip_expiration);
+      /* For display purposes, show dates really far in the future as indefinite */
+      if (date.isSameOrAfter(moment().add(100, "years"))) {
+        return "Never";
+      } else {
+        return moment(player.vip_expiration).format("YYYY-MM-DD HH:MM:SSZ");
+      }
+    } else {
+      return "Never";
+    }
+  };
+
+  function onOpenAddVipDialog(name, steamId64) {
+      return setVIPPlayer(fromJS({
+          names: [{
+              name: name,
+          }],
+          steam_id_64: steamId64,
+      }));
+  }
 
   return (
     <React.Fragment>
@@ -177,11 +208,14 @@ const VipEditableList = ({
           setName={setName}
           steamID64={steamID64}
           setSteamID64={setSteamID64}
-          onAdd={onAdd}
+          onAdd={onOpenAddVipDialog}
         />
         {peopleList.map((obj) => (
           <ListItem key={obj.steam_id_64}>
-            <ListItemText primary={obj.name} secondary={obj.steam_id_64} />
+            <ListItemText
+              primary={obj.name}
+              secondary={obj.steam_id_64 + " " + formatExpirationDate(obj)}
+            />
             <ListItemSecondaryAction>
               <IconButton
                 edge="end"
@@ -199,9 +233,19 @@ const VipEditableList = ({
           setName={setName}
           steamID64={steamID64}
           setSteamID64={setSteamID64}
-          onAdd={onAdd}
+          onAdd={onOpenAddVipDialog}
         />
         <ForwardCheckBox bool={forward} onChange={onFowardChange} />
+        <VipExpirationDialog
+            open={VIPPlayer}
+            vips={vipListFromServer(peopleList)}
+            onDeleteVip={(playerObj) => onDelete(nameOf(playerObj), playerObj.get("steam_id_64"))}
+            handleClose={() => setVIPPlayer(false)}
+            handleConfirm={(playerObj, expirationTimestamp) => {
+              onAdd(nameOf(playerObj), playerObj.get("steam_id_64"), expirationTimestamp);
+              setVIPPlayer(false);
+            }}
+        />
       </List>
     </React.Fragment>
   );
