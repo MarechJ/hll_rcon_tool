@@ -2,7 +2,6 @@ import React from "react";
 import {
   Button,
   Grid,
-  TextField,
   Typography
 } from "@material-ui/core";
 import { ForwardCheckBox } from "../commonComponent";
