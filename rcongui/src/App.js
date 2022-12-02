@@ -152,7 +152,7 @@ const RedTheme = createMuiTheme({
   },
 });
 
-const GreyBlueTheme = createMuiTheme({
+const GreyBlueDarkTheme = createMuiTheme({
   palette: {
     primary: {
       light: "#8eacbb",
@@ -346,7 +346,7 @@ function App() {
     GreenYellowLight: GreenYellowLightTheme,
     YellowGreen: YellowGreenTheme,
     Red: RedTheme,
-    GreyBlue: GreyBlueTheme,
+    GreyBlueDark: GreyBlueDarkTheme,
     CamoDark: CamoDarkTheme,
     PurplePink: PurplePinkTheme,
     CamoLight: CamoLight,

@@ -15,7 +15,8 @@ const AutoSettings = ({
   onSave,
   forward,
   onFowardChange,
-  onEditorMount
+  onEditorMount,
+  theme
 }) => (
   <Grid container>
     <Grid xs={12}>
@@ -29,6 +30,7 @@ const AutoSettings = ({
           tabSize: 2
         }}
         onMount={onEditorMount}
+        theme={theme}
       />
     </Grid>
     <Typography variant="caption" align="left" color="textSecondary">

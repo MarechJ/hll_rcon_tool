@@ -757,6 +757,7 @@ class RconSettings extends React.Component {
             forward={forwardAutoSettings}
             onFowardChange={() => this.toggle("forwardAutoSettings")}
             onEditorMount={this.handleEditorDidMount}
+            theme={theme.toLowerCase().includes("dark") ? "vs-dark" : "vs"}
           />
         </Grid>
 
