@@ -31,8 +31,8 @@ import DialogContent from "@material-ui/core/DialogContent";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import { getEmojiFlag } from "../../utils/emoji";
 import PlayerGrid from "./playerGrid";
-import { VipExpirationDialog } from "./VipDialog";
-import { PlayerVipSummary } from "./VipDialog/PlayerVipSummary";
+import { VipExpirationDialog } from "../VipDialog";
+import {vipListFromServer} from "../VipDialog/vipFromServer";
 
 const PlayerSummary = ({ player, flag }) => (
   <React.Fragment>
@@ -251,16 +251,7 @@ class PlayersHistory extends React.Component {
   loadVips() {
     return this._loadToState("get_vip_ids", false, (data) =>
       this.setState({
-        vips: fromJS(
-          reduce(
-            data.result,
-            (acc, val) => {
-              acc[val.steam_id_64] = true;
-              return acc;
-            },
-            {}
-          )
-        ),
+        vips: vipListFromServer(data.result),
       })
     );
   }
@@ -652,7 +643,6 @@ class PlayersHistory extends React.Component {
             this.addVip(playerObj, expirationTimestamp);
             this.setDoVIPPlayer(false);
           }}
-          SummaryRenderer={PlayerVipSummary}
         />
       </Grid>
     );
