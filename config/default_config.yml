@@ -290,22 +290,27 @@ REMOVE_EXPIRED_VIPS:
 
 
 # This allows you to subscribe any number of Discord webhooks and optional roles and/or users to mention
-# which will be used to send the matching log lines to the webhooks
+# which will be used to send the matching log lines to the Discord webhooks
 # You must include the server number for each hook or it won't be processed
 # This allows you to subscribe to different log events for different servers if you run more than one
-
+#
 # Review USERGUIDE.md for information on how to get webhooks and role/user IDs from Discord
-
+#
 # A more general log event type will trigger for all sub types, for instance the CHAT event will trigger
 # for any kind of chat
 # A more specific log event type will only trigger for that type, for instance Chat[Axis][Unit] would not
 # trigger for Axis team chat, or any Allied chats
 # If you subscribe to a general event type, such as CHAT you should not subscribe to anymore specific event
 # or you'll receive duplicates
-
+#
 # This can get very spammy very quickly, especially if you mention users/roles, please plan accordingly
-# and be aware of both CPU usage on your server and Discord rate limiting for webhooks
-
+# and be aware of both CPU usage on your server and Discord rate limiting for webhooks, or you may run into
+# issues processing your other hooks (such as checking the blacklist on player connect) in a timely fashion
+#
+# You can use a YAML validator (such as https://codebeautify.org/yaml-validator/) to validate your config.yml
+# before starting RCON, but please be aware that sharing a Discord webhook allows anyone that has it to send
+# messages to it
+#
 # For example:
 # - URL: https://discord.com/api/...etc
 #   MENTIONS:
