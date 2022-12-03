@@ -220,7 +220,7 @@ const PlayerInfoFunc = ({ classes }) => {
   };
 
   const fetchMessages = (steamId64) => {
-    get(`get_player_message?steam_id_64=${steamId64}`)
+    get(`get_player_messages?steam_id_64=${steamId64}`)
       .then((response) => showResponse(response, "get_player_messages", false))
       .then((data) => {
         if (

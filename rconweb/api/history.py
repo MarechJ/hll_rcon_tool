@@ -8,10 +8,10 @@ from django.views.decorators.csrf import csrf_exempt
 
 from rcon.commands import CommandFailedError
 from rcon.discord import send_to_discord_audit
+from rcon import player_history
 from rcon.player_history import (
     add_flag_to_player,
     get_player_comments,
-    get_player_messages,
     get_player_profile,
     get_player_profile_by_id,
     get_players_by_appearance,
@@ -181,11 +181,11 @@ def players_history(request):
 
 @csrf_exempt
 @login_required
-def get_player_message(request):
+def get_player_messages(request):
     data = _get_data(request)
     res = None
     try:
-        res = get_player_messages(steam_id_64=data.get("steam_id_64"))
+        res = player_history.get_player_messages(steam_id_64=data.get("steam_id_64"))
         failed = False
     except:
         logger.exception("Unable to get player message history")

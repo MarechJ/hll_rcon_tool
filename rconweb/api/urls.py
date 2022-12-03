@@ -44,7 +44,7 @@ urlpatterns = [path(name, func, name="name") for name, func in views.commands] +
     path("set_votemap_config", votemap.set_votemap_config),
     path("get_votemap_status", votemap.get_votemap_status),
     path("reset_votemap_state", votemap.reset_votemap_state),
-    path("get_player_message", history.get_player_message),
+    path("get_player_messages", history.get_player_messages),
     path("get_player_comment", history.get_player_comment),
     path("post_player_comment", history.post_player_comment),
     path("get_real_vip_config", vips.get_real_vip_config),
