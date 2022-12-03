@@ -368,23 +368,25 @@ const PlayerInfoFunc = ({ classes }) => {
                 </Grid>
               </Grid>
             </Grid>
-            <Grid item xl={3} lg={3} md={3} sm={4} xs={12} container>
-              <Grid item xs={12}>
-                <CollapseCard title="Comments" classes={classes} startOpen>
-                  <ChatContent
-                    data={comments}
-                    handleMessageSend={handleNewComment}
-                  />
-                </CollapseCard>
-              </Grid>
-              <Grid item xs={12}>
-                <CollapseCard
-                  title="Message History"
-                  classes={classes}
-                  startOpen
-                >
-                  <MessageHistory data={messages} />
-                </CollapseCard>
+            <Grid item xl={3} xs={12}>
+              <Grid container spacing={1}>
+                <Grid item xs={12}>
+                  <CollapseCard title="Comments" classes={classes} startOpen>
+                    <ChatContent
+                      data={comments}
+                      handleMessageSend={handleNewComment}
+                    />
+                  </CollapseCard>
+                </Grid>
+                <Grid item xs={12}>
+                  <CollapseCard
+                    title="Message History"
+                    classes={classes}
+                    startOpen
+                  >
+                    <MessageHistory data={messages} />
+                  </CollapseCard>
+                </Grid>
               </Grid>
             </Grid>
           </Grid>
