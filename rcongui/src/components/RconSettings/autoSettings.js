@@ -2,7 +2,6 @@ import React from "react";
 import {
   Button,
   Grid,
-  TextField,
   Typography
 } from "@material-ui/core";
 import { ForwardCheckBox } from "../commonComponent";
@@ -15,7 +14,8 @@ const AutoSettings = ({
   onSave,
   forward,
   onFowardChange,
-  onEditorMount
+  onEditorMount,
+  theme
 }) => (
   <Grid container>
     <Grid xs={12}>
@@ -29,6 +29,7 @@ const AutoSettings = ({
           tabSize: 2
         }}
         onMount={onEditorMount}
+        theme={theme}
       />
     </Grid>
     <Typography variant="caption" align="left" color="textSecondary">
