@@ -1273,12 +1273,17 @@ class Rcon(ServerCtl):
                 else:
                     logger.error("Unkown type line: '%s'", line)
                     continue
-
                 if action in {"CONNECTED", "DISCONNECTED"}:
                     # player = content
-                    print(f"{content=}")
-                    groups = re.match(r"(.+) \((\d+)\)", content).groups()
-                    player, steam_id_64 = groups
+                    try:
+                        groups = re.match(r"(.+) \((\d+)\)", content).groups()
+                        player, steam_id_64 = groups
+                        steam_id_64_1 = steam_id_64
+                    except AttributeError:
+                        # Handle U12 format for the U13 release
+                        # TODO: remove release after U13 is out
+                        player = content
+                    
                 if action in {"KILL", "TEAM KILL"}:
                     parts = re.split(Rcon.player_info_pattern + r" -> ", content, 1)
                     player = parts[1]

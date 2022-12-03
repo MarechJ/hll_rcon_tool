@@ -2,21 +2,28 @@ from django.urls import path
 
 from rcon import scoreboard
 
-from . import (auth, auto_settings, history, logs, multi_servers, scoreboards,
-               services, views, vips, votemap)
+from . import (
+    auth,
+    auto_settings,
+    history,
+    logs,
+    multi_servers,
+    scoreboards,
+    services,
+    views,
+    vips,
+    votemap,
+)
 
-urlpatterns = [
-    path(name, func, name='name')
-    for name, func in views.commands
-] + [
-    path('login', auth.do_login),
-    path('logout', auth.do_logout),
-    path('is_logged_in', auth.is_logged_in),
-    path('get_online_mods', auth.get_online_mods),
-    path('get_ingame_mods', auth.get_ingame_mods),
-    path('get_services', services.get_services),
-    path('do_service', services.do_service),
-    path('server_list',  multi_servers.get_server_list),
+urlpatterns = [path(name, func, name="name") for name, func in views.commands] + [
+    path("login", auth.do_login),
+    path("logout", auth.do_logout),
+    path("is_logged_in", auth.is_logged_in),
+    path("get_online_mods", auth.get_online_mods),
+    path("get_ingame_mods", auth.get_ingame_mods),
+    path("get_services", services.get_services),
+    path("do_service", services.do_service),
+    path("server_list", multi_servers.get_server_list),
     path("get_recent_logs", logs.get_recent_logs),
     path("get_historical_logs", logs.get_historical_logs),
     path("upload_vips", vips.upload_vips),
@@ -37,6 +44,7 @@ urlpatterns = [
     path("set_votemap_config", votemap.set_votemap_config),
     path("get_votemap_status", votemap.get_votemap_status),
     path("reset_votemap_state", votemap.reset_votemap_state),
+    path("get_player_messages", history.get_player_messages),
     path("get_player_comment", history.get_player_comment),
     path("post_player_comment", history.post_player_comment),
     path("get_real_vip_config", vips.get_real_vip_config),
