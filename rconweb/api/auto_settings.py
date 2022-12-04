@@ -14,7 +14,7 @@ AUTO_SETTINGS_KEY_ORDER = ["always_apply_defaults", "defaults", "rules", "_avail
 AUTO_SETTINGS_KEY_INDEX_MAP = {v: i for i, v in enumerate(AUTO_SETTINGS_KEY_ORDER)}
 
 @csrf_exempt
-@login_required
+@login_required(True)
 def get_auto_settings(request):
     data = _get_data(request)
     try:
@@ -33,7 +33,7 @@ def get_auto_settings(request):
     )
 
 @csrf_exempt
-@login_required
+@login_required(True)
 def set_auto_settings(request):
     data = _get_data(request)
     try:

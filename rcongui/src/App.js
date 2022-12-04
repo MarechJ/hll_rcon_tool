@@ -25,6 +25,7 @@ import {
   LiveSessionScore,
 } from "./components/Scoreboard/LiveScore";
 import ServerInfo from "./components/Embeds/ServerInfo";
+import ServerStatsPage from "./components/ServerStats"; 
 import GameView from "./components/GameView"
 
 const Live = ({ classes }) => {
@@ -467,6 +468,14 @@ function App() {
                     </Grid>
                     <Grid item sm={12}>
                       <LogsHistory classes={classes} />
+                    </Grid>
+                  </Grid>
+                  
+                </Route>
+                <Route path="/server">
+                  <Grid container>
+                    <Grid item sm={12} lg={12}>
+                      <ServerStatsPage classes={classes} />
                     </Grid>
                   </Grid>
                 </Route>

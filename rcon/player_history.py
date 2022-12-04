@@ -5,6 +5,8 @@ import os
 import unicodedata
 from functools import cmp_to_key
 
+from rcon.commands import CommandFailedError
+
 from sqlalchemy import func
 from sqlalchemy.orm import contains_eager, defaultload
 from sqlalchemy.sql.functions import ReturnTypeFromArgs

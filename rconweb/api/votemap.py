@@ -26,7 +26,7 @@ def votemap_config():
         }
 
 @csrf_exempt
-@login_required
+@login_required(True)
 def get_votemap_config(request):
     return api_response(
         failed=False,
@@ -36,7 +36,7 @@ def get_votemap_config(request):
 
 
 @csrf_exempt
-@login_required
+@login_required(True)
 def set_votemap_config(request):
     config = VoteMapConfig()
     data = _get_data(request)
@@ -70,7 +70,7 @@ def set_votemap_config(request):
     )
 
 @csrf_exempt
-@login_required
+@login_required(True)
 def get_votemap_status(request):
     v = VoteMap()
     return api_response(
@@ -85,7 +85,7 @@ def get_votemap_status(request):
     
 
 @csrf_exempt
-@login_required
+@login_required(True)
 def reset_votemap_state(request):
     if request.method != 'POST':
         return api_response(

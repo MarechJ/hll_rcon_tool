@@ -347,6 +347,8 @@ Hitting http://127.0.0.1:8000/api/ with Django DEBUG set to true will show you a
 All endpoints accept GET querystring parameters OR (not both at the same time) a json payload. The parameters are the same as the parameter names of the `Rcon` methodds (all that is auto generated remember).
 It is not best practice to have endpoints that do write operations accept a GET with query string parameters but it was just easier that way. 
 
+!IMPORTANT Since chrome made their cookie policy stricter you must use Firefox for dev because sessions don't stick under chrome (the cookie can't be set)
+
 #### Now start the frontend:
 
     # from the root of the repo

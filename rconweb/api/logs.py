@@ -15,7 +15,7 @@ from .utils import _get_data
 
 
 @csrf_exempt
-@login_required
+@login_required()
 def get_historical_logs(request):
     data = _get_data(request)
     player_name = data.get("player_name")
@@ -73,7 +73,7 @@ def get_historical_logs(request):
 
 
 @csrf_exempt
-@login_required
+@login_required()
 def get_recent_logs(request):
     data = _get_data(request)
     start = int(data.get("start", 0))

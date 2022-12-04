@@ -147,7 +147,7 @@ def get_live_game_stats(request):
 
 
 @csrf_exempt
-@login_required
+@login_required()
 def date_scoreboard(request):
     try:
         start = datetime.fromtimestamp(request.GET.get("start"))
