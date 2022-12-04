@@ -322,7 +322,7 @@ const Header = ({ classes }) => {
                             Games
                           </MenuItem>
                         </Link>
-                        <Link
+                        {/* <Link
                           variant="button"
                           color="inherit"
                           className={classes.link}
@@ -332,7 +332,7 @@ const Header = ({ classes }) => {
                           <MenuItem onClick={() => setAnchorElScores(null)}>
                             Server
                           </MenuItem>
-                        </Link>
+                        </Link> */}
                       </Menu>
 
                       <LoginBox classes={classes} component={RouterLink} />
