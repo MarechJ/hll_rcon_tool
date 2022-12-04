@@ -6,7 +6,7 @@ from rcon.server_stats import get_db_server_stats_for_range, get_server_stats_fo
 from dateutil import parser
 
 @csrf_exempt
-@login_required
+@login_required()
 def get_server_stats(request):
     data = _get_data(request)
 

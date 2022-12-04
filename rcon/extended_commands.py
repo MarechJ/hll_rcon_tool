@@ -66,7 +66,11 @@ class GameState(TypedDict):
 MOD_ALLOWED_CMDS = set()
 def mod_users_allowed(func):
     """Wrapper to flag a method as something that moderator
-    accounts are allowed to use
+    accounts are allowed to use.
+
+    Moderator accounts should be able to manage online players,
+    for instance banning them. Viewing or changing server settings
+    like map rotation or VIPs should not be allowed.
     """
     MOD_ALLOWED_CMDS.add(func.__name__)
     update_wrapper(wrapper=mod_users_allowed, wrapped=func)
@@ -674,6 +678,7 @@ class Rcon(ServerCtl):
 
         return "SUCCESS"
 
+    @mod_users_allowed
     def get_gamestate(self) -> GameState:
         """
         Returns player counts, team scores, remaining match time and current/next map

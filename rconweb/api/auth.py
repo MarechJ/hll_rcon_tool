@@ -102,7 +102,17 @@ def get_moderators_accounts():
 
 
 def _can_change_server_settings(user):
-    return not(user.has_perm('auth.can_not_change_server_settings') and not user.is_superuser)
+    """Whether the user is capable of changing server settings as well, rather than
+    being limited to viewing data and performing basic actions, such as kicking and
+    banning players.
+    
+    These limited permissions, generally referred to as a "mod role", can be enabled
+    by giving the user the "Can NOT change server settings" permission in the Django
+    admin panel.
+    
+    Superusers always are able to change server settings, regardles of what other perms
+    their account is given."""
+    return user.is_superuser or not user.has_perm('auth.can_not_change_server_settings')
 
 @csrf_exempt
 def is_logged_in(request):
@@ -142,6 +152,17 @@ def do_logout(request):
     )
 
 def login_required(also_require_perms=False):
+    """Flag this endpoint as one that requires the user
+    to be logged in.
+
+
+
+    Parameters
+    ----------
+    also_require_perms : bool, optional
+        Whether just the mod role isn't sufficient enough
+        to use this endpoint, by default False
+    """
     def decorator(func):
         @wraps(func)
         def wrapper(request, *args, **kwargs):
