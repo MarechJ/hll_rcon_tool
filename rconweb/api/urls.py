@@ -13,6 +13,7 @@ from . import (
     views,
     vips,
     votemap,
+    server_stats,
 )
 
 urlpatterns = [path(name, func, name="name") for name, func in views.commands] + [
