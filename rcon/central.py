@@ -13,14 +13,19 @@ class Central:
 
     def checkin(self, server_name, version):
         try:
-            requests.post(urljoin(self.central_url, 'checking'), timeout=10, data={
-                'server_name': server_name,
-                'version': version,
-                'group_key': group_key,
-            }, auth=("bearer", self.token))
+            requests.post(
+                urljoin(self.central_url, "checking"),
+                timeout=10,
+                data={
+                    "server_name": server_name,
+                    "version": version,
+                    "group_key": group_key,
+                },
+                auth=("bearer", self.token),
+            )
         except:
             pass
-    
+
     def push_ban_list(self, ban_list):
         pass
 
@@ -29,4 +34,3 @@ class Central:
 
     def subscribe(self, foreign_group_key):
         pass
-

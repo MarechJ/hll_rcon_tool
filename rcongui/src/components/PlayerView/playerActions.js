@@ -172,7 +172,6 @@ class ReasonDialog extends React.Component {
           ) : (
             ""
           )}
-
           {open.actionType === "temp_ban" ? (
             <Duration
               durationNumber={durationNumber}

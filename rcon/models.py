@@ -3,9 +3,12 @@ from datetime import datetime
 import logging
 from operator import index
 import os
+import re
 from contextlib import contextmanager
 from datetime import datetime
+from typing import List, Optional
 
+import pydantic
 from sqlalchemy import (
     TIMESTAMP,
     Boolean,
@@ -18,14 +21,9 @@ from sqlalchemy import (
     create_engine,
 )
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.engine.url import URL
-from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker
 from sqlalchemy.schema import UniqueConstraint
-from sqlalchemy.sql.expression import nullslast, true
-
-from rcon.utils import map_name
 
 logger = logging.getLogger(__name__)
 
@@ -80,6 +78,12 @@ class PlayerSteamID(Base):
     steaminfo = relationship("SteamInfo", backref="steamid", uselist=False)
     comments = relationship("PlayerComment", back_populates="player")
     stats = relationship("PlayerStats", backref="steamid", uselist=False)
+    vip = relationship(
+        "PlayerVIP",
+        back_populates="steamid",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
 
     def get_penalty_count(self):
         penalities_type = {"KICK", "PUNISH", "TEMPBAN", "PERMABAN"}
@@ -328,12 +332,12 @@ class LogLine(Base):
         if self.weapon:
             return self.weapon
         # Backward compatibility for logs before weapon was added
-        if self.type and self.type.lower() in ('kill', 'team kill'):
+        if self.type and self.type.lower() in ("kill", "team kill"):
             try:
-                return self.raw.rsplit(' with ', 1)[-1]
+                return self.raw.rsplit(" with ", 1)[-1]
             except:
                 logger.exception("Unable to extract weapon")
-            
+
         return None
 
     def to_dict(self):
@@ -350,7 +354,7 @@ class LogLine(Base):
             raw=self.raw,
             content=self.content,
             server=self.server,
-            weapon=self.get_weapon()
+            weapon=self.get_weapon(),
         )
 
     def compatible_dict(self):
@@ -448,13 +452,14 @@ class PlayerStats(Base):
     death_by = Column(JSONB)
     weapons = Column(JSONB)
 
-
     def to_dict(self):
         return dict(
             id=self.id,
             player_id=self.playersteamid_id,
             player=self.name,
-            steaminfo=self.steamid.steaminfo.to_dict() if self.steamid.steaminfo else None,
+            steaminfo=self.steamid.steaminfo.to_dict()
+            if self.steamid.steaminfo
+            else None,
             map_id=self.map_id,
             kills=self.kills,
             kills_streak=self.kills_streak,
@@ -500,7 +505,7 @@ class PlayerComment(Base):
             creation_time=self.creation_time,
             playersteamid_id=self.playersteamid_id,
             content=self.content,
-            by=self.by
+            by=self.by,
         )
 
 class ServerCount(Base):
@@ -577,6 +582,22 @@ class PlayerAtCount(Base):
             vip=self.vip
         )
 
+class PlayerVIP(Base):
+    __tablename__: str = "player_vip"
+
+    id = Column(Integer, primary_key=True)
+    expiration = Column(TIMESTAMP(timezone=True), nullable=False)
+
+    playersteamid_id = Column(
+        Integer,
+        ForeignKey("steam_id_64.id"),
+        nullable=False,
+        index=True,
+    )
+
+    steamid = relationship("PlayerSteamID", back_populates="vip")
+
+
 def init_db(force=False):
     # create tables
     engine = get_engine()
@@ -607,3 +628,26 @@ def enter_session():
     finally:
         sess.commit()
         sess.close()
+
+
+class LogLineWebHookField(pydantic.BaseModel):
+    """A Discord Webhook URL and optional roles to ping for log events and applicable servers
+
+    LOG_LINE_WEBHOOKS in config.yml
+    """
+
+    url: str
+    mentions: Optional[List[str]] = []
+    servers: List[str] = []
+
+    @pydantic.validator("mentions")
+    def valid_role(cls, values):
+        if not values:
+            return []
+
+        for role_or_user in values:
+            if not re.search(r"<@&\d+>|<@\d+>", role_or_user):
+                print(f"Invalid Discord role or user {role_or_user}")
+                raise ValueError(f"Invalid Discord role {role_or_user}")
+
+        return values

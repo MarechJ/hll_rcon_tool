@@ -1,6 +1,10 @@
 import React from "react";
-import {Grid, Link, Typography} from "@material-ui/core";
-import {get as apiGet, handle_http_errors, showResponse,} from "../../utils/fetchUtils";
+import { Grid, Link, Typography } from "@material-ui/core";
+import {
+  get as apiGet,
+  handle_http_errors,
+  showResponse,
+} from "../../utils/fetchUtils";
 
 const Footer = ({ classes }) => {
   const [repoData, setRepoData] = React.useState([]);
@@ -10,12 +14,13 @@ const Footer = ({ classes }) => {
     fetch("https://api.github.com/repos/MarechJ/hll_rcon_tool/contributors")
       .then((response) => {
         if (response.status === 200) {
-          return response.json()
+          return response.json();
         } else {
-          throw new Error("rate limited")
+          throw new Error("rate limited");
         }
       })
-      .then((data) => setRepoData(data)).catch(() => null);
+      .then((data) => setRepoData(data))
+      .catch(() => null);
     apiGet("get_version")
       .then((res) => showResponse(res, "get_version", false))
       .then((data) => setApiVersion(data.result))
@@ -42,22 +47,25 @@ const Footer = ({ classes }) => {
             ))}
         </Typography>
       </Grid>
-      {!process.env.REACT_APP_PUBLIC_BUILD ?
-      <Grid item xs={12}>
-        <Typography
-          color="textSecondary"
-          variant="caption"
-          display="block"
-          gutterBottom
-        >
-          Join{" "}
-          <Link target="_blank" href="https://discord.gg/zpSQQef">
-            the discord
-          </Link>{" "}
-          for announcements, questions, feedback and support. Dev or docs
-          contributions are most welcomed.
-        </Typography>
-      </Grid> : ""}
+      {!process.env.REACT_APP_PUBLIC_BUILD ? (
+        <Grid item xs={12}>
+          <Typography
+            color="textSecondary"
+            variant="caption"
+            display="block"
+            gutterBottom
+          >
+            Join{" "}
+            <Link target="_blank" href="https://discord.gg/zpSQQef">
+              the discord
+            </Link>{" "}
+            for announcements, questions, feedback and support. Dev or docs
+            contributions are most welcomed.
+          </Typography>
+        </Grid>
+      ) : (
+        ""
+      )}
     </Grid>
   );
 };

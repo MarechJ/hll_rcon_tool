@@ -4,10 +4,10 @@ import re
 from datetime import datetime
 from functools import lru_cache
 
-import discord.utils
 import requests
-from discord import RequestsWebhookAdapter, Webhook
 
+import discord.utils
+from discord import RequestsWebhookAdapter, Webhook
 from rcon.game_logs import on_chat, on_kill, on_tk
 
 DISCORD_CHAT_WEBHOOK_URL = os.getenv("DISCORD_CHAT_WEBHOOK")
@@ -148,7 +148,9 @@ class DiscordWebhookHandler:
             action = action.split("CHAT")[1]
             color = CHAT_ACTION_TO_COLOR[action]
 
-            embed = discord.Embed(description=message, color=color, timestamp=datetime.utcnow())
+            embed = discord.Embed(
+                description=message, color=color, timestamp=datetime.utcnow()
+            )
             embed.set_author(
                 name=f"{player} {action}", url=STEAM_PROFILE_URL.format(id64=steam_id)
             )
@@ -172,9 +174,10 @@ class DiscordWebhookHandler:
             )
 
             # Use chat webhook for both.
-            if (self.ping_trigger_webhook and self.ping_trigger_webhook == self.chat_webhook) or (
-                self.chat_webhook and not self.ping_trigger_webhook
-            ):
+            if (
+                self.ping_trigger_webhook
+                and self.ping_trigger_webhook == self.chat_webhook
+            ) or (self.chat_webhook and not self.ping_trigger_webhook):
                 self.chat_webhook.send(content=content, embed=embed)
             # Use separate webhooks.
             else:

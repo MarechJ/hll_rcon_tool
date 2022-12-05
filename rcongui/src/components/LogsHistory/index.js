@@ -1,3 +1,3 @@
-import LogsHistory from './logsHistory'
+import LogsHistory from "./logsHistory";
 
-export default LogsHistory
+export default LogsHistory;

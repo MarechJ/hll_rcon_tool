@@ -25,8 +25,8 @@ import {
   LiveSessionScore,
 } from "./components/Scoreboard/LiveScore";
 import ServerInfo from "./components/Embeds/ServerInfo";
-import ServerStatsPage from "./components/ServerStats"; 
-import GameView from "./components/GameView"
+import ServerStatsPage from "./components/ServerStats";
+import GameView from "./components/GameView";
 
 const Live = ({ classes }) => {
   const [mdSize, setMdSize] = React.useState(6);
@@ -383,7 +383,7 @@ function App() {
           )}
 
           <Switch>
-          <Route path="/gameview" exact>
+            <Route path="/gameview" exact>
               <GameView classes={classes} />
             </Route>
             <Route path="/serverinfo" exact>
@@ -470,7 +470,7 @@ function App() {
                       <LogsHistory classes={classes} />
                     </Grid>
                   </Grid>
-                  
+
                 </Route>
                 <Route path="/server">
                   <Grid container>

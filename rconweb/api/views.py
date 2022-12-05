@@ -4,6 +4,7 @@ import os
 import traceback
 from functools import wraps
 from subprocess import PIPE, run
+from typing import List
 
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -14,14 +15,18 @@ from rcon.commands import CommandFailedError
 from rcon.config import get_config
 from rcon.discord import send_to_discord_audit
 from rcon.gtx import GTXFtp
-from rcon.player_history import (add_player_to_blacklist,
-                                 remove_player_from_blacklist)
+from rcon.player_history import add_player_to_blacklist, remove_player_from_blacklist
 from rcon.recorded_commands import RecordedRcon
 from rcon.extended_commands import MOD_ALLOWED_CMDS
 from rcon.settings import SERVER_INFO
-from rcon.user_config import (AutoBroadcasts, AutoVoteKickConfig, CameraConfig,
-                              DiscordHookConfig, InvalidConfigurationError,
-                              StandardMessages)
+from rcon.user_config import (
+    AutoBroadcasts,
+    AutoVoteKickConfig,
+    CameraConfig,
+    DiscordHookConfig,
+    InvalidConfigurationError,
+    StandardMessages,
+)
 from rcon.utils import LONG_HUMAN_MAP_NAMES, MapsHistory, map_name
 from rcon.watchlist import PlayerWatch
 from rcon.workers import temporary_broadcast, temporary_welcome
@@ -59,8 +64,9 @@ def set_name(request):
     except Exception as e:
         failed = True
         error = repr(e)
-    return api_response(failed=failed, error=error, result=None, command="set_server_name")
-
+    return api_response(
+        failed=failed, error=error, result=None, command="set_server_name"
+    )
 
 
 @csrf_exempt
@@ -116,8 +122,8 @@ def public_info(request):
             vote_status=get_votes_status(none_on_fail=True),
             name=ctl.get_name(),
             short_name=os.getenv("SERVER_SHORT_NAME", "HLL RCON"),
-            public_stats_port=os.getenv('PUBLIC_STATS_PORT', "Not defined"),
-            public_stats_port_https=os.getenv('PUBLIC_STATS_PORT_HTTPS', "Not defined")
+            public_stats_port=os.getenv("PUBLIC_STATS_PORT", "Not defined"),
+            public_stats_port_https=os.getenv("PUBLIC_STATS_PORT_HTTPS", "Not defined"),
         ),
         failed=False,
         command="public_info",
@@ -454,18 +460,25 @@ def blacklist_player(request):
 def unblacklist_player(request):
     data = _get_data(request)
     res = {}
+
+    potential_failed_unbans: List[str] = []
     try:
         remove_player_from_blacklist(data["steam_id_64"])
         audit("unblacklist", request, data)
         if get_config()["BANS"]["unblacklist_does_unban"]:
-            ctl.do_unban(data["steam_id_64"])  # also remove bans
+            # also remove bans
+            potential_failed_unbans = ctl.do_unban(data["steam_id_64"])
             if get_config()["MULTI_SERVERS"]["broadcast_unbans"]:
                 forward_command(
                     "/api/do_unban",
                     json=data,
                     sessionid=request.COOKIES.get("sessionid"),
                 )
+
         failed = False
+
+        if potential_failed_unbans:
+            raise CommandFailedError(", ".join(potential_failed_unbans))
     except:
         logger.exception("Unable to unblacklist player")
         failed = True
@@ -476,6 +489,7 @@ def unblacklist_player(request):
             "command": "unblacklist_player",
             "arguments": data,
             "failed": failed,
+            "error": ", ".join(potential_failed_unbans),
         }
     )
 
@@ -487,8 +501,10 @@ def unban(request):
     res = {}
     results = None
 
+    potential_failed_unbans: List[str] = []
     try:
-        ctl.do_unban(data["steam_id_64"])  # also remove bans
+        # also remove bans
+        potential_failed_unbans = ctl.do_unban(data["steam_id_64"])
         audit("unban", request, data)
         if get_config()["MULTI_SERVERS"]["broadcast_unbans"]:
             results = forward_command(
@@ -500,6 +516,10 @@ def unban(request):
             except CommandFailedError:
                 logger.warning("Player %s was not on blacklist", data["steam_id_64"])
         failed = False
+
+        if potential_failed_unbans:
+            raise CommandFailedError(", ".join(potential_failed_unbans))
+
     except:
         logger.exception("Unable to unban player")
         failed = True
@@ -510,6 +530,7 @@ def unban(request):
             "command": "unban_player",
             "arguments": data,
             "failed": failed,
+            "error": ", ".join(potential_failed_unbans),
             "forward_results": results,
         }
     )
@@ -608,13 +629,14 @@ def get_connection_info(request):
         command="get_connection_info",
     )
 
+
 @csrf_exempt
 @login_required(True)
 def run_raw_command(request):
     data = _get_data(request)
-    command = data.get('command')
+    command = data.get("command")
     if not command:
-        res = "Parameter \"command\" must not be none"
+        res = 'Parameter "command" must not be none'
     else:
         try:
             res = ctl._request(command, can_fail=True, log_info=True)
@@ -663,7 +685,8 @@ try:
         require_perms = name not in MOD_ALLOWED_CMDS
 
         commands.append((name, wrap_method(func, inspect.signature(func).parameters, name, require_perms=require_perms)))
-    logger.info("Done Initializing endpoint")
+    logger.info("Done Initializing endpoint"
+        )
 except:
     logger.exception("Failed to initialized endpoints - Most likely bad configuration")
     raise

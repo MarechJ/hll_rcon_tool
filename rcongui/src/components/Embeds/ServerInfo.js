@@ -111,7 +111,6 @@ const ServerInfo = ({ classes }) => {
     return `Nextmap: ${nextMap}`;
   }, [serverState]);
 
- 
   return (
     <GridList cols={1} className={styles.gridList}>
       <GridListTile>

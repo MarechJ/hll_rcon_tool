@@ -8,7 +8,7 @@ from rcon.extended_commands import Rcon
 # Traceback (most recent call last):
 #  File "/code/rcon/extended_commands.py", line 1157, in parse_logs
 #    player = groups[1]
-#TypeError: 'NoneType' object is not subscriptable
+# TypeError: 'NoneType' object is not subscriptable
 
 
 RAW_LOGS = """
@@ -348,7 +348,7 @@ def test_log_parsing(*mocks):
                 "(WTH) Abusify",
                 "GinPick]ledYak",
                 "VegaBond",
-                "adamtfitz"
+                "adamtfitz",
             ]
         )
         assert set(l["timestamp_ms"] for l in res["logs"]) == {

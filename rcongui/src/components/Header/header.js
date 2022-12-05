@@ -8,7 +8,12 @@ import { Link as RouterLink } from "react-router-dom";
 import TextField from "@material-ui/core/TextField";
 import Button from "@material-ui/core/Button";
 import ServerStatus from "./serverStatus";
-import { get, handle_http_errors, postData, showResponse, } from "../../utils/fetchUtils";
+import {
+  get,
+  handle_http_errors,
+  postData,
+  showResponse,
+} from "../../utils/fetchUtils";
 import Dialog from "@material-ui/core/Dialog";
 import DialogActions from "@material-ui/core/DialogActions";
 import DialogContent from "@material-ui/core/DialogContent";
@@ -201,7 +206,6 @@ const Header = ({ classes }) => {
                         <Link
                           variant="button"
                           color="inherit"
-                          
                           component={RouterLink}
                           to="/"
                         >
@@ -212,7 +216,6 @@ const Header = ({ classes }) => {
                         <Link
                           variant="button"
                           color="inherit"
-                          
                           component={RouterLink}
                           to="/gameview"
                         >
@@ -220,7 +223,6 @@ const Header = ({ classes }) => {
                             Game view
                           </MenuItem>
                         </Link>
-
                       </Menu>
                       <Link
                         variant="button"
@@ -242,27 +244,17 @@ const Header = ({ classes }) => {
                           component={RouterLink}
                           to="/history"
                         >
-                          <MenuItem onClick={handleClose}>
-                            Players
-                          </MenuItem>
+                          <MenuItem onClick={handleClose}>Players</MenuItem>
                         </Link>
-                        <Link
-                          color="inherit"
-                          component={RouterLink}
-                          to="/logs"
-                        >
-                          <MenuItem onClick={handleClose}>
-                            Logs
-                          </MenuItem>
+                        <Link color="inherit" component={RouterLink} to="/logs">
+                          <MenuItem onClick={handleClose}>Logs</MenuItem>
                         </Link>
                         <Link
                           color="inherit"
                           component={RouterLink}
                           to="/combined_history"
                         >
-                          <MenuItem onClick={handleClose}>
-                            Combined
-                          </MenuItem>
+                          <MenuItem onClick={handleClose}>Combined</MenuItem>
                         </Link>
                       </Menu>
                       <Link
@@ -292,7 +284,6 @@ const Header = ({ classes }) => {
                         <Link
                           variant="button"
                           color="inherit"
-                          
                           component={RouterLink}
                           to="/livescore"
                         >
@@ -303,7 +294,6 @@ const Header = ({ classes }) => {
                         <Link
                           variant="button"
                           color="inherit"
-                          
                           component={RouterLink}
                           to="/livegamescore"
                         >
@@ -314,7 +304,6 @@ const Header = ({ classes }) => {
                         <Link
                           variant="button"
                           color="inherit"
-                          
                           component={RouterLink}
                           to="/gamescoreboard"
                         >

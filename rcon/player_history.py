@@ -254,6 +254,7 @@ def get_players_by_appearance(
                     "last_seen_timestamp_ms": int(p[2].timestamp() * 1000)
                     if p[2]
                     else None,
+                    "vip_expiration": p[0].vip.expiration if p[0].vip else None,
                 }
                 for p in players
             ],

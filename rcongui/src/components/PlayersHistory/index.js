@@ -7,24 +7,32 @@ import {
   sendAction,
   showResponse,
 } from "../../utils/fetchUtils";
-import {toast} from "react-toastify";
-import {reduce} from "lodash";
+import { toast } from "react-toastify";
+import { reduce } from "lodash";
 import Pagination from "@material-ui/lab/Pagination";
-import {Button, Chip, Grid, LinearProgress, TextField, Typography,} from "@material-ui/core";
-import {ReasonDialog} from "../PlayerView/playerActions";
-import {omitBy} from "lodash/object";
+import {
+  Button,
+  Chip,
+  Grid,
+  LinearProgress,
+  TextField,
+  Typography,
+} from "@material-ui/core";
+import { ReasonDialog } from "../PlayerView/playerActions";
+import { omitBy } from "lodash/object";
 import SearchBar from "./searchBar";
-import {fromJS, List, Map} from "immutable";
+import { fromJS, List, Map } from "immutable";
 import FlagIcon from "@material-ui/icons/Flag";
 import "emoji-mart/css/emoji-mart.css";
-import {Picker} from "emoji-mart";
+import { Picker } from "emoji-mart";
 import Dialog from "@material-ui/core/Dialog";
 import DialogActions from "@material-ui/core/DialogActions";
 import DialogContent from "@material-ui/core/DialogContent";
 import DialogTitle from "@material-ui/core/DialogTitle";
-import {getEmojiFlag} from "../../utils/emoji";
+import { getEmojiFlag } from "../../utils/emoji";
 import PlayerGrid from "./playerGrid";
-
+import { VipExpirationDialog } from "../VipDialog";
+import {vipListFromServer} from "../VipDialog/vipFromServer";
 
 const PlayerSummary = ({ player, flag }) => (
   <React.Fragment>
@@ -116,7 +124,6 @@ class FlagDialog extends React.Component {
   }
 }
 
-
 const FlagButton = ({ classes, onflag }) => (
   <Button variant="outlined" onClick={onflag}>
     <FlagIcon />
@@ -155,6 +162,7 @@ class PlayersHistory extends React.Component {
       vips: new Map(),
       doFlag: false,
       doConfirmPlayer: false,
+      doVIPPlayer: false,
       ignoreAccent: true,
       exactMatch: false,
       flags: "",
@@ -175,6 +183,7 @@ class PlayersHistory extends React.Component {
     this.removeFromWatchList = this.removeFromWatchList.bind(this);
     this.setDoFlag = this.setDoFlag.bind(this);
     this.setDoConfirmPlayer = this.setDoConfirmPlayer.bind(this);
+    this.setDoVIPPlayer = this.setDoVIPPlayer.bind(this);
     this.setIgnoreAccent = this.setIgnoreAccent.bind(this);
     this.setExactMatch = this.setExactMatch.bind(this);
     this.setFlags = this.setFlags.bind(this);
@@ -193,7 +202,11 @@ class PlayersHistory extends React.Component {
   }
 
   tempBan(steamId64, reason, durationHours, comment) {
-    this.postComment(steamId64, comment, `PlayerID ${steamId64} temp banned ${durationHours} for ${reason}`);
+    this.postComment(
+      steamId64,
+      comment,
+      `PlayerID ${steamId64} temp banned ${durationHours} for ${reason}`
+    );
     postData(`${process.env.REACT_APP_API_URL}do_temp_ban`, {
       steam_id_64: steamId64,
       reason: reason,
@@ -211,16 +224,20 @@ class PlayersHistory extends React.Component {
       .catch((error) => toast.error("Unable to connect to API " + error));
   }
 
-  addVip(name, steamID64) {
+  addVip(player, expirationTimestamp) {
+    const steamID64 = player.get("steam_id_64");
+    const name = player.get("names").get(0).get("name");
+
     return sendAction("do_add_vip", {
       steam_id_64: steamID64,
       name: name,
-    }).then(this.loadVips);
+      expiration: expirationTimestamp,
+    }).then(this._reloadOnSuccess);
   }
 
   deleteVip(steamID64) {
     return sendAction("do_remove_vip", { steam_id_64: steamID64 }).then(
-      this.loadVips
+      this._reloadOnSuccess
     );
   }
 
@@ -234,16 +251,7 @@ class PlayersHistory extends React.Component {
   loadVips() {
     return this._loadToState("get_vip_ids", false, (data) =>
       this.setState({
-        vips: fromJS(
-          reduce(
-            data.result,
-            (acc, val) => {
-              acc[val.steam_id_64] = true;
-              return acc;
-            },
-            {}
-          )
-        ),
+        vips: vipListFromServer(data.result),
       })
     );
   }
@@ -261,7 +269,7 @@ class PlayersHistory extends React.Component {
       exactMatch,
       ignoreAccent,
       flags,
-      country
+      country,
     } = this.state;
     const params = omitBy(
       {
@@ -329,24 +337,32 @@ class PlayersHistory extends React.Component {
   postComment(steamId64, comment, action) {
     postData(`${process.env.REACT_APP_API_URL}post_player_comment`, {
       steam_id_64: steamId64,
-      comment: action
-    }).then((response) => {
-      return showResponse(response, "post_player_comments", false)
-    }).then(() => {
-      if (comment && comment !== "" && comment !== null) {
-        postData(`${process.env.REACT_APP_API_URL}post_player_comment`, {
-          steam_id_64: steamId64,
-          comment: comment
-        }).then((response) => {
-          return showResponse(response, "post_player_comments", false)
-        }).catch((error) => toast.error("Unable to connect to API " + error));
-      }
-    }).catch((error) => toast.error("Unable to connect to API " + error));
-
+      comment: action,
+    })
+      .then((response) => {
+        return showResponse(response, "post_player_comments", false);
+      })
+      .then(() => {
+        if (comment && comment !== "" && comment !== null) {
+          postData(`${process.env.REACT_APP_API_URL}post_player_comment`, {
+            steam_id_64: steamId64,
+            comment: comment,
+          })
+            .then((response) => {
+              return showResponse(response, "post_player_comments", false);
+            })
+            .catch((error) => toast.error("Unable to connect to API " + error));
+        }
+      })
+      .catch((error) => toast.error("Unable to connect to API " + error));
   }
 
   blacklistPlayer(steamId64, reason, comment) {
-    this.postComment(steamId64, comment, `PlayerID ${steamId64} blacklist for ${reason}`);
+    this.postComment(
+      steamId64,
+      comment,
+      `PlayerID ${steamId64} blacklist for ${reason}`
+    );
     postData(`${process.env.REACT_APP_API_URL}blacklist_player`, {
       steam_id_64: steamId64,
       reason: reason,
@@ -363,7 +379,11 @@ class PlayersHistory extends React.Component {
   }
 
   unblacklistPlayer(steamId64) {
-    this.postComment(steamId64, null, `PlayerID ${steamId64} removed from blacklist`);
+    this.postComment(
+      steamId64,
+      null,
+      `PlayerID ${steamId64} removed from blacklist`
+    );
     postData(`${process.env.REACT_APP_API_URL}unblacklist_player`, {
       steam_id_64: steamId64,
     })
@@ -421,6 +441,12 @@ class PlayersHistory extends React.Component {
     return this.setState({ doConfirmPlayer: confirmPlayer });
   }
 
+  setDoVIPPlayer(doVIPPlayer) {
+    return this.setState({
+      doVIPPlayer,
+    });
+  }
+
   setIgnoreAccent(ignoreAccent) {
     return this.setState({ ignoreAccent });
   }
@@ -461,8 +487,11 @@ class PlayersHistory extends React.Component {
       steam_id_64: player.get("steam_id_64"),
     });
   }
+
   onAddVip(player) {
-    return this.addVip(player.get("names").get(0).get("name"), player.get("steam_id_64"));
+    return this.setDoVIPPlayer({
+      player,
+    });
   }
 
   onDeleteVip(player) {
@@ -495,11 +524,12 @@ class PlayersHistory extends React.Component {
       isWatchedOnly,
       doFlag,
       doConfirmPlayer,
+      doVIPPlayer,
       vips,
       ignoreAccent,
       exactMatch,
       flags,
-      country
+      country,
     } = this.state;
 
     // Perfomance is crappy. It's less crappy after switcing to immutables but still...
@@ -539,7 +569,9 @@ class PlayersHistory extends React.Component {
             classes={classes}
             pageSize={pageSize}
             page={page}
-            setPage={(page) => this.setState({ page: page }, this.getPlayerHistory)}
+            setPage={(page) =>
+              this.setState({ page: page }, this.getPlayerHistory)
+            }
             total={total}
           />
         </Grid>
@@ -548,12 +580,6 @@ class PlayersHistory extends React.Component {
           <PlayerGrid
             classes={classes}
             players={playersHistory}
-            /* pageSize={pageSize}
-            total={total}
-            page={page}
-            setPage={(page) =>
-              this.setState({ page: page }, this.getPlayerHistory)
-            } */
             onBlacklist={this.onBlacklist}
             onUnBlacklist={this.onUnBlacklist}
             onDeleteFlag={this.deleteFlag}
@@ -562,7 +588,7 @@ class PlayersHistory extends React.Component {
             onflag={this.setDoFlag}
             onUnban={this.onUnban}
             onTempBan={this.onTempBan}
-            onAddVip={this.onAddVip}
+            onAddVip={this.setDoVIPPlayer}
             onDeleteVip={this.onDeleteVip}
             onAddToWatchList={this.onAddToWatchList}
           />
@@ -572,7 +598,9 @@ class PlayersHistory extends React.Component {
             classes={classes}
             pageSize={pageSize}
             page={page}
-            setPage={(page) => this.setState({ page: page }, this.getPlayerHistory)}
+            setPage={(page) =>
+              this.setState({ page: page }, this.getPlayerHistory)
+            }
             total={total}
           />
         </Grid>
@@ -605,6 +633,16 @@ class PlayersHistory extends React.Component {
             this.setDoFlag(false);
           }}
           SummaryRenderer={PlayerSummary}
+        />
+        <VipExpirationDialog
+          open={doVIPPlayer}
+          vips={vips}
+          onDeleteVip={this.onDeleteVip}
+          handleClose={() => this.setDoVIPPlayer(false)}
+          handleConfirm={(playerObj, expirationTimestamp) => {
+            this.addVip(playerObj, expirationTimestamp);
+            this.setDoVIPPlayer(false);
+          }}
         />
       </Grid>
     );

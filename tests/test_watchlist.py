@@ -17,9 +17,11 @@ def test_watchlist_hook():
         "message": "Boulard",
         "sub_content": None,
     }
-    steam_id = '7777777777777777'
+    steam_id = "7777777777777777"
+
     class Fake:
         def get_player_info(self, player_name):
             return steam_id
+
     PlayerWatch(steam_id).watch("Test player", "No further comments")
     watchdog(Fake(), log)

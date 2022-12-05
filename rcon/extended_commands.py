@@ -1,18 +1,18 @@
 import logging
 import os
-import random
 import re
 import socket
-import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
 from functools import cached_property
 from time import sleep
-from typing import Tuple, TypedDict, Any
+from typing import Tuple, TypedDict
 from functools import update_wrapper
+from typing import Dict, List, Optional, Union
 
 from rcon.cache_utils import get_redis_client, invalidates, ttl_cache
 from rcon.commands import CommandFailedError, HLLServerError, ServerCtl
+from rcon.models import PlayerSteamID, PlayerVIP, enter_session
 from rcon.player_history import get_profiles
 from rcon.steam_utils import (
     get_player_country_code,
@@ -619,15 +619,29 @@ class Rcon(ServerCtl):
         return temp_bans + bans
 
     @mod_users_allowed
-    def do_unban(self, steam_id_64):
+    def do_unban(self, steam_id_64) -> List[str]:
+        """Remove all temporary and permanent bans from the steam_id_64"""
         bans = self.get_bans()
         type_to_func = {
             "temp": self.do_remove_temp_ban,
             "perma": self.do_remove_perma_ban,
         }
+        failed_ban_removals: List[str] = []
         for b in bans:
             if b.get("steam_id_64") == steam_id_64:
-                type_to_func[b["type"]](b["raw"])
+                # The game server will sometimes continue to report expired temporary bans
+                # (verified as of 10 Aug 2022 U12 Hotfix)
+                # which will prevent removing permanent bans if we don't catch the failed removal
+
+                # We swallow exceptions here and test for failed unbans in views.py
+                try:
+                    type_to_func[b["type"]](b["raw"])
+                except CommandFailedError:
+                    message = f"Unable to remove {b['type']} ban from {steam_id_64}"
+                    logger.exception(message)
+                    failed_ban_removals.append(message)
+
+        return failed_ban_removals
 
     @mod_users_allowed
     def get_ban(self, steam_id_64):
@@ -642,9 +656,16 @@ class Rcon(ServerCtl):
 
     @mod_users_allowed
     @ttl_cache(ttl=60 * 60)
-    def get_vip_ids(self):
+    def get_vip_ids(self) -> List[Dict[str, Union[str, Optional[datetime]]]]:
         res = super().get_vip_ids()
         l = []
+
+        vip_expirations: Dict[str, datetime]
+        with enter_session() as session:
+            players = session.query(PlayerSteamID).join(PlayerVIP).all()
+            vip_expirations = {
+                player.steam_id_64: player.vip.expiration for player in players
+            }
 
         for item in res:
             try:
@@ -655,7 +676,9 @@ class Rcon(ServerCtl):
             except ValueError:
                 self._reconnect()
                 raise
-            l.append(dict(zip((STEAMID, NAME), (steam_id_64, name))))
+            player = dict(zip((STEAMID, NAME), (steam_id_64, name)))
+            player["vip_expiration"] = vip_expirations.get(steam_id_64, None)
+            l.append(player)
 
         return sorted(l, key=lambda d: d[NAME])
 
@@ -1044,11 +1067,11 @@ class Rcon(ServerCtl):
     @mod_users_allowed
     def do_punish(self, player, reason):
         return super().do_punish(player, reason)
-    
+
     @mod_users_allowed
     def do_switch_player_now(self, player):
         return super().do_switch_player_now(player)
-    
+
     @mod_users_allowed
     def do_switch_player_on_death(self, player):
         return super().do_switch_player_on_death(player)
@@ -1142,7 +1165,7 @@ class Rcon(ServerCtl):
                 logger.info("Removing from rotation: '%s'", map_without_number)
                 super().do_remove_map_from_rotation(map_without_number)
 
-            for map_ in rotation:  
+            for map_ in rotation:
                 logger.info("Adding to rotation: '%s'", map_)
                 super().do_add_map_to_rotation(map_)
 
@@ -1340,7 +1363,7 @@ class Rcon(ServerCtl):
                         # Handle U12 format for the U13 release
                         # TODO: remove release after U13 is out
                         player = content
-                    
+
                 if action in {"KILL", "TEAM KILL"}:
                     parts = re.split(Rcon.player_info_pattern + r" -> ", content, 1)
                     player = parts[1]
