@@ -805,7 +805,7 @@ class Rcon(ServerCtl):
         if not self.map_regexp.match(current_map):
             raise CommandFailedError("Server returned wrong data")
 
-        return current_map.replace("_RESTART", "")
+        return current_map
 
     @mod_users_allowed
     @ttl_cache(ttl=60 * 60)
