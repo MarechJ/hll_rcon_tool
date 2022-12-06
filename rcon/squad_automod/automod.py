@@ -105,7 +105,10 @@ def _get_team_count(team_view, team):
 
 
 def should_punish_player(
-    watch_status: WatchStatus, config: NoLeaderConfig, team_view,
+    watch_status: WatchStatus,
+    config: NoLeaderConfig,
+    team_view,
+    team,
     squad_name,
     squad,
     player,
@@ -166,7 +169,10 @@ def should_punish_player(
 
 
 def should_kick_player(
-    watch_status: WatchStatus, config: NoLeaderConfig, team_view,
+    watch_status: WatchStatus,
+    config: NoLeaderConfig,
+    team_view,
+    team,
     squad_name,
     squad,
     player,

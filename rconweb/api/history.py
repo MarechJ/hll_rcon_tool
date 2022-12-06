@@ -6,6 +6,7 @@ from dateutil import parser
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
+import rcon
 from rcon.commands import CommandFailedError
 from rcon.discord import send_to_discord_audit
 from rcon import player_history
