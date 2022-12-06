@@ -14,10 +14,10 @@ from rcon.cache_utils import RedisCached, get_redis_pool
 from rcon.commands import CommandFailedError
 from rcon.config import get_config
 from rcon.discord import send_to_discord_audit
+from rcon.extended_commands import MOD_ALLOWED_CMDS
 from rcon.gtx import GTXFtp
 from rcon.player_history import add_player_to_blacklist, remove_player_from_blacklist
 from rcon.recorded_commands import RecordedRcon
-from rcon.extended_commands import MOD_ALLOWED_CMDS
 from rcon.settings import SERVER_INFO
 from rcon.user_config import (
     AutoBroadcasts,
@@ -108,7 +108,7 @@ def public_info(request):
     return api_response(
         result=dict(
             current_map=explode_map_info(gamestate["current_map"], current_map_start),
-            next_map=explode_map_info(ctl.get_next_map(), None),
+            next_map=explode_map_info(gamestate["next_map"], None),
             player_count=curr_players,
             max_player_count=max_players,
             players=dict(
@@ -116,6 +116,7 @@ def public_info(request):
                 axis=gamestate["num_axis_players"],
             ),
             score=dict(allied=gamestate["allied_score"], axis=gamestate["axis_score"]),
+            raw_time_remaining=gamestate["raw_time_remaining"],
             vote_status=get_votes_status(none_on_fail=True),
             name=ctl.get_name(),
             short_name=os.getenv("SERVER_SHORT_NAME", "HLL RCON"),

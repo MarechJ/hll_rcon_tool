@@ -4,11 +4,9 @@ import re
 import socket
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
-from functools import cached_property
+from functools import cached_property, update_wrapper
 from time import sleep
-from typing import Tuple, TypedDict
-from functools import update_wrapper
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Tuple, TypedDict, Union
 
 from rcon.cache_utils import get_redis_client, invalidates, ttl_cache
 from rcon.commands import CommandFailedError, HLLServerError, ServerCtl
@@ -735,6 +733,7 @@ class Rcon(ServerCtl):
             r"Remaining Time: (\d):(\d{2}):(\d{2})", raw_time_remaining
         ).groups()
 
+        raw_time_remaining = raw_time_remaining.split("Remaining Time: ")[1]
         current_map = raw_current_map.split(": ")[1]
         next_map = raw_next_map.split(": ")[1]
 
@@ -746,6 +745,7 @@ class Rcon(ServerCtl):
             "time_remaining": timedelta(
                 hours=float(hours), minutes=float(mins), seconds=float(secs)
             ),
+            "raw_time_remaining": raw_time_remaining,
             "current_map": current_map,
             "next_map": next_map,
         }
