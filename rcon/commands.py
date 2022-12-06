@@ -452,7 +452,7 @@ class ServerCtl:
     @_escape_params
     def do_message_player(self, player_name=None, steam_id_64=None, message=""):
         return self._request(
-            f'message "{steam_id_64 or player_name}" "{message}"',
+            f'message "{steam_id_64 or player_name}" {message}',
             log_info=True,
         )
 

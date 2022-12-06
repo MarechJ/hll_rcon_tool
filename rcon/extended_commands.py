@@ -48,6 +48,7 @@ LOG_ACTIONS = [
     "MATCH",
     "MATCH START",
     "MATCH ENDED",
+    "MESSAGE",
 ]
 logger = logging.getLogger(__name__)
 
@@ -63,7 +64,10 @@ class GameState(TypedDict):
     current_map: str
     next_map: str
 
+
 MOD_ALLOWED_CMDS = set()
+
+
 def mod_users_allowed(func):
     """Wrapper to flag a method as something that moderator
     accounts are allowed to use.
@@ -653,7 +657,6 @@ class Rcon(ServerCtl):
         bans = self.get_bans()
         return list(filter(lambda x: x.get("steam_id_64") == steam_id_64, bans))
 
-
     @mod_users_allowed
     @ttl_cache(ttl=60 * 60)
     def get_vip_ids(self) -> List[Dict[str, Union[str, Optional[datetime]]]]:
@@ -801,6 +804,7 @@ class Rcon(ServerCtl):
         current_map = super().get_map()
         if not self.map_regexp.match(current_map):
             raise CommandFailedError("Server returned wrong data")
+
         return current_map
 
     @mod_users_allowed
@@ -1126,9 +1130,13 @@ class Rcon(ServerCtl):
                 raise CommandFailedError("Server return wrong data")
         return l
 
-    def do_add_map_to_rotation(self, map_name, after_map_name: str = None, after_map_name_number: str = None):
+    def do_add_map_to_rotation(
+        self, map_name, after_map_name: str = None, after_map_name_number: str = None
+    ):
         with invalidates(Rcon.get_map_rotation):
-            super().do_add_map_to_rotation(map_name, after_map_name, after_map_name_number)
+            super().do_add_map_to_rotation(
+                map_name, after_map_name, after_map_name_number
+            )
 
     def do_remove_map_from_rotation(self, map_name, map_number: str = None):
         with invalidates(Rcon.get_map_rotation):
@@ -1350,6 +1358,15 @@ class Rcon(ServerCtl):
                 elif rest.upper().startswith("MATCH ENDED"):
                     action = "MATCH ENDED"
                     _, sub_content = rest.split("MATCH ENDED ")
+                elif rest.upper().startswith("MESSAGE"):
+
+                    action = "MESSAGE"
+                    groups = re.match(
+                        r"MESSAGE: player \[(.+)\((\d+)\)\], content \[(.+)\]", rest
+                    ).groups()
+                    player, steam_id_64_1, content = groups
+                    content = f"{player}({steam_id_64_1}): {content}"
+
                 else:
                     logger.error("Unkown type line: '%s'", line)
                     continue
