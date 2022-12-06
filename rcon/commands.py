@@ -375,7 +375,12 @@ class ServerCtl:
     def do_switch_player_now(self, player):
         return self._request(f"switchteamnow {player}", log_info=True)
 
-    def do_add_map_to_rotation(self, map_name: str, after_map_name: str = None, after_map_name_number: str = None):
+    def do_add_map_to_rotation(
+        self,
+        map_name: str,
+        after_map_name: str = None,
+        after_map_name_number: str = None,
+    ):
         cmd = f"rotadd {map_name}"
         if after_map_name:
             cmd = f"{cmd} {after_map_name}"
@@ -460,7 +465,8 @@ class ServerCtl:
         Next Map: stmariedumont_warfare
 
         """
-        return self._get("gamestate", can_fail=False).split("\n")[:-1]
+        # Has no trailing "\n"
+        return self._get("gamestate", can_fail=False).split("\n")
 
 
 if __name__ == "__main__":
