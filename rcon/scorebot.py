@@ -217,6 +217,7 @@ def cleanup_orphaned_messages(conn: Connection, server_number: int):
     )
     conn.commit()
 
+
 def run():
     try:
         path = os.getenv("DISCORD_BOT_DATA_PATH", "/data")
@@ -267,7 +268,9 @@ def run():
             try:
                 webhook.edit_message(message_id, embeds=get_embeds(public_info, stats))
             except NotFound as ex:
-                logger.exception("Message with ID in our records does not exist, cleaning up and restarting")
+                logger.exception(
+                    "Message with ID in our records does not exist, cleaning up and restarting"
+                )
                 cleanup_orphaned_messages(conn, server_number)
                 raise ex
             except (HTTPException, RequestException, ConnectionError):

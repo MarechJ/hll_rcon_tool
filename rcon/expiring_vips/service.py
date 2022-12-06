@@ -100,5 +100,5 @@ def run():
 
         if config.enabled:
             remove_expired_vips(rcon_hook, config.discord_webhook_url)
-        
+
         time.sleep(config.interval * 60)

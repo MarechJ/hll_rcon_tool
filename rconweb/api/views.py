@@ -102,23 +102,20 @@ def public_info(request):
             just_name=map_name(game_map),
             human_name=LONG_HUMAN_MAP_NAMES.get(game_map, game_map),
             name=game_map,
-            start=start
+            start=start,
         )
 
     return api_response(
-        result = dict(
+        result=dict(
             current_map=explode_map_info(gamestate["current_map"], current_map_start),
             next_map=explode_map_info(ctl.get_next_map(), None),
             player_count=curr_players,
             max_player_count=max_players,
             players=dict(
                 allied=gamestate["num_allied_players"],
-                axis=gamestate["num_axis_players"]
+                axis=gamestate["num_axis_players"],
             ),
-            score=dict(
-                allied=gamestate["allied_score"],
-                axis=gamestate["axis_score"]
-            ),
+            score=dict(allied=gamestate["allied_score"], axis=gamestate["axis_score"]),
             vote_status=get_votes_status(none_on_fail=True),
             name=ctl.get_name(),
             short_name=os.getenv("SERVER_SHORT_NAME", "HLL RCON"),
@@ -684,9 +681,18 @@ try:
 
         require_perms = name not in MOD_ALLOWED_CMDS
 
-        commands.append((name, wrap_method(func, inspect.signature(func).parameters, name, require_perms=require_perms)))
-    logger.info("Done Initializing endpoint"
+        commands.append(
+            (
+                name,
+                wrap_method(
+                    func,
+                    inspect.signature(func).parameters,
+                    name,
+                    require_perms=require_perms,
+                ),
+            )
         )
+    logger.info("Done Initializing endpoint")
 except:
     logger.exception("Failed to initialized endpoints - Most likely bad configuration")
     raise

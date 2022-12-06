@@ -20,19 +20,25 @@ fileConfig(config.config_file_name)
 # target_metadata = mymodel.Base.metadata
 target_metadata = Base.metadata
 
-HLL_DB = os.getenv('DB_URL')
+HLL_DB = os.getenv("DB_URL")
 print(HLL_DB)
-config.set_main_option('sqlalchemy.url', HLL_DB)
+config.set_main_option("sqlalchemy.url", HLL_DB)
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
 
+
 def include_object(object, name, type_, reflected, compare_to):
-    if name.startswith('auth_') or name.startswith('django_') or name.startswith('api_'):
+    if (
+        name.startswith("auth_")
+        or name.startswith("django_")
+        or name.startswith("api_")
+    ):
         return False
     else:
         return True
+
 
 def run_migrations_offline():
     """Run migrations in 'offline' mode.ec
@@ -52,7 +58,7 @@ def run_migrations_offline():
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
-        include_object=include_object
+        include_object=include_object,
     )
 
     with context.begin_transaction():
@@ -74,7 +80,9 @@ def run_migrations_online():
 
     with connectable.connect() as connection:
         context.configure(
-            connection=connection, target_metadata=target_metadata, include_object=include_object
+            connection=connection,
+            target_metadata=target_metadata,
+            include_object=include_object,
         )
 
         with context.begin_transaction():

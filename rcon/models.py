@@ -508,6 +508,7 @@ class PlayerComment(Base):
             by=self.by,
         )
 
+
 class ServerCount(Base):
     __tablename__ = "server_counts"
     __table_args__ = (
@@ -545,13 +546,16 @@ class ServerCount(Base):
             count=self.count,
             players=players,
             map=self.map.map_name,
-            vip_count=self.vip_count
+            vip_count=self.vip_count,
         )
+
 
 class PlayerAtCount(Base):
     __tablename__ = "player_at_count"
     __table_args__ = (
-        UniqueConstraint("playersteamid_id", "servercount_id", name="unique_player_at_count"),
+        UniqueConstraint(
+            "playersteamid_id", "servercount_id", name="unique_player_at_count"
+        ),
     )
     id = Column(Integer, primary_key=True)
     playersteamid_id = Column(
@@ -576,11 +580,8 @@ class PlayerAtCount(Base):
         except:
             logger.exception("Unable to load name for %s", self.steamid.steam_id_64)
             name = ""
-        return dict(
-            steam_id_64=self.steamid.steam_id_64,
-            name=name,
-            vip=self.vip
-        )
+        return dict(steam_id_64=self.steamid.steam_id_64, name=name, vip=self.vip)
+
 
 class PlayerVIP(Base):
     __tablename__: str = "player_vip"

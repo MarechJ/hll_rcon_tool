@@ -69,10 +69,12 @@ def save_server_stats_for_last_hours(hours=24, skip_last_hours=1):
 
 def save_server_stats_since_inception():
     with enter_session() as sess:
-        start, = sess.query(func.min(Maps.start)).one()
-    save_server_stats_for_range(start, datetime.datetime.now() - datetime.timedelta(hours=2))
-    
-    
+        (start,) = sess.query(func.min(Maps.start)).one()
+    save_server_stats_for_range(
+        start, datetime.datetime.now() - datetime.timedelta(hours=2)
+    )
+
+
 def save_server_stats_for_range(start, end):
     start = start.replace(minute=0, second=0, microsecond=0)
     end = end.replace(minute=0, second=0, microsecond=0)
@@ -127,7 +129,9 @@ def save_server_stats_for_range(start, end):
                     sess.commit()
                     players_at_counts = [
                         PlayerAtCount(
-                            servercount_id=server_count.id, playersteamid_id=player.id, vip=is_vip
+                            servercount_id=server_count.id,
+                            playersteamid_id=player.id,
+                            vip=is_vip,
                         )
                         for player, is_vip in item["players"]
                     ]
@@ -207,7 +211,7 @@ def get_db_server_stats_for_range(
                 end=end,
                 by_map=by_map,
             )
-            #import ipdb; ipdb.set_trace();
+            # import ipdb; ipdb.set_trace();
             if by_map:
                 for m, items in live_stats.items():
                     data.setdefault(m, []).extend(items)
@@ -276,7 +280,8 @@ def _get_server_stats(
                     PlayerSession.start.between(start, end),
                     PlayerSession.end.between(start, end),
                     and_(
-                        PlayerSession.start <= start, end <= coalesce(PlayerSession.end, end)
+                        PlayerSession.start <= start,
+                        end <= coalesce(PlayerSession.end, end),
                     ).self_group(),
                 ),
                 PlayerSession.server_number == server_number,
@@ -313,7 +318,7 @@ def _get_server_stats(
         #         present_players.append(player_session.steamid.names[0].name)
         for player_session in get_obj_for_minute(
             minute, indexed_sessions, first_only=False
-        ):  
+        ):
             if not player_session.steamid:
                 continue
             if not return_models:
@@ -325,7 +330,9 @@ def _get_server_stats(
                     )
                 )
             else:
-                present_players.append((player_session.steamid, player_session.steamid.steam_id_64 in vips))
+                present_players.append(
+                    (player_session.steamid, player_session.steamid.steam_id_64 in vips)
+                )
             if player_session.steamid.steam_id_64 in vips:
                 vip_count += 1
         map_name = map_.map_name if map_ else None

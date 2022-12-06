@@ -35,10 +35,10 @@ class PunishStepState(Enum):
 class NoLeaderConfig:
     enabled: bool = False
     dry_run: bool = True
-    discord_webhook_url: str = ''
-    warn_message_header: str = ''
-    warn_message_footer: str = ''
-    warning_message: str = ''
+    discord_webhook_url: str = ""
+    warn_message_header: str = ""
+    warn_message_footer: str = ""
+    warning_message: str = ""
     # Set to 0 to disable, -1 for infinite warnings (will never go to punishes)
     number_of_warning: int = 2
     warning_interval_seconds: int = 60
@@ -81,9 +81,7 @@ class ASquad:
 
 @dataclass
 class PunitionsToApply:
-    warning: List[APlayer] = field(
-        default_factory=list
-    )
+    warning: List[APlayer] = field(default_factory=list)
     punish: List[APlayer] = field(default_factory=list)
     kick: List[APlayer] = field(default_factory=list)
     squads_state: List[ASquad] = field(default_factory=list)
@@ -92,11 +90,18 @@ class PunitionsToApply:
         try:
             if any(s.team == team and s.name == squad_name for s in self.squads_state):
                 return
-            self.squads_state.append(ASquad(
-                team=team,
-                name=squad_name,
-                players=[
-                    APlayer(steam_id_64=p.get("steam_id_64"), player=p.get("name"), squad=p.get("unit_name"), team=p.get("team"), role=p.get("role"), lvl=p.get("level"),
+            self.squads_state.append(
+                ASquad(
+                    team=team,
+                    name=squad_name,
+                    players=[
+                        APlayer(
+                            steam_id_64=p.get("steam_id_64"),
+                            player=p.get("name"),
+                            squad=p.get("unit_name"),
+                            team=p.get("team"),
+                            role=p.get("role"),
+                            lvl=p.get("level"),
                         )
                         for p in squad.get("players", [])
                     ],

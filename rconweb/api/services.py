@@ -39,7 +39,7 @@ def get_services(request):
 
     try:
         processes = client.supervisor.getAllProcessInfo()
-        result = [dict(info=info.get(p['name'], ''), **p) for p in processes]
+        result = [dict(info=info.get(p["name"], ""), **p) for p in processes]
     except:
         if os.getenv("DJANGO_DEBUG"):
             result = []

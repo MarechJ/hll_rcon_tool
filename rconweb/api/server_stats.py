@@ -5,6 +5,7 @@ from .views import ctl, _get_data
 from rcon.server_stats import get_db_server_stats_for_range, get_server_stats_for_range
 from dateutil import parser
 
+
 @csrf_exempt
 @login_required()
 def get_server_stats(request):
@@ -18,7 +19,7 @@ def get_server_stats(request):
     if start:
         start = parser.parse(start)
     else:
-        start = (datetime.datetime.now() - datetime.timedelta(hours=24))
+        start = datetime.datetime.now() - datetime.timedelta(hours=24)
 
     end = data.get("end")
     if end:
@@ -27,6 +28,10 @@ def get_server_stats(request):
         end = datetime.datetime.now()
 
     return api_response(
-        result=get_db_server_stats_for_range(start=start, end=end, by_map=True, with_player_list=with_players), error=None, failed=False, command="get_server_stats"
+        result=get_db_server_stats_for_range(
+            start=start, end=end, by_map=True, with_player_list=with_players
+        ),
+        error=None,
+        failed=False,
+        command="get_server_stats",
     )
-
