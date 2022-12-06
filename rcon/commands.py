@@ -375,7 +375,12 @@ class ServerCtl:
     def do_switch_player_now(self, player):
         return self._request(f"switchteamnow {player}", log_info=True)
 
-    def do_add_map_to_rotation(self, map_name: str, after_map_name: str = None, after_map_name_number: str = None):
+    def do_add_map_to_rotation(
+        self,
+        map_name: str,
+        after_map_name: str = None,
+        after_map_name_number: str = None,
+    ):
         cmd = f"rotadd {map_name}"
         if after_map_name:
             cmd = f"{cmd} {after_map_name}"
@@ -447,7 +452,7 @@ class ServerCtl:
     @_escape_params
     def do_message_player(self, player_name=None, steam_id_64=None, message=""):
         return self._request(
-            f'message "{steam_id_64 or player_name}" "{message}"',
+            f'message "{steam_id_64 or player_name}" {message}',
             log_info=True,
         )
 
