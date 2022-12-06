@@ -598,22 +598,6 @@ class PlayerVIP(Base):
     steamid = relationship("PlayerSteamID", back_populates="vip")
 
 
-class PlayerVIP(Base):
-    __tablename__: str = "player_vip"
-
-    id = Column(Integer, primary_key=True)
-    expiration = Column(TIMESTAMP(timezone=True), nullable=False)
-
-    playersteamid_id = Column(
-        Integer,
-        ForeignKey("steam_id_64.id"),
-        nullable=False,
-        index=True,
-    )
-
-    steamid = relationship("PlayerSteamID", back_populates="vip")
-
-
 def init_db(force=False):
     # create tables
     engine = get_engine()
