@@ -27,4 +27,4 @@ services:
       - 127.0.0.1:${HLL_REDIS_HOST_PORT:-6379}:6379
   postgres:
     ports:
-      - 127.0.0.1:${HLL_DB_HOST_PORT:-5432}:5432
+      - 127.0.0.1:${HLL_DB_HOST_PORT:-5433}:5432

@@ -106,7 +106,7 @@ class LoginBox extends React.Component {
   isLoggedIn() {
     return get("is_logged_in")
       .then((response) => response.json())
-      .then((res) => this.setState({ isLoggedIn: res.result }))
+      .then((res) => this.setState({ isLoggedIn: res.result.authenticated }))
       .catch(handle_http_errors);
   }
 
@@ -272,7 +272,7 @@ const Header = ({ classes }) => {
                         className={classes.link}
                         onClick={(e) => setAnchorElScores(e.currentTarget)}
                       >
-                        Score
+                        Stats
                       </Link>
                       <Menu
                         id="score-menu"
@@ -311,6 +311,17 @@ const Header = ({ classes }) => {
                             Games
                           </MenuItem>
                         </Link>
+                        {/* <Link
+                          variant="button"
+                          color="inherit"
+                          className={classes.link}
+                          component={RouterLink}
+                          to="/server"
+                        >
+                          <MenuItem onClick={() => setAnchorElScores(null)}>
+                            Server
+                          </MenuItem>
+                        </Link> */}
                       </Menu>
 
                       <LoginBox classes={classes} component={RouterLink} />

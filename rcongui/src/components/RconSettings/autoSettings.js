@@ -1,5 +1,9 @@
 import React from "react";
-import { Button, Grid, TextField, Typography } from "@material-ui/core";
+import {
+  Button,
+  Grid,
+  Typography
+} from "@material-ui/core";
 import { ForwardCheckBox } from "../commonComponent";
 import Editor from "@monaco-editor/react";
 
@@ -10,6 +14,7 @@ const AutoSettings = ({
   forward,
   onFowardChange,
   onEditorMount,
+  theme,
 }) => (
   <Grid container>
     <Grid xs={12}>
@@ -23,6 +28,7 @@ const AutoSettings = ({
           tabSize: 2,
         }}
         onMount={onEditorMount}
+        theme={theme}
       />
     </Grid>
     <Typography variant="caption" align="left" color="textSecondary">

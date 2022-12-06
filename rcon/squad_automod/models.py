@@ -19,7 +19,7 @@ class SquadCycleOver(Exception):
 
 @dataclass
 class WatchStatus:
-    warned: List[datetime] = field(default_factory=list)
+    warned: Mapping[str, List[datetime]] = field(default_factory=dict)
     punished: Mapping[str, List[datetime]] = field(default_factory=dict)
 
 
@@ -35,11 +35,10 @@ class PunishStepState(Enum):
 class NoLeaderConfig:
     enabled: bool = False
     dry_run: bool = True
-    discord_webhook_url: str = ""
-    warn_message_header: str = (
-        "Warning squads must have an Officer.\nYou will be punished then kicked"
-    )
-    warn_message_footer: str = "Next check will happen automatically in 60s"
+    discord_webhook_url: str = ''
+    warn_message_header: str = ''
+    warn_message_footer: str = ''
+    warning_message: str = ''
     # Set to 0 to disable, -1 for infinite warnings (will never go to punishes)
     number_of_warning: int = 2
     warning_interval_seconds: int = 60
@@ -65,6 +64,7 @@ class NoLeaderConfig:
 
 @dataclass
 class APlayer:
+    steam_id_64: str
     player: str
     squad: str
     team: str
@@ -74,34 +74,29 @@ class APlayer:
 
 @dataclass
 class ASquad:
+    team: str
     name: str
     players: List[APlayer] = field(default_factory=list)
 
 
 @dataclass
 class PunitionsToApply:
-    warning: Mapping[str, List[str]] = field(
-        default_factory=lambda: {"allies": [], "axis": []}
-    )
-    pending_warnings: Mapping[str, List[str]] = field(
-        default_factory=lambda: {"allies": [], "axis": []}
+    warning: List[APlayer] = field(
+        default_factory=list
     )
     punish: List[APlayer] = field(default_factory=list)
     kick: List[APlayer] = field(default_factory=list)
     squads_state: List[ASquad] = field(default_factory=list)
 
-    def add_squad_state(self, squad_name: str, squad: dict):
+    def add_squad_state(self, team: str, squad_name: str, squad: dict):
         try:
-            self.squads_state.append(
-                ASquad(
-                    name=squad_name,
-                    players=[
-                        APlayer(
-                            player=p.get("name"),
-                            squad=p.get("unit_name"),
-                            team=p.get("team"),
-                            role=p.get("role"),
-                            lvl=p.get("level"),
+            if any(s.team == team and s.name == squad_name for s in self.squads_state):
+                return
+            self.squads_state.append(ASquad(
+                team=team,
+                name=squad_name,
+                players=[
+                    APlayer(steam_id_64=p.get("steam_id_64"), player=p.get("name"), squad=p.get("unit_name"), team=p.get("team"), role=p.get("role"), lvl=p.get("level"),
                         )
                         for p in squad.get("players", [])
                     ],
@@ -113,8 +108,7 @@ class PunitionsToApply:
     def __bool__(self):
         return any(
             [
-                self.warning.get("allies"),
-                self.warning.get("axis"),
+                self.warning,
                 self.kick,
                 self.punish,
             ]

@@ -15,6 +15,7 @@ from rcon.scoreboard import live_stats_loop
 from rcon.settings import SERVER_INFO
 from rcon.squad_automod import automod
 from rcon.steam_utils import enrich_db_users
+from rcon.server_stats import save_server_stats_since_inception, save_server_stats_for_last_hours
 from rcon.user_config import seed_default_config
 from rcon.utils import ApiKey
 
@@ -38,6 +39,15 @@ def run_stats_loop():
     except:
         logger.exception("Stats loop stopped")
         sys.exit(1)
+
+@cli.command(name="record_server_stats_inception")
+def save_stats():
+    save_server_stats_since_inception()
+
+
+@cli.command(name="record_server_stats")
+def save_recent_stats():
+    save_server_stats_for_last_hours()
 
 
 @cli.command(name="enrich_db_users")

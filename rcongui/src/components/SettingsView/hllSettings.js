@@ -28,6 +28,7 @@ import AutoRefreshLine from "../autoRefreshLine";
 import { ForwardCheckBox, WordList } from "../commonComponent";
 import VoteMapConfig from "./voteMapConfig";
 import HelpIcon from "@material-ui/icons/Help";
+import MapRotation from "../MapManager";
 
 const ProfanityFiler = ({
   words,
@@ -681,6 +682,14 @@ class HLLSettings extends React.Component {
         <Grid container className={classes.paper} xs={12}>
           <VoteMapConfig />
         </Grid>
+        <Grid container className={classes.paddingTop} justify="center">
+          <Grid item xs={12}>
+            <Typography variant="h5">Map rotation</Typography>
+
+            <MapRotation classes={classes} />
+          </Grid>
+        </Grid>
+        {/* LEGACY ROTATION GUI 
         <Grid container className={classes.paddingTop} justify="center" xs={12}>
           <Grid item>
             <Typography variant="h5" gutterBottom>
@@ -736,6 +745,7 @@ class HLLSettings extends React.Component {
             </Typography>
           </Grid>
         </Grid>
+            END LEGACY ROTATION UI */}
         <Grid item xs={12}>
           <ProfanityFiler
             words={profanities}

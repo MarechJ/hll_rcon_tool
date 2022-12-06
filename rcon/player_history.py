@@ -3,13 +3,14 @@ import logging
 import math
 import os
 import unicodedata
-from functools import cmp_to_key, wraps
+from functools import cmp_to_key
+
+from rcon.commands import CommandFailedError
 
 from sqlalchemy import func
-from sqlalchemy.orm import contains_eager, defaultload, joinedload
+from sqlalchemy.orm import contains_eager, defaultload
 from sqlalchemy.sql.functions import ReturnTypeFromArgs
 
-from rcon.cache_utils import invalidates, ttl_cache
 from rcon.commands import CommandFailedError
 from rcon.models import (
     BlacklistedPlayer,
@@ -472,6 +473,21 @@ def remove_player_from_blacklist(steam_id_64):
 
         player.blacklist.is_blacklisted = False
         sess.commit()
+
+
+def get_player_messages(steam_id_64):
+    with enter_session() as sess:
+        player = (
+            sess.query(PlayerSteamID).filter_by(steam_id_64=steam_id_64).one_or_none()
+        )
+        if player:
+            return [
+                action.to_dict()
+                for action in player.received_actions
+                if action.action_type == "MESSAGE"
+            ]
+        else:
+            raise Exception
 
 
 def get_player_comments(steam_id_64):

@@ -1,4 +1,4 @@
-from rcon.player_history import should_ban
+from rcon.hooks import should_ban
 
 
 def test_should_not_ban():

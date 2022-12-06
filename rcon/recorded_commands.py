@@ -103,6 +103,21 @@ class RecordedRcon(Rcon):
 
         return players
 
+    def do_message_player(
+        self, player_name=None, steam_id_64=None, message="", by="", save_message=False
+    ):
+        res = super().do_message_player(player_name, steam_id_64, message)
+        if save_message:
+            safe_save_player_action(
+                rcon=self,
+                player_name=player_name,
+                action_type="MESSAGE",
+                reason=message,
+                by=by,
+                steam_id_64=steam_id_64,
+            )
+        return res
+
     def do_remove_vip(self, steam_id_64):
         """Removes VIP status on the game server and removes their PlayerVIP record."""
 

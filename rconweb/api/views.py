@@ -17,6 +17,7 @@ from rcon.discord import send_to_discord_audit
 from rcon.gtx import GTXFtp
 from rcon.player_history import add_player_to_blacklist, remove_player_from_blacklist
 from rcon.recorded_commands import RecordedRcon
+from rcon.extended_commands import MOD_ALLOWED_CMDS
 from rcon.settings import SERVER_INFO
 from rcon.user_config import (
     AutoBroadcasts,
@@ -52,7 +53,7 @@ def set_temp_msg(request, func, name):
 
 
 @csrf_exempt
-@login_required
+@login_required(True)
 def set_name(request):
     data = _get_data(request)
     failed = False
@@ -69,13 +70,13 @@ def set_name(request):
 
 
 @csrf_exempt
-@login_required
+@login_required(True)
 def set_temp_broadcast(request):
     return set_temp_msg(request, temporary_broadcast, "set_temp_broadcast")
 
 
 @csrf_exempt
-@login_required
+@login_required(True)
 def set_temp_welcome(request):
     return set_temp_msg(request, temporary_welcome, "set_temp_welcome")
 
@@ -88,25 +89,39 @@ def get_version(request):
 
 @csrf_exempt
 def public_info(request):
-    status = ctl.get_status()
+    gamestate = ctl.get_gamestate()
+    curr_players, max_players = tuple(map(int, ctl.get_slots().split("/")))
     try:
-        current_map = MapsHistory()[0]
+        current_map_start = MapsHistory(max_len=1)[0]["start"]
     except IndexError:
         logger.error("Can't get current map time, map_recorder is probably offline")
-        current_map = {"name": status["map"], "start": None, "end": None}
-    current_map = dict(
-        just_name=map_name(current_map["name"]),
-        human_name=LONG_HUMAN_MAP_NAMES.get(current_map["name"], current_map["name"]),
-        **current_map,
-    )
-    vote_status = get_votes_status(none_on_fail=True)
-    next_map = ctl.get_next_map()
+        current_map_start = None
+
+    def explode_map_info(game_map: str, start) -> dict:
+        return dict(
+            just_name=map_name(game_map),
+            human_name=LONG_HUMAN_MAP_NAMES.get(game_map, game_map),
+            name=game_map,
+            start=start
+        )
+
     return api_response(
-        result=dict(
-            current_map=current_map,
-            **status,
-            vote_status=vote_status,
-            next_map=next_map,
+        result = dict(
+            current_map=explode_map_info(gamestate["current_map"], current_map_start),
+            next_map=explode_map_info(ctl.get_next_map(), None),
+            player_count=curr_players,
+            max_player_count=max_players,
+            players=dict(
+                allied=gamestate["num_allied_players"],
+                axis=gamestate["num_axis_players"]
+            ),
+            score=dict(
+                allied=gamestate["allied_score"],
+                axis=gamestate["axis_score"]
+            ),
+            vote_status=get_votes_status(none_on_fail=True),
+            name=ctl.get_name(),
+            short_name=os.getenv("SERVER_SHORT_NAME", "HLL RCON"),
             public_stats_port=os.getenv("PUBLIC_STATS_PORT", "Not defined"),
             public_stats_port_https=os.getenv("PUBLIC_STATS_PORT_HTTPS", "Not defined"),
         ),
@@ -116,7 +131,7 @@ def public_info(request):
 
 
 @csrf_exempt
-@login_required
+@login_required(True)
 def get_hooks(request):
     return api_response(
         result=DiscordHookConfig.get_all_hook_types(as_dict=True),
@@ -126,7 +141,7 @@ def get_hooks(request):
 
 
 @csrf_exempt
-@login_required
+@login_required(True)
 def set_hooks(request):
     data = _get_data(request)
 
@@ -142,7 +157,7 @@ def set_hooks(request):
 
 
 @csrf_exempt
-@login_required
+@login_required(True)
 def get_camera_config(request):
     config = CameraConfig()
     return api_response(
@@ -156,7 +171,7 @@ def get_camera_config(request):
 
 
 @csrf_exempt
-@login_required
+@login_required(True)
 def get_votekick_autotoggle_config(request):
     config = AutoVoteKickConfig()
     return api_response(
@@ -172,7 +187,7 @@ def get_votekick_autotoggle_config(request):
 
 
 @csrf_exempt
-@login_required
+@login_required(True)
 def set_votekick_autotoggle_config(request):
     config = AutoVoteKickConfig()
     data = _get_data(request)
@@ -201,7 +216,7 @@ def set_votekick_autotoggle_config(request):
 
 
 @csrf_exempt
-@login_required
+@login_required(True)
 def set_camera_config(request):
     config = CameraConfig()
     data = _get_data(request)
@@ -270,19 +285,19 @@ def _do_watch(request, add: bool):
 
 
 @csrf_exempt
-@login_required
+@login_required()
 def do_watch_player(request):
     return _do_watch(request, add=True)
 
 
 @csrf_exempt
-@login_required
+@login_required()
 def do_unwatch_player(request):
     return _do_watch(request, add=False)
 
 
 @csrf_exempt
-@login_required
+@login_required()
 def clear_cache(request):
     res = RedisCached.clear_all_caches(get_redis_pool())
     audit("clear_cache", request, {})
@@ -297,7 +312,7 @@ def clear_cache(request):
 
 
 @csrf_exempt
-@login_required
+@login_required(True)
 def get_auto_broadcasts_config(request):
     failed = False
     config = None
@@ -324,7 +339,7 @@ def get_auto_broadcasts_config(request):
 
 
 @csrf_exempt
-@login_required
+@login_required(True)
 def set_auto_broadcasts_config(request):
     failed = False
     res = None
@@ -355,7 +370,6 @@ def set_auto_broadcasts_config(request):
 
 
 @csrf_exempt
-@login_required
 def get_standard_messages(request):
     failed = False
     data = _get_data(request)
@@ -382,7 +396,7 @@ def get_standard_messages(request):
 
 
 @csrf_exempt
-@login_required
+@login_required(True)
 def set_standard_messages(request):
     failed = False
     data = _get_data(request)
@@ -410,7 +424,7 @@ def set_standard_messages(request):
 
 
 @csrf_exempt
-@login_required
+@login_required()
 def blacklist_player(request):
     data = _get_data(request)
     res = {}
@@ -442,7 +456,7 @@ def blacklist_player(request):
 
 
 @csrf_exempt
-@login_required
+@login_required()
 def unblacklist_player(request):
     data = _get_data(request)
     res = {}
@@ -481,7 +495,7 @@ def unblacklist_player(request):
 
 
 @csrf_exempt
-@login_required
+@login_required()
 def unban(request):
     data = _get_data(request)
     res = {}
@@ -542,9 +556,9 @@ def audit(func_name, request, arguments):
 
 
 # This is were all the RCON commands are turned into HTTP endpoints
-def wrap_method(func, parameters, command_name):
+def wrap_method(func, parameters, command_name, require_perms=False):
     @csrf_exempt
-    @login_required
+    @login_required(require_perms)
     @wraps(func)
     def wrapper(request):
         logger = logging.getLogger("rconweb")
@@ -602,7 +616,7 @@ def wrap_method(func, parameters, command_name):
     return wrapper
 
 
-@login_required
+@login_required()
 @csrf_exempt
 def get_connection_info(request):
     return api_response(
@@ -617,7 +631,7 @@ def get_connection_info(request):
 
 
 @csrf_exempt
-@login_required
+@login_required(True)
 def run_raw_command(request):
     data = _get_data(request)
     command = data.get("command")
@@ -668,8 +682,10 @@ try:
         if not any(name.startswith(prefix) for prefix in PREFIXES_TO_EXPOSE):
             continue
 
-        commands.append(
-            (name, wrap_method(func, inspect.signature(func).parameters, name))
+        require_perms = name not in MOD_ALLOWED_CMDS
+
+        commands.append((name, wrap_method(func, inspect.signature(func).parameters, name, require_perms=require_perms)))
+    logger.info("Done Initializing endpoint"
         )
 except:
     logger.exception("Failed to initialized endpoints - Most likely bad configuration")
