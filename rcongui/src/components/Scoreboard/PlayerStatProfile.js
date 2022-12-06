@@ -2,7 +2,6 @@ import React from "react";
 import { Set } from "immutable";
 import {
   Grid,
-
   Link,
   Avatar,
   List,
@@ -10,11 +9,9 @@ import {
   ListItemSecondaryAction,
   ListItemAvatar,
   ListItemText,
-
   Typography,
   Paper,
-
-  IconButton
+  IconButton,
 } from "@material-ui/core";
 import CancelIcon from "@material-ui/icons/Cancel";
 import { pure } from "recompose";
@@ -44,16 +41,19 @@ export const PlayerStatProfile = pure(({ playerScore, onClose }) => {
                   <Avatar src={steamProfile.get("avatar")}></Avatar>
                 </ListItemAvatar>
                 <ListItemText
-                  primary={<Typography variant="h4">
-                    <Link
-                      color="inherit"
-                      href={steamProfile.get("profileurl")}
-                      target="_blank"
-                    >
-                      {playerScore.get("player") ||
-                        steamProfile.get("personaname")}
-                    </Link>
-                  </Typography>} />
+                  primary={
+                    <Typography variant="h4">
+                      <Link
+                        color="inherit"
+                        href={steamProfile.get("profileurl")}
+                        target="_blank"
+                      >
+                        {playerScore.get("player") ||
+                          steamProfile.get("personaname")}
+                      </Link>
+                    </Typography>
+                  }
+                />
                 <ListItemSecondaryAction>
                   <IconButton onClick={onClose}>
                     <CancelIcon />
@@ -65,19 +65,24 @@ export const PlayerStatProfile = pure(({ playerScore, onClose }) => {
                 dataMapKey="weapons"
                 title="Kills by weapons"
                 subtitle="'None' means Tank, Arty, roadkill or some explosives"
-                openDefault />
+                openDefault
+              />
               <SubList
                 playerScore={playerScore}
                 dataMapKey="most_killed"
-                title="Kills by player" />
+                title="Kills by player"
+              />
               <SubList
                 playerScore={playerScore}
                 dataMapKey="death_by"
-                title="Deaths by player" />
+                title="Deaths by player"
+              />
               <SubList
-                playerScore={playerScore.filterNot((v, k) => excludedKeys.has(k)
+                playerScore={playerScore.filterNot((v, k) =>
+                  excludedKeys.has(k)
                 )}
-                title="Raw stats" />
+                title="Raw stats"
+              />
             </List>
           </Paper>
         </Grid>

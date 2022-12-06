@@ -17,7 +17,7 @@ from rcon.config import get_config
 
 from .models import SteamPlayer
 
-logger = logging.getLogger('rconweb')
+logger = logging.getLogger("rconweb")
 
 
 def update_mods(sender, instance, **kwargs):
@@ -45,19 +45,16 @@ class RconResponse:
 
 def api_response(*args, **kwargs):
     status_code = kwargs.pop("status_code", 200)
-    return JsonResponse(
-        RconResponse(*args, **kwargs).to_dict(),
-        status=status_code
-    )
+    return JsonResponse(RconResponse(*args, **kwargs).to_dict(), status=status_code)
 
 
 def api_csv_response(content, name, header):
     response = HttpResponse(
-        content_type='text/csv',
+        content_type="text/csv",
     )
-    response['Content-Disposition'] = 'attachment; filename="%s"' % name
+    response["Content-Disposition"] = 'attachment; filename="%s"' % name
 
-    writer = csv.DictWriter(response, fieldnames=header, dialect='excel')
+    writer = csv.DictWriter(response, fieldnames=header, dialect="excel")
     writer.writerows(content)
 
     return response
@@ -71,29 +68,22 @@ def do_login(request):
         logger.debug("Login attempt without data")
         raise PermissionDenied("No data")
 
-    name = data.get('username')
-    password = data.get('password')
+    name = data.get("username")
+    password = data.get("password")
     try:
         user = authenticate(request, username=name, password=password)
         if user is not None:
             login(request, user)
             logger.info("Successful login: %s", name)
             return api_response(
-                result=True,
-                command="login",
-                arguments=name,
-                failed=False
+                result=True, command="login", arguments=name, failed=False
             )
         else:
             logger.warning("Failed login attempt %s", data)
             raise PermissionDenied("Invalid login")
     except PermissionDenied:
         logger.warning("Failed login attempt %s", data)
-        return api_response(
-            command="login",
-            arguments=name,
-            status_code=401
-        )
+        return api_response(command="login", arguments=name, status_code=401)
 
 
 @ttl_cache(60 * 60, cache_falsy=False)
@@ -105,11 +95,11 @@ def _can_change_server_settings(user):
     """Whether the user is capable of changing server settings as well, rather than
     being limited to viewing data and performing basic actions, such as kicking and
     banning players.
-    
+
     These limited permissions, generally referred to as a "mod role", can be enabled
     by giving the user the "Can NOT change server settings" permission in the Django
     admin panel.
-    
+
     Superusers always are able to change server settings, regardles of what other perms
     their account is given."""
     return user.is_superuser or not user.has_perm('auth.can_not_change_server_settings')
@@ -135,21 +125,13 @@ def is_logged_in(request):
         authenticated=is_auth,
         can_change_server_settings=_can_change_server_settings(request.user),
     )
-    return api_response(
-        result=res,
-        command="is_logged_in",
-        failed=False
-    )
+    return api_response(result=res, command="is_logged_in", failed=False)
 
 
 @csrf_exempt
 def do_logout(request):
     logout(request)
-    return api_response(
-        result=True,
-        command="logout",
-        failed=False
-    )
+    return api_response(result=True, command="logout", failed=False)
 
 def login_required(also_require_perms=False):
     """Flag this endpoint as one that requires the user
@@ -210,17 +192,14 @@ def stats_login_required(func):
                 command=request.path,
                 error="You must be logged in to use this",
                 failed=True,
-                status_code=401
+                status_code=401,
             )
         try:
             return func(request, *args, **kwargs)
         except Exception as e:
             logger.exception("Unexpected error in %s", func.__name__)
             return api_response(
-                command=request.path,
-                error=repr(e),
-                failed=True,
-                status_code=500
+                command=request.path, error=repr(e), failed=True, status_code=500
             )
 
     return wrapper

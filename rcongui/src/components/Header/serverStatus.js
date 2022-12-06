@@ -1,15 +1,15 @@
 import React from "react";
 import "react-toastify/dist/ReactToastify.css";
 import Grid from "@material-ui/core/Grid";
-import {get, handle_http_errors, showResponse} from "../../utils/fetchUtils";
+import { get, handle_http_errors, showResponse } from "../../utils/fetchUtils";
 
 import debounce from "lodash/debounce";
-import {useTheme} from "@material-ui/core/styles";
+import { useTheme } from "@material-ui/core/styles";
 import useMediaQuery from "@material-ui/core/useMediaQuery";
 import Menu from "@material-ui/core/Menu";
 import MenuItem from "@material-ui/core/MenuItem";
 import Link from "@material-ui/core/Link";
-import {fromJS, List} from "immutable";
+import { fromJS, List } from "immutable";
 
 const Status = ({ classes, name, nbPlayers, map, serverList }) => {
   const theme = useTheme();
@@ -44,16 +44,24 @@ const Status = ({ classes, name, nbPlayers, map, serverList }) => {
             onClose={handleClose}
           >
             {serverList.map((s) => {
-              let link = `${window.location.protocol}//${window.location.hostname}:${s.get('port')}${window.location.pathname}${window.location.hash}`
-              if (s.get('link')) {
-                link = `${s.get('link')}${window.location.pathname}${window.location.hash}`
+              let link = `${window.location.protocol}//${
+                window.location.hostname
+              }:${s.get("port")}${window.location.pathname}${
+                window.location.hash
+              }`;
+              if (s.get("link")) {
+                link = `${s.get("link")}${window.location.pathname}${
+                  window.location.hash
+                }`;
               }
-              return <MenuItem onClick={handleClose}>
-                <Link color="inherit" href={link}>
-                  {s.get("name")}
-                </Link>
-              </MenuItem>
-          })}
+              return (
+                <MenuItem onClick={handleClose}>
+                  <Link color="inherit" href={link}>
+                    {s.get("name")}
+                  </Link>
+                </MenuItem>
+              );
+            })}
           </Menu>
           <small style={{ display: "block" }}>
             {nbPlayers} - {map}

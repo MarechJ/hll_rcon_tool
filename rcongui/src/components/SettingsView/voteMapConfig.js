@@ -1,7 +1,20 @@
-import {Button, FormControl, Grid, InputLabel, NativeSelect, TextField, Typography,} from "@material-ui/core";
+import {
+  Button,
+  FormControl,
+  Grid,
+  InputLabel,
+  NativeSelect,
+  TextField,
+  Typography,
+} from "@material-ui/core";
 import React from "react";
-import {fromJS, List, Map} from "immutable";
-import {get, handle_http_errors, postData, showResponse,} from "../../utils/fetchUtils";
+import { fromJS, List, Map } from "immutable";
+import {
+  get,
+  handle_http_errors,
+  postData,
+  showResponse,
+} from "../../utils/fetchUtils";
 import Padlock from "./padlock";
 
 const VoteMapConfig = () => {
@@ -69,10 +82,10 @@ const VoteMapConfig = () => {
         </Grid>
         <Grid item xs={6}>
           <TextField
-          fullWidth
-          multiline
-          rows={2}
-          rowsMax={4}
+            fullWidth
+            multiline
+            rows={2}
+            rowsMax={4}
             label="Thank you for voting message"
             helperText="Text shown in broadcast for 10 secs when someone votes. You can use {player_name} and {map_name}"
             value={config.get("votemap_thank_you_text", "")}
@@ -83,10 +96,10 @@ const VoteMapConfig = () => {
         </Grid>
         <Grid item xs={6}>
           <TextField
-          fullWidth
-          multiline
-          rows={2}
-          rowsMax={4}
+            fullWidth
+            multiline
+            rows={2}
+            rowsMax={4}
             label="No votes recorded text"
             helperText="Text shown in scrolling broadcast when votes are empty"
             value={config.get("votemap_no_vote_text", "")}
@@ -96,7 +109,9 @@ const VoteMapConfig = () => {
           />
         </Grid>
         <Grid item xs={12}>
-          <Button variant="outlined" onClick={() => saveConfig(config)}>Save texts</Button>
+          <Button variant="outlined" onClick={() => saveConfig(config)}>
+            Save texts
+          </Button>
         </Grid>
       </Grid>
 

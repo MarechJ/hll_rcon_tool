@@ -15,4 +15,3 @@ def allow_csv(endpoint):
     def wrapper(request, *args, **kwargs):
         to_csv = _get_data(request).get("to_csv")
         res = endpoint(request, *args, **kwargs)
-        

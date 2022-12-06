@@ -1,4 +1,3 @@
-
 import logging
 from dataclasses import field
 from datetime import datetime
@@ -49,9 +48,7 @@ class NoLeaderConfig:
     punish_interval_seconds: int = 60
     min_squad_players_for_punish: int = 3
     disable_punish_below_server_player_count: int = 60
-    punish_message: str = (
-        "Squads must have an officer.\nYou're being punished by a bot.\nNext check in 60seconds"
-    )
+    punish_message: str = "Squads must have an officer.\nYou're being punished by a bot.\nNext check in 60seconds"
 
     kick_after_max_punish: bool = False
     disable_kick_below_server_player_count: int = 60
@@ -81,9 +78,12 @@ class ASquad:
     name: str
     players: List[APlayer] = field(default_factory=list)
 
+
 @dataclass
 class PunitionsToApply:
-    warning: List[APlayer] = field(default_factory=list)
+    warning: List[APlayer] = field(
+        default_factory=list
+    )
     punish: List[APlayer] = field(default_factory=list)
     kick: List[APlayer] = field(default_factory=list)
     squads_state: List[ASquad] = field(default_factory=list)
@@ -96,13 +96,20 @@ class PunitionsToApply:
                 team=team,
                 name=squad_name,
                 players=[
-                    APlayer(steam_id_64=p.get("steam_id_64"), player=p.get("name"), squad=p.get("unit_name"), team=p.get("team"), role=p.get("role"), lvl=p.get("level"))
-                    for p in squad.get("players", [])
-                ]
-            ))
+                    APlayer(steam_id_64=p.get("steam_id_64"), player=p.get("name"), squad=p.get("unit_name"), team=p.get("team"), role=p.get("role"), lvl=p.get("level"),
+                        )
+                        for p in squad.get("players", [])
+                    ],
+                )
+            )
         except:
             logger.exception("Unable to add squad info")
 
     def __bool__(self):
-        return any([self.warning, self.kick, self.punish])
-
+        return any(
+            [
+                self.warning,
+                self.kick,
+                self.punish,
+            ]
+        )

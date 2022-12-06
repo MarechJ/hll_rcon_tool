@@ -404,11 +404,12 @@ class HLLSettings extends React.Component {
               classes={classes}
               forward={forwardVIP}
               onFowardChange={() => this.toggle("forwardVIP")}
-              onAdd={(name, steamID64) =>
+              onAdd={(name, steamID64, expirationTimestamp) =>
                 sendAction("do_add_vip", {
                   steam_id_64: steamID64,
                   name: name,
                   forward: forwardVIP,
+                  expiration: expirationTimestamp,
                 }).then(this.loadVips)
               }
               onDelete={(name, steamID64) =>

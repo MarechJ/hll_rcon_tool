@@ -568,8 +568,12 @@ def test_should_warn_first_time(team_view):
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
 
-    assert PunishStepState.apply == should_warn_player(watch_status, config, "able", player)
-    assert PunishStepState.wait == should_warn_player(watch_status, config, "able", player)
+    assert PunishStepState.apply == should_warn_player(
+        watch_status, config, "able"
+    , player)
+    assert PunishStepState.wait == should_warn_player(
+        watch_status, config, "able"
+    , player)
 
 
 def test_should_not_warn(team_view):
@@ -579,8 +583,12 @@ def test_should_not_warn(team_view):
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
 
-    assert PunishStepState.disabled == should_warn_player(watch_status, config, "able", player)
-    assert PunishStepState.disabled == should_warn_player(watch_status, config, "able", player)
+    assert PunishStepState.disabled == should_warn_player(
+        watch_status, config, "able"
+    , player)
+    assert PunishStepState.disabled == should_warn_player(
+        watch_status, config, "able"
+    , player)
     assert WatchStatus() == watch_status
 
 
@@ -592,11 +600,19 @@ def test_should_warn_twice(team_view):
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
 
-    assert PunishStepState.apply == should_warn_player(watch_status, config, "able", player)
-    assert PunishStepState.wait == should_warn_player(watch_status, config, "able", player)
+    assert PunishStepState.apply == should_warn_player(
+        watch_status, config, "able"
+    , player)
+    assert PunishStepState.wait == should_warn_player(
+        watch_status, config, "able"
+    , player)
     time.sleep(config.warning_interval_seconds)
-    assert PunishStepState.apply == should_warn_player(watch_status, config, "able", player)
-    assert PunishStepState.wait == should_warn_player(watch_status, config, "able", player)
+    assert PunishStepState.apply == should_warn_player(
+        watch_status, config, "able"
+    , player)
+    assert PunishStepState.wait == should_warn_player(
+        watch_status, config, "able"
+    , player)
     time.sleep(config.warning_interval_seconds)
     assert PunishStepState.go_to_next_step == should_warn_player(watch_status, config, "able", player)
 
@@ -610,7 +626,9 @@ def test_should_warn_infinite(team_view):
     player = team_view["allies"]["squads"]["able"]["players"][0]
 
     for _ in range(100):
-        assert PunishStepState.apply == should_warn_player(watch_status, config, "able", player)
+        assert PunishStepState.apply == should_warn_player(
+            watch_status, config, "able"
+        , player)
 
 
 def test_should_punish(team_view):
@@ -1043,26 +1061,63 @@ def test_watcher(team_view):
         except (SquadCycleOver, SquadHasLeader):
             del state[f"{team}{squad_name}"]
 
-    with mock.patch("rcon.squad_automod.automod.watch_state", wraps=fake_state), mock.patch(
-        "rcon.squad_automod.automod.get_redis_client"
-    ):
+    with mock.patch(
+        "rcon.squad_automod.automod.watch_state", wraps=fake_state
+    ), mock.patch("rcon.squad_automod.automod.get_redis_client"):
         rcon = mock.MagicMock()
         rcon.get_team_view_fast.return_value = team_view
         expected_warned_players = [
-            APlayer(steam_id_64="76561198055458575", player="Lawless", squad="baker", team="allies", role='heavymachinegunner', lvl=88),
-            APlayer(steam_id_64="76561198985998769", player="Major_Winters", squad="baker", team="allies", role='rifleman', lvl=82),
-            APlayer(steam_id_64="76561198393093210", player="Toomz", squad="baker", team="allies", role='assault', lvl=69),
-            APlayer(steam_id_64="76561198026310990", player="Zones (BEL)", squad="baker", team="allies", role='engineer', lvl=59),
-            APlayer(steam_id_64="76561198198563101", player="Pavooloni", squad="baker", team="allies", role='antitank', lvl=71),
-            APlayer(steam_id_64="76561198028236925", player="Kjjuj", squad="baker", team="allies", role='rifleman', lvl=102),
-            APlayer(steam_id_64="76561198979089668", player="emfoor", squad="able", team="axis", role='assault', lvl=110),
-            APlayer(steam_id_64="76561198041823654", player="Makaj", squad="able", team="axis", role='officer', lvl=43),
-            APlayer(steam_id_64="76561198892700816", player="tinner2115", squad="able", team="axis", role='engineer', lvl=170),
-            APlayer(steam_id_64="76561198354354474", player="Cuervo", squad="able", team="axis", role='antitank', lvl=129),
-            APlayer(steam_id_64="76561198046677517", player="capitanodrew", squad="able", team="axis", role='heavymachinegunner', lvl=67),
-            APlayer(steam_id_64='76561199027409370', player='Dr.FishShitz', squad='able', team='axis', role='automaticrifleman', lvl=10),
-            APlayer(steam_id_64="76561198206929555", player='WilliePeter', squad='baker', team='axis', role='spotter', lvl=123),
-            APlayer(steam_id_64="76561199166765040", player='DarkVisionary', squad='baker', team='axis', role='sniper', lvl=184)
+            APlayer(
+                steam_id_64="76561198055458575", player="Lawless", squad="baker", team="allies", role="heavymachinegunner",
+                lvl=88,
+            ),
+            APlayer(
+                steam_id_64="76561198985998769", player="Major_Winters", squad="baker", team="allies", role="rifleman",
+                lvl=82,
+            ),
+            APlayer(
+                steam_id_64="76561198393093210", player="Toomz", squad="baker", team="allies", role="assault", lvl=69
+            ),
+            APlayer(
+                steam_id_64="76561198026310990", player="Zones (BEL)", squad="baker", team="allies", role="engineer",
+                lvl=59,
+            ),
+            APlayer(
+                steam_id_64="76561198198563101", player="Pavooloni", squad="baker", team="allies", role="antitank",
+                lvl=71,
+            ),
+            APlayer(
+                steam_id_64="76561198028236925", player="Kjjuj", squad="baker", team="allies", role="rifleman", lvl=102
+            ),
+            APlayer(
+                steam_id_64="76561198979089668", player="emfoor", squad="able", team="axis", role="assault", lvl=110
+            ),
+            APlayer(steam_id_64="76561198041823654", player="Makaj", squad="able", team="axis", role="officer", lvl=43),
+            APlayer(
+                steam_id_64="76561198892700816", player="tinner2115", squad="able", team="axis", role="engineer", lvl=170
+            ),
+            APlayer(
+                steam_id_64="76561198354354474", player="Cuervo", squad="able", team="axis", role="antitank", lvl=129
+            ),
+            APlayer(
+                steam_id_64="76561198046677517", player="capitanodrew", squad="able", team="axis", role="heavymachinegunner",
+                lvl=67,
+            ),
+            APlayer(
+                steam_id_64='76561199027409370', player='Dr.FishShitz', squad='able', team='axis', role='automaticrifleman', lvl=10),
+            APlayer(steam_id_64="76561198206929555", player="WilliePeter",
+                squad="baker",
+                team="axis",
+                role="spotter",
+                lvl=123,
+            ),
+            APlayer(
+                steam_id_64="76561199166765040", player="DarkVisionary",
+                squad="baker",
+                team="axis",
+                role="sniper",
+                lvl=184,
+            ),
         ]
         expected_punished_players = list(filter(lambda p: p.lvl > 10, expected_warned_players))
 
@@ -1137,24 +1192,52 @@ def test_watcher_no_kick(team_view):
         except (SquadCycleOver, SquadHasLeader):
             del state[f"{team}{squad_name}"]
 
-    with mock.patch("rcon.squad_automod.automod.watch_state", wraps=fake_state), mock.patch(
-        "rcon.squad_automod.automod.get_redis_client"
-    ):
+    with mock.patch(
+        "rcon.squad_automod.automod.watch_state", wraps=fake_state
+    ), mock.patch("rcon.squad_automod.automod.get_redis_client"):
         rcon = mock.MagicMock()
         rcon.get_team_view_fast.return_value = team_view
         expected_warned_players = [
-            APlayer(steam_id_64="76561198055458575", player="Lawless", squad="baker", team="allies", role='heavymachinegunner', lvl=88),
-            APlayer(steam_id_64="76561198985998769", player="Major_Winters", squad="baker", team="allies", role='rifleman', lvl=82),
-            APlayer(steam_id_64="76561198393093210", player="Toomz", squad="baker", team="allies", role='assault', lvl=69),
-            APlayer(steam_id_64="76561198026310990", player="Zones (BEL)", squad="baker", team="allies", role='engineer', lvl=59),
-            APlayer(steam_id_64="76561198198563101", player="Pavooloni", squad="baker", team="allies", role='antitank', lvl=71),
-            APlayer(steam_id_64="76561198028236925", player="Kjjuj", squad="baker", team="allies", role='rifleman', lvl=102),
-            APlayer(steam_id_64="76561198979089668", player="emfoor", squad="able", team="axis", role='assault', lvl=110),
-            APlayer(steam_id_64="76561198041823654", player="Makaj", squad="able", team="axis", role='officer', lvl=43),
-            APlayer(steam_id_64="76561198892700816", player="tinner2115", squad="able", team="axis", role='engineer', lvl=170),
-            APlayer(steam_id_64="76561198354354474", player="Cuervo", squad="able", team="axis", role='antitank', lvl=129),
-            APlayer(steam_id_64="76561198046677517", player="capitanodrew", squad="able", team="axis", role='heavymachinegunner', lvl=67),
-            APlayer(steam_id_64='76561199027409370', player="Dr.FishShitz", squad="able", team="axis", role='automaticrifleman', lvl=10),
+            APlayer(
+                steam_id_64="76561198055458575", player="Lawless", squad="baker", team="allies", role="heavymachinegunner",
+                lvl=88,
+            ),
+            APlayer(
+                steam_id_64="76561198985998769", player="Major_Winters", squad="baker", team="allies", role="rifleman",
+                lvl=82,
+            ),
+            APlayer(
+                steam_id_64="76561198393093210", player="Toomz", squad="baker", team="allies", role="assault", lvl=69
+            ),
+            APlayer(
+                steam_id_64="76561198026310990", player="Zones (BEL)", squad="baker", team="allies", role="engineer",
+                lvl=59,
+            ),
+            APlayer(
+                steam_id_64="76561198198563101", player="Pavooloni", squad="baker", team="allies", role="antitank",
+                lvl=71,
+            ),
+            APlayer(
+                steam_id_64="76561198028236925", player="Kjjuj", squad="baker", team="allies", role="rifleman", lvl=102
+            ),
+            APlayer(
+                steam_id_64="76561198979089668", player="emfoor", squad="able", team="axis", role="assault", lvl=110
+            ),
+            APlayer(steam_id_64="76561198041823654", player="Makaj", squad="able", team="axis", role="officer", lvl=43),
+            APlayer(
+                steam_id_64="76561198892700816", player="tinner2115", squad="able", team="axis", role="engineer", lvl=170
+            ),
+            APlayer(
+                steam_id_64="76561198354354474", player="Cuervo", squad="able", team="axis", role="antitank", lvl=129
+            ),
+            APlayer(
+                steam_id_64="76561198046677517", player="capitanodrew", squad="able", team="axis", role="heavymachinegunner",
+                lvl=67,
+            ),
+            APlayer(
+                steam_id_64='76561199027409370', player="Dr.FishShitz", squad="able", team="axis", role="automaticrifleman",
+                lvl=10,
+            ),
             APlayer(steam_id_64="76561198206929555", player='WilliePeter', squad='baker', team='axis', role='spotter', lvl=123),
             APlayer(steam_id_64="76561199166765040", player='DarkVisionary', squad='baker', team='axis', role='sniper', lvl=184)
         ]
@@ -1210,24 +1293,52 @@ def test_watcher_resets(team_view):
         except (SquadCycleOver, SquadHasLeader):
             del state[f"{team}{squad_name}"]
 
-    with mock.patch("rcon.squad_automod.automod.watch_state", wraps=fake_state), mock.patch(
-        "rcon.squad_automod.automod.get_redis_client"
-    ):
+    with mock.patch(
+        "rcon.squad_automod.automod.watch_state", wraps=fake_state
+    ), mock.patch("rcon.squad_automod.automod.get_redis_client"):
         rcon = mock.MagicMock()
         rcon.get_team_view_fast.return_value = team_view
         expected_players = [
-            APlayer(steam_id_64="76561198055458575", player="Lawless", squad="baker", team="allies", role='heavymachinegunner', lvl=88),
-            APlayer(steam_id_64="76561198985998769", player="Major_Winters", squad="baker", team="allies", role='rifleman', lvl=82),
-            APlayer(steam_id_64="76561198393093210", player="Toomz", squad="baker", team="allies", role='assault', lvl=69),
-            APlayer(steam_id_64="76561198026310990", player="Zones (BEL)", squad="baker", team="allies", role='engineer', lvl=59),
-            APlayer(steam_id_64="76561198198563101", player="Pavooloni", squad="baker", team="allies", role='antitank', lvl=71),
-            APlayer(steam_id_64="76561198028236925", player="Kjjuj", squad="baker", team="allies", role='rifleman', lvl=102),
-            APlayer(steam_id_64="76561198979089668", player="emfoor", squad="able", team="axis", role='assault', lvl=110),
-            APlayer(steam_id_64="76561198041823654", player="Makaj", squad="able", team="axis", role='officer', lvl=43),
-            APlayer(steam_id_64="76561198892700816", player="tinner2115", squad="able", team="axis", role='engineer', lvl=170),
-            APlayer(steam_id_64="76561198354354474", player="Cuervo", squad="able", team="axis", role='antitank', lvl=129),
-            APlayer(steam_id_64="76561198046677517", player="capitanodrew", squad="able", team="axis", role='heavymachinegunner', lvl=67),
-            APlayer(steam_id_64='76561199027409370', player="Dr.FishShitz", squad="able", team="axis", role='automaticrifleman', lvl=10),
+            APlayer(
+                steam_id_64="76561198055458575", player="Lawless", squad="baker", team="allies", role="heavymachinegunner",
+                lvl=88,
+            ),
+            APlayer(
+                steam_id_64="76561198985998769", player="Major_Winters", squad="baker", team="allies", role="rifleman",
+                lvl=82,
+            ),
+            APlayer(
+                steam_id_64="76561198393093210", player="Toomz", squad="baker", team="allies", role="assault", lvl=69
+            ),
+            APlayer(
+                steam_id_64="76561198026310990", player="Zones (BEL)", squad="baker", team="allies", role="engineer",
+                lvl=59,
+            ),
+            APlayer(
+                steam_id_64="76561198198563101", player="Pavooloni", squad="baker", team="allies", role="antitank",
+                lvl=71,
+            ),
+            APlayer(
+                steam_id_64="76561198028236925", player="Kjjuj", squad="baker", team="allies", role="rifleman", lvl=102
+            ),
+            APlayer(
+                steam_id_64="76561198979089668", player="emfoor", squad="able", team="axis", role="assault", lvl=110
+            ),
+            APlayer(steam_id_64="76561198041823654", player="Makaj", squad="able", team="axis", role="officer", lvl=43),
+            APlayer(
+                steam_id_64="76561198892700816", player="tinner2115", squad="able", team="axis", role="engineer", lvl=170
+            ),
+            APlayer(
+                steam_id_64="76561198354354474", player="Cuervo", squad="able", team="axis", role="antitank", lvl=129
+            ),
+            APlayer(
+                steam_id_64="76561198046677517", player="capitanodrew", squad="able", team="axis", role="heavymachinegunner",
+                lvl=67,
+            ),
+            APlayer(
+                steam_id_64='76561199027409370', player="Dr.FishShitz", squad="able", team="axis", role="automaticrifleman",
+                lvl=10,
+            ),
             # APlayer(player="WilliePeter",
             # APlayer(player="DarkVisionary",
         ]

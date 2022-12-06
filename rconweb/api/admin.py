@@ -11,11 +11,13 @@ from .models import SteamPlayer
 class SteamPlayerInline(admin.StackedInline):
     model = SteamPlayer
     can_delete = False
-    verbose_name_plural = 'steamid'
+    verbose_name_plural = "steamid"
+
 
 # Define a new User admin
 class UserAdmin(BaseUserAdmin):
     inlines = (SteamPlayerInline,)
+
 
 # Re-register UserAdmin
 admin.site.unregister(User)

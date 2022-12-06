@@ -1,14 +1,13 @@
-import {Grid, GridList, GridListTile, makeStyles} from "@material-ui/core";
+import { Grid, GridList, GridListTile, makeStyles } from "@material-ui/core";
 import React from "react";
 import "emoji-mart/css/emoji-mart.css";
-import {ActionButton} from "./PlayerTile/ActionButton";
-import {PlayerHeader} from "./PlayerTile/PlayerHeader";
-import {PlayerFlags} from "./PlayerTile/PlayerFlags";
-import {PlayerSighthings} from "./PlayerTile/PlayerSighthings";
-import {PlayerPenalties} from "./PlayerTile/PlayerPenalties";
+import { ActionButton } from "./PlayerTile/ActionButton";
+import { PlayerHeader } from "./PlayerTile/PlayerHeader";
+import { PlayerFlags } from "./PlayerTile/PlayerFlags";
+import { PlayerSighthings } from "./PlayerTile/PlayerSighthings";
+import { PlayerPenalties } from "./PlayerTile/PlayerPenalties";
 import withWidth from "@material-ui/core/withWidth";
-import {pure} from "recompose";
-
+import { pure } from "recompose";
 
 const useStyles = makeStyles((theme) => ({
   paperTile: {
@@ -68,41 +67,41 @@ const PlayerGrid = withWidth()(
                     justify="space-between"
                   >
                     <PlayerHeader classes={classes} player={player} />
-                      <React.Fragment>
-                        <PlayerFlags
-                          player={player}
-                          classes={classes}
-                          onDeleteFlag={onDeleteFlag}
-                        />
-                        <PlayerSighthings classes={classes} player={player} />
-                        <PlayerPenalties classes={classes} player={player} />
-                        <Grid container justify="center">
-                          <Grid item>
-                            <ActionButton
-                              blacklisted={
-                                player.get("blacklist") &&
-                                player.get("blacklist").get("is_blacklisted")
-                              }
-                              onUnBlacklist={() => onUnBlacklist(player)}
-                              onBlacklist={() => onBlacklist(player)}
-                              onTempBan={() => onTempBan(player)}
-                              onUnban={() => onUnban(player)}
-                              onflag={() => onflag(player)}
-                              isVip={vips.get(player.get("steam_id_64"))}
-                              onAddVip={() => onAddVip(player)}
-                              onDeleteVip={() => onDeleteVip(player)}
-                              isWatched={
-                                player.get("watchlist") &&
-                                player.get("watchlist").get("is_watched")
-                              }
-                              onAddToWatchList={() => onAddToWatchList(player)}
-                              onRemoveFromWatchList={() =>
-                                onRemoveFromWatchList(player)
-                              }
-                            />
-                          </Grid>
+                    <React.Fragment>
+                      <PlayerFlags
+                        player={player}
+                        classes={classes}
+                        onDeleteFlag={onDeleteFlag}
+                      />
+                      <PlayerSighthings classes={classes} player={player} />
+                      <PlayerPenalties classes={classes} player={player} />
+                      <Grid container justify="center">
+                        <Grid item>
+                          <ActionButton
+                            blacklisted={
+                              player.get("blacklist") &&
+                              player.get("blacklist").get("is_blacklisted")
+                            }
+                            onUnBlacklist={() => onUnBlacklist(player)}
+                            onBlacklist={() => onBlacklist(player)}
+                            onTempBan={() => onTempBan(player)}
+                            onUnban={() => onUnban(player)}
+                            onflag={() => onflag(player)}
+                            isVip={vips.get(player.get("steam_id_64"))}
+                            onAddVip={() => onAddVip(player)}
+                            onDeleteVip={() => onDeleteVip(player)}
+                            isWatched={
+                              player.get("watchlist") &&
+                              player.get("watchlist").get("is_watched")
+                            }
+                            onAddToWatchList={() => onAddToWatchList(player)}
+                            onRemoveFromWatchList={() =>
+                              onRemoveFromWatchList(player)
+                            }
+                          />
                         </Grid>
-                      </React.Fragment>
+                      </Grid>
+                    </React.Fragment>
                   </Grid>
                 </GridListTile>
               );

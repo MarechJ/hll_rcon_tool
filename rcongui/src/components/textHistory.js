@@ -18,7 +18,6 @@ const getAllNamespaces = () => {
   });
 };
 
-
 class TextHistory {
   constructor(namespace) {
     this.namespace = PREFIX + namespace;
