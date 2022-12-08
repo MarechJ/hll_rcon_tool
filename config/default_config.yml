@@ -136,12 +136,13 @@ NOLEADER_AUTO_MOD:
   # set to 0 to disable (this it will move to punish directly), -1 for infinite warnings (will never go to punishes)
   # set to 1 or N to warn squad N times before we move on to the punish step
   number_of_warning: 2
-  # This is the text that will be displayed in the warning message. The middle section (between the header and footer)
-  # will be automatically filled like this example (the numbers are <warning_received>/<number_of_warning set above>:
-  # allies: BAKER 1/2 /!\\
-  # axis: ABLE 2/2 /!\\, BAKER 1/2 /!\\
+  # This is the text that will be displayed to warn players.
+  # Deprecated: Use 'warning_message' instead.
   warn_message_header: "Warning squads must have an Officer.\nYou will be punished then kicked"
   warn_message_footer: "Next check will happen automatically in 60s"
+
+  # This is the text that will be displayed to warn players.
+  warning_message: "Warning, {player_name}! Your squad ({squad_name}) does not have an officer. Players of squads without an officer will be punished after {max_warnings} (you already {received_warnings}), then kicked.\nNext check will happen automatically in {next_check_seconds}s."
   # This is the number of seconds this auto-mod will wait until moving to 
   # the next warning or to the punish if the number of warning was reached
   warning_interval_seconds: 60
@@ -241,7 +242,7 @@ SCOREBOT:
     NEXT_MAP_TEXT: "Next map"
     VOTE: "vote(s)"
     PLAYERS: "players"
-    ELAPSED_TIME: "Elasped game time: "
+    ELAPSED_TIME: "Elapsed game time: "
 
     # Discord markup is supported, you can add emoji too, TOP_KILLERS as an example of custom emoji. Do \<the emoji> on your discord to get that id
     TOP_KILLERS: "<:HLLBomb:868256234439073802> TOP KILLERS\n*kills* <:HLLBomb:868256234439073802>"
@@ -275,3 +276,77 @@ SCOREBOT:
       - WHAT_IS_A_BREAK
       - SURVIVORS
       - U_R_STILL_A_MAN
+
+
+# The config values are cached by RCON
+# Changes may take up to 10 minutes to take effect
+REMOVE_EXPIRED_VIPS:
+  # Set to true to automatically remove any expired VIPs
+  enabled: true
+  # The number of minutes between checking for expired VIPs
+  interval: 60
+  # Discord Webhook URL where audit logs should be sent. If not specified, the environment variable DISCORD_WEBHOOK_AUDIT_LOG
+  # will be used, instead.
+  discord_webhook_url: ''
+
+
+# Any changes to these values require an RCON restart to take effect
+#
+# This allows you to subscribe any number of Discord webhooks and optional roles and/or users to mention
+# which will be used to send the matching log lines to the Discord webhooks
+# You must include the server number for each hook or it won't be processed
+# This allows you to subscribe to different log events for different servers if you run more than one
+#
+# Review USERGUIDE.md for information on how to get webhooks and role/user IDs from Discord
+#
+# A more general log event type will trigger for all sub types, for instance the CHAT event will trigger
+# for any kind of chat
+# A more specific log event type will only trigger for that type, for instance Chat[Axis][Unit] would not
+# trigger for Axis team chat, or any Allied chats
+# If you subscribe to a general event type, such as CHAT you should not subscribe to anymore specific event
+# or you'll receive duplicates
+#
+# This can get very spammy very quickly, especially if you mention users/roles, please plan accordingly
+# and be aware of both CPU usage on your server and Discord rate limiting for webhooks, or you may run into
+# issues processing your other hooks (such as checking the blacklist on player connect) in a timely fashion
+#
+# You can use a YAML validator (such as https://codebeautify.org/yaml-validator/) to validate your config.yml
+# before starting RCON, but please be aware that sharing a Discord webhook allows anyone that has it to send
+# messages to it
+#
+# For example:
+# - URL: https://discord.com/api/...etc
+#   MENTIONS:
+#     - <@&1234567891234567891>
+#     - <@987654321987654321>
+#   SERVERS:
+#   - 1
+#   - 2
+LOG_LINE_WEBHOOKS:
+  ADMIN BANNED:
+  ADMIN KICKED:
+  CAMERA:
+  CHAT:
+  CHAT[Allies]:
+  CHAT[Allies][Team]:
+  CHAT[Allies][Unit]:
+  CHAT[Axis]:
+  CHAT[Axis][Team]:
+  CHAT[Axis][Unit]:
+  CONNECTED:
+  DISCONNECTED:
+  KILL:
+  MATCH:
+  MATCH START:
+  MATCH ENDED:
+  TEAM KILL:
+  TEAMSWITCH:
+  # Automatic kicks for team kills
+  TK:
+  TK AUTO:
+  TK AUTO BANNED:
+  TK AUTO KICKED:
+  # Vote kicks
+  VOTE:
+  VOTE STARTED:
+  VOTE COMPLETED:

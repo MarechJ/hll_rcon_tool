@@ -91,10 +91,24 @@ def get_moderators_accounts():
     return [(u.user.username, u.steam_id_64) for u in SteamPlayer.objects.all()]
 
 
+def _can_change_server_settings(user):
+    """Whether the user is capable of changing server settings as well, rather than
+    being limited to viewing data and performing basic actions, such as kicking and
+    banning players.
+
+    These limited permissions, generally referred to as a "mod role", can be enabled
+    by giving the user the "Can NOT change server settings" permission in the Django
+    admin panel.
+
+    Superusers always are able to change server settings, regardles of what other perms
+    their account is given."""
+    return user.is_superuser or not user.has_perm("auth.can_not_change_server_settings")
+
+
 @csrf_exempt
 def is_logged_in(request):
-    res = request.user.is_authenticated
-    if res:
+    is_auth = request.user.is_authenticated
+    if is_auth:
         try:
             steam_id = None
             try:
@@ -108,6 +122,10 @@ def is_logged_in(request):
         except:
             logger.exception("Can't record heartbeat")
 
+    res = dict(
+        authenticated=is_auth,
+        can_change_server_settings=_can_change_server_settings(request.user),
+    )
     return api_response(result=res, command="is_logged_in", failed=False)
 
 
@@ -117,25 +135,50 @@ def do_logout(request):
     return api_response(result=True, command="logout", failed=False)
 
 
-def login_required(func):
-    @wraps(func)
-    def wrapper(request, *args, **kwargs):
-        if not request.user.is_authenticated:
-            return api_response(
-                command=request.path,
-                error="You must be logged in to use this",
-                failed=True,
-                status_code=401,
-            )
-        try:
-            return func(request, *args, **kwargs)
-        except Exception as e:
-            logger.exception("Unexpected error in %s", func.__name__)
-            return api_response(
-                command=request.path, error=repr(e), failed=True, status_code=500
-            )
+def login_required(also_require_perms=False):
+    """Flag this endpoint as one that requires the user
+    to be logged in.
 
-    return wrapper
+
+
+    Parameters
+    ----------
+    also_require_perms : bool, optional
+        Whether just the mod role isn't sufficient enough
+        to use this endpoint, by default False
+    """
+
+    def decorator(func):
+        @wraps(func)
+        def wrapper(request, *args, **kwargs):
+            if not request.user.is_authenticated:
+                return api_response(
+                    command=request.path,
+                    error="You must be logged in to use this",
+                    failed=True,
+                    status_code=401,
+                )
+
+            if also_require_perms:
+                if not _can_change_server_settings(request.user):
+                    return api_response(
+                        command=request.path,
+                        error="You do not have the required permissions to use this",
+                        failed=True,
+                        status_code=403,
+                    )
+
+            try:
+                return func(request, *args, **kwargs)
+            except Exception as e:
+                logger.exception("Unexpected error in %s", func.__name__)
+                return api_response(
+                    command=request.path, error=repr(e), failed=True, status_code=500
+                )
+
+        return wrapper
+
+    return decorator
 
 
 def stats_login_required(func):

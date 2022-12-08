@@ -1,9 +1,9 @@
 import React from "react";
+import { withTheme } from '@material-ui/core/styles';
 import {
   Button,
   Grid,
   IconButton,
-  Link,
   TextField,
   Typography,
   Tooltip,
@@ -429,7 +429,7 @@ class RconSettings extends React.Component {
       autosettings,
       forwardAutoSettings,
     } = this.state;
-    const { classes, theme, themes, setTheme } = this.props;
+    const { classes, theme, themeName, themeNames, setTheme } = this.props;
 
     return (
       <Grid container className={classes.paper} spacing={3}>
@@ -443,10 +443,10 @@ class RconSettings extends React.Component {
           <FormControl style={{ minWidth: "200px" }}>
             <InputLabel>Pick your theme</InputLabel>
             <Select
-              value={theme}
+              value={themeName}
               onChange={(event) => setTheme(event.target.value)}
             >
-              {themes.map((t) => (
+              {themeNames.map((t) => (
                 <MenuItem key={t} value={t}>
                   {t}
                 </MenuItem>
@@ -763,6 +763,7 @@ class RconSettings extends React.Component {
             forward={forwardAutoSettings}
             onFowardChange={() => this.toggle("forwardAutoSettings")}
             onEditorMount={this.handleEditorDidMount}
+            theme={theme.editor ? theme.editor : "vs"}
           />
         </Grid>
 
@@ -787,4 +788,4 @@ class RconSettings extends React.Component {
   }
 }
 
-export default RconSettings;
+export default withTheme(RconSettings);

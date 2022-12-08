@@ -1,8 +1,14 @@
+from curses import echo
+from datetime import datetime
 import logging
+from operator import index
 import os
+import re
 from contextlib import contextmanager
 from datetime import datetime
+from typing import List, Optional
 
+import pydantic
 from sqlalchemy import (
     TIMESTAMP,
     Boolean,
@@ -15,14 +21,9 @@ from sqlalchemy import (
     create_engine,
 )
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.engine.url import URL
-from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker
 from sqlalchemy.schema import UniqueConstraint
-from sqlalchemy.sql.expression import nullslast, true
-
-from rcon.utils import map_name
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +41,7 @@ def get_engine():
         logger.error(msg)
         raise ValueError(msg)
 
-    _ENGINE = create_engine(url)
+    _ENGINE = create_engine(url, echo=False)
     return _ENGINE
 
 
@@ -77,6 +78,12 @@ class PlayerSteamID(Base):
     steaminfo = relationship("SteamInfo", backref="steamid", uselist=False)
     comments = relationship("PlayerComment", back_populates="player")
     stats = relationship("PlayerStats", backref="steamid", uselist=False)
+    vip = relationship(
+        "PlayerVIP",
+        back_populates="steamid",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
 
     def get_penalty_count(self):
         penalities_type = {"KICK", "PUNISH", "TEMPBAN", "PERMABAN"}
@@ -502,6 +509,96 @@ class PlayerComment(Base):
         )
 
 
+class ServerCount(Base):
+    __tablename__ = "server_counts"
+    __table_args__ = (
+        UniqueConstraint("server_number", "datapoint_time", name="unique_server_count"),
+    )
+    id = Column(Integer, primary_key=True)
+    server_number = Column(Integer)
+    creation_time = Column(TIMESTAMP, default=datetime.utcnow)
+    datapoint_time = Column(TIMESTAMP, unique=True, index=True)
+    map_id = Column(
+        Integer,
+        ForeignKey("map_history.id"),
+        nullable=False,
+        index=True,
+    )
+    count = Column(Integer, nullable=False)
+    vip_count = Column(Integer, nullable=False)
+    players = relationship("PlayerAtCount", back_populates="data_point")
+    map = relationship("Maps", lazy="joined")
+
+    def to_dict(self, players_as_tuple=False, with_player_list=True):
+        players = []
+
+        if with_player_list and self.players:
+            for p in self.players:
+                p = p.to_dict()
+                if players_as_tuple:
+                    players.append((p["name"], p["steam_id_64"], p["vip"]))
+                else:
+                    players.append(p)
+
+        return dict(
+            server_number=self.server_number,
+            minute=self.datapoint_time,
+            count=self.count,
+            players=players,
+            map=self.map.map_name,
+            vip_count=self.vip_count,
+        )
+
+
+class PlayerAtCount(Base):
+    __tablename__ = "player_at_count"
+    __table_args__ = (
+        UniqueConstraint(
+            "playersteamid_id", "servercount_id", name="unique_player_at_count"
+        ),
+    )
+    id = Column(Integer, primary_key=True)
+    playersteamid_id = Column(
+        Integer,
+        ForeignKey("steam_id_64.id"),
+        nullable=False,
+        index=True,
+    )
+    servercount_id = Column(
+        Integer,
+        ForeignKey("server_counts.id"),
+        nullable=False,
+        index=True,
+    )
+    vip = Column(Boolean)
+    data_point = relationship("ServerCount", back_populates="players")
+    steamid = relationship("PlayerSteamID", lazy="joined")
+
+    def to_dict(self):
+        try:
+            name = self.steamid.names[0].name
+        except:
+            logger.exception("Unable to load name for %s", self.steamid.steam_id_64)
+            name = ""
+        return dict(steam_id_64=self.steamid.steam_id_64, name=name, vip=self.vip)
+
+
+class PlayerVIP(Base):
+    __tablename__: str = "player_vip"
+
+    id = Column(Integer, primary_key=True)
+    expiration = Column(TIMESTAMP(timezone=True), nullable=False)
+
+    playersteamid_id = Column(
+        Integer,
+        ForeignKey("steam_id_64.id"),
+        nullable=False,
+        index=True,
+    )
+
+    steamid = relationship("PlayerSteamID", back_populates="vip")
+
+
 def init_db(force=False):
     # create tables
     engine = get_engine()
@@ -532,3 +629,26 @@ def enter_session():
     finally:
         sess.commit()
         sess.close()
+
+
+class LogLineWebHookField(pydantic.BaseModel):
+    """A Discord Webhook URL and optional roles to ping for log events and applicable servers
+
+    LOG_LINE_WEBHOOKS in config.yml
+    """
+
+    url: str
+    mentions: Optional[List[str]] = []
+    servers: List[str] = []
+
+    @pydantic.validator("mentions")
+    def valid_role(cls, values):
+        if not values:
+            return []
+
+        for role_or_user in values:
+            if not re.search(r"<@&\d+>|<@\d+>", role_or_user):
+                print(f"Invalid Discord role or user {role_or_user}")
+                raise ValueError(f"Invalid Discord role {role_or_user}")
+
+        return values

@@ -9,6 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 import rcon
 from rcon.commands import CommandFailedError
 from rcon.discord import send_to_discord_audit
+from rcon import player_history
 from rcon.player_history import (
     add_flag_to_player,
     get_player_comments,
@@ -50,7 +51,7 @@ def get_map_history(request):
 
 
 @csrf_exempt
-@login_required
+@login_required()
 def get_player(request):
     data = _get_data(request)
     res = {}
@@ -77,7 +78,7 @@ def get_player(request):
 
 
 @csrf_exempt
-@login_required
+@login_required()
 def flag_player(request):
     data = _get_data(request)
     res = None
@@ -108,7 +109,7 @@ def flag_player(request):
 
 
 @csrf_exempt
-@login_required
+@login_required()
 def unflag_player(request):
     # Note is this really not restful
     data = _get_data(request)
@@ -133,7 +134,7 @@ def unflag_player(request):
 
 
 @csrf_exempt
-@login_required
+@login_required()
 def players_history(request):
     try:
         data = json.loads(request.body)
@@ -180,7 +181,29 @@ def players_history(request):
 
 
 @csrf_exempt
-@login_required
+@login_required()
+def get_player_messages(request):
+    data = _get_data(request)
+    res = None
+    try:
+        res = player_history.get_player_messages(steam_id_64=data.get("steam_id_64"))
+        failed = False
+    except:
+        logger.exception("Unable to get player message history")
+        failed = True
+
+    return JsonResponse(
+        {
+            "result": res,
+            "command": "player_messages",
+            "arguments": data,
+            "failed": failed,
+        }
+    )
+
+
+@csrf_exempt
+@login_required()
 def get_player_comment(request):
     data = _get_data(request)
     res = None
@@ -202,7 +225,7 @@ def get_player_comment(request):
 
 
 @csrf_exempt
-@login_required
+@login_required()
 def post_player_comment(request):
     try:
         data = json.loads(request.body)

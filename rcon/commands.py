@@ -4,6 +4,7 @@ import socket
 import time
 from dataclasses import dataclass
 from functools import wraps
+from typing import List
 
 from rcon.connection import HLLConnection
 from rcon.settings import check_config
@@ -216,7 +217,7 @@ class ServerCtl:
         return self._get("map", can_fail=False)
 
     def get_maps(self):
-        return self._get("mapsforrotation", True, can_fail=False)
+        return sorted(self._get("mapsforrotation", True, can_fail=False))
 
     def get_players(self):
         return self._get("players", True, can_fail=False)
@@ -374,11 +375,26 @@ class ServerCtl:
     def do_switch_player_now(self, player):
         return self._request(f"switchteamnow {player}", log_info=True)
 
-    def do_add_map_to_rotation(self, map_name):
-        return self._request(f"rotadd {map_name}", can_fail=False, log_info=True)
+    def do_add_map_to_rotation(
+        self,
+        map_name: str,
+        after_map_name: str = None,
+        after_map_name_number: str = None,
+    ):
+        cmd = f"rotadd {map_name}"
+        if after_map_name:
+            cmd = f"{cmd} {after_map_name}"
+            if after_map_name_number:
+                cmd = f"{cmd} {after_map_name_number}"
 
-    def do_remove_map_from_rotation(self, map_name):
-        return self._request(f"rotdel {map_name}", can_fail=False, log_info=True)
+        return self._request(cmd, can_fail=False, log_info=True)
+
+    def do_remove_map_from_rotation(self, map_name, map_number: str = None):
+        cmd = f"rotdel {map_name}"
+        if map_number:
+            cmd = f"{cmd} {map_number}"
+
+        return self._request(cmd, can_fail=False, log_info=True)
 
     @_escape_params
     def do_punish(self, player, reason):
@@ -432,6 +448,25 @@ class ServerCtl:
 
     def do_remove_vip(self, steam_id_64):
         return self._request(f"vipdel {steam_id_64}", log_info=True)
+
+    @_escape_params
+    def do_message_player(self, player_name=None, steam_id_64=None, message=""):
+        return self._request(
+            f'message "{steam_id_64 or player_name}" {message}',
+            log_info=True,
+        )
+
+    def get_gamestate(self) -> List[str]:
+        """
+        Players: Allied: 0 - Axis: 1
+        Score: Allied: 2 - Axis: 2
+        Remaining Time: 0:11:51
+        Map: foy_warfare
+        Next Map: stmariedumont_warfare
+
+        """
+        # Has no trailing "\n"
+        return self._get("gamestate", can_fail=False).split("\n")
 
 
 if __name__ == "__main__":

@@ -14,7 +14,7 @@ from .utils import _get_data
 logger = logging.getLogger("rcon")
 
 
-@login_required
+@login_required()
 @csrf_exempt
 def get_server_list(request):
     api_key = ApiKey()

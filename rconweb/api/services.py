@@ -27,7 +27,7 @@ def get_supervisor_client():
 
 
 @csrf_exempt
-@login_required
+@login_required(True)
 def get_services(request):
     info = {
         "broadcasts": "The automatic broadcasts.",
@@ -37,17 +37,23 @@ def get_services(request):
     }
     client = get_supervisor_client()
 
-    processes = client.supervisor.getAllProcessInfo()
-
+    try:
+        processes = client.supervisor.getAllProcessInfo()
+        result = [dict(info=info.get(p["name"], ""), **p) for p in processes]
+    except:
+        if os.getenv("DJANGO_DEBUG"):
+            result = []
+        else:
+            raise
     return api_response(
-        result=[dict(info=info.get(p["name"], ""), **p) for p in processes],
+        result=result,
         command="get_services",
         failed=False,
     )
 
 
 @csrf_exempt
-@login_required
+@login_required(True)
 def do_service(request):
     data = _get_data(request)
     client = get_supervisor_client()

@@ -6,4 +6,8 @@ redis_data/
 *.log
 *.pyc
 events/
+rcongui/node_modules/
+*.tar
+*.gz
+db_data_bu/
 config/

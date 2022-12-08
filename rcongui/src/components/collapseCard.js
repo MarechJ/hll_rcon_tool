@@ -10,12 +10,22 @@ import {
   Collapse,
 } from "@material-ui/core";
 
-const CollapseCard = ({ classes, title, children, onExpand }) => {
+const CollapseCard = ({
+  classes,
+  title,
+  children,
+  onExpand,
+  startOpen = false,
+}) => {
   const [expanded, setExpanded] = React.useState(false);
   const handleExpandClick = () => {
     setExpanded(!expanded);
     onExpand();
   };
+
+  React.useEffect(() => {
+    setExpanded(startOpen);
+  }, [startOpen]);
 
   return (
     <Card>

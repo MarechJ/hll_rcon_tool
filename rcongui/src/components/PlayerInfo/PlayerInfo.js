@@ -20,8 +20,10 @@ import MUIDataTable from "mui-datatables";
 import { withRouter } from "react-router";
 import "./PlayerInfo.css";
 import { ChatContent } from "../ChatWidget";
+import MessageHistory from "../MessageHistory";
 import { toast } from "react-toastify";
 import { useParams } from "react-router-dom";
+import CollapseCard from "../collapseCard";
 
 const useStyles = makeStyles((theme) => ({
   padding: {
@@ -160,6 +162,7 @@ const PlayerInfoFunc = ({ classes }) => {
   const [vip, setVip] = React.useState(false);
   const [loaded, setLoaded] = React.useState(false);
   const [comments, setComments] = React.useState(undefined);
+  const [messages, setMessages] = React.useState(undefined);
 
   /**
    * fetch bans that currently affect the steamId64
@@ -216,6 +219,21 @@ const PlayerInfoFunc = ({ classes }) => {
       .catch(handle_http_errors);
   };
 
+  const fetchMessages = (steamId64) => {
+    get(`get_player_messages?steam_id_64=${steamId64}`)
+      .then((response) => showResponse(response, "get_player_messages", false))
+      .then((data) => {
+        if (
+          data.result !== undefined &&
+          data.result !== null &&
+          Object.keys(data.result).length !== 0
+        ) {
+          setMessages(data.result);
+        }
+      })
+      .catch(handle_http_errors);
+  };
+
   const fetchPlayerComments = (steamId64) => {
     get(`get_player_comment?steam_id_64=${steamId64}`)
       .then((response) => showResponse(response, "get_player_comments", false))
@@ -248,6 +266,7 @@ const PlayerInfoFunc = ({ classes }) => {
   React.useEffect(() => {
     fetchPlayer(steamId64);
     fetchPlayerBan(steamId64);
+    fetchMessages(steamId64);
     fetchPlayerComments(steamId64);
   }, [steamId64]);
 
@@ -255,7 +274,7 @@ const PlayerInfoFunc = ({ classes }) => {
     <Grid container className={classes.root}>
       {loaded ? (
         <Grid item sm={12} className={classes.marginTop}>
-          <Grid container>
+          <Grid container spacing={2}>
             <Grid item xl={2} lg={2} md={2} sm={3} xs={12}>
               <Grid
                 container
@@ -349,15 +368,25 @@ const PlayerInfoFunc = ({ classes }) => {
                 </Grid>
               </Grid>
             </Grid>
-            <Grid item xl={3} lg={3} md={3} sm={4} xs={12}>
-              <Grid item xs={12}>
-                <Typography variant="h3">Comments</Typography>
-              </Grid>
-              <Grid item xs={12}>
-                <ChatContent
-                  data={comments}
-                  handleMessageSend={handleNewComment}
-                />
+            <Grid item xl={3} xs={12}>
+              <Grid container spacing={1}>
+                <Grid item xs={12}>
+                  <CollapseCard title="Comments" classes={classes} startOpen>
+                    <ChatContent
+                      data={comments}
+                      handleMessageSend={handleNewComment}
+                    />
+                  </CollapseCard>
+                </Grid>
+                <Grid item xs={12}>
+                  <CollapseCard
+                    title="Message History"
+                    classes={classes}
+                    startOpen
+                  >
+                    <MessageHistory data={messages} />
+                  </CollapseCard>
+                </Grid>
               </Grid>
             </Grid>
           </Grid>
@@ -401,6 +430,7 @@ class PlayerInfo extends React.Component {
       vip: false,
       loaded: false,
       comments: undefined,
+      messages: undefined,
     };
     this.handleNewComment = this.handleNewComment.bind(this);
   }

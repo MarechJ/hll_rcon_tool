@@ -13,6 +13,7 @@ from . import (
     views,
     vips,
     votemap,
+    server_stats,
 )
 
 urlpatterns = [path(name, func, name="name") for name, func in views.commands] + [
@@ -44,10 +45,12 @@ urlpatterns = [path(name, func, name="name") for name, func in views.commands] +
     path("set_votemap_config", votemap.set_votemap_config),
     path("get_votemap_status", votemap.get_votemap_status),
     path("reset_votemap_state", votemap.reset_votemap_state),
+    path("get_player_messages", history.get_player_messages),
     path("get_player_comment", history.get_player_comment),
     path("post_player_comment", history.post_player_comment),
     path("get_real_vip_config", vips.get_real_vip_config),
     path("set_real_vip_config", vips.set_real_vip_config),
     path("get_auto_settings", auto_settings.get_auto_settings),
     path("set_auto_settings", auto_settings.set_auto_settings),
+    path("get_server_stats", server_stats.get_server_stats),
 ]
