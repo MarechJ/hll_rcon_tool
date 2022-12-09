@@ -285,7 +285,7 @@ def get_warning_message(config: NoLeaderConfig, aplayer: APlayer) -> str:
     if config.warning_message:
         return config.warning_message.format(
             player_name=aplayer.player,
-            sqaud_name=aplayer.squad,
+            squad_name=aplayer.squad,
             received_warnings=warnings,
             max_warnings=config.number_of_warning,
             next_check_seconds=config.warning_interval_seconds,
