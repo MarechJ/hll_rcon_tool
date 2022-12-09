@@ -2,7 +2,7 @@ import logging
 from dataclasses import field
 from datetime import datetime
 from enum import Enum, auto
-from typing import Callable, List, Mapping
+from typing import List, Mapping
 
 from pydantic.dataclasses import dataclass
 
@@ -24,11 +24,16 @@ class WatchStatus:
 
 
 class PunishStepState(Enum):
-    wait = auto()
-    immuned = auto()
-    disabled = auto()
-    apply = auto()
-    go_to_next_step = auto()
+    WAIT = auto()
+    IMMUNED = auto()
+    DISABLED = auto()
+    APPLY = auto()
+    GO_TO_NEXT_STEP = auto()
+
+class ActionMethod(Enum):
+    MESSAGE = auto()
+    PUNISH = auto()
+    KICK = auto()
 
 
 @dataclass
@@ -36,9 +41,12 @@ class NoLeaderConfig:
     enabled: bool = False
     dry_run: bool = True
     discord_webhook_url: str = ""
-    warn_message_header: str = ""
-    warn_message_footer: str = ""
-    warning_message: str = ""
+    warning_message: str = (
+        "Warning, {player_name}! Your squad ({squad_name}) does not have an officer."
+        "Players of squads without an officer will be punished after {max_warnings} "
+        "(you already {received_warnings}), then kicked.\n"
+        "Next check will happen automatically in {next_check_seconds}s."
+    )
     # Set to 0 to disable, -1 for infinite warnings (will never go to punishes)
     number_of_warning: int = 2
     warning_interval_seconds: int = 60
@@ -48,14 +56,19 @@ class NoLeaderConfig:
     punish_interval_seconds: int = 60
     min_squad_players_for_punish: int = 3
     disable_punish_below_server_player_count: int = 60
-    punish_message: str = "Squads must have an officer.\nYou're being punished by a bot.\nNext check in 60seconds"
+    punish_message: str = (
+        "Squads must have an officer.\n"
+        "You're being punished by a bot.\n"
+        "Next check in 60seconds"
+    )
 
     kick_after_max_punish: bool = False
     disable_kick_below_server_player_count: int = 60
     min_squad_players_for_kick: int = 3
     kick_grace_period_seconds: int = 120
     kick_message: str = (
-        "Squads must have an officer.\nYou failed to comply with the previous warnings."
+        "Squads must have an officer.\n"
+        "You failed to comply with the previous warnings."
     )
     # roles: 'officer', 'antitank', 'automaticrifleman', 'assault', 'heavymachinegunner', 'support', 'sniper', 'spotter', 'rifleman', 'crewman', 'tankcommander', 'engineer', 'medic'
     immuned_roles: List[str] = field(default_factory=lambda: ["support", "sniper"])
@@ -65,18 +78,17 @@ class NoLeaderConfig:
 @dataclass
 class APlayer:
     steam_id_64: str
-    player: str
+    name: str
     squad: str
     team: str
     role: str = None
     lvl: int = None
 
-
-@dataclass
-class ASquad:
-    team: str
-    name: str
-    players: List[APlayer] = field(default_factory=list)
+    def short_repr(self):
+        return (
+            f"{self.__class__.__name__}"
+            f"(name={self.name}, lvl={self.lvl}, role={self.role})"
+        )
 
 
 @dataclass
@@ -84,37 +96,13 @@ class PunitionsToApply:
     warning: List[APlayer] = field(default_factory=list)
     punish: List[APlayer] = field(default_factory=list)
     kick: List[APlayer] = field(default_factory=list)
-    squads_state: List[ASquad] = field(default_factory=list)
-
-    def add_squad_state(self, team: str, squad_name: str, squad: dict):
-        try:
-            if any(s.team == team and s.name == squad_name for s in self.squads_state):
-                return
-            self.squads_state.append(
-                ASquad(
-                    team=team,
-                    name=squad_name,
-                    players=[
-                        APlayer(
-                            steam_id_64=p.get("steam_id_64"),
-                            player=p.get("name"),
-                            squad=p.get("unit_name"),
-                            team=p.get("team"),
-                            role=p.get("role"),
-                            lvl=p.get("level"),
-                        )
-                        for p in squad.get("players", [])
-                    ],
-                )
-            )
-        except:
-            logger.exception("Unable to add squad info")
 
     def __bool__(self):
         return any(
             [
                 self.warning,
-                self.kick,
                 self.punish,
+                self.kick,
             ]
         )
+

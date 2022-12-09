@@ -116,35 +116,32 @@ GTX:
 
 
 NOLEADER_AUTO_MOD:
-  # Set to true to enable the auto moderation of squads without officers
-  # This auto-moderator has 3 steps, 1. warning via broadcast (N times), 2. Punish (N times) 3. kick
+  # This auto-moderator has 3 steps, 1. warning via direct message (X times), 2. punish (Y times) 3. kick
   # Note that the state cycle for a given squad only resets once it finally has an officer. So for example if you
   # disabled the kick and have 3 punishes configured, once the 3 punishes are 
   # through that's it, nothing will happen anymore for that squad even if they still dont have an officer. 
   # 
   # Note 2: punishes and kicks are tracked individual per player, not at the squad level.
   # So if a player joins a squad that already received 3 punishes and will be kicked next, the new player will 
-  # start at the first punish regardless (so he won't be kick), howver he won't have a warning broadcast message as those are issued and tracked per squad)
-  enabled: false
+  # start at the first punish regardless (so he won't be kick)
+  # Set to true to enable the auto moderation of squads without officers
+  enabled: true
   # If this is set to true no warning / punish / kick will be applied for real 
   # It turns the code into a "simulation" mode and only send what it would do to your discord audit log webhook
   dry_run: true
   # Discord Webhook URL where audit logs should be sent. If not specified, the envrionment variable DISCORD_WEBHOOK_AUDIT_LOG
   # will be used, instead.
   discord_webhook_url: ''
-  # The first step of the auto-moderation is to send a broadcast warning the squads that don't have an officer
-  # set to 0 to disable (this it will move to punish directly), -1 for infinite warnings (will never go to punishes)
+  # The first step of the auto-moderation is to send a direct warning message to the squads that don't have an officer
+  # set to 0 to disable (this means it will move to punish directly), -1 for infinite warnings (will never go to punishes)
   # set to 1 or N to warn squad N times before we move on to the punish step
   number_of_warning: 2
   # This is the text that will be displayed to warn players.
-  # Deprecated: Use 'warning_message' instead.
-  warn_message_header: "Warning squads must have an Officer.\nYou will be punished then kicked"
-  warn_message_footer: "Next check will happen automatically in 60s"
-
-  # This is the text that will be displayed to warn players.
+  # The following variables are available to fill into the text
+  #  {player_name}, {squad_name}, {received_warnings}, {max_warnings} and {next_check_seconds}
   warning_message: "Warning, {player_name}! Your squad ({squad_name}) does not have an officer. Players of squads without an officer will be punished after {max_warnings} (you already {received_warnings}), then kicked.\nNext check will happen automatically in {next_check_seconds}s."
   # This is the number of seconds this auto-mod will wait until moving to 
-  # the next warning or to the punish if the number of warning was reached
+  # the next warning or to the punish if the number_of_warning's is reached
   warning_interval_seconds: 60
 
   # Step number 2
@@ -155,7 +152,7 @@ NOLEADER_AUTO_MOD:
   # Set to 1 or N to apply N punishes before we move to the next step (the kicks)
   number_of_punish: 2
   # This is the number of seconds to wait between punishes (if the squad remains without an officer
-  # I wouldn't recommand setting a high value here (unless you chose infinite punishes) as once the player has died he has the opportunity to take
+  # I wouldn't recommend setting a high value here (unless you chose infinite punishes) as once the player has died he has the opportunity to take
   # the officer role, so no excuse. Also it's even more frustrating to respawn run 300m and die again ;)
   punish_interval_seconds: 60
   # This value will disable the punishes until the squad has at least the number of player set below
@@ -181,12 +178,12 @@ NOLEADER_AUTO_MOD:
   kick_message: "Squads must have an officer.\nYou failed to comply with the previous warnings."
   
   # GLOBAL OPTIONS
-  # You can some role that are immuned to punish and kick (this must be a list, the syntax is important)
+  # You can define roles that are immune to punishes and kicks (this must be a list, the syntax is important)
   # Available roles are: 'officer', 'antitank', 'automaticrifleman', 'assault', 'heavymachinegunner', 'support', 'sniper', 'spotter', 'rifleman', 'crewman', 'tankcommander', 'engineer', 'medic'
   immuned_roles: 
     - support
     - sniper
-  # If the level of the player is below this number he/she will be immuned to punish / kicks
+  # If the level of the player is below this number he/she will is immune to punishes / kicks
   immuned_level_up_to: 15
 
 
