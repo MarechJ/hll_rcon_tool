@@ -4,6 +4,7 @@ import re
 from collections import defaultdict
 from datetime import datetime
 from functools import partial, wraps
+from threading import Timer
 from typing import DefaultDict, Dict, List, Optional, Sequence, Union
 
 import discord
@@ -188,7 +189,7 @@ def ban_if_has_vac_bans(rcon: RecordedRcon, steam_id_64, name):
                 logger.exception("Unable to send vac ban to audit log")
 
 
-def inject_steam_id_64(func):
+def inject_player_ids(func):
     @wraps(func)
     def wrapper(rcon, struct_log):
         try:
@@ -202,7 +203,7 @@ def inject_steam_id_64(func):
             logger.warning("Can't get player steam_id for %s", name)
             return
 
-        return func(rcon, struct_log, steam_id_64)
+        return func(rcon, struct_log, name, steam_id_64)
 
     return wrapper
 
@@ -252,14 +253,14 @@ def handle_on_connect(rcon, struct_log):
 
 
 @on_disconnected
-@inject_steam_id_64
-def handle_on_disconnect(rcon, struct_log, steam_id_64):
+@inject_player_ids
+def handle_on_disconnect(rcon, struct_log, _, steam_id_64):
     save_end_player_session(steam_id_64, struct_log["timestamp_ms"] / 1000)
 
 
 @on_connected
-@inject_steam_id_64
-def update_player_steaminfo_on_connect(rcon, struct_log, steam_id_64):
+@inject_player_ids
+def update_player_steaminfo_on_connect(rcon, struct_log, _, steam_id_64):
     if not steam_id_64:
         logger.error(
             "Can't update steam info, no steam id available for %s",
@@ -282,6 +283,47 @@ def update_player_steaminfo_on_connect(rcon, struct_log, steam_id_64):
         update_db_player_info(player, profile)
         sess.commit()
 
+
+pendingTimers = {}
+
+
+@on_connected
+@inject_player_ids
+def notify_false_positives(rcon: RecordedRcon, _, name: str, steam_id_64: str):
+    c = get_config()["NOLEADER_AUTO_MOD"]
+    if not c["enabled"]:
+        logger.info("no leader auto mod is disabled")
+        return
+
+    if not name.endswith(" "):
+        return
+
+    logger.info("Detected player name with whitespace at the end: Warning him of false-positive events. Player name: "
+                + name)
+
+    def notify_player():
+        try:
+            rcon.do_message_player(steam_id_64=steam_id_64, message=c["whitespace_names_message"], by="CRcon", save_message=False)
+        except Exception as e:
+            logger.error("Could not message player " + name + "/" + steam_id_64, e)
+
+    # The player might not yet have finished connecting in order to send messages.
+    t = Timer(10, notify_player)
+    pendingTimers[steam_id_64] = t
+    t.start()
+
+
+@on_disconnected
+@inject_player_ids
+def cleanup_pending_timers(_, _1, _2, steam_id_64: str):
+    pt: Timer = pendingTimers.pop(steam_id_64, None)
+    if pt is None:
+        return
+    if pt.is_alive():
+        try:
+            pt.cancel()
+        except:
+            pass
 
 def _set_real_vips(rcon: RecordedRcon, struct_log):
     config = RealVipConfig()
@@ -352,10 +394,10 @@ def make_allowed_mentions(mentions: Sequence[str]) -> discord.AllowedMentions:
 
 
 def send_log_line_webhook_message(
-    webhook_url: str,
-    mentions: Optional[Sequence[str]],
-    _,
-    log_line: Dict[str, Union[str, int, float, None]],
+        webhook_url: str,
+        mentions: Optional[Sequence[str]],
+        _,
+        log_line: Dict[str, Union[str, int, float, None]],
 ) -> None:
     """Send a time stammped embed of the log_line and mentions to the provided Discord Webhook"""
 
