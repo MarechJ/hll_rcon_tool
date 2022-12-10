@@ -48,8 +48,8 @@ class NoLeaderConfig:
 
     warning_message: str = (
         "Warning, {player_name}! Your squad ({squad_name}) does not have an officer."
-        "Players of squads without an officer will be punished after {max_warnings} "
-        "(you already {received_warnings}), then kicked.\n"
+        "Players of squads without an officer will be punished after {max_warnings} warnings"
+        "(you already received {received_warnings}), then kicked.\n"
         "Next check will happen automatically in {next_check_seconds}s."
     )
     # Set to 0 to disable, -1 for infinite warnings (will never go to punishes)
@@ -62,9 +62,9 @@ class NoLeaderConfig:
     min_squad_players_for_punish: int = 3
     disable_punish_below_server_player_count: int = 60
     punish_message: str = (
-        "Squads must have an officer.\n"
-        "You're being punished by a bot.\n"
-        "Next check in 60seconds"
+        "Your squad ({squad_name}) must have an officer.\n"
+        "You're being punished by a bot ({received_punishes}/{max_punishes}).\n"
+        "Next check in {next_check_seconds} seconds"
     )
 
     kick_after_max_punish: bool = False
@@ -72,7 +72,8 @@ class NoLeaderConfig:
     min_squad_players_for_kick: int = 3
     kick_grace_period_seconds: int = 120
     kick_message: str = (
-        "Squads must have an officer.\n"
+        "Your squad ({squad_name}) must have an officer.\n"
+        "Your grace period of {kick_grace_period}s has passed.\n"
         "You failed to comply with the previous warnings."
     )
     # roles: 'officer', 'antitank', 'automaticrifleman', 'assault', 'heavymachinegunner', 'support', 'sniper', 'spotter', 'rifleman', 'crewman', 'tankcommander', 'engineer', 'medic'

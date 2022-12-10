@@ -309,17 +309,36 @@ def get_punitions_to_apply(rcon, config: NoLeaderConfig) -> PunitionsToApply:
     return punitions_to_apply
 
 
-def get_warning_message(config: NoLeaderConfig, aplayer: APlayer) -> str:
-    with watch_state(get_redis_client(), aplayer.team, aplayer.squad) as watch_status:
-        warnings = len(watch_status.warned.get(aplayer.name))
+def get_message(config: NoLeaderConfig, aplayer: APlayer, method: ActionMethod) -> str:
+    data = {}
 
-    return config.warning_message.format(
-        player_name=aplayer.name,
-        squad_name=aplayer.squad,
-        received_warnings=warnings,
-        max_warnings=config.number_of_warning,
-        next_check_seconds=config.warning_interval_seconds,
-    )
+    with watch_state(get_redis_client(), aplayer.team, aplayer.squad) as watch_status:
+        if method == ActionMethod.MESSAGE:
+            data["received_warnings"] = len(watch_status.warned.get(aplayer.name))
+            data["max_warnings"] = config.number_of_warning
+            data["next_check_seconds"] = config.warning_interval_seconds
+        if method == ActionMethod.PUNISH:
+            data["received_punishes"] = len(watch_status.punished.get(aplayer.name))
+            data["max_punishes"] = config.number_of_punish
+            data["next_check_seconds"] = config.punish_interval_seconds
+        if method == ActionMethod.KICK:
+            data["kick_grace_period"] = config.kick_grace_period_seconds
+
+    data["player_name"] = aplayer.name
+    data["squad_name"] = aplayer.squad
+
+    base_message = {
+        ActionMethod.MESSAGE: config.warning_message,
+        ActionMethod.PUNISH: config.punish_message,
+        ActionMethod.KICK: config.kick_message
+    }
+
+    message = base_message[method]
+    try:
+        return message.format(**data)
+    except KeyError:
+        logger.warning(f"The automod message of {repr(method)} ({message}) contains an invalid key")
+        return message
 
 
 def _do_punitions(
@@ -333,20 +352,18 @@ def _do_punitions(
 
     for aplayer in players:
         try:
+            message = get_message(config, aplayer, method)
             if method == ActionMethod.MESSAGE:
-                message = get_warning_message(config, aplayer)
                 if not config.dry_run:
                     rcon.do_message_player(aplayer.name, aplayer.steam_id_64, message, by=author)
                 audit(config, f"-> WARNING: {aplayer}", author)
 
             if method == ActionMethod.PUNISH:
-                message = config.punish_message
                 if not config.dry_run:
                     rcon.do_punish(aplayer.name, message, by=author)
                 audit(config, f"--> PUNISHING: {aplayer}", author)
 
             if method == ActionMethod.KICK:
-                message = config.kick_message
                 if not config.dry_run:
                     rcon.do_kick(aplayer.name, message, by=author)
                 audit(config, f"---> KICKING <---: {aplayer}", author)

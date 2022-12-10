@@ -152,7 +152,7 @@ NOLEADER_AUTO_MOD:
   # This is the text that will be displayed to warn players.
   # The following variables are available to fill into the text
   #  {player_name}, {squad_name}, {received_warnings}, {max_warnings} and {next_check_seconds}
-  warning_message: "Warning, {player_name}! Your squad ({squad_name}) does not have an officer. Players of squads without an officer will be punished after {max_warnings} (you already {received_warnings}), then kicked.\nNext check will happen automatically in {next_check_seconds}s."
+  warning_message: "Warning, {player_name}! Your squad ({squad_name}) does not have an officer. Players of squads without an officer will be punished after {max_warnings} warnings (you already received {received_warnings}), then kicked.\nNext check will happen automatically in {next_check_seconds}s."
   # This is the number of seconds this auto-mod will wait until moving to
   # the next warning or to the punish if the number_of_warning's is reached
   warning_interval_seconds: 60
@@ -175,7 +175,9 @@ NOLEADER_AUTO_MOD:
   # than the number you set below, not punish / kicks will be applied
   disable_punish_below_server_player_count: 40
   # This is the message that will be set in the punish
-  punish_message: "Squads must have an officer.\nYou're being punished by a bot.\nNext check in 60 seconds"
+  # The following variables are available to fill into the text
+  #  {player_name}, {squad_name}, {received_punishes}, {max_punishes} and {next_check_seconds}
+  punish_message: "Your squad ({squad_name}) must have an officer.\nYou're being punished by a bot ({received_punishes}/{max_punishes}).\nNext check in {next_check_seconds} seconds"
 
   # Step number 4
   # Set the below value to false if you don't want to kick players after they reached the max amount of punishes
@@ -188,7 +190,9 @@ NOLEADER_AUTO_MOD:
   # After the Step 2 has reached it's max punishes, this is the amount of time in seconds the auto-mod will wait before kicking
   kick_grace_period_seconds: 120
   # This is the message that will be set in the kick
-  kick_message: "Squads must have an officer.\nYou failed to comply with the previous warnings."
+  # The following variables are available to fill into the text
+  #  {player_name}, {squad_name} and {kick_grace_period}
+  kick_message: "Your Squad ({squad_name}) must have an officer.\nYour grace period of {kick_grace_period}s has passed.\nYou failed to comply with the previous warnings."
   
   # GLOBAL OPTIONS
   # You can define roles that are immune to punishes and kicks (this must be a list, the syntax is important)
