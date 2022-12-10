@@ -18,6 +18,7 @@ from rcon.discord import (
     send_to_discord_audit,
 )
 from rcon.discord_chat import make_hook
+from rcon.extended_commands import StructuredLogLine
 from rcon.game_logs import on_camera, on_chat, on_connected, on_disconnected, on_generic
 from rcon.map_recorder import VoteMap
 from rcon.models import LogLineWebHookField, enter_session
@@ -191,7 +192,7 @@ def ban_if_has_vac_bans(rcon: RecordedRcon, steam_id_64, name):
 
 def inject_player_ids(func):
     @wraps(func)
-    def wrapper(rcon, struct_log):
+    def wrapper(rcon, struct_log: StructuredLogLine):
         name = struct_log["player"]
         steam_id_64 = struct_log["steam_id_64_1"]
         return func(rcon, struct_log, name, steam_id_64)
