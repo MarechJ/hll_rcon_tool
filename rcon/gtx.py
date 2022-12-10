@@ -30,7 +30,7 @@ class FTPAdapter:
         try:
             return self.conn.put(fp, remote_path)
         except ftplib.error_temp as e:
-            # TODO there's a bug in FTPlib when it tries to go back to the original directory
+            # TODO there's a but in FTPlib when it tries to go back to the original directory
             logger.error(repr(e))
 
 
