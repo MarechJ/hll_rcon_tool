@@ -19,6 +19,7 @@ class SquadCycleOver(Exception):
 
 @dataclass
 class WatchStatus:
+    noted: Mapping[str, List[datetime]] = field(default_factory=dict)
     warned: Mapping[str, List[datetime]] = field(default_factory=dict)
     punished: Mapping[str, List[datetime]] = field(default_factory=dict)
 
@@ -41,6 +42,10 @@ class NoLeaderConfig:
     enabled: bool = False
     dry_run: bool = True
     discord_webhook_url: str = ""
+
+    number_of_notes: int = 1
+    notes_interval_seconds: int = 10
+
     warning_message: str = (
         "Warning, {player_name}! Your squad ({squad_name}) does not have an officer."
         "Players of squads without an officer will be punished after {max_warnings} "
@@ -90,12 +95,43 @@ class APlayer:
             f"(name={self.name}, lvl={self.lvl}, role={self.role})"
         )
 
+@dataclass
+class ASquad:
+    team: str
+    name: str
+    players: List[APlayer] = field(default_factory=list)
+
 
 @dataclass
 class PunitionsToApply:
     warning: List[APlayer] = field(default_factory=list)
     punish: List[APlayer] = field(default_factory=list)
     kick: List[APlayer] = field(default_factory=list)
+    squads_state: List[ASquad] = field(default_factory=list)
+
+    def add_squad_state(self, team: str, squad_name: str, squad: dict):
+        try:
+            if any(s.team == team and s.name == squad_name for s in self.squads_state):
+                return
+            self.squads_state.append(
+                ASquad(
+                    team=team,
+                    name=squad_name,
+                    players=[
+                        APlayer(
+                            steam_id_64=p.get("steam_id_64"),
+                            name=p.get("name"),
+                            squad=p.get("unit_name"),
+                            team=p.get("team"),
+                            role=p.get("role"),
+                            lvl=p.get("level"),
+                        )
+                        for p in squad.get("players", [])
+                    ],
+                )
+            )
+        except:
+            logger.exception("Unable to add squad info")
 
     def __bool__(self):
         return any(

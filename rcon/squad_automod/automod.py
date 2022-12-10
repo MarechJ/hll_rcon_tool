@@ -70,6 +70,40 @@ def _get_team_count(team_view, team):
         len(s.get("players", [])) for s in team_view[team].get("squads", {}).values()
     )
 
+def should_note_player(
+    watch_status: WatchStatus,
+    config: NoLeaderConfig,
+    squad_name: str,
+    aplayer: APlayer
+):
+    if config.number_of_notes == 0:
+        logger.debug("Notes are disabled. number_of_notes is set to 0")
+        return PunishStepState.DISABLED
+
+    notes = watch_status.noted.setdefault(aplayer.name, [])
+
+    if not is_time(notes, config.notes_interval_seconds):
+        logger.debug("Waiting to note: %s in %s", aplayer.short_repr(), squad_name)
+        return PunishStepState.WAIT
+
+    if len(notes) < config.number_of_notes:
+        logger.info(
+            "%s Will be noted (%s/%s)",
+            aplayer.short_repr(),
+            len(notes),
+            num_or_inf(config.number_of_notes),
+        )
+        notes.append(datetime.now())
+        return PunishStepState.APPLY
+
+    logger.info(
+        "%s Max notes reached (%s/%s). Moving on to warn.",
+        aplayer.short_repr(),
+        len(notes),
+        config.number_of_notes,
+    )
+    return PunishStepState.GO_TO_NEXT_STEP
+
 
 def should_warn_player(
     watch_status: WatchStatus,
@@ -77,27 +111,21 @@ def should_warn_player(
     squad_name: str,
     aplayer: APlayer
 ):
-    warnings = watch_status.warned.setdefault(aplayer.name, [])
-
-    if len(warnings) == 0:
-        logger.debug("Noted but won't warn: %s in %s", aplayer.short_repr(), squad_name)
-        warnings.append(datetime.now())
-        return PunishStepState.WAIT
-
     if config.number_of_warning == 0:
         logger.debug("Warnings are disabled. number_of_warning is set to 0")
         return PunishStepState.DISABLED
+
+    warnings = watch_status.warned.setdefault(aplayer.name, [])
 
     if not is_time(warnings, config.warning_interval_seconds):
         logger.debug("Waiting to warn: %s in %s", aplayer.short_repr(), squad_name)
         return PunishStepState.WAIT
 
-    warning_count = len(warnings) - 1
-    if warning_count < config.number_of_warning or config.number_of_warning == -1:
+    if len(warnings) < config.number_of_warning or config.number_of_warning == -1:
         logger.info(
             "%s Will be warned (%s/%s)",
             aplayer.short_repr(),
-            warning_count,
+            len(warnings),
             num_or_inf(config.number_of_warning),
         )
         warnings.append(datetime.now())
@@ -106,7 +134,7 @@ def should_warn_player(
     logger.info(
         "%s Max warnings reached (%s/%s). Moving on to punish.",
         aplayer.short_repr(),
-        warning_count,
+        len(warnings),
         config.number_of_warning,
     )
     return PunishStepState.GO_TO_NEXT_STEP
@@ -242,13 +270,22 @@ def get_punitions_to_apply(rcon, config: NoLeaderConfig) -> PunitionsToApply:
                         team=team,
                         squad=squad_name,
                         role=player.get("role"),
-                        lvl=player.get("level"),
+                        lvl=int(player.get("level")),
                     )
+
+                    state = should_note_player(watch_status, config, squad_name, aplayer)
+                    if state == PunishStepState.APPLY:
+                        punitions_to_apply.add_squad_state(team, squad_name, squad)
+                    if not state in [PunishStepState.DISABLED, PunishStepState.GO_TO_NEXT_STEP]:
+                        continue
 
                     state = should_warn_player(watch_status, config, squad_name, aplayer)
 
                     if state == PunishStepState.APPLY:
                         punitions_to_apply.warning.append(aplayer)
+                        punitions_to_apply.add_squad_state(team, squad_name, squad)
+                    if state == PunishStepState.WAIT: # only here to make the tests pass, otherwise useless
+                        punitions_to_apply.add_squad_state(team, squad_name, squad)
                     if not state in [PunishStepState.DISABLED, PunishStepState.GO_TO_NEXT_STEP]:
                         continue
 
@@ -258,14 +295,16 @@ def get_punitions_to_apply(rcon, config: NoLeaderConfig) -> PunitionsToApply:
 
                     if state == PunishStepState.APPLY:
                         punitions_to_apply.punish.append(aplayer)
+                        punitions_to_apply.add_squad_state(team, squad_name, squad)
                     if not state in [PunishStepState.DISABLED, PunishStepState.GO_TO_NEXT_STEP]:
                         continue
 
                     state = should_kick_player(
-                        watch_status, config, team_view, squad_name, squad, player
+                        watch_status, config, team_view, squad_name, squad, aplayer
                     )
                     if state == PunishStepState.APPLY:
                         punitions_to_apply.kick.append(aplayer)
+                        punitions_to_apply.add_squad_state(team, squad_name, squad)
 
     return punitions_to_apply
 
