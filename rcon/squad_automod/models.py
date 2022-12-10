@@ -2,7 +2,7 @@ import logging
 from dataclasses import field
 from datetime import datetime
 from enum import Enum, auto
-from typing import Callable, List, Mapping
+from typing import List, Mapping
 
 from pydantic.dataclasses import dataclass
 
@@ -19,16 +19,22 @@ class SquadCycleOver(Exception):
 
 @dataclass
 class WatchStatus:
+    noted: Mapping[str, List[datetime]] = field(default_factory=dict)
     warned: Mapping[str, List[datetime]] = field(default_factory=dict)
     punished: Mapping[str, List[datetime]] = field(default_factory=dict)
 
 
 class PunishStepState(Enum):
-    wait = auto()
-    immuned = auto()
-    disabled = auto()
-    apply = auto()
-    go_to_next_step = auto()
+    WAIT = auto()
+    IMMUNED = auto()
+    DISABLED = auto()
+    APPLY = auto()
+    GO_TO_NEXT_STEP = auto()
+
+class ActionMethod(Enum):
+    MESSAGE = auto()
+    PUNISH = auto()
+    KICK = auto()
 
 
 @dataclass
@@ -36,9 +42,16 @@ class NoLeaderConfig:
     enabled: bool = False
     dry_run: bool = True
     discord_webhook_url: str = ""
-    warn_message_header: str = ""
-    warn_message_footer: str = ""
-    warning_message: str = ""
+
+    number_of_notes: int = 1
+    notes_interval_seconds: int = 10
+
+    warning_message: str = (
+        "Warning, {player_name}! Your squad ({squad_name}) does not have an officer."
+        "Players of squads without an officer will be punished after {max_warnings} warnings"
+        "(you already received {received_warnings}), then kicked.\n"
+        "Next check will happen automatically in {next_check_seconds}s."
+    )
     # Set to 0 to disable, -1 for infinite warnings (will never go to punishes)
     number_of_warning: int = 2
     warning_interval_seconds: int = 60
@@ -48,14 +61,20 @@ class NoLeaderConfig:
     punish_interval_seconds: int = 60
     min_squad_players_for_punish: int = 3
     disable_punish_below_server_player_count: int = 60
-    punish_message: str = "Squads must have an officer.\nYou're being punished by a bot.\nNext check in 60seconds"
+    punish_message: str = (
+        "Your squad ({squad_name}) must have an officer.\n"
+        "You're being punished by a bot ({received_punishes}/{max_punishes}).\n"
+        "Next check in {next_check_seconds} seconds"
+    )
 
     kick_after_max_punish: bool = False
     disable_kick_below_server_player_count: int = 60
     min_squad_players_for_kick: int = 3
     kick_grace_period_seconds: int = 120
     kick_message: str = (
-        "Squads must have an officer.\nYou failed to comply with the previous warnings."
+        "Your squad ({squad_name}) must have an officer.\n"
+        "Your grace period of {kick_grace_period}s has passed.\n"
+        "You failed to comply with the previous warnings."
     )
     # roles: 'officer', 'antitank', 'automaticrifleman', 'assault', 'heavymachinegunner', 'support', 'sniper', 'spotter', 'rifleman', 'crewman', 'tankcommander', 'engineer', 'medic'
     immuned_roles: List[str] = field(default_factory=lambda: ["support", "sniper"])
@@ -65,12 +84,17 @@ class NoLeaderConfig:
 @dataclass
 class APlayer:
     steam_id_64: str
-    player: str
+    name: str
     squad: str
     team: str
     role: str = None
     lvl: int = None
 
+    def short_repr(self):
+        return (
+            f"{self.__class__.__name__}"
+            f"(name={self.name}, lvl={self.lvl}, role={self.role})"
+        )
 
 @dataclass
 class ASquad:
@@ -97,7 +121,7 @@ class PunitionsToApply:
                     players=[
                         APlayer(
                             steam_id_64=p.get("steam_id_64"),
-                            player=p.get("name"),
+                            name=p.get("name"),
                             squad=p.get("unit_name"),
                             team=p.get("team"),
                             role=p.get("role"),
@@ -114,7 +138,8 @@ class PunitionsToApply:
         return any(
             [
                 self.warning,
-                self.kick,
                 self.punish,
+                self.kick,
             ]
         )
+
