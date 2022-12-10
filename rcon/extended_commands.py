@@ -579,6 +579,20 @@ class Rcon(ServerCtl):
         return res
 
     def _struct_ban(self, ban, type_):
+
+        # Avoid errors on empty temp bans
+        if ban == "":
+            return {
+                "type": type_,
+                "name": None,
+                "steam_id_64": None,
+                "timestamp": None,
+                "ban_time": None,
+                "reason": None,
+                "by": None,
+                "raw": ban,
+            }
+
         # name, time = ban.split(', banned on ')
         # '76561197984877751 : nickname "Dr.WeeD" banned for 2 hours on 2020.12.03-12.40.08 for "None" by admin "test"'
         steamd_id_64, rest = ban.split(" :", 1)
