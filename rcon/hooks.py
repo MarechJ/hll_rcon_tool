@@ -192,17 +192,8 @@ def ban_if_has_vac_bans(rcon: RecordedRcon, steam_id_64, name):
 def inject_player_ids(func):
     @wraps(func)
     def wrapper(rcon, struct_log):
-        try:
-            name = struct_log["player"]
-            info = rcon.get_player_info(name, can_fail=True)
-            steam_id_64 = info.get("steam_id_64")
-        except KeyError:
-            logger.exception("Unable to inject steamid %s", struct_log)
-            raise
-        if not steam_id_64:
-            logger.warning("Can't get player steam_id for %s", name)
-            return
-
+        name = struct_log["player"]
+        steam_id_64 = struct_log["steam_id_64_1"]
         return func(rcon, struct_log, name, steam_id_64)
 
     return wrapper
