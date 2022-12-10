@@ -51,6 +51,21 @@ LOG_ACTIONS = [
 logger = logging.getLogger(__name__)
 
 
+class StructuredLogLine(TypedDict):
+    version: int
+    timestamp_ms: int
+    relative_time_ms: int
+    raw: str
+    line_without_time: str
+    action: str
+    player: str
+    steam_id_64_1: str
+    player2: str
+    steam_id_64_2: str
+    weapon: str
+    message: str
+    sub_content: str
+
 class GameState(TypedDict):
     """TypedDict for Rcon.get_gamestate"""
 
@@ -1274,7 +1289,7 @@ class Rcon(ServerCtl):
     def parse_logs(raw, filter_action=None, filter_player=None):
         synthetic_actions = LOG_ACTIONS
         now = datetime.now()
-        res = []
+        res: List[StructuredLogLine] = []
         actions = set()
         players = set()
 
@@ -1440,19 +1455,3 @@ class Rcon(ServerCtl):
             "players": list(players),
             "logs": res,
         }
-
-
-if __name__ == "__main__":
-    from rcon.settings import SERVER_INFO
-
-    rcon_hook = Rcon(SERVER_INFO)
-
-    res = rcon_hook.parse_logs(
-        "[29:15 min (1668100749)] CONNECTED Corex (76561198094854678)"
-    )
-
-    res = rcon_hook.parse_logs(
-        "[29:15 min (1668100749)] Players: Allied: 0 - Axis: 1\nScore: Allied: 2 - Axis: 2\nRemaining Time: 0:11:51\nMap: foy_warfare\nNext Map: stmariedumont_warfare"
-    )
-
-    # print(r.get_team_view_fast())
