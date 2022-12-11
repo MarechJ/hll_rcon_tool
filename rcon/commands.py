@@ -172,13 +172,15 @@ class ServerCtl:
                 "Unexpected response from server." "Unable to get list length"
             )
 
+        self.conn.lock()
         # Max 30 tries
         for i in range(30):
             if expected_len <= len(res) - 1:
                 break
-            raw += self.conn.receive().decode()
+            raw += self.conn.receive(unlock=False).decode()
             res = raw.split("\t")
 
+        self.conn.unlock()
         if res[-1] == "":
             # There's a trailin \t
             res = res[:-1]
@@ -233,7 +235,7 @@ class ServerCtl:
             logger.exception("Bad playerinfo data")
             return False
 
-    def get_player_info(self, player, can_fail=False):
+    def get_player_info(self, player, can_fail=True):
         data = self._request(f"playerinfo {player}", can_fail=can_fail)
         if not self._is_info_correct(player, data):
             data = self._request(f"playerinfo {player}", can_fail=can_fail)

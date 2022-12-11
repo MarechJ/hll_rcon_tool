@@ -84,6 +84,7 @@ class PlayerSteamID(Base):
         uselist=False,
         cascade="all, delete-orphan",
     )
+    optins = relationship("PlayerOptins", backref="steamid", uselist=True)
 
     def get_penalty_count(self):
         penalities_type = {"KICK", "PUNISH", "TEMPBAN", "PERMABAN"}
@@ -207,6 +208,26 @@ class PlayerFlag(Base):
     def to_dict(self):
         return dict(
             id=self.id, flag=self.flag, comment=self.comment, modified=self.modified
+        )
+
+
+class PlayerOptins(Base):
+    __tablename__ = "player_optins"
+    __table_args__ = (
+        UniqueConstraint("playersteamid_id", "optin_name", name="unique_optins_steamid"),
+    )
+
+    id = Column(Integer, primary_key=True)
+    playersteamid_id = Column(
+        Integer, ForeignKey("steam_id_64.id"), nullable=False, index=True
+    )
+    optin_name = Column(String, nullable=False, index=True)
+    optin_value = Column(String, nullable=True)
+    modified = Column(DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return dict(
+            id=self.id, optin_name=self.flag, optin_value=self.comment, modified=self.modified
         )
 
 

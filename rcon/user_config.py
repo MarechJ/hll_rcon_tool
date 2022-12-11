@@ -299,6 +299,9 @@ class VoteMapConfig:
         )
         self.VOTEMAP_THANK_YOU_TEXT = f"{server_number}_votemap_VOTEMAP_THANK_YOU_TEXT"
         self.VOTEMAP_NO_VOTE_TEXT = f"{server_number}_votemap_VOTEMAP_NO_VOTE_TEXT"
+        self.VOTEMAP_REMINDER_FREQUENCY_MINUTES = f"{server_number}_votemap_VOTEMAP_REMINDER_FREQUENCY_MINUTES"
+        self.VOTEMAP_ALLOW_OPTOUT = f"{server_number}_votemap_VOTEMAP_ALLOW_OPTOUT"
+        self.VOTEMAP_HELP_TEXT = f"{server_number}_votemap_VOTEMAP_HELP_TEXT"
 
     def set_votemap_instruction_text(self, value):
         return set_user_config(self.VOTEMAP_INSTRUCTION_TEXT, value)
@@ -341,6 +344,15 @@ class VoteMapConfig:
     def set_votemap_allow_default_to_offsensive(self, value):
         return set_user_config(self.VOTEMAP_ALLOW_DEFAULT_TO_OFFSENSIVE, bool(value))
 
+    def set_votemap_reminder_frequency_minutes(self, value):
+        return set_user_config(self.VOTEMAP_REMINDER_FREQUENCY_MINUTES, int(value))
+
+    def set_votemap_allow_optout(self, value):
+        return set_user_config(self.VOTEMAP_ALLOW_OPTOUT, bool(value))
+
+    def set_votemap_help_text(self, value):
+        return set_user_config(self.VOTEMAP_HELP_TEXT, value)
+
     def get_votemap_instruction_text(self):
         return get_user_config(self.VOTEMAP_INSTRUCTION_TEXT)
 
@@ -380,6 +392,15 @@ class VoteMapConfig:
     def get_votemap_allow_default_to_offsensive(self):
         return get_user_config(self.VOTEMAP_ALLOW_DEFAULT_TO_OFFSENSIVE)
 
+    def get_votemap_reminder_frequency_minutes(self):
+        return get_user_config(self.VOTEMAP_REMINDER_FREQUENCY_MINUTES)
+
+    def get_votemap_allow_optout(self):
+        return get_user_config(self.VOTEMAP_ALLOW_OPTOUT)
+
+    def get_votemap_help_text(self):
+        return get_user_config(self.VOTEMAP_HELP_TEXT)
+
     def seed_db(self, sess):
         _set_default(sess, self.VOTE_ENABLED, False)
         _set_default(
@@ -399,7 +420,7 @@ class VoteMapConfig:
         _set_default(
             sess,
             self.VOTEMAP_INSTRUCTION_TEXT,
-            "Vote for the nextmap:\nType in the chat !votemap <map number>",
+            "Vote for the nextmap:\nType in the chat !votemap <map number>\n{map_selection}\n\nTo never see this message again type in the chat !votemap never\n\nTo renable type: !votemap",
         )
         _set_default(
             sess,
@@ -410,6 +431,21 @@ class VoteMapConfig:
             sess,
             self.VOTEMAP_NO_VOTE_TEXT,
             "No votes recorded yet",
+        )
+        _set_default(
+            sess,
+            self.VOTEMAP_REMINDER_FREQUENCY_MINUTES,
+            20,
+        )
+        _set_default(
+            sess,
+            self.VOTEMAP_ALLOW_OPTOUT,
+            True,
+        )
+        _set_default(
+            sess,
+            self.VOTEMAP_HELP_TEXT,
+            "To vote you must type in the chat (press K to open the chat) !votemap followed by the number of the map you want (from 0 to N), you must write the number without the brackets, e.g.: !votemap 0\n\nThe map numbers appear in the reminder message you get once in a while or if you type !votemap without a number.\n\nIf you want to opt-out of the votemap reminder FOREVER type !votemap never\n\nTo opt back in again type !votemap allow\n\nTo see this message again type !votemap help",
         )
 
 

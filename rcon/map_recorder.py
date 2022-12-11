@@ -8,12 +8,15 @@ from datetime import datetime, timedelta
 from functools import partial
 from threading import Thread
 from typing import Counter
-
+import pickle
 import redis
+from sqlalchemy import and_
 
 from rcon.cache_utils import get_redis_client, get_redis_pool
 from rcon.discord import dict_to_discord, send_to_discord_audit
-from rcon.extended_commands import CommandFailedError
+from rcon.extended_commands import CommandFailedError, StructuredLogLine
+from rcon.models import PlayerOptins, enter_session
+from rcon.player_history import get_player
 from rcon.recorded_commands import RecordedRcon
 from rcon.settings import SERVER_INFO
 from rcon.user_config import DefaultMethods, VoteMapConfig
@@ -32,6 +35,14 @@ from rcon.workers import (
     temp_welcome_standalone,
     temporary_welcome,
     temporary_welcome_in,
+)
+from rcon.utils import (
+    LONG_HUMAN_MAP_NAMES,
+    NO_MOD_LONG_HUMAN_MAP_NAMES,
+    NO_MOD_SHORT_HUMAN_MAP_NAMES,
+    SHORT_HUMAN_MAP_NAMES,
+    categorize_maps,
+    numbered_maps,
 )
 
 logger = logging.getLogger(__name__)
@@ -123,16 +134,195 @@ def suggest_next_maps(
 class InvalidVoteError(Exception):
     pass
 
+class VoteMapNoInitialised(Exception):
+    pass
 
 # TODO:  Handle empty selection (None)
 class VoteMap:
     def __init__(self) -> None:
         self.red = get_redis_client()
+        self.reminder_time_key = "last_vote_reminder"
 
-    def is_vote(self, message):
-        match = re.match(r"(\d)", message)
-        if not match:
-            match = re.match(r"!votemap\s*(.*)", message)
+    def join_vote_options(self, join_char, selection, human_name_map, maps_to_numbers):
+        return join_char.join(
+            f"[{maps_to_numbers[m]}] {human_name_map[m]}" for m in selection
+        )
+
+    def format_map_vote(self, format_type="line", short_names=True):
+        selection = self.get_selection()
+        if not selection:
+            logger.warning("No vote map selection")
+            return ""
+        human_map = SHORT_HUMAN_MAP_NAMES if short_names else LONG_HUMAN_MAP_NAMES
+        human_map_mod = (
+            NO_MOD_SHORT_HUMAN_MAP_NAMES if short_names else NO_MOD_LONG_HUMAN_MAP_NAMES
+        )
+        vote_dict = numbered_maps(selection)
+        maps_to_numbers = dict(zip(vote_dict.values(), vote_dict.keys()))
+        items = [f"[{k}] {human_map.get(v, v)}" for k, v in vote_dict.items()]
+
+        if format_type == "vertical":
+            return "\n".join(items)
+        if format_type.startswith("by_mod"):
+            categorized = categorize_maps(selection)
+            off = self.join_vote_options(
+                "  ", categorized["offensive"], human_map_mod, maps_to_numbers
+            )
+            warfare =self.join_vote_options(
+                "  ", categorized["warfare"], human_map_mod, maps_to_numbers
+            )
+
+            if format_type == "by_mod_vertical":
+                return "OFFENSIVE:\n{}\nWARFARE:\n{}".format(off, warfare)
+            if format_type == "by_mod_split":
+                return "OFFENSIVE: {}\nWARFARE: {}".format(off, warfare)
+            if format_type == "by_mod_vertical_all":
+                return "WARFARES:\n{}\n\nOFFENSIVES:\n{}".format(
+                    self.join_vote_options(
+                        "\n", categorized["warfare"], human_map_mod, maps_to_numbers
+                    ),
+                    self.join_vote_options(
+                        "\n", categorized["offensive"], human_map_mod, maps_to_numbers
+                    ),
+                
+                )
+
+
+    def get_last_reminder_time(self):
+        res = self.red.get(self.reminder_time_key)
+        if res is not None:
+            res = pickle.loads(res)
+        return res
+
+    def set_last_reminder_time(self, the_time: datetime = None):
+        dt = the_time or datetime.now()
+        self.red.set(self.reminder_time_key, pickle.dumps(the_time))
+
+    def reset_last_reminder_time(self):
+        self.red.delete(self.reminder_time_key)
+
+    def is_time_for_reminder(self):
+        last_time = self.get_last_reminder_time()
+        if last_time is None:
+            return True
+        
+        reminder_freq_min = VoteMapConfig().get_votemap_reminder_frequency_minutes()
+        if (datetime.now() - last_time).total_seconds() > reminder_freq_min * 60:
+            return True
+        
+        return False
+
+    def vote_map_reminder(self, rcon: RecordedRcon, force=False):
+        vote_map_config = VoteMapConfig()
+        vote_map_message = vote_map_config.get_votemap_instruction_text()
+
+        if not vote_map_config.get_vote_enabled():
+            return
+
+        if not self.is_time_for_reminder() and not force:
+            return
+
+        if "{map_selection}" not in vote_map_message:
+            logger.error("Vote map is not configured properly, {map_selection} is not present in the instruction text")
+            return
+
+        for player in rcon.get_players():
+            if self.has_voted(player["name"]):
+                continue
+            
+            rcon.do_message_player(steam_id_64=player["steam_id_64"], message=vote_map_message.format(map_selection=self.format_map_vote("by_mod_vertical_all")))
+
+
+    def handle_vote_command(self, rcon, struct_log: StructuredLogLine):
+        message = struct_log.get("sub_content", "").strip()
+        if not message.startswith("!votemap"):
+            return
+
+        steam_id_64_1 = struct_log["steam_id_64_1"]
+        config = VoteMapConfig()
+        if not config.get_vote_enabled():
+            rcon.do_message_player(steam_id_64=steam_id_64_1, message="Vote map is not enabled on thi server")
+            return 
+
+        help_text = config.get_votemap_help_text()
+        
+
+        if match := re.match(r"!votemap\s*(\d+)", message):
+            logger.info("Registering vote %s", struct_log)
+            vote = match.group(1)
+            try:
+                map_name = self.register_vote(
+                    struct_log["player"], struct_log["timestamp_ms"] / 1000, vote
+                )
+            except InvalidVoteError:
+                rcon.do_message_player(steam_id_64=steam_id_64_1, message="Invalid vote.")
+                if help_text:
+                    rcon.do_message_player(steam_id_64=steam_id_64_1, message=help_text)
+            except VoteMapNoInitialised:
+                rcon.do_message_player(steam_id_64=steam_id_64_1, message="We can't register you vote at this time.\nVoteMap not initialised")
+                raise
+            else:
+                if msg := config.get_votemap_thank_you_text():
+                    msg = msg.format(
+                        player_name=struct_log["player"], map_name=map_name
+                    )
+                    rcon.do_message_player(steam_id_64=steam_id_64_1, message=msg)
+            finally:
+                return
+
+        if re.match(r"!votemap\s*help", message) and help_text:
+            logger.info("Showing help %s", struct_log)
+            rcon.do_message_player(steam_id_64=steam_id_64_1, message=help_text)
+            return
+
+        if re.match(r"!votemap$", message):
+            logger.info("Showing selection %s", struct_log)
+            vote_map_message = config.get_votemap_instruction_text()
+            rcon.do_message_player(steam_id_64=steam_id_64_1, message=vote_map_message.format(map_selection=self.format_map_vote("by_mod_vertical_all")))
+            return
+
+        if re.match(r"!votemap\s*never$", message):
+            logger.info("Player opting out of vote %s", struct_log)
+            with enter_session() as sess:
+                player = get_player(sess, steam_id_64_1)
+                sess.add(PlayerOptins(
+                    steamid=player,
+                    optin_name="votemap_reminder",
+                    optin_value="false"
+                ))
+                try:
+                    sess.commit()
+                except Exception as e:
+                    logger.exception("Unable to add optin. Already exists?")
+            return
+
+        if re.match(r"!votemap\s*allow$", message):
+            logger.info("Player opting in for vote %s", struct_log)
+            with enter_session() as sess:
+                player = get_player(sess, steam_id_64_1)
+                existing = sess.query(PlayerOptins).filter(and_(PlayerOptins.playersteamid_id == player.id, optin_name="votemap_reminder")).one_or_none()
+                if existing:
+                    existing.optin_value = "true"
+                else:
+                    sess.add(PlayerOptins(
+                        steamid=player,
+                        optin_name="votemap_reminder",
+                        optin_value="true"
+                    ))
+                try:
+                    sess.commit()
+                except Exception as e:
+                    logger.exception("Unable to update optin. Already exists?")
+            return
+
+        rcon.do_message_player(steam_id_64=steam_id_64_1, message=help_text)
+        return 
+
+
+    def is_optin(self, message):
+        #match = re.match(r"(\d)", message)
+        #if not match:
+        match = re.match(r"!votemap\s*(\d+)", message)
         if not match:
             return False
         if not match.groups():
@@ -144,12 +334,10 @@ class VoteMap:
         try:
             current_map = MapsHistory()[0]
             min_time = current_map["start"]
-        except IndexError:
-            logger.error("Map history is empty - Can't register vote")
-            raise
-        except KeyError:
-            logger.error("Map history is corrupted - Can't register vote")
-            raise
+        except IndexError as e:
+            raise VoteMapNoInitialised("Map history is empty - Can't register vote") from e
+        except KeyError as e:
+            raise VoteMapNoInitialised("Map history is corrupted - Can't register vote") from e
 
         if vote_timestamp < min_time:
             logger.warning(
@@ -182,6 +370,9 @@ class VoteMap:
 
     def clear_votes(self):
         self.red.delete("VOTES")
+
+    def has_voted(self, player_name):
+        return self.red.hget("VOTES", player_name) is not None
 
     def get_votes(self):
         votes = self.red.hgetall("VOTES") or {}
@@ -297,7 +488,7 @@ class VoteMap:
                     f"{next_map=} is not part of the all map list {ALL_MAPS=}"
                 )
             if next_map not in (selection := self.get_selection()):
-                raise ValueError(f"{next_map=} is not part of vote select {selection=}")
+                raise ValueError(f"{next_map=} is not part of vote selection {selection=}")
             logger.info(f"Winning map {next_map=}")
 
         # Sanity checks below
@@ -337,7 +528,7 @@ class VoteMap:
             )
         except ValueError as e:
             raise ValueError(
-                f"{current_map=} is not in {current_rotation=} addint it failed"
+                f"{current_map=} is not in {current_rotation=} adding it failed"
             ) from e
 
         try:
@@ -405,21 +596,21 @@ class VoteMap:
 
 def on_map_change(old_map: str, new_map: str):
     logger.info("Running on_map_change hooks with %s %s", old_map, new_map)
-    try:
-        config = VoteMapConfig()
+    # try:
+    #     config = VoteMapConfig()
 
-        if config.get_vote_enabled():
-            votemap = VoteMap()
-            votemap.gen_selection()
-            votemap.clear_votes()
-            votemap.apply_with_retry(nb_retry=4)
-            # temporary_welcome_in(
-            #    "%s{votenextmap_vertical}" % config.get_votemap_instruction_text(),
-            #    seconds=60 * 20,
-            #    restore_after_seconds=60 * 5,
-            # )
-    except Exception:
-        logger.exception("Unexpected error while running vote map")
+    #     if config.get_vote_enabled():
+    #         votemap = VoteMap()
+    #         votemap.gen_selection()
+    #         votemap.clear_votes()
+    #         votemap.apply_with_retry(nb_retry=4)
+    #         # temporary_welcome_in(
+    #         #    "%s{votenextmap_vertical}" % config.get_votemap_instruction_text(),
+    #         #    seconds=60 * 20,
+    #         #    restore_after_seconds=60 * 5,
+    #         # )
+    # except Exception:
+    #     logger.exception("Unexpected error while running vote map")
     try:
         record_stats_worker(MapsHistory()[1])
     except Exception:

@@ -65,46 +65,46 @@ const VoteMapConfig = () => {
           handleChange={(v) => saveConfig({ vote_enabled: v })}
         />
       </Grid>
-      <Grid container spacing={1}>
+      <Grid container spacing={1} alignItems="center">
         <Grid item xs={12}>
           <TextField
             fullWidth
             multiline
             rows={2}
             rowsMax={4}
-            label="Text to explain how to vote"
-            helperText="The text shown in some preformated broadcasts."
+            label="Reminder text sent to player to vote"
+            helperText="Make sure you add {map_selection} in your text"
             value={config.get("votemap_instruction_text", "")}
             onChange={(e) =>
               setConfig(config.set("votemap_instruction_text", e.target.value))
             }
           />
         </Grid>
-        <Grid item xs={6}>
+        <Grid item xs={12}>
           <TextField
             fullWidth
             multiline
             rows={2}
             rowsMax={4}
             label="Thank you for voting message"
-            helperText="Text shown in broadcast for 10 secs when someone votes. You can use {player_name} and {map_name}"
+            helperText="The reply to player after he voted. You can use {player_name} and {map_name} in the text. Leave blank if you don't want the confirmation message"
             value={config.get("votemap_thank_you_text", "")}
             onChange={(e) =>
               setConfig(config.set("votemap_thank_you_text", e.target.value))
             }
           />
         </Grid>
-        <Grid item xs={6}>
+        <Grid item xs={12}>
           <TextField
             fullWidth
             multiline
             rows={2}
             rowsMax={4}
-            label="No votes recorded text"
-            helperText="Text shown in scrolling broadcast when votes are empty"
-            value={config.get("votemap_no_vote_text", "")}
+            label="Help text"
+            helperText="This text will show to the player in case of a bad !votemap command, or if the user types !votemap help"
+            value={config.get("votemap_help_text", "")}
             onChange={(e) =>
-              setConfig(config.set("votemap_no_vote_text", e.target.value))
+              setConfig(config.set("votemap_help_text", e.target.value))
             }
           />
         </Grid>
@@ -114,7 +114,27 @@ const VoteMapConfig = () => {
           </Button>
         </Grid>
       </Grid>
-
+      <Grid item>
+          <TextField
+            type="number"
+            inputProps={{ min: 1, max: 90 }}
+            label="Reminder frequency minutes"
+            helperText="If the player hasn't voted yet, it will remind him with a PM"
+            value={config.get("votemap_reminder_frequency_minutes", false)}
+            onChange={(e) =>
+              saveConfig({ votemap_reminder_frequency_minutes: e.target.value })
+            }
+          />
+        </Grid>
+        <Grid item>
+        <Padlock
+          label="Allow user to opt-out of vote map reminders by typing !votemap never"
+          checked={config.get("votemap_allow_optout", false)}
+          handleChange={(v) =>
+            saveConfig({ votemap_allow_optout: v })
+          }
+        />
+      </Grid>
       <Grid item>
         <TextField
           type="number"

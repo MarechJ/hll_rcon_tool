@@ -19,7 +19,7 @@ from rcon.discord import (
 )
 from rcon.discord_chat import make_hook
 from rcon.extended_commands import StructuredLogLine
-from rcon.game_logs import on_camera, on_chat, on_connected, on_disconnected, on_generic
+from rcon.game_logs import on_camera, on_chat, on_connected, on_disconnected, on_generic, on_match_end, on_match_start
 from rcon.map_recorder import VoteMap
 from rcon.models import LogLineWebHookField, enter_session
 from rcon.player_history import (
@@ -33,34 +33,43 @@ from rcon.player_history import (
 from rcon.recorded_commands import RecordedRcon
 from rcon.steam_utils import get_player_bans, get_steam_profile, update_db_player_info
 from rcon.user_config import CameraConfig, RealVipConfig, VoteMapConfig
+from rcon.utils import MapsHistory
 from rcon.workers import temporary_broadcast, temporary_welcome
 
 logger = logging.getLogger(__name__)
 
 
 @on_chat
-def count_vote(rcon: RecordedRcon, struct_log):
-    config = VoteMapConfig()
-    if not config.get_vote_enabled():
-        return
+def count_vote(rcon: RecordedRcon, struct_log: StructuredLogLine):
+    v = VoteMap().handle_vote_command(rcon=rcon, struct_log=struct_log)
 
-    v = VoteMap()
-    if vote := v.is_vote(struct_log.get("sub_content")):
-        logger.debug("Vote chat detected: %s", struct_log["message"])
-        map_name = v.register_vote(
-            struct_log["player"], struct_log["timestamp_ms"] / 1000, vote
-        )
-        try:
-            temporary_broadcast(
-                rcon,
-                config.get_votemap_thank_you_text().format(
-                    player_name=struct_log["player"], map_name=map_name
-                ),
-                5,
-            )
-        except Exception:
-            logger.warning("Unable to output thank you message")
-        v.apply_with_retry(nb_retry=2)
+@on_match_start
+def initialise_vote_map(rcon: RecordedRcon, struct_log):
+    logger.info("New match started initilising vote map. %s", struct_log)
+    vote_map = VoteMap()
+    vote_map.clear_votes()
+    vote_map.gen_selection()
+    vote_map.reset_last_reminder_time()
+
+
+@on_match_end
+def remind_vote_map(rcon: RecordedRcon, struct_log):
+    logger.info("Match ended reminding to vote map. %s", struct_log)
+    vote_map = VoteMap()
+    vote_map.vote_map_reminder(rcon, force=True)
+    
+@on_match_start
+def record_map_start(rcon: RecordedRcon, struct_log):
+    logger.info("New match started recording map %s", struct_log)
+    # TODO figure out how to deal with the past
+    maps_history = MapsHistory()
+    maps_history.save_new_map()
+        
+@on_match_end
+def record_map_send(rcon: RecordedRcon, struct_log):
+    logger.info("Match ended  recording map %s", struct_log)
+    maps_history = MapsHistory()
+
 
 
 MAX_DAYS_SINCE_BAN = os.getenv("BAN_ON_VAC_HISTORY_DAYS", 0)

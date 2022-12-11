@@ -6,8 +6,27 @@ from rcon.extended_commands import CommandFailedError
 from rcon.map_recorder import MapsRecorder
 from rcon.recorded_commands import RecordedRcon
 from rcon.user_config import AutoVoteKickConfig
+import logging
+import time
+import datetime
+from rcon.cache_utils import get_redis_client
+
+from rcon.audit import ingame_mods, online_mods
+from rcon.commands import CommandFailedError
+from rcon.map_recorder import VoteMap
+from rcon.user_config import VoteMapConfig
+from rcon.utils import (
+    LONG_HUMAN_MAP_NAMES,
+    NO_MOD_LONG_HUMAN_MAP_NAMES,
+    NO_MOD_SHORT_HUMAN_MAP_NAMES,
+    SHORT_HUMAN_MAP_NAMES,
+    categorize_maps,
+    numbered_maps,
+)
+
 
 logger = logging.getLogger(__name__)
+
 
 
 def toggle_votekick(rcon: RecordedRcon):
@@ -49,9 +68,11 @@ def run():
         try:
             recorder.detect_map_change()
             toggle_votekick(rcon)
+            VoteMap().vote_map_reminder(rcon)
         except CommandFailedError:
             max_fails -= 1
             if max_fails <= 0:
                 logger.exception("Routines 5 failures in a row. Stopping")
                 raise
         time.sleep(30)
+

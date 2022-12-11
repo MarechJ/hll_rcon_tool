@@ -290,6 +290,7 @@ class Rcon(ServerCtl):
         teams = {}
         players_by_id = {}
         players = self.get_players_fast()
+        fail_count = 0
 
         futures = {
             self.run_in_pool(idx, "get_detailed_player_info", player[NAME]): player
@@ -300,6 +301,7 @@ class Rcon(ServerCtl):
                 player_data = future.result()
             except Exception:
                 logger.exception("Failed to get info for %s", futures[future])
+                fail_count += 1
                 player_data = self._get_default_info_dict(futures[future][NAME])
             player = futures[future]
             player.update(player_data)
@@ -372,9 +374,10 @@ class Rcon(ServerCtl):
                 "kills": sum(s["kills"] for s in squads.values()),
                 "deaths": sum(s["deaths"] for s in squads.values()),
                 "count": sum(len(s["players"]) for s in squads.values()),
+                
             }
 
-        return game
+        return dict(fail_count=fail_count, **game)
 
     @mod_users_allowed
     @ttl_cache(ttl=60 * 60 * 24, cache_falsy=False)
