@@ -50,17 +50,19 @@ logger = logging.getLogger(__name__)
 
 @on_chat
 def count_vote(rcon: RecordedRcon, struct_log: StructuredLogLine):
-    v = VoteMap().handle_vote_command(rcon=rcon, struct_log=struct_log)
+    VoteMap().handle_vote_command(rcon=rcon, struct_log=struct_log)
 
 
 def initialise_vote_map(rcon: RecordedRcon, struct_log):
     logger.info("New match started initilising vote map. %s", struct_log)
-    vote_map = VoteMap()
-    vote_map.clear_votes()
-    vote_map.gen_selection()
-    vote_map.reset_last_reminder_time()
-    vote_map.apply_results()
-
+    try:
+        vote_map = VoteMap()
+        vote_map.clear_votes()
+        vote_map.gen_selection()
+        vote_map.reset_last_reminder_time()
+        vote_map.apply_results()
+    except:
+        logger.exception("Something went wrong in vote map init")
 
 @on_match_end
 def remind_vote_map(rcon: RecordedRcon, struct_log):

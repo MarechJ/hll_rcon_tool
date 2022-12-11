@@ -361,6 +361,7 @@ class VoteMap:
                     )
                     rcon.do_message_player(steam_id_64=steam_id_64_1, message=msg)
             finally:
+                self.apply_results()
                 return
 
         if re.match(r"!votemap\s*help", message) and help_text:
