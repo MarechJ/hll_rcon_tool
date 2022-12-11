@@ -110,6 +110,13 @@ def should_warn_player(
         logger.debug("Warnings are disabled. number_of_warning is set to 0")
         return PunishStepState.DISABLED
 
+    if (
+        aplayer.lvl <= config.immuned_level_up_to
+        or aplayer.role in config.immuned_roles
+    ):
+        logger.info("%s is immune to warnings", aplayer.short_repr())
+        return PunishStepState.IMMUNED
+
     warnings = watch_status.warned.setdefault(aplayer.name, [])
 
     if not is_time(warnings, config.warning_interval_seconds):
@@ -161,7 +168,7 @@ def should_punish_player(
         aplayer.lvl <= config.immuned_level_up_to
         or aplayer.role in config.immuned_roles
     ):
-        logger.info("%s is immuned to punishment", aplayer.short_repr())
+        logger.info("%s is immune to punishment", aplayer.short_repr())
         return PunishStepState.IMMUNED
 
     punishes = watch_status.punished.setdefault(aplayer.name, [])
@@ -198,6 +205,7 @@ def should_kick_player(
     aplayer: APlayer,
 ):
     if not config.kick_after_max_punish:
+        logger.debug("Kick is disabled")
         return PunishStepState.DISABLED
 
     if (
@@ -214,7 +222,7 @@ def should_kick_player(
         aplayer.lvl <= config.immuned_level_up_to
         or aplayer.role in config.immuned_roles
     ):
-        logger.info("%s is immuned to punishment", aplayer.short_repr())
+        logger.info("%s is immune to kick", aplayer.short_repr())
         return PunishStepState.IMMUNED
 
     try:
@@ -356,7 +364,7 @@ def _do_punitions(
     method: ActionMethod,
     players: List[APlayer],
 ):
-    author = AUTOMOD_USERNAME + "-DryRun" if config.dry_run else ""
+    author = AUTOMOD_USERNAME + ("-DryRun" if config.dry_run else "")
 
     for aplayer in players:
         try:

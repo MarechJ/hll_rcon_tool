@@ -560,10 +560,10 @@ def team_view():
         },
     }
 
+
 def construct_aplayer(
-        player_dict: dict,
-        team_name: str = "allies",
-        squad_name: str = "able"):
+    player_dict: dict, team_name: str = "allies", squad_name: str = "able"
+):
     return APlayer(
         steam_id_64=player_dict["steam_id_64"],
         name=player_dict["name"],
@@ -697,7 +697,7 @@ def test_should_punish(team_view):
         team_view,
         "able",
         team_view["allies"]["squads"]["able"],
-        aplayer
+        aplayer,
     )
 
 
@@ -721,7 +721,7 @@ def test_punish_wait(team_view):
         team_view,
         "able",
         team_view["allies"]["squads"]["able"],
-        aplayer
+        aplayer,
     )
     assert PunishStepState.WAIT == should_punish_player(
         watch_status,
@@ -729,7 +729,7 @@ def test_punish_wait(team_view):
         team_view,
         "able",
         team_view["allies"]["squads"]["able"],
-        aplayer
+        aplayer,
     )
 
 
@@ -753,7 +753,7 @@ def test_punish_twice(team_view):
         team_view,
         "able",
         team_view["allies"]["squads"]["able"],
-        aplayer
+        aplayer,
     )
     assert PunishStepState.WAIT == should_punish_player(
         watch_status,
@@ -761,7 +761,7 @@ def test_punish_twice(team_view):
         team_view,
         "able",
         team_view["allies"]["squads"]["able"],
-        aplayer
+        aplayer,
     )
     time.sleep(config.punish_interval_seconds)
     assert PunishStepState.APPLY == should_punish_player(
@@ -770,7 +770,7 @@ def test_punish_twice(team_view):
         team_view,
         "able",
         team_view["allies"]["squads"]["able"],
-        aplayer
+        aplayer,
     )
     time.sleep(config.punish_interval_seconds)
     assert PunishStepState.GO_TO_NEXT_STEP == should_punish_player(
@@ -779,7 +779,7 @@ def test_punish_twice(team_view):
         team_view,
         "able",
         team_view["allies"]["squads"]["able"],
-        aplayer
+        aplayer,
     )
 
 
@@ -803,7 +803,7 @@ def test_punish_too_little_players(team_view):
         team_view,
         "able",
         team_view["allies"]["squads"]["able"],
-        aplayer
+        aplayer,
     )
 
 
@@ -827,7 +827,7 @@ def test_punish_small_squad(team_view):
         team_view,
         "able",
         team_view["allies"]["squads"]["able"],
-        aplayer
+        aplayer,
     )
 
 
@@ -851,7 +851,7 @@ def test_punish_disabled(team_view):
         team_view,
         "able",
         team_view["allies"]["squads"]["able"],
-        aplayer
+        aplayer,
     )
 
 
@@ -875,7 +875,7 @@ def test_punish_immuned_role(team_view):
         team_view,
         "able",
         team_view["allies"]["squads"]["able"],
-        aplayer
+        aplayer,
     )
 
     config = NoLeaderConfig(
@@ -894,7 +894,7 @@ def test_punish_immuned_role(team_view):
         team_view,
         "able",
         team_view["allies"]["squads"]["able"],
-        aplayer
+        aplayer,
     )
 
 
@@ -918,7 +918,7 @@ def test_punish_immuned_lvl(team_view):
         team_view,
         "able",
         team_view["allies"]["squads"]["able"],
-        aplayer
+        aplayer,
     )
 
 
@@ -1235,14 +1235,6 @@ def test_watcher(team_view):
                 team="axis",
                 role="heavymachinegunner",
                 lvl=67,
-            ),
-            APlayer(
-                steam_id_64="76561199027409370",
-                name="Dr.FishShitz",
-                squad="able",
-                team="axis",
-                role="automaticrifleman",
-                lvl=10,
             ),
             APlayer(
                 steam_id_64="76561198206929555",
