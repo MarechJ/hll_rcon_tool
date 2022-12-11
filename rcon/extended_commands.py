@@ -66,6 +66,7 @@ class StructuredLogLine(TypedDict):
     message: str
     sub_content: str
 
+
 class GameState(TypedDict):
     """TypedDict for Rcon.get_gamestate"""
 
@@ -116,7 +117,7 @@ class Rcon(ServerCtl):
     MAX_SERV_NAME_LEN = 1024  # I totally made up that number. Unable to test
     log_time_regexp = re.compile(r".*\((\d+)\).*")
 
-    def __init__(self, *args, pool_size=20, **kwargs):
+    def __init__(self, *args, pool_size=10, **kwargs):
         super().__init__(*args, **kwargs)
         self.pool_size = pool_size
 
@@ -290,6 +291,7 @@ class Rcon(ServerCtl):
         teams = {}
         players_by_id = {}
         players = self.get_players_fast()
+        fail_count = 0
 
         futures = {
             self.run_in_pool(idx, "get_detailed_player_info", player[NAME]): player
@@ -300,6 +302,7 @@ class Rcon(ServerCtl):
                 player_data = future.result()
             except Exception:
                 logger.exception("Failed to get info for %s", futures[future])
+                fail_count += 1
                 player_data = self._get_default_info_dict(futures[future][NAME])
             player = futures[future]
             player.update(player_data)
@@ -374,7 +377,7 @@ class Rcon(ServerCtl):
                 "count": sum(len(s["players"]) for s in squads.values()),
             }
 
-        return game
+        return dict(fail_count=fail_count, **game)
 
     @mod_users_allowed
     @ttl_cache(ttl=60 * 60 * 24, cache_falsy=False)
@@ -822,9 +825,14 @@ class Rcon(ServerCtl):
 
     def set_map(self, map_name):
         with invalidates(Rcon.get_map):
-            res = super().set_map(map_name)
-            if res != "SUCCESS":
-                raise CommandFailedError(res)
+            try:
+                res = super().set_map(map_name)
+                if res != "SUCCESS":
+                    raise CommandFailedError(res)
+            except CommandFailedError:
+                self.do_add_map_to_rotation(map_name)
+                if super().set_map(map_name) != "SUCCESS":
+                    raise CommandFailedError(res)
 
     @mod_users_allowed
     @ttl_cache(ttl=10)
@@ -1424,7 +1432,7 @@ class Rcon(ServerCtl):
                 players.add(player2)
                 actions.add(action)
             except:
-                logger.exception("Invalid line: '%s'", line)
+                # logger.exception("Invalid line: '%s'", line)
                 continue
             if filter_action and not action.startswith(filter_action):
                 continue

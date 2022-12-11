@@ -94,6 +94,16 @@ def on_disconnected(func):
     return func
 
 
+def on_match_start(func):
+    HOOKS["MATCH START"].append(func)
+    return func
+
+
+def on_match_end(func):
+    HOOKS["MATCH ENDED"].append(func)
+    return func
+
+
 def on_generic(key, func) -> Callable:
     """Dynamically register hooks from config.yml LOG_LINE_WEBHOOKS"""
     HOOKS[key].append(func)

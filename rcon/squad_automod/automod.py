@@ -222,7 +222,7 @@ def should_kick_player(
         aplayer.lvl <= config.immuned_level_up_to
         or aplayer.role in config.immuned_roles
     ):
-        logger.info("%s is immune to punishment", aplayer.short_repr())
+        logger.info("%s is immune to kick", aplayer.short_repr())
         return PunishStepState.IMMUNED
 
     try:
