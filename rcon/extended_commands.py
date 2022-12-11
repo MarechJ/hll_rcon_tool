@@ -116,7 +116,7 @@ class Rcon(ServerCtl):
     MAX_SERV_NAME_LEN = 1024  # I totally made up that number. Unable to test
     log_time_regexp = re.compile(r".*\((\d+)\).*")
 
-    def __init__(self, *args, pool_size=20, **kwargs):
+    def __init__(self, *args, pool_size=2, **kwargs):
         super().__init__(*args, **kwargs)
         self.pool_size = pool_size
 
@@ -825,9 +825,14 @@ class Rcon(ServerCtl):
 
     def set_map(self, map_name):
         with invalidates(Rcon.get_map):
-            res = super().set_map(map_name)
-            if res != "SUCCESS":
-                raise CommandFailedError(res)
+            try:
+                res = super().set_map(map_name)
+                if res != "SUCCESS":
+                    raise CommandFailedError(res)
+            except CommandFailedError:
+                self.do_add_map_to_rotation(map_name)
+                if super().set_map(map_name) != "SUCCESS":
+                    raise CommandFailedError(res)
 
     @mod_users_allowed
     @ttl_cache(ttl=10)
@@ -1427,7 +1432,7 @@ class Rcon(ServerCtl):
                 players.add(player2)
                 actions.add(action)
             except:
-                logger.exception("Invalid line: '%s'", line)
+                #logger.exception("Invalid line: '%s'", line)
                 continue
             if filter_action and not action.startswith(filter_action):
                 continue
