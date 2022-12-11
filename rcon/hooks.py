@@ -51,6 +51,11 @@ logger = logging.getLogger(__name__)
 @on_chat
 def count_vote(rcon: RecordedRcon, struct_log: StructuredLogLine):
     VoteMap().handle_vote_command(rcon=rcon, struct_log=struct_log)
+    if match := re.match(r"\d", struct_log["sub_content"].strip()):
+        rcon.do_message_player(
+            steam_id_64=struct_log["steam_id_64_1"],
+            message=f"INVALID VOTE\n\nUse: !votemap {match.group()}"
+        )
 
 
 def initialise_vote_map(rcon: RecordedRcon, struct_log):

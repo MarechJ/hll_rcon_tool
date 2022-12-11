@@ -78,7 +78,7 @@ def categorize_maps(maps):
         "offensive": [],
     }
     for m in maps:
-        if "offensive" in m:
+        if "offensive" in m or m.startswith("stmariedumont_off"):
             warfare_offsensive["offensive"].append(m)
         if "warfare" in m:
             warfare_offsensive["warfare"].append(m)
