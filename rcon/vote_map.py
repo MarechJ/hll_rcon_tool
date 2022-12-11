@@ -580,8 +580,8 @@ class VoteMap:
             logger.debug(
                 "Not allowing default to offensive, removing all offensive maps"
             )
-            selection = [m for m in selection if not "offensive" in m]
-            all_maps = [m for m in ALL_MAPS if not "offensive" in m]
+            selection = [m for m in selection if not "off" in m]
+            all_maps = [m for m in ALL_MAPS if not "off" in m]
 
         if not maps_history:
             raise ValueError("Map history is empty")
