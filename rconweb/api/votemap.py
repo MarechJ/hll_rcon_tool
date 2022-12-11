@@ -1,7 +1,7 @@
 from django.views.decorators.csrf import csrf_exempt
 
 from rcon.discord import send_to_discord_audit
-from rcon.map_recorder import VoteMap, VoteMapConfig
+from rcon.vote_map import VoteMap, VoteMapConfig
 
 from .auth import api_response, login_required
 from .utils import _get_data
@@ -23,6 +23,9 @@ def votemap_config():
         "votemap_instruction_text": config.get_votemap_instruction_text(),
         "votemap_thank_you_text": config.get_votemap_thank_you_text(),
         "votemap_no_vote_text": config.get_votemap_no_vote_text(),
+        "votemap_reminder_frequency_minutes": config.get_votemap_reminder_frequency_minutes(),
+        "votemap_allow_optout": config.get_votemap_allow_optout(),
+        "votemap_help_text": config.get_votemap_help_text(),
     }
 
 
@@ -55,6 +58,9 @@ def set_votemap_config(request):
         "votemap_instruction_text": config.set_votemap_instruction_text,
         "votemap_thank_you_text": config.set_votemap_thank_you_text,
         "votemap_no_vote_text": config.set_votemap_no_vote_text,
+        "votemap_reminder_frequency_minutes": config.set_votemap_reminder_frequency_minutes,
+        "votemap_allow_optout": config.set_votemap_allow_optout,
+        "votemap_help_text": config.set_votemap_help_text,
     }
 
     for k, v in data.items():
