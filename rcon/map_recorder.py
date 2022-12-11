@@ -510,67 +510,25 @@ class VoteMap:
             )
 
         # Apply rotation safely
+    
         current_rotation = rcon.get_map_rotation()
-        try:
-            current_map_idx = current_rotation.index(
-                current_map.replace("_RESTART", "")
-            )
-        except ValueError:
-            logger.warning(
-                f"{current_map=} is not in {current_rotation=} will try to add"
-            )
-            rcon.do_add_map_to_rotation(current_map.replace("_RESTART", ""))
-
-        current_rotation = rcon.get_map_rotation()
-        try:
-            current_map_idx = current_rotation.index(
-                current_map.replace("_RESTART", "")
-            )
-        except ValueError as e:
-            raise ValueError(
-                f"{current_map=} is not in {current_rotation=} adding it failed"
-            ) from e
-
-        try:
-            next_map_idx = current_rotation.index(next_map)
-        except ValueError:
-            logger.info(f"{next_map=} no in rotation, adding it {current_rotation=}")
+        
+        while len(current_rotation) > 1:
+            # Make sure only 1 map is in rotation
+            map_ = current_rotation.pop(1)
+            rcon.do_remove_map_from_rotation(map_)
+        
+        current_next_map = current_rotation[0]
+        if current_next_map != next_map:
+            # Replace the only map left in rotation
             rcon.do_add_map_to_rotation(next_map)
-        else:
-            if next_map_idx < current_map_idx:
-                logger.info(
-                    f"{next_map=} is before {current_map=} removing and re-adding"
-                )
-                rcon.do_remove_map_from_rotation(next_map)
-                rcon.do_add_map_to_rotation(next_map)
-
-        current_rotation = rcon.get_map_rotation()
-
-        try:
-            next_map_idx = current_rotation.index(next_map)
-            if next_map_idx < current_map_idx:
-                raise ValueError(f"{next_map=} is still before {current_map=}")
-        except ValueError as e:
-            raise ValueError(f"{next_map=} failed to be added to {current_rotation=}")
-
-        maps_to_remove = current_rotation[current_map_idx + 1 : next_map_idx]
-        logger.debug(f"{current_map=} {current_rotation=} - {maps_to_remove=}")
-
-        for map in maps_to_remove:
-            # Remove the maps that are in between the current map and the desired next map
-            rcon.do_remove_map_from_rotation(map)
-
-        for map in maps_to_remove:
-            rcon.do_add_map_to_rotation(map)
+            rcon.do_remove_map_from_rotation(current_next_map)
 
         # Check that it worked
         current_rotation = rcon.get_map_rotation()
-        if (
-            not current_rotation[current_map_idx] == current_map.replace("_RESTART", "")
-            and current_rotation[current_map_idx + 1] == next_map
-        ):
+        if len(current_rotation) != 1 or current_rotation[0] != next_map:
             raise ValueError(
-                f"Applying the winning map {next_map=} after the {current_map=} failed: {current_rotation=}"
+                f"Applying the winning map {next_map=} failed: {current_rotation=}"
             )
 
         logger.info(
