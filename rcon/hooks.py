@@ -43,7 +43,7 @@ from rcon.recorded_commands import RecordedRcon
 from rcon.steam_utils import get_player_bans, get_steam_profile, update_db_player_info
 from rcon.user_config import CameraConfig, RealVipConfig, VoteMapConfig
 from rcon.utils import LOG_MAP_NAMES_TO_MAP, MapsHistory
-from rcon.workers import temporary_broadcast, temporary_welcome
+from rcon.workers import record_stats_worker, temporary_broadcast, temporary_welcome
 
 logger = logging.getLogger(__name__)
 
@@ -129,6 +129,10 @@ def handle_new_match_start(rcon: RecordedRcon, struct_log):
         raise
     finally:
         initialise_vote_map(rcon, struct_log)
+        try:
+            record_stats_worker(MapsHistory()[1])
+        except Exception:
+            logger.exception("Unexpected error while running stats worker")
 
 
 @on_match_end

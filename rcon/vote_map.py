@@ -704,10 +704,10 @@ def on_map_change(old_map: str, new_map: str):
     #         # )
     # except Exception:
     #     logger.exception("Unexpected error while running vote map")
-    try:
-        record_stats_worker(MapsHistory()[1])
-    except Exception:
-        logger.exception("Unexpected error while running stats worker")
+    #try:
+    #    record_stats_worker(MapsHistory()[1])
+    #except Exception:
+    #    logger.exception("Unexpected error while running stats worker")
 
 
 # DEPRECATED see hooks.py
