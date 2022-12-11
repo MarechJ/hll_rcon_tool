@@ -180,14 +180,14 @@ NOLEADER_AUTO_MOD:
   # This option is the same as above but for the entire server. If the server has less players
   # than the number you set below, not punish / kicks will be applied
   disable_punish_below_server_player_count: 40
-  # This is the message that will be set in the punish
+  # This is the message that will be used in the punish
   # The following variables are available to fill into the text
   #  {player_name}, {squad_name}, {received_punishes}, {max_punishes} and {next_check_seconds}
   punish_message: "Your squad ({squad_name}) must have an officer.\nYou're being punished by a bot ({received_punishes}/{max_punishes}).\nNext check in {next_check_seconds} seconds"
 
   # Step number 4
   # Set the below value to false if you don't want to kick players after they reached the max amount of punishes
-  # note that if you disabled punish it will never go to that step. no matter if it's set to true
+  # note that if you disable punishes it will never go to that step. no matter if it's set to true
   kick_after_max_punish: true
   # Same behavior as for the punishes, if the squad has less players than the below it won't kick
   min_squad_players_for_kick: 7
@@ -195,7 +195,7 @@ NOLEADER_AUTO_MOD:
   disable_kick_below_server_player_count: 60
   # After the Step 2 has reached it's max punishes, this is the amount of time in seconds the auto-mod will wait before kicking
   kick_grace_period_seconds: 120
-  # This is the message that will be set in the kick
+  # This is the message that will be used in the kick
   # The following variables are available to fill into the text
   #  {player_name}, {squad_name} and {kick_grace_period}
   kick_message: "Your Squad ({squad_name}) must have an officer.\nYour grace period of {kick_grace_period}s has passed.\nYou failed to comply with the previous warnings."
@@ -206,7 +206,7 @@ NOLEADER_AUTO_MOD:
   immuned_roles: 
     - support
     - sniper
-  # If the level of the player is below this number he/she will is immune to punishes / kicks
+  # If the level of the player is below this number he/she will be immune to punishes / kicks
   immuned_level_up_to: 15
 
 

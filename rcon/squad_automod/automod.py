@@ -348,7 +348,7 @@ def _do_punitions(
     method: ActionMethod,
     players: List[APlayer]
 ):
-    author = AUTOMOD_USERNAME + "-DryRun" if config.dry_run else ""
+    author = AUTOMOD_USERNAME + ("-DryRun" if config.dry_run else "")
 
     for aplayer in players:
         try:
