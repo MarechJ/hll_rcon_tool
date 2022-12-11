@@ -207,6 +207,7 @@ class VoteMap:
             return True
         
         reminder_freq_min = VoteMapConfig().get_votemap_reminder_frequency_minutes()
+        print(f"{datetime.now() - last_time).total_seconds()}")
         if (datetime.now() - last_time).total_seconds() > reminder_freq_min * 60:
             return True
         
@@ -226,11 +227,16 @@ class VoteMap:
             logger.error("Vote map is not configured properly, {map_selection} is not present in the instruction text")
             return
 
+        self.set_last_reminder_time()
         for player in rcon.get_players():
             if self.has_voted(player["name"]):
                 continue
             
-            rcon.do_message_player(steam_id_64=player["steam_id_64"], message=vote_map_message.format(map_selection=self.format_map_vote("by_mod_vertical_all")))
+            try:
+                print(" REMINDING PLAYERS   ")
+                #rcon.do_message_player(steam_id_64=player["steam_id_64"], message=vote_map_message.format(map_selection=self.format_map_vote("by_mod_vertical_all")))
+            except CommandFailedError:
+                logger.warning("Unable to message %s", player)
 
 
     def handle_vote_command(self, rcon, struct_log: StructuredLogLine):
