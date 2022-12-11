@@ -80,6 +80,10 @@ class NoLeaderConfig:
     immuned_roles: List[str] = field(default_factory=lambda: ["support", "sniper"])
     immuned_level_up_to: int = 15
 
+    # this value is not used in automod
+    # but required to succesfully parse the yml data to a pydanctic.dataclass
+    whitespace_names_message: str = ""
+
 
 @dataclass
 class APlayer:
