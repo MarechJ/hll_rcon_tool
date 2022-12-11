@@ -21,7 +21,7 @@ from rcon.squad_automod.models import (
     SquadCycleOver,
     SquadHasLeader,
     WatchStatus,
-    ActionMethod
+    ActionMethod,
 )
 
 LEADER_WATCH_RESET_SECS = 120
@@ -70,11 +70,9 @@ def _get_team_count(team_view, team):
         len(s.get("players", [])) for s in team_view[team].get("squads", {}).values()
     )
 
+
 def should_note_player(
-    watch_status: WatchStatus,
-    config: NoLeaderConfig,
-    squad_name: str,
-    aplayer: APlayer
+    watch_status: WatchStatus, config: NoLeaderConfig, squad_name: str, aplayer: APlayer
 ):
     if config.number_of_notes == 0:
         logger.debug("Notes are disabled. number_of_notes is set to 0")
@@ -106,14 +104,18 @@ def should_note_player(
 
 
 def should_warn_player(
-    watch_status: WatchStatus,
-    config: NoLeaderConfig,
-    squad_name: str,
-    aplayer: APlayer
+    watch_status: WatchStatus, config: NoLeaderConfig, squad_name: str, aplayer: APlayer
 ):
     if config.number_of_warning == 0:
         logger.debug("Warnings are disabled. number_of_warning is set to 0")
         return PunishStepState.DISABLED
+
+    if (
+        aplayer.lvl <= config.immuned_level_up_to
+        or aplayer.role in config.immuned_roles
+    ):
+        logger.info("%s is immune to warnings", aplayer.short_repr())
+        return PunishStepState.IMMUNED
 
     warnings = watch_status.warned.setdefault(aplayer.name, [])
 
@@ -166,10 +168,7 @@ def should_punish_player(
         aplayer.lvl <= config.immuned_level_up_to
         or aplayer.role in config.immuned_roles
     ):
-        logger.info(
-            "%s is immuned to punishment",
-            aplayer.short_repr()
-        )
+        logger.info("%s is immune to punishment", aplayer.short_repr())
         return PunishStepState.IMMUNED
 
     punishes = watch_status.punished.setdefault(aplayer.name, [])
@@ -206,6 +205,7 @@ def should_kick_player(
     aplayer: APlayer,
 ):
     if not config.kick_after_max_punish:
+        logger.debug("Kick is disabled")
         return PunishStepState.DISABLED
 
     if (
@@ -222,10 +222,7 @@ def should_kick_player(
         aplayer.lvl <= config.immuned_level_up_to
         or aplayer.role in config.immuned_roles
     ):
-        logger.info(
-            "%s is immuned to punishment",
-            aplayer.short_repr()
-        )
+        logger.info("%s is immune to punishment", aplayer.short_repr())
         return PunishStepState.IMMUNED
 
     try:
@@ -255,7 +252,9 @@ def get_punitions_to_apply(rcon, config: NoLeaderConfig) -> PunitionsToApply:
                 logger.info("Skipping None or empty squad %s %s", squad_name, squad)
                 continue
             with watch_state(red, team, squad_name) as watch_status:
-                if squad["has_leader"]: # The squad has a leader, clearing punishments plan
+                if squad[
+                    "has_leader"
+                ]:  # The squad has a leader, clearing punishments plan
                     raise SquadHasLeader()
 
                 if squad_name is None or squad is None:
@@ -273,20 +272,32 @@ def get_punitions_to_apply(rcon, config: NoLeaderConfig) -> PunitionsToApply:
                         lvl=int(player.get("level")),
                     )
 
-                    state = should_note_player(watch_status, config, squad_name, aplayer)
+                    state = should_note_player(
+                        watch_status, config, squad_name, aplayer
+                    )
                     if state == PunishStepState.APPLY:
                         punitions_to_apply.add_squad_state(team, squad_name, squad)
-                    if not state in [PunishStepState.DISABLED, PunishStepState.GO_TO_NEXT_STEP]:
+                    if not state in [
+                        PunishStepState.DISABLED,
+                        PunishStepState.GO_TO_NEXT_STEP,
+                    ]:
                         continue
 
-                    state = should_warn_player(watch_status, config, squad_name, aplayer)
+                    state = should_warn_player(
+                        watch_status, config, squad_name, aplayer
+                    )
 
                     if state == PunishStepState.APPLY:
                         punitions_to_apply.warning.append(aplayer)
                         punitions_to_apply.add_squad_state(team, squad_name, squad)
-                    if state == PunishStepState.WAIT: # only here to make the tests pass, otherwise useless
+                    if (
+                        state == PunishStepState.WAIT
+                    ):  # only here to make the tests pass, otherwise useless
                         punitions_to_apply.add_squad_state(team, squad_name, squad)
-                    if not state in [PunishStepState.DISABLED, PunishStepState.GO_TO_NEXT_STEP]:
+                    if not state in [
+                        PunishStepState.DISABLED,
+                        PunishStepState.GO_TO_NEXT_STEP,
+                    ]:
                         continue
 
                     state = should_punish_player(
@@ -296,7 +307,10 @@ def get_punitions_to_apply(rcon, config: NoLeaderConfig) -> PunitionsToApply:
                     if state == PunishStepState.APPLY:
                         punitions_to_apply.punish.append(aplayer)
                         punitions_to_apply.add_squad_state(team, squad_name, squad)
-                    if not state in [PunishStepState.DISABLED, PunishStepState.GO_TO_NEXT_STEP]:
+                    if not state in [
+                        PunishStepState.DISABLED,
+                        PunishStepState.GO_TO_NEXT_STEP,
+                    ]:
                         continue
 
                     state = should_kick_player(
@@ -330,14 +344,16 @@ def get_message(config: NoLeaderConfig, aplayer: APlayer, method: ActionMethod) 
     base_message = {
         ActionMethod.MESSAGE: config.warning_message,
         ActionMethod.PUNISH: config.punish_message,
-        ActionMethod.KICK: config.kick_message
+        ActionMethod.KICK: config.kick_message,
     }
 
     message = base_message[method]
     try:
         return message.format(**data)
     except KeyError:
-        logger.warning(f"The automod message of {repr(method)} ({message}) contains an invalid key")
+        logger.warning(
+            f"The automod message of {repr(method)} ({message}) contains an invalid key"
+        )
         return message
 
 
@@ -346,7 +362,7 @@ def _do_punitions(
     config: NoLeaderConfig,
     rcon: RecordedRcon,
     method: ActionMethod,
-    players: List[APlayer]
+    players: List[APlayer],
 ):
     author = AUTOMOD_USERNAME + ("-DryRun" if config.dry_run else "")
 
@@ -355,7 +371,9 @@ def _do_punitions(
             message = get_message(config, aplayer, method)
             if method == ActionMethod.MESSAGE:
                 if not config.dry_run:
-                    rcon.do_message_player(aplayer.name, aplayer.steam_id_64, message, by=author)
+                    rcon.do_message_player(
+                        aplayer.name, aplayer.steam_id_64, message, by=author
+                    )
                 audit(config, f"-> WARNING: {aplayer}", author)
 
             if method == ActionMethod.PUNISH:
@@ -414,9 +432,7 @@ def audit(cfg: NoLeaderConfig, msg: str, author: str):
     webhook_url = None
     if cfg.discord_webhook_url is not None and cfg.discord_webhook_url != "":
         webhook_url = cfg.discord_webhook_url
-        send_to_discord_audit(
-            msg, by=author, webhookurl=webhook_url, silent=False
-        )
+        send_to_discord_audit(msg, by=author, webhookurl=webhook_url, silent=False)
 
 
 def run():
@@ -429,4 +445,3 @@ def run():
         except Exception:
             logger.exception("Squad automod: Something unexpected happened")
             raise
-

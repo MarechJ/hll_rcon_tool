@@ -31,6 +31,7 @@ class PunishStepState(Enum):
     APPLY = auto()
     GO_TO_NEXT_STEP = auto()
 
+
 class ActionMethod(Enum):
     MESSAGE = auto()
     PUNISH = auto()
@@ -100,6 +101,7 @@ class APlayer:
             f"(name={self.name}, lvl={self.lvl}, role={self.role})"
         )
 
+
 @dataclass
 class ASquad:
     team: str
@@ -146,4 +148,3 @@ class PunitionsToApply:
                 self.kick,
             ]
         )
-
