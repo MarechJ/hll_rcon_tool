@@ -98,6 +98,7 @@ def on_match_start(func):
     HOOKS["MATCH START"].append(func)
     return func
 
+
 def on_match_end(func):
     HOOKS["MATCH ENDED"].append(func)
     return func

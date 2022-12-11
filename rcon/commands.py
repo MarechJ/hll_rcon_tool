@@ -286,20 +286,24 @@ class ServerCtl:
     @_auto_retry
     def get_logs(self, since_min_ago, filter_=""):
         res = self._request(f"showlog {since_min_ago}")
-        for i in range(30):
-            if res[-1] == "\n":
-                break
-            try:
-                res += self.conn.receive().decode()
-            except (
-                RuntimeError,
-                BrokenPipeError,
-                socket.timeout,
-                ConnectionResetError,
-                UnicodeDecodeError,
-            ):
-                logger.exception("Failed request")
-                raise HLLServerError(f"showlog {since_min_ago}")
+        self.conn.lock()
+        try:
+            for i in range(30):
+                if res[-1] == "\n":
+                    break
+                try:
+                    res += self.conn.receive(unlock=False).decode()
+                except (
+                    RuntimeError,
+                    BrokenPipeError,
+                    socket.timeout,
+                    ConnectionResetError,
+                    UnicodeDecodeError,
+                ):
+                    logger.exception("Failed request")
+                    raise HLLServerError(f"showlog {since_min_ago}")
+        finally:
+            self.conn.unlock()
         return res
 
     def get_timed_logs(self, since_min_ago, filter_=""):

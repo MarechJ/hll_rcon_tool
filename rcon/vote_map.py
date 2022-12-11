@@ -15,7 +15,7 @@ from sqlalchemy import and_
 from rcon.cache_utils import get_redis_client, get_redis_pool
 from rcon.discord import dict_to_discord, send_to_discord_audit
 from rcon.extended_commands import CommandFailedError, StructuredLogLine
-from rcon.models import PlayerOptins, enter_session
+from rcon.models import PlayerOptins, PlayerSteamID, enter_session
 from rcon.player_history import get_player
 from rcon.recorded_commands import RecordedRcon
 from rcon.settings import SERVER_INFO
@@ -46,6 +46,13 @@ from rcon.utils import (
 )
 
 logger = logging.getLogger(__name__)
+
+####################
+#
+#  See hooks.py for the actual initialization of the vote map
+#
+#
+####################
 
 
 def _get_random_map_selection(maps, nb_to_return, history=None):
@@ -134,59 +141,96 @@ def suggest_next_maps(
 class InvalidVoteError(Exception):
     pass
 
+
 class VoteMapNoInitialised(Exception):
     pass
+
 
 # TODO:  Handle empty selection (None)
 class VoteMap:
     def __init__(self) -> None:
         self.red = get_redis_client()
         self.reminder_time_key = "last_vote_reminder"
+        self.optin_name = "votemap_reminder"
 
-    def join_vote_options(self, join_char, selection, human_name_map, maps_to_numbers):
+    def join_vote_options(
+        self, join_char, selection, human_name_map, maps_to_numbers, votes, total_votes
+    ):
         return join_char.join(
-            f"[{maps_to_numbers[m]}] {human_name_map[m]}" for m in selection
+            f"[{maps_to_numbers[m]}] {human_name_map[m]} - {votes[m]}/{total_votes} votes"
+            for m in selection
         )
 
-    def format_map_vote(self, format_type="line", short_names=True):
+    def format_map_vote(self, format_type="vertical", short_names=True):
         selection = self.get_selection()
         if not selection:
             logger.warning("No vote map selection")
             return ""
+
+        votes = self.get_votes()
+        total_votes = len(votes)
+        votes = Counter(votes.values())
         human_map = SHORT_HUMAN_MAP_NAMES if short_names else LONG_HUMAN_MAP_NAMES
         human_map_mod = (
             NO_MOD_SHORT_HUMAN_MAP_NAMES if short_names else NO_MOD_LONG_HUMAN_MAP_NAMES
         )
         vote_dict = numbered_maps(selection)
         maps_to_numbers = dict(zip(vote_dict.values(), vote_dict.keys()))
-        items = [f"[{k}] {human_map.get(v, v)}" for k, v in vote_dict.items()]
+        items = [
+            f"[{k}] {human_map.get(v, v)} - {votes[v]}/{total_votes} votes"
+            for k, v in vote_dict.items()
+        ]
 
         if format_type == "vertical":
             return "\n".join(items)
         if format_type.startswith("by_mod"):
             categorized = categorize_maps(selection)
+
             off = self.join_vote_options(
-                "  ", categorized["offensive"], human_map_mod, maps_to_numbers
+                "  ",
+                categorized["offensive"],
+                human_map_mod,
+                maps_to_numbers,
+                votes,
+                total_votes,
             )
-            warfare =self.join_vote_options(
-                "  ", categorized["warfare"], human_map_mod, maps_to_numbers
+            warfare = self.join_vote_options(
+                "  ",
+                categorized["warfare"],
+                human_map_mod,
+                maps_to_numbers,
+                votes,
+                total_votes,
             )
 
-            if format_type == "by_mod_vertical":
-                return "OFFENSIVE:\n{}\nWARFARE:\n{}".format(off, warfare)
-            if format_type == "by_mod_split":
-                return "OFFENSIVE: {}\nWARFARE: {}".format(off, warfare)
-            if format_type == "by_mod_vertical_all":
-                return "WARFARES:\n{}\n\nOFFENSIVES:\n{}".format(
+            vote_string = ""
+            if categorized["warfare"]:
+                vote_string = "WARFARES:\n{}".format(
                     self.join_vote_options(
-                        "\n", categorized["warfare"], human_map_mod, maps_to_numbers
-                    ),
+                        "\n",
+                        categorized["warfare"],
+                        human_map_mod,
+                        maps_to_numbers,
+                        votes,
+                        total_votes,
+                    )
+                )
+            if categorized["offensive"]:
+                if vote_string:
+                    vote_string += "\n\n"
+                vote_string = "{}OFFENSIVES:\n{}".format(
+                    vote_string,
                     self.join_vote_options(
-                        "\n", categorized["offensive"], human_map_mod, maps_to_numbers
+                        "\n",
+                        categorized["offensive"],
+                        human_map_mod,
+                        maps_to_numbers,
+                        votes,
+                        total_votes,
                     ),
-                
                 )
 
+            return vote_string
 
     def get_last_reminder_time(self):
         res = self.red.get(self.reminder_time_key)
@@ -196,24 +240,29 @@ class VoteMap:
 
     def set_last_reminder_time(self, the_time: datetime = None):
         dt = the_time or datetime.now()
-        self.red.set(self.reminder_time_key, pickle.dumps(the_time))
+        self.red.set(self.reminder_time_key, pickle.dumps(dt))
 
     def reset_last_reminder_time(self):
         self.red.delete(self.reminder_time_key)
 
     def is_time_for_reminder(self):
-        last_time = self.get_last_reminder_time()
-        if last_time is None:
-            return True
-        
         reminder_freq_min = VoteMapConfig().get_votemap_reminder_frequency_minutes()
-        print(f"{datetime.now() - last_time).total_seconds()}")
+        if reminder_freq_min == 0:
+            return False
+
+        last_time = self.get_last_reminder_time()
+
+        if last_time is None:
+            logger.warning("No time for last vote reminder")
+            return True
+
         if (datetime.now() - last_time).total_seconds() > reminder_freq_min * 60:
             return True
-        
+
         return False
 
     def vote_map_reminder(self, rcon: RecordedRcon, force=False):
+        logger.info("Vote MAP reminder")
         vote_map_config = VoteMapConfig()
         vote_map_message = vote_map_config.get_votemap_instruction_text()
 
@@ -224,20 +273,51 @@ class VoteMap:
             return
 
         if "{map_selection}" not in vote_map_message:
-            logger.error("Vote map is not configured properly, {map_selection} is not present in the instruction text")
+            logger.error(
+                "Vote map is not configured properly, {map_selection} is not present in the instruction text"
+            )
             return
 
         self.set_last_reminder_time()
-        for player in rcon.get_players():
-            if self.has_voted(player["name"]):
-                continue
-            
-            try:
-                print(" REMINDING PLAYERS   ")
-                #rcon.do_message_player(steam_id_64=player["steam_id_64"], message=vote_map_message.format(map_selection=self.format_map_vote("by_mod_vertical_all")))
-            except CommandFailedError:
-                logger.warning("Unable to message %s", player)
+        players = rcon.get_playerids()
+        # Get optins
+        steamd_ids = [steamid for _, steamid in players]
+        opted_out = {}
 
+        try:
+            with enter_session() as sess:
+                res = (
+                    sess.query(PlayerOptins)
+                    .join(PlayerSteamID)
+                    .filter(
+                        and_(
+                            PlayerSteamID.steam_id_64.in_(steamd_ids),
+                            PlayerOptins.optin_name == self.optin_name,
+                            PlayerOptins.optin_value == "false",
+                        )
+                    )
+                    .all()
+                )
+                opted_out = {p.steamid.steam_id_64 for p in res}
+        except Exception:
+            logger.exception("Can't get optins")
+
+        for name, steamid in players:
+            if self.has_voted(name) or (
+                steamid in opted_out and vote_map_config.get_votemap_allow_optout()
+            ):
+                logger.info("Not showing reminder to %s", name)
+                continue
+
+            try:
+                rcon.do_message_player(
+                    steam_id_64=steamid,
+                    message=vote_map_message.format(
+                        map_selection=self.format_map_vote("by_mod_vertical_all")
+                    ),
+                )
+            except CommandFailedError:
+                logger.warning("Unable to message %s", name)
 
     def handle_vote_command(self, rcon, struct_log: StructuredLogLine):
         message = struct_log.get("sub_content", "").strip()
@@ -247,11 +327,13 @@ class VoteMap:
         steam_id_64_1 = struct_log["steam_id_64_1"]
         config = VoteMapConfig()
         if not config.get_vote_enabled():
-            rcon.do_message_player(steam_id_64=steam_id_64_1, message="Vote map is not enabled on thi server")
-            return 
+            rcon.do_message_player(
+                steam_id_64=steam_id_64_1,
+                message="Vote map is not enabled on thi server",
+            )
+            return
 
         help_text = config.get_votemap_help_text()
-        
 
         if match := re.match(r"!votemap\s*(\d+)", message):
             logger.info("Registering vote %s", struct_log)
@@ -261,11 +343,16 @@ class VoteMap:
                     struct_log["player"], struct_log["timestamp_ms"] / 1000, vote
                 )
             except InvalidVoteError:
-                rcon.do_message_player(steam_id_64=steam_id_64_1, message="Invalid vote.")
+                rcon.do_message_player(
+                    steam_id_64=steam_id_64_1, message="Invalid vote."
+                )
                 if help_text:
                     rcon.do_message_player(steam_id_64=steam_id_64_1, message=help_text)
             except VoteMapNoInitialised:
-                rcon.do_message_player(steam_id_64=steam_id_64_1, message="We can't register you vote at this time.\nVoteMap not initialised")
+                rcon.do_message_player(
+                    steam_id_64=steam_id_64_1,
+                    message="We can't register you vote at this time.\nVoteMap not initialised",
+                )
                 raise
             else:
                 if msg := config.get_votemap_thank_you_text():
@@ -284,66 +371,104 @@ class VoteMap:
         if re.match(r"!votemap$", message):
             logger.info("Showing selection %s", struct_log)
             vote_map_message = config.get_votemap_instruction_text()
-            rcon.do_message_player(steam_id_64=steam_id_64_1, message=vote_map_message.format(map_selection=self.format_map_vote("by_mod_vertical_all")))
+            rcon.do_message_player(
+                steam_id_64=steam_id_64_1,
+                message=vote_map_message.format(
+                    map_selection=self.format_map_vote("by_mod_vertical_all")
+                ),
+            )
             return
 
         if re.match(r"!votemap\s*never$", message):
+            if not config.get_votemap_allow_optout():
+                rcon.do_message_player(
+                    steam_id_64=steam_id_64_1,
+                    message="You can't opt-out of vote map on this server",
+                )
+                return
+
             logger.info("Player opting out of vote %s", struct_log)
             with enter_session() as sess:
                 player = get_player(sess, steam_id_64_1)
-                sess.add(PlayerOptins(
-                    steamid=player,
-                    optin_name="votemap_reminder",
-                    optin_value="false"
-                ))
+                existing = (
+                    sess.query(PlayerOptins)
+                    .filter(
+                        and_(
+                            PlayerOptins.playersteamid_id == player.id,
+                            PlayerOptins.optin_name == self.optin_name,
+                        )
+                    )
+                    .one_or_none()
+                )
+                if existing:
+                    existing.optin_value = "false"
+                else:
+                    sess.add(
+                        PlayerOptins(
+                            steamid=player,
+                            optin_name=self.optin_name,
+                            optin_value="false",
+                        )
+                    )
                 try:
                     sess.commit()
+                    rcon.do_message_player(
+                        steam_id_64=steam_id_64_1, message="VoteMap Unsubscribed OK"
+                    )
                 except Exception as e:
                     logger.exception("Unable to add optin. Already exists?")
+                self.apply_with_retry()
+
             return
 
         if re.match(r"!votemap\s*allow$", message):
             logger.info("Player opting in for vote %s", struct_log)
             with enter_session() as sess:
                 player = get_player(sess, steam_id_64_1)
-                existing = sess.query(PlayerOptins).filter(and_(PlayerOptins.playersteamid_id == player.id, optin_name="votemap_reminder")).one_or_none()
+                existing = (
+                    sess.query(PlayerOptins)
+                    .filter(
+                        and_(
+                            PlayerOptins.playersteamid_id == player.id,
+                            PlayerOptins.optin_name == self.optin_name,
+                        )
+                    )
+                    .one_or_none()
+                )
                 if existing:
                     existing.optin_value = "true"
                 else:
-                    sess.add(PlayerOptins(
-                        steamid=player,
-                        optin_name="votemap_reminder",
-                        optin_value="true"
-                    ))
+                    sess.add(
+                        PlayerOptins(
+                            steamid=player,
+                            optin_name=self.optin_name,
+                            optin_value="true",
+                        )
+                    )
                 try:
                     sess.commit()
+                    rcon.do_message_player(
+                        steam_id_64=steam_id_64_1, message="VoteMap Subscribed OK"
+                    )
                 except Exception as e:
                     logger.exception("Unable to update optin. Already exists?")
             return
 
         rcon.do_message_player(steam_id_64=steam_id_64_1, message=help_text)
-        return 
-
-
-    def is_optin(self, message):
-        #match = re.match(r"(\d)", message)
-        #if not match:
-        match = re.match(r"!votemap\s*(\d+)", message)
-        if not match:
-            return False
-        if not match.groups():
-            raise InvalidVoteError("You must specify the number of the map")
-
-        return match.groups()[0]
+        return
 
     def register_vote(self, player_name, vote_timestamp, vote_content):
         try:
             current_map = MapsHistory()[0]
             min_time = current_map["start"]
         except IndexError as e:
-            raise VoteMapNoInitialised("Map history is empty - Can't register vote") from e
+            raise VoteMapNoInitialised(
+                "Map history is empty - Can't register vote"
+            ) from e
         except KeyError as e:
-            raise VoteMapNoInitialised("Map history is corrupted - Can't register vote") from e
+            raise VoteMapNoInitialised(
+                "Map history is corrupted - Can't register vote"
+            ) from e
 
         if vote_timestamp < min_time:
             logger.warning(
@@ -494,7 +619,9 @@ class VoteMap:
                     f"{next_map=} is not part of the all map list {ALL_MAPS=}"
                 )
             if next_map not in (selection := self.get_selection()):
-                raise ValueError(f"{next_map=} is not part of vote selection {selection=}")
+                raise ValueError(
+                    f"{next_map=} is not part of vote selection {selection=}"
+                )
             logger.info(f"Winning map {next_map=}")
 
         # Sanity checks below
@@ -516,14 +643,14 @@ class VoteMap:
             )
 
         # Apply rotation safely
-    
+
         current_rotation = rcon.get_map_rotation()
-        
+
         while len(current_rotation) > 1:
             # Make sure only 1 map is in rotation
             map_ = current_rotation.pop(1)
             rcon.do_remove_map_from_rotation(map_)
-        
+
         current_next_map = current_rotation[0]
         if current_next_map != next_map:
             # Replace the only map left in rotation
@@ -558,6 +685,7 @@ class VoteMap:
             RecordedRcon(SERVER_INFO).set_maprotation(ALL_MAPS)
 
 
+# DEPRECATED see hooks.py
 def on_map_change(old_map: str, new_map: str):
     logger.info("Running on_map_change hooks with %s %s", old_map, new_map)
     # try:
@@ -581,6 +709,7 @@ def on_map_change(old_map: str, new_map: str):
         logger.exception("Unexpected error while running stats worker")
 
 
+# DEPRECATED see hooks.py
 class MapsRecorder:
     def __init__(self, rcon: RecordedRcon):
         self.rcon = rcon

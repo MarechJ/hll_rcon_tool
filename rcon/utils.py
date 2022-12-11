@@ -101,6 +101,33 @@ def get_map_side(map_):
         return None
 
 
+LOG_MAP_NAMES_TO_MAP = {
+    "CARENTAN OFFENSIVE": "carentan_offensive_ger",
+    "CARENTAN WARFARE": "carentan_warfare",
+    "FOY OFFENSIVE": "foy_offensive_ger",
+    "FOY WARFARE": "foy_warfare",
+    "HILL 400 OFFENSIVE": "hill400_offensive_ger",
+    "HILL 400 WARFARE": "hill400_warfare",
+    "HÜRTGEN FOREST OFFENSIVE": "hurtgenforest_offensive_ger",
+    "HÜRTGEN FOREST WARFARE": "hurtgenforest_warfare_V2",
+    "KURSK OFFENSIVE": "kursk_offensive_ger",
+    "KURSK WARFARE": "kursk_warfare",
+    "Kharkov OFFENSIVE": "kharkov_offensive_rus",
+    "Kharkov WARFARE": "kharkov_warfare",
+    "PURPLE HEART LANE OFFENSIVE": "purpleheartlane_offensive_ger",
+    "PURPLE HEART LANE WARFARE": "purpleheartlane_warfare",
+    "REMAGEN OFFENSIVE": "remagen_offensive_ger",
+    "REMAGEN WARFARE": "remagen_warfare",
+    "SAINTE-MÈRE-ÉGLISE OFFENSIVE": "stmereeglise_offensive_ger",
+    "SAINTE-MÈRE-ÉGLISE WARFARE": "stmereeglise_warfare",
+    "ST MARIE DU MONT OFFENSIVE": "stmariedumont_off_ger",
+    "ST MARIE DU MONT WARFARE": "stmariedumont_warfare",
+    "STALINGRAD OFFENSIVE": "stalingrad_offensive_ger",
+    "STALINGRAD WARFARE": "stalingrad_warfare",
+    "UTAH BEACH OFFENSIVE": "utahbeach_offensive_ger",
+    "UTAH BEACH WARFARE": "utahbeach_warfare",
+}
+
 LONG_HUMAN_MAP_NAMES = {
     "carentan_offensive_ger": "Carentan Offensive (GER)",
     "carentan_offensive_us": "Carentan Offensive (US)",
@@ -338,18 +365,18 @@ class MapsHistory(FixedLenList):
     def __init__(self, key="maps_history", max_len=500):
         super().__init__(key, max_len)
 
-    def save_map_end(self, old_map):
-        ts = datetime.now().timestamp()
+    def save_map_end(self, old_map=None, end_timestamp: int = None):
+        ts = end_timestamp or datetime.now().timestamp()
         logger.info("Saving end of map %s at time %s", old_map, ts)
-        prev = self.lpop() or dict(name=old_map, start=None, end=None)
+        prev = self.lpop() or dict(name=old_map, start=None, end=None, guessed=True)
         prev["end"] = ts
         self.lpush(prev)
         return prev
 
-    def save_new_map(self, new_map):
-        ts = datetime.now().timestamp()
+    def save_new_map(self, new_map, guessed=True, start_timestamp: int = None):
+        ts = start_timestamp or datetime.now().timestamp()
         logger.info("Saving start of new map %s at time %s", new_map, ts)
-        new = dict(name=new_map, start=ts, end=None)
+        new = dict(name=new_map, start=ts, end=None, guessed=guessed)
         self.add(new)
         return new
 

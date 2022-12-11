@@ -72,7 +72,7 @@ const VoteMapConfig = () => {
             multiline
             rows={2}
             rowsMax={4}
-            label="Reminder text sent to player to vote"
+            label="Reminder text sent to player to vote:"
             helperText="Make sure you add {map_selection} in your text"
             value={config.get("votemap_instruction_text", "")}
             onChange={(e) =>
@@ -86,7 +86,7 @@ const VoteMapConfig = () => {
             multiline
             rows={2}
             rowsMax={4}
-            label="Thank you for voting message"
+            label="Thank you for voting message:"
             helperText="The reply to player after he voted. You can use {player_name} and {map_name} in the text. Leave blank if you don't want the confirmation message"
             value={config.get("votemap_thank_you_text", "")}
             onChange={(e) =>
@@ -100,7 +100,7 @@ const VoteMapConfig = () => {
             multiline
             rows={2}
             rowsMax={4}
-            label="Help text"
+            label="Help text:"
             helperText="This text will show to the player in case of a bad !votemap command, or if the user types !votemap help"
             value={config.get("votemap_help_text", "")}
             onChange={(e) =>
@@ -115,18 +115,18 @@ const VoteMapConfig = () => {
         </Grid>
       </Grid>
       <Grid item>
-          <TextField
-            type="number"
-            inputProps={{ min: 1, max: 90 }}
-            label="Reminder frequency minutes"
-            helperText="If the player hasn't voted yet, it will remind him with a PM"
-            value={config.get("votemap_reminder_frequency_minutes", false)}
-            onChange={(e) =>
-              saveConfig({ votemap_reminder_frequency_minutes: e.target.value })
-            }
-          />
-        </Grid>
-        <Grid item>
+        <TextField
+          type="number"
+          inputProps={{ min: 0, max: 90 }}
+          label="Reminder frequency minutes:"
+          helperText="Will remind players who haven't vote with a PM. Set to 0 to disable (will only show once on map end)."
+          value={config.get("votemap_reminder_frequency_minutes", false)}
+          onChange={(e) =>
+            saveConfig({ votemap_reminder_frequency_minutes: e.target.value })
+          }
+        />
+      </Grid>
+      <Grid item>
         <Padlock
           label="Allow user to opt-out of vote map reminders by typing !votemap never"
           checked={config.get("votemap_allow_optout", false)}
@@ -139,7 +139,7 @@ const VoteMapConfig = () => {
         <TextField
           type="number"
           inputProps={{ min: 2, max: 10 }}
-          label="Number of options in selection"
+          label="Number of options in selection:"
           helperText="The amount of maps that should be offered in the vote"
           value={config.get("votemap_number_of_options", false)}
           onChange={(e) =>
@@ -151,7 +151,7 @@ const VoteMapConfig = () => {
         <TextField
           type="number"
           inputProps={{ min: 0, max: 1, step: 0.05 }}
-          label="Ratio of offensives"
+          label="Ratio of offensives:"
           helperText="The ratio of offensive maps in the selection"
           value={config.get("votemap_ratio_of_offensives_to_offer", false)}
           onChange={(e) =>
@@ -164,7 +164,7 @@ const VoteMapConfig = () => {
         <TextField
           type="number"
           inputProps={{ min: 0, max: 6, step: 1 }}
-          label="Number of recently played maps excluded"
+          label="Number of recently played maps excluded:"
           helperText="Exclude the last N played maps from the selection. The current map is always excluded."
           value={config.get(
             "votemap_number_of_last_played_map_to_exclude",
@@ -179,7 +179,7 @@ const VoteMapConfig = () => {
       </Grid>
       <Grid item>
         <Padlock
-          label="Consider offensive map being the same as warfare when excluding"
+          label="Consider offensive map being the same as warfare when excluding:"
           checked={config.get("votemap_consider_offensive_as_same_map", false)}
           handleChange={(v) =>
             saveConfig({ votemap_consider_offensive_as_same_map: v })

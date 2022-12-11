@@ -214,7 +214,9 @@ class PlayerFlag(Base):
 class PlayerOptins(Base):
     __tablename__ = "player_optins"
     __table_args__ = (
-        UniqueConstraint("playersteamid_id", "optin_name", name="unique_optins_steamid"),
+        UniqueConstraint(
+            "playersteamid_id", "optin_name", name="unique_optins_steamid"
+        ),
     )
 
     id = Column(Integer, primary_key=True)
@@ -227,7 +229,10 @@ class PlayerOptins(Base):
 
     def to_dict(self):
         return dict(
-            id=self.id, optin_name=self.flag, optin_value=self.comment, modified=self.modified
+            id=self.id,
+            optin_name=self.flag,
+            optin_value=self.comment,
+            modified=self.modified,
         )
 
 

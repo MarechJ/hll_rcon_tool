@@ -299,7 +299,9 @@ class VoteMapConfig:
         )
         self.VOTEMAP_THANK_YOU_TEXT = f"{server_number}_votemap_VOTEMAP_THANK_YOU_TEXT"
         self.VOTEMAP_NO_VOTE_TEXT = f"{server_number}_votemap_VOTEMAP_NO_VOTE_TEXT"
-        self.VOTEMAP_REMINDER_FREQUENCY_MINUTES = f"{server_number}_votemap_VOTEMAP_REMINDER_FREQUENCY_MINUTES"
+        self.VOTEMAP_REMINDER_FREQUENCY_MINUTES = (
+            f"{server_number}_votemap_VOTEMAP_REMINDER_FREQUENCY_MINUTES"
+        )
         self.VOTEMAP_ALLOW_OPTOUT = f"{server_number}_votemap_VOTEMAP_ALLOW_OPTOUT"
         self.VOTEMAP_HELP_TEXT = f"{server_number}_votemap_VOTEMAP_HELP_TEXT"
 
@@ -420,7 +422,7 @@ class VoteMapConfig:
         _set_default(
             sess,
             self.VOTEMAP_INSTRUCTION_TEXT,
-            "Vote for the nextmap:\nType in the chat !votemap <map number>\n{map_selection}\n\nTo never see this message again type in the chat !votemap never\n\nTo renable type: !votemap",
+            "Vote for the nextmap:\nType in the chat !votemap <map number>\n{map_selection}\n\nTo never see this message again type in the chat !votemap never\n\nTo renable type: !votemap allow",
         )
         _set_default(
             sess,
@@ -445,7 +447,7 @@ class VoteMapConfig:
         _set_default(
             sess,
             self.VOTEMAP_HELP_TEXT,
-            "To vote you must type in the chat (press K to open the chat) !votemap followed by the number of the map you want (from 0 to N), you must write the number without the brackets, e.g.: !votemap 0\n\nThe map numbers appear in the reminder message you get once in a while or if you type !votemap without a number.\n\nIf you want to opt-out of the votemap reminder FOREVER type !votemap never\n\nTo opt back in again type !votemap allow\n\nTo see this message again type !votemap help",
+            "To vote you must type in the chat (press K to open the chat) !votemap followed by the number of the map you want (from 0 to N), you must write the number without the brackets, e.g.: !votemap 0\n\nThe map numbers appear in the reminder message you get once in a while or if you type !votemap without a number.\n\nIf you want to opt-out of the votemap reminder FOREVER type !votemap never\n\nTo opt back in again type !votemap allow\n\nTo see the select type !votemap\n\nTo see this message again type !votemap help",
         )
 
 

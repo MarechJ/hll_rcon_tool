@@ -66,6 +66,7 @@ class StructuredLogLine(TypedDict):
     message: str
     sub_content: str
 
+
 class GameState(TypedDict):
     """TypedDict for Rcon.get_gamestate"""
 
@@ -116,7 +117,7 @@ class Rcon(ServerCtl):
     MAX_SERV_NAME_LEN = 1024  # I totally made up that number. Unable to test
     log_time_regexp = re.compile(r".*\((\d+)\).*")
 
-    def __init__(self, *args, pool_size=2, **kwargs):
+    def __init__(self, *args, pool_size=10, **kwargs):
         super().__init__(*args, **kwargs)
         self.pool_size = pool_size
 
@@ -374,7 +375,6 @@ class Rcon(ServerCtl):
                 "kills": sum(s["kills"] for s in squads.values()),
                 "deaths": sum(s["deaths"] for s in squads.values()),
                 "count": sum(len(s["players"]) for s in squads.values()),
-                
             }
 
         return dict(fail_count=fail_count, **game)
@@ -1432,7 +1432,7 @@ class Rcon(ServerCtl):
                 players.add(player2)
                 actions.add(action)
             except:
-                #logger.exception("Invalid line: '%s'", line)
+                # logger.exception("Invalid line: '%s'", line)
                 continue
             if filter_action and not action.startswith(filter_action):
                 continue
