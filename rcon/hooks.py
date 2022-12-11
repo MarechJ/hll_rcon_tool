@@ -58,7 +58,7 @@ def initialise_vote_map(rcon: RecordedRcon, struct_log):
     vote_map = VoteMap()
     vote_map.clear_votes()
     vote_map.gen_selection()
-    vote_map.set_last_reminder_time()
+    vote_map.reset_last_reminder_time()
     vote_map.apply_results()
 
 
