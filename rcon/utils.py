@@ -293,7 +293,7 @@ NO_MOD_SHORT_HUMAN_MAP_NAMES = {
     "kursk_warfare_night": "Kursk (Night)",
     "kursk_warfare": "Kursk",
     "omahabeach_offensive_ger": "Omaha (GER)",
-    "omahabeach_offensive_us": "Omaha",
+    "omahabeach_offensive_us": "Omaha (US)",
     "omahabeach_warfare": "Omaha",
     "purpleheartlane_offensive_ger": "PHL (GER)",
     "purpleheartlane_offensive_us": "PHL (US)",
