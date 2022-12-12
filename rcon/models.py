@@ -22,7 +22,9 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship, sessionmaker
+from sqlalchemy.orm.session import object_session
 from sqlalchemy.schema import UniqueConstraint
 
 logger = logging.getLogger(__name__)
@@ -41,7 +43,7 @@ def get_engine():
         logger.error(msg)
         raise ValueError(msg)
 
-    _ENGINE = create_engine(url, echo=False)
+    _ENGINE = create_engine(url, echo=True)
     return _ENGINE
 
 
@@ -78,12 +80,30 @@ class PlayerSteamID(Base):
     steaminfo = relationship("SteamInfo", backref="steamid", uselist=False)
     comments = relationship("PlayerComment", back_populates="player")
     stats = relationship("PlayerStats", backref="steamid", uselist=False)
-    vip = relationship(
+
+    vips = relationship(
         "PlayerVIP",
         back_populates="steamid",
-        uselist=False,
+        uselist=True,
         cascade="all, delete-orphan",
+        lazy="dynamic",
     )
+
+    @property
+    def server_number(self):
+        return int(os.getenv("SERVER_NUMBER"))
+
+    # @hybrid_property
+    # def vip(self):
+    #     # Mock one_or_none() essentially
+    #     try:
+    #         _vip = [
+    #             v for v in self.vips.all() if v.server_number == self.server_number
+    #         ][0]
+    #     except IndexError:
+    #         return None
+
+    #     return _vip
 
     def get_penalty_count(self):
         penalities_type = {"KICK", "PUNISH", "TEMPBAN", "PERMABAN"}
@@ -585,9 +605,16 @@ class PlayerAtCount(Base):
 
 class PlayerVIP(Base):
     __tablename__: str = "player_vip"
+    __table_args__ = (
+        UniqueConstraint(
+            "playersteamid_id", "server_number", name="unique_player_server_vip"
+        ),
+    )
 
     id = Column(Integer, primary_key=True)
     expiration = Column(TIMESTAMP(timezone=True), nullable=False)
+    # Not making this unique (even though it should be) to avoid breaking existing CRCONs
+    server_number = Column(Integer)
 
     playersteamid_id = Column(
         Integer,
@@ -596,7 +623,7 @@ class PlayerVIP(Base):
         index=True,
     )
 
-    steamid = relationship("PlayerSteamID", back_populates="vip")
+    steamid = relationship("PlayerSteamID", back_populates="vips")
 
 
 def init_db(force=False):

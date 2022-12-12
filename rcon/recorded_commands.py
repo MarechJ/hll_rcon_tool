@@ -1,8 +1,10 @@
 from datetime import datetime
 from logging import getLogger
 from typing import Union
+import os
 
 from dateutil import parser, relativedelta
+from sqlalchemy.orm.attributes import flag_dirty
 
 from rcon.cache_utils import ttl_cache
 from rcon.commands import ServerCtl
@@ -13,6 +15,8 @@ from rcon.player_history import (
     get_profiles,
     safe_save_player_action,
 )
+from rcon.utils import get_server_number
+
 
 logger = getLogger(__name__)
 
@@ -124,6 +128,8 @@ class RecordedRcon(Rcon):
         # Remove VIP before anything else in case we have errors
         result = super().do_remove_vip(steam_id_64)
 
+        server_number = get_server_number()
+
         with enter_session() as session:
             player: PlayerSteamID = (
                 session.query(PlayerSteamID)
@@ -133,10 +139,14 @@ class RecordedRcon(Rcon):
 
             if player and player.vip:
                 logger.info(f"Removed VIP from {steam_id_64} {player.vip.expiration}")
-                player.vip = None
+                logger.info(f"player.vip={player.vip}")
+                session.delete(player.vip)
             elif player and not player.vip:
-                logger.warning(f"{steam_id_64} had no player_vip record")
+                logger.error(f"player= {player} player.vip={player.vip}")
+                logger.warning(f"{steam_id_64} has no PlayerVIP record")
             else:
+                # This is okay since you can give VIP to someone who has never been on a game server
+                # or that your instance of CRCON hasn't seen before
                 logger.warning(f"{steam_id_64} has no PlayerSteamID record")
 
         return result
@@ -150,6 +160,8 @@ class RecordedRcon(Rcon):
         # postgres and Python have different max date limits
         # https://docs.python.org/3.8/library/datetime.html#datetime.MAXYEAR
         # https://www.postgresql.org/docs/12/datatype-datetime.html
+
+        server_number = get_server_number()
 
         # If we're unable to parse the date, treat them as indefinite VIPs
         expiration_date: Union[str, datetime]
@@ -176,15 +188,31 @@ class RecordedRcon(Rcon):
             if player:
                 if not player.vip:
                     vip_record = PlayerVIP(
-                        expiration=expiration_date, playersteamid_id=None
+                        expiration=expiration_date,
+                        playersteamid_id=player.id,
+                        server_number=server_number,
                     )
-                    player.vip = vip_record
-                    logger.info(f"Added new PlayerVIP record {expiration_date=}")
-                else:
-                    previous_expiration = player.vip.expiration.isoformat()
-                    player.vip.expiration = expiration_date
                     logger.info(
-                        f"Created new PlayerVIP record {expiration_date=} {previous_expiration=}"
+                        f"Added new PlayerVIP record {player.steam_id_64=} {expiration_date=}"
+                    )
+                    session.add(vip_record)
+                else:
+                    vip_record = player.vip
+
+                    previous_expiration = vip_record.expiration.isoformat()
+                    vip_record.playersteamid_id = player.id
+                    vip_record.expiration_date = expiration_date
+                    logger.info(f"dirty={session.dirty}")
+                    flag_dirty(vip_record)
+                    session.add(vip_record)
+                    logger.info(f"dirty={session.dirty}")
+                    session.flush()
+                    logger.info(f"dirty={session.dirty}")
+                    logger.info(
+                        f"player.vip={player.vip} id={player.vip.id} exp={player.vip.expiration} server_num={player.vip.server_number}"
+                    )
+                    logger.info(
+                        f"Modified PlayerVIP record {player.steam_id_64=} {player.vip.expiration_date=} {previous_expiration=}"
                     )
 
         return result

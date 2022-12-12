@@ -17,9 +17,9 @@ import { ForwardCheckBox } from "../commonComponent";
 import { get, handle_http_errors, showResponse } from "../../utils/fetchUtils";
 
 import moment from "moment";
-import {VipExpirationDialog} from "../VipDialog";
-import {fromJS} from "immutable";
-import {vipListFromServer} from "../VipDialog/vipFromServer";
+import { VipExpirationDialog } from "../VipDialog";
+import { fromJS } from "immutable";
+import { vipListFromServer } from "../VipDialog/vipFromServer";
 
 const AddVipItem = ({
   classes,
@@ -131,7 +131,13 @@ const VipUpload = ({ classes }) => {
             submit
           </Button>
         ) : (
-          <Tooltip title="Caution this does a total override, deletes all vip then re-add from file. The format is a simple text file (same as the downloaded one), one person per line with the steam id first then the name. eg: 76561198107873800 Thats my name">
+          <Tooltip
+            title={`Caution this does a total override, deletes all vip then re-add from file.
+            The format is a simple text file (same as the downloaded one), one person per line with the steam id first then the name.
+            eg: 76561198107873800 Thats my name.
+            
+            This is not forwarded to your other servers (if you have them)`}
+          >
             <Button fullWidth variant="outlined" component="label">
               Upload VIPs
               <input type="file" hidden onChange={changeHandler} />
@@ -156,11 +162,11 @@ const VipUpload = ({ classes }) => {
 };
 
 function nameOf(playerObj) {
-    const names = playerObj.get("names");
-    if (names.size === 0) {
-        return "";
-    }
-    return playerObj.get("names").get(0).get("name");
+  const names = playerObj.get("names");
+  if (names.size === 0) {
+    return "";
+  }
+  return playerObj.get("names").get(0).get("name");
 }
 
 const VipEditableList = ({
@@ -182,7 +188,7 @@ const VipEditableList = ({
       if (date.isSameOrAfter(moment().add(100, "years"))) {
         return "Never";
       } else {
-        return moment(player.vip_expiration).format("YYYY-MM-DD HH:MM:SSZ");
+        return moment(player.vip_expiration).format("YYYY-MM-DD HH:mm:ssZ");
       }
     } else {
       return "Never";
@@ -190,18 +196,22 @@ const VipEditableList = ({
   };
 
   function onOpenAddVipDialog(name, steamId64) {
-      return setVIPPlayer(fromJS({
-          names: [{
-              name: name,
-          }],
-          steam_id_64: steamId64,
-      }));
+    return setVIPPlayer(
+      fromJS({
+        names: [
+          {
+            name: name,
+          },
+        ],
+        steam_id_64: steamId64,
+      })
+    );
   }
 
   return (
     <React.Fragment>
       <List dense>
-        <ForwardCheckBox bool={forward} onChange={onFowardChange} />
+        {/* <ForwardCheckBox bool={forward} onChange={onFowardChange} /> */}
         <AddVipItem
           classes={classes}
           name={name}
@@ -235,16 +245,23 @@ const VipEditableList = ({
           setSteamID64={setSteamID64}
           onAdd={onOpenAddVipDialog}
         />
-        <ForwardCheckBox bool={forward} onChange={onFowardChange} />
+        {/* <ForwardCheckBox bool={forward} onChange={onFowardChange} /> */}
         <VipExpirationDialog
-            open={VIPPlayer}
-            vips={vipListFromServer(peopleList)}
-            onDeleteVip={(playerObj) => onDelete(nameOf(playerObj), playerObj.get("steam_id_64"))}
-            handleClose={() => setVIPPlayer(false)}
-            handleConfirm={(playerObj, expirationTimestamp) => {
-              onAdd(nameOf(playerObj), playerObj.get("steam_id_64"), expirationTimestamp);
-              setVIPPlayer(false);
-            }}
+          open={VIPPlayer}
+          vips={vipListFromServer(peopleList)}
+          onDeleteVip={(playerObj) =>
+            onDelete(nameOf(playerObj), playerObj.get("steam_id_64"))
+          }
+          handleClose={() => setVIPPlayer(false)}
+          handleConfirm={(playerObj, expirationTimestamp) => {
+            console.log(`vips.js expirationTimestamp=${expirationTimestamp}`);
+            onAdd(
+              nameOf(playerObj),
+              playerObj.get("steam_id_64"),
+              expirationTimestamp
+            );
+            setVIPPlayer(false);
+          }}
         />
       </List>
     </React.Fragment>

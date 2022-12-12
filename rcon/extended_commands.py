@@ -18,6 +18,7 @@ from rcon.steam_utils import (
     get_players_country_code,
     get_players_have_bans,
 )
+from rcon.utils import get_server_number
 
 STEAMID = "steam_id_64"
 NAME = "name"
@@ -101,7 +102,7 @@ class Rcon(ServerCtl):
     MAX_SERV_NAME_LEN = 1024  # I totally made up that number. Unable to test
     log_time_regexp = re.compile(r".*\((\d+)\).*")
 
-    def __init__(self, *args, pool_size=20, **kwargs):
+    def __init__(self, *args, pool_size=1, **kwargs):
         super().__init__(*args, **kwargs)
         self.pool_size = pool_size
 
@@ -659,13 +660,24 @@ class Rcon(ServerCtl):
     @ttl_cache(ttl=60 * 60)
     def get_vip_ids(self) -> List[Dict[str, Union[str, Optional[datetime]]]]:
         res = super().get_vip_ids()
-        l = []
+        player_dicts = []
 
         vip_expirations: Dict[str, datetime]
         with enter_session() as session:
-            players = session.query(PlayerSteamID).join(PlayerVIP).all()
+            # players = session.query(PlayerSteamID).join(PlayerVIP).all()
+            
+            server_number = get_server_number()
+
+            players = (
+                session.query(PlayerVIP)
+                .filter(PlayerVIP.server_number == server_number)
+                .all()
+            )
+            # print(f"query={session.query(PlayerSteamID).join(PlayerVIP)}")
+            # server_number = int(os.getenv("SERVER_NUMBER"))
+            # players = session.query(PlayerVIP).filter().all()
             vip_expirations = {
-                player.steam_id_64: player.vip.expiration for player in players
+                player.steamid.steam_id_64: player.expiration for player in players
             }
 
         for item in res:
@@ -679,9 +691,9 @@ class Rcon(ServerCtl):
                 raise
             player = dict(zip((STEAMID, NAME), (steam_id_64, name)))
             player["vip_expiration"] = vip_expirations.get(steam_id_64, None)
-            l.append(player)
+            player_dicts.append(player)
 
-        return sorted(l, key=lambda d: d[NAME])
+        return sorted(player_dicts, key=lambda d: d[NAME])
 
     def do_remove_vip(self, steam_id_64):
         with invalidates(Rcon.get_vip_ids):
