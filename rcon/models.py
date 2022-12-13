@@ -93,17 +93,17 @@ class PlayerSteamID(Base):
     def server_number(self):
         return int(os.getenv("SERVER_NUMBER"))
 
-    # @hybrid_property
-    # def vip(self):
-    #     # Mock one_or_none() essentially
-    #     try:
-    #         _vip = [
-    #             v for v in self.vips.all() if v.server_number == self.server_number
-    #         ][0]
-    #     except IndexError:
-    #         return None
-
-    #     return _vip
+    @hybrid_property
+    def vip(self):
+        return (
+            object_session(self)
+            .query(PlayerVIP)
+            .filter(
+                PlayerVIP.playersteamid_id == self.id,
+                PlayerVIP.server_number == self.server_number,
+            )
+            .one_or_none()
+        )
 
     def get_penalty_count(self):
         penalities_type = {"KICK", "PUNISH", "TEMPBAN", "PERMABAN"}

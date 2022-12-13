@@ -211,7 +211,7 @@ const VipEditableList = ({
   return (
     <React.Fragment>
       <List dense>
-        {/* <ForwardCheckBox bool={forward} onChange={onFowardChange} /> */}
+        <ForwardCheckBox bool={forward} onChange={onFowardChange} />
         <AddVipItem
           classes={classes}
           name={name}
@@ -245,7 +245,7 @@ const VipEditableList = ({
           setSteamID64={setSteamID64}
           onAdd={onOpenAddVipDialog}
         />
-        {/* <ForwardCheckBox bool={forward} onChange={onFowardChange} /> */}
+        <ForwardCheckBox bool={forward} onChange={onFowardChange} />
         <VipExpirationDialog
           open={VIPPlayer}
           vips={vipListFromServer(peopleList)}

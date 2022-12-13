@@ -87,7 +87,7 @@ def remove_expired_vips(rcon_hook: RecordedRcon, webhookurl: Optional[str] = Non
                 )
 
     if count > 0:
-        logger.info(f"Removed VIP from {count} players")
+        logger.info(f"Removed VIP from {count} player(s)")
     else:
         logger.info("No expired VIPs found")
 

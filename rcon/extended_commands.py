@@ -2,15 +2,15 @@ import logging
 import os
 import re
 import socket
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import as_completed
 from datetime import datetime, timedelta
-from functools import cached_property, update_wrapper
+from functools import update_wrapper
 from time import sleep
 from typing import Dict, List, Optional, Tuple, TypedDict, Union
 
 from rcon.cache_utils import get_redis_client, invalidates, ttl_cache
 from rcon.commands import CommandFailedError, HLLServerError, ServerCtl
-from rcon.models import PlayerSteamID, PlayerVIP, enter_session
+from rcon.models import PlayerVIP, enter_session
 from rcon.player_history import get_profiles
 from rcon.steam_utils import (
     get_player_country_code,
@@ -102,32 +102,8 @@ class Rcon(ServerCtl):
     MAX_SERV_NAME_LEN = 1024  # I totally made up that number. Unable to test
     log_time_regexp = re.compile(r".*\((\d+)\).*")
 
-    def __init__(self, *args, pool_size=1, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.pool_size = pool_size
-
-    @cached_property
-    def thread_pool(self):
-        return ThreadPoolExecutor(self.pool_size)
-
-    @cached_property
-    def connection_pool(self):
-        logger.info("Initializing Rcon connection pool of size %s", self.pool_size)
-        pool = [Rcon(self.config) for _ in range(self.pool_size)]
-        for idx, rcon in enumerate(pool):
-            logger.debug("Connecting rcon %s/%s", idx, self.pool_size)
-            rcon._connect()
-        logger.info("Done initialzing Rcon connection pool")
-        return pool
-
-    def run_in_pool(self, process_number: int, function_name: str, *args, **kwargs):
-        return self.thread_pool.submit(
-            getattr(
-                self.connection_pool[process_number % self.pool_size], function_name
-            ),
-            *args,
-            **kwargs,
-        )
 
     @mod_users_allowed
     def get_playerids(self, as_dict=False):
@@ -665,7 +641,7 @@ class Rcon(ServerCtl):
         vip_expirations: Dict[str, datetime]
         with enter_session() as session:
             # players = session.query(PlayerSteamID).join(PlayerVIP).all()
-            
+
             server_number = get_server_number()
 
             players = (
