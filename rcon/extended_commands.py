@@ -52,6 +52,22 @@ LOG_ACTIONS = [
 logger = logging.getLogger(__name__)
 
 
+class StructuredLogLine(TypedDict):
+    version: int
+    timestamp_ms: int
+    relative_time_ms: int
+    raw: str
+    line_without_time: str
+    action: str
+    player: str
+    steam_id_64_1: str
+    player2: str
+    steam_id_64_2: str
+    weapon: str
+    message: str
+    sub_content: str
+
+
 class GameState(TypedDict):
     """TypedDict for Rcon.get_gamestate"""
 
@@ -252,6 +268,7 @@ class Rcon(ServerCtl):
         teams = {}
         players_by_id = {}
         players = self.get_players_fast()
+        fail_count = 0
 
         futures = {
             self.run_in_pool(idx, "get_detailed_player_info", player[NAME]): player
@@ -262,6 +279,7 @@ class Rcon(ServerCtl):
                 player_data = future.result()
             except Exception:
                 logger.exception("Failed to get info for %s", futures[future])
+                fail_count += 1
                 player_data = self._get_default_info_dict(futures[future][NAME])
             player = futures[future]
             player.update(player_data)
@@ -336,7 +354,7 @@ class Rcon(ServerCtl):
                 "count": sum(len(s["players"]) for s in squads.values()),
             }
 
-        return game
+        return dict(fail_count=fail_count, **game)
 
     @mod_users_allowed
     @ttl_cache(ttl=60 * 60 * 24, cache_falsy=False)
@@ -556,6 +574,20 @@ class Rcon(ServerCtl):
         return res
 
     def _struct_ban(self, ban, type_):
+
+        # Avoid errors on empty temp bans
+        if ban == "":
+            return {
+                "type": type_,
+                "name": None,
+                "steam_id_64": None,
+                "timestamp": None,
+                "ban_time": None,
+                "reason": None,
+                "by": None,
+                "raw": ban,
+            }
+
         # name, time = ban.split(', banned on ')
         # '76561197984877751 : nickname "Dr.WeeD" banned for 2 hours on 2020.12.03-12.40.08 for "None" by admin "test"'
         steamd_id_64, rest = ban.split(" :", 1)
@@ -781,9 +813,14 @@ class Rcon(ServerCtl):
 
     def set_map(self, map_name):
         with invalidates(Rcon.get_map):
-            res = super().set_map(map_name)
-            if res != "SUCCESS":
-                raise CommandFailedError(res)
+            try:
+                res = super().set_map(map_name)
+                if res != "SUCCESS":
+                    raise CommandFailedError(res)
+            except CommandFailedError:
+                self.do_add_map_to_rotation(map_name)
+                if super().set_map(map_name) != "SUCCESS":
+                    raise CommandFailedError(res)
 
     @mod_users_allowed
     @ttl_cache(ttl=10)
@@ -1248,7 +1285,7 @@ class Rcon(ServerCtl):
     def parse_logs(raw, filter_action=None, filter_player=None):
         synthetic_actions = LOG_ACTIONS
         now = datetime.now()
-        res = []
+        res: List[StructuredLogLine] = []
         actions = set()
         players = set()
 
@@ -1383,7 +1420,7 @@ class Rcon(ServerCtl):
                 players.add(player2)
                 actions.add(action)
             except:
-                logger.exception("Invalid line: '%s'", line)
+                # logger.exception("Invalid line: '%s'", line)
                 continue
             if filter_action and not action.startswith(filter_action):
                 continue
@@ -1414,19 +1451,3 @@ class Rcon(ServerCtl):
             "players": list(players),
             "logs": res,
         }
-
-
-if __name__ == "__main__":
-    from rcon.settings import SERVER_INFO
-
-    rcon_hook = Rcon(SERVER_INFO)
-
-    res = rcon_hook.parse_logs(
-        "[29:15 min (1668100749)] CONNECTED Corex (76561198094854678)"
-    )
-
-    res = rcon_hook.parse_logs(
-        "[29:15 min (1668100749)] Players: Allied: 0 - Axis: 1\nScore: Allied: 2 - Axis: 2\nRemaining Time: 0:11:51\nMap: foy_warfare\nNext Map: stmariedumont_warfare"
-    )
-
-    # print(r.get_team_view_fast())

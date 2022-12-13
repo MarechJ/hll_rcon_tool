@@ -8,6 +8,7 @@ from pytest import fixture
 from rcon.config import get_config
 from rcon.squad_automod.automod import (
     get_punitions_to_apply,
+    should_note_player,
     should_kick_player,
     should_punish_player,
     should_warn_player,
@@ -560,19 +561,61 @@ def team_view():
     }
 
 
-def test_should_warn_first_time(team_view):
+def construct_aplayer(
+    player_dict: dict, team_name: str = "allies", squad_name: str = "able"
+):
+    return APlayer(
+        steam_id_64=player_dict["steam_id_64"],
+        name=player_dict["name"],
+        team=team_name,
+        squad=squad_name,
+        role=player_dict.get("role"),
+        lvl=int(player_dict.get("level")),
+    )
+
+
+def test_should_not_note(team_view):
     config = NoLeaderConfig(
-        number_of_warning=2,
-        warning_interval_seconds=60,
+        number_of_notes=0,
     )
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
+    aplayer = construct_aplayer(player)
 
-    assert PunishStepState.apply == should_warn_player(
-        watch_status, config, "able", player
+    assert PunishStepState.DISABLED == should_note_player(
+        watch_status, config, "able", aplayer
     )
-    assert PunishStepState.wait == should_warn_player(
-        watch_status, config, "able", player
+    assert PunishStepState.DISABLED == should_note_player(
+        watch_status, config, "able", aplayer
+    )
+    assert WatchStatus() == watch_status
+
+
+def test_should_note_twice(team_view):
+    config = NoLeaderConfig(
+        number_of_notes=2,
+        notes_interval_seconds=1,
+    )
+    watch_status = WatchStatus()
+    player = team_view["allies"]["squads"]["able"]["players"][0]
+    aplayer = construct_aplayer(player)
+
+    assert PunishStepState.APPLY == should_note_player(
+        watch_status, config, "able", aplayer
+    )
+    assert PunishStepState.WAIT == should_note_player(
+        watch_status, config, "able", aplayer
+    )
+    time.sleep(config.notes_interval_seconds)
+    assert PunishStepState.APPLY == should_note_player(
+        watch_status, config, "able", aplayer
+    )
+    assert PunishStepState.WAIT == should_note_player(
+        watch_status, config, "able", aplayer
+    )
+    time.sleep(config.notes_interval_seconds)
+    assert PunishStepState.GO_TO_NEXT_STEP == should_note_player(
+        watch_status, config, "able", aplayer
     )
 
 
@@ -582,12 +625,13 @@ def test_should_not_warn(team_view):
     )
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
+    aplayer = construct_aplayer(player)
 
-    assert PunishStepState.disabled == should_warn_player(
-        watch_status, config, "able", player
+    assert PunishStepState.DISABLED == should_warn_player(
+        watch_status, config, "able", aplayer
     )
-    assert PunishStepState.disabled == should_warn_player(
-        watch_status, config, "able", player
+    assert PunishStepState.DISABLED == should_warn_player(
+        watch_status, config, "able", aplayer
     )
     assert WatchStatus() == watch_status
 
@@ -599,23 +643,24 @@ def test_should_warn_twice(team_view):
     )
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
+    aplayer = construct_aplayer(player)
 
-    assert PunishStepState.apply == should_warn_player(
-        watch_status, config, "able", player
+    assert PunishStepState.APPLY == should_warn_player(
+        watch_status, config, "able", aplayer
     )
-    assert PunishStepState.wait == should_warn_player(
-        watch_status, config, "able", player
-    )
-    time.sleep(config.warning_interval_seconds)
-    assert PunishStepState.apply == should_warn_player(
-        watch_status, config, "able", player
-    )
-    assert PunishStepState.wait == should_warn_player(
-        watch_status, config, "able", player
+    assert PunishStepState.WAIT == should_warn_player(
+        watch_status, config, "able", aplayer
     )
     time.sleep(config.warning_interval_seconds)
-    assert PunishStepState.go_to_next_step == should_warn_player(
-        watch_status, config, "able", player
+    assert PunishStepState.APPLY == should_warn_player(
+        watch_status, config, "able", aplayer
+    )
+    assert PunishStepState.WAIT == should_warn_player(
+        watch_status, config, "able", aplayer
+    )
+    time.sleep(config.warning_interval_seconds)
+    assert PunishStepState.GO_TO_NEXT_STEP == should_warn_player(
+        watch_status, config, "able", aplayer
     )
 
 
@@ -626,10 +671,11 @@ def test_should_warn_infinite(team_view):
     )
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
+    aplayer = construct_aplayer(player)
 
     for _ in range(100):
-        assert PunishStepState.apply == should_warn_player(
-            watch_status, config, "able", player
+        assert PunishStepState.APPLY == should_warn_player(
+            watch_status, config, "able", aplayer
         )
 
 
@@ -642,13 +688,16 @@ def test_should_punish(team_view):
     )
 
     watch_status = WatchStatus()
-    assert PunishStepState.apply == should_punish_player(
+    player = team_view["allies"]["squads"]["able"]["players"][0]
+    aplayer = construct_aplayer(player)
+
+    assert PunishStepState.APPLY == should_punish_player(
         watch_status,
         config,
         team_view,
         "able",
         team_view["allies"]["squads"]["able"],
-        team_view["allies"]["squads"]["able"]["players"][0],
+        aplayer,
     )
 
 
@@ -663,21 +712,24 @@ def test_punish_wait(team_view):
     )
 
     watch_status = WatchStatus()
-    assert PunishStepState.apply == should_punish_player(
+    player = team_view["allies"]["squads"]["able"]["players"][0]
+    aplayer = construct_aplayer(player)
+
+    assert PunishStepState.APPLY == should_punish_player(
         watch_status,
         config,
         team_view,
         "able",
         team_view["allies"]["squads"]["able"],
-        team_view["allies"]["squads"]["able"]["players"][0],
+        aplayer,
     )
-    assert PunishStepState.wait == should_punish_player(
+    assert PunishStepState.WAIT == should_punish_player(
         watch_status,
         config,
         team_view,
         "able",
         team_view["allies"]["squads"]["able"],
-        team_view["allies"]["squads"]["able"]["players"][0],
+        aplayer,
     )
 
 
@@ -692,39 +744,42 @@ def test_punish_twice(team_view):
     )
 
     watch_status = WatchStatus()
-    assert PunishStepState.apply == should_punish_player(
+    player = team_view["allies"]["squads"]["able"]["players"][0]
+    aplayer = construct_aplayer(player)
+
+    assert PunishStepState.APPLY == should_punish_player(
         watch_status,
         config,
         team_view,
         "able",
         team_view["allies"]["squads"]["able"],
-        team_view["allies"]["squads"]["able"]["players"][0],
+        aplayer,
     )
-    assert PunishStepState.wait == should_punish_player(
+    assert PunishStepState.WAIT == should_punish_player(
         watch_status,
         config,
         team_view,
         "able",
         team_view["allies"]["squads"]["able"],
-        team_view["allies"]["squads"]["able"]["players"][0],
-    )
-    time.sleep(config.punish_interval_seconds)
-    assert PunishStepState.apply == should_punish_player(
-        watch_status,
-        config,
-        team_view,
-        "able",
-        team_view["allies"]["squads"]["able"],
-        team_view["allies"]["squads"]["able"]["players"][0],
+        aplayer,
     )
     time.sleep(config.punish_interval_seconds)
-    assert PunishStepState.go_to_next_step == should_punish_player(
+    assert PunishStepState.APPLY == should_punish_player(
         watch_status,
         config,
         team_view,
         "able",
         team_view["allies"]["squads"]["able"],
-        team_view["allies"]["squads"]["able"]["players"][0],
+        aplayer,
+    )
+    time.sleep(config.punish_interval_seconds)
+    assert PunishStepState.GO_TO_NEXT_STEP == should_punish_player(
+        watch_status,
+        config,
+        team_view,
+        "able",
+        team_view["allies"]["squads"]["able"],
+        aplayer,
     )
 
 
@@ -739,13 +794,16 @@ def test_punish_too_little_players(team_view):
     )
 
     watch_status = WatchStatus()
-    assert PunishStepState.wait == should_punish_player(
+    player = team_view["allies"]["squads"]["able"]["players"][0]
+    aplayer = construct_aplayer(player)
+
+    assert PunishStepState.WAIT == should_punish_player(
         watch_status,
         config,
         team_view,
         "able",
         team_view["allies"]["squads"]["able"],
-        team_view["allies"]["squads"]["able"]["players"][0],
+        aplayer,
     )
 
 
@@ -760,13 +818,16 @@ def test_punish_small_squad(team_view):
     )
 
     watch_status = WatchStatus()
-    assert PunishStepState.wait == should_punish_player(
+    player = team_view["allies"]["squads"]["able"]["players"][0]
+    aplayer = construct_aplayer(player)
+
+    assert PunishStepState.WAIT == should_punish_player(
         watch_status,
         config,
         team_view,
         "able",
         team_view["allies"]["squads"]["able"],
-        team_view["allies"]["squads"]["able"]["players"][0],
+        aplayer,
     )
 
 
@@ -781,13 +842,16 @@ def test_punish_disabled(team_view):
     )
 
     watch_status = WatchStatus()
-    assert PunishStepState.disabled == should_punish_player(
+    player = team_view["allies"]["squads"]["able"]["players"][0]
+    aplayer = construct_aplayer(player)
+
+    assert PunishStepState.DISABLED == should_punish_player(
         watch_status,
         config,
         team_view,
         "able",
         team_view["allies"]["squads"]["able"],
-        team_view["allies"]["squads"]["able"]["players"][0],
+        aplayer,
     )
 
 
@@ -802,13 +866,16 @@ def test_punish_immuned_role(team_view):
     )
 
     watch_status = WatchStatus()
-    assert PunishStepState.immuned == should_punish_player(
+    player = team_view["allies"]["squads"]["able"]["players"][0]
+    aplayer = construct_aplayer(player)
+
+    assert PunishStepState.IMMUNED == should_punish_player(
         watch_status,
         config,
         team_view,
         "able",
         team_view["allies"]["squads"]["able"],
-        team_view["allies"]["squads"]["able"]["players"][0],
+        aplayer,
     )
 
     config = NoLeaderConfig(
@@ -821,13 +888,13 @@ def test_punish_immuned_role(team_view):
     )
 
     watch_status = WatchStatus()
-    assert PunishStepState.immuned == should_punish_player(
+    assert PunishStepState.IMMUNED == should_punish_player(
         watch_status,
         config,
         team_view,
         "able",
         team_view["allies"]["squads"]["able"],
-        team_view["allies"]["squads"]["able"]["players"][0],
+        aplayer,
     )
 
 
@@ -842,13 +909,16 @@ def test_punish_immuned_lvl(team_view):
     )
 
     watch_status = WatchStatus()
-    assert PunishStepState.immuned == should_punish_player(
+    player = team_view["allies"]["squads"]["able"]["players"][0]
+    aplayer = construct_aplayer(player)
+
+    assert PunishStepState.IMMUNED == should_punish_player(
         watch_status,
         config,
         team_view,
         "able",
         team_view["allies"]["squads"]["able"],
-        team_view["allies"]["squads"]["able"]["players"][0],
+        aplayer,
     )
 
 
@@ -864,22 +934,24 @@ def test_shouldnt_kick_without_punish(team_view):
 
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
-    assert PunishStepState.disabled == should_kick_player(
+    aplayer = construct_aplayer(player)
+
+    assert PunishStepState.DISABLED == should_kick_player(
         watch_status,
         config,
         team_view,
         "able",
         team_view["allies"]["squads"]["able"],
-        player,
+        aplayer,
     )
     watch_status.punished.setdefault(player["name"], []).append(datetime.now())
-    assert PunishStepState.apply == should_kick_player(
+    assert PunishStepState.APPLY == should_kick_player(
         watch_status,
         config,
         team_view,
         "able",
         team_view["allies"]["squads"]["able"],
-        player,
+        aplayer,
     )
 
 
@@ -894,15 +966,16 @@ def test_shouldnt_kick_immuned(team_view):
     )
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
+    aplayer = construct_aplayer(player)
     watch_status.punished.setdefault(player["name"], []).append(datetime.now())
 
-    assert PunishStepState.immuned == should_kick_player(
+    assert PunishStepState.IMMUNED == should_kick_player(
         watch_status,
         config,
         team_view,
         "able",
         team_view["allies"]["squads"]["able"],
-        player,
+        aplayer,
     )
 
 
@@ -917,15 +990,16 @@ def test_shouldnt_kick_immuned_lvl(team_view):
     )
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
+    aplayer = construct_aplayer(player)
     watch_status.punished.setdefault(player["name"], []).append(datetime.now())
 
-    assert PunishStepState.immuned == should_kick_player(
+    assert PunishStepState.IMMUNED == should_kick_player(
         watch_status,
         config,
         team_view,
         "able",
         team_view["allies"]["squads"]["able"],
-        player,
+        aplayer,
     )
 
 
@@ -940,15 +1014,16 @@ def test_shouldnt_kick_small_squad(team_view):
     )
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
+    aplayer = construct_aplayer(player)
     watch_status.punished.setdefault(player["name"], []).append(datetime.now())
 
-    assert PunishStepState.wait == should_kick_player(
+    assert PunishStepState.WAIT == should_kick_player(
         watch_status,
         config,
         team_view,
         "able",
         team_view["allies"]["squads"]["able"],
-        player,
+        aplayer,
     )
 
 
@@ -963,15 +1038,16 @@ def test_shouldnt_kick_small_game(team_view):
     )
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
+    aplayer = construct_aplayer(player)
     watch_status.punished.setdefault(player["name"], []).append(datetime.now())
 
-    assert PunishStepState.wait == should_kick_player(
+    assert PunishStepState.WAIT == should_kick_player(
         watch_status,
         config,
         team_view,
         "able",
         team_view["allies"]["squads"]["able"],
-        player,
+        aplayer,
     )
 
 
@@ -986,15 +1062,16 @@ def test_shouldnt_kick_disabled(team_view):
     )
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
+    aplayer = construct_aplayer(player)
     watch_status.punished.setdefault(player["name"], []).append(datetime.now())
 
-    assert PunishStepState.disabled == should_kick_player(
+    assert PunishStepState.DISABLED == should_kick_player(
         watch_status,
         config,
         team_view,
         "able",
         team_view["allies"]["squads"]["able"],
-        player,
+        aplayer,
     )
 
 
@@ -1009,37 +1086,39 @@ def test_should_wait_kick(team_view):
     )
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
+    aplayer = construct_aplayer(player)
     watch_status.punished.setdefault(player["name"], []).append(datetime.now())
 
-    assert PunishStepState.wait == should_kick_player(
+    assert PunishStepState.WAIT == should_kick_player(
         watch_status,
         config,
         team_view,
         "able",
         team_view["allies"]["squads"]["able"],
-        player,
+        aplayer,
     )
-    assert PunishStepState.wait == should_kick_player(
+    assert PunishStepState.WAIT == should_kick_player(
         watch_status,
         config,
         team_view,
         "able",
         team_view["allies"]["squads"]["able"],
-        player,
+        aplayer,
     )
     time.sleep(1)
-    assert PunishStepState.apply == should_kick_player(
+    assert PunishStepState.APPLY == should_kick_player(
         watch_status,
         config,
         team_view,
         "able",
         team_view["allies"]["squads"]["able"],
-        player,
+        aplayer,
     )
 
 
 def test_watcher(team_view):
     config = NoLeaderConfig(
+        number_of_notes=0,
         number_of_warning=1,
         warning_interval_seconds=3,
         number_of_punish=2,
@@ -1071,7 +1150,7 @@ def test_watcher(team_view):
         expected_warned_players = [
             APlayer(
                 steam_id_64="76561198055458575",
-                player="Lawless",
+                name="Lawless",
                 squad="baker",
                 team="allies",
                 role="heavymachinegunner",
@@ -1079,7 +1158,7 @@ def test_watcher(team_view):
             ),
             APlayer(
                 steam_id_64="76561198985998769",
-                player="Major_Winters",
+                name="Major_Winters",
                 squad="baker",
                 team="allies",
                 role="rifleman",
@@ -1087,7 +1166,7 @@ def test_watcher(team_view):
             ),
             APlayer(
                 steam_id_64="76561198393093210",
-                player="Toomz",
+                name="Toomz",
                 squad="baker",
                 team="allies",
                 role="assault",
@@ -1095,7 +1174,7 @@ def test_watcher(team_view):
             ),
             APlayer(
                 steam_id_64="76561198026310990",
-                player="Zones (BEL)",
+                name="Zones (BEL)",
                 squad="baker",
                 team="allies",
                 role="engineer",
@@ -1103,7 +1182,7 @@ def test_watcher(team_view):
             ),
             APlayer(
                 steam_id_64="76561198198563101",
-                player="Pavooloni",
+                name="Pavooloni",
                 squad="baker",
                 team="allies",
                 role="antitank",
@@ -1111,7 +1190,7 @@ def test_watcher(team_view):
             ),
             APlayer(
                 steam_id_64="76561198028236925",
-                player="Kjjuj",
+                name="Kjjuj",
                 squad="baker",
                 team="allies",
                 role="rifleman",
@@ -1119,7 +1198,7 @@ def test_watcher(team_view):
             ),
             APlayer(
                 steam_id_64="76561198979089668",
-                player="emfoor",
+                name="emfoor",
                 squad="able",
                 team="axis",
                 role="assault",
@@ -1127,7 +1206,7 @@ def test_watcher(team_view):
             ),
             APlayer(
                 steam_id_64="76561198041823654",
-                player="Makaj",
+                name="Makaj",
                 squad="able",
                 team="axis",
                 role="officer",
@@ -1135,7 +1214,7 @@ def test_watcher(team_view):
             ),
             APlayer(
                 steam_id_64="76561198892700816",
-                player="tinner2115",
+                name="tinner2115",
                 squad="able",
                 team="axis",
                 role="engineer",
@@ -1143,7 +1222,7 @@ def test_watcher(team_view):
             ),
             APlayer(
                 steam_id_64="76561198354354474",
-                player="Cuervo",
+                name="Cuervo",
                 squad="able",
                 team="axis",
                 role="antitank",
@@ -1151,23 +1230,15 @@ def test_watcher(team_view):
             ),
             APlayer(
                 steam_id_64="76561198046677517",
-                player="capitanodrew",
+                name="capitanodrew",
                 squad="able",
                 team="axis",
                 role="heavymachinegunner",
                 lvl=67,
             ),
             APlayer(
-                steam_id_64="76561199027409370",
-                player="Dr.FishShitz",
-                squad="able",
-                team="axis",
-                role="automaticrifleman",
-                lvl=10,
-            ),
-            APlayer(
                 steam_id_64="76561198206929555",
-                player="WilliePeter",
+                name="WilliePeter",
                 squad="baker",
                 team="axis",
                 role="spotter",
@@ -1175,7 +1246,7 @@ def test_watcher(team_view):
             ),
             APlayer(
                 steam_id_64="76561199166765040",
-                player="DarkVisionary",
+                name="DarkVisionary",
                 squad="baker",
                 team="axis",
                 role="sniper",
@@ -1197,7 +1268,7 @@ def test_watcher(team_view):
                 players=[
                     APlayer(
                         steam_id_64="76561198055458575",
-                        player="Lawless",
+                        name="Lawless",
                         squad="baker",
                         team="allies",
                         role="heavymachinegunner",
@@ -1205,7 +1276,7 @@ def test_watcher(team_view):
                     ),
                     APlayer(
                         steam_id_64="76561198985998769",
-                        player="Major_Winters",
+                        name="Major_Winters",
                         squad="baker",
                         team="allies",
                         role="rifleman",
@@ -1213,7 +1284,7 @@ def test_watcher(team_view):
                     ),
                     APlayer(
                         steam_id_64="76561198393093210",
-                        player="Toomz",
+                        name="Toomz",
                         squad="baker",
                         team="allies",
                         role="assault",
@@ -1221,7 +1292,7 @@ def test_watcher(team_view):
                     ),
                     APlayer(
                         steam_id_64="76561198026310990",
-                        player="Zones (BEL)",
+                        name="Zones (BEL)",
                         squad="baker",
                         team="allies",
                         role="engineer",
@@ -1229,7 +1300,7 @@ def test_watcher(team_view):
                     ),
                     APlayer(
                         steam_id_64="76561198198563101",
-                        player="Pavooloni",
+                        name="Pavooloni",
                         squad="baker",
                         team="allies",
                         role="antitank",
@@ -1237,7 +1308,7 @@ def test_watcher(team_view):
                     ),
                     APlayer(
                         steam_id_64="76561198028236925",
-                        player="Kjjuj",
+                        name="Kjjuj",
                         squad="baker",
                         team="allies",
                         role="rifleman",
@@ -1251,7 +1322,7 @@ def test_watcher(team_view):
                 players=[
                     APlayer(
                         steam_id_64="76561198979089668",
-                        player="emfoor",
+                        name="emfoor",
                         squad="able",
                         team="axis",
                         role="assault",
@@ -1259,7 +1330,7 @@ def test_watcher(team_view):
                     ),
                     APlayer(
                         steam_id_64="76561198041823654",
-                        player="Makaj",
+                        name="Makaj",
                         squad="able",
                         team="axis",
                         role="officer",
@@ -1267,7 +1338,7 @@ def test_watcher(team_view):
                     ),
                     APlayer(
                         steam_id_64="76561198892700816",
-                        player="tinner2115",
+                        name="tinner2115",
                         squad="able",
                         team="axis",
                         role="engineer",
@@ -1275,7 +1346,7 @@ def test_watcher(team_view):
                     ),
                     APlayer(
                         steam_id_64="76561198354354474",
-                        player="Cuervo",
+                        name="Cuervo",
                         squad="able",
                         team="axis",
                         role="antitank",
@@ -1283,7 +1354,7 @@ def test_watcher(team_view):
                     ),
                     APlayer(
                         steam_id_64="76561198046677517",
-                        player="capitanodrew",
+                        name="capitanodrew",
                         squad="able",
                         team="axis",
                         role="heavymachinegunner",
@@ -1291,7 +1362,7 @@ def test_watcher(team_view):
                     ),
                     APlayer(
                         steam_id_64="76561199027409370",
-                        player="Dr.FishShitz",
+                        name="Dr.FishShitz",
                         squad="able",
                         team="axis",
                         role="automaticrifleman",
@@ -1305,7 +1376,7 @@ def test_watcher(team_view):
                 players=[
                     APlayer(
                         steam_id_64="76561198206929555",
-                        player="WilliePeter",
+                        name="WilliePeter",
                         squad="baker",
                         team="axis",
                         role="spotter",
@@ -1313,7 +1384,7 @@ def test_watcher(team_view):
                     ),
                     APlayer(
                         steam_id_64="76561199166765040",
-                        player="DarkVisionary",
+                        name="DarkVisionary",
                         squad="baker",
                         team="axis",
                         role="sniper",
@@ -1348,6 +1419,7 @@ def test_watcher(team_view):
 
 def test_watcher_no_kick(team_view):
     config = NoLeaderConfig(
+        number_of_notes=0,
         number_of_warning=1,
         warning_interval_seconds=3,
         number_of_punish=2,
@@ -1379,7 +1451,7 @@ def test_watcher_no_kick(team_view):
         expected_warned_players = [
             APlayer(
                 steam_id_64="76561198055458575",
-                player="Lawless",
+                name="Lawless",
                 squad="baker",
                 team="allies",
                 role="heavymachinegunner",
@@ -1387,7 +1459,7 @@ def test_watcher_no_kick(team_view):
             ),
             APlayer(
                 steam_id_64="76561198985998769",
-                player="Major_Winters",
+                name="Major_Winters",
                 squad="baker",
                 team="allies",
                 role="rifleman",
@@ -1395,7 +1467,7 @@ def test_watcher_no_kick(team_view):
             ),
             APlayer(
                 steam_id_64="76561198393093210",
-                player="Toomz",
+                name="Toomz",
                 squad="baker",
                 team="allies",
                 role="assault",
@@ -1403,7 +1475,7 @@ def test_watcher_no_kick(team_view):
             ),
             APlayer(
                 steam_id_64="76561198026310990",
-                player="Zones (BEL)",
+                name="Zones (BEL)",
                 squad="baker",
                 team="allies",
                 role="engineer",
@@ -1411,7 +1483,7 @@ def test_watcher_no_kick(team_view):
             ),
             APlayer(
                 steam_id_64="76561198198563101",
-                player="Pavooloni",
+                name="Pavooloni",
                 squad="baker",
                 team="allies",
                 role="antitank",
@@ -1419,7 +1491,7 @@ def test_watcher_no_kick(team_view):
             ),
             APlayer(
                 steam_id_64="76561198028236925",
-                player="Kjjuj",
+                name="Kjjuj",
                 squad="baker",
                 team="allies",
                 role="rifleman",
@@ -1427,7 +1499,7 @@ def test_watcher_no_kick(team_view):
             ),
             APlayer(
                 steam_id_64="76561198979089668",
-                player="emfoor",
+                name="emfoor",
                 squad="able",
                 team="axis",
                 role="assault",
@@ -1435,7 +1507,7 @@ def test_watcher_no_kick(team_view):
             ),
             APlayer(
                 steam_id_64="76561198041823654",
-                player="Makaj",
+                name="Makaj",
                 squad="able",
                 team="axis",
                 role="officer",
@@ -1443,7 +1515,7 @@ def test_watcher_no_kick(team_view):
             ),
             APlayer(
                 steam_id_64="76561198892700816",
-                player="tinner2115",
+                name="tinner2115",
                 squad="able",
                 team="axis",
                 role="engineer",
@@ -1451,7 +1523,7 @@ def test_watcher_no_kick(team_view):
             ),
             APlayer(
                 steam_id_64="76561198354354474",
-                player="Cuervo",
+                name="Cuervo",
                 squad="able",
                 team="axis",
                 role="antitank",
@@ -1459,7 +1531,7 @@ def test_watcher_no_kick(team_view):
             ),
             APlayer(
                 steam_id_64="76561198046677517",
-                player="capitanodrew",
+                name="capitanodrew",
                 squad="able",
                 team="axis",
                 role="heavymachinegunner",
@@ -1467,7 +1539,7 @@ def test_watcher_no_kick(team_view):
             ),
             APlayer(
                 steam_id_64="76561199027409370",
-                player="Dr.FishShitz",
+                name="Dr.FishShitz",
                 squad="able",
                 team="axis",
                 role="automaticrifleman",
@@ -1475,7 +1547,7 @@ def test_watcher_no_kick(team_view):
             ),
             APlayer(
                 steam_id_64="76561198206929555",
-                player="WilliePeter",
+                name="WilliePeter",
                 squad="baker",
                 team="axis",
                 role="spotter",
@@ -1483,7 +1555,7 @@ def test_watcher_no_kick(team_view):
             ),
             APlayer(
                 steam_id_64="76561199166765040",
-                player="DarkVisionary",
+                name="DarkVisionary",
                 squad="baker",
                 team="axis",
                 role="sniper",
@@ -1524,6 +1596,7 @@ def test_watcher_no_kick(team_view):
 
 def test_watcher_resets(team_view):
     config = NoLeaderConfig(
+        number_of_notes=0,
         number_of_warning=0,
         warning_interval_seconds=3,
         number_of_punish=1,
@@ -1555,7 +1628,7 @@ def test_watcher_resets(team_view):
         expected_players = [
             APlayer(
                 steam_id_64="76561198055458575",
-                player="Lawless",
+                name="Lawless",
                 squad="baker",
                 team="allies",
                 role="heavymachinegunner",
@@ -1563,7 +1636,7 @@ def test_watcher_resets(team_view):
             ),
             APlayer(
                 steam_id_64="76561198985998769",
-                player="Major_Winters",
+                name="Major_Winters",
                 squad="baker",
                 team="allies",
                 role="rifleman",
@@ -1571,7 +1644,7 @@ def test_watcher_resets(team_view):
             ),
             APlayer(
                 steam_id_64="76561198393093210",
-                player="Toomz",
+                name="Toomz",
                 squad="baker",
                 team="allies",
                 role="assault",
@@ -1579,7 +1652,7 @@ def test_watcher_resets(team_view):
             ),
             APlayer(
                 steam_id_64="76561198026310990",
-                player="Zones (BEL)",
+                name="Zones (BEL)",
                 squad="baker",
                 team="allies",
                 role="engineer",
@@ -1587,7 +1660,7 @@ def test_watcher_resets(team_view):
             ),
             APlayer(
                 steam_id_64="76561198198563101",
-                player="Pavooloni",
+                name="Pavooloni",
                 squad="baker",
                 team="allies",
                 role="antitank",
@@ -1595,7 +1668,7 @@ def test_watcher_resets(team_view):
             ),
             APlayer(
                 steam_id_64="76561198028236925",
-                player="Kjjuj",
+                name="Kjjuj",
                 squad="baker",
                 team="allies",
                 role="rifleman",
@@ -1603,7 +1676,7 @@ def test_watcher_resets(team_view):
             ),
             APlayer(
                 steam_id_64="76561198979089668",
-                player="emfoor",
+                name="emfoor",
                 squad="able",
                 team="axis",
                 role="assault",
@@ -1611,7 +1684,7 @@ def test_watcher_resets(team_view):
             ),
             APlayer(
                 steam_id_64="76561198041823654",
-                player="Makaj",
+                name="Makaj",
                 squad="able",
                 team="axis",
                 role="officer",
@@ -1619,7 +1692,7 @@ def test_watcher_resets(team_view):
             ),
             APlayer(
                 steam_id_64="76561198892700816",
-                player="tinner2115",
+                name="tinner2115",
                 squad="able",
                 team="axis",
                 role="engineer",
@@ -1627,7 +1700,7 @@ def test_watcher_resets(team_view):
             ),
             APlayer(
                 steam_id_64="76561198354354474",
-                player="Cuervo",
+                name="Cuervo",
                 squad="able",
                 team="axis",
                 role="antitank",
@@ -1635,7 +1708,7 @@ def test_watcher_resets(team_view):
             ),
             APlayer(
                 steam_id_64="76561198046677517",
-                player="capitanodrew",
+                name="capitanodrew",
                 squad="able",
                 team="axis",
                 role="heavymachinegunner",
@@ -1643,14 +1716,14 @@ def test_watcher_resets(team_view):
             ),
             APlayer(
                 steam_id_64="76561199027409370",
-                player="Dr.FishShitz",
+                name="Dr.FishShitz",
                 squad="able",
                 team="axis",
                 role="automaticrifleman",
                 lvl=10,
             ),
-            # APlayer(player="WilliePeter",
-            # APlayer(player="DarkVisionary",
+            # APlayer(name="WilliePeter",
+            # APlayer(name="DarkVisionary",
         ]
 
         # 1st punish

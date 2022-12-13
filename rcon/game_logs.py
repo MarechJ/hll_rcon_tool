@@ -12,7 +12,7 @@ from sqlalchemy.exc import IntegrityError
 from rcon.cache_utils import get_redis_client
 from rcon.config import get_config
 from rcon.discord import send_to_discord_audit
-from rcon.extended_commands import LOG_ACTIONS, Rcon
+from rcon.extended_commands import LOG_ACTIONS, Rcon, StructuredLogLine
 from rcon.models import LogLine, PlayerSteamID, enter_session
 from rcon.player_history import (
     add_player_to_blacklist,
@@ -91,6 +91,16 @@ def on_connected(func):
 
 def on_disconnected(func):
     HOOKS["DISCONNECTED"].append(func)
+    return func
+
+
+def on_match_start(func):
+    HOOKS["MATCH START"].append(func)
+    return func
+
+
+def on_match_end(func):
+    HOOKS["MATCH ENDED"].append(func)
     return func
 
 
@@ -173,7 +183,7 @@ class LogLoop:
                 self.red.srem(self.duplicate_guard_key, k)
         logger.info("Cleanup done")
 
-    def process_hooks(self, log):
+    def process_hooks(self, log: StructuredLogLine):
         logger.debug("Processing %s", f"{log['action']}{log['message']}")
         hooks = []
         for action_hook, funcs in HOOKS.items():

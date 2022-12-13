@@ -2,6 +2,7 @@ import datetime
 import logging
 import os
 from datetime import timedelta
+from typing import Set
 
 from concurrent.futures import as_completed
 from dateutil import relativedelta
@@ -135,8 +136,20 @@ def record_stats_from_map(sess, map_):
     player_stats = stats.get_players_stats_at_time(
         from_=map_.start, until=map_.end, server_number=str(map_.server_number)
     )
+
+    seen_players: Set[str] = set()
     for player, stats in player_stats.items():
         if steam_id_64 := stats.get("steam_id_64"):
+
+            # If a player has changed their name and had stats recorded under two or more
+            # names in the same match it will otherwise try to insert duplicate records
+            # This will only record stats for the first instance of the player it sees, the other(s)
+            # will be lost of course
+            if steam_id_64 in seen_players:
+                logger.info(f"Failed to record duplicate stats for {steam_id_64}")
+                continue
+            seen_players.add(steam_id_64)
+
             player_record = get_player(sess, steam_id_64=steam_id_64)
             if not player_record:
                 logger.error("Can't find DB record for %s", steam_id_64)

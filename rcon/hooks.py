@@ -4,12 +4,14 @@ import re
 from collections import defaultdict
 from datetime import datetime
 from functools import partial, wraps
+from threading import Timer
 from typing import DefaultDict, Dict, List, Optional, Sequence, Union
 
 import discord
 from discord_webhook import DiscordEmbed
+from rcon.cache_utils import invalidates
 
-from rcon.commands import CommandFailedError
+from rcon.commands import CommandFailedError, HLLServerError
 from rcon.config import get_config
 from rcon.discord import (
     dict_to_discord,
@@ -17,8 +19,17 @@ from rcon.discord import (
     send_to_discord_audit,
 )
 from rcon.discord_chat import make_hook
-from rcon.game_logs import on_camera, on_chat, on_connected, on_disconnected, on_generic
-from rcon.map_recorder import VoteMap
+from rcon.extended_commands import Rcon, StructuredLogLine
+from rcon.game_logs import (
+    on_camera,
+    on_chat,
+    on_connected,
+    on_disconnected,
+    on_generic,
+    on_match_end,
+    on_match_start,
+)
+from rcon.vote_map import VoteMap
 from rcon.models import LogLineWebHookField, enter_session
 from rcon.player_history import (
     _get_set_player,
@@ -31,35 +42,120 @@ from rcon.player_history import (
 from rcon.recorded_commands import RecordedRcon
 from rcon.steam_utils import get_player_bans, get_steam_profile, update_db_player_info
 from rcon.user_config import CameraConfig, RealVipConfig, VoteMapConfig
-from rcon.workers import temporary_broadcast, temporary_welcome
+from rcon.utils import LOG_MAP_NAMES_TO_MAP, MapsHistory
+from rcon.workers import record_stats_worker, temporary_broadcast, temporary_welcome
 from rcon.utils import get_server_number
 
 logger = logging.getLogger(__name__)
 
 
 @on_chat
-def count_vote(rcon: RecordedRcon, struct_log):
-    config = VoteMapConfig()
-    if not config.get_vote_enabled():
-        return
-
-    v = VoteMap()
-    if vote := v.is_vote(struct_log.get("sub_content")):
-        logger.debug("Vote chat detected: %s", struct_log["message"])
-        map_name = v.register_vote(
-            struct_log["player"], struct_log["timestamp_ms"] / 1000, vote
+def count_vote(rcon: RecordedRcon, struct_log: StructuredLogLine):
+    VoteMap().handle_vote_command(rcon=rcon, struct_log=struct_log)
+    if match := re.match(r"\d", struct_log["sub_content"].strip()):
+        rcon.do_message_player(
+            steam_id_64=struct_log["steam_id_64_1"],
+            message=f"INVALID VOTE\n\nUse: !votemap {match.group()}",
         )
+
+
+def initialise_vote_map(rcon: RecordedRcon, struct_log):
+    logger.info("New match started initilising vote map. %s", struct_log)
+    try:
+        vote_map = VoteMap()
+        vote_map.clear_votes()
+        vote_map.gen_selection()
+        vote_map.reset_last_reminder_time()
+        vote_map.apply_results()
+    except:
+        logger.exception("Something went wrong in vote map init")
+
+
+@on_match_end
+def remind_vote_map(rcon: RecordedRcon, struct_log):
+    logger.info("Match ended reminding to vote map. %s", struct_log)
+    vote_map = VoteMap()
+    vote_map.apply_with_retry()
+    vote_map.vote_map_reminder(rcon, force=True)
+
+
+@on_match_start
+def handle_new_match_start(rcon: RecordedRcon, struct_log):
+    try:
+        logger.info("New match started recording map %s", struct_log)
+        with invalidates(Rcon.get_map):
+            try:
+                current_map = rcon.get_map()
+            except (CommandFailedError, HLLServerError):
+                current_map = "bla_"
+                logger.error("Unable to get current map")
+
+        map_name_to_save = LOG_MAP_NAMES_TO_MAP.get(
+            struct_log["sub_content"], "foy_warfare_night"
+        )
+        guessed = True
+        log_map_name = struct_log["sub_content"].rsplit(" ")[0]
+        log_time = datetime.fromtimestamp(struct_log["timestamp_ms"] / 1000)
+        # Check that the log is less than 5min old
+        if (datetime.utcnow() - log_time).total_seconds() < 5 * 60:
+            # then we use the current map to be more accurate
+            if (
+                current_map.split("_")[0].lower()
+                == map_name_to_save.split("_")[0].lower()
+            ):
+                map_name_to_save = current_map
+                guessed = False
+            else:
+                logger.warning(
+                    "Got recent match start but map don't match %s != %s",
+                    map_name_to_save,
+                    current_map,
+                )
+
+        # TODO added guess - check if it's already in there - set prev end if None
+        maps_history = MapsHistory()
+
+        if len(maps_history) > 0:
+            if maps_history[0]["end"] is None and maps_history[0]["name"]:
+                maps_history.save_map_end(
+                    old_map=maps_history[0]["name"],
+                    end_timestamp=int(struct_log["timestamp_ms"] / 1000) - 100,
+                )
+
+        maps_history.save_new_map(
+            new_map=map_name_to_save,
+            guessed=guessed,
+            start_timestamp=int(struct_log["timestamp_ms"] / 1000),
+        )
+    except:
+        raise
+    finally:
+        initialise_vote_map(rcon, struct_log)
         try:
-            temporary_broadcast(
-                rcon,
-                config.get_votemap_thank_you_text().format(
-                    player_name=struct_log["player"], map_name=map_name
-                ),
-                5,
-            )
+            record_stats_worker(MapsHistory()[1])
         except Exception:
-            logger.warning("Unable to output thank you message")
-        v.apply_with_retry(nb_retry=2)
+            logger.exception("Unexpected error while running stats worker")
+
+
+@on_match_end
+def record_map_end(rcon: RecordedRcon, struct_log):
+    logger.info("Match ended recording map %s", struct_log)
+    maps_history = MapsHistory()
+    try:
+        current_map = rcon.get_map()
+    except (CommandFailedError, HLLServerError):
+        current_map = "bla_"
+        logger.error("Unable to get current map")
+
+    map_name = LOG_MAP_NAMES_TO_MAP.get(struct_log["sub_content"], "foy_warfare_night")
+    log_time = datetime.fromtimestamp(struct_log["timestamp_ms"] / 1000)
+
+    if (datetime.utcnow() - log_time).total_seconds() < 60:
+        # then we use the current map to be more accurate
+        if current_map.split("_")[0].lower() == map_name.split("_")[0].lower():
+            maps_history.save_map_end(
+                current_map, end_timestamp=int(struct_log["timestamp_ms"] / 1000)
+            )
 
 
 MAX_DAYS_SINCE_BAN = os.getenv("BAN_ON_VAC_HISTORY_DAYS", 0)
@@ -189,21 +285,12 @@ def ban_if_has_vac_bans(rcon: RecordedRcon, steam_id_64, name):
                 logger.exception("Unable to send vac ban to audit log")
 
 
-def inject_steam_id_64(func):
+def inject_player_ids(func):
     @wraps(func)
-    def wrapper(rcon, struct_log):
-        try:
-            name = struct_log["player"]
-            info = rcon.get_player_info(name, can_fail=True)
-            steam_id_64 = info.get("steam_id_64")
-        except KeyError:
-            logger.exception("Unable to inject steamid %s", struct_log)
-            raise
-        if not steam_id_64:
-            logger.warning("Can't get player steam_id for %s", name)
-            return
-
-        return func(rcon, struct_log, steam_id_64)
+    def wrapper(rcon, struct_log: StructuredLogLine):
+        name = struct_log["player"]
+        steam_id_64 = struct_log["steam_id_64_1"]
+        return func(rcon, struct_log, name, steam_id_64)
 
     return wrapper
 
@@ -253,14 +340,14 @@ def handle_on_connect(rcon, struct_log):
 
 
 @on_disconnected
-@inject_steam_id_64
-def handle_on_disconnect(rcon, struct_log, steam_id_64):
+@inject_player_ids
+def handle_on_disconnect(rcon, struct_log, _, steam_id_64):
     save_end_player_session(steam_id_64, struct_log["timestamp_ms"] / 1000)
 
 
 @on_connected
-@inject_steam_id_64
-def update_player_steaminfo_on_connect(rcon, struct_log, steam_id_64):
+@inject_player_ids
+def update_player_steaminfo_on_connect(rcon, struct_log, _, steam_id_64):
     if not steam_id_64:
         logger.error(
             "Can't update steam info, no steam id available for %s",
@@ -282,6 +369,55 @@ def update_player_steaminfo_on_connect(rcon, struct_log, steam_id_64):
         )
         update_db_player_info(player, profile)
         sess.commit()
+
+
+pendingTimers = {}
+
+
+@on_connected
+@inject_player_ids
+def notify_false_positives(rcon: RecordedRcon, _, name: str, steam_id_64: str):
+    c = get_config()["NOLEADER_AUTO_MOD"]
+    if not c["enabled"]:
+        logger.info("no leader auto mod is disabled")
+        return
+
+    if not name.endswith(" "):
+        return
+
+    logger.info(
+        "Detected player name with whitespace at the end: Warning him of false-positive events. Player name: "
+        + name
+    )
+
+    def notify_player():
+        try:
+            rcon.do_message_player(
+                steam_id_64=steam_id_64,
+                message=c["whitespace_names_message"],
+                by="CRcon",
+                save_message=False,
+            )
+        except Exception as e:
+            logger.error("Could not message player " + name + "/" + steam_id_64, e)
+
+    # The player might not yet have finished connecting in order to send messages.
+    t = Timer(10, notify_player)
+    pendingTimers[steam_id_64] = t
+    t.start()
+
+
+@on_disconnected
+@inject_player_ids
+def cleanup_pending_timers(_, _1, _2, steam_id_64: str):
+    pt: Timer = pendingTimers.pop(steam_id_64, None)
+    if pt is None:
+        return
+    if pt.is_alive():
+        try:
+            pt.cancel()
+        except:
+            pass
 
 
 def _set_real_vips(rcon: RecordedRcon, struct_log):
