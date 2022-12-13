@@ -17,6 +17,10 @@ class SquadCycleOver(Exception):
     pass
 
 
+class NoSeedingViolation(Exception):
+    pass
+
+
 @dataclass
 class WatchStatus:
     noted: Mapping[str, List[datetime]] = field(default_factory=dict)
@@ -90,6 +94,7 @@ class NoLeaderConfig:
 class DisallowedRolesConfig:
     threshold: int = 0
     roles: List[str] = field(default_factory=list)
+    message: str = "{role} is not allowed when server is seeding"
 
 
 @dataclass
@@ -98,7 +103,7 @@ class SeedingRulesConfig:
     discord_webhook_url: str = ""
 
     warning_message: str = (
-        "Warning, {player_name}! You violate seeding rules on this server. "
+        "Warning, {player_name}! You violate seeding rules on this server: {violation}\n"
         "You will be punished after {max_warnings} warnings (you already received {received_warnings}), "
         "then kicked.\nNext check will happen automatically in {next_check_seconds}s."
     )

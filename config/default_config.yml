@@ -230,8 +230,8 @@ SEEDING_AUTO_MOD:
   number_of_warning: 2
   # This is the text that will be displayed to warn players.
   # The following variables are available to fill into the text
-  #  {player_name}, {received_warnings}, {max_warnings} and {next_check_seconds}
-  warning_message: "Warning, {player_name}! You violate seeding rules on this server. You will be punished after {max_warnings} warnings (you already received {received_warnings}), then kicked.\nNext check will happen automatically in {next_check_seconds}s."
+  #  {player_name}, {received_warnings}, {max_warnings} and {next_check_seconds}, {violation}
+  warning_message: "Warning, {player_name}! You violate seeding rules on this server: {violation}\nYou will be punished after {max_warnings} warnings (you already received {received_warnings}), then kicked.\nNext check will happen automatically in {next_check_seconds}s."
   # This is the number of seconds this auto-mod will wait until moving to
   # the next warning or to the punish stage if the number_of_warning's is reached
   warning_interval_seconds: 60
@@ -274,6 +274,9 @@ SEEDING_AUTO_MOD:
     roles:
     - tankcommander
     - crewman
+    # Violation message used as a description of the seeding violation when player is messaged, punished and kicked.
+    #  {role}
+    message: "{role} is not allowed when server is seeding"
 
 # Set your custom text or transalation for each of the below keys. Logo urls and prefered stats and such
 # If you have more that 3 server copy the whole SERVER_1 section 
