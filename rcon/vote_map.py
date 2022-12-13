@@ -604,7 +604,7 @@ class VoteMap:
     def apply_results(self):
         config = VoteMapConfig()
         if not config.get_vote_enabled():
-            return
+            return True
 
         votes = self.get_votes()
         first = Counter(votes.values()).most_common(1)

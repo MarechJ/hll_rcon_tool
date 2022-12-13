@@ -60,8 +60,6 @@ def count_vote(rcon: RecordedRcon, struct_log: StructuredLogLine):
 
 def initialise_vote_map(rcon: RecordedRcon, struct_log):
     config = VoteMapConfig()
-    if not config.get_vote_enabled():
-        return
 
     logger.info("New match started initilising vote map. %s", struct_log)
     try:
