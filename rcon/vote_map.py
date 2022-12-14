@@ -319,19 +319,20 @@ class VoteMap:
             except CommandFailedError:
                 logger.warning("Unable to message %s", name)
 
-    def handle_vote_command(self, rcon, struct_log: StructuredLogLine):
+    def handle_vote_command(self, rcon, struct_log: StructuredLogLine) -> bool:
         message = struct_log.get("sub_content", "").strip()
+        config = VoteMapConfig()
+        enabled = config.get_vote_enabled()
         if not message.startswith("!votemap"):
-            return
+            return enabled
 
         steam_id_64_1 = struct_log["steam_id_64_1"]
-        config = VoteMapConfig()
-        if not config.get_vote_enabled():
+        if not enabled:
             rcon.do_message_player(
                 steam_id_64=steam_id_64_1,
                 message="Vote map is not enabled on this server",
             )
-            return
+            return enabled
 
         help_text = config.get_votemap_help_text()
 
@@ -362,12 +363,12 @@ class VoteMap:
                     rcon.do_message_player(steam_id_64=steam_id_64_1, message=msg)
             finally:
                 self.apply_results()
-                return
+                return enabled
 
         if re.match(r"!votemap\s*help", message) and help_text:
             logger.info("Showing help %s", struct_log)
             rcon.do_message_player(steam_id_64=steam_id_64_1, message=help_text)
-            return
+            return enabled
 
         if re.match(r"!votemap$", message):
             logger.info("Showing selection %s", struct_log)
@@ -378,7 +379,7 @@ class VoteMap:
                     map_selection=self.format_map_vote("by_mod_vertical_all")
                 ),
             )
-            return
+            return enabled
 
         if re.match(r"!votemap\s*never$", message):
             if not config.get_votemap_allow_optout():
@@ -386,7 +387,7 @@ class VoteMap:
                     steam_id_64=steam_id_64_1,
                     message="You can't opt-out of vote map on this server",
                 )
-                return
+                return enabled
 
             logger.info("Player opting out of vote %s", struct_log)
             with enter_session() as sess:
@@ -420,7 +421,7 @@ class VoteMap:
                     logger.exception("Unable to add optin. Already exists?")
                 self.apply_with_retry()
 
-            return
+            return enabled
 
         if re.match(r"!votemap\s*allow$", message):
             logger.info("Player opting in for vote %s", struct_log)
@@ -453,10 +454,10 @@ class VoteMap:
                     )
                 except Exception as e:
                     logger.exception("Unable to update optin. Already exists?")
-            return
+            return enabled
 
         rcon.do_message_player(steam_id_64=steam_id_64_1, message=help_text)
-        return
+        return enabled
 
     def register_vote(self, player_name, vote_timestamp, vote_content):
         try:
@@ -707,9 +708,9 @@ def on_map_change(old_map: str, new_map: str):
     #         # )
     # except Exception:
     #     logger.exception("Unexpected error while running vote map")
-    #try:
+    # try:
     #    record_stats_worker(MapsHistory()[1])
-    #except Exception:
+    # except Exception:
     #    logger.exception("Unexpected error while running stats worker")
 
 
