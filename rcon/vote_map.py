@@ -329,7 +329,7 @@ class VoteMap:
         if not config.get_vote_enabled():
             rcon.do_message_player(
                 steam_id_64=steam_id_64_1,
-                message="Vote map is not enabled on thi server",
+                message="Vote map is not enabled on this server",
             )
             return
 
@@ -603,6 +603,9 @@ class VoteMap:
 
     def apply_results(self):
         config = VoteMapConfig()
+        if not config.get_vote_enabled():
+            return True
+
         votes = self.get_votes()
         first = Counter(votes.values()).most_common(1)
         if not first:
