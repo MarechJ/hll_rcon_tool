@@ -272,11 +272,11 @@ SEEDING_AUTO_MOD:
     # a list of roles that should not be taken by players.
     # Available roles are: 'officer', 'antitank', 'automaticrifleman', 'assault', 'heavymachinegunner', 'support', 'sniper', 'spotter', 'rifleman', 'crewman', 'tankcommander', 'engineer', 'medic'
     roles:
-    - tankcommander
-    - crewman
+      tankcommander: Tanks
+      crewman: Tanks
     # Violation message used as a description of the seeding violation when player is messaged, punished and kicked.
     #  {role}
-    message: "{role} is not allowed when server is seeding"
+    message: "{role} are not allowed when server is seeding"
 
 # Set your custom text or transalation for each of the below keys. Logo urls and prefered stats and such
 # If you have more that 3 server copy the whole SERVER_1 section 

@@ -108,12 +108,13 @@ def valid_roles(o: List[str]) -> List[str]:
 @dataclass
 class DisallowedRolesConfig:
     threshold: int = 0
-    roles: List[str] = field(default_factory=list)
+    roles: Mapping[str, str] = field(default_factory=dict)
     message: str = "{role} is not allowed when server is seeding"
 
     @validator("roles")
-    def validate_roles(cls, v: List[str]):
-        return valid_roles(v)
+    def validate_roles(cls, v: Mapping[str, str]):
+        valid_roles(list(v.keys()))
+        return v
 
 
 @dataclass

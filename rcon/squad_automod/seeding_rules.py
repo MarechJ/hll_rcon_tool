@@ -104,8 +104,10 @@ class SeedingRulesAutomod:
                 )
 
                 violations = []
+                print(self.config.disallowed_roles.roles)
                 if aplayer.role in self.config.disallowed_roles.roles:
-                    violations.append(self.config.disallowed_roles.message.format(role=aplayer.role))
+                    violations.append(self.config.disallowed_roles.message.format(
+                        role=self.config.disallowed_roles.roles.get(aplayer.role)))
 
                 if len(violations) == 0:
                     continue
@@ -114,7 +116,8 @@ class SeedingRulesAutomod:
                 state = self.should_warn_player(watch_status, squad_name, aplayer)
 
                 if state == PunishStepState.APPLY:
-                    aplayer.details.message = self.get_message(watch_status, aplayer, violation_msg, ActionMethod.MESSAGE)
+                    aplayer.details.message = self.get_message(watch_status, aplayer, violation_msg,
+                                                               ActionMethod.MESSAGE)
                     punitions_to_apply.warning.append(aplayer)
                     punitions_to_apply.add_squad_state(team, squad_name, squad)
 
@@ -124,7 +127,8 @@ class SeedingRulesAutomod:
                 state = self.should_punish_player(watch_status, squad_name, aplayer)
 
                 if state == PunishStepState.APPLY:
-                    aplayer.details.message = self.get_message(watch_status, aplayer, violation_msg, ActionMethod.PUNISH)
+                    aplayer.details.message = self.get_message(watch_status, aplayer, violation_msg,
+                                                               ActionMethod.PUNISH)
                     punitions_to_apply.punish.append(aplayer)
                     punitions_to_apply.add_squad_state(team, squad_name, squad)
                 if state not in [PunishStepState.DISABLED, PunishStepState.GO_TO_NEXT_STEP]:

@@ -186,7 +186,7 @@ def test_cycles_warn_punish_kick_armor_players(team_view):
         discord_webhook_url="",
         disallowed_roles=DisallowedRolesConfig(
             threshold=get_team_count(team_view, "allies") + get_team_count(team_view, "axis") + 1,
-            roles=["tankcommander", "crewman"]
+            roles={"tankcommander": "Tanks", "crewman": "Tanks"}
         ),
     )
     mod = mod_with_config(config)
@@ -223,7 +223,7 @@ def test_stops_when_no_violations_anymore(team_view):
         discord_webhook_url="",
         disallowed_roles=DisallowedRolesConfig(
             threshold=get_team_count(team_view, "allies") + get_team_count(team_view, "axis") + 1,
-            roles=["tankcommander", "crewman"]
+            roles={"tankcommander": "Tanks", "crewman": "Tanks"}
         ),
     )
     mod = mod_with_config(config)
@@ -247,6 +247,6 @@ def test_non_existing_roles_raises():
     with pytest.raises(ValueError):
         SeedingRulesConfig(
             disallowed_roles=DisallowedRolesConfig(
-                roles=["does_not_exist"]
+                roles={"does_not_exist": ""}
             ),
         )
