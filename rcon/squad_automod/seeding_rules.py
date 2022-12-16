@@ -24,6 +24,9 @@ class SeedingRulesAutomod:
         self.red = red
         self.config = config
 
+    def enabled(self):
+        return self.config.enabled
+
     @contextmanager
     def watch_state(self, team: str, squad_name: str):
         redis_key = f"seeding_rules_automod{team.lower()}{str(squad_name).lower()}"

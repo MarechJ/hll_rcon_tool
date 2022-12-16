@@ -97,8 +97,8 @@ def run_expiring_vips():
     rcon.expiring_vips.service.run()
 
 
-@cli.command(name="noleaders")
-def run_squad_automod():
+@cli.command(name="automod")
+def run_automod():
     automod.run()
 
 

@@ -12,9 +12,10 @@ from rcon.squad_automod.models import (
     PunishPlayer,
     NoLeaderConfig,
     PunitionsToApply,
-    ActionMethod,
+    ActionMethod, SeedingRulesConfig,
 )
 from rcon.squad_automod.no_leader import NoLeaderAutomod
+from rcon.squad_automod.seeding_rules import SeedingRulesAutomod
 
 LEADER_WATCH_RESET_SECS = 120
 AUTOMOD_USERNAME = "NoLeaderWatch"
@@ -79,12 +80,14 @@ def punish_squads(rcon: RecordedRcon):
     try:
         config = get_config()
         no_leader_config = NoLeaderConfig(**config["NOLEADER_AUTO_MOD"])
+        seeding_config = SeedingRulesConfig(**config["SEEDING_AUTO_MOD"])
     except Exception as e:
         logger.exception("Invalid automod config, check your config/config.yml", e)
         raise
 
     enabled_moderators = list(filter(lambda m: m.enabled(), [
-        NoLeaderAutomod(no_leader_config, red)
+        NoLeaderAutomod(no_leader_config, red),
+        SeedingRulesAutomod(seeding_config, red),
     ]))
     if len(enabled_moderators) == 0:
         logger.debug("No automod is enabled")
