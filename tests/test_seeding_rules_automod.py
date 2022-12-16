@@ -1,6 +1,7 @@
 import time
 from contextlib import contextmanager
 
+import pytest
 from _pytest.fixtures import fixture
 
 from rcon.squad_automod.get_team_count import get_team_count
@@ -167,7 +168,8 @@ def test_does_nothing_when_enough_players(team_view):
         ),
     ))
 
-    assert PunitionsToApply() == mod.punitions_to_apply(team_view, "able", "allies", team_view["allies"]["squads"]["able"])
+    assert PunitionsToApply() == mod.punitions_to_apply(team_view, "able", "allies",
+                                                        team_view["allies"]["squads"]["able"])
 
 
 def test_cycles_warn_punish_kick_armor_players(team_view):
@@ -239,3 +241,12 @@ def test_stops_when_no_violations_anymore(team_view):
     assert [] == punitions.warning
     assert [] == punitions.punish
     assert [] == punitions.kick
+
+
+def test_non_existing_roles_raises():
+    with pytest.raises(ValueError):
+        SeedingRulesConfig(
+            disallowed_roles=DisallowedRolesConfig(
+                roles=["does_not_exist"]
+            ),
+        )

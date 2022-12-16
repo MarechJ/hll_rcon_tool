@@ -2,8 +2,9 @@ import logging
 from dataclasses import field
 from datetime import datetime
 from enum import Enum, auto
-from typing import List, Mapping, TypedDict
+from typing import List, Mapping
 
+from pydantic import validator
 from pydantic.dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
@@ -81,7 +82,6 @@ class NoLeaderConfig:
         "Your grace period of {kick_grace_period}s has passed.\n"
         "You failed to comply with the previous warnings."
     )
-    # roles: 'officer', 'antitank', 'automaticrifleman', 'assault', 'heavymachinegunner', 'support', 'sniper', 'spotter', 'rifleman', 'crewman', 'tankcommander', 'engineer', 'medic'
     immuned_roles: List[str] = field(default_factory=lambda: ["support", "sniper"])
     immuned_level_up_to: int = 15
 
@@ -89,12 +89,31 @@ class NoLeaderConfig:
     # but required to succesfully parse the yml data to a pydanctic.dataclass
     whitespace_names_message: str = ""
 
+    @validator("immuned_roles")
+    def validate_roles(cls, v: List[str]):
+        return valid_roles(v)
+
+
+EXISTING_ROLES = {"officer", "antitank", "automaticrifleman", "assault", "heavymachinegunner", "support", "sniper",
+                  "spotter", "rifleman", "crewman", "tankcommander", "engineer", "medic"}
+
+
+def valid_roles(o: List[str]) -> List[str]:
+    non_existing_roles = list(set(o) - EXISTING_ROLES)
+    if len(non_existing_roles) != 0:
+        raise ValueError("following roles are unknown: " + ", ".join(non_existing_roles))
+    return o
+
 
 @dataclass
 class DisallowedRolesConfig:
     threshold: int = 0
     roles: List[str] = field(default_factory=list)
     message: str = "{role} is not allowed when server is seeding"
+
+    @validator("roles")
+    def validate_roles(cls, v: List[str]):
+        return valid_roles(v)
 
 
 @dataclass
@@ -125,7 +144,7 @@ class SeedingRulesConfig:
         "Your grace period of {kick_grace_period}s has passed.\n"
         "You failed to comply with the previous warnings."
     )
-    disallowed_roles: DisallowedRolesConfig = DisallowedRolesConfig()
+    disallowed_roles: DisallowedRolesConfig = field(default_factory=DisallowedRolesConfig())
 
 
 @dataclass
