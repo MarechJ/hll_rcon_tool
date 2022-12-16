@@ -213,10 +213,12 @@ class PunitionsToApply:
     def merge(self, o: 'PunitionsToApply'):
         if len(o.warning) != 0:
             self.warning.extend(o.warning)
-        if len(o.punish) != 0:
-            self.punish.extend(o.punish)
-        if len(o.kick) != 0:
-            self.kick.extend(o.kick)
+        for p in o.punish:
+            if not any(sp.steam_id_64 == p.steam_id_64 for sp in self.punish):
+                self.punish.append(p)
+        for k in o.kick:
+            if not any(sk.steam_id_64 == k.steam_id_64 for sk in self.kick):
+                self.kick.append(k)
         for s in o.squads_state:
             if any(s.team == ss.team and s.name == ss.name for ss in self.squads_state):
                 continue
