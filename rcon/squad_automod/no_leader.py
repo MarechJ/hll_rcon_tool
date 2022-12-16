@@ -28,20 +28,19 @@ class NoLeaderAutomod:
     def enabled(self):
         return self.config.enabled
 
-    def get_message(self, aplayer: PunishPlayer, method):
+    def get_message(self, watch_status: WatchStatus, aplayer: PunishPlayer, method: ActionMethod):
         data = {}
 
-        with self.watch_state(aplayer.team, aplayer.squad) as watch_status:
-            if method == ActionMethod.MESSAGE:
-                data["received_warnings"] = len(watch_status.warned.get(aplayer.name))
-                data["max_warnings"] = self.config.number_of_warning
-                data["next_check_seconds"] = self.config.warning_interval_seconds
-            if method == ActionMethod.PUNISH:
-                data["received_punishes"] = len(watch_status.punished.get(aplayer.name))
-                data["max_punishes"] = self.config.number_of_punish
-                data["next_check_seconds"] = self.config.punish_interval_seconds
-            if method == ActionMethod.KICK:
-                data["kick_grace_period"] = self.config.kick_grace_period_seconds
+        if method == ActionMethod.MESSAGE:
+            data["received_warnings"] = len(watch_status.warned.get(aplayer.name))
+            data["max_warnings"] = self.config.number_of_warning
+            data["next_check_seconds"] = self.config.warning_interval_seconds
+        if method == ActionMethod.PUNISH:
+            data["received_punishes"] = len(watch_status.punished.get(aplayer.name))
+            data["max_punishes"] = self.config.number_of_punish
+            data["next_check_seconds"] = self.config.punish_interval_seconds
+        if method == ActionMethod.KICK:
+            data["kick_grace_period"] = self.config.kick_grace_period_seconds
 
         data["player_name"] = aplayer.name
         data["squad_name"] = aplayer.squad
@@ -135,7 +134,7 @@ class NoLeaderAutomod:
                 )
 
                 if state == PunishStepState.APPLY:
-                    aplayer.details.message = self.get_message(aplayer, ActionMethod.MESSAGE)
+                    aplayer.details.message = self.get_message(watch_status, aplayer, ActionMethod.MESSAGE)
                     punitions_to_apply.warning.append(aplayer)
                     punitions_to_apply.add_squad_state(team, squad_name, squad)
                 if (
@@ -153,7 +152,7 @@ class NoLeaderAutomod:
                 )
 
                 if state == PunishStepState.APPLY:
-                    aplayer.details.message = self.get_message(aplayer, ActionMethod.PUNISH)
+                    aplayer.details.message = self.get_message(watch_status, aplayer, ActionMethod.PUNISH)
                     punitions_to_apply.punish.append(aplayer)
                     punitions_to_apply.add_squad_state(team, squad_name, squad)
                 if not state in [
@@ -166,7 +165,7 @@ class NoLeaderAutomod:
                     watch_status, team_view, squad_name, squad, aplayer
                 )
                 if state == PunishStepState.APPLY:
-                    aplayer.details.message = self.get_message(aplayer, ActionMethod.KICK)
+                    aplayer.details.message = self.get_message(watch_status, aplayer, ActionMethod.KICK)
                     punitions_to_apply.kick.append(aplayer)
                     punitions_to_apply.add_squad_state(team, squad_name, squad)
 

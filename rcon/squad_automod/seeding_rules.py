@@ -44,20 +44,21 @@ class SeedingRulesAutomod:
         else:
             self.red.setex(redis_key, SEEDING_RULES_RESET_SECS, pickle.dumps(watch_status))
 
-    def get_message(self, aplayer: PunishPlayer, method):
-        data = {}
+    def get_message(self, watch_status: WatchStatus, aplayer: PunishPlayer, violation_msg: str, method: ActionMethod):
+        data = {
+            "violation": violation_msg,
+        }
 
-        with self.watch_state(aplayer.team, aplayer.squad) as watch_status:
-            if method == ActionMethod.MESSAGE:
-                data["received_warnings"] = len(watch_status.warned.get(aplayer.name))
-                data["max_warnings"] = self.config.number_of_warning
-                data["next_check_seconds"] = self.config.warning_interval_seconds
-            if method == ActionMethod.PUNISH:
-                data["received_punishes"] = len(watch_status.punished.get(aplayer.name))
-                data["max_punishes"] = self.config.number_of_punish
-                data["next_check_seconds"] = self.config.punish_interval_seconds
-            if method == ActionMethod.KICK:
-                data["kick_grace_period"] = self.config.kick_grace_period_seconds
+        if method == ActionMethod.MESSAGE:
+            data["received_warnings"] = len(watch_status.warned.get(aplayer.name))
+            data["max_warnings"] = self.config.number_of_warning
+            data["next_check_seconds"] = self.config.warning_interval_seconds
+        if method == ActionMethod.PUNISH:
+            data["received_punishes"] = len(watch_status.punished.get(aplayer.name))
+            data["max_punishes"] = self.config.number_of_punish
+            data["next_check_seconds"] = self.config.punish_interval_seconds
+        if method == ActionMethod.KICK:
+            data["kick_grace_period"] = self.config.kick_grace_period_seconds
 
         data["player_name"] = aplayer.name
         data["squad_name"] = aplayer.squad
@@ -109,10 +110,11 @@ class SeedingRulesAutomod:
                 if len(violations) == 0:
                     continue
 
+                violation_msg = ", ".join(violations)
                 state = self.should_warn_player(watch_status, squad_name, aplayer)
 
                 if state == PunishStepState.APPLY:
-                    aplayer.details.message = self.get_message(aplayer, ActionMethod.MESSAGE)
+                    aplayer.details.message = self.get_message(watch_status, aplayer, violation_msg, ActionMethod.MESSAGE)
                     punitions_to_apply.warning.append(aplayer)
                     punitions_to_apply.add_squad_state(team, squad_name, squad)
 
@@ -122,7 +124,7 @@ class SeedingRulesAutomod:
                 state = self.should_punish_player(watch_status, squad_name, aplayer)
 
                 if state == PunishStepState.APPLY:
-                    aplayer.details.message = self.get_message(aplayer, ActionMethod.PUNISH)
+                    aplayer.details.message = self.get_message(watch_status, aplayer, violation_msg, ActionMethod.PUNISH)
                     punitions_to_apply.punish.append(aplayer)
                     punitions_to_apply.add_squad_state(team, squad_name, squad)
                 if state not in [PunishStepState.DISABLED, PunishStepState.GO_TO_NEXT_STEP]:
@@ -131,14 +133,11 @@ class SeedingRulesAutomod:
                 state = self.should_kick_player(watch_status, aplayer)
 
                 if state == PunishStepState.APPLY:
-                    aplayer.details.message = self.get_message(aplayer, ActionMethod.KICK)
+                    aplayer.details.message = self.get_message(watch_status, aplayer, violation_msg, ActionMethod.KICK)
                     punitions_to_apply.kick.append(aplayer)
                     punitions_to_apply.add_squad_state(team, squad_name, squad)
                 if state not in [PunishStepState.DISABLED, PunishStepState.GO_TO_NEXT_STEP]:
                     continue
-
-            if not punitions_to_apply:
-                raise NoSeedingViolation
 
         return punitions_to_apply
 
