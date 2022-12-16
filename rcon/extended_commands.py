@@ -117,9 +117,12 @@ class Rcon(ServerCtl):
     MAX_SERV_NAME_LEN = 1024  # I totally made up that number. Unable to test
     log_time_regexp = re.compile(r".*\((\d+)\).*")
 
-    def __init__(self, *args, pool_size=10, **kwargs):
+    def __init__(self, *args, pool_size=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.pool_size = pool_size
+        if pool_size:
+            self.pool_size = pool_size
+        else:
+            self.pool_size = self.advanced_settings.thread_pool_size
 
     @cached_property
     def thread_pool(self):
@@ -130,7 +133,7 @@ class Rcon(ServerCtl):
         logger.info("Initializing Rcon connection pool of size %s", self.pool_size)
         pool = [Rcon(self.config) for _ in range(self.pool_size)]
         for idx, rcon in enumerate(pool):
-            logger.debug("Connecting rcon %s/%s", idx, self.pool_size)
+            logger.debug("Connecting rcon %s/%s", idx+1, self.pool_size)
             rcon._connect()
         logger.info("Done initialzing Rcon connection pool")
         return pool

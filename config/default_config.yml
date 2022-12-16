@@ -11,6 +11,11 @@
 ######################################################################################
 ######################################################################################
 
+# Advanced settings, you should only touch these if you really know what you're doing
+ADVANCED_CRCON_SETTINGS:
+  # The number of concurrent connections to the game server CRCON will open
+  thread_pool_size: 20
+
 # If you set this to true your public website for stats won't work anymore
 # This will request a login for all the stats endpoints
 # To lock set to: true

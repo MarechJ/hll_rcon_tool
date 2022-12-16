@@ -8,6 +8,8 @@ from typing import List
 
 from rcon.connection import HLLConnection
 from rcon.settings import check_config
+from rcon.config import get_config
+from rcon.models import AdvancedConfigOptions
 
 logger = logging.getLogger(__name__)
 
@@ -77,10 +79,16 @@ class ServerCtl:
     """
 
     def __init__(self, config, auto_retry=1):
+        # .env fed config from rcon.SERVER_INFO
         self.config = config
         self.conn = None
         # self._connect()
         self.auto_retry = auto_retry
+
+        # config/default_config.yml config.yml, etc.
+        config = get_config()
+        # logger.debug(f"{config=}")
+        self.advanced_settings = AdvancedConfigOptions(**config['ADVANCED_CRCON_SETTINGS'])
 
     def _connect(self):
         self.conn = HLLConnection()

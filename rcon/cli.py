@@ -2,6 +2,7 @@ import inspect
 import logging
 import sys
 from datetime import datetime, timedelta
+from typing import Set
 
 import click
 
@@ -222,11 +223,17 @@ def process_games(start_day_offset, end_day_offset=0, force=False):
 
 
 PREFIXES_TO_EXPOSE = ["get_", "set_", "do_"]
-
-EXCLUDED = {"set_maprotation"}
+EXCLUDED: Set[str] = {"set_maprotation", "connection_pool"}
 
 # Dynamically register all the methods from ServerCtl
-for name, func in inspect.getmembers(ctl):
+# use dir instead of inspect.getmembers to avoid touching cached_property
+# members that would be initialized even if we want to skip them, like connection_pool
+for name in dir(ctl):
+    if name in EXCLUDED:
+        continue
+
+    func = getattr(ctl, name)
+
     if (
         not any(name.startswith(prefix) for prefix in PREFIXES_TO_EXPOSE)
         or name in EXCLUDED
