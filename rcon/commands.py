@@ -286,6 +286,8 @@ class ServerCtl:
     @_auto_retry
     def get_logs(self, since_min_ago, filter_=""):
         res = self._request(f"showlog {since_min_ago}")
+        if res == "EMPTY":
+            return ""
         self.conn.lock()
         try:
             for i in range(30):
