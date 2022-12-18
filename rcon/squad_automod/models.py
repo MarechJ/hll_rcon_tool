@@ -107,7 +107,8 @@ def valid_roles(o: List[str]) -> List[str]:
 
 @dataclass
 class DisallowedRolesConfig:
-    threshold: int = 0
+    min_players: int = 0
+    max_players: int = 0
     roles: Mapping[str, str] = field(default_factory=dict)
     message: str = "{role} is not allowed when server is seeding"
 

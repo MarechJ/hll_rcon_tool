@@ -164,7 +164,20 @@ def mod_with_config(c: SeedingRulesConfig) -> SeedingRulesAutomod:
 def test_does_nothing_when_enough_players(team_view):
     mod = mod_with_config(SeedingRulesConfig(
         disallowed_roles=DisallowedRolesConfig(
-            threshold=get_team_count(team_view, "allies") + get_team_count(team_view, "axis") - 1
+            roles={"tankcommander": "Tanks", "crewman": "Tanks"},
+            max_players=get_team_count(team_view, "allies") + get_team_count(team_view, "axis") - 1,
+        ),
+    ))
+
+    assert PunitionsToApply() == mod.punitions_to_apply(team_view, "able", "allies",
+                                                        team_view["allies"]["squads"]["able"])
+
+
+def test_does_nothing_when_not_enough_players(team_view):
+    mod = mod_with_config(SeedingRulesConfig(
+        disallowed_roles=DisallowedRolesConfig(
+            roles={"tankcommander": "Tanks", "crewman": "Tanks"},
+            min_players=get_team_count(team_view, "allies") + get_team_count(team_view, "axis") + 1,
         ),
     ))
 
@@ -185,7 +198,7 @@ def test_cycles_warn_punish_kick_armor_players(team_view):
         kick_grace_period_seconds=1,
         discord_webhook_url="",
         disallowed_roles=DisallowedRolesConfig(
-            threshold=get_team_count(team_view, "allies") + get_team_count(team_view, "axis") + 1,
+            max_players=get_team_count(team_view, "allies") + get_team_count(team_view, "axis") + 1,
             roles={"tankcommander": "Tanks", "crewman": "Tanks"}
         ),
     )
@@ -222,7 +235,7 @@ def test_stops_when_no_violations_anymore(team_view):
         kick_grace_period_seconds=1,
         discord_webhook_url="",
         disallowed_roles=DisallowedRolesConfig(
-            threshold=get_team_count(team_view, "allies") + get_team_count(team_view, "axis") + 1,
+            max_players=get_team_count(team_view, "allies") + get_team_count(team_view, "axis") + 1,
             roles={"tankcommander": "Tanks", "crewman": "Tanks"}
         ),
     )

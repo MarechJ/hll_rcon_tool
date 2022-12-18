@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 
 import redis
 
+from rcon.squad_automod.get_team_count import get_team_count
 from rcon.squad_automod.is_time import is_time
 from rcon.squad_automod.models import SeedingRulesConfig, PunitionsToApply, PunishPlayer, PunishDetails, WatchStatus, \
     NoSeedingViolation, PunishStepState, ActionMethod
@@ -78,11 +79,13 @@ class SeedingRulesAutomod:
             )
             return message
 
-    def punitions_to_apply(self, _, squad_name: str, team: str, squad: dict) -> PunitionsToApply:
+    def punitions_to_apply(self, team_view, squad_name: str, team: str, squad: dict) -> PunitionsToApply:
         punitions_to_apply = PunitionsToApply()
         if not squad_name:
             self.logger.info("Skipping None or empty squad %s %s", squad_name, squad)
             return punitions_to_apply
+
+        server_player_count = get_team_count(team_view, "allies") + get_team_count(team_view, "axis")
 
         with self.watch_state(team, squad_name) as watch_status:
             if squad_name is None or squad is None:
@@ -104,10 +107,10 @@ class SeedingRulesAutomod:
                 )
 
                 violations = []
-                print(self.config.disallowed_roles.roles)
-                if aplayer.role in self.config.disallowed_roles.roles:
-                    violations.append(self.config.disallowed_roles.message.format(
-                        role=self.config.disallowed_roles.roles.get(aplayer.role)))
+                if self.config.disallowed_roles.min_players < server_player_count < self.config.disallowed_roles.max_players:
+                    if aplayer.role in self.config.disallowed_roles.roles:
+                        violations.append(self.config.disallowed_roles.message.format(
+                            role=self.config.disallowed_roles.roles.get(aplayer.role)))
 
                 if len(violations) == 0:
                     continue
