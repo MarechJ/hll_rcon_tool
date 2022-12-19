@@ -44,6 +44,7 @@ from rcon.steam_utils import get_player_bans, get_steam_profile, update_db_playe
 from rcon.user_config import CameraConfig, RealVipConfig, VoteMapConfig
 from rcon.utils import LOG_MAP_NAMES_TO_MAP, MapsHistory
 from rcon.workers import record_stats_worker, temporary_broadcast, temporary_welcome
+from rcon.utils import get_server_number
 
 logger = logging.getLogger(__name__)
 
@@ -516,10 +517,7 @@ def send_log_line_webhook_message(
 
 def load_generic_hooks():
     """Load and validate all the subscribed log line webhooks from config.yml"""
-    server_id = os.getenv("SERVER_NUMBER")
-    if not server_id:
-        # Shouldn't get here because SERVER_NUMBER is a mandatory ENV Var
-        raise ValueError("SERVER_NUMBER is not set, can't record logs")
+    server_id = get_server_number()
 
     try:
         raw_config = get_config()["LOG_LINE_WEBHOOKS"]

@@ -2,15 +2,15 @@ import logging
 import os
 import re
 import socket
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import as_completed
 from datetime import datetime, timedelta
-from functools import cached_property, update_wrapper
+from functools import update_wrapper
 from time import sleep
 from typing import Dict, List, Optional, Tuple, TypedDict, Union
 
 from rcon.cache_utils import get_redis_client, invalidates, ttl_cache
 from rcon.commands import CommandFailedError, HLLServerError, ServerCtl
-from rcon.models import PlayerSteamID, PlayerVIP, enter_session
+from rcon.models import PlayerVIP, enter_session
 from rcon.player_history import get_profiles
 from rcon.steam_utils import (
     get_player_country_code,
@@ -18,6 +18,7 @@ from rcon.steam_utils import (
     get_players_country_code,
     get_players_have_bans,
 )
+from rcon.utils import get_server_number
 
 STEAMID = "steam_id_64"
 NAME = "name"
@@ -117,32 +118,8 @@ class Rcon(ServerCtl):
     MAX_SERV_NAME_LEN = 1024  # I totally made up that number. Unable to test
     log_time_regexp = re.compile(r".*\((\d+)\).*")
 
-    def __init__(self, *args, pool_size=10, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.pool_size = pool_size
-
-    @cached_property
-    def thread_pool(self):
-        return ThreadPoolExecutor(self.pool_size)
-
-    @cached_property
-    def connection_pool(self):
-        logger.info("Initializing Rcon connection pool of size %s", self.pool_size)
-        pool = [Rcon(self.config) for _ in range(self.pool_size)]
-        for idx, rcon in enumerate(pool):
-            logger.debug("Connecting rcon %s/%s", idx, self.pool_size)
-            rcon._connect()
-        logger.info("Done initialzing Rcon connection pool")
-        return pool
-
-    def run_in_pool(self, process_number: int, function_name: str, *args, **kwargs):
-        return self.thread_pool.submit(
-            getattr(
-                self.connection_pool[process_number % self.pool_size], function_name
-            ),
-            *args,
-            **kwargs,
-        )
 
     @mod_users_allowed
     def get_playerids(self, as_dict=False):
@@ -691,13 +668,24 @@ class Rcon(ServerCtl):
     @ttl_cache(ttl=60 * 60)
     def get_vip_ids(self) -> List[Dict[str, Union[str, Optional[datetime]]]]:
         res = super().get_vip_ids()
-        l = []
+        player_dicts = []
 
         vip_expirations: Dict[str, datetime]
         with enter_session() as session:
-            players = session.query(PlayerSteamID).join(PlayerVIP).all()
+            # players = session.query(PlayerSteamID).join(PlayerVIP).all()
+
+            server_number = get_server_number()
+
+            players = (
+                session.query(PlayerVIP)
+                .filter(PlayerVIP.server_number == server_number)
+                .all()
+            )
+            # print(f"query={session.query(PlayerSteamID).join(PlayerVIP)}")
+            # server_number = int(os.getenv("SERVER_NUMBER"))
+            # players = session.query(PlayerVIP).filter().all()
             vip_expirations = {
-                player.steam_id_64: player.vip.expiration for player in players
+                player.steamid.steam_id_64: player.expiration for player in players
             }
 
         for item in res:
@@ -711,9 +699,9 @@ class Rcon(ServerCtl):
                 raise
             player = dict(zip((STEAMID, NAME), (steam_id_64, name)))
             player["vip_expiration"] = vip_expirations.get(steam_id_64, None)
-            l.append(player)
+            player_dicts.append(player)
 
-        return sorted(l, key=lambda d: d[NAME])
+        return sorted(player_dicts, key=lambda d: d[NAME])
 
     def do_remove_vip(self, steam_id_64):
         with invalidates(Rcon.get_vip_ids):

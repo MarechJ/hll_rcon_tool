@@ -15,6 +15,7 @@ from rcon.discord import dict_to_discord, send_to_discord_audit
 from rcon.models import PlayerSteamID, PlayerVIP, enter_session
 from rcon.user_config import RealVipConfig
 from rcon.workers import get_job_results, worker_bulk_vip
+from rcon.utils import get_server_number
 
 from .auth import api_response, login_required
 from .views import _get_data, ctl
@@ -163,7 +164,12 @@ def download_vips(request):
         lambda: datetime.datetime.utcnow() + relativedelta.relativedelta(years=200)
     )
     with enter_session() as session:
-        players = session.query(PlayerSteamID).join(PlayerVIP).all()
+        players = (
+            session.query(PlayerSteamID)
+            .join(PlayerVIP)
+            .filter(PlayerVIP.server_number == get_server_number())
+            .all()
+        )
         for player in players:
             expiration_lookup[player.steam_id_64] = player.vip.expiration
 
