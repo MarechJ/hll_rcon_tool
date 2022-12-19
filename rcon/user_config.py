@@ -601,7 +601,7 @@ DEFAULT_AUTO_SETTINGS = {
             ]
         },
         "set_maprotation": {
-            "maps": [
+            "rotation": [
                 "Overwrites the current rotation",
                 "Yes the spelling is intentional",
             ]
