@@ -4,7 +4,6 @@ import socket
 import time
 from threading import Lock, get_ident
 
-
 MSGLEN = 8196
 TIMEOUT_SEC = 20
 
@@ -69,7 +68,7 @@ class HLLConnection:
 
     def lock(self):
         if self._lock.locked():
-            logger.error("Mutex lock detected, this is unexpected in %s", get_ident())
+            logger.warning("Mutex lock detected, this is unexpected in %s", get_ident())
 
         # logger.debug("Locking connection in %s", get_ident())
         if not self._lock.acquire(timeout=10):
