@@ -1,7 +1,6 @@
 import logging
 import os
 import re
-import socket
 from concurrent.futures import as_completed
 from datetime import datetime, timedelta
 from functools import update_wrapper
@@ -733,7 +732,7 @@ class Rcon(ServerCtl):
         Map: foy_warfare
         Next Map: stmariedumont_warfare"""
         with invalidates(
-            Rcon.team_sizes, Rcon.team_objective_scores, Rcon.round_time_remaining
+                Rcon.team_sizes, Rcon.team_objective_scores, Rcon.round_time_remaining
         ):
             (
                 raw_team_size,
@@ -1018,14 +1017,9 @@ class Rcon(ServerCtl):
     @mod_users_allowed
     @ttl_cache(ttl=2)
     def get_structured_logs(
-        self, since_min_ago, filter_action=None, filter_player=None
+            self, since_min_ago, filter_action=None, filter_player=None
     ):
-        try:
-            raw = super().get_logs(since_min_ago)
-        except socket.timeout:
-            # The hll server just hangs when there are no logs for the requested time
-            raw = ""
-
+        raw = super().get_logs(since_min_ago)
         return self.parse_logs(raw, filter_action, filter_player)
 
     @ttl_cache(ttl=60 * 60)
@@ -1112,7 +1106,7 @@ class Rcon(ServerCtl):
 
     @mod_users_allowed
     def do_temp_ban(
-        self, player=None, steam_id_64=None, duration_hours=2, reason="", admin_name=""
+            self, player=None, steam_id_64=None, duration_hours=2, reason="", admin_name=""
     ):
         with invalidates(Rcon.get_players, Rcon.get_temp_bans):
             if player and re.match(r"\d+", player):
@@ -1156,7 +1150,7 @@ class Rcon(ServerCtl):
         return l
 
     def do_add_map_to_rotation(
-        self, map_name, after_map_name: str = None, after_map_name_number: str = None
+            self, map_name, after_map_name: str = None, after_map_name_number: str = None
     ):
         with invalidates(Rcon.get_map_rotation):
             super().do_add_map_to_rotation(
@@ -1268,10 +1262,10 @@ class Rcon(ServerCtl):
                     "Teamkills": tk,
                     "Death by TK": death_by_tk,
                     "Estimated play time (minutes)": (last_timestamp - first_timestamp)
-                    // 1000
-                    // 60,
+                                                     // 1000
+                                                     // 60,
                     "TK Minutes": tk
-                    / max((last_timestamp - first_timestamp) // 1000 // 60, 1),
+                                  / max((last_timestamp - first_timestamp) // 1000 // 60, 1),
                 }
             )
 
@@ -1319,8 +1313,8 @@ class Rcon(ServerCtl):
                     # [15:49 min (1606998428)] VOTE Player [[fr]ELsass_blitz] Started a vote of type (PVR_Kick_Abuse) against [拢儿]. VoteID: [1]
                     action = "VOTE"
                     if (
-                        rest.startswith("VOTESYS Player")
-                        and " against " in rest.lower()
+                            rest.startswith("VOTESYS Player")
+                            and " against " in rest.lower()
                     ):
                         action = "VOTE STARTED"
                         groups = re.match(
