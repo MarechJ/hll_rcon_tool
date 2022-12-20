@@ -420,10 +420,8 @@ const GameView = ({ classes: globalClasses }) => {
           .then((response) =>
             showResponse(response, `${actionType} ${player_name}`, true)
           )
-          .then(this.loadPlayers)
           .catch(handle_http_errors); 
 
-        // Work around to the fact that the steam is not always know in this scope (as is changes the behaviour of the temp / perma ban commands)
         if (comment) {
           postData(`${process.env.REACT_APP_API_URL}post_player_comment`, {
             steam_id_64: steam_id_64,
@@ -432,7 +430,6 @@ const GameView = ({ classes: globalClasses }) => {
             .then((response) =>
               showResponse(response, `post_player_comment ${player_name}`, true)
             )
-            .then(this.loadPlayers)
             .catch(handle_http_errors);
         }
       });
