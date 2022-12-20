@@ -1,6 +1,7 @@
 import enum
 import logging
 import os
+import pickle
 import random
 import re
 import time
@@ -8,7 +9,7 @@ from datetime import datetime, timedelta
 from functools import partial
 from threading import Thread
 from typing import Counter
-import pickle
+
 import redis
 from sqlalchemy import and_
 
@@ -22,6 +23,10 @@ from rcon.settings import SERVER_INFO
 from rcon.user_config import DefaultMethods, VoteMapConfig
 from rcon.utils import (
     ALL_MAPS,
+    LONG_HUMAN_MAP_NAMES,
+    NO_MOD_LONG_HUMAN_MAP_NAMES,
+    NO_MOD_SHORT_HUMAN_MAP_NAMES,
+    SHORT_HUMAN_MAP_NAMES,
     FixedLenList,
     MapsHistory,
     categorize_maps,
@@ -35,14 +40,6 @@ from rcon.workers import (
     temp_welcome_standalone,
     temporary_welcome,
     temporary_welcome_in,
-)
-from rcon.utils import (
-    LONG_HUMAN_MAP_NAMES,
-    NO_MOD_LONG_HUMAN_MAP_NAMES,
-    NO_MOD_SHORT_HUMAN_MAP_NAMES,
-    SHORT_HUMAN_MAP_NAMES,
-    categorize_maps,
-    numbered_maps,
 )
 
 logger = logging.getLogger(__name__)
@@ -685,8 +682,8 @@ class VoteMap:
                 break
 
         if not success:
-            logger.warning("Falling back to adding all maps to the rotation")
-            RecordedRcon(SERVER_INFO).set_maprotation(ALL_MAPS)
+            logger.warning("Unable to set votemap results")
+            
 
 
 # DEPRECATED see hooks.py
