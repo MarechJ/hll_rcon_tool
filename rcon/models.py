@@ -22,7 +22,9 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship, sessionmaker
+from sqlalchemy.orm.session import object_session
 from sqlalchemy.schema import UniqueConstraint
 
 logger = logging.getLogger(__name__)
@@ -78,13 +80,31 @@ class PlayerSteamID(Base):
     steaminfo = relationship("SteamInfo", backref="steamid", uselist=False)
     comments = relationship("PlayerComment", back_populates="player")
     stats = relationship("PlayerStats", backref="steamid", uselist=False)
-    vip = relationship(
+
+    vips = relationship(
         "PlayerVIP",
         back_populates="steamid",
-        uselist=False,
+        uselist=True,
         cascade="all, delete-orphan",
+        lazy="dynamic",
     )
     optins = relationship("PlayerOptins", backref="steamid", uselist=True)
+
+    @property
+    def server_number(self):
+        return int(os.getenv("SERVER_NUMBER"))
+
+    @hybrid_property
+    def vip(self):
+        return (
+            object_session(self)
+            .query(PlayerVIP)
+            .filter(
+                PlayerVIP.playersteamid_id == self.id,
+                PlayerVIP.server_number == self.server_number,
+            )
+            .one_or_none()
+        )
 
     def get_penalty_count(self):
         penalities_type = {"KICK", "PUNISH", "TEMPBAN", "PERMABAN"}
@@ -611,9 +631,16 @@ class PlayerAtCount(Base):
 
 class PlayerVIP(Base):
     __tablename__: str = "player_vip"
+    __table_args__ = (
+        UniqueConstraint(
+            "playersteamid_id", "server_number", name="unique_player_server_vip"
+        ),
+    )
 
     id = Column(Integer, primary_key=True)
     expiration = Column(TIMESTAMP(timezone=True), nullable=False)
+    # Not making this unique (even though it should be) to avoid breaking existing CRCONs
+    server_number = Column(Integer)
 
     playersteamid_id = Column(
         Integer,
@@ -622,7 +649,7 @@ class PlayerVIP(Base):
         index=True,
     )
 
-    steamid = relationship("PlayerSteamID", back_populates="vip")
+    steamid = relationship("PlayerSteamID", back_populates="vips")
 
 
 def init_db(force=False):

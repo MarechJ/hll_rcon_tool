@@ -11,6 +11,7 @@ from rcon.discord import send_to_discord_audit
 from rcon.models import PlayerSteamID, PlayerVIP, enter_session
 from rcon.recorded_commands import RecordedRcon
 from rcon.settings import SERVER_INFO
+from rcon.utils import get_server_number
 
 SERVICE_NAME = "ExpiringVIPs"
 logger = logging.getLogger(__name__)
@@ -26,10 +27,14 @@ def remove_expired_vips(rcon_hook: RecordedRcon, webhookurl: Optional[str] = Non
     logger.info(f"Checking for expired VIPs")
 
     count = 0
+    server_number = get_server_number()
     with enter_session() as session:
         expired_vips: List[PlayerVIP] = (
             session.query(PlayerVIP)
-            .filter(PlayerVIP.expiration < datetime.utcnow())
+            .filter(
+                PlayerVIP.server_number == server_number,
+                PlayerVIP.expiration < datetime.utcnow(),
+            )
             .all()
         )
 
@@ -62,9 +67,11 @@ def remove_expired_vips(rcon_hook: RecordedRcon, webhookurl: Optional[str] = Non
                     years=200
                 )
                 vip_record = PlayerVIP(
-                    expiration=expiration_date, playersteamid_id=None
+                    expiration=expiration_date,
+                    playersteamid_id=player.id,
+                    server_number=server_number,
                 )
-                player.vip = vip_record
+                session.add(vip_record)
 
                 try:
                     name = player.names[0].name
@@ -80,7 +87,7 @@ def remove_expired_vips(rcon_hook: RecordedRcon, webhookurl: Optional[str] = Non
                 )
 
     if count > 0:
-        logger.info(f"Removed VIP from {count} players")
+        logger.info(f"Removed VIP from {count} player(s)")
     else:
         logger.info("No expired VIPs found")
 

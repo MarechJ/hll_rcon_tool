@@ -1,18 +1,20 @@
 from datetime import datetime
 from logging import getLogger
 from typing import Union
+from functools import cached_property
+from concurrent.futures import ThreadPoolExecutor
 
 from dateutil import parser, relativedelta
 
-from rcon.cache_utils import ttl_cache
-from rcon.commands import ServerCtl
-from rcon.extended_commands import NAME, STEAMID, Rcon, invalidates
+from rcon.extended_commands import NAME, STEAMID, Rcon
 from rcon.models import PlayerSteamID, PlayerVIP, enter_session
 from rcon.player_history import (
     add_player_to_blacklist,
     get_profiles,
     safe_save_player_action,
 )
+from rcon.utils import get_server_number
+
 
 logger = getLogger(__name__)
 
@@ -22,8 +24,32 @@ class RecordedRcon(Rcon):
     Note beware of using the cache in this layer
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, pool_size=10, **kwargs):
         super().__init__(*args, **kwargs)
+        self.pool_size = pool_size
+
+    @cached_property
+    def thread_pool(self):
+        return ThreadPoolExecutor(self.pool_size)
+
+    @cached_property
+    def connection_pool(self):
+        logger.info("Initializing Rcon connection pool of size %s", self.pool_size)
+        pool = [RecordedRcon(self.config) for _ in range(self.pool_size)]
+        for idx, rcon in enumerate(pool):
+            logger.debug("Connecting rcon %s/%s", idx, self.pool_size)
+            rcon._connect()
+        logger.info("Done initialzing Rcon connection pool")
+        return pool
+
+    def run_in_pool(self, process_number: int, function_name: str, *args, **kwargs):
+        return self.thread_pool.submit(
+            getattr(
+                self.connection_pool[process_number % self.pool_size], function_name
+            ),
+            *args,
+            **kwargs,
+        )
 
     def do_punish(self, player, reason, by):
         res = super().do_punish(player, reason)
@@ -124,19 +150,33 @@ class RecordedRcon(Rcon):
         # Remove VIP before anything else in case we have errors
         result = super().do_remove_vip(steam_id_64)
 
+        server_number = get_server_number()
         with enter_session() as session:
             player: PlayerSteamID = (
                 session.query(PlayerSteamID)
                 .filter(PlayerSteamID.steam_id_64 == steam_id_64)
                 .one_or_none()
             )
-
             if player and player.vip:
-                logger.info(f"Removed VIP from {steam_id_64} {player.vip.expiration}")
-                player.vip = None
+                logger.info(
+                    f"Removed VIP from {steam_id_64} expired: {player.vip.expiration}"
+                )
+                # TODO: This is an incredibly dumb fix because I can't get
+                # the changes to persist otherwise
+                vip_record: PlayerVIP = (
+                    session.query(PlayerVIP)
+                    .filter(
+                        PlayerVIP.playersteamid_id == player.id,
+                        PlayerVIP.server_number == server_number,
+                    )
+                    .one_or_none()
+                )
+                session.delete(vip_record)
             elif player and not player.vip:
-                logger.warning(f"{steam_id_64} had no player_vip record")
+                logger.warning(f"{steam_id_64} has no PlayerVIP record")
             else:
+                # This is okay since you can give VIP to someone who has never been on a game server
+                # or that your instance of CRCON hasn't seen before, but you might want to prune these
                 logger.warning(f"{steam_id_64} has no PlayerSteamID record")
 
         return result
@@ -151,6 +191,7 @@ class RecordedRcon(Rcon):
         # https://docs.python.org/3.8/library/datetime.html#datetime.MAXYEAR
         # https://www.postgresql.org/docs/12/datatype-datetime.html
 
+        server_number = get_server_number()
         # If we're unable to parse the date, treat them as indefinite VIPs
         expiration_date: Union[str, datetime]
         try:
@@ -174,17 +215,36 @@ class RecordedRcon(Rcon):
             # The service that prunes expired VIPs checks for VIPs without a PlayerVIP record
             # and creates them there as indefinite VIPs
             if player:
-                if not player.vip:
-                    vip_record = PlayerVIP(
-                        expiration=expiration_date, playersteamid_id=None
+                vip_record: PlayerVIP = (
+                    session.query(PlayerVIP)
+                    .filter(
+                        PlayerVIP.server_number == server_number,
+                        PlayerVIP.playersteamid_id == player.id,
                     )
-                    player.vip = vip_record
-                    logger.info(f"Added new PlayerVIP record {expiration_date=}")
-                else:
-                    previous_expiration = player.vip.expiration.isoformat()
-                    player.vip.expiration = expiration_date
+                    .one_or_none()
+                )
+                new_vip_record = PlayerVIP(
+                    expiration=expiration_date,
+                    playersteamid_id=player.id,
+                    server_number=server_number,
+                )
+                if not vip_record:
                     logger.info(
-                        f"Created new PlayerVIP record {expiration_date=} {previous_expiration=}"
+                        f"Added new PlayerVIP record {player.steam_id_64=} {expiration_date=}"
+                    )
+                    # TODO: This is an incredibly dumb fix because I can't get
+                    # the changes to persist otherwise
+                    session.add(new_vip_record)
+                else:
+                    previous_expiration = vip_record.expiration.isoformat()
+
+                    # TODO: This is an incredibly dumb fix because I can't get
+                    # the changes to persist otherwise
+                    session.delete(vip_record)
+                    session.commit()
+                    session.add(new_vip_record)
+                    logger.info(
+                        f"Modified PlayerVIP record {player.steam_id_64=} {player.vip.expiration=} {previous_expiration=}"
                     )
 
         return result
