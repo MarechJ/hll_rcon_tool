@@ -684,9 +684,10 @@ const GameView = ({ classes: globalClasses }) => {
               </Grid>
               <Grid item>
                 <TextField
+                  style={{minWidth: "100px"}}
                   type="number"
                   inputProps={{ min: 2, max: 6000 }}
-                  label="Refresh freq. seconds"
+                  label="Refresh seconds"
                   helperText=""
                   value={resfreshFreqSecs}
                   onChange={(e) => setResfreshFreqSecs(e.target.value)}
