@@ -52,6 +52,18 @@ logger = logging.getLogger(__name__)
 ####################
 
 
+class RestrictiveFilterError(Exception):
+    pass
+
+
+class InvalidVoteError(Exception):
+    pass
+
+
+class VoteMapNoInitialised(Exception):
+    pass
+
+
 def _get_random_map_selection(maps, nb_to_return, history=None):
     # if history:
     # Calculate weights to stir selection towards least played maps
@@ -72,7 +84,44 @@ def suggest_next_maps(
     consider_offensive_as_same_map=True,
     allow_consecutive_offensive=True,
     allow_consecutive_offensives_of_opposite_side=False,
-    current_map=None,
+    current_map=None
+):
+    try:
+        return _suggest_next_maps(
+            maps_history,
+            whitelist_maps,
+            selection_size,
+            exclude_last_n,
+            offsensive_ratio,
+            consider_offensive_as_same_map,
+            allow_consecutive_offensive,
+            allow_consecutive_offensives_of_opposite_side,
+            current_map
+        )
+    except RestrictiveFilterError:
+        return _suggest_next_maps(
+            maps_history,
+            set(ALL_MAPS),
+            selection_size,
+            exclude_last_n,
+            offsensive_ratio,
+            consider_offensive_as_same_map,
+            allow_consecutive_offensive,
+            allow_consecutive_offensives_of_opposite_side,
+            current_map
+        )
+
+
+def _suggest_next_maps(
+    maps_history,
+    whitelist_maps,
+    selection_size,
+    exclude_last_n,
+    offsensive_ratio,
+    consider_offensive_as_same_map,
+    allow_consecutive_offensive,
+    allow_consecutive_offensives_of_opposite_side,
+    current_map
 ):
     if exclude_last_n > 0:
         last_n_map = set(m["name"] for m in maps_history[:exclude_last_n])
@@ -130,17 +179,9 @@ def suggest_next_maps(
 
     if not selection:
         logger.error("No maps can be suggested with the given parameters.")
-        raise ValueError("Unable to suggest map")
+        raise RestrictiveFilterError("Unable to suggest map")
     logger.info("Suggestion %s", selection)
     return selection
-
-
-class InvalidVoteError(Exception):
-    pass
-
-
-class VoteMapNoInitialised(Exception):
-    pass
 
 
 # TODO:  Handle empty selection (None)
