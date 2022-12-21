@@ -38,6 +38,7 @@ import {
 } from "../PlayerView/playerActions";
 import { toast } from "react-toastify";
 import { FlagDialog } from "../PlayersHistory";
+import Padlock from "../SettingsView/padlock";
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -68,6 +69,7 @@ const Squad = ({
   onSelectPlayer,
   selectedPlayers,
   selectMultiplePlayers,
+  showOnlySelected,
 }) => {
   const classes = useStyles();
   const [open, setOpen] = React.useState(false);
@@ -93,6 +95,11 @@ const Squad = ({
     return intersection.size !== 0;
   }, [selectedPlayers, squadPlayerNames]);
 
+  const shouldHide = React.useMemo(
+    () => showOnlySelected && !hasSelectedPlayers,
+    [showOnlySelected, hasSelectedPlayers]
+  );
+
   const deleteFlag = (flag_id) => {
     return postData(`${process.env.REACT_APP_API_URL}unflag_player`, {
       flag_id: flag_id,
@@ -105,7 +112,7 @@ const Squad = ({
 
   if (squadName === "commander") return "";
 
-  return squadData ? (
+  return squadData && !shouldHide ? (
     <Fragment>
       <ListItem button onClick={handleClick}>
         <ListItemIcon>
@@ -173,17 +180,25 @@ const Squad = ({
         unmountOnExit
       >
         <List component="div" disablePadding className={classes.nested}>
-          {squadData.get("players", new IList()).map((player) => (
-            <PlayerItem
-              key={player.get("name")}
-              classes={globalClasses}
-              player={player}
-              playerHasExtraInfo={true}
-              onDeleteFlag={(flagId) => deleteFlag(flagId)}
-              onSelect={() => onSelectPlayer(player.get("name"))}
-              isSelected={selectedPlayers?.contains(player.get("name"))}
-            />
-          ))}
+          {squadData.get("players", new IList()).map((player) => {
+            if (
+              showOnlySelected &&
+              !selectedPlayers.includes(player.get("name"))
+            )
+              return "";
+
+            return (
+              <PlayerItem
+                key={player.get("name")}
+                classes={globalClasses}
+                player={player}
+                playerHasExtraInfo={true}
+                onDeleteFlag={(flagId) => deleteFlag(flagId)}
+                onSelect={() => onSelectPlayer(player.get("name"))}
+                isSelected={selectedPlayers?.contains(player.get("name"))}
+              />
+            );
+          })}
         </List>
       </Collapse>
     </Fragment>
@@ -201,30 +216,13 @@ const Team = ({
   selectMultiplePlayers,
   selectAll,
   deselectAll,
+  sortFunc,
+  showOnlySelected,
 }) => {
   const classes = useStyles();
   const [openAll, setOpenAll] = React.useState(false);
-  const [sortType, setSortType] = React.useState(localStorage.getItem("game_view_sorting") ? localStorage.getItem("game_view_sorting") :  "name_asc");
-  const onOpenAll = () => (openAll ? setOpenAll(false) : setOpenAll(true));
 
-  const sortTypeToFunc = React.useMemo(
-    () => ({
-      name_asc: (squadData, squadName) => squadName,
-      combat_asc: (squadData, squadName) => squadData.get("combat", 0),
-      offense_asc: (squadData, squadName) => squadData.get("offense", 0),
-      defense_asc: (squadData, squadName) => squadData.get("defense", 0),
-      support_asc: (squadData, squadName) => squadData.get("support", 0),
-      kills_asc: (squadData, squadName) => squadData.get("kills", 0),
-      deaths_asc: (squadData, squadName) => squadData.get("kills", 0),
-      combat_desc: (squadData, squadName) => -squadData.get("combat", 0),
-      offense_desc: (squadData, squadName) => -squadData.get("offense", 0),
-      defense_desc: (squadData, squadName) => -squadData.get("defense", 0),
-      support_desc: (squadData, squadName) => -squadData.get("support", 0),
-      kills_desc: (squadData, squadName) => -squadData.get("kills", 0),
-      deaths_desc: (squadData, squadName) => -squadData.get("kills", 0),
-    }),
-    []
-  );
+  const onOpenAll = () => (openAll ? setOpenAll(false) : setOpenAll(true));
 
   return teamData ? (
     <List
@@ -232,26 +230,15 @@ const Team = ({
       component="nav"
       subheader={
         <ListSubheader component="div" id="nested-list-subheader">
-          <Grid container alignContent="center" alignItems="flex-end" justify="space-between" spacing={2}>
-          <Grid item={2}>
-              <FormControl style={{minWidth: "120px"}}>
-              <InputLabel htmlFor="age-native-simple">Sort by</InputLabel>
-                <Select
-                  labelId="demo-simple-select-label"
-                  id="demo-simple-select"
-                  value={sortType}
-                  onChange={(e) => {setSortType(e.target.value); localStorage.setItem("game_view_sorting", e.target.value) }}
-                >
-                  {Object.keys(sortTypeToFunc).map((k) => (
-                    <MenuItem key={k} value={k}>
-                      {k}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={10}>
-              <Typography variant="h4">
+          <Grid
+            container
+            alignContent="space-between"
+            alignItems="flex-end"
+            justify="space-between"
+            spacing={2}
+          >
+            <Grid item xs={9}>
+              <Typography variant="h4" align="left">
                 {teamName} {teamData.get("count", 0)}/50{" "}
                 <Link onClick={onOpenAll} component="button">
                   {openAll ? "Collapse" : "Expand"} all
@@ -260,17 +247,20 @@ const Team = ({
                   Select all
                 </Link>{" "}
                 <Link onClick={deselectAll} component="button">
-                  deselect all
+                  Deselect all
                 </Link>
               </Typography>
             </Grid>
-            
+            <Grid item={3}></Grid>
           </Grid>
         </ListSubheader>
       }
       className={classes.root}
     >
-      {teamData.get("commander") ? (
+      {teamData.get("commander") &&
+      (!showOnlySelected ||
+        (showOnlySelected &&
+          selectedPlayers.contains(teamData.get("commander")?.get("name")))) ? (
         <PlayerItem
           classes={globalClasses}
           player={teamData.get("commander")}
@@ -288,7 +278,7 @@ const Team = ({
       {teamData
         .get("squads", new Map())
         .toOrderedMap()
-        .sortBy(sortTypeToFunc[sortType])
+        .sortBy(sortFunc)
         .entrySeq()
         .map(([key, value]) => (
           <Squad
@@ -301,6 +291,7 @@ const Team = ({
             onSelectPlayer={selectPlayer}
             selectedPlayers={selectedPlayers}
             selectMultiplePlayers={selectMultiplePlayers}
+            showOnlySelected={showOnlySelected}
           />
         ))}
     </List>
@@ -325,7 +316,11 @@ const GameView = ({ classes: globalClasses }) => {
   const [resfreshFreqSecs, setResfreshFreqSecs] = React.useState(5);
   const [intervalHandle, setIntervalHandle] = React.useState(null);
   const [flag, setFlag] = React.useState(false);
-
+  const [sortType, setSortType] = React.useState(
+    localStorage.getItem("game_view_sorting")
+      ? localStorage.getItem("game_view_sorting")
+      : "name_asc"
+  );
   /* confirm action needs to be set to a dict to call the popup: 
         {
           player: null,
@@ -334,6 +329,26 @@ const GameView = ({ classes: globalClasses }) => {
         }
   */
   const [confirmAction, setConfirmAction] = React.useState(false);
+  const [showOnlySelected, setShowOnlySelected] = React.useState(false);
+
+  const sortTypeToFunc = React.useMemo(
+    () => ({
+      combat_desc: (squadData, squadName) => -squadData.get("combat", 0),
+      offense_desc: (squadData, squadName) => -squadData.get("offense", 0),
+      defense_desc: (squadData, squadName) => -squadData.get("defense", 0),
+      support_desc: (squadData, squadName) => -squadData.get("support", 0),
+      kills_desc: (squadData, squadName) => -squadData.get("kills", 0),
+      deaths_desc: (squadData, squadName) => -squadData.get("kills", 0),
+      name_asc: (squadData, squadName) => squadName,
+      combat_asc: (squadData, squadName) => squadData.get("combat", 0),
+      offense_asc: (squadData, squadName) => squadData.get("offense", 0),
+      defense_asc: (squadData, squadName) => squadData.get("defense", 0),
+      support_asc: (squadData, squadName) => squadData.get("support", 0),
+      kills_asc: (squadData, squadName) => squadData.get("kills", 0),
+      deaths_asc: (squadData, squadName) => squadData.get("kills", 0),
+    }),
+    []
+  );
 
   const playerNamesToSteamId = React.useMemo(() => {
     if (!teamView) {
@@ -382,6 +397,11 @@ const GameView = ({ classes: globalClasses }) => {
 
     return names;
   };
+
+  const autoCompleteSelectedPlayers = React.useMemo(
+    () => selectedPlayers.toJS(),
+    [selectedPlayers]
+  );
 
   const allPlayerNames = React.useMemo(() => {
     if (!teamView) {
@@ -457,16 +477,23 @@ const GameView = ({ classes: globalClasses }) => {
       .catch(handle_http_errors);
   };
 
+  const myInterval = React.useMemo(() => (func, ms) => {
+    const handle = setTimeout(() => {
+      func();
+      return myInterval(func, ms);
+    }, ms);
+    setIntervalHandle(handle);
+  }, []);
+
   React.useEffect(() => {
     loadData();
   }, []);
 
   React.useEffect(() => {
-    clearInterval(intervalHandle);
-    const handle = setInterval(loadData, resfreshFreqSecs * 1000);
-    setIntervalHandle(handle);
-    return () => clearInterval(handle);
-  }, [resfreshFreqSecs]);
+    clearTimeout(intervalHandle);
+    myInterval(loadData, resfreshFreqSecs * 1000);
+    return () => clearInterval(intervalHandle);
+  }, [resfreshFreqSecs, myInterval]);
 
   const isMessageLessAction = (actionType) =>
     actionType.startsWith("switch_") || actionType.startsWith("unwatch_");
@@ -546,45 +573,48 @@ const GameView = ({ classes: globalClasses }) => {
               style={{ visibility: isLoading ? "visible" : "hidden" }}
             />
           </Grid>
-
+          <FlagDialog
+            open={flag}
+            handleClose={() => setFlag(false)}
+            handleConfirm={addFlagToPlayers}
+            SummaryRenderer={SimplePlayerRenderer}
+          />
+          <ReasonDialog
+            open={confirmAction}
+            handleClose={() => setConfirmAction(false)}
+            handleConfirm={(
+              action,
+              player,
+              reason,
+              comment,
+              duration_hours = 2,
+              steam_id_64 = null
+            ) => {
+              handleAction(
+                action,
+                selectedPlayers,
+                reason,
+                duration_hours,
+                comment
+              );
+              setConfirmAction(false);
+            }}
+          />
           <Grid item xs={12}>
-            <FlagDialog
-              open={flag}
-              handleClose={() => setFlag(false)}
-              handleConfirm={addFlagToPlayers}
-              SummaryRenderer={SimplePlayerRenderer}
-            />
-            <Grid container alignItems="center" spacing={2}>
-              <ReasonDialog
-                open={confirmAction}
-                handleClose={() => setConfirmAction(false)}
-                handleConfirm={(
-                  action,
-                  player,
-                  reason,
-                  comment,
-                  duration_hours = 2,
-                  steam_id_64 = null
-                ) => {
-                  handleAction(
-                    action,
-                    selectedPlayers,
-                    reason,
-                    duration_hours,
-                    comment
-                  );
-                  setConfirmAction(false);
-                }}
-              />
-
-              <Grid item md={12} lg={6}>
+            <Grid
+              container
+              alignItems="center"
+              justify="space-between"
+              spacing={2}
+            >
+              <Grid item xs={12}>
                 <Autocomplete
                   className={classes.marginBottom}
                   multiple
                   clearOnEscape
                   id="tags-outlined"
                   options={allPlayerNames}
-                  value={selectedPlayers.toJS()}
+                  value={autoCompleteSelectedPlayers}
                   filterSelectedOptions
                   onChange={(e, val) => {
                     setSelectedPlayers(new OrderedSet(val));
@@ -593,15 +623,15 @@ const GameView = ({ classes: globalClasses }) => {
                     <TextField
                       {...params}
                       variant="outlined"
-                      label="Selected players to apply action to"
+                      label="Selected players to search or apply action to"
                       fullWidth
                     />
                   )}
                 />
               </Grid>
-              <Grid item xs={12} md={12} lg={6}>
+              <Grid item>
                 <PlayerActions
-                  size="large"
+                  size="default"
                   displayCount={12}
                   disableAll={selectedPlayers.size === 0}
                   handleAction={(actionType) => {
@@ -624,6 +654,44 @@ const GameView = ({ classes: globalClasses }) => {
                   onFlag={() => setFlag(true)}
                 />
               </Grid>
+              <Grid item>
+                <Padlock
+                  handleChange={setShowOnlySelected}
+                  checked={showOnlySelected}
+                  label="Only show selected players"
+                />
+              </Grid>
+              <Grid item>
+                <FormControl size="small" style={{ minWidth: "120px" }}>
+                  <InputLabel htmlFor="age-native-simple">Sort by</InputLabel>
+                  <Select
+                    labelId="demo-simple-select-label"
+                    id="demo-simple-select"
+                    value={sortType}
+                    helperText="sort the squads and players"
+                    onChange={(e) => {
+                      setSortType(e.target.value);
+                      localStorage.setItem("game_view_sorting", e.target.value);
+                    }}
+                  >
+                    {Object.keys(sortTypeToFunc).map((k) => (
+                      <MenuItem key={k} value={k}>
+                        {k}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item>
+                <TextField
+                  type="number"
+                  inputProps={{ min: 2, max: 6000 }}
+                  label="Refresh freq. seconds"
+                  helperText=""
+                  value={resfreshFreqSecs}
+                  onChange={(e) => setResfreshFreqSecs(e.target.value)}
+                />
+              </Grid>
             </Grid>
           </Grid>
           <Grid item xs={12} md={12} lg={6}>
@@ -636,6 +704,8 @@ const GameView = ({ classes: globalClasses }) => {
               selectMultiplePlayers={selectMultiplePlayers}
               selectAll={() => selectAllTeam("axis")}
               deselectAll={() => deselectAllTeam("axis")}
+              sortFunc={sortTypeToFunc[sortType]}
+              showOnlySelected={showOnlySelected && selectedPlayers.size !== 0}
             />
           </Grid>
           <Grid item xs={12} md={12} lg={6}>
@@ -648,6 +718,8 @@ const GameView = ({ classes: globalClasses }) => {
               selectMultiplePlayers={selectMultiplePlayers}
               selectAll={() => selectAllTeam("allies")}
               deselectAll={() => deselectAllTeam("allies")}
+              sortFunc={sortTypeToFunc[sortType]}
+              showOnlySelected={showOnlySelected && selectedPlayers.size !== 0}
             />
           </Grid>
           <Grid item xs={12} md={12}>
@@ -660,6 +732,8 @@ const GameView = ({ classes: globalClasses }) => {
               selectMultiplePlayers={selectMultiplePlayers}
               selectAll={() => selectAllTeam("none")}
               deselectAll={() => deselectAllTeam("none")}
+              sortFunc={sortTypeToFunc[sortType]}
+              showOnlySelected={showOnlySelected && selectedPlayers.size !== 0}
             />
           </Grid>
         </Fragment>
