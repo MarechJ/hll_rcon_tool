@@ -32,6 +32,8 @@ import {
   PlayerActions,
   ReasonDialog,
 } from "../PlayerView/playerActions";
+import { toast } from "react-toastify";
+import { FlagDialog } from "../PlayersHistory";
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -87,6 +89,15 @@ const Squad = ({
     return intersection.size !== 0;
   }, [selectedPlayers, squadPlayerNames]);
 
+  const deleteFlag = (flag_id) => {
+    return postData(`${process.env.REACT_APP_API_URL}unflag_player`, {
+      flag_id: flag_id,
+    })
+      .then((response) => showResponse(response, "Flag will be removed momentarily", true))
+      .catch((error) => toast.error("Unable to connect to API " + error));
+  }
+
+
   if (squadName === "commander") return "";
 
   return squadData ? (
@@ -97,7 +108,11 @@ const Squad = ({
             variant="rounded"
             className={classes.primaryBackground}
             alt={squadData.get("type", "na")}
-            src={`icons/roles/${squadData.get("type")}.png`}
+            src={
+              squadName.toUpperCase() === "NULL"
+                ? `icons/sleep.png`
+                : `icons/roles/${squadData.get("type")}.png`
+            }
           >
             {squadName[0].toUpperCase()}
           </Avatar>
@@ -105,9 +120,13 @@ const Squad = ({
         <ListItemText
           primary={
             <Typography variant="h6">
-              {`${squadName.toUpperCase()} - ${
-                squadData.get("players", new IList()).size
-              }/${sizes[squadData.get("type", "infantry")]}`}{" "}
+              {`${
+                squadName.toUpperCase() === "NULL"
+                  ? "Unassigned"
+                  : squadName.toUpperCase()
+              } - ${squadData.get("players", new IList()).size}/${
+                sizes[squadData.get("type", "infantry")]
+              }`}{" "}
               {squadData.get("has_leader", false) ? (
                 ""
               ) : (
@@ -155,7 +174,7 @@ const Squad = ({
               classes={globalClasses}
               player={player}
               playerHasExtraInfo={true}
-              onDeleteFlag={() => null}
+              onDeleteFlag={(flagId) => deleteFlag(flagId)}
               onSelect={() => onSelectPlayer(player.get("name"))}
               isSelected={selectedPlayers?.contains(player.get("name"))}
             />
@@ -176,7 +195,7 @@ const Team = ({
   selectPlayer,
   selectMultiplePlayers,
   selectAll,
-  deselectAll
+  deselectAll,
 }) => {
   const classes = useStyles();
   const [openAll, setOpenAll] = React.useState(false);
@@ -192,10 +211,11 @@ const Team = ({
             {teamName} {teamData.get("count", 0)}/50{" "}
             <Link onClick={onOpenAll} component="button">
               {openAll ? "Collapse" : "Expand"} all
-            </Link>
-            {" "}<Link onClick={selectAll} component="button">
+            </Link>{" "}
+            <Link onClick={selectAll} component="button">
               Select all
-            </Link>{" "}<Link onClick={deselectAll} component="button">
+            </Link>{" "}
+            <Link onClick={deselectAll} component="button">
               deselect all
             </Link>
           </Typography>
@@ -242,6 +262,8 @@ const Team = ({
   );
 };
 
+const SimplePlayerRenderer = ({player, flag}) => <Typography variant="h4">Add {!flag ? '<select a flag>' : flag} to all selected players</Typography>
+
 const GameView = ({ classes: globalClasses }) => {
   const classes = useStyles();
   const [isLoading, setIsLoading] = React.useState(false);
@@ -249,6 +271,9 @@ const GameView = ({ classes: globalClasses }) => {
   const [selectedPlayers, setSelectedPlayers] = React.useState(
     new OrderedSet()
   );
+  const [resfreshFreqSecs, setResfreshFreqSecs] = React.useState(5);
+  const [intervalHandle, setIntervalHandle] = React.useState(null);
+  const [flag, setFlag] = React.useState(false)
 
   /* confirm action needs to be set to a dict to call the popup: 
         {
@@ -280,7 +305,7 @@ const GameView = ({ classes: globalClasses }) => {
         .get(key, new Map())
         .get("commander", new Map());
       if (commander) {
-        namesToId[commander.get("name")] = commander.get("steam_id_64")
+        namesToId[commander.get("name")] = commander.get("steam_id_64");
       }
     });
     return fromJS(namesToId);
@@ -288,8 +313,9 @@ const GameView = ({ classes: globalClasses }) => {
 
   const getPlayersNamesByTeam = (teamView, teamName) => {
     const commander = teamView
-    .get(teamName, new Map())
-    .get("commander", new Map())?.get("name");
+      .get(teamName, new Map())
+      .get("commander", new Map())
+      ?.get("name");
 
     const names = teamView
       .get(teamName, new Map())
@@ -297,12 +323,14 @@ const GameView = ({ classes: globalClasses }) => {
       .entrySeq()
       .map(([key, value]) =>
         value.get("players", new IList()).map((player) => player.get("name"))
-      ).flatten().toList()
+      )
+      .flatten()
+      .toList();
 
-    if (commander) return names.push(commander)
+    if (commander) return names.push(commander);
 
-    return names
-  }
+    return names;
+  };
 
   const allPlayerNames = React.useMemo(() => {
     if (!teamView) {
@@ -311,7 +339,7 @@ const GameView = ({ classes: globalClasses }) => {
 
     const res = new IList(["axis", "allies", "none"])
       .map((key) => {
-        return getPlayersNamesByTeam(teamView, key)
+        return getPlayersNamesByTeam(teamView, key);
       })
       .flatten()
       .toJS();
@@ -320,12 +348,12 @@ const GameView = ({ classes: globalClasses }) => {
   }, [teamView]);
 
   const selectAllTeam = (teamName) => {
-    selectMultiplePlayers(getPlayersNamesByTeam(teamView, teamName), 'add')
-  }
+    selectMultiplePlayers(getPlayersNamesByTeam(teamView, teamName), "add");
+  };
 
   const deselectAllTeam = (teamName) => {
-    selectMultiplePlayers(getPlayersNamesByTeam(teamView, teamName), 'delete')
-  }
+    selectMultiplePlayers(getPlayersNamesByTeam(teamView, teamName), "delete");
+  };
 
   const selectPlayer = (playerName, force) => {
     if (
@@ -380,32 +408,41 @@ const GameView = ({ classes: globalClasses }) => {
 
   React.useEffect(() => {
     loadData();
-    const handle = setInterval(loadData, 15000);
-    return () => clearInterval(handle);
   }, []);
+
+  React.useEffect(() => {
+    clearInterval(intervalHandle);
+    const handle = setInterval(loadData, resfreshFreqSecs * 1000);
+    setIntervalHandle(handle);
+    return () => clearInterval(handle);
+  }, [resfreshFreqSecs]);
+
+  const isMessageLessAction = (actionType) =>
+    actionType.startsWith("switch_") || actionType.startsWith("unwatch_");
 
   const handleAction = (
     actionType,
-    player_names,
+    playerNames,
     message,
     duration_hours = 2,
     comment = null
   ) => {
-    if (
-      !message &&
-      !actionType.startsWith("switch_") &&
-      !actionType.startsWith("unwatch_")
-    ) {
+    if (!message && !isMessageLessAction(actionType)) {
       setConfirmAction({
         player: null,
         actionType: actionType,
         steam_id_64: null,
       });
     } else {
-      player_names.forEach((player_name) => {
-        const steam_id_64 = playerNamesToSteamId.get(player_name, null);
+      playerNames.forEach((playerName) => {
+        if (allPlayerNames.indexOf(playerName) === -1) {
+          toast.error(`Player ${playerName} is not on the server anymore`)
+          selectPlayer(playerName, 'delete')
+          return
+        }
+        const steam_id_64 = playerNamesToSteamId.get(playerName, null);
         const data = {
-          player: player_name,
+          player: playerName,
           steam_id_64: steam_id_64,
           reason: message,
           comment: comment,
@@ -418,9 +455,9 @@ const GameView = ({ classes: globalClasses }) => {
         console.log(`Posting do_${actionType}`, data);
         postData(`${process.env.REACT_APP_API_URL}do_${actionType}`, data)
           .then((response) =>
-            showResponse(response, `${actionType} ${player_name}`, true)
+            showResponse(response, `${actionType} ${playerName}`, true)
           )
-          .catch(handle_http_errors); 
+          .catch(handle_http_errors);
 
         if (comment) {
           postData(`${process.env.REACT_APP_API_URL}post_player_comment`, {
@@ -428,7 +465,7 @@ const GameView = ({ classes: globalClasses }) => {
             comment: comment,
           })
             .then((response) =>
-              showResponse(response, `post_player_comment ${player_name}`, true)
+              showResponse(response, `post_player_comment ${playerName}`, true)
             )
             .catch(handle_http_errors);
         }
@@ -436,19 +473,37 @@ const GameView = ({ classes: globalClasses }) => {
     }
   };
 
+  const addFlagToPlayers = (_, flag, comment) => {
+    selectedPlayers.forEach((name) =>
+      postData(`${process.env.REACT_APP_API_URL}flag_player`, {
+        steam_id_64: playerNamesToSteamId.get(name),
+        flag: flag,
+        comment: comment,
+      })
+        .then((response) => showResponse(response, "flag_player", true))
+        .then(() => setFlag(false))
+        .catch(handle_http_errors)
+    );
+  };
+
   return (
     <Grid container spacing={2} className={globalClasses.padding}>
       {teamView ? (
         <Fragment>
-          {isLoading ? (
-            <Grid item xs={12} className={globalClasses.doublePadding}>
-              <LinearProgress />
-            </Grid>
-          ) : (
-            ""
-          )}
+          <Grid item xs={12} className={globalClasses.doublePadding}>
+            <LinearProgress
+              style={{ visibility: isLoading ? "visible" : "hidden" }}
+            />
+          </Grid>
+
           <Grid item xs={12}>
-            <Grid container alignItems="center">
+          <FlagDialog
+            open={flag}
+            handleClose={() => setFlag(false)}
+            handleConfirm={addFlagToPlayers}
+            SummaryRenderer={SimplePlayerRenderer}
+          />
+            <Grid container alignItems="center" spacing={2}>
               <ReasonDialog
                 open={confirmAction}
                 handleClose={() => setConfirmAction(false)}
@@ -470,7 +525,8 @@ const GameView = ({ classes: globalClasses }) => {
                   setConfirmAction(false);
                 }}
               />
-              <Grid item xs={12} md={6}>
+
+              <Grid item md={12} lg={6}>
                 <Autocomplete
                   className={classes.marginBottom}
                   multiple
@@ -480,7 +536,6 @@ const GameView = ({ classes: globalClasses }) => {
                   value={selectedPlayers.toJS()}
                   filterSelectedOptions
                   onChange={(e, val) => {
-                    console.log("Autocomplete");
                     setSelectedPlayers(new OrderedSet(val));
                   }}
                   renderInput={(params) => (
@@ -493,22 +548,34 @@ const GameView = ({ classes: globalClasses }) => {
                   )}
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
+              <Grid item xs={12} md={12} lg={6}>
                 <PlayerActions
                   size="large"
                   displayCount={12}
-                  handleAction={(actionType) =>
-                    setConfirmAction({
-                      player: "All selected players",
-                      actionType: actionType,
-                      steam_id_64: null,
-                    })
-                  }
+                  disableAll={selectedPlayers.size === 0}
+                  handleAction={(actionType) => {
+                    if (isMessageLessAction(actionType)) {
+                      handleAction(
+                        actionType,
+                        selectedPlayers,
+                        null,
+                        null,
+                        null
+                      );
+                    } else {
+                      setConfirmAction({
+                        player: "All selected players",
+                        actionType: actionType,
+                        steam_id_64: null,
+                      });
+                    }
+                  }}
+                  onFlag={() => setFlag(true)}
                 />
               </Grid>
             </Grid>
           </Grid>
-          <Grid item xs={12} md={6}>
+          <Grid item xs={12} md={12} lg={6}>
             <Team
               classes={globalClasses}
               teamName="Axis"
@@ -516,11 +583,11 @@ const GameView = ({ classes: globalClasses }) => {
               selectedPlayers={selectedPlayers}
               selectPlayer={selectPlayer}
               selectMultiplePlayers={selectMultiplePlayers}
-              selectAll={() => selectAllTeam('axis')}
-              deselectAll={() => deselectAllTeam('axis')}
+              selectAll={() => selectAllTeam("axis")}
+              deselectAll={() => deselectAllTeam("axis")}
             />
           </Grid>
-          <Grid item xs={12} md={6}>
+          <Grid item xs={12} md={12} lg={6}>
             <Team
               classes={globalClasses}
               teamName="Allies"
@@ -528,11 +595,11 @@ const GameView = ({ classes: globalClasses }) => {
               selectedPlayers={selectedPlayers}
               selectPlayer={selectPlayer}
               selectMultiplePlayers={selectMultiplePlayers}
-              selectAll={() => selectAllTeam('allies')}
-              deselectAll={() => deselectAllTeam('allies')}
+              selectAll={() => selectAllTeam("allies")}
+              deselectAll={() => deselectAllTeam("allies")}
             />
           </Grid>
-          <Grid item xs={12} md={6}>
+          <Grid item xs={12} md={12}>
             <Team
               classes={globalClasses}
               teamName="Unassigned"
@@ -540,8 +607,8 @@ const GameView = ({ classes: globalClasses }) => {
               selectedPlayers={selectedPlayers}
               selectPlayer={selectPlayer}
               selectMultiplePlayers={selectMultiplePlayers}
-              selectAll={() => selectAllTeam('none')}
-              deselectAll={() => deselectAllTeam('none')}
+              selectAll={() => selectAllTeam("none")}
+              deselectAll={() => deselectAllTeam("none")}
             />
           </Grid>
         </Fragment>
