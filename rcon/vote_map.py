@@ -65,7 +65,7 @@ def _get_random_map_selection(maps, nb_to_return, history=None):
 
 def suggest_next_maps(
     maps_history,
-    all_maps,
+    whitelist_maps,
     selection_size=6,
     exclude_last_n=4,
     offsensive_ratio=0.5,
@@ -79,7 +79,7 @@ def suggest_next_maps(
     else:
         last_n_map = set()
     logger.info("Excluding last %s player maps: %s", exclude_last_n, last_n_map)
-    remaining_maps = set(all_maps) - last_n_map
+    remaining_maps = whitelist_maps - last_n_map
     logger.info("Remaining maps to suggest from: %s", remaining_maps)
 
     try:
@@ -149,6 +149,7 @@ class VoteMap:
         self.red = get_redis_client()
         self.reminder_time_key = "last_vote_reminder"
         self.optin_name = "votemap_reminder"
+        self.whitelist_key = "votemap_whitelist"
 
     def join_vote_options(
         self, join_char, selection, human_name_map, maps_to_numbers, votes, total_votes
@@ -518,6 +519,36 @@ class VoteMap:
 
         return map_
 
+    def get_map_whitelist(self):
+        res = self.red.get(self.whitelist_key)
+        if res is not None:
+            return pickle.loads(res)
+        return set(ALL_MAPS)
+
+    def do_add_map_to_whitelist(self, map_name):
+        whitelist = self.get_map_whitelist()
+        whitelist.add(map_name)
+        self.do_set_map_whitelist(whitelist)
+
+    def do_add_maps_to_whitelist(self, map_names):
+        for map_name in map_names:
+            self.do_add_map_to_whitelist(map_name)
+
+    def do_remove_map_from_whitelist(self, map_name):
+        whitelist = self.get_map_whitelist()
+        whitelist.discard(map_name)
+        self.do_set_map_whitelist(whitelist)
+
+    def do_remove_maps_from_whitelist(self, map_names):
+        for map_name in map_names:
+            self.do_remove_map_from_whitelist(map_name)
+
+    def do_reset_map_whitelist(self):
+        self.do_set_map_whitelist(ALL_MAPS)
+
+    def do_set_map_whitelist(self, map_names):
+        self.red.set(self.whitelist_key, pickle.dumps(set(map_names)))
+
     def gen_selection(self):
         config = VoteMapConfig()
 
@@ -535,7 +566,7 @@ class VoteMap:
         )
         selection = suggest_next_maps(
             MapsHistory(),
-            ALL_MAPS,
+            self.get_map_whitelist(),
             selection_size=config.get_votemap_number_of_options(),
             exclude_last_n=config.get_votemap_number_of_last_played_map_to_exclude(),
             offsensive_ratio=config.get_votemap_ratio_of_offensives_to_offer(),
@@ -684,7 +715,6 @@ class VoteMap:
 
         if not success:
             logger.warning("Unable to set votemap results")
-            
 
 
 # DEPRECATED see hooks.py
