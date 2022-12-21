@@ -684,7 +684,7 @@ const GameView = ({ classes: globalClasses }) => {
               </Grid>
               <Grid item>
                 <TextField
-                  style={{minWidth: "100px"}}
+                  style={{minWidth: "125px"}}
                   type="number"
                   inputProps={{ min: 2, max: 6000 }}
                   label="Refresh seconds"
