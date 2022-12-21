@@ -622,8 +622,23 @@ class Rcon(ServerCtl):
 
     @mod_users_allowed
     def get_bans(self):
-        temp_bans = [self._struct_ban(b, "temp") for b in self.get_temp_bans()]
-        bans = [self._struct_ban(b, "perma") for b in self.get_perma_bans()]
+        try:
+            temp_bans = []
+            for b in self.get_temp_bans():
+                try:
+                    temp_bans.append(self._struct_ban(b, "temp"))
+                except ValueError:
+                    logger.exception("Invalid temp ban line: %s", b)
+            bans = [] 
+            for b in self.get_perma_bans():
+                try:
+                    bans.append(self._struct_ban(b, "perma"))
+                except ValueError:
+                    logger.exception("Invalid perm ban line: %s", b)
+        except Exception:
+            self.get_temp_bans.cache_clear()
+            self.get_perma_bans.cache_clear()
+            raise
         # Most recent first
         bans.reverse()
         return temp_bans + bans
