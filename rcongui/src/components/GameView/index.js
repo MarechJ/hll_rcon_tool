@@ -9,6 +9,10 @@ import {
   ListItemSecondaryAction,
   Checkbox,
   LinearProgress,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from "@material-ui/core";
 import Autocomplete from "@material-ui/lab/Autocomplete";
 import WarningIcon from "@material-ui/icons/Warning";
@@ -93,10 +97,11 @@ const Squad = ({
     return postData(`${process.env.REACT_APP_API_URL}unflag_player`, {
       flag_id: flag_id,
     })
-      .then((response) => showResponse(response, "Flag will be removed momentarily", true))
+      .then((response) =>
+        showResponse(response, "Flag will be removed momentarily", true)
+      )
       .catch((error) => toast.error("Unable to connect to API " + error));
-  }
-
+  };
 
   if (squadName === "commander") return "";
 
@@ -199,7 +204,27 @@ const Team = ({
 }) => {
   const classes = useStyles();
   const [openAll, setOpenAll] = React.useState(false);
+  const [sortType, setSortType] = React.useState(localStorage.getItem("game_view_sorting") ? localStorage.getItem("game_view_sorting") :  "name_asc");
   const onOpenAll = () => (openAll ? setOpenAll(false) : setOpenAll(true));
+
+  const sortTypeToFunc = React.useMemo(
+    () => ({
+      name_asc: (squadData, squadName) => squadName,
+      combat_asc: (squadData, squadName) => squadData.get("combat", 0),
+      offense_asc: (squadData, squadName) => squadData.get("offense", 0),
+      defense_asc: (squadData, squadName) => squadData.get("defense", 0),
+      support_asc: (squadData, squadName) => squadData.get("support", 0),
+      kills_asc: (squadData, squadName) => squadData.get("kills", 0),
+      deaths_asc: (squadData, squadName) => squadData.get("kills", 0),
+      combat_desc: (squadData, squadName) => -squadData.get("combat", 0),
+      offense_desc: (squadData, squadName) => -squadData.get("offense", 0),
+      defense_desc: (squadData, squadName) => -squadData.get("defense", 0),
+      support_desc: (squadData, squadName) => -squadData.get("support", 0),
+      kills_desc: (squadData, squadName) => -squadData.get("kills", 0),
+      deaths_desc: (squadData, squadName) => -squadData.get("kills", 0),
+    }),
+    []
+  );
 
   return teamData ? (
     <List
@@ -207,23 +232,40 @@ const Team = ({
       component="nav"
       subheader={
         <ListSubheader component="div" id="nested-list-subheader">
-          <Typography variant="h4">
-            {teamName} {teamData.get("count", 0)}/50{" "}
-            <Link onClick={onOpenAll} component="button">
-              {openAll ? "Collapse" : "Expand"} all
-            </Link>{" "}
-            <Link onClick={selectAll} component="button">
-              Select all
-            </Link>{" "}
-            <Link onClick={deselectAll} component="button">
-              deselect all
-            </Link>
-            {" "}<Link onClick={selectAll} component="button">
-              Select all
-            </Link>{" "}<Link onClick={deselectAll} component="button">
-              deselect all
-            </Link>
-          </Typography>
+          <Grid container alignContent="center" alignItems="flex-end" justify="space-between" spacing={2}>
+          <Grid item={2}>
+              <FormControl style={{minWidth: "120px"}}>
+              <InputLabel htmlFor="age-native-simple">Sort by</InputLabel>
+                <Select
+                  labelId="demo-simple-select-label"
+                  id="demo-simple-select"
+                  value={sortType}
+                  onChange={(e) => {setSortType(e.target.value); localStorage.setItem("game_view_sorting", e.target.value) }}
+                >
+                  {Object.keys(sortTypeToFunc).map((k) => (
+                    <MenuItem key={k} value={k}>
+                      {k}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={10}>
+              <Typography variant="h4">
+                {teamName} {teamData.get("count", 0)}/50{" "}
+                <Link onClick={onOpenAll} component="button">
+                  {openAll ? "Collapse" : "Expand"} all
+                </Link>{" "}
+                <Link onClick={selectAll} component="button">
+                  Select all
+                </Link>{" "}
+                <Link onClick={deselectAll} component="button">
+                  deselect all
+                </Link>
+              </Typography>
+            </Grid>
+            
+          </Grid>
         </ListSubheader>
       }
       className={classes.root}
@@ -246,7 +288,7 @@ const Team = ({
       {teamData
         .get("squads", new Map())
         .toOrderedMap()
-        .sortBy((v, k) => k)
+        .sortBy(sortTypeToFunc[sortType])
         .entrySeq()
         .map(([key, value]) => (
           <Squad
@@ -267,7 +309,11 @@ const Team = ({
   );
 };
 
-const SimplePlayerRenderer = ({player, flag}) => <Typography variant="h4">Add {!flag ? '<select a flag>' : flag} to all selected players</Typography>
+const SimplePlayerRenderer = ({ player, flag }) => (
+  <Typography variant="h4">
+    Add {!flag ? "<select a flag>" : flag} to all selected players
+  </Typography>
+);
 
 const GameView = ({ classes: globalClasses }) => {
   const classes = useStyles();
@@ -278,7 +324,7 @@ const GameView = ({ classes: globalClasses }) => {
   );
   const [resfreshFreqSecs, setResfreshFreqSecs] = React.useState(5);
   const [intervalHandle, setIntervalHandle] = React.useState(null);
-  const [flag, setFlag] = React.useState(false)
+  const [flag, setFlag] = React.useState(false);
 
   /* confirm action needs to be set to a dict to call the popup: 
         {
@@ -441,9 +487,9 @@ const GameView = ({ classes: globalClasses }) => {
     } else {
       playerNames.forEach((playerName) => {
         if (allPlayerNames.indexOf(playerName) === -1) {
-          toast.error(`Player ${playerName} is not on the server anymore`)
-          selectPlayer(playerName, 'delete')
-          return
+          toast.error(`Player ${playerName} is not on the server anymore`);
+          selectPlayer(playerName, "delete");
+          return;
         }
         const steam_id_64 = playerNamesToSteamId.get(playerName, null);
         const data = {
@@ -502,12 +548,12 @@ const GameView = ({ classes: globalClasses }) => {
           </Grid>
 
           <Grid item xs={12}>
-          <FlagDialog
-            open={flag}
-            handleClose={() => setFlag(false)}
-            handleConfirm={addFlagToPlayers}
-            SummaryRenderer={SimplePlayerRenderer}
-          />
+            <FlagDialog
+              open={flag}
+              handleClose={() => setFlag(false)}
+              handleConfirm={addFlagToPlayers}
+              SummaryRenderer={SimplePlayerRenderer}
+            />
             <Grid container alignItems="center" spacing={2}>
               <ReasonDialog
                 open={confirmAction}
