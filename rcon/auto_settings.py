@@ -7,6 +7,7 @@ import pytz
 
 from rcon.audit import ingame_mods, online_mods
 from rcon.extended_commands import Rcon
+from rcon.vote_map import VoteMap
 from rcon.settings import SERVER_INFO
 from rcon.user_config import AutoSettingsConfig
 
@@ -181,11 +182,22 @@ def create_condition(name, **kwargs):
         raise ValueError("Invalid condition type: %s" % name)
 
 
-def do_run_commands(rcon, commands):
+def do_run_commands(rcon, votemap, commands):
     for command, params in commands.items():
         try:
             logger.info("Applying %s %s", command, params)
-            rcon.__getattribute__(command)(**params)
+            vm_commands = {
+                "do_add_map_to_whitelist": votemap.do_add_map_to_whitelist,
+                "do_add_maps_to_whitelist": votemap.do_add_maps_to_whitelist,
+                "do_remove_map_from_whitelist": votemap.do_remove_map_from_whitelist,
+                "do_remove_maps_from_whitelist": votemap.do_remove_maps_from_whitelist,
+                "do_reset_map_whitelist": votemap.do_reset_map_whitelist,
+                "do_set_map_whitelist": votemap.do_set_map_whitelist,
+            }
+            if command in vm_methods.keys():
+                vm_commands[command](**params)
+            else:
+                rcon.__getattribute__(command)(**params)
         except:
             logger.exception("Unable to apply %s %s", command, params)
         time.sleep(5)  # go easy on the server
@@ -193,6 +205,7 @@ def do_run_commands(rcon, commands):
 
 def run():
     rcon = Rcon(SERVER_INFO)
+    votemap = VoteMap()
     config = AutoSettingsConfig().get_settings()
 
     while True:
@@ -209,6 +222,7 @@ def run():
             }
             do_run_commands(
                 rcon,
+                votemap,
                 {
                     name: params
                     for (name, params) in default_commands.items()
@@ -236,9 +250,9 @@ def run():
             if all([c.is_valid(rcon=rcon) for c in conditions]):
                 if always_apply_defaults:
                     # Overwrites the saved commands in case they're duplicate
-                    do_run_commands(rcon, {**saved_commands, **commands})
+                    do_run_commands(rcon, votemap, {**saved_commands, **commands})
                 else:
-                    do_run_commands(rcon, commands)
+                    do_run_commands(rcon, votemap, commands)
                 rule_matched = True
                 break
             logger.info("Rule validation failed, moving to next one.")
@@ -246,9 +260,9 @@ def run():
         if not rule_matched:
             if always_apply_defaults:
                 # The saved commands were never ran yet, so we do that here
-                do_run_commands(rcon, saved_commands)
+                do_run_commands(rcon, votemap, saved_commands)
             else:
-                do_run_commands(rcon, default_commands)
+                do_run_commands(rcon, votemap, default_commands)
         time.sleep(60)
 
 

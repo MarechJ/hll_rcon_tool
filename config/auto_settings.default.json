@@ -105,7 +105,13 @@
     "do_remove_admin": { "steam_id_64": "1234567890123456" },
     "do_add_vip": { "steam_id_64": "1234567890123456", "name": "A comment" },
     "do_remove_vip": { "steam_id_64": "1234567890123456" },
-    "do_remove_all_vips": {}
+    "do_remove_all_vips": {},
+    "do_add_map_to_whitelist": { "map_name": "stmariedumont_warfare" },
+    "do_add_maps_to_whitelist": { "map_names": ["stmariedumont_warfare", "kursk_offensive_rus"] },
+    "do_remove_map_from_whitelist": { "map_name": "stmariedumont_warfare" },
+    "do_remove_maps_from_whitelist": { "map_names": ["stmariedumont_warfare", "kursk_offensive_rus"] },
+    "do_reset_map_whitelist": {},
+    "do_set_map_whitelist": { "map_names": ["stmariedumont_warfare", "kursk_offensive_rus"] }
   },
   "_available_conditions": {
     "player_count": {
