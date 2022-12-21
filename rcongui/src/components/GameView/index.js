@@ -218,6 +218,11 @@ const Team = ({
             <Link onClick={deselectAll} component="button">
               deselect all
             </Link>
+            {" "}<Link onClick={selectAll} component="button">
+              Select all
+            </Link>{" "}<Link onClick={deselectAll} component="button">
+              deselect all
+            </Link>
           </Typography>
         </ListSubheader>
       }
