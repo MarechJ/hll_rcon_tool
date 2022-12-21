@@ -84,7 +84,7 @@
     "do_remove_map_from_rotation": { "map_name": "stmariedumont_warfare" },
     "do_remove_maps_from_rotation": { "maps": ["stmariedumont_warfare", "kursk_offensive_rus"] },
     "do_randomize_map_rotation": { "maps": ["An optional list of maps", "that will replace the current rotation"] },
-    "set_maprotation": { "maps": ["Overwrites the current rotation", "Yes the spelling is intentional"] },
+    "set_maprotation": { "rotation": ["Overwrites the current rotation", "Yes the spelling is intentional"] },
     "do_punish": { "player": "12345678901234567", "reason": "Get rekt" },
     "do_kick": { "player": "12345678901234567", "reason": "Get rekt" },
     "do_temp_ban": {
