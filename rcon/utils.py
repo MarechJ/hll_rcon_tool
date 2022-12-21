@@ -126,6 +126,8 @@ LOG_MAP_NAMES_TO_MAP = {
     "STALINGRAD WARFARE": "stalingrad_warfare",
     "UTAH BEACH OFFENSIVE": "utahbeach_offensive_ger",
     "UTAH BEACH WARFARE": "utahbeach_warfare",
+    "OMAHA BEACH WARFARE": "omahabeach_warfare",
+    "OMAHA BEACH OFFENSIVE": "omahabeach_offensive_ger",
 }
 
 LONG_HUMAN_MAP_NAMES = {

@@ -9,8 +9,8 @@ from typing import DefaultDict, Dict, List, Optional, Sequence, Union
 
 import discord
 from discord_webhook import DiscordEmbed
-from rcon.cache_utils import invalidates
 
+from rcon.cache_utils import invalidates
 from rcon.commands import CommandFailedError, HLLServerError
 from rcon.config import get_config
 from rcon.discord import (
@@ -29,7 +29,6 @@ from rcon.game_logs import (
     on_match_end,
     on_match_start,
 )
-from rcon.vote_map import VoteMap
 from rcon.models import LogLineWebHookField, enter_session
 from rcon.player_history import (
     _get_set_player,
@@ -42,9 +41,9 @@ from rcon.player_history import (
 from rcon.recorded_commands import RecordedRcon
 from rcon.steam_utils import get_player_bans, get_steam_profile, update_db_player_info
 from rcon.user_config import CameraConfig, RealVipConfig, VoteMapConfig
-from rcon.utils import LOG_MAP_NAMES_TO_MAP, MapsHistory
+from rcon.utils import LOG_MAP_NAMES_TO_MAP, MapsHistory, get_server_number
+from rcon.vote_map import VoteMap
 from rcon.workers import record_stats_worker, temporary_broadcast, temporary_welcome
-from rcon.utils import get_server_number
 
 logger = logging.getLogger(__name__)
 
@@ -87,7 +86,7 @@ def handle_new_match_start(rcon: RecordedRcon, struct_log):
         logger.info("New match started recording map %s", struct_log)
         with invalidates(Rcon.get_map):
             try:
-                current_map = rcon.get_map()
+                current_map = rcon.get_map().replace('_RESTART', '')
             except (CommandFailedError, HLLServerError):
                 current_map = "bla_"
                 logger.error("Unable to get current map")
