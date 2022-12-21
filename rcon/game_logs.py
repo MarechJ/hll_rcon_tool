@@ -186,15 +186,21 @@ class LogLoop:
     def process_hooks(self, log: StructuredLogLine):
         logger.debug("Processing %s", f"{log['action']}{log['message']}")
         hooks = []
+        started_total = time.time()
         for action_hook, funcs in HOOKS.items():
             if log["action"].startswith(action_hook):
                 hooks += funcs
+
         for hook in hooks:
             try:
                 logger.info(
                     "Triggered %s.%s on %s", hook.__module__, hook.__name__, log["raw"]
                 )
+                started = time.time()
                 hook(self.rcon_2, log)
+                logger.debug(
+                    "Ran in %s seconds %s.%s on %s", time.time() - started, hook.__module__, hook.__name__, log["raw"]
+                )
             except KeyboardInterrupt:
                 sys.exit(0)
             except Exception:
@@ -204,6 +210,8 @@ class LogLoop:
                     hook.__name__,
                     log,
                 )
+        logger.debug("Processed %s hooks in %s for: %s", len(hooks), time.time() - started_total, f"{log['action']}{log['message']}")
+        
 
 
 class LogRecorder:

@@ -217,7 +217,7 @@ class ReasonDialog extends React.Component {
                 reason,
                 comment,
                 durationMultiplier * durationNumber,
-                open.steam_id_64
+                open.steam_id_64,
               );
               this.setState({ reason: "", comment: "" });
             }}
@@ -240,6 +240,7 @@ const PlayerActions = ({
   displayCount = 3,
   disable = false,
   penaltyCount = Map(),
+  disableAll = false,
 }) => {
   const [anchorEl, setAnchorEl] = React.useState(null);
   const [isOpen, setOpen] = React.useState(false);
@@ -269,7 +270,7 @@ const PlayerActions = ({
 
   return (
     <React.Fragment>
-      <ButtonGroup size={size} aria-label="small outlined button group">
+      <ButtonGroup size={size} disabled={disableAll} aria-label="small outlined button group">
         <Tooltip title="Message Player">
           <Button onClick={() => handleAction("message_player")}>
             <MessageIcon />

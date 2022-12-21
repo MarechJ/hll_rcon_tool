@@ -59,13 +59,20 @@ const Selector = ({
 class Logs extends React.Component {
   constructor(props) {
     super(props);
+    console.log("logs_action_type", JSON.parse(localStorage.getItem("logs_action_type")))
     this.state = {
       logs: [],
       actions: [],
       players: [],
-      playersFilter: [],
-      actionsFilter: [],
-      inclusiveFilter: true,
+      playersFilter: localStorage.getItem("logs_player_filters")
+      ? JSON.parse(localStorage.getItem("logs_player_filters"))
+      : [],
+      actionsFilter: localStorage.getItem("logs_action_filters")
+      ? JSON.parse(localStorage.getItem("logs_action_filters"))
+      : [],
+      inclusiveFilter: localStorage.getItem("logs_action_type") !== null
+      ? JSON.parse(localStorage.getItem("logs_action_type"))
+      : true,
       limit: localStorage.getItem("logs_limit")
         ? localStorage.getItem("logs_limit")
         : 500,
@@ -109,11 +116,12 @@ class Logs extends React.Component {
 
   setActionFilter(actionsFilter) {
     this.setState({ actionsFilter }, this.loadLogs);
-    localStorage.setItem("logs_actions", actionsFilter);
+    localStorage.setItem("logs_action_filters", JSON.stringify(actionsFilter));
   }
 
   setActionsFilterInclusivity(e) {
     this.setState({ inclusiveFilter: e.target.value }, this.loadLogs);
+    localStorage.setItem("logs_action_type", JSON.stringify(e.target.value))
   }
 
   setLimit(limit) {
@@ -123,7 +131,7 @@ class Logs extends React.Component {
 
   render() {
     const { classes, isFullScreen, onFullScreen } = this.props;
-    const { logs, players, actions, actionsFilter, limit, limitOptions } =
+    const { logs, players, actions, actionsFilter, limit, limitOptions, inclusiveFilter, playersFilter } =
       this.state;
 
     return (
@@ -165,6 +173,7 @@ class Logs extends React.Component {
               <InputLabel shrink>Inclusive/Exclusive</InputLabel>
               <Select
                 onChange={this.setActionsFilterInclusivity}
+                value={inclusiveFilter}
                 defaultValue={true}
               >
                 <MenuItem value={true}>Inclusive</MenuItem>
@@ -177,6 +186,7 @@ class Logs extends React.Component {
               id="tags-outlined"
               multiple
               options={actions}
+              value={actionsFilter}
               getOptionLabel={(option) => option}
               filterSelectedOptions
               onChange={(e, value) => this.setActionFilter(value)}
@@ -195,13 +205,18 @@ class Logs extends React.Component {
               id="tags-outlined"
               multiple
               options={players.sort()}
+              value={playersFilter}
               getOptionLabel={(option) => option}
               filterSelectedOptions
-              onChange={(e, value) =>
+              onChange={(e, value) => {
                 this.setState(
                   { playersFilter: value ? value : "" },
                   this.loadLogs
                 )
+                if (value) {
+                  localStorage.setItem("logs_player_filters", JSON.stringify(value))
+                }
+              }
               }
               renderInput={(params) => (
                 <TextField
@@ -226,7 +241,7 @@ class Logs extends React.Component {
           </Grid>
         </Grid>
         <Grid container justify="center" alignItems="center">
-          <Grid className={classes.padding} xs={12}>
+          <Grid item className={classes.padding} xs={12}>
             <Paper className={classes.paperLogs}>
               {logs.map((l) => (
                 <pre key={l.raw} className={classes.logs}>
