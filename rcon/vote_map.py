@@ -99,6 +99,7 @@ def suggest_next_maps(
             current_map
         )
     except RestrictiveFilterError:
+        logger.warning("Falling back on ALL_MAPS since the filters are too restrictive")
         return _suggest_next_maps(
             maps_history,
             set(ALL_MAPS),
