@@ -114,7 +114,7 @@ def suggest_next_maps(
 
 def _suggest_next_maps(
     maps_history,
-    whitelist_maps,
+    allowed_maps,
     selection_size,
     exclude_last_n,
     offsensive_ratio,
@@ -128,7 +128,7 @@ def _suggest_next_maps(
     else:
         last_n_map = set()
     logger.info("Excluding last %s player maps: %s", exclude_last_n, last_n_map)
-    remaining_maps = whitelist_maps - last_n_map
+    remaining_maps = allowed_maps - last_n_map
     logger.info("Remaining maps to suggest from: %s", remaining_maps)
 
     try:
