@@ -1,5 +1,6 @@
 {
   "always_apply_defaults": false,
+  "can_invoke_multiple_rules": false,
   "defaults": {
     "set_idle_autokick_time": {
       "minutes": 10
