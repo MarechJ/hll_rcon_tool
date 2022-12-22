@@ -186,7 +186,7 @@ def do_run_commands(rcon, votemap, commands):
     for command, params in commands.items():
         try:
             logger.info("Applying %s %s", command, params)
-            vm_commands = {
+            votemap_commands = {
                 "do_add_map_to_whitelist": votemap.do_add_map_to_whitelist,
                 "do_add_maps_to_whitelist": votemap.do_add_maps_to_whitelist,
                 "do_remove_map_from_whitelist": votemap.do_remove_map_from_whitelist,
@@ -194,8 +194,8 @@ def do_run_commands(rcon, votemap, commands):
                 "do_reset_map_whitelist": votemap.do_reset_map_whitelist,
                 "do_set_map_whitelist": votemap.do_set_map_whitelist,
             }
-            if command in vm_methods.keys():
-                vm_commands[command](**params)
+            if command in votemap_commands.keys():
+                votemap_commands[command](**params)
             else:
                 rcon.__getattribute__(command)(**params)
         except:
