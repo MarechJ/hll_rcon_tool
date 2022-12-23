@@ -297,9 +297,8 @@ def inject_player_ids(func):
 
 
 @on_connected
-def handle_on_connect(rcon, struct_log):
-    steam_id_64 = rcon.get_player_info.get_cached_value_for(struct_log["player"])
-
+@inject_player_ids
+def handle_on_connect(rcon, struct_log, name, steam_id_64):
     try:
         if type(rcon) == RecordedRcon:
             rcon.invalidate_player_list_cache()
@@ -309,19 +308,6 @@ def handle_on_connect(rcon, struct_log):
         rcon.get_player_info.clear_for(player=struct_log["player"])
     except Exception:
         logger.exception("Unable to clear cache for %s", steam_id_64)
-    try:
-        info = rcon.get_player_info(struct_log["player"], can_fail=True)
-        steam_id_64 = info.get("steam_id_64")
-    except (CommandFailedError, KeyError):
-        if not steam_id_64:
-            logger.exception("Unable to get player steam ID for %s", struct_log)
-            raise
-        else:
-            logger.error(
-                "Unable to get player steam ID for %s, falling back to cached value %s",
-                struct_log,
-                steam_id_64,
-            )
 
     timestamp = int(struct_log["timestamp_ms"]) / 1000
     if not steam_id_64:
