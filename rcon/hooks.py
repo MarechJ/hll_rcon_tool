@@ -377,7 +377,10 @@ def notify_false_positives(rcon: RecordedRcon, _, name: str, steam_id_64: str):
         + name
     )
 
-    send_to_discord_audit("WARNING Player with bugged profile joined: `%s`\n\nThis player if Squad lead will cause his squad to be punished. He also will show as unassigned in the Game view.\n\nPlease ask him to change his name (last character IG shouldn't be a whitespace)")
+    try:
+        send_to_discord_audit("WARNING Player with bugged profile joined: `%s`\n\nThis player if Squad lead will cause his squad to be punished. He also will show as unassigned in the Game view.\n\nPlease ask him to change his name (last character IG shouldn't be a whitespace)")
+    except Exception:
+        logger.exception("Unable to send to audit")
 
     def notify_player():
         try:
