@@ -199,7 +199,7 @@ class LogLoop:
                 started = time.time()
                 hook(self.rcon_2, log)
                 logger.debug(
-                    "Ran in %s seconds %s.%s on %s", time.time() - started, hook.__module__, hook.__name__, log["raw"]
+                    "Ran in %.4f seconds %s.%s on %s", time.time() - started, hook.__module__, hook.__name__, log["raw"]
                 )
             except KeyboardInterrupt:
                 sys.exit(0)
@@ -210,7 +210,7 @@ class LogLoop:
                     hook.__name__,
                     log,
                 )
-        logger.debug("Processed %s hooks in %s for: %s", len(hooks), time.time() - started_total, f"{log['action']}{log['message']}")
+        logger.debug("Processed %s g %s for: %s", len(hooks), time.time() - started_total, f"{log['action']}{log['message']}")
         
 
 
