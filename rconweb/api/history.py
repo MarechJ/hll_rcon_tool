@@ -7,9 +7,9 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
 import rcon
+from rcon import player_history
 from rcon.commands import CommandFailedError
 from rcon.discord import send_to_discord_audit
-from rcon import player_history
 from rcon.player_history import (
     add_flag_to_player,
     get_player_comments,
@@ -21,6 +21,7 @@ from rcon.player_history import (
 )
 from rcon.utils import MapsHistory
 
+from .audit_log import auto_record_audit, record_audit
 from .auth import api_response, login_required, stats_login_required
 from .utils import _get_data
 
@@ -79,6 +80,7 @@ def get_player(request):
 
 @csrf_exempt
 @login_required()
+@record_audit
 def flag_player(request):
     data = _get_data(request)
     res = None
@@ -110,6 +112,7 @@ def flag_player(request):
 
 @csrf_exempt
 @login_required()
+@record_audit
 def unflag_player(request):
     # Note is this really not restful
     data = _get_data(request)
@@ -226,6 +229,7 @@ def get_player_comment(request):
 
 @csrf_exempt
 @login_required()
+@record_audit
 def post_player_comment(request):
     try:
         data = json.loads(request.body)

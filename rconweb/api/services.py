@@ -8,6 +8,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from rcon.discord import send_to_discord_audit
 
+from .audit_log import auto_record_audit, record_audit
 from .auth import api_response, login_required
 from .utils import _get_data
 
@@ -54,6 +55,7 @@ def get_services(request):
 
 @csrf_exempt
 @login_required(True)
+@record_audit
 def do_service(request):
     data = _get_data(request)
     client = get_supervisor_client()

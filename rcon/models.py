@@ -1,11 +1,10 @@
-from curses import echo
-from datetime import datetime
 import logging
-from operator import index
 import os
 import re
 from contextlib import contextmanager
+from curses import echo
 from datetime import datetime
+from operator import index
 from typing import List, Optional
 
 import pydantic
@@ -213,36 +212,26 @@ class UserConfig(Base):
 
 class PlayerFlag(Base):
     __tablename__ = "player_flags"
-    __table_args__ = (
-        UniqueConstraint("playersteamid_id", "flag", name="unique_flag_steamid"),
-    )
+    __table_args__ = (UniqueConstraint("playersteamid_id", "flag", name="unique_flag_steamid"),)
 
     id = Column(Integer, primary_key=True)
-    playersteamid_id = Column(
-        Integer, ForeignKey("steam_id_64.id"), nullable=False, index=True
-    )
+    playersteamid_id = Column(Integer, ForeignKey("steam_id_64.id"), nullable=False, index=True)
     flag = Column(String, nullable=False, index=True)
     comment = Column(String, nullable=True)
     modified = Column(DateTime, default=datetime.utcnow)
 
     def to_dict(self):
-        return dict(
-            id=self.id, flag=self.flag, comment=self.comment, modified=self.modified
-        )
+        return dict(id=self.id, flag=self.flag, comment=self.comment, modified=self.modified)
 
 
 class PlayerOptins(Base):
     __tablename__ = "player_optins"
     __table_args__ = (
-        UniqueConstraint(
-            "playersteamid_id", "optin_name", name="unique_optins_steamid"
-        ),
+        UniqueConstraint("playersteamid_id", "optin_name", name="unique_optins_steamid"),
     )
 
     id = Column(Integer, primary_key=True)
-    playersteamid_id = Column(
-        Integer, ForeignKey("steam_id_64.id"), nullable=False, index=True
-    )
+    playersteamid_id = Column(Integer, ForeignKey("steam_id_64.id"), nullable=False, index=True)
     optin_name = Column(String, nullable=False, index=True)
     optin_value = Column(String, nullable=True)
     modified = Column(DateTime, default=datetime.utcnow)
@@ -258,14 +247,10 @@ class PlayerOptins(Base):
 
 class PlayerName(Base):
     __tablename__ = "player_names"
-    __table_args__ = (
-        UniqueConstraint("playersteamid_id", "name", name="unique_name_steamid"),
-    )
+    __table_args__ = (UniqueConstraint("playersteamid_id", "name", name="unique_name_steamid"),)
 
     id = Column(Integer, primary_key=True)
-    playersteamid_id = Column(
-        Integer, ForeignKey("steam_id_64.id"), nullable=False, index=True
-    )
+    playersteamid_id = Column(Integer, ForeignKey("steam_id_64.id"), nullable=False, index=True)
     name = Column(String, nullable=False)
     created = Column(DateTime, default=datetime.utcnow)
     last_seen = Column(DateTime, default=datetime.utcnow)
@@ -284,9 +269,7 @@ class PlayerSession(Base):
     __tablename__ = "player_sessions"
 
     id = Column(Integer, primary_key=True)
-    playersteamid_id = Column(
-        Integer, ForeignKey("steam_id_64.id"), nullable=False, index=True
-    )
+    playersteamid_id = Column(Integer, ForeignKey("steam_id_64.id"), nullable=False, index=True)
     start = Column(DateTime)
     end = Column(DateTime)
     created = Column(DateTime, default=datetime.utcnow)
@@ -339,9 +322,7 @@ class PlayersAction(Base):
     time = Column(DateTime, default=datetime.utcnow)
 
     def to_dict(self):
-        return dict(
-            action_type=self.action_type, reason=self.reason, by=self.by, time=self.time
-        )
+        return dict(action_type=self.action_type, reason=self.reason, by=self.by, time=self.time)
 
 
 class LogLine(Base):
@@ -428,9 +409,7 @@ class LogLine(Base):
 class Maps(Base):
     __tablename__ = "map_history"
     __table_args__ = (
-        UniqueConstraint(
-            "start", "end", "server_number", "map_name", name="unique_map"
-        ),
+        UniqueConstraint("start", "end", "server_number", "map_name", name="unique_map"),
     )
 
     id = Column(Integer, primary_key=True)
@@ -459,9 +438,7 @@ class Maps(Base):
 
 class PlayerStats(Base):
     __tablename__ = "player_stats"
-    __table_args__ = (
-        UniqueConstraint("playersteamid_id", "map_id", name="unique_map_player"),
-    )
+    __table_args__ = (UniqueConstraint("playersteamid_id", "map_id", name="unique_map_player"),)
 
     id = Column(Integer, primary_key=True)
     playersteamid_id = Column(
@@ -503,9 +480,7 @@ class PlayerStats(Base):
             id=self.id,
             player_id=self.playersteamid_id,
             player=self.name,
-            steaminfo=self.steamid.steaminfo.to_dict()
-            if self.steamid.steaminfo
-            else None,
+            steaminfo=self.steamid.steaminfo.to_dict() if self.steamid.steaminfo else None,
             map_id=self.map_id,
             kills=self.kills,
             kills_streak=self.kills_streak,
@@ -599,9 +574,7 @@ class ServerCount(Base):
 class PlayerAtCount(Base):
     __tablename__ = "player_at_count"
     __table_args__ = (
-        UniqueConstraint(
-            "playersteamid_id", "servercount_id", name="unique_player_at_count"
-        ),
+        UniqueConstraint("playersteamid_id", "servercount_id", name="unique_player_at_count"),
     )
     id = Column(Integer, primary_key=True)
     playersteamid_id = Column(
@@ -632,9 +605,7 @@ class PlayerAtCount(Base):
 class PlayerVIP(Base):
     __tablename__: str = "player_vip"
     __table_args__ = (
-        UniqueConstraint(
-            "playersteamid_id", "server_number", name="unique_player_server_vip"
-        ),
+        UniqueConstraint("playersteamid_id", "server_number", name="unique_player_server_vip"),
     )
 
     id = Column(Integer, primary_key=True)
@@ -650,6 +621,28 @@ class PlayerVIP(Base):
     )
 
     steamid = relationship("PlayerSteamID", back_populates="vips")
+
+
+class AuditLog(Base):
+    __tablename__: str = "audit_log"
+
+    id = Column(Integer, primary_key=True)
+    username = Column(String, nullable=False, index=True)
+    creation_time = Column(TIMESTAMP(timezone=True), default=datetime.utcnow)
+    # Not making this unique (even though it should be) to avoid breaking existing CRCONs
+    command = Column(String, nullable=False, index=True)
+    command_arguments = Column(String)
+    command_result = Column(String)
+
+    def to_dict(self):
+        return dict(
+            id=self.id,
+            username=self.username,
+            creation_time=self.creation_time,
+            command=self.command,
+            command_arguments=self.command_arguments,
+            command_result=self.command_result,
+        )
 
 
 def init_db(force=False):

@@ -3,17 +3,18 @@ from django.urls import path
 from rcon import scoreboard
 
 from . import (
+    audit_log,
     auth,
     auto_settings,
     history,
     logs,
     multi_servers,
     scoreboards,
+    server_stats,
     services,
     views,
     vips,
     votemap,
-    server_stats,
 )
 
 urlpatterns = [path(name, func, name="name") for name, func in views.commands] + [
@@ -53,4 +54,6 @@ urlpatterns = [path(name, func, name="name") for name, func in views.commands] +
     path("get_auto_settings", auto_settings.get_auto_settings),
     path("set_auto_settings", auto_settings.set_auto_settings),
     path("get_server_stats", server_stats.get_server_stats),
+    path("get_audit_logs", audit_log.get_audit_logs),
+    path("get_audit_logs_autocomplete", audit_log.get_audit_logs_autocomplete),
 ]
