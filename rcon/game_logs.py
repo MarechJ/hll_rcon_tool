@@ -210,7 +210,7 @@ class LogLoop:
                     hook.__name__,
                     log,
                 )
-        logger.debug("Processed %s g %s for: %s", len(hooks), time.time() - started_total, f"{log['action']}{log['message']}")
+        logger.debug("Processed %s hooks in %.4f for: %s", len(hooks), time.time() - started_total, f"{log['action']}{log['message']}")
         
 
 
