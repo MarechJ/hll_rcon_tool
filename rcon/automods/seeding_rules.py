@@ -107,7 +107,7 @@ class SeedingRulesAutomod:
                 )
 
                 violations = []
-                if self.config.disallowed_roles.min_players < server_player_count < self.config.disallowed_roles.max_players:
+                if self.config.disallowed_roles.min_players <= server_player_count < self.config.disallowed_roles.max_players:
                     if aplayer.role in self.config.disallowed_roles.roles:
                         violations.append(self.config.disallowed_roles.message.format(
                             role=self.config.disallowed_roles.roles.get(aplayer.role)))
