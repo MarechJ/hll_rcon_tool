@@ -4,10 +4,10 @@ from contextlib import contextmanager
 import pytest
 from _pytest.fixtures import fixture
 
-from rcon.squad_automod.get_team_count import get_team_count
-from rcon.squad_automod.models import SeedingRulesConfig, PunitionsToApply, DisallowedRolesConfig, PunishDetails, \
+from rcon.automods.get_team_count import get_team_count
+from rcon.automods.models import SeedingRulesConfig, PunitionsToApply, DisallowedRolesConfig, PunishDetails, \
     PunishPlayer, NoSeedingViolation, WatchStatus
-from rcon.squad_automod.seeding_rules import SeedingRulesAutomod
+from rcon.automods.seeding_rules import SeedingRulesAutomod
 
 state = {}
 

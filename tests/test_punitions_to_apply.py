@@ -1,4 +1,4 @@
-from rcon.squad_automod.models import PunitionsToApply, PunishPlayer, PunishDetails
+from rcon.automods.models import PunitionsToApply, PunishPlayer, PunishDetails
 
 first_player: PunishPlayer = PunishPlayer(steam_id_64="A_STEAM_ID",
                                           details=PunishDetails(author="", message="first warning"),

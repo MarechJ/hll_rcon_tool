@@ -8,17 +8,14 @@ from rcon.config import get_config
 from rcon.discord import send_to_discord_audit
 from rcon.recorded_commands import RecordedRcon
 from rcon.settings import SERVER_INFO
-from rcon.squad_automod.models import (
+from rcon.automods.models import (
     PunishPlayer,
     NoLeaderConfig,
     PunitionsToApply,
     ActionMethod, SeedingRulesConfig,
 )
-from rcon.squad_automod.no_leader import NoLeaderAutomod
-from rcon.squad_automod.seeding_rules import SeedingRulesAutomod
-
-LEADER_WATCH_RESET_SECS = 120
-AUTOMOD_USERNAME = "NoLeaderWatch"
+from rcon.automods.no_leader import NoLeaderAutomod
+from rcon.automods.seeding_rules import SeedingRulesAutomod
 
 logger = logging.getLogger(__name__)
 

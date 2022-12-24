@@ -13,7 +13,7 @@ from rcon.game_logs import LogLoop
 from rcon.models import install_unaccent
 from rcon.scoreboard import live_stats_loop
 from rcon.settings import SERVER_INFO
-from rcon.squad_automod import automod
+from rcon.automods import automod
 from rcon.steam_utils import enrich_db_users
 from rcon.server_stats import (
     save_server_stats_since_inception,

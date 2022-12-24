@@ -6,10 +6,10 @@ from unittest import mock
 from pytest import fixture
 
 from rcon.config import get_config
-from rcon.squad_automod.automod import (
+from rcon.automods.automod import (
     get_punitions_to_apply,
 )
-from rcon.squad_automod.models import (
+from rcon.automods.models import (
     PunishPlayer,
     ASquad,
     NoLeaderConfig,
@@ -19,7 +19,7 @@ from rcon.squad_automod.models import (
     SquadHasLeader,
     WatchStatus, PunishDetails,
 )
-from rcon.squad_automod.no_leader import NoLeaderAutomod
+from rcon.automods.no_leader import NoLeaderAutomod
 
 
 @fixture

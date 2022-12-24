@@ -5,11 +5,11 @@ from datetime import datetime, timedelta
 
 import redis
 
-from rcon.squad_automod.get_team_count import get_team_count
-from rcon.squad_automod.is_time import is_time
-from rcon.squad_automod.models import SeedingRulesConfig, PunitionsToApply, PunishPlayer, PunishDetails, WatchStatus, \
+from rcon.automods.get_team_count import get_team_count
+from rcon.automods.is_time import is_time
+from rcon.automods.models import SeedingRulesConfig, PunitionsToApply, PunishPlayer, PunishDetails, WatchStatus, \
     NoSeedingViolation, PunishStepState, ActionMethod
-from rcon.squad_automod.num_or_inf import num_or_inf
+from rcon.automods.num_or_inf import num_or_inf
 
 SEEDING_RULES_RESET_SECS = 120
 AUTOMOD_USERNAME = "SeedingRulesAutomod"
