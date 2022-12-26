@@ -17,6 +17,7 @@ from rcon.steam_utils import (
     get_players_country_code,
     get_players_have_bans,
 )
+from rcon.types import GetPlayersType
 from rcon.utils import get_server_number
 
 STEAMID = "steam_id_64"
@@ -527,7 +528,7 @@ class Rcon(ServerCtl):
 
     @mod_users_allowed
     @ttl_cache(ttl=2)
-    def get_players_fast(self):
+    def get_players_fast(self) -> List[GetPlayersType]:
         players = {}
         ids = []
 

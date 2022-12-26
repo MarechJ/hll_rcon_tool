@@ -690,33 +690,16 @@ class VoteMap:
             logger.info(f"{votes=}")
             next_map = first[0][0]
             if next_map not in ALL_MAPS:
-                raise ValueError(
+                logger.error(
                     f"{next_map=} is not part of the all map list {ALL_MAPS=}"
                 )
             if next_map not in (selection := self.get_selection()):
-                raise ValueError(
+                logger.error(
                     f"{next_map=} is not part of vote selection {selection=}"
                 )
             logger.info(f"Winning map {next_map=}")
 
-        # Sanity checks below
         rcon = RecordedRcon(SERVER_INFO)
-        current_map = rcon.get_map()
-        if current_map.replace("_RESTART", "") not in ALL_MAPS:
-            raise ValueError(
-                f"{current_map=} is not part of the all map list {ALL_MAPS=}"
-            )
-
-        try:
-            history_current_map = MapsHistory()[0]["name"]
-        except (IndexError, KeyError):
-            raise ValueError("History is empty")
-
-        if current_map != history_current_map:
-            raise ValueError(
-                f"{current_map=} does not match history map {history_current_map=}"
-            )
-
         # Apply rotation safely
 
         current_rotation = rcon.get_map_rotation()

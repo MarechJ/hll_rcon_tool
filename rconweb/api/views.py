@@ -31,6 +31,7 @@ from rcon.utils import LONG_HUMAN_MAP_NAMES, MapsHistory, map_name
 from rcon.watchlist import PlayerWatch
 from rcon.workers import temporary_broadcast, temporary_welcome
 
+from .audit_log import auto_record_audit, record_audit
 from .auth import api_response, login_required
 from .multi_servers import forward_command, forward_request
 from .utils import _get_data
@@ -54,6 +55,7 @@ def set_temp_msg(request, func, name):
 
 @csrf_exempt
 @login_required(True)
+@record_audit
 def set_name(request):
     data = _get_data(request)
     failed = False
@@ -71,12 +73,14 @@ def set_name(request):
 
 @csrf_exempt
 @login_required(True)
+@record_audit
 def set_temp_broadcast(request):
     return set_temp_msg(request, temporary_broadcast, "set_temp_broadcast")
 
 
 @csrf_exempt
 @login_required(True)
+@record_audit
 def set_temp_welcome(request):
     return set_temp_msg(request, temporary_welcome, "set_temp_welcome")
 
@@ -140,6 +144,7 @@ def get_hooks(request):
 
 @csrf_exempt
 @login_required(True)
+@record_audit
 def set_hooks(request):
     data = _get_data(request)
 
@@ -186,6 +191,7 @@ def get_votekick_autotoggle_config(request):
 
 @csrf_exempt
 @login_required(True)
+@record_audit
 def set_votekick_autotoggle_config(request):
     config = AutoVoteKickConfig()
     data = _get_data(request)
@@ -215,6 +221,7 @@ def set_votekick_autotoggle_config(request):
 
 @csrf_exempt
 @login_required(True)
+@record_audit
 def set_camera_config(request):
     config = CameraConfig()
     data = _get_data(request)
@@ -284,18 +291,21 @@ def _do_watch(request, add: bool):
 
 @csrf_exempt
 @login_required()
+@record_audit
 def do_watch_player(request):
     return _do_watch(request, add=True)
 
 
 @csrf_exempt
 @login_required()
+@record_audit
 def do_unwatch_player(request):
     return _do_watch(request, add=False)
 
 
 @csrf_exempt
 @login_required()
+@record_audit
 def clear_cache(request):
     res = RedisCached.clear_all_caches(get_redis_pool())
     audit("clear_cache", request, {})
@@ -338,6 +348,7 @@ def get_auto_broadcasts_config(request):
 
 @csrf_exempt
 @login_required(True)
+@record_audit
 def set_auto_broadcasts_config(request):
     failed = False
     res = None
@@ -395,6 +406,7 @@ def get_standard_messages(request):
 
 @csrf_exempt
 @login_required(True)
+@record_audit
 def set_standard_messages(request):
     failed = False
     data = _get_data(request)
@@ -423,6 +435,7 @@ def set_standard_messages(request):
 
 @csrf_exempt
 @login_required()
+@record_audit
 def blacklist_player(request):
     data = _get_data(request)
     res = {}
@@ -455,6 +468,7 @@ def blacklist_player(request):
 
 @csrf_exempt
 @login_required()
+@record_audit
 def unblacklist_player(request):
     data = _get_data(request)
     res = {}
@@ -494,6 +508,7 @@ def unblacklist_player(request):
 
 @csrf_exempt
 @login_required()
+@record_audit
 def unban(request):
     data = _get_data(request)
     res = {}
@@ -557,6 +572,7 @@ def audit(func_name, request, arguments):
 def wrap_method(func, parameters, command_name, require_perms=False):
     @csrf_exempt
     @login_required(require_perms)
+    @auto_record_audit(command_name)
     @wraps(func)
     def wrapper(request):
         logger = logging.getLogger("rconweb")

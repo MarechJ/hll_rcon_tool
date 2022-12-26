@@ -1,8 +1,8 @@
-from datetime import datetime
-from logging import getLogger
-from typing import Union
-from functools import cached_property
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
+from functools import cached_property
+from logging import getLogger
+from typing import List, Union
 
 from dateutil import parser, relativedelta
 
@@ -13,8 +13,8 @@ from rcon.player_history import (
     get_profiles,
     safe_save_player_action,
 )
+from rcon.types import EnrichedGetPlayersType
 from rcon.utils import get_server_number
-
 
 logger = getLogger(__name__)
 
@@ -44,9 +44,7 @@ class RecordedRcon(Rcon):
 
     def run_in_pool(self, process_number: int, function_name: str, *args, **kwargs):
         return self.thread_pool.submit(
-            getattr(
-                self.connection_pool[process_number % self.pool_size], function_name
-            ),
+            getattr(self.connection_pool[process_number % self.pool_size], function_name),
             *args,
             **kwargs,
         )
@@ -65,12 +63,8 @@ class RecordedRcon(Rcon):
         )
         return res
 
-    def do_temp_ban(
-        self, player=None, steam_id_64=None, duration_hours=2, reason="", by=""
-    ):
-        res = super().do_temp_ban(
-            player, steam_id_64, duration_hours, reason, admin_name=by
-        )
+    def do_temp_ban(self, player=None, steam_id_64=None, duration_hours=2, reason="", by=""):
+        res = super().do_temp_ban(player, steam_id_64, duration_hours, reason, admin_name=by)
         safe_save_player_action(
             rcon=self,
             player_name=player,
@@ -112,7 +106,7 @@ class RecordedRcon(Rcon):
     def invalidate_player_list_cache(self):
         super().get_players.cache_clear()
 
-    def get_players(self):
+    def get_players(self) -> List[EnrichedGetPlayersType]:
         players = super().get_players()
 
         vips = set(v["steam_id_64"] for v in super().get_vip_ids())
@@ -158,9 +152,7 @@ class RecordedRcon(Rcon):
                 .one_or_none()
             )
             if player and player.vip:
-                logger.info(
-                    f"Removed VIP from {steam_id_64} expired: {player.vip.expiration}"
-                )
+                logger.info(f"Removed VIP from {steam_id_64} expired: {player.vip.expiration}")
                 # TODO: This is an incredibly dumb fix because I can't get
                 # the changes to persist otherwise
                 vip_record: PlayerVIP = (

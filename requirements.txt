@@ -1,7 +1,7 @@
 Flask==1.1.2
-Click==7.1.2
+Click~=8.0.0
 cachetools==4.0.0
-Django==3.1.14
+Django~=3.2.0
 django-cors-headers==3.5.0
 redis==3.5.3
 simplejson==3.17.0
@@ -15,13 +15,14 @@ discord==1.7.3
 requests>=2.21.0
 steam==1.0.2
 pyaml==21.10.1
-alembic==1.4.3
+alembic~=1.9.0
 rq==1.8.0
 paramiko==2.10.1
 rq-scheduler==0.11.0
 ftpretty==0.4.0
 pytz>=2021.1
-pandas==1.4.1
+pandas>=1.4.1,<2.0.0
 pydantic==1.9.1
 discord.py==1.7.3
 pytest==7.2.0
+django-directory
