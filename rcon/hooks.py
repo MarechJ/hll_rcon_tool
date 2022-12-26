@@ -7,9 +7,9 @@ from functools import partial, wraps
 from threading import Timer
 from typing import DefaultDict, Dict, List, Optional, Sequence, Union
 
-import discord
 from discord_webhook import DiscordEmbed
 
+import discord
 from rcon.cache_utils import invalidates
 from rcon.commands import CommandFailedError, HLLServerError
 from rcon.config import get_config
@@ -59,8 +59,6 @@ def count_vote(rcon: RecordedRcon, struct_log: StructuredLogLine):
 
 
 def initialise_vote_map(rcon: RecordedRcon, struct_log):
-    config = VoteMapConfig()
-
     logger.info("New match started initializing vote map. %s", struct_log)
     try:
         vote_map = VoteMap()
@@ -378,7 +376,7 @@ def notify_false_positives(rcon: RecordedRcon, _, name: str, steam_id_64: str):
     )
 
     try:
-        send_to_discord_audit("WARNING Player with bugged profile joined: `%s`\n\nThis player if Squad lead will cause his squad to be punished. He also will show as unassigned in the Game view.\n\nPlease ask him to change his name (last character IG shouldn't be a whitespace)")
+        send_to_discord_audit(f"WARNING Player with bugged profile joined: `{name}` `{steam_id_64}`\n\nThis player if Squad Officer will cause his squad to be punished. He also will show as unassigned in the Game view.\n\nPlease ask him to change his name (last character IG shouldn't be a whitespace)")
     except Exception:
         logger.exception("Unable to send to audit")
 
