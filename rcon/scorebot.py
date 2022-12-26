@@ -17,7 +17,7 @@ from discord.embeds import Embed
 from discord.errors import HTTPException, NotFound
 from rcon.config import get_config
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('rcon')
 
 try:
     SERVER_CONFIG = get_config()["SCOREBOT"][f'SERVER_{os.getenv("SERVER_NUMBER")}']
