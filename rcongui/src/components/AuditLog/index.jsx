@@ -10,6 +10,7 @@ import MenuItem from "@material-ui/core/MenuItem";
 import FormControl from "@material-ui/core/FormControl";
 import Select from "@material-ui/core/Select";
 
+import Padlock from "../SettingsView/padlock";
 import { Button, IconButton } from "@material-ui/core";
 import Autocomplete from "@material-ui/lab/Autocomplete";
 import TextField from "@material-ui/core/TextField";
@@ -43,7 +44,7 @@ const AuditLogsTable = ({ auditLogs }) => {
       label: "Time",
       options: {
         customBodyRenderLite: (dataIndex) =>
-          moment(auditLogs.get(dataIndex).creation_time).format(
+          moment(auditLogs.get(dataIndex)?.get("creation_time")).format(
             "ddd Do MMM HH:mm:ss"
           ),
       },
@@ -82,13 +83,15 @@ const AuditLog = ({ classes }) => {
   const [commands, setCommands] = React.useState(new IList());
   const [usernameSearch, setUsernameSearch] = React.useState([]);
   const [commandSearch, setCommandSearch] = React.useState([]);
-  const [paramSearch, setParamSearch] = React.useState("")
+  const [paramSearch, setParamSearch] = React.useState("");
+  const [timeSort, setTimeSort] = React.useState("desc")
 
   const getAuditLogs = () => {
     postData(`${process.env.REACT_APP_API_URL}get_audit_logs`, {
       usernames: usernameSearch,
       commands: commandSearch,
       parameters: paramSearch,
+      time_sort: timeSort
     })
       .then((res) => showResponse(res, "get_audit_logs", false))
       .then((res) => {
@@ -98,8 +101,9 @@ const AuditLog = ({ classes }) => {
 
   const getMetdata = () => {
     get("get_audit_logs_autocomplete")
-      .then(res => res.json()).then((res) => {
-        console.log(res)
+      .then((res) => res.json())
+      .then((res) => {
+        console.log(res);
         if (res) {
           if (res.result?.usernames) {
             setUsernames(fromJS(res.result.usernames));
@@ -118,7 +122,13 @@ const AuditLog = ({ classes }) => {
   }, []);
 
   return (
-    <Grid container spacing={2} className={classes.doublePadding} justify="flex-start" alignItems="center">
+    <Grid
+      container
+      spacing={2}
+      className={classes.doublePadding}
+      justify="flex-start"
+      alignItems="center"
+    >
       <Grid item xs={3}>
         <Autocomplete
           multiple
@@ -160,8 +170,36 @@ const AuditLog = ({ classes }) => {
           )}
         />
       </Grid>
-      <Grid item><TextField label="Parameters search" value={paramSearch} onChange={e => setParamSearch(e.target.value)} className={classes.marginBottom} /></Grid>
-      <Grid item><Button variant="contained" onClick={getAuditLogs}>Search</Button></Grid>
+      <Grid item>
+        <TextField
+          label="Parameters search"
+          value={paramSearch}
+          onChange={(e) => setParamSearch(e.target.value)}
+          className={classes.marginBottom}
+        />
+      </Grid>
+      <Grid item>
+        <FormControl className={classes.formControl}>
+          <InputLabel htmlFor="age-native-simple">Time sort</InputLabel>
+          <Select
+            native
+            value={timeSort}
+            onChange={e => setTimeSort(e.target.value)}
+            inputProps={{
+              name: "age",
+              id: "age-native-simple",
+            }}
+          >
+            <option value={"asc"}>Asc</option>
+            <option value={"desc"}>Desc</option>
+          </Select>
+        </FormControl>
+      </Grid>
+      <Grid item>
+        <Button variant="contained" onClick={getAuditLogs}>
+          Search
+        </Button>
+      </Grid>
       <Grid item xs={12}>
         <AuditLogsTable auditLogs={auditLogs} />
       </Grid>

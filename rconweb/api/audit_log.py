@@ -90,6 +90,7 @@ def get_audit_logs(request):
     try:
         with enter_session() as sess:
             query = sess.query(AuditLog)
+
             if usernames := data.get('usernames'):
                 usernames = _to_list(usernames)
                 and_conditions.append(AuditLog.username.in_(usernames))
@@ -112,6 +113,11 @@ def get_audit_logs(request):
                     and_conditions = and_conditions[0]
                 query = query.filter(and_conditions)
                 logger.debug(query)
+
+            if data.get('time_sort') == 'asc':
+                query = query.order_by(AuditLog.creation_time.asc())
+            else:
+                query = query.order_by(AuditLog.creation_time.desc())
             
             res = query.all()
             res = [r.to_dict() for r in res]
