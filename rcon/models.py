@@ -5,7 +5,7 @@ from contextlib import contextmanager
 from curses import echo
 from datetime import datetime
 from operator import index
-from typing import List, Optional
+from typing import List, Optional, TypedDict
 
 import pydantic
 from sqlalchemy import (
@@ -25,6 +25,25 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship, sessionmaker
 from sqlalchemy.orm.session import object_session
 from sqlalchemy.schema import UniqueConstraint
+
+from rcon.types import (
+    AuditLogType,
+    BlackListType,
+    DBLogLineType,
+    MapsType,
+    PlayerActionType,
+    PlayerAtCountType,
+    PlayerCommentType,
+    PlayerFlagType,
+    PlayerNameType,
+    PlayerOptinsType,
+    PlayerProfileType,
+    PlayerSessionType,
+    PlayerStatsType,
+    ServerCountType,
+    UserConfigType,
+    WatchListType,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -131,7 +150,7 @@ class PlayerSteamID(Base):
             return int((datetime.now() - start).total_seconds())
         return 0
 
-    def to_dict(self, limit_sessions=5):
+    def to_dict(self, limit_sessions=5) -> PlayerProfileType:
         return dict(
             id=self.id,
             steam_id_64=self.steam_id_64,
@@ -189,7 +208,7 @@ class WatchList(Base):
     reason = Column(String, default="")
     comment = Column(String, default="")
 
-    def to_dict(self):
+    def to_dict(self) -> WatchListType:
         return dict(
             id=self.id,
             steam_id_64=self.steamid.steam_id_64,
@@ -206,7 +225,7 @@ class UserConfig(Base):
     key = Column(String, unique=True, index=True)
     value = Column(JSONB)
 
-    def to_dict(self):
+    def to_dict(self) -> UserConfigType:
         return {self.key: self.value}
 
 
@@ -220,7 +239,7 @@ class PlayerFlag(Base):
     comment = Column(String, nullable=True)
     modified = Column(DateTime, default=datetime.utcnow)
 
-    def to_dict(self):
+    def to_dict(self) -> PlayerFlagType:
         return dict(id=self.id, flag=self.flag, comment=self.comment, modified=self.modified)
 
 
@@ -236,11 +255,11 @@ class PlayerOptins(Base):
     optin_value = Column(String, nullable=True)
     modified = Column(DateTime, default=datetime.utcnow)
 
-    def to_dict(self):
+    def to_dict(self) -> PlayerOptinsType:
         return dict(
             id=self.id,
-            optin_name=self.flag,
-            optin_value=self.comment,
+            optin_name=self.optin_name,
+            optin_value=self.optin_value,
             modified=self.modified,
         )
 
@@ -255,7 +274,7 @@ class PlayerName(Base):
     created = Column(DateTime, default=datetime.utcnow)
     last_seen = Column(DateTime, default=datetime.utcnow)
 
-    def to_dict(self):
+    def to_dict(self) -> PlayerNameType:
         return dict(
             id=self.id,
             name=self.name,
@@ -276,7 +295,7 @@ class PlayerSession(Base):
     server_number = Column(Integer)
     server_name = Column(String)
 
-    def to_dict(self):
+    def to_dict(self) -> PlayerSessionType:
         return dict(
             id=self.id,
             steam_id_64=self.steamid.steam_id_64,
@@ -297,7 +316,7 @@ class BlacklistedPlayer(Base):
     reason = Column(String)
     by = Column(String)
 
-    def to_dict(self):
+    def to_dict(self) -> BlackListType:
         return dict(
             steam_id_64=self.steamid.steam_id_64,
             is_blacklisted=self.is_blacklisted,
@@ -321,7 +340,7 @@ class PlayersAction(Base):
     by = Column(String)
     time = Column(DateTime, default=datetime.utcnow)
 
-    def to_dict(self):
+    def to_dict(self) -> PlayerActionType:
         return dict(action_type=self.action_type, reason=self.reason, by=self.by, time=self.time)
 
 
@@ -367,7 +386,7 @@ class LogLine(Base):
 
         return None
 
-    def to_dict(self):
+    def to_dict(self) -> DBLogLineType:
         return dict(
             id=self.id,
             version=self.version,
@@ -422,7 +441,7 @@ class Maps(Base):
 
     player_stats = relationship("PlayerStats", backref="map", uselist=True)
 
-    def to_dict(self, with_stats=False):
+    def to_dict(self, with_stats=False) -> MapsType:
         return dict(
             id=self.id,
             creation_time=self.creation_time,
@@ -475,7 +494,7 @@ class PlayerStats(Base):
     death_by = Column(JSONB)
     weapons = Column(JSONB)
 
-    def to_dict(self):
+    def to_dict(self) -> PlayerStatsType:
         return dict(
             id=self.id,
             player_id=self.playersteamid_id,
@@ -520,7 +539,7 @@ class PlayerComment(Base):
 
     player = relationship("PlayerSteamID", back_populates="comments")
 
-    def to_dict(self):
+    def to_dict(self) -> PlayerCommentType:
         return dict(
             id=self.id,
             creation_time=self.creation_time,
@@ -550,7 +569,7 @@ class ServerCount(Base):
     players = relationship("PlayerAtCount", back_populates="data_point")
     map = relationship("Maps", lazy="joined")
 
-    def to_dict(self, players_as_tuple=False, with_player_list=True):
+    def to_dict(self, players_as_tuple=False, with_player_list=True) -> ServerCountType:
         players = []
 
         if with_player_list and self.players:
@@ -593,7 +612,7 @@ class PlayerAtCount(Base):
     data_point = relationship("ServerCount", back_populates="players")
     steamid = relationship("PlayerSteamID", lazy="joined")
 
-    def to_dict(self):
+    def to_dict(self) -> PlayerAtCountType:
         try:
             name = self.steamid.names[0].name
         except:
@@ -634,7 +653,7 @@ class AuditLog(Base):
     command_arguments = Column(String)
     command_result = Column(String)
 
-    def to_dict(self):
+    def to_dict(self) -> AuditLogType:
         return dict(
             id=self.id,
             username=self.username,
