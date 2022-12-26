@@ -6,29 +6,19 @@ import {
   showResponse,
 } from "../../utils/fetchUtils";
 import InputLabel from "@material-ui/core/InputLabel";
-import MenuItem from "@material-ui/core/MenuItem";
 import FormControl from "@material-ui/core/FormControl";
 import Select from "@material-ui/core/Select";
 
-import Padlock from "../SettingsView/padlock";
-import { Button, IconButton } from "@material-ui/core";
+import { Button } from "@material-ui/core";
 import Autocomplete from "@material-ui/lab/Autocomplete";
 import TextField from "@material-ui/core/TextField";
-import RefreshIcon from "@material-ui/icons/Refresh";
-import Paper from "@material-ui/core/Paper";
 import moment from "moment";
-import withWidth from "@material-ui/core/withWidth";
-import AutoRefreshLine from "../autoRefreshLine";
-import ListItemText from "@material-ui/core/ListItemText";
-import FullscreenIcon from "@material-ui/icons/Fullscreen";
-import FullscreenExitIcon from "@material-ui/icons/FullscreenExit";
-import Link from "@material-ui/core/Link";
 import { List as IList, fromJS } from "immutable";
 
 import { Grid } from "@material-ui/core";
 
 import MUIDataTable from "mui-datatables";
-import { ImageList } from "@material-ui/core";
+
 
 const AuditLogsTable = ({ auditLogs }) => {
   const [myRowPerPage, setRowPerPage] = React.useState(
@@ -84,14 +74,14 @@ const AuditLog = ({ classes }) => {
   const [usernameSearch, setUsernameSearch] = React.useState([]);
   const [commandSearch, setCommandSearch] = React.useState([]);
   const [paramSearch, setParamSearch] = React.useState("");
-  const [timeSort, setTimeSort] = React.useState("desc")
+  const [timeSort, setTimeSort] = React.useState("desc");
 
   const getAuditLogs = () => {
     postData(`${process.env.REACT_APP_API_URL}get_audit_logs`, {
       usernames: usernameSearch,
       commands: commandSearch,
       parameters: paramSearch,
-      time_sort: timeSort
+      time_sort: timeSort,
     })
       .then((res) => showResponse(res, "get_audit_logs", false))
       .then((res) => {
@@ -184,7 +174,7 @@ const AuditLog = ({ classes }) => {
           <Select
             native
             value={timeSort}
-            onChange={e => setTimeSort(e.target.value)}
+            onChange={(e) => setTimeSort(e.target.value)}
             inputProps={{
               name: "age",
               id: "age-native-simple",
