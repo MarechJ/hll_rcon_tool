@@ -201,7 +201,7 @@ def get_embeds(server_info, stats):
 
 
 def get_stats():
-    stats = requests.get(STATS_URL).json()
+    stats = requests.get(STATS_URL, verify=False).json()
     try:
         stats = stats["result"]["stats"]
     except KeyError:
@@ -248,7 +248,7 @@ def run():
             adapter=discord.RequestsWebhookAdapter(),
         )
 
-        public_info = requests.get(INFO_URL).json()["result"]
+        public_info = requests.get(INFO_URL, verify=False).json()["result"]
         stats = get_stats()
 
         if message_id:
@@ -263,7 +263,7 @@ def run():
             conn.commit()
             message_id = message.id
         while True:
-            public_info = requests.get(INFO_URL).json()["result"]
+            public_info = requests.get(INFO_URL, verify=False).json()["result"]
             stats = get_stats()
             try:
                 webhook.edit_message(message_id, embeds=get_embeds(public_info, stats))
