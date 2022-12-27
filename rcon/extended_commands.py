@@ -1,16 +1,15 @@
 import logging
 import os
 import re
-import socket
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import as_completed
 from datetime import datetime, timedelta
-from functools import cached_property, update_wrapper
+from functools import update_wrapper
 from time import sleep
 from typing import Dict, List, Optional, Tuple, TypedDict, Union
 
 from rcon.cache_utils import get_redis_client, invalidates, ttl_cache
 from rcon.commands import CommandFailedError, HLLServerError, ServerCtl
-from rcon.models import PlayerSteamID, PlayerVIP, enter_session
+from rcon.models import PlayerVIP, enter_session
 from rcon.player_history import get_profiles
 from rcon.steam_utils import (
     get_player_country_code,
@@ -18,6 +17,8 @@ from rcon.steam_utils import (
     get_players_country_code,
     get_players_have_bans,
 )
+from rcon.types import GetPlayersType
+from rcon.utils import get_server_number
 
 STEAMID = "steam_id_64"
 NAME = "name"
@@ -475,11 +476,14 @@ class Rcon(ServerCtl):
         # Remap keys and parse values
         data[STEAMID] = raw_data.get("steamid64")
         data["team"] = raw_data.get("team", "None")
-        data["unit_id"], data["unit_name"] = (
-            raw_data.get("unit").split(" - ")
-            if raw_data.get("unit")
-            else ("None", None)
-        )
+        if raw_data["role"].lower() == "armycommander":
+            data["unit_id"], data["unit_name"] = (-1, "Commmand")
+        else:
+            data["unit_id"], data["unit_name"] = (
+                raw_data.get("unit").split(" - ")
+                if raw_data.get("unit")
+                else ("None", None)
+            )
         data["kills"], data["deaths"] = (
             raw_data.get("kills").split(" - Deaths: ")
             if raw_data.get("kills")
@@ -554,7 +558,7 @@ class Rcon(ServerCtl):
 
     @mod_users_allowed
     @ttl_cache(ttl=2)
-    def get_players_fast(self):
+    def get_players_fast(self) -> List[GetPlayersType]:
         players = {}
         ids = []
 
@@ -649,8 +653,23 @@ class Rcon(ServerCtl):
 
     @mod_users_allowed
     def get_bans(self):
-        temp_bans = [self._struct_ban(b, "temp") for b in self.get_temp_bans()]
-        bans = [self._struct_ban(b, "perma") for b in self.get_perma_bans()]
+        try:
+            temp_bans = []
+            for b in self.get_temp_bans():
+                try:
+                    temp_bans.append(self._struct_ban(b, "temp"))
+                except ValueError:
+                    logger.exception("Invalid temp ban line: %s", b)
+            bans = [] 
+            for b in self.get_perma_bans():
+                try:
+                    bans.append(self._struct_ban(b, "perma"))
+                except ValueError:
+                    logger.exception("Invalid perm ban line: %s", b)
+        except Exception:
+            self.get_temp_bans.cache_clear()
+            self.get_perma_bans.cache_clear()
+            raise
         # Most recent first
         bans.reverse()
         return temp_bans + bans
@@ -694,13 +713,24 @@ class Rcon(ServerCtl):
     @ttl_cache(ttl=60 * 60)
     def get_vip_ids(self) -> List[Dict[str, Union[str, Optional[datetime]]]]:
         res = super().get_vip_ids()
-        l = []
+        player_dicts = []
 
         vip_expirations: Dict[str, datetime]
         with enter_session() as session:
-            players = session.query(PlayerSteamID).join(PlayerVIP).all()
+            # players = session.query(PlayerSteamID).join(PlayerVIP).all()
+
+            server_number = get_server_number()
+
+            players = (
+                session.query(PlayerVIP)
+                .filter(PlayerVIP.server_number == server_number)
+                .all()
+            )
+            # print(f"query={session.query(PlayerSteamID).join(PlayerVIP)}")
+            # server_number = int(os.getenv("SERVER_NUMBER"))
+            # players = session.query(PlayerVIP).filter().all()
             vip_expirations = {
-                player.steam_id_64: player.vip.expiration for player in players
+                player.steamid.steam_id_64: player.expiration for player in players
             }
 
         for item in res:
@@ -714,9 +744,9 @@ class Rcon(ServerCtl):
                 raise
             player = dict(zip((STEAMID, NAME), (steam_id_64, name)))
             player["vip_expiration"] = vip_expirations.get(steam_id_64, None)
-            l.append(player)
+            player_dicts.append(player)
 
-        return sorted(l, key=lambda d: d[NAME])
+        return sorted(player_dicts, key=lambda d: d[NAME])
 
     def do_remove_vip(self, steam_id_64):
         with invalidates(Rcon.get_vip_ids):
@@ -748,7 +778,7 @@ class Rcon(ServerCtl):
         Map: foy_warfare
         Next Map: stmariedumont_warfare"""
         with invalidates(
-            Rcon.team_sizes, Rcon.team_objective_scores, Rcon.round_time_remaining
+                Rcon.team_sizes, Rcon.team_objective_scores, Rcon.round_time_remaining
         ):
             (
                 raw_team_size,
@@ -1033,14 +1063,9 @@ class Rcon(ServerCtl):
     @mod_users_allowed
     @ttl_cache(ttl=2)
     def get_structured_logs(
-        self, since_min_ago, filter_action=None, filter_player=None
+            self, since_min_ago, filter_action=None, filter_player=None
     ):
-        try:
-            raw = super().get_logs(since_min_ago)
-        except socket.timeout:
-            # The hll server just hangs when there are no logs for the requested time
-            raw = ""
-
+        raw = super().get_logs(since_min_ago)
         return self.parse_logs(raw, filter_action, filter_player)
 
     @ttl_cache(ttl=60 * 60)
@@ -1127,7 +1152,7 @@ class Rcon(ServerCtl):
 
     @mod_users_allowed
     def do_temp_ban(
-        self, player=None, steam_id_64=None, duration_hours=2, reason="", admin_name=""
+            self, player=None, steam_id_64=None, duration_hours=2, reason="", admin_name=""
     ):
         with invalidates(Rcon.get_players, Rcon.get_temp_bans):
             if player and re.match(r"\d+", player):
@@ -1171,7 +1196,7 @@ class Rcon(ServerCtl):
         return l
 
     def do_add_map_to_rotation(
-        self, map_name, after_map_name: str = None, after_map_name_number: str = None
+            self, map_name, after_map_name: str = None, after_map_name_number: str = None
     ):
         with invalidates(Rcon.get_map_rotation):
             super().do_add_map_to_rotation(
@@ -1283,10 +1308,10 @@ class Rcon(ServerCtl):
                     "Teamkills": tk,
                     "Death by TK": death_by_tk,
                     "Estimated play time (minutes)": (last_timestamp - first_timestamp)
-                    // 1000
-                    // 60,
+                                                     // 1000
+                                                     // 60,
                     "TK Minutes": tk
-                    / max((last_timestamp - first_timestamp) // 1000 // 60, 1),
+                                  / max((last_timestamp - first_timestamp) // 1000 // 60, 1),
                 }
             )
 
@@ -1334,8 +1359,8 @@ class Rcon(ServerCtl):
                     # [15:49 min (1606998428)] VOTE Player [[fr]ELsass_blitz] Started a vote of type (PVR_Kick_Abuse) against [拢儿]. VoteID: [1]
                     action = "VOTE"
                     if (
-                        rest.startswith("VOTESYS Player")
-                        and " against " in rest.lower()
+                            rest.startswith("VOTESYS Player")
+                            and " against " in rest.lower()
                     ):
                         action = "VOTE STARTED"
                         groups = re.match(

@@ -8,6 +8,7 @@ from sqlalchemy.sql.expression import false, true
 
 from rcon.commands import CommandFailedError
 from rcon.models import UserConfig, enter_session
+from rcon.cache_utils import ttl_cache, invalidates
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +17,7 @@ def _get_conf(sess, key):
     return sess.query(UserConfig).filter(UserConfig.key == key).one_or_none()
 
 
-def get_user_config(key, default=None):
+def get_user_config(key, default=None) -> bool:
     logger.debug("Getting user config for %s", key)
     with enter_session() as sess:
         res = _get_conf(sess, key)
@@ -315,7 +316,8 @@ class VoteMapConfig:
         return set_user_config(self.VOTEMAP_NO_VOTE_TEXT, value)
 
     def set_vote_enabled(self, value):
-        return set_user_config(self.VOTE_ENABLED, bool(value))
+        with invalidates(VoteMapConfig.get_vote_enabled):
+            return set_user_config(self.VOTE_ENABLED, bool(value))
 
     def set_votemap_number_of_options(self, value):
         return set_user_config(self.VOTEMAP_NUMBER_OF_OPTIONS, int(value))
@@ -364,7 +366,8 @@ class VoteMapConfig:
     def get_votemap_no_vote_text(self):
         return get_user_config(self.VOTEMAP_NO_VOTE_TEXT)
 
-    def get_vote_enabled(self):
+    @ttl_cache(ttl=60, cache_falsy=True)
+    def get_vote_enabled(self) -> bool:
         return get_user_config(self.VOTE_ENABLED)
 
     def get_votemap_number_of_options(self):
@@ -601,7 +604,7 @@ DEFAULT_AUTO_SETTINGS = {
             ]
         },
         "set_maprotation": {
-            "maps": [
+            "rotation": [
                 "Overwrites the current rotation",
                 "Yes the spelling is intentional",
             ]

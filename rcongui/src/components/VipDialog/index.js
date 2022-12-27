@@ -12,18 +12,14 @@ import {
 import { DateTimePicker, MuiPickersUtilsProvider } from "@material-ui/pickers";
 import MomentUtils from "@date-io/moment";
 import moment from "moment";
-import {PlayerVipSummary} from "./PlayerVipSummary";
+import { PlayerVipSummary } from "./PlayerVipSummary";
+import { ForwardCheckBox } from "../commonComponent";
 
 export function VipExpirationDialog(props) {
-  const {
-    open,
-    vips,
-    onDeleteVip,
-    handleClose,
-    handleConfirm,
-  } = props;
+  const { open, vips, onDeleteVip, handleClose, handleConfirm } = props;
   const [expirationTimestamp, setExpirationTimestamp] = useState();
   const [isVip, setIsVip] = useState(false);
+  const [forward, setForward] = useState(false);
 
   /* open is either a boolean or the passed in player Map */
   useEffect(() => {
@@ -33,7 +29,7 @@ export function VipExpirationDialog(props) {
         setExpirationTimestamp(open.get("vip_expiration"));
       }
     }
-  }, [open]);
+  }, [open, vips]);
 
   const adjustTimestamp = (amount, unit) =>
     setExpirationTimestamp(
@@ -47,6 +43,12 @@ export function VipExpirationDialog(props) {
       </DialogTitle>
       <DialogContent>
         <Grid container spacing={2}>
+          <Grid item>
+            <ForwardCheckBox
+              bool={forward}
+              onChange={() => setForward(!forward)}
+            />
+          </Grid>
           <Grid item>
             <PlayerVipSummary player={open} isVip={isVip} />
           </Grid>
@@ -134,25 +136,24 @@ export function VipExpirationDialog(props) {
       <DialogActions>
         <Button
           onClick={() => {
-            handleConfirm(open, moment().add(200, "years").format());
+            handleConfirm(open, moment().add(200, "years").format(), forward);
           }}
           color="primary"
         >
           Indefinite VIP
         </Button>
-        {
-            isVip &&
-            <Button
-                color="secondary"
-                onClick={() => {
-                  setExpirationTimestamp(moment().format());
-                  onDeleteVip(open);
-                  handleClose();
-                }}
-            >
-              Remove VIP
-            </Button>
-        }
+        {isVip && (
+          <Button
+            color="secondary"
+            onClick={() => {
+              setExpirationTimestamp(moment().format());
+              onDeleteVip(open, forward);
+              handleClose();
+            }}
+          >
+            Remove VIP
+          </Button>
+        )}
         <Button
           color="primary"
           onClick={() => {
@@ -165,7 +166,8 @@ export function VipExpirationDialog(props) {
           onClick={() => {
             handleConfirm(
               open,
-              moment.utc(expirationTimestamp).format("YYYY-MM-DD HH:MM:SSZ")
+              moment.utc(expirationTimestamp).format("YYYY-MM-DD HH:mm:ssZ"),
+              forward
             );
           }}
           color="primary"

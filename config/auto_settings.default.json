@@ -1,5 +1,6 @@
 {
   "always_apply_defaults": false,
+  "can_invoke_multiple_rules": false,
   "defaults": {
     "set_idle_autokick_time": {
       "minutes": 10
@@ -60,6 +61,10 @@
       }
     }
   ],
+  "_available_settings": {
+      "always_apply_defaults": "Whether or not to apply the settings defined in the default section in each iteration. Allowed values: true / false",
+      "can_invoke_multiple_rules": "Whether or not to allow the invocation of multiple rules e.g. don't stop after the first fulfilled rule. Allowed values: true / false"
+  },
   "_available_commands": {
     "do_ban_profanities": { "profanities": ["word1", "word2"] },
     "do_unban_profanities": { "profanities": ["word1", "word2"] },
@@ -84,7 +89,7 @@
     "do_remove_map_from_rotation": { "map_name": "stmariedumont_warfare" },
     "do_remove_maps_from_rotation": { "maps": ["stmariedumont_warfare", "kursk_offensive_rus"] },
     "do_randomize_map_rotation": { "maps": ["An optional list of maps", "that will replace the current rotation"] },
-    "set_maprotation": { "maps": ["Overwrites the current rotation", "Yes the spelling is intentional"] },
+    "set_maprotation": { "rotation": ["Overwrites the current rotation", "Yes the spelling is intentional"] },
     "do_punish": { "player": "12345678901234567", "reason": "Get rekt" },
     "do_kick": { "player": "12345678901234567", "reason": "Get rekt" },
     "do_temp_ban": {
@@ -105,7 +110,13 @@
     "do_remove_admin": { "steam_id_64": "1234567890123456" },
     "do_add_vip": { "steam_id_64": "1234567890123456", "name": "A comment" },
     "do_remove_vip": { "steam_id_64": "1234567890123456" },
-    "do_remove_all_vips": {}
+    "do_remove_all_vips": {},
+    "do_add_map_to_whitelist": { "map_name": "stmariedumont_warfare" },
+    "do_add_maps_to_whitelist": { "map_names": ["stmariedumont_warfare", "kursk_offensive_rus"] },
+    "do_remove_map_from_whitelist": { "map_name": "stmariedumont_warfare" },
+    "do_remove_maps_from_whitelist": { "map_names": ["stmariedumont_warfare", "kursk_offensive_rus"] },
+    "do_reset_map_whitelist": {},
+    "do_set_map_whitelist": { "map_names": ["stmariedumont_warfare", "kursk_offensive_rus"] }
   },
   "_available_conditions": {
     "player_count": {

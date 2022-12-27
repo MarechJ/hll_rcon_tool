@@ -7,13 +7,14 @@ from rcon.config import get_config
 from rcon.discord import get_prepared_discord_hooks
 from rcon.extended_commands import CommandFailedError, Rcon
 from rcon.game_logs import on_connected
+from rcon.hooks import inject_player_ids
 from rcon.models import PlayerSteamID, WatchList, enter_session
 from rcon.player_history import _get_set_player, get_player
 
 
 @on_connected
-def watchdog(rcon: Rcon, log):
-    steam_id_64 = rcon.get_player_info(log["player"], can_fail=True)["steam_id_64"]
+@inject_player_ids
+def watchdog(rcon: Rcon, log, name, steam_id_64):
     watcher = PlayerWatch(steam_id_64)
     if watcher.is_watched():
         if hooks := get_prepared_discord_hooks("watchlist"):

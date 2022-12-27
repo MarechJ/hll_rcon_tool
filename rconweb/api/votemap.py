@@ -3,6 +3,7 @@ from django.views.decorators.csrf import csrf_exempt
 from rcon.discord import send_to_discord_audit
 from rcon.vote_map import VoteMap, VoteMapConfig
 
+from .audit_log import auto_record_audit, record_audit
 from .auth import api_response, login_required
 from .utils import _get_data
 from .views import audit
@@ -41,6 +42,7 @@ def get_votemap_config(request):
 
 @csrf_exempt
 @login_required(True)
+@record_audit
 def set_votemap_config(request):
     config = VoteMapConfig()
     data = _get_data(request)
@@ -94,6 +96,7 @@ def get_votemap_status(request):
 
 @csrf_exempt
 @login_required(True)
+@record_audit
 def reset_votemap_state(request):
     if request.method != "POST":
         return api_response(

@@ -27,6 +27,7 @@ import {
 import ServerInfo from "./components/Embeds/ServerInfo";
 import ServerStatsPage from "./components/ServerStats";
 import GameView from "./components/GameView";
+import AuditLog from "./components/AuditLog";
 
 const Live = ({ classes }) => {
   const [mdSize, setMdSize] = React.useState(6);
@@ -388,6 +389,9 @@ function App() {
             </Route>
             <Route path="/serverinfo" exact>
               <ServerInfo classes={classes} />
+            </Route>
+            <Route path="/auditlogs" exact>
+              <AuditLog classes={classes} />
             </Route>
             <Route
               path="/livescore"

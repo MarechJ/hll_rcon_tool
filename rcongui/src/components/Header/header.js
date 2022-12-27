@@ -256,6 +256,9 @@ const Header = ({ classes }) => {
                         >
                           <MenuItem onClick={handleClose}>Combined</MenuItem>
                         </Link>
+                        <Link color="inherit" component={RouterLink} to="/auditlogs">
+                          <MenuItem onClick={handleClose}>Audit Logs</MenuItem>
+                        </Link>
                       </Menu>
                       <Link
                         variant="button"

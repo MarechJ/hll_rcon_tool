@@ -10,6 +10,7 @@ from rcon.settings import SERVER_INFO
 from rcon.steam_utils import get_steam_profile
 from rcon.utils import MapsHistory
 
+from .audit_log import auto_record_audit, record_audit
 from .auth import api_csv_response, api_response, login_required
 from .utils import _get_data
 

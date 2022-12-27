@@ -79,10 +79,10 @@ def do_login(request):
                 result=True, command="login", arguments=name, failed=False
             )
         else:
-            logger.warning("Failed login attempt %s", data)
+            logger.warning("Failed login attempt %s", name)
             raise PermissionDenied("Invalid login")
     except PermissionDenied:
-        logger.warning("Failed login attempt %s", data)
+        logger.warning("Failed login attempt %s", name)
         return api_response(command="login", arguments=name, status_code=401)
 
 
@@ -179,6 +179,12 @@ def login_required(also_require_perms=False):
         return wrapper
 
     return decorator
+
+
+def staff_required(request):
+    if request.user.is_authenticated and request.user.is_staff:
+        return True
+    return False  
 
 
 def stats_login_required(func):

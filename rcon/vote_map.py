@@ -1,6 +1,7 @@
 import enum
 import logging
 import os
+import pickle
 import random
 import re
 import time
@@ -8,7 +9,7 @@ from datetime import datetime, timedelta
 from functools import partial
 from threading import Thread
 from typing import Counter
-import pickle
+
 import redis
 from sqlalchemy import and_
 
@@ -22,6 +23,10 @@ from rcon.settings import SERVER_INFO
 from rcon.user_config import DefaultMethods, VoteMapConfig
 from rcon.utils import (
     ALL_MAPS,
+    LONG_HUMAN_MAP_NAMES,
+    NO_MOD_LONG_HUMAN_MAP_NAMES,
+    NO_MOD_SHORT_HUMAN_MAP_NAMES,
+    SHORT_HUMAN_MAP_NAMES,
     FixedLenList,
     MapsHistory,
     categorize_maps,
@@ -36,14 +41,6 @@ from rcon.workers import (
     temporary_welcome,
     temporary_welcome_in,
 )
-from rcon.utils import (
-    LONG_HUMAN_MAP_NAMES,
-    NO_MOD_LONG_HUMAN_MAP_NAMES,
-    NO_MOD_SHORT_HUMAN_MAP_NAMES,
-    SHORT_HUMAN_MAP_NAMES,
-    categorize_maps,
-    numbered_maps,
-)
 
 logger = logging.getLogger(__name__)
 
@@ -53,6 +50,18 @@ logger = logging.getLogger(__name__)
 #
 #
 ####################
+
+
+class RestrictiveFilterError(Exception):
+    pass
+
+
+class InvalidVoteError(Exception):
+    pass
+
+
+class VoteMapNoInitialised(Exception):
+    pass
 
 
 def _get_random_map_selection(maps, nb_to_return, history=None):
@@ -68,21 +77,59 @@ def _get_random_map_selection(maps, nb_to_return, history=None):
 
 def suggest_next_maps(
     maps_history,
-    all_maps,
+    whitelist_maps,
     selection_size=6,
     exclude_last_n=4,
     offsensive_ratio=0.5,
     consider_offensive_as_same_map=True,
     allow_consecutive_offensive=True,
     allow_consecutive_offensives_of_opposite_side=False,
-    current_map=None,
+    current_map=None
+):
+    try:
+        return _suggest_next_maps(
+            maps_history,
+            whitelist_maps,
+            selection_size,
+            exclude_last_n,
+            offsensive_ratio,
+            consider_offensive_as_same_map,
+            allow_consecutive_offensive,
+            allow_consecutive_offensives_of_opposite_side,
+            current_map
+        )
+    except RestrictiveFilterError:
+        logger.warning("Falling back on ALL_MAPS since the filters are too restrictive")
+        return _suggest_next_maps(
+            maps_history,
+            set(ALL_MAPS),
+            selection_size,
+            exclude_last_n,
+            offsensive_ratio,
+            consider_offensive_as_same_map,
+            allow_consecutive_offensive,
+            allow_consecutive_offensives_of_opposite_side,
+            current_map
+        )
+
+
+def _suggest_next_maps(
+    maps_history,
+    allowed_maps,
+    selection_size,
+    exclude_last_n,
+    offsensive_ratio,
+    consider_offensive_as_same_map,
+    allow_consecutive_offensive,
+    allow_consecutive_offensives_of_opposite_side,
+    current_map
 ):
     if exclude_last_n > 0:
         last_n_map = set(m["name"] for m in maps_history[:exclude_last_n])
     else:
         last_n_map = set()
     logger.info("Excluding last %s player maps: %s", exclude_last_n, last_n_map)
-    remaining_maps = set(all_maps) - last_n_map
+    remaining_maps = allowed_maps - last_n_map
     logger.info("Remaining maps to suggest from: %s", remaining_maps)
 
     try:
@@ -133,17 +180,9 @@ def suggest_next_maps(
 
     if not selection:
         logger.error("No maps can be suggested with the given parameters.")
-        raise ValueError("Unable to suggest map")
+        raise RestrictiveFilterError("Unable to suggest map")
     logger.info("Suggestion %s", selection)
     return selection
-
-
-class InvalidVoteError(Exception):
-    pass
-
-
-class VoteMapNoInitialised(Exception):
-    pass
 
 
 # TODO:  Handle empty selection (None)
@@ -152,6 +191,7 @@ class VoteMap:
         self.red = get_redis_client()
         self.reminder_time_key = "last_vote_reminder"
         self.optin_name = "votemap_reminder"
+        self.whitelist_key = "votemap_whitelist"
 
     def join_vote_options(
         self, join_char, selection, human_name_map, maps_to_numbers, votes, total_votes
@@ -319,19 +359,20 @@ class VoteMap:
             except CommandFailedError:
                 logger.warning("Unable to message %s", name)
 
-    def handle_vote_command(self, rcon, struct_log: StructuredLogLine):
+    def handle_vote_command(self, rcon, struct_log: StructuredLogLine) -> bool:
         message = struct_log.get("sub_content", "").strip()
+        config = VoteMapConfig()
+        enabled = config.get_vote_enabled()
         if not message.startswith("!votemap"):
-            return
+            return enabled
 
         steam_id_64_1 = struct_log["steam_id_64_1"]
-        config = VoteMapConfig()
-        if not config.get_vote_enabled():
+        if not enabled:
             rcon.do_message_player(
                 steam_id_64=steam_id_64_1,
                 message="Vote map is not enabled on this server",
             )
-            return
+            return enabled
 
         help_text = config.get_votemap_help_text()
 
@@ -362,12 +403,12 @@ class VoteMap:
                     rcon.do_message_player(steam_id_64=steam_id_64_1, message=msg)
             finally:
                 self.apply_results()
-                return
+                return enabled
 
         if re.match(r"!votemap\s*help", message) and help_text:
             logger.info("Showing help %s", struct_log)
             rcon.do_message_player(steam_id_64=steam_id_64_1, message=help_text)
-            return
+            return enabled
 
         if re.match(r"!votemap$", message):
             logger.info("Showing selection %s", struct_log)
@@ -378,7 +419,7 @@ class VoteMap:
                     map_selection=self.format_map_vote("by_mod_vertical_all")
                 ),
             )
-            return
+            return enabled
 
         if re.match(r"!votemap\s*never$", message):
             if not config.get_votemap_allow_optout():
@@ -386,7 +427,7 @@ class VoteMap:
                     steam_id_64=steam_id_64_1,
                     message="You can't opt-out of vote map on this server",
                 )
-                return
+                return enabled
 
             logger.info("Player opting out of vote %s", struct_log)
             with enter_session() as sess:
@@ -420,7 +461,7 @@ class VoteMap:
                     logger.exception("Unable to add optin. Already exists?")
                 self.apply_with_retry()
 
-            return
+            return enabled
 
         if re.match(r"!votemap\s*allow$", message):
             logger.info("Player opting in for vote %s", struct_log)
@@ -453,10 +494,10 @@ class VoteMap:
                     )
                 except Exception as e:
                     logger.exception("Unable to update optin. Already exists?")
-            return
+            return enabled
 
         rcon.do_message_player(steam_id_64=steam_id_64_1, message=help_text)
-        return
+        return enabled
 
     def register_vote(self, player_name, vote_timestamp, vote_content):
         try:
@@ -520,6 +561,36 @@ class VoteMap:
 
         return map_
 
+    def get_map_whitelist(self):
+        res = self.red.get(self.whitelist_key)
+        if res is not None:
+            return pickle.loads(res)
+        return set(ALL_MAPS)
+
+    def do_add_map_to_whitelist(self, map_name):
+        whitelist = self.get_map_whitelist()
+        whitelist.add(map_name)
+        self.do_set_map_whitelist(whitelist)
+
+    def do_add_maps_to_whitelist(self, map_names):
+        for map_name in map_names:
+            self.do_add_map_to_whitelist(map_name)
+
+    def do_remove_map_from_whitelist(self, map_name):
+        whitelist = self.get_map_whitelist()
+        whitelist.discard(map_name)
+        self.do_set_map_whitelist(whitelist)
+
+    def do_remove_maps_from_whitelist(self, map_names):
+        for map_name in map_names:
+            self.do_remove_map_from_whitelist(map_name)
+
+    def do_reset_map_whitelist(self):
+        self.do_set_map_whitelist(ALL_MAPS)
+
+    def do_set_map_whitelist(self, map_names):
+        self.red.set(self.whitelist_key, pickle.dumps(set(map_names)))
+
     def gen_selection(self):
         config = VoteMapConfig()
 
@@ -537,7 +608,7 @@ class VoteMap:
         )
         selection = suggest_next_maps(
             MapsHistory(),
-            ALL_MAPS,
+            self.get_map_whitelist(),
             selection_size=config.get_votemap_number_of_options(),
             exclude_last_n=config.get_votemap_number_of_last_played_map_to_exclude(),
             offsensive_ratio=config.get_votemap_ratio_of_offensives_to_offer(),
@@ -619,33 +690,16 @@ class VoteMap:
             logger.info(f"{votes=}")
             next_map = first[0][0]
             if next_map not in ALL_MAPS:
-                raise ValueError(
+                logger.error(
                     f"{next_map=} is not part of the all map list {ALL_MAPS=}"
                 )
             if next_map not in (selection := self.get_selection()):
-                raise ValueError(
+                logger.error(
                     f"{next_map=} is not part of vote selection {selection=}"
                 )
             logger.info(f"Winning map {next_map=}")
 
-        # Sanity checks below
         rcon = RecordedRcon(SERVER_INFO)
-        current_map = rcon.get_map()
-        if current_map.replace("_RESTART", "") not in ALL_MAPS:
-            raise ValueError(
-                f"{current_map=} is not part of the all map list {ALL_MAPS=}"
-            )
-
-        try:
-            history_current_map = MapsHistory()[0]["name"]
-        except (IndexError, KeyError):
-            raise ValueError("History is empty")
-
-        if current_map != history_current_map:
-            raise ValueError(
-                f"{current_map=} does not match history map {history_current_map=}"
-            )
-
         # Apply rotation safely
 
         current_rotation = rcon.get_map_rotation()
@@ -685,8 +739,7 @@ class VoteMap:
                 break
 
         if not success:
-            logger.warning("Falling back to adding all maps to the rotation")
-            RecordedRcon(SERVER_INFO).set_maprotation(ALL_MAPS)
+            logger.warning("Unable to set votemap results")
 
 
 # DEPRECATED see hooks.py
@@ -707,9 +760,9 @@ def on_map_change(old_map: str, new_map: str):
     #         # )
     # except Exception:
     #     logger.exception("Unexpected error while running vote map")
-    #try:
+    # try:
     #    record_stats_worker(MapsHistory()[1])
-    #except Exception:
+    # except Exception:
     #    logger.exception("Unexpected error while running stats worker")
 
 

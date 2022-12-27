@@ -317,6 +317,7 @@ This is a bit hackish, but it saved me a lot of time a the begining, it also rem
 
 #### First boot up the dependancies. I use docker for that but you can also install Redis and Postgres natively if you prefer
 
+    export HLL_DB_PASSWORD=developmentpassword
     docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d redis postgres
 
 This will make redis and postgres available on you localhost with their default ports. If you need different port bindings refer to the `docker-compose-dev.yml` file
@@ -330,15 +331,22 @@ This will make redis and postgres available on you localhost with their default 
     export HLL_HOST=<fill in yours>
     export HLL_DB_PASSWORD=developmentpassword
     export DJANGO_DEBUG=True
- 
+    export SERVER_NUMBER=1
+
     export DB_URL=postgres://rcon:developmentpassword@localhost:5432
     export REDIS_URL=redis://localhost:6379/0
+
+#### Prepare the DB
+
+    PYTHONPATH=$(pwd) alembic upgrade head 
+    PYTHONPATH=$(pwd) ./manage.py init_db   
 
 #### Run a server
 
     # from the root of the repo
     pip install -r requirements.txt
-    PYTHONPATH=$PWD  DJANGO_DEBUG=true ./rconweb/manage.py runserver
+    # Then you can run the API
+    DJANGO_DEBUG=true DEBUG=true PYTHONPATH=$(pwd) ./rconweb/manage.py runserver --nothreading
 
 This will run a development server on http://127.0.0.1:8000/ it auto refreshes on code changes
 If you change the port rember that you will also need to change it in rcongui/.env for the frontend to know where to talk to the API

@@ -32,7 +32,7 @@ import DialogTitle from "@material-ui/core/DialogTitle";
 import { getEmojiFlag } from "../../utils/emoji";
 import PlayerGrid from "./playerGrid";
 import { VipExpirationDialog } from "../VipDialog";
-import {vipListFromServer} from "../VipDialog/vipFromServer";
+import { vipListFromServer } from "../VipDialog/vipFromServer";
 
 const PlayerSummary = ({ player, flag }) => (
   <React.Fragment>
@@ -224,21 +224,24 @@ class PlayersHistory extends React.Component {
       .catch((error) => toast.error("Unable to connect to API " + error));
   }
 
-  addVip(player, expirationTimestamp) {
+  addVip(player, expirationTimestamp, forwardVIP) {
     const steamID64 = player.get("steam_id_64");
     const name = player.get("names").get(0).get("name");
 
+    console.log(`do_add_vip ${expirationTimestamp}`);
     return sendAction("do_add_vip", {
       steam_id_64: steamID64,
       name: name,
       expiration: expirationTimestamp,
+      forward: forwardVIP,
     }).then(this._reloadOnSuccess);
   }
 
-  deleteVip(steamID64) {
-    return sendAction("do_remove_vip", { steam_id_64: steamID64 }).then(
-      this._reloadOnSuccess
-    );
+  deleteVip(steamID64, forwardVIP) {
+    return sendAction("do_remove_vip", {
+      steam_id_64: steamID64,
+      forward: forwardVIP,
+    }).then(this._reloadOnSuccess);
   }
 
   _loadToState(command, showSuccess, stateSetter) {
@@ -494,8 +497,8 @@ class PlayersHistory extends React.Component {
     });
   }
 
-  onDeleteVip(player) {
-    return this.deleteVip(player.get("steam_id_64"));
+  onDeleteVip(player, forwardVIP) {
+    return this.deleteVip(player.get("steam_id_64"), forwardVIP);
   }
   onAddToWatchList(player) {
     return this.setDoConfirmPlayer({
@@ -639,8 +642,9 @@ class PlayersHistory extends React.Component {
           vips={vips}
           onDeleteVip={this.onDeleteVip}
           handleClose={() => this.setDoVIPPlayer(false)}
-          handleConfirm={(playerObj, expirationTimestamp) => {
-            this.addVip(playerObj, expirationTimestamp);
+          handleConfirm={(playerObj, expirationTimestamp, forwardVIP) => {
+            console.log(`handleConfirm ${expirationTimestamp}`);
+            this.addVip(playerObj, expirationTimestamp, forwardVIP);
             this.setDoVIPPlayer(false);
           }}
         />
