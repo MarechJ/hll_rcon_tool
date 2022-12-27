@@ -16,7 +16,7 @@ requests>=2.21.0
 steam==1.0.2
 pyaml==21.10.1
 alembic~=1.9.0
-rq==1.8.0
+rq~=1.11.0
 paramiko==2.10.1
 rq-scheduler==0.11.0
 ftpretty==0.4.0
