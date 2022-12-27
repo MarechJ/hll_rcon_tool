@@ -13,8 +13,10 @@ from .utils import _get_data
 
 AUTO_SETTINGS_KEY_ORDER = [
     "always_apply_defaults",
+    "can_invoke_multiple_rules",
     "defaults",
     "rules",
+    "_available_settings",
     "_available_commands",
     "_available_conditions",
 ]
