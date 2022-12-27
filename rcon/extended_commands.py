@@ -449,11 +449,14 @@ class Rcon(ServerCtl):
         # Remap keys and parse values
         data[STEAMID] = raw_data.get("steamid64")
         data["team"] = raw_data.get("team", "None")
-        data["unit_id"], data["unit_name"] = (
-            raw_data.get("unit").split(" - ")
-            if raw_data.get("unit")
-            else ("None", None)
-        )
+        if raw_data["role"].lower() == "armycommander":
+            data["unit_id"], data["unit_name"] = (-1, "Commmand")
+        else:
+            data["unit_id"], data["unit_name"] = (
+                raw_data.get("unit").split(" - ")
+                if raw_data.get("unit")
+                else ("None", None)
+            )
         data["kills"], data["deaths"] = (
             raw_data.get("kills").split(" - Deaths: ")
             if raw_data.get("kills")
