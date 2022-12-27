@@ -143,7 +143,12 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "corsheaders",
     "api",
+    "directory",
 ]
+
+DIRECTORY_DIRECTORY = os.getenv("LOGGING_PATH", './logs')
+DIRECTORY_ACCESS_FUNCTION = 'api.auth.staff_required'
+DIRECTORY_ACCESS_MODE = 'custom'
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -161,7 +166,7 @@ ROOT_URLCONF = "rconweb.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [os.path.join(BASE_DIR, 'templates')],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [

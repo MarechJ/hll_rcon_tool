@@ -14,9 +14,10 @@ from rcon.commands import CommandFailedError
 from rcon.discord import dict_to_discord, send_to_discord_audit
 from rcon.models import PlayerSteamID, PlayerVIP, enter_session
 from rcon.user_config import RealVipConfig
-from rcon.workers import get_job_results, worker_bulk_vip
 from rcon.utils import get_server_number
+from rcon.workers import get_job_results, worker_bulk_vip
 
+from .audit_log import auto_record_audit, record_audit
 from .auth import api_response, login_required
 from .views import _get_data, ctl
 
@@ -29,6 +30,7 @@ class DocumentForm(forms.Form):
 
 @csrf_exempt
 @login_required(True)
+@record_audit
 def upload_vips(request):
     message = "Upload a VIP file!"
     send_to_discord_audit("upload_vips", request.user.username)
@@ -77,6 +79,7 @@ def upload_vips(request):
 
 @csrf_exempt
 @login_required(True)
+@record_audit
 def async_upload_vips(request):
     errors = []
     send_to_discord_audit("upload_vips", request.user.username)
@@ -216,6 +219,7 @@ def get_real_vip_config(request):
 
 @csrf_exempt
 @login_required(True)
+@auto_record_audit
 def set_real_vip_config(request):
     error = None
     data = _get_data(request)

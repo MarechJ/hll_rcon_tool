@@ -8,12 +8,13 @@ from typing import List
 import redis
 
 from rcon.cache_utils import get_redis_client
+from rcon.commands import CommandFailedError, HLLServerError
 from rcon.config import get_config
 from rcon.discord import send_to_discord_audit
-from rcon.commands import CommandFailedError, HLLServerError
 from rcon.recorded_commands import RecordedRcon
 from rcon.settings import SERVER_INFO
 from rcon.squad_automod.models import (
+    ActionMethod,
     APlayer,
     NoLeaderConfig,
     PunishStepState,
@@ -21,7 +22,6 @@ from rcon.squad_automod.models import (
     SquadCycleOver,
     SquadHasLeader,
     WatchStatus,
-    ActionMethod,
 )
 
 LEADER_WATCH_RESET_SECS = 120

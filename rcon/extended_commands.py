@@ -17,6 +17,7 @@ from rcon.steam_utils import (
     get_players_country_code,
     get_players_have_bans,
 )
+from rcon.types import GetPlayersType
 from rcon.utils import get_server_number
 
 STEAMID = "steam_id_64"
@@ -448,11 +449,14 @@ class Rcon(ServerCtl):
         # Remap keys and parse values
         data[STEAMID] = raw_data.get("steamid64")
         data["team"] = raw_data.get("team", "None")
-        data["unit_id"], data["unit_name"] = (
-            raw_data.get("unit").split(" - ")
-            if raw_data.get("unit")
-            else ("None", None)
-        )
+        if raw_data["role"].lower() == "armycommander":
+            data["unit_id"], data["unit_name"] = (-1, "Commmand")
+        else:
+            data["unit_id"], data["unit_name"] = (
+                raw_data.get("unit").split(" - ")
+                if raw_data.get("unit")
+                else ("None", None)
+            )
         data["kills"], data["deaths"] = (
             raw_data.get("kills").split(" - Deaths: ")
             if raw_data.get("kills")
@@ -527,7 +531,7 @@ class Rcon(ServerCtl):
 
     @mod_users_allowed
     @ttl_cache(ttl=2)
-    def get_players_fast(self):
+    def get_players_fast(self) -> List[GetPlayersType]:
         players = {}
         ids = []
 

@@ -7,9 +7,9 @@ from functools import partial, wraps
 from threading import Timer
 from typing import DefaultDict, Dict, List, Optional, Sequence, Union
 
-import discord
 from discord_webhook import DiscordEmbed
 
+import discord
 from rcon.cache_utils import invalidates
 from rcon.commands import CommandFailedError, HLLServerError
 from rcon.config import get_config
@@ -59,8 +59,6 @@ def count_vote(rcon: RecordedRcon, struct_log: StructuredLogLine):
 
 
 def initialise_vote_map(rcon: RecordedRcon, struct_log):
-    config = VoteMapConfig()
-
     logger.info("New match started initializing vote map. %s", struct_log)
     try:
         vote_map = VoteMap()
@@ -297,9 +295,8 @@ def inject_player_ids(func):
 
 
 @on_connected
-def handle_on_connect(rcon, struct_log):
-    steam_id_64 = rcon.get_player_info.get_cached_value_for(struct_log["player"])
-
+@inject_player_ids
+def handle_on_connect(rcon, struct_log, name, steam_id_64):
     try:
         if type(rcon) == RecordedRcon:
             rcon.invalidate_player_list_cache()
@@ -309,19 +306,6 @@ def handle_on_connect(rcon, struct_log):
         rcon.get_player_info.clear_for(player=struct_log["player"])
     except Exception:
         logger.exception("Unable to clear cache for %s", steam_id_64)
-    try:
-        info = rcon.get_player_info(struct_log["player"], can_fail=True)
-        steam_id_64 = info.get("steam_id_64")
-    except (CommandFailedError, KeyError):
-        if not steam_id_64:
-            logger.exception("Unable to get player steam ID for %s", struct_log)
-            raise
-        else:
-            logger.error(
-                "Unable to get player steam ID for %s, falling back to cached value %s",
-                struct_log,
-                steam_id_64,
-            )
 
     timestamp = int(struct_log["timestamp_ms"]) / 1000
     if not steam_id_64:
@@ -390,6 +374,11 @@ def notify_false_positives(rcon: RecordedRcon, _, name: str, steam_id_64: str):
         "Detected player name with whitespace at the end: Warning him of false-positive events. Player name: "
         + name
     )
+
+    try:
+        send_to_discord_audit(f"WARNING Player with bugged profile joined: `{name}` `{steam_id_64}`\n\nThis player if Squad Officer will cause his squad to be punished. He also will show as unassigned in the Game view.\n\nPlease ask him to change his name (last character IG shouldn't be a whitespace)")
+    except Exception:
+        logger.exception("Unable to send to audit")
 
     def notify_player():
         try:
