@@ -1,5 +1,6 @@
 {
   "always_apply_defaults": false,
+  "can_invoke_multiple_rules": false,
   "defaults": {
     "set_idle_autokick_time": {
       "minutes": 10
@@ -60,6 +61,10 @@
       }
     }
   ],
+  "_available_settings": {
+      "always_apply_defaults": "Whether or not to apply the settings defined in the default section in each iteration. Allowed values: true / false",
+      "can_invoke_multiple_rules": "Whether or not to allow the invocation of multiple rules e.g. don't stop after the first fulfilled rule. Allowed values: true / false"
+  },
   "_available_commands": {
     "do_ban_profanities": { "profanities": ["word1", "word2"] },
     "do_unban_profanities": { "profanities": ["word1", "word2"] },

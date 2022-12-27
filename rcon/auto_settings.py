@@ -210,6 +210,7 @@ def run():
 
     while True:
         always_apply_defaults = config.get("always_apply_defaults", False)
+        can_invoke_multiple_rules = config.get("can_invoke_multiple_rules", False)
         default_commands = config.get("defaults", {})
         rule_matched = False
         if always_apply_defaults:
@@ -254,7 +255,17 @@ def run():
                 else:
                     do_run_commands(rcon, votemap, commands)
                 rule_matched = True
-                break
+                if can_invoke_multiple_rules:
+                    logger.info(
+                        f"Rule validation succeded, moving to next one. ({can_invoke_multiple_rules})"
+                    )
+                    continue
+                else:
+                    logger.info(
+                        f"Rule validation succeded, ignoring potential other rules. ({can_invoke_multiple_rules=})"
+                    )
+                    break
+
             logger.info("Rule validation failed, moving to next one.")
 
         if not rule_matched:
