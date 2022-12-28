@@ -18,7 +18,11 @@ from rcon.steam_utils import (
     get_players_have_bans,
 )
 from rcon.types import GetPlayersType
-from rcon.utils import get_server_number
+from rcon.utils import (
+    ALL_ROLES,
+    ALL_ROLES_KEY_INDEX_MAP,
+    get_server_number
+)
 
 STEAMID = "steam_id_64"
 NAME = "name"
@@ -217,6 +221,11 @@ class Rcon(ServerCtl):
             if team is None:
                 continue
             for squad_name, squad in squads.items():
+                squad["players"] = sorted(
+                    squad["players"],
+                    key=lambda player: (ALL_ROLES_KEY_INDEX_MAP.get(player.get("role"), len(ALL_ROLES)),
+                                        player.get("steam_id_64"))
+                )
                 squad["type"] = self._guess_squad_type(squad)
                 squad["has_leader"] = self._has_leader(squad)
 
@@ -311,6 +320,12 @@ class Rcon(ServerCtl):
             if team is None:
                 continue
             for squad_name, squad in squads.items():
+                squad["players"] = sorted(
+                    squad["players"],
+                    key=lambda player: (ALL_ROLES_KEY_INDEX_MAP.get(player.get("role"), len(ALL_ROLES)),
+                                        player.get("steam_id_64"))
+                )
+
                 squad["type"] = self._guess_squad_type(squad)
                 squad["has_leader"] = self._has_leader(squad)
 
