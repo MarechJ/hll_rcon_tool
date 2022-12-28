@@ -257,7 +257,7 @@ def run():
                 rule_matched = True
                 if can_invoke_multiple_rules:
                     logger.info(
-                        f"Rule validation succeded, moving to next one. ({can_invoke_multiple_rules})"
+                        f"Rule validation succeded, moving to next one. ({can_invoke_multiple_rules=})"
                     )
                     continue
                 else:
