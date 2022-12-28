@@ -542,6 +542,7 @@ class AutoSettingsConfig:
 
 DEFAULT_AUTO_SETTINGS = {
     "always_apply_defaults": False,
+    "can_invoke_multiple_rules": False,
     "defaults": {
         "set_idle_autokick_time": {"minutes": 10},
         "set_autobalance_threshold": {"max_diff": 3},
@@ -568,6 +569,10 @@ DEFAULT_AUTO_SETTINGS = {
             },
         },
     ],
+    "_available_settings": {
+        "always_apply_defaults": "Whether or not to apply the settings defined in the default section in each iteration. Allowed values: true / false",
+        "can_invoke_multiple_rules": "Whether or not to allow the invocation of multiple rules e.g. don't stop after the first fulfilled rule. Allowed values: true / false"
+    },
     "_available_commands": {
         "do_ban_profanities": {"profanities": ["word1", "word2"]},
         "do_unban_profanities": {"profanities": ["word1", "word2"]},
@@ -634,6 +639,12 @@ DEFAULT_AUTO_SETTINGS = {
         "do_add_vip": {"steam_id_64": "1234567890123456", "name": "A comment"},
         "do_remove_vip": {"steam_id_64": "1234567890123456"},
         "do_remove_all_vips": {},
+        "do_add_map_to_whitelist": { "map_name": "stmariedumont_warfare" },
+        "do_add_maps_to_whitelist": { "map_names": ["stmariedumont_warfare", "kursk_offensive_rus"] },
+        "do_remove_map_from_whitelist": { "map_name": "stmariedumont_warfare" },
+        "do_remove_maps_from_whitelist": { "map_names": ["stmariedumont_warfare", "kursk_offensive_rus"] },
+        "do_reset_map_whitelist": {},
+        "do_set_map_whitelist": { "map_names": ["stmariedumont_warfare", "kursk_offensive_rus"] },
     },
     "_available_conditions": {
         "player_count": {"min": 0, "max": 100, "not": False},
