@@ -126,6 +126,8 @@ LOG_MAP_NAMES_TO_MAP = {
     "STALINGRAD WARFARE": "stalingrad_warfare",
     "UTAH BEACH OFFENSIVE": "utahbeach_offensive_ger",
     "UTAH BEACH WARFARE": "utahbeach_warfare",
+    "OMAHA BEACH WARFARE": "omahabeach_warfare",
+    "OMAHA BEACH OFFENSIVE": "omahabeach_offensive_ger",
 }
 
 LONG_HUMAN_MAP_NAMES = {
@@ -411,3 +413,13 @@ class ApiKey:
             k.decode(): self.red.get(k.decode()).decode()
             for k in self.red.keys(f"{self.key_prefix}*")
         }
+
+
+def get_server_number() -> int:
+    """Get the CRCON server number"""
+    server_number = os.getenv("SERVER_NUMBER")
+    if not server_number:
+        # Shouldn't get here because SERVER_NUMBER is a mandatory ENV Var
+        raise ValueError("SERVER_NUMBER is not set")
+
+    return server_number

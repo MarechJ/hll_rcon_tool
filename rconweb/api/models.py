@@ -8,6 +8,7 @@ class SteamPlayer(models.Model):
 
 
 class RconUser(User):
+    """api_rconuser table"""
     class Meta:
         permissions = (
             ("can_not_change_server_settings", "Can NOT Change Server Settings"),

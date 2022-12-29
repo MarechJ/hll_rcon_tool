@@ -4,6 +4,7 @@ import re
 from rcon.config import get_config
 from rcon.discord import send_to_discord_audit
 from rcon.game_logs import on_connected
+from rcon.hooks import inject_player_ids
 from rcon.player_history import get_player_profile, player_has_flag
 from rcon.recorded_commands import RecordedRcon
 from rcon.settings import SERVER_INFO
@@ -15,7 +16,8 @@ recorded_rcon = RecordedRcon(SERVER_INFO)
 
 
 @on_connected
-def auto_kick(_, log):
+@inject_player_ids
+def auto_kick(_, log, name, steam_id_64):
     try:
         config = get_config().get("NAME_KICKS")
     except KeyError:
@@ -23,16 +25,14 @@ def auto_kick(_, log):
         return
 
     for r in config["regexps"]:
-        name = log["player"]
-        info = recorded_rcon.get_player_info(name, can_fail=True)
         try:
-            profile = get_player_profile(info["steam_id_64"], 0)
+            profile = get_player_profile(steam_id_64, 0)
             for f in config.get("whitelist_flags", []):
                 if player_has_flag(profile, f):
                     logger.debug(
                         "Not checking nickname validity for whitelisted player %s (%s)",
                         name,
-                        info["steam_id_64"],
+                        steam_id_64,
                     )
                     return
         except:

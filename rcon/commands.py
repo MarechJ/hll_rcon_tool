@@ -100,7 +100,7 @@ class ServerCtl:
         self._connect()
 
     @_auto_retry
-    def _request(self, command: str, can_fail=True, log_info=False):
+    def _request(self, command: str, can_fail=True, log_info=False, decode=True):
         if not self.conn:
             self._connect()
         if log_info:
@@ -109,7 +109,10 @@ class ServerCtl:
             logger.debug(command)
         try:
             self.conn.send(command.encode())
-            result = self.conn.receive().decode()
+            if decode:
+                result = self.conn.receive().decode()
+            else:
+                result = self.conn.receive()
         except (
             RuntimeError,
             BrokenPipeError,
@@ -120,7 +123,7 @@ class ServerCtl:
             logger.exception("Failed request")
             raise HLLServerError(command) from e
 
-        if result == "FAIL":
+        if (decode and result == "FAIL") or (not decode and result == b"FAIL"):
             if can_fail:
                 raise CommandFailedError(command)
             else:
@@ -163,10 +166,11 @@ class ServerCtl:
         )
 
     def _read_list(self, raw):
-        res = raw.split("\t")
+        res = raw.split(b"\t")
 
         try:
             expected_len = int(res[0])
+            logger.debug("Expected list length %s", expected_len)
         except ValueError:
             raise HLLServerError(
                 "Unexpected response from server." "Unable to get list length"
@@ -174,14 +178,18 @@ class ServerCtl:
 
         self.conn.lock()
         # Max 30 tries
-        for i in range(30):
-            if expected_len <= len(res) - 1:
+        for i in range(1000):
+            if expected_len <= len(res) - 1 and raw[-1] in [0, 9, 10]:  # \0 \t or \n
+                logger.debug("List seems complete length is %s/%s last char is %s", len(res), expected_len, raw[-1])
                 break
-            raw += self.conn.receive(unlock=False).decode()
-            res = raw.split("\t")
+            logger.debug("Reading again list length is %s/%s last char is %s", len(res), expected_len, raw[-1])
+            raw += self.conn.receive(unlock=False)
+            res = raw.split(b"\t")
+            #logger.warning(f"{res}|")
 
         self.conn.unlock()
-        if res[-1] == "":
+
+        if res[-1] == b"":
             # There's a trailin \t
             res = res[:-1]
         if expected_len < len(res) - 1:
@@ -190,11 +198,11 @@ class ServerCtl:
                 f" expected {expected_len} got {len(res) - 1}"
             )
 
-        return res[1:]
+        return [l.decode() for l in res[1:]]
 
     @_auto_retry
     def _get(self, item, is_list=False, can_fail=True):
-        res = self._request(f"get {item}", can_fail)
+        res = self._request(f"get {item}", can_fail, decode=not is_list)
 
         if not is_list:
             return res
@@ -286,6 +294,8 @@ class ServerCtl:
     @_auto_retry
     def get_logs(self, since_min_ago, filter_=""):
         res = self._request(f"showlog {since_min_ago}")
+        if res == "EMPTY":
+            return ""
         self.conn.lock()
         try:
             for i in range(30):
@@ -472,7 +482,10 @@ class ServerCtl:
 
         """
         # Has no trailing "\n"
-        return self._get("gamestate", can_fail=False).split("\n")
+        
+        result = self._get("gamestate", can_fail=False)
+        logger.info("Gamestate results:\n|%s|", result)
+        return result.split("\n")
 
 
 if __name__ == "__main__":

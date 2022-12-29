@@ -12,7 +12,8 @@ from rcon.squad_automod.models import (
     PunishPlayer,
     NoLeaderConfig,
     PunitionsToApply,
-    ActionMethod, SeedingRulesConfig,
+    ActionMethod,
+    SeedingRulesConfig,
 )
 from rcon.squad_automod.no_leader import NoLeaderAutomod
 from rcon.squad_automod.seeding_rules import SeedingRulesAutomod

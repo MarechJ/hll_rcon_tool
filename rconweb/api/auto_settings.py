@@ -5,6 +5,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from rcon.user_config import AutoSettingsConfig
 
+from .audit_log import auto_record_audit, record_audit
 from .auth import api_response, login_required
 from .multi_servers import forward_request
 from .services import get_supervisor_client
@@ -12,8 +13,10 @@ from .utils import _get_data
 
 AUTO_SETTINGS_KEY_ORDER = [
     "always_apply_defaults",
+    "can_invoke_multiple_rules",
     "defaults",
     "rules",
+    "_available_settings",
     "_available_commands",
     "_available_conditions",
 ]
@@ -47,6 +50,7 @@ def get_auto_settings(request):
 
 @csrf_exempt
 @login_required(True)
+@record_audit
 def set_auto_settings(request):
     data = _get_data(request)
     try:
