@@ -205,6 +205,7 @@ def _get_real_vip_config():
 @login_required(True)
 def get_real_vip_config(request):
     error = None
+    real_vip_config = None
     try:
         real_vip_config = _get_real_vip_config()
     except Exception as e:
@@ -219,7 +220,7 @@ def get_real_vip_config(request):
 
 @csrf_exempt
 @login_required(True)
-@auto_record_audit
+@record_audit
 def set_real_vip_config(request):
     error = None
     data = _get_data(request)
