@@ -5,14 +5,30 @@ from datetime import datetime, timedelta
 
 import redis
 
-from rcon.squad_automod.get_team_count import get_team_count
-from rcon.squad_automod.is_time import is_time
-from rcon.squad_automod.models import SeedingRulesConfig, PunitionsToApply, PunishPlayer, PunishDetails, WatchStatus, \
+from rcon.automods.get_team_count import get_team_count
+from rcon.automods.is_time import is_time
+from rcon.automods.models import SeedingRulesConfig, PunitionsToApply, PunishPlayer, PunishDetails, WatchStatus, \
     NoSeedingViolation, PunishStepState, ActionMethod
-from rcon.squad_automod.num_or_inf import num_or_inf
+from rcon.automods.num_or_inf import num_or_inf
+from rcon.cache_utils import get_redis_client
+from rcon.game_logs import on_match_start
 
 SEEDING_RULES_RESET_SECS = 120
 AUTOMOD_USERNAME = "SeedingRulesAutomod"
+
+
+def disabled_rule_key(rule: str) -> str:
+    return f"seeding_rules_automod_disabled_for_round_{rule}"
+
+
+@on_match_start
+def on_map_change(_, _1):
+    keys = []
+    for rule in ["disallowed_roles"]:
+        keys.append(disabled_rule_key(rule))
+    if len(keys) == 0:
+        return
+    get_redis_client().delete(*keys)
 
 
 class SeedingRulesAutomod:
@@ -79,6 +95,12 @@ class SeedingRulesAutomod:
             )
             return message
 
+    def _seeding_rule_disabled_for_round(self, rule: str):
+        self.red.setex(disabled_rule_key(rule), 3*60*60, "1")
+
+    def _is_seeding_rule_disabled(self, rule: str) -> bool:
+        return self.red.get(disabled_rule_key(rule)) == "1"
+
     def punitions_to_apply(self, team_view, squad_name: str, team: str, squad: dict) -> PunitionsToApply:
         punitions_to_apply = PunitionsToApply()
         if not squad_name:
@@ -106,11 +128,18 @@ class SeedingRulesAutomod:
                     )
                 )
 
+                drc = self.config.disallowed_roles
+                if server_player_count >= drc.max_players:
+                    self._seeding_rule_disabled_for_round("disallowed_roles")
+
                 violations = []
-                if self.config.disallowed_roles.min_players < server_player_count < self.config.disallowed_roles.max_players:
-                    if aplayer.role in self.config.disallowed_roles.roles:
-                        violations.append(self.config.disallowed_roles.message.format(
-                            role=self.config.disallowed_roles.roles.get(aplayer.role)))
+                if (
+                        not self._is_seeding_rule_disabled("disallowed_roles") and
+                        drc.min_players <= server_player_count < drc.max_players
+                ):
+                    if aplayer.role in drc.roles:
+                        violations.append(drc.message.format(
+                            role=drc.roles.get(aplayer.role)))
 
                 if len(violations) == 0:
                     continue
