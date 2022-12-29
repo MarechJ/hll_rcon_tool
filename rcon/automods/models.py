@@ -153,7 +153,7 @@ class SeedingRulesConfig:
 class PunishDetails:
     author: str
     message: str = ""
-    discord_audit_url: str = None
+    discord_audit_url: str = field(repr=False, default=None)
     dry_run: bool = False
 
 
