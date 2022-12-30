@@ -1,4 +1,4 @@
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from functools import cached_property
 from logging import getLogger
@@ -6,8 +6,10 @@ from typing import List, Union
 
 from dateutil import parser, relativedelta
 
-from rcon.extended_commands import NAME, STEAMID, Rcon
-from rcon.models import PlayerSteamID, PlayerVIP, enter_session
+from rcon.cache_utils import ttl_cache
+from rcon.config import get_config
+from rcon.extended_commands import NAME, STEAMID, Rcon, mod_users_allowed
+from rcon.models import AdvancedConfigOptions, PlayerSteamID, PlayerVIP, enter_session
 from rcon.player_history import (
     add_player_to_blacklist,
     get_profiles,
@@ -24,9 +26,25 @@ class RecordedRcon(Rcon):
     Note beware of using the cache in this layer
     """
 
-    def __init__(self, *args, pool_size=10, **kwargs):
+    def __init__(self, *args, pool_size=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.pool_size = pool_size
+
+        # config/default_config.yml config.yml, etc.
+        config = get_config()
+        try:
+            self.advanced_settings = AdvancedConfigOptions(
+                **config["ADVANCED_CRCON_SETTINGS"]
+            )
+        except ValueError:
+            # This might look dumb but pydantic provides useful error messages in the
+            # stack trace and we don't have to remember to keep updating this if we add
+            # any more fields to the ADVANCED_CRCON_SETTINGS config
+            logger.exception()
+
+        if pool_size is not None:
+            self.pool_size = pool_size
+        else:
+            self.pool_size = self.advanced_settings.thread_pool_size
 
     @cached_property
     def thread_pool(self):
@@ -37,17 +55,113 @@ class RecordedRcon(Rcon):
         logger.info("Initializing Rcon connection pool of size %s", self.pool_size)
         pool = [RecordedRcon(self.config) for _ in range(self.pool_size)]
         for idx, rcon in enumerate(pool):
-            logger.debug("Connecting rcon %s/%s", idx, self.pool_size)
+            logger.debug("Connecting rcon %s/%s", idx + 1, self.pool_size)
             rcon._connect()
         logger.info("Done initialzing Rcon connection pool")
         return pool
 
     def run_in_pool(self, process_number: int, function_name: str, *args, **kwargs):
         return self.thread_pool.submit(
-            getattr(self.connection_pool[process_number % self.pool_size], function_name),
+            getattr(
+                self.connection_pool[process_number % self.pool_size], function_name
+            ),
             *args,
             **kwargs,
         )
+
+    @mod_users_allowed
+    @ttl_cache(ttl=2, cache_falsy=False)
+    def get_team_view_fast(self):
+        teams = {}
+        players_by_id = {}
+        players = self.get_players_fast()
+        fail_count = 0
+
+        futures = {
+            self.run_in_pool(idx, "get_detailed_player_info", player[NAME]): player
+            for idx, player in enumerate(players)
+        }
+        for future in as_completed(futures):
+            try:
+                player_data = future.result()
+            except Exception:
+                logger.exception("Failed to get info for %s", futures[future])
+                fail_count += 1
+                player_data = self._get_default_info_dict(futures[future][NAME])
+            player = futures[future]
+            player.update(player_data)
+            players_by_id[player[STEAMID]] = player
+
+        logger.debug("Getting DB profiles")
+        steam_profiles = {
+            profile[STEAMID]: profile
+            for profile in get_profiles(list(players_by_id.keys()))
+        }
+        logger.debug("Getting VIP list")
+        try:
+            vips = set(v[STEAMID] for v in self.get_vip_ids())
+        except Exception:
+            logger.exception("Failed to get VIPs")
+            vips = set()
+
+        for player in players_by_id.values():
+            steam_id_64 = player[STEAMID]
+            profile = steam_profiles.get(player.get("steam_id_64"), {}) or {}
+            player["profile"] = profile
+            player["is_vip"] = steam_id_64 in vips
+
+            teams.setdefault(player.get("team"), {}).setdefault(
+                player.get("unit_name"), {}
+            ).setdefault("players", []).append(player)
+
+        for team, squads in teams.items():
+            if team is None:
+                continue
+            for squad_name, squad in squads.items():
+                squad["type"] = self._guess_squad_type(squad)
+                squad["has_leader"] = self._has_leader(squad)
+
+                try:
+                    squad["combat"] = sum(p["combat"] for p in squad["players"])
+                    squad["offense"] = sum(p["offense"] for p in squad["players"])
+                    squad["defense"] = sum(p["defense"] for p in squad["players"])
+                    squad["support"] = sum(p["support"] for p in squad["players"])
+                    squad["kills"] = sum(p["kills"] for p in squad["players"])
+                    squad["deaths"] = sum(p["deaths"] for p in squad["players"])
+                except Exception as e:
+                    logger.exception()
+
+        game = {}
+        for team, squads in teams.items():
+            if team is None:
+                continue
+            commander = [
+                squad for _, squad in squads.items() if squad["type"] == "commander"
+            ]
+            if not commander:
+                commander = None
+            else:
+                commander = (
+                    commander[0]["players"][0] if commander[0].get("players") else None
+                )
+
+            game[team] = {
+                "squads": {
+                    squad_name: squad
+                    for squad_name, squad in squads.items()
+                    if squad["type"] != "commander"
+                },
+                "commander": commander,
+                "combat": sum(s["combat"] for s in squads.values()),
+                "offense": sum(s["offense"] for s in squads.values()),
+                "defense": sum(s["defense"] for s in squads.values()),
+                "support": sum(s["support"] for s in squads.values()),
+                "kills": sum(s["kills"] for s in squads.values()),
+                "deaths": sum(s["deaths"] for s in squads.values()),
+                "count": sum(len(s["players"]) for s in squads.values()),
+            }
+
+        return dict(fail_count=fail_count, **game)
 
     def do_punish(self, player, reason, by):
         res = super().do_punish(player, reason)
@@ -63,8 +177,12 @@ class RecordedRcon(Rcon):
         )
         return res
 
-    def do_temp_ban(self, player=None, steam_id_64=None, duration_hours=2, reason="", by=""):
-        res = super().do_temp_ban(player, steam_id_64, duration_hours, reason, admin_name=by)
+    def do_temp_ban(
+        self, player=None, steam_id_64=None, duration_hours=2, reason="", by=""
+    ):
+        res = super().do_temp_ban(
+            player, steam_id_64, duration_hours, reason, admin_name=by
+        )
         safe_save_player_action(
             rcon=self,
             player_name=player,
@@ -152,7 +270,9 @@ class RecordedRcon(Rcon):
                 .one_or_none()
             )
             if player and player.vip:
-                logger.info(f"Removed VIP from {steam_id_64} expired: {player.vip.expiration}")
+                logger.info(
+                    f"Removed VIP from {steam_id_64} expired: {player.vip.expiration}"
+                )
                 # TODO: This is an incredibly dumb fix because I can't get
                 # the changes to persist otherwise
                 vip_record: PlayerVIP = (

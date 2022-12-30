@@ -5,7 +5,7 @@ from concurrent.futures import as_completed
 from datetime import datetime, timedelta
 from functools import update_wrapper
 from time import sleep
-from typing import Dict, List, Optional, Tuple, TypedDict, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 from rcon.cache_utils import get_redis_client, invalidates, ttl_cache
 from rcon.commands import CommandFailedError, HLLServerError, ServerCtl
@@ -17,7 +17,7 @@ from rcon.steam_utils import (
     get_players_country_code,
     get_players_have_bans,
 )
-from rcon.types import GetPlayersType
+from rcon.types import GameState, GetPlayersType, StructuredLogLine
 from rcon.utils import get_server_number
 
 STEAMID = "steam_id_64"
@@ -50,34 +50,6 @@ LOG_ACTIONS = [
     "MESSAGE",
 ]
 logger = logging.getLogger(__name__)
-
-
-class StructuredLogLine(TypedDict):
-    version: int
-    timestamp_ms: int
-    relative_time_ms: int
-    raw: str
-    line_without_time: str
-    action: str
-    player: str
-    steam_id_64_1: str
-    player2: str
-    steam_id_64_2: str
-    weapon: str
-    message: str
-    sub_content: str
-
-
-class GameState(TypedDict):
-    """TypedDict for Rcon.get_gamestate"""
-
-    num_allied_players: int
-    num_axis_players: int
-    allied_score: int
-    axis_score: int
-    time_remaining: timedelta
-    current_map: str
-    next_map: str
 
 
 MOD_ALLOWED_CMDS = set()
@@ -118,35 +90,8 @@ class Rcon(ServerCtl):
     MAX_SERV_NAME_LEN = 1024  # I totally made up that number. Unable to test
     log_time_regexp = re.compile(r".*\((\d+)\).*")
 
-    def __init__(self, *args, pool_size=None, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if pool_size:
-            self.pool_size = pool_size
-        else:
-            self.pool_size = self.advanced_settings.thread_pool_size
-
-    @cached_property
-    def thread_pool(self):
-        return ThreadPoolExecutor(self.pool_size)
-
-    @cached_property
-    def connection_pool(self):
-        logger.info("Initializing Rcon connection pool of size %s", self.pool_size)
-        pool = [Rcon(self.config) for _ in range(self.pool_size)]
-        for idx, rcon in enumerate(pool):
-            logger.debug("Connecting rcon %s/%s", idx+1, self.pool_size)
-            rcon._connect()
-        logger.info("Done initialzing Rcon connection pool")
-        return pool
-
-    def run_in_pool(self, process_number: int, function_name: str, *args, **kwargs):
-        return self.thread_pool.submit(
-            getattr(
-                self.connection_pool[process_number % self.pool_size], function_name
-            ),
-            *args,
-            **kwargs,
-        )
 
     @mod_users_allowed
     def get_playerids(self, as_dict=False):
@@ -288,100 +233,6 @@ class Rcon(ServerCtl):
             }
 
         return game
-
-    @mod_users_allowed
-    @ttl_cache(ttl=2, cache_falsy=False)
-    def get_team_view_fast(self):
-        teams = {}
-        players_by_id = {}
-        players = self.get_players_fast()
-        fail_count = 0
-
-        futures = {
-            self.run_in_pool(idx, "get_detailed_player_info", player[NAME]): player
-            for idx, player in enumerate(players)
-        }
-        for future in as_completed(futures):
-            try:
-                player_data = future.result()
-            except Exception:
-                logger.exception("Failed to get info for %s", futures[future])
-                fail_count += 1
-                player_data = self._get_default_info_dict(futures[future][NAME])
-            player = futures[future]
-            player.update(player_data)
-            players_by_id[player[STEAMID]] = player
-
-        logger.debug("Getting DB profiles")
-        steam_profiles = {
-            profile[STEAMID]: profile
-            for profile in get_profiles(list(players_by_id.keys()))
-        }
-        logger.debug("Getting VIP list")
-        try:
-            vips = set(v[STEAMID] for v in self.get_vip_ids())
-        except Exception:
-            logger.exception("Failed to get VIPs")
-            vips = set()
-
-        for player in players_by_id.values():
-            steam_id_64 = player[STEAMID]
-            profile = steam_profiles.get(player.get("steam_id_64"), {}) or {}
-            player["profile"] = profile
-            player["is_vip"] = steam_id_64 in vips
-
-            teams.setdefault(player.get("team"), {}).setdefault(
-                player.get("unit_name"), {}
-            ).setdefault("players", []).append(player)
-
-        for team, squads in teams.items():
-            if team is None:
-                continue
-            for squad_name, squad in squads.items():
-                squad["type"] = self._guess_squad_type(squad)
-                squad["has_leader"] = self._has_leader(squad)
-
-                try:
-                    squad["combat"] = sum(p["combat"] for p in squad["players"])
-                    squad["offense"] = sum(p["offense"] for p in squad["players"])
-                    squad["defense"] = sum(p["defense"] for p in squad["players"])
-                    squad["support"] = sum(p["support"] for p in squad["players"])
-                    squad["kills"] = sum(p["kills"] for p in squad["players"])
-                    squad["deaths"] = sum(p["deaths"] for p in squad["players"])
-                except Exception as e:
-                    logger.exception()
-
-        game = {}
-        for team, squads in teams.items():
-            if team is None:
-                continue
-            commander = [
-                squad for _, squad in squads.items() if squad["type"] == "commander"
-            ]
-            if not commander:
-                commander = None
-            else:
-                commander = (
-                    commander[0]["players"][0] if commander[0].get("players") else None
-                )
-
-            game[team] = {
-                "squads": {
-                    squad_name: squad
-                    for squad_name, squad in squads.items()
-                    if squad["type"] != "commander"
-                },
-                "commander": commander,
-                "combat": sum(s["combat"] for s in squads.values()),
-                "offense": sum(s["offense"] for s in squads.values()),
-                "defense": sum(s["defense"] for s in squads.values()),
-                "support": sum(s["support"] for s in squads.values()),
-                "kills": sum(s["kills"] for s in squads.values()),
-                "deaths": sum(s["deaths"] for s in squads.values()),
-                "count": sum(len(s["players"]) for s in squads.values()),
-            }
-
-        return dict(fail_count=fail_count, **game)
 
     @mod_users_allowed
     @ttl_cache(ttl=60 * 60 * 24, cache_falsy=False)
@@ -660,7 +511,7 @@ class Rcon(ServerCtl):
                     temp_bans.append(self._struct_ban(b, "temp"))
                 except ValueError:
                     logger.exception("Invalid temp ban line: %s", b)
-            bans = [] 
+            bans = []
             for b in self.get_perma_bans():
                 try:
                     bans.append(self._struct_ban(b, "perma"))
@@ -717,18 +568,13 @@ class Rcon(ServerCtl):
 
         vip_expirations: Dict[str, datetime]
         with enter_session() as session:
-            # players = session.query(PlayerSteamID).join(PlayerVIP).all()
-
             server_number = get_server_number()
 
-            players = (
+            players: list[PlayerVIP] = (
                 session.query(PlayerVIP)
                 .filter(PlayerVIP.server_number == server_number)
                 .all()
             )
-            # print(f"query={session.query(PlayerSteamID).join(PlayerVIP)}")
-            # server_number = int(os.getenv("SERVER_NUMBER"))
-            # players = session.query(PlayerVIP).filter().all()
             vip_expirations = {
                 player.steamid.steam_id_64: player.expiration for player in players
             }
@@ -778,7 +624,7 @@ class Rcon(ServerCtl):
         Map: foy_warfare
         Next Map: stmariedumont_warfare"""
         with invalidates(
-                Rcon.team_sizes, Rcon.team_objective_scores, Rcon.round_time_remaining
+            Rcon.team_sizes, Rcon.team_objective_scores, Rcon.round_time_remaining
         ):
             (
                 raw_team_size,
@@ -1063,7 +909,7 @@ class Rcon(ServerCtl):
     @mod_users_allowed
     @ttl_cache(ttl=2)
     def get_structured_logs(
-            self, since_min_ago, filter_action=None, filter_player=None
+        self, since_min_ago, filter_action=None, filter_player=None
     ):
         raw = super().get_logs(since_min_ago)
         return self.parse_logs(raw, filter_action, filter_player)
@@ -1152,7 +998,7 @@ class Rcon(ServerCtl):
 
     @mod_users_allowed
     def do_temp_ban(
-            self, player=None, steam_id_64=None, duration_hours=2, reason="", admin_name=""
+        self, player=None, steam_id_64=None, duration_hours=2, reason="", admin_name=""
     ):
         with invalidates(Rcon.get_players, Rcon.get_temp_bans):
             if player and re.match(r"\d+", player):
@@ -1196,7 +1042,7 @@ class Rcon(ServerCtl):
         return l
 
     def do_add_map_to_rotation(
-            self, map_name, after_map_name: str = None, after_map_name_number: str = None
+        self, map_name, after_map_name: str = None, after_map_name_number: str = None
     ):
         with invalidates(Rcon.get_map_rotation):
             super().do_add_map_to_rotation(
@@ -1308,10 +1154,10 @@ class Rcon(ServerCtl):
                     "Teamkills": tk,
                     "Death by TK": death_by_tk,
                     "Estimated play time (minutes)": (last_timestamp - first_timestamp)
-                                                     // 1000
-                                                     // 60,
+                    // 1000
+                    // 60,
                     "TK Minutes": tk
-                                  / max((last_timestamp - first_timestamp) // 1000 // 60, 1),
+                    / max((last_timestamp - first_timestamp) // 1000 // 60, 1),
                 }
             )
 
@@ -1359,8 +1205,8 @@ class Rcon(ServerCtl):
                     # [15:49 min (1606998428)] VOTE Player [[fr]ELsass_blitz] Started a vote of type (PVR_Kick_Abuse) against [拢儿]. VoteID: [1]
                     action = "VOTE"
                     if (
-                            rest.startswith("VOTESYS Player")
-                            and " against " in rest.lower()
+                        rest.startswith("VOTESYS Player")
+                        and " against " in rest.lower()
                     ):
                         action = "VOTE STARTED"
                         groups = re.match(
@@ -1491,3 +1337,11 @@ class Rcon(ServerCtl):
             "players": list(players),
             "logs": res,
         }
+
+
+if __name__ == "__main__":
+    from rcon.settings import SERVER_INFO
+
+    ctl = Rcon(SERVER_INFO)
+    print("in main")
+    ctl.get_vip_ids()
