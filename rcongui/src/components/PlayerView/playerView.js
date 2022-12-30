@@ -133,7 +133,7 @@ class PlayerView extends Component {
       });
     } else {
       const data = {
-        player_name: player_name,
+        player: player_name,
         steam_id_64: steam_id_64,
         reason: message,
         comment: comment,

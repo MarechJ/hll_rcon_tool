@@ -474,9 +474,9 @@ class ServerCtl:
         return self._request(f"vipdel {steam_id_64}", log_info=True)
 
     @_escape_params
-    def do_message_player(self, player_name=None, steam_id_64=None, message=""):
+    def do_message_player(self, player=None, steam_id_64=None, message=""):
         return self._request(
-            f'message "{steam_id_64 or player_name}" {message}',
+            f'message "{steam_id_64 or player}" {message}',
             log_info=True,
         )
 
