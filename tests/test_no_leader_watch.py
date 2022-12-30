@@ -1146,7 +1146,7 @@ def test_watcher(team_view):
         "rcon.squad_automod.automod.watch_state", wraps=fake_state
     ), mock.patch("rcon.squad_automod.automod.get_redis_client"):
         rcon = mock.MagicMock()
-        rcon.get_team_view_fast.return_value = team_view
+        rcon.get_team_view.return_value = team_view
         expected_warned_players = [
             APlayer(
                 steam_id_64="76561198055458575",
@@ -1447,7 +1447,7 @@ def test_watcher_no_kick(team_view):
         "rcon.squad_automod.automod.watch_state", wraps=fake_state
     ), mock.patch("rcon.squad_automod.automod.get_redis_client"):
         rcon = mock.MagicMock()
-        rcon.get_team_view_fast.return_value = team_view
+        rcon.get_team_view.return_value = team_view
         expected_warned_players = [
             APlayer(
                 steam_id_64="76561198055458575",
@@ -1624,7 +1624,7 @@ def test_watcher_resets(team_view):
         "rcon.squad_automod.automod.watch_state", wraps=fake_state
     ), mock.patch("rcon.squad_automod.automod.get_redis_client"):
         rcon = mock.MagicMock()
-        rcon.get_team_view_fast.return_value = team_view
+        rcon.get_team_view.return_value = team_view
         expected_players = [
             APlayer(
                 steam_id_64="76561198055458575",
