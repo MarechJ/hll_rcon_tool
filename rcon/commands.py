@@ -1,15 +1,10 @@
 import logging
-import re
 import socket
 import time
-from dataclasses import dataclass
 from functools import wraps
 from typing import List
 
 from rcon.connection import HLLConnection
-from rcon.settings import check_config
-from rcon.config import get_config
-from rcon.models import AdvancedConfigOptions
 
 logger = logging.getLogger(__name__)
 
@@ -84,11 +79,6 @@ class ServerCtl:
         self.conn = None
         # self._connect()
         self.auto_retry = auto_retry
-
-        # config/default_config.yml config.yml, etc.
-        config = get_config()
-        # logger.debug(f"{config=}")
-        self.advanced_settings = AdvancedConfigOptions(**config['ADVANCED_CRCON_SETTINGS'])
 
     def _connect(self):
         self.conn = HLLConnection()
@@ -188,12 +178,22 @@ class ServerCtl:
         # Max 30 tries
         for i in range(1000):
             if expected_len <= len(res) - 1 and raw[-1] in [0, 9, 10]:  # \0 \t or \n
-                logger.debug("List seems complete length is %s/%s last char is %s", len(res), expected_len, raw[-1])
+                logger.debug(
+                    "List seems complete length is %s/%s last char is %s",
+                    len(res),
+                    expected_len,
+                    raw[-1],
+                )
                 break
-            logger.debug("Reading again list length is %s/%s last char is %s", len(res), expected_len, raw[-1])
+            logger.debug(
+                "Reading again list length is %s/%s last char is %s",
+                len(res),
+                expected_len,
+                raw[-1],
+            )
             raw += self.conn.receive(unlock=False)
             res = raw.split(b"\t")
-            #logger.warning(f"{res}|")
+            # logger.warning(f"{res}|")
 
         self.conn.unlock()
 
@@ -490,7 +490,7 @@ class ServerCtl:
 
         """
         # Has no trailing "\n"
-        
+
         result = self._get("gamestate", can_fail=False)
         logger.info("Gamestate results:\n|%s|", result)
         return result.split("\n")
