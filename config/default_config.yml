@@ -23,6 +23,7 @@ ADVANCED_CRCON_SETTINGS:
   # ~4 you should not use the game view, squad automod, etc. as it will be very
   # delayed
   # The higher the number the longer it will take for the RCON backend to start
+  # This must be an integer 1 <= x <= 100
   thread_pool_size: 20
 
 # If you set this to true your public website for stats won't work anymore
