@@ -2,23 +2,24 @@ import inspect
 import logging
 import sys
 from datetime import datetime, timedelta
+from typing import Set
 
 import click
 
 import rcon.expiring_vips.service
-from rcon import auto_settings, broadcast, game_logs, routines, stats_loop
+from rcon import auto_settings, broadcast, game_logs, routines
 from rcon.cache_utils import RedisCached, get_redis_pool
-from rcon.extended_commands import Rcon
 from rcon.game_logs import LogLoop
 from rcon.models import install_unaccent
+from rcon.recorded_commands import RecordedRcon
 from rcon.scoreboard import live_stats_loop
+from rcon.server_stats import (
+    save_server_stats_for_last_hours,
+    save_server_stats_since_inception,
+)
 from rcon.settings import SERVER_INFO
 from rcon.squad_automod import automod
 from rcon.steam_utils import enrich_db_users
-from rcon.server_stats import (
-    save_server_stats_since_inception,
-    save_server_stats_for_last_hours,
-)
 from rcon.user_config import seed_default_config
 from rcon.utils import ApiKey
 
@@ -30,7 +31,7 @@ def cli():
     pass
 
 
-ctl = Rcon(SERVER_INFO)
+ctl = RecordedRcon(SERVER_INFO)
 
 
 @cli.command(name="live_stats_loop")
@@ -222,11 +223,17 @@ def process_games(start_day_offset, end_day_offset=0, force=False):
 
 
 PREFIXES_TO_EXPOSE = ["get_", "set_", "do_"]
-
-EXCLUDED = {"set_maprotation"}
+EXCLUDED: Set[str] = {"set_maprotation", "connection_pool"}
 
 # Dynamically register all the methods from ServerCtl
-for name, func in inspect.getmembers(ctl):
+# use dir instead of inspect.getmembers to avoid touching cached_property
+# members that would be initialized even if we want to skip them, like connection_pool
+for name in dir(ctl):
+    if name in EXCLUDED:
+        continue
+
+    func = getattr(ctl, name)
+
     if (
         not any(name.startswith(prefix) for prefix in PREFIXES_TO_EXPOSE)
         or name in EXCLUDED
