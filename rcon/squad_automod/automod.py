@@ -239,7 +239,7 @@ def should_kick_player(
 
 def get_punitions_to_apply(rcon, config: NoLeaderConfig) -> PunitionsToApply:
     logger.debug("Getting team info")
-    team_view = rcon.get_team_view_fast()
+    team_view = rcon.get_team_view()
     red = get_redis_client()
     punitions_to_apply = PunitionsToApply()
 
