@@ -202,3 +202,31 @@ class GetPlayersType(TypedDict):
 class EnrichedGetPlayersType(GetPlayersType):
     is_vip: bool
     profile: PlayerProfileType
+
+
+class StructuredLogLine(TypedDict):
+    version: int
+    timestamp_ms: int
+    relative_time_ms: int
+    raw: str
+    line_without_time: str
+    action: str
+    player: str
+    steam_id_64_1: str
+    player2: str
+    steam_id_64_2: str
+    weapon: str
+    message: str
+    sub_content: str
+
+
+class GameState(TypedDict):
+    """TypedDict for Rcon.get_gamestate"""
+
+    num_allied_players: int
+    num_axis_players: int
+    allied_score: int
+    axis_score: int
+    time_remaining: datetime.timedelta
+    current_map: str
+    next_map: str
