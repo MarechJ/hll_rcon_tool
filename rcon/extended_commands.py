@@ -1337,11 +1337,3 @@ class Rcon(ServerCtl):
             "players": list(players),
             "logs": res,
         }
-
-
-if __name__ == "__main__":
-    from rcon.settings import SERVER_INFO
-
-    ctl = Rcon(SERVER_INFO)
-    print("in main")
-    ctl.get_vip_ids()
