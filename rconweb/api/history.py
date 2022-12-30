@@ -56,12 +56,18 @@ def get_map_history(request):
 def get_player(request):
     data = _get_data(request)
     res = {}
+
+    try:
+        nb_sessions = int(data.get("nb_sessions", 10))
+    except ValueError:
+        nb_sessions = 10
+
     try:
         if s := data.get("steam_id_64"):
-            res = get_player_profile(s, nb_sessions=data.get("nb_sessions", 10))
+            res = get_player_profile(s, nb_sessions=nb_sessions)
         else:
             res = get_player_profile_by_id(
-                data["id"], nb_sessions=data.get("nb_sessions", 10)
+                data["id"], nb_sessions=nb_sessions
             )
         failed = False
     except:
