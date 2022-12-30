@@ -7,19 +7,19 @@ from typing import Set
 import click
 
 import rcon.expiring_vips.service
-from rcon import auto_settings, broadcast, game_logs, routines, stats_loop
+from rcon import auto_settings, broadcast, game_logs, routines
 from rcon.cache_utils import RedisCached, get_redis_pool
-from rcon.extended_commands import Rcon
 from rcon.game_logs import LogLoop
 from rcon.models import install_unaccent
+from rcon.recorded_commands import RecordedRcon
 from rcon.scoreboard import live_stats_loop
+from rcon.server_stats import (
+    save_server_stats_for_last_hours,
+    save_server_stats_since_inception,
+)
 from rcon.settings import SERVER_INFO
 from rcon.squad_automod import automod
 from rcon.steam_utils import enrich_db_users
-from rcon.server_stats import (
-    save_server_stats_since_inception,
-    save_server_stats_for_last_hours,
-)
 from rcon.user_config import seed_default_config
 from rcon.utils import ApiKey
 
@@ -31,7 +31,7 @@ def cli():
     pass
 
 
-ctl = Rcon(SERVER_INFO)
+ctl = RecordedRcon(SERVER_INFO)
 
 
 @cli.command(name="live_stats_loop")
