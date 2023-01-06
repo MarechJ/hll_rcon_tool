@@ -1,5 +1,6 @@
 import time
 from contextlib import contextmanager
+from unittest.mock import Mock
 
 import pytest
 from _pytest.fixtures import fixture
@@ -10,12 +11,14 @@ from rcon.automods.models import SeedingRulesConfig, PunitionsToApply, Disallowe
 from rcon.automods.seeding_rules import SeedingRulesAutomod
 
 state = {}
+redis_store = {}
 
 
 @fixture
 def team_view():
-    global state
+    global state, redis_store
     state = {}
+    redis_store = {}
     return {
         "allies": {
             "combat": 0,
@@ -155,8 +158,25 @@ def fake_state(team, squad_name):
         del state[f"{team}{squad_name}"]
 
 
+def fake_setex(k, _, v):
+    redis_store[k] = v
+
+
+
+def fake_get(k):
+    return redis_store.get(k)
+
+
+def fake_delete(ks: list[str]):
+    for k in ks:
+        del redis_store[k]
+
+
 def mod_with_config(c: SeedingRulesConfig) -> SeedingRulesAutomod:
-    mod = SeedingRulesAutomod(c, None)
+    mod = SeedingRulesAutomod(c, Mock())
+    mod.red.setex = fake_setex
+    mod.red.delete = fake_delete
+    mod.red.get = fake_get
     mod.watch_state = fake_state
     return mod
 

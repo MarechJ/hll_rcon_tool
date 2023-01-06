@@ -154,8 +154,8 @@ class SeedingRulesConfig:
         "Your grace period of {kick_grace_period}s has passed.\n"
         "You failed to comply with the previous warnings."
     )
-    disallowed_roles: DisallowedRolesConfig = field(default_factory=DisallowedRolesConfig())
-    disallowed_weapons: DisallowedWeaponConfig = field(default_factory=DisallowedWeaponConfig())
+    disallowed_roles: DisallowedRolesConfig = field(default_factory=DisallowedRolesConfig)
+    disallowed_weapons: DisallowedWeaponConfig = field(default_factory=DisallowedWeaponConfig)
 
 
 @dataclass

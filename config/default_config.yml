@@ -282,14 +282,29 @@ SEEDING_AUTO_MOD:
     #  {role}
     message: "{role} are not allowed when server is seeding"
 
+  # The disallowed weapons is a seeding rule that prevents players from using defined weapons to kill other players. Different to the other
+  # automods, this rule does not use the escalation path (message -> punish -> kick) as configured in the general seeding automod config.
+  # Instead, players using one of the mentioned weapons (and given the server player count are in the bounds as configured) will be
+  # punished directly. This automod will also continue to punish players if they continue using disallowed weapons, even if they were punished
+  # already. The automod will not escalate to the kick stage, either.
   disallowed_weapons:
+    # the player count of the server needed for this rule to be enforced. The number is inclusive, which means, if you use 5
+    # this rule will be enforced for players 5 to max_players. If there are only 4 players on the server, the rules will
+    # not be enforced.
     min_players: 5
+    # the player count of the server under which this rule should be enforced. The number is exclusive, which means, if you use 30
+    # this rule will be enforced for players 1 to 29, once the 30 player connected, the rule will not be enforced anymore.
     max_players: 30
+    # a map of weapons players should not use. The key of the map is the weapon class as used by the game (look in your recent
+    # game logs to find possible values), whereas the value of the map is a human friendly name of the weapon (as it will be passed
+    # to the `weapon` variable of the message parameter.
     weapons:
       '155MM HOWITZER [M114]': Artillery shells
       '150MM HOWITZER [sFH 18]': Artillery shells
       '122MM HOWITZER [M1938 (M-30)]': Artillery shells
       MK2_Grenade: Grenades
+    # The message used when the player is punished.
+    #  {weapon}
     message: "{weapon} are not allowed when server is seeding"
 
 # Set your custom text or transalation for each of the below keys. Logo urls and prefered stats and such
