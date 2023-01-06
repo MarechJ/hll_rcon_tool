@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 def get_punitions_to_apply(rcon, moderators) -> PunitionsToApply:
     logger.debug("Getting team info")
-    team_view = rcon.get_team_view_fast()
+    team_view = rcon.get_team_view()
     punitions_to_apply = PunitionsToApply()
 
     for team in ["allies", "axis"]:

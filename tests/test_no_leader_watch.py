@@ -1123,7 +1123,7 @@ def test_watcher(team_view):
             del state[f"{team}{squad_name}"]
 
     rcon = mock.MagicMock()
-    rcon.get_team_view_fast.return_value = team_view
+    rcon.get_team_view.return_value = team_view
     expected_warned_players = [
         PunishPlayer(
             steam_id_64="76561198055458575",
@@ -1441,7 +1441,7 @@ def test_watcher_no_kick(team_view):
             del state[f"{team}{squad_name}"]
 
     rcon = mock.MagicMock()
-    rcon.get_team_view_fast.return_value = team_view
+    rcon.get_team_view.return_value = team_view
     expected_warned_players = [
         PunishPlayer(
             steam_id_64="76561198055458575",
@@ -1634,7 +1634,7 @@ def test_watcher_resets(team_view):
             del state[f"{team}{squad_name}"]
 
     rcon = mock.MagicMock()
-    rcon.get_team_view_fast.return_value = team_view
+    rcon.get_team_view.return_value = team_view
     expected_players = [
         PunishPlayer(
             steam_id_64="76561198055458575",

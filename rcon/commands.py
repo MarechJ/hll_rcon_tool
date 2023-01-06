@@ -1,13 +1,10 @@
 import logging
-import re
 import socket
 import time
-from dataclasses import dataclass
 from functools import wraps
 from typing import List
 
 from rcon.connection import HLLConnection
-from rcon.settings import check_config
 
 logger = logging.getLogger(__name__)
 
@@ -77,6 +74,7 @@ class ServerCtl:
     """
 
     def __init__(self, config, auto_retry=1):
+        # .env fed config from rcon.SERVER_INFO
         self.config = config
         self.conn = None
         # self._connect()
@@ -180,12 +178,22 @@ class ServerCtl:
         # Max 30 tries
         for i in range(1000):
             if expected_len <= len(res) - 1 and raw[-1] in [0, 9, 10]:  # \0 \t or \n
-                logger.debug("List seems complete length is %s/%s last char is %s", len(res), expected_len, raw[-1])
+                logger.debug(
+                    "List seems complete length is %s/%s last char is %s",
+                    len(res),
+                    expected_len,
+                    raw[-1],
+                )
                 break
-            logger.debug("Reading again list length is %s/%s last char is %s", len(res), expected_len, raw[-1])
+            logger.debug(
+                "Reading again list length is %s/%s last char is %s",
+                len(res),
+                expected_len,
+                raw[-1],
+            )
             raw += self.conn.receive(unlock=False)
             res = raw.split(b"\t")
-            #logger.warning(f"{res}|")
+            # logger.warning(f"{res}|")
 
         self.conn.unlock()
 
@@ -466,9 +474,9 @@ class ServerCtl:
         return self._request(f"vipdel {steam_id_64}", log_info=True)
 
     @_escape_params
-    def do_message_player(self, player_name=None, steam_id_64=None, message=""):
+    def do_message_player(self, player=None, steam_id_64=None, message=""):
         return self._request(
-            f'message "{steam_id_64 or player_name}" {message}',
+            f'message "{steam_id_64 or player}" {message}',
             log_info=True,
         )
 
@@ -482,7 +490,7 @@ class ServerCtl:
 
         """
         # Has no trailing "\n"
-        
+
         result = self._get("gamestate", can_fail=False)
         logger.info("Gamestate results:\n|%s|", result)
         return result.split("\n")

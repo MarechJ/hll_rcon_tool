@@ -122,7 +122,7 @@ def get_players_have_bans(steamd_ids: List) -> Mapping[str, SteamBanResultType]:
     player_bans = get_players_ban(steamd_ids)
 
     result = dict.fromkeys(steamd_ids, {"steam_bans": None})
-    if player_bans is None:
+    if player_bans is None and steamd_ids:
         logger.warning("Unable to read bans for %s" % steamd_ids)
         return result
 
