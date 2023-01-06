@@ -282,6 +282,16 @@ SEEDING_AUTO_MOD:
     #  {role}
     message: "{role} are not allowed when server is seeding"
 
+  disallowed_weapons:
+    min_players: 5
+    max_players: 30
+    weapons:
+      '155MM HOWITZER [M114]': Artillery shells
+      '150MM HOWITZER [sFH 18]': Artillery shells
+      '122MM HOWITZER [M1938 (M-30)]': Artillery shells
+      MK2_Grenade: Grenades
+    message: "{weapon} are not allowed when server is seeding"
+
 # Set your custom text or transalation for each of the below keys. Logo urls and prefered stats and such
 # If you have more that 3 server copy the whole SERVER_1 section 
 SCOREBOT:

@@ -119,6 +119,14 @@ class DisallowedRolesConfig:
 
 
 @dataclass
+class DisallowedWeaponConfig:
+    min_players: int = 0
+    max_players: int = 0
+    weapons: Mapping[str, str] = field(default_factory=dict)
+    message: str = "{weapon} is not allowed when server is seeding"
+
+
+@dataclass
 class SeedingRulesConfig:
     enabled: bool = False
     discord_webhook_url: str = ""
@@ -147,6 +155,7 @@ class SeedingRulesConfig:
         "You failed to comply with the previous warnings."
     )
     disallowed_roles: DisallowedRolesConfig = field(default_factory=DisallowedRolesConfig())
+    disallowed_weapons: DisallowedWeaponConfig = field(default_factory=DisallowedWeaponConfig())
 
 
 @dataclass

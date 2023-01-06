@@ -11,6 +11,7 @@ from rcon.automods.models import SeedingRulesConfig, PunitionsToApply, PunishPla
     NoSeedingViolation, PunishStepState, ActionMethod
 from rcon.automods.num_or_inf import num_or_inf
 from rcon.cache_utils import get_redis_client
+from rcon.extended_commands import StructuredLogLine
 from rcon.game_logs import on_match_start
 
 SEEDING_RULES_RESET_SECS = 120
@@ -24,7 +25,7 @@ def disabled_rule_key(rule: str) -> str:
 @on_match_start
 def on_map_change(_, _1):
     keys = []
-    for rule in ["disallowed_roles"]:
+    for rule in ["disallowed_roles", "disallowed_weapons"]:
         keys.append(disabled_rule_key(rule))
     if len(keys) == 0:
         return
@@ -61,6 +62,40 @@ class SeedingRulesAutomod:
         else:
             self.red.setex(redis_key, SEEDING_RULES_RESET_SECS, pickle.dumps(watch_status))
 
+    def on_kill(self, log: StructuredLogLine) -> PunitionsToApply:
+        p: PunitionsToApply = PunitionsToApply()
+
+        if log['weapon'] in self.config.disallowed_weapons.weapons and not self._is_seeding_rule_disabled("disallowed_weapons"):
+            aplayer = PunishPlayer(
+                steam_id_64=log['steam_id_64_1'],
+                name=log['player'],
+                squad='',
+                team='',
+                role='',
+                lvl=0,
+                details=PunishDetails(
+                    author=AUTOMOD_USERNAME,
+                    dry_run=False,
+                    discord_audit_url=self.config.discord_webhook_url,
+                )
+            )
+            data = {
+                "player_name": aplayer.name,
+                "weapon": self.config.disallowed_weapons.weapons.get(log['weapon']),
+            }
+            message = self.config.disallowed_weapons.message
+            try:
+                message = message.format(**data)
+            except KeyError:
+                self.logger.warning(
+                    f"The automod message for disallowed weapons ({message}) contains an invalid key"
+                )
+            aplayer.details.message = message
+
+            p.punish.append(aplayer)
+
+        return p
+
     def get_message(self, watch_status: WatchStatus, aplayer: PunishPlayer, violation_msg: str, method: ActionMethod):
         data = {
             "violation": violation_msg,
@@ -95,8 +130,11 @@ class SeedingRulesAutomod:
             )
             return message
 
-    def _seeding_rule_disabled_for_round(self, rule: str):
-        self.red.setex(disabled_rule_key(rule), 3*60*60, "1")
+    def _disable_for_round(self, rule: str):
+        self.red.setex(disabled_rule_key(rule), 3 * 60 * 60, "1")
+
+    def _enable_for_round(self, rule: str):
+        self.red.delete(disabled_rule_key(rule))
 
     def _is_seeding_rule_disabled(self, rule: str) -> bool:
         return self.red.get(disabled_rule_key(rule)) == "1"
@@ -130,7 +168,13 @@ class SeedingRulesAutomod:
 
                 drc = self.config.disallowed_roles
                 if server_player_count >= drc.max_players:
-                    self._seeding_rule_disabled_for_round("disallowed_roles")
+                    self._disable_for_round("disallowed_roles")
+
+                dwc = self.config.disallowed_weapons
+                if dwc.max_players > server_player_count >= dwc.min_players:
+                    self._enable_for_round("disallowed_weapons")
+                if server_player_count >= dwc.max_players:
+                    self._disable_for_round("disallowed_weapons")
 
                 violations = []
                 if (

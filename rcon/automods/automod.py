@@ -6,6 +6,8 @@ from rcon.cache_utils import get_redis_client
 from rcon.commands import CommandFailedError, HLLServerError
 from rcon.config import get_config
 from rcon.discord import send_to_discord_audit
+from rcon.extended_commands import StructuredLogLine
+from rcon.game_logs import on_kill
 from rcon.recorded_commands import RecordedRcon
 from rcon.settings import SERVER_INFO
 from rcon.automods.models import (
@@ -73,25 +75,7 @@ def _do_punitions(
                       aplayer.details.author)
 
 
-def punish_squads(rcon: RecordedRcon):
-    red = get_redis_client()
-    try:
-        config = get_config()
-        no_leader_config = NoLeaderConfig(**config["NOLEADER_AUTO_MOD"])
-        seeding_config = SeedingRulesConfig(**config["SEEDING_AUTO_MOD"])
-    except Exception as e:
-        logger.exception("Invalid automod config, check your config/config.yml", e)
-        raise
-
-    enabled_moderators = list(filter(lambda m: m.enabled(), [
-        NoLeaderAutomod(no_leader_config, red),
-        SeedingRulesAutomod(seeding_config, red),
-    ]))
-    if len(enabled_moderators) == 0:
-        logger.debug("No automod is enabled")
-        return
-
-    punitions_to_apply = get_punitions_to_apply(rcon, enabled_moderators)
+def do_punitions(rcon: RecordedRcon, punitions_to_apply: PunitionsToApply):
     if punitions_to_apply:
         logger.info(
             "Automod will apply the following punitions %s",
@@ -107,9 +91,52 @@ def punish_squads(rcon: RecordedRcon):
     _do_punitions(rcon, ActionMethod.KICK, punitions_to_apply.kick, enabled_moderators)
 
 
+def enabled_moderators():
+    red = get_redis_client()
+    try:
+        config = get_config()
+        no_leader_config = NoLeaderConfig(**config["NOLEADER_AUTO_MOD"])
+        seeding_config = SeedingRulesConfig(**config["SEEDING_AUTO_MOD"])
+    except Exception as e:
+        logger.exception("Invalid automod config, check your config/config.yml", e)
+        raise
+
+    return list(filter(lambda m: m.enabled(), [
+        NoLeaderAutomod(no_leader_config, red),
+        SeedingRulesAutomod(seeding_config, red),
+    ]))
+
+
+def punish_squads(rcon: RecordedRcon):
+    mods = enabled_moderators()
+    if len(mods) == 0:
+        logger.debug("No automod is enabled")
+        return
+
+    punitions_to_apply = get_punitions_to_apply(rcon, mods)
+
+    do_punitions(rcon, punitions_to_apply)
+
+
 def audit(discord_webhook_url: str, msg: str, author: str):
     if discord_webhook_url is not None and discord_webhook_url != "":
         send_to_discord_audit(msg, by=author, webhookurl=discord_webhook_url, silent=False)
+
+
+@on_kill
+def on_kill(rcon: RecordedRcon, log: StructuredLogLine):
+    mods = enabled_moderators()
+    if len(mods) == 0:
+        logger.debug("No automod is enabled")
+        return
+
+    punitions_to_apply = PunitionsToApply()
+    for mod in mods:
+        on_kill_hook = getattr(mod, 'on_kill', None)
+        if callable(on_kill_hook):
+            punitions_to_apply.merge(mod.on_kill(log))
+
+    do_punitions(rcon, punitions_to_apply)
 
 
 def run():
