@@ -1,5 +1,6 @@
 import logging
 import time
+from threading import Timer
 from typing import List
 
 from rcon.cache_utils import get_redis_client
@@ -7,7 +8,8 @@ from rcon.commands import CommandFailedError, HLLServerError
 from rcon.config import get_config
 from rcon.discord import send_to_discord_audit
 from rcon.extended_commands import StructuredLogLine
-from rcon.game_logs import on_kill
+from rcon.game_logs import on_kill, on_connected
+from rcon.hooks import inject_player_ids
 from rcon.recorded_commands import RecordedRcon
 from rcon.settings import SERVER_INFO
 from rcon.automods.models import (
@@ -138,6 +140,43 @@ def on_kill(rcon: RecordedRcon, log: StructuredLogLine):
 
     do_punitions(rcon, punitions_to_apply)
 
+
+pendingTimers = {}
+
+
+@on_connected
+@inject_player_ids
+def on_connected(rcon: RecordedRcon, _, name: str, steam_id_64: str):
+    mods = enabled_moderators()
+    if len(mods) == 0:
+        logger.debug("No automod is enabled")
+        return
+
+    punitions_to_apply: PunitionsToApply = PunitionsToApply()
+    for mod in mods:
+        on_connected_hook = getattr(mod, 'on_connected', None)
+        if callable(on_connected_hook):
+            punitions_to_apply.merge(mod.on_connected(name, steam_id_64))
+
+    def notify_player():
+        try:
+            for p in punitions_to_apply.warning:
+                rcon.do_message_player(
+                    steam_id_64=p.steam_id_64,
+                    message=p.details.message,
+                    by=p.details.author,
+                    save_message=False,
+                )
+        except Exception as e:
+            logger.error("Could not message player " + name + "/" + steam_id_64, e)
+
+    if len(punitions_to_apply.warning) == 0:
+        return
+
+    # The player might not yet have finished connecting in order to send messages.
+    t = Timer(10, notify_player)
+    pendingTimers[steam_id_64] = t
+    t.start()
 
 def run():
     rcon = RecordedRcon(SERVER_INFO)

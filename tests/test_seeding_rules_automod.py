@@ -8,7 +8,7 @@ from _pytest.fixtures import fixture
 
 from rcon.automods.get_team_count import get_team_count
 from rcon.automods.models import SeedingRulesConfig, PunitionsToApply, DisallowedRolesConfig, PunishDetails, \
-    PunishPlayer, NoSeedingViolation, WatchStatus, DisallowedWeaponConfig
+    PunishPlayer, NoSeedingViolation, WatchStatus, DisallowedWeaponConfig, AnnounceSeedingActiveConfig
 from rcon.automods.seeding_rules import SeedingRulesAutomod
 from rcon.extended_commands import StructuredLogLine
 
@@ -181,9 +181,12 @@ def fake_setex(k, _, v):
     redis_store[k] = v
 
 
-
 def fake_get(k):
     return redis_store.get(k)
+
+
+def fake_exists(k):
+    return redis_store.get(k, None) is not None
 
 
 def fake_delete(ks: list[str]):
@@ -196,6 +199,7 @@ def mod_with_config(c: SeedingRulesConfig) -> SeedingRulesAutomod:
     mod.red.setex = fake_setex
     mod.red.delete = fake_delete
     mod.red.get = fake_get
+    mod.red.exists = fake_exists
     mod.watch_state = fake_state
     return mod
 
@@ -331,6 +335,45 @@ def test_does_not_punish_when_weapon_allowed(team_view):
 
     punitions = mod.on_kill(kill_event_log)
     assert 0 == len(punitions.punish)
+
+
+def test_announces_on_connect(team_view):
+    mod = mod_with_config(SeedingRulesConfig(
+        announce_seeding_active=AnnounceSeedingActiveConfig(
+            enabled=True,
+            message="",
+        ),
+        disallowed_weapons=DisallowedWeaponConfig(
+            weapons={"MK2_Grenade": "Grenade"},
+        ),
+        disallowed_roles=DisallowedRolesConfig(
+            roles={"tankcommander": "Tanks", "crewman": "Tanks"}
+        ),
+    ))
+
+    punitions = mod.on_connected("A_NAME", "A_STEAM_ID")
+    assert 1 == len(punitions.warning)
+
+
+def test_does_not_announces_when_all_disabled(team_view):
+    mod = mod_with_config(SeedingRulesConfig(
+        announce_seeding_active=AnnounceSeedingActiveConfig(
+            enabled=True,
+            message="",
+        ),
+        disallowed_weapons=DisallowedWeaponConfig(
+            weapons={"MK2_Grenade": "Grenade"},
+            max_players=get_team_count(team_view, "allies") + get_team_count(team_view, "axis") - 1,
+        ),
+        disallowed_roles=DisallowedRolesConfig(
+            roles={"tankcommander": "Tanks", "crewman": "Tanks"},
+            max_players=get_team_count(team_view, "allies") + get_team_count(team_view, "axis") - 1,
+        ),
+    ))
+    mod.punitions_to_apply(team_view, "able", "allies", team_view["allies"]["squads"]["able"])
+
+    punitions = mod.on_connected("A_NAME", "A_STEAM_ID")
+    assert 0 == len(punitions.warning)
 
 def test_non_existing_roles_raises():
     with pytest.raises(ValueError):

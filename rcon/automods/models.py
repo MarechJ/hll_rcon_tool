@@ -127,6 +127,12 @@ class DisallowedWeaponConfig:
 
 
 @dataclass
+class AnnounceSeedingActiveConfig:
+    enabled: bool = False
+    message: str = ""
+
+
+@dataclass
 class SeedingRulesConfig:
     enabled: bool = False
     discord_webhook_url: str = ""
@@ -154,6 +160,9 @@ class SeedingRulesConfig:
         "Your grace period of {kick_grace_period}s has passed.\n"
         "You failed to comply with the previous warnings."
     )
+
+    announce_seeding_active: AnnounceSeedingActiveConfig = field(default_factory=AnnounceSeedingActiveConfig)
+
     disallowed_roles: DisallowedRolesConfig = field(default_factory=DisallowedRolesConfig)
     disallowed_weapons: DisallowedWeaponConfig = field(default_factory=DisallowedWeaponConfig)
 

@@ -16,6 +16,7 @@ from rcon.game_logs import on_match_start
 
 SEEDING_RULES_RESET_SECS = 120
 AUTOMOD_USERNAME = "SeedingRulesAutomod"
+SEEDING_RULE_NAMES = ["disallowed_roles", "disallowed_weapons"]
 
 
 def disabled_rule_key(rule: str) -> str:
@@ -25,7 +26,7 @@ def disabled_rule_key(rule: str) -> str:
 @on_match_start
 def on_map_change(_, _1):
     keys = []
-    for rule in ["disallowed_roles", "disallowed_weapons"]:
+    for rule in SEEDING_RULE_NAMES:
         keys.append(disabled_rule_key(rule))
     if len(keys) == 0:
         return
@@ -61,6 +62,46 @@ class SeedingRulesAutomod:
             self.red.delete(redis_key)
         else:
             self.red.setex(redis_key, SEEDING_RULES_RESET_SECS, pickle.dumps(watch_status))
+
+    def on_connected(self, name: str, steam_id_64: str) -> PunitionsToApply:
+        p: PunitionsToApply = PunitionsToApply()
+
+        disallowed_roles = set(self.config.disallowed_roles.roles.values())
+        disallowed_weapons = set(self.config.disallowed_weapons.weapons.values())
+
+        if self.config.announce_seeding_active.enabled and (len(disallowed_weapons) != 0 or len(disallowed_weapons) != 0):
+            if all([self._is_seeding_rule_disabled(r) is True for r in SEEDING_RULE_NAMES]):
+                return p
+
+            data = {
+                "disallowed_roles": ", ".join(disallowed_roles),
+                "disallowed_roles_max_players": self.config.disallowed_roles.max_players,
+                "disallowed_weapons": ", ".join(disallowed_weapons),
+                "disallowed_weapons_max_players": self.config.disallowed_weapons.max_players,
+            }
+            message = self.config.announce_seeding_active.message
+            try:
+                message = message.format(**data)
+            except KeyError:
+                self.logger.warning(
+                    f"The automod message for disallowed weapons ({message}) contains an invalid key")
+
+            p.warning.append(PunishPlayer(
+                steam_id_64=steam_id_64,
+                name=name,
+                squad='',
+                team='',
+                role='',
+                lvl=0,
+                details=PunishDetails(
+                    author=AUTOMOD_USERNAME,
+                    dry_run=False,
+                    discord_audit_url=self.config.discord_webhook_url,
+                    message=message
+                )
+            ))
+
+        return p
 
     def on_kill(self, log: StructuredLogLine) -> PunitionsToApply:
         p: PunitionsToApply = PunitionsToApply()
@@ -137,7 +178,14 @@ class SeedingRulesAutomod:
         self.red.delete(disabled_rule_key(rule))
 
     def _is_seeding_rule_disabled(self, rule: str) -> bool:
-        return self.red.get(disabled_rule_key(rule)) == "1"
+        k = disabled_rule_key(rule)
+        if not self.red.exists(k):
+            return False
+
+        v = self.red.get(disabled_rule_key(rule))
+        if isinstance(v, bytes):
+            v = v.decode()
+        return v == "1"
 
     def punitions_to_apply(self, team_view, squad_name: str, team: str, squad: dict) -> PunitionsToApply:
         punitions_to_apply = PunitionsToApply()

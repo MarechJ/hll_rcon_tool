@@ -278,6 +278,14 @@ SEEDING_AUTO_MOD:
   #  {player_name}, {squad_name} and {kick_grace_period}
   kick_message: "You violated seeding rules on this server.\nYour grace period of {kick_grace_period}s has passed.\nYou failed to comply with the previous warnings."
 
+  # Announce that the server is currently seeding when at least one seeding rule is enabled. When the player count exceeds
+  # the max_player settings of all seeding rules, the announcement is disabled automatically until the next round.
+  # This message occurs only when a player connects to a server. If the player count drops beneath the max_player setting of one
+  # seeding rule and a new map starts, all connected players will NOT get an announcement.
+  announce_seeding_active:
+    enabled: false
+    message: "We are trying to populate the server! That means special rules apply.\n\n- {disallowed_roles} are not allowed (until {disallowed_roles_max_players} players are online)\n- {disallowed_weapons} are not allowed (until {disallowed_weapons_max_players} players are online)\n\nThanks for understanding and helping us seed!"
+
   # The disallowed roles is a seeding rule that ultimately prevents players from taking a role that should generally not
   # be used when a server has a playercount below a certain threshold (seeding).
   disallowed_roles:
