@@ -69,7 +69,7 @@ LOGGING = {
             "level": os.getenv("COMMANDS_LOGLEVEL", os.getenv("LOGGING_LEVEL", "INFO"))
         },
         # TODO fix that
-        "rcon.squad_automod.automod": {
+        "rcon.automods.automod": {
             "handlers": ["console", "file"],
             "level": os.getenv("LOGGING_LEVEL", "DEBUG"),
             "propagate": False,

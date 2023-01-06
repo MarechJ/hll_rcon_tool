@@ -18,7 +18,7 @@ from rcon.server_stats import (
     save_server_stats_since_inception,
 )
 from rcon.settings import SERVER_INFO
-from rcon.squad_automod import automod
+from rcon.automods import automod
 from rcon.steam_utils import enrich_db_users
 from rcon.user_config import seed_default_config
 from rcon.utils import ApiKey
@@ -98,8 +98,8 @@ def run_expiring_vips():
     rcon.expiring_vips.service.run()
 
 
-@cli.command(name="noleaders")
-def run_squad_automod():
+@cli.command(name="automod")
+def run_automod():
     automod.run()
 
 
