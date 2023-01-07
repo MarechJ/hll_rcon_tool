@@ -119,6 +119,7 @@ def punish_squads(rcon: RecordedRcon):
     punitions_to_apply = get_punitions_to_apply(rcon, mods)
 
     do_punitions(rcon, punitions_to_apply)
+    global first_run_done
     first_run_done = True
 
 
