@@ -10,6 +10,7 @@ from steam.webapi import WebAPI
 
 from rcon.cache_utils import ttl_cache
 from rcon.models import PlayerSteamID, SteamInfo
+from rcon.types import SteamBanResultType
 
 logger = logging.getLogger(__name__)
 
@@ -117,11 +118,11 @@ def get_players_ban(steamd_ids: List):
 
 
 @ttl_cache(60 * 60 * 12, cache_falsy=False, is_method=False)
-def get_players_have_bans(steamd_ids: List) -> Mapping:
+def get_players_have_bans(steamd_ids: List) -> Mapping[str, SteamBanResultType]:
     player_bans = get_players_ban(steamd_ids)
 
     result = dict.fromkeys(steamd_ids, {"steam_bans": None})
-    if player_bans is None:
+    if player_bans is None and steamd_ids:
         logger.warning("Unable to read bans for %s" % steamd_ids)
         return result
 
@@ -135,7 +136,7 @@ def get_players_have_bans(steamd_ids: List) -> Mapping:
                 "NumberOfGameBans",
             ]
         )
-        result[bans["SteamId"]]["steam_bans"] = bans
+        result[bans["SteamId"]] = {"steam_bans": bans}
         del bans["SteamId"]
 
     return result

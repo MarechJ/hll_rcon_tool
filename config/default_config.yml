@@ -11,6 +11,21 @@
 ######################################################################################
 ######################################################################################
 
+# Advanced settings, you should only touch these if you really know what you're doing
+ADVANCED_CRCON_SETTINGS:
+  # The number of concurrent connections to the game server CRCON will open for each
+  # worker you've set in your .env (NB_API_WORKERS)
+  # This affects things like the game view that uses multiple connections to pull
+  # information faster so it's less likely to be out of date
+  # Unless you're having issues that would be fixed by a reduced pool size
+  # (for instance connections being refused/timed out by your GSP) you should
+  # leave this at the default, 10-20 is a good range but if you reduce it below
+  # ~4 you should not use the game view, squad automod, etc. as it will be very
+  # delayed
+  # The higher the number the longer it will take for the RCON backend to start
+  # This must be an integer 1 <= x <= 100
+  thread_pool_size: 20
+
 # If you set this to true your public website for stats won't work anymore
 # This will request a login for all the stats endpoints
 # To lock set to: true
@@ -209,6 +224,111 @@ NOLEADER_AUTO_MOD:
   # If the level of the player is below this number he/she will be immune to punishes / kicks
   immuned_level_up_to: 15
 
+
+SEEDING_AUTO_MOD:
+  # This auto-moderator has 3 steps, 1. warning via direct message (Y times), 3. punish (Z times) 4. kick
+  # Note that the state cycle for a given squad only resets once the rule-violation is fixed. So for example if you
+  # disabled the kick and have 3 punishes configured, once the 3 punishes are
+  # through that's it, nothing will happen anymore for that player if they still break seeding rules.
+  #
+  # Set to true to enable the auto moderation of seeding rules
+  enabled: false
+
+  # Discord Webhook URL where audit logs should be sent. If not specified, the environment variable DISCORD_WEBHOOK_AUDIT_LOG
+  # will be used, instead.
+  discord_webhook_url: ''
+
+  # Step number 1
+  # Send a direct warning message to the players that violate seeding rules
+  # set to 0 to disable (this means it will move to punish directly), -1 for infinite warnings (will never go to punishes)
+  # set to 1 or Y to warn squad Y times before we move on to the punish step
+  number_of_warning: 2
+  # This is the text that will be displayed to warn players.
+  # The following variables are available to fill into the text
+  #  {player_name}, {received_warnings}, {max_warnings} and {next_check_seconds}, {violation}
+  warning_message: "Warning, {player_name}! You violate seeding rules on this server: {violation}\nYou will be punished after {max_warnings} warnings (you already received {received_warnings}), then kicked.\nNext check will happen automatically in {next_check_seconds}s."
+  # This is the number of seconds this auto-mod will wait until moving to
+  # the next warning or to the punish stage if the number_of_warning's is reached
+  warning_interval_seconds: 60
+
+  # Step number 2
+  # If the player still violates a seeding rule after
+  # the N warnings and the last warning_interval_seconds has elapsed, automod starts punishing
+  # Set to 0 to disable to punish entirely. I would advise setting warnings to infinity (-1) if you do that
+  # Set to -1 for infinite punish (will never go to kicks)
+  # Set to 1 or Z to apply Z punishes before we move to the next step (the kicks)
+  number_of_punish: 2
+  # This is the number of seconds to wait between punishes
+  # I wouldn't recommend setting a high value here (unless you chose infinite punishes) as once the player has died he has the opportunity to
+  # stop violating the seeding rules, so no excuse. Also it's even more frustrating to respawn run 300m and die again ;)
+  punish_interval_seconds: 60
+  # This is the message that will be used in the punish
+  # The following variables are available to fill into the text
+  #  {player_name}, {received_punishes}, {max_punishes} and {next_check_seconds}
+  punish_message: "You violated seeding rules on this server.\nYou're being punished by a bot ({received_punishes}/{max_punishes}).\nNext check in {next_check_seconds} seconds"
+
+  # Step number 4
+  # Set the below value to false if you don't want to kick players after they reached the max amount of punishes
+  # note that if you disable punishes it will never go to that step. no matter if it's set to true
+  kick_after_max_punish: true
+  # After the Step 2 has reached it's max punishes, this is the amount of time in seconds the auto-mod will wait before kicking
+  kick_grace_period_seconds: 120
+  # This is the message that will be used in the kick
+  # The following variables are available to fill into the text
+  #  {player_name}, {squad_name} and {kick_grace_period}
+  kick_message: "You violated seeding rules on this server.\nYour grace period of {kick_grace_period}s has passed.\nYou failed to comply with the previous warnings."
+
+  # Announce that the server is currently seeding when at least one seeding rule is enabled. When the player count exceeds
+  # the max_player settings of all seeding rules, the announcement is disabled automatically until the next round.
+  # This message occurs only when a player connects to a server. If the player count drops beneath the max_player setting of one
+  # seeding rule and a new map starts, all connected players will NOT get an announcement.
+  announce_seeding_active:
+    enabled: false
+    message: "We are trying to populate the server! That means special rules apply.\n\n- {disallowed_roles} are not allowed (until {disallowed_roles_max_players} players are online)\n- {disallowed_weapons} are not allowed (until {disallowed_weapons_max_players} players are online)\n\nThanks for understanding and helping us seed!"
+
+  # The disallowed roles is a seeding rule that ultimately prevents players from taking a role that should generally not
+  # be used when a server has a playercount below a certain threshold (seeding).
+  disallowed_roles:
+    # the player count of the server needed for this rule to be enforced. The number is inclusive, which means, if you use 5
+    # this rule will be enforced for players 5 to max_players. If there are only 4 players on the server, the rules will
+    # not be enforced.
+    min_players: 5
+    # the player count of the server under which this rule should be enforced. The number is exclusive, which means, if you use 30
+    # this rule will be enforced for players 1 to 29, once the 30 player connected, the rule will not be enforced anymore.
+    max_players: 30
+    # a list of roles that should not be taken by players.
+    # Available roles are: 'officer', 'antitank', 'automaticrifleman', 'assault', 'heavymachinegunner', 'support', 'sniper', 'spotter', 'rifleman', 'crewman', 'tankcommander', 'engineer', 'medic'
+    roles:
+      tankcommander: Tanks
+      crewman: Tanks
+    # Violation message used as a description of the seeding violation when player is messaged, punished and kicked.
+    #  {role}
+    message: "{role} are not allowed when server is seeding"
+
+  # The disallowed weapons is a seeding rule that prevents players from using defined weapons to kill other players. Different to the other
+  # automods, this rule does not use the escalation path (message -> punish -> kick) as configured in the general seeding automod config.
+  # Instead, players using one of the mentioned weapons (and given the server player count are in the bounds as configured) will be
+  # punished directly. This automod will also continue to punish players if they continue using disallowed weapons, even if they were punished
+  # already. The automod will not escalate to the kick stage, either.
+  disallowed_weapons:
+    # the player count of the server needed for this rule to be enforced. The number is inclusive, which means, if you use 5
+    # this rule will be enforced for players 5 to max_players. If there are only 4 players on the server, the rules will
+    # not be enforced.
+    min_players: 5
+    # the player count of the server under which this rule should be enforced. The number is exclusive, which means, if you use 30
+    # this rule will be enforced for players 1 to 29, once the 30 player connected, the rule will not be enforced anymore.
+    max_players: 30
+    # a map of weapons players should not use. The key of the map is the weapon class as used by the game (look in your recent
+    # game logs to find possible values), whereas the value of the map is a human friendly name of the weapon (as it will be passed
+    # to the `weapon` variable of the message parameter.
+    weapons:
+      '155MM HOWITZER [M114]': Artillery shells
+      '150MM HOWITZER [sFH 18]': Artillery shells
+      '122MM HOWITZER [M1938 (M-30)]': Artillery shells
+      MK2_Grenade: Grenades
+    # The message used when the player is punished.
+    #  {weapon}
+    message: "{weapon} are not allowed when server is seeding"
 
 # Set your custom text or transalation for each of the below keys. Logo urls and prefered stats and such
 # If you have more that 3 server copy the whole SERVER_1 section 

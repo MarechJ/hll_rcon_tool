@@ -1,12 +1,11 @@
-from curses import echo
-from datetime import datetime
 import logging
-from operator import index
 import os
 import re
 from contextlib import contextmanager
+from curses import echo
 from datetime import datetime
-from typing import List, Optional
+from operator import index
+from typing import List, Optional, TypedDict
 
 import pydantic
 from sqlalchemy import (
@@ -22,8 +21,29 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship, sessionmaker
+from sqlalchemy.orm.session import object_session
 from sqlalchemy.schema import UniqueConstraint
+
+from rcon.types import (
+    AuditLogType,
+    BlackListType,
+    DBLogLineType,
+    MapsType,
+    PlayerActionType,
+    PlayerAtCountType,
+    PlayerCommentType,
+    PlayerFlagType,
+    PlayerNameType,
+    PlayerOptinsType,
+    PlayerProfileType,
+    PlayerSessionType,
+    PlayerStatsType,
+    ServerCountType,
+    UserConfigType,
+    WatchListType,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -78,13 +98,31 @@ class PlayerSteamID(Base):
     steaminfo = relationship("SteamInfo", backref="steamid", uselist=False)
     comments = relationship("PlayerComment", back_populates="player")
     stats = relationship("PlayerStats", backref="steamid", uselist=False)
-    vip = relationship(
+
+    vips = relationship(
         "PlayerVIP",
         back_populates="steamid",
-        uselist=False,
+        uselist=True,
         cascade="all, delete-orphan",
+        lazy="dynamic",
     )
     optins = relationship("PlayerOptins", backref="steamid", uselist=True)
+
+    @property
+    def server_number(self):
+        return int(os.getenv("SERVER_NUMBER"))
+
+    @hybrid_property
+    def vip(self):
+        return (
+            object_session(self)
+            .query(PlayerVIP)
+            .filter(
+                PlayerVIP.playersteamid_id == self.id,
+                PlayerVIP.server_number == self.server_number,
+            )
+            .one_or_none()
+        )
 
     def get_penalty_count(self):
         penalities_type = {"KICK", "PUNISH", "TEMPBAN", "PERMABAN"}
@@ -112,7 +150,7 @@ class PlayerSteamID(Base):
             return int((datetime.now() - start).total_seconds())
         return 0
 
-    def to_dict(self, limit_sessions=5):
+    def to_dict(self, limit_sessions=5) -> PlayerProfileType:
         return dict(
             id=self.id,
             steam_id_64=self.steam_id_64,
@@ -170,7 +208,7 @@ class WatchList(Base):
     reason = Column(String, default="")
     comment = Column(String, default="")
 
-    def to_dict(self):
+    def to_dict(self) -> WatchListType:
         return dict(
             id=self.id,
             steam_id_64=self.steamid.steam_id_64,
@@ -187,70 +225,56 @@ class UserConfig(Base):
     key = Column(String, unique=True, index=True)
     value = Column(JSONB)
 
-    def to_dict(self):
+    def to_dict(self) -> UserConfigType:
         return {self.key: self.value}
 
 
 class PlayerFlag(Base):
     __tablename__ = "player_flags"
-    __table_args__ = (
-        UniqueConstraint("playersteamid_id", "flag", name="unique_flag_steamid"),
-    )
+    __table_args__ = (UniqueConstraint("playersteamid_id", "flag", name="unique_flag_steamid"),)
 
     id = Column(Integer, primary_key=True)
-    playersteamid_id = Column(
-        Integer, ForeignKey("steam_id_64.id"), nullable=False, index=True
-    )
+    playersteamid_id = Column(Integer, ForeignKey("steam_id_64.id"), nullable=False, index=True)
     flag = Column(String, nullable=False, index=True)
     comment = Column(String, nullable=True)
     modified = Column(DateTime, default=datetime.utcnow)
 
-    def to_dict(self):
-        return dict(
-            id=self.id, flag=self.flag, comment=self.comment, modified=self.modified
-        )
+    def to_dict(self) -> PlayerFlagType:
+        return dict(id=self.id, flag=self.flag, comment=self.comment, modified=self.modified)
 
 
 class PlayerOptins(Base):
     __tablename__ = "player_optins"
     __table_args__ = (
-        UniqueConstraint(
-            "playersteamid_id", "optin_name", name="unique_optins_steamid"
-        ),
+        UniqueConstraint("playersteamid_id", "optin_name", name="unique_optins_steamid"),
     )
 
     id = Column(Integer, primary_key=True)
-    playersteamid_id = Column(
-        Integer, ForeignKey("steam_id_64.id"), nullable=False, index=True
-    )
+    playersteamid_id = Column(Integer, ForeignKey("steam_id_64.id"), nullable=False, index=True)
     optin_name = Column(String, nullable=False, index=True)
     optin_value = Column(String, nullable=True)
     modified = Column(DateTime, default=datetime.utcnow)
 
-    def to_dict(self):
+    def to_dict(self) -> PlayerOptinsType:
         return dict(
             id=self.id,
-            optin_name=self.flag,
-            optin_value=self.comment,
+            optin_name=self.optin_name,
+            optin_value=self.optin_value,
             modified=self.modified,
         )
 
 
 class PlayerName(Base):
     __tablename__ = "player_names"
-    __table_args__ = (
-        UniqueConstraint("playersteamid_id", "name", name="unique_name_steamid"),
-    )
+    __table_args__ = (UniqueConstraint("playersteamid_id", "name", name="unique_name_steamid"),)
 
     id = Column(Integer, primary_key=True)
-    playersteamid_id = Column(
-        Integer, ForeignKey("steam_id_64.id"), nullable=False, index=True
-    )
+    playersteamid_id = Column(Integer, ForeignKey("steam_id_64.id"), nullable=False, index=True)
     name = Column(String, nullable=False)
     created = Column(DateTime, default=datetime.utcnow)
     last_seen = Column(DateTime, default=datetime.utcnow)
 
-    def to_dict(self):
+    def to_dict(self) -> PlayerNameType:
         return dict(
             id=self.id,
             name=self.name,
@@ -264,16 +288,14 @@ class PlayerSession(Base):
     __tablename__ = "player_sessions"
 
     id = Column(Integer, primary_key=True)
-    playersteamid_id = Column(
-        Integer, ForeignKey("steam_id_64.id"), nullable=False, index=True
-    )
+    playersteamid_id = Column(Integer, ForeignKey("steam_id_64.id"), nullable=False, index=True)
     start = Column(DateTime)
     end = Column(DateTime)
     created = Column(DateTime, default=datetime.utcnow)
     server_number = Column(Integer)
     server_name = Column(String)
 
-    def to_dict(self):
+    def to_dict(self) -> PlayerSessionType:
         return dict(
             id=self.id,
             steam_id_64=self.steamid.steam_id_64,
@@ -294,7 +316,7 @@ class BlacklistedPlayer(Base):
     reason = Column(String)
     by = Column(String)
 
-    def to_dict(self):
+    def to_dict(self) -> BlackListType:
         return dict(
             steam_id_64=self.steamid.steam_id_64,
             is_blacklisted=self.is_blacklisted,
@@ -318,10 +340,8 @@ class PlayersAction(Base):
     by = Column(String)
     time = Column(DateTime, default=datetime.utcnow)
 
-    def to_dict(self):
-        return dict(
-            action_type=self.action_type, reason=self.reason, by=self.by, time=self.time
-        )
+    def to_dict(self) -> PlayerActionType:
+        return dict(action_type=self.action_type, reason=self.reason, by=self.by, time=self.time)
 
 
 class LogLine(Base):
@@ -366,7 +386,7 @@ class LogLine(Base):
 
         return None
 
-    def to_dict(self):
+    def to_dict(self) -> DBLogLineType:
         return dict(
             id=self.id,
             version=self.version,
@@ -408,9 +428,7 @@ class LogLine(Base):
 class Maps(Base):
     __tablename__ = "map_history"
     __table_args__ = (
-        UniqueConstraint(
-            "start", "end", "server_number", "map_name", name="unique_map"
-        ),
+        UniqueConstraint("start", "end", "server_number", "map_name", name="unique_map"),
     )
 
     id = Column(Integer, primary_key=True)
@@ -423,7 +441,7 @@ class Maps(Base):
 
     player_stats = relationship("PlayerStats", backref="map", uselist=True)
 
-    def to_dict(self, with_stats=False):
+    def to_dict(self, with_stats=False) -> MapsType:
         return dict(
             id=self.id,
             creation_time=self.creation_time,
@@ -439,9 +457,7 @@ class Maps(Base):
 
 class PlayerStats(Base):
     __tablename__ = "player_stats"
-    __table_args__ = (
-        UniqueConstraint("playersteamid_id", "map_id", name="unique_map_player"),
-    )
+    __table_args__ = (UniqueConstraint("playersteamid_id", "map_id", name="unique_map_player"),)
 
     id = Column(Integer, primary_key=True)
     playersteamid_id = Column(
@@ -478,14 +494,12 @@ class PlayerStats(Base):
     death_by = Column(JSONB)
     weapons = Column(JSONB)
 
-    def to_dict(self):
+    def to_dict(self) -> PlayerStatsType:
         return dict(
             id=self.id,
             player_id=self.playersteamid_id,
             player=self.name,
-            steaminfo=self.steamid.steaminfo.to_dict()
-            if self.steamid.steaminfo
-            else None,
+            steaminfo=self.steamid.steaminfo.to_dict() if self.steamid.steaminfo else None,
             map_id=self.map_id,
             kills=self.kills,
             kills_streak=self.kills_streak,
@@ -525,7 +539,7 @@ class PlayerComment(Base):
 
     player = relationship("PlayerSteamID", back_populates="comments")
 
-    def to_dict(self):
+    def to_dict(self) -> PlayerCommentType:
         return dict(
             id=self.id,
             creation_time=self.creation_time,
@@ -555,7 +569,7 @@ class ServerCount(Base):
     players = relationship("PlayerAtCount", back_populates="data_point")
     map = relationship("Maps", lazy="joined")
 
-    def to_dict(self, players_as_tuple=False, with_player_list=True):
+    def to_dict(self, players_as_tuple=False, with_player_list=True) -> ServerCountType:
         players = []
 
         if with_player_list and self.players:
@@ -579,9 +593,7 @@ class ServerCount(Base):
 class PlayerAtCount(Base):
     __tablename__ = "player_at_count"
     __table_args__ = (
-        UniqueConstraint(
-            "playersteamid_id", "servercount_id", name="unique_player_at_count"
-        ),
+        UniqueConstraint("playersteamid_id", "servercount_id", name="unique_player_at_count"),
     )
     id = Column(Integer, primary_key=True)
     playersteamid_id = Column(
@@ -600,7 +612,7 @@ class PlayerAtCount(Base):
     data_point = relationship("ServerCount", back_populates="players")
     steamid = relationship("PlayerSteamID", lazy="joined")
 
-    def to_dict(self):
+    def to_dict(self) -> PlayerAtCountType:
         try:
             name = self.steamid.names[0].name
         except:
@@ -611,9 +623,14 @@ class PlayerAtCount(Base):
 
 class PlayerVIP(Base):
     __tablename__: str = "player_vip"
+    __table_args__ = (
+        UniqueConstraint("playersteamid_id", "server_number", name="unique_player_server_vip"),
+    )
 
     id = Column(Integer, primary_key=True)
     expiration = Column(TIMESTAMP(timezone=True), nullable=False)
+    # Not making this unique (even though it should be) to avoid breaking existing CRCONs
+    server_number = Column(Integer)
 
     playersteamid_id = Column(
         Integer,
@@ -622,7 +639,29 @@ class PlayerVIP(Base):
         index=True,
     )
 
-    steamid = relationship("PlayerSteamID", back_populates="vip")
+    steamid = relationship("PlayerSteamID", back_populates="vips")
+
+
+class AuditLog(Base):
+    __tablename__: str = "audit_log"
+
+    id = Column(Integer, primary_key=True)
+    username = Column(String, nullable=False, index=True)
+    creation_time = Column(TIMESTAMP(timezone=True), default=datetime.utcnow)
+    # Not making this unique (even though it should be) to avoid breaking existing CRCONs
+    command = Column(String, nullable=False, index=True)
+    command_arguments = Column(String)
+    command_result = Column(String)
+
+    def to_dict(self) -> AuditLogType:
+        return dict(
+            id=self.id,
+            username=self.username,
+            creation_time=self.creation_time,
+            command=self.command,
+            command_arguments=self.command_arguments,
+            command_result=self.command_result,
+        )
 
 
 def init_db(force=False):
@@ -678,3 +717,9 @@ class LogLineWebHookField(pydantic.BaseModel):
                 raise ValueError(f"Invalid Discord role {role_or_user}")
 
         return values
+
+
+class AdvancedConfigOptions(pydantic.BaseModel):
+    """ADVANCED_CRCON_SETTINGS in config.yml"""
+
+    thread_pool_size: pydantic.conint(ge=1, le=100)

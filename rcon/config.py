@@ -21,7 +21,7 @@ def get_config():
         user_config_path = Path(root) / Path("config.yml")
     user_config = {}
     try:
-        with default_config_path.open() as f:
+        with default_config_path.open(encoding='utf8') as f:
             config = yaml.safe_load(stream=f)
     except FileNotFoundError:
         logger.error("Unable to open default config at %s", str(default_config_path))

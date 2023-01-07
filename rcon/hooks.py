@@ -7,10 +7,10 @@ from functools import partial, wraps
 from threading import Timer
 from typing import DefaultDict, Dict, List, Optional, Sequence, Union
 
-import discord
 from discord_webhook import DiscordEmbed
-from rcon.cache_utils import invalidates
 
+import discord
+from rcon.cache_utils import invalidates
 from rcon.commands import CommandFailedError, HLLServerError
 from rcon.config import get_config
 from rcon.discord import (
@@ -29,7 +29,6 @@ from rcon.game_logs import (
     on_match_end,
     on_match_start,
 )
-from rcon.vote_map import VoteMap
 from rcon.models import LogLineWebHookField, enter_session
 from rcon.player_history import (
     _get_set_player,
@@ -42,7 +41,8 @@ from rcon.player_history import (
 from rcon.recorded_commands import RecordedRcon
 from rcon.steam_utils import get_player_bans, get_steam_profile, update_db_player_info
 from rcon.user_config import CameraConfig, RealVipConfig, VoteMapConfig
-from rcon.utils import LOG_MAP_NAMES_TO_MAP, MapsHistory
+from rcon.utils import LOG_MAP_NAMES_TO_MAP, MapsHistory, get_server_number
+from rcon.vote_map import VoteMap
 from rcon.workers import record_stats_worker, temporary_broadcast, temporary_welcome
 
 logger = logging.getLogger(__name__)
@@ -50,18 +50,16 @@ logger = logging.getLogger(__name__)
 
 @on_chat
 def count_vote(rcon: RecordedRcon, struct_log: StructuredLogLine):
-    VoteMap().handle_vote_command(rcon=rcon, struct_log=struct_log)
-    if match := re.match(r"\d", struct_log["sub_content"].strip()):
+    enabled = VoteMap().handle_vote_command(rcon=rcon, struct_log=struct_log)
+    if enabled and (match := re.match(r"\d\s*$", struct_log["sub_content"].strip())):
         rcon.do_message_player(
             steam_id_64=struct_log["steam_id_64_1"],
-            message=f"INVALID VOTE\n\nUse: !votemap {match.group()}"
+            message=f"INVALID VOTE\n\nUse: !votemap {match.group()}",
         )
 
 
 def initialise_vote_map(rcon: RecordedRcon, struct_log):
-    config = VoteMapConfig()
-
-    logger.info("New match started initilising vote map. %s", struct_log)
+    logger.info("New match started initializing vote map. %s", struct_log)
     try:
         vote_map = VoteMap()
         vote_map.clear_votes()
@@ -70,6 +68,7 @@ def initialise_vote_map(rcon: RecordedRcon, struct_log):
         vote_map.apply_results()
     except:
         logger.exception("Something went wrong in vote map init")
+
 
 @on_match_end
 def remind_vote_map(rcon: RecordedRcon, struct_log):
@@ -85,7 +84,7 @@ def handle_new_match_start(rcon: RecordedRcon, struct_log):
         logger.info("New match started recording map %s", struct_log)
         with invalidates(Rcon.get_map):
             try:
-                current_map = rcon.get_map()
+                current_map = rcon.get_map().replace('_RESTART', '')
             except (CommandFailedError, HLLServerError):
                 current_map = "bla_"
                 logger.error("Unable to get current map")
@@ -296,9 +295,8 @@ def inject_player_ids(func):
 
 
 @on_connected
-def handle_on_connect(rcon, struct_log):
-    steam_id_64 = rcon.get_player_info.get_cached_value_for(struct_log["player"])
-
+@inject_player_ids
+def handle_on_connect(rcon, struct_log, name, steam_id_64):
     try:
         if type(rcon) == RecordedRcon:
             rcon.invalidate_player_list_cache()
@@ -308,19 +306,6 @@ def handle_on_connect(rcon, struct_log):
         rcon.get_player_info.clear_for(player=struct_log["player"])
     except Exception:
         logger.exception("Unable to clear cache for %s", steam_id_64)
-    try:
-        info = rcon.get_player_info(struct_log["player"], can_fail=True)
-        steam_id_64 = info.get("steam_id_64")
-    except (CommandFailedError, KeyError):
-        if not steam_id_64:
-            logger.exception("Unable to get player steam ID for %s", struct_log)
-            raise
-        else:
-            logger.error(
-                "Unable to get player steam ID for %s, falling back to cached value %s",
-                struct_log,
-                steam_id_64,
-            )
 
     timestamp = int(struct_log["timestamp_ms"]) / 1000
     if not steam_id_64:
@@ -389,6 +374,11 @@ def notify_false_positives(rcon: RecordedRcon, _, name: str, steam_id_64: str):
         "Detected player name with whitespace at the end: Warning him of false-positive events. Player name: "
         + name
     )
+
+    try:
+        send_to_discord_audit(f"WARNING Player with bugged profile joined: `{name}` `{steam_id_64}`\n\nThis player if Squad Officer will cause his squad to be punished. He also will show as unassigned in the Game view.\n\nPlease ask him to change his name (last character IG shouldn't be a whitespace)")
+    except Exception:
+        logger.exception("Unable to send to audit")
 
     def notify_player():
         try:
@@ -515,10 +505,7 @@ def send_log_line_webhook_message(
 
 def load_generic_hooks():
     """Load and validate all the subscribed log line webhooks from config.yml"""
-    server_id = os.getenv("SERVER_NUMBER")
-    if not server_id:
-        # Shouldn't get here because SERVER_NUMBER is a mandatory ENV Var
-        raise ValueError("SERVER_NUMBER is not set, can't record logs")
+    server_id = get_server_number()
 
     try:
         raw_config = get_config()["LOG_LINE_WEBHOOKS"]

@@ -1,16 +1,15 @@
 import logging
 import os
 import re
-import socket
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import as_completed
 from datetime import datetime, timedelta
-from functools import cached_property, update_wrapper
+from functools import update_wrapper
 from time import sleep
-from typing import Dict, List, Optional, Tuple, TypedDict, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 from rcon.cache_utils import get_redis_client, invalidates, ttl_cache
 from rcon.commands import CommandFailedError, HLLServerError, ServerCtl
-from rcon.models import PlayerSteamID, PlayerVIP, enter_session
+from rcon.models import PlayerVIP, enter_session
 from rcon.player_history import get_profiles
 from rcon.steam_utils import (
     get_player_country_code,
@@ -18,6 +17,8 @@ from rcon.steam_utils import (
     get_players_country_code,
     get_players_have_bans,
 )
+from rcon.types import GameState, GetPlayersType, StructuredLogLine
+from rcon.utils import get_server_number
 
 STEAMID = "steam_id_64"
 NAME = "name"
@@ -49,34 +50,6 @@ LOG_ACTIONS = [
     "MESSAGE",
 ]
 logger = logging.getLogger(__name__)
-
-
-class StructuredLogLine(TypedDict):
-    version: int
-    timestamp_ms: int
-    relative_time_ms: int
-    raw: str
-    line_without_time: str
-    action: str
-    player: str
-    steam_id_64_1: str
-    player2: str
-    steam_id_64_2: str
-    weapon: str
-    message: str
-    sub_content: str
-
-
-class GameState(TypedDict):
-    """TypedDict for Rcon.get_gamestate"""
-
-    num_allied_players: int
-    num_axis_players: int
-    allied_score: int
-    axis_score: int
-    time_remaining: timedelta
-    current_map: str
-    next_map: str
 
 
 MOD_ALLOWED_CMDS = set()
@@ -117,32 +90,8 @@ class Rcon(ServerCtl):
     MAX_SERV_NAME_LEN = 1024  # I totally made up that number. Unable to test
     log_time_regexp = re.compile(r".*\((\d+)\).*")
 
-    def __init__(self, *args, pool_size=10, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.pool_size = pool_size
-
-    @cached_property
-    def thread_pool(self):
-        return ThreadPoolExecutor(self.pool_size)
-
-    @cached_property
-    def connection_pool(self):
-        logger.info("Initializing Rcon connection pool of size %s", self.pool_size)
-        pool = [Rcon(self.config) for _ in range(self.pool_size)]
-        for idx, rcon in enumerate(pool):
-            logger.debug("Connecting rcon %s/%s", idx, self.pool_size)
-            rcon._connect()
-        logger.info("Done initialzing Rcon connection pool")
-        return pool
-
-    def run_in_pool(self, process_number: int, function_name: str, *args, **kwargs):
-        return self.thread_pool.submit(
-            getattr(
-                self.connection_pool[process_number % self.pool_size], function_name
-            ),
-            *args,
-            **kwargs,
-        )
 
     @mod_users_allowed
     def get_playerids(self, as_dict=False):
@@ -187,197 +136,6 @@ class Rcon(ServerCtl):
             if players.get("role") in ["tankcommander", "officer", "spotter"]:
                 return True
         return False
-
-    @mod_users_allowed
-    @ttl_cache(ttl=60, cache_falsy=False)
-    def get_team_view(self):
-        teams = {}
-        players_by_id = {}
-        for player in super().get_players():
-            try:
-                info = self.get_detailed_player_info(player)
-                print(info)
-            except (HLLServerError, CommandFailedError):
-                logger.exception("Unable to get %s info", player)
-                try:
-                    steam_id_64 = self.get_playerids(as_dict=True).get(player)
-                    info = self._get_default_info_dict(player)
-                    info[STEAMID] = steam_id_64
-                except Exception:
-                    logger.exception(
-                        "Unable to get %s info with playerids either", player
-                    )
-                    continue
-
-            players_by_id[info.get(STEAMID)] = info
-
-        logger.debug("Getting DB profiles")
-        steam_profiles = {
-            profile[STEAMID]: profile
-            for profile in get_profiles(list(players_by_id.keys()))
-        }
-        logger.debug("Getting VIP list")
-        try:
-            vips = set(v[STEAMID] for v in self.get_vip_ids())
-        except Exception:
-            logger.exception("Failed to get VIPs")
-            vips = set()
-
-        for player in players_by_id.values():
-            steam_id_64 = player[STEAMID]
-            profile = steam_profiles.get(player.get("steam_id_64"), {}) or {}
-            player["profile"] = profile
-            player["is_vip"] = steam_id_64 in vips
-            steaminfo = profile.get("steaminfo", {}) or {}
-            player["country"] = steaminfo.get("country", "private")
-            # TODO refresh ban info and store into DB to avoid IOs here
-            player["steam_bans"] = get_player_has_bans(steam_id_64)
-            teams.setdefault(player.get("team"), {}).setdefault(
-                player.get("unit_name"), {}
-            ).setdefault("players", []).append(player)
-
-        for team, squads in teams.items():
-            if team is None:
-                continue
-            for squad_name, squad in squads.items():
-                squad["type"] = self._guess_squad_type(squad)
-                squad["has_leader"] = self._has_leader(squad)
-
-                try:
-                    squad["combat"] = sum(p["combat"] for p in squad["players"])
-                    squad["offense"] = sum(p["offense"] for p in squad["players"])
-                    squad["defense"] = sum(p["defense"] for p in squad["players"])
-                    squad["support"] = sum(p["support"] for p in squad["players"])
-                    squad["kills"] = sum(p["kills"] for p in squad["players"])
-                    squad["deaths"] = sum(p["deaths"] for p in squad["players"])
-                except Exception as e:
-                    logger.exception()
-
-        game = {}
-        for team, squads in teams.items():
-            if team is None:
-                continue
-            commander = [
-                squad for _, squad in squads.items() if squad["type"] == "commander"
-            ]
-            if not commander:
-                commander = None
-            else:
-                commander = (
-                    commander[0]["players"][0] if commander[0].get("players") else None
-                )
-
-            game[team] = {
-                "squads": {
-                    squad_name: squad
-                    for squad_name, squad in squads.items()
-                    if squad["type"] != "commander"
-                },
-                "commander": commander,
-                "combat": sum(s["combat"] for s in squads.values()),
-                "offense": sum(s["offense"] for s in squads.values()),
-                "defense": sum(s["defense"] for s in squads.values()),
-                "support": sum(s["support"] for s in squads.values()),
-                "kills": sum(s["kills"] for s in squads.values()),
-                "deaths": sum(s["deaths"] for s in squads.values()),
-                "count": sum(len(s["players"]) for s in squads.values()),
-            }
-
-        return game
-
-    @mod_users_allowed
-    @ttl_cache(ttl=2, cache_falsy=False)
-    def get_team_view_fast(self):
-        teams = {}
-        players_by_id = {}
-        players = self.get_players_fast()
-        fail_count = 0
-
-        futures = {
-            self.run_in_pool(idx, "get_detailed_player_info", player[NAME]): player
-            for idx, player in enumerate(players)
-        }
-        for future in as_completed(futures):
-            try:
-                player_data = future.result()
-            except Exception:
-                logger.exception("Failed to get info for %s", futures[future])
-                fail_count += 1
-                player_data = self._get_default_info_dict(futures[future][NAME])
-            player = futures[future]
-            player.update(player_data)
-            players_by_id[player[STEAMID]] = player
-
-        logger.debug("Getting DB profiles")
-        steam_profiles = {
-            profile[STEAMID]: profile
-            for profile in get_profiles(list(players_by_id.keys()))
-        }
-        logger.debug("Getting VIP list")
-        try:
-            vips = set(v[STEAMID] for v in self.get_vip_ids())
-        except Exception:
-            logger.exception("Failed to get VIPs")
-            vips = set()
-
-        for player in players_by_id.values():
-            steam_id_64 = player[STEAMID]
-            profile = steam_profiles.get(player.get("steam_id_64"), {}) or {}
-            player["profile"] = profile
-            player["is_vip"] = steam_id_64 in vips
-
-            teams.setdefault(player.get("team"), {}).setdefault(
-                player.get("unit_name"), {}
-            ).setdefault("players", []).append(player)
-
-        for team, squads in teams.items():
-            if team is None:
-                continue
-            for squad_name, squad in squads.items():
-                squad["type"] = self._guess_squad_type(squad)
-                squad["has_leader"] = self._has_leader(squad)
-
-                try:
-                    squad["combat"] = sum(p["combat"] for p in squad["players"])
-                    squad["offense"] = sum(p["offense"] for p in squad["players"])
-                    squad["defense"] = sum(p["defense"] for p in squad["players"])
-                    squad["support"] = sum(p["support"] for p in squad["players"])
-                    squad["kills"] = sum(p["kills"] for p in squad["players"])
-                    squad["deaths"] = sum(p["deaths"] for p in squad["players"])
-                except Exception as e:
-                    logger.exception()
-
-        game = {}
-        for team, squads in teams.items():
-            if team is None:
-                continue
-            commander = [
-                squad for _, squad in squads.items() if squad["type"] == "commander"
-            ]
-            if not commander:
-                commander = None
-            else:
-                commander = (
-                    commander[0]["players"][0] if commander[0].get("players") else None
-                )
-
-            game[team] = {
-                "squads": {
-                    squad_name: squad
-                    for squad_name, squad in squads.items()
-                    if squad["type"] != "commander"
-                },
-                "commander": commander,
-                "combat": sum(s["combat"] for s in squads.values()),
-                "offense": sum(s["offense"] for s in squads.values()),
-                "defense": sum(s["defense"] for s in squads.values()),
-                "support": sum(s["support"] for s in squads.values()),
-                "kills": sum(s["kills"] for s in squads.values()),
-                "deaths": sum(s["deaths"] for s in squads.values()),
-                "count": sum(len(s["players"]) for s in squads.values()),
-            }
-
-        return dict(fail_count=fail_count, **game)
 
     @mod_users_allowed
     @ttl_cache(ttl=60 * 60 * 24, cache_falsy=False)
@@ -472,11 +230,14 @@ class Rcon(ServerCtl):
         # Remap keys and parse values
         data[STEAMID] = raw_data.get("steamid64")
         data["team"] = raw_data.get("team", "None")
-        data["unit_id"], data["unit_name"] = (
-            raw_data.get("unit").split(" - ")
-            if raw_data.get("unit")
-            else ("None", None)
-        )
+        if raw_data["role"].lower() == "armycommander":
+            data["unit_id"], data["unit_name"] = (-1, "Commmand")
+        else:
+            data["unit_id"], data["unit_name"] = (
+                raw_data.get("unit").split(" - ")
+                if raw_data.get("unit")
+                else ("None", None)
+            )
         data["kills"], data["deaths"] = (
             raw_data.get("kills").split(" - Deaths: ")
             if raw_data.get("kills")
@@ -551,7 +312,7 @@ class Rcon(ServerCtl):
 
     @mod_users_allowed
     @ttl_cache(ttl=2)
-    def get_players_fast(self):
+    def get_players_fast(self) -> List[GetPlayersType]:
         players = {}
         ids = []
 
@@ -646,8 +407,23 @@ class Rcon(ServerCtl):
 
     @mod_users_allowed
     def get_bans(self):
-        temp_bans = [self._struct_ban(b, "temp") for b in self.get_temp_bans()]
-        bans = [self._struct_ban(b, "perma") for b in self.get_perma_bans()]
+        try:
+            temp_bans = []
+            for b in self.get_temp_bans():
+                try:
+                    temp_bans.append(self._struct_ban(b, "temp"))
+                except ValueError:
+                    logger.exception("Invalid temp ban line: %s", b)
+            bans = []
+            for b in self.get_perma_bans():
+                try:
+                    bans.append(self._struct_ban(b, "perma"))
+                except ValueError:
+                    logger.exception("Invalid perm ban line: %s", b)
+        except Exception:
+            self.get_temp_bans.cache_clear()
+            self.get_perma_bans.cache_clear()
+            raise
         # Most recent first
         bans.reverse()
         return temp_bans + bans
@@ -691,13 +467,19 @@ class Rcon(ServerCtl):
     @ttl_cache(ttl=60 * 60)
     def get_vip_ids(self) -> List[Dict[str, Union[str, Optional[datetime]]]]:
         res = super().get_vip_ids()
-        l = []
+        player_dicts = []
 
         vip_expirations: Dict[str, datetime]
         with enter_session() as session:
-            players = session.query(PlayerSteamID).join(PlayerVIP).all()
+            server_number = get_server_number()
+
+            players: list[PlayerVIP] = (
+                session.query(PlayerVIP)
+                .filter(PlayerVIP.server_number == server_number)
+                .all()
+            )
             vip_expirations = {
-                player.steam_id_64: player.vip.expiration for player in players
+                player.steamid.steam_id_64: player.expiration for player in players
             }
 
         for item in res:
@@ -711,9 +493,9 @@ class Rcon(ServerCtl):
                 raise
             player = dict(zip((STEAMID, NAME), (steam_id_64, name)))
             player["vip_expiration"] = vip_expirations.get(steam_id_64, None)
-            l.append(player)
+            player_dicts.append(player)
 
-        return sorted(l, key=lambda d: d[NAME])
+        return sorted(player_dicts, key=lambda d: d[NAME])
 
     def do_remove_vip(self, steam_id_64):
         with invalidates(Rcon.get_vip_ids):
@@ -1032,12 +814,7 @@ class Rcon(ServerCtl):
     def get_structured_logs(
         self, since_min_ago, filter_action=None, filter_player=None
     ):
-        try:
-            raw = super().get_logs(since_min_ago)
-        except socket.timeout:
-            # The hll server just hangs when there are no logs for the requested time
-            raw = ""
-
+        raw = super().get_logs(since_min_ago)
         return self.parse_logs(raw, filter_action, filter_player)
 
     @ttl_cache(ttl=60 * 60)
