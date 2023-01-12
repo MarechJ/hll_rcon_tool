@@ -492,7 +492,6 @@ class ServerCtl:
         # Has no trailing "\n"
 
         result = self._get("gamestate", can_fail=False)
-        logger.info("Gamestate results:\n|%s|", result)
         return result.split("\n")
 
 
