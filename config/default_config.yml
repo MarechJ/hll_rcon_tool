@@ -373,7 +373,6 @@ SCOREBOT:
     ALL_STATS_TEXT: "All stats on: "
     AUTHOR_NAME: "STATS LIVE HLL FRANCE - click here"
     AUTHOR_ICON_URL: "https://static.wixstatic.com/media/da3421_111b24ae66f64f73aa94efeb80b08f58~mv2.png/v1/fit/w_2500,h_1330,al_c/da3421_111b24ae66f64f73aa94efeb80b08f58~mv2.png"
-    ELAPSED_TIME: "Game time: "
     # The number of top players to display from 1 to 100
     TOP_LIMIT: 10
     FOOTER_ICON_URL: "https://static.wixstatic.com/media/da3421_111b24ae66f64f73aa94efeb80b08f58~mv2.png/v1/fit/w_2500,h_1330,al_c/da3421_111b24ae66f64f73aa94efeb80b08f58~mv2.png"

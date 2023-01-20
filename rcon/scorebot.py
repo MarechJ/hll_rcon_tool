@@ -16,8 +16,60 @@ import discord
 from discord.embeds import Embed
 from discord.errors import HTTPException, NotFound
 from rcon.config import get_config
+from typing import TypedDict
 
-logger = logging.getLogger('rcon')
+
+class _PublicInfoCurrentMapType(TypedDict):
+    just_name: str
+    human_name: str
+    name: str
+    start: int
+
+
+class _PublicInfoNextMapType(TypedDict):
+    just_name: str
+    human_name: str
+    name: str
+    start: int | None
+
+
+class _PublicInfoPlayerType(TypedDict):
+    allied: int
+    axis: int
+
+
+class _PublicInfoScoreType(TypedDict):
+    allied: str
+    axis: str
+
+
+class _PublicInfoVoteStatusType(TypedDict):
+    total_votes: int
+    winning_maps: list[str]
+
+
+class _PublicInfoNameType(TypedDict):
+    name: str
+    short_name: str
+    public_stats_port: str
+    public_stats_port_https: str
+
+
+class PublicInfoType(TypedDict):
+    """TypedDict for rcon.views.public_info"""
+
+    current_map: _PublicInfoCurrentMapType
+    next_map: _PublicInfoNextMapType
+    player_count: int
+    max_player_count: int
+    players: _PublicInfoPlayerType
+    score: _PublicInfoScoreType
+    raw_time_remaining: str
+    vote_status: _PublicInfoVoteStatusType
+    name: _PublicInfoNameType
+
+
+logger = logging.getLogger("rcon")
 
 try:
     SERVER_CONFIG = get_config()["SCOREBOT"][f'SERVER_{os.getenv("SERVER_NUMBER")}']
@@ -33,7 +85,6 @@ try:
     ALL_STATS_TEXT = CONFIG["ALL_STATS_TEXT"]
     AUTHOR_NAME = CONFIG["AUTHOR_NAME"]
     AUTHOR_ICON_URL = CONFIG["AUTHOR_ICON_URL"]
-    ELAPSED_TIME = CONFIG["ELAPSED_TIME"]
     TOP_LIMIT = CONFIG["TOP_LIMIT"]
     FOOTER_ICON_URL = CONFIG["FOOTER_ICON_URL"]
     NO_STATS_AVAILABLE = CONFIG["NO_STATS_AVAILABLE"]
@@ -41,6 +92,12 @@ try:
     NEXT_MAP_TEXT = CONFIG["NEXT_MAP_TEXT"]
     VOTE = CONFIG["VOTE"]
     PLAYERS = CONFIG["PLAYERS"]
+    ELAPSED_TIME = CONFIG["ELAPSED_TIME"]
+    ALLIED_PLAYERS_TEXT = CONFIG["ALLIED_PLAYERS_TEXT"]
+    AXIS_PLAYERS_TEXT = CONFIG["AXIS_PLAYERS_TEXT"]
+    TIME_REMAINING_TEXT = CONFIG["TIME_REMAINING_TEXT"]
+    MATCH_SCORE_TITLE_TEXT = CONFIG["MATCH_SCORE_TITLE_TEXT"]
+    MATCH_SCORE_TEXT = CONFIG["MATCH_SCORE_TEXT"]
 
     TOP_KILLERS = CONFIG["TOP_KILLERS"]
     TOP_RATIO = CONFIG["TOP_RATIO"]
@@ -56,7 +113,6 @@ try:
     WHAT_IS_A_BREAK = CONFIG["WHAT_IS_A_BREAK"]
     SURVIVORS = CONFIG["SURVIVORS"]
     U_R_STILL_A_MAN = CONFIG["U_R_STILL_A_MAN"]
-    ELAPSED_TIME = CONFIG["ELAPSED_TIME"]
 
     STATS_KEYS_TO_DISPLAY = CONFIG["STATS_TO_DISPLAY"]
 except Exception as e:
@@ -88,7 +144,7 @@ def get_map_image(server_info):
     return url
 
 
-def get_header_embed(public_info):
+def get_header_embed(public_info: PublicInfoType):
     elapsed_time_minutes = (
         datetime.datetime.now()
         - datetime.datetime.fromtimestamp(public_info["current_map"]["start"])
@@ -110,6 +166,35 @@ def get_header_embed(public_info):
         name=f"{NEXT_MAP_TEXT} {public_info['next_map']['human_name']}",
         value=f"{winning_map_votes}/{total_votes} {VOTE}",
     )
+
+    embed.add_field(name="\u200b", value="\u200b", inline=False)
+
+    embed.add_field(
+        name=f"{ALLIED_PLAYERS_TEXT}",
+        value=f"{public_info['players']['allied']}",
+        inline=True,
+    )
+
+    embed.add_field(
+        name=f"{AXIS_PLAYERS_TEXT}",
+        value=f"{public_info['players']['axis']}",
+        inline=True,
+    )
+
+    embed.add_field(name="\u200b", value="\u200b", inline=False)
+
+    embed.add_field(
+        name=f"{MATCH_SCORE_TITLE_TEXT}",
+        value=MATCH_SCORE_TEXT.format(public_info["score"]["allied"]),
+        inline=True,
+    )
+
+    embed.add_field(
+        name=f"{TIME_REMAINING_TEXT}",
+        value=f"{public_info['raw_time_remaining']}",
+        inline=True,
+    )
+
     embed.set_author(
         name=AUTHOR_NAME,
         url=SCOREBOARD_PUBLIC_URL,
@@ -223,7 +308,11 @@ def run():
         path = os.getenv("DISCORD_BOT_DATA_PATH", "/data")
         path = pathlib.Path(path) / pathlib.Path("scorebot.db")
         print(str(path))
-        conn = sqlite3.connect(str(path))
+        try:
+            conn = sqlite3.connect(str(path))
+        except sqlite3.OperationalError as e:
+            logger.error(e)
+            raise
         server_number = int(os.getenv("SERVER_NUMBER", 0))
         # TODO handle webhook change
         # TODO handle invalid message id
@@ -247,8 +336,13 @@ def run():
             WEBHOOK_URL,
             adapter=discord.RequestsWebhookAdapter(),
         )
+        try:
+            public_info = requests.get(INFO_URL, verify=False).json()["result"]
+        except ConnectionError as e:
+            logger.error(f"Error accessing {INFO_URL}")
+            # logger.exception(e)
+            raise
 
-        public_info = requests.get(INFO_URL, verify=False).json()["result"]
         stats = get_stats()
 
         if message_id:
@@ -287,4 +381,8 @@ def run():
 
 
 if __name__ == "__main__":
-    run()
+    try:
+        run()
+    except Exception as e:
+        logger.exception(e)
+        raise
