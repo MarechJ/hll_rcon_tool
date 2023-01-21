@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import os
 
 from rcon import broadcast
 from rcon.audit import ingame_mods, online_mods
@@ -54,24 +55,38 @@ async def scheduled_routines(rcon: RecordedRcon):
         await asyncio.sleep(30)
 
 
-async def auto_broadcast(rcon: RecordedRcon):
-    logger.debug("Starting broadcasts")
-    await broadcast.run(rcon)
+async def auto_broadcast(log: logging.Logger, rcon: RecordedRcon):
+    log.debug("Starting broadcasts")
+    await broadcast.run(log, rcon)
 
 
-async def expire_vips(rcon: RecordedRcon):
-    logger.debug("Starting expiring vips")
+async def expire_vips(log: logging.Logger, rcon: RecordedRcon):
+    log.debug("Starting expiring vips")
     await service.run(rcon)
+
+
+def component_logger(name: str, server_number: str) -> logging.Logger:
+    filename = f"{name}_{server_number}.log"
+    handler = logging.FileHandler(filename)
+
+    log = logging.getLogger(name)
+    level = os.getenv("LOGGING_LEVEL")
+    if level is not None:
+        log.setLevel(level)
+    log.addHandler(handler)
+
+    return log
 
 
 async def run():
     from rcon.settings import SERVER_INFO
     rcon = RecordedRcon(SERVER_INFO)
+    server_number = os.getenv("SERVER_NUMBER")
 
     tasks = asyncio.gather(
         scheduled_routines(rcon),
-        auto_broadcast(rcon),
-        expire_vips(rcon),
+        auto_broadcast(component_logger("broadcasts", server_number), rcon),
+        expire_vips(component_logger("expiring_vips", server_number), rcon),
     )
     try:
         await tasks

@@ -24,7 +24,8 @@ CHECK_INTERVAL = 20
 
 
 class LazyPrinter:
-    def __init__(self, func, default="", is_list=False, list_separator=", "):
+    def __init__(self, log: logging.Logger, func, default="", is_list=False, list_separator=", "):
+        self.logger = log
         self.func = func
         self.is_list = is_list
         self.default = default
@@ -36,7 +37,7 @@ class LazyPrinter:
                 return self.list_separator.join(self.func())
             return str(self.func())
         except:
-            logger.exception("Unable to get data for broacasts")
+            self.logger.exception("Unable to get data for broacasts")
             return self.default
 
 
@@ -161,7 +162,7 @@ def get_ingame_mods():
     return [mod["username"] for mod in ingame_mods()]
 
 
-def _get_vars(ctl: RecordedRcon):
+def _get_vars(log: logging.Logger, ctl: RecordedRcon):
     get_vip_names = lambda: [d["name"] for d in ctl.get_vip_ids()]
     get_admin_names = lambda: [d["name"] for d in ctl.get_admin_ids()]
     get_owner_names = lambda: [
@@ -181,96 +182,96 @@ def _get_vars(ctl: RecordedRcon):
     vote_status = get_votes_status()
 
     subs = {
-        "nextmap": LazyPrinter(get_next_map),
+        "nextmap": LazyPrinter(log, get_next_map),
         "maprotation": LazyPrinter(
-            ctl.get_map_rotation, is_list=True, list_separator=" -> "
+            log, ctl.get_map_rotation, is_list=True, list_separator=" -> "
         ),
-        "servername": LazyPrinter(ctl.get_name),
-        "admins": LazyPrinter(get_admin_names, is_list=True),
-        "owners": LazyPrinter(get_owner_names, is_list=True),
-        "seniors": LazyPrinter(get_senior_names, is_list=True),
-        "juniors": LazyPrinter(get_junior_names, is_list=True),
-        "vips": LazyPrinter(get_vip_names, is_list=True),
-        "randomvip": LazyPrinter(lambda: random.choice(get_vip_names() or [""])),
+        "servername": LazyPrinter(log, ctl.get_name),
+        "admins": LazyPrinter(log, get_admin_names, is_list=True),
+        "owners": LazyPrinter(log, get_owner_names, is_list=True),
+        "seniors": LazyPrinter(log, get_senior_names, is_list=True),
+        "juniors": LazyPrinter(log, get_junior_names, is_list=True),
+        "vips": LazyPrinter(log, get_vip_names, is_list=True),
+        "randomvip": LazyPrinter(log, lambda: random.choice(get_vip_names() or [""])),
         "votenextmap_line": LazyPrinter(
-            partial(format_map_vote, format_type="line")
+            log, partial(format_map_vote, format_type="line")
         ),
         "votenextmap_noscroll": LazyPrinter(
-            partial(format_map_vote, format_type="max_length")
+            log, partial(format_map_vote, format_type="max_length")
         ),
         "votenextmap_vertical": LazyPrinter(
-            partial(format_map_vote, format_type="vertical")
+            log, partial(format_map_vote, format_type="vertical")
         ),
         "votenextmap_by_mod_line": LazyPrinter(
-            partial(format_map_vote, format_type="by_mod_line")
+            log, partial(format_map_vote, format_type="by_mod_line")
         ),
         "votenextmap_by_mod_vertical": LazyPrinter(
-            partial(format_map_vote, format_type="by_mod_vertical")
+            log, partial(format_map_vote, format_type="by_mod_vertical")
         ),
         "votenextmap_by_mod_vertical_all": LazyPrinter(
-            partial(format_map_vote, format_type="by_mod_vertical_all")
+            log, partial(format_map_vote, format_type="by_mod_vertical_all")
         ),
         "votenextmap_by_mod_split": LazyPrinter(
-            partial(format_map_vote, format_type="by_mod_split")
+            log, partial(format_map_vote, format_type="by_mod_split")
         ),
         "total_votes": vote_status.get("total_votes"),
         "winning_maps_short": LazyPrinter(
-            partial(
+            log, partial(
                 format_winning_map, ctl, vote_status["winning_maps"], display_count=2
             )
         ),
         "winning_maps_all": LazyPrinter(
-            partial(
+            log, partial(
                 format_winning_map, ctl, vote_status["winning_maps"], display_count=0
             )
         ),
         "scrolling_votemap": LazyPrinter(
-            partial(scrolling_votemap, ctl, vote_status["winning_maps"])
+            log, partial(scrolling_votemap, ctl, vote_status["winning_maps"])
         ),
-        "online_mods": LazyPrinter(get_online_mods, is_list=True),
-        "ingame_mods": LazyPrinter(get_ingame_mods, is_list=True),
+        "online_mods": LazyPrinter(log, get_online_mods, is_list=True),
+        "ingame_mods": LazyPrinter(log, get_ingame_mods, is_list=True),
     }
 
     return subs
 
 
-def format_message(ctl: RecordedRcon, msg):
-    subs = _get_vars(ctl)
+def format_message(log: logging.Logger, ctl: RecordedRcon, msg):
+    subs = _get_vars(log, ctl)
 
     try:
         return msg.format(**subs)
     except KeyError as e:
-        logger.warning(
+        log.warning(
             "Can't broadcast message correctly, variable does not exists %s", e
         )
         return msg
 
 
-async def run(rcon: RecordedRcon):
+async def run(log: logging.Logger, rcon: RecordedRcon):
     config = AutoBroadcasts()
 
     while True:
         msgs = config.get_messages()
 
         if not config.get_enabled() or not msgs:
-            logger.debug(
+            log.debug(
                 "Auto broadcasts are disabled. Sleeping %s seconds", CHECK_INTERVAL
             )
             await asyncio.sleep(CHECK_INTERVAL)
             continue
 
         if config.get_randomize():
-            logger.debug("Auto broadcasts. Randomizing")
+            log.debug("Auto broadcasts. Randomizing")
             random.shuffle(msgs)
 
         for time_sec, msg in msgs:
             if not config.get_enabled():
                 break
 
-            formatted = format_message(rcon, msg)
-            logger.debug("Broadcasting for %s seconds: %s", time_sec, formatted)
+            formatted = format_message(log, rcon, msg)
+            log.debug("Broadcasting for %s seconds: %s", time_sec, formatted)
             try:
                 rcon.set_broadcast(formatted)
             except CommandFailedError:
-                logger.exception("Unable to broadcast %s", msg)
+                log.exception("Unable to broadcast %s", msg)
             await asyncio.sleep(int(time_sec))
