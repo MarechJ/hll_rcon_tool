@@ -1,3 +1,4 @@
+import asyncio
 import inspect
 import logging
 import sys
@@ -94,7 +95,7 @@ def auto_settings_loop():
 
 @cli.command(name="routines")
 def run_routines():
-    routines.run()
+    asyncio.run(routines.run())
 
 
 @cli.command(name="expiring_vips")

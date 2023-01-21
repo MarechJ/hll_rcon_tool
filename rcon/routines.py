@@ -55,10 +55,11 @@ async def scheduled_routines(rcon: RecordedRcon):
 
 
 async def auto_broadcast(rcon: RecordedRcon):
+    logger.debug("Starting broadcasts")
     await broadcast.run(rcon)
 
 
-def run():
+async def run():
     from rcon.settings import SERVER_INFO
     rcon = RecordedRcon(SERVER_INFO)
 
