@@ -7,7 +7,6 @@ from typing import Set
 
 import click
 
-import rcon.expiring_vips.service
 from rcon import auto_settings, game_logs, routines
 from rcon.automods import automod
 from rcon.cache_utils import RedisCached, get_redis_pool
@@ -100,7 +99,11 @@ def run_routines():
 
 @cli.command(name="expiring_vips")
 def run_expiring_vips():
-    rcon.expiring_vips.service.run()
+    """
+    Kept for backward compatibility when people use their own supervisord config with a stale expiring vip program config.
+    """
+    logger.debug("Expiring VIPs moved from own process to routines")
+    exit(0)
 
 
 @cli.command(name="automod")

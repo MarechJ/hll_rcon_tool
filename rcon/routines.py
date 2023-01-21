@@ -1,10 +1,10 @@
 import asyncio
 import logging
-import time
 
 from rcon import broadcast
 from rcon.audit import ingame_mods, online_mods
 from rcon.commands import CommandFailedError
+from rcon.expiring_vips import service
 from rcon.recorded_commands import RecordedRcon
 from rcon.user_config import AutoVoteKickConfig
 from rcon.vote_map import VoteMap
@@ -59,13 +59,19 @@ async def auto_broadcast(rcon: RecordedRcon):
     await broadcast.run(rcon)
 
 
+async def expire_vips(rcon: RecordedRcon):
+    logger.debug("Starting expiring vips")
+    await service.run(rcon)
+
+
 async def run():
     from rcon.settings import SERVER_INFO
     rcon = RecordedRcon(SERVER_INFO)
 
     tasks = asyncio.gather(
         scheduled_routines(rcon),
-        auto_broadcast(rcon)
+        auto_broadcast(rcon),
+        expire_vips(rcon),
     )
     try:
         await tasks

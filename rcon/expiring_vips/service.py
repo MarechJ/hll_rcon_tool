@@ -1,5 +1,5 @@
+import asyncio
 import logging
-import time
 from datetime import datetime
 from typing import List, Optional
 
@@ -10,7 +10,6 @@ from rcon.config import get_config
 from rcon.discord import send_to_discord_audit
 from rcon.models import PlayerSteamID, PlayerVIP, enter_session
 from rcon.recorded_commands import RecordedRcon
-from rcon.settings import SERVER_INFO
 from rcon.utils import get_server_number
 
 SERVICE_NAME = "ExpiringVIPs"
@@ -92,20 +91,19 @@ def remove_expired_vips(rcon_hook: RecordedRcon, webhookurl: Optional[str] = Non
         logger.info("No expired VIPs found")
 
 
-def run():
-    rcon_hook = RecordedRcon(SERVER_INFO)
+async def run(rcon: RecordedRcon):
+    try:
+        config = get_config()
+        config = ExpiringVIPConfig(**config["REMOVE_EXPIRED_VIPS"])
+    except ValidationError as e:
+        logger.exception(
+            f"Invalid REMOVE_EXPIRED_VIPS config {str(e)} check your config/config.yml"
+        )
+        raise
+
+    if not config.enabled:
+        return
 
     while True:
-        try:
-            config = get_config()
-            config = ExpiringVIPConfig(**config["REMOVE_EXPIRED_VIPS"])
-        except ValidationError as e:
-            logger.exception(
-                f"Invalid REMOVE_EXPIRED_VIPS config {str(e)} check your config/config.yml"
-            )
-            raise
-
-        if config.enabled:
-            remove_expired_vips(rcon_hook, config.discord_webhook_url)
-
-        time.sleep(config.interval * 60)
+        remove_expired_vips(rcon, config.discord_webhook_url)
+        await asyncio.sleep(config.interval * 60)
