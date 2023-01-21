@@ -72,13 +72,21 @@ class PublicInfoType(TypedDict):
 logger = logging.getLogger("rcon")
 
 try:
-    SERVER_CONFIG = get_config()["SCOREBOT"][f'SERVER_{os.getenv("SERVER_NUMBER")}']
-    CONFIG = get_config()["SCOREBOT"]["COMMON"]
+    config = get_config()
+
+    SERVER_CONFIG = config["SCOREBOT"][f'SERVER_{os.getenv("SERVER_NUMBER")}']
+    CONFIG = config["SCOREBOT"]["COMMON"]
 
     STATS_URL = SERVER_CONFIG["STATS_URL"]
     INFO_URL = SERVER_CONFIG["INFO_URL"]
     SCOREBOARD_PUBLIC_URL = SERVER_CONFIG["SCOREBOARD_PUBLIC_URL"]
-    SCORBOARD_BASE_PATH = SERVER_CONFIG["SCORBOARD_BASE_PATH"]
+
+    try:
+        # Older versions of default_config.yml and peoples config.yml have this typo
+        SCOREBOARD_BASE_PATH = SERVER_CONFIG["SCORBOARD_BASE_PATH"]
+    except KeyError:
+        SCOREBOARD_BASE_PATH = SERVER_CONFIG["SCOREBOARD_BASE_PATH"]
+
     PAST_GAMES_URL = SERVER_CONFIG["PAST_GAMES_URL"]
     WEBHOOK_URL = SERVER_CONFIG["WEBHOOK_URL"]
 
@@ -140,7 +148,7 @@ def get_map_image(server_info):
     img = map_to_pict.get(
         server_info["current_map"]["just_name"], server_info["current_map"]["just_name"]
     )
-    url = urljoin(SCORBOARD_BASE_PATH, img)
+    url = urljoin(SCOREBOARD_BASE_PATH, img)
     return url
 
 
@@ -185,7 +193,9 @@ def get_header_embed(public_info: PublicInfoType):
 
     embed.add_field(
         name=f"{MATCH_SCORE_TITLE_TEXT}",
-        value=MATCH_SCORE_TEXT.format(public_info["score"]["allied"]),
+        value=MATCH_SCORE_TEXT.format(
+            public_info["score"]["allied"], public_info["score"]["axis"]
+        ),
         inline=True,
     )
 
@@ -307,12 +317,7 @@ def run():
     try:
         path = os.getenv("DISCORD_BOT_DATA_PATH", "/data")
         path = pathlib.Path(path) / pathlib.Path("scorebot.db")
-        print(str(path))
-        try:
-            conn = sqlite3.connect(str(path))
-        except sqlite3.OperationalError as e:
-            logger.error(e)
-            raise
+        conn = sqlite3.connect(str(path))
         server_number = int(os.getenv("SERVER_NUMBER", 0))
         # TODO handle webhook change
         # TODO handle invalid message id
@@ -340,7 +345,6 @@ def run():
             public_info = requests.get(INFO_URL, verify=False).json()["result"]
         except ConnectionError as e:
             logger.error(f"Error accessing {INFO_URL}")
-            # logger.exception(e)
             raise
 
         stats = get_stats()

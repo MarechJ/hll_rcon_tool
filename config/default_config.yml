@@ -48,12 +48,12 @@ BANS:
   unblacklist_does_unban: yes
 
 # You can test your regex there: https://regex101.com/ set it to "Python"
-NAME_KICKS: 
+NAME_KICKS:
   regexps: []
   reason: "Your nickname is invalid"
   # If left unset, the webhook default to your audit log webhook
   discord_webhook_url: ""
-  whitelist_flags: 
+  whitelist_flags:
     - ✅
 
 BAN_TK_ON_CONNECT:
@@ -62,8 +62,8 @@ BAN_TK_ON_CONNECT:
   author_name: "HATERS GONNA HATE"
   # Exlude TK with certain weapons from triggering the ban, adding "None" by default so it will exclude arty, tanks and road accidents
   # The weapon name should be as found in your game logs (case insensitive), know weapons at the time of writing: 'SMine M2 Kar98_Sniper M43 M1911 MK2_Grenade Satchel_M37 None P38 M24_Grenade M1A1 MP40 Kar98 STG44 Thompson MG42 Garand Tellermine43 Luger Satchel_3KG Panzershreck M1918A2_BAR M1919 G43 M1903 SMG_M3_GreaseGun M1_Carbine Bazooka'
-  # To not exclude any weapons write exclude_weapons: [] 
-  exclude_weapons: 
+  # To not exclude any weapons write exclude_weapons: []
+  exclude_weapons:
     - None
     - MK2_Grenade
     - M24_Grenade
@@ -92,11 +92,11 @@ LIVE_STATS:
   # smaller machines should choose at the very least 30 seconds, if not 60 to 120
   # The below is to compute live stats based on session (from the last connection) accross all games
   refresh_stats_seconds: 15
-  # The below is to compute live stats for the current game and starts at the begining of the game, even if the 
+  # The below is to compute live stats for the current game and starts at the begining of the game, even if the
   # player disconnect and reconnected multiple times, all his/her stats are counted
   refresh_current_game_stats_seconds: 5
 
-# The below is not effective yet. 
+# The below is not effective yet.
 # Here you can set your custom urls (if you have any)
 # Make sure you set them in the same order as your server numbers
 # Leave empty if you don't have any custom urls / domains, the default will be used
@@ -129,24 +129,23 @@ GTX:
     username: null
     password: null
 
-
 NOLEADER_AUTO_MOD:
   # This auto-moderator has 4 steps, 1. internally noting (X times), 2. warning via direct message (Y times), 3. punish (Z times) 4. kick
   # Note that the state cycle for a given squad only resets once it finally has an officer. So for example if you
-  # disabled the kick and have 3 punishes configured, once the 3 punishes are 
+  # disabled the kick and have 3 punishes configured, once the 3 punishes are
   # through that's it, nothing will happen anymore for that squad even if they still don't have an officer.
-  # 
+  #
   # Note 2: notes, warnings, punishes and kicks are tracked individual per player, not at the squad level.
-  # So if a player joins a squad that already received 3 punishes and will be kicked next, the new player will 
+  # So if a player joins a squad that already received 3 punishes and will be kicked next, the new player will
   # start at the first punish regardless (so he won't be kick)
   # Set to true to enable the auto moderation of squads without officers
   enabled: false
-  # If this is set to true no warning / punish / kick will be applied for real 
+  # If this is set to true no warning / punish / kick will be applied for real
   # It turns the code into a "simulation" mode and only send what it would do to your discord audit log webhook
   dry_run: true
   # Discord Webhook URL where audit logs should be sent. If not specified, the environment variable DISCORD_WEBHOOK_AUDIT_LOG
   # will be used, instead.
-  discord_webhook_url: ''
+  discord_webhook_url: ""
 
   # Step number 1
   # If a squad has no officer all members are noted internally but no action is taken
@@ -179,7 +178,7 @@ NOLEADER_AUTO_MOD:
   warning_interval_seconds: 60
 
   # Step number 3
-  # If the squad still doesn't have an officer after 
+  # If the squad still doesn't have an officer after
   # the N warnings and the last warning_interval_seconds has elapsed, automod starts punishing
   # Set to 0 to disable to punish entirely. I would advise setting warnings to infinity (-1) if you do that
   # Set to -1 for infinite punish (will never go to kicks)
@@ -214,16 +213,15 @@ NOLEADER_AUTO_MOD:
   # The following variables are available to fill into the text
   #  {player_name}, {squad_name} and {kick_grace_period}
   kick_message: "Your Squad ({squad_name}) must have an officer.\nYour grace period of {kick_grace_period}s has passed.\nYou failed to comply with the previous warnings."
-  
+
   # GLOBAL OPTIONS
   # You can define roles that are immune to punishes and kicks (this must be a list, the syntax is important)
   # Available roles are: 'officer', 'antitank', 'automaticrifleman', 'assault', 'heavymachinegunner', 'support', 'sniper', 'spotter', 'rifleman', 'crewman', 'tankcommander', 'engineer', 'medic'
-  immuned_roles: 
+  immuned_roles:
     - support
     - sniper
   # If the level of the player is below this number he/she will be immune to punishes / kicks
   immuned_level_up_to: 15
-
 
 SEEDING_AUTO_MOD:
   # This auto-moderator has 3 steps, 1. warning via direct message (Y times), 3. punish (Z times) 4. kick
@@ -236,7 +234,7 @@ SEEDING_AUTO_MOD:
 
   # Discord Webhook URL where audit logs should be sent. If not specified, the environment variable DISCORD_WEBHOOK_AUDIT_LOG
   # will be used, instead.
-  discord_webhook_url: ''
+  discord_webhook_url: ""
 
   # Step number 1
   # Send a direct warning message to the players that violate seeding rules
@@ -322,19 +320,19 @@ SEEDING_AUTO_MOD:
     # game logs to find possible values), whereas the value of the map is a human friendly name of the weapon (as it will be passed
     # to the `weapon` variable of the message parameter.
     weapons:
-      '155MM HOWITZER [M114]': Artillery shells
-      '150MM HOWITZER [sFH 18]': Artillery shells
-      '122MM HOWITZER [M1938 (M-30)]': Artillery shells
+      "155MM HOWITZER [M114]": Artillery shells
+      "150MM HOWITZER [sFH 18]": Artillery shells
+      "122MM HOWITZER [M1938 (M-30)]": Artillery shells
       MK2_Grenade: Grenades
     # The message used when the player is punished.
     #  {weapon}
     message: "{weapon} are not allowed when server is seeding"
 
 # Set your custom text or transalation for each of the below keys. Logo urls and prefered stats and such
-# If you have more that 3 server copy the whole SERVER_1 section 
+# If you have more that 3 server copy the whole SERVER_1 section
 SCOREBOT:
   SERVER_1:
-    # Don't forget to replace with your IP:port or url, leave the /api/get_live_game_stats 
+    # Don't forget to replace with your IP:port or url, leave the /api/get_live_game_stats
     STATS_URL: "https://<rcon IP or url>/api/get_live_game_stats"
     # Don't forget to replace with your IP:port or url, leave the /api/public_info
     INFO_URL: "https://<rcon IP or url>/api/public_info"
@@ -345,7 +343,7 @@ SCOREBOT:
     # This is the public url
     PAST_GAMES_URL: "https://stats1.hllfrance.org/#/gamescoreboard"
     WEBHOOK_URL: "https://discord.com/api/webhooks/86....40/qlh....Ie3"
-  
+
   SERVER_2:
     STATS_URL: "https://<rcon IP or url>/api/get_live_game_stats"
     INFO_URL: "https://<rcon IP or url>/api/public_info"
@@ -368,7 +366,6 @@ SCOREBOT:
     PAST_GAMES_URL: "https://stats2.hllfrance.org/#/gamescoreboard"
     WEBHOOK_URL: "https://discord.com/api/webhooks/86....40/qlh....Ie3"
 
-
   COMMON:
     ALL_STATS_TEXT: "All stats on: "
     AUTHOR_NAME: "STATS LIVE HLL FRANCE - click here"
@@ -382,6 +379,12 @@ SCOREBOT:
     VOTE: "vote(s)"
     PLAYERS: "players"
     ELAPSED_TIME: "Elapsed game time: "
+    ALLIED_PLAYERS_TEXT: "Allied Players"
+    AXIS_PLAYERS_TEXT: "Axis Players"
+    MATCH_SCORE_TITLE_TEXT: "Match Score"
+    # You can format this however you want and include emojis, Discord markdown formatting, etc. {0} will replace the allied score and {1} the axis score
+    MATCH_SCORE_TEXT: "Allied {0} : Axis {1}"
+    TIME_REMAINING_TEXT: "Time Remaining"
 
     # Discord markup is supported, you can add emoji too, TOP_KILLERS as an example of custom emoji. Do \<the emoji> on your discord to get that id
     TOP_KILLERS: "<:HLLBomb:868256234439073802> TOP KILLERS\n*kills* <:HLLBomb:868256234439073802>"
@@ -416,7 +419,6 @@ SCOREBOT:
       - SURVIVORS
       - U_R_STILL_A_MAN
 
-
 # The config values are cached by RCON
 # Changes may take up to 10 minutes to take effect
 REMOVE_EXPIRED_VIPS:
@@ -426,8 +428,7 @@ REMOVE_EXPIRED_VIPS:
   interval: 60
   # Discord Webhook URL where audit logs should be sent. If not specified, the environment variable DISCORD_WEBHOOK_AUDIT_LOG
   # will be used, instead.
-  discord_webhook_url: ''
-
+  discord_webhook_url: ""
 
 # Any changes to these values require an RCON restart to take effect
 #
