@@ -352,10 +352,22 @@ def save_start_player_session(
             )
             return
 
+        start_time = datetime.datetime.fromtimestamp(timestamp)
+        already_saved = (
+            sess.query(PlayerSession)
+            .filter(PlayerSession.steamid == player)
+            .filter(PlayerSession.start == start_time)
+            .first()
+        )
+
+        if already_saved is not None:
+            logger.info(f"Player session starting at {start_time} for player {steam_id_64} already recorded, skipping...")
+            return
+
         sess.add(
             PlayerSession(
                 steamid=player,
-                start=datetime.datetime.fromtimestamp(timestamp),
+                start=start_time,
                 server_name=server_name,
                 server_number=server_number,
             )
