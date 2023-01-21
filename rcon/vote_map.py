@@ -304,14 +304,13 @@ class VoteMap:
     def vote_map_reminder(self, rcon: RecordedRcon, force=False):
         logger.info("Vote MAP reminder")
         vote_map_config = VoteMapConfig()
-        vote_map_message = vote_map_config.get_votemap_instruction_text()
 
         if not vote_map_config.get_vote_enabled():
             return
-
         if not self.is_time_for_reminder() and not force:
             return
 
+        vote_map_message = vote_map_config.get_votemap_instruction_text()
         if "{map_selection}" not in vote_map_message:
             logger.error(
                 "Vote map is not configured properly, {map_selection} is not present in the instruction text"

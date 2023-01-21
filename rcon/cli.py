@@ -7,7 +7,8 @@ from typing import Set
 import click
 
 import rcon.expiring_vips.service
-from rcon import auto_settings, broadcast, game_logs, routines
+from rcon import auto_settings, game_logs, routines
+from rcon.automods import automod
 from rcon.cache_utils import RedisCached, get_redis_pool
 from rcon.game_logs import LogLoop
 from rcon.models import install_unaccent
@@ -18,7 +19,6 @@ from rcon.server_stats import (
     save_server_stats_since_inception,
 )
 from rcon.settings import SERVER_INFO
-from rcon.automods import automod
 from rcon.steam_utils import enrich_db_users
 from rcon.user_config import seed_default_config
 from rcon.utils import ApiKey
@@ -80,7 +80,11 @@ def run_logs_eventloop():
 
 @cli.command(name="broadcast_loop")
 def run_broadcast_loop():
-    broadcast.run()
+    """
+    Kept for backward compatibility when people use their own supervisord config with a stale broadcast program config.
+    """
+    logger.debug("Broadcast loop moved from own process to routines")
+    exit(0)
 
 
 @cli.command(name="auto_settings")
@@ -235,8 +239,8 @@ for name in dir(ctl):
     func = getattr(ctl, name)
 
     if (
-        not any(name.startswith(prefix) for prefix in PREFIXES_TO_EXPOSE)
-        or name in EXCLUDED
+            not any(name.startswith(prefix) for prefix in PREFIXES_TO_EXPOSE)
+            or name in EXCLUDED
     ):
         continue
     wrapped = do_print(func)
@@ -250,7 +254,6 @@ for name in dir(ctl):
             wrapped = click.argument(pname)(wrapped)
 
     cli.command(name=name)(wrapped)
-
 
 if __name__ == "__main__":
     cli()

@@ -1,17 +1,11 @@
-import json
+import asyncio
 import logging
-import os
 import random
-import time
-from functools import partial, wraps
-
-import redis
+from functools import partial
 
 from rcon.audit import ingame_mods, online_mods
-from rcon.cache_utils import get_redis_pool
 from rcon.commands import CommandFailedError
-from rcon.vote_map import VoteMap
-from rcon.settings import SERVER_INFO
+from rcon.recorded_commands import RecordedRcon
 from rcon.user_config import AutoBroadcasts, VoteMapConfig
 from rcon.utils import (
     LONG_HUMAN_MAP_NAMES,
@@ -21,6 +15,12 @@ from rcon.utils import (
     categorize_maps,
     numbered_maps,
 )
+from rcon.vote_map import VoteMap
+
+
+logger = logging.getLogger(__name__)
+
+CHECK_INTERVAL = 20
 
 
 class LazyPrinter:
@@ -40,7 +40,7 @@ class LazyPrinter:
             return self.default
 
 
-def get_votes_status(none_on_fail=False):
+def get_votes_status():
     return VoteMap().get_vote_overview()
 
 
@@ -58,20 +58,15 @@ def format_winning_map(ctl, winning_maps, display_count=2, default=None):
     )
 
 
-logger = logging.getLogger(__name__)
-
-CHECK_INTERVAL = 20
-
-
 def chunks(lst, n):
     """Yield successive n-sized chunks from lst."""
     for i in range(0, len(lst), n):
-        yield lst[i : i + n]
+        yield lst[i: i + n]
 
 
 def scrolling_votemap(rcon, winning_maps, repeat=10):
     config = VoteMapConfig()
-    vote_options = format_map_vote(rcon, "line", short_names=False)
+    vote_options = format_map_vote("line", short_names=False)
     if not vote_options:
         return ""
     separator = "  ***  "
@@ -116,7 +111,7 @@ def join_vote_options(join_char, selection, human_name_map, maps_to_numbers):
     )
 
 
-def format_map_vote(rcon, format_type="line", short_names=True):
+def format_map_vote(format_type="line", short_names=True):
     selection = VoteMap().get_selection()
     if not selection:
         return ""
@@ -166,7 +161,7 @@ def get_ingame_mods():
     return [mod["username"] for mod in ingame_mods()]
 
 
-def _get_vars(ctl):
+def _get_vars(ctl: RecordedRcon):
     get_vip_names = lambda: [d["name"] for d in ctl.get_vip_ids()]
     get_admin_names = lambda: [d["name"] for d in ctl.get_admin_ids()]
     get_owner_names = lambda: [
@@ -198,25 +193,25 @@ def _get_vars(ctl):
         "vips": LazyPrinter(get_vip_names, is_list=True),
         "randomvip": LazyPrinter(lambda: random.choice(get_vip_names() or [""])),
         "votenextmap_line": LazyPrinter(
-            partial(format_map_vote, ctl, format_type="line")
+            partial(format_map_vote, format_type="line")
         ),
         "votenextmap_noscroll": LazyPrinter(
-            partial(format_map_vote, ctl, format_type="max_length")
+            partial(format_map_vote, format_type="max_length")
         ),
         "votenextmap_vertical": LazyPrinter(
-            partial(format_map_vote, ctl, format_type="vertical")
+            partial(format_map_vote, format_type="vertical")
         ),
         "votenextmap_by_mod_line": LazyPrinter(
-            partial(format_map_vote, ctl, format_type="by_mod_line")
+            partial(format_map_vote, format_type="by_mod_line")
         ),
         "votenextmap_by_mod_vertical": LazyPrinter(
-            partial(format_map_vote, ctl, format_type="by_mod_vertical")
+            partial(format_map_vote, format_type="by_mod_vertical")
         ),
         "votenextmap_by_mod_vertical_all": LazyPrinter(
-            partial(format_map_vote, ctl, format_type="by_mod_vertical_all")
+            partial(format_map_vote, format_type="by_mod_vertical_all")
         ),
         "votenextmap_by_mod_split": LazyPrinter(
-            partial(format_map_vote, ctl, format_type="by_mod_split")
+            partial(format_map_vote, format_type="by_mod_split")
         ),
         "total_votes": vote_status.get("total_votes"),
         "winning_maps_short": LazyPrinter(
@@ -239,7 +234,7 @@ def _get_vars(ctl):
     return subs
 
 
-def format_message(ctl, msg):
+def format_message(ctl: RecordedRcon, msg):
     subs = _get_vars(ctl)
 
     try:
@@ -251,12 +246,7 @@ def format_message(ctl, msg):
         return msg
 
 
-def run():
-    # avoid circular import
-    from rcon.extended_commands import Rcon
-
-    ctl = Rcon(SERVER_INFO)
-
+async def run(rcon: RecordedRcon):
     config = AutoBroadcasts()
 
     while True:
@@ -266,25 +256,21 @@ def run():
             logger.debug(
                 "Auto broadcasts are disabled. Sleeping %s seconds", CHECK_INTERVAL
             )
-            time.sleep(CHECK_INTERVAL)
+            await asyncio.sleep(CHECK_INTERVAL)
             continue
 
         if config.get_randomize():
-            logger.debug("Auto broadcasts. Radomizing")
+            logger.debug("Auto broadcasts. Randomizing")
             random.shuffle(msgs)
 
         for time_sec, msg in msgs:
             if not config.get_enabled():
                 break
 
-            formatted = format_message(ctl, msg)
+            formatted = format_message(rcon, msg)
             logger.debug("Broadcasting for %s seconds: %s", time_sec, formatted)
             try:
-                ctl.set_broadcast(formatted)
+                rcon.set_broadcast(formatted)
             except CommandFailedError:
                 logger.exception("Unable to broadcast %s", msg)
-            time.sleep(int(time_sec))
-
-
-if __name__ == "__main__":
-    run()
+            await asyncio.sleep(int(time_sec))
