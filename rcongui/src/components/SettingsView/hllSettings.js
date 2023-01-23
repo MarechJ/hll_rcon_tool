@@ -1,5 +1,12 @@
 import React from "react";
-import { Button, Grid, Link, TextField, Typography, Tooltip } from "@material-ui/core";
+import {
+  Button,
+  Grid,
+  Link,
+  TextField,
+  Typography,
+  Tooltip,
+} from "@material-ui/core";
 import { range } from "lodash/util";
 import {
   get,
@@ -21,6 +28,7 @@ import AutoRefreshLine from "../autoRefreshLine";
 import { ForwardCheckBox, WordList } from "../commonComponent";
 import VoteMapConfig from "./voteMapConfig";
 import HelpIcon from "@material-ui/icons/Help";
+import MapRotation from "../MapManager";
 
 const ProfanityFiler = ({
   words,
@@ -396,11 +404,12 @@ class HLLSettings extends React.Component {
               classes={classes}
               forward={forwardVIP}
               onFowardChange={() => this.toggle("forwardVIP")}
-              onAdd={(name, steamID64) =>
+              onAdd={(name, steamID64, expirationTimestamp) =>
                 sendAction("do_add_vip", {
                   steam_id_64: steamID64,
                   name: name,
                   forward: forwardVIP,
+                  expiration: expirationTimestamp,
                 }).then(this.loadVips)
               }
               onDelete={(name, steamID64) =>
@@ -673,6 +682,14 @@ class HLLSettings extends React.Component {
         <Grid container className={classes.paper} xs={12}>
           <VoteMapConfig />
         </Grid>
+        <Grid container className={classes.paddingTop} justify="center">
+          <Grid item xs={12}>
+            <Typography variant="h5">Map rotation</Typography>
+
+            <MapRotation classes={classes} />
+          </Grid>
+        </Grid>
+        {/* LEGACY ROTATION GUI 
         <Grid container className={classes.paddingTop} justify="center" xs={12}>
           <Grid item>
             <Typography variant="h5" gutterBottom>
@@ -728,6 +745,7 @@ class HLLSettings extends React.Component {
             </Typography>
           </Grid>
         </Grid>
+            END LEGACY ROTATION UI */}
         <Grid item xs={12}>
           <ProfanityFiler
             words={profanities}

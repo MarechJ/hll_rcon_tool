@@ -19,7 +19,7 @@ const Reason = ({
   extraClasses,
   helperText = "Leave blank if you want a confirmation popup",
   message,
-  label = "Punish/Kick/Ban message",
+  label = "In Game Message/Punish/Kick/Ban message",
   textHistory,
   saveMessage,
   setSaveMessage,

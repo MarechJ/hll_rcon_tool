@@ -1,7 +1,12 @@
 import React from "react";
-import {getSharedMessages, handle_http_errors, postData, showResponse,} from "../../utils/fetchUtils";
+import {
+  getSharedMessages,
+  handle_http_errors,
+  postData,
+  showResponse,
+} from "../../utils/fetchUtils";
 import TextHistory from "../textHistory";
-import {ManualPlayerInput} from "../commonComponent"
+import { ManualPlayerInput } from "../commonComponent";
 
 class Blacklist extends React.Component {
   constructor(props) {

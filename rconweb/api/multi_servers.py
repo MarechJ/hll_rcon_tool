@@ -11,9 +11,10 @@ from rcon.utils import ApiKey
 from .auth import api_response, login_required
 from .utils import _get_data
 
-logger = logging.getLogger('rcon')
+logger = logging.getLogger("rcon")
 
-@login_required
+
+@login_required()
 @csrf_exempt
 def get_server_list(request):
     api_key = ApiKey()
@@ -26,14 +27,18 @@ def get_server_list(request):
         if key == my_key:
             continue
         try:
-            res = requests.get(f'http://{host}/api/get_connection_info', timeout=5, cookies=dict(sessionid=request.COOKIES.get('sessionid')))
+            res = requests.get(
+                f"http://{host}/api/get_connection_info",
+                timeout=5,
+                cookies=dict(sessionid=request.COOKIES.get("sessionid")),
+            )
             if res.ok:
-                names.append(res.json()['result'])
+                names.append(res.json()["result"])
         except requests.exceptions.RequestException:
             logger.warning(f"Unable to connect with {host}")
-    
+
     return api_response(names, failed=False, command="server_list")
-        
+
 
 def forward_request(request):
     api_key = ApiKey()
@@ -45,19 +50,25 @@ def forward_request(request):
         if key == my_key:
             continue
         try:
-            url = f'http://{host}{request.path}'
-            
+            url = f"http://{host}{request.path}"
+
             params = dict(request.GET)
-            params.pop('forward', None)
+            params.pop("forward", None)
             try:
                 data = json.loads(request.body)
-                data.pop('forward', None)
+                data.pop("forward", None)
             except json.JSONDecodeError:
                 data = None
             logger.info("Forwarding request: %s %s %s", url, params, data)
-            res = requests.get(url, params=params, json=data, timeout=5, cookies=dict(sessionid=request.COOKIES.get('sessionid')))
+            res = requests.get(
+                url,
+                params=params,
+                json=data,
+                timeout=5,
+                cookies=dict(sessionid=request.COOKIES.get("sessionid")),
+            )
             if res.ok:
-                r = {'host': host,'response': res.json()}
+                r = {"host": host, "response": res.json()}
                 results.append(r)
                 logger.info(r)
             else:
@@ -67,6 +78,7 @@ def forward_request(request):
             logger.warning(f"Unable to connect with {host}")
 
     return results
+
 
 def forward_command(path, params=None, json=None, sessionid=None):
     api_key = ApiKey()
@@ -76,26 +88,32 @@ def forward_command(path, params=None, json=None, sessionid=None):
     data = deepcopy(json) or {}
     results = []
 
-    if 'forwarded' in params or 'forwarded' in data:
+    if "forwarded" in params or "forwarded" in data:
         logger.debug("The request was already forwarded")
         return []
     if params:
-        params.pop('forward', None)
-        params['forwarded'] = "yes"
+        params.pop("forward", None)
+        params["forwarded"] = "yes"
     if data:
-        data.pop('forward', None)
-        data['forwarded'] = "yes"
+        data.pop("forward", None)
+        data["forwarded"] = "yes"
 
     for host, key in keys.items():
         if key == my_key:
             continue
         try:
-            url = f'http://{host}{path}'
+            url = f"http://{host}{path}"
 
             logger.info("Forwarding request: %s %s %s", url, params, data)
-            res = requests.get(url, params=params, json=data, timeout=5, cookies=dict(sessionid=sessionid))
+            res = requests.get(
+                url,
+                params=params,
+                json=data,
+                timeout=5,
+                cookies=dict(sessionid=sessionid),
+            )
             if res.ok:
-                r = {'host': host,'response': res.json()}
+                r = {"host": host, "response": res.json()}
                 results.append(r)
                 logger.info(r)
             else:
@@ -103,6 +121,5 @@ def forward_command(path, params=None, json=None, sessionid=None):
                 logger.warning(f"Forwarding to {host} failed %s", res.text)
         except requests.exceptions.RequestException:
             logger.warning(f"Unable to connect with {host}")
-    
-    return results
 
+    return results

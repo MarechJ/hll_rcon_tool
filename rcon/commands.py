@@ -1,12 +1,10 @@
 import logging
 import socket
 import time
-import re
-from dataclasses import dataclass
 from functools import wraps
+from typing import List
 
 from rcon.connection import HLLConnection
-from rcon.settings import check_config
 
 logger = logging.getLogger(__name__)
 
@@ -57,8 +55,8 @@ def _auto_retry(method):
                 raise
             time.sleep(5)
             logger.exception("Auto retrying %s %s %s", method.__name__, args, kwargs)
-            
-            try: 
+
+            try:
                 return method(self, *args, **kwargs)
             except (HLLServerError, UnicodeDecodeError):
                 self._reconnect()
@@ -76,6 +74,7 @@ class ServerCtl:
     """
 
     def __init__(self, config, auto_retry=1):
+        # .env fed config from rcon.SERVER_INFO
         self.config = config
         self.conn = None
         # self._connect()
@@ -99,7 +98,7 @@ class ServerCtl:
         self._connect()
 
     @_auto_retry
-    def _request(self, command: str, can_fail=True, log_info=False):
+    def _request(self, command: str, can_fail=True, log_info=False, decode=True):
         if not self.conn:
             self._connect()
         if log_info:
@@ -108,7 +107,10 @@ class ServerCtl:
             logger.debug(command)
         try:
             self.conn.send(command.encode())
-            result = self.conn.receive().decode()
+            if decode:
+                result = self.conn.receive().decode()
+            else:
+                result = self.conn.receive()
         except (
             RuntimeError,
             BrokenPipeError,
@@ -119,7 +121,7 @@ class ServerCtl:
             logger.exception("Failed request")
             raise HLLServerError(command) from e
 
-        if result == "FAIL":
+        if (decode and result == "FAIL") or (not decode and result == b"FAIL"):
             if can_fail:
                 raise CommandFailedError(command)
             else:
@@ -162,23 +164,40 @@ class ServerCtl:
         )
 
     def _read_list(self, raw):
-        res = raw.split("\t")
+        res = raw.split(b"\t")
 
         try:
             expected_len = int(res[0])
+            logger.debug("Expected list length %s", expected_len)
         except ValueError:
             raise HLLServerError(
                 "Unexpected response from server." "Unable to get list length"
             )
 
+        self.conn.lock()
         # Max 30 tries
-        for i in range(30):
-            if expected_len <= len(res) - 1:
+        for i in range(1000):
+            if expected_len <= len(res) - 1 and raw[-1] in [0, 9, 10]:  # \0 \t or \n
+                logger.debug(
+                    "List seems complete length is %s/%s last char is %s",
+                    len(res),
+                    expected_len,
+                    raw[-1],
+                )
                 break
-            raw += self.conn.receive().decode()
-            res = raw.split("\t")
+            logger.debug(
+                "Reading again list length is %s/%s last char is %s",
+                len(res),
+                expected_len,
+                raw[-1],
+            )
+            raw += self.conn.receive(unlock=False)
+            res = raw.split(b"\t")
+            # logger.warning(f"{res}|")
 
-        if res[-1] == "":
+        self.conn.unlock()
+
+        if res[-1] == b"":
             # There's a trailin \t
             res = res[:-1]
         if expected_len < len(res) - 1:
@@ -187,11 +206,11 @@ class ServerCtl:
                 f" expected {expected_len} got {len(res) - 1}"
             )
 
-        return res[1:]
+        return [l.decode() for l in res[1:]]
 
     @_auto_retry
     def _get(self, item, is_list=False, can_fail=True):
-        res = self._request(f"get {item}", can_fail)
+        res = self._request(f"get {item}", can_fail, decode=not is_list)
 
         if not is_list:
             return res
@@ -216,7 +235,7 @@ class ServerCtl:
         return self._get("map", can_fail=False)
 
     def get_maps(self):
-        return self._get("mapsforrotation", True, can_fail=False)
+        return sorted(self._get("mapsforrotation", True, can_fail=False))
 
     def get_players(self):
         return self._get("players", True, can_fail=False)
@@ -226,18 +245,22 @@ class ServerCtl:
 
     def _is_info_correct(self, player, raw_data):
         try:
-            lines = raw_data.split('\n')
+            lines = raw_data.split("\n")
             return lines[0] == f"Name: {player}"
         except Exception:
             logger.exception("Bad playerinfo data")
             return False
 
-    def get_player_info(self, player, can_fail=False):
+    def get_player_info(self, player, can_fail=True):
         data = self._request(f"playerinfo {player}", can_fail=can_fail)
         if not self._is_info_correct(player, data):
             data = self._request(f"playerinfo {player}", can_fail=can_fail)
         if not self._is_info_correct(player, data):
-            raise CommandFailedError("The game server is returning the wrong player info for %s we got %s", player, data)
+            raise CommandFailedError(
+                "The game server is returning the wrong player info for %s we got %s",
+                player,
+                data,
+            )
         return data
 
     def get_admin_ids(self):
@@ -279,20 +302,26 @@ class ServerCtl:
     @_auto_retry
     def get_logs(self, since_min_ago, filter_=""):
         res = self._request(f"showlog {since_min_ago}")
-        for i in range(30):
-            if res[-1] == "\n":
-                break
-            try:
-                res += self.conn.receive().decode()
-            except (
-                RuntimeError,
-                BrokenPipeError,
-                socket.timeout,
-                ConnectionResetError,
-                UnicodeDecodeError,
-            ):
-                logger.exception("Failed request")
-                raise HLLServerError(f"showlog {since_min_ago}")
+        if res == "EMPTY":
+            return ""
+        self.conn.lock()
+        try:
+            for i in range(30):
+                if res[-1] == "\n":
+                    break
+                try:
+                    res += self.conn.receive(unlock=False).decode()
+                except (
+                    RuntimeError,
+                    BrokenPipeError,
+                    socket.timeout,
+                    ConnectionResetError,
+                    UnicodeDecodeError,
+                ):
+                    logger.exception("Failed request")
+                    raise HLLServerError(f"showlog {since_min_ago}")
+        finally:
+            self.conn.unlock()
         return res
 
     def get_timed_logs(self, since_min_ago, filter_=""):
@@ -368,13 +397,28 @@ class ServerCtl:
         return self._request(f"switchteamondeath {player}", log_info=True)
 
     def do_switch_player_now(self, player):
-        return self._request(f'switchteamnow {player}', log_info=True)
+        return self._request(f"switchteamnow {player}", log_info=True)
 
-    def do_add_map_to_rotation(self, map_name):
-        return self._request(f"rotadd {map_name}", can_fail=False, log_info=True)
+    def do_add_map_to_rotation(
+        self,
+        map_name: str,
+        after_map_name: str = None,
+        after_map_name_number: str = None,
+    ):
+        cmd = f"rotadd {map_name}"
+        if after_map_name:
+            cmd = f"{cmd} {after_map_name}"
+            if after_map_name_number:
+                cmd = f"{cmd} {after_map_name_number}"
 
-    def do_remove_map_from_rotation(self, map_name):
-        return self._request(f"rotdel {map_name}", can_fail=False, log_info=True)
+        return self._request(cmd, can_fail=False, log_info=True)
+
+    def do_remove_map_from_rotation(self, map_name, map_number: str = None):
+        cmd = f"rotdel {map_name}"
+        if map_number:
+            cmd = f"{cmd} {map_number}"
+
+        return self._request(cmd, can_fail=False, log_info=True)
 
     @_escape_params
     def do_punish(self, player, reason):
@@ -428,6 +472,28 @@ class ServerCtl:
 
     def do_remove_vip(self, steam_id_64):
         return self._request(f"vipdel {steam_id_64}", log_info=True)
+
+    @_escape_params
+    def do_message_player(self, player=None, steam_id_64=None, message=""):
+        return self._request(
+            f'message "{steam_id_64 or player}" {message}',
+            log_info=True,
+        )
+
+    def get_gamestate(self) -> List[str]:
+        """
+        Players: Allied: 0 - Axis: 1
+        Score: Allied: 2 - Axis: 2
+        Remaining Time: 0:11:51
+        Map: foy_warfare
+        Next Map: stmariedumont_warfare
+
+        """
+        # Has no trailing "\n"
+
+        result = self._get("gamestate", can_fail=False)
+        logger.info("Gamestate results:\n|%s|", result)
+        return result.split("\n")
 
 
 if __name__ == "__main__":

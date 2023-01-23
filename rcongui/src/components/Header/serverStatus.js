@@ -1,17 +1,26 @@
 import React from "react";
 import "react-toastify/dist/ReactToastify.css";
 import Grid from "@material-ui/core/Grid";
-import {get, handle_http_errors, showResponse} from "../../utils/fetchUtils";
+import { get, handle_http_errors, showResponse } from "../../utils/fetchUtils";
 
 import debounce from "lodash/debounce";
-import {useTheme} from "@material-ui/core/styles";
+import { useTheme } from "@material-ui/core/styles";
 import useMediaQuery from "@material-ui/core/useMediaQuery";
 import Menu from "@material-ui/core/Menu";
 import MenuItem from "@material-ui/core/MenuItem";
 import Link from "@material-ui/core/Link";
-import {fromJS, List} from "immutable";
+import { fromJS, List } from "immutable";
 
-const Status = ({ classes, name, nbPlayers, map, serverList }) => {
+const Status = ({
+  classes,
+  name,
+  nbPlayers,
+  map,
+  serverList,
+  timeRemaining,
+  balance,
+  score,
+}) => {
   const theme = useTheme();
   const isSmall = useMediaQuery(theme.breakpoints.down("sm"));
   const [anchorEl, setAnchorEl] = React.useState(null);
@@ -44,19 +53,27 @@ const Status = ({ classes, name, nbPlayers, map, serverList }) => {
             onClose={handleClose}
           >
             {serverList.map((s) => {
-              let link = `${window.location.protocol}//${window.location.hostname}:${s.get('port')}${window.location.pathname}${window.location.hash}`
-              if (s.get('link')) {
-                link = `${s.get('link')}${window.location.pathname}${window.location.hash}`
+              let link = `${window.location.protocol}//${
+                window.location.hostname
+              }:${s.get("port")}${window.location.pathname}${
+                window.location.hash
+              }`;
+              if (s.get("link")) {
+                link = `${s.get("link")}${window.location.pathname}${
+                  window.location.hash
+                }`;
               }
-              return <MenuItem onClick={handleClose}>
-                <Link color="inherit" href={link}>
-                  {s.get("name")}
-                </Link>
-              </MenuItem>
-          })}
+              return (
+                <MenuItem onClick={handleClose}>
+                  <Link color="inherit" href={link}>
+                    {s.get("name")}
+                  </Link>
+                </MenuItem>
+              );
+            })}
           </Menu>
           <small style={{ display: "block" }}>
-            {nbPlayers} - {map}
+            {nbPlayers} ({balance}) - {map} - {timeRemaining} - {score}
           </small>
         </Grid>
       </Grid>
@@ -77,6 +94,14 @@ class ServerStatus extends React.Component {
       listRefreshIntervalSec: 30,
       interval: null,
       intervalLoadList: null,
+      numAlliedPlayers: 0,
+      numAxisPlayers: 0,
+      alliedScore: 0,
+      axisScore: 0,
+      timeRemaining: "0:00:00",
+      rawTimeRemaining: "0:00:00",
+      currentMap: "",
+      nextMap: "",
     };
 
     this.debouncedLoad = debounce(
@@ -85,6 +110,10 @@ class ServerStatus extends React.Component {
     );
     this.debouncedLoadList = debounce(
       this.loadServerList.bind(this),
+      this.state.listRefreshIntervalSec
+    );
+    this.debouncedLoadInfo = debounce(
+      this.loadInfo.bind(this),
       this.state.listRefreshIntervalSec
     );
   }
@@ -98,12 +127,13 @@ class ServerStatus extends React.Component {
       ),
     });
     this.setState({
-      intervalLoadList: setInterval(
-        this.debouncedLoadList,
-        this.state.listRefreshIntervalSec * 1000
-      ),
+      intervalLoadList: setInterval(() => {
+        this.debouncedLoadList();
+        this.debouncedLoadInfo();
+      }, this.state.listRefreshIntervalSec * 1000),
     });
     this.loadServerList();
+    this.loadInfo();
   }
 
   componentWillUnmount() {
@@ -125,6 +155,24 @@ class ServerStatus extends React.Component {
       .catch(handle_http_errors);
   }
 
+  async loadInfo() {
+    return get(`get_gamestate`)
+      .then((response) => showResponse(response, "get_gamestate", false))
+      .then((data) => {
+        this.setState({
+          numAlliedPlayers: data.result.num_allied_players,
+          numAxisPlayers: data.result.num_axis_players,
+          alliedScore: data.result.allied_score,
+          axisScore: data.result.axis_score,
+          timeRemaining: data.result.time_remaining,
+          rawTimeRemaining: data.result.raw_time_remaining,
+          currentMap: data.result.current_map,
+          nextMap: data.result.next_map,
+        });
+      })
+      .catch(handle_http_errors);
+  }
+
   async loadServerList() {
     return get(`server_list`)
       .then((response) => showResponse(response, "server_list", false))
@@ -137,7 +185,17 @@ class ServerStatus extends React.Component {
   }
 
   render() {
-    const { map, name, nbPlayers, serverList } = this.state;
+    const {
+      map,
+      name,
+      nbPlayers,
+      serverList,
+      rawTimeRemaining,
+      axisScore,
+      alliedScore,
+      numAxisPlayers,
+      numAlliedPlayers,
+    } = this.state;
     const { classes } = this.props;
 
     return (
@@ -147,6 +205,9 @@ class ServerStatus extends React.Component {
         nbPlayers={nbPlayers}
         map={map}
         serverList={serverList}
+        timeRemaining={rawTimeRemaining}
+        score={`${alliedScore}:${axisScore}`}
+        balance={`${numAlliedPlayers}vs${numAxisPlayers}`}
       />
     );
   }

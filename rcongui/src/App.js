@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React from "react";
 import "./App.css";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -25,7 +25,9 @@ import {
   LiveSessionScore,
 } from "./components/Scoreboard/LiveScore";
 import ServerInfo from "./components/Embeds/ServerInfo";
-import GameView from "./components/GameView"
+import ServerStatsPage from "./components/ServerStats";
+import GameView from "./components/GameView";
+import AuditLog from "./components/AuditLog";
 
 const Live = ({ classes }) => {
   const [mdSize, setMdSize] = React.useState(6);
@@ -63,6 +65,7 @@ const Live = ({ classes }) => {
 
 // Easy way to make ugly ass themes: https://material.io/resources/color/#!/?view.left=0&view.right=0&primary.color=33691E&secondary.color=3E2723
 const darkTheme = createMuiTheme({
+  editor: "vs-dark",
   palette: {
     type: "dark",
   },
@@ -75,6 +78,7 @@ const lightTheme = createMuiTheme({
 });
 
 const GreenYellowDarkTheme = createMuiTheme({
+  editor: "vs-dark",
   palette: {
     primary: {
       light: "#5edfca",
@@ -151,7 +155,8 @@ const RedTheme = createMuiTheme({
   },
 });
 
-const GreyBlueTheme = createMuiTheme({
+const GreyBlueDarkTheme = createMuiTheme({
+  editor: "vs-dark",
   palette: {
     primary: {
       light: "#8eacbb",
@@ -195,6 +200,7 @@ const PurplePinkTheme = createMuiTheme({
 });
 
 const CamoDarkTheme = createMuiTheme({
+  editor: "vs-dark",
   palette: {
     primary: {
       light: "#629749",
@@ -345,7 +351,7 @@ function App() {
     GreenYellowLight: GreenYellowLightTheme,
     YellowGreen: YellowGreenTheme,
     Red: RedTheme,
-    GreyBlue: GreyBlueTheme,
+    GreyBlueDark: GreyBlueDarkTheme,
     CamoDark: CamoDarkTheme,
     PurplePink: PurplePinkTheme,
     CamoLight: CamoLight,
@@ -378,11 +384,14 @@ function App() {
           )}
 
           <Switch>
-          <Route path="/gameview" exact>
+            <Route path="/gameview" exact>
               <GameView classes={classes} />
             </Route>
             <Route path="/serverinfo" exact>
               <ServerInfo classes={classes} />
+            </Route>
+            <Route path="/auditlogs" exact>
+              <AuditLog classes={classes} />
             </Route>
             <Route
               path="/livescore"
@@ -429,8 +438,8 @@ function App() {
                     <Grid item sm={12} lg={6}>
                       <RconSettings
                         classes={classes}
-                        theme={userTheme ? userTheme : "Light"}
-                        themes={Object.keys(themes)}
+                        themeName={userTheme ? userTheme : "Light"}
+                        themeNames={Object.keys(themes)}
                         setTheme={setTheme}
                       />
                     </Grid>
@@ -463,6 +472,14 @@ function App() {
                     </Grid>
                     <Grid item sm={12}>
                       <LogsHistory classes={classes} />
+                    </Grid>
+                  </Grid>
+
+                </Route>
+                <Route path="/server">
+                  <Grid container>
+                    <Grid item sm={12} lg={12}>
+                      <ServerStatsPage classes={classes} />
                     </Grid>
                   </Grid>
                 </Route>

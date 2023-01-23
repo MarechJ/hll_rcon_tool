@@ -1,9 +1,9 @@
 import React from "react";
+import { withTheme } from '@material-ui/core/styles';
 import {
   Button,
   Grid,
   IconButton,
-  Link,
   TextField,
   Typography,
   Tooltip,
@@ -36,7 +36,6 @@ import RealVip from "./realVip";
 import HelpIcon from "@material-ui/icons/Help";
 import ServerName from "./serverName";
 import AutoSettings from "./autoSettings";
-
 
 const ManualWatchList = ({ classes }) => {
   const [name, setName] = React.useState("");
@@ -350,9 +349,14 @@ class RconSettings extends React.Component {
       .then(
         (data) =>
           !data.failed &&
-          this.setState({
-            autosettings: JSON.stringify(data.result, null, 2)
-          }, () => this.editorRef.current && this.editorRef.current.setValue(this.state.autosettings))
+          this.setState(
+            {
+              autosettings: JSON.stringify(data.result, null, 2),
+            },
+            () =>
+              this.editorRef.current &&
+              this.editorRef.current.setValue(this.state.autosettings)
+          )
       )
       .catch(handle_http_errors);
   }
@@ -392,7 +396,7 @@ class RconSettings extends React.Component {
   }
 
   handleEditorDidMount(editor, monaco) {
-    this.editorRef.current = editor; 
+    this.editorRef.current = editor;
   }
 
   componentDidMount() {
@@ -425,7 +429,7 @@ class RconSettings extends React.Component {
       autosettings,
       forwardAutoSettings,
     } = this.state;
-    const { classes, theme, themes, setTheme } = this.props;
+    const { classes, theme, themeName, themeNames, setTheme } = this.props;
 
     return (
       <Grid container className={classes.paper} spacing={3}>
@@ -439,10 +443,10 @@ class RconSettings extends React.Component {
           <FormControl style={{ minWidth: "200px" }}>
             <InputLabel>Pick your theme</InputLabel>
             <Select
-              value={theme}
+              value={themeName}
               onChange={(event) => setTheme(event.target.value)}
             >
-              {themes.map((t) => (
+              {themeNames.map((t) => (
                 <MenuItem key={t} value={t}>
                   {t}
                 </MenuItem>
@@ -752,11 +756,14 @@ class RconSettings extends React.Component {
         <Grid item xs={12}>
           <AutoSettings
             words={autosettings}
-            onWordsChange={(words, event) => this.setState({ autosettings: words })}
+            onWordsChange={(words, event) =>
+              this.setState({ autosettings: words })
+            }
             onSave={() => this.saveAutoSettings(autosettings)}
             forward={forwardAutoSettings}
             onFowardChange={() => this.toggle("forwardAutoSettings")}
             onEditorMount={this.handleEditorDidMount}
+            theme={theme.editor ? theme.editor : "vs"}
           />
         </Grid>
 
@@ -781,4 +788,4 @@ class RconSettings extends React.Component {
   }
 }
 
-export default RconSettings;
+export default withTheme(RconSettings);

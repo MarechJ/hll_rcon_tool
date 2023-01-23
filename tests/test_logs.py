@@ -8,7 +8,7 @@ from rcon.extended_commands import Rcon
 # Traceback (most recent call last):
 #  File "/code/rcon/extended_commands.py", line 1157, in parse_logs
 #    player = groups[1]
-#TypeError: 'NoneType' object is not subscriptable
+# TypeError: 'NoneType' object is not subscriptable
 
 
 RAW_LOGS = """
@@ -65,7 +65,8 @@ def test_kicks(*mocks):
         [4:48 min (1646331637)] KICK: [VegaBond] has been kicked. [BANNED FOR 1 HOURS BY THE ADMINISTRATOR!
         [27.8 sec (1646334121)] KICK: [GinPick]ledYak] has been kicked. [PERMANENTLY BANNED BY THE ADMINISTRATOR!
         [2:00 min (1646137918)] BAN: [(WTH) Abusify] has been banned. [BANNED FOR 2 HOURS BY THE ADMINISTRATOR!
-        [2:00 min (1646137918)] KICK: [adamtfitz] has been kicked. [YOU WERE KICKED FOR BEING IDLE]       
+        [2:00 min (1646137918)] KICK: [adamtfitz] has been kicked. [YOU WERE KICKED FOR BEING IDLE]    
+        [4:58 min (1671726145)] KICK: [Duolong] has been kicked. [Host closed the connection.]   
         """
     )
 
@@ -348,7 +349,7 @@ def test_log_parsing(*mocks):
                 "(WTH) Abusify",
                 "GinPick]ledYak",
                 "VegaBond",
-                "adamtfitz"
+                "adamtfitz",
             ]
         )
         assert set(l["timestamp_ms"] for l in res["logs"]) == {

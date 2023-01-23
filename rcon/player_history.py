@@ -3,17 +3,27 @@ import logging
 import math
 import os
 import unicodedata
-from functools import cmp_to_key, wraps
+from functools import cmp_to_key
+
+from rcon.commands import CommandFailedError
 
 from sqlalchemy import func
-from sqlalchemy.orm import contains_eager, defaultload, joinedload
+from sqlalchemy.orm import contains_eager, defaultload
 from sqlalchemy.sql.functions import ReturnTypeFromArgs
 
-from rcon.cache_utils import invalidates, ttl_cache
 from rcon.commands import CommandFailedError
-from rcon.models import (BlacklistedPlayer, PlayerComment, PlayerFlag,
-                         PlayerName, PlayersAction, PlayerSession,
-                         PlayerSteamID, SteamInfo, WatchList, enter_session)
+from rcon.models import (
+    BlacklistedPlayer,
+    PlayerComment,
+    PlayerFlag,
+    PlayerName,
+    PlayersAction,
+    PlayerSession,
+    PlayerSteamID,
+    SteamInfo,
+    WatchList,
+    enter_session,
+)
 
 
 class unaccent(ReturnTypeFromArgs):
@@ -66,6 +76,7 @@ def get_player_profile_by_ids(sess, ids):
         .all()
     )
 
+
 def get_player_profile_by_steam_ids(sess, steam_ids):
     eager_load = [
         PlayerSteamID.names,
@@ -84,7 +95,6 @@ def get_player_profile_by_steam_ids(sess, steam_ids):
     )
 
 
-
 def get_player_profile_by_id(id, nb_sessions):
     with enter_session() as sess:
         player = sess.query(PlayerSteamID).filter(PlayerSteamID.id == id).one_or_none()
@@ -92,8 +102,11 @@ def get_player_profile_by_id(id, nb_sessions):
             return
         return player.to_dict(limit_sessions=nb_sessions)
 
+
 def _get_profiles(sess, steam_ids, nb_sessions=0):
-    return sess.query(PlayerSteamID).filter(PlayerSteamID.steam_id_64.in_(steam_ids)).all()
+    return (
+        sess.query(PlayerSteamID).filter(PlayerSteamID.steam_id_64.in_(steam_ids)).all()
+    )
 
 
 def get_profiles(steam_ids, nb_sessions=1):
@@ -241,6 +254,7 @@ def get_players_by_appearance(
                     "last_seen_timestamp_ms": int(p[2].timestamp() * 1000)
                     if p[2]
                     else None,
+                    "vip_expiration": p[0].vip.expiration if p[0].vip else None,
                 }
                 for p in players
             ],
@@ -298,7 +312,10 @@ def save_player_action(
     rcon, action_type, player_name, by, reason="", steam_id_64=None, timestamp=None
 ):
     with enter_session() as sess:
-        _steam_id_64 = steam_id_64 or rcon.get_player_info(player_name, can_fail=True)["steam_id_64"]
+        _steam_id_64 = (
+            steam_id_64
+            or rcon.get_player_info(player_name, can_fail=True)["steam_id_64"]
+        )
         player = _get_set_player(sess, player_name, _steam_id_64, timestamp=timestamp)
         sess.add(
             PlayersAction(
@@ -321,7 +338,9 @@ def safe_save_player_action(
         return False
 
 
-def save_start_player_session(steam_id_64, timestamp, server_name=None, server_number=None):
+def save_start_player_session(
+    steam_id_64, timestamp, server_name=None, server_number=None
+):
     server_name = server_name or os.getenv("SERVER_SHORT_NAME")
     server_number = server_number or os.getenv("SERVER_NUMBER")
 
@@ -333,9 +352,24 @@ def save_start_player_session(steam_id_64, timestamp, server_name=None, server_n
             )
             return
 
+        start_time = datetime.datetime.fromtimestamp(timestamp)
+        already_saved = (
+            sess.query(PlayerSession)
+            .filter(PlayerSession.steamid == player)
+            .filter(PlayerSession.start == start_time)
+            .first()
+        )
+
+        if already_saved is not None:
+            logger.info(f"Player session starting at {start_time} for player {steam_id_64} already recorded, skipping...")
+            return
+
         sess.add(
             PlayerSession(
-                steamid=player, start=datetime.datetime.fromtimestamp(timestamp), server_name=server_name, server_number=server_number
+                steamid=player,
+                start=start_time,
+                server_name=server_name,
+                server_number=server_number,
             )
         )
         logger.info(
@@ -453,11 +487,25 @@ def remove_player_from_blacklist(steam_id_64):
         sess.commit()
 
 
+def get_player_messages(steam_id_64):
+    with enter_session() as sess:
+        player = (
+            sess.query(PlayerSteamID).filter_by(steam_id_64=steam_id_64).one_or_none()
+        )
+        if player:
+            return [
+                action.to_dict()
+                for action in player.received_actions
+                if action.action_type == "MESSAGE"
+            ]
+        else:
+            raise Exception
+
+
 def get_player_comments(steam_id_64):
     with enter_session() as sess:
         player = sess.query(PlayerSteamID).filter_by(steam_id_64=steam_id_64).one()
         return [c.to_dict() for c in player.comments]
-
 
 
 def post_player_comments(steam_id_64, comment, user="Bot"):

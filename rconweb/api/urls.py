@@ -3,12 +3,14 @@ from django.urls import path
 from rcon import scoreboard
 
 from . import (
+    audit_log,
     auth,
     auto_settings,
     history,
     logs,
     multi_servers,
     scoreboards,
+    server_stats,
     services,
     views,
     vips,
@@ -45,12 +47,16 @@ urlpatterns = [path(name, func, name="name") for name, func in views.commands] +
     path("set_votemap_config", votemap.set_votemap_config),
     path("get_votemap_status", votemap.get_votemap_status),
     path("reset_votemap_state", votemap.reset_votemap_state),
+    path("get_player_messages", history.get_player_messages),
     path("get_player_comment", history.get_player_comment),
     path("post_player_comment", history.post_player_comment),
     path("get_real_vip_config", vips.get_real_vip_config),
     path("set_real_vip_config", vips.set_real_vip_config),
     path("get_auto_settings", auto_settings.get_auto_settings),
     path("set_auto_settings", auto_settings.set_auto_settings),
+    path("get_server_stats", server_stats.get_server_stats),
+    path("get_audit_logs", audit_log.get_audit_logs),
+    path("get_audit_logs_autocomplete", audit_log.get_audit_logs_autocomplete),
     path("do_balance_teams", team_balance.balance_teams),
     path("do_shuffle_teams", team_balance.shuffle_teams),
 ]

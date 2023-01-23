@@ -138,3 +138,11 @@ dmypy.json
 redis_data/
 
 .idea/
+
+# Auto generated Django admin panel stuff
+static/
+
+certs/
+
+# scorebot database
+supervisor_data/

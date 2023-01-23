@@ -1,4 +1,4 @@
-FROM python:3.8-buster
+FROM python:3.11-buster
 
 WORKDIR /code
 RUN apt-get update -y && apt-get install -y cron logrotate
@@ -12,5 +12,6 @@ ENV FLASK_APP rcon.connection
 ENV PYTHONPATH /code/
 RUN chmod +x entrypoint.sh
 RUN chmod +x manage.py
+ENV LOGGING_FILENAME=startup.log
 
 ENTRYPOINT [ "/code/entrypoint.sh" ]

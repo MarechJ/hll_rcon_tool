@@ -1,16 +1,21 @@
-import React, {Component} from "react";
+import React, { Component } from "react";
 import "react-toastify/dist/ReactToastify.css";
-import {get, handle_http_errors, postData, showResponse,} from "../../utils/fetchUtils";
+import {
+  get,
+  handle_http_errors,
+  postData,
+  showResponse,
+} from "../../utils/fetchUtils";
 import AutoRefreshBar from "./header";
 import TextInputBar from "./textInputBar";
 import CompactList from "./playerList";
 import Chip from "@material-ui/core/Chip";
-import {ReasonDialog} from "./playerActions";
+import { ReasonDialog } from "./playerActions";
 import GroupActions from "./groupActions";
 import Unban from "./unban";
-import {fromJS, List} from "immutable";
-import {FlagDialog} from "../PlayersHistory";
-import {getEmojiFlag} from "../../utils/emoji";
+import { fromJS, List } from "immutable";
+import { FlagDialog } from "../PlayersHistory";
+import { getEmojiFlag } from "../../utils/emoji";
 
 function stripDiacritics(string) {
   return typeof string.normalize !== "undefined"
@@ -107,13 +112,18 @@ class PlayerView extends Component {
     message = null,
     comment = null,
     duration_hours = 2,
-    steam_id_64 = null
+    steam_id_64 = null,
+    save_message = true
   ) {
     if (message === null) {
       message = this.state.actionMessage;
     }
-    
-    if (message === "" && !actionType.startsWith("switch_") &&  !actionType.startsWith("unwatch_")) {
+
+    if (
+      message === "" &&
+      !actionType.startsWith("switch_") &&
+      !actionType.startsWith("unwatch_")
+    ) {
       this.setState({
         doConfirm: {
           player: player_name,
@@ -128,6 +138,8 @@ class PlayerView extends Component {
         reason: message,
         comment: comment,
         duration_hours: duration_hours,
+        message: message,
+        save_message: save_message,
       };
       if (actionType === "temp_ban") {
         data["forward"] = "yes";
@@ -141,24 +153,29 @@ class PlayerView extends Component {
     }
     // Work around to the fact that the steam is not always know in this scope (as is changes the behaviour of the temp / perma ban commands)
     if (comment) {
-      let steamid = steam_id_64
+      let steamid = steam_id_64;
       if (!steamid) {
         try {
-          console.log(this.state.players)
-          steamid = this.state.players.filter(p => p.get("name") === player_name).get(0).get('steam_id_64')
-          console.log(steamid)
+          console.log(this.state.players);
+          steamid = this.state.players
+            .filter((p) => p.get("name") === player_name)
+            .get(0)
+            .get("steam_id_64");
+          console.log(steamid);
         } catch (err) {
-          console.log("Unable to get steamId", err)
+          console.log("Unable to get steamId", err);
         }
       }
-      postData(`${process.env.REACT_APP_API_URL}post_player_comment`, {"steam_id_64": steamid, "comment": comment})
-      .then((response) =>
-        showResponse(response, `post_player_comment ${player_name}`, true)
-      )
-      .then(this.loadPlayers)
-      .catch(handle_http_errors);
+      postData(`${process.env.REACT_APP_API_URL}post_player_comment`, {
+        steam_id_64: steamid,
+        comment: comment,
+      })
+        .then((response) =>
+          showResponse(response, `post_player_comment ${player_name}`, true)
+        )
+        .then(this.loadPlayers)
+        .catch(handle_http_errors);
     }
-
   }
 
   onPlayerSelected(players) {
@@ -226,7 +243,7 @@ class PlayerView extends Component {
   }
 
   componentDidMount() {
-    this.loadPlayers()
+    this.loadPlayers();
   }
   render() {
     const { classes, isFullScreen, onFullScreen } = this.props;

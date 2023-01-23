@@ -103,7 +103,7 @@ const ServerInfo = ({ classes }) => {
       ?.get("winning_maps")
       ?.get(0) || ["", 0];
     const totalVotes = serverState.get("vote_status")?.get("total_votes");
-    const nextMap = serverState.get("next_map");
+    const nextMap = serverState.get("next_map")?.get("name");
 
     if (map === nextMap) {
       return `Nextmap ${nextMap} ${nbVotes}/${totalVotes} votes`;
@@ -111,7 +111,6 @@ const ServerInfo = ({ classes }) => {
     return `Nextmap: ${nextMap}`;
   }, [serverState]);
 
- 
   return (
     <GridList cols={1} className={styles.gridList}>
       <GridListTile>
@@ -133,7 +132,7 @@ const ServerInfo = ({ classes }) => {
         />
         <GridListTileBar
           className={styles.titleBarBottom}
-          title={`Time: ${started} - Players: ${serverState.get("nb_players")}`}
+          title={`Time: ${started} - Players: ${serverState.get("player_count")}/${serverState.get("max_player_count")}`}
           subtitle={nextMapString}
           titlePosition="bottom"
         />

@@ -1,17 +1,15 @@
 import logging
 import os
-import random
 import re
-import socket
-from cmath import inf
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import as_completed
 from datetime import datetime, timedelta
-from functools import cached_property
+from functools import update_wrapper
 from time import sleep
-from typing import Any
+from typing import Dict, List, Optional, Tuple, Union
 
 from rcon.cache_utils import get_redis_client, invalidates, ttl_cache
 from rcon.commands import CommandFailedError, HLLServerError, ServerCtl
+from rcon.models import PlayerVIP, enter_session
 from rcon.player_history import get_profiles
 from rcon.steam_utils import (
     get_player_country_code,
@@ -19,6 +17,8 @@ from rcon.steam_utils import (
     get_players_country_code,
     get_players_have_bans,
 )
+from rcon.types import GameState, GetPlayersType, StructuredLogLine
+from rcon.utils import get_server_number
 
 STEAMID = "steam_id_64"
 NAME = "name"
@@ -47,8 +47,25 @@ LOG_ACTIONS = [
     "MATCH",
     "MATCH START",
     "MATCH ENDED",
+    "MESSAGE",
 ]
 logger = logging.getLogger(__name__)
+
+
+MOD_ALLOWED_CMDS = set()
+
+
+def mod_users_allowed(func):
+    """Wrapper to flag a method as something that moderator
+    accounts are allowed to use.
+
+    Moderator accounts should be able to manage online players,
+    for instance banning them. Viewing or changing server settings
+    like map rotation or VIPs should not be allowed.
+    """
+    MOD_ALLOWED_CMDS.add(func.__name__)
+    update_wrapper(wrapper=mod_users_allowed, wrapped=func)
+    return func
 
 
 class Rcon(ServerCtl):
@@ -73,29 +90,10 @@ class Rcon(ServerCtl):
     MAX_SERV_NAME_LEN = 1024  # I totally made up that number. Unable to test
     log_time_regexp = re.compile(r".*\((\d+)\).*")
 
-    def __init__(self, *args, pool_size=20, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.pool_size = pool_size
 
-    @cached_property
-    def thread_pool(self):
-        return ThreadPoolExecutor(self.pool_size)
-
-    @cached_property
-    def connection_pool(self):
-        logger.info("Initializing Rcon connection pool of size %s", self.pool_size)
-        pool = [Rcon(self.config) for _ in range(self.pool_size)]
-        for idx, rcon in enumerate(pool):
-            logger.debug("Connecting rcon %s/%s", idx, self.pool_size)
-            rcon._connect()
-        logger.info("Done initialzing Rcon connection pool")
-        return pool
-
-    def run_in_pool(self, process_number: int, function_name: str, *args, **kwargs):
-        return self.thread_pool.submit(
-            getattr(self.connection_pool[process_number % self.pool_size], function_name), *args, **kwargs
-        )
-
+    @mod_users_allowed
     def get_playerids(self, as_dict=False):
         raw_list = super().get_playerids()
 
@@ -110,6 +108,7 @@ class Rcon(ServerCtl):
 
         return player_dict if as_dict else player_list
 
+    @mod_users_allowed
     def get_vips_count(self):
         players = self.get_playerids()
 
@@ -129,7 +128,7 @@ class Rcon(ServerCtl):
                 return "recon"
             if player.get("role") in ["armycommander"]:
                 return "commander"
-        
+
         return "infantry"
 
     def _has_leader(self, squad):
@@ -138,170 +137,7 @@ class Rcon(ServerCtl):
                 return True
         return False
 
-    @ttl_cache(ttl=60, cache_falsy=False)
-    def get_team_view(self):
-        teams = {}
-        players_by_id = {}
-        for player in super().get_players():
-            try:
-                info = self.get_detailed_player_info(player)
-                print(info)
-            except (HLLServerError, CommandFailedError):
-                logger.exception("Unable to get %s info", player)
-                try:
-                    steam_id_64 = self.get_playerids(as_dict=True).get(player)
-                    info = self._get_default_info_dict(player)
-                    info[STEAMID] = steam_id_64
-                except Exception:
-                    logger.exception("Unable to get %s info with playerids either", player)
-                    continue
-
-            players_by_id[info.get(STEAMID)] = info
-            
-        logger.debug("Getting DB profiles")
-        steam_profiles = {profile[STEAMID]: profile for profile in get_profiles(list(players_by_id.keys()))}
-        logger.debug("Getting VIP list")
-        try:
-            vips = set(v[STEAMID] for v in self.get_vip_ids())
-        except Exception:
-            logger.exception("Failed to get VIPs")
-            vips = set()
-
-        for player in players_by_id.values():
-            steam_id_64 = player[STEAMID]
-            profile = steam_profiles.get(player.get("steam_id_64"), {}) or {}
-            player["profile"] = profile
-            player["is_vip"] = steam_id_64 in vips
-            steaminfo = profile.get("steaminfo", {}) or {}
-            player["country"] = steaminfo.get("country", "private")
-            # TODO refresh ban info and store into DB to avoid IOs here
-            player["steam_bans"] = get_player_has_bans(steam_id_64)
-            teams.setdefault(player.get("team"), {}).setdefault(player.get("unit_name"), {}).setdefault("players", []).append(player)    
-
-        for team, squads in teams.items():
-            if team is None:
-                continue
-            for squad_name, squad in squads.items():
-                squad["type"] = self._guess_squad_type(squad)  
-                squad["has_leader"] = self._has_leader(squad)  
-               
-                try:
-                    squad["combat"] = sum(p["combat"] for p in squad['players'])
-                    squad["offense"] = sum(p["offense"] for p in squad['players'])
-                    squad["defense"] = sum(p["defense"] for p in squad['players'])
-                    squad["support"] = sum(p["support"] for p in squad['players'])
-                    squad["kills"] = sum(p["kills"] for p in squad['players'])
-                    squad["deaths"] = sum(p["deaths"] for p in squad['players'])
-                except Exception as e:
-                    logger.exception()
-
-        game = {}
-        for team, squads in teams.items():
-            if team is None:
-                continue
-            commander = [squad for _, squad in squads.items() if squad["type"] == "commander"]
-            if not commander:
-                commander = None
-            else:
-                commander = commander[0]["players"][0] if commander[0].get("players") else None
-
-            game[team] = {
-                "squads": {
-                    squad_name: squad 
-                    for squad_name, squad in squads.items() 
-                    if squad["type"] != "commander"
-                },
-                "commander": commander,
-                "combat": sum(s["combat"] for s in squads.values()),
-                "offense": sum(s["offense"] for s in squads.values()),
-                "defense": sum(s["defense"] for s in squads.values()),
-                "support": sum(s["support"] for s in squads.values()),
-                "kills": sum(s["kills"] for s in squads.values()),
-                "deaths": sum(s["deaths"] for s in squads.values()),
-                "count": sum(len(s["players"]) for s in squads.values())
-            }
-
-        return game
-
-    @ttl_cache(ttl=2, cache_falsy=False)
-    def get_team_view_fast(self):
-        teams = {}
-        players_by_id = {}
-        players = self.get_players_fast()
-
-        futures = {self.run_in_pool(idx, "get_detailed_player_info", player[NAME]): player for idx, player in enumerate(players)}
-        for future in as_completed(futures):
-            try:
-                player_data = future.result()
-            except Exception:
-                logger.exception("Failed to get info for %s", futures[future])
-                player_data = self._get_default_info_dict(futures[future][NAME])
-            player = futures[future]
-            player.update(player_data)
-            players_by_id[player[STEAMID]] = player
-
-        logger.debug("Getting DB profiles")
-        steam_profiles = {profile[STEAMID]: profile for profile in get_profiles(list(players_by_id.keys()))}
-        logger.debug("Getting VIP list")
-        try:
-            vips = set(v[STEAMID] for v in self.get_vip_ids())
-        except Exception:
-            logger.exception("Failed to get VIPs")
-            vips = set()
-
-        for player in players_by_id.values():
-            steam_id_64 = player[STEAMID]
-            profile = steam_profiles.get(player.get("steam_id_64"), {}) or {}
-            player["profile"] = profile
-            player["is_vip"] = steam_id_64 in vips
-
-            teams.setdefault(player.get("team"), {}).setdefault(player.get("unit_name"), {}).setdefault("players", []).append(player)    
-
-        for team, squads in teams.items():
-            if team is None:
-                continue
-            for squad_name, squad in squads.items():
-                squad["type"] = self._guess_squad_type(squad)  
-                squad["has_leader"] = self._has_leader(squad)  
-               
-                try:
-                    squad["combat"] = sum(p["combat"] for p in squad['players'])
-                    squad["offense"] = sum(p["offense"] for p in squad['players'])
-                    squad["defense"] = sum(p["defense"] for p in squad['players'])
-                    squad["support"] = sum(p["support"] for p in squad['players'])
-                    squad["kills"] = sum(p["kills"] for p in squad['players'])
-                    squad["deaths"] = sum(p["deaths"] for p in squad['players'])
-                except Exception as e:
-                    logger.exception()
-
-        game = {}
-        for team, squads in teams.items():
-            if team is None:
-                continue
-            commander = [squad for _, squad in squads.items() if squad["type"] == "commander"]
-            if not commander:
-                commander = None
-            else:
-                commander = commander[0]["players"][0] if commander[0].get("players") else None
-
-            game[team] = {
-                "squads": {
-                    squad_name: squad 
-                    for squad_name, squad in squads.items() 
-                    if squad["type"] != "commander"
-                },
-                "commander": commander,
-                "combat": sum(s["combat"] for s in squads.values()),
-                "offense": sum(s["offense"] for s in squads.values()),
-                "defense": sum(s["defense"] for s in squads.values()),
-                "support": sum(s["support"] for s in squads.values()),
-                "kills": sum(s["kills"] for s in squads.values()),
-                "deaths": sum(s["deaths"] for s in squads.values()),
-                "count": sum(len(s["players"]) for s in squads.values())
-            }
-
-        return game
-
+    @mod_users_allowed
     @ttl_cache(ttl=60 * 60 * 24, cache_falsy=False)
     def get_player_info(self, player, can_fail=False):
         try:
@@ -339,7 +175,7 @@ class Rcon(ServerCtl):
             "country": country,
             "steam_bans": steam_bans,
         }
-    
+
     def _get_default_info_dict(self, player):
         return dict(
             name=player,
@@ -357,6 +193,7 @@ class Rcon(ServerCtl):
             level=0,
         )
 
+    @mod_users_allowed
     @ttl_cache(ttl=2, cache_falsy=False)
     def get_detailed_player_info(self, player):
         raw = super().get_player_info(player)
@@ -385,7 +222,7 @@ class Rcon(ServerCtl):
             if ": " not in line:
                 logger.warning("Invalid info line: %s", line)
                 continue
-            
+
             key, val = line.split(": ", 1)
             raw_data[key.lower()] = val
 
@@ -393,30 +230,56 @@ class Rcon(ServerCtl):
         # Remap keys and parse values
         data[STEAMID] = raw_data.get("steamid64")
         data["team"] = raw_data.get("team", "None")
-        data["unit_id"], data['unit_name'] = raw_data.get("unit").split(' - ') if raw_data.get("unit") else ("None", None)
-        data["kills"], data["deaths"] = raw_data.get("kills").split(' - Deaths: ') if raw_data.get("kills") else ('0', '0')
+        if raw_data["role"].lower() == "armycommander":
+            data["unit_id"], data["unit_name"] = (-1, "Commmand")
+        else:
+            data["unit_id"], data["unit_name"] = (
+                raw_data.get("unit").split(" - ")
+                if raw_data.get("unit")
+                else ("None", None)
+            )
+        data["kills"], data["deaths"] = (
+            raw_data.get("kills").split(" - Deaths: ")
+            if raw_data.get("kills")
+            else ("0", "0")
+        )
         for k in ["role", "loadout", "level"]:
             data[k] = raw_data.get(k)
 
-        scores = dict([score.split(" ", 1) for score in raw_data.get("score", "C 0, O 0, D 0, S 0").split(", ")])
+        scores = dict(
+            [
+                score.split(" ", 1)
+                for score in raw_data.get("score", "C 0, O 0, D 0, S 0").split(", ")
+            ]
+        )
         map_score = {"C": "combat", "O": "offense", "D": "defense", "S": "support"}
         for key, val in map_score.items():
-            data[map_score[key]] = scores.get(key, '0')
+            data[map_score[key]] = scores.get(key, "0")
 
         # Typecast values
         # cast strings to lower
         for key in ["team", "unit_name", "role", "loadout"]:
             data[key] = data[key].lower() if data.get(key) else None
-   
+
         # cast string numbers to ints
-        for key in ["kills", "deaths", "level", "combat", "offense", "defense", "support", "unit_id"]:
+        for key in [
+            "kills",
+            "deaths",
+            "level",
+            "combat",
+            "offense",
+            "defense",
+            "support",
+            "unit_id",
+        ]:
             try:
                 data[key] = int(data[key])
             except (ValueError, TypeError):
                 data[key] = 0
-        
+
         return data
 
+    @mod_users_allowed
     @ttl_cache(ttl=60 * 60 * 24)
     def get_admin_ids(self):
         res = super().get_admin_ids()
@@ -426,6 +289,7 @@ class Rcon(ServerCtl):
             admins.append({STEAMID: steam_id_64, NAME: name[1:-1], ROLE: role})
         return admins
 
+    @mod_users_allowed
     def get_online_console_admins(self):
         admins = self.get_admin_ids()
         players = self.get_players()
@@ -446,21 +310,19 @@ class Rcon(ServerCtl):
         with invalidates(Rcon.get_admin_ids):
             return super().do_remove_admin(steam_id_64)
 
+    @mod_users_allowed
     @ttl_cache(ttl=2)
-    def get_players_fast(self):        
+    def get_players_fast(self) -> List[GetPlayersType]:
         players = {}
         ids = []
 
         for name, steam_id_64 in self.get_playerids():
-            players[steam_id_64] = {
-                NAME: name,
-                STEAMID: steam_id_64
-            }
+            players[steam_id_64] = {NAME: name, STEAMID: steam_id_64}
             ids.append(steam_id_64)
 
         countries = self.thread_pool.submit(get_players_country_code, ids)
         bans = self.thread_pool.submit(get_players_have_bans, ids)
-        
+
         for future in as_completed([countries, bans]):
             d = future.result()
             for steamid, data in d.items():
@@ -468,6 +330,7 @@ class Rcon(ServerCtl):
 
         return list(players.values())
 
+    @mod_users_allowed
     @ttl_cache(ttl=5)
     def get_players(self):
         return self.get_players_fast()
@@ -482,10 +345,12 @@ class Rcon(ServerCtl):
 
         return players
 
+    @mod_users_allowed
     @ttl_cache(ttl=60)
     def get_perma_bans(self):
         return super().get_perma_bans()
 
+    @mod_users_allowed
     @ttl_cache(ttl=60)
     def get_temp_bans(self):
         res = super().get_temp_bans()
@@ -493,6 +358,20 @@ class Rcon(ServerCtl):
         return res
 
     def _struct_ban(self, ban, type_):
+
+        # Avoid errors on empty temp bans
+        if ban == "":
+            return {
+                "type": type_,
+                "name": None,
+                "steam_id_64": None,
+                "timestamp": None,
+                "ban_time": None,
+                "reason": None,
+                "by": None,
+                "raw": ban,
+            }
+
         # name, time = ban.split(', banned on ')
         # '76561197984877751 : nickname "Dr.WeeD" banned for 2 hours on 2020.12.03-12.40.08 for "None" by admin "test"'
         steamd_id_64, rest = ban.split(" :", 1)
@@ -526,23 +405,55 @@ class Rcon(ServerCtl):
             "raw": ban,
         }
 
+    @mod_users_allowed
     def get_bans(self):
-        temp_bans = [self._struct_ban(b, "temp") for b in self.get_temp_bans()]
-        bans = [self._struct_ban(b, "perma") for b in self.get_perma_bans()]
+        try:
+            temp_bans = []
+            for b in self.get_temp_bans():
+                try:
+                    temp_bans.append(self._struct_ban(b, "temp"))
+                except ValueError:
+                    logger.exception("Invalid temp ban line: %s", b)
+            bans = []
+            for b in self.get_perma_bans():
+                try:
+                    bans.append(self._struct_ban(b, "perma"))
+                except ValueError:
+                    logger.exception("Invalid perm ban line: %s", b)
+        except Exception:
+            self.get_temp_bans.cache_clear()
+            self.get_perma_bans.cache_clear()
+            raise
         # Most recent first
         bans.reverse()
         return temp_bans + bans
 
-    def do_unban(self, steam_id_64):
+    @mod_users_allowed
+    def do_unban(self, steam_id_64) -> List[str]:
+        """Remove all temporary and permanent bans from the steam_id_64"""
         bans = self.get_bans()
         type_to_func = {
             "temp": self.do_remove_temp_ban,
             "perma": self.do_remove_perma_ban,
         }
+        failed_ban_removals: List[str] = []
         for b in bans:
             if b.get("steam_id_64") == steam_id_64:
-                type_to_func[b["type"]](b["raw"])
+                # The game server will sometimes continue to report expired temporary bans
+                # (verified as of 10 Aug 2022 U12 Hotfix)
+                # which will prevent removing permanent bans if we don't catch the failed removal
 
+                # We swallow exceptions here and test for failed unbans in views.py
+                try:
+                    type_to_func[b["type"]](b["raw"])
+                except CommandFailedError:
+                    message = f"Unable to remove {b['type']} ban from {steam_id_64}"
+                    logger.exception(message)
+                    failed_ban_removals.append(message)
+
+        return failed_ban_removals
+
+    @mod_users_allowed
     def get_ban(self, steam_id_64):
         """
         get all bans from steam_id_64
@@ -552,10 +463,24 @@ class Rcon(ServerCtl):
         bans = self.get_bans()
         return list(filter(lambda x: x.get("steam_id_64") == steam_id_64, bans))
 
+    @mod_users_allowed
     @ttl_cache(ttl=60 * 60)
-    def get_vip_ids(self):
+    def get_vip_ids(self) -> List[Dict[str, Union[str, Optional[datetime]]]]:
         res = super().get_vip_ids()
-        l = []
+        player_dicts = []
+
+        vip_expirations: Dict[str, datetime]
+        with enter_session() as session:
+            server_number = get_server_number()
+
+            players: list[PlayerVIP] = (
+                session.query(PlayerVIP)
+                .filter(PlayerVIP.server_number == server_number)
+                .all()
+            )
+            vip_expirations = {
+                player.steamid.steam_id_64: player.expiration for player in players
+            }
 
         for item in res:
             try:
@@ -566,9 +491,11 @@ class Rcon(ServerCtl):
             except ValueError:
                 self._reconnect()
                 raise
-            l.append(dict(zip((STEAMID, NAME), (steam_id_64, name))))
+            player = dict(zip((STEAMID, NAME), (steam_id_64, name)))
+            player["vip_expiration"] = vip_expirations.get(steam_id_64, None)
+            player_dicts.append(player)
 
-        return sorted(l, key=lambda d: d[NAME])
+        return sorted(player_dicts, key=lambda d: d[NAME])
 
     def do_remove_vip(self, steam_id_64):
         with invalidates(Rcon.get_vip_ids):
@@ -589,8 +516,79 @@ class Rcon(ServerCtl):
 
         return "SUCCESS"
 
+    @mod_users_allowed
+    def get_gamestate(self) -> GameState:
+        """
+        Returns player counts, team scores, remaining match time and current/next map
+
+        Players: Allied: 0 - Axis: 1
+        Score: Allied: 2 - Axis: 2
+        Remaining Time: 0:11:51
+        Map: foy_warfare
+        Next Map: stmariedumont_warfare"""
+        with invalidates(
+            Rcon.team_sizes, Rcon.team_objective_scores, Rcon.round_time_remaining
+        ):
+            (
+                raw_team_size,
+                raw_score,
+                raw_time_remaining,
+                raw_current_map,
+                raw_next_map,
+            ) = super().get_gamestate()
+
+        num_allied_players, num_axis_players = re.match(
+            r"Players: Allied: (\d+) - Axis: (\d+)", raw_team_size
+        ).groups()
+        allied_score, axis_score = re.match(
+            r"Score: Allied: (\d+) - Axis: (\d+)", raw_score
+        ).groups()
+        hours, mins, secs = re.match(
+            r"Remaining Time: (\d):(\d{2}):(\d{2})", raw_time_remaining
+        ).groups()
+
+        raw_time_remaining = raw_time_remaining.split("Remaining Time: ")[1]
+        current_map = raw_current_map.split(": ")[1]
+        next_map = raw_next_map.split(": ")[1]
+
+        return {
+            "num_allied_players": int(num_allied_players),
+            "num_axis_players": int(num_axis_players),
+            "allied_score": int(allied_score),
+            "axis_score": int(axis_score),
+            "time_remaining": timedelta(
+                hours=float(hours), minutes=float(mins), seconds=float(secs)
+            ),
+            "raw_time_remaining": raw_time_remaining,
+            "current_map": current_map,
+            "next_map": next_map,
+        }
+
+    @ttl_cache(ttl=2, cache_falsy=False)
+    def team_sizes(self) -> Tuple[int, int]:
+        """Returns the number of allied/axis players respectively"""
+        result = self.get_gamestate()
+
+        return result["num_allied_players"], result["num_axis_players"]
+
+    @ttl_cache(ttl=2, cache_falsy=False)
+    def team_objective_scores(self) -> Tuple[int, int]:
+        """Returns the number of objectives held by the allied/axis team respectively"""
+        result = self.get_gamestate()
+
+        return result["allied_score"], result["axis_score"]
+
+    @ttl_cache(ttl=2, cache_falsy=False)
+    def round_time_remaining(self) -> timedelta:
+        """Returns the amount of time left in the round as a timedelta"""
+        result = self.get_gamestate()
+
+        return result["time_remaining"]
+
+    @mod_users_allowed
     @ttl_cache(ttl=60)
     def get_next_map(self):
+        # TODO: think about whether or not the new gamestate command can simplify this
         current = self.get_map()
         current = current.replace("_RESTART", "")
         rotation = self.get_map_rotation()
@@ -609,17 +607,26 @@ class Rcon(ServerCtl):
 
     def set_map(self, map_name):
         with invalidates(Rcon.get_map):
-            res = super().set_map(map_name)
-            if res != "SUCCESS":
-                raise CommandFailedError(res)
+            try:
+                res = super().set_map(map_name)
+                if res != "SUCCESS":
+                    raise CommandFailedError(res)
+            except CommandFailedError:
+                self.do_add_map_to_rotation(map_name)
+                if super().set_map(map_name) != "SUCCESS":
+                    raise CommandFailedError(res)
 
+    @mod_users_allowed
     @ttl_cache(ttl=10)
     def get_map(self):
+        # TODO: think about whether or not the new gamestate command can simplify this
         current_map = super().get_map()
         if not self.map_regexp.match(current_map):
             raise CommandFailedError("Server returned wrong data")
+
         return current_map
 
+    @mod_users_allowed
     @ttl_cache(ttl=60 * 60)
     def get_name(self):
         name = super().get_name()
@@ -737,13 +744,15 @@ class Rcon(ServerCtl):
         super().set_broadcast(formatted)
         return prev.decode() if prev else ""
 
-    @ttl_cache(ttl=20)
+    @mod_users_allowed
+    @ttl_cache(ttl=5)
     def get_slots(self):
         res = super().get_slots()
         if not self.slots_regexp.match(res):
             raise CommandFailedError("Server returned crap")
         return res
 
+    @mod_users_allowed
     @ttl_cache(ttl=5, cache_falsy=False)
     def get_status(self):
         slots = self.get_slots()
@@ -800,16 +809,12 @@ class Rcon(ServerCtl):
         except (ValueError, TypeError) as e:
             raise ValueError("Time '%s' is not a valid integer", time_str) from e
 
+    @mod_users_allowed
     @ttl_cache(ttl=2)
     def get_structured_logs(
         self, since_min_ago, filter_action=None, filter_player=None
     ):
-        try:
-            raw = super().get_logs(since_min_ago)
-        except socket.timeout:
-            # The hll server just hangs when there are no logs for the requested time
-            raw = ""
-
+        raw = super().get_logs(since_min_ago)
         return self.parse_logs(raw, filter_action, filter_player)
 
     @ttl_cache(ttl=60 * 60)
@@ -877,40 +882,58 @@ class Rcon(ServerCtl):
         with invalidates(self.get_profanities):
             return super().do_ban_profanities(",".join(profanities))
 
+    @mod_users_allowed
+    def do_punish(self, player, reason):
+        return super().do_punish(player, reason)
+
+    @mod_users_allowed
+    def do_switch_player_now(self, player):
+        return super().do_switch_player_now(player)
+
+    @mod_users_allowed
+    def do_switch_player_on_death(self, player):
+        return super().do_switch_player_on_death(player)
+
+    @mod_users_allowed
     def do_kick(self, player, reason):
         with invalidates(Rcon.get_players):
             return super().do_kick(player, reason)
 
+    @mod_users_allowed
     def do_temp_ban(
         self, player=None, steam_id_64=None, duration_hours=2, reason="", admin_name=""
     ):
         with invalidates(Rcon.get_players, Rcon.get_temp_bans):
-            if player and re.match(r'\d+', player):
+            if player and re.match(r"\d+", player):
                 info = self.get_player_info(player)
                 steam_id_64 = info.get(STEAMID, None)
-                return super().do_temp_ban(None, steam_id_64, duration_hours, reason, admin_name)
+                return super().do_temp_ban(
+                    None, steam_id_64, duration_hours, reason, admin_name
+                )
 
             return super().do_temp_ban(
                 player, steam_id_64, duration_hours, reason, admin_name
             )
 
+    @mod_users_allowed
     def do_remove_temp_ban(self, ban_log):
         with invalidates(Rcon.get_temp_bans):
             return super().do_remove_temp_ban(ban_log)
 
+    @mod_users_allowed
     def do_remove_perma_ban(self, ban_log):
         with invalidates(Rcon.get_perma_bans):
             return super().do_remove_perma_ban(ban_log)
 
+    @mod_users_allowed
     def do_perma_ban(self, player=None, steam_id_64=None, reason="", admin_name=""):
         with invalidates(Rcon.get_players, Rcon.get_perma_bans):
-            if player and re.match(r'\d+', player):
+            if player and re.match(r"\d+", player):
                 info = self.get_player_info(player)
                 steam_id_64 = info.get(STEAMID, None)
                 return super().do_perma_ban(None, steam_id_64, reason, admin_name)
-            
-            return super().do_perma_ban(player, steam_id_64, reason, admin_name)
 
+            return super().do_perma_ban(player, steam_id_64, reason, admin_name)
 
     @ttl_cache(60 * 5)
     def get_map_rotation(self):
@@ -921,11 +944,17 @@ class Rcon(ServerCtl):
                 raise CommandFailedError("Server return wrong data")
         return l
 
-    def do_add_map_to_rotation(self, map_name):
-        return self.do_add_maps_to_rotation([map_name])
+    def do_add_map_to_rotation(
+        self, map_name, after_map_name: str = None, after_map_name_number: str = None
+    ):
+        with invalidates(Rcon.get_map_rotation):
+            super().do_add_map_to_rotation(
+                map_name, after_map_name, after_map_name_number
+            )
 
-    def do_remove_map_from_rotation(self, map_name):
-        return self.do_remove_maps_from_rotation([map_name])
+    def do_remove_map_from_rotation(self, map_name, map_number: str = None):
+        with invalidates(Rcon.get_map_rotation):
+            super().do_remove_map_from_rotation(map_name, map_number)
 
     def do_remove_maps_from_rotation(self, maps):
         with invalidates(Rcon.get_map_rotation):
@@ -939,19 +968,6 @@ class Rcon(ServerCtl):
                 super().do_add_map_to_rotation(map_name)
             return "SUCCESS"
 
-    def do_randomize_map_rotation(self, maps=None):
-        maps = maps or self.get_maps()
-        current = self.get_map_rotation()
-
-        random.shuffle(maps)
-
-        for m in maps:
-            if m in current:
-                self.do_remove_map_from_rotation(m)
-            self.do_add_map_to_rotation(m)
-
-        return maps
-
     def set_maprotation(self, rotation):
         if not rotation:
             raise CommandFailedError("Empty rotation")
@@ -960,32 +976,27 @@ class Rcon(ServerCtl):
         logger.info("Apply map rotation %s", rotation)
 
         current = self.get_map_rotation()
+        logger.info("Current rotation: %s", current)
         if rotation == current:
             logger.debug("Map rotation is the same, nothing to do")
             return current
         with invalidates(Rcon.get_map_rotation):
-            if len(current) == 1:
-                logger.info("Current rotation is a single map")
-                for idx, m in enumerate(rotation):
-                    if m not in current:
-                        self.do_add_map_to_rotation(m)
-                    if m in current and idx != 0:
-                        self.do_remove_map_from_rotation(m)
-                        self.do_add_map_to_rotation(m)
-                if current[0] not in rotation:
-                    self.do_remove_map_from_rotation(m)
-                return rotation
+            # we remove all but the first
+            for map_ in current[1:]:
+                map_without_number = map_.rsplit(" ")[0]
+                logger.info("Removing from rotation: '%s'", map_without_number)
+                super().do_remove_map_from_rotation(map_without_number)
 
-            first = rotation.pop(0)
-            to_remove = set(current) - {first}
-            if to_remove == set(current):
-                self.do_add_map_to_rotation(first)
+            for map_ in rotation:
+                logger.info("Adding to rotation: '%s'", map_)
+                super().do_add_map_to_rotation(map_)
 
-            self.do_remove_maps_from_rotation(to_remove)
-            self.do_add_maps_to_rotation(rotation)
+            # Now we can remove the first from the previous rotation
+            super().do_remove_map_from_rotation(current[0])
 
-        return [first] + rotation
+        return self.get_map_rotation()
 
+    @mod_users_allowed
     @ttl_cache(ttl=60 * 2)
     def get_scoreboard(self, minutes=180, sort="ratio"):
         logs = self.get_structured_logs(minutes, "KILL")
@@ -1017,6 +1028,7 @@ class Rcon(ServerCtl):
 
         return scoreboard
 
+    @mod_users_allowed
     @ttl_cache(ttl=60 * 2)
     def get_teamkills_boards(self, sort="TK Minutes"):
         logs = self.get_structured_logs(180)
@@ -1062,7 +1074,7 @@ class Rcon(ServerCtl):
     def parse_logs(raw, filter_action=None, filter_player=None):
         synthetic_actions = LOG_ACTIONS
         now = datetime.now()
-        res = []
+        res: List[StructuredLogLine] = []
         actions = set()
         players = set()
 
@@ -1095,7 +1107,10 @@ class Rcon(ServerCtl):
                 elif rest.startswith("VOTESYS"):
                     # [15:49 min (1606998428)] VOTE Player [[fr]ELsass_blitz] Started a vote of type (PVR_Kick_Abuse) against [拢儿]. VoteID: [1]
                     action = "VOTE"
-                    if rest.startswith("VOTESYS Player") and " against " in rest.lower():
+                    if (
+                        rest.startswith("VOTESYS Player")
+                        and " against " in rest.lower()
+                    ):
                         action = "VOTE STARTED"
                         groups = re.match(
                             r"VOTESYS Player \[(.*)\].* against \[(.*)\]\. VoteID: \[\d+\]",
@@ -1133,7 +1148,7 @@ class Rcon(ServerCtl):
                         player, sub_content, *_ = matches.groups()
                     else:
                         logger.error("Unable to parse line: %s", line)
-                elif rest.startswith('KICK') or rest.startswith('BAN'):
+                elif rest.startswith("KICK") or rest.startswith("BAN"):
                     if "FOR TEAM KILLING" in rest:
                         action = "TK AUTO"
                     else:
@@ -1157,12 +1172,29 @@ class Rcon(ServerCtl):
                 elif rest.upper().startswith("MATCH ENDED"):
                     action = "MATCH ENDED"
                     _, sub_content = rest.split("MATCH ENDED ")
+                elif rest.upper().startswith("MESSAGE"):
+
+                    action = "MESSAGE"
+                    groups = re.match(
+                        r"MESSAGE: player \[(.+)\((\d+)\)\], content \[(.+)\]", rest
+                    ).groups()
+                    player, steam_id_64_1, content = groups
+                    content = f"{player}({steam_id_64_1}): {content}"
+
                 else:
                     logger.error("Unkown type line: '%s'", line)
                     continue
-
                 if action in {"CONNECTED", "DISCONNECTED"}:
-                    player = content
+                    # player = content
+                    try:
+                        groups = re.match(r"(.+) \((\d+)\)", content).groups()
+                        player, steam_id_64 = groups
+                        steam_id_64_1 = steam_id_64
+                    except AttributeError:
+                        # Handle U12 format for the U13 release
+                        # TODO: remove release after U13 is out
+                        player = content
+
                 if action in {"KILL", "TEAM KILL"}:
                     parts = re.split(Rcon.player_info_pattern + r" -> ", content, 1)
                     player = parts[1]
@@ -1177,7 +1209,7 @@ class Rcon(ServerCtl):
                 players.add(player2)
                 actions.add(action)
             except:
-                logger.exception("Invalid line: '%s'", line)
+                # logger.exception("Invalid line: '%s'", line)
                 continue
             if filter_action and not action.startswith(filter_action):
                 continue
@@ -1208,10 +1240,3 @@ class Rcon(ServerCtl):
             "players": list(players),
             "logs": res,
         }
-
-
-if __name__ == "__main__":
-    from rcon.settings import SERVER_INFO
-
-    r = Rcon(SERVER_INFO)
-    print(r.get_team_view_fast())

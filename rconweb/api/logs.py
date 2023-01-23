@@ -10,12 +10,13 @@ from rcon.settings import SERVER_INFO
 from rcon.steam_utils import get_steam_profile
 from rcon.utils import MapsHistory
 
+from .audit_log import auto_record_audit, record_audit
 from .auth import api_csv_response, api_response, login_required
 from .utils import _get_data
 
 
 @csrf_exempt
-@login_required
+@login_required()
 def get_historical_logs(request):
     data = _get_data(request)
     player_name = data.get("player_name")
@@ -73,7 +74,7 @@ def get_historical_logs(request):
 
 
 @csrf_exempt
-@login_required
+@login_required()
 def get_recent_logs(request):
     data = _get_data(request)
     start = int(data.get("start", 0))

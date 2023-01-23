@@ -10,6 +10,7 @@ from steam.webapi import WebAPI
 
 from rcon.cache_utils import ttl_cache
 from rcon.models import PlayerSteamID, SteamInfo
+from rcon.types import SteamBanResultType
 
 logger = logging.getLogger(__name__)
 
@@ -32,9 +33,9 @@ def get_steam_profiles(steam_ids):
         return None
     try:
         api = WebAPI(key=STEAM_KEY)
-        return api.ISteamUser.GetPlayerSummaries(steamids=",".join(steam_ids))["response"][
-            "players"
-        ]
+        return api.ISteamUser.GetPlayerSummaries(steamids=",".join(steam_ids))[
+            "response"
+        ]["players"]
     except AttributeError:
         logger.error("STEAM_API_KEY is invalid, can't fetch steam profile")
         return None
@@ -117,20 +118,25 @@ def get_players_ban(steamd_ids: List):
 
 
 @ttl_cache(60 * 60 * 12, cache_falsy=False, is_method=False)
-def get_players_have_bans(steamd_ids: List) -> Mapping:
+def get_players_have_bans(steamd_ids: List) -> Mapping[str, SteamBanResultType]:
     player_bans = get_players_ban(steamd_ids)
 
     result = dict.fromkeys(steamd_ids, {"steam_bans": None})
-    if player_bans is None:
+    if player_bans is None and steamd_ids:
         logger.warning("Unable to read bans for %s" % steamd_ids)
         return result
 
     for bans in player_bans:
         bans["has_bans"] = any(
             bans.get(k)
-            for k in ["VACBanned", "NumberOfVACBans", "DaysSinceLastBan", "NumberOfGameBans"]
+            for k in [
+                "VACBanned",
+                "NumberOfVACBans",
+                "DaysSinceLastBan",
+                "NumberOfGameBans",
+            ]
         )
-        result[bans["SteamId"]]["steam_bans"] = bans
+        result[bans["SteamId"]] = {"steam_bans": bans}
         del bans["SteamId"]
 
     return result
@@ -146,7 +152,12 @@ def get_player_has_bans(steamd_id):
 
     bans["has_bans"] = any(
         bans.get(k)
-        for k in ["VACBanned", "NumberOfVACBans", "DaysSinceLastBan", "NumberOfGameBans"]
+        for k in [
+            "VACBanned",
+            "NumberOfVACBans",
+            "DaysSinceLastBan",
+            "NumberOfGameBans",
+        ]
     )
     return bans
 

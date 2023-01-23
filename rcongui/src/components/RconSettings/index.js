@@ -1,3 +1,3 @@
-import RconSettings from './rconSettings'
+import RconSettings from "./rconSettings";
 
-export default RconSettings
+export default RconSettings;

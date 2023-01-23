@@ -33,7 +33,11 @@ LOGGING = {
         },
     },
     "handlers": {
-        "console": {"level": "DEBUG", "class": "logging.StreamHandler", "formatter": "console"},
+        "console": {
+            "level": "DEBUG",
+            "class": "logging.StreamHandler",
+            "formatter": "console",
+        },
         "file": {
             "level": "DEBUG",
             "formatter": "console",
@@ -67,15 +71,21 @@ LOGGING = {
             "level": os.getenv("LOGGING_LEVEL", "DEBUG"),
             "propagate": False,
         },
-        "rcon.extended_commands": {"level": os.getenv("COMMANDS_LOGLEVEL", os.getenv("LOGGING_LEVEL", "INFO"))},
-        "rcon.recorded_commands": {"level": os.getenv("COMMANDS_LOGLEVEL", os.getenv("LOGGING_LEVEL", "INFO"))},
-        "rcon.commands": {"level": os.getenv("COMMANDS_LOGLEVEL", os.getenv("LOGGING_LEVEL", "INFO"))},
+        "rcon.extended_commands": {
+            "level": os.getenv("COMMANDS_LOGLEVEL", os.getenv("LOGGING_LEVEL", "INFO"))
+        },
+        "rcon.recorded_commands": {
+            "level": os.getenv("COMMANDS_LOGLEVEL", os.getenv("LOGGING_LEVEL", "INFO"))
+        },
+        "rcon.commands": {
+            "level": os.getenv("COMMANDS_LOGLEVEL", os.getenv("LOGGING_LEVEL", "INFO"))
+        },
         # TODO fix that
-        "rcon.squad_automod.automod": {
+        "rcon.automods.automod": {
             "handlers": ["console", "file"],
             "level": os.getenv("LOGGING_LEVEL", "DEBUG"),
             "propagate": False,
-        },
+        }
         "rcon.team_balance": {
             "handlers": ["console", "team_balance_file"],
             "level": os.getenv("LOGGING_LEVEL", "DEBUG"),

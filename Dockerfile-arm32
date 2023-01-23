@@ -1,4 +1,4 @@
-FROM arm32v7/python:3.8.12-bullseye
+FROM arm32v7/python:3.11-bullseye
 
 WORKDIR /code
 RUN apt-get update -y && apt-get install -y cron logrotate

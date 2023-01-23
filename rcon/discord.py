@@ -14,14 +14,14 @@ logger = logging.getLogger(__name__)
 def make_allowed_mentions(roles):
     allowed_mentions = {}
     for r in roles:
-        if match := re.match(r'<@\!(\d+)>', r):
+        if match := re.match(r"<@\!(\d+)>", r):
             allowed_mentions.setdefault("users", []).append(match.group(1))
-        if match := re.match(r'<@&(\d+)>', r):
+        if match := re.match(r"<@&(\d+)>", r):
             allowed_mentions.setdefault("roles", []).append(match.group(1))
-        if r == '@everyone' or r == '@here':
-            allowed_mentions['parse'] = r.replace('@', '')
+        if r == "@everyone" or r == "@here":
+            allowed_mentions["parse"] = r.replace("@", "")
     print(allowed_mentions)
-    #allowed_mentions = {"parse": ["users"]}
+    # allowed_mentions = {"parse": ["users"]}
     return allowed_mentions
 
 
@@ -44,14 +44,18 @@ def dict_to_discord(d):
 
 
 def send_to_discord_audit(message, by=None, silent=True, webhookurl=None):
-    webhookurl = webhookurl or os.getenv('DISCORD_WEBHOOK_AUDIT_LOG', None)
+    webhookurl = webhookurl or os.getenv("DISCORD_WEBHOOK_AUDIT_LOG", None)
     logger.info("Audit: [%s] %s", by, message)
     if not webhookurl:
         logger.debug("No webhook set for audit log")
         return
     try:
-        server_name = os.getenv('SERVER_SHORT_NAME', os.getenv('SERVER_SHORT_NAME', 'Undefined'))
-        webhook = DiscordWebhook(url=webhookurl, content='[{}][**{}**] {}'.format(server_name, by, message))
+        server_name = os.getenv(
+            "SERVER_SHORT_NAME", os.getenv("SERVER_SHORT_NAME", "Undefined")
+        )
+        webhook = DiscordWebhook(
+            url=webhookurl, content="[{}][**{}**] {}".format(server_name, by, message)
+        )
         return webhook.execute()
     except:
         logger.exception("Can't send audit log")

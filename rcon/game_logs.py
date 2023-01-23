@@ -4,18 +4,16 @@ import os
 import sys
 import time
 import unicodedata
-from logging import config
+from typing import Callable, Dict, List
 
 from sqlalchemy import and_, desc, or_
-from sqlalchemy.exc import IntegrityError, InvalidRequestError
-from sqlalchemy.sql.expression import false, true
+from sqlalchemy.exc import IntegrityError
 
 from rcon.cache_utils import get_redis_client
-from rcon.commands import CommandFailedError, HLLServerError
 from rcon.config import get_config
 from rcon.discord import send_to_discord_audit
-from rcon.extended_commands import LOG_ACTIONS, Rcon
-from rcon.models import LogLine, PlayerName, PlayerSteamID, enter_session
+from rcon.extended_commands import LOG_ACTIONS, Rcon, StructuredLogLine
+from rcon.models import LogLine, PlayerSteamID, enter_session
 from rcon.player_history import (
     add_player_to_blacklist,
     get_player_profile,
@@ -27,19 +25,32 @@ from rcon.utils import FixedLenList
 
 logger = logging.getLogger(__name__)
 
-HOOKS = {
+HOOKS: Dict[str, List[Callable]] = {
     "TEAM KILL": [],
     "CONNECTED": [],
     "DISCONNECTED": [],
-    "CHAT[Allies]": [],
-    "CHAT[Axis]": [],
-    "CHAT": [],
-    "KILL": [],
-    "CAMERA": [],
     "TK": [],
-    "MATCH": [],
+    "TK AUTO": [],
+    "TK AUTO BANNED": [],
+    "TK AUTO KICKED": [],
+    "ADMIN BANNED": [],
+    "ADMIN KICKED": [],
+    "CAMERA": [],
+    "CHAT": [],
+    "CHAT[Allies]": [],
+    "CHAT[Allies][Team]": [],
+    "CHAT[Allies][Unit]": [],
+    "CHAT[Axis]": [],
+    "CHAT[Axis][Team]": [],
+    "CHAT[Axis][Unit]": [],
+    "KILL": [],
     "MATCH START": [],
     "MATCH ENDED": [],
+    "MATCH": [],
+    "TEAMSWITCH": [],
+    "VOTE": [],
+    "VOTE STARTED": [],
+    "VOTE COMPLETED": [],
 }
 
 
@@ -83,6 +94,22 @@ def on_disconnected(func):
     return func
 
 
+def on_match_start(func):
+    HOOKS["MATCH START"].append(func)
+    return func
+
+
+def on_match_end(func):
+    HOOKS["MATCH ENDED"].append(func)
+    return func
+
+
+def on_generic(key, func) -> Callable:
+    """Dynamically register hooks from config.yml LOG_LINE_WEBHOOKS"""
+    HOOKS[key].append(func)
+    return func
+
+
 MAX_FAILS = 10
 
 
@@ -95,6 +122,7 @@ class LogLoop:
         self.red = get_redis_client()
         self.duplicate_guard_key = "unique_logs"
         self.log_history = self.get_log_history_list()
+
         logger.info("Registered hooks: %s", HOOKS)
 
     @staticmethod
@@ -155,18 +183,24 @@ class LogLoop:
                 self.red.srem(self.duplicate_guard_key, k)
         logger.info("Cleanup done")
 
-    def process_hooks(self, log):
+    def process_hooks(self, log: StructuredLogLine):
         logger.debug("Processing %s", f"{log['action']}{log['message']}")
         hooks = []
+        started_total = time.time()
         for action_hook, funcs in HOOKS.items():
             if log["action"].startswith(action_hook):
                 hooks += funcs
+
         for hook in hooks:
             try:
                 logger.info(
                     "Triggered %s.%s on %s", hook.__module__, hook.__name__, log["raw"]
                 )
+                started = time.time()
                 hook(self.rcon_2, log)
+                logger.debug(
+                    "Ran in %.4f seconds %s.%s on %s", time.time() - started, hook.__module__, hook.__name__, log["raw"]
+                )
             except KeyboardInterrupt:
                 sys.exit(0)
             except Exception:
@@ -176,6 +210,8 @@ class LogLoop:
                     hook.__name__,
                     log,
                 )
+        logger.debug("Processed %s hooks in %.4f for: %s", len(hooks), time.time() - started_total, f"{log['action']}{log['message']}")
+        
 
 
 class LogRecorder:
@@ -367,6 +403,7 @@ def get_recent_logs(
                     # Handle action_filter being empty
                     elif not action_filter:
                         logs.append(line)
+                        break
         elif action_filter:
             # Filter out anything that isn't in action_filter
             if inclusive_filter and is_action(
@@ -380,6 +417,7 @@ def get_recent_logs(
                 logs.append(line)
         elif not player_search and not action_filter:
             logs.append(line)
+
         if p1 := line["player"]:
             all_players.add(p1)
         if p2 := line["player2"]:

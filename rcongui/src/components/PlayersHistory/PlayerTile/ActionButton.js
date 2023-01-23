@@ -1,7 +1,4 @@
-import {
-  ButtonGroup,
-  Button
-} from "@material-ui/core";
+import { ButtonGroup, Button } from "@material-ui/core";
 import React from "react";
 import FlagIcon from "@material-ui/icons/Flag";
 import Tooltip from "@material-ui/core/Tooltip";
@@ -37,13 +34,13 @@ export const ActionButton = ({
             <BlockIcon size="small" color="primary" onClick={onUnBlacklist} />
           </Tooltip>
         ) : (
-            <Tooltip
-              title="Add the player to the blacklist. He will be perma banned at his next connection (applies to all servers)"
-              arrow
-            >
-              <BlockIcon size="small" onClick={onBlacklist} />
-            </Tooltip>
-          )}
+          <Tooltip
+            title="Add the player to the blacklist. He will be perma banned at his next connection (applies to all servers)"
+            arrow
+          >
+            <BlockIcon size="small" onClick={onBlacklist} />
+          </Tooltip>
+        )}
       </Button>
 
       <Button>
@@ -70,13 +67,13 @@ export const ActionButton = ({
       <Button>
         {isVip ? (
           <Tooltip title="Remove player from VIPs." arrow>
-            <StarBorder color="primary" onClick={onDeleteVip} />
+            <StarBorder color="primary" onClick={onAddVip} />
           </Tooltip>
         ) : (
-            <Tooltip title="Add player to VIPs." arrow>
-              <StarIcon size="small" onClick={onAddVip} />
-            </Tooltip>
-          )}
+          <Tooltip title="Add player to VIPs." arrow>
+            <StarIcon size="small" onClick={onAddVip} />
+          </Tooltip>
+        )}
       </Button>
 
       <Button>
@@ -85,16 +82,17 @@ export const ActionButton = ({
             <VisibilityIcon
               size="small"
               color="primary"
-              onClick={onRemoveFromWatchList} />
+              onClick={onRemoveFromWatchList}
+            />
           </Tooltip>
         ) : (
-            <Tooltip
-              title="Add player to watchlist. You'll be notified on your configured webhook(s) upon his connections"
-              arrow
-            >
-              <VisibilityIcon size="small" onClick={onAddToWatchList} />
-            </Tooltip>
-          )}
+          <Tooltip
+            title="Add player to watchlist. You'll be notified on your configured webhook(s) upon his connections"
+            arrow
+          >
+            <VisibilityIcon size="small" onClick={onAddToWatchList} />
+          </Tooltip>
+        )}
       </Button>
     </ButtonGroup>
   );
