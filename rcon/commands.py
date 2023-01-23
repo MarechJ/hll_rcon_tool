@@ -1,8 +1,10 @@
 import logging
 import socket
+import threading
 import time
+from contextlib import contextmanager, nullcontext
 from functools import wraps
-from typing import List
+from typing import List, TypedDict
 
 from rcon.connection import HLLConnection
 
@@ -45,23 +47,37 @@ class HLLServerError(Exception):
     pass
 
 
+class VipId(TypedDict):
+    steam_id_64: str
+    name: str
+
+
 def _auto_retry(method):
     @wraps(method)
     def wrap(self, *args, **kwargs):
-        try:
-            return method(self, *args, **kwargs)
-        except (HLLServerError, UnicodeDecodeError):
-            if not self.auto_retry:
-                raise
-            time.sleep(5)
-            logger.exception("Auto retrying %s %s %s", method.__name__, args, kwargs)
+        if "conn" not in kwargs or kwargs["conn"] is None:
+            logger.debug("auto-retry: acquiring connection from pool")
+            connection = self.with_connection()
+            kwargs["conn"] = connection
+        else:
+            connection = nullcontext(enter_result=kwargs["conn"])
 
+        with connection as conn:
+            kwargs["conn"] = conn
             try:
                 return method(self, *args, **kwargs)
             except (HLLServerError, UnicodeDecodeError):
-                self._reconnect()
-                raise
-            # TODO loop and counter implement counter
+                if not self.auto_retry:
+                    raise
+                time.sleep(5)
+                logger.exception("Auto retrying %s %s %s", method.__name__, args, kwargs)
+
+                try:
+                    return method(self, *args, **kwargs)
+                except (HLLServerError, UnicodeDecodeError):
+                    self._reconnect(conn)
+                    raise
+                # TODO loop and counter implement counter
 
     return wrap
 
@@ -73,56 +89,96 @@ class ServerCtl:
     set password not implemented on purpose
     """
 
-    def __init__(self, config, auto_retry=1):
+    def __init__(self, config, auto_retry=1, pool_size=20):
         # .env fed config from rcon.SERVER_INFO
         self.config = config
-        self.conn = None
-        # self._connect()
         self.auto_retry = auto_retry
+        self.mu = threading.RLock()
+        self.idles: list[HLLConnection] = []
+        self.numOpen = 0
+        self.maxOpen = 20
+        self.maxIdle = pool_size
 
-    def _connect(self):
-        self.conn = HLLConnection()
+    @contextmanager
+    def with_connection(self) -> HLLConnection:
+        logger.debug("Waiting to acquire lock")
+        with self.mu:
+            if len(self.idles) != 0:
+                logger.debug("acquiring connection from idle pool")
+                conn = self.idles.pop()
+
+            elif self.numOpen >= self.maxOpen:
+                logger.debug("Max connections already open, waiting for connection returned to pool")
+                c = 0
+                while len(self.idles) == 0:
+                    if c >= 30:
+                        logger.error("waiting for connection returned to pool timed out after " + str(c) + " seconds")
+                        raise TimeoutError()
+                    c += 1
+                    time.sleep(1)
+                conn = self.idles.pop()
+
+            else:
+                logger.debug("Opening a new connection")
+                conn = HLLConnection()
+                self._connect(conn)
+                self.numOpen += 1
+
         try:
-            self.conn.connect(
-                self.config["host"], int(self.config["port"]), self.config["password"]
-            )
+            yield conn
+        finally:
+            logger.debug("return connection")
+            if len(self.idles) >= self.maxIdle:
+                logger.debug("Enough connections in pool, closing")
+                self.numOpen -= 1
+                conn.close()
+            else:
+                logger.debug("Returning connection to pool")
+                self.idles.append(conn)
+
+    def _connect(self, conn: HLLConnection):
+        try:
+            conn.connect(self.config["host"], int(self.config["port"]), self.config["password"])
         except (TypeError, ValueError) as e:
-            logger.critical("Invalid connection information")
+            logger.critical("Invalid connection information", e)
             raise
 
-    def _reconnect(self):
+    def _reconnect(self, conn: HLLConnection):
         logger.warning("reconnecting")
 
-        self.conn.close()
+        conn.close()
         time.sleep(2)
-        self._connect()
+        self._connect(conn)
 
     @_auto_retry
-    def _request(self, command: str, can_fail=True, log_info=False, decode=True):
-        if not self.conn:
-            self._connect()
+    def _request(self, command: str, can_fail=True, log_info=False, decode=True, conn: HLLConnection = None):
+        assert conn is not None
         if log_info:
             logger.info(command)
         else:
             logger.debug(command)
         try:
-            self.conn.send(command.encode())
+            conn.send(command.encode())
             if decode:
-                result = self.conn.receive().decode()
+                result = conn.receive().decode()
             else:
-                result = self.conn.receive()
+                result = conn.receive()
         except (
-            RuntimeError,
-            BrokenPipeError,
-            socket.timeout,
-            ConnectionResetError,
-            UnicodeDecodeError,
+                RuntimeError,
+                BrokenPipeError,
+                socket.timeout,
+                ConnectionResetError,
+                UnicodeDecodeError,
         ) as e:
             logger.exception("Failed request")
             raise HLLServerError(command) from e
+        except ValueError:
+            self._reconnect(conn)
+            raise
 
         if (decode and result == "FAIL") or (not decode and result == b"FAIL"):
             if can_fail:
+                self._reconnect(conn)
                 raise CommandFailedError(command)
             else:
                 raise HLLServerError(f"Got FAIL for {command}")
@@ -130,21 +186,22 @@ class ServerCtl:
         return result
 
     @_auto_retry
-    def _timed_request(self, command: str, can_fail=True, log_info=False):
+    def _timed_request(self, command: str, can_fail=True, log_info=False, conn: HLLConnection = None):
+        assert conn is not None
         if log_info:
             logger.info(command)
         else:
             logger.debug(command)
         try:
-            before_sent, after_sent, _ = self.conn.send(command.encode(), timed=True)
-            before_received, after_received, result = self.conn.receive(timed=True)
+            before_sent, after_sent, _ = conn.send(command.encode(), timed=True)
+            before_received, after_received, result = conn.receive(timed=True)
             result = result.decode()
         except (
-            RuntimeError,
-            BrokenPipeError,
-            socket.timeout,
-            ConnectionResetError,
-            UnicodeDecodeError,
+                RuntimeError,
+                BrokenPipeError,
+                socket.timeout,
+                ConnectionResetError,
+                UnicodeDecodeError,
         ):
             logger.exception("Failed request")
             raise HLLServerError(command)
@@ -163,7 +220,8 @@ class ServerCtl:
             result=result,
         )
 
-    def _read_list(self, raw):
+    def _read_list(self, raw, conn: HLLConnection):
+        assert conn is not None
         res = raw.split(b"\t")
 
         try:
@@ -174,7 +232,7 @@ class ServerCtl:
                 "Unexpected response from server." "Unable to get list length"
             )
 
-        self.conn.lock()
+        conn.lock()
         # Max 30 tries
         for i in range(1000):
             if expected_len <= len(res) - 1 and raw[-1] in [0, 9, 10]:  # \0 \t or \n
@@ -191,14 +249,13 @@ class ServerCtl:
                 expected_len,
                 raw[-1],
             )
-            raw += self.conn.receive(unlock=False)
+            raw += conn.receive(unlock=False)
             res = raw.split(b"\t")
-            # logger.warning(f"{res}|")
 
-        self.conn.unlock()
+        conn.unlock()
 
         if res[-1] == b"":
-            # There's a trailin \t
+            # There's a trailing \t
             res = res[:-1]
         if expected_len < len(res) - 1:
             raise HLLServerError(
@@ -209,13 +266,14 @@ class ServerCtl:
         return [l.decode() for l in res[1:]]
 
     @_auto_retry
-    def _get(self, item, is_list=False, can_fail=True):
-        res = self._request(f"get {item}", can_fail, decode=not is_list)
+    def _get(self, item, is_list=False, can_fail=True, conn: HLLConnection = None):
+        assert conn is not None
+        res = self._request(f"get {item}", can_fail, decode=not is_list, conn=conn)
 
         if not is_list:
             return res
 
-        return self._read_list(res)
+        return self._read_list(res, conn)
 
     def get_profanities(self):
         return self._get("profanity", is_list=True, can_fail=False)
@@ -290,8 +348,22 @@ class ServerCtl:
     def get_slots(self):
         return self._get("slots", can_fail=False)
 
-    def get_vip_ids(self):
-        return self._get("vipids", True, can_fail=False)
+    def get_vip_ids(self) -> List[VipId]:
+        with self.with_connection() as conn:
+            res = self._get("vipids", True, can_fail=False, conn=conn)
+
+            vip_ids: List[VipId] = []
+            for item in res:
+                try:
+                    steam_id_64, name = item.split(" ", 1)
+                    name = name.replace('"', "")
+                    name = name.replace("\n", "")
+                    name = name.strip()
+                    vip_ids.append(dict(steam_id_64=steam_id_64, name=name))
+                except ValueError:
+                    self._reconnect(conn)
+                    raise
+            return vip_ids
 
     def get_admin_groups(self):
         return self._get("admingroups", True, can_fail=False)
@@ -300,37 +372,39 @@ class ServerCtl:
         return self._get("autobalanceenabled", can_fail=False)
 
     @_auto_retry
-    def get_logs(self, since_min_ago, filter_=""):
+    def get_logs(self, since_min_ago, filter_="", conn: HLLConnection = None):
+        assert conn is not None
         res = self._request(f"showlog {since_min_ago}")
         if res == "EMPTY":
             return ""
-        self.conn.lock()
+        conn.lock()
         try:
             for i in range(30):
                 if res[-1] == "\n":
                     break
                 try:
-                    res += self.conn.receive(unlock=False).decode()
+                    res += conn.receive(unlock=False).decode()
                 except (
-                    RuntimeError,
-                    BrokenPipeError,
-                    socket.timeout,
-                    ConnectionResetError,
-                    UnicodeDecodeError,
+                        RuntimeError,
+                        BrokenPipeError,
+                        socket.timeout,
+                        ConnectionResetError,
+                        UnicodeDecodeError,
                 ):
                     logger.exception("Failed request")
                     raise HLLServerError(f"showlog {since_min_ago}")
         finally:
-            self.conn.unlock()
+            conn.unlock()
         return res
 
     def get_timed_logs(self, since_min_ago, filter_=""):
-        res = self._timed_request(f"showlog {since_min_ago}")
-        for i in range(30):
-            if res["result"][-1] == "\n":
-                break
-            res["result"] += self.conn.receive().decode()
-        return res
+        with self.with_connection() as conn:
+            res = self._timed_request(f"showlog {since_min_ago}", conn=conn)
+            for i in range(30):
+                if res["result"][-1] == "\n":
+                    break
+                res["result"] += conn.receive().decode()
+            return res
 
     def get_idle_autokick_time(self):
         return self._get("idletime", can_fail=False)
@@ -400,10 +474,10 @@ class ServerCtl:
         return self._request(f"switchteamnow {player}", log_info=True)
 
     def do_add_map_to_rotation(
-        self,
-        map_name: str,
-        after_map_name: str = None,
-        after_map_name_number: str = None,
+            self,
+            map_name: str,
+            after_map_name: str = None,
+            after_map_name_number: str = None,
     ):
         cmd = f"rotadd {map_name}"
         if after_map_name:
@@ -430,12 +504,12 @@ class ServerCtl:
 
     @_escape_params
     def do_temp_ban(
-        self,
-        player_name=None,
-        steam_id_64=None,
-        duration_hours=2,
-        reason="",
-        admin_name="",
+            self,
+            player_name=None,
+            steam_id_64=None,
+            duration_hours=2,
+            reason="",
+            admin_name="",
     ):
         return self._request(
             f'tempban "{steam_id_64 or player_name}" {duration_hours} "{reason}" "{admin_name}"',
@@ -444,7 +518,7 @@ class ServerCtl:
 
     @_escape_params
     def do_perma_ban(
-        self, player_name=None, steam_id_64=None, reason="", admin_name=""
+            self, player_name=None, steam_id_64=None, reason="", admin_name=""
     ):
         return self._request(
             f'permaban "{steam_id_64 or player_name}" "{reason}" "{admin_name}"',
@@ -496,8 +570,6 @@ class ServerCtl:
 
 
 if __name__ == "__main__":
-    import os
-
     from rcon.settings import SERVER_INFO
 
     ctl = ServerCtl(SERVER_INFO)

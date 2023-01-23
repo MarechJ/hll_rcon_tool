@@ -63,10 +63,17 @@ class HLLConnection:
         return array.array("B", n).tobytes()
 
     def unlock(self):
-        # logger.debug("Unlocking connection in %s", get_ident())
+        """
+        With using the ServerCtl connection pool, locking an individual connection has low value, but is kept for
+        backward compatibility and cowardliness :D Might be removed in future released.
+        """
         self._lock.release()
 
     def lock(self):
+        """
+        With using the ServerCtl connection pool, locking an individual connection has low value, but is kept for
+        backward compatibility and cowardliness :D Might be removed in future released.
+        """
         if self._lock.locked():
             logger.warning("Mutex lock detected, this is unexpected in %s", get_ident())
 
