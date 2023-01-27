@@ -153,9 +153,14 @@ class ServerCtl:
         try:
             yield conn
         except Exception as e:
-            logger.debug("Connection errored: %s, removing from pool", e)
-            conn.close()
-            return
+            # All other errors, that might be caught (like UnicodeDecodeError) do not really qualify as an error of the
+            # connection itself. Instead of reconnecting the existing connection here (conditionally), we simply discard
+            # the connection, assuming it is broken. The pool will establish a new connection when needed.
+            if isinstance(e.__context__, RuntimeError | BrokenPipeError | socket.timeout | ConnectionResetError):
+                logger.debug("Connection errored: %s, removing from pool", e)
+                self.numOpen -= 1
+                conn.close()
+                raise
 
         logger.debug("return connection")
         if len(self.idles) >= self.maxIdle:
@@ -203,9 +208,6 @@ class ServerCtl:
         ) as e:
             logger.exception("Failed request")
             raise HLLServerError(command) from e
-        except ValueError:
-            self._reconnect(conn)
-            raise
 
         if (decode and result == "FAIL") or (not decode and result == b"FAIL"):
             if can_fail:
@@ -234,9 +236,9 @@ class ServerCtl:
                 socket.timeout,
                 ConnectionResetError,
                 UnicodeDecodeError,
-        ):
+        ) as e:
             logger.exception("Failed request")
-            raise HLLServerError(command)
+            raise HLLServerError(command) from e
 
         if result == "FAIL":
             if can_fail:
