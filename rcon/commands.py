@@ -265,7 +265,6 @@ class ServerCtl:
                 "Unexpected response from server." "Unable to get list length"
             )
 
-        conn.lock()
         # Max 30 tries
         for i in range(1000):
             if expected_len <= len(res) - 1 and raw[-1] in [0, 9, 10]:  # \0 \t or \n
@@ -282,10 +281,8 @@ class ServerCtl:
                 expected_len,
                 raw[-1],
             )
-            raw += conn.receive(unlock=False)
+            raw += conn.receive()
             res = raw.split(b"\t")
-
-        conn.unlock()
 
         if res[-1] == b"":
             # There's a trailing \t
@@ -412,24 +409,21 @@ class ServerCtl:
         res = self._request(f"showlog {since_min_ago}")
         if res == "EMPTY":
             return ""
-        conn.lock()
-        try:
-            for i in range(30):
-                if res[-1] == "\n":
-                    break
-                try:
-                    res += conn.receive(unlock=False).decode()
-                except (
-                        RuntimeError,
-                        BrokenPipeError,
-                        socket.timeout,
-                        ConnectionResetError,
-                        UnicodeDecodeError,
-                ):
-                    logger.exception("Failed request")
-                    raise HLLServerError(f"showlog {since_min_ago}")
-        finally:
-            conn.unlock()
+        for i in range(30):
+            if res[-1] == "\n":
+                break
+            try:
+                res += conn.receive().decode()
+            except (
+                    RuntimeError,
+                    BrokenPipeError,
+                    socket.timeout,
+                    ConnectionResetError,
+                    UnicodeDecodeError,
+            ):
+                logger.exception("Failed request")
+                raise HLLServerError(f"showlog {since_min_ago}")
+
         return res
 
     def get_timed_logs(self, since_min_ago, filter_=""):
