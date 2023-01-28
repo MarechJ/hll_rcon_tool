@@ -62,6 +62,7 @@ def _auto_retry(method):
             connection = self.with_connection()
             kwargs["conn"] = connection
         else:
+            logger.debug("using passed in connection")
             connection = nullcontext(enter_result=kwargs["conn"])
 
         with connection as conn:
@@ -121,34 +122,43 @@ class ServerCtl:
         # .env fed config from rcon.SERVER_INFO
         self.config = config
         self.auto_retry = auto_retry
-        self.mu = threading.RLock()
+        self.mu = threading.Lock()
         self.idles: list[HLLConnection] = []
         self.numOpen = 0
 
     @contextmanager
     def with_connection(self) -> HLLConnection:
         logger.debug("Waiting to acquire lock")
-        with self.mu:
-            if len(self.idles) != 0:
-                logger.debug("acquiring connection from idle pool")
+        self.mu.acquire()
+
+        if len(self.idles) != 0:
+            logger.debug("acquiring connection from idle pool")
+            conn = self.idles.pop()
+            self.mu.release()
+
+        elif self.numOpen >= self.maxOpen:
+            logger.debug("Max connections already open, waiting for connection returned to pool")
+            c = 0
+            idle_len = len(self.idles)
+            self.mu.release()
+            while idle_len == 0:
+                if c >= 30:
+                    logger.error("waiting for connection returned to pool timed out after %s seconds", c)
+                    raise TimeoutError()
+                c += 1
+                time.sleep(1)
+                with self.mu:
+                    idle_len = len(self.idles)
+
+            with self.mu:
                 conn = self.idles.pop()
 
-            elif self.numOpen >= self.maxOpen:
-                logger.debug("Max connections already open, waiting for connection returned to pool")
-                c = 0
-                while len(self.idles) == 0:
-                    if c >= 30:
-                        logger.error("waiting for connection returned to pool timed out after %s seconds", c)
-                        raise TimeoutError()
-                    c += 1
-                    time.sleep(1)
-                conn = self.idles.pop()
-
-            else:
-                logger.debug("Opening a new connection")
-                conn = HLLConnection()
-                self._connect(conn)
-                self.numOpen += 1
+        else:
+            logger.debug("Opening a new connection")
+            conn = HLLConnection()
+            self._connect(conn)
+            self.numOpen += 1
+            self.mu.release()
 
         try:
             yield conn
