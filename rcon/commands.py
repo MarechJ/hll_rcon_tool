@@ -49,6 +49,10 @@ class HLLServerError(Exception):
     pass
 
 
+class BrokenHllConnection(Exception):
+    pass
+
+
 class VipId(TypedDict):
     steam_id_64: str
     name: str
@@ -77,9 +81,8 @@ def _auto_retry(method):
 
                 try:
                     return method(self, *args, **kwargs)
-                except (HLLServerError, UnicodeDecodeError):
-                    self._reconnect(conn)
-                    raise
+                except (HLLServerError, UnicodeDecodeError) as e:
+                    raise BrokenHllConnection from e
                 # TODO loop and counter implement counter
 
     return wrap
@@ -173,6 +176,15 @@ class ServerCtl:
                 self.numOpen -= 1
                 conn.close()
                 raise
+
+            if isinstance(e, BrokenHllConnection):
+                logger.debug("Connection (%s) marked as broken in thread %s, removing from pool", conn.id, threading.get_ident())
+                self.numOpen -= 1
+                conn.close()
+                if e.__context__ is not None:
+                    raise e.__context__
+                raise e
+
             ex = e
 
         logger.debug("return connection (%s) from thread %s", conn.id, threading.get_ident())
@@ -193,13 +205,6 @@ class ServerCtl:
         except (TypeError, ValueError) as e:
             logger.exception("Invalid connection information", e)
             raise
-
-    def _reconnect(self, conn: HLLConnection):
-        logger.warning("reconnecting %s", conn.id)
-
-        conn.close()
-        time.sleep(2)
-        self._connect(conn)
 
     @_auto_retry
     def _request(self, command: str, can_fail=True, log_info=False, decode=True, conn: HLLConnection = None):
@@ -227,8 +232,7 @@ class ServerCtl:
 
         if (decode and result == "FAIL") or (not decode and result == b"FAIL"):
             if can_fail:
-                self._reconnect(conn)
-                raise CommandFailedError(command)
+                raise BrokenHllConnection() from CommandFailedError(command)
             else:
                 raise HLLServerError(f"Got FAIL for {command}")
 
@@ -407,9 +411,8 @@ class ServerCtl:
                     name = name.replace("\n", "")
                     name = name.strip()
                     vip_ids.append(dict(steam_id_64=steam_id_64, name=name))
-                except ValueError:
-                    self._reconnect(conn)
-                    raise
+                except ValueError as e:
+                    raise BrokenHllConnection() from e
             return vip_ids
 
     def get_admin_groups(self):
