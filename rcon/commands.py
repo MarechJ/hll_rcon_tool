@@ -365,7 +365,7 @@ class ServerCtl:
         if not self._is_info_correct(player, data):
             data = self._request(f"playerinfo {player}", can_fail=can_fail)
         if not self._is_info_correct(player, data):
-            raise CommandFailedError(
+            raise BrokenHllConnection() from CommandFailedError(
                 "The game server is returning the wrong player info for %s we got %s",
                 player,
                 data,
