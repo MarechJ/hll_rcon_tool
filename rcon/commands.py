@@ -128,12 +128,12 @@ class ServerCtl:
 
     @contextmanager
     def with_connection(self) -> HLLConnection:
-        logger.debug("Waiting to acquire lock")
+        logger.debug("Waiting to acquire lock %s", threading.get_ident())
         self.mu.acquire()
 
         if len(self.idles) != 0:
-            logger.debug("acquiring connection from idle pool")
             conn = self.idles.pop()
+            logger.debug("acquiring connection from idle pool: %s", conn.id)
             self.mu.release()
 
         elif self.numOpen >= self.maxOpen:
@@ -152,33 +152,35 @@ class ServerCtl:
 
             with self.mu:
                 conn = self.idles.pop()
+                logger.debug("connection appeared in pool: %s, acquiring it", conn.id)
 
         else:
-            logger.debug("Opening a new connection")
             conn = HLLConnection()
+            logger.debug("Opening a new connection with ID %s", conn.id)
             self._connect(conn)
             self.numOpen += 1
             self.mu.release()
 
         try:
             yield conn
+            self._reconnect(conn)
         except Exception as e:
             # All other errors, that might be caught (like UnicodeDecodeError) do not really qualify as an error of the
             # connection itself. Instead of reconnecting the existing connection here (conditionally), we simply discard
             # the connection, assuming it is broken. The pool will establish a new connection when needed.
             if isinstance(e.__context__, RuntimeError | BrokenPipeError | socket.timeout | ConnectionResetError):
-                logger.debug("Connection errored: %s, removing from pool", e)
+                logger.debug("Connection (%s) errored in thread %s: %s, removing from pool", conn.id, threading.get_ident(), e)
                 self.numOpen -= 1
                 conn.close()
                 raise
 
-        logger.debug("return connection")
+        logger.debug("return connection (%s) from thread %s", conn.id, threading.get_ident())
         if len(self.idles) >= self.maxIdle:
-            logger.debug("Enough connections in pool, closing")
+            logger.debug("Enough connections in pool, closing %s", conn.id)
             self.numOpen -= 1
             conn.close()
         else:
-            logger.debug("Returning connection to pool")
+            logger.debug("Returning connection (%s) to pool", conn.id)
             self.idles.append(conn)
 
     def _connect(self, conn: HLLConnection):
@@ -189,7 +191,7 @@ class ServerCtl:
             raise
 
     def _reconnect(self, conn: HLLConnection):
-        logger.warning("reconnecting")
+        logger.warning("reconnecting %s", conn.id)
 
         conn.close()
         time.sleep(2)

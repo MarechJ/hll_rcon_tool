@@ -2,6 +2,7 @@ import array
 import logging
 import socket
 import time
+import uuid
 from threading import Lock, get_ident
 
 MSGLEN = 8196
@@ -23,6 +24,7 @@ class HLLConnection:
         self.xorkey = None
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.settimeout(TIMEOUT_SEC)
+        self.id = f"{get_ident()}-{uuid.uuid4()}"
 
     def connect(self, host, port, password: str):
         self.sock.connect((host, port))
