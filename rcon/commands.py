@@ -168,7 +168,7 @@ class ServerCtl:
             # All other errors, that might be caught (like UnicodeDecodeError) do not really qualify as an error of the
             # connection itself. Instead of reconnecting the existing connection here (conditionally), we simply discard
             # the connection, assuming it is broken. The pool will establish a new connection when needed.
-            if isinstance(e.__context__, RuntimeError | BrokenPipeError | socket.timeout | ConnectionResetError):
+            if isinstance(e.__context__, RuntimeError | OSError):
                 logger.debug("Connection (%s) errored in thread %s: %s, removing from pool", conn.id, threading.get_ident(), e)
                 self.numOpen -= 1
                 conn.close()
