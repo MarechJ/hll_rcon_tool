@@ -161,9 +161,9 @@ class ServerCtl:
             self.numOpen += 1
             self.mu.release()
 
+        ex = None
         try:
             yield conn
-            self._reconnect(conn)
         except Exception as e:
             # All other errors, that might be caught (like UnicodeDecodeError) do not really qualify as an error of the
             # connection itself. Instead of reconnecting the existing connection here (conditionally), we simply discard
@@ -173,6 +173,7 @@ class ServerCtl:
                 self.numOpen -= 1
                 conn.close()
                 raise
+            ex = e
 
         logger.debug("return connection (%s) from thread %s", conn.id, threading.get_ident())
         if len(self.idles) >= self.maxIdle:
@@ -182,6 +183,9 @@ class ServerCtl:
         else:
             logger.debug("Returning connection (%s) to pool", conn.id)
             self.idles.append(conn)
+
+        if ex is not None:
+            raise ex
 
     def _connect(self, conn: HLLConnection):
         try:
