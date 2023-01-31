@@ -9,6 +9,7 @@ from typing import List, TypedDict
 from rcon.config import get_config
 from rcon.connection import HLLConnection
 from rcon.models import AdvancedConfigOptions
+from rcon.utils import exception_in_chain
 
 logger = logging.getLogger(__name__)
 
@@ -176,13 +177,13 @@ class ServerCtl:
             # All other errors, that might be caught (like UnicodeDecodeError) do not really qualify as an error of the
             # connection itself. Instead of reconnecting the existing connection here (conditionally), we simply discard
             # the connection, assuming it is broken. The pool will establish a new connection when needed.
-            if isinstance(e.__context__, RuntimeError | OSError) or isinstance(e, OSError) or isinstance(e.__cause__, OSError):
+            if isinstance(e.__context__, RuntimeError | OSError) or exception_in_chain(e, OSError):
                 logger.warning("Connection (%s) errored in thread %s: %s, removing from pool", conn.id, threading.get_ident(), e)
                 self.numOpen -= 1
                 conn.close()
                 raise
 
-            if isinstance(e, BrokenHllConnection):
+            if exception_in_chain(e, BrokenHllConnection):
                 logger.warning("Connection (%s) marked as broken in thread %s, removing from pool", conn.id, threading.get_ident())
                 self.numOpen -= 1
                 conn.close()
