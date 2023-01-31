@@ -61,27 +61,32 @@ class VipId(TypedDict):
 def _auto_retry(method):
     @wraps(method)
     def wrap(self, *args, **kwargs):
+        parent_connection = False
         if "conn" not in kwargs or kwargs["conn"] is None:
             logger.debug("auto-retry: acquiring connection from pool")
             connection = self.with_connection()
             kwargs["conn"] = connection
         else:
+            parent_connection = True
             logger.debug("using passed in connection")
             connection = nullcontext(enter_result=kwargs["conn"])
 
-        with connection as conn:
-            kwargs["conn"] = conn
-            try:
+        try:
+            with connection as conn:
+                kwargs["conn"] = conn
                 return method(self, *args, **kwargs)
-            except (HLLServerError, UnicodeDecodeError):
-                if not self.auto_retry:
-                    raise
-                time.sleep(5)
-                logger.exception("Auto retrying %s %s %s", method.__name__, args, kwargs)
+        except (HLLServerError, UnicodeDecodeError, OSError):
+            if not self.auto_retry or parent_connection:
+                raise
+            time.sleep(5)
+            logger.exception("Auto retrying %s %s %s", method.__name__, args, kwargs)
 
+            logger.debug("auto-retry: acquiring new connection for retry from pool")
+            with self.with_connection() as conn:
+                kwargs["conn"] = conn
                 try:
                     return method(self, *args, **kwargs)
-                except (HLLServerError, UnicodeDecodeError) as e:
+                except (HLLServerError, UnicodeDecodeError, OSError) as e:
                     raise BrokenHllConnection from e
                 # TODO loop and counter implement counter
 
@@ -172,13 +177,13 @@ class ServerCtl:
             # connection itself. Instead of reconnecting the existing connection here (conditionally), we simply discard
             # the connection, assuming it is broken. The pool will establish a new connection when needed.
             if isinstance(e.__context__, RuntimeError | OSError) or isinstance(e, OSError) or isinstance(e.__cause__, OSError):
-                logger.debug("Connection (%s) errored in thread %s: %s, removing from pool", conn.id, threading.get_ident(), e)
+                logger.warning("Connection (%s) errored in thread %s: %s, removing from pool", conn.id, threading.get_ident(), e)
                 self.numOpen -= 1
                 conn.close()
                 raise
 
             if isinstance(e, BrokenHllConnection):
-                logger.debug("Connection (%s) marked as broken in thread %s, removing from pool", conn.id, threading.get_ident())
+                logger.warning("Connection (%s) marked as broken in thread %s, removing from pool", conn.id, threading.get_ident())
                 self.numOpen -= 1
                 conn.close()
                 if e.__context__ is not None:
