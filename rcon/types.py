@@ -207,17 +207,23 @@ class EnrichedGetPlayersType(GetPlayersType):
 class StructuredLogLine(TypedDict):
     version: int
     timestamp_ms: int
-    relative_time_ms: int
+    relative_time_ms: float
     raw: str
     line_without_time: str
     action: str
-    player: str
-    steam_id_64_1: str
-    player2: str
-    steam_id_64_2: str
-    weapon: str
+    player: str | None
+    steam_id_64_1: str | None
+    player2: str | None
+    steam_id_64_2: str | None
+    weapon: str | None
     message: str
-    sub_content: str
+    sub_content: str | None
+
+
+class ParsedLogsType(TypedDict):
+    actions: list[str]
+    players: list[str]
+    logs: list[StructuredLogLine]
 
 
 class GameState(TypedDict):
