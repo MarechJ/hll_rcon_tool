@@ -5,6 +5,7 @@ from functools import partial
 
 from rcon.audit import ingame_mods, online_mods
 from rcon.commands import CommandFailedError
+from rcon.extended_commands import Rcon
 from rcon.recorded_commands import RecordedRcon
 from rcon.user_config import AutoBroadcasts, VoteMapConfig
 from rcon.utils import (
@@ -162,7 +163,7 @@ def get_ingame_mods():
     return [mod["username"] for mod in ingame_mods()]
 
 
-def _get_vars(log: logging.Logger, ctl: RecordedRcon):
+def _get_vars(log: logging.Logger, ctl: Rcon):
     get_vip_names = lambda: [d["name"] for d in ctl.get_vip_ids()]
     get_admin_names = lambda: [d["name"] for d in ctl.get_admin_ids()]
     get_owner_names = lambda: [
@@ -235,7 +236,7 @@ def _get_vars(log: logging.Logger, ctl: RecordedRcon):
     return subs
 
 
-def format_message(log: logging.Logger, ctl: RecordedRcon, msg):
+def format_message(log: logging.Logger, ctl: Rcon, msg):
     subs = _get_vars(log, ctl)
 
     try:

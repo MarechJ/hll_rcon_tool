@@ -727,7 +727,7 @@ class Rcon(ServerCtl):
             logger.exception("Can't save message in redis: %s", msg)
 
         try:
-            formatted = format_message(self, msg)
+            formatted = format_message(logger, self, msg)
         except Exception:
             logger.exception("Unable to format message")
             formatted = msg
