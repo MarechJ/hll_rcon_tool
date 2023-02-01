@@ -478,8 +478,13 @@ const GameView = ({ classes: globalClasses }) => {
   };
 
   const myInterval = React.useMemo(() => (func, ms) => {
-    const handle = setTimeout(() => {
-      func().then(() => myInterval(func, ms)).catch(() => myInterval(func, ms));
+    const handle = setTimeout(async () => {
+      try {
+        await func();
+      } catch (e)  {
+        console.warn('Error in periodic refresh', e);
+      }
+      myInterval(func, ms);
     }, ms);
     setIntervalHandle(handle);
   }, []);
