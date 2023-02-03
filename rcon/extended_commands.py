@@ -1204,13 +1204,11 @@ class Rcon(ServerCtl):
             _, sub_content = raw_line.split("MATCH ENDED ")
         elif raw_line.upper().startswith("MESSAGE"):
             action = "MESSAGE"
-            logger.error(f"{raw_line=}")
 
             if match := re.match(Rcon.message_pattern, raw_line):
                 player, steam_id_64_1, message_content = match.groups()
                 content = f"{player}({steam_id_64_1}): {message_content}"
                 sub_content = message_content
-                logger.error(f"{sub_content=}")
             else:
                 raise ValueError(f"Unable to parse line: {raw_line}")
         else:
@@ -1252,7 +1250,6 @@ class Rcon(ServerCtl):
         players: set[str] = set()
 
         for raw_timestamp, raw_log_line in Rcon.split_raw_log_lines(raw_logs):
-            logger.error(f"{raw_timestamp=}")
             time = Rcon._extract_time(raw_timestamp)
             try:
                 log_line = Rcon.parse_log_line(raw_log_line)
