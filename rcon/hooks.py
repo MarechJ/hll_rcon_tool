@@ -19,7 +19,7 @@ from rcon.discord import (
     send_to_discord_audit,
 )
 from rcon.discord_chat import make_hook
-from rcon.extended_commands import Rcon, StructuredLogLine
+from rcon.extended_commands import Rcon, StructuredLogLineType
 from rcon.game_logs import (
     on_camera,
     on_chat,
@@ -40,7 +40,7 @@ from rcon.player_history import (
 )
 from rcon.recorded_commands import RecordedRcon
 from rcon.steam_utils import get_player_bans, get_steam_profile, update_db_player_info
-from rcon.user_config import CameraConfig, RealVipConfig, VoteMapConfig
+from rcon.user_config import CameraConfig, RealVipConfig
 from rcon.utils import LOG_MAP_NAMES_TO_MAP, MapsHistory, get_server_number
 from rcon.vote_map import VoteMap
 from rcon.workers import record_stats_worker, temporary_broadcast, temporary_welcome
@@ -49,7 +49,7 @@ logger = logging.getLogger(__name__)
 
 
 @on_chat
-def count_vote(rcon: RecordedRcon, struct_log: StructuredLogLine):
+def count_vote(rcon: RecordedRcon, struct_log: StructuredLogLineType):
     enabled = VoteMap().handle_vote_command(rcon=rcon, struct_log=struct_log)
     if enabled and (match := re.match(r"\d\s*$", struct_log["sub_content"].strip())):
         rcon.do_message_player(
@@ -84,7 +84,7 @@ def handle_new_match_start(rcon: RecordedRcon, struct_log):
         logger.info("New match started recording map %s", struct_log)
         with invalidates(Rcon.get_map):
             try:
-                current_map = rcon.get_map().replace('_RESTART', '')
+                current_map = rcon.get_map().replace("_RESTART", "")
             except (CommandFailedError, HLLServerError):
                 current_map = "bla_"
                 logger.error("Unable to get current map")
@@ -286,7 +286,7 @@ def ban_if_has_vac_bans(rcon: RecordedRcon, steam_id_64, name):
 
 def inject_player_ids(func):
     @wraps(func)
-    def wrapper(rcon, struct_log: StructuredLogLine):
+    def wrapper(rcon, struct_log: StructuredLogLineType):
         name = struct_log["player"]
         steam_id_64 = struct_log["steam_id_64_1"]
         return func(rcon, struct_log, name, steam_id_64)
@@ -376,7 +376,9 @@ def notify_false_positives(rcon: RecordedRcon, _, name: str, steam_id_64: str):
     )
 
     try:
-        send_to_discord_audit(f"WARNING Player with bugged profile joined: `{name}` `{steam_id_64}`\n\nThis player if Squad Officer will cause his squad to be punished. He also will show as unassigned in the Game view.\n\nPlease ask him to change his name (last character IG shouldn't be a whitespace)")
+        send_to_discord_audit(
+            f"WARNING Player with bugged profile joined: `{name}` `{steam_id_64}`\n\nThis player if Squad Officer will cause his squad to be punished. He also will show as unassigned in the Game view.\n\nPlease ask him to change his name (last character IG shouldn't be a whitespace)"
+        )
     except Exception:
         logger.exception("Unable to send to audit")
 
