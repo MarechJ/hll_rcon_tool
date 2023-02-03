@@ -12,7 +12,7 @@ from sqlalchemy.exc import IntegrityError
 from rcon.cache_utils import get_redis_client
 from rcon.config import get_config
 from rcon.discord import send_to_discord_audit
-from rcon.extended_commands import LOG_ACTIONS, Rcon, StructuredLogLine
+from rcon.extended_commands import LOG_ACTIONS, Rcon
 from rcon.models import LogLine, PlayerSteamID, enter_session
 from rcon.player_history import (
     add_player_to_blacklist,
@@ -21,6 +21,7 @@ from rcon.player_history import (
 )
 from rcon.recorded_commands import RecordedRcon
 from rcon.settings import SERVER_INFO
+from rcon.types import StructuredLogLineWithMetaData, ParsedLogsType
 from rcon.utils import FixedLenList
 
 logger = logging.getLogger(__name__)
@@ -126,7 +127,7 @@ class LogLoop:
         logger.info("Registered hooks: %s", HOOKS)
 
     @staticmethod
-    def get_log_history_list():
+    def get_log_history_list() -> FixedLenList:
         return FixedLenList(key=LogLoop.log_history_key, max_len=100000)
 
     def run(self, loop_frequency_secs=2, cleanup_frequency_minutes=10):
@@ -135,12 +136,14 @@ class LogLoop:
         last_cleanup_time = datetime.datetime.now()
 
         while True:
-            logs = self.rcon.get_structured_logs(since_min_ago=since_min)
+            logs: ParsedLogsType = self.rcon.get_structured_logs(
+                since_min_ago=since_min
+            )
             since_min = 5
             for log in reversed(logs["logs"]):
-                l = self.record_line(log)
-                if l:
-                    self.process_hooks(l)
+                line = self.record_line(log)
+                if line:
+                    self.process_hooks(line)
             if (
                 datetime.datetime.now() - last_cleanup_time
             ).total_seconds() >= cleanup_frequency_minutes * 60:
@@ -183,7 +186,7 @@ class LogLoop:
                 self.red.srem(self.duplicate_guard_key, k)
         logger.info("Cleanup done")
 
-    def process_hooks(self, log: StructuredLogLine):
+    def process_hooks(self, log: StructuredLogLineWithMetaData):
         logger.debug("Processing %s", f"{log['action']}{log['message']}")
         hooks = []
         started_total = time.time()
@@ -199,7 +202,11 @@ class LogLoop:
                 started = time.time()
                 hook(self.rcon_2, log)
                 logger.debug(
-                    "Ran in %.4f seconds %s.%s on %s", time.time() - started, hook.__module__, hook.__name__, log["raw"]
+                    "Ran in %.4f seconds %s.%s on %s",
+                    time.time() - started,
+                    hook.__module__,
+                    hook.__name__,
+                    log["raw"],
                 )
             except KeyboardInterrupt:
                 sys.exit(0)
@@ -210,8 +217,12 @@ class LogLoop:
                     hook.__name__,
                     log,
                 )
-        logger.debug("Processed %s hooks in %.4f for: %s", len(hooks), time.time() - started_total, f"{log['action']}{log['message']}")
-        
+        logger.debug(
+            "Processed %s hooks in %.4f for: %s",
+            len(hooks),
+            time.time() - started_total,
+            f"{log['action']}{log['message']}",
+        )
 
 
 class LogRecorder:
@@ -223,7 +234,7 @@ class LogRecorder:
             raise ValueError("SERVER_NUMBER is not set, can't record logs")
 
     def _get_new_logs(self, sess):
-        to_store = []
+        to_store: list[StructuredLogLineWithMetaData] = []
         last_log = (
             sess.query(LogLine)
             .filter(LogLine.server == self.server_id)
@@ -232,6 +243,7 @@ class LogRecorder:
             .one_or_none()
         )
         logger.info("Getting new logs from %s", last_log.event_time if last_log else 0)
+        log: StructuredLogLineWithMetaData
         for log in LogLoop.get_log_history_list():
             if not isinstance(log, dict):
                 logger.warning("Log is invalid, not a dict: %s", log)
@@ -260,13 +272,14 @@ class LogRecorder:
             .one_or_none()
         )
 
-    def _save_logs(self, sess, to_store):
+    def _save_logs(self, sess, to_store: list[StructuredLogLineWithMetaData]):
         for log in to_store:
             steamid_1 = self._get_steamid_record(sess, log["steam_id_64_1"])
             steamid_2 = self._get_steamid_record(sess, log["steam_id_64_2"])
             try:
                 sess.add(
                     LogLine(
+                        version=log["version"],
                         event_time=datetime.datetime.fromtimestamp(
                             log["timestamp_ms"] // 1000
                         ),
@@ -278,6 +291,7 @@ class LogRecorder:
                         raw=log["raw"],
                         content=log["message"],
                         server=os.getenv("SERVER_NUMBER"),
+                        weapon=log["weapon"],
                     )
                 )
                 sess.commit()
@@ -356,7 +370,7 @@ def get_recent_logs(
     exact_player_match=False,
     exact_action=False,
     inclusive_filter=True,
-):
+) -> ParsedLogsType:
     # The default behavior is to only show log lines with actions in `actions_filter`
     # inclusive_filter=True retains this default behavior
     # inclusive_filter=False will do the opposite, show all lines except what is passed in
@@ -365,12 +379,13 @@ def get_recent_logs(
     all_logs = log_list
     if start != 0:
         all_logs = log_list[start : min(end, len(log_list))]
-    logs = []
+    logs: list[StructuredLogLineWithMetaData] = []
     all_players = set()
     actions = set(LOG_ACTIONS)
     if player_search and not isinstance(player_search, list):
         player_search = [player_search]
     # flatten that shit
+    line: StructuredLogLineWithMetaData
     for idx, line in enumerate(all_logs):
         if idx >= end - start:
             break
@@ -440,7 +455,9 @@ def is_player_kill(player, log):
 
 
 @on_tk
-def auto_ban_if_tks_right_after_connection(rcon: RecordedRcon, log):
+def auto_ban_if_tks_right_after_connection(
+    rcon: RecordedRcon, log: StructuredLogLineWithMetaData
+):
     config = get_config()
     config = config.get("BAN_TK_ON_CONNECT")
     if not config or not config.get("enabled"):
