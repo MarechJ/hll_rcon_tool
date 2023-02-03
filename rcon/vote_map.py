@@ -1,13 +1,10 @@
-import enum
 import logging
 import os
 import pickle
 import random
 import re
-import time
 from datetime import datetime, timedelta
 from functools import partial
-from threading import Thread
 from typing import Counter
 
 import redis
@@ -15,7 +12,7 @@ from sqlalchemy import and_
 
 from rcon.cache_utils import get_redis_client, get_redis_pool
 from rcon.discord import dict_to_discord, send_to_discord_audit
-from rcon.extended_commands import CommandFailedError, StructuredLogLine
+from rcon.extended_commands import CommandFailedError, StructuredLogLineType
 from rcon.models import PlayerOptins, PlayerSteamID, enter_session
 from rcon.player_history import get_player
 from rcon.recorded_commands import RecordedRcon
@@ -27,19 +24,11 @@ from rcon.utils import (
     NO_MOD_LONG_HUMAN_MAP_NAMES,
     NO_MOD_SHORT_HUMAN_MAP_NAMES,
     SHORT_HUMAN_MAP_NAMES,
-    FixedLenList,
     MapsHistory,
     categorize_maps,
     get_map_side,
     map_name,
     numbered_maps,
-)
-from rcon.workers import (
-    record_stats,
-    record_stats_worker,
-    temp_welcome_standalone,
-    temporary_welcome,
-    temporary_welcome_in,
 )
 
 logger = logging.getLogger(__name__)
@@ -84,7 +73,7 @@ def suggest_next_maps(
     consider_offensive_as_same_map=True,
     allow_consecutive_offensive=True,
     allow_consecutive_offensives_of_opposite_side=False,
-    current_map=None
+    current_map=None,
 ):
     try:
         return _suggest_next_maps(
@@ -96,7 +85,7 @@ def suggest_next_maps(
             consider_offensive_as_same_map,
             allow_consecutive_offensive,
             allow_consecutive_offensives_of_opposite_side,
-            current_map
+            current_map,
         )
     except RestrictiveFilterError:
         logger.warning("Falling back on ALL_MAPS since the filters are too restrictive")
@@ -109,7 +98,7 @@ def suggest_next_maps(
             consider_offensive_as_same_map,
             allow_consecutive_offensive,
             allow_consecutive_offensives_of_opposite_side,
-            current_map
+            current_map,
         )
 
 
@@ -122,7 +111,7 @@ def _suggest_next_maps(
     consider_offensive_as_same_map,
     allow_consecutive_offensive,
     allow_consecutive_offensives_of_opposite_side,
-    current_map
+    current_map,
 ):
     if exclude_last_n > 0:
         last_n_map = set(m["name"] for m in maps_history[:exclude_last_n])
@@ -359,7 +348,7 @@ class VoteMap:
             except CommandFailedError:
                 logger.warning("Unable to message %s", name)
 
-    def handle_vote_command(self, rcon, struct_log: StructuredLogLine) -> bool:
+    def handle_vote_command(self, rcon, struct_log: StructuredLogLineType) -> bool:
         message = struct_log.get("sub_content", "").strip()
         config = VoteMapConfig()
         enabled = config.get_vote_enabled()
@@ -690,13 +679,9 @@ class VoteMap:
             logger.info(f"{votes=}")
             next_map = first[0][0]
             if next_map not in ALL_MAPS:
-                logger.error(
-                    f"{next_map=} is not part of the all map list {ALL_MAPS=}"
-                )
+                logger.error(f"{next_map=} is not part of the all map list {ALL_MAPS=}")
             if next_map not in (selection := self.get_selection()):
-                logger.error(
-                    f"{next_map=} is not part of vote selection {selection=}"
-                )
+                logger.error(f"{next_map=} is not part of vote selection {selection=}")
             logger.info(f"Winning map {next_map=}")
 
         rcon = RecordedRcon(SERVER_INFO)
