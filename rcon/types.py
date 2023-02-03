@@ -204,7 +204,18 @@ class EnrichedGetPlayersType(GetPlayersType):
     profile: PlayerProfileType
 
 
-class StructuredLogLine(TypedDict):
+class StructuredLogLineType(TypedDict):
+    action: str
+    player: str | None
+    steam_id_64_1: str | None
+    player2: str | None
+    steam_id_64_2: str | None
+    weapon: str | None
+    message: str
+    sub_content: str | None
+
+
+class StructuredLogLineWithMetaData(TypedDict):
     version: int
     timestamp_ms: int
     relative_time_ms: float
@@ -223,7 +234,7 @@ class StructuredLogLine(TypedDict):
 class ParsedLogsType(TypedDict):
     actions: list[str]
     players: list[str]
-    logs: list[StructuredLogLine]
+    logs: list[StructuredLogLineWithMetaData]
 
 
 class GameState(TypedDict):
