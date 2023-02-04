@@ -15,6 +15,7 @@ COPY rcongui/src/ src/
 COPY rcongui/public/ public/
 
 COPY .git/ .git/
+RUN git describe --tags > /code/tag_version
 RUN npx browserslist@latest --update-db
 # Normal build
 RUN npm run build
