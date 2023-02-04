@@ -28,6 +28,7 @@ RUN mv /code/build /www_public
 
 FROM nginx:mainline-alpine
 
+RUN apk add openssl
 COPY rcongui/nginx.conf /etc/nginx/conf.d/default.conf
 WORKDIR /var/www
 
