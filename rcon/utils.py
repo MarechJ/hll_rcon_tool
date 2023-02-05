@@ -441,3 +441,20 @@ def get_server_number() -> int:
         raise ValueError("SERVER_NUMBER is not set")
 
     return server_number
+
+
+def exception_in_chain(e: BaseException, c) -> bool:
+    if isinstance(e, c):
+        return True
+
+    if e.__context__ is not None:
+        s = exception_in_chain(e.__context__, c)
+        if s:
+            return True
+
+    if e.__cause__ is not None:
+        s = exception_in_chain(e.__cause__, c)
+        if s:
+            return True
+
+    return False

@@ -466,7 +466,7 @@ const GameView = ({ classes: globalClasses }) => {
 
   const loadData = () => {
     setIsLoading(true);
-    get("get_team_view")
+    return get("get_team_view")
       .then((response) => showResponse(response, "get_team_view"))
       .then((data) => {
         setIsLoading(false);
@@ -478,9 +478,13 @@ const GameView = ({ classes: globalClasses }) => {
   };
 
   const myInterval = React.useMemo(() => (func, ms) => {
-    const handle = setTimeout(() => {
-      func();
-      return myInterval(func, ms);
+    const handle = setTimeout(async () => {
+      try {
+        await func();
+      } catch (e)  {
+        console.warn('Error in periodic refresh', e);
+      }
+      myInterval(func, ms);
     }, ms);
     setIntervalHandle(handle);
   }, []);

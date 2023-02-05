@@ -15,6 +15,7 @@ COPY rcongui/src/ src/
 COPY rcongui/public/ public/
 
 COPY .git/ .git/
+RUN git describe --tags > /code/tag_version
 # Normal build
 RUN npm run build
 
@@ -26,6 +27,7 @@ RUN mv /code/build /www_public
 
 FROM arm64v8/nginx:mainline-alpine
 
+RUN apk add openssl
 COPY rcongui/nginx.conf /etc/nginx/conf.d/default.conf
 WORKDIR /var/www
 
