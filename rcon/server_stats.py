@@ -67,14 +67,6 @@ def save_server_stats_for_last_hours(hours=24, skip_last_hours=1):
     return save_server_stats_for_range(start, end)
 
 
-def save_server_stats_since_inception():
-    with enter_session() as sess:
-        (start,) = sess.query(func.min(Maps.start)).one()
-    save_server_stats_for_range(
-        start, datetime.datetime.now() - datetime.timedelta(hours=2)
-    )
-
-
 def save_server_stats_for_range(start, end):
     start = start.replace(minute=0, second=0, microsecond=0)
     end = end.replace(minute=0, second=0, microsecond=0)
