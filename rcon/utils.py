@@ -58,6 +58,24 @@ ALL_MAPS = (
     "utahbeach_warfare",
 )
 
+ALL_ROLES = (
+    "armycommander",
+    "officer",
+    "rifleman",
+    "assault",
+    "automaticrifleman",
+    "medic",
+    "support",
+    "heavymachinegunner",
+    "antitank",
+    "engineer",
+    "tankcommander",
+    "crewman",
+    "spotter",
+    "sniper",
+)
+
+ALL_ROLES_KEY_INDEX_MAP = {v: i for i, v in enumerate(ALL_ROLES)}
 
 def get_current_map(rcon):
     map_ = rcon.get_map()
@@ -78,7 +96,7 @@ def categorize_maps(maps):
         "offensive": [],
     }
     for m in maps:
-        if "offensive" in m:
+        if "offensive" in m or m.startswith("stmariedumont_off"):
             warfare_offsensive["offensive"].append(m)
         if "warfare" in m:
             warfare_offsensive["warfare"].append(m)
@@ -100,6 +118,35 @@ def get_map_side(map_):
     except IndexError:
         return None
 
+
+LOG_MAP_NAMES_TO_MAP = {
+    "CARENTAN OFFENSIVE": "carentan_offensive_ger",
+    "CARENTAN WARFARE": "carentan_warfare",
+    "FOY OFFENSIVE": "foy_offensive_ger",
+    "FOY WARFARE": "foy_warfare",
+    "HILL 400 OFFENSIVE": "hill400_offensive_ger",
+    "HILL 400 WARFARE": "hill400_warfare",
+    "HÜRTGEN FOREST OFFENSIVE": "hurtgenforest_offensive_ger",
+    "HÜRTGEN FOREST WARFARE": "hurtgenforest_warfare_V2",
+    "KURSK OFFENSIVE": "kursk_offensive_ger",
+    "KURSK WARFARE": "kursk_warfare",
+    "Kharkov OFFENSIVE": "kharkov_offensive_rus",
+    "Kharkov WARFARE": "kharkov_warfare",
+    "PURPLE HEART LANE OFFENSIVE": "purpleheartlane_offensive_ger",
+    "PURPLE HEART LANE WARFARE": "purpleheartlane_warfare",
+    "REMAGEN OFFENSIVE": "remagen_offensive_ger",
+    "REMAGEN WARFARE": "remagen_warfare",
+    "SAINTE-MÈRE-ÉGLISE OFFENSIVE": "stmereeglise_offensive_ger",
+    "SAINTE-MÈRE-ÉGLISE WARFARE": "stmereeglise_warfare",
+    "ST MARIE DU MONT OFFENSIVE": "stmariedumont_off_ger",
+    "ST MARIE DU MONT WARFARE": "stmariedumont_warfare",
+    "STALINGRAD OFFENSIVE": "stalingrad_offensive_ger",
+    "STALINGRAD WARFARE": "stalingrad_warfare",
+    "UTAH BEACH OFFENSIVE": "utahbeach_offensive_ger",
+    "UTAH BEACH WARFARE": "utahbeach_warfare",
+    "OMAHA BEACH WARFARE": "omahabeach_warfare",
+    "OMAHA BEACH OFFENSIVE": "omahabeach_offensive_ger",
+}
 
 LONG_HUMAN_MAP_NAMES = {
     "carentan_offensive_ger": "Carentan Offensive (GER)",
@@ -266,7 +313,7 @@ NO_MOD_SHORT_HUMAN_MAP_NAMES = {
     "kursk_warfare_night": "Kursk (Night)",
     "kursk_warfare": "Kursk",
     "omahabeach_offensive_ger": "Omaha (GER)",
-    "omahabeach_offensive_us": "Omaha",
+    "omahabeach_offensive_us": "Omaha (US)",
     "omahabeach_warfare": "Omaha",
     "purpleheartlane_offensive_ger": "PHL (GER)",
     "purpleheartlane_offensive_us": "PHL (US)",
@@ -338,18 +385,18 @@ class MapsHistory(FixedLenList):
     def __init__(self, key="maps_history", max_len=500):
         super().__init__(key, max_len)
 
-    def save_map_end(self, old_map):
-        ts = datetime.now().timestamp()
+    def save_map_end(self, old_map=None, end_timestamp: int = None):
+        ts = end_timestamp or datetime.now().timestamp()
         logger.info("Saving end of map %s at time %s", old_map, ts)
-        prev = self.lpop() or dict(name=old_map, start=None, end=None)
+        prev = self.lpop() or dict(name=old_map, start=None, end=None, guessed=True)
         prev["end"] = ts
         self.lpush(prev)
         return prev
 
-    def save_new_map(self, new_map):
-        ts = datetime.now().timestamp()
+    def save_new_map(self, new_map, guessed=True, start_timestamp: int = None):
+        ts = start_timestamp or datetime.now().timestamp()
         logger.info("Saving start of new map %s at time %s", new_map, ts)
-        new = dict(name=new_map, start=ts, end=None)
+        new = dict(name=new_map, start=ts, end=None, guessed=guessed)
         self.add(new)
         return new
 
@@ -384,3 +431,30 @@ class ApiKey:
             k.decode(): self.red.get(k.decode()).decode()
             for k in self.red.keys(f"{self.key_prefix}*")
         }
+
+
+def get_server_number() -> int:
+    """Get the CRCON server number"""
+    server_number = os.getenv("SERVER_NUMBER")
+    if not server_number:
+        # Shouldn't get here because SERVER_NUMBER is a mandatory ENV Var
+        raise ValueError("SERVER_NUMBER is not set")
+
+    return server_number
+
+
+def exception_in_chain(e: BaseException, c) -> bool:
+    if isinstance(e, c):
+        return True
+
+    if e.__context__ is not None:
+        s = exception_in_chain(e.__context__, c)
+        if s:
+            return True
+
+    if e.__cause__ is not None:
+        s = exception_in_chain(e.__cause__, c)
+        if s:
+            return True
+
+    return False

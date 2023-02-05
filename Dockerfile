@@ -1,11 +1,10 @@
-FROM python:3.8-buster
+FROM python:3.11-buster
 
 WORKDIR /code
 RUN apt-get update -y && apt-get install -y cron logrotate
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 RUN pip install gunicorn
-RUN pip install gunicorn[eventlet]
 RUN pip install supervisor
 COPY . .
 ENV FLASK_APP rcon.connection

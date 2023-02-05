@@ -6,6 +6,7 @@ import os
 class ConfigurationError(Exception):
     pass
 
+
 def _get_missing_env(keys, env):
     missing = []
     for k in keys:
@@ -13,19 +14,16 @@ def _get_missing_env(keys, env):
             missing.append("'{}' was not specified in your configuration".format(k))
     return missing
 
+
 def pre_flight_checks(env):
     required = [
-        'HLL_HOST',
-        'HLL_PORT',
-        'HLL_PASSWORD',
-        'REDIS_URL',
-        'DB_URL',
+        "HLL_HOST",
+        "HLL_PORT",
+        "HLL_PASSWORD",
+        "REDIS_URL",
+        "DB_URL",
     ]
-    optionnal = [
-        'DISCORD_WEBHOOK_AUDIT_LOG',
-        'LOGGING_PATH',
-        'LOGGING_LEVEL'
-    ]
+    optionnal = ["DISCORD_WEBHOOK_AUDIT_LOG", "LOGGING_PATH", "LOGGING_LEVEL"]
 
     errors = _get_missing_env(required, env)
     warnings = _get_missing_env(optionnal, env)
@@ -33,15 +31,16 @@ def pre_flight_checks(env):
     print(warnings)
     if errors:
         print(errors)
-        raise ConfigurationError('\n'.join(errors))
-    
+        raise ConfigurationError("\n".join(errors))
+
 
 if __name__ == "__main__":
     env = os.environ
-    logger = logging.getLogger('rcon')
+    logger = logging.getLogger("rcon")
     try:
-        #pre_flight_checks(env)
+        # pre_flight_checks(env)
         from rcon.cli import cli, init
+
         init()
         cli()
     except SystemExit as e:

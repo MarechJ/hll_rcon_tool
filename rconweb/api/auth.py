@@ -79,10 +79,10 @@ def do_login(request):
                 result=True, command="login", arguments=name, failed=False
             )
         else:
-            logger.warning("Failed login attempt %s", data)
+            logger.warning("Failed login attempt %s", name)
             raise PermissionDenied("Invalid login")
     except PermissionDenied:
-        logger.warning("Failed login attempt %s", data)
+        logger.warning("Failed login attempt %s", name)
         return api_response(command="login", arguments=name, status_code=401)
 
 
@@ -102,7 +102,8 @@ def _can_change_server_settings(user):
 
     Superusers always are able to change server settings, regardles of what other perms
     their account is given."""
-    return user.is_superuser or not user.has_perm('auth.can_not_change_server_settings')
+    return user.is_superuser or not user.has_perm("auth.can_not_change_server_settings")
+
 
 @csrf_exempt
 def is_logged_in(request):
@@ -133,6 +134,7 @@ def do_logout(request):
     logout(request)
     return api_response(result=True, command="logout", failed=False)
 
+
 def login_required(also_require_perms=False):
     """Flag this endpoint as one that requires the user
     to be logged in.
@@ -145,6 +147,7 @@ def login_required(also_require_perms=False):
         Whether just the mod role isn't sufficient enough
         to use this endpoint, by default False
     """
+
     def decorator(func):
         @wraps(func)
         def wrapper(request, *args, **kwargs):
@@ -153,7 +156,7 @@ def login_required(also_require_perms=False):
                     command=request.path,
                     error="You must be logged in to use this",
                     failed=True,
-                    status_code=401
+                    status_code=401,
                 )
 
             if also_require_perms:
@@ -162,7 +165,7 @@ def login_required(also_require_perms=False):
                         command=request.path,
                         error="You do not have the required permissions to use this",
                         failed=True,
-                        status_code=403
+                        status_code=403,
                     )
 
             try:
@@ -170,14 +173,19 @@ def login_required(also_require_perms=False):
             except Exception as e:
                 logger.exception("Unexpected error in %s", func.__name__)
                 return api_response(
-                    command=request.path,
-                    error=repr(e),
-                    failed=True,
-                    status_code=500
+                    command=request.path, error=repr(e), failed=True, status_code=500
                 )
 
         return wrapper
+
     return decorator
+
+
+def staff_required(request):
+    if request.user.is_authenticated and request.user.is_staff:
+        return True
+    return False  
+
 
 def stats_login_required(func):
     config = get_config()

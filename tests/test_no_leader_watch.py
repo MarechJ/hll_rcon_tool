@@ -6,22 +6,20 @@ from unittest import mock
 from pytest import fixture
 
 from rcon.config import get_config
-from rcon.squad_automod.automod import (
+from rcon.automods.automod import (
     get_punitions_to_apply,
-    should_kick_player,
-    should_punish_player,
-    should_warn_player,
 )
-from rcon.squad_automod.models import (
-    APlayer,
+from rcon.automods.models import (
+    PunishPlayer,
     ASquad,
     NoLeaderConfig,
     PunishStepState,
     PunitionsToApply,
     SquadCycleOver,
     SquadHasLeader,
-    WatchStatus,
+    WatchStatus, PunishDetails,
 )
+from rcon.automods.no_leader import NoLeaderAutomod
 
 
 @fixture
@@ -560,35 +558,79 @@ def team_view():
     }
 
 
-def test_should_warn_first_time(team_view):
-    config = NoLeaderConfig(
-        number_of_warning=2,
-        warning_interval_seconds=60,
+def construct_aplayer(
+        player_dict: dict, team_name: str = "allies", squad_name: str = "able"
+):
+    return PunishPlayer(
+        steam_id_64=player_dict["steam_id_64"],
+        name=player_dict["name"],
+        team=team_name,
+        squad=squad_name,
+        role=player_dict.get("role"),
+        lvl=int(player_dict.get("level")),
     )
+
+
+def test_should_not_note(team_view):
+    mod = NoLeaderAutomod(NoLeaderConfig(
+        number_of_notes=0,
+    ), None)
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
+    aplayer = construct_aplayer(player)
 
-    assert PunishStepState.apply == should_warn_player(
-        watch_status, config, "able"
-    , player)
-    assert PunishStepState.wait == should_warn_player(
-        watch_status, config, "able"
-    , player)
+    assert PunishStepState.DISABLED == mod.should_note_player(
+        watch_status, "able", aplayer
+    )
+    assert PunishStepState.DISABLED == mod.should_note_player(
+        watch_status, "able", aplayer
+    )
+    assert WatchStatus() == watch_status
+
+
+def test_should_note_twice(team_view):
+    config = NoLeaderConfig(
+        number_of_notes=2,
+        notes_interval_seconds=1,
+    )
+    mod = NoLeaderAutomod(config, None)
+    watch_status = WatchStatus()
+    player = team_view["allies"]["squads"]["able"]["players"][0]
+    aplayer = construct_aplayer(player)
+
+    assert PunishStepState.APPLY == mod.should_note_player(
+        watch_status, "able", aplayer
+    )
+    assert PunishStepState.WAIT == mod.should_note_player(
+        watch_status, "able", aplayer
+    )
+    time.sleep(config.notes_interval_seconds)
+    assert PunishStepState.APPLY == mod.should_note_player(
+        watch_status, "able", aplayer
+    )
+    assert PunishStepState.WAIT == mod.should_note_player(
+        watch_status, "able", aplayer
+    )
+    time.sleep(config.notes_interval_seconds)
+    assert PunishStepState.GO_TO_NEXT_STEP == mod.should_note_player(
+        watch_status, "able", aplayer
+    )
 
 
 def test_should_not_warn(team_view):
-    config = NoLeaderConfig(
+    mod = NoLeaderAutomod(NoLeaderConfig(
         number_of_warning=0,
-    )
+    ), None)
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
+    aplayer = construct_aplayer(player)
 
-    assert PunishStepState.disabled == should_warn_player(
-        watch_status, config, "able"
-    , player)
-    assert PunishStepState.disabled == should_warn_player(
-        watch_status, config, "able"
-    , player)
+    assert PunishStepState.DISABLED == mod.should_warn_player(
+        watch_status, "able", aplayer
+    )
+    assert PunishStepState.DISABLED == mod.should_warn_player(
+        watch_status, "able", aplayer
+    )
     assert WatchStatus() == watch_status
 
 
@@ -597,85 +639,93 @@ def test_should_warn_twice(team_view):
         number_of_warning=2,
         warning_interval_seconds=1,
     )
+    mod = NoLeaderAutomod(config, None)
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
+    aplayer = construct_aplayer(player)
 
-    assert PunishStepState.apply == should_warn_player(
-        watch_status, config, "able"
-    , player)
-    assert PunishStepState.wait == should_warn_player(
-        watch_status, config, "able"
-    , player)
+    assert PunishStepState.APPLY == mod.should_warn_player(
+        watch_status, "able", aplayer
+    )
+    assert PunishStepState.WAIT == mod.should_warn_player(
+        watch_status, "able", aplayer
+    )
     time.sleep(config.warning_interval_seconds)
-    assert PunishStepState.apply == should_warn_player(
-        watch_status, config, "able"
-    , player)
-    assert PunishStepState.wait == should_warn_player(
-        watch_status, config, "able"
-    , player)
+    assert PunishStepState.APPLY == mod.should_warn_player(
+        watch_status, "able", aplayer
+    )
+    assert PunishStepState.WAIT == mod.should_warn_player(
+        watch_status, "able", aplayer
+    )
     time.sleep(config.warning_interval_seconds)
-    assert PunishStepState.go_to_next_step == should_warn_player(watch_status, config, "able", player)
+    assert PunishStepState.GO_TO_NEXT_STEP == mod.should_warn_player(
+        watch_status, "able", aplayer
+    )
 
 
 def test_should_warn_infinite(team_view):
-    config = NoLeaderConfig(
+    mod = NoLeaderAutomod(NoLeaderConfig(
         number_of_warning=-1,
         warning_interval_seconds=0,
-    )
+    ), None)
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
+    aplayer = construct_aplayer(player)
 
     for _ in range(100):
-        assert PunishStepState.apply == should_warn_player(
-            watch_status, config, "able"
-        , player)
+        assert PunishStepState.APPLY == mod.should_warn_player(
+            watch_status, "able", aplayer
+        )
 
 
 def test_should_punish(team_view):
-    config = NoLeaderConfig(
+    mod = NoLeaderAutomod(NoLeaderConfig(
         number_of_punish=2,
         min_squad_players_for_punish=0,
         disable_punish_below_server_player_count=10,
         immuned_roles=["support"],
-    )
+    ), None)
 
     watch_status = WatchStatus()
-    assert PunishStepState.apply == should_punish_player(
+    player = team_view["allies"]["squads"]["able"]["players"][0]
+    aplayer = construct_aplayer(player)
+
+    assert PunishStepState.APPLY == mod.should_punish_player(
         watch_status,
-        config,
         team_view,
         "able",
         team_view["allies"]["squads"]["able"],
-        team_view["allies"]["squads"]["able"]["players"][0],
+        aplayer,
     )
 
 
 def test_punish_wait(team_view):
-    config = NoLeaderConfig(
+    mod = NoLeaderAutomod(NoLeaderConfig(
         number_of_punish=2,
         punish_interval_seconds=60,
         min_squad_players_for_punish=0,
         disable_punish_below_server_player_count=0,
         immuned_level_up_to=10,
         immuned_roles=[],
-    )
+    ), None)
 
     watch_status = WatchStatus()
-    assert PunishStepState.apply == should_punish_player(
+    player = team_view["allies"]["squads"]["able"]["players"][0]
+    aplayer = construct_aplayer(player)
+
+    assert PunishStepState.APPLY == mod.should_punish_player(
         watch_status,
-        config,
         team_view,
         "able",
         team_view["allies"]["squads"]["able"],
-        team_view["allies"]["squads"]["able"]["players"][0],
+        aplayer,
     )
-    assert PunishStepState.wait == should_punish_player(
+    assert PunishStepState.WAIT == mod.should_punish_player(
         watch_status,
-        config,
         team_view,
         "able",
         team_view["allies"]["squads"]["able"],
-        team_view["allies"]["squads"]["able"]["players"][0],
+        aplayer,
     )
 
 
@@ -688,356 +738,364 @@ def test_punish_twice(team_view):
         immuned_level_up_to=10,
         immuned_roles=[],
     )
+    mod = NoLeaderAutomod(config, None)
 
     watch_status = WatchStatus()
-    assert PunishStepState.apply == should_punish_player(
+    player = team_view["allies"]["squads"]["able"]["players"][0]
+    aplayer = construct_aplayer(player)
+
+    assert PunishStepState.APPLY == mod.should_punish_player(
         watch_status,
-        config,
         team_view,
         "able",
         team_view["allies"]["squads"]["able"],
-        team_view["allies"]["squads"]["able"]["players"][0],
+        aplayer,
     )
-    assert PunishStepState.wait == should_punish_player(
+    assert PunishStepState.WAIT == mod.should_punish_player(
         watch_status,
-        config,
         team_view,
         "able",
         team_view["allies"]["squads"]["able"],
-        team_view["allies"]["squads"]["able"]["players"][0],
-    )
-    time.sleep(config.punish_interval_seconds)
-    assert PunishStepState.apply == should_punish_player(
-        watch_status,
-        config,
-        team_view,
-        "able",
-        team_view["allies"]["squads"]["able"],
-        team_view["allies"]["squads"]["able"]["players"][0],
+        aplayer,
     )
     time.sleep(config.punish_interval_seconds)
-    assert PunishStepState.go_to_next_step == should_punish_player(
+    assert PunishStepState.APPLY == mod.should_punish_player(
         watch_status,
-        config,
         team_view,
         "able",
         team_view["allies"]["squads"]["able"],
-        team_view["allies"]["squads"]["able"]["players"][0],
+        aplayer,
+    )
+    time.sleep(config.punish_interval_seconds)
+    assert PunishStepState.GO_TO_NEXT_STEP == mod.should_punish_player(
+        watch_status,
+        team_view,
+        "able",
+        team_view["allies"]["squads"]["able"],
+        aplayer,
     )
 
 
 def test_punish_too_little_players(team_view):
-    config = NoLeaderConfig(
+    mod = NoLeaderAutomod(NoLeaderConfig(
         number_of_punish=2,
         punish_interval_seconds=60,
         min_squad_players_for_punish=0,
         disable_punish_below_server_player_count=60,
         immuned_level_up_to=10,
         immuned_roles=[],
-    )
+    ), None)
 
     watch_status = WatchStatus()
-    assert PunishStepState.wait == should_punish_player(
+    player = team_view["allies"]["squads"]["able"]["players"][0]
+    aplayer = construct_aplayer(player)
+
+    assert PunishStepState.WAIT == mod.should_punish_player(
         watch_status,
-        config,
         team_view,
         "able",
         team_view["allies"]["squads"]["able"],
-        team_view["allies"]["squads"]["able"]["players"][0],
+        aplayer,
     )
 
 
 def test_punish_small_squad(team_view):
-    config = NoLeaderConfig(
+    mod = NoLeaderAutomod(NoLeaderConfig(
         number_of_punish=2,
         punish_interval_seconds=60,
         min_squad_players_for_punish=7,
         disable_punish_below_server_player_count=0,
         immuned_level_up_to=10,
         immuned_roles=[],
-    )
+    ), None)
 
     watch_status = WatchStatus()
-    assert PunishStepState.wait == should_punish_player(
+    player = team_view["allies"]["squads"]["able"]["players"][0]
+    aplayer = construct_aplayer(player)
+
+    assert PunishStepState.WAIT == mod.should_punish_player(
         watch_status,
-        config,
         team_view,
         "able",
         team_view["allies"]["squads"]["able"],
-        team_view["allies"]["squads"]["able"]["players"][0],
+        aplayer,
     )
 
 
 def test_punish_disabled(team_view):
-    config = NoLeaderConfig(
+    mod = NoLeaderAutomod(NoLeaderConfig(
         number_of_punish=0,
         punish_interval_seconds=0,
         min_squad_players_for_punish=0,
         disable_punish_below_server_player_count=0,
         immuned_level_up_to=10,
         immuned_roles=[],
-    )
+    ), None)
 
     watch_status = WatchStatus()
-    assert PunishStepState.disabled == should_punish_player(
+    player = team_view["allies"]["squads"]["able"]["players"][0]
+    aplayer = construct_aplayer(player)
+
+    assert PunishStepState.DISABLED == mod.should_punish_player(
         watch_status,
-        config,
         team_view,
         "able",
         team_view["allies"]["squads"]["able"],
-        team_view["allies"]["squads"]["able"]["players"][0],
+        aplayer,
     )
 
 
 def test_punish_immuned_role(team_view):
-    config = NoLeaderConfig(
+    mod = NoLeaderAutomod(NoLeaderConfig(
         number_of_punish=2,
         punish_interval_seconds=0,
         min_squad_players_for_punish=0,
         disable_punish_below_server_player_count=0,
         immuned_level_up_to=10,
         immuned_roles=["antitank"],
-    )
+    ), None)
 
     watch_status = WatchStatus()
-    assert PunishStepState.immuned == should_punish_player(
+    player = team_view["allies"]["squads"]["able"]["players"][0]
+    aplayer = construct_aplayer(player)
+
+    assert PunishStepState.IMMUNED == mod.should_punish_player(
         watch_status,
-        config,
         team_view,
         "able",
         team_view["allies"]["squads"]["able"],
-        team_view["allies"]["squads"]["able"]["players"][0],
+        aplayer,
     )
 
-    config = NoLeaderConfig(
+    mod = NoLeaderAutomod(NoLeaderConfig(
         number_of_punish=2,
         punish_interval_seconds=0,
         min_squad_players_for_punish=0,
         disable_punish_below_server_player_count=0,
         immuned_level_up_to=10,
         immuned_roles=["antitank", "support"],
-    )
+    ), None)
 
     watch_status = WatchStatus()
-    assert PunishStepState.immuned == should_punish_player(
+    assert PunishStepState.IMMUNED == mod.should_punish_player(
         watch_status,
-        config,
         team_view,
         "able",
         team_view["allies"]["squads"]["able"],
-        team_view["allies"]["squads"]["able"]["players"][0],
+        aplayer,
     )
 
 
 def test_punish_immuned_lvl(team_view):
-    config = NoLeaderConfig(
+    mod = NoLeaderAutomod(NoLeaderConfig(
         number_of_punish=2,
         punish_interval_seconds=0,
         min_squad_players_for_punish=0,
         disable_punish_below_server_player_count=0,
         immuned_level_up_to=50,
         immuned_roles=[],
-    )
+    ), None)
 
     watch_status = WatchStatus()
-    assert PunishStepState.immuned == should_punish_player(
+    player = team_view["allies"]["squads"]["able"]["players"][0]
+    aplayer = construct_aplayer(player)
+
+    assert PunishStepState.IMMUNED == mod.should_punish_player(
         watch_status,
-        config,
         team_view,
         "able",
         team_view["allies"]["squads"]["able"],
-        team_view["allies"]["squads"]["able"]["players"][0],
+        aplayer,
     )
 
 
 def test_shouldnt_kick_without_punish(team_view):
-    config = NoLeaderConfig(
+    mod = NoLeaderAutomod(NoLeaderConfig(
         kick_after_max_punish=True,
         kick_grace_period_seconds=0,
         min_squad_players_for_kick=0,
         disable_kick_below_server_player_count=0,
         immuned_level_up_to=10,
         immuned_roles=["support"],
-    )
+    ), None)
 
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
-    assert PunishStepState.disabled == should_kick_player(
+    aplayer = construct_aplayer(player)
+
+    assert PunishStepState.DISABLED == mod.should_kick_player(
         watch_status,
-        config,
         team_view,
         "able",
         team_view["allies"]["squads"]["able"],
-        player,
+        aplayer,
     )
     watch_status.punished.setdefault(player["name"], []).append(datetime.now())
-    assert PunishStepState.apply == should_kick_player(
+    assert PunishStepState.APPLY == mod.should_kick_player(
         watch_status,
-        config,
         team_view,
         "able",
         team_view["allies"]["squads"]["able"],
-        player,
+        aplayer,
     )
 
 
 def test_shouldnt_kick_immuned(team_view):
-    config = NoLeaderConfig(
+    mod = NoLeaderAutomod(NoLeaderConfig(
         kick_after_max_punish=True,
         kick_grace_period_seconds=0,
         min_squad_players_for_kick=0,
         disable_kick_below_server_player_count=0,
         immuned_level_up_to=10,
         immuned_roles=["antitank"],
-    )
+    ), None)
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
+    aplayer = construct_aplayer(player)
     watch_status.punished.setdefault(player["name"], []).append(datetime.now())
 
-    assert PunishStepState.immuned == should_kick_player(
+    assert PunishStepState.IMMUNED == mod.should_kick_player(
         watch_status,
-        config,
         team_view,
         "able",
         team_view["allies"]["squads"]["able"],
-        player,
+        aplayer,
     )
 
 
 def test_shouldnt_kick_immuned_lvl(team_view):
-    config = NoLeaderConfig(
+    mod = NoLeaderAutomod(NoLeaderConfig(
         kick_after_max_punish=True,
         kick_grace_period_seconds=0,
         min_squad_players_for_kick=0,
         disable_kick_below_server_player_count=0,
         immuned_level_up_to=50,
         immuned_roles=[],
-    )
+    ), None)
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
+    aplayer = construct_aplayer(player)
     watch_status.punished.setdefault(player["name"], []).append(datetime.now())
 
-    assert PunishStepState.immuned == should_kick_player(
+    assert PunishStepState.IMMUNED == mod.should_kick_player(
         watch_status,
-        config,
         team_view,
         "able",
         team_view["allies"]["squads"]["able"],
-        player,
+        aplayer,
     )
 
 
 def test_shouldnt_kick_small_squad(team_view):
-    config = NoLeaderConfig(
+    mod = NoLeaderAutomod(NoLeaderConfig(
         kick_after_max_punish=True,
         kick_grace_period_seconds=0,
         min_squad_players_for_kick=7,
         disable_kick_below_server_player_count=0,
         immuned_level_up_to=10,
         immuned_roles=[],
-    )
+    ), None)
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
+    aplayer = construct_aplayer(player)
     watch_status.punished.setdefault(player["name"], []).append(datetime.now())
 
-    assert PunishStepState.wait == should_kick_player(
+    assert PunishStepState.WAIT == mod.should_kick_player(
         watch_status,
-        config,
         team_view,
         "able",
         team_view["allies"]["squads"]["able"],
-        player,
+        aplayer,
     )
 
 
 def test_shouldnt_kick_small_game(team_view):
-    config = NoLeaderConfig(
+    mod = NoLeaderAutomod(NoLeaderConfig(
         kick_after_max_punish=True,
         kick_grace_period_seconds=0,
         min_squad_players_for_kick=0,
         disable_kick_below_server_player_count=50,
         immuned_level_up_to=10,
         immuned_roles=[],
-    )
+    ), None)
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
+    aplayer = construct_aplayer(player)
     watch_status.punished.setdefault(player["name"], []).append(datetime.now())
 
-    assert PunishStepState.wait == should_kick_player(
+    assert PunishStepState.WAIT == mod.should_kick_player(
         watch_status,
-        config,
         team_view,
         "able",
         team_view["allies"]["squads"]["able"],
-        player,
+        aplayer,
     )
 
 
 def test_shouldnt_kick_disabled(team_view):
-    config = NoLeaderConfig(
+    mod = NoLeaderAutomod(NoLeaderConfig(
         kick_after_max_punish=False,
         kick_grace_period_seconds=0,
         min_squad_players_for_kick=0,
         disable_kick_below_server_player_count=0,
         immuned_level_up_to=10,
         immuned_roles=[],
-    )
+    ), None)
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
+    aplayer = construct_aplayer(player)
     watch_status.punished.setdefault(player["name"], []).append(datetime.now())
 
-    assert PunishStepState.disabled == should_kick_player(
+    assert PunishStepState.DISABLED == mod.should_kick_player(
         watch_status,
-        config,
         team_view,
         "able",
         team_view["allies"]["squads"]["able"],
-        player,
+        aplayer,
     )
 
 
 def test_should_wait_kick(team_view):
-    config = NoLeaderConfig(
+    mod = NoLeaderAutomod(NoLeaderConfig(
         kick_after_max_punish=True,
         kick_grace_period_seconds=1,
         min_squad_players_for_kick=0,
         disable_kick_below_server_player_count=0,
         immuned_level_up_to=10,
         immuned_roles=[],
-    )
+    ), None)
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
+    aplayer = construct_aplayer(player)
     watch_status.punished.setdefault(player["name"], []).append(datetime.now())
 
-    assert PunishStepState.wait == should_kick_player(
+    assert PunishStepState.WAIT == mod.should_kick_player(
         watch_status,
-        config,
         team_view,
         "able",
         team_view["allies"]["squads"]["able"],
-        player,
+        aplayer,
     )
-    assert PunishStepState.wait == should_kick_player(
+    assert PunishStepState.WAIT == mod.should_kick_player(
         watch_status,
-        config,
         team_view,
         "able",
         team_view["allies"]["squads"]["able"],
-        player,
+        aplayer,
     )
     time.sleep(1)
-    assert PunishStepState.apply == should_kick_player(
+    assert PunishStepState.APPLY == mod.should_kick_player(
         watch_status,
-        config,
         team_view,
         "able",
         team_view["allies"]["squads"]["able"],
-        player,
+        aplayer,
     )
 
 
 def test_watcher(team_view):
     config = NoLeaderConfig(
+        number_of_notes=0,
         number_of_warning=1,
         warning_interval_seconds=3,
         number_of_punish=2,
@@ -1050,125 +1108,312 @@ def test_watcher(team_view):
         disable_kick_below_server_player_count=0,
         immuned_level_up_to=10,
         immuned_roles=[],
+        warning_message="",
+        punish_message="",
+        kick_message="",
     )
 
     state = {}
 
     @contextmanager
-    def fake_state(red, team, squad_name):
+    def fake_state(team, squad_name):
         try:
             yield state.setdefault(f"{team}{squad_name}", WatchStatus())
         except (SquadCycleOver, SquadHasLeader):
             del state[f"{team}{squad_name}"]
 
-    with mock.patch(
-        "rcon.squad_automod.automod.watch_state", wraps=fake_state
-    ), mock.patch("rcon.squad_automod.automod.get_redis_client"):
-        rcon = mock.MagicMock()
-        rcon.get_team_view_fast.return_value = team_view
-        expected_warned_players = [
-            APlayer(
-                steam_id_64="76561198055458575", player="Lawless", squad="baker", team="allies", role="heavymachinegunner",
-                lvl=88,
-            ),
-            APlayer(
-                steam_id_64="76561198985998769", player="Major_Winters", squad="baker", team="allies", role="rifleman",
-                lvl=82,
-            ),
-            APlayer(
-                steam_id_64="76561198393093210", player="Toomz", squad="baker", team="allies", role="assault", lvl=69
-            ),
-            APlayer(
-                steam_id_64="76561198026310990", player="Zones (BEL)", squad="baker", team="allies", role="engineer",
-                lvl=59,
-            ),
-            APlayer(
-                steam_id_64="76561198198563101", player="Pavooloni", squad="baker", team="allies", role="antitank",
-                lvl=71,
-            ),
-            APlayer(
-                steam_id_64="76561198028236925", player="Kjjuj", squad="baker", team="allies", role="rifleman", lvl=102
-            ),
-            APlayer(
-                steam_id_64="76561198979089668", player="emfoor", squad="able", team="axis", role="assault", lvl=110
-            ),
-            APlayer(steam_id_64="76561198041823654", player="Makaj", squad="able", team="axis", role="officer", lvl=43),
-            APlayer(
-                steam_id_64="76561198892700816", player="tinner2115", squad="able", team="axis", role="engineer", lvl=170
-            ),
-            APlayer(
-                steam_id_64="76561198354354474", player="Cuervo", squad="able", team="axis", role="antitank", lvl=129
-            ),
-            APlayer(
-                steam_id_64="76561198046677517", player="capitanodrew", squad="able", team="axis", role="heavymachinegunner",
-                lvl=67,
-            ),
-            APlayer(
-                steam_id_64='76561199027409370', player='Dr.FishShitz', squad='able', team='axis', role='automaticrifleman', lvl=10),
-            APlayer(steam_id_64="76561198206929555", player="WilliePeter",
-                squad="baker",
-                team="axis",
-                role="spotter",
-                lvl=123,
-            ),
-            APlayer(
-                steam_id_64="76561199166765040", player="DarkVisionary",
-                squad="baker",
-                team="axis",
-                role="sniper",
-                lvl=184,
-            ),
-        ]
-        expected_punished_players = list(filter(lambda p: p.lvl > 10, expected_warned_players))
+    rcon = mock.MagicMock()
+    rcon.get_team_view.return_value = team_view
+    expected_warned_players = [
+        PunishPlayer(
+            steam_id_64="76561198055458575",
+            name="Lawless",
+            squad="baker",
+            team="allies",
+            role="heavymachinegunner",
+            lvl=88,
+            details=PunishDetails(author='NoLeaderWatch-DryRun', message='', discord_audit_url='', dry_run=True),
+        ),
+        PunishPlayer(
+            steam_id_64="76561198985998769",
+            name="Major_Winters",
+            squad="baker",
+            team="allies",
+            role="rifleman",
+            lvl=82,
+            details=PunishDetails(author='NoLeaderWatch-DryRun', message='', discord_audit_url='', dry_run=True),
+        ),
+        PunishPlayer(
+            steam_id_64="76561198393093210",
+            name="Toomz",
+            squad="baker",
+            team="allies",
+            role="assault",
+            lvl=69,
+            details=PunishDetails(author='NoLeaderWatch-DryRun', message='', discord_audit_url='', dry_run=True),
+        ),
+        PunishPlayer(
+            steam_id_64="76561198026310990",
+            name="Zones (BEL)",
+            squad="baker",
+            team="allies",
+            role="engineer",
+            lvl=59,
+            details=PunishDetails(author='NoLeaderWatch-DryRun', message='', discord_audit_url='', dry_run=True),
+        ),
+        PunishPlayer(
+            steam_id_64="76561198198563101",
+            name="Pavooloni",
+            squad="baker",
+            team="allies",
+            role="antitank",
+            lvl=71,
+            details=PunishDetails(author='NoLeaderWatch-DryRun', message='', discord_audit_url='', dry_run=True),
+        ),
+        PunishPlayer(
+            steam_id_64="76561198028236925",
+            name="Kjjuj",
+            squad="baker",
+            team="allies",
+            role="rifleman",
+            lvl=102,
+            details=PunishDetails(author='NoLeaderWatch-DryRun', message='', discord_audit_url='', dry_run=True),
+        ),
+        PunishPlayer(
+            steam_id_64="76561198979089668",
+            name="emfoor",
+            squad="able",
+            team="axis",
+            role="assault",
+            lvl=110,
+            details=PunishDetails(author='NoLeaderWatch-DryRun', message='', discord_audit_url='', dry_run=True),
+        ),
+        PunishPlayer(
+            steam_id_64="76561198041823654",
+            name="Makaj",
+            squad="able",
+            team="axis",
+            role="officer",
+            lvl=43,
+            details=PunishDetails(author='NoLeaderWatch-DryRun', message='', discord_audit_url='', dry_run=True),
+        ),
+        PunishPlayer(
+            steam_id_64="76561198892700816",
+            name="tinner2115",
+            squad="able",
+            team="axis",
+            role="engineer",
+            lvl=170,
+            details=PunishDetails(author='NoLeaderWatch-DryRun', message='', discord_audit_url='', dry_run=True),
+        ),
+        PunishPlayer(
+            steam_id_64="76561198354354474",
+            name="Cuervo",
+            squad="able",
+            team="axis",
+            role="antitank",
+            lvl=129,
+            details=PunishDetails(author='NoLeaderWatch-DryRun', message='', discord_audit_url='', dry_run=True),
+        ),
+        PunishPlayer(
+            steam_id_64="76561198046677517",
+            name="capitanodrew",
+            squad="able",
+            team="axis",
+            role="heavymachinegunner",
+            lvl=67,
+            details=PunishDetails(author='NoLeaderWatch-DryRun', message='', discord_audit_url='', dry_run=True),
+        ),
+        PunishPlayer(
+            steam_id_64="76561198206929555",
+            name="WilliePeter",
+            squad="baker",
+            team="axis",
+            role="spotter",
+            lvl=123,
+            details=PunishDetails(author='NoLeaderWatch-DryRun', message='', discord_audit_url='', dry_run=True),
+        ),
+        PunishPlayer(
+            steam_id_64="76561199166765040",
+            name="DarkVisionary",
+            squad="baker",
+            team="axis",
+            role="sniper",
+            lvl=184,
+            details=PunishDetails(author='NoLeaderWatch-DryRun', message='', discord_audit_url='', dry_run=True),
+        ),
+    ]
+    expected_punished_players = list(
+        filter(lambda p: p.lvl > 10, expected_warned_players)
+    )
 
-        # 1st warning
-        to_apply = get_punitions_to_apply(rcon, config)
-        assert expected_warned_players == to_apply.warning
+    # 1st warning
+    mod = NoLeaderAutomod(config, None)
+    mod.watch_state = fake_state
+    to_apply = get_punitions_to_apply(rcon, [mod])
+    assert expected_warned_players == to_apply.warning
 
-        expected_squad_state = [ASquad(team="allies", name='baker', players=[
-            APlayer(steam_id_64="76561198055458575", player='Lawless', squad='baker', team='allies', role='heavymachinegunner', lvl=88),
-            APlayer(steam_id_64="76561198985998769", player='Major_Winters', squad='baker', team='allies', role='rifleman', lvl=82),
-            APlayer(steam_id_64="76561198393093210", player='Toomz', squad='baker', team='allies', role='assault', lvl=69),
-            APlayer(steam_id_64="76561198026310990", player='Zones (BEL)', squad='baker', team='allies', role='engineer', lvl=59),
-            APlayer(steam_id_64="76561198198563101", player='Pavooloni', squad='baker', team='allies', role='antitank', lvl=71),
-            APlayer(steam_id_64="76561198028236925", player='Kjjuj', squad='baker', team='allies', role='rifleman', lvl=102)
-        ]), ASquad(team="axis", name='able', players=[
-            APlayer(steam_id_64="76561198979089668", player='emfoor', squad='able', team='axis', role='assault', lvl=110),
-            APlayer(steam_id_64="76561198041823654", player='Makaj', squad='able', team='axis', role='officer', lvl=43),
-            APlayer(steam_id_64="76561198892700816", player='tinner2115', squad='able', team='axis', role='engineer', lvl=170),
-            APlayer(steam_id_64="76561198354354474", player='Cuervo', squad='able', team='axis', role='antitank', lvl=129),
-            APlayer(steam_id_64="76561198046677517", player='capitanodrew', squad='able', team='axis', role='heavymachinegunner', lvl=67),
-            APlayer(steam_id_64='76561199027409370', player='Dr.FishShitz', squad='able', team='axis', role='automaticrifleman', lvl=10)
-        ]), ASquad(team="axis", name='baker', players=[
-            APlayer(steam_id_64="76561198206929555", player='WilliePeter', squad='baker', team='axis', role='spotter', lvl=123),
-            APlayer(steam_id_64="76561199166765040", player='DarkVisionary', squad='baker', team='axis', role='sniper', lvl=184)
-        ])]
+    expected_squad_state = [
+        ASquad(
+            team="allies",
+            name="baker",
+            players=[
+                PunishPlayer(
+                    steam_id_64="76561198055458575",
+                    name="Lawless",
+                    squad="baker",
+                    team="allies",
+                    role="heavymachinegunner",
+                    lvl=88,
+                ),
+                PunishPlayer(
+                    steam_id_64="76561198985998769",
+                    name="Major_Winters",
+                    squad="baker",
+                    team="allies",
+                    role="rifleman",
+                    lvl=82,
+                ),
+                PunishPlayer(
+                    steam_id_64="76561198393093210",
+                    name="Toomz",
+                    squad="baker",
+                    team="allies",
+                    role="assault",
+                    lvl=69,
+                ),
+                PunishPlayer(
+                    steam_id_64="76561198026310990",
+                    name="Zones (BEL)",
+                    squad="baker",
+                    team="allies",
+                    role="engineer",
+                    lvl=59,
+                ),
+                PunishPlayer(
+                    steam_id_64="76561198198563101",
+                    name="Pavooloni",
+                    squad="baker",
+                    team="allies",
+                    role="antitank",
+                    lvl=71,
+                ),
+                PunishPlayer(
+                    steam_id_64="76561198028236925",
+                    name="Kjjuj",
+                    squad="baker",
+                    team="allies",
+                    role="rifleman",
+                    lvl=102,
+                ),
+            ],
+        ),
+        ASquad(
+            team="axis",
+            name="able",
+            players=[
+                PunishPlayer(
+                    steam_id_64="76561198979089668",
+                    name="emfoor",
+                    squad="able",
+                    team="axis",
+                    role="assault",
+                    lvl=110,
+                ),
+                PunishPlayer(
+                    steam_id_64="76561198041823654",
+                    name="Makaj",
+                    squad="able",
+                    team="axis",
+                    role="officer",
+                    lvl=43,
+                ),
+                PunishPlayer(
+                    steam_id_64="76561198892700816",
+                    name="tinner2115",
+                    squad="able",
+                    team="axis",
+                    role="engineer",
+                    lvl=170,
+                ),
+                PunishPlayer(
+                    steam_id_64="76561198354354474",
+                    name="Cuervo",
+                    squad="able",
+                    team="axis",
+                    role="antitank",
+                    lvl=129,
+                ),
+                PunishPlayer(
+                    steam_id_64="76561198046677517",
+                    name="capitanodrew",
+                    squad="able",
+                    team="axis",
+                    role="heavymachinegunner",
+                    lvl=67,
+                ),
+                PunishPlayer(
+                    steam_id_64="76561199027409370",
+                    name="Dr.FishShitz",
+                    squad="able",
+                    team="axis",
+                    role="automaticrifleman",
+                    lvl=10,
+                ),
+            ],
+        ),
+        ASquad(
+            team="axis",
+            name="baker",
+            players=[
+                PunishPlayer(
+                    steam_id_64="76561198206929555",
+                    name="WilliePeter",
+                    squad="baker",
+                    team="axis",
+                    role="spotter",
+                    lvl=123,
+                ),
+                PunishPlayer(
+                    steam_id_64="76561199166765040",
+                    name="DarkVisionary",
+                    squad="baker",
+                    team="axis",
+                    role="sniper",
+                    lvl=184,
+                ),
+            ],
+        ),
+    ]
 
-        assert PunitionsToApply(
-            warning=[], punish=[], kick=[], squads_state=expected_squad_state
-        ) == get_punitions_to_apply(rcon, config)
-        time.sleep(config.warning_interval_seconds)
+    mod = NoLeaderAutomod(config, None)
+    mod.watch_state = fake_state
+    assert PunitionsToApply(
+        warning=[], punish=[], kick=[], squads_state=expected_squad_state
+    ) == get_punitions_to_apply(rcon, [mod])
+    time.sleep(config.warning_interval_seconds)
 
-        # 1st punish
-        assert expected_punished_players == get_punitions_to_apply(rcon, config).punish
-        assert PunitionsToApply(
-            warning=[], punish=[], kick=[], squads_state=[]
-        ) == get_punitions_to_apply(rcon, config)
-        time.sleep(config.punish_interval_seconds)
+    # 1st punish
+    assert expected_punished_players == get_punitions_to_apply(rcon, [mod]).punish
+    assert PunitionsToApply(
+        warning=[], punish=[], kick=[], squads_state=[]
+    ) == get_punitions_to_apply(rcon, [mod])
+    time.sleep(config.punish_interval_seconds)
 
-        # 2nd punish
-        assert expected_punished_players == get_punitions_to_apply(rcon, config).punish
-        assert PunitionsToApply(
-            warning=[], punish=[], kick=[], squads_state=[]
-        ) == get_punitions_to_apply(rcon, config)
-        time.sleep(config.punish_interval_seconds)
+    # 2nd punish
+    assert expected_punished_players == get_punitions_to_apply(rcon, [mod]).punish
+    assert PunitionsToApply(
+        warning=[], punish=[], kick=[], squads_state=[]
+    ) == get_punitions_to_apply(rcon, [mod])
+    time.sleep(config.punish_interval_seconds)
 
-        # kick, final
-        assert expected_punished_players == get_punitions_to_apply(rcon, config).kick
+    # kick, final
+    assert expected_punished_players == get_punitions_to_apply(rcon, [mod]).kick
 
 
 def test_watcher_no_kick(team_view):
     config = NoLeaderConfig(
+        number_of_notes=0,
         number_of_warning=1,
         warning_interval_seconds=3,
         number_of_punish=2,
@@ -1181,95 +1426,187 @@ def test_watcher_no_kick(team_view):
         disable_kick_below_server_player_count=0,
         immuned_level_up_to=1,
         immuned_roles=[],
+        warning_message="",
+        punish_message="",
+        kick_message="",
     )
 
     state = {}
 
     @contextmanager
-    def fake_state(red, team, squad_name):
+    def fake_state(team, squad_name):
         try:
             yield state.setdefault(f"{team}{squad_name}", WatchStatus())
         except (SquadCycleOver, SquadHasLeader):
             del state[f"{team}{squad_name}"]
 
-    with mock.patch(
-        "rcon.squad_automod.automod.watch_state", wraps=fake_state
-    ), mock.patch("rcon.squad_automod.automod.get_redis_client"):
-        rcon = mock.MagicMock()
-        rcon.get_team_view_fast.return_value = team_view
-        expected_warned_players = [
-            APlayer(
-                steam_id_64="76561198055458575", player="Lawless", squad="baker", team="allies", role="heavymachinegunner",
-                lvl=88,
-            ),
-            APlayer(
-                steam_id_64="76561198985998769", player="Major_Winters", squad="baker", team="allies", role="rifleman",
-                lvl=82,
-            ),
-            APlayer(
-                steam_id_64="76561198393093210", player="Toomz", squad="baker", team="allies", role="assault", lvl=69
-            ),
-            APlayer(
-                steam_id_64="76561198026310990", player="Zones (BEL)", squad="baker", team="allies", role="engineer",
-                lvl=59,
-            ),
-            APlayer(
-                steam_id_64="76561198198563101", player="Pavooloni", squad="baker", team="allies", role="antitank",
-                lvl=71,
-            ),
-            APlayer(
-                steam_id_64="76561198028236925", player="Kjjuj", squad="baker", team="allies", role="rifleman", lvl=102
-            ),
-            APlayer(
-                steam_id_64="76561198979089668", player="emfoor", squad="able", team="axis", role="assault", lvl=110
-            ),
-            APlayer(steam_id_64="76561198041823654", player="Makaj", squad="able", team="axis", role="officer", lvl=43),
-            APlayer(
-                steam_id_64="76561198892700816", player="tinner2115", squad="able", team="axis", role="engineer", lvl=170
-            ),
-            APlayer(
-                steam_id_64="76561198354354474", player="Cuervo", squad="able", team="axis", role="antitank", lvl=129
-            ),
-            APlayer(
-                steam_id_64="76561198046677517", player="capitanodrew", squad="able", team="axis", role="heavymachinegunner",
-                lvl=67,
-            ),
-            APlayer(
-                steam_id_64='76561199027409370', player="Dr.FishShitz", squad="able", team="axis", role="automaticrifleman",
-                lvl=10,
-            ),
-            APlayer(steam_id_64="76561198206929555", player='WilliePeter', squad='baker', team='axis', role='spotter', lvl=123),
-            APlayer(steam_id_64="76561199166765040", player='DarkVisionary', squad='baker', team='axis', role='sniper', lvl=184)
-        ]
-        expected_punished_players = list(filter(lambda p: p.squad != 'baker' or p.team != 'axis', expected_warned_players))
+    rcon = mock.MagicMock()
+    rcon.get_team_view.return_value = team_view
+    expected_warned_players = [
+        PunishPlayer(
+            steam_id_64="76561198055458575",
+            name="Lawless",
+            squad="baker",
+            team="allies",
+            role="heavymachinegunner",
+            lvl=88,
+            details=PunishDetails(author='NoLeaderWatch-DryRun', message='', discord_audit_url='', dry_run=True),
+        ),
+        PunishPlayer(
+            steam_id_64="76561198985998769",
+            name="Major_Winters",
+            squad="baker",
+            team="allies",
+            role="rifleman",
+            lvl=82,
+            details=PunishDetails(author='NoLeaderWatch-DryRun', message='', discord_audit_url='', dry_run=True),
+        ),
+        PunishPlayer(
+            steam_id_64="76561198393093210",
+            name="Toomz",
+            squad="baker",
+            team="allies",
+            role="assault",
+            lvl=69,
+            details=PunishDetails(author='NoLeaderWatch-DryRun', message='', discord_audit_url='', dry_run=True),
+        ),
+        PunishPlayer(
+            steam_id_64="76561198026310990",
+            name="Zones (BEL)",
+            squad="baker",
+            team="allies",
+            role="engineer",
+            lvl=59,
+            details=PunishDetails(author='NoLeaderWatch-DryRun', message='', discord_audit_url='', dry_run=True),
+        ),
+        PunishPlayer(
+            steam_id_64="76561198198563101",
+            name="Pavooloni",
+            squad="baker",
+            team="allies",
+            role="antitank",
+            lvl=71,
+            details=PunishDetails(author='NoLeaderWatch-DryRun', message='', discord_audit_url='', dry_run=True),
+        ),
+        PunishPlayer(
+            steam_id_64="76561198028236925",
+            name="Kjjuj",
+            squad="baker",
+            team="allies",
+            role="rifleman",
+            lvl=102,
+            details=PunishDetails(author='NoLeaderWatch-DryRun', message='', discord_audit_url='', dry_run=True),
+        ),
+        PunishPlayer(
+            steam_id_64="76561198979089668",
+            name="emfoor",
+            squad="able",
+            team="axis",
+            role="assault",
+            lvl=110,
+            details=PunishDetails(author='NoLeaderWatch-DryRun', message='', discord_audit_url='', dry_run=True),
+        ),
+        PunishPlayer(
+            steam_id_64="76561198041823654",
+            name="Makaj",
+            squad="able",
+            team="axis",
+            role="officer",
+            lvl=43,
+            details=PunishDetails(author='NoLeaderWatch-DryRun', message='', discord_audit_url='', dry_run=True),
+        ),
+        PunishPlayer(
+            steam_id_64="76561198892700816",
+            name="tinner2115",
+            squad="able",
+            team="axis",
+            role="engineer",
+            lvl=170,
+            details=PunishDetails(author='NoLeaderWatch-DryRun', message='', discord_audit_url='', dry_run=True),
+        ),
+        PunishPlayer(
+            steam_id_64="76561198354354474",
+            name="Cuervo",
+            squad="able",
+            team="axis",
+            role="antitank",
+            lvl=129,
+            details=PunishDetails(author='NoLeaderWatch-DryRun', message='', discord_audit_url='', dry_run=True),
+        ),
+        PunishPlayer(
+            steam_id_64="76561198046677517",
+            name="capitanodrew",
+            squad="able",
+            team="axis",
+            role="heavymachinegunner",
+            lvl=67,
+            details=PunishDetails(author='NoLeaderWatch-DryRun', message='', discord_audit_url='', dry_run=True),
+        ),
+        PunishPlayer(
+            steam_id_64="76561199027409370",
+            name="Dr.FishShitz",
+            squad="able",
+            team="axis",
+            role="automaticrifleman",
+            lvl=10,
+            details=PunishDetails(author='NoLeaderWatch-DryRun', message='', discord_audit_url='', dry_run=True),
+        ),
+        PunishPlayer(
+            steam_id_64="76561198206929555",
+            name="WilliePeter",
+            squad="baker",
+            team="axis",
+            role="spotter",
+            lvl=123,
+            details=PunishDetails(author='NoLeaderWatch-DryRun', message='', discord_audit_url='', dry_run=True),
+        ),
+        PunishPlayer(
+            steam_id_64="76561199166765040",
+            name="DarkVisionary",
+            squad="baker",
+            team="axis",
+            role="sniper",
+            lvl=184,
+            details=PunishDetails(author='NoLeaderWatch-DryRun', message='', discord_audit_url='', dry_run=True),
+        ),
+    ]
+    expected_punished_players = list(
+        filter(
+            lambda p: p.squad != "baker" or p.team != "axis",
+            expected_warned_players,
+        )
+    )
 
-        # 1st warning
-        assert expected_warned_players == get_punitions_to_apply(rcon, config).warning
-        assert [] == get_punitions_to_apply(rcon, config).punish
-        assert [] == get_punitions_to_apply(rcon, config).kick
-        assert [] == get_punitions_to_apply(rcon, config).warning
-        time.sleep(config.warning_interval_seconds)
+    mod = NoLeaderAutomod(config, None)
+    mod.watch_state = fake_state
+    # 1st warning
+    assert expected_warned_players == get_punitions_to_apply(rcon, [mod]).warning
+    assert [] == get_punitions_to_apply(rcon, [mod]).punish
+    assert [] == get_punitions_to_apply(rcon, [mod]).kick
+    assert [] == get_punitions_to_apply(rcon, [mod]).warning
+    time.sleep(config.warning_interval_seconds)
 
-        # 1st punish
-        assert expected_punished_players == get_punitions_to_apply(rcon, config).punish
-        assert [] == get_punitions_to_apply(rcon, config).kick
-        assert [] == get_punitions_to_apply(rcon, config).warning
-        time.sleep(config.punish_interval_seconds)
+    # 1st punish
+    assert expected_punished_players == get_punitions_to_apply(rcon, [mod]).punish
+    assert [] == get_punitions_to_apply(rcon, [mod]).kick
+    assert [] == get_punitions_to_apply(rcon, [mod]).warning
+    time.sleep(config.punish_interval_seconds)
 
-        # 2nd punish
-        assert expected_punished_players == get_punitions_to_apply(rcon, config).punish
-        assert [] == get_punitions_to_apply(rcon, config).kick
-        assert [] == get_punitions_to_apply(rcon, config).warning
-        time.sleep(config.punish_interval_seconds)
+    # 2nd punish
+    assert expected_punished_players == get_punitions_to_apply(rcon, [mod]).punish
+    assert [] == get_punitions_to_apply(rcon, [mod]).kick
+    assert [] == get_punitions_to_apply(rcon, [mod]).warning
+    time.sleep(config.punish_interval_seconds)
 
-        # no kick, final
-        assert [] == get_punitions_to_apply(rcon, config).punish
-        assert [] == get_punitions_to_apply(rcon, config).kick
-        assert [] == get_punitions_to_apply(rcon, config).warning
+    # no kick, final
+    assert [] == get_punitions_to_apply(rcon, [mod]).punish
+    assert [] == get_punitions_to_apply(rcon, [mod]).kick
+    assert [] == get_punitions_to_apply(rcon, [mod]).warning
 
 
 def test_watcher_resets(team_view):
     config = NoLeaderConfig(
+        number_of_notes=0,
         number_of_warning=0,
         warning_interval_seconds=3,
         number_of_punish=1,
@@ -1282,92 +1619,162 @@ def test_watcher_resets(team_view):
         disable_kick_below_server_player_count=0,
         immuned_level_up_to=1,
         immuned_roles=[],
+        warning_message="",
+        punish_message="",
+        kick_message="",
     )
 
     state = {}
 
     @contextmanager
-    def fake_state(red, team, squad_name):
+    def fake_state(team, squad_name):
         try:
             yield state.setdefault(f"{team}{squad_name}", WatchStatus())
         except (SquadCycleOver, SquadHasLeader):
             del state[f"{team}{squad_name}"]
 
-    with mock.patch(
-        "rcon.squad_automod.automod.watch_state", wraps=fake_state
-    ), mock.patch("rcon.squad_automod.automod.get_redis_client"):
-        rcon = mock.MagicMock()
-        rcon.get_team_view_fast.return_value = team_view
-        expected_players = [
-            APlayer(
-                steam_id_64="76561198055458575", player="Lawless", squad="baker", team="allies", role="heavymachinegunner",
-                lvl=88,
-            ),
-            APlayer(
-                steam_id_64="76561198985998769", player="Major_Winters", squad="baker", team="allies", role="rifleman",
-                lvl=82,
-            ),
-            APlayer(
-                steam_id_64="76561198393093210", player="Toomz", squad="baker", team="allies", role="assault", lvl=69
-            ),
-            APlayer(
-                steam_id_64="76561198026310990", player="Zones (BEL)", squad="baker", team="allies", role="engineer",
-                lvl=59,
-            ),
-            APlayer(
-                steam_id_64="76561198198563101", player="Pavooloni", squad="baker", team="allies", role="antitank",
-                lvl=71,
-            ),
-            APlayer(
-                steam_id_64="76561198028236925", player="Kjjuj", squad="baker", team="allies", role="rifleman", lvl=102
-            ),
-            APlayer(
-                steam_id_64="76561198979089668", player="emfoor", squad="able", team="axis", role="assault", lvl=110
-            ),
-            APlayer(steam_id_64="76561198041823654", player="Makaj", squad="able", team="axis", role="officer", lvl=43),
-            APlayer(
-                steam_id_64="76561198892700816", player="tinner2115", squad="able", team="axis", role="engineer", lvl=170
-            ),
-            APlayer(
-                steam_id_64="76561198354354474", player="Cuervo", squad="able", team="axis", role="antitank", lvl=129
-            ),
-            APlayer(
-                steam_id_64="76561198046677517", player="capitanodrew", squad="able", team="axis", role="heavymachinegunner",
-                lvl=67,
-            ),
-            APlayer(
-                steam_id_64='76561199027409370', player="Dr.FishShitz", squad="able", team="axis", role="automaticrifleman",
-                lvl=10,
-            ),
-            # APlayer(player="WilliePeter",
-            # APlayer(player="DarkVisionary",
-        ]
+    rcon = mock.MagicMock()
+    rcon.get_team_view.return_value = team_view
+    expected_players = [
+        PunishPlayer(
+            steam_id_64="76561198055458575",
+            name="Lawless",
+            squad="baker",
+            team="allies",
+            role="heavymachinegunner",
+            lvl=88,
+            details=PunishDetails(author='NoLeaderWatch-DryRun', message='', discord_audit_url='', dry_run=True),
+        ),
+        PunishPlayer(
+            steam_id_64="76561198985998769",
+            name="Major_Winters",
+            squad="baker",
+            team="allies",
+            role="rifleman",
+            lvl=82,
+            details=PunishDetails(author='NoLeaderWatch-DryRun', message='', discord_audit_url='', dry_run=True),
+        ),
+        PunishPlayer(
+            steam_id_64="76561198393093210",
+            name="Toomz",
+            squad="baker",
+            team="allies",
+            role="assault",
+            lvl=69,
+            details=PunishDetails(author='NoLeaderWatch-DryRun', message='', discord_audit_url='', dry_run=True),
+        ),
+        PunishPlayer(
+            steam_id_64="76561198026310990",
+            name="Zones (BEL)",
+            squad="baker",
+            team="allies",
+            role="engineer",
+            lvl=59,
+            details=PunishDetails(author='NoLeaderWatch-DryRun', message='', discord_audit_url='', dry_run=True),
+        ),
+        PunishPlayer(
+            steam_id_64="76561198198563101",
+            name="Pavooloni",
+            squad="baker",
+            team="allies",
+            role="antitank",
+            lvl=71,
+            details=PunishDetails(author='NoLeaderWatch-DryRun', message='', discord_audit_url='', dry_run=True),
+        ),
+        PunishPlayer(
+            steam_id_64="76561198028236925",
+            name="Kjjuj",
+            squad="baker",
+            team="allies",
+            role="rifleman",
+            lvl=102,
+            details=PunishDetails(author='NoLeaderWatch-DryRun', message='', discord_audit_url='', dry_run=True),
+        ),
+        PunishPlayer(
+            steam_id_64="76561198979089668",
+            name="emfoor",
+            squad="able",
+            team="axis",
+            role="assault",
+            lvl=110,
+            details=PunishDetails(author='NoLeaderWatch-DryRun', message='', discord_audit_url='', dry_run=True),
+        ),
+        PunishPlayer(
+            steam_id_64="76561198041823654",
+            name="Makaj",
+            squad="able",
+            team="axis",
+            role="officer",
+            lvl=43,
+            details=PunishDetails(author='NoLeaderWatch-DryRun', message='', discord_audit_url='', dry_run=True),
+        ),
+        PunishPlayer(
+            steam_id_64="76561198892700816",
+            name="tinner2115",
+            squad="able",
+            team="axis",
+            role="engineer",
+            lvl=170,
+            details=PunishDetails(author='NoLeaderWatch-DryRun', message='', discord_audit_url='', dry_run=True),
+        ),
+        PunishPlayer(
+            steam_id_64="76561198354354474",
+            name="Cuervo",
+            squad="able",
+            team="axis",
+            role="antitank",
+            lvl=129,
+            details=PunishDetails(author='NoLeaderWatch-DryRun', message='', discord_audit_url='', dry_run=True),
+        ),
+        PunishPlayer(
+            steam_id_64="76561198046677517",
+            name="capitanodrew",
+            squad="able",
+            team="axis",
+            role="heavymachinegunner",
+            lvl=67,
+            details=PunishDetails(author='NoLeaderWatch-DryRun', message='', discord_audit_url='', dry_run=True),
+        ),
+        PunishPlayer(
+            steam_id_64="76561199027409370",
+            name="Dr.FishShitz",
+            squad="able",
+            team="axis",
+            role="automaticrifleman",
+            lvl=10,
+            details=PunishDetails(author='NoLeaderWatch-DryRun', message='', discord_audit_url='', dry_run=True),
+        ),
+        # APlayer(name="WilliePeter",
+        # APlayer(name="DarkVisionary",
+    ]
 
-        # 1st punish
-        assert expected_players == get_punitions_to_apply(rcon, config).punish
-        assert [] == get_punitions_to_apply(rcon, config).kick
-        assert [] == get_punitions_to_apply(rcon, config).warning
-        time.sleep(config.punish_interval_seconds)
+    mod = NoLeaderAutomod(config, None)
+    mod.watch_state = fake_state
+    # 1st punish
+    assert expected_players == get_punitions_to_apply(rcon, [mod]).punish
+    assert [] == get_punitions_to_apply(rcon, [mod]).kick
+    assert [] == get_punitions_to_apply(rcon, [mod]).warning
+    time.sleep(config.punish_interval_seconds)
 
-        # Nothing should happen
-        assert [] == get_punitions_to_apply(rcon, config).punish
-        assert [] == get_punitions_to_apply(rcon, config).kick
-        assert [] == get_punitions_to_apply(rcon, config).warning
+    # Nothing should happen
+    assert [] == get_punitions_to_apply(rcon, [mod]).punish
+    assert [] == get_punitions_to_apply(rcon, [mod]).kick
+    assert [] == get_punitions_to_apply(rcon, [mod]).warning
 
-        assert "alliesbaker" in state
-        team_view["allies"]["squads"]["baker"]["has_leader"] = True
-        team_view["axis"]["squads"]["able"]["has_leader"] = True
-        team_view["axis"]["squads"]["baker"]["has_leader"] = True
-        assert [] == get_punitions_to_apply(rcon, config).punish
-        assert [] == get_punitions_to_apply(rcon, config).kick
-        assert [] == get_punitions_to_apply(rcon, config).warning
-        # state should be reset now
-        assert "alliesbaker" not in state
-        team_view["allies"]["squads"]["baker"]["has_leader"] = False
-        team_view["axis"]["squads"]["able"]["has_leader"] = False
-        team_view["axis"]["squads"]["baker"]["has_leader"] = False
-        # punish again
-        assert expected_players == get_punitions_to_apply(rcon, config).punish
+    assert "alliesbaker" in state
+    team_view["allies"]["squads"]["baker"]["has_leader"] = True
+    team_view["axis"]["squads"]["able"]["has_leader"] = True
+    team_view["axis"]["squads"]["baker"]["has_leader"] = True
+    assert [] == get_punitions_to_apply(rcon, [mod]).punish
+    assert [] == get_punitions_to_apply(rcon, [mod]).kick
+    assert [] == get_punitions_to_apply(rcon, [mod]).warning
+    # state should be reset now
+    assert "alliesbaker" not in state
+    team_view["allies"]["squads"]["baker"]["has_leader"] = False
+    team_view["axis"]["squads"]["able"]["has_leader"] = False
+    team_view["axis"]["squads"]["baker"]["has_leader"] = False
+    # punish again
+    assert expected_players == get_punitions_to_apply(rcon, [mod]).punish
 
 
 def test_default_config():

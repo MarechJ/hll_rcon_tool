@@ -81,14 +81,14 @@ sentry_logging = LoggingIntegration(
     event_level=logging.ERROR,  # Send errors as events
 )
 
-# Switch to public integration if possible
-sentry_sdk.init(
-    dsn="https://78c97168e38343e9aba5435aebd94b2b@o60943.ingest.sentry.io/5220965",
-    integrations=[DjangoIntegration(), sentry_logging],
-    release=os.getenv("RELEASE_TAG", "dev"),
-    environment=os.getenv("ENV", ENVIRONMENT),
-    send_default_pii=True,
-)
+if dsn := os.getenv("SENTRY_DSN"):
+    sentry_sdk.init(
+        dsn=dsn,
+        integrations=[DjangoIntegration(), sentry_logging],
+        release=os.getenv("RELEASE_TAG", "dev"),
+        environment=os.getenv("ENV", ENVIRONMENT),
+        send_default_pii=True,
+    )
 
 with configure_scope() as scope:
     scope.set_extra("instance", ENVIRONMENT)
@@ -143,7 +143,12 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "corsheaders",
     "api",
+    "directory",
 ]
+
+DIRECTORY_DIRECTORY = os.getenv("LOGGING_PATH", './logs')
+DIRECTORY_ACCESS_FUNCTION = 'api.auth.staff_required'
+DIRECTORY_ACCESS_MODE = 'custom'
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -161,7 +166,7 @@ ROOT_URLCONF = "rconweb.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [os.path.join(BASE_DIR, 'templates')],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [

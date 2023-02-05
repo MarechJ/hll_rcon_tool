@@ -10,7 +10,7 @@ import redis
 from rcon.audit import ingame_mods, online_mods
 from rcon.cache_utils import get_redis_pool
 from rcon.commands import CommandFailedError
-from rcon.map_recorder import VoteMap
+from rcon.vote_map import VoteMap
 from rcon.settings import SERVER_INFO
 from rcon.user_config import AutoBroadcasts, VoteMapConfig
 from rcon.utils import (

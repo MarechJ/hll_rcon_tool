@@ -314,6 +314,8 @@ const PlayerItem = ({
   onDeleteFlag,
   playerHasExtraInfo,
   avatarBackround,
+  onSelect,
+  isSelected
 }) => {
   const profile = player.get("profile") ? player.get("profile") : new Map();
   const name = player.get("name");
@@ -321,7 +323,7 @@ const PlayerItem = ({
   const localClasses = useStyles();
 
   return (
-    <ListItem key={name} dense>
+    <ListItem key={name} dense selected={isSelected}>
       {playerHasExtraInfo ? (
         <ListItemAvatar>
           <Badge
@@ -411,6 +413,14 @@ const PlayerItem = ({
             }
             penaltyCount={profile.get("penalty_count", Map())}
           />
+        </ListItemSecondaryAction>
+      ) : (
+        ""
+      )}
+
+      {onSelect ? (
+        <ListItemSecondaryAction>
+          <Checkbox checked={isSelected} onChange={onSelect}/>
         </ListItemSecondaryAction>
       ) : (
         ""

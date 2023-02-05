@@ -14,10 +14,10 @@ from rcon.cache_utils import RedisCached, get_redis_pool
 from rcon.commands import CommandFailedError
 from rcon.config import get_config
 from rcon.discord import send_to_discord_audit
+from rcon.extended_commands import MOD_ALLOWED_CMDS
 from rcon.gtx import GTXFtp
 from rcon.player_history import add_player_to_blacklist, remove_player_from_blacklist
 from rcon.recorded_commands import RecordedRcon
-from rcon.extended_commands import MOD_ALLOWED_CMDS
 from rcon.settings import SERVER_INFO
 from rcon.user_config import (
     AutoBroadcasts,
@@ -31,6 +31,7 @@ from rcon.utils import LONG_HUMAN_MAP_NAMES, MapsHistory, map_name
 from rcon.watchlist import PlayerWatch
 from rcon.workers import temporary_broadcast, temporary_welcome
 
+from .audit_log import auto_record_audit, record_audit
 from .auth import api_response, login_required
 from .multi_servers import forward_command, forward_request
 from .utils import _get_data
@@ -54,6 +55,7 @@ def set_temp_msg(request, func, name):
 
 @csrf_exempt
 @login_required(True)
+@record_audit
 def set_name(request):
     data = _get_data(request)
     failed = False
@@ -71,12 +73,14 @@ def set_name(request):
 
 @csrf_exempt
 @login_required(True)
+@record_audit
 def set_temp_broadcast(request):
     return set_temp_msg(request, temporary_broadcast, "set_temp_broadcast")
 
 
 @csrf_exempt
 @login_required(True)
+@record_audit
 def set_temp_welcome(request):
     return set_temp_msg(request, temporary_welcome, "set_temp_welcome")
 
@@ -102,23 +106,21 @@ def public_info(request):
             just_name=map_name(game_map),
             human_name=LONG_HUMAN_MAP_NAMES.get(game_map, game_map),
             name=game_map,
-            start=start
+            start=start,
         )
 
     return api_response(
-        result = dict(
+        result=dict(
             current_map=explode_map_info(gamestate["current_map"], current_map_start),
-            next_map=explode_map_info(ctl.get_next_map(), None),
+            next_map=explode_map_info(gamestate["next_map"], None),
             player_count=curr_players,
             max_player_count=max_players,
             players=dict(
                 allied=gamestate["num_allied_players"],
-                axis=gamestate["num_axis_players"]
+                axis=gamestate["num_axis_players"],
             ),
-            score=dict(
-                allied=gamestate["allied_score"],
-                axis=gamestate["axis_score"]
-            ),
+            score=dict(allied=gamestate["allied_score"], axis=gamestate["axis_score"]),
+            raw_time_remaining=gamestate["raw_time_remaining"],
             vote_status=get_votes_status(none_on_fail=True),
             name=ctl.get_name(),
             short_name=os.getenv("SERVER_SHORT_NAME", "HLL RCON"),
@@ -142,6 +144,7 @@ def get_hooks(request):
 
 @csrf_exempt
 @login_required(True)
+@record_audit
 def set_hooks(request):
     data = _get_data(request)
 
@@ -188,6 +191,7 @@ def get_votekick_autotoggle_config(request):
 
 @csrf_exempt
 @login_required(True)
+@record_audit
 def set_votekick_autotoggle_config(request):
     config = AutoVoteKickConfig()
     data = _get_data(request)
@@ -217,6 +221,7 @@ def set_votekick_autotoggle_config(request):
 
 @csrf_exempt
 @login_required(True)
+@record_audit
 def set_camera_config(request):
     config = CameraConfig()
     data = _get_data(request)
@@ -286,18 +291,21 @@ def _do_watch(request, add: bool):
 
 @csrf_exempt
 @login_required()
+@record_audit
 def do_watch_player(request):
     return _do_watch(request, add=True)
 
 
 @csrf_exempt
 @login_required()
+@record_audit
 def do_unwatch_player(request):
     return _do_watch(request, add=False)
 
 
 @csrf_exempt
 @login_required()
+@record_audit
 def clear_cache(request):
     res = RedisCached.clear_all_caches(get_redis_pool())
     audit("clear_cache", request, {})
@@ -340,6 +348,7 @@ def get_auto_broadcasts_config(request):
 
 @csrf_exempt
 @login_required(True)
+@record_audit
 def set_auto_broadcasts_config(request):
     failed = False
     res = None
@@ -397,6 +406,7 @@ def get_standard_messages(request):
 
 @csrf_exempt
 @login_required(True)
+@record_audit
 def set_standard_messages(request):
     failed = False
     data = _get_data(request)
@@ -425,6 +435,7 @@ def set_standard_messages(request):
 
 @csrf_exempt
 @login_required()
+@record_audit
 def blacklist_player(request):
     data = _get_data(request)
     res = {}
@@ -457,6 +468,7 @@ def blacklist_player(request):
 
 @csrf_exempt
 @login_required()
+@record_audit
 def unblacklist_player(request):
     data = _get_data(request)
     res = {}
@@ -496,6 +508,7 @@ def unblacklist_player(request):
 
 @csrf_exempt
 @login_required()
+@record_audit
 def unban(request):
     data = _get_data(request)
     res = {}
@@ -559,6 +572,7 @@ def audit(func_name, request, arguments):
 def wrap_method(func, parameters, command_name, require_perms=False):
     @csrf_exempt
     @login_required(require_perms)
+    @auto_record_audit(command_name)
     @wraps(func)
     def wrapper(request):
         logger = logging.getLogger("rconweb")
@@ -684,9 +698,18 @@ try:
 
         require_perms = name not in MOD_ALLOWED_CMDS
 
-        commands.append((name, wrap_method(func, inspect.signature(func).parameters, name, require_perms=require_perms)))
-    logger.info("Done Initializing endpoint"
+        commands.append(
+            (
+                name,
+                wrap_method(
+                    func,
+                    inspect.signature(func).parameters,
+                    name,
+                    require_perms=require_perms,
+                ),
+            )
         )
+    logger.info("Done Initializing endpoint")
 except:
     logger.exception("Failed to initialized endpoints - Most likely bad configuration")
     raise

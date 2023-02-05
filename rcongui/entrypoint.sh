@@ -1,5 +1,7 @@
-#!/usr/bin/env bash
-  
+#!/usr/bin/env sh
+
+export REACT_APP_VERSION=$(cat /code/tag_version)
+
 if [ "$HLL_HOST" == '' ] 
 then
     $echo "HLL_HOST is not set. stopping"

@@ -11,6 +11,21 @@
 ######################################################################################
 ######################################################################################
 
+# Advanced settings, you should only touch these if you really know what you're doing
+ADVANCED_CRCON_SETTINGS:
+  # The number of concurrent connections to the game server CRCON will open for each
+  # worker you've set in your .env (NB_API_WORKERS)
+  # This affects things like the game view that uses multiple connections to pull
+  # information faster so it's less likely to be out of date
+  # Unless you're having issues that would be fixed by a reduced pool size
+  # (for instance connections being refused/timed out by your GSP) you should
+  # leave this at the default, 10-20 is a good range but if you reduce it below
+  # ~4 you should not use the game view, squad automod, etc. as it will be very
+  # delayed
+  # The higher the number the longer it will take for the RCON backend to start
+  # This must be an integer 1 <= x <= 100
+  thread_pool_size: 20
+
 # If you set this to true your public website for stats won't work anymore
 # This will request a login for all the stats endpoints
 # To lock set to: true
@@ -33,12 +48,12 @@ BANS:
   unblacklist_does_unban: yes
 
 # You can test your regex there: https://regex101.com/ set it to "Python"
-NAME_KICKS: 
+NAME_KICKS:
   regexps: []
   reason: "Your nickname is invalid"
   # If left unset, the webhook default to your audit log webhook
   discord_webhook_url: ""
-  whitelist_flags: 
+  whitelist_flags:
     - ✅
 
 BAN_TK_ON_CONNECT:
@@ -47,8 +62,8 @@ BAN_TK_ON_CONNECT:
   author_name: "HATERS GONNA HATE"
   # Exlude TK with certain weapons from triggering the ban, adding "None" by default so it will exclude arty, tanks and road accidents
   # The weapon name should be as found in your game logs (case insensitive), know weapons at the time of writing: 'SMine M2 Kar98_Sniper M43 M1911 MK2_Grenade Satchel_M37 None P38 M24_Grenade M1A1 MP40 Kar98 STG44 Thompson MG42 Garand Tellermine43 Luger Satchel_3KG Panzershreck M1918A2_BAR M1919 G43 M1903 SMG_M3_GreaseGun M1_Carbine Bazooka'
-  # To not exclude any weapons write exclude_weapons: [] 
-  exclude_weapons: 
+  # To not exclude any weapons write exclude_weapons: []
+  exclude_weapons:
     - None
     - MK2_Grenade
     - M24_Grenade
@@ -77,11 +92,11 @@ LIVE_STATS:
   # smaller machines should choose at the very least 30 seconds, if not 60 to 120
   # The below is to compute live stats based on session (from the last connection) accross all games
   refresh_stats_seconds: 15
-  # The below is to compute live stats for the current game and starts at the begining of the game, even if the 
+  # The below is to compute live stats for the current game and starts at the begining of the game, even if the
   # player disconnect and reconnected multiple times, all his/her stats are counted
   refresh_current_game_stats_seconds: 5
 
-# The below is not effective yet. 
+# The below is not effective yet.
 # Here you can set your custom urls (if you have any)
 # Make sure you set them in the same order as your server numbers
 # Leave empty if you don't have any custom urls / domains, the default will be used
@@ -114,87 +129,210 @@ GTX:
     username: null
     password: null
 
-
 NOLEADER_AUTO_MOD:
-  # Set to true to enable the auto moderation of squads without officers
-  # This auto-moderator has 3 steps, 1. warning via broadcast (N times), 2. Punish (N times) 3. kick
+  # This auto-moderator has 4 steps, 1. internally noting (X times), 2. warning via direct message (Y times), 3. punish (Z times) 4. kick
   # Note that the state cycle for a given squad only resets once it finally has an officer. So for example if you
-  # disabled the kick and have 3 punishes configured, once the 3 punishes are 
-  # through that's it, nothing will happen anymore for that squad even if they still dont have an officer. 
-  # 
-  # Note 2: punishes and kicks are tracked individual per player, not at the squad level.
-  # So if a player joins a squad that already received 3 punishes and will be kicked next, the new player will 
-  # start at the first punish regardless (so he won't be kick), howver he won't have a warning broadcast message as those are issued and tracked per squad)
+  # disabled the kick and have 3 punishes configured, once the 3 punishes are
+  # through that's it, nothing will happen anymore for that squad even if they still don't have an officer.
+  #
+  # Note 2: notes, warnings, punishes and kicks are tracked individual per player, not at the squad level.
+  # So if a player joins a squad that already received 3 punishes and will be kicked next, the new player will
+  # start at the first punish regardless (so he won't be kick)
+  # Set to true to enable the auto moderation of squads without officers
   enabled: false
-  # If this is set to true no warning / punish / kick will be applied for real 
+  # If this is set to true no warning / punish / kick will be applied for real
   # It turns the code into a "simulation" mode and only send what it would do to your discord audit log webhook
   dry_run: true
-  # Discord Webhook URL where audit logs should be sent. If not specified, the envrionment variable DISCORD_WEBHOOK_AUDIT_LOG
+  # Discord Webhook URL where audit logs should be sent. If not specified, the environment variable DISCORD_WEBHOOK_AUDIT_LOG
   # will be used, instead.
-  discord_webhook_url: ''
-  # The first step of the auto-moderation is to send a broadcast warning the squads that don't have an officer
-  # set to 0 to disable (this it will move to punish directly), -1 for infinite warnings (will never go to punishes)
-  # set to 1 or N to warn squad N times before we move on to the punish step
-  number_of_warning: 2
-  # This is the text that will be displayed to warn players.
-  # Deprecated: Use 'warning_message' instead.
-  warn_message_header: "Warning squads must have an Officer.\nYou will be punished then kicked"
-  warn_message_footer: "Next check will happen automatically in 60s"
+  discord_webhook_url: ""
 
-  # This is the text that will be displayed to warn players.
-  warning_message: "Warning, {player_name}! Your squad ({squad_name}) does not have an officer. Players of squads without an officer will be punished after {max_warnings} (you already {received_warnings}), then kicked.\nNext check will happen automatically in {next_check_seconds}s."
-  # This is the number of seconds this auto-mod will wait until moving to 
-  # the next warning or to the punish if the number of warning was reached
-  warning_interval_seconds: 60
+  # Step number 1
+  # If a squad has no officer all members are noted internally but no action is taken
+  # Since we sometimes receive wrong data from the game server we note those players
+  # and see if these squads still don't have an officer the next time we check
+  # set to 0 to disable (this means it will move to warn directly)
+  # set to 1 to X to note the squad X times before we move to the warn step (we recommend 1)
+  number_of_notes: 1
+  # This is the number of seconds this auto-mod will wait until moving to
+  # the next note or to warnings if the number_of_notes is reached
+  notes_interval_seconds: 10
+
+  # Deprecated: This option is deprecated and will be removed in a future release.
+  # Temporary message used as a warning text for player names that will lead to false-positives in auto-moderation,
+  # because of a game-server bug.
+  # See https://github.com/MarechJ/hll_rcon_tool/issues/117 for more details.
+  whitespace_names_message: Your name contains a whitespace at the end (because it is truncated as it is too long). Because of a bug in the game, you might suffer auto-moderation actions as a false-positive. Please change your name and restart your game to avoid this.
 
   # Step number 2
-  # If the squad still doesn't have an officer after 
+  # Send a direct warning message to the squads that don't have an officer
+  # set to 0 to disable (this means it will move to punish directly), -1 for infinite warnings (will never go to punishes)
+  # set to 1 or Y to warn squad Y times before we move on to the punish step
+  number_of_warning: 2
+  # This is the text that will be displayed to warn players.
+  # The following variables are available to fill into the text
+  #  {player_name}, {squad_name}, {received_warnings}, {max_warnings} and {next_check_seconds}
+  warning_message: "Warning, {player_name}! Your squad ({squad_name}) does not have an officer. Players of squads without an officer will be punished after {max_warnings} warnings (you already received {received_warnings}), then kicked.\nNext check will happen automatically in {next_check_seconds}s."
+  # This is the number of seconds this auto-mod will wait until moving to
+  # the next warning or to the punish if the number_of_warning's is reached
+  warning_interval_seconds: 60
+
+  # Step number 3
+  # If the squad still doesn't have an officer after
   # the N warnings and the last warning_interval_seconds has elapsed, automod starts punishing
   # Set to 0 to disable to punish entirely. I would advise setting warnings to infinity (-1) if you do that
   # Set to -1 for infinite punish (will never go to kicks)
-  # Set to 1 or N to apply N punishes before we move to the next step (the kicks)
+  # Set to 1 or Z to apply Z punishes before we move to the next step (the kicks)
   number_of_punish: 2
   # This is the number of seconds to wait between punishes (if the squad remains without an officer
-  # I wouldn't recommand setting a high value here (unless you chose infinite punishes) as once the player has died he has the opportunity to take
+  # I wouldn't recommend setting a high value here (unless you chose infinite punishes) as once the player has died he has the opportunity to take
   # the officer role, so no excuse. Also it's even more frustrating to respawn run 300m and die again ;)
   punish_interval_seconds: 60
   # This value will disable the punishes until the squad has at least the number of player set below
-  # So if you set min_squad_players_for_punish: 3 a squad of 2 will be immuned to punishes (and kicks)
+  # So if you set min_squad_players_for_punish: 3 a squad of 2 will be immune to punishes (and kicks)
   min_squad_players_for_punish: 3
   # This option is the same as above but for the entire server. If the server has less players
   # than the number you set below, not punish / kicks will be applied
   disable_punish_below_server_player_count: 40
-  # This is the message that will be set in the punish
-  punish_message: "Squads must have an officer.\nYou're being punished by a bot.\nNext check in 60 seconds"
+  # This is the message that will be used in the punish
+  # The following variables are available to fill into the text
+  #  {player_name}, {squad_name}, {received_punishes}, {max_punishes} and {next_check_seconds}
+  punish_message: "Your squad ({squad_name}) must have an officer.\nYou're being punished by a bot ({received_punishes}/{max_punishes}).\nNext check in {next_check_seconds} seconds"
 
-  # Step number 3 (and final)
+  # Step number 4
   # Set the below value to false if you don't want to kick players after they reached the max amount of punishes
-  # note that if you disabled punish it will never go to that step. no matter if it's set to true
+  # note that if you disable punishes it will never go to that step. no matter if it's set to true
   kick_after_max_punish: true
-  # Same behaviour as for the punishes, if the squad has less players than the below it won't kick
+  # Same behavior as for the punishes, if the squad has less players than the below it won't kick
   min_squad_players_for_kick: 7
-  # Same behaviour as for the punishes, if the server has less players than the number below the auto-moderator will wait and not kick yet
+  # Same behavior as for the punishes, if the server has less players than the number below the auto-moderator will wait and not kick yet
   disable_kick_below_server_player_count: 60
   # After the Step 2 has reached it's max punishes, this is the amount of time in seconds the auto-mod will wait before kicking
   kick_grace_period_seconds: 120
-  # This is the message that will be set in the kick
-  kick_message: "Squads must have an officer.\nYou failed to comply with the previous warnings."
-  
+  # This is the message that will be used in the kick
+  # The following variables are available to fill into the text
+  #  {player_name}, {squad_name} and {kick_grace_period}
+  kick_message: "Your Squad ({squad_name}) must have an officer.\nYour grace period of {kick_grace_period}s has passed.\nYou failed to comply with the previous warnings."
+
   # GLOBAL OPTIONS
-  # You can some role that are immuned to punish and kick (this must be a list, the syntax is important)
+  # You can define roles that are immune to punishes and kicks (this must be a list, the syntax is important)
   # Available roles are: 'officer', 'antitank', 'automaticrifleman', 'assault', 'heavymachinegunner', 'support', 'sniper', 'spotter', 'rifleman', 'crewman', 'tankcommander', 'engineer', 'medic'
-  immuned_roles: 
+  immuned_roles:
     - support
     - sniper
-  # If the level of the player is below this number he/she will be immuned to punish / kicks
+  # If the level of the player is below this number he/she will be immune to punishes / kicks
   immuned_level_up_to: 15
 
+SEEDING_AUTO_MOD:
+  # This auto-moderator has 3 steps, 1. warning via direct message (Y times), 3. punish (Z times) 4. kick
+  # Note that the state cycle for a given squad only resets once the rule-violation is fixed. So for example if you
+  # disabled the kick and have 3 punishes configured, once the 3 punishes are
+  # through that's it, nothing will happen anymore for that player if they still break seeding rules.
+  #
+  # Set to true to enable the auto moderation of seeding rules
+  enabled: false
+
+  # Discord Webhook URL where audit logs should be sent. If not specified, the environment variable DISCORD_WEBHOOK_AUDIT_LOG
+  # will be used, instead.
+  discord_webhook_url: ""
+
+  # Step number 1
+  # Send a direct warning message to the players that violate seeding rules
+  # set to 0 to disable (this means it will move to punish directly), -1 for infinite warnings (will never go to punishes)
+  # set to 1 or Y to warn squad Y times before we move on to the punish step
+  number_of_warning: 2
+  # This is the text that will be displayed to warn players.
+  # The following variables are available to fill into the text
+  #  {player_name}, {received_warnings}, {max_warnings} and {next_check_seconds}, {violation}
+  warning_message: "Warning, {player_name}! You violate seeding rules on this server: {violation}\nYou will be punished after {max_warnings} warnings (you already received {received_warnings}), then kicked.\nNext check will happen automatically in {next_check_seconds}s."
+  # This is the number of seconds this auto-mod will wait until moving to
+  # the next warning or to the punish stage if the number_of_warning's is reached
+  warning_interval_seconds: 60
+
+  # Step number 2
+  # If the player still violates a seeding rule after
+  # the N warnings and the last warning_interval_seconds has elapsed, automod starts punishing
+  # Set to 0 to disable to punish entirely. I would advise setting warnings to infinity (-1) if you do that
+  # Set to -1 for infinite punish (will never go to kicks)
+  # Set to 1 or Z to apply Z punishes before we move to the next step (the kicks)
+  number_of_punish: 2
+  # This is the number of seconds to wait between punishes
+  # I wouldn't recommend setting a high value here (unless you chose infinite punishes) as once the player has died he has the opportunity to
+  # stop violating the seeding rules, so no excuse. Also it's even more frustrating to respawn run 300m and die again ;)
+  punish_interval_seconds: 60
+  # This is the message that will be used in the punish
+  # The following variables are available to fill into the text
+  #  {player_name}, {received_punishes}, {max_punishes} and {next_check_seconds}
+  punish_message: "You violated seeding rules on this server.\nYou're being punished by a bot ({received_punishes}/{max_punishes}).\nNext check in {next_check_seconds} seconds"
+
+  # Step number 4
+  # Set the below value to false if you don't want to kick players after they reached the max amount of punishes
+  # note that if you disable punishes it will never go to that step. no matter if it's set to true
+  kick_after_max_punish: true
+  # After the Step 2 has reached it's max punishes, this is the amount of time in seconds the auto-mod will wait before kicking
+  kick_grace_period_seconds: 120
+  # This is the message that will be used in the kick
+  # The following variables are available to fill into the text
+  #  {player_name}, {squad_name} and {kick_grace_period}
+  kick_message: "You violated seeding rules on this server.\nYour grace period of {kick_grace_period}s has passed.\nYou failed to comply with the previous warnings."
+
+  # Announce that the server is currently seeding when at least one seeding rule is enabled. When the player count exceeds
+  # the max_player settings of all seeding rules, the announcement is disabled automatically until the next round.
+  # This message occurs only when a player connects to a server. If the player count drops beneath the max_player setting of one
+  # seeding rule and a new map starts, all connected players will NOT get an announcement.
+  announce_seeding_active:
+    enabled: false
+    message: "We are trying to populate the server! That means special rules apply.\n\n- {disallowed_roles} are not allowed (until {disallowed_roles_max_players} players are online)\n- {disallowed_weapons} are not allowed (until {disallowed_weapons_max_players} players are online)\n\nThanks for understanding and helping us seed!"
+
+  # The disallowed roles is a seeding rule that ultimately prevents players from taking a role that should generally not
+  # be used when a server has a playercount below a certain threshold (seeding).
+  disallowed_roles:
+    # the player count of the server needed for this rule to be enforced. The number is inclusive, which means, if you use 5
+    # this rule will be enforced for players 5 to max_players. If there are only 4 players on the server, the rules will
+    # not be enforced.
+    min_players: 5
+    # the player count of the server under which this rule should be enforced. The number is exclusive, which means, if you use 30
+    # this rule will be enforced for players 1 to 29, once the 30 player connected, the rule will not be enforced anymore.
+    max_players: 30
+    # a list of roles that should not be taken by players.
+    # Available roles are: 'officer', 'antitank', 'automaticrifleman', 'assault', 'heavymachinegunner', 'support', 'sniper', 'spotter', 'rifleman', 'crewman', 'tankcommander', 'engineer', 'medic'
+    roles:
+      tankcommander: Tanks
+      crewman: Tanks
+    # Violation message used as a description of the seeding violation when player is messaged, punished and kicked.
+    #  {role}
+    message: "{role} are not allowed when server is seeding"
+
+  # The disallowed weapons is a seeding rule that prevents players from using defined weapons to kill other players. Different to the other
+  # automods, this rule does not use the escalation path (message -> punish -> kick) as configured in the general seeding automod config.
+  # Instead, players using one of the mentioned weapons (and given the server player count are in the bounds as configured) will be
+  # punished directly. This automod will also continue to punish players if they continue using disallowed weapons, even if they were punished
+  # already. The automod will not escalate to the kick stage, either.
+  disallowed_weapons:
+    # the player count of the server needed for this rule to be enforced. The number is inclusive, which means, if you use 5
+    # this rule will be enforced for players 5 to max_players. If there are only 4 players on the server, the rules will
+    # not be enforced.
+    min_players: 5
+    # the player count of the server under which this rule should be enforced. The number is exclusive, which means, if you use 30
+    # this rule will be enforced for players 1 to 29, once the 30 player connected, the rule will not be enforced anymore.
+    max_players: 30
+    # a map of weapons players should not use. The key of the map is the weapon class as used by the game (look in your recent
+    # game logs to find possible values), whereas the value of the map is a human friendly name of the weapon (as it will be passed
+    # to the `weapon` variable of the message parameter.
+    weapons:
+      "155MM HOWITZER [M114]": Artillery shells
+      "150MM HOWITZER [sFH 18]": Artillery shells
+      "122MM HOWITZER [M1938 (M-30)]": Artillery shells
+      MK2_Grenade: Grenades
+    # The message used when the player is punished.
+    #  {weapon}
+    message: "{weapon} are not allowed when server is seeding"
 
 # Set your custom text or transalation for each of the below keys. Logo urls and prefered stats and such
-# If you have more that 3 server copy the whole SERVER_1 section 
+# If you have more that 3 server copy the whole SERVER_1 section
 SCOREBOT:
   SERVER_1:
-    # Don't forget to replace with your IP:port or url, leave the /api/get_live_game_stats 
+    # Don't forget to replace with your IP:port or url, leave the /api/get_live_game_stats
     STATS_URL: "https://<rcon IP or url>/api/get_live_game_stats"
     # Don't forget to replace with your IP:port or url, leave the /api/public_info
     INFO_URL: "https://<rcon IP or url>/api/public_info"
@@ -205,7 +343,7 @@ SCOREBOT:
     # This is the public url
     PAST_GAMES_URL: "https://stats1.hllfrance.org/#/gamescoreboard"
     WEBHOOK_URL: "https://discord.com/api/webhooks/86....40/qlh....Ie3"
-  
+
   SERVER_2:
     STATS_URL: "https://<rcon IP or url>/api/get_live_game_stats"
     INFO_URL: "https://<rcon IP or url>/api/public_info"
@@ -228,12 +366,10 @@ SCOREBOT:
     PAST_GAMES_URL: "https://stats2.hllfrance.org/#/gamescoreboard"
     WEBHOOK_URL: "https://discord.com/api/webhooks/86....40/qlh....Ie3"
 
-
   COMMON:
     ALL_STATS_TEXT: "All stats on: "
     AUTHOR_NAME: "STATS LIVE HLL FRANCE - click here"
     AUTHOR_ICON_URL: "https://static.wixstatic.com/media/da3421_111b24ae66f64f73aa94efeb80b08f58~mv2.png/v1/fit/w_2500,h_1330,al_c/da3421_111b24ae66f64f73aa94efeb80b08f58~mv2.png"
-    ELAPSED_TIME: "Game time: "
     # The number of top players to display from 1 to 100
     TOP_LIMIT: 10
     FOOTER_ICON_URL: "https://static.wixstatic.com/media/da3421_111b24ae66f64f73aa94efeb80b08f58~mv2.png/v1/fit/w_2500,h_1330,al_c/da3421_111b24ae66f64f73aa94efeb80b08f58~mv2.png"
@@ -243,6 +379,12 @@ SCOREBOT:
     VOTE: "vote(s)"
     PLAYERS: "players"
     ELAPSED_TIME: "Elapsed game time: "
+    ALLIED_PLAYERS_TEXT: "Allied Players"
+    AXIS_PLAYERS_TEXT: "Axis Players"
+    MATCH_SCORE_TITLE_TEXT: "Match Score"
+    # You can format this however you want and include emojis, Discord markdown formatting, etc. {0} will replace the allied score and {1} the axis score
+    MATCH_SCORE_TEXT: "Allied {0} : Axis {1}"
+    TIME_REMAINING_TEXT: "Time Remaining"
 
     # Discord markup is supported, you can add emoji too, TOP_KILLERS as an example of custom emoji. Do \<the emoji> on your discord to get that id
     TOP_KILLERS: "<:HLLBomb:868256234439073802> TOP KILLERS\n*kills* <:HLLBomb:868256234439073802>"
@@ -277,7 +419,6 @@ SCOREBOT:
       - SURVIVORS
       - U_R_STILL_A_MAN
 
-
 # The config values are cached by RCON
 # Changes may take up to 10 minutes to take effect
 REMOVE_EXPIRED_VIPS:
@@ -287,8 +428,7 @@ REMOVE_EXPIRED_VIPS:
   interval: 60
   # Discord Webhook URL where audit logs should be sent. If not specified, the environment variable DISCORD_WEBHOOK_AUDIT_LOG
   # will be used, instead.
-  discord_webhook_url: ''
-
+  discord_webhook_url: ""
 
 # Any changes to these values require an RCON restart to take effect
 #

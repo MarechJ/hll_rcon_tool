@@ -16,24 +16,83 @@ import discord
 from discord.embeds import Embed
 from discord.errors import HTTPException, NotFound
 from rcon.config import get_config
+from typing import TypedDict
 
-logger = logging.getLogger(__name__)
+
+class _PublicInfoCurrentMapType(TypedDict):
+    just_name: str
+    human_name: str
+    name: str
+    start: int
+
+
+class _PublicInfoNextMapType(TypedDict):
+    just_name: str
+    human_name: str
+    name: str
+    start: int | None
+
+
+class _PublicInfoPlayerType(TypedDict):
+    allied: int
+    axis: int
+
+
+class _PublicInfoScoreType(TypedDict):
+    allied: str
+    axis: str
+
+
+class _PublicInfoVoteStatusType(TypedDict):
+    total_votes: int
+    winning_maps: list[str]
+
+
+class _PublicInfoNameType(TypedDict):
+    name: str
+    short_name: str
+    public_stats_port: str
+    public_stats_port_https: str
+
+
+class PublicInfoType(TypedDict):
+    """TypedDict for rcon.views.public_info"""
+
+    current_map: _PublicInfoCurrentMapType
+    next_map: _PublicInfoNextMapType
+    player_count: int
+    max_player_count: int
+    players: _PublicInfoPlayerType
+    score: _PublicInfoScoreType
+    raw_time_remaining: str
+    vote_status: _PublicInfoVoteStatusType
+    name: _PublicInfoNameType
+
+
+logger = logging.getLogger("rcon")
 
 try:
-    SERVER_CONFIG = get_config()["SCOREBOT"][f'SERVER_{os.getenv("SERVER_NUMBER")}']
-    CONFIG = get_config()["SCOREBOT"]["COMMON"]
+    config = get_config()
+
+    SERVER_CONFIG = config["SCOREBOT"][f'SERVER_{os.getenv("SERVER_NUMBER")}']
+    CONFIG = config["SCOREBOT"]["COMMON"]
 
     STATS_URL = SERVER_CONFIG["STATS_URL"]
     INFO_URL = SERVER_CONFIG["INFO_URL"]
     SCOREBOARD_PUBLIC_URL = SERVER_CONFIG["SCOREBOARD_PUBLIC_URL"]
-    SCORBOARD_BASE_PATH = SERVER_CONFIG["SCORBOARD_BASE_PATH"]
+
+    try:
+        # Older versions of default_config.yml and peoples config.yml have this typo
+        SCOREBOARD_BASE_PATH = SERVER_CONFIG["SCORBOARD_BASE_PATH"]
+    except KeyError:
+        SCOREBOARD_BASE_PATH = SERVER_CONFIG["SCOREBOARD_BASE_PATH"]
+
     PAST_GAMES_URL = SERVER_CONFIG["PAST_GAMES_URL"]
     WEBHOOK_URL = SERVER_CONFIG["WEBHOOK_URL"]
 
     ALL_STATS_TEXT = CONFIG["ALL_STATS_TEXT"]
     AUTHOR_NAME = CONFIG["AUTHOR_NAME"]
     AUTHOR_ICON_URL = CONFIG["AUTHOR_ICON_URL"]
-    ELAPSED_TIME = CONFIG["ELAPSED_TIME"]
     TOP_LIMIT = CONFIG["TOP_LIMIT"]
     FOOTER_ICON_URL = CONFIG["FOOTER_ICON_URL"]
     NO_STATS_AVAILABLE = CONFIG["NO_STATS_AVAILABLE"]
@@ -41,6 +100,14 @@ try:
     NEXT_MAP_TEXT = CONFIG["NEXT_MAP_TEXT"]
     VOTE = CONFIG["VOTE"]
     PLAYERS = CONFIG["PLAYERS"]
+    ELAPSED_TIME = CONFIG["ELAPSED_TIME"]
+
+    # New options, including defaults to not break it for users with an older config.yml
+    ALLIED_PLAYERS_TEXT = CONFIG.get("ALLIED_PLAYERS_TEXT", "Allied Players")
+    AXIS_PLAYERS_TEXT = CONFIG.get("AXIS_PLAYERS_TEXT", "Axis Players")
+    MATCH_SCORE_TITLE_TEXT = CONFIG.get("MATCH_SCORE_TITLE_TEXT", "Match Score")
+    MATCH_SCORE_TEXT = CONFIG.get("MATCH_SCORE_TEXT", "Allied {0} : Axis {1}")
+    TIME_REMAINING_TEXT = CONFIG.get("TIME_REMAINING_TEXT", "Time Remaining")
 
     TOP_KILLERS = CONFIG["TOP_KILLERS"]
     TOP_RATIO = CONFIG["TOP_RATIO"]
@@ -56,7 +123,6 @@ try:
     WHAT_IS_A_BREAK = CONFIG["WHAT_IS_A_BREAK"]
     SURVIVORS = CONFIG["SURVIVORS"]
     U_R_STILL_A_MAN = CONFIG["U_R_STILL_A_MAN"]
-    ELAPSED_TIME = CONFIG["ELAPSED_TIME"]
 
     STATS_KEYS_TO_DISPLAY = CONFIG["STATS_TO_DISPLAY"]
 except Exception as e:
@@ -84,11 +150,11 @@ def get_map_image(server_info):
     img = map_to_pict.get(
         server_info["current_map"]["just_name"], server_info["current_map"]["just_name"]
     )
-    url = urljoin(SCORBOARD_BASE_PATH, img)
+    url = urljoin(SCOREBOARD_BASE_PATH, img)
     return url
 
 
-def get_header_embed(public_info):
+def get_header_embed(public_info: PublicInfoType):
     elapsed_time_minutes = (
         datetime.datetime.now()
         - datetime.datetime.fromtimestamp(public_info["current_map"]["start"])
@@ -110,6 +176,37 @@ def get_header_embed(public_info):
         name=f"{NEXT_MAP_TEXT} {public_info['next_map']['human_name']}",
         value=f"{winning_map_votes}/{total_votes} {VOTE}",
     )
+
+    embed.add_field(name="\u200b", value="\u200b", inline=False)
+
+    embed.add_field(
+        name=f"{ALLIED_PLAYERS_TEXT}",
+        value=f"{public_info['players']['allied']}",
+        inline=True,
+    )
+
+    embed.add_field(
+        name=f"{AXIS_PLAYERS_TEXT}",
+        value=f"{public_info['players']['axis']}",
+        inline=True,
+    )
+
+    embed.add_field(name="\u200b", value="\u200b", inline=False)
+
+    embed.add_field(
+        name=f"{MATCH_SCORE_TITLE_TEXT}",
+        value=MATCH_SCORE_TEXT.format(
+            public_info["score"]["allied"], public_info["score"]["axis"]
+        ),
+        inline=True,
+    )
+
+    embed.add_field(
+        name=f"{TIME_REMAINING_TEXT}",
+        value=f"{public_info['raw_time_remaining']}",
+        inline=True,
+    )
+
     embed.set_author(
         name=AUTHOR_NAME,
         url=SCOREBOARD_PUBLIC_URL,
@@ -201,7 +298,7 @@ def get_embeds(server_info, stats):
 
 
 def get_stats():
-    stats = requests.get(STATS_URL).json()
+    stats = requests.get(STATS_URL, verify=False).json()
     try:
         stats = stats["result"]["stats"]
     except KeyError:
@@ -217,11 +314,11 @@ def cleanup_orphaned_messages(conn: Connection, server_number: int):
     )
     conn.commit()
 
+
 def run():
     try:
         path = os.getenv("DISCORD_BOT_DATA_PATH", "/data")
         path = pathlib.Path(path) / pathlib.Path("scorebot.db")
-        print(str(path))
         conn = sqlite3.connect(str(path))
         server_number = int(os.getenv("SERVER_NUMBER", 0))
         # TODO handle webhook change
@@ -246,8 +343,12 @@ def run():
             WEBHOOK_URL,
             adapter=discord.RequestsWebhookAdapter(),
         )
+        try:
+            public_info = requests.get(INFO_URL, verify=False).json()["result"]
+        except ConnectionError as e:
+            logger.error(f"Error accessing {INFO_URL}")
+            raise
 
-        public_info = requests.get(INFO_URL).json()["result"]
         stats = get_stats()
 
         if message_id:
@@ -262,12 +363,14 @@ def run():
             conn.commit()
             message_id = message.id
         while True:
-            public_info = requests.get(INFO_URL).json()["result"]
+            public_info = requests.get(INFO_URL, verify=False).json()["result"]
             stats = get_stats()
             try:
                 webhook.edit_message(message_id, embeds=get_embeds(public_info, stats))
             except NotFound as ex:
-                logger.exception("Message with ID in our records does not exist, cleaning up and restarting")
+                logger.exception(
+                    "Message with ID in our records does not exist, cleaning up and restarting"
+                )
                 cleanup_orphaned_messages(conn, server_number)
                 raise ex
             except (HTTPException, RequestException, ConnectionError):
@@ -284,4 +387,8 @@ def run():
 
 
 if __name__ == "__main__":
-    run()
+    try:
+        run()
+    except Exception as e:
+        logger.exception(e)
+        raise

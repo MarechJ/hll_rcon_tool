@@ -33,7 +33,10 @@ def upgrade():
             sa.PrimaryKeyConstraint("id"),
         )
         op.create_index(
-            op.f("ix_steam_id_64_steam_id_64"), "steam_id_64", ["steam_id_64"], unique=True
+            op.f("ix_steam_id_64_steam_id_64"),
+            "steam_id_64",
+            ["steam_id_64"],
+            unique=True,
         )
     if "user_config" not in tables:
         op.create_table(

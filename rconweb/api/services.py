@@ -8,6 +8,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from rcon.discord import send_to_discord_audit
 
+from .audit_log import auto_record_audit, record_audit
 from .auth import api_response, login_required
 from .utils import _get_data
 
@@ -39,7 +40,7 @@ def get_services(request):
 
     try:
         processes = client.supervisor.getAllProcessInfo()
-        result = [dict(info=info.get(p['name'], ''), **p) for p in processes]
+        result = [dict(info=info.get(p["name"], ""), **p) for p in processes]
     except:
         if os.getenv("DJANGO_DEBUG"):
             result = []
@@ -54,6 +55,7 @@ def get_services(request):
 
 @csrf_exempt
 @login_required(True)
+@record_audit
 def do_service(request):
     data = _get_data(request)
     client = get_supervisor_client()
