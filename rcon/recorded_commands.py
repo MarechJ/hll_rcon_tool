@@ -16,11 +16,7 @@ from rcon.player_history import (
     safe_save_player_action,
 )
 from rcon.types import EnrichedGetPlayersType
-from rcon.utils import (
-    ALL_ROLES,
-    ALL_ROLES_KEY_INDEX_MAP,
-    get_server_number
-)
+from rcon.utils import ALL_ROLES, ALL_ROLES_KEY_INDEX_MAP, get_server_number
 
 logger = getLogger(__name__)
 
@@ -87,7 +83,7 @@ class RecordedRcon(Rcon):
         }
         logger.debug("Getting VIP list")
         try:
-            vips = set(v[STEAMID] for v in self.get_vip_ids())
+            vips = set(v[STEAMID] for v in super().get_vip_ids())
         except Exception:
             logger.exception("Failed to get VIPs")
             vips = set()
@@ -108,8 +104,10 @@ class RecordedRcon(Rcon):
             for squad_name, squad in squads.items():
                 squad["players"] = sorted(
                     squad["players"],
-                    key=lambda player: (ALL_ROLES_KEY_INDEX_MAP.get(player.get("role"), len(ALL_ROLES)),
-                                        player.get("steam_id_64"))
+                    key=lambda player: (
+                        ALL_ROLES_KEY_INDEX_MAP.get(player.get("role"), len(ALL_ROLES)),
+                        player.get("steam_id_64"),
+                    ),
                 )
                 squad["type"] = self._guess_squad_type(squad)
                 squad["has_leader"] = self._has_leader(squad)
@@ -122,7 +120,7 @@ class RecordedRcon(Rcon):
                     squad["kills"] = sum(p["kills"] for p in squad["players"])
                     squad["deaths"] = sum(p["deaths"] for p in squad["players"])
                 except Exception as e:
-                    logger.exception()
+                    logger.exception(e)
 
         game = {}
         for team, squads in teams.items():
@@ -328,12 +326,12 @@ class RecordedRcon(Rcon):
                     )
                     .one_or_none()
                 )
-                new_vip_record = PlayerVIP(
-                    expiration=expiration_date,
-                    playersteamid_id=player.id,
-                    server_number=server_number,
-                )
                 if not vip_record:
+                    new_vip_record = PlayerVIP(
+                        expiration=expiration_date,
+                        playersteamid_id=player.id,
+                        server_number=server_number,
+                    )
                     logger.info(
                         f"Added new PlayerVIP record {player.steam_id_64=} {expiration_date=}"
                     )
@@ -342,6 +340,12 @@ class RecordedRcon(Rcon):
                     session.add(new_vip_record)
                 else:
                     previous_expiration = vip_record.expiration.isoformat()
+
+                    new_vip_record = PlayerVIP(
+                        expiration=expiration_date,
+                        playersteamid_id=player.id,
+                        server_number=server_number,
+                    )
 
                     # TODO: This is an incredibly dumb fix because I can't get
                     # the changes to persist otherwise
