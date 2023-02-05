@@ -50,24 +50,8 @@ class RecordedRcon(Rcon):
     def thread_pool(self):
         return ThreadPoolExecutor(self.pool_size)
 
-    @cached_property
-    def connection_pool(self):
-        logger.info("Initializing Rcon connection pool of size %s", self.pool_size)
-        pool = [RecordedRcon(self.config) for _ in range(self.pool_size)]
-        for idx, rcon in enumerate(pool):
-            logger.debug("Connecting rcon %s/%s", idx + 1, self.pool_size)
-            rcon._connect()
-        logger.info("Done initialzing Rcon connection pool")
-        return pool
-
-    def run_in_pool(self, process_number: int, function_name: str, *args, **kwargs):
-        return self.thread_pool.submit(
-            getattr(
-                self.connection_pool[process_number % self.pool_size], function_name
-            ),
-            *args,
-            **kwargs,
-        )
+    def run_in_pool(self, function_name: str, *args, **kwargs):
+        return self.thread_pool.submit(getattr(self, function_name), *args, **kwargs)
 
     @mod_users_allowed
     @ttl_cache(ttl=2, cache_falsy=False)
@@ -78,7 +62,7 @@ class RecordedRcon(Rcon):
         fail_count = 0
 
         futures = {
-            self.run_in_pool(idx, "get_detailed_player_info", player[NAME]): player
+            self.run_in_pool("get_detailed_player_info", player[NAME]): player
             for idx, player in enumerate(players)
         }
         for future in as_completed(futures):
