@@ -210,12 +210,9 @@ class LogLoop:
                 )
             except KeyboardInterrupt:
                 sys.exit(0)
-            except Exception:
+            except Exception as e:
                 logger.exception(
-                    "Hook '%s.%s' for '%s' returned an error",
-                    hook.__module__,
-                    hook.__name__,
-                    log,
+                    f"Hook '{hook.__module__}.{hook.__name__}' for '{log}' returned an error: {e}"
                 )
         logger.debug(
             "Processed %s hooks in %.4f for: %s",
@@ -440,7 +437,7 @@ def get_recent_logs(
         actions.add(line["action"])
 
     return {
-        "actions": list(actions),
+        "actions": sorted(list(actions)),
         "players": list(all_players),
         "logs": logs,
     }
