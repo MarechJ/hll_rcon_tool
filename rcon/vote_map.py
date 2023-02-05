@@ -557,7 +557,7 @@ class VoteMap:
             map_ = map_.replace("_RESTART", "")
 
         if map_ not in ALL_MAPS:
-            raise ValueError("Invalid current map %s map_")
+            raise ValueError("Invalid current map %s", map_)
 
         return map_
 

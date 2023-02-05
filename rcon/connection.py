@@ -2,6 +2,7 @@ import array
 import logging
 import socket
 import time
+import uuid
 from threading import Lock, get_ident
 
 MSGLEN = 8196
@@ -23,7 +24,7 @@ class HLLConnection:
         self.xorkey = None
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.settimeout(TIMEOUT_SEC)
-        self._lock = Lock()
+        self.id = f"{get_ident()}-{uuid.uuid4()}"
 
     def connect(self, host, port, password: str):
         self.sock.connect((host, port))
@@ -41,8 +42,6 @@ class HLLConnection:
         self.sock.close()
 
     def send(self, msg, timed=False):
-        self.lock()
-
         xored = self._xor(msg)
         before = time.time()
         sent = self.sock.send(xored)
@@ -62,26 +61,7 @@ class HLLConnection:
 
         return array.array("B", n).tobytes()
 
-    def unlock(self):
-        # logger.debug("Unlocking connection in %s", get_ident())
-        self._lock.release()
-
-    def lock(self):
-        if self._lock.locked():
-            logger.warning("Mutex lock detected, this is unexpected in %s", get_ident())
-
-        # logger.debug("Locking connection in %s", get_ident())
-        if not self._lock.acquire(timeout=10):
-            logger.error("Unable to acquirelock after 10sec in %s", get_ident())
-            raise RuntimeError("Unable to acquirelock after 10sec in %s", get_ident())
-
-    def receive(self, msglen=MSGLEN, timed=False, unlock=True):
-        if not self._lock.locked() and unlock == True:
-            logger.error(
-                "Receiving on unlocked connection, this is unexpected in %s",
-                get_ident(),
-            )
-
+    def receive(self, msglen=MSGLEN, timed=False):
         before = time.time()
         buff = self.sock.recv(msglen)
 
@@ -95,8 +75,6 @@ class HLLConnection:
             msg += self._xor(buff)
         after = time.time()
 
-        if unlock:
-            self.unlock()
         if timed:
             return before, after, msg
         return msg

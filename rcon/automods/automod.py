@@ -23,6 +23,7 @@ from rcon.automods.no_leader import NoLeaderAutomod
 from rcon.automods.seeding_rules import SeedingRulesAutomod
 
 logger = logging.getLogger(__name__)
+first_run_done = False
 
 
 def get_punitions_to_apply(rcon, moderators) -> PunitionsToApply:
@@ -118,6 +119,8 @@ def punish_squads(rcon: RecordedRcon):
     punitions_to_apply = get_punitions_to_apply(rcon, mods)
 
     do_punitions(rcon, punitions_to_apply)
+    global first_run_done
+    first_run_done = True
 
 
 def audit(discord_webhook_url: str, msg: str, author: str):
@@ -127,6 +130,9 @@ def audit(discord_webhook_url: str, msg: str, author: str):
 
 @on_kill
 def on_kill(rcon: RecordedRcon, log: StructuredLogLine):
+    if not first_run_done:
+        logger.debug("Kill event received, but not automod run done yet, giving mods time to warmup")
+        return
     mods = enabled_moderators()
     if len(mods) == 0:
         logger.debug("No automod is enabled")
@@ -147,6 +153,9 @@ pendingTimers = {}
 @on_connected
 @inject_player_ids
 def on_connected(rcon: RecordedRcon, _, name: str, steam_id_64: str):
+    if not first_run_done:
+        logger.debug("Kill event received, but not automod run done yet, giving mods time to warmup")
+        return
     mods = enabled_moderators()
     if len(mods) == 0:
         logger.debug("No automod is enabled")
