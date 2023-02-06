@@ -9,16 +9,16 @@ from rcon.cache_utils import get_redis_client
 from rcon.discord import send_to_discord_audit
 from rcon.recorded_commands import RecordedRcon
 from rcon.settings import SERVER_INFO
-from rcon.team_balance import balance, shuffle
-from rcon.team_balance.constants import (
+from rcon.team_shuffle import balance, shuffle
+from rcon.team_shuffle.constants import (
     API_COMMAND_BALANCE,
     API_COMMAND_SHUFFLE,
     COMMAND_FAILED_ERROR_MSG,
     DISCORD_BALANCE_SHUFFLE_WEBHOOK,
     SWAP_SUCCESSFUL_MSG,
 )
-from rcon.team_balance.models import DetailedPlayerInfo, RateLimitError
-from rcon.team_balance.utils import audit
+from rcon.team_shuffle.models import DetailedPlayerInfo, SwapRateLimitError
+from rcon.team_shuffle.utils import audit
 
 from .auth import api_response, login_required
 from .utils import _get_data
@@ -81,7 +81,7 @@ def balance_teams(request) -> JsonResponse:
             swap_on_death=swap_on_death,
         )
     # TODO: Log/ specific exceptions
-    except RateLimitError as e:
+    except SwapRateLimitError as e:
         failed = True
         message = f"{API_COMMAND_BALANCE} failed {e}"
         logger.exception(message)
@@ -165,7 +165,7 @@ def shuffle_teams(request) -> JsonResponse:
             swapped_teamless,
         ) = shuffle.shuffle_teams(rcon_hook, redis_store, shuffle_method)
     # TODO: Log/catch specific exceptions
-    except RateLimitError as e:
+    except SwapRateLimitError as e:
         failed = True
         message = f"{API_COMMAND_BALANCE} failed {e}"
         logger.exception(message)

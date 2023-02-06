@@ -1,11 +1,10 @@
 import logging
 import random
-from typing import List, Sequence, Tuple, Iterable
 
 import redis
 
 from rcon.recorded_commands import RecordedRcon
-from rcon.team_balance.constants import (
+from rcon.team_shuffle.constants import (
     ALLIED_TEAM,
     AXIS_TEAM,
     DISCORD_BALANCE_SHUFFLE_WEBHOOK,
@@ -16,10 +15,11 @@ from rcon.team_balance.constants import (
     SHUFFLE_METHOD_SPLIT_SHUFFLE,
     SWAP_TYPE_SHUFFLE,
 )
-from rcon.team_balance.models import DetailedPlayerInfo, RCONTeamView, ShuffleAPIRequest
-from rcon.team_balance.utils import (
+from rcon.types import TeamViewType
+from rcon.team_shuffle.models import DetailedPlayerInfo, ShuffleAPIRequest
+from rcon.team_shuffle.utils import (
     audit,
-    check_rate_limit,
+    check_swap_rate_limit,
     get_players_on_team,
     select_players_randomly,
     swap_players,
@@ -31,26 +31,26 @@ logger = logging.getLogger(__name__)
 
 def shuffle_teams(
     rcon_hook: RecordedRcon, redis_store: redis.StrictRedis, shuffle_method: str
-) -> Tuple[
-    List[DetailedPlayerInfo],
-    List[DetailedPlayerInfo],
-    List[DetailedPlayerInfo],
-    List[DetailedPlayerInfo],
-    List[DetailedPlayerInfo],
-    List[DetailedPlayerInfo],
+) -> tuple[
+    list[DetailedPlayerInfo],
+    list[DetailedPlayerInfo],
+    list[DetailedPlayerInfo],
+    list[DetailedPlayerInfo],
+    list[DetailedPlayerInfo],
+    list[DetailedPlayerInfo],
 ]:
     """Shuffle teams by the given shuffle_method while maintaining even team sizes."""
     args = ShuffleAPIRequest(shuffle_method=shuffle_method)
 
-    check_rate_limit(redis_store)
+    check_swap_rate_limit(redis_store)
 
-    team_view: RCONTeamView = rcon_hook.get_team_view_fast()
+    team_view: TeamViewType = rcon_hook.get_team_view_fast()
 
-    axis_players: List[DetailedPlayerInfo] = get_players_on_team(team_view, AXIS_TEAM)
-    allied_players: List[DetailedPlayerInfo] = get_players_on_team(
+    axis_players: list[DetailedPlayerInfo] = get_players_on_team(team_view, AXIS_TEAM)
+    allied_players: list[DetailedPlayerInfo] = get_players_on_team(
         team_view, ALLIED_TEAM
     )
-    teamless_players: List[DetailedPlayerInfo] = get_players_on_team(
+    teamless_players: list[DetailedPlayerInfo] = get_players_on_team(
         team_view, EMPTY_TEAM
     )
 
@@ -63,16 +63,16 @@ def shuffle_teams(
 
     # Randomly select which team is team one or two so we aren't always biased towards
     # shuffling extra players onto one faction
-    team_one: List[DetailedPlayerInfo]
-    team_two: List[DetailedPlayerInfo]
+    team_one: list[DetailedPlayerInfo]
+    team_two: list[DetailedPlayerInfo]
     if random.choice((AXIS_TEAM, ALLIED_TEAM)) == AXIS_TEAM:
         team_one, team_two = axis_players, allied_players
     else:
         team_one, team_two = allied_players, axis_players
 
-    team_one_players_to_swap: List[DetailedPlayerInfo] = []
-    team_two_players_to_swap: List[DetailedPlayerInfo] = []
-    teamless_players_to_swap: List[DetailedPlayerInfo] = teamless_players
+    team_one_players_to_swap: list[DetailedPlayerInfo] = []
+    team_two_players_to_swap: list[DetailedPlayerInfo] = []
+    teamless_players_to_swap: list[DetailedPlayerInfo] = teamless_players
     if args.shuffle_method == SHUFFLE_METHOD_RANDOMLY:
         (
             team_one_players_to_swap,
@@ -122,8 +122,8 @@ def shuffle_teams(
 
 
 def find_players_to_swap_split_shuffle(
-    team_one: List[DetailedPlayerInfo], team_two: List[DetailedPlayerInfo]
-) -> Tuple[List[DetailedPlayerInfo], List[DetailedPlayerInfo]]:
+    team_one: list[DetailedPlayerInfo], team_two: list[DetailedPlayerInfo]
+) -> tuple[list[DetailedPlayerInfo], list[DetailedPlayerInfo]]:
     """Randomly swaps half of each team while maintaining even team sizes.
 
     Swapping half of each team is a more 'fair' shuffle than a true random shuffle
@@ -148,19 +148,19 @@ def find_players_to_swap_split_shuffle(
 
 
 def find_players_to_swap_player_level(
-    team_one: Sequence[DetailedPlayerInfo],
-    team_two: Sequence[DetailedPlayerInfo],
-) -> Tuple[List[DetailedPlayerInfo], List[DetailedPlayerInfo]]:
+    team_one: list[DetailedPlayerInfo],
+    team_two: list[DetailedPlayerInfo],
+) -> tuple[list[DetailedPlayerInfo], list[DetailedPlayerInfo]]:
     """Shuffle by level to the team with the lowest mean level while maintaining even team sizes."""
     original_team_one_players = set(player["steam_id_64"] for player in team_one)
     original_team_two_players = set(player["steam_id_64"] for player in team_two)
 
-    all_players: List[DetailedPlayerInfo] = sorted(
+    all_players: list[DetailedPlayerInfo] = sorted(
         team_one + team_two, key=lambda p: p["level"], reverse=True
     )
 
-    new_team_one: List[DetailedPlayerInfo] = []
-    new_team_two: List[DetailedPlayerInfo] = []
+    new_team_one: list[DetailedPlayerInfo] = []
+    new_team_two: list[DetailedPlayerInfo] = []
 
     # Assign the highest level player to the team with the lowest mean player level
     # Unless one team is behind a player, then the smallest team gets that player
@@ -188,8 +188,8 @@ def find_players_to_swap_player_level(
         team_two_mean = sum(player["level"] for player in new_team_two) / divisor
 
     # Each player might already be on their 'new' team and doesn't need to be swapped
-    team_one_to_swap: List[DetailedPlayerInfo] = []
-    team_two_to_swap: List[DetailedPlayerInfo] = []
+    team_one_to_swap: list[DetailedPlayerInfo] = []
+    team_two_to_swap: list[DetailedPlayerInfo] = []
     for player in new_team_one:
         if player["steam_id_64"] not in original_team_one_players:
             team_two_to_swap.append(player)
@@ -202,9 +202,9 @@ def find_players_to_swap_player_level(
 
 
 def find_players_to_swap_randomly(
-    team_one: List[DetailedPlayerInfo],
-    team_two: List[DetailedPlayerInfo],
-) -> Tuple[List[DetailedPlayerInfo], List[DetailedPlayerInfo]]:
+    team_one: list[DetailedPlayerInfo],
+    team_two: list[DetailedPlayerInfo],
+) -> tuple[list[DetailedPlayerInfo], list[DetailedPlayerInfo]]:
     """Shuffles the entire server randomly while maintaining even team sizes."""
     original_team_one_players = set(player["steam_id_64"] for player in team_one)
     original_team_two_players = set(player["steam_id_64"] for player in team_two)
@@ -216,8 +216,8 @@ def find_players_to_swap_randomly(
     new_team_two = shuffled_players[len(shuffled_players) // 2 :]
 
     # Each player might already be on their 'new' team and doesn't need to be swapped
-    team_one_to_swap: List[DetailedPlayerInfo] = []
-    team_two_to_swap: List[DetailedPlayerInfo] = []
+    team_one_to_swap: list[DetailedPlayerInfo] = []
+    team_two_to_swap: list[DetailedPlayerInfo] = []
     for player in new_team_one:
         if player["steam_id_64"] not in original_team_one_players:
             team_two_to_swap.append(player)

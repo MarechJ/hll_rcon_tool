@@ -1,12 +1,11 @@
 import logging
 import random
 from datetime import datetime, timezone
-from typing import Iterable, List, Optional, Sequence, Tuple
 
 import redis
 
 from rcon.recorded_commands import RecordedRcon
-from rcon.team_balance.constants import (
+from rcon.team_shuffle.constants import (
     ALLIED_TEAM,
     AXIS_TEAM,
     DISCORD_BALANCE_SHUFFLE_WEBHOOK,
@@ -18,10 +17,11 @@ from rcon.team_balance.constants import (
     PLAYER_BALANCE_NOT_SWAPPED_MSG,
     SWAP_TYPE_BALANCE,
 )
-from rcon.team_balance.models import BalanceAPIRequest, DetailedPlayerInfo, RCONTeamView
-from rcon.team_balance.utils import (
+from rcon.types import TeamViewType
+from rcon.team_shuffle.models import BalanceAPIRequest, DetailedPlayerInfo
+from rcon.team_shuffle.utils import (
     audit,
-    check_rate_limit,
+    check_swap_rate_limit,
     get_player_last_swap_timestamp,
     get_player_session,
     get_players_on_team,
@@ -39,17 +39,17 @@ def autobalance_teams(
     redis_store: redis.StrictRedis,
     rebalance_method: str,
     immune_level: int = 0,
-    immune_roles: Optional[Sequence[str]] = None,
+    immune_roles: list[str] | None = None,
     immune_seconds: int = 0,
     include_teamless: bool = True,
     swap_on_death: bool = False,
-) -> Tuple[
-    List[DetailedPlayerInfo],
-    List[DetailedPlayerInfo],
-    List[DetailedPlayerInfo],
-    List[DetailedPlayerInfo],
-    List[DetailedPlayerInfo],
-    List[DetailedPlayerInfo],
+) -> tuple[
+    list[DetailedPlayerInfo],
+    list[DetailedPlayerInfo],
+    list[DetailedPlayerInfo],
+    list[DetailedPlayerInfo],
+    list[DetailedPlayerInfo],
+    list[DetailedPlayerInfo],
 ]:
     """Verify if criteria for balancing has been met and then swap players.
 
@@ -69,7 +69,8 @@ def autobalance_teams(
         swap_on_death=swap_on_death,
     )
 
-    check_rate_limit(redis_store)
+    # raises SwapRateLimitError
+    check_swap_rate_limit(redis_store)
 
     # Only making one team_view call and passing it down to all the sub functions
     # so if one more players changes teams, roles, etc. during a balance we don't
@@ -78,7 +79,7 @@ def autobalance_teams(
     # This does mean that a player might still be swapped or not swapped if their
     # info has changed since the request was made, but this shouldn't blow up
 
-    team_view: RCONTeamView = rcon_hook.get_team_view_fast()
+    team_view: TeamViewType = rcon_hook.get_team_view()
 
     larger_team_name = find_larger_team_name(team_view)
     smaller_team_name = ALLIED_TEAM if larger_team_name == AXIS_TEAM else AXIS_TEAM
@@ -145,7 +146,7 @@ def autobalance_teams(
         logger.warning(message)
         audit(DISCORD_BALANCE_SHUFFLE_WEBHOOK, message)
 
-    players_to_swap: List[DetailedPlayerInfo] = []
+    players_to_swap: list[DetailedPlayerInfo] = []
     if args.rebalance_method == "random":
         players_to_swap = select_players_randomly(
             swappable_players, num_players_to_switch
@@ -160,18 +161,18 @@ def autobalance_teams(
         )
 
     # Perform a swap action on each selected player who was on a team to begin with
-    swapped_axis_players: List[DetailedPlayerInfo]
-    swapped_allied_players: List[DetailedPlayerInfo]
+    swapped_axis_players: list[DetailedPlayerInfo]
+    swapped_allied_players: list[DetailedPlayerInfo]
     swapped_axis_players, swapped_allied_players = swap_players(
         rcon_hook, redis_store, players_to_swap, SWAP_TYPE_BALANCE, args.swap_on_death
     )
 
     # Distribute teamless players to each team, choosing which team to start with at random
-    alternating_teams: Tuple[str, str] = (AXIS_TEAM, ALLIED_TEAM)
+    alternating_teams: tuple[str, str] = (AXIS_TEAM, ALLIED_TEAM)
     if random.choice(alternating_teams) == ALLIED_TEAM:
         alternating_teams = (ALLIED_TEAM, AXIS_TEAM)
 
-    teamless_players_to_swap: List[DetailedPlayerInfo] = []
+    teamless_players_to_swap: list[DetailedPlayerInfo] = []
     if args.include_teamless:
         teamless_players_to_swap = teamless_players
         swap_teamless_players(
@@ -195,7 +196,7 @@ def autobalance_teams(
 def is_player_swappable(
     detailed_player_info: DetailedPlayerInfo,  # Player info from rcon.extended_commands.get_team_view()
     redis_store: redis.StrictRedis,
-    immune_roles: Iterable[str],
+    immune_roles: list[str] | None,
     immune_swap_time_threshold_secs: int = 0,
     immune_level: int = 0,
 ) -> bool:
@@ -207,7 +208,7 @@ def is_player_swappable(
     level: int = detailed_player_info["level"]
     role: str = detailed_player_info["role"]
 
-    logger.info(f"{player_name=} {role=}")
+    logger.debug(f"{player_name=} {role=}")
 
     # If they are not on a team their role defaults to rifleman
     # maybe a problem if someone immunes riflemen but wants to swap teamless players
@@ -218,7 +219,10 @@ def is_player_swappable(
     )
 
     is_swappable = True
-    not_swapped_reasons: List[str] = []
+    not_swapped_reasons: list[str] = []
+
+    if immune_roles is None:
+        immune_roles = []
 
     if role in immune_roles:
         is_swappable = False
@@ -250,7 +254,7 @@ def is_player_swappable(
     return is_swappable
 
 
-def find_larger_team_name(team_view: RCONTeamView) -> str:
+def find_larger_team_name(team_view: TeamViewType) -> str:
     """Return the team name of the team that has more players (axis if tied)."""
     axis_player_count = get_team_player_count(team_view, AXIS_TEAM)
     allied_player_count = get_team_player_count(team_view, ALLIED_TEAM)
@@ -262,13 +266,13 @@ def find_larger_team_name(team_view: RCONTeamView) -> str:
 
 
 def select_players_arrival_time(
-    players: Sequence[DetailedPlayerInfo],
+    players: list[DetailedPlayerInfo],
     num_to_select: int,
     *,
     most_recent: bool = True,
-) -> List[DetailedPlayerInfo]:
+) -> list[DetailedPlayerInfo]:
     """Select up to num_to_select players based on arrival time to the server."""
-    ordered_players: List[DetailedPlayerInfo] = sorted(
+    ordered_players: list[DetailedPlayerInfo] = sorted(
         players,
         key=lambda p: get_player_session(p, most_recent),
         reverse=most_recent,
@@ -284,12 +288,13 @@ def select_players_arrival_time(
 
 def collect_swappable_players(
     redis_store: redis.StrictRedis,
-    players: Iterable[DetailedPlayerInfo],
-    immune_roles: List[str],
+    players: list[DetailedPlayerInfo],
+    immune_roles: list[str] | None,
     immune_seconds: int,
     immune_level: int,
-) -> List[DetailedPlayerInfo]:
+) -> list[DetailedPlayerInfo]:
     """Return a list of swappable players from the given list of players."""
+
     return [
         player
         for player in players

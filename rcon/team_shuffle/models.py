@@ -2,7 +2,7 @@ from typing import Any, Dict, NewType, Optional, Sequence
 
 from pydantic import BaseModel, conint, validator
 
-from rcon.team_balance.constants import (
+from rcon.team_shuffle.constants import (
     BALANCE_METHODS,
     INVALID_BALANCE_METHOD_ERROR_MSG,
     INVALID_ROLE_ERROR_MSG,
@@ -12,7 +12,7 @@ from rcon.team_balance.constants import (
 )
 
 
-class RateLimitError(BaseException):
+class SwapRateLimitError(BaseException):
     pass
 
 
@@ -30,7 +30,7 @@ class ShuffleAPIRequest(BaseModel):
 class BalanceAPIRequest(BaseModel):
     rebalance_method: str
     immune_level: conint(ge=0, le=500)
-    immune_roles: Optional[Sequence[str]] = []
+    immune_roles: list[str] | None = []
     immune_seconds: conint(ge=0)
     include_teamless: bool
     swap_on_death: bool
@@ -69,5 +69,3 @@ DetailedPlayerInfo = NewType("DetailedPlayerInfo", Dict[str, Any])
         Level: 34
 
         """
-
-RCONTeamView = NewType("RCONTeamView", Dict[str, Any])
