@@ -1,3 +1,5 @@
+"""For shuffling players between teams"""
+
 import logging
 import random
 
@@ -44,7 +46,7 @@ def shuffle_teams(
 
     check_swap_rate_limit(redis_store)
 
-    team_view: TeamViewType = rcon_hook.get_team_view_fast()
+    team_view: TeamViewType = rcon_hook.get_team_view()
 
     axis_players: list[DetailedPlayerInfo] = get_players_on_team(team_view, AXIS_TEAM)
     allied_players: list[DetailedPlayerInfo] = get_players_on_team(
