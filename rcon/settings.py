@@ -85,7 +85,7 @@ LOGGING = {
             "handlers": ["console", "file"],
             "level": os.getenv("LOGGING_LEVEL", "DEBUG"),
             "propagate": False,
-        }
+        },
         "rcon.team_balance": {
             "handlers": ["console", "team_balance_file"],
             "level": os.getenv("LOGGING_LEVEL", "DEBUG"),
