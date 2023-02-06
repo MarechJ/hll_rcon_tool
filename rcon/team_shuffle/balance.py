@@ -1,3 +1,5 @@
+"""For moving players from the larger team to the smaller team when team sizes are unequal"""
+
 import logging
 import random
 from datetime import datetime, timezone
