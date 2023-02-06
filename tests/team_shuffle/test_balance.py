@@ -4,6 +4,7 @@ from typing import List, Any
 from unittest.mock import MagicMock
 from pprint import pprint
 import dateutil.parser
+from pathlib import Path
 
 import pytest
 from rcon.team_shuffle.balance import (
@@ -39,7 +40,7 @@ class MockRCON:
     def __init__(self, team_view=None):
         self._team_view = team_view
 
-    def get_team_view_fast(self):
+    def get_team_view(self):
         return self._team_view
 
     # TODO: Doesn't implement the dict behavior the real command does
@@ -300,7 +301,14 @@ class TestPlayerSwapEligibility:
 
 @pytest.mark.parametrize(
     "path, expected",
-    [("./rcon/team_balance/tests/data/real_team_views/axis_larger.json", AXIS_TEAM)],
+    [
+        (
+            Path(
+                "tests/team_shuffle/data/mocked_team_views/axis_players_allied_empty_teamless_empty.json"
+            ),
+            AXIS_TEAM,
+        )
+    ],
 )
 def test_larger_team_is_larger(path, expected) -> None:
     """The larger team should be chosen."""
@@ -418,16 +426,24 @@ class TestAutobalanceScenarios:
         "path",
         [
             (
-                "./rcon/team_balance/tests/data/mocked_team_views/axis_empty_allied_empty_teamless_players.json"
+                Path(
+                    "tests/team_shuffle/data/mocked_team_views/axis_empty_allied_empty_teamless_players.json"
+                )
             ),
             (
-                "./rcon/team_balance/tests/data/mocked_team_views/axis_players_allied_players_teamless_players.json"
+                Path(
+                    "tests/team_shuffle/data/mocked_team_views/axis_players_allied_players_teamless_players.json"
+                )
             ),
             (
-                "./rcon/team_balance/tests/data/mocked_team_views/axis_empty_allied_players_teamless_players.json"
+                Path(
+                    "tests/team_shuffle/data/mocked_team_views/axis_empty_allied_players_teamless_players.json"
+                )
             ),
             (
-                "./rcon/team_balance/tests/data/mocked_team_views/axis_players_allied_empty_teamless_players.json"
+                Path(
+                    "tests/team_shuffle/data/mocked_team_views/axis_players_allied_empty_teamless_players.json"
+                )
             ),
         ],
     )
@@ -435,6 +451,7 @@ class TestAutobalanceScenarios:
         self, path, mock_redis
     ) -> None:
         """All teamless players should always be swapped to a team regardless of axis/allied team states."""
+        print(f"{Path.cwd()=}")
         team_view = team_view_file(path)
         mock_rcon: MockRCON = MockRCON(team_view)
 
@@ -450,42 +467,54 @@ class TestAutobalanceScenarios:
         "path, swap_method, include_teamless, expected_team, expected_player",
         [
             (
-                "./rcon/team_balance/tests/data/mocked_team_views/axis_players_allied_empty_teamless_players.json",
+                Path(
+                    "tests/team_shuffle/data/mocked_team_views/axis_players_allied_empty_teamless_players.json"
+                ),
                 "arrival_most_recent",
                 True,
                 AXIS_TEAM,
                 "player6",
             ),
             (
-                "./rcon/team_balance/tests/data/mocked_team_views/axis_players_allied_empty_teamless_empty.json",
+                Path(
+                    "tests/team_shuffle/data/mocked_team_views/axis_players_allied_empty_teamless_empty.json"
+                ),
                 "arrival_most_recent",
                 False,
                 AXIS_TEAM,
                 "player6",
             ),
             (
-                "./rcon/team_balance/tests/data/mocked_team_views/axis_players_allied_empty_teamless_players.json",
+                Path(
+                    "tests/team_shuffle/data/mocked_team_views/axis_players_allied_empty_teamless_players.json"
+                ),
                 "arrival_least_recent",
                 True,
                 AXIS_TEAM,
                 "player4",
             ),
             (
-                "./rcon/team_balance/tests/data/mocked_team_views/axis_players_allied_empty_teamless_empty.json",
+                Path(
+                    "tests/team_shuffle/data/mocked_team_views/axis_players_allied_empty_teamless_empty.json"
+                ),
                 "arrival_least_recent",
                 False,
                 AXIS_TEAM,
                 "player4",
             ),
             (
-                "./rcon/team_balance/tests/data/mocked_team_views/axis_empty_allied_players_teamless_players.json",
+                Path(
+                    "tests/team_shuffle/data/mocked_team_views/axis_empty_allied_players_teamless_players.json"
+                ),
                 "arrival_most_recent",
                 True,
                 ALLIED_TEAM,
                 "player9",
             ),
             (
-                "./rcon/team_balance/tests/data/mocked_team_views/axis_empty_allied_players_teamless_players.json",
+                Path(
+                    "tests/team_shuffle/data/mocked_team_views/axis_empty_allied_players_teamless_players.json"
+                ),
                 "arrival_least_recent",
                 True,
                 ALLIED_TEAM,
