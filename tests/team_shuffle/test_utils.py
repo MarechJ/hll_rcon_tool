@@ -2,14 +2,14 @@ import pytest
 from datetime import datetime, timezone
 
 
-from rcon.team_balance.utils import (
+from rcon.team_shuffle.utils import (
     get_player_last_swap_timestamp,
     set_player_swap_timestamp,
     get_player_session,
 )
 
-from rcon.team_balance.constants import SWAP_TYPE_BALANCE
-from rcon.team_balance.tests.test_balance import mock_redis
+from rcon.team_shuffle.constants import SWAP_TYPE_BALANCE
+from .test_balance import mock_redis
 
 # TODO: test get_team_player_count()
 

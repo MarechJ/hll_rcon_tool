@@ -6,15 +6,15 @@ from pprint import pprint
 import dateutil.parser
 
 import pytest
-from rcon.team_balance.balance import (
+from rcon.team_shuffle.balance import (
     autobalance_teams,
-    check_rate_limit,
+    check_swap_rate_limit,
     find_larger_team_name,
     is_player_swappable,
 )
-from rcon.team_balance.constants import ALLIED_TEAM, AXIS_TEAM, SWAP_TYPE_BALANCE
-from rcon.team_balance.models import DetailedPlayerInfo, RateLimitError
-from rcon.team_balance.utils import (
+from rcon.team_shuffle.constants import ALLIED_TEAM, AXIS_TEAM, SWAP_TYPE_BALANCE
+from rcon.team_shuffle.models import DetailedPlayerInfo, SwapRateLimitError
+from rcon.team_shuffle.utils import (
     get_player_session,
     set_balance_timestamp,
     set_player_swap_timestamp,
@@ -109,19 +109,19 @@ def mocked_datetime(monkeypatch):
 
 @pytest.mark.parametrize(
     "rate_limit, expected",
-    [(5, RateLimitError)],
+    [(5, SwapRateLimitError)],
 )
 def test_rate_limit_too_soon(mock_redis, rate_limit, expected):
     last_swap = datetime.now(timezone.utc) - timedelta(seconds=rate_limit - 1)
     set_balance_timestamp(mock_redis, last_swap)
     with pytest.raises(expected):
-        check_rate_limit(mock_redis, rate_limit)
+        check_swap_rate_limit(mock_redis, rate_limit)
 
 
 @pytest.mark.parametrize("rate_limit", [(5)])
 def test_rate_limit_okay(mock_redis, rate_limit):
     set_balance_timestamp(mock_redis, datetime(2022, 10, 1, 2, 0, 0, 0, timezone.utc))
-    check_rate_limit(mock_redis, rate_limit)
+    check_swap_rate_limit(mock_redis, rate_limit)
 
 
 class TestPlayerSwapEligibility:
