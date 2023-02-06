@@ -1,3 +1,4 @@
 nox==2022.11.21
 black==20.8b0
 isort==5.10.1
+hypothesis~=6.67.1
