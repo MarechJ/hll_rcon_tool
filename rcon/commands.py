@@ -428,7 +428,7 @@ class ServerCtl:
     def get_logs(self, since_min_ago, filter_="", conn: HLLConnection = None):
         if conn is None:
             raise ValueError("conn parameter should never be None")
-        res = self._request(f"showlog {since_min_ago}")
+        res = self._request(f"showlog {since_min_ago}", conn=conn)
         if res == "EMPTY":
             return ""
         for i in range(30):
