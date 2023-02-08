@@ -17,7 +17,12 @@ from rcon.steam_utils import (
     get_players_country_code,
     get_players_have_bans,
 )
-from rcon.types import GameState, GetPlayersType, StructuredLogLine
+from rcon.types import (
+    GameState,
+    GetPlayersType,
+    StructuredLogLine,
+    DetailedPlayerInfoType,
+)
 from rcon.utils import get_server_number
 
 STEAMID = "steam_id_64"
@@ -195,7 +200,7 @@ class Rcon(ServerCtl):
 
     @mod_users_allowed
     @ttl_cache(ttl=2, cache_falsy=False)
-    def get_detailed_player_info(self, player):
+    def get_detailed_player_info(self, player) -> DetailedPlayerInfoType:
         raw = super().get_player_info(player)
         if not raw:
             raise CommandFailedError("Got bad data")
@@ -277,7 +282,35 @@ class Rcon(ServerCtl):
             except (ValueError, TypeError):
                 data[key] = 0
 
-        return data
+        # Pull these out separately to make pylance happy for the return type
+        team: str = data["team"]
+        role: str = data["role"]
+        level: int = data["level"]
+        unit_id: int = data["unit_id"]
+        loadout: str = data["loadout"]
+        kills: int = data["kills"]
+        deaths: int = data["death"]
+        combat: int = data["combat"]
+        offense: int = data["offense"]
+        defense: int = data["defense"]
+        support: int = data["support"]
+
+        return {
+            "name": raw_data["name"],
+            "steam_id_64": data["steam_id_64"],
+            "team": team,
+            "role": role,
+            "level": level,
+            "unit_id": unit_id,
+            "unit_name": data["unit_name"],
+            "loadout": loadout,
+            "kills": kills,
+            "deaths": deaths,
+            "combat": combat,
+            "offense": offense,
+            "defense": defense,
+            "support": support,
+        }
 
     @mod_users_allowed
     @ttl_cache(ttl=60 * 60 * 24)

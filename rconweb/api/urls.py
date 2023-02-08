@@ -1,7 +1,5 @@
 from django.urls import path
 
-from rcon import scoreboard
-
 from . import (
     audit_log,
     auth,
@@ -12,10 +10,10 @@ from . import (
     scoreboards,
     server_stats,
     services,
+    team_balance,
     views,
     vips,
     votemap,
-    team_balance,
 )
 
 urlpatterns = [path(name, func, name="name") for name, func in views.commands] + [
@@ -57,6 +55,6 @@ urlpatterns = [path(name, func, name="name") for name, func in views.commands] +
     path("get_server_stats", server_stats.get_server_stats),
     path("get_audit_logs", audit_log.get_audit_logs),
     path("get_audit_logs_autocomplete", audit_log.get_audit_logs_autocomplete),
-    path("do_balance_teams", team_balance.balance_teams),
-    path("do_shuffle_teams", team_balance.shuffle_teams),
+    path("do_even_teams", team_balance.do_even_teams),
+    path("do_shuffle_teams", team_balance.do_shuffle_teams),
 ]

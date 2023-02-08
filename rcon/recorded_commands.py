@@ -15,12 +15,8 @@ from rcon.player_history import (
     get_profiles,
     safe_save_player_action,
 )
-from rcon.types import EnrichedGetPlayersType
-from rcon.utils import (
-    ALL_ROLES,
-    ALL_ROLES_KEY_INDEX_MAP,
-    get_server_number
-)
+from rcon.types import EnrichedGetPlayersType, TeamViewType
+from rcon.utils import ALL_ROLES, ALL_ROLES_KEY_INDEX_MAP, get_server_number
 
 logger = getLogger(__name__)
 
@@ -75,7 +71,7 @@ class RecordedRcon(Rcon):
 
     @mod_users_allowed
     @ttl_cache(ttl=2, cache_falsy=False)
-    def get_team_view(self):
+    def get_team_view(self) -> TeamViewType:
         teams = {}
         players_by_id = {}
         players = self.get_players_fast()
@@ -124,8 +120,10 @@ class RecordedRcon(Rcon):
             for squad_name, squad in squads.items():
                 squad["players"] = sorted(
                     squad["players"],
-                    key=lambda player: (ALL_ROLES_KEY_INDEX_MAP.get(player.get("role"), len(ALL_ROLES)),
-                                        player.get("steam_id_64"))
+                    key=lambda player: (
+                        ALL_ROLES_KEY_INDEX_MAP.get(player.get("role"), len(ALL_ROLES)),
+                        player.get("steam_id_64"),
+                    ),
                 )
                 squad["type"] = self._guess_squad_type(squad)
                 squad["has_leader"] = self._has_leader(squad)

@@ -1,11 +1,8 @@
-from typing import Any, Dict, NewType, Optional, Sequence
-
 from pydantic import BaseModel, conint, validator
 
 from rcon.team_shuffle.constants import (
-    BALANCE_METHODS,
-    INVALID_BALANCE_METHOD_ERROR_MSG,
-    INVALID_ROLE_ERROR_MSG,
+    EVEN_TEAMS_METHODS,
+    INVALID_EVEN_TEAMS_METHOD_ERROR_MSG,
     INVALID_SHUFFLE_METHOD_ERROR_MSG,
     SHUFFLE_METHODS,
     VALID_ROLES,
@@ -37,8 +34,8 @@ class BalanceAPIRequest(BaseModel):
 
     @validator("rebalance_method")
     def only_valid_balance_methods(cls, v):
-        if v not in BALANCE_METHODS:
-            raise ValueError(INVALID_BALANCE_METHOD_ERROR_MSG.format(v))
+        if v not in EVEN_TEAMS_METHODS:
+            raise ValueError(INVALID_EVEN_TEAMS_METHOD_ERROR_MSG.format(v))
 
         return v
 
@@ -49,23 +46,20 @@ class BalanceAPIRequest(BaseModel):
 
         for role in v:
             if role not in VALID_ROLES:
-                raise ValueError(INVALID_ROLE_ERROR_MSG.format(role))
+                raise ValueError(f"{role} is not a valid role.")
 
         return v
 
 
-DetailedPlayerInfo = NewType("DetailedPlayerInfo", Dict[str, Any])
-"""
-        rcon.extended_commands.get_detailed_player_info()
-
-        Name: T17 Scott
-        steamID64: 01234567890123456
-        Team: Allies            # "None" when not in team
-        Role: Officer
-        Unit: 0 - Able          # Absent when not in unit
-        Loadout: NCO            # Absent when not in team
-        Kills: 0 - Deaths: 0
-        Score: C 50, O 0, D 40, S 10
-        Level: 34
-
-        """
+class TeamShuffleConfig(BaseModel):
+    rate_limit_sec: int
+    discord_webhook_url: str
+    discord_audit_swaps: bool
+    discord_audit_service_name: str
+    even_teams_swap_message: str
+    team_shuffle_swap_message: str
+    swap_on_death_description: str
+    swap_immediately_description: str
+    even_teams_logger_message: str
+    shuffle_teams_logger_message: str
+    failed_swap_logger_message: str

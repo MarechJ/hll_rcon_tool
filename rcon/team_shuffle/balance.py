@@ -10,19 +10,11 @@ from rcon.recorded_commands import RecordedRcon
 from rcon.team_shuffle.constants import (
     ALLIED_TEAM,
     AXIS_TEAM,
-    DISCORD_BALANCE_SHUFFLE_WEBHOOK,
     EMPTY_TEAM,
-    INSUFFICIENT_SWAPPABLE_PLAYERS_WARN_MSG,
-    NOT_SWAPPED_IMMUNE_LEVEL_ERROR_MSG,
-    NOT_SWAPPED_IMMUNE_ROLE_ERROR_MSG,
-    NOT_SWAPPED_SWAPPED_RECENTLY_ERROR_MSG,
-    PLAYER_BALANCE_NOT_SWAPPED_MSG,
-    SWAP_TYPE_BALANCE,
+    SWAP_TYPE_EVEN_TEAMS,
 )
-from rcon.types import TeamViewType
-from rcon.team_shuffle.models import BalanceAPIRequest, DetailedPlayerInfo
+from rcon.team_shuffle.models import BalanceAPIRequest, TeamShuffleConfig
 from rcon.team_shuffle.utils import (
-    audit,
     check_swap_rate_limit,
     get_player_last_swap_timestamp,
     get_player_session,
@@ -32,26 +24,28 @@ from rcon.team_shuffle.utils import (
     swap_players,
     swap_teamless_players,
 )
+from rcon.types import TeamViewPlayerType, TeamViewType
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("rcon.team_shuffle")
 
 
-def autobalance_teams(
+def even_teams(
     rcon_hook: RecordedRcon,
     redis_store: redis.StrictRedis,
-    rebalance_method: str,
+    config: TeamShuffleConfig,
+    rebalance_method: str = "random",
     immune_level: int = 0,
     immune_roles: list[str] | None = None,
     immune_seconds: int = 0,
     include_teamless: bool = True,
     swap_on_death: bool = False,
 ) -> tuple[
-    list[DetailedPlayerInfo],
-    list[DetailedPlayerInfo],
-    list[DetailedPlayerInfo],
-    list[DetailedPlayerInfo],
-    list[DetailedPlayerInfo],
-    list[DetailedPlayerInfo],
+    list[TeamViewPlayerType],
+    list[TeamViewPlayerType],
+    list[TeamViewPlayerType],
+    list[TeamViewPlayerType],
+    list[TeamViewPlayerType],
+    list[TeamViewPlayerType],
 ]:
     """Verify if criteria for balancing has been met and then swap players.
 
@@ -71,15 +65,15 @@ def autobalance_teams(
         swap_on_death=swap_on_death,
     )
 
-    # raises SwapRateLimitError
-    check_swap_rate_limit(redis_store)
+    # raises SwapRateLimitError if conditions not met
+    check_swap_rate_limit(redis_store, config.rate_limit_sec)
 
     # Only making one team_view call and passing it down to all the sub functions
     # so if one more players changes teams, roles, etc. during a balance we don't
     # end up in some weird inconsistent state
 
     # This does mean that a player might still be swapped or not swapped if their
-    # info has changed since the request was made, but this shouldn't blow up
+    # info has changed since the request was made
 
     team_view: TeamViewType = rcon_hook.get_team_view()
 
@@ -100,21 +94,21 @@ def autobalance_teams(
     # Bail out early with error messages if we can't balance due to team sizes
     if len(larger_team_players) == 0 and len(smaller_team_players) == 0:
         if not args.include_teamless:
-            message = f"Both teams were empty and `({len(teamless_players)})` teamless players aren't being considered, unable to balance."
-            logger.info(message)
-            audit(DISCORD_BALANCE_SHUFFLE_WEBHOOK, message)
+            logger.info(
+                f"Both teams were empty and `({len(teamless_players)})` teamless players aren't being considered, unable to balance."
+            )
             return axis_players, [], allied_players, [], teamless_players, []
         elif args.include_teamless and len(teamless_players) == 0:
-            message = f"Both teams were empty and there are no teamless players, unable to balance."
-            logger.info(message)
-            audit(DISCORD_BALANCE_SHUFFLE_WEBHOOK, message)
+            logger.info(
+                f"Both teams were empty and there are no teamless players, unable to balance."
+            )
             return axis_players, [], allied_players, [], teamless_players, []
 
     if len(larger_team_players) == len(smaller_team_players):
         if not args.include_teamless:
-            message = f"Both teams were the same size `{len(axis_players)}`-`{len(allied_players)}` and `({len(teamless_players)})` unassigned players aren't being considered, unable to balance."
-            logger.info(message)
-            audit(DISCORD_BALANCE_SHUFFLE_WEBHOOK, message)
+            logger.info(
+                f"Both teams were the same size `{len(axis_players)}`-`{len(allied_players)}` and `({len(teamless_players)})` unassigned players aren't being considered, unable to balance."
+            )
             return axis_players, [], allied_players, [], teamless_players, []
 
     swappable_players = collect_swappable_players(
@@ -132,9 +126,9 @@ def autobalance_teams(
 
     # Even/empty team sizes is checked earlier
     if team_size_delta == 1:
-        message = "Difference between team sizes is only `1` player, unable to balance."
-        logger.info(message)
-        audit(DISCORD_BALANCE_SHUFFLE_WEBHOOK, message)
+        logger.info(
+            "Difference between team sizes is only `1` player, unable to balance."
+        )
 
     # Use integer division so it rounds down (swaps the fewest number of people)
     # If teamless players are included any eligible teamless player is distributed
@@ -142,13 +136,11 @@ def autobalance_teams(
     num_players_to_switch = team_size_delta // 2
 
     if len(swappable_players) < num_players_to_switch:
-        message = INSUFFICIENT_SWAPPABLE_PLAYERS_WARN_MSG.format(
-            num_players_to_switch, (num_players_to_switch - len(swappable_players))
+        logger.warning(
+            f"Only `{num_players_to_switch}` players are currently swappable, missing `{(num_players_to_switch - len(swappable_players))}` players."
         )
-        logger.warning(message)
-        audit(DISCORD_BALANCE_SHUFFLE_WEBHOOK, message)
 
-    players_to_swap: list[DetailedPlayerInfo] = []
+    players_to_swap: list[TeamViewPlayerType] = []
     if args.rebalance_method == "random":
         players_to_swap = select_players_randomly(
             swappable_players, num_players_to_switch
@@ -163,25 +155,31 @@ def autobalance_teams(
         )
 
     # Perform a swap action on each selected player who was on a team to begin with
-    swapped_axis_players: list[DetailedPlayerInfo]
-    swapped_allied_players: list[DetailedPlayerInfo]
+    swapped_axis_players: list[TeamViewPlayerType]
+    swapped_allied_players: list[TeamViewPlayerType]
     swapped_axis_players, swapped_allied_players = swap_players(
-        rcon_hook, redis_store, players_to_swap, SWAP_TYPE_BALANCE, args.swap_on_death
+        rcon_hook,
+        redis_store,
+        config,
+        players_to_swap,
+        SWAP_TYPE_EVEN_TEAMS,
+        args.swap_on_death,
     )
 
     # Distribute teamless players to each team, choosing which team to start with at random
-    alternating_teams: tuple[str, str] = (AXIS_TEAM, ALLIED_TEAM)
+    alternating_teams = (AXIS_TEAM, ALLIED_TEAM)
     if random.choice(alternating_teams) == ALLIED_TEAM:
         alternating_teams = (ALLIED_TEAM, AXIS_TEAM)
 
-    teamless_players_to_swap: list[DetailedPlayerInfo] = []
+    teamless_players_to_swap: list[TeamViewPlayerType] = []
     if args.include_teamless:
         teamless_players_to_swap = teamless_players
         swap_teamless_players(
             rcon_hook,
             redis_store,
+            config,
             teamless_players_to_swap,
-            SWAP_TYPE_BALANCE,
+            SWAP_TYPE_EVEN_TEAMS,
             swap_on_death,
         )
 
@@ -196,7 +194,7 @@ def autobalance_teams(
 
 
 def is_player_swappable(
-    detailed_player_info: DetailedPlayerInfo,  # Player info from rcon.extended_commands.get_team_view()
+    detailed_player_info: TeamViewPlayerType,
     redis_store: redis.StrictRedis,
     immune_roles: list[str] | None,
     immune_swap_time_threshold_secs: int = 0,
@@ -205,19 +203,17 @@ def is_player_swappable(
     """Test if a player can be swapped based on the time of their last swap, their level and role."""
 
     # If any of these fail we can't proceed and should abort, so not checking for missing keys
-    player_name: str = detailed_player_info["name"]
-    steam_id_64: str = detailed_player_info["steam_id_64"]
-    level: int = detailed_player_info["level"]
-    role: str = detailed_player_info["role"]
-
-    logger.debug(f"{player_name=} {role=}")
+    player_name = detailed_player_info["name"]
+    steam_id_64 = detailed_player_info["steam_id_64"]
+    level = detailed_player_info["level"]
+    role = detailed_player_info["role"]
 
     # If they are not on a team their role defaults to rifleman
     # maybe a problem if someone immunes riflemen but wants to swap teamless players
     # TODO: Investigate
 
-    last_swap: datetime = get_player_last_swap_timestamp(
-        redis_store, steam_id_64=steam_id_64, swap_type=SWAP_TYPE_BALANCE
+    last_swap = get_player_last_swap_timestamp(
+        redis_store, steam_id_64=steam_id_64, swap_type=SWAP_TYPE_EVEN_TEAMS
     )
 
     is_swappable = True
@@ -228,12 +224,12 @@ def is_player_swappable(
 
     if role in immune_roles:
         is_swappable = False
-        not_swapped_reasons.append(NOT_SWAPPED_IMMUNE_ROLE_ERROR_MSG.format(role))
+        not_swapped_reasons.append(f"player is playing an immune role ({role})")
 
     if level <= immune_level:
         is_swappable = False
         not_swapped_reasons.append(
-            NOT_SWAPPED_IMMUNE_LEVEL_ERROR_MSG.format(level, immune_level)
+            f"player level {level} is below immune level of {immune_level}"
         )
 
     seconds_since_last_swap = int(
@@ -242,15 +238,11 @@ def is_player_swappable(
     if seconds_since_last_swap < immune_swap_time_threshold_secs:
         is_swappable = False
         not_swapped_reasons.append(
-            NOT_SWAPPED_SWAPPED_RECENTLY_ERROR_MSG.format(
-                seconds_since_last_swap, immune_swap_time_threshold_secs
-            )
+            f"player was swapped too recently {seconds_since_last_swap} seconds ago, configured limit is {immune_swap_time_threshold_secs} seconds"
         )
 
     if not_swapped_reasons:
-        message = PLAYER_BALANCE_NOT_SWAPPED_MSG.format(
-            steam_id_64, player_name, ", ".join(not_swapped_reasons)
-        )
+        message = f"steam_id: `{steam_id_64}` player: `{player_name}` not balanced due to: `{', '.join(not_swapped_reasons)}`."
         logger.warning(message)
 
     return is_swappable
@@ -268,13 +260,13 @@ def find_larger_team_name(team_view: TeamViewType) -> str:
 
 
 def select_players_arrival_time(
-    players: list[DetailedPlayerInfo],
+    players: list[TeamViewPlayerType],
     num_to_select: int,
     *,
     most_recent: bool = True,
-) -> list[DetailedPlayerInfo]:
+) -> list[TeamViewPlayerType]:
     """Select up to num_to_select players based on arrival time to the server."""
-    ordered_players: list[DetailedPlayerInfo] = sorted(
+    ordered_players: list[TeamViewPlayerType] = sorted(
         players,
         key=lambda p: get_player_session(p, most_recent),
         reverse=most_recent,
@@ -290,14 +282,14 @@ def select_players_arrival_time(
 
 def collect_swappable_players(
     redis_store: redis.StrictRedis,
-    players: list[DetailedPlayerInfo],
+    players: list[TeamViewPlayerType],
     immune_roles: list[str] | None,
     immune_seconds: int,
     immune_level: int,
-) -> list[DetailedPlayerInfo]:
+) -> list[TeamViewPlayerType]:
     """Return a list of swappable players from the given list of players."""
 
-    return [
+    players = [
         player
         for player in players
         if is_player_swappable(
@@ -308,6 +300,8 @@ def collect_swappable_players(
             immune_level,
         )
     ]
+
+    return players
 
 
 if __name__ == "__main__":

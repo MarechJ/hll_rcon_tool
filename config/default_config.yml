@@ -490,3 +490,37 @@ LOG_LINE_WEBHOOKS:
   VOTE:
   VOTE STARTED:
   VOTE COMPLETED:
+
+
+TEAM_SHUFFLE:
+  # The minimum number of seconds that must pass between even/shuffle team requests before it can be run again
+  # You should not set this too low to prevent accidental team swaps if you click the button too quickly
+  # or multiple admins try to run it at the same time
+  rate_limit_sec: 5
+
+
+  # Discord Webhook URL where audit logs should be sent. If not specified, the environment variable DISCORD_WEBHOOK_AUDIT_LOG
+  # will be used, instead.
+  discord_webhook_url: ""
+  discord_audit_swaps: false
+  # The service name as it will show up in your discord audit messages
+  discord_audit_service_name: "TeamShuffle"
+
+  # The message sent to the player when `do_even_teams` is run
+  even_teams_swap_message: "The admins have made the team sizes even automatically and you have been team swapped."
+  # The message sent to the player when `do_shuffle_teams` is run
+  team_shuffle_swap_message: "The admins have shuffled the teams automatically and you have been team swapped."
+
+  swap_on_death_description: "on death"
+  swap_immediately_description: "immediately"
+
+  # The message logged and sent to the webhook when players are swapped
+  # The following variables are available to fill into the text
+  # {player_name}, {steam_id}, {from_team}, {to_team}, {switch_type}
+  even_teams_logger_message: "player `{player_name}` (`{from_team}`/`{steam_id}`) was balanced `{from_team}` > `{to_team}` ({switch_type})."
+  shuffle_teams_logger_message: "player `{player['name']}` (`{from_team}/{player['steam_id_64']}`) was shuffled `{from_team}` > `{to_team}`."
+  
+  # The message logged and sent to the webhook when players are swapped
+  # The following variables are available to fill into the text
+  # {player_name}, {steam_id}
+  failed_swap_logger_message: "Game server failed to swap player `{player['name']}` (`{player['team']}`/`{player['steam_id_64']}`)."

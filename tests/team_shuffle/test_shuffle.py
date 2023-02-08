@@ -1,10 +1,7 @@
 import pytest
 from hypothesis import given
 from hypothesis.strategies import composite, integers, lists, text, uuids
-from rcon.team_shuffle.constants import (
-    SHUFFLE_METHOD_PLAYER_LEVEL,
-    SHUFFLE_METHOD_RANDOMLY,
-)
+
 from rcon.team_shuffle.shuffle import (
     find_players_to_swap_player_level,
     find_players_to_swap_randomly,

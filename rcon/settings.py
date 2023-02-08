@@ -47,7 +47,7 @@ LOGGING = {
                 os.getenv("LOGGING_FILENAME", f"{socket.gethostname()}.log"),
             ),
         },
-        "team_balance_file": {
+        "team_shuffle_file": {
             "level": "DEBUG",
             "formatter": "console",
             "class": "logging.FileHandler",
@@ -55,7 +55,7 @@ LOGGING = {
                 os.getenv("LOGGING_PATH", ""),
                 os.getenv(
                     "LOGGING_FILENAME",
-                    f"team_balance_{os.getenv('SERVER_NUMBER', '')}.log",
+                    f"team_shuffle_{os.getenv('SERVER_NUMBER', '')}.log",
                 ),
             ),
         },
@@ -86,10 +86,10 @@ LOGGING = {
             "level": os.getenv("LOGGING_LEVEL", "DEBUG"),
             "propagate": False,
         },
-        "rcon.team_balance": {
-            "handlers": ["console", "team_balance_file"],
+        "rcon.team_shuffle": {
+            "handlers": ["console", "team_shuffle_file"],
             "level": os.getenv("LOGGING_LEVEL", "DEBUG"),
-            "filename": "rcon.team_balance",
+            "filename": "rcon.team_shuffle",
             "propagate": False,
         },
     },

@@ -3,48 +3,34 @@ import pickle
 import random
 from datetime import datetime, timezone
 from itertools import cycle
-from typing import Callable
 
 import redis
 
-from rcon.types import TeamViewType
 from rcon.discord import send_to_discord_audit
 from rcon.recorded_commands import RecordedRcon
 from rcon.team_shuffle.constants import (
     ALLIED_TEAM,
     AXIS_TEAM,
-    BALANCE_RATE_LIMIT_EXCEEDED_ERROR_MSG,
-    DISCORD_BALANCE_SHUFFLE_WEBHOOK,
     EMPTY_TEAM,
     INVALID_SWAP_TYPE_ERROR_MSG,
-    PLAYER_BALANCE_SWAP_MSG,
-    PLAYER_SHUFFLE_SWAP_MSG,
-    RCON_SWAP_FAILED_ERROR_MSG,
-    RCON_TEAM_SWAP_DELAY_MS,
-    REDIS_BALANCE_KEY,
     REDIS_PLAYER_KEY,
-    SWAP_IMMEDIATELY_DESCRIPTION,
-    SWAP_ON_DEATH_DESCRIPTION,
-    SWAP_TYPE_BALANCE,
+    REDIS_TEAM_SHUFFLE_KEY,
+    SWAP_TYPE_EVEN_TEAMS,
     SWAP_TYPES,
-    TEAM_BALANCE_RATE_LIMIT_SEC,
     UNABLE_TO_SET_REDIS_KEY_ERROR_MSG,
 )
-from rcon.team_shuffle.models import (
-    DetailedPlayerInfo,
-    SwapRateLimitError,
-)
+from rcon.team_shuffle.models import SwapRateLimitError, TeamShuffleConfig
+from rcon.types import TeamViewPlayerType, TeamViewType
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("rcon.team_shuffle")
 
 
 def get_team_player_count(team_view: TeamViewType, team_name: str) -> int:
     """Return the number of players on the specified team."""
     player_count: int = 0
 
-    team = team_view.get(team_name, None)
     # Relying on well formed team_views here, if we don't have one better to fail early on a key error
-    if team:
+    if team_view.get(team_name, None):
         player_count = team_view[team_name]["count"]
 
     return player_count
@@ -52,13 +38,12 @@ def get_team_player_count(team_view: TeamViewType, team_name: str) -> int:
 
 def get_players_on_team(
     team_view: TeamViewType, team_name: str
-) -> list[DetailedPlayerInfo]:
+) -> list[TeamViewPlayerType]:
     """Collect all the players on a specific team from the given team view."""
-    team_players: list[DetailedPlayerInfo] = []
+    team_players: list[TeamViewPlayerType] = []
 
-    team = team_view.get(team_name, None)
     # Relying on well formed team_views here, if we don't have one better to fail early on a key error
-    if team:
+    if team := team_view.get(team_name, None):
         for squad in team["squads"].values():
             for player in squad["players"]:
                 team_players.append(player)
@@ -71,7 +56,7 @@ def get_players_on_team(
 
 def check_swap_rate_limit(
     redis_store: redis.StrictRedis,
-    rate_limit: int = TEAM_BALANCE_RATE_LIMIT_SEC,
+    rate_limit: int,
     timestamp: datetime | None = None,
 ) -> None:
     """Raise a SwapRateLimitError if ran too recently or set the new run timestamp."""
@@ -84,9 +69,7 @@ def check_swap_rate_limit(
         < rate_limit
     ):
         raise SwapRateLimitError(
-            BALANCE_RATE_LIMIT_EXCEEDED_ERROR_MSG.format(
-                round(delta.total_seconds(), 1), rate_limit
-            )
+            f"Balance/Shuffle attempted {round(delta.total_seconds(), 1)} seconds ago, configured limit is {rate_limit} seconds."
         )
 
     set_balance_timestamp(redis_store, timestamp)
@@ -95,7 +78,7 @@ def check_swap_rate_limit(
 def set_balance_timestamp(
     redis_store: redis.StrictRedis,
     timestamp: datetime | None = None,
-    redis_key: str = REDIS_BALANCE_KEY,
+    redis_key: str = REDIS_TEAM_SHUFFLE_KEY,
 ) -> None:
     """Set the UTC timestamp of the shuffle/balance attempt."""
     time_stamp = timestamp or datetime.now(timezone.utc)
@@ -105,7 +88,7 @@ def set_balance_timestamp(
 
 
 def get_balance_timestamp(
-    redis_store: redis.StrictRedis, redis_key: str = REDIS_BALANCE_KEY
+    redis_store: redis.StrictRedis, redis_key: str = REDIS_TEAM_SHUFFLE_KEY
 ) -> datetime | None:
     """Return the UTC timestamp of the last shuffle/balance or None."""
 
@@ -173,13 +156,13 @@ def get_player_last_swap_timestamp(
 
 
 def select_players_randomly(
-    players: list[DetailedPlayerInfo], num_to_select: int
-) -> list[DetailedPlayerInfo]:
+    players: list[TeamViewPlayerType], num_to_select: int
+) -> list[TeamViewPlayerType]:
     """Select up to num_to_select players randomly from the given list of players"""
     if len(players) == 0:
         return []
 
-    shuffled_players: list[DetailedPlayerInfo] = players[:]
+    shuffled_players: list[TeamViewPlayerType] = players[:]
     random.shuffle(shuffled_players)
 
     # If we don't have enough possible players to swap, use as many as possible
@@ -190,7 +173,7 @@ def select_players_randomly(
     return shuffled_players[0:num_to_select]
 
 
-def get_player_session(player: DetailedPlayerInfo, most_recent: bool) -> datetime:
+def get_player_session(player: TeamViewPlayerType, most_recent: bool) -> datetime:
     """Always include a player if their session information is missing."""
     try:
         # Session time stamps are stored as UTC but this has to be forced when parsing the date
@@ -207,28 +190,35 @@ def get_player_session(player: DetailedPlayerInfo, most_recent: bool) -> datetim
 def swap_players(
     rcon_hook: RecordedRcon,
     redis_store: redis.StrictRedis,
-    players_to_swap: list[DetailedPlayerInfo],
+    config: TeamShuffleConfig,
+    players_to_swap: list[TeamViewPlayerType],
     swap_type: str,
     swap_on_death: bool = False,
     from_team: str | None = None,
     to_team: str | None = None,
-) -> tuple[list[DetailedPlayerInfo], list[DetailedPlayerInfo]]:
+    swap_message: str = "",
+) -> tuple[list[TeamViewPlayerType], list[TeamViewPlayerType]]:
     """Swap players and handle logging."""
 
-    swapped_axis_players: list[DetailedPlayerInfo] = []
-    swapped_allied_players: list[DetailedPlayerInfo] = []
+    swapped_axis_players: list[TeamViewPlayerType] = []
+    swapped_allied_players: list[TeamViewPlayerType] = []
 
     switch_type: str
     if swap_on_death:
         switch_function = rcon_hook.do_switch_player_on_death
-        switch_type = SWAP_ON_DEATH_DESCRIPTION
+        switch_type = config.swap_on_death_description
     else:
         switch_function = rcon_hook.do_switch_player_now
-        switch_type = SWAP_IMMEDIATELY_DESCRIPTION
+        switch_type = config.swap_immediately_description
 
     for player in players_to_swap:
+        rcon_hook.do_message_player(
+            steam_id_64=player["steam_id_64"],
+            message=swap_message,
+            by=config.discord_audit_service_name,
+            save_message=False,
+        )
         # this function has a unused 'by' argument
-        swap_message = f""
         result = switch_function(player["name"], None)
         if result == "SUCCESS":
             set_player_swap_timestamp(
@@ -237,13 +227,12 @@ def swap_players(
                 swap_type=swap_type,
             )
 
-            destination_team: str | None = None
+            destination_team: str = ALLIED_TEAM
             if player["team"] == ALLIED_TEAM:
                 swapped_allied_players.append(player)
                 destination_team = AXIS_TEAM
             elif player["team"] == AXIS_TEAM:
                 swapped_axis_players.append(player)
-                destination_team = ALLIED_TEAM
 
             if not from_team:
                 from_team = player["team"]
@@ -251,37 +240,42 @@ def swap_players(
             if not to_team:
                 to_team = destination_team
 
-            if swap_type == SWAP_TYPE_BALANCE:
-                message = PLAYER_BALANCE_SWAP_MSG.format(
-                    player["name"],
-                    from_team,
-                    player["steam_id_64"],
-                    to_team,
-                    switch_type,
-                )
+            if swap_type == SWAP_TYPE_EVEN_TEAMS:
+                message = config.even_teams_logger_message
             else:
-                message = PLAYER_SHUFFLE_SWAP_MSG.format(
-                    player["name"],
-                    from_team,
-                    player["steam_id_64"],
-                    to_team,
-                )
+                message = config.shuffle_teams_logger_message
 
-            # When called with teamless players it's called one player a a time
+            message = message.replace("{player_name}", player["name"])
+            message = message.replace("{steam_id}", player["name"])
+            message = message.replace("{from_team}", from_team)
+            message = message.replace("{to_team}", to_team)
+            message = message.replace("{switch_type}", switch_type)
+
+            # When called with teamless players it's called one player at a time
             # When called for a list of players with more than one player we have to
             # reset these or these are stale values from the previous loop
             from_team = None
             to_team = None
 
             logger.info(message)
-
-            audit(DISCORD_BALANCE_SHUFFLE_WEBHOOK, message)
+            if config.discord_audit_swaps:
+                audit(
+                    config.discord_webhook_url,
+                    message,
+                    by=config.discord_audit_service_name,
+                )
         else:
-            message = RCON_SWAP_FAILED_ERROR_MSG.format(
-                player["name"], player["team"], player["steam_id_64"]
-            )
+            message = config.failed_swap_logger_message
+            message = message.replace("{player_name}", player["name"])
+            message = message.replace("{steam_id}", player["name"])
+
             logger.error(message)
-            audit(DISCORD_BALANCE_SHUFFLE_WEBHOOK, message)
+            if config.discord_audit_swaps:
+                audit(
+                    config.discord_webhook_url,
+                    message,
+                    by=config.discord_audit_service_name,
+                )
 
         # time.sleep(RCON_TEAM_SWAP_DELAY_MS / 1000)
 
@@ -291,9 +285,11 @@ def swap_players(
 def swap_teamless_players(
     rcon_hook: RecordedRcon,
     redis_store: redis.StrictRedis,
-    teamless_players_to_swap: list[DetailedPlayerInfo],
+    config: TeamShuffleConfig,
+    teamless_players_to_swap: list[TeamViewPlayerType],
     swap_type: str,
     swap_on_death: bool = False,
+    swap_message: str = "",
 ) -> None:
     """Handle swapping teamless players between teams evenly."""
 
@@ -307,11 +303,13 @@ def swap_teamless_players(
         swap_players(
             rcon_hook,
             redis_store,
+            config,
             [player],
             swap_type,
             swap_on_death,
             from_team=EMPTY_TEAM,
             to_team=ALLIED_TEAM,
+            swap_message=swap_message,
         )
         # When swapping a teamless player, RCON defaults to putting them on the Allied team
         # and they have to be swapped twice to get to the Axis team
@@ -319,17 +317,19 @@ def swap_teamless_players(
             swap_players(
                 rcon_hook,
                 redis_store,
+                config,
                 [player],
                 swap_type,
                 swap_on_death,
                 from_team=ALLIED_TEAM,
                 to_team=AXIS_TEAM,
+                swap_message=swap_message,
             )
 
 
-def audit(discord_webhook_url: str | None, message: str, by="TeamAutoBalance") -> None:
+def audit(discord_webhook_url: str | None, message: str, by: str) -> None:
     """Send message to the given Discord webhook."""
     webhook_url = None
     if discord_webhook_url is not None and discord_webhook_url != "":
         webhook_url = discord_webhook_url
-        send_to_discord_audit(message, by=by, webhookurl=webhook_url, silent=False)
+    send_to_discord_audit(message, by=by, webhookurl=webhook_url, silent=False)

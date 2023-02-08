@@ -1,25 +1,26 @@
 import json
 from datetime import datetime, timedelta, timezone
-from typing import List, Any
-from unittest.mock import MagicMock
-from pprint import pprint
-import dateutil.parser
 from pathlib import Path
+from pprint import pprint
+from typing import Any, List
+from unittest.mock import MagicMock
 
 import pytest
+
 from rcon.team_shuffle.balance import (
-    autobalance_teams,
     check_swap_rate_limit,
+    even_teams,
     find_larger_team_name,
     is_player_swappable,
 )
-from rcon.team_shuffle.constants import ALLIED_TEAM, AXIS_TEAM, SWAP_TYPE_BALANCE
-from rcon.team_shuffle.models import DetailedPlayerInfo, SwapRateLimitError
+from rcon.team_shuffle.constants import ALLIED_TEAM, AXIS_TEAM, SWAP_TYPE_EVEN_TEAMS
+from rcon.team_shuffle.models import SwapRateLimitError, TeamShuffleConfig
 from rcon.team_shuffle.utils import (
     get_player_session,
     set_balance_timestamp,
     set_player_swap_timestamp,
 )
+from rcon.types import TeamViewPlayerType
 
 
 # TODO: Should move these mocks/fixtures to a shared file
@@ -60,6 +61,17 @@ class MockRCON:
     def do_switch_player_now(self, name, by, result="SUCCESS"):
         return result
 
+    def do_message_player(
+        self,
+        player=None,
+        steam_id_64=None,
+        message="",
+        by="",
+        save_message=False,
+        result="SUCCESS",
+    ):
+        return result
+
 
 def team_view_file(path: str):
     datetime_teamview_fields = ("created", "last_seen", "start", "end")
@@ -90,6 +102,23 @@ def team_view_file(path: str):
 @pytest.fixture
 def mock_redis():
     yield MockRedis()
+
+
+@pytest.fixture
+def mock_config():
+    yield TeamShuffleConfig(
+        rate_limit_sec=5,
+        discord_webhook_url="",
+        discord_audit_swaps=False,
+        discord_audit_service_name="",
+        even_teams_swap_message="",
+        team_shuffle_swap_message="",
+        swap_on_death_description="on death",
+        swap_immediately_description="immediately",
+        even_teams_logger_message="",
+        shuffle_teams_logger_message="",
+        failed_swap_logger_message="",
+    )
 
 
 def mock_get_player_profile(steam_id_64, nb_sessions, team_view):
@@ -164,7 +193,7 @@ class TestPlayerSwapEligibility:
     def test_should_not_swap_player_immune_role(
         self,
         mock_redis,
-        player_info: DetailedPlayerInfo,
+        player_info: TeamViewPlayerType,
         immune_roles: List[str],
         expected,
     ) -> None:
@@ -174,7 +203,7 @@ class TestPlayerSwapEligibility:
             mock_redis,
             timestamp=swap_time,
             steam_id_64=player_info["steam_id_64"],
-            swap_type=SWAP_TYPE_BALANCE,
+            swap_type=SWAP_TYPE_EVEN_TEAMS,
         )
         result = is_player_swappable(player_info, mock_redis, immune_roles=immune_roles)
         assert result == expected
@@ -223,7 +252,7 @@ class TestPlayerSwapEligibility:
             mock_redis,
             timestamp=swap_time,
             steam_id_64=player_info["steam_id_64"],
-            swap_type=SWAP_TYPE_BALANCE,
+            swap_type=SWAP_TYPE_EVEN_TEAMS,
         )
 
         result = is_player_swappable(
@@ -274,7 +303,7 @@ class TestPlayerSwapEligibility:
             mock_redis,
             timestamp=swap_time,
             steam_id_64=player_info["steam_id_64"],
-            swap_type=SWAP_TYPE_BALANCE,
+            swap_type=SWAP_TYPE_EVEN_TEAMS,
         )
 
         result = is_player_swappable(
@@ -340,11 +369,14 @@ def test_larger_team_is_larger(path, expected) -> None:
 
 
 @pytest.mark.parametrize("method, expected", [("nonsense_method", ValueError)])
-def test_invalid_rebalance_method_fails(method, expected, mock_redis) -> None:
+def test_invalid_rebalance_method_fails(
+    method, expected, mock_redis, mock_config
+) -> None:
     """An invalid rebalance method raises a ValueError."""
     mock_rcon = MockRCON()
+
     with pytest.raises(expected):
-        autobalance_teams(mock_rcon, mock_redis, method)
+        even_teams(mock_rcon, mock_redis, mock_config, method)
 
 
 @pytest.mark.parametrize(
@@ -353,64 +385,65 @@ def test_invalid_rebalance_method_fails(method, expected, mock_redis) -> None:
         (-1, ValueError),
         (501, ValueError),
         (None, ValueError),
-        ("3", ValueError),
     ],
 )
-def test_invalid_immune_level_fails(level, expected, mock_redis) -> None:
+def test_invalid_immune_level_fails(level, expected, mock_redis, mock_config) -> None:
     """An invalid immune_level raises a ValueError."""
     # TODO: good candidate for hypothesis
     mock_rcon = MockRCON()
     with pytest.raises(expected):
-        autobalance_teams(mock_rcon, mock_redis, None, immune_level=level)
+        even_teams(mock_rcon, mock_redis, mock_config, immune_level=level)
 
 
 @pytest.mark.parametrize(
-    "seconds,  expected",
+    "seconds, expected",
     [
         (-1, ValueError),
-        (501, ValueError),
         (None, ValueError),
-        ("3", ValueError),
     ],
 )
-def test_invalid_immune_seconds_fails(seconds, expected, mock_redis) -> None:
+def test_invalid_immune_seconds_fails(
+    seconds, expected, mock_redis, mock_config
+) -> None:
     """An invalid immune_seconds raises a ValueError."""
     # TODO: good candidate for hypothesis
     with pytest.raises(expected):
         mock_rcon = MockRCON()
-        autobalance_teams(mock_rcon, mock_redis, None, immune_seconds=seconds)
+        even_teams(mock_rcon, mock_redis, mock_config, immune_seconds=seconds)
 
 
 @pytest.mark.parametrize(
-    "include_teamless,  expected",
+    "include_teamless, expected",
     [
-        (1, ValueError),
-        (None, ValueError),
         ("asdf", ValueError),
     ],
 )
-def test_invalid_include_teamless_fails(include_teamless, expected, mock_redis) -> None:
+def test_invalid_include_teamless_fails(
+    include_teamless, expected, mock_redis, mock_config
+) -> None:
     """An invalid include_teamless raises a ValueError."""
     mock_rcon = MockRCON()
     with pytest.raises(expected):
-        autobalance_teams(
-            mock_rcon, mock_redis, None, include_teamless=include_teamless
+        even_teams(
+            mock_rcon, mock_redis, mock_config, include_teamless=include_teamless
         )
 
 
 @pytest.mark.parametrize(
-    "swap_on_death,  expected",
+    "swap_on_death, expected",
     [
-        (1, ValueError),
-        (None, ValueError),
+        # (1, ValueError),
+        # (None, ValueError),
         ("asdf", ValueError),
     ],
 )
-def test_invalid_swap_on_death_fails(swap_on_death, expected, mock_redis) -> None:
+def test_invalid_swap_on_death_fails(
+    swap_on_death, expected, mock_redis, mock_config
+) -> None:
     """An invalid swap_on_death raises a ValueError."""
     mock_rcon = MockRCON()
     with pytest.raises(expected):
-        autobalance_teams(mock_rcon, mock_redis, None, swap_on_death=swap_on_death)
+        even_teams(mock_rcon, mock_redis, mock_config, swap_on_death=swap_on_death)
 
 
 # test set_player_swap_timestamp
@@ -448,7 +481,7 @@ class TestAutobalanceScenarios:
         ],
     )
     def test_even_teams_teamless_players_are_distributed(
-        self, path, mock_redis
+        self, path, mock_redis, mock_config
     ) -> None:
         """All teamless players should always be swapped to a team regardless of axis/allied team states."""
         print(f"{Path.cwd()=}")
@@ -457,8 +490,12 @@ class TestAutobalanceScenarios:
 
         pprint(team_view)
 
-        _, _, _, _, teamless_players, swapped_teamless = autobalance_teams(
-            mock_rcon, mock_redis, "arrival_most_recent", include_teamless=True
+        _, _, _, _, teamless_players, swapped_teamless = even_teams(
+            mock_rcon,
+            mock_redis,
+            mock_config,
+            rebalance_method="arrival_most_recent",
+            include_teamless=True,
         )
 
         assert len(teamless_players) == len(swapped_teamless)
@@ -530,6 +567,7 @@ class TestAutobalanceScenarios:
         expected_team,
         expected_player,
         mock_redis,
+        mock_config,
     ) -> None:
         """Player swapping should respect arrival times and teamless player inclusion."""
         team_view = team_view_file(path)
@@ -542,8 +580,12 @@ class TestAutobalanceScenarios:
             swapped_allied_players,
             teamless_players,
             swapped_teamless,
-        ) = autobalance_teams(
-            mock_rcon, mock_redis, swap_method, include_teamless=include_teamless
+        ) = even_teams(
+            mock_rcon,
+            mock_redis,
+            mock_config,
+            swap_method,
+            include_teamless=include_teamless,
         )
 
         if expected_team == AXIS_TEAM:

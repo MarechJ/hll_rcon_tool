@@ -1,14 +1,14 @@
-import pytest
 from datetime import datetime, timezone
 
+import pytest
 
+from rcon.team_shuffle.constants import SWAP_TYPE_EVEN_TEAMS
 from rcon.team_shuffle.utils import (
     get_player_last_swap_timestamp,
-    set_player_swap_timestamp,
     get_player_session,
+    set_player_swap_timestamp,
 )
 
-from rcon.team_shuffle.constants import SWAP_TYPE_BALANCE
 from .test_balance import mock_redis
 
 # TODO: test get_team_player_count()
@@ -34,7 +34,7 @@ def test_get_player_session_does_not_change_datetime(player, expected_datetime):
     assert timestamp == expected_datetime
 
 
-@pytest.mark.parametrize("steam_id_64, swap_type", [("1234", SWAP_TYPE_BALANCE)])
+@pytest.mark.parametrize("steam_id_64, swap_type", [("1234", SWAP_TYPE_EVEN_TEAMS)])
 def test_getting_unset_players_is_sentinel_timestamp(
     steam_id_64, swap_type, mock_redis, sentinel_datetime
 ):
@@ -47,7 +47,7 @@ def test_getting_unset_players_is_sentinel_timestamp(
 
 @pytest.mark.parametrize(
     "steam_id_64, swap_type, timestamp",
-    [("1234", SWAP_TYPE_BALANCE, datetime.now(timezone.utc))],
+    [("1234", SWAP_TYPE_EVEN_TEAMS, datetime.now(timezone.utc))],
 )
 def test_setting_getting_player_timestamp_matches(
     steam_id_64, swap_type, timestamp, mock_redis
