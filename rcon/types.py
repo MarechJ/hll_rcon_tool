@@ -180,7 +180,7 @@ class PlayerProfileType(TypedDict):
     steam_id_64: str
     created: datetime.datetime
     names: List[PlayerNameType]
-    session: List[PlayerSessionType]
+    sessions: List[PlayerSessionType]
     sessions_count: int
     total_playtime_seconds: int
     current_playtime_seconds: int
@@ -221,7 +221,7 @@ class StructuredLogLine(TypedDict):
 
 
 class GameState(TypedDict):
-    """TypedDict for Rcon.get_gamestate"""
+    """Rcon.get_gamestate"""
 
     num_allied_players: int
     num_axis_players: int
@@ -230,3 +230,74 @@ class GameState(TypedDict):
     time_remaining: datetime.timedelta
     current_map: str
     next_map: str
+
+
+class DetailedPlayerInfoType(TypedDict):
+    name: str
+    steam_id_64: str
+    team: str
+    unit_id: int
+    unit_name: str | None
+    loadout: str
+    role: str
+    kills: int
+    deaths: int
+    combat: int
+    offense: int
+    defense: int
+    support: int
+    level: int
+
+
+class TeamViewPlayerType(TypedDict):
+    name: str
+    steam_id_64: str
+    steam_bans: SteamBansType
+    country: str
+    unit_id: int
+    unit_name: str
+    loadout: str
+    team: str
+    role: str
+    kills: int
+    deaths: int
+    combat: int
+    offense: int
+    defense: int
+    support: int
+    level: int
+    profile: PlayerProfileType
+    is_vip: bool
+
+
+class TeamViewSquadType(TypedDict):
+    players: List[TeamViewPlayerType]
+    type: str
+    has_leader: bool
+    combat: int
+    offense: int
+    defense: int
+    support: int
+    kills: int
+    deaths: int
+
+
+class TeamViewFactionType(TypedDict):
+    squads: dict[str, TeamViewSquadType]
+    commander: TeamViewPlayerType | None
+
+    combat: int
+    offense: int
+    defense: int
+    support: int
+    kills: int
+    deaths: int
+    count: int
+
+
+class TeamViewType(TypedDict):
+    allies: TeamViewFactionType
+    axis: TeamViewFactionType
+    none: dict
+
+    fail_count: int
