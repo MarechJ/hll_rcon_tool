@@ -1259,7 +1259,7 @@ class Rcon(ServerCtl):
                         "version": 1,
                         "timestamp_ms": int(time.timestamp() * 1000),
                         "relative_time_ms": (time - now).total_seconds() * 1000,
-                        "raw": raw_relative_time + raw_log_line,
+                        "raw": raw_relative_time + " " + raw_log_line,
                         "line_without_time": raw_log_line,
                         "action": log_line["action"],
                         "player": log_line["player"],
