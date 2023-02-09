@@ -28,7 +28,8 @@ from rcon.utils import get_server_number
 STEAMID = "steam_id_64"
 NAME = "name"
 ROLE = "role"
-# ["CHAT[Allies]", "CHAT[Axis]", "CHAT", "VOTE STARTED", "VOTE COMPLETED"]
+# The base level of actions that will always show up in the Live view
+# actions filter from the call to `get_recent_logs`
 LOG_ACTIONS = [
     "DISCONNECTED",
     "CHAT[Allies]",
@@ -1152,12 +1153,11 @@ class Rcon(ServerCtl):
 
             action = f"ADMIN {type_}".strip()
 
-            # Reconstruct the log line without the newlines and tack on the trailling ] we lose
+            # Reconstruct the log line without the newlines and tack on the trailing ] we lose
             content = f"{_action}: [{player}] {sub_content}"
             if content[-1] != "]":
                 content += "]"
                 sub_content += "]"
-
         elif raw_line.startswith("VOTE"):
             action = "VOTE"
 
@@ -1183,7 +1183,6 @@ class Rcon(ServerCtl):
 
             # Not currently parsing this
             # VOTESYS: Vote Kick {buscÃ´O-sensei} successfully passed. [For: 2/1 - Against: 0]
-
         elif raw_line.upper().startswith("PLAYER"):
             # Player [Fachi (71234567891234567)] Entered Admin Camera
             action = "CAMERA"
@@ -1295,7 +1294,7 @@ class Rcon(ServerCtl):
         parsed_log_lines.reverse()
 
         return {
-            "actions": list(actions) + synthetic_actions,
+            "actions": list(actions | set(synthetic_actions)),
             "players": list(players),
             "logs": parsed_log_lines,
         }
