@@ -227,7 +227,7 @@ def bulk_vip(name_ids, mode="override"):
     vips = ctl.get_vip_ids()
 
     removal_futures = {
-        ctl.run_in_pool(idx, "do_remove_vip", vip["steam_id_64"]): vip
+        ctl.run_in_pool("do_remove_vip", vip["steam_id_64"]): vip
         for idx, vip in enumerate(vips)
     }
     for future in as_completed(removal_futures):
@@ -251,7 +251,6 @@ def bulk_vip(name_ids, mode="override"):
 
     add_futures = {
         ctl.run_in_pool(
-            idx,
             "do_add_vip",
             name,
             steam_id,
