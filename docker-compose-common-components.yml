@@ -36,6 +36,7 @@ services:
             SUPERVISOR_RPC_URL: http://supervisor:9001/RPC2
             SERVER_NUMBER: 1
             NB_API_WORKERS: ${NB_API_WORKERS}
+            NB_API_THREADS: ${NB_API_THREADS}
             CONFIG_DIR: /config/
             RCONWEB_EXTERNAL_ADDRESS: ${RCONWEB_EXTERNAL_ADDRESS}
             RCONWEB_SERVER_URL: ${RCONWEB_SERVER_URL}

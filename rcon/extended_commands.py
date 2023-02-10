@@ -8,7 +8,7 @@ from time import sleep
 from typing import Dict, List, Optional, Tuple, Union
 
 from rcon.cache_utils import get_redis_client, invalidates, ttl_cache
-from rcon.commands import CommandFailedError, HLLServerError, ServerCtl
+from rcon.commands import CommandFailedError, HLLServerError, ServerCtl, VipId
 from rcon.models import PlayerVIP, enter_session
 from rcon.player_history import get_profiles
 from rcon.steam_utils import (
@@ -466,7 +466,7 @@ class Rcon(ServerCtl):
     @mod_users_allowed
     @ttl_cache(ttl=60 * 60)
     def get_vip_ids(self) -> List[Dict[str, Union[str, Optional[datetime]]]]:
-        res = super().get_vip_ids()
+        res: List[VipId] = super().get_vip_ids()
         player_dicts = []
 
         vip_expirations: Dict[str, datetime]
@@ -483,16 +483,8 @@ class Rcon(ServerCtl):
             }
 
         for item in res:
-            try:
-                steam_id_64, name = item.split(" ", 1)
-                name = name.replace('"', "")
-                name = name.replace("\n", "")
-                name = name.strip()
-            except ValueError:
-                self._reconnect()
-                raise
-            player = dict(zip((STEAMID, NAME), (steam_id_64, name)))
-            player["vip_expiration"] = vip_expirations.get(steam_id_64, None)
+            player = dict(zip((STEAMID, NAME), (item['steam_id_64'], item['name'])))
+            player["vip_expiration"] = vip_expirations.get(item['steam_id_64'], None)
             player_dicts.append(player)
 
         return sorted(player_dicts, key=lambda d: d[NAME])
@@ -511,7 +503,6 @@ class Rcon(ServerCtl):
             try:
                 self.do_remove_vip(vip["steam_id_64"])
             except (CommandFailedError, ValueError):
-                self._reconnect()
                 raise
 
         return "SUCCESS"
