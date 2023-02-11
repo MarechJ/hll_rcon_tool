@@ -1,3 +1,7 @@
 [tool.isort]
 profile = "black"
 src_paths = ["rcon", "rconweb", "tests"]
+
+[tool.black]
+target-version = ['py311']
+include = '\.pyi?$'
