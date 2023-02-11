@@ -130,9 +130,7 @@ const VoteMapConfig = () => {
         <Padlock
           label="Allow user to opt-out of vote map reminders by typing !votemap never"
           checked={config.get("votemap_allow_optout", false)}
-          handleChange={(v) =>
-            saveConfig({ votemap_allow_optout: v })
-          }
+          handleChange={(v) => saveConfig({ votemap_allow_optout: v })}
         />
       </Grid>
       <Grid item>

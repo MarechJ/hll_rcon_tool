@@ -84,7 +84,7 @@ def suggest_next_maps(
     consider_offensive_as_same_map=True,
     allow_consecutive_offensive=True,
     allow_consecutive_offensives_of_opposite_side=False,
-    current_map=None
+    current_map=None,
 ):
     try:
         return _suggest_next_maps(
@@ -96,7 +96,7 @@ def suggest_next_maps(
             consider_offensive_as_same_map,
             allow_consecutive_offensive,
             allow_consecutive_offensives_of_opposite_side,
-            current_map
+            current_map,
         )
     except RestrictiveFilterError:
         logger.warning("Falling back on ALL_MAPS since the filters are too restrictive")
@@ -109,7 +109,7 @@ def suggest_next_maps(
             consider_offensive_as_same_map,
             allow_consecutive_offensive,
             allow_consecutive_offensives_of_opposite_side,
-            current_map
+            current_map,
         )
 
 
@@ -122,7 +122,7 @@ def _suggest_next_maps(
     consider_offensive_as_same_map,
     allow_consecutive_offensive,
     allow_consecutive_offensives_of_opposite_side,
-    current_map
+    current_map,
 ):
     if exclude_last_n > 0:
         last_n_map = set(m["name"] for m in maps_history[:exclude_last_n])
@@ -597,12 +597,12 @@ class VoteMap:
         logger.debug(
             f"""Generating new map selection for vote map with the following criteria:
             {ALL_MAPS}
-            {config.get_votemap_number_of_options()=} 
-            {config.get_votemap_ratio_of_offensives_to_offer()=} 
-            {config.get_votemap_number_of_last_played_map_to_exclude()=} 
-            {config.get_votemap_consider_offensive_as_same_map()=} 
-            {config.get_votemap_allow_consecutive_offensives()=} 
-            {config.get_votemap_allow_consecutive_offensives_of_opposite_side()=} 
+            {config.get_votemap_number_of_options()=}
+            {config.get_votemap_ratio_of_offensives_to_offer()=}
+            {config.get_votemap_number_of_last_played_map_to_exclude()=}
+            {config.get_votemap_consider_offensive_as_same_map()=}
+            {config.get_votemap_allow_consecutive_offensives()=}
+            {config.get_votemap_allow_consecutive_offensives_of_opposite_side()=}
             {config.get_votemap_default_method()=}
         """
         )
@@ -690,13 +690,9 @@ class VoteMap:
             logger.info(f"{votes=}")
             next_map = first[0][0]
             if next_map not in ALL_MAPS:
-                logger.error(
-                    f"{next_map=} is not part of the all map list {ALL_MAPS=}"
-                )
+                logger.error(f"{next_map=} is not part of the all map list {ALL_MAPS=}")
             if next_map not in (selection := self.get_selection()):
-                logger.error(
-                    f"{next_map=} is not part of vote selection {selection=}"
-                )
+                logger.error(f"{next_map=} is not part of vote selection {selection=}")
             logger.info(f"Winning map {next_map=}")
 
         rcon = RecordedRcon(SERVER_INFO)

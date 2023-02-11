@@ -27,7 +27,7 @@ def _to_list(value):
 def record_audit(func):
     @wraps(func)
     def wrapper(request, **kwargs):
-        name = request.path.split('/')[-1]
+        name = request.path.split("/")[-1]
         data = _get_data(request)
         user = request.user.username
 
@@ -39,23 +39,27 @@ def record_audit(func):
             raise
         finally:
             with enter_session() as sess:
-                sess.add(AuditLog(
-                    username=user,
-                    command=name,
-                    command_arguments=json.dumps(data),
-                    command_result=result
-                ))
+                sess.add(
+                    AuditLog(
+                        username=user,
+                        command=name,
+                        command_arguments=json.dumps(data),
+                        command_result=result,
+                    )
+                )
 
         return raw
+
     return wrapper
 
 
-def auto_record_audit(name): 
+def auto_record_audit(name):
     def wrapper(func):
-        if name.startswith('do_') or name.startswith('set_'):
+        if name.startswith("do_") or name.startswith("set_"):
             return record_audit(func)
         else:
             return func
+
     return wrapper
 
 
@@ -76,8 +80,13 @@ def get_audit_logs_autocomplete(request):
         error = e
 
     return api_response(
-        result={"usernames": usernames, "commands": commands}, command="get_audit_logs_autocomplete", arguments=None, failed=failed, error=error
+        result={"usernames": usernames, "commands": commands},
+        command="get_audit_logs_autocomplete",
+        arguments=None,
+        failed=failed,
+        error=error,
     )
+
 
 @csrf_exempt
 @login_required()
@@ -91,20 +100,22 @@ def get_audit_logs(request):
         with enter_session() as sess:
             query = sess.query(AuditLog)
 
-            if usernames := data.get('usernames'):
+            if usernames := data.get("usernames"):
                 usernames = _to_list(usernames)
                 and_conditions.append(AuditLog.username.in_(usernames))
-            if commands := data.get('commands'):
+            if commands := data.get("commands"):
                 commands = _to_list(commands)
                 and_conditions.append(AuditLog.command.in_(commands))
-            if parameters := data.get('parameters'):
+            if parameters := data.get("parameters"):
                 parameters = _to_list(parameters)
-                conditions = [AuditLog.command_arguments.ilike(f'%{c}%') for c in parameters]
+                conditions = [
+                    AuditLog.command_arguments.ilike(f"%{c}%") for c in parameters
+                ]
                 if len(conditions) == 1:
                     and_conditions.append(conditions[0])
                 else:
                     and_conditions.append(or_(*conditions))
-                
+
             if and_conditions:
                 logger.debug("condition %s", and_conditions)
                 if len(and_conditions) > 1:
@@ -114,11 +125,11 @@ def get_audit_logs(request):
                 query = query.filter(and_conditions)
                 logger.debug(query)
 
-            if data.get('time_sort') == 'asc':
+            if data.get("time_sort") == "asc":
                 query = query.order_by(AuditLog.creation_time.asc())
             else:
                 query = query.order_by(AuditLog.creation_time.desc())
-            
+
             res = query.all()
             res = [r.to_dict() for r in res]
     except Exception as e:

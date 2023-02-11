@@ -84,7 +84,7 @@ def handle_new_match_start(rcon: RecordedRcon, struct_log):
         logger.info("New match started recording map %s", struct_log)
         with invalidates(Rcon.get_map):
             try:
-                current_map = rcon.get_map().replace('_RESTART', '')
+                current_map = rcon.get_map().replace("_RESTART", "")
             except (CommandFailedError, HLLServerError):
                 current_map = "bla_"
                 logger.error("Unable to get current map")
@@ -376,7 +376,9 @@ def notify_false_positives(rcon: RecordedRcon, _, name: str, steam_id_64: str):
     )
 
     try:
-        send_to_discord_audit(f"WARNING Player with bugged profile joined: `{name}` `{steam_id_64}`\n\nThis player if Squad Officer will cause his squad to be punished. He also will show as unassigned in the Game view.\n\nPlease ask him to change his name (last character IG shouldn't be a whitespace)")
+        send_to_discord_audit(
+            f"WARNING Player with bugged profile joined: `{name}` `{steam_id_64}`\n\nThis player if Squad Officer will cause his squad to be punished. He also will show as unassigned in the Game view.\n\nPlease ask him to change his name (last character IG shouldn't be a whitespace)"
+        )
     except Exception:
         logger.exception("Unable to send to audit")
 

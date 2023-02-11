@@ -48,16 +48,16 @@ async function handle_http_errors(error) {
       {
         toastId: "Bad login",
       }
-    )} else if (error.name === "TypeError" || error.name === "SyntaxError") {
-      toast.error(
-        "Your RCON Api is not reachable. Check your config and start it again",
-        {
-          toastId: "Api down",
-        }
-      );
-    }
-   else {
-    console.log(error.name, error.message)
+    );
+  } else if (error.name === "TypeError" || error.name === "SyntaxError") {
+    toast.error(
+      "Your RCON Api is not reachable. Check your config and start it again",
+      {
+        toastId: "Api down",
+      }
+    );
+  } else {
+    console.log(error.name, error.message);
     toast.error("Unable to connect to API " + error);
   }
 }

@@ -204,7 +204,7 @@ class Rcon(ServerCtl):
         Name: T17 Scott
         steamID64: 01234567890123456
         Team: Allies            # "None" when not in team
-        Role: Officer           
+        Role: Officer
         Unit: 0 - Able          # Absent when not in unit
         Loadout: NCO            # Absent when not in team
         Kills: 0 - Deaths: 0
@@ -358,7 +358,6 @@ class Rcon(ServerCtl):
         return res
 
     def _struct_ban(self, ban, type_):
-
         # Avoid errors on empty temp bans
         if ban == "":
             return {
@@ -483,8 +482,8 @@ class Rcon(ServerCtl):
             }
 
         for item in res:
-            player = dict(zip((STEAMID, NAME), (item['steam_id_64'], item['name'])))
-            player["vip_expiration"] = vip_expirations.get(item['steam_id_64'], None)
+            player = dict(zip((STEAMID, NAME), (item["steam_id_64"], item["name"])))
+            player["vip_expiration"] = vip_expirations.get(item["steam_id_64"], None)
             player_dicts.append(player)
 
         return sorted(player_dicts, key=lambda d: d[NAME])
@@ -1164,7 +1163,6 @@ class Rcon(ServerCtl):
                     action = "MATCH ENDED"
                     _, sub_content = rest.split("MATCH ENDED ")
                 elif rest.upper().startswith("MESSAGE"):
-
                     action = "MESSAGE"
                     groups = re.match(
                         r"MESSAGE: player \[(.+)\((\d+)\)\], content \[(.+)\]", rest
