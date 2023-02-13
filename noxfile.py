@@ -11,9 +11,9 @@ def install(session):
 
 @nox.session(tags=["style", "black"])
 def black(session):
-    session.run("black", *source_dirs)
+    session.run("black", *source_dirs, external=True)
 
 
 @nox.session(tags=["style", "isort"])
 def isort(session):
-    session.run("isort", *source_dirs)
+    session.run("isort", *source_dirs, external=True)

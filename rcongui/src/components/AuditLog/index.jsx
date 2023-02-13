@@ -19,7 +19,6 @@ import { Grid } from "@material-ui/core";
 
 import MUIDataTable from "mui-datatables";
 
-
 const AuditLogsTable = ({ auditLogs }) => {
   const [myRowPerPage, setRowPerPage] = React.useState(
     window.localStorage.getItem("auditlogs_row_per_page") || 50

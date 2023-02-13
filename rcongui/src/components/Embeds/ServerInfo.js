@@ -132,7 +132,9 @@ const ServerInfo = ({ classes }) => {
         />
         <GridListTileBar
           className={styles.titleBarBottom}
-          title={`Time: ${started} - Players: ${serverState.get("player_count")}/${serverState.get("max_player_count")}`}
+          title={`Time: ${started} - Players: ${serverState.get(
+            "player_count"
+          )}/${serverState.get("max_player_count")}`}
           subtitle={nextMapString}
           titlePosition="bottom"
         />

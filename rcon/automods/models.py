@@ -94,14 +94,29 @@ class NoLeaderConfig:
         return valid_roles(v)
 
 
-EXISTING_ROLES = {"officer", "antitank", "automaticrifleman", "assault", "heavymachinegunner", "support", "sniper",
-                  "spotter", "rifleman", "crewman", "tankcommander", "engineer", "medic"}
+EXISTING_ROLES = {
+    "officer",
+    "antitank",
+    "automaticrifleman",
+    "assault",
+    "heavymachinegunner",
+    "support",
+    "sniper",
+    "spotter",
+    "rifleman",
+    "crewman",
+    "tankcommander",
+    "engineer",
+    "medic",
+}
 
 
 def valid_roles(o: List[str]) -> List[str]:
     non_existing_roles = list(set(o) - EXISTING_ROLES)
     if len(non_existing_roles) != 0:
-        raise ValueError("following roles are unknown: " + ", ".join(non_existing_roles))
+        raise ValueError(
+            "following roles are unknown: " + ", ".join(non_existing_roles)
+        )
     return o
 
 
@@ -161,10 +176,16 @@ class SeedingRulesConfig:
         "You failed to comply with the previous warnings."
     )
 
-    announce_seeding_active: AnnounceSeedingActiveConfig = field(default_factory=AnnounceSeedingActiveConfig)
+    announce_seeding_active: AnnounceSeedingActiveConfig = field(
+        default_factory=AnnounceSeedingActiveConfig
+    )
 
-    disallowed_roles: DisallowedRolesConfig = field(default_factory=DisallowedRolesConfig)
-    disallowed_weapons: DisallowedWeaponConfig = field(default_factory=DisallowedWeaponConfig)
+    disallowed_roles: DisallowedRolesConfig = field(
+        default_factory=DisallowedRolesConfig
+    )
+    disallowed_weapons: DisallowedWeaponConfig = field(
+        default_factory=DisallowedWeaponConfig
+    )
 
 
 @dataclass
@@ -230,7 +251,7 @@ class PunitionsToApply:
         except:
             logger.exception("Unable to add squad info")
 
-    def merge(self, o: 'PunitionsToApply'):
+    def merge(self, o: "PunitionsToApply"):
         if len(o.warning) != 0:
             self.warning.extend(o.warning)
         for p in o.punish:
@@ -242,11 +263,13 @@ class PunitionsToApply:
         for s in o.squads_state:
             if any(s.team == ss.team and s.name == ss.name for ss in self.squads_state):
                 continue
-            self.squads_state.append(ASquad(
-                team=s.team,
-                name=s.name,
-                players=s.players,
-            ))
+            self.squads_state.append(
+                ASquad(
+                    team=s.team,
+                    name=s.name,
+                    players=s.players,
+                )
+            )
 
     def __bool__(self):
         return any(

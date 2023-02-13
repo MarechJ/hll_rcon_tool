@@ -64,7 +64,6 @@ class RedisCached:
         return self.function
 
     def __call__(self, *args, **kwargs):
-
         val = None
         key = self.key(*args, **kwargs)
         try:

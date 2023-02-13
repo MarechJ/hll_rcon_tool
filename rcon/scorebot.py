@@ -7,6 +7,7 @@ import time
 from logging.config import dictConfig
 from sqlite3 import Connection
 from sqlite3.dbapi2 import connect
+from typing import TypedDict
 from urllib.parse import urljoin
 
 import requests
@@ -16,7 +17,6 @@ import discord
 from discord.embeds import Embed
 from discord.errors import HTTPException, NotFound
 from rcon.config import get_config
-from typing import TypedDict
 
 
 class _PublicInfoCurrentMapType(TypedDict):

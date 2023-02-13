@@ -333,7 +333,9 @@ const LiveHeader = ({
             />
             <GridListTileBar
               className={styles.titleBarBottom}
-              title={`Elapsed: ${started} - Players: ${serverState.get("player_count")}/${serverState.get("max_player_count")}`}
+              title={`Elapsed: ${started} - Players: ${serverState.get(
+                "player_count"
+              )}/${serverState.get("max_player_count")}`}
               subtitle={nextMapString}
               titlePosition="bottom"
             />

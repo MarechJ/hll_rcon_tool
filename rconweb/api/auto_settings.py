@@ -36,7 +36,10 @@ def get_auto_settings(request):
     ordered_config = {
         k: v
         for (k, v) in sorted(
-            config.items(), key=lambda pair: AUTO_SETTINGS_KEY_INDEX_MAP.get(pair[0], len(AUTO_SETTINGS_KEY_ORDER))
+            config.items(),
+            key=lambda pair: AUTO_SETTINGS_KEY_INDEX_MAP.get(
+                pair[0], len(AUTO_SETTINGS_KEY_ORDER)
+            ),
         )
     }
 

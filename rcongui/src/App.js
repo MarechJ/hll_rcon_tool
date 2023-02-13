@@ -474,7 +474,6 @@ function App() {
                       <LogsHistory classes={classes} />
                     </Grid>
                   </Grid>
-
                 </Route>
                 <Route path="/server">
                   <Grid container>

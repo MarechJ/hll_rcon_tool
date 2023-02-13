@@ -326,7 +326,6 @@ class TimeWindowStats(BaseStats):
     def _set_start_end_times(
         self, player, players_times, log, from_, offset_warmup_time_seconds=180
     ):
-
         if not player:
             return
         # A CONNECT means the begining of a session for the player

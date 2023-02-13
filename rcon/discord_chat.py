@@ -212,7 +212,11 @@ class DiscordWebhookHandler:
                 name=killer_field_name,
                 value=killer_id_link,
                 inline=True,
-            ).add_field(name="Victim", value=victim_id_link, inline=True,).add_field(
+            ).add_field(
+                name="Victim",
+                value=victim_id_link,
+                inline=True,
+            ).add_field(
                 name="Weapon",
                 value=log["weapon"],
                 inline=True,
