@@ -146,13 +146,18 @@ class ServerCtl:
             self.mu.release()
 
         elif self.numOpen >= self.maxOpen:
-            logger.debug("Max connections already open, waiting for connection returned to pool")
+            logger.debug(
+                "Max connections already open, waiting for connection returned to pool"
+            )
             c = 0
             idle_len = len(self.idles)
             self.mu.release()
             while idle_len == 0:
                 if c >= 30:
-                    logger.error("waiting for connection returned to pool timed out after %s seconds", c)
+                    logger.error(
+                        "waiting for connection returned to pool timed out after %s seconds",
+                        c,
+                    )
                     raise TimeoutError()
                 c += 1
                 time.sleep(1)
@@ -177,14 +182,25 @@ class ServerCtl:
             # All other errors, that might be caught (like UnicodeDecodeError) do not really qualify as an error of the
             # connection itself. Instead of reconnecting the existing connection here (conditionally), we simply discard
             # the connection, assuming it is broken. The pool will establish a new connection when needed.
-            if isinstance(e.__context__, RuntimeError | OSError) or exception_in_chain(e, OSError):
-                logger.warning("Connection (%s) errored in thread %s: %s, removing from pool", conn.id, threading.get_ident(), e)
+            if isinstance(e.__context__, RuntimeError | OSError) or exception_in_chain(
+                e, OSError
+            ):
+                logger.warning(
+                    "Connection (%s) errored in thread %s: %s, removing from pool",
+                    conn.id,
+                    threading.get_ident(),
+                    e,
+                )
                 self.numOpen -= 1
                 conn.close()
                 raise
 
             if exception_in_chain(e, BrokenHllConnection):
-                logger.warning("Connection (%s) marked as broken in thread %s, removing from pool", conn.id, threading.get_ident())
+                logger.warning(
+                    "Connection (%s) marked as broken in thread %s, removing from pool",
+                    conn.id,
+                    threading.get_ident(),
+                )
                 self.numOpen -= 1
                 conn.close()
                 if e.__context__ is not None:
@@ -193,7 +209,9 @@ class ServerCtl:
 
             ex = e
 
-        logger.debug("return connection (%s) from thread %s", conn.id, threading.get_ident())
+        logger.debug(
+            "return connection (%s) from thread %s", conn.id, threading.get_ident()
+        )
         if len(self.idles) >= self.maxIdle:
             logger.debug("Enough connections in pool, closing %s", conn.id)
             self.numOpen -= 1
@@ -207,13 +225,22 @@ class ServerCtl:
 
     def _connect(self, conn: HLLConnection):
         try:
-            conn.connect(self.config["host"], int(self.config["port"]), self.config["password"])
+            conn.connect(
+                self.config["host"], int(self.config["port"]), self.config["password"]
+            )
         except (TypeError, ValueError) as e:
             logger.exception("Invalid connection information", e)
             raise
 
     @_auto_retry
-    def _request(self, command: str, can_fail=True, log_info=False, decode=True, conn: HLLConnection = None):
+    def _request(
+        self,
+        command: str,
+        can_fail=True,
+        log_info=False,
+        decode=True,
+        conn: HLLConnection = None,
+    ):
         if conn is None:
             raise ValueError("conn parameter should never be None")
         if log_info:
@@ -242,7 +269,9 @@ class ServerCtl:
         return result
 
     @_auto_retry
-    def _timed_request(self, command: str, can_fail=True, log_info=False, conn: HLLConnection = None):
+    def _timed_request(
+        self, command: str, can_fail=True, log_info=False, conn: HLLConnection = None
+    ):
         if conn is None:
             raise ValueError("conn parameter should never be None")
         if log_info:
@@ -254,11 +283,11 @@ class ServerCtl:
             before_received, after_received, result = conn.receive(timed=True)
             result = result.decode()
         except (
-                RuntimeError,
-                BrokenPipeError,
-                socket.timeout,
-                ConnectionResetError,
-                UnicodeDecodeError,
+            RuntimeError,
+            BrokenPipeError,
+            socket.timeout,
+            ConnectionResetError,
+            UnicodeDecodeError,
         ) as e:
             logger.exception("Failed request")
             raise HLLServerError(command) from e
@@ -437,11 +466,11 @@ class ServerCtl:
             try:
                 res += conn.receive().decode()
             except (
-                    RuntimeError,
-                    BrokenPipeError,
-                    socket.timeout,
-                    ConnectionResetError,
-                    UnicodeDecodeError,
+                RuntimeError,
+                BrokenPipeError,
+                socket.timeout,
+                ConnectionResetError,
+                UnicodeDecodeError,
             ):
                 logger.exception("Failed request")
                 raise HLLServerError(f"showlog {since_min_ago}")
@@ -525,10 +554,10 @@ class ServerCtl:
         return self._request(f"switchteamnow {player}", log_info=True)
 
     def do_add_map_to_rotation(
-            self,
-            map_name: str,
-            after_map_name: str = None,
-            after_map_name_number: str = None,
+        self,
+        map_name: str,
+        after_map_name: str = None,
+        after_map_name_number: str = None,
     ):
         cmd = f"rotadd {map_name}"
         if after_map_name:
@@ -555,12 +584,12 @@ class ServerCtl:
 
     @_escape_params
     def do_temp_ban(
-            self,
-            player_name=None,
-            steam_id_64=None,
-            duration_hours=2,
-            reason="",
-            admin_name="",
+        self,
+        player_name=None,
+        steam_id_64=None,
+        duration_hours=2,
+        reason="",
+        admin_name="",
     ):
         return self._request(
             f'tempban "{steam_id_64 or player_name}" {duration_hours} "{reason}" "{admin_name}"',
@@ -569,7 +598,7 @@ class ServerCtl:
 
     @_escape_params
     def do_perma_ban(
-            self, player_name=None, steam_id_64=None, reason="", admin_name=""
+        self, player_name=None, steam_id_64=None, reason="", admin_name=""
     ):
         return self._request(
             f'permaban "{steam_id_64 or player_name}" "{reason}" "{admin_name}"',

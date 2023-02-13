@@ -184,7 +184,7 @@ def login_required(also_require_perms=False):
 def staff_required(request):
     if request.user.is_authenticated and request.user.is_staff:
         return True
-    return False  
+    return False
 
 
 def stats_login_required(func):

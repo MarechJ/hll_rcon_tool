@@ -1,9 +1,12 @@
 import datetime
-from django.views.decorators.csrf import csrf_exempt
-from .auth import api_response, login_required
-from .views import ctl, _get_data
-from rcon.server_stats import get_db_server_stats_for_range, get_server_stats_for_range
+
 from dateutil import parser
+from django.views.decorators.csrf import csrf_exempt
+
+from rcon.server_stats import get_db_server_stats_for_range, get_server_stats_for_range
+
+from .auth import api_response, login_required
+from .views import _get_data, ctl
 
 
 @csrf_exempt

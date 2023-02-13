@@ -586,12 +586,12 @@ class VoteMap:
         logger.debug(
             f"""Generating new map selection for vote map with the following criteria:
             {ALL_MAPS}
-            {config.get_votemap_number_of_options()=} 
-            {config.get_votemap_ratio_of_offensives_to_offer()=} 
-            {config.get_votemap_number_of_last_played_map_to_exclude()=} 
-            {config.get_votemap_consider_offensive_as_same_map()=} 
-            {config.get_votemap_allow_consecutive_offensives()=} 
-            {config.get_votemap_allow_consecutive_offensives_of_opposite_side()=} 
+            {config.get_votemap_number_of_options()=}
+            {config.get_votemap_ratio_of_offensives_to_offer()=}
+            {config.get_votemap_number_of_last_played_map_to_exclude()=}
+            {config.get_votemap_consider_offensive_as_same_map()=}
+            {config.get_votemap_allow_consecutive_offensives()=}
+            {config.get_votemap_allow_consecutive_offensives_of_opposite_side()=}
             {config.get_votemap_default_method()=}
         """
         )

@@ -1,5 +1,5 @@
 import React from "react";
-import { withTheme } from '@material-ui/core/styles';
+import { withTheme } from "@material-ui/core/styles";
 import {
   Button,
   Grid,
@@ -706,7 +706,7 @@ class RconSettings extends React.Component {
             not release until a VIP leaves. This is done by dynaically settings
             the number of VIP slots based on (Max num of VIP slots - current
             number of vips in game). The number of VIP slots will never fall below
-            'Min num of VIP slot', you can set that to 0 to have a hard cap. 
+            'Min num of VIP slot', you can set that to 0 to have a hard cap.
             If you use the autoSettings don't forget not set the VIPs in there or it will override the realVip system"
               >
                 <HelpIcon fontSize="small" />

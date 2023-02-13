@@ -233,7 +233,7 @@ class Rcon(ServerCtl):
         Name: T17 Scott
         steamID64: 01234567890123456
         Team: Allies            # "None" when not in team
-        Role: Officer           
+        Role: Officer
         Unit: 0 - Able          # Absent when not in unit
         Loadout: NCO            # Absent when not in team
         Kills: 0 - Deaths: 0
@@ -387,7 +387,6 @@ class Rcon(ServerCtl):
         return res
 
     def _struct_ban(self, ban, type_):
-
         # Avoid errors on empty temp bans
         if ban == "":
             return {
