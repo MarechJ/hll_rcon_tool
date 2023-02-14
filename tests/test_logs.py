@@ -598,6 +598,19 @@ def test_kicks(raw_log_line, expected):
                 "sub_content": "Vote [10] expired before completion",
             },
         ),
+        (
+            "VOTESYS: Vote Kick {buscÃ´O-sensei} successfully passed. [For: 2/1 - Against: 0]",
+            {
+                "action": "VOTE PASSED",
+                "player": "buscÃ´O-sensei",
+                "steam_id_64_1": None,
+                "player2": None,
+                "steam_id_64_2": None,
+                "weapon": None,
+                "message": "Vote Kick {buscÃ´O-sensei} successfully passed. [For: 2/1 - Against: 0]",
+                "sub_content": "For: 2/1 - Against: 0",
+            },
+        ),
     ],
 )
 def test_vote_kicks(raw_log_line, expected):

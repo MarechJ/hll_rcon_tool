@@ -114,6 +114,7 @@ class Rcon(ServerCtl):
     )
     vote_complete_pattern = re.compile(r"VOTESYS: Vote \[\d+\] completed. Result: (.*)")
     vote_expired_pattern = re.compile(r"VOTESYS: Vote \[\d+\] expired")
+    vote_passed_pattern = re.compile(r"VOTESYS: (Vote Kick \{(.*)\} .*\[(.*)\])")
     # Need the DOTALL flag to allow `.` to capture newlines in multi line messages
     message_pattern = re.compile(
         r"MESSAGE: player \[(.+)\((\d+)\)\], content \[(.+)\]", re.DOTALL
@@ -1179,9 +1180,13 @@ class Rcon(ServerCtl):
             # VOTESYS: Vote [1] expired before completion.
             elif match := re.match(Rcon.vote_expired_pattern, raw_line):
                 action = "VOTE EXPIRED"
-
-            # Not currently parsing this
             # VOTESYS: Vote Kick {buscÃ´O-sensei} successfully passed. [For: 2/1 - Against: 0]
+            elif match := re.match(Rcon.vote_passed_pattern, raw_line):
+                action = "VOTE PASSED"
+                content, player, sub_content = match.groups()
+            else:
+                raise ValueError(f"Unable to parse line: {raw_line}")
+
         elif raw_line.upper().startswith("PLAYER"):
             # Player [Fachi (71234567891234567)] Entered Admin Camera
             action = "CAMERA"
