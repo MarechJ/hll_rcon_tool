@@ -32,8 +32,6 @@ then
     exit 0
 fi
   sleep 10
-  LOGGING_FILENAME=historical_server_stats_$SERVER_NUMBER.log python -m rcon.cli record_server_stats_inception &
-  LOGGING_FILENAME=recent_server_stats_$SERVER_NUMBER.log python -m rcon.cli record_server_stats &
   env >> /etc/environment
   export LOGGING_FILENAME=supervisor_$SERVER_NUMBER.log
   supervisord -c /config/supervisord_$SERVER_NUMBER.conf || supervisord -c /config/supervisord.conf
