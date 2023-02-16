@@ -45,6 +45,11 @@ def run_stats_loop():
         sys.exit(1)
 
 
+@cli.command(name="record_server_stats_inception")
+def save_stats():
+    save_server_stats_since_inception()
+
+
 @cli.command(name="record_server_stats")
 def save_recent_stats():
     save_server_stats_for_last_hours()
