@@ -1,13 +1,10 @@
-import enum
 import logging
 import os
 import pickle
 import random
 import re
-import time
 from datetime import datetime, timedelta
 from functools import partial
-from threading import Thread
 from typing import Counter
 
 import redis
@@ -15,7 +12,7 @@ from sqlalchemy import and_
 
 from rcon.cache_utils import get_redis_client, get_redis_pool
 from rcon.discord import dict_to_discord, send_to_discord_audit
-from rcon.extended_commands import CommandFailedError, StructuredLogLine
+from rcon.extended_commands import CommandFailedError, StructuredLogLineType
 from rcon.models import PlayerOptins, PlayerSteamID, enter_session
 from rcon.player_history import get_player
 from rcon.recorded_commands import RecordedRcon
@@ -27,19 +24,11 @@ from rcon.utils import (
     NO_MOD_LONG_HUMAN_MAP_NAMES,
     NO_MOD_SHORT_HUMAN_MAP_NAMES,
     SHORT_HUMAN_MAP_NAMES,
-    FixedLenList,
     MapsHistory,
     categorize_maps,
     get_map_side,
     map_name,
     numbered_maps,
-)
-from rcon.workers import (
-    record_stats,
-    record_stats_worker,
-    temp_welcome_standalone,
-    temporary_welcome,
-    temporary_welcome_in,
 )
 
 logger = logging.getLogger(__name__)
@@ -359,7 +348,7 @@ class VoteMap:
             except CommandFailedError:
                 logger.warning("Unable to message %s", name)
 
-    def handle_vote_command(self, rcon, struct_log: StructuredLogLine) -> bool:
+    def handle_vote_command(self, rcon, struct_log: StructuredLogLineType) -> bool:
         message = struct_log.get("sub_content", "").strip()
         config = VoteMapConfig()
         enabled = config.get_vote_enabled()

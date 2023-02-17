@@ -16,11 +16,11 @@ from rcon.cache_utils import get_redis_client
 from rcon.commands import CommandFailedError, HLLServerError
 from rcon.config import get_config
 from rcon.discord import send_to_discord_audit
-from rcon.extended_commands import StructuredLogLine
-from rcon.game_logs import on_connected, on_kill
+from rcon.game_logs import on_kill, on_connected
 from rcon.hooks import inject_player_ids
 from rcon.recorded_commands import RecordedRcon
 from rcon.settings import SERVER_INFO
+from rcon.types import StructuredLogLineType
 
 logger = logging.getLogger(__name__)
 first_run_done = False
@@ -167,7 +167,7 @@ def audit(discord_webhook_url: str, msg: str, author: str):
 
 
 @on_kill
-def on_kill(rcon: RecordedRcon, log: StructuredLogLine):
+def on_kill(rcon: RecordedRcon, log: StructuredLogLineType):
     if not first_run_done:
         logger.debug(
             "Kill event received, but not automod run done yet, giving mods time to warmup"

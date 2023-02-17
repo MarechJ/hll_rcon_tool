@@ -19,7 +19,7 @@ from rcon.automods.models import (
 )
 from rcon.automods.num_or_inf import num_or_inf
 from rcon.cache_utils import get_redis_client
-from rcon.extended_commands import StructuredLogLine
+from rcon.extended_commands import StructuredLogLineType
 from rcon.game_logs import on_match_start
 
 SEEDING_RULES_RESET_SECS = 120
@@ -122,7 +122,7 @@ class SeedingRulesAutomod:
 
         return p
 
-    def on_kill(self, log: StructuredLogLine) -> PunitionsToApply:
+    def on_kill(self, log: StructuredLogLineType) -> PunitionsToApply:
         p: PunitionsToApply = PunitionsToApply()
 
         if log[
