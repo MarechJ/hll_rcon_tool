@@ -19,7 +19,7 @@ from rcon.automods.models import (
     WatchStatus,
 )
 from rcon.automods.seeding_rules import SeedingRulesAutomod
-from rcon.extended_commands import StructuredLogLine
+from rcon.types import StructuredLogLineType
 
 state = {}
 redis_store = {}
@@ -144,7 +144,7 @@ def team_view():
 
 line = "[29:42 min (1606340690)] KILL: [CPC] [1.Fjg] FlorianSW(Allies/76561198012102485) -> Karadoc(Axis/76561198080212634) with MK2_Grenade"
 lt = datetime.fromtimestamp(1606340690)
-kill_event_log: StructuredLogLine = {
+kill_event_log: StructuredLogLineType = {
     "version": 1,
     "timestamp_ms": int(lt.timestamp() * 1000),
     "relative_time_ms": (lt - datetime.now()).total_seconds() * 1000,

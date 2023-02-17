@@ -2,10 +2,8 @@ import logging
 import os
 import re
 from contextlib import contextmanager
-from curses import echo
 from datetime import datetime
-from operator import index
-from typing import List, Optional, TypedDict
+from typing import List, Optional
 
 import pydantic
 from sqlalchemy import (
