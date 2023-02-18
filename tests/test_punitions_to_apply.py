@@ -1,12 +1,22 @@
-from rcon.automods.models import PunitionsToApply, PunishPlayer, PunishDetails
+from rcon.automods.models import PunishDetails, PunishPlayer, PunitionsToApply
 
-first_player: PunishPlayer = PunishPlayer(steam_id_64="A_STEAM_ID",
-                                          details=PunishDetails(author="", message="first warning"),
-                                          name="", squad="", team="")
-same_player: PunishPlayer = PunishPlayer(steam_id_64="A_STEAM_ID",
-                                         details=PunishDetails(author="", message="second warning"),
-                                         name="", squad="", team="")
-second_player: PunishPlayer = PunishPlayer(steam_id_64="ANOTHER_STEAM_ID", name="", squad="", team="")
+first_player: PunishPlayer = PunishPlayer(
+    steam_id_64="A_STEAM_ID",
+    details=PunishDetails(author="", message="first warning"),
+    name="",
+    squad="",
+    team="",
+)
+same_player: PunishPlayer = PunishPlayer(
+    steam_id_64="A_STEAM_ID",
+    details=PunishDetails(author="", message="second warning"),
+    name="",
+    squad="",
+    team="",
+)
+second_player: PunishPlayer = PunishPlayer(
+    steam_id_64="ANOTHER_STEAM_ID", name="", squad="", team=""
+)
 
 
 def test_merge_warnings():

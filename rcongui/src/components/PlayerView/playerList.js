@@ -315,7 +315,7 @@ const PlayerItem = ({
   playerHasExtraInfo,
   avatarBackround,
   onSelect,
-  isSelected
+  isSelected,
 }) => {
   const profile = player.get("profile") ? player.get("profile") : new Map();
   const name = player.get("name");
@@ -420,7 +420,7 @@ const PlayerItem = ({
 
       {onSelect ? (
         <ListItemSecondaryAction>
-          <Checkbox checked={isSelected} onChange={onSelect}/>
+          <Checkbox checked={isSelected} onChange={onSelect} />
         </ListItemSecondaryAction>
       ) : (
         ""

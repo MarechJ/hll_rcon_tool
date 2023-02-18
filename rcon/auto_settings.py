@@ -7,9 +7,9 @@ import pytz
 
 from rcon.audit import ingame_mods, online_mods
 from rcon.extended_commands import Rcon
-from rcon.vote_map import VoteMap
 from rcon.settings import SERVER_INFO
 from rcon.user_config import AutoSettingsConfig
+from rcon.vote_map import VoteMap
 
 logger = logging.getLogger(__name__)
 

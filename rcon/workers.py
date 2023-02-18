@@ -1,10 +1,10 @@
 import datetime
 import logging
 import os
+from concurrent.futures import as_completed
 from datetime import timedelta
 from typing import Set
 
-from concurrent.futures import as_completed
 from dateutil import relativedelta
 from rq import Queue
 from rq.job import Job
@@ -140,7 +140,6 @@ def record_stats_from_map(sess, map_):
     seen_players: Set[str] = set()
     for player, stats in player_stats.items():
         if steam_id_64 := stats.get("steam_id_64"):
-
             # If a player has changed their name and had stats recorded under two or more
             # names in the same match it will otherwise try to insert duplicate records
             # This will only record stats for the first instance of the player it sees, the other(s)

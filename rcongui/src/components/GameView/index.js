@@ -321,7 +321,7 @@ const GameView = ({ classes: globalClasses }) => {
       ? localStorage.getItem("game_view_sorting")
       : "name_asc"
   );
-  /* confirm action needs to be set to a dict to call the popup: 
+  /* confirm action needs to be set to a dict to call the popup:
         {
           player: null,
           actionType: actionType,
@@ -477,17 +477,20 @@ const GameView = ({ classes: globalClasses }) => {
       .catch(handle_http_errors);
   };
 
-  const myInterval = React.useMemo(() => (func, ms) => {
-    const handle = setTimeout(async () => {
-      try {
-        await func();
-      } catch (e)  {
-        console.warn('Error in periodic refresh', e);
-      }
-      myInterval(func, ms);
-    }, ms);
-    setIntervalHandle(handle);
-  }, []);
+  const myInterval = React.useMemo(
+    () => (func, ms) => {
+      const handle = setTimeout(async () => {
+        try {
+          await func();
+        } catch (e) {
+          console.warn("Error in periodic refresh", e);
+        }
+        myInterval(func, ms);
+      }, ms);
+      setIntervalHandle(handle);
+    },
+    []
+  );
 
   React.useEffect(() => {
     loadData();
@@ -688,7 +691,7 @@ const GameView = ({ classes: globalClasses }) => {
               </Grid>
               <Grid item>
                 <TextField
-                  style={{minWidth: "125px"}}
+                  style={{ minWidth: "125px" }}
                   type="number"
                   inputProps={{ min: 2, max: 6000 }}
                   label="Refresh seconds"

@@ -1,9 +1,5 @@
 import React from "react";
-import {
-  Button,
-  Grid,
-  Typography
-} from "@material-ui/core";
+import { Button, Grid, Typography } from "@material-ui/core";
 import { ForwardCheckBox } from "../commonComponent";
 import Editor from "@monaco-editor/react";
 
