@@ -116,7 +116,7 @@ def mock_config():
         swap_on_death_description="on death",
         swap_immediately_description="immediately",
         even_teams_logger_message="",
-        shuffle_teams_logger_message="",
+        team_shuffle_logger_message="",
         failed_swap_logger_message="",
     )
 

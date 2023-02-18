@@ -61,5 +61,5 @@ class TeamShuffleConfig(BaseModel):
     swap_on_death_description: str
     swap_immediately_description: str
     even_teams_logger_message: str
-    shuffle_teams_logger_message: str
+    team_shuffle_logger_message: str
     failed_swap_logger_message: str

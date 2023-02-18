@@ -193,10 +193,10 @@ def swap_players(
     config: TeamShuffleConfig,
     players_to_swap: list[TeamViewPlayerType],
     swap_type: str,
+    swap_message: str,
     swap_on_death: bool = False,
     from_team: str | None = None,
     to_team: str | None = None,
-    swap_message: str = "",
 ) -> tuple[list[TeamViewPlayerType], list[TeamViewPlayerType]]:
     """Swap players and handle logging."""
 
@@ -243,19 +243,17 @@ def swap_players(
             if swap_type == SWAP_TYPE_EVEN_TEAMS:
                 message = config.even_teams_logger_message
             else:
-                message = config.shuffle_teams_logger_message
+                message = config.team_shuffle_logger_message
 
-            message = message.replace("{player_name}", player["name"])
-            message = message.replace("{steam_id}", player["name"])
-            message = message.replace("{from_team}", from_team)
-            message = message.replace("{to_team}", to_team)
-            message = message.replace("{switch_type}", switch_type)
+            mapping = {
+                "player_name": player["name"],
+                "steam_id": player["steam_id_64"],
+                "from_team": from_team,
+                "to_team": to_team,
+                "switch_type": switch_type,
+            }
 
-            # When called with teamless players it's called one player at a time
-            # When called for a list of players with more than one player we have to
-            # reset these or these are stale values from the previous loop
-            from_team = None
-            to_team = None
+            message = message.format_map(mapping)
 
             logger.info(message)
             if config.discord_audit_swaps:
@@ -264,12 +262,17 @@ def swap_players(
                     message,
                     by=config.discord_audit_service_name,
                 )
+
         else:
             message = config.failed_swap_logger_message
-            message = message.replace("{player_name}", player["name"])
-            message = message.replace("{steam_id}", player["name"])
+            mapping = {
+                "player_name": player["name"],
+                "steam_id": player["steam_id_64"],
+            }
 
-            logger.error(message)
+            message = message.format_map(mapping)
+
+            logger.info(message)
             if config.discord_audit_swaps:
                 audit(
                     config.discord_webhook_url,
@@ -277,7 +280,11 @@ def swap_players(
                     by=config.discord_audit_service_name,
                 )
 
-        # time.sleep(RCON_TEAM_SWAP_DELAY_MS / 1000)
+        # When called with teamless players it's called one player at a time
+        # When called for a list of players with more than one player we have to
+        # reset these or these are stale values from the previous loop
+        from_team = None
+        to_team = None
 
     return swapped_axis_players, swapped_allied_players
 
@@ -288,8 +295,8 @@ def swap_teamless_players(
     config: TeamShuffleConfig,
     teamless_players_to_swap: list[TeamViewPlayerType],
     swap_type: str,
+    swap_message: str,
     swap_on_death: bool = False,
-    swap_message: str = "",
 ) -> None:
     """Handle swapping teamless players between teams evenly."""
 
@@ -304,12 +311,12 @@ def swap_teamless_players(
             rcon_hook,
             redis_store,
             config,
-            [player],
-            swap_type,
-            swap_on_death,
+            players_to_swap=[player],
+            swap_type=swap_type,
+            swap_message=swap_message,
+            swap_on_death=swap_on_death,
             from_team=EMPTY_TEAM,
             to_team=ALLIED_TEAM,
-            swap_message=swap_message,
         )
         # When swapping a teamless player, RCON defaults to putting them on the Allied team
         # and they have to be swapped twice to get to the Axis team
@@ -318,12 +325,12 @@ def swap_teamless_players(
                 rcon_hook,
                 redis_store,
                 config,
-                [player],
-                swap_type,
-                swap_on_death,
+                players_to_swap=[player],
+                swap_type=swap_type,
+                swap_message=swap_message,
+                swap_on_death=swap_on_death,
                 from_team=ALLIED_TEAM,
                 to_team=AXIS_TEAM,
-                swap_message=swap_message,
             )
 
 

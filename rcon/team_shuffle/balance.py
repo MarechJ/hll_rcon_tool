@@ -161,9 +161,10 @@ def even_teams(
         rcon_hook,
         redis_store,
         config,
-        players_to_swap,
-        SWAP_TYPE_EVEN_TEAMS,
-        args.swap_on_death,
+        players_to_swap=players_to_swap,
+        swap_type=SWAP_TYPE_EVEN_TEAMS,
+        swap_message=config.even_teams_swap_message,
+        swap_on_death=args.swap_on_death,
     )
 
     # Distribute teamless players to each team, choosing which team to start with at random
@@ -178,9 +179,10 @@ def even_teams(
             rcon_hook,
             redis_store,
             config,
-            teamless_players_to_swap,
-            SWAP_TYPE_EVEN_TEAMS,
-            swap_on_death,
+            teamless_players_to_swap=teamless_players_to_swap,
+            swap_type=SWAP_TYPE_EVEN_TEAMS,
+            swap_message=config.even_teams_swap_message,
+            swap_on_death=swap_on_death,
         )
 
     return (

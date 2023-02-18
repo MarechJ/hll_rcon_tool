@@ -507,9 +507,9 @@ TEAM_SHUFFLE:
   discord_audit_service_name: "TeamShuffle"
 
   # The message sent to the player when `do_even_teams` is run
-  even_teams_swap_message: "The admins have made the team sizes even automatically and you have been team swapped."
+  even_teams_swap_message: "Team sizes have been balanced!\n\nThe admins have made the team sizes even automatically and you have been swapped."
   # The message sent to the player when `do_shuffle_teams` is run
-  team_shuffle_swap_message: "The admins have shuffled the teams automatically and you have been team swapped."
+  team_shuffle_swap_message: "Teams have been shuffled!\n\nThe admins have shuffled the teams automatically and you have been swapped."
 
   swap_on_death_description: "on death"
   swap_immediately_description: "immediately"
@@ -518,9 +518,9 @@ TEAM_SHUFFLE:
   # The following variables are available to fill into the text
   # {player_name}, {steam_id}, {from_team}, {to_team}, {switch_type}
   even_teams_logger_message: "player `{player_name}` (`{from_team}`/`{steam_id}`) was balanced `{from_team}` > `{to_team}` ({switch_type})."
-  shuffle_teams_logger_message: "player `{player['name']}` (`{from_team}/{player['steam_id_64']}`) was shuffled `{from_team}` > `{to_team}`."
+  team_shuffle_logger_message: "player `{player_name}` (`{from_team}/{steam_id}`) was shuffled `{from_team}` > `{to_team}` ({switch_type})."
   
   # The message logged and sent to the webhook when players are swapped
   # The following variables are available to fill into the text
   # {player_name}, {steam_id}
-  failed_swap_logger_message: "Game server failed to swap player `{player['name']}` (`{player['team']}`/`{player['steam_id_64']}`)."
+  failed_swap_logger_message: "Game server failed to swap player `{player_name}` (`{from_team}`/`{steam_id}`)."

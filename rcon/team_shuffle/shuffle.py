@@ -106,11 +106,17 @@ def shuffle_teams(
         rcon_hook,
         redis_store,
         config,
-        team_one_players_to_swap + team_two_players_to_swap,
-        SWAP_TYPE_SHUFFLE,
+        players_to_swap=team_one_players_to_swap + team_two_players_to_swap,
+        swap_type=SWAP_TYPE_SHUFFLE,
+        swap_message=config.team_shuffle_swap_message,
     )
     swap_teamless_players(
-        rcon_hook, redis_store, config, teamless_players, SWAP_TYPE_SHUFFLE
+        rcon_hook,
+        redis_store,
+        config,
+        teamless_players_to_swap=teamless_players,
+        swap_type=SWAP_TYPE_SHUFFLE,
+        swap_message=config.team_shuffle_swap_message,
     )
 
     return (
