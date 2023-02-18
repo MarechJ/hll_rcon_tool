@@ -288,12 +288,12 @@ class Rcon(ServerCtl):
         level: int = data["level"]
         unit_id: int = data["unit_id"]
         loadout: str = data["loadout"]
-        kills: int = data["kills"]
-        deaths: int = data["death"]
-        combat: int = data["combat"]
-        offense: int = data["offense"]
-        defense: int = data["defense"]
-        support: int = data["support"]
+        kills: int = data.get("kills", 0)
+        deaths: int = data.get("deaths", 0)
+        combat: int = data.get("combat", 0)
+        offense: int = data.get("offense", 0)
+        defense: int = data.get("defense", 0)
+        support: int = data.get("support", 0)
 
         return {
             "name": raw_data["name"],
