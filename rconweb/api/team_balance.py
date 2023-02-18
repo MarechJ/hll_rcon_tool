@@ -18,12 +18,12 @@ from rcon.team_shuffle.utils import audit
 from rcon.types import TeamViewPlayerType
 
 # Use existing connections
-from rconweb.api.views import ctl
+from .views import ctl
 
 from .auth import api_response, login_required
 from .utils import _get_data
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("rconweb")
 
 
 @csrf_exempt
@@ -47,7 +47,7 @@ def do_even_teams(request) -> JsonResponse:
     try:
         config = TeamShuffleConfig(**get_config()["TEAM_SHUFFLE"])
     except (KeyError, ValueError) as e:
-        logger.error("Invalid `TEAM_SHUFFLE` configuration in your `config.yml`: {e}")
+        logger.error(f"Invalid `TEAM_SHUFFLE` configuration in your `config.yml`: {e}")
         return api_response(
             None,
             failed=True,
@@ -94,10 +94,13 @@ def do_even_teams(request) -> JsonResponse:
     # TODO: Log specific exceptions
     except SwapRateLimitError as e:
         failed = True
-        logger.error(f"{API_COMMAND_EVEN_TEAM_SIZES} failed {e}")
+        logger.error(f"{API_COMMAND_EVEN_TEAM_SIZES} FAILED {e}")
+    except (KeyError, ValueError, AttributeError) as e:
+        failed = True
+        logger.error(f"{API_COMMAND_EVEN_TEAM_SIZES} FAILED {e}")
     except Exception as e:
         failed = True
-        logger.exception(f"{API_COMMAND_EVEN_TEAM_SIZES} failed {e}")
+        logger.exception(f"{API_COMMAND_EVEN_TEAM_SIZES} FAILED {e}")
         raise e
 
     if not failed:
@@ -144,7 +147,7 @@ def do_shuffle_teams(request) -> JsonResponse:
     try:
         config = TeamShuffleConfig(**get_config()["TEAM_SHUFFLE"])
     except (KeyError, ValueError) as e:
-        logger.error("Invalid `TEAM_SHUFFLE` configuration in your `config.yml`: {e}")
+        logger.error(f"Invalid `TEAM_SHUFFLE` configuration in your `config.yml`: {e}")
         return api_response(
             None,
             failed=True,
@@ -180,23 +183,28 @@ def do_shuffle_teams(request) -> JsonResponse:
     # TODO: Log/catch specific exceptions
     except SwapRateLimitError as e:
         failed = True
-        logger.error(f"{API_COMMAND_EVEN_TEAM_SIZES} failed {e}")
+        logger.error(f"{API_COMMAND_EVEN_TEAM_SIZES} FAILED {e}")
+    except (KeyError, ValueError, AttributeError) as e:
+        failed = True
+        logger.error(f"{API_COMMAND_EVEN_TEAM_SIZES} FAILED")
+        logger.exception(e)
     except Exception:
         failed = True
         logger.error(f"{API_COMMAND_SHUFFLE} FAILED.")
         raise
 
-    logger.info(
-        SWAP_SUCCESSFUL_MSG.format(
-            API_COMMAND_SHUFFLE,
-            len(swapped_axis),
-            len(original_axis),
-            len(swapped_allies),
-            len(original_allies),
-            len(swapped_teamless),
-            len(original_teamless),
+    if not failed:
+        logger.info(
+            SWAP_SUCCESSFUL_MSG.format(
+                API_COMMAND_SHUFFLE,
+                len(swapped_axis),
+                len(original_axis),
+                len(swapped_allies),
+                len(original_allies),
+                len(swapped_teamless),
+                len(original_teamless),
+            )
         )
-    )
 
     return api_response(
         None,
