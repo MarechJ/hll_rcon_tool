@@ -27,7 +27,7 @@ logger = logging.getLogger("rconweb")
 
 
 @csrf_exempt
-@login_required
+@login_required()
 def do_even_teams(request) -> JsonResponse:
     """Parse the incoming request, log the request and then even team sizes."""
     data = _get_data(request)
@@ -51,6 +51,7 @@ def do_even_teams(request) -> JsonResponse:
         return api_response(
             None,
             failed=True,
+            error="Invalid `TEAM_SHUFFLE` configuration in your config.yml.",
             command=API_COMMAND_EVEN_TEAM_SIZES,
             arguments={
                 "rebalance_method": rebalance_method,
@@ -72,6 +73,7 @@ def do_even_teams(request) -> JsonResponse:
     swapped_allies: list[TeamViewPlayerType] = []
     original_teamless: list[TeamViewPlayerType] = []
     swapped_teamless: list[TeamViewPlayerType] = []
+    error: str | None = None
     try:
         (
             original_axis,
@@ -95,9 +97,11 @@ def do_even_teams(request) -> JsonResponse:
     except SwapRateLimitError as e:
         failed = True
         logger.error(f"{API_COMMAND_EVEN_TEAM_SIZES} FAILED {e}")
+        error = f"{API_COMMAND_EVEN_TEAM_SIZES} FAILED {e}"
     except (KeyError, ValueError, AttributeError) as e:
         failed = True
         logger.error(f"{API_COMMAND_EVEN_TEAM_SIZES} FAILED {e}")
+        error = f"{API_COMMAND_EVEN_TEAM_SIZES} FAILED"
     except Exception as e:
         failed = True
         logger.exception(f"{API_COMMAND_EVEN_TEAM_SIZES} FAILED {e}")
@@ -119,6 +123,7 @@ def do_even_teams(request) -> JsonResponse:
     return api_response(
         None,
         failed=failed,
+        error=error,
         command=API_COMMAND_EVEN_TEAM_SIZES,
         arguments={
             "rebalance_method": rebalance_method,
@@ -132,7 +137,7 @@ def do_even_teams(request) -> JsonResponse:
 
 
 @csrf_exempt
-@login_required
+@login_required()
 def do_shuffle_teams(request) -> JsonResponse:
     """Parse the incoming request, log the request and then shuffle teams."""
     data = _get_data(request)
@@ -151,6 +156,7 @@ def do_shuffle_teams(request) -> JsonResponse:
         return api_response(
             None,
             failed=True,
+            error="Invalid `TEAM_SHUFFLE` configuration in your config.yml.",
             command=API_COMMAND_SHUFFLE,
             arguments={"shuffle_method": shuffle_method},
         )
@@ -171,6 +177,7 @@ def do_shuffle_teams(request) -> JsonResponse:
     swapped_allies: list[TeamViewPlayerType] = []
     original_teamless: list[TeamViewPlayerType] = []
     swapped_teamless: list[TeamViewPlayerType] = []
+    error: str | None = None
     try:
         (
             original_axis,
@@ -184,9 +191,11 @@ def do_shuffle_teams(request) -> JsonResponse:
     except SwapRateLimitError as e:
         failed = True
         logger.error(f"{API_COMMAND_EVEN_TEAM_SIZES} FAILED {e}")
+        error = f"{API_COMMAND_EVEN_TEAM_SIZES} FAILED {e}"
     except (KeyError, ValueError, AttributeError) as e:
         failed = True
-        logger.error(f"{API_COMMAND_EVEN_TEAM_SIZES} FAILED")
+        logger.error(f"{API_COMMAND_EVEN_TEAM_SIZES} FAILED {e}")
+        error = f"{API_COMMAND_EVEN_TEAM_SIZES} FAILED"
         logger.exception(e)
     except Exception:
         failed = True
@@ -209,6 +218,7 @@ def do_shuffle_teams(request) -> JsonResponse:
     return api_response(
         None,
         failed=failed,
+        error=error,
         command=API_COMMAND_SHUFFLE,
         arguments={"shuffle_method": shuffle_method},
     )
