@@ -5,8 +5,6 @@ import os
 import unicodedata
 from functools import cmp_to_key
 
-from rcon.commands import CommandFailedError
-
 from sqlalchemy import func
 from sqlalchemy.orm import contains_eager, defaultload
 from sqlalchemy.sql.functions import ReturnTypeFromArgs
@@ -361,7 +359,9 @@ def save_start_player_session(
         )
 
         if already_saved is not None:
-            logger.info(f"Player session starting at {start_time} for player {steam_id_64} already recorded, skipping...")
+            logger.info(
+                f"Player session starting at {start_time} for player {steam_id_64} already recorded, skipping..."
+            )
             return
 
         sess.add(

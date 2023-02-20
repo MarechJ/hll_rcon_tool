@@ -77,6 +77,7 @@ ALL_ROLES = (
 
 ALL_ROLES_KEY_INDEX_MAP = {v: i for i, v in enumerate(ALL_ROLES)}
 
+
 def get_current_map(rcon):
     map_ = rcon.get_map()
 

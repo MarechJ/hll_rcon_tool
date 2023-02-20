@@ -66,9 +66,7 @@ def get_player(request):
         if s := data.get("steam_id_64"):
             res = get_player_profile(s, nb_sessions=nb_sessions)
         else:
-            res = get_player_profile_by_id(
-                data["id"], nb_sessions=nb_sessions
-            )
+            res = get_player_profile_by_id(data["id"], nb_sessions=nb_sessions)
         failed = False
     except:
         logger.exception("Unable to get player %s", data)

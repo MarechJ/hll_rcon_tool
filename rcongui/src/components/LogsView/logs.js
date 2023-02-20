@@ -59,20 +59,24 @@ const Selector = ({
 class Logs extends React.Component {
   constructor(props) {
     super(props);
-    console.log("logs_action_type", JSON.parse(localStorage.getItem("logs_action_type")))
+    console.log(
+      "logs_action_type",
+      JSON.parse(localStorage.getItem("logs_action_type"))
+    );
     this.state = {
       logs: [],
       actions: [],
       players: [],
       playersFilter: localStorage.getItem("logs_player_filters")
-      ? JSON.parse(localStorage.getItem("logs_player_filters"))
-      : [],
+        ? JSON.parse(localStorage.getItem("logs_player_filters"))
+        : [],
       actionsFilter: localStorage.getItem("logs_action_filters")
-      ? JSON.parse(localStorage.getItem("logs_action_filters"))
-      : [],
-      inclusiveFilter: localStorage.getItem("logs_action_type") !== null
-      ? JSON.parse(localStorage.getItem("logs_action_type"))
-      : true,
+        ? JSON.parse(localStorage.getItem("logs_action_filters"))
+        : [],
+      inclusiveFilter:
+        localStorage.getItem("logs_action_type") !== null
+          ? JSON.parse(localStorage.getItem("logs_action_type"))
+          : true,
       limit: localStorage.getItem("logs_limit")
         ? localStorage.getItem("logs_limit")
         : 500,
@@ -121,7 +125,7 @@ class Logs extends React.Component {
 
   setActionsFilterInclusivity(e) {
     this.setState({ inclusiveFilter: e.target.value }, this.loadLogs);
-    localStorage.setItem("logs_action_type", JSON.stringify(e.target.value))
+    localStorage.setItem("logs_action_type", JSON.stringify(e.target.value));
   }
 
   setLimit(limit) {
@@ -131,8 +135,16 @@ class Logs extends React.Component {
 
   render() {
     const { classes, isFullScreen, onFullScreen } = this.props;
-    const { logs, players, actions, actionsFilter, limit, limitOptions, inclusiveFilter, playersFilter } =
-      this.state;
+    const {
+      logs,
+      players,
+      actions,
+      actionsFilter,
+      limit,
+      limitOptions,
+      inclusiveFilter,
+      playersFilter,
+    } = this.state;
 
     return (
       <React.Fragment>
@@ -212,12 +224,14 @@ class Logs extends React.Component {
                 this.setState(
                   { playersFilter: value ? value : "" },
                   this.loadLogs
-                )
+                );
                 if (value) {
-                  localStorage.setItem("logs_player_filters", JSON.stringify(value))
+                  localStorage.setItem(
+                    "logs_player_filters",
+                    JSON.stringify(value)
+                  );
                 }
-              }
-              }
+              }}
               renderInput={(params) => (
                 <TextField
                   className={classes.logsControl}

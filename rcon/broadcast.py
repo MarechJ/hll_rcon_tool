@@ -10,7 +10,6 @@ import redis
 from rcon.audit import ingame_mods, online_mods
 from rcon.cache_utils import get_redis_pool
 from rcon.commands import CommandFailedError
-from rcon.vote_map import VoteMap
 from rcon.settings import SERVER_INFO
 from rcon.user_config import AutoBroadcasts, VoteMapConfig
 from rcon.utils import (
@@ -21,6 +20,7 @@ from rcon.utils import (
     categorize_maps,
     numbered_maps,
 )
+from rcon.vote_map import VoteMap
 
 
 class LazyPrinter:
