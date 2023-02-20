@@ -138,7 +138,8 @@ class ServerCtl:
     @contextmanager
     def with_connection(self) -> HLLConnection:
         logger.debug("Waiting to acquire lock %s", threading.get_ident())
-        self.mu.acquire()
+        if not self.mu.acquire(timeout=30):
+            raise TimeoutError()
 
         if len(self.idles) != 0:
             conn = self.idles.pop()
@@ -161,19 +162,26 @@ class ServerCtl:
                     raise TimeoutError()
                 c += 1
                 time.sleep(1)
-                with self.mu:
-                    idle_len = len(self.idles)
 
-            with self.mu:
-                conn = self.idles.pop()
-                logger.debug("connection appeared in pool: %s, acquiring it", conn.id)
+                if not self.mu.acquire(timeout=30):
+                    raise TimeoutError()
+                idle_len = len(self.idles)
+                self.mu.release()
+
+            if not self.mu.acquire(timeout=30):
+                raise TimeoutError()
+            conn = self.idles.pop()
+            logger.debug("connection appeared in pool: %s, acquiring it", conn.id)
+            self.mu.release()
 
         else:
             conn = HLLConnection()
             logger.debug("Opening a new connection with ID %s", conn.id)
-            self._connect(conn)
-            self.numOpen += 1
-            self.mu.release()
+            try:
+                self._connect(conn)
+                self.numOpen += 1
+            finally:
+                self.mu.release()
 
         ex = None
         try:
@@ -191,7 +199,8 @@ class ServerCtl:
                     threading.get_ident(),
                     e,
                 )
-                self.numOpen -= 1
+                with self.mu:
+                    self.numOpen -= 1
                 conn.close()
                 raise
 
@@ -201,7 +210,8 @@ class ServerCtl:
                     conn.id,
                     threading.get_ident(),
                 )
-                self.numOpen -= 1
+                with self.mu:
+                    self.numOpen -= 1
                 conn.close()
                 if e.__context__ is not None:
                     raise e.__context__
@@ -214,10 +224,12 @@ class ServerCtl:
         )
         if len(self.idles) >= self.maxIdle:
             logger.debug("Enough connections in pool, closing %s", conn.id)
-            self.numOpen -= 1
+            with self.mu:
+                self.numOpen -= 1
             conn.close()
         else:
             logger.debug("Returning connection (%s) to pool", conn.id)
+
             self.idles.append(conn)
 
         if ex is not None:
