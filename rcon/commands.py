@@ -274,7 +274,7 @@ class ServerCtl:
 
         if (decode and result == "FAIL") or (not decode and result == b"FAIL"):
             if can_fail:
-                raise BrokenHllConnection() from CommandFailedError(command)
+                raise CommandFailedError(command)
             else:
                 raise HLLServerError(f"Got FAIL for {command}")
 
