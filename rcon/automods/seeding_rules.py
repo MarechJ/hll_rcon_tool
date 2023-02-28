@@ -82,10 +82,10 @@ class SeedingRulesAutomod:
         disallowed_weapons = set(self.config.disallowed_weapons.weapons.values())
 
         if self.config.announce_seeding_active.enabled and (
-            len(disallowed_weapons) != 0 or len(disallowed_weapons) != 0
+            len(disallowed_roles) != 0 or len(disallowed_weapons) != 0
         ):
             if all(
-                [self._is_seeding_rule_disabled(r) is True for r in SEEDING_RULE_NAMES]
+                [self._is_seeding_rule_disabled(r) for r in SEEDING_RULE_NAMES]
             ):
                 return p
 

@@ -3,6 +3,8 @@ import time
 from threading import Timer
 from typing import List
 
+from redis.client import Redis
+
 from rcon.automods.models import (
     ActionMethod,
     NoLeaderConfig,
@@ -23,7 +25,7 @@ from rcon.settings import SERVER_INFO
 from rcon.types import StructuredLogLineType
 
 logger = logging.getLogger(__name__)
-first_run_done = False
+first_run_done_key = "first_run_done"
 
 
 def get_punitions_to_apply(rcon, moderators) -> PunitionsToApply:
@@ -45,10 +47,10 @@ def get_punitions_to_apply(rcon, moderators) -> PunitionsToApply:
 
 
 def _do_punitions(
-    rcon: RecordedRcon,
-    method: ActionMethod,
-    players: List[PunishPlayer],
-    mods,
+        rcon: RecordedRcon,
+        method: ActionMethod,
+        players: List[PunishPlayer],
+        mods,
 ):
     for aplayer in players:
         try:
@@ -127,6 +129,7 @@ def do_punitions(rcon: RecordedRcon, punitions_to_apply: PunitionsToApply):
 
 def enabled_moderators():
     red = get_redis_client()
+
     try:
         config = get_config()
         no_leader_config = NoLeaderConfig(**config["NOLEADER_AUTO_MOD"])
@@ -146,7 +149,15 @@ def enabled_moderators():
     )
 
 
-def punish_squads(rcon: RecordedRcon):
+def is_first_run_done(r: Redis) -> bool:
+    return r.exists(first_run_done_key) == 1
+
+
+def set_first_run_done(r: Redis):
+    r.setex(first_run_done_key, 4 * 60, "1")
+
+
+def punish_squads(rcon: RecordedRcon, r: Redis):
     mods = enabled_moderators()
     if len(mods) == 0:
         logger.debug("No automod is enabled")
@@ -155,8 +166,7 @@ def punish_squads(rcon: RecordedRcon):
     punitions_to_apply = get_punitions_to_apply(rcon, mods)
 
     do_punitions(rcon, punitions_to_apply)
-    global first_run_done
-    first_run_done = True
+    set_first_run_done(r)
 
 
 def audit(discord_webhook_url: str, msg: str, author: str):
@@ -168,7 +178,8 @@ def audit(discord_webhook_url: str, msg: str, author: str):
 
 @on_kill
 def on_kill(rcon: RecordedRcon, log: StructuredLogLineType):
-    if not first_run_done:
+    red = get_redis_client()
+    if not is_first_run_done(red):
         logger.debug(
             "Kill event received, but not automod run done yet, giving mods time to warmup"
         )
@@ -193,7 +204,8 @@ pendingTimers = {}
 @on_connected
 @inject_player_ids
 def on_connected(rcon: RecordedRcon, _, name: str, steam_id_64: str):
-    if not first_run_done:
+    red = get_redis_client()
+    if not is_first_run_done(red):
         logger.debug(
             "Kill event received, but not automod run done yet, giving mods time to warmup"
         )
@@ -225,17 +237,18 @@ def on_connected(rcon: RecordedRcon, _, name: str, steam_id_64: str):
         return
 
     # The player might not yet have finished connecting in order to send messages.
-    t = Timer(10, notify_player)
+    t = Timer(20, notify_player)
     pendingTimers[steam_id_64] = t
     t.start()
 
 
 def run():
     rcon = RecordedRcon(SERVER_INFO)
+    red = get_redis_client()
 
     while True:
         try:
-            punish_squads(rcon)
+            punish_squads(rcon, red)
             time.sleep(5)
         except Exception:
             logger.exception("Squad automod: Something unexpected happened")
