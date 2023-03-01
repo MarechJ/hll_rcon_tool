@@ -102,7 +102,7 @@ def _can_change_server_settings(user):
 
     Superusers always are able to change server settings, regardles of what other perms
     their account is given."""
-    return user.is_superuser or not user.has_perm("auth.can_not_change_server_settings")
+    return user.is_superuser or not user.has_perm("api.can_not_change_server_settings")
 
 
 @csrf_exempt
