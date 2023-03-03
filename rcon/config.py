@@ -35,8 +35,9 @@ def get_config():
             user_config = yaml.safe_load(stream=f)
     except FileNotFoundError:
         logger.warning("No user config found, defaults only are loaded")
-    except yaml.YAMLError:
+    except yaml.YAMLError as e:
         logger.error("User config at '%s' is invalid YAML", str(user_config_path))
+        logger.error(e)
 
     config.update(user_config)
     return config
