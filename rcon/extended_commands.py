@@ -1133,7 +1133,6 @@ class Rcon(ServerCtl):
             else:
                 raise ValueError(f"Unable to parse line: {raw_line}")
         elif raw_line.startswith("KICK") or raw_line.startswith("BAN"):
-
             if "FOR TEAM KILLING" in raw_line:
                 action = "TK AUTO"
 
@@ -1260,8 +1259,8 @@ class Rcon(ServerCtl):
                 log_line = Rcon.parse_log_line(raw_log_line)
                 parsed_log_lines.append(
                     {
-                        "version": 1,
-                        "timestamp_ms": int(time.timestamp() * 1000),
+                        "version": 3,
+                        "timestamp_ms": int(time.timestamp()),
                         "relative_time_ms": (time - now).total_seconds() * 1000,
                         "raw": raw_relative_time + " " + raw_log_line,
                         "line_without_time": raw_log_line,
