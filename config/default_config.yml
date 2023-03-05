@@ -262,8 +262,8 @@ SEEDING_AUTO_MOD:
   punish_interval_seconds: 60
   # This is the message that will be used in the punish
   # The following variables are available to fill into the text
-  #  {player_name}, {received_punishes}, {max_punishes} and {next_check_seconds}
-  punish_message: "You violated seeding rules on this server.\nYou're being punished by a bot ({received_punishes}/{max_punishes}).\nNext check in {next_check_seconds} seconds"
+  #  {player_name}, {received_punishes}, {max_punishes} and {next_check_seconds}, {violation}
+  punish_message: "You violated seeding rules on this server: {violation}.\nYou're being punished by a bot ({received_punishes}/{max_punishes}).\nNext check in {next_check_seconds} seconds"
 
   # Step number 4
   # Set the below value to false if you don't want to kick players after they reached the max amount of punishes
@@ -327,6 +327,24 @@ SEEDING_AUTO_MOD:
     # The message used when the player is punished.
     #  {weapon}
     message: "{weapon} are not allowed when server is seeding"
+
+  enforce_cap_fight:
+    # the player count of the server needed for this rule to be enforced. The number is inclusive, which means, if you use 5
+    # this rule will be enforced for players 5 to max_players. If there are only 4 players on the server, the rules will
+    # not be enforced.
+    min_players: 5
+    # the player count of the server under which this rule should be enforced. The number is exclusive, which means, if you use 30
+    # this rule will be enforced for players 1 to 29, once the 30 player connected, the rule will not be enforced anymore.
+    max_players: 30
+    # The maximum number of caps a team can have while seeding. When a player gains offensive points while is team has
+    # this number of caps capped, they will be warned/punished by this automod.
+    max_caps: 3
+    # A boolean to indicate if this rule should go straight to punish the player (instead of warn them first). This might be valuable
+    # to enable, as the game will only refresh offensive points (which this rule is based upon) every minute. Capping a point takes 2 minutes in warfare mode.
+    # A player might get warnings, but the damage capping a point with "just" two warnings might justify directly punishing the player.
+    skip_warning: false
+    # The message used when player is punished. There are no parameters available.
+    message: "Attacking 4th cap while seeding is not allowed"
 
 # Set your custom text or transalation for each of the below keys. Logo urls and prefered stats and such
 # If you have more that 3 server copy the whole SERVER_1 section

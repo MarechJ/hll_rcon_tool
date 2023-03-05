@@ -2,6 +2,7 @@ import logging
 import pickle
 from contextlib import contextmanager
 from datetime import datetime, timedelta
+from typing import Literal
 
 import redis
 
@@ -21,10 +22,11 @@ from rcon.automods.num_or_inf import num_or_inf
 from rcon.cache_utils import get_redis_client
 from rcon.extended_commands import StructuredLogLineType
 from rcon.game_logs import on_match_start
+from rcon.types import GameState
 
 SEEDING_RULES_RESET_SECS = 120
 AUTOMOD_USERNAME = "SeedingRulesAutomod"
-SEEDING_RULE_NAMES = ["disallowed_roles", "disallowed_weapons"]
+SEEDING_RULE_NAMES = ["disallowed_roles", "disallowed_weapons", "enforce_cap_fight"]
 
 
 def disabled_rule_key(rule: str) -> str:
@@ -82,10 +84,10 @@ class SeedingRulesAutomod:
         disallowed_weapons = set(self.config.disallowed_weapons.weapons.values())
 
         if self.config.announce_seeding_active.enabled and (
-            len(disallowed_roles) != 0 or len(disallowed_weapons) != 0
+                len(disallowed_roles) != 0 or len(disallowed_weapons) != 0
         ):
             if all(
-                [self._is_seeding_rule_disabled(r) for r in SEEDING_RULE_NAMES]
+                    [self._is_seeding_rule_disabled(r) for r in SEEDING_RULE_NAMES]
             ):
                 return p
 
@@ -161,11 +163,11 @@ class SeedingRulesAutomod:
         return p
 
     def get_message(
-        self,
-        watch_status: WatchStatus,
-        aplayer: PunishPlayer,
-        violation_msg: str,
-        method: ActionMethod,
+            self,
+            watch_status: WatchStatus,
+            aplayer: PunishPlayer,
+            violation_msg: str,
+            method: ActionMethod,
     ):
         data = {
             "violation": violation_msg,
@@ -217,7 +219,7 @@ class SeedingRulesAutomod:
         return v == "1"
 
     def punitions_to_apply(
-        self, team_view, squad_name: str, team: str, squad: dict
+            self, team_view, squad_name: str, team: Literal["axis", "allies"], squad: dict, game_state: GameState
     ) -> PunitionsToApply:
         punitions_to_apply = PunitionsToApply()
         if not squad_name:
@@ -257,15 +259,39 @@ class SeedingRulesAutomod:
                 if server_player_count >= dwc.max_players:
                     self._disable_for_round("disallowed_weapons")
 
+                ecf = self.config.enforce_cap_fight
+                if server_player_count >= ecf.max_players:
+                    self._disable_for_round("enforce_cap_fight")
+
                 violations = []
                 if (
-                    not self._is_seeding_rule_disabled("disallowed_roles")
-                    and drc.min_players <= server_player_count < drc.max_players
+                        not self._is_seeding_rule_disabled("disallowed_roles")
+                        and drc.min_players <= server_player_count < drc.max_players
                 ):
                     if aplayer.role in drc.roles:
                         violations.append(
                             drc.message.format(role=drc.roles.get(aplayer.role))
                         )
+
+                if not self._is_seeding_rule_disabled("enforce_cap_fight") and \
+                        (team == "axis" and game_state["axis_score"]) >= ecf.max_caps or \
+                        (team == "allies" and game_state["allied_score"] >= ecf.max_caps):
+                    self.logger.debug("Player is on " + team + " side and winning")
+                    op = player['offense']
+                    oop = watch_status.offensive_points.setdefault(aplayer.name, 0)
+
+                    self.logger.debug(
+                        "Player had " + str(oop) + " offensive points last and now " + str(op))
+                    if oop != 0 and oop < op:
+                        violations.append(ecf.message)
+
+                        if ecf.skip_warning:
+                            warnings = watch_status.warned.setdefault(aplayer.name, [])
+                            for _ in range(self.config.number_of_warning):
+                                warnings.append(datetime.now() - timedelta(seconds=self.config.warning_interval_seconds + 1))
+                    watch_status.offensive_points[aplayer.name] = op
+                else:
+                    watch_status.offensive_points.clear()
 
                 if len(violations) == 0:
                     continue
@@ -317,7 +343,7 @@ class SeedingRulesAutomod:
         return punitions_to_apply
 
     def should_warn_player(
-        self, watch_status: WatchStatus, squad_name: str, aplayer: PunishPlayer
+            self, watch_status: WatchStatus, squad_name: str, aplayer: PunishPlayer
     ):
         if self.config.number_of_warning == 0:
             self.logger.debug("Warnings are disabled. number_of_warning is set to 0")
@@ -332,8 +358,8 @@ class SeedingRulesAutomod:
             return PunishStepState.WAIT
 
         if (
-            len(warnings) < self.config.number_of_warning
-            or self.config.number_of_warning == -1
+                len(warnings) < self.config.number_of_warning
+                or self.config.number_of_warning == -1
         ):
             self.logger.info(
                 "%s Will be warned (%s/%s)",
@@ -353,10 +379,10 @@ class SeedingRulesAutomod:
         return PunishStepState.GO_TO_NEXT_STEP
 
     def should_punish_player(
-        self,
-        watch_status: WatchStatus,
-        squad_name: str,
-        aplayer: PunishPlayer,
+            self,
+            watch_status: WatchStatus,
+            squad_name: str,
+            aplayer: PunishPlayer,
     ):
         if self.config.number_of_punish == 0:
             self.logger.debug("Punish is disabled")
@@ -369,8 +395,8 @@ class SeedingRulesAutomod:
             return PunishStepState.WAIT
 
         if (
-            len(punishes) < self.config.number_of_punish
-            or self.config.number_of_punish == -1
+                len(punishes) < self.config.number_of_punish
+                or self.config.number_of_punish == -1
         ):
             self.logger.info(
                 "%s Will be punished (%s/%s)",
@@ -390,9 +416,9 @@ class SeedingRulesAutomod:
         return PunishStepState.GO_TO_NEXT_STEP
 
     def should_kick_player(
-        self,
-        watch_status: WatchStatus,
-        aplayer: PunishPlayer,
+            self,
+            watch_status: WatchStatus,
+            aplayer: PunishPlayer,
     ):
         if not self.config.kick_after_max_punish:
             self.logger.debug("Kick is disabled")
@@ -405,7 +431,7 @@ class SeedingRulesAutomod:
             return PunishStepState.DISABLED
 
         if datetime.now() - last_time < timedelta(
-            seconds=self.config.kick_grace_period_seconds
+                seconds=self.config.kick_grace_period_seconds
         ):
             return PunishStepState.WAIT
 

@@ -31,6 +31,7 @@ first_run_done_key = "first_run_done"
 def get_punitions_to_apply(rcon, moderators) -> PunitionsToApply:
     logger.debug("Getting team info")
     team_view = rcon.get_team_view()
+    gamestate = rcon.get_gamestate()
     punitions_to_apply = PunitionsToApply()
 
     for team in ["allies", "axis"]:
@@ -40,7 +41,7 @@ def get_punitions_to_apply(rcon, moderators) -> PunitionsToApply:
         for squad_name, squad in team_view[team]["squads"].items():
             for mod in moderators:
                 punitions_to_apply.merge(
-                    mod.punitions_to_apply(team_view, squad_name, team, squad)
+                    mod.punitions_to_apply(team_view, squad_name, team, squad, gamestate)
                 )
 
     return punitions_to_apply
