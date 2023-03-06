@@ -537,7 +537,7 @@ def auto_ban_if_tks_right_after_connection(
                 logger.debug(
                     "Not counting TK as offense due to elapsed time exclusion, last connection time %s, tk time %s",
                     datetime.datetime.fromtimestamp(last_connect_time / 1000),
-                    datetime.datetime.fromtimestamp(log["timestamp_ms"]),
+                    datetime.datetime.fromtimestamp(log["timestamp_ms"] / 1000),
                 )
                 continue
 
