@@ -273,16 +273,19 @@ class SeedingRulesAutomod:
                             drc.message.format(role=drc.roles.get(aplayer.role))
                         )
 
+                if "offensive" in game_state['current_map'] or game_state['current_map'].startswith("stmariedumont_off"):
+                    self._disable_for_round("enforce_cap_fight")
+
                 if not self._is_seeding_rule_disabled("enforce_cap_fight") and \
                         (team == "axis" and game_state["axis_score"]) >= ecf.max_caps or \
                         (team == "allies" and game_state["allied_score"] >= ecf.max_caps):
                     self.logger.debug("Player is on " + team + " side and winning")
                     op = player['offense']
-                    oop = watch_status.offensive_points.setdefault(aplayer.name, 0)
+                    oop = watch_status.offensive_points.setdefault(aplayer.name, -1)
 
                     self.logger.debug(
                         "Player had " + str(oop) + " offensive points last and now " + str(op))
-                    if oop != 0 and oop < op:
+                    if oop != -1 and oop < op:
                         violations.append(ecf.message)
 
                         if ecf.skip_warning:

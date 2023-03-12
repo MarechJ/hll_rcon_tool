@@ -262,7 +262,7 @@ SEEDING_AUTO_MOD:
   punish_interval_seconds: 60
   # This is the message that will be used in the punish
   # The following variables are available to fill into the text
-  #  {player_name}, {received_punishes}, {max_punishes} and {next_check_seconds}, {violation}
+  #  {player_name}, {received_punishes}, {max_punishes}, {next_check_seconds} and {violation}
   punish_message: "You violated seeding rules on this server: {violation}.\nYou're being punished by a bot ({received_punishes}/{max_punishes}).\nNext check in {next_check_seconds} seconds"
 
   # Step number 4
