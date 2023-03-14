@@ -2,7 +2,7 @@ import logging
 from dataclasses import field
 from datetime import datetime
 from enum import Enum, auto
-from typing import List, Mapping
+from typing import List, Mapping, TypedDict
 
 from pydantic import validator
 from pydantic.dataclasses import dataclass
@@ -22,8 +22,14 @@ class NoSeedingViolation(Exception):
     pass
 
 
+class OffensiveDefensiveState(TypedDict):
+    offensive_points: int
+    defensive_points: int
+
 @dataclass
 class WatchStatus:
+    offensive_points: Mapping[str, int] = field(default_factory=dict)
+
     noted: Mapping[str, List[datetime]] = field(default_factory=dict)
     warned: Mapping[str, List[datetime]] = field(default_factory=dict)
     punished: Mapping[str, List[datetime]] = field(default_factory=dict)
@@ -142,6 +148,15 @@ class DisallowedWeaponConfig:
 
 
 @dataclass
+class EnforceCapFightConfig:
+    min_players: int = 0
+    max_players: int = 0
+    max_caps: int = 3
+    skip_warning: bool = False
+    message: str = ""
+
+
+@dataclass
 class AnnounceSeedingActiveConfig:
     enabled: bool = False
     message: str = ""
@@ -185,6 +200,9 @@ class SeedingRulesConfig:
     )
     disallowed_weapons: DisallowedWeaponConfig = field(
         default_factory=DisallowedWeaponConfig
+    )
+    enforce_cap_fight: EnforceCapFightConfig = field(
+        default_factory=EnforceCapFightConfig
     )
 
 

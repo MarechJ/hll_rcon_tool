@@ -1,6 +1,6 @@
 import time
 from contextlib import contextmanager
-from datetime import datetime
+from datetime import datetime, timedelta
 from unittest.mock import Mock
 
 import pytest
@@ -16,10 +16,10 @@ from rcon.automods.models import (
     PunishPlayer,
     PunitionsToApply,
     SeedingRulesConfig,
-    WatchStatus,
+    WatchStatus, EnforceCapFightConfig,
 )
 from rcon.automods.seeding_rules import SeedingRulesAutomod
-from rcon.types import StructuredLogLineType
+from rcon.types import StructuredLogLineType, GameState
 
 state = {}
 redis_store = {}
@@ -142,6 +142,16 @@ def team_view():
     }
 
 
+game_state: GameState = {
+    'allied_score': 3,
+    'axis_score': 2,
+    'current_map': '',
+    'next_map': '',
+    'num_allied_players': 30,
+    'num_axis_players': 30,
+    'time_remaining': timedelta(10),
+}
+
 line = "[29:42 min (1606340690)] KILL: [CPC] [1.Fjg] FlorianSW(Allies/76561198012102485) -> Karadoc(Axis/76561198080212634) with MK2_Grenade"
 lt = datetime.fromtimestamp(1606340690)
 kill_event_log: StructuredLogLineType = {
@@ -246,7 +256,7 @@ def test_does_nothing_when_enough_players(team_view):
     )
 
     assert PunitionsToApply() == mod.punitions_to_apply(
-        team_view, "able", "allies", team_view["allies"]["squads"]["able"]
+        team_view, "able", "allies", team_view["allies"]["squads"]["able"], game_state
     )
     assert PunitionsToApply() == mod.on_kill(kill_event_log)
 
@@ -270,7 +280,7 @@ def test_does_nothing_when_not_enough_players(team_view):
     )
 
     assert PunitionsToApply() == mod.punitions_to_apply(
-        team_view, "able", "allies", team_view["allies"]["squads"]["able"]
+        team_view, "able", "allies", team_view["allies"]["squads"]["able"], game_state
     )
     assert PunitionsToApply() == mod.on_kill(kill_event_log)
 
@@ -297,7 +307,7 @@ def test_cycles_warn_punish_kick_armor_players(team_view):
     mod = mod_with_config(config)
 
     punitions = mod.punitions_to_apply(
-        team_view, "able", "allies", team_view["allies"]["squads"]["able"]
+        team_view, "able", "allies", team_view["allies"]["squads"]["able"], game_state
     )
     assert expected_warned_players == punitions.warning
     assert [] == punitions.punish
@@ -305,7 +315,7 @@ def test_cycles_warn_punish_kick_armor_players(team_view):
     time.sleep(config.warning_interval_seconds)
 
     punitions = mod.punitions_to_apply(
-        team_view, "able", "allies", team_view["allies"]["squads"]["able"]
+        team_view, "able", "allies", team_view["allies"]["squads"]["able"], game_state
     )
     assert [] == punitions.warning
     assert expected_warned_players == punitions.punish
@@ -313,11 +323,60 @@ def test_cycles_warn_punish_kick_armor_players(team_view):
     time.sleep(config.kick_grace_period_seconds)
 
     punitions = mod.punitions_to_apply(
-        team_view, "able", "allies", team_view["allies"]["squads"]["able"]
+        team_view, "able", "allies", team_view["allies"]["squads"]["able"], game_state
     )
     assert [] == punitions.warning
     assert [] == punitions.punish
     assert expected_warned_players == punitions.kick
+
+
+def test_cycles_warn_punish_kick_cap_fight_players(team_view):
+    config = SeedingRulesConfig(
+        number_of_warning=1,
+        warning_interval_seconds=1,
+        number_of_punish=1,
+        punish_interval_seconds=1,
+        warning_message="",
+        punish_message="",
+        kick_after_max_punish=True,
+        kick_message="",
+        kick_grace_period_seconds=1,
+        discord_webhook_url="",
+        enforce_cap_fight=EnforceCapFightConfig(
+            max_players=get_team_count(team_view, "allies")
+                        + get_team_count(team_view, "axis")
+                        + 1,
+            max_caps=3,
+        ),
+    )
+    mod = mod_with_config(config)
+    mod.punitions_to_apply(team_view, "able", "allies", team_view["allies"]["squads"]["able"], game_state)
+
+    team_view["allies"]["squads"]["able"]['players'][0]['offense'] += 1
+    punitions = mod.punitions_to_apply(
+        team_view, "able", "allies", team_view["allies"]["squads"]["able"], game_state
+    )
+    assert [expected_warned_players[0]] == punitions.warning
+    assert [] == punitions.punish
+    assert [] == punitions.kick
+    time.sleep(config.warning_interval_seconds)
+
+    team_view["allies"]["squads"]["able"]['players'][0]['offense'] += 1
+    punitions = mod.punitions_to_apply(
+        team_view, "able", "allies", team_view["allies"]["squads"]["able"], game_state
+    )
+    assert [] == punitions.warning
+    assert [expected_warned_players[0]] == punitions.punish
+    assert [] == punitions.kick
+    time.sleep(config.kick_grace_period_seconds)
+
+    team_view["allies"]["squads"]["able"]['players'][0]['offense'] += 1
+    punitions = mod.punitions_to_apply(
+        team_view, "able", "allies", team_view["allies"]["squads"]["able"], game_state
+    )
+    assert [] == punitions.warning
+    assert [] == punitions.punish
+    assert [expected_warned_players[0]] == punitions.kick
 
 
 def test_stops_when_no_violations_anymore(team_view):
@@ -342,7 +401,7 @@ def test_stops_when_no_violations_anymore(team_view):
     mod = mod_with_config(config)
 
     punitions = mod.punitions_to_apply(
-        team_view, "able", "allies", team_view["allies"]["squads"]["able"]
+        team_view, "able", "allies", team_view["allies"]["squads"]["able"], game_state
     )
     assert expected_warned_players == punitions.warning
     assert [] == punitions.punish
@@ -352,7 +411,7 @@ def test_stops_when_no_violations_anymore(team_view):
     able = team_view["allies"]["squads"]["able"]
     for p in able["players"]:
         p["role"] = "rifleman"
-    punitions = mod.punitions_to_apply(team_view, "able", "allies", able)
+    punitions = mod.punitions_to_apply(team_view, "able", "allies", able, game_state)
     assert [] == punitions.warning
     assert [] == punitions.punish
     assert [] == punitions.kick
@@ -373,7 +432,7 @@ def test_punishes_when_weapon_disallowed(team_view):
         )
     )
     mod.punitions_to_apply(
-        team_view, "able", "allies", team_view["allies"]["squads"]["able"]
+        team_view, "able", "allies", team_view["allies"]["squads"]["able"], game_state
     )
 
     punitions = mod.on_kill(kill_event_log)
@@ -395,7 +454,7 @@ def test_does_not_punish_when_weapon_allowed(team_view):
         )
     )
     mod.punitions_to_apply(
-        team_view, "able", "allies", team_view["allies"]["squads"]["able"]
+        team_view, "able", "allies", team_view["allies"]["squads"]["able"], game_state
     )
 
     punitions = mod.on_kill(kill_event_log)
@@ -444,7 +503,7 @@ def test_does_not_announces_when_all_disabled(team_view):
         )
     )
     mod.punitions_to_apply(
-        team_view, "able", "allies", team_view["allies"]["squads"]["able"]
+        team_view, "able", "allies", team_view["allies"]["squads"]["able"], game_state
     )
 
     punitions = mod.on_connected("A_NAME", "A_STEAM_ID")
