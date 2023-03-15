@@ -260,6 +260,8 @@ class SeedingRulesAutomod:
                     self._disable_for_round("disallowed_weapons")
 
                 ecf = self.config.enforce_cap_fight
+                if ecf.max_players > server_player_count >= ecf.min_players:
+                    self._enable_for_round("enforce_cap_fight")
                 if server_player_count >= ecf.max_players:
                     self._disable_for_round("enforce_cap_fight")
 
@@ -273,12 +275,15 @@ class SeedingRulesAutomod:
                             drc.message.format(role=drc.roles.get(aplayer.role))
                         )
 
-                if "offensive" in game_state['current_map'] or game_state['current_map'].startswith("stmariedumont_off"):
+                if "offensive" in game_state['current_map'] or game_state['current_map'].startswith(
+                        "stmariedumont_off"):
                     self._disable_for_round("enforce_cap_fight")
 
                 if not self._is_seeding_rule_disabled("enforce_cap_fight") and \
-                        (team == "axis" and game_state["axis_score"]) >= ecf.max_caps or \
-                        (team == "allies" and game_state["allied_score"] >= ecf.max_caps):
+                        (
+                                (team == "axis" and game_state["axis_score"] >= ecf.max_caps) or
+                                (team == "allies" and game_state["allied_score"] >= ecf.max_caps)
+                        ):
                     self.logger.debug("Player is on " + team + " side and winning")
                     op = player['offense']
                     oop = watch_status.offensive_points.setdefault(aplayer.name, -1)
@@ -291,7 +296,9 @@ class SeedingRulesAutomod:
                         if ecf.skip_warning:
                             warnings = watch_status.warned.setdefault(aplayer.name, [])
                             for _ in range(self.config.number_of_warning):
-                                warnings.append(datetime.now() - timedelta(seconds=self.config.warning_interval_seconds + 1))
+                                warnings.append(
+                                    datetime.now() - timedelta(seconds=self.config.warning_interval_seconds + 1)
+                                )
                     watch_status.offensive_points[aplayer.name] = op
                 else:
                     watch_status.offensive_points.clear()

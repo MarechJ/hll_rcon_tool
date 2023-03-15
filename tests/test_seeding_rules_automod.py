@@ -222,9 +222,8 @@ def fake_exists(k):
     return redis_store.get(k, None) is not None
 
 
-def fake_delete(ks: list[str]):
-    for k in ks:
-        redis_store.pop(k, None)
+def fake_delete(ks: str):
+    redis_store.pop(ks, None)
 
 
 def mod_with_config(c: SeedingRulesConfig) -> SeedingRulesAutomod:
@@ -346,6 +345,7 @@ def test_cycles_warn_punish_kick_cap_fight_players(team_view):
             max_players=get_team_count(team_view, "allies")
                         + get_team_count(team_view, "axis")
                         + 1,
+            min_players=0,
             max_caps=3,
         ),
     )
@@ -377,6 +377,101 @@ def test_cycles_warn_punish_kick_cap_fight_players(team_view):
     assert [] == punitions.warning
     assert [] == punitions.punish
     assert [expected_warned_players[0]] == punitions.kick
+
+
+def test_skips_warning_when_disabled(team_view):
+    config = SeedingRulesConfig(
+        number_of_warning=1,
+        warning_interval_seconds=1,
+        number_of_punish=1,
+        punish_interval_seconds=1,
+        warning_message="",
+        punish_message="",
+        kick_after_max_punish=True,
+        kick_message="",
+        kick_grace_period_seconds=1,
+        discord_webhook_url="",
+        enforce_cap_fight=EnforceCapFightConfig(
+            max_players=get_team_count(team_view, "allies")
+                        + get_team_count(team_view, "axis")
+                        + 1,
+            skip_warning=True,
+            min_players=0,
+            max_caps=3,
+        ),
+    )
+    mod = mod_with_config(config)
+    mod.punitions_to_apply(team_view, "able", "allies", team_view["allies"]["squads"]["able"], game_state)
+
+    team_view["allies"]["squads"]["able"]['players'][0]['offense'] += 1
+    punitions = mod.punitions_to_apply(
+        team_view, "able", "allies", team_view["allies"]["squads"]["able"], game_state
+    )
+    assert [] == punitions.warning
+    assert [expected_warned_players[0]] == punitions.punish
+    assert [] == punitions.kick
+
+
+def test_does_nothing_when_cap_not_reached(team_view):
+    config = SeedingRulesConfig(
+        number_of_warning=1,
+        warning_interval_seconds=1,
+        number_of_punish=1,
+        punish_interval_seconds=1,
+        warning_message="",
+        punish_message="",
+        kick_after_max_punish=True,
+        kick_message="",
+        kick_grace_period_seconds=1,
+        discord_webhook_url="",
+        enforce_cap_fight=EnforceCapFightConfig(
+            max_players=get_team_count(team_view, "allies")
+                        + get_team_count(team_view, "axis")
+                        + 1,
+            max_caps=game_state['allied_score'] + 1,
+        ),
+    )
+    mod = mod_with_config(config)
+    mod.punitions_to_apply(team_view, "able", "allies", team_view["allies"]["squads"]["able"], game_state)
+
+    team_view["allies"]["squads"]["able"]['players'][0]['offense'] += 1
+    punitions = mod.punitions_to_apply(
+        team_view, "able", "allies", team_view["allies"]["squads"]["able"], game_state
+    )
+    assert [] == punitions.warning
+    assert [] == punitions.punish
+    assert [] == punitions.kick
+
+
+def test_stops_when_players_reached(team_view):
+    config = SeedingRulesConfig(
+        number_of_warning=1,
+        warning_interval_seconds=1,
+        number_of_punish=1,
+        punish_interval_seconds=1,
+        warning_message="",
+        punish_message="",
+        kick_after_max_punish=True,
+        kick_message="",
+        kick_grace_period_seconds=1,
+        discord_webhook_url="",
+        enforce_cap_fight=EnforceCapFightConfig(
+            max_players=get_team_count(team_view, "allies")
+                        + get_team_count(team_view, "axis")
+                        - 1,
+            max_caps=3,
+        ),
+    )
+    mod = mod_with_config(config)
+    mod.punitions_to_apply(team_view, "able", "allies", team_view["allies"]["squads"]["able"], game_state)
+
+    team_view["allies"]["squads"]["able"]['players'][0]['offense'] += 1
+    punitions = mod.punitions_to_apply(
+        team_view, "able", "allies", team_view["allies"]["squads"]["able"], game_state
+    )
+    assert [] == punitions.warning
+    assert [] == punitions.punish
+    assert [] == punitions.kick
 
 
 def test_stops_when_no_violations_anymore(team_view):

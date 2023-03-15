@@ -118,14 +118,14 @@ def do_punitions(rcon: RecordedRcon, punitions_to_apply: PunitionsToApply):
         logger.debug("Automod did not suggest any punitions")
 
     _do_punitions(
-        rcon, ActionMethod.MESSAGE, punitions_to_apply.warning, enabled_moderators
+        rcon, ActionMethod.MESSAGE, punitions_to_apply.warning, enabled_moderators()
     )
 
     _do_punitions(
-        rcon, ActionMethod.PUNISH, punitions_to_apply.punish, enabled_moderators
+        rcon, ActionMethod.PUNISH, punitions_to_apply.punish, enabled_moderators()
     )
 
-    _do_punitions(rcon, ActionMethod.KICK, punitions_to_apply.kick, enabled_moderators)
+    _do_punitions(rcon, ActionMethod.KICK, punitions_to_apply.kick, enabled_moderators())
 
 
 def enabled_moderators():
