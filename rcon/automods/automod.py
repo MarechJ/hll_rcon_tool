@@ -38,6 +38,14 @@ def get_punitions_to_apply(rcon, moderators) -> PunitionsToApply:
         if not team_view.get(team):
             continue
 
+        if team_view[team]["commander"] is not None:
+            for mod in moderators:
+                punitions_to_apply.merge(
+                    mod.punitions_to_apply(team_view, "Commander", team, {
+                        "players": [team_view[team]["commander"]]
+                    }, gamestate)
+                )
+
         for squad_name, squad in team_view[team]["squads"].items():
             for mod in moderators:
                 punitions_to_apply.merge(
@@ -118,14 +126,14 @@ def do_punitions(rcon: RecordedRcon, punitions_to_apply: PunitionsToApply):
         logger.debug("Automod did not suggest any punitions")
 
     _do_punitions(
-        rcon, ActionMethod.MESSAGE, punitions_to_apply.warning, enabled_moderators
+        rcon, ActionMethod.MESSAGE, punitions_to_apply.warning, enabled_moderators()
     )
 
     _do_punitions(
-        rcon, ActionMethod.PUNISH, punitions_to_apply.punish, enabled_moderators
+        rcon, ActionMethod.PUNISH, punitions_to_apply.punish, enabled_moderators()
     )
 
-    _do_punitions(rcon, ActionMethod.KICK, punitions_to_apply.kick, enabled_moderators)
+    _do_punitions(rcon, ActionMethod.KICK, punitions_to_apply.kick, enabled_moderators())
 
 
 def enabled_moderators():
