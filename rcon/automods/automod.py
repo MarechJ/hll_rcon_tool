@@ -38,6 +38,14 @@ def get_punitions_to_apply(rcon, moderators) -> PunitionsToApply:
         if not team_view.get(team):
             continue
 
+        if team_view[team]["commander"] is not None:
+            for mod in moderators:
+                punitions_to_apply.merge(
+                    mod.punitions_to_apply(team_view, "Commander", team, {
+                        "players": [team_view[team]["commander"]]
+                    }, gamestate)
+                )
+
         for squad_name, squad in team_view[team]["squads"].items():
             for mod in moderators:
                 punitions_to_apply.merge(

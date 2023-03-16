@@ -221,6 +221,7 @@ class SeedingRulesAutomod:
     def punitions_to_apply(
             self, team_view, squad_name: str, team: Literal["axis", "allies"], squad: dict, game_state: GameState
     ) -> PunitionsToApply:
+        self.logger.info("Squad %s %s", squad_name, squad)
         punitions_to_apply = PunitionsToApply()
         if not squad_name:
             self.logger.info("Skipping None or empty squad %s %s", squad_name, squad)
