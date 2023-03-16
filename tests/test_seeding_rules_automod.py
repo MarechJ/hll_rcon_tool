@@ -116,7 +116,7 @@ def team_view():
         },
         "axis": {
             "combat": 0,
-            "commander": {},
+            "commander": None,
             "count": 0,
             "deaths": 0,
             "defense": 0,
