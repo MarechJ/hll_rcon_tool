@@ -446,7 +446,6 @@ def test_punishes_commander_cap_fight(team_view):
     )] == punitions.warning
     assert [] == punitions.punish
     assert [] == punitions.kick
-    time.sleep(config.warning_interval_seconds)
 
 
 def test_skips_warning_when_disabled(team_view):

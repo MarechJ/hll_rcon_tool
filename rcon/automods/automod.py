@@ -42,7 +42,7 @@ def get_punitions_to_apply(rcon, moderators) -> PunitionsToApply:
             for mod in moderators:
                 punitions_to_apply.merge(
                     mod.punitions_to_apply(team_view, "Commander", team, {
-                        "players": [team_view[team]["commander"]]
+                        "players": [team_view[team]["commander"]],
                     }, gamestate)
                 )
 

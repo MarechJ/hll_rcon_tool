@@ -111,7 +111,7 @@ class NoLeaderAutomod:
         game_state: GameState,
     ) -> PunitionsToApply:
         punitions_to_apply = PunitionsToApply()
-        if squad == -1:
+        if squad_name == "Commander":
             self.logger.debug("Skipping commander")
             return punitions_to_apply
         if not squad_name:
