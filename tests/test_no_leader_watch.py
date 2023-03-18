@@ -1,6 +1,6 @@
 import time
 from contextlib import contextmanager
-from datetime import datetime
+from datetime import datetime, timedelta
 from unittest import mock
 
 from pytest import fixture
@@ -19,6 +19,7 @@ from rcon.automods.models import (
 )
 from rcon.automods.no_leader import NoLeaderAutomod
 from rcon.config import get_config
+from rcon.types import GameState
 
 
 @fixture
@@ -43,8 +44,8 @@ def team_view():
                 "steam_id_64": "76561198192586863",
                 "support": 792,
                 "team": "allies",
-                "unit_id": 0,
-                "unit_name": None,
+                "unit_id": -1,
+                "unit_name": "Commander",
             },
             "count": 46,
             "deaths": 154,
@@ -556,6 +557,16 @@ def team_view():
         },
     }
 
+
+game_state: GameState = {
+    'allied_score': 3,
+    'axis_score': 2,
+    'current_map': '',
+    'next_map': '',
+    'num_allied_players': 30,
+    'num_axis_players': 30,
+    'time_remaining': timedelta(10),
+}
 
 def construct_aplayer(
     player_dict: dict, team_name: str = "allies", squad_name: str = "able"
@@ -1137,6 +1148,33 @@ def test_should_wait_kick(team_view):
         aplayer,
     )
 
+
+def test_ignores_commander(team_view):
+    config = NoLeaderConfig(
+        number_of_notes=0,
+        number_of_warning=1,
+        warning_interval_seconds=3,
+        number_of_punish=2,
+        punish_interval_seconds=4,
+        min_squad_players_for_punish=0,
+        disable_punish_below_server_player_count=0,
+        kick_after_max_punish=True,
+        kick_grace_period_seconds=1,
+        min_squad_players_for_kick=0,
+        disable_kick_below_server_player_count=0,
+        immuned_level_up_to=10,
+        immuned_roles=[],
+        warning_message="",
+        punish_message="",
+        kick_message="",
+    )
+
+    mod = NoLeaderAutomod(config, None)
+    to_apply = mod.punitions_to_apply(team_view, "Commander", "allies", {
+        "players": [team_view["allies"]["commander"]]
+    }, game_state)
+
+    assert to_apply.warning == []
 
 def test_watcher(team_view):
     config = NoLeaderConfig(
