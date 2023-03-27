@@ -97,6 +97,7 @@ class PlayerStatsType(TypedDict):
     most_killed: Optional[dict]
     death_by: Optional[dict]
     weapons: Optional[dict]
+    death_by_weapons: Optional[dict]
 
 
 class MapsType(TypedDict):

@@ -178,6 +178,7 @@ def record_stats_from_map(sess, map_):
                 weapons=stats.get("weapons"),
                 most_killed=stats.get("most_killed"),
                 death_by=stats.get("death_by"),
+                death_by_weapons=stats.get("death_by_weapons"),
             )
             logger.debug(f"Saving stats %s", player_stats)
             player_stat_record = PlayerStats(**player_stats)

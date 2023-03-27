@@ -299,12 +299,14 @@ const RawScores = pure(({ classes, scores }) => {
                 name: "weapons",
                 label: "Weapons",
                 options: {
-                  customBodyRender: (value, tableMeta, updateValue) => {
-                    const pairs = toPairs(value);
-                    return sortBy(pairs, (v) => -v[1])
-                      .map((v) => `${v[0]}: ${v[1]}`)
-                      .join(", ");
-                  },
+                  customBodyRender: commaSeperatedListRenderer,
+                },
+              },
+              {
+                name: "death_by_weapons",
+                label: "Death by Weapons",
+                options: {
+                  customBodyRender: commaSeperatedListRenderer,
                 },
               },
             ]}
@@ -316,6 +318,13 @@ const RawScores = pure(({ classes, scores }) => {
     </Grid>
   );
 });
+
+function commaSeperatedListRenderer(value) {
+  const pairs = toPairs(value);
+  return sortBy(pairs, (v) => -v[1])
+    .map((v) => `${v[0]}: ${v[1]}`)
+    .join(", ");
+}
 
 const Scores = pure(({ classes, scores, durationToHour, type }) => {
   const [highlight, setHighlight] = React.useState(null);
