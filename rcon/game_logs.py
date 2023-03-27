@@ -548,7 +548,7 @@ def auto_ban_if_tks_right_after_connection(
                 )
                 try:
                     rcon.do_perma_ban(
-                        player=player_name,
+                        steam_id_64=player_steam_id,
                         reason=reason,
                         by=author,
                     )
