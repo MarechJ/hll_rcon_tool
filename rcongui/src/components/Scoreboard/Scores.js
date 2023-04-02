@@ -25,6 +25,7 @@ import { pure } from "recompose";
 import { PlayerStatProfile } from "./PlayerStatProfile";
 import MUIDataTable from "mui-datatables";
 import { Button } from "@material-ui/core";
+import { fromJS } from "immutable";
 import { toPairs, sortBy } from "lodash";
 
 export const safeGetSteamProfile = (scoreObj) =>
@@ -220,6 +221,7 @@ const RawScores = pure(({ classes, scores }) => {
             options={{
               filter: false,
               rowsPerPage: rowsPerPage,
+              enableNestedDataAccess: '.',
               selectableRows: "none",
               rowsPerPageOptions: [10, 25, 50, 100, 250, 500, 1000],
               onChangeRowsPerPage: (v) => setRowsPerPage(v),
@@ -240,7 +242,7 @@ const RawScores = pure(({ classes, scores }) => {
             }}
             data={scores ? scores.toJS() : []}
             columns={[
-              { name: "steam_id_64", label: "Steam ID" },
+              { name: "steaminfo.profile.steamid", label: "Steam ID", options: {display: false}, },
               { name: "player", label: "Name" },
               { name: "kills", label: "Kills" },
               { name: "deaths", label: "Deaths" },
