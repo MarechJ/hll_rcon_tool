@@ -63,6 +63,7 @@ class BaseStats:
                 stats["most_killed"].get(log["player2"], 0) + 1
             )
         if self._is_player_death(player, log):
+            stats["death_by_weapons"][log["weapon"]] = stats["death_by_weapons"].get(log["weapon"], 0) + 1
             stats["death_by"][log["player"]] = (
                 stats["death_by"].get(log["player"], 0) + 1
             )
@@ -168,6 +169,7 @@ class BaseStats:
                 "kills": 0,
                 "kills_streak": 0,
                 "deaths": 0,
+                "death_by_weapons": {},
                 "deaths_without_kill_streak": 0,
                 "teamkills": 0,
                 "teamkills_streak": 0,

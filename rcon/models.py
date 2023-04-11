@@ -513,6 +513,7 @@ class PlayerStats(Base):
     most_killed = Column(JSONB)
     death_by = Column(JSONB)
     weapons = Column(JSONB)
+    death_by_weapons = Column(JSONB)
 
     def to_dict(self) -> PlayerStatsType:
         return dict(
@@ -543,6 +544,7 @@ class PlayerStats(Base):
             most_killed=self.most_killed,
             death_by=self.death_by,
             weapons=self.weapons,
+            death_by_weapons=self.death_by_weapons,
         )
 
 
