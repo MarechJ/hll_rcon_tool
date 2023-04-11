@@ -12,7 +12,7 @@ APP_LABEL = "api"
 def delete_default_permissions(apps, schema_editor):
     ContentType = apps.get_model("contenttypes.ContentType")
     Permission = apps.get_model("auth.Permission")
-    RconUser = apps.get_model("api..RconUser")
+    RconUser = apps.get_model("api.RconUser")
     SteamUser = apps.get_model("api.SteamPlayer")
 
     rcon_user_permissions_to_delete = (
