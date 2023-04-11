@@ -4,8 +4,9 @@ import os
 import traceback
 from functools import wraps
 from subprocess import PIPE, run
-from typing import List
+from typing import Callable, List
 
+from django.contrib.auth.decorators import permission_required
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
@@ -14,7 +15,6 @@ from rcon.cache_utils import RedisCached, get_redis_pool
 from rcon.commands import CommandFailedError
 from rcon.config import get_config
 from rcon.discord import send_to_discord_audit
-from rcon.extended_commands import MOD_ALLOWED_CMDS
 from rcon.gtx import GTXFtp
 from rcon.player_history import add_player_to_blacklist, remove_player_from_blacklist
 from rcon.recorded_commands import RecordedRcon
@@ -53,8 +53,9 @@ def set_temp_msg(request, func, name):
     return api_response(failed=failed, error=error, result=None, command=name)
 
 
+# TODO: this is not an exposed endpoint
 @csrf_exempt
-@login_required(True)
+@login_required()
 @record_audit
 def set_name(request):
     data = _get_data(request)
@@ -71,27 +72,31 @@ def set_name(request):
     )
 
 
+# TODO: this is not an exposed endpoint
 @csrf_exempt
-@login_required(True)
+@login_required()
 @record_audit
 def set_temp_broadcast(request):
     return set_temp_msg(request, temporary_broadcast, "set_temp_broadcast")
 
 
+# TODO: this is not an exposed endpoint
 @csrf_exempt
-@login_required(True)
+@login_required()
 @record_audit
 def set_temp_welcome(request):
     return set_temp_msg(request, temporary_welcome, "set_temp_welcome")
 
 
 @csrf_exempt
+@permission_required("api.can_view_crcon_version", raise_exception=True)
 def get_version(request):
     res = run(["git", "describe", "--tags"], stdout=PIPE, stderr=PIPE)
     return api_response(res.stdout.decode(), failed=False, command="get_version")
 
 
 @csrf_exempt
+@permission_required("api.can_view_public_info", raise_exception=True)
 def public_info(request):
     gamestate = ctl.get_gamestate()
     curr_players, max_players = tuple(map(int, ctl.get_slots().split("/")))
@@ -133,7 +138,8 @@ def public_info(request):
 
 
 @csrf_exempt
-@login_required(True)
+@login_required()
+@permission_required("api.can_view_discord_webhooks", raise_exception=True)
 def get_hooks(request):
     return api_response(
         result=DiscordHookConfig.get_all_hook_types(as_dict=True),
@@ -143,7 +149,8 @@ def get_hooks(request):
 
 
 @csrf_exempt
-@login_required(True)
+@login_required()
+@permission_required("api.can_change_discord_webhooks", raise_exception=True)
 @record_audit
 def set_hooks(request):
     data = _get_data(request)
@@ -154,13 +161,14 @@ def set_hooks(request):
     audit("set_hooks", request, data)
     return api_response(
         result=DiscordHookConfig.get_all_hook_types(),
-        command="get_hooks",
+        command="set_hooks",
         failed=False,
     )
 
 
 @csrf_exempt
-@login_required(True)
+@login_required()
+@permission_required("api.can_view_camera_config", raise_exception=True)
 def get_camera_config(request):
     config = CameraConfig()
     return api_response(
@@ -174,7 +182,8 @@ def get_camera_config(request):
 
 
 @csrf_exempt
-@login_required(True)
+@login_required()
+@permission_required("api.can_view_votekick_autotoggle_config", raise_exception=True)
 def get_votekick_autotoggle_config(request):
     config = AutoVoteKickConfig()
     return api_response(
@@ -190,7 +199,8 @@ def get_votekick_autotoggle_config(request):
 
 
 @csrf_exempt
-@login_required(True)
+@login_required()
+@permission_required("api.can_change_votekick_autotoggle_config", raise_exception=True)
 @record_audit
 def set_votekick_autotoggle_config(request):
     config = AutoVoteKickConfig()
@@ -220,7 +230,8 @@ def set_votekick_autotoggle_config(request):
 
 
 @csrf_exempt
-@login_required(True)
+@login_required()
+@permission_required("api.can_change_camera_config", raise_exception=True)
 @record_audit
 def set_camera_config(request):
     config = CameraConfig()
@@ -291,6 +302,7 @@ def _do_watch(request, add: bool):
 
 @csrf_exempt
 @login_required()
+@permission_required("api.can_watch_players", raise_exception=True)
 @record_audit
 def do_watch_player(request):
     return _do_watch(request, add=True)
@@ -298,6 +310,7 @@ def do_watch_player(request):
 
 @csrf_exempt
 @login_required()
+@permission_required("api.can_unwatch_players", raise_exception=True)
 @record_audit
 def do_unwatch_player(request):
     return _do_watch(request, add=False)
@@ -305,6 +318,7 @@ def do_unwatch_player(request):
 
 @csrf_exempt
 @login_required()
+@permission_required("api.can_clear_crcon_cache", raise_exception=True)
 @record_audit
 def clear_cache(request):
     res = RedisCached.clear_all_caches(get_redis_pool())
@@ -320,7 +334,8 @@ def clear_cache(request):
 
 
 @csrf_exempt
-@login_required(True)
+@login_required()
+@permission_required("api.can_view_auto_broadcast_config", raise_exception=True)
 def get_auto_broadcasts_config(request):
     failed = False
     config = None
@@ -347,7 +362,8 @@ def get_auto_broadcasts_config(request):
 
 
 @csrf_exempt
-@login_required(True)
+@login_required()
+@permission_required("api.can_change_auto_broadcast_config", raise_exception=True)
 @record_audit
 def set_auto_broadcasts_config(request):
     failed = False
@@ -379,7 +395,9 @@ def set_auto_broadcasts_config(request):
 
 
 @csrf_exempt
-def get_standard_messages(request):
+# TODO: login required?
+@permission_required("api.can_view_shared_standard_messages", raise_exception=True)
+def get_standard_messages(request) -> JsonResponse:
     failed = False
     data = _get_data(request)
 
@@ -405,7 +423,8 @@ def get_standard_messages(request):
 
 
 @csrf_exempt
-@login_required(True)
+@login_required()
+@permission_required("api.can_change_shared_standard_messages", raise_exception=True)
 @record_audit
 def set_standard_messages(request):
     failed = False
@@ -435,6 +454,7 @@ def set_standard_messages(request):
 
 @csrf_exempt
 @login_required()
+@permission_required("api.can_blacklist_players", raise_exception=True)
 @record_audit
 def blacklist_player(request):
     data = _get_data(request)
@@ -468,6 +488,7 @@ def blacklist_player(request):
 
 @csrf_exempt
 @login_required()
+@permission_required("api.can_unblacklist_players", raise_exception=True)
 @record_audit
 def unblacklist_player(request):
     data = _get_data(request)
@@ -506,8 +527,17 @@ def unblacklist_player(request):
     )
 
 
+# TODO: this seems redundant with do_unban in RecordedRcon?
 @csrf_exempt
 @login_required()
+@permission_required(
+    {
+        "api.can_remove_temp_bans",
+        "api.can_remove_perma_bans",
+        "api.can_unblacklist_players",
+    },
+    raise_exception=True,
+)
 @record_audit
 def unban(request):
     data = _get_data(request)
@@ -569,13 +599,16 @@ def audit(func_name, request, arguments):
 
 
 # This is were all the RCON commands are turned into HTTP endpoints
-def wrap_method(func, parameters, command_name, require_perms=False):
+def expose_api_endpoint(func, command_name, permissions: list[str] | set[str] | str):
     @csrf_exempt
-    @login_required(require_perms)
+    @login_required()
     @auto_record_audit(command_name)
+    @permission_required(permissions, raise_exception=True)
     @wraps(func)
     def wrapper(request):
         logger = logging.getLogger("rconweb")
+        parameters = inspect.signature(func).parameters
+        command_name = func.__name__
         arguments = {}
         data = {}
         failure = False
@@ -631,6 +664,7 @@ def wrap_method(func, parameters, command_name, require_perms=False):
 
 
 @login_required()
+@permission_required("api.can_view_connection_info", raise_exception=True)
 @csrf_exempt
 def get_connection_info(request):
     return api_response(
@@ -645,7 +679,8 @@ def get_connection_info(request):
 
 
 @csrf_exempt
-@login_required(True)
+@login_required()
+@permission_required("api.can_run_raw_commands", raise_exception=True)
 def run_raw_command(request):
     data = _get_data(request)
     command = data.get("command")
@@ -661,6 +696,130 @@ def run_raw_command(request):
             res = "Internal error!\n\n" + traceback.format_exc()
     return HttpResponse(res, content_type="text/plain")
 
+
+ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
+    ctl.get_admin_groups: "api.can_view_admin_groups",
+    ctl.get_logs: "api.can_view_game_logs",
+    ctl.get_timed_logs: "api.can_view_timed_logs",
+    ctl.get_playerids: "api.can_view_playerids",
+    ctl.get_vips_count: "api.can_view_vip_count",
+    ctl.get_player_info: "api.can_view_player_info",
+    ctl.get_detailed_player_info: "api.can_view_detailed_player_info",
+    ctl.get_admin_ids: "api.can_view_admin_ids",
+    ctl.get_online_console_admins: "api.can_view_online_console_admins",
+    ctl.do_add_admin: "api.can_add_admin_roles",
+    ctl.do_remove_admin: "api.can_remove_admin_roles",
+    ctl.get_perma_bans: "api.can_view_perma_bans",
+    ctl.get_temp_bans: "api.can_view_temp_bans",
+    ctl.get_bans: {"api.can_view_temp_bans", "api.can_view_perma_bans"},
+    ctl.do_unban: {
+        "api.can_view_temp_bans",
+        "api.can_view_perma_bans",
+        "api.can_remove_temp_bans",
+        "api.can_remove_perma_bans",
+    },
+    ctl.get_ban: "api.can_view_player_bans",
+    ctl.get_vip_ids: "api.can_view_vip_ids",
+    ctl.do_remove_all_vips: "api.can_remove_all_vips",
+    ctl.get_gamestate: "api.can_view_gamestate",
+    ctl.get_team_sizes: "api.can_view_team_sizes",
+    ctl.get_team_objective_scores: "api.can_view_team_objective_scores",
+    ctl.get_round_time_remaining: "api.can_view_round_time_remaining",
+    ctl.get_next_map: "api.can_view_next_map",
+    ctl.set_map: {
+        "api.can_change_current_map",
+        "api.can_add_map_to_rotation",
+        "api.can_remove_map_from_rotation",
+    },
+    ctl.get_map: "api.can_view_current_map",
+    ctl.get_name: "api.can_view_server_name",
+    ctl.get_team_switch_cooldown: "api.can_view_team_switch_cooldown",
+    ctl.set_team_switch_cooldown: "api.can_change_team_switch_cooldown",
+    ctl.get_autobalance_threshold: "api.can_view_autobalance_threshold",
+    ctl.set_autobalance_threshold: "api.can_change_autobalance_threshold",
+    ctl.get_idle_autokick_time: "api.can_view_idle_autokick_time",
+    ctl.set_idle_autokick_time: "api.can_change_idle_autokick_time",
+    ctl.get_max_ping_autokick: "api.can_view_max_ping_autokick",
+    ctl.set_max_ping_autokick: "api.can_change_max_ping_autokick",
+    ctl.get_queue_length: "api.can_view_queue_length",
+    ctl.set_queue_length: "api.can_change_queue_length",
+    ctl.get_vip_slots_num: "api.can_view_vip_slots",
+    ctl.set_vip_slots_num: "api.can_change_vip_slots",
+    ctl.get_welcome_message: "api.can_view_welcome_message",
+    ctl.set_welcome_message: "api.can_change_welcome_message",
+    ctl.get_broadcast_message: "api.can_view_broadcast_message",
+    ctl.set_broadcast: "api.can_change_broadcast_message",
+    ctl.get_slots: "api.can_view_player_slots",
+    ctl.get_status: "api.can_view_get_status",
+    ctl.get_maps: "api.can_view_all_maps",
+    ctl.get_server_settings: {
+        "api.can_view_team_switch_cooldown",
+        "api.can_view_autobalance_threshold",
+        "api.can_view_autobalance_enabled",
+        "api.can_view_idle_autokick_time",
+        "api.can_view_max_ping_autokick",
+        "api.can_view_queue_length",
+        "api.can_view_vip_slots",
+        "api.can_view_votekick_enabled",
+        "api.can_view_votekick_threshold",
+    },
+    ctl.do_save_setting: {
+        "api.can_change_team_switch_cooldown",
+        "api.can_change_autobalance_threshold",
+        "api.can_change_autobalance_enabled",
+        "api.can_change_idle_autokick_time",
+        "api.can_change_max_ping_autokick",
+        "api.can_change_queue_length",
+        "api.can_change_vip_slots",
+        "api.can_change_votekick_enabled",
+        "api.can_change_votekick_threshold",
+    },
+    ctl.get_structured_logs: "api.can_view_structured_logs",
+    ctl.get_profanities: "api.can_view_profanities",
+    ctl.get_autobalance_enabled: "api.can_view_autobalance_enabled",
+    ctl.get_votekick_enabled: "api.can_view_votekick_enabled",
+    ctl.get_votekick_threshold: "api.can_view_votekick_threshold",
+    ctl.set_autobalance_enabled: "api.can_change_autobalance_enabled",
+    ctl.set_votekick_enabled: "api.can_change_votekick_enabled",
+    ctl.set_votekick_threshold: "api.can_change_votekick_threshold",
+    ctl.do_reset_votekick_threshold: "api.can_reset_votekick_threshold",
+    ctl.set_profanities: {
+        "api.can_view_profanities",
+        "api.can_ban_profanities",
+        "api.can_unban_profanities",
+    },
+    ctl.do_unban_profanities: "api.can_unban_profanities",
+    ctl.do_ban_profanities: "api.can_ban_profanities",
+    ctl.do_remove_temp_ban: "api.can_remove_temp_bans",
+    ctl.do_remove_perma_ban: "api.can_remove_perma_bans",
+    ctl.get_map_rotation: "api.can_view_map_rotation",
+    ctl.do_add_map_to_rotation: "api.can_add_map_to_rotation",
+    ctl.do_remove_map_from_rotation: "api.can_remove_map_from_rotation",
+    ctl.do_remove_maps_from_rotation: "api.can_remove_maps_from_rotation",
+    ctl.do_add_maps_to_rotation: "api.can_add_maps_to_rotation",
+    ctl.set_maprotation: {
+        "api.can_add_map_to_rotation",
+        "api.can_remove_map_from_rotation",
+        "api.can_view_map_rotation",
+    },
+    ctl.get_scoreboard: "api.can_view_scoreboard",
+    ctl.get_teamkills_boards: "api.can_view_teamkills_boards",
+    ctl.get_players_fast: "api.can_view_players",
+    ctl.get_players: "api.can_view_get_players",
+    ctl.get_team_view: "api.can_view_team_view",
+    ctl.do_punish: "api.can_punish_players",
+    ctl.do_kick: "api.can_kick_players",
+    ctl.do_temp_ban: "api.can_temp_ban_players",
+    ctl.do_perma_ban: {
+        "api.can_perma_ban_players",
+        "api.can_blacklist_players",
+    },
+    ctl.do_switch_player_on_death: "api.can_switch_players_on_death",
+    ctl.do_switch_player_now: "api.can_switch_players_immediately",
+    ctl.do_message_player: "api.can_message_players",
+    ctl.do_remove_vip: "api.can_remove_vip",
+    ctl.do_add_vip: "api.can_add_vip",
+}
 
 PREFIXES_TO_EXPOSE = ["get_", "set_", "do_"]
 
@@ -696,18 +855,8 @@ try:
         if not any(name.startswith(prefix) for prefix in PREFIXES_TO_EXPOSE):
             continue
 
-        require_perms = name not in MOD_ALLOWED_CMDS
-
         commands.append(
-            (
-                name,
-                wrap_method(
-                    func,
-                    inspect.signature(func).parameters,
-                    name,
-                    require_perms=require_perms,
-                ),
-            )
+            (name, expose_api_endpoint(func, name, ENDPOINT_PERMISSIONS[func])),
         )
     logger.info("Done Initializing endpoint")
 except:

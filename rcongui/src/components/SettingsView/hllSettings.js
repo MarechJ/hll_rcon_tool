@@ -241,15 +241,25 @@ class HLLSettings extends React.Component {
   }
 
   async saveSetting(name, value) {
-    return postData(`${process.env.REACT_APP_API_URL}do_save_setting`, {
-      name: name,
-      value: value,
+    const endpointToParameters = {
+      set_team_switch_cooldown: "minutes",
+      set_autobalance_threshold: "max_diff",
+      set_autobalance_enabled: "bool_",
+      set_idle_autokick_time: "minutes",
+      set_max_ping_autokick: "max_ms",
+      set_queue_length: "num",
+      set_vip_slots_num: "num",
+      set_votekick_enabled: "bool_",
+      set_votekick_threshold: "threshold_pairs",
+    };
+
+    return postData(`${process.env.REACT_APP_API_URL}${name}`, {
+      [endpointToParameters[name]]: value,
       forward: this.state.forwardSettings,
     })
-      .then((res) =>
-        showResponse(res, `do_save_setting ${name} ${value}`, true)
-      )
-      .catch(handle_http_errors);
+      .then((res) => showResponse(res, `${name} ${value}`, true))
+      .catch(handle_http_errors)
+      .then(this.loadSettings);
   }
 
   async saveVotekickThreshold() {
@@ -496,7 +506,7 @@ class HLLSettings extends React.Component {
             setValue={(val) => this.setState({ teamSwitchCooldownMin: val })}
             saveValue={(val) =>
               this.setState({ teamSwitchCooldownMin: val }, () =>
-                this.saveSetting("team_switch_cooldown", val)
+                this.saveSetting("set_team_switch_cooldown", val)
               )
             }
           />
@@ -517,7 +527,7 @@ class HLLSettings extends React.Component {
             setValue={(val) => this.setState({ autoBalanceThres: val })}
             saveValue={(val) =>
               this.setState({ autoBalanceThres: val }, () =>
-                this.saveSetting("autobalance_threshold", val)
+                this.saveSetting("set_autobalance_threshold", val)
               )
             }
           />
@@ -539,7 +549,10 @@ class HLLSettings extends React.Component {
             setValue={(val) => this.setState({ idleAutokickMin: val })}
             saveValue={(val) =>
               this.setState({ idleAutokickMin: val }, () =>
-                this.saveSetting("idle_autokick_time", val === 0 ? 9999 : val)
+                this.saveSetting(
+                  "set_idle_autokick_time",
+                  val === 0 ? 9999 : val
+                )
               )
             }
           />
@@ -562,7 +575,7 @@ class HLLSettings extends React.Component {
             setValue={(val) => this.setState({ maxPingMs: val })}
             saveValue={(val) =>
               this.setState({ maxPingMs: val }, () =>
-                this.saveSetting("max_ping_autokick", val)
+                this.saveSetting("set_max_ping_autokick", val)
               )
             }
           />
@@ -584,7 +597,7 @@ class HLLSettings extends React.Component {
             setValue={(val) => this.setState({ queueLength: val })}
             saveValue={(val) =>
               this.setState({ queueLength: val }, () =>
-                this.saveSetting("queue_length", val)
+                this.saveSetting("set_queue_length", val)
               )
             }
           />
@@ -605,7 +618,7 @@ class HLLSettings extends React.Component {
             setValue={(val) => this.setState({ vipSlots: val })}
             saveValue={(val) =>
               this.setState({ vipSlots: val }, () =>
-                this.saveSetting("vip_slots_num", val)
+                this.saveSetting("set_vip_slots_num", val)
               )
             }
           />
@@ -617,7 +630,9 @@ class HLLSettings extends React.Component {
             checked={autobalanceEnabled}
             color="secondary"
             handleChange={(v) =>
-              this.saveSetting("autobalance_enabled", v).then(this.loadSettings)
+              this.saveSetting("set_autobalance_enabled", v).then(
+                this.loadSettings
+              )
             }
           />
         </Grid>
@@ -627,7 +642,9 @@ class HLLSettings extends React.Component {
             checked={votekickEnabled}
             color="secondary"
             handleChange={(v) =>
-              this.saveSetting("votekick_enabled", v).then(this.loadSettings)
+              this.saveSetting("set_votekick_enabled", v).then(
+                this.loadSettings
+              )
             }
           />
         </Grid>

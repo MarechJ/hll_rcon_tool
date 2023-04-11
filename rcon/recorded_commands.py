@@ -8,14 +8,15 @@ from dateutil import parser, relativedelta
 
 from rcon.cache_utils import ttl_cache
 from rcon.config import get_config
-from rcon.extended_commands import NAME, STEAMID, Rcon, mod_users_allowed
+from rcon.extended_commands import NAME, STEAMID, Rcon
 from rcon.models import AdvancedConfigOptions, PlayerSteamID, PlayerVIP, enter_session
 from rcon.player_history import (
     add_player_to_blacklist,
     get_profiles,
     safe_save_player_action,
 )
-from rcon.types import EnrichedGetPlayersType
+from rcon.steam_utils import get_players_country_code, get_players_have_bans
+from rcon.types import EnrichedGetPlayersType, GetPlayersType
 from rcon.utils import ALL_ROLES, ALL_ROLES_KEY_INDEX_MAP, get_server_number
 
 logger = getLogger(__name__)
@@ -53,7 +54,25 @@ class RecordedRcon(Rcon):
     def run_in_pool(self, function_name: str, *args, **kwargs):
         return self.thread_pool.submit(getattr(self, function_name), *args, **kwargs)
 
-    @mod_users_allowed
+    @ttl_cache(ttl=2)
+    def get_players_fast(self) -> List[GetPlayersType]:
+        players = {}
+        ids = []
+
+        for name, steam_id_64 in self.get_playerids():
+            players[steam_id_64] = {NAME: name, STEAMID: steam_id_64}
+            ids.append(steam_id_64)
+
+        countries = self.thread_pool.submit(get_players_country_code, ids)
+        bans = self.thread_pool.submit(get_players_have_bans, ids)
+
+        for future in as_completed([countries, bans]):
+            d = future.result()
+            for steamid, data in d.items():
+                players.get(steamid, {}).update(data)
+
+        return list(players.values())
+
     @ttl_cache(ttl=2, cache_falsy=False)
     def get_team_view(self):
         teams = {}
@@ -195,6 +214,8 @@ class RecordedRcon(Rcon):
             steam_id_64=steam_id_64,
         )
         try:
+            # TODO: this will never work when banning by name because they're already removed
+            # from the server before you can get their steam ID
             if not steam_id_64:
                 info = self.get_player_info(player)
                 steam_id_64 = info["steam_id_64"]
@@ -216,7 +237,7 @@ class RecordedRcon(Rcon):
         super().get_players.cache_clear()
 
     def get_players(self) -> List[EnrichedGetPlayersType]:
-        players = super().get_players()
+        players = self.get_players_fast()
 
         vips = set(v["steam_id_64"] for v in super().get_vip_ids())
         steam_ids = [p.get(STEAMID) for p in players if p.get(STEAMID)]

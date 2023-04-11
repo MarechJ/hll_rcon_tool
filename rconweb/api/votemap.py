@@ -1,9 +1,9 @@
+from django.contrib.auth.decorators import permission_required
 from django.views.decorators.csrf import csrf_exempt
 
-from rcon.discord import send_to_discord_audit
 from rcon.vote_map import VoteMap, VoteMapConfig
 
-from .audit_log import auto_record_audit, record_audit
+from .audit_log import record_audit
 from .auth import api_response, login_required
 from .utils import _get_data
 from .views import audit
@@ -31,7 +31,8 @@ def votemap_config():
 
 
 @csrf_exempt
-@login_required(True)
+@login_required()
+@permission_required("api.can_view_votemap_config", raise_exception=True)
 def get_votemap_config(request):
     return api_response(
         failed=False,
@@ -41,7 +42,8 @@ def get_votemap_config(request):
 
 
 @csrf_exempt
-@login_required(True)
+@login_required()
+@permission_required("api.can_change_votemap_config", raise_exception=True)
 @record_audit
 def set_votemap_config(request):
     config = VoteMapConfig()
@@ -80,7 +82,8 @@ def set_votemap_config(request):
 
 
 @csrf_exempt
-@login_required(True)
+@login_required()
+@permission_required("api.can_view_votemap_status", raise_exception=True)
 def get_votemap_status(request):
     v = VoteMap()
     return api_response(
@@ -95,7 +98,8 @@ def get_votemap_status(request):
 
 
 @csrf_exempt
-@login_required(True)
+@login_required()
+@permission_required("api.can_reset_votemap_state", raise_exception=True)
 @record_audit
 def reset_votemap_state(request):
     if request.method != "POST":

@@ -2,34 +2,16 @@ import logging
 import os
 from datetime import datetime, timedelta
 
-from django.http import HttpResponse
+from django.contrib.auth.decorators import permission_required
 from django.views.decorators.csrf import csrf_exempt
 
-from rcon import game_logs
-from rcon.commands import CommandFailedError
 from rcon.config import get_config
-from rcon.discord import send_to_discord_audit
-from rcon.models import (
-    LogLine,
-    Maps,
-    PlayerName,
-    PlayerStats,
-    PlayerSteamID,
-    enter_session,
-)
-from rcon.recorded_commands import RecordedRcon
-from rcon.scoreboard import (
-    LiveStats,
-    TimeWindowStats,
-    current_game_stats,
-    get_cached_live_game_stats,
-)
-from rcon.settings import SERVER_INFO
-from rcon.steam_utils import get_steam_profile
-from rcon.utils import LONG_HUMAN_MAP_NAMES, MapsHistory, map_name
+from rcon.models import Maps, enter_session
+from rcon.scoreboard import LiveStats, TimeWindowStats, get_cached_live_game_stats
+from rcon.utils import LONG_HUMAN_MAP_NAMES, map_name
 
 from .auth import api_response, login_required, stats_login_required
-from .views import _get_data, ctl
+from .views import _get_data
 
 logger = logging.getLogger("rconweb")
 
@@ -146,6 +128,7 @@ def get_live_game_stats(request):
 
 @csrf_exempt
 @login_required()
+@permission_required("api.can_view_date_scoreboard", raise_exception=True)
 def date_scoreboard(request):
     try:
         start = datetime.fromtimestamp(request.GET.get("start"))
