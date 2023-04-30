@@ -359,7 +359,7 @@ class PlayersHistory extends React.Component {
       .catch((error) => toast.error("Unable to connect to API " + error));
   }
 
-  blacklistPlayer(steamId64, reason, comment, player = null) {
+  blacklistPlayer(steamId64, reason, comment) {
     this.postComment(
       steamId64,
       comment,
@@ -367,7 +367,6 @@ class PlayersHistory extends React.Component {
     );
     postData(`${process.env.REACT_APP_API_URL}blacklist_player`, {
       steam_id_64: steamId64,
-      player_name: player,
       reason: reason,
     })
       .then((response) =>
