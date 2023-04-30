@@ -359,7 +359,7 @@ class PlayersHistory extends React.Component {
       .catch((error) => toast.error("Unable to connect to API " + error));
   }
 
-  blacklistPlayer(steamId64, reason, comment) {
+  blacklistPlayer(steamId64, reason, comment, player = null) {
     this.postComment(
       steamId64,
       comment,
@@ -367,6 +367,7 @@ class PlayersHistory extends React.Component {
     );
     postData(`${process.env.REACT_APP_API_URL}blacklist_player`, {
       steam_id_64: steamId64,
+      player_name: player,
       reason: reason,
     })
       .then((response) =>
@@ -469,7 +470,7 @@ class PlayersHistory extends React.Component {
   /* Shortcut function for the grid list */
   onBlacklist(player) {
     return this.setDoConfirmPlayer({
-      playerName: player.get("names").get(0).get("name"),
+      player: player.get("steam_id_64"),
       actionType: "blacklist",
       steam_id_64: player.get("steam_id_64"),
     });
@@ -485,7 +486,7 @@ class PlayersHistory extends React.Component {
 
   onTempBan(player) {
     return this.setDoConfirmPlayer({
-      playerName: player.get("names").get(0).get("name"),
+      player: player.get("steam_id_64"),
       actionType: "temp_ban",
       steam_id_64: player.get("steam_id_64"),
     });
@@ -502,7 +503,7 @@ class PlayersHistory extends React.Component {
   }
   onAddToWatchList(player) {
     return this.setDoConfirmPlayer({
-      playerName: player.get("names").get(0).get("name"),
+      player: player.get("names").get(0).get("name"),
       actionType: "watchlist",
       steam_id_64: player.get("steam_id_64"),
     });
