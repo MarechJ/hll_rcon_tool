@@ -37,7 +37,7 @@ def player_has_flag(player_dict, flag):
     return flag in {flag["flag"] for flag in flags}
 
 
-def get_player(sess, steam_id_64):
+def get_player(sess, steam_id_64) -> PlayerSteamID | None:
     return (
         sess.query(PlayerSteamID)
         .filter(PlayerSteamID.steam_id_64 == steam_id_64)

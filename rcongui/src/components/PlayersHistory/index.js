@@ -228,7 +228,6 @@ class PlayersHistory extends React.Component {
     const steamID64 = player.get("steam_id_64");
     const name = player.get("names").get(0).get("name");
 
-    console.log(`do_add_vip ${expirationTimestamp}`);
     return sendAction("do_add_vip", {
       steam_id_64: steamID64,
       name: name,
@@ -413,16 +412,17 @@ class PlayersHistory extends React.Component {
       .catch((error) => toast.error("Unable to connect to API " + error));
   }
 
-  addToWatchlist(steamId64, reason, comment) {
+  addToWatchlist(steamId64, reason, comment, playerName) {
     this.postComment(steamId64, comment, `PlayerID ${steamId64} watched`);
-    return addPlayerToWatchList(steamId64, reason, null).then(
+    return addPlayerToWatchList(steamId64, reason, playerName).then(
       this._reloadOnSuccess
     );
   }
 
-  removeFromWatchList(steamId64) {
+  removeFromWatchList(steamId64, playerName) {
     postData(`${process.env.REACT_APP_API_URL}do_unwatch_player`, {
       steam_id_64: steamId64,
+      player_name: playerName,
     })
       .then((response) =>
         showResponse(response, `PlayerID ${steamId64} unwatched`, true)
@@ -469,7 +469,7 @@ class PlayersHistory extends React.Component {
   /* Shortcut function for the grid list */
   onBlacklist(player) {
     return this.setDoConfirmPlayer({
-      player: player.get("steam_id_64"),
+      playerName: player.get("names").get(0).get("name"),
       actionType: "blacklist",
       steam_id_64: player.get("steam_id_64"),
     });
@@ -485,7 +485,7 @@ class PlayersHistory extends React.Component {
 
   onTempBan(player) {
     return this.setDoConfirmPlayer({
-      player: player.get("steam_id_64"),
+      playerName: player.get("names").get(0).get("name"),
       actionType: "temp_ban",
       steam_id_64: player.get("steam_id_64"),
     });
@@ -502,13 +502,17 @@ class PlayersHistory extends React.Component {
   }
   onAddToWatchList(player) {
     return this.setDoConfirmPlayer({
-      player: player.get("steam_id_64"),
+      playerName: player.get("names").get(0).get("name"),
       actionType: "watchlist",
       steam_id_64: player.get("steam_id_64"),
     });
   }
+
   onRemoveFromWatchList(player) {
-    return this.removeFromWatchList(player.get("steam_id_64"));
+    return this.removeFromWatchList(
+      player.get("steam_id_64"),
+      player.get("names").get(0).get("name")
+    );
   }
 
   render() {
@@ -623,7 +627,7 @@ class PlayersHistory extends React.Component {
             } else if (actionType === "temp_ban") {
               this.tempBan(steamId64, reason, durationHours, comment);
             } else if (actionType === "watchlist") {
-              this.addToWatchlist(steamId64, reason, comment);
+              this.addToWatchlist(steamId64, reason, comment, player);
             }
             this.setDoConfirmPlayer(false);
           }}
@@ -643,7 +647,6 @@ class PlayersHistory extends React.Component {
           onDeleteVip={this.onDeleteVip}
           handleClose={() => this.setDoVIPPlayer(false)}
           handleConfirm={(playerObj, expirationTimestamp, forwardVIP) => {
-            console.log(`handleConfirm ${expirationTimestamp}`);
             this.addVip(playerObj, expirationTimestamp, forwardVIP);
             this.setDoVIPPlayer(false);
           }}

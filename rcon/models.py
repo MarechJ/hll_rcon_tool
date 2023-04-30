@@ -199,20 +199,24 @@ class WatchList(Base):
     __tablename__ = "player_watchlist"
 
     id = Column(Integer, primary_key=True)
+    modified = Column(DateTime, default=datetime.utcnow)
     playersteamid_id = Column(
         Integer, ForeignKey("steam_id_64.id"), nullable=False, index=True, unique=True
     )
     is_watched = Column(Boolean, nullable=False)
     reason = Column(String, default="")
-    comment = Column(String, default="")
+    by = Column(String)
+    count = Column(Integer, default=0)
 
     def to_dict(self) -> WatchListType:
         return dict(
             id=self.id,
+            modified=self.modified,
             steam_id_64=self.steamid.steam_id_64,
             is_watched=self.is_watched,
             reason=self.reason,
-            comment=self.comment,
+            by=self.by,
+            count=self.count,
         )
 
 
