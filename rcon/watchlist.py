@@ -1,4 +1,3 @@
-import logging
 from datetime import datetime
 
 from discord_webhook import DiscordEmbed
@@ -10,8 +9,6 @@ from rcon.hooks import inject_player_ids
 from rcon.models import WatchList, enter_session
 from rcon.player_history import _get_set_player, get_player
 from rcon.types import PlayerProfileType
-
-logger = logging.getLogger(__name__)
 
 
 @on_connected
