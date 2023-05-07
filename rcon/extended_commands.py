@@ -25,6 +25,8 @@ from rcon.types import (
 )
 from rcon.utils import get_server_number
 
+SYNTHETIC_EVENT_PLAYER_SCORE = "PLAYER SCORE"
+
 STEAMID = "steam_id_64"
 NAME = "name"
 ROLE = "role"
@@ -1223,6 +1225,36 @@ class Rcon(ServerCtl):
                 players.add(player2)
 
             actions.add(log_line["action"])
+
+        for steam_id in players_by_id:
+            player = players_by_id[steam_id]
+            if any(filter(lambda ll: ll['steam_id_64_1'] == steam_id, parsed_log_lines)):
+                continue
+            parsed_log_lines.append(
+                {
+                    "version": 1,
+                    "timestamp_ms": int(datetime.now().timestamp() * 1000),
+                    "relative_time_ms": 0,
+                    "raw": "0 " + SYNTHETIC_EVENT_PLAYER_SCORE,
+                    "line_without_time": SYNTHETIC_EVENT_PLAYER_SCORE,
+                    "action": SYNTHETIC_EVENT_PLAYER_SCORE,
+                    "player": player['name'],
+                    "steam_id_64_1": steam_id,
+                    "player2": None,
+                    "steam_id_64_2": None,
+                    "weapon": None,
+                    "message": None,
+                    "sub_content": None,
+                    "stats": {
+                        "kills": player['kills'],
+                        "deaths": player['deaths'],
+                        "combat": player['combat'],
+                        "offense": player['offense'],
+                        "defense": player['defense'],
+                        "support": player['support'],
+                    },
+                }
+            )
 
         parsed_log_lines.reverse()
 

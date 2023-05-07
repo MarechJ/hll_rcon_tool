@@ -353,6 +353,9 @@ class FixedLenList:
         self.red.lpush(self.key, self.serializer(obj))
         self.red.ltrim(self.key, 0, self.max_len - 1)
 
+    def remove(self, obj):
+        self.red.lrem(self.key, 0, self.serializer(obj))
+
     def __getitem__(self, index):
         if isinstance(index, slice):
             if index.step:

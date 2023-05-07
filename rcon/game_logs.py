@@ -12,7 +12,7 @@ from sqlalchemy.exc import IntegrityError
 from rcon.cache_utils import get_redis_client
 from rcon.config import get_config
 from rcon.discord import send_to_discord_audit
-from rcon.extended_commands import LOG_ACTIONS, Rcon
+from rcon.extended_commands import LOG_ACTIONS, Rcon, SYNTHETIC_EVENT_PLAYER_SCORE
 from rcon.models import LogLine, PlayerSteamID, enter_session
 from rcon.player_history import (
     add_player_to_blacklist,
@@ -151,7 +151,7 @@ class LogLoop:
 
             time.sleep(loop_frequency_secs)
 
-    def record_line(self, log):
+    def record_line(self, log: StructuredLogLineWithMetaData):
         id_ = f"{log['timestamp_ms']}|{log['line_without_time']}"
         if not self.red.sadd(self.duplicate_guard_key, id_):
             # logger.debug("Skipping duplicate: %s", id_)
@@ -167,6 +167,11 @@ class LogLoop:
         elif last_line and last_line["timestamp_ms"] > log["timestamp_ms"]:
             logger.error("Received old log record, ignoring")
             return None
+
+        if log['action'] == SYNTHETIC_EVENT_PLAYER_SCORE:
+            old_events = filter(lambda l: l['action'] == SYNTHETIC_EVENT_PLAYER_SCORE and l['steam_id_64_1'] == log['steam_id_64_1'], self.log_history)
+            for oe in old_events:
+                self.log_history.remove(oe)
 
         self.log_history.add(log)
         return log
@@ -270,6 +275,8 @@ class LogRecorder:
 
     def _save_logs(self, sess, to_store: list[StructuredLogLineWithMetaData]):
         for log in to_store:
+            if log['action'] == SYNTHETIC_EVENT_PLAYER_SCORE:
+                continue
             steamid_1 = self._get_steamid_record(sess, log["steam_id_64_1"])
             steamid_2 = self._get_steamid_record(sess, log["steam_id_64_2"])
             try:
