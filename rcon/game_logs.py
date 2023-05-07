@@ -118,8 +118,7 @@ class LogLoop:
     log_history_key = "log_history"
 
     def __init__(self):
-        self.rcon = Rcon(SERVER_INFO)
-        self.rcon_2 = RecordedRcon(SERVER_INFO)
+        self.rcon = RecordedRcon(SERVER_INFO)
         self.red = get_redis_client()
         self.duplicate_guard_key = "unique_logs"
         self.log_history = self.get_log_history_list()
@@ -200,7 +199,7 @@ class LogLoop:
                     "Triggered %s.%s on %s", hook.__module__, hook.__name__, log["raw"]
                 )
                 started = time.time()
-                hook(self.rcon_2, log)
+                hook(self.rcon, log)
                 logger.debug(
                     "Ran in %.4f seconds %s.%s on %s",
                     time.time() - started,
@@ -289,6 +288,7 @@ class LogRecorder:
                         content=log["message"],
                         server=os.getenv("SERVER_NUMBER"),
                         weapon=log["weapon"],
+                        stats=log['stats'],
                     )
                 )
                 sess.commit()

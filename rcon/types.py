@@ -69,6 +69,7 @@ class DBLogLineType(TypedDict):
     content: str
     server: str
     weapon: str
+    stats: dict
 
 
 class PlayerStatsType(TypedDict):
@@ -200,6 +201,22 @@ class GetPlayersType(TypedDict):
     steam_bans: Optional[SteamBansType]
 
 
+class GetDetailedPlayer(TypedDict):
+    name: str
+    unit_id: Optional[int]
+    unit_name: Optional[str]
+    loadout: Optional[str]
+    team: Optional[str]
+    role: Optional[str]
+    kills: int
+    deaths: int
+    combat: int
+    offense: int
+    defense: int
+    support: int
+    level: int
+
+
 class EnrichedGetPlayersType(GetPlayersType):
     is_vip: bool
     profile: PlayerProfileType
@@ -216,6 +233,15 @@ class StructuredLogLineType(TypedDict):
     sub_content: str | None
 
 
+class LogStats(TypedDict):
+    kills: int
+    deaths: int
+    combat: int
+    offense: int
+    defense: int
+    support: int
+
+
 class StructuredLogLineWithMetaData(TypedDict):
     version: int
     timestamp_ms: int
@@ -230,6 +256,7 @@ class StructuredLogLineWithMetaData(TypedDict):
     weapon: str | None
     message: str
     sub_content: str | None
+    stats: LogStats | None
 
 
 class ParsedLogsType(TypedDict):

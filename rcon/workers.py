@@ -154,7 +154,7 @@ def record_stats_from_map(sess, map_):
                 logger.error("Can't find DB record for %s", steam_id_64)
                 continue
 
-            player_stats = dict(
+            player_stat = dict(
                 playersteamid_id=player_record.id,
                 map_id=map_.id,
                 name=stats.get("player"),
@@ -179,9 +179,13 @@ def record_stats_from_map(sess, map_):
                 most_killed=stats.get("most_killed"),
                 death_by=stats.get("death_by"),
                 death_by_weapons=stats.get("death_by_weapons"),
+                combat=stats.get('combat'),
+                offense=stats.get('offense'),
+                defense=stats.get('defense'),
+                support=stats.get('support'),
             )
-            logger.debug(f"Saving stats %s", player_stats)
-            player_stat_record = PlayerStats(**player_stats)
+            logger.debug(f"Saving stats %s", player_stat)
+            player_stat_record = PlayerStats(**player_stat)
             sess.add(player_stat_record)
         else:
             logger.error("Stat object does not contain a steam id: %s", stats)

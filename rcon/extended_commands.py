@@ -5,7 +5,7 @@ from concurrent.futures import as_completed
 from datetime import datetime, timedelta
 from functools import update_wrapper
 from time import sleep
-from typing import Dict, Iterable, List, Optional, Tuple, Union
+from typing import Dict, Iterable, List, Optional, Tuple, Union, TypedDict
 
 from rcon.cache_utils import get_redis_client, invalidates, ttl_cache
 from rcon.commands import CommandFailedError, ServerCtl, VipId
@@ -21,7 +21,7 @@ from rcon.types import (
     GetPlayersType,
     ParsedLogsType,
     StructuredLogLineType,
-    StructuredLogLineWithMetaData,
+    StructuredLogLineWithMetaData, GetDetailedPlayer,
 )
 from rcon.utils import get_server_number
 
@@ -57,7 +57,6 @@ LOG_ACTIONS = [
     "MESSAGE",
 ]
 logger = logging.getLogger(__name__)
-
 
 MOD_ALLOWED_CMDS = set()
 
@@ -206,7 +205,7 @@ class Rcon(ServerCtl):
             "steam_bans": steam_bans,
         }
 
-    def _get_default_info_dict(self, player):
+    def _get_default_info_dict(self, player) -> GetDetailedPlayer:
         return dict(
             name=player,
             unit_id=None,
@@ -225,7 +224,7 @@ class Rcon(ServerCtl):
 
     @mod_users_allowed
     @ttl_cache(ttl=2, cache_falsy=False)
-    def get_detailed_player_info(self, player):
+    def get_detailed_player_info(self, player) -> GetDetailedPlayer:
         raw = super().get_player_info(player)
         if not raw:
             raise CommandFailedError("Got bad data")
@@ -548,7 +547,7 @@ class Rcon(ServerCtl):
         Map: foy_warfare
         Next Map: stmariedumont_warfare"""
         with invalidates(
-            Rcon.team_sizes, Rcon.team_objective_scores, Rcon.round_time_remaining
+                Rcon.team_sizes, Rcon.team_objective_scores, Rcon.round_time_remaining
         ):
             (
                 raw_team_size,
@@ -828,14 +827,6 @@ class Rcon(ServerCtl):
         except (ValueError, TypeError) as e:
             raise ValueError(f"Time {raw_timestamp} is not a valid integer") from e
 
-    @mod_users_allowed
-    @ttl_cache(ttl=2)
-    def get_structured_logs(
-        self, since_min_ago, filter_action=None, filter_player=None
-    ) -> ParsedLogsType:
-        raw = super().get_logs(since_min_ago)
-        return self.parse_logs(raw, filter_action, filter_player)
-
     @ttl_cache(ttl=60 * 60)
     def get_profanities(self):
         return super().get_profanities()
@@ -920,7 +911,7 @@ class Rcon(ServerCtl):
 
     @mod_users_allowed
     def do_temp_ban(
-        self, player=None, steam_id_64=None, duration_hours=2, reason="", admin_name=""
+            self, player=None, steam_id_64=None, duration_hours=2, reason="", admin_name=""
     ):
         with invalidates(Rcon.get_players, Rcon.get_temp_bans):
             if player and re.match(r"\d+", player):
@@ -964,7 +955,7 @@ class Rcon(ServerCtl):
         return l
 
     def do_add_map_to_rotation(
-        self, map_name, after_map_name: str = None, after_map_name_number: str = None
+            self, map_name, after_map_name: str = None, after_map_name_number: str = None
     ):
         with invalidates(Rcon.get_map_rotation):
             super().do_add_map_to_rotation(
@@ -1014,80 +1005,6 @@ class Rcon(ServerCtl):
             super().do_remove_map_from_rotation(current[0])
 
         return self.get_map_rotation()
-
-    @mod_users_allowed
-    @ttl_cache(ttl=60 * 2)
-    def get_scoreboard(self, minutes=180, sort="ratio"):
-        logs = self.get_structured_logs(minutes, "KILL")
-        scoreboard = []
-        for player in logs["players"]:
-            if not player:
-                continue
-            kills = 0
-            death = 0
-            for log in logs["logs"]:
-                if log["player"] == player:
-                    kills += 1
-                elif log["player2"] == player:
-                    death += 1
-            if kills == 0 and death == 0:
-                continue
-            scoreboard.append(
-                {
-                    "player": player,
-                    "(real) kills": kills,
-                    "(real) death": death,
-                    "ratio": kills / max(death, 1),
-                }
-            )
-
-        scoreboard = sorted(scoreboard, key=lambda o: o[sort], reverse=True)
-        for o in scoreboard:
-            o["ratio"] = "%.2f" % o["ratio"]
-
-        return scoreboard
-
-    @mod_users_allowed
-    @ttl_cache(ttl=60 * 2)
-    def get_teamkills_boards(self, sort="TK Minutes"):
-        logs = self.get_structured_logs(180)
-        scoreboard = []
-        for player in logs["players"]:
-            if not player:
-                continue
-            first_timestamp = float("inf")
-            last_timestamp = 0
-            tk = 0
-            death_by_tk = 0
-            for log in logs["logs"]:
-                if log["player"] == player or log["player2"] == player:
-                    first_timestamp = min(log["timestamp_ms"], first_timestamp)
-                    last_timestamp = max(log["timestamp_ms"], last_timestamp)
-                if log["action"] == "TEAM KILL":
-                    if log["player"] == player:
-                        tk += 1
-                    elif log["player2"] == player:
-                        death_by_tk += 1
-            if tk == 0 and death_by_tk == 0:
-                continue
-            scoreboard.append(
-                {
-                    "player": player,
-                    "Teamkills": tk,
-                    "Death by TK": death_by_tk,
-                    "Estimated play time (minutes)": (last_timestamp - first_timestamp)
-                    // 1000
-                    // 60,
-                    "TK Minutes": tk
-                    / max((last_timestamp - first_timestamp) // 1000 // 60, 1),
-                }
-            )
-
-        scoreboard = sorted(scoreboard, key=lambda o: o[sort], reverse=True)
-        for o in scoreboard:
-            o["TK Minutes"] = "%.2f" % o["TK Minutes"]
-
-        return scoreboard
 
     @staticmethod
     def parse_log_line(raw_line: str) -> StructuredLogLineType:
@@ -1169,8 +1086,8 @@ class Rcon(ServerCtl):
                 player = match.groups()[0]
             # VOTESYS: Player [NoodleArms] Started a vote of type (PVR_Kick_Abuse) against [buscÃ´O-sensei]. VoteID: [2]
             elif match := re.match(
-                Rcon.vote_started_pattern,
-                raw_line,
+                    Rcon.vote_started_pattern,
+                    raw_line,
             ):
                 action = "VOTE STARTED"
                 player, player2 = match.groups()
@@ -1243,7 +1160,7 @@ class Rcon(ServerCtl):
 
     @staticmethod
     def parse_logs(
-        raw_logs: str, filter_action=None, filter_player=None
+            players_by_id: dict[str, GetDetailedPlayer], raw_logs: str, filter_action=None, filter_player=None
     ) -> ParsedLogsType:
         """Parse a chunk of raw gameserver RCON logs"""
         synthetic_actions = LOG_ACTIONS
@@ -1253,11 +1170,22 @@ class Rcon(ServerCtl):
         players: set[str] = set()
 
         for raw_relative_time, raw_timestamp, raw_log_line in Rcon.split_raw_log_lines(
-            raw_logs
+                raw_logs
         ):
             time = Rcon._extract_time(raw_timestamp)
             try:
                 log_line = Rcon.parse_log_line(raw_log_line)
+                stats = {}
+                if players_by_id.get(log_line["steam_id_64_1"], None) is not None:
+                    p: GetDetailedPlayer = players_by_id.get(log_line["steam_id_64_1"])
+                    stats = {
+                        "kills": p['kills'],
+                        "deaths": p['deaths'],
+                        "combat": p['combat'],
+                        "offense": p['offense'],
+                        "defense": p['defense'],
+                        "support": p['support'],
+                    }
                 parsed_log_lines.append(
                     {
                         "version": 1,
@@ -1273,6 +1201,7 @@ class Rcon(ServerCtl):
                         "weapon": log_line["weapon"],
                         "message": log_line["message"],
                         "sub_content": log_line["sub_content"],
+                        "stats": stats,
                     }
                 )
             except ValueError:

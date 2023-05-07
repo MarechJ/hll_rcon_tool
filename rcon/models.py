@@ -384,6 +384,7 @@ class LogLine(Base):
         index=True,
     )
     weapon = Column(String)
+    stats = Column(JSONB)
     raw = Column(String, nullable=False)
     content = Column(String)
     steamid1 = relationship("PlayerSteamID", foreign_keys=[player1_steamid])
@@ -417,6 +418,7 @@ class LogLine(Base):
             content=self.content,
             server=self.server,
             weapon=self.get_weapon(),
+            stats=self.stats,
         )
 
     def compatible_dict(self):
@@ -438,6 +440,7 @@ class LogLine(Base):
             "weapon": self.get_weapon(),
             "message": self.content,
             "sub_content": None,  # TODO
+            "stats": self.stats,
         }
 
 
@@ -510,6 +513,10 @@ class PlayerStats(Base):
     kill_death_ratio = Column(Float)
     longest_life_secs = Column(Integer)
     shortest_life_secs = Column(Integer)
+    combat = Column(Integer)
+    offense = Column(Integer)
+    defense = Column(Integer)
+    support = Column(Integer)
     most_killed = Column(JSONB)
     death_by = Column(JSONB)
     weapons = Column(JSONB)

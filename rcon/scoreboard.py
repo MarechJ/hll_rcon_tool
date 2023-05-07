@@ -5,6 +5,7 @@ import pickle
 import re
 import time
 from dataclasses import dataclass
+from typing import TypedDict
 
 from rcon.cache_utils import get_redis_client, ttl_cache
 from rcon.config import get_config
@@ -17,6 +18,7 @@ from rcon.player_history import (
 )
 from rcon.recorded_commands import RecordedRcon
 from rcon.settings import SERVER_INFO
+from rcon.types import StructuredLogLineWithMetaData, LogStats
 from rcon.utils import MapsHistory
 
 logger = logging.getLogger(__name__)
@@ -145,7 +147,7 @@ class BaseStats:
     def _get_player_first_appearance(self, player):
         raise NotImplementedError("_get_player_first_appearance")
 
-    def get_stats_by_player(self, indexed_logs, players, profiles_by_id):
+    def get_stats_by_player(self, indexed_logs: dict[str, list[StructuredLogLineWithMetaData]], players, profiles_by_id):
         """
         players is expected to be a list of dict, such as:
         [{"steam_id_64": ..., "name": ...}, ...]
@@ -160,7 +162,7 @@ class BaseStats:
         }
         for p in players:
             logger.debug("Crunching stats for %s", p)
-            player_logs = indexed_logs.get(p["name"], [])
+            player_logs: list[StructuredLogLineWithMetaData] = indexed_logs.get(p["name"], [])
             profile = profiles_by_id.get(p.get("steam_id_64"))
             stats = {
                 "player": p["name"],
@@ -187,6 +189,10 @@ class BaseStats:
                 "weapons": {},
                 "death_by": {},
                 "most_killed": {},
+                "combat": 0,
+                "offense": 0,
+                "defense": 0,
+                "support": 0,
             }
 
             streaks = Streaks()
@@ -197,8 +203,20 @@ class BaseStats:
                 processor = actions_processors.get(action, lambda **kargs: None)
                 processor(stats=stats, player=p, log=l)
                 self._streaks_accumulator(p, l, stats, streaks)
+                if l['stats'] is not None and len(l['stats']) != 0:
+                    ps: LogStats = l['stats']
+                    def higher_or_default(name: str):
+                        v = ps.get(name, stats.get(name, 0))
+                        if v > stats[name]:
+                            return v
+                        return stats[name]
 
-            # stats = self._compute_stats(stats)
+                    stats['combat'] = higher_or_default('combat')
+                    stats['offense'] = higher_or_default('offense')
+                    stats['defense'] = higher_or_default('defense')
+                    stats['support'] = higher_or_default('support')
+
+            logger.info(p['name'] + ': ' + str(stats['support']))
             stats_by_player[p["name"]] = self._compute_stats(stats)
 
         return stats_by_player
@@ -254,7 +272,7 @@ class LiveStats(BaseStats):
             >= (now.timestamp() - self._get_player_session_time(player)) * 1000
         )
 
-    def _get_indexed_logs_by_player_for_session(self, now, indexed_players, logs):
+    def _get_indexed_logs_by_player_for_session(self, now, indexed_players, logs: list[StructuredLogLineWithMetaData]) -> dict[str, list[StructuredLogLineWithMetaData]]:
         logs_indexed = {}
         for l in logs:
             player = indexed_players.get(l["player"])
@@ -304,7 +322,7 @@ class LiveStats(BaseStats):
 
             indexed_players = {p["name"]: p for p in players}
             indexed_logs = self._get_indexed_logs_by_player_for_session(
-                now, indexed_players, reversed(logs["logs"])
+                now, indexed_players, list(reversed(logs["logs"]))
             )
 
             return self.get_stats_by_player(indexed_logs, players, profiles_by_id)
