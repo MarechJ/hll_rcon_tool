@@ -297,6 +297,10 @@ const RawScores = pure(({ classes, scores }) => {
                   },
                 },
               },
+              { name: "combat", label: "Combat Effectiveness", options: {display: false} },
+              { name: "support", label: "Support Points", options: {display: false} },
+              { name: "defense", label: "Defensive Points", options: {display: false} },
+              { name: "offense", label: "Offensive Points", options: {display: false} },
               {
                 name: "weapons",
                 label: "Weapons",

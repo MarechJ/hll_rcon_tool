@@ -4,6 +4,7 @@ from sqlalchemy import and_, or_
 
 from rcon import game_logs
 from rcon.commands import CommandFailedError
+from rcon.extended_commands import SYNTHETIC_EVENT_PLAYER_SCORE
 from rcon.models import LogLine, PlayerName, PlayerSteamID, enter_session
 from rcon.recorded_commands import RecordedRcon
 from rcon.settings import SERVER_INFO
@@ -85,16 +86,22 @@ def get_recent_logs(request):
     exact_player_match = data.get("exact_player_match", True)
     exact_action = data.get("exact_action", False)
 
+    logs = game_logs.get_recent_logs(
+        start=start,
+        end=end,
+        player_search=player_search,
+        action_filter=action_filter,
+        exact_player_match=exact_player_match,
+        exact_action=exact_action,
+        inclusive_filter=inclusive_filter,
+    )
+
     return api_response(
-        result=game_logs.get_recent_logs(
-            start=start,
-            end=end,
-            player_search=player_search,
-            action_filter=action_filter,
-            exact_player_match=exact_player_match,
-            exact_action=exact_action,
-            inclusive_filter=inclusive_filter,
-        ),
+        result={
+            "logs": list(filter(lambda l: l['action'] != SYNTHETIC_EVENT_PLAYER_SCORE, logs['logs'])),
+            "players": logs['players'],
+            "actions": logs['actions'],
+        },
         command="get_recent_logs",
         arguments=dict(
             start=start,
