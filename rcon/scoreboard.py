@@ -63,7 +63,9 @@ class BaseStats:
                 stats["most_killed"].get(log["player2"], 0) + 1
             )
         if self._is_player_death(player, log):
-            stats["death_by_weapons"][log["weapon"]] = stats["death_by_weapons"].get(log["weapon"], 0) + 1
+            stats["death_by_weapons"][log["weapon"]] = (
+                stats["death_by_weapons"].get(log["weapon"], 0) + 1
+            )
             stats["death_by"][log["player"]] = (
                 stats["death_by"].get(log["player"], 0) + 1
             )
@@ -125,7 +127,7 @@ class BaseStats:
                 self._process_death_time(log_time, stats)
         if action == "CONNECTED":
             stats["last_spawn"] = log_time
-        if action == "DISCONNETCED":
+        if action == "DISCONNECTED":
             self._process_death_time(log_time, stats, save_spawn=False)
 
         stats["kills_streak"] = max(streaks.kill, stats["kills_streak"])
