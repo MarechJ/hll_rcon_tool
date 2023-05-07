@@ -216,7 +216,6 @@ class BaseStats:
                     stats['defense'] = higher_or_default('defense')
                     stats['support'] = higher_or_default('support')
 
-            logger.info(p['name'] + ': ' + str(stats['support']))
             stats_by_player[p["name"]] = self._compute_stats(stats)
 
         return stats_by_player
