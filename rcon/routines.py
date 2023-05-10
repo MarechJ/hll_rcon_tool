@@ -54,11 +54,9 @@ def run():
     from rcon.settings import SERVER_INFO
 
     rcon = RecordedRcon(SERVER_INFO)
-    # recorder = MapsRecorder(rcon)
 
     while True:
         try:
-            # recorder.detect_map_change()
             toggle_votekick(rcon)
             VoteMap().vote_map_reminder(rcon)
         except CommandFailedError:

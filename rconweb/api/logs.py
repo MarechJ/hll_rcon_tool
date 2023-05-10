@@ -1,17 +1,7 @@
 from dateutil import parser
 from django.views.decorators.csrf import csrf_exempt
-from sqlalchemy import and_, or_
 
 from rcon import game_logs
-from rcon.commands import CommandFailedError
-from rcon.extended_commands import SYNTHETIC_EVENT_PLAYER_SCORE
-from rcon.models import LogLine, PlayerName, PlayerSteamID, enter_session
-from rcon.recorded_commands import RecordedRcon
-from rcon.settings import SERVER_INFO
-from rcon.steam_utils import get_steam_profile
-from rcon.utils import MapsHistory
-
-from .audit_log import auto_record_audit, record_audit
 from .auth import api_csv_response, api_response, login_required
 from .utils import _get_data
 
@@ -98,7 +88,7 @@ def get_recent_logs(request):
 
     return api_response(
         result={
-            "logs": list(filter(lambda l: l['action'] != SYNTHETIC_EVENT_PLAYER_SCORE, logs['logs'])),
+            "logs": logs['logs'],
             "players": logs['players'],
             "actions": logs['actions'],
         },

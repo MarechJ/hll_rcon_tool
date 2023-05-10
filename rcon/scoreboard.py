@@ -5,20 +5,18 @@ import pickle
 import re
 import time
 from dataclasses import dataclass
-from typing import TypedDict
 
-from rcon.cache_utils import get_redis_client, ttl_cache
+from rcon.cache_utils import get_redis_client
 from rcon.config import get_config
 from rcon.game_logs import get_historical_logs_records, get_recent_logs
-from rcon.models import SteamInfo, enter_session
+from rcon.models import enter_session
 from rcon.player_history import (
     _get_profiles,
-    get_player_profile,
     get_player_profile_by_steam_ids,
 )
 from rcon.recorded_commands import RecordedRcon
 from rcon.settings import SERVER_INFO
-from rcon.types import StructuredLogLineWithMetaData, LogStats
+from rcon.types import StructuredLogLineWithMetaData
 from rcon.utils import MapsHistory
 
 logger = logging.getLogger(__name__)
@@ -62,14 +60,14 @@ class BaseStats:
         if self._is_player_kill(player, log):
             stats["weapons"][log["weapon"]] = stats["weapons"].get(log["weapon"], 0) + 1
             stats["most_killed"][log["player2"]] = (
-                stats["most_killed"].get(log["player2"], 0) + 1
+                    stats["most_killed"].get(log["player2"], 0) + 1
             )
         if self._is_player_death(player, log):
             stats["death_by_weapons"][log["weapon"]] = (
-                stats["death_by_weapons"].get(log["weapon"], 0) + 1
+                    stats["death_by_weapons"].get(log["weapon"], 0) + 1
             )
             stats["death_by"][log["player"]] = (
-                stats["death_by"].get(log["player"], 0) + 1
+                    stats["death_by"].get(log["player"], 0) + 1
             )
 
     def _add_tk(self, stats, player, log):
@@ -147,7 +145,8 @@ class BaseStats:
     def _get_player_first_appearance(self, player):
         raise NotImplementedError("_get_player_first_appearance")
 
-    def get_stats_by_player(self, indexed_logs: dict[str, list[StructuredLogLineWithMetaData]], players, profiles_by_id):
+    def get_stats_by_player(self, indexed_logs: dict[str, list[StructuredLogLineWithMetaData]], players,
+                            profiles_by_id):
         """
         players is expected to be a list of dict, such as:
         [{"steam_id_64": ..., "name": ...}, ...]
@@ -203,18 +202,6 @@ class BaseStats:
                 processor = actions_processors.get(action, lambda **kargs: None)
                 processor(stats=stats, player=p, log=l)
                 self._streaks_accumulator(p, l, stats, streaks)
-                if l['stats'] is not None and len(l['stats']) != 0:
-                    ps: LogStats = l['stats']
-                    def higher_or_default(name: str):
-                        v = ps.get(name, stats.get(name, 0))
-                        if v > stats[name]:
-                            return v
-                        return stats[name]
-
-                    stats['combat'] = higher_or_default('combat')
-                    stats['offense'] = higher_or_default('offense')
-                    stats['defense'] = higher_or_default('defense')
-                    stats['support'] = higher_or_default('support')
 
             stats_by_player[p["name"]] = self._compute_stats(stats)
 
@@ -267,11 +254,13 @@ class LiveStats(BaseStats):
                 log["raw"],
             )
         return (
-            log["timestamp_ms"]
-            >= (now.timestamp() - self._get_player_session_time(player)) * 1000
+                log["timestamp_ms"]
+                >= (now.timestamp() - self._get_player_session_time(player)) * 1000
         )
 
-    def _get_indexed_logs_by_player_for_session(self, now, indexed_players, logs: list[StructuredLogLineWithMetaData]) -> dict[str, list[StructuredLogLineWithMetaData]]:
+    def _get_indexed_logs_by_player_for_session(self, now, indexed_players,
+                                                logs: list[StructuredLogLineWithMetaData]) -> dict[
+        str, list[StructuredLogLineWithMetaData]]:
         logs_indexed = {}
         for l in logs:
             player = indexed_players.get(l["player"])
@@ -312,7 +301,7 @@ class LiveStats(BaseStats):
             logger.debug("Oldest session: %s", oldest_session_seconds)
             now = datetime.datetime.now()
             min_timestamp = (
-                now - datetime.timedelta(seconds=oldest_session_seconds)
+                    now - datetime.timedelta(seconds=oldest_session_seconds)
             ).timestamp()
             logger.debug("Min timestamp: %s", min_timestamp)
             logs = get_recent_logs(min_timestamp=min_timestamp)
@@ -345,7 +334,7 @@ class LiveStats(BaseStats):
 
 class TimeWindowStats(BaseStats):
     def _set_start_end_times(
-        self, player, players_times, log, from_, offset_warmup_time_seconds=180
+            self, player, players_times, log, from_, offset_warmup_time_seconds=180
     ):
         if not player:
             return
@@ -394,12 +383,12 @@ class TimeWindowStats(BaseStats):
             return 0
 
     def _get_players_stats_for_logs(
-        self,
-        logs,
-        from_,
-        until,
-        offset_warmup_time_seconds=120,
-        offset_cooldown_time_seconds=100,
+            self,
+            logs,
+            from_,
+            until,
+            offset_warmup_time_seconds=120,
+            offset_cooldown_time_seconds=100,
     ):
         indexed_logs = {}
         players = set()
@@ -524,10 +513,10 @@ def live_stats_loop():
     while True:
         # Keep track of session and game timers seperately
         last_loop_session_seconds = (
-            datetime.datetime.now() - last_loop_session
+                datetime.datetime.now() - last_loop_session
         ).total_seconds()
         last_loop_game_seconds = (
-            datetime.datetime.now() - last_loop_game
+                datetime.datetime.now() - last_loop_game
         ).total_seconds()
 
         if last_loop_session_seconds >= live_session_sleep_seconds:
@@ -567,7 +556,18 @@ def current_game_stats():
         logger.error("No maps information available")
         return {}
 
-    return TimeWindowStats().get_players_stats_from_time(current_map["start"])
+    stats = TimeWindowStats().get_players_stats_from_time(current_map["start"])
+    for name in stats:
+        stat = stats.setdefault(name)
+        map_stat = current_map.get('player_stats', dict()).get(stat['steam_id_64'], None)
+        if map_stat is None:
+            logger.info("No stats for: " + stat['steam_id_64'])
+            continue
+        stat['combat'] = map_stat['combat']
+        stat['offense'] = map_stat['offense']
+        stat['defense'] = map_stat['defense']
+        stat['support'] = map_stat['support']
+    return stats
 
 
 def get_cached_live_game_stats():
@@ -580,8 +580,6 @@ def get_cached_live_game_stats():
 
 if __name__ == "__main__":
     from pprint import pprint
-
-    from dateutil import tz
 
     # pprint(LiveStats().get_current_players_stats())
     pprint(

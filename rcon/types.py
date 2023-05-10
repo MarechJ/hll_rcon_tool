@@ -69,7 +69,6 @@ class DBLogLineType(TypedDict):
     content: str
     server: str
     weapon: str
-    stats: dict
 
 
 class PlayerStatsType(TypedDict):
@@ -237,15 +236,6 @@ class StructuredLogLineType(TypedDict):
     sub_content: str | None
 
 
-class LogStats(TypedDict):
-    kills: int
-    deaths: int
-    combat: int
-    offense: int
-    defense: int
-    support: int
-
-
 class StructuredLogLineWithMetaData(TypedDict):
     version: int
     timestamp_ms: int
@@ -260,7 +250,6 @@ class StructuredLogLineWithMetaData(TypedDict):
     weapon: str | None
     message: str
     sub_content: str | None
-    stats: LogStats | None
 
 
 class ParsedLogsType(TypedDict):

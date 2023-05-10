@@ -9,6 +9,7 @@ from dateutil import relativedelta
 from rq import Queue
 from rq.job import Job
 from sqlalchemy import and_
+from sqlalchemy.orm import Session
 
 from rcon.cache_utils import get_redis_client
 from rcon.models import Maps, PlayerStats, enter_session
@@ -16,6 +17,7 @@ from rcon.player_history import get_player
 from rcon.recorded_commands import RecordedRcon
 from rcon.scoreboard import TimeWindowStats
 from rcon.settings import SERVER_INFO
+from rcon.utils import MapInfo, PlayerStat
 
 logger = logging.getLogger("rcon")
 
@@ -97,12 +99,12 @@ def get_or_create_map(sess, start, end, server_number, map_name):
     return map_
 
 
-def record_stats_worker(map_info):
+def record_stats_worker(map_info: MapInfo):
     queue = get_queue()
     queue.enqueue_in(timedelta(seconds=60 * 6), record_stats, map_info)
 
 
-def record_stats(map_info):
+def record_stats(map_info: MapInfo):
     logger.info("Recording stats for %s", map_info)
     try:
         _record_stats(map_info)
@@ -111,7 +113,7 @@ def record_stats(map_info):
         logger.exception("Unexpected error while recording stats for %s", map_info)
 
 
-def _record_stats(map_info=None, map=None):
+def _record_stats(map_info: MapInfo):
     start = datetime.datetime.utcfromtimestamp(map_info.get("start"))
     end = datetime.datetime.utcfromtimestamp(map_info.get("end"))
 
@@ -127,11 +129,11 @@ def _record_stats(map_info=None, map=None):
             server_number=os.getenv("SERVER_NUMBER"),
             map_name=map_info["name"],
         )
-        record_stats_from_map(sess, map_)
+        record_stats_from_map(sess, map_, map_info.get('player_stats', dict()))
         sess.commit()
 
 
-def record_stats_from_map(sess, map_):
+def record_stats_from_map(sess: Session, map_, ps: dict[str, PlayerStat] = (), force: bool = False):
     stats = TimeWindowStats()
     player_stats = stats.get_players_stats_at_time(
         from_=map_.start, until=map_.end, server_number=str(map_.server_number)
@@ -154,6 +156,14 @@ def record_stats_from_map(sess, map_):
                 logger.error("Can't find DB record for %s", steam_id_64)
                 continue
 
+            existing: PlayerStats | None = sess\
+                .query(PlayerStats)\
+                .filter(PlayerStats.map_id == map_.id, PlayerStats.playersteamid_id == player_record.id)\
+                .one_or_none()
+            default_stat = PlayerStat(combat=0, offense=0, defense=0, support=0)
+            if existing is not None:
+                default_stat = PlayerStat(combat=existing.combat, offense=existing.offense, defense=existing.defense, support=existing.support)
+            map_stats = ps.get(steam_id_64, default_stat)
             player_stat = dict(
                 playersteamid_id=player_record.id,
                 map_id=map_.id,
@@ -179,14 +189,45 @@ def record_stats_from_map(sess, map_):
                 most_killed=stats.get("most_killed"),
                 death_by=stats.get("death_by"),
                 death_by_weapons=stats.get("death_by_weapons"),
-                combat=stats.get('combat'),
-                offense=stats.get('offense'),
-                defense=stats.get('defense'),
-                support=stats.get('support'),
+                combat=map_stats.get('combat'),
+                offense=map_stats.get('offense'),
+                defense=map_stats.get('defense'),
+                support=map_stats.get('support'),
             )
-            logger.debug(f"Saving stats %s", player_stat)
-            player_stat_record = PlayerStats(**player_stat)
-            sess.add(player_stat_record)
+            if existing is not None and force != True:
+                continue
+            elif existing is not None and force == True:
+                logger.debug(f"Updating stats %s", player_stat)
+                existing.kills = player_stat.get('kills')
+                existing.kills_streak = player_stat.get('kills_streak')
+                existing.deaths = player_stat.get('deaths')
+                existing.deaths_without_kill_streak = player_stat.get('deaths_without_kill_streak')
+                existing.teamkills = player_stat.get('teamkills')
+                existing.teamkills_streak = player_stat.get('teamkills_streak')
+                existing.deaths_by_tk = player_stat.get('deaths_by_tk')
+                existing.deaths_by_tk_streak = player_stat.get('deaths_by_tk_streak')
+                existing.nb_vote_started = player_stat.get('nb_vote_started')
+                existing.nb_voted_yes = player_stat.get('nb_voted_yes')
+                existing.nb_voted_no = player_stat.get('nb_voted_no')
+                existing.time_seconds = player_stat.get('time_seconds')
+                existing.kills = player_stat.get('kills')
+                existing.kills_per_minute = player_stat.get('kills_per_minute')
+                existing.deaths_per_minute = player_stat.get('deaths_per_minute')
+                existing.kill_death_ratio = player_stat.get('kill_death_ratio')
+                existing.longest_life_secs = player_stat.get('longest_life_secs')
+                existing.shortest_life_secs = player_stat.get('shortest_life_secs')
+                existing.weapons = player_stat.get('weapons')
+                existing.most_killed = player_stat.get('most_killed')
+                existing.death_by = player_stat.get('death_by')
+                existing.death_by_weapons = player_stat.get('death_by_weapons')
+                existing.combat = player_stat.get('combat')
+                existing.offense = player_stat.get('offense')
+                existing.defense = player_stat.get('defense')
+                existing.support = player_stat.get('support')
+            else:
+                logger.debug(f"Saving stats %s", player_stat)
+                player_stat_record = PlayerStats(**player_stat)
+                sess.add(player_stat_record)
         else:
             logger.error("Stat object does not contain a steam id: %s", stats)
 

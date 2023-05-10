@@ -58,7 +58,7 @@ class RecordedRcon(Rcon):
     def run_in_pool(self, function_name: str, *args, **kwargs):
         return self.thread_pool.submit(getattr(self, function_name), *args, **kwargs)
 
-    def _get_detailed_players(self) -> GetDetailedPlayers:
+    def get_detailed_players(self) -> GetDetailedPlayers:
         players = self.get_players_fast()
         fail_count = 0
         players_by_id = {}
@@ -87,7 +87,7 @@ class RecordedRcon(Rcon):
     @ttl_cache(ttl=2, cache_falsy=False)
     def get_team_view(self):
         teams = {}
-        (players_by_id, fail_count) = self._get_detailed_players()
+        (players_by_id, fail_count) = self.get_detailed_players()
 
         logger.debug("Getting DB profiles")
         steam_profiles = {
@@ -173,8 +173,7 @@ class RecordedRcon(Rcon):
             self, since_min_ago, filter_action=None, filter_player=None
     ) -> ParsedLogsType:
         raw = super().get_logs(since_min_ago)
-        players = self._get_detailed_players()
-        return self.parse_logs(players['players'], raw, filter_action, filter_player)
+        return self.parse_logs(raw, filter_action, filter_player)
 
     def do_punish(self, player, reason, by):
         res = super().do_punish(player, reason)
