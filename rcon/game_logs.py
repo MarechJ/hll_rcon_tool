@@ -22,8 +22,8 @@ from rcon.player_history import (
 )
 from rcon.recorded_commands import RecordedRcon
 from rcon.settings import SERVER_INFO
-from rcon.types import StructuredLogLineWithMetaData, ParsedLogsType, GetDetailedPlayer
-from rcon.utils import FixedLenList, MapsHistory, PlayerStat
+from rcon.types import StructuredLogLineWithMetaData, ParsedLogsType, GetDetailedPlayer, PlayerStat
+from rcon.utils import FixedLenList, MapsHistory
 
 logger = logging.getLogger(__name__)
 
