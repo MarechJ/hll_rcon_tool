@@ -104,6 +104,21 @@ class PlayerStatsType(TypedDict):
     death_by_weapons: Optional[dict]
 
 
+class PlayerStat(TypedDict):
+    combat: int
+    offense: int
+    defense: int
+    support: int
+
+
+class MapInfo(TypedDict):
+    name: str
+    start: None | float
+    end: None | float
+    guessed: bool
+    player_stats: dict[str, PlayerStat]
+
+
 class MapsType(TypedDict):
     id: int
     creation_time: datetime.datetime
