@@ -87,7 +87,9 @@ class RecordedRcon(Rcon):
     @ttl_cache(ttl=2, cache_falsy=False)
     def get_team_view(self):
         teams = {}
-        (players_by_id, fail_count) = self.get_detailed_players()
+        detailed_players = self.get_detailed_players()
+        players_by_id = detailed_players['players']
+        fail_count = detailed_players['fail_count']
 
         logger.debug("Getting DB profiles")
         steam_profiles = {
