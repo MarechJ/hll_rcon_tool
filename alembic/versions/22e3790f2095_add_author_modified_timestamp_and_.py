@@ -1,7 +1,7 @@
 """Add author modified timestamp and session count to watchlist
 
 Revision ID: 22e3790f2095
-Revises: 028dee0924c2
+Revises: 99643dfdb5c3
 Create Date: 2023-04-28 22:09:29.582135
 
 """
@@ -11,7 +11,7 @@ from sqlalchemy import func
 
 # revision identifiers, used by Alembic.
 revision = "22e3790f2095"
-down_revision = "028dee0924c2"
+down_revision = "99643dfdb5c3"
 branch_labels = None
 depends_on = None
 
