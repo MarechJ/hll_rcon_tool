@@ -165,10 +165,12 @@ class PlayerOptinsType(TypedDict):
 
 class WatchListType(TypedDict):
     id: int
+    modified: datetime.datetime
     steam_id_64: str
     is_watched: bool
     reason: str
-    comment: str
+    by: str
+    count: int
 
 
 class UserConfigType(TypedDict):
