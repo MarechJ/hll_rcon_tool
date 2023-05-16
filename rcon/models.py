@@ -514,6 +514,10 @@ class PlayerStats(Base):
     kill_death_ratio = Column(Float)
     longest_life_secs = Column(Integer)
     shortest_life_secs = Column(Integer)
+    combat = Column(Integer)
+    offense = Column(Integer)
+    defense = Column(Integer)
+    support = Column(Integer)
     most_killed = Column(JSONB)
     death_by = Column(JSONB)
     weapons = Column(JSONB)
@@ -545,6 +549,10 @@ class PlayerStats(Base):
             kill_death_ratio=self.kill_death_ratio,
             longest_life_secs=self.longest_life_secs,
             shortest_life_secs=self.shortest_life_secs,
+            combat=self.combat,
+            offense=self.offense,
+            defense=self.defense,
+            support=self.support,
             most_killed=self.most_killed,
             death_by=self.death_by,
             weapons=self.weapons,

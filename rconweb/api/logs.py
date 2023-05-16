@@ -1,16 +1,7 @@
 from dateutil import parser
 from django.views.decorators.csrf import csrf_exempt
-from sqlalchemy import and_, or_
 
 from rcon import game_logs
-from rcon.commands import CommandFailedError
-from rcon.models import LogLine, PlayerName, PlayerSteamID, enter_session
-from rcon.recorded_commands import RecordedRcon
-from rcon.settings import SERVER_INFO
-from rcon.steam_utils import get_steam_profile
-from rcon.utils import MapsHistory
-
-from .audit_log import auto_record_audit, record_audit
 from .auth import api_csv_response, api_response, login_required
 from .utils import _get_data
 
@@ -85,16 +76,22 @@ def get_recent_logs(request):
     exact_player_match = data.get("exact_player_match", True)
     exact_action = data.get("exact_action", False)
 
+    logs = game_logs.get_recent_logs(
+        start=start,
+        end=end,
+        player_search=player_search,
+        action_filter=action_filter,
+        exact_player_match=exact_player_match,
+        exact_action=exact_action,
+        inclusive_filter=inclusive_filter,
+    )
+
     return api_response(
-        result=game_logs.get_recent_logs(
-            start=start,
-            end=end,
-            player_search=player_search,
-            action_filter=action_filter,
-            exact_player_match=exact_player_match,
-            exact_action=exact_action,
-            inclusive_filter=inclusive_filter,
-        ),
+        result={
+            "logs": logs['logs'],
+            "players": logs['players'],
+            "actions": logs['actions'],
+        },
         command="get_recent_logs",
         arguments=dict(
             start=start,

@@ -3,11 +3,13 @@ import logging
 import os
 import secrets
 from datetime import datetime
+from typing import Generic, TypeVar
 from urllib.parse import urlparse
 
 import redis
 
-from rcon.cache_utils import get_redis_client, get_redis_pool
+from rcon.cache_utils import get_redis_pool
+from rcon.types import MapInfo
 
 logger = logging.getLogger("rcon")
 
@@ -243,7 +245,6 @@ SHORT_HUMAN_MAP_NAMES = {
     "utahbeach_warfare": "Utah",
 }
 
-
 NO_MOD_LONG_HUMAN_MAP_NAMES = {
     "carentan_offensive_ger": "Carentan (GER)",
     "carentan_offensive_us": "Carentan (US)",
@@ -338,8 +339,10 @@ NO_MOD_SHORT_HUMAN_MAP_NAMES = {
     "utahbeach_warfare": "Utah",
 }
 
+T = TypeVar("T")
 
-class FixedLenList:
+
+class FixedLenList(Generic[T]):
     def __init__(
         self, key, max_len=100, serializer=json.dumps, deserializer=json.loads
     ):
@@ -353,7 +356,13 @@ class FixedLenList:
         self.red.lpush(self.key, self.serializer(obj))
         self.red.ltrim(self.key, 0, self.max_len - 1)
 
-    def __getitem__(self, index):
+    def remove(self, obj):
+        self.red.lrem(self.key, 0, self.serializer(obj))
+
+    def update(self, index, obj):
+        self.red.lset(self.key, index, self.serializer(obj))
+
+    def __getitem__(self, index) -> T:
         if isinstance(index, slice):
             if index.step:
                 raise ValueError("Step is not supported")
@@ -382,14 +391,16 @@ class FixedLenList:
         return self.red.llen(self.key)
 
 
-class MapsHistory(FixedLenList):
+class MapsHistory(FixedLenList[MapInfo]):
     def __init__(self, key="maps_history", max_len=500):
         super().__init__(key, max_len)
 
     def save_map_end(self, old_map=None, end_timestamp: int = None):
         ts = end_timestamp or datetime.now().timestamp()
         logger.info("Saving end of map %s at time %s", old_map, ts)
-        prev = self.lpop() or dict(name=old_map, start=None, end=None, guessed=True)
+        prev = self.lpop() or MapInfo(
+            name=old_map, start=None, end=None, guessed=True, player_stats=dict()
+        )
         prev["end"] = ts
         self.lpush(prev)
         return prev
@@ -397,7 +408,9 @@ class MapsHistory(FixedLenList):
     def save_new_map(self, new_map, guessed=True, start_timestamp: int = None):
         ts = start_timestamp or datetime.now().timestamp()
         logger.info("Saving start of new map %s at time %s", new_map, ts)
-        new = dict(name=new_map, start=ts, end=None, guessed=guessed)
+        new = MapInfo(
+            name=new_map, start=ts, end=None, guessed=guessed, player_stats=dict()
+        )
         self.add(new)
         return new
 

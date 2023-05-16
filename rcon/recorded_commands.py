@@ -2,7 +2,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from functools import cached_property
 from logging import getLogger
-from typing import List, Union
+from typing import List, Union, TypedDict
 
 from dateutil import parser, relativedelta
 
@@ -15,10 +15,15 @@ from rcon.player_history import (
     get_profiles,
     safe_save_player_action,
 )
-from rcon.types import EnrichedGetPlayersType
+from rcon.types import EnrichedGetPlayersType, ParsedLogsType, GetPlayersType, GetDetailedPlayer
 from rcon.utils import ALL_ROLES, ALL_ROLES_KEY_INDEX_MAP, get_server_number
 
 logger = getLogger(__name__)
+
+
+class GetDetailedPlayers(TypedDict):
+    players: dict[str, GetDetailedPlayer]
+    fail_count: int
 
 
 class RecordedRcon(Rcon):
@@ -53,13 +58,10 @@ class RecordedRcon(Rcon):
     def run_in_pool(self, function_name: str, *args, **kwargs):
         return self.thread_pool.submit(getattr(self, function_name), *args, **kwargs)
 
-    @mod_users_allowed
-    @ttl_cache(ttl=2, cache_falsy=False)
-    def get_team_view(self):
-        teams = {}
-        players_by_id = {}
+    def get_detailed_players(self) -> GetDetailedPlayers:
         players = self.get_players_fast()
         fail_count = 0
+        players_by_id = {}
 
         futures = {
             self.run_in_pool("get_detailed_player_info", player[NAME]): player
@@ -75,6 +77,17 @@ class RecordedRcon(Rcon):
             player = futures[future]
             player.update(player_data)
             players_by_id[player[STEAMID]] = player
+
+        return {
+            'players': players_by_id,
+            'fail_count': fail_count,
+        }
+
+    @mod_users_allowed
+    @ttl_cache(ttl=2, cache_falsy=False)
+    def get_team_view(self):
+        teams = {}
+        (players_by_id, fail_count) = self.get_detailed_players()
 
         logger.debug("Getting DB profiles")
         steam_profiles = {
@@ -153,6 +166,14 @@ class RecordedRcon(Rcon):
             }
 
         return dict(fail_count=fail_count, **game)
+
+    @mod_users_allowed
+    @ttl_cache(ttl=2)
+    def get_structured_logs(
+            self, since_min_ago, filter_action=None, filter_player=None
+    ) -> ParsedLogsType:
+        raw = super().get_logs(since_min_ago)
+        return self.parse_logs(raw, filter_action, filter_player)
 
     def do_punish(self, player, reason, by):
         res = super().do_punish(player, reason)
