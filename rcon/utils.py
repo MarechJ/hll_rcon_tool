@@ -14,6 +14,13 @@ from rcon.types import MapInfo
 logger = logging.getLogger("rcon")
 
 ALL_MAPS = (
+    "driel_offensive_ger",
+    "driel_offensive_uk",
+    "driel_warfare",
+    "elalamein_offensive_ger",
+    "elalamein_offensive_uk",
+    "elalamein_warfare",
+    # TODO: verify map names
     "carentan_offensive_ger",
     "carentan_offensive_us",
     "carentan_warfare",
@@ -123,6 +130,7 @@ def get_map_side(map_):
 
 
 LOG_MAP_NAMES_TO_MAP = {
+    # TODO: U14 map names
     "CARENTAN OFFENSIVE": "carentan_offensive_ger",
     "CARENTAN WARFARE": "carentan_warfare",
     "FOY OFFENSIVE": "foy_offensive_ger",
@@ -152,6 +160,13 @@ LOG_MAP_NAMES_TO_MAP = {
 }
 
 LONG_HUMAN_MAP_NAMES = {
+    "driel_offensive_ger": "Driel Offensive (GER)",
+    "driel_offensive_uk": "Driel Offensive (UK)",
+    "driel_warfare": "Driel",
+    "elalamein_offensive_ger": "El Alamein Offensive (GER)",
+    "elalamein_offensive_uk": "El Alamein Offensive (UK)",
+    "elalamein_warfare": "El Alamein",
+    # TODO: verify map names
     "carentan_offensive_ger": "Carentan Offensive (GER)",
     "carentan_offensive_us": "Carentan Offensive (US)",
     "carentan_warfare": "Carentan",
@@ -199,6 +214,13 @@ LONG_HUMAN_MAP_NAMES = {
 }
 
 SHORT_HUMAN_MAP_NAMES = {
+    "driel_offensive_ger": "Driel Off. (GER)",
+    "driel_offensive_uk": "Driel Off. (UK)",
+    "driel_warfare": "Driel",
+    "elalamein_offensive_ger": "El Alamein Off. (GER)",
+    "elalamein_offensive_uk": "El Alamein Off. (UK)",
+    "elalamein_warfare": "El Alamein",
+    # TODO: verify map names
     "carentan_offensive_ger": "Carentan Off. (GER)",
     "carentan_offensive_us": "Carentan Off. (US)",
     "carentan_warfare": "Carentan",
@@ -246,6 +268,13 @@ SHORT_HUMAN_MAP_NAMES = {
 }
 
 NO_MOD_LONG_HUMAN_MAP_NAMES = {
+    "driel_offensive_ger": "Driel (GER)",
+    "driel_offensive_uk": "Driel (UK)",
+    "driel_warfare": "Driel",
+    "elalamein_offensive_ger": "El Alamein (GER)",
+    "elalamein_offensive_uk": "El Alamein (UK)",
+    "elalamein_warfare": "El Alamein",
+    # TODO: verify map names
     "carentan_offensive_ger": "Carentan (GER)",
     "carentan_offensive_us": "Carentan (US)",
     "carentan_warfare": "Carentan",
@@ -293,6 +322,13 @@ NO_MOD_LONG_HUMAN_MAP_NAMES = {
 }
 
 NO_MOD_SHORT_HUMAN_MAP_NAMES = {
+    "driel_offensive_ger": "Driel (GER)",
+    "driel_offensive_uk": "Driel (UK)",
+    "driel_warfare": "Driel",
+    "elalamein_offensive_ger": "El Alamein (GER)",
+    "elalamein_offensive_uk": "El Alamein (UK)",
+    "elalamein_warfare": "El Alamein",
+    # TODO: verify map names
     "carentan_offensive_ger": "Carentan (GER)",
     "carentan_offensive_us": "Carentan (US)",
     "carentan_warfare": "Carentan",

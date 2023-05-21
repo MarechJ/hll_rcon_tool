@@ -21,7 +21,8 @@ from rcon.types import (
     GetPlayersType,
     ParsedLogsType,
     StructuredLogLineType,
-    StructuredLogLineWithMetaData, GetDetailedPlayer,
+    StructuredLogLineWithMetaData,
+    GetDetailedPlayer,
 )
 from rcon.utils import get_server_number
 
@@ -547,7 +548,7 @@ class Rcon(ServerCtl):
         Map: foy_warfare
         Next Map: stmariedumont_warfare"""
         with invalidates(
-                Rcon.team_sizes, Rcon.team_objective_scores, Rcon.round_time_remaining
+            Rcon.team_sizes, Rcon.team_objective_scores, Rcon.round_time_remaining
         ):
             (
                 raw_team_size,
@@ -645,6 +646,14 @@ class Rcon(ServerCtl):
             raise CommandFailedError("Server returned wrong data")
 
         return current_map
+
+    @ttl_cache(ttl=60 * 60)
+    def get_current_map_sequence(self):
+        return super().get_current_map_sequence()
+
+    def set_map_shuffle_enabled(self, enabled: str):
+        with invalidates(Rcon.get_current_map_sequence):
+            return super().set_map_shuffle_enabled(enabled)
 
     @mod_users_allowed
     @ttl_cache(ttl=60 * 60)
@@ -911,7 +920,7 @@ class Rcon(ServerCtl):
 
     @mod_users_allowed
     def do_temp_ban(
-            self, player=None, steam_id_64=None, duration_hours=2, reason="", admin_name=""
+        self, player=None, steam_id_64=None, duration_hours=2, reason="", admin_name=""
     ):
         with invalidates(Rcon.get_players, Rcon.get_temp_bans):
             if player and re.match(r"\d+", player):
@@ -955,7 +964,7 @@ class Rcon(ServerCtl):
         return l
 
     def do_add_map_to_rotation(
-            self, map_name, after_map_name: str = None, after_map_name_number: str = None
+        self, map_name, after_map_name: str = None, after_map_name_number: str = None
     ):
         with invalidates(Rcon.get_map_rotation):
             super().do_add_map_to_rotation(
@@ -1086,8 +1095,8 @@ class Rcon(ServerCtl):
                 player = match.groups()[0]
             # VOTESYS: Player [NoodleArms] Started a vote of type (PVR_Kick_Abuse) against [buscÃ´O-sensei]. VoteID: [2]
             elif match := re.match(
-                    Rcon.vote_started_pattern,
-                    raw_line,
+                Rcon.vote_started_pattern,
+                raw_line,
             ):
                 action = "VOTE STARTED"
                 player, player2 = match.groups()
@@ -1160,7 +1169,7 @@ class Rcon(ServerCtl):
 
     @staticmethod
     def parse_logs(
-            raw_logs: str, filter_action=None, filter_player=None
+        raw_logs: str, filter_action=None, filter_player=None
     ) -> ParsedLogsType:
         """Parse a chunk of raw gameserver RCON logs"""
         synthetic_actions = LOG_ACTIONS
@@ -1170,7 +1179,7 @@ class Rcon(ServerCtl):
         players: set[str] = set()
 
         for raw_relative_time, raw_timestamp, raw_log_line in Rcon.split_raw_log_lines(
-                raw_logs
+            raw_logs
         ):
             time = Rcon._extract_time(raw_timestamp)
             try:
