@@ -165,12 +165,17 @@ class LogLoop:
         m = maps[0]
         for steam_id in players:
             player = players.get(steam_id)
-            m.setdefault('player_stats', dict())[steam_id] = PlayerStat(
+            map_players = m.setdefault('player_stats', dict())
+            p = map_players.get(steam_id, PlayerStat(
                 combat=player['combat'],
                 offense=player['offense'],
                 defense=player['defense'],
                 support=player['support']
-            )
+            ))
+            for stat in ['combat', 'offense', 'defense', 'support']:
+                if player[stat] > p[stat]:
+                    p[stat] = player[stat]
+            map_players[steam_id] = p
         maps.update(0, m)
 
     def record_line(self, log: StructuredLogLineWithMetaData):
