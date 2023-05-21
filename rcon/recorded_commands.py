@@ -15,7 +15,12 @@ from rcon.player_history import (
     get_profiles,
     safe_save_player_action,
 )
-from rcon.types import EnrichedGetPlayersType, ParsedLogsType, GetPlayersType, GetDetailedPlayer
+from rcon.types import (
+    EnrichedGetPlayersType,
+    ParsedLogsType,
+    GetPlayersType,
+    GetDetailedPlayer,
+)
 from rcon.utils import ALL_ROLES, ALL_ROLES_KEY_INDEX_MAP, get_server_number
 
 logger = getLogger(__name__)
@@ -79,8 +84,8 @@ class RecordedRcon(Rcon):
             players_by_id[player[STEAMID]] = player
 
         return {
-            'players': players_by_id,
-            'fail_count': fail_count,
+            "players": players_by_id,
+            "fail_count": fail_count,
         }
 
     @mod_users_allowed
@@ -88,8 +93,8 @@ class RecordedRcon(Rcon):
     def get_team_view(self):
         teams = {}
         detailed_players = self.get_detailed_players()
-        players_by_id = detailed_players['players']
-        fail_count = detailed_players['fail_count']
+        players_by_id = detailed_players["players"]
+        fail_count = detailed_players["fail_count"]
 
         logger.debug("Getting DB profiles")
         steam_profiles = {
@@ -172,7 +177,7 @@ class RecordedRcon(Rcon):
     @mod_users_allowed
     @ttl_cache(ttl=2)
     def get_structured_logs(
-            self, since_min_ago, filter_action=None, filter_player=None
+        self, since_min_ago, filter_action=None, filter_player=None
     ) -> ParsedLogsType:
         raw = super().get_logs(since_min_ago)
         return self.parse_logs(raw, filter_action, filter_player)
@@ -255,6 +260,7 @@ class RecordedRcon(Rcon):
 
         return players
 
+    @mod_users_allowed
     def do_message_player(
         self, player=None, steam_id_64=None, message="", by="", save_message=False
     ):
