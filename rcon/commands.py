@@ -528,12 +528,11 @@ class ServerCtl:
     def get_map_shuffle_enabled(self):
         return self._request("query map shuffle")
 
-    @_escape_params
     def set_map_shuffle_enabled(self, enabled: str | None = None):
         if enabled is None:
             return self._request(f"toggle map shuffle")
         else:
-            return self._request(f"toggle map shuffle {enabled}")
+            return self._request(f"toggle map shuffle {escape_string(enabled)}")
 
     def set_idle_autokick_time(self, minutes):
         return self._request(f"setkickidletime {minutes}", log_info=True)
