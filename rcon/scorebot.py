@@ -143,6 +143,8 @@ map_to_pict = {
     "kursk": "maps/kursk.webp",
     "stalingrad": "maps/stalingrad.webp",
     "kharkov": "maps/kharkov.webp",
+    "driel": "maps/driel.webp",
+    "elalamein": "maps/elalamein.webp",
 }
 
 
