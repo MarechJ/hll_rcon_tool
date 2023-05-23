@@ -151,6 +151,8 @@ class LogLoop:
                 last_cleanup_time = datetime.datetime.now()
 
             dp = self.rcon.get_detailed_players()
+            if dp['fail_count'] > 0:
+                logger.warning("Could not fetch all player stats. " + str(dp["fail_count"]) + " players failed.")
             self.record_player_stats(dp['players'])
 
             time.sleep(loop_frequency_secs)
@@ -163,14 +165,17 @@ class LogLoop:
         m = maps[0]
         for steam_id in players:
             player = players.get(steam_id)
-            logger.info("Adding: " + json.dumps(player))
-            m.setdefault('player_stats', dict())[steam_id] = PlayerStat(
+            map_players = m.setdefault('player_stats', dict())
+            p = map_players.get(steam_id, PlayerStat(
                 combat=player['combat'],
                 offense=player['offense'],
                 defense=player['defense'],
                 support=player['support']
-            )
-        logger.info("Map after update: " + json.dumps(m))
+            ))
+            for stat in ['combat', 'offense', 'defense', 'support']:
+                if player[stat] > p[stat]:
+                    p[stat] = player[stat]
+            map_players[steam_id] = p
         maps.update(0, m)
 
     def record_line(self, log: StructuredLogLineWithMetaData):

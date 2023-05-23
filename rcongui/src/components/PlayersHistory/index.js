@@ -157,7 +157,7 @@ class PlayersHistory extends React.Component {
       blacklistedOnly: false,
       lastSeenFrom: null,
       lastSeenUntil: null,
-      isLoading: true,
+      isLoading: false,
       isWatchedOnly: false,
       vips: new Map(),
       doFlag: false,
@@ -429,11 +429,6 @@ class PlayersHistory extends React.Component {
       )
       .then(this._reloadOnSuccess)
       .catch(handle_http_errors);
-  }
-
-  componentDidMount() {
-    this.getPlayerHistory();
-    this.loadVips();
   }
 
   setDoFlag(playerToFlag) {
