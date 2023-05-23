@@ -523,14 +523,13 @@ class ServerCtl:
         return self._request(f"map {map_name}", log_info=True)
 
     def get_current_map_sequence(self):
-        # TODO: need more details
-        raise NotImplementedError
         return self._request("list current map sequence")
 
+    def get_map_shuffle_enabled(self):
+        return self._request("query map shuffle")
+
     @_escape_params
-    def set_map_shuffle_enabled(self, enabled: str):
-        # TODO: need more details
-        raise NotImplementedError
+    def set_map_shuffle_enabled(self, enabled: str = ""):
         return self._request(f"toggle map shuffle {enabled}")
 
     def set_idle_autokick_time(self, minutes):

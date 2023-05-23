@@ -651,8 +651,12 @@ class Rcon(ServerCtl):
     def get_current_map_sequence(self):
         return super().get_current_map_sequence()
 
+    @ttl_cache(ttl=60 * 60)
+    def get_map_shuffle_enabled(self):
+        return super().get_map_shuffle_enabled()
+
     def set_map_shuffle_enabled(self, enabled: str):
-        with invalidates(Rcon.get_current_map_sequence):
+        with invalidates(Rcon.get_current_map_sequence, Rcon.get_map_shuffle_enabled):
             return super().set_map_shuffle_enabled(enabled)
 
     @mod_users_allowed
