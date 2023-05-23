@@ -14,16 +14,15 @@ from rcon.types import MapInfo
 logger = logging.getLogger("rcon")
 
 ALL_MAPS = (
-    "driel_offensive_ger",
-    "driel_offensive_us",
-    "driel_warfare",
-    "elalamein_offensive_ger",
-    "elalamein_offensive_CW",
-    "elalamein_warfare",
-    # TODO: verify map names
     "carentan_offensive_ger",
     "carentan_offensive_us",
     "carentan_warfare",
+    "driel_offensive_ger",
+    "driel_offensive_us",
+    "driel_warfare",
+    "elalamein_offensive_CW",
+    "elalamein_offensive_ger",
+    "elalamein_warfare",
     "foy_offensive_ger",
     "foy_offensive_us",
     "foy_warfare_night",
@@ -160,16 +159,15 @@ LOG_MAP_NAMES_TO_MAP = {
 }
 
 LONG_HUMAN_MAP_NAMES = {
-    "driel_offensive_ger": "Driel Offensive (GER)",
-    "driel_offensive_us": "Driel Offensive (UK)",
-    "driel_warfare": "Driel",
-    "elalamein_offensive_ger": "El Alamein Offensive (GER)",
-    "elalamein_offensive_CW": "El Alamein Offensive (UK)",
-    "elalamein_warfare": "El Alamein",
-    # TODO: verify map names
     "carentan_offensive_ger": "Carentan Offensive (GER)",
     "carentan_offensive_us": "Carentan Offensive (US)",
     "carentan_warfare": "Carentan",
+    "driel_offensive_ger": "Driel Offensive (GER)",
+    "driel_offensive_us": "Driel Offensive (UK)",
+    "driel_warfare": "Driel",
+    "elalamein_offensive_CW": "El Alamein Offensive (UK)",
+    "elalamein_offensive_ger": "El Alamein Offensive (GER)",
+    "elalamein_warfare": "El Alamein",
     "foy_offensive_ger": "Foy Offensive (GER)",
     "foy_offensive_us": "Foy Offensive (US)",
     "foy_warfare_night": "Foy (Night)",
@@ -214,16 +212,15 @@ LONG_HUMAN_MAP_NAMES = {
 }
 
 SHORT_HUMAN_MAP_NAMES = {
-    "driel_offensive_ger": "Driel Off. (GER)",
-    "driel_offensive_us": "Driel Off. (UK)",
-    "driel_warfare": "Driel",
-    "elalamein_offensive_ger": "El Alamein Off. (GER)",
-    "elalamein_offensive_CW": "El Alamein Off. (UK)",
-    "elalamein_warfare": "El Alamein",
-    # TODO: verify map names
     "carentan_offensive_ger": "Carentan Off. (GER)",
     "carentan_offensive_us": "Carentan Off. (US)",
     "carentan_warfare": "Carentan",
+    "driel_offensive_ger": "Driel Off. (GER)",
+    "driel_offensive_us": "Driel Off. (UK)",
+    "driel_warfare": "Driel",
+    "elalamein_offensive_CW": "El Alamein Off. (UK)",
+    "elalamein_offensive_ger": "El Alamein Off. (GER)",
+    "elalamein_warfare": "El Alamein",
     "foy_offensive_ger": "Foy Off. (GER)",
     "foy_offensive_us": "Foy Off. (US)",
     "foy_warfare_night": "Foy (Night)",
@@ -268,16 +265,15 @@ SHORT_HUMAN_MAP_NAMES = {
 }
 
 NO_MOD_LONG_HUMAN_MAP_NAMES = {
-    "driel_offensive_ger": "Driel (GER)",
-    "driel_offensive_us": "Driel (UK)",
-    "driel_warfare": "Driel",
-    "elalamein_offensive_ger": "El Alamein (GER)",
-    "elalamein_offensive_CW": "El Alamein (UK)",
-    "elalamein_warfare": "El Alamein",
-    # TODO: verify map names
     "carentan_offensive_ger": "Carentan (GER)",
     "carentan_offensive_us": "Carentan (US)",
     "carentan_warfare": "Carentan",
+    "driel_offensive_ger": "Driel (GER)",
+    "driel_offensive_us": "Driel (UK)",
+    "driel_warfare": "Driel",
+    "elalamein_offensive_CW": "El Alamein (UK)",
+    "elalamein_offensive_ger": "El Alamein (GER)",
+    "elalamein_warfare": "El Alamein",
     "foy_offensive_ger": "Foy (GER)",
     "foy_offensive_us": "Foy (US)",
     "foy_warfare_night": "Foy (Night)",
@@ -322,16 +318,15 @@ NO_MOD_LONG_HUMAN_MAP_NAMES = {
 }
 
 NO_MOD_SHORT_HUMAN_MAP_NAMES = {
-    "driel_offensive_ger": "Driel (GER)",
-    "driel_offensive_us": "Driel (UK)",
-    "driel_warfare": "Driel",
-    "elalamein_offensive_ger": "El Alamein (GER)",
-    "elalamein_offensive_CW": "El Alamein (UK)",
-    "elalamein_warfare": "El Alamein",
-    # TODO: verify map names
     "carentan_offensive_ger": "Carentan (GER)",
     "carentan_offensive_us": "Carentan (US)",
     "carentan_warfare": "Carentan",
+    "driel_offensive_ger": "Driel (GER)",
+    "driel_offensive_us": "Driel (UK)",
+    "driel_warfare": "Driel",
+    "elalamein_offensive_CW": "El Alamein (UK)",
+    "elalamein_offensive_ger": "El Alamein (GER)",
+    "elalamein_warfare": "El Alamein",
     "foy_offensive_ger": "Foy (GER)",
     "foy_offensive_us": "Foy (US)",
     "foy_warfare_night": "Foy (Night)",

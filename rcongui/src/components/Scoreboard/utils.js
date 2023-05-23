@@ -1,5 +1,4 @@
 const map_to_pict = {
-  // TODO: U14 need a map picture for new maps
   carentan: "/maps/carentan.webp",
   driel: "/maps/driel.webp",
   elalamein: "/maps/elalamein.webp",
