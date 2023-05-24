@@ -523,16 +523,16 @@ class ServerCtl:
         return self._request(f"map {map_name}", log_info=True)
 
     def get_current_map_sequence(self):
-        return self._request("list current map sequence")
+        return self._request("listcurrentmapsequence").split("\n")[:-1]
 
     def get_map_shuffle_enabled(self):
-        return self._request("query map shuffle")
+        return self._request("querymapshuffle")
 
     def set_map_shuffle_enabled(self, enabled: str | None = None):
         if enabled is None:
-            return self._request(f"toggle map shuffle")
+            return self._request(f"togglemapshuffle")
         else:
-            return self._request(f"toggle map shuffle {escape_string(enabled)}")
+            return self._request(f"togglemapshuffle {escape_string(enabled)}")
 
     def set_idle_autokick_time(self, minutes):
         return self._request(f"setkickidletime {minutes}", log_info=True)
