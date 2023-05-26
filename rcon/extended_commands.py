@@ -633,7 +633,8 @@ class Rcon(ServerCtl):
                 if res != "SUCCESS":
                     raise CommandFailedError(res)
             except CommandFailedError:
-                self.do_add_map_to_rotation(map_name)
+                maps = self.get_map_rotation()
+                self.do_add_map_to_rotation(map_name, maps[len(maps) - 1], str(len(maps)))
                 if super().set_map(map_name) != "SUCCESS":
                     raise CommandFailedError(res)
 
@@ -968,7 +969,7 @@ class Rcon(ServerCtl):
         return l
 
     def do_add_map_to_rotation(
-        self, map_name, after_map_name: str = None, after_map_name_number: str = None
+        self, map_name, after_map_name: str, after_map_name_number: str = None
     ):
         with invalidates(Rcon.get_map_rotation):
             super().do_add_map_to_rotation(
@@ -987,8 +988,13 @@ class Rcon(ServerCtl):
 
     def do_add_maps_to_rotation(self, maps):
         with invalidates(Rcon.get_map_rotation):
+            existing = self.get_map_rotation()
+            last = existing[len(existing) - 1]
+            last_index = len(existing)
             for map_name in maps:
-                super().do_add_map_to_rotation(map_name)
+                super().do_add_map_to_rotation(map_name, last, str(last_index))
+                last = map_name
+                last_index += 1
             return "SUCCESS"
 
     def set_maprotation(self, rotation):
@@ -1010,9 +1016,13 @@ class Rcon(ServerCtl):
                 logger.info("Removing from rotation: '%s'", map_without_number)
                 super().do_remove_map_from_rotation(map_without_number)
 
+            last = current[0]
+            last_index = 0
             for map_ in rotation:
                 logger.info("Adding to rotation: '%s'", map_)
-                super().do_add_map_to_rotation(map_)
+                super().do_add_map_to_rotation(map_, last, str(last_index))
+                last = map_
+                last_index += 1
 
             # Now we can remove the first from the previous rotation
             super().do_remove_map_from_rotation(current[0])
