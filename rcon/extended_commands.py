@@ -990,11 +990,11 @@ class Rcon(ServerCtl):
         with invalidates(Rcon.get_map_rotation):
             existing = self.get_map_rotation()
             last = existing[len(existing) - 1]
-            last_index = len(existing)
+            map_index = {last: len(existing)}
             for map_name in maps:
-                super().do_add_map_to_rotation(map_name, last, str(last_index))
+                super().do_add_map_to_rotation(map_name, last, str(map_index.get(last, 1)))
                 last = map_name
-                last_index += 1
+                map_index[last] = map_index.get(last, 0) + 1
             return "SUCCESS"
 
     def set_maprotation(self, rotation):
@@ -1004,7 +1004,7 @@ class Rcon(ServerCtl):
         rotation = list(rotation)
         logger.info("Apply map rotation %s", rotation)
 
-        current = self.get_map_rotation()
+        current = super().get_map_rotation()
         logger.info("Current rotation: %s", current)
         if rotation == current:
             logger.debug("Map rotation is the same, nothing to do")
@@ -1017,17 +1017,17 @@ class Rcon(ServerCtl):
                 super().do_remove_map_from_rotation(map_without_number)
 
             last = current[0]
-            last_index = 0
+            map_index = {last: 1}
             for map_ in rotation:
                 logger.info("Adding to rotation: '%s'", map_)
-                super().do_add_map_to_rotation(map_, last, str(last_index))
+                super().do_add_map_to_rotation(map_, last, str(map_index.get(last, 1)))
                 last = map_
-                last_index += 1
+                map_index[last] = map_index.get(last, 0) + 1
 
             # Now we can remove the first from the previous rotation
-            super().do_remove_map_from_rotation(current[0])
+            super().do_remove_map_from_rotation(current[0], "1")
 
-        return self.get_map_rotation()
+        return super().get_map_rotation()
 
     @staticmethod
     def parse_log_line(raw_line: str) -> StructuredLogLineType:
