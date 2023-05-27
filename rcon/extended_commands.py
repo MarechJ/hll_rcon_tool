@@ -656,7 +656,7 @@ class Rcon(ServerCtl):
     def get_map_shuffle_enabled(self):
         return super().get_map_shuffle_enabled()
 
-    def set_map_shuffle_enabled(self, enabled: str | None = None):
+    def set_map_shuffle_enabled(self, enabled: bool):
         with invalidates(Rcon.get_current_map_sequence, Rcon.get_map_shuffle_enabled):
             return super().set_map_shuffle_enabled(enabled)
 
@@ -972,6 +972,11 @@ class Rcon(ServerCtl):
         self, map_name, after_map_name: str = None, after_map_name_number: int = None
     ):
         with invalidates(Rcon.get_map_rotation):
+            if after_map_name is None:
+                current = self.get_map_rotation()
+                after_map_name = current[len(current) - 1]
+                after_map_name_number = current.count(after_map_name)
+
             super().do_add_map_to_rotation(
                 map_name, after_map_name, after_map_name_number
             )

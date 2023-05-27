@@ -528,9 +528,9 @@ class ServerCtl:
     def get_map_shuffle_enabled(self):
         return self._request("querymapshuffle").endswith('TRUE')
 
-    def set_map_shuffle_enabled(self, should_be_enabled: str | None = None):
-        enabled = self.get_map_shuffle_enabled()
-        if enabled != should_be_enabled:
+    def set_map_shuffle_enabled(self, enabled: bool):
+        current = self.get_map_shuffle_enabled()
+        if current != enabled:
             self._request(f"togglemapshuffle")
 
     def set_idle_autokick_time(self, minutes):
@@ -579,13 +579,9 @@ class ServerCtl:
     def do_add_map_to_rotation(
         self,
         map_name: str,
-        after_map_name: str = None,
+        after_map_name: str,
         after_map_name_number: int = None,
     ):
-        if after_map_name is None:
-            current = self.get_map_rotation()
-            after_map_name = current[len(current) - 1]
-            after_map_name_number = current.count(after_map_name)
         cmd = f"rotadd /Game/Maps/{map_name} /Game/Maps/{after_map_name}"
         if after_map_name_number:
             cmd = f"{cmd} {after_map_name_number}"
