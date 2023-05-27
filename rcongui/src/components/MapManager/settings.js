@@ -1,5 +1,5 @@
 import * as React from "react";
-import {get, handle_http_errors, showResponse,} from "../../utils/fetchUtils";
+import {get, handle_http_errors, postData, showResponse,} from "../../utils/fetchUtils";
 import {Grid, Typography} from "@material-ui/core";
 import Padlock from "../SettingsView/padlock";
 
@@ -17,9 +17,11 @@ const MapRotationSettings = ({classes}) => {
     loadToState("get_map_shuffle_enabled", false, setShuffleEnabled);
   };
 
-  const toggleShuffleEnabled = () => {
-    return get("set_map_shuffle_enabled")
-      .then((res) => showResponse(res, "set_map_shuffle_enabled", true))
+  const toggleShuffleEnabled = (enabled) => {
+    return postData(`${process.env.REACT_APP_API_URL}set_map_shuffle_enabled`, {
+      enabled: enabled,
+    })
+      .then((res) => showResponse(res, `set_map_shuffle_enabled: ${enabled}`, true))
       .catch(handle_http_errors);
   };
 
@@ -47,7 +49,7 @@ const MapRotationSettings = ({classes}) => {
           </div>}
           checked={shuffleEnabled}
           handleChange={(v) => {
-            toggleShuffleEnabled();
+            toggleShuffleEnabled(!shuffleEnabled);
             setShuffleEnabled(v);
           }}
         />
