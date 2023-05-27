@@ -1,6 +1,6 @@
 import * as React from "react";
 import {get, handle_http_errors, showResponse,} from "../../utils/fetchUtils";
-import {Grid} from "@material-ui/core";
+import {Grid, Typography} from "@material-ui/core";
 import Padlock from "../SettingsView/padlock";
 
 const MapRotationSettings = ({classes}) => {
@@ -41,12 +41,14 @@ const MapRotationSettings = ({classes}) => {
     >
       <Grid item xs={12}>
         <Padlock
-          label="Shuffle map rotation"
+          label={<div style={{textAlign: 'start', display: 'flex', flexDirection: 'column'}}>
+            <Typography variant={'body'}>Shuffle map rotation</Typography>
+            <Typography variant={'caption'}>Will reset to default enabled when server restarts.</Typography>
+          </div>}
           checked={shuffleEnabled}
           handleChange={(v) => {
-            setShuffleEnabled(v);
-            console.log(v);
             toggleShuffleEnabled();
+            setShuffleEnabled(v);
           }}
         />
       </Grid>
