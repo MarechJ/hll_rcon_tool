@@ -129,7 +129,6 @@ def get_map_side(map_):
 
 
 LOG_MAP_NAMES_TO_MAP = {
-    # TODO: U14 map names
     "CARENTAN OFFENSIVE": "carentan_offensive_ger",
     "CARENTAN WARFARE": "carentan_warfare",
     "FOY OFFENSIVE": "foy_offensive_ger",
@@ -156,6 +155,10 @@ LOG_MAP_NAMES_TO_MAP = {
     "UTAH BEACH WARFARE": "utahbeach_warfare",
     "OMAHA BEACH WARFARE": "omahabeach_warfare",
     "OMAHA BEACH OFFENSIVE": "omahabeach_offensive_ger",
+    "DRIEL WARFARE": "driel_warfare",
+    "DRIEL OFFENSIVE": "driel_offensive_ger",
+    "EL ALAMEIN WARFARE": "elalamein_warfare",
+    "EL ALAMEIN OFFENSIVE": "elalamein_offensive_ger",
 }
 
 LONG_HUMAN_MAP_NAMES = {

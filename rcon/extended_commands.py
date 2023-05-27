@@ -633,7 +633,8 @@ class Rcon(ServerCtl):
                 if res != "SUCCESS":
                     raise CommandFailedError(res)
             except CommandFailedError:
-                self.do_add_map_to_rotation(map_name)
+                maps = self.get_map_rotation()
+                self.do_add_map_to_rotation(map_name, maps[len(maps) - 1], maps.count(maps[len(maps) - 1]))
                 if super().set_map(map_name) != "SUCCESS":
                     raise CommandFailedError(res)
 
@@ -655,7 +656,7 @@ class Rcon(ServerCtl):
     def get_map_shuffle_enabled(self):
         return super().get_map_shuffle_enabled()
 
-    def set_map_shuffle_enabled(self, enabled: str | None = None):
+    def set_map_shuffle_enabled(self, enabled: bool):
         with invalidates(Rcon.get_current_map_sequence, Rcon.get_map_shuffle_enabled):
             return super().set_map_shuffle_enabled(enabled)
 
@@ -968,14 +969,19 @@ class Rcon(ServerCtl):
         return l
 
     def do_add_map_to_rotation(
-        self, map_name, after_map_name: str = None, after_map_name_number: str = None
+        self, map_name, after_map_name: str = None, after_map_name_number: int = None
     ):
         with invalidates(Rcon.get_map_rotation):
+            if after_map_name is None:
+                current = self.get_map_rotation()
+                after_map_name = current[len(current) - 1]
+                after_map_name_number = current.count(after_map_name)
+
             super().do_add_map_to_rotation(
                 map_name, after_map_name, after_map_name_number
             )
 
-    def do_remove_map_from_rotation(self, map_name, map_number: str = None):
+    def do_remove_map_from_rotation(self, map_name, map_number: int = None):
         with invalidates(Rcon.get_map_rotation):
             super().do_remove_map_from_rotation(map_name, map_number)
 
@@ -987,8 +993,13 @@ class Rcon(ServerCtl):
 
     def do_add_maps_to_rotation(self, maps):
         with invalidates(Rcon.get_map_rotation):
+            existing = self.get_map_rotation()
+            last = existing[len(existing) - 1]
+            map_numbers = {last: existing.count(last)}
             for map_name in maps:
-                super().do_add_map_to_rotation(map_name)
+                super().do_add_map_to_rotation(map_name, last, map_numbers.get(last, 1))
+                last = map_name
+                map_numbers[last] = map_numbers.get(last, 0) + 1
             return "SUCCESS"
 
     def set_maprotation(self, rotation):
@@ -998,24 +1009,29 @@ class Rcon(ServerCtl):
         rotation = list(rotation)
         logger.info("Apply map rotation %s", rotation)
 
-        current = self.get_map_rotation()
-        logger.info("Current rotation: %s", current)
-        if rotation == current:
-            logger.debug("Map rotation is the same, nothing to do")
-            return current
         with invalidates(Rcon.get_map_rotation):
+            current = self.get_map_rotation()
+            logger.info("Current rotation: %s", current)
+            if rotation == current:
+                logger.debug("Map rotation is the same, nothing to do")
+                return current
+
             # we remove all but the first
             for map_ in current[1:]:
                 map_without_number = map_.rsplit(" ")[0]
                 logger.info("Removing from rotation: '%s'", map_without_number)
                 super().do_remove_map_from_rotation(map_without_number)
 
+            last = current[0]
+            map_number = {last: 1}
             for map_ in rotation:
                 logger.info("Adding to rotation: '%s'", map_)
-                super().do_add_map_to_rotation(map_)
+                super().do_add_map_to_rotation(map_, last, map_number.get(last, 1))
+                last = map_
+                map_number[last] = map_number.get(last, 0) + 1
 
             # Now we can remove the first from the previous rotation
-            super().do_remove_map_from_rotation(current[0])
+            super().do_remove_map_from_rotation(current[0], 1)
 
         return self.get_map_rotation()
 

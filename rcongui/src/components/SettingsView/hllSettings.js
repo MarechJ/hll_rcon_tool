@@ -17,8 +17,6 @@ import {
 } from "../../utils/fetchUtils";
 import VipEditableList, { VipUpload } from "./vips";
 import AdminsEditableList from "./admins";
-import _ from "lodash";
-import MapRotationTransferList from "./mapRotation";
 import CollapseCard from "../collapseCard";
 import ServerMessage from "./serverMessage";
 import NumSlider from "./numSlider";
@@ -29,6 +27,7 @@ import { ForwardCheckBox, WordList } from "../commonComponent";
 import VoteMapConfig from "./voteMapConfig";
 import HelpIcon from "@material-ui/icons/Help";
 import MapRotation from "../MapManager";
+import MapRotationSettings from "../MapManager/settings";
 
 const ProfanityFiler = ({
   words,
@@ -687,6 +686,9 @@ class HLLSettings extends React.Component {
             <Typography variant="h5">Map rotation</Typography>
 
             <MapRotation classes={classes} />
+            <Typography variant="h5">Map rotation settings</Typography>
+
+            <MapRotationSettings classes={classes} />
           </Grid>
         </Grid>
         {/* LEGACY ROTATION GUI 
