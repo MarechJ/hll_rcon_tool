@@ -39,7 +39,7 @@
     "recompose": "^0.30.0"
   },
   "scripts": {
-    "start": "export REACT_APP_VERSION=$(git describe --tags) && react-scripts start",
+    "start": "react-scripts start",
     "build": "export REACT_APP_VERSION=$(git describe --tags) && react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"

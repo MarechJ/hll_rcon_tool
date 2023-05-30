@@ -168,7 +168,7 @@ class BaseStats:
                 "steam_id_64": p.get("steam_id_64"),
                 "steaminfo": profile.steaminfo.to_dict()
                 if profile and profile.steaminfo
-                else {"profile": {"steamid": p.get("steam_id_64")}},
+                else None,
                 "kills": 0,
                 "kills_streak": 0,
                 "deaths": 0,

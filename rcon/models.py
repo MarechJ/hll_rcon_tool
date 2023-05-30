@@ -490,6 +490,7 @@ class PlayerStats(Base):
         nullable=False,
         index=True,
     )
+    steam_id_64 = relationship("PlayerSteamID", foreign_keys=[playersteamid_id])
     map_id = Column(
         Integer,
         ForeignKey("map_history.id"),
@@ -527,6 +528,7 @@ class PlayerStats(Base):
         return dict(
             id=self.id,
             player_id=self.playersteamid_id,
+            steam_id_64=self.steam_id_64.steam_id_64,
             player=self.name,
             steaminfo=self.steamid.steaminfo.to_dict()
             if self.steamid.steaminfo

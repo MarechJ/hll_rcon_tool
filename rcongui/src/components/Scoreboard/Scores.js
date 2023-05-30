@@ -202,7 +202,7 @@ const RawScores = pure(({ classes, scores }) => {
   );
   const [rowsPerPage, setRowsPerPage] = React.useState(50);
   const [columns, setColumns] = React.useState([
-    { name: "steaminfo.profile.steamid", label: "Steam ID", options: {display: false}, },
+    { name: "steam_id_64", label: "Steam ID", options: {display: false}, },
     { name: "player", label: "Name" },
     { name: "kills", label: "Kills" },
     { name: "deaths", label: "Deaths" },
