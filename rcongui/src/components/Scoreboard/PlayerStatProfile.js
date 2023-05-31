@@ -28,6 +28,7 @@ export const PlayerStatProfile = pure(({ playerScore, onClose }) => {
     "most_killed",
     "weapons",
     "death_by",
+    "death_by_weapons",
   ]);
 
   return (
@@ -69,6 +70,12 @@ export const PlayerStatProfile = pure(({ playerScore, onClose }) => {
               />
               <SubList
                 playerScore={playerScore}
+                dataMapKey="death_by_weapons"
+                subtitle="'None' means Tank, Arty, roadkill or some explosives"
+                title="Deaths by weapons"
+              />
+              <SubList
+                playerScore={playerScore}
                 dataMapKey="most_killed"
                 title="Kills by player"
               />
@@ -82,6 +89,7 @@ export const PlayerStatProfile = pure(({ playerScore, onClose }) => {
                   excludedKeys.has(k)
                 )}
                 title="Raw stats"
+                sortByKey
               />
             </List>
           </Paper>
