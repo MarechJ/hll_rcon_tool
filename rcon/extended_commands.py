@@ -1080,9 +1080,6 @@ class Rcon(ServerCtl):
                 raise ValueError(f"Unable to parse line: {raw_line}")
         elif raw_line.startswith("KICK") or raw_line.startswith("BAN"):
 
-            if "FOR TEAM KILLING" in raw_line:
-                action = "TK AUTO"
-
             if match := re.match(Rcon.kick_ban_pattern, raw_line):
                 _action, player, sub_content, type_ = match.groups()
             else:
@@ -1098,6 +1095,9 @@ class Rcon(ServerCtl):
                 type_ = "ANTI-CHEAT"
 
             action = f"ADMIN {type_}".strip()
+
+            if "FOR TEAM KILLING" in raw_line:
+                action = f"TK AUTO {type_}"
 
             # Reconstruct the log line without the newlines and tack on the trailing ] we lose
             content = f"{_action}: [{player}] {sub_content}"
