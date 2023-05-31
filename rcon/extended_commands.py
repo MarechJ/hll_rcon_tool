@@ -21,7 +21,8 @@ from rcon.types import (
     GetPlayersType,
     ParsedLogsType,
     StructuredLogLineType,
-    StructuredLogLineWithMetaData, GetDetailedPlayer,
+    StructuredLogLineWithMetaData,
+    GetDetailedPlayer,
 )
 from rcon.utils import get_server_number
 
@@ -547,7 +548,7 @@ class Rcon(ServerCtl):
         Map: foy_warfare
         Next Map: stmariedumont_warfare"""
         with invalidates(
-                Rcon.team_sizes, Rcon.team_objective_scores, Rcon.round_time_remaining
+            Rcon.team_sizes, Rcon.team_objective_scores, Rcon.round_time_remaining
         ):
             (
                 raw_team_size,
@@ -911,7 +912,7 @@ class Rcon(ServerCtl):
 
     @mod_users_allowed
     def do_temp_ban(
-            self, player=None, steam_id_64=None, duration_hours=2, reason="", admin_name=""
+        self, player=None, steam_id_64=None, duration_hours=2, reason="", admin_name=""
     ):
         with invalidates(Rcon.get_players, Rcon.get_temp_bans):
             if player and re.match(r"\d+", player):
@@ -955,7 +956,7 @@ class Rcon(ServerCtl):
         return l
 
     def do_add_map_to_rotation(
-            self, map_name, after_map_name: str = None, after_map_name_number: str = None
+        self, map_name, after_map_name: str = None, after_map_name_number: str = None
     ):
         with invalidates(Rcon.get_map_rotation):
             super().do_add_map_to_rotation(
@@ -1051,9 +1052,6 @@ class Rcon(ServerCtl):
                 raise ValueError(f"Unable to parse line: {raw_line}")
         elif raw_line.startswith("KICK") or raw_line.startswith("BAN"):
 
-            if "FOR TEAM KILLING" in raw_line:
-                action = "TK AUTO"
-
             if match := re.match(Rcon.kick_ban_pattern, raw_line):
                 _action, player, sub_content, type_ = match.groups()
             else:
@@ -1069,6 +1067,9 @@ class Rcon(ServerCtl):
                 type_ = "ANTI-CHEAT"
 
             action = f"ADMIN {type_}".strip()
+
+            if "FOR TEAM KILLING" in raw_line:
+                action = f"TK AUTO {type_}"
 
             # Reconstruct the log line without the newlines and tack on the trailing ] we lose
             content = f"{_action}: [{player}] {sub_content}"
@@ -1086,8 +1087,8 @@ class Rcon(ServerCtl):
                 player = match.groups()[0]
             # VOTESYS: Player [NoodleArms] Started a vote of type (PVR_Kick_Abuse) against [buscÃ´O-sensei]. VoteID: [2]
             elif match := re.match(
-                    Rcon.vote_started_pattern,
-                    raw_line,
+                Rcon.vote_started_pattern,
+                raw_line,
             ):
                 action = "VOTE STARTED"
                 player, player2 = match.groups()
@@ -1160,7 +1161,7 @@ class Rcon(ServerCtl):
 
     @staticmethod
     def parse_logs(
-            raw_logs: str, filter_action=None, filter_player=None
+        raw_logs: str, filter_action=None, filter_player=None
     ) -> ParsedLogsType:
         """Parse a chunk of raw gameserver RCON logs"""
         synthetic_actions = LOG_ACTIONS
@@ -1170,7 +1171,7 @@ class Rcon(ServerCtl):
         players: set[str] = set()
 
         for raw_relative_time, raw_timestamp, raw_log_line in Rcon.split_raw_log_lines(
-                raw_logs
+            raw_logs
         ):
             time = Rcon._extract_time(raw_timestamp)
             try:

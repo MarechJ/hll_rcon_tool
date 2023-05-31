@@ -537,6 +537,32 @@ def test_teamswitch(raw_log_line, expected):
                 "sub_content": "has been kicked. [Anti-Cheat Authentication timed out (1/2)]",
             },
         ),
+        (
+            "KICK: [-Cosmic-] has been kicked. [KICKED FOR TEAM KILLING!]",
+            {
+                "action": "TK AUTO KICKED",
+                "player": "-Cosmic-",
+                "steam_id_64_1": None,
+                "player2": None,
+                "steam_id_64_2": None,
+                "weapon": None,
+                "message": "KICK: [-Cosmic-] has been kicked. [KICKED FOR TEAM KILLING!]",
+                "sub_content": "has been kicked. [KICKED FOR TEAM KILLING!]",
+            },
+        ),
+        (
+            "KICK: [RyanJose] has been kicked. [BANNED FOR 2 HOURS FOR TEAM KILLING!]",
+            {
+                "action": "TK AUTO BANNED",
+                "player": "RyanJose",
+                "steam_id_64_1": None,
+                "player2": None,
+                "steam_id_64_2": None,
+                "weapon": None,
+                "message": "KICK: [RyanJose] has been kicked. [BANNED FOR 2 HOURS FOR TEAM KILLING!]",
+                "sub_content": "has been kicked. [BANNED FOR 2 HOURS FOR TEAM KILLING!]",
+            },
+        ),
     ],
 )
 def test_kicks(raw_log_line, expected):
