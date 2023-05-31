@@ -21,12 +21,17 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 export const SubList = pure(
-  ({ playerScore, dataMapKey, title, subtitle, openDefault }) => {
-    const data = dataMapKey
+  ({ playerScore, dataMapKey, title, subtitle, openDefault, sortByKey }) => {
+    let data = dataMapKey
       ? playerScore.get(dataMapKey) || new Map()
       : playerScore;
     const styles = useStyles();
     const [open, setOpen] = React.useState(openDefault);
+
+    if (sortByKey)
+      data = data.sortBy((v, k) => k)
+    else
+      data = data.sort().reverse()
 
     return (
       <React.Fragment>
@@ -44,8 +49,6 @@ export const SubList = pure(
         <Collapse in={open} timeout="auto" unmountOnExit>
           <List component="div" disablePadding dense>
             {data
-              .sort()
-              .reverse()
               .entrySeq()
               .map(([key, value]) => (
                 <ListItem className={styles.nested}>
