@@ -7,7 +7,6 @@ RUN pip install -r requirements.txt
 RUN pip install gunicorn
 RUN pip install supervisor
 COPY . .
-ENV FLASK_APP rcon.connection
 ENV PYTHONPATH /code/
 RUN chmod +x entrypoint.sh
 RUN chmod +x manage.py
