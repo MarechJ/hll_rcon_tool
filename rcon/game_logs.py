@@ -163,6 +163,11 @@ class LogLoop:
             logger.info("No map seems to be running, skipping saving stats")
             return
         m = maps[0]
+        # give us and the gameserver some time after map switch to zero out scores.
+        # No clue, why this is actually needed, tbh, but without it, it seems that score values
+        # from the previous map may leak into the current one
+        if m['start'] > datetime.datetime.now().timestamp() - 30:
+            return
         for steam_id in players:
             player = players.get(steam_id)
             map_players = m.setdefault('player_stats', dict())
