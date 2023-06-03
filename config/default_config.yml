@@ -56,6 +56,15 @@ NAME_KICKS:
   whitelist_flags:
     - ✅
 
+# Automatically kick players under a given level
+LEVEL_KICKS:
+  min_level: 0
+  reason: "Your level is too low for this server. Please come back when you will match the level threshold."
+  # If left unset, the webhook default to your audit log webhook
+  discord_webhook_url: ""
+  whitelist_flags:
+    - ✅
+
 BAN_TK_ON_CONNECT:
   enabled: no
   message: "Your first action on the server was a TEAM KILL you were banned as a result"
