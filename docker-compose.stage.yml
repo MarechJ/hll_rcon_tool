@@ -1,0 +1,11 @@
+version: '2.4'
+
+services:
+  supervisor_1:
+    build: .
+  backend_1:
+    build: .
+  frontend_1:
+    build:
+      context: .
+      dockerfile: Dockerfile-frontend

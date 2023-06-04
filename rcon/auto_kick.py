@@ -62,6 +62,8 @@ def auto_kick_by_level(_, log, name, steam_id_64):
         return
 
     minLevel = config["min_level"]
+    maxLevel = config["max_level"]
+    
     playerLevel = 0
     try:
         player = recorded_rcon.get_detailed_player_info(name)
@@ -79,12 +81,25 @@ def auto_kick_by_level(_, log, name, steam_id_64):
     except:
         logger.exception("Unable to check player profile")
 
-    if playerLevel < minLevel:
+    if minLevel is not None and minLevel != 0 and playerLevel < minLevel:
         logger.info("player %s of level %i under level %i", name, playerLevel, minLevel)
-        recorded_rcon.do_kick(player=name, reason=config["reason"], by="LEVEL_KICK")
+        recorded_rcon.do_kick(player=name, reason=config["min_reason"], by="LEVEL_KICK")
         try:
             send_to_discord_audit(
                 f"`{name}` kicked from minimum level `{minLevel}`",
+                by="LEVEL_KICK",
+                webhookurl=config.get("discord_webhook_url"),
+            )
+        except Exception:
+            logger.error("Unable to send to audit_log")
+        return
+    
+    if maxLevel is not None and maxLevel != 0 and playerLevel > maxLevel:
+        logger.info("player %s of level %i over level %i", name, playerLevel, maxLevel)
+        recorded_rcon.do_kick(player=name, reason=config["max_reason"], by="LEVEL_KICK")
+        try:
+            send_to_discord_audit(
+                f"`{name}` kicked from maximum level `{maxLevel}`",
                 by="LEVEL_KICK",
                 webhookurl=config.get("discord_webhook_url"),
             )

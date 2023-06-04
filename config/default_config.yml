@@ -57,9 +57,14 @@ NAME_KICKS:
     - ✅
 
 # Automatically kick players under a given level
+# Warning: This feature can lead to false positive checks cause of some people can be identified as level 1 by default by the RCON
 LEVEL_KICKS:
+  # value 0 disable the check
   min_level: 0
-  reason: "Your level is too low for this server. Please come back when you will match the level threshold."
+  # value 0 disable the check
+  max_level: 0
+  min_reason: "Your level is too low for this server. Please come back when you reach the level threshold. \nIn case of false positive, please rejoin."
+  max_reason: "Your level is too high for this server."
   # If left unset, the webhook default to your audit log webhook
   discord_webhook_url: ""
   whitelist_flags:
