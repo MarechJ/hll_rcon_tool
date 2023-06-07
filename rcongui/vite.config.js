@@ -8,7 +8,7 @@ export default defineConfig(({command, mode}) => {
   return {
     define: {
       'process.env.REACT_APP_PUBLIC_BUILD': env.REACT_APP_PUBLIC_BUILD,
-      'process.env.REACT_APP_API_URL': env.REACT_APP_API_URL,
+      'process.env.REACT_APP_API_URL': `"${env.REACT_APP_API_URL}"`,
     },
     plugins: [react()],
     server: {

@@ -1,6 +1,5 @@
 import React from "react";
 import {
-  get,
   handle_http_errors,
   postData,
   showResponse,
