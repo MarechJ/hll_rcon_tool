@@ -1,4 +1,6 @@
-FROM arm32v7/node:15-stretch as build
+FROM arm32v7/node:20-buster-slim as build
+
+RUN apt update && apt install -y git
 
 WORKDIR /code
 
