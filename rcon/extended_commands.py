@@ -21,7 +21,8 @@ from rcon.types import (
     GetPlayersType,
     ParsedLogsType,
     StructuredLogLineType,
-    StructuredLogLineWithMetaData, GetDetailedPlayer,
+    StructuredLogLineWithMetaData,
+    GetDetailedPlayer,
 )
 from rcon.utils import get_server_number
 
@@ -547,7 +548,7 @@ class Rcon(ServerCtl):
         Map: foy_warfare
         Next Map: stmariedumont_warfare"""
         with invalidates(
-                Rcon.team_sizes, Rcon.team_objective_scores, Rcon.round_time_remaining
+            Rcon.team_sizes, Rcon.team_objective_scores, Rcon.round_time_remaining
         ):
             (
                 raw_team_size,
@@ -632,7 +633,8 @@ class Rcon(ServerCtl):
                 if res != "SUCCESS":
                     raise CommandFailedError(res)
             except CommandFailedError:
-                self.do_add_map_to_rotation(map_name)
+                maps = self.get_map_rotation()
+                self.do_add_map_to_rotation(map_name, maps[len(maps) - 1], maps.count(maps[len(maps) - 1]))
                 if super().set_map(map_name) != "SUCCESS":
                     raise CommandFailedError(res)
 
@@ -645,6 +647,18 @@ class Rcon(ServerCtl):
             raise CommandFailedError("Server returned wrong data")
 
         return current_map
+
+    @ttl_cache(ttl=60 * 60)
+    def get_current_map_sequence(self):
+        return super().get_current_map_sequence()
+
+    @ttl_cache(ttl=60 * 60)
+    def get_map_shuffle_enabled(self):
+        return super().get_map_shuffle_enabled()
+
+    def set_map_shuffle_enabled(self, enabled: bool):
+        with invalidates(Rcon.get_current_map_sequence, Rcon.get_map_shuffle_enabled):
+            return super().set_map_shuffle_enabled(enabled)
 
     @mod_users_allowed
     @ttl_cache(ttl=60 * 60)
@@ -911,7 +925,7 @@ class Rcon(ServerCtl):
 
     @mod_users_allowed
     def do_temp_ban(
-            self, player=None, steam_id_64=None, duration_hours=2, reason="", admin_name=""
+        self, player=None, steam_id_64=None, duration_hours=2, reason="", admin_name=""
     ):
         with invalidates(Rcon.get_players, Rcon.get_temp_bans):
             if player and re.match(r"\d+", player):
@@ -955,14 +969,19 @@ class Rcon(ServerCtl):
         return l
 
     def do_add_map_to_rotation(
-            self, map_name, after_map_name: str = None, after_map_name_number: str = None
+        self, map_name, after_map_name: str = None, after_map_name_number: int = None
     ):
         with invalidates(Rcon.get_map_rotation):
+            if after_map_name is None:
+                current = self.get_map_rotation()
+                after_map_name = current[len(current) - 1]
+                after_map_name_number = current.count(after_map_name)
+
             super().do_add_map_to_rotation(
                 map_name, after_map_name, after_map_name_number
             )
 
-    def do_remove_map_from_rotation(self, map_name, map_number: str = None):
+    def do_remove_map_from_rotation(self, map_name, map_number: int = None):
         with invalidates(Rcon.get_map_rotation):
             super().do_remove_map_from_rotation(map_name, map_number)
 
@@ -974,8 +993,13 @@ class Rcon(ServerCtl):
 
     def do_add_maps_to_rotation(self, maps):
         with invalidates(Rcon.get_map_rotation):
+            existing = self.get_map_rotation()
+            last = existing[len(existing) - 1]
+            map_numbers = {last: existing.count(last)}
             for map_name in maps:
-                super().do_add_map_to_rotation(map_name)
+                super().do_add_map_to_rotation(map_name, last, map_numbers.get(last, 1))
+                last = map_name
+                map_numbers[last] = map_numbers.get(last, 0) + 1
             return "SUCCESS"
 
     def set_maprotation(self, rotation):
@@ -985,24 +1009,29 @@ class Rcon(ServerCtl):
         rotation = list(rotation)
         logger.info("Apply map rotation %s", rotation)
 
-        current = self.get_map_rotation()
-        logger.info("Current rotation: %s", current)
-        if rotation == current:
-            logger.debug("Map rotation is the same, nothing to do")
-            return current
         with invalidates(Rcon.get_map_rotation):
+            current = self.get_map_rotation()
+            logger.info("Current rotation: %s", current)
+            if rotation == current:
+                logger.debug("Map rotation is the same, nothing to do")
+                return current
+
             # we remove all but the first
             for map_ in current[1:]:
                 map_without_number = map_.rsplit(" ")[0]
                 logger.info("Removing from rotation: '%s'", map_without_number)
                 super().do_remove_map_from_rotation(map_without_number)
 
+            last = current[0]
+            map_number = {last: 1}
             for map_ in rotation:
                 logger.info("Adding to rotation: '%s'", map_)
-                super().do_add_map_to_rotation(map_)
+                super().do_add_map_to_rotation(map_, last, map_number.get(last, 1))
+                last = map_
+                map_number[last] = map_number.get(last, 0) + 1
 
             # Now we can remove the first from the previous rotation
-            super().do_remove_map_from_rotation(current[0])
+            super().do_remove_map_from_rotation(current[0], 1)
 
         return self.get_map_rotation()
 
@@ -1051,9 +1080,6 @@ class Rcon(ServerCtl):
                 raise ValueError(f"Unable to parse line: {raw_line}")
         elif raw_line.startswith("KICK") or raw_line.startswith("BAN"):
 
-            if "FOR TEAM KILLING" in raw_line:
-                action = "TK AUTO"
-
             if match := re.match(Rcon.kick_ban_pattern, raw_line):
                 _action, player, sub_content, type_ = match.groups()
             else:
@@ -1069,6 +1095,9 @@ class Rcon(ServerCtl):
                 type_ = "ANTI-CHEAT"
 
             action = f"ADMIN {type_}".strip()
+
+            if "FOR TEAM KILLING" in raw_line:
+                action = f"TK AUTO {type_}"
 
             # Reconstruct the log line without the newlines and tack on the trailing ] we lose
             content = f"{_action}: [{player}] {sub_content}"
@@ -1086,8 +1115,8 @@ class Rcon(ServerCtl):
                 player = match.groups()[0]
             # VOTESYS: Player [NoodleArms] Started a vote of type (PVR_Kick_Abuse) against [buscÃ´O-sensei]. VoteID: [2]
             elif match := re.match(
-                    Rcon.vote_started_pattern,
-                    raw_line,
+                Rcon.vote_started_pattern,
+                raw_line,
             ):
                 action = "VOTE STARTED"
                 player, player2 = match.groups()
@@ -1160,7 +1189,7 @@ class Rcon(ServerCtl):
 
     @staticmethod
     def parse_logs(
-            raw_logs: str, filter_action=None, filter_player=None
+        raw_logs: str, filter_action=None, filter_player=None
     ) -> ParsedLogsType:
         """Parse a chunk of raw gameserver RCON logs"""
         synthetic_actions = LOG_ACTIONS
@@ -1170,7 +1199,7 @@ class Rcon(ServerCtl):
         players: set[str] = set()
 
         for raw_relative_time, raw_timestamp, raw_log_line in Rcon.split_raw_log_lines(
-                raw_logs
+            raw_logs
         ):
             time = Rcon._extract_time(raw_timestamp)
             try:
