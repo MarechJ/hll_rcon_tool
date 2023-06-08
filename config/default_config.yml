@@ -420,10 +420,10 @@ LEVEL_AUTO_MOD:
     # Available roles are: 'armycommander', 'officer', 'antitank', 'automaticrifleman', 'assault', 'heavymachinegunner', 'support', 'sniper', 'spotter', 'rifleman', 'crewman', 'tankcommander', 'engineer', 'medic'
     # Label's values are used for sending messages to players.
     roles:
-      - armycommander: 
+      armycommander: 
         label: Commander
         min_level: 50
-      - officer: 
+      officer: 
         label: Officer
         min_level: 25
     # Violation message used as a description of the seeding violation when player is messaged, punished and kicked.
