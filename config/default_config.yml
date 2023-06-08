@@ -350,9 +350,9 @@ LEVEL_AUTO_MOD:
   # This auto-moderator has 3 steps, 1. warning via direct message (Y times), 2. punish (Z times) 3. kick
   # Note that the state cycle for a given squad only resets once the rule-violation is fixed. So for example if you
   # disabled the kick and have 3 punishes configured, once the 3 punishes are
-  # through that's it, nothing will happen anymore for that player if they still break seeding rules.
+  # through that's it, nothing will happen anymore for that player if they still break level thresholds rules.
   #
-  # Set to true to enable the auto moderation of seeding rules
+  # Set to true to enable the auto moderation of level thresholds rules
   enabled: false
 
   # Discord Webhook URL where audit logs should be sent. If not specified, the environment variable DISCORD_WEBHOOK_AUDIT_LOG
@@ -381,7 +381,7 @@ LEVEL_AUTO_MOD:
   number_of_punish: 2
   # This is the number of seconds to wait between punishes
   # I wouldn't recommend setting a high value here (unless you chose infinite punishes) as once the player has died he has the opportunity to
-  # stop violating the seeding rules, so no excuse. Also it's even more frustrating to respawn run 300m and die again ;)
+  # stop violating the level thresholds rules, so no excuse. Also it's even more frustrating to respawn run 300m and die again ;)
   punish_interval_seconds: 60
   # This is the message that will be used in the punish
   # The following variables are available to fill into the text
@@ -426,7 +426,7 @@ LEVEL_AUTO_MOD:
       officer: 
         label: Officer
         min_level: 25
-    # Violation message used as a description of the seeding violation when player is messaged, punished and kicked.
+    # Violation message used as a description of the level thresholds violation when player is messaged, punished and kicked.
     # Available properties: {role} matching label's value of previous map and {level} matching level's value from previous map.
     message: "{role} are not allowed under level {level}"
 
