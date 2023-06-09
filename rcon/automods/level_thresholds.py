@@ -216,10 +216,10 @@ class LevelThresholdsAutomod:
                     ),
                 )
 
+                violations = []
+                
                 # Global exclusion to avoid "Level 1" HLL bug
-                if aplayer.lvl != 1:
-                    
-                    violations = []
+                if aplayer.lvl != 1:                    
                     
                     # Server min level threshold check
                     min_level = self.config.min_level
