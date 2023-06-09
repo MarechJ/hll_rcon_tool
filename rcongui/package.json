@@ -34,18 +34,19 @@
     "react-copy-to-clipboard": "^5.0.3",
     "react-dom": "^16.12.0",
     "react-router-dom": "^5.1.2",
-    "react-scripts": "5.0.1",
     "react-toastify": "^5.5.0",
     "recompose": "^0.30.0"
   },
-  "scripts": {
-    "start": "export REACT_APP_VERSION=$(git describe --tags) && react-scripts start",
-    "build": "export REACT_APP_VERSION=$(git describe --tags) && react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
+  "devDependencies": {
+    "vite": "^4.3.9",
+    "@vitejs/plugin-react": "^4.0.0",
+    "prettier": "^2.8.8"
   },
-  "eslintConfig": {
-    "extends": "react-app"
+  "scripts": {
+    "start": "vite",
+    "build": "vite build",
+    "serve": "vite preview",
+    "test": "jest"
   },
   "browserslist": {
     "production": [
@@ -58,8 +59,5 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  },
-  "devDependencies": {
-    "prettier": "2.8.0"
   }
 }
