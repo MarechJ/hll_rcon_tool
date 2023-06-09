@@ -177,6 +177,7 @@ class LevelThresholdsAutomod:
             ActionMethod.MESSAGE: self.config.warning_message,
             ActionMethod.PUNISH: self.config.punish_message,
             ActionMethod.KICK: self.config.kick_message,
+            ActionMethod.FORCE_KICK: self.config.force_kick_message,
         }
 
         message = base_message[method]
@@ -218,6 +219,7 @@ class LevelThresholdsAutomod:
 
                 violations = []
                 
+                shouldForceKick = False
                 # Global exclusion to avoid "Level 1" HLL bug
                 if aplayer.lvl != 1:                    
                     
@@ -232,6 +234,7 @@ class LevelThresholdsAutomod:
                                 f"The automod message ({message}) contains an invalid key"
                             )
                         violations.append(message)
+                        shouldForceKick = True
                     
                     # Server max level threshold check
                     max_level = self.config.max_level
@@ -244,6 +247,17 @@ class LevelThresholdsAutomod:
                                 f"The automod message ({message}) contains an invalid key"
                             )
                         violations.append(message)
+                        shouldForceKick = True
+                    
+                    # Force kick player if not matching global level thresholds
+                    if shouldForceKick:
+                        violation_msg = ", ".join(violations)
+                        aplayer.details.message = self.get_message(
+                            watch_status, aplayer, violation_msg, ActionMethod.FORCE_KICK
+                        )
+                        punitions_to_apply.kick.append(aplayer)
+                        punitions_to_apply.add_squad_state(team, squad_name, squad)
+                        continue
 
                     # By role level thresholds check
                     lt = self.config.level_thresholds

@@ -49,6 +49,7 @@ class ActionMethod(Enum):
     MESSAGE = auto()
     PUNISH = auto()
     KICK = auto()
+    FORCE_KICK = auto()
 
 
 @dataclass
@@ -336,6 +337,10 @@ class LevelThresholdsConfig:
         "You violated level thresholds rules on this server.\n"
         "Your grace period of {kick_grace_period}s has passed.\n"
         "You failed to comply with the previous warnings."
+    )
+    
+    force_kick_message: str = (
+        "You violated level thresholds rules on this server: {violation}."
     )
     
     announce_level_thresholds: AnnounceSeedingActiveConfig = field(
