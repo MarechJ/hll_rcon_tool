@@ -238,7 +238,7 @@ class LevelThresholdsAutomod:
                     
                     # Server max level threshold check
                     max_level = self.config.max_level
-                    if max_level > 0 and aplayer.lvl >= max_level:
+                    if max_level > 0 and aplayer.lvl > max_level:
                         message = self.config.max_level_message
                         try:
                             message = message.format(level=max_level)
