@@ -2,7 +2,7 @@ version: '2.4'
 
 services:
     python:
-        image: maresh/hll_rcon:latest
+        image: ${BACKEND_DOCKER_REPOSITORY}:${TAGGED_VERSION}
         environment:
             HLL_HOST: ${HLL_HOST}
             HLL_PORT: ${HLL_PORT}
