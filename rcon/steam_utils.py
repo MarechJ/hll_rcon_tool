@@ -10,7 +10,7 @@ from steam.webapi import WebAPI
 
 from rcon.cache_utils import ttl_cache
 from rcon.models import PlayerSteamID, SteamInfo
-from rcon.types import SteamBanResultType
+from rcon.types import SteamBanResultType, SteamBansType
 
 logger = logging.getLogger(__name__)
 
@@ -74,7 +74,7 @@ def get_players_country_code(steamd_ids: List[str]) -> Mapping:
 
 
 @ttl_cache(60 * 60 * 12, cache_falsy=False, is_method=False)
-def get_player_bans(steamd_id):
+def get_player_bans(steamd_id) -> SteamBansType | None:
     if not STEAM_KEY:
         return None
 

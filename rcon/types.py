@@ -285,3 +285,11 @@ class GameState(TypedDict):
     time_remaining: datetime.timedelta
     current_map: str
     next_map: str
+
+
+class VACGameBansConfigType(TypedDict):
+    steam_api_key: str
+    ban_on_vac_history_days: int
+    max_game_ban_threshold: int
+    ban_on_vac_history_reason: str
+    whitelist_flags: list[str]
