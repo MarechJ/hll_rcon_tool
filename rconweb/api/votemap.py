@@ -1,7 +1,12 @@
 from django.views.decorators.csrf import csrf_exempt
 
 from rcon.discord import send_to_discord_audit
-from rcon.vote_map import VoteMap, VoteMapConfig
+
+
+from rcon.vote_map import (
+    VoteMap,
+    VoteMapConfig,
+)
 
 from .audit_log import auto_record_audit, record_audit
 from .auth import api_response, login_required
@@ -98,6 +103,7 @@ def get_votemap_status(request):
 @login_required(True)
 @record_audit
 def reset_votemap_state(request):
+    v = VoteMap()
     if request.method != "POST":
         return api_response(
             failed=True,
@@ -109,7 +115,6 @@ def reset_votemap_state(request):
             command="reset_votemap_state",
         )
     audit("reset_votemap_state", request, {})
-    v = VoteMap()
     v.clear_votes()
     v.gen_selection()
     v.apply_results()
@@ -121,4 +126,159 @@ def reset_votemap_state(request):
             "results": v.get_vote_overview(),
         },
         command="reset_votemap_state",
+    )
+
+
+@csrf_exempt
+@login_required(True)
+def get_map_whitelist(request):
+    v = VoteMap()
+    return api_response(
+        failed=False,
+        result=[map for map in v.get_map_whitelist()],
+        command="get_map_whitelist",
+    )
+
+
+@csrf_exempt
+@login_required(True)
+@record_audit
+def do_add_map_to_whitelist(request):
+    data = _get_data(request)
+    try:
+        map_name = data["map_name"]
+    except KeyError:
+        return api_response(
+            failed=True,
+            result=None,
+            command="do_add_map_to_whitelist",
+        )
+
+    v = VoteMap()
+    audit("do_add_map_to_whitelist", request, {"map_name": map_name})
+    v.do_add_map_to_whitelist(map_name=map_name)
+
+    return api_response(
+        failed=False,
+        result=None,
+        command="do_add_map_to_whitelist",
+    )
+
+
+@csrf_exempt
+@login_required(True)
+@record_audit
+def do_add_maps_to_whitelist(request):
+    data = _get_data(request)
+
+    try:
+        map_names = data["map_names"]
+    except KeyError:
+        return api_response(
+            failed=True,
+            result=None,
+            command="do_add_maps_to_whitelist",
+        )
+
+    v = VoteMap()
+    audit("do_add_maps_to_whitelist", request, {"map_names": map_names})
+    v.do_add_maps_to_whitelist(map_names=map_names)
+
+    return api_response(
+        failed=False,
+        result=None,
+        command="do_add_maps_to_whitelist",
+    )
+
+
+@csrf_exempt
+@login_required(True)
+@record_audit
+def do_remove_map_from_whitelist(request):
+    data = _get_data(request)
+
+    try:
+        map_name = data["map_name"]
+    except KeyError:
+        return api_response(
+            failed=True,
+            result=None,
+            command="do_remove_map_from_whitelist",
+        )
+
+    v = VoteMap()
+    audit("do_remove_map_from_whitelist", request, {"map_name": map_name})
+    v.do_remove_map_from_whitelist(map_name=map_name)
+
+    return api_response(
+        failed=False,
+        result=None,
+        command="do_remove_map_from_whitelist",
+    )
+
+
+@csrf_exempt
+@login_required(True)
+@record_audit
+def do_remove_maps_from_whitelist(request):
+    data = _get_data(request)
+
+    try:
+        map_names = data["map_names"]
+    except KeyError:
+        return api_response(
+            failed=True,
+            result=None,
+            command="do_remove_maps_from_whitelist",
+        )
+
+    v = VoteMap()
+    audit("do_remove_maps_from_whitelist", request, {"map_names": map_names})
+    v.do_remove_maps_from_whitelist(map_names=map_names)
+
+    return api_response(
+        failed=False,
+        result=None,
+        command="do_remove_maps_from_whitelist",
+    )
+
+
+@csrf_exempt
+@login_required(True)
+@record_audit
+def do_reset_map_whitelist(request):
+    v = VoteMap()
+    audit("do_reset_map_whitelist", request, {})
+    v.do_reset_map_whitelist()
+
+    return api_response(
+        failed=False,
+        result=None,
+        command="do_reset_map_whitelist",
+    )
+
+
+@csrf_exempt
+@login_required(True)
+@record_audit
+def do_set_map_whitelist(request):
+    data = _get_data(request)
+
+    try:
+        map_names = data["map_names"]
+    except KeyError:
+        return api_response(
+            failed=True,
+            result=None,
+            command="do_set_map_whitelist",
+        )
+
+    v = VoteMap()
+    audit("do_set_map_whitelist", request, {"map_names": map_names})
+    v.do_set_map_whitelist(map_names=map_names)
+
+    return api_response(
+        failed=False,
+        result=None,
+        command="do_set_map_whitelist",
     )
