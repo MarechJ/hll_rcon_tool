@@ -85,7 +85,7 @@ class RconUser(User):
             ("can_unban_profanities", "Can unban profanities (censored game chat)"),
             ("can_unblacklist_players", "Can remove players from the blacklist"),
             ("can_unflag_player", "Can remove flags from players"),
-            ("can_unwatch_players", "Can remove a watch from players"),
+            ("can_remove_player_watch", "Can remove a watch from players"),
             ("can_upload_vip_list", "Can upload a VIP list"),
             ("can_view_admin_groups", "Can view available admin roles"),
             (
@@ -110,7 +110,6 @@ class RconUser(User):
             ("can_view_broadcast_message", "Can view the current broadcast message"),
             ("can_view_camera_config", "Can view camera notification settings"),
             ("can_view_connection_info", "Can view CRCON's connection info"),
-            ("can_view_crcon_version", "Can view CRCON's version"),
             ("can_view_current_map", "Can view the currently playing map"),
             ("can_view_date_scoreboard", "Can view the date_scoreboard endpoint"),
             (
@@ -175,7 +174,6 @@ class RconUser(User):
                 "Can view get_players_fast endpoint for all connected players ",
             ),
             ("can_view_profanities", "Can view profanities (censored game chat)"),
-            ("can_view_public_info", "Can view the public_info endpoint"),
             ("can_view_queue_length", "Can view the maximum size of the server queue"),
             ("can_view_real_vip_config", "Can view the real VIP settings"),
             ("can_view_recent_logs", "Can view recent logs (Live view)"),
@@ -195,7 +193,6 @@ class RconUser(User):
                 "can_view_team_objective_scores",
                 "Can view the number of objectives held by each team",
             ),
-            ("can_view_team_sizes", "Can view the number of allied/axis players"),
             (
                 "can_view_team_switch_cooldown",
                 "Can view the team switch cooldown value",
@@ -222,5 +219,5 @@ class RconUser(User):
                 "Can view the current votemap status (votes, results, etc)",
             ),
             ("can_view_welcome_message", "Can view the server welcome message"),
-            ("can_watch_players", "Can add a watch to players"),
+            ("can_add_player_watch", "Can add a watch to players"),
         )
