@@ -8,13 +8,19 @@ from typing import List, Mapping
 
 from steam.webapi import WebAPI
 
+from rcon.config import get_config
 from rcon.cache_utils import ttl_cache
 from rcon.models import PlayerSteamID, SteamInfo
-from rcon.types import SteamBanResultType, SteamBansType
+from rcon.types import SteamBanResultType, SteamBansType, VACGameBansConfigType
 
 logger = logging.getLogger(__name__)
 
-STEAM_KEY = os.getenv("STEAM_API_KEY")
+try:
+    config: VACGameBansConfigType = get_config()["VAC_GAME_BANS"]
+except KeyError:
+    logger.error(f"VAC_GAME_BANS not in your config")
+
+STEAM_KEY = config.get("steam_api_key", None)
 if not STEAM_KEY:
     logger.warning("STEAM_API_KEY not set some features will be disabled.")
 
