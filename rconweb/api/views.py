@@ -95,7 +95,6 @@ def get_version(request):
 
 
 @csrf_exempt
-@permission_required("api.can_view_public_info", raise_exception=True)
 def public_info(request):
     gamestate = ctl.get_gamestate()
     curr_players, max_players = tuple(map(int, ctl.get_slots().split("/")))
