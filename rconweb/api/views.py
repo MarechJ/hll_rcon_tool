@@ -89,7 +89,6 @@ def set_temp_welcome(request):
 
 
 @csrf_exempt
-@permission_required("api.can_view_crcon_version", raise_exception=True)
 def get_version(request):
     res = run(["git", "describe", "--tags"], stdout=PIPE, stderr=PIPE)
     return api_response(res.stdout.decode(), failed=False, command="get_version")
