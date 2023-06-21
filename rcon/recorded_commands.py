@@ -54,7 +54,6 @@ class RecordedRcon(Rcon):
     def run_in_pool(self, function_name: str, *args, **kwargs):
         return self.thread_pool.submit(getattr(self, function_name), *args, **kwargs)
 
-    @ttl_cache(ttl=2)
     def get_players_fast(self) -> List[GetPlayersType]:
         players = {}
         ids = []
