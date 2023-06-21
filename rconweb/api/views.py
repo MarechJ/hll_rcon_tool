@@ -306,7 +306,7 @@ def _do_watch(request, add: bool):
 
 @csrf_exempt
 @login_required()
-@permission_required("api.can_watch_players", raise_exception=True)
+@permission_required("api.can_add_player_watch", raise_exception=True)
 @record_audit
 def do_watch_player(request):
     return _do_watch(request, add=True)
@@ -314,7 +314,7 @@ def do_watch_player(request):
 
 @csrf_exempt
 @login_required()
-@permission_required("api.can_unwatch_players", raise_exception=True)
+@permission_required("api.can_remove_player_watch", raise_exception=True)
 @record_audit
 def do_unwatch_player(request):
     return _do_watch(request, add=False)
