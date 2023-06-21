@@ -52,8 +52,9 @@ VAC_GAME_BANS:
   ban_on_vac_history_days: 0
   max_game_ban_threshold: 0
   ban_on_vac_history_reason: "VAC/Game ban history ({DAYS_SINCE_LAST_BAN} days ago)"
-  whitelist_flags:
-    - 🤡
+  # This is either an empty list [] or a list of flags
+  whitelist_flags: []
+    # - 🤡
 
 # You can test your regex there: https://regex101.com/ set it to "Python"
 NAME_KICKS:
