@@ -488,7 +488,7 @@ class Rcon(ServerCtl):
         Map: foy_warfare
         Next Map: stmariedumont_warfare"""
         with invalidates(
-            Rcon.get_team_sizes,
+            Rcon.team_sizes,
             Rcon.get_team_objective_scores,
             Rcon.get_round_time_remaining,
         ):
@@ -528,7 +528,7 @@ class Rcon(ServerCtl):
         }
 
     @ttl_cache(ttl=2, cache_falsy=False)
-    def get_team_sizes(self) -> Tuple[int, int]:
+    def team_sizes(self) -> Tuple[int, int]:
         """Returns the number of allied/axis players respectively"""
         result = self.get_gamestate()
 

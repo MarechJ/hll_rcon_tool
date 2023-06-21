@@ -722,7 +722,6 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     ctl.get_vip_ids: "api.can_view_vip_ids",
     ctl.do_remove_all_vips: "api.can_remove_all_vips",
     ctl.get_gamestate: "api.can_view_gamestate",
-    ctl.get_team_sizes: "api.can_view_team_sizes",
     ctl.get_team_objective_scores: "api.can_view_team_objective_scores",
     ctl.get_round_time_remaining: "api.can_view_round_time_remaining",
     ctl.get_next_map: "api.can_view_next_map",
