@@ -135,7 +135,7 @@ Per server settings
     HLL_PASSWORD
     
 
-There are other optional (but beneficial) settings in your `.env` such as the `STEAM_API_KEY` or Discord integration.
+There are other optional (but beneficial) settings in your `.env` such as Discord integration.
 
 Note: when you're configuring multiple game servers inside one CRCON installation you need to make sure your `RCONWEB_PORT`s are unique and also not otherwise used on the machine your're hosting on, the defaults *should* work.
 
