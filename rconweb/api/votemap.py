@@ -103,18 +103,14 @@ def get_votemap_status(request):
 @login_required(True)
 @record_audit
 def reset_votemap_state(request):
-    v = VoteMap()
     if request.method != "POST":
         return api_response(
             failed=True,
-            result={
-                "votes": v.get_votes(),
-                "selection": v.get_selection(),
-                "results": v.get_vote_overview(),
-            },
+            result="Only POST requests are supported",
             command="reset_votemap_state",
         )
     audit("reset_votemap_state", request, {})
+    v = VoteMap()
     v.clear_votes()
     v.gen_selection()
     v.apply_results()
@@ -150,7 +146,7 @@ def do_add_map_to_whitelist(request):
     except KeyError:
         return api_response(
             failed=True,
-            result=None,
+            result="map_name parameter not provided",
             command="do_add_map_to_whitelist",
         )
 
@@ -176,7 +172,7 @@ def do_add_maps_to_whitelist(request):
     except KeyError:
         return api_response(
             failed=True,
-            result=None,
+            result="map_name parameter not provided",
             command="do_add_maps_to_whitelist",
         )
 
@@ -202,7 +198,7 @@ def do_remove_map_from_whitelist(request):
     except KeyError:
         return api_response(
             failed=True,
-            result=None,
+            result="map_name parameter not provided",
             command="do_remove_map_from_whitelist",
         )
 
@@ -228,7 +224,7 @@ def do_remove_maps_from_whitelist(request):
     except KeyError:
         return api_response(
             failed=True,
-            result=None,
+            result="map_name parameter not provided",
             command="do_remove_maps_from_whitelist",
         )
 
@@ -269,7 +265,7 @@ def do_set_map_whitelist(request):
     except KeyError:
         return api_response(
             failed=True,
-            result=None,
+            result="map_name parameter not provided",
             command="do_set_map_whitelist",
         )
 
