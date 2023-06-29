@@ -38,7 +38,7 @@ services:
           - backend
       common:
   frontend_1: &frontend
-    image: maresh/hll_rcon_frontend:latest
+    image: ${FRONTEND_DOCKER_REPOSITORY}:${TAGGED_VERSION}
     ports:
       - ${RCONWEB_PORT}:80
       - ${RCONWEB_PORT_HTTPS}:443
