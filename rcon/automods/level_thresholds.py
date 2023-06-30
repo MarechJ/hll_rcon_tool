@@ -100,7 +100,7 @@ class LevelThresholdsAutomod:
                     )
                 data["max_level_msg"] = message
 
-            # Populate level thresholds by role message id configured
+            # Populate level thresholds by role message if configured
             if lt.roles is not None and len(lt.roles.keys()) > 0:
                 level_thresholds_msg = ""
                 for role in lt.roles:
@@ -198,6 +198,8 @@ class LevelThresholdsAutomod:
             self.logger.info("Skipping None or empty squad %s %s", squad_name, squad)
             return punitions_to_apply
 
+        server_player_count = get_team_count(team_view, "allies") + get_team_count(team_view, "axis")
+
         with self.watch_state(team, squad_name) as watch_status:
             if squad_name is None or squad is None:
                 raise NoLevelViolation()
@@ -264,7 +266,7 @@ class LevelThresholdsAutomod:
                     if lt.roles is not None and len(lt.roles.keys()) > 0:
                         if aplayer.role in lt.roles:
                             roleConfig = lt.roles.get(aplayer.role)
-                            if roleConfig and aplayer.lvl < roleConfig.min_level:
+                            if roleConfig and server_player_count >= roleConfig.min_players and aplayer.lvl < roleConfig.min_level:
                                 message = lt.message
                                 try:
                                     message = message.format(role=roleConfig.label, level=roleConfig.min_level)

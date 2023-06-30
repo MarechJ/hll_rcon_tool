@@ -304,6 +304,7 @@ class PunitionsToApply:
 class RoleLabelNLevel:
     label: str
     min_level: int
+    min_players: int
 
 @dataclass
 class LevelByRoleConfig:
