@@ -347,7 +347,9 @@ SEEDING_AUTO_MOD:
     message: "Attacking 4th cap while seeding is not allowed"
 
 LEVEL_AUTO_MOD:
-  # This auto-moderator has 3 steps, 1. warning via direct message (Y times), 2. punish (Z times) 3. kick
+  # This auto-moderator has 2 features: 
+  #   1. Global server min/max level: No warning, players are kick after connection if they does'not match level requirements
+  #   2. Min level by role: 3 steps, 1. warning via direct message (Y times), 2. punish (Z times) 3. kick
   # Note that the state cycle for a given squad only resets once the rule-violation is fixed. So for example if you
   # disabled the kick and have 3 punishes configured, once the 3 punishes are
   # through that's it, nothing will happen anymore for that player if they still break level thresholds rules.
@@ -358,6 +360,42 @@ LEVEL_AUTO_MOD:
   # Discord Webhook URL where audit logs should be sent. If not specified, the environment variable DISCORD_WEBHOOK_AUDIT_LOG
   # will be used, instead.
   discord_webhook_url: ""
+
+  # Announce that the server has managed level thresholds when at least one level thresholds rule is enabled. 
+  # This message occurs only when a player connects to a server. 
+  announce_level_thresholds:
+    enabled: true
+    # Available fields: {min_level_msg} from min_level_message value, {max_level_msg} from max_level_message value, {level_thresholds_msg} from level_thresholds's message value
+    message: "This server is under level thresholds control.\n\n{min_level_msg}{max_level_msg}{level_thresholds_msg}\nThanks for understanding."
+
+  # This is the message that will be used in the force kick without warnings when player does not match global level thresholds.
+  # The following variables are available to fill into the text: {player_name}, {squad_name} and {violation}
+  force_kick_message: "You violated level thresholds rules on this server: {violation}."
+
+  # This allows to configure a global minimum level on the whole server and the matching kick message to display to players.
+  min_level: 0
+  min_level_message: "Access to this server is not allowed under level {level}"
+  
+  # This allows to configure a global maximum level on the whole server and the matching kick message to display to players.
+  max_level: 0
+  max_level_message: "Access to this server is not allowed over level {level}"
+
+  # This allows to configure minimum level by role that prevent player from taking a role which level does not match with warnings/punishes/kick lifecycle.
+  level_thresholds:
+    # a map of roles to label & level object that should not be taken by players under the required level.
+    # Available roles are: 'armycommander', 'officer', 'antitank', 'automaticrifleman', 'assault', 'heavymachinegunner', 'support', 'sniper', 'spotter', 'rifleman', 'crewman', 'tankcommander', 'engineer', 'medic'
+    # Label's values are used for sending messages to players.
+    # To disable, leave roles's value empty ie. "roles: "
+    roles:
+      armycommander: 
+        label: Commander
+        min_level: 50
+      officer: 
+        label: Officer
+        min_level: 25
+    # Violation message used as a description of the level thresholds violation when player is messaged, punished and kicked.
+    # Available properties: {role} matching label's value of previous map and {level} matching level's value from previous map.
+    message: "{role} are not allowed under level {level}"
 
   # Step number 1
   # Send a direct warning message to the players that violate level thresholds rules
@@ -398,43 +436,6 @@ LEVEL_AUTO_MOD:
   # The following variables are available to fill into the text
   #  {player_name}, {squad_name}, {kick_grace_period} and {violation}
   kick_message: "You violated level thresholds rules on this server: {violation}.\nYour grace period of {kick_grace_period}s has passed.\nYou failed to comply with the previous warnings."
-
-  # This is the message that will be used in the force kick when player does not match global level thresholds.
-  # The following variables are available to fill into the text
-  #  {player_name}, {squad_name} and {violation}
-  force_kick_message: "You violated level thresholds rules on this server: {violation}."
-
-  # Announce that the server has managed level thresholds when at least one level thresholds rule is enabled. 
-  # This message occurs only when a player connects to a server. 
-  announce_level_thresholds:
-    enabled: true
-    # Available fields: {min_level_msg} from min_level_message value, {max_level_msg} from max_level_message value, {level_thresholds_msg} from level_thresholds's message value
-    message: "This server is under level thresholds control.\n\n{min_level_msg}{max_level_msg}{level_thresholds_msg}\nThanks for understanding."
-
-  # This allows to configure a global minimum level on the whole server and the matching warning message to display to players.
-  min_level: 0
-  min_level_message: "Access to this server is not allowed under level {level}"
-  
-  # This allows to configure a global maximum level on the whole server and the matching warning message to display to players.
-  max_level: 0
-  max_level_message: "Access to this server is not allowed over level {level}"
-
-  # This allows to configure minimum level by role that prevent player from taking a role which level does not match.
-  level_thresholds:
-    # a map of roles to label & level object that should not be taken by players under the required level.
-    # Available roles are: 'armycommander', 'officer', 'antitank', 'automaticrifleman', 'assault', 'heavymachinegunner', 'support', 'sniper', 'spotter', 'rifleman', 'crewman', 'tankcommander', 'engineer', 'medic'
-    # Label's values are used for sending messages to players.
-    # To disable, leave roles's value empty ie. "roles: "
-    roles:
-      armycommander: 
-        label: Commander
-        min_level: 50
-      officer: 
-        label: Officer
-        min_level: 25
-    # Violation message used as a description of the level thresholds violation when player is messaged, punished and kicked.
-    # Available properties: {role} matching label's value of previous map and {level} matching level's value from previous map.
-    message: "{role} are not allowed under level {level}"
 
 # Set your custom text or transalation for each of the below keys. Logo urls and prefered stats and such
 # If you have more that 3 server copy the whole SERVER_1 section
