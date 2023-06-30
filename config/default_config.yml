@@ -382,16 +382,18 @@ LEVEL_AUTO_MOD:
 
   # This allows to configure minimum level by role that prevent player from taking a role which level does not match with warnings/punishes/kick lifecycle.
   level_thresholds:
-    # a map of roles to label & level object that should not be taken by players under the required level.
+    # a map of roles to label, min_players & min_level that should not be taken by players under the required level only when min_players reached.
     # Available roles are: 'armycommander', 'officer', 'antitank', 'automaticrifleman', 'assault', 'heavymachinegunner', 'support', 'sniper', 'spotter', 'rifleman', 'crewman', 'tankcommander', 'engineer', 'medic'
     # Label's values are used for sending messages to players.
     # To disable, leave roles's value empty ie. "roles: "
     roles:
       armycommander: 
         label: Commander
+        min_players: 0
         min_level: 50
       officer: 
         label: Officer
+        min_players: 30
         min_level: 25
     # Violation message used as a description of the level thresholds violation when player is messaged, punished and kicked.
     # Available properties: {role} matching label's value of previous map and {level} matching level's value from previous map.
