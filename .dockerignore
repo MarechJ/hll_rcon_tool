@@ -11,3 +11,5 @@ rcongui/node_modules/
 *.gz
 db_data_bu/
 config/
+rcongui/dist/
+rcongui/build/

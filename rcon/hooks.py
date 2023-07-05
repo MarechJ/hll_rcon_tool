@@ -44,6 +44,7 @@ from rcon.user_config import CameraConfig, RealVipConfig
 from rcon.utils import LOG_MAP_NAMES_TO_MAP, MapsHistory, get_server_number
 from rcon.vote_map import VoteMap
 from rcon.workers import record_stats_worker, temporary_broadcast, temporary_welcome
+from rcon.types import VACGameBansConfigType, PlayerFlagType, SteamBansType
 
 logger = logging.getLogger(__name__)
 
@@ -157,13 +158,6 @@ def record_map_end(rcon: RecordedRcon, struct_log):
             )
 
 
-MAX_DAYS_SINCE_BAN = os.getenv("BAN_ON_VAC_HISTORY_DAYS", 0)
-AUTO_BAN_REASON = os.getenv(
-    "BAN_ON_VAC_HISTORY_REASON", "VAC ban history ({DAYS_SINCE_LAST_BAN} days ago)"
-)
-MAX_GAME_BAN_THRESHOLD = os.getenv("MAX_GAME_BAN_THRESHOLD", 0)
-
-
 def ban_if_blacklisted(rcon: RecordedRcon, steam_id_64, name):
     with enter_session() as sess:
         player = get_player(sess, steam_id_64)
@@ -206,7 +200,19 @@ def ban_if_blacklisted(rcon: RecordedRcon, steam_id_64, name):
                 )
 
 
-def should_ban(bans, max_game_bans, max_days_since_ban):
+def should_ban(
+    bans: SteamBansType | None,
+    max_game_bans: float,
+    max_days_since_ban: int,
+    player_flags: list[PlayerFlagType] = [],
+    whitelist_flags: list[str] = [],
+) -> bool | None:
+    if not bans:
+        return
+
+    if any(player_flag in whitelist_flags for player_flag in player_flags):
+        return False
+
     try:
         days_since_last_ban = int(bans["DaysSinceLastBan"])
         number_of_game_bans = int(bans.get("NumberOfGameBans", 0))
@@ -226,17 +232,18 @@ def should_ban(bans, max_game_bans, max_days_since_ban):
 
 def ban_if_has_vac_bans(rcon: RecordedRcon, steam_id_64, name):
     try:
-        max_days_since_ban = int(MAX_DAYS_SINCE_BAN)
-        max_game_bans = (
-            float("inf")
-            if int(MAX_GAME_BAN_THRESHOLD) <= 0
-            else int(MAX_GAME_BAN_THRESHOLD)
-        )
-    except ValueError:  # No proper value is given
-        logger.error(
-            "Invalid value given for environment variable BAN_ON_VAC_HISTORY_DAYS or MAX_GAME_BAN_THRESHOLD"
-        )
+        config: VACGameBansConfigType = get_config()["VAC_GAME_BANS"]
+    except KeyError:
+        logger.error(f"VAC_GAME_BANS not in your config")
         return
+
+    max_days_since_ban = config.get("ban_on_vac_history_days", 0)
+    max_game_bans = (
+        float("inf")
+        if config.get("max_game_ban_threshold", 0) <= 0
+        else config.get("max_game_ban_threshold", 0)
+    )
+    whitelist_flags = config.get("whitelist_flags", [])
 
     if max_days_since_ban <= 0:
         return  # Feature is disabled
@@ -248,7 +255,7 @@ def ban_if_has_vac_bans(rcon: RecordedRcon, steam_id_64, name):
             logger.error("Can't check VAC history, player not found %s", steam_id_64)
             return
 
-        bans = get_player_bans(steam_id_64)
+        bans: SteamBansType | None = get_player_bans(steam_id_64)
         if not bans or not isinstance(bans, dict):
             logger.warning(
                 "Can't fetch Bans for player %s, received %s", steam_id_64, bans
@@ -256,8 +263,14 @@ def ban_if_has_vac_bans(rcon: RecordedRcon, steam_id_64, name):
             # Player couldn't be fetched properly (logged by get_player_bans)
             return
 
-        if should_ban(bans, max_game_bans, max_days_since_ban):
-            reason = AUTO_BAN_REASON.format(
+        if should_ban(
+            bans,
+            max_game_bans,
+            max_days_since_ban,
+            player_flags=player,
+            whitelist_flags=whitelist_flags,
+        ):
+            reason = config["ban_on_vac_history_reason"].format(
                 DAYS_SINCE_LAST_BAN=bans.get("DaysSinceLastBan"),
                 MAX_DAYS_SINCE_BAN=str(max_days_since_ban),
             )

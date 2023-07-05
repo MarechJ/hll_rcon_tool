@@ -187,7 +187,7 @@ def process_games(start_day_offset, end_day_offset=0, force=False):
     from sqlalchemy import and_
     from sqlalchemy.exc import IntegrityError
 
-    from rcon.models import Maps, PlayerStats, enter_session
+    from rcon.models import Maps, enter_session
     from rcon.workers import record_stats_from_map
 
     start_date = datetime.now() - timedelta(days=start_day_offset)
@@ -205,11 +205,8 @@ def process_games(start_day_offset, end_day_offset=0, force=False):
         print("Found %s games to reprocess" % len(all_maps))
         for map_ in all_maps:
             print("Reprocessing map: ", map_.to_dict())
-            if force:
-                sess.query(PlayerStats).filter(PlayerStats.map_id == map_.id).delete()
-                sess.commit()
             try:
-                record_stats_from_map(sess, map_)
+                record_stats_from_map(sess, map_, dict(), force=force)
                 sess.commit()
                 print("Done")
             except IntegrityError as e:
@@ -235,8 +232,8 @@ for name in dir(ctl):
     func = getattr(ctl, name)
 
     if (
-        not any(name.startswith(prefix) for prefix in PREFIXES_TO_EXPOSE)
-        or name in EXCLUDED
+            not any(name.startswith(prefix) for prefix in PREFIXES_TO_EXPOSE)
+            or name in EXCLUDED
     ):
         continue
     wrapped = do_print(func)
@@ -250,7 +247,6 @@ for name in dir(ctl):
             wrapped = click.argument(pname)(wrapped)
 
     cli.command(name=name)(wrapped)
-
 
 if __name__ == "__main__":
     cli()

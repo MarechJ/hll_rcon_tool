@@ -200,8 +200,82 @@ const RawScores = pure(({ classes, scores }) => {
       ? 0
       : 1
   );
-  const styles = useStyles();
   const [rowsPerPage, setRowsPerPage] = React.useState(50);
+  const [columns, setColumns] = React.useState([
+    { name: "steam_id_64", label: "Steam ID", options: {display: false}, },
+    { name: "player", label: "Name" },
+    { name: "kills", label: "Kills" },
+    { name: "deaths", label: "Deaths" },
+    { name: "kill_death_ratio", label: "K/D" },
+    { name: "kills_streak", label: "Max kill streak" },
+    { name: "kills_per_minute", label: "Kill(s) / minute" },
+    { name: "deaths_per_minute", label: "Death(s) / minute" },
+    {
+      name: "deaths_without_kill_streak",
+      label: "Max death streak",
+    },
+    { name: "teamkills", label: "Max TK streak" },
+    { name: "deaths_by_tk", label: "Death by TK" },
+    { name: "deaths_by_tk_streak", label: "Death by TK Streak" },
+    {
+      name: "longest_life_secs",
+      label: "(aprox.) Longest life min.",
+      options: {
+        customBodyRender: (value, tableMeta, updateValue) =>
+          Math.round(parseInt(value) / 60).toFixed(2),
+      },
+    },
+    {
+      name: "shortest_life_secs",
+      label: "(aprox.) Shortest life secs.",
+      options: {
+        customBodyRender: (value, tableMeta, updateValue) =>
+          Math.round(parseInt(value) / 60).toFixed(2),
+      },
+    },
+    {
+      name: "death_by",
+      label: "Nemesis",
+      options: {
+        customBodyRender: (value, tableMeta, updateValue) => {
+          const pairs = toPairs(value);
+          return sortBy(pairs, (v) => -v[1]).map(
+            (v) => `${v[0]}: ${v[1]}`
+          )[0];
+        },
+      },
+    },
+    {
+      name: "most_killed",
+      label: "Victim",
+      options: {
+        customBodyRender: (value, tableMeta, updateValue) => {
+          const pairs = toPairs(value);
+          return sortBy(pairs, (v) => -v[1]).map(
+            (v) => `${v[0]}: ${v[1]}`
+          )[0];
+        },
+      },
+    },
+    { name: "combat", label: "Combat Effectiveness", options: {display: false} },
+    { name: "support", label: "Support Points", options: {display: false} },
+    { name: "defense", label: "Defensive Points", options: {display: false} },
+    { name: "offense", label: "Offensive Points", options: {display: false} },
+    {
+      name: "weapons",
+      label: "Weapons",
+      options: {
+        customBodyRender: commaSeperatedListRenderer,
+      },
+    },
+    {
+      name: "death_by_weapons",
+      label: "Death by Weapons",
+      options: {
+        customBodyRender: commaSeperatedListRenderer,
+      },
+    },
+  ]);
   return (
     <Grid container spacing={2} className={classes.padding}>
       <Grid item xs={12}>
@@ -225,6 +299,18 @@ const RawScores = pure(({ classes, scores }) => {
               selectableRows: "none",
               rowsPerPageOptions: [10, 25, 50, 100, 250, 500, 1000],
               onChangeRowsPerPage: (v) => setRowsPerPage(v),
+              onViewColumnsChange: (c, a) => {
+                setColumns((cc) => {
+                  const newColumns = [...cc];
+                  const changedColumn = newColumns.find((column) => column.name === c);
+                  if (!changedColumn.options) {
+                    changedColumn.options = {display: a === 'add'};
+                  } else {
+                    changedColumn.options.display = a === 'add';
+                  }
+                  return newColumns;
+                });
+              },
               onDownload: (buildHead, buildBody, columns, data) => {
                 // Convert any column values that are objects to JSON so they display in the csv as data instead of [object Object]
                 const expandedData = data.map((row) => {
@@ -241,77 +327,7 @@ const RawScores = pure(({ classes, scores }) => {
               },
             }}
             data={scores ? scores.toJS() : []}
-            columns={[
-              { name: "steaminfo.profile.steamid", label: "Steam ID", options: {display: false}, },
-              { name: "player", label: "Name" },
-              { name: "kills", label: "Kills" },
-              { name: "deaths", label: "Deaths" },
-              { name: "kill_death_ratio", label: "K/D" },
-              { name: "kills_streak", label: "Max kill streak" },
-              { name: "kills_per_minute", label: "Kill(s) / minute" },
-              { name: "deaths_per_minute", label: "Death(s) / minute" },
-              {
-                name: "deaths_without_kill_streak",
-                label: "Max death streak",
-              },
-              { name: "teamkills", label: "Max TK streak" },
-              { name: "deaths_by_tk", label: "Death by TK" },
-              { name: "deaths_by_tk_streak", label: "Death by TK Streak" },
-              {
-                name: "longest_life_secs",
-                label: "(aprox.) Longest life min.",
-                options: {
-                  customBodyRender: (value, tableMeta, updateValue) =>
-                    Math.round(parseInt(value) / 60).toFixed(2),
-                },
-              },
-              {
-                name: "shortest_life_secs",
-                label: "(aprox.) Shortest life secs.",
-                options: {
-                  customBodyRender: (value, tableMeta, updateValue) =>
-                    Math.round(parseInt(value) / 60).toFixed(2),
-                },
-              },
-              {
-                name: "death_by",
-                label: "Nemesis",
-                options: {
-                  customBodyRender: (value, tableMeta, updateValue) => {
-                    const pairs = toPairs(value);
-                    return sortBy(pairs, (v) => -v[1]).map(
-                      (v) => `${v[0]}: ${v[1]}`
-                    )[0];
-                  },
-                },
-              },
-              {
-                name: "most_killed",
-                label: "Victim",
-                options: {
-                  customBodyRender: (value, tableMeta, updateValue) => {
-                    const pairs = toPairs(value);
-                    return sortBy(pairs, (v) => -v[1]).map(
-                      (v) => `${v[0]}: ${v[1]}`
-                    )[0];
-                  },
-                },
-              },
-              {
-                name: "weapons",
-                label: "Weapons",
-                options: {
-                  customBodyRender: commaSeperatedListRenderer,
-                },
-              },
-              {
-                name: "death_by_weapons",
-                label: "Death by Weapons",
-                options: {
-                  customBodyRender: commaSeperatedListRenderer,
-                },
-              },
-            ]}
+            columns={columns}
           />
         </Grid>
       ) : (

@@ -275,14 +275,26 @@ def _do_watch(request, add: bool):
         if add:
             params = dict(
                 reason=data["reason"],
-                comment=data.get("comment"),
+                by=request.user.username,
                 player_name=data.get("player_name"),
+                steam_id_64=data.get("steam_id_64"),
             )
-            result = watcher.watch(**params)
+            # watch(self, reason: str, by: str, player_name: str = "")
+            result = watcher.watch(
+                reason=params["reason"],
+                by=params["by"],
+                player_name=params["player_name"],
+            )
             audit("do_watch_player", request, params)
         else:
             result = watcher.unwatch()
-            audit("do_unwatch_player", request, dict(steam_id_64=data["steam_id_64"]))
+            audit(
+                "do_unwatch_player",
+                request,
+                dict(
+                    player_name=data.get("player_name"), steam_id_64=data["steam_id_64"]
+                ),
+            )
         failed = False
     except KeyError as e:
         error = f"No {e.args} provided"
