@@ -199,20 +199,24 @@ class WatchList(Base):
     __tablename__ = "player_watchlist"
 
     id = Column(Integer, primary_key=True)
+    modified = Column(DateTime, default=datetime.utcnow)
     playersteamid_id = Column(
         Integer, ForeignKey("steam_id_64.id"), nullable=False, index=True, unique=True
     )
     is_watched = Column(Boolean, nullable=False)
     reason = Column(String, default="")
-    comment = Column(String, default="")
+    by = Column(String)
+    count = Column(Integer, default=0)
 
     def to_dict(self) -> WatchListType:
         return dict(
             id=self.id,
+            modified=self.modified,
             steam_id_64=self.steamid.steam_id_64,
             is_watched=self.is_watched,
             reason=self.reason,
-            comment=self.comment,
+            by=self.by,
+            count=self.count,
         )
 
 
@@ -486,6 +490,7 @@ class PlayerStats(Base):
         nullable=False,
         index=True,
     )
+    steam_id_64 = relationship("PlayerSteamID", foreign_keys=[playersteamid_id])
     map_id = Column(
         Integer,
         ForeignKey("map_history.id"),
@@ -510,6 +515,10 @@ class PlayerStats(Base):
     kill_death_ratio = Column(Float)
     longest_life_secs = Column(Integer)
     shortest_life_secs = Column(Integer)
+    combat = Column(Integer)
+    offense = Column(Integer)
+    defense = Column(Integer)
+    support = Column(Integer)
     most_killed = Column(JSONB)
     death_by = Column(JSONB)
     weapons = Column(JSONB)
@@ -519,6 +528,7 @@ class PlayerStats(Base):
         return dict(
             id=self.id,
             player_id=self.playersteamid_id,
+            steam_id_64=self.steam_id_64.steam_id_64,
             player=self.name,
             steaminfo=self.steamid.steaminfo.to_dict()
             if self.steamid.steaminfo
@@ -541,6 +551,10 @@ class PlayerStats(Base):
             kill_death_ratio=self.kill_death_ratio,
             longest_life_secs=self.longest_life_secs,
             shortest_life_secs=self.shortest_life_secs,
+            combat=self.combat,
+            offense=self.offense,
+            defense=self.defense,
+            support=self.support,
             most_killed=self.most_killed,
             death_by=self.death_by,
             weapons=self.weapons,

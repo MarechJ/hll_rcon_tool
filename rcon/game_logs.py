@@ -1,4 +1,5 @@
 import datetime
+import json
 import logging
 import os
 import sys
@@ -12,7 +13,7 @@ from sqlalchemy.exc import IntegrityError
 from rcon.cache_utils import get_redis_client
 from rcon.config import get_config
 from rcon.discord import send_to_discord_audit
-from rcon.extended_commands import LOG_ACTIONS, Rcon
+from rcon.extended_commands import LOG_ACTIONS
 from rcon.models import LogLine, PlayerSteamID, enter_session
 from rcon.player_history import (
     add_player_to_blacklist,
@@ -21,8 +22,8 @@ from rcon.player_history import (
 )
 from rcon.recorded_commands import RecordedRcon
 from rcon.settings import SERVER_INFO
-from rcon.types import StructuredLogLineWithMetaData, ParsedLogsType
-from rcon.utils import FixedLenList
+from rcon.types import StructuredLogLineWithMetaData, ParsedLogsType, GetDetailedPlayer, PlayerStat
+from rcon.utils import FixedLenList, MapsHistory
 
 logger = logging.getLogger(__name__)
 
@@ -118,8 +119,7 @@ class LogLoop:
     log_history_key = "log_history"
 
     def __init__(self):
-        self.rcon = Rcon(SERVER_INFO)
-        self.rcon_2 = RecordedRcon(SERVER_INFO)
+        self.rcon = RecordedRcon(SERVER_INFO)
         self.red = get_redis_client()
         self.duplicate_guard_key = "unique_logs"
         self.log_history = self.get_log_history_list()
@@ -145,14 +145,45 @@ class LogLoop:
                 if line:
                     self.process_hooks(line)
             if (
-                datetime.datetime.now() - last_cleanup_time
+                    datetime.datetime.now() - last_cleanup_time
             ).total_seconds() >= cleanup_frequency_minutes * 60:
                 self.cleanup()
                 last_cleanup_time = datetime.datetime.now()
 
+            dp = self.rcon.get_detailed_players()
+            if dp['fail_count'] > 0:
+                logger.warning("Could not fetch all player stats. " + str(dp["fail_count"]) + " players failed.")
+            self.record_player_stats(dp['players'])
+
             time.sleep(loop_frequency_secs)
 
-    def record_line(self, log):
+    def record_player_stats(self, players: dict[str, GetDetailedPlayer]):
+        maps = MapsHistory()
+        if len(maps) == 0:
+            logger.info("No map seems to be running, skipping saving stats")
+            return
+        m = maps[0]
+        # give us and the gameserver some time after map switch to zero out scores.
+        # No clue, why this is actually needed, tbh, but without it, it seems that score values
+        # from the previous map may leak into the current one
+        if m['start'] > datetime.datetime.now().timestamp() - 30:
+            return
+        for steam_id in players:
+            player = players.get(steam_id)
+            map_players = m.setdefault('player_stats', dict())
+            p = map_players.get(steam_id, PlayerStat(
+                combat=player['combat'],
+                offense=player['offense'],
+                defense=player['defense'],
+                support=player['support']
+            ))
+            for stat in ['combat', 'offense', 'defense', 'support']:
+                if player[stat] > p[stat]:
+                    p[stat] = player[stat]
+            map_players[steam_id] = p
+        maps.update(0, m)
+
+    def record_line(self, log: StructuredLogLineWithMetaData):
         id_ = f"{log['timestamp_ms']}|{log['line_without_time']}"
         if not self.red.sadd(self.duplicate_guard_key, id_):
             # logger.debug("Skipping duplicate: %s", id_)
@@ -200,7 +231,7 @@ class LogLoop:
                     "Triggered %s.%s on %s", hook.__module__, hook.__name__, log["raw"]
                 )
                 started = time.time()
-                hook(self.rcon_2, log)
+                hook(self.rcon, log)
                 logger.debug(
                     "Ran in %.4f seconds %s.%s on %s",
                     time.time() - started,
@@ -246,15 +277,15 @@ class LogRecorder:
                 logger.warning("Log is invalid, not a dict: %s", log)
                 continue
             if (
-                not last_log
-                or int(log["timestamp_ms"]) / 1000 > last_log.event_time.timestamp()
+                    not last_log
+                    or int(log["timestamp_ms"]) / 1000 > last_log.event_time.timestamp()
             ):
                 to_store.append(log)
             if (
-                last_log
-                and not int(log["timestamp_ms"]) / 1000
-                == last_log.event_time.timestamp()
-                and last_log.raw == log["raw"]
+                    last_log
+                    and not int(log["timestamp_ms"]) / 1000
+                            == last_log.event_time.timestamp()
+                    and last_log.raw == log["raw"]
             ):
                 logger.info("New logs collection at: %s", log)
                 return to_store
@@ -359,14 +390,14 @@ def is_action(action_filter, action, exact_match=False):
 
 
 def get_recent_logs(
-    start=0,
-    end=100000,
-    player_search=None,
-    action_filter=None,
-    min_timestamp=None,
-    exact_player_match=False,
-    exact_action=False,
-    inclusive_filter=True,
+        start=0,
+        end=100000,
+        player_search=None,
+        action_filter=None,
+        min_timestamp=None,
+        exact_player_match=False,
+        exact_action=False,
+        inclusive_filter=True,
 ) -> ParsedLogsType:
     # The default behavior is to only show log lines with actions in `actions_filter`
     # inclusive_filter=True retains this default behavior
@@ -375,7 +406,7 @@ def get_recent_logs(
     log_list = LogLoop.get_log_history_list()
     all_logs = log_list
     if start != 0:
-        all_logs = log_list[start : min(end, len(log_list))]
+        all_logs = log_list[start: min(end, len(log_list))]
     logs: list[StructuredLogLineWithMetaData] = []
     all_players = set()
     actions = set(LOG_ACTIONS)
@@ -394,21 +425,21 @@ def get_recent_logs(
         if player_search:
             for player_name_search in player_search:
                 if is_player(
-                    player_name_search, line["player"], exact_player_match
+                        player_name_search, line["player"], exact_player_match
                 ) or is_player(player_name_search, line["player2"], exact_player_match):
                     # Filter out anything that isn't in action_filter
                     if (
-                        action_filter
-                        and inclusive_filter
-                        and is_action(action_filter, line["action"], exact_action)
+                            action_filter
+                            and inclusive_filter
+                            and is_action(action_filter, line["action"], exact_action)
                     ):
                         logs.append(line)
                         break
                     # Filter out any action in action_filter
                     elif (
-                        action_filter
-                        and not inclusive_filter
-                        and not is_action(action_filter, line["action"], exact_action)
+                            action_filter
+                            and not inclusive_filter
+                            and not is_action(action_filter, line["action"], exact_action)
                     ):
                         logs.append(line)
                         break
@@ -419,12 +450,12 @@ def get_recent_logs(
         elif action_filter:
             # Filter out anything that isn't in action_filter
             if inclusive_filter and is_action(
-                action_filter, line["action"], exact_action
+                    action_filter, line["action"], exact_action
             ):
                 logs.append(line)
             # Filter out any action in action_filter
             elif not inclusive_filter and not is_action(
-                action_filter, line["action"], exact_action
+                    action_filter, line["action"], exact_action
             ):
                 logs.append(line)
         elif not player_search and not action_filter:
@@ -453,7 +484,7 @@ def is_player_kill(player, log):
 
 @on_tk
 def auto_ban_if_tks_right_after_connection(
-    rcon: RecordedRcon, log: StructuredLogLineWithMetaData
+        rcon: RecordedRcon, log: StructuredLogLineWithMetaData
 ):
     config = get_config()
     config = config.get("BAN_TK_ON_CONNECT")
@@ -526,9 +557,9 @@ def auto_ban_if_tks_right_after_connection(
             death_counter = 0
             continue
         if (
-            log["action"] == "TEAM KILL"
-            and log["player"] == player_name
-            and last_action_is_connect
+                log["action"] == "TEAM KILL"
+                and log["player"] == player_name
+                and last_action_is_connect
         ):
             if excluded_weapons and log["weapon"].lower() in excluded_weapons:
                 logger.debug("Not counting TK as offense due to weapon exclusion")
@@ -574,17 +605,17 @@ def auto_ban_if_tks_right_after_connection(
 
 
 def get_historical_logs_records(
-    sess,
-    player_name=None,
-    action=None,
-    steam_id_64=None,
-    limit=1000,
-    from_=None,
-    till=None,
-    time_sort="desc",
-    exact_player_match=False,
-    exact_action=True,
-    server_filter=None,
+        sess,
+        player_name=None,
+        action=None,
+        steam_id_64=None,
+        limit=1000,
+        from_=None,
+        till=None,
+        time_sort="desc",
+        exact_player_match=False,
+        exact_action=True,
+        server_filter=None,
 ):
     names = []
     name_filters = []
@@ -648,17 +679,17 @@ def get_historical_logs_records(
 
 
 def get_historical_logs(
-    player_name=None,
-    action=None,
-    steam_id_64=None,
-    limit=1000,
-    from_=None,
-    till=None,
-    time_sort="desc",
-    exact_player_match=False,
-    exact_action=True,
-    server_filter=None,
-    output=None,
+        player_name=None,
+        action=None,
+        steam_id_64=None,
+        limit=1000,
+        from_=None,
+        till=None,
+        time_sort="desc",
+        exact_player_match=False,
+        exact_action=True,
+        server_filter=None,
+        output=None,
 ):
     with enter_session() as sess:
         res = get_historical_logs_records(

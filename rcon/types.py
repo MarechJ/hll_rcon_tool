@@ -94,10 +94,29 @@ class PlayerStatsType(TypedDict):
     kill_death_ratio: Optional[float]
     longest_life_secs: Optional[int]
     shortest_life_secs: Optional[int]
+    combat: Optional[int]
+    offense: Optional[int]
+    defense: Optional[int]
+    support: Optional[int]
     most_killed: Optional[dict]
     death_by: Optional[dict]
     weapons: Optional[dict]
     death_by_weapons: Optional[dict]
+
+
+class PlayerStat(TypedDict):
+    combat: int
+    offense: int
+    defense: int
+    support: int
+
+
+class MapInfo(TypedDict):
+    name: str
+    start: None | float
+    end: None | float
+    guessed: bool
+    player_stats: dict[str, PlayerStat]
 
 
 class MapsType(TypedDict):
@@ -165,10 +184,12 @@ class PlayerOptinsType(TypedDict):
 
 class WatchListType(TypedDict):
     id: int
+    modified: datetime.datetime
     steam_id_64: str
     is_watched: bool
     reason: str
-    comment: str
+    by: str
+    count: int
 
 
 class UserConfigType(TypedDict):
@@ -198,6 +219,22 @@ class GetPlayersType(TypedDict):
     steam_id_64: str
     country: str
     steam_bans: Optional[SteamBansType]
+
+
+class GetDetailedPlayer(TypedDict):
+    name: str
+    unit_id: Optional[int]
+    unit_name: Optional[str]
+    loadout: Optional[str]
+    team: Optional[str]
+    role: Optional[str]
+    kills: int
+    deaths: int
+    combat: int
+    offense: int
+    defense: int
+    support: int
+    level: int
 
 
 class EnrichedGetPlayersType(GetPlayersType):
@@ -248,3 +285,10 @@ class GameState(TypedDict):
     time_remaining: datetime.timedelta
     current_map: str
     next_map: str
+
+
+class VACGameBansConfigType(TypedDict):
+    ban_on_vac_history_days: int
+    max_game_ban_threshold: int
+    ban_on_vac_history_reason: str
+    whitelist_flags: list[str]

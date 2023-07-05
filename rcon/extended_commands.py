@@ -5,7 +5,7 @@ from concurrent.futures import as_completed
 from datetime import datetime, timedelta
 from functools import update_wrapper
 from time import sleep
-from typing import Dict, Iterable, List, Optional, Tuple, Union
+from typing import Dict, Iterable, List, Optional, Tuple, Union, TypedDict
 
 from rcon.cache_utils import get_redis_client, invalidates, ttl_cache
 from rcon.commands import CommandFailedError, ServerCtl, VipId
@@ -22,6 +22,7 @@ from rcon.types import (
     ParsedLogsType,
     StructuredLogLineType,
     StructuredLogLineWithMetaData,
+    GetDetailedPlayer,
 )
 from rcon.utils import get_server_number
 
@@ -57,7 +58,6 @@ LOG_ACTIONS = [
     "MESSAGE",
 ]
 logger = logging.getLogger(__name__)
-
 
 MOD_ALLOWED_CMDS = set()
 
@@ -206,7 +206,7 @@ class Rcon(ServerCtl):
             "steam_bans": steam_bans,
         }
 
-    def _get_default_info_dict(self, player):
+    def _get_default_info_dict(self, player) -> GetDetailedPlayer:
         return dict(
             name=player,
             unit_id=None,
@@ -225,7 +225,7 @@ class Rcon(ServerCtl):
 
     @mod_users_allowed
     @ttl_cache(ttl=2, cache_falsy=False)
-    def get_detailed_player_info(self, player):
+    def get_detailed_player_info(self, player) -> GetDetailedPlayer:
         raw = super().get_player_info(player)
         if not raw:
             raise CommandFailedError("Got bad data")
@@ -633,7 +633,8 @@ class Rcon(ServerCtl):
                 if res != "SUCCESS":
                     raise CommandFailedError(res)
             except CommandFailedError:
-                self.do_add_map_to_rotation(map_name)
+                maps = self.get_map_rotation()
+                self.do_add_map_to_rotation(map_name, maps[len(maps) - 1], maps.count(maps[len(maps) - 1]))
                 if super().set_map(map_name) != "SUCCESS":
                     raise CommandFailedError(res)
 
@@ -646,6 +647,18 @@ class Rcon(ServerCtl):
             raise CommandFailedError("Server returned wrong data")
 
         return current_map
+
+    @ttl_cache(ttl=60 * 60)
+    def get_current_map_sequence(self):
+        return super().get_current_map_sequence()
+
+    @ttl_cache(ttl=60 * 60)
+    def get_map_shuffle_enabled(self):
+        return super().get_map_shuffle_enabled()
+
+    def set_map_shuffle_enabled(self, enabled: bool):
+        with invalidates(Rcon.get_current_map_sequence, Rcon.get_map_shuffle_enabled):
+            return super().set_map_shuffle_enabled(enabled)
 
     @mod_users_allowed
     @ttl_cache(ttl=60 * 60)
@@ -828,14 +841,6 @@ class Rcon(ServerCtl):
         except (ValueError, TypeError) as e:
             raise ValueError(f"Time {raw_timestamp} is not a valid integer") from e
 
-    @mod_users_allowed
-    @ttl_cache(ttl=2)
-    def get_structured_logs(
-        self, since_min_ago, filter_action=None, filter_player=None
-    ) -> ParsedLogsType:
-        raw = super().get_logs(since_min_ago)
-        return self.parse_logs(raw, filter_action, filter_player)
-
     @ttl_cache(ttl=60 * 60)
     def get_profanities(self):
         return super().get_profanities()
@@ -964,14 +969,19 @@ class Rcon(ServerCtl):
         return l
 
     def do_add_map_to_rotation(
-        self, map_name, after_map_name: str = None, after_map_name_number: str = None
+        self, map_name, after_map_name: str = None, after_map_name_number: int = None
     ):
         with invalidates(Rcon.get_map_rotation):
+            if after_map_name is None:
+                current = self.get_map_rotation()
+                after_map_name = current[len(current) - 1]
+                after_map_name_number = current.count(after_map_name)
+
             super().do_add_map_to_rotation(
                 map_name, after_map_name, after_map_name_number
             )
 
-    def do_remove_map_from_rotation(self, map_name, map_number: str = None):
+    def do_remove_map_from_rotation(self, map_name, map_number: int = None):
         with invalidates(Rcon.get_map_rotation):
             super().do_remove_map_from_rotation(map_name, map_number)
 
@@ -983,8 +993,13 @@ class Rcon(ServerCtl):
 
     def do_add_maps_to_rotation(self, maps):
         with invalidates(Rcon.get_map_rotation):
+            existing = self.get_map_rotation()
+            last = existing[len(existing) - 1]
+            map_numbers = {last: existing.count(last)}
             for map_name in maps:
-                super().do_add_map_to_rotation(map_name)
+                super().do_add_map_to_rotation(map_name, last, map_numbers.get(last, 1))
+                last = map_name
+                map_numbers[last] = map_numbers.get(last, 0) + 1
             return "SUCCESS"
 
     def set_maprotation(self, rotation):
@@ -994,100 +1009,31 @@ class Rcon(ServerCtl):
         rotation = list(rotation)
         logger.info("Apply map rotation %s", rotation)
 
-        current = self.get_map_rotation()
-        logger.info("Current rotation: %s", current)
-        if rotation == current:
-            logger.debug("Map rotation is the same, nothing to do")
-            return current
         with invalidates(Rcon.get_map_rotation):
+            current = self.get_map_rotation()
+            logger.info("Current rotation: %s", current)
+            if rotation == current:
+                logger.debug("Map rotation is the same, nothing to do")
+                return current
+
             # we remove all but the first
             for map_ in current[1:]:
                 map_without_number = map_.rsplit(" ")[0]
                 logger.info("Removing from rotation: '%s'", map_without_number)
                 super().do_remove_map_from_rotation(map_without_number)
 
+            last = current[0]
+            map_number = {last: 1}
             for map_ in rotation:
                 logger.info("Adding to rotation: '%s'", map_)
-                super().do_add_map_to_rotation(map_)
+                super().do_add_map_to_rotation(map_, last, map_number.get(last, 1))
+                last = map_
+                map_number[last] = map_number.get(last, 0) + 1
 
             # Now we can remove the first from the previous rotation
-            super().do_remove_map_from_rotation(current[0])
+            super().do_remove_map_from_rotation(current[0], 1)
 
         return self.get_map_rotation()
-
-    @mod_users_allowed
-    @ttl_cache(ttl=60 * 2)
-    def get_scoreboard(self, minutes=180, sort="ratio"):
-        logs = self.get_structured_logs(minutes, "KILL")
-        scoreboard = []
-        for player in logs["players"]:
-            if not player:
-                continue
-            kills = 0
-            death = 0
-            for log in logs["logs"]:
-                if log["player"] == player:
-                    kills += 1
-                elif log["player2"] == player:
-                    death += 1
-            if kills == 0 and death == 0:
-                continue
-            scoreboard.append(
-                {
-                    "player": player,
-                    "(real) kills": kills,
-                    "(real) death": death,
-                    "ratio": kills / max(death, 1),
-                }
-            )
-
-        scoreboard = sorted(scoreboard, key=lambda o: o[sort], reverse=True)
-        for o in scoreboard:
-            o["ratio"] = "%.2f" % o["ratio"]
-
-        return scoreboard
-
-    @mod_users_allowed
-    @ttl_cache(ttl=60 * 2)
-    def get_teamkills_boards(self, sort="TK Minutes"):
-        logs = self.get_structured_logs(180)
-        scoreboard = []
-        for player in logs["players"]:
-            if not player:
-                continue
-            first_timestamp = float("inf")
-            last_timestamp = 0
-            tk = 0
-            death_by_tk = 0
-            for log in logs["logs"]:
-                if log["player"] == player or log["player2"] == player:
-                    first_timestamp = min(log["timestamp_ms"], first_timestamp)
-                    last_timestamp = max(log["timestamp_ms"], last_timestamp)
-                if log["action"] == "TEAM KILL":
-                    if log["player"] == player:
-                        tk += 1
-                    elif log["player2"] == player:
-                        death_by_tk += 1
-            if tk == 0 and death_by_tk == 0:
-                continue
-            scoreboard.append(
-                {
-                    "player": player,
-                    "Teamkills": tk,
-                    "Death by TK": death_by_tk,
-                    "Estimated play time (minutes)": (last_timestamp - first_timestamp)
-                    // 1000
-                    // 60,
-                    "TK Minutes": tk
-                    / max((last_timestamp - first_timestamp) // 1000 // 60, 1),
-                }
-            )
-
-        scoreboard = sorted(scoreboard, key=lambda o: o[sort], reverse=True)
-        for o in scoreboard:
-            o["TK Minutes"] = "%.2f" % o["TK Minutes"]
-
-        return scoreboard
 
     @staticmethod
     def parse_log_line(raw_line: str) -> StructuredLogLineType:
@@ -1134,9 +1080,6 @@ class Rcon(ServerCtl):
                 raise ValueError(f"Unable to parse line: {raw_line}")
         elif raw_line.startswith("KICK") or raw_line.startswith("BAN"):
 
-            if "FOR TEAM KILLING" in raw_line:
-                action = "TK AUTO"
-
             if match := re.match(Rcon.kick_ban_pattern, raw_line):
                 _action, player, sub_content, type_ = match.groups()
             else:
@@ -1152,6 +1095,9 @@ class Rcon(ServerCtl):
                 type_ = "ANTI-CHEAT"
 
             action = f"ADMIN {type_}".strip()
+
+            if "FOR TEAM KILLING" in raw_line:
+                action = f"TK AUTO {type_}"
 
             # Reconstruct the log line without the newlines and tack on the trailing ] we lose
             content = f"{_action}: [{player}] {sub_content}"

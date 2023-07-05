@@ -17,8 +17,6 @@ import {
 } from "../../utils/fetchUtils";
 import VipEditableList, { VipUpload } from "./vips";
 import AdminsEditableList from "./admins";
-import _ from "lodash";
-import MapRotationTransferList from "./mapRotation";
 import CollapseCard from "../collapseCard";
 import ServerMessage from "./serverMessage";
 import NumSlider from "./numSlider";
@@ -29,6 +27,7 @@ import { ForwardCheckBox, WordList } from "../commonComponent";
 import VoteMapConfig from "./voteMapConfig";
 import HelpIcon from "@material-ui/icons/Help";
 import MapRotation from "../MapManager";
+import MapRotationSettings from "../MapManager/settings";
 
 const ProfanityFiler = ({
   words,
@@ -687,65 +686,11 @@ class HLLSettings extends React.Component {
             <Typography variant="h5">Map rotation</Typography>
 
             <MapRotation classes={classes} />
+            <Typography variant="h5">Map rotation settings</Typography>
+
+            <MapRotationSettings classes={classes} />
           </Grid>
         </Grid>
-        {/* LEGACY ROTATION GUI 
-        <Grid container className={classes.paddingTop} justify="center" xs={12}>
-          <Grid item>
-            <Typography variant="h5" gutterBottom>
-              Configure map rotation
-            </Typography>
-            <Typography variant="caption" gutterBottom>
-              Map sure the vote map is disabled if you want to change your
-              rotation
-            </Typography>
-          </Grid>
-        </Grid>
-        <Grid container className={classes.paper} xs={12}>
-          <MapRotationTransferList
-            classes={classes}
-            mapRotation={mapRotation}
-            availableMaps={_.difference(availableMaps, mapRotation)}
-            addToRotation={this.addMapsToRotation}
-            removeFromRotation={this.removeMapsFromRotation}
-          />
-        </Grid>
-        <Grid container className={classes.paper} justify="center" xs={12}>
-          <Grid item xs={5} className={classes.padding}>
-            <Button
-              variant="outlined"
-              fullWidth
-              onClick={() =>
-                sendAction("do_randomize_map_rotation", {}).then(
-                  this.loadMapRotation
-                )
-              }
-            >
-              Randomize all
-            </Button>
-          </Grid>
-          <Grid item xs={5} className={classes.padding}>
-            <Button
-              variant="outlined"
-              fullWidth
-              onClick={() =>
-                sendAction("do_randomize_map_rotation", {
-                  maps: mapRotation,
-                }).then(this.loadMapRotation)
-              }
-            >
-              Randomize current
-            </Button>
-          </Grid>
-        </Grid>
-        <Grid container className={classes.paddingTop} justify="center" xs={12}>
-          <Grid item>
-            <Typography variant="h5" gutterBottom>
-              Profanity censoring
-            </Typography>
-          </Grid>
-        </Grid>
-            END LEGACY ROTATION UI */}
         <Grid item xs={12}>
           <ProfanityFiler
             words={profanities}
