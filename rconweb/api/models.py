@@ -235,5 +235,8 @@ class RconUser(User):
                 "can_view_votemap_status",
                 "Can view the current votemap status (votes, results, etc)",
             ),
+            ("can_view_current_map_sequence", "Can view the current map shuffle sequence"),
+            ("can_view_map_shuffle_enabled", "Can view if map shuffle is enabled"),
+            ("can_change_map_shuffle_enabled", "Can enable/disable map shuffle"),
             ("can_view_welcome_message", "Can view the server welcome message"),
         )
