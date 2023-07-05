@@ -339,6 +339,37 @@ class Migration(migrations.Migration):
                     ),
                     ("can_view_welcome_message", "Can view the server welcome message"),
                     ("can_add_player_watch", "Can add a watch to players"),
+                    (
+                        "can_view_current_map_sequence",
+                        "Can view the current map shuffle sequence",
+                    ),
+                    (
+                        "can_view_map_shuffle_enabled",
+                        "Can view if map shuffle is enabled",
+                    ),
+                    (
+                        "can_change_map_shuffle_enabled",
+                        "Can enable/disable map shuffle",
+                    ),
+                    ("can_view_map_whitelist", "Can view the votemap whitelist"),
+                    (
+                        "can_add_map_to_whitelist",
+                        "Can add a map to the votemap whitelist",
+                    ),
+                    (
+                        "can_add_maps_to_whitelist",
+                        "Can add multiple maps to the votemap whitelist",
+                    ),
+                    (
+                        "can_remove_map_from_whitelist",
+                        "Can remove a map from the votemap whitelist",
+                    ),
+                    (
+                        "can_remove_maps_from_whitelist",
+                        "Can remove multiple maps from the votemap whitelist",
+                    ),
+                    ("can_reset_map_whitelist", "Can reset the votemap whitelist"),
+                    ("can_set_map_whitelist", "Can set the votemap whitelist"),
                 ),
                 "default_permissions": (),
             },
