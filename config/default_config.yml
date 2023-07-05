@@ -11,6 +11,13 @@
 ######################################################################################
 ######################################################################################
 
+# -----------------------------
+# Customisation
+# -----------------------------
+# The steam API is used to display country flags and VAC bans. 
+# Get a key from: https://steamcommunity.com/dev/apikey
+STEAM_API_KEY: ''
+
 # Advanced settings, you should only touch these if you really know what you're doing
 ADVANCED_CRCON_SETTINGS:
   # The number of concurrent connections to the game server CRCON will open for each
@@ -46,6 +53,37 @@ BANS:
   unban_does_unblacklist: yes
   # Same as above but the other way around, remove a player from the blacklist will unban him
   unblacklist_does_unban: yes
+
+# -----------------------------
+# VAC & Game Bans
+# -----------------------------
+VAC_GAME_BANS:
+  # Automatically ban a player if they have a VAC or game ban within the desired timeframe
+  # E.g. if you set the value to 160, any players with a VAC or game ban within the 
+  # last 160 days will be permanently banned. Setting this to 0 will disable it.
+  ban_on_vac_history_days: 0
+
+  # In COMBINATION with the BAN_ON_VAC_HISTORY_DAYS, you can also ban players with game bans
+  # The value is the number of GAME bans a player must have to be auto-banned
+  # E.g if you set 2, any players with 2 or more game bans will be permanently banned
+  # 0 disables that feature (any number of game bans is allowed). 
+  # Remember that game bans don't necessarily mean much.
+  max_game_ban_threshold: 0
+
+  # The reason to the player for the permanent ban
+  # You may use the below variables within your reason
+  # {DAYS_SINCE_LAST_BAN}
+  # {MAX_DAYS_SINCE_BAN}
+  ban_on_vac_history_reason: "VAC/Game ban history ({DAYS_SINCE_LAST_BAN} days ago)"
+  
+  # This is either an empty list [] or a list of flags to exempt a player
+  # from the VAC/Game Ban feature.
+  # To use, add a flag or multiple flags to the list, and then flag
+  # the players you want to exempt in the CRCON UI
+  # If they have already been banned you will need to clear the bans
+  # for them to be able to connect
+  whitelist_flags: []
+    # - 🤡
 
 # You can test your regex there: https://regex101.com/ set it to "Python"
 NAME_KICKS:
