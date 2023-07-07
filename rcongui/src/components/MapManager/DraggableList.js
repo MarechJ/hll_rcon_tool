@@ -3,7 +3,6 @@ import DraggableListItem from "./DraggableListItem";
 import {
   DragDropContext,
   Droppable,
-  OnDragEndResponder,
 } from "react-beautiful-dnd";
 
 const DraggableList = React.memo(({ items, onDragEnd, onRemove }) => {

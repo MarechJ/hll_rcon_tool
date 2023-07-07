@@ -1,4 +1,6 @@
-FROM node:15-stretch as build
+FROM node:20-buster-slim as build
+
+RUN apt update && apt install -y git
 
 WORKDIR /code
 
@@ -11,8 +13,7 @@ RUN npm ci
 
 ENV REACT_APP_API_URL /api/
 
-COPY rcongui/src/ src/
-COPY rcongui/public/ public/
+COPY rcongui/ .
 
 COPY .git/ .git/
 RUN git describe --tags > /code/tag_version
@@ -20,11 +21,11 @@ RUN npx browserslist@latest --update-db
 # Normal build
 RUN npm run build
 
-RUN mv /code/build /www
+RUN mv /code/dist /www
 # Public build
-ENV REACT_APP_PUBLIC_BUILD on
+ENV REACT_APP_PUBLIC_BUILD true
 RUN npm run build
-RUN mv /code/build /www_public
+RUN mv /code/dist /www_public
 
 FROM nginx:mainline-alpine
 
@@ -35,6 +36,7 @@ WORKDIR /var/www
 RUN mkdir /var/www_public/
 COPY --from=build /www_public /var/www_public/
 COPY --from=build /www /var/www/
+COPY --from=build /code/tag_version /code/tag_version
 
 VOLUME /certs
 COPY rcongui/entrypoint.sh /code/entrypoint.sh

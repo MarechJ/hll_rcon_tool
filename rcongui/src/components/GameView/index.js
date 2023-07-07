@@ -705,20 +705,6 @@ const GameView = ({ classes: globalClasses }) => {
           <Grid item xs={12} md={12} lg={6}>
             <Team
               classes={globalClasses}
-              teamName="Axis"
-              teamData={teamView.get("axis")}
-              selectedPlayers={selectedPlayers}
-              selectPlayer={selectPlayer}
-              selectMultiplePlayers={selectMultiplePlayers}
-              selectAll={() => selectAllTeam("axis")}
-              deselectAll={() => deselectAllTeam("axis")}
-              sortFunc={sortTypeToFunc[sortType]}
-              showOnlySelected={showOnlySelected && selectedPlayers.size !== 0}
-            />
-          </Grid>
-          <Grid item xs={12} md={12} lg={6}>
-            <Team
-              classes={globalClasses}
               teamName="Allies"
               teamData={teamView.get("allies")}
               selectedPlayers={selectedPlayers}
@@ -726,6 +712,20 @@ const GameView = ({ classes: globalClasses }) => {
               selectMultiplePlayers={selectMultiplePlayers}
               selectAll={() => selectAllTeam("allies")}
               deselectAll={() => deselectAllTeam("allies")}
+              sortFunc={sortTypeToFunc[sortType]}
+              showOnlySelected={showOnlySelected && selectedPlayers.size !== 0}
+            />
+          </Grid>
+          <Grid item xs={12} md={12} lg={6}>
+            <Team
+              classes={globalClasses}
+              teamName="Axis"
+              teamData={teamView.get("axis")}
+              selectedPlayers={selectedPlayers}
+              selectPlayer={selectPlayer}
+              selectMultiplePlayers={selectMultiplePlayers}
+              selectAll={() => selectAllTeam("axis")}
+              deselectAll={() => deselectAllTeam("axis")}
               sortFunc={sortTypeToFunc[sortType]}
               showOnlySelected={showOnlySelected && selectedPlayers.size !== 0}
             />
