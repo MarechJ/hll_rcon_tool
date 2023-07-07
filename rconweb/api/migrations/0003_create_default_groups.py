@@ -141,6 +141,8 @@ GROUPS = [
             "can_view_votemap_status",
             "can_view_welcome_message",
         ),
+    ),
+    (
         # Default admin group, full access to everything except can_run_raw_commands
         "admin",
         (
