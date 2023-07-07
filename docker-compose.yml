@@ -14,8 +14,10 @@ services:
       service: python
     command: supervisor
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       common:
       server1:
@@ -60,6 +62,11 @@ services:
     image: redis:latest
     restart: always
     command: redis-server /usr/local/etc/redis/redis.conf
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+      interval: 15s
+      timeout: 30s
+      retries: 5
     volumes:
       - ./redis_data:/data
       - ./config:/usr/local/etc/redis
@@ -71,9 +78,16 @@ services:
     environment:
       # If a password is not defined this container will fail to create
       POSTGRES_PASSWORD: ${HLL_DB_PASSWORD}
-      POSTGRES_USER: rcon
-      POSTGRES_DB: rcon
+      POSTGRES_USER: ${HLL_DB_USER}
+      POSTGRES_DB: ${HLL_DB_NAME}
       PGDATA: /data
+      PGUSER: rcon
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready", "-d", "HLL_DB_NAME"]
+      interval: 15s
+      timeout: 30s
+      retries: 5
+      start_period: 80s
     volumes:
       - ./db_data:/data
     networks:
@@ -92,7 +106,12 @@ services:
       REDIS_HOST: redis 
       REDIS_PORT: 6379
       REDIS_DB: 1
-      DB_URL: 'postgres://rcon:${HLL_DB_PASSWORD}@postgres:5432'
+      HLL_DB_USER: ${HLL_DB_USER}
+      HLL_DB_PASSWORD: ${HLL_DB_PASSWORD}
+      HLL_DB_NAME: ${HLL_DB_NAME}
+      HLL_DB_HOST: ${HLL_DB_HOST}
+      HLL_DB_HOST_PORT: ${HLL_DB_HOST_PORT}
+      HLL_DB_URL: 'postgres://${HLL_DB_USER}:${HLL_DB_PASSWORD}@${HLL_DB_HOST}:${HLL_DB_HOST_PORT}'
       DISCORD_WEBHOOK_AUDIT_LOG: ${DISCORD_WEBHOOK_AUDIT_LOG_2}
       RCONWEB_API_SECRET: ${RCONWEB_API_SECRET}
       SERVER_SHORT_NAME: ${SERVER_SHORT_NAME_2}
@@ -162,7 +181,12 @@ services:
       REDIS_HOST: redis 
       REDIS_PORT: 6379
       REDIS_DB: 2
-      DB_URL: 'postgres://rcon:${HLL_DB_PASSWORD}@postgres:5432'
+      HLL_DB_USER: ${HLL_DB_USER}
+      HLL_DB_PASSWORD: ${HLL_DB_PASSWORD}
+      HLL_DB_NAME: ${HLL_DB_NAME}
+      HLL_DB_HOST: ${HLL_DB_HOST}
+      HLL_DB_HOST_PORT: ${HLL_DB_HOST_PORT}
+      HLL_DB_URL: 'postgres://${HLL_DB_USER}:${HLL_DB_PASSWORD}@${HLL_DB_HOST}:${HLL_DB_HOST_PORT}'
       DISCORD_WEBHOOK_AUDIT_LOG: ${DISCORD_WEBHOOK_AUDIT_LOG_3}
       RCONWEB_API_SECRET: ${RCONWEB_API_SECRET}
       SERVER_SHORT_NAME: ${SERVER_SHORT_NAME_3}

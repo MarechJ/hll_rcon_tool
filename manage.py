@@ -21,7 +21,7 @@ def pre_flight_checks(env):
         "HLL_PORT",
         "HLL_PASSWORD",
         "REDIS_URL",
-        "DB_URL",
+        "HLL_DB_URL",
     ]
     optionnal = ["DISCORD_WEBHOOK_AUDIT_LOG", "LOGGING_PATH", "LOGGING_LEVEL"]
 

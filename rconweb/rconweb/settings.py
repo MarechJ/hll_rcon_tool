@@ -185,22 +185,24 @@ WSGI_APPLICATION = "rconweb.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 
-from urllib.parse import urlparse
-
-db_info = urlparse(os.getenv("DB_URL"))
-
+db_info = {
+    'USER': os.getenv("HLL_DB_USER"),
+    'PASSWORD': os.getenv("HLL_DB_PASSWORD"),
+    'HOST': os.getenv("HLL_DB_HOST"),
+    'PORT': os.getenv("HLL_DB_HOST_PORT"),
+    'NAME': os.getenv('HLL_DB_NAME')
+}
 
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "USER": db_info.username,
-        "PASSWORD": db_info.password,
-        "HOST": db_info.hostname,
-        "PORT": db_info.port,
-        "NAME": "rcon",
+        "USER": db_info['USER'],
+        "PASSWORD": db_info['PASSWORD'],
+        "HOST": db_info['HOST'],
+        "PORT": db_info['PORT'],
+        "NAME": db_info['NAME'],
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
