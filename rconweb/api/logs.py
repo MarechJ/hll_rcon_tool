@@ -2,6 +2,7 @@ from dateutil import parser
 from django.views.decorators.csrf import csrf_exempt
 
 from rcon import game_logs
+
 from .auth import api_csv_response, api_response, login_required
 from .utils import _get_data
 
@@ -88,9 +89,9 @@ def get_recent_logs(request):
 
     return api_response(
         result={
-            "logs": logs['logs'],
-            "players": logs['players'],
-            "actions": logs['actions'],
+            "logs": logs["logs"],
+            "players": logs["players"],
+            "actions": logs["actions"],
         },
         command="get_recent_logs",
         arguments=dict(

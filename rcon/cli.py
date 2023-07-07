@@ -232,8 +232,8 @@ for name in dir(ctl):
     func = getattr(ctl, name)
 
     if (
-            not any(name.startswith(prefix) for prefix in PREFIXES_TO_EXPOSE)
-            or name in EXCLUDED
+        not any(name.startswith(prefix) for prefix in PREFIXES_TO_EXPOSE)
+        or name in EXCLUDED
     ):
         continue
     wrapped = do_print(func)

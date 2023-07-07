@@ -2,7 +2,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from functools import cached_property
 from logging import getLogger
-from typing import List, Union, TypedDict
+from typing import List, TypedDict, Union
 
 from dateutil import parser, relativedelta
 
@@ -17,9 +17,8 @@ from rcon.player_history import (
 )
 from rcon.types import (
     EnrichedGetPlayersType,
-    ParsedLogsType,
-    GetPlayersType,
     GetDetailedPlayer,
+    ParsedLogsType,
 )
 from rcon.utils import ALL_ROLES, ALL_ROLES_KEY_INDEX_MAP, get_server_number
 

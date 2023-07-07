@@ -1,14 +1,8 @@
 from django.views.decorators.csrf import csrf_exempt
 
-from rcon.discord import send_to_discord_audit
+from rcon.vote_map import VoteMap, VoteMapConfig
 
-
-from rcon.vote_map import (
-    VoteMap,
-    VoteMapConfig,
-)
-
-from .audit_log import auto_record_audit, record_audit
+from .audit_log import record_audit
 from .auth import api_response, login_required
 from .utils import _get_data
 from .views import audit

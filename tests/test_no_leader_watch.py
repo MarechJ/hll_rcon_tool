@@ -559,14 +559,15 @@ def team_view():
 
 
 game_state: GameState = {
-    'allied_score': 3,
-    'axis_score': 2,
-    'current_map': '',
-    'next_map': '',
-    'num_allied_players': 30,
-    'num_axis_players': 30,
-    'time_remaining': timedelta(10),
+    "allied_score": 3,
+    "axis_score": 2,
+    "current_map": "",
+    "next_map": "",
+    "num_allied_players": 30,
+    "num_axis_players": 30,
+    "time_remaining": timedelta(10),
 }
+
 
 def construct_aplayer(
     player_dict: dict, team_name: str = "allies", squad_name: str = "able"
@@ -1170,11 +1171,16 @@ def test_ignores_commander(team_view):
     )
 
     mod = NoLeaderAutomod(config, None)
-    to_apply = mod.punitions_to_apply(team_view, "Commander", "allies", {
-        "players": [team_view["allies"]["commander"]]
-    }, game_state)
+    to_apply = mod.punitions_to_apply(
+        team_view,
+        "Commander",
+        "allies",
+        {"players": [team_view["allies"]["commander"]]},
+        game_state,
+    )
 
     assert to_apply.warning == []
+
 
 def test_watcher(team_view):
     config = NoLeaderConfig(

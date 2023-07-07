@@ -5,7 +5,7 @@ from concurrent.futures import as_completed
 from datetime import datetime, timedelta
 from functools import update_wrapper
 from time import sleep
-from typing import Dict, Iterable, List, Optional, Tuple, Union, TypedDict
+from typing import Dict, Iterable, List, Optional, Tuple, Union
 
 from rcon.cache_utils import get_redis_client, invalidates, ttl_cache
 from rcon.commands import CommandFailedError, ServerCtl, VipId
@@ -18,11 +18,11 @@ from rcon.steam_utils import (
 )
 from rcon.types import (
     GameState,
+    GetDetailedPlayer,
     GetPlayersType,
     ParsedLogsType,
     StructuredLogLineType,
     StructuredLogLineWithMetaData,
-    GetDetailedPlayer,
 )
 from rcon.utils import get_server_number
 
@@ -634,7 +634,9 @@ class Rcon(ServerCtl):
                     raise CommandFailedError(res)
             except CommandFailedError:
                 maps = self.get_map_rotation()
-                self.do_add_map_to_rotation(map_name, maps[len(maps) - 1], maps.count(maps[len(maps) - 1]))
+                self.do_add_map_to_rotation(
+                    map_name, maps[len(maps) - 1], maps.count(maps[len(maps) - 1])
+                )
                 if super().set_map(map_name) != "SUCCESS":
                     raise CommandFailedError(res)
 
@@ -1079,7 +1081,6 @@ class Rcon(ServerCtl):
             else:
                 raise ValueError(f"Unable to parse line: {raw_line}")
         elif raw_line.startswith("KICK") or raw_line.startswith("BAN"):
-
             if match := re.match(Rcon.kick_ban_pattern, raw_line):
                 _action, player, sub_content, type_ = match.groups()
             else:

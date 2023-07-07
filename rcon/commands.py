@@ -526,7 +526,7 @@ class ServerCtl:
         return self._request("listcurrentmapsequence").split("\n")[:-1]
 
     def get_map_shuffle_enabled(self):
-        return self._request("querymapshuffle").endswith('TRUE')
+        return self._request("querymapshuffle").endswith("TRUE")
 
     def set_map_shuffle_enabled(self, enabled: bool):
         current = self.get_map_shuffle_enabled()

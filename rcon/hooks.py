@@ -40,11 +40,11 @@ from rcon.player_history import (
 )
 from rcon.recorded_commands import RecordedRcon
 from rcon.steam_utils import get_player_bans, get_steam_profile, update_db_player_info
+from rcon.types import PlayerFlagType, SteamBansType, VACGameBansConfigType
 from rcon.user_config import CameraConfig, RealVipConfig
 from rcon.utils import LOG_MAP_NAMES_TO_MAP, MapsHistory, get_server_number
 from rcon.vote_map import VoteMap
 from rcon.workers import record_stats_worker, temporary_broadcast, temporary_welcome
-from rcon.types import VACGameBansConfigType, PlayerFlagType, SteamBansType
 
 logger = logging.getLogger(__name__)
 
