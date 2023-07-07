@@ -7,7 +7,7 @@ from functools import lru_cache
 import requests
 
 import discord.utils
-from discord import RequestsWebhookAdapter, Webhook
+from discord import SyncWebhook
 from rcon.game_logs import on_chat, on_kill, on_tk
 
 DISCORD_CHAT_WEBHOOK_URL = os.getenv("DISCORD_CHAT_WEBHOOK")
@@ -68,9 +68,7 @@ def make_hook(webhook_url):
     webhook_id, webhook_token = parse_webhook_url(webhook_url)
     if not all([webhook_id, webhook_token]):
         return None
-    return Webhook.partial(
-        id=webhook_id, token=webhook_token, adapter=RequestsWebhookAdapter()
-    )
+    return SyncWebhook.partial(id=webhook_id, token=webhook_token)
 
 
 class DiscordWebhookHandler:

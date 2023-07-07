@@ -1,21 +1,19 @@
 import logging
 import os
 import re
-from collections import defaultdict
 from datetime import datetime
 from functools import partial, wraps
 from threading import Timer
-from typing import DefaultDict, Dict, List, Optional, Sequence, Union
+from typing import Sequence
 
-from discord_webhook import DiscordEmbed
-
-import discord
+from discord import Embed
 from rcon.cache_utils import invalidates
 from rcon.commands import CommandFailedError, HLLServerError
 from rcon.config import get_config
-from rcon.discord import (
+from rcon.discord_utils import (
     dict_to_discord,
     get_prepared_discord_hooks,
+    make_allowed_mentions,
     send_to_discord_audit,
 )
 from rcon.discord_chat import make_hook
@@ -40,11 +38,11 @@ from rcon.player_history import (
 )
 from rcon.recorded_commands import RecordedRcon
 from rcon.steam_utils import get_player_bans, get_steam_profile, update_db_player_info
+from rcon.types import PlayerFlagType, SteamBansType, VACGameBansConfigType
 from rcon.user_config import CameraConfig, RealVipConfig
 from rcon.utils import LOG_MAP_NAMES_TO_MAP, MapsHistory, get_server_number
 from rcon.vote_map import VoteMap
 from rcon.workers import record_stats_worker, temporary_broadcast, temporary_welcome
-from rcon.types import VACGameBansConfigType, PlayerFlagType, SteamBansType
 
 logger = logging.getLogger(__name__)
 
@@ -455,15 +453,16 @@ def notify_camera(rcon: RecordedRcon, struct_log):
     send_to_discord_audit(message=struct_log["message"], by=struct_log["player"])
 
     try:
-        if hooks := get_prepared_discord_hooks("camera"):
-            embeded = DiscordEmbed(
-                title=f'{struct_log["player"]}  - {struct_log["steam_id_64_1"]}',
-                description=struct_log["sub_content"],
-                color=242424,
+        for webhook, allowed_mentions, roles_to_ping in get_prepared_discord_hooks(
+            "camera"
+        ):
+            title = f'{struct_log["player"]}  - {struct_log["steam_id_64_1"]}'
+            description = struct_log["sub_content"]
+            color = 242424
+            embed = Embed(title=title, description=description, color=color)
+            webhook.send(
+                embed=embed, content=roles_to_ping, allowed_mentions=allowed_mentions
             )
-            for h in hooks:
-                h.add_embed(embeded)
-                h.execute()
     except Exception:
         logger.exception("Unable to forward to hooks")
 
@@ -475,42 +474,29 @@ def notify_camera(rcon: RecordedRcon, struct_log):
         temporary_welcome(rcon, struct_log["message"], 60)
 
 
-def make_allowed_mentions(mentions: Sequence[str]) -> discord.AllowedMentions:
-    """Convert the provided sequence of users and roles to a discord.AllowedMentions
-
-    Similar to discord_chat.make_allowed_mentions but doesn't strip @everyone/@here
-    """
-    allowed_mentions: DefaultDict[str, List[discord.Object]] = defaultdict(list)
-
-    for role_or_user in mentions:
-        if match := re.match(r"<@(\d+)>", role_or_user):
-            allowed_mentions["users"].append(discord.Object(int(match.group(1))))
-        if match := re.match(r"<@&(\d+)>", role_or_user):
-            allowed_mentions["roles"].append(discord.Object(int(match.group(1))))
-
-    return discord.AllowedMentions(
-        users=allowed_mentions["users"], roles=allowed_mentions["roles"]
-    )
-
-
 def send_log_line_webhook_message(
     webhook_url: str,
-    mentions: Optional[Sequence[str]],
+    mentions: Sequence[str] | None,
     _,
-    log_line: Dict[str, Union[str, int, float, None]],
+    log_line: dict[str, str | int | float | None],
 ) -> None:
     """Send a time stammped embed of the log_line and mentions to the provided Discord Webhook"""
 
     mentions = mentions or []
 
     webhook = make_hook(webhook_url)
+
+    if not webhook:
+        logger.warning(f"{webhook_url} is not a valid webhook")
+        return
+
     allowed_mentions = make_allowed_mentions(mentions)
 
     SERVER_SHORT_NAME = os.getenv("SERVER_SHORT_NAME", "No Server Name Set")
 
     content = " ".join(mentions)
     description = log_line["line_without_time"]
-    embed = discord.Embed(
+    embed = Embed(
         description=description,
         timestamp=datetime.utcfromtimestamp(log_line["timestamp_ms"] / 1000),
     )

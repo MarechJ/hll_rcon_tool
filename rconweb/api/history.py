@@ -9,7 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 import rcon
 from rcon import player_history
 from rcon.commands import CommandFailedError
-from rcon.discord import send_to_discord_audit
+from rcon.discord_utils import send_to_discord_audit
 from rcon.player_history import (
     add_flag_to_player,
     get_player_comments,

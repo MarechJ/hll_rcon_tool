@@ -1,8 +1,7 @@
 from datetime import datetime
 
-from discord_webhook import DiscordEmbed
-
-from rcon.discord import get_prepared_discord_hooks
+from discord import Embed
+from rcon.discord_utils import get_prepared_discord_hooks
 from rcon.extended_commands import CommandFailedError, Rcon
 from rcon.game_logs import on_connected
 from rcon.hooks import inject_player_ids
@@ -17,7 +16,10 @@ def watchdog(rcon: Rcon, log, name: str, steam_id_64: str):
     watcher = PlayerWatch(steam_id_64)
     if watcher.is_watched():
         watcher.increment_watch()
-        if hooks := get_prepared_discord_hooks("watchlist"):
+
+        for webhook, allowed_mentions, roles_to_ping in get_prepared_discord_hooks(
+            "watchlist"
+        ):
             watched_player = watcher.get_watch()
             player_name = log["player"]
 
@@ -29,7 +31,7 @@ def watchdog(rcon: Rcon, log, name: str, steam_id_64: str):
                 reason = watched_player["watchlist"]["reason"]
                 names = ", ".join(n["name"] for n in watched_player["names"])
 
-                embed = DiscordEmbed(
+                embed = Embed(
                     title=f"{player_name}  - {steam_id_64}",
                     description=f"""AKA: {names}
                     
@@ -40,9 +42,12 @@ def watchdog(rcon: Rcon, log, name: str, steam_id_64: str):
                     """,
                     color=242424,
                 )
-                for h in hooks:
-                    h.add_embed(embed)
-                    h.execute()
+
+                webhook.send(
+                    embed=embed,
+                    content=roles_to_ping,
+                    allowed_mentions=allowed_mentions,
+                )
 
 
 class PlayerWatch:

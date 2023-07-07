@@ -7,7 +7,7 @@ from dateutil import relativedelta
 from pydantic import BaseModel, ValidationError, conint
 
 from rcon.config import get_config
-from rcon.discord import send_to_discord_audit
+from rcon.discord_utils import send_to_discord_audit
 from rcon.models import PlayerSteamID, PlayerVIP, enter_session
 from rcon.recorded_commands import RecordedRcon
 from rcon.settings import SERVER_INFO

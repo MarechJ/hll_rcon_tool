@@ -19,7 +19,7 @@ from rcon.automods.level_thresholds import LevelThresholdsAutomod
 from rcon.cache_utils import get_redis_client
 from rcon.commands import CommandFailedError, HLLServerError
 from rcon.config import get_config
-from rcon.discord import send_to_discord_audit
+from rcon.discord_utils import send_to_discord_audit
 from rcon.game_logs import on_kill, on_connected
 from rcon.hooks import inject_player_ids
 from rcon.recorded_commands import RecordedRcon
@@ -43,25 +43,33 @@ def get_punitions_to_apply(rcon, moderators) -> PunitionsToApply:
         if team_view[team]["commander"] is not None:
             for mod in moderators:
                 punitions_to_apply.merge(
-                    mod.punitions_to_apply(team_view, "Commander", team, {
-                        "players": [team_view[team]["commander"]],
-                    }, gamestate)
+                    mod.punitions_to_apply(
+                        team_view,
+                        "Commander",
+                        team,
+                        {
+                            "players": [team_view[team]["commander"]],
+                        },
+                        gamestate,
+                    )
                 )
 
         for squad_name, squad in team_view[team]["squads"].items():
             for mod in moderators:
                 punitions_to_apply.merge(
-                    mod.punitions_to_apply(team_view, squad_name, team, squad, gamestate)
+                    mod.punitions_to_apply(
+                        team_view, squad_name, team, squad, gamestate
+                    )
                 )
 
     return punitions_to_apply
 
 
 def _do_punitions(
-        rcon: RecordedRcon,
-        method: ActionMethod,
-        players: List[PunishPlayer],
-        mods,
+    rcon: RecordedRcon,
+    method: ActionMethod,
+    players: List[PunishPlayer],
+    mods,
 ):
     for aplayer in players:
         try:
@@ -135,7 +143,9 @@ def do_punitions(rcon: RecordedRcon, punitions_to_apply: PunitionsToApply):
         rcon, ActionMethod.PUNISH, punitions_to_apply.punish, enabled_moderators()
     )
 
-    _do_punitions(rcon, ActionMethod.KICK, punitions_to_apply.kick, enabled_moderators())
+    _do_punitions(
+        rcon, ActionMethod.KICK, punitions_to_apply.kick, enabled_moderators()
+    )
 
 
 def enabled_moderators():
@@ -143,15 +153,15 @@ def enabled_moderators():
 
     try:
         config = get_config()
-        
+
         no_leader_config = None
         if config.get("NOLEADER_AUTO_MOD") is not None:
             no_leader_config = NoLeaderConfig(**config["NOLEADER_AUTO_MOD"])
-        
+
         seeding_config = None
         if config.get("SEEDING_AUTO_MOD") is not None:
             seeding_config = SeedingRulesConfig(**config["SEEDING_AUTO_MOD"])
-        
+
         level_thresholds_config = None
         if config.get("LEVEL_AUTO_MOD") is not None:
             level_thresholds_config = LevelThresholdsConfig(**config["LEVEL_AUTO_MOD"])
@@ -163,9 +173,19 @@ def enabled_moderators():
         filter(
             lambda m: m.enabled(),
             [
-                NoLeaderAutomod(no_leader_config, red) if no_leader_config is not None else NoLeaderAutomod(NoLeaderConfig(**{"enabled": False}), None),
-                SeedingRulesAutomod(seeding_config, red) if seeding_config is not None else SeedingRulesAutomod(SeedingRulesConfig(**{"enabled": False}), None),
-                LevelThresholdsAutomod(level_thresholds_config, red) if level_thresholds_config is not None else LevelThresholdsAutomod(LevelThresholdsConfig(**{"enabled": False}), None),
+                NoLeaderAutomod(no_leader_config, red)
+                if no_leader_config is not None
+                else NoLeaderAutomod(NoLeaderConfig(**{"enabled": False}), None),
+                SeedingRulesAutomod(seeding_config, red)
+                if seeding_config is not None
+                else SeedingRulesAutomod(
+                    SeedingRulesConfig(**{"enabled": False}), None
+                ),
+                LevelThresholdsAutomod(level_thresholds_config, red)
+                if level_thresholds_config is not None
+                else LevelThresholdsAutomod(
+                    LevelThresholdsConfig(**{"enabled": False}), None
+                ),
             ],
         )
     )

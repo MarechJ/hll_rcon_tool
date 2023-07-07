@@ -13,7 +13,7 @@ from rcon.broadcast import get_votes_status
 from rcon.cache_utils import RedisCached, get_redis_pool
 from rcon.commands import CommandFailedError
 from rcon.config import get_config
-from rcon.discord import send_to_discord_audit
+from rcon.discord_utils import send_to_discord_audit
 from rcon.extended_commands import MOD_ALLOWED_CMDS
 from rcon.gtx import GTXFtp
 from rcon.player_history import add_player_to_blacklist, remove_player_from_blacklist

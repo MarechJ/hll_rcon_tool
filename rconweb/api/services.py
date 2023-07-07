@@ -6,7 +6,7 @@ from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 
-from rcon.discord import send_to_discord_audit
+from rcon.discord_utils import send_to_discord_audit
 
 from .audit_log import auto_record_audit, record_audit
 from .auth import api_response, login_required
