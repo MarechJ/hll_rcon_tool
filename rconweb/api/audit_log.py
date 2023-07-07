@@ -1,16 +1,11 @@
-import datetime
 import json
 import logging
 from functools import wraps
-from urllib.parse import urlparse
 
-from dateutil import parser
-from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from sqlalchemy import and_, or_
 
 from rcon.models import AuditLog, enter_session
-from rcon.utils import MapsHistory
 
 from .auth import api_response, login_required
 from .utils import _get_data

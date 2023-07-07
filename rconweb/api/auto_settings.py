@@ -5,7 +5,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from rcon.user_config import AutoSettingsConfig
 
-from .audit_log import auto_record_audit, record_audit
+from .audit_log import record_audit
 from .auth import api_response, login_required
 from .multi_servers import forward_request
 from .services import get_supervisor_client

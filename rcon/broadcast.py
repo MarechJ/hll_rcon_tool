@@ -1,14 +1,10 @@
-import json
 import logging
-import os
 import random
 import time
-from functools import partial, wraps
+from functools import partial
 
-import redis
 
 from rcon.audit import ingame_mods, online_mods
-from rcon.cache_utils import get_redis_pool
 from rcon.commands import CommandFailedError
 from rcon.settings import SERVER_INFO
 from rcon.user_config import AutoBroadcasts, VoteMapConfig

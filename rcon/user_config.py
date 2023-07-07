@@ -4,7 +4,6 @@ import os
 from dataclasses import asdict, dataclass, field, fields
 from typing import List
 
-from sqlalchemy.sql.expression import false, true
 
 from rcon.cache_utils import invalidates, ttl_cache
 from rcon.commands import CommandFailedError

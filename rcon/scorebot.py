@@ -4,9 +4,7 @@ import os
 import pathlib
 import sqlite3
 import time
-from logging.config import dictConfig
 from sqlite3 import Connection
-from sqlite3.dbapi2 import connect
 from typing import TypedDict
 from urllib.parse import urljoin
 

@@ -5,15 +5,13 @@ import os
 
 import pandas as pd
 from sqlalchemy import and_, func, or_
-from sqlalchemy.orm import joinedload, subqueryload
+from sqlalchemy.orm import joinedload
 from sqlalchemy.sql.functions import coalesce
 
-from rcon.cache_utils import ttl_cache
 from rcon.extended_commands import Rcon
 from rcon.models import (
     Maps,
     PlayerAtCount,
-    PlayerName,
     PlayerSession,
     PlayerSteamID,
     ServerCount,

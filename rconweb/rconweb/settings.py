@@ -13,10 +13,8 @@ import logging
 import os
 import re
 import socket
-from logging.config import dictConfig
 
 import sentry_sdk
-from django.utils.log import DEFAULT_LOGGING
 from sentry_sdk import configure_scope
 from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration

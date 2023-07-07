@@ -1,7 +1,5 @@
 from django.urls import path
 
-from rcon import scoreboard
-
 from . import (
     audit_log,
     auth,

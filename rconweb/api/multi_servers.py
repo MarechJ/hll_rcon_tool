@@ -1,7 +1,6 @@
 import json
 import logging
 from copy import deepcopy
-from functools import wraps
 
 import requests
 from django.views.decorators.csrf import csrf_exempt
@@ -9,7 +8,6 @@ from django.views.decorators.csrf import csrf_exempt
 from rcon.utils import ApiKey
 
 from .auth import api_response, login_required
-from .utils import _get_data
 
 logger = logging.getLogger("rcon")
 

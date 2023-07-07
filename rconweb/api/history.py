@@ -6,7 +6,6 @@ from dateutil import parser
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
-import rcon
 from rcon import player_history
 from rcon.commands import CommandFailedError
 from rcon.discord import send_to_discord_audit
@@ -21,7 +20,7 @@ from rcon.player_history import (
 )
 from rcon.utils import MapsHistory
 
-from .audit_log import auto_record_audit, record_audit
+from .audit_log import record_audit
 from .auth import api_response, login_required, stats_login_required
 from .utils import _get_data
 
