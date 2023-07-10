@@ -11,9 +11,11 @@ from rcon.automods.models import (
     PunishPlayer,
     PunitionsToApply,
     SeedingRulesConfig,
+    LevelThresholdsConfig,
 )
 from rcon.automods.no_leader import NoLeaderAutomod
 from rcon.automods.seeding_rules import SeedingRulesAutomod
+from rcon.automods.level_thresholds import LevelThresholdsAutomod
 from rcon.cache_utils import get_redis_client
 from rcon.commands import CommandFailedError, HLLServerError
 from rcon.config import get_config
@@ -141,8 +143,18 @@ def enabled_moderators():
 
     try:
         config = get_config()
-        no_leader_config = NoLeaderConfig(**config["NOLEADER_AUTO_MOD"])
-        seeding_config = SeedingRulesConfig(**config["SEEDING_AUTO_MOD"])
+        
+        no_leader_config = None
+        if config.get("NOLEADER_AUTO_MOD") is not None:
+            no_leader_config = NoLeaderConfig(**config["NOLEADER_AUTO_MOD"])
+        
+        seeding_config = None
+        if config.get("SEEDING_AUTO_MOD") is not None:
+            seeding_config = SeedingRulesConfig(**config["SEEDING_AUTO_MOD"])
+        
+        level_thresholds_config = None
+        if config.get("LEVEL_AUTO_MOD") is not None:
+            level_thresholds_config = LevelThresholdsConfig(**config["LEVEL_AUTO_MOD"])
     except Exception as e:
         logger.exception("Invalid automod config, check your config/config.yml", e)
         raise
@@ -151,8 +163,9 @@ def enabled_moderators():
         filter(
             lambda m: m.enabled(),
             [
-                NoLeaderAutomod(no_leader_config, red),
-                SeedingRulesAutomod(seeding_config, red),
+                NoLeaderAutomod(no_leader_config, red) if no_leader_config is not None else NoLeaderAutomod(NoLeaderConfig(**{"enabled": False}), None),
+                SeedingRulesAutomod(seeding_config, red) if seeding_config is not None else SeedingRulesAutomod(SeedingRulesConfig(**{"enabled": False}), None),
+                LevelThresholdsAutomod(level_thresholds_config, red) if level_thresholds_config is not None else LevelThresholdsAutomod(LevelThresholdsConfig(**{"enabled": False}), None),
             ],
         )
     )

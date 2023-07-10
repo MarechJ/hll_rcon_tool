@@ -210,11 +210,15 @@ Save your existing changes (such as your `.env` settings):
 
 Pull the changes from github:
 
-    git pull
+    git fetch --tags
+
+Check out a tagged release (substitute the release you want):
+
+    git checkout v7.0.2
 
 Reapply your changes:
 
-    git stash
+    git stash apply
 
 Get the newest docker images and restart your containers:
 
@@ -222,13 +226,17 @@ Get the newest docker images and restart your containers:
     docker-compose up -d --force-recreate --remove-orphans
 
 #### Windows
+Substitute the release you want in `git checkout`:
 
-    git pull
+    git fetch --tags
+    git checkout v7.0.2
     docker-compose pull && docker-compose -f docker-compose.yml -f docker-compose.windows.yml up -d --force-recreate --remove-orphans
 
 #### Raspberry-Pi or any ARM32v7
+Substitute the release you want in `git checkout`:
 
-    git pull
+    git fetch --tags
+    git checkout v7.0.2
     docker-compose -f docker-compose.yml -f docker-compose.arm32v7.yml up --build -d --force-recreate --remove-orphans
 
 Or download the [latest zip release](https://github.com/MarechJ/hll_rcon_tool/releases/latest)
