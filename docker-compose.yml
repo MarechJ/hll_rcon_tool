@@ -93,7 +93,7 @@ services:
     networks:
       - common
 
-  ############ SERVER 2  #############
+  ########### SERVER 2  #############
   supervisor_2:
     <<: *supervisor
     environment: &env2
@@ -102,10 +102,10 @@ services:
       HLL_PASSWORD: ${HLL_PASSWORD_2}
       LOGGING_LEVEL: 'INFO'
       LOGGING_PATH: /logs/
-      REDIS_URL: redis://redis:6379/1
-      REDIS_HOST: redis 
-      REDIS_PORT: 6379
-      REDIS_DB: 1
+      HLL_REDIS_HOST: ${HLL_REDIS_HOST} 
+      HLL_REDIS_PORT: ${HLL_REDIS_HOST_PORT}
+      HLL_REDIS_DB: 1
+      HLL_REDIS_URL: redis://${HLL_REDIS_HOST}:${HLL_REDIS_HOST_PORT}/1
       HLL_DB_USER: ${HLL_DB_USER}
       HLL_DB_PASSWORD: ${HLL_DB_PASSWORD}
       HLL_DB_NAME: ${HLL_DB_NAME}
@@ -177,10 +177,10 @@ services:
       HLL_PASSWORD: ${HLL_PASSWORD_3}
       LOGGING_LEVEL: 'INFO'
       LOGGING_PATH: /logs/
-      REDIS_URL: redis://redis:6379/2
-      REDIS_HOST: redis 
-      REDIS_PORT: 6379
-      REDIS_DB: 2
+      HLL_REDIS_HOST: ${HLL_REDIS_HOST} 
+      HLL_REDIS_PORT: ${HLL_REDIS_HOST_PORT}
+      HLL_REDIS_DB: 2
+      HLL_REDIS_URL: redis://${HLL_REDIS_HOST}:${HLL_REDIS_HOST_PORT}/2
       HLL_DB_USER: ${HLL_DB_USER}
       HLL_DB_PASSWORD: ${HLL_DB_PASSWORD}
       HLL_DB_NAME: ${HLL_DB_NAME}

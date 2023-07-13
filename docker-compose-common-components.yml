@@ -9,10 +9,10 @@ services:
             HLL_PASSWORD: ${HLL_PASSWORD}
             LOGGING_LEVEL: 'INFO'
             LOGGING_PATH: /logs/
-            REDIS_URL: redis://redis:6379/0
-            REDIS_HOST: redis 
-            REDIS_PORT: 6379
-            REDIS_DB: 0
+            HLL_REDIS_HOST: ${HLL_REDIS_HOST} 
+            HLL_REDIS_PORT: ${HLL_REDIS_HOST_PORT}
+            HLL_REDIS_DB: 0
+            HLL_REDIS_URL: redis://${HLL_REDIS_HOST}:${HLL_REDIS_HOST_PORT}/0
             HLL_DB_USER: ${HLL_DB_USER}
             HLL_DB_PASSWORD: ${HLL_DB_PASSWORD}
             HLL_DB_NAME: ${HLL_DB_NAME}

@@ -2,7 +2,6 @@ import datetime
 import json
 import logging
 from functools import wraps
-from urllib.parse import urlparse
 
 from dateutil import parser
 from django.http import JsonResponse
