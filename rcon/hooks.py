@@ -267,7 +267,7 @@ def ban_if_has_vac_bans(rcon: RecordedRcon, steam_id_64, name):
             bans,
             max_game_bans,
             max_days_since_ban,
-            player_flags=player,
+            player_flags=player.flags,
             whitelist_flags=whitelist_flags,
         ):
             reason = config["ban_on_vac_history_reason"].format(
