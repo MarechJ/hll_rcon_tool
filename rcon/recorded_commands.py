@@ -82,6 +82,31 @@ class RecordedRcon(Rcon):
 
         return list(players.values())
 
+    def get_detailed_players(self) -> GetDetailedPlayers:
+        players = self.get_players_fast()
+        fail_count = 0
+        players_by_id = {}
+
+        futures = {
+            self.run_in_pool("get_detailed_player_info", player[NAME]): player
+            for idx, player in enumerate(players)
+        }
+        for future in as_completed(futures):
+            try:
+                player_data = future.result()
+            except Exception:
+                logger.exception("Failed to get info for %s", futures[future])
+                fail_count += 1
+                player_data = self._get_default_info_dict(futures[future][NAME])
+            player = futures[future]
+            player.update(player_data)
+            players_by_id[player[STEAMID]] = player
+
+        return {
+            "players": players_by_id,
+            "fail_count": fail_count,
+        }
+
     @ttl_cache(ttl=2, cache_falsy=False)
     def get_team_view(self):
         teams = {}

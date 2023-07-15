@@ -794,6 +794,7 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     ctl.get_structured_logs: "api.can_view_structured_logs",
     ctl.get_team_objective_scores: "api.can_view_team_objective_scores",
     ctl.get_team_switch_cooldown: "api.can_view_team_switch_cooldown",
+    ctl.get_detailed_players: "api.can_view_detailed_players",
     ctl.get_team_view: "api.can_view_team_view",
     ctl.get_teamkills_boards: "api.can_view_teamkills_boards",
     ctl.get_temp_bans: "api.can_view_temp_bans",

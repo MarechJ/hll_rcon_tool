@@ -308,8 +308,12 @@ class Migration(migrations.Migration):
                         "Can view the team switch cooldown value",
                     ),
                     (
+                        "can_view_detailed_players",
+                        "Can view get_detailed_players endpoint",
+                    ),
+                    (
                         "can_view_team_view",
-                        "Can view can_view_team_view endpoint (detailed player info by team for all connected players)",
+                        "Can view get_team_view endpoint (detailed player info by team for all connected players)",
                     ),
                     (
                         "can_view_teamkills_boards",
