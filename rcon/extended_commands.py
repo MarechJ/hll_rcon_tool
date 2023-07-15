@@ -576,7 +576,9 @@ class Rcon(ServerCtl):
                     raise CommandFailedError(res)
             except CommandFailedError:
                 maps = self.get_map_rotation()
-                self.do_add_map_to_rotation(map_name, maps[len(maps) - 1], maps.count(maps[len(maps) - 1]))
+                self.do_add_map_to_rotation(
+                    map_name, maps[len(maps) - 1], maps.count(maps[len(maps) - 1])
+                )
                 if super().set_map(map_name) != "SUCCESS":
                     raise CommandFailedError(res)
 
@@ -601,7 +603,6 @@ class Rcon(ServerCtl):
         with invalidates(Rcon.get_current_map_sequence, Rcon.get_map_shuffle_enabled):
             return super().set_map_shuffle_enabled(enabled)
 
-    @mod_users_allowed
     @ttl_cache(ttl=60 * 60)
     def get_name(self):
         name = super().get_name()
@@ -1089,7 +1090,6 @@ class Rcon(ServerCtl):
             else:
                 raise ValueError(f"Unable to parse line: {raw_line}")
         elif raw_line.startswith("KICK") or raw_line.startswith("BAN"):
-
             if match := re.match(Rcon.kick_ban_pattern, raw_line):
                 _action, player, sub_content, type_ = match.groups()
             else:
