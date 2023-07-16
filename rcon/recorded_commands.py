@@ -110,30 +110,87 @@ class RecordedRcon(Rcon):
     @ttl_cache(ttl=2, cache_falsy=False)
     def get_team_view(self):
         teams = {}
-        players_by_id = {}
-        players = self.get_players_fast()
-        fail_count = 0
-        players_by_id = {}
+        detailed_players = self.get_detailed_players()
+        players_by_id = detailed_players["players"]
+        fail_count = detailed_players["fail_count"]
 
-        futures = {
-            self.run_in_pool("get_detailed_player_info", player[NAME]): player
-            for idx, player in enumerate(players)
+        logger.debug("Getting DB profiles")
+        steam_profiles = {
+            profile[STEAMID]: profile
+            for profile in get_profiles(list(players_by_id.keys()))
         }
-        for future in as_completed(futures):
-            try:
-                player_data = future.result()
-            except Exception:
-                logger.exception("Failed to get info for %s", futures[future])
-                fail_count += 1
-                player_data = self._get_default_info_dict(futures[future][NAME])
-            player = futures[future]
-            player.update(player_data)
-            players_by_id[player[STEAMID]] = player
+        logger.debug("Getting VIP list")
+        try:
+            vips = set(v[STEAMID] for v in super().get_vip_ids())
+        except Exception:
+            logger.exception("Failed to get VIPs")
+            vips = set()
 
-        return {
-            "players": players_by_id,
-            "fail_count": fail_count,
-        }
+        for player in players_by_id.values():
+            steam_id_64 = player[STEAMID]
+            profile = steam_profiles.get(player.get("steam_id_64"), {}) or {}
+            player["profile"] = profile
+            player["is_vip"] = steam_id_64 in vips
+
+            teams.setdefault(player.get("team"), {}).setdefault(
+                player.get("unit_name"), {}
+            ).setdefault("players", []).append(player)
+
+        for team, squads in teams.items():
+            if team is None:
+                continue
+            for squad_name, squad in squads.items():
+                squad["players"] = sorted(
+                    squad["players"],
+                    key=lambda player: (
+                        ALL_ROLES_KEY_INDEX_MAP.get(player.get("role"), len(ALL_ROLES)),
+                        player.get("steam_id_64"),
+                    ),
+                )
+                squad["type"] = self._guess_squad_type(squad)
+                squad["has_leader"] = self._has_leader(squad)
+
+                try:
+                    squad["combat"] = sum(p["combat"] for p in squad["players"])
+                    squad["offense"] = sum(p["offense"] for p in squad["players"])
+                    squad["defense"] = sum(p["defense"] for p in squad["players"])
+                    squad["support"] = sum(p["support"] for p in squad["players"])
+                    squad["kills"] = sum(p["kills"] for p in squad["players"])
+                    squad["deaths"] = sum(p["deaths"] for p in squad["players"])
+                except Exception as e:
+                    logger.exception(e)
+
+        game = {}
+        for team, squads in teams.items():
+            if team is None:
+                continue
+            commander = [
+                squad for _, squad in squads.items() if squad["type"] == "commander"
+            ]
+            if not commander:
+                commander = None
+            else:
+                commander = (
+                    commander[0]["players"][0] if commander[0].get("players") else None
+                )
+
+            game[team] = {
+                "squads": {
+                    squad_name: squad
+                    for squad_name, squad in squads.items()
+                    if squad["type"] != "commander"
+                },
+                "commander": commander,
+                "combat": sum(s["combat"] for s in squads.values()),
+                "offense": sum(s["offense"] for s in squads.values()),
+                "defense": sum(s["defense"] for s in squads.values()),
+                "support": sum(s["support"] for s in squads.values()),
+                "kills": sum(s["kills"] for s in squads.values()),
+                "deaths": sum(s["deaths"] for s in squads.values()),
+                "count": sum(len(s["players"]) for s in squads.values()),
+            }
+
+        return dict(fail_count=fail_count, **game)
 
     @ttl_cache(ttl=2)
     def get_structured_logs(
