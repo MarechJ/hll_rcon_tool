@@ -198,7 +198,6 @@ class RconUser(User):
                 "can_view_round_time_remaining",
                 "Can view the amount of time left in the round",
             ),
-            ("can_view_scoreboard", "Can view the get_scoreboard endpoint"),
             ("can_view_server_name", "Can view the server name"),
             ("can_view_server_stats", "Can view the get_server_stats endpoint"),
             (
@@ -219,7 +218,6 @@ class RconUser(User):
                 "can_view_team_view",
                 "Can view get_team_view endpoint (detailed player info by team for all connected players)",
             ),
-            ("can_view_teamkills_boards", "Can view the get_teamkills_boards endpoint"),
             ("can_view_temp_bans", "Can view temporary banned players"),
             ("can_view_timed_logs", "Can view the get_timed_logs endpoint"),
             ("can_view_vip_count", "Can view the number of connected VIPs"),

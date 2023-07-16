@@ -777,7 +777,6 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     ctl.get_profanities: "api.can_view_profanities",
     ctl.get_queue_length: "api.can_view_queue_length",
     ctl.get_round_time_remaining: "api.can_view_round_time_remaining",
-    ctl.get_scoreboard: "api.can_view_scoreboard",
     ctl.get_server_settings: {
         "api.can_view_team_switch_cooldown",
         "api.can_view_autobalance_threshold",
@@ -796,7 +795,6 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     ctl.get_team_switch_cooldown: "api.can_view_team_switch_cooldown",
     ctl.get_detailed_players: "api.can_view_detailed_players",
     ctl.get_team_view: "api.can_view_team_view",
-    ctl.get_teamkills_boards: "api.can_view_teamkills_boards",
     ctl.get_temp_bans: "api.can_view_temp_bans",
     ctl.get_timed_logs: "api.can_view_timed_logs",
     ctl.get_vip_ids: "api.can_view_vip_ids",
