@@ -781,13 +781,6 @@ class Rcon(ServerCtl):
         except (ValueError, TypeError) as e:
             raise ValueError(f"Time {raw_timestamp} is not a valid integer") from e
 
-    @ttl_cache(ttl=2)
-    def get_structured_logs(
-        self, since_min_ago, filter_action=None, filter_player=None
-    ) -> ParsedLogsType:
-        raw = super().get_logs(since_min_ago)
-        return self.parse_logs(raw, filter_action, filter_player)
-
     @ttl_cache(ttl=60 * 60)
     def get_profanities(self):
         return super().get_profanities()
