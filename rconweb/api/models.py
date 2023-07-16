@@ -198,7 +198,6 @@ class RconUser(User):
                 "can_view_round_time_remaining",
                 "Can view the amount of time left in the round",
             ),
-            ("can_view_scoreboard", "Can view the get_scoreboard endpoint"),
             ("can_view_server_name", "Can view the server name"),
             ("can_view_server_stats", "Can view the get_server_stats endpoint"),
             (
@@ -214,11 +213,11 @@ class RconUser(User):
                 "can_view_team_switch_cooldown",
                 "Can view the team switch cooldown value",
             ),
+            ("can_view_detailed_players", "Can view get_detailed_players endpoint"),
             (
                 "can_view_team_view",
-                "Can view can_view_team_view endpoint (detailed player info by team for all connected players)",
+                "Can view get_team_view endpoint (detailed player info by team for all connected players)",
             ),
-            ("can_view_teamkills_boards", "Can view the get_teamkills_boards endpoint"),
             ("can_view_temp_bans", "Can view temporary banned players"),
             ("can_view_timed_logs", "Can view the get_timed_logs endpoint"),
             ("can_view_vip_count", "Can view the number of connected VIPs"),
@@ -235,7 +234,10 @@ class RconUser(User):
                 "can_view_votemap_status",
                 "Can view the current votemap status (votes, results, etc)",
             ),
-            ("can_view_current_map_sequence", "Can view the current map shuffle sequence"),
+            (
+                "can_view_current_map_sequence",
+                "Can view the current map shuffle sequence",
+            ),
             ("can_view_map_shuffle_enabled", "Can view if map shuffle is enabled"),
             ("can_change_map_shuffle_enabled", "Can enable/disable map shuffle"),
             ("can_view_welcome_message", "Can view the server welcome message"),

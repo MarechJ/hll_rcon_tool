@@ -3,10 +3,10 @@ import json
 import logging
 
 from dateutil import parser
+from django.contrib.auth.decorators import permission_required
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
-import rcon
 from rcon import player_history
 from rcon.commands import CommandFailedError
 from rcon.discord import send_to_discord_audit
@@ -21,7 +21,7 @@ from rcon.player_history import (
 )
 from rcon.utils import MapsHistory
 
-from .audit_log import auto_record_audit, record_audit
+from .audit_log import record_audit
 from .auth import api_response, login_required, stats_login_required
 from .utils import _get_data
 
@@ -53,6 +53,7 @@ def get_map_history(request):
 
 @csrf_exempt
 @login_required()
+@permission_required("api.can_view_player_profile", raise_exception=True)
 def get_player(request):
     data = _get_data(request)
     res = {}
@@ -84,6 +85,7 @@ def get_player(request):
 
 @csrf_exempt
 @login_required()
+@permission_required("api.can_flag_player", raise_exception=True)
 @record_audit
 def flag_player(request):
     data = _get_data(request)
@@ -116,6 +118,7 @@ def flag_player(request):
 
 @csrf_exempt
 @login_required()
+@permission_required("api.can_unflag_player", raise_exception=True)
 @record_audit
 def unflag_player(request):
     # Note is this really not restful
@@ -142,6 +145,7 @@ def unflag_player(request):
 
 @csrf_exempt
 @login_required()
+@permission_required("api.can_view_player_history", raise_exception=True)
 def players_history(request):
     try:
         data = json.loads(request.body)
@@ -189,6 +193,7 @@ def players_history(request):
 
 @csrf_exempt
 @login_required()
+@permission_required("api.can_view_player_messages", raise_exception=True)
 def get_player_messages(request):
     data = _get_data(request)
     res = None
@@ -211,6 +216,7 @@ def get_player_messages(request):
 
 @csrf_exempt
 @login_required()
+@permission_required("api.can_view_player_comments", raise_exception=True)
 def get_player_comment(request):
     data = _get_data(request)
     res = None
@@ -233,6 +239,7 @@ def get_player_comment(request):
 
 @csrf_exempt
 @login_required()
+@permission_required("api.can_add_player_comments", raise_exception=True)
 @record_audit
 def post_player_comment(request):
     try:

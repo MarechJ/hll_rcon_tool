@@ -1,16 +1,18 @@
 import datetime
 
 from dateutil import parser
+from django.contrib.auth.decorators import permission_required
 from django.views.decorators.csrf import csrf_exempt
 
-from rcon.server_stats import get_db_server_stats_for_range, get_server_stats_for_range
+from rcon.server_stats import get_db_server_stats_for_range
 
 from .auth import api_response, login_required
-from .views import _get_data, ctl
+from .views import _get_data
 
 
 @csrf_exempt
 @login_required()
+@permission_required("api.can_view_server_stats", raise_exception=True)
 def get_server_stats(request):
     data = _get_data(request)
 

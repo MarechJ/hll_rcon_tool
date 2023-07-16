@@ -1,24 +1,16 @@
 import logging
 import os
 import re
-from concurrent.futures import as_completed
 from datetime import datetime, timedelta
-from functools import update_wrapper
 from time import sleep
 from typing import Dict, Iterable, List, Optional, Tuple, Union, TypedDict
 
 from rcon.cache_utils import get_redis_client, invalidates, ttl_cache
 from rcon.commands import CommandFailedError, ServerCtl, VipId
 from rcon.models import PlayerVIP, enter_session
-from rcon.steam_utils import (
-    get_player_country_code,
-    get_player_has_bans,
-    get_players_country_code,
-    get_players_have_bans,
-)
+from rcon.steam_utils import get_player_country_code, get_player_has_bans
 from rcon.types import (
     GameState,
-    GetPlayersType,
     ParsedLogsType,
     StructuredLogLineType,
     StructuredLogLineWithMetaData,
@@ -58,21 +50,6 @@ LOG_ACTIONS = [
     "MESSAGE",
 ]
 logger = logging.getLogger(__name__)
-
-MOD_ALLOWED_CMDS = set()
-
-
-def mod_users_allowed(func):
-    """Wrapper to flag a method as something that moderator
-    accounts are allowed to use.
-
-    Moderator accounts should be able to manage online players,
-    for instance banning them. Viewing or changing server settings
-    like map rotation or VIPs should not be allowed.
-    """
-    MOD_ALLOWED_CMDS.add(func.__name__)
-    update_wrapper(wrapper=mod_users_allowed, wrapped=func)
-    return func
 
 
 class Rcon(ServerCtl):
@@ -123,7 +100,18 @@ class Rcon(ServerCtl):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    @mod_users_allowed
+    def get_admin_groups(self):
+        # Defined here to avoid circular imports with commands.py
+        return super().get_admin_groups()
+
+    def get_logs(self, *args, **kwargs):
+        # Defined here to avoid circular imports with commands.py
+        return super().get_logs(*args, **kwargs)
+
+    def get_timed_logs(self, *args, **kwargs):
+        # Defined here to avoid circular imports with commands.py
+        return super().get_timed_logs(*args, **kwargs)
+
     def get_playerids(self, as_dict=False):
         raw_list = super().get_playerids()
 
@@ -138,7 +126,6 @@ class Rcon(ServerCtl):
 
         return player_dict if as_dict else player_list
 
-    @mod_users_allowed
     def get_vips_count(self):
         players = self.get_playerids()
 
@@ -167,7 +154,6 @@ class Rcon(ServerCtl):
                 return True
         return False
 
-    @mod_users_allowed
     @ttl_cache(ttl=60 * 60 * 24, cache_falsy=False)
     def get_player_info(self, player, can_fail=False):
         try:
@@ -223,7 +209,6 @@ class Rcon(ServerCtl):
             level=0,
         )
 
-    @mod_users_allowed
     @ttl_cache(ttl=2, cache_falsy=False)
     def get_detailed_player_info(self, player) -> GetDetailedPlayer:
         raw = super().get_player_info(player)
@@ -309,7 +294,6 @@ class Rcon(ServerCtl):
 
         return data
 
-    @mod_users_allowed
     @ttl_cache(ttl=60 * 60 * 24)
     def get_admin_ids(self):
         res = super().get_admin_ids()
@@ -319,7 +303,6 @@ class Rcon(ServerCtl):
             admins.append({STEAMID: steam_id_64, NAME: name[1:-1], ROLE: role})
         return admins
 
-    @mod_users_allowed
     def get_online_console_admins(self):
         admins = self.get_admin_ids()
         players = self.get_players()
@@ -340,47 +323,10 @@ class Rcon(ServerCtl):
         with invalidates(Rcon.get_admin_ids):
             return super().do_remove_admin(steam_id_64)
 
-    @mod_users_allowed
-    @ttl_cache(ttl=2)
-    def get_players_fast(self) -> List[GetPlayersType]:
-        players = {}
-        ids = []
-
-        for name, steam_id_64 in self.get_playerids():
-            players[steam_id_64] = {NAME: name, STEAMID: steam_id_64}
-            ids.append(steam_id_64)
-
-        countries = self.thread_pool.submit(get_players_country_code, ids)
-        bans = self.thread_pool.submit(get_players_have_bans, ids)
-
-        for future in as_completed([countries, bans]):
-            d = future.result()
-            for steamid, data in d.items():
-                players.get(steamid, {}).update(data)
-
-        return list(players.values())
-
-    @mod_users_allowed
-    @ttl_cache(ttl=5)
-    def get_players(self):
-        return self.get_players_fast()
-
-        # Below is legacy
-        names = super().get_players()
-        players = []
-        for n in names:
-            player = {NAME: n}
-            player.update(self.get_player_info(n))
-            players.append(player)
-
-        return players
-
-    @mod_users_allowed
     @ttl_cache(ttl=60)
     def get_perma_bans(self):
         return super().get_perma_bans()
 
-    @mod_users_allowed
     @ttl_cache(ttl=60)
     def get_temp_bans(self):
         res = super().get_temp_bans()
@@ -434,7 +380,6 @@ class Rcon(ServerCtl):
             "raw": ban,
         }
 
-    @mod_users_allowed
     def get_bans(self):
         try:
             temp_bans = []
@@ -457,7 +402,6 @@ class Rcon(ServerCtl):
         bans.reverse()
         return temp_bans + bans
 
-    @mod_users_allowed
     def do_unban(self, steam_id_64) -> List[str]:
         """Remove all temporary and permanent bans from the steam_id_64"""
         bans = self.get_bans()
@@ -483,7 +427,6 @@ class Rcon(ServerCtl):
 
         return failed_ban_removals
 
-    @mod_users_allowed
     def get_ban(self, steam_id_64):
         """
         get all bans from steam_id_64
@@ -493,7 +436,6 @@ class Rcon(ServerCtl):
         bans = self.get_bans()
         return list(filter(lambda x: x.get("steam_id_64") == steam_id_64, bans))
 
-    @mod_users_allowed
     @ttl_cache(ttl=60 * 60)
     def get_vip_ids(self) -> List[Dict[str, Union[str, Optional[datetime]]]]:
         res: List[VipId] = super().get_vip_ids()
@@ -537,7 +479,6 @@ class Rcon(ServerCtl):
 
         return "SUCCESS"
 
-    @mod_users_allowed
     def get_gamestate(self) -> GameState:
         """
         Returns player counts, team scores, remaining match time and current/next map
@@ -548,7 +489,9 @@ class Rcon(ServerCtl):
         Map: foy_warfare
         Next Map: stmariedumont_warfare"""
         with invalidates(
-            Rcon.team_sizes, Rcon.team_objective_scores, Rcon.round_time_remaining
+            Rcon.team_sizes,
+            Rcon.get_team_objective_scores,
+            Rcon.get_round_time_remaining,
         ):
             (
                 raw_team_size,
@@ -593,20 +536,19 @@ class Rcon(ServerCtl):
         return result["num_allied_players"], result["num_axis_players"]
 
     @ttl_cache(ttl=2, cache_falsy=False)
-    def team_objective_scores(self) -> Tuple[int, int]:
+    def get_team_objective_scores(self) -> Tuple[int, int]:
         """Returns the number of objectives held by the allied/axis team respectively"""
         result = self.get_gamestate()
 
         return result["allied_score"], result["axis_score"]
 
     @ttl_cache(ttl=2, cache_falsy=False)
-    def round_time_remaining(self) -> timedelta:
+    def get_round_time_remaining(self) -> timedelta:
         """Returns the amount of time left in the round as a timedelta"""
         result = self.get_gamestate()
 
         return result["time_remaining"]
 
-    @mod_users_allowed
     @ttl_cache(ttl=60)
     def get_next_map(self):
         # TODO: think about whether or not the new gamestate command can simplify this
@@ -634,11 +576,12 @@ class Rcon(ServerCtl):
                     raise CommandFailedError(res)
             except CommandFailedError:
                 maps = self.get_map_rotation()
-                self.do_add_map_to_rotation(map_name, maps[len(maps) - 1], maps.count(maps[len(maps) - 1]))
+                self.do_add_map_to_rotation(
+                    map_name, maps[len(maps) - 1], maps.count(maps[len(maps) - 1])
+                )
                 if super().set_map(map_name) != "SUCCESS":
                     raise CommandFailedError(res)
 
-    @mod_users_allowed
     @ttl_cache(ttl=10)
     def get_map(self):
         # TODO: think about whether or not the new gamestate command can simplify this
@@ -660,7 +603,6 @@ class Rcon(ServerCtl):
         with invalidates(Rcon.get_current_map_sequence, Rcon.get_map_shuffle_enabled):
             return super().set_map_shuffle_enabled(enabled)
 
-    @mod_users_allowed
     @ttl_cache(ttl=60 * 60)
     def get_name(self):
         name = super().get_name()
@@ -778,7 +720,6 @@ class Rcon(ServerCtl):
         super().set_broadcast(formatted)
         return prev.decode() if prev else ""
 
-    @mod_users_allowed
     @ttl_cache(ttl=5)
     def get_slots(self):
         res = super().get_slots()
@@ -786,7 +727,6 @@ class Rcon(ServerCtl):
             raise CommandFailedError("Server returned crap")
         return res
 
-    @mod_users_allowed
     @ttl_cache(ttl=5, cache_falsy=False)
     def get_status(self):
         slots = self.get_slots()
@@ -906,24 +846,19 @@ class Rcon(ServerCtl):
         with invalidates(self.get_profanities):
             return super().do_ban_profanities(",".join(profanities))
 
-    @mod_users_allowed
     def do_punish(self, player, reason):
         return super().do_punish(player, reason)
 
-    @mod_users_allowed
     def do_switch_player_now(self, player):
         return super().do_switch_player_now(player)
 
-    @mod_users_allowed
     def do_switch_player_on_death(self, player):
         return super().do_switch_player_on_death(player)
 
-    @mod_users_allowed
     def do_kick(self, player, reason):
         with invalidates(Rcon.get_players):
             return super().do_kick(player, reason)
 
-    @mod_users_allowed
     def do_temp_ban(
         self, player=None, steam_id_64=None, duration_hours=2, reason="", admin_name=""
     ):
@@ -939,17 +874,14 @@ class Rcon(ServerCtl):
                 player, steam_id_64, duration_hours, reason, admin_name
             )
 
-    @mod_users_allowed
     def do_remove_temp_ban(self, ban_log):
         with invalidates(Rcon.get_temp_bans):
             return super().do_remove_temp_ban(ban_log)
 
-    @mod_users_allowed
     def do_remove_perma_ban(self, ban_log):
         with invalidates(Rcon.get_perma_bans):
             return super().do_remove_perma_ban(ban_log)
 
-    @mod_users_allowed
     def do_perma_ban(self, player=None, steam_id_64=None, reason="", admin_name=""):
         with invalidates(Rcon.get_players, Rcon.get_perma_bans):
             if player and re.match(r"\d+", player):
@@ -1079,7 +1011,6 @@ class Rcon(ServerCtl):
             else:
                 raise ValueError(f"Unable to parse line: {raw_line}")
         elif raw_line.startswith("KICK") or raw_line.startswith("BAN"):
-
             if match := re.match(Rcon.kick_ban_pattern, raw_line):
                 _action, player, sub_content, type_ = match.groups()
             else:
