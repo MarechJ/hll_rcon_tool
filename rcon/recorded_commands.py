@@ -262,6 +262,7 @@ class RecordedRcon(Rcon):
     def invalidate_player_list_cache(self):
         super().get_players.cache_clear()
 
+    @ttl_cache(ttl=5)
     def get_players(self) -> List[EnrichedGetPlayersType]:
         players = self.get_players_fast()
 
