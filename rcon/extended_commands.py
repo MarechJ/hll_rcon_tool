@@ -303,18 +303,6 @@ class Rcon(ServerCtl):
             admins.append({STEAMID: steam_id_64, NAME: name[1:-1], ROLE: role})
         return admins
 
-    def get_online_console_admins(self):
-        admins = self.get_admin_ids()
-        players = self.get_players()
-        online = []
-        admins_ids = set(a["steam_id_64"] for a in admins)
-
-        for player in players:
-            if player["steam_id_64"] in admins_ids:
-                online.append(player["name"])
-
-        return online
-
     def do_add_admin(self, steam_id_64, role, name):
         with invalidates(Rcon.get_admin_ids):
             return super().do_add_admin(steam_id_64, role, name)
@@ -855,24 +843,19 @@ class Rcon(ServerCtl):
     def do_switch_player_on_death(self, player):
         return super().do_switch_player_on_death(player)
 
-    def do_kick(self, player, reason):
-        with invalidates(Rcon.get_players):
-            return super().do_kick(player, reason)
-
     def do_temp_ban(
         self, player=None, steam_id_64=None, duration_hours=2, reason="", admin_name=""
     ):
-        with invalidates(Rcon.get_players, Rcon.get_temp_bans):
-            if player and re.match(r"\d+", player):
-                info = self.get_player_info(player)
-                steam_id_64 = info.get(STEAMID, None)
-                return super().do_temp_ban(
-                    None, steam_id_64, duration_hours, reason, admin_name
-                )
-
+        if player and re.match(r"\d+", player):
+            info = self.get_player_info(player)
+            steam_id_64 = info.get(STEAMID, None)
             return super().do_temp_ban(
-                player, steam_id_64, duration_hours, reason, admin_name
+                None, steam_id_64, duration_hours, reason, admin_name
             )
+
+        return super().do_temp_ban(
+            player, steam_id_64, duration_hours, reason, admin_name
+        )
 
     def do_remove_temp_ban(self, ban_log):
         with invalidates(Rcon.get_temp_bans):
@@ -883,13 +866,12 @@ class Rcon(ServerCtl):
             return super().do_remove_perma_ban(ban_log)
 
     def do_perma_ban(self, player=None, steam_id_64=None, reason="", admin_name=""):
-        with invalidates(Rcon.get_players, Rcon.get_perma_bans):
-            if player and re.match(r"\d+", player):
-                info = self.get_player_info(player)
-                steam_id_64 = info.get(STEAMID, None)
-                return super().do_perma_ban(None, steam_id_64, reason, admin_name)
+        if player and re.match(r"\d+", player):
+            info = self.get_player_info(player)
+            steam_id_64 = info.get(STEAMID, None)
+            return super().do_perma_ban(None, steam_id_64, reason, admin_name)
 
-            return super().do_perma_ban(player, steam_id_64, reason, admin_name)
+        return super().do_perma_ban(player, steam_id_64, reason, admin_name)
 
     @ttl_cache(60 * 5)
     def get_map_rotation(self):

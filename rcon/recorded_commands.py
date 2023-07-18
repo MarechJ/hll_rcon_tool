@@ -6,7 +6,7 @@ from typing import List, Union, TypedDict
 
 from dateutil import parser, relativedelta
 
-from rcon.cache_utils import ttl_cache
+from rcon.cache_utils import ttl_cache, invalidates
 from rcon.config import get_config
 from rcon.extended_commands import NAME, STEAMID, Rcon
 from rcon.models import AdvancedConfigOptions, PlayerSteamID, PlayerVIP, enter_session
@@ -63,6 +63,18 @@ class RecordedRcon(Rcon):
 
     def run_in_pool(self, function_name: str, *args, **kwargs):
         return self.thread_pool.submit(getattr(self, function_name), *args, **kwargs)
+
+    def get_online_console_admins(self):
+        admins = self.get_admin_ids()
+        players = self.get_players()
+        online = []
+        admins_ids = set(a["steam_id_64"] for a in admins)
+
+        for player in players:
+            if player["steam_id_64"] in admins_ids:
+                online.append(player["name"])
+
+        return online
 
     def get_players_fast(self) -> List[GetPlayersType]:
         players = {}
@@ -207,7 +219,8 @@ class RecordedRcon(Rcon):
         return res
 
     def do_kick(self, player, reason, by):
-        res = super().do_kick(player, reason)
+        with invalidates(RecordedRcon.get_players):
+            res = super().do_kick(player, reason)
         safe_save_player_action(
             rcon=self, player_name=player, action_type="KICK", reason=reason, by=by
         )
@@ -216,9 +229,10 @@ class RecordedRcon(Rcon):
     def do_temp_ban(
         self, player=None, steam_id_64=None, duration_hours=2, reason="", by=""
     ):
-        res = super().do_temp_ban(
-            player, steam_id_64, duration_hours, reason, admin_name=by
-        )
+        with invalidates(RecordedRcon.get_players, Rcon.get_temp_bans):
+            res = super().do_temp_ban(
+                player, steam_id_64, duration_hours, reason, admin_name=by
+            )
         safe_save_player_action(
             rcon=self,
             player_name=player,
@@ -230,7 +244,8 @@ class RecordedRcon(Rcon):
         return res
 
     def do_perma_ban(self, player=None, steam_id_64=None, reason="", by=""):
-        res = super().do_perma_ban(player, steam_id_64, reason, admin_name=by)
+        with invalidates(RecordedRcon.get_players, Rcon.get_perma_bans):
+            res = super().do_perma_ban(player, steam_id_64, reason, admin_name=by)
         safe_save_player_action(
             rcon=self,
             player_name=player,
