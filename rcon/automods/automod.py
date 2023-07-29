@@ -5,24 +5,24 @@ from typing import List
 
 from redis.client import Redis
 
+from rcon.automods.level_thresholds import LevelThresholdsAutomod
 from rcon.automods.models import (
     ActionMethod,
+    LevelThresholdsConfig,
     NoLeaderConfig,
     PunishPlayer,
     PunitionsToApply,
     SeedingRulesConfig,
-    LevelThresholdsConfig,
 )
 from rcon.automods.no_leader import NoLeaderAutomod
 from rcon.automods.seeding_rules import SeedingRulesAutomod
-from rcon.automods.level_thresholds import LevelThresholdsAutomod
 from rcon.cache_utils import get_redis_client
 from rcon.commands import CommandFailedError, HLLServerError
 from rcon.config import get_config
 from rcon.discord import send_to_discord_audit
-from rcon.game_logs import on_kill, on_connected
+from rcon.extended_commands import Rcon
+from rcon.game_logs import on_connected, on_kill
 from rcon.hooks import inject_player_ids
-from rcon.recorded_commands import RecordedRcon
 from rcon.settings import SERVER_INFO
 from rcon.types import StructuredLogLineType
 
@@ -58,7 +58,7 @@ def get_punitions_to_apply(rcon, moderators) -> PunitionsToApply:
 
 
 def _do_punitions(
-        rcon: RecordedRcon,
+        rcon: Rcon,
         method: ActionMethod,
         players: List[PunishPlayer],
         mods,
@@ -118,7 +118,7 @@ def _do_punitions(
                 )
 
 
-def do_punitions(rcon: RecordedRcon, punitions_to_apply: PunitionsToApply):
+def do_punitions(rcon: Rcon, punitions_to_apply: PunitionsToApply):
     if punitions_to_apply:
         logger.info(
             "Automod will apply the following punitions %s",
@@ -179,7 +179,7 @@ def set_first_run_done(r: Redis):
     r.setex(first_run_done_key, 4 * 60, "1")
 
 
-def punish_squads(rcon: RecordedRcon, r: Redis):
+def punish_squads(rcon: Rcon, r: Redis):
     mods = enabled_moderators()
     if len(mods) == 0:
         logger.debug("No automod is enabled")
@@ -199,7 +199,7 @@ def audit(discord_webhook_url: str, msg: str, author: str):
 
 
 @on_kill
-def on_kill(rcon: RecordedRcon, log: StructuredLogLineType):
+def on_kill(rcon: Rcon, log: StructuredLogLineType):
     red = get_redis_client()
     if not is_first_run_done(red):
         logger.debug(
@@ -225,7 +225,7 @@ pendingTimers = {}
 
 @on_connected
 @inject_player_ids
-def on_connected(rcon: RecordedRcon, _, name: str, steam_id_64: str):
+def on_connected(rcon: Rcon, _, name: str, steam_id_64: str):
     red = get_redis_client()
     if not is_first_run_done(red):
         logger.debug(
@@ -265,7 +265,7 @@ def on_connected(rcon: RecordedRcon, _, name: str, steam_id_64: str):
 
 
 def run():
-    rcon = RecordedRcon(SERVER_INFO)
+    rcon = Rcon(SERVER_INFO)
     red = get_redis_client()
 
     while True:

@@ -5,8 +5,7 @@ import time
 from rcon.audit import ingame_mods, online_mods
 from rcon.cache_utils import get_redis_client
 from rcon.commands import CommandFailedError
-from rcon.extended_commands import CommandFailedError
-from rcon.recorded_commands import RecordedRcon
+from rcon.extended_commands import CommandFailedError, Rcon
 from rcon.user_config import AutoVoteKickConfig, VoteMapConfig
 from rcon.utils import (
     LONG_HUMAN_MAP_NAMES,
@@ -21,7 +20,7 @@ from rcon.vote_map import MapsRecorder, VoteMap
 logger = logging.getLogger(__name__)
 
 
-def toggle_votekick(rcon: RecordedRcon):
+def toggle_votekick(rcon: Rcon):
     config = AutoVoteKickConfig()
 
     if not config.is_enabled():
@@ -53,7 +52,7 @@ def run():
     max_fails = 5
     from rcon.settings import SERVER_INFO
 
-    rcon = RecordedRcon(SERVER_INFO)
+    rcon = Rcon(SERVER_INFO)
 
     while True:
         try:

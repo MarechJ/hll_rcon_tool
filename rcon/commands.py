@@ -10,6 +10,7 @@ from rcon.config import get_config
 from rcon.connection import HLLConnection
 from rcon.models import AdvancedConfigOptions
 from rcon.utils import exception_in_chain
+from rcon.types import VipId
 
 logger = logging.getLogger(__name__)
 
@@ -52,11 +53,6 @@ class HLLServerError(Exception):
 
 class BrokenHllConnection(Exception):
     pass
-
-
-class VipId(TypedDict):
-    steam_id_64: str
-    name: str
 
 
 def _auto_retry(method):
@@ -526,7 +522,7 @@ class ServerCtl:
         return self._request("listcurrentmapsequence").split("\n")[:-1]
 
     def get_map_shuffle_enabled(self):
-        return self._request("querymapshuffle").endswith('TRUE')
+        return self._request("querymapshuffle").endswith("TRUE")
 
     def set_map_shuffle_enabled(self, enabled: bool):
         current = self.get_map_shuffle_enabled()

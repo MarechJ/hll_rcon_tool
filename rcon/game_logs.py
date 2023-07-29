@@ -13,16 +13,20 @@ from sqlalchemy.exc import IntegrityError
 from rcon.cache_utils import get_redis_client
 from rcon.config import get_config
 from rcon.discord import send_to_discord_audit
-from rcon.extended_commands import LOG_ACTIONS
+from rcon.extended_commands import LOG_ACTIONS, Rcon
 from rcon.models import LogLine, PlayerSteamID, enter_session
 from rcon.player_history import (
     add_player_to_blacklist,
     get_player_profile,
     player_has_flag,
 )
-from rcon.recorded_commands import RecordedRcon
 from rcon.settings import SERVER_INFO
-from rcon.types import StructuredLogLineWithMetaData, ParsedLogsType, GetDetailedPlayer, PlayerStat
+from rcon.types import (
+    GetDetailedPlayer,
+    ParsedLogsType,
+    PlayerStat,
+    StructuredLogLineWithMetaData,
+)
 from rcon.utils import FixedLenList, MapsHistory
 
 logger = logging.getLogger(__name__)
@@ -119,7 +123,7 @@ class LogLoop:
     log_history_key = "log_history"
 
     def __init__(self):
-        self.rcon = RecordedRcon(SERVER_INFO)
+        self.rcon = Rcon(SERVER_INFO)
         self.red = get_redis_client()
         self.duplicate_guard_key = "unique_logs"
         self.log_history = self.get_log_history_list()
@@ -484,7 +488,7 @@ def is_player_kill(player, log):
 
 @on_tk
 def auto_ban_if_tks_right_after_connection(
-        rcon: RecordedRcon, log: StructuredLogLineWithMetaData
+        rcon: Rcon, log: StructuredLogLineWithMetaData
 ):
     config = get_config()
     config = config.get("BAN_TK_ON_CONNECT")

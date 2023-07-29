@@ -10,9 +10,9 @@ import rcon.expiring_vips.service
 from rcon import auto_settings, broadcast, game_logs, routines
 from rcon.automods import automod
 from rcon.cache_utils import RedisCached, get_redis_pool
+from rcon.extended_commands import Rcon
 from rcon.game_logs import LogLoop
 from rcon.models import install_unaccent
-from rcon.recorded_commands import RecordedRcon
 from rcon.scoreboard import live_stats_loop
 from rcon.server_stats import (
     save_server_stats_for_last_hours,
@@ -31,7 +31,7 @@ def cli():
     pass
 
 
-ctl = RecordedRcon(SERVER_INFO)
+ctl = Rcon(SERVER_INFO)
 
 
 @cli.command(name="live_stats_loop")

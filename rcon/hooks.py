@@ -38,19 +38,18 @@ from rcon.player_history import (
     save_player,
     save_start_player_session,
 )
-from rcon.recorded_commands import RecordedRcon
 from rcon.steam_utils import get_player_bans, get_steam_profile, update_db_player_info
+from rcon.types import PlayerFlagType, SteamBansType, VACGameBansConfigType
 from rcon.user_config import CameraConfig, RealVipConfig
 from rcon.utils import LOG_MAP_NAMES_TO_MAP, MapsHistory, get_server_number
 from rcon.vote_map import VoteMap
 from rcon.workers import record_stats_worker, temporary_broadcast, temporary_welcome
-from rcon.types import VACGameBansConfigType, PlayerFlagType, SteamBansType
 
 logger = logging.getLogger(__name__)
 
 
 @on_chat
-def count_vote(rcon: RecordedRcon, struct_log: StructuredLogLineType):
+def count_vote(rcon: Rcon, struct_log: StructuredLogLineType):
     enabled = VoteMap().handle_vote_command(rcon=rcon, struct_log=struct_log)
     if enabled and (match := re.match(r"\d\s*$", struct_log["sub_content"].strip())):
         rcon.do_message_player(
@@ -59,7 +58,7 @@ def count_vote(rcon: RecordedRcon, struct_log: StructuredLogLineType):
         )
 
 
-def initialise_vote_map(rcon: RecordedRcon, struct_log):
+def initialise_vote_map(rcon: Rcon, struct_log):
     logger.info("New match started initializing vote map. %s", struct_log)
     try:
         vote_map = VoteMap()
@@ -72,7 +71,7 @@ def initialise_vote_map(rcon: RecordedRcon, struct_log):
 
 
 @on_match_end
-def remind_vote_map(rcon: RecordedRcon, struct_log):
+def remind_vote_map(rcon: Rcon, struct_log):
     logger.info("Match ended reminding to vote map. %s", struct_log)
     vote_map = VoteMap()
     vote_map.apply_with_retry()
@@ -80,7 +79,7 @@ def remind_vote_map(rcon: RecordedRcon, struct_log):
 
 
 @on_match_start
-def handle_new_match_start(rcon: RecordedRcon, struct_log):
+def handle_new_match_start(rcon: Rcon, struct_log):
     try:
         logger.info("New match started recording map %s", struct_log)
         with invalidates(Rcon.get_map):
@@ -138,7 +137,7 @@ def handle_new_match_start(rcon: RecordedRcon, struct_log):
 
 
 @on_match_end
-def record_map_end(rcon: RecordedRcon, struct_log):
+def record_map_end(rcon: Rcon, struct_log):
     logger.info("Match ended recording map %s", struct_log)
     maps_history = MapsHistory()
     try:
@@ -158,7 +157,7 @@ def record_map_end(rcon: RecordedRcon, struct_log):
             )
 
 
-def ban_if_blacklisted(rcon: RecordedRcon, steam_id_64, name):
+def ban_if_blacklisted(rcon: Rcon, steam_id_64, name):
     with enter_session() as sess:
         player = get_player(sess, steam_id_64)
 
@@ -230,7 +229,7 @@ def should_ban(
     return False
 
 
-def ban_if_has_vac_bans(rcon: RecordedRcon, steam_id_64, name):
+def ban_if_has_vac_bans(rcon: Rcon, steam_id_64, name):
     try:
         config: VACGameBansConfigType = get_config()["VAC_GAME_BANS"]
     except KeyError:
@@ -311,7 +310,7 @@ def inject_player_ids(func):
 @inject_player_ids
 def handle_on_connect(rcon, struct_log, name, steam_id_64):
     try:
-        if type(rcon) == RecordedRcon:
+        if type(rcon) == Rcon:
             rcon.invalidate_player_list_cache()
         else:
             rcon.get_player.cache_clear()
@@ -374,7 +373,7 @@ pendingTimers = {}
 
 @on_connected
 @inject_player_ids
-def notify_false_positives(rcon: RecordedRcon, _, name: str, steam_id_64: str):
+def notify_false_positives(rcon: Rcon, _, name: str, steam_id_64: str):
     c = get_config()["NOLEADER_AUTO_MOD"]
     if not c["enabled"]:
         logger.info("no leader auto mod is disabled")
@@ -425,7 +424,7 @@ def cleanup_pending_timers(_, _1, _2, steam_id_64: str):
             pass
 
 
-def _set_real_vips(rcon: RecordedRcon, struct_log):
+def _set_real_vips(rcon: Rcon, struct_log):
     config = RealVipConfig()
     if not config.get_enabled():
         logger.debug("Real VIP is disabled")
@@ -441,17 +440,17 @@ def _set_real_vips(rcon: RecordedRcon, struct_log):
 
 
 @on_connected
-def do_real_vips(rcon: RecordedRcon, struct_log):
+def do_real_vips(rcon: Rcon, struct_log):
     _set_real_vips(rcon, struct_log)
 
 
 @on_disconnected
-def undo_real_vips(rcon: RecordedRcon, struct_log):
+def undo_real_vips(rcon: Rcon, struct_log):
     _set_real_vips(rcon, struct_log)
 
 
 @on_camera
-def notify_camera(rcon: RecordedRcon, struct_log):
+def notify_camera(rcon: Rcon, struct_log):
     send_to_discord_audit(message=struct_log["message"], by=struct_log["player"])
 
     try:
@@ -570,4 +569,4 @@ if __name__ == "__main__":
         "message": "Dr.WeeD",
         "sub_content": None,
     }
-    real_vips(RecordedRcon(SERVER_INFO), struct_log=log)
+    real_vips(Rcon(SERVER_INFO), struct_log=log)
