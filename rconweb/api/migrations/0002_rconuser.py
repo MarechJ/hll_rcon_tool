@@ -369,6 +369,10 @@ class Migration(migrations.Migration):
                     ),
                     ("can_reset_map_whitelist", "Can reset the votemap whitelist"),
                     ("can_set_map_whitelist", "Can set the votemap whitelist"),
+                    (
+                        "can_view_api_documentation",
+                        "Can view the API documentation endpoint",
+                    ),
                 ),
                 "default_permissions": (),
             },

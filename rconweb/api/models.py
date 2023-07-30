@@ -241,4 +241,5 @@ class RconUser(User):
             ("can_view_map_shuffle_enabled", "Can view if map shuffle is enabled"),
             ("can_change_map_shuffle_enabled", "Can enable/disable map shuffle"),
             ("can_view_welcome_message", "Can view the server welcome message"),
+            ("can_view_api_documentation", "Can view the API documentation endpoint"),
         )

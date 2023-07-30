@@ -3,6 +3,8 @@ from typing import Callable
 
 from django.urls import path
 from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.decorators import permission_required
+
 
 from . import (
     audit_log,
@@ -18,7 +20,7 @@ from . import (
     vips,
     votemap,
 )
-from .auth import api_response
+from .auth import api_response, login_required
 
 
 def _get_empty(value):
@@ -30,6 +32,8 @@ def _get_empty(value):
 
 
 @csrf_exempt
+@login_required()
+@permission_required("api.can_view_api_documentation", raise_exception=True)
 def get_api_documentation(request):
     """Auto-generate minimal API documentation through introspection"""
 
@@ -113,5 +117,5 @@ endpoints: list[tuple[str, Callable]] = [
 
 # Expose endpoints though Django
 urlpatterns = [path(name, func, name=name) for name, func in endpoints] + [
-    path("document_api", get_api_documentation, name="get_api_documentation")
+    path("get_api_documentation", get_api_documentation, name="get_api_documentation")
 ]
