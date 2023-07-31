@@ -28,11 +28,11 @@ from rcon.types import (
     EnrichedGetPlayersType,
     GameState,
     GetDetailedPlayer,
+    GetDetailedPlayers,
     GetPlayersType,
     ParsedLogsType,
     StructuredLogLineType,
     StructuredLogLineWithMetaData,
-    GetDetailedPlayers,
 )
 from rcon.utils import ALL_ROLES, ALL_ROLES_KEY_INDEX_MAP, get_server_number
 

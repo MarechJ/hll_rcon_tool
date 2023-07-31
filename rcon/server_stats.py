@@ -9,7 +9,6 @@ from sqlalchemy.orm import joinedload, subqueryload
 from sqlalchemy.sql.functions import coalesce
 
 from rcon.cache_utils import ttl_cache
-from rcon.rcon import Rcon
 from rcon.models import (
     Maps,
     PlayerAtCount,
@@ -19,6 +18,7 @@ from rcon.models import (
     ServerCount,
     enter_session,
 )
+from rcon.rcon import Rcon
 from rcon.settings import SERVER_INFO
 
 logger = logging.getLogger(__name__)

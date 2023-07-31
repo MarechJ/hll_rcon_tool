@@ -13,13 +13,13 @@ from sqlalchemy.exc import IntegrityError
 from rcon.cache_utils import get_redis_client
 from rcon.config import get_config
 from rcon.discord import send_to_discord_audit
-from rcon.rcon import LOG_ACTIONS, Rcon
 from rcon.models import LogLine, PlayerSteamID, enter_session
 from rcon.player_history import (
     add_player_to_blacklist,
     get_player_profile,
     player_has_flag,
 )
+from rcon.rcon import LOG_ACTIONS, Rcon
 from rcon.settings import SERVER_INFO
 from rcon.types import (
     GetDetailedPlayer,

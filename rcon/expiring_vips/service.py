@@ -8,8 +8,8 @@ from pydantic import BaseModel, ValidationError, conint
 
 from rcon.config import get_config
 from rcon.discord import send_to_discord_audit
-from rcon.rcon import Rcon
 from rcon.models import PlayerSteamID, PlayerVIP, enter_session
+from rcon.rcon import Rcon
 from rcon.settings import SERVER_INFO
 from rcon.utils import get_server_number
 

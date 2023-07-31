@@ -9,8 +9,8 @@ from typing import List, TypedDict
 from rcon.config import get_config
 from rcon.connection import HLLConnection
 from rcon.models import AdvancedConfigOptions
-from rcon.utils import exception_in_chain
 from rcon.types import VipId
+from rcon.utils import exception_in_chain
 
 logger = logging.getLogger(__name__)
 

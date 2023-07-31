@@ -20,9 +20,9 @@ from rcon.cache_utils import get_redis_client
 from rcon.commands import CommandFailedError, HLLServerError
 from rcon.config import get_config
 from rcon.discord import send_to_discord_audit
-from rcon.rcon import Rcon
 from rcon.game_logs import on_connected, on_kill
 from rcon.hooks import inject_player_ids
+from rcon.rcon import Rcon
 from rcon.settings import SERVER_INFO
 from rcon.types import StructuredLogLineType
 

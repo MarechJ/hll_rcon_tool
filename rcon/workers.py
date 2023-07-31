@@ -12,9 +12,9 @@ from sqlalchemy import and_
 from sqlalchemy.orm import Session
 
 from rcon.cache_utils import get_redis_client
-from rcon.rcon import Rcon
 from rcon.models import Maps, PlayerStats, enter_session
 from rcon.player_history import get_player
+from rcon.rcon import Rcon
 from rcon.scoreboard import TimeWindowStats
 from rcon.settings import SERVER_INFO
 from rcon.types import MapInfo, PlayerStat
