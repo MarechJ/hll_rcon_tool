@@ -17,7 +17,7 @@ from rcon.config import get_config
 from rcon.discord import send_to_discord_audit
 from rcon.gtx import GTXFtp
 from rcon.player_history import add_player_to_blacklist, remove_player_from_blacklist
-from rcon.extended_commands import Rcon
+from rcon.rcon import Rcon
 from rcon.settings import SERVER_INFO
 from rcon.user_config import (
     AutoBroadcasts,

@@ -19,7 +19,7 @@ from rcon.discord import (
     send_to_discord_audit,
 )
 from rcon.discord_chat import make_hook
-from rcon.extended_commands import Rcon, StructuredLogLineType
+from rcon.rcon import Rcon, StructuredLogLineType
 from rcon.game_logs import (
     on_camera,
     on_chat,

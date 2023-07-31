@@ -5,7 +5,7 @@ import time
 from rcon.audit import ingame_mods, online_mods
 from rcon.cache_utils import get_redis_client
 from rcon.commands import CommandFailedError
-from rcon.extended_commands import CommandFailedError, Rcon
+from rcon.rcon import CommandFailedError, Rcon
 from rcon.user_config import AutoVoteKickConfig, VoteMapConfig
 from rcon.utils import (
     LONG_HUMAN_MAP_NAMES,

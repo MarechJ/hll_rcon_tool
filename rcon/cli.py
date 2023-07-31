@@ -10,7 +10,7 @@ import rcon.expiring_vips.service
 from rcon import auto_settings, broadcast, game_logs, routines
 from rcon.automods import automod
 from rcon.cache_utils import RedisCached, get_redis_pool
-from rcon.extended_commands import Rcon
+from rcon.rcon import Rcon
 from rcon.game_logs import LogLoop
 from rcon.models import install_unaccent
 from rcon.scoreboard import live_stats_loop
@@ -232,8 +232,8 @@ for name in dir(ctl):
     func = getattr(ctl, name)
 
     if (
-            not any(name.startswith(prefix) for prefix in PREFIXES_TO_EXPOSE)
-            or name in EXCLUDED
+        not any(name.startswith(prefix) for prefix in PREFIXES_TO_EXPOSE)
+        or name in EXCLUDED
     ):
         continue
     wrapped = do_print(func)

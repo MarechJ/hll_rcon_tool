@@ -12,7 +12,7 @@ from sqlalchemy import and_
 from sqlalchemy.orm import Session
 
 from rcon.cache_utils import get_redis_client
-from rcon.extended_commands import Rcon
+from rcon.rcon import Rcon
 from rcon.models import Maps, PlayerStats, enter_session
 from rcon.player_history import get_player
 from rcon.scoreboard import TimeWindowStats
@@ -28,7 +28,7 @@ def get_queue(redis_client=None):
 
 
 def broadcast(msg):
-    from rcon.extended_commands import Rcon
+    from rcon.rcon import Rcon
 
     rcon = Rcon(SERVER_INFO)
     rcon.set_broadcast(msg)
@@ -41,7 +41,7 @@ def temporary_broadcast(rcon, message, seconds):
 
 
 def welcome(msg):
-    from rcon.extended_commands import Rcon
+    from rcon.rcon import Rcon
 
     rcon = Rcon(SERVER_INFO)
     rcon.set_welcome_message(msg)
@@ -54,7 +54,7 @@ def temporary_welcome(rcon, message, seconds):
 
 
 def temp_welcome_standalone(msg, seconds):
-    from rcon.extended_commands import Rcon
+    from rcon.rcon import Rcon
 
     rcon = Rcon(SERVER_INFO)
     prev = rcon.set_welcome_message(msg, save=False)
