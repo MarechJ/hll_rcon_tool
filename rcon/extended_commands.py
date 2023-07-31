@@ -670,6 +670,9 @@ class Rcon(ServerCtl):
         return sorted(player_dicts, key=lambda d: d[NAME])
 
     def do_remove_vip(self, steam_id_64):
+        """Removes VIP status on the game server and removes their PlayerVIP record."""
+
+        # Remove VIP before anything else in case we have errors
         with invalidates(Rcon.get_vip_ids):
             result = super().do_remove_vip(steam_id_64)
 
