@@ -160,6 +160,7 @@ class Rcon(ServerCtl):
 
         return list(players.values())
 
+    @ttl_cache(ttl=5)
     def get_players(self) -> list[EnrichedGetPlayersType]:
         players = self.get_players_fast()
 
