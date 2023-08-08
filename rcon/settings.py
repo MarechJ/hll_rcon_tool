@@ -59,10 +59,7 @@ LOGGING = {
             "level": os.getenv("LOGGING_LEVEL", "DEBUG"),
             "propagate": False,
         },
-        "rcon.extended_commands": {
-            "level": os.getenv("COMMANDS_LOGLEVEL", os.getenv("LOGGING_LEVEL", "INFO"))
-        },
-        "rcon.recorded_commands": {
+        "rcon.rcon": {
             "level": os.getenv("COMMANDS_LOGLEVEL", os.getenv("LOGGING_LEVEL", "INFO"))
         },
         "rcon.commands": {

@@ -17,7 +17,7 @@ from rcon.config import get_config
 from rcon.discord import send_to_discord_audit
 from rcon.gtx import GTXFtp
 from rcon.player_history import add_player_to_blacklist, remove_player_from_blacklist
-from rcon.recorded_commands import RecordedRcon
+from rcon.rcon import Rcon
 from rcon.settings import SERVER_INFO
 from rcon.user_config import (
     AutoBroadcasts,
@@ -37,7 +37,7 @@ from .multi_servers import forward_command, forward_request
 from .utils import _get_data
 
 logger = logging.getLogger("rconweb")
-ctl = RecordedRcon(SERVER_INFO)
+ctl = Rcon(SERVER_INFO)
 
 
 def set_temp_msg(request, func, name):
@@ -756,13 +756,13 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     ctl.get_ban: "api.can_view_player_bans",
     ctl.get_bans: {"api.can_view_temp_bans", "api.can_view_perma_bans"},
     ctl.get_broadcast_message: "api.can_view_broadcast_message",
-    ctl.get_current_map_sequence: "can_view_current_map_sequence",
+    ctl.get_current_map_sequence: "api.can_view_current_map_sequence",
     ctl.get_detailed_player_info: "api.can_view_detailed_player_info",
     ctl.get_gamestate: "api.can_view_gamestate",
     ctl.get_idle_autokick_time: "api.can_view_idle_autokick_time",
     ctl.get_logs: "api.can_view_game_logs",
     ctl.get_map_rotation: "api.can_view_map_rotation",
-    ctl.get_map_shuffle_enabled: "can_view_map_shuffle_enabled",
+    ctl.get_map_shuffle_enabled: "api.can_view_map_shuffle_enabled",
     ctl.get_map: "api.can_view_current_map",
     ctl.get_maps: "api.can_view_all_maps",
     ctl.get_max_ping_autokick: "api.can_view_max_ping_autokick",
@@ -807,7 +807,7 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     ctl.set_autobalance_threshold: "api.can_change_autobalance_threshold",
     ctl.set_broadcast: "api.can_change_broadcast_message",
     ctl.set_idle_autokick_time: "api.can_change_idle_autokick_time",
-    ctl.set_map_shuffle_enabled: "can_change_map_shuffle_enabled",
+    ctl.set_map_shuffle_enabled: "api.can_change_map_shuffle_enabled",
     ctl.set_map: {
         "api.can_change_current_map",
         "api.can_add_map_to_rotation",
