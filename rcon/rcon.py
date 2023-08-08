@@ -884,22 +884,9 @@ class Rcon(ServerCtl):
 
     @ttl_cache(ttl=60)
     def get_next_map(self):
-        # TODO: think about whether or not the new gamestate command can simplify this
-        current = self.get_map()
-        current = current.replace("_RESTART", "")
-        rotation = self.get_map_rotation()
-        try:
-            next_id = rotation.index(current)
-            next_id += 1
-            if next_id == len(rotation):
-                next_id = 0
-            return rotation[next_id]
-        except ValueError:
-            logger.error(
-                "Can't find %s in rotation, assuming next map as first map of rotation",
-                current,
-            )
-            return rotation[0]
+        """Return the next map in the rotation as determined by the gameserver through the gamestate command"""
+        gamestate = self.get_gamestate()
+        return gamestate["next_map"]
 
     def set_map(self, map_name):
         with invalidates(Rcon.get_map):
