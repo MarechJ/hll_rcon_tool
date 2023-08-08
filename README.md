@@ -138,6 +138,12 @@ Per server settings
     HLL_HOST
     HLL_PORT
     HLL_PASSWORD
+    RCONWEB_SERVER_URL
+
+**You must configure `RCONWEB_SERVER_URL` for each server you're setting up to match the URL you're hosting CRCON on, or you will be unable to access the admin site due to CSRF errors**
+
+For example if you are hosting using `HTTPS` on `example.com` you would set `RCONWEB_SERVER_URL=https://example.com`
+For example if you are hosting using `HTTP` on `127.0.0.1` on port `8010` you would set `RCONWEB_SERVER_URL=http://127.0.0.1:8010`
 
 There are other optional (but beneficial) settings in your `.env` such as Discord integration.
 
