@@ -20,8 +20,8 @@ from rcon.automods.models import (
 )
 from rcon.automods.num_or_inf import num_or_inf
 from rcon.cache_utils import get_redis_client
-from rcon.extended_commands import StructuredLogLineType
 from rcon.game_logs import on_match_start
+from rcon.rcon import StructuredLogLineType
 from rcon.types import GameState
 
 SEEDING_RULES_RESET_SECS = 120

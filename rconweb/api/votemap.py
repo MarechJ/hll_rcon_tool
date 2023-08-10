@@ -1,3 +1,4 @@
+from django.contrib.auth.decorators import permission_required
 from django.views.decorators.csrf import csrf_exempt
 
 from rcon.vote_map import VoteMap, VoteMapConfig
@@ -30,7 +31,8 @@ def votemap_config():
 
 
 @csrf_exempt
-@login_required(True)
+@login_required()
+@permission_required("api.can_view_votemap_config", raise_exception=True)
 def get_votemap_config(request):
     return api_response(
         failed=False,
@@ -40,7 +42,8 @@ def get_votemap_config(request):
 
 
 @csrf_exempt
-@login_required(True)
+@login_required()
+@permission_required("api.can_change_votemap_config", raise_exception=True)
 @record_audit
 def set_votemap_config(request):
     config = VoteMapConfig()
@@ -79,7 +82,8 @@ def set_votemap_config(request):
 
 
 @csrf_exempt
-@login_required(True)
+@login_required()
+@permission_required("api.can_view_votemap_status", raise_exception=True)
 def get_votemap_status(request):
     v = VoteMap()
     return api_response(
@@ -94,7 +98,8 @@ def get_votemap_status(request):
 
 
 @csrf_exempt
-@login_required(True)
+@login_required()
+@permission_required("api.can_reset_votemap_state", raise_exception=True)
 @record_audit
 def reset_votemap_state(request):
     if request.method != "POST":
@@ -120,7 +125,8 @@ def reset_votemap_state(request):
 
 
 @csrf_exempt
-@login_required(True)
+@login_required()
+@permission_required("api.can_view_map_whitelist", raise_exception=True)
 def get_map_whitelist(request):
     v = VoteMap()
     return api_response(
@@ -131,7 +137,8 @@ def get_map_whitelist(request):
 
 
 @csrf_exempt
-@login_required(True)
+@login_required()
+@permission_required("api.can_add_map_to_whitelist", raise_exception=True)
 @record_audit
 def do_add_map_to_whitelist(request):
     data = _get_data(request)
@@ -156,7 +163,8 @@ def do_add_map_to_whitelist(request):
 
 
 @csrf_exempt
-@login_required(True)
+@login_required()
+@permission_required("api.can_add_maps_to_whitelist", raise_exception=True)
 @record_audit
 def do_add_maps_to_whitelist(request):
     data = _get_data(request)
@@ -182,7 +190,8 @@ def do_add_maps_to_whitelist(request):
 
 
 @csrf_exempt
-@login_required(True)
+@login_required()
+@permission_required("api.can_remove_map_from_whitelist", raise_exception=True)
 @record_audit
 def do_remove_map_from_whitelist(request):
     data = _get_data(request)
@@ -208,7 +217,8 @@ def do_remove_map_from_whitelist(request):
 
 
 @csrf_exempt
-@login_required(True)
+@login_required()
+@permission_required("api.can_remove_maps_from_whitelist", raise_exception=True)
 @record_audit
 def do_remove_maps_from_whitelist(request):
     data = _get_data(request)
@@ -234,7 +244,8 @@ def do_remove_maps_from_whitelist(request):
 
 
 @csrf_exempt
-@login_required(True)
+@login_required()
+@permission_required("api.can_reset_map_whitelist", raise_exception=True)
 @record_audit
 def do_reset_map_whitelist(request):
     v = VoteMap()
@@ -249,7 +260,8 @@ def do_reset_map_whitelist(request):
 
 
 @csrf_exempt
-@login_required(True)
+@login_required()
+@permission_required("api.can_set_map_whitelist", raise_exception=True)
 @record_audit
 def do_set_map_whitelist(request):
     data = _get_data(request)

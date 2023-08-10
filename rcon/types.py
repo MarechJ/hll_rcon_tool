@@ -237,6 +237,11 @@ class GetDetailedPlayer(TypedDict):
     level: int
 
 
+class GetDetailedPlayers(TypedDict):
+    players: dict[str, GetDetailedPlayer]
+    fail_count: int
+
+
 class EnrichedGetPlayersType(GetPlayersType):
     is_vip: bool
     profile: PlayerProfileType
@@ -292,3 +297,8 @@ class VACGameBansConfigType(TypedDict):
     max_game_ban_threshold: int
     ban_on_vac_history_reason: str
     whitelist_flags: list[str]
+
+
+class VipId(TypedDict):
+    steam_id_64: str
+    name: str

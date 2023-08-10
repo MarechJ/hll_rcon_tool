@@ -11,7 +11,7 @@ from rcon.config import get_config
 from rcon.game_logs import get_historical_logs_records, get_recent_logs
 from rcon.models import enter_session
 from rcon.player_history import _get_profiles, get_player_profile_by_steam_ids
-from rcon.recorded_commands import RecordedRcon
+from rcon.rcon import Rcon
 from rcon.settings import SERVER_INFO
 from rcon.types import StructuredLogLineWithMetaData
 from rcon.utils import MapsHistory
@@ -29,7 +29,7 @@ class Streaks:
 
 class BaseStats:
     def __init__(self):
-        self.rcon = RecordedRcon(SERVER_INFO)
+        self.rcon = Rcon(SERVER_INFO)
         self.voted_yes_regex = re.compile(".*PV_Favour.*")
         self.voted_no_regex = re.compile(".*PV_Against.*")
         self.red = get_redis_client()

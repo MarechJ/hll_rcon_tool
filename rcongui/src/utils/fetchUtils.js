@@ -7,8 +7,9 @@ function LoginError(message) {
   this.name = "LoginError";
 }
 
-function PermissionError(message) {
+function PermissionError(message, command) {
   this.message = message;
+  this.command = command;
   this.name = "PermissionError";
 }
 
@@ -23,8 +24,12 @@ async function handle_response_status(response) {
   }
 
   if (response.status === 403) {
-    throw new PermissionError("You are not authorized to do this!");
+    throw new PermissionError(
+      "You are not authorized to do this!",
+      response.url.slice(response.url.indexOf("/api/") + "/api/".length)
+    );
   }
+
   return response;
 }
 
@@ -36,7 +41,7 @@ async function handle_http_errors(error) {
       position: toast.POSITION.BOTTOM_RIGHT,
     });
   } else if (error.name === "PermissionError") {
-    toast.warn("You are not allowed to do this", {
+    toast.warn(`You are not allowed to use ${error.command}`, {
       toastId: "Not allowed",
     });
   } else if (error.name === "InvalidLogin") {
@@ -99,6 +104,7 @@ async function postData(url = "", data = {}) {
 
 async function showResponse(response, command, showSuccess) {
   // TODO: limit the amount of toasts
+  // TODO: show message when not allowed due to permissions
   if (!response.ok) {
     toast.error(`Game server failed to return for ${command}`, {
       toastId: "connectionError",

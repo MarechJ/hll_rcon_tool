@@ -2,6 +2,7 @@ import json
 import logging
 from functools import wraps
 
+from django.contrib.auth.decorators import permission_required
 from django.views.decorators.csrf import csrf_exempt
 from sqlalchemy import and_, or_
 
@@ -60,6 +61,7 @@ def auto_record_audit(name):
 
 @csrf_exempt
 @login_required()
+@permission_required("api.can_view_audit_logs_autocomplete", raise_exception=True)
 def get_audit_logs_autocomplete(request):
     failed = False
     error = None
@@ -85,6 +87,7 @@ def get_audit_logs_autocomplete(request):
 
 @csrf_exempt
 @login_required()
+@permission_required("api.can_view_audit_logs", raise_exception=True)
 def get_audit_logs(request):
     data = _get_data(request)
     and_conditions = []

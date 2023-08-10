@@ -1,6 +1,7 @@
 import json
 import os
 
+from django.contrib.auth.decorators import permission_required
 from django.views.decorators.csrf import csrf_exempt
 
 from rcon.user_config import AutoSettingsConfig
@@ -24,7 +25,8 @@ AUTO_SETTINGS_KEY_INDEX_MAP = {v: i for i, v in enumerate(AUTO_SETTINGS_KEY_ORDE
 
 
 @csrf_exempt
-@login_required(True)
+@login_required()
+@permission_required("api.can_view_auto_settings", raise_exception=True)
 def get_auto_settings(request):
     data = _get_data(request)
     try:
@@ -52,7 +54,8 @@ def get_auto_settings(request):
 
 
 @csrf_exempt
-@login_required(True)
+@login_required()
+@permission_required("api.can_change_auto_settings", raise_exception=True)
 @record_audit
 def set_auto_settings(request):
     data = _get_data(request)

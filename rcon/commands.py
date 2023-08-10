@@ -9,6 +9,7 @@ from typing import List, TypedDict
 from rcon.config import get_config
 from rcon.connection import HLLConnection
 from rcon.models import AdvancedConfigOptions
+from rcon.types import VipId
 from rcon.utils import exception_in_chain
 
 logger = logging.getLogger(__name__)
@@ -52,11 +53,6 @@ class HLLServerError(Exception):
 
 class BrokenHllConnection(Exception):
     pass
-
-
-class VipId(TypedDict):
-    steam_id_64: str
-    name: str
 
 
 def _auto_retry(method):

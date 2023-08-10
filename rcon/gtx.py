@@ -9,7 +9,7 @@ from ftpretty import ftpretty
 
 from rcon.cache_utils import invalidates
 from rcon.config import get_config
-from rcon.extended_commands import Rcon, invalidates
+from rcon.rcon import Rcon, invalidates
 
 logger = logging.getLogger(__name__)
 
