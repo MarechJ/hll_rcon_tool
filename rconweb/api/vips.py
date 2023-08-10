@@ -18,7 +18,7 @@ from rcon.user_config import RealVipConfig
 from rcon.utils import get_server_number
 from rcon.workers import get_job_results, worker_bulk_vip
 
-from .audit_log import auto_record_audit, record_audit
+from .audit_log import record_audit
 from .auth import api_response, login_required
 from .views import _get_data, ctl
 

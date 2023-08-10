@@ -1,6 +1,5 @@
 import json
 import logging
-from itertools import chain
 from typing import List
 
 from redis import BlockingConnectionPool, Redis

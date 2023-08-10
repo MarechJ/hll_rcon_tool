@@ -3,7 +3,7 @@ import logging
 import socket
 import time
 import uuid
-from threading import Lock, get_ident
+from threading import get_ident
 
 MSGLEN = 8196
 TIMEOUT_SEC = 20
