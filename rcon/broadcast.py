@@ -3,7 +3,6 @@ import random
 import time
 from functools import partial
 
-
 from rcon.audit import ingame_mods, online_mods
 from rcon.commands import CommandFailedError
 from rcon.settings import SERVER_INFO

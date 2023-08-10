@@ -4,7 +4,6 @@ import os
 from dataclasses import asdict, dataclass, field, fields
 from typing import List
 
-
 from rcon.cache_utils import invalidates, ttl_cache
 from rcon.commands import CommandFailedError
 from rcon.models import UserConfig, enter_session

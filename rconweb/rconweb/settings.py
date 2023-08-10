@@ -131,7 +131,7 @@ SESSION_COOKIE_SAMESITE = "Lax"
 # Required as of Django 4.0 otherwise it causes CSRF issues
 # if we don't include the origin
 CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS.copy()
-if host := os.getenv('RCONWEB_SERVER_URL'):
+if host := os.getenv("RCONWEB_SERVER_URL"):
     CSRF_TRUSTED_ORIGINS.append(host)
 
 if DEBUG:
