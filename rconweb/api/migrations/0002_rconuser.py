@@ -159,7 +159,7 @@ class Migration(migrations.Migration):
                         "Can remove players from the blacklist",
                     ),
                     ("can_unflag_player", "Can remove flags from players"),
-                    ("can_unwatch_players", "Can remove a watch from players"),
+                    ("can_remove_player_watch", "Can remove a watch from players"),
                     ("can_upload_vip_list", "Can upload a VIP list"),
                     ("can_view_admin_groups", "Can view available admin roles"),
                     (
@@ -199,7 +199,6 @@ class Migration(migrations.Migration):
                     ),
                     ("can_view_camera_config", "Can view camera notification settings"),
                     ("can_view_connection_info", "Can view CRCON's connection info"),
-                    ("can_view_crcon_version", "Can view CRCON's version"),
                     ("can_view_current_map", "Can view the currently playing map"),
                     (
                         "can_view_date_scoreboard",
@@ -279,7 +278,6 @@ class Migration(migrations.Migration):
                         "can_view_profanities",
                         "Can view profanities (censored game chat)",
                     ),
-                    ("can_view_public_info", "Can view the public_info endpoint"),
                     (
                         "can_view_queue_length",
                         "Can view the maximum size of the server queue",
@@ -290,7 +288,6 @@ class Migration(migrations.Migration):
                         "can_view_round_time_remaining",
                         "Can view the amount of time left in the round",
                     ),
-                    ("can_view_scoreboard", "Can view the get_scoreboard endpoint"),
                     ("can_view_server_name", "Can view the server name"),
                     ("can_view_server_stats", "Can view the get_server_stats endpoint"),
                     (
@@ -306,20 +303,16 @@ class Migration(migrations.Migration):
                         "Can view the number of objectives held by each team",
                     ),
                     (
-                        "can_view_team_sizes",
-                        "Can view the number of allied/axis players",
-                    ),
-                    (
                         "can_view_team_switch_cooldown",
                         "Can view the team switch cooldown value",
                     ),
                     (
-                        "can_view_team_view",
-                        "Can view can_view_team_view endpoint (detailed player info by team for all connected players)",
+                        "can_view_detailed_players",
+                        "Can view get_detailed_players endpoint",
                     ),
                     (
-                        "can_view_teamkills_boards",
-                        "Can view the get_teamkills_boards endpoint",
+                        "can_view_team_view",
+                        "Can view get_team_view endpoint (detailed player info by team for all connected players)",
                     ),
                     ("can_view_temp_bans", "Can view temporary banned players"),
                     ("can_view_timed_logs", "Can view the get_timed_logs endpoint"),
@@ -344,7 +337,38 @@ class Migration(migrations.Migration):
                         "Can view the current votemap status (votes, results, etc)",
                     ),
                     ("can_view_welcome_message", "Can view the server welcome message"),
-                    ("can_watch_players", "Can add a watch to players"),
+                    ("can_add_player_watch", "Can add a watch to players"),
+                    (
+                        "can_view_current_map_sequence",
+                        "Can view the current map shuffle sequence",
+                    ),
+                    (
+                        "can_view_map_shuffle_enabled",
+                        "Can view if map shuffle is enabled",
+                    ),
+                    (
+                        "can_change_map_shuffle_enabled",
+                        "Can enable/disable map shuffle",
+                    ),
+                    ("can_view_map_whitelist", "Can view the votemap whitelist"),
+                    (
+                        "can_add_map_to_whitelist",
+                        "Can add a map to the votemap whitelist",
+                    ),
+                    (
+                        "can_add_maps_to_whitelist",
+                        "Can add multiple maps to the votemap whitelist",
+                    ),
+                    (
+                        "can_remove_map_from_whitelist",
+                        "Can remove a map from the votemap whitelist",
+                    ),
+                    (
+                        "can_remove_maps_from_whitelist",
+                        "Can remove multiple maps from the votemap whitelist",
+                    ),
+                    ("can_reset_map_whitelist", "Can reset the votemap whitelist"),
+                    ("can_set_map_whitelist", "Can set the votemap whitelist"),
                 ),
                 "default_permissions": (),
             },

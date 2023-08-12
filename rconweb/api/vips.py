@@ -229,7 +229,7 @@ def get_real_vip_config(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_change_real_vip_config", raise_exception=True)
-@auto_record_audit
+@record_audit
 def set_real_vip_config(request):
     error = None
     data = _get_data(request)

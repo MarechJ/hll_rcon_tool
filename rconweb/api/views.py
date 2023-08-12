@@ -277,8 +277,14 @@ def _do_watch(request, add: bool):
                 reason=data["reason"],
                 by=request.user.username,
                 player_name=data.get("player_name"),
+                steam_id_64=data.get("steam_id_64"),
             )
-            result = watcher.watch(**params)
+            # watch(self, reason: str, by: str, player_name: str = "")
+            result = watcher.watch(
+                reason=params["reason"],
+                by=params["by"],
+                player_name=params["player_name"],
+            )
             audit("do_watch_player", request, params)
         else:
             result = watcher.unwatch()
@@ -750,13 +756,13 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     ctl.get_ban: "api.can_view_player_bans",
     ctl.get_bans: {"api.can_view_temp_bans", "api.can_view_perma_bans"},
     ctl.get_broadcast_message: "api.can_view_broadcast_message",
-    ctl.get_current_map_sequence: "can_view_current_map_sequence",
+    ctl.get_current_map_sequence: "api.can_view_current_map_sequence",
     ctl.get_detailed_player_info: "api.can_view_detailed_player_info",
     ctl.get_gamestate: "api.can_view_gamestate",
     ctl.get_idle_autokick_time: "api.can_view_idle_autokick_time",
     ctl.get_logs: "api.can_view_game_logs",
     ctl.get_map_rotation: "api.can_view_map_rotation",
-    ctl.get_map_shuffle_enabled: "can_view_map_shuffle_enabled",
+    ctl.get_map_shuffle_enabled: "api.can_view_map_shuffle_enabled",
     ctl.get_map: "api.can_view_current_map",
     ctl.get_maps: "api.can_view_all_maps",
     ctl.get_max_ping_autokick: "api.can_view_max_ping_autokick",
@@ -771,7 +777,6 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     ctl.get_profanities: "api.can_view_profanities",
     ctl.get_queue_length: "api.can_view_queue_length",
     ctl.get_round_time_remaining: "api.can_view_round_time_remaining",
-    ctl.get_scoreboard: "api.can_view_scoreboard",
     ctl.get_server_settings: {
         "api.can_view_team_switch_cooldown",
         "api.can_view_autobalance_threshold",
@@ -788,8 +793,8 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     ctl.get_structured_logs: "api.can_view_structured_logs",
     ctl.get_team_objective_scores: "api.can_view_team_objective_scores",
     ctl.get_team_switch_cooldown: "api.can_view_team_switch_cooldown",
+    ctl.get_detailed_players: "api.can_view_detailed_players",
     ctl.get_team_view: "api.can_view_team_view",
-    ctl.get_teamkills_boards: "api.can_view_teamkills_boards",
     ctl.get_temp_bans: "api.can_view_temp_bans",
     ctl.get_timed_logs: "api.can_view_timed_logs",
     ctl.get_vip_ids: "api.can_view_vip_ids",
@@ -802,7 +807,7 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     ctl.set_autobalance_threshold: "api.can_change_autobalance_threshold",
     ctl.set_broadcast: "api.can_change_broadcast_message",
     ctl.set_idle_autokick_time: "api.can_change_idle_autokick_time",
-    ctl.set_map_shuffle_enabled: "can_change_map_shuffle_enabled",
+    ctl.set_map_shuffle_enabled: "api.can_change_map_shuffle_enabled",
     ctl.set_map: {
         "api.can_change_current_map",
         "api.can_add_map_to_rotation",
