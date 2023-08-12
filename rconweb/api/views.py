@@ -89,12 +89,14 @@ def set_temp_welcome(request):
 
 
 @csrf_exempt
+@permission_required("api.can_view_crcon_version", raise_exception=True)
 def get_version(request):
     res = run(["git", "describe", "--tags"], stdout=PIPE, stderr=PIPE)
     return api_response(res.stdout.decode(), failed=False, command="get_version")
 
 
 @csrf_exempt
+@permission_required("api.can_view_public_info", raise_exception=True)
 def public_info(request):
     gamestate = ctl.get_gamestate()
     curr_players, max_players = tuple(map(int, ctl.get_slots().split("/")))
@@ -277,14 +279,8 @@ def _do_watch(request, add: bool):
                 reason=data["reason"],
                 by=request.user.username,
                 player_name=data.get("player_name"),
-                steam_id_64=data.get("steam_id_64"),
             )
-            # watch(self, reason: str, by: str, player_name: str = "")
-            result = watcher.watch(
-                reason=params["reason"],
-                by=params["by"],
-                player_name=params["player_name"],
-            )
+            result = watcher.watch(**params)
             audit("do_watch_player", request, params)
         else:
             result = watcher.unwatch()
@@ -312,7 +308,7 @@ def _do_watch(request, add: bool):
 
 @csrf_exempt
 @login_required()
-@permission_required("api.can_add_player_watch", raise_exception=True)
+@permission_required("api.can_watch_players", raise_exception=True)
 @record_audit
 def do_watch_player(request):
     return _do_watch(request, add=True)
@@ -320,7 +316,7 @@ def do_watch_player(request):
 
 @csrf_exempt
 @login_required()
-@permission_required("api.can_remove_player_watch", raise_exception=True)
+@permission_required("api.can_unwatch_players", raise_exception=True)
 @record_audit
 def do_unwatch_player(request):
     return _do_watch(request, add=False)
@@ -708,75 +704,60 @@ def run_raw_command(request):
 
 
 ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
+    ctl.get_admin_groups: "api.can_view_admin_groups",
+    ctl.get_logs: "api.can_view_game_logs",
+    ctl.get_timed_logs: "api.can_view_timed_logs",
+    ctl.get_playerids: "api.can_view_playerids",
+    ctl.get_vips_count: "api.can_view_vip_count",
+    ctl.get_player_info: "api.can_view_player_info",
+    ctl.get_detailed_player_info: "api.can_view_detailed_player_info",
+    ctl.get_admin_ids: "api.can_view_admin_ids",
+    ctl.get_online_console_admins: "api.can_view_online_console_admins",
     ctl.do_add_admin: "api.can_add_admin_roles",
-    ctl.do_add_map_to_rotation: "api.can_add_map_to_rotation",
-    ctl.do_add_maps_to_rotation: "api.can_add_maps_to_rotation",
-    ctl.do_add_vip: "api.can_add_vip",
-    ctl.do_ban_profanities: "api.can_ban_profanities",
-    ctl.do_kick: "api.can_kick_players",
-    ctl.do_message_player: "api.can_message_players",
-    ctl.do_perma_ban: {
-        "api.can_perma_ban_players",
-        "api.can_blacklist_players",
-    },
-    ctl.do_punish: "api.can_punish_players",
     ctl.do_remove_admin: "api.can_remove_admin_roles",
-    ctl.do_remove_all_vips: "api.can_remove_all_vips",
-    ctl.do_remove_map_from_rotation: "api.can_remove_map_from_rotation",
-    ctl.do_remove_maps_from_rotation: "api.can_remove_maps_from_rotation",
-    ctl.do_remove_perma_ban: "api.can_remove_perma_bans",
-    ctl.do_remove_temp_ban: "api.can_remove_temp_bans",
-    ctl.do_remove_vip: "api.can_remove_vip",
-    ctl.do_reset_votekick_threshold: "api.can_reset_votekick_threshold",
-    ctl.do_save_setting: {
-        "api.can_change_team_switch_cooldown",
-        "api.can_change_autobalance_threshold",
-        "api.can_change_autobalance_enabled",
-        "api.can_change_idle_autokick_time",
-        "api.can_change_max_ping_autokick",
-        "api.can_change_queue_length",
-        "api.can_change_vip_slots",
-        "api.can_change_votekick_enabled",
-        "api.can_change_votekick_threshold",
-    },
-    ctl.do_switch_player_now: "api.can_switch_players_immediately",
-    ctl.do_switch_player_on_death: "api.can_switch_players_on_death",
-    ctl.do_temp_ban: "api.can_temp_ban_players",
-    ctl.do_unban_profanities: "api.can_unban_profanities",
+    ctl.get_perma_bans: "api.can_view_perma_bans",
+    ctl.get_temp_bans: "api.can_view_temp_bans",
+    ctl.get_bans: {"api.can_view_temp_bans", "api.can_view_perma_bans"},
     ctl.do_unban: {
         "api.can_view_temp_bans",
         "api.can_view_perma_bans",
         "api.can_remove_temp_bans",
         "api.can_remove_perma_bans",
     },
-    ctl.get_admin_groups: "api.can_view_admin_groups",
-    ctl.get_admin_ids: "api.can_view_admin_ids",
-    ctl.get_autobalance_enabled: "api.can_view_autobalance_enabled",
-    ctl.get_autobalance_threshold: "api.can_view_autobalance_threshold",
     ctl.get_ban: "api.can_view_player_bans",
-    ctl.get_bans: {"api.can_view_temp_bans", "api.can_view_perma_bans"},
-    ctl.get_broadcast_message: "api.can_view_broadcast_message",
-    ctl.get_current_map_sequence: "api.can_view_current_map_sequence",
-    ctl.get_detailed_player_info: "api.can_view_detailed_player_info",
+    ctl.get_vip_ids: "api.can_view_vip_ids",
+    ctl.do_remove_all_vips: "api.can_remove_all_vips",
     ctl.get_gamestate: "api.can_view_gamestate",
-    ctl.get_idle_autokick_time: "api.can_view_idle_autokick_time",
-    ctl.get_logs: "api.can_view_game_logs",
-    ctl.get_map_rotation: "api.can_view_map_rotation",
-    ctl.get_map_shuffle_enabled: "api.can_view_map_shuffle_enabled",
-    ctl.get_map: "api.can_view_current_map",
-    ctl.get_maps: "api.can_view_all_maps",
-    ctl.get_max_ping_autokick: "api.can_view_max_ping_autokick",
-    ctl.get_name: "api.can_view_server_name",
-    ctl.get_next_map: "api.can_view_next_map",
-    ctl.get_online_console_admins: "api.can_view_online_console_admins",
-    ctl.get_perma_bans: "api.can_view_perma_bans",
-    ctl.get_player_info: "api.can_view_player_info",
-    ctl.get_playerids: "api.can_view_playerids",
-    ctl.get_players_fast: "api.can_view_players",
-    ctl.get_players: "api.can_view_get_players",
-    ctl.get_profanities: "api.can_view_profanities",
-    ctl.get_queue_length: "api.can_view_queue_length",
+    ctl.get_team_sizes: "api.can_view_team_sizes",
+    ctl.get_team_objective_scores: "api.can_view_team_objective_scores",
     ctl.get_round_time_remaining: "api.can_view_round_time_remaining",
+    ctl.get_next_map: "api.can_view_next_map",
+    ctl.set_map: {
+        "api.can_change_current_map",
+        "api.can_add_map_to_rotation",
+        "api.can_remove_map_from_rotation",
+    },
+    ctl.get_map: "api.can_view_current_map",
+    ctl.get_name: "api.can_view_server_name",
+    ctl.get_team_switch_cooldown: "api.can_view_team_switch_cooldown",
+    ctl.set_team_switch_cooldown: "api.can_change_team_switch_cooldown",
+    ctl.get_autobalance_threshold: "api.can_view_autobalance_threshold",
+    ctl.set_autobalance_threshold: "api.can_change_autobalance_threshold",
+    ctl.get_idle_autokick_time: "api.can_view_idle_autokick_time",
+    ctl.set_idle_autokick_time: "api.can_change_idle_autokick_time",
+    ctl.get_max_ping_autokick: "api.can_view_max_ping_autokick",
+    ctl.set_max_ping_autokick: "api.can_change_max_ping_autokick",
+    ctl.get_queue_length: "api.can_view_queue_length",
+    ctl.set_queue_length: "api.can_change_queue_length",
+    ctl.get_vip_slots_num: "api.can_view_vip_slots",
+    ctl.set_vip_slots_num: "api.can_change_vip_slots",
+    ctl.get_welcome_message: "api.can_view_welcome_message",
+    ctl.set_welcome_message: "api.can_change_welcome_message",
+    ctl.get_broadcast_message: "api.can_view_broadcast_message",
+    ctl.set_broadcast: "api.can_change_broadcast_message",
+    ctl.get_slots: "api.can_view_player_slots",
+    ctl.get_status: "api.can_view_get_status",
+    ctl.get_maps: "api.can_view_all_maps",
     ctl.get_server_settings: {
         "api.can_view_team_switch_cooldown",
         "api.can_view_autobalance_threshold",
@@ -788,48 +769,62 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
         "api.can_view_votekick_enabled",
         "api.can_view_votekick_threshold",
     },
-    ctl.get_slots: "api.can_view_player_slots",
-    ctl.get_status: "api.can_view_get_status",
+    ctl.do_save_setting: {
+        "api.can_change_team_switch_cooldown",
+        "api.can_change_autobalance_threshold",
+        "api.can_change_autobalance_enabled",
+        "api.can_change_idle_autokick_time",
+        "api.can_change_max_ping_autokick",
+        "api.can_change_queue_length",
+        "api.can_change_vip_slots",
+        "api.can_change_votekick_enabled",
+        "api.can_change_votekick_threshold",
+    },
     ctl.get_structured_logs: "api.can_view_structured_logs",
-    ctl.get_team_objective_scores: "api.can_view_team_objective_scores",
-    ctl.get_team_switch_cooldown: "api.can_view_team_switch_cooldown",
-    ctl.get_detailed_players: "api.can_view_detailed_players",
-    ctl.get_team_view: "api.can_view_team_view",
-    ctl.get_temp_bans: "api.can_view_temp_bans",
-    ctl.get_timed_logs: "api.can_view_timed_logs",
-    ctl.get_vip_ids: "api.can_view_vip_ids",
-    ctl.get_vip_slots_num: "api.can_view_vip_slots",
-    ctl.get_vips_count: "api.can_view_vip_count",
+    ctl.get_profanities: "api.can_view_profanities",
+    ctl.get_autobalance_enabled: "api.can_view_autobalance_enabled",
     ctl.get_votekick_enabled: "api.can_view_votekick_enabled",
     ctl.get_votekick_threshold: "api.can_view_votekick_threshold",
-    ctl.get_welcome_message: "api.can_view_welcome_message",
     ctl.set_autobalance_enabled: "api.can_change_autobalance_enabled",
-    ctl.set_autobalance_threshold: "api.can_change_autobalance_threshold",
-    ctl.set_broadcast: "api.can_change_broadcast_message",
-    ctl.set_idle_autokick_time: "api.can_change_idle_autokick_time",
-    ctl.set_map_shuffle_enabled: "api.can_change_map_shuffle_enabled",
-    ctl.set_map: {
-        "api.can_change_current_map",
-        "api.can_add_map_to_rotation",
-        "api.can_remove_map_from_rotation",
-    },
-    ctl.set_maprotation: {
-        "api.can_add_map_to_rotation",
-        "api.can_remove_map_from_rotation",
-        "api.can_view_map_rotation",
-    },
-    ctl.set_max_ping_autokick: "api.can_change_max_ping_autokick",
+    ctl.set_votekick_enabled: "api.can_change_votekick_enabled",
+    ctl.set_votekick_threshold: "api.can_change_votekick_threshold",
+    ctl.do_reset_votekick_threshold: "api.can_reset_votekick_threshold",
     ctl.set_profanities: {
         "api.can_view_profanities",
         "api.can_ban_profanities",
         "api.can_unban_profanities",
     },
-    ctl.set_queue_length: "api.can_change_queue_length",
-    ctl.set_team_switch_cooldown: "api.can_change_team_switch_cooldown",
-    ctl.set_vip_slots_num: "api.can_change_vip_slots",
-    ctl.set_votekick_enabled: "api.can_change_votekick_enabled",
-    ctl.set_votekick_threshold: "api.can_change_votekick_threshold",
-    ctl.set_welcome_message: "api.can_change_welcome_message",
+    ctl.do_unban_profanities: "api.can_unban_profanities",
+    ctl.do_ban_profanities: "api.can_ban_profanities",
+    ctl.do_remove_temp_ban: "api.can_remove_temp_bans",
+    ctl.do_remove_perma_ban: "api.can_remove_perma_bans",
+    ctl.get_map_rotation: "api.can_view_map_rotation",
+    ctl.do_add_map_to_rotation: "api.can_add_map_to_rotation",
+    ctl.do_remove_map_from_rotation: "api.can_remove_map_from_rotation",
+    ctl.do_remove_maps_from_rotation: "api.can_remove_maps_from_rotation",
+    ctl.do_add_maps_to_rotation: "api.can_add_maps_to_rotation",
+    ctl.set_maprotation: {
+        "api.can_add_map_to_rotation",
+        "api.can_remove_map_from_rotation",
+        "api.can_view_map_rotation",
+    },
+    ctl.get_scoreboard: "api.can_view_scoreboard",
+    ctl.get_teamkills_boards: "api.can_view_teamkills_boards",
+    ctl.get_players_fast: "api.can_view_players",
+    ctl.get_players: "api.can_view_get_players",
+    ctl.get_team_view: "api.can_view_team_view",
+    ctl.do_punish: "api.can_punish_players",
+    ctl.do_kick: "api.can_kick_players",
+    ctl.do_temp_ban: "api.can_temp_ban_players",
+    ctl.do_perma_ban: {
+        "api.can_perma_ban_players",
+        "api.can_blacklist_players",
+    },
+    ctl.do_switch_player_on_death: "api.can_switch_players_on_death",
+    ctl.do_switch_player_now: "api.can_switch_players_immediately",
+    ctl.do_message_player: "api.can_message_players",
+    ctl.do_remove_vip: "api.can_remove_vip",
+    ctl.do_add_vip: "api.can_add_vip",
 }
 
 PREFIXES_TO_EXPOSE = ["get_", "set_", "do_"]
