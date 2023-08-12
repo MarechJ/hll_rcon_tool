@@ -17,9 +17,11 @@ from rcon.audit import heartbeat, ingame_mods, online_mods, set_registered_mods
 from rcon.cache_utils import ttl_cache
 from rcon.config import get_config
 
-from .models import SteamPlayer
+from .models import SteamPlayer, DjangoAPIKey
 
 logger = logging.getLogger("rconweb")
+
+AUTHORIZATION_HEADER = "HTTP_AUTHORIZATION"
 
 
 def update_mods(sender, instance, **kwargs):
@@ -128,6 +130,18 @@ def login_required():
     def decorator(func):
         @wraps(func)
         def wrapper(request, *args, **kwargs):
+            # TODO: Handle hashed API keys
+            try:
+                raw_api_key = request.META[AUTHORIZATION_HEADER].split("Bearer: ")[1]
+            except KeyError:
+                raw_api_key = None
+
+            try:
+                api_key = DjangoAPIKey.objects.get(api_key=raw_api_key)
+                request.user = api_key.user
+            except DjangoAPIKey.DoesNotExist:
+                pass
+
             if not request.user.is_authenticated:
                 return api_response(
                     command=request.path,

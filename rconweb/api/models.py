@@ -2,6 +2,23 @@ from django.contrib.auth.models import User
 from django.db import models
 
 
+class DjangoAPIKey(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    # Can't use a lambda, Django can't serialize it for migrations
+    api_key = models.CharField(max_length=64, unique=True)
+    date_created = models.DateField(auto_now_add=True)
+    date_modified = models.DateField(auto_now=True)
+    notes = models.CharField(max_length=128, null=True, blank=True)
+
+    default_permissions = ()
+
+    def __str__(self) -> str:
+        return f"{self.api_key}"
+
+    class Meta:
+        ordering = ("date_modified",)
+
+
 class SteamPlayer(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     steam_id_64 = models.CharField(max_length=100)
