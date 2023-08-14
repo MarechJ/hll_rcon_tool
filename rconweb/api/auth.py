@@ -24,6 +24,7 @@ from .models import DjangoAPIKey, SteamPlayer
 logger = logging.getLogger("rconweb")
 
 AUTHORIZATION_HEADER = "HTTP_AUTHORIZATION"
+BEARER = "BEARER"
 
 
 def update_mods(sender, instance, **kwargs):
@@ -132,15 +133,23 @@ def login_required():
     def decorator(func):
         @wraps(func)
         def wrapper(request, *args, **kwargs):
-            try:
-                raw_api_key = request.META[AUTHORIZATION_HEADER].split("Bearer: ")[1]
-            except KeyError:
+            # Extract the header and bearer key if present, otherwise fall back on
+            # requiring the user to be logged in
+            header_name, raw_api_key = request.META[AUTHORIZATION_HEADER].split(
+                ": ", maxsplit=1
+            )
+            if not header_name.upper() == BEARER:
                 raw_api_key = None
 
             try:
+                # If we don't include the salt, the hasher generates its own
+                # and it will generate different hashed values every time
                 hashed_api_key = make_password(raw_api_key, salt=SECRET_KEY)
-                api_key = DjangoAPIKey.objects.get(api_key=hashed_api_key)
-                request.user = api_key.user
+                api_key_model = DjangoAPIKey.objects.get(api_key=hashed_api_key)
+
+                # Retrieve the user to use the normal authentication system
+                # to include their permissions
+                request.user = api_key_model.user
             except DjangoAPIKey.DoesNotExist:
                 pass
 
