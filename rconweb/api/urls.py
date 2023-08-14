@@ -3,7 +3,6 @@ from typing import Callable
 
 from django.urls import path
 from django.views.decorators.csrf import csrf_exempt
-from django.contrib.auth.decorators import permission_required
 
 
 from . import (
@@ -20,7 +19,7 @@ from . import (
     vips,
     votemap,
 )
-from .auth import api_response, login_required
+from .auth import api_response
 
 
 def _get_empty(value):
@@ -32,8 +31,6 @@ def _get_empty(value):
 
 
 @csrf_exempt
-@login_required()
-@permission_required("api.can_view_api_documentation", raise_exception=True)
 def get_api_documentation(request):
     """Auto-generate minimal API documentation through introspection"""
 
@@ -52,7 +49,7 @@ def get_api_documentation(request):
             }
             arguments[k] = expanded_args
 
-        item["name"] = name
+        item["endpoint"] = name
         item["arguments"] = arguments
         item["return_type"] = _get_empty(sig.return_annotation)
         item["doc_string"] = getdoc(func)
@@ -60,7 +57,7 @@ def get_api_documentation(request):
         api_docs.append(item)
 
     return api_response(
-        result=sorted(api_docs, key=lambda x: x["name"]),
+        result=sorted(api_docs, key=lambda x: x["endpoint"]),
         command="get_api_documentation",
         failed=False,
     )

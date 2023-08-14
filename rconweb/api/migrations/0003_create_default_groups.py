@@ -139,7 +139,6 @@ GROUPS = [
             "can_view_votemap_config",
             "can_view_votemap_status",
             "can_view_welcome_message",
-            "can_view_api_documentation",
         ),
     ),
     (
@@ -276,7 +275,6 @@ GROUPS = [
             "can_view_votemap_config",
             "can_view_votemap_status",
             "can_view_welcome_message",
-            "can_view_api_documentation",
         ),
     ),
     (
@@ -367,7 +365,6 @@ GROUPS = [
             "can_view_votemap_config",
             "can_view_votemap_status",
             "can_view_welcome_message",
-            "can_view_api_documentation",
         ),
     ),
     (
@@ -442,7 +439,6 @@ GROUPS = [
             "can_view_votemap_config",
             "can_view_votemap_status",
             "can_view_welcome_message",
-            "can_view_api_documentation",
         ),
     ),
 ]
