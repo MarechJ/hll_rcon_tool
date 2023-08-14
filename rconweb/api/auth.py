@@ -135,10 +135,13 @@ def login_required():
         def wrapper(request, *args, **kwargs):
             # Extract the header and bearer key if present, otherwise fall back on
             # requiring the user to be logged in
-            header_name, raw_api_key = request.META[AUTHORIZATION_HEADER].split(
-                ": ", maxsplit=1
-            )
-            if not header_name.upper() == BEARER:
+            try:
+                header_name, raw_api_key = request.META[AUTHORIZATION_HEADER].split(
+                    ": ", maxsplit=1
+                )
+                if not header_name.upper() == BEARER:
+                    raw_api_key = None
+            except ValueError:
                 raw_api_key = None
 
             try:
