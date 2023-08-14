@@ -11,6 +11,8 @@ document.addEventListener('readystatechange', event => {
     if (event.target.readyState === "complete") {
         const elementSearch = `id_api_key`
         const apiKey = document.getElementById(elementSearch)
-        apiKey.value = window.uuidv4()
+        if (!apiKey.value) {
+            apiKey.value = window.uuidv4()
+        }
     }
 });
