@@ -1,5 +1,4 @@
 import logging
-import os
 import pickle
 import random
 import re
@@ -11,10 +10,9 @@ import redis
 from sqlalchemy import and_
 
 from rcon.cache_utils import get_redis_client, get_redis_pool
-from rcon.extended_commands import CommandFailedError, StructuredLogLineType
 from rcon.models import PlayerOptins, PlayerSteamID, enter_session
 from rcon.player_history import get_player
-from rcon.recorded_commands import RecordedRcon
+from rcon.rcon import CommandFailedError, Rcon, StructuredLogLineType
 from rcon.settings import SERVER_INFO
 from rcon.user_config import DefaultMethods, VoteMapConfig
 from rcon.utils import (
@@ -289,7 +287,7 @@ class VoteMap:
 
         return False
 
-    def vote_map_reminder(self, rcon: RecordedRcon, force=False):
+    def vote_map_reminder(self, rcon: Rcon, force=False):
         logger.info("Vote MAP reminder")
         vote_map_config = VoteMapConfig()
         vote_map_message = vote_map_config.get_votemap_instruction_text()
@@ -540,7 +538,7 @@ class VoteMap:
         return {k.decode(): v.decode() for k, v in votes.items()}
 
     def get_current_map(self):
-        map_ = RecordedRcon(SERVER_INFO).get_map()
+        map_ = Rcon(SERVER_INFO).get_map()
         if map_.endswith("_RESTART"):
             map_ = map_.replace("_RESTART", "")
 
@@ -683,7 +681,7 @@ class VoteMap:
                 logger.error(f"{next_map=} is not part of vote selection {selection=}")
             logger.info(f"Winning map {next_map=}")
 
-        rcon = RecordedRcon(SERVER_INFO)
+        rcon = Rcon(SERVER_INFO)
         # Apply rotation safely
 
         current_rotation = rcon.get_map_rotation()
@@ -752,7 +750,7 @@ def on_map_change(old_map: str, new_map: str):
 
 # DEPRECATED see hooks.py
 class MapsRecorder:
-    def __init__(self, rcon: RecordedRcon):
+    def __init__(self, rcon: Rcon):
         self.rcon = rcon
         self.red = redis.Redis(connection_pool=get_redis_pool())
         self.maps_history = MapsHistory()

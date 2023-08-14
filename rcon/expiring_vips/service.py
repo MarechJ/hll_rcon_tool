@@ -9,7 +9,7 @@ from pydantic import BaseModel, ValidationError, conint
 from rcon.config import get_config
 from rcon.discord_utils import send_to_discord_audit
 from rcon.models import PlayerSteamID, PlayerVIP, enter_session
-from rcon.recorded_commands import RecordedRcon
+from rcon.rcon import Rcon
 from rcon.settings import SERVER_INFO
 from rcon.utils import get_server_number
 
@@ -23,7 +23,7 @@ class ExpiringVIPConfig(BaseModel):
     discord_webhook_url: str
 
 
-def remove_expired_vips(rcon_hook: RecordedRcon, webhookurl: Optional[str] = None):
+def remove_expired_vips(rcon_hook: Rcon, webhookurl: Optional[str] = None):
     logger.info(f"Checking for expired VIPs")
 
     count = 0
@@ -93,7 +93,7 @@ def remove_expired_vips(rcon_hook: RecordedRcon, webhookurl: Optional[str] = Non
 
 
 def run():
-    rcon_hook = RecordedRcon(SERVER_INFO)
+    rcon_hook = Rcon(SERVER_INFO)
 
     while True:
         try:

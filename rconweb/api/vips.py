@@ -6,6 +6,7 @@ from typing import Dict, List
 
 from dateutil import parser, relativedelta
 from django import forms
+from django.contrib.auth.decorators import permission_required
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
@@ -17,7 +18,7 @@ from rcon.user_config import RealVipConfig
 from rcon.utils import get_server_number
 from rcon.workers import get_job_results, worker_bulk_vip
 
-from .audit_log import auto_record_audit, record_audit
+from .audit_log import record_audit
 from .auth import api_response, login_required
 from .views import _get_data, ctl
 
@@ -28,8 +29,12 @@ class DocumentForm(forms.Form):
     docfile = forms.FileField(label="Select a file")
 
 
+# TODO: should deprecate this since we use the async version
 @csrf_exempt
-@login_required(True)
+@login_required()
+@permission_required(
+    {"api.can_upload_vip_list", "api.can_remove_all_vips"}, raise_exception=True
+)
 @record_audit
 def upload_vips(request):
     message = "Upload a VIP file!"
@@ -78,7 +83,8 @@ def upload_vips(request):
 
 
 @csrf_exempt
-@login_required(True)
+@login_required()
+@permission_required("api.can_upload_vip_list", raise_exception=True)
 @record_audit
 def async_upload_vips(request):
     errors = []
@@ -147,7 +153,8 @@ def async_upload_vips(request):
 
 
 @csrf_exempt
-@login_required(True)
+@login_required()
+@permission_required("api.can_upload_vip_list", raise_exception=True)
 def async_upload_vips_result(request):
     return api_response(
         result=get_job_results(f"upload_vip_{os.getenv('SERVER_NUMBER')}"),
@@ -157,7 +164,8 @@ def async_upload_vips_result(request):
 
 
 @csrf_exempt
-@login_required(True)
+@login_required()
+@permission_required("api.can_download_vip_list", raise_exception=True)
 def download_vips(request):
     vips = ctl.get_vip_ids()
     vip_lines: List[str]
@@ -202,7 +210,8 @@ def _get_real_vip_config():
 
 
 @csrf_exempt
-@login_required(True)
+@login_required()
+@permission_required("api.can_view_real_vip_config", raise_exception=True)
 def get_real_vip_config(request):
     error = None
     try:
@@ -218,7 +227,8 @@ def get_real_vip_config(request):
 
 
 @csrf_exempt
-@login_required(True)
+@login_required()
+@permission_required("api.can_change_real_vip_config", raise_exception=True)
 @record_audit
 def set_real_vip_config(request):
     error = None

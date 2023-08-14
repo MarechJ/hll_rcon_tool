@@ -1,6 +1,5 @@
 import json
 import logging
-from itertools import chain
 from typing import List
 
 from redis import BlockingConnectionPool, Redis
@@ -61,7 +60,7 @@ def set_registered_mods(moderators_name_steamids: List[tuple]):
 
 
 def ingame_mods(rcon=None):
-    from rcon.recorded_commands import RecordedRcon
+    from rcon.rcon import Rcon
 
     red = _red()
     mods = red.hgetall("moderators") or {}
@@ -69,7 +68,7 @@ def ingame_mods(rcon=None):
     if not mods:
         return []
 
-    rcon = rcon or RecordedRcon(SERVER_INFO)
+    rcon = rcon or Rcon(SERVER_INFO)
     players = rcon.get_players()
     mods_ids = set(v.decode() for v in mods.values())
     ig_mods = []

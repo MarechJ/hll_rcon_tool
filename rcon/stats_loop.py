@@ -5,7 +5,7 @@ import redis
 from redistimeseries.client import Client
 
 from rcon.cache_utils import get_redis_pool
-from rcon.extended_commands import Rcon
+from rcon.rcon import Rcon
 from rcon.settings import SERVER_INFO
 
 logger = getLogger(__name__)

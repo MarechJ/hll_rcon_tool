@@ -1,5 +1,5 @@
 from rcon import broadcast
-from rcon.extended_commands import Rcon
+from rcon.rcon import Rcon
 from rcon.settings import SERVER_INFO
 
 
