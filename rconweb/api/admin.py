@@ -1,10 +1,13 @@
 # Register your models here.
+from django import forms
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import User
-from django import forms
 
-from .models import SteamPlayer, DjangoAPIKey
+from rconweb.settings import SECRET_KEY
+
+from .models import DjangoAPIKey, SteamPlayer
 
 
 # Define an inline admin descriptor for Employee model
@@ -51,6 +54,10 @@ class DjangoAPIKeyAdmin(admin.ModelAdmin):
     list_display = ("user", "api_key", "date_created", "date_modified", "notes")
     list_filter = ("user",)
     search_fields = ("notes",)
+
+    def save_model(self, request, obj, form, change) -> None:
+        obj.api_key = make_password(obj.api_key, salt=SECRET_KEY)
+        return super().save_model(request, obj, form, change)
 
     def get_form(self, request, obj=None, **kwargs):
         form = super().get_form(request, obj, **kwargs)

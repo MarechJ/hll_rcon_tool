@@ -7,6 +7,7 @@ from typing import Any
 
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import permission_required
+from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
 from django.db.models.signals import post_delete, post_save
@@ -16,8 +17,9 @@ from django.views.decorators.csrf import csrf_exempt
 from rcon.audit import heartbeat, ingame_mods, online_mods, set_registered_mods
 from rcon.cache_utils import ttl_cache
 from rcon.config import get_config
+from rconweb.settings import SECRET_KEY
 
-from .models import SteamPlayer, DjangoAPIKey
+from .models import DjangoAPIKey, SteamPlayer
 
 logger = logging.getLogger("rconweb")
 
@@ -130,14 +132,14 @@ def login_required():
     def decorator(func):
         @wraps(func)
         def wrapper(request, *args, **kwargs):
-            # TODO: Handle hashed API keys
             try:
                 raw_api_key = request.META[AUTHORIZATION_HEADER].split("Bearer: ")[1]
             except KeyError:
                 raw_api_key = None
 
             try:
-                api_key = DjangoAPIKey.objects.get(api_key=raw_api_key)
+                hashed_api_key = make_password(raw_api_key, salt=SECRET_KEY)
+                api_key = DjangoAPIKey.objects.get(api_key=hashed_api_key)
                 request.user = api_key.user
             except DjangoAPIKey.DoesNotExist:
                 pass

@@ -5,7 +5,7 @@ from django.db import models
 class DjangoAPIKey(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     # Can't use a lambda, Django can't serialize it for migrations
-    api_key = models.CharField(max_length=64, unique=True)
+    api_key = models.CharField(unique=True)
     date_created = models.DateField(auto_now_add=True)
     date_modified = models.DateField(auto_now=True)
     notes = models.CharField(max_length=128, null=True, blank=True)
