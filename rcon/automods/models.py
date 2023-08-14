@@ -21,12 +21,15 @@ class SquadCycleOver(Exception):
 class NoSeedingViolation(Exception):
     pass
 
+
 class NoLevelViolation(Exception):
     pass
+
 
 class OffensiveDefensiveState(TypedDict):
     offensive_points: int
     defensive_points: int
+
 
 @dataclass
 class WatchStatus:
@@ -300,17 +303,21 @@ class PunitionsToApply:
                 self.kick,
             ]
         )
+
+
 @dataclass
 class RoleLabelNLevel:
     label: str
     min_level: int
     min_players: int
 
+
 @dataclass
 class LevelByRoleConfig:
     roles: Mapping[str, RoleLabelNLevel] | None = field(default_factory=dict)
     message: str = "{role} is not allowed under level {level}"
-        
+
+
 @dataclass
 class LevelThresholdsConfig:
     enabled: bool = False
@@ -339,22 +346,19 @@ class LevelThresholdsConfig:
         "Your grace period of {kick_grace_period}s has passed.\n"
         "You failed to comply with the previous warnings."
     )
-    
+
     force_kick_message: str = (
         "You violated level thresholds rules on this server: {violation}."
     )
-    
+
     announce_level_thresholds: AnnounceSeedingActiveConfig = field(
         default_factory=AnnounceSeedingActiveConfig
     )
 
     min_level: int = 0
     min_level_message: str = "Access to this server is not allowed under level {level}"
-    
+
     max_level: int = 0
     max_level_message: str = "Access to this server is not allowed over level {level}"
-    
-    level_thresholds: LevelByRoleConfig = field(
-        default_factory=LevelByRoleConfig
-    )
 
+    level_thresholds: LevelByRoleConfig = field(default_factory=LevelByRoleConfig)

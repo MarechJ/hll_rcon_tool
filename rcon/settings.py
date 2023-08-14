@@ -1,4 +1,3 @@
-import logging
 import os
 import socket
 from logging.config import dictConfig

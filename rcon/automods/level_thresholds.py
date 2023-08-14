@@ -24,6 +24,7 @@ from rcon.types import GameState
 LEVEL_THRESHOLDS_RESET_SECS = 120
 AUTOMOD_USERNAME = "LevelThresholdsAutomod"
 
+
 class LevelThresholdsAutomod:
     logger: logging.Logger
     red: redis.StrictRedis
@@ -60,24 +61,24 @@ class LevelThresholdsAutomod:
 
     def on_connected(self, name: str, steam_id_64: str) -> PunitionsToApply:
         p: PunitionsToApply = PunitionsToApply()
-        
+
         min_level = self.config.min_level
         max_level = self.config.max_level
         lt = self.config.level_thresholds
 
         if self.config.announce_level_thresholds.enabled and (
-            min_level > 0 or
-            max_level > 0 or
-            lt.roles is not None and len(lt.roles.keys()) > 0
+            min_level > 0
+            or max_level > 0
+            or lt.roles is not None
+            and len(lt.roles.keys()) > 0
         ):
-            
             # Initialize messages to empty string
             data = {
                 "min_level_msg": "",
                 "max_level_msg": "",
                 "level_thresholds_msg": "",
             }
-            
+
             # Populate min_level message if configured
             if min_level > 0:
                 message = self.config.min_level_message
@@ -88,7 +89,7 @@ class LevelThresholdsAutomod:
                         f"The automod message ({message}) contains an invalid key"
                     )
                 data["min_level_msg"] = message
-            
+
             # Populate max_level message if configured
             if max_level > 0:
                 message = self.config.max_level_message
@@ -104,11 +105,15 @@ class LevelThresholdsAutomod:
             if lt.roles is not None and len(lt.roles.keys()) > 0:
                 level_thresholds_msg = ""
                 for role in lt.roles:
-                    
                     message = lt.message
                     roleConfig = lt.roles.get(role)
                     try:
-                        message = message.format(role=roleConfig.label, level=roleConfig.min_level) + "\n"
+                        message = (
+                            message.format(
+                                role=roleConfig.label, level=roleConfig.min_level
+                            )
+                            + "\n"
+                        )
                     except KeyError:
                         self.logger.warning(
                             f"The automod message ({message}) contains an invalid key"
@@ -119,8 +124,11 @@ class LevelThresholdsAutomod:
             self.logger.debug("ON_CONNECTED: generated messages %s", data)
 
             # Format and send annoucement message with previous data if required
-            if data.get("min_level_msg") is not None or data.get("max_level_msg") is not None or data.get("level_thresholds_msg") is not None:
-                
+            if (
+                data.get("min_level_msg") is not None
+                or data.get("max_level_msg") is not None
+                or data.get("level_thresholds_msg") is not None
+            ):
                 message = self.config.announce_level_thresholds.message
                 try:
                     message = message.format(**data)
@@ -149,11 +157,11 @@ class LevelThresholdsAutomod:
         return p
 
     def get_message(
-            self,
-            watch_status: WatchStatus,
-            aplayer: PunishPlayer,
-            violation_msg: str,
-            method: ActionMethod,
+        self,
+        watch_status: WatchStatus,
+        aplayer: PunishPlayer,
+        violation_msg: str,
+        method: ActionMethod,
     ):
         data = {
             "violation": violation_msg,
@@ -190,7 +198,12 @@ class LevelThresholdsAutomod:
             return message
 
     def punitions_to_apply(
-            self, team_view, squad_name: str, team: Literal["axis", "allies"], squad: dict, game_state: GameState
+        self,
+        team_view,
+        squad_name: str,
+        team: Literal["axis", "allies"],
+        squad: dict,
+        game_state: GameState,
     ) -> PunitionsToApply:
         self.logger.info("Squad %s %s", squad_name, squad)
         punitions_to_apply = PunitionsToApply()
@@ -198,7 +211,9 @@ class LevelThresholdsAutomod:
             self.logger.info("Skipping None or empty squad %s %s", squad_name, squad)
             return punitions_to_apply
 
-        server_player_count = get_team_count(team_view, "allies") + get_team_count(team_view, "axis")
+        server_player_count = get_team_count(team_view, "allies") + get_team_count(
+            team_view, "axis"
+        )
 
         with self.watch_state(team, squad_name) as watch_status:
             if squad_name is None or squad is None:
@@ -220,11 +235,10 @@ class LevelThresholdsAutomod:
                 )
 
                 violations = []
-                
+
                 shouldForceKick = False
                 # Global exclusion to avoid "Level 1" HLL bug
-                if aplayer.lvl != 1:                    
-                    
+                if aplayer.lvl != 1:
                     # Server min level threshold check
                     min_level = self.config.min_level
                     if min_level > 0 and aplayer.lvl < min_level:
@@ -237,7 +251,7 @@ class LevelThresholdsAutomod:
                             )
                         violations.append(message)
                         shouldForceKick = True
-                    
+
                     # Server max level threshold check
                     max_level = self.config.max_level
                     if max_level > 0 and aplayer.lvl > max_level:
@@ -250,12 +264,15 @@ class LevelThresholdsAutomod:
                             )
                         violations.append(message)
                         shouldForceKick = True
-                    
+
                     # Force kick player if not matching global level thresholds
                     if shouldForceKick:
                         violation_msg = ", ".join(violations)
                         aplayer.details.message = self.get_message(
-                            watch_status, aplayer, violation_msg, ActionMethod.FORCE_KICK
+                            watch_status,
+                            aplayer,
+                            violation_msg,
+                            ActionMethod.FORCE_KICK,
                         )
                         punitions_to_apply.kick.append(aplayer)
                         punitions_to_apply.add_squad_state(team, squad_name, squad)
@@ -266,10 +283,17 @@ class LevelThresholdsAutomod:
                     if lt.roles is not None and len(lt.roles.keys()) > 0:
                         if aplayer.role in lt.roles:
                             roleConfig = lt.roles.get(aplayer.role)
-                            if roleConfig and server_player_count >= roleConfig.min_players and aplayer.lvl < roleConfig.min_level:
+                            if (
+                                roleConfig
+                                and server_player_count >= roleConfig.min_players
+                                and aplayer.lvl < roleConfig.min_level
+                            ):
                                 message = lt.message
                                 try:
-                                    message = message.format(role=roleConfig.label, level=roleConfig.min_level)
+                                    message = message.format(
+                                        role=roleConfig.label,
+                                        level=roleConfig.min_level,
+                                    )
                                 except KeyError:
                                     self.logger.warning(
                                         f"The automod message ({message}) contains an invalid key"
@@ -326,7 +350,7 @@ class LevelThresholdsAutomod:
         return punitions_to_apply
 
     def should_warn_player(
-            self, watch_status: WatchStatus, squad_name: str, aplayer: PunishPlayer
+        self, watch_status: WatchStatus, squad_name: str, aplayer: PunishPlayer
     ):
         if self.config.number_of_warning == 0:
             self.logger.debug("Warnings are disabled. number_of_warning is set to 0")
@@ -341,8 +365,8 @@ class LevelThresholdsAutomod:
             return PunishStepState.WAIT
 
         if (
-                len(warnings) < self.config.number_of_warning
-                or self.config.number_of_warning == -1
+            len(warnings) < self.config.number_of_warning
+            or self.config.number_of_warning == -1
         ):
             self.logger.info(
                 "%s Will be warned (%s/%s)",
@@ -362,10 +386,10 @@ class LevelThresholdsAutomod:
         return PunishStepState.GO_TO_NEXT_STEP
 
     def should_punish_player(
-            self,
-            watch_status: WatchStatus,
-            squad_name: str,
-            aplayer: PunishPlayer,
+        self,
+        watch_status: WatchStatus,
+        squad_name: str,
+        aplayer: PunishPlayer,
     ):
         if self.config.number_of_punish == 0:
             self.logger.debug("Punish is disabled")
@@ -378,8 +402,8 @@ class LevelThresholdsAutomod:
             return PunishStepState.WAIT
 
         if (
-                len(punishes) < self.config.number_of_punish
-                or self.config.number_of_punish == -1
+            len(punishes) < self.config.number_of_punish
+            or self.config.number_of_punish == -1
         ):
             self.logger.info(
                 "%s Will be punished (%s/%s)",
@@ -399,9 +423,9 @@ class LevelThresholdsAutomod:
         return PunishStepState.GO_TO_NEXT_STEP
 
     def should_kick_player(
-            self,
-            watch_status: WatchStatus,
-            aplayer: PunishPlayer,
+        self,
+        watch_status: WatchStatus,
+        aplayer: PunishPlayer,
     ):
         if not self.config.kick_after_max_punish:
             self.logger.debug("Kick is disabled")
@@ -414,7 +438,7 @@ class LevelThresholdsAutomod:
             return PunishStepState.DISABLED
 
         if datetime.now() - last_time < timedelta(
-                seconds=self.config.kick_grace_period_seconds
+            seconds=self.config.kick_grace_period_seconds
         ):
             return PunishStepState.WAIT
 

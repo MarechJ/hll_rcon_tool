@@ -13,10 +13,8 @@ import logging
 import os
 import re
 import socket
-from logging.config import dictConfig
 
 import sentry_sdk
-from django.utils.log import DEFAULT_LOGGING
 from sentry_sdk import configure_scope
 from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
@@ -133,7 +131,7 @@ SESSION_COOKIE_SAMESITE = "Lax"
 # Required as of Django 4.0 otherwise it causes CSRF issues
 # if we don't include the origin
 CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS.copy()
-if host := os.getenv('RCONWEB_SERVER_URL'):
+if host := os.getenv("RCONWEB_SERVER_URL"):
     CSRF_TRUSTED_ORIGINS.append(host)
 
 if DEBUG:

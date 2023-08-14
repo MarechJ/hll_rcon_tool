@@ -4,7 +4,7 @@ import threading
 import time
 from contextlib import contextmanager, nullcontext
 from functools import wraps
-from typing import List, TypedDict
+from typing import List
 
 from rcon.config import get_config
 from rcon.connection import HLLConnection
