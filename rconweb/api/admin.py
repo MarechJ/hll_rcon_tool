@@ -44,9 +44,6 @@ class DjangoAPIKeyAdminForm(forms.ModelForm):
         if len(self.cleaned_data["api_key"]) < 32:
             raise forms.ValidationError("Minimum API key length is 32 characters")
 
-        if len(self.cleaned_data["api_key"]) > 64:
-            raise forms.ValidationError("Maximum API key length is 64 characters")
-
         return self.cleaned_data["api_key"]
 
 
