@@ -202,7 +202,7 @@ const RawScores = pure(({ classes, scores }) => {
   );
   const [rowsPerPage, setRowsPerPage] = React.useState(50);
   const [columns, setColumns] = React.useState([
-    { name: "steam_id_64", label: "Steam ID", options: {display: false}, },
+    { name: "steam_id_64", label: "Steam ID", options: { display: false } },
     { name: "player", label: "Name" },
     { name: "kills", label: "Kills" },
     { name: "deaths", label: "Deaths" },
@@ -239,9 +239,7 @@ const RawScores = pure(({ classes, scores }) => {
       options: {
         customBodyRender: (value, tableMeta, updateValue) => {
           const pairs = toPairs(value);
-          return sortBy(pairs, (v) => -v[1]).map(
-            (v) => `${v[0]}: ${v[1]}`
-          )[0];
+          return sortBy(pairs, (v) => -v[1]).map((v) => `${v[0]}: ${v[1]}`)[0];
         },
       },
     },
@@ -251,16 +249,18 @@ const RawScores = pure(({ classes, scores }) => {
       options: {
         customBodyRender: (value, tableMeta, updateValue) => {
           const pairs = toPairs(value);
-          return sortBy(pairs, (v) => -v[1]).map(
-            (v) => `${v[0]}: ${v[1]}`
-          )[0];
+          return sortBy(pairs, (v) => -v[1]).map((v) => `${v[0]}: ${v[1]}`)[0];
         },
       },
     },
-    { name: "combat", label: "Combat Effectiveness", options: {display: false} },
-    { name: "support", label: "Support Points", options: {display: false} },
-    { name: "defense", label: "Defensive Points", options: {display: false} },
-    { name: "offense", label: "Offensive Points", options: {display: false} },
+    {
+      name: "combat",
+      label: "Combat Effectiveness",
+      options: { display: false },
+    },
+    { name: "support", label: "Support Points", options: { display: false } },
+    { name: "defense", label: "Defensive Points", options: { display: false } },
+    { name: "offense", label: "Offensive Points", options: { display: false } },
     {
       name: "weapons",
       label: "Weapons",
@@ -295,18 +295,20 @@ const RawScores = pure(({ classes, scores }) => {
             options={{
               filter: false,
               rowsPerPage: rowsPerPage,
-              enableNestedDataAccess: '.',
+              enableNestedDataAccess: ".",
               selectableRows: "none",
               rowsPerPageOptions: [10, 25, 50, 100, 250, 500, 1000],
               onChangeRowsPerPage: (v) => setRowsPerPage(v),
               onViewColumnsChange: (c, a) => {
                 setColumns((cc) => {
                   const newColumns = [...cc];
-                  const changedColumn = newColumns.find((column) => column.name === c);
+                  const changedColumn = newColumns.find(
+                    (column) => column.name === c
+                  );
                   if (!changedColumn.options) {
-                    changedColumn.options = {display: a === 'add'};
+                    changedColumn.options = { display: a === "add" };
                   } else {
-                    changedColumn.options.display = a === 'add';
+                    changedColumn.options.display = a === "add";
                   }
                   return newColumns;
                 });
@@ -590,6 +592,58 @@ const Scores = pure(({ classes, scores, durationToHour, type }) => {
                 postProcessFunc={(v) => (v / 60).toFixed(2)}
                 onPlayerClick={doHighlight}
                 playersFilter={playersFilter}
+              />
+            </Grid>
+            <Grid item xs={12} md={6} lg={3} xl={2}>
+              <RankBoard
+                classes={classes}
+                iconUrl={"icons/early.png"}
+                scores={scores}
+                title="COMBAT SCORE"
+                statType="Points"
+                statKey="combat"
+                onPlayerClick={doHighlight}
+                playersFilter={playersFilter}
+                reversed
+              />
+            </Grid>
+            <Grid item xs={12} md={6} lg={3} xl={2}>
+              <RankBoard
+                classes={classes}
+                iconUrl={"icons/early.png"}
+                scores={scores}
+                title="ATTACK SCORE"
+                statType="Points"
+                statKey="offense"
+                onPlayerClick={doHighlight}
+                playersFilter={playersFilter}
+                reversed
+              />
+            </Grid>
+            <Grid item xs={12} md={6} lg={3} xl={2}>
+              <RankBoard
+                classes={classes}
+                iconUrl={"icons/early.png"}
+                scores={scores}
+                title="DEFENSE SCORE"
+                statType="Points"
+                statKey="defense"
+                onPlayerClick={doHighlight}
+                playersFilter={playersFilter}
+                reversed
+              />
+            </Grid>
+            <Grid item xs={12} md={6} lg={3} xl={2}>
+              <RankBoard
+                classes={classes}
+                iconUrl={"icons/early.png"}
+                scores={scores}
+                title="SUPPORT SCORE"
+                statType="Points"
+                statKey="support"
+                onPlayerClick={doHighlight}
+                playersFilter={playersFilter}
+                reversed
               />
             </Grid>
             {process.env.REACT_APP_PUBLIC_BUILD ? (
