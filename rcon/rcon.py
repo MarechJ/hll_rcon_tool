@@ -175,7 +175,7 @@ class Rcon(ServerCtl):
                 updated_players.append(
                     {
                         **p,
-                        "profile": profiles[p["steam_id_64"]],
+                        "profile": profiles.get(p.get(STEAMID)),
                         "is_vip": p.get(STEAMID) in vips,
                     }
                 )
