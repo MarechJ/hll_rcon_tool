@@ -33,6 +33,7 @@ import {
   Grid,
   ListItemAvatar,
 } from "@material-ui/core";
+import makeSteamProfileUrl from "../../utils/makeSteamProfileUrl";
 
 const zeroPad = (num, places) => String(num).padStart(places, "0");
 
@@ -366,7 +367,7 @@ const PlayerItem = ({
               className={classes.marginRight}
               target="_blank"
               color="inherit"
-              href={`https://steamcommunity.com/profiles/${steamID64}`}
+              href={makeSteamProfileUrl(steamID64)}
             >
               <FontAwesomeIcon icon={faSteam} />
             </Link>
