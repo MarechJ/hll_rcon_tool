@@ -233,14 +233,8 @@ class Rcon(ServerCtl):
         for player in players_by_id.values():
             steam_id_64 = player[STEAMID]
             profile = steam_profiles.get(player.get("steam_id_64"), {}) or {}
-            enriched_player: EnrichedGetPlayersType = {
-                "name": "",
-                "steam_id_64": steam_id_64,
-                "country": "",
-                "steam_bans": None,
-                "profile": profile,
-                "is_vip": steam_id_64 in vips,
-            }
+            player["profile"] = profile
+            player["is_vip"] = steam_id_64 in vips
 
             teams.setdefault(player.get("team"), {}).setdefault(
                 player.get("unit_name"), {}
