@@ -308,12 +308,9 @@ def inject_player_ids(func):
 
 @on_connected
 @inject_player_ids
-def handle_on_connect(rcon, struct_log, name, steam_id_64):
+def handle_on_connect(rcon: Rcon, struct_log, name, steam_id_64):
     try:
-        if type(rcon) == Rcon:
-            rcon.invalidate_player_list_cache()
-        else:
-            rcon.get_player.cache_clear()
+        rcon.get_players.cache_clear()
         rcon.get_player_info.clear_for(struct_log["player"])
         rcon.get_player_info.clear_for(player=struct_log["player"])
     except Exception:

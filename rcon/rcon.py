@@ -135,9 +135,6 @@ class Rcon(ServerCtl):
         else:
             self.pool_size = self.advanced_settings.thread_pool_size
 
-    def invalidate_player_list_cache(self):
-        super().get_players.cache_clear()
-
     @cached_property
     def thread_pool(self):
         return ThreadPoolExecutor(self.pool_size)
