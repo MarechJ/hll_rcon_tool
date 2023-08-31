@@ -100,13 +100,13 @@ class DiscordHookConfig:
             role_ids: list[webhooks.DiscordRoleIdFormat] = []
             user_ids.extend(
                 [
-                    webhooks.DiscordUserIdFormat(value=v["value"])
+                    webhooks.DiscordUserIdFormat(value=v.get("value"))
                     for v in raw_hook["user_mentions"]
                 ]
             )
             role_ids.extend(
                 [
-                    webhooks.DiscordRoleIdFormat(value=v["value"])
+                    webhooks.DiscordRoleIdFormat(value=v.get("value"))
                     for v in raw_hook["role_mentions"]
                 ]
             )

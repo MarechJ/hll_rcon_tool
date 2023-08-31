@@ -9,8 +9,8 @@ DISCORD_ROLE_ID_PATTERN = re.compile(r"<@&\d+>")
 
 class DynamicHookType(TypedDict):
     url: str
-    user_mentions: list[str]
-    role_mentions: list[str]
+    user_mentions: list[dict[str, str]]
+    role_mentions: list[dict[str, str]]
 
 
 class DiscordUserIdFormat(pydantic.BaseModel):

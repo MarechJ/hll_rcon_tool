@@ -148,6 +148,33 @@ def get_hooks(request):
 
 @csrf_exempt
 @login_required()
+# TODO different permission?
+@permission_required("api.can_change_discord_webhooks", raise_exception=True)
+def validate_hooks(request):
+    data = _get_data(request)
+
+    succesful = True
+    error_message: str | None = None
+    try:
+        hook_config = DiscordHookConfig(for_type=data["name"])
+        hook_config.set_hooks_for_type(data["hooks"], save_config=False)
+    except (ValueError, KeyError) as e:
+        succesful = False
+        if isinstance(e, KeyError):
+            error_message = f"Missing mandatory key {e}"
+        else:
+            error_message = repr(e)
+
+    if succesful:
+        return api_response(result=succesful, command="validate_hooks")
+    else:
+        return api_response(
+            result=succesful, error=error_message, command="validate_hooks"
+        )
+
+
+@csrf_exempt
+@login_required()
 @permission_required("api.can_change_discord_webhooks", raise_exception=True)
 @record_audit
 def set_hooks(request):
@@ -847,6 +874,7 @@ commands = [
     ("unban", unban),
     ("get_hooks", get_hooks),
     ("set_hooks", set_hooks),
+    ("validate_hooks", validate_hooks),
     ("do_unwatch_player", do_unwatch_player),
     ("do_watch_player", do_watch_player),
     ("public_info", public_info),
