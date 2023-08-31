@@ -153,8 +153,12 @@ export const WordList = ({
       freeSolo
       options={[]}
       autoSelect
-      onChange={(e, val) => onWordsChange(val)}
-      value={words}
+      onChange={(e, val) => {
+        onWordsChange(val.map(o => {
+          return { value: o }
+        }))
+      }}
+      value={words.map(o => o.value)}
       renderTags={(value, getTagProps) =>
         value.map((option, index) => (
           <Chip

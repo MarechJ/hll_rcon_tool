@@ -88,7 +88,9 @@ class DiscordHookConfig:
 
         return webhooks.DiscordWebhooksUserConfig(name=self.for_type)
 
-    def set_hooks_for_type(self, hooks: list[webhooks.DynamicHookType]):
+    def set_hooks_for_type(
+        self, hooks: list[webhooks.DynamicHookType], save_config=True
+    ):
         if not isinstance(hooks, list):
             raise InvalidConfigurationError("%s must be a list", self.HOOKS_KEY)
 
@@ -96,21 +98,18 @@ class DiscordHookConfig:
         for raw_hook in hooks:
             user_ids: list[webhooks.DiscordUserIdFormat] = []
             role_ids: list[webhooks.DiscordRoleIdFormat] = []
-            try:
-                user_ids.extend(
-                    webhooks.DiscordUserIdFormat(value=v)
+            user_ids.extend(
+                [
+                    webhooks.DiscordUserIdFormat(value=v["value"])
                     for v in raw_hook["user_mentions"]
-                )
-            except ValueError:
-                pass
-
-            try:
-                role_ids.extend(
-                    webhooks.DiscordRoleIdFormat(value=v)
+                ]
+            )
+            role_ids.extend(
+                [
+                    webhooks.DiscordRoleIdFormat(value=v["value"])
                     for v in raw_hook["role_mentions"]
-                )
-            except ValueError:
-                pass
+                ]
+            )
 
             h = webhooks.DiscordWebhook(
                 url=raw_hook["url"], user_mentions=user_ids, role_mentions=role_ids
@@ -120,7 +119,9 @@ class DiscordHookConfig:
         validated_conf = webhooks.DiscordWebhooksUserConfig(
             name=self.for_type, hooks=validated_hooks
         )
-        set_user_config(self.HOOKS_KEY, validated_conf.model_dump())
+
+        if save_config:
+            set_user_config(self.HOOKS_KEY, validated_conf.model_dump())
 
 
 class CameraConfig:

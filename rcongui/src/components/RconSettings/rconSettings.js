@@ -76,8 +76,8 @@ const Hook = ({
   actionType,
 }) => {
   const [myHook, setMyHook] = React.useState(hook);
-  const [myUsers, setMyUsers] = React.useState(user_mentions.map(o => o?.value))
-  const [myRoles, setMyRoles] = React.useState(role_mentions.map(o => o?.value));
+  const [myUsers, setMyUsers] = React.useState(user_mentions)
+  const [myRoles, setMyRoles] = React.useState(role_mentions);
 
   return (
     <Grid container spacing={1}>
@@ -178,10 +178,6 @@ const WebhooksConfig = () => {
             <Grid container>
               {hookConfig.hooks.length ? (
                 hookConfig.hooks.map((o, idx) => {
-                  // console.log(`hook=${o.stringify()}`)
-                  console.log(`hook=${JSON.stringify(o)}`)
-                  console.log(`url=${o.url} user_mentions=${o.user_mentions} role_mentions=${o.role_mentions}`)
-
                   return <Hook
                     hook={o.url}
                     user_mentions={o.user_mentions}
