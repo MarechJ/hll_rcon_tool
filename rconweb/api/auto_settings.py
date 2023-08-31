@@ -4,7 +4,7 @@ import os
 from django.contrib.auth.decorators import permission_required
 from django.views.decorators.csrf import csrf_exempt
 
-from rcon.user_config import AutoSettingsConfig
+from rcon.user_config.user_config import AutoSettingsConfig
 
 from .audit_log import record_audit
 from .auth import api_response, login_required

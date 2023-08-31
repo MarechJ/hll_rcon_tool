@@ -3,7 +3,7 @@ import os
 import re
 from contextlib import contextmanager
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Generator
 
 import pydantic
 from sqlalchemy import (
@@ -21,7 +21,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship, sessionmaker
-from sqlalchemy.orm.session import object_session
+from sqlalchemy.orm.session import object_session, Session
 from sqlalchemy.schema import UniqueConstraint
 
 from rcon.types import (
@@ -227,7 +227,7 @@ class UserConfig(Base):
     key = Column(String, unique=True, index=True)
     value = Column(JSONB)
 
-    def to_dict(self) -> UserConfigType:
+    def to_dict(self) -> dict[str, JSONB]:
         return {self.key: self.value}
 
 
@@ -719,7 +719,7 @@ def install_unaccent():
         sess.execute("CREATE EXTENSION IF NOT EXISTS unaccent;")
 
 
-def get_session_maker():
+def get_session_maker() -> sessionmaker:
     engine = get_engine()
     sess = sessionmaker()
     sess.configure(bind=engine)
@@ -727,11 +727,11 @@ def get_session_maker():
 
 
 @contextmanager
-def enter_session():
-    sess = get_session_maker()
+def enter_session() -> Generator[Session, None, None]:
+    session_maker = get_session_maker()
 
     try:
-        sess = sess()
+        sess: Session = session_maker()
         yield sess
     finally:
         sess.commit()

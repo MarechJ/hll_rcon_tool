@@ -14,7 +14,7 @@ from rcon.models import PlayerOptins, PlayerSteamID, enter_session
 from rcon.player_history import get_player
 from rcon.rcon import CommandFailedError, Rcon, StructuredLogLineType
 from rcon.settings import SERVER_INFO
-from rcon.user_config import DefaultMethods, VoteMapConfig
+from rcon.user_config.user_config import DefaultMethods, VoteMapConfig
 from rcon.utils import (
     ALL_MAPS,
     LONG_HUMAN_MAP_NAMES,

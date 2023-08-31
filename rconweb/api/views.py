@@ -19,7 +19,7 @@ from rcon.gtx import GTXFtp
 from rcon.player_history import add_player_to_blacklist, remove_player_from_blacklist
 from rcon.rcon import Rcon
 from rcon.settings import SERVER_INFO
-from rcon.user_config import (
+from rcon.user_config.user_config import (
     AutoBroadcasts,
     AutoVoteKickConfig,
     CameraConfig,
@@ -154,11 +154,11 @@ def set_hooks(request):
     data = _get_data(request)
 
     hook_config = DiscordHookConfig(for_type=data["name"])
-    hook_config.set_hooks(data["hooks"])
+    hook_config.set_hooks_for_type(data["hooks"])
 
     audit("set_hooks", request, data)
     return api_response(
-        result=DiscordHookConfig.get_all_hook_types(),
+        result=DiscordHookConfig.get_all_hook_types(as_dict=True),
         command="set_hooks",
         failed=False,
     )

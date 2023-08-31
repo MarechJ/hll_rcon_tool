@@ -5,14 +5,14 @@ from typing import List
 
 from discord_webhook import DiscordWebhook
 
-from rcon.user_config import DiscordHookConfig
+from rcon.user_config.user_config import DiscordHookConfig
 
 logger = logging.getLogger(__name__)
 
 
-def make_allowed_mentions(roles):
+def make_allowed_mentions(user_ids, role_ids):
     allowed_mentions = {}
-    for r in roles:
+    for r in user_ids + role_ids:
         if match := re.match(r"<@\!(\d+)>", r):
             allowed_mentions.setdefault("users", []).append(match.group(1))
         if match := re.match(r"<@&(\d+)>", r):
@@ -26,13 +26,18 @@ def make_allowed_mentions(roles):
 
 def get_prepared_discord_hooks(type) -> List[DiscordWebhook]:
     config = DiscordHookConfig(type)
-    hooks = config.get_hooks()
+    hooks = config.get_hooks_for_type()
 
     return [
         DiscordWebhook(
-            url=hook.hook,
-            allowed_mentions=make_allowed_mentions(hook.roles),
-            content=" ".join(hook.roles),
+            url=hook.url,
+            allowed_mentions=make_allowed_mentions(
+                hook.user_mentions, hook.role_mentions
+            ),
+            content=" ".join(
+                [v.value for v in hook.user_mentions]
+                + [v.value for v in hook.role_mentions]
+            ),
         )
         for hook in hooks.hooks
     ]

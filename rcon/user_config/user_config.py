@@ -1,12 +1,12 @@
 import enum
 import logging
 import os
-from dataclasses import asdict, dataclass, field, fields
-from typing import List
+from dataclasses import dataclass, fields
 
 from rcon.cache_utils import invalidates, ttl_cache
 from rcon.commands import CommandFailedError
 from rcon.models import UserConfig, enter_session
+from rcon.user_config import webhooks
 
 logger = logging.getLogger(__name__)
 
@@ -49,26 +49,9 @@ class InvalidConfigurationError(Exception):
     pass
 
 
-@dataclass
-class Hook:
-    roles: List[str] = field(default_factory=list)
-    hook: str = None
-
-
-@dataclass
-class Hooks:
-    name: str
-    hooks: List[Hook] = field(default_factory=list)
-
-    @classmethod
-    def from_dict(cls, dict_):
-        hooks = [Hook(**h) for h in dict_.pop("hooks", [])]
-        return cls(hooks=hooks, **dict_)
-
-
 class DiscordHookConfig:
     hooks_key = "discord_hooks"
-    expected_hook_types = (
+    EXPECTED_HOOK_TYPES = (
         "watchlist",
         "camera",
         # TODO
@@ -78,7 +61,7 @@ class DiscordHookConfig:
     )
 
     def __init__(self, for_type):
-        if for_type not in self.expected_hook_types:
+        if for_type not in self.EXPECTED_HOOK_TYPES:
             raise ValueError("Using unexpected hook type %s", for_type)
         server_number = os.getenv("SERVER_NUMBER", 0)
         self.for_type = for_type
@@ -86,23 +69,58 @@ class DiscordHookConfig:
 
     @staticmethod
     def get_all_hook_types(as_dict=False):
-        hooks = []
+        hooks: list[webhooks.DiscordWebhooksUserConfig] = []
         with enter_session() as sess:
-            for name in DiscordHookConfig.expected_hook_types:
-                hooks.append(asdict(DiscordHookConfig(for_type=name).get_hooks()))
+            hooks = [
+                DiscordHookConfig(for_type=name).get_hooks_for_type()
+                for name in DiscordHookConfig.EXPECTED_HOOK_TYPES
+            ]
+
+        if as_dict:
+            return [h.model_dump() for h in hooks]
+        else:
             return hooks
 
-    def get_hooks(self) -> Hooks:
+    def get_hooks_for_type(self) -> webhooks.DiscordWebhooksUserConfig:
         conf = get_user_config(self.HOOKS_KEY, None)
         if conf:
-            return Hooks.from_dict(conf)
-        return Hooks(name=self.for_type)
+            return webhooks.DiscordWebhooksUserConfig.model_validate(conf)
 
-    def set_hooks(self, hooks):
+        return webhooks.DiscordWebhooksUserConfig(name=self.for_type)
+
+    def set_hooks_for_type(self, hooks: list[webhooks.DynamicHookType]):
         if not isinstance(hooks, list):
             raise InvalidConfigurationError("%s must be a list", self.HOOKS_KEY)
-        hooks = Hooks(name=self.for_type, hooks=[Hook(**h) for h in hooks])
-        set_user_config(self.HOOKS_KEY, asdict(hooks))
+
+        validated_hooks = []
+        for raw_hook in hooks:
+            user_ids: list[webhooks.DiscordUserIdFormat] = []
+            role_ids: list[webhooks.DiscordRoleIdFormat] = []
+            try:
+                user_ids.extend(
+                    webhooks.DiscordUserIdFormat(value=v)
+                    for v in raw_hook["user_mentions"]
+                )
+            except ValueError:
+                pass
+
+            try:
+                role_ids.extend(
+                    webhooks.DiscordRoleIdFormat(value=v)
+                    for v in raw_hook["role_mentions"]
+                )
+            except ValueError:
+                pass
+
+            h = webhooks.DiscordWebhook(
+                url=raw_hook["url"], user_mentions=user_ids, role_mentions=role_ids
+            )
+            validated_hooks.append(h)
+
+        validated_conf = webhooks.DiscordWebhooksUserConfig(
+            name=self.for_type, hooks=validated_hooks
+        )
+        set_user_config(self.HOOKS_KEY, validated_conf.model_dump())
 
 
 class CameraConfig:

@@ -68,14 +68,16 @@ const ManualWatchList = ({ classes }) => {
 
 const Hook = ({
   hook = "",
-  roles = [],
+  role_mentions = [],
+  user_mentions = [],
   onAddHook,
   onDeleteHook,
   onUpdateHook,
   actionType,
 }) => {
   const [myHook, setMyHook] = React.useState(hook);
-  const [myRoles, setMyRoles] = React.useState(roles);
+  const [myUsers, setMyUsers] = React.useState(user_mentions.map(o => o?.value))
+  const [myRoles, setMyRoles] = React.useState(role_mentions.map(o => o?.value));
 
   return (
     <Grid container spacing={1}>
@@ -90,8 +92,15 @@ const Hook = ({
       </Grid>
       <Grid item xs={6}>
         <WordList
+          label="Users"
+          helperText="Add users in <@> format to be pinged, hit enter to validate"
+          placeholder="<@111117777888889999>"
+          words={myUsers}
+          onWordsChange={setMyUsers}
+        />
+        <WordList
           label="Roles"
-          helperText="Add roles to be pinged, hit enter to validate"
+          helperText="Add roles in <@&> format to be pinged, hit enter to validate"
           placeholder="<@&111117777888889999>"
           words={myRoles}
           onWordsChange={setMyRoles}
@@ -102,13 +111,13 @@ const Hook = ({
           <React.Fragment>
             <IconButton
               edge="start"
-              onClick={() => onDeleteHook(myHook, myRoles)}
+              onClick={() => onDeleteHook(myHook, myUsers, myRoles)}
             >
               <DeleteIcon />
             </IconButton>
             <IconButton
               edge="start"
-              onClick={() => onUpdateHook(myHook, myRoles)}
+              onClick={() => onUpdateHook(myHook, myUsers, myRoles)}
             >
               <SaveIcon />
             </IconButton>
@@ -117,8 +126,9 @@ const Hook = ({
           <IconButton
             edge="start"
             onClick={() => {
-              onAddHook(myHook, myRoles);
-              setMyRoles("");
+              onAddHook(myHook, myUsers, myRoles);
+              setMyUsers([]);
+              setMyRoles([]);
               setMyHook("");
             }}
           >
@@ -167,21 +177,27 @@ const WebhooksConfig = () => {
             </Typography>
             <Grid container>
               {hookConfig.hooks.length ? (
-                hookConfig.hooks.map((o, idx) => (
-                  <Hook
-                    hook={o.hook}
-                    roles={o.roles}
+                hookConfig.hooks.map((o, idx) => {
+                  // console.log(`hook=${o.stringify()}`)
+                  console.log(`hook=${JSON.stringify(o)}`)
+                  console.log(`url=${o.url} user_mentions=${o.user_mentions} role_mentions=${o.role_mentions}`)
+
+                  return <Hook
+                    hook={o.url}
+                    user_mentions={o.user_mentions}
+                    role_mentions={o.role_mentions}
+                    // mentions={o.roles}
                     actionType="delete"
                     onDeleteHook={() => {
                       hookConfig.hooks.splice(idx, 1);
                       setHookConfig(hookConfig);
                     }}
-                    onUpdateHook={(hook, roles) => {
-                      hookConfig.hooks[idx] = { hook: hook, roles: roles };
+                    onUpdateHook={(hook_url, user_mentions, role_mentions) => {
+                      hookConfig.hooks[idx] = { url: hook_url, user_mentions: user_mentions, role_mentions: role_mentions };
                       setHookConfig(hookConfig);
                     }}
                   />
-                ))
+                })
               ) : (
                 <Typography>{`No hooks defined for: ${hookConfig.name}`}</Typography>
               )}
@@ -190,8 +206,8 @@ const WebhooksConfig = () => {
           <Grid item xs={12}>
             <Hook
               actionType="add"
-              onAddHook={(hook, roles) => {
-                hookConfig.hooks.push({ hook: hook, roles: roles });
+              onAddHook={(hook_url, user_mentions, role_mentions) => {
+                hookConfig.hooks.push({ url: hook_url, user_mentions: user_mentions, role_mentions: role_mentions });
                 setHookConfig(hookConfig);
               }}
             />

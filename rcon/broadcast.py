@@ -6,7 +6,7 @@ from functools import partial
 from rcon.audit import ingame_mods, online_mods
 from rcon.commands import CommandFailedError
 from rcon.settings import SERVER_INFO
-from rcon.user_config import AutoBroadcasts, VoteMapConfig
+from rcon.user_config.user_config import AutoBroadcasts, VoteMapConfig
 from rcon.utils import (
     LONG_HUMAN_MAP_NAMES,
     NO_MOD_LONG_HUMAN_MAP_NAMES,

@@ -4,7 +4,7 @@ import time
 from rcon.audit import ingame_mods, online_mods
 from rcon.commands import CommandFailedError
 from rcon.rcon import CommandFailedError, Rcon
-from rcon.user_config import AutoVoteKickConfig
+from rcon.user_config.user_config import AutoVoteKickConfig
 from rcon.vote_map import VoteMap
 
 logger = logging.getLogger(__name__)
