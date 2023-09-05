@@ -23,10 +23,10 @@ from rcon.user_config.user_config import (
     AutoBroadcasts,
     AutoVoteKickConfig,
     CameraConfig,
-    DiscordHookConfig,
-    InvalidConfigurationError,
     StandardMessages,
 )
+from rcon.user_config.utils import InvalidConfigurationError
+from rcon.user_config.webhooks import DiscordWebhooksUserConfig
 from rcon.utils import LONG_HUMAN_MAP_NAMES, MapsHistory, map_name
 from rcon.watchlist import PlayerWatch
 from rcon.workers import temporary_broadcast, temporary_welcome
@@ -140,7 +140,7 @@ def public_info(request):
 @permission_required("api.can_view_discord_webhooks", raise_exception=True)
 def get_hooks(request):
     return api_response(
-        result=DiscordHookConfig.get_all_hook_types(as_dict=True),
+        result=DiscordWebhooksUserConfig.get_all_hook_types(as_dict=True),
         command="get_hooks",
         failed=False,
     )
@@ -156,8 +156,8 @@ def validate_hooks(request):
     succesful = True
     error_message: str | None = None
     try:
-        hook_config = DiscordHookConfig(for_type=data["name"])
-        hook_config.set_hooks_for_type(data["hooks"], save_config=False)
+        hook_config = DiscordWebhooksUserConfig(hook_type=data["name"])
+        hook_config.save_to_db(data["hooks"], dry_run=True)
     except (ValueError, KeyError) as e:
         succesful = False
         if isinstance(e, KeyError):
@@ -180,12 +180,12 @@ def validate_hooks(request):
 def set_hooks(request):
     data = _get_data(request)
 
-    hook_config = DiscordHookConfig(for_type=data["name"])
-    hook_config.set_hooks_for_type(data["hooks"])
+    hook_config = DiscordWebhooksUserConfig(hook_type=data["name"])
+    hook_config.save_to_db(data["hooks"])
 
     audit("set_hooks", request, data)
     return api_response(
-        result=DiscordHookConfig.get_all_hook_types(as_dict=True),
+        result=DiscordWebhooksUserConfig.get_all_hook_types(as_dict=True),
         command="set_hooks",
         failed=False,
     )
