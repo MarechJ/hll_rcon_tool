@@ -39,9 +39,10 @@ from rcon.player_history import (
 )
 from rcon.rcon import Rcon, StructuredLogLineType
 from rcon.steam_utils import get_player_bans, get_steam_profile, update_db_player_info
-from rcon.types import PlayerFlagType, SteamBansType, VACGameBansConfigType
+from rcon.types import PlayerFlagType, SteamBansType
 from rcon.user_config.camera import CameraNotificationUserConfig
 from rcon.user_config.real_vip import RealVipUserConfig
+from rcon.user_config.vac_game_bans import VacGameBansUserConfig
 from rcon.utils import LOG_MAP_NAMES_TO_MAP, MapsHistory, get_server_number
 from rcon.vote_map import VoteMap
 from rcon.workers import record_stats_worker, temporary_broadcast, temporary_welcome
@@ -232,18 +233,16 @@ def should_ban(
 
 def ban_if_has_vac_bans(rcon: Rcon, steam_id_64, name):
     try:
-        config: VACGameBansConfigType = get_config()["VAC_GAME_BANS"]
-    except KeyError:
-        logger.error(f"VAC_GAME_BANS not in your config")
+        config = VacGameBansUserConfig.load_from_db()
+    except Exception as e:
+        logger.exception(e)
         return
 
-    max_days_since_ban = config.get("ban_on_vac_history_days", 0)
+    max_days_since_ban = config.vac_history_days
     max_game_bans = (
-        float("inf")
-        if config.get("max_game_ban_threshold", 0) <= 0
-        else config.get("max_game_ban_threshold", 0)
+        float("inf") if config.game_ban_threshhold <= 0 else config.game_ban_threshhold
     )
-    whitelist_flags = config.get("whitelist_flags", [])
+    whitelist_flags = config.whitelist_flags
 
     if max_days_since_ban <= 0:
         return  # Feature is disabled
@@ -270,7 +269,7 @@ def ban_if_has_vac_bans(rcon: Rcon, steam_id_64, name):
             player_flags=player.flags,
             whitelist_flags=whitelist_flags,
         ):
-            reason = config["ban_on_vac_history_reason"].format(
+            reason = config.ban_on_vac_history_reason.format(
                 DAYS_SINCE_LAST_BAN=bans.get("DaysSinceLastBan"),
                 MAX_DAYS_SINCE_BAN=str(max_days_since_ban),
             )

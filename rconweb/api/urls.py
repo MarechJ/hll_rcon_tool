@@ -118,6 +118,9 @@ endpoints: list[tuple[str, Callable]] = [
     ("get_rcon_settings_config", user_settings.get_rcon_settings_config),
     ("validate_rcon_settings_config", user_settings.validate_rcon_settings_config),
     ("set_rcon_settings_config", user_settings.set_rcon_settings_config),
+    ("get_vac_game_bans_config", user_settings.get_vac_game_bans_config),
+    ("validate_vac_game_bans_config", user_settings.validate_vac_game_bans_config),
+    ("set_vac_game_bans_config", user_settings.set_vac_game_bans_config),
 ] + [(name, func) for name, func in views.commands]
 
 # Expose endpoints though Django
