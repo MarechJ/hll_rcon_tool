@@ -6,10 +6,9 @@ from contextlib import contextmanager, nullcontext
 from functools import wraps
 from typing import List
 
-from rcon.config import get_config
 from rcon.connection import HLLConnection
-from rcon.models import AdvancedConfigOptions
 from rcon.types import VipId
+from rcon.user_config.rcon_settings import RconSettingsUserConfig
 from rcon.utils import exception_in_chain
 
 logger = logging.getLogger(__name__)
@@ -98,32 +97,8 @@ class ServerCtl:
     """
 
     def __init__(self, config, auto_retry=1, max_open=None, max_idle=None):
-        rcon_config = get_config()
-        advanced_settings = None
-        try:
-            advanced_settings = AdvancedConfigOptions(
-                **rcon_config["ADVANCED_CRCON_SETTINGS"]
-            )
-        except ValueError as e:
-            # This might look dumb but pydantic provides useful error messages in the
-            # stack trace and we don't have to remember to keep updating this if we add
-            # any more fields to the ADVANCED_CRCON_SETTINGS config
-            logger.exception(e)
-
-        if max_open is not None:
-            self.maxOpen = max_open
-        elif advanced_settings is not None:
-            self.maxOpen = advanced_settings.thread_pool_size
-        else:
-            self.maxOpen = 20
-
-        if max_idle is not None:
-            self.maxIdle = max_idle
-        elif advanced_settings is not None:
-            self.maxIdle = advanced_settings.thread_pool_size
-        else:
-            self.maxIdle = 20
-
+        self.maxOpen = max_open
+        self.maxIdle = max_idle
         # .env fed config from rcon.SERVER_INFO
         self.config = config
         self.auto_retry = auto_retry

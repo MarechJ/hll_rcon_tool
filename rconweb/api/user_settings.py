@@ -3,6 +3,7 @@ from logging import getLogger
 from django.contrib.auth.decorators import permission_required
 from django.views.decorators.csrf import csrf_exempt
 
+from rcon.user_config.rcon_settings import RconSettingsUserConfig
 from rcon.user_config.steam import SteamUserConfig
 
 from .audit_log import record_audit
@@ -65,6 +66,71 @@ def set_steam_config(request):
 
     response = _validate_user_config(
         SteamUserConfig, data=data, command_name=command_name, dry_run=False
+    )
+
+    if response:
+        return response
+
+    return api_response(
+        result=True,
+        command=command_name,
+        arguments=data,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+@permission_required("api.", raise_exception=True)
+def get_rcon_settings_config(request):
+    command_name = "get_rcon_settings_config"
+
+    try:
+        config = RconSettingsUserConfig.load_from_db()
+    except Exception as e:
+        logger.exception(e)
+        return api_response(command=command_name, error=str(e), failed=True)
+
+    return api_response(
+        result=config.model_dump(),
+        command=command_name,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+# TODO: different permission?
+@permission_required("api.", raise_exception=True)
+def validate_rcon_settings_config(request):
+    command_name = "validate_rcon_settings_config"
+    data = _get_data(request)
+
+    response = _validate_user_config(
+        RconSettingsUserConfig, data=data, command_name=command_name, dry_run=True
+    )
+
+    if response:
+        return response
+
+    return api_response(
+        result=True,
+        command=command_name,
+        arguments=data,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+@permission_required("api.", raise_exception=True)
+@record_audit
+def set_rcon_settings_config(request):
+    command_name = "set_rcon_settings_config"
+    data = _get_data(request)
+
+    response = _validate_user_config(
+        RconSettingsUserConfig, data=data, command_name=command_name, dry_run=False
     )
 
     if response:

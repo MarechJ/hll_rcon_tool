@@ -11,8 +11,7 @@ from dateutil import parser, relativedelta
 
 from rcon.cache_utils import get_redis_client, invalidates, ttl_cache
 from rcon.commands import CommandFailedError, ServerCtl, VipId
-from rcon.config import get_config
-from rcon.models import AdvancedConfigOptions, PlayerSteamID, PlayerVIP, enter_session
+from rcon.models import PlayerSteamID, PlayerVIP, enter_session
 from rcon.player_history import (
     add_player_to_blacklist,
     get_profiles,
@@ -34,6 +33,7 @@ from rcon.types import (
     StructuredLogLineType,
     StructuredLogLineWithMetaData,
 )
+from rcon.user_config.rcon_settings import RconSettingsUserConfig
 from rcon.utils import ALL_ROLES, ALL_ROLES_KEY_INDEX_MAP, get_server_number
 
 STEAMID = "steam_id_64"
@@ -116,24 +116,24 @@ class Rcon(ServerCtl):
     )
 
     def __init__(self, *args, pool_size: bool | None = None, **kwargs):
-        super().__init__(*args, **kwargs)
-
         # config/default_config.yml config.yml, etc.
-        config = get_config()
+        # TODO: Don't let this block starting RCON
         try:
-            self.advanced_settings = AdvancedConfigOptions(
-                **config["ADVANCED_CRCON_SETTINGS"]
-            )
+            config = RconSettingsUserConfig.load_from_db()
         except ValueError as e:
             # This might look dumb but pydantic provides useful error messages in the
             # stack trace and we don't have to remember to keep updating this if we add
-            # any more fields to the ADVANCED_CRCON_SETTINGS config
+            # any more fields to RconSettingsUserConfig config
             logger.exception(e)
+            config = RconSettingsUserConfig()
 
+        super().__init__(
+            *args, **kwargs, max_open=config.max_open, max_idle=config.max_idle
+        )
         if pool_size is not None:
             self.pool_size = pool_size
         else:
-            self.pool_size = self.advanced_settings.thread_pool_size
+            self.pool_size = config.thread_pool_size
 
     @cached_property
     def thread_pool(self):

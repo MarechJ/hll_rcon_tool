@@ -758,9 +758,3 @@ class LogLineWebHookField(pydantic.BaseModel):
                 raise ValueError(f"Invalid Discord role {role_or_user}")
 
         return values
-
-
-class AdvancedConfigOptions(pydantic.BaseModel):
-    """ADVANCED_CRCON_SETTINGS in config.yml"""
-
-    thread_pool_size: pydantic.conint(ge=1, le=100)
