@@ -14,6 +14,7 @@ from . import (
     scoreboards,
     server_stats,
     services,
+    user_settings,
     views,
     vips,
     votemap,
@@ -111,6 +112,9 @@ endpoints: list[tuple[str, Callable]] = [
     ("get_server_stats", server_stats.get_server_stats),
     ("get_audit_logs", audit_log.get_audit_logs),
     ("get_audit_logs_autocomplete", audit_log.get_audit_logs_autocomplete),
+    ("get_steam_config", user_settings.get_steam_config),
+    ("validate_steam_config", user_settings.validate_steam_config),
+    ("set_steam_config", user_settings.set_steam_config),
 ] + [(name, func) for name, func in views.commands]
 
 # Expose endpoints though Django

@@ -8,19 +8,19 @@ import steam.exceptions
 from steam.webapi import WebAPI
 
 from rcon.cache_utils import ttl_cache
-from rcon.config import get_config
 from rcon.models import PlayerSteamID, SteamInfo
 from rcon.types import SteamBanResultType, SteamBansType
+from rcon.user_config.steam import SteamUserConfig
 
 logger = logging.getLogger(__name__)
 
 
 def get_steam_api_key() -> str | None:
-    steam_key = get_config().get("STEAM_API_KEY", None)
-    if steam_key is None or steam_key == "":
-        logger.warning("STEAM_API_KEY not set some features will be disabled.")
+    config = SteamUserConfig.load_from_db()
+    if config.api_key is None or config.api_key == "":
+        logger.warning("Steam API key is not set some features will be disabled.")
 
-    return steam_key
+    return config.api_key
 
 
 @ttl_cache(60 * 60 * 24, cache_falsy=False, is_method=False)
@@ -47,7 +47,7 @@ def get_steam_profiles(steam_ids):
         logger.exception(e)
         return None
     except AttributeError:
-        logger.error("STEAM_API_KEY is invalid, can't fetch steam profile")
+        logger.error("Steam API key is invalid, can't fetch steam profile")
         return None
     except IndexError:
         logger.exception("Steam: no player found")
@@ -97,7 +97,7 @@ def get_player_bans(steamd_id) -> SteamBansType | None:
         logger.exception(e)
         return None
     except AttributeError:
-        logger.error("STEAM_API_KEY is invalid, can't fetch steam profile")
+        logger.error("Steam API key is invalid, can't fetch steam profile")
         return None
     except IndexError:
         logger.exception("Steam no player found")
@@ -125,7 +125,7 @@ def get_players_ban(steamd_ids: List):
         logger.exception(e)
         return None
     except AttributeError:
-        logger.error("STEAM_API_KEY is invalid, can't fetch steam profile")
+        logger.error("Steam API key is invalid, can't fetch steam profile")
         return None
     except IndexError:
         logger.exception("Steam no player found")
