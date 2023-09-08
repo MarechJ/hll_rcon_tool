@@ -3,7 +3,7 @@ import os
 import re
 from contextlib import contextmanager
 from datetime import datetime
-from typing import List, Optional, Generator
+from typing import Generator, List, Optional
 
 import pydantic
 from sqlalchemy import (
@@ -21,7 +21,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship, sessionmaker
-from sqlalchemy.orm.session import object_session, Session
+from sqlalchemy.orm.session import Session, object_session
 from sqlalchemy.schema import UniqueConstraint
 
 from rcon.types import (
@@ -39,7 +39,6 @@ from rcon.types import (
     PlayerSessionType,
     PlayerStatsType,
     ServerCountType,
-    UserConfigType,
     WatchListType,
 )
 

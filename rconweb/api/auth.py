@@ -10,7 +10,7 @@ from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
 from django.db.models.signals import post_delete, post_save
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse, QueryDict
 from django.views.decorators.csrf import csrf_exempt
 
 from rcon.audit import heartbeat, ingame_mods, online_mods, set_registered_mods
@@ -31,6 +31,8 @@ post_delete.connect(update_mods, sender=User)
 post_save.connect(update_mods, sender=SteamPlayer)
 post_delete.connect(update_mods, sender=SteamPlayer)
 
+from pprint import pprint
+
 
 @dataclass
 class RconResponse:
@@ -42,10 +44,15 @@ class RconResponse:
     forwards_results: Any = None
 
     def to_dict(self):
+        # asdict() cannot convert a Django QueryDict properly
+        if isinstance(self.arguments, QueryDict):
+            self.arguments = self.arguments.dict()
         return asdict(self)
 
 
 def api_response(*args, **kwargs):
+    # logger.error(f"{args=}")
+    # logger.error(f"{kwargs=}")
     status_code = kwargs.pop("status_code", 200)
     return JsonResponse(RconResponse(*args, **kwargs).to_dict(), status=status_code)
 

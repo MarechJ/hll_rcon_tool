@@ -6,7 +6,8 @@ from functools import partial
 from rcon.audit import ingame_mods, online_mods
 from rcon.commands import CommandFailedError
 from rcon.settings import SERVER_INFO
-from rcon.user_config.user_config import AutoBroadcasts, VoteMapConfig
+from rcon.user_config.auto_broadcast import AutoBroadcastUserConfig
+from rcon.user_config.vote_map import VoteMapUserConfig
 from rcon.utils import (
     LONG_HUMAN_MAP_NAMES,
     NO_MOD_LONG_HUMAN_MAP_NAMES,
@@ -65,20 +66,20 @@ def chunks(lst, n):
 
 
 def scrolling_votemap(rcon, winning_maps, repeat=10):
-    config = VoteMapConfig()
+    config = VoteMapUserConfig.load_from_db()
     vote_options = format_map_vote(rcon, "line", short_names=False)
     if not vote_options:
         return ""
     separator = "  ***  "
     options = separator.join([vote_options] * repeat)
-    instructions = config.get_votemap_instruction_text().replace("\n", " ")
+    instructions = config.instruction_text.replace("\n", " ")
     repeat_instructions = max(
         int(len(options) / (len(instructions) + len(separator))), 1
     )
     instructions = separator.join([instructions] * repeat_instructions)
 
     winning_maps = format_winning_map(
-        rcon, winning_maps, display_count=0, default=config.get_votemap_no_vote_text()
+        rcon, winning_maps, display_count=0, default=config.no_vote_text
     )
     repeat_winning_maps = max(
         int(len(options) / (len(winning_maps) + len(separator))), 1
@@ -252,24 +253,22 @@ def run():
 
     ctl = Rcon(SERVER_INFO)
 
-    config = AutoBroadcasts()
+    config = AutoBroadcastUserConfig.load_from_db()
 
     while True:
-        msgs = config.get_messages()
-
-        if not config.get_enabled() or not msgs:
+        if not config.enabled or not config.messages:
             logger.debug(
                 "Auto broadcasts are disabled. Sleeping %s seconds", CHECK_INTERVAL
             )
             time.sleep(CHECK_INTERVAL)
             continue
 
-        if config.get_randomize():
+        if config.randomize:
             logger.debug("Auto broadcasts. Radomizing")
-            random.shuffle(msgs)
+            random.shuffle(config.messages)
 
-        for time_sec, msg in msgs:
-            if not config.get_enabled():
+        for time_sec, msg in config.messages:
+            if not config.enabled:
                 break
 
             formatted = format_message(ctl, msg)

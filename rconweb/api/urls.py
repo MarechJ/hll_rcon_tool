@@ -4,7 +4,6 @@ from typing import Callable
 from django.urls import path
 from django.views.decorators.csrf import csrf_exempt
 
-
 from . import (
     audit_log,
     auth,
@@ -97,13 +96,15 @@ endpoints: list[tuple[str, Callable]] = [
     ("do_set_map_whitelist", votemap.do_set_map_whitelist),
     ("get_map_whitelist", votemap.get_map_whitelist),
     ("get_votemap_config", votemap.get_votemap_config),
+    ("validate_votemap_config", votemap.validate_votemap_config),
+    ("set_votemap_config", votemap.set_votemap_config),
     ("get_votemap_status", votemap.get_votemap_status),
     ("reset_votemap_state", votemap.reset_votemap_state),
-    ("set_votemap_config", votemap.set_votemap_config),
     ("get_player_messages", history.get_player_messages),
     ("get_player_comment", history.get_player_comment),
     ("post_player_comment", history.post_player_comment),
     ("get_real_vip_config", vips.get_real_vip_config),
+    ("validate_real_vip_config", vips.validate_real_vip_config),
     ("set_real_vip_config", vips.set_real_vip_config),
     ("get_auto_settings", auto_settings.get_auto_settings),
     ("set_auto_settings", auto_settings.set_auto_settings),

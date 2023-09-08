@@ -153,8 +153,14 @@ async function _checkResult(data) {
 }
 
 async function getSharedMessages(namespace) {
-  return get(`get_standard_messages?message_type=${namespace}`)
+  return get(`get_standard_${namespace}_messages`)
     .then((res) => res.json())
+    .then((res) => {
+      console.log(
+        `get_standard_${namespace}_messages res=${json.stringify(res)}`
+      );
+      return res;
+    })
     .then(_checkResult);
 }
 

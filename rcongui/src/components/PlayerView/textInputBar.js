@@ -26,11 +26,11 @@ const Reason = ({
 }) => {
   const autoCompletehistory = textHistory
     ? textHistory.getTexts()
-    : new TextHistory("punitions").getTexts();
+    : new TextHistory("punishments").getTexts();
 
   const [sharedMessages, setSharedMessages] = React.useState([]);
   React.useEffect(() => {
-    getSharedMessages("punitions").then((data) => setSharedMessages(data));
+    getSharedMessages("punishments").then((data) => setSharedMessages(data));
   }, []);
 
   return (

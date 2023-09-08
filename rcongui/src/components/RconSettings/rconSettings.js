@@ -44,7 +44,7 @@ const ManualWatchList = ({ classes }) => {
   const [sharedMessages, setSharedMessages] = React.useState([]);
 
   React.useEffect(() => {
-    getSharedMessages("punitions").then((data) => setSharedMessages(data));
+    getSharedMessages("punishments").then((data) => setSharedMessages(data));
   }, []);
   const textHistory = new TextHistory("watchlist");
 
@@ -75,9 +75,13 @@ const Hook = ({
   onUpdateHook,
   actionType,
 }) => {
-  const [myHook, setMyHook] = React.useState(hook);
-  const [myUsers, setMyUsers] = React.useState(user_mentions)
-  const [myRoles, setMyRoles] = React.useState(role_mentions);
+  const [hookUrl, setHookUrl] = React.useState(hook);
+  const [userIds, setUserIds] = React.useState(user_mentions);
+  const [roleIds, setRoleIds] = React.useState(role_mentions);
+
+  console.log(
+    `hook=${hook} user_mentions=${user_mentions} role_mentions=${role_mentions}`
+  );
 
   return (
     <Grid container spacing={1}>
@@ -85,8 +89,8 @@ const Hook = ({
         <TextField
           label="webhook url"
           fullWidth
-          value={myHook}
-          onChange={(e) => setMyHook(e.target.value)}
+          value={hookUrl}
+          onChange={(e) => setHookUrl(e.target.value)}
           helperText="Discord hook url"
         />
       </Grid>
@@ -95,15 +99,15 @@ const Hook = ({
           label="Users"
           helperText="Add users in <@> format to be pinged, hit enter to validate"
           placeholder="<@111117777888889999>"
-          words={myUsers}
-          onWordsChange={setMyUsers}
+          words={userIds}
+          onWordsChange={setUserIds}
         />
         <WordList
           label="Roles"
           helperText="Add roles in <@&> format to be pinged, hit enter to validate"
           placeholder="<@&111117777888889999>"
-          words={myRoles}
-          onWordsChange={setMyRoles}
+          words={roleIds}
+          onWordsChange={setRoleIds}
         />
       </Grid>
       <Grid item xs={2}>
@@ -111,13 +115,16 @@ const Hook = ({
           <React.Fragment>
             <IconButton
               edge="start"
-              onClick={() => onDeleteHook(myHook, myUsers, myRoles)}
+              onClick={() => {
+                console.log("starting delete");
+                onDeleteHook();
+              }}
             >
               <DeleteIcon />
             </IconButton>
             <IconButton
               edge="start"
-              onClick={() => onUpdateHook(myHook, myUsers, myRoles)}
+              onClick={() => onUpdateHook(hookUrl, userIds, roleIds)}
             >
               <SaveIcon />
             </IconButton>
@@ -126,10 +133,10 @@ const Hook = ({
           <IconButton
             edge="start"
             onClick={() => {
-              onAddHook(myHook, myUsers, myRoles);
-              setMyUsers([]);
-              setMyRoles([]);
-              setMyHook("");
+              onAddHook(hookUrl, userIds, roleIds);
+              setUserIds([]);
+              setRoleIds([]);
+              setHookUrl("");
             }}
           >
             <AddIcon />
@@ -140,76 +147,110 @@ const Hook = ({
   );
 };
 
-const WebhooksConfig = () => {
+const WebhooksConfig = ({ type }) => {
   const [hooks, setHooks] = React.useState([]);
   React.useEffect(() => {
-    get("get_hooks")
-      .then((res) => showResponse(res, "get_hooks", false))
-      .then((res) => setHooks(res.result))
+    get(`get_${type}_discord_webhooks`)
+      .then((res) => showResponse(res, `get_${type}_discord_webhooks`, false))
+      .then((res) => {
+        return setHooks(res.result.hooks);
+      })
       .catch(handle_http_errors);
   }, []);
 
-  const setHookConfig = (hookConfig) =>
-    postData(`${process.env.REACT_APP_API_URL}set_hooks`, {
-      name: hookConfig.name,
-      hooks: hookConfig.hooks,
+  const setHookConfig = (hooks) => {
+    console.log(`hooks=${hookConfig}`);
+    postData(`${process.env.REACT_APP_API_URL}set_${type}_discord_webhooks`, {
+      hooks: hooks,
     })
-      .then((res) => showResponse(res, `set_hooks ${hookConfig.name}`, true))
+      .then((res) => showResponse(res, `set_${type}_discord_webhooks`, true))
       .then((res) => {
-        console.log(res);
-        setHooks(res.result);
+        setHooks(res.result.hooks);
       });
+  };
 
-  if (hooks === null) {
-    return (
-      <React.Fragment>
-        <p>no hooks found</p>
-      </React.Fragment>
-    );
-  }
+  // if (hooks === null) {
+  //   return (
+  //     <React.Fragment>
+  //       <p>no hooks found</p>
+  //     </React.Fragment>
+  //   );
+  // }
+
   return (
     <React.Fragment>
-      {hooks.map((hookConfig) => (
-        <Grid container>
-          <Grid item xs={12}>
-            <Typography variant="h6" style={{ "text-transform": "capitalize" }}>
-              For: {hookConfig.name}
-            </Typography>
-            <Grid container>
-              {hookConfig.hooks.length ? (
-                hookConfig.hooks.map((o, idx) => {
-                  return <Hook
-                    hook={o.url}
-                    user_mentions={o.user_mentions}
-                    role_mentions={o.role_mentions}
-                    // mentions={o.roles}
-                    actionType="delete"
-                    onDeleteHook={() => {
-                      hookConfig.hooks.splice(idx, 1);
-                      setHookConfig(hookConfig);
-                    }}
-                    onUpdateHook={(hook_url, user_mentions, role_mentions) => {
-                      hookConfig.hooks[idx] = { url: hook_url, user_mentions: user_mentions, role_mentions: role_mentions };
-                      setHookConfig(hookConfig);
-                    }}
-                  />
-                })
-              ) : (
-                <Typography>{`No hooks defined for: ${hookConfig.name}`}</Typography>
-              )}
+      <Grid container>
+        <Grid item xs={12}>
+          <Typography variant="h6" style={{ "text-transform": "capitalize" }}>
+            For: {type}
+          </Typography>
+          {hooks.length ? (
+            hooks.map((h) => {
+              console.log(
+                `webhook type=${type} hookConfig=${JSON.stringify(h)}`
+              );
+              return (
+                <>
+                  <Grid container>
+                    <Hook
+                      hook={h.url}
+                      user_mentions={h.user_mentions}
+                      role_mentions={h.role_mentions}
+                      actionType="delete"
+                      onDeleteHook={() => {
+                        console.log(`deleting hook idx=${idx}`);
+                        hooks.splice(idx, 1);
+                        setHookConfig(hooks);
+                      }}
+                      onUpdateHook={(
+                        hook_url,
+                        user_mentions,
+                        role_mentions
+                      ) => {
+                        console.log(`updating hook idx=${idx}`);
+                        hooks[idx] = {
+                          url: hook_url,
+                          user_mentions: user_mentions,
+                          role_mentions: role_mentions,
+                        };
+                        setHookConfig(hooks);
+                      }}
+                    />
+                  </Grid>
+
+                  <Grid item xs={12}>
+                    <Hook
+                      actionType="add"
+                      onAddHook={(hook_url, user_mentions, role_mentions) => {
+                        h.hooks.push({
+                          url: hook_url,
+                          user_mentions: user_mentions,
+                          role_mentions: role_mentions,
+                        });
+                        setHookConfig(h);
+                      }}
+                    />
+                  </Grid>
+                </>
+              );
+            })
+          ) : (
+            <Grid item xs={12}>
+              <Hook
+                actionType="add"
+                onAddHook={(hook_url, user_mentions, role_mentions) => {
+                  h.hooks.push({
+                    url: hook_url,
+                    user_mentions: user_mentions,
+                    role_mentions: role_mentions,
+                  });
+                  setHookConfig(h);
+                }}
+              />
             </Grid>
-          </Grid>
-          <Grid item xs={12}>
-            <Hook
-              actionType="add"
-              onAddHook={(hook_url, user_mentions, role_mentions) => {
-                hookConfig.hooks.push({ url: hook_url, user_mentions: user_mentions, role_mentions: role_mentions });
-                setHookConfig(hookConfig);
-              }}
-            />
-          </Grid>
+          )}
         </Grid>
-      ))}
+      </Grid>
     </React.Fragment>
   );
 };
@@ -225,10 +266,11 @@ class RconSettings extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
+      rawBroadcastMessages: [],
       broadcastMessages: [],
       standardMessages: [],
-      standardMessagesType: "punitions",
-      randomized: false,
+      standardMessagesType: "punishments",
+      randomize: false,
       enabled: false,
       cameraBroadcast: false,
       cameraWelcome: false,
@@ -286,10 +328,10 @@ class RconSettings extends React.Component {
         (data) =>
           !data.failed &&
           this.setState({
-            autovotekickEnabled: data.result.is_enabled,
-            autovotekickMinIngameMods: data.result.min_ingame_mods,
-            autovotekickMinOnlineMods: data.result.min_online_mods,
-            autovotekickConditionType: data.result.condition_type,
+            autovotekickEnabled: data.result.enabled,
+            autovotekickMinIngameMods: data.result.minimum_ingame_mods,
+            autovotekickMinOnlineMods: data.result.minimum_online_mods,
+            autovotekickConditionType: data.result.condition,
           })
       )
       .catch(handle_http_errors);
@@ -312,8 +354,10 @@ class RconSettings extends React.Component {
         (data) =>
           !data.failed &&
           this.setState({
-            broadcastMessages: data.result.messages,
-            randomized: data.result.randomized,
+            broadcastMessages: data.result.messages.map(
+              (m) => m.time_sec + " " + m.message
+            ),
+            randomize: data.result.randomize,
             enabled: data.result.enabled,
           })
       )
@@ -331,26 +375,39 @@ class RconSettings extends React.Component {
   }
 
   async loadStandardMessages() {
-    return get(
-      `get_standard_messages?message_type=${this.state.standardMessagesType}`
-    )
-      .then((res) => showResponse(res, "get_standard_messages", false))
-      .then(
-        (data) =>
+    return get(`get_standard_${this.state.standardMessagesType}_messages`)
+      .then((res) =>
+        showResponse(
+          res,
+          `get_standard_${this.state.standardMessagesType}_messages`,
+          false
+        )
+      )
+      .then((data) => {
+        return (
           !data.failed &&
           this.setState({
-            standardMessages: data.result,
+            standardMessages: data.result.messages,
           })
-      )
+        );
+      })
       .catch(handle_http_errors);
   }
 
   async saveStandardMessages() {
-    return postData(`${process.env.REACT_APP_API_URL}set_standard_messages`, {
-      message_type: this.state.standardMessagesType,
-      messages: this.state.standardMessages,
-    })
-      .then((res) => showResponse(res, "set_standard_messages", true))
+    return postData(
+      `${process.env.REACT_APP_API_URL}set_standard_${this.state.standardMessagesType}_messages`,
+      {
+        messages: this.state.standardMessages,
+      }
+    )
+      .then((res) =>
+        showResponse(
+          res,
+          `set_standard_${this.state.standardMessagesType}_messages`,
+          true
+        )
+      )
       .then(this.loadStandardMessages)
       .catch(handle_http_errors);
   }
@@ -403,7 +460,11 @@ class RconSettings extends React.Component {
 
   saveBroadCastMessages() {
     if (this.validate_messages()) {
-      this.saveBroadcastsSettings({ messages: this.state.broadcastMessages });
+      this.saveBroadcastsSettings({
+        enabled: this.state.enabled,
+        randomize: this.state.randomize,
+        messages: this.state.broadcastMessages,
+      });
     }
   }
 
@@ -431,7 +492,7 @@ class RconSettings extends React.Component {
       standardMessages,
       standardMessagesType,
       enabled,
-      randomized,
+      randomize,
       cameraBroadcast,
       cameraWelcome,
       autovotekickEnabled,
@@ -483,9 +544,9 @@ class RconSettings extends React.Component {
             <Grid item>
               <Padlock
                 handleChange={(v) =>
-                  this.saveBroadcastsSettings({ randomized: v })
+                  this.saveBroadcastsSettings({ randomize: v })
                 }
-                checked={randomized}
+                checked={randomize}
                 label="Randomized messages"
               />
             </Grid>
@@ -510,9 +571,9 @@ class RconSettings extends React.Component {
             placeholder="Insert your messages here, one per line, with format: <number of seconds to display> <a message (write: \n if you want a line return)>"
             variant="outlined"
             helperText="You can use the following variables in the text using the following syntax: '60 Welcome to {servername}. The next map is {nextmap}.'
-              (nextmap, maprotation, servername, vips, randomvip, votenextmap_line, votenextmap_line, votenextmap_noscroll, votenextmap_vertical,
-              votenextmap_by_mod_line, votenextmap_by_mod_vertical, votenextmap_by_mod_vertical_all, votenextmap_by_mod_split, total_votes,
-              winning_maps_short, winning_maps_all, scrolling_votemap, online_mods, ingame_mods)"
+            (nextmap, maprotation, servername, vips, randomvip, votenextmap_line, votenextmap_line, votenextmap_noscroll, votenextmap_vertical,
+            votenextmap_by_mod_line, votenextmap_by_mod_vertical, votenextmap_by_mod_vertical_all, votenextmap_by_mod_split, total_votes,
+            winning_maps_short, winning_maps_all, scrolling_votemap, online_mods, ingame_mods)"
           />
         </Grid>
         <Grid item xs={12}>
@@ -553,7 +614,7 @@ class RconSettings extends React.Component {
                 this.loadStandardMessages
               )
             }
-            values={["punitions", "welcome", "broadcast"]}
+            values={["punishments", "welcome", "broadcast"]}
           />
         </Grid>
         <Grid item xs={12}>
@@ -617,7 +678,17 @@ class RconSettings extends React.Component {
           justify="center"
           alignItems="center"
         >
-          <WebhooksConfig classes={classes} />
+          <WebhooksConfig classes={classes} type="watchlist" />
+        </Grid>
+        <Grid
+          item
+          xs={12}
+          className={`${classes.padding} ${classes.margin} ${classes.root}`}
+          alignContent="center"
+          justify="center"
+          alignItems="center"
+        >
+          <WebhooksConfig classes={classes} type="camera" />
         </Grid>
         <Grid item className={classes.paddingTop} justify="center" xs={12}>
           <Typography variant="h5">
@@ -636,13 +707,13 @@ class RconSettings extends React.Component {
           alignItems="center"
           spacing={1}
         >
-          <Grid item xs={12}>
+          {/* <Grid item xs={12}>
             <TextField
               type="number"
               label="# ingame moderator"
               value={autovotekickMinIngameMods}
               onChange={(e) =>
-                this.saveAutoVotekickConfig({ min_ingame_mods: e.target.value })
+                this.saveAutoVotekickConfig({ minimum_ingame_mods: e.target.value })
               }
               helperText="Number of moderator in game is greater or equal"
             />
@@ -653,7 +724,7 @@ class RconSettings extends React.Component {
                 value={autovotekickConditionType}
                 onChange={(e) =>
                   this.saveAutoVotekickConfig({
-                    condition_type: e.target.value,
+                    condition: e.target.value,
                   })
                 }
               >
@@ -667,18 +738,16 @@ class RconSettings extends React.Component {
               label="# online moderator"
               value={autovotekickMinOnlineMods}
               onChange={(e) =>
-                this.saveAutoVotekickConfig({ min_online_mods: e.target.value })
+                this.saveAutoVotekickConfig({ minimum_online_mods: e.target.value })
               }
               helperText="number of moderator with the rcon openned"
             />
-          </Grid>
+          </Grid> */}
           <Grid item>
             <Padlock
               label="Auto votekick toggle enabled"
               checked={autovotekickEnabled}
-              handleChange={(v) =>
-                this.saveAutoVotekickConfig({ is_enabled: v })
-              }
+              handleChange={(v) => this.saveAutoVotekickConfig({ enabled: v })}
             />
           </Grid>
         </Grid>

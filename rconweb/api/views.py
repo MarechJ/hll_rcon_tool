@@ -6,8 +6,9 @@ from functools import wraps
 from subprocess import PIPE, run
 from typing import Callable, List
 
+import pydantic
 from django.contrib.auth.decorators import permission_required
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse, QueryDict
 from django.views.decorators.csrf import csrf_exempt
 
 from rcon.broadcast import get_votes_status
@@ -19,14 +20,21 @@ from rcon.gtx import GTXFtp
 from rcon.player_history import add_player_to_blacklist, remove_player_from_blacklist
 from rcon.rcon import Rcon
 from rcon.settings import SERVER_INFO
-from rcon.user_config.user_config import (
-    AutoBroadcasts,
-    AutoVoteKickConfig,
-    CameraConfig,
-    StandardMessages,
+from rcon.user_config.auto_broadcast import AutoBroadcastUserConfig
+from rcon.user_config.auto_kick import AutoVoteKickUserConfig
+from rcon.user_config.camera import CameraNotificationUserConfig
+from rcon.user_config.standard_messages import (
+    StandardBroadcastMessagesUserConfig,
+    StandardPunishmentMessagesUserConfig,
+    StandardWelcomeMessagesUserConfig,
+    get_all_message_types,
 )
 from rcon.user_config.utils import InvalidConfigurationError
-from rcon.user_config.webhooks import DiscordWebhooksUserConfig
+from rcon.user_config.webhooks import (
+    CameraWebhooksUserConfig,
+    WatchlistWebhooksUserConfig,
+    get_all_hook_types,
+)
 from rcon.utils import LONG_HUMAN_MAP_NAMES, MapsHistory, map_name
 from rcon.watchlist import PlayerWatch
 from rcon.workers import temporary_broadcast, temporary_welcome
@@ -38,6 +46,37 @@ from .utils import _get_data
 
 logger = logging.getLogger("rconweb")
 ctl = Rcon(SERVER_INFO)
+
+
+def _validate_user_config(
+    model: AutoBroadcastUserConfig | CameraNotificationUserConfig,
+    data: QueryDict,
+    command_name: str,
+    dry_run=True,
+):
+    error_msg = None
+    try:
+        model.save_to_db(values=data, dry_run=dry_run)  # type: ignore
+    except pydantic.ValidationError as e:
+        error_msg = str(e)
+        # error_msg = e.json()
+        logger.warning(error_msg)
+        return api_response(
+            command=command_name, failed=True, error=error_msg, arguments=data
+        )
+    except InvalidConfigurationError as e:
+        error_msg = str(e)
+        logger.warning(error_msg)
+        # logger.error(e)
+        return api_response(
+            command=command_name, failed=True, error=error_msg, arguments=data
+        )
+    except Exception as e:
+        error_msg = str(e)
+        logger.exception(e)
+        return api_response(
+            command=command_name, failed=True, error=error_msg, arguments=data
+        )
 
 
 def set_temp_msg(request, func, name):
@@ -123,6 +162,7 @@ def public_info(request):
                 axis=gamestate["num_axis_players"],
             ),
             score=dict(allied=gamestate["allied_score"], axis=gamestate["axis_score"]),
+            # TODO: fix key
             raw_time_remaining=gamestate["raw_time_remaining"],
             vote_status=get_votes_status(none_on_fail=True),
             name=ctl.get_name(),
@@ -138,55 +178,145 @@ def public_info(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_view_discord_webhooks", raise_exception=True)
-def get_hooks(request):
+def get_all_discord_webhooks(request):
+    command_name = "get_all_discord_webhooks"
+
+    error_msg = None
+    try:
+        hooks = get_all_hook_types(as_dict=True)
+        return api_response(result=hooks, command=command_name, failed=False)
+    except:
+        return api_response(command=command_name, error=error_msg)
+
+
+@csrf_exempt
+@login_required()
+# TODO: permission does not exist yet
+@permission_required("api.can_view_watchlist_discord_webhooks", raise_exception=True)
+def get_watchlist_discord_webhooks(request):
+    command_name = "get_watchlist_discord_webhooks"
+
+    try:
+        config = WatchlistWebhooksUserConfig.load_from_db()
+    except Exception as e:
+        logger.exception(e)
+        return api_response(command=command_name, error=str(e), failed=True)
+
     return api_response(
-        result=DiscordWebhooksUserConfig.get_all_hook_types(as_dict=True),
-        command="get_hooks",
+        result=config.model_dump(),
+        command=command_name,
         failed=False,
     )
 
 
 @csrf_exempt
 @login_required()
-# TODO different permission?
-@permission_required("api.can_change_discord_webhooks", raise_exception=True)
-def validate_hooks(request):
+# TODO: permission does not exist yet
+@permission_required("api.can_change_watchlist_discord_webhooks", raise_exception=True)
+def validate_watchlist_discord_webhooks(request):
+    command_name = "validate_watchlist_discord_webhooks"
     data = _get_data(request)
 
-    succesful = True
-    error_message: str | None = None
-    try:
-        hook_config = DiscordWebhooksUserConfig(hook_type=data["name"])
-        hook_config.save_to_db(data["hooks"], dry_run=True)
-    except (ValueError, KeyError) as e:
-        succesful = False
-        if isinstance(e, KeyError):
-            error_message = f"Missing mandatory key {e}"
-        else:
-            error_message = repr(e)
+    response = _validate_user_config(
+        WatchlistWebhooksUserConfig, data=data, command_name=command_name, dry_run=True
+    )
 
-    if succesful:
-        return api_response(result=succesful, command="validate_hooks")
-    else:
-        return api_response(
-            result=succesful, error=error_message, command="validate_hooks"
-        )
+    if response:
+        return response
+
+    return api_response(
+        result=True,
+        command=command_name,
+        arguments=data,
+        failed=False,
+    )
 
 
 @csrf_exempt
 @login_required()
-@permission_required("api.can_change_discord_webhooks", raise_exception=True)
-@record_audit
-def set_hooks(request):
+# TODO: permission does not exist yet
+@permission_required("api.can_change_watchlist_discord_webhooks", raise_exception=True)
+def set_watchlist_discord_webhooks(request):
+    command_name = "set_watchlist_discord_webhooks"
     data = _get_data(request)
 
-    hook_config = DiscordWebhooksUserConfig(hook_type=data["name"])
-    hook_config.save_to_db(data["hooks"])
+    response = _validate_user_config(
+        WatchlistWebhooksUserConfig, data=data, command_name=command_name, dry_run=False
+    )
 
-    audit("set_hooks", request, data)
+    if response:
+        return response
+
     return api_response(
-        result=DiscordWebhooksUserConfig.get_all_hook_types(as_dict=True),
-        command="set_hooks",
+        result=True,
+        command=command_name,
+        arguments=data,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+# TODO: permission does not exist yet
+@permission_required("api.can_view_camera_discord_webhooks", raise_exception=True)
+def get_camera_discord_webhooks(request):
+    command_name = "get_camera_discord_webhooks"
+
+    try:
+        config = CameraWebhooksUserConfig.load_from_db()
+    except Exception as e:
+        logger.exception(e)
+        return api_response(command=command_name, error=str(e), failed=True)
+
+    return api_response(
+        result=config.model_dump(),
+        command=command_name,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+# TODO: permission does not exist yet
+@permission_required("api.can_change_camera_discord_webhooks", raise_exception=True)
+def validate_camera_discord_webhooks(request):
+    command_name = "validate_camera_discord_webhooks"
+    data = _get_data(request)
+
+    response = _validate_user_config(
+        CameraWebhooksUserConfig, data=data, command_name=command_name, dry_run=True
+    )
+
+    if response:
+        return response
+
+    return api_response(
+        result=True,
+        command=command_name,
+        arguments=data,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+# TODO: permission does not exist yet
+@permission_required("api.can_change_camera_discord_webhooks", raise_exception=True)
+def set_camera_discord_webhooks(request):
+    command_name = "set_camera_discord_webhooks"
+    data = _get_data(request)
+
+    response = _validate_user_config(
+        CameraWebhooksUserConfig, data=data, command_name=command_name, dry_run=False
+    )
+
+    if response:
+        return response
+
+    return api_response(
+        result=True,
+        command=command_name,
+        arguments=data,
         failed=False,
     )
 
@@ -195,61 +325,40 @@ def set_hooks(request):
 @login_required()
 @permission_required("api.can_view_camera_config", raise_exception=True)
 def get_camera_config(request):
-    config = CameraConfig()
+    command_name = "get_camera_config"
+
+    try:
+        config = CameraNotificationUserConfig()
+    except Exception as e:
+        logger.exception(e)
+        return api_response(command=command_name, error=str(e), failed=True)
+
     return api_response(
-        result={
-            "broadcast": config.is_broadcast(),
-            "welcome": config.is_welcome(),
-        },
-        command="get_camera_config",
+        result=config.model_dump(),
+        command=command_name,
         failed=False,
     )
 
 
 @csrf_exempt
 @login_required()
-@permission_required("api.can_view_votekick_autotoggle_config", raise_exception=True)
-def get_votekick_autotoggle_config(request):
-    config = AutoVoteKickConfig()
-    return api_response(
-        result={
-            "min_ingame_mods": config.get_min_ingame_mods(),
-            "min_online_mods": config.get_min_online_mods(),
-            "is_enabled": config.is_enabled(),
-            "condition_type": config.get_condition_type(),
-        },
-        command="get_votekick_autotoggle_config",
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_change_votekick_autotoggle_config", raise_exception=True)
-@record_audit
-def set_votekick_autotoggle_config(request):
-    config = AutoVoteKickConfig()
+# TODO: different permission?
+@permission_required("api.can_change_camera_config", raise_exception=True)
+def validate_camera_config(request):
+    command_name = "validate_camera_config"
     data = _get_data(request)
-    funcs = {
-        "min_ingame_mods": config.set_min_ingame_mods,
-        "min_online_mods": config.set_min_online_mods,
-        "is_enabled": config.set_is_enabled,
-        "condition_type": config.set_condition_type,
-    }
 
-    for k, v in data.items():
-        try:
-            funcs[k](v)
-        except KeyError:
-            return api_response(
-                error="{} invalid key".format(k),
-                command="set_votekick_autotoggle_config",
-            )
+    response = _validate_user_config(
+        CameraNotificationUserConfig, data=data, command_name=command_name, dry_run=True
+    )
 
-        audit("set_votekick_autotoggle_config", request, {k: v})
+    if response:
+        return response
 
     return api_response(
-        command="set_votekick_autotoggle_config",
+        result=True,
+        command=command_name,
+        arguments=data,
         failed=False,
     )
 
@@ -259,34 +368,88 @@ def set_votekick_autotoggle_config(request):
 @permission_required("api.can_change_camera_config", raise_exception=True)
 @record_audit
 def set_camera_config(request):
-    config = CameraConfig()
+    command_name = "set_camera_config"
     data = _get_data(request)
 
-    funcs = {
-        "broadcast": config.set_broadcast,
-        "welcome": config.set_welcome,
-    }
+    response = _validate_user_config(
+        CameraNotificationUserConfig,
+        data=data,
+        command_name=command_name,
+        dry_run=False,
+    )
 
-    for k, v in data.items():
-        if not isinstance(v, bool):
-            return api_response(
-                error="Values must be boolean", command="set_camera_config"
-            )
-        try:
-            funcs[k](v)
-        except KeyError:
-            return api_response(
-                error="{} invalid key".format(k), command="set_camera_config"
-            )
-
-        audit("set_camera_config", request, {k: v})
+    if response:
+        return response
 
     return api_response(
-        result={
-            "broadcast": config.is_broadcast(),
-            "welcome": config.is_welcome(),
-        },
-        command="set_camera_config",
+        result=True,
+        command=command_name,
+        arguments=data,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+@permission_required("api.can_view_votekick_autotoggle_config", raise_exception=True)
+def get_votekick_autotoggle_config(request):
+    command_name = "get_votekick_autotoggle_config"
+
+    try:
+        config = AutoVoteKickUserConfig.load_from_db()
+    except Exception as e:
+        logger.exception(e)
+        return api_response(command=command_name, error=str(e), failed=True)
+
+    return api_response(
+        result=config.model_dump(),
+        command=command_name,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+# TODO different permission?
+@permission_required("api.can_change_votekick_autotoggle_config", raise_exception=True)
+def validate_votekick_autotoggle_config(request):
+    command_name = "validate_votekick_autotoggle_config"
+    data = _get_data(request)
+
+    response = _validate_user_config(
+        AutoVoteKickUserConfig, data=data, command_name=command_name, dry_run=True
+    )
+
+    if response:
+        return response
+
+    return api_response(
+        result=True,
+        command=command_name,
+        arguments=data,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+@permission_required("api.can_change_votekick_autotoggle_config", raise_exception=True)
+@record_audit
+def set_votekick_autotoggle_config(request):
+    command_name = "set_votekick_autotoggle_config"
+    data = _get_data(request)
+
+    response = _validate_user_config(
+        AutoVoteKickUserConfig, data=data, command_name=command_name, dry_run=False
+    )
+
+    if response:
+        return response
+
+    return api_response(
+        result=True,
+        command=command_name,
+        arguments=data,
         failed=False,
     )
 
@@ -374,27 +537,41 @@ def clear_cache(request):
 @login_required()
 @permission_required("api.can_view_auto_broadcast_config", raise_exception=True)
 def get_auto_broadcasts_config(request):
-    failed = False
-    config = None
+    command_name = "get_auto_broadcasts_config"
 
     try:
-        broadcasts = AutoBroadcasts()
-        config = {
-            "messages": ["{} {}".format(m[0], m[1]) for m in broadcasts.get_messages()],
-            "randomized": broadcasts.get_randomize(),
-            "enabled": broadcasts.get_enabled(),
-        }
-    except:
-        logger.exception("Error fetch broadcasts config")
-        failed = True
+        config = AutoBroadcastUserConfig.load_from_db()
+    except Exception as e:
+        logger.exception(e)
+        return api_response(command=command_name, error=str(e), failed=True)
 
-    return JsonResponse(
-        {
-            "result": config,
-            "command": "get_auto_broadcasts_config",
-            "arguments": None,
-            "failed": failed,
-        }
+    return api_response(
+        result=config.model_dump(),
+        command=command_name,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+# TODO: different permissions?
+@permission_required("api.can_change_auto_broadcast_config", raise_exception=True)
+def validate_auto_broadcasts_config(request):
+    command_name = "validate_auto_broadcasts_config"
+    data = _get_data(request)
+
+    response = _validate_user_config(
+        AutoBroadcastUserConfig, data=data, command_name=command_name, dry_run=True
+    )
+
+    if response:
+        return response
+
+    return api_response(
+        result=True,
+        command=command_name,
+        arguments=data,
+        failed=False,
     )
 
 
@@ -403,90 +580,255 @@ def get_auto_broadcasts_config(request):
 @permission_required("api.can_change_auto_broadcast_config", raise_exception=True)
 @record_audit
 def set_auto_broadcasts_config(request):
-    failed = False
-    res = None
+    command_name = "set_auto_broadcasts_config"
     data = _get_data(request)
-    broadcasts = AutoBroadcasts()
-    config_keys = {
-        "messages": broadcasts.set_messages,
-        "randomized": broadcasts.set_randomize,
-        "enabled": broadcasts.set_enabled,
-    }
-    try:
-        for k, v in data.items():
-            if k in config_keys:
-                config_keys[k](v)
-                audit(set_auto_broadcasts_config.__name__, request, {k: v})
-    except InvalidConfigurationError as e:
-        failed = True
-        res = str(e)
 
-    return JsonResponse(
-        {
-            "result": res,
-            "command": "set_auto_broadcasts_config",
-            "arguments": data,
-            "failed": failed,
-        }
+    response = _validate_user_config(
+        AutoBroadcastUserConfig, data=data, command_name=command_name, dry_run=False
+    )
+
+    if response:
+        return response
+
+    return api_response(
+        result=True,
+        command=command_name,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+# TODO: permission does not exist yet
+@permission_required("api.can_view_standard_welcome_messages", raise_exception=True)
+def get_standard_welcome_messages(request):
+    command_name = "get_standard_welcome_messages"
+
+    try:
+        config = StandardWelcomeMessagesUserConfig.load_from_db()
+    except Exception as e:
+        logger.exception(e)
+        return api_response(command=command_name, error=str(e), failed=True)
+
+    return api_response(
+        result=config.model_dump(),
+        command=command_name,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+# TODO: permission does not exist yet
+@permission_required("api.can_change_standard_welcome_messages", raise_exception=True)
+def validate_standard_welcome_messages(request):
+    command_name = "validate_standard_welcome_messages"
+    data = _get_data(request)
+
+    response = _validate_user_config(
+        StandardWelcomeMessagesUserConfig,
+        data=data,
+        command_name=command_name,
+        dry_run=True,
+    )
+
+    if response:
+        return response
+
+    return api_response(
+        result=True,
+        command=command_name,
+        arguments=data,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+# TODO: permission does not exist yet
+@permission_required("api.can_change_standard_welcome_messages", raise_exception=True)
+def set_standard_welcome_messages(request):
+    command_name = "set_standard_welcome_messages"
+    data = _get_data(request)
+
+    response = _validate_user_config(
+        StandardWelcomeMessagesUserConfig,
+        data=data,
+        command_name=command_name,
+        dry_run=False,
+    )
+
+    if response:
+        return response
+
+    return api_response(
+        result=True,
+        command=command_name,
+        arguments=data,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+# TODO: permission does not exist yet
+@permission_required("api.can_view_standard_broadcast_messages", raise_exception=True)
+def get_standard_broadcast_messages(request):
+    command_name = "get_standard_broadcast_messages"
+
+    try:
+        config = StandardBroadcastMessagesUserConfig.load_from_db()
+    except Exception as e:
+        logger.exception(e)
+        return api_response(command=command_name, error=str(e), failed=True)
+
+    return api_response(
+        result=config.model_dump(),
+        command=command_name,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+# TODO: permission does not exist yet
+@permission_required("api.can_change_standard_broadcast_messages", raise_exception=True)
+def validate_standard_broadcast_messages(request):
+    command_name = "validate_standard_broadcast_messages"
+    data = _get_data(request)
+
+    response = _validate_user_config(
+        StandardBroadcastMessagesUserConfig,
+        data=data,
+        command_name=command_name,
+        dry_run=True,
+    )
+
+    if response:
+        return response
+
+    return api_response(
+        result=True,
+        command=command_name,
+        arguments=data,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+# TODO: permission does not exist yet
+@permission_required("api.can_change_standard_broadcast_messages", raise_exception=True)
+def set_standard_broadcast_messages(request):
+    command_name = "set_standard_broadcast_messages"
+    data = _get_data(request)
+
+    response = _validate_user_config(
+        StandardBroadcastMessagesUserConfig,
+        data=data,
+        command_name=command_name,
+        dry_run=False,
+    )
+
+    if response:
+        return response
+
+    return api_response(
+        result=True,
+        command=command_name,
+        arguments=data,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+# TODO: permission does not exist yet
+@permission_required("api.can_view_standard_punishment_messages", raise_exception=True)
+def get_standard_punishments_messages(request):
+    command_name = "get_standard_punishments_messages"
+
+    try:
+        config = StandardPunishmentMessagesUserConfig.load_from_db()
+    except Exception as e:
+        logger.exception(e)
+        return api_response(command=command_name, error=str(e), failed=True)
+
+    return api_response(
+        result=config.model_dump(),
+        command=command_name,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+# TODO: permission does not exist yet
+@permission_required(
+    "api.can_change_standard_punishment_messages", raise_exception=True
+)
+def validate_standard_punishments_messages(request):
+    command_name = "validate_standard_punishments_messages"
+    data = _get_data(request)
+
+    response = _validate_user_config(
+        StandardPunishmentMessagesUserConfig,
+        data=data,
+        command_name=command_name,
+        dry_run=True,
+    )
+
+    if response:
+        return response
+
+    return api_response(
+        result=True,
+        command=command_name,
+        arguments=data,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+# TODO: permission does not exist yet
+@permission_required(
+    "api.can_change_standard_punishment_messages", raise_exception=True
+)
+def set_standard_punishments_messages(request):
+    command_name = "set_standard_punishments_messages"
+    data = _get_data(request)
+
+    response = _validate_user_config(
+        StandardPunishmentMessagesUserConfig,
+        data=data,
+        command_name=command_name,
+        dry_run=False,
+    )
+
+    if response:
+        return response
+
+    return api_response(
+        result=True,
+        command=command_name,
+        arguments=data,
+        failed=False,
     )
 
 
 @csrf_exempt
 # TODO: login required?
 @permission_required("api.can_view_shared_standard_messages", raise_exception=True)
-def get_standard_messages(request) -> JsonResponse:
-    failed = False
-    data = _get_data(request)
+def get_all_standard_messages(request) -> JsonResponse:
+    command_name = "get_standard_messages"
 
+    error_msg = None
     try:
-        msgs = StandardMessages()
-        res = msgs.get_messages(data["message_type"])
-    except CommandFailedError as e:
-        failed = True
-        res = repr(e)
+        messages = get_all_message_types(as_dict=True)
+        return api_response(result=messages, command=command_name, failed=False)
     except:
-        logger.exception("Error fetching standard messages config")
-        failed = True
-        res = "Error setting standard messages config"
-
-    return JsonResponse(
-        {
-            "result": res,
-            "command": "get_standard_messages",
-            "arguments": data,
-            "failed": failed,
-        }
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_change_shared_standard_messages", raise_exception=True)
-@record_audit
-def set_standard_messages(request):
-    failed = False
-    data = _get_data(request)
-
-    try:
-        msgs = StandardMessages()
-        res = msgs.set_messages(data["message_type"], data["messages"])
-        send_to_discord_audit("set_standard_messages", request.user.username)
-    except CommandFailedError as e:
-        failed = True
-        res = repr(e)
-    except:
-        logger.exception("Error setting standard messages config")
-        failed = True
-        res = "Error setting standard messages config"
-
-    return JsonResponse(
-        {
-            "result": res,
-            "command": "get_standard_messages",
-            "arguments": data,
-            "failed": failed,
-        }
-    )
+        return api_response(command=command_name, error=error_msg)
 
 
 @csrf_exempt
@@ -865,23 +1207,39 @@ commands = [
     ("blacklist_player", blacklist_player),
     ("unblacklist_player", unblacklist_player),
     ("get_auto_broadcasts_config", get_auto_broadcasts_config),
+    ("validate_auto_broadcasts_config", validate_auto_broadcasts_config),
     ("set_auto_broadcasts_config", set_auto_broadcasts_config),
     ("clear_cache", clear_cache),
-    ("get_standard_messages", get_standard_messages),
-    ("set_standard_messages", set_standard_messages),
+    ("get_all_standard_messages", get_all_standard_messages),
+    # ("set_standard_messages", set_standard_messages),
+    ("get_standard_welcome_messages", get_standard_welcome_messages),
+    ("validate_standard_welcome_messages", validate_standard_welcome_messages),
+    ("set_standard_welcome_messages", set_standard_welcome_messages),
+    ("get_standard_broadcast_messages", get_standard_broadcast_messages),
+    ("validate_standard_broadcast_messages", validate_standard_broadcast_messages),
+    ("set_standard_broadcast_messages", set_standard_broadcast_messages),
+    ("get_standard_punishments_messages", get_standard_punishments_messages),
+    ("validate_standard_punishments_messages", validate_standard_punishments_messages),
+    ("set_standard_punishments_messages", set_standard_punishments_messages),
     ("get_version", get_version),
     ("get_connection_info", get_connection_info),
     ("unban", unban),
-    ("get_hooks", get_hooks),
-    ("set_hooks", set_hooks),
-    ("validate_hooks", validate_hooks),
+    ("get_all_discord_webhooks", get_all_discord_webhooks),
+    ("get_camera_discord_webhooks", get_camera_discord_webhooks),
+    ("validate_camera_discord_webhooks", validate_camera_discord_webhooks),
+    ("set_camera_discord_webhooks", set_camera_discord_webhooks),
+    ("get_watchlist_discord_webhooks", get_watchlist_discord_webhooks),
+    ("validate_watchlist_discord_webhooks", validate_watchlist_discord_webhooks),
+    ("set_watchlist_discord_webhooks", set_watchlist_discord_webhooks),
     ("do_unwatch_player", do_unwatch_player),
     ("do_watch_player", do_watch_player),
     ("public_info", public_info),
     ("set_camera_config", set_camera_config),
+    ("validate_camera_config", validate_camera_config),
     ("get_camera_config", get_camera_config),
-    ("set_votekick_autotoggle_config", set_votekick_autotoggle_config),
     ("get_votekick_autotoggle_config", get_votekick_autotoggle_config),
+    ("validate_votekick_autotoggle_config", validate_votekick_autotoggle_config),
+    ("set_votekick_autotoggle_config", set_votekick_autotoggle_config),
     ("set_name", set_name),
     ("run_raw_command", run_raw_command),
 ]

@@ -40,7 +40,8 @@ from rcon.player_history import (
 from rcon.rcon import Rcon, StructuredLogLineType
 from rcon.steam_utils import get_player_bans, get_steam_profile, update_db_player_info
 from rcon.types import PlayerFlagType, SteamBansType, VACGameBansConfigType
-from rcon.user_config.user_config import CameraConfig, RealVipConfig
+from rcon.user_config.camera import CameraNotificationUserConfig
+from rcon.user_config.real_vip import RealVipUserConfig
 from rcon.utils import LOG_MAP_NAMES_TO_MAP, MapsHistory, get_server_number
 from rcon.vote_map import VoteMap
 from rcon.workers import record_stats_worker, temporary_broadcast, temporary_welcome
@@ -422,13 +423,13 @@ def cleanup_pending_timers(_, _1, _2, steam_id_64: str):
 
 
 def _set_real_vips(rcon: Rcon, struct_log):
-    config = RealVipConfig()
-    if not config.get_enabled():
+    config = RealVipUserConfig.load_from_db()
+    if not config.enabled:
         logger.debug("Real VIP is disabled")
         return
 
-    desired_nb_vips = config.get_desired_total_number_vips()
-    min_vip_slot = config.get_minimum_number_vip_slot()
+    desired_nb_vips = config.desired_total_number_vips
+    min_vip_slot = config.minimum_number_vip_slots
     vip_count = rcon.get_vips_count()
 
     remaining_vip_slots = max(desired_nb_vips - vip_count, max(min_vip_slot, 0))
@@ -463,11 +464,11 @@ def notify_camera(rcon: Rcon, struct_log):
     except Exception:
         logger.exception("Unable to forward to hooks")
 
-    config = CameraConfig()
-    if config.is_broadcast():
+    config = CameraNotificationUserConfig.load_from_db()
+    if config.broadcast:
         temporary_broadcast(rcon, struct_log["message"], 60)
 
-    if config.is_welcome():
+    if config.welcome:
         temporary_welcome(rcon, struct_log["message"], 60)
 
 

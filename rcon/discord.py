@@ -5,7 +5,10 @@ from typing import List
 
 from discord_webhook import DiscordWebhook
 
-from rcon.user_config.user_config import DiscordHookConfig
+from rcon.user_config.webhooks import (
+    CameraWebhooksUserConfig,
+    WatchlistWebhooksUserConfig,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -24,9 +27,13 @@ def make_allowed_mentions(user_ids, role_ids):
     return allowed_mentions
 
 
-def get_prepared_discord_hooks(type) -> List[DiscordWebhook]:
-    config = DiscordHookConfig(type)
-    hooks = config.get_hooks_for_type()
+def get_prepared_discord_hooks(hook_type: str) -> List[DiscordWebhook]:
+    if hook_type == CameraWebhooksUserConfig.KEY_NAME:
+        hooks = CameraWebhooksUserConfig.load_from_db().hooks
+    elif hook_type == WatchlistWebhooksUserConfig.KEY_NAME:
+        hooks = WatchlistWebhooksUserConfig.load_from_db().hooks
+    else:
+        raise ValueError(f"{hook_type} is not a valid webhook type")
 
     return [
         DiscordWebhook(
@@ -39,7 +46,7 @@ def get_prepared_discord_hooks(type) -> List[DiscordWebhook]:
                 + [v.value for v in hook.role_mentions]
             ),
         )
-        for hook in hooks.hooks
+        for hook in hooks
     ]
 
 

@@ -4,21 +4,21 @@ import time
 from rcon.audit import ingame_mods, online_mods
 from rcon.commands import CommandFailedError
 from rcon.rcon import CommandFailedError, Rcon
-from rcon.user_config.user_config import AutoVoteKickConfig
+from rcon.user_config.auto_kick import AutoVoteKickUserConfig
 from rcon.vote_map import VoteMap
 
 logger = logging.getLogger(__name__)
 
 
 def toggle_votekick(rcon: Rcon):
-    config = AutoVoteKickConfig()
+    config = AutoVoteKickUserConfig.load_from_db()
 
-    if not config.is_enabled():
+    if not config.enabled:
         return
 
-    condition_type = config.get_condition_type().upper()
-    min_online = config.get_min_online_mods()
-    min_ingame = config.get_min_ingame_mods()
+    condition_type = config.condition.upper()
+    min_online = config.minimum_online_mods
+    min_ingame = config.minimum_ingame_mods
     condition = all if condition_type == "AND" else any
     online_mods_ = online_mods()
     ingame_mods_ = ingame_mods(rcon)
