@@ -124,6 +124,12 @@ endpoints: list[tuple[str, Callable]] = [
     ("get_name_kick_config", user_settings.get_name_kick_config),
     ("validate_name_kick_config", user_settings.validate_name_kick_config),
     ("set_name_kick_config", user_settings.set_name_kick_config),
+    ("get_tk_ban_on_connect_config", user_settings.get_tk_ban_on_connect_config),
+    (
+        "validate_tk_ban_on_connect_config",
+        user_settings.validate_tk_ban_on_connect_config,
+    ),
+    ("set_tk_ban_on_connect_config", user_settings.set_tk_ban_on_connect_config),
 ] + [(name, func) for name, func in views.commands]
 
 # Expose endpoints though Django

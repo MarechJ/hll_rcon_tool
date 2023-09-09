@@ -26,6 +26,7 @@ from rcon.types import (
     PlayerStat,
     StructuredLogLineWithMetaData,
 )
+from rcon.user_config.ban_tk_on_connect import BanTeamKillOnConnectUserConfig
 from rcon.utils import FixedLenList, MapsHistory
 
 logger = logging.getLogger(__name__)
@@ -496,9 +497,8 @@ def is_player_kill(player, log):
 def auto_ban_if_tks_right_after_connection(
     rcon: Rcon, log: StructuredLogLineWithMetaData
 ):
-    config = get_config()
-    config = config.get("BAN_TK_ON_CONNECT")
-    if not config or not config.get("enabled"):
+    config = BanTeamKillOnConnectUserConfig.load_from_db()
+    if not config or not config.enabled:
         return
 
     player_name = log["player"]
@@ -518,36 +518,33 @@ def auto_ban_if_tks_right_after_connection(
         end=500, player_search=player_name, exact_player_match=True
     )
     logger.debug("Checking TK from %s", player_name)
-    author = config.get("author_name", "Automation")
-    reason = config.get("message", "No reasons provided")
-    discord_msg = config.get("discord_webhook_message", "No message provided")
-    webhook = config.get("discord_webhook_url")
-    max_time_minute = config.get("max_time_after_connect_minutes", 5)
-    excluded_weapons = [w.lower() for w in config.get("exclude_weapons", [])]
-    ignore_after_kill = config.get("ignore_tk_after_n_kills", 1)
-    ignore_after_death = config.get("ignore_tk_after_n_death", 1)
-    whitelist_players = config.get("whitelist_players", {})
-    tk_tolerance_count = config.get("teamkill_tolerance_count", 1)
+    author = config.author_name
+    reason = config.message
+    discord_msg = config.discord_webhook_message
+    webhook = config.discord_webhook_url
+    max_time_minute = config.max_time_after_connect_minutes
+    excluded_weapons = [w.lower() for w in config.excluded_weapons]
+    ignore_after_kill = config.ignore_tk_after_n_kills
+    ignore_after_death = config.ignore_tk_after_n_deaths
+    whitelist_players = config.whitelist_players
+    tk_tolerance_count = config.teamkill_tolerance_count
 
     if player_profile:
-        if whitelist_players.get("is_vip") and player_steam_id in vips:
+        if whitelist_players.is_vip and player_steam_id in vips:
             logger.debug("Not checking player because he's VIP")
             return
 
-        if whitelist_players.get("has_at_least_n_sessions") and player_profile[
-            "sessions_count"
-        ] >= whitelist_players.get("has_at_least_n_sessions"):
+        if (
+            player_profile["sessions_count"]
+            >= whitelist_players.has_at_least_n_sessions
+        ):
             logger.debug(
                 "Not checking player because he has %s sessions",
                 player_profile["sessions_count"],
             )
             return
 
-        flags = whitelist_players.get("has_flag", [])
-        if not isinstance(flags, list):
-            flags = [flags]
-
-        for f in flags:
+        for f in whitelist_players.has_flag:
             if player_has_flag(player_profile, f):
                 logger.debug("Not checking player because he has flag %s", f)
                 return
