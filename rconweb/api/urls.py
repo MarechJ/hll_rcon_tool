@@ -121,6 +121,9 @@ endpoints: list[tuple[str, Callable]] = [
     ("get_vac_game_bans_config", user_settings.get_vac_game_bans_config),
     ("validate_vac_game_bans_config", user_settings.validate_vac_game_bans_config),
     ("set_vac_game_bans_config", user_settings.set_vac_game_bans_config),
+    ("get_name_kick_config", user_settings.get_name_kick_config),
+    ("validate_name_kick_config", user_settings.validate_name_kick_config),
+    ("set_name_kick_config", user_settings.set_name_kick_config),
 ] + [(name, func) for name, func in views.commands]
 
 # Expose endpoints though Django
