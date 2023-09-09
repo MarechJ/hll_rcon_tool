@@ -11,6 +11,7 @@ from rcon.discord import send_to_discord_audit
 from rcon.models import PlayerSteamID, PlayerVIP, enter_session
 from rcon.rcon import Rcon
 from rcon.settings import SERVER_INFO
+from rcon.user_config.expired_vips import ExpiredVipsUserConfig
 from rcon.utils import get_server_number
 
 SERVICE_NAME = "ExpiringVIPs"
@@ -97,9 +98,9 @@ def run():
 
     while True:
         try:
-            config = get_config()
-            config = ExpiringVIPConfig(**config["REMOVE_EXPIRED_VIPS"])
+            config = ExpiredVipsUserConfig.load_from_db()
         except ValidationError as e:
+            # TODO: update
             logger.exception(
                 f"Invalid REMOVE_EXPIRED_VIPS config {str(e)} check your config/config.yml"
             )
@@ -108,7 +109,7 @@ def run():
         if config.enabled:
             remove_expired_vips(rcon_hook, config.discord_webhook_url)
 
-        time.sleep(config.interval * 60)
+        time.sleep(config.interval_minutes * 60)
 
 
 if __name__ == "__main__":

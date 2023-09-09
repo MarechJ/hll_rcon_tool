@@ -130,6 +130,9 @@ endpoints: list[tuple[str, Callable]] = [
         user_settings.validate_tk_ban_on_connect_config,
     ),
     ("set_tk_ban_on_connect_config", user_settings.set_tk_ban_on_connect_config),
+    ("get_expired_vip_config", user_settings.get_expired_vip_config),
+    ("validate_expired_vip_config", user_settings.validate_expired_vip_config),
+    ("set_expired_vip_config", user_settings.set_expired_vip_config),
 ] + [(name, func) for name, func in views.commands]
 
 # Expose endpoints though Django
