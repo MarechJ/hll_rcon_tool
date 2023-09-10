@@ -41,6 +41,8 @@ NAME = "name"
 ROLE = "role"
 # The base level of actions that will always show up in the Live view
 # actions filter from the call to `get_recent_logs`
+
+
 LOG_ACTIONS = [
     "DISCONNECTED",
     "CHAT[Allies]",

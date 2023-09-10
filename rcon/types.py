@@ -302,3 +302,34 @@ class VACGameBansConfigType(TypedDict):
 class VipId(TypedDict):
     steam_id_64: str
     name: str
+
+
+ALL_LOG_TYPES = (
+    "ADMIN BANNED",
+    "ADMIN KICKED",
+    "CAMERA",
+    "CHAT",
+    "CHAT[Allies]",
+    "CHAT[Allies][Team]",
+    "CHAT[Allies][Unit]",
+    "CHAT[Axis]",
+    "CHAT[Axis][Team]",
+    "CHAT[Axis][Unit]",
+    "CONNECTED",
+    "DISCONNECTED",
+    "KILL",
+    "MATCH",
+    "MATCH START",
+    "MATCH ENDED",
+    "TEAM KILL",
+    "TEAMSWITCH",
+    # Automatic kicks for team kills
+    "TK",
+    "TK AUTO",
+    "TK AUTO BANNED",
+    "TK AUTO KICKED",
+    # Vote kicks
+    "VOTE",
+    "VOTE STARTED",
+    "VOTE COMPLETED",
+)

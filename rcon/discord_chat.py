@@ -4,10 +4,8 @@ import re
 from datetime import datetime
 from functools import lru_cache
 
-import requests
-
 import discord.utils
-from discord import RequestsWebhookAdapter, Webhook
+from rcon.discord import make_hook
 from rcon.game_logs import on_chat, on_kill, on_tk
 
 DISCORD_CHAT_WEBHOOK_URL = os.getenv("DISCORD_CHAT_WEBHOOK")
@@ -48,29 +46,6 @@ def escape_string(string):
     string = discord.utils.escape_markdown(string)
     string = discord.utils.escape_mentions(string)
     return string
-
-
-@lru_cache
-def parse_webhook_url(url):
-    """Parse and check validity of Discord webhook URL
-    by performing a get request and checking existence
-    of 'id' and 'token' in the JSON response.
-    """
-    if not url:
-        return None, None
-    resp = requests.get(url, timeout=10).json()
-    _id = int(resp["id"])
-    token = resp["token"]
-    return _id, token
-
-
-def make_hook(webhook_url):
-    webhook_id, webhook_token = parse_webhook_url(webhook_url)
-    if not all([webhook_id, webhook_token]):
-        return None
-    return Webhook.partial(
-        id=webhook_id, token=webhook_token, adapter=RequestsWebhookAdapter()
-    )
 
 
 class DiscordWebhookHandler:

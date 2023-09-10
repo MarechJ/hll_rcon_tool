@@ -1,17 +1,20 @@
 import datetime
 import logging
 import os
+import re
 import sys
 import time
 import unicodedata
-from typing import Callable, Dict, List
+from collections import defaultdict
+from functools import partial
+from typing import Callable, DefaultDict, Dict, Iterable, List
 
 from sqlalchemy import and_, desc, or_
 from sqlalchemy.exc import IntegrityError
 
-from rcon.cache_utils import get_redis_client
-from rcon.config import get_config
-from rcon.discord import send_to_discord_audit
+import discord
+from rcon.cache_utils import get_redis_client, ttl_cache
+from rcon.discord import make_hook, send_to_discord_audit
 from rcon.models import LogLine, PlayerSteamID, enter_session
 from rcon.player_history import (
     add_player_to_blacklist,
@@ -27,93 +30,159 @@ from rcon.types import (
     StructuredLogLineWithMetaData,
 )
 from rcon.user_config.ban_tk_on_connect import BanTeamKillOnConnectUserConfig
+from rcon.user_config.log_line_webhooks import DiscordWebhook, LogLineWebhookUserConfig
 from rcon.utils import FixedLenList, MapsHistory
 
 logger = logging.getLogger(__name__)
 
-HOOKS: Dict[str, List[Callable]] = {
-    "TEAM KILL": [],
-    "CONNECTED": [],
-    "DISCONNECTED": [],
-    "TK": [],
-    "TK AUTO": [],
-    "TK AUTO BANNED": [],
-    "TK AUTO KICKED": [],
-    "ADMIN BANNED": [],
-    "ADMIN KICKED": [],
-    "CAMERA": [],
-    "CHAT": [],
-    "CHAT[Allies]": [],
-    "CHAT[Allies][Team]": [],
-    "CHAT[Allies][Unit]": [],
-    "CHAT[Axis]": [],
-    "CHAT[Axis][Team]": [],
-    "CHAT[Axis][Unit]": [],
-    "KILL": [],
-    "MATCH START": [],
-    "MATCH ENDED": [],
-    "MATCH": [],
-    "TEAMSWITCH": [],
-    "VOTE": [],
-    "VOTE STARTED": [],
-    "VOTE COMPLETED": [],
+HOOKS: Dict[str, set[Callable]] = {
+    "TEAM KILL": set(),
+    "CONNECTED": set(),
+    "DISCONNECTED": set(),
+    "TK": set(),
+    "TK AUTO": set(),
+    "TK AUTO BANNED": set(),
+    "TK AUTO KICKED": set(),
+    "ADMIN BANNED": set(),
+    "ADMIN KICKED": set(),
+    "CAMERA": set(),
+    "CHAT": set(),
+    "CHAT[Allies]": set(),
+    "CHAT[Allies][Team]": set(),
+    "CHAT[Allies][Unit]": set(),
+    "CHAT[Axis]": set(),
+    "CHAT[Axis][Team]": set(),
+    "CHAT[Axis][Unit]": set(),
+    "KILL": set(),
+    "MATCH START": set(),
+    "MATCH ENDED": set(),
+    "MATCH": set(),
+    "TEAMSWITCH": set(),
+    "VOTE": set(),
+    "VOTE STARTED": set(),
+    "VOTE COMPLETED": set(),
 }
 
 
 def on_kill(func):
-    HOOKS["KILL"].append(func)
+    HOOKS["KILL"].add(func)
     return func
 
 
 def on_tk(func):
-    HOOKS["TEAM KILL"].append(func)
+    HOOKS["TEAM KILL"].add(func)
     return func
 
 
 def on_chat(func):
-    HOOKS["CHAT"].append(func)
+    HOOKS["CHAT"].add(func)
     return func
 
 
 def on_camera(func):
-    HOOKS["CAMERA"].append(func)
+    HOOKS["CAMERA"].add(func)
     return func
 
 
 def on_chat_axis(func):
-    HOOKS["CHAT[Axis]"].append(func)
+    HOOKS["CHAT[Axis]"].add(func)
     return func
 
 
 def on_chat_allies(func):
-    HOOKS["CHAT[Allies]"].append(func)
+    HOOKS["CHAT[Allies]"].add(func)
     return func
 
 
 def on_connected(func):
-    HOOKS["CONNECTED"].append(func)
+    HOOKS["CONNECTED"].add(func)
     return func
 
 
 def on_disconnected(func):
-    HOOKS["DISCONNECTED"].append(func)
+    HOOKS["DISCONNECTED"].add(func)
     return func
 
 
 def on_match_start(func):
-    HOOKS["MATCH START"].append(func)
+    HOOKS["MATCH START"].add(func)
     return func
 
 
 def on_match_end(func):
-    HOOKS["MATCH ENDED"].append(func)
+    HOOKS["MATCH ENDED"].add(func)
     return func
 
 
 def on_generic(key, func) -> Callable:
     """Dynamically register hooks from config.yml LOG_LINE_WEBHOOKS"""
-    HOOKS[key].append(func)
+    HOOKS[key].add(func)
     return func
+
+
+def make_allowed_mentions(mentions: Iterable[str]) -> discord.AllowedMentions:
+    """Convert the provided sequence of users and roles to a discord.AllowedMentions
+
+    Similar to discord_chat.make_allowed_mentions but doesn't strip @everyone/@here
+    """
+    allowed_mentions: DefaultDict[str, List[discord.Object]] = defaultdict(list)
+
+    for role_or_user in mentions:
+        if match := re.match(r"<@(\d+)>", role_or_user):
+            allowed_mentions["users"].append(discord.Object(int(match.group(1))))
+        if match := re.match(r"<@&(\d+)>", role_or_user):
+            allowed_mentions["roles"].append(discord.Object(int(match.group(1))))
+
+    return discord.AllowedMentions(
+        users=allowed_mentions["users"], roles=allowed_mentions["roles"]
+    )
+
+
+def send_log_line_webhook_message(
+    webhooks: list[DiscordWebhook],
+    _,
+    log_line: Dict[str, str | int | float | None],
+) -> None:
+    """Send a time stammped embed of the log_line and mentions to the provided Discord Webhook"""
+
+    for hook in webhooks:
+        mentions = hook.user_mentions + hook.role_mentions
+        webhook = make_hook(hook.url)
+        allowed_mentions = make_allowed_mentions(mentions)
+
+        SERVER_SHORT_NAME = os.getenv("SERVER_SHORT_NAME", "No Server Name Set")
+
+        content = " ".join(mentions)
+        description = log_line["line_without_time"]
+        embed = discord.Embed(
+            description=description,
+            timestamp=datetime.datetime.utcfromtimestamp(
+                log_line["timestamp_ms"] / 1000
+            ),
+        )
+        embed.set_footer(text=SERVER_SHORT_NAME)
+        webhook.send(content=content, embed=embed, allowed_mentions=allowed_mentions)
+
+
+@ttl_cache(ttl=60 * 5)
+def load_generic_hooks():
+    """Load and validate all the subscribed log line webhooks from config.yml"""
+    try:
+        config = LogLineWebhookUserConfig.load_from_db()
+    except KeyError:
+        # TODO: update error message
+        logger.error("No config.yml or no LOG_LINE_WEBHOOKS configuration")
+        return
+
+    for conf in config.log_types:
+        # mentions = [h.user_mentions + h.role_mentions for h in conf.webhooks]
+        func = partial(send_log_line_webhook_message, conf.webhooks)
+
+        # Have to set these attributes as the're used in LogLoop.process_hooks()
+        func.__name__ = send_log_line_webhook_message.__name__
+        func.__module__ = __name__
+
+        on_generic(conf.log_type, func)
 
 
 MAX_FAILS = 10
@@ -140,6 +209,7 @@ class LogLoop:
         last_cleanup_time = datetime.datetime.now()
 
         while True:
+            load_generic_hooks()
             logs: ParsedLogsType = self.rcon.get_structured_logs(
                 since_min_ago=since_min
             )

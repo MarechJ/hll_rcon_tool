@@ -133,6 +133,12 @@ endpoints: list[tuple[str, Callable]] = [
     ("get_expired_vip_config", user_settings.get_expired_vip_config),
     ("validate_expired_vip_config", user_settings.validate_expired_vip_config),
     ("set_expired_vip_config", user_settings.set_expired_vip_config),
+    ("get_log_line_webhook_config", user_settings.get_log_line_webhook_config),
+    (
+        "validate_log_line_webhook_config",
+        user_settings.validate_log_line_webhook_config,
+    ),
+    ("set_log_line_webhook_config", user_settings.set_log_line_webhook_config),
 ] + [(name, func) for name, func in views.commands]
 
 # Expose endpoints though Django

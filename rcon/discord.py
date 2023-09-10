@@ -1,16 +1,43 @@
 import logging
 import os
 import re
+from functools import lru_cache
 from typing import List
 
+import requests
 from discord_webhook import DiscordWebhook
 
+from discord import RequestsWebhookAdapter, Webhook
 from rcon.user_config.webhooks import (
     CameraWebhooksUserConfig,
     WatchlistWebhooksUserConfig,
 )
 
+
+@lru_cache
+def parse_webhook_url(url):
+    """Parse and check validity of Discord webhook URL
+    by performing a get request and checking existence
+    of 'id' and 'token' in the JSON response.
+    """
+    if not url:
+        return None, None
+    resp = requests.get(url, timeout=10).json()
+    _id = int(resp["id"])
+    token = resp["token"]
+    return _id, token
+
+
 logger = logging.getLogger(__name__)
+
+
+def make_hook(webhook_url):
+    webhook_id, webhook_token = parse_webhook_url(webhook_url)
+    if not all([webhook_id, webhook_token]):
+        return None
+    return Webhook.partial(
+        id=webhook_id, token=webhook_token, adapter=RequestsWebhookAdapter()
+    )
 
 
 def make_allowed_mentions(user_ids, role_ids):
