@@ -25,6 +25,7 @@ from rcon.hooks import inject_player_ids
 from rcon.rcon import Rcon
 from rcon.settings import SERVER_INFO
 from rcon.types import StructuredLogLineType
+from rcon.user_config.auto_mod_level import AutoModLevelUserConfig
 
 logger = logging.getLogger(__name__)
 first_run_done_key = "first_run_done"
@@ -153,6 +154,7 @@ def enabled_moderators():
 
     try:
         config = get_config()
+        level_thresholds_config = AutoModLevelUserConfig.load_from_db()
 
         no_leader_config = None
         if config.get("NOLEADER_AUTO_MOD") is not None:
@@ -162,9 +164,7 @@ def enabled_moderators():
         if config.get("SEEDING_AUTO_MOD") is not None:
             seeding_config = SeedingRulesConfig(**config["SEEDING_AUTO_MOD"])
 
-        level_thresholds_config = None
-        if config.get("LEVEL_AUTO_MOD") is not None:
-            level_thresholds_config = LevelThresholdsConfig(**config["LEVEL_AUTO_MOD"])
+        # TODO: update error messages
     except Exception as e:
         logger.exception("Invalid automod config, check your config/config.yml", e)
         raise
@@ -181,11 +181,7 @@ def enabled_moderators():
                 else SeedingRulesAutomod(
                     SeedingRulesConfig(**{"enabled": False}), None
                 ),
-                LevelThresholdsAutomod(level_thresholds_config, red)
-                if level_thresholds_config is not None
-                else LevelThresholdsAutomod(
-                    LevelThresholdsConfig(**{"enabled": False}), None
-                ),
+                LevelThresholdsAutomod(level_thresholds_config, red),
             ],
         )
     )

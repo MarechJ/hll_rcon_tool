@@ -3,6 +3,7 @@ from logging import getLogger
 from django.contrib.auth.decorators import permission_required
 from django.views.decorators.csrf import csrf_exempt
 
+from rcon.user_config.auto_mod_level import AutoModLevelUserConfig
 from rcon.user_config.ban_tk_on_connect import BanTeamKillOnConnectUserConfig
 from rcon.user_config.expired_vips import ExpiredVipsUserConfig
 from rcon.user_config.log_line_webhooks import LogLineWebhookUserConfig
@@ -548,6 +549,77 @@ def set_scorebot_config(request):
 
     response = _validate_user_config(
         ScorebotUserConfig,
+        data=data,
+        command_name=command_name,
+        dry_run=False,
+    )
+
+    if response:
+        return response
+
+    return api_response(
+        result=True,
+        command=command_name,
+        arguments=data,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+@permission_required("api.", raise_exception=True)
+def get_auto_mod_level_config(request):
+    command_name = "get_auto_mod_level_config"
+
+    try:
+        config = AutoModLevelUserConfig.load_from_db()
+    except Exception as e:
+        logger.exception(e)
+        return api_response(command=command_name, error=str(e), failed=True)
+
+    return api_response(
+        result=config.model_dump(),
+        command=command_name,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+# TODO: different permission?
+@permission_required("api.", raise_exception=True)
+def validate_auto_mod_level_config(request):
+    command_name = "validate_auto_mod_level_config"
+    data = _get_data(request)
+
+    response = _validate_user_config(
+        AutoModLevelUserConfig,
+        data=data,
+        command_name=command_name,
+        dry_run=True,
+    )
+
+    if response:
+        return response
+
+    return api_response(
+        result=True,
+        command=command_name,
+        arguments=data,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+@permission_required("api.", raise_exception=True)
+@record_audit
+def set_auto_mod_level_config(request):
+    command_name = "set_auto_mod_level_config"
+    data = _get_data(request)
+
+    response = _validate_user_config(
+        AutoModLevelUserConfig,
         data=data,
         command_name=command_name,
         dry_run=False,

@@ -20,6 +20,7 @@ from rcon.automods.models import (
 )
 from rcon.automods.num_or_inf import num_or_inf
 from rcon.types import GameState
+from rcon.user_config.auto_mod_level import AutoModLevelUserConfig, Roles
 
 LEVEL_THRESHOLDS_RESET_SECS = 120
 AUTOMOD_USERNAME = "LevelThresholdsAutomod"
@@ -28,9 +29,9 @@ AUTOMOD_USERNAME = "LevelThresholdsAutomod"
 class LevelThresholdsAutomod:
     logger: logging.Logger
     red: redis.StrictRedis
-    config: LevelThresholdsConfig
+    config: AutoModLevelUserConfig
 
-    def __init__(self, config: LevelThresholdsConfig, red: redis.StrictRedis or None):
+    def __init__(self, config: AutoModLevelUserConfig, red: redis.StrictRedis or None):
         self.logger = logging.getLogger(__name__)
         self.red = red
         self.config = config
@@ -64,13 +65,9 @@ class LevelThresholdsAutomod:
 
         min_level = self.config.min_level
         max_level = self.config.max_level
-        lt = self.config.level_thresholds
 
-        if self.config.announce_level_thresholds.enabled and (
-            min_level > 0
-            or max_level > 0
-            or lt.roles is not None
-            and len(lt.roles.keys()) > 0
+        if self.config.announcement_enabled and (
+            min_level > 0 or max_level > 0 or self.config.level_thresholds
         ):
             # Initialize messages to empty string
             data = {
@@ -102,17 +99,13 @@ class LevelThresholdsAutomod:
                 data["max_level_msg"] = message
 
             # Populate level thresholds by role message if configured
-            if lt.roles is not None and len(lt.roles.keys()) > 0:
+            if self.config.level_thresholds:
                 level_thresholds_msg = ""
-                for role in lt.roles:
-                    message = lt.message
-                    roleConfig = lt.roles.get(role)
+                for role in self.config.level_thresholds:
+                    message = self.config.violation_message
                     try:
                         message = (
-                            message.format(
-                                role=roleConfig.label, level=roleConfig.min_level
-                            )
-                            + "\n"
+                            message.format(role=role.label, level=role.min_level) + "\n"
                         )
                     except KeyError:
                         self.logger.warning(
@@ -129,7 +122,7 @@ class LevelThresholdsAutomod:
                 or data.get("max_level_msg") is not None
                 or data.get("level_thresholds_msg") is not None
             ):
-                message = self.config.announce_level_thresholds.message
+                message = self.config.announcement_message
                 try:
                     message = message.format(**data)
                 except KeyError:
@@ -169,11 +162,11 @@ class LevelThresholdsAutomod:
 
         if method == ActionMethod.MESSAGE:
             data["received_warnings"] = len(watch_status.warned.get(aplayer.name))
-            data["max_warnings"] = self.config.number_of_warning
+            data["max_warnings"] = self.config.number_of_warnings
             data["next_check_seconds"] = self.config.warning_interval_seconds
         if method == ActionMethod.PUNISH:
             data["received_punishes"] = len(watch_status.punished.get(aplayer.name))
-            data["max_punishes"] = self.config.number_of_punish
+            data["max_punishes"] = self.config.number_of_punishments
             data["next_check_seconds"] = self.config.punish_interval_seconds
         if method == ActionMethod.KICK:
             data["kick_grace_period"] = self.config.kick_grace_period_seconds
@@ -279,26 +272,27 @@ class LevelThresholdsAutomod:
                         continue
 
                     # By role level thresholds check
-                    lt = self.config.level_thresholds
-                    if lt.roles is not None and len(lt.roles.keys()) > 0:
-                        if aplayer.role in lt.roles:
-                            roleConfig = lt.roles.get(aplayer.role)
-                            if (
-                                roleConfig
-                                and server_player_count >= roleConfig.min_players
-                                and aplayer.lvl < roleConfig.min_level
-                            ):
-                                message = lt.message
-                                try:
-                                    message = message.format(
-                                        role=roleConfig.label,
-                                        level=roleConfig.min_level,
-                                    )
-                                except KeyError:
-                                    self.logger.warning(
-                                        f"The automod message ({message}) contains an invalid key"
-                                    )
-                                violations.append(message)
+                    if self.config.level_thresholds:
+                        role_config = self.config.level_thresholds.get(
+                            Roles(aplayer.role)
+                        )
+
+                        if (
+                            role_config
+                            and server_player_count >= role_config.min_players
+                            and aplayer.lvl < role_config.min_level
+                        ):
+                            message = self.config.violation_message
+                            try:
+                                message = message.format(
+                                    role=role_config.label,
+                                    level=role_config.min_level,
+                                )
+                            except KeyError:
+                                self.logger.warning(
+                                    f"The automod message ({message}) contains an invalid key"
+                                )
+                            violations.append(message)
 
                 if len(violations) == 0:
                     continue
@@ -352,7 +346,7 @@ class LevelThresholdsAutomod:
     def should_warn_player(
         self, watch_status: WatchStatus, squad_name: str, aplayer: PunishPlayer
     ):
-        if self.config.number_of_warning == 0:
+        if self.config.number_of_warnings == 0:
             self.logger.debug("Warnings are disabled. number_of_warning is set to 0")
             return PunishStepState.DISABLED
 
@@ -365,14 +359,14 @@ class LevelThresholdsAutomod:
             return PunishStepState.WAIT
 
         if (
-            len(warnings) < self.config.number_of_warning
-            or self.config.number_of_warning == -1
+            len(warnings) < self.config.number_of_warnings
+            or self.config.number_of_warnings == -1
         ):
             self.logger.info(
                 "%s Will be warned (%s/%s)",
                 aplayer.short_repr(),
                 len(warnings),
-                num_or_inf(self.config.number_of_warning),
+                num_or_inf(self.config.number_of_warnings),
             )
             warnings.append(datetime.now())
             return PunishStepState.APPLY
@@ -381,7 +375,7 @@ class LevelThresholdsAutomod:
             "%s Max warnings reached (%s/%s). Moving on to punish.",
             aplayer.short_repr(),
             len(warnings),
-            self.config.number_of_warning,
+            self.config.number_of_warnings,
         )
         return PunishStepState.GO_TO_NEXT_STEP
 
@@ -391,7 +385,7 @@ class LevelThresholdsAutomod:
         squad_name: str,
         aplayer: PunishPlayer,
     ):
-        if self.config.number_of_punish == 0:
+        if self.config.number_of_punishments == 0:
             self.logger.debug("Punish is disabled")
             return PunishStepState.DISABLED
 
@@ -402,14 +396,14 @@ class LevelThresholdsAutomod:
             return PunishStepState.WAIT
 
         if (
-            len(punishes) < self.config.number_of_punish
-            or self.config.number_of_punish == -1
+            len(punishes) < self.config.number_of_punishments
+            or self.config.number_of_punishments == -1
         ):
             self.logger.info(
                 "%s Will be punished (%s/%s)",
                 aplayer.short_repr(),
                 len(punishes),
-                num_or_inf(self.config.number_of_punish),
+                num_or_inf(self.config.number_of_punishments),
             )
             punishes.append(datetime.now())
             return PunishStepState.APPLY
@@ -418,7 +412,7 @@ class LevelThresholdsAutomod:
             "%s Max punish reached (%s/%s)",
             aplayer.short_repr(),
             len(punishes),
-            self.config.number_of_punish,
+            self.config.number_of_punishments,
         )
         return PunishStepState.GO_TO_NEXT_STEP
 
