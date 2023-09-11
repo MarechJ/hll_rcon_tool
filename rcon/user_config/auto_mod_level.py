@@ -1,8 +1,12 @@
 import enum
+from pprint import pprint
 from typing import ClassVar, Optional, TypedDict
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, BeforeValidator, Field, field_validator
+from pydantic.functional_validators import BeforeValidator
+from typing_extensions import Annotated
 
+from rcon.types import Roles
 from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
 
 ANNOUNCE_MESSAGE = "This server is under level thresholds control.\n\n{min_level_msg}{max_level_msg}{level_thresholds_msg}\nThanks for understanding."
@@ -15,43 +19,7 @@ PUNISH_MESSAGE = "You violated level thresholds rules on this server: {violation
 KICK_MESSAGE = "You violated level thresholds rules on this server: {violation}.\nYour grace period of {kick_grace_period}s has passed.\nYou failed to comply with the previous warnings."
 
 
-class Roles(enum.Enum):
-    commander = "commander"
-    squad_lead = "officer"
-    rifleman = "rifleman"
-    engineer = "engineer"
-    medic = "medic"
-    anti_tank = "antitank"
-    automatic_rifleman = "automaticrifleman"
-    assault = "assault"
-    machine_gunner = "heavyachinegunner"
-    support = "support"
-    spotter = "spotter"
-    sniper = "sniper"
-    tank_commander = "tankcommander"
-    crewman = "crewman"
-
-
-ROLES_TO_LABELS = {
-    Roles.commander: "Commander",
-    Roles.squad_lead: "Squad Lead",
-    Roles.rifleman: "Rifleman",
-    Roles.engineer: "Engineer",
-    Roles.medic: "Medic",
-    Roles.anti_tank: "Anti-Tank",
-    Roles.automatic_rifleman: "Automatic Rifleman",
-    Roles.assault: "Assault",
-    Roles.machine_gunner: "Machinegunner",
-    Roles.support: "Support",
-    Roles.spotter: "Spotter",
-    Roles.sniper: "Sniper",
-    Roles.tank_commander: "Tank Commander",
-    Roles.crewman: "Crewman",
-}
-
-
 class RoleType(TypedDict):
-    role: Roles
     label: str
     min_players: int
     min_level: int
@@ -59,7 +27,7 @@ class RoleType(TypedDict):
 
 class AutoModLevelType(TypedDict):
     enabled: bool
-    discord_webhook_url: str
+    discord_webhook_url: Optional[str]
     announcement_enabled: bool
     announcement_message: str
     force_kick_message: str
@@ -68,7 +36,7 @@ class AutoModLevelType(TypedDict):
     max_level: int
     max_level_message: str
     violation_message: str
-    level_thresholds: dict[Roles, RoleType]
+    level_thresholds: dict[str, RoleType]
 
     number_of_warnings: int
     warning_message: str
@@ -84,17 +52,25 @@ class AutoModLevelType(TypedDict):
 
 
 class Role(BaseModel):
-    role: Roles
+    # role: Roles
     label: str
     min_players: int = Field(ge=0, le=50)
     min_level: int = Field(ge=0, le=500)
+
+
+def validate_level_thresholds(v):
+    """Required to prevent validation errors for empty values"""
+    if not v or v == []:
+        return dict()
+
+    return v
 
 
 class AutoModLevelUserConfig(BaseUserConfig):
     KEY_NAME: ClassVar = "auto_mod_level"
 
     enabled: bool = Field(default=False)
-    discord_webhook_url: Optional[str]
+    discord_webhook_url: Optional[str] = Field(default=None)
     announcement_enabled: bool = Field(default=True)
     announcement_message: str = Field(default=ANNOUNCE_MESSAGE)
     force_kick_message: str = Field(default=FORCEKICK_MESSAGE)
@@ -103,7 +79,9 @@ class AutoModLevelUserConfig(BaseUserConfig):
     max_level: int = Field(ge=0, le=500, default=0)
     max_level_message: str = Field(default=MAX_LEVEL_MESSAGE)
     violation_message: str = Field(default=VIOLATION_MESSAGE)
-    level_thresholds: dict[Roles, Role] = Field(default_factory=dict)
+    level_thresholds: Annotated[
+        dict[Roles, Role], BeforeValidator(validate_level_thresholds)
+    ] = Field(default_factory=dict)
 
     number_of_warnings: int = Field(ge=-1, default=2)
     warning_message: str = Field(default=WARNING_MESSAGE)
@@ -121,9 +99,14 @@ class AutoModLevelUserConfig(BaseUserConfig):
     def save_to_db(values: AutoModLevelType, dry_run=False):
         key_check(AutoModLevelType.__required_keys__, values.keys())
 
-        validated_level_threshholds: list[Role] = []
-        for raw_role in values.get("level_thresholds"):
-            pass
+        validated_level_threshholds: dict[Roles, Role] = {}
+        for raw_role, obj in values.get("level_thresholds").items():
+            validated_level_threshholds[Roles(raw_role)] = Role(
+                role=Roles(raw_role),
+                label=obj.get("label"),
+                min_players=obj.get("min_players"),
+                min_level=obj.get("min_level"),
+            )
 
         validated_conf = AutoModLevelUserConfig(
             enabled=values.get("enabled"),

@@ -1,5 +1,42 @@
 import datetime
+import enum
 from typing import List, Optional, TypedDict
+
+
+# # Have to inherit from str to allow for JSON serialization w/ pydantic
+class Roles(str, enum.Enum):
+    commander = "commander"
+    squad_lead = "officer"
+    rifleman = "rifleman"
+    engineer = "engineer"
+    medic = "medic"
+    anti_tank = "antitank"
+    automatic_rifleman = "automaticrifleman"
+    assault = "assault"
+    machine_gunner = "heavyachinegunner"
+    support = "support"
+    spotter = "spotter"
+    sniper = "sniper"
+    tank_commander = "tankcommander"
+    crewman = "crewman"
+
+
+ROLES_TO_LABELS = {
+    Roles.commander: "Commander",
+    Roles.squad_lead: "Squad Lead",
+    Roles.rifleman: "Rifleman",
+    Roles.engineer: "Engineer",
+    Roles.medic: "Medic",
+    Roles.anti_tank: "Anti-Tank",
+    Roles.automatic_rifleman: "Automatic Rifleman",
+    Roles.assault: "Assault",
+    Roles.machine_gunner: "Machinegunner",
+    Roles.support: "Support",
+    Roles.spotter: "Spotter",
+    Roles.sniper: "Sniper",
+    Roles.tank_commander: "Tank Commander",
+    Roles.crewman: "Crewman",
+}
 
 
 class SteamBansType(TypedDict):

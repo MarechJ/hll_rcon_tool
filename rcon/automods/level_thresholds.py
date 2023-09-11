@@ -101,11 +101,14 @@ class LevelThresholdsAutomod:
             # Populate level thresholds by role message if configured
             if self.config.level_thresholds:
                 level_thresholds_msg = ""
-                for role in self.config.level_thresholds:
+                for role, role_config in self.config.level_thresholds.items():
                     message = self.config.violation_message
                     try:
                         message = (
-                            message.format(role=role.label, level=role.min_level) + "\n"
+                            message.format(
+                                role=role_config.label, level=role_config.min_level
+                            )
+                            + "\n"
                         )
                     except KeyError:
                         self.logger.warning(

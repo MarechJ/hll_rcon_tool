@@ -8,7 +8,6 @@ from redis.client import Redis
 from rcon.automods.level_thresholds import LevelThresholdsAutomod
 from rcon.automods.models import (
     ActionMethod,
-    LevelThresholdsConfig,
     NoLeaderConfig,
     PunishPlayer,
     PunitionsToApply,
