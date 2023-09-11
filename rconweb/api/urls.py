@@ -139,6 +139,9 @@ endpoints: list[tuple[str, Callable]] = [
         user_settings.validate_log_line_webhook_config,
     ),
     ("set_log_line_webhook_config", user_settings.set_log_line_webhook_config),
+    ("get_scorebot_config", user_settings.get_scorebot_config),
+    ("validate_scorebot_config", user_settings.validate_scorebot_config),
+    ("set_scorebot_config", user_settings.set_scorebot_config),
 ] + [(name, func) for name, func in views.commands]
 
 # Expose endpoints though Django

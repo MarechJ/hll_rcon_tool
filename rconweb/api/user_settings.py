@@ -8,6 +8,7 @@ from rcon.user_config.expired_vips import ExpiredVipsUserConfig
 from rcon.user_config.log_line_webhooks import LogLineWebhookUserConfig
 from rcon.user_config.name_kicks import NameKickUserConfig
 from rcon.user_config.rcon_settings import RconSettingsUserConfig
+from rcon.user_config.scorebot import ScorebotUserConfig
 from rcon.user_config.steam import SteamUserConfig
 from rcon.user_config.vac_game_bans import VacGameBansUserConfig
 
@@ -476,6 +477,77 @@ def set_log_line_webhook_config(request):
 
     response = _validate_user_config(
         LogLineWebhookUserConfig,
+        data=data,
+        command_name=command_name,
+        dry_run=False,
+    )
+
+    if response:
+        return response
+
+    return api_response(
+        result=True,
+        command=command_name,
+        arguments=data,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+@permission_required("api.", raise_exception=True)
+def get_scorebot_config(request):
+    command_name = "get_scorebot_config"
+
+    try:
+        config = ScorebotUserConfig.load_from_db()
+    except Exception as e:
+        logger.exception(e)
+        return api_response(command=command_name, error=str(e), failed=True)
+
+    return api_response(
+        result=config.model_dump(),
+        command=command_name,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+# TODO: different permission?
+@permission_required("api.", raise_exception=True)
+def validate_scorebot_config(request):
+    command_name = "validate_scorebot_config"
+    data = _get_data(request)
+
+    response = _validate_user_config(
+        ScorebotUserConfig,
+        data=data,
+        command_name=command_name,
+        dry_run=True,
+    )
+
+    if response:
+        return response
+
+    return api_response(
+        result=True,
+        command=command_name,
+        arguments=data,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+@permission_required("api.", raise_exception=True)
+@record_audit
+def set_scorebot_config(request):
+    command_name = "set_scorebot_config"
+    data = _get_data(request)
+
+    response = _validate_user_config(
+        ScorebotUserConfig,
         data=data,
         command_name=command_name,
         dry_run=False,
