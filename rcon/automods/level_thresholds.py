@@ -197,6 +197,14 @@ class LevelThresholdsAutomod:
             )
             return message
 
+    def player_punish_failed(self, aplayer):
+        with self.watch_state(aplayer.team, aplayer.squad) as watch_status:
+            try:
+                if punishes := watch_status.punished.get(aplayer.name):
+                    del punishes[-1]
+            except Exception:
+                self.logger.exception("tried to cleanup punished time but failed")
+
     def punitions_to_apply(
         self,
         team_view,
