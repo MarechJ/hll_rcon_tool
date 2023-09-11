@@ -16,6 +16,7 @@ from django.views.decorators.csrf import csrf_exempt
 from rcon.audit import heartbeat, ingame_mods, online_mods, set_registered_mods
 from rcon.cache_utils import ttl_cache
 from rcon.config import get_config
+from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 
 from .models import SteamPlayer
 
@@ -170,9 +171,9 @@ def staff_required(request):
 
 
 def stats_login_required(func):
-    config = get_config()
+    config = RconServerSettingsUserConfig.load_from_db()
 
-    if not config.get("LOCK_STATS_API"):
+    if not config.lock_stats_api:
         return func
 
     @wraps(func)

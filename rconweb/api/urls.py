@@ -157,6 +157,12 @@ endpoints: list[tuple[str, Callable]] = [
         user_settings.validate_auto_mod_no_leader_config,
     ),
     ("set_auto_mod_no_leader_config", user_settings.set_auto_mod_no_leader_config),
+    ("get_server_name_change_config", user_settings.get_server_name_change_config),
+    (
+        "validate_server_name_change_config",
+        user_settings.validate_server_name_change_config,
+    ),
+    ("set_server_name_change_config", user_settings.set_server_name_change_config),
 ] + [(name, func) for name, func in views.commands]
 
 # Expose endpoints though Django

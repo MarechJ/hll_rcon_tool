@@ -33,7 +33,7 @@ from rcon.types import (
     StructuredLogLineType,
     StructuredLogLineWithMetaData,
 )
-from rcon.user_config.rcon_settings import RconSettingsUserConfig
+from rcon.user_config.rcon_connection_settings import RconSettingsUserConfig
 from rcon.utils import ALL_ROLES, ALL_ROLES_KEY_INDEX_MAP, get_server_number
 
 STEAMID = "steam_id_64"

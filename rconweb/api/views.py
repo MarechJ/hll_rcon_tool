@@ -23,6 +23,7 @@ from rcon.settings import SERVER_INFO
 from rcon.user_config.auto_broadcast import AutoBroadcastUserConfig
 from rcon.user_config.auto_kick import AutoVoteKickUserConfig
 from rcon.user_config.camera import CameraNotificationUserConfig
+from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.standard_messages import (
     StandardBroadcastMessagesUserConfig,
     StandardPunishmentMessagesUserConfig,
@@ -877,10 +878,11 @@ def unblacklist_player(request):
     try:
         remove_player_from_blacklist(data["steam_id_64"])
         audit("unblacklist", request, data)
-        if get_config()["BANS"]["unblacklist_does_unban"]:
+        config = RconServerSettingsUserConfig.load_from_db()
+        if config.unban_does_unblacklist:
             # also remove bans
             potential_failed_unbans = ctl.do_unban(data["steam_id_64"])
-            if get_config()["MULTI_SERVERS"]["broadcast_unbans"]:
+            if config.broadcast_unbans:
                 forward_command(
                     "/api/do_unban",
                     json=data,
@@ -928,11 +930,12 @@ def unban(request):
         # also remove bans
         potential_failed_unbans = ctl.do_unban(data["steam_id_64"])
         audit("unban", request, data)
-        if get_config()["MULTI_SERVERS"]["broadcast_unbans"]:
+        config = RconServerSettingsUserConfig.load_from_db()
+        if config.broadcast_unbans:
             results = forward_command(
                 "/api/do_unban", json=data, sessionid=request.COOKIES.get("sessionid")
             )
-        if get_config()["BANS"]["unban_does_unblacklist"]:
+        if config.unban_does_unblacklist:
             try:
                 remove_player_from_blacklist(data["steam_id_64"])
             except CommandFailedError:
@@ -1027,9 +1030,8 @@ def expose_api_endpoint(func, command_name, permissions: list[str] | set[str] | 
             )
         )
         if data.get("forward"):
-            if command_name == "do_temp_ban" and not get_config().get(
-                "MULTI_SERVERS", {}
-            ).get("broadcast_temp_bans", True):
+            config = RconServerSettingsUserConfig.load_from_db()
+            if command_name == "do_temp_ban" and not config.broadcast_temp_bans:
                 logger.debug("Not broadcasting temp ban due to settings")
                 return response
             try:

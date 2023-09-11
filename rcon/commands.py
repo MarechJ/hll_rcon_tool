@@ -8,7 +8,7 @@ from typing import List
 
 from rcon.connection import HLLConnection
 from rcon.types import VipId
-from rcon.user_config.rcon_settings import RconSettingsUserConfig
+from rcon.user_config.rcon_connection_settings import RconSettingsUserConfig
 from rcon.utils import exception_in_chain
 
 logger = logging.getLogger(__name__)
