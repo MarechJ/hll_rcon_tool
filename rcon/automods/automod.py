@@ -25,6 +25,7 @@ from rcon.rcon import Rcon
 from rcon.settings import SERVER_INFO
 from rcon.types import StructuredLogLineType
 from rcon.user_config.auto_mod_level import AutoModLevelUserConfig
+from rcon.user_config.auto_mod_no_leader import AutoModNoLeaderUserConfig
 
 logger = logging.getLogger(__name__)
 first_run_done_key = "first_run_done"
@@ -154,10 +155,7 @@ def enabled_moderators():
     try:
         config = get_config()
         level_thresholds_config = AutoModLevelUserConfig.load_from_db()
-
-        no_leader_config = None
-        if config.get("NOLEADER_AUTO_MOD") is not None:
-            no_leader_config = NoLeaderConfig(**config["NOLEADER_AUTO_MOD"])
+        no_leader_config = AutoModNoLeaderUserConfig.load_from_db()
 
         seeding_config = None
         if config.get("SEEDING_AUTO_MOD") is not None:

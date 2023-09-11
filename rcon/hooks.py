@@ -8,7 +8,6 @@ from discord_webhook import DiscordEmbed
 
 from rcon.cache_utils import invalidates
 from rcon.commands import CommandFailedError, HLLServerError
-from rcon.config import get_config
 from rcon.discord import (
     dict_to_discord,
     get_prepared_discord_hooks,
@@ -34,6 +33,7 @@ from rcon.player_history import (
 from rcon.rcon import Rcon, StructuredLogLineType
 from rcon.steam_utils import get_player_bans, get_steam_profile, update_db_player_info
 from rcon.types import PlayerFlagType, SteamBansType
+from rcon.user_config.auto_mod_no_leader import AutoModNoLeaderUserConfig
 from rcon.user_config.camera import CameraNotificationUserConfig
 from rcon.user_config.real_vip import RealVipUserConfig
 from rcon.user_config.vac_game_bans import VacGameBansUserConfig
@@ -365,8 +365,9 @@ pendingTimers = {}
 @on_connected
 @inject_player_ids
 def notify_false_positives(rcon: Rcon, _, name: str, steam_id_64: str):
-    c = get_config()["NOLEADER_AUTO_MOD"]
-    if not c["enabled"]:
+    config = AutoModNoLeaderUserConfig.load_from_db()
+
+    if not config.enabled:
         logger.info("no leader auto mod is disabled")
         return
 
@@ -389,7 +390,7 @@ def notify_false_positives(rcon: Rcon, _, name: str, steam_id_64: str):
         try:
             rcon.do_message_player(
                 steam_id_64=steam_id_64,
-                message=c["whitespace_names_message"],
+                message=config.whitespace_message,
                 by="CRcon",
                 save_message=False,
             )

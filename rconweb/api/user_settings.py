@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import permission_required
 from django.views.decorators.csrf import csrf_exempt
 
 from rcon.user_config.auto_mod_level import AutoModLevelUserConfig
+from rcon.user_config.auto_mod_no_leader import AutoModNoLeaderUserConfig
 from rcon.user_config.auto_mod_seeding import AutoModSeedingUserConfig
 from rcon.user_config.ban_tk_on_connect import BanTeamKillOnConnectUserConfig
 from rcon.user_config.expired_vips import ExpiredVipsUserConfig
@@ -692,6 +693,77 @@ def set_auto_mod_seeding_config(request):
 
     response = _validate_user_config(
         AutoModSeedingUserConfig,
+        data=data,
+        command_name=command_name,
+        dry_run=False,
+    )
+
+    if response:
+        return response
+
+    return api_response(
+        result=True,
+        command=command_name,
+        arguments=data,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+@permission_required("api.", raise_exception=True)
+def get_auto_mod_no_leader_config(request):
+    command_name = "get_auto_mod_no_leader_config"
+
+    try:
+        config = AutoModNoLeaderUserConfig.load_from_db()
+    except Exception as e:
+        logger.exception(e)
+        return api_response(command=command_name, error=str(e), failed=True)
+
+    return api_response(
+        result=config.model_dump(),
+        command=command_name,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+# TODO: different permission?
+@permission_required("api.", raise_exception=True)
+def validate_auto_mod_no_leader_config(request):
+    command_name = "validate_auto_mod_no_leader_config"
+    data = _get_data(request)
+
+    response = _validate_user_config(
+        AutoModNoLeaderUserConfig,
+        data=data,
+        command_name=command_name,
+        dry_run=True,
+    )
+
+    if response:
+        return response
+
+    return api_response(
+        result=True,
+        command=command_name,
+        arguments=data,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+@permission_required("api.", raise_exception=True)
+@record_audit
+def set_auto_mod_no_leader_config(request):
+    command_name = "set_auto_mod_no_leader_config"
+    data = _get_data(request)
+
+    response = _validate_user_config(
+        AutoModNoLeaderUserConfig,
         data=data,
         command_name=command_name,
         dry_run=False,

@@ -18,8 +18,8 @@ from rcon.automods.models import (
     WatchStatus,
 )
 from rcon.automods.no_leader import NoLeaderAutomod
-from rcon.config import get_config
-from rcon.types import GameState
+from rcon.types import GameState, Roles
+from rcon.user_config.auto_mod_no_leader import AutoModNoLeaderUserConfig
 
 
 @fixture
@@ -559,14 +559,15 @@ def team_view():
 
 
 game_state: GameState = {
-    'allied_score': 3,
-    'axis_score': 2,
-    'current_map': '',
-    'next_map': '',
-    'num_allied_players': 30,
-    'num_axis_players': 30,
-    'time_remaining': timedelta(10),
+    "allied_score": 3,
+    "axis_score": 2,
+    "current_map": "",
+    "next_map": "",
+    "num_allied_players": 30,
+    "num_axis_players": 30,
+    "time_remaining": timedelta(10),
 }
+
 
 def construct_aplayer(
     player_dict: dict, team_name: str = "allies", squad_name: str = "able"
@@ -602,10 +603,7 @@ def test_should_not_note(team_view):
 
 
 def test_should_note_twice(team_view):
-    config = NoLeaderConfig(
-        number_of_notes=2,
-        notes_interval_seconds=1,
-    )
+    config = AutoModNoLeaderUserConfig(number_of_notes=2, notes_interval_seconds=1)
     mod = NoLeaderAutomod(config, None)
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
@@ -627,12 +625,8 @@ def test_should_note_twice(team_view):
 
 
 def test_should_not_warn(team_view):
-    mod = NoLeaderAutomod(
-        NoLeaderConfig(
-            number_of_warning=0,
-        ),
-        None,
-    )
+    config = AutoModNoLeaderUserConfig(number_of_warnings=0)
+    mod = NoLeaderAutomod(config, None)
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
     aplayer = construct_aplayer(player)
@@ -647,10 +641,7 @@ def test_should_not_warn(team_view):
 
 
 def test_should_warn_twice(team_view):
-    config = NoLeaderConfig(
-        number_of_warning=2,
-        warning_interval_seconds=1,
-    )
+    config = AutoModNoLeaderUserConfig(number_of_warnings=2, warning_interval_seconds=1)
     mod = NoLeaderAutomod(config, None)
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
@@ -672,13 +663,8 @@ def test_should_warn_twice(team_view):
 
 
 def test_should_warn_infinite(team_view):
-    mod = NoLeaderAutomod(
-        NoLeaderConfig(
-            number_of_warning=-1,
-            warning_interval_seconds=0,
-        ),
-        None,
-    )
+    config = AutoModNoLeaderUserConfig(number_of_warnings=1, warning_interval_seconds=0)
+    mod = NoLeaderAutomod(config, None)
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
     aplayer = construct_aplayer(player)
@@ -690,15 +676,13 @@ def test_should_warn_infinite(team_view):
 
 
 def test_should_punish(team_view):
-    mod = NoLeaderAutomod(
-        NoLeaderConfig(
-            number_of_punish=2,
-            min_squad_players_for_punish=0,
-            disable_punish_below_server_player_count=10,
-            immuned_roles=["support"],
-        ),
-        None,
+    config = AutoModNoLeaderUserConfig(
+        number_of_punishments=2,
+        min_squad_players_for_punish=0,
+        min_server_players_for_punish=10,
+        immune_roles=[Roles("support")],
     )
+    mod = NoLeaderAutomod(config, None)
 
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
@@ -714,17 +698,15 @@ def test_should_punish(team_view):
 
 
 def test_punish_wait(team_view):
-    mod = NoLeaderAutomod(
-        NoLeaderConfig(
-            number_of_punish=2,
-            punish_interval_seconds=60,
-            min_squad_players_for_punish=0,
-            disable_punish_below_server_player_count=0,
-            immuned_level_up_to=10,
-            immuned_roles=[],
-        ),
-        None,
+    config = AutoModNoLeaderUserConfig(
+        number_of_punishments=2,
+        punish_interval_seconds=60,
+        min_squad_players_for_punish=0,
+        min_server_players_for_punish=0,
+        immune_player_level=10,
+        immune_roles=[],
     )
+    mod = NoLeaderAutomod(config, None)
 
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
@@ -747,13 +729,13 @@ def test_punish_wait(team_view):
 
 
 def test_punish_twice(team_view):
-    config = NoLeaderConfig(
-        number_of_punish=2,
+    config = AutoModNoLeaderUserConfig(
+        number_of_punishments=2,
         punish_interval_seconds=1,
         min_squad_players_for_punish=0,
-        disable_punish_below_server_player_count=0,
-        immuned_level_up_to=10,
-        immuned_roles=[],
+        min_server_players_for_punish=0,
+        immune_player_level=10,
+        immune_roles=[],
     )
     mod = NoLeaderAutomod(config, None)
 
@@ -794,17 +776,15 @@ def test_punish_twice(team_view):
 
 
 def test_punish_too_little_players(team_view):
-    mod = NoLeaderAutomod(
-        NoLeaderConfig(
-            number_of_punish=2,
-            punish_interval_seconds=60,
-            min_squad_players_for_punish=0,
-            disable_punish_below_server_player_count=60,
-            immuned_level_up_to=10,
-            immuned_roles=[],
-        ),
-        None,
+    config = AutoModNoLeaderUserConfig(
+        number_of_punishments=2,
+        punish_interval_seconds=60,
+        min_squad_players_for_punish=0,
+        min_server_players_for_punish=60,
+        immune_player_level=10,
+        immune_roles=[],
     )
+    mod = NoLeaderAutomod(config, None)
 
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
@@ -820,17 +800,15 @@ def test_punish_too_little_players(team_view):
 
 
 def test_punish_small_squad(team_view):
-    mod = NoLeaderAutomod(
-        NoLeaderConfig(
-            number_of_punish=2,
-            punish_interval_seconds=60,
-            min_squad_players_for_punish=7,
-            disable_punish_below_server_player_count=0,
-            immuned_level_up_to=10,
-            immuned_roles=[],
-        ),
-        None,
+    config = AutoModNoLeaderUserConfig(
+        number_of_punishments=2,
+        punish_interval_seconds=60,
+        min_squad_players_for_punish=7,
+        min_server_players_for_punish=0,
+        immune_player_level=10,
+        immune_roles=[],
     )
+    mod = NoLeaderAutomod(config, None)
 
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
@@ -846,17 +824,15 @@ def test_punish_small_squad(team_view):
 
 
 def test_punish_disabled(team_view):
-    mod = NoLeaderAutomod(
-        NoLeaderConfig(
-            number_of_punish=0,
-            punish_interval_seconds=0,
-            min_squad_players_for_punish=0,
-            disable_punish_below_server_player_count=0,
-            immuned_level_up_to=10,
-            immuned_roles=[],
-        ),
-        None,
+    config = AutoModNoLeaderUserConfig(
+        number_of_punishments=0,
+        punish_interval_seconds=0,
+        min_squad_players_for_punish=0,
+        min_server_players_for_punish=0,
+        immune_player_level=10,
+        immune_roles=[],
     )
+    mod = NoLeaderAutomod(config, None)
 
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
@@ -872,17 +848,15 @@ def test_punish_disabled(team_view):
 
 
 def test_punish_immuned_role(team_view):
-    mod = NoLeaderAutomod(
-        NoLeaderConfig(
-            number_of_punish=2,
-            punish_interval_seconds=0,
-            min_squad_players_for_punish=0,
-            disable_punish_below_server_player_count=0,
-            immuned_level_up_to=10,
-            immuned_roles=["antitank"],
-        ),
-        None,
+    config = AutoModNoLeaderUserConfig(
+        number_of_punishments=2,
+        punish_interval_seconds=0,
+        min_squad_players_for_punish=0,
+        min_server_players_for_punish=0,
+        immune_player_level=10,
+        immune_roles=[Roles.anti_tank],
     )
+    mod = NoLeaderAutomod(config, None)
 
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
@@ -896,17 +870,15 @@ def test_punish_immuned_role(team_view):
         aplayer,
     )
 
-    mod = NoLeaderAutomod(
-        NoLeaderConfig(
-            number_of_punish=2,
-            punish_interval_seconds=0,
-            min_squad_players_for_punish=0,
-            disable_punish_below_server_player_count=0,
-            immuned_level_up_to=10,
-            immuned_roles=["antitank", "support"],
-        ),
-        None,
+    config = AutoModNoLeaderUserConfig(
+        number_of_punishments=2,
+        punish_interval_seconds=0,
+        min_squad_players_for_punish=0,
+        min_server_players_for_punish=0,
+        immune_player_level=10,
+        immune_roles=[Roles.anti_tank, Roles.support],
     )
+    mod = NoLeaderAutomod(config, None)
 
     watch_status = WatchStatus()
     assert PunishStepState.IMMUNED == mod.should_punish_player(
@@ -919,17 +891,15 @@ def test_punish_immuned_role(team_view):
 
 
 def test_punish_immuned_lvl(team_view):
-    mod = NoLeaderAutomod(
-        NoLeaderConfig(
-            number_of_punish=2,
-            punish_interval_seconds=0,
-            min_squad_players_for_punish=0,
-            disable_punish_below_server_player_count=0,
-            immuned_level_up_to=50,
-            immuned_roles=[],
-        ),
-        None,
+    config = AutoModNoLeaderUserConfig(
+        number_of_punishments=2,
+        punish_interval_seconds=0,
+        min_squad_players_for_punish=0,
+        min_server_players_for_punish=0,
+        immune_player_level=50,
+        immune_roles=[],
     )
+    mod = NoLeaderAutomod(config, None)
 
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
@@ -945,17 +915,15 @@ def test_punish_immuned_lvl(team_view):
 
 
 def test_shouldnt_kick_without_punish(team_view):
-    mod = NoLeaderAutomod(
-        NoLeaderConfig(
-            kick_after_max_punish=True,
-            kick_grace_period_seconds=0,
-            min_squad_players_for_kick=0,
-            disable_kick_below_server_player_count=0,
-            immuned_level_up_to=10,
-            immuned_roles=["support"],
-        ),
-        None,
+    config = AutoModNoLeaderUserConfig(
+        kick_after_max_punish=True,
+        kick_grace_period_seconds=0,
+        min_squad_players_for_kick=0,
+        min_server_players_for_kick=0,
+        immune_player_level=10,
+        immune_roles=[Roles.support],
     )
+    mod = NoLeaderAutomod(config, None)
 
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
@@ -979,17 +947,15 @@ def test_shouldnt_kick_without_punish(team_view):
 
 
 def test_shouldnt_kick_immuned(team_view):
-    mod = NoLeaderAutomod(
-        NoLeaderConfig(
-            kick_after_max_punish=True,
-            kick_grace_period_seconds=0,
-            min_squad_players_for_kick=0,
-            disable_kick_below_server_player_count=0,
-            immuned_level_up_to=10,
-            immuned_roles=["antitank"],
-        ),
-        None,
+    config = AutoModNoLeaderUserConfig(
+        kick_after_max_punish=True,
+        kick_grace_period_seconds=0,
+        min_squad_players_for_kick=0,
+        min_server_players_for_kick=0,
+        immune_player_level=10,
+        immune_roles=[Roles.anti_tank],
     )
+    mod = NoLeaderAutomod(config, None)
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
     aplayer = construct_aplayer(player)
@@ -1005,17 +971,15 @@ def test_shouldnt_kick_immuned(team_view):
 
 
 def test_shouldnt_kick_immuned_lvl(team_view):
-    mod = NoLeaderAutomod(
-        NoLeaderConfig(
-            kick_after_max_punish=True,
-            kick_grace_period_seconds=0,
-            min_squad_players_for_kick=0,
-            disable_kick_below_server_player_count=0,
-            immuned_level_up_to=50,
-            immuned_roles=[],
-        ),
-        None,
+    config = AutoModNoLeaderUserConfig(
+        kick_after_max_punish=True,
+        kick_grace_period_seconds=0,
+        min_squad_players_for_kick=0,
+        min_server_players_for_kick=0,
+        immune_player_level=50,
+        immune_roles=[],
     )
+    mod = NoLeaderAutomod(config, None)
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
     aplayer = construct_aplayer(player)
@@ -1031,17 +995,15 @@ def test_shouldnt_kick_immuned_lvl(team_view):
 
 
 def test_shouldnt_kick_small_squad(team_view):
-    mod = NoLeaderAutomod(
-        NoLeaderConfig(
-            kick_after_max_punish=True,
-            kick_grace_period_seconds=0,
-            min_squad_players_for_kick=7,
-            disable_kick_below_server_player_count=0,
-            immuned_level_up_to=10,
-            immuned_roles=[],
-        ),
-        None,
+    config = AutoModNoLeaderUserConfig(
+        kick_after_max_punish=True,
+        kick_grace_period_seconds=0,
+        min_squad_players_for_kick=7,
+        min_server_players_for_kick=0,
+        immune_player_level=10,
+        immune_roles=[],
     )
+    mod = NoLeaderAutomod(config, None)
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
     aplayer = construct_aplayer(player)
@@ -1057,17 +1019,15 @@ def test_shouldnt_kick_small_squad(team_view):
 
 
 def test_shouldnt_kick_small_game(team_view):
-    mod = NoLeaderAutomod(
-        NoLeaderConfig(
-            kick_after_max_punish=True,
-            kick_grace_period_seconds=0,
-            min_squad_players_for_kick=0,
-            disable_kick_below_server_player_count=50,
-            immuned_level_up_to=10,
-            immuned_roles=[],
-        ),
-        None,
+    config = AutoModNoLeaderUserConfig(
+        kick_after_max_punish=True,
+        kick_grace_period_seconds=0,
+        min_squad_players_for_kick=0,
+        min_server_players_for_kick=50,
+        immune_player_level=10,
+        immune_roles=[],
     )
+    mod = NoLeaderAutomod(config, None)
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
     aplayer = construct_aplayer(player)
@@ -1083,17 +1043,15 @@ def test_shouldnt_kick_small_game(team_view):
 
 
 def test_shouldnt_kick_disabled(team_view):
-    mod = NoLeaderAutomod(
-        NoLeaderConfig(
-            kick_after_max_punish=False,
-            kick_grace_period_seconds=0,
-            min_squad_players_for_kick=0,
-            disable_kick_below_server_player_count=0,
-            immuned_level_up_to=10,
-            immuned_roles=[],
-        ),
-        None,
+    config = AutoModNoLeaderUserConfig(
+        kick_after_max_punish=False,
+        kick_grace_period_seconds=0,
+        min_squad_players_for_kick=0,
+        min_server_players_for_kick=0,
+        immune_player_level=10,
+        immune_roles=[],
     )
+    mod = NoLeaderAutomod(config, None)
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
     aplayer = construct_aplayer(player)
@@ -1109,17 +1067,15 @@ def test_shouldnt_kick_disabled(team_view):
 
 
 def test_should_wait_kick(team_view):
-    mod = NoLeaderAutomod(
-        NoLeaderConfig(
-            kick_after_max_punish=True,
-            kick_grace_period_seconds=1,
-            min_squad_players_for_kick=0,
-            disable_kick_below_server_player_count=0,
-            immuned_level_up_to=10,
-            immuned_roles=[],
-        ),
-        None,
+    config = AutoModNoLeaderUserConfig(
+        kick_after_max_punish=True,
+        kick_grace_period_seconds=1,
+        min_squad_players_for_kick=0,
+        min_server_players_for_kick=0,
+        immune_player_level=10,
+        immune_roles=[],
     )
+    mod = NoLeaderAutomod(config, None)
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
     aplayer = construct_aplayer(player)
@@ -1150,47 +1106,51 @@ def test_should_wait_kick(team_view):
 
 
 def test_ignores_commander(team_view):
-    config = NoLeaderConfig(
+    config = AutoModNoLeaderUserConfig(
         number_of_notes=0,
-        number_of_warning=1,
+        number_of_warnings=1,
         warning_interval_seconds=3,
-        number_of_punish=2,
+        number_of_punishments=2,
         punish_interval_seconds=4,
         min_squad_players_for_punish=0,
-        disable_punish_below_server_player_count=0,
+        min_server_players_for_punish=0,
         kick_after_max_punish=True,
         kick_grace_period_seconds=1,
         min_squad_players_for_kick=0,
-        disable_kick_below_server_player_count=0,
-        immuned_level_up_to=10,
-        immuned_roles=[],
+        min_server_players_for_kick=0,
+        immune_player_level=10,
+        immune_roles=[],
         warning_message="",
         punish_message="",
         kick_message="",
     )
-
     mod = NoLeaderAutomod(config, None)
-    to_apply = mod.punitions_to_apply(team_view, "Commander", "allies", {
-        "players": [team_view["allies"]["commander"]]
-    }, game_state)
+    to_apply = mod.punitions_to_apply(
+        team_view,
+        "Commander",
+        "allies",
+        {"players": [team_view["allies"]["commander"]]},
+        game_state,
+    )
 
     assert to_apply.warning == []
 
+
 def test_watcher(team_view):
-    config = NoLeaderConfig(
+    config = AutoModNoLeaderUserConfig(
         number_of_notes=0,
-        number_of_warning=1,
+        number_of_warnings=1,
         warning_interval_seconds=3,
-        number_of_punish=2,
+        number_of_punishments=2,
         punish_interval_seconds=4,
         min_squad_players_for_punish=0,
-        disable_punish_below_server_player_count=0,
+        min_server_players_for_punish=0,
         kick_after_max_punish=True,
         kick_grace_period_seconds=1,
         min_squad_players_for_kick=0,
-        disable_kick_below_server_player_count=0,
-        immuned_level_up_to=10,
-        immuned_roles=[],
+        min_server_players_for_kick=0,
+        immune_player_level=10,
+        immune_roles=[],
         warning_message="",
         punish_message="",
         kick_message="",
@@ -1560,25 +1520,24 @@ def test_watcher(team_view):
 
 
 def test_watcher_no_kick(team_view):
-    config = NoLeaderConfig(
+    config = AutoModNoLeaderUserConfig(
         number_of_notes=0,
-        number_of_warning=1,
+        number_of_warnings=1,
         warning_interval_seconds=3,
-        number_of_punish=2,
+        number_of_punishments=2,
         punish_interval_seconds=4,
         min_squad_players_for_punish=3,
-        disable_punish_below_server_player_count=0,
+        min_server_players_for_punish=0,
         kick_after_max_punish=False,
         kick_grace_period_seconds=1,
         min_squad_players_for_kick=3,
-        disable_kick_below_server_player_count=0,
-        immuned_level_up_to=1,
-        immuned_roles=[],
+        min_server_players_for_kick=0,
+        immune_player_level=1,
+        immune_roles=[],
         warning_message="",
         punish_message="",
         kick_message="",
     )
-
     state = {}
 
     @contextmanager
@@ -1823,25 +1782,24 @@ def test_watcher_no_kick(team_view):
 
 
 def test_watcher_resets(team_view):
-    config = NoLeaderConfig(
+    config = AutoModNoLeaderUserConfig(
         number_of_notes=0,
-        number_of_warning=0,
+        number_of_warnings=0,
         warning_interval_seconds=3,
-        number_of_punish=1,
+        number_of_punishments=1,
         punish_interval_seconds=4,
         min_squad_players_for_punish=3,
-        disable_punish_below_server_player_count=0,
+        min_server_players_for_punish=0,
         kick_after_max_punish=False,
         kick_grace_period_seconds=1,
         min_squad_players_for_kick=3,
-        disable_kick_below_server_player_count=0,
-        immuned_level_up_to=1,
-        immuned_roles=[],
+        min_server_players_for_kick=0,
+        immune_player_level=1,
+        immune_roles=[],
         warning_message="",
         punish_message="",
         kick_message="",
     )
-
     state = {}
 
     @contextmanager
@@ -2056,7 +2014,5 @@ def test_watcher_resets(team_view):
 
 
 def test_default_config():
-    config = get_config()
-    config = NoLeaderConfig(**config["NOLEADER_AUTO_MOD"])
-
+    config = AutoModNoLeaderUserConfig.load_from_db()
     assert config.enabled == False
