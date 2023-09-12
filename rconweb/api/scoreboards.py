@@ -5,9 +5,9 @@ from datetime import datetime, timedelta
 from django.contrib.auth.decorators import permission_required
 from django.views.decorators.csrf import csrf_exempt
 
-from rcon.config import get_config
 from rcon.models import Maps, enter_session
 from rcon.scoreboard import LiveStats, TimeWindowStats, get_cached_live_game_stats
+from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.utils import LONG_HUMAN_MAP_NAMES, map_name
 
 from .auth import api_response, login_required, stats_login_required
@@ -20,15 +20,12 @@ logger = logging.getLogger("rconweb")
 @stats_login_required
 def live_scoreboard(request):
     stats = LiveStats()
-    config = get_config()
-
+    config = RconServerSettingsUserConfig.load_from_db()
     try:
         result = stats.get_cached_stats()
         result = {
             "snapshot_timestamp": result["snapshot_timestamp"],
-            "refresh_interval_sec": config.get("LIVE_STATS", {}).get(
-                "refresh_stats_seconds", 30
-            ),
+            "refresh_interval_sec": config.live_stats_refresh_seconds,
             "stats": result["stats"],
         }
         error = (None,)

@@ -11,6 +11,11 @@ logger = logging.getLogger(__name__)
 
 def key_check(mandatory_keys: frozenset, provided_keys: Iterable[str]):
     missing_keys = mandatory_keys - set(provided_keys)
+    extra_keys = set(provided_keys) - mandatory_keys
+    if extra_keys:
+        raise InvalidConfigurationError(
+            f"extra keys=({', '.join(extra_keys)}) | Mandatory keys=({', '.join(mandatory_keys)}) | Provided keys=({', '.join(provided_keys)})"
+        )
     if missing_keys:
         raise InvalidConfigurationError(
             f"missing keys=({', '.join(missing_keys)}) | Mandatory keys=({', '.join(mandatory_keys)}) | Provided keys=({', '.join(provided_keys)})"
@@ -39,10 +44,6 @@ class BaseUserConfig(pydantic.BaseModel):
             return cls.model_validate(conf)
 
         from pprint import pprint
-
-        # pprint(cls)
-        # pprint(cls().model_dump())
-        # pprint(cls().model_dump_json())
 
         return cls()
 

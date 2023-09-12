@@ -33,7 +33,7 @@ from rcon.types import (
     StructuredLogLineType,
     StructuredLogLineWithMetaData,
 )
-from rcon.user_config.rcon_connection_settings import RconSettingsUserConfig
+from rcon.user_config.rcon_connection_settings import RconConnectionSettingsUserConfig
 from rcon.utils import ALL_ROLES, ALL_ROLES_KEY_INDEX_MAP, get_server_number
 
 STEAMID = "steam_id_64"
@@ -121,13 +121,13 @@ class Rcon(ServerCtl):
         # config/default_config.yml config.yml, etc.
         # TODO: Don't let this block starting RCON
         try:
-            config = RconSettingsUserConfig.load_from_db()
+            config = RconConnectionSettingsUserConfig.load_from_db()
         except ValueError as e:
             # This might look dumb but pydantic provides useful error messages in the
             # stack trace and we don't have to remember to keep updating this if we add
             # any more fields to RconSettingsUserConfig config
             logger.exception(e)
-            config = RconSettingsUserConfig()
+            config = RconConnectionSettingsUserConfig()
 
         super().__init__(
             *args, **kwargs, max_open=config.max_open, max_idle=config.max_idle

@@ -11,6 +11,9 @@ class RconServerSettingsType(TypedDict):
     unblacklist_does_unban: bool
     broadcast_temp_bans: bool
     broadcast_unbans: bool
+    lock_stats_api: bool
+    live_stats_refresh_seconds: int
+    live_stats_refresh_current_game_seconds: int
 
 
 class RconServerSettingsUserConfig(BaseUserConfig):
@@ -23,6 +26,10 @@ class RconServerSettingsUserConfig(BaseUserConfig):
     broadcast_temp_bans: bool = Field(default=True)
     broadcast_unbans: bool = Field(default=True)
 
+    lock_stats_api: bool = Field(default=False)
+    live_stats_refresh_seconds: int = Field(default=15)
+    live_stats_refresh_current_game_seconds: int = Field(default=5)
+
     @staticmethod
     def save_to_db(values: RconServerSettingsType, dry_run=False):
         key_check(RconServerSettingsType.__required_keys__, values.keys())
@@ -33,6 +40,10 @@ class RconServerSettingsUserConfig(BaseUserConfig):
             unblacklist_does_unban=values.get("unblacklist_does_unban"),
             broadcast_temp_bans=values.get("broadcast_temp_bans"),
             broadcast_unbans=values.get("broadcast_unbans"),
+            live_stats_refresh_seconds=values.get("live_stats_refresh_seconds"),
+            live_stats_refresh_current_game_seconds=values.get(
+                "live_stats_refresh_current_game_seconds"
+            ),
         )
 
         if not dry_run:

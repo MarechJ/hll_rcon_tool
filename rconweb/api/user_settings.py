@@ -12,7 +12,8 @@ from rcon.user_config.expired_vips import ExpiredVipsUserConfig
 from rcon.user_config.gtx_server_name import ServerNameChangeUserConfig
 from rcon.user_config.log_line_webhooks import LogLineWebhookUserConfig
 from rcon.user_config.name_kicks import NameKickUserConfig
-from rcon.user_config.rcon_connection_settings import RconSettingsUserConfig
+from rcon.user_config.rcon_connection_settings import RconConnectionSettingsUserConfig
+from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.scorebot import ScorebotUserConfig
 from rcon.user_config.steam import SteamUserConfig
 from rcon.user_config.vac_game_bans import VacGameBansUserConfig
@@ -93,11 +94,11 @@ def set_steam_config(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.", raise_exception=True)
-def get_rcon_settings_config(request):
-    command_name = "get_rcon_settings_config"
+def get_rcon_connection_settings_config(request):
+    command_name = "get_rcon_connection_settings_config"
 
     try:
-        config = RconSettingsUserConfig.load_from_db()
+        config = RconConnectionSettingsUserConfig.load_from_db()
     except Exception as e:
         logger.exception(e)
         return api_response(command=command_name, error=str(e), failed=True)
@@ -113,12 +114,15 @@ def get_rcon_settings_config(request):
 @login_required()
 # TODO: different permission?
 @permission_required("api.", raise_exception=True)
-def validate_rcon_settings_config(request):
-    command_name = "validate_rcon_settings_config"
+def validate_rcon_connection_settings_config(request):
+    command_name = "validate_rcon_connection_settings_config"
     data = _get_data(request)
 
     response = _validate_user_config(
-        RconSettingsUserConfig, data=data, command_name=command_name, dry_run=True
+        RconConnectionSettingsUserConfig,
+        data=data,
+        command_name=command_name,
+        dry_run=True,
     )
 
     if response:
@@ -136,12 +140,86 @@ def validate_rcon_settings_config(request):
 @login_required()
 @permission_required("api.", raise_exception=True)
 @record_audit
-def set_rcon_settings_config(request):
-    command_name = "set_rcon_settings_config"
+def set_rcon_connection_settings_config(request):
+    command_name = "set_rcon_connection_settings_config"
     data = _get_data(request)
 
     response = _validate_user_config(
-        RconSettingsUserConfig, data=data, command_name=command_name, dry_run=False
+        RconConnectionSettingsUserConfig,
+        data=data,
+        command_name=command_name,
+        dry_run=False,
+    )
+
+    if response:
+        return response
+
+    return api_response(
+        result=True,
+        command=command_name,
+        arguments=data,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+@permission_required("api.", raise_exception=True)
+def get_rcon_server_settings_config(request):
+    command_name = "get_rcon_server_settings_config"
+
+    try:
+        config = RconServerSettingsUserConfig.load_from_db()
+    except Exception as e:
+        logger.exception(e)
+        return api_response(command=command_name, error=str(e), failed=True)
+
+    return api_response(
+        result=config.model_dump(),
+        command=command_name,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+# TODO: different permission?
+@permission_required("api.", raise_exception=True)
+def validate_rcon_server_settings_config(request):
+    command_name = "validate_rcon_server_settings_config"
+    data = _get_data(request)
+
+    response = _validate_user_config(
+        RconServerSettingsUserConfig,
+        data=data,
+        command_name=command_name,
+        dry_run=True,
+    )
+
+    if response:
+        return response
+
+    return api_response(
+        result=True,
+        command=command_name,
+        arguments=data,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+@permission_required("api.", raise_exception=True)
+@record_audit
+def set_rcon_server_settings_config(request):
+    command_name = "set_rcon_server_settings_config"
+    data = _get_data(request)
+
+    response = _validate_user_config(
+        RconServerSettingsUserConfig,
+        data=data,
+        command_name=command_name,
+        dry_run=False,
     )
 
     if response:
@@ -206,7 +284,10 @@ def set_vac_game_bans_config(request):
     data = _get_data(request)
 
     response = _validate_user_config(
-        RconSettingsUserConfig, data=data, command_name=command_name, dry_run=False
+        RconConnectionSettingsUserConfig,
+        data=data,
+        command_name=command_name,
+        dry_run=False,
     )
 
     if response:
