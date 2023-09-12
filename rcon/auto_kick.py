@@ -48,7 +48,7 @@ def auto_kick(_, log, name, steam_id_64):
                 send_to_discord_audit(
                     f"`{name}` kicked from regexp `{r}`",
                     by="NAME_KICK",
-                    webhookurl=config.discord_webhook_url,
+                    webhookurls=[config.discord_webhook_url],
                 )
             except Exception:
                 logger.error("Unable to send to audit_log")

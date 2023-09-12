@@ -178,6 +178,12 @@ endpoints: list[tuple[str, Callable]] = [
         user_settings.validate_server_name_change_config,
     ),
     ("set_server_name_change_config", user_settings.set_server_name_change_config),
+    ("get_audit_webhooks_config", user_settings.get_audit_webhooks_config),
+    (
+        "validate_audit_webhooks_config",
+        user_settings.validate_audit_webhooks_config,
+    ),
+    ("set_audit_webhooks_config", user_settings.set_audit_webhooks_config),
 ] + [(name, func) for name, func in views.commands]
 
 # Expose endpoints though Django

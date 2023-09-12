@@ -207,7 +207,7 @@ def punish_squads(rcon: Rcon, r: Redis):
 def audit(discord_webhook_url: str, msg: str, author: str):
     if discord_webhook_url is not None and discord_webhook_url != "":
         send_to_discord_audit(
-            msg, by=author, webhookurl=discord_webhook_url, silent=False
+            msg, by=author, webhookurls=[discord_webhook_url], silent=False
         )
 
 

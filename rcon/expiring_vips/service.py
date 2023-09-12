@@ -48,7 +48,7 @@ def remove_expired_vips(rcon_hook: Rcon, webhookurl: Optional[str] = None):
                 name = "No name found"
             message = f"Removing VIP from `{name}`/`{vip.steamid.steam_id_64}` expired `{vip.expiration}`"
             logger.info(message)
-            send_to_discord_audit(message, by=SERVICE_NAME, webhookurl=webhookurl)
+            send_to_discord_audit(message, by=SERVICE_NAME, webhookurls=[webhookurl])
             rcon_hook.do_remove_vip(vip.steamid.steam_id_64)
 
         # Look for anyone with VIP but without a record and create one for them

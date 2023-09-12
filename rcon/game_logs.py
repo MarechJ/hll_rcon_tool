@@ -672,7 +672,7 @@ def auto_ban_if_tks_right_after_connection(
                 send_to_discord_audit(
                     discord_msg.format(player=player_name),
                     by=author,
-                    webhookurl=webhook,
+                    webhookurls=[webhook],
                 )
         elif is_player_death(player_name, log):
             death_counter += 1

@@ -9,6 +9,7 @@ from discord_webhook import DiscordWebhook
 
 from discord import RequestsWebhookAdapter, Webhook
 from rcon.user_config.webhooks import (
+    AuditWebhooksUserConfig,
     CameraWebhooksUserConfig,
     WatchlistWebhooksUserConfig,
 )
@@ -81,22 +82,36 @@ def dict_to_discord(d):
     return "   ".join([f"{k}: `{v}`" for k, v in d.items()])
 
 
-def send_to_discord_audit(message, by=None, silent=True, webhookurl=None):
-    webhookurl = webhookurl or os.getenv("DISCORD_WEBHOOK_AUDIT_LOG", None)
+def send_to_discord_audit(
+    message, by=None, silent=True, webhookurls: list[str | None] | None = None
+):
+    config = None
+
+    if webhookurls is None:
+        config = AuditWebhooksUserConfig.load_from_db()
+        webhookurls = [hook.url for hook in config.hooks]
+
     # Flatten messages with newlines
     message = message.replace("\n", " ")
     logger.info("Audit: [%s] %s", by, message)
-    if not webhookurl:
-        logger.debug("No webhook set for audit log")
+    if not webhookurls:
+        logger.debug("No webhooks set for audit log")
         return
     try:
         server_name = os.getenv(
             "SERVER_SHORT_NAME", os.getenv("SERVER_SHORT_NAME", "Undefined")
         )
-        webhook = DiscordWebhook(
-            url=webhookurl, content="[{}][**{}**] {}".format(server_name, by, message)
-        )
-        return webhook.execute()
+
+        dh_webhooks = [
+            DiscordWebhook(
+                url=url, content="[{}][**{}**] {}".format(server_name, by, message)
+            )
+            for url in webhookurls
+            if url
+        ]
+
+        responses = [hook.execute() for hook in dh_webhooks]
+        return responses
     except:
         logger.exception("Can't send audit log")
         if not silent:

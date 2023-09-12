@@ -63,11 +63,15 @@ class BaseMentionWebhookUserConfig(BaseUserConfig):
     hooks: list[DiscordMentionWebhook] = pydantic.Field(default_factory=list)
 
     @classmethod
-    def save_to_db(cls, values: WebhookMentionType, dry_run=False) -> None:
-        for obj in values.get("hooks", []):
+    def save_to_db(cls, values, dry_run=False) -> None:
+        raw_hooks: list[WebhookMentionType] = values.get("hooks")
+        if not isinstance(raw_hooks, list):
+            raise InvalidConfigurationError(f"'hooks' must be a list")
+
+        for obj in raw_hooks:
             key_check(WebhookMentionType.__required_keys__, obj.keys())
 
-        validated_hooks = parse_raw_mention_hooks(values.get("hooks"))
+        validated_hooks = parse_raw_mention_hooks(raw_hooks)
         validated_conf = cls(hooks=validated_hooks)
 
         if not dry_run:
@@ -78,11 +82,15 @@ class BaseWebhookUserConfig(BaseUserConfig):
     hooks: list[DiscordWehbhook] = pydantic.Field(default_factory=list)
 
     @classmethod
-    def save_to_db(cls, values: WebhookType, dry_run=False) -> None:
-        for obj in values.get("hooks", []):
-            key_check(WebhookMentionType.__required_keys__, obj.keys())
+    def save_to_db(cls, values, dry_run=False) -> None:
+        raw_hooks: list[WebhookType] = values.get("hooks")
+        if not isinstance(raw_hooks, list):
+            raise InvalidConfigurationError(f"'hooks' must be a list")
 
-        validated_hooks = [DiscordWehbhook(url=url) for url in values.get("url")]
+        for obj in raw_hooks:
+            key_check(WebhookType.__required_keys__, obj.keys())
+
+        validated_hooks = [DiscordWehbhook(url=obj.get("url")) for obj in raw_hooks]
         validated_conf = cls(hooks=validated_hooks)
 
         if not dry_run:
@@ -104,18 +112,17 @@ class AuditWebhooksUserConfig(BaseWebhookUserConfig):
 def parse_raw_mention_hooks(
     raw_hooks: list[WebhookMentionType],
 ) -> list["DiscordMentionWebhook"]:
-    if not isinstance(raw_hooks, list):
-        raise InvalidConfigurationError("%s must be a list", raw_hooks)
-
     validated_hooks: list[DiscordMentionWebhook] = []
     for raw_hook in raw_hooks:
-        user_mentions = raw_hook["user_mentions"]
-        user_ids = frozenset(user_mentions)
-        role_mentions = raw_hook["role_mentions"]
-        role_ids = frozenset(role_mentions)
+        user_mentions = raw_hook.get("user_mentions")
+        user_ids = set(user_mentions)
+        role_mentions = raw_hook.get("role_mentions")
+        role_ids = set(role_mentions)
 
         h = DiscordMentionWebhook(
-            url=raw_hook.get("url"), user_mentions=user_ids, role_mentions=role_ids
+            url=raw_hook.get("url"),
+            user_mentions=list(user_ids),
+            role_mentions=list(role_ids),
         )
         validated_hooks.append(h)
 

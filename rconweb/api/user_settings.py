@@ -17,6 +17,7 @@ from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.scorebot import ScorebotUserConfig
 from rcon.user_config.steam import SteamUserConfig
 from rcon.user_config.vac_game_bans import VacGameBansUserConfig
+from rcon.user_config.webhooks import AuditWebhooksUserConfig
 
 from .audit_log import record_audit
 from .auth import api_response, login_required
@@ -918,6 +919,77 @@ def set_server_name_change_config(request):
 
     response = _validate_user_config(
         ServerNameChangeUserConfig,
+        data=data,
+        command_name=command_name,
+        dry_run=False,
+    )
+
+    if response:
+        return response
+
+    return api_response(
+        result=True,
+        command=command_name,
+        arguments=data,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+@permission_required("api.", raise_exception=True)
+def get_audit_webhooks_config(request):
+    command_name = "get_audit_webhooks_config"
+
+    try:
+        config = AuditWebhooksUserConfig.load_from_db()
+    except Exception as e:
+        logger.exception(e)
+        return api_response(command=command_name, error=str(e), failed=True)
+
+    return api_response(
+        result=config.model_dump(),
+        command=command_name,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+# TODO: different permission?
+@permission_required("api.", raise_exception=True)
+def validate_audit_webhooks_config(request):
+    command_name = "validate_audit_webhooks_config"
+    data = _get_data(request)
+
+    response = _validate_user_config(
+        AuditWebhooksUserConfig,
+        data=data,
+        command_name=command_name,
+        dry_run=True,
+    )
+
+    if response:
+        return response
+
+    return api_response(
+        result=True,
+        command=command_name,
+        arguments=data,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+@permission_required("api.", raise_exception=True)
+@record_audit
+def set_audit_webhooks_config(request):
+    command_name = "set_audit_webhooks_config"
+    data = _get_data(request)
+
+    response = _validate_user_config(
+        AuditWebhooksUserConfig,
         data=data,
         command_name=command_name,
         dry_run=False,
