@@ -57,22 +57,22 @@ SURVIVORS = "SURVIVORS\n*longest life (min.)*"
 U_R_STILL_A_MAN = "U'R STILL A MAN\n*shortest life (min.)*"
 
 
-# Have to inherit from str to allow for JSON serialization
+# # Have to inherit from str to allow for JSON serialization w/ pydantic
 class StatTypes(enum.Enum):
-    top_killers: str
-    top_ratio: str
-    top_performance: str
-    try_harders: str
-    top_stamina: str
-    top_kill_streak: str
-    most_patient: str
-    i_never_give_up: str
-    im_clumsy: str
-    i_need_glasses: str
-    i_love_voting: str
-    what_is_a_break: str
-    survivors: str
-    u_r_still_a_man: str
+    top_killers = "top_killers"
+    top_ratio = "top_ratio"
+    top_performance = "top_performance"
+    try_harders = "try_harders"
+    top_stamina = "top_stamina"
+    top_kill_streak = "top_kill_streak"
+    most_patient = "most_patient"
+    i_never_give_up = "i_never_give_up"
+    im_clumsy = "im_clumsy"
+    i_need_glasses = "i_need_glasses"
+    i_love_voting = "i_love_voting"
+    what_is_a_break = "what_is_a_break"
+    survivors = "survivors"
+    u_r_still_a_man = "u_r_still_a_man"
 
 
 def seed_default_displays():
