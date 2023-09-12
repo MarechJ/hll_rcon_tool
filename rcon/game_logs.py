@@ -30,7 +30,10 @@ from rcon.types import (
     StructuredLogLineWithMetaData,
 )
 from rcon.user_config.ban_tk_on_connect import BanTeamKillOnConnectUserConfig
-from rcon.user_config.log_line_webhooks import DiscordWebhook, LogLineWebhookUserConfig
+from rcon.user_config.log_line_webhooks import (
+    DiscordMentionWebhook,
+    LogLineWebhookUserConfig,
+)
 from rcon.utils import FixedLenList, MapsHistory
 
 logger = logging.getLogger(__name__)
@@ -139,7 +142,7 @@ def make_allowed_mentions(mentions: Iterable[str]) -> discord.AllowedMentions:
 
 
 def send_log_line_webhook_message(
-    webhooks: list[DiscordWebhook],
+    webhooks: list[DiscordMentionWebhook],
     _,
     log_line: Dict[str, str | int | float | None],
 ) -> None:

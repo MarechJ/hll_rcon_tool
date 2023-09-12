@@ -14,65 +14,25 @@ DISCORD_USER_ID_PATTERN = re.compile(r"<@\d+>")
 DISCORD_ROLE_ID_PATTERN = re.compile(r"<@&\d+>")
 
 
-class DynamicHookType(TypedDict):
+class WebhookType(TypedDict):
+    url: str
+
+
+class WebhookMentionType(TypedDict):
     url: str
     user_mentions: list[str]
     role_mentions: list[str]
 
 
-def parse_raw_hooks(raw_hooks: list[DynamicHookType]) -> list["DiscordWebhook"]:
-    if not isinstance(raw_hooks, list):
-        raise InvalidConfigurationError("%s must be a list", raw_hooks)
-
-    validated_hooks: list[DiscordWebhook] = []
-    for raw_hook in raw_hooks:
-        user_mentions = raw_hook["user_mentions"]
-        user_ids = frozenset(user_mentions)
-        role_mentions = raw_hook["role_mentions"]
-        role_ids = frozenset(role_mentions)
-
-        h = DiscordWebhook(
-            url=raw_hook.get("url"), user_mentions=user_ids, role_mentions=role_ids
-        )
-        validated_hooks.append(h)
-
-    return validated_hooks
+class DiscordWehbhook(pydantic.BaseModel):
+    url: str
 
 
-# class DiscordUserIdFormat(pydantic.BaseModel):
-#     """A discord user ID format for mentions <@123456789>"""
-
-#     value: str
-
-#     @pydantic.field_validator("value")
-#     @classmethod
-#     def validate_format(cls, v: str) -> str:
-#         if re.match(DISCORD_USER_ID_PATTERN, v):
-#             return v
-#         else:
-#             raise ValueError(f"{v} is not a valid Discord user ID ex: <@123456789>")
-
-
-# class DiscordRoleIdFormat(pydantic.BaseModel):
-#     """A discord role ID format for mentions <@&123456789>"""
-
-#     value: str
-
-#     @pydantic.field_validator("value")
-#     @classmethod
-#     def validate_format(cls, v: str) -> str:
-#         if re.match(DISCORD_ROLE_ID_PATTERN, v):
-#             return v
-#         else:
-#             raise ValueError(f"{v} is not a valid Discord role ID ex: <@&123456789>")
-
-
-class DiscordWebhook(pydantic.BaseModel):
+class DiscordMentionWebhook(DiscordWehbhook):
     """A webhook URL and list of user/role IDs to mention in <@> and <@&> format"""
 
     user_mentions: list[str] = pydantic.Field(default_factory=list)
     role_mentions: list[str] = pydantic.Field(default_factory=list)
-    url: str
 
     @pydantic.field_validator("user_mentions")
     @classmethod
@@ -99,28 +59,67 @@ class DiscordWebhook(pydantic.BaseModel):
         return list(role_ids)
 
 
-class BaseWebhookUserConfig(BaseUserConfig):
-    hooks: list[DiscordWebhook] = pydantic.Field(default_factory=list)
+class BaseMentionWebhookUserConfig(BaseUserConfig):
+    hooks: list[DiscordMentionWebhook] = pydantic.Field(default_factory=list)
 
     @classmethod
-    def save_to_db(cls, values: DynamicHookType, dry_run=False) -> None:
+    def save_to_db(cls, values: WebhookMentionType, dry_run=False) -> None:
         for obj in values.get("hooks", []):
-            key_check(DynamicHookType.__required_keys__, obj.keys())
+            key_check(WebhookMentionType.__required_keys__, obj.keys())
 
-        validated_hooks = parse_raw_hooks(values.get("hooks"))
+        validated_hooks = parse_raw_mention_hooks(values.get("hooks"))
         validated_conf = cls(hooks=validated_hooks)
 
-        # pprint(validated_conf)
         if not dry_run:
             set_user_config(validated_conf.KEY(), validated_conf.model_dump())
 
 
-class WatchlistWebhooksUserConfig(BaseWebhookUserConfig):
+class BaseWebhookUserConfig(BaseUserConfig):
+    hooks: list[DiscordWehbhook] = pydantic.Field(default_factory=list)
+
+    @classmethod
+    def save_to_db(cls, values: WebhookType, dry_run=False) -> None:
+        for obj in values.get("hooks", []):
+            key_check(WebhookMentionType.__required_keys__, obj.keys())
+
+        validated_hooks = [DiscordWehbhook(url=url) for url in values.get("url")]
+        validated_conf = cls(hooks=validated_hooks)
+
+        if not dry_run:
+            set_user_config(validated_conf.KEY(), validated_conf.model_dump())
+
+
+class WatchlistWebhooksUserConfig(BaseMentionWebhookUserConfig):
     KEY_NAME: ClassVar = "watchlist_webhooks"
 
 
-class CameraWebhooksUserConfig(BaseWebhookUserConfig):
+class CameraWebhooksUserConfig(BaseMentionWebhookUserConfig):
     KEY_NAME: ClassVar = "camera_webhooks"
+
+
+class AuditWebhooksUserConfig(BaseWebhookUserConfig):
+    KEY_NAME: ClassVar = "audit_webhooks"
+
+
+def parse_raw_mention_hooks(
+    raw_hooks: list[WebhookMentionType],
+) -> list["DiscordMentionWebhook"]:
+    if not isinstance(raw_hooks, list):
+        raise InvalidConfigurationError("%s must be a list", raw_hooks)
+
+    validated_hooks: list[DiscordMentionWebhook] = []
+    for raw_hook in raw_hooks:
+        user_mentions = raw_hook["user_mentions"]
+        user_ids = frozenset(user_mentions)
+        role_mentions = raw_hook["role_mentions"]
+        role_ids = frozenset(role_mentions)
+
+        h = DiscordMentionWebhook(
+            url=raw_hook.get("url"), user_mentions=user_ids, role_mentions=role_ids
+        )
+        validated_hooks.append(h)
+
+    return validated_hooks
 
 
 def get_all_hook_types(

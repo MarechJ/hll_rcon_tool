@@ -9,17 +9,17 @@ from rcon.user_config.utils import (
     key_check,
     set_user_config,
 )
-from rcon.user_config.webhooks import DiscordWebhook, DynamicHookType
+from rcon.user_config.webhooks import DiscordMentionWebhook, WebhookMentionType
 
 
 class LogLineWebhookType(TypedDict):
     log_type: str
-    webhooks: list[DynamicHookType]
+    webhooks: list[WebhookMentionType]
 
 
 class LogLineWebhook(BaseModel):
     log_type: str
-    webhooks: list[DiscordWebhook] = Field(default_factory=list)
+    webhooks: list[DiscordMentionWebhook] = Field(default_factory=list)
 
     @field_validator("log_type")
     @classmethod
@@ -47,7 +47,7 @@ class LogLineWebhookUserConfig(BaseUserConfig):
             key_check(LogLineWebhookType.__required_keys__, raw_log_line.keys())
 
             webhooks = [
-                DiscordWebhook(
+                DiscordMentionWebhook(
                     url=h.get("url"),
                     user_mentions=h.get("user_mentions"),
                     role_mentions=h.get("role_mentions"),
