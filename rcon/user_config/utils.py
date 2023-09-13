@@ -2,6 +2,7 @@ import logging
 from typing import Iterable, Self
 
 import pydantic
+from sqlalchemy.exc import InvalidRequestError
 
 from rcon.models import UserConfig, enter_session
 from rcon.utils import get_server_number
@@ -78,7 +79,12 @@ def set_user_config(key, object_):
     with enter_session() as sess:
         conf = _get_conf(sess, key)
         if conf is None:
-            _add_conf(sess, key, object_)
+            try:
+                _add_conf(sess, key, object_)
+            except InvalidRequestError as e:
+                # Don't let a previous failed transaction block future ones
+                logger.exception(e)
+                sess.rollback()
         else:
             conf.value = object_
         sess.commit()
