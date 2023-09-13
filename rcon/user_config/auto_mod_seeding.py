@@ -1,6 +1,6 @@
 from typing import ClassVar, Optional, TypedDict
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, HttpUrl, field_serializer
 
 from rcon.types import Roles
 from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
@@ -49,7 +49,7 @@ class EnforceCapFightType(TypedDict):
 
 class AutoModSeedingType(TypedDict):
     enabled: bool
-    discord_webhook_url: Optional[str]
+    discord_webhook_url: Optional[HttpUrl]
     announcement_enabled: bool
     announcement_message: str
 
@@ -96,7 +96,7 @@ class AutoModSeedingUserConfig(BaseUserConfig):
     KEY_NAME: ClassVar = "auto_mod_seeding"
 
     enabled: bool = Field(default=False)
-    discord_webhook_url: Optional[str] = Field(default=None)
+    discord_webhook_url: Optional[HttpUrl] = Field(default=None)
     announcement_enabled: bool = Field(default=False)
     announcement_message: str = Field(default=ANNOUNCEMENT_MESSAGE)
 
@@ -115,6 +115,13 @@ class AutoModSeedingUserConfig(BaseUserConfig):
     disallowed_roles: DisallowedRoles = Field(default_factory=DisallowedRoles)
     disallowed_weapons: DisallowedWeapons = Field(default_factory=DisallowedWeapons)
     enforce_cap_fight: EnforceCapFight = Field(default_factory=EnforceCapFight)
+
+    @field_serializer("discord_webhook_url")
+    def serialize_server_url(self, discord_webhook_url: HttpUrl, _info):
+        if discord_webhook_url is not None:
+            return str(discord_webhook_url)
+        else:
+            return None
 
     @staticmethod
     def save_to_db(values: AutoModSeedingType, dry_run=False):

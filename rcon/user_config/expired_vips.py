@@ -8,7 +8,7 @@ from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
 class ExpiredVipsType(TypedDict):
     enabled: bool
     interval_minutes: int
-    discord_webhook_url: HttpUrl | None
+    discord_webhook_url: Optional[HttpUrl]
 
 
 class ExpiredVipsUserConfig(BaseUserConfig):

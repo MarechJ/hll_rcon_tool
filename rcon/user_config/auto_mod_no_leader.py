@@ -1,8 +1,6 @@
 from typing import ClassVar, Optional, TypedDict
 
-from pydantic import BaseModel, BeforeValidator, Field
-from pydantic.functional_validators import BeforeValidator
-from typing_extensions import Annotated
+from pydantic import Field, HttpUrl, field_serializer
 
 from rcon.types import Roles
 from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
@@ -18,7 +16,7 @@ WHITESPACE_NAMES_MESSAGE = "Your name contains a whitespace at the end (because 
 class AutoModNoLeaderType(TypedDict):
     enabled: bool
     dry_run: bool
-    discord_webhook_url: Optional[str]
+    discord_webhook_url: Optional[HttpUrl]
 
     number_of_notes: int
     notes_interval_seconds: int
@@ -50,7 +48,7 @@ class AutoModNoLeaderUserConfig(BaseUserConfig):
 
     enabled: bool = Field(default=False)
     dry_run: bool = Field(default=True)
-    discord_webhook_url: Optional[str] = Field(default=None)
+    discord_webhook_url: Optional[HttpUrl] = Field(default=None)
 
     number_of_notes: int = Field(ge=0, default=1)
     notes_interval_seconds: int = Field(ge=1, default=10)
@@ -76,6 +74,13 @@ class AutoModNoLeaderUserConfig(BaseUserConfig):
 
     immune_roles: list[Roles] = Field(default_factory=list)
     immune_player_level: int = Field(ge=0, le=500, default=15)
+
+    @field_serializer("discord_webhook_url")
+    def serialize_server_url(self, discord_webhook_url: HttpUrl, _info):
+        if discord_webhook_url is not None:
+            return str(discord_webhook_url)
+        else:
+            return None
 
     @staticmethod
     def save_to_db(values: AutoModNoLeaderType, dry_run=False):

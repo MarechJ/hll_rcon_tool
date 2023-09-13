@@ -1,8 +1,6 @@
-import enum
-from pprint import pprint
 from typing import ClassVar, Optional, TypedDict
 
-from pydantic import BaseModel, BeforeValidator, Field, field_validator
+from pydantic import BaseModel, BeforeValidator, Field, HttpUrl, field_serializer
 from pydantic.functional_validators import BeforeValidator
 from typing_extensions import Annotated
 
@@ -27,7 +25,7 @@ class RoleType(TypedDict):
 
 class AutoModLevelType(TypedDict):
     enabled: bool
-    discord_webhook_url: Optional[str]
+    discord_webhook_url: Optional[HttpUrl]
     announcement_enabled: bool
     announcement_message: str
     force_kick_message: str
@@ -52,7 +50,6 @@ class AutoModLevelType(TypedDict):
 
 
 class Role(BaseModel):
-    # role: Roles
     label: str
     min_players: int = Field(ge=0, le=50)
     min_level: int = Field(ge=0, le=500)
@@ -70,7 +67,7 @@ class AutoModLevelUserConfig(BaseUserConfig):
     KEY_NAME: ClassVar = "auto_mod_level"
 
     enabled: bool = Field(default=False)
-    discord_webhook_url: Optional[str] = Field(default=None)
+    discord_webhook_url: Optional[HttpUrl] = Field(default=None)
     announcement_enabled: bool = Field(default=True)
     announcement_message: str = Field(default=ANNOUNCE_MESSAGE)
     force_kick_message: str = Field(default=FORCEKICK_MESSAGE)
@@ -95,6 +92,13 @@ class AutoModLevelUserConfig(BaseUserConfig):
     kick_grace_period_seconds: int = Field(ge=1, default=120)
     kick_message: str = Field(default=KICK_MESSAGE)
 
+    @field_serializer("discord_webhook_url")
+    def serialize_server_url(self, discord_webhook_url: HttpUrl, _info):
+        if discord_webhook_url is not None:
+            return str(discord_webhook_url)
+        else:
+            return None
+
     @staticmethod
     def save_to_db(values: AutoModLevelType, dry_run=False):
         key_check(AutoModLevelType.__required_keys__, values.keys())
@@ -102,7 +106,6 @@ class AutoModLevelUserConfig(BaseUserConfig):
         validated_level_threshholds: dict[Roles, Role] = {}
         for raw_role, obj in values.get("level_thresholds").items():
             validated_level_threshholds[Roles(raw_role)] = Role(
-                role=Roles(raw_role),
                 label=obj.get("label"),
                 min_players=obj.get("min_players"),
                 min_level=obj.get("min_level"),

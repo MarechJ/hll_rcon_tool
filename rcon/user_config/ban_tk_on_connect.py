@@ -1,6 +1,6 @@
 from typing import ClassVar, Optional, TypedDict
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, HttpUrl, field_serializer
 
 from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
 
@@ -24,7 +24,7 @@ class BanTeamKillOnConnectType(TypedDict):
     ignore_tk_after_n_deaths: int
     whitelist_players: BanTeamKillOnConnectWhitelistType
     teamkill_tolerance_count: int
-    discord_webhook_url: str | None
+    discord_webhook_url: Optional[HttpUrl]
     discord_webhook_message: str
 
 
@@ -48,8 +48,15 @@ class BanTeamKillOnConnectUserConfig(BaseUserConfig):
         default_factory=BanTeamKillOnConnectWhiteList
     )
     teamkill_tolerance_count: int = Field(ge=0, default=1)
-    discord_webhook_url: Optional[str] = Field(default=None)
+    discord_webhook_url: Optional[HttpUrl] = Field(default=None)
     discord_webhook_message: str = Field(default=DISCORD_WEBHOOK_MESSAGE)
+
+    @field_serializer("discord_webhook_url")
+    def serialize_server_url(self, discord_webhook_url: HttpUrl, _info):
+        if discord_webhook_url is not None:
+            return str(discord_webhook_url)
+        else:
+            return None
 
     @staticmethod
     def save_to_db(values: BanTeamKillOnConnectType, dry_run=False):
