@@ -201,15 +201,6 @@ def download_vips(request):
     return response
 
 
-def _get_real_vip_config():
-    config = RealVipUserConfig.load_from_db()
-    return {
-        "enabled": config.enabled,
-        "desired_total_number_vips": config.desired_total_number_vips,
-        "minimum_number_vip_slot": config.minimum_number_vip_slots,
-    }
-
-
 @csrf_exempt
 @login_required()
 @permission_required("api.can_view_real_vip_config", raise_exception=True)
@@ -261,7 +252,7 @@ def set_real_vip_config(request):
     data = _get_data(request)
 
     response = _validate_user_config(
-        RealVipUserConfig, data=data, command_name=command_name, dry_run=True
+        RealVipUserConfig, data=data, command_name=command_name, dry_run=False
     )
 
     if response:

@@ -27,4 +27,4 @@ class RealVipUserConfig(BaseUserConfig):
         )
 
         if not dry_run:
-            set_user_config(validated_conf.KEY(), validated_conf)
+            set_user_config(validated_conf.KEY(), validated_conf.model_dump())
