@@ -153,12 +153,6 @@ def seed_default_config():
     logger.info("Seeding DB")
     try:
         with enter_session() as sess:
-            # AutoBroadcasts().seed_db(sess)
-            # StandardMessages().seed_db(sess)
-            # CameraConfig().seed_db(sess)
-            # AutoVoteKickConfig().seed_db(sess)
-            # VoteMapConfig().seed_db(sess)
-            # RealVipConfig().seed_db(sess)
             AutoSettingsConfig().seed_db(sess)
             sess.commit()
     except Exception as e:
