@@ -53,10 +53,20 @@ def _validate_user_config(
     dry_run=True,
 ) -> JsonResponse | None:
     error_msg = None
+
+    if "errors_as_json" in data:
+        errors_as_json: bool = bool(data.pop("errors_as_json"))
+    else:
+        errors_as_json = False
+
     try:
         model.save_to_db(values=data, dry_run=dry_run)  # type: ignore
     except pydantic.ValidationError as e:
-        error_msg = str(e)
+        if errors_as_json:
+            error_msg = e.json()
+        else:
+            error_msg = str(e)
+
         # error_msg = e.json()
         logger.warning(error_msg)
         return api_response(
