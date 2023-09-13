@@ -34,7 +34,7 @@ from rcon.rcon import Rcon, StructuredLogLineType
 from rcon.steam_utils import get_player_bans, get_steam_profile, update_db_player_info
 from rcon.types import PlayerFlagType, SteamBansType
 from rcon.user_config.auto_mod_no_leader import AutoModNoLeaderUserConfig
-from rcon.user_config.camera import CameraNotificationUserConfig
+from rcon.user_config.camera_notification import CameraNotificationUserConfig
 from rcon.user_config.real_vip import RealVipUserConfig
 from rcon.user_config.vac_game_bans import VacGameBansUserConfig
 from rcon.utils import LOG_MAP_NAMES_TO_MAP, MapsHistory

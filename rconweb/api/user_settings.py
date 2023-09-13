@@ -12,7 +12,7 @@ from rcon.user_config.auto_mod_level import AutoModLevelUserConfig
 from rcon.user_config.auto_mod_no_leader import AutoModNoLeaderUserConfig
 from rcon.user_config.auto_mod_seeding import AutoModSeedingUserConfig
 from rcon.user_config.ban_tk_on_connect import BanTeamKillOnConnectUserConfig
-from rcon.user_config.camera import CameraNotificationUserConfig
+from rcon.user_config.camera_notification import CameraNotificationUserConfig
 from rcon.user_config.expired_vips import ExpiredVipsUserConfig
 from rcon.user_config.gtx_server_name import ServerNameChangeUserConfig
 from rcon.user_config.log_line_webhooks import LogLineWebhookUserConfig
@@ -493,8 +493,8 @@ def set_tk_ban_on_connect_config(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_view_camera_config", raise_exception=True)
-def get_camera_config(request):
-    command_name = "get_camera_config"
+def get_camera_notification_config(request):
+    command_name = "get_camera_notification_config"
 
     try:
         config = CameraNotificationUserConfig()
@@ -513,8 +513,8 @@ def get_camera_config(request):
 @login_required()
 # TODO: different permission?
 @permission_required("api.can_change_camera_config", raise_exception=True)
-def validate_camera_config(request):
-    command_name = "validate_camera_config"
+def validate_camera_notification_config(request):
+    command_name = "validate_camera_notification_config"
     data = _get_data(request)
 
     response = _validate_user_config(
@@ -536,8 +536,8 @@ def validate_camera_config(request):
 @login_required()
 @permission_required("api.can_change_camera_config", raise_exception=True)
 @record_audit
-def set_camera_config(request):
-    command_name = "set_camera_config"
+def set_camera_notification_config(request):
+    command_name = "set_camera_notification_config"
     data = _get_data(request)
 
     response = _validate_user_config(
