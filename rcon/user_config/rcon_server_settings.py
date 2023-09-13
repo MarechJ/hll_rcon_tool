@@ -1,6 +1,6 @@
 from typing import ClassVar, Optional, TypedDict
 
-from pydantic import Field, HttpUrl
+from pydantic import Field, HttpUrl, field_serializer
 
 from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
 from rcon.utils import get_server_number
@@ -35,6 +35,13 @@ class RconServerSettingsUserConfig(BaseUserConfig):
     lock_stats_api: bool = Field(default=False)
     live_stats_refresh_seconds: int = Field(default=15)
     live_stats_refresh_current_game_seconds: int = Field(default=5)
+
+    @field_serializer("server_url")
+    def serialize_server_url(self, server_url: HttpUrl, _info):
+        if server_url is not None:
+            return str(server_url)
+        else:
+            return None
 
     @staticmethod
     def save_to_db(values: RconServerSettingsType, dry_run=False):
