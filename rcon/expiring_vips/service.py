@@ -4,9 +4,8 @@ from datetime import datetime
 from typing import List, Optional
 
 from dateutil import relativedelta
-from pydantic import BaseModel, ValidationError, conint
+from pydantic import HttpUrl
 
-from rcon.config import get_config
 from rcon.discord import send_to_discord_audit
 from rcon.models import PlayerSteamID, PlayerVIP, enter_session
 from rcon.rcon import Rcon
@@ -18,13 +17,7 @@ SERVICE_NAME = "ExpiringVIPs"
 logger = logging.getLogger(__name__)
 
 
-class ExpiringVIPConfig(BaseModel):
-    enabled: bool
-    interval: conint(ge=0)
-    discord_webhook_url: str
-
-
-def remove_expired_vips(rcon_hook: Rcon, webhookurl: Optional[str] = None):
+def remove_expired_vips(rcon_hook: Rcon, webhookurl: Optional[HttpUrl] = None):
     logger.info(f"Checking for expired VIPs")
 
     count = 0
@@ -48,7 +41,11 @@ def remove_expired_vips(rcon_hook: Rcon, webhookurl: Optional[str] = None):
                 name = "No name found"
             message = f"Removing VIP from `{name}`/`{vip.steamid.steam_id_64}` expired `{vip.expiration}`"
             logger.info(message)
-            send_to_discord_audit(message, by=SERVICE_NAME, webhookurls=[webhookurl])
+            send_to_discord_audit(
+                message,
+                by=SERVICE_NAME,
+                webhookurls=[str(webhookurl) if webhookurl else None],
+            )
             rcon_hook.do_remove_vip(vip.steamid.steam_id_64)
 
         # Look for anyone with VIP but without a record and create one for them
@@ -99,11 +96,8 @@ def run():
     while True:
         try:
             config = ExpiredVipsUserConfig.load_from_db()
-        except ValidationError as e:
+        except:
             # TODO: update
-            logger.exception(
-                f"Invalid REMOVE_EXPIRED_VIPS config {str(e)} check your config/config.yml"
-            )
             raise
 
         if config.enabled:
