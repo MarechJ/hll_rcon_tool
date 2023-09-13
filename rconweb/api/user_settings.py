@@ -1828,5 +1828,6 @@ def get_all_discord_webhooks(request):
     try:
         hooks = get_all_hook_types(as_dict=True)
         return api_response(result=hooks, command=command_name, failed=False)
-    except:
+    except Exception as e:
+        error_msg = str(e)
         return api_response(command=command_name, error=error_msg)

@@ -234,21 +234,16 @@ def parse_raw_mention_hooks(
     return validated_hooks
 
 
-def get_all_hook_types(
-    as_dict=False, as_json=False
-) -> (
-    list[dict[str, Any]]
-    | list[str]
-    | tuple[CameraWebhooksUserConfig, WatchlistWebhooksUserConfig]
-):
+def get_all_hook_types(as_dict=True, as_json=False):
     cameras = CameraWebhooksUserConfig.load_from_db()
     watchlists = WatchlistWebhooksUserConfig.load_from_db()
+    chats = ChatWebhooksUserConfig.load_from_db()
+    kills = KillsWebhooksUserConfig.load_from_db()
+    audits = AuditWebhooksUserConfig.load_from_db()
 
-    all_types = (cameras, watchlists)
+    all_types = (cameras, watchlists, chats, kills, audits)
 
     if as_dict:
-        return [msg.model_dump() for msg in all_types]
+        return [{msg.__repr_name__(): msg.model_dump()} for msg in all_types]
     elif as_json:
         return [msg.model_dump_json() for msg in all_types]
-    else:
-        return all_types
