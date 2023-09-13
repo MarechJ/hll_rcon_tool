@@ -43,8 +43,6 @@ class BaseUserConfig(pydantic.BaseModel):
         if conf:
             return cls.model_validate(conf)
 
-        from pprint import pprint
-
         return cls()
 
     @staticmethod
