@@ -105,7 +105,13 @@ class AutoModLevelUserConfig(BaseUserConfig):
 
         validated_level_threshholds: dict[Roles, Role] = {}
         for raw_role, obj in values.get("level_thresholds").items():
-            validated_level_threshholds[Roles(raw_role)] = Role(
+            try:
+                role = Roles(raw_role)
+            except ValueError:
+                raise ValueError(
+                    f"{raw_role} must be one of ({', '.join(r for r in Roles)})"
+                )
+            validated_level_threshholds[role] = Role(
                 label=obj.get("label"),
                 min_players=obj.get("min_players"),
                 min_level=obj.get("min_level"),
