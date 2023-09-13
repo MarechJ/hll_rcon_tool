@@ -7,6 +7,7 @@ from typing import Set
 import click
 
 import rcon.expiring_vips.service
+import rcon.user_config
 from rcon import auto_settings, broadcast, game_logs, routines
 from rcon.automods import automod
 from rcon.cache_utils import RedisCached, get_redis_pool
@@ -217,6 +218,12 @@ def process_games(start_day_offset, end_day_offset=0, force=False):
                     repr(e),
                 )
                 continue
+
+
+@click.command(name="set_user_settings")
+@click.option("--dry-run", type=bool, default=True, help="Validate settings only")
+def set_user_settings(dry_run=True):
+    pass
 
 
 PREFIXES_TO_EXPOSE = ["get_", "set_", "do_"]

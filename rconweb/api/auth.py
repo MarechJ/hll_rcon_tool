@@ -15,7 +15,6 @@ from django.views.decorators.csrf import csrf_exempt
 
 from rcon.audit import heartbeat, ingame_mods, online_mods, set_registered_mods
 from rcon.cache_utils import ttl_cache
-from rcon.config import get_config
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 
 from .models import SteamPlayer
