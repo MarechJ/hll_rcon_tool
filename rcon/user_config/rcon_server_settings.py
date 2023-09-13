@@ -1,6 +1,6 @@
-from typing import ClassVar, TypedDict
+from typing import ClassVar, Optional, TypedDict
 
-from pydantic import Field
+from pydantic import Field, HttpUrl
 
 from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
 from rcon.utils import get_server_number
@@ -8,6 +8,7 @@ from rcon.utils import get_server_number
 
 class RconServerSettingsType(TypedDict):
     short_name: str
+    server_url: HttpUrl
     lock_stats_api: bool
     unban_does_unblacklist: bool
     unblacklist_does_unban: bool
@@ -22,6 +23,8 @@ class RconServerSettingsUserConfig(BaseUserConfig):
     KEY_NAME: ClassVar = "steam_settings"
 
     short_name: str = Field(default=f"MyServer{get_server_number()}")
+    server_url: Optional[HttpUrl] = Field(default=None)
+
     lock_stats_api: bool = Field(default=False)
     unban_does_unblacklist: bool = Field(default=True)
     # TODO: this isn't actually used anywhere
@@ -38,6 +41,8 @@ class RconServerSettingsUserConfig(BaseUserConfig):
         key_check(RconServerSettingsType.__required_keys__, values.keys())
 
         validated_conf = RconServerSettingsUserConfig(
+            short_name=values.get("short_name"),
+            server_url=values.get("server_url"),
             lock_stats_api=values.get("lock_stats_api"),
             unban_does_unblacklist=values.get("unban_does_unblacklist"),
             unblacklist_does_unban=values.get("unblacklist_does_unban"),

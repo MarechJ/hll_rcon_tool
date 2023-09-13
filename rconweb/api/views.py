@@ -897,11 +897,12 @@ def expose_api_endpoint(func, command_name, permissions: list[str] | set[str] | 
 @permission_required("api.can_view_connection_info", raise_exception=True)
 @csrf_exempt
 def get_connection_info(request):
+    config = RconServerSettingsUserConfig.load_from_db()
     return api_response(
         {
             "name": ctl.get_name(),
             "port": os.getenv("RCONWEB_PORT"),
-            "link": os.getenv("RCONWEB_SERVER_URL"),
+            "link": str(config.server_url),
         },
         failed=False,
         command="get_connection_info",

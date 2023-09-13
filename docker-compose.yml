@@ -97,7 +97,6 @@ services:
       SUPERVISOR_RPC_URL: http://supervisor:9001/RPC2
       CONFIG_DIR: /config/
       SERVER_NUMBER: 2
-      RCONWEB_SERVER_URL: ${RCONWEB_SERVER_URL_2}
       PUBLIC_STATS_PORT: ${PUBLIC_STATS_PORT_2}
       PUBLIC_STATS_PORT_HTTPS: ${PUBLIC_STATS_PORT_HTTPS_2}
     restart: on-failure
@@ -157,7 +156,6 @@ services:
       SUPERVISOR_RPC_URL: http://supervisor:9001/RPC2
       CONFIG_DIR: /config/
       SERVER_NUMBER: 3
-      RCONWEB_SERVER_URL: ${RCONWEB_SERVER_URL_3}
       PUBLIC_STATS_PORT: ${PUBLIC_STATS_PORT_3}
       PUBLIC_STATS_PORT_HTTPS: ${PUBLIC_STATS_PORT_HTTPS_3}
     restart: on-failure
