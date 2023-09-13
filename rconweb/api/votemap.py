@@ -8,8 +8,8 @@ from rcon.vote_map import VoteMap
 
 from .audit_log import record_audit
 from .auth import api_response, login_required
+from .user_settings import _validate_user_config
 from .utils import _get_data
-from .views import _validate_user_config, audit
 
 logger = getLogger(__name__)
 

@@ -20,7 +20,8 @@ from rcon.workers import get_job_results, worker_bulk_vip
 
 from .audit_log import record_audit
 from .auth import api_response, login_required
-from .views import _get_data, _validate_user_config, ctl
+from .user_settings import _validate_user_config
+from .views import _get_data, ctl
 
 logger = logging.getLogger("rconweb")
 
