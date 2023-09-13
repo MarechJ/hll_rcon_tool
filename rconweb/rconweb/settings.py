@@ -134,7 +134,8 @@ CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS.copy()
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 
 rcon_config = RconServerSettingsUserConfig.load_from_db()
-if host := str(rcon_config.server_url):
+if host := rcon_config.server_url:
+    host = str(host)
     # Django doesn't like the trailing / in a URL
     if host[-1] == "/":
         CSRF_TRUSTED_ORIGINS.append(host[:-1])
