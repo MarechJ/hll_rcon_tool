@@ -22,6 +22,7 @@ from rcon.models import (
     WatchList,
     enter_session,
 )
+from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 
 
 class unaccent(ReturnTypeFromArgs):
@@ -339,7 +340,9 @@ def safe_save_player_action(
 def save_start_player_session(
     steam_id_64, timestamp, server_name=None, server_number=None
 ):
-    server_name = server_name or os.getenv("SERVER_SHORT_NAME")
+    config = RconServerSettingsUserConfig.load_from_db()
+
+    server_name = server_name or config.short_name
     server_number = server_number or os.getenv("SERVER_NUMBER")
 
     with enter_session() as sess:

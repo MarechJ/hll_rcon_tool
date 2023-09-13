@@ -146,6 +146,7 @@ def public_info(request):
             start=start,
         )
 
+    config = RconServerSettingsUserConfig.load_from_db()
     return api_response(
         result=dict(
             current_map=explode_map_info(gamestate["current_map"], current_map_start),
@@ -161,7 +162,7 @@ def public_info(request):
             raw_time_remaining=gamestate["raw_time_remaining"],
             vote_status=get_votes_status(none_on_fail=True),
             name=ctl.get_name(),
-            short_name=os.getenv("SERVER_SHORT_NAME", "HLL RCON"),
+            short_name=config.short_name,
             public_stats_port=os.getenv("PUBLIC_STATS_PORT", "Not defined"),
             public_stats_port_https=os.getenv("PUBLIC_STATS_PORT_HTTPS", "Not defined"),
         ),

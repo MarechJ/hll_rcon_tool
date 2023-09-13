@@ -8,6 +8,7 @@ import requests
 from discord_webhook import DiscordWebhook
 
 from discord import RequestsWebhookAdapter, Webhook
+from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.webhooks import (
     AuditWebhooksUserConfig,
     CameraWebhooksUserConfig,
@@ -90,6 +91,8 @@ def send_to_discord_audit(
         config = AuditWebhooksUserConfig.load_from_db()
         webhookurls = [hook.url for hook in config.hooks]
 
+    server_config = RconServerSettingsUserConfig.load_from_db()
+
     # Flatten messages with newlines
     message = message.replace("\n", " ")
     logger.info("Audit: [%s] %s", by, message)
@@ -97,13 +100,10 @@ def send_to_discord_audit(
         logger.debug("No webhooks set for audit log")
         return
     try:
-        server_name = os.getenv(
-            "SERVER_SHORT_NAME", os.getenv("SERVER_SHORT_NAME", "Undefined")
-        )
-
         dh_webhooks = [
             DiscordWebhook(
-                url=url, content="[{}][**{}**] {}".format(server_name, by, message)
+                url=url,
+                content="[{}][**{}**] {}".format(server_config.short_name, by, message),
             )
             for url in webhookurls
             if url

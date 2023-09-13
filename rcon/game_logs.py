@@ -34,6 +34,7 @@ from rcon.user_config.log_line_webhooks import (
     DiscordMentionWebhook,
     LogLineWebhookUserConfig,
 )
+from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.utils import FixedLenList, MapsHistory
 
 logger = logging.getLogger(__name__)
@@ -148,12 +149,12 @@ def send_log_line_webhook_message(
 ) -> None:
     """Send a time stammped embed of the log_line and mentions to the provided Discord Webhook"""
 
+    config = RconServerSettingsUserConfig.load_from_db()
+
     for hook in webhooks:
         mentions = hook.user_mentions + hook.role_mentions
         webhook = make_hook(hook.url)
         allowed_mentions = make_allowed_mentions(mentions)
-
-        SERVER_SHORT_NAME = os.getenv("SERVER_SHORT_NAME", "No Server Name Set")
 
         content = " ".join(mentions)
         description = log_line["line_without_time"]
@@ -163,7 +164,7 @@ def send_log_line_webhook_message(
                 log_line["timestamp_ms"] / 1000
             ),
         )
-        embed.set_footer(text=SERVER_SHORT_NAME)
+        embed.set_footer(text=config.short_name)
         webhook.send(content=content, embed=embed, allowed_mentions=allowed_mentions)
 
 

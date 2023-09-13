@@ -3,9 +3,11 @@ from typing import ClassVar, TypedDict
 from pydantic import Field
 
 from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
+from rcon.utils import get_server_number
 
 
 class RconServerSettingsType(TypedDict):
+    short_name: str
     lock_stats_api: bool
     unban_does_unblacklist: bool
     unblacklist_does_unban: bool
@@ -19,6 +21,7 @@ class RconServerSettingsType(TypedDict):
 class RconServerSettingsUserConfig(BaseUserConfig):
     KEY_NAME: ClassVar = "steam_settings"
 
+    short_name: str = Field(default=f"MyServer{get_server_number()}")
     lock_stats_api: bool = Field(default=False)
     unban_does_unblacklist: bool = Field(default=True)
     # TODO: this isn't actually used anywhere

@@ -7,13 +7,13 @@ from functools import lru_cache
 import discord.utils
 from rcon.discord import make_hook
 from rcon.game_logs import on_chat, on_kill, on_tk
+from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.webhooks import (
     AdminPingWebhooksUserConfig,
     ChatWebhooksUserConfig,
     KillsWebhooksUserConfig,
 )
 
-SERVER_SHORT_NAME = os.getenv("SERVER_SHORT_NAME", "MyServer")
 STEAM_PROFILE_URL = "http://steamcommunity.com/profiles/{id64}"
 
 RED = 0xA62019
@@ -50,6 +50,7 @@ class DiscordWebhookHandler:
         self.admin_wh_config = AdminPingWebhooksUserConfig.load_from_db()
         self.chat_wh_config = ChatWebhooksUserConfig.load_from_db()
         self.kills_wh_config = KillsWebhooksUserConfig.load_from_db()
+        self.server_settings = RconServerSettingsUserConfig.load_from_db()
 
         ping_trigger_webhooks = []
         try:
@@ -99,7 +100,7 @@ class DiscordWebhookHandler:
             embed.set_author(
                 name=f"{player} {action}", url=STEAM_PROFILE_URL.format(id64=steam_id)
             )
-            embed.set_footer(text=SERVER_SHORT_NAME)
+            embed.set_footer(text=self.server_settings.short_name)
 
             content = ""
             triggered = False
