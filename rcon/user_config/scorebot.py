@@ -1,7 +1,7 @@
 import enum
-from typing import ClassVar, Optional, TypedDict
+from typing import ClassVar, TypedDict
 
-from pydantic import BaseModel, Field, computed_field, field_validator
+from pydantic import BaseModel, Field, field_validator
 
 from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
 
@@ -190,7 +190,6 @@ class ScorebotUserConfig(BaseUserConfig):
 
         return list(unique)
 
-    @computed_field
     @property
     def stats_url(self) -> str:
         if not self.base_api_url:
@@ -208,7 +207,6 @@ class ScorebotUserConfig(BaseUserConfig):
 
         return api_url + stats_endpoint
 
-    @computed_field
     @property
     def info_url(self) -> str:
         if not self.base_api_url:
@@ -226,7 +224,6 @@ class ScorebotUserConfig(BaseUserConfig):
 
         return api_url + info_endpoint
 
-    @computed_field
     @property
     def past_games_url(self) -> str:
         if not self.base_scoreboard_url:
