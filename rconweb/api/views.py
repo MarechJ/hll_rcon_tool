@@ -14,7 +14,6 @@ from django.views.decorators.csrf import csrf_exempt
 from rcon.broadcast import get_votes_status
 from rcon.cache_utils import RedisCached, get_redis_pool
 from rcon.commands import CommandFailedError
-from rcon.config import get_config
 from rcon.discord import send_to_discord_audit
 from rcon.gtx import GTXFtp
 from rcon.player_history import add_player_to_blacklist, remove_player_from_blacklist
@@ -31,11 +30,6 @@ from rcon.user_config.standard_messages import (
     get_all_message_types,
 )
 from rcon.user_config.utils import InvalidConfigurationError
-from rcon.user_config.webhooks import (
-    CameraWebhooksUserConfig,
-    WatchlistWebhooksUserConfig,
-    get_all_hook_types,
-)
 from rcon.utils import LONG_HUMAN_MAP_NAMES, MapsHistory, map_name
 from rcon.watchlist import PlayerWatch
 from rcon.workers import temporary_broadcast, temporary_welcome
@@ -173,152 +167,6 @@ def public_info(request):
         ),
         failed=False,
         command="public_info",
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_view_discord_webhooks", raise_exception=True)
-def get_all_discord_webhooks(request):
-    command_name = "get_all_discord_webhooks"
-
-    error_msg = None
-    try:
-        hooks = get_all_hook_types(as_dict=True)
-        return api_response(result=hooks, command=command_name, failed=False)
-    except:
-        return api_response(command=command_name, error=error_msg)
-
-
-@csrf_exempt
-@login_required()
-# TODO: permission does not exist yet
-@permission_required("api.can_view_watchlist_discord_webhooks", raise_exception=True)
-def get_watchlist_discord_webhooks(request):
-    command_name = "get_watchlist_discord_webhooks"
-
-    try:
-        config = WatchlistWebhooksUserConfig.load_from_db()
-    except Exception as e:
-        logger.exception(e)
-        return api_response(command=command_name, error=str(e), failed=True)
-
-    return api_response(
-        result=config.model_dump(),
-        command=command_name,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-# TODO: permission does not exist yet
-@permission_required("api.can_change_watchlist_discord_webhooks", raise_exception=True)
-def validate_watchlist_discord_webhooks(request):
-    command_name = "validate_watchlist_discord_webhooks"
-    data = _get_data(request)
-
-    response = _validate_user_config(
-        WatchlistWebhooksUserConfig, data=data, command_name=command_name, dry_run=True
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        arguments=data,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-# TODO: permission does not exist yet
-@permission_required("api.can_change_watchlist_discord_webhooks", raise_exception=True)
-def set_watchlist_discord_webhooks(request):
-    command_name = "set_watchlist_discord_webhooks"
-    data = _get_data(request)
-
-    response = _validate_user_config(
-        WatchlistWebhooksUserConfig, data=data, command_name=command_name, dry_run=False
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        arguments=data,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-# TODO: permission does not exist yet
-@permission_required("api.can_view_camera_discord_webhooks", raise_exception=True)
-def get_camera_discord_webhooks(request):
-    command_name = "get_camera_discord_webhooks"
-
-    try:
-        config = CameraWebhooksUserConfig.load_from_db()
-    except Exception as e:
-        logger.exception(e)
-        return api_response(command=command_name, error=str(e), failed=True)
-
-    return api_response(
-        result=config.model_dump(),
-        command=command_name,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-# TODO: permission does not exist yet
-@permission_required("api.can_change_camera_discord_webhooks", raise_exception=True)
-def validate_camera_discord_webhooks(request):
-    command_name = "validate_camera_discord_webhooks"
-    data = _get_data(request)
-
-    response = _validate_user_config(
-        CameraWebhooksUserConfig, data=data, command_name=command_name, dry_run=True
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        arguments=data,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-# TODO: permission does not exist yet
-@permission_required("api.can_change_camera_discord_webhooks", raise_exception=True)
-def set_camera_discord_webhooks(request):
-    command_name = "set_camera_discord_webhooks"
-    data = _get_data(request)
-
-    response = _validate_user_config(
-        CameraWebhooksUserConfig, data=data, command_name=command_name, dry_run=False
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        arguments=data,
-        failed=False,
     )
 
 
@@ -1226,13 +1074,6 @@ commands = [
     ("get_version", get_version),
     ("get_connection_info", get_connection_info),
     ("unban", unban),
-    ("get_all_discord_webhooks", get_all_discord_webhooks),
-    ("get_camera_discord_webhooks", get_camera_discord_webhooks),
-    ("validate_camera_discord_webhooks", validate_camera_discord_webhooks),
-    ("set_camera_discord_webhooks", set_camera_discord_webhooks),
-    ("get_watchlist_discord_webhooks", get_watchlist_discord_webhooks),
-    ("validate_watchlist_discord_webhooks", validate_watchlist_discord_webhooks),
-    ("set_watchlist_discord_webhooks", set_watchlist_discord_webhooks),
     ("do_unwatch_player", do_unwatch_player),
     ("do_watch_player", do_watch_player),
     ("public_info", public_info),

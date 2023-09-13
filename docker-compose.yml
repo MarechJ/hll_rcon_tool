@@ -1,11 +1,10 @@
-version: '2.4'
+version: "2.4"
 
 networks:
   server1:
   server2:
   server3:
   common:
-
 
 services:
   supervisor_1: &supervisor
@@ -19,7 +18,7 @@ services:
     networks:
       common:
       server1:
-        aliases: 
+        aliases:
           - supervisor
     volumes:
       - ./supervisor_data:/data
@@ -30,8 +29,8 @@ services:
       service: python
     command: web
     depends_on:
-        - postgres
-        - redis
+      - postgres
+      - redis
     networks:
       server1:
         aliases:
@@ -86,25 +85,16 @@ services:
       HLL_HOST: ${HLL_HOST_2}
       HLL_PORT: ${HLL_PORT_2}
       HLL_PASSWORD: ${HLL_PASSWORD_2}
-      LOGGING_LEVEL: 'INFO'
+      LOGGING_LEVEL: "INFO"
       LOGGING_PATH: /logs/
       REDIS_URL: redis://redis:6379/1
-      REDIS_HOST: redis 
+      REDIS_HOST: redis
       REDIS_PORT: 6379
       REDIS_DB: 1
-      DB_URL: 'postgres://rcon:${HLL_DB_PASSWORD}@postgres:5432'
-      DISCORD_WEBHOOK_AUDIT_LOG: ${DISCORD_WEBHOOK_AUDIT_LOG_2}
+      DB_URL: "postgres://rcon:${HLL_DB_PASSWORD}@postgres:5432"
       RCONWEB_API_SECRET: ${RCONWEB_API_SECRET}
       SERVER_SHORT_NAME: ${SERVER_SHORT_NAME_2}
-      DISCORD_CHAT_WEBHOOK: ${DISCORD_CHAT_WEBHOOK_2}
-      DISCORD_CHAT_WEBHOOK_ALLOW_MENTIONS: ${DISCORD_CHAT_WEBHOOK_ALLOW_MENTIONS}
       RCONWEB_PORT: ${RCONWEB_PORT_2}
-      DISCORD_PING_TRIGGER_WORDS: ${DISCORD_PING_TRIGGER_WORDS_2}
-      DISCORD_PING_TRIGGER_ROLES: ${DISCORD_PING_TRIGGER_ROLES_2}
-      DISCORD_PING_TRIGGER_WEBHOOK: ${DISCORD_PING_TRIGGER_WEBHOOK_2}
-      DISCORD_KILLS_WEBHOOK: ${DISCORD_KILLS_WEBHOOK_2}
-      DISCORD_SEND_KILL_UPDATES: ${DISCORD_SEND_KILL_UPDATES_2}
-      DISCORD_SEND_TEAM_KILL_UPDATES: ${DISCORD_SEND_TEAM_KILL_UPDATES_2}
       SUPERVISOR_RPC_URL: http://supervisor:9001/RPC2
       CONFIG_DIR: /config/
       SERVER_NUMBER: 2
@@ -115,7 +105,7 @@ services:
     networks:
       common:
       server2:
-        aliases: 
+        aliases:
           - supervisor
     command: supervisor
     depends_on:
@@ -156,25 +146,16 @@ services:
       HLL_HOST: ${HLL_HOST_3}
       HLL_PORT: ${HLL_PORT_3}
       HLL_PASSWORD: ${HLL_PASSWORD_3}
-      LOGGING_LEVEL: 'INFO'
+      LOGGING_LEVEL: "INFO"
       LOGGING_PATH: /logs/
       REDIS_URL: redis://redis:6379/2
-      REDIS_HOST: redis 
+      REDIS_HOST: redis
       REDIS_PORT: 6379
       REDIS_DB: 2
-      DB_URL: 'postgres://rcon:${HLL_DB_PASSWORD}@postgres:5432'
-      DISCORD_WEBHOOK_AUDIT_LOG: ${DISCORD_WEBHOOK_AUDIT_LOG_3}
+      DB_URL: "postgres://rcon:${HLL_DB_PASSWORD}@postgres:5432"
       RCONWEB_API_SECRET: ${RCONWEB_API_SECRET}
       SERVER_SHORT_NAME: ${SERVER_SHORT_NAME_3}
-      DISCORD_CHAT_WEBHOOK: ${DISCORD_CHAT_WEBHOOK_3}
-      DISCORD_CHAT_WEBHOOK_ALLOW_MENTIONS: ${DISCORD_CHAT_WEBHOOK_ALLOW_MENTIONS}
       RCONWEB_PORT: ${RCONWEB_PORT_3}
-      DISCORD_PING_TRIGGER_WORDS: ${DISCORD_PING_TRIGGER_WORDS_3}
-      DISCORD_PING_TRIGGER_ROLES: ${DISCORD_PING_TRIGGER_ROLES_3}
-      DISCORD_PING_TRIGGER_WEBHOOK: ${DISCORD_PING_TRIGGER_WEBHOOK_3}
-      DISCORD_KILLS_WEBHOOK: ${DISCORD_KILLS_WEBHOOK_3}
-      DISCORD_SEND_KILL_UPDATES: ${DISCORD_SEND_KILL_UPDATES_3}
-      DISCORD_SEND_TEAM_KILL_UPDATES: ${DISCORD_SEND_TEAM_KILL_UPDATES_3}
       SUPERVISOR_RPC_URL: http://supervisor:9001/RPC2
       CONFIG_DIR: /config/
       SERVER_NUMBER: 3
@@ -186,7 +167,7 @@ services:
     networks:
       common:
       server3:
-        aliases: 
+        aliases:
           - supervisor
     depends_on:
       - frontend_2
@@ -216,5 +197,5 @@ services:
     networks:
       - common
       - server3
-    depends_on: 
+    depends_on:
       - backend_3

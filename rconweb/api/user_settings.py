@@ -17,7 +17,15 @@ from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.scorebot import ScorebotUserConfig
 from rcon.user_config.steam import SteamUserConfig
 from rcon.user_config.vac_game_bans import VacGameBansUserConfig
-from rcon.user_config.webhooks import AuditWebhooksUserConfig
+from rcon.user_config.webhooks import (
+    AdminPingWebhooksUserConfig,
+    AuditWebhooksUserConfig,
+    CameraWebhooksUserConfig,
+    ChatWebhooksUserConfig,
+    KillsWebhooksUserConfig,
+    WatchlistWebhooksUserConfig,
+    get_all_hook_types,
+)
 
 from .audit_log import record_audit
 from .auth import api_response, login_required
@@ -938,7 +946,78 @@ def set_server_name_change_config(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.", raise_exception=True)
-def get_audit_webhooks_config(request):
+def get_admin_pings_discord_webhooks_config(request):
+    command_name = "get_admin_pings_webhooks_config"
+
+    try:
+        config = AdminPingWebhooksUserConfig.load_from_db()
+    except Exception as e:
+        logger.exception(e)
+        return api_response(command=command_name, error=str(e), failed=True)
+
+    return api_response(
+        result=config.model_dump(),
+        command=command_name,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+# TODO: different permission?
+@permission_required("api.", raise_exception=True)
+def validate_admin_pings_discord_webhooks_config(request):
+    command_name = "validate_admin_pings_webhooks_config"
+    data = _get_data(request)
+
+    response = _validate_user_config(
+        AdminPingWebhooksUserConfig,
+        data=data,
+        command_name=command_name,
+        dry_run=True,
+    )
+
+    if response:
+        return response
+
+    return api_response(
+        result=True,
+        command=command_name,
+        arguments=data,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+@permission_required("api.", raise_exception=True)
+@record_audit
+def set_admin_pings_discord_webhooks_config(request):
+    command_name = "set_admin_pings_webhooks_config"
+    data = _get_data(request)
+
+    response = _validate_user_config(
+        AdminPingWebhooksUserConfig,
+        data=data,
+        command_name=command_name,
+        dry_run=False,
+    )
+
+    if response:
+        return response
+
+    return api_response(
+        result=True,
+        command=command_name,
+        arguments=data,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+@permission_required("api.", raise_exception=True)
+def get_audit_discord_webhooks_config(request):
     command_name = "get_audit_webhooks_config"
 
     try:
@@ -958,7 +1037,7 @@ def get_audit_webhooks_config(request):
 @login_required()
 # TODO: different permission?
 @permission_required("api.", raise_exception=True)
-def validate_audit_webhooks_config(request):
+def validate_audit_discord_webhooks_config(request):
     command_name = "validate_audit_webhooks_config"
     data = _get_data(request)
 
@@ -984,7 +1063,7 @@ def validate_audit_webhooks_config(request):
 @login_required()
 @permission_required("api.", raise_exception=True)
 @record_audit
-def set_audit_webhooks_config(request):
+def set_audit_discord_webhooks_config(request):
     command_name = "set_audit_webhooks_config"
     data = _get_data(request)
 
@@ -1004,3 +1083,291 @@ def set_audit_webhooks_config(request):
         arguments=data,
         failed=False,
     )
+
+
+@csrf_exempt
+@login_required()
+# TODO: permission does not exist yet
+@permission_required("api.can_view_camera_discord_webhooks", raise_exception=True)
+def get_camera_discord_webhooks(request):
+    command_name = "get_camera_discord_webhooks"
+
+    try:
+        config = CameraWebhooksUserConfig.load_from_db()
+    except Exception as e:
+        logger.exception(e)
+        return api_response(command=command_name, error=str(e), failed=True)
+
+    return api_response(
+        result=config.model_dump(),
+        command=command_name,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+# TODO: permission does not exist yet
+@permission_required("api.can_change_camera_discord_webhooks", raise_exception=True)
+def validate_camera_discord_webhooks(request):
+    command_name = "validate_camera_discord_webhooks"
+    data = _get_data(request)
+
+    response = _validate_user_config(
+        CameraWebhooksUserConfig, data=data, command_name=command_name, dry_run=True
+    )
+
+    if response:
+        return response
+
+    return api_response(
+        result=True,
+        command=command_name,
+        arguments=data,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+# TODO: permission does not exist yet
+@permission_required("api.can_change_camera_discord_webhooks", raise_exception=True)
+def set_camera_discord_webhooks(request):
+    command_name = "set_camera_discord_webhooks"
+    data = _get_data(request)
+
+    response = _validate_user_config(
+        CameraWebhooksUserConfig, data=data, command_name=command_name, dry_run=False
+    )
+
+    if response:
+        return response
+
+    return api_response(
+        result=True,
+        command=command_name,
+        arguments=data,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+@permission_required("api.", raise_exception=True)
+def get_chat_discord_webhooks_config(request):
+    command_name = "get_chat_webhooks_config"
+
+    try:
+        config = ChatWebhooksUserConfig.load_from_db()
+    except Exception as e:
+        logger.exception(e)
+        return api_response(command=command_name, error=str(e), failed=True)
+
+    return api_response(
+        result=config.model_dump(),
+        command=command_name,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+# TODO: different permission?
+@permission_required("api.", raise_exception=True)
+def validate_chat_discord_webhooks_config(request):
+    command_name = "validate_chat_webhooks_config"
+    data = _get_data(request)
+
+    response = _validate_user_config(
+        ChatWebhooksUserConfig,
+        data=data,
+        command_name=command_name,
+        dry_run=True,
+    )
+
+    if response:
+        return response
+
+    return api_response(
+        result=True,
+        command=command_name,
+        arguments=data,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+@permission_required("api.", raise_exception=True)
+@record_audit
+def set_chat_discord_webhooks_config(request):
+    command_name = "set_chat_webhooks_config"
+    data = _get_data(request)
+
+    response = _validate_user_config(
+        ChatWebhooksUserConfig,
+        data=data,
+        command_name=command_name,
+        dry_run=False,
+    )
+
+    if response:
+        return response
+
+    return api_response(
+        result=True,
+        command=command_name,
+        arguments=data,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+@permission_required("api.", raise_exception=True)
+def get_kills_discord_webhooks_config(request):
+    command_name = "get_kills_webhooks_config"
+
+    try:
+        config = KillsWebhooksUserConfig.load_from_db()
+    except Exception as e:
+        logger.exception(e)
+        return api_response(command=command_name, error=str(e), failed=True)
+
+    return api_response(
+        result=config.model_dump(),
+        command=command_name,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+# TODO: different permission?
+@permission_required("api.", raise_exception=True)
+def validate_kills_discord_webhooks_config(request):
+    command_name = "get_kills_webhooks_config"
+    data = _get_data(request)
+
+    response = _validate_user_config(
+        KillsWebhooksUserConfig,
+        data=data,
+        command_name=command_name,
+        dry_run=True,
+    )
+
+    if response:
+        return response
+
+    return api_response(
+        result=True,
+        command=command_name,
+        arguments=data,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+@permission_required("api.", raise_exception=True)
+@record_audit
+def set_kills_discord_webhooks_config(request):
+    command_name = "set_kills_webhooks_config"
+    data = _get_data(request)
+
+    response = _validate_user_config(
+        KillsWebhooksUserConfig,
+        data=data,
+        command_name=command_name,
+        dry_run=False,
+    )
+
+    if response:
+        return response
+
+    return api_response(
+        result=True,
+        command=command_name,
+        arguments=data,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+# TODO: permission does not exist yet
+@permission_required("api.can_view_watchlist_discord_webhooks", raise_exception=True)
+def get_watchlist_discord_webhooks(request):
+    command_name = "get_watchlist_discord_webhooks"
+
+    try:
+        config = WatchlistWebhooksUserConfig.load_from_db()
+    except Exception as e:
+        logger.exception(e)
+        return api_response(command=command_name, error=str(e), failed=True)
+
+    return api_response(
+        result=config.model_dump(),
+        command=command_name,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+# TODO: permission does not exist yet
+@permission_required("api.can_change_watchlist_discord_webhooks", raise_exception=True)
+def validate_watchlist_discord_webhooks(request):
+    command_name = "validate_watchlist_discord_webhooks"
+    data = _get_data(request)
+
+    response = _validate_user_config(
+        WatchlistWebhooksUserConfig, data=data, command_name=command_name, dry_run=True
+    )
+
+    if response:
+        return response
+
+    return api_response(
+        result=True,
+        command=command_name,
+        arguments=data,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+# TODO: permission does not exist yet
+@permission_required("api.can_change_watchlist_discord_webhooks", raise_exception=True)
+def set_watchlist_discord_webhooks(request):
+    command_name = "set_watchlist_discord_webhooks"
+    data = _get_data(request)
+
+    response = _validate_user_config(
+        WatchlistWebhooksUserConfig, data=data, command_name=command_name, dry_run=False
+    )
+
+    if response:
+        return response
+
+    return api_response(
+        result=True,
+        command=command_name,
+        arguments=data,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+@permission_required("api.can_view_discord_webhooks", raise_exception=True)
+def get_all_discord_webhooks(request):
+    command_name = "get_all_discord_webhooks"
+
+    error_msg = None
+    try:
+        hooks = get_all_hook_types(as_dict=True)
+        return api_response(result=hooks, command=command_name, failed=False)
+    except:
+        return api_response(command=command_name, error=error_msg)

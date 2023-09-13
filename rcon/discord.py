@@ -32,7 +32,7 @@ def parse_webhook_url(url):
 logger = logging.getLogger(__name__)
 
 
-def make_hook(webhook_url):
+def make_hook(webhook_url) -> Webhook | None:
     webhook_id, webhook_token = parse_webhook_url(webhook_url)
     if not all([webhook_id, webhook_token]):
         return None
@@ -70,8 +70,7 @@ def get_prepared_discord_hooks(hook_type: str) -> List[DiscordWebhook]:
                 hook.user_mentions, hook.role_mentions
             ),
             content=" ".join(
-                [v.value for v in hook.user_mentions]
-                + [v.value for v in hook.role_mentions]
+                [v for v in hook.user_mentions] + [v for v in hook.role_mentions]
             ),
         )
         for hook in hooks

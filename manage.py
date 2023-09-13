@@ -23,7 +23,7 @@ def pre_flight_checks(env):
         "REDIS_URL",
         "DB_URL",
     ]
-    optionnal = ["DISCORD_WEBHOOK_AUDIT_LOG", "LOGGING_PATH", "LOGGING_LEVEL"]
+    optionnal = ["LOGGING_PATH", "LOGGING_LEVEL"]
 
     errors = _get_missing_env(required, env)
     warnings = _get_missing_env(optionnal, env)

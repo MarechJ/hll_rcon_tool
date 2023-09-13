@@ -14,14 +14,35 @@ DISCORD_USER_ID_PATTERN = re.compile(r"<@\d+>")
 DISCORD_ROLE_ID_PATTERN = re.compile(r"<@&\d+>")
 
 
-class WebhookType(TypedDict):
-    url: str
-
-
 class WebhookMentionType(TypedDict):
     url: str
     user_mentions: list[str]
     role_mentions: list[str]
+
+
+class WebhookType(TypedDict):
+    url: str
+
+
+class RawWebhookType(TypedDict):
+    hooks: list[WebhookType]
+
+
+class RawWebhookMentionType(TypedDict):
+    hooks: list[WebhookMentionType]
+
+
+class AdminPingWebhookType(RawWebhookMentionType):
+    trigger_words: list[str]
+
+
+class ChatWebhookType(RawWebhookMentionType):
+    allow_mentions: bool
+
+
+class KillsWebhookType(RawWebhookType):
+    send_kills: bool
+    send_team_kills: bool
 
 
 class DiscordWehbhook(pydantic.BaseModel):
@@ -63,7 +84,7 @@ class BaseMentionWebhookUserConfig(BaseUserConfig):
     hooks: list[DiscordMentionWebhook] = pydantic.Field(default_factory=list)
 
     @classmethod
-    def save_to_db(cls, values, dry_run=False) -> None:
+    def save_to_db(cls, values: RawWebhookMentionType, dry_run=False) -> None:
         raw_hooks: list[WebhookMentionType] = values.get("hooks")
         if not isinstance(raw_hooks, list):
             raise InvalidConfigurationError(f"'hooks' must be a list")
@@ -82,7 +103,7 @@ class BaseWebhookUserConfig(BaseUserConfig):
     hooks: list[DiscordWehbhook] = pydantic.Field(default_factory=list)
 
     @classmethod
-    def save_to_db(cls, values, dry_run=False) -> None:
+    def save_to_db(cls, values: RawWebhookType, dry_run=False) -> None:
         raw_hooks: list[WebhookType] = values.get("hooks")
         if not isinstance(raw_hooks, list):
             raise InvalidConfigurationError(f"'hooks' must be a list")
@@ -105,8 +126,92 @@ class CameraWebhooksUserConfig(BaseMentionWebhookUserConfig):
     KEY_NAME: ClassVar = "camera_webhooks"
 
 
+class AdminPingWebhooksUserConfig(BaseMentionWebhookUserConfig):
+    KEY_NAME: ClassVar = "admin_pings_webhooks"
+
+    trigger_words: list[str] = pydantic.Field(default_factory=list)
+
+    @pydantic.field_validator("trigger_words")
+    @classmethod
+    def ensure_case_unique(cls, vs):
+        processed_words = set()
+        v: str
+        for v in vs:
+            processed_words.add(v.lower().strip())
+
+        return list(processed_words)
+
+    @staticmethod
+    def save_to_db(values: AdminPingWebhookType, dry_run=False) -> None:
+        raw_hooks = values.get("hooks")
+        if not isinstance(raw_hooks, list):
+            raise InvalidConfigurationError(f"'hooks' must be a list")
+
+        for obj in raw_hooks:
+            key_check(WebhookType.__required_keys__, obj.keys())
+
+        validated_hooks = parse_raw_mention_hooks(raw_hooks)
+        validated_conf = AdminPingWebhooksUserConfig(
+            trigger_words=values.get("trigger_words"),
+            hooks=validated_hooks,
+        )
+
+        if not dry_run:
+            set_user_config(validated_conf.KEY(), validated_conf.model_dump())
+
+
+class ChatWebhooksUserConfig(BaseMentionWebhookUserConfig):
+    KEY_NAME: ClassVar = "chat_webhooks"
+
+    allow_mentions: bool = pydantic.Field(default=False)
+
+    @staticmethod
+    def save_to_db(values: ChatWebhookType, dry_run=False) -> None:
+        raw_hooks = values.get("hooks")
+        if not isinstance(raw_hooks, list):
+            raise InvalidConfigurationError(f"'hooks' must be a list")
+
+        for obj in raw_hooks:
+            key_check(WebhookType.__required_keys__, obj.keys())
+
+        validated_hooks = parse_raw_mention_hooks(raw_hooks)
+        validated_conf = ChatWebhooksUserConfig(
+            allow_mentions=values.get("allow_mentions"),
+            hooks=validated_hooks,
+        )
+
+        if not dry_run:
+            set_user_config(validated_conf.KEY(), validated_conf.model_dump())
+
+
 class AuditWebhooksUserConfig(BaseWebhookUserConfig):
     KEY_NAME: ClassVar = "audit_webhooks"
+
+
+class KillsWebhooksUserConfig(BaseWebhookUserConfig):
+    KEY_NAME: ClassVar = "kills_webhooks"
+
+    send_kills: bool = pydantic.Field(default=False)
+    send_team_kills: bool = pydantic.Field(default=True)
+
+    @staticmethod
+    def save_to_db(values: KillsWebhookType, dry_run=False) -> None:
+        raw_hooks = values.get("hooks")
+        if not isinstance(raw_hooks, list):
+            raise InvalidConfigurationError(f"'hooks' must be a list")
+
+        for obj in raw_hooks:
+            key_check(WebhookType.__required_keys__, obj.keys())
+
+        validated_hooks = [DiscordWehbhook(url=obj.get("url")) for obj in raw_hooks]
+        validated_conf = KillsWebhooksUserConfig(
+            send_kills=values.get("send_kills"),
+            send_team_kills=values.get("send_team_kills"),
+            hooks=validated_hooks,
+        )
+
+        if not dry_run:
+            set_user_config(validated_conf.KEY(), validated_conf.model_dump())
 
 
 def parse_raw_mention_hooks(

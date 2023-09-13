@@ -178,12 +178,67 @@ endpoints: list[tuple[str, Callable]] = [
         user_settings.validate_server_name_change_config,
     ),
     ("set_server_name_change_config", user_settings.set_server_name_change_config),
-    ("get_audit_webhooks_config", user_settings.get_audit_webhooks_config),
     (
-        "validate_audit_webhooks_config",
-        user_settings.validate_audit_webhooks_config,
+        "get_admin_pings_discord_webhooks_config",
+        user_settings.get_admin_pings_discord_webhooks_config,
     ),
-    ("set_audit_webhooks_config", user_settings.set_audit_webhooks_config),
+    (
+        "validate_admin_pings_discord_webhooks_config",
+        user_settings.validate_admin_pings_discord_webhooks_config,
+    ),
+    (
+        "set_admin_pings_discord_webhooks_config",
+        user_settings.set_admin_pings_discord_webhooks_config,
+    ),
+    (
+        "get_audit_discord_webhooks_config",
+        user_settings.get_audit_discord_webhooks_config,
+    ),
+    (
+        "validate_audit_discord_webhooks_config",
+        user_settings.validate_audit_discord_webhooks_config,
+    ),
+    (
+        "set_audit_discord_webhooks_config",
+        user_settings.set_audit_discord_webhooks_config,
+    ),
+    ("get_camera_discord_webhooks", user_settings.get_camera_discord_webhooks),
+    (
+        "validate_camera_discord_webhooks",
+        user_settings.validate_camera_discord_webhooks,
+    ),
+    ("set_camera_discord_webhooks", user_settings.set_camera_discord_webhooks),
+    (
+        "get_chat_discord_webhooks_config",
+        user_settings.get_chat_discord_webhooks_config,
+    ),
+    (
+        "validate_chat_discord_webhooks_config",
+        user_settings.validate_chat_discord_webhooks_config,
+    ),
+    (
+        "set_chat_discord_webhooks_config",
+        user_settings.set_chat_discord_webhooks_config,
+    ),
+    (
+        "get_kills_discord_webhooks_config",
+        user_settings.get_kills_discord_webhooks_config,
+    ),
+    (
+        "validate_kills_discord_webhooks_config",
+        user_settings.validate_kills_discord_webhooks_config,
+    ),
+    (
+        "set_kills_discord_webhooks_config",
+        user_settings.set_kills_discord_webhooks_config,
+    ),
+    ("get_watchlist_discord_webhooks", user_settings.get_watchlist_discord_webhooks),
+    (
+        "validate_watchlist_discord_webhooks",
+        user_settings.validate_watchlist_discord_webhooks,
+    ),
+    ("set_watchlist_discord_webhooks", user_settings.set_watchlist_discord_webhooks),
+    ("get_all_discord_webhooks", user_settings.get_all_discord_webhooks),
 ] + [(name, func) for name, func in views.commands]
 
 # Expose endpoints though Django
