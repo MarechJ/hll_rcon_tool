@@ -6,18 +6,11 @@ from typing import List
 from redis.client import Redis
 
 from rcon.automods.level_thresholds import LevelThresholdsAutomod
-from rcon.automods.models import (
-    ActionMethod,
-    NoLeaderConfig,
-    PunishPlayer,
-    PunitionsToApply,
-    SeedingRulesConfig,
-)
+from rcon.automods.models import ActionMethod, PunishPlayer, PunitionsToApply
 from rcon.automods.no_leader import NoLeaderAutomod
 from rcon.automods.seeding_rules import SeedingRulesAutomod
 from rcon.cache_utils import get_redis_client
 from rcon.commands import CommandFailedError, HLLServerError
-from rcon.config import get_config
 from rcon.discord import send_to_discord_audit
 from rcon.game_logs import on_connected, on_kill
 from rcon.hooks import inject_player_ids
@@ -26,6 +19,7 @@ from rcon.settings import SERVER_INFO
 from rcon.types import StructuredLogLineType
 from rcon.user_config.auto_mod_level import AutoModLevelUserConfig
 from rcon.user_config.auto_mod_no_leader import AutoModNoLeaderUserConfig
+from rcon.user_config.auto_mod_seeding import AutoModSeedingUserConfig
 
 logger = logging.getLogger(__name__)
 first_run_done_key = "first_run_done"
@@ -153,14 +147,9 @@ def enabled_moderators():
     red = get_redis_client()
 
     try:
-        config = get_config()
         level_thresholds_config = AutoModLevelUserConfig.load_from_db()
         no_leader_config = AutoModNoLeaderUserConfig.load_from_db()
-
-        seeding_config = None
-        if config.get("SEEDING_AUTO_MOD") is not None:
-            seeding_config = SeedingRulesConfig(**config["SEEDING_AUTO_MOD"])
-
+        seeding_config = AutoModSeedingUserConfig.load_from_db()
         # TODO: update error messages
     except Exception as e:
         logger.exception("Invalid automod config, check your config/config.yml", e)
@@ -170,14 +159,8 @@ def enabled_moderators():
         filter(
             lambda m: m.enabled(),
             [
-                NoLeaderAutomod(no_leader_config, red)
-                if no_leader_config is not None
-                else NoLeaderAutomod(NoLeaderConfig(**{"enabled": False}), None),
-                SeedingRulesAutomod(seeding_config, red)
-                if seeding_config is not None
-                else SeedingRulesAutomod(
-                    SeedingRulesConfig(**{"enabled": False}), None
-                ),
+                NoLeaderAutomod(no_leader_config, red),
+                SeedingRulesAutomod(seeding_config, red),
                 LevelThresholdsAutomod(level_thresholds_config, red),
             ],
         )

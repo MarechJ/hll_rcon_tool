@@ -5,6 +5,21 @@ from pydantic import BaseModel, Field
 from rcon.types import Roles
 from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
 
+WARNING_MESSAGE = """Warning, {player_name}! You violate seeding rules on this server: {violation}
+You will be punished after {max_warnings} warnings (you already received {received_warnings}), then kicked.
+Next check will happen automatically in {next_check_seconds}s."""
+KICK_MESSAGE = """You violated seeding rules on this server.
+Your grace period of {kick_grace_period}s has passed.
+You failed to comply with the previous warnings."""
+PUNISH_MESSAGE = """You violated seeding rules on this server: {violation}.
+You're being punished by a bot ({received_punishes}/{max_punishes}).
+Next check in {next_check_seconds} seconds"""
+ANNOUNCEMENT_MESSAGE = """We are trying to populate the server! That means special rules apply.
+
+- {disallowed_roles} are not allowed (until {disallowed_roles_max_players} players are online)
+- {disallowed_weapons} are not allowed (until {disallowed_weapons_max_players} players are online)
+
+Thanks for understanding and helping us seed!"""
 DISALLOWED_ROLES_VIOLATION_MESSAGE = "{role} are not allowed when server is seeding"
 DISALLOWED_WEAPONS_VIOLATION_MESSAGE = "{weapon} are not allowed when server is seeding"
 ENFORCE_CAP_FIGHT_VIOLATION_MESSAGE = "Attacking 4th cap while seeding is not allowed"
@@ -82,24 +97,24 @@ class AutoModSeedingUserConfig(BaseUserConfig):
 
     enabled: bool = Field(default=False)
     discord_webhook_url: Optional[str] = Field(default=None)
-    announcement_enabled: bool
-    announcement_message: str
+    announcement_enabled: bool = Field(default=False)
+    announcement_message: str = Field(default=ANNOUNCEMENT_MESSAGE)
 
-    number_of_warnings: int
-    warning_message: str
-    warning_interval_seconds: int
+    number_of_warnings: int = Field(default=2)
+    warning_message: str = Field(default=WARNING_MESSAGE)
+    warning_interval_seconds: int = Field(default=60)
 
-    number_of_punishments: int
-    punish_message: str
-    punish_interval_seconds: int
+    number_of_punishments: int = Field(default=2)
+    punish_message: str = Field(default=PUNISH_MESSAGE)
+    punish_interval_seconds: int = Field(default=60)
 
-    kick_after_max_punish: bool
-    kick_grace_period_seconds: int
-    kick_message: str
+    kick_after_max_punish: bool = Field(default=True)
+    kick_grace_period_seconds: int = Field(default=120)
+    kick_message: str = Field(default=KICK_MESSAGE)
 
-    disallowed_roles: DisallowedRoles
-    disallowed_weapons: DisallowedWeapons
-    enforce_cap_fight: EnforceCapFight
+    disallowed_roles: DisallowedRoles = Field(default_factory=DisallowedRoles)
+    disallowed_weapons: DisallowedWeapons = Field(default_factory=DisallowedWeapons)
+    enforce_cap_fight: EnforceCapFight = Field(default_factory=EnforceCapFight)
 
     @staticmethod
     def save_to_db(values: AutoModSeedingType, dry_run=False):

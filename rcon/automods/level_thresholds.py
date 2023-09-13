@@ -10,7 +10,6 @@ from rcon.automods.get_team_count import get_team_count
 from rcon.automods.is_time import is_time
 from rcon.automods.models import (
     ActionMethod,
-    LevelThresholdsConfig,
     NoLevelViolation,
     PunishDetails,
     PunishPlayer,
@@ -159,7 +158,7 @@ class LevelThresholdsAutomod:
         violation_msg: str,
         method: ActionMethod,
     ):
-        data = {
+        data: dict[str, str | int] = {
             "violation": violation_msg,
         }
 
