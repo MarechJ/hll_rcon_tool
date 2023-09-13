@@ -48,7 +48,7 @@ class BanTeamKillOnConnectUserConfig(BaseUserConfig):
         default_factory=BanTeamKillOnConnectWhiteList
     )
     teamkill_tolerance_count: int = Field(ge=0, default=1)
-    discord_webhook_url: Optional[str]
+    discord_webhook_url: Optional[str] = Field(default=None)
     discord_webhook_message: str = Field(default=DISCORD_WEBHOOK_MESSAGE)
 
     @staticmethod
