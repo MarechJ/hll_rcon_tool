@@ -1416,7 +1416,7 @@ def set_vac_game_bans_config(request):
 @login_required()
 @permission_required("api.", raise_exception=True)
 def get_admin_pings_discord_webhooks_config(request):
-    command_name = "get_admin_pings_webhooks_config"
+    command_name = "get_admin_pings_discord_webhooks_config"
 
     try:
         config = AdminPingWebhooksUserConfig.load_from_db()
