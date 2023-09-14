@@ -176,7 +176,7 @@ class ChatWebhooksUserConfig(BaseMentionWebhookUserConfig):
             raise InvalidConfigurationError(f"'hooks' must be a list")
 
         for obj in raw_hooks:
-            key_check(WebhookType.__required_keys__, obj.keys())
+            key_check(WebhookMentionType.__required_keys__, obj.keys())
 
         validated_hooks = parse_raw_mention_hooks(raw_hooks)
         validated_conf = ChatWebhooksUserConfig(
