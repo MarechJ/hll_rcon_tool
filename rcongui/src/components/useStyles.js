@@ -89,6 +89,10 @@ const useStyles = makeStyles((theme) => {
     padding: {
       padding: theme.spacing(1),
     },
+    gridContainer: {
+      width: '100%',
+      margin: 0,
+    },
     doublePadding: {
       padding: theme.spacing(2),
     },
