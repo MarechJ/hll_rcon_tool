@@ -1,5 +1,5 @@
 import re
-from typing import Any, ClassVar, TypedDict
+from typing import ClassVar, TypedDict
 
 import pydantic
 
@@ -15,13 +15,13 @@ DISCORD_ROLE_ID_PATTERN = re.compile(r"<@&\d+>")
 
 
 class WebhookMentionType(TypedDict):
-    url: str
+    url: pydantic.HttpUrl
     user_mentions: list[str]
     role_mentions: list[str]
 
 
 class WebhookType(TypedDict):
-    url: str
+    url: pydantic.HttpUrl
 
 
 class RawWebhookType(TypedDict):
@@ -46,7 +46,11 @@ class KillsWebhookType(RawWebhookType):
 
 
 class DiscordWehbhook(pydantic.BaseModel):
-    url: str
+    url: pydantic.HttpUrl
+
+    @pydantic.field_serializer("url")
+    def serialize_url(self, server_url: pydantic.HttpUrl, _info):
+        return str(server_url)
 
 
 class DiscordMentionWebhook(DiscordWehbhook):
@@ -148,7 +152,7 @@ class AdminPingWebhooksUserConfig(BaseMentionWebhookUserConfig):
             raise InvalidConfigurationError(f"'hooks' must be a list")
 
         for obj in raw_hooks:
-            key_check(WebhookType.__required_keys__, obj.keys())
+            key_check(WebhookMentionType.__required_keys__, obj.keys())
 
         validated_hooks = parse_raw_mention_hooks(raw_hooks)
         validated_conf = AdminPingWebhooksUserConfig(
