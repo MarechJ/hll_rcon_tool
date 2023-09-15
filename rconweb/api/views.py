@@ -46,15 +46,19 @@ def set_temp_msg(request, func, name):
     return api_response(failed=failed, error=error, result=None, command=name)
 
 
-# TODO: this is not an exposed endpoint
 @csrf_exempt
 @login_required()
+# TODO: permission does not exist
+@permission_required("api.", raise_exception=True)
 @record_audit
 def set_name(request):
     data = _get_data(request)
     failed = False
     error = None
     try:
+        # TODO: server name won't change until map change
+        # but the cache also needs to be cleared, but can't
+        # immediately clear or it will just refresh
         gtx = GTXFtp.from_config()
         gtx.change_server_name(data["name"])
     except Exception as e:
