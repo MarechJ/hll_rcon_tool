@@ -241,12 +241,18 @@ endpoints: list[tuple[str, Callable]] = [
         "set_audit_discord_webhooks_config",
         user_settings.set_audit_discord_webhooks_config,
     ),
-    ("get_camera_discord_webhooks", user_settings.get_camera_discord_webhooks),
     (
-        "validate_camera_discord_webhooks",
-        user_settings.validate_camera_discord_webhooks,
+        "get_camera_discord_webhooks_config",
+        user_settings.get_camera_discord_webhooks_config,
     ),
-    ("set_camera_discord_webhooks", user_settings.set_camera_discord_webhooks),
+    (
+        "validate_camera_discord_webhooks_config",
+        user_settings.validate_camera_discord_webhooks_config,
+    ),
+    (
+        "set_camera_discord_webhooks_config",
+        user_settings.set_camera_discord_webhooks_config,
+    ),
     (
         "get_chat_discord_webhooks_config",
         user_settings.get_chat_discord_webhooks_config,
