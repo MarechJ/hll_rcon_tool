@@ -10,6 +10,7 @@ from .audit_log import record_audit
 from .auth import api_response, login_required
 from .user_settings import _validate_user_config
 from .utils import _get_data
+from .views import audit
 
 logger = getLogger(__name__)
 
