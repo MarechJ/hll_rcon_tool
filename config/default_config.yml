@@ -489,6 +489,12 @@ NOSOLOTANK_AUTO_MOD:
   # If this is set to true no warning / punish / kick will be applied for real
   # It turns the code into a "simulation" mode and only send what it would do to your discord audit log webhook
   dry_run: true
+  # This is either an empty list [] or a list of flags to exempt a player
+  # from the automod feature (could be useful for admins that open locked armor squads to be able to use camera).
+  # To use, add a flag or multiple flags to the list, and then flag
+  # the players you want to exempt in the CRCON UI
+  whitelist_flags: []
+    # - 🚨
   # Discord Webhook URL where audit logs should be sent. If not specified, the environment variable DISCORD_WEBHOOK_AUDIT_LOG
   # will be used, instead.
   discord_webhook_url: ""
