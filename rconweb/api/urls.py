@@ -97,6 +97,7 @@ endpoints: list[tuple[str, Callable]] = [
     ("do_set_map_whitelist", votemap.do_set_map_whitelist),
     ("get_map_whitelist", votemap.get_map_whitelist),
     ("get_votemap_config", votemap.get_votemap_config),
+    ("describe_votemap_config", votemap.describe_votemap_config),
     ("validate_votemap_config", votemap.validate_votemap_config),
     ("set_votemap_config", votemap.set_votemap_config),
     ("get_votemap_status", votemap.get_votemap_status),
@@ -105,6 +106,7 @@ endpoints: list[tuple[str, Callable]] = [
     ("get_player_comment", history.get_player_comment),
     ("post_player_comment", history.post_player_comment),
     ("get_real_vip_config", vips.get_real_vip_config),
+    ("describe_real_vip_config", vips.describe_real_vip_config),
     ("validate_real_vip_config", vips.validate_real_vip_config),
     ("set_real_vip_config", vips.set_real_vip_config),
     ("get_auto_settings", auto_settings.get_auto_settings),
@@ -113,18 +115,28 @@ endpoints: list[tuple[str, Callable]] = [
     ("get_audit_logs", audit_log.get_audit_logs),
     ("get_audit_logs_autocomplete", audit_log.get_audit_logs_autocomplete),
     ("get_auto_broadcasts_config", user_settings.get_auto_broadcasts_config),
+    ("describe_auto_broadcasts_config", user_settings.describe_auto_broadcasts_config),
     ("validate_auto_broadcasts_config", user_settings.validate_auto_broadcasts_config),
     ("set_auto_broadcasts_config", user_settings.set_auto_broadcasts_config),
     ("get_votekick_autotoggle_config", user_settings.get_votekick_autotoggle_config),
+    (
+        "describe_votekick_autotoggle_config",
+        user_settings.describe_votekick_autotoggle_config,
+    ),
     (
         "validate_votekick_autotoggle_config",
         user_settings.validate_votekick_autotoggle_config,
     ),
     ("set_votekick_autotoggle_config", user_settings.set_votekick_autotoggle_config),
     ("get_auto_mod_level_config", user_settings.get_auto_mod_level_config),
+    ("describe_auto_mod_level_config", user_settings.describe_auto_mod_level_config),
     ("validate_auto_mod_level_config", user_settings.validate_auto_mod_level_config),
     ("set_auto_mod_level_config", user_settings.set_auto_mod_level_config),
     ("get_auto_mod_no_leader_config", user_settings.get_auto_mod_no_leader_config),
+    (
+        "describe_auto_mod_no_leader_config",
+        user_settings.describe_auto_mod_no_leader_config,
+    ),
     (
         "validate_auto_mod_no_leader_config",
         user_settings.validate_auto_mod_no_leader_config,
@@ -132,11 +144,19 @@ endpoints: list[tuple[str, Callable]] = [
     ("set_auto_mod_no_leader_config", user_settings.set_auto_mod_no_leader_config),
     ("get_auto_mod_seeding_config", user_settings.get_auto_mod_seeding_config),
     (
+        "describe_auto_mod_seeding_config",
+        user_settings.describe_auto_mod_seeding_config,
+    ),
+    (
         "validate_auto_mod_seeding_config",
         user_settings.validate_auto_mod_seeding_config,
     ),
     ("set_auto_mod_seeding_config", user_settings.set_auto_mod_seeding_config),
     ("get_tk_ban_on_connect_config", user_settings.get_tk_ban_on_connect_config),
+    (
+        "describe_tk_ban_on_connect_config",
+        user_settings.describe_tk_ban_on_connect_config,
+    ),
     (
         "validate_tk_ban_on_connect_config",
         user_settings.validate_tk_ban_on_connect_config,
@@ -144,14 +164,23 @@ endpoints: list[tuple[str, Callable]] = [
     ("set_tk_ban_on_connect_config", user_settings.set_tk_ban_on_connect_config),
     ("get_camera_notification_config", user_settings.get_camera_notification_config),
     (
+        "describe_camera_notification_config",
+        user_settings.describe_camera_notification_config,
+    ),
+    (
         "validate_camera_notification_config",
         user_settings.validate_camera_notification_config,
     ),
     ("set_camera_notification_config", user_settings.set_camera_notification_config),
     ("get_expired_vip_config", user_settings.get_expired_vip_config),
+    ("describe_expired_vip_config", user_settings.describe_expired_vip_config),
     ("validate_expired_vip_config", user_settings.validate_expired_vip_config),
     ("set_expired_vip_config", user_settings.set_expired_vip_config),
     ("get_server_name_change_config", user_settings.get_server_name_change_config),
+    (
+        "describe_server_name_change_config",
+        user_settings.describe_server_name_change_config,
+    ),
     (
         "validate_server_name_change_config",
         user_settings.validate_server_name_change_config,
@@ -159,16 +188,25 @@ endpoints: list[tuple[str, Callable]] = [
     ("set_server_name_change_config", user_settings.set_server_name_change_config),
     ("get_log_line_webhook_config", user_settings.get_log_line_webhook_config),
     (
+        "describe_log_line_webhook_config",
+        user_settings.describe_log_line_webhook_config,
+    ),
+    (
         "validate_log_line_webhook_config",
         user_settings.validate_log_line_webhook_config,
     ),
     ("set_log_line_webhook_config", user_settings.set_log_line_webhook_config),
     ("get_name_kick_config", user_settings.get_name_kick_config),
+    ("describe_name_kick_config", user_settings.describe_name_kick_config),
     ("validate_name_kick_config", user_settings.validate_name_kick_config),
     ("set_name_kick_config", user_settings.set_name_kick_config),
     (
         "get_rcon_connection_settings_config",
         user_settings.get_rcon_connection_settings_config,
+    ),
+    (
+        "describe_rcon_connection_settings_config",
+        user_settings.describe_rcon_connection_settings_config,
     ),
     (
         "validate_rcon_connection_settings_config",
@@ -180,14 +218,23 @@ endpoints: list[tuple[str, Callable]] = [
     ),
     ("get_rcon_server_settings_config", user_settings.get_rcon_server_settings_config),
     (
+        "describe_rcon_server_settings_config",
+        user_settings.describe_rcon_server_settings_config,
+    ),
+    (
         "validate_rcon_server_settings_config",
         user_settings.validate_rcon_server_settings_config,
     ),
     ("set_rcon_server_settings_config", user_settings.set_rcon_server_settings_config),
     ("get_scorebot_config", user_settings.get_scorebot_config),
+    ("describe_scorebot_config", user_settings.describe_scorebot_config),
     ("validate_scorebot_config", user_settings.validate_scorebot_config),
     ("set_scorebot_config", user_settings.set_scorebot_config),
     ("get_standard_broadcast_messages", user_settings.get_standard_broadcast_messages),
+    (
+        "describe_standard_broadcast_messages",
+        user_settings.describe_standard_broadcast_messages,
+    ),
     (
         "validate_standard_broadcast_messages",
         user_settings.validate_standard_broadcast_messages,
@@ -196,6 +243,10 @@ endpoints: list[tuple[str, Callable]] = [
     (
         "get_standard_punishments_messages",
         user_settings.get_standard_punishments_messages,
+    ),
+    (
+        "describe_standard_punishments_messages",
+        user_settings.describe_standard_punishments_messages,
     ),
     (
         "validate_standard_punishments_messages",
@@ -207,19 +258,29 @@ endpoints: list[tuple[str, Callable]] = [
     ),
     ("get_standard_welcome_messages", user_settings.get_standard_welcome_messages),
     (
+        "describe_standard_welcome_messages",
+        user_settings.describe_standard_welcome_messages,
+    ),
+    (
         "validate_standard_welcome_messages",
         user_settings.validate_standard_welcome_messages,
     ),
     ("set_standard_welcome_messages", user_settings.set_standard_welcome_messages),
     ("get_steam_config", user_settings.get_steam_config),
+    ("describe_steam_config", user_settings.describe_steam_config),
     ("validate_steam_config", user_settings.validate_steam_config),
     ("set_steam_config", user_settings.set_steam_config),
     ("get_vac_game_bans_config", user_settings.get_vac_game_bans_config),
+    ("describe_vac_game_bans_config", user_settings.describe_vac_game_bans_config),
     ("validate_vac_game_bans_config", user_settings.validate_vac_game_bans_config),
     ("set_vac_game_bans_config", user_settings.set_vac_game_bans_config),
     (
         "get_admin_pings_discord_webhooks_config",
         user_settings.get_admin_pings_discord_webhooks_config,
+    ),
+    (
+        "describe_admin_pings_discord_webhooks_config",
+        user_settings.describe_admin_pings_discord_webhooks_config,
     ),
     (
         "validate_admin_pings_discord_webhooks_config",
@@ -234,6 +295,10 @@ endpoints: list[tuple[str, Callable]] = [
         user_settings.get_audit_discord_webhooks_config,
     ),
     (
+        "describe_audit_discord_webhooks_config",
+        user_settings.describe_audit_discord_webhooks_config,
+    ),
+    (
         "validate_audit_discord_webhooks_config",
         user_settings.validate_audit_discord_webhooks_config,
     ),
@@ -244,6 +309,10 @@ endpoints: list[tuple[str, Callable]] = [
     (
         "get_camera_discord_webhooks_config",
         user_settings.get_camera_discord_webhooks_config,
+    ),
+    (
+        "describe_camera_discord_webhooks_config",
+        user_settings.describe_camera_discord_webhooks_config,
     ),
     (
         "validate_camera_discord_webhooks_config",
@@ -258,6 +327,10 @@ endpoints: list[tuple[str, Callable]] = [
         user_settings.get_chat_discord_webhooks_config,
     ),
     (
+        "describe_chat_discord_webhooks_config",
+        user_settings.describe_chat_discord_webhooks_config,
+    ),
+    (
         "validate_chat_discord_webhooks_config",
         user_settings.validate_chat_discord_webhooks_config,
     ),
@@ -270,6 +343,10 @@ endpoints: list[tuple[str, Callable]] = [
         user_settings.get_kills_discord_webhooks_config,
     ),
     (
+        "get_kills_discord_webhooks_config",
+        user_settings.describe_kills_discord_webhooks_config,
+    ),
+    (
         "validate_kills_discord_webhooks_config",
         user_settings.validate_kills_discord_webhooks_config,
     ),
@@ -278,6 +355,14 @@ endpoints: list[tuple[str, Callable]] = [
         user_settings.set_kills_discord_webhooks_config,
     ),
     ("get_watchlist_discord_webhooks", user_settings.get_watchlist_discord_webhooks),
+    (
+        "describe_watchlist_discord_webhooks",
+        user_settings.describe_watchlist_discord_webhooks,
+    ),
+    (
+        "describe_watchlist_discord_webhooks",
+        user_settings.describe_watchlist_discord_webhooks,
+    ),
     (
         "validate_watchlist_discord_webhooks",
         user_settings.validate_watchlist_discord_webhooks,

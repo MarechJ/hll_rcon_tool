@@ -221,6 +221,17 @@ def get_real_vip_config(request):
 
 
 @csrf_exempt
+def describe_real_vip_config(request):
+    command_name = "describe_real_vip_config"
+
+    return api_response(
+        result=RealVipUserConfig.model_json_schema(),
+        command=command_name,
+        failed=False,
+    )
+
+
+@csrf_exempt
 @login_required()
 # TODO: different permission?
 @permission_required("api.can_change_real_vip_config", raise_exception=True)

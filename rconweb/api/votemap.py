@@ -34,6 +34,17 @@ def get_votemap_config(request):
 
 
 @csrf_exempt
+def describe_votemap_config(request):
+    command_name = "get_votemap_config"
+
+    return api_response(
+        result=VoteMapUserConfig.model_json_schema(),
+        command=command_name,
+        failed=False,
+    )
+
+
+@csrf_exempt
 @login_required()
 # TODO: different permission?
 @permission_required("api.can_change_votemap_config", raise_exception=True)
