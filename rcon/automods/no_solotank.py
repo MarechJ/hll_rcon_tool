@@ -135,6 +135,10 @@ class NoSoloTankAutomod:
             if not squad["has_leader"]:
                 raise NoSoloTanker()
 
+            for flagnb in squad["players"][0]["profile"]["flags"]:
+                if flagnb["flag"] in self.config.whitelist_flags:
+                    raise NoSoloTanker()
+
             self.logger.info("Squad %s - %s is solo tank", team, squad_name)
             author = AUTOMOD_USERNAME + ("-DryRun" if self.config.dry_run else "")
 
