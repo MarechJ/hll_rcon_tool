@@ -22,9 +22,12 @@ const VoteMapConfig = () => {
   const [status, setStatus] = React.useState(new Map());
 
   const saveConfig = (kv) =>
-    postData(`${process.env.REACT_APP_API_URL}set_votemap_config`, kv)
+    postData(`${process.env.REACT_APP_API_URL}set_votemap_config`, {
+      ...Object.fromEntries(config.entries()),
+      ...kv,
+    })
       .then((res) => showResponse(res, "set_votemap_config", true))
-      .then((data) => (data.failed ? "" : setConfig(fromJS(data.result))))
+      .then(loadData)
       .catch(handle_http_errors);
 
   const loadData = () => {

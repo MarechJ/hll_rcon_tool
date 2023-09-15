@@ -117,6 +117,7 @@ async function showResponse(response, command, showSuccess) {
           res.result
         )}\n\nError: ${res.error}`
       );
+      return res;
     } else if (showSuccess === true) {
       toast.success(`Done: ${command}`);
     }
@@ -147,7 +148,7 @@ async function sendAction(command, parameters) {
 
 async function _checkResult(data) {
   if (data.result) {
-    return data.result;
+    return data.result.messages;
   }
   return [];
 }
@@ -156,9 +157,6 @@ async function getSharedMessages(namespace) {
   return get(`get_standard_${namespace}_messages`)
     .then((res) => res.json())
     .then((res) => {
-      console.log(
-        `get_standard_${namespace}_messages res=${json.stringify(res)}`
-      );
       return res;
     })
     .then(_checkResult);

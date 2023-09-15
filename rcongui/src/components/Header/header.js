@@ -165,8 +165,10 @@ class LoginBox extends React.Component {
 const Header = ({ classes }) => {
   const [anchorEl, setAnchorEl] = React.useState(null);
   const [anchorElScores, setAnchorElScores] = React.useState(null);
+  const [anchorElSettings, setAnchorElSettings] = React.useState(null);
   const [anchorElLive, setAnchorElLive] = React.useState(null);
   const handleClick = (event) => {
+    console.log(event.currentTarget);
     setAnchorEl(event.currentTarget);
   };
 
@@ -233,7 +235,7 @@ const Header = ({ classes }) => {
                         History
                       </Link>
                       <Menu
-                        id="simple-menu"
+                        id="history-menu"
                         anchorEl={anchorEl}
                         keepMounted
                         open={Boolean(anchorEl)}
@@ -268,11 +270,182 @@ const Header = ({ classes }) => {
                         variant="button"
                         color="inherit"
                         className={classes.link}
-                        component={RouterLink}
-                        to="/settings"
+                        onClick={(e) => {
+                          setAnchorElSettings(e.currentTarget);
+                        }}
                       >
                         Settings
                       </Link>
+                      <Menu
+                        id="settings-menu"
+                        anchorEl={anchorElSettings}
+                        keepMounted
+                        open={Boolean(anchorElSettings)}
+                        onClose={() => setAnchorElSettings(null)}
+                      >
+                        <Link
+                          color="inherit"
+                          component={RouterLink}
+                          to="/settings/settings"
+                        >
+                          <MenuItem onClick={() => setAnchorElSettings(null)}>
+                            Settings
+                          </MenuItem>
+                        </Link>
+                        <Link
+                          color="inherit"
+                          component={RouterLink}
+                          to="/settings/audit-webhooks"
+                        >
+                          <MenuItem onClick={() => setAnchorElSettings(null)}>
+                            Audit Webhooks
+                          </MenuItem>
+                        </Link>
+                        <Link
+                          color="inherit"
+                          component={RouterLink}
+                          to="/settings/admin-webhooks"
+                        >
+                          <MenuItem onClick={() => setAnchorElSettings(null)}>
+                            Admin Ping Webhooks
+                          </MenuItem>
+                        </Link>
+                        <Link
+                          color="inherit"
+                          component={RouterLink}
+                          to="/settings/camera-webhooks"
+                        >
+                          <MenuItem onClick={() => setAnchorElSettings(null)}>
+                            Camera Webhooks
+                          </MenuItem>
+                        </Link>
+                        <Link
+                          color="inherit"
+                          component={RouterLink}
+                          to="/settings/chat-webhooks"
+                        >
+                          <MenuItem onClick={() => setAnchorElSettings(null)}>
+                            Chat Webhooks
+                          </MenuItem>
+                        </Link>
+                        <Link
+                          color="inherit"
+                          component={RouterLink}
+                          to="/settings/kill-webhooks"
+                        >
+                          <MenuItem onClick={() => setAnchorElSettings(null)}>
+                            Kill/Teamkills Webhooks
+                          </MenuItem>
+                        </Link>
+                        <Link
+                          color="inherit"
+                          component={RouterLink}
+                          to="/settings/automod-level"
+                        >
+                          <MenuItem onClick={() => setAnchorElSettings(null)}>
+                            Level Auto Mod
+                          </MenuItem>
+                        </Link>
+                        <Link
+                          color="inherit"
+                          component={RouterLink}
+                          to="/settings/automod-no-leader"
+                        >
+                          <MenuItem onClick={() => setAnchorElSettings(null)}>
+                            No Leader Auto Mod
+                          </MenuItem>
+                        </Link>
+                        <Link
+                          color="inherit"
+                          component={RouterLink}
+                          to="/settings/automod-seeding"
+                        >
+                          <MenuItem onClick={() => setAnchorElSettings(null)}>
+                            Seeding Auto Mod
+                          </MenuItem>
+                        </Link>
+                        <Link
+                          color="inherit"
+                          component={RouterLink}
+                          to="/settings/rcon-gameserver"
+                        >
+                          <MenuItem onClick={() => setAnchorElSettings(null)}>
+                            RCON Game Server Connection
+                          </MenuItem>
+                        </Link>
+                        <Link
+                          color="inherit"
+                          component={RouterLink}
+                          to="/settings/rcon-server"
+                        >
+                          <MenuItem onClick={() => setAnchorElSettings(null)}>
+                            CRCON Settings
+                          </MenuItem>
+                        </Link>
+                        <Link
+                          color="inherit"
+                          component={RouterLink}
+                          to="/settings/scorebot"
+                        >
+                          <MenuItem onClick={() => setAnchorElSettings(null)}>
+                            Scorebot
+                          </MenuItem>
+                        </Link>
+                        <Link
+                          color="inherit"
+                          component={RouterLink}
+                          to="/settings/steam"
+                        >
+                          <MenuItem onClick={() => setAnchorElSettings(null)}>
+                            Steam API
+                          </MenuItem>
+                        </Link>
+                        <Link
+                          color="inherit"
+                          component={RouterLink}
+                          to="/settings/vac-gamebans"
+                        >
+                          <MenuItem onClick={() => setAnchorElSettings(null)}>
+                            VAC/Game Bans
+                          </MenuItem>
+                        </Link>
+                        <Link
+                          color="inherit"
+                          component={RouterLink}
+                          to="/settings/tk-ban"
+                        >
+                          <MenuItem onClick={() => setAnchorElSettings(null)}>
+                            TK Ban On Connect
+                          </MenuItem>
+                        </Link>
+                        <Link
+                          color="inherit"
+                          component={RouterLink}
+                          to="/settings/name-kicks"
+                        >
+                          <MenuItem onClick={() => setAnchorElSettings(null)}>
+                            Name Kicks
+                          </MenuItem>
+                        </Link>
+                        <Link
+                          color="inherit"
+                          component={RouterLink}
+                          to="/settings/log-lines"
+                        >
+                          <MenuItem onClick={() => setAnchorElSettings(null)}>
+                            Log Line Webhooks
+                          </MenuItem>
+                        </Link>
+                        <Link
+                          color="inherit"
+                          component={RouterLink}
+                          to="/settings/expired-vip"
+                        >
+                          <MenuItem onClick={() => setAnchorElSettings(null)}>
+                            Expired VIP
+                          </MenuItem>
+                        </Link>
+                      </Menu>
                       <Link
                         variant="button"
                         color="inherit"

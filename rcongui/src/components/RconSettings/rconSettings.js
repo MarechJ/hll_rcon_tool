@@ -79,10 +79,6 @@ const Hook = ({
   const [userIds, setUserIds] = React.useState(user_mentions);
   const [roleIds, setRoleIds] = React.useState(role_mentions);
 
-  console.log(
-    `hook=${hook} user_mentions=${user_mentions} role_mentions=${role_mentions}`
-  );
-
   return (
     <Grid container spacing={1}>
       <Grid item xs={4}>
@@ -116,7 +112,6 @@ const Hook = ({
             <IconButton
               edge="start"
               onClick={() => {
-                console.log("starting delete");
                 onDeleteHook();
               }}
             >
@@ -159,7 +154,6 @@ const WebhooksConfig = ({ type }) => {
   }, []);
 
   const setHookConfig = (hooks) => {
-    console.log(`hooks=${hookConfig}`);
     postData(`${process.env.REACT_APP_API_URL}set_${type}_discord_webhooks`, {
       hooks: hooks,
     })
@@ -186,9 +180,6 @@ const WebhooksConfig = ({ type }) => {
           </Typography>
           {hooks.length ? (
             hooks.map((h) => {
-              console.log(
-                `webhook type=${type} hookConfig=${JSON.stringify(h)}`
-              );
               return (
                 <>
                   <Grid container>
@@ -198,7 +189,6 @@ const WebhooksConfig = ({ type }) => {
                       role_mentions={h.role_mentions}
                       actionType="delete"
                       onDeleteHook={() => {
-                        console.log(`deleting hook idx=${idx}`);
                         hooks.splice(idx, 1);
                         setHookConfig(hooks);
                       }}
@@ -207,7 +197,6 @@ const WebhooksConfig = ({ type }) => {
                         user_mentions,
                         role_mentions
                       ) => {
-                        console.log(`updating hook idx=${idx}`);
                         hooks[idx] = {
                           url: hook_url,
                           user_mentions: user_mentions,
@@ -301,8 +290,8 @@ class RconSettings extends React.Component {
   }
 
   async loadCameraConfig() {
-    return get(`get_camera_config`)
-      .then((res) => showResponse(res, "get_camera_config", false))
+    return get(`get_camera_notification_config`)
+      .then((res) => showResponse(res, "get_camera_notification_config", false))
       .then(
         (data) =>
           !data.failed &&
@@ -315,8 +304,11 @@ class RconSettings extends React.Component {
   }
 
   async saveCameraConfig(data) {
-    return postData(`${process.env.REACT_APP_API_URL}set_camera_config`, data)
-      .then((res) => showResponse(res, "set_camera_config", true))
+    return postData(
+      `${process.env.REACT_APP_API_URL}set_camera_notification_config`,
+      data
+    )
+      .then((res) => showResponse(res, "set_camera_notification_config", true))
       .then(this.loadCameraConfig)
       .catch(handle_http_errors);
   }
@@ -667,7 +659,7 @@ class RconSettings extends React.Component {
             </Grid>
           </Grid>
         </Grid>
-        <Grid item className={classes.paddingTop} justify="center" xs={12}>
+        {/* <Grid item className={classes.paddingTop} justify="center" xs={12}>
           <Typography variant="h5">Discord Webhooks configuration</Typography>
         </Grid>
         <Grid
@@ -689,7 +681,7 @@ class RconSettings extends React.Component {
           alignItems="center"
         >
           <WebhooksConfig classes={classes} type="camera" />
-        </Grid>
+        </Grid> */}
         <Grid item className={classes.paddingTop} justify="center" xs={12}>
           <Typography variant="h5">
             Auto votekick toggle{" "}
@@ -707,13 +699,18 @@ class RconSettings extends React.Component {
           alignItems="center"
           spacing={1}
         >
-          {/* <Grid item xs={12}>
+          <Grid item xs={12}>
             <TextField
               type="number"
               label="# ingame moderator"
               value={autovotekickMinIngameMods}
               onChange={(e) =>
-                this.saveAutoVotekickConfig({ minimum_ingame_mods: e.target.value })
+                this.saveAutoVotekickConfig({
+                  enabled: autovotekickEnabled,
+                  minimum_ingame_mods: e.target.value,
+                  minimum_online_mods: autovotekickMinOnlineMods,
+                  condition: autovotekickConditionType,
+                })
               }
               helperText="Number of moderator in game is greater or equal"
             />
@@ -724,6 +721,9 @@ class RconSettings extends React.Component {
                 value={autovotekickConditionType}
                 onChange={(e) =>
                   this.saveAutoVotekickConfig({
+                    enabled: autovotekickEnabled,
+                    minimum_ingame_mods: autovotekickMinIngameMods,
+                    minimum_online_mods: autovotekickMinOnlineMods,
                     condition: e.target.value,
                   })
                 }
@@ -738,16 +738,28 @@ class RconSettings extends React.Component {
               label="# online moderator"
               value={autovotekickMinOnlineMods}
               onChange={(e) =>
-                this.saveAutoVotekickConfig({ minimum_online_mods: e.target.value })
+                this.saveAutoVotekickConfig({
+                  enabled: autovotekickEnabled,
+                  minimum_ingame_mods: autovotekickMinIngameMods,
+                  minimum_online_mods: e.target.value,
+                  condition: autovotekickConditionType,
+                })
               }
               helperText="number of moderator with the rcon openned"
             />
-          </Grid> */}
+          </Grid>
           <Grid item>
             <Padlock
               label="Auto votekick toggle enabled"
               checked={autovotekickEnabled}
-              handleChange={(v) => this.saveAutoVotekickConfig({ enabled: v })}
+              handleChange={(v) =>
+                this.saveAutoVotekickConfig({
+                  enabled: v,
+                  minimum_ingame_mods: autovotekickMinIngameMods,
+                  minimum_online_mods: autovotekickMinOnlineMods,
+                  condition: autovotekickConditionType,
+                })
+              }
             />
           </Grid>
         </Grid>
@@ -764,12 +776,16 @@ class RconSettings extends React.Component {
           <Padlock
             label="broadcast"
             checked={cameraBroadcast}
-            handleChange={(v) => this.saveCameraConfig({ broadcast: v })}
+            handleChange={(v) =>
+              this.saveCameraConfig({ welcome: cameraWelcome, broadcast: v })
+            }
           />
           <Padlock
             label="set welcome message"
             checked={cameraWelcome}
-            handleChange={(v) => this.saveCameraConfig({ welcome: v })}
+            handleChange={(v) =>
+              this.saveCameraConfig({ welcome: v, broadcast: cameraBroadcast })
+            }
           />
         </Grid>
         <Grid
