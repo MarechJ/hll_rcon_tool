@@ -67,7 +67,6 @@ def _validate_user_config(
         else:
             error_msg = str(e)
 
-        # error_msg = e.json()
         logger.warning(error_msg)
         return api_response(
             command=command_name, failed=True, error=error_msg, arguments=data
@@ -507,7 +506,7 @@ def get_camera_notification_config(request):
     command_name = "get_camera_notification_config"
 
     try:
-        config = CameraNotificationUserConfig()
+        config = CameraNotificationUserConfig.load_from_db()
     except Exception as e:
         logger.exception(e)
         return api_response(command=command_name, error=str(e), failed=True)
@@ -1558,7 +1557,7 @@ def set_audit_discord_webhooks_config(request):
 @login_required()
 # TODO: permission does not exist yet
 @permission_required("api.can_view_camera_discord_webhooks", raise_exception=True)
-def get_camera_discord_webhooks(request):
+def get_camera_discord_webhooks_config(request):
     command_name = "get_camera_discord_webhooks"
 
     try:
@@ -1578,7 +1577,7 @@ def get_camera_discord_webhooks(request):
 @login_required()
 # TODO: permission does not exist yet
 @permission_required("api.can_change_camera_discord_webhooks", raise_exception=True)
-def validate_camera_discord_webhooks(request):
+def validate_camera_discord_webhooks_config(request):
     command_name = "validate_camera_discord_webhooks"
     data = _get_data(request)
 
@@ -1601,7 +1600,7 @@ def validate_camera_discord_webhooks(request):
 @login_required()
 # TODO: permission does not exist yet
 @permission_required("api.can_change_camera_discord_webhooks", raise_exception=True)
-def set_camera_discord_webhooks(request):
+def set_camera_discord_webhooks_config(request):
     command_name = "set_camera_discord_webhooks"
     data = _get_data(request)
 
