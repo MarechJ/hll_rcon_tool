@@ -106,6 +106,7 @@ def get_auto_broadcasts_config(request):
 
 
 @csrf_exempt
+@login_required()
 def describe_auto_broadcasts_config(request):
     command_name = "describe_auto_broadcasts_config"
     return api_response(
@@ -180,6 +181,7 @@ def get_votekick_autotoggle_config(request):
 
 
 @csrf_exempt
+@login_required()
 def describe_votekick_autotoggle_config(request):
     command_name = "describe_votekick_autotoggle_config"
 
@@ -256,6 +258,7 @@ def get_auto_mod_level_config(request):
 
 
 @csrf_exempt
+@login_required()
 def describe_auto_mod_level_config(request):
     command_name = "describe_auto_mod_level_config"
 
@@ -338,6 +341,7 @@ def get_auto_mod_no_leader_config(request):
 
 
 @csrf_exempt
+@login_required()
 def describe_auto_mod_no_leader_config(request):
     command_name = "describe_auto_mod_no_leader_config"
 
@@ -420,6 +424,7 @@ def get_auto_mod_seeding_config(request):
 
 
 @csrf_exempt
+@login_required()
 def describe_auto_mod_seeding_config(request):
     command_name = "describe_auto_mod_seeding_config"
 
@@ -502,6 +507,7 @@ def get_tk_ban_on_connect_config(request):
 
 
 @csrf_exempt
+@login_required()
 def describe_tk_ban_on_connect_config(request):
     command_name = "describe_tk_ban_on_connect_config"
 
@@ -584,6 +590,7 @@ def get_camera_notification_config(request):
 
 
 @csrf_exempt
+@login_required()
 def describe_camera_notification_config(request):
     command_name = "describe_camera_notification_config"
 
@@ -663,6 +670,7 @@ def get_expired_vip_config(request):
 
 
 @csrf_exempt
+@login_required()
 def describe_expired_vip_config(request):
     command_name = "describe_expired_vip_config"
 
@@ -745,6 +753,7 @@ def get_server_name_change_config(request):
 
 
 @csrf_exempt
+@login_required()
 def describe_server_name_change_config(request):
     command_name = "describe_server_name_change_config"
 
@@ -827,6 +836,7 @@ def get_log_line_webhook_config(request):
 
 
 @csrf_exempt
+@login_required()
 def describe_log_line_webhook_config(request):
     command_name = "describe_log_line_webhook_config"
 
@@ -909,6 +919,7 @@ def get_name_kick_config(request):
 
 
 @csrf_exempt
+@login_required()
 def describe_name_kick_config(request):
     command_name = "describe_name_kick_config"
 
@@ -985,6 +996,7 @@ def get_rcon_connection_settings_config(request):
 
 
 @csrf_exempt
+@login_required()
 def describe_rcon_connection_settings_config(request):
     command_name = "describe_rcon_connection_settings_config"
 
@@ -1067,6 +1079,7 @@ def get_rcon_server_settings_config(request):
 
 
 @csrf_exempt
+@login_required()
 def describe_rcon_server_settings_config(request):
     command_name = "describe_rcon_server_settings_config"
 
@@ -1149,6 +1162,7 @@ def get_scorebot_config(request):
 
 
 @csrf_exempt
+@login_required()
 def describe_scorebot_config(request):
     command_name = "describe_scorebot_config"
 
@@ -1238,6 +1252,7 @@ def get_standard_broadcast_messages(request):
 
 
 @csrf_exempt
+@login_required()
 def describe_standard_broadcast_messages(request):
     command_name = "describe_standard_broadcast_messages"
 
@@ -1321,6 +1336,7 @@ def get_standard_punishments_messages(request):
 
 
 @csrf_exempt
+@login_required()
 def describe_standard_punishments_messages(request):
     command_name = "describe_standard_punishments_messages"
 
@@ -1408,6 +1424,7 @@ def get_standard_welcome_messages(request):
 
 
 @csrf_exempt
+@login_required()
 def describe_standard_welcome_messages(request):
     command_name = "describe_standard_welcome_messages"
 
@@ -1490,6 +1507,7 @@ def get_steam_config(request):
 
 
 @csrf_exempt
+@login_required()
 def describe_steam_config(request):
     command_name = "describe_steam_config"
 
@@ -1566,6 +1584,7 @@ def get_vac_game_bans_config(request):
 
 
 @csrf_exempt
+@login_required()
 def describe_vac_game_bans_config(request):
     command_name = "describe_vac_game_bans_config"
 
@@ -1645,6 +1664,7 @@ def get_admin_pings_discord_webhooks_config(request):
 
 
 @csrf_exempt
+@login_required()
 def describe_admin_pings_discord_webhooks_config(request):
     command_name = "describe_admin_pings_discord_webhooks_config"
 
@@ -1727,6 +1747,7 @@ def get_audit_discord_webhooks_config(request):
 
 
 @csrf_exempt
+@login_required()
 def describe_audit_discord_webhooks_config(request):
     command_name = "describe_audit_discord_webhooks_config"
 
@@ -1810,6 +1831,7 @@ def get_camera_discord_webhooks_config(request):
 
 
 @csrf_exempt
+@login_required()
 def describe_camera_discord_webhooks_config(request):
     command_name = "describe_camera_discord_webhooks_config"
 
@@ -1886,6 +1908,7 @@ def get_chat_discord_webhooks_config(request):
 
 
 @csrf_exempt
+@login_required()
 def describe_chat_discord_webhooks_config(request):
     command_name = "describe_chat_discord_webhooks_config"
 
@@ -1968,6 +1991,7 @@ def get_kills_discord_webhooks_config(request):
 
 
 @csrf_exempt
+@login_required()
 def describe_kills_discord_webhooks_config(request):
     command_name = "describe_kills_discord_webhooks_config"
 
@@ -2051,6 +2075,7 @@ def get_watchlist_discord_webhooks(request):
 
 
 @csrf_exempt
+@login_required()
 def describe_watchlist_discord_webhooks(request):
     command_name = "describe_watchlist_discord_webhooks"
 

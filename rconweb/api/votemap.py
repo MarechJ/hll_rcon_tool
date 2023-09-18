@@ -35,6 +35,7 @@ def get_votemap_config(request):
 
 
 @csrf_exempt
+@login_required()
 def describe_votemap_config(request):
     command_name = "get_votemap_config"
 

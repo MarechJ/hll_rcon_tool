@@ -221,6 +221,7 @@ def get_real_vip_config(request):
 
 
 @csrf_exempt
+@login_required()
 def describe_real_vip_config(request):
     command_name = "describe_real_vip_config"
 
