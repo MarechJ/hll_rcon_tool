@@ -150,9 +150,8 @@ def enabled_moderators():
         level_thresholds_config = AutoModLevelUserConfig.load_from_db()
         no_leader_config = AutoModNoLeaderUserConfig.load_from_db()
         seeding_config = AutoModSeedingUserConfig.load_from_db()
-        # TODO: update error messages
     except Exception as e:
-        logger.exception("Invalid automod config, check your config/config.yml", e)
+        logger.exception(e)
         raise
 
     return list(

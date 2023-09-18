@@ -119,8 +119,6 @@ class Rcon(ServerCtl):
     )
 
     def __init__(self, *args, pool_size: bool | None = None, **kwargs):
-        # config/default_config.yml config.yml, etc.
-        # TODO: Don't let this block starting RCON
         try:
             config = RconConnectionSettingsUserConfig.load_from_db()
         except ValueError as e:
@@ -128,6 +126,7 @@ class Rcon(ServerCtl):
             # stack trace and we don't have to remember to keep updating this if we add
             # any more fields to RconSettingsUserConfig config
             logger.exception(e)
+            logger.error("Error when loading settings, falling back to defaults")
             config = RconConnectionSettingsUserConfig()
 
         super().__init__(

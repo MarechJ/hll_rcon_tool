@@ -96,9 +96,8 @@ class ServerCtl:
     """
 
     def __init__(self, config, auto_retry=1, max_open=None, max_idle=None):
-        self.maxOpen = max_open
-        self.maxIdle = max_idle
-        # .env fed config from rcon.SERVER_INFO
+        self.maxOpen: int = max_open
+        self.maxIdle: int = max_idle
         self.config = config
         self.auto_retry = auto_retry
         self.mu = threading.Lock()

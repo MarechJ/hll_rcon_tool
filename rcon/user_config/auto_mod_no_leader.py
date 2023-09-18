@@ -62,7 +62,6 @@ class AutoModNoLeaderUserConfig(BaseUserConfig):
     number_of_punishments: int = Field(ge=0, default=2)
     punish_message: str = Field(default=PUNISH_MESSAGE)
     punish_interval_seconds: int = Field(ge=1, default=40)
-    # TODO: check bounds
     min_squad_players_for_punish: int = Field(ge=1, default=3)
     min_server_players_for_punish: int = Field(ge=0, le=50, default=40)
 
