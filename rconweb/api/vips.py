@@ -234,7 +234,6 @@ def describe_real_vip_config(request):
 
 @csrf_exempt
 @login_required()
-# TODO: different permission?
 @permission_required("api.can_change_real_vip_config", raise_exception=True)
 def validate_real_vip_config(request):
     command_name = "validate_real_vip_config"

@@ -48,7 +48,6 @@ def describe_votemap_config(request):
 
 @csrf_exempt
 @login_required()
-# TODO: different permission?
 @permission_required("api.can_change_votemap_config", raise_exception=True)
 @record_audit
 def validate_votemap_config(request):

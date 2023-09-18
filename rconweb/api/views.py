@@ -48,8 +48,7 @@ def set_temp_msg(request, func, name):
 
 @csrf_exempt
 @login_required()
-# TODO: permission does not exist
-@permission_required("api.", raise_exception=True)
+@permission_required("api.can_change_server_name", raise_exception=True)
 @record_audit
 def set_name(request):
     data = _get_data(request)

@@ -118,7 +118,6 @@ def describe_auto_broadcasts_config(request):
 
 @csrf_exempt
 @login_required()
-# TODO: different permissions?
 @permission_required("api.can_change_auto_broadcast_config", raise_exception=True)
 def validate_auto_broadcasts_config(request):
     command_name = "validate_auto_broadcasts_config"
@@ -194,7 +193,6 @@ def describe_votekick_autotoggle_config(request):
 
 @csrf_exempt
 @login_required()
-# TODO different permission?
 @permission_required("api.can_change_votekick_autotoggle_config", raise_exception=True)
 def validate_votekick_autotoggle_config(request):
     command_name = "validate_votekick_autotoggle_config"
@@ -240,7 +238,7 @@ def set_votekick_autotoggle_config(request):
 
 @csrf_exempt
 @login_required()
-@permission_required("api.", raise_exception=True)
+@permission_required("api.can_view_auto_mod_level_config", raise_exception=True)
 def get_auto_mod_level_config(request):
     command_name = "get_auto_mod_level_config"
 
@@ -271,8 +269,7 @@ def describe_auto_mod_level_config(request):
 
 @csrf_exempt
 @login_required()
-# TODO: different permission?
-@permission_required("api.", raise_exception=True)
+@permission_required("api.can_change_auto_mod_level_config", raise_exception=True)
 def validate_auto_mod_level_config(request):
     command_name = "validate_auto_mod_level_config"
     data = _get_data(request)
@@ -297,7 +294,7 @@ def validate_auto_mod_level_config(request):
 
 @csrf_exempt
 @login_required()
-@permission_required("api.", raise_exception=True)
+@permission_required("api.can_change_auto_mod_level_config", raise_exception=True)
 @record_audit
 def set_auto_mod_level_config(request):
     command_name = "set_auto_mod_level_config"
@@ -323,7 +320,7 @@ def set_auto_mod_level_config(request):
 
 @csrf_exempt
 @login_required()
-@permission_required("api.", raise_exception=True)
+@permission_required("api.can_view_auto_mod_no_leader_config", raise_exception=True)
 def get_auto_mod_no_leader_config(request):
     command_name = "get_auto_mod_no_leader_config"
 
@@ -354,8 +351,7 @@ def describe_auto_mod_no_leader_config(request):
 
 @csrf_exempt
 @login_required()
-# TODO: different permission?
-@permission_required("api.", raise_exception=True)
+@permission_required("api.can_change_auto_mod_no_leader_config", raise_exception=True)
 def validate_auto_mod_no_leader_config(request):
     command_name = "validate_auto_mod_no_leader_config"
     data = _get_data(request)
@@ -380,7 +376,7 @@ def validate_auto_mod_no_leader_config(request):
 
 @csrf_exempt
 @login_required()
-@permission_required("api.", raise_exception=True)
+@permission_required("api.can_change_auto_mod_no_leader_config", raise_exception=True)
 @record_audit
 def set_auto_mod_no_leader_config(request):
     command_name = "set_auto_mod_no_leader_config"
@@ -406,8 +402,8 @@ def set_auto_mod_no_leader_config(request):
 
 @csrf_exempt
 @login_required()
-@permission_required("api.", raise_exception=True)
-def get_auto_mod_seeding_config(request):
+@permission_required("api.can_view_auto_mod_seeding_config", raise_exception=True)
+def get_auto_mod_seeding_config(request) -> JsonResponse:
     command_name = "get_auto_mod_seeding_config"
 
     try:
@@ -437,8 +433,7 @@ def describe_auto_mod_seeding_config(request):
 
 @csrf_exempt
 @login_required()
-# TODO: different permission?
-@permission_required("api.", raise_exception=True)
+@permission_required("api.can_change_auto_mod_seeding_config", raise_exception=True)
 def validate_auto_mod_seeding_config(request):
     command_name = "validate_auto_mod_seeding_config"
     data = _get_data(request)
@@ -463,7 +458,7 @@ def validate_auto_mod_seeding_config(request):
 
 @csrf_exempt
 @login_required()
-@permission_required("api.", raise_exception=True)
+@permission_required("api.can_change_auto_mod_seeding_config", raise_exception=True)
 @record_audit
 def set_auto_mod_seeding_config(request):
     command_name = "set_auto_mod_seeding_config"
@@ -489,7 +484,7 @@ def set_auto_mod_seeding_config(request):
 
 @csrf_exempt
 @login_required()
-@permission_required("api.", raise_exception=True)
+@permission_required("api.can_view_tk_ban_on_connect_config", raise_exception=True)
 def get_tk_ban_on_connect_config(request):
     command_name = "get_tk_ban_on_connect_config"
 
@@ -520,8 +515,7 @@ def describe_tk_ban_on_connect_config(request):
 
 @csrf_exempt
 @login_required()
-# TODO: different permission?
-@permission_required("api.", raise_exception=True)
+@permission_required("api.can_change_tk_ban_on_connect_config", raise_exception=True)
 def validate_tk_ban_on_connect_config(request):
     command_name = "validate_tk_ban_on_connect_config"
     data = _get_data(request)
@@ -546,7 +540,7 @@ def validate_tk_ban_on_connect_config(request):
 
 @csrf_exempt
 @login_required()
-@permission_required("api.", raise_exception=True)
+@permission_required("api.can_change_tk_ban_on_connect_config", raise_exception=True)
 @record_audit
 def set_tk_ban_on_connect_config(request):
     command_name = "set_tk_ban_on_connect_config"
@@ -603,7 +597,6 @@ def describe_camera_notification_config(request):
 
 @csrf_exempt
 @login_required()
-# TODO: different permission?
 @permission_required("api.can_change_camera_config", raise_exception=True)
 def validate_camera_notification_config(request):
     command_name = "validate_camera_notification_config"
@@ -652,7 +645,7 @@ def set_camera_notification_config(request):
 
 @csrf_exempt
 @login_required()
-@permission_required("api.", raise_exception=True)
+@permission_required("api.can_view_expired_vip_config", raise_exception=True)
 def get_expired_vip_config(request):
     command_name = "get_expired_vip_config"
 
@@ -683,8 +676,7 @@ def describe_expired_vip_config(request):
 
 @csrf_exempt
 @login_required()
-# TODO: different permission?
-@permission_required("api.", raise_exception=True)
+@permission_required("api.can_change_expired_vip_config", raise_exception=True)
 def validate_expired_vip_config(request):
     command_name = "validate_expired_vip_config"
     data = _get_data(request)
@@ -709,7 +701,7 @@ def validate_expired_vip_config(request):
 
 @csrf_exempt
 @login_required()
-@permission_required("api.", raise_exception=True)
+@permission_required("api.can_change_expired_vip_config", raise_exception=True)
 @record_audit
 def set_expired_vip_config(request):
     command_name = "set_expired_vip_config"
@@ -735,7 +727,7 @@ def set_expired_vip_config(request):
 
 @csrf_exempt
 @login_required()
-@permission_required("api.", raise_exception=True)
+@permission_required("api.can_view_server_name_change_config", raise_exception=True)
 def get_server_name_change_config(request):
     command_name = "get_server_name_change_config"
 
@@ -766,8 +758,7 @@ def describe_server_name_change_config(request):
 
 @csrf_exempt
 @login_required()
-# TODO: different permission?
-@permission_required("api.", raise_exception=True)
+@permission_required("api.can_change_server_name_change_config", raise_exception=True)
 def validate_server_name_change_config(request):
     command_name = "validate_server_name_change_config"
     data = _get_data(request)
@@ -792,7 +783,7 @@ def validate_server_name_change_config(request):
 
 @csrf_exempt
 @login_required()
-@permission_required("api.", raise_exception=True)
+@permission_required("api.can_change_server_name_change_config", raise_exception=True)
 @record_audit
 def set_server_name_change_config(request):
     command_name = "set_server_name_change_config"
@@ -818,7 +809,9 @@ def set_server_name_change_config(request):
 
 @csrf_exempt
 @login_required()
-@permission_required("api.", raise_exception=True)
+@permission_required(
+    "api.can_view_log_line_discord_webhook_config", raise_exception=True
+)
 def get_log_line_webhook_config(request):
     command_name = "get_log_line_webhook_config"
 
@@ -849,8 +842,9 @@ def describe_log_line_webhook_config(request):
 
 @csrf_exempt
 @login_required()
-# TODO: different permission?
-@permission_required("api.", raise_exception=True)
+@permission_required(
+    "api.can_change_log_line_discord_webhook_config", raise_exception=True
+)
 def validate_log_line_webhook_config(request):
     command_name = "validate_log_line_webhook_config"
     data = _get_data(request)
@@ -875,7 +869,9 @@ def validate_log_line_webhook_config(request):
 
 @csrf_exempt
 @login_required()
-@permission_required("api.", raise_exception=True)
+@permission_required(
+    "api.can_change_log_line_discord_webhook_config", raise_exception=True
+)
 @record_audit
 def set_log_line_webhook_config(request):
     command_name = "set_log_line_webhook_config"
@@ -901,7 +897,7 @@ def set_log_line_webhook_config(request):
 
 @csrf_exempt
 @login_required()
-@permission_required("api.", raise_exception=True)
+@permission_required("api.can_view_name_kick_config", raise_exception=True)
 def get_name_kick_config(request):
     command_name = "get_name_kick_config"
 
@@ -932,8 +928,7 @@ def describe_name_kick_config(request):
 
 @csrf_exempt
 @login_required()
-# TODO: different permission?
-@permission_required("api.", raise_exception=True)
+@permission_required("api.can_change_name_kick_config", raise_exception=True)
 def validate_name_kick_config(request):
     command_name = "validate_name_kick_config"
     data = _get_data(request)
@@ -955,7 +950,7 @@ def validate_name_kick_config(request):
 
 @csrf_exempt
 @login_required()
-@permission_required("api.", raise_exception=True)
+@permission_required("api.can_change_name_kick_config", raise_exception=True)
 @record_audit
 def set_name_kick_config(request):
     command_name = "set_name_kick_config"
@@ -978,7 +973,9 @@ def set_name_kick_config(request):
 
 @csrf_exempt
 @login_required()
-@permission_required("api.", raise_exception=True)
+@permission_required(
+    "api.can_view_rcon_connection_settings_config", raise_exception=True
+)
 def get_rcon_connection_settings_config(request):
     command_name = "get_rcon_connection_settings_config"
 
@@ -1009,8 +1006,9 @@ def describe_rcon_connection_settings_config(request):
 
 @csrf_exempt
 @login_required()
-# TODO: different permission?
-@permission_required("api.", raise_exception=True)
+@permission_required(
+    "api.can_change_rcon_connection_settings_config", raise_exception=True
+)
 def validate_rcon_connection_settings_config(request):
     command_name = "validate_rcon_connection_settings_config"
     data = _get_data(request)
@@ -1035,7 +1033,9 @@ def validate_rcon_connection_settings_config(request):
 
 @csrf_exempt
 @login_required()
-@permission_required("api.", raise_exception=True)
+@permission_required(
+    "api.can_change_rcon_connection_settings_config", raise_exception=True
+)
 @record_audit
 def set_rcon_connection_settings_config(request):
     command_name = "set_rcon_connection_settings_config"
@@ -1061,7 +1061,7 @@ def set_rcon_connection_settings_config(request):
 
 @csrf_exempt
 @login_required()
-@permission_required("api.", raise_exception=True)
+@permission_required("api.can_view_rcon_server_settings_config", raise_exception=True)
 def get_rcon_server_settings_config(request):
     command_name = "get_rcon_server_settings_config"
 
@@ -1092,8 +1092,7 @@ def describe_rcon_server_settings_config(request):
 
 @csrf_exempt
 @login_required()
-# TODO: different permission?
-@permission_required("api.", raise_exception=True)
+@permission_required("api.can_change_rcon_server_settings_config", raise_exception=True)
 def validate_rcon_server_settings_config(request):
     command_name = "validate_rcon_server_settings_config"
     data = _get_data(request)
@@ -1118,7 +1117,7 @@ def validate_rcon_server_settings_config(request):
 
 @csrf_exempt
 @login_required()
-@permission_required("api.", raise_exception=True)
+@permission_required("api.can_change_rcon_server_settings_config", raise_exception=True)
 @record_audit
 def set_rcon_server_settings_config(request):
     command_name = "set_rcon_server_settings_config"
@@ -1144,7 +1143,7 @@ def set_rcon_server_settings_config(request):
 
 @csrf_exempt
 @login_required()
-@permission_required("api.", raise_exception=True)
+@permission_required("api.can_view_scorebot_config", raise_exception=True)
 def get_scorebot_config(request):
     command_name = "get_scorebot_config"
 
@@ -1181,8 +1180,7 @@ def describe_scorebot_config(request):
 
 @csrf_exempt
 @login_required()
-# TODO: different permission?
-@permission_required("api.", raise_exception=True)
+@permission_required("api.can_change_scorebot_config", raise_exception=True)
 def validate_scorebot_config(request):
     command_name = "validate_scorebot_config"
     data = _get_data(request)
@@ -1207,7 +1205,7 @@ def validate_scorebot_config(request):
 
 @csrf_exempt
 @login_required()
-@permission_required("api.", raise_exception=True)
+@permission_required("api.can_change_scorebot_config", raise_exception=True)
 @record_audit
 def set_scorebot_config(request):
     command_name = "set_scorebot_config"
@@ -1233,7 +1231,6 @@ def set_scorebot_config(request):
 
 @csrf_exempt
 @login_required()
-# TODO: permission does not exist yet
 @permission_required("api.can_view_standard_broadcast_messages", raise_exception=True)
 def get_standard_broadcast_messages(request):
     command_name = "get_standard_broadcast_messages"
@@ -1265,7 +1262,6 @@ def describe_standard_broadcast_messages(request):
 
 @csrf_exempt
 @login_required()
-# TODO: permission does not exist yet
 @permission_required("api.can_change_standard_broadcast_messages", raise_exception=True)
 def validate_standard_broadcast_messages(request):
     command_name = "validate_standard_broadcast_messages"
@@ -1291,7 +1287,6 @@ def validate_standard_broadcast_messages(request):
 
 @csrf_exempt
 @login_required()
-# TODO: permission does not exist yet
 @permission_required("api.can_change_standard_broadcast_messages", raise_exception=True)
 def set_standard_broadcast_messages(request):
     command_name = "set_standard_broadcast_messages"
@@ -1317,7 +1312,6 @@ def set_standard_broadcast_messages(request):
 
 @csrf_exempt
 @login_required()
-# TODO: permission does not exist yet
 @permission_required("api.can_view_standard_punishment_messages", raise_exception=True)
 def get_standard_punishments_messages(request):
     command_name = "get_standard_punishments_messages"
@@ -1349,7 +1343,6 @@ def describe_standard_punishments_messages(request):
 
 @csrf_exempt
 @login_required()
-# TODO: permission does not exist yet
 @permission_required(
     "api.can_change_standard_punishment_messages", raise_exception=True
 )
@@ -1377,7 +1370,6 @@ def validate_standard_punishments_messages(request):
 
 @csrf_exempt
 @login_required()
-# TODO: permission does not exist yet
 @permission_required(
     "api.can_change_standard_punishment_messages", raise_exception=True
 )
@@ -1405,7 +1397,6 @@ def set_standard_punishments_messages(request):
 
 @csrf_exempt
 @login_required()
-# TODO: permission does not exist yet
 @permission_required("api.can_view_standard_welcome_messages", raise_exception=True)
 def get_standard_welcome_messages(request):
     command_name = "get_standard_welcome_messages"
@@ -1437,7 +1428,6 @@ def describe_standard_welcome_messages(request):
 
 @csrf_exempt
 @login_required()
-# TODO: permission does not exist yet
 @permission_required("api.can_change_standard_welcome_messages", raise_exception=True)
 def validate_standard_welcome_messages(request):
     command_name = "validate_standard_welcome_messages"
@@ -1463,7 +1453,6 @@ def validate_standard_welcome_messages(request):
 
 @csrf_exempt
 @login_required()
-# TODO: permission does not exist yet
 @permission_required("api.can_change_standard_welcome_messages", raise_exception=True)
 def set_standard_welcome_messages(request):
     command_name = "set_standard_welcome_messages"
@@ -1489,7 +1478,7 @@ def set_standard_welcome_messages(request):
 
 @csrf_exempt
 @login_required()
-@permission_required("api.", raise_exception=True)
+@permission_required("api.can_view_steam_config", raise_exception=True)
 def get_steam_config(request):
     command_name = "get_steam_config"
 
@@ -1520,8 +1509,7 @@ def describe_steam_config(request):
 
 @csrf_exempt
 @login_required()
-# TODO: different permission?
-@permission_required("api.", raise_exception=True)
+@permission_required("api.can_change_steam_config", raise_exception=True)
 def validate_steam_config(request):
     command_name = "validate_steam_config"
     data = _get_data(request)
@@ -1543,7 +1531,7 @@ def validate_steam_config(request):
 
 @csrf_exempt
 @login_required()
-@permission_required("api.", raise_exception=True)
+@permission_required("api.can_change_steam_config", raise_exception=True)
 @record_audit
 def set_steam_config(request):
     command_name = "set_steam_config"
@@ -1566,7 +1554,7 @@ def set_steam_config(request):
 
 @csrf_exempt
 @login_required()
-@permission_required("api.", raise_exception=True)
+@permission_required("api.can_view_vac_game_bans_config", raise_exception=True)
 def get_vac_game_bans_config(request):
     command_name = "get_vac_game_bans_config"
 
@@ -1597,8 +1585,7 @@ def describe_vac_game_bans_config(request):
 
 @csrf_exempt
 @login_required()
-# TODO: different permission?
-@permission_required("api.", raise_exception=True)
+@permission_required("api.can_change_vac_game_bans_config", raise_exception=True)
 def validate_vac_game_bans_config(request):
     command_name = "validate_vac_game_bans_config"
     data = _get_data(request)
@@ -1620,7 +1607,7 @@ def validate_vac_game_bans_config(request):
 
 @csrf_exempt
 @login_required()
-@permission_required("api.", raise_exception=True)
+@permission_required("api.can_change_vac_game_bans_config", raise_exception=True)
 @record_audit
 def set_vac_game_bans_config(request):
     command_name = "set_vac_game_bans_config"
@@ -1646,7 +1633,9 @@ def set_vac_game_bans_config(request):
 
 @csrf_exempt
 @login_required()
-@permission_required("api.", raise_exception=True)
+@permission_required(
+    "api.can_view_admin_pings_discord_webhooks_config", raise_exception=True
+)
 def get_admin_pings_discord_webhooks_config(request):
     command_name = "get_admin_pings_discord_webhooks_config"
 
@@ -1677,8 +1666,9 @@ def describe_admin_pings_discord_webhooks_config(request):
 
 @csrf_exempt
 @login_required()
-# TODO: different permission?
-@permission_required("api.", raise_exception=True)
+@permission_required(
+    "api.can_change_admin_pings_discord_webhooks_config", raise_exception=True
+)
 def validate_admin_pings_discord_webhooks_config(request):
     command_name = "validate_admin_pings_webhooks_config"
     data = _get_data(request)
@@ -1703,7 +1693,9 @@ def validate_admin_pings_discord_webhooks_config(request):
 
 @csrf_exempt
 @login_required()
-@permission_required("api.", raise_exception=True)
+@permission_required(
+    "api.can_change_admin_pings_discord_webhooks_config", raise_exception=True
+)
 @record_audit
 def set_admin_pings_discord_webhooks_config(request):
     command_name = "set_admin_pings_webhooks_config"
@@ -1729,7 +1721,7 @@ def set_admin_pings_discord_webhooks_config(request):
 
 @csrf_exempt
 @login_required()
-@permission_required("api.", raise_exception=True)
+@permission_required("api.can_view_audit_discord_webhooks_config", raise_exception=True)
 def get_audit_discord_webhooks_config(request):
     command_name = "get_audit_webhooks_config"
 
@@ -1760,8 +1752,9 @@ def describe_audit_discord_webhooks_config(request):
 
 @csrf_exempt
 @login_required()
-# TODO: different permission?
-@permission_required("api.", raise_exception=True)
+@permission_required(
+    "api.can_change_audit_discord_webhooks_config", raise_exception=True
+)
 def validate_audit_discord_webhooks_config(request):
     command_name = "validate_audit_webhooks_config"
     data = _get_data(request)
@@ -1786,7 +1779,9 @@ def validate_audit_discord_webhooks_config(request):
 
 @csrf_exempt
 @login_required()
-@permission_required("api.", raise_exception=True)
+@permission_required(
+    "api.can_change_audit_discord_webhooks_config", raise_exception=True
+)
 @record_audit
 def set_audit_discord_webhooks_config(request):
     command_name = "set_audit_webhooks_config"
@@ -1812,8 +1807,9 @@ def set_audit_discord_webhooks_config(request):
 
 @csrf_exempt
 @login_required()
-# TODO: permission does not exist yet
-@permission_required("api.can_view_camera_discord_webhooks", raise_exception=True)
+@permission_required(
+    "api.can_view_camera_discord_webhooks_config", raise_exception=True
+)
 def get_camera_discord_webhooks_config(request):
     command_name = "get_camera_discord_webhooks"
 
@@ -1844,8 +1840,9 @@ def describe_camera_discord_webhooks_config(request):
 
 @csrf_exempt
 @login_required()
-# TODO: permission does not exist yet
-@permission_required("api.can_change_camera_discord_webhooks", raise_exception=True)
+@permission_required(
+    "api.can_change_camera_discord_webhooks_config", raise_exception=True
+)
 def validate_camera_discord_webhooks_config(request):
     command_name = "validate_camera_discord_webhooks"
     data = _get_data(request)
@@ -1867,8 +1864,9 @@ def validate_camera_discord_webhooks_config(request):
 
 @csrf_exempt
 @login_required()
-# TODO: permission does not exist yet
-@permission_required("api.can_change_camera_discord_webhooks", raise_exception=True)
+@permission_required(
+    "api.can_change_camera_discord_webhooks_config", raise_exception=True
+)
 def set_camera_discord_webhooks_config(request):
     command_name = "set_camera_discord_webhooks"
     data = _get_data(request)
@@ -1890,7 +1888,7 @@ def set_camera_discord_webhooks_config(request):
 
 @csrf_exempt
 @login_required()
-@permission_required("api.", raise_exception=True)
+@permission_required("api.can_view_chat_discord_webhooks_config", raise_exception=True)
 def get_chat_discord_webhooks_config(request):
     command_name = "get_chat_webhooks_config"
 
@@ -1921,8 +1919,9 @@ def describe_chat_discord_webhooks_config(request):
 
 @csrf_exempt
 @login_required()
-# TODO: different permission?
-@permission_required("api.", raise_exception=True)
+@permission_required(
+    "api.can_change_chat_discord_webhooks_config", raise_exception=True
+)
 def validate_chat_discord_webhooks_config(request):
     command_name = "validate_chat_webhooks_config"
     data = _get_data(request)
@@ -1947,7 +1946,9 @@ def validate_chat_discord_webhooks_config(request):
 
 @csrf_exempt
 @login_required()
-@permission_required("api.", raise_exception=True)
+@permission_required(
+    "api.can_change_chat_discord_webhooks_config", raise_exception=True
+)
 @record_audit
 def set_chat_discord_webhooks_config(request):
     command_name = "set_chat_webhooks_config"
@@ -1973,7 +1974,7 @@ def set_chat_discord_webhooks_config(request):
 
 @csrf_exempt
 @login_required()
-@permission_required("api.", raise_exception=True)
+@permission_required("api.can_view_kills_discord_webhooks_config", raise_exception=True)
 def get_kills_discord_webhooks_config(request):
     command_name = "get_kills_webhooks_config"
 
@@ -2004,8 +2005,9 @@ def describe_kills_discord_webhooks_config(request):
 
 @csrf_exempt
 @login_required()
-# TODO: different permission?
-@permission_required("api.", raise_exception=True)
+@permission_required(
+    "api.can_change_kills_discord_webhooks_config", raise_exception=True
+)
 def validate_kills_discord_webhooks_config(request):
     command_name = "get_kills_webhooks_config"
     data = _get_data(request)
@@ -2030,7 +2032,9 @@ def validate_kills_discord_webhooks_config(request):
 
 @csrf_exempt
 @login_required()
-@permission_required("api.", raise_exception=True)
+@permission_required(
+    "api.can_change_kills_discord_webhooks_config", raise_exception=True
+)
 @record_audit
 def set_kills_discord_webhooks_config(request):
     command_name = "set_kills_webhooks_config"
@@ -2056,8 +2060,9 @@ def set_kills_discord_webhooks_config(request):
 
 @csrf_exempt
 @login_required()
-# TODO: permission does not exist yet
-@permission_required("api.can_view_watchlist_discord_webhooks", raise_exception=True)
+@permission_required(
+    "api.can_view_watchlist_discord_webhooks_config", raise_exception=True
+)
 def get_watchlist_discord_webhooks(request):
     command_name = "get_watchlist_discord_webhooks"
 
@@ -2088,8 +2093,9 @@ def describe_watchlist_discord_webhooks(request):
 
 @csrf_exempt
 @login_required()
-# TODO: permission does not exist yet
-@permission_required("api.can_change_watchlist_discord_webhooks", raise_exception=True)
+@permission_required(
+    "api.can_change_watchlist_discord_webhooks_config", raise_exception=True
+)
 def validate_watchlist_discord_webhooks(request):
     command_name = "validate_watchlist_discord_webhooks"
     data = _get_data(request)
@@ -2111,8 +2117,9 @@ def validate_watchlist_discord_webhooks(request):
 
 @csrf_exempt
 @login_required()
-# TODO: permission does not exist yet
-@permission_required("api.can_change_watchlist_discord_webhooks", raise_exception=True)
+@permission_required(
+    "api.can_change_watchlist_discord_webhooks_config", raise_exception=True
+)
 def set_watchlist_discord_webhooks(request):
     command_name = "set_watchlist_discord_webhooks"
     data = _get_data(request)
@@ -2134,7 +2141,17 @@ def set_watchlist_discord_webhooks(request):
 
 @csrf_exempt
 @login_required()
-@permission_required("api.can_view_discord_webhooks", raise_exception=True)
+@permission_required(
+    {
+        "api.can_view_admin_pings_discord_webhooks_config",
+        "api.can_view_audit_discord_webhooks_config",
+        "api.can_view_camera_discord_webhooks_config",
+        "api.can_view_chat_discord_webhooks_config",
+        "api.can_view_kills_discord_webhooks_config",
+        "api.can_view_watchlist_discord_webhooks_config",
+    },
+    raise_exception=True,
+)
 def get_all_discord_webhooks(request):
     command_name = "get_all_discord_webhooks"
 
