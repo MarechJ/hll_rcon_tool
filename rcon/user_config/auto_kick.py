@@ -16,6 +16,19 @@ VALID_CONDITIONS = ("AND", "OR")
 
 
 class AutoVoteKickUserConfig(BaseUserConfig):
+    """
+    Args:
+        enabled bool: Enable vote kick status by conditions
+        minimum_ingame_mods int:
+            The number of moderators (steam IDs must be set in the admin site)
+            in game for vote kick to be automatically turned off
+        minimum_online_mods int:
+            The number of moderators (steam IDs must be set in the admin site)
+            with CRCON open for vote kick to be automatically turned off
+        condition str:
+            AND or OR for minimum_ingame_mods/minimum_online_mods criteria
+    """
+
     KEY_NAME: ClassVar = "auto_votekick_config"
 
     enabled: bool = Field(default=False, strict=True)

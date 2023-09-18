@@ -22,6 +22,16 @@ class AutoBroadcastMessage(BaseModel):
 
 
 class AutoBroadcastUserConfig(BaseUserConfig):
+    """
+    Args:
+        enabled bool: Enable auto broadcasts
+        randomize bool: Set broadcasts in random order
+        messages list[dict]:
+            A list of dicts w/ `time_sec` and `message` keys
+            time_sec: length in seconds the broadcast is set for
+            message: the broadcast message
+    """
+
     KEY_NAME: ClassVar = "auto_broadcasts_config"
 
     enabled: bool = Field(default=False, strict=True)
