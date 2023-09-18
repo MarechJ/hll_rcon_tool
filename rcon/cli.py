@@ -1,19 +1,23 @@
 import inspect
+import json
 import logging
 import sys
 from datetime import datetime, timedelta
-from typing import Set
+from typing import Any, Set, Type
 
 import click
+import pydantic
+import yaml
 
 import rcon.expiring_vips.service
 import rcon.user_config
+import rcon.user_config.utils
 from rcon import auto_settings, broadcast, game_logs, routines
 from rcon.automods import automod
 from rcon.cache_utils import RedisCached, get_redis_pool
 from rcon.game_logs import LogLoop
 from rcon.models import install_unaccent
-from rcon.rcon import Rcon
+from rcon.rcon_ import Rcon
 from rcon.scoreboard import live_stats_loop
 from rcon.server_stats import (
     save_server_stats_for_last_hours,
@@ -22,6 +26,10 @@ from rcon.server_stats import (
 from rcon.settings import SERVER_INFO
 from rcon.steam_utils import enrich_db_users
 from rcon.user_config.user_config import seed_default_config
+from rcon.user_config.webhooks import (
+    BaseMentionWebhookUserConfig,
+    BaseWebhookUserConfig,
+)
 from rcon.utils import ApiKey
 
 logger = logging.getLogger(__name__)
@@ -220,10 +228,71 @@ def process_games(start_day_offset, end_day_offset=0, force=False):
                 continue
 
 
-@click.command(name="set_user_settings")
+@cli.command(name="set_user_settings")
+@click.argument("input", type=click.Path())
+@click.option(
+    "--type", "file_type", type=str, default="yaml", help="File format (JSON or YAML)"
+)
 @click.option("--dry-run", type=bool, default=True, help="Validate settings only")
-def set_user_settings(dry_run=True):
-    pass
+def set_user_settings(input: click.Path, file_type="yaml", dry_run=True):
+    ALLOWED_TYPES = ("JSON", "YAML", "YML")
+    if file_type.upper() not in ALLOWED_TYPES:
+        raise ValueError(f"{file_type} must be one of {ALLOWED_TYPES}")
+
+    keys_to_exclude = set(
+        [BaseWebhookUserConfig.KEY_NAME, BaseMentionWebhookUserConfig.__name__]
+    )
+
+    keys_to_models = {
+        model.KEY_NAME: model
+        for model in rcon.user_config.utils.all_subclasses(
+            rcon.user_config.utils.BaseUserConfig
+        )
+        if model.KEY_NAME not in keys_to_exclude
+    }
+
+    user_settings: dict[str, Any]
+    if file_type.upper() == "JSON":
+        with open(str(input)) as fp:
+            print(f"parsing JSON {input}")
+            try:
+                user_settings = json.load(fp)
+            except json.decoder.JSONDecodeError as e:
+                logger.error("JSON decoding error:")
+                logger.error(e)
+                sys.exit(-1)
+    else:
+        with open(str(input)) as fp:
+            print(f"parsing YAML {input}")
+            try:
+                user_settings = yaml.safe_load_all(fp)
+                pprint(dict(user_settings))
+            except yaml.YAMLError as e:
+                logger.error("YAML decoding error:")
+                logger.error(e)
+                sys.exit(-1)
+
+    for key in user_settings.keys():
+        if key not in keys_to_models:
+            logger.error(f"{key} not an allowed key, no changes made.")
+            sys.exit(-1)
+
+    parsed_models: list[rcon.user_config.utils.BaseUserConfig] = []
+    model: rcon.user_config.utils.BaseUserConfig
+    for key, payload in user_settings.items():
+        cls = keys_to_models[key]
+        print(f"Parsing {key} as {cls}")
+        try:
+            model = cls(**payload)
+        except pydantic.ValidationError as e:
+            logger.error(e)
+            sys.exit(-1)
+
+        parsed_models.append(model)
+
+    if not dry_run:
+        for model in parsed_models:
+            rcon.user_config.utils.set_user_config(model.KEY_NAME, model.model_dump())
 
 
 PREFIXES_TO_EXPOSE = ["get_", "set_", "do_"]

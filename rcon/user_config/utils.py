@@ -1,5 +1,5 @@
 import logging
-from typing import Iterable, Self
+from typing import ClassVar, Iterable, Self
 
 import pydantic
 from sqlalchemy.exc import InvalidRequestError
@@ -8,6 +8,13 @@ from rcon.models import UserConfig, enter_session
 from rcon.utils import get_server_number
 
 logger = logging.getLogger(__name__)
+
+
+# Sourced without modification from https://stackoverflow.com/a/17246726
+def all_subclasses(cls):
+    return set(cls.__subclasses__()).union(
+        [s for c in cls.__subclasses__() for s in all_subclasses(c)]
+    )
 
 
 def key_check(mandatory_keys: frozenset, provided_keys: Iterable[str]):
@@ -30,7 +37,7 @@ class InvalidConfigurationError(Exception):
 class BaseUserConfig(pydantic.BaseModel):
     """The interface UI config settings should adhere to in addition to pydantic.BaseModel"""
 
-    KEY_NAME: str = pydantic.Field(default="")
+    KEY_NAME: ClassVar = "UNUSED"
 
     @classmethod
     def KEY(cls) -> str:
