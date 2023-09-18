@@ -16,7 +16,7 @@ class NameKickType(TypedDict):
 
 
 class NameKickUserConfig(BaseUserConfig):
-    KEY_NAME: ClassVar = "name_kicks"
+    KEY_NAME: ClassVar = "name_kicks_config"
 
     regular_expressions: list[str] = Field(default_factory=list)
     kick_reason: str = Field(default=KICK_REASON)

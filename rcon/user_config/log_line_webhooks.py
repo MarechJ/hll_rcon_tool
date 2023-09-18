@@ -2,7 +2,7 @@ from typing import ClassVar, TypedDict
 
 from pydantic import BaseModel, Field, field_validator
 
-from rcon.types import ALL_LOG_TYPES
+from rcon.typedefs import ALL_LOG_TYPES
 from rcon.user_config.utils import (
     BaseUserConfig,
     InvalidConfigurationError,
@@ -31,7 +31,7 @@ class LogLineWebhook(BaseModel):
 
 
 class LogLineWebhookUserConfig(BaseUserConfig):
-    KEY_NAME: ClassVar = "log_line_webhooks"
+    KEY_NAME: ClassVar = "log_line_webhooks_config"
 
     log_types: list[LogLineWebhook] = Field(default_factory=list)
 

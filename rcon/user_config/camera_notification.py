@@ -11,7 +11,7 @@ class CameraNotificationType(TypedDict):
 
 
 class CameraNotificationUserConfig(BaseUserConfig):
-    KEY_NAME: ClassVar = "camera_config"
+    KEY_NAME: ClassVar = "camera_notification_config"
 
     broadcast: bool = Field(default=False)
     welcome: bool = Field(default=False)

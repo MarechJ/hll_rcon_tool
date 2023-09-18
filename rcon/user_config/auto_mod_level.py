@@ -4,7 +4,7 @@ from pydantic import BaseModel, BeforeValidator, Field, HttpUrl, field_serialize
 from pydantic.functional_validators import BeforeValidator
 from typing_extensions import Annotated
 
-from rcon.types import Roles
+from rcon.typedefs import Roles
 from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
 
 ANNOUNCE_MESSAGE = "This server is under level thresholds control.\n\n{min_level_msg}{max_level_msg}{level_thresholds_msg}\nThanks for understanding."
@@ -64,7 +64,7 @@ def validate_level_thresholds(v):
 
 
 class AutoModLevelUserConfig(BaseUserConfig):
-    KEY_NAME: ClassVar = "auto_mod_level"
+    KEY_NAME: ClassVar = "auto_mod_level_config"
 
     enabled: bool = Field(default=False)
     discord_webhook_url: Optional[HttpUrl] = Field(default=None)

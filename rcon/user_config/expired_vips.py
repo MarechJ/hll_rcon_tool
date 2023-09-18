@@ -12,7 +12,7 @@ class ExpiredVipsType(TypedDict):
 
 
 class ExpiredVipsUserConfig(BaseUserConfig):
-    KEY_NAME: ClassVar = "expired_vips"
+    KEY_NAME: ClassVar = "expired_vips_config"
 
     enabled: bool = Field(default=True)
     interval_minutes: int = Field(ge=1, default=60)

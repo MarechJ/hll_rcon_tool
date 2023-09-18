@@ -2,7 +2,7 @@ from typing import ClassVar, Optional, TypedDict
 
 from pydantic import Field, HttpUrl, field_serializer
 
-from rcon.types import Roles
+from rcon.typedefs import Roles
 from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
 
 WARNING_MESSAGE = "Warning, {player_name}! Your squad ({squad_name}) does not have an officer. Players of squads without an officer will be punished after {max_warnings} warnings (you already received {received_warnings}), then kicked.\nNext check will happen automatically in {next_check_seconds}s."
@@ -44,7 +44,7 @@ class AutoModNoLeaderType(TypedDict):
 
 
 class AutoModNoLeaderUserConfig(BaseUserConfig):
-    KEY_NAME: ClassVar = "auto_mod_level_no_leader"
+    KEY_NAME: ClassVar = "auto_mod_level_no_leader_config"
 
     enabled: bool = Field(default=False)
     dry_run: bool = Field(default=True)

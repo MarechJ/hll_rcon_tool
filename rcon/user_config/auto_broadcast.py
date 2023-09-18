@@ -22,7 +22,7 @@ class AutoBroadcastMessage(BaseModel):
 
 
 class AutoBroadcastUserConfig(BaseUserConfig):
-    KEY_NAME: ClassVar = "auto_broadcasts"
+    KEY_NAME: ClassVar = "auto_broadcasts_config"
 
     enabled: bool = Field(default=False, strict=True)
     randomize: bool = Field(default=False, strict=True)

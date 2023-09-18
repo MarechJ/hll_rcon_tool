@@ -35,7 +35,7 @@ class BanTeamKillOnConnectWhiteList(BaseModel):
 
 
 class BanTeamKillOnConnectUserConfig(BaseUserConfig):
-    KEY_NAME: ClassVar = "ban_tk_on_connect"
+    KEY_NAME: ClassVar = "ban_tk_on_connect_config"
 
     enabled: bool = Field(default=False)
     message: str = Field(default=MESSAGE)

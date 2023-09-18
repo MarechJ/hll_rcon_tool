@@ -8,7 +8,7 @@ class SteamType(TypedDict):
 
 
 class SteamUserConfig(BaseUserConfig):
-    KEY_NAME: ClassVar = "steam_settings"
+    KEY_NAME: ClassVar = "steam_settings_config"
 
     api_key: Optional[str] = None
 

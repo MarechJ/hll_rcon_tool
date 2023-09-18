@@ -2,7 +2,7 @@ from typing import ClassVar, Optional, TypedDict
 
 from pydantic import BaseModel, Field, HttpUrl, field_serializer
 
-from rcon.types import Roles
+from rcon.typedefs import Roles
 from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
 
 WARNING_MESSAGE = """Warning, {player_name}! You violate seeding rules on this server: {violation}
@@ -93,7 +93,7 @@ class EnforceCapFight(BaseModel):
 
 
 class AutoModSeedingUserConfig(BaseUserConfig):
-    KEY_NAME: ClassVar = "auto_mod_seeding"
+    KEY_NAME: ClassVar = "auto_mod_seeding_config"
 
     enabled: bool = Field(default=False)
     discord_webhook_url: Optional[HttpUrl] = Field(default=None)
