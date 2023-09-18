@@ -16,7 +16,7 @@ from rcon.models import (
     ServerCount,
     enter_session,
 )
-from rcon.rcon import Rcon
+from rcon.rcon_ import Rcon
 from rcon.settings import SERVER_INFO
 
 logger = logging.getLogger(__name__)

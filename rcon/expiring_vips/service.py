@@ -6,9 +6,9 @@ from typing import List, Optional
 from dateutil import relativedelta
 from pydantic import HttpUrl
 
-from rcon.discord import send_to_discord_audit
 from rcon.models import PlayerSteamID, PlayerVIP, enter_session
-from rcon.rcon import Rcon
+from rcon.rcon_ import Rcon
+from rcon.rcon_discord import send_to_discord_audit
 from rcon.settings import SERVER_INFO
 from rcon.user_config.expired_vips import ExpiredVipsUserConfig
 from rcon.utils import get_server_number

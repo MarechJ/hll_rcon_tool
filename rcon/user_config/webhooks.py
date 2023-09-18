@@ -123,15 +123,15 @@ class BaseWebhookUserConfig(BaseUserConfig):
 
 
 class WatchlistWebhooksUserConfig(BaseMentionWebhookUserConfig):
-    KEY_NAME: ClassVar = "watchlist_webhooks"
+    KEY_NAME: ClassVar = "watchlist_webhooks_config"
 
 
 class CameraWebhooksUserConfig(BaseMentionWebhookUserConfig):
-    KEY_NAME: ClassVar = "camera_webhooks"
+    KEY_NAME: ClassVar = "camera_webhooks_config"
 
 
 class AdminPingWebhooksUserConfig(BaseMentionWebhookUserConfig):
-    KEY_NAME: ClassVar = "admin_pings_webhooks"
+    KEY_NAME: ClassVar = "admin_pings_webhooks_config"
 
     trigger_words: list[str] = pydantic.Field(default_factory=list)
 
@@ -165,7 +165,7 @@ class AdminPingWebhooksUserConfig(BaseMentionWebhookUserConfig):
 
 
 class ChatWebhooksUserConfig(BaseMentionWebhookUserConfig):
-    KEY_NAME: ClassVar = "chat_webhooks"
+    KEY_NAME: ClassVar = "chat_webhooks_config"
 
     allow_mentions: bool = pydantic.Field(default=False)
 
@@ -189,11 +189,11 @@ class ChatWebhooksUserConfig(BaseMentionWebhookUserConfig):
 
 
 class AuditWebhooksUserConfig(BaseWebhookUserConfig):
-    KEY_NAME: ClassVar = "audit_webhooks"
+    KEY_NAME: ClassVar = "audit_webhooks_config"
 
 
 class KillsWebhooksUserConfig(BaseWebhookUserConfig):
-    KEY_NAME: ClassVar = "kills_webhooks"
+    KEY_NAME: ClassVar = "kills_webhooks_config"
 
     send_kills: bool = pydantic.Field(default=False)
     send_team_kills: bool = pydantic.Field(default=True)

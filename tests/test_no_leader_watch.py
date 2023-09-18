@@ -18,7 +18,7 @@ from rcon.automods.models import (
     WatchStatus,
 )
 from rcon.automods.no_leader import NoLeaderAutomod
-from rcon.types import GameState, Roles
+from rcon.typedefs import GameState, Roles
 from rcon.user_config.auto_mod_no_leader import AutoModNoLeaderUserConfig
 
 

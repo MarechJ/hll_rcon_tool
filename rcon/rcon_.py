@@ -23,7 +23,7 @@ from rcon.steam_utils import (
     get_players_country_code,
     get_players_have_bans,
 )
-from rcon.types import (
+from rcon.typedefs import (
     EnrichedGetPlayersType,
     GameState,
     GetDetailedPlayer,

@@ -12,8 +12,8 @@ from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 
 from rcon.commands import CommandFailedError
-from rcon.discord import send_to_discord_audit
 from rcon.models import PlayerSteamID, PlayerVIP, enter_session
+from rcon.rcon_discord import send_to_discord_audit
 from rcon.user_config.real_vip import RealVipUserConfig
 from rcon.utils import get_server_number
 from rcon.workers import get_job_results, worker_bulk_vip

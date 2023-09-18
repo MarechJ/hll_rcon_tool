@@ -8,7 +8,7 @@ import paramiko
 from ftpretty import ftpretty
 
 from rcon.cache_utils import invalidates
-from rcon.rcon import Rcon, invalidates
+from rcon.rcon_ import Rcon, invalidates
 from rcon.user_config.gtx_server_name import ServerNameChangeUserConfig
 
 logger = logging.getLogger(__name__)

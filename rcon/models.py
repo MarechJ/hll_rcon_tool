@@ -24,7 +24,7 @@ from sqlalchemy.orm import relationship, sessionmaker
 from sqlalchemy.orm.session import Session, object_session
 from sqlalchemy.schema import UniqueConstraint
 
-from rcon.types import (
+from rcon.typedefs import (
     AuditLogType,
     BlackListType,
     DBLogLineType,

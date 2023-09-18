@@ -3,7 +3,7 @@ import time
 
 from rcon.audit import ingame_mods, online_mods
 from rcon.commands import CommandFailedError
-from rcon.rcon import CommandFailedError, Rcon
+from rcon.rcon_ import CommandFailedError, Rcon
 from rcon.user_config.auto_kick import AutoVoteKickUserConfig
 from rcon.vote_map import VoteMap
 

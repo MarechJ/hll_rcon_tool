@@ -9,7 +9,7 @@ from urllib.parse import urlparse
 import redis
 
 from rcon.cache_utils import get_redis_pool
-from rcon.types import MapInfo
+from rcon.typedefs import MapInfo
 
 logger = logging.getLogger("rcon")
 

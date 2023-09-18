@@ -5,9 +5,9 @@ from functools import lru_cache
 from typing import List
 
 import requests
+from discord import RequestsWebhookAdapter, Webhook
 from discord_webhook import DiscordWebhook
 
-from discord import RequestsWebhookAdapter, Webhook
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.webhooks import (
     AuditWebhooksUserConfig,

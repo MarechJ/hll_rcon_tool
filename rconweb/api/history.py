@@ -9,7 +9,6 @@ from django.views.decorators.csrf import csrf_exempt
 
 from rcon import player_history
 from rcon.commands import CommandFailedError
-from rcon.discord import send_to_discord_audit
 from rcon.player_history import (
     add_flag_to_player,
     get_player_comments,
@@ -19,6 +18,7 @@ from rcon.player_history import (
     post_player_comments,
     remove_flag,
 )
+from rcon.rcon_discord import send_to_discord_audit
 from rcon.utils import MapsHistory
 
 from .audit_log import record_audit

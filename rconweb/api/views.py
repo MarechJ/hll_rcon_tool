@@ -14,10 +14,10 @@ from django.views.decorators.csrf import csrf_exempt
 from rcon.broadcast import get_votes_status
 from rcon.cache_utils import RedisCached, get_redis_pool
 from rcon.commands import CommandFailedError
-from rcon.discord import send_to_discord_audit
 from rcon.gtx import GTXFtp
 from rcon.player_history import add_player_to_blacklist, remove_player_from_blacklist
-from rcon.rcon import Rcon
+from rcon.rcon_ import Rcon
+from rcon.rcon_discord import send_to_discord_audit
 from rcon.settings import SERVER_INFO
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.utils import LONG_HUMAN_MAP_NAMES, MapsHistory, map_name

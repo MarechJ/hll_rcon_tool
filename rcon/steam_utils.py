@@ -9,7 +9,7 @@ from steam.webapi import WebAPI
 
 from rcon.cache_utils import ttl_cache
 from rcon.models import PlayerSteamID, SteamInfo
-from rcon.types import SteamBanResultType, SteamBansType
+from rcon.typedefs import SteamBanResultType, SteamBansType
 from rcon.user_config.steam import SteamUserConfig
 
 logger = logging.getLogger(__name__)

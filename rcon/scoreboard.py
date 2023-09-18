@@ -10,9 +10,9 @@ from rcon.cache_utils import get_redis_client
 from rcon.game_logs import get_historical_logs_records, get_recent_logs
 from rcon.models import enter_session
 from rcon.player_history import _get_profiles, get_player_profile_by_steam_ids
-from rcon.rcon import Rcon
+from rcon.rcon_ import Rcon
 from rcon.settings import SERVER_INFO
-from rcon.types import StructuredLogLineWithMetaData
+from rcon.typedefs import StructuredLogLineWithMetaData
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.utils import MapsHistory
 

@@ -5,8 +5,9 @@ from datetime import datetime
 from functools import lru_cache
 
 import discord.utils
-from rcon.discord import make_hook
+
 from rcon.game_logs import on_chat, on_kill, on_tk
+from rcon.rcon_discord import make_hook
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.webhooks import (
     AdminPingWebhooksUserConfig,
