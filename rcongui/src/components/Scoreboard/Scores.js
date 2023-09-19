@@ -277,7 +277,7 @@ const RawScores = pure(({ classes, scores }) => {
     },
   ]);
   return (
-    <Grid container spacing={2} className={classes.padding}>
+    <Grid container spacing={2} className={classes.gridContainer}>
       <Grid item xs={12}>
         <Button
           onClick={() => {

@@ -612,6 +612,7 @@ DEFAULT_AUTO_SETTINGS = {
                 "Yes the spelling is intentional",
             ]
         },
+        "set_map_shuffle_enabled": {"enabled": False},
         "do_punish": {"player": "12345678901234567", "reason": "Get rekt"},
         "do_kick": {"player": "12345678901234567", "reason": "Get rekt"},
         "do_temp_ban": {

@@ -6,7 +6,6 @@ import {
   GridListTile,
   GridListTileBar,
   IconButton,
-  Paper,
 } from "@material-ui/core";
 import useMediaQuery from "@material-ui/core/useMediaQuery";
 import VisibilityIcon from "@material-ui/icons/Visibility";
@@ -192,13 +191,14 @@ const GamesScore = ({ classes }) => {
     : "N/A";
 
   return (
-    <React.Fragment>
-      <Grid container spacing={2} justify="center" className={classes.padding}>
-        <Grid
-          item
-          xs={12}
-          className={`${classes.doublePadding} ${styles.transparentPaper}`}
-        >
+    <>
+      <Grid
+        container
+        spacing={2}
+        justify="center"
+        className={classes.gridContainer}
+      >
+        <Grid item xs={12} className={styles.transparentPaper}>
           <Typography color="secondary" variant="h4">
             {serverState.get("name")}
           </Typography>
@@ -289,7 +289,12 @@ const GamesScore = ({ classes }) => {
           </div>
         </Grid>
       </Grid>
-      <Grid container spacing={2} justify="center" className={classes.padding}>
+      <Grid
+        container
+        spacing={2}
+        justify="center"
+        className={classes.gridContainer}
+      >
         <Scores
           classes={classes}
           serverState={serverState}
@@ -304,7 +309,7 @@ const GamesScore = ({ classes }) => {
           durationToHour={durationToHour}
         />
       </Grid>
-    </React.Fragment>
+    </>
   );
 };
 
