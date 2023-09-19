@@ -5,7 +5,7 @@ from typing import List, Optional, TypedDict
 
 # # Have to inherit from str to allow for JSON serialization w/ pydantic
 class Roles(str, enum.Enum):
-    commander = "commander"
+    commander = "armycommander"
     squad_lead = "officer"
     rifleman = "rifleman"
     engineer = "engineer"
@@ -13,7 +13,7 @@ class Roles(str, enum.Enum):
     anti_tank = "antitank"
     automatic_rifleman = "automaticrifleman"
     assault = "assault"
-    machine_gunner = "heavyachinegunner"
+    machine_gunner = "heavymachinegunner"
     support = "support"
     spotter = "spotter"
     sniper = "sniper"
