@@ -1,4 +1,5 @@
-from typing import Any, ClassVar, Iterable, TypedDict
+import json
+from typing import Any, ClassVar, TypedDict
 
 import pydantic
 
@@ -40,19 +41,11 @@ class StandardPunishmentMessagesUserConfig(BaseStandardMessageUserConfig):
     KEY_NAME: ClassVar = "standard_messages_punishments"
 
 
-def get_all_message_keys() -> Iterable[str]:
-    return (
-        StandardWelcomeMessagesUserConfig.KEY_NAME,
-        StandardBroadcastMessagesUserConfig.KEY_NAME,
-        StandardPunishmentMessagesUserConfig.KEY_NAME,
-    )
-
-
 def get_all_message_types(
     as_dict=False, as_json=False
 ) -> (
-    list[dict[str, Any]]
-    | list[str]
+    dict[str, dict[str, Any]]
+    | str
     | tuple[
         StandardWelcomeMessagesUserConfig,
         StandardBroadcastMessagesUserConfig,
@@ -66,8 +59,8 @@ def get_all_message_types(
     all_types = (welcomes, broadcasts, punishments)
 
     if as_dict:
-        return [msg.model_dump() for msg in all_types]
+        return {msg.__repr_name__(): msg.model_dump() for msg in all_types}
     elif as_json:
-        return [msg.model_dump_json() for msg in all_types]
+        return json.dumps({msg.__repr_name__(): msg.model_dump() for msg in all_types})
     else:
         return all_types

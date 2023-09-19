@@ -1490,6 +1490,31 @@ def set_standard_welcome_messages(request):
 
 @csrf_exempt
 @login_required()
+@permission_required(
+    {
+        "api.can_view_standard_broadcast_messages",
+        "api.can_view_standard_punishment_messages",
+        "api.can_view_standard_welcome_messages",
+    }
+)
+def get_all_standard_message_config(request):
+    command_name = "get_all_standard_message_config"
+
+    try:
+        res = get_all_message_types(as_dict=True)
+    except Exception as e:
+        logger.exception(e)
+        return api_response(command=command_name, error=str(e), failed=True)
+
+    return api_response(
+        result=res,
+        command=command_name,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
 @permission_required("api.can_view_steam_config", raise_exception=True)
 def get_steam_config(request):
     command_name = "get_steam_config"

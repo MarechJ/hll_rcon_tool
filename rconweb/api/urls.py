@@ -369,6 +369,7 @@ endpoints: list[tuple[str, Callable]] = [
     ),
     ("set_watchlist_discord_webhooks", user_settings.set_watchlist_discord_webhooks),
     ("get_all_discord_webhooks", user_settings.get_all_discord_webhooks),
+    ("get_all_standard_message_config", user_settings.get_all_standard_message_config),
 ] + [(name, func) for name, func in views.commands]
 
 # Expose endpoints though Django
