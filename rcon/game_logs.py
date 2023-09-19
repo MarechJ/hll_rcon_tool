@@ -569,9 +569,12 @@ def is_player_kill(player, log):
 
 @on_tk
 def auto_ban_if_tks_right_after_connection(
-    rcon: Rcon, log: StructuredLogLineWithMetaData
+    rcon: Rcon,
+    log: StructuredLogLineWithMetaData,
+    config: BanTeamKillOnConnectUserConfig | None = None,
 ):
-    config = BanTeamKillOnConnectUserConfig.load_from_db()
+    if config is None:
+        config = BanTeamKillOnConnectUserConfig.load_from_db()
     if not config or not config.enabled:
         return
 
