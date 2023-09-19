@@ -27,7 +27,6 @@ class RconServerSettingsUserConfig(BaseUserConfig):
 
     lock_stats_api: bool = Field(default=False)
     unban_does_unblacklist: bool = Field(default=True)
-    # TODO: this isn't actually used anywhere
     unblacklist_does_unban: bool = Field(default=True)
     broadcast_temp_bans: bool = Field(default=True)
     broadcast_unbans: bool = Field(default=True)

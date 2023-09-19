@@ -259,7 +259,7 @@ def unblacklist_player(request):
         remove_player_from_blacklist(data["steam_id_64"])
         audit("unblacklist", request, data)
         config = RconServerSettingsUserConfig.load_from_db()
-        if config.unban_does_unblacklist:
+        if config.unblacklist_does_unban:
             # also remove bans
             potential_failed_unbans = ctl.do_unban(data["steam_id_64"])
             if config.broadcast_unbans:
