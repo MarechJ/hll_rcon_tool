@@ -21,7 +21,7 @@ from rcon.automods.num_or_inf import num_or_inf
 from rcon.cache_utils import get_redis_client
 from rcon.game_logs import on_match_start
 from rcon.rcon_ import StructuredLogLineType
-from rcon.typedefs import GameState
+from rcon.typedefs import GameState, Roles
 from rcon.user_config.auto_mod_seeding import AutoModSeedingUserConfig
 
 SEEDING_RULES_RESET_SECS = 120
@@ -55,7 +55,7 @@ class SeedingRulesAutomod:
         self.red = red
         self.config = config
 
-    def enabled(self):
+    def enabled(self) -> bool:
         return self.config.enabled
 
     @contextmanager
@@ -276,10 +276,10 @@ class SeedingRulesAutomod:
                     not self._is_seeding_rule_disabled("disallowed_roles")
                     and drc.min_players <= server_player_count < drc.max_players
                 ):
-                    if aplayer.role in drc.roles:
+                    if Roles(aplayer.role) in drc.roles:
                         violations.append(
                             drc.violation_message.format(
-                                role=drc.roles.get(aplayer.role)
+                                role=drc.roles.get(Roles(aplayer.role))
                             )
                         )
 
