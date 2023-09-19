@@ -747,7 +747,7 @@ class LogLineWebHookField(pydantic.BaseModel):
     mentions: Optional[List[str]] = []
     servers: List[str] = []
 
-    @pydantic.validator("mentions")
+    @pydantic.field_validator("mentions")
     def valid_role(cls, values):
         if not values:
             return []
