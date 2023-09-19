@@ -2100,7 +2100,7 @@ def set_kills_discord_webhooks_config(request):
 @permission_required(
     "api.can_view_watchlist_discord_webhooks_config", raise_exception=True
 )
-def get_watchlist_discord_webhooks(request):
+def get_watchlist_discord_webhooks_config(request):
     command_name = "get_watchlist_discord_webhooks"
 
     try:
@@ -2118,7 +2118,7 @@ def get_watchlist_discord_webhooks(request):
 
 @csrf_exempt
 @login_required()
-def describe_watchlist_discord_webhooks(request):
+def describe_watchlist_discord_webhooks_config(request):
     command_name = "describe_watchlist_discord_webhooks"
 
     return api_response(
@@ -2133,7 +2133,7 @@ def describe_watchlist_discord_webhooks(request):
 @permission_required(
     "api.can_change_watchlist_discord_webhooks_config", raise_exception=True
 )
-def validate_watchlist_discord_webhooks(request):
+def validate_watchlist_discord_webhooks_config(request):
     command_name = "validate_watchlist_discord_webhooks"
     data = _get_data(request)
 
@@ -2157,7 +2157,7 @@ def validate_watchlist_discord_webhooks(request):
 @permission_required(
     "api.can_change_watchlist_discord_webhooks_config", raise_exception=True
 )
-def set_watchlist_discord_webhooks(request):
+def set_watchlist_discord_webhooks_config(request):
     command_name = "set_watchlist_discord_webhooks"
     data = _get_data(request)
 
@@ -2189,7 +2189,7 @@ def set_watchlist_discord_webhooks(request):
     },
     raise_exception=True,
 )
-def get_all_discord_webhooks(request):
+def get_all_discord_webhooks_config(request):
     command_name = "get_all_discord_webhooks"
 
     error_msg = None

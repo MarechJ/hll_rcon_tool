@@ -468,6 +468,16 @@ function App() {
                         />
                       </Grid>
                     </Route>
+                    <Route path="/settings/watchlist-webhooks">
+                      <Grid container spacing={2}>
+                        <UserSetting
+                          description="Watchlist Webhooks"
+                          getEndpoint="get_watchlist_discord_webhooks_config"
+                          setEndpoint="set_watchlist_discord_webhooks_config"
+                          validateEndpoint="validate_watchlist_discord_webhooks_config"
+                        />
+                      </Grid>
+                    </Route>
                     <Route path="/settings/camera-webhooks">
                       <Grid container spacing={2}>
                         <UserSetting

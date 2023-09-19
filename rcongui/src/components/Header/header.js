@@ -313,6 +313,15 @@ const Header = ({ classes }) => {
                         <Link
                           color="inherit"
                           component={RouterLink}
+                          to="/settings/watchlist-webhooks"
+                        >
+                          <MenuItem onClick={() => setAnchorElSettings(null)}>
+                            Watchlist Webhooks
+                          </MenuItem>
+                        </Link>
+                        <Link
+                          color="inherit"
+                          component={RouterLink}
                           to="/settings/camera-webhooks"
                         >
                           <MenuItem onClick={() => setAnchorElSettings(null)}>

@@ -354,21 +354,23 @@ endpoints: list[tuple[str, Callable]] = [
         "set_kills_discord_webhooks_config",
         user_settings.set_kills_discord_webhooks_config,
     ),
-    ("get_watchlist_discord_webhooks", user_settings.get_watchlist_discord_webhooks),
     (
-        "describe_watchlist_discord_webhooks",
-        user_settings.describe_watchlist_discord_webhooks,
+        "get_watchlist_discord_webhooks_config",
+        user_settings.get_watchlist_discord_webhooks_config,
     ),
     (
-        "describe_watchlist_discord_webhooks",
-        user_settings.describe_watchlist_discord_webhooks,
+        "describe_watchlist_discord_webhooks_config",
+        user_settings.describe_watchlist_discord_webhooks_config,
     ),
     (
-        "validate_watchlist_discord_webhooks",
-        user_settings.validate_watchlist_discord_webhooks,
+        "validate_watchlist_discord_webhooks_config",
+        user_settings.validate_watchlist_discord_webhooks_config,
     ),
-    ("set_watchlist_discord_webhooks", user_settings.set_watchlist_discord_webhooks),
-    ("get_all_discord_webhooks", user_settings.get_all_discord_webhooks),
+    (
+        "set_watchlist_discord_webhooks_config",
+        user_settings.set_watchlist_discord_webhooks_config,
+    ),
+    ("get_all_discord_webhooks_config", user_settings.get_all_discord_webhooks_config),
     ("get_all_standard_message_config", user_settings.get_all_standard_message_config),
 ] + [(name, func) for name, func in views.commands]
 
