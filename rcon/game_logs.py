@@ -173,9 +173,9 @@ def load_generic_hooks():
     """Load and validate all the subscribed log line webhooks from config.yml"""
     try:
         config = LogLineWebhookUserConfig.load_from_db()
-    except KeyError:
-        # TODO: update error message
-        logger.error("No config.yml or no LOG_LINE_WEBHOOKS configuration")
+    except Exception as e:
+        logger.exception(e)
+        logger.error("Error when loading settings")
         return
 
     for conf in config.log_types:

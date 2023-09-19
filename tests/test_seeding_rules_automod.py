@@ -265,6 +265,7 @@ def test_does_nothing_when_enough_players(team_view):
                 Roles.tank_commander: "Tanks",
                 Roles.crewman: "Tanks",
             },
+            min_players=0,
             max_players=get_team_count(team_view, "allies")
             + get_team_count(team_view, "axis")
             - 1,
@@ -276,7 +277,9 @@ def test_does_nothing_when_enough_players(team_view):
             min_players=get_team_count(team_view, "allies")
             + get_team_count(team_view, "axis")
             - 1,
+            max_players=0,
         ),
+        enforce_cap_fight=EnforceCapFight(min_players=0, max_players=0),
     )
     mod = mod_with_config(config)
 
@@ -297,12 +300,14 @@ def test_does_nothing_when_not_enough_players(team_view):
                 min_players=get_team_count(team_view, "allies")
                 + get_team_count(team_view, "axis")
                 + 1,
+                max_players=0,
             ),
             disallowed_weapons=DisallowedWeapons(
                 weapons={"MP40": "MP40"},
                 min_players=get_team_count(team_view, "allies")
                 + get_team_count(team_view, "axis")
                 + 1,
+                max_players=0,
             ),
         )
     )
@@ -326,6 +331,7 @@ def test_cycles_warn_punish_kick_armor_players(team_view):
         kick_grace_period_seconds=1,
         disallowed_roles=DisallowedRoles(
             roles={Roles.tank_commander: "Tanks", Roles.crewman: "Tanks"},
+            min_players=0,
             max_players=get_team_count(team_view, "allies")
             + get_team_count(team_view, "axis")
             + 1,
@@ -581,6 +587,7 @@ def test_stops_when_no_violations_anymore(team_view):
         kick_message="",
         kick_grace_period_seconds=1,
         disallowed_roles=DisallowedRoles(
+            min_players=0,
             max_players=get_team_count(team_view, "allies")
             + get_team_count(team_view, "axis")
             + 1,
@@ -673,18 +680,23 @@ def test_does_not_announces_when_all_disabled(team_view):
     config = AutoModSeedingUserConfig(
         announcement_enabled=True,
         announcement_message="",
+        number_of_warnings=0,
+        number_of_punishments=0,
         disallowed_weapons=DisallowedWeapons(
             weapons={"MK2_Grenade": "Grenade"},
+            min_players=0,
             max_players=get_team_count(team_view, "allies")
             + get_team_count(team_view, "axis")
             - 1,
         ),
         disallowed_roles=DisallowedRoles(
             roles={Roles.tank_commander: "Tanks", Roles.crewman: "Tanks"},
+            min_players=0,
             max_players=get_team_count(team_view, "allies")
             + get_team_count(team_view, "axis")
             - 1,
         ),
+        enforce_cap_fight=EnforceCapFight(min_players=0, max_players=0),
     )
     mod = mod_with_config(config)
     mod.punitions_to_apply(
