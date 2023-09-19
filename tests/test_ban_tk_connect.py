@@ -17,7 +17,6 @@ from rcon.user_config.ban_tk_on_connect import BanTeamKillOnConnectWhiteList
         max_time_after_connect_minutes=5,
         ignore_tk_after_n_kills=1,
         ignore_tk_after_n_deaths=2,
-        discord_webhook_url="",
         discord_webhook_message="{player} banned for TK right after connecting",
         whitelist_players=BanTeamKillOnConnectWhiteList(
             has_flag=["✅"], is_vip=True, has_at_least_n_sessions=10
@@ -56,7 +55,7 @@ def test_ban_excluded_weapon(*args):
         },
     ]
 
-    with mock.patch("rcon.game_logs.RecordedRcon") as rcon, mock.patch(
+    with mock.patch("rcon.game_logs.Rcon") as rcon, mock.patch(
         "rcon.game_logs.get_recent_logs", return_value={"logs": logs}
     ) as get:
         rcon.get_vips_ids = mock.MagicMock(return_value=[])
@@ -65,23 +64,6 @@ def test_ban_excluded_weapon(*args):
 
 
 @mock.patch("rcon.game_logs.get_player_profile", autospec=True, return_value=None)
-@mock.patch(
-    "rcon.game_logs.get_config",
-    return_value=BanTeamKillOnConnectUserConfig(
-        enabled=True,
-        message="Vous avez été banni automatiquement car votre premiere action apres connection est un TEAM KILL.\nSi c'etait un accident demandez votre déban sur: https://discord.io/HLLFR (Via un navigateur, pas directement dans discord)\n\nYou've been banned automatically for TEAM KILLING. Cheers",
-        author_name="HATERS GONNA HATE",
-        excluded_weapons=["None"],
-        max_time_after_connect_minutes=5,
-        ignore_tk_after_n_kills=1,
-        ignore_tk_after_n_deaths=2,
-        discord_webhook_url="",
-        discord_webhook_message="{player} banned for TK right after connecting",
-        whitelist_players=BanTeamKillOnConnectWhiteList(
-            has_flag=["✅"], is_vip=True, has_at_least_n_sessions=10
-        ),
-    ),
-)
 def test_ban_success(*args):
     tk_log = {
         "version": 1,
@@ -114,18 +96,7 @@ def test_ban_success(*args):
         },
     ]
 
-    with mock.patch("rcon.game_logs.RecordedRcon") as rcon, mock.patch(
-        "rcon.game_logs.get_recent_logs", return_value={"logs": logs}
-    ) as get:
-        rcon.get_vips_ids = mock.MagicMock(return_value=[])
-        auto_ban_if_tks_right_after_connection(rcon, tk_log)
-        rcon.do_perma_ban.assert_called()
-
-
-@mock.patch("rcon.game_logs.get_player_profile", autospec=True, return_value=None)
-@mock.patch(
-    "rcon.game_logs.get_config",
-    return_value=BanTeamKillOnConnectUserConfig(
+    config = BanTeamKillOnConnectUserConfig(
         enabled=True,
         message="Vous avez été banni automatiquement car votre premiere action apres connection est un TEAM KILL.\nSi c'etait un accident demandez votre déban sur: https://discord.io/HLLFR (Via un navigateur, pas directement dans discord)\n\nYou've been banned automatically for TEAM KILLING. Cheers",
         author_name="HATERS GONNA HATE",
@@ -133,13 +104,20 @@ def test_ban_success(*args):
         max_time_after_connect_minutes=5,
         ignore_tk_after_n_kills=1,
         ignore_tk_after_n_deaths=2,
-        discord_webhook_url="",
         discord_webhook_message="{player} banned for TK right after connecting",
         whitelist_players=BanTeamKillOnConnectWhiteList(
             has_flag=["✅"], is_vip=True, has_at_least_n_sessions=10
         ),
-    ),
-)
+    )
+    with mock.patch("rcon.game_logs.Rcon") as rcon, mock.patch(
+        "rcon.game_logs.get_recent_logs", return_value={"logs": logs}
+    ) as get:
+        rcon.get_vips_ids = mock.MagicMock(return_value=[])
+        auto_ban_if_tks_right_after_connection(rcon, tk_log, config)
+        rcon.do_perma_ban.assert_called()
+
+
+@mock.patch("rcon.game_logs.get_player_profile", autospec=True, return_value=None)
 def test_ban_ignored_kill(*args):
     tk_log = {
         "version": 1,
@@ -183,19 +161,7 @@ def test_ban_ignored_kill(*args):
             "server": "1",
         },
     ]
-
-    with mock.patch("rcon.game_logs.RecordedRcon") as rcon, mock.patch(
-        "rcon.game_logs.get_recent_logs", return_value={"logs": logs}
-    ) as get:
-        rcon.get_vips_ids = mock.MagicMock(return_value=[])
-        auto_ban_if_tks_right_after_connection(rcon, tk_log)
-        rcon.do_perma_ban.assert_not_called()
-
-
-@mock.patch("rcon.game_logs.get_player_profile", autospec=True, return_value=None)
-@mock.patch(
-    "rcon.game_logs.get_config",
-    return_value=BanTeamKillOnConnectUserConfig(
+    config = BanTeamKillOnConnectUserConfig(
         enabled=True,
         message="Vous avez été banni automatiquement car votre premiere action apres connection est un TEAM KILL.\nSi c'etait un accident demandez votre déban sur: https://discord.io/HLLFR (Via un navigateur, pas directement dans discord)\n\nYou've been banned automatically for TEAM KILLING. Cheers",
         author_name="HATERS GONNA HATE",
@@ -203,13 +169,20 @@ def test_ban_ignored_kill(*args):
         max_time_after_connect_minutes=5,
         ignore_tk_after_n_kills=1,
         ignore_tk_after_n_deaths=2,
-        discord_webhook_url="",
         discord_webhook_message="{player} banned for TK right after connecting",
         whitelist_players=BanTeamKillOnConnectWhiteList(
             has_flag=["✅"], is_vip=True, has_at_least_n_sessions=10
         ),
-    ),
-)
+    )
+    with mock.patch("rcon.game_logs.Rcon") as rcon, mock.patch(
+        "rcon.game_logs.get_recent_logs", return_value={"logs": logs}
+    ) as get:
+        rcon.get_vips_ids = mock.MagicMock(return_value=[])
+        auto_ban_if_tks_right_after_connection(rcon, tk_log, config)
+        rcon.do_perma_ban.assert_not_called()
+
+
+@mock.patch("rcon.game_logs.get_player_profile", autospec=True, return_value=None)
 def test_ban_count_one_death(*args):
     tk_log = {
         "version": 1,
@@ -254,18 +227,7 @@ def test_ban_count_one_death(*args):
         },
     ]
 
-    with mock.patch("rcon.game_logs.RecordedRcon") as rcon, mock.patch(
-        "rcon.game_logs.get_recent_logs", return_value={"logs": logs}
-    ) as get:
-        rcon.get_vips_ids = mock.MagicMock(return_value=[])
-        auto_ban_if_tks_right_after_connection(rcon, tk_log)
-        rcon.do_perma_ban.assert_called()
-
-
-@mock.patch("rcon.game_logs.get_player_profile", autospec=True, return_value=None)
-@mock.patch(
-    "rcon.game_logs.get_config",
-    return_value=BanTeamKillOnConnectUserConfig(
+    config = BanTeamKillOnConnectUserConfig(
         enabled=True,
         message="Vous avez été banni automatiquement car votre premiere action apres connection est un TEAM KILL.\nSi c'etait un accident demandez votre déban sur: https://discord.io/HLLFR (Via un navigateur, pas directement dans discord)\n\nYou've been banned automatically for TEAM KILLING. Cheers",
         author_name="HATERS GONNA HATE",
@@ -273,13 +235,21 @@ def test_ban_count_one_death(*args):
         max_time_after_connect_minutes=5,
         ignore_tk_after_n_kills=1,
         ignore_tk_after_n_deaths=2,
-        discord_webhook_url="",
         discord_webhook_message="{player} banned for TK right after connecting",
         whitelist_players=BanTeamKillOnConnectWhiteList(
             has_flag=["✅"], is_vip=True, has_at_least_n_sessions=10
         ),
-    ),
-)
+    )
+
+    with mock.patch("rcon.game_logs.Rcon") as rcon, mock.patch(
+        "rcon.game_logs.get_recent_logs", return_value={"logs": logs}
+    ) as get:
+        rcon.get_vips_ids = mock.MagicMock(return_value=[])
+        auto_ban_if_tks_right_after_connection(rcon, tk_log, config)
+        rcon.do_perma_ban.assert_called()
+
+
+@mock.patch("rcon.game_logs.get_player_profile", autospec=True, return_value=None)
 def test_ban_ignored_2_death(*args):
     tk_log = {
         "version": 1,
@@ -336,9 +306,23 @@ def test_ban_ignored_2_death(*args):
         },
     ]
 
-    with mock.patch("rcon.game_logs.RecordedRcon") as rcon, mock.patch(
+    config = BanTeamKillOnConnectUserConfig(
+        enabled=True,
+        message="Vous avez été banni automatiquement car votre premiere action apres connection est un TEAM KILL.\nSi c'etait un accident demandez votre déban sur: https://discord.io/HLLFR (Via un navigateur, pas directement dans discord)\n\nYou've been banned automatically for TEAM KILLING. Cheers",
+        author_name="HATERS GONNA HATE",
+        excluded_weapons=["None"],
+        max_time_after_connect_minutes=5,
+        ignore_tk_after_n_kills=1,
+        ignore_tk_after_n_deaths=2,
+        discord_webhook_message="{player} banned for TK right after connecting",
+        whitelist_players=BanTeamKillOnConnectWhiteList(
+            has_flag=["✅"], is_vip=True, has_at_least_n_sessions=10
+        ),
+    )
+
+    with mock.patch("rcon.game_logs.Rcon") as rcon, mock.patch(
         "rcon.game_logs.get_recent_logs", return_value={"logs": logs}
     ) as get:
         rcon.get_vips_ids = mock.MagicMock(return_value=[])
-        auto_ban_if_tks_right_after_connection(rcon, tk_log)
+        auto_ban_if_tks_right_after_connection(rcon, tk_log, config)
         rcon.do_perma_ban.assert_not_called()

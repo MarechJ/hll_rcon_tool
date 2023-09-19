@@ -75,6 +75,5 @@ def test_team_count_with_commander(team_view):
     assert get_team_count(team_view, "allies") == 3
 
 
-
 def test_team_count_without_commander(team_view):
     assert get_team_count(team_view, "axis") == 1

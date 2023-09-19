@@ -8,7 +8,6 @@ from pytest import fixture
 from rcon.automods.automod import get_punitions_to_apply
 from rcon.automods.models import (
     ASquad,
-    NoLeaderConfig,
     PunishDetails,
     PunishPlayer,
     PunishStepState,
@@ -583,12 +582,8 @@ def construct_aplayer(
 
 
 def test_should_not_note(team_view):
-    mod = NoLeaderAutomod(
-        NoLeaderConfig(
-            number_of_notes=0,
-        ),
-        None,
-    )
+    config = AutoModNoLeaderUserConfig(number_of_notes=0)
+    mod = NoLeaderAutomod(config, None)
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
     aplayer = construct_aplayer(player)
@@ -663,7 +658,9 @@ def test_should_warn_twice(team_view):
 
 
 def test_should_warn_infinite(team_view):
-    config = AutoModNoLeaderUserConfig(number_of_warnings=1, warning_interval_seconds=0)
+    config = AutoModNoLeaderUserConfig(
+        number_of_warnings=-1, warning_interval_seconds=0
+    )
     mod = NoLeaderAutomod(config, None)
     watch_status = WatchStatus()
     player = team_view["allies"]["squads"]["able"]["players"][0]
@@ -1178,7 +1175,7 @@ def test_watcher(team_view):
             details=PunishDetails(
                 author="NoLeaderWatch-DryRun",
                 message="",
-                discord_audit_url="",
+                discord_audit_url=None,
                 dry_run=True,
             ),
         ),
@@ -1192,7 +1189,7 @@ def test_watcher(team_view):
             details=PunishDetails(
                 author="NoLeaderWatch-DryRun",
                 message="",
-                discord_audit_url="",
+                discord_audit_url=None,
                 dry_run=True,
             ),
         ),
@@ -1206,7 +1203,7 @@ def test_watcher(team_view):
             details=PunishDetails(
                 author="NoLeaderWatch-DryRun",
                 message="",
-                discord_audit_url="",
+                discord_audit_url=None,
                 dry_run=True,
             ),
         ),
@@ -1220,7 +1217,7 @@ def test_watcher(team_view):
             details=PunishDetails(
                 author="NoLeaderWatch-DryRun",
                 message="",
-                discord_audit_url="",
+                discord_audit_url=None,
                 dry_run=True,
             ),
         ),
@@ -1234,7 +1231,7 @@ def test_watcher(team_view):
             details=PunishDetails(
                 author="NoLeaderWatch-DryRun",
                 message="",
-                discord_audit_url="",
+                discord_audit_url=None,
                 dry_run=True,
             ),
         ),
@@ -1248,7 +1245,7 @@ def test_watcher(team_view):
             details=PunishDetails(
                 author="NoLeaderWatch-DryRun",
                 message="",
-                discord_audit_url="",
+                discord_audit_url=None,
                 dry_run=True,
             ),
         ),
@@ -1262,7 +1259,7 @@ def test_watcher(team_view):
             details=PunishDetails(
                 author="NoLeaderWatch-DryRun",
                 message="",
-                discord_audit_url="",
+                discord_audit_url=None,
                 dry_run=True,
             ),
         ),
@@ -1276,7 +1273,7 @@ def test_watcher(team_view):
             details=PunishDetails(
                 author="NoLeaderWatch-DryRun",
                 message="",
-                discord_audit_url="",
+                discord_audit_url=None,
                 dry_run=True,
             ),
         ),
@@ -1290,7 +1287,7 @@ def test_watcher(team_view):
             details=PunishDetails(
                 author="NoLeaderWatch-DryRun",
                 message="",
-                discord_audit_url="",
+                discord_audit_url=None,
                 dry_run=True,
             ),
         ),
@@ -1304,7 +1301,7 @@ def test_watcher(team_view):
             details=PunishDetails(
                 author="NoLeaderWatch-DryRun",
                 message="",
-                discord_audit_url="",
+                discord_audit_url=None,
                 dry_run=True,
             ),
         ),
@@ -1318,7 +1315,7 @@ def test_watcher(team_view):
             details=PunishDetails(
                 author="NoLeaderWatch-DryRun",
                 message="",
-                discord_audit_url="",
+                discord_audit_url=None,
                 dry_run=True,
             ),
         ),
@@ -1332,7 +1329,7 @@ def test_watcher(team_view):
             details=PunishDetails(
                 author="NoLeaderWatch-DryRun",
                 message="",
-                discord_audit_url="",
+                discord_audit_url=None,
                 dry_run=True,
             ),
         ),
@@ -1346,7 +1343,7 @@ def test_watcher(team_view):
             details=PunishDetails(
                 author="NoLeaderWatch-DryRun",
                 message="",
-                discord_audit_url="",
+                discord_audit_url=None,
                 dry_run=True,
             ),
         ),
@@ -1560,7 +1557,7 @@ def test_watcher_no_kick(team_view):
             details=PunishDetails(
                 author="NoLeaderWatch-DryRun",
                 message="",
-                discord_audit_url="",
+                discord_audit_url=None,
                 dry_run=True,
             ),
         ),
@@ -1574,7 +1571,7 @@ def test_watcher_no_kick(team_view):
             details=PunishDetails(
                 author="NoLeaderWatch-DryRun",
                 message="",
-                discord_audit_url="",
+                discord_audit_url=None,
                 dry_run=True,
             ),
         ),
@@ -1588,7 +1585,7 @@ def test_watcher_no_kick(team_view):
             details=PunishDetails(
                 author="NoLeaderWatch-DryRun",
                 message="",
-                discord_audit_url="",
+                discord_audit_url=None,
                 dry_run=True,
             ),
         ),
@@ -1602,7 +1599,7 @@ def test_watcher_no_kick(team_view):
             details=PunishDetails(
                 author="NoLeaderWatch-DryRun",
                 message="",
-                discord_audit_url="",
+                discord_audit_url=None,
                 dry_run=True,
             ),
         ),
@@ -1616,7 +1613,7 @@ def test_watcher_no_kick(team_view):
             details=PunishDetails(
                 author="NoLeaderWatch-DryRun",
                 message="",
-                discord_audit_url="",
+                discord_audit_url=None,
                 dry_run=True,
             ),
         ),
@@ -1630,7 +1627,7 @@ def test_watcher_no_kick(team_view):
             details=PunishDetails(
                 author="NoLeaderWatch-DryRun",
                 message="",
-                discord_audit_url="",
+                discord_audit_url=None,
                 dry_run=True,
             ),
         ),
@@ -1644,7 +1641,7 @@ def test_watcher_no_kick(team_view):
             details=PunishDetails(
                 author="NoLeaderWatch-DryRun",
                 message="",
-                discord_audit_url="",
+                discord_audit_url=None,
                 dry_run=True,
             ),
         ),
@@ -1658,7 +1655,7 @@ def test_watcher_no_kick(team_view):
             details=PunishDetails(
                 author="NoLeaderWatch-DryRun",
                 message="",
-                discord_audit_url="",
+                discord_audit_url=None,
                 dry_run=True,
             ),
         ),
@@ -1672,7 +1669,7 @@ def test_watcher_no_kick(team_view):
             details=PunishDetails(
                 author="NoLeaderWatch-DryRun",
                 message="",
-                discord_audit_url="",
+                discord_audit_url=None,
                 dry_run=True,
             ),
         ),
@@ -1686,7 +1683,7 @@ def test_watcher_no_kick(team_view):
             details=PunishDetails(
                 author="NoLeaderWatch-DryRun",
                 message="",
-                discord_audit_url="",
+                discord_audit_url=None,
                 dry_run=True,
             ),
         ),
@@ -1700,7 +1697,7 @@ def test_watcher_no_kick(team_view):
             details=PunishDetails(
                 author="NoLeaderWatch-DryRun",
                 message="",
-                discord_audit_url="",
+                discord_audit_url=None,
                 dry_run=True,
             ),
         ),
@@ -1714,7 +1711,7 @@ def test_watcher_no_kick(team_view):
             details=PunishDetails(
                 author="NoLeaderWatch-DryRun",
                 message="",
-                discord_audit_url="",
+                discord_audit_url=None,
                 dry_run=True,
             ),
         ),
@@ -1728,7 +1725,7 @@ def test_watcher_no_kick(team_view):
             details=PunishDetails(
                 author="NoLeaderWatch-DryRun",
                 message="",
-                discord_audit_url="",
+                discord_audit_url=None,
                 dry_run=True,
             ),
         ),
@@ -1742,7 +1739,7 @@ def test_watcher_no_kick(team_view):
             details=PunishDetails(
                 author="NoLeaderWatch-DryRun",
                 message="",
-                discord_audit_url="",
+                discord_audit_url=None,
                 dry_run=True,
             ),
         ),
@@ -1822,7 +1819,7 @@ def test_watcher_resets(team_view):
             details=PunishDetails(
                 author="NoLeaderWatch-DryRun",
                 message="",
-                discord_audit_url="",
+                discord_audit_url=None,
                 dry_run=True,
             ),
         ),
@@ -1836,7 +1833,7 @@ def test_watcher_resets(team_view):
             details=PunishDetails(
                 author="NoLeaderWatch-DryRun",
                 message="",
-                discord_audit_url="",
+                discord_audit_url=None,
                 dry_run=True,
             ),
         ),
@@ -1850,7 +1847,7 @@ def test_watcher_resets(team_view):
             details=PunishDetails(
                 author="NoLeaderWatch-DryRun",
                 message="",
-                discord_audit_url="",
+                discord_audit_url=None,
                 dry_run=True,
             ),
         ),
@@ -1864,7 +1861,7 @@ def test_watcher_resets(team_view):
             details=PunishDetails(
                 author="NoLeaderWatch-DryRun",
                 message="",
-                discord_audit_url="",
+                discord_audit_url=None,
                 dry_run=True,
             ),
         ),
@@ -1878,7 +1875,7 @@ def test_watcher_resets(team_view):
             details=PunishDetails(
                 author="NoLeaderWatch-DryRun",
                 message="",
-                discord_audit_url="",
+                discord_audit_url=None,
                 dry_run=True,
             ),
         ),
@@ -1892,7 +1889,7 @@ def test_watcher_resets(team_view):
             details=PunishDetails(
                 author="NoLeaderWatch-DryRun",
                 message="",
-                discord_audit_url="",
+                discord_audit_url=None,
                 dry_run=True,
             ),
         ),
@@ -1906,7 +1903,7 @@ def test_watcher_resets(team_view):
             details=PunishDetails(
                 author="NoLeaderWatch-DryRun",
                 message="",
-                discord_audit_url="",
+                discord_audit_url=None,
                 dry_run=True,
             ),
         ),
@@ -1920,7 +1917,7 @@ def test_watcher_resets(team_view):
             details=PunishDetails(
                 author="NoLeaderWatch-DryRun",
                 message="",
-                discord_audit_url="",
+                discord_audit_url=None,
                 dry_run=True,
             ),
         ),
@@ -1934,7 +1931,7 @@ def test_watcher_resets(team_view):
             details=PunishDetails(
                 author="NoLeaderWatch-DryRun",
                 message="",
-                discord_audit_url="",
+                discord_audit_url=None,
                 dry_run=True,
             ),
         ),
@@ -1948,7 +1945,7 @@ def test_watcher_resets(team_view):
             details=PunishDetails(
                 author="NoLeaderWatch-DryRun",
                 message="",
-                discord_audit_url="",
+                discord_audit_url=None,
                 dry_run=True,
             ),
         ),
@@ -1962,7 +1959,7 @@ def test_watcher_resets(team_view):
             details=PunishDetails(
                 author="NoLeaderWatch-DryRun",
                 message="",
-                discord_audit_url="",
+                discord_audit_url=None,
                 dry_run=True,
             ),
         ),
@@ -1976,7 +1973,7 @@ def test_watcher_resets(team_view):
             details=PunishDetails(
                 author="NoLeaderWatch-DryRun",
                 message="",
-                discord_audit_url="",
+                discord_audit_url=None,
                 dry_run=True,
             ),
         ),
