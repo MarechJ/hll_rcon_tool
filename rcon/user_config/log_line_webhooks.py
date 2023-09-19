@@ -3,18 +3,17 @@ from typing import ClassVar, TypedDict
 from pydantic import BaseModel, Field, field_validator
 
 from rcon.typedefs import ALL_LOG_TYPES
-from rcon.user_config.utils import (
-    BaseUserConfig,
-    InvalidConfigurationError,
-    key_check,
-    set_user_config,
-)
+from rcon.user_config.utils import BaseUserConfig, _listType, key_check, set_user_config
 from rcon.user_config.webhooks import DiscordMentionWebhook, WebhookMentionType
 
 
 class LogLineWebhookType(TypedDict):
     log_type: str
     webhooks: list[WebhookMentionType]
+
+
+class LogLineType(TypedDict):
+    log_types: list[LogLineWebhookType]
 
 
 class LogLineWebhook(BaseModel):
@@ -36,11 +35,10 @@ class LogLineWebhookUserConfig(BaseUserConfig):
     log_types: list[LogLineWebhook] = Field(default_factory=list)
 
     @staticmethod
-    def save_to_db(values, dry_run=False):
+    def save_to_db(values: LogLineType, dry_run=False):
+        key_check(LogLineType.__required_keys__, values.keys())
         raw_hooks: list[LogLineWebhookType] = values.get("log_types")
-        if not isinstance(raw_hooks, list):
-            print(f"{type(values)=}")
-            raise InvalidConfigurationError(f"{values} must be a list")
+        _listType(values=raw_hooks)  # type: ignore
 
         validated_log_lines: list[LogLineWebhook] = []
         for raw_log_line in raw_hooks:

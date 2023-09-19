@@ -8,14 +8,13 @@ from sqlite3 import Connection
 from typing import TypedDict
 from urllib.parse import urljoin
 
-import requests
-from requests.exceptions import ConnectionError, RequestException
-
 import discord
+import requests
 from discord.embeds import Embed
 from discord.errors import HTTPException, NotFound
+from requests.exceptions import ConnectionError, RequestException
+
 from rcon.cache_utils import ttl_cache
-from rcon.config import get_config
 from rcon.user_config.scorebot import ScorebotUserConfig, StatTypes
 
 

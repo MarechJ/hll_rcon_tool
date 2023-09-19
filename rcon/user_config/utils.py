@@ -1,5 +1,5 @@
 import logging
-from typing import ClassVar, Iterable, Self
+from typing import Any, ClassVar, Iterable, Self
 
 import pydantic
 from sqlalchemy.exc import InvalidRequestError
@@ -21,17 +21,50 @@ def key_check(mandatory_keys: frozenset, provided_keys: Iterable[str]):
     missing_keys = mandatory_keys - set(provided_keys)
     extra_keys = set(provided_keys) - mandatory_keys
     if extra_keys:
-        raise InvalidConfigurationError(
-            f"extra keys=({', '.join(extra_keys)}) | Mandatory keys=({', '.join(mandatory_keys)}) | Provided keys=({', '.join(provided_keys)})"
+        raise MissingKeysConfigurationError(
+            missing_keys=set(missing_keys),
+            mandatory_keys=set(mandatory_keys),
+            provided_keys=set(provided_keys),
         )
     if missing_keys:
-        raise InvalidConfigurationError(
-            f"missing keys=({', '.join(missing_keys)}) | Mandatory keys=({', '.join(mandatory_keys)}) | Provided keys=({', '.join(provided_keys)})"
+        raise MissingKeysConfigurationError(
+            missing_keys=set(missing_keys),
+            mandatory_keys=set(mandatory_keys),
+            provided_keys=set(provided_keys),
         )
 
 
-class InvalidConfigurationError(Exception):
-    pass
+class _listType(pydantic.BaseModel):
+    """Used to raise ValidationErrors when not passed a list"""
+
+    values: list[Any]
+
+
+class MissingKeysConfigurationError(Exception):
+    def __init__(
+        self,
+        missing_keys: set[str] = set(),
+        mandatory_keys: set[str] = set(),
+        provided_keys: set[str] = set(),
+        *args: object,
+    ) -> None:
+        super().__init__(*args)
+        self.missing_keys = missing_keys
+        self.mandatory_keys = mandatory_keys
+        self.provided_keys = provided_keys
+
+    def __str__(self) -> str:
+        return self.__repr__()
+
+    def __repr__(self) -> str:
+        return f"missing keys=({', '.join(self.missing_keys)}) | Mandatory keys=({', '.join(self.mandatory_keys)}) | Provided keys=({', '.join(self.provided_keys)})"
+
+    def asdict(self):
+        return {
+            "missing_keys": [k for k in self.missing_keys],
+            "mandatory_keys": [k for k in self.mandatory_keys],
+            "provided_keys": [k for k in self.provided_keys],
+        }
 
 
 class BaseUserConfig(pydantic.BaseModel):

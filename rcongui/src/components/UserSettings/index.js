@@ -83,7 +83,19 @@ const UserSetting = ({
         <Grid item xs={12}>
           <h2>errors</h2>
           {errors.map((ele) => {
-            return (
+            return ele.type === "InvalidConfigurationError" ? (
+              <div>
+                <div>
+                  <b>Missing Keys</b>: {ele.missing_keys.join(", ")}
+                </div>
+                <div>
+                  <b>Mandatory Keys</b>: {ele.mandatory_keys.join(", ")}
+                </div>
+                <div>
+                  <b>Provided Keys</b>: {ele.provided_keys.join(", ")}
+                </div>
+              </div>
+            ) : (
               <div>
                 {Object.keys(ele).map((k) => {
                   return (

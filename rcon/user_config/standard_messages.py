@@ -1,14 +1,8 @@
-from pprint import pprint
 from typing import Any, ClassVar, Iterable, TypedDict
 
 import pydantic
 
-from rcon.user_config.utils import (
-    BaseUserConfig,
-    InvalidConfigurationError,
-    key_check,
-    set_user_config,
-)
+from rcon.user_config.utils import BaseUserConfig, _listType, key_check, set_user_config
 
 
 class StandardMessageType(TypedDict):
@@ -24,11 +18,9 @@ class BaseStandardMessageUserConfig(BaseUserConfig):
 
     @classmethod
     def save_to_db(cls, values, dry_run=False):
-        pprint(values)
         key_check(StandardMessageType.__required_keys__, values.keys())
         messages: list[str] = values.get("messages")
-        if not isinstance(messages, list):
-            raise InvalidConfigurationError(f"{messages} must be a list")
+        _listType(values=messages)  # type: ignore
 
         validated_conf = cls(messages=messages)
 

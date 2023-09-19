@@ -1,3 +1,4 @@
+import json
 from logging import getLogger
 from typing import Any, Type
 
@@ -27,7 +28,7 @@ from rcon.user_config.standard_messages import (
     get_all_message_types,
 )
 from rcon.user_config.steam import SteamUserConfig
-from rcon.user_config.utils import BaseUserConfig, InvalidConfigurationError
+from rcon.user_config.utils import BaseUserConfig, MissingKeysConfigurationError
 from rcon.user_config.vac_game_bans import VacGameBansUserConfig
 from rcon.user_config.webhooks import (
     AdminPingWebhooksUserConfig,
@@ -66,15 +67,26 @@ def _validate_user_config(
             error_msg = e.json()
         else:
             error_msg = str(e)
-
         logger.warning(error_msg)
         return api_response(
             command=command_name, failed=True, error=error_msg, arguments=data
         )
-    except InvalidConfigurationError as e:
-        error_msg = str(e)
+    except MissingKeysConfigurationError as e:
+        if errors_as_json:
+            as_dict = e.asdict()
+            error_msg = json.dumps(
+                [
+                    {
+                        "type": MissingKeysConfigurationError.__name__,
+                        "missing_keys": as_dict["missing_keys"],
+                        "provided_keys": as_dict["provided_keys"],
+                        "mandatory_keys": as_dict["mandatory_keys"],
+                    }
+                ]
+            )
+        else:
+            error_msg = str(e)
         logger.warning(error_msg)
-        # logger.error(e)
         return api_response(
             command=command_name, failed=True, error=error_msg, arguments=data
         )

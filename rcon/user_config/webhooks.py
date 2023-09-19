@@ -3,12 +3,7 @@ from typing import ClassVar, TypedDict
 
 import pydantic
 
-from rcon.user_config.utils import (
-    BaseUserConfig,
-    InvalidConfigurationError,
-    key_check,
-    set_user_config,
-)
+from rcon.user_config.utils import BaseUserConfig, _listType, key_check, set_user_config
 
 DISCORD_USER_ID_PATTERN = re.compile(r"<@\d+>")
 DISCORD_ROLE_ID_PATTERN = re.compile(r"<@&\d+>")
@@ -90,8 +85,7 @@ class BaseMentionWebhookUserConfig(BaseUserConfig):
     @classmethod
     def save_to_db(cls, values: RawWebhookMentionType, dry_run=False) -> None:
         raw_hooks: list[WebhookMentionType] = values.get("hooks")
-        if not isinstance(raw_hooks, list):
-            raise InvalidConfigurationError(f"'hooks' must be a list")
+        _listType(values=raw_hooks)
 
         for obj in raw_hooks:
             key_check(WebhookMentionType.__required_keys__, obj.keys())
@@ -109,8 +103,7 @@ class BaseWebhookUserConfig(BaseUserConfig):
     @classmethod
     def save_to_db(cls, values: RawWebhookType, dry_run=False) -> None:
         raw_hooks: list[WebhookType] = values.get("hooks")
-        if not isinstance(raw_hooks, list):
-            raise InvalidConfigurationError(f"'hooks' must be a list")
+        _listType(values=raw_hooks)
 
         for obj in raw_hooks:
             key_check(WebhookType.__required_keys__, obj.keys())
@@ -148,8 +141,7 @@ class AdminPingWebhooksUserConfig(BaseMentionWebhookUserConfig):
     @staticmethod
     def save_to_db(values: AdminPingWebhookType, dry_run=False) -> None:
         raw_hooks = values.get("hooks")
-        if not isinstance(raw_hooks, list):
-            raise InvalidConfigurationError(f"'hooks' must be a list")
+        _listType(values=raw_hooks)
 
         for obj in raw_hooks:
             key_check(WebhookMentionType.__required_keys__, obj.keys())
@@ -172,8 +164,7 @@ class ChatWebhooksUserConfig(BaseMentionWebhookUserConfig):
     @staticmethod
     def save_to_db(values: ChatWebhookType, dry_run=False) -> None:
         raw_hooks = values.get("hooks")
-        if not isinstance(raw_hooks, list):
-            raise InvalidConfigurationError(f"'hooks' must be a list")
+        _listType(values=raw_hooks)
 
         for obj in raw_hooks:
             key_check(WebhookMentionType.__required_keys__, obj.keys())
@@ -201,8 +192,7 @@ class KillsWebhooksUserConfig(BaseWebhookUserConfig):
     @staticmethod
     def save_to_db(values: KillsWebhookType, dry_run=False) -> None:
         raw_hooks = values.get("hooks")
-        if not isinstance(raw_hooks, list):
-            raise InvalidConfigurationError(f"'hooks' must be a list")
+        _listType(values=raw_hooks)
 
         for obj in raw_hooks:
             key_check(WebhookType.__required_keys__, obj.keys())
