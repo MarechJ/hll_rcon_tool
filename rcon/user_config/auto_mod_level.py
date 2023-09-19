@@ -51,7 +51,7 @@ class AutoModLevelType(TypedDict):
 
 class Role(BaseModel):
     label: str
-    min_players: int = Field(ge=0, le=50)
+    min_players: int = Field(ge=0, le=100)
     min_level: int = Field(ge=0, le=500)
 
 
