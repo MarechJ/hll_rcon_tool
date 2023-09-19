@@ -57,18 +57,18 @@ class AutoModNoLeaderUserConfig(BaseUserConfig):
 
     number_of_warnings: int = Field(ge=-1, default=2)
     warning_message: str = Field(default=WARNING_MESSAGE)
-    warning_interval_seconds: int = Field(ge=1, default=60)
+    warning_interval_seconds: int = Field(ge=0, default=60)
 
     number_of_punishments: int = Field(ge=0, default=2)
     punish_message: str = Field(default=PUNISH_MESSAGE)
-    punish_interval_seconds: int = Field(ge=1, default=40)
-    min_squad_players_for_punish: int = Field(ge=1, default=3)
-    min_server_players_for_punish: int = Field(ge=0, le=50, default=40)
+    punish_interval_seconds: int = Field(ge=0, default=40)
+    min_squad_players_for_punish: int = Field(ge=0, default=3)
+    min_server_players_for_punish: int = Field(ge=0, le=100, default=40)
 
     kick_after_max_punish: bool = Field(default=True)
-    min_squad_players_for_kick: int = Field(ge=1, default=7)
-    min_server_players_for_kick: int = Field(ge=0, le=50, default=6)
-    kick_grace_period_seconds: int = Field(ge=1, default=120)
+    min_squad_players_for_kick: int = Field(ge=0, default=7)
+    min_server_players_for_kick: int = Field(ge=0, le=100, default=6)
+    kick_grace_period_seconds: int = Field(ge=0, default=120)
     kick_message: str = Field(default=KICK_MESSAGE)
 
     immune_roles: list[Roles] = Field(default_factory=list)
