@@ -5,6 +5,7 @@ import traceback
 from functools import wraps
 from subprocess import PIPE, run
 from typing import Callable, List
+from rcon.utils import get_server_number
 
 from django.contrib.auth.decorators import permission_required
 from django.http import HttpResponse, JsonResponse
@@ -682,6 +683,7 @@ def get_connection_info(request):
             "name": ctl.get_name(),
             "port": os.getenv("RCONWEB_PORT"),
             "link": os.getenv("RCONWEB_SERVER_URL"),
+            "server_number": get_server_number(),
         },
         failed=False,
         command="get_connection_info",
