@@ -181,8 +181,13 @@ const LiveScore = ({ classes, endpoint, explainText, title }) => {
     : "N/A";
 
   return (
-    <React.Fragment>
-      <Grid container spacing={2} justify="center" className={classes.padding}>
+    <>
+      <Grid
+        container
+        spacing={2}
+        justify="center"
+        className={classes.gridContainer}
+      >
         <Grid
           item
           xs={12}
@@ -231,7 +236,12 @@ const LiveScore = ({ classes, endpoint, explainText, title }) => {
           ""
         )}
       </Grid>
-      <Grid container spacing={2} justify="center" className={classes.padding}>
+      <Grid
+        container
+        spacing={2}
+        justify="center"
+        className={classes.gridContainer}
+      >
         <Scores
           classes={classes}
           serverState={serverState}
@@ -247,7 +257,7 @@ const LiveScore = ({ classes, endpoint, explainText, title }) => {
           type="live"
         />
       </Grid>
-    </React.Fragment>
+    </>
   );
 };
 
