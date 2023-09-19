@@ -2,7 +2,7 @@ import logging
 from dataclasses import field
 from datetime import datetime
 from enum import Enum, auto
-from typing import List, Mapping, TypedDict
+from typing import List, Mapping, Optional, TypedDict
 
 from pydantic.dataclasses import dataclass
 
@@ -58,7 +58,7 @@ class ActionMethod(Enum):
 class PunishDetails:
     author: str
     message: str = ""
-    discord_audit_url: str = field(repr=False, default=None)
+    discord_audit_url: Optional[str] = field(repr=False, default=None)
     dry_run: bool = False
 
 
