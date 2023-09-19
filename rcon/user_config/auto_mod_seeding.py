@@ -71,22 +71,22 @@ class AutoModSeedingType(TypedDict):
 
 
 class DisallowedRoles(BaseModel):
-    min_players: int = Field(ge=0, le=50, default=5)
-    max_players: int = Field(ge=0, le=50, default=30)
+    min_players: int = Field(ge=0, le=100, default=5)
+    max_players: int = Field(ge=0, le=100, default=30)
     roles: dict[Roles, str] = Field(default_factory=dict)
     violation_message: str = Field(default=DISALLOWED_ROLES_VIOLATION_MESSAGE)
 
 
 class DisallowedWeapons(BaseModel):
-    min_players: int = Field(ge=0, le=50, default=5)
-    max_players: int = Field(ge=0, le=50, default=30)
+    min_players: int = Field(ge=0, le=100, default=5)
+    max_players: int = Field(ge=0, le=100, default=30)
     weapons: dict[str, str] = Field(default_factory=dict)
     violation_message: str = Field(default=DISALLOWED_WEAPONS_VIOLATION_MESSAGE)
 
 
 class EnforceCapFight(BaseModel):
-    min_players: int = Field(ge=0, le=50, default=5)
-    max_players: int = Field(ge=0, le=50, default=30)
+    min_players: int = Field(ge=0, le=100, default=5)
+    max_players: int = Field(ge=0, le=100, default=30)
     max_caps: int = Field(ge=2, le=4, default=3)
     skip_warning: bool = Field(default=False)
     violation_message: str = Field(default=ENFORCE_CAP_FIGHT_VIOLATION_MESSAGE)
