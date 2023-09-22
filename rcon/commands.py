@@ -7,7 +7,7 @@ from functools import wraps
 from typing import List
 
 from rcon.connection import HLLConnection
-from rcon.typedefs import VipId
+from rcon.typedefs import ServerInfoType, VipId
 from rcon.utils import exception_in_chain
 
 logger = logging.getLogger(__name__)
@@ -95,7 +95,9 @@ class ServerCtl:
     set password not implemented on purpose
     """
 
-    def __init__(self, config, auto_retry=1, max_open=20, max_idle=20) -> None:
+    def __init__(
+        self, config: ServerInfoType, auto_retry=1, max_open=20, max_idle=20
+    ) -> None:
         self.maxOpen: int = max_open
         self.maxIdle: int = max_idle
         self.config = config

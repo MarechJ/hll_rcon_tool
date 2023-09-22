@@ -3,6 +3,12 @@ import enum
 from typing import List, Optional, TypedDict
 
 
+class ServerInfoType(TypedDict):
+    host: str | None
+    port: str | None
+    password: str | None
+
+
 # # Have to inherit from str to allow for JSON serialization w/ pydantic
 class Roles(str, enum.Enum):
     commander = "armycommander"
