@@ -31,8 +31,6 @@ post_delete.connect(update_mods, sender=User)
 post_save.connect(update_mods, sender=SteamPlayer)
 post_delete.connect(update_mods, sender=SteamPlayer)
 
-from pprint import pprint
-
 
 @dataclass
 class RconResponse:
