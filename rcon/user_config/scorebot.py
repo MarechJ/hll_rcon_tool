@@ -58,7 +58,7 @@ U_R_STILL_A_MAN = "U'R STILL A MAN\n*shortest life (min.)*"
 
 
 # # Have to inherit from str to allow for JSON serialization w/ pydantic
-class StatTypes(enum.Enum):
+class StatTypes(str, enum.Enum):
     top_killers = "top_killers"
     top_ratio = "top_ratio"
     top_performance = "top_performance"
