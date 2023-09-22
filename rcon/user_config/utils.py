@@ -20,13 +20,7 @@ def all_subclasses(cls):
 def key_check(mandatory_keys: frozenset, provided_keys: Iterable[str]):
     missing_keys = mandatory_keys - set(provided_keys)
     extra_keys = set(provided_keys) - mandatory_keys
-    if extra_keys:
-        raise MissingKeysConfigurationError(
-            missing_keys=set(missing_keys),
-            mandatory_keys=set(mandatory_keys),
-            provided_keys=set(provided_keys),
-        )
-    if missing_keys:
+    if extra_keys or missing_keys:
         raise MissingKeysConfigurationError(
             missing_keys=set(missing_keys),
             mandatory_keys=set(mandatory_keys),
