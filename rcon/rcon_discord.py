@@ -1,5 +1,4 @@
 import logging
-import os
 import re
 from functools import lru_cache
 from typing import List
@@ -7,6 +6,7 @@ from typing import List
 import requests
 from discord import RequestsWebhookAdapter, Webhook
 from discord_webhook import DiscordWebhook
+from pydantic import HttpUrl
 
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.webhooks import (
@@ -83,7 +83,7 @@ def dict_to_discord(d):
 
 
 def send_to_discord_audit(
-    message, by=None, silent=True, webhookurls: list[str | None] | None = None
+    message, by=None, silent=True, webhookurls: list[HttpUrl | None] | None = None
 ):
     config = None
 
@@ -102,7 +102,7 @@ def send_to_discord_audit(
     try:
         dh_webhooks = [
             DiscordWebhook(
-                url=url,
+                url=str(url),
                 content="[{}][**{}**] {}".format(server_config.short_name, by, message),
             )
             for url in webhookurls
