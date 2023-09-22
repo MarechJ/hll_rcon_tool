@@ -1,4 +1,4 @@
-from typing import ClassVar, TypedDict
+from typing import TypedDict
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -30,8 +30,6 @@ class LogLineWebhook(BaseModel):
 
 
 class LogLineWebhookUserConfig(BaseUserConfig):
-    KEY_NAME: ClassVar = "log_line_webhooks_config"
-
     log_types: list[LogLineWebhook] = Field(default_factory=list)
 
     @staticmethod

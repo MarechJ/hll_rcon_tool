@@ -1,4 +1,4 @@
-from typing import ClassVar, TypedDict
+from typing import TypedDict
 
 from pydantic import Field
 
@@ -12,8 +12,6 @@ class RealVipConfigType(TypedDict):
 
 
 class RealVipUserConfig(BaseUserConfig):
-    KEY_NAME: ClassVar = "real_vip_config"
-
     enabled: bool = Field(default=False)
     desired_total_number_vips: int = Field(ge=0, default=5)
     minimum_number_vip_slots: int = Field(ge=0, default=1)

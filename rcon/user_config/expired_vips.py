@@ -1,4 +1,4 @@
-from typing import ClassVar, Optional, TypedDict
+from typing import Optional, TypedDict
 
 from pydantic import Field, HttpUrl, field_serializer
 
@@ -12,8 +12,6 @@ class ExpiredVipsType(TypedDict):
 
 
 class ExpiredVipsUserConfig(BaseUserConfig):
-    KEY_NAME: ClassVar = "expired_vips_config"
-
     enabled: bool = Field(default=True)
     interval_minutes: int = Field(ge=1, default=60)
     discord_webhook_url: Optional[HttpUrl] = Field(default=None)

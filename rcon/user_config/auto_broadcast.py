@@ -53,8 +53,6 @@ class AutoBroadcastUserConfig(BaseUserConfig):
             message: the broadcast message
     """
 
-    KEY_NAME: ClassVar = "auto_broadcasts_config"
-
     enabled: bool = Field(default=False, strict=True)
     randomize: bool = Field(default=False, strict=True)
     messages: list[AutoBroadcastMessage] = Field(default_factory=list)

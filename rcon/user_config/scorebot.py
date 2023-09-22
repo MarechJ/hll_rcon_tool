@@ -1,5 +1,5 @@
 import enum
-from typing import ClassVar, TypedDict
+from typing import TypedDict
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -151,8 +151,6 @@ class ScorebotConfigType(TypedDict):
 
 
 class ScorebotUserConfig(BaseUserConfig):
-    KEY_NAME: ClassVar = "scorebot_config"
-
     all_stats_text: str = Field(default=ALL_STATS)
     author_name_text: str = Field(default=AUTHOR_NAME)
     author_icon_url: str = Field(default=AUTHOR_ICON_URL)

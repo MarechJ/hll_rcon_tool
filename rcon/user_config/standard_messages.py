@@ -1,5 +1,5 @@
 import json
-from typing import Any, ClassVar, TypedDict
+from typing import Any, TypedDict
 
 import pydantic
 
@@ -14,10 +14,6 @@ class BaseStandardMessageUserConfig(BaseUserConfig):
     messages: list[str] = pydantic.Field(default_factory=list)
 
     @classmethod
-    def KEY(cls) -> str:
-        return f"{cls.KEY_NAME}"
-
-    @classmethod
     def save_to_db(cls, values, dry_run=False):
         key_check(StandardMessageType.__required_keys__, values.keys())
         messages: list[str] = values.get("messages")
@@ -30,15 +26,15 @@ class BaseStandardMessageUserConfig(BaseUserConfig):
 
 
 class StandardWelcomeMessagesUserConfig(BaseStandardMessageUserConfig):
-    KEY_NAME: ClassVar = "standard_messages_welcome"
+    pass
 
 
 class StandardBroadcastMessagesUserConfig(BaseStandardMessageUserConfig):
-    KEY_NAME: ClassVar = "standard_messages_broadcasts"
+    pass
 
 
 class StandardPunishmentMessagesUserConfig(BaseStandardMessageUserConfig):
-    KEY_NAME: ClassVar = "standard_messages_punishments"
+    pass
 
 
 def get_all_message_types(

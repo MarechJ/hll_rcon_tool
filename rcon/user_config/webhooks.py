@@ -1,5 +1,5 @@
 import re
-from typing import ClassVar, TypedDict
+from typing import TypedDict
 
 import pydantic
 
@@ -116,15 +116,15 @@ class BaseWebhookUserConfig(BaseUserConfig):
 
 
 class WatchlistWebhooksUserConfig(BaseMentionWebhookUserConfig):
-    KEY_NAME: ClassVar = "watchlist_webhooks_config"
+    pass
 
 
 class CameraWebhooksUserConfig(BaseMentionWebhookUserConfig):
-    KEY_NAME: ClassVar = "camera_webhooks_config"
+    pass
 
 
 class AdminPingWebhooksUserConfig(BaseMentionWebhookUserConfig):
-    KEY_NAME: ClassVar = "admin_pings_webhooks_config"
+    pass
 
     trigger_words: list[str] = pydantic.Field(default_factory=list)
 
@@ -157,8 +157,6 @@ class AdminPingWebhooksUserConfig(BaseMentionWebhookUserConfig):
 
 
 class ChatWebhooksUserConfig(BaseMentionWebhookUserConfig):
-    KEY_NAME: ClassVar = "chat_webhooks_config"
-
     allow_mentions: bool = pydantic.Field(default=False)
 
     @staticmethod
@@ -180,12 +178,10 @@ class ChatWebhooksUserConfig(BaseMentionWebhookUserConfig):
 
 
 class AuditWebhooksUserConfig(BaseWebhookUserConfig):
-    KEY_NAME: ClassVar = "audit_webhooks_config"
+    pass
 
 
 class KillsWebhooksUserConfig(BaseWebhookUserConfig):
-    KEY_NAME: ClassVar = "kills_webhooks_config"
-
     send_kills: bool = pydantic.Field(default=False)
     send_team_kills: bool = pydantic.Field(default=True)
 

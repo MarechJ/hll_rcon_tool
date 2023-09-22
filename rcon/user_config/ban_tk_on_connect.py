@@ -1,4 +1,4 @@
-from typing import ClassVar, Optional, TypedDict
+from typing import Optional, TypedDict
 
 from pydantic import BaseModel, Field, HttpUrl, field_serializer
 
@@ -35,8 +35,6 @@ class BanTeamKillOnConnectWhiteList(BaseModel):
 
 
 class BanTeamKillOnConnectUserConfig(BaseUserConfig):
-    KEY_NAME: ClassVar = "ban_tk_on_connect_config"
-
     enabled: bool = Field(default=False)
     message: str = Field(default=MESSAGE)
     author_name: str = Field(default="HATERS GONNA HATE")

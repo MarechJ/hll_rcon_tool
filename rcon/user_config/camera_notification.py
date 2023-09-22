@@ -1,4 +1,4 @@
-from typing import ClassVar, TypedDict
+from typing import TypedDict
 
 from pydantic import Field
 
@@ -11,8 +11,6 @@ class CameraNotificationType(TypedDict):
 
 
 class CameraNotificationUserConfig(BaseUserConfig):
-    KEY_NAME: ClassVar = "camera_notification_config"
-
     broadcast: bool = Field(default=False)
     welcome: bool = Field(default=False)
 

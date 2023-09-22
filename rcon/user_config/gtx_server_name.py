@@ -1,4 +1,4 @@
-from typing import ClassVar, Optional, TypedDict
+from typing import Optional, TypedDict
 
 from pydantic import Field, IPvAnyAddress, field_validator
 
@@ -13,8 +13,6 @@ class ServerNameChangeType(TypedDict):
 
 
 class ServerNameChangeUserConfig(BaseUserConfig):
-    KEY_NAME: ClassVar = "server_name_change_config"
-
     ip: str = Field(default="127.0.0.1")
     port: int = Field(default=0)
     username: Optional[str] = Field(default=None)

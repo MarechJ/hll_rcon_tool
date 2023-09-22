@@ -1,4 +1,4 @@
-from typing import ClassVar, Optional, TypedDict
+from typing import Optional, TypedDict
 
 from pydantic import Field, HttpUrl, field_serializer
 
@@ -44,8 +44,6 @@ class AutoModNoLeaderType(TypedDict):
 
 
 class AutoModNoLeaderUserConfig(BaseUserConfig):
-    KEY_NAME: ClassVar = "auto_mod_level_no_leader_config"
-
     enabled: bool = Field(default=False)
     dry_run: bool = Field(default=True)
     discord_webhook_url: Optional[HttpUrl] = Field(default=None)

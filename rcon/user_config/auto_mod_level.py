@@ -1,4 +1,4 @@
-from typing import ClassVar, Optional, TypedDict
+from typing import Optional, TypedDict
 
 from pydantic import BaseModel, BeforeValidator, Field, HttpUrl, field_serializer
 from pydantic.functional_validators import BeforeValidator
@@ -64,8 +64,6 @@ def validate_level_thresholds(v):
 
 
 class AutoModLevelUserConfig(BaseUserConfig):
-    KEY_NAME: ClassVar = "auto_mod_level_config"
-
     enabled: bool = Field(default=False)
     discord_webhook_url: Optional[HttpUrl] = Field(default=None)
     announcement_enabled: bool = Field(default=True)

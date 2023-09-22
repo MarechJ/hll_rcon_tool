@@ -240,7 +240,7 @@ def set_user_settings(input: click.Path, file_type="yaml", dry_run=True):
         raise ValueError(f"{file_type} must be one of {ALLOWED_TYPES}")
 
     keys_to_exclude = set(
-        [BaseWebhookUserConfig.KEY_NAME, BaseMentionWebhookUserConfig.__name__]
+        [BaseWebhookUserConfig.KEY(), BaseMentionWebhookUserConfig.__name__]
     )
 
     keys_to_models = {
@@ -266,7 +266,7 @@ def set_user_settings(input: click.Path, file_type="yaml", dry_run=True):
             print(f"parsing YAML {input}")
             try:
                 user_settings = yaml.safe_load_all(fp)
-                pprint(dict(user_settings))
+                # pprint(dict(user_settings))
             except yaml.YAMLError as e:
                 logger.error("YAML decoding error:")
                 logger.error(e)
@@ -292,7 +292,7 @@ def set_user_settings(input: click.Path, file_type="yaml", dry_run=True):
 
     if not dry_run:
         for model in parsed_models:
-            rcon.user_config.utils.set_user_config(model.KEY_NAME, model.model_dump())
+            rcon.user_config.utils.set_user_config(model.KEY(), model.model_dump())
 
 
 PREFIXES_TO_EXPOSE = ["get_", "set_", "do_"]

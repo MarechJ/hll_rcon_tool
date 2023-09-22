@@ -1,4 +1,4 @@
-from typing import ClassVar, Optional, TypedDict
+from typing import Optional, TypedDict
 
 from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
 
@@ -8,8 +8,6 @@ class SteamType(TypedDict):
 
 
 class SteamUserConfig(BaseUserConfig):
-    KEY_NAME: ClassVar = "steam_settings_config"
-
     api_key: Optional[str] = None
 
     @staticmethod

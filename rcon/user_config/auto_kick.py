@@ -29,8 +29,6 @@ class AutoVoteKickUserConfig(BaseUserConfig):
             AND or OR for minimum_ingame_mods/minimum_online_mods criteria
     """
 
-    KEY_NAME: ClassVar = "auto_votekick_config"
-
     enabled: bool = Field(default=False, strict=True)
     minimum_ingame_mods: int = Field(ge=0, default=1)
     minimum_online_mods: int = Field(ge=0, default=2)

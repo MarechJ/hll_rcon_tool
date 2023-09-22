@@ -1,4 +1,4 @@
-from typing import ClassVar, Optional, TypedDict
+from typing import Optional, TypedDict
 
 from pydantic import BaseModel, Field, HttpUrl, field_serializer
 
@@ -93,8 +93,6 @@ class EnforceCapFight(BaseModel):
 
 
 class AutoModSeedingUserConfig(BaseUserConfig):
-    KEY_NAME: ClassVar = "auto_mod_seeding_config"
-
     enabled: bool = Field(default=False)
     discord_webhook_url: Optional[HttpUrl] = Field(default=None)
     announcement_enabled: bool = Field(default=False)

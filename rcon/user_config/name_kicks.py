@@ -1,5 +1,5 @@
 import re
-from typing import ClassVar, Optional, TypedDict
+from typing import Optional, TypedDict
 
 from pydantic import Field, HttpUrl, field_serializer, field_validator
 
@@ -16,8 +16,6 @@ class NameKickType(TypedDict):
 
 
 class NameKickUserConfig(BaseUserConfig):
-    KEY_NAME: ClassVar = "name_kicks_config"
-
     regular_expressions: list[str] = Field(default_factory=list)
     kick_reason: str = Field(default=KICK_REASON)
     discord_webhook_url: Optional[HttpUrl] = Field(default=None)

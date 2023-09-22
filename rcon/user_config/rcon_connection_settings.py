@@ -1,4 +1,4 @@
-from typing import ClassVar, TypedDict
+from typing import TypedDict
 
 from pydantic import Field
 
@@ -12,8 +12,6 @@ class RconConnectionSettingsType(TypedDict):
 
 
 class RconConnectionSettingsUserConfig(BaseUserConfig):
-    KEY_NAME: ClassVar = "rcon_connection_settings_config"
-
     # TODO: max open and threadpool seem redundant
     thread_pool_size: int = Field(ge=1, le=100, default=20)
     max_open: int = Field(ge=1, le=100, default=20)

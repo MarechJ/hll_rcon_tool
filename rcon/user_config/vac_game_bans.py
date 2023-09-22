@@ -1,4 +1,4 @@
-from typing import ClassVar, TypedDict
+from typing import TypedDict
 
 from pydantic import Field
 
@@ -15,8 +15,6 @@ class VacGameBansType(TypedDict):
 
 
 class VacGameBansUserConfig(BaseUserConfig):
-    KEY_NAME: ClassVar = "vac_game_bans_config"
-
     vac_history_days: int = Field(ge=0, default=0)
     game_ban_threshhold: int = Field(ge=0, default=0)
     ban_on_vac_history_reason: str = Field(default=BAN_ON_VAC_HISTORY_REASON)

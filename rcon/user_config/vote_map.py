@@ -1,5 +1,5 @@
 import enum
-from typing import ClassVar, TypedDict
+from typing import TypedDict
 
 from pydantic import Field
 
@@ -56,8 +56,6 @@ To see this message again type !votemap help"""
 
 
 class VoteMapUserConfig(BaseUserConfig):
-    KEY_NAME: ClassVar = "vote_map_config"
-
     enabled: bool = Field(default=False)
     default_method: DefaultMethods = Field(
         default=DefaultMethods.least_played_suggestions

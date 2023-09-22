@@ -1,4 +1,4 @@
-from typing import ClassVar, Optional, TypedDict
+from typing import Optional, TypedDict
 
 from pydantic import Field, HttpUrl, field_serializer
 
@@ -20,8 +20,6 @@ class RconServerSettingsType(TypedDict):
 
 
 class RconServerSettingsUserConfig(BaseUserConfig):
-    KEY_NAME: ClassVar = "rcon_server_settings_config"
-
     short_name: str = Field(default=f"MyServer{get_server_number()}")
     server_url: Optional[HttpUrl] = Field(default=None)
 
