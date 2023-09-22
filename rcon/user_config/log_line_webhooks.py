@@ -1,14 +1,14 @@
 from typing import TypedDict
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
 
-from rcon.typedefs import ALL_LOG_TYPES
+from rcon.typedefs import AllLogTypes
 from rcon.user_config.utils import BaseUserConfig, _listType, key_check, set_user_config
 from rcon.user_config.webhooks import DiscordMentionWebhook, WebhookMentionType
 
 
 class LogLineWebhookType(TypedDict):
-    log_type: str
+    log_type: AllLogTypes
     webhooks: list[WebhookMentionType]
 
 
@@ -17,16 +17,8 @@ class LogLineType(TypedDict):
 
 
 class LogLineWebhook(BaseModel):
-    log_type: str
+    log_type: AllLogTypes
     webhooks: list[DiscordMentionWebhook] = Field(default_factory=list)
-
-    @field_validator("log_type")
-    @classmethod
-    def validate_log_type(cls, v):
-        if v not in ALL_LOG_TYPES:
-            raise ValueError(f"{v} not one of {ALL_LOG_TYPES}")
-
-        return v
 
 
 class LogLineWebhookUserConfig(BaseUserConfig):

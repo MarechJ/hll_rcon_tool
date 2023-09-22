@@ -186,7 +186,7 @@ def load_generic_hooks():
         func.__name__ = send_log_line_webhook_message.__name__
         func.__module__ = __name__
 
-        on_generic(conf.log_type, func)
+        on_generic(conf.log_type.value, func)
 
 
 MAX_FAILS = 10

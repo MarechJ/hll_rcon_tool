@@ -360,32 +360,31 @@ class VipId(TypedDict):
     name: str
 
 
-ALL_LOG_TYPES = (
-    "ADMIN BANNED",
-    "ADMIN KICKED",
-    "CAMERA",
-    "CHAT",
-    "CHAT[Allies]",
-    "CHAT[Allies][Team]",
-    "CHAT[Allies][Unit]",
-    "CHAT[Axis]",
-    "CHAT[Axis][Team]",
-    "CHAT[Axis][Unit]",
-    "CONNECTED",
-    "DISCONNECTED",
-    "KILL",
-    "MATCH",
-    "MATCH START",
-    "MATCH ENDED",
-    "TEAM KILL",
-    "TEAMSWITCH",
+class AllLogTypes(enum.Enum):
+    admin_banned = "ADMIN BANNED"
+    admin_kicked = "ADMIN KICKED"
+    camera = "CAMERA"
+    chat = "CHAT"
+    allies_chat = "CHAT[Allies]"
+    allies_team_chat = "CHAT[Allies][Team]"
+    allies_unit_chat = "CHAT[Allies][Unit]"
+    cxis_chat = "CHAT[Axis]"
+    axis_team_chat = "CHAT[Axis][Team]"
+    axis_unit_chat = "CHAT[Axis][Unit]"
+    connected = "CONNECTED"
+    disconnected = "DISCONNECTED"
+    kill = "KILL"
+    match = "MATCH"
+    match_start = "MATCH START"
+    match_end = "MATCH ENDED"
+    team_kill = ("TEAM KILL",)
+    team_switch = ("TEAMSWITCH",)
     # Automatic kicks for team kills
-    "TK",
-    "TK AUTO",
-    "TK AUTO BANNED",
-    "TK AUTO KICKED",
+    # tk= "TK",
+    tk_auto = ("TK AUTO",)
+    tk_auto_banned = ("TK AUTO BANNED",)
+    tk_auto_kicked = ("TK AUTO KICKED",)
     # Vote kicks
-    "VOTE",
-    "VOTE STARTED",
-    "VOTE COMPLETED",
-)
+    vote = ("VOTE",)
+    vote_started = ("VOTE STARTED",)
+    vote_completed = ("VOTE COMPLETED",)
