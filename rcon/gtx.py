@@ -9,7 +9,7 @@ from ftpretty import ftpretty
 
 from rcon.cache_utils import invalidates
 from rcon.rcon_ import Rcon, invalidates
-from rcon.user_config.gtx_server_name import ServerNameChangeUserConfig
+from rcon.user_config.gtx_server_name import GtxServerNameChangeUserConfig
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +61,7 @@ class GTXFtp:
 
     @classmethod
     def from_config(cls):
-        config = ServerNameChangeUserConfig.load_from_db()
+        config = GtxServerNameChangeUserConfig.load_from_db()
         return cls(
             ip=config.ip,
             port=config.port,

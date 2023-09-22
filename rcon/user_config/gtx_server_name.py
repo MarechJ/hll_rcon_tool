@@ -5,14 +5,14 @@ from pydantic import Field, IPvAnyAddress, field_validator
 from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
 
 
-class ServerNameChangeType(TypedDict):
+class GtxServerNameChangeType(TypedDict):
     ip: str
     port: int
     username: str
     password: str
 
 
-class ServerNameChangeUserConfig(BaseUserConfig):
+class GtxServerNameChangeUserConfig(BaseUserConfig):
     ip: str = Field(default="127.0.0.1")
     port: int = Field(default=0)
     username: Optional[str] = Field(default=None)
@@ -27,10 +27,10 @@ class ServerNameChangeUserConfig(BaseUserConfig):
         return v
 
     @staticmethod
-    def save_to_db(values: ServerNameChangeType, dry_run=False):
-        key_check(ServerNameChangeType.__required_keys__, values.keys())
+    def save_to_db(values: GtxServerNameChangeType, dry_run=False):
+        key_check(GtxServerNameChangeType.__required_keys__, values.keys())
 
-        validated_conf = ServerNameChangeUserConfig(
+        validated_conf = GtxServerNameChangeUserConfig(
             ip=values.get("ip"),
             port=values.get("port"),
             username=values.get("username"),
@@ -39,5 +39,5 @@ class ServerNameChangeUserConfig(BaseUserConfig):
 
         if not dry_run:
             set_user_config(
-                ServerNameChangeUserConfig.KEY(), validated_conf.model_dump()
+                GtxServerNameChangeUserConfig.KEY(), validated_conf.model_dump()
             )
