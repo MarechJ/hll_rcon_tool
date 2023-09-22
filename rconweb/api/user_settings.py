@@ -73,17 +73,7 @@ def _validate_user_config(
         )
     except MissingKeysConfigurationError as e:
         if errors_as_json:
-            as_dict = e.asdict()
-            error_msg = json.dumps(
-                [
-                    {
-                        "type": MissingKeysConfigurationError.__name__,
-                        "missing_keys": as_dict["missing_keys"],
-                        "provided_keys": as_dict["provided_keys"],
-                        "mandatory_keys": as_dict["mandatory_keys"],
-                    }
-                ]
-            )
+            error_msg = json.dumps([e.asdict()])
         else:
             error_msg = str(e)
         logger.warning(error_msg)

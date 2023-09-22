@@ -57,6 +57,7 @@ class MissingKeysConfigurationError(Exception):
 
     def asdict(self):
         return {
+            "type": MissingKeysConfigurationError.__name__,
             "missing_keys": [k for k in self.missing_keys],
             "mandatory_keys": [k for k in self.mandatory_keys],
             "provided_keys": [k for k in self.provided_keys],
