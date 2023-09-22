@@ -1,6 +1,6 @@
 from typing import Optional, TypedDict
 
-from pydantic import Field, HttpUrl, field_serializer
+from pydantic import Field, HttpUrl, field_serializer, field_validator
 
 from rcon.typedefs import Roles
 from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
@@ -79,13 +79,18 @@ class AutoModNoLeaderUserConfig(BaseUserConfig):
         else:
             return None
 
+    @field_validator("immune_roles")
+    @classmethod
+    def validate_roles(cls, vs):
+        validated_immune_roles: list[Roles] = []
+        for raw_role in vs:
+            validated_immune_roles.append(Roles(raw_role))
+
+        return validated_immune_roles
+
     @staticmethod
     def save_to_db(values: AutoModNoLeaderType, dry_run=False):
         key_check(AutoModNoLeaderType.__required_keys__, values.keys())
-
-        validated_immune_roles: list[Roles] = []
-        for raw_role in values.get("immune_roles"):
-            validated_immune_roles.append(Roles(raw_role))
 
         validated_conf = AutoModNoLeaderUserConfig(
             enabled=values.get("enabled"),
@@ -107,7 +112,7 @@ class AutoModNoLeaderUserConfig(BaseUserConfig):
             min_server_players_for_kick=values.get("min_server_players_for_kick"),
             kick_grace_period_seconds=values.get("kick_grace_period_seconds"),
             kick_message=values.get("kick_message"),
-            immune_roles=validated_immune_roles,
+            immune_roles=values.get("immune_roles"),
             immune_player_level=values.get("immune_player_level"),
         )
 

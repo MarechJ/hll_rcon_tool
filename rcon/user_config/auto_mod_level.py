@@ -34,7 +34,7 @@ class AutoModLevelType(TypedDict):
     max_level: int
     max_level_message: str
     violation_message: str
-    level_thresholds: dict[str, RoleType]
+    level_thresholds: dict[Roles, "Role"]
 
     number_of_warnings: int
     warning_message: str
@@ -55,12 +55,20 @@ class Role(BaseModel):
     min_level: int = Field(ge=0, le=500)
 
 
-def validate_level_thresholds(v):
+def validate_level_thresholds(vs):
     """Required to prevent validation errors for empty values"""
-    if not v or v == []:
+    if not vs or vs == []:
         return dict()
 
-    return v
+    validated_level_threshholds: dict[Roles, Role] = {}
+    for raw_role, obj in vs.items():
+        validated_level_threshholds[Roles(raw_role)] = Role(
+            label=obj.get("label"),
+            min_players=obj.get("min_players"),
+            min_level=obj.get("min_level"),
+        )
+
+    return validated_level_threshholds
 
 
 class AutoModLevelUserConfig(BaseUserConfig):
@@ -101,20 +109,6 @@ class AutoModLevelUserConfig(BaseUserConfig):
     def save_to_db(values: AutoModLevelType, dry_run=False):
         key_check(AutoModLevelType.__required_keys__, values.keys())
 
-        validated_level_threshholds: dict[Roles, Role] = {}
-        for raw_role, obj in values.get("level_thresholds").items():
-            try:
-                role = Roles(raw_role)
-            except ValueError:
-                raise ValueError(
-                    f"{raw_role} must be one of ({', '.join(r for r in Roles)})"
-                )
-            validated_level_threshholds[role] = Role(
-                label=obj.get("label"),
-                min_players=obj.get("min_players"),
-                min_level=obj.get("min_level"),
-            )
-
         validated_conf = AutoModLevelUserConfig(
             enabled=values.get("enabled"),
             discord_webhook_url=values.get("discord_webhook_url"),
@@ -126,7 +120,7 @@ class AutoModLevelUserConfig(BaseUserConfig):
             max_level=values.get("max_level"),
             max_level_message=values.get("max_level_message"),
             violation_message=values.get("violation_message"),
-            level_thresholds=validated_level_threshholds,
+            level_thresholds=values.get("level_thresholds"),
             number_of_warnings=values.get("number_of_warnings"),
             warning_message=values.get("warning_message"),
             warning_interval_seconds=values.get("warning_interval_seconds"),
