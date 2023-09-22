@@ -19,11 +19,7 @@ recorded_rcon = Rcon(SERVER_INFO)
 @on_connected
 @inject_player_ids
 def auto_kick(_, log, name, steam_id_64):
-    try:
-        config = NameKickUserConfig.load_from_db()
-    except KeyError:
-        logger.error("Error loading name kick configuration")
-        return
+    config = NameKickUserConfig.load_from_db()
 
     for r in config.regular_expressions:
         try:
