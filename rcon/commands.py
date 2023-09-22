@@ -95,7 +95,7 @@ class ServerCtl:
     set password not implemented on purpose
     """
 
-    def __init__(self, config, auto_retry=1, max_open=None, max_idle=None):
+    def __init__(self, config, auto_retry=1, max_open=20, max_idle=20) -> None:
         self.maxOpen: int = max_open
         self.maxIdle: int = max_idle
         self.config = config
