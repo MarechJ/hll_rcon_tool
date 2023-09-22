@@ -9,6 +9,8 @@ from rcon.utils import get_server_number
 
 logger = logging.getLogger(__name__)
 
+USER_CONFIG_KEY_FORMAT = "{server}_{cls_name}"
+
 
 # Sourced without modification from https://stackoverflow.com/a/17246726
 def all_subclasses(cls):
@@ -67,7 +69,9 @@ class BaseUserConfig(pydantic.BaseModel):
     @classmethod
     def KEY(cls) -> str:
         """The database primary key for a setting"""
-        return f"{get_server_number()}_{cls.__name__}"
+        return USER_CONFIG_KEY_FORMAT.format(
+            server=get_server_number(), cls_name=cls.__name__
+        )
 
     @classmethod
     def load_from_db(cls) -> Self:
@@ -89,7 +93,7 @@ def _get_conf(sess, key):
     return sess.query(UserConfig).filter(UserConfig.key == key).one_or_none()
 
 
-def get_user_config(key, default=None) -> bool:
+def get_user_config(key: str, default=None) -> str | None:
     logger.debug("Getting user config for %s", key)
     with enter_session() as sess:
         res = _get_conf(sess, key)

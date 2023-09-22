@@ -28,6 +28,7 @@ from rcon.steam_utils import enrich_db_users
 from rcon.user_config.user_config import seed_default_config
 from rcon.user_config.webhooks import (
     BaseMentionWebhookUserConfig,
+    BaseUserConfig,
     BaseWebhookUserConfig,
 )
 from rcon.utils import ApiKey
@@ -228,27 +229,83 @@ def process_games(start_day_offset, end_day_offset=0, force=False):
                 continue
 
 
+@cli.command(name="get_user_settings")
+@click.argument("server", type=int)
+@click.argument("output", type=click.Path())
+@click.option(
+    "--type", "file_type", type=str, default="yaml", help="File format (JSON or YAML)"
+)
+def get_user_setting(server: int, output: click.Path, file_type="yaml"):
+    """Dump all user settings for SERVER to OUTPUT file.
+
+    SERVER: The server number (SERVER_NUMBER as set in the compose files).
+
+    Only configured settings are dumped, never defaults.
+    """
+    key_format = "{server}_{cls_name}"
+    file_type = file_type.upper()
+
+    ALLOWED_TYPES = ("JSON", "YAML", "YML")
+    if file_type not in ALLOWED_TYPES:
+        raise ValueError(f"{file_type} must be one of {ALLOWED_TYPES}")
+
+    keys_to_models: dict[str, BaseUserConfig] = {
+        model.__name__: model
+        for model in rcon.user_config.utils.all_subclasses(BaseUserConfig)
+    }
+
+    # Since a CRCON install can have multiple servers, but get_server_number()
+    # depends on the environment, pass the server number to the tool
+    dump: dict[str, Any] = {}
+    for model in keys_to_models.values():
+        key = key_format.format(server=server, cls_name=model.__name__)
+        value = rcon.user_config.utils.get_user_config(key)
+        if value:
+            config = model.model_validate(value)
+            dump[model.__name__] = config.model_dump()
+
+    with open(str(output), "w") as fp:
+        if file_type == "JSON":
+            fp.write((json.dumps(dump, indent=2)))
+        else:
+            fp.write((yaml.dump(dump)))
+
+
 @cli.command(name="set_user_settings")
+@click.argument("server", type=int)
 @click.argument("input", type=click.Path())
 @click.option(
     "--type", "file_type", type=str, default="yaml", help="File format (JSON or YAML)"
 )
 @click.option("--dry-run", type=bool, default=True, help="Validate settings only")
-def set_user_settings(input: click.Path, file_type="yaml", dry_run=True):
+def set_user_settings(server: int, input: click.Path, file_type="yaml", dry_run=True):
+    """Set all (specified) user settings for SERVER from INPUT file.
+
+    if DRY_RUN is not false, it will only validate the file.
+    No settings will be set unless the entire file validates correctly.
+
+    SERVER: The server number (SERVER_NUMBER as set in the compose files).
+    """
+    file_type = file_type.upper()
+
     ALLOWED_TYPES = ("JSON", "YAML", "YML")
-    if file_type.upper() not in ALLOWED_TYPES:
+    if file_type not in ALLOWED_TYPES:
         raise ValueError(f"{file_type} must be one of {ALLOWED_TYPES}")
 
-    keys_to_exclude = set(
-        [BaseWebhookUserConfig.KEY(), BaseMentionWebhookUserConfig.__name__]
+    # Any sort of parent class that doesn't directly map to a user config
+    # should be excluded
+    models_to_exclude = set(
+        [
+            BaseWebhookUserConfig.__name__,
+            BaseMentionWebhookUserConfig.__name__,
+            BaseUserConfig.__name__,
+        ]
     )
 
-    keys_to_models = {
-        model.KEY_NAME: model
-        for model in rcon.user_config.utils.all_subclasses(
-            rcon.user_config.utils.BaseUserConfig
-        )
-        if model.KEY_NAME not in keys_to_exclude
+    config_models: dict[str, Type[BaseUserConfig]] = {
+        model.__name__: model
+        for model in rcon.user_config.utils.all_subclasses(BaseUserConfig)
+        if model.__name__ not in models_to_exclude
     }
 
     user_settings: dict[str, Any]
@@ -273,14 +330,14 @@ def set_user_settings(input: click.Path, file_type="yaml", dry_run=True):
                 sys.exit(-1)
 
     for key in user_settings.keys():
-        if key not in keys_to_models:
+        if key not in config_models:
             logger.error(f"{key} not an allowed key, no changes made.")
             sys.exit(-1)
 
-    parsed_models: list[rcon.user_config.utils.BaseUserConfig] = []
-    model: rcon.user_config.utils.BaseUserConfig
+    parsed_models: list[tuple[Type[BaseUserConfig], BaseUserConfig]] = []
+    model: BaseUserConfig
     for key, payload in user_settings.items():
-        cls = keys_to_models[key]
+        cls = config_models[key]
         print(f"Parsing {key} as {cls}")
         try:
             model = cls(**payload)
@@ -288,11 +345,15 @@ def set_user_settings(input: click.Path, file_type="yaml", dry_run=True):
             logger.error(e)
             sys.exit(-1)
 
-        parsed_models.append(model)
+        parsed_models.append((cls, model))
 
     if not dry_run:
-        for model in parsed_models:
-            rcon.user_config.utils.set_user_config(model.KEY(), model.model_dump())
+        for cls, model in parsed_models:
+            key = rcon.user_config.utils.USER_CONFIG_KEY_FORMAT.format(
+                server=server, cls_name=cls.__name__
+            )
+            print(f"setting {key=} class={cls.__name__}")
+            rcon.user_config.utils.set_user_config(key, model.model_dump())
 
 
 PREFIXES_TO_EXPOSE = ["get_", "set_", "do_"]
