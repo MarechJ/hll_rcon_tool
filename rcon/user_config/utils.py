@@ -70,12 +70,10 @@ class MissingKeysConfigurationError(Exception):
 class BaseUserConfig(pydantic.BaseModel):
     """The interface UI config settings should adhere to in addition to pydantic.BaseModel"""
 
-    KEY_NAME: ClassVar = "UNUSED"
-
     @classmethod
     def KEY(cls) -> str:
         """The database primary key for a setting"""
-        return f"{get_server_number()}_{cls.KEY_NAME}"
+        return f"{get_server_number()}_{cls.__name__}"
 
     @classmethod
     def load_from_db(cls) -> Self:
@@ -83,6 +81,8 @@ class BaseUserConfig(pydantic.BaseModel):
 
         if conf:
             return cls.model_validate(conf)
+        else:
+            logger.warning(f"{cls.KEY()} not found, returning defaults")
 
         return cls()
 
