@@ -21,6 +21,25 @@ class Roles(str, enum.Enum):
     crewman = "crewman"
 
 
+class InvalidRoleError(ValueError):
+    def __init__(self, role: str) -> None:
+        super().__init__()
+        self.role = role
+
+    def __str__(self) -> str:
+        return self.__repr__()
+
+    def __repr__(self) -> str:
+        return f"{self.role} must be one of ({', '.join(r for r in Roles)})"
+
+    def asdict(self):
+        return {
+            "type": InvalidRoleError.__name__,
+            "role": self.role,
+            "allowed_roles": [r for r in Roles],
+        }
+
+
 ROLES_TO_LABELS = {
     Roles.commander: "Commander",
     Roles.squad_lead: "Squad Lead",
