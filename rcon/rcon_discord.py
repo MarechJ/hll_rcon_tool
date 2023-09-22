@@ -1,7 +1,7 @@
 import logging
 import re
 from functools import lru_cache
-from typing import List
+from typing import List, Type
 
 import requests
 from discord import RequestsWebhookAdapter, Webhook
@@ -11,6 +11,8 @@ from pydantic import HttpUrl
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.webhooks import (
     AuditWebhooksUserConfig,
+    BaseMentionWebhookUserConfig,
+    BaseWebhookUserConfig,
     CameraWebhooksUserConfig,
     WatchlistWebhooksUserConfig,
 )
@@ -56,10 +58,12 @@ def make_allowed_mentions(user_ids, role_ids):
     return allowed_mentions
 
 
-def get_prepared_discord_hooks(hook_type: str) -> List[DiscordWebhook]:
-    if hook_type == CameraWebhooksUserConfig.KEY_NAME:
+def get_prepared_discord_hooks(
+    hook_type: Type[BaseWebhookUserConfig | BaseMentionWebhookUserConfig],
+) -> List[DiscordWebhook]:
+    if isinstance(hook_type, CameraWebhooksUserConfig):
         hooks = CameraWebhooksUserConfig.load_from_db().hooks
-    elif hook_type == WatchlistWebhooksUserConfig.KEY_NAME:
+    elif isinstance(hook_type, WatchlistWebhooksUserConfig):
         hooks = WatchlistWebhooksUserConfig.load_from_db().hooks
     else:
         raise ValueError(f"{hook_type} is not a valid webhook type")
