@@ -105,6 +105,9 @@ BAN_TK_ON_CONNECT:
     - None
     - MK2_Grenade
     - M24_Grenade
+    - 155MM HOWITZER [M114]
+    - 150MM HOWITZER [sFH 18]
+    - 122MM HOWITZER [M1938 (M-30)]
   # TK after connect only counts as an offense for the first N minute after connecting, N is the number you set below
   max_time_after_connect_minutes: 5
   # A TK after connecting will be ignored if there's <N> kills before it
