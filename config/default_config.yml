@@ -224,7 +224,7 @@ NOLEADER_AUTO_MOD:
   # Set to 0 to disable to punish entirely. I would advise setting warnings to infinity (-1) if you do that
   # Set to -1 for infinite punish (will never go to kicks)
   # Set to 1 or Z to apply Z punishes before we move to the next step (the kicks)
-  number_of_punish: 2
+  number_of_punish: -1
   # This is the number of seconds to wait between punishes (if the squad remains without an officer
   # I wouldn't recommend setting a high value here (unless you chose infinite punishes) as once the player has died he has the opportunity to take
   # the officer role, so no excuse. Also it's even more frustrating to respawn run 300m and die again ;)
@@ -281,11 +281,11 @@ SEEDING_AUTO_MOD:
   # Send a direct warning message to the players that violate seeding rules
   # set to 0 to disable (this means it will move to punish directly), -1 for infinite warnings (will never go to punishes)
   # set to 1 or Y to warn squad Y times before we move on to the punish step
-  number_of_warning: 2
+  number_of_warning: -1
   # This is the text that will be displayed to warn players.
   # The following variables are available to fill into the text
   #  {player_name}, {received_warnings}, {max_warnings} and {next_check_seconds}, {violation}
-  warning_message: "Warning, {player_name}! You violate seeding rules on this server: {violation}\nYou will be punished after {max_warnings} warnings (you already received {received_warnings}), then kicked.\nNext check will happen automatically in {next_check_seconds}s."
+  warning_message: "Warning, {player_name}! You're violating the seeding rules on this server: {violation}\nYou will be punished after {max_warnings} warnings (you already received {received_warnings}), you will be kicked.\nNext check will happen automatically in {next_check_seconds}s."
   # This is the number of seconds this auto-mod will wait until moving to
   # the next warning or to the punish stage if the number_of_warning's is reached
   warning_interval_seconds: 60
@@ -315,7 +315,7 @@ SEEDING_AUTO_MOD:
   # This is the message that will be used in the kick
   # The following variables are available to fill into the text
   #  {player_name}, {squad_name} and {kick_grace_period}
-  kick_message: "You violated seeding rules on this server.\nYour grace period of {kick_grace_period}s has passed.\nYou failed to comply with the previous warnings."
+  kick_message: "You violated the seeding rules on this server.\nYour grace period of {kick_grace_period}s has passed.\nYou failed to comply with the previous warnings."
 
   # Announce that the server is currently seeding when at least one seeding rule is enabled. When the player count exceeds
   # the max_player settings of all seeding rules, the announcement is disabled automatically until the next round.
@@ -342,7 +342,7 @@ SEEDING_AUTO_MOD:
       crewman: Tanks
     # Violation message used as a description of the seeding violation when player is messaged, punished and kicked.
     #  {role}
-    message: "{role} are not allowed when server is seeding"
+    message: "{role} is allowed when server is seeding"
 
   # The disallowed weapons is a seeding rule that prevents players from using defined weapons to kill other players. Different to the other
   # automods, this rule does not use the escalation path (message -> punish -> kick) as configured in the general seeding automod config.
@@ -373,7 +373,7 @@ SEEDING_AUTO_MOD:
     # the player count of the server needed for this rule to be enforced. The number is inclusive, which means, if you use 5
     # this rule will be enforced for players 5 to max_players. If there are only 4 players on the server, the rules will
     # not be enforced.
-    min_players: 1
+    min_players: 20
     # the player count of the server under which this rule should be enforced. The number is exclusive, which means, if you use 30
     # this rule will be enforced for players 1 to 29, once the 30 player connected, the rule will not be enforced anymore.
     max_players: 40
@@ -436,6 +436,10 @@ LEVEL_AUTO_MOD:
         label: Officer
         min_players: 30
         min_level: 25
+      tankcommander: 
+        label: Tankcommander
+        min_players: 0
+        min_level: 25
     # Violation message used as a description of the level thresholds violation when player is messaged, punished and kicked.
     # Available properties: {role} matching label's value of previous map and {level} matching level's value from previous map.
     message: "{role} are not allowed under level {level}"
@@ -444,11 +448,11 @@ LEVEL_AUTO_MOD:
   # Send a direct warning message to the players that violate level thresholds rules
   # set to 0 to disable (this means it will move to punish directly), -1 for infinite warnings (will never go to punishes)
   # set to 1 or Y to warn squad Y times before we move on to the punish step
-  number_of_warning: 2
+  number_of_warning: -1
   # This is the text that will be displayed to warn players.
   # The following variables are available to fill into the text
   #  {player_name}, {received_warnings}, {max_warnings} and {next_check_seconds}, {violation}
-  warning_message: "Warning, {player_name}! You violate level thresholds rules on this server: {violation}\nYou will be punished after {max_warnings} warnings (you already received {received_warnings}), then kicked.\nNext check will happen automatically in {next_check_seconds}s."
+  warning_message: "Warning, {player_name}! You're violating the level threshold rules on this server: {violation}\nYou will be punished after {max_warnings} warnings (you already received {received_warnings}), then kicked.\nNext check will happen automatically in {next_check_seconds}s. \n\n Please change roles now!!!"
   # This is the number of seconds this auto-mod will wait until moving to
   # the next warning or to the punish stage if the number_of_warning's is reached
   warning_interval_seconds: 60
@@ -467,7 +471,7 @@ LEVEL_AUTO_MOD:
   # This is the message that will be used in the punish
   # The following variables are available to fill into the text
   #  {player_name}, {received_punishes}, {max_punishes}, {next_check_seconds} and {violation}
-  punish_message: "You violated level thresholds rules on this server: {violation}.\nYou're being punished by a bot ({received_punishes}/{max_punishes}).\nNext check in {next_check_seconds} seconds"
+  punish_message: "You violated the level thresholds rules on this server: {violation}.\nYou're being punished by a bot ({received_punishes}/{max_punishes}).\nNext check in {next_check_seconds} seconds \n\n Please Switch Roles!!!"
 
   # Step number 4
   # Set the below value to false if you don't want to kick players after they reached the max amount of punishes
@@ -478,7 +482,7 @@ LEVEL_AUTO_MOD:
   # This is the message that will be used in the kick
   # The following variables are available to fill into the text
   #  {player_name}, {squad_name}, {kick_grace_period} and {violation}
-  kick_message: "You violated level thresholds rules on this server: {violation}.\nYour grace period of {kick_grace_period}s has passed.\nYou failed to comply with the previous warnings."
+  kick_message: "You violated the level thresholds rules on this server: {violation}.\nYour grace period of {kick_grace_period}s has passed.\nYou failed to comply with the previous warnings."
 
 NOSOLOTANK_AUTO_MOD:
   # This auto-moderator has 4 steps, 1. internally noting (X times), 2. warning via direct message (Y times), 3. punish (Z times) 4. kick
@@ -518,14 +522,14 @@ NOSOLOTANK_AUTO_MOD:
   # Send a direct warning message to the solo tank player
   # set to 0 to disable (this means it will move to punish directly), -1 for infinite warnings (will never go to punishes)
   # set to 1 or Y to warn him Y times before we move on to the punish step
-  number_of_warning: 2
+  number_of_warning: -1
   # This is the number of seconds this auto-mod will wait until moving to
   # the next warning or to the punish if the number_of_warning's is reached
   warning_interval_seconds: 60
   # This is the text that will be displayed to warn players.
   # The following variables are available to fill into the text
   #  {player_name}, {squad_name}, {received_warnings}, {max_warnings} and {next_check_seconds}
-  warning_message: "Attention, {player_name} !\n\nYou can't play solo in the armor squad {squad_name}.\n\n(Warning {received_warnings} of {max_warnings} before punition)\n\nNext check in {next_check_seconds}s."
+  warning_message: "Attention, {player_name} !\n\nYou can't play solo in the armor squad {squad_name}.\n\n(Warning {received_warnings} of {max_warnings} before punition)\n\nNext check in {next_check_seconds}s. \n\n Please recruit another player, or change Squads!!!"
 
   # Step number 3
   # If the player is still solo in his tank after
@@ -548,7 +552,7 @@ NOSOLOTANK_AUTO_MOD:
   # note that if you disable punishes it will never go to that step. no matter if it's set to true
   kick_after_max_punish: true
   # If the server has less players than the number below, the auto-moderator will wait and not kick yet
-  disable_kick_below_server_player_count: 0
+  disable_kick_below_server_player_count: 6
   # After the Step 2 has reached it's max punishes, this is the amount of time in seconds the auto-mod will wait before kicking
   kick_grace_period_seconds: 60
   # This is the message that will be used in the kick

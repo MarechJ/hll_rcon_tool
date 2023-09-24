@@ -57,6 +57,7 @@ class ActionMethod(Enum):
     PUNISH = auto()
     KICK = auto()
     FORCE_KICK = auto()
+    KILL = auto()
 
 
 @dataclass
@@ -69,9 +70,9 @@ class NoLeaderConfig:
     notes_interval_seconds: int = 10
 
     warning_message: str = (
-        "Warning, {player_name}! Your squad ({squad_name}) does not have an officer. "
+        "Warning, {player_name}! Your squad ({squad_name}) does not have an officer. \n Switch to Officer or be Kicked"
         "Players of squads without an officer will be punished after {max_warnings} warnings "
-        "(you already received {received_warnings}), then kicked.\n"
+        "(you already received {received_warnings}), you will be kicked kicked.\n"
         "Next check will happen automatically in {next_check_seconds}s."
     )
     # Set to 0 to disable, -1 for infinite warnings (will never go to punishes)
