@@ -2,6 +2,7 @@ import logging
 import os
 from datetime import datetime, timedelta
 
+from django.contrib.auth.decorators import permission_required
 from django.views.decorators.csrf import csrf_exempt
 
 from rcon.config import get_config
@@ -127,6 +128,7 @@ def get_live_game_stats(request):
 
 @csrf_exempt
 @login_required()
+@permission_required("api.can_view_date_scoreboard", raise_exception=True)
 def date_scoreboard(request):
     try:
         start = datetime.fromtimestamp(request.GET.get("start"))

@@ -4,8 +4,6 @@ import os
 from dataclasses import asdict, dataclass, field, fields
 from typing import List
 
-from sqlalchemy.sql.expression import false, true
-
 from rcon.cache_utils import invalidates, ttl_cache
 from rcon.commands import CommandFailedError
 from rcon.models import UserConfig, enter_session
@@ -614,6 +612,7 @@ DEFAULT_AUTO_SETTINGS = {
                 "Yes the spelling is intentional",
             ]
         },
+        "set_map_shuffle_enabled": {"enabled": False},
         "do_punish": {"player": "12345678901234567", "reason": "Get rekt"},
         "do_kick": {"player": "12345678901234567", "reason": "Get rekt"},
         "do_temp_ban": {

@@ -17,6 +17,7 @@ import CancelIcon from "@material-ui/icons/Cancel";
 import { pure } from "recompose";
 import { safeGetSteamProfile } from "./Scores";
 import { SubList } from "./SubList";
+import makeSteamProfileUrl from "../../utils/makeSteamProfileUrl";
 
 export const PlayerStatProfile = pure(({ playerScore, onClose }) => {
   const steamProfile = safeGetSteamProfile(playerScore);
@@ -46,7 +47,10 @@ export const PlayerStatProfile = pure(({ playerScore, onClose }) => {
                     <Typography variant="h4">
                       <Link
                         color="inherit"
-                        href={steamProfile.get("profileurl")}
+                        href={
+                          steamProfile.get("profileurl") ||
+                          makeSteamProfileUrl(playerScore.get("steam_id_64"))
+                        }
                         target="_blank"
                       >
                         {playerScore.get("player") ||

@@ -1,20 +1,20 @@
 import json
 import logging
 from copy import deepcopy
-from functools import wraps
 
 import requests
+from django.contrib.auth.decorators import permission_required
 from django.views.decorators.csrf import csrf_exempt
 
 from rcon.utils import ApiKey
 
 from .auth import api_response, login_required
-from .utils import _get_data
 
 logger = logging.getLogger("rcon")
 
 
 @login_required()
+@permission_required("api.can_view_other_crcon_servers", raise_exception=True)
 @csrf_exempt
 def get_server_list(request):
     api_key = ApiKey()

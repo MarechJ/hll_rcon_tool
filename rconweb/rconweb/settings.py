@@ -13,15 +13,13 @@ import logging
 import os
 import re
 import socket
-from logging.config import dictConfig
 
 import sentry_sdk
-from django.utils.log import DEFAULT_LOGGING
 from sentry_sdk import configure_scope
 from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
 
-from rcon.extended_commands import Rcon
+from rcon.rcon import Rcon
 from rcon.settings import SERVER_INFO
 
 try:
@@ -118,7 +116,7 @@ ALLOWED_HOSTS = [
     "localhost",
     "localhost:3000",
 ] + os.getenv("DOMAINS", "").split(",")
-CORS_ORIGIN_WHITELIST = ["http://{}".format(h) for h in ALLOWED_HOSTS if h] + [
+CORS_ALLOWED_ORIGINS = ["http://{}".format(h) for h in ALLOWED_HOSTS if h] + [
     "https://{}".format(h) for h in ALLOWED_HOSTS if h
 ]
 CORS_ALLOW_CREDENTIALS = True
@@ -129,6 +127,12 @@ CORS_ORIGIN_ALLOW_ALL = False
 SESSION_COOKIE_HTTPONLY = False
 CSRF_COOKIE_SAMESITE = "Lax"
 SESSION_COOKIE_SAMESITE = "Lax"
+
+# Required as of Django 4.0 otherwise it causes CSRF issues
+# if we don't include the origin
+CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS.copy()
+if host := os.getenv("RCONWEB_SERVER_URL"):
+    CSRF_TRUSTED_ORIGINS.append(host)
 
 if DEBUG:
     CSRF_COOKIE_SAMESITE = "None"
@@ -230,6 +234,7 @@ TIME_ZONE = "UTC"
 
 USE_I18N = True
 
+# Deprecated in Django 4.0, removed in Django 5.0
 USE_L10N = True
 
 USE_TZ = True

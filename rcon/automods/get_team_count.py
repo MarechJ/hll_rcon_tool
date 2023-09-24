@@ -9,6 +9,10 @@ def get_team_count(team_view, team: Literal["axis", "allies"]):
     else:
         cmd = 1
 
-    return sum(
-        len(s.get("players", [])) for s in team_view[team].get("squads", {}).values()
-    ) + cmd
+    return (
+        sum(
+            len(s.get("players", []))
+            for s in team_view[team].get("squads", {}).values()
+        )
+        + cmd
+    )

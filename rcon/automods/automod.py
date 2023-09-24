@@ -5,24 +5,26 @@ from typing import List
 
 from redis.client import Redis
 
+from rcon.automods.level_thresholds import LevelThresholdsAutomod
 from rcon.automods.models import (
     ActionMethod,
+    LevelThresholdsConfig,
     NoLeaderConfig,
+    NoSoloTankConfig,
     PunishPlayer,
     PunitionsToApply,
     SeedingRulesConfig,
-    LevelThresholdsConfig,
 )
 from rcon.automods.no_leader import NoLeaderAutomod
+from rcon.automods.no_solotank import NoSoloTankAutomod
 from rcon.automods.seeding_rules import SeedingRulesAutomod
-from rcon.automods.level_thresholds import LevelThresholdsAutomod
 from rcon.cache_utils import get_redis_client
 from rcon.commands import CommandFailedError, HLLServerError
 from rcon.config import get_config
 from rcon.discord import send_to_discord_audit
-from rcon.game_logs import on_kill, on_connected
+from rcon.game_logs import on_connected, on_kill
 from rcon.hooks import inject_player_ids
-from rcon.recorded_commands import RecordedRcon
+from rcon.rcon import Rcon
 from rcon.settings import SERVER_INFO
 from rcon.types import StructuredLogLineType
 
@@ -43,25 +45,33 @@ def get_punitions_to_apply(rcon, moderators) -> PunitionsToApply:
         if team_view[team]["commander"] is not None:
             for mod in moderators:
                 punitions_to_apply.merge(
-                    mod.punitions_to_apply(team_view, "Commander", team, {
-                        "players": [team_view[team]["commander"]],
-                    }, gamestate)
+                    mod.punitions_to_apply(
+                        team_view,
+                        "Commander",
+                        team,
+                        {
+                            "players": [team_view[team]["commander"]],
+                        },
+                        gamestate,
+                    )
                 )
 
         for squad_name, squad in team_view[team]["squads"].items():
             for mod in moderators:
                 punitions_to_apply.merge(
-                    mod.punitions_to_apply(team_view, squad_name, team, squad, gamestate)
+                    mod.punitions_to_apply(
+                        team_view, squad_name, team, squad, gamestate
+                    )
                 )
 
     return punitions_to_apply
 
 
 def _do_punitions(
-        rcon: RecordedRcon,
-        method: ActionMethod,
-        players: List[PunishPlayer],
-        mods,
+    rcon: Rcon,
+    method: ActionMethod,
+    players: List[PunishPlayer],
+    mods,
 ):
     for aplayer in players:
         try:
@@ -103,11 +113,12 @@ def _do_punitions(
         except (CommandFailedError, HLLServerError):
             logger.exception("Failed to %s %s", repr(method), repr(aplayer))
             if method == ActionMethod.PUNISH:
-                audit(
-                    aplayer.details.discord_audit_url,
-                    f"--> PUNISH FAILED, will retry: {aplayer}",
-                    aplayer.details.author,
-                )
+                # Deactivated (spams the Discord channel)
+                # audit(
+                #     aplayer.details.discord_audit_url,
+                #     f"--> PUNISH FAILED, will retry: {aplayer}",
+                #     aplayer.details.author,
+                # )
                 for m in mods:
                     m.player_punish_failed(aplayer)
             elif method == ActionMethod.KICK:
@@ -118,7 +129,7 @@ def _do_punitions(
                 )
 
 
-def do_punitions(rcon: RecordedRcon, punitions_to_apply: PunitionsToApply):
+def do_punitions(rcon: Rcon, punitions_to_apply: PunitionsToApply):
     if punitions_to_apply:
         logger.info(
             "Automod will apply the following punitions %s",
@@ -135,7 +146,9 @@ def do_punitions(rcon: RecordedRcon, punitions_to_apply: PunitionsToApply):
         rcon, ActionMethod.PUNISH, punitions_to_apply.punish, enabled_moderators()
     )
 
-    _do_punitions(rcon, ActionMethod.KICK, punitions_to_apply.kick, enabled_moderators())
+    _do_punitions(
+        rcon, ActionMethod.KICK, punitions_to_apply.kick, enabled_moderators()
+    )
 
 
 def enabled_moderators():
@@ -143,18 +156,23 @@ def enabled_moderators():
 
     try:
         config = get_config()
-        
+
         no_leader_config = None
         if config.get("NOLEADER_AUTO_MOD") is not None:
             no_leader_config = NoLeaderConfig(**config["NOLEADER_AUTO_MOD"])
-        
+
         seeding_config = None
         if config.get("SEEDING_AUTO_MOD") is not None:
             seeding_config = SeedingRulesConfig(**config["SEEDING_AUTO_MOD"])
-        
+
         level_thresholds_config = None
         if config.get("LEVEL_AUTO_MOD") is not None:
             level_thresholds_config = LevelThresholdsConfig(**config["LEVEL_AUTO_MOD"])
+
+        no_solotank_config = None
+        if config.get("NOSOLOTANK_AUTO_MOD") is not None:
+            no_solotank_config = NoSoloTankConfig(**config["NOSOLOTANK_AUTO_MOD"])
+
     except Exception as e:
         logger.exception("Invalid automod config, check your config/config.yml", e)
         raise
@@ -163,9 +181,26 @@ def enabled_moderators():
         filter(
             lambda m: m.enabled(),
             [
-                NoLeaderAutomod(no_leader_config, red) if no_leader_config is not None else NoLeaderAutomod(NoLeaderConfig(**{"enabled": False}), None),
-                SeedingRulesAutomod(seeding_config, red) if seeding_config is not None else SeedingRulesAutomod(SeedingRulesConfig(**{"enabled": False}), None),
-                LevelThresholdsAutomod(level_thresholds_config, red) if level_thresholds_config is not None else LevelThresholdsAutomod(LevelThresholdsConfig(**{"enabled": False}), None),
+                NoLeaderAutomod(no_leader_config, red)
+                if no_leader_config is not None
+                else NoLeaderAutomod(
+                    NoLeaderConfig(**{"enabled": False}), None
+                ),
+                SeedingRulesAutomod(seeding_config, red)
+                if seeding_config is not None
+                else SeedingRulesAutomod(
+                    SeedingRulesConfig(**{"enabled": False}), None
+                ),
+                LevelThresholdsAutomod(level_thresholds_config, red)
+                if level_thresholds_config is not None
+                else LevelThresholdsAutomod(
+                    LevelThresholdsConfig(**{"enabled": False}), None
+                ),
+                NoSoloTankAutomod(no_solotank_config, red)
+                if no_solotank_config is not None
+                else NoSoloTankAutomod(
+                    NoSoloTankConfig(**{"enabled": False}), None
+                ),
             ],
         )
     )
@@ -179,7 +214,7 @@ def set_first_run_done(r: Redis):
     r.setex(first_run_done_key, 4 * 60, "1")
 
 
-def punish_squads(rcon: RecordedRcon, r: Redis):
+def punish_squads(rcon: Rcon, r: Redis):
     mods = enabled_moderators()
     if len(mods) == 0:
         logger.debug("No automod is enabled")
@@ -199,7 +234,7 @@ def audit(discord_webhook_url: str, msg: str, author: str):
 
 
 @on_kill
-def on_kill(rcon: RecordedRcon, log: StructuredLogLineType):
+def on_kill(rcon: Rcon, log: StructuredLogLineType):
     red = get_redis_client()
     if not is_first_run_done(red):
         logger.debug(
@@ -225,7 +260,7 @@ pendingTimers = {}
 
 @on_connected
 @inject_player_ids
-def on_connected(rcon: RecordedRcon, _, name: str, steam_id_64: str):
+def on_connected(rcon: Rcon, _, name: str, steam_id_64: str):
     red = get_redis_client()
     if not is_first_run_done(red):
         logger.debug(
@@ -265,7 +300,7 @@ def on_connected(rcon: RecordedRcon, _, name: str, steam_id_64: str):
 
 
 def run():
-    rcon = RecordedRcon(SERVER_INFO)
+    rcon = Rcon(SERVER_INFO)
     red = get_redis_client()
 
     while True:

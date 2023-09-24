@@ -1,12 +1,12 @@
 import datetime
 
 from rcon.player_history import get_profiles
-from rcon.recorded_commands import RecordedRcon
+from rcon.rcon import Rcon
 from rcon.settings import SERVER_INFO
 
 
 def get_prunable_vips(days_of_inactivity=30):
-    rcon = RecordedRcon(SERVER_INFO)
+    rcon = Rcon(SERVER_INFO)
 
     age_limit = datetime.datetime.now() - datetime.timedelta(days=days_of_inactivity)
     vips = rcon.get_vip_ids()
@@ -41,4 +41,4 @@ def get_prunable_vips(days_of_inactivity=30):
 
 if __name__ == "__main__":
     # print(get_prunable_vips())
-    light_get_vips_count(RecordedRcon(SERVER_INFO))
+    light_get_vips_count(Rcon(SERVER_INFO))

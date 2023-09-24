@@ -1,14 +1,12 @@
 import os
-from functools import partial
 from xmlrpc.client import Fault, ServerProxy
 
-from django.http import HttpResponse, JsonResponse
-from django.shortcuts import render
+from django.contrib.auth.decorators import permission_required
 from django.views.decorators.csrf import csrf_exempt
 
 from rcon.discord import send_to_discord_audit
 
-from .audit_log import auto_record_audit, record_audit
+from .audit_log import record_audit
 from .auth import api_response, login_required
 from .utils import _get_data
 
@@ -28,7 +26,8 @@ def get_supervisor_client():
 
 
 @csrf_exempt
-@login_required(True)
+@login_required()
+@permission_required("api.can_view_available_services", raise_exception=True)
 def get_services(request):
     info = {
         "broadcasts": "The automatic broadcasts.",
@@ -54,7 +53,8 @@ def get_services(request):
 
 
 @csrf_exempt
-@login_required(True)
+@login_required()
+@permission_required("api.can_toggle_services", raise_exception=True)
 @record_audit
 def do_service(request):
     data = _get_data(request)
