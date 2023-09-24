@@ -177,10 +177,10 @@ NOLEADER_AUTO_MOD:
   # So if a player joins a squad that already received 3 punishes and will be kicked next, the new player will
   # start at the first punish regardless (so he won't be kick)
   # Set to true to enable the auto moderation of squads without officers
-  enabled: false
+  enabled: true
   # If this is set to true no warning / punish / kick will be applied for real
   # It turns the code into a "simulation" mode and only send what it would do to your discord audit log webhook
-  dry_run: true
+  dry_run: false
   # Discord Webhook URL where audit logs should be sent. If not specified, the environment variable DISCORD_WEBHOOK_AUDIT_LOG
   # will be used, instead.
   discord_webhook_url: ""
@@ -268,7 +268,7 @@ SEEDING_AUTO_MOD:
   # through that's it, nothing will happen anymore for that player if they still break seeding rules.
   #
   # Set to true to enable the auto moderation of seeding rules
-  enabled: false
+  enabled: true
 
   # Discord Webhook URL where audit logs should be sent. If not specified, the environment variable DISCORD_WEBHOOK_AUDIT_LOG
   # will be used, instead.
@@ -319,7 +319,7 @@ SEEDING_AUTO_MOD:
   # This message occurs only when a player connects to a server. If the player count drops beneath the max_player setting of one
   # seeding rule and a new map starts, all connected players will NOT get an announcement.
   announce_seeding_active:
-    enabled: false
+    enabled: true
     message: "We are trying to populate the server! That means special rules apply.\n\n- {disallowed_roles} are not allowed (until {disallowed_roles_max_players} players are online)\n- {disallowed_weapons} are not allowed (until {disallowed_weapons_max_players} players are online)\n\nThanks for understanding and helping us seed!"
 
   # The disallowed roles is a seeding rule that ultimately prevents players from taking a role that should generally not
@@ -393,7 +393,7 @@ LEVEL_AUTO_MOD:
   # through that's it, nothing will happen anymore for that player if they still break level thresholds rules.
   #
   # Set to true to enable the auto moderation of level thresholds rules
-  enabled: false
+  enabled: true
 
   # Discord Webhook URL where audit logs should be sent. If not specified, the environment variable DISCORD_WEBHOOK_AUDIT_LOG
   # will be used, instead.
@@ -482,15 +482,15 @@ LEVEL_AUTO_MOD:
 SCOREBOT:
   SERVER_1:
     # Don't forget to replace with your IP:port or url, leave the /api/get_live_game_stats
-    STATS_URL: "https://<rcon IP or url>/api/get_live_game_stats"
+    STATS_URL: "https://69.28.91.188/api/get_live_game_stats"
     # Don't forget to replace with your IP:port or url, leave the /api/public_info
-    INFO_URL: "https://<rcon IP or url>/api/public_info"
+    INFO_URL: "https://69.28.91.188/api/public_info"
     # This is the public url
-    SCOREBOARD_PUBLIC_URL: "https://stats1.hllfrance.org/"
+    SCOREBOARD_PUBLIC_URL: "https://stats1.69.28.91.188/"
     # The last slash matters
-    SCORBOARD_BASE_PATH: "https://stats1.hllfrance.org/"
+    SCORBOARD_BASE_PATH: "https://stats1.69.28.91.188/"
     # This is the public url
-    PAST_GAMES_URL: "https://stats1.hllfrance.org/#/gamescoreboard"
+    PAST_GAMES_URL: "https://stats1.69.28.91.188/#/gamescoreboard"
     WEBHOOK_URL: "https://discord.com/api/webhooks/86....40/qlh....Ie3"
 
   SERVER_2:
