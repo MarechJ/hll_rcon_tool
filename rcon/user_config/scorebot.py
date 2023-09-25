@@ -182,11 +182,14 @@ class ScorebotUserConfig(BaseUserConfig):
     @field_validator("stats_to_display")
     @classmethod
     def unique_stats(cls, vs):
-        unique = set()
+        unique_types = set()
+        unique = []
         for v in vs:
-            unique.add(v)
+            if v.type not in unique_types:
+                unique.append(v)
+                unique_types.add(v.type)
 
-        return list(unique)
+        return unique
 
     @property
     def stats_url(self) -> str:
