@@ -3,7 +3,7 @@ import logging
 import os
 import secrets
 from datetime import datetime
-from typing import Generic, TypeVar
+from typing import Any, Generic, TypeVar
 from urllib.parse import urlparse
 
 import redis
@@ -506,3 +506,18 @@ def exception_in_chain(e: BaseException, c) -> bool:
             return True
 
     return False
+
+
+def dict_differences(old: dict[Any, Any], new: dict[Any, Any]) -> dict[Any, Any]:
+    """Compare old/new and return a dict of differences by key"""
+    diff = {}
+    for k, v in old.items():
+        if isinstance(old[k], dict):
+            sub_diff = dict_differences(old[k], new[k])
+            if sub_diff:
+                diff[k] = sub_diff
+        else:
+            if old[k] != new[k]:
+                diff[k] = v
+
+    return diff

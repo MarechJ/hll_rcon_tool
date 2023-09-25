@@ -8,7 +8,7 @@ from rcon.vote_map import VoteMap
 
 from .audit_log import record_audit
 from .auth import api_response, login_required
-from .user_settings import _validate_user_config
+from .user_settings import _audit_user_config_differences, _validate_user_config
 from .utils import _get_data
 from .views import audit
 
@@ -75,10 +75,11 @@ def validate_votemap_config(request):
 @record_audit
 def set_votemap_config(request):
     command_name = "set_votemap_config"
+    cls = VoteMapUserConfig
     data = _get_data(request)
 
-    response = _validate_user_config(
-        VoteMapUserConfig, data=data, command_name=command_name, dry_run=False
+    response = _audit_user_config_differences(
+        cls, data, command_name, request.user.username
     )
 
     if response:

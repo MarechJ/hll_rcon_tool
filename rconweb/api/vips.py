@@ -20,7 +20,7 @@ from rcon.workers import get_job_results, worker_bulk_vip
 
 from .audit_log import record_audit
 from .auth import api_response, login_required
-from .user_settings import _validate_user_config
+from .user_settings import _audit_user_config_differences, _validate_user_config
 from .views import _get_data, ctl
 
 logger = logging.getLogger("rconweb")
@@ -260,10 +260,11 @@ def validate_real_vip_config(request):
 @record_audit
 def set_real_vip_config(request):
     command_name = "set_real_vip_config"
+    cls = RealVipUserConfig
     data = _get_data(request)
 
-    response = _validate_user_config(
-        RealVipUserConfig, data=data, command_name=command_name, dry_run=False
+    response = _audit_user_config_differences(
+        cls, data, command_name, request.user.username
     )
 
     if response:

@@ -10,6 +10,7 @@ from rcon.utils import get_server_number
 logger = logging.getLogger(__name__)
 
 USER_CONFIG_KEY_FORMAT = "{server}_{cls_name}"
+DISCORD_AUDIT_FORMAT = "[{command_name}] new values: {differences}"
 
 
 # Sourced without modification from https://stackoverflow.com/a/17246726

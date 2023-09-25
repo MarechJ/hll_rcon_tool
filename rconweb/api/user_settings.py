@@ -7,6 +7,7 @@ from django.contrib.auth.decorators import permission_required
 from django.http import JsonResponse, QueryDict
 from django.views.decorators.csrf import csrf_exempt
 
+from rcon.rcon_discord import send_to_discord_audit
 from rcon.user_config.auto_broadcast import AutoBroadcastUserConfig
 from rcon.user_config.auto_kick import AutoVoteKickUserConfig
 from rcon.user_config.auto_mod_level import AutoModLevelUserConfig
@@ -28,7 +29,11 @@ from rcon.user_config.standard_messages import (
     get_all_message_types,
 )
 from rcon.user_config.steam import SteamUserConfig
-from rcon.user_config.utils import BaseUserConfig, MissingKeysConfigurationError
+from rcon.user_config.utils import (
+    DISCORD_AUDIT_FORMAT,
+    BaseUserConfig,
+    MissingKeysConfigurationError,
+)
 from rcon.user_config.vac_game_bans import VacGameBansUserConfig
 from rcon.user_config.webhooks import (
     AdminPingWebhooksUserConfig,
@@ -39,6 +44,7 @@ from rcon.user_config.webhooks import (
     WatchlistWebhooksUserConfig,
     get_all_hook_types,
 )
+from rcon.utils import dict_differences
 
 from .audit_log import record_audit
 from .auth import api_response, login_required
@@ -86,6 +92,28 @@ def _validate_user_config(
         return api_response(
             command=command_name, failed=True, error=error_msg, arguments=data
         )
+
+
+def _audit_user_config_differences(
+    cls, data, command_name, author
+) -> JsonResponse | None:
+    old_model = cls.load_from_db().model_dump()
+    response = _validate_user_config(
+        cls,
+        data=data,
+        command_name=command_name,
+        dry_run=False,
+    )
+    new_model = cls.load_from_db().model_dump()
+    differences = dict_differences(old_model, new_model)
+    send_to_discord_audit(
+        message=DISCORD_AUDIT_FORMAT.format(
+            command_name=command_name, differences=str(differences)
+        ),
+        by=author,
+    )
+
+    return response
 
 
 @csrf_exempt
@@ -146,10 +174,11 @@ def validate_auto_broadcasts_config(request):
 @record_audit
 def set_auto_broadcasts_config(request):
     command_name = "set_auto_broadcasts_config"
+    cls = AutoBroadcastUserConfig
     data = _get_data(request)
 
-    response = _validate_user_config(
-        AutoBroadcastUserConfig, data=data, command_name=command_name, dry_run=False
+    response = _audit_user_config_differences(
+        cls, data, command_name, request.user.username
     )
 
     if response:
@@ -221,10 +250,11 @@ def validate_votekick_autotoggle_config(request):
 @record_audit
 def set_votekick_autotoggle_config(request):
     command_name = "set_votekick_autotoggle_config"
+    cls = AutoVoteKickUserConfig
     data = _get_data(request)
 
-    response = _validate_user_config(
-        AutoVoteKickUserConfig, data=data, command_name=command_name, dry_run=False
+    response = _audit_user_config_differences(
+        cls, data, command_name, request.user.username
     )
 
     if response:
@@ -300,13 +330,11 @@ def validate_auto_mod_level_config(request):
 @record_audit
 def set_auto_mod_level_config(request):
     command_name = "set_auto_mod_level_config"
+    cls = AutoModLevelUserConfig
     data = _get_data(request)
 
-    response = _validate_user_config(
-        AutoModLevelUserConfig,
-        data=data,
-        command_name=command_name,
-        dry_run=False,
+    response = _audit_user_config_differences(
+        cls, data, command_name, request.user.username
     )
 
     if response:
@@ -382,13 +410,11 @@ def validate_auto_mod_no_leader_config(request):
 @record_audit
 def set_auto_mod_no_leader_config(request):
     command_name = "set_auto_mod_no_leader_config"
+    cls = AutoModNoLeaderUserConfig
     data = _get_data(request)
 
-    response = _validate_user_config(
-        AutoModNoLeaderUserConfig,
-        data=data,
-        command_name=command_name,
-        dry_run=False,
+    response = _audit_user_config_differences(
+        cls, data, command_name, request.user.username
     )
 
     if response:
@@ -464,13 +490,11 @@ def validate_auto_mod_seeding_config(request):
 @record_audit
 def set_auto_mod_seeding_config(request):
     command_name = "set_auto_mod_seeding_config"
+    cls = AutoModSeedingUserConfig
     data = _get_data(request)
 
-    response = _validate_user_config(
-        AutoModSeedingUserConfig,
-        data=data,
-        command_name=command_name,
-        dry_run=False,
+    response = _audit_user_config_differences(
+        cls, data, command_name, request.user.username
     )
 
     if response:
@@ -546,13 +570,11 @@ def validate_tk_ban_on_connect_config(request):
 @record_audit
 def set_tk_ban_on_connect_config(request):
     command_name = "set_tk_ban_on_connect_config"
+    cls = BanTeamKillOnConnectUserConfig
     data = _get_data(request)
 
-    response = _validate_user_config(
-        BanTeamKillOnConnectUserConfig,
-        data=data,
-        command_name=command_name,
-        dry_run=False,
+    response = _audit_user_config_differences(
+        cls, data, command_name, request.user.username
     )
 
     if response:
@@ -625,13 +647,11 @@ def validate_camera_notification_config(request):
 @record_audit
 def set_camera_notification_config(request):
     command_name = "set_camera_notification_config"
+    cls = CameraNotificationUserConfig
     data = _get_data(request)
 
-    response = _validate_user_config(
-        CameraNotificationUserConfig,
-        data=data,
-        command_name=command_name,
-        dry_run=False,
+    response = _audit_user_config_differences(
+        cls, data, command_name, request.user.username
     )
 
     if response:
@@ -707,13 +727,11 @@ def validate_expired_vip_config(request):
 @record_audit
 def set_expired_vip_config(request):
     command_name = "set_expired_vip_config"
+    cls = ExpiredVipsUserConfig
     data = _get_data(request)
 
-    response = _validate_user_config(
-        ExpiredVipsUserConfig,
-        data=data,
-        command_name=command_name,
-        dry_run=False,
+    response = _audit_user_config_differences(
+        cls, data, command_name, request.user.username
     )
 
     if response:
@@ -789,13 +807,11 @@ def validate_server_name_change_config(request):
 @record_audit
 def set_server_name_change_config(request):
     command_name = "set_server_name_change_config"
+    cls = GtxServerNameChangeUserConfig
     data = _get_data(request)
 
-    response = _validate_user_config(
-        GtxServerNameChangeUserConfig,
-        data=data,
-        command_name=command_name,
-        dry_run=False,
+    response = _audit_user_config_differences(
+        cls, data, command_name, request.user.username
     )
 
     if response:
@@ -877,13 +893,11 @@ def validate_log_line_webhook_config(request):
 @record_audit
 def set_log_line_webhook_config(request):
     command_name = "set_log_line_webhook_config"
+    cls = LogLineWebhookUserConfig
     data = _get_data(request)
 
-    response = _validate_user_config(
-        LogLineWebhookUserConfig,
-        data=data,
-        command_name=command_name,
-        dry_run=False,
+    response = _audit_user_config_differences(
+        cls, data, command_name, request.user.username
     )
 
     if response:
@@ -956,10 +970,11 @@ def validate_name_kick_config(request):
 @record_audit
 def set_name_kick_config(request):
     command_name = "set_name_kick_config"
+    cls = NameKickUserConfig
     data = _get_data(request)
 
-    response = _validate_user_config(
-        NameKickUserConfig, data=data, command_name=command_name, dry_run=False
+    response = _audit_user_config_differences(
+        cls, data, command_name, request.user.username
     )
 
     if response:
@@ -1041,13 +1056,11 @@ def validate_rcon_connection_settings_config(request):
 @record_audit
 def set_rcon_connection_settings_config(request):
     command_name = "set_rcon_connection_settings_config"
+    cls = RconConnectionSettingsUserConfig
     data = _get_data(request)
 
-    response = _validate_user_config(
-        RconConnectionSettingsUserConfig,
-        data=data,
-        command_name=command_name,
-        dry_run=False,
+    response = _audit_user_config_differences(
+        cls, data, command_name, request.user.username
     )
 
     if response:
@@ -1123,13 +1136,11 @@ def validate_rcon_server_settings_config(request):
 @record_audit
 def set_rcon_server_settings_config(request):
     command_name = "set_rcon_server_settings_config"
+    cls = RconServerSettingsUserConfig
     data = _get_data(request)
 
-    response = _validate_user_config(
-        RconServerSettingsUserConfig,
-        data=data,
-        command_name=command_name,
-        dry_run=False,
+    response = _audit_user_config_differences(
+        cls, data, command_name, request.user.username
     )
 
     if response:
@@ -1211,13 +1222,11 @@ def validate_scorebot_config(request):
 @record_audit
 def set_scorebot_config(request):
     command_name = "set_scorebot_config"
+    cls = ScorebotUserConfig
     data = _get_data(request)
 
-    response = _validate_user_config(
-        ScorebotUserConfig,
-        data=data,
-        command_name=command_name,
-        dry_run=False,
+    response = _audit_user_config_differences(
+        cls, data, command_name, request.user.username
     )
 
     if response:
@@ -1292,13 +1301,11 @@ def validate_standard_broadcast_messages(request):
 @permission_required("api.can_change_standard_broadcast_messages", raise_exception=True)
 def set_standard_broadcast_messages(request):
     command_name = "set_standard_broadcast_messages"
+    cls = StandardBroadcastMessagesUserConfig
     data = _get_data(request)
 
-    response = _validate_user_config(
-        StandardBroadcastMessagesUserConfig,
-        data=data,
-        command_name=command_name,
-        dry_run=False,
+    response = _audit_user_config_differences(
+        cls, data, command_name, request.user.username
     )
 
     if response:
@@ -1377,13 +1384,11 @@ def validate_standard_punishments_messages(request):
 )
 def set_standard_punishments_messages(request):
     command_name = "set_standard_punishments_messages"
+    cls = StandardPunishmentMessagesUserConfig
     data = _get_data(request)
 
-    response = _validate_user_config(
-        StandardPunishmentMessagesUserConfig,
-        data=data,
-        command_name=command_name,
-        dry_run=False,
+    response = _audit_user_config_differences(
+        cls, data, command_name, request.user.username
     )
 
     if response:
@@ -1458,13 +1463,11 @@ def validate_standard_welcome_messages(request):
 @permission_required("api.can_change_standard_welcome_messages", raise_exception=True)
 def set_standard_welcome_messages(request):
     command_name = "set_standard_welcome_messages"
+    cls = StandardWelcomeMessagesUserConfig
     data = _get_data(request)
 
-    response = _validate_user_config(
-        StandardWelcomeMessagesUserConfig,
-        data=data,
-        command_name=command_name,
-        dry_run=False,
+    response = _audit_user_config_differences(
+        cls, data, command_name, request.user.username
     )
 
     if response:
@@ -1562,10 +1565,11 @@ def validate_steam_config(request):
 @record_audit
 def set_steam_config(request):
     command_name = "set_steam_config"
+    cls = SteamUserConfig
     data = _get_data(request)
 
-    response = _validate_user_config(
-        SteamUserConfig, data=data, command_name=command_name, dry_run=False
+    response = _audit_user_config_differences(
+        cls, data, command_name, request.user.username
     )
 
     if response:
@@ -1638,13 +1642,11 @@ def validate_vac_game_bans_config(request):
 @record_audit
 def set_vac_game_bans_config(request):
     command_name = "set_vac_game_bans_config"
+    cls = VacGameBansUserConfig
     data = _get_data(request)
 
-    response = _validate_user_config(
-        VacGameBansUserConfig,
-        data=data,
-        command_name=command_name,
-        dry_run=False,
+    response = _audit_user_config_differences(
+        cls, data, command_name, request.user.username
     )
 
     if response:
@@ -1726,13 +1728,11 @@ def validate_admin_pings_discord_webhooks_config(request):
 @record_audit
 def set_admin_pings_discord_webhooks_config(request):
     command_name = "set_admin_pings_webhooks_config"
+    cls = AdminPingWebhooksUserConfig
     data = _get_data(request)
 
-    response = _validate_user_config(
-        AdminPingWebhooksUserConfig,
-        data=data,
-        command_name=command_name,
-        dry_run=False,
+    response = _audit_user_config_differences(
+        cls, data, command_name, request.user.username
     )
 
     if response:
@@ -1812,13 +1812,11 @@ def validate_audit_discord_webhooks_config(request):
 @record_audit
 def set_audit_discord_webhooks_config(request):
     command_name = "set_audit_webhooks_config"
+    cls = AuditWebhooksUserConfig
     data = _get_data(request)
 
-    response = _validate_user_config(
-        AuditWebhooksUserConfig,
-        data=data,
-        command_name=command_name,
-        dry_run=False,
+    response = _audit_user_config_differences(
+        cls, data, command_name, request.user.username
     )
 
     if response:
@@ -1896,10 +1894,11 @@ def validate_camera_discord_webhooks_config(request):
 )
 def set_camera_discord_webhooks_config(request):
     command_name = "set_camera_discord_webhooks"
+    cls = CameraWebhooksUserConfig
     data = _get_data(request)
 
-    response = _validate_user_config(
-        CameraWebhooksUserConfig, data=data, command_name=command_name, dry_run=False
+    response = _audit_user_config_differences(
+        cls, data, command_name, request.user.username
     )
 
     if response:
@@ -1979,13 +1978,11 @@ def validate_chat_discord_webhooks_config(request):
 @record_audit
 def set_chat_discord_webhooks_config(request):
     command_name = "set_chat_webhooks_config"
+    cls = ChatWebhooksUserConfig
     data = _get_data(request)
 
-    response = _validate_user_config(
-        ChatWebhooksUserConfig,
-        data=data,
-        command_name=command_name,
-        dry_run=False,
+    response = _audit_user_config_differences(
+        cls, data, command_name, request.user.username
     )
 
     if response:
@@ -2065,13 +2062,11 @@ def validate_kills_discord_webhooks_config(request):
 @record_audit
 def set_kills_discord_webhooks_config(request):
     command_name = "set_kills_webhooks_config"
+    cls = KillsWebhooksUserConfig
     data = _get_data(request)
 
-    response = _validate_user_config(
-        KillsWebhooksUserConfig,
-        data=data,
-        command_name=command_name,
-        dry_run=False,
+    response = _audit_user_config_differences(
+        cls, data, command_name, request.user.username
     )
 
     if response:
@@ -2149,10 +2144,11 @@ def validate_watchlist_discord_webhooks_config(request):
 )
 def set_watchlist_discord_webhooks_config(request):
     command_name = "set_watchlist_discord_webhooks"
+    cls = WatchlistWebhooksUserConfig
     data = _get_data(request)
 
-    response = _validate_user_config(
-        WatchlistWebhooksUserConfig, data=data, command_name=command_name, dry_run=False
+    response = _audit_user_config_differences(
+        cls, data, command_name, request.user.username
     )
 
     if response:
