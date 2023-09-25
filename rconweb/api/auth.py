@@ -49,8 +49,6 @@ class RconResponse:
 
 
 def api_response(*args, **kwargs):
-    # logger.error(f"{args=}")
-    # logger.error(f"{kwargs=}")
     status_code = kwargs.pop("status_code", 200)
     return JsonResponse(RconResponse(*args, **kwargs).to_dict(), status=status_code)
 
