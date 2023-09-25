@@ -4,8 +4,9 @@ import os
 import pathlib
 import sqlite3
 import time
+from collections import defaultdict
 from sqlite3 import Connection
-from typing import TypedDict
+from typing import Callable, TypedDict
 from urllib.parse import urljoin
 
 import discord
@@ -228,7 +229,11 @@ def escaped_name(stat):
     )
 
 
-def get_stat(stats, key, limit: int, post_process=lambda v: v, reverse=True, **kwargs):
+def get_stat(
+    stats, key, limit: int, post_process: Callable | None = None, reverse=True, **kwargs
+):
+    if post_process is None:
+        post_process = lambda v: v
     stats = sorted(stats, key=lambda stat: stat[key], reverse=reverse)[:limit]
 
     return "```md\n%s\n```" % "\n".join(
@@ -242,21 +247,25 @@ def get_embeds(server_info, stats, config: ScorebotUserConfig):
     embeds.append(get_header_embed(server_info, config))
 
     stat_display_lookup = {
-        "top_killers": "kills",
-        "top_ratio": "kill_death_ratio",
-        "top_performance": "kills_per_minute",
-        "try_harders": "deaths_per_minute",
-        "top_stamina": "deaths",
-        "top_kill_streak": "kills_streak",
-        "i_never_give_up": "deaths_without_kill_streak",
-        "most_patient": "deaths_by_tk",
-        "im_clumsy": "teamkills",
-        "i_need_glasses": "teamkills_streak",
-        "i_love_voting": "nb_vote_started",
-        "what_is_a_break": "time_seconds",
-        "survivors": "longest_life_secs",
-        "u_r_still_a_man": "shortest_life_secs",
+        "TOP_KILLERS": "kills",
+        "TOP_RATIO": "kill_death_ratio",
+        "TOP_PERFORMANCE": "kills_per_minute",
+        "TRY_HARDERS": "deaths_per_minute",
+        "TOP_STAMINA": "deaths",
+        "TOP_KILL_STREAK": "kills_streak",
+        "I_NEVER_GIVE_UP": "deaths_without_kill_streak",
+        "MOST_PATIENT": "deaths_by_tk",
+        "IM_CLUMSY": "teamkills",
+        "I_NEED_GLASSES": "teamkills_streak",
+        "I_LOVE_VOTING": "nb_vote_started",
+        "WHAT_IS_A_BREAK": "time_seconds",
+        "SURVIVORS": "longest_life_secs",
+        "U_R_STILL_A_MAN": "shortest_life_secs",
     }
+
+    stat_display_lambda_lookup = defaultdict(None)
+    stat_display_lambda_lookup["what_is_a_break"] = lambda v: round(v / 60, 2)
+    stat_display_lambda_lookup["survivors"] = lambda v: round(v / 60, 2)
 
     current_embed = Embed(
         color=13734400,
@@ -273,7 +282,10 @@ def get_embeds(server_info, stats, config: ScorebotUserConfig):
             current_embed.add_field(
                 name=stat_display.display_format,
                 value=get_stat(
-                    stats, stat_display_lookup[stat_display.type], config.top_limit
+                    stats,
+                    stat_display_lookup[stat_display.type],
+                    config.top_limit,
+                    post_process=stat_display_lambda_lookup[stat_display.type],
                 ),
             )
             if idx % 2:
