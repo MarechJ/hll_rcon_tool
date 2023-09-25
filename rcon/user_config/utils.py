@@ -75,11 +75,21 @@ class BaseUserConfig(pydantic.BaseModel):
         )
 
     @classmethod
-    def load_from_db(cls) -> Self:
+    def load_from_db(cls, default_on_error: bool = True) -> Self:
         conf = get_user_config(cls.KEY(), None)
 
         if conf:
-            return cls.model_validate(conf)
+            try:
+                return cls.model_validate(conf)
+            except pydantic.ValidationError as e:
+                if default_on_error:
+                    logger.error(
+                        f"Validation error loading {cls.KEY()}, returning defaults"
+                    )
+                    logger.error(e)
+                    return cls()
+                else:
+                    raise
         else:
             logger.warning(f"{cls.KEY()} not found, returning defaults")
 
