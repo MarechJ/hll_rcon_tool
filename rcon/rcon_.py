@@ -119,16 +119,7 @@ class Rcon(ServerCtl):
     )
 
     def __init__(self, *args, pool_size: bool | None = None, **kwargs):
-        try:
-            config = RconConnectionSettingsUserConfig.load_from_db()
-        except ValueError as e:
-            # This might look dumb but pydantic provides useful error messages in the
-            # stack trace and we don't have to remember to keep updating this if we add
-            # any more fields to RconSettingsUserConfig config
-            logger.exception(e)
-            logger.error("Error when loading settings, falling back to defaults")
-            config = RconConnectionSettingsUserConfig()
-
+        config = RconConnectionSettingsUserConfig.load_from_db()
         super().__init__(
             *args, **kwargs, max_open=config.max_open, max_idle=config.max_idle
         )

@@ -94,11 +94,7 @@ def run():
     rcon_hook = Rcon(SERVER_INFO)
 
     while True:
-        try:
-            config = ExpiredVipsUserConfig.load_from_db()
-        except:
-            # TODO: update
-            raise
+        config = ExpiredVipsUserConfig.load_from_db()
 
         if config.enabled:
             remove_expired_vips(rcon_hook, config.discord_webhook_url)

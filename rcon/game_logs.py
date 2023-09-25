@@ -171,13 +171,7 @@ def send_log_line_webhook_message(
 @ttl_cache(ttl=60 * 5)
 def load_generic_hooks():
     """Load and validate all the subscribed log line webhooks from config.yml"""
-    try:
-        config = LogLineWebhookUserConfig.load_from_db()
-    except Exception as e:
-        logger.exception(e)
-        logger.error("Error when loading settings")
-        return
-
+    config = LogLineWebhookUserConfig.load_from_db()
     for conf in config.log_types:
         # mentions = [h.user_mentions + h.role_mentions for h in conf.webhooks]
         func = partial(send_log_line_webhook_message, conf.webhooks)

@@ -146,13 +146,9 @@ def do_punitions(rcon: Rcon, punitions_to_apply: PunitionsToApply):
 def enabled_moderators():
     red = get_redis_client()
 
-    try:
-        level_thresholds_config = AutoModLevelUserConfig.load_from_db()
-        no_leader_config = AutoModNoLeaderUserConfig.load_from_db()
-        seeding_config = AutoModSeedingUserConfig.load_from_db()
-    except Exception as e:
-        logger.exception(e)
-        raise
+    level_thresholds_config = AutoModLevelUserConfig.load_from_db()
+    no_leader_config = AutoModNoLeaderUserConfig.load_from_db()
+    seeding_config = AutoModSeedingUserConfig.load_from_db()
 
     return list(
         filter(

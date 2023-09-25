@@ -226,11 +226,7 @@ def should_ban(
 
 
 def ban_if_has_vac_bans(rcon: Rcon, steam_id_64, name):
-    try:
-        config = VacGameBansUserConfig.load_from_db()
-    except Exception as e:
-        logger.exception(e)
-        return
+    config = VacGameBansUserConfig.load_from_db()
 
     max_days_since_ban = config.vac_history_days
     max_game_bans = (
