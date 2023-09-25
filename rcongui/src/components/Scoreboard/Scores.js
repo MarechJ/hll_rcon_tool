@@ -111,10 +111,10 @@ const TopList = pure(
         </React.Fragment>
         {sortedScore.map((s, idx) =>
           playersFilter.size === 0 ||
-          playersFilter.includes(
-            s.get("player") ||
+            playersFilter.includes(
+              s.get("player") ||
               s.get("steaminfo")?.get("profile")?.get("personaname")
-          ) ? (
+            ) ? (
             <PlayerItem
               key={statKey + idx}
               score={s}
@@ -197,8 +197,8 @@ const RawScores = pure(({ classes, scores }) => {
     lastState !== null
       ? parseInt(lastState)
       : process.env.REACT_APP_PUBLIC_BUILD
-      ? 0
-      : 1
+        ? 0
+        : 1
   );
   const [rowsPerPage, setRowsPerPage] = React.useState(50);
   const [columns, setColumns] = React.useState([
@@ -405,7 +405,7 @@ const Scores = pure(({ classes, scores, durationToHour, type }) => {
           </Grid>
           <Grid item xs={12} className={classes.doublePadding}>
             <Typography variant="caption">
-              You can click on a player to see his details
+              You can click on a player to see their details
             </Typography>
           </Grid>
 
