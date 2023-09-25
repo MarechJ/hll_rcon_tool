@@ -14,6 +14,10 @@ class SquadHasLeader(Exception):
     pass
 
 
+class NoSoloTanker(Exception):
+    pass
+
+
 class SquadCycleOver(Exception):
     pass
 
@@ -362,3 +366,42 @@ class LevelThresholdsConfig:
     max_level_message: str = "Access to this server is not allowed over level {level}"
 
     level_thresholds: LevelByRoleConfig = field(default_factory=LevelByRoleConfig)
+
+
+@dataclass
+class NoSoloTankConfig:
+    enabled: bool = False
+    dry_run: bool = True
+    whitelist_flags: List = field(default_factory=lambda: ['🚨'])
+    discord_webhook_url: str = ""
+
+    number_of_notes: int = 2  # Let's give the mates some time to arrive
+    notes_interval_seconds: int = 60
+
+    number_of_warning: int = 2
+    warning_interval_seconds: int = 60
+    warning_message: str = (
+        "Warning, {player_name} !\n\n"
+        "You can't play solo tank on this server !\n\n"
+        "You will be punished after {max_warnings} warnings\n"
+        "(you already received {received_warnings})\n\n"
+        "Next check will happen automatically in {next_check_seconds}s."
+    )
+
+    disable_punish_below_server_player_count: int = 40
+    number_of_punish: int = 2
+    punish_interval_seconds: int = 60
+    punish_message: str = (
+        "You violated solo tank rule on this server.\n"
+        "You're being punished by a bot ({received_punishes}/{max_punishes}).\n"
+        "Next check in {next_check_seconds}s."
+    )
+
+    disable_kick_below_server_player_count: int = 40
+    kick_after_max_punish: bool = False
+    kick_grace_period_seconds: int = 60
+    kick_message: str = (
+        "You violated solo tank rule on this server.\n"
+        "Your grace period of {kick_grace_period}s has passed.\n"
+        "You failed to comply with the previous warnings."
+    )
