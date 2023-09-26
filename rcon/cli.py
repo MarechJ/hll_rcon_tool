@@ -229,6 +229,19 @@ def process_games(start_day_offset, end_day_offset=0, force=False):
                 continue
 
 
+def _models_to_exclude():
+    """Return model classes that do not map directly to a user config"""
+    # Any sort of parent class that doesn't directly map to a user config
+    # should be excluded
+    return set(
+        [
+            BaseWebhookUserConfig.__name__,
+            BaseMentionWebhookUserConfig.__name__,
+            BaseUserConfig.__name__,
+        ]
+    )
+
+
 @cli.command(name="get_user_settings")
 @click.argument("server", type=int)
 @click.argument("output", type=click.Path())
@@ -292,20 +305,10 @@ def set_user_settings(server: int, input: click.Path, file_type="yaml", dry_run=
     if file_type not in ALLOWED_TYPES:
         raise ValueError(f"{file_type} must be one of {ALLOWED_TYPES}")
 
-    # Any sort of parent class that doesn't directly map to a user config
-    # should be excluded
-    models_to_exclude = set(
-        [
-            BaseWebhookUserConfig.__name__,
-            BaseMentionWebhookUserConfig.__name__,
-            BaseUserConfig.__name__,
-        ]
-    )
-
     config_models: dict[str, Type[BaseUserConfig]] = {
         model.__name__: model
         for model in rcon.user_config.utils.all_subclasses(BaseUserConfig)
-        if model.__name__ not in models_to_exclude
+        if model.__name__ not in _models_to_exclude()
     }
 
     user_settings: dict[str, Any]
@@ -354,6 +357,31 @@ def set_user_settings(server: int, input: click.Path, file_type="yaml", dry_run=
             )
             print(f"setting {key=} class={cls.__name__}")
             rcon.user_config.utils.set_user_config(key, model.model_dump())
+
+
+@cli.command(name="reset_user_settings")
+@click.argument("server", type=int)
+def reset_user_settings(server: int):
+    """Reset all user settings for SERVER to their defaults.
+
+    There is no way to undo this if you do not save your settings in advance!
+
+    SERVER: The server number (SERVER_NUMBER as set in the compose files).
+    """
+
+    models: list[Type[BaseUserConfig]] = [
+        model
+        for model in rcon.user_config.utils.all_subclasses(BaseUserConfig)
+        if model.__name__ not in _models_to_exclude()
+    ]
+
+    for cls in models:
+        model = cls()
+        key = rcon.user_config.utils.USER_CONFIG_KEY_FORMAT.format(
+            server=server, cls_name=cls.__name__
+        )
+        print(f"Resetting {key=} class={cls.__name__}")
+        rcon.user_config.utils.set_user_config(key, model.model_dump())
 
 
 PREFIXES_TO_EXPOSE = ["get_", "set_", "do_"]
