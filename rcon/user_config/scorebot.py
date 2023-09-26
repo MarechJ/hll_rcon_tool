@@ -1,7 +1,7 @@
 import enum
-from typing import TypedDict
+from typing import Optional, TypedDict
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, HttpUrl, field_serializer, field_validator
 
 from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
 
@@ -59,20 +59,20 @@ U_R_STILL_A_MAN = "U'R STILL A MAN\n*shortest life (min.)*"
 
 # # Have to inherit from str to allow for JSON serialization w/ pydantic
 class StatTypes(str, enum.Enum):
-    top_killers = "top_killers"
-    top_ratio = "top_ratio"
-    top_performance = "top_performance"
-    try_harders = "try_harders"
-    top_stamina = "top_stamina"
-    top_kill_streak = "top_kill_streak"
-    most_patient = "most_patient"
-    i_never_give_up = "i_never_give_up"
-    im_clumsy = "im_clumsy"
-    i_need_glasses = "i_need_glasses"
-    i_love_voting = "i_love_voting"
-    what_is_a_break = "what_is_a_break"
-    survivors = "survivors"
-    u_r_still_a_man = "u_r_still_a_man"
+    top_killers = "TOP_KILLERS"
+    top_ratio = "TOP_RATIO"
+    top_performance = "TOP_PERFORMANCE"
+    try_harders = "TRY_HARDERS"
+    top_stamina = "TOP_STAMINA"
+    top_kill_streak = "TOP_KILL_STREAK"
+    most_patient = "MOST_PATIENT"
+    i_never_give_up = "I_NEVER_GIVE_UP"
+    im_clumsy = "IM_CLUMSY"
+    i_need_glasses = "I_NEED_GLASSES"
+    i_love_voting = "I_LOVE_VOTING"
+    what_is_a_break = "WHAT_IS_A_BREAK"
+    survivors = "SURVIVORS"
+    u_r_still_a_man = "U_R_STILL_A_MAN"
 
 
 def seed_default_displays():
@@ -140,8 +140,8 @@ class ScorebotConfigType(TypedDict):
 
     stats_to_display: list[StatDisplay]
 
-    base_api_url: str
-    base_scoreboard_url: str
+    base_api_url: HttpUrl
+    base_scoreboard_url: HttpUrl
 
     stats_endpoint: str
     info_endpoint: str
@@ -170,14 +170,21 @@ class ScorebotUserConfig(BaseUserConfig):
 
     stats_to_display: list[StatDisplay] = Field(default_factory=seed_default_displays)
 
-    base_api_url: str = Field(default=None)
-    base_scoreboard_url: str = Field(default=None)
+    base_api_url: Optional[HttpUrl] = Field(default=None)
+    base_scoreboard_url: Optional[HttpUrl] = Field(default=None)
 
     stats_endpoint: str = Field(default="/api/get_live_game_stats")
     info_endpoint: str = Field(default="/api/public_info")
     past_games_endpoint: str = Field(default="/#/gamescoreboard")
 
     webhook_urls: list[str] = Field(default_factory=list)
+
+    @field_serializer("base_api_url", "base_scoreboard_url")
+    def serialize_server_url(self, url: HttpUrl, _info):
+        if url is not None:
+            return str(url)
+        else:
+            return None
 
     @field_validator("stats_to_display")
     @classmethod
@@ -194,53 +201,60 @@ class ScorebotUserConfig(BaseUserConfig):
     @property
     def stats_url(self) -> str:
         if not self.base_api_url:
-            return ""
+            raise ValueError("base API URL not set")
 
-        if self.base_api_url[-1] == "/":
-            api_url = self.base_api_url[:-1]
+        if str(self.base_api_url).endswith("/"):
+            api_url = str(self.base_api_url)[:-1]
         else:
-            api_url = self.base_api_url
+            api_url = str(self.base_api_url)
 
-        if self.stats_endpoint[0] != "/":
+        if not self.stats_endpoint.endswith("/"):
             stats_endpoint = "/" + self.stats_endpoint
         else:
             stats_endpoint = self.stats_endpoint
 
-        return api_url + stats_endpoint
+        validated_url = api_url + stats_endpoint
+
+        HttpUrl(validated_url)
+        return validated_url
 
     @property
     def info_url(self) -> str:
         if not self.base_api_url:
-            return ""
+            raise ValueError("base API URL not set")
 
-        if self.base_api_url[-1] == "/":
-            api_url = self.base_api_url[:-1]
+        if str(self.base_api_url).endswith("/"):
+            api_url = str(self.base_api_url)[:-1]
         else:
-            api_url = self.base_api_url
+            api_url = str(self.base_api_url)
 
-        if self.info_endpoint[0] != "/":
+        if not self.info_endpoint.endswith("/"):
             info_endpoint = "/" + self.info_endpoint
         else:
             info_endpoint = self.info_endpoint
 
-        return api_url + info_endpoint
+        validated_url = api_url + info_endpoint
+        HttpUrl(validated_url)
+        return validated_url
 
     @property
     def past_games_url(self) -> str:
         if not self.base_scoreboard_url:
-            return ""
+            raise ValueError("base scoreboard URL not set")
 
-        if self.base_scoreboard_url[-1] == "/":
-            scoreboard_url = self.base_scoreboard_url[:-1]
+        if str(self.base_scoreboard_url).endswith("/"):
+            scoreboard_url = str(self.base_scoreboard_url)[:-1]
         else:
-            scoreboard_url = self.base_scoreboard_url
+            scoreboard_url = str(self.base_scoreboard_url)
 
-        if self.past_games_endpoint[0] != "/":
+        if not self.past_games_endpoint.endswith("/"):
             past_games_endpoint = "/" + self.past_games_endpoint
         else:
             past_games_endpoint = self.past_games_endpoint
 
-        return scoreboard_url + past_games_endpoint
+        validated_url = scoreboard_url + past_games_endpoint
+        HttpUrl(validated_url)
+        return validated_url
 
     @staticmethod
     def save_to_db(values: ScorebotConfigType, dry_run=False):

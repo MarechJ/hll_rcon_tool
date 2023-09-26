@@ -3,6 +3,7 @@ import logging
 import os
 import pathlib
 import sqlite3
+import sys
 import time
 from collections import defaultdict
 from sqlite3 import Connection
@@ -152,7 +153,7 @@ def get_map_image(server_info, config: ScorebotUserConfig):
     img = map_to_pict.get(
         server_info["current_map"]["just_name"], server_info["current_map"]["just_name"]
     )
-    url = urljoin(config.base_scoreboard_url, img)
+    url = urljoin(str(config.base_scoreboard_url), img)
     return url
 
 
@@ -167,7 +168,7 @@ def get_header_embed(public_info: PublicInfoType, config: ScorebotUserConfig):
         description=f"**{public_info['current_map']['human_name']} - {config.elapsed_time_text}{round(elapsed_time_minutes)} min. - {public_info['player_count']}/{public_info['max_player_count']} {config.players_text}**",
         color=13734400,
         timestamp=datetime.datetime.utcnow(),
-        url=config.base_scoreboard_url,
+        url=str(config.base_scoreboard_url),
     )
     total_votes = public_info["vote_status"]["total_votes"]
     winning_map_votes = 0
@@ -211,7 +212,7 @@ def get_header_embed(public_info: PublicInfoType, config: ScorebotUserConfig):
 
     embed.set_author(
         name=config.author_name_text,
-        url=config.base_scoreboard_url,
+        url=str(config.base_scoreboard_url),
         icon_url=config.author_icon_url,
     )
     embed.set_image(url=get_map_image(public_info, config))
@@ -247,25 +248,25 @@ def get_embeds(server_info, stats, config: ScorebotUserConfig):
     embeds.append(get_header_embed(server_info, config))
 
     stat_display_lookup = {
-        "TOP_KILLERS": "kills",
-        "TOP_RATIO": "kill_death_ratio",
-        "TOP_PERFORMANCE": "kills_per_minute",
-        "TRY_HARDERS": "deaths_per_minute",
-        "TOP_STAMINA": "deaths",
-        "TOP_KILL_STREAK": "kills_streak",
-        "I_NEVER_GIVE_UP": "deaths_without_kill_streak",
-        "MOST_PATIENT": "deaths_by_tk",
-        "IM_CLUMSY": "teamkills",
-        "I_NEED_GLASSES": "teamkills_streak",
-        "I_LOVE_VOTING": "nb_vote_started",
-        "WHAT_IS_A_BREAK": "time_seconds",
-        "SURVIVORS": "longest_life_secs",
-        "U_R_STILL_A_MAN": "shortest_life_secs",
+        StatTypes("TOP_KILLERS"): "kills",
+        StatTypes("TOP_RATIO"): "kill_death_ratio",
+        StatTypes("TOP_PERFORMANCE"): "kills_per_minute",
+        StatTypes("TRY_HARDERS"): "deaths_per_minute",
+        StatTypes("TOP_STAMINA"): "deaths",
+        StatTypes("TOP_KILL_STREAK"): "kills_streak",
+        StatTypes("I_NEVER_GIVE_UP"): "deaths_without_kill_streak",
+        StatTypes("MOST_PATIENT"): "deaths_by_tk",
+        StatTypes("IM_CLUMSY"): "teamkills",
+        StatTypes("I_NEED_GLASSES"): "teamkills_streak",
+        StatTypes("I_LOVE_VOTING"): "nb_vote_started",
+        StatTypes("WHAT_IS_A_BREAK"): "time_seconds",
+        StatTypes("SURVIVORS"): "longest_life_secs",
+        StatTypes("U_R_STILL_A_MAN"): "shortest_life_secs",
     }
 
-    stat_display_lambda_lookup = defaultdict(None)
-    stat_display_lambda_lookup["what_is_a_break"] = lambda v: round(v / 60, 2)
-    stat_display_lambda_lookup["survivors"] = lambda v: round(v / 60, 2)
+    stat_display_lambda_lookup = {}
+    stat_display_lambda_lookup["WHAT_IS_A_BREAK"] = lambda v: round(v / 60, 2)
+    stat_display_lambda_lookup["SURVIVORS"] = lambda v: round(v / 60, 2)
 
     current_embed = Embed(
         color=13734400,
@@ -278,14 +279,13 @@ def get_embeds(server_info, stats, config: ScorebotUserConfig):
         embeds.append(current_embed)
     else:
         for idx, stat_display in enumerate(config.stats_to_display):
-            logger.warning(f"{stat_display=}")
             current_embed.add_field(
                 name=stat_display.display_format,
                 value=get_stat(
                     stats,
                     stat_display_lookup[stat_display.type],
                     config.top_limit,
-                    post_process=stat_display_lambda_lookup[stat_display.type],
+                    post_process=stat_display_lambda_lookup.get(stat_display.type),
                 ),
             )
             if idx % 2:
@@ -302,7 +302,6 @@ def get_embeds(server_info, stats, config: ScorebotUserConfig):
     embeds[-1].set_footer(
         icon_url=config.footer_icon_url, text="Community RCon based stats by Dr.WeeD"
     )
-    print(embeds)
     return embeds
 
 
@@ -324,6 +323,7 @@ def cleanup_orphaned_messages(conn: Connection, server_number: int, webhook_url:
     conn.commit()
 
 
+# TODO: invalidate cache when setting
 @ttl_cache(ttl=5 * 60 * 60)
 def refresh_config() -> ScorebotUserConfig:
     config = ScorebotUserConfig.load_from_db()
@@ -374,6 +374,16 @@ def run():
             )
             for webhook_url in config.webhook_urls
         ]
+
+        if config.base_api_url is None:
+            print("Your scorebot base API URL is not configured, exiting")
+            logger.error("Your scorebot base API URL is not configured, exiting")
+            sys.exit(-1)
+
+        if config.base_scoreboard_url is None:
+            print("Your scorebot base API URL is not configured, exiting")
+            logger.error("Your scorebot base API URL is not configured, exiting")
+            sys.exit(-1)
 
         try:
             public_info = requests.get(config.info_url, verify=False).json()["result"]
