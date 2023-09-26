@@ -1,4 +1,5 @@
 import json
+from copy import copy
 from logging import getLogger
 from typing import Any, Type
 
@@ -32,7 +33,8 @@ from rcon.user_config.steam import SteamUserConfig
 from rcon.user_config.utils import (
     DISCORD_AUDIT_FORMAT,
     BaseUserConfig,
-    MissingKeysConfigurationError,
+    InvalidKeysConfigurationError,
+    set_user_config,
 )
 from rcon.user_config.vac_game_bans import VacGameBansUserConfig
 from rcon.user_config.webhooks import (
@@ -61,10 +63,45 @@ def _validate_user_config(
 ) -> JsonResponse | None:
     error_msg = None
 
+    # Make a copy for responses, but remove keys from data
+    # so they aren't registered as extra keys and generate
+    # InvalidKeysConfigurationError exceptions
+    arguments = copy(data)
     if "errors_as_json" in data:
         errors_as_json: bool = bool(data.pop("errors_as_json"))
     else:
         errors_as_json = False
+
+    if "reset_to_default" in data:
+        reset_to_default: bool = bool(data.pop("reset_to_default"))
+    else:
+        reset_to_default = False
+
+    if reset_to_default:
+        try:
+            default = model()
+            set_user_config(default.KEY(), default.model_dump())
+            return api_response(
+                command=command_name,
+                failed=False,
+                result=default.model_dump(),
+                arguments=arguments,
+            )
+        except pydantic.ValidationError as e:
+            if errors_as_json:
+                error_msg = e.json()
+            else:
+                error_msg = str(e)
+            logger.warning(error_msg)
+            return api_response(
+                command=command_name, failed=True, error=error_msg, arguments=arguments
+            )
+        except Exception as e:
+            error_msg = str(e)
+            logger.exception(e)
+            return api_response(
+                command=command_name, failed=True, error=error_msg, arguments=arguments
+            )
 
     try:
         model.save_to_db(values=data, dry_run=dry_run)  # type: ignore
@@ -75,22 +112,22 @@ def _validate_user_config(
             error_msg = str(e)
         logger.warning(error_msg)
         return api_response(
-            command=command_name, failed=True, error=error_msg, arguments=data
+            command=command_name, failed=True, error=error_msg, arguments=arguments
         )
-    except MissingKeysConfigurationError as e:
+    except InvalidKeysConfigurationError as e:
         if errors_as_json:
             error_msg = json.dumps([e.asdict()])
         else:
             error_msg = str(e)
         logger.warning(error_msg)
         return api_response(
-            command=command_name, failed=True, error=error_msg, arguments=data
+            command=command_name, failed=True, error=error_msg, arguments=arguments
         )
     except Exception as e:
         error_msg = str(e)
         logger.exception(e)
         return api_response(
-            command=command_name, failed=True, error=error_msg, arguments=data
+            command=command_name, failed=True, error=error_msg, arguments=arguments
         )
 
 

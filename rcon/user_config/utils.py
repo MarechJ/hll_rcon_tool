@@ -24,7 +24,7 @@ def key_check(mandatory_keys: frozenset, provided_keys: Iterable[str]):
     missing_keys = mandatory_keys - set(provided_keys)
     extra_keys = set(provided_keys) - mandatory_keys
     if extra_keys or missing_keys:
-        raise MissingKeysConfigurationError(
+        raise InvalidKeysConfigurationError(
             missing_keys=set(missing_keys),
             mandatory_keys=set(mandatory_keys),
             provided_keys=set(provided_keys),
@@ -37,7 +37,9 @@ class _listType(pydantic.BaseModel):
     values: list[Any]
 
 
-class MissingKeysConfigurationError(Exception):
+class InvalidKeysConfigurationError(Exception):
+    """Raised for user configs that have extra or missing keys"""
+
     def __init__(
         self,
         missing_keys: set[str] = set(),
@@ -58,7 +60,7 @@ class MissingKeysConfigurationError(Exception):
 
     def asdict(self):
         return {
-            "type": MissingKeysConfigurationError.__name__,
+            "type": InvalidKeysConfigurationError.__name__,
             "missing_keys": [k for k in self.missing_keys],
             "mandatory_keys": [k for k in self.mandatory_keys],
             "provided_keys": [k for k in self.provided_keys],
