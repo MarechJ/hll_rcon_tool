@@ -1,5 +1,5 @@
 import logging
-from typing import Any, ClassVar, Iterable, Self
+from typing import Any, Iterable, Self
 
 import pydantic
 from sqlalchemy.exc import InvalidRequestError

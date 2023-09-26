@@ -245,9 +245,6 @@ def _models_to_exclude():
 @cli.command(name="get_user_settings")
 @click.argument("server", type=int)
 @click.argument("output", type=click.Path())
-@click.option(
-    "--type", "file_type", type=str, default="yaml", help="File format (JSON or YAML)"
-)
 def get_user_setting(server: int, output: click.Path, file_type="yaml"):
     """Dump all user settings for SERVER to OUTPUT file.
 
@@ -256,11 +253,6 @@ def get_user_setting(server: int, output: click.Path, file_type="yaml"):
     Only configured settings are dumped, never defaults.
     """
     key_format = "{server}_{cls_name}"
-    file_type = file_type.upper()
-
-    ALLOWED_TYPES = ("JSON", "YAML", "YML")
-    if file_type not in ALLOWED_TYPES:
-        raise ValueError(f"{file_type} must be one of {ALLOWED_TYPES}")
 
     keys_to_models: dict[str, BaseUserConfig] = {
         model.__name__: model
@@ -275,23 +267,19 @@ def get_user_setting(server: int, output: click.Path, file_type="yaml"):
         value = rcon.user_config.utils.get_user_config(key)
         if value:
             config = model.model_validate(value)
-            dump[model.__name__] = config.model_dump()
+            dump[key] = config.model_dump()
 
     with open(str(output), "w") as fp:
-        if file_type == "JSON":
-            fp.write((json.dumps(dump, indent=2)))
-        else:
-            fp.write((yaml.dump(dump)))
+        fp.write((json.dumps(dump, indent=2)))
+
+    print("Done")
 
 
 @cli.command(name="set_user_settings")
 @click.argument("server", type=int)
 @click.argument("input", type=click.Path())
-@click.option(
-    "--type", "file_type", type=str, default="yaml", help="File format (JSON or YAML)"
-)
 @click.option("--dry-run", type=bool, default=True, help="Validate settings only")
-def set_user_settings(server: int, input: click.Path, file_type="yaml", dry_run=True):
+def set_user_settings(server: int, input: click.Path, dry_run=True):
     """Set all (specified) user settings for SERVER from INPUT file.
 
     if DRY_RUN is not false, it will only validate the file.
@@ -299,38 +287,26 @@ def set_user_settings(server: int, input: click.Path, file_type="yaml", dry_run=
 
     SERVER: The server number (SERVER_NUMBER as set in the compose files).
     """
-    file_type = file_type.upper()
-
-    ALLOWED_TYPES = ("JSON", "YAML", "YML")
-    if file_type not in ALLOWED_TYPES:
-        raise ValueError(f"{file_type} must be one of {ALLOWED_TYPES}")
+    if dry_run:
+        print(f"{dry_run=} validating models only, not setting")
 
     config_models: dict[str, Type[BaseUserConfig]] = {
-        model.__name__: model
+        rcon.user_config.utils.USER_CONFIG_KEY_FORMAT.format(
+            server=server, cls_name=model.__name__
+        ): model
         for model in rcon.user_config.utils.all_subclasses(BaseUserConfig)
         if model.__name__ not in _models_to_exclude()
     }
 
     user_settings: dict[str, Any]
-    if file_type.upper() == "JSON":
-        with open(str(input)) as fp:
-            print(f"parsing JSON {input}")
-            try:
-                user_settings = json.load(fp)
-            except json.decoder.JSONDecodeError as e:
-                logger.error("JSON decoding error:")
-                logger.error(e)
-                sys.exit(-1)
-    else:
-        with open(str(input)) as fp:
-            print(f"parsing YAML {input}")
-            try:
-                user_settings = yaml.safe_load_all(fp)
-                # pprint(dict(user_settings))
-            except yaml.YAMLError as e:
-                logger.error("YAML decoding error:")
-                logger.error(e)
-                sys.exit(-1)
+    with open(str(input)) as fp:
+        print(f"parsing {input=}")
+        try:
+            user_settings = json.load(fp)
+        except json.decoder.JSONDecodeError as e:
+            logger.error("JSON decoding error:")
+            logger.error(e)
+            sys.exit(-1)
 
     for key in user_settings.keys():
         if key not in config_models:
@@ -341,9 +317,9 @@ def set_user_settings(server: int, input: click.Path, file_type="yaml", dry_run=
     model: BaseUserConfig
     for key, payload in user_settings.items():
         cls = config_models[key]
-        print(f"Parsing {key} as {cls}")
         try:
             model = cls(**payload)
+            print(f"Successfully parsed {key} as {cls}")
         except pydantic.ValidationError as e:
             logger.error(e)
             sys.exit(-1)
@@ -357,6 +333,8 @@ def set_user_settings(server: int, input: click.Path, file_type="yaml", dry_run=
             )
             print(f"setting {key=} class={cls.__name__}")
             rcon.user_config.utils.set_user_config(key, model.model_dump())
+
+    print("Done")
 
 
 @cli.command(name="reset_user_settings")
@@ -382,6 +360,8 @@ def reset_user_settings(server: int):
         )
         print(f"Resetting {key=} class={cls.__name__}")
         rcon.user_config.utils.set_user_config(key, model.model_dump())
+
+    print("Done")
 
 
 PREFIXES_TO_EXPOSE = ["get_", "set_", "do_"]
