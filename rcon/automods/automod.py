@@ -3,6 +3,7 @@ import time
 from threading import Timer
 from typing import List
 
+from pydantic import HttpUrl
 from redis.client import Redis
 
 from rcon.automods.level_thresholds import LevelThresholdsAutomod
@@ -182,8 +183,8 @@ def punish_squads(rcon: Rcon, r: Redis):
     set_first_run_done(r)
 
 
-def audit(discord_webhook_url: str, msg: str, author: str):
-    if discord_webhook_url is not None and discord_webhook_url != "":
+def audit(discord_webhook_url: HttpUrl | None, msg: str, author: str):
+    if discord_webhook_url is not None:
         send_to_discord_audit(
             msg, by=author, webhookurls=[discord_webhook_url], silent=False
         )

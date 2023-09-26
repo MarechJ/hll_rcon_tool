@@ -4,6 +4,7 @@ from datetime import datetime
 from enum import Enum, auto
 from typing import List, Mapping, Optional, TypedDict
 
+from pydantic import HttpUrl
 from pydantic.dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
@@ -58,7 +59,7 @@ class ActionMethod(Enum):
 class PunishDetails:
     author: str
     message: str = ""
-    discord_audit_url: Optional[str] = field(repr=False, default=None)
+    discord_audit_url: Optional[HttpUrl] = field(repr=False, default=None)
     dry_run: bool = False
 
 
