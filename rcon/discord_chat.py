@@ -61,25 +61,23 @@ class DiscordWebhookHandler:
         except Exception as e:
             logger.exception("Error initializing ping trigger webhooks: %s", e)
 
-        chat_trigger_webhooks = []
+        chat_webhooks = []
         try:
-            chat_trigger_webhooks = [
-                make_hook(hook.url) for hook in self.chat_wh_config.hooks
-            ]
+            chat_webhooks = [make_hook(hook.url) for hook in self.chat_wh_config.hooks]
         except Exception as e:
             logger.exception("Error initializing ping trigger webhooks: %s", e)
 
-        kills_trigger_webhooks = []
+        kills_webhooks = []
         try:
-            kills_trigger_webhooks = [
+            kills_webhooks = [
                 make_hook(hook.url) for hook in self.kills_wh_config.hooks
             ]
         except Exception as e:
             logger.exception("Error initializing ping trigger webhooks: %s", e)
 
         self.ping_trigger_webhooks = [wh for wh in ping_trigger_webhooks if wh]
-        self.chat_trigger_webhooks = [wh for wh in chat_trigger_webhooks if wh]
-        self.kills_trigger_webhooks = [wh for wh in kills_trigger_webhooks if wh]
+        self.chat_webhooks = [wh for wh in chat_webhooks if wh]
+        self.kills_webhooks = [wh for wh in kills_webhooks if wh]
 
     def send_chat_message(self, _, log):
         try:
@@ -135,8 +133,8 @@ class DiscordWebhookHandler:
                 "sending chat message len=%s to Discord", len(embed) + len(content)
             )
 
-            if self.chat_trigger_webhooks:
-                for wh in self.chat_trigger_webhooks:
+            if self.chat_webhooks:
+                for wh in self.chat_webhooks:
                     wh.send(content=content, embed=embed)
 
             if triggered and self.ping_trigger_webhooks:
@@ -147,7 +145,7 @@ class DiscordWebhookHandler:
             raise
 
     def send_generic_kill_message(self, _, log, action):
-        if not self.kills_trigger_webhooks:
+        if not self.kills_webhooks:
             return
 
         try:
@@ -179,8 +177,8 @@ class DiscordWebhookHandler:
             )
 
             logger.debug("sending kill message len=%s to Discord", len(embed))
-            if self.kills_trigger_webhooks:
-                for wh in self.kills_trigger_webhooks:
+            if self.kills_webhooks:
+                for wh in self.kills_webhooks:
                     wh.send(embed=embed)
         except Exception as e:
             logger.exception("error executing kill message webhook %s", e)
