@@ -518,6 +518,6 @@ def dict_differences(old: dict[Any, Any], new: dict[Any, Any]) -> dict[Any, Any]
                 diff[k] = sub_diff
         else:
             if old[k] != new[k]:
-                diff[k] = v
+                diff[k] = new[k]
 
     return diff
