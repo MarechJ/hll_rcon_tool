@@ -323,13 +323,6 @@ def cleanup_orphaned_messages(conn: Connection, server_number: int, webhook_url:
     conn.commit()
 
 
-# TODO: invalidate cache when setting
-@ttl_cache(ttl=5 * 60 * 60)
-def refresh_config() -> ScorebotUserConfig:
-    config = ScorebotUserConfig.load_from_db()
-    return config
-
-
 def create_table(conn):
     try:
         conn.execute(
@@ -358,7 +351,7 @@ def fetch_existing(conn, server_number: int, webhook_url: str):
 
 
 def run():
-    config = refresh_config()
+    config = ScorebotUserConfig.load_from_db()
     try:
         path = os.getenv("DISCORD_BOT_DATA_PATH", "/data")
         path = pathlib.Path(path) / pathlib.Path("scorebot.db")
@@ -410,7 +403,7 @@ def run():
                 message_id = message.id
 
         while True:
-            config = refresh_config()
+            config = ScorebotUserConfig.load_from_db()
             public_info = requests.get(config.info_url, verify=False).json()["result"]
             stats = get_stats(config.stats_url)
 
