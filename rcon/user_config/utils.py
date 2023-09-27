@@ -4,6 +4,7 @@ from typing import Any, Iterable, Self
 import pydantic
 from sqlalchemy.exc import InvalidRequestError
 
+from rcon.cache_utils import invalidates, ttl_cache
 from rcon.models import UserConfig, enter_session
 from rcon.utils import get_server_number
 
@@ -80,7 +81,6 @@ class BaseUserConfig(pydantic.BaseModel):
     @classmethod
     def load_from_db(cls, default_on_error: bool = True) -> Self:
         conf = get_user_config(cls.KEY(), None)
-
         if conf:
             try:
                 return cls.model_validate(conf)
@@ -107,6 +107,7 @@ def _get_conf(sess, key):
     return sess.query(UserConfig).filter(UserConfig.key == key).one_or_none()
 
 
+@ttl_cache(5 * 60 * 60, is_method=False)
 def get_user_config(key: str, default=None) -> str | None:
     logger.debug("Getting user config for %s", key)
     with enter_session() as sess:
@@ -127,16 +128,17 @@ def _set_default(sess, key, val):
 
 
 def set_user_config(key, object_):
-    logger.debug("Setting user config for %s with %s", key, object_)
-    with enter_session() as sess:
-        conf = _get_conf(sess, key)
-        if conf is None:
-            try:
-                _add_conf(sess, key, object_)
-            except InvalidRequestError as e:
-                # Don't let a previous failed transaction block future ones
-                logger.exception(e)
-                sess.rollback()
-        else:
-            conf.value = object_
-        sess.commit()
+    with invalidates(get_user_config):
+        logger.debug("Setting user config for %s with %s", key, object_)
+        with enter_session() as sess:
+            conf = _get_conf(sess, key)
+            if conf is None:
+                try:
+                    _add_conf(sess, key, object_)
+                except InvalidRequestError as e:
+                    # Don't let a previous failed transaction block future ones
+                    logger.exception(e)
+                    sess.rollback()
+            else:
+                conf.value = object_
+            sess.commit()
