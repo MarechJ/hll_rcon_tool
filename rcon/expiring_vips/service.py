@@ -44,7 +44,7 @@ def remove_expired_vips(rcon_hook: Rcon, webhookurl: Optional[HttpUrl] = None):
             send_to_discord_audit(
                 message,
                 by=SERVICE_NAME,
-                webhookurls=[str(webhookurl) if webhookurl else None],
+                webhookurls=[webhookurl],
             )
             rcon_hook.do_remove_vip(vip.steamid.steam_id_64)
 
