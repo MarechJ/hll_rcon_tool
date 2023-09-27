@@ -267,17 +267,17 @@ def run():
             logger.debug("Auto broadcasts. Radomizing")
             random.shuffle(config.messages)
 
-        for time_sec, msg in config.messages:
+        for msg in config.messages:
             if not config.enabled:
                 break
 
-            formatted = format_message(ctl, msg)
-            logger.debug("Broadcasting for %s seconds: %s", time_sec, formatted)
+            formatted = format_message(ctl, msg.message)
+            logger.debug("Broadcasting for %s seconds: %s", msg.time_sec, formatted)
             try:
                 ctl.set_broadcast(formatted)
             except CommandFailedError:
-                logger.exception("Unable to broadcast %s", msg)
-            time.sleep(int(time_sec))
+                logger.exception("Unable to broadcast %s %s", msg.time_sec, msg.message)
+            time.sleep(int(msg.time_sec))
 
 
 if __name__ == "__main__":
