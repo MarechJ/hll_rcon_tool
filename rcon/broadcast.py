@@ -253,9 +253,8 @@ def run():
 
     ctl = Rcon(SERVER_INFO)
 
-    config = AutoBroadcastUserConfig.load_from_db()
-
     while True:
+        config = AutoBroadcastUserConfig.load_from_db()
         if not config.enabled or not config.messages:
             logger.debug(
                 "Auto broadcasts are disabled. Sleeping %s seconds", CHECK_INTERVAL
