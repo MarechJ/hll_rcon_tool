@@ -384,14 +384,14 @@ class AllLogTypes(str, enum.Enum):
     match = "MATCH"
     match_start = "MATCH START"
     match_end = "MATCH ENDED"
-    team_kill = ("TEAM KILL",)
-    team_switch = ("TEAMSWITCH",)
+    team_kill = "TEAM KILL"
+    team_switch = "TEAMSWITCH"
     # Automatic kicks for team kills
     # tk= "TK",
-    tk_auto = ("TK AUTO",)
-    tk_auto_banned = ("TK AUTO BANNED",)
-    tk_auto_kicked = ("TK AUTO KICKED",)
+    tk_auto = "TK AUTO"
+    tk_auto_banned = "TK AUTO BANNED"
+    tk_auto_kicked = "TK AUTO KICKED"
     # Vote kicks
-    vote = ("VOTE",)
-    vote_started = ("VOTE STARTED",)
-    vote_completed = ("VOTE COMPLETED",)
+    vote = "VOTE"
+    vote_started = "VOTE STARTED"
+    vote_completed = "VOTE COMPLETED"
