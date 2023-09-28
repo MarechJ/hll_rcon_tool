@@ -8,7 +8,7 @@ from rcon.user_config.webhooks import (
     AdminPingWebhooksUserConfig,
     ChatWebhooksUserConfig,
     DiscordMentionWebhook,
-    DiscordWehbhook,
+    DiscordWebhook,
     KillsWebhooksUserConfig,
 )
 
@@ -142,7 +142,7 @@ def test_kill_message():
     config = KillsWebhooksUserConfig(
         send_kills=True,
         send_team_kills=False,
-        hooks=[DiscordWehbhook(url=HttpUrl("http://example.com"))],
+        hooks=[DiscordWebhook(url=HttpUrl("http://example.com"))],
     )
 
     # monkeypatch.setattr(DiscordWebhookHandler, "_make_hook", lambda: [])
@@ -175,7 +175,7 @@ def test_team_kill_message():
     config = KillsWebhooksUserConfig(
         send_kills=True,
         send_team_kills=False,
-        hooks=[DiscordWehbhook(url=HttpUrl("http://example.com"))],
+        hooks=[DiscordWebhook(url=HttpUrl("http://example.com"))],
     )
 
     # monkeypatch.setattr(DiscordWebhookHandler, "_make_hook", lambda: [])

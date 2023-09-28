@@ -14,7 +14,7 @@ from rcon.user_config.webhooks import (
     AdminPingWebhooksUserConfig,
     ChatWebhooksUserConfig,
     DiscordMentionWebhook,
-    DiscordWehbhook,
+    DiscordWebhook,
     KillsWebhooksUserConfig,
 )
 
@@ -93,7 +93,7 @@ class DiscordWebhookHandler:
         self.kills_webhooks = [wh for wh in kills_webhooks if wh]
 
     @staticmethod
-    def _make_hook(hooks: Iterable[DiscordWehbhook] | Iterable[DiscordMentionWebhook]):
+    def _make_hook(hooks: Iterable[DiscordWebhook] | Iterable[DiscordMentionWebhook]):
         return [make_hook(hook.url) for hook in hooks]
 
     def create_chat_message(self, log) -> tuple[str, discord.Embed, bool]:

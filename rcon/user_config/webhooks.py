@@ -40,7 +40,7 @@ class KillsWebhookType(RawWebhookType):
     send_team_kills: bool
 
 
-class DiscordWehbhook(pydantic.BaseModel):
+class DiscordWebhook(pydantic.BaseModel):
     url: pydantic.HttpUrl
 
     @pydantic.field_serializer("url")
@@ -48,7 +48,7 @@ class DiscordWehbhook(pydantic.BaseModel):
         return str(server_url)
 
 
-class DiscordMentionWebhook(DiscordWehbhook):
+class DiscordMentionWebhook(DiscordWebhook):
     """A webhook URL and list of user/role IDs to mention in <@> and <@&> format"""
 
     user_mentions: list[str] = pydantic.Field(default_factory=list)
@@ -98,7 +98,7 @@ class BaseMentionWebhookUserConfig(BaseUserConfig):
 
 
 class BaseWebhookUserConfig(BaseUserConfig):
-    hooks: list[DiscordWehbhook] = pydantic.Field(default_factory=list)
+    hooks: list[DiscordWebhook] = pydantic.Field(default_factory=list)
 
     @classmethod
     def save_to_db(cls, values: RawWebhookType, dry_run=False) -> None:
@@ -108,7 +108,7 @@ class BaseWebhookUserConfig(BaseUserConfig):
         for obj in raw_hooks:
             key_check(WebhookType.__required_keys__, obj.keys())
 
-        validated_hooks = [DiscordWehbhook(url=obj.get("url")) for obj in raw_hooks]
+        validated_hooks = [DiscordWebhook(url=obj.get("url")) for obj in raw_hooks]
         validated_conf = cls(hooks=validated_hooks)
 
         if not dry_run:
@@ -193,7 +193,7 @@ class KillsWebhooksUserConfig(BaseWebhookUserConfig):
         for obj in raw_hooks:
             key_check(WebhookType.__required_keys__, obj.keys())
 
-        validated_hooks = [DiscordWehbhook(url=obj.get("url")) for obj in raw_hooks]
+        validated_hooks = [DiscordWebhook(url=obj.get("url")) for obj in raw_hooks]
         validated_conf = KillsWebhooksUserConfig(
             send_kills=values.get("send_kills"),
             send_team_kills=values.get("send_team_kills"),
