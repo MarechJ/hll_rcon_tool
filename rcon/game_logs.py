@@ -143,7 +143,7 @@ def make_allowed_mentions(mentions: Iterable[str]) -> discord.AllowedMentions:
 
 
 def send_log_line_webhook_message(
-    webhooks: list[DiscordMentionWebhook],
+    webhook: DiscordMentionWebhook,
     _,
     log_line: Dict[str, str | int | float | None],
 ) -> None:
@@ -151,36 +151,46 @@ def send_log_line_webhook_message(
 
     config = RconServerSettingsUserConfig.load_from_db()
 
-    for hook in webhooks:
-        mentions = hook.user_mentions + hook.role_mentions
-        webhook = make_hook(hook.url)
-        allowed_mentions = make_allowed_mentions(mentions)
+    mentions = webhook.user_mentions + webhook.role_mentions
 
-        content = " ".join(mentions)
-        description = log_line["line_without_time"]
-        embed = discord.Embed(
-            description=description,
-            timestamp=datetime.datetime.utcfromtimestamp(
-                log_line["timestamp_ms"] / 1000
-            ),
-        )
-        embed.set_footer(text=config.short_name)
-        webhook.send(content=content, embed=embed, allowed_mentions=allowed_mentions)
+    discord_webhook = make_hook(webhook.url)
+    if not discord_webhook:
+        logger.error("Error creating discord webhook for: %s", webhook.url)
+        return
+
+    allowed_mentions = make_allowed_mentions(mentions)
+
+    content = " ".join(mentions)
+    description = log_line["line_without_time"]
+    embed = discord.Embed(
+        description=description,
+        timestamp=datetime.datetime.utcfromtimestamp(log_line["timestamp_ms"] / 1000),
+    )
+    embed.set_footer(text=config.short_name)
+    discord_webhook.send(
+        content=content, embed=embed, allowed_mentions=allowed_mentions
+    )
 
 
+# I don't think there is a good way to cache invalidate this without
+# circular imports when setting it through LogLineWebhookUserConfig
+# but it is invalidated on service startup
 @ttl_cache(ttl=60 * 5)
 def load_generic_hooks():
     """Load and validate all the subscribed log line webhooks from config.yml"""
+    logger.info("Loading generic hooks")
     config = LogLineWebhookUserConfig.load_from_db()
-    for conf in config.log_types:
+    for hook in config.webhooks:
         # mentions = [h.user_mentions + h.role_mentions for h in conf.webhooks]
-        func = partial(send_log_line_webhook_message, conf.webhooks)
+        func = partial(send_log_line_webhook_message, hook.webhook)
 
         # Have to set these attributes as the're used in LogLoop.process_hooks()
         func.__name__ = send_log_line_webhook_message.__name__
         func.__module__ = __name__
 
-        on_generic(conf.log_type.value, func)
+        for log_type in hook.log_types:
+            logger.info("Adding log type %s, %s", func, log_type.value)
+            on_generic(log_type.value, func)
 
 
 MAX_FAILS = 10

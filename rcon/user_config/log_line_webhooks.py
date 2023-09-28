@@ -8,48 +8,51 @@ from rcon.user_config.webhooks import DiscordMentionWebhook, WebhookMentionType
 
 
 class LogLineWebhookType(TypedDict):
-    log_type: AllLogTypes
-    webhooks: list[WebhookMentionType]
+    log_types: list[AllLogTypes]
+    webhook: WebhookMentionType
 
 
 class LogLineType(TypedDict):
-    log_types: list[LogLineWebhookType]
+    webhooks: list[LogLineWebhookType]
 
 
 class LogLineWebhook(BaseModel):
-    log_type: AllLogTypes
-    webhooks: list[DiscordMentionWebhook] = Field(default_factory=list)
+    log_types: list[AllLogTypes] = Field(default_factory=list)
+    webhook: DiscordMentionWebhook
 
 
 class LogLineWebhookUserConfig(BaseUserConfig):
-    log_types: list[LogLineWebhook] = Field(default_factory=list)
+    webhooks: list[LogLineWebhook] = Field(default_factory=list)
 
     @staticmethod
     def save_to_db(values: LogLineType, dry_run=False):
         key_check(LogLineType.__required_keys__, values.keys())
-        raw_hooks: list[LogLineWebhookType] = values.get("log_types")
-        _listType(values=raw_hooks)  # type: ignore
+        raw_objects: list[LogLineWebhookType] = values.get("webhooks")
+        _listType(values=raw_objects)  # type: ignore
 
         validated_log_lines: list[LogLineWebhook] = []
-        for raw_log_line in raw_hooks:
-            key_check(LogLineWebhookType.__required_keys__, raw_log_line.keys())
+        for obj in raw_objects:
+            key_check(LogLineWebhookType.__required_keys__, obj.keys())
 
-            webhooks = [
-                DiscordMentionWebhook(
-                    url=h.get("url"),
-                    user_mentions=h.get("user_mentions"),
-                    role_mentions=h.get("role_mentions"),
-                )
-                for h in raw_log_line.get("webhooks")
-            ]
+            raw_webhook = obj.get("webhook")
+            raw_log_types = obj.get("log_types")
+            _listType(values=raw_log_types)  # type: ignore
+
+            hook = DiscordMentionWebhook(
+                url=raw_webhook.get("url"),
+                user_mentions=raw_webhook.get("user_mentions"),
+                role_mentions=raw_webhook.get("role_mentions"),
+            )
+
+            log_types = [AllLogTypes(log_type) for log_type in raw_log_types]
 
             log_line = LogLineWebhook(
-                log_type=raw_log_line.get("log_type"),
-                webhooks=webhooks,
+                log_types=log_types,
+                webhook=hook,
             )
             validated_log_lines.append(log_line)
 
-        validated_conf = LogLineWebhookUserConfig(log_types=validated_log_lines)
+        validated_conf = LogLineWebhookUserConfig(webhooks=validated_log_lines)
 
         if not dry_run:
             set_user_config(LogLineWebhookUserConfig.KEY(), validated_conf.model_dump())
