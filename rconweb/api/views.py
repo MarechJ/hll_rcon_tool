@@ -33,6 +33,25 @@ logger = logging.getLogger("rconweb")
 ctl = Rcon(SERVER_INFO)
 
 
+@csrf_exempt
+@login_required()
+@permission_required("api.can_restart_webserver", raise_exception=True)
+@record_audit
+def restart_gunicorn(request):
+    """Restart gunicorn workers, forces a reload of Django"""
+    exit_code = os.system(f"cat /code/rconweb/gunicorn.pid | xargs kill -HUP")
+    error_msg = None
+    if exit_code == 0:
+        result = "Web server restarted successfully"
+        failed = False
+    else:
+        result = "Web server failed to restart"
+        failed = True
+        error_msg = exit_code
+
+    return api_response(result=result, failed=failed, error=error_msg)
+
+
 def set_temp_msg(request, func, name):
     data = _get_data(request)
     failed = False

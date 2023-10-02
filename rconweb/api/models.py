@@ -387,4 +387,8 @@ class RconUser(User):
                 "can_change_watchlist_discord_webhooks_config",
                 "Can change Discord player watchlist notification config",
             ),
+            (
+                "can_restart_webserver",
+                "Can restart the webserver (Not a complete Docker restart)",
+            ),
         )

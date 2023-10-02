@@ -437,6 +437,12 @@ class RconSettings extends React.Component {
       .catch(handle_http_errors);
   }
 
+  async restartWebServer() {
+    return postData(`${process.env.REACT_APP_API_URL}do_restart_webserver`, {})
+      .then((res) => showResponse(res, "do_restart", true))
+      .catch(handle_http_errors);
+  }
+
   validate_messages() {
     let hasErrors = false;
     _.forEach(this.state.broadcastMessages, (m) => {
@@ -878,6 +884,22 @@ class RconSettings extends React.Component {
             onClick={this.clearCache}
           >
             Clear application cache
+          </Button>
+        </Grid>
+        <Grid
+          item
+          xs={12}
+          className={`${classes.padding} ${classes.margin} ${classes.root}`}
+          alignContent="center"
+          justify="center"
+          alignItems="center"
+        >
+          <Button
+            color="secondary"
+            variant="outlined"
+            onClick={this.restartWebServer}
+          >
+            Restart Webserver
           </Button>
         </Grid>
       </Grid>
