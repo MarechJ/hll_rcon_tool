@@ -59,7 +59,7 @@ def make_allowed_mentions(user_ids, role_ids):
 
 
 def get_prepared_discord_hooks(
-    hook_type: Type[BaseWebhookUserConfig | BaseMentionWebhookUserConfig],
+    hook_type: Type[CameraWebhooksUserConfig | WatchlistWebhooksUserConfig],
 ) -> List[DiscordWebhook]:
     if isinstance(hook_type, CameraWebhooksUserConfig):
         hooks = CameraWebhooksUserConfig.load_from_db().hooks

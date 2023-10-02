@@ -37,6 +37,7 @@ from rcon.user_config.auto_mod_no_leader import AutoModNoLeaderUserConfig
 from rcon.user_config.camera_notification import CameraNotificationUserConfig
 from rcon.user_config.real_vip import RealVipUserConfig
 from rcon.user_config.vac_game_bans import VacGameBansUserConfig
+from rcon.user_config.webhooks import CameraWebhooksUserConfig
 from rcon.utils import LOG_MAP_NAMES_TO_MAP, MapsHistory
 from rcon.vote_map import VoteMap
 from rcon.workers import record_stats_worker, temporary_broadcast, temporary_welcome
@@ -442,7 +443,7 @@ def notify_camera(rcon: Rcon, struct_log):
     send_to_discord_audit(message=struct_log["message"], by=struct_log["player"])
 
     try:
-        if hooks := get_prepared_discord_hooks("camera"):
+        if hooks := get_prepared_discord_hooks(CameraWebhooksUserConfig):
             embeded = DiscordEmbed(
                 title=f'{struct_log["player"]}  - {struct_log["steam_id_64_1"]}',
                 description=struct_log["sub_content"],
