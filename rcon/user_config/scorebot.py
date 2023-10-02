@@ -208,7 +208,7 @@ class ScorebotUserConfig(BaseUserConfig):
         else:
             api_url = str(self.base_api_url)
 
-        if not self.stats_endpoint.endswith("/"):
+        if not self.stats_endpoint.startswith("/"):
             stats_endpoint = "/" + self.stats_endpoint
         else:
             stats_endpoint = self.stats_endpoint
@@ -228,7 +228,7 @@ class ScorebotUserConfig(BaseUserConfig):
         else:
             api_url = str(self.base_api_url)
 
-        if not self.info_endpoint.endswith("/"):
+        if not self.info_endpoint.startswith("/"):
             info_endpoint = "/" + self.info_endpoint
         else:
             info_endpoint = self.info_endpoint
@@ -247,7 +247,7 @@ class ScorebotUserConfig(BaseUserConfig):
         else:
             scoreboard_url = str(self.base_scoreboard_url)
 
-        if not self.past_games_endpoint.endswith("/"):
+        if not self.past_games_endpoint.startswith("/"):
             past_games_endpoint = "/" + self.past_games_endpoint
         else:
             past_games_endpoint = self.past_games_endpoint
