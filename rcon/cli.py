@@ -15,6 +15,7 @@ import rcon.user_config.utils
 from rcon import auto_settings, broadcast, game_logs, routines
 from rcon.automods import automod
 from rcon.cache_utils import RedisCached, get_redis_pool, invalidates
+from rcon.discord_chat import get_handler
 from rcon.game_logs import LogLoop, load_generic_hooks
 from rcon.models import install_unaccent
 from rcon.rcon_ import Rcon
@@ -78,7 +79,7 @@ def run_enrich_db_users():
 def run_log_loop():
     # Invalidate the cache on startup so it always loads user settings
     # since they might have been set through the CLI, etc.
-    with invalidates(load_generic_hooks):
+    with invalidates(load_generic_hooks, get_handler):
         try:
             LogLoop().run()
         except:

@@ -1,5 +1,4 @@
 import logging
-import os
 import re
 from datetime import datetime
 from functools import lru_cache
@@ -7,6 +6,7 @@ from typing import Iterable
 
 import discord.utils
 
+from rcon.cache_utils import ttl_cache
 from rcon.game_logs import on_chat, on_kill, on_tk
 from rcon.rcon_discord import make_hook
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
@@ -212,11 +212,10 @@ class DiscordWebhookHandler:
 HANDLER = None
 
 
-# TODO: Cache this so it refreshes periodically?
+@ttl_cache(5 * 60)
 def get_handler():
     global HANDLER
-    if not HANDLER:
-        HANDLER = DiscordWebhookHandler()
+    HANDLER = DiscordWebhookHandler()
     return HANDLER
 
 
