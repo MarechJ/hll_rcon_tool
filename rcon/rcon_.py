@@ -970,6 +970,12 @@ class Rcon(ServerCtl):
         msg = red.get("WELCOME_MESSAGE")
         if msg:
             return msg.decode()
+
+        # JSON can't serialize bytes and the welcome messgae
+        # can be set to an empty string
+        if msg == b"":
+            msg = None
+
         return msg
 
     def set_welcome_message(self, msg, save=True):
