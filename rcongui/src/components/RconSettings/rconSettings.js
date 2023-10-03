@@ -437,9 +437,12 @@ class RconSettings extends React.Component {
       .catch(handle_http_errors);
   }
 
-  async restartWebServer() {
-    return postData(`${process.env.REACT_APP_API_URL}do_restart_webserver`, {})
-      .then((res) => showResponse(res, "do_restart", true))
+  async reconnectToGameServer() {
+    return postData(
+      `${process.env.REACT_APP_API_URL}do_reconnect_gameserver`,
+      {}
+    )
+      .then((res) => showResponse(res, "do_reconnect_gameserver", true))
       .catch(handle_http_errors);
   }
 
@@ -897,9 +900,9 @@ class RconSettings extends React.Component {
           <Button
             color="secondary"
             variant="outlined"
-            onClick={this.restartWebServer}
+            onClick={this.reconnectToGameServer}
           >
-            Restart Webserver
+            Reconnect To Gameserver
           </Button>
         </Grid>
       </Grid>
