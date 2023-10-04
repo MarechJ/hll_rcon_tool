@@ -17,7 +17,7 @@ SERVICE_NAME = "ExpiringVIPs"
 logger = logging.getLogger(__name__)
 
 
-def remove_expired_vips(rcon_hook: Rcon, webhookurl: Optional[HttpUrl] = None):
+def remove_expired_vips(rcon_hook: Rcon, webhook_url: Optional[HttpUrl] = None):
     logger.info(f"Checking for expired VIPs")
 
     count = 0
@@ -41,10 +41,16 @@ def remove_expired_vips(rcon_hook: Rcon, webhookurl: Optional[HttpUrl] = None):
                 name = "No name found"
             message = f"Removing VIP from `{name}`/`{vip.steamid.steam_id_64}` expired `{vip.expiration}`"
             logger.info(message)
+
+            webhookurls: list[HttpUrl | None] | None
+            if webhook_url is None:
+                webhookurls = None
+            else:
+                webhookurls = [webhook_url]
             send_to_discord_audit(
                 message,
                 by=SERVICE_NAME,
-                webhookurls=[webhookurl],
+                webhookurls=webhookurls,
             )
             rcon_hook.do_remove_vip(vip.steamid.steam_id_64)
 

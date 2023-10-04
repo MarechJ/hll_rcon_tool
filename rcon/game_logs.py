@@ -10,6 +10,7 @@ from functools import partial
 from typing import Callable, DefaultDict, Dict, Iterable, List
 
 import discord
+from pydantic import HttpUrl
 from sqlalchemy import and_, desc, or_
 from sqlalchemy.exc import IntegrityError
 
@@ -677,10 +678,16 @@ def auto_ban_if_tks_right_after_connection(
                 logger.info(
                     "Banned player %s for TEAMKILL after connect %s", player_name, log
                 )
+
+                webhookurls: list[HttpUrl | None] | None
+                if webhook is None:
+                    webhookurls = None
+                else:
+                    webhookurls = [webhook]
                 send_to_discord_audit(
                     discord_msg.format(player=player_name),
                     by=author,
-                    webhookurls=[webhook],
+                    webhookurls=webhookurls,
                 )
         elif is_player_death(player_name, log):
             death_counter += 1

@@ -1,6 +1,8 @@
 import logging
 import re
 
+from pydantic import HttpUrl
+
 from rcon.game_logs import on_connected
 from rcon.hooks import inject_player_ids
 from rcon.player_history import get_player_profile, player_has_flag
@@ -40,10 +42,15 @@ def auto_kick(_, log, name, steam_id_64):
                 player=name, reason=config.kick_reason, by="NAME_KICK"
             )
             try:
+                webhookurls: list[HttpUrl | None] | None
+                if config.discord_webhook_url is None:
+                    webhookurls = None
+                else:
+                    webhookurls = [config.discord_webhook_url]
                 send_to_discord_audit(
                     f"`{name}` kicked from regexp `{r}`",
                     by="NAME_KICK",
-                    webhookurls=[config.discord_webhook_url],
+                    webhookurls=webhookurls,
                 )
             except Exception:
                 logger.error("Unable to send to audit_log")
