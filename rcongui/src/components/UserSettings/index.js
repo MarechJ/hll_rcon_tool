@@ -4,6 +4,7 @@ import Editor from "@monaco-editor/react";
 import { Button } from "@material-ui/core";
 import { withRouter } from "react-router";
 import Grid from "@material-ui/core/Grid";
+import { CopyBlock, dracula } from "react-code-blocks";
 
 const endpointToNames = new Map();
 endpointToNames.set("get_audit_discord_webhooks_config", "Audit Webhooks");
@@ -13,13 +14,22 @@ const UserSetting = ({
   getEndpoint,
   setEndpoint,
   validateEndpoint,
+  describeEndpoint,
+  notes,
 }) => {
   const [data, setData] = useState("");
   const [errors, setErrors] = useState([]);
+  const [schema, setSchema] = useState("");
 
   useEffect(() => {
     getData(getEndpoint);
   }, [getEndpoint]);
+
+  useEffect(() => {
+    get(describeEndpoint)
+      .then((res) => showResponse(res, describeEndpoint, false))
+      .then((res) => setSchema(JSON.stringify(res?.result, null, 2)));
+  }, [describeEndpoint]);
 
   const getData = (endpoint) => {
     setErrors([]);
@@ -54,7 +64,6 @@ const UserSetting = ({
     <>
       <Grid container spacing={2}>
         <Grid item xs={12}>
-          {/* <h1>{endpointToNames.get(getEndpoint)}</h1> */}
           <h1>{description}</h1>
         </Grid>
         <Grid item xs={12}>
@@ -78,6 +87,7 @@ const UserSetting = ({
             value={data}
             onChange={setData}
             defaultValue={""}
+            theme="vs-dark"
           />
         </Grid>
         <Grid item xs={12}>
@@ -114,7 +124,18 @@ const UserSetting = ({
           <Button onClick={() => sendData(setEndpoint)}>Save</Button>
         </Grid>
       </Grid>
-      {/* 0// </> */}
+      <Grid item xs={12}>
+        <h1>Documentation</h1>
+        <div style={{ textAlign: "left" }}>
+          <CopyBlock text={notes} language="json" wrapLines theme={dracula} />
+        </div>
+      </Grid>
+      <Grid item xs={12}>
+        <h1>Model Schema</h1>
+        <div style={{ textAlign: "left" }}>
+          <CopyBlock text={schema} language="json" wrapLines theme={dracula} />
+        </div>
+      </Grid>
     </>
   );
 };

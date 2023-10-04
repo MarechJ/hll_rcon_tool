@@ -28,7 +28,30 @@ import ServerInfo from "./components/Embeds/ServerInfo";
 import ServerStatsPage from "./components/ServerStats";
 import GameView from "./components/GameView";
 import AuditLog from "./components/AuditLog";
-import UserSetting from "./components/UserSettings";
+import {
+  AdminPingWebhooks,
+  AuditWebhooks,
+  WatchlistWebhooks,
+  CameraWebhooks,
+  ChatWebhooks,
+  KillWebhooks,
+  LogLineWebhooks,
+} from "./components/UserSettings/webHooks";
+import {
+  LevelAutoMod,
+  NoLeaderAutoMod,
+  SeedingAutoMod,
+} from "./components/UserSettings/autoMods";
+import {
+  RconConnectionSettings,
+  RconServerSettings,
+  Scorebot,
+  SteamAPI,
+  VacGameBans,
+  TeamKillBanOnConnect,
+  NameKicks,
+  ExpiredVIP,
+} from "./components/UserSettings/miscellaneous";
 
 const Live = ({ classes }) => {
   const [mdSize, setMdSize] = React.useState(6);
@@ -450,181 +473,200 @@ function App() {
                     </Route>
                     <Route path="/settings/audit-webhooks">
                       <Grid container spacing={2}>
-                        <UserSetting
+                        <AuditWebhooks
                           description="Audit Webhooks"
                           getEndpoint="get_audit_discord_webhooks_config"
                           setEndpoint="set_audit_discord_webhooks_config"
                           validateEndpoint="validate_audit_discord_webhooks_config"
+                          describeEndpoint="describe_audit_discord_webhooks_config"
                         />
                       </Grid>
                     </Route>
                     <Route path="/settings/admin-webhooks">
                       <Grid container spacing={2}>
-                        <UserSetting
+                        <AdminPingWebhooks
                           description="Admin Ping Webhooks"
                           getEndpoint="get_admin_pings_discord_webhooks_config"
                           setEndpoint="set_admin_pings_discord_webhooks_config"
                           validateEndpoint="validate_admin_pings_discord_webhooks_config"
+                          describeEndpoint="describe_admin_pings_discord_webhooks_config"
                         />
                       </Grid>
                     </Route>
                     <Route path="/settings/watchlist-webhooks">
                       <Grid container spacing={2}>
-                        <UserSetting
+                        <WatchlistWebhooks
                           description="Watchlist Webhooks"
                           getEndpoint="get_watchlist_discord_webhooks_config"
                           setEndpoint="set_watchlist_discord_webhooks_config"
                           validateEndpoint="validate_watchlist_discord_webhooks_config"
+                          describeEndpoint="describe_watchlist_discord_webhooks_config"
                         />
                       </Grid>
                     </Route>
                     <Route path="/settings/camera-webhooks">
                       <Grid container spacing={2}>
-                        <UserSetting
+                        <CameraWebhooks
                           description="Camera Webhooks"
                           getEndpoint="get_camera_discord_webhooks_config"
                           setEndpoint="set_camera_discord_webhooks_config"
                           validateEndpoint="validate_camera_discord_webhooks_config"
+                          describeEndpoint="describe_camera_discord_webhooks_config"
                         />
                       </Grid>
                     </Route>
                     <Route path="/settings/chat-webhooks">
                       <Grid container spacing={2}>
-                        <UserSetting
+                        <ChatWebhooks
                           description="Chat Webhooks"
                           getEndpoint="get_chat_discord_webhooks_config"
                           setEndpoint="set_chat_discord_webhooks_config"
                           validateEndpoint="validate_chat_discord_webhooks_config"
+                          describeEndpoint="describe_chat_discord_webhooks_config"
                         />
                       </Grid>
                     </Route>
                     <Route path="/settings/kill-webhooks">
                       <Grid container spacing={2}>
-                        <UserSetting
+                        <KillWebhooks
                           description="Kill/Team Kill Webhooks"
                           getEndpoint="get_kills_discord_webhooks_config"
                           setEndpoint="set_kills_discord_webhooks_config"
                           validateEndpoint="validate_kills_discord_webhooks_config"
-                        />
-                      </Grid>
-                    </Route>
-                    <Route path="/settings/automod-level">
-                      <Grid container spacing={2}>
-                        <UserSetting
-                          description="Level Auto Mod"
-                          getEndpoint="get_auto_mod_level_config"
-                          setEndpoint="set_auto_mod_level_config"
-                          validateEndpoint="validate_auto_mod_level_config"
-                        />
-                      </Grid>
-                    </Route>
-                    <Route path="/settings/automod-no-leader">
-                      <Grid container spacing={2}>
-                        <UserSetting
-                          description="No Leader Auto Mod"
-                          getEndpoint="get_auto_mod_no_leader_config"
-                          setEndpoint="set_auto_mod_no_leader_config"
-                          validateEndpoint="validate_auto_mod_no_leader_config"
-                        />
-                      </Grid>
-                    </Route>
-                    <Route path="/settings/automod-seeding">
-                      <Grid container spacing={2}>
-                        <UserSetting
-                          description="Seeding Auto Mod"
-                          getEndpoint="get_auto_mod_seeding_config"
-                          setEndpoint="set_auto_mod_seeding_config"
-                          validateEndpoint="validate_auto_mod_seeding_config"
-                        />
-                      </Grid>
-                    </Route>
-                    <Route path="/settings/rcon-gameserver">
-                      <Grid container spacing={2}>
-                        <UserSetting
-                          description="Game Server Connection Settings"
-                          getEndpoint="get_rcon_connection_settings_config"
-                          setEndpoint="set_rcon_connection_settings_config"
-                          validateEndpoint="validate_rcon_connection_settings_config"
-                        />
-                      </Grid>
-                    </Route>
-                    <Route path="/settings/rcon-server">
-                      <Grid container spacing={2}>
-                        <UserSetting
-                          description="General CRCON Settings"
-                          getEndpoint="get_rcon_server_settings_config"
-                          setEndpoint="set_rcon_server_settings_config"
-                          validateEndpoint="validate_rcon_server_settings_config"
-                        />
-                      </Grid>
-                    </Route>
-                    <Route path="/settings/scorebot">
-                      <Grid container spacing={2}>
-                        <UserSetting
-                          description="Scorebot"
-                          getEndpoint="get_scorebot_config"
-                          setEndpoint="set_scorebot_config"
-                          validateEndpoint="validate_scorebot_config"
-                        />
-                      </Grid>
-                    </Route>
-                    <Route path="/settings/steam">
-                      <Grid container spacing={2}>
-                        <UserSetting
-                          description="Steam API"
-                          getEndpoint="get_steam_config"
-                          setEndpoint="set_steam_config"
-                          validateEndpoint="validate_steam_config"
-                        />
-                      </Grid>
-                    </Route>
-                    <Route path="/settings/vac-gamebans">
-                      <Grid container spacing={2}>
-                        <UserSetting
-                          description="VAC/Game Bans"
-                          getEndpoint="get_vac_game_bans_config"
-                          setEndpoint="set_vac_game_bans_config"
-                          validateEndpoint="validate_vac_game_bans_config"
-                        />
-                      </Grid>
-                    </Route>
-                    <Route path="/settings/tk-ban">
-                      <Grid container spacing={2}>
-                        <UserSetting
-                          description="TK Ban On Connect"
-                          getEndpoint="get_tk_ban_on_connect_config"
-                          setEndpoint="set_tk_ban_on_connect_config"
-                          validateEndpoint="validate_tk_ban_on_connect_config"
-                        />
-                      </Grid>
-                    </Route>
-                    <Route path="/settings/name-kicks">
-                      <Grid container spacing={2}>
-                        <UserSetting
-                          description="Name Kicks"
-                          getEndpoint="get_name_kick_config"
-                          setEndpoint="set_name_kick_config"
-                          validateEndpoint="validate_name_kick_config"
+                          describeEndpoint="describe_kills_discord_webhooks_config"
                         />
                       </Grid>
                     </Route>
                     <Route path="/settings/log-lines">
                       <Grid container spacing={2}>
-                        <UserSetting
+                        <LogLineWebhooks
                           description="Log Line Webhooks"
                           getEndpoint="get_log_line_webhook_config"
                           setEndpoint="set_log_line_webhook_config"
                           validateEndpoint="validate_log_line_webhook_config"
+                          describeEndpoint="describe_log_line_webhook_config"
                         />
                       </Grid>
                     </Route>
+                    <Route path="/settings/automod-level">
+                      <Grid container spacing={2}>
+                        <LevelAutoMod
+                          description="Level Auto Mod"
+                          getEndpoint="get_auto_mod_level_config"
+                          setEndpoint="set_auto_mod_level_config"
+                          validateEndpoint="validate_auto_mod_level_config"
+                          describeEndpoint="describe_auto_mod_level_config"
+                        />
+                      </Grid>
+                    </Route>
+                    <Route path="/settings/automod-no-leader">
+                      <Grid container spacing={2}>
+                        <NoLeaderAutoMod
+                          description="No Leader Auto Mod"
+                          getEndpoint="get_auto_mod_no_leader_config"
+                          setEndpoint="set_auto_mod_no_leader_config"
+                          validateEndpoint="validate_auto_mod_no_leader_config"
+                          describeEndpoint="describe_auto_mod_no_leader_config"
+                        />
+                      </Grid>
+                    </Route>
+                    <Route path="/settings/automod-seeding">
+                      <Grid container spacing={2}>
+                        <SeedingAutoMod
+                          description="Seeding Auto Mod"
+                          getEndpoint="get_auto_mod_seeding_config"
+                          setEndpoint="set_auto_mod_seeding_config"
+                          validateEndpoint="validate_auto_mod_seeding_config"
+                          describeEndpoint="describe_auto_mod_seeding_config"
+                        />
+                      </Grid>
+                    </Route>
+                    <Route path="/settings/rcon-gameserver">
+                      <Grid container spacing={2}>
+                        <RconConnectionSettings
+                          description="Game Server Connection Settings"
+                          getEndpoint="get_rcon_connection_settings_config"
+                          setEndpoint="set_rcon_connection_settings_config"
+                          validateEndpoint="validate_rcon_connection_settings_config"
+                          describeEndpoint="describe_rcon_connection_settings_config"
+                        />
+                      </Grid>
+                    </Route>
+                    <Route path="/settings/rcon-server">
+                      <Grid container spacing={2}>
+                        <RconServerSettings
+                          description="General CRCON Settings"
+                          getEndpoint="get_rcon_server_settings_config"
+                          setEndpoint="set_rcon_server_settings_config"
+                          validateEndpoint="validate_rcon_server_settings_config"
+                          describeEndpoint="describe_rcon_server_settings_config"
+                        />
+                      </Grid>
+                    </Route>
+                    <Route path="/settings/scorebot">
+                      <Grid container spacing={2}>
+                        <Scorebot
+                          description="Scorebot"
+                          getEndpoint="get_scorebot_config"
+                          setEndpoint="set_scorebot_config"
+                          validateEndpoint="validate_scorebot_config"
+                          describeEndpoint="describe_scorebot_config"
+                        />
+                      </Grid>
+                    </Route>
+                    <Route path="/settings/steam">
+                      <Grid container spacing={2}>
+                        <SteamAPI
+                          description="Steam API"
+                          getEndpoint="get_steam_config"
+                          setEndpoint="set_steam_config"
+                          validateEndpoint="validate_steam_config"
+                          describeEndpoint="describe_steam_config"
+                        />
+                      </Grid>
+                    </Route>
+                    <Route path="/settings/vac-gamebans">
+                      <Grid container spacing={2}>
+                        <VacGameBans
+                          description="VAC/Game Bans"
+                          getEndpoint="get_vac_game_bans_config"
+                          setEndpoint="set_vac_game_bans_config"
+                          validateEndpoint="validate_vac_game_bans_config"
+                          describeEndpoint="describe_vac_game_bans_config"
+                        />
+                      </Grid>
+                    </Route>
+                    <Route path="/settings/tk-ban">
+                      <Grid container spacing={2}>
+                        <TeamKillBanOnConnect
+                          description="TK Ban On Connect"
+                          getEndpoint="get_tk_ban_on_connect_config"
+                          setEndpoint="set_tk_ban_on_connect_config"
+                          validateEndpoint="validate_tk_ban_on_connect_config"
+                          describeEndpoint="describe_tk_ban_on_connect_config"
+                        />
+                      </Grid>
+                    </Route>
+                    <Route path="/settings/name-kicks">
+                      <Grid container spacing={2}>
+                        <NameKicks
+                          description="Name Kicks"
+                          getEndpoint="get_name_kick_config"
+                          setEndpoint="set_name_kick_config"
+                          validateEndpoint="validate_name_kick_config"
+                          describeEndpoint="describe_name_kick_config"
+                        />
+                      </Grid>
+                    </Route>
+
                     <Route path="/settings/expired-vip">
                       <Grid container spacing={2}>
-                        <UserSetting
+                        <ExpiredVIP
                           description="Expired VIP"
                           getEndpoint="get_expired_vip_config"
                           setEndpoint="set_expired_vip_config"
                           validateEndpoint="validate_expired_vip_config"
+                          describeEndpoint="describe_expired_vip_config"
                         />
                       </Grid>
                     </Route>
