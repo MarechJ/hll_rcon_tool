@@ -31,7 +31,7 @@ class AdminPingWebhookType(RawWebhookMentionType):
     trigger_words: list[str]
 
 
-class ChatWebhookType(RawWebhookMentionType):
+class ChatWebhookType(RawWebhookType):
     allow_mentions: bool
 
 
@@ -156,7 +156,7 @@ class AdminPingWebhooksUserConfig(BaseMentionWebhookUserConfig):
             set_user_config(validated_conf.KEY(), validated_conf.model_dump())
 
 
-class ChatWebhooksUserConfig(BaseMentionWebhookUserConfig):
+class ChatWebhooksUserConfig(BaseWebhookUserConfig):
     allow_mentions: bool = pydantic.Field(default=False)
 
     @staticmethod
@@ -165,9 +165,9 @@ class ChatWebhooksUserConfig(BaseMentionWebhookUserConfig):
         _listType(values=raw_hooks)
 
         for obj in raw_hooks:
-            key_check(WebhookMentionType.__required_keys__, obj.keys())
+            key_check(WebhookType.__required_keys__, obj.keys())
 
-        validated_hooks = parse_raw_mention_hooks(raw_hooks)
+        validated_hooks = [DiscordWebhook(url=obj.get("url")) for obj in raw_hooks]
         validated_conf = ChatWebhooksUserConfig(
             allow_mentions=values.get("allow_mentions"),
             hooks=validated_hooks,
