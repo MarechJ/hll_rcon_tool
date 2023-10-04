@@ -343,7 +343,7 @@ endpoints: list[tuple[str, Callable]] = [
         user_settings.get_kills_discord_webhooks_config,
     ),
     (
-        "get_kills_discord_webhooks_config",
+        "describe_kills_discord_webhooks_config",
         user_settings.describe_kills_discord_webhooks_config,
     ),
     (
