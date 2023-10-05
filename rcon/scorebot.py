@@ -331,7 +331,6 @@ def run():
             sys.exit(-1)
 
         try:
-            logger.info(f"Requesting {config.info_url=}")
             public_info = requests.get(config.info_url, verify=False).json()["result"]
         except ConnectionError as e:
             logger.error(f"Error accessing {config.info_url}")
