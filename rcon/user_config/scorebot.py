@@ -5,6 +5,10 @@ from pydantic import BaseModel, Field, HttpUrl, field_serializer, field_validato
 
 from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
 
+STATS_ENDPOINT = "/api/get_live_game_stats"
+INFO_ENDPOINT = "/api/public_info"
+PAST_GAMES_ENDPOINT = "/#/gamescoreboard"
+
 STAT_TYPES = (
     "TOP_KILLERS",
     "TOP_RATIO",
@@ -39,21 +43,19 @@ MATCH_SCORE_TITLE = "Match Score"
 MATCH_SCORE = "Allied {0} : Axis {1}"
 TIME_REMAINING = "Time Remaining"
 
-TOP_KILLERS = (
-    "<=HLLBomb=868256234439073802> TOP KILLERS\n*kills* <=HLLBomb=868256234439073802>"
-)
-TOP_RATIO = "TOP RATIO\n*kills/death*"
-TOP_PERFORMANCE = "TOP PERFORMANCE\n*kills/minute*"
-TRY_HARDERS = "TRY HARDERS\n*deaths/minute*"
-TOP_STAMINA = "TOP STAMINA\n*deaths*"
-TOP_KILL_STREAK = "TOP KILL STREAK\n*kill streak*"
-MOST_PATIENT = "MOST PATIENT\n*death by teamkill*"
-I_NEVER_GIVE_UP = "I NEVER GIVE UP\n*death streak*"
+TOP_KILLERS = ":knife: TOP KILLERS\n*kills*"
+TOP_RATIO = ":knife: TOP RATIO\n*kills/death*"
+TOP_PERFORMANCE = ":knife: TOP PERFORMANCE\n*kills/minute*"
+TRY_HARDERS = ":skull: TRY HARDERS\n*deaths/minute*"
+TOP_STAMINA = ":skull: TOP STAMINA\n*deaths*"
+TOP_KILL_STREAK = ":knife: TOP KILL STREAK\n*kill streak*"
+MOST_PATIENT = ":skull: MOST PATIENT\n*death by teamkill*"
+I_NEVER_GIVE_UP = ":skull: I NEVER GIVE UP\n*death streak*"
 I_M_CLUMSY = "YES I'M CLUMSY\n*teamkills*"
-I_NEED_GLASSES = "I NEED GLASSES\n*teamkill streak*"
-I_LOVE_VOTING = "I ❤ VOTING\n*num. votes started*"
+I_NEED_GLASSES = ":eyeglasses: I NEED GLASSES\n*teamkill streak*"
+I_LOVE_VOTING = "I :heart: VOTING\n*num. votes started*"
 WHAT_IS_A_BREAK = "WHAT IS A BREAK?\n*ingame time*"
-SURVIVORS = "SURVIVORS\n*longest life (min.)*"
+SURVIVORS = ":clock1: SURVIVORS\n*longest life (min.)*"
 U_R_STILL_A_MAN = "U'R STILL A MAN\n*shortest life (min.)*"
 
 
@@ -143,10 +145,6 @@ class ScorebotConfigType(TypedDict):
     base_api_url: HttpUrl
     base_scoreboard_url: HttpUrl
 
-    stats_endpoint: str
-    info_endpoint: str
-    past_games_endpoint: str
-
     webhook_urls: list[str]
 
 
@@ -172,10 +170,6 @@ class ScorebotUserConfig(BaseUserConfig):
 
     base_api_url: Optional[HttpUrl] = Field(default=None)
     base_scoreboard_url: Optional[HttpUrl] = Field(default=None)
-
-    stats_endpoint: str = Field(default="/api/get_live_game_stats")
-    info_endpoint: str = Field(default="/api/public_info")
-    past_games_endpoint: str = Field(default="/#/gamescoreboard")
 
     webhook_urls: list[str] = Field(default_factory=list)
 
@@ -208,12 +202,7 @@ class ScorebotUserConfig(BaseUserConfig):
         else:
             api_url = str(self.base_api_url)
 
-        if not self.stats_endpoint.startswith("/"):
-            stats_endpoint = "/" + self.stats_endpoint
-        else:
-            stats_endpoint = self.stats_endpoint
-
-        validated_url = api_url + stats_endpoint
+        validated_url = api_url + STATS_ENDPOINT
 
         HttpUrl(validated_url)
         return validated_url
@@ -228,12 +217,7 @@ class ScorebotUserConfig(BaseUserConfig):
         else:
             api_url = str(self.base_api_url)
 
-        if not self.info_endpoint.startswith("/"):
-            info_endpoint = "/" + self.info_endpoint
-        else:
-            info_endpoint = self.info_endpoint
-
-        validated_url = api_url + info_endpoint
+        validated_url = api_url + INFO_ENDPOINT
         HttpUrl(validated_url)
         return validated_url
 
@@ -247,12 +231,7 @@ class ScorebotUserConfig(BaseUserConfig):
         else:
             scoreboard_url = str(self.base_scoreboard_url)
 
-        if not self.past_games_endpoint.startswith("/"):
-            past_games_endpoint = "/" + self.past_games_endpoint
-        else:
-            past_games_endpoint = self.past_games_endpoint
-
-        validated_url = scoreboard_url + past_games_endpoint
+        validated_url = scoreboard_url + PAST_GAMES_ENDPOINT
         HttpUrl(validated_url)
         return validated_url
 
@@ -280,8 +259,6 @@ class ScorebotUserConfig(BaseUserConfig):
             stats_to_display=values.get("stats_to_display"),
             base_api_url=values.get("base_api_url"),
             base_scoreboard_url=values.get("base_scoreboard_url"),
-            stats_endpoint=values.get("stats_endpoint"),
-            info_endpoint=values.get("info_endpoint"),
             webhook_urls=values.get("webhook_urls"),
         )
 
