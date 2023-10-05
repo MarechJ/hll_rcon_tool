@@ -231,7 +231,12 @@ def escaped_name(stat):
 
 
 def get_stat(
-    stats, key, limit: int, post_process: Callable | None = None, reverse=True, **kwargs
+    stats,
+    key: str,
+    limit: int,
+    post_process: Callable | None = None,
+    reverse=True,
+    **kwargs,
 ):
     if post_process is None:
         post_process = lambda v: v
@@ -248,25 +253,25 @@ def get_embeds(server_info, stats, config: ScorebotUserConfig):
     embeds.append(get_header_embed(server_info, config))
 
     stat_display_lookup = {
-        StatTypes("TOP_KILLERS"): "kills",
-        StatTypes("TOP_RATIO"): "kill_death_ratio",
-        StatTypes("TOP_PERFORMANCE"): "kills_per_minute",
-        StatTypes("TRY_HARDERS"): "deaths_per_minute",
-        StatTypes("TOP_STAMINA"): "deaths",
-        StatTypes("TOP_KILL_STREAK"): "kills_streak",
-        StatTypes("I_NEVER_GIVE_UP"): "deaths_without_kill_streak",
-        StatTypes("MOST_PATIENT"): "deaths_by_tk",
-        StatTypes("IM_CLUMSY"): "teamkills",
-        StatTypes("I_NEED_GLASSES"): "teamkills_streak",
-        StatTypes("I_LOVE_VOTING"): "nb_vote_started",
-        StatTypes("WHAT_IS_A_BREAK"): "time_seconds",
-        StatTypes("SURVIVORS"): "longest_life_secs",
-        StatTypes("U_R_STILL_A_MAN"): "shortest_life_secs",
+        StatTypes.top_killers: "kills",
+        StatTypes.top_ratio: "kill_death_ratio",
+        StatTypes.top_performance: "kills_per_minute",
+        StatTypes.try_harders: "deaths_per_minute",
+        StatTypes.top_stamina: "deaths",
+        StatTypes.top_kill_streak: "kills_streak",
+        StatTypes.i_never_give_up: "deaths_without_kill_streak",
+        StatTypes.most_patient: "deaths_by_tk",
+        StatTypes.im_clumsy: "teamkills",
+        StatTypes.i_need_glasses: "teamkills_streak",
+        StatTypes.i_love_voting: "nb_vote_started",
+        StatTypes.what_is_a_break: "time_seconds",
+        StatTypes.survivors: "longest_life_secs",
+        StatTypes.u_r_still_a_man: "shortest_life_secs",
     }
 
     stat_display_lambda_lookup = {}
-    stat_display_lambda_lookup["WHAT_IS_A_BREAK"] = lambda v: round(v / 60, 2)
-    stat_display_lambda_lookup["SURVIVORS"] = lambda v: round(v / 60, 2)
+    stat_display_lambda_lookup[StatTypes.what_is_a_break] = lambda v: round(v / 60, 2)
+    stat_display_lambda_lookup[StatTypes.survivors] = lambda v: round(v / 60, 2)
 
     current_embed = Embed(
         color=13734400,
@@ -279,6 +284,11 @@ def get_embeds(server_info, stats, config: ScorebotUserConfig):
         embeds.append(current_embed)
     else:
         for idx, stat_display in enumerate(config.stats_to_display):
+            if stat_display.type in (StatTypes.u_r_still_a_man,):
+                reverse = False
+            else:
+                reverse = True
+
             current_embed.add_field(
                 name=stat_display.display_format,
                 value=get_stat(
@@ -286,6 +296,7 @@ def get_embeds(server_info, stats, config: ScorebotUserConfig):
                     stat_display_lookup[stat_display.type],
                     config.top_limit,
                     post_process=stat_display_lambda_lookup.get(stat_display.type),
+                    reverse=reverse,
                 ),
             )
             if idx % 2:
@@ -379,6 +390,7 @@ def run():
             sys.exit(-1)
 
         try:
+            logger.info(f"Requesting {config.info_url=}")
             public_info = requests.get(config.info_url, verify=False).json()["result"]
         except ConnectionError as e:
             logger.error(f"Error accessing {config.info_url}")
