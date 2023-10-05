@@ -125,6 +125,15 @@ def _add_conf(sess, key, val):
     return sess.add(UserConfig(key=key, value=val))
 
 
+def _remove_conf(sess, key):
+    conf = _get_conf(sess, key)
+
+    if conf is not None:
+        logger.info("Deleting %s", key)
+        sess.delete(conf)
+        sess.commit()
+
+
 def _set_default(sess, key, val):
     if _get_conf(sess, key) is None:
         _add_conf(sess, key, val)

@@ -17,7 +17,7 @@ from rcon.automods import automod
 from rcon.cache_utils import RedisCached, get_redis_pool, invalidates
 from rcon.discord_chat import get_handler
 from rcon.game_logs import LogLoop, load_generic_hooks
-from rcon.models import install_unaccent
+from rcon.models import enter_session, install_unaccent
 from rcon.rcon_ import Rcon
 from rcon.scoreboard import live_stats_loop
 from rcon.server_stats import (
@@ -26,7 +26,7 @@ from rcon.server_stats import (
 )
 from rcon.settings import SERVER_INFO
 from rcon.steam_utils import enrich_db_users
-from rcon.user_config.auto_settings import seed_default_config
+from rcon.user_config.auto_settings import AutoSettingsConfig, seed_default_config
 from rcon.user_config.webhooks import (
     BaseMentionWebhookUserConfig,
     BaseUserConfig,
@@ -273,6 +273,14 @@ def get_user_setting(server: int, output: click.Path, file_type="yaml"):
             config = model.model_validate(value)
             dump[key] = config.model_dump()
 
+    # Auto settings are unique right now
+    auto_settings_key = f"{server}_auto_settings"
+    auto_settings_model = rcon.user_config.utils.get_user_config(
+        f"{server}_auto_settings"
+    )
+    if auto_settings_model:
+        dump[auto_settings_key] = auto_settings_model
+
     with open(str(output), "w") as fp:
         fp.write((json.dumps(dump, indent=2)))
 
@@ -287,10 +295,15 @@ def set_user_settings(server: int, input: click.Path, dry_run=True):
     """Set all (specified) user settings for SERVER from INPUT file.
 
     if DRY_RUN is not false, it will only validate the file.
-    No settings will be set unless the entire file validates correctly.
+    No settings will be set unless the entire file validates correctly.*
+
+    *Auto settings are not validated
 
     SERVER: The server number (SERVER_NUMBER as set in the compose files).
     """
+    # Auto settings are unique right now
+    auto_settings_key = f"{server}_auto_settings"
+
     if dry_run:
         print(f"{dry_run=} validating models only, not setting")
 
@@ -313,13 +326,16 @@ def set_user_settings(server: int, input: click.Path, dry_run=True):
             sys.exit(-1)
 
     for key in user_settings.keys():
-        if key not in config_models:
+        if key not in config_models and key != auto_settings_key:
             logger.error(f"{key} not an allowed key, no changes made.")
             sys.exit(-1)
 
     parsed_models: list[tuple[Type[BaseUserConfig], BaseUserConfig]] = []
     model: BaseUserConfig
     for key, payload in user_settings.items():
+        if key == auto_settings_key:
+            continue
+
         cls = config_models[key]
         try:
             model = cls(**payload)
@@ -338,6 +354,11 @@ def set_user_settings(server: int, input: click.Path, dry_run=True):
             print(f"setting {key=} class={cls.__name__}")
             rcon.user_config.utils.set_user_config(key, model.model_dump())
 
+        if auto_settings_key in user_settings:
+            rcon.user_config.utils.set_user_config(
+                auto_settings_key, user_settings[auto_settings_key]
+            )
+
     print("Done")
 
 
@@ -350,6 +371,9 @@ def reset_user_settings(server: int):
 
     SERVER: The server number (SERVER_NUMBER as set in the compose files).
     """
+    with enter_session() as sess:
+        AutoSettingsConfig().reset_settings(sess)
+        sess.commit()
 
     models: list[Type[BaseUserConfig]] = [
         model

@@ -2,7 +2,13 @@ import logging
 import os
 
 from rcon.models import enter_session
-from rcon.user_config.utils import _set_default, get_user_config, set_user_config
+from rcon.user_config.utils import (
+    _add_conf,
+    _remove_conf,
+    _set_default,
+    get_user_config,
+    set_user_config,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -14,6 +20,10 @@ class AutoSettingsConfig:
 
     def seed_db(self, sess):
         _set_default(sess, self.SETTINGS, DEFAULT_AUTO_SETTINGS)
+
+    def reset_settings(self, sess):
+        _remove_conf(sess, self.SETTINGS)
+        _add_conf(sess, self.SETTINGS, DEFAULT_AUTO_SETTINGS)
 
     def get_settings(self):
         return get_user_config(self.SETTINGS)
