@@ -72,65 +72,6 @@ class PublicInfoType(TypedDict):
 
 logger = logging.getLogger("rcon")
 
-# try:
-#     config = get_config()
-
-#     SERVER_CONFIG = config["SCOREBOT"][f'SERVER_{os.getenv("SERVER_NUMBER")}']
-#     CONFIG = config["SCOREBOT"]["COMMON"]
-
-#     STATS_URL = SERVER_CONFIG["STATS_URL"]
-#     INFO_URL = SERVER_CONFIG["INFO_URL"]
-#     SCOREBOARD_PUBLIC_URL = SERVER_CONFIG["SCOREBOARD_PUBLIC_URL"]
-
-#     try:
-#         # Older versions of default_config.yml and peoples config.yml have this typo
-#         SCOREBOARD_BASE_PATH = SERVER_CONFIG["SCORBOARD_BASE_PATH"]
-#     except KeyError:
-#         SCOREBOARD_BASE_PATH = SERVER_CONFIG["SCOREBOARD_BASE_PATH"]
-
-#     PAST_GAMES_URL = SERVER_CONFIG["PAST_GAMES_URL"]
-#     WEBHOOK_URL = SERVER_CONFIG["WEBHOOK_URL"]
-
-#     ALL_STATS_TEXT = CONFIG["ALL_STATS_TEXT"]
-#     AUTHOR_NAME = CONFIG["AUTHOR_NAME"]
-#     AUTHOR_ICON_URL = CONFIG["AUTHOR_ICON_URL"]
-#     TOP_LIMIT = CONFIG["TOP_LIMIT"]
-#     FOOTER_ICON_URL = CONFIG["FOOTER_ICON_URL"]
-#     NO_STATS_AVAILABLE = CONFIG["NO_STATS_AVAILABLE"]
-#     FIND_PAST_STATS = CONFIG["FIND_PAST_STATS"]
-#     NEXT_MAP_TEXT = CONFIG["NEXT_MAP_TEXT"]
-#     VOTE = CONFIG["VOTE"]
-#     PLAYERS = CONFIG["PLAYERS"]
-#     ELAPSED_TIME = CONFIG["ELAPSED_TIME"]
-
-#     # New options, including defaults to not break it for users with an older config.yml
-#     ALLIED_PLAYERS_TEXT = CONFIG.get("ALLIED_PLAYERS_TEXT", "Allied Players")
-#     AXIS_PLAYERS_TEXT = CONFIG.get("AXIS_PLAYERS_TEXT", "Axis Players")
-#     MATCH_SCORE_TITLE_TEXT = CONFIG.get("MATCH_SCORE_TITLE_TEXT", "Match Score")
-#     MATCH_SCORE_TEXT = CONFIG.get("MATCH_SCORE_TEXT", "Allied {0} : Axis {1}")
-#     TIME_REMAINING_TEXT = CONFIG.get("TIME_REMAINING_TEXT", "Time Remaining")
-
-#     TOP_KILLERS = CONFIG["TOP_KILLERS"]
-#     TOP_RATIO = CONFIG["TOP_RATIO"]
-#     TOP_PERFORMANCE = CONFIG["TOP_PERFORMANCE"]
-#     TRY_HARDERS = CONFIG["TRY_HARDERS"]
-#     TOP_STAMINA = CONFIG["TOP_STAMINA"]
-#     TOP_KILL_STREAK = CONFIG["TOP_KILL_STREAK"]
-#     MOST_PATIENT = CONFIG["MOST_PATIENT"]
-#     I_NEVER_GIVE_UP = CONFIG["I_NEVER_GIVE_UP"]
-#     I_M_CLUMSY = CONFIG["I_M_CLUMSY"]
-#     I_NEED_GLASSES = CONFIG["I_NEED_GLASSES"]
-#     I_LOVE_VOTING = CONFIG["I_LOVE_VOTING"]
-#     WHAT_IS_A_BREAK = CONFIG["WHAT_IS_A_BREAK"]
-#     SURVIVORS = CONFIG["SURVIVORS"]
-#     U_R_STILL_A_MAN = CONFIG["U_R_STILL_A_MAN"]
-
-#     STATS_KEYS_TO_DISPLAY = CONFIG["STATS_TO_DISPLAY"]
-# except Exception as e:
-#     logger.exception(f"There's an error in your scorebot config: {repr(e)}")
-#     raise
-
-
 map_to_pict = {
     "carentan": "maps/carentan.webp",
     "driel": "maps/driel.webp",
