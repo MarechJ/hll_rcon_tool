@@ -26,7 +26,7 @@ from rcon.server_stats import (
 )
 from rcon.settings import SERVER_INFO
 from rcon.steam_utils import enrich_db_users
-from rcon.user_config.user_config import seed_default_config
+from rcon.user_config.auto_settings import seed_default_config
 from rcon.user_config.webhooks import (
     BaseMentionWebhookUserConfig,
     BaseUserConfig,
