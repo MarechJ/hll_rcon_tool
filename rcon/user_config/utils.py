@@ -27,6 +27,7 @@ def key_check(mandatory_keys: frozenset, provided_keys: Iterable[str]):
     if extra_keys or missing_keys:
         raise InvalidKeysConfigurationError(
             missing_keys=set(missing_keys),
+            extra_keys=set(extra_keys),
             mandatory_keys=set(mandatory_keys),
             provided_keys=set(provided_keys),
         )
@@ -44,12 +45,14 @@ class InvalidKeysConfigurationError(Exception):
     def __init__(
         self,
         missing_keys: set[str] = set(),
+        extra_keys: set[str] = set(),
         mandatory_keys: set[str] = set(),
         provided_keys: set[str] = set(),
         *args: object,
     ) -> None:
         super().__init__(*args)
         self.missing_keys = missing_keys
+        self.extra_keys = extra_keys
         self.mandatory_keys = mandatory_keys
         self.provided_keys = provided_keys
 
@@ -57,14 +60,15 @@ class InvalidKeysConfigurationError(Exception):
         return self.__repr__()
 
     def __repr__(self) -> str:
-        return f"missing keys=({', '.join(self.missing_keys)}) | Mandatory keys=({', '.join(self.mandatory_keys)}) | Provided keys=({', '.join(self.provided_keys)})"
+        return f"missing keys=({', '.join(self.missing_keys)}) | Extra keys = ({', '.join(self.extra_keys)}) | Mandatory keys=({', '.join(self.mandatory_keys)}) | Provided keys=({', '.join(self.provided_keys)})"
 
     def asdict(self):
         return {
             "type": InvalidKeysConfigurationError.__name__,
-            "missing_keys": [k for k in self.missing_keys],
-            "mandatory_keys": [k for k in self.mandatory_keys],
-            "provided_keys": [k for k in self.provided_keys],
+            "missing_keys": sorted([k for k in self.missing_keys]),
+            "extra_keys": sorted([k for k in self.extra_keys]),
+            "mandatory_keys": sorted([k for k in self.mandatory_keys]),
+            "provided_keys": sorted([k for k in self.provided_keys]),
         }
 
 
