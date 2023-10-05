@@ -342,7 +342,7 @@ export const SeedingAutoMod = ({
             seeding rule and a new map starts, all connected players will NOT get an announcement.      
         */
         "announcement_enabled": false,
-        "announcement_message": "We are trying to populate the server! That means special rules apply.\n\n- {disallowed_roles} are not allowed (until {disallowed_roles_max_players} players are online)\n- {disallowed_weapons} are not allowed (until {disallowed_weapons_max_players} players are online)\n\nThanks for understanding and helping us seed!",
+        "announcement_message": "We are trying to populate the server! That means special rules apply.\\n\\n- {disallowed_roles} are not allowed (until {disallowed_roles_max_players} players are online)\\n- {disallowed_weapons} are not allowed (until {disallowed_weapons_max_players} players are online)\\n\\nThanks for understanding and helping us seed!",
         
         /*
             Step number 1
@@ -357,7 +357,7 @@ export const SeedingAutoMod = ({
             The following variables are available to fill into the text
             {player_name}, {received_warnings}, {max_warnings} and {next_check_seconds}, {violation}
         */
-        "warning_message": "Warning, {player_name}! You violate seeding rules on this server: {violation}\nYou will be punished after {max_warnings} warnings (you already received {received_warnings}), then kicked.\nNext check will happen automatically in {next_check_seconds}s.",
+        "warning_message": "Warning, {player_name}! You violate seeding rules on this server: {violation}\\nYou will be punished after {max_warnings} warnings (you already received {received_warnings}), then kicked.\\nNext check will happen automatically in {next_check_seconds}s.",
         
         /*
             This is the number of seconds this auto-mod will wait until moving to
@@ -404,7 +404,7 @@ export const SeedingAutoMod = ({
             The following variables are available to fill into the text
             {player_name}, {squad_name} and {kick_grace_period}
         */
-        "kick_message": "You violated seeding rules on this server.\nYour grace period of {kick_grace_period}s has passed.\nYou failed to comply with the previous warnings.",
+        "kick_message": "You violated seeding rules on this server.\\nYour grace period of {kick_grace_period}s has passed.\\nYou failed to comply with the previous warnings.",
         
         
         /*

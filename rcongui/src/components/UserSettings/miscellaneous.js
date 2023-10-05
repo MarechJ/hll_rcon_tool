@@ -153,59 +153,59 @@ export const Scorebot = ({
         "stats_to_display": [
             {
                 "type": "TOP_KILLERS",
-                "display_format": "<=HLLBomb=868256234439073802> TOP KILLERS\n*kills* <=HLLBomb=868256234439073802>"
+                "display_format": ":knife: TOP KILLERS\\n*kills* <=HLLBomb=868256234439073802>"
             },
             {
                 "type": "TOP_RATIO",
-                "display_format": "TOP RATIO\n*kills/death*"
+                "display_format": "TOP RATIO\\n*kills/death*"
             },
             {
                 "type": "TOP_PERFORMANCE",
-                "display_format": "TOP PERFORMANCE\n*kills/minute*"
+                "display_format": "TOP PERFORMANCE\\n*kills/minute*"
             },
             {
                 "type": "TRY_HARDERS",
-                "display_format": "TRY HARDERS\n*deaths/minute*"
+                "display_format": "TRY HARDERS\\n*deaths/minute*"
             },
             {
                 "type": "TOP_STAMINA",
-                "display_format": "TOP STAMINA\n*deaths*"
+                "display_format": "TOP STAMINA\\n*deaths*"
             },
             {
                 "type": "TOP_KILL_STREAK",
-                "display_format": "TOP KILL STREAK\n*kill streak*"
+                "display_format": "TOP KILL STREAK\\n*kill streak*"
             },
             {
                 "type": "MOST_PATIENT",
-                "display_format": "MOST PATIENT\n*death by teamkill*"
+                "display_format": "MOST PATIENT\\n*death by teamkill*"
             },
             {
                 "type": "I_NEVER_GIVE_UP",
-                "display_format": "I NEVER GIVE UP\n*death streak*"
+                "display_format": "I NEVER GIVE UP\\n*death streak*"
             },
             {
                 "type": "IM_CLUMSY",
-                "display_format": "YES I'M CLUMSY\n*teamkills*"
+                "display_format": "YES I'M CLUMSY\\n*teamkills*"
             },
             {
                 "type": "I_NEED_GLASSES",
-                "display_format": "I NEED GLASSES\n*teamkill streak*"
+                "display_format": "I NEED GLASSES\\n*teamkill streak*"
             },
             {
                 "type": "I_LOVE_VOTING",
-                "display_format": "I ❤ VOTING\n*num. votes started*"
+                "display_format": "I ❤ VOTING\\n*num. votes started*"
             },
             {
                 "type": "WHAT_IS_A_BREAK",
-                "display_format": "WHAT IS A BREAK?\n*ingame time*"
+                "display_format": "WHAT IS A BREAK?\\n*ingame time*"
             },
             {
                 "type": "SURVIVORS",
-                "display_format": "SURVIVORS\n*longest life (min.)*"
+                "display_format": "SURVIVORS\\n*longest life (min.)*"
             },
             {
                 "type": "U_R_STILL_A_MAN",
-                "display_format": "U'R STILL A MAN\n*shortest life (min.)*"
+                "display_format": "U'R STILL A MAN\\n*shortest life (min.)*"
             }
         ],
 
