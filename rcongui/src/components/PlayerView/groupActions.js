@@ -49,7 +49,6 @@ const GroupActions = ({
   const [sharedMessages, setSharedMessages] = React.useState([]);
   React.useEffect(() => {
     getSharedMessages("punishments").then((data) => setSharedMessages(data));
-    console.log(`sharedMessages=${sharedMessages}`);
   }, []);
 
   let myPlayers = new List(players);
