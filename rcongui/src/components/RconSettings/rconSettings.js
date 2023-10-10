@@ -494,7 +494,11 @@ class RconSettings extends React.Component {
             <Grid item>
               <Padlock
                 handleChange={(v) =>
-                  this.saveBroadcastsSettings({ enabled: v })
+                  this.saveBroadcastsSettings({
+                    enabled: v,
+                    randomize: randomize,
+                    messages: broadcastMessages,
+                  })
                 }
                 checked={enabled}
                 label="Auto broadcast enabled"
@@ -503,7 +507,11 @@ class RconSettings extends React.Component {
             <Grid item>
               <Padlock
                 handleChange={(v) =>
-                  this.saveBroadcastsSettings({ randomize: v })
+                  this.saveBroadcastsSettings({
+                    enabled: enabled,
+                    randomize: v,
+                    messages: broadcastMessages,
+                  })
                 }
                 checked={randomize}
                 label="Randomized messages"
