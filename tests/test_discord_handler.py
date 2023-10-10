@@ -1,6 +1,3 @@
-from unittest import mock
-
-import pytest
 from pydantic import HttpUrl
 
 from rcon.discord_chat import DiscordWebhookHandler
@@ -13,8 +10,7 @@ from rcon.user_config.webhooks import (
 )
 
 
-@mock.patch("rcon.rcon_discord.make_hook", return_value=[])
-def test_no_mentions(monkeypatch):
+def test_no_mentions():
     config = ChatWebhooksUserConfig(
         hooks=[
             DiscordMentionWebhook(
@@ -23,7 +19,6 @@ def test_no_mentions(monkeypatch):
         ],
         allow_mentions=True,
     )
-    monkeypatch.setattr(DiscordWebhookHandler, "_make_hook", lambda: [])
     handler = DiscordWebhookHandler(chat_wh_config=config)
     content, embed, triggered = handler.create_chat_message(
         log={
@@ -96,7 +91,6 @@ def test_admin_pings_mention_start():
         ],
     )
 
-    # monkeypatch.setattr(DiscordWebhookHandler, "_make_hook", lambda: [])
     handler = DiscordWebhookHandler(admin_wh_config=config)
     content, embed, triggered = handler.create_chat_message(
         log={
@@ -107,7 +101,7 @@ def test_admin_pings_mention_start():
         }
     )
 
-    assert embed.description == "__**!admin**__ test @here"
+    assert embed.description == "__**!admin**__ test @\u200bhere"
     assert content == "<@1212>"
     assert triggered == True
 
@@ -122,7 +116,6 @@ def test_admin_pings_mention_middle():
         ],
     )
 
-    # monkeypatch.setattr(DiscordWebhookHandler, "_make_hook", lambda: [])
     handler = DiscordWebhookHandler(admin_wh_config=config)
     content, embed, triggered = handler.create_chat_message(
         log={
@@ -133,7 +126,7 @@ def test_admin_pings_mention_middle():
         }
     )
 
-    assert embed.description == "test __**!admin**__ @here"
+    assert embed.description == "test __**!admin**__ @\u200bhere"
     assert content == "<@1212>"
     assert triggered == True
 
@@ -145,7 +138,6 @@ def test_kill_message():
         hooks=[DiscordWebhook(url=HttpUrl("http://example.com"))],
     )
 
-    # monkeypatch.setattr(DiscordWebhookHandler, "_make_hook", lambda: [])
     handler = DiscordWebhookHandler(kills_wh_config=config)
 
     embed = handler.create_kill_message(
@@ -178,7 +170,6 @@ def test_team_kill_message():
         hooks=[DiscordWebhook(url=HttpUrl("http://example.com"))],
     )
 
-    # monkeypatch.setattr(DiscordWebhookHandler, "_make_hook", lambda: [])
     handler = DiscordWebhookHandler(kills_wh_config=config)
 
     embed = handler.create_kill_message(
