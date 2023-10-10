@@ -166,6 +166,7 @@ GROUPS = [
             "can_view_standard_welcome_messages",
             "can_change_standard_welcome_messages",
             "can_view_steam_config",
+            "can_change_steam_config",
             "can_view_vac_game_bans_config",
             "can_change_vac_game_bans_config",
             "can_view_admin_pings_discord_webhooks_config",
