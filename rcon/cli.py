@@ -249,13 +249,22 @@ def _models_to_exclude():
 @cli.command(name="get_user_settings")
 @click.argument("server", type=int)
 @click.argument("output", type=click.Path())
-def get_user_setting(server: int, output: click.Path, file_type="yaml"):
+@click.option(
+    "--output-server",
+    type=int,
+    default=None,
+    help="The server number to export for (if different)",
+)
+def get_user_setting(server: int, output: click.Path, output_server=None):
     """Dump all user settings for SERVER to OUTPUT file.
 
     SERVER: The server number (SERVER_NUMBER as set in the compose files).
 
     Only configured settings are dumped, never defaults.
     """
+    if output_server is None:
+        output_server = server
+
     key_format = "{server}_{cls_name}"
 
     keys_to_models: dict[str, BaseUserConfig] = {
@@ -268,18 +277,20 @@ def get_user_setting(server: int, output: click.Path, file_type="yaml"):
     dump: dict[str, Any] = {}
     for model in keys_to_models.values():
         key = key_format.format(server=server, cls_name=model.__name__)
+        output_key = key_format.format(server=output_server, cls_name=model.__name__)
         value = rcon.user_config.utils.get_user_config(key)
         if value:
             config = model.model_validate(value)
-            dump[key] = config.model_dump()
+            dump[output_key] = config.model_dump()
 
     # Auto settings are unique right now
     auto_settings_key = f"{server}_auto_settings"
+    auto_settings_output_key = f"{output_server}_auto_settings"
     auto_settings_model = rcon.user_config.utils.get_user_config(
         f"{server}_auto_settings"
     )
     if auto_settings_model:
-        dump[auto_settings_key] = auto_settings_model
+        dump[auto_settings_output_key] = auto_settings_model
 
     with open(str(output), "w") as fp:
         fp.write((json.dumps(dump, indent=2)))
