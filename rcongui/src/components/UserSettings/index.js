@@ -81,8 +81,8 @@ const UserSetting = ({
           direction="column"
         >
           <Editor
-            width="75vw"
-            height="75vh"
+            width="90vw"
+            height="50vh"
             defaultLanguage="json"
             value={data}
             onChange={setData}
