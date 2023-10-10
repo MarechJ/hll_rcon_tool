@@ -38,7 +38,7 @@ ctl = Rcon(SERVER_INFO)
 @permission_required("api.can_restart_webserver", raise_exception=True)
 @record_audit
 def restart_gunicorn(request):
-    """Restart gunicorn workers, forces a reload of Django"""
+    """Restart gunicorn workers which reconnects Rcon endpoint instances"""
     exit_code = os.system(f"cat /code/rconweb/gunicorn.pid | xargs kill -HUP")
     error_msg = None
     if exit_code == 0:
