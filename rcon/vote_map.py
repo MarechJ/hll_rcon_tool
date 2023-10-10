@@ -358,8 +358,6 @@ class VoteMap:
             )
             return config.enabled
 
-        # help_text = config.get_votemap_help_text()
-
         if match := re.match(r"!votemap\s*(\d+)", message):
             logger.info("Registering vote %s", struct_log)
             vote = match.group(1)
