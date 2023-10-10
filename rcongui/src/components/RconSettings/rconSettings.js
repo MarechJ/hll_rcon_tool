@@ -68,16 +68,14 @@ const ManualWatchList = ({ classes }) => {
 
 const Hook = ({
   hook = "",
-  role_mentions = [],
-  user_mentions = [],
+  roles = [],
   onAddHook,
   onDeleteHook,
   onUpdateHook,
   actionType,
 }) => {
-  const [hookUrl, setHookUrl] = React.useState(hook);
-  const [userIds, setUserIds] = React.useState(user_mentions);
-  const [roleIds, setRoleIds] = React.useState(role_mentions);
+  const [myHook, setMyHook] = React.useState(hook);
+  const [myRoles, setMyRoles] = React.useState(roles);
 
   return (
     <Grid container spacing={1}>
@@ -85,25 +83,18 @@ const Hook = ({
         <TextField
           label="webhook url"
           fullWidth
-          value={hookUrl}
-          onChange={(e) => setHookUrl(e.target.value)}
+          value={myHook}
+          onChange={(e) => setMyHook(e.target.value)}
           helperText="Discord hook url"
         />
       </Grid>
       <Grid item xs={6}>
         <WordList
-          label="Users"
-          helperText="Add users in <@> format to be pinged, hit enter to validate"
-          placeholder="<@111117777888889999>"
-          words={userIds}
-          onWordsChange={setUserIds}
-        />
-        <WordList
           label="Roles"
-          helperText="Add roles in <@&> format to be pinged, hit enter to validate"
+          helperText="Add roles to be pinged, hit enter to validate"
           placeholder="<@&111117777888889999>"
-          words={roleIds}
-          onWordsChange={setRoleIds}
+          words={myRoles}
+          onWordsChange={setMyRoles}
         />
       </Grid>
       <Grid item xs={2}>
@@ -111,15 +102,13 @@ const Hook = ({
           <React.Fragment>
             <IconButton
               edge="start"
-              onClick={() => {
-                onDeleteHook();
-              }}
+              onClick={() => onDeleteHook(myHook, myRoles)}
             >
               <DeleteIcon />
             </IconButton>
             <IconButton
               edge="start"
-              onClick={() => onUpdateHook(hookUrl, userIds, roleIds)}
+              onClick={() => onUpdateHook(myHook, myRoles)}
             >
               <SaveIcon />
             </IconButton>
@@ -128,10 +117,9 @@ const Hook = ({
           <IconButton
             edge="start"
             onClick={() => {
-              onAddHook(hookUrl, userIds, roleIds);
-              setUserIds([]);
-              setRoleIds([]);
-              setHookUrl("");
+              onAddHook(myHook, myRoles);
+              setMyRoles("");
+              setMyHook("");
             }}
           >
             <AddIcon />
@@ -142,104 +130,74 @@ const Hook = ({
   );
 };
 
-const WebhooksConfig = ({ type }) => {
+const WebhooksConfig = () => {
   const [hooks, setHooks] = React.useState([]);
   React.useEffect(() => {
-    get(`get_${type}_discord_webhooks`)
-      .then((res) => showResponse(res, `get_${type}_discord_webhooks`, false))
-      .then((res) => {
-        return setHooks(res.result.hooks);
-      })
+    get("get_hooks")
+      .then((res) => showResponse(res, "get_hooks", false))
+      .then((res) => setHooks(res.result))
       .catch(handle_http_errors);
   }, []);
 
-  const setHookConfig = (hooks) => {
-    postData(`${process.env.REACT_APP_API_URL}set_${type}_discord_webhooks`, {
-      hooks: hooks,
+  const setHookConfig = (hookConfig) =>
+    postData(`${process.env.REACT_APP_API_URL}set_hooks`, {
+      name: hookConfig.name,
+      hooks: hookConfig.hooks,
     })
-      .then((res) => showResponse(res, `set_${type}_discord_webhooks`, true))
+      .then((res) => showResponse(res, `set_hooks ${hookConfig.name}`, true))
       .then((res) => {
-        setHooks(res.result.hooks);
+        console.log(res);
+        setHooks(res.result);
       });
-  };
 
-  // if (hooks === null) {
-  //   return (
-  //     <React.Fragment>
-  //       <p>no hooks found</p>
-  //     </React.Fragment>
-  //   );
-  // }
-
+  if (hooks === null) {
+    return (
+      <React.Fragment>
+        <p>no hooks found</p>
+      </React.Fragment>
+    );
+  }
   return (
     <React.Fragment>
-      <Grid container>
-        <Grid item xs={12}>
-          <Typography variant="h6" style={{ "text-transform": "capitalize" }}>
-            For: {type}
-          </Typography>
-          {hooks.length ? (
-            hooks.map((h) => {
-              return (
-                <>
-                  <Grid container>
-                    <Hook
-                      hook={h.url}
-                      user_mentions={h.user_mentions}
-                      role_mentions={h.role_mentions}
-                      actionType="delete"
-                      onDeleteHook={() => {
-                        hooks.splice(idx, 1);
-                        setHookConfig(hooks);
-                      }}
-                      onUpdateHook={(
-                        hook_url,
-                        user_mentions,
-                        role_mentions
-                      ) => {
-                        hooks[idx] = {
-                          url: hook_url,
-                          user_mentions: user_mentions,
-                          role_mentions: role_mentions,
-                        };
-                        setHookConfig(hooks);
-                      }}
-                    />
-                  </Grid>
-
-                  <Grid item xs={12}>
-                    <Hook
-                      actionType="add"
-                      onAddHook={(hook_url, user_mentions, role_mentions) => {
-                        h.hooks.push({
-                          url: hook_url,
-                          user_mentions: user_mentions,
-                          role_mentions: role_mentions,
-                        });
-                        setHookConfig(h);
-                      }}
-                    />
-                  </Grid>
-                </>
-              );
-            })
-          ) : (
-            <Grid item xs={12}>
-              <Hook
-                actionType="add"
-                onAddHook={(hook_url, user_mentions, role_mentions) => {
-                  h.hooks.push({
-                    url: hook_url,
-                    user_mentions: user_mentions,
-                    role_mentions: role_mentions,
-                  });
-                  setHookConfig(h);
-                }}
-              />
+      {hooks.map((hookConfig) => (
+        <Grid container>
+          <Grid item xs={12}>
+            <Typography variant="h6" style={{ "text-transform": "capitalize" }}>
+              For: {hookConfig.name}
+            </Typography>
+            <Grid container>
+              {hookConfig.hooks.length ? (
+                hookConfig.hooks.map((o, idx) => (
+                  <Hook
+                    hook={o.hook}
+                    roles={o.roles}
+                    actionType="delete"
+                    onDeleteHook={() => {
+                      hookConfig.hooks.splice(idx, 1);
+                      setHookConfig(hookConfig);
+                    }}
+                    onUpdateHook={(hook, roles) => {
+                      hookConfig.hooks[idx] = { hook: hook, roles: roles };
+                      setHookConfig(hookConfig);
+                    }}
+                  />
+                ))
+              ) : (
+                <Typography>{`No hooks defined for: ${hookConfig.name}`}</Typography>
+              )}
             </Grid>
-          )}
+          </Grid>
+          <Grid item xs={12}>
+            <Hook
+              actionType="add"
+              onAddHook={(hook, roles) => {
+                hookConfig.hooks.push({ hook: hook, roles: roles });
+                setHookConfig(hookConfig);
+              }}
+            />
+          </Grid>
         </Grid>
-      </Grid>
+      ))}
     </React.Fragment>
   );
 };
