@@ -683,7 +683,7 @@ def get_connection_info(request):
             "name": ctl.get_name(),
             "port": os.getenv("RCONWEB_PORT"),
             "link": os.getenv("RCONWEB_SERVER_URL"),
-            "server_number": get_server_number(),
+            "server_number": int(get_server_number()),
         },
         failed=False,
         command="get_connection_info",
