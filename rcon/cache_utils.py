@@ -119,7 +119,7 @@ class RedisCached:
 
 def get_redis_pool(decode_responses=True):
     global _REDIS_POOL
-    redis_url = os.getenv("REDIS_URL")
+    redis_url = os.getenv("HLL_REDIS_URL")
     if not redis_url:
         return None
 
@@ -144,7 +144,7 @@ def get_redis_client(decode_responses=True):
 def ttl_cache(ttl, *args, is_method=True, cache_falsy=True, **kwargs):
     pool = get_redis_pool(decode_responses=False)
     if not pool:
-        logger.debug("REDIS_URL is not set falling back to memory cache")
+        logger.debug("HLL_REDIS_URL is not set falling back to memory cache")
         return cachetools_ttl_cache(*args, ttl=ttl, **kwargs)
 
     def decorator(func):

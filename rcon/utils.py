@@ -4,7 +4,6 @@ import os
 import secrets
 from datetime import datetime
 from typing import Generic, TypeVar
-from urllib.parse import urlparse
 
 import redis
 
@@ -455,8 +454,18 @@ class ApiKey:
         if not num:
             raise ValueError("SERVER_NUMBER variable is not set, can't start")
 
-        parts = urlparse(os.getenv("REDIS_URL"))
-        self.red = redis.StrictRedis(host=parts.hostname, port=parts.port, db=0)
+        REDIS_PARTS = {
+            'HOST': os.getenv('HLL_REDIS_HOST'),
+            'PORT': os.getenv('HLL_REDIS_PORT'),
+        }
+
+        if not REDIS_PARTS['HOST']:
+            raise ValueError("HLL_REDIS_HOST must be set")
+        
+        if not REDIS_PARTS['PORT']:
+            raise ValueError("HLL_REDIS_PORT must be set")
+
+        self.red = redis.StrictRedis(host=REDIS_PARTS['HOST'], port=REDIS_PARTS['PORT'], db=0)
         self.key_prefix = "frontend_"
         self.key = f"{self.key_prefix}{num}"
 

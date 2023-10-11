@@ -274,14 +274,14 @@ Reverse any changes you made (from the previous upgrades) to your `config.yml`, 
 ### Note for multi servers beyond 3 servers
 
 You can copy the the last server section in the docker-compose.yml file and paste it, while replacing all the \_3 by \_4, also add the required variable in your .env (copy a whole section and replace the \_3 to \_4 suffix)
-Also note that you must add this extra keys in your docker-compose.yml after REDIS_URL. And mind the DB number that should change with each server
+Also note that you must add this extra keys in your docker-compose.yml after HLL_REDIS_URL. And mind the DB number that should change with each server
 
 ```
       ....
-      REDIS_URL: redis://redis:6379/1
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      REDIS_DB: 1
+      HLL_REDIS_URL: redis://redis:6379/1
+      HLL_REDIS_HOST: redis
+      HLL_REDIS_PORT: 6379
+      HLL_REDIS_DB: 1
       ....
 ```
 
@@ -382,8 +382,8 @@ This will make redis and postgres available on you localhost with their default 
     export DJANGO_DEBUG=True
     export SERVER_NUMBER=1
 
-    export DB_URL=postgres://rcon:developmentpassword@localhost:5432
-    export REDIS_URL=redis://localhost:6379/0
+    export HLL_DB_URL=postgres://rcon:developmentpassword@localhost:5432
+    export HLL_REDIS_URL=redis://localhost:6379/0
 
 #### Prepare the DB
 
