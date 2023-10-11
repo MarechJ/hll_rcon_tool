@@ -481,7 +481,7 @@ class ApiKey:
         }
 
 
-def get_server_number() -> int:
+def get_server_number() -> str:
     """Get the CRCON server number"""
     server_number = os.getenv("SERVER_NUMBER")
     if not server_number:
