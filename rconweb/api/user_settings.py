@@ -3,6 +3,7 @@ from copy import copy
 from logging import getLogger
 from typing import Any, Type
 
+import discord
 import pydantic
 from django.contrib.auth.decorators import permission_required
 from django.http import JsonResponse, QueryDict
@@ -142,11 +143,14 @@ def _audit_user_config_differences(
         dry_run=False,
     )
     new_model = cls.load_from_db().model_dump()
-    differences = dict_differences(old_model, new_model)
+    differences = str(dict_differences(old_model, new_model))
+    message = DISCORD_AUDIT_FORMAT.format(
+        command_name=command_name, differences=differences
+    )
+    message = discord.utils.escape_markdown(message)
+    message = discord.utils.escape_mentions(message)
     send_to_discord_audit(
-        message=DISCORD_AUDIT_FORMAT.format(
-            command_name=command_name, differences=str(differences)
-        ),
+        message=message,
         by=author,
     )
 
