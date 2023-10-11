@@ -73,7 +73,7 @@ services:
     networks:
       - common
   postgres:
-    image: postgres:12
+    image: postgres:12-alpine
     restart: always
     environment:
       # If a password is not defined this container will fail to create
@@ -81,9 +81,10 @@ services:
       POSTGRES_USER: ${HLL_DB_USER}
       POSTGRES_DB: ${HLL_DB_NAME}
       PGDATA: /data
-      PGUSER: rcon
+      HLL_DB_NAME: ${HLL_DB_NAME}
+      HLL_DB_USER: ${HLL_DB_USER}
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready", "-d", "HLL_DB_NAME"]
+      test: ["CMD", "pg_isready", "-U", "${HLL_DB_USER}", "-d", "${HLL_DB_NAME}"]
       interval: 15s
       timeout: 30s
       retries: 5
@@ -111,7 +112,7 @@ services:
       HLL_DB_NAME: ${HLL_DB_NAME}
       HLL_DB_HOST: ${HLL_DB_HOST}
       HLL_DB_HOST_PORT: ${HLL_DB_HOST_PORT}
-      HLL_DB_URL: 'postgres://${HLL_DB_USER}:${HLL_DB_PASSWORD}@${HLL_DB_HOST}:${HLL_DB_HOST_PORT}'
+      HLL_DB_URL: 'postgres://${HLL_DB_USER}:${HLL_DB_PASSWORD}@${HLL_DB_HOST}:${HLL_DB_HOST_PORT}/${HLL_DB_NAME}'
       DISCORD_WEBHOOK_AUDIT_LOG: ${DISCORD_WEBHOOK_AUDIT_LOG_2}
       RCONWEB_API_SECRET: ${RCONWEB_API_SECRET}
       SERVER_SHORT_NAME: ${SERVER_SHORT_NAME_2}
@@ -186,7 +187,7 @@ services:
       HLL_DB_NAME: ${HLL_DB_NAME}
       HLL_DB_HOST: ${HLL_DB_HOST}
       HLL_DB_HOST_PORT: ${HLL_DB_HOST_PORT}
-      HLL_DB_URL: 'postgres://${HLL_DB_USER}:${HLL_DB_PASSWORD}@${HLL_DB_HOST}:${HLL_DB_HOST_PORT}'
+      HLL_DB_URL: 'postgres://${HLL_DB_USER}:${HLL_DB_PASSWORD}@${HLL_DB_HOST}:${HLL_DB_HOST_PORT}/${HLL_DB_NAME}'
       DISCORD_WEBHOOK_AUDIT_LOG: ${DISCORD_WEBHOOK_AUDIT_LOG_3}
       RCONWEB_API_SECRET: ${RCONWEB_API_SECRET}
       SERVER_SHORT_NAME: ${SERVER_SHORT_NAME_3}
