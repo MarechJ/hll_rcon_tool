@@ -35,13 +35,12 @@ def parse_webhook_url(url):
 logger = logging.getLogger(__name__)
 
 
-def make_hook(webhook_url) -> Webhook | None:
+def make_hook(webhook_url) -> DiscordWebhook | None:
     webhook_id, webhook_token = parse_webhook_url(webhook_url)
     if not all([webhook_id, webhook_token]):
         return None
-    return Webhook.partial(
-        id=webhook_id, token=webhook_token, adapter=RequestsWebhookAdapter()
-    )
+
+    return DiscordWebhook(url=webhook_url)
 
 
 def make_allowed_mentions(user_ids, role_ids):
@@ -70,7 +69,7 @@ def get_prepared_discord_hooks(
 
     return [
         DiscordWebhook(
-            url=hook.url,
+            url=str(hook.url),
             allowed_mentions=make_allowed_mentions(
                 hook.user_mentions, hook.role_mentions
             ),

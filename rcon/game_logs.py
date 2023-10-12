@@ -7,9 +7,9 @@ import time
 import unicodedata
 from collections import defaultdict
 from functools import partial
-from typing import Callable, DefaultDict, Dict, Iterable, List
+from typing import Callable, DefaultDict, Dict, Iterable
 
-import discord
+import discord_webhook
 from pydantic import HttpUrl
 from sqlalchemy import and_, desc, or_
 from sqlalchemy.exc import IntegrityError
@@ -125,22 +125,20 @@ def on_generic(key, func) -> Callable:
     return func
 
 
-def make_allowed_mentions(mentions: Iterable[str]) -> discord.AllowedMentions:
+def make_allowed_mentions(mentions: Iterable[str]) -> defaultdict[str, list[str]]:
     """Convert the provided sequence of users and roles to a discord.AllowedMentions
 
     Similar to discord_chat.make_allowed_mentions but doesn't strip @everyone/@here
     """
-    allowed_mentions: DefaultDict[str, List[discord.Object]] = defaultdict(list)
+    allowed_mentions: DefaultDict[str, list[str]] = defaultdict(list)
 
     for role_or_user in mentions:
         if match := re.match(r"<@(\d+)>", role_or_user):
-            allowed_mentions["users"].append(discord.Object(int(match.group(1))))
-        if match := re.match(r"<@&(\d+)>", role_or_user):
-            allowed_mentions["roles"].append(discord.Object(int(match.group(1))))
+            allowed_mentions["users"].append((match.group(1)))
+        elif match := re.match(r"<@&(\d+)>", role_or_user):
+            allowed_mentions["roles"].append((match.group(1)))
 
-    return discord.AllowedMentions(
-        users=allowed_mentions["users"], roles=allowed_mentions["roles"]
-    )
+    return allowed_mentions
 
 
 def send_log_line_webhook_message(
@@ -154,23 +152,26 @@ def send_log_line_webhook_message(
 
     mentions = webhook.user_mentions + webhook.role_mentions
 
-    discord_webhook = make_hook(webhook.url)
-    if not discord_webhook:
+    wh = make_hook(webhook.url)
+    if not wh:
         logger.error("Error creating discord webhook for: %s", webhook.url)
         return
 
     allowed_mentions = make_allowed_mentions(mentions)
 
     content = " ".join(mentions)
-    description = log_line["line_without_time"]
-    embed = discord.Embed(
+    description: str = log_line["line_without_time"]
+    embed = discord_webhook.DiscordEmbed(
         description=description,
         timestamp=datetime.datetime.utcfromtimestamp(log_line["timestamp_ms"] / 1000),
     )
+
     embed.set_footer(text=config.short_name)
-    discord_webhook.send(
-        content=content, embed=embed, allowed_mentions=allowed_mentions
-    )
+
+    wh.content = content
+    wh.add_embed(embed)
+    wh.allowed_mentions = allowed_mentions["user"] + allowed_mentions["roles"]
+    wh.execute()
 
 
 # I don't think there is a good way to cache invalidate this without

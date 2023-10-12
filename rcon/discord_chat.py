@@ -5,6 +5,7 @@ from functools import lru_cache
 from typing import Iterable
 
 import discord.utils
+from discord_webhook import DiscordEmbed, DiscordWebhook
 
 from rcon.cache_utils import ttl_cache
 from rcon.game_logs import on_chat, on_kill, on_tk
@@ -96,7 +97,7 @@ class DiscordWebhookHandler:
     def _make_hook(hooks: Iterable[DiscordWebhook] | Iterable[DiscordMentionWebhook]):
         return [make_hook(hook.url) for hook in hooks]
 
-    def create_chat_message(self, log) -> tuple[str, discord.Embed, bool]:
+    def create_chat_message(self, log) -> tuple[str, DiscordEmbed, bool]:
         message = log["sub_content"]
 
         if not self.chat_wh_config.allow_mentions:
@@ -109,7 +110,7 @@ class DiscordWebhookHandler:
         action = action.split("CHAT")[1]
         color = CHAT_ACTION_TO_COLOR[action]
 
-        embed = discord.Embed(
+        embed = DiscordEmbed(
             description=message, color=color, timestamp=datetime.utcnow()
         )
         embed.set_author(
@@ -153,16 +154,18 @@ class DiscordWebhookHandler:
         # "TEAM KILL" -> "Team Killer", etc.
         killer_field_name = f"{action.title().strip()}er"
 
-        embed = discord.Embed(color=color)
-        embed.add_field(
+        embed = DiscordEmbed(color=color)
+        embed.add_embed_field(
             name=killer_field_name,
             value=killer_id_link,
             inline=True,
-        ).add_field(
+        )
+        embed.add_embed_field(
             name="Victim",
             value=victim_id_link,
             inline=True,
-        ).add_field(
+        )
+        embed.add_embed_field(
             name="Weapon",
             value=log["weapon"],
             inline=True,
@@ -179,11 +182,17 @@ class DiscordWebhookHandler:
             )
 
             for wh in self.chat_webhooks:
-                wh.send(content=content, embed=embed)
+                wh.remove_embeds()
+                wh.add_embed(embed)
+                wh.content = content
+                wh.execute()
 
             if triggered:
                 for wh in self.ping_trigger_webhooks:
-                    wh.send(content=content, embed=embed)
+                    wh.remove_embeds()
+                    wh.add_embed(embed)
+                    wh.content = content
+                    wh.execute()
         except Exception as e:
             logger.exception("error executing chat message webhook: %s", e)
             raise
@@ -196,7 +205,9 @@ class DiscordWebhookHandler:
             embed = self.create_kill_message(log)
             logger.debug("sending kill message len=%s to Discord", len(embed))
             for wh in self.kills_webhooks:
-                wh.send(embed=embed)
+                wh.remove_embeds()
+                wh.add_embed(embed)
+                wh.execute()
         except Exception as e:
             logger.exception("error executing kill message webhook %s", e)
 
