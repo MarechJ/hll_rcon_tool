@@ -380,13 +380,13 @@ def notify_false_positives(rcon: Rcon, _, name: str, steam_id_64: str):
         return
 
     logger.info(
-        "Detected player name with whitespace at the end: Warning him of false-positive events. Player name: "
+        "Detected player name with whitespace at the end: Warning them of false-positive events. Player name: "
         + name
     )
 
     try:
         send_to_discord_audit(
-            f"WARNING Player with bugged profile joined: `{name}` `{steam_id_64}`\n\nThis player if Squad Officer will cause his squad to be punished. He also will show as unassigned in the Game view.\n\nPlease ask him to change his name (last character IG shouldn't be a whitespace)"
+            f"WARNING Player with bugged profile joined: `{name}` `{steam_id_64}`\n\nThis player if Squad Officer will cause their squad to be punished. They also will show as unassigned in the Game view.\n\nPlease ask them to change their name (last character IG shouldn't be a whitespace)"
         )
     except Exception:
         logger.exception("Unable to send to audit")

@@ -49,9 +49,9 @@ MULTI_SERVERS:
 
 # Config related to bans
 BANS:
-  # By setting this to yes, if you unban a player (temp or perma) it will also remove his blacklist (if any)
+  # By setting this to yes, if you unban a player (temp or perma) it will also remove their blacklist (if any)
   unban_does_unblacklist: yes
-  # Same as above but the other way around, remove a player from the blacklist will unban him
+  # Same as above but the other way around, remove a player from the blacklist will unban them
   unblacklist_does_unban: yes
 
 # -----------------------------
