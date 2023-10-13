@@ -81,11 +81,12 @@ def _validate_user_config(
     if reset_to_default:
         try:
             default = model()
-            set_user_config(default.KEY(), default.model_dump())
+            result = default.model_dump()
+            set_user_config(default.KEY(), result)
             return api_response(
                 command=command_name,
                 failed=False,
-                result=default.model_dump(),
+                result=result,
                 arguments=arguments,
             )
         except pydantic.ValidationError as e:
@@ -132,6 +133,33 @@ def _validate_user_config(
         )
 
 
+def mask_sensitive_data(
+    values: dict[str, Any],
+    sensitive_keys: set[str] = {
+        "discord_webhook_url",
+        "username",
+        "password",
+        "url",
+        "webhook_urls",
+        "api_key",
+    },
+    masked_value: str = "***",
+) -> None:
+    """Replace the value of any dict key in sensitive_keys with masked_value"""
+    if not isinstance(values, dict):
+        return
+
+    for k, v in values.items():
+        if isinstance(v, dict):
+            mask_sensitive_data(values[k], sensitive_keys=sensitive_keys)
+        elif isinstance(v, list):
+            for ele in v:
+                mask_sensitive_data(ele, sensitive_keys=sensitive_keys)
+
+        if k in sensitive_keys:
+            values[k] = masked_value
+
+
 def _audit_user_config_differences(
     cls, data, command_name, author
 ) -> JsonResponse | None:
@@ -143,9 +171,10 @@ def _audit_user_config_differences(
         dry_run=False,
     )
     new_model = cls.load_from_db().model_dump()
-    differences = str(dict_differences(old_model, new_model))
+    differences = dict_differences(old_model, new_model)
+    mask_sensitive_data(differences)
     message = DISCORD_AUDIT_FORMAT.format(
-        command_name=command_name, differences=differences
+        command_name=command_name, differences=str(differences)
     )
     message = discord.utils.escape_markdown(message)
     message = discord.utils.escape_mentions(message)
