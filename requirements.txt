@@ -9,7 +9,7 @@ psycopg2-binary
 sentry-sdk==0.17.1
 redistimeseries==0.8.0
 python-dateutil==2.8.1
-git+https://github.com/MarechJ/python-discord-webhook.git@36b420749258fc03c8f8163cc105997e0baba8f3
+git+https://github.com/cemathey/python-discord-webhook.git@4d79ab09526b96a2cc86c50ca1c609d7b644c6c7
 discord==1.7.3
 requests>=2.21.0
 steam==1.4.4
