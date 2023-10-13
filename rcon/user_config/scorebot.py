@@ -4,6 +4,7 @@ from typing import Optional, TypedDict
 from pydantic import BaseModel, Field, HttpUrl, field_serializer, field_validator
 
 from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
+from rcon.utils import get_server_number
 
 STATS_ENDPOINT = "/api/get_live_game_stats"
 INFO_ENDPOINT = "/api/public_info"
@@ -168,7 +169,9 @@ class ScorebotUserConfig(BaseUserConfig):
 
     stats_to_display: list[StatDisplay] = Field(default_factory=seed_default_displays)
 
-    base_api_url: Optional[HttpUrl] = Field(default=None)
+    base_api_url: Optional[HttpUrl] = Field(
+        default=HttpUrl(f"http://frontend_{get_server_number()}/")
+    )
     base_scoreboard_url: Optional[HttpUrl] = Field(default=None)
 
     webhook_urls: list[str] = Field(default_factory=list)
