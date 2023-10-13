@@ -397,7 +397,7 @@ def reset_user_settings(server: int):
         key = rcon.user_config.utils.USER_CONFIG_KEY_FORMAT.format(
             server=server, cls_name=cls.__name__
         )
-        print(f"Resetting {key=} class={cls.__name__}")
+        print(f"Resetting {key}")
         rcon.user_config.utils.set_user_config(key, model.model_dump())
 
     print("Done")
