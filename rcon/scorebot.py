@@ -321,13 +321,11 @@ def run():
         ]
 
         if config.base_api_url is None:
-            print("Your scorebot base API URL is not configured, exiting")
-            logger.error("Your scorebot base API URL is not configured, exiting")
+            logger.error("Your scorebot API URL is not configured, exiting")
             sys.exit(-1)
 
         if config.base_scoreboard_url is None:
-            print("Your scorebot base API URL is not configured, exiting")
-            logger.error("Your scorebot base API URL is not configured, exiting")
+            logger.error("Your scorebot Scoreboard URL is not configured, exiting")
             sys.exit(-1)
 
         try:
