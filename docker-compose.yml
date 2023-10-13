@@ -13,8 +13,10 @@ services:
       service: python
     command: supervisor
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       common:
       server1:
@@ -59,6 +61,11 @@ services:
     image: redis:alpine
     restart: always
     command: redis-server /usr/local/etc/redis/redis.conf
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+      interval: 15s
+      timeout: 30s
+      retries: 5
     volumes:
       - ./redis_data:/data
       - ./config:/usr/local/etc/redis
@@ -70,15 +77,24 @@ services:
     environment:
       # If a password is not defined this container will fail to create
       POSTGRES_PASSWORD: ${HLL_DB_PASSWORD}
-      POSTGRES_USER: rcon
-      POSTGRES_DB: rcon
+      POSTGRES_USER: ${HLL_DB_USER}
+      POSTGRES_DB: ${HLL_DB_NAME}
       PGDATA: /data
+      HLL_DB_NAME: ${HLL_DB_NAME}
+      HLL_DB_USER: ${HLL_DB_USER}
+    healthcheck:
+      test:
+        ["CMD", "pg_isready", "-U", "${HLL_DB_USER}", "-d", "${HLL_DB_NAME}"]
+      interval: 15s
+      timeout: 30s
+      retries: 5
+      start_period: 80s
     volumes:
       - ./db_data:/data
     networks:
       - common
 
-  ############ SERVER 2  #############
+  ########### SERVER 2  #############
   supervisor_2:
     <<: *supervisor
     environment: &env2
@@ -87,11 +103,16 @@ services:
       HLL_PASSWORD: ${HLL_PASSWORD_2}
       LOGGING_LEVEL: "INFO"
       LOGGING_PATH: /logs/
-      REDIS_URL: redis://redis:6379/1
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      REDIS_DB: 1
-      DB_URL: "postgres://rcon:${HLL_DB_PASSWORD}@postgres:5432"
+      HLL_REDIS_HOST: ${HLL_REDIS_HOST}
+      HLL_REDIS_PORT: ${HLL_REDIS_HOST_PORT}
+      HLL_REDIS_DB: 1
+      HLL_REDIS_URL: redis://${HLL_REDIS_HOST}:${HLL_REDIS_HOST_PORT}/1
+      HLL_DB_USER: ${HLL_DB_USER}
+      HLL_DB_PASSWORD: ${HLL_DB_PASSWORD}
+      HLL_DB_NAME: ${HLL_DB_NAME}
+      HLL_DB_HOST: ${HLL_DB_HOST}
+      HLL_DB_HOST_PORT: ${HLL_DB_HOST_PORT}
+      HLL_DB_URL: "postgres://${HLL_DB_USER}:${HLL_DB_PASSWORD}@${HLL_DB_HOST}:${HLL_DB_HOST_PORT}/${HLL_DB_NAME}"
       RCONWEB_API_SECRET: ${RCONWEB_API_SECRET}
       RCONWEB_PORT: ${RCONWEB_PORT_2}
       SUPERVISOR_RPC_URL: http://supervisor:9001/RPC2
@@ -146,11 +167,16 @@ services:
       HLL_PASSWORD: ${HLL_PASSWORD_3}
       LOGGING_LEVEL: "INFO"
       LOGGING_PATH: /logs/
-      REDIS_URL: redis://redis:6379/2
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      REDIS_DB: 2
-      DB_URL: "postgres://rcon:${HLL_DB_PASSWORD}@postgres:5432"
+      HLL_REDIS_HOST: ${HLL_REDIS_HOST}
+      HLL_REDIS_PORT: ${HLL_REDIS_HOST_PORT}
+      HLL_REDIS_DB: 2
+      HLL_REDIS_URL: redis://${HLL_REDIS_HOST}:${HLL_REDIS_HOST_PORT}/2
+      HLL_DB_USER: ${HLL_DB_USER}
+      HLL_DB_PASSWORD: ${HLL_DB_PASSWORD}
+      HLL_DB_NAME: ${HLL_DB_NAME}
+      HLL_DB_HOST: ${HLL_DB_HOST}
+      HLL_DB_HOST_PORT: ${HLL_DB_HOST_PORT}
+      HLL_DB_URL: "postgres://${HLL_DB_USER}:${HLL_DB_PASSWORD}@${HLL_DB_HOST}:${HLL_DB_HOST_PORT}/${HLL_DB_NAME}"
       RCONWEB_API_SECRET: ${RCONWEB_API_SECRET}
       RCONWEB_PORT: ${RCONWEB_PORT_3}
       SUPERVISOR_RPC_URL: http://supervisor:9001/RPC2

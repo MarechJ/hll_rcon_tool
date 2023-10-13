@@ -20,8 +20,8 @@ def pre_flight_checks(env):
         "HLL_HOST",
         "HLL_PORT",
         "HLL_PASSWORD",
-        "REDIS_URL",
-        "DB_URL",
+        "HLL_REDIS_URL",
+        "HLL_DB_URL",
     ]
     optionnal = ["LOGGING_PATH", "LOGGING_LEVEL"]
 

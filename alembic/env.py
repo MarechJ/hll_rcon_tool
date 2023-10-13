@@ -20,8 +20,7 @@ fileConfig(config.config_file_name)
 # target_metadata = mymodel.Base.metadata
 target_metadata = Base.metadata
 
-HLL_DB = os.getenv("DB_URL")
-print(HLL_DB)
+HLL_DB = os.getenv("HLL_DB_URL")
 config.set_main_option("sqlalchemy.url", HLL_DB)
 # other values from the config, defined by the needs of env.py,
 # can be acquired:

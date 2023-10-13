@@ -20,7 +20,7 @@ from rcon.rcon_ import Rcon
 from rcon.rcon_discord import send_to_discord_audit
 from rcon.settings import SERVER_INFO
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
-from rcon.utils import LONG_HUMAN_MAP_NAMES, MapsHistory, map_name
+from rcon.utils import LONG_HUMAN_MAP_NAMES, MapsHistory, get_server_number, map_name
 from rcon.watchlist import PlayerWatch
 from rcon.workers import temporary_broadcast, temporary_welcome
 
@@ -453,6 +453,7 @@ def get_connection_info(request):
             "name": ctl.get_name(),
             "port": os.getenv("RCONWEB_PORT"),
             "link": str(config.server_url),
+            "server_number": int(get_server_number()),
         },
         failed=False,
         command="get_connection_info",

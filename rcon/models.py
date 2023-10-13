@@ -52,9 +52,9 @@ def get_engine():
 
     if _ENGINE:
         return _ENGINE
-    url = os.getenv("DB_URL")
+    url = os.getenv("HLL_DB_URL")
     if not url:
-        msg = "No $DB_URL specified. Can't use database features"
+        msg = "No $HLL_DB_URL specified. Can't use database features"
         logger.error(msg)
         raise ValueError(msg)
 

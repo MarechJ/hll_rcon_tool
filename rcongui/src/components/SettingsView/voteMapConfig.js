@@ -90,7 +90,7 @@ const VoteMapConfig = () => {
             rows={2}
             rowsMax={4}
             label="Thank you for voting message:"
-            helperText="The reply to player after he voted. You can use {player_name} and {map_name} in the text. Leave blank if you don't want the confirmation message"
+            helperText="The reply to player after they voted. You can use {player_name} and {map_name} in the text. Leave blank if you don't want the confirmation message"
             value={config.get("thank_you_text", "")}
             onChange={(e) =>
               setConfig(config.set("thank_you_text", e.target.value))

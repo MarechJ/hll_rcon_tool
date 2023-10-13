@@ -35,7 +35,7 @@ export const ActionButton = ({
           </Tooltip>
         ) : (
           <Tooltip
-            title="Add the player to the blacklist. He will be perma banned at his next connection (applies to all servers)"
+            title="Add the player to the blacklist. They will be perma banned at their next connection (applies to all servers)"
             arrow
           >
             <BlockIcon size="small" onClick={onBlacklist} />
@@ -87,7 +87,7 @@ export const ActionButton = ({
           </Tooltip>
         ) : (
           <Tooltip
-            title="Add player to watchlist. You'll be notified on your configured webhook(s) upon his connections"
+            title="Add player to watchlist. You'll be notified on your configured webhook(s) upon their connections"
             arrow
           >
             <VisibilityIcon size="small" onClick={onAddToWatchList} />
