@@ -306,6 +306,7 @@ class PlayersHistory extends React.Component {
           page: data.result.page,
         });
       })
+      .then(this.loadVips)
       .catch(handle_http_errors);
   }
 
