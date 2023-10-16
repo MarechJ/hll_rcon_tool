@@ -121,6 +121,19 @@ def on_match_end(func):
 
 def on_generic(key, func) -> Callable:
     """Dynamically register hooks from config.yml LOG_LINE_WEBHOOKS"""
+
+    # equality comparison for partial functions does not work since each newly created object has a different id
+    # we have to directly compare the function and arguments to avoid duplicates
+    for f in HOOKS[key]:
+        if (
+            isinstance(f, partial)
+            and f.func == func.func
+            and f.args == func.args
+            and f.keywords == func.keywords
+        ):
+            logger.info("Skipping %s %s already added", key, func)
+            return func
+
     HOOKS[key].add(func)
     return func
 
