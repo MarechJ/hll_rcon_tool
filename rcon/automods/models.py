@@ -372,7 +372,7 @@ class LevelThresholdsConfig:
 class NoSoloTankConfig:
     enabled: bool = False
     dry_run: bool = True
-    whitelist_flags: List = field(default_factory=lambda: ['🚨'])
+    whitelist_flags: List = field(default_factory=list)
     discord_webhook_url: str = ""
 
     number_of_notes: int = 2  # Let's give the mates some time to arrive
