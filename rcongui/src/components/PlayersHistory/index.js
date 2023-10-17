@@ -33,6 +33,7 @@ import { getEmojiFlag } from "../../utils/emoji";
 import PlayerGrid from "./playerGrid";
 import { VipExpirationDialog } from "../VipDialog";
 import { vipListFromServer } from "../VipDialog/vipFromServer";
+import { banListFromServer } from '../PlayersHistory/PlayerTile/PlayerBan'
 
 const PlayerSummary = ({ player, flag }) => (
   <React.Fragment>
@@ -167,9 +168,11 @@ class PlayersHistory extends React.Component {
       exactMatch: false,
       flags: "",
       country: "",
+      bans: new Map(),
     };
 
     this.getPlayerHistory = this.getPlayerHistory.bind(this);
+    this.loadBans = this.loadBans.bind(this)
     this.blacklistPlayer = this.blacklistPlayer.bind(this);
     this.unblacklistPlayer = this.unblacklistPlayer.bind(this);
     this.addFlagToPlayer = this.addFlagToPlayer.bind(this);
@@ -306,14 +309,23 @@ class PlayersHistory extends React.Component {
           page: data.result.page,
         });
       })
+      .then(this.loadBans)
       .catch(handle_http_errors);
+  }
+
+  loadBans() {
+    return this._loadToState("get_bans", false, (data) =>
+      this.setState({
+        bans: banListFromServer(data.result),
+      })
+    );
   }
 
   _reloadOnSuccess = (data) => {
     if (data.failed) {
       return;
     }
-    this.getPlayerHistory().then(this.loadVips);
+    this.getPlayerHistory().then(this.loadVips).then(this.loadBans);
   };
 
   addFlagToPlayer(playerObj, flag, comment = null) {
@@ -528,6 +540,7 @@ class PlayersHistory extends React.Component {
       doConfirmPlayer,
       doVIPPlayer,
       vips,
+      bans,
       ignoreAccent,
       exactMatch,
       flags,
@@ -587,6 +600,7 @@ class PlayersHistory extends React.Component {
             onDeleteFlag={this.deleteFlag}
             onRemoveFromWatchList={this.onRemoveFromWatchList}
             vips={vips}
+            bans={bans}
             onflag={this.setDoFlag}
             onUnban={this.onUnban}
             onTempBan={this.onTempBan}

@@ -6,6 +6,7 @@ import { PlayerHeader } from "./PlayerTile/PlayerHeader";
 import { PlayerFlags } from "./PlayerTile/PlayerFlags";
 import { PlayerSighthings } from "./PlayerTile/PlayerSighthings";
 import { PlayerPenalties } from "./PlayerTile/PlayerPenalties";
+import { PlayerBan } from "./PlayerTile/PlayerBan";
 import withWidth from "@material-ui/core/withWidth";
 import { pure } from "recompose";
 
@@ -39,6 +40,7 @@ const PlayerGrid = withWidth()(
     onRemoveFromWatchList,
     width,
     vips,
+    bans
   }) => {
     const myClasses = useStyles();
 
@@ -53,7 +55,7 @@ const PlayerGrid = withWidth()(
     return (
       <Grid container>
         <Grid item xs={12}>
-          <GridList cols={size} cellHeight={210} spacing={12}>
+          <GridList cols={size} cellHeight={240} spacing={12}>
             {players.map((player) => {
               return (
                 <GridListTile
@@ -73,6 +75,7 @@ const PlayerGrid = withWidth()(
                         classes={classes}
                         onDeleteFlag={onDeleteFlag}
                       />
+                      <PlayerBan classes={classes} bans={bans} player={player} />
                       <PlayerSighthings classes={classes} player={player} />
                       <PlayerPenalties classes={classes} player={player} />
                       <Grid container justify="center">
