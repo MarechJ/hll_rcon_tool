@@ -266,6 +266,14 @@ class RconUser(User):
                 "Can change Auto Mod No Seeding enforcement config",
             ),
             (
+                "can_view_auto_mod_solo_tank_config",
+                "Can view Auto Mod No Solo Tank enforcement config",
+            ),
+            (
+                "can_change_auto_mod_solo_tank_config",
+                "Can change Auto Mod No Solo Tank enforcement config",
+            ),
+            (
                 "can_view_tk_ban_on_connect_config",
                 "Can view team kill ban on connect config",
             ),
