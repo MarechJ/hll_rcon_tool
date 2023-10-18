@@ -204,7 +204,7 @@ LONG_HUMAN_MAP_NAMES = {
     "kursk_warfare": "Kursk",
     "omahabeach_offensive_ger": "Omaha Beach Offensive (GER)",
     "omahabeach_offensive_us": "Omaha Beach Offensive (US)",
-    "omahabeach_warfare_night": "Omaha (Night)",
+    "omahabeach_warfare_night": "Omaha Beach (Night)",
     "omahabeach_warfare": "Omaha Beach",
     "purpleheartlane_offensive_ger": "Purple Heart Lane Offensive (GER)",
     "purpleheartlane_offensive_us": "Purple Heart Lane Offensive (US)",
@@ -227,7 +227,7 @@ LONG_HUMAN_MAP_NAMES = {
     "stmereeglise_warfare": "Ste Mère Église",
     "utahbeach_offensive_ger": "Utah Beach Offensive (GER)",
     "utahbeach_offensive_us": "Utah Beach Offensive (US)",
-    "utahbeach_warfare_night": "Utah (Night)",
+    "utahbeach_warfare_night": "Utah Beach (Night)",
     "utahbeach_warfare": "Utah Beach",
 }
 
@@ -326,9 +326,9 @@ NO_MOD_LONG_HUMAN_MAP_NAMES = {
     "kursk_offensive_rus": "Kursk (RUS)",
     "kursk_warfare_night": "Kursk (Night)",
     "kursk_warfare": "Kursk",
-    "omahabeach_offensive_ger": "Omaha (GER)",
+    "omahabeach_offensive_ger": "Omaha Beach (GER)",
     "omahabeach_offensive_us": "Omaha Beach (US)",
-    "omahabeach_warfare_night": "Omaha (Night)",
+    "omahabeach_warfare_night": "Omaha Beach (Night)",
     "omahabeach_warfare": "Omaha Beach",
     "purpleheartlane_offensive_ger": "Purple Heart Lane (GER)",
     "purpleheartlane_offensive_us": "Purple Heart Lane (US)",
@@ -351,7 +351,7 @@ NO_MOD_LONG_HUMAN_MAP_NAMES = {
     "stmereeglise_warfare": "Ste Mère Église",
     "utahbeach_offensive_ger": "Utah Beach (GER)",
     "utahbeach_offensive_us": "Utah Beach (US)",
-    "utahbeach_warfare_night": "Utah (Night)",
+    "utahbeach_warfare_night": "Utah Beach (Night)",
     "utahbeach_warfare": "Utah Beach",
 }
 
@@ -374,7 +374,7 @@ NO_MOD_SHORT_HUMAN_MAP_NAMES = {
     "foy_warfare": "Foy",
     "hill400_offensive_ger": "Hill400 (GER)",
     "hill400_offensive_US": "Hill400 (US)",
-    "hill400_warfare_night": "Hill 400 (Night)",
+    "hill400_warfare_night": "Hill400 (Night)",
     "hill400_warfare": "Hill400",
     "hurtgenforest_offensive_ger": "Hürtgen (GER)",
     "hurtgenforest_offensive_US": "Hürtgen (US)",
