@@ -490,7 +490,7 @@ class Rcon(ServerCtl):
 
         return data
 
-    @ttl_cache(ttl=60 * 60 * 24)
+    @ttl_cache(ttl=60 * 10)
     def get_admin_ids(self):
         res = super().get_admin_ids()
         admins = []
@@ -632,7 +632,7 @@ class Rcon(ServerCtl):
         bans = self.get_bans()
         return list(filter(lambda x: x.get("steam_id_64") == steam_id_64, bans))
 
-    @ttl_cache(ttl=60 * 60)
+    @ttl_cache(ttl=60 * 5)
     def get_vip_ids(self) -> list[dict[str, str | datetime | None]]:
         res: list[VipId] = super().get_vip_ids()
         player_dicts = []
@@ -898,11 +898,11 @@ class Rcon(ServerCtl):
 
         return current_map
 
-    @ttl_cache(ttl=60 * 60)
+    @ttl_cache(ttl=60 * 5)
     def get_current_map_sequence(self):
         return super().get_current_map_sequence()
 
-    @ttl_cache(ttl=60 * 60)
+    @ttl_cache(ttl=60 * 10)
     def get_map_shuffle_enabled(self):
         return super().get_map_shuffle_enabled()
 
@@ -910,14 +910,14 @@ class Rcon(ServerCtl):
         with invalidates(Rcon.get_current_map_sequence, Rcon.get_map_shuffle_enabled):
             return super().set_map_shuffle_enabled(enabled)
 
-    @ttl_cache(ttl=60 * 60)
+    @ttl_cache(ttl=60 * 30)
     def get_name(self):
         name = super().get_name()
         if len(name) > self.MAX_SERV_NAME_LEN:
             raise CommandFailedError("Server returned wrong data")
         return name
 
-    @ttl_cache(ttl=60 * 60)
+    @ttl_cache(ttl=60 * 10)
     def get_team_switch_cooldown(self):
         return int(super().get_team_switch_cooldown())
 
@@ -925,7 +925,7 @@ class Rcon(ServerCtl):
         with invalidates(Rcon.get_team_switch_cooldown):
             return super().set_team_switch_cooldown(minutes)
 
-    @ttl_cache(ttl=60 * 60)
+    @ttl_cache(ttl=60 * 10)
     def get_autobalance_threshold(self):
         return int(super().get_autobalance_threshold())
 
@@ -933,7 +933,7 @@ class Rcon(ServerCtl):
         with invalidates(Rcon.get_autobalance_threshold):
             return super().set_autobalance_threshold(max_diff)
 
-    @ttl_cache(ttl=60 * 60)
+    @ttl_cache(ttl=60 * 10)
     def get_idle_autokick_time(self):
         return int(super().get_idle_autokick_time())
 
@@ -941,7 +941,7 @@ class Rcon(ServerCtl):
         with invalidates(Rcon.get_idle_autokick_time):
             return super().set_idle_autokick_time(minutes)
 
-    @ttl_cache(ttl=60 * 60)
+    @ttl_cache(ttl=60 * 10)
     def get_max_ping_autokick(self):
         return int(super().get_max_ping_autokick())
 
@@ -949,7 +949,7 @@ class Rcon(ServerCtl):
         with invalidates(Rcon.get_max_ping_autokick):
             return super().set_max_ping_autokick(max_ms)
 
-    @ttl_cache(ttl=60 * 60)
+    @ttl_cache(ttl=60 * 10)
     def get_queue_length(self):
         return int(super().get_queue_length())
 
@@ -957,7 +957,7 @@ class Rcon(ServerCtl):
         with invalidates(Rcon.get_queue_length):
             return super().set_queue_length(num)
 
-    @ttl_cache(ttl=60 * 60)
+    @ttl_cache(ttl=60 * 10)
     def get_vip_slots_num(self):
         return super().get_vip_slots_num()
 
@@ -1095,19 +1095,19 @@ class Rcon(ServerCtl):
         except (ValueError, TypeError) as e:
             raise ValueError(f"Time {raw_timestamp} is not a valid integer") from e
 
-    @ttl_cache(ttl=60 * 60)
+    @ttl_cache(ttl=60 * 10)
     def get_profanities(self):
         return super().get_profanities()
 
-    @ttl_cache(ttl=60 * 60)
+    @ttl_cache(ttl=60 * 10)
     def get_autobalance_enabled(self):
         return super().get_autobalance_enabled() == "on"
 
-    @ttl_cache(ttl=60 * 60)
+    @ttl_cache(ttl=60 * 10)
     def get_votekick_enabled(self):
         return super().get_votekick_enabled() == "on"
 
-    @ttl_cache(ttl=60 * 60)
+    @ttl_cache(ttl=60 * 10)
     def get_votekick_threshold(self):
         res = super().get_votekick_threshold()
         if isinstance(res, str):

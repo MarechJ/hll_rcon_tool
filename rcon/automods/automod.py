@@ -7,8 +7,14 @@ from pydantic import HttpUrl
 from redis.client import Redis
 
 from rcon.automods.level_thresholds import LevelThresholdsAutomod
-from rcon.automods.models import ActionMethod, PunishPlayer, PunitionsToApply
+from rcon.automods.models import (
+    ActionMethod,
+    NoSoloTankConfig,
+    PunishPlayer,
+    PunitionsToApply,
+)
 from rcon.automods.no_leader import NoLeaderAutomod
+from rcon.automods.no_solotank import NoSoloTankAutomod
 from rcon.automods.seeding_rules import SeedingRulesAutomod
 from rcon.cache_utils import get_redis_client
 from rcon.commands import CommandFailedError, HLLServerError
@@ -107,11 +113,12 @@ def _do_punitions(
         except (CommandFailedError, HLLServerError):
             logger.exception("Failed to %s %s", repr(method), repr(aplayer))
             if method == ActionMethod.PUNISH:
-                audit(
-                    aplayer.details.discord_audit_url,
-                    f"--> PUNISH FAILED, will retry: {aplayer}",
-                    aplayer.details.author,
-                )
+                # Deactivated (spams the Discord channel)
+                # audit(
+                #     aplayer.details.discord_audit_url,
+                #     f"--> PUNISH FAILED, will retry: {aplayer}",
+                #     aplayer.details.author,
+                # )
                 for m in mods:
                     m.player_punish_failed(aplayer)
             elif method == ActionMethod.KICK:
@@ -151,13 +158,35 @@ def enabled_moderators():
     no_leader_config = AutoModNoLeaderUserConfig.load_from_db()
     seeding_config = AutoModSeedingUserConfig.load_from_db()
 
+    try:
+        config = get_config()
+        no_solotank_config = None
+        if config.get("NOSOLOTANK_AUTO_MOD") is not None:
+            no_solotank_config = NoSoloTankConfig(**config["NOSOLOTANK_AUTO_MOD"])
+    except Exception as e:
+        logger.exception("Invalid automod config, check your config/config.yml", e)
+        raise
+
     return list(
         filter(
             lambda m: m.enabled(),
             [
-                NoLeaderAutomod(no_leader_config, red),
-                SeedingRulesAutomod(seeding_config, red),
-                LevelThresholdsAutomod(level_thresholds_config, red),
+                NoLeaderAutomod(no_leader_config, red)
+                if no_leader_config is not None
+                else NoLeaderAutomod(NoLeaderConfig(**{"enabled": False}), None),
+                SeedingRulesAutomod(seeding_config, red)
+                if seeding_config is not None
+                else SeedingRulesAutomod(
+                    SeedingRulesConfig(**{"enabled": False}), None
+                ),
+                LevelThresholdsAutomod(level_thresholds_config, red)
+                if level_thresholds_config is not None
+                else LevelThresholdsAutomod(
+                    LevelThresholdsConfig(**{"enabled": False}), None
+                ),
+                NoSoloTankAutomod(no_solotank_config, red)
+                if no_solotank_config is not None
+                else NoSoloTankAutomod(NoSoloTankConfig(**{"enabled": False}), None),
             ],
         )
     )

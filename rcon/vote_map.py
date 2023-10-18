@@ -352,10 +352,10 @@ class VoteMap:
 
         steam_id_64_1 = struct_log["steam_id_64_1"]
         if not config.enabled:
-            rcon.do_message_player(
-                steam_id_64=steam_id_64_1,
-                message="Vote map is not enabled on this server",
-            )
+            # rcon.do_message_player(
+            #     steam_id_64=steam_id_64_1,
+            #     message="Vote map is not enabled on this server",
+            # )
             return config.enabled
 
         if match := re.match(r"!votemap\s*(\d+)", message):
