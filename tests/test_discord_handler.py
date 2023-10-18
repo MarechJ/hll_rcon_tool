@@ -153,14 +153,14 @@ def test_kill_message():
 
     killer, victim, weapon = embed.fields
 
-    assert killer.name == "Killer"
-    assert killer.value.startswith("[EL MONO LOKO]")  # type: ignore
+    assert killer["name"] == "Killer"
+    assert killer["value"].startswith("[EL MONO LOKO]")  # type: ignore
 
-    assert victim.name == "Victim"
-    assert victim.value.startswith("[zerothreeOG]")  # type: ignore
+    assert victim["name"] == "Victim"
+    assert victim["value"].startswith("[zerothreeOG]")  # type: ignore
 
-    assert weapon.name == "Weapon"
-    assert weapon.value == "MG42"
+    assert weapon["name"] == "Weapon"
+    assert weapon["value"] == "MG42"
 
 
 def test_team_kill_message():
@@ -185,11 +185,11 @@ def test_team_kill_message():
 
     killer, victim, weapon = embed.fields
 
-    assert killer.name == "Team Killer"
-    assert killer.value.startswith("[EL MONO LOKO]")  # type: ignore
+    assert killer["name"] == "Team Killer"
+    assert killer["value"].startswith("[EL MONO LOKO]")  # type: ignore
 
-    assert victim.name == "Victim"
-    assert victim.value.startswith("[zerothreeOG]")  # type: ignore
+    assert victim["name"] == "Victim"
+    assert victim["value"].startswith("[zerothreeOG]")  # type: ignore
 
-    assert weapon.name == "Weapon"
-    assert weapon.value == "MG42"
+    assert weapon["name"] == "Weapon"
+    assert weapon["value"] == "MG42"
