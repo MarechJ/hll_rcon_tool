@@ -41,6 +41,7 @@ import {
   LevelAutoMod,
   NoLeaderAutoMod,
   SeedingAutoMod,
+  NoSoloTankAutoMod,
 } from "./components/UserSettings/autoMods";
 import {
   RconConnectionSettings,
@@ -578,6 +579,17 @@ function App() {
                           setEndpoint="set_auto_mod_seeding_config"
                           validateEndpoint="validate_auto_mod_seeding_config"
                           describeEndpoint="describe_auto_mod_seeding_config"
+                        />
+                      </Grid>
+                    </Route>
+                    <Route path="/settings/automod-solo-tank">
+                      <Grid container spacing={2}>
+                        <SeedingAutoMod
+                          description="No Solo Tank Auto Mod"
+                          getEndpoint="get_auto_mod_solo_tank_config"
+                          setEndpoint="set_auto_mod_solo_tank_config"
+                          validateEndpoint="validate_auto_mod_solo_tank_config"
+                          describeEndpoint="describe_auto_mod_solo_tank_config"
                         />
                       </Grid>
                     </Route>

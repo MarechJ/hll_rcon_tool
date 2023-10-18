@@ -145,6 +145,8 @@ GROUPS = [
             "can_change_auto_mod_no_leader_config",
             "can_view_auto_mod_seeding_config",
             "can_change_auto_mod_seeding_config",
+            "can_view_auto_mod_solo_tank_config",
+            "can_change_auto_mod_solo_tank_config",
             "can_view_tk_ban_on_connect_config",
             "can_change_tk_ban_on_connect_config",
             "can_view_expired_vip_config",

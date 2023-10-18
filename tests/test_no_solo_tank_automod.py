@@ -3,15 +3,10 @@ from datetime import datetime, timedelta
 
 from pytest import fixture
 
-from rcon.automods.models import (
-    PunishPlayer,
-    PunishStepState,
-    WatchStatus,
-    NoSoloTankConfig,
-)
+from rcon.automods.models import PunishPlayer, PunishStepState, WatchStatus
 from rcon.automods.no_solotank import NoSoloTankAutomod
-from rcon.config import get_config
-from rcon.types import GameState
+from rcon.typedefs import GameState
+from rcon.user_config.auto_mod_solo_tank import AutoModNoSoloTankUserConfig
 
 
 @fixture
@@ -410,7 +405,7 @@ def construct_aplayer(
 
 
 def test_should_not_warn(team_view):
-    config = NoSoloTankConfig(number_of_warning=0)
+    config = AutoModNoSoloTankUserConfig(number_of_warnings=0)
     mod = NoSoloTankAutomod(config, None)
 
     watch_status = WatchStatus()
@@ -426,8 +421,8 @@ def test_should_not_warn(team_view):
 
 
 def test_should_warn_twice(team_view):
-    config = NoSoloTankConfig(
-        number_of_warning=2,
+    config = AutoModNoSoloTankUserConfig(
+        number_of_warnings=2,
         warning_interval_seconds=1,
     )
     mod = NoSoloTankAutomod(config, None)
@@ -456,7 +451,9 @@ def test_should_warn_twice(team_view):
 
 
 def test_should_warn_infinite(team_view):
-    config = NoSoloTankConfig(number_of_warning=-1, warning_interval_seconds=0)
+    config = AutoModNoSoloTankUserConfig(
+        number_of_warnings=-1, warning_interval_seconds=0
+    )
     mod = NoSoloTankAutomod(config, None)
     watch_status = WatchStatus()
     # baker squad is a solo tank squad, w/ SL
@@ -470,9 +467,9 @@ def test_should_warn_infinite(team_view):
 
 
 def test_should_punish(team_view):
-    config = NoSoloTankConfig(
-        number_of_punish=2,
-        disable_punish_below_server_player_count=10,
+    config = AutoModNoSoloTankUserConfig(
+        number_of_punishments=2,
+        min_server_players_for_punish=10,
     )
     mod = NoSoloTankAutomod(config, None)
 
@@ -491,10 +488,10 @@ def test_should_punish(team_view):
 
 
 def test_punish_wait(team_view):
-    config = NoSoloTankConfig(
-        number_of_punish=2,
+    config = AutoModNoSoloTankUserConfig(
+        number_of_punishments=2,
         punish_interval_seconds=60,
-        disable_punish_below_server_player_count=0,
+        min_server_players_for_punish=0,
     )
     mod = NoSoloTankAutomod(config, None)
 
@@ -520,10 +517,10 @@ def test_punish_wait(team_view):
 
 
 def test_punish_twice(team_view):
-    config = NoSoloTankConfig(
-        number_of_punish=2,
+    config = AutoModNoSoloTankUserConfig(
+        number_of_punishments=2,
         punish_interval_seconds=1,
-        disable_punish_below_server_player_count=0,
+        min_server_players_for_punish=0,
     )
     mod = NoSoloTankAutomod(config, None)
 
@@ -565,10 +562,10 @@ def test_punish_twice(team_view):
 
 
 def test_punish_too_little_players(team_view):
-    config = NoSoloTankConfig(
-        number_of_punish=2,
+    config = AutoModNoSoloTankUserConfig(
+        number_of_punishments=2,
         punish_interval_seconds=60,
-        disable_punish_below_server_player_count=60,
+        min_server_players_for_punish=60,
     )
     mod = NoSoloTankAutomod(config, None)
 
@@ -587,10 +584,10 @@ def test_punish_too_little_players(team_view):
 
 
 def test_punish_disabled(team_view):
-    config = NoSoloTankConfig(
-        number_of_punish=0,
+    config = AutoModNoSoloTankUserConfig(
+        number_of_punishments=0,
         punish_interval_seconds=0,
-        disable_punish_below_server_player_count=0,
+        min_server_players_for_punish=0,
     )
     mod = NoSoloTankAutomod(config, None)
 
@@ -609,10 +606,10 @@ def test_punish_disabled(team_view):
 
 
 def test_shouldnt_kick_without_punish(team_view):
-    config = NoSoloTankConfig(
+    config = AutoModNoSoloTankUserConfig(
         kick_after_max_punish=True,
         kick_grace_period_seconds=0,
-        disable_kick_below_server_player_count=0,
+        min_server_players_for_kick=0,
     )
     mod = NoSoloTankAutomod(config, None)
 
@@ -639,10 +636,10 @@ def test_shouldnt_kick_without_punish(team_view):
 
 
 def test_shouldnt_kick_disabled(team_view):
-    config = NoSoloTankConfig(
+    config = AutoModNoSoloTankUserConfig(
         kick_after_max_punish=False,
         kick_grace_period_seconds=0,
-        disable_kick_below_server_player_count=0,
+        min_server_players_for_kick=0,
     )
     mod = NoSoloTankAutomod(config, None)
     # baker squad is a solo tank squad, w/ SL
@@ -661,10 +658,10 @@ def test_shouldnt_kick_disabled(team_view):
 
 
 def test_should_wait_kick(team_view):
-    config = NoSoloTankConfig(
+    config = AutoModNoSoloTankUserConfig(
         kick_after_max_punish=True,
         kick_grace_period_seconds=1,
-        disable_kick_below_server_player_count=0,
+        min_server_players_for_kick=0,
     )
     mod = NoSoloTankAutomod(config, None)
     watch_status = WatchStatus()
@@ -698,7 +695,5 @@ def test_should_wait_kick(team_view):
 
 
 def test_default_config():
-    config = get_config()
-    config = NoSoloTankConfig(**config["NOSOLOTANK_AUTO_MOD"])
-
+    config = AutoModNoSoloTankUserConfig.load_from_db()
     assert config.enabled == False

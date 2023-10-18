@@ -15,6 +15,7 @@ from rcon.user_config.auto_kick import AutoVoteKickUserConfig
 from rcon.user_config.auto_mod_level import AutoModLevelUserConfig
 from rcon.user_config.auto_mod_no_leader import AutoModNoLeaderUserConfig
 from rcon.user_config.auto_mod_seeding import AutoModSeedingUserConfig
+from rcon.user_config.auto_mod_solo_tank import AutoModNoSoloTankUserConfig
 from rcon.user_config.ban_tk_on_connect import BanTeamKillOnConnectUserConfig
 from rcon.user_config.camera_notification import CameraNotificationUserConfig
 from rcon.user_config.expired_vips import ExpiredVipsUserConfig
@@ -561,6 +562,86 @@ def validate_auto_mod_seeding_config(request):
 def set_auto_mod_seeding_config(request):
     command_name = "set_auto_mod_seeding_config"
     cls = AutoModSeedingUserConfig
+    data = _get_data(request)
+
+    response = _audit_user_config_differences(
+        cls, data, command_name, request.user.username
+    )
+
+    if response:
+        return response
+
+    return api_response(
+        result=True,
+        command=command_name,
+        arguments=data,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+@permission_required("api.can_view_auto_mod_solo_tank_config", raise_exception=True)
+def get_auto_mod_solo_tank_config(request) -> JsonResponse:
+    command_name = "get_auto_mod_solo_tank_config"
+
+    try:
+        config = AutoModNoSoloTankUserConfig.load_from_db()
+    except Exception as e:
+        logger.exception(e)
+        return api_response(command=command_name, error=str(e), failed=True)
+
+    return api_response(
+        result=config.model_dump(),
+        command=command_name,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+def describe_auto_mod_solo_tank_config(request):
+    command_name = "describe_auto_mod_solo_tank_config"
+
+    return api_response(
+        result=AutoModNoSoloTankUserConfig.model_json_schema(),
+        command=command_name,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+@permission_required("api.can_change_auto_mod_solo_tank_config", raise_exception=True)
+def validate_auto_mod_solo_tank_config(request):
+    command_name = "validate_auto_mod_solo_tank_config"
+    data = _get_data(request)
+
+    response = _validate_user_config(
+        AutoModNoSoloTankUserConfig,
+        data=data,
+        command_name=command_name,
+        dry_run=True,
+    )
+
+    if response:
+        return response
+
+    return api_response(
+        result=True,
+        command=command_name,
+        arguments=data,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+@permission_required("api.can_change_auto_mod_solo_tank_config", raise_exception=True)
+@record_audit
+def set_auto_mod_solo_tank_config(request):
+    command_name = "set_auto_mod_solo_tank_config"
+    cls = AutoModNoSoloTankUserConfig
     data = _get_data(request)
 
     response = _audit_user_config_differences(

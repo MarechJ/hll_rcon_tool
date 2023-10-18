@@ -7,12 +7,7 @@ from pydantic import HttpUrl
 from redis.client import Redis
 
 from rcon.automods.level_thresholds import LevelThresholdsAutomod
-from rcon.automods.models import (
-    ActionMethod,
-    NoSoloTankConfig,
-    PunishPlayer,
-    PunitionsToApply,
-)
+from rcon.automods.models import ActionMethod, PunishPlayer, PunitionsToApply
 from rcon.automods.no_leader import NoLeaderAutomod
 from rcon.automods.no_solotank import NoSoloTankAutomod
 from rcon.automods.seeding_rules import SeedingRulesAutomod
@@ -27,6 +22,7 @@ from rcon.typedefs import StructuredLogLineType
 from rcon.user_config.auto_mod_level import AutoModLevelUserConfig
 from rcon.user_config.auto_mod_no_leader import AutoModNoLeaderUserConfig
 from rcon.user_config.auto_mod_seeding import AutoModSeedingUserConfig
+from rcon.user_config.auto_mod_solo_tank import AutoModNoSoloTankUserConfig
 
 logger = logging.getLogger(__name__)
 first_run_done_key = "first_run_done"
@@ -157,36 +153,16 @@ def enabled_moderators():
     level_thresholds_config = AutoModLevelUserConfig.load_from_db()
     no_leader_config = AutoModNoLeaderUserConfig.load_from_db()
     seeding_config = AutoModSeedingUserConfig.load_from_db()
-
-    try:
-        config = get_config()
-        no_solotank_config = None
-        if config.get("NOSOLOTANK_AUTO_MOD") is not None:
-            no_solotank_config = NoSoloTankConfig(**config["NOSOLOTANK_AUTO_MOD"])
-    except Exception as e:
-        logger.exception("Invalid automod config, check your config/config.yml", e)
-        raise
+    solo_tank_config = AutoModNoSoloTankUserConfig.load_from_db()
 
     return list(
         filter(
             lambda m: m.enabled(),
             [
-                NoLeaderAutomod(no_leader_config, red)
-                if no_leader_config is not None
-                else NoLeaderAutomod(NoLeaderConfig(**{"enabled": False}), None),
-                SeedingRulesAutomod(seeding_config, red)
-                if seeding_config is not None
-                else SeedingRulesAutomod(
-                    SeedingRulesConfig(**{"enabled": False}), None
-                ),
-                LevelThresholdsAutomod(level_thresholds_config, red)
-                if level_thresholds_config is not None
-                else LevelThresholdsAutomod(
-                    LevelThresholdsConfig(**{"enabled": False}), None
-                ),
-                NoSoloTankAutomod(no_solotank_config, red)
-                if no_solotank_config is not None
-                else NoSoloTankAutomod(NoSoloTankConfig(**{"enabled": False}), None),
+                NoLeaderAutomod(no_leader_config, red),
+                SeedingRulesAutomod(seeding_config, red),
+                LevelThresholdsAutomod(level_thresholds_config, red),
+                NoSoloTankAutomod(solo_tank_config, red),
             ],
         )
     )

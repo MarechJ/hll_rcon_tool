@@ -376,6 +376,15 @@ const Header = ({ classes }) => {
                         <Link
                           color="inherit"
                           component={RouterLink}
+                          to="/settings/automod-solo-tank"
+                        >
+                          <MenuItem onClick={() => setAnchorElSettings(null)}>
+                            No Solo Tank Auto Mod
+                          </MenuItem>
+                        </Link>
+                        <Link
+                          color="inherit"
+                          component={RouterLink}
                           to="/settings/rcon-gameserver"
                         >
                           <MenuItem onClick={() => setAnchorElSettings(null)}>

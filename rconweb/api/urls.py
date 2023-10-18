@@ -152,6 +152,16 @@ endpoints: list[tuple[str, Callable]] = [
         user_settings.validate_auto_mod_seeding_config,
     ),
     ("set_auto_mod_seeding_config", user_settings.set_auto_mod_seeding_config),
+    ("get_auto_mod_solo_tank_config", user_settings.get_auto_mod_solo_tank_config),
+    (
+        "describe_auto_mod_solo_tank_config",
+        user_settings.describe_auto_mod_solo_tank_config,
+    ),
+    (
+        "validate_auto_mod_solo_tank_config",
+        user_settings.validate_auto_mod_solo_tank_config,
+    ),
+    ("set_auto_mod_solo_tank_config", user_settings.set_auto_mod_solo_tank_config),
     ("get_tk_ban_on_connect_config", user_settings.get_tk_ban_on_connect_config),
     (
         "describe_tk_ban_on_connect_config",
