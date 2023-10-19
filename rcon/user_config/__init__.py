@@ -4,6 +4,7 @@ from . import (
     auto_mod_level,
     auto_mod_no_leader,
     auto_mod_seeding,
+    auto_mod_solo_tank,
     ban_tk_on_connect,
     camera_notification,
     expired_vips,
