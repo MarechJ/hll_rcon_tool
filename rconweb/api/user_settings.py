@@ -10,6 +10,7 @@ from django.http import JsonResponse, QueryDict
 from django.views.decorators.csrf import csrf_exempt
 
 from rcon.rcon_discord import send_to_discord_audit
+from rcon.typedefs import InvalidLogTypeError
 from rcon.user_config.auto_broadcast import AutoBroadcastUserConfig
 from rcon.user_config.auto_kick import AutoVoteKickUserConfig
 from rcon.user_config.auto_mod_level import AutoModLevelUserConfig
@@ -117,7 +118,7 @@ def _validate_user_config(
         return api_response(
             command=command_name, failed=True, error=error_msg, arguments=arguments
         )
-    except InvalidKeysConfigurationError as e:
+    except (InvalidKeysConfigurationError, InvalidLogTypeError) as e:
         if errors_as_json:
             error_msg = json.dumps([e.asdict()])
         else:

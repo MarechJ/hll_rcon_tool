@@ -2,7 +2,7 @@ from typing import TypedDict
 
 from pydantic import BaseModel, Field
 
-from rcon.typedefs import AllLogTypes
+from rcon.typedefs import AllLogTypes, InvalidLogTypeError
 from rcon.user_config.utils import BaseUserConfig, _listType, key_check, set_user_config
 from rcon.user_config.webhooks import DiscordMentionWebhook, WebhookMentionType
 
@@ -44,10 +44,17 @@ class LogLineWebhookUserConfig(BaseUserConfig):
                 role_mentions=raw_webhook.get("role_mentions"),
             )
 
-            log_types = [AllLogTypes(log_type) for log_type in raw_log_types]
+            log_types: list[AllLogTypes] = []
+            invalid_log_type = None
+            try:
+                for log_type in raw_log_types:
+                    invalid_log_type = log_type
+                    log_types.append(AllLogTypes(log_type))
+            except ValueError:
+                raise InvalidLogTypeError(invalid_log_type)  # type: ignore
 
             log_line = LogLineWebhook(
-                log_types=log_types,
+                log_types=raw_log_types,
                 webhook=hook,
             )
             validated_log_lines.append(log_line)

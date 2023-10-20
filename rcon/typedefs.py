@@ -395,3 +395,22 @@ class AllLogTypes(str, enum.Enum):
     vote = "VOTE"
     vote_started = "VOTE STARTED"
     vote_completed = "VOTE COMPLETED"
+
+
+class InvalidLogTypeError(ValueError):
+    def __init__(self, log_type: str) -> None:
+        super().__init__()
+        self.log_type = log_type
+
+    def __str__(self) -> str:
+        return self.__repr__()
+
+    def __repr__(self) -> str:
+        return f"{self.log_type} must be one of ({', '.join(r for r in AllLogTypes)})"
+
+    def asdict(self):
+        return {
+            "type": InvalidLogTypeError.__name__,
+            "log_type": self.log_type,
+            "allowed_log_types": [log for log in AllLogTypes],
+        }
