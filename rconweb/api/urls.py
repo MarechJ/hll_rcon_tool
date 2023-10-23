@@ -88,6 +88,7 @@ endpoints: list[tuple[str, Callable]] = [
     ("flag_player", history.flag_player),
     ("unflag_player", history.unflag_player),
     ("player", history.get_player),
+    ("get_previous_map", history.get_previous_map),
     ("get_map_history", history.get_map_history),
     ("do_add_map_to_whitelist", votemap.do_add_map_to_whitelist),
     ("do_add_maps_to_whitelist", votemap.do_add_maps_to_whitelist),
