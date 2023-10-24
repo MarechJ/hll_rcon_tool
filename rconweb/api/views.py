@@ -580,11 +580,7 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     ctl.set_broadcast: "api.can_change_broadcast_message",
     ctl.set_idle_autokick_time: "api.can_change_idle_autokick_time",
     ctl.set_map_shuffle_enabled: "api.can_change_map_shuffle_enabled",
-    ctl.set_map: {
-        "api.can_change_current_map",
-        "api.can_add_map_to_rotation",
-        "api.can_remove_map_from_rotation",
-    },
+    ctl.set_map: "api.can_change_current_map",
     ctl.set_maprotation: {
         "api.can_add_map_to_rotation",
         "api.can_remove_map_from_rotation",

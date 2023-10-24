@@ -255,3 +255,4 @@ USE_TZ = True
 
 STATIC_URL = "/djangostatic/"
 STATIC_ROOT = "/static/"
+STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
