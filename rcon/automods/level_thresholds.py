@@ -216,7 +216,7 @@ class LevelThresholdsAutomod:
         self.logger.info("Squad %s %s", squad_name, squad)
         punitions_to_apply = PunitionsToApply()
         if not squad_name:
-            self.logger.info("Skipping None or empty squad %s %s", squad_name, squad)
+            self.logger.debug("Skipping None or empty squad %s %s", squad_name, squad)
             return punitions_to_apply
 
         server_player_count = get_team_count(team_view, "allies") + get_team_count(
