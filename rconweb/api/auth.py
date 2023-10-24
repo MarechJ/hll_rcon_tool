@@ -141,7 +141,7 @@ def login_required():
                 )
                 if not header_name.upper() == BEARER:
                     raw_api_key = None
-            except ValueError:
+            except (KeyError, ValueError):
                 raw_api_key = None
 
             try:
