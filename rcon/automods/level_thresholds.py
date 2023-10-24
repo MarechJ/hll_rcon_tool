@@ -213,7 +213,7 @@ class LevelThresholdsAutomod:
         squad: dict,
         game_state: GameState,
     ) -> PunitionsToApply:
-        self.logger.info("Squad %s %s", squad_name, squad)
+        self.logger.debug("Squad %s %s", squad_name, squad)
         punitions_to_apply = PunitionsToApply()
         if not squad_name:
             self.logger.debug("Skipping None or empty squad %s %s", squad_name, squad)
