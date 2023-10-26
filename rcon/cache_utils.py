@@ -144,7 +144,7 @@ def ttl_cache(ttl, *args, is_method=True, cache_falsy=True, **kwargs):
     pool = get_redis_pool(decode_responses=False)
     if not pool:
         logger.error("Unable to connect to Redis")
-        raise ConnectionError
+        raise ConnectionError("Unable to connect to Redis")
 
     def decorator(func):
         cached_func = RedisCached(
