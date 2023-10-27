@@ -349,7 +349,7 @@ class VoteMap:
         message = struct_log.get("sub_content", "").strip()
         config = VoteMapConfig()
         enabled = config.get_vote_enabled()
-        if not message.startswith(("!votemap", "!vm", "!VOTEMAP", "!VM")):
+        if not message.lower().startswith(("!votemap", "!vm")):
             return enabled
 
         steam_id_64_1 = struct_log["steam_id_64_1"]
