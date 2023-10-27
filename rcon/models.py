@@ -16,9 +16,10 @@ from sqlalchemy import (
     Integer,
     String,
     create_engine,
+    text,
 )
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship, sessionmaker
 from sqlalchemy.orm.session import object_session
@@ -95,7 +96,7 @@ class PlayerSteamID(Base):
     watchlist = relationship("WatchList", backref="steamid", uselist=False)
     steaminfo = relationship("SteamInfo", backref="steamid", uselist=False)
     comments = relationship("PlayerComment", back_populates="player")
-    stats = relationship("PlayerStats", backref="steamid", uselist=False)
+    stats = relationship("PlayerStats", back_populates="steam_id_64", uselist=False)
 
     vips = relationship(
         "PlayerVIP",
@@ -490,7 +491,9 @@ class PlayerStats(Base):
         nullable=False,
         index=True,
     )
-    steam_id_64 = relationship("PlayerSteamID", foreign_keys=[playersteamid_id])
+    steam_id_64 = relationship(
+        "PlayerSteamID", foreign_keys=[playersteamid_id], back_populates="stats"
+    )
     map_id = Column(
         Integer,
         ForeignKey("map_history.id"),
@@ -530,8 +533,8 @@ class PlayerStats(Base):
             player_id=self.playersteamid_id,
             steam_id_64=self.steam_id_64.steam_id_64,
             player=self.name,
-            steaminfo=self.steamid.steaminfo.to_dict()
-            if self.steamid.steaminfo
+            steaminfo=self.steam_id_64.steaminfo.to_dict()
+            if self.steam_id_64.steaminfo
             else None,
             map_id=self.map_id,
             kills=self.kills,
@@ -706,17 +709,9 @@ class AuditLog(Base):
         )
 
 
-def init_db(force=False):
-    # create tables
-    engine = get_engine()
-    if force is True:
-        Base.metadata.drop_all(bind=engine)
-    Base.metadata.create_all(bind=engine)
-
-
 def install_unaccent():
     with enter_session() as sess:
-        sess.execute("CREATE EXTENSION IF NOT EXISTS unaccent;")
+        sess.execute(text("CREATE EXTENSION IF NOT EXISTS unaccent;"))
 
 
 def get_session_maker():
