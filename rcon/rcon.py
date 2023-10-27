@@ -34,7 +34,7 @@ from rcon.types import (
     StructuredLogLineType,
     StructuredLogLineWithMetaData,
 )
-from rcon.utils import ALL_ROLES, ALL_ROLES_KEY_INDEX_MAP, get_server_number
+from rcon.utils import ALL_ROLES, ALL_ROLES_KEY_INDEX_MAP, get_server_number, INDEFINITE_VIP_DATE
 
 STEAMID = "steam_id_64"
 NAME = "name"
@@ -721,7 +721,7 @@ class Rcon(ServerCtl):
             logger.warning(f"Unable to parse {expiration=} for {name=} {steam_id_64=}")
             # For our purposes (human lifespans) we can use 200 years in the future as
             # the equivalent of indefinite VIP access
-            expiration_date = datetime.utcnow() + relativedelta.relativedelta(years=200)
+            expiration_date = INDEFINITE_VIP_DATE
 
         # Find a player and update their expiration date if it exists or create a new record if not
         with enter_session() as session:
