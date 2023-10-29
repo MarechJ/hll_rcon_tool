@@ -115,7 +115,7 @@ class NoLeaderAutomod:
             self.logger.debug("Skipping commander")
             return punitions_to_apply
         if not squad_name:
-            self.logger.info("Skipping None or empty squad %s %s", squad_name, squad)
+            self.logger.debug("Skipping None or empty squad %s %s", squad_name, squad)
             return punitions_to_apply
 
         with self.watch_state(team, squad_name) as watch_status:
