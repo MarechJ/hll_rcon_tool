@@ -4,7 +4,7 @@ Django~=4.2.0
 django-cors-headers==4.2.0
 redis==3.5.3
 simplejson==3.17.0
-sqlalchemy~=2.0.22
+sqlalchemy==2.0.22
 psycopg2-binary
 sentry-sdk==0.17.1
 redistimeseries==0.8.0
