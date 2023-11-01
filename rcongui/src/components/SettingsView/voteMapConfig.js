@@ -21,14 +21,23 @@ const VoteMapConfig = () => {
   const [config, setConfig] = React.useState(new Map());
   const [status, setStatus] = React.useState(new Map());
 
-  const saveConfig = (kv) =>
-    postData(`${process.env.REACT_APP_API_URL}set_votemap_config`, {
+  const saveConfig = (kv) => {
+    let mapAsObject = {
       ...Object.fromEntries(config.entries()),
       ...kv,
-    })
+    };
+    /* TODO: This is kind of dumb but I don't know a better way to do it */
+    delete mapAsObject.size;
+    delete mapAsObject._root;
+    delete mapAsObject.__altered;
+    return postData(
+      `${process.env.REACT_APP_API_URL}set_votemap_config`,
+      mapAsObject
+    )
       .then((res) => showResponse(res, "set_votemap_config", true))
       .then(loadData)
       .catch(handle_http_errors);
+  };
 
   const loadData = () => {
     get("get_votemap_status")
