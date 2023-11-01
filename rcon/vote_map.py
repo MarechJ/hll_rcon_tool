@@ -347,7 +347,7 @@ class VoteMap:
     def handle_vote_command(self, rcon, struct_log: StructuredLogLineType) -> bool:
         message = struct_log.get("sub_content", "").strip()
         config = VoteMapUserConfig.load_from_db()
-        if not message.startswith("!votemap"):
+        if not message.lower().startswith(("!votemap", "!vm")):
             return config.enabled
 
         steam_id_64_1 = struct_log["steam_id_64_1"]
@@ -358,9 +358,9 @@ class VoteMap:
             # )
             return config.enabled
 
-        if match := re.match(r"!votemap\s*(\d+)", message):
+        if match := re.match(r"(!votemap|!vm)\s*(\d+)", message, re.IGNORECASE):
             logger.info("Registering vote %s", struct_log)
-            vote = match.group(1)
+            vote = match.group(2)
             try:
                 map_name = self.register_vote(
                     struct_log["player"], struct_log["timestamp_ms"] / 1000, vote
@@ -389,12 +389,15 @@ class VoteMap:
                 self.apply_results()
                 return config.enabled
 
-        if re.match(r"!votemap\s*help", message) and config.help_text:
+        if (
+            re.match(r"(!votemap|!vm)\s*help", message, re.IGNORECASE)
+            and config.help_text
+        ):
             logger.info("Showing help %s", struct_log)
             rcon.do_message_player(steam_id_64=steam_id_64_1, message=config.help_text)
             return config.enabled
 
-        if re.match(r"!votemap$", message):
+        if re.match(r"(!votemap|!vm)$", message, re.IGNORECASE):
             logger.info("Showing selection %s", struct_log)
             vote_map_message = config.instruction_text
             rcon.do_message_player(
@@ -405,7 +408,7 @@ class VoteMap:
             )
             return config.enabled
 
-        if re.match(r"!votemap\s*never$", message):
+        if re.match(r"(!votemap|!vm)\s*never$", message, re.IGNORECASE):
             if not config.allow_opt_out:
                 rcon.do_message_player(
                     steam_id_64=steam_id_64_1,
@@ -447,7 +450,7 @@ class VoteMap:
 
             return config.enabled
 
-        if re.match(r"!votemap\s*allow$", message):
+        if re.match(r"(!votemap|!vm)\s*allow$", message, re.IGNORECASE):
             logger.info("Player opting in for vote %s", struct_log)
             with enter_session() as sess:
                 player = get_player(sess, steam_id_64_1)

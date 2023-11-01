@@ -1127,7 +1127,7 @@ class Rcon(ServerCtl):
         with invalidates(self.get_votekick_threshold):
             res = super().set_votekick_threshold(threshold_pairs)
             print(f"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! {res}")
-            logger.error("Threshold res %s", res)
+            logger.info("Threshold res %s", res)
             if res.lower().startswith("error"):
                 logger.error("Unable to set votekick threshold: %s", res)
                 raise CommandFailedError(res)
