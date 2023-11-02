@@ -24,7 +24,7 @@ from .models import DjangoAPIKey, SteamPlayer
 logger = logging.getLogger("rconweb")
 
 AUTHORIZATION_HEADER = "HTTP_AUTHORIZATION"
-BEARER = "BEARER"
+BEARER = ("BEARER", "BEARER:")
 
 
 def update_mods(sender, instance, **kwargs):
@@ -137,9 +137,9 @@ def login_required():
             # requiring the user to be logged in
             try:
                 header_name, raw_api_key = request.META[AUTHORIZATION_HEADER].split(
-                    ": ", maxsplit=1
+                    maxsplit=1
                 )
-                if not header_name.upper() == BEARER:
+                if not header_name.upper().strip() in BEARER:
                     raw_api_key = None
             except (KeyError, ValueError):
                 raw_api_key = None
