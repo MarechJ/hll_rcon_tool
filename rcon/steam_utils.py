@@ -52,7 +52,7 @@ def get_steam_profiles(steam_ids):
     except IndexError:
         logger.exception("Steam: no player found")
     except:
-        logging.exception("Unexpected error while fetching steam profile")
+        logger.exception("Unexpected error while fetching steam profile")
         return None
 
 
@@ -103,7 +103,7 @@ def get_player_bans(steamd_id) -> SteamBansType | None:
         logger.exception("Steam no player found")
         return None
     except:
-        logging.exception("Unexpected error while fetching steam bans")
+        logger.exception("Unexpected error while fetching steam bans")
         return None
 
     if not bans:
@@ -131,7 +131,7 @@ def get_players_ban(steamd_ids: List):
         logger.exception("Steam no player found")
         return None
     except:
-        logging.exception("Unexpected error while fetching steam bans")
+        logger.exception("Unexpected error while fetching steam bans")
         return None
 
     return bans
