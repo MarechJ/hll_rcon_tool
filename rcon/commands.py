@@ -241,9 +241,9 @@ class ServerCtl:
             raise
 
     @staticmethod
-    def _ends_on_complete_code_point(result: bytes) -> bool:
+    def _ends_on_complete_code_point(byte_chunk: bytes) -> bool:
         """Return if byte_chunk ends on a valid UTF-8 code point"""
-        finalBytes = result[-4:]
+        finalBytes = byte_chunk[-4:]
         numBytesLeft = len(finalBytes)
 
         for b in finalBytes:
