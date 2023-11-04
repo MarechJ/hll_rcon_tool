@@ -205,7 +205,13 @@ def enrich_db_users(chunk_size=100, update_from_days_old=30):
         pages = math.ceil(query.count() / chunk_size)
         for page in range(pages):
             by_ids = {p.steam_id_64: p for p in query.limit(chunk_size).all()}
+            if not by_ids:
+                logger.warning("Empty query results")
+                continue
             profiles = get_steam_profiles(list(by_ids.keys()))
+            if not profiles:
+                logger.error("Error while retrieving Steam profiles - Steam API may have returned a 'Too Many Requests' error")
+                continue
             logger.info(
                 "Updating steam profiles page %s of %s - result count (query) %s - result count (steam) %s",
                 page + 1,
@@ -213,9 +219,6 @@ def enrich_db_users(chunk_size=100, update_from_days_old=30):
                 len(by_ids),
                 len(profiles),
             )
-            if not by_ids:
-                logger.warning("Empty query results")
-                continue
             for p in profiles:
                 player = by_ids.get(p["steamid"])
                 if not player:
