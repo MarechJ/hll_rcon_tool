@@ -500,7 +500,15 @@ class ServerCtl:
             if res[-1] == "\n":
                 break
             try:
-                res += conn.receive().decode()
+                # res *should* already be a decodable byte chunk because of how _request works
+                extra_chunks: list[bytes] = []
+                next_chunk: bytes = conn.receive()
+                extra_chunks.append(next_chunk)
+                while not self._ends_on_complete_code_point(extra_chunks[-1]):
+                    next_chunk: bytes = conn.receive()
+                    extra_chunks.append(next_chunk)
+
+                res += b"".join(extra_chunks).decode()
             except (
                 RuntimeError,
                 BrokenPipeError,
@@ -515,6 +523,7 @@ class ServerCtl:
 
     def get_timed_logs(self, since_min_ago, filter_=""):
         with self.with_connection() as conn:
+            # TODO: Bandaid this with unicode decode stuff
             res = self._timed_request(f"showlog {since_min_ago}", conn=conn)
             for i in range(30):
                 if res["result"][-1] == "\n":
