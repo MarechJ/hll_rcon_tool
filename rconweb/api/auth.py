@@ -6,7 +6,9 @@ from functools import wraps
 from typing import Any
 
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.models import Permission
 from django.contrib.auth.decorators import permission_required
+from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
 from django.db.models.signals import post_delete, post_save
@@ -16,10 +18,14 @@ from django.views.decorators.csrf import csrf_exempt
 from rcon.audit import heartbeat, ingame_mods, online_mods, set_registered_mods
 from rcon.cache_utils import ttl_cache
 from rcon.config import get_config
+from rconweb.settings import SECRET_KEY
 
-from .models import SteamPlayer
+from .models import DjangoAPIKey, SteamPlayer
 
 logger = logging.getLogger("rconweb")
+
+AUTHORIZATION_HEADER = "HTTP_AUTHORIZATION"
+BEARER = "BEARER"
 
 
 def update_mods(sender, instance, **kwargs):
@@ -128,6 +134,29 @@ def login_required():
     def decorator(func):
         @wraps(func)
         def wrapper(request, *args, **kwargs):
+            # Extract the header and bearer key if present, otherwise fall back on
+            # requiring the user to be logged in
+            try:
+                header_name, raw_api_key = request.META[AUTHORIZATION_HEADER].split(
+                    ": ", maxsplit=1
+                )
+                if not header_name.upper() == BEARER:
+                    raw_api_key = None
+            except ValueError:
+                raw_api_key = None
+
+            try:
+                # If we don't include the salt, the hasher generates its own
+                # and it will generate different hashed values every time
+                hashed_api_key = make_password(raw_api_key, salt=SECRET_KEY)
+                api_key_model = DjangoAPIKey.objects.get(api_key=hashed_api_key)
+
+                # Retrieve the user to use the normal authentication system
+                # to include their permissions
+                request.user = api_key_model.user
+            except DjangoAPIKey.DoesNotExist:
+                pass
+
             if not request.user.is_authenticated:
                 return api_response(
                     command=request.path,
@@ -207,3 +236,22 @@ def get_ingame_mods(request):
         result=ingame_mods(),
         failed=False,
     )
+
+@csrf_exempt
+@login_required()
+def get_own_user_permissions(request):
+    command_name = "get_own_user_permissions"
+
+    permissions = Permission.objects.filter(user=request.user)
+    trimmed_permissions = [
+        {
+            "permission": p['codename'],
+            "description": p['name'],
+        }
+        for p in permissions.values()
+    ]
+
+    return api_response(command=command_name, result={
+        "permissions": trimmed_permissions,
+        "is_superuser": request.user.is_superuser,
+        }, failed=False)

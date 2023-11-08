@@ -70,6 +70,7 @@ endpoints: list[tuple[str, Callable]] = [
     ("is_logged_in", auth.is_logged_in),
     ("get_online_mods", auth.get_online_mods),
     ("get_ingame_mods", auth.get_ingame_mods),
+    ("get_own_user_permissions", auth.get_own_user_permissions),
     ("get_services", services.get_services),
     ("do_service", services.do_service),
     ("server_list", multi_servers.get_server_list),

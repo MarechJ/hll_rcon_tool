@@ -1050,6 +1050,7 @@ class Rcon(ServerCtl):
             "nb_players": slots,
             "short_name": os.getenv("SERVER_SHORT_NAME", None) or "HLL Rcon",
             "player_count": slots.split("/")[0],
+            "server_number": int(get_server_number()),
         }
 
     @ttl_cache(ttl=60 * 60 * 24)
@@ -1127,7 +1128,7 @@ class Rcon(ServerCtl):
         with invalidates(self.get_votekick_threshold):
             res = super().set_votekick_threshold(threshold_pairs)
             print(f"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! {res}")
-            logger.error("Threshold res %s", res)
+            logger.info("Threshold res %s", res)
             if res.lower().startswith("error"):
                 logger.error("Unable to set votekick threshold: %s", res)
                 raise CommandFailedError(res)
