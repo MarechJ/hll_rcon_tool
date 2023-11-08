@@ -228,6 +228,7 @@ class LogsHistory extends React.Component {
         customBodyRenderLite: (dataIndex) =>
           moment
             .unix(this.state.logs[dataIndex]?.event_time)
+            .local()
             .format("ddd Do MMM HH:mm:ss"),
       },
     },
