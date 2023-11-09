@@ -127,7 +127,7 @@ export function VipExpirationDialog(props) {
                   setExpirationTimestamp(value.format());
                 }}
                 format="YYYY/MM/DD HH:mm"
-                maxDate={moment("2300-01-01")}
+                maxDate={moment("3000-01-01T00:00:00+00:00")}
               />
             </MuiPickersUtilsProvider>
           </Grid>
@@ -136,7 +136,7 @@ export function VipExpirationDialog(props) {
       <DialogActions>
         <Button
           onClick={() => {
-            handleConfirm(open, moment().add(200, "years").format(), forward);
+            handleConfirm(open, moment("3000-01-01T00:00:00+00:00").format(), forward);
           }}
           color="primary"
         >
