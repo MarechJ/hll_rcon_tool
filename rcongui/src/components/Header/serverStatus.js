@@ -53,15 +53,12 @@ const Status = ({
             onClose={handleClose}
           >
             {serverList.map((s) => {
-              let link = `${window.location.protocol}//${
-                window.location.hostname
-              }:${s.get("port")}${window.location.pathname}${
-                window.location.hash
-              }`;
-              if (s.get("link")) {
-                link = `${s.get("link")}${window.location.pathname}${
-                  window.location.hash
+              let link = `${window.location.protocol}//${window.location.hostname
+                }:${s.get("port")}${window.location.pathname}${window.location.hash
                 }`;
+              if (s.get("link")) {
+                link = `${s.get("link")}${window.location.pathname}${window.location.hash
+                  }`;
               }
               return (
                 <MenuItem onClick={handleClose}>
@@ -146,11 +143,11 @@ class ServerStatus extends React.Component {
       .then((response) => showResponse(response, "get_status", false))
       .then((data) => {
         this.setState({
-          name: data.result.name,
-          map: data.result.map,
+          name: data?.result.name,
+          map: data?.result.map,
           nbPlayers: data.result.nb_players,
         });
-        document.title = `(${data.result.player_count}) ${data.result.short_name}`;
+        document.title = `(${data?.result.player_count}) ${data?.result.short_name}`;
       })
       .catch(handle_http_errors);
   }

@@ -12,6 +12,8 @@ from rcon.types import MapInfo
 
 logger = logging.getLogger("rcon")
 
+UNKNOWN_MAP_NAME = 'unknown'
+
 ALL_MAPS = (
     "carentan_offensive_ger",
     "carentan_offensive_us",
@@ -289,7 +291,7 @@ SHORT_HUMAN_MAP_NAMES = {
     "stmereeglise_warfare": "SME",
     "utahbeach_offensive_ger": "Utah Off. (GER)",
     "utahbeach_offensive_us": "Utah Off. (US)",
-    "utahbeach_warfare_night" : "Utah (Night)",
+    "utahbeach_warfare_night": "Utah (Night)",
     "utahbeach_warfare": "Utah",
 }
 
