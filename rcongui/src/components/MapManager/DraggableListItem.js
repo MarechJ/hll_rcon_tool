@@ -13,7 +13,7 @@ import {
 } from "@material-ui/core";
 import Avatar from "@material-ui/core/Avatar";
 import DeleteIcon from "@material-ui/icons/Delete";
-import map_to_pict from "../Scoreboard/utils";
+import { getMapName, getMapImageUrl } from "../Scoreboard/utils";
 
 const useStyles = makeStyles({
   draggingListItem: {
@@ -25,13 +25,6 @@ const useStyles = makeStyles({
 });
 
 const DraggableListItem = ({ item, index, onRemove }) => {
-  const getMapName = (fullName) => {
-    const parts = fullName.split("_");
-    if (parts && parts.length > 0) {
-      return parts[0];
-    }
-    return "foy";
-  };
 
   const getLabels = (fullName) => {
     const labels = [];
@@ -87,7 +80,7 @@ const DraggableListItem = ({ item, index, onRemove }) => {
           }
         >
           <ListItemAvatar>
-            <Avatar src={map_to_pict[getMapName(item)]} />
+            <Avatar src={getMapImageUrl(item)} />
           </ListItemAvatar>
           <ListItemText
             primary={

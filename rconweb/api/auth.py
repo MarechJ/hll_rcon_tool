@@ -6,6 +6,7 @@ from functools import wraps
 from typing import Any
 
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.models import Permission
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import User
@@ -24,7 +25,7 @@ from .models import DjangoAPIKey, SteamPlayer
 logger = logging.getLogger("rconweb")
 
 AUTHORIZATION_HEADER = "HTTP_AUTHORIZATION"
-BEARER = "BEARER"
+BEARER = ("BEARER", "BEARER:")
 
 
 def update_mods(sender, instance, **kwargs):
@@ -137,11 +138,11 @@ def login_required():
             # requiring the user to be logged in
             try:
                 header_name, raw_api_key = request.META[AUTHORIZATION_HEADER].split(
-                    ": ", maxsplit=1
+                    maxsplit=1
                 )
-                if not header_name.upper() == BEARER:
+                if not header_name.upper().strip() in BEARER:
                     raw_api_key = None
-            except ValueError:
+            except (KeyError, ValueError):
                 raw_api_key = None
 
             try:
@@ -235,3 +236,22 @@ def get_ingame_mods(request):
         result=ingame_mods(),
         failed=False,
     )
+
+@csrf_exempt
+@login_required()
+def get_own_user_permissions(request):
+    command_name = "get_own_user_permissions"
+
+    permissions = Permission.objects.filter(user=request.user)
+    trimmed_permissions = [
+        {
+            "permission": p['codename'],
+            "description": p['name'],
+        }
+        for p in permissions.values()
+    ]
+
+    return api_response(command=command_name, result={
+        "permissions": trimmed_permissions,
+        "is_superuser": request.user.is_superuser,
+        }, failed=False)

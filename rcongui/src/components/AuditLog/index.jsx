@@ -33,7 +33,7 @@ const AuditLogsTable = ({ auditLogs }) => {
       label: "Time",
       options: {
         customBodyRenderLite: (dataIndex) =>
-          moment(auditLogs.get(dataIndex)?.get("creation_time")).format(
+          moment.utc(auditLogs.get(dataIndex)?.get("creation_time")).local().format(
             "ddd Do MMM HH:mm:ss"
           ),
       },

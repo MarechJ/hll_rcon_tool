@@ -17,7 +17,7 @@ import { List as iList, Map, fromJS, List } from "immutable";
 import moment from "moment";
 import { useTheme } from "@material-ui/core/styles";
 import Scores from "./Scores";
-import map_to_pict from "./utils";
+import { getMapImageUrl } from "./utils";
 import { fade } from "@material-ui/core/styles/colorManipulator";
 import { CopyToClipboard } from "react-copy-to-clipboard";
 import { useParams } from "react-router-dom";
@@ -155,7 +155,7 @@ const GamesScore = ({ classes }) => {
         setMapsPageSize(data.result.page_size);
         setMapsTotal(data.result.total);
         setMaps(fromJS(data.result.maps));
-        if (data.result.maps && !slug) {
+        if (data.result.maps.length > 0 && !slug) {
           window.location.hash = `#/gamescoreboard/${data.result.maps[0].id}`;
         }
       })
@@ -186,8 +186,8 @@ const GamesScore = ({ classes }) => {
   let started = serverState.get("current_map", new Map()).get("start");
   started = started
     ? new Date(Date.now() - new Date(started * 1000))
-        .toISOString()
-        .substr(11, 8)
+      .toISOString()
+      .substr(11, 8)
     : "N/A";
 
   return (
@@ -221,12 +221,12 @@ const GamesScore = ({ classes }) => {
                 xl
                   ? Math.min(maps.size, 8.5)
                   : lg
-                  ? Math.min(maps.size, 5.5)
-                  : md
-                  ? Math.min(maps.size, 3.5)
-                  : sm
-                  ? Math.min(maps.size, 2.5)
-                  : Math.min(maps.size, 1.5)
+                    ? Math.min(maps.size, 5.5)
+                    : md
+                      ? Math.min(maps.size, 3.5)
+                      : sm
+                        ? Math.min(maps.size, 2.5)
+                        : Math.min(maps.size, 1.5)
               }
               className={styles.gridList}
             >
@@ -243,7 +243,7 @@ const GamesScore = ({ classes }) => {
                     onClick={() => doSelectMap(m.get("id"))}
                     key={`${m.get("name")}${m.get("start")}${m.get("end")}`}
                   >
-                    <img alt="Map" src={map_to_pict[m.get("just_name")]} />
+                    <img alt="Map" src={getMapImageUrl(m.get('map_name'))} />
 
                     <GridListTileBar
                       className={isSelected(
