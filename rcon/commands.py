@@ -240,6 +240,28 @@ class ServerCtl:
             logger.exception("Invalid connection information", e)
             raise
 
+    @staticmethod
+    def _ends_on_complete_code_point(byte_chunk: bytes) -> bool:
+        """Return if byte_chunk ends on a valid UTF-8 code point"""
+        finalBytes = byte_chunk[-4:]
+        numBytesLeft = len(finalBytes)
+
+        for b in finalBytes:
+            numBytesLeft -= 1
+            if b < 0b10000000:
+                # First bit is 0, means we have a 1-byte char
+                # Will be most common so most efficient to check this case first
+                continue
+            if (
+                (b >= 0b11110000 and numBytesLeft < 3)
+                or (b >= 0b11100000 and numBytesLeft < 2)
+                or (b >= 0b11000000 and numBytesLeft < 1)
+            ):
+                # Need to receive another chunk
+                return False
+
+        return True
+
     @_auto_retry
     def _request(
         self,
@@ -257,16 +279,22 @@ class ServerCtl:
             logger.debug(command)
         try:
             conn.send(command.encode())
-            if decode:
-                result = conn.receive().decode()
-            else:
-                result = conn.receive()
+            byte_chunks: list[bytes] = []
+            result: bytes = conn.receive()
+            byte_chunks.append(result)
+            while not self._ends_on_complete_code_point(byte_chunks[-1]):
+                result: bytes = conn.receive()
+                byte_chunks.append(result)
         except (
             RuntimeError,
             UnicodeDecodeError,
         ) as e:
             logger.exception("Failed request")
             raise HLLServerError(command) from e
+
+        result = b"".join(byte_chunks)
+        if decode:
+            result = result.decode()
 
         if (decode and result == "FAIL") or (not decode and result == b"FAIL"):
             if can_fail:
@@ -472,7 +500,15 @@ class ServerCtl:
             if res[-1] == "\n":
                 break
             try:
-                res += conn.receive().decode()
+                # res *should* already be a decodable byte chunk because of how _request works
+                extra_chunks: list[bytes] = []
+                next_chunk: bytes = conn.receive()
+                extra_chunks.append(next_chunk)
+                while not self._ends_on_complete_code_point(extra_chunks[-1]):
+                    next_chunk: bytes = conn.receive()
+                    extra_chunks.append(next_chunk)
+
+                res += b"".join(extra_chunks).decode()
             except (
                 RuntimeError,
                 BrokenPipeError,
@@ -487,6 +523,7 @@ class ServerCtl:
 
     def get_timed_logs(self, since_min_ago, filter_=""):
         with self.with_connection() as conn:
+            # TODO: Bandaid this with unicode decode stuff
             res = self._timed_request(f"showlog {since_min_ago}", conn=conn)
             for i in range(30):
                 if res["result"][-1] == "\n":
