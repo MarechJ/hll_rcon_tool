@@ -18,8 +18,8 @@ export const Penalites = ({ player }) => (
   <div>
     {player.get("received_actions", new List()).size < 1 ? "Clean record" : ""}
     {player.get("received_actions", new List()).map((action) => (
-      <p>{`${action.get("action_type")} ${moment(action.get("time")).format(
-        "LLL"
+      <p>{`${action.get("action_type")} ${moment.utc(action.get("time")).local().format(
+        "ddd Do MMM HH:mm:ss"
       )}: ${truncateString(action.get("reason"), 50)} by ${action.get(
         "by"
       )}`}</p>

@@ -19,6 +19,7 @@ INDEFINITE_VIP_DATE = datetime(
     tzinfo=timezone.utc,
 )
 
+UNKNOWN_MAP_NAME = 'unknown'
 
 ALL_MAPS = (
     "carentan_offensive_ger",
