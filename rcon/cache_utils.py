@@ -6,7 +6,6 @@ from contextlib import contextmanager
 
 import redis
 import simplejson
-from cachetools.func import ttl_cache as cachetools_ttl_cache
 
 logger = logging.getLogger(__name__)
 
@@ -144,8 +143,8 @@ def get_redis_client(decode_responses=True):
 def ttl_cache(ttl, *args, is_method=True, cache_falsy=True, **kwargs):
     pool = get_redis_pool(decode_responses=False)
     if not pool:
-        logger.debug("HLL_REDIS_URL is not set falling back to memory cache")
-        return cachetools_ttl_cache(*args, ttl=ttl, **kwargs)
+        logger.error("Unable to connect to Redis")
+        raise ConnectionError("Unable to connect to Redis")
 
     def decorator(func):
         cached_func = RedisCached(
