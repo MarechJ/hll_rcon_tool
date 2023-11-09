@@ -15,6 +15,7 @@ import discord
 from discord.embeds import Embed
 from discord.errors import HTTPException, NotFound
 from rcon.config import get_config
+from rcon.utils import UNKNOWN_MAP_NAME
 
 
 class _PublicInfoCurrentMapType(TypedDict):
@@ -130,26 +131,50 @@ except Exception as e:
 
 map_to_pict = {
     "carentan": "maps/carentan.webp",
+    "carentan_night": "maps/carentan-night.webp",
     "driel": "maps/driel.webp",
+    "driel_night": "maps/driel-night.webp",
     "elalamein": "maps/elalamein.webp",
+    "elalamein_night": "maps/elalamein-night.webp",
     "foy": "maps/foy.webp",
+    "foy_night": "maps/foy-night.webp",
     "hill400": "maps/hill400.webp",
+    "hill400_night": "maps/hill400-night.webp",
     "hurtgenforest": "maps/hurtgen.webp",
+    "hurtgenforest_night": "maps/hurtgen-night.webp",
     "kharkov": "maps/kharkov.webp",
+    "kharkov_night": "maps/kharkov-night.webp",
     "kursk": "maps/kursk.webp",
+    "kursk_night": "maps/kursk-night.webp",
     "omahabeach": "maps/omaha.webp",
+    "omahabeach_night": "maps/omaha-night.webp",
     "purpleheartlane": "maps/phl.webp",
+    "purpleheartlane_night": "maps/phl-night.webp",
     "stalingrad": "maps/stalingrad.webp",
+    "stalingrad_night": "maps/stalingrad-night.webp",
     "stmariedumont": "maps/smdm.webp",
+    "stmariedumont_night": "maps/smdm-night.webp",
     "stmereeglise": "maps/sme.webp",
+    "stmereeglise_night": "maps/sme-night.webp",
     "utahbeach": "maps/utah.webp",
+    "utahbeach_night": "maps/utah-night.webp",
+    UNKNOWN_MAP_NAME: "maps/unknown.webp",
 }
 
 
 def get_map_image(server_info):
-    img = map_to_pict.get(
-        server_info["current_map"]["just_name"], server_info["current_map"]["just_name"]
-    )
+    map_name: str = server_info["current_map"]["name"]
+
+    try:
+        base_map_name, _ = map_name.split("_", maxsplit=1)
+    except ValueError:
+        base_map_name = map_name
+
+    if "night" in map_name.lower():
+        base_map_name = base_map_name + "_night"
+
+
+    img = map_to_pict.get(base_map_name, UNKNOWN_MAP_NAME)
     url = urljoin(SCOREBOARD_BASE_PATH, img)
     return url
 
