@@ -382,7 +382,7 @@ This will make redis and postgres available on you localhost with their default 
     export DJANGO_DEBUG=True
     export SERVER_NUMBER=1
 
-    export HLL_DB_URL=postgres://rcon:developmentpassword@localhost:5432
+    export HLL_DB_URL=postgresql://rcon:developmentpassword@localhost:5432
     export HLL_REDIS_URL=redis://localhost:6379/0
 
 #### Prepare the DB
