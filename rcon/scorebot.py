@@ -364,10 +364,7 @@ def run():
             (server_number, "live", WEBHOOK_URL),
         )
         message_id = message_id.fetchone()
-        webhook = discord.Webhook.from_url(
-            WEBHOOK_URL,
-            adapter=discord.RequestsWebhookAdapter(),
-        )
+        webhook = discord.SyncWebhook.from_url(WEBHOOK_URL)
         try:
             public_info = requests.get(INFO_URL, verify=False).json()["result"]
         except ConnectionError as e:
