@@ -99,7 +99,7 @@ class Rcon(ServerCtl):
     camera_pattern = re.compile(r"\[(.*)\s{1}\((\d+)\)\] (.*)")
     teamswitch_pattern = re.compile(r"TEAMSWITCH\s(.*)\s\((.*\s>\s.*)\)")
     kick_ban_pattern = re.compile(
-        r"(KICK|BAN): \[(.*)\] (.*\[(KICKED|BANNED|PERMANENTLY|YOU|Host|Anti-Cheat)[^\]]*)(?:\])*"
+        r"(KICK|BAN): \[(.*)\] (.*\[(KICKED|BANNED|PERMANENTLY|YOU|Host|Anti-Cheat|[^\]]*)[^\]]*)(?:\])*"
     )
     vote_pattern = re.compile(
         r"VOTESYS: Player \[(.*)\] voted \[.*\] for VoteID\[\d+\]"
@@ -1372,6 +1372,12 @@ class Rcon(ServerCtl):
                 type_ = ""
             elif type_ == "Anti-Cheat":
                 type_ = "ANTI-CHEAT"
+            elif type_ == "KICKED":
+                type_ = "KICKED"
+            elif type_ == "BANNED":
+                type_ = "BANNED"
+            else:
+                type_ = "MISC"
 
             action = f"ADMIN {type_}".strip()
 
