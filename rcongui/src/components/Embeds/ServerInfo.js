@@ -15,7 +15,7 @@ import {
 import { fade } from "@material-ui/core/styles/colorManipulator";
 import { get, handle_http_errors, showResponse } from "../../utils/fetchUtils";
 import { List as iList, Map, fromJS } from "immutable";
-import map_to_pict from "../Scoreboard/utils";
+import { getMapImageUrl } from "../Scoreboard/utils";
 
 const useStyles = makeStyles((theme) => ({
   padRight: {
@@ -72,6 +72,7 @@ const ServerInfo = ({ classes }) => {
   const [serverState, setServerState] = React.useState(new Map());
   const [isLoading, setIsLoading] = React.useState(true);
   const isXs = useMediaQuery(theme.breakpoints.down("sm"));
+  const [mapName, setMapName] = React.useState("")
 
   const getData = () => {
     setIsLoading(true);
@@ -90,11 +91,17 @@ const ServerInfo = ({ classes }) => {
     return () => clearInterval(interval);
   }, []);
 
+  React.useEffect(() => {
+    if (serverState.get('current_map') !== undefined) {
+      setMapName(serverState.get('current_map').get('name'))
+    }
+  }, [serverState])
+
   let started = serverState.get("current_map", new Map()).get("start");
   started = started
     ? new Date(Date.now() - new Date(started * 1000))
-        .toISOString()
-        .substr(11, 8)
+      .toISOString()
+      .substr(11, 8)
     : "N/A";
 
   const nextMapString = React.useMemo(() => {
@@ -116,11 +123,7 @@ const ServerInfo = ({ classes }) => {
       <GridListTile>
         <img
           alt="Map"
-          src={
-            map_to_pict[
-              serverState.get("current_map", new Map()).get("just_name", "foy")
-            ]
-          }
+          src={getMapImageUrl(mapName)}
         />
         <GridListTileBar
           className={styles.titleBarTop}

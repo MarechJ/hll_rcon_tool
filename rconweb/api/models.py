@@ -16,6 +16,7 @@ class DjangoAPIKey(models.Model):
 
     class Meta:
         ordering = ("date_modified",)
+        verbose_name = "Django API Key"
 
 
 class SteamPlayer(models.Model):
