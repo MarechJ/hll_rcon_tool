@@ -44,15 +44,15 @@ def get_steam_profiles(steam_ids):
             "response"
         ]["players"]
     except steam.exceptions.SteamError as e:
-        logger.exception(e)
+        logger.error(e)
         return None
     except AttributeError:
         logger.error("STEAM_API_KEY is invalid, can't fetch steam profile")
         return None
     except IndexError:
-        logger.exception("Steam: no player found")
+        logger.error("Steam: no player found")
     except:
-        logger.exception("Unexpected error while fetching steam profile")
+        logger.error("Unexpected error while fetching steam profile")
         return None
 
 
@@ -94,16 +94,16 @@ def get_player_bans(steamd_id) -> SteamBansType | None:
         api = WebAPI(key=steam_key)
         bans = api.ISteamUser.GetPlayerBans(steamids=steamd_id)["players"][0]
     except steam.exceptions.SteamError as e:
-        logger.exception(e)
+        logger.error(e)
         return None
     except AttributeError:
         logger.error("STEAM_API_KEY is invalid, can't fetch steam profile")
         return None
     except IndexError:
-        logger.exception("Steam no player found")
+        logger.error("Steam no player found")
         return None
     except:
-        logger.exception("Unexpected error while fetching steam bans")
+        logger.error("Unexpected error while fetching steam bans")
         return None
 
     if not bans:
@@ -122,16 +122,16 @@ def get_players_ban(steamd_ids: List):
         api = WebAPI(key=steam_key)
         bans = api.ISteamUser.GetPlayerBans(steamids=",".join(steamd_ids))["players"]
     except steam.exceptions.SteamError as e:
-        logger.exception(e)
+        logger.error(e)
         return None
     except AttributeError:
         logger.error("STEAM_API_KEY is invalid, can't fetch steam profile")
         return None
     except IndexError:
-        logger.exception("Steam no player found")
+        logger.error("Steam no player found")
         return None
     except:
-        logger.exception("Unexpected error while fetching steam bans")
+        logger.error("Unexpected error while fetching steam bans")
         return None
 
     return bans
