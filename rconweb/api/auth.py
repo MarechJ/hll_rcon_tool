@@ -5,6 +5,7 @@ from dataclasses import asdict, dataclass
 from functools import wraps
 from typing import Any
 
+from channels.db import database_sync_to_async
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.hashers import make_password
@@ -24,7 +25,7 @@ from .models import DjangoAPIKey, SteamPlayer
 logger = logging.getLogger("rconweb")
 
 AUTHORIZATION_HEADER = "HTTP_AUTHORIZATION"
-BEARER = "BEARER"
+BEARER = ("BEARER", "BEARER:")
 
 
 def update_mods(sender, instance, **kwargs):
@@ -35,6 +36,43 @@ post_save.connect(update_mods, sender=User)
 post_delete.connect(update_mods, sender=User)
 post_save.connect(update_mods, sender=SteamPlayer)
 post_delete.connect(update_mods, sender=SteamPlayer)
+
+
+@database_sync_to_async
+def get_user(api_key) -> User:
+    user = DjangoAPIKey.objects.get(api_key=api_key)
+    return user.user
+
+
+class APITokenAuthMiddleware:
+    def __init__(self, app) -> None:
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        headers = dict(scope["headers"])
+        headers = {k.decode(): v.decode() for k, v in headers.items()}
+        try:
+            header_name, raw_api_key = headers.get("authorization", "").split(
+                maxsplit=1
+            )
+            if not header_name.upper().strip() in BEARER:
+                raw_api_key = None
+        except (KeyError, ValueError):
+            raw_api_key = None
+
+        # TODO: There is a better way to handle not finding a user
+        try:
+            # If we don't include the salt, the hasher generates its own
+            # and it will generate different hashed values every time
+            hashed_api_key = make_password(raw_api_key, salt=SECRET_KEY)
+
+            # Retrieve the user to use the normal authentication system
+            # to include their permissions
+            scope["user"] = await get_user(hashed_api_key)
+        except DjangoAPIKey.DoesNotExist:
+            scope["user"] = None
+
+        return await self.app(scope, receive, send)
 
 
 @dataclass
@@ -137,11 +175,11 @@ def login_required():
             # requiring the user to be logged in
             try:
                 header_name, raw_api_key = request.META[AUTHORIZATION_HEADER].split(
-                    ": ", maxsplit=1
+                    maxsplit=1
                 )
-                if not header_name.upper() == BEARER:
+                if not header_name.upper().strip() in BEARER:
                     raw_api_key = None
-            except ValueError:
+            except (KeyError, ValueError):
                 raw_api_key = None
 
             try:

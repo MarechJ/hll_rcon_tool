@@ -296,7 +296,7 @@ class Rcon(ServerCtl):
 
         return dict(fail_count=fail_count, **game)
 
-    @ttl_cache(ttl=2)
+    @ttl_cache(ttl=1)
     def get_structured_logs(
         self, since_min_ago, filter_action=None, filter_player=None
     ) -> ParsedLogsType:

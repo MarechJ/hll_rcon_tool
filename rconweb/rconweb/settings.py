@@ -139,6 +139,7 @@ if DEBUG:
     SESSION_COOKIE_SAMESITE = "None"
 
 INSTALLED_APPS = [
+    "daphne",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -184,27 +185,28 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "rconweb.wsgi.application"
+ASGI_APPLICATION = "rconweb.asgi.application"
 
 
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 
 db_info = {
-    'USER': os.getenv("HLL_DB_USER"),
-    'PASSWORD': os.getenv("HLL_DB_PASSWORD"),
-    'HOST': os.getenv("HLL_DB_HOST"),
-    'PORT': os.getenv("HLL_DB_HOST_PORT"),
-    'NAME': os.getenv('HLL_DB_NAME')
+    "USER": os.getenv("HLL_DB_USER"),
+    "PASSWORD": os.getenv("HLL_DB_PASSWORD"),
+    "HOST": os.getenv("HLL_DB_HOST"),
+    "PORT": os.getenv("HLL_DB_HOST_PORT"),
+    "NAME": os.getenv("HLL_DB_NAME"),
 }
 
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "USER": db_info['USER'],
-        "PASSWORD": db_info['PASSWORD'],
-        "HOST": db_info['HOST'],
-        "PORT": db_info['PORT'],
-        "NAME": db_info['NAME'],
+        "USER": db_info["USER"],
+        "PASSWORD": db_info["PASSWORD"],
+        "HOST": db_info["HOST"],
+        "PORT": db_info["PORT"],
+        "NAME": db_info["NAME"],
     }
 }
 

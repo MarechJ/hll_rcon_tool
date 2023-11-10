@@ -32,6 +32,7 @@ def get_services(request):
     info = {
         "broadcasts": "The automatic broadcasts.",
         "log_event_loop": "Blacklist enforcement, chat/kill forwarding, player history, etc...",
+        "log_stream": "Optionally store game server logs in a redis stream",
         "auto_settings": "Applies commands automaticaly based on your rules.",
         "cron": "The scheduler, cleans logs and whatever you added.",
     }

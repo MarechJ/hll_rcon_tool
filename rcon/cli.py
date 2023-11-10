@@ -10,7 +10,7 @@ import rcon.expiring_vips.service
 from rcon import auto_settings, broadcast, game_logs, routines
 from rcon.automods import automod
 from rcon.cache_utils import RedisCached, get_redis_pool
-from rcon.game_logs import LogLoop
+from rcon.game_logs import LogLoop, LogStream
 from rcon.models import install_unaccent
 from rcon.rcon import Rcon
 from rcon.scoreboard import live_stats_loop
@@ -70,6 +70,15 @@ def run_log_loop():
         LogLoop().run()
     except:
         logger.exception("Chat recorder stopped")
+        sys.exit(1)
+
+
+@cli.command(name="log_stream")
+def run_log_stream():
+    try:
+        LogStream().run()
+    except:
+        logger.exception("Log stream stopped")
         sys.exit(1)
 
 

@@ -5,6 +5,7 @@ RUN apt-get update -y && apt-get install -y cron logrotate git
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 RUN pip install gunicorn
+RUN pip install daphne
 RUN pip install supervisor
 COPY . .
 ENV PYTHONPATH /code/
