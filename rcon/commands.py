@@ -500,7 +500,16 @@ class ServerCtl:
             if res[-1] == "\n":
                 break
             try:
-                res += conn.receive().decode()
+                # res *should* already be a decodable byte chunk
+                # because of how _request works
+                extra_chunks: list[bytes] = []
+                next_chunk: bytes = conn.receive()
+                extra_chunks.append(next_chunk)
+                while not self._ends_on_complete_code_point(extra_chunks[-1]):
+                    next_chunk: bytes = conn.receive()
+                    extra_chunks.append(next_chunk)
+
+                res += b"".join(extra_chunks).decode()
             except (
                 RuntimeError,
                 BrokenPipeError,
