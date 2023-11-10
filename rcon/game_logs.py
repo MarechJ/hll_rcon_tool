@@ -198,7 +198,10 @@ class LogStream:
     def logs_since(self, last_seen: StreamID | None = None, block_ms=500):
         """Return a list of logs more recent than the last_seen ID"""
         try:
-            logs = self.log_stream.read(last_id=last_seen, block_ms=block_ms)
+            if last_seen is None:
+                logs = [self.log_stream.head()]
+            else:
+                logs = self.log_stream.read(last_id=last_seen, block_ms=block_ms)
             return logs
         except StreamNoElements:
             return []
