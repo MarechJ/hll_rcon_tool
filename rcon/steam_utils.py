@@ -209,7 +209,7 @@ def enrich_db_users(chunk_size=100, update_from_days_old=30):
                 logger.warning("Empty query results")
                 continue
             profiles = get_steam_profiles(list(by_ids.keys()))
-            if not profile:
+            if not profiles:
                 logger.warning("Steam profile couldn't be loaded")
                 continue
             logger.info(
