@@ -70,51 +70,33 @@ class PlayerSteamID(Base):
     steam_id_64: Mapped[str] = mapped_column(nullable=False, index=True, unique=True)
     created: Mapped[datetime] = mapped_column(default=datetime.utcnow)
     names: Mapped[list["PlayerName"]] = relationship(
-        "PlayerName",
-        backref="steamid",
-        uselist=True,
+        back_populates="steamid",
         order_by="nullslast(desc(PlayerName.last_seen))",
     )
     # If you ever change the ordering of sessions make sure you change the playtime calc code
     sessions: Mapped[list["PlayerSession"]] = relationship(
-        "PlayerSession",
-        backref="steamid",
-        uselist=True,
+        back_populates="steamid",
         order_by="desc(PlayerSession.created)",
     )
     received_actions: Mapped[list["PlayersAction"]] = relationship(
-        "PlayersAction",
-        backref="steamid",
-        uselist=True,
+        back_populates="steamid",
         order_by="desc(PlayersAction.time)",
     )
-    blacklist: Mapped["BlacklistedPlayer"] = relationship(
-        "BlacklistedPlayer", backref="steamid", uselist=False
-    )
-    flags: Mapped["PlayerFlag"] = relationship("PlayerFlag", backref="steamid")
-    watchlist: Mapped["WatchList"] = relationship(
-        "WatchList", backref="steamid", uselist=False
-    )
-    steaminfo: Mapped["SteamInfo"] = relationship(
-        "SteamInfo", backref="steamid", uselist=False
-    )
-    comments: Mapped[list["PlayerComment"]] = relationship(
-        "PlayerComment", back_populates="player"
-    )
+    blacklist: Mapped["BlacklistedPlayer"] = relationship(back_populates="steamid")
+    flags: Mapped[list["PlayerFlag"]] = relationship(back_populates="steamid")
+    watchlist: Mapped["WatchList"] = relationship(back_populates="steamid")
+    steaminfo: Mapped["SteamInfo"] = relationship(back_populates="steamid")
+    comments: Mapped[list["PlayerComment"]] = relationship(back_populates="player")
     stats: Mapped["PlayerStats"] = relationship(
-        "PlayerStats", back_populates="steam_id_64", uselist=False
+        "PlayerStats", back_populates="steam_id_64"
     )
 
     vips: Mapped[list["PlayerVIP"]] = relationship(
-        "PlayerVIP",
         back_populates="steamid",
-        uselist=True,
         cascade="all, delete-orphan",
         lazy="dynamic",
     )
-    optins: Mapped[list["PlayerOptins"]] = relationship(
-        "PlayerOptins", backref="steamid", uselist=True
-    )
+    optins: Mapped[list["PlayerOptins"]] = relationship(back_populates="steamid")
 
     @property
     def server_number(self) -> int:
@@ -196,6 +178,8 @@ class SteamInfo(Base):
     # TODO: I don't think bans is actually persisted at all
     bans: Mapped[dict[str, Any]] = mapped_column()
 
+    steamid: Mapped[PlayerSteamID] = relationship(back_populates="steaminfo")
+
     def to_dict(self):
         return dict(
             id=self.id,
@@ -219,6 +203,8 @@ class WatchList(Base):
     reason: Mapped[str] = mapped_column(default="")
     by: Mapped[str] = mapped_column()
     count: Mapped[int] = mapped_column(default=0)
+
+    steamid: Mapped[PlayerSteamID] = relationship(back_populates="watchlist")
 
     def to_dict(self) -> WatchListType:
         # TODO: Fix typing
@@ -259,6 +245,8 @@ class PlayerFlag(Base):
     comment: Mapped[str] = mapped_column(String, nullable=True)
     modified: Mapped[datetime] = mapped_column(default=datetime.utcnow)
 
+    steamid: Mapped[PlayerSteamID] = relationship(back_populates="flags")
+
     def to_dict(self) -> PlayerFlagType:
         # TODO: Fix typing
         return dict(
@@ -281,6 +269,8 @@ class PlayerOptins(Base):
     optin_name: Mapped[str] = mapped_column(nullable=False, index=True)
     optin_value: Mapped[str] = mapped_column(nullable=True)
     modified: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+
+    steamid: Mapped[PlayerSteamID] = relationship(back_populates="optins")
 
     def to_dict(self) -> PlayerOptinsType:
         # TODO: Fix typing
@@ -306,6 +296,8 @@ class PlayerName(Base):
     created: Mapped[datetime] = mapped_column(default=datetime.utcnow)
     last_seen: Mapped[datetime] = mapped_column(default=datetime.utcnow)
 
+    steamid: Mapped[PlayerSteamID] = relationship(back_populates="names")
+
     def to_dict(self) -> PlayerNameType:
         # TODO: Fix typing
         return dict(
@@ -330,6 +322,8 @@ class PlayerSession(Base):
     server_number: Mapped[int] = mapped_column()
     server_name: Mapped[str] = mapped_column()
 
+    steamid: Mapped[PlayerSteamID] = relationship(back_populates="sessions")
+
     def to_dict(self) -> PlayerSessionType:
         # TODO: Fix typing
         return dict(
@@ -352,6 +346,8 @@ class BlacklistedPlayer(Base):
     reason: Mapped[str] = mapped_column()
     by: Mapped[str] = mapped_column()
 
+    steamid: Mapped[PlayerSteamID] = relationship(back_populates="blacklist")
+
     def to_dict(self) -> BlackListType:
         # TODO: Fix typing
         return dict(
@@ -373,6 +369,8 @@ class PlayersAction(Base):
     reason: Mapped[str] = mapped_column()
     by: Mapped[str] = mapped_column()
     time: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+
+    steamid: Mapped[PlayerSteamID] = relationship(back_populates="received_actions")
 
     def to_dict(self) -> PlayerActionType:
         # TODO: Fix typing
@@ -478,7 +476,7 @@ class Maps(Base):
     server_number: Mapped[int] = mapped_column(index=True)
     map_name: Mapped[str] = mapped_column(nullable=False, index=True)
 
-    player_stats = relationship("PlayerStats", backref="map", uselist=True)
+    player_stats: Mapped[list['PlayerStats']] = relationship(back_populates="map")
 
     def to_dict(self, with_stats=False) -> MapsType:
         # TODO: Fix typing
@@ -506,7 +504,7 @@ class PlayerStats(Base):
         ForeignKey("steam_id_64.id"), nullable=False, index=True
     )
     steam_id_64: Mapped[PlayerSteamID] = relationship(
-        "PlayerSteamID", foreign_keys=[playersteamid_id], back_populates="stats"
+        foreign_keys=[playersteamid_id], back_populates="stats"
     )
     map_id: Mapped[int] = mapped_column(
         ForeignKey("map_history.id"), nullable=False, index=True
@@ -537,6 +535,8 @@ class PlayerStats(Base):
     death_by: Mapped[dict[str, int]] = mapped_column()
     weapons: Mapped[dict[str, int]] = mapped_column()
     death_by_weapons: Mapped[dict[str, int]] = mapped_column()
+
+    map: Mapped[Maps] = relationship(back_populates="player_stats")
 
     def to_dict(self) -> PlayerStatsType:
         # TODO: Fix typing
@@ -587,9 +587,7 @@ class PlayerComment(Base):
     )
     content: Mapped[str] = mapped_column(nullable=False)
 
-    player: Mapped[PlayerSteamID] = relationship(
-        "PlayerSteamID", back_populates="comments"
-    )
+    player: Mapped[PlayerSteamID] = relationship(back_populates="comments")
 
     def to_dict(self) -> PlayerCommentType:
         # TODO: Fix typing
@@ -694,7 +692,7 @@ class PlayerVIP(Base):
     )
 
     steamid: Mapped[PlayerSteamID] = relationship(
-        "PlayerSteamID", back_populates="vips"
+        back_populates="vips"
     )
 
 
