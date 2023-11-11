@@ -39,38 +39,33 @@ class LogStreamConsumer(AsyncJsonWebsocketConsumer):
     async def receive_json(self, content, **kwargs):
         last_seen: StreamID = content.get("last_seen_id")
         log_stream = LogStream()
-        try:
-            while self.connected:
-                try:
-                    logs = log_stream.logs_since(last_seen=last_seen)
-                    json_logs = []
-                    for id_, log in logs:
-                        json_logs.append({"id": id_, "logs": log})
-                        last_seen = id_
+        while self.connected:
+            try:
+                logs = log_stream.logs_since(last_seen=last_seen)
+                json_logs = []
+                for id_, log in logs:
+                    json_logs.append({"id": id_, "logs": log})
+                    last_seen = id_
 
-                    if json_logs:
-                        response: LogStreamResponse = {
-                            "last_seen_id": last_seen,
-                            "logs": json_logs,
-                            "error": None,
-                        }
-
-                        await self.send_json(response)
-
-                except StreamInvalidID as e:
+                if json_logs:
                     response: LogStreamResponse = {
-                        "error": str(e),
-                        # TODO: should this be None?
-                        "last_seen_id": None,
-                        "logs": [],
+                        "last_seen_id": last_seen,
+                        "logs": json_logs,
+                        "error": None,
                     }
+
                     await self.send_json(response)
-                    raise
-                await asyncio.sleep(0.5)
-        except Exception as e:
-            logger.exception(e)
-            await self.disconnect(1)
-            raise
+
+            except StreamInvalidID as e:
+                response: LogStreamResponse = {
+                    "error": str(e),
+                    # TODO: should this be None?
+                    "last_seen_id": None,
+                    "logs": [],
+                }
+                await self.send_json(response)
+                raise
+            await asyncio.sleep(0.5)
 
     async def send_json(self, content, close=False):
         return await super().send_json(content, close)
