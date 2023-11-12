@@ -376,34 +376,58 @@ pendingTimers = {}
 def notify_false_positives(rcon: Rcon, _, name: str, steam_id_64: str):
     c = get_config()["NOLEADER_AUTO_MOD"]
     if not c["enabled"]:
-        logger.info("no leader auto mod is disabled")
+        logger.debug("no_leader automod is disabled")
         return
 
     if not name.endswith(" "):
         return
 
+    action = c["whitespace_names_action"]
+
     logger.info(
-        "Detected player name with whitespace at the end: Warning them of false-positive events. Player name: "
-        + name
+        f"Player '{name}' has a pseudo ending with whitespace. "
+        f"Action = {action}."
     )
 
     try:
         send_to_discord_audit(
-            f"WARNING Player with bugged profile joined: `{name}` `{steam_id_64}`\n\nThis player if Squad Officer will cause their squad to be punished. They also will show as unassigned in the Game view.\n\nPlease ask them to change their name (last character IG shouldn't be a whitespace)"
+            f"Player with bugged profile joined : `{name}` (`{steam_id_64}`).\n"
+            " If the player take SL role, this will trigger injustified"
+            " punitions on their squad mates.\n"
+            " The player also will be shown as 'unassigned' in Gameview.\n"
+            f" Action = {action}."
         )
     except Exception:
         logger.exception("Unable to send to audit")
 
     def notify_player():
-        try:
-            rcon.do_message_player(
-                steam_id_64=steam_id_64,
-                message=c["whitespace_names_message"],
-                by="CRcon",
-                save_message=False,
-            )
-        except Exception as e:
-            logger.error("Could not message player " + name + "/" + steam_id_64, e)
+        if action == "none":
+            return
+
+        if action == "kick":
+            try:
+                rcon.do_kick(
+                    player=name,
+                    reason=c["whitespace_names_message"],
+                    by="CRCON"
+                )
+            except Exception as e:
+                logger.error(
+                    "Could not kick player " + name + "/" + steam_id_64, e
+                )
+
+        if action == "warn":
+            try:
+                rcon.do_message_player(
+                    steam_id_64=steam_id_64,
+                    message=c["whitespace_names_message"],
+                    by="CRCON",
+                    save_message=False,
+                )
+            except Exception as e:
+                logger.error(
+                    "Could not message player " + name + "/" + steam_id_64, e
+                )
 
     # The player might not yet have finished connecting in order to send messages.
     t = Timer(10, notify_player)
