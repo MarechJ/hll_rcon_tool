@@ -103,7 +103,8 @@ class NoLeaderConfig:
 
     # this value is not used in automod
     # but required to succesfully parse the yml data to a pydanctic.dataclass
-    whitespace_names_message: str = ""
+    whitespace_names_message: str = "Your Steam pseudo ends with a space\n(or it has been truncated by the game server).\n\nIf you play SL, this will trigger injustified punitions on your squad mates.\n\nPlease change your pseudo !"
+    whitespace_names_action: str = "warn"
 
     @validator("immuned_roles")
     def validate_roles(cls, v: List[str]):
