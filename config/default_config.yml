@@ -200,7 +200,9 @@ NOLEADER_AUTO_MOD:
   # Temporary message used as a warning text for player names that will lead to false-positives in auto-moderation,
   # because of a game-server bug.
   # See https://github.com/MarechJ/hll_rcon_tool/issues/117 for more details.
-  whitespace_names_message: Your name contains a whitespace at the end (because it is truncated as it is too long). Because of a bug in the game, you might suffer auto-moderation actions as a false-positive. Please change your name and restart your game to avoid this.
+  whitespace_names_message: "Your Steam pseudo ends with a space\n(or it has been truncated by the game server).\n\nIf you play SL, this will trigger injustified punitions on your squad mates.\n\nPlease change your pseudo !"
+  # Either "none", "kick" or "warn" - Default : "warn"
+  whitespace_names_action: "warn"
 
   # Step number 2
   # Send a direct warning message to the squads that don't have an officer
