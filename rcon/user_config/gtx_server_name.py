@@ -8,15 +8,11 @@ from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
 class GtxServerNameChangeType(TypedDict):
     ip: str
     port: int
-    username: str
-    password: str
 
 
 class GtxServerNameChangeUserConfig(BaseUserConfig):
     ip: str = Field(default="127.0.0.1")
     port: int = Field(default=0)
-    username: Optional[str] = Field(default=None)
-    password: Optional[str] = Field(default=None)
 
     @field_validator("ip")
     @classmethod
@@ -33,8 +29,6 @@ class GtxServerNameChangeUserConfig(BaseUserConfig):
         validated_conf = GtxServerNameChangeUserConfig(
             ip=values.get("ip"),
             port=values.get("port"),
-            username=values.get("username"),
-            password=values.get("password"),
         )
 
         if not dry_run:

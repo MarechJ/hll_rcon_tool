@@ -670,7 +670,6 @@ function App() {
                         />
                       </Grid>
                     </Route>
-
                     <Route path="/settings/expired-vip">
                       <Grid container spacing={2}>
                         <ExpiredVIP
@@ -679,6 +678,17 @@ function App() {
                           setEndpoint="set_expired_vip_config"
                           validateEndpoint="validate_expired_vip_config"
                           describeEndpoint="describe_expired_vip_config"
+                        />
+                      </Grid>
+                    </Route>
+                    <Route path="/settings/gtx-server-name-change">
+                      <Grid container spacing={2}>
+                        <ExpiredVIP
+                          description="GTX Server Name Change"
+                          getEndpoint="get_server_name_change_config"
+                          setEndpoint="set_server_name_change_config"
+                          validateEndpoint="validate_server_name_change_config"
+                          describeEndpoint="describe_server_name_change_config"
                         />
                       </Grid>
                     </Route>

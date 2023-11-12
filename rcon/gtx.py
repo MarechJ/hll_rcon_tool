@@ -49,8 +49,19 @@ class SFTPAdapter:
 
 
 class GTXFtp:
-    def __init__(self, ip, port, username, password) -> None:
+    def __init__(self, ip, port) -> None:
+        username = os.getenv("GTX_SERVER_NAME_CHANGE_USERNAME")
+        password = os.getenv("GTX_SERVER_NAME_CHANGE_PASSWORD")
         logger.info("Connecting to GTX SFTP %s@%s:%s", username, ip, port)
+
+        if not username or not password:
+            logger.error(
+                "Both GTX_SERVER_NAME_CHANGE_USERNAME and GTX_SERVER_NAME_CHANGE_PASSWORD must be set in your .env"
+            )
+            raise ValueError(
+                "Both GTX_SERVER_NAME_CHANGE_USERNAME and GTX_SERVER_NAME_CHANGE_PASSWORD must be set in your .env"
+            )
+
         try:
             self.adapter = SFTPAdapter(ip, port, username, password)
         except:
@@ -65,8 +76,6 @@ class GTXFtp:
         return cls(
             ip=config.ip,
             port=config.port,
-            username=config.username,
-            password=config.password,
         )
 
     def change_server_name(self, new_name):

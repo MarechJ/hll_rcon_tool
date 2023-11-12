@@ -463,6 +463,15 @@ const Header = ({ classes }) => {
                             Expired VIP
                           </MenuItem>
                         </Link>
+                        <Link
+                          color="inherit"
+                          component={RouterLink}
+                          to="/settings/gtx-server-name-change"
+                        >
+                          <MenuItem onClick={() => setAnchorElSettings(null)}>
+                            GTX Server Name Change
+                          </MenuItem>
+                        </Link>
                       </Menu>
                       <Link
                         variant="button"
