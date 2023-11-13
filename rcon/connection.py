@@ -20,7 +20,7 @@ class HLLConnection:
     - coded for clarity, not efficiency
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.xorkey = None
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.settimeout(TIMEOUT_SEC)
@@ -34,25 +34,21 @@ class HLLConnection:
         if result != b"SUCCESS":
             raise HLLAuthError("Invalid password")
 
-    def close(self):
+    def close(self) -> None:
         try:
             self.sock.shutdown(socket.SHUT_RDWR)
         except OSError:
             logger.debug("Unable to send socket shutdown")
         self.sock.close()
 
-    def send(self, msg, timed=False):
+    def send(self, msg) -> int:
         xored = self._xor(msg)
-        before = time.time()
         sent = self.sock.send(xored)
-        after = time.time()
         if sent != len(msg):
             raise RuntimeError("socket connection broken")
-        if timed:
-            return before, after, sent
         return sent
 
-    def _xor(self, msg):
+    def _xor(self, msg) -> bytes:
         n = []
         if not self.xorkey:
             raise RuntimeError("The game server did not return a key")
@@ -61,10 +57,8 @@ class HLLConnection:
 
         return array.array("B", n).tobytes()
 
-    def receive(self, msglen=MSGLEN, timed=False):
-        before = time.time()
+    def receive(self, msglen=MSGLEN) -> bytes:
         buff = self.sock.recv(msglen)
-
         msg = self._xor(buff)
 
         while len(buff) >= msglen:
@@ -73,8 +67,5 @@ class HLLConnection:
             except socket.timeout:
                 break
             msg += self._xor(buff)
-        after = time.time()
 
-        if timed:
-            return before, after, msg
         return msg

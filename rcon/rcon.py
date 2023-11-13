@@ -1,13 +1,13 @@
 import logging
 import os
 import re
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor, as_completed, Future
 from datetime import datetime, timedelta
 from functools import cached_property
 from time import sleep
-from typing import Iterable
+from typing import Iterable, Literal, Any
 
-from dateutil import parser, relativedelta
+from dateutil import parser
 
 from rcon.cache_utils import get_redis_client, invalidates, ttl_cache
 from rcon.commands import CommandFailedError, ServerCtl, VipId
@@ -32,9 +32,19 @@ from rcon.types import (
     GetPlayersType,
     ParsedLogsType,
     StructuredLogLineType,
+    PlayerIdsType,
     StructuredLogLineWithMetaData,
+    AdminType,
+    GameServerBanType,
+    VipIdType,
+    StatusType,
 )
-from rcon.utils import ALL_ROLES, ALL_ROLES_KEY_INDEX_MAP, get_server_number, INDEFINITE_VIP_DATE
+from rcon.utils import (
+    ALL_ROLES,
+    ALL_ROLES_KEY_INDEX_MAP,
+    get_server_number,
+    INDEFINITE_VIP_DATE,
+)
 
 STEAMID = "steam_id_64"
 NAME = "name"
@@ -189,10 +199,10 @@ class Rcon(ServerCtl):
         fail_count = 0
         players_by_id: dict[str, GetDetailedPlayer] = {}
 
-        futures = {
+        futures: dict[Future[Any], GetDetailedPlayer] = {
             self.run_in_pool("get_detailed_player_info", player[NAME]): player
             for _, player in enumerate(players)
-        }
+        }  # type: ignore
 
         for future in as_completed(futures):
             try:
@@ -303,24 +313,21 @@ class Rcon(ServerCtl):
         raw = super().get_logs(since_min_ago)
         return self.parse_logs(raw, filter_action, filter_player)
 
-    def get_admin_groups(self):
+    def get_admin_groups(self) -> list[str]:
         # Defined here to avoid circular imports with commands.py
         return super().get_admin_groups()
 
-    def get_logs(self, *args, **kwargs):
+    def get_logs(self, *args, **kwargs) -> str:
         # Defined here to avoid circular imports with commands.py
         return super().get_logs(*args, **kwargs)
 
-    def get_timed_logs(self, *args, **kwargs):
-        # Defined here to avoid circular imports with commands.py
-        return super().get_timed_logs(*args, **kwargs)
-
-    def get_playerids(self, as_dict=False):
+    def get_playerids(self, as_dict=False) -> PlayerIdsType | list[tuple[str, str]]:
         raw_list = super().get_playerids()
 
-        player_list = []
-        player_dict = {}
+        player_list: list[tuple[str, str]] = []
+        player_dict: PlayerIdsType = {}  # type: ignore
         for playerinfo in raw_list:
+            # playerinfo='some_dude : 76561199400000000
             name, steamid = playerinfo.rsplit(":", 1)
             name = name[:-1]
             steamid = steamid[1:]
@@ -329,7 +336,7 @@ class Rcon(ServerCtl):
 
         return player_dict if as_dict else player_list
 
-    def get_vips_count(self):
+    def get_vips_count(self) -> int:
         players = self.get_playerids()
 
         vips = {v["steam_id_64"] for v in self.get_vip_ids()}
@@ -340,7 +347,9 @@ class Rcon(ServerCtl):
 
         return vip_count
 
-    def _guess_squad_type(self, squad):
+    def _guess_squad_type(
+        self, squad
+    ) -> Literal["armor", "recon", "commander", "infantry"]:
         for player in squad.get("players", []):
             if player.get("role") in ["tankcommander", "crewman"]:
                 return "armor"
@@ -351,7 +360,7 @@ class Rcon(ServerCtl):
 
         return "infantry"
 
-    def _has_leader(self, squad):
+    def _has_leader(self, squad) -> bool:
         for players in squad.get("players", []):
             if players.get("role") in ["tankcommander", "officer", "spotter"]:
                 return True
@@ -366,7 +375,8 @@ class Rcon(ServerCtl):
             except (CommandFailedError, Exception):
                 sleep(2)
                 name = player
-                steam_id_64 = self.get_playerids(as_dict=True).get(name)
+                steam_id_lookup: PlayerIdsType = self.get_playerids(as_dict=True)  # type: ignore
+                steam_id_64 = steam_id_lookup.get(name)
             if not steam_id_64:
                 return {}
 
@@ -396,21 +406,24 @@ class Rcon(ServerCtl):
         }
 
     def _get_default_info_dict(self, player) -> GetDetailedPlayer:
-        return dict(
-            name=player,
-            unit_id=None,
-            unit_name=None,
-            loadout=None,
-            team=None,
-            role=None,
-            kills=0,
-            deaths=0,
-            combat=0,
-            offense=0,
-            defense=0,
-            support=0,
-            level=0,
-        )
+        return {
+            "name": player,
+            "steam_id_64": "",
+            "profile": None,
+            "is_vip": False,
+            "unit_id": None,
+            "unit_name": None,
+            "loadout": None,
+            "team": None,
+            "role": None,
+            "kills": 0,
+            "deaths": 0,
+            "combat": 0,
+            "offense": 0,
+            "defense": 0,
+            "support": 0,
+            "level": 0,
+        }
 
     @ttl_cache(ttl=2, cache_falsy=False)
     def get_detailed_player_info(self, player) -> GetDetailedPlayer:
@@ -446,18 +459,18 @@ class Rcon(ServerCtl):
 
         logger.debug(raw_data)
         # Remap keys and parse values
-        data[STEAMID] = raw_data.get("steamid64")
+        data[STEAMID] = raw_data.get("steamid64")  # type: ignore
         data["team"] = raw_data.get("team", "None")
         if raw_data["role"].lower() == "armycommander":
             data["unit_id"], data["unit_name"] = (-1, "Commmand")
         else:
             data["unit_id"], data["unit_name"] = (
-                raw_data.get("unit").split(" - ")
+                raw_data.get("unit").split(" - ")  # type: ignore
                 if raw_data.get("unit")
                 else ("None", None)
             )
-        data["kills"], data["deaths"] = (
-            raw_data.get("kills").split(" - Deaths: ")
+        data["kills"], data["deaths"] = (  # type: ignore
+            raw_data.get("kills").split(" - Deaths: ")  # type: ignore
             if raw_data.get("kills")
             else ("0", "0")
         )
@@ -498,18 +511,18 @@ class Rcon(ServerCtl):
         return data
 
     @ttl_cache(ttl=60 * 10)
-    def get_admin_ids(self):
+    def get_admin_ids(self) -> list[AdminType]:
         res = super().get_admin_ids()
-        admins = []
+        admins: list[AdminType] = []
         for item in res:
             steam_id_64, role, name = item.split(" ", 2)
             admins.append({STEAMID: steam_id_64, NAME: name[1:-1], ROLE: role})
         return admins
 
-    def get_online_console_admins(self):
+    def get_online_console_admins(self) -> list[str]:
         admins = self.get_admin_ids()
         players = self.get_players()
-        online = []
+        online: list[str] = []
         admins_ids = set(a["steam_id_64"] for a in admins)
 
         for player in players:
@@ -518,25 +531,25 @@ class Rcon(ServerCtl):
 
         return online
 
-    def do_add_admin(self, steam_id_64, role, name):
+    def do_add_admin(self, steam_id_64, role, name) -> str:
         with invalidates(Rcon.get_admin_ids):
             return super().do_add_admin(steam_id_64, role, name)
 
-    def do_remove_admin(self, steam_id_64):
+    def do_remove_admin(self, steam_id_64) -> str:
         with invalidates(Rcon.get_admin_ids):
             return super().do_remove_admin(steam_id_64)
 
     @ttl_cache(ttl=60)
-    def get_perma_bans(self):
+    def get_perma_bans(self) -> list[str]:
         return super().get_perma_bans()
 
     @ttl_cache(ttl=60)
-    def get_temp_bans(self):
+    def get_temp_bans(self) -> list[str]:
         res = super().get_temp_bans()
         logger.debug(res)
         return res
 
-    def _struct_ban(self, ban, type_):
+    def _struct_ban(self, ban, type_) -> GameServerBanType:
         # Avoid errors on empty temp bans
         if ban == "":
             return {
@@ -583,7 +596,7 @@ class Rcon(ServerCtl):
             "raw": ban,
         }
 
-    def get_bans(self):
+    def get_bans(self) -> list[GameServerBanType]:
         try:
             temp_bans = []
             for b in self.get_temp_bans():
@@ -630,7 +643,7 @@ class Rcon(ServerCtl):
 
         return failed_ban_removals
 
-    def get_ban(self, steam_id_64):
+    def get_ban(self, steam_id_64) -> list[GameServerBanType]:
         """
         get all bans from steam_id_64
         @param steam_id_64: steam_id_64 of a user
@@ -640,7 +653,7 @@ class Rcon(ServerCtl):
         return list(filter(lambda x: x.get("steam_id_64") == steam_id_64, bans))
 
     @ttl_cache(ttl=60 * 5)
-    def get_vip_ids(self) -> list[dict[str, str | datetime | None]]:
+    def get_vip_ids(self) -> list[VipIdType]:
         res: list[VipId] = super().get_vip_ids()
         player_dicts = []
 
@@ -658,13 +671,17 @@ class Rcon(ServerCtl):
             }
 
         for item in res:
-            player = dict(zip((STEAMID, NAME), (item["steam_id_64"], item["name"])))
+            player: VipIdType = {
+                STEAMID: item["steam_id_64"],
+                NAME: item["name"],
+                "vip_expiration": None,
+            }
             player["vip_expiration"] = vip_expirations.get(item["steam_id_64"], None)
             player_dicts.append(player)
 
         return sorted(player_dicts, key=lambda d: d[NAME])
 
-    def do_remove_vip(self, steam_id_64):
+    def do_remove_vip(self, steam_id_64) -> str:
         """Removes VIP status on the game server and removes their PlayerVIP record."""
 
         # Remove VIP before anything else in case we have errors
@@ -673,7 +690,7 @@ class Rcon(ServerCtl):
 
         server_number = get_server_number()
         with enter_session() as session:
-            player: PlayerSteamID = (
+            player: PlayerSteamID | None = (
                 session.query(PlayerSteamID)
                 .filter(PlayerSteamID.steam_id_64 == steam_id_64)
                 .one_or_none()
@@ -684,7 +701,7 @@ class Rcon(ServerCtl):
                 )
                 # TODO: This is an incredibly dumb fix because I can't get
                 # the changes to persist otherwise
-                vip_record: PlayerVIP = (
+                vip_record: PlayerVIP | None = (
                     session.query(PlayerVIP)
                     .filter(
                         PlayerVIP.playersteamid_id == player.id,
@@ -702,7 +719,7 @@ class Rcon(ServerCtl):
 
         return result
 
-    def do_add_vip(self, name, steam_id_64, expiration: str = ""):
+    def do_add_vip(self, name, steam_id_64, expiration: str = "") -> str:
         """Adds VIP status on the game server and adds or updates their PlayerVIP record."""
         with invalidates(Rcon.get_vip_ids):
             # Add VIP before anything else in case we have errors
@@ -725,7 +742,7 @@ class Rcon(ServerCtl):
 
         # Find a player and update their expiration date if it exists or create a new record if not
         with enter_session() as session:
-            player: PlayerSteamID = (
+            player: PlayerSteamID | None = (
                 session.query(PlayerSteamID)
                 .filter(PlayerSteamID.steam_id_64 == steam_id_64)
                 .one_or_none()
@@ -736,7 +753,7 @@ class Rcon(ServerCtl):
             # The service that prunes expired VIPs checks for VIPs without a PlayerVIP record
             # and creates them there as indefinite VIPs
             if player:
-                vip_record: PlayerVIP = (
+                vip_record: PlayerVIP | None = (
                     session.query(PlayerVIP)
                     .filter(
                         PlayerVIP.server_number == server_number,
@@ -770,13 +787,17 @@ class Rcon(ServerCtl):
                     session.delete(vip_record)
                     session.commit()
                     session.add(new_vip_record)
+                    if player.vip:
+                        expiration_date = player.vip.expiration
+                    else:
+                        expiration_date = new_vip_record.expiration
                     logger.info(
-                        f"Modified PlayerVIP record {player.steam_id_64=} {player.vip.expiration=} {previous_expiration=}"
+                        f"Modified PlayerVIP record {player.steam_id_64=} {expiration} {previous_expiration=}"
                     )
 
         return result
 
-    def do_remove_all_vips(self):
+    def do_remove_all_vips(self) -> Literal["SUCCESS"]:
         vips = self.get_vip_ids()
         for vip in vips:
             try:
@@ -793,7 +814,7 @@ class Rcon(ServerCtl):
         message: str = "",
         by: str = "",
         save_message: bool = False,
-    ):
+    ) -> str:
         res = super().do_message_player(player, steam_id_64, message)
         if save_message:
             safe_save_player_action(
@@ -828,15 +849,37 @@ class Rcon(ServerCtl):
                 raw_next_map,
             ) = super().get_gamestate()
 
-        num_allied_players, num_axis_players = re.match(
-            r"Players: Allied: (\d+) - Axis: (\d+)", raw_team_size
-        ).groups()
-        allied_score, axis_score = re.match(
-            r"Score: Allied: (\d+) - Axis: (\d+)", raw_score
-        ).groups()
-        hours, mins, secs = re.match(
+        num_allied_players: int = None  # type: ignore
+        num_axis_players: int = None  # type: ignore
+        allied_score: int = None  # type: ignore
+        axis_score: int = None  # type: ignore
+        hours: int = None  # type: ignore
+        mins: int = None  # type: ignore
+        secs: int = None  # type: ignore
+
+        if match := re.match(r"Players: Allied: (\d+) - Axis: (\d+)", raw_team_size):
+            num_allied_players, num_axis_players = match.groups()  # type: ignore
+
+        if match := re.match(r"Score: Allied: (\d+) - Axis: (\d+)", raw_score):
+            allied_score, axis_score = match.groups()  # type: ignore
+
+        if match := re.match(
             r"Remaining Time: (\d):(\d{2}):(\d{2})", raw_time_remaining
-        ).groups()
+        ):
+            hours, mins, secs = match.groups()  # type: ignore
+
+        if not all(
+            [
+                num_allied_players,
+                num_axis_players,
+                allied_score,
+                axis_score,
+                hours,
+                mins,
+                secs,
+            ]
+        ):
+            raise ValueError("Game server returned junk for get_gamestate")
 
         raw_time_remaining = raw_time_remaining.split("Remaining Time: ")[1]
         current_map = raw_current_map.split(": ")[1]
@@ -877,12 +920,12 @@ class Rcon(ServerCtl):
         return result["time_remaining"]
 
     @ttl_cache(ttl=60)
-    def get_next_map(self):
+    def get_next_map(self) -> str:
         """Return the next map in the rotation as determined by the gameserver through the gamestate command"""
         gamestate = self.get_gamestate()
         return gamestate["next_map"]
 
-    def set_map(self, map_name):
+    def set_map(self, map_name) -> None:
         with invalidates(Rcon.get_map):
             try:
                 res = super().set_map(map_name)
@@ -897,7 +940,7 @@ class Rcon(ServerCtl):
                     raise CommandFailedError(res)
 
     @ttl_cache(ttl=10)
-    def get_map(self):
+    def get_map(self) -> str:
         # TODO: think about whether or not the new gamestate command can simplify this
         current_map = super().get_map()
         if not self.map_regexp.match(current_map):
@@ -906,75 +949,75 @@ class Rcon(ServerCtl):
         return current_map
 
     @ttl_cache(ttl=60 * 5)
-    def get_current_map_sequence(self):
+    def get_current_map_sequence(self) -> list[str]:
         return super().get_current_map_sequence()
 
     @ttl_cache(ttl=60 * 10)
-    def get_map_shuffle_enabled(self):
+    def get_map_shuffle_enabled(self) -> bool:
         return super().get_map_shuffle_enabled()
 
-    def set_map_shuffle_enabled(self, enabled: bool):
+    def set_map_shuffle_enabled(self, enabled: bool) -> None:
         with invalidates(Rcon.get_current_map_sequence, Rcon.get_map_shuffle_enabled):
             return super().set_map_shuffle_enabled(enabled)
 
     @ttl_cache(ttl=60 * 30)
-    def get_name(self):
+    def get_name(self) -> str:
         name = super().get_name()
         if len(name) > self.MAX_SERV_NAME_LEN:
             raise CommandFailedError("Server returned wrong data")
         return name
 
     @ttl_cache(ttl=60 * 10)
-    def get_team_switch_cooldown(self):
+    def get_team_switch_cooldown(self) -> int:
         return int(super().get_team_switch_cooldown())
 
-    def set_team_switch_cooldown(self, minutes):
+    def set_team_switch_cooldown(self, minutes) -> str:
         with invalidates(Rcon.get_team_switch_cooldown):
             return super().set_team_switch_cooldown(minutes)
 
     @ttl_cache(ttl=60 * 10)
-    def get_autobalance_threshold(self):
+    def get_autobalance_threshold(self) -> int:
         return int(super().get_autobalance_threshold())
 
-    def set_autobalance_threshold(self, max_diff):
+    def set_autobalance_threshold(self, max_diff) -> str:
         with invalidates(Rcon.get_autobalance_threshold):
             return super().set_autobalance_threshold(max_diff)
 
     @ttl_cache(ttl=60 * 10)
-    def get_idle_autokick_time(self):
+    def get_idle_autokick_time(self) -> int:
         return int(super().get_idle_autokick_time())
 
-    def set_idle_autokick_time(self, minutes):
+    def set_idle_autokick_time(self, minutes) -> str:
         with invalidates(Rcon.get_idle_autokick_time):
             return super().set_idle_autokick_time(minutes)
 
     @ttl_cache(ttl=60 * 10)
-    def get_max_ping_autokick(self):
+    def get_max_ping_autokick(self) -> int:
         return int(super().get_max_ping_autokick())
 
-    def set_max_ping_autokick(self, max_ms):
+    def set_max_ping_autokick(self, max_ms) -> str:
         with invalidates(Rcon.get_max_ping_autokick):
             return super().set_max_ping_autokick(max_ms)
 
     @ttl_cache(ttl=60 * 10)
-    def get_queue_length(self):
+    def get_queue_length(self) -> int:
         return int(super().get_queue_length())
 
-    def set_queue_length(self, num):
+    def set_queue_length(self, num) -> str:
         with invalidates(Rcon.get_queue_length):
             return super().set_queue_length(num)
 
     @ttl_cache(ttl=60 * 10)
-    def get_vip_slots_num(self):
+    def get_vip_slots_num(self) -> str:
         return super().get_vip_slots_num()
 
-    def set_vip_slots_num(self, num):
+    def set_vip_slots_num(self, num) -> str:
         with invalidates(Rcon.get_vip_slots_num):
             return super().set_vip_slots_num(num)
 
     def get_welcome_message(self):
         red = get_redis_client()
-        msg = red.get("WELCOME_MESSAGE")
+        msg: bytes = red.get("WELCOME_MESSAGE")  # type: ignore
         if msg:
             return msg.decode()
         return msg
@@ -982,14 +1025,14 @@ class Rcon(ServerCtl):
     def set_welcome_message(self, msg, save=True):
         from rcon.broadcast import format_message
 
-        prev = None
+        prev: bytes | None = None
 
         try:
             red = get_redis_client()
             if save:
-                prev = red.getset("WELCOME_MESSAGE", msg)
+                prev = red.set("WELCOME_MESSAGE", msg, get=True)  # type: ignore
             else:
-                prev = red.get("WELCOME_MESSAGE")
+                prev = red.get("WELCOME_MESSAGE")  # type:ignore
             red.expire("WELCOME_MESSAGE", 60 * 60 * 24 * 7)
         except Exception:
             logger.exception("Can't save message in redis: %s", msg)
@@ -1003,24 +1046,24 @@ class Rcon(ServerCtl):
         super().set_welcome_message(formatted)
         return prev.decode() if prev else ""
 
-    def get_broadcast_message(self):
+    def get_broadcast_message(self) -> str | bytes:
         red = get_redis_client()
-        msg = red.get("BROADCAST_MESSAGE")
+        msg: bytes = red.get("BROADCAST_MESSAGE")  # type: ignore
         if isinstance(msg, (str, bytes)):
             return msg.decode()
         return msg
 
-    def set_broadcast(self, msg, save=True):
+    def set_broadcast(self, msg, save=True) -> str:
         from rcon.broadcast import format_message
 
-        prev = None
+        prev: bytes | None = None
 
         try:
             red = get_redis_client()
             if save:
-                prev = red.getset("BROADCAST_MESSAGE", msg)
+                prev = red.set("BROADCAST_MESSAGE", msg, get=True)  # type: ignore
             else:
-                prev = red.get("BROADCAST_MESSAGE")
+                prev = red.get("BROADCAST_MESSAGE")  # type: ignore
             red.expire("BROADCAST_MESSAGE", 60 * 30)
         except Exception:
             logger.exception("Can't save message in redis: %s", msg)
@@ -1035,14 +1078,14 @@ class Rcon(ServerCtl):
         return prev.decode() if prev else ""
 
     @ttl_cache(ttl=5)
-    def get_slots(self):
+    def get_slots(self) -> str:
         res = super().get_slots()
         if not self.slots_regexp.match(res):
             raise CommandFailedError("Server returned crap")
         return res
 
     @ttl_cache(ttl=5, cache_falsy=False)
-    def get_status(self):
+    def get_status(self) -> StatusType:
         slots = self.get_slots()
         return {
             "name": self.get_name(),
@@ -1054,9 +1097,10 @@ class Rcon(ServerCtl):
         }
 
     @ttl_cache(ttl=60 * 60 * 24)
-    def get_maps(self):
+    def get_maps(self) -> list[str]:
         return super().get_maps()
 
+    # TODO: fix typing
     def get_server_settings(self):
         settings = {}
         for name, type_ in self.settings:
@@ -1073,21 +1117,6 @@ class Rcon(ServerCtl):
 
         return getattr(self, f"set_{name}")(value)
 
-    def _convert_relative_time(self, from_, time_str):
-        time, unit = time_str.split(" ")
-        if unit == "ms":
-            return from_ - timedelta(milliseconds=int(time))
-        if unit == "sec":
-            return from_ - timedelta(seconds=float(time))
-        if unit == "min":
-            minutes, seconds = time.split(":")
-            return from_ - timedelta(minutes=float(minutes), seconds=float(seconds))
-        if unit == "hours":
-            hours, minutes, seconds = time.split(":")
-            return from_ - timedelta(
-                hours=int(hours), minutes=int(minutes), seconds=int(seconds)
-            )
-
     @staticmethod
     def _extract_time(raw_timestamp: str) -> datetime:
         """Parse a unix timestamp to a UTC Python datetime"""
@@ -1097,47 +1126,46 @@ class Rcon(ServerCtl):
             raise ValueError(f"Time {raw_timestamp} is not a valid integer") from e
 
     @ttl_cache(ttl=60 * 10)
-    def get_profanities(self):
+    def get_profanities(self) -> list[str]:
         return super().get_profanities()
 
     @ttl_cache(ttl=60 * 10)
-    def get_autobalance_enabled(self):
+    def get_autobalance_enabled(self) -> bool:
         return super().get_autobalance_enabled() == "on"
 
     @ttl_cache(ttl=60 * 10)
-    def get_votekick_enabled(self):
+    def get_votekick_enabled(self) -> bool:
         return super().get_votekick_enabled() == "on"
 
     @ttl_cache(ttl=60 * 10)
-    def get_votekick_threshold(self):
+    def get_votekick_threshold(self) -> str:
         res = super().get_votekick_threshold()
         if isinstance(res, str):
             return res.strip()
         return res
 
-    def set_autobalance_enabled(self, bool_):
+    def set_autobalance_enabled(self, bool_) -> str:
         with invalidates(self.get_autobalance_enabled):
             return super().set_autobalance_enabled("on" if bool_ else "off")
 
-    def set_votekick_enabled(self, bool_):
+    def set_votekick_enabled(self, bool_) -> str:
         with invalidates(self.get_votekick_enabled):
             return super().set_votekick_enabled("on" if bool_ else "off")
 
-    def set_votekick_threshold(self, threshold_pairs):
-        # Todo use proper data structure
+    def set_votekick_threshold(self, threshold_pairs) -> None:
+        # TODO: use proper data structure
         with invalidates(self.get_votekick_threshold):
             res = super().set_votekick_threshold(threshold_pairs)
-            print(f"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! {res}")
             logger.info("Threshold res %s", res)
             if res.lower().startswith("error"):
                 logger.error("Unable to set votekick threshold: %s", res)
                 raise CommandFailedError(res)
 
-    def do_reset_votekick_threshold(self):
+    def do_reset_votekick_threshold(self) -> str:
         with invalidates(self.get_votekick_threshold):
             return super().do_reset_votekick_threshold()
 
-    def set_profanities(self, profanities):
+    def set_profanities(self, profanities: list[str]) -> list[str]:
         current = self.get_profanities()
         with invalidates(self.get_profanities):
             removed = set(current) - set(profanities)
@@ -1149,32 +1177,32 @@ class Rcon(ServerCtl):
 
         return profanities
 
-    def do_unban_profanities(self, profanities):
+    def do_unban_profanities(self, profanities) -> str:
         if not isinstance(profanities, list):
             profanities = [profanities]
         with invalidates(self.get_profanities):
             return super().do_unban_profanities(",".join(profanities))
 
-    def do_ban_profanities(self, profanities):
+    def do_ban_profanities(self, profanities) -> str:
         if not isinstance(profanities, list):
             profanities = [profanities]
         with invalidates(self.get_profanities):
             return super().do_ban_profanities(",".join(profanities))
 
-    def do_punish(self, player, reason, by):
+    def do_punish(self, player, reason, by) -> str:
         res = super().do_punish(player, reason)
         safe_save_player_action(
             rcon=self, player_name=player, action_type="PUNISH", reason=reason, by=by
         )
         return res
 
-    def do_switch_player_now(self, player, by):
+    def do_switch_player_now(self, player, by) -> str:
         return super().do_switch_player_now(player)
 
-    def do_switch_player_on_death(self, player, by):
+    def do_switch_player_on_death(self, player, by) -> str:
         return super().do_switch_player_on_death(player)
 
-    def do_kick(self, player, reason, by):
+    def do_kick(self, player, reason, by) -> str:
         with invalidates(Rcon.get_players):
             res = super().do_kick(player, reason)
         safe_save_player_action(
@@ -1184,7 +1212,7 @@ class Rcon(ServerCtl):
 
     def do_temp_ban(
         self, player=None, steam_id_64=None, duration_hours=2, reason="", by=""
-    ):
+    ) -> str:
         with invalidates(Rcon.get_players, Rcon.get_temp_bans):
             if player and re.match(r"\d+", player):
                 info = self.get_player_info(player)
@@ -1204,15 +1232,15 @@ class Rcon(ServerCtl):
             )
             return res
 
-    def do_remove_temp_ban(self, ban_log):
+    def do_remove_temp_ban(self, ban_log) -> str:
         with invalidates(Rcon.get_temp_bans):
             return super().do_remove_temp_ban(ban_log)
 
-    def do_remove_perma_ban(self, ban_log):
+    def do_remove_perma_ban(self, ban_log) -> str:
         with invalidates(Rcon.get_perma_bans):
             return super().do_remove_perma_ban(ban_log)
 
-    def do_perma_ban(self, player=None, steam_id_64=None, reason="", by=""):
+    def do_perma_ban(self, player=None, steam_id_64=None, reason="", by="") -> str:
         with invalidates(Rcon.get_players, Rcon.get_perma_bans):
             if player and re.match(r"\d+", player):
                 info = self.get_player_info(player)
@@ -1240,7 +1268,7 @@ class Rcon(ServerCtl):
             return res
 
     @ttl_cache(60 * 5)
-    def get_map_rotation(self):
+    def get_map_rotation(self) -> list[str]:
         l = super().get_map_rotation()
 
         for map_ in l:
@@ -1249,8 +1277,11 @@ class Rcon(ServerCtl):
         return l
 
     def do_add_map_to_rotation(
-        self, map_name, after_map_name: str = None, after_map_name_number: int = None
-    ):
+        self,
+        map_name,
+        after_map_name: str | None = None,
+        after_map_name_number: int | None = None,
+    ) -> None:
         with invalidates(Rcon.get_map_rotation):
             if after_map_name is None:
                 current = self.get_map_rotation()
@@ -1261,17 +1292,17 @@ class Rcon(ServerCtl):
                 map_name, after_map_name, after_map_name_number
             )
 
-    def do_remove_map_from_rotation(self, map_name, map_number: int = None):
+    def do_remove_map_from_rotation(self, map_name, map_number: int | None = None):
         with invalidates(Rcon.get_map_rotation):
             super().do_remove_map_from_rotation(map_name, map_number)
 
-    def do_remove_maps_from_rotation(self, maps):
+    def do_remove_maps_from_rotation(self, maps) -> Literal["SUCCESS"]:
         with invalidates(Rcon.get_map_rotation):
             for map_name in maps:
                 super().do_remove_map_from_rotation(map_name)
             return "SUCCESS"
 
-    def do_add_maps_to_rotation(self, maps):
+    def do_add_maps_to_rotation(self, maps) -> Literal["SUCCESS"]:
         with invalidates(Rcon.get_map_rotation):
             existing = self.get_map_rotation()
             last = existing[len(existing) - 1]
@@ -1282,7 +1313,7 @@ class Rcon(ServerCtl):
                 map_numbers[last] = map_numbers.get(last, 0) + 1
             return "SUCCESS"
 
-    def set_maprotation(self, rotation):
+    def set_maprotation(self, rotation) -> list[str]:
         if not rotation:
             raise CommandFailedError("Empty rotation")
 
@@ -1388,7 +1419,7 @@ class Rcon(ServerCtl):
             content = f"{_action}: [{player}] {sub_content}"
             if content[-1] != "]":
                 content += "]"
-                sub_content += "]"
+                sub_content = sub_content + "]" if sub_content else ""
         elif raw_line.startswith("VOTE"):
             action = "VOTE"
 
