@@ -6,7 +6,6 @@ sqlalchemy==2.0.23
 simplejson==3.19.2
 psycopg2-binary
 sentry-sdk==0.17.1
-redistimeseries==0.8.0
 python-dateutil==2.8.2
 git+https://github.com/MarechJ/python-discord-webhook.git@36b420749258fc03c8f8163cc105997e0baba8f3
 requests==2.31.0
