@@ -15,7 +15,7 @@ steam==1.4.4
 alembic==1.12.1
 # rq-scheduler doesn't work with rq > 1.13.0 right now because of a deprecated `ColorizingStreamHandler` import
 rq==1.13.0
-rq-scheduler==0.13.0
+rq-scheduler==0.13.1
 paramiko==3.3.1
 ftpretty==0.4.0
 pytz>=2023.3
