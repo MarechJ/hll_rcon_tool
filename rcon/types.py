@@ -64,6 +64,42 @@ ROLES_TO_LABELS = {
 }
 
 
+class PlayerIdsType(TypedDict):
+    name: str
+
+
+class AdminType(TypedDict):
+    steam_id_64: str
+    name: str
+    role: str
+
+
+class StatusType(TypedDict):
+    name: str
+    map: str
+    nb_players: str
+    short_name: str
+    player_count: str
+    server_number: int
+
+
+class VipIdType(TypedDict):
+    steam_id_64: str
+    name: str
+    vip_expiration: datetime.datetime | None
+
+
+class GameServerBanType(TypedDict):
+    type: str
+    name: str | None
+    steam_id_64: str | None
+    timestamp: datetime.datetime | None
+    ban_time: str | None
+    reason: str | None
+    by: str | None
+    raw: str
+
+
 class SteamBansType(TypedDict):
     CommunityBanned: bool
     VACBanned: bool
@@ -287,6 +323,9 @@ class GetPlayersType(TypedDict):
 
 class GetDetailedPlayer(TypedDict):
     name: str
+    steam_id_64: str
+    profile: PlayerProfileType | None
+    is_vip: bool
     unit_id: Optional[int]
     unit_name: Optional[str]
     loadout: Optional[str]
@@ -308,7 +347,7 @@ class GetDetailedPlayers(TypedDict):
 
 class EnrichedGetPlayersType(GetPlayersType):
     is_vip: bool
-    profile: PlayerProfileType
+    profile: PlayerProfileType | None
 
 
 class StructuredLogLineType(TypedDict):
@@ -351,6 +390,7 @@ class GameState(TypedDict):
     num_axis_players: int
     allied_score: int
     axis_score: int
+    raw_time_remaining: str
     time_remaining: datetime.timedelta
     current_map: str
     next_map: str
