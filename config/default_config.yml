@@ -717,3 +717,9 @@ LOG_LINE_WEBHOOKS:
   VOTE:
   VOTE STARTED:
   VOTE COMPLETED:
+
+# These messages will be sent to the player who type the trigger word in chat
+# You can add as many as you want, use "\n" to force a line-return
+TRIGGER_WORDS:
+  "!rules": "Our server rules:\n- no TK\n- no cheating\n\nType '@admin' in chat if you need assistance"
+  "!discord": "You can join the clan on this discord server : https://yourdiscorddomain"
