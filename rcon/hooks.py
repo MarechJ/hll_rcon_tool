@@ -57,6 +57,16 @@ def count_vote(rcon: Rcon, struct_log: StructuredLogLineType):
             message=f"INVALID VOTE\n\nUse: !votemap {match.group()}",
         )
 
+@on_chat
+def send_info(rcon: Rcon, struct_log: StructuredLogLineType):
+    message = struct_log.get("sub_content", "").strip()
+    trigger_words = get_config()["TRIGGER_WORDS"]
+    for word, output in trigger_words.items():
+        if message.startswith(word):
+            rcon.do_message_player(
+                steam_id_64=struct_log["steam_id_64_1"], message=output
+            )
+
 
 def initialise_vote_map(rcon: Rcon, struct_log):
     logger.info("New match started initializing vote map. %s", struct_log)
