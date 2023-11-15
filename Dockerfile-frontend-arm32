@@ -17,16 +17,17 @@ COPY rcongui/ .
 
 COPY .git/ .git/
 RUN git describe --tags > /code/tag_version
+RUN npx browserslist@latest --update-db
 # Normal build
 RUN npm run build
 
-RUN mv /code/dist /www/
+RUN mv /code/dist /www
 # Public build
 ENV REACT_APP_PUBLIC_BUILD true
 RUN npm run build
-RUN mv /code/dist /www_public/
+RUN mv /code/dist /www_public
 
-FROM arm32v7/nginx:mainlaine-alpine
+FROM arm32v7/nginx:mainline-alpine
 
 RUN apk add openssl
 COPY rcongui/nginx.conf /etc/nginx/conf.d/default.conf
