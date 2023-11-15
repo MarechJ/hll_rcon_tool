@@ -2,7 +2,7 @@ import logging
 from typing import Any, Iterable, Self
 
 import pydantic
-from sqlalchemy.exc import InvalidRequestError
+from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 
 from rcon.cache_utils import invalidates, ttl_cache
 from rcon.models import UserConfig, enter_session
@@ -108,7 +108,13 @@ class BaseUserConfig(pydantic.BaseModel):
 
 
 def _get_conf(sess, key):
-    return sess.query(UserConfig).filter(UserConfig.key == key).one_or_none()
+    try:
+        return sess.query(UserConfig).filter(UserConfig.key == key).one_or_none()
+    except ProgrammingError:
+        # This should only ever happen on the first launch before any migrations have been run
+        # or if someone has manually deleted the table in the database
+        logger.error("The user_config table does not exist")
+        return None
 
 
 @ttl_cache(5 * 60 * 60, is_method=False)
