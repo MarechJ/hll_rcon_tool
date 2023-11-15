@@ -41,7 +41,7 @@ from rcon.rcon import Rcon
 I just need a multiline message in the RCON logs
 to test something]
 [4.56 sec (1675270564)] MESSAGE: player [ð“¼ð“ºð“¾ð“²ð“­ð“­ [KRKN](76561198062837577)], content [Please ignore this just need a message in the RCON logs to test something.]
-
+[3:41 min (1699465895)] KICK: [Elinho] has been kicked. [Kicked for failing auth]
 """,
             [
                 (
@@ -178,6 +178,11 @@ to test something]
                     "[4.56 sec (1675270564)]",
                     "1675270564",
                     "MESSAGE: player [ð“¼ð“ºð“¾ð“²ð“­ð“­ [KRKN](76561198062837577)], content [Please ignore this just need a message in the RCON logs to test something.]",
+                ),
+                (
+                    "[3:41 min (1699465895)]",
+                    "1699465895",
+                    "KICK: [Elinho] has been kicked. [Kicked for failing auth]",
                 ),
             ],
         )
@@ -561,6 +566,32 @@ def test_teamswitch(raw_log_line, expected):
                 "weapon": None,
                 "message": "KICK: [RyanJose] has been kicked. [BANNED FOR 2 HOURS FOR TEAM KILLING!]",
                 "sub_content": "has been kicked. [BANNED FOR 2 HOURS FOR TEAM KILLING!]",
+            },
+        ),
+        (
+            "KICK: [Elinho] has been kicked. [Kicked for failing auth]",
+            {
+                "action": "ADMIN MISC",
+                "player": "Elinho",
+                "steam_id_64_1": None,
+                "player2": None,
+                "steam_id_64_2": None,
+                "weapon": None,
+                "message": "KICK: [Elinho] has been kicked. [Kicked for failing auth]",
+                "sub_content": "has been kicked. [Kicked for failing auth]",
+            },
+        ),
+        (
+            "KICK: [Elinho] has been kicked. [totally new random reason!]",
+            {
+                "action": "ADMIN MISC",
+                "player": "Elinho",
+                "steam_id_64_1": None,
+                "player2": None,
+                "steam_id_64_2": None,
+                "weapon": None,
+                "message": "KICK: [Elinho] has been kicked. [totally new random reason!]",
+                "sub_content": "has been kicked. [totally new random reason!]",
             },
         ),
     ],

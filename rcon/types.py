@@ -130,14 +130,15 @@ class DBLogLineType(TypedDict):
     raw: str
     content: str
     server: str
-    weapon: str
+    weapon: Optional[str]
 
 
 class PlayerStatsType(TypedDict):
     id: int
-    player_id: str
+    player_id: int
+    steam_id_64: str
     player: Optional[str]
-    steaminfo: SteamInfoType
+    steaminfo: Optional[SteamInfoType]
     map_id: int
     kills: Optional[int]
     kills_streak: Optional[int]
@@ -184,7 +185,7 @@ class MapInfo(TypedDict):
 class MapsType(TypedDict):
     id: int
     creation_time: datetime.datetime
-    star: datetime.datetime
+    start: datetime.datetime
     end: Optional[datetime.datetime]
     server_number: Optional[int]
     map_name: str
@@ -210,7 +211,7 @@ class ServerCountType(TypedDict):
     minute: datetime.datetime
     count: int
     players: List[PlayerAtCountType]
-    map: MapsType
+    map: str
     vip_count: int
 
 
@@ -254,6 +255,7 @@ class WatchListType(TypedDict):
     count: int
 
 
+# TODO: Remove? Not used anywhere
 class UserConfigType(TypedDict):
     key: str
     value: str
@@ -264,7 +266,7 @@ class PlayerProfileType(TypedDict):
     steam_id_64: str
     created: datetime.datetime
     names: List[PlayerNameType]
-    session: List[PlayerSessionType]
+    sessions: List[PlayerSessionType]
     sessions_count: int
     total_playtime_seconds: int
     current_playtime_seconds: int

@@ -19,7 +19,7 @@ export default function LogsTable({ logs, downloadCSV }) {
       label: "Time",
       options: {
         customBodyRenderLite: (dataIndex) =>
-          moment.unix(logs[dataIndex].event_time).format("ddd Do MMM HH:mm:ss"),
+          moment.unix(logs[dataIndex].event_time).local().format("ddd Do MMM HH:mm:ss"),
       },
     },
     { name: "type", label: "Type" },

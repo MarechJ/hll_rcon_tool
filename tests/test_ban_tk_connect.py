@@ -55,7 +55,7 @@ def test_ban_excluded_weapon(*args):
         },
     ]
 
-    with mock.patch("rcon.game_logs.Rcon") as rcon, mock.patch(
+    with mock.patch("rcon.game_logs.RecordedRcon") as rcon, mock.patch(
         "rcon.game_logs.get_recent_logs", return_value={"logs": logs}
     ) as get:
         rcon.get_vips_ids = mock.MagicMock(return_value=[])

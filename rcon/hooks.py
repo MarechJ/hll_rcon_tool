@@ -38,7 +38,7 @@ from rcon.user_config.camera_notification import CameraNotificationUserConfig
 from rcon.user_config.real_vip import RealVipUserConfig
 from rcon.user_config.vac_game_bans import VacGameBansUserConfig
 from rcon.user_config.webhooks import CameraWebhooksUserConfig
-from rcon.utils import LOG_MAP_NAMES_TO_MAP, MapsHistory
+from rcon.utils import LOG_MAP_NAMES_TO_MAP, UNKNOWN_MAP_NAME, MapsHistory
 from rcon.vote_map import VoteMap
 from rcon.workers import record_stats_worker, temporary_broadcast, temporary_welcome
 
@@ -87,7 +87,7 @@ def handle_new_match_start(rcon: Rcon, struct_log):
                 logger.error("Unable to get current map")
 
         map_name_to_save = LOG_MAP_NAMES_TO_MAP.get(
-            struct_log["sub_content"], "foy_warfare_night"
+            struct_log["sub_content"], UNKNOWN_MAP_NAME
         )
         guessed = True
         log_map_name = struct_log["sub_content"].rsplit(" ")[0]
@@ -101,6 +101,9 @@ def handle_new_match_start(rcon: Rcon, struct_log):
             ):
                 map_name_to_save = current_map
                 guessed = False
+            elif map_name_to_save == UNKNOWN_MAP_NAME:
+                map_name_to_save = current_map
+                guessed = True
             else:
                 logger.warning(
                     "Got recent match start but map don't match %s != %s",
@@ -143,7 +146,7 @@ def record_map_end(rcon: Rcon, struct_log):
         current_map = "bla_"
         logger.error("Unable to get current map")
 
-    map_name = LOG_MAP_NAMES_TO_MAP.get(struct_log["sub_content"], "foy_warfare_night")
+    map_name = LOG_MAP_NAMES_TO_MAP.get(struct_log["sub_content"], UNKNOWN_MAP_NAME)
     log_time = datetime.fromtimestamp(struct_log["timestamp_ms"] / 1000)
 
     if (datetime.utcnow() - log_time).total_seconds() < 60:

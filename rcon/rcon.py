@@ -35,7 +35,12 @@ from rcon.types import (
 )
 from rcon.user_config.rcon_connection_settings import RconConnectionSettingsUserConfig
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
-from rcon.utils import ALL_ROLES, ALL_ROLES_KEY_INDEX_MAP, get_server_number
+from rcon.utils import (
+    ALL_ROLES,
+    ALL_ROLES_KEY_INDEX_MAP,
+    INDEFINITE_VIP_DATE,
+    get_server_number,
+)
 
 STEAMID = "steam_id_64"
 NAME = "name"
@@ -102,7 +107,7 @@ class Rcon(ServerCtl):
     camera_pattern = re.compile(r"\[(.*)\s{1}\((\d+)\)\] (.*)")
     teamswitch_pattern = re.compile(r"TEAMSWITCH\s(.*)\s\((.*\s>\s.*)\)")
     kick_ban_pattern = re.compile(
-        r"(KICK|BAN): \[(.*)\] (.*\[(KICKED|BANNED|PERMANENTLY|YOU|Host|Anti-Cheat)[^\]]*)(?:\])*"
+        r"(KICK|BAN): \[(.*)\] (.*\[(KICKED|BANNED|PERMANENTLY|YOU|Host|Anti-Cheat|[^\]]*)[^\]]*)(?:\])*"
     )
     vote_pattern = re.compile(
         r"VOTESYS: Player \[(.*)\] voted \[.*\] for VoteID\[\d+\]"
@@ -714,7 +719,7 @@ class Rcon(ServerCtl):
             logger.warning(f"Unable to parse {expiration=} for {name=} {steam_id_64=}")
             # For our purposes (human lifespans) we can use 200 years in the future as
             # the equivalent of indefinite VIP access
-            expiration_date = datetime.utcnow() + relativedelta.relativedelta(years=200)
+            expiration_date = INDEFINITE_VIP_DATE
 
         # Find a player and update their expiration date if it exists or create a new record if not
         with enter_session() as session:
@@ -1050,6 +1055,7 @@ class Rcon(ServerCtl):
             "nb_players": slots,
             "short_name": config.short_name,
             "player_count": slots.split("/")[0],
+            "server_number": int(get_server_number()),
         }
 
     @ttl_cache(ttl=60 * 60 * 24)
@@ -1371,6 +1377,12 @@ class Rcon(ServerCtl):
                 type_ = ""
             elif type_ == "Anti-Cheat":
                 type_ = "ANTI-CHEAT"
+            elif type_ == "KICKED":
+                type_ = "KICKED"
+            elif type_ == "BANNED":
+                type_ = "BANNED"
+            else:
+                type_ = "MISC"
 
             action = f"ADMIN {type_}".strip()
 

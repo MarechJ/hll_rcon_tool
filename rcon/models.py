@@ -3,24 +3,19 @@ import os
 import re
 from contextlib import contextmanager
 from datetime import datetime
-from typing import Generator, List, Optional
+from typing import Any, Generator, List, Optional
 
 import pydantic
-from sqlalchemy import (
-    TIMESTAMP,
-    Boolean,
-    Column,
-    DateTime,
-    Float,
-    ForeignKey,
-    Integer,
-    String,
-    create_engine,
-)
+from sqlalchemy import TIMESTAMP, ForeignKey, String, create_engine, text
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.orm import relationship, sessionmaker
+from sqlalchemy.orm import (
+    DeclarativeBase,
+    Mapped,
+    mapped_column,
+    relationship,
+    sessionmaker,
+)
 from sqlalchemy.orm.session import Session, object_session
 from sqlalchemy.schema import UniqueConstraint
 
@@ -29,6 +24,7 @@ from rcon.types import (
     BlackListType,
     DBLogLineType,
     MapsType,
+    PenaltyCountType,
     PlayerActionType,
     PlayerAtCountType,
     PlayerCommentType,
@@ -39,6 +35,7 @@ from rcon.types import (
     PlayerSessionType,
     PlayerStatsType,
     ServerCountType,
+    SteamInfoType,
     WatchListType,
 )
 
@@ -62,58 +59,52 @@ def get_engine():
     return _ENGINE
 
 
-Base = declarative_base()
+class Base(DeclarativeBase):
+    # TODO: Replace dict[str, Any] w/ actual types
+    type_annotation_map = {dict[str, Any]: JSONB, dict[str, int]: JSONB}
 
 
 class PlayerSteamID(Base):
     __tablename__ = "steam_id_64"
-    id = Column(Integer, primary_key=True)
-    steam_id_64 = Column(String, nullable=False, index=True, unique=True)
-    created = Column(DateTime, default=datetime.utcnow)
-    names = relationship(
-        "PlayerName",
-        backref="steamid",
-        uselist=True,
+    id: Mapped[int] = mapped_column(primary_key=True)
+    steam_id_64: Mapped[str] = mapped_column(nullable=False, index=True, unique=True)
+    created: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+    names: Mapped[list["PlayerName"]] = relationship(
+        back_populates="steamid",
         order_by="nullslast(desc(PlayerName.last_seen))",
     )
     # If you ever change the ordering of sessions make sure you change the playtime calc code
-    sessions = relationship(
-        "PlayerSession",
-        backref="steamid",
-        uselist=True,
+    sessions: Mapped[list["PlayerSession"]] = relationship(
+        back_populates="steamid",
         order_by="desc(PlayerSession.created)",
     )
-    received_actions = relationship(
-        "PlayersAction",
-        backref="steamid",
-        uselist=True,
+    received_actions: Mapped[list["PlayersAction"]] = relationship(
+        back_populates="steamid",
         order_by="desc(PlayersAction.time)",
     )
-    blacklist = relationship("BlacklistedPlayer", backref="steamid", uselist=False)
-    flags = relationship("PlayerFlag", backref="steamid")
-    watchlist = relationship("WatchList", backref="steamid", uselist=False)
-    steaminfo = relationship("SteamInfo", backref="steamid", uselist=False)
-    comments = relationship("PlayerComment", back_populates="player")
-    stats = relationship("PlayerStats", backref="steamid", uselist=False)
+    blacklist: Mapped["BlacklistedPlayer"] = relationship(back_populates="steamid")
+    flags: Mapped[list["PlayerFlag"]] = relationship(back_populates="steamid")
+    watchlist: Mapped["WatchList"] = relationship(back_populates="steamid")
+    steaminfo: Mapped["SteamInfo"] = relationship(back_populates="steamid")
+    comments: Mapped[list["PlayerComment"]] = relationship(back_populates="player")
+    stats: Mapped["PlayerStats"] = relationship(back_populates="steam_id_64")
 
-    vips = relationship(
-        "PlayerVIP",
+    vips: Mapped[list["PlayerVIP"]] = relationship(
         back_populates="steamid",
-        uselist=True,
         cascade="all, delete-orphan",
         lazy="dynamic",
     )
-    optins = relationship("PlayerOptins", backref="steamid", uselist=True)
+    optins: Mapped[list["PlayerOptins"]] = relationship(back_populates="steamid")
 
     @property
-    def server_number(self):
-        return int(os.getenv("SERVER_NUMBER"))
+    def server_number(self) -> int:
+        return int(os.getenv("SERVER_NUMBER"))  # type: ignore
 
     @hybrid_property
-    def vip(self):
+    def vip(self) -> Optional["PlayerVIP"]:
         return (
             object_session(self)
-            .query(PlayerVIP)
+            .query(PlayerVIP)  # type: ignore
             .filter(
                 PlayerVIP.playersteamid_id == self.id,
                 PlayerVIP.server_number == self.server_number,
@@ -121,16 +112,16 @@ class PlayerSteamID(Base):
             .one_or_none()
         )
 
-    def get_penalty_count(self):
+    def get_penalty_count(self) -> PenaltyCountType:
         penalities_type = {"KICK", "PUNISH", "TEMPBAN", "PERMABAN"}
-        counts = dict.fromkeys(penalities_type, 0)
+        counts: PenaltyCountType = {"KICK": 0, "PUNISH": 0, "TEMPBAN": 0, "PERMABAN": 0}
         for action in self.received_actions:
             if action.action_type in penalities_type:
                 counts[action.action_type] += 1
 
         return counts
 
-    def get_total_playtime_seconds(self):
+    def get_total_playtime_seconds(self) -> int:
         total = 0
 
         for i, s in enumerate(self.sessions):
@@ -141,31 +132,33 @@ class PlayerSteamID(Base):
 
         return int(total)
 
-    def get_current_playtime_seconds(self):
+    def get_current_playtime_seconds(self) -> int:
         if self.sessions:
             start = self.sessions[0].start or self.sessions[0].created
             return int((datetime.now() - start).total_seconds())
         return 0
 
     def to_dict(self, limit_sessions=5) -> PlayerProfileType:
-        return dict(
-            id=self.id,
-            steam_id_64=self.steam_id_64,
-            created=self.created,
-            names=[name.to_dict() for name in self.names],
-            sessions=[session.to_dict() for session in self.sessions][:limit_sessions],
-            sessions_count=len(self.sessions),
-            total_playtime_seconds=self.get_total_playtime_seconds(),
-            current_playtime_seconds=self.get_current_playtime_seconds(),
-            received_actions=[action.to_dict() for action in self.received_actions],
-            penalty_count=self.get_penalty_count(),
-            blacklist=self.blacklist.to_dict() if self.blacklist else None,
-            flags=[f.to_dict() for f in (self.flags or [])],
-            watchlist=self.watchlist.to_dict() if self.watchlist else None,
-            steaminfo=self.steaminfo.to_dict() if self.steaminfo else None,
-        )
+        return {
+            "id": self.id,
+            "steam_id_64": self.steam_id_64,
+            "created": self.created,
+            "names": [name.to_dict() for name in self.names],
+            "sessions": [session.to_dict() for session in self.sessions][
+                :limit_sessions
+            ],
+            "sessions_count": len(self.sessions),
+            "total_playtime_seconds": self.get_current_playtime_seconds(),
+            "current_playtime_seconds": self.get_current_playtime_seconds(),
+            "received_actions": [action.to_dict() for action in self.received_actions],
+            "penalty_count": self.get_penalty_count(),
+            "blacklist": self.blacklist.to_dict() if self.blacklist else None,
+            "flags": [f.to_dict() for f in (self.flags or [])],
+            "watchlist": self.watchlist.to_dict() if self.watchlist else None,
+            "steaminfo": self.steaminfo.to_dict() if self.steaminfo else None,
+        }
 
-    def __str__(self):
+    def __str__(self) -> str:
         aka = " | ".join([n.name for n in self.names])
         return f"{self.steam_id_64} {aka}"
 
@@ -173,61 +166,64 @@ class PlayerSteamID(Base):
 class SteamInfo(Base):
     __tablename__ = "steam_info"
 
-    id = Column(Integer, primary_key=True)
-    playersteamid_id = Column(
-        Integer, ForeignKey("steam_id_64.id"), nullable=False, index=True, unique=True
+    id: Mapped[int] = mapped_column(primary_key=True)
+    playersteamid_id: Mapped[int] = mapped_column(
+        ForeignKey("steam_id_64.id"), nullable=False, index=True, unique=True
     )
-    created = Column(DateTime, default=datetime.utcnow)
-    updated = Column(DateTime, onupdate=datetime.utcnow)
-    profile = Column(JSONB)
-    country = Column(String, index=True)
-    bans = Column(JSONB)
+    created: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+    updated: Mapped[datetime] = mapped_column(onupdate=datetime.utcnow)
+    profile: Mapped[dict[str, Any]] = mapped_column()
+    country: Mapped[str] = mapped_column(index=True)
+    # TODO: I don't think bans is actually persisted at all
+    bans: Mapped[dict[str, Any]] = mapped_column()
 
-    def to_dict(self):
-        return dict(
-            id=self.id,
-            created=self.created,
-            updated=self.updated,
-            profile=self.profile,
-            country=self.country,
-            bans=self.bans,
-        )
+    steamid: Mapped[PlayerSteamID] = relationship(back_populates="steaminfo")
+
+    def to_dict(self) -> SteamInfoType:
+        return {
+            "id": self.id,
+            "created": self.created,
+            "updated": self.updated,
+            "profile": self.profile,
+            "country": self.country,
+            "bans": self.bans,
+        }
 
 
 class WatchList(Base):
     __tablename__ = "player_watchlist"
 
-    id = Column(Integer, primary_key=True)
-    modified = Column(DateTime, default=datetime.utcnow)
-    playersteamid_id = Column(
-        Integer, ForeignKey("steam_id_64.id"), nullable=False, index=True, unique=True
+    id: Mapped[int] = mapped_column(primary_key=True)
+    modified: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+    playersteamid_id: Mapped[int] = mapped_column(
+        ForeignKey("steam_id_64.id"), nullable=False, index=True, unique=True
     )
-    is_watched = Column(Boolean, nullable=False)
-    reason = Column(String, default="")
-    by = Column(String)
-    count = Column(Integer, default=0)
+    is_watched: Mapped[bool] = mapped_column(nullable=False)
+    reason: Mapped[str] = mapped_column(default="")
+    by: Mapped[str] = mapped_column()
+    count: Mapped[int] = mapped_column(default=0)
+
+    steamid: Mapped[PlayerSteamID] = relationship(back_populates="watchlist")
 
     def to_dict(self) -> WatchListType:
-        return dict(
-            id=self.id,
-            modified=self.modified,
-            steam_id_64=self.steamid.steam_id_64,
-            is_watched=self.is_watched,
-            reason=self.reason,
-            by=self.by,
-            count=self.count,
-        )
+        return {
+            "id": self.id,
+            "modified": self.modified,
+            "steam_id_64": self.steamid.steam_id_64,
+            "is_watched": self.is_watched,
+            "reason": self.reason,
+            "by": self.by,
+            "count": self.count,
+        }
 
 
 class UserConfig(Base):
     __tablename__ = "user_config"
 
-    id = Column(Integer, primary_key=True)
-    key = Column(String, unique=True, index=True)
-    value = Column(JSONB)
-
-    def to_dict(self) -> dict[str, JSONB]:
-        return {self.key: self.value}
+    id: Mapped[int] = mapped_column(primary_key=True)
+    key: Mapped[str] = mapped_column(unique=True, index=True)
+    # TODO: Fix this on the UI settings branch once merged
+    value: Mapped[dict[str, Any]] = mapped_column()
 
 
 class PlayerFlag(Base):
@@ -236,18 +232,23 @@ class PlayerFlag(Base):
         UniqueConstraint("playersteamid_id", "flag", name="unique_flag_steamid"),
     )
 
-    id = Column(Integer, primary_key=True)
-    playersteamid_id = Column(
-        Integer, ForeignKey("steam_id_64.id"), nullable=False, index=True
+    id: Mapped[int] = mapped_column(primary_key=True)
+    playersteamid_id: Mapped[int] = mapped_column(
+        ForeignKey("steam_id_64.id"), nullable=False, index=True
     )
-    flag = Column(String, nullable=False, index=True)
-    comment = Column(String, nullable=True)
-    modified = Column(DateTime, default=datetime.utcnow)
+    flag: Mapped[str] = mapped_column(nullable=False, index=True)
+    comment: Mapped[str] = mapped_column(String, nullable=True)
+    modified: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+
+    steamid: Mapped[PlayerSteamID] = relationship(back_populates="flags")
 
     def to_dict(self) -> PlayerFlagType:
-        return dict(
-            id=self.id, flag=self.flag, comment=self.comment, modified=self.modified
-        )
+        return {
+            "id": self.id,
+            "flag": self.flag,
+            "comment": self.comment,
+            "modified": self.modified,
+        }
 
 
 class PlayerOptins(Base):
@@ -258,21 +259,23 @@ class PlayerOptins(Base):
         ),
     )
 
-    id = Column(Integer, primary_key=True)
-    playersteamid_id = Column(
-        Integer, ForeignKey("steam_id_64.id"), nullable=False, index=True
+    id: Mapped[int] = mapped_column(primary_key=True)
+    playersteamid_id: Mapped[int] = mapped_column(
+        ForeignKey("steam_id_64.id"), nullable=False, index=True
     )
-    optin_name = Column(String, nullable=False, index=True)
-    optin_value = Column(String, nullable=True)
-    modified = Column(DateTime, default=datetime.utcnow)
+    optin_name: Mapped[str] = mapped_column(nullable=False, index=True)
+    optin_value: Mapped[str] = mapped_column(nullable=True)
+    modified: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+
+    steamid: Mapped[PlayerSteamID] = relationship(back_populates="optins")
 
     def to_dict(self) -> PlayerOptinsType:
-        return dict(
-            id=self.id,
-            optin_name=self.optin_name,
-            optin_value=self.optin_value,
-            modified=self.modified,
-        )
+        return {
+            "id": self.id,
+            "optin_name": self.optin_name,
+            "optin_value": self.optin_value,
+            "modified": self.modified,
+        }
 
 
 class PlayerName(Base):
@@ -281,119 +284,121 @@ class PlayerName(Base):
         UniqueConstraint("playersteamid_id", "name", name="unique_name_steamid"),
     )
 
-    id = Column(Integer, primary_key=True)
-    playersteamid_id = Column(
-        Integer, ForeignKey("steam_id_64.id"), nullable=False, index=True
+    id: Mapped[int] = mapped_column(primary_key=True)
+    playersteamid_id: Mapped[int] = mapped_column(
+        ForeignKey("steam_id_64.id"), nullable=False, index=True
     )
-    name = Column(String, nullable=False)
-    created = Column(DateTime, default=datetime.utcnow)
-    last_seen = Column(DateTime, default=datetime.utcnow)
+    name: Mapped[str] = mapped_column(nullable=False)
+    created: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+    last_seen: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+
+    steamid: Mapped[PlayerSteamID] = relationship(back_populates="names")
 
     def to_dict(self) -> PlayerNameType:
-        return dict(
-            id=self.id,
-            name=self.name,
-            steam_id_64=self.steamid.steam_id_64,
-            created=self.created,
-            last_seen=self.last_seen,
-        )
+        return {
+            "id": self.id,
+            "name": self.name,
+            "steam_id_64": self.steamid.steam_id_64,
+            "created": self.created,
+            "last_seen": self.last_seen,
+        }
 
 
 class PlayerSession(Base):
     __tablename__ = "player_sessions"
 
-    id = Column(Integer, primary_key=True)
-    playersteamid_id = Column(
-        Integer, ForeignKey("steam_id_64.id"), nullable=False, index=True
+    id: Mapped[int] = mapped_column(primary_key=True)
+    playersteamid_id: Mapped[int] = mapped_column(
+        ForeignKey("steam_id_64.id"), nullable=False, index=True
     )
-    start = Column(DateTime)
-    end = Column(DateTime)
-    created = Column(DateTime, default=datetime.utcnow)
-    server_number = Column(Integer)
-    server_name = Column(String)
+    start: Mapped[datetime] = mapped_column()
+    end: Mapped[datetime] = mapped_column()
+    created: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+    server_number: Mapped[int] = mapped_column()
+    server_name: Mapped[str] = mapped_column()
+
+    steamid: Mapped[PlayerSteamID] = relationship(back_populates="sessions")
 
     def to_dict(self) -> PlayerSessionType:
-        return dict(
-            id=self.id,
-            steam_id_64=self.steamid.steam_id_64,
-            start=self.start,
-            end=self.end,
-            created=self.created,
-        )
+        return {
+            "id": self.id,
+            "steam_id_64": self.steamid.steam_id_64,
+            "start": self.start,
+            "end": self.end,
+            "created": self.created,
+        }
 
 
 class BlacklistedPlayer(Base):
     __tablename__ = "player_blacklist"
 
-    id = Column(Integer, primary_key=True)
-    playersteamid_id = Column(
-        Integer, ForeignKey("steam_id_64.id"), nullable=False, index=True, unique=True
+    id: Mapped[int] = mapped_column(primary_key=True)
+    playersteamid_id: Mapped[int] = mapped_column(
+        ForeignKey("steam_id_64.id"), nullable=False, index=True, unique=True
     )
-    is_blacklisted = Column(Boolean, default=False)
-    reason = Column(String)
-    by = Column(String)
+    is_blacklisted: Mapped[bool] = mapped_column(default=False)
+    reason: Mapped[str] = mapped_column()
+    by: Mapped[str] = mapped_column()
+
+    steamid: Mapped[PlayerSteamID] = relationship(back_populates="blacklist")
 
     def to_dict(self) -> BlackListType:
-        return dict(
-            steam_id_64=self.steamid.steam_id_64,
-            is_blacklisted=self.is_blacklisted,
-            reason=self.reason,
-            by=self.by,
-        )
+        return {
+            "steam_id_64": self.steamid.steam_id_64,
+            "is_blacklisted": self.is_blacklisted,
+            "reason": self.reason,
+            "by": self.by,
+        }
 
 
 class PlayersAction(Base):
     __tablename__ = "players_actions"
 
-    id = Column(Integer, primary_key=True)
-    action_type = Column(String, nullable=False)
-    playersteamid_id = Column(
-        Integer,
-        ForeignKey("steam_id_64.id"),
-        nullable=False,
-        index=True,
+    id: Mapped[int] = mapped_column(primary_key=True)
+    action_type: Mapped[str] = mapped_column(nullable=False)
+    playersteamid_id: Mapped[int] = mapped_column(
+        ForeignKey("steam_id_64.id"), nullable=False, index=True
     )
-    reason = Column(String)
-    by = Column(String)
-    time = Column(DateTime, default=datetime.utcnow)
+    reason: Mapped[str] = mapped_column()
+    by: Mapped[str] = mapped_column()
+    time: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+
+    steamid: Mapped[PlayerSteamID] = relationship(back_populates="received_actions")
 
     def to_dict(self) -> PlayerActionType:
-        return dict(
-            action_type=self.action_type, reason=self.reason, by=self.by, time=self.time
-        )
+        return {
+            "action_type": self.action_type,
+            "reason": self.reason,
+            "by": self.by,
+            "time": self.time,
+        }
 
 
 class LogLine(Base):
     __tablename__ = "log_lines"
     __table_args__ = (UniqueConstraint("event_time", "raw", name="unique_log_line"),)
 
-    id = Column(Integer, primary_key=True)
-    version = Column(Integer, default=1)
-    creation_time = Column(TIMESTAMP, default=datetime.utcnow)
-    event_time = Column(DateTime, nullable=False, index=True)
-    type = Column(String, nullable=True)
-    player1_name = Column(String, nullable=True)
-    player1_steamid = Column(
-        Integer,
-        ForeignKey("steam_id_64.id"),
-        nullable=True,
-        index=True,
+    id: Mapped[int] = mapped_column(primary_key=True)
+    version: Mapped[int] = mapped_column(default=1)
+    creation_time: Mapped[datetime] = mapped_column(TIMESTAMP, default=datetime.utcnow)
+    event_time: Mapped[datetime] = mapped_column(nullable=False, index=True)
+    type: Mapped[str] = mapped_column(nullable=True)
+    player1_name: Mapped[str] = mapped_column(nullable=True)
+    player1_steamid: Mapped[int] = mapped_column(
+        ForeignKey("steam_id_64.id"), nullable=True, index=True
     )
-    player2_name = Column(String, nullable=True)
-    player2_steamid = Column(
-        Integer,
-        ForeignKey("steam_id_64.id"),
-        nullable=True,
-        index=True,
+    player2_name: Mapped[str] = mapped_column(nullable=True)
+    player2_steamid: Mapped[int] = mapped_column(
+        ForeignKey("steam_id_64.id"), nullable=True, index=True
     )
-    weapon = Column(String)
-    raw = Column(String, nullable=False)
-    content = Column(String)
-    steamid1 = relationship("PlayerSteamID", foreign_keys=[player1_steamid])
-    steamid2 = relationship("PlayerSteamID", foreign_keys=[player2_steamid])
-    server = Column(String)
+    weapon: Mapped[str] = mapped_column()
+    raw: Mapped[str] = mapped_column(nullable=False)
+    content: Mapped[str] = mapped_column()
+    steamid1: Mapped[PlayerSteamID] = relationship(foreign_keys=[player1_steamid])
+    steamid2: Mapped[PlayerSteamID] = relationship(foreign_keys=[player2_steamid])
+    server: Mapped[str] = mapped_column()
 
-    def get_weapon(self):
+    def get_weapon(self) -> str | None:
         if self.weapon:
             return self.weapon
         # Backward compatibility for logs before weapon was added
@@ -406,23 +411,25 @@ class LogLine(Base):
         return None
 
     def to_dict(self) -> DBLogLineType:
-        return dict(
-            id=self.id,
-            version=self.version,
-            creation_time=self.creation_time,
-            event_time=self.event_time,
-            type=self.type,
-            player_name=self.player1_name,
-            player1_id=self.player1_steamid,
-            player2_name=self.player2_name,
-            player2_id=self.player2_steamid,
-            raw=self.raw,
-            content=self.content,
-            server=self.server,
-            weapon=self.get_weapon(),
-        )
+        # TODO: Fix typing
+        return {
+            "id": self.id,
+            "version": self.version,
+            "creation_time": self.creation_time,
+            "event_time": self.event_time,
+            "type": self.type,
+            "player_name": self.player1_name,
+            "player1_id": self.steamid1.steam_id_64 if self.steamid1 else None,
+            "player2_name": self.player2_name,
+            "player2_id": self.steamid2.steam_id_64 if self.steamid2 else None,
+            "raw": self.raw,
+            "content": self.content,
+            "server": self.server,
+            "weapon": self.get_weapon(),
+        }
 
     def compatible_dict(self):
+        # TODO: Add typing
         return {
             "id": self.id,
             "version": self.version,
@@ -452,28 +459,28 @@ class Maps(Base):
         ),
     )
 
-    id = Column(Integer, primary_key=True)
+    id: Mapped[int] = mapped_column(primary_key=True)
 
-    creation_time = Column(TIMESTAMP, default=datetime.utcnow)
-    start = Column(DateTime, nullable=False, index=True)
-    end = Column(DateTime, index=True)
-    server_number = Column(Integer, index=True)
-    map_name = Column(String, nullable=False, index=True)
+    creation_time: Mapped[datetime] = mapped_column(TIMESTAMP, default=datetime.utcnow)
+    start: Mapped[datetime] = mapped_column(nullable=False, index=True)
+    end: Mapped[datetime] = mapped_column(index=True)
+    server_number: Mapped[int] = mapped_column(index=True)
+    map_name: Mapped[str] = mapped_column(nullable=False, index=True)
 
-    player_stats = relationship("PlayerStats", backref="map", uselist=True)
+    player_stats: Mapped[list["PlayerStats"]] = relationship(back_populates="map")
 
     def to_dict(self, with_stats=False) -> MapsType:
-        return dict(
-            id=self.id,
-            creation_time=self.creation_time,
-            start=self.start,
-            end=self.end,
-            server_number=self.server_number,
-            map_name=self.map_name,
-            player_stats=[]
+        return {
+            "id": self.id,
+            "creation_time": self.creation_time,
+            "start": self.start,
+            "end": self.end,
+            "server_number": self.server_number,
+            "map_name": self.map_name,
+            "player_stats": []
             if not with_stats or not self.player_stats
             else [s.to_dict() for s in self.player_stats],
-        )
+        }
 
 
 class PlayerStats(Base):
@@ -482,108 +489,104 @@ class PlayerStats(Base):
         UniqueConstraint("playersteamid_id", "map_id", name="unique_map_player"),
     )
 
-    id = Column(Integer, primary_key=True)
-    playersteamid_id = Column(
-        Integer,
-        ForeignKey("steam_id_64.id"),
-        nullable=False,
-        index=True,
+    id: Mapped[int] = mapped_column(primary_key=True)
+    playersteamid_id: Mapped[int] = mapped_column(
+        ForeignKey("steam_id_64.id"), nullable=False, index=True
     )
-    steam_id_64 = relationship("PlayerSteamID", foreign_keys=[playersteamid_id])
-    map_id = Column(
-        Integer,
-        ForeignKey("map_history.id"),
-        nullable=False,
-        index=True,
+    steam_id_64: Mapped[PlayerSteamID] = relationship(
+        foreign_keys=[playersteamid_id], back_populates="stats"
     )
-    name = Column(String)
-    kills = Column(Integer)
-    kills_streak = Column(Integer)
-    deaths = Column(Integer)
-    deaths_without_kill_streak = Column(Integer)
-    teamkills = Column(Integer)
-    teamkills_streak = Column(Integer)
-    deaths_by_tk = Column(Integer)
-    deaths_by_tk_streak = Column(Integer)
-    nb_vote_started = Column(Integer)
-    nb_voted_yes = Column(Integer)
-    nb_voted_no = Column(Integer)
-    time_seconds = Column(Integer)
-    kills_per_minute = Column(Float)
-    deaths_per_minute = Column(Float)
-    kill_death_ratio = Column(Float)
-    longest_life_secs = Column(Integer)
-    shortest_life_secs = Column(Integer)
-    combat = Column(Integer)
-    offense = Column(Integer)
-    defense = Column(Integer)
-    support = Column(Integer)
-    most_killed = Column(JSONB)
-    death_by = Column(JSONB)
-    weapons = Column(JSONB)
-    death_by_weapons = Column(JSONB)
+    map_id: Mapped[int] = mapped_column(
+        ForeignKey("map_history.id"), nullable=False, index=True
+    )
+    name: Mapped[str] = mapped_column()
+    kills: Mapped[int] = mapped_column()
+    kills_streak: Mapped[int] = mapped_column()
+    deaths: Mapped[int] = mapped_column()
+    deaths_without_kill_streak: Mapped[int] = mapped_column()
+    teamkills: Mapped[int] = mapped_column()
+    teamkills_streak: Mapped[int] = mapped_column()
+    deaths_by_tk: Mapped[int] = mapped_column()
+    deaths_by_tk_streak: Mapped[int] = mapped_column()
+    nb_vote_started: Mapped[int] = mapped_column()
+    nb_voted_yes: Mapped[int] = mapped_column()
+    nb_voted_no: Mapped[int] = mapped_column()
+    time_seconds: Mapped[int] = mapped_column()
+    kills_per_minute: Mapped[float] = mapped_column()
+    deaths_per_minute: Mapped[float] = mapped_column()
+    kill_death_ratio: Mapped[float] = mapped_column()
+    longest_life_secs: Mapped[int] = mapped_column()
+    shortest_life_secs: Mapped[int] = mapped_column()
+    combat: Mapped[int] = mapped_column()
+    offense: Mapped[int] = mapped_column()
+    defense: Mapped[int] = mapped_column()
+    support: Mapped[int] = mapped_column()
+    most_killed: Mapped[dict[str, int]] = mapped_column()
+    death_by: Mapped[dict[str, int]] = mapped_column()
+    weapons: Mapped[dict[str, int]] = mapped_column()
+    death_by_weapons: Mapped[dict[str, int]] = mapped_column()
+
+    map: Mapped[Maps] = relationship(back_populates="player_stats")
 
     def to_dict(self) -> PlayerStatsType:
-        return dict(
-            id=self.id,
-            player_id=self.playersteamid_id,
-            steam_id_64=self.steam_id_64.steam_id_64,
-            player=self.name,
-            steaminfo=self.steamid.steaminfo.to_dict()
-            if self.steamid.steaminfo
+        # TODO: Fix typing
+        return {
+            "id": self.id,
+            "player_id": self.playersteamid_id,
+            "steam_id_64": self.steam_id_64.steam_id_64,
+            "player": self.name,
+            "steaminfo": self.steam_id_64.steaminfo.to_dict()
+            if self.steam_id_64
             else None,
-            map_id=self.map_id,
-            kills=self.kills,
-            kills_streak=self.kills_streak,
-            deaths=self.deaths,
-            deaths_without_kill_streak=self.deaths_without_kill_streak,
-            teamkills=self.teamkills,
-            teamkills_streak=self.teamkills_streak,
-            deaths_by_tk=self.deaths_by_tk,
-            deaths_by_tk_streak=self.deaths_by_tk_streak,
-            nb_vote_started=self.nb_vote_started,
-            nb_voted_yes=self.nb_voted_yes,
-            nb_voted_no=self.nb_voted_no,
-            time_seconds=self.time_seconds,
-            kills_per_minute=self.kills_per_minute,
-            deaths_per_minute=self.deaths_per_minute,
-            kill_death_ratio=self.kill_death_ratio,
-            longest_life_secs=self.longest_life_secs,
-            shortest_life_secs=self.shortest_life_secs,
-            combat=self.combat,
-            offense=self.offense,
-            defense=self.defense,
-            support=self.support,
-            most_killed=self.most_killed,
-            death_by=self.death_by,
-            weapons=self.weapons,
-            death_by_weapons=self.death_by_weapons,
-        )
+            "map_id": self.map_id,
+            "kills": self.kills,
+            "kills_streak": self.kills_streak,
+            "deaths": self.deaths,
+            "deaths_without_kill_streak": self.deaths_without_kill_streak,
+            "teamkills": self.teamkills,
+            "teamkills_streak": self.teamkills_streak,
+            "deaths_by_tk": self.deaths_by_tk,
+            "deaths_by_tk_streak": self.deaths_by_tk_streak,
+            "nb_vote_started": self.nb_vote_started,
+            "nb_voted_yes": self.nb_voted_yes,
+            "nb_voted_no": self.nb_voted_no,
+            "time_seconds": self.time_seconds,
+            "kills_per_minute": self.kills_per_minute,
+            "deaths_per_minute": self.deaths_per_minute,
+            "kill_death_ratio": self.kill_death_ratio,
+            "longest_life_secs": self.longest_life_secs,
+            "shortest_life_secs": self.shortest_life_secs,
+            "combat": self.combat,
+            "offense": self.offense,
+            "defense": self.defense,
+            "support": self.support,
+            "most_killed": self.most_killed,
+            "death_by": self.death_by,
+            "weapons": self.weapons,
+            "death_by_weapons": self.death_by_weapons,
+        }
 
 
 class PlayerComment(Base):
     __tablename__ = "player_comments"
-    id = Column(Integer, primary_key=True)
-    creation_time = Column(TIMESTAMP, default=datetime.utcnow)
-    by = Column(String)
-    playersteamid_id = Column(
-        Integer,
-        ForeignKey("steam_id_64.id"),
-        nullable=False,
-        index=True,
+    id: Mapped[int] = mapped_column(primary_key=True)
+    creation_time: Mapped[datetime] = mapped_column(TIMESTAMP, default=datetime.utcnow)
+    by: Mapped[str] = mapped_column()
+    playersteamid_id: Mapped[int] = mapped_column(
+        ForeignKey("steam_id_64.id"), nullable=False, index=True
     )
-    content = Column(String, nullable=False)
+    content: Mapped[str] = mapped_column(nullable=False)
 
-    player = relationship("PlayerSteamID", back_populates="comments")
+    player: Mapped[PlayerSteamID] = relationship(back_populates="comments")
 
     def to_dict(self) -> PlayerCommentType:
-        return dict(
-            id=self.id,
-            creation_time=self.creation_time,
-            playersteamid_id=self.playersteamid_id,
-            content=self.content,
-            by=self.by,
-        )
+        return {
+            "id": self.id,
+            "creation_time": self.creation_time,
+            "playersteamid_id": self.playersteamid_id,
+            "content": self.content,
+            "by": self.by,
+        }
 
 
 class ServerCount(Base):
@@ -591,20 +594,17 @@ class ServerCount(Base):
     __table_args__ = (
         UniqueConstraint("server_number", "datapoint_time", name="unique_server_count"),
     )
-    id = Column(Integer, primary_key=True)
-    server_number = Column(Integer)
-    creation_time = Column(TIMESTAMP, default=datetime.utcnow)
-    datapoint_time = Column(TIMESTAMP, unique=True, index=True)
-    map_id = Column(
-        Integer,
-        ForeignKey("map_history.id"),
-        nullable=False,
-        index=True,
+    id: Mapped[int] = mapped_column(primary_key=True)
+    server_number: Mapped[int] = mapped_column()
+    creation_time: Mapped[datetime] = mapped_column(TIMESTAMP, default=datetime.utcnow)
+    datapoint_time: Mapped[datetime] = mapped_column(TIMESTAMP, unique=True, index=True)
+    map_id: Mapped[int] = mapped_column(
+        ForeignKey("map_history.id"), nullable=False, index=True
     )
-    count = Column(Integer, nullable=False)
-    vip_count = Column(Integer, nullable=False)
-    players = relationship("PlayerAtCount", back_populates="data_point")
-    map = relationship("Maps", lazy="joined")
+    count: Mapped[int] = mapped_column(nullable=False)
+    vip_count: Mapped[int] = mapped_column(nullable=False)
+    players: Mapped["PlayerAtCount"] = relationship(back_populates="data_point")
+    map: Mapped[Maps] = relationship(lazy="joined")
 
     def to_dict(self, players_as_tuple=False, with_player_list=True) -> ServerCountType:
         players = []
@@ -617,14 +617,15 @@ class ServerCount(Base):
                 else:
                     players.append(p)
 
-        return dict(
-            server_number=self.server_number,
-            minute=self.datapoint_time,
-            count=self.count,
-            players=players,
-            map=self.map.map_name,
-            vip_count=self.vip_count,
-        )
+        # TODO: Fix typing
+        return {
+            "server_number": self.server_number,
+            "minute": self.datapoint_time,
+            "count": self.count,
+            "players": self.players,
+            "map": self.map.map_name,
+            "vip_count": self.vip_count,
+        }
 
 
 class PlayerAtCount(Base):
@@ -634,22 +635,16 @@ class PlayerAtCount(Base):
             "playersteamid_id", "servercount_id", name="unique_player_at_count"
         ),
     )
-    id = Column(Integer, primary_key=True)
-    playersteamid_id = Column(
-        Integer,
-        ForeignKey("steam_id_64.id"),
-        nullable=False,
-        index=True,
+    id: Mapped[int] = mapped_column(primary_key=True)
+    playersteamid_id: Mapped[int] = mapped_column(
+        ForeignKey("steam_id_64.id"), nullable=False, index=True
     )
-    servercount_id = Column(
-        Integer,
-        ForeignKey("server_counts.id"),
-        nullable=False,
-        index=True,
+    servercount_id: Mapped[int] = mapped_column(
+        ForeignKey("server_counts.id"), nullable=False, index=True
     )
-    vip = Column(Boolean)
-    data_point = relationship("ServerCount", back_populates="players")
-    steamid = relationship("PlayerSteamID", lazy="joined")
+    vip: Mapped[bool] = mapped_column()
+    data_point: Mapped[ServerCount] = relationship(back_populates="players")
+    steamid: Mapped[PlayerSteamID] = relationship(lazy="joined")
 
     def to_dict(self) -> PlayerAtCountType:
         try:
@@ -657,7 +652,12 @@ class PlayerAtCount(Base):
         except:
             logger.exception("Unable to load name for %s", self.steamid.steam_id_64)
             name = ""
-        return dict(steam_id_64=self.steamid.steam_id_64, name=name, vip=self.vip)
+
+        return {
+            "steam_id_64": self.steamid.steam_id_64,
+            "name": name,
+            "vip": self.vip,
+        }
 
 
 class PlayerVIP(Base):
@@ -668,54 +668,47 @@ class PlayerVIP(Base):
         ),
     )
 
-    id = Column(Integer, primary_key=True)
-    expiration = Column(TIMESTAMP(timezone=True), nullable=False)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    expiration: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True), nullable=False
+    )
     # Not making this unique (even though it should be) to avoid breaking existing CRCONs
-    server_number = Column(Integer)
+    server_number: Mapped[int] = mapped_column()
 
-    playersteamid_id = Column(
-        Integer,
-        ForeignKey("steam_id_64.id"),
-        nullable=False,
-        index=True,
+    playersteamid_id: Mapped[int] = mapped_column(
+        ForeignKey("steam_id_64.id"), nullable=False, index=True
     )
 
-    steamid = relationship("PlayerSteamID", back_populates="vips")
+    steamid: Mapped[PlayerSteamID] = relationship(back_populates="vips")
 
 
 class AuditLog(Base):
     __tablename__: str = "audit_log"
 
-    id = Column(Integer, primary_key=True)
-    username = Column(String, nullable=False, index=True)
-    creation_time = Column(TIMESTAMP(timezone=True), default=datetime.utcnow)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    username: Mapped[str] = mapped_column(nullable=False, index=True)
+    creation_time: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True), default=datetime.utcnow
+    )
     # Not making this unique (even though it should be) to avoid breaking existing CRCONs
-    command = Column(String, nullable=False, index=True)
-    command_arguments = Column(String)
-    command_result = Column(String)
+    command: Mapped[str] = mapped_column(nullable=False, index=True)
+    command_arguments: Mapped[str] = mapped_column()
+    command_result: Mapped[str] = mapped_column()
 
     def to_dict(self) -> AuditLogType:
-        return dict(
-            id=self.id,
-            username=self.username,
-            creation_time=self.creation_time,
-            command=self.command,
-            command_arguments=self.command_arguments,
-            command_result=self.command_result,
-        )
-
-
-def init_db(force=False):
-    # create tables
-    engine = get_engine()
-    if force is True:
-        Base.metadata.drop_all(bind=engine)
-    Base.metadata.create_all(bind=engine)
+        return {
+            "id": self.id,
+            "username": self.username,
+            "creation_time": self.creation_time,
+            "command": self.command,
+            "command_arguments": self.command_arguments,
+            "command_result": self.command_result,
+        }
 
 
 def install_unaccent():
     with enter_session() as sess:
-        sess.execute("CREATE EXTENSION IF NOT EXISTS unaccent;")
+        sess.execute(text("CREATE EXTENSION IF NOT EXISTS unaccent;"))
 
 
 def get_session_maker() -> sessionmaker:
@@ -737,6 +730,7 @@ def enter_session() -> Generator[Session, None, None]:
         sess.close()
 
 
+# TODO: This probably belongs in rcon.types
 class LogLineWebHookField(pydantic.BaseModel):
     """A Discord Webhook URL and optional roles to ping for log events and applicable servers
 

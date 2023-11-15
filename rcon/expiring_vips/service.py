@@ -1,9 +1,8 @@
 import logging
 import time
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 
-from dateutil import relativedelta
 from pydantic import HttpUrl
 
 from rcon.discord import send_to_discord_audit
@@ -11,7 +10,7 @@ from rcon.models import PlayerSteamID, PlayerVIP, enter_session
 from rcon.rcon import Rcon
 from rcon.settings import SERVER_INFO
 from rcon.user_config.expired_vips import ExpiredVipsUserConfig
-from rcon.utils import get_server_number
+from rcon.utils import INDEFINITE_VIP_DATE, get_server_number
 
 SERVICE_NAME = "ExpiringVIPs"
 logger = logging.getLogger(__name__)
@@ -56,9 +55,24 @@ def remove_expired_vips(rcon_hook: Rcon, webhook_url: Optional[HttpUrl] = None):
 
         # Look for anyone with VIP but without a record and create one for them
         vip_ids = rcon_hook.get_vip_ids()
-        missing_expiration_records = [
-            player for player in vip_ids if player["vip_expiration"] is None
-        ]
+        missing_expiration_records = []
+        for player in vip_ids:
+            player_expiration: datetime | None = player["vip_expiration"]
+            if player_expiration is None:
+                missing_expiration_records.append(player)
+            # Find any old style records that had a floating creation date + 200 year expiration
+            # so they get changed to the new fixed UTC 3000-01-01 datetime
+            elif (
+                player_expiration
+                and player_expiration
+                >= datetime.now(timezone.utc) + timedelta(days=365 * 100)
+                and player_expiration.year < 3000
+            ):
+                missing_expiration_records.append(player)
+                logger.info(
+                    "Correcting old style expiration date for %s", player["steam_id_64"]
+                )
+
         for raw_player in missing_expiration_records:
             player: PlayerSteamID = (
                 session.query(PlayerSteamID)
@@ -67,15 +81,25 @@ def remove_expired_vips(rcon_hook: Rcon, webhook_url: Optional[HttpUrl] = None):
             )
 
             if player:
-                expiration_date = datetime.utcnow() + relativedelta.relativedelta(
-                    years=200
+                expiration_date = INDEFINITE_VIP_DATE
+                vip_record = (
+                    session.query(PlayerVIP)
+                    .filter(
+                        PlayerVIP.playersteamid_id == player.id,
+                        PlayerVIP.server_number == get_server_number(),
+                    )
+                    .one_or_none()
                 )
-                vip_record = PlayerVIP(
-                    expiration=expiration_date,
-                    playersteamid_id=player.id,
-                    server_number=server_number,
-                )
-                session.add(vip_record)
+
+                if vip_record:
+                    vip_record.expiration = expiration_date
+                else:
+                    vip_record = PlayerVIP(
+                        expiration=expiration_date,
+                        playersteamid_id=player.id,
+                        server_number=server_number,
+                    )
+                    session.add(vip_record)
 
                 try:
                     name = player.names[0].name

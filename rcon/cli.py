@@ -125,7 +125,6 @@ def run_log_recorder(frequency_min, now):
 
 
 def init(force=False):
-    # init_db(force)
     install_unaccent()
     seed_default_config()
 

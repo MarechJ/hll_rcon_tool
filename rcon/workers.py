@@ -18,7 +18,7 @@ from rcon.rcon import Rcon
 from rcon.scoreboard import TimeWindowStats
 from rcon.settings import SERVER_INFO
 from rcon.types import MapInfo, PlayerStat
-
+from rcon.utils import INDEFINITE_VIP_DATE
 logger = logging.getLogger("rcon")
 
 
@@ -299,9 +299,7 @@ def bulk_vip(name_ids, mode="override"):
     processed_additions = []
     for name, steam_id, expiration_timestamp in name_ids:
         if not expiration_timestamp:
-            expiration_timestamp = (
-                datetime.datetime.utcnow() + relativedelta.relativedelta(years=200)
-            ).isoformat()
+            expiration_timestamp = INDEFINITE_VIP_DATE.isoformat()
         else:
             expiration_timestamp = expiration_timestamp.isoformat()
 
