@@ -7,7 +7,7 @@ from functools import wraps
 from typing import List
 
 from rcon.connection import HLLConnection
-from rcon.typedefs import ServerInfoType, VipId
+from rcon.types import ServerInfoType, VipId
 from rcon.utils import exception_in_chain
 
 logger = logging.getLogger(__name__)

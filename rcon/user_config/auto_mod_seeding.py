@@ -2,7 +2,7 @@ from typing import Optional, TypedDict
 
 from pydantic import BaseModel, Field, HttpUrl, field_serializer
 
-from rcon.typedefs import Roles
+from rcon.types import Roles
 from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
 
 WARNING_MESSAGE = """Warning, {player_name}! You violate seeding rules on this server: {violation}

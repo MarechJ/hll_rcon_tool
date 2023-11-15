@@ -2,13 +2,13 @@ from datetime import datetime
 
 from discord_webhook import DiscordEmbed
 
+from rcon.discord import get_prepared_discord_hooks
 from rcon.game_logs import on_connected
 from rcon.hooks import inject_player_ids
 from rcon.models import WatchList, enter_session
 from rcon.player_history import _get_set_player, get_player
-from rcon.rcon_ import CommandFailedError, Rcon
-from rcon.rcon_discord import get_prepared_discord_hooks
-from rcon.typedefs import PlayerProfileType
+from rcon.rcon import CommandFailedError, Rcon
+from rcon.types import PlayerProfileType
 from rcon.user_config.webhooks import WatchlistWebhooksUserConfig
 
 

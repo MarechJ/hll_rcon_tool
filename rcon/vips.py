@@ -1,7 +1,7 @@
 import datetime
 
 from rcon.player_history import get_profiles
-from rcon.rcon_ import Rcon
+from rcon.rcon import Rcon
 from rcon.settings import SERVER_INFO
 
 

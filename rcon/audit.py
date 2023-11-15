@@ -60,7 +60,7 @@ def set_registered_mods(moderators_name_steamids: List[tuple]):
 
 
 def ingame_mods(rcon=None):
-    from rcon.rcon_ import Rcon
+    from rcon.rcon import Rcon
 
     red = _red()
     mods = red.hgetall("moderators") or {}

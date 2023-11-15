@@ -2,7 +2,7 @@ import os
 import socket
 from logging.config import dictConfig
 
-from rcon.typedefs import ServerInfoType
+from rcon.types import ServerInfoType
 
 # TODO: Use a config style that is not required at import time
 

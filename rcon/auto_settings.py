@@ -6,7 +6,7 @@ from datetime import datetime
 import pytz
 
 from rcon.audit import ingame_mods, online_mods
-from rcon.rcon_ import Rcon
+from rcon.rcon import Rcon
 from rcon.settings import SERVER_INFO
 from rcon.user_config.auto_settings import AutoSettingsConfig
 from rcon.vote_map import VoteMap

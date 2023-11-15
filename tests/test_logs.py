@@ -2,7 +2,7 @@ from datetime import datetime
 
 import pytest
 
-from rcon.rcon_ import Rcon
+from rcon.rcon import Rcon
 
 
 # Test that we successfully split raw log lines from the game server

@@ -249,7 +249,7 @@ def format_message(ctl, msg):
 
 def run():
     # avoid circular import
-    from rcon.rcon_ import Rcon
+    from rcon.rcon import Rcon
 
     ctl = Rcon(SERVER_INFO)
 

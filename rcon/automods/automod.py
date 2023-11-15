@@ -13,12 +13,12 @@ from rcon.automods.no_solotank import NoSoloTankAutomod
 from rcon.automods.seeding_rules import SeedingRulesAutomod
 from rcon.cache_utils import get_redis_client
 from rcon.commands import CommandFailedError, HLLServerError
+from rcon.discord import send_to_discord_audit
 from rcon.game_logs import on_connected, on_kill
 from rcon.hooks import inject_player_ids
-from rcon.rcon_ import Rcon
-from rcon.rcon_discord import send_to_discord_audit
+from rcon.rcon import Rcon
 from rcon.settings import SERVER_INFO
-from rcon.typedefs import StructuredLogLineType
+from rcon.types import StructuredLogLineType
 from rcon.user_config.auto_mod_level import AutoModLevelUserConfig
 from rcon.user_config.auto_mod_no_leader import AutoModNoLeaderUserConfig
 from rcon.user_config.auto_mod_seeding import AutoModSeedingUserConfig

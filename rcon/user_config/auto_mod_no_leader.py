@@ -2,7 +2,7 @@ from typing import Optional, TypedDict
 
 from pydantic import Field, HttpUrl, field_serializer, field_validator
 
-from rcon.typedefs import Roles
+from rcon.types import Roles
 from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
 
 WARNING_MESSAGE = "Warning, {player_name}! Your squad ({squad_name}) does not have an officer. Players of squads without an officer will be punished after {max_warnings} warnings (you already received {received_warnings}), then kicked.\nNext check will happen automatically in {next_check_seconds}s."

@@ -2,7 +2,7 @@ from typing import TypedDict
 
 from pydantic import BaseModel, Field
 
-from rcon.typedefs import AllLogTypes, InvalidLogTypeError
+from rcon.types import AllLogTypes, InvalidLogTypeError
 from rcon.user_config.utils import BaseUserConfig, _listType, key_check, set_user_config
 from rcon.user_config.webhooks import DiscordMentionWebhook, WebhookMentionType
 

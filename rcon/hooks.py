@@ -8,6 +8,11 @@ from discord_webhook import DiscordEmbed
 
 from rcon.cache_utils import invalidates
 from rcon.commands import CommandFailedError, HLLServerError
+from rcon.discord import (
+    dict_to_discord,
+    get_prepared_discord_hooks,
+    send_to_discord_audit,
+)
 from rcon.game_logs import (
     on_camera,
     on_chat,
@@ -25,14 +30,9 @@ from rcon.player_history import (
     save_player,
     save_start_player_session,
 )
-from rcon.rcon_ import Rcon, StructuredLogLineType
-from rcon.rcon_discord import (
-    dict_to_discord,
-    get_prepared_discord_hooks,
-    send_to_discord_audit,
-)
+from rcon.rcon import Rcon, StructuredLogLineType
 from rcon.steam_utils import get_player_bans, get_steam_profile, update_db_player_info
-from rcon.typedefs import PlayerFlagType, SteamBansType
+from rcon.types import PlayerFlagType, SteamBansType
 from rcon.user_config.auto_mod_no_leader import AutoModNoLeaderUserConfig
 from rcon.user_config.camera_notification import CameraNotificationUserConfig
 from rcon.user_config.real_vip import RealVipUserConfig

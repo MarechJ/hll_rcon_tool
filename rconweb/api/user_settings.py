@@ -3,14 +3,14 @@ from copy import copy
 from logging import getLogger
 from typing import Any, Type
 
-import discord
 import pydantic
 from django.contrib.auth.decorators import permission_required
 from django.http import JsonResponse, QueryDict
 from django.views.decorators.csrf import csrf_exempt
 
-from rcon.rcon_discord import send_to_discord_audit
-from rcon.typedefs import InvalidLogTypeError
+import discord
+from rcon.discord import send_to_discord_audit
+from rcon.types import InvalidLogTypeError
 from rcon.user_config.auto_broadcast import AutoBroadcastUserConfig
 from rcon.user_config.auto_kick import AutoVoteKickUserConfig
 from rcon.user_config.auto_mod_level import AutoModLevelUserConfig

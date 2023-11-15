@@ -5,7 +5,7 @@ from pytest import fixture
 
 from rcon.automods.models import PunishPlayer, PunishStepState, WatchStatus
 from rcon.automods.no_solotank import NoSoloTankAutomod
-from rcon.typedefs import GameState
+from rcon.types import GameState
 from rcon.user_config.auto_mod_solo_tank import AutoModNoSoloTankUserConfig
 
 

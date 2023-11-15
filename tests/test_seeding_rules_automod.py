@@ -15,7 +15,7 @@ from rcon.automods.models import (
     WatchStatus,
 )
 from rcon.automods.seeding_rules import SeedingRulesAutomod
-from rcon.typedefs import GameState, StructuredLogLineType
+from rcon.types import GameState, StructuredLogLineType
 from rcon.user_config.auto_mod_seeding import (
     AutoModSeedingUserConfig,
     DisallowedRoles,

@@ -19,7 +19,7 @@ from sentry_sdk import configure_scope
 from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
 
-from rcon.rcon_ import Rcon
+from rcon.rcon import Rcon
 from rcon.settings import SERVER_INFO
 
 try:

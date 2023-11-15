@@ -18,7 +18,7 @@ from rcon.cache_utils import RedisCached, get_redis_pool, invalidates
 from rcon.discord_chat import get_handler
 from rcon.game_logs import LogLoop, load_generic_hooks
 from rcon.models import enter_session, install_unaccent
-from rcon.rcon_ import Rcon
+from rcon.rcon import Rcon
 from rcon.scoreboard import live_stats_loop
 from rcon.server_stats import (
     save_server_stats_for_last_hours,

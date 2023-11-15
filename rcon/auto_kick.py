@@ -3,11 +3,11 @@ import re
 
 from pydantic import HttpUrl
 
+from rcon.discord import send_to_discord_audit
 from rcon.game_logs import on_connected
 from rcon.hooks import inject_player_ids
 from rcon.player_history import get_player_profile, player_has_flag
-from rcon.rcon_ import Rcon
-from rcon.rcon_discord import send_to_discord_audit
+from rcon.rcon import Rcon
 from rcon.settings import SERVER_INFO
 from rcon.user_config.name_kicks import NameKickUserConfig
 

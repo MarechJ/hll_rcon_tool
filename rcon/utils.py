@@ -8,7 +8,7 @@ from typing import Any, Generic, TypeVar
 import redis
 
 from rcon.cache_utils import get_redis_pool
-from rcon.typedefs import MapInfo
+from rcon.types import MapInfo
 
 logger = logging.getLogger("rcon")
 
