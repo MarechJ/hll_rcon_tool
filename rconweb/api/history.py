@@ -30,6 +30,27 @@ logger = logging.getLogger("rconweb")
 
 @csrf_exempt
 @stats_login_required
+def get_previous_map(request):
+    command_name = "get_previous_map"
+    try:
+        prev_map = MapsHistory()[-1]
+        res = {
+            "name": prev_map['name'],
+            "start": datetime.datetime.fromtimestamp(prev_map['start']).isoformat() if prev_map['start'] else None,
+            "end": datetime.datetime.fromtimestamp(prev_map['end']).isoformat() if prev_map['end'] else None,
+        }
+
+        return api_response(result=res, command=command_name, failed=False)
+    except IndexError:
+        return api_response(result=None,command=command_name, failed=False)
+    except Exception as e:
+        logger.exception(e)
+        return api_response(result=None, command=command_name, failed=True, error=str(e))
+
+
+
+@csrf_exempt
+@stats_login_required
 def get_map_history(request):
     data = _get_data(request)
     res = MapsHistory()[:]

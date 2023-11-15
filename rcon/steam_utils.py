@@ -44,15 +44,15 @@ def get_steam_profiles(steam_ids):
             "response"
         ]["players"]
     except steam.exceptions.SteamError as e:
-        logger.exception(e)
+        logger.error(e)
         return None
     except AttributeError:
         logger.error("STEAM_API_KEY is invalid, can't fetch steam profile")
         return None
     except IndexError:
-        logger.exception("Steam: no player found")
+        logger.error("Steam: no player found")
     except:
-        logging.exception("Unexpected error while fetching steam profile")
+        logger.error("Unexpected error while fetching steam profile")
         return None
 
 
@@ -94,16 +94,16 @@ def get_player_bans(steamd_id) -> SteamBansType | None:
         api = WebAPI(key=steam_key)
         bans = api.ISteamUser.GetPlayerBans(steamids=steamd_id)["players"][0]
     except steam.exceptions.SteamError as e:
-        logger.exception(e)
+        logger.error(e)
         return None
     except AttributeError:
         logger.error("STEAM_API_KEY is invalid, can't fetch steam profile")
         return None
     except IndexError:
-        logger.exception("Steam no player found")
+        logger.error("Steam no player found")
         return None
     except:
-        logging.exception("Unexpected error while fetching steam bans")
+        logger.error("Unexpected error while fetching steam bans")
         return None
 
     if not bans:
@@ -122,16 +122,16 @@ def get_players_ban(steamd_ids: List):
         api = WebAPI(key=steam_key)
         bans = api.ISteamUser.GetPlayerBans(steamids=",".join(steamd_ids))["players"]
     except steam.exceptions.SteamError as e:
-        logger.exception(e)
+        logger.error(e)
         return None
     except AttributeError:
         logger.error("STEAM_API_KEY is invalid, can't fetch steam profile")
         return None
     except IndexError:
-        logger.exception("Steam no player found")
+        logger.error("Steam no player found")
         return None
     except:
-        logging.exception("Unexpected error while fetching steam bans")
+        logger.error("Unexpected error while fetching steam bans")
         return None
 
     return bans
@@ -205,6 +205,9 @@ def enrich_db_users(chunk_size=100, update_from_days_old=30):
         pages = math.ceil(query.count() / chunk_size)
         for page in range(pages):
             by_ids = {p.steam_id_64: p for p in query.limit(chunk_size).all()}
+            if not by_ids:
+                logger.warning("Empty query results")
+                continue
             profiles = get_steam_profiles(list(by_ids.keys()))
             logger.info(
                 "Updating steam profiles page %s of %s - result count (query) %s - result count (steam) %s",
@@ -213,9 +216,6 @@ def enrich_db_users(chunk_size=100, update_from_days_old=30):
                 len(by_ids),
                 len(profiles),
             )
-            if not by_ids:
-                logger.warning("Empty query results")
-                continue
             for p in profiles:
                 player = by_ids.get(p["steamid"])
                 if not player:

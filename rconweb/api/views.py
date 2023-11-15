@@ -700,7 +700,7 @@ def run_raw_command(request):
         res = 'Parameter "command" must not be none'
     else:
         try:
-            res = ctl._request(command, can_fail=True, log_info=True)
+            res = ctl._str_request(command, can_fail=True, log_info=True)
         except CommandFailedError:
             res = "Command returned FAIL"
         except:
@@ -798,7 +798,6 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     ctl.get_detailed_players: "api.can_view_detailed_players",
     ctl.get_team_view: "api.can_view_team_view",
     ctl.get_temp_bans: "api.can_view_temp_bans",
-    ctl.get_timed_logs: "api.can_view_timed_logs",
     ctl.get_vip_ids: "api.can_view_vip_ids",
     ctl.get_vip_slots_num: "api.can_view_vip_slots",
     ctl.get_vips_count: "api.can_view_vip_count",
@@ -810,7 +809,7 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     ctl.set_broadcast: "api.can_change_broadcast_message",
     ctl.set_idle_autokick_time: "api.can_change_idle_autokick_time",
     ctl.set_map_shuffle_enabled: "api.can_change_map_shuffle_enabled",
-    ctl.set_map:  "api.can_change_current_map",
+    ctl.set_map: "api.can_change_current_map",
     ctl.set_maprotation: {
         "api.can_add_map_to_rotation",
         "api.can_remove_map_from_rotation",

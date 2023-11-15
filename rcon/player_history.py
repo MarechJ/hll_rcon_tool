@@ -6,7 +6,7 @@ import unicodedata
 from functools import cmp_to_key
 
 from sqlalchemy import func
-from sqlalchemy.orm import contains_eager, defaultload
+from sqlalchemy.orm import contains_eager, selectinload
 from sqlalchemy.sql.functions import ReturnTypeFromArgs
 
 from rcon.commands import CommandFailedError
@@ -58,37 +58,33 @@ def get_player_profile(steam_id_64, nb_sessions):
 
 
 def get_player_profile_by_ids(sess, ids):
-    eager_load = [
-        PlayerSteamID.names,
-        PlayerSteamID.received_actions,
-        PlayerSteamID.blacklist,
-        PlayerSteamID.flags,
-        PlayerSteamID.watchlist,
-        PlayerSteamID.steaminfo,
-    ]
-
     return (
         sess.query(PlayerSteamID)
         .filter(PlayerSteamID.id.in_(ids))
-        .options(defaultload(*eager_load))
+        .options(
+            selectinload(PlayerSteamID.names),
+            selectinload(PlayerSteamID.received_actions),
+            selectinload(PlayerSteamID.blacklist),
+            selectinload(PlayerSteamID.flags),
+            selectinload(PlayerSteamID.watchlist),
+            selectinload(PlayerSteamID.steaminfo),
+        )
         .all()
     )
 
 
 def get_player_profile_by_steam_ids(sess, steam_ids):
-    eager_load = [
-        PlayerSteamID.names,
-        PlayerSteamID.received_actions,
-        PlayerSteamID.blacklist,
-        PlayerSteamID.flags,
-        PlayerSteamID.watchlist,
-        PlayerSteamID.steaminfo,
-    ]
-
     return (
         sess.query(PlayerSteamID)
         .filter(PlayerSteamID.steam_id_64.in_(steam_ids))
-        .options(defaultload(*eager_load))
+        .options(
+            selectinload(PlayerSteamID.names),
+            selectinload(PlayerSteamID.received_actions),
+            selectinload(PlayerSteamID.blacklist),
+            selectinload(PlayerSteamID.flags),
+            selectinload(PlayerSteamID.watchlist),
+            selectinload(PlayerSteamID.steaminfo),
+        )
         .all()
     )
 

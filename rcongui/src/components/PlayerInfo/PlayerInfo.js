@@ -98,7 +98,7 @@ const Punishment = ({ punishments }) => {
       label: "Time",
       options: {
         customBodyRenderLite: (dataIndex) =>
-          moment(punishments[dataIndex].time).format("ddd Do MMM HH:mm:ss"),
+          moment.utc(punishments[dataIndex].time).local().format("ddd Do MMM HH:mm:ss"),
       },
     },
   ];

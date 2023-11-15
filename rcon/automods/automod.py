@@ -131,7 +131,7 @@ def _do_punitions(
 
 def do_punitions(rcon: Rcon, punitions_to_apply: PunitionsToApply):
     if punitions_to_apply:
-        logger.info(
+        logger.debug(
             "Automod will apply the following punitions %s",
             repr(punitions_to_apply),
         )

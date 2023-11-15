@@ -2,6 +2,42 @@ import datetime
 from typing import List, Optional, TypedDict
 
 
+class PlayerIdsType(TypedDict):
+    name: str
+
+
+class AdminType(TypedDict):
+    steam_id_64: str
+    name: str
+    role: str
+
+
+class StatusType(TypedDict):
+    name: str
+    map: str
+    nb_players: str
+    short_name: str
+    player_count: str
+    server_number: int
+
+
+class VipIdType(TypedDict):
+    steam_id_64: str
+    name: str
+    vip_expiration: datetime.datetime | None
+
+
+class GameServerBanType(TypedDict):
+    type: str
+    name: str | None
+    steam_id_64: str | None
+    timestamp: datetime.datetime | None
+    ban_time: str | None
+    reason: str | None
+    by: str | None
+    raw: str
+
+
 class SteamBansType(TypedDict):
     CommunityBanned: bool
     VACBanned: bool
@@ -68,14 +104,15 @@ class DBLogLineType(TypedDict):
     raw: str
     content: str
     server: str
-    weapon: str
+    weapon: Optional[str]
 
 
 class PlayerStatsType(TypedDict):
     id: int
-    player_id: str
+    player_id: int
+    steam_id_64: str
     player: Optional[str]
-    steaminfo: SteamInfoType
+    steaminfo: Optional[SteamInfoType]
     map_id: int
     kills: Optional[int]
     kills_streak: Optional[int]
@@ -122,7 +159,7 @@ class MapInfo(TypedDict):
 class MapsType(TypedDict):
     id: int
     creation_time: datetime.datetime
-    star: datetime.datetime
+    start: datetime.datetime
     end: Optional[datetime.datetime]
     server_number: Optional[int]
     map_name: str
@@ -148,7 +185,7 @@ class ServerCountType(TypedDict):
     minute: datetime.datetime
     count: int
     players: List[PlayerAtCountType]
-    map: MapsType
+    map: str
     vip_count: int
 
 
@@ -192,6 +229,7 @@ class WatchListType(TypedDict):
     count: int
 
 
+# TODO: Remove? Not used anywhere
 class UserConfigType(TypedDict):
     key: str
     value: str
@@ -202,7 +240,7 @@ class PlayerProfileType(TypedDict):
     steam_id_64: str
     created: datetime.datetime
     names: List[PlayerNameType]
-    session: List[PlayerSessionType]
+    sessions: List[PlayerSessionType]
     sessions_count: int
     total_playtime_seconds: int
     current_playtime_seconds: int
@@ -223,6 +261,9 @@ class GetPlayersType(TypedDict):
 
 class GetDetailedPlayer(TypedDict):
     name: str
+    steam_id_64: str
+    profile: PlayerProfileType | None
+    is_vip: bool
     unit_id: Optional[int]
     unit_name: Optional[str]
     loadout: Optional[str]
@@ -244,7 +285,7 @@ class GetDetailedPlayers(TypedDict):
 
 class EnrichedGetPlayersType(GetPlayersType):
     is_vip: bool
-    profile: PlayerProfileType
+    profile: PlayerProfileType | None
 
 
 class StructuredLogLineType(TypedDict):
@@ -287,6 +328,7 @@ class GameState(TypedDict):
     num_axis_players: int
     allied_score: int
     axis_score: int
+    raw_time_remaining: str
     time_remaining: datetime.timedelta
     current_map: str
     next_map: str

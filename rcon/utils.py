@@ -2,7 +2,7 @@ import orjson
 import logging
 import os
 import secrets
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Generic, TypeVar, Any, Iterable
 
 import redis
@@ -12,6 +12,15 @@ from rcon.cache_utils import get_redis_pool
 from rcon.types import MapInfo
 
 logger = logging.getLogger("rcon")
+
+INDEFINITE_VIP_DATE = datetime(
+    year=3000,
+    month=1,
+    day=1,
+    tzinfo=timezone.utc,
+)
+
+UNKNOWN_MAP_NAME = "unknown"
 
 ALL_MAPS = (
     "carentan_offensive_ger",

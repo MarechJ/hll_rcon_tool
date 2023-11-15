@@ -34,6 +34,7 @@ import {
   ListItemAvatar,
 } from "@material-ui/core";
 import makeSteamProfileUrl from "../../utils/makeSteamProfileUrl";
+import moment from "moment";
 
 const zeroPad = (num, places) => String(num).padStart(places, "0");
 
@@ -169,7 +170,7 @@ const Flag = ({ data, onDeleteFlag }) => (
 );
 
 const formatPunitions = (profile) => {
-  const formatTime = (item) => item.get("time");
+  const formatTime = (item) => moment.utc(item.get("time")).local().format("ddd Do MMM HH:mm:ss");
   return profile
     .get("received_actions", [])
     .map((item) => (

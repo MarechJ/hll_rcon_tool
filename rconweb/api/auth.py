@@ -7,6 +7,7 @@ from typing import Any
 
 from channels.db import database_sync_to_async
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.models import Permission
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import User
@@ -273,3 +274,22 @@ def get_ingame_mods(request):
         result=ingame_mods(),
         failed=False,
     )
+
+@csrf_exempt
+@login_required()
+def get_own_user_permissions(request):
+    command_name = "get_own_user_permissions"
+
+    permissions = Permission.objects.filter(user=request.user)
+    trimmed_permissions = [
+        {
+            "permission": p['codename'],
+            "description": p['name'],
+        }
+        for p in permissions.values()
+    ]
+
+    return api_response(command=command_name, result={
+        "permissions": trimmed_permissions,
+        "is_superuser": request.user.is_superuser,
+        }, failed=False)
