@@ -353,6 +353,11 @@ def run():
 
         try:
             public_info = requests.get(config.info_url, verify=False).json()["result"]
+        except requests.exceptions.JSONDecodeError as e:
+            logger.error(
+                f"Bad result (invalid JSON) from {config.info_url}, check your CRCON backend status"
+            )
+            sys.exit(-1)
         except ConnectionError as e:
             logger.error(f"Error accessing {config.info_url}")
             raise
@@ -377,7 +382,16 @@ def run():
 
         while True:
             config = ScorebotUserConfig.load_from_db()
-            public_info = requests.get(config.info_url, verify=False).json()["result"]
+            try:
+                public_info = requests.get(config.info_url, verify=False).json()[
+                    "result"
+                ]
+            except requests.exceptions.JSONDecodeError:
+                logger.error(
+                    f"Bad result from (invalid JSON) {config.info_url}, check your CRCON backend status"
+                )
+                sys.exit(-1)
+
             stats = get_stats(config.stats_url)
 
             for webhook in webhooks:
