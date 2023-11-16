@@ -318,7 +318,6 @@ class Migration(migrations.Migration):
                         "Can view get_team_view endpoint (detailed player info by team for all connected players)",
                     ),
                     ("can_view_temp_bans", "Can view temporary banned players"),
-                    ("can_view_timed_logs", "Can view the get_timed_logs endpoint"),
                     ("can_view_vip_count", "Can view the number of connected VIPs"),
                     (
                         "can_view_vip_ids",
