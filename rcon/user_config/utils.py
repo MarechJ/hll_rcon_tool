@@ -98,7 +98,9 @@ class BaseUserConfig(pydantic.BaseModel):
                 else:
                     raise
         else:
-            logger.warning(f"{cls.KEY()} not found, returning defaults")
+            logger.warning(f"{cls.KEY()} not found, creating defaults")
+            conf = cls()
+            set_user_config(conf.KEY(), conf.model_dump())
 
         return cls()
 
