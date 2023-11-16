@@ -100,7 +100,11 @@ def get_map_scoreboard(request):
         failed = True
 
     return api_response(
-        result=game, error=error, failed=failed, command="get_map_scoreboard"
+        result=game,
+        arguments=data,
+        error=error,
+        failed=failed,
+        command="get_map_scoreboard",
     )
 
 
