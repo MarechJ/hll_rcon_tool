@@ -337,9 +337,8 @@ def run():
         # TODO handle invalid message id
 
         webhooks = [
-            discord.Webhook.from_url(
+            discord.SyncWebhook.from_url(
                 webhook_url,
-                adapter=discord.RequestsWebhookAdapter(),
             )
             for webhook_url in config.webhook_urls
         ]
