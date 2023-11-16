@@ -118,7 +118,7 @@ def get_map_image(server_info, config: ScorebotUserConfig):
         base_map_name = base_map_name + "_night"
 
     img = map_to_pict.get(base_map_name, UNKNOWN_MAP_NAME)
-    url = urljoin(str(config.base_api_url), img)
+    url = urljoin(str(config.base_scoreboard_url), img)
     return url
 
 
