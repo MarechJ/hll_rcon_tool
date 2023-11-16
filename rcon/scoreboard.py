@@ -86,7 +86,7 @@ class BaseStats:
 
     def _process_death_time(self, log_time, stats, save_spawn=True):
         if not isinstance(stats["last_spawn"], datetime.datetime):
-            logger.error("Unkown last spawn")
+            logger.warning("Unknown last spawn")
             stats["last_spawn"] = log_time
             return
 
