@@ -536,7 +536,7 @@ class PlayerStats(Base):
             "steam_id_64": self.steam_id_64.steam_id_64,
             "player": self.name,
             "steaminfo": self.steam_id_64.steaminfo.to_dict()
-            if self.steam_id_64
+            if self.steam_id_64 and self.steam_id_64.steaminfo
             else None,
             "map_id": self.map_id,
             "kills": self.kills,
