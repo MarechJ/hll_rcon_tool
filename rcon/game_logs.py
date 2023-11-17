@@ -195,16 +195,23 @@ class LogStream:
             time.sleep(loop_frequency_secs)
             logs = self.rcon.get_structured_logs(since_min_ago=since_min)["logs"]
 
-    def logs_since(self, last_seen: StreamID | None = None, block_ms=500):
+    def logs_since(
+        self, last_seen: StreamID | None = None, block_ms=500
+    ) -> list[tuple[StreamID, StructuredLogLineWithMetaData]]:
         """Return a list of logs more recent than the last_seen ID"""
         try:
             if last_seen is None:
-                logs = [self.log_stream.head()]
+                logs: list[tuple[StreamID, StructuredLogLineWithMetaData]] = [
+                    self.log_stream.head()
+                ]
             else:
-                logs = self.log_stream.read(last_id=last_seen, block_ms=block_ms)
+                logs: list[
+                    tuple[StreamID, StructuredLogLineWithMetaData]
+                ] = self.log_stream.read(last_id=last_seen, block_ms=block_ms)
             return logs
         except StreamNoElements:
-            return []
+            response: list[tuple[StreamID, StructuredLogLineWithMetaData]] = []
+            return response
 
 
 class LogLoop:

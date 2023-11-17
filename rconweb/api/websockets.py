@@ -1,20 +1,20 @@
 from django.urls import path
-from rcon.game_logs import LogStream
+from rcon.game_logs import LogStream, is_action
 from rcon.utils import StreamInvalidID, StreamID
-from typing import TypedDict
+from typing import TypedDict, Generator
 import asyncio
 
 
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from logging import getLogger
-from rcon.types import StructuredLogLineWithMetaData
+from rcon.types import StructuredLogLineWithMetaData, AllLogTypes
 
 logger = getLogger(__name__)
 
 
 class LogStreamObject(TypedDict):
     id: StreamID
-    logs: list[StructuredLogLineWithMetaData]
+    log: list[StructuredLogLineWithMetaData]
 
 
 class LogStreamResponse(TypedDict):
@@ -33,28 +33,50 @@ class LogStreamConsumer(AsyncJsonWebsocketConsumer):
         await super().websocket_connect(*args, **kwargs)
 
     async def websocket_disconnect(self, *args, **kwargs):
-        self.conencted = False
+        self.connected = False
         await super().websocket_disconnect(*args, **kwargs)
 
     async def receive_json(self, content, **kwargs):
         last_seen: StreamID = content.get("last_seen_id")
+        raw_actions: list[str] | None = content.get("actions")
+
+        actions_filter: list[AllLogTypes]
+        if raw_actions:
+            actions_filter = [AllLogTypes(v.upper()) for v in raw_actions]
+        else:
+            actions_filter = []
+
+        send_all = False
+        if len(actions_filter) == 0:
+            send_all = True
+
+        def batch_logs(
+            logs: list[LogStreamObject], size=25
+        ) -> Generator[list[LogStreamObject], None, None]:
+            size = max(size, 1)
+            return (logs[i : i + size] for i in range(0, len(logs), size))
+
         log_stream = LogStream()
         while self.connected:
             try:
                 logs = log_stream.logs_since(last_seen=last_seen)
-                json_logs = []
-                for id_, log in logs:
-                    json_logs.append({"id": id_, "logs": log})
-                    last_seen = id_
+                json_logs: list[LogStreamObject] = []
+                if logs:
+                    for id_, log in logs:
+                        last_seen = id_
+                        if send_all or is_action(
+                            actions_filter, log["action"], exact_match=False
+                        ):
+                            json_logs.append({"id": id_, "log": log})
 
-                if json_logs:
-                    response: LogStreamResponse = {
-                        "last_seen_id": last_seen,
-                        "logs": json_logs,
-                        "error": None,
-                    }
-
-                    await self.send_json(response)
+                    if json_logs:
+                        for batch in batch_logs(json_logs):
+                            response: LogStreamResponse = {
+                                "last_seen_id": batch[-1]["id"],
+                                "logs": batch,
+                                "error": None,
+                            }
+                            await self.send_json(response)
 
             except StreamInvalidID as e:
                 response: LogStreamResponse = {
@@ -65,7 +87,7 @@ class LogStreamConsumer(AsyncJsonWebsocketConsumer):
                 }
                 await self.send_json(response)
                 raise
-            await asyncio.sleep(0.5)
+            await asyncio.sleep(0.3)
 
     async def send_json(self, content, close=False):
         return await super().send_json(content, close)

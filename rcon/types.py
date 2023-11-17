@@ -1,5 +1,6 @@
 import datetime
 from typing import List, Optional, TypedDict
+import enum
 
 
 class PlayerIdsType(TypedDict):
@@ -344,3 +345,35 @@ class VACGameBansConfigType(TypedDict):
 class VipId(TypedDict):
     steam_id_64: str
     name: str
+
+
+# TODO: this will come in from UI settings
+# Have to inherit from str to allow for JSON serialization w/ pydantic
+class AllLogTypes(str, enum.Enum):
+    admin_banned = "ADMIN BANNED"
+    admin_kicked = "ADMIN KICKED"
+    camera = "CAMERA"
+    chat = "CHAT"
+    allies_chat = "CHAT[Allies]"
+    allies_team_chat = "CHAT[Allies][Team]"
+    allies_unit_chat = "CHAT[Allies][Unit]"
+    cxis_chat = "CHAT[Axis]"
+    axis_team_chat = "CHAT[Axis][Team]"
+    axis_unit_chat = "CHAT[Axis][Unit]"
+    connected = "CONNECTED"
+    disconnected = "DISCONNECTED"
+    kill = "KILL"
+    match = "MATCH"
+    match_start = "MATCH START"
+    match_end = "MATCH ENDED"
+    team_kill = "TEAM KILL"
+    team_switch = "TEAMSWITCH"
+    # Automatic kicks for team kills
+    # tk= "TK",
+    tk_auto = "TK AUTO"
+    tk_auto_banned = "TK AUTO BANNED"
+    tk_auto_kicked = "TK AUTO KICKED"
+    # Vote kicks
+    vote = "VOTE"
+    vote_started = "VOTE STARTED"
+    vote_completed = "VOTE COMPLETED"

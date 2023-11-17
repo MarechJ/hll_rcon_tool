@@ -4,6 +4,7 @@ import logging
 from dataclasses import asdict, dataclass
 from functools import wraps
 from typing import Any
+from django.contrib.auth.decorators import permission_required
 
 from channels.db import database_sync_to_async
 from django.contrib.auth import authenticate, login, logout
@@ -20,7 +21,7 @@ from rcon.audit import heartbeat, ingame_mods, online_mods, set_registered_mods
 from rcon.cache_utils import ttl_cache
 from rcon.config import get_config
 from rconweb.settings import SECRET_KEY
-
+from channels.security.websocket import WebsocketDenier
 from .models import DjangoAPIKey, SteamPlayer
 
 logger = logging.getLogger("rconweb")
@@ -45,11 +46,17 @@ def get_user(api_key) -> User:
     return user.user
 
 
+@database_sync_to_async
+def has_perm(scope) -> bool:
+    return scope["user"].has_perm(("api.can_view_structured_logs"))
+
+
 class APITokenAuthMiddleware:
     def __init__(self, app) -> None:
         self.app = app
 
     async def __call__(self, scope, receive, send):
+        ENDPOINT = "/ws/logs"
         headers = dict(scope["headers"])
         headers = {k.decode(): v.decode() for k, v in headers.items()}
         try:
@@ -60,8 +67,8 @@ class APITokenAuthMiddleware:
                 raw_api_key = None
         except (KeyError, ValueError):
             raw_api_key = None
+            logger.info(f"Couldn't parse API key {raw_api_key=}")
 
-        # TODO: There is a better way to handle not finding a user
         try:
             # If we don't include the salt, the hasher generates its own
             # and it will generate different hashed values every time
@@ -72,6 +79,18 @@ class APITokenAuthMiddleware:
             scope["user"] = await get_user(hashed_api_key)
         except DjangoAPIKey.DoesNotExist:
             scope["user"] = None
+            logger.info(
+                "API key not associated with a user, denying connection to %s", ENDPOINT
+            )
+            denier = WebsocketDenier()
+            return await denier(scope, receive, send)
+
+        if not await has_perm(scope):
+            logger.warning(
+                "User %s does not have permission to view %s", scope["user"], ENDPOINT
+            )
+            denier = WebsocketDenier()
+            return await denier(scope, receive, send)
 
         return await self.app(scope, receive, send)
 
@@ -275,6 +294,7 @@ def get_ingame_mods(request):
         failed=False,
     )
 
+
 @csrf_exempt
 @login_required()
 def get_own_user_permissions(request):
@@ -283,13 +303,17 @@ def get_own_user_permissions(request):
     permissions = Permission.objects.filter(user=request.user)
     trimmed_permissions = [
         {
-            "permission": p['codename'],
-            "description": p['name'],
+            "permission": p["codename"],
+            "description": p["name"],
         }
         for p in permissions.values()
     ]
 
-    return api_response(command=command_name, result={
-        "permissions": trimmed_permissions,
-        "is_superuser": request.user.is_superuser,
-        }, failed=False)
+    return api_response(
+        command=command_name,
+        result={
+            "permissions": trimmed_permissions,
+            "is_superuser": request.user.is_superuser,
+        },
+        failed=False,
+    )
