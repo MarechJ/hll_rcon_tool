@@ -1,5 +1,19 @@
 import datetime
 from typing import List, Optional, TypedDict
+from dataclasses import dataclass
+
+
+@dataclass
+class MostRecentEvents:
+    player_name: str | None = None
+    last_victim: str | None = None
+    last_nemesis: str | None = None
+    last_victim_weapon: str | None = None
+    last_nemesis_weapon: str | None = None
+    last_tk_victim: str | None = None
+    last_tk_victim_weapon: str | None = None
+    last_tk_nemesis: str | None = None
+    last_tk_nemesis_weapon: str | None = None
 
 
 class SteamBansType(TypedDict):
