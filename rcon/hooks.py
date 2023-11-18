@@ -76,7 +76,7 @@ def send_info(rcon: Rcon, struct_log: StructuredLogLineType):
         rcon.do_message_player(
             steam_id_64=struct_log["steam_id_64_1"], message=replymessage
         )
-    # !vip (displays VIP status and expiration date if VIP)
+    # !myvip (displays VIP status and expiration date if VIP)
     elif chatentry.startswith("!myvip"):
         player_steam_id_64 = int(struct_log["steam_id_64_1"])
         vips_ids = rcon.get_vip_ids()
