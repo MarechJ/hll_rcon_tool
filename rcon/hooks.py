@@ -59,13 +59,59 @@ def count_vote(rcon: Rcon, struct_log: StructuredLogLineType):
 
 @on_chat
 def send_info(rcon: Rcon, struct_log: StructuredLogLineType):
-    message = struct_log.get("sub_content", "").strip()
-    trigger_words = get_config()["TRIGGER_WORDS"]
-    for word, output in trigger_words.items():
-        if message.startswith(word):
-            rcon.do_message_player(
-                steam_id_64=struct_log["steam_id_64_1"], message=output
-            )
+    chatentry = struct_log.get("sub_content", "").strip()
+    # !commands (displays a list of all available commands)
+    if chatentry.startswith("!commands"):
+        replymessage = (
+            "Available commands:\n\n"
+            "!myvip : your VIP status\n"
+            "!killer : your last killer\n"
+            "!victim : your last victim"
+        )
+        votemap_enabled = VoteMap().handle_vote_command(
+            rcon=rcon, struct_log=struct_log
+        )
+        if votemap_enabled:
+            replymessage = replymessage + "\n!vm help : votemap help"
+        rcon.do_message_player(
+            steam_id_64=struct_log["steam_id_64_1"], message=replymessage
+        )
+    # !vip (displays VIP status and expiration date if VIP)
+    elif chatentry.startswith("!myvip"):
+        player_steam_id_64 = int(struct_log["steam_id_64_1"])
+        vips_ids = rcon.get_vip_ids()
+        for player in vips_ids:
+            if player["steam_id_64"] == struct_log["steam_id_64_1"]:
+                expiration_datetime: datetime | None = player["vip_expiration"]
+                expiration_str = expiration_datetime.strftime("%m/%d/%Y, %Hh%M")
+                replymessage = "VIP found !\n\nExpiration:\n" + expiration_str
+                break
+            else:
+                replymessage = "You're not VIP\non this server."
+        rcon.do_message_player(
+            steam_id_64=struct_log["steam_id_64_1"], message=replymessage
+        )
+    # !killer (displays the pseudo of the last player who killed me)
+    elif chatentry.startswith("!killer"):
+        replymessage = "TODO : killer's pseudo (+ weapon ?)"
+        rcon.do_message_player(
+            steam_id_64=struct_log["steam_id_64_1"], message=replymessage
+        )
+    # !victim (displays the pseudo of the last player that I've killed)
+    elif chatentry.startswith("!victim"):
+        replymessage = "TODO : victim's pseudo"
+        rcon.do_message_player(
+            steam_id_64=struct_log["steam_id_64_1"], message=replymessage
+        )
+    # command isn't hardcoded : using custom trigger words as set in config
+    else:
+        trigger_words = get_config()["TRIGGER_WORDS"]
+        for word, output in trigger_words.items():
+            if chatentry.startswith(word):
+                replymessage = output
+                rcon.do_message_player(
+                    steam_id_64=struct_log["steam_id_64_1"], message=replymessage
+                )
 
 
 def initialise_vote_map(rcon: Rcon, struct_log):
