@@ -133,7 +133,7 @@ def send_info(rcon: Rcon, struct_log: StructuredLogLineType):
             steam_id_64=struct_log["steam_id_64_1"],
             message=replymessage
         )
-    # command isn't hardcoded : using custom trigger words as set in config
+    # Not an hardcoded command : checking custom trigger words as set in config
     else:
         trigger_words = get_config()["TRIGGER_WORDS"]
         for word, output in trigger_words.items():
