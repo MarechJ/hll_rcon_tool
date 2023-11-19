@@ -102,8 +102,8 @@ def send_info(rcon: Rcon, struct_log: StructuredLogLineType):
         if my_events.last_victim is not None:
             replymessage = (
                 replymessage
-                + my_events.last_victim
-                + "\n with :"
+                + my_events.player_name
+                + "\n with :\n"
                 + my_events.last_victim_weapon
             )
         else:
@@ -118,8 +118,8 @@ def send_info(rcon: Rcon, struct_log: StructuredLogLineType):
         if my_events.last_nemesis is not None:
             replymessage = (
                 replymessage
-                + my_events.last_nemesis
-                + "\n with :"
+                + my_events.player_name
+                + "\n with :\n"
                 + my_events.last_nemesis_weapon
             )
         else:
