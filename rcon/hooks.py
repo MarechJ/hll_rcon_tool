@@ -86,7 +86,7 @@ def send_info(rcon: Rcon, struct_log: StructuredLogLineType):
                 if expiration_datetime == INDEFINITE_VIP_DATE:
                     expiration_str = "never (unlimited)"
                 else:
-                    expiration_str = expiration_datetime.strftime("%m/%d/%Y, %Hh%M")
+                    expiration_str = expiration_datetime.strftime("%d/%m/%Y, %Hh%M")
                 replymessage = "VIP found !\n\nExpiration:\n" + expiration_str
                 break
         rcon.do_message_player(
@@ -95,18 +95,37 @@ def send_info(rcon: Rcon, struct_log: StructuredLogLineType):
         )
     # !killer (displays the pseudo of the last player who killed me)
     elif chatentry.startswith("!killer"):
-        eventscache = recent_actions()
+        eventscache = recent_actions(None)
         my_events = eventscache[struct_log["steam_id_64_1"]]
+        replymessage = "Your last victim :\n"
+        if my_events.last_victim is not None:
+            replymessage = (
+                replymessage
+                + my_events.last_victim
+                + "\n with :"
+                + my_events.last_victim_weapon
+            )
+        else:
+            replymessage = (
+                replymessage
+                + "(no kill yet)"
+            )
         replymessage = (
-            "Your last victim :\n"
-            + my_events.last_victim
-            + "\n with :"
-            + my_events.last_victim_weapon
+            replymessage
             + "\n\nYour last killer :\n"
-            + my_events.last_nemesis
-            + "\n with :"
-            + my_events.last_nemesis_weapon
         )
+        if my_events.last_nemesis is not None:
+            replymessage = (
+                replymessage
+                + my_events.last_nemesis
+                + "\n with :"
+                + my_events.last_nemesis_weapon
+            )
+        else:
+            replymessage = (
+                replymessage
+                + "(no death yet)"
+            )
         rcon.do_message_player(
             steam_id_64=struct_log["steam_id_64_1"],
             message=replymessage
