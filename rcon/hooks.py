@@ -141,7 +141,6 @@ def send_info(rcon: Rcon, struct_log: StructuredLogLineType):
                     message=replymessage
                 )
 
-
 def initialise_vote_map(rcon: Rcon, struct_log):
     logger.info("New match started initializing vote map. %s", struct_log)
     try:
