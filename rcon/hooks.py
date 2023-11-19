@@ -100,9 +100,10 @@ def send_info(rcon: Rcon, struct_log: StructuredLogLineType):
         my_events = eventscache[struct_log["steam_id_64_1"]]
         replymessage = "Your last victim :\n"
         if my_events.last_victim is not None:
+            last_victim_events = eventscache[my_events.last_victim]
             replymessage = (
                 replymessage
-                + my_events.player_name
+                + last_victim_events.player_name
                 + "\n with :\n"
                 + my_events.last_victim_weapon
             )
@@ -116,9 +117,10 @@ def send_info(rcon: Rcon, struct_log: StructuredLogLineType):
             + "\n\nYour last killer :\n"
         )
         if my_events.last_nemesis is not None:
+            last_nemesis_events = eventscache[my_events.last_nemesis]
             replymessage = (
                 replymessage
-                + my_events.player_name
+                + last_nemesis_events.player_name
                 + "\n with :\n"
                 + my_events.last_nemesis_weapon
             )
