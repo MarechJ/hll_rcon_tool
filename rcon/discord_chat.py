@@ -1,25 +1,23 @@
 import logging
-import os
 import re
 from datetime import datetime
 from functools import lru_cache
+from typing import Iterable
 
-import requests
+from discord_webhook import DiscordEmbed, DiscordWebhook
 
 import discord.utils
-from discord import SyncWebhook
+from rcon.cache_utils import ttl_cache
+from rcon.discord import make_hook
 from rcon.game_logs import on_chat, on_kill, on_tk
-
-DISCORD_CHAT_WEBHOOK_URL = os.getenv("DISCORD_CHAT_WEBHOOK")
-DISCORD_KILLS_WEBHOOK_URL = os.getenv("DISCORD_KILLS_WEBHOOK")
-PING_TRIGGER_WEBHOOK = os.getenv("DISCORD_PING_TRIGGER_WEBHOOK")
-ALLOW_MENTIONS = os.getenv("DISCORD_CHAT_WEBHOOK_ALLOW_MENTIONS")
-PING_TRIGGER_WORDS = os.getenv("DISCORD_PING_TRIGGER_WORDS")
-PING_TRIGGER_ROLES = os.getenv("DISCORD_PING_TRIGGER_ROLES")
-SEND_KILLS = os.getenv("DISCORD_SEND_KILL_UPDATES")
-SEND_TEAM_KILLS = os.getenv("DISCORD_SEND_TEAM_KILL_UPDATES")
-
-SERVER_SHORT_NAME = os.getenv("SERVER_SHORT_NAME")
+from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
+from rcon.user_config.webhooks import (
+    AdminPingWebhooksUserConfig,
+    ChatWebhooksUserConfig,
+    DiscordMentionWebhook,
+    DiscordWebhook,
+    KillsWebhooksUserConfig,
+)
 
 STEAM_PROFILE_URL = "http://steamcommunity.com/profiles/{id64}"
 
@@ -50,215 +48,198 @@ def escape_string(string):
     return string
 
 
-@lru_cache
-def parse_webhook_url(url):
-    """Parse and check validity of Discord webhook URL
-    by performing a get request and checking existence
-    of 'id' and 'token' in the JSON response.
-    """
-    if not url:
-        return None, None
-    resp = requests.get(url, timeout=10).json()
-    _id = int(resp["id"])
-    token = resp["token"]
-    return _id, token
-
-
-def make_hook(webhook_url):
-    webhook_id, webhook_token = parse_webhook_url(webhook_url)
-    if not all([webhook_id, webhook_token]):
-        return None
-    return SyncWebhook.partial(id=webhook_id, token=webhook_token)
-    return Webhook.partial(
-        id=webhook_id, token=webhook_token, adapter=RequestsWebhookAdapter()
-    )
-
-
 class DiscordWebhookHandler:
     """RCON Tool -> Discord messaging."""
 
-    def __init__(self):
-        # TODO: take config as argument if modularity is desired.
-        self.ping_trigger_words = []
-        self.ping_trigger_roles = []
-        self.chat_webhook = None
-        self.kills_webhook = None
-        self.ping_trigger_webhook = None
-        self.send_kills = False
-        self.send_team_kills = False
-        self.init_env_vars()
+    def __init__(
+        self,
+        admin_wh_config: AdminPingWebhooksUserConfig | None = None,
+        chat_wh_config: ChatWebhooksUserConfig | None = None,
+        kills_wh_config: KillsWebhooksUserConfig | None = None,
+        server_settings: RconServerSettingsUserConfig | None = None,
+    ):
+        self.admin_wh_config: AdminPingWebhooksUserConfig = (
+            admin_wh_config or AdminPingWebhooksUserConfig.load_from_db()
+        )
+        self.chat_wh_config: ChatWebhooksUserConfig = (
+            chat_wh_config or ChatWebhooksUserConfig.load_from_db()
+        )
+        self.kills_wh_config: KillsWebhooksUserConfig = (
+            kills_wh_config or KillsWebhooksUserConfig.load_from_db()
+        )
+        self.server_settings: RconServerSettingsUserConfig = (
+            server_settings or RconServerSettingsUserConfig.load_from_db()
+        )
 
-    def init_env_vars(self):
-        self.init_ping_trigger_vars()
-        self.init_chat_vars()
-        self.init_kill_vars()
-
-    def init_ping_trigger_vars(self):
-        # Not checking PING_TRIGGER_WEBHOOK here on purpose
-        # because it being None is valid (see .env).
-        if not all([PING_TRIGGER_WORDS, PING_TRIGGER_ROLES]):
-            return
-
+        ping_trigger_webhooks = []
         try:
-            self.ping_trigger_words = [
-                word.lower().strip() for word in PING_TRIGGER_WORDS.split(",") if word
-            ]
-            self.ping_trigger_roles = [
-                role.strip() for role in PING_TRIGGER_ROLES.split(",") if role
-            ]
-            self.ping_trigger_webhook = make_hook(PING_TRIGGER_WEBHOOK)
-            logger.info("ping trigger variables initialized successfully")
+            ping_trigger_webhooks = self._make_hook(self.admin_wh_config.hooks)
         except Exception as e:
-            logger.exception("error initializing ping trigger variables: %s", e)
+            logger.exception("Error initializing ping trigger webhooks: %s", e)
 
-    def init_chat_vars(self):
-        if not DISCORD_CHAT_WEBHOOK_URL:
-            return
-
+        chat_webhooks = []
         try:
-            self.chat_webhook = make_hook(DISCORD_CHAT_WEBHOOK_URL)
-            logger.info("chat variables initialized successfully")
+            chat_webhooks = self._make_hook(self.chat_wh_config.hooks)
         except Exception as e:
-            logger.exception("error initializing chat variables: %s", e)
+            logger.exception("Error initializing ping trigger webhooks: %s", e)
 
-    def init_kill_vars(self):
-        if not DISCORD_KILLS_WEBHOOK_URL:
-            return
-
+        kills_webhooks = []
         try:
-            self.kills_webhook = make_hook(DISCORD_KILLS_WEBHOOK_URL)
-            self.send_kills = True if SEND_KILLS == "yes" else False
-            self.send_team_kills = True if SEND_TEAM_KILLS == "yes" else False
-            logger.info("kill variables initialized successfully")
+            kills_webhooks = self._make_hook(self.kills_wh_config.hooks)
         except Exception as e:
-            logger.exception("error initializing kill variables: %s", e)
+            logger.exception("Error initializing ping trigger webhooks: %s", e)
 
-    def send_chat_message(self, _, log):
-        if not self.ping_trigger_webhook and not self.chat_webhook:
-            return
+        self.ping_trigger_webhooks = [wh for wh in ping_trigger_webhooks if wh]
+        self.chat_webhooks = [wh for wh in chat_webhooks if wh]
+        self.kills_webhooks = [wh for wh in kills_webhooks if wh]
+
+    @staticmethod
+    def _make_hook(hooks: Iterable[DiscordWebhook] | Iterable[DiscordMentionWebhook]):
+        return [make_hook(hook.url) for hook in hooks]
+
+    def create_chat_message(self, log) -> tuple[str, DiscordEmbed, bool]:
+        message = log["sub_content"]
+
+        if not self.chat_wh_config.allow_mentions:
+            message = discord.utils.escape_mentions(message)
+        message = discord.utils.escape_markdown(message)
+
+        player = log["player"].ljust(25)
+        steam_id = log["steam_id_64_1"]
+        action = log["action"]
+        action = action.split("CHAT")[1]
+        color = CHAT_ACTION_TO_COLOR[action]
+
+        embed = DiscordEmbed(
+            description=message, color=color, timestamp=datetime.utcnow()
+        )
+        embed.set_author(
+            name=f"{player} {action}", url=STEAM_PROFILE_URL.format(id64=steam_id)
+        )
+        embed.set_footer(text=self.server_settings.short_name)
+
+        content = ""
+        triggered = False
+        if self.admin_wh_config.trigger_words:
+            msg_words = re.split("([^a-zA-Z!@])", message)
+            for trigger_word in self.admin_wh_config.trigger_words:
+                for i, msg_word in enumerate(msg_words):
+                    if trigger_word == msg_word.lower():
+                        triggered = True
+                        msg_words[i] = f"__**{msg_words[i]}**__"
+            if triggered:
+                mentions: list[str] = []
+                mentions.extend(
+                    [id_ for h in self.admin_wh_config.hooks for id_ in h.user_mentions]
+                )
+                mentions.extend(
+                    [id_ for h in self.admin_wh_config.hooks for id_ in h.role_mentions]
+                )
+                content = " ".join(mentions)
+                embed.description = "".join(msg_words)
+
+        return content, embed, triggered
+
+    def create_kill_message(self, log):
+        action = log["action"]
+        player1 = escape_string(log["player"])
+        player2 = escape_string(log["player2"])
+        id_1 = log["steam_id_64_1"]
+        killer_id_link = f"[{player1}]({STEAM_PROFILE_URL.format(id64=id_1)})"
+        id_2 = log["steam_id_64_2"]
+        victim_id_link = f"[{player2}]({STEAM_PROFILE_URL.format(id64=id_2)})"
+
+        color = KILL_ACTION_TO_COLOR[action]
+
+        # "TEAM KILL" -> "Team Killer", etc.
+        killer_field_name = f"{action.title().strip()}er"
+
+        embed = DiscordEmbed(color=color)
+        embed.add_embed_field(
+            name=killer_field_name,
+            value=killer_id_link,
+            inline=True,
+        )
+        embed.add_embed_field(
+            name="Victim",
+            value=victim_id_link,
+            inline=True,
+        )
+        embed.add_embed_field(
+            name="Weapon",
+            value=log["weapon"],
+            inline=True,
+        )
+
+        return embed
+
+    def send_chat_message(self, log):
         try:
-            message = log["sub_content"]
-
-            if ALLOW_MENTIONS != "yes":
-                message = discord.utils.escape_mentions(message)
-            message = discord.utils.escape_markdown(message)
-
-            player = log["player"].ljust(25)
-            steam_id = log["steam_id_64_1"]
-            action = log["action"]
-            action = action.split("CHAT")[1]
-            color = CHAT_ACTION_TO_COLOR[action]
-
-            embed = discord.Embed(
-                description=message, color=color, timestamp=datetime.utcnow()
-            )
-            embed.set_author(
-                name=f"{player} {action}", url=STEAM_PROFILE_URL.format(id64=steam_id)
-            )
-            embed.set_footer(text=SERVER_SHORT_NAME)
-
-            content = ""
-            triggered = False
-            if self.ping_trigger_words:
-                msg_words = re.split("([^a-zA-Z!@])", message)
-                for trigger_word in self.ping_trigger_words:
-                    for i, msg_word in enumerate(msg_words):
-                        if trigger_word == msg_word.lower():
-                            triggered = True
-                            msg_words[i] = f"__**{msg_words[i]}**__"
-                if triggered:
-                    content = " ".join(self.ping_trigger_roles)
-                    embed.description = "".join(msg_words)
+            content, embed, triggered = self.create_chat_message(log)
 
             logger.debug(
                 "sending chat message len=%s to Discord", len(embed) + len(content)
             )
 
-            # Use chat webhook for both.
-            if (
-                self.ping_trigger_webhook
-                and self.ping_trigger_webhook == self.chat_webhook
-            ) or (self.chat_webhook and not self.ping_trigger_webhook):
-                self.chat_webhook.send(content=content, embed=embed)
-            # Use separate webhooks.
-            else:
-                if self.chat_webhook:
-                    self.chat_webhook.send(embed=embed)
-                if triggered and self.ping_trigger_webhook:
-                    self.ping_trigger_webhook.send(content=content, embed=embed)
+            for wh in self.chat_webhooks:
+                wh.remove_embeds()
+                wh.add_embed(embed)
+                wh.content = content
+                wh.execute()
 
+            if triggered:
+                for wh in self.ping_trigger_webhooks:
+                    wh.remove_embeds()
+                    wh.add_embed(embed)
+                    wh.content = content
+                    wh.execute()
         except Exception as e:
             logger.exception("error executing chat message webhook: %s", e)
             raise
 
-    def send_generic_kill_message(self, _, log, action):
-        if not self.kills_webhook:
+    def send_generic_kill_message(self, log):
+        if not self.kills_webhooks:
             return
 
         try:
-            player1 = escape_string(log["player"])
-            player2 = escape_string(log["player2"])
-            id_1 = log["steam_id_64_1"]
-            killer_id_link = f"[{player1}]({STEAM_PROFILE_URL.format(id64=id_1)})"
-            id_2 = log["steam_id_64_2"]
-            victim_id_link = f"[{player2}]({STEAM_PROFILE_URL.format(id64=id_2)})"
-
-            color = KILL_ACTION_TO_COLOR[action]
-
-            # "TEAM KILL" -> "Team Killer", etc.
-            killer_field_name = f"{action.title().strip()}er"
-
-            embed = discord.Embed(color=color)
-            embed.add_field(
-                name=killer_field_name,
-                value=killer_id_link,
-                inline=True,
-            ).add_field(
-                name="Victim",
-                value=victim_id_link,
-                inline=True,
-            ).add_field(
-                name="Weapon",
-                value=log["weapon"],
-                inline=True,
-            )
-
+            embed = self.create_kill_message(log)
             logger.debug("sending kill message len=%s to Discord", len(embed))
-            self.kills_webhook.send(embed=embed)
+            for wh in self.kills_webhooks:
+                wh.remove_embeds()
+                wh.add_embed(embed)
+                wh.execute()
         except Exception as e:
             logger.exception("error executing kill message webhook %s", e)
 
-    def send_kill_message(self, _, log):
-        action = log["action"]
-        if action == "KILL" and self.send_kills:
-            self.send_generic_kill_message(_, log, action)
+    def send_kill_message(self, log):
+        if log["action"] == "KILL" and self.kills_wh_config.send_kills:
+            self.send_generic_kill_message(log)
 
-    def send_tk_message(self, _, log):
-        action = log["action"]
-        if action == "TEAM KILL" and self.send_team_kills:
-            self.send_generic_kill_message(_, log, action)
+    def send_tk_message(self, log):
+        if log["action"] == "TEAM KILL" and self.kills_wh_config.send_team_kills:
+            self.send_generic_kill_message(log)
 
 
 HANDLER = None
 
 
+@ttl_cache(5 * 60)
 def get_handler():
     global HANDLER
-    if not HANDLER:
-        HANDLER = DiscordWebhookHandler()
+    HANDLER = DiscordWebhookHandler()
     return HANDLER
 
 
 @on_chat
 def handle_on_chat(rcon, log):
-    get_handler().send_chat_message(rcon, log)
+    get_handler().send_chat_message(log)
 
 
 @on_kill
 def handle_on_kill(rcon, log):
-    get_handler().send_kill_message(rcon, log)
+    get_handler().send_kill_message(log)
 
 
 @on_tk
 def handle_on_tk(rcon, log):
-    get_handler().send_tk_message(rcon, log)
+    get_handler().send_tk_message(log)

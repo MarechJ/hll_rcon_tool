@@ -1,18 +1,17 @@
 import logging
 import os
 import re
-from concurrent.futures import ThreadPoolExecutor, as_completed, Future
+from concurrent.futures import Future, ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
 from functools import cached_property
 from time import sleep
-from typing import Iterable, Literal, Any
+from typing import Any, Iterable, Literal
 
 from dateutil import parser
 
 from rcon.cache_utils import get_redis_client, invalidates, ttl_cache
 from rcon.commands import CommandFailedError, ServerCtl, VipId
-from rcon.config import get_config
-from rcon.models import AdvancedConfigOptions, PlayerSteamID, PlayerVIP, enter_session
+from rcon.models import PlayerSteamID, PlayerVIP, enter_session
 from rcon.player_history import (
     add_player_to_blacklist,
     get_profiles,
@@ -25,25 +24,27 @@ from rcon.steam_utils import (
     get_players_have_bans,
 )
 from rcon.types import (
+    AdminType,
     EnrichedGetPlayersType,
+    GameServerBanType,
     GameState,
     GetDetailedPlayer,
     GetDetailedPlayers,
     GetPlayersType,
     ParsedLogsType,
-    StructuredLogLineType,
     PlayerIdsType,
-    StructuredLogLineWithMetaData,
-    AdminType,
-    GameServerBanType,
-    VipIdType,
     StatusType,
+    StructuredLogLineType,
+    StructuredLogLineWithMetaData,
+    VipIdType,
 )
+from rcon.user_config.rcon_connection_settings import RconConnectionSettingsUserConfig
+from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.utils import (
     ALL_ROLES,
     ALL_ROLES_KEY_INDEX_MAP,
-    get_server_number,
     INDEFINITE_VIP_DATE,
+    get_server_number,
 )
 
 STEAMID = "steam_id_64"
@@ -51,6 +52,8 @@ NAME = "name"
 ROLE = "role"
 # The base level of actions that will always show up in the Live view
 # actions filter from the call to `get_recent_logs`
+
+
 LOG_ACTIONS = [
     "DISCONNECTED",
     "CHAT[Allies]",
@@ -126,24 +129,14 @@ class Rcon(ServerCtl):
     )
 
     def __init__(self, *args, pool_size: bool | None = None, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        # config/default_config.yml config.yml, etc.
-        config = get_config()
-        try:
-            self.advanced_settings = AdvancedConfigOptions(
-                **config["ADVANCED_CRCON_SETTINGS"]
-            )
-        except ValueError as e:
-            # This might look dumb but pydantic provides useful error messages in the
-            # stack trace and we don't have to remember to keep updating this if we add
-            # any more fields to the ADVANCED_CRCON_SETTINGS config
-            logger.exception(e)
-
+        config = RconConnectionSettingsUserConfig.load_from_db()
+        super().__init__(
+            *args, **kwargs, max_open=config.max_open, max_idle=config.max_idle
+        )
         if pool_size is not None:
             self.pool_size = pool_size
         else:
-            self.pool_size = self.advanced_settings.thread_pool_size
+            self.pool_size = config.thread_pool_size
 
     @cached_property
     def thread_pool(self):
@@ -1020,6 +1013,12 @@ class Rcon(ServerCtl):
         msg: bytes = red.get("WELCOME_MESSAGE")  # type: ignore
         if msg:
             return msg.decode()
+
+        # JSON can't serialize bytes and the welcome messgae
+        # can be set to an empty string
+        if msg == b"":
+            msg = None
+
         return msg
 
     def set_welcome_message(self, msg, save=True):
@@ -1086,12 +1085,13 @@ class Rcon(ServerCtl):
 
     @ttl_cache(ttl=5, cache_falsy=False)
     def get_status(self) -> StatusType:
+        config = RconServerSettingsUserConfig.load_from_db()
         slots = self.get_slots()
         return {
             "name": self.get_name(),
             "map": self.get_map(),
             "nb_players": slots,
-            "short_name": os.getenv("SERVER_SHORT_NAME", None) or "HLL Rcon",
+            "short_name": config.short_name,
             "player_count": slots.split("/")[0],
             "server_number": int(get_server_number()),
         }

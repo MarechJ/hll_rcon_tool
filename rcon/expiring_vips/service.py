@@ -1,31 +1,22 @@
 import logging
 import time
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 
-from pydantic import BaseModel, ValidationError, conint
+from pydantic import HttpUrl
 
-from rcon.config import get_config
 from rcon.discord import send_to_discord_audit
 from rcon.models import PlayerSteamID, PlayerVIP, enter_session
 from rcon.rcon import Rcon
 from rcon.settings import SERVER_INFO
-from rcon.utils import (
-    get_server_number,
-    INDEFINITE_VIP_DATE
-)
+from rcon.user_config.expired_vips import ExpiredVipsUserConfig
+from rcon.utils import INDEFINITE_VIP_DATE, get_server_number
 
 SERVICE_NAME = "ExpiringVIPs"
 logger = logging.getLogger(__name__)
 
 
-class ExpiringVIPConfig(BaseModel):
-    enabled: bool
-    interval: conint(ge=0)
-    discord_webhook_url: str
-
-
-def remove_expired_vips(rcon_hook: Rcon, webhookurl: Optional[str] = None):
+def remove_expired_vips(rcon_hook: Rcon, webhook_url: Optional[HttpUrl] = None):
     logger.info(f"Checking for expired VIPs")
 
     count = 0
@@ -49,7 +40,17 @@ def remove_expired_vips(rcon_hook: Rcon, webhookurl: Optional[str] = None):
                 name = "No name found"
             message = f"Removing VIP from `{name}`/`{vip.steamid.steam_id_64}` expired `{vip.expiration}`"
             logger.info(message)
-            send_to_discord_audit(message, by=SERVICE_NAME, webhookurl=webhookurl)
+
+            webhookurls: list[HttpUrl | None] | None
+            if webhook_url is None:
+                webhookurls = None
+            else:
+                webhookurls = [webhook_url]
+            send_to_discord_audit(
+                message,
+                by=SERVICE_NAME,
+                webhookurls=webhookurls,
+            )
             rcon_hook.do_remove_vip(vip.steamid.steam_id_64)
 
         # Look for anyone with VIP but without a record and create one for them
@@ -63,11 +64,14 @@ def remove_expired_vips(rcon_hook: Rcon, webhookurl: Optional[str] = None):
             # so they get changed to the new fixed UTC 3000-01-01 datetime
             elif (
                 player_expiration
-                and player_expiration >= datetime.now(timezone.utc) + timedelta(days=365 * 100)
+                and player_expiration
+                >= datetime.now(timezone.utc) + timedelta(days=365 * 100)
                 and player_expiration.year < 3000
             ):
                 missing_expiration_records.append(player)
-                logger.info("Correcting old style expiration date for %s", player['steam_id_64'])
+                logger.info(
+                    "Correcting old style expiration date for %s", player["steam_id_64"]
+                )
 
         for raw_player in missing_expiration_records:
             player: PlayerSteamID = (
@@ -78,10 +82,17 @@ def remove_expired_vips(rcon_hook: Rcon, webhookurl: Optional[str] = None):
 
             if player:
                 expiration_date = INDEFINITE_VIP_DATE
-                vip_record = session.query(PlayerVIP).filter(PlayerVIP.playersteamid_id == player.id, PlayerVIP.server_number == get_server_number()).one_or_none()
+                vip_record = (
+                    session.query(PlayerVIP)
+                    .filter(
+                        PlayerVIP.playersteamid_id == player.id,
+                        PlayerVIP.server_number == get_server_number(),
+                    )
+                    .one_or_none()
+                )
 
                 if vip_record:
-                    vip_record.expiration=expiration_date
+                    vip_record.expiration = expiration_date
                 else:
                     vip_record = PlayerVIP(
                         expiration=expiration_date,
@@ -113,19 +124,12 @@ def run():
     rcon_hook = Rcon(SERVER_INFO)
 
     while True:
-        try:
-            config = get_config()
-            config = ExpiringVIPConfig(**config["REMOVE_EXPIRED_VIPS"])
-        except ValidationError as e:
-            logger.exception(
-                f"Invalid REMOVE_EXPIRED_VIPS config {str(e)} check your config/config.yml"
-            )
-            raise
+        config = ExpiredVipsUserConfig.load_from_db()
 
         if config.enabled:
             remove_expired_vips(rcon_hook, config.discord_webhook_url)
 
-        time.sleep(config.interval * 60)
+        time.sleep(config.interval_minutes * 60)
 
 
 if __name__ == "__main__":

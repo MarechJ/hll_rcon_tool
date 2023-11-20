@@ -44,11 +44,11 @@ const GroupActions = ({
   const [durationMultiplier, setDurationMultiplier] = React.useState(1);
   const [saveMessage, setSaveMessage] = React.useState(true);
   const [comment, setComment] = React.useState("");
-  const textHistory = new TextHistory("punitions");
+  const textHistory = new TextHistory("punishments");
   const nbButton = ["xs"].indexOf(width) !== -1 ? 3 : 6;
   const [sharedMessages, setSharedMessages] = React.useState([]);
   React.useEffect(() => {
-    getSharedMessages("punitions").then((data) => setSharedMessages(data));
+    getSharedMessages("punishments").then((data) => setSharedMessages(data));
   }, []);
 
   let myPlayers = new List(players);

@@ -2,9 +2,12 @@ import os
 import socket
 from logging.config import dictConfig
 
+from rcon.types import ServerInfoType
+
 # TODO: Use a config style that is not required at import time
 
-SERVER_INFO = {
+
+SERVER_INFO: ServerInfoType = {
     "host": os.getenv("HLL_HOST"),
     "port": os.getenv("HLL_PORT"),
     "password": os.getenv("HLL_PASSWORD"),

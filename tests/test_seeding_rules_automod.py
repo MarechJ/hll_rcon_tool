@@ -8,18 +8,21 @@ from _pytest.fixtures import fixture
 
 from rcon.automods.get_team_count import get_team_count
 from rcon.automods.models import (
-    AnnounceSeedingActiveConfig,
-    DisallowedRolesConfig,
-    DisallowedWeaponConfig,
     NoSeedingViolation,
     PunishDetails,
     PunishPlayer,
     PunitionsToApply,
-    SeedingRulesConfig,
-    WatchStatus, EnforceCapFightConfig,
+    WatchStatus,
 )
 from rcon.automods.seeding_rules import SeedingRulesAutomod
-from rcon.types import StructuredLogLineType, GameState
+from rcon.types import GameState, StructuredLogLineType
+from rcon.user_config.auto_mod_seeding import (
+    AutoModSeedingUserConfig,
+    DisallowedRoles,
+    DisallowedWeapons,
+    EnforceCapFight,
+    Roles,
+)
 
 state = {}
 redis_store = {}
@@ -162,13 +165,13 @@ def team_view():
 
 
 game_state: GameState = {
-    'allied_score': 3,
-    'axis_score': 2,
-    'current_map': '',
-    'next_map': '',
-    'num_allied_players': 30,
-    'num_axis_players': 30,
-    'time_remaining': timedelta(10),
+    "allied_score": 3,
+    "axis_score": 2,
+    "current_map": "",
+    "next_map": "",
+    "num_allied_players": 30,
+    "num_axis_players": 30,
+    "time_remaining": timedelta(10),
 }
 
 line = "[29:42 min (1606340690)] KILL: [CPC] [1.Fjg] FlorianSW(Allies/76561198012102485) -> Karadoc(Axis/76561198080212634) with MK2_Grenade"
@@ -200,7 +203,7 @@ expected_warned_players = [
         details=PunishDetails(
             author="SeedingRulesAutomod",
             message="",
-            discord_audit_url="",
+            discord_audit_url=None,
             dry_run=False,
         ),
     ),
@@ -214,7 +217,7 @@ expected_warned_players = [
         details=PunishDetails(
             author="SeedingRulesAutomod",
             message="",
-            discord_audit_url="",
+            discord_audit_url=None,
             dry_run=False,
         ),
     ),
@@ -245,7 +248,7 @@ def fake_delete(ks: str):
     redis_store.pop(ks, None)
 
 
-def mod_with_config(c: SeedingRulesConfig) -> SeedingRulesAutomod:
+def mod_with_config(c: AutoModSeedingUserConfig) -> SeedingRulesAutomod:
     mod = SeedingRulesAutomod(c, Mock())
     mod.red.setex = fake_setex
     mod.red.delete = fake_delete
@@ -256,22 +259,29 @@ def mod_with_config(c: SeedingRulesConfig) -> SeedingRulesAutomod:
 
 
 def test_does_nothing_when_enough_players(team_view):
-    mod = mod_with_config(
-        SeedingRulesConfig(
-            disallowed_roles=DisallowedRolesConfig(
-                roles={"tankcommander": "Tanks", "crewman": "Tanks"},
-                max_players=get_team_count(team_view, "allies")
-                            + get_team_count(team_view, "axis")
-                            - 1,
-            ),
-            disallowed_weapons=DisallowedWeaponConfig(
-                weapons={"MP40": "MP40"},
-                min_players=get_team_count(team_view, "allies")
-                            + get_team_count(team_view, "axis")
-                            - 1,
-            ),
-        )
+    config = AutoModSeedingUserConfig(
+        disallowed_roles=DisallowedRoles(
+            roles={
+                Roles.tank_commander: "Tanks",
+                Roles.crewman: "Tanks",
+            },
+            min_players=0,
+            max_players=get_team_count(team_view, "allies")
+            + get_team_count(team_view, "axis")
+            - 1,
+        ),
+        disallowed_weapons=DisallowedWeapons(
+            weapons={
+                "MP40": "MP40",
+            },
+            min_players=get_team_count(team_view, "allies")
+            + get_team_count(team_view, "axis")
+            - 1,
+            max_players=0,
+        ),
+        enforce_cap_fight=EnforceCapFight(min_players=0, max_players=0),
     )
+    mod = mod_with_config(config)
 
     assert PunitionsToApply() == mod.punitions_to_apply(
         team_view, "able", "allies", team_view["allies"]["squads"]["able"], game_state
@@ -281,18 +291,23 @@ def test_does_nothing_when_enough_players(team_view):
 
 def test_does_nothing_when_not_enough_players(team_view):
     mod = mod_with_config(
-        SeedingRulesConfig(
-            disallowed_roles=DisallowedRolesConfig(
-                roles={"tankcommander": "Tanks", "crewman": "Tanks"},
+        AutoModSeedingUserConfig(
+            disallowed_roles=DisallowedRoles(
+                roles={
+                    Roles.tank_commander: "Tanks",
+                    Roles.crewman: "Tanks",
+                },
                 min_players=get_team_count(team_view, "allies")
-                            + get_team_count(team_view, "axis")
-                            + 1,
+                + get_team_count(team_view, "axis")
+                + 1,
+                max_players=0,
             ),
-            disallowed_weapons=DisallowedWeaponConfig(
+            disallowed_weapons=DisallowedWeapons(
                 weapons={"MP40": "MP40"},
                 min_players=get_team_count(team_view, "allies")
-                            + get_team_count(team_view, "axis")
-                            + 1,
+                + get_team_count(team_view, "axis")
+                + 1,
+                max_players=0,
             ),
         )
     )
@@ -304,24 +319,25 @@ def test_does_nothing_when_not_enough_players(team_view):
 
 
 def test_cycles_warn_punish_kick_armor_players(team_view):
-    config = SeedingRulesConfig(
-        number_of_warning=1,
+    config = AutoModSeedingUserConfig(
+        number_of_warnings=1,
         warning_interval_seconds=1,
-        number_of_punish=1,
+        number_of_punishments=1,
         punish_interval_seconds=1,
         warning_message="",
         punish_message="",
         kick_after_max_punish=True,
         kick_message="",
         kick_grace_period_seconds=1,
-        discord_webhook_url="",
-        disallowed_roles=DisallowedRolesConfig(
+        disallowed_roles=DisallowedRoles(
+            roles={Roles.tank_commander: "Tanks", Roles.crewman: "Tanks"},
+            min_players=0,
             max_players=get_team_count(team_view, "allies")
-                        + get_team_count(team_view, "axis")
-                        + 1,
-            roles={"tankcommander": "Tanks", "crewman": "Tanks"},
+            + get_team_count(team_view, "axis")
+            + 1,
         ),
     )
+
     mod = mod_with_config(config)
 
     punitions = mod.punitions_to_apply(
@@ -349,29 +365,31 @@ def test_cycles_warn_punish_kick_armor_players(team_view):
 
 
 def test_cycles_warn_punish_kick_cap_fight_players(team_view):
-    config = SeedingRulesConfig(
-        number_of_warning=1,
+    config = AutoModSeedingUserConfig(
+        number_of_warnings=1,
         warning_interval_seconds=1,
-        number_of_punish=1,
+        number_of_punishments=1,
         punish_interval_seconds=1,
         warning_message="",
         punish_message="",
         kick_after_max_punish=True,
         kick_message="",
         kick_grace_period_seconds=1,
-        discord_webhook_url="",
-        enforce_cap_fight=EnforceCapFightConfig(
-            max_players=get_team_count(team_view, "allies")
-                        + get_team_count(team_view, "axis")
-                        + 1,
+        enforce_cap_fight=EnforceCapFight(
             min_players=0,
             max_caps=3,
+            max_players=get_team_count(team_view, "allies")
+            + get_team_count(team_view, "axis")
+            + 1,
         ),
     )
-    mod = mod_with_config(config)
-    mod.punitions_to_apply(team_view, "able", "allies", team_view["allies"]["squads"]["able"], game_state)
 
-    team_view["allies"]["squads"]["able"]['players'][0]['offense'] += 1
+    mod = mod_with_config(config)
+    mod.punitions_to_apply(
+        team_view, "able", "allies", team_view["allies"]["squads"]["able"], game_state
+    )
+
+    team_view["allies"]["squads"]["able"]["players"][0]["offense"] += 1
     punitions = mod.punitions_to_apply(
         team_view, "able", "allies", team_view["allies"]["squads"]["able"], game_state
     )
@@ -380,7 +398,7 @@ def test_cycles_warn_punish_kick_cap_fight_players(team_view):
     assert [] == punitions.kick
     time.sleep(config.warning_interval_seconds)
 
-    team_view["allies"]["squads"]["able"]['players'][0]['offense'] += 1
+    team_view["allies"]["squads"]["able"]["players"][0]["offense"] += 1
     punitions = mod.punitions_to_apply(
         team_view, "able", "allies", team_view["allies"]["squads"]["able"], game_state
     )
@@ -389,7 +407,7 @@ def test_cycles_warn_punish_kick_cap_fight_players(team_view):
     assert [] == punitions.kick
     time.sleep(config.kick_grace_period_seconds)
 
-    team_view["allies"]["squads"]["able"]['players'][0]['offense'] += 1
+    team_view["allies"]["squads"]["able"]["players"][0]["offense"] += 1
     punitions = mod.punitions_to_apply(
         team_view, "able", "allies", team_view["allies"]["squads"]["able"], game_state
     )
@@ -399,80 +417,90 @@ def test_cycles_warn_punish_kick_cap_fight_players(team_view):
 
 
 def test_punishes_commander_cap_fight(team_view):
-    config = SeedingRulesConfig(
-        number_of_warning=1,
+    config = AutoModSeedingUserConfig(
+        number_of_warnings=1,
         warning_interval_seconds=1,
-        number_of_punish=1,
+        number_of_punishments=1,
         punish_interval_seconds=1,
         warning_message="",
         punish_message="",
         kick_after_max_punish=True,
         kick_message="",
         kick_grace_period_seconds=1,
-        discord_webhook_url="",
-        enforce_cap_fight=EnforceCapFightConfig(
-            max_players=get_team_count(team_view, "allies")
-                        + get_team_count(team_view, "axis")
-                        + 1,
+        enforce_cap_fight=EnforceCapFight(
             min_players=0,
             max_caps=3,
+            max_players=get_team_count(team_view, "allies")
+            + get_team_count(team_view, "axis")
+            + 1,
         ),
     )
+
     mod = mod_with_config(config)
-    mod.punitions_to_apply(team_view, "Commander", "allies", {
-        "players": [team_view["allies"]["commander"]]
-    }, game_state)
-
-    team_view["allies"]["commander"]['offense'] += 1
-    punitions = mod.punitions_to_apply(
-        team_view, "Commander", "allies", {
-            "players": [team_view["allies"]["commander"]]
-        }, game_state
+    mod.punitions_to_apply(
+        team_view,
+        "Commander",
+        "allies",
+        {"players": [team_view["allies"]["commander"]]},
+        game_state,
     )
 
-    assert [PunishPlayer(
-        steam_id_64="76561198206929556",
-        name="FamousCommander",
-        squad="Commander",
-        team="allies",
-        role="armycommander",
-        lvl=123,
-        details=PunishDetails(
-            author="SeedingRulesAutomod",
-            message="",
-            discord_audit_url="",
-            dry_run=False,
-        ),
-    )] == punitions.warning
+    team_view["allies"]["commander"]["offense"] += 1
+    punitions = mod.punitions_to_apply(
+        team_view,
+        "Commander",
+        "allies",
+        {"players": [team_view["allies"]["commander"]]},
+        game_state,
+    )
+
+    assert [
+        PunishPlayer(
+            steam_id_64="76561198206929556",
+            name="FamousCommander",
+            squad="Commander",
+            team="allies",
+            role="armycommander",
+            lvl=123,
+            details=PunishDetails(
+                author="SeedingRulesAutomod",
+                message="",
+                discord_audit_url=None,
+                dry_run=False,
+            ),
+        )
+    ] == punitions.warning
     assert [] == punitions.punish
     assert [] == punitions.kick
 
 
 def test_skips_warning_when_disabled(team_view):
-    config = SeedingRulesConfig(
-        number_of_warning=1,
+    config = AutoModSeedingUserConfig(
+        number_of_warnings=1,
         warning_interval_seconds=1,
-        number_of_punish=1,
+        number_of_punishments=1,
         punish_interval_seconds=1,
         warning_message="",
         punish_message="",
         kick_after_max_punish=True,
         kick_message="",
         kick_grace_period_seconds=1,
-        discord_webhook_url="",
-        enforce_cap_fight=EnforceCapFightConfig(
-            max_players=get_team_count(team_view, "allies")
-                        + get_team_count(team_view, "axis")
-                        + 1,
+        enforce_cap_fight=EnforceCapFight(
             skip_warning=True,
             min_players=0,
             max_caps=3,
+            max_players=get_team_count(team_view, "allies")
+            + get_team_count(team_view, "axis")
+            + 1,
         ),
     )
-    mod = mod_with_config(config)
-    mod.punitions_to_apply(team_view, "able", "allies", team_view["allies"]["squads"]["able"], game_state)
 
-    team_view["allies"]["squads"]["able"]['players'][0]['offense'] += 1
+    mod = mod_with_config(config)
+    mod.punitions_to_apply(
+        team_view, "able", "allies", team_view["allies"]["squads"]["able"], game_state
+    )
+
+    team_view["allies"]["squads"]["able"]["players"][0]["offense"] += 1
     punitions = mod.punitions_to_apply(
         team_view, "able", "allies", team_view["allies"]["squads"]["able"], game_state
     )
@@ -482,28 +510,30 @@ def test_skips_warning_when_disabled(team_view):
 
 
 def test_does_nothing_when_cap_not_reached(team_view):
-    config = SeedingRulesConfig(
-        number_of_warning=1,
+    config = AutoModSeedingUserConfig(
+        number_of_warnings=1,
         warning_interval_seconds=1,
-        number_of_punish=1,
+        number_of_punishments=1,
         punish_interval_seconds=1,
         warning_message="",
         punish_message="",
         kick_after_max_punish=True,
         kick_message="",
         kick_grace_period_seconds=1,
-        discord_webhook_url="",
-        enforce_cap_fight=EnforceCapFightConfig(
+        enforce_cap_fight=EnforceCapFight(
             max_players=get_team_count(team_view, "allies")
-                        + get_team_count(team_view, "axis")
-                        + 1,
-            max_caps=game_state['allied_score'] + 1,
+            + get_team_count(team_view, "axis")
+            + 1,
+            max_caps=game_state["allied_score"] + 1,
         ),
     )
-    mod = mod_with_config(config)
-    mod.punitions_to_apply(team_view, "able", "allies", team_view["allies"]["squads"]["able"], game_state)
 
-    team_view["allies"]["squads"]["able"]['players'][0]['offense'] += 1
+    mod = mod_with_config(config)
+    mod.punitions_to_apply(
+        team_view, "able", "allies", team_view["allies"]["squads"]["able"], game_state
+    )
+
+    team_view["allies"]["squads"]["able"]["players"][0]["offense"] += 1
     punitions = mod.punitions_to_apply(
         team_view, "able", "allies", team_view["allies"]["squads"]["able"], game_state
     )
@@ -513,28 +543,30 @@ def test_does_nothing_when_cap_not_reached(team_view):
 
 
 def test_stops_when_players_reached(team_view):
-    config = SeedingRulesConfig(
-        number_of_warning=1,
+    config = AutoModSeedingUserConfig(
+        number_of_warnings=1,
         warning_interval_seconds=1,
-        number_of_punish=1,
+        number_of_punishments=1,
         punish_interval_seconds=1,
         warning_message="",
         punish_message="",
         kick_after_max_punish=True,
         kick_message="",
         kick_grace_period_seconds=1,
-        discord_webhook_url="",
-        enforce_cap_fight=EnforceCapFightConfig(
+        enforce_cap_fight=EnforceCapFight(
             max_players=get_team_count(team_view, "allies")
-                        + get_team_count(team_view, "axis")
-                        - 1,
+            + get_team_count(team_view, "axis")
+            - 1,
             max_caps=3,
         ),
     )
-    mod = mod_with_config(config)
-    mod.punitions_to_apply(team_view, "able", "allies", team_view["allies"]["squads"]["able"], game_state)
 
-    team_view["allies"]["squads"]["able"]['players'][0]['offense'] += 1
+    mod = mod_with_config(config)
+    mod.punitions_to_apply(
+        team_view, "able", "allies", team_view["allies"]["squads"]["able"], game_state
+    )
+
+    team_view["allies"]["squads"]["able"]["players"][0]["offense"] += 1
     punitions = mod.punitions_to_apply(
         team_view, "able", "allies", team_view["allies"]["squads"]["able"], game_state
     )
@@ -544,24 +576,25 @@ def test_stops_when_players_reached(team_view):
 
 
 def test_stops_when_no_violations_anymore(team_view):
-    config = SeedingRulesConfig(
-        number_of_warning=1,
+    config = AutoModSeedingUserConfig(
+        number_of_warnings=1,
         warning_interval_seconds=1,
-        number_of_punish=1,
+        number_of_punishments=1,
         punish_interval_seconds=1,
         warning_message="",
         punish_message="",
         kick_after_max_punish=False,
         kick_message="",
         kick_grace_period_seconds=1,
-        discord_webhook_url="",
-        disallowed_roles=DisallowedRolesConfig(
+        disallowed_roles=DisallowedRoles(
+            min_players=0,
             max_players=get_team_count(team_view, "allies")
-                        + get_team_count(team_view, "axis")
-                        + 1,
-            roles={"tankcommander": "Tanks", "crewman": "Tanks"},
+            + get_team_count(team_view, "axis")
+            + 1,
+            roles={Roles.tank_commander: "Tanks", Roles.crewman: "Tanks"},
         ),
     )
+
     mod = mod_with_config(config)
 
     punitions = mod.punitions_to_apply(
@@ -583,16 +616,16 @@ def test_stops_when_no_violations_anymore(team_view):
 
 def test_punishes_when_weapon_disallowed(team_view):
     mod = mod_with_config(
-        SeedingRulesConfig(
-            disallowed_weapons=DisallowedWeaponConfig(
+        AutoModSeedingUserConfig(
+            disallowed_weapons=DisallowedWeapons(
                 weapons={"MP40": "MP40"},
                 min_players=get_team_count(team_view, "allies")
-                            + get_team_count(team_view, "axis")
-                            - 1,
+                + get_team_count(team_view, "axis")
+                - 1,
                 max_players=get_team_count(team_view, "allies")
-                            + get_team_count(team_view, "axis")
-                            + 1,
-            ),
+                + get_team_count(team_view, "axis")
+                + 1,
+            )
         )
     )
     mod.punitions_to_apply(
@@ -605,16 +638,16 @@ def test_punishes_when_weapon_disallowed(team_view):
 
 def test_does_not_punish_when_weapon_allowed(team_view):
     mod = mod_with_config(
-        SeedingRulesConfig(
-            disallowed_weapons=DisallowedWeaponConfig(
+        AutoModSeedingUserConfig(
+            disallowed_weapons=DisallowedWeapons(
                 weapons={"MK2_Grenade": "Grenade"},
                 min_players=get_team_count(team_view, "allies")
-                            + get_team_count(team_view, "axis")
-                            - 1,
+                + get_team_count(team_view, "axis")
+                - 1,
                 max_players=get_team_count(team_view, "allies")
-                            + get_team_count(team_view, "axis")
-                            + 1,
-            ),
+                + get_team_count(team_view, "axis")
+                + 1,
+            )
         )
     )
     mod.punitions_to_apply(
@@ -627,16 +660,14 @@ def test_does_not_punish_when_weapon_allowed(team_view):
 
 def test_announces_on_connect(team_view):
     mod = mod_with_config(
-        SeedingRulesConfig(
-            announce_seeding_active=AnnounceSeedingActiveConfig(
-                enabled=True,
-                message="",
-            ),
-            disallowed_weapons=DisallowedWeaponConfig(
+        AutoModSeedingUserConfig(
+            announcement_enabled=True,
+            announcement_message="",
+            disallowed_weapons=DisallowedWeapons(
                 weapons={"MK2_Grenade": "Grenade"},
             ),
-            disallowed_roles=DisallowedRolesConfig(
-                roles={"tankcommander": "Tanks", "crewman": "Tanks"}
+            disallowed_roles=DisallowedRoles(
+                roles={Roles.tank_commander: "Tanks", Roles.crewman: "Tanks"}
             ),
         )
     )
@@ -646,26 +677,28 @@ def test_announces_on_connect(team_view):
 
 
 def test_does_not_announces_when_all_disabled(team_view):
-    mod = mod_with_config(
-        SeedingRulesConfig(
-            announce_seeding_active=AnnounceSeedingActiveConfig(
-                enabled=True,
-                message="",
-            ),
-            disallowed_weapons=DisallowedWeaponConfig(
-                weapons={"MK2_Grenade": "Grenade"},
-                max_players=get_team_count(team_view, "allies")
-                            + get_team_count(team_view, "axis")
-                            - 1,
-            ),
-            disallowed_roles=DisallowedRolesConfig(
-                roles={"tankcommander": "Tanks", "crewman": "Tanks"},
-                max_players=get_team_count(team_view, "allies")
-                            + get_team_count(team_view, "axis")
-                            - 1,
-            ),
-        )
+    config = AutoModSeedingUserConfig(
+        announcement_enabled=True,
+        announcement_message="",
+        number_of_warnings=0,
+        number_of_punishments=0,
+        disallowed_weapons=DisallowedWeapons(
+            weapons={"MK2_Grenade": "Grenade"},
+            min_players=0,
+            max_players=get_team_count(team_view, "allies")
+            + get_team_count(team_view, "axis")
+            - 1,
+        ),
+        disallowed_roles=DisallowedRoles(
+            roles={Roles.tank_commander: "Tanks", Roles.crewman: "Tanks"},
+            min_players=0,
+            max_players=get_team_count(team_view, "allies")
+            + get_team_count(team_view, "axis")
+            - 1,
+        ),
+        enforce_cap_fight=EnforceCapFight(min_players=0, max_players=0),
     )
+    mod = mod_with_config(config)
     mod.punitions_to_apply(
         team_view, "able", "allies", team_view["allies"]["squads"]["able"], game_state
     )
@@ -676,6 +709,6 @@ def test_does_not_announces_when_all_disabled(team_view):
 
 def test_non_existing_roles_raises():
     with pytest.raises(ValueError):
-        SeedingRulesConfig(
-            disallowed_roles=DisallowedRolesConfig(roles={"does_not_exist": ""}),
+        AutoModSeedingUserConfig(
+            disallowed_roles=DisallowedRoles(roles={Roles("does_not_exist"): ""})
         )

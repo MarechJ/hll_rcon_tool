@@ -30,7 +30,7 @@ const RealVip = ({ classes }) => {
         if (!res.failed && res.result) {
           setEnabled(res.result.enabled);
           setMaxVipSlot(res.result.desired_total_number_vips);
-          setMinVipSlot(res.result.minimum_number_vip_slot);
+          setMinVipSlot(res.result.minimum_number_vip_slots);
         }
       });
   }, []);

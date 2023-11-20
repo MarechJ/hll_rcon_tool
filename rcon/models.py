@@ -3,7 +3,7 @@ import os
 import re
 from contextlib import contextmanager
 from datetime import datetime
-from typing import Any, List, Optional
+from typing import Any, Generator, List, Optional
 
 import pydantic
 from sqlalchemy import TIMESTAMP, ForeignKey, String, create_engine, text
@@ -16,7 +16,7 @@ from sqlalchemy.orm import (
     relationship,
     sessionmaker,
 )
-from sqlalchemy.orm.session import object_session
+from sqlalchemy.orm.session import Session, object_session
 from sqlalchemy.schema import UniqueConstraint
 
 from rcon.types import (
@@ -24,6 +24,7 @@ from rcon.types import (
     BlackListType,
     DBLogLineType,
     MapsType,
+    PenaltyCountType,
     PlayerActionType,
     PlayerAtCountType,
     PlayerCommentType,
@@ -34,9 +35,8 @@ from rcon.types import (
     PlayerSessionType,
     PlayerStatsType,
     ServerCountType,
-    WatchListType,
-    PenaltyCountType,
     SteamInfoType,
+    WatchListType,
 )
 
 logger = logging.getLogger(__name__)
@@ -536,7 +536,7 @@ class PlayerStats(Base):
             "steam_id_64": self.steam_id_64.steam_id_64,
             "player": self.name,
             "steaminfo": self.steam_id_64.steaminfo.to_dict()
-            if self.steam_id_64
+            if self.steam_id_64 and self.steam_id_64.steaminfo
             else None,
             "map_id": self.map_id,
             "kills": self.kills,
@@ -711,7 +711,7 @@ def install_unaccent():
         sess.execute(text("CREATE EXTENSION IF NOT EXISTS unaccent;"))
 
 
-def get_session_maker():
+def get_session_maker() -> sessionmaker:
     engine = get_engine()
     sess = sessionmaker()
     sess.configure(bind=engine)
@@ -719,11 +719,11 @@ def get_session_maker():
 
 
 @contextmanager
-def enter_session():
-    sess = get_session_maker()
+def enter_session() -> Generator[Session, None, None]:
+    session_maker = get_session_maker()
 
     try:
-        sess = sess()
+        sess: Session = session_maker()
         yield sess
     finally:
         sess.commit()
@@ -741,7 +741,7 @@ class LogLineWebHookField(pydantic.BaseModel):
     mentions: Optional[List[str]] = []
     servers: List[str] = []
 
-    @pydantic.validator("mentions")
+    @pydantic.field_validator("mentions")
     def valid_role(cls, values):
         if not values:
             return []
@@ -752,9 +752,3 @@ class LogLineWebHookField(pydantic.BaseModel):
                 raise ValueError(f"Invalid Discord role {role_or_user}")
 
         return values
-
-
-class AdvancedConfigOptions(pydantic.BaseModel):
-    """ADVANCED_CRCON_SETTINGS in config.yml"""
-
-    thread_pool_size: pydantic.conint(ge=1, le=100)

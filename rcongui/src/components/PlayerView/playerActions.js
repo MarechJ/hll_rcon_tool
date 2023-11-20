@@ -85,7 +85,7 @@ class ReasonDialog extends React.Component {
   }
 
   componentDidMount() {
-    getSharedMessages("punitions").then((data) =>
+    getSharedMessages("punishments").then((data) =>
       this.setState({ sharedMessages: data })
     );
   }
@@ -127,7 +127,7 @@ class ReasonDialog extends React.Component {
       durationNumber,
       durationMultiplier,
     } = this.state;
-    const textHistory = new TextHistory("punitions");
+    const textHistory = new TextHistory("punishments");
     const actionType = open.actionType;
     const playerName = open.player;
     return (

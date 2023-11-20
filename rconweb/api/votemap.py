@@ -1,43 +1,71 @@
+from logging import getLogger
+
 from django.contrib.auth.decorators import permission_required
 from django.views.decorators.csrf import csrf_exempt
 
-from rcon.vote_map import VoteMap, VoteMapConfig
+from rcon.user_config.vote_map import VoteMapUserConfig
+from rcon.vote_map import VoteMap
 
 from .audit_log import record_audit
 from .auth import api_response, login_required
+from .user_settings import _audit_user_config_differences, _validate_user_config
 from .utils import _get_data
 from .views import audit
 
-
-def votemap_config():
-    config = VoteMapConfig()
-    return {
-        "vote_enabled": config.get_vote_enabled(),
-        "votemap_number_of_options": config.get_votemap_number_of_options(),
-        "votemap_ratio_of_offensives_to_offer": config.get_votemap_ratio_of_offensives_to_offer(),
-        "votemap_number_of_last_played_map_to_exclude": config.get_votemap_number_of_last_played_map_to_exclude(),
-        "votemap_consider_offensive_as_same_map": config.get_votemap_consider_offensive_as_same_map(),
-        "votemap_allow_consecutive_offensives": config.get_votemap_allow_consecutive_offensives(),
-        "votemap_allow_consecutive_offensives_of_opposite_side": config.get_votemap_allow_consecutive_offensives_of_opposite_side(),
-        "votemap_default_method": config.get_votemap_default_method().value,
-        "votemap_allow_default_to_offsensive": config.get_votemap_allow_default_to_offsensive(),
-        "votemap_instruction_text": config.get_votemap_instruction_text(),
-        "votemap_thank_you_text": config.get_votemap_thank_you_text(),
-        "votemap_no_vote_text": config.get_votemap_no_vote_text(),
-        "votemap_reminder_frequency_minutes": config.get_votemap_reminder_frequency_minutes(),
-        "votemap_allow_optout": config.get_votemap_allow_optout(),
-        "votemap_help_text": config.get_votemap_help_text(),
-    }
+logger = getLogger(__name__)
 
 
 @csrf_exempt
 @login_required()
 @permission_required("api.can_view_votemap_config", raise_exception=True)
 def get_votemap_config(request):
+    command_name = "get_votemap_config"
+
+    try:
+        config = VoteMapUserConfig.load_from_db()
+    except Exception as e:
+        logger.exception(e)
+        return api_response(command=command_name, error=str(e), failed=True)
+
     return api_response(
+        result=config.model_dump(),
+        command=command_name,
         failed=False,
-        command="get_votemap_config",
-        result=votemap_config(),
+    )
+
+
+@csrf_exempt
+@login_required()
+def describe_votemap_config(request):
+    command_name = "get_votemap_config"
+
+    return api_response(
+        result=VoteMapUserConfig.model_json_schema(),
+        command=command_name,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+@permission_required("api.can_change_votemap_config", raise_exception=True)
+@record_audit
+def validate_votemap_config(request):
+    command_name = "validate_votemap_config"
+    data = _get_data(request)
+
+    response = _validate_user_config(
+        VoteMapUserConfig, data=data, command_name=command_name, dry_run=True
+    )
+
+    if response:
+        return response
+
+    return api_response(
+        result=True,
+        command=command_name,
+        arguments=data,
+        failed=False,
     )
 
 
@@ -46,38 +74,22 @@ def get_votemap_config(request):
 @permission_required("api.can_change_votemap_config", raise_exception=True)
 @record_audit
 def set_votemap_config(request):
-    config = VoteMapConfig()
+    command_name = "set_votemap_config"
+    cls = VoteMapUserConfig
     data = _get_data(request)
 
-    setters = {
-        "vote_enabled": config.set_vote_enabled,
-        "votemap_number_of_options": config.set_votemap_number_of_options,
-        "votemap_ratio_of_offensives_to_offer": config.set_votemap_ratio_of_offensives_to_offer,
-        "votemap_number_of_last_played_map_to_exclude": config.set_votemap_number_of_last_played_map_to_exclude,
-        "votemap_consider_offensive_as_same_map": config.set_votemap_consider_offensive_as_same_map,
-        "votemap_allow_consecutive_offensives": config.set_votemap_allow_consecutive_offensives,
-        "votemap_allow_consecutive_offensives_of_opposite_side": config.set_votemap_allow_consecutive_offensives_of_opposite_side,
-        "votemap_default_method": config.set_votemap_default_method,
-        "votemap_allow_default_to_offsensive": config.set_votemap_allow_default_to_offsensive,
-        "votemap_instruction_text": config.set_votemap_instruction_text,
-        "votemap_thank_you_text": config.set_votemap_thank_you_text,
-        "votemap_no_vote_text": config.set_votemap_no_vote_text,
-        "votemap_reminder_frequency_minutes": config.set_votemap_reminder_frequency_minutes,
-        "votemap_allow_optout": config.set_votemap_allow_optout,
-        "votemap_help_text": config.set_votemap_help_text,
-    }
+    response = _audit_user_config_differences(
+        cls, data, command_name, request.user.username
+    )
 
-    for k, v in data.items():
-        try:
-            setters[k](v)
-            audit("set_votemap_config", request, {k: v})
-        except KeyError:
-            return api_response(
-                error="{} invalid key".format(k), command="set_votemap_config"
-            )
+    if response:
+        return response
 
     return api_response(
-        failed=False, result=votemap_config(), command="set_votemap_config"
+        result=True,
+        command=command_name,
+        arguments=data,
+        failed=False,
     )
 
 
