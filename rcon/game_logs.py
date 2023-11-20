@@ -40,82 +40,82 @@ from rcon.utils import FixedLenList, MapsHistory
 
 logger = logging.getLogger(__name__)
 
-HOOKS: Dict[str, set[Callable]] = {
-    "TEAM KILL": set(),
-    "CONNECTED": set(),
-    "DISCONNECTED": set(),
-    "TK": set(),
-    "TK AUTO": set(),
-    "TK AUTO BANNED": set(),
-    "TK AUTO KICKED": set(),
-    "ADMIN BANNED": set(),
-    "ADMIN KICKED": set(),
-    "CAMERA": set(),
-    "CHAT": set(),
-    "CHAT[Allies]": set(),
-    "CHAT[Allies][Team]": set(),
-    "CHAT[Allies][Unit]": set(),
-    "CHAT[Axis]": set(),
-    "CHAT[Axis][Team]": set(),
-    "CHAT[Axis][Unit]": set(),
-    "KILL": set(),
-    "MATCH START": set(),
-    "MATCH ENDED": set(),
-    "MATCH": set(),
-    "TEAMSWITCH": set(),
-    "VOTE": set(),
-    "VOTE STARTED": set(),
-    "VOTE COMPLETED": set(),
+HOOKS: Dict[str, list[Callable]] = {
+    "TEAM KILL": [],
+    "CONNECTED": [],
+    "DISCONNECTED": [],
+    "TK": [],
+    "TK AUTO": [],
+    "TK AUTO BANNED": [],
+    "TK AUTO KICKED": [],
+    "ADMIN BANNED": [],
+    "ADMIN KICKED": [],
+    "CAMERA": [],
+    "CHAT": [],
+    "CHAT[Allies]": [],
+    "CHAT[Allies][Team]": [],
+    "CHAT[Allies][Unit]": [],
+    "CHAT[Axis]": [],
+    "CHAT[Axis][Team]": [],
+    "CHAT[Axis][Unit]": [],
+    "KILL": [],
+    "MATCH START": [],
+    "MATCH ENDED": [],
+    "MATCH": [],
+    "TEAMSWITCH": [],
+    "VOTE": [],
+    "VOTE STARTED": [],
+    "VOTE COMPLETED": [],
 }
 
 
 def on_kill(func):
-    HOOKS["KILL"].add(func)
+    HOOKS["KILL"].append(func)
     return func
 
 
 def on_tk(func):
-    HOOKS["TEAM KILL"].add(func)
+    HOOKS["TEAM KILL"].append(func)
     return func
 
 
 def on_chat(func):
-    HOOKS["CHAT"].add(func)
+    HOOKS["CHAT"].append(func)
     return func
 
 
 def on_camera(func):
-    HOOKS["CAMERA"].add(func)
+    HOOKS["CAMERA"].append(func)
     return func
 
 
 def on_chat_axis(func):
-    HOOKS["CHAT[Axis]"].add(func)
+    HOOKS["CHAT[Axis]"].append(func)
     return func
 
 
 def on_chat_allies(func):
-    HOOKS["CHAT[Allies]"].add(func)
+    HOOKS["CHAT[Allies]"].append(func)
     return func
 
 
 def on_connected(func):
-    HOOKS["CONNECTED"].add(func)
+    HOOKS["CONNECTED"].append(func)
     return func
 
 
 def on_disconnected(func):
-    HOOKS["DISCONNECTED"].add(func)
+    HOOKS["DISCONNECTED"].append(func)
     return func
 
 
 def on_match_start(func):
-    HOOKS["MATCH START"].add(func)
+    HOOKS["MATCH START"].append(func)
     return func
 
 
 def on_match_end(func):
-    HOOKS["MATCH ENDED"].add(func)
+    HOOKS["MATCH ENDED"].append(func)
     return func
 
 
@@ -134,7 +134,7 @@ def on_generic(key, func) -> Callable:
             logger.info("Skipping %s %s already added", key, func)
             return func
 
-    HOOKS[key].add(func)
+    HOOKS[key].append(func)
     return func
 
 
