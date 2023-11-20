@@ -18,7 +18,7 @@ rq-scheduler==0.13.1
 paramiko==3.3.1
 ftpretty==0.4.0
 pytz>=2023.3
-pandas>=1.4.1,<2.0.0
+pandas>=1.4.1,<3.0.0
 pydantic==2.3.0
 discord.py==2.3.2
 # django-directory
