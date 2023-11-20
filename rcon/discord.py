@@ -59,12 +59,7 @@ def make_allowed_mentions(user_ids, role_ids):
 def get_prepared_discord_hooks(
     hook_type: Type[CameraWebhooksUserConfig | WatchlistWebhooksUserConfig],
 ) -> List[DiscordWebhook]:
-    if isinstance(hook_type, CameraWebhooksUserConfig):
-        hooks = CameraWebhooksUserConfig.load_from_db().hooks
-    elif isinstance(hook_type, WatchlistWebhooksUserConfig):
-        hooks = WatchlistWebhooksUserConfig.load_from_db().hooks
-    else:
-        raise ValueError(f"{hook_type} is not a valid webhook type")
+    hooks = hook_type.load_from_db().hooks
 
     return [
         DiscordWebhook(
