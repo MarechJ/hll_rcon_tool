@@ -408,7 +408,7 @@ class VipId(TypedDict):
     name: str
 
 
-# # Have to inherit from str to allow for JSON serialization w/ pydantic
+# Have to inherit from str to allow for JSON serialization w/ pydantic
 class AllLogTypes(str, enum.Enum):
     admin_banned = "ADMIN BANNED"
     admin_kicked = "ADMIN KICKED"
