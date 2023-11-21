@@ -5,6 +5,7 @@ import { Button } from "@material-ui/core";
 import { withRouter } from "react-router";
 import Grid from "@material-ui/core/Grid";
 import { CopyBlock, dracula } from "react-code-blocks";
+import { toast } from "react-toastify";
 
 const endpointToNames = new Map();
 endpointToNames.set("get_audit_discord_webhooks_config", "Audit Webhooks");
@@ -40,25 +41,22 @@ const UserSetting = ({
   };
 
   const sendData = (endpoint) => {
-    console.log(`sending data=${JSON.stringify(data)}`);
     setErrors([]);
-    postData(`${process.env.REACT_APP_API_URL}${endpoint}`, {
-      ...JSON.parse(data),
-      errors_as_json: true,
-    })
-      .then((res) => showResponse(res, endpoint, true))
-      .then((res) => {
-        console.log(`post res=${JSON.stringify(res)}`);
-        if (res?.error) {
-          console.log(
-            `error len=${JSON.parse(res.error).length} res.error=${res.error}`
-          );
-          setErrors(JSON.parse(res.error));
-        }
-      });
+    try {
+      postData(`${process.env.REACT_APP_API_URL}${endpoint}`, {
+        ...JSON.parse(data),
+        errors_as_json: true,
+      })
+        .then((res) => showResponse(res, endpoint, true))
+        .then((res) => {
+          if (res?.error) {
+            setErrors(JSON.parse(res.error));
+          }
+        });
+    } catch (error) {
+      toast.error("Error parsing your settings JSON: " + error);
+    }
   };
-
-  console.log(`errors=${JSON.stringify(errors)}`);
 
   return (
     <>
