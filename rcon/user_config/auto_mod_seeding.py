@@ -102,7 +102,7 @@ class AutoModSeedingUserConfig(BaseUserConfig):
     warning_message: str = Field(default=WARNING_MESSAGE)
     warning_interval_seconds: int = Field(default=60)
 
-    number_of_punishments: int = Field(default=2)
+    number_of_punishments: int = Field(ge=-1, default=2)
     punish_message: str = Field(default=PUNISH_MESSAGE)
     punish_interval_seconds: int = Field(default=60)
 

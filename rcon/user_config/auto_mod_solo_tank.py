@@ -58,7 +58,7 @@ class AutoModNoSoloTankUserConfig(BaseUserConfig):
     warning_message: str = Field(default=WARNING_MESSAGE)
     warning_interval_seconds: int = Field(ge=0, default=60)
 
-    number_of_punishments: int = Field(ge=0, default=2)
+    number_of_punishments: int = Field(ge=-1, default=2)
     punish_message: str = Field(default=PUNISH_MESSAGE)
     punish_interval_seconds: int = Field(ge=0, default=40)
     min_server_players_for_punish: int = Field(ge=0, le=100, default=40)
