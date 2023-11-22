@@ -112,10 +112,9 @@ class BaseUserConfig(pydantic.BaseModel):
 def _get_conf(sess, key):
     try:
         return sess.query(UserConfig).filter(UserConfig.key == key).one_or_none()
-    except ProgrammingError:
-        # This should only ever happen on the first launch before any migrations have been run
-        # or if someone has manually deleted the table in the database
-        logger.error("The user_config table does not exist")
+    except (InvalidRequestError, ProgrammingError) as e:
+        # Don't let a failed transaction block model creation
+        # the session context manager will handle this
         return None
 
 
@@ -130,7 +129,12 @@ def get_user_config(key: str, default=None) -> str | None:
 
 
 def _add_conf(sess, key, val):
-    return sess.add(UserConfig(key=key, value=val))
+    try:
+        return sess.add(UserConfig(key=key, value=val))
+    except (ProgrammingError, InvalidRequestError) as e:
+        # Don't let a failed transaction block model creation
+        # the session context manager will handle this
+        return None
 
 
 def _remove_conf(sess, key):
@@ -154,12 +158,4 @@ def set_user_config(key, object_):
         with enter_session() as sess:
             conf = _get_conf(sess, key)
             if conf is None:
-                try:
-                    _add_conf(sess, key, object_)
-                except InvalidRequestError as e:
-                    # Don't let a previous failed transaction block future ones
-                    logger.exception(e)
-                    sess.rollback()
-            else:
-                conf.value = object_
-            sess.commit()
+                _add_conf(sess, key, object_)
