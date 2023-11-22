@@ -200,7 +200,7 @@ export const ChatWebhooks = ({
         */
         "hooks": [
             {
-                "url": "https://discord.com/api/webhooks/1156773876626374778/qyXM1nlYRNU-6R6eaL1xCESqMyK2jnfT1L9N_USz9V05JZS7h6EwOkzGu0hHzyVx00QG"
+                "url": "https://discord.com/api/webhooks/.../..."
             }
         ],
 

@@ -400,10 +400,17 @@ export const NameKicks = ({
   const notes = `
     {
         /*
-            A list of regular expressions player names are tested againstwhen they join,
+            A list of regular expressions player names are tested against when they join,
             any player name that matches any of the regular expressions will be kicked
             
             You can test your regex here: https://regex101.com/ (set the type to "Python")
+        */
+
+        /*
+          You must escape any \ character in your regular expressions
+          For example:
+            ^[\\d]+$ is correct
+            ^[\d]+$ is not correct and will cause JSON parsing errors
         */
         "regular_expressions": [],
 

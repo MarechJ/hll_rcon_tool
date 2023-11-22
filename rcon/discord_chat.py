@@ -97,10 +97,10 @@ class DiscordWebhookHandler:
     def _make_hook(hooks: Iterable[DiscordWebhook] | Iterable[DiscordMentionWebhook]):
         return [make_hook(hook.url) for hook in hooks]
 
-    def create_chat_message(self, log) -> tuple[str, DiscordEmbed, bool]:
+    def create_chat_embed(self, log, allow_mentions=False) -> DiscordEmbed:
         message = log["sub_content"]
 
-        if not self.chat_wh_config.allow_mentions:
+        if not allow_mentions:
             message = discord.utils.escape_mentions(message)
         message = discord.utils.escape_markdown(message)
 
@@ -117,6 +117,12 @@ class DiscordWebhookHandler:
             name=f"{player} {action}", url=STEAM_PROFILE_URL.format(id64=steam_id)
         )
         embed.set_footer(text=self.server_settings.short_name)
+
+        return embed
+
+    def create_admin_ping_message(self, log) -> tuple[str, DiscordEmbed, bool]:
+        message = log["sub_content"]
+        embed = self.create_chat_embed(log)
 
         content = ""
         triggered = False
@@ -136,9 +142,17 @@ class DiscordWebhookHandler:
                     [id_ for h in self.admin_wh_config.hooks for id_ in h.role_mentions]
                 )
                 content = " ".join(mentions)
-                embed.description = "".join(msg_words)
+                embed.description = discord.utils.escape_mentions("".join(msg_words))
 
         return content, embed, triggered
+
+    def create_chat_message(self, log) -> DiscordEmbed:
+        message = log["sub_content"]
+        embed = self.create_chat_embed(
+            log, allow_mentions=self.chat_wh_config.allow_mentions
+        )
+
+        return embed
 
     def create_kill_message(self, log):
         action = log["action"]
@@ -175,22 +189,18 @@ class DiscordWebhookHandler:
 
     def send_chat_message(self, log):
         try:
-            content, embed, triggered = self.create_chat_message(log)
-
-            logger.debug(
-                "sending chat message len=%s to Discord", len(embed) + len(content)
-            )
+            content, admin_embed, triggered = self.create_admin_ping_message(log)
+            chat_embed = self.create_chat_message(log)
 
             for wh in self.chat_webhooks:
                 wh.remove_embeds()
-                wh.add_embed(embed)
-                wh.content = content
+                wh.add_embed(chat_embed)
                 wh.execute()
 
             if triggered:
                 for wh in self.ping_trigger_webhooks:
                     wh.remove_embeds()
-                    wh.add_embed(embed)
+                    wh.add_embed(admin_embed)
                     wh.content = content
                     wh.execute()
         except Exception as e:

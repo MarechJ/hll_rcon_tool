@@ -20,7 +20,7 @@ def test_no_mentions():
         allow_mentions=True,
     )
     handler = DiscordWebhookHandler(chat_wh_config=config)
-    content, embed, triggered = handler.create_chat_message(
+    embed = handler.create_chat_message(
         log={
             "sub_content": "test message",
             "player": "some dude",
@@ -30,10 +30,9 @@ def test_no_mentions():
     )
 
     assert embed.description == "test message"
-    assert content == ""
 
 
-def test_mentions_are_escaped():
+def test_chat_mentions_are_escaped():
     config = ChatWebhooksUserConfig(
         hooks=[
             DiscordMentionWebhook(
@@ -42,9 +41,8 @@ def test_mentions_are_escaped():
         ],
         allow_mentions=False,
     )
-    # monkeypatch.setattr(DiscordWebhookHandler, "_make_hook", lambda: [])
     handler = DiscordWebhookHandler(chat_wh_config=config)
-    content, embed, triggered = handler.create_chat_message(
+    embed = handler.create_chat_message(
         log={
             "sub_content": "test message @here",
             "player": "some dude",
@@ -54,7 +52,22 @@ def test_mentions_are_escaped():
     )
 
     assert embed.description == "test message @\u200bhere"
-    assert content == ""
+
+
+def test_admin_ping_mentions_always_escaped():
+    handler = DiscordWebhookHandler()
+
+    embed = handler.create_chat_embed(
+        log={
+            "sub_content": "test message @here",
+            "player": "some dude",
+            "steam_id_64_1": "1234",
+            "action": "CHAT[Allies][Team]",
+        },
+        allow_mentions=False,
+    )
+
+    assert embed.description == "test message @\u200bhere"
 
 
 def test_mentions_are_not_escaped():
@@ -68,7 +81,7 @@ def test_mentions_are_not_escaped():
     )
     # monkeypatch.setattr(DiscordWebhookHandler, "_make_hook", lambda: [])
     handler = DiscordWebhookHandler(chat_wh_config=config)
-    content, embed, triggered = handler.create_chat_message(
+    embed = handler.create_chat_message(
         log={
             "sub_content": "test message @here",
             "player": "some dude",
@@ -78,7 +91,6 @@ def test_mentions_are_not_escaped():
     )
 
     assert embed.description == "test message @here"
-    assert content == ""
 
 
 def test_admin_pings_mention_start():
@@ -92,7 +104,7 @@ def test_admin_pings_mention_start():
     )
 
     handler = DiscordWebhookHandler(admin_wh_config=config)
-    content, embed, triggered = handler.create_chat_message(
+    content, embed, triggered = handler.create_admin_ping_message(
         log={
             "sub_content": "!admin test @here",
             "player": "some dude",
@@ -102,8 +114,8 @@ def test_admin_pings_mention_start():
     )
 
     assert embed.description == "__**!admin**__ test @\u200bhere"
+    assert triggered
     assert content == "<@1212>"
-    assert triggered == True
 
 
 def test_admin_pings_mention_middle():
@@ -117,7 +129,7 @@ def test_admin_pings_mention_middle():
     )
 
     handler = DiscordWebhookHandler(admin_wh_config=config)
-    content, embed, triggered = handler.create_chat_message(
+    content, embed, triggered = handler.create_admin_ping_message(
         log={
             "sub_content": "test !admin @here",
             "player": "some dude",
@@ -128,7 +140,7 @@ def test_admin_pings_mention_middle():
 
     assert embed.description == "test __**!admin**__ @\u200bhere"
     assert content == "<@1212>"
-    assert triggered == True
+    assert triggered
 
 
 def test_kill_message():
