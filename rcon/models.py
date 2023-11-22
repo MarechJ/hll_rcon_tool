@@ -9,6 +9,7 @@ import pydantic
 from sqlalchemy import TIMESTAMP, ForeignKey, String, create_engine, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 from sqlalchemy.orm import (
     DeclarativeBase,
     Mapped,
@@ -725,8 +726,11 @@ def enter_session() -> Generator[Session, None, None]:
     try:
         sess: Session = session_maker()
         yield sess
-    finally:
+        # Only commit if there were no exceptions, otherwise rollback
         sess.commit()
+    except (ProgrammingError, InvalidRequestError):
+        sess.rollback()
+    finally:
         sess.close()
 
 
