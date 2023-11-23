@@ -2,7 +2,7 @@ import logging
 from typing import Any, Iterable, Self
 
 import pydantic
-from sqlalchemy.exc import InvalidRequestError, ProgrammingError
+from sqlalchemy.exc import SQLAlchemyError
 
 from rcon.cache_utils import invalidates, ttl_cache
 from rcon.models import UserConfig, enter_session
@@ -112,9 +112,10 @@ class BaseUserConfig(pydantic.BaseModel):
 def _get_conf(sess, key):
     try:
         return sess.query(UserConfig).filter(UserConfig.key == key).one_or_none()
-    except (InvalidRequestError, ProgrammingError) as e:
+    except SQLAlchemyError as e:
         # Don't let a failed transaction block model creation
         # the session context manager will handle this
+        sess.rollback()
         return None
 
 
@@ -131,9 +132,10 @@ def get_user_config(key: str, default=None) -> str | None:
 def _add_conf(sess, key, val):
     try:
         return sess.add(UserConfig(key=key, value=val))
-    except (ProgrammingError, InvalidRequestError) as e:
+    except SQLAlchemyError as e:
         # Don't let a failed transaction block model creation
         # the session context manager will handle this
+        sess.rollback()
         return None
 
 
@@ -159,3 +161,5 @@ def set_user_config(key, object_):
             conf = _get_conf(sess, key)
             if conf is None:
                 _add_conf(sess, key, object_)
+            else:
+                conf.value = object_
