@@ -40,7 +40,7 @@ const RealVip = ({ classes }) => {
       postData(`${process.env.REACT_APP_API_URL}set_real_vip_config`, {
         enabled: enabled,
         desired_total_number_vips: maxVipSlot,
-        minimum_number_vip_slot: minVipSlot,
+        minimum_number_vip_slots: minVipSlot,
       })
         .then((res) => showResponse(res, "set_real_vip_config", true))
         .catch(handle_http_errors);
