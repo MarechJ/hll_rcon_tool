@@ -333,6 +333,7 @@ def run():
         path = pathlib.Path(path) / pathlib.Path("scorebot.db")
         conn = sqlite3.connect(str(path))
         server_number = int(os.getenv("SERVER_NUMBER", 0))
+        create_table(conn)
         # TODO handle webhook change
         # TODO handle invalid message id
 
@@ -412,7 +413,7 @@ def run():
                     logger.exception("Unable to edit message. Deleting record", e)
                     cleanup_orphaned_messages(conn, server_number, webhook.url)
                     raise e
-                time.sleep(1)
+                time.sleep(config.refresh_time_secs)
     except Exception as e:
         logger.exception("The bot stopped", e)
         raise

@@ -140,6 +140,7 @@ class ScorebotConfigType(TypedDict):
     match_score_title_text: str
     match_score_text: str
     time_remaining_text: str
+    refresh_time_secs: int
 
     stats_to_display: list[StatDisplay]
 
@@ -166,6 +167,7 @@ class ScorebotUserConfig(BaseUserConfig):
     match_score_title_text: str = Field(default=MATCH_SCORE_TITLE)
     match_score_text: str = Field(default=MATCH_SCORE)
     time_remaining_text: str = Field(default=TIME_REMAINING)
+    refresh_time_secs: int = Field(ge=1, default=5)
 
     stats_to_display: list[StatDisplay] = Field(default_factory=seed_default_displays)
 
@@ -259,6 +261,7 @@ class ScorebotUserConfig(BaseUserConfig):
             match_score_title_text=values.get("match_score_title_text"),
             match_score_text=values.get("match_score_text"),
             time_remaining_text=values.get("time_remaining_text"),
+            refresh_time_secs=values.get("refresh_time_secs"),
             stats_to_display=values.get("stats_to_display"),
             base_api_url=values.get("base_api_url"),
             base_scoreboard_url=values.get("base_scoreboard_url"),
