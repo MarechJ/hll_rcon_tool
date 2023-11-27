@@ -213,7 +213,8 @@ class DiscordWebhookHandler:
 
         try:
             embed = self.create_kill_message(log)
-            logger.debug("sending kill message len=%s to Discord", len(embed))
+            # TODO: fix this, needs to be fixed upstream
+            # logger.debug("sending kill message len=%s to Discord", len(embed))
             for wh in self.kills_webhooks:
                 wh.remove_embeds()
                 wh.add_embed(embed)
