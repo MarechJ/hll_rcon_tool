@@ -70,7 +70,7 @@ class VoteMapUserConfig(BaseUserConfig):
     instruction_text: str = Field(default=INSTRUCTION_TEXT)
     thank_you_text: str | None = Field(default=THANK_YOU_TEXT)
     no_vote_text: str = Field(default=NO_VOTE_TEXT)
-    reminder_frequency_minutes: int = Field(ge=1, default=20)
+    reminder_frequency_minutes: int = Field(ge=0, default=20)
     allow_opt_out: bool = Field(default=True)
     help_text: str | None = Field(default="")
 
