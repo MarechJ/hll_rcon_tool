@@ -333,6 +333,7 @@ def run():
         path = pathlib.Path(path) / pathlib.Path("scorebot.db")
         conn = sqlite3.connect(str(path))
         server_number = int(os.getenv("SERVER_NUMBER", 0))
+        create_table(conn)
         # TODO handle webhook change
         # TODO handle invalid message id
 
