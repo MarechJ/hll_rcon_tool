@@ -12,14 +12,15 @@ from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 
 from rcon.commands import CommandFailedError
-from rcon.discord import dict_to_discord, send_to_discord_audit
+from rcon.discord import send_to_discord_audit
 from rcon.models import PlayerSteamID, PlayerVIP, enter_session
-from rcon.user_config import RealVipConfig
+from rcon.user_config.real_vip import RealVipUserConfig
 from rcon.utils import get_server_number
 from rcon.workers import get_job_results, worker_bulk_vip
 
 from .audit_log import record_audit
 from .auth import api_response, login_required
+from .user_settings import _audit_user_config_differences, _validate_user_config
 from .views import _get_data, ctl
 
 logger = logging.getLogger("rconweb")
@@ -200,29 +201,56 @@ def download_vips(request):
     return response
 
 
-def _get_real_vip_config():
-    config = RealVipConfig()
-    return {
-        "enabled": config.get_enabled(),
-        "desired_total_number_vips": config.get_desired_total_number_vips(),
-        "minimum_number_vip_slot": config.get_minimum_number_vip_slot(),
-    }
-
-
 @csrf_exempt
 @login_required()
 @permission_required("api.can_view_real_vip_config", raise_exception=True)
 def get_real_vip_config(request):
-    error = None
+    command_name = "get_real_vip_config"
+
     try:
-        real_vip_config = _get_real_vip_config()
+        config = RealVipUserConfig.load_from_db()
     except Exception as e:
-        error = repr(e)
+        logger.exception(e)
+        return api_response(command=command_name, error=str(e), failed=True)
+
     return api_response(
-        result=real_vip_config,
-        failed=bool(error),
-        error=error,
-        command="get_real_vip_config",
+        result=config.model_dump(),
+        command=command_name,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+def describe_real_vip_config(request):
+    command_name = "describe_real_vip_config"
+
+    return api_response(
+        result=RealVipUserConfig.model_json_schema(),
+        command=command_name,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+@permission_required("api.can_change_real_vip_config", raise_exception=True)
+def validate_real_vip_config(request):
+    command_name = "validate_real_vip_config"
+    data = _get_data(request)
+
+    response = _validate_user_config(
+        RealVipUserConfig, data=data, command_name=command_name, dry_run=True
+    )
+
+    if response:
+        return response
+
+    return api_response(
+        result=True,
+        command=command_name,
+        arguments=data,
+        failed=False,
     )
 
 
@@ -231,28 +259,20 @@ def get_real_vip_config(request):
 @permission_required("api.can_change_real_vip_config", raise_exception=True)
 @record_audit
 def set_real_vip_config(request):
-    error = None
+    command_name = "set_real_vip_config"
+    cls = RealVipUserConfig
     data = _get_data(request)
-    try:
-        config = RealVipConfig()
-        real_vip_config = {
-            "enabled": (bool, config.set_enabled),
-            "desired_total_number_vips": (int, config.set_desired_total_number_vips),
-            "minimum_number_vip_slot": (int, config.set_minimum_number_vip_slot),
-        }
-        for k, v in data.items():
-            if k in real_vip_config:
-                cast, setter = real_vip_config[k]
-                send_to_discord_audit(
-                    f"RealVIP set {dict_to_discord({k: v})}", request.user.username
-                )
-                setter(cast(v))
-    except Exception as e:
-        logger.exception("Failed to set realvip config")
-        error = repr(e)
+
+    response = _audit_user_config_differences(
+        cls, data, command_name, request.user.username
+    )
+
+    if response:
+        return response
+
     return api_response(
-        result=_get_real_vip_config(),
-        failed=bool(error),
-        error=error,
-        command="get_real_vip_config",
+        result=True,
+        command=command_name,
+        arguments=data,
+        failed=False,
     )

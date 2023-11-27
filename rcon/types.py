@@ -1,5 +1,103 @@
 import datetime
+import enum
 from typing import List, Optional, TypedDict
+
+
+class ServerInfoType(TypedDict):
+    host: str | None
+    port: str | None
+    password: str | None
+
+
+# # Have to inherit from str to allow for JSON serialization w/ pydantic
+class Roles(str, enum.Enum):
+    commander = "armycommander"
+    squad_lead = "officer"
+    rifleman = "rifleman"
+    engineer = "engineer"
+    medic = "medic"
+    anti_tank = "antitank"
+    automatic_rifleman = "automaticrifleman"
+    assault = "assault"
+    machine_gunner = "heavymachinegunner"
+    support = "support"
+    spotter = "spotter"
+    sniper = "sniper"
+    tank_commander = "tankcommander"
+    crewman = "crewman"
+
+
+class InvalidRoleError(ValueError):
+    def __init__(self, role: str) -> None:
+        super().__init__()
+        self.role = role
+
+    def __str__(self) -> str:
+        return self.__repr__()
+
+    def __repr__(self) -> str:
+        return f"{self.role} must be one of ({', '.join(r for r in Roles)})"
+
+    def asdict(self):
+        return {
+            "type": InvalidRoleError.__name__,
+            "role": self.role,
+            "allowed_roles": [r for r in Roles],
+        }
+
+
+ROLES_TO_LABELS = {
+    Roles.commander: "Commander",
+    Roles.squad_lead: "Squad Lead",
+    Roles.rifleman: "Rifleman",
+    Roles.engineer: "Engineer",
+    Roles.medic: "Medic",
+    Roles.anti_tank: "Anti-Tank",
+    Roles.automatic_rifleman: "Automatic Rifleman",
+    Roles.assault: "Assault",
+    Roles.machine_gunner: "Machinegunner",
+    Roles.support: "Support",
+    Roles.spotter: "Spotter",
+    Roles.sniper: "Sniper",
+    Roles.tank_commander: "Tank Commander",
+    Roles.crewman: "Crewman",
+}
+
+
+class PlayerIdsType(TypedDict):
+    name: str
+
+
+class AdminType(TypedDict):
+    steam_id_64: str
+    name: str
+    role: str
+
+
+class StatusType(TypedDict):
+    name: str
+    map: str
+    nb_players: str
+    short_name: str
+    player_count: str
+    server_number: int
+
+
+class VipIdType(TypedDict):
+    steam_id_64: str
+    name: str
+    vip_expiration: datetime.datetime | None
+
+
+class GameServerBanType(TypedDict):
+    type: str
+    name: str | None
+    steam_id_64: str | None
+    timestamp: datetime.datetime | None
+    ban_time: str | None
+    reason: str | None
+    by: str | None
+    raw: str
 
 
 class SteamBansType(TypedDict):
@@ -68,14 +166,15 @@ class DBLogLineType(TypedDict):
     raw: str
     content: str
     server: str
-    weapon: str
+    weapon: Optional[str]
 
 
 class PlayerStatsType(TypedDict):
     id: int
-    player_id: str
+    player_id: int
+    steam_id_64: str
     player: Optional[str]
-    steaminfo: SteamInfoType
+    steaminfo: Optional[SteamInfoType]
     map_id: int
     kills: Optional[int]
     kills_streak: Optional[int]
@@ -122,7 +221,7 @@ class MapInfo(TypedDict):
 class MapsType(TypedDict):
     id: int
     creation_time: datetime.datetime
-    star: datetime.datetime
+    start: datetime.datetime
     end: Optional[datetime.datetime]
     server_number: Optional[int]
     map_name: str
@@ -148,7 +247,7 @@ class ServerCountType(TypedDict):
     minute: datetime.datetime
     count: int
     players: List[PlayerAtCountType]
-    map: MapsType
+    map: str
     vip_count: int
 
 
@@ -192,6 +291,7 @@ class WatchListType(TypedDict):
     count: int
 
 
+# TODO: Remove? Not used anywhere
 class UserConfigType(TypedDict):
     key: str
     value: str
@@ -202,7 +302,7 @@ class PlayerProfileType(TypedDict):
     steam_id_64: str
     created: datetime.datetime
     names: List[PlayerNameType]
-    session: List[PlayerSessionType]
+    sessions: List[PlayerSessionType]
     sessions_count: int
     total_playtime_seconds: int
     current_playtime_seconds: int
@@ -223,6 +323,9 @@ class GetPlayersType(TypedDict):
 
 class GetDetailedPlayer(TypedDict):
     name: str
+    steam_id_64: str
+    profile: PlayerProfileType | None
+    is_vip: bool
     unit_id: Optional[int]
     unit_name: Optional[str]
     loadout: Optional[str]
@@ -244,7 +347,7 @@ class GetDetailedPlayers(TypedDict):
 
 class EnrichedGetPlayersType(GetPlayersType):
     is_vip: bool
-    profile: PlayerProfileType
+    profile: PlayerProfileType | None
 
 
 class StructuredLogLineType(TypedDict):
@@ -287,6 +390,7 @@ class GameState(TypedDict):
     num_axis_players: int
     allied_score: int
     axis_score: int
+    raw_time_remaining: str
     time_remaining: datetime.timedelta
     current_map: str
     next_map: str
@@ -302,3 +406,53 @@ class VACGameBansConfigType(TypedDict):
 class VipId(TypedDict):
     steam_id_64: str
     name: str
+
+
+# Have to inherit from str to allow for JSON serialization w/ pydantic
+class AllLogTypes(str, enum.Enum):
+    admin_banned = "ADMIN BANNED"
+    admin_kicked = "ADMIN KICKED"
+    camera = "CAMERA"
+    chat = "CHAT"
+    allies_chat = "CHAT[Allies]"
+    allies_team_chat = "CHAT[Allies][Team]"
+    allies_unit_chat = "CHAT[Allies][Unit]"
+    cxis_chat = "CHAT[Axis]"
+    axis_team_chat = "CHAT[Axis][Team]"
+    axis_unit_chat = "CHAT[Axis][Unit]"
+    connected = "CONNECTED"
+    disconnected = "DISCONNECTED"
+    kill = "KILL"
+    match = "MATCH"
+    match_start = "MATCH START"
+    match_end = "MATCH ENDED"
+    team_kill = "TEAM KILL"
+    team_switch = "TEAMSWITCH"
+    # Automatic kicks for team kills
+    # tk= "TK",
+    tk_auto = "TK AUTO"
+    tk_auto_banned = "TK AUTO BANNED"
+    tk_auto_kicked = "TK AUTO KICKED"
+    # Vote kicks
+    vote = "VOTE"
+    vote_started = "VOTE STARTED"
+    vote_completed = "VOTE COMPLETED"
+
+
+class InvalidLogTypeError(ValueError):
+    def __init__(self, log_type: str) -> None:
+        super().__init__()
+        self.log_type = log_type
+
+    def __str__(self) -> str:
+        return self.__repr__()
+
+    def __repr__(self) -> str:
+        return f"{self.log_type} must be one of ({', '.join(r for r in AllLogTypes)})"
+
+    def asdict(self):
+        return {
+            "type": InvalidLogTypeError.__name__,
+            "log_type": self.log_type,
+            "allowed_log_types": [log for log in AllLogTypes],
+        }

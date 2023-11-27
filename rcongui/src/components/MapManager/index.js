@@ -152,14 +152,12 @@ const MapRotation = ({ classes }) => {
           color="primary"
           variant="outlined"
           fullWidth
-          disabled={
-            hasChanged || rotationIsSaving || voteMapConfig.vote_enabled
-          }
+          disabled={hasChanged || rotationIsSaving || voteMapConfig.enabled}
           onClick={saveRotation}
         >
           {rotationIsSaving ? (
             <CircularProgress />
-          ) : voteMapConfig.vote_enabled ? (
+          ) : voteMapConfig.enabled ? (
             "You can't change the rotation while votemap is on"
           ) : (
             "Save rotation"

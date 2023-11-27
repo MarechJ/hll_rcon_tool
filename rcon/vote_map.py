@@ -14,7 +14,7 @@ from rcon.models import PlayerOptins, PlayerSteamID, enter_session
 from rcon.player_history import get_player
 from rcon.rcon import CommandFailedError, Rcon, StructuredLogLineType
 from rcon.settings import SERVER_INFO
-from rcon.user_config import DefaultMethods, VoteMapConfig
+from rcon.user_config.vote_map import DefaultMethods, VoteMapUserConfig
 from rcon.utils import (
     ALL_MAPS,
     LONG_HUMAN_MAP_NAMES,
@@ -66,7 +66,7 @@ def suggest_next_maps(
     whitelist_maps,
     selection_size=6,
     exclude_last_n=4,
-    offsensive_ratio=0.5,
+    offensive_ratio=0.5,
     consider_offensive_as_same_map=True,
     allow_consecutive_offensive=True,
     allow_consecutive_offensives_of_opposite_side=False,
@@ -78,7 +78,7 @@ def suggest_next_maps(
             whitelist_maps,
             selection_size,
             exclude_last_n,
-            offsensive_ratio,
+            offensive_ratio,
             consider_offensive_as_same_map,
             allow_consecutive_offensive,
             allow_consecutive_offensives_of_opposite_side,
@@ -91,7 +91,7 @@ def suggest_next_maps(
             set(ALL_MAPS),
             selection_size,
             exclude_last_n,
-            offsensive_ratio,
+            offensive_ratio,
             consider_offensive_as_same_map,
             allow_consecutive_offensive,
             allow_consecutive_offensives_of_opposite_side,
@@ -272,7 +272,8 @@ class VoteMap:
         self.red.delete(self.reminder_time_key)
 
     def is_time_for_reminder(self):
-        reminder_freq_min = VoteMapConfig().get_votemap_reminder_frequency_minutes()
+        config = VoteMapUserConfig.load_from_db()
+        reminder_freq_min = config.reminder_frequency_minutes
         if reminder_freq_min == 0:
             return False
 
@@ -289,10 +290,10 @@ class VoteMap:
 
     def vote_map_reminder(self, rcon: Rcon, force=False):
         logger.info("Vote MAP reminder")
-        vote_map_config = VoteMapConfig()
-        vote_map_message = vote_map_config.get_votemap_instruction_text()
+        config = VoteMapUserConfig.load_from_db()
+        vote_map_message = config.instruction_text
 
-        if not vote_map_config.get_vote_enabled():
+        if not config.enabled:
             return
 
         if not self.is_time_for_reminder() and not force:
@@ -329,9 +330,7 @@ class VoteMap:
             logger.exception("Can't get optins")
 
         for name, steamid in players:
-            if self.has_voted(name) or (
-                steamid in opted_out and vote_map_config.get_votemap_allow_optout()
-            ):
+            if self.has_voted(name) or (steamid in opted_out and config.allow_opt_out):
                 logger.info("Not showing reminder to %s", name)
                 continue
 
@@ -347,20 +346,17 @@ class VoteMap:
 
     def handle_vote_command(self, rcon, struct_log: StructuredLogLineType) -> bool:
         message = struct_log.get("sub_content", "").strip()
-        config = VoteMapConfig()
-        enabled = config.get_vote_enabled()
+        config = VoteMapUserConfig.load_from_db()
         if not message.lower().startswith(("!votemap", "!vm")):
-            return enabled
+            return config.enabled
 
         steam_id_64_1 = struct_log["steam_id_64_1"]
-        if not enabled:
+        if not config.enabled:
             # rcon.do_message_player(
             #     steam_id_64=steam_id_64_1,
             #     message="Vote map is not enabled on this server",
             # )
-            return enabled
-
-        help_text = config.get_votemap_help_text()
+            return config.enabled
 
         if match := re.match(r"(!votemap|!vm)\s*(\d+)", message, re.IGNORECASE):
             logger.info("Registering vote %s", struct_log)
@@ -373,8 +369,10 @@ class VoteMap:
                 rcon.do_message_player(
                     steam_id_64=steam_id_64_1, message="Invalid vote."
                 )
-                if help_text:
-                    rcon.do_message_player(steam_id_64=steam_id_64_1, message=help_text)
+                if config.help_text:
+                    rcon.do_message_player(
+                        steam_id_64=steam_id_64_1, message=config.help_text
+                    )
             except VoteMapNoInitialised:
                 rcon.do_message_player(
                     steam_id_64=steam_id_64_1,
@@ -382,38 +380,41 @@ class VoteMap:
                 )
                 raise
             else:
-                if msg := config.get_votemap_thank_you_text():
+                if msg := config.thank_you_text:
                     msg = msg.format(
                         player_name=struct_log["player"], map_name=map_name
                     )
                     rcon.do_message_player(steam_id_64=steam_id_64_1, message=msg)
             finally:
                 self.apply_results()
-                return enabled
+                return config.enabled
 
-        if re.match(r"(!votemap|!vm)\s*help", message, re.IGNORECASE) and help_text:
+        if (
+            re.match(r"(!votemap|!vm)\s*help", message, re.IGNORECASE)
+            and config.help_text
+        ):
             logger.info("Showing help %s", struct_log)
-            rcon.do_message_player(steam_id_64=steam_id_64_1, message=help_text)
-            return enabled
+            rcon.do_message_player(steam_id_64=steam_id_64_1, message=config.help_text)
+            return config.enabled
 
         if re.match(r"(!votemap|!vm)$", message, re.IGNORECASE):
             logger.info("Showing selection %s", struct_log)
-            vote_map_message = config.get_votemap_instruction_text()
+            vote_map_message = config.instruction_text
             rcon.do_message_player(
                 steam_id_64=steam_id_64_1,
                 message=vote_map_message.format(
                     map_selection=self.format_map_vote("by_mod_vertical_all")
                 ),
             )
-            return enabled
+            return config.enabled
 
         if re.match(r"(!votemap|!vm)\s*never$", message, re.IGNORECASE):
-            if not config.get_votemap_allow_optout():
+            if not config.allow_opt_out:
                 rcon.do_message_player(
                     steam_id_64=steam_id_64_1,
                     message="You can't opt-out of vote map on this server",
                 )
-                return enabled
+                return config.enabled
 
             logger.info("Player opting out of vote %s", struct_log)
             with enter_session() as sess:
@@ -447,7 +448,7 @@ class VoteMap:
                     logger.exception("Unable to add optin. Already exists?")
                 self.apply_with_retry()
 
-            return enabled
+            return config.enabled
 
         if re.match(r"(!votemap|!vm)\s*allow$", message, re.IGNORECASE):
             logger.info("Player opting in for vote %s", struct_log)
@@ -480,10 +481,10 @@ class VoteMap:
                     )
                 except Exception as e:
                     logger.exception("Unable to update optin. Already exists?")
-            return enabled
+            return config.enabled
 
-        rcon.do_message_player(steam_id_64=steam_id_64_1, message=help_text)
-        return enabled
+        rcon.do_message_player(steam_id_64=steam_id_64_1, message=config.help_text)
+        return config.enabled
 
     def register_vote(self, player_name, vote_timestamp, vote_content):
         try:
@@ -578,29 +579,29 @@ class VoteMap:
         self.red.set(self.whitelist_key, pickle.dumps(set(map_names)))
 
     def gen_selection(self):
-        config = VoteMapConfig()
+        config = VoteMapUserConfig.load_from_db()
 
         logger.debug(
             f"""Generating new map selection for vote map with the following criteria:
             {ALL_MAPS}
-            {config.get_votemap_number_of_options()=}
-            {config.get_votemap_ratio_of_offensives_to_offer()=}
-            {config.get_votemap_number_of_last_played_map_to_exclude()=}
-            {config.get_votemap_consider_offensive_as_same_map()=}
-            {config.get_votemap_allow_consecutive_offensives()=}
-            {config.get_votemap_allow_consecutive_offensives_of_opposite_side()=}
-            {config.get_votemap_default_method()=}
+            {config.number_of_options=}
+            {config.ratio_of_offensives=}
+            {config.number_last_played_to_exclude=}
+            {config.consider_offensive_same_map=}
+            {config.allow_consecutive_offensives=}
+            {config.allow_consecutive_offensives_opposite_sides=}
+            {config.default_method.value=}
         """
         )
         selection = suggest_next_maps(
             MapsHistory(),
             self.get_map_whitelist(),
-            selection_size=config.get_votemap_number_of_options(),
-            exclude_last_n=config.get_votemap_number_of_last_played_map_to_exclude(),
-            offsensive_ratio=config.get_votemap_ratio_of_offensives_to_offer(),
-            consider_offensive_as_same_map=config.get_votemap_consider_offensive_as_same_map(),
-            allow_consecutive_offensive=config.get_votemap_allow_consecutive_offensives(),
-            allow_consecutive_offensives_of_opposite_side=config.get_votemap_allow_consecutive_offensives_of_opposite_side(),
+            selection_size=config.number_of_options,
+            exclude_last_n=config.number_last_played_to_exclude,
+            offensive_ratio=config.ratio_of_offensives,
+            consider_offensive_as_same_map=config.consider_offensive_same_map,
+            allow_consecutive_offensive=config.allow_consecutive_offensives,
+            allow_consecutive_offensives_of_opposite_side=config.allow_consecutive_offensives_opposite_sides,
             current_map=self.get_current_map(),
         )
         self.red.delete("MAP_SELECTION")
@@ -630,10 +631,10 @@ class VoteMap:
     def pick_default_next_map(self):
         selection = self.get_selection()
         maps_history = MapsHistory()
-        config = VoteMapConfig()
+        config = VoteMapUserConfig.load_from_db()
         all_maps = ALL_MAPS
 
-        if not config.get_votemap_allow_default_to_offsensive():
+        if not config.allow_default_to_offensive:
             logger.debug(
                 "Not allowing default to offensive, removing all offensive maps"
             )
@@ -656,11 +657,11 @@ class VoteMap:
             DefaultMethods.random_suggestions: lambda: random.choice(
                 list(set(selection) - set([maps_history[0]["name"]]))
             ),
-        }[config.get_votemap_default_method()]()
+        }[config.default_method]()
 
     def apply_results(self):
-        config = VoteMapConfig()
-        if not config.get_vote_enabled():
+        config = VoteMapUserConfig.load_from_db()
+        if not config.enabled:
             return True
 
         votes = self.get_votes()
@@ -669,7 +670,7 @@ class VoteMap:
             next_map = self.pick_default_next_map()
             logger.warning(
                 "No votes recorded, defaulting with %s using default winning map %s",
-                config.get_votemap_default_method(),
+                config.default_method.value,
                 next_map,
             )
         else:

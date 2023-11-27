@@ -8,8 +8,8 @@ import paramiko
 from ftpretty import ftpretty
 
 from rcon.cache_utils import invalidates
-from rcon.config import get_config
 from rcon.rcon import Rcon, invalidates
+from rcon.user_config.gtx_server_name import GtxServerNameChangeUserConfig
 
 logger = logging.getLogger(__name__)
 
@@ -49,8 +49,19 @@ class SFTPAdapter:
 
 
 class GTXFtp:
-    def __init__(self, ip, port, username, password) -> None:
+    def __init__(self, ip, port) -> None:
+        username = os.getenv("GTX_SERVER_NAME_CHANGE_USERNAME")
+        password = os.getenv("GTX_SERVER_NAME_CHANGE_PASSWORD")
         logger.info("Connecting to GTX SFTP %s@%s:%s", username, ip, port)
+
+        if not username or not password:
+            logger.error(
+                "Both GTX_SERVER_NAME_CHANGE_USERNAME and GTX_SERVER_NAME_CHANGE_PASSWORD must be set in your .env"
+            )
+            raise ValueError(
+                "Both GTX_SERVER_NAME_CHANGE_USERNAME and GTX_SERVER_NAME_CHANGE_PASSWORD must be set in your .env"
+            )
+
         try:
             self.adapter = SFTPAdapter(ip, port, username, password)
         except:
@@ -60,15 +71,11 @@ class GTXFtp:
         logger.debug("Connected to GTX SFTP %s@%s:%s", username, ip, port)
 
     @classmethod
-    def from_config(cls, server_number=None):
-        server_number = server_number or os.getenv("SERVER_NUMBER")
-        config = get_config()
-        config = config.get("GTX").get(f"server_{server_number}")
+    def from_config(cls):
+        config = GtxServerNameChangeUserConfig.load_from_db()
         return cls(
-            ip=config["ip"],
-            port=config["port"],
-            username=config["username"],
-            password=config["password"],
+            ip=config.ip,
+            port=config.port,
         )
 
     def change_server_name(self, new_name):

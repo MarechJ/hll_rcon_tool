@@ -9,6 +9,7 @@ from rcon.models import WatchList, enter_session
 from rcon.player_history import _get_set_player, get_player
 from rcon.rcon import CommandFailedError, Rcon
 from rcon.types import PlayerProfileType
+from rcon.user_config.webhooks import WatchlistWebhooksUserConfig
 
 
 @on_connected
@@ -17,7 +18,7 @@ def watchdog(rcon: Rcon, log, name: str, steam_id_64: str):
     watcher = PlayerWatch(steam_id_64)
     if watcher.is_watched():
         watcher.increment_watch()
-        if hooks := get_prepared_discord_hooks("watchlist"):
+        if hooks := get_prepared_discord_hooks(WatchlistWebhooksUserConfig):
             watched_player = watcher.get_watch()
             player_name = log["player"]
 

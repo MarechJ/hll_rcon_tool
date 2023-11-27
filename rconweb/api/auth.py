@@ -6,18 +6,17 @@ from functools import wraps
 from typing import Any
 
 from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.models import Permission
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.hashers import make_password
-from django.contrib.auth.models import User
+from django.contrib.auth.models import Permission, User
 from django.core.exceptions import PermissionDenied
 from django.db.models.signals import post_delete, post_save
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse, QueryDict
 from django.views.decorators.csrf import csrf_exempt
 
 from rcon.audit import heartbeat, ingame_mods, online_mods, set_registered_mods
 from rcon.cache_utils import ttl_cache
-from rcon.config import get_config
+from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rconweb.settings import SECRET_KEY
 
 from .models import DjangoAPIKey, SteamPlayer
@@ -48,6 +47,9 @@ class RconResponse:
     forwards_results: Any = None
 
     def to_dict(self):
+        # asdict() cannot convert a Django QueryDict properly
+        if isinstance(self.arguments, QueryDict):
+            self.arguments = self.arguments.dict()
         return asdict(self)
 
 
@@ -192,9 +194,9 @@ def staff_required(request):
 
 
 def stats_login_required(func):
-    config = get_config()
+    config = RconServerSettingsUserConfig.load_from_db()
 
-    if not config.get("LOCK_STATS_API"):
+    if not config.lock_stats_api:
         return func
 
     @wraps(func)
@@ -237,6 +239,7 @@ def get_ingame_mods(request):
         failed=False,
     )
 
+
 @csrf_exempt
 @login_required()
 def get_own_user_permissions(request):
@@ -245,13 +248,17 @@ def get_own_user_permissions(request):
     permissions = Permission.objects.filter(user=request.user)
     trimmed_permissions = [
         {
-            "permission": p['codename'],
-            "description": p['name'],
+            "permission": p["codename"],
+            "description": p["name"],
         }
         for p in permissions.values()
     ]
 
-    return api_response(command=command_name, result={
-        "permissions": trimmed_permissions,
-        "is_superuser": request.user.is_superuser,
-        }, failed=False)
+    return api_response(
+        command=command_name,
+        result={
+            "permissions": trimmed_permissions,
+            "is_superuser": request.user.is_superuser,
+        },
+        failed=False,
+    )

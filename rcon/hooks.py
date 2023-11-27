@@ -1,34 +1,27 @@
 import logging
-import os
 import re
-from collections import defaultdict
 from datetime import datetime
-from functools import partial, wraps
+from functools import wraps
 from threading import Timer
-from typing import DefaultDict, Dict, List, Optional, Sequence, Union
 
 from discord_webhook import DiscordEmbed
 
-import discord
 from rcon.cache_utils import invalidates
 from rcon.commands import CommandFailedError, HLLServerError
-from rcon.config import get_config
 from rcon.discord import (
     dict_to_discord,
     get_prepared_discord_hooks,
     send_to_discord_audit,
 )
-from rcon.discord_chat import make_hook
 from rcon.game_logs import (
     on_camera,
     on_chat,
     on_connected,
     on_disconnected,
-    on_generic,
     on_match_end,
     on_match_start,
 )
-from rcon.models import LogLineWebHookField, enter_session
+from rcon.models import enter_session
 from rcon.player_history import (
     _get_set_player,
     get_player,
@@ -39,9 +32,13 @@ from rcon.player_history import (
 )
 from rcon.rcon import Rcon, StructuredLogLineType
 from rcon.steam_utils import get_player_bans, get_steam_profile, update_db_player_info
-from rcon.types import PlayerFlagType, SteamBansType, VACGameBansConfigType
-from rcon.user_config import CameraConfig, RealVipConfig
-from rcon.utils import LOG_MAP_NAMES_TO_MAP, MapsHistory, get_server_number, UNKNOWN_MAP_NAME
+from rcon.types import PlayerFlagType, SteamBansType
+from rcon.user_config.auto_mod_no_leader import AutoModNoLeaderUserConfig
+from rcon.user_config.camera_notification import CameraNotificationUserConfig
+from rcon.user_config.real_vip import RealVipUserConfig
+from rcon.user_config.vac_game_bans import VacGameBansUserConfig
+from rcon.user_config.webhooks import CameraWebhooksUserConfig
+from rcon.utils import LOG_MAP_NAMES_TO_MAP, UNKNOWN_MAP_NAME, MapsHistory
 from rcon.vote_map import VoteMap
 from rcon.workers import record_stats_worker, temporary_broadcast, temporary_welcome
 
@@ -233,19 +230,13 @@ def should_ban(
 
 
 def ban_if_has_vac_bans(rcon: Rcon, steam_id_64, name):
-    try:
-        config: VACGameBansConfigType = get_config()["VAC_GAME_BANS"]
-    except KeyError:
-        logger.error(f"VAC_GAME_BANS not in your config")
-        return
+    config = VacGameBansUserConfig.load_from_db()
 
-    max_days_since_ban = config.get("ban_on_vac_history_days", 0)
+    max_days_since_ban = config.vac_history_days
     max_game_bans = (
-        float("inf")
-        if config.get("max_game_ban_threshold", 0) <= 0
-        else config.get("max_game_ban_threshold", 0)
+        float("inf") if config.game_ban_threshhold <= 0 else config.game_ban_threshhold
     )
-    whitelist_flags = config.get("whitelist_flags", [])
+    whitelist_flags = config.whitelist_flags
 
     if max_days_since_ban <= 0:
         return  # Feature is disabled
@@ -272,7 +263,7 @@ def ban_if_has_vac_bans(rcon: Rcon, steam_id_64, name):
             player_flags=player.flags,
             whitelist_flags=whitelist_flags,
         ):
-            reason = config["ban_on_vac_history_reason"].format(
+            reason = config.ban_on_vac_history_reason.format(
                 DAYS_SINCE_LAST_BAN=bans.get("DaysSinceLastBan"),
                 MAX_DAYS_SINCE_BAN=str(max_days_since_ban),
             )
@@ -374,8 +365,9 @@ pendingTimers = {}
 @on_connected
 @inject_player_ids
 def notify_false_positives(rcon: Rcon, _, name: str, steam_id_64: str):
-    c = get_config()["NOLEADER_AUTO_MOD"]
-    if not c["enabled"]:
+    config = AutoModNoLeaderUserConfig.load_from_db()
+
+    if not config.enabled:
         logger.debug("no_leader automod is disabled")
         return
 
@@ -385,8 +377,7 @@ def notify_false_positives(rcon: Rcon, _, name: str, steam_id_64: str):
     action = c["whitespace_names_action"]
 
     logger.info(
-        f"Player '{name}' has a pseudo ending with whitespace. "
-        f"Action = {action}."
+        f"Player '{name}' has a pseudo ending with whitespace. " f"Action = {action}."
     )
 
     try:
@@ -407,27 +398,21 @@ def notify_false_positives(rcon: Rcon, _, name: str, steam_id_64: str):
         if action == "kick":
             try:
                 rcon.do_kick(
-                    player=name,
-                    reason=c["whitespace_names_message"],
-                    by="CRCON"
+                    player=name, reason=c["whitespace_names_message"], by="CRCON"
                 )
             except Exception as e:
-                logger.error(
-                    "Could not kick player " + name + "/" + steam_id_64, e
-                )
+                logger.error("Could not kick player " + name + "/" + steam_id_64, e)
 
         if action == "warn":
             try:
                 rcon.do_message_player(
                     steam_id_64=steam_id_64,
-                    message=c["whitespace_names_message"],
+                    message=config.whitespace_message,
                     by="CRCON",
                     save_message=False,
                 )
             except Exception as e:
-                logger.error(
-                    "Could not message player " + name + "/" + steam_id_64, e
-                )
+                logger.error("Could not message player " + name + "/" + steam_id_64, e)
 
     # The player might not yet have finished connecting in order to send messages.
     t = Timer(10, notify_player)
@@ -449,13 +434,13 @@ def cleanup_pending_timers(_, _1, _2, steam_id_64: str):
 
 
 def _set_real_vips(rcon: Rcon, struct_log):
-    config = RealVipConfig()
-    if not config.get_enabled():
+    config = RealVipUserConfig.load_from_db()
+    if not config.enabled:
         logger.debug("Real VIP is disabled")
         return
 
-    desired_nb_vips = config.get_desired_total_number_vips()
-    min_vip_slot = config.get_minimum_number_vip_slot()
+    desired_nb_vips = config.desired_total_number_vips
+    min_vip_slot = config.minimum_number_vip_slots
     vip_count = rcon.get_vips_count()
 
     remaining_vip_slots = max(desired_nb_vips - vip_count, max(min_vip_slot, 0))
@@ -478,7 +463,7 @@ def notify_camera(rcon: Rcon, struct_log):
     send_to_discord_audit(message=struct_log["message"], by=struct_log["player"])
 
     try:
-        if hooks := get_prepared_discord_hooks("camera"):
+        if hooks := get_prepared_discord_hooks(CameraWebhooksUserConfig):
             embeded = DiscordEmbed(
                 title=f'{struct_log["player"]}  - {struct_log["steam_id_64_1"]}',
                 description=struct_log["sub_content"],
@@ -490,90 +475,13 @@ def notify_camera(rcon: Rcon, struct_log):
     except Exception:
         logger.exception("Unable to forward to hooks")
 
-    config = CameraConfig()
-    if config.is_broadcast():
+    config = CameraNotificationUserConfig.load_from_db()
+    if config.broadcast:
         temporary_broadcast(rcon, struct_log["message"], 60)
 
-    if config.is_welcome():
+    if config.welcome:
         temporary_welcome(rcon, struct_log["message"], 60)
 
-
-def make_allowed_mentions(mentions: Sequence[str]) -> discord.AllowedMentions:
-    """Convert the provided sequence of users and roles to a discord.AllowedMentions
-
-    Similar to discord_chat.make_allowed_mentions but doesn't strip @everyone/@here
-    """
-    allowed_mentions: DefaultDict[str, List[discord.Object]] = defaultdict(list)
-
-    for role_or_user in mentions:
-        if match := re.match(r"<@(\d+)>", role_or_user):
-            allowed_mentions["users"].append(discord.Object(int(match.group(1))))
-        if match := re.match(r"<@&(\d+)>", role_or_user):
-            allowed_mentions["roles"].append(discord.Object(int(match.group(1))))
-
-    return discord.AllowedMentions(
-        users=allowed_mentions["users"], roles=allowed_mentions["roles"]
-    )
-
-
-def send_log_line_webhook_message(
-    webhook_url: str,
-    mentions: Optional[Sequence[str]],
-    _,
-    log_line: Dict[str, Union[str, int, float, None]],
-) -> None:
-    """Send a time stammped embed of the log_line and mentions to the provided Discord Webhook"""
-
-    mentions = mentions or []
-
-    webhook = make_hook(webhook_url)
-    allowed_mentions = make_allowed_mentions(mentions)
-
-    SERVER_SHORT_NAME = os.getenv("SERVER_SHORT_NAME", "No Server Name Set")
-
-    content = " ".join(mentions)
-    description = log_line["line_without_time"]
-    embed = discord.Embed(
-        description=description,
-        timestamp=datetime.utcfromtimestamp(log_line["timestamp_ms"] / 1000),
-    )
-    embed.set_footer(text=SERVER_SHORT_NAME)
-    webhook.send(content=content, embed=embed, allowed_mentions=allowed_mentions)
-
-
-def load_generic_hooks():
-    """Load and validate all the subscribed log line webhooks from config.yml"""
-    server_id = get_server_number()
-
-    try:
-        raw_config = get_config()["LOG_LINE_WEBHOOKS"]
-    except KeyError:
-        logger.error("No config.yml or no LOG_LINE_WEBHOOKS configuration")
-        return
-
-    for key, value in raw_config.items():
-        if value:
-            for field in value:
-                validated_field = LogLineWebHookField(
-                    url=field["URL"],
-                    mentions=field["MENTIONS"],
-                    servers=field["SERVERS"],
-                )
-
-                func = partial(
-                    send_log_line_webhook_message,
-                    validated_field.url,
-                    validated_field.mentions,
-                )
-
-                # Have to set these attributes as the're used in LogLoop.process_hooks()
-                func.__name__ = send_log_line_webhook_message.__name__
-                func.__module__ = __name__
-
-                on_generic(key, func)
-
-
-load_generic_hooks()
 
 if __name__ == "__main__":
     from rcon.settings import SERVER_INFO

@@ -19,7 +19,7 @@ then
   ./manage.py collectstatic --noinput
   echo "from django.contrib.auth.models import User; User.objects.create_superuser('admin', 'admin@example.com', 'admin') if not User.objects.filter(username='admin').first() else None" | python manage.py shell
   export LOGGING_FILENAME=api_$SERVER_NUMBER.log
-  gunicorn --preload -w $NB_API_WORKERS -k gthread --threads $NB_API_THREADS -t 120 -b 0.0.0.0 rconweb.wsgi
+  gunicorn --preload --pid gunicorn.pid -w $NB_API_WORKERS -k gthread --threads $NB_API_THREADS -t 120 -b 0.0.0.0 rconweb.wsgi
   cd ..
   ./manage.py unregister_api
 else

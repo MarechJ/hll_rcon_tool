@@ -7,13 +7,13 @@ import time
 from dataclasses import dataclass
 
 from rcon.cache_utils import get_redis_client
-from rcon.config import get_config
 from rcon.game_logs import get_historical_logs_records, get_recent_logs
 from rcon.models import enter_session
 from rcon.player_history import _get_profiles, get_player_profile_by_steam_ids
 from rcon.rcon import Rcon
 from rcon.settings import SERVER_INFO
 from rcon.types import StructuredLogLineWithMetaData
+from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.utils import MapsHistory
 
 logger = logging.getLogger(__name__)
@@ -86,7 +86,7 @@ class BaseStats:
 
     def _process_death_time(self, log_time, stats, save_spawn=True):
         if not isinstance(stats["last_spawn"], datetime.datetime):
-            logger.error("Unkown last spawn")
+            logger.warning("Unknown last spawn")
             stats["last_spawn"] = log_time
             return
 
@@ -500,15 +500,11 @@ class TimeWindowStats(BaseStats):
 
 def live_stats_loop():
     live = LiveStats()
-    config = get_config()
+    config = RconServerSettingsUserConfig.load_from_db()
     last_loop_session = datetime.datetime(year=2020, month=1, day=1)
     last_loop_game = datetime.datetime(year=2020, month=1, day=1)
-    live_session_sleep_seconds = config.get("LIVE_STATS", {}).get(
-        "refresh_stats_seconds", 30
-    )
-    live_game_sleep_seconds = config.get("LIVE_STATS", {}).get(
-        "refresh_current_game_stats_seconds", 5
-    )
+    live_session_sleep_seconds = config.live_stats_refresh_seconds
+    live_game_sleep_seconds = config.live_stats_refresh_seconds
     logger.debug("live_session_sleep_seconds: {}".format(live_session_sleep_seconds))
     logger.debug("live_game_sleep_seconds: {}".format(live_game_sleep_seconds))
     red = get_redis_client()

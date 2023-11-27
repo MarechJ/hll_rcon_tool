@@ -10,7 +10,6 @@ from rcon.automods.get_team_count import get_team_count
 from rcon.automods.is_time import is_time
 from rcon.automods.models import (
     ActionMethod,
-    NoLeaderConfig,
     PunishDetails,
     PunishPlayer,
     PunishStepState,
@@ -21,6 +20,7 @@ from rcon.automods.models import (
 )
 from rcon.automods.num_or_inf import num_or_inf
 from rcon.types import GameState
+from rcon.user_config.auto_mod_no_leader import AutoModNoLeaderUserConfig
 
 LEADER_WATCH_RESET_SECS = 120
 AUTOMOD_USERNAME = "NoLeaderWatch"
@@ -29,9 +29,11 @@ AUTOMOD_USERNAME = "NoLeaderWatch"
 class NoLeaderAutomod:
     logger: logging.Logger
     red: redis.StrictRedis
-    config: NoLeaderConfig
+    config: AutoModNoLeaderUserConfig
 
-    def __init__(self, config: NoLeaderConfig, red: redis.StrictRedis or None):
+    def __init__(
+        self, config: AutoModNoLeaderUserConfig, red: redis.StrictRedis or None
+    ):
         self.logger = logging.getLogger(__name__)
         self.red = red
         self.config = config
@@ -46,11 +48,11 @@ class NoLeaderAutomod:
 
         if method == ActionMethod.MESSAGE:
             data["received_warnings"] = len(watch_status.warned.get(aplayer.name))
-            data["max_warnings"] = self.config.number_of_warning
+            data["max_warnings"] = self.config.number_of_warnings
             data["next_check_seconds"] = self.config.warning_interval_seconds
         if method == ActionMethod.PUNISH:
             data["received_punishes"] = len(watch_status.punished.get(aplayer.name))
-            data["max_punishes"] = self.config.number_of_punish
+            data["max_punishes"] = self.config.number_of_punishments
             data["next_check_seconds"] = self.config.punish_interval_seconds
         if method == ActionMethod.KICK:
             data["kick_grace_period"] = self.config.kick_grace_period_seconds
@@ -234,13 +236,13 @@ class NoLeaderAutomod:
     def should_warn_player(
         self, watch_status: WatchStatus, squad_name: str, aplayer: PunishPlayer
     ):
-        if self.config.number_of_warning == 0:
+        if self.config.number_of_warnings == 0:
             self.logger.debug("Warnings are disabled. number_of_warning is set to 0")
             return PunishStepState.DISABLED
 
         if (
-            aplayer.lvl <= self.config.immuned_level_up_to
-            or aplayer.role in self.config.immuned_roles
+            aplayer.lvl <= self.config.immune_player_level
+            or aplayer.role in self.config.immune_roles
         ):
             self.logger.info("%s is immune to warnings", aplayer.short_repr())
             return PunishStepState.IMMUNED
@@ -254,14 +256,14 @@ class NoLeaderAutomod:
             return PunishStepState.WAIT
 
         if (
-            len(warnings) < self.config.number_of_warning
-            or self.config.number_of_warning == -1
+            len(warnings) < self.config.number_of_warnings
+            or self.config.number_of_warnings == -1
         ):
             self.logger.info(
                 "%s Will be warned (%s/%s)",
                 aplayer.short_repr(),
                 len(warnings),
-                num_or_inf(self.config.number_of_warning),
+                num_or_inf(self.config.number_of_warnings),
             )
             warnings.append(datetime.now())
             return PunishStepState.APPLY
@@ -270,7 +272,7 @@ class NoLeaderAutomod:
             "%s Max warnings reached (%s/%s). Moving on to punish.",
             aplayer.short_repr(),
             len(warnings),
-            self.config.number_of_warning,
+            self.config.number_of_warnings,
         )
         return PunishStepState.GO_TO_NEXT_STEP
 
@@ -282,13 +284,13 @@ class NoLeaderAutomod:
         squad,
         aplayer: PunishPlayer,
     ):
-        if self.config.number_of_punish == 0:
+        if self.config.number_of_punishments == 0:
             self.logger.debug("Punish is disabled")
             return PunishStepState.DISABLED
 
         if (
             get_team_count(team_view, "allies") + get_team_count(team_view, "axis")
-        ) < self.config.disable_punish_below_server_player_count:
+        ) < self.config.min_server_players_for_punish:
             self.logger.debug("Server below min player count for punish")
             return PunishStepState.WAIT
 
@@ -297,8 +299,8 @@ class NoLeaderAutomod:
             return PunishStepState.WAIT
 
         if (
-            aplayer.lvl <= self.config.immuned_level_up_to
-            or aplayer.role in self.config.immuned_roles
+            aplayer.lvl <= self.config.immune_player_level
+            or aplayer.role in self.config.immune_roles
         ):
             self.logger.info("%s is immune to punishment", aplayer.short_repr())
             return PunishStepState.IMMUNED
@@ -310,14 +312,14 @@ class NoLeaderAutomod:
             return PunishStepState.WAIT
 
         if (
-            len(punishes) < self.config.number_of_punish
-            or self.config.number_of_punish == -1
+            len(punishes) < self.config.number_of_punishments
+            or self.config.number_of_punishments == -1
         ):
             self.logger.info(
                 "%s Will be punished (%s/%s)",
                 aplayer.short_repr(),
                 len(punishes),
-                num_or_inf(self.config.number_of_punish),
+                num_or_inf(self.config.number_of_punishments),
             )
             punishes.append(datetime.now())
             return PunishStepState.APPLY
@@ -326,7 +328,7 @@ class NoLeaderAutomod:
             "%s Max punish reached (%s/%s)",
             aplayer.short_repr(),
             len(punishes),
-            self.config.number_of_punish,
+            self.config.number_of_punishments,
         )
         return PunishStepState.GO_TO_NEXT_STEP
 
@@ -344,7 +346,7 @@ class NoLeaderAutomod:
 
         if (
             get_team_count(team_view, "allies") + get_team_count(team_view, "axis")
-        ) < self.config.disable_kick_below_server_player_count:
+        ) < self.config.min_server_players_for_kick:
             self.logger.debug("Server below min player count for punish")
             return PunishStepState.WAIT
 
@@ -353,8 +355,8 @@ class NoLeaderAutomod:
             return PunishStepState.WAIT
 
         if (
-            aplayer.lvl <= self.config.immuned_level_up_to
-            or aplayer.role in self.config.immuned_roles
+            aplayer.lvl <= self.config.immune_player_level
+            or aplayer.role in self.config.immune_roles
         ):
             self.logger.info("%s is immune to kick", aplayer.short_repr())
             return PunishStepState.IMMUNED
