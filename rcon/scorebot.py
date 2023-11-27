@@ -413,7 +413,8 @@ def run():
                     logger.exception("Unable to edit message. Deleting record", e)
                     cleanup_orphaned_messages(conn, server_number, webhook.url)
                     raise e
-                time.sleep(60)
+                logger.info(f"sleeping for {config.refresh_time_secs} seconds")
+                time.sleep(config.refresh_time_secs)
     except Exception as e:
         logger.exception("The bot stopped", e)
         raise
