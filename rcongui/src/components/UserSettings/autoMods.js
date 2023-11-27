@@ -185,6 +185,7 @@ export const NoLeaderAutoMod = ({
         
         /*
             Step number 1
+            
             If a squad has no officer all members are noted internally but no action is taken
             Since we sometimes receive wrong data from the game server we note those players
             and see if these squads still don't have an officer the next time we check
@@ -209,6 +210,7 @@ export const NoLeaderAutoMod = ({
         
         /*
             Step number 2
+            
             Send a direct warning message to the squads that don't have an officer
             set to 0 to disable (this means it will move to punish directly), -1 for infinite warn
             set to 1 or Y to warn squad Y times before we move on to the punish step
@@ -230,6 +232,7 @@ export const NoLeaderAutoMod = ({
     
         /*
             Step number 3
+            
             If the squad still doesn't have an officer after
             the N warnings and the last warning_interval_seconds has elapsed, automod starts punishing
             Set to 0 to disable to punish entirely. I would advise setting warnings to infinity (-1) if you do that
@@ -268,6 +271,7 @@ export const NoLeaderAutoMod = ({
         
         /*
             Step number 4
+            
             Set the below value to false if you don't want to kick players after they reached the max amount of punishes
             note that if you disable punishes it will never go to that step. no matter if it's set to true 
         */
@@ -362,7 +366,7 @@ export const SeedingAutoMod = ({
         {player_name}, {received_warnings}, {max_warnings}, {next_check_seconds} and {violation}
         are the allowed message parameters
     */
-    "warning_message": "Warning, {player_name}! You violate seeding rules on this server: {violation}\nYou will be punished after {max_warnings} warnings (you already received {received_warnings}), then kicked.\nNext check will happen automatically in {next_check_seconds}s.",
+    "warning_message": "Warning, {player_name}! You violate seeding rules on this server: {violation}\\nYou will be punished after {max_warnings} warnings (you already received {received_warnings}), then kicked.\\nNext check will happen automatically in {next_check_seconds}s.",
     
     /*
         This is the number of seconds this auto-mod will wait until moving to
@@ -387,7 +391,7 @@ export const SeedingAutoMod = ({
         {player_name}, {received_punishes}, {max_punishes}, {next_check_seconds} and {violation}
         are the allowed message parameters
     */
-    "punish_message": "You violated seeding rules on this server: {violation}.\nYou're being punished by a bot ({received_punishes}/{max_punishes}).\nNext check in {next_check_seconds} seconds",
+    "punish_message": "You violated seeding rules on this server: {violation}.\\nYou're being punished by a bot ({received_punishes}/{max_punishes}).\\nNext check in {next_check_seconds} seconds",
     
     /*
         This is the number of seconds to wait between punishes
@@ -412,7 +416,7 @@ export const SeedingAutoMod = ({
         {player_name}, {squad_name} and {kick_grace_period}
         are the allowed message parameters
     */
-    "kick_message": "You violated seeding rules on this server.\nYour grace period of {kick_grace_period}s has passed.\nYou failed to comply with the previous warnings.",
+    "kick_message": "You violated seeding rules on this server.\\nYour grace period of {kick_grace_period}s has passed.\\nYou failed to comply with the previous warnings.",
     
     /*
         The disallowed roles is a seeding rule that ultimately prevents players from taking a role that should generally not
@@ -538,142 +542,122 @@ export const NoSoloTankAutoMod = ({
       {
           /*
               This auto-moderator has 4 steps, 1. internally noting (X times), 2. warning via direct message (Y times), 3. punish (Z times) 4. kick
-              Note that the state cycle for a given squad only resets once it finally has an officer. So for example if you
+              Note that the state cycle for a given squad only resets once it finally has more than one member. So for example if you
               disabled the kick and have 3 punishes configured, once the 3 punishes are
-              through that's it, nothing will happen anymore for that squad even if they still don't have an officer.
-  
+              through that's it, nothing will happen anymore for that solotaker, even if he's still alone in his squad.
+              
               Note 2: notes, warnings, punishes and kicks are tracked individual per player, not at the squad level.
-              So if a player joins a squad that already received 3 punishes and will be kicked next, the new player will
-              start at the first punish regardless (so he won't be kick)
-              Set to true to enable the auto moderation of squads without officers
-  
+              Set to true to enable the auto moderation of solo tankers squads.
           */
           "enabled": false,
-  
+
           /*
               If this is set to true no warning / punish / kick will be applied for real
               It turns the code into a "simulation" mode and only send what it would do to your discord audit log webhook
           */
           "dry_run": true,
-  
+
           /* Discord Webhook URL where audit logs should be sent. */
           "discord_webhook_url": null,
-          
+
+          /*
+              This is either an empty list [] or a list of flags to exempt a player
+              from the automod feature (could be useful for admins that open locked armor squads to be able to use camera).
+              To use, add a flag or multiple flags to the list, and then flag
+              the players you want to exempt in the CRCON UI
+          */
+          "whitelist_flags": [
+              "🚨"
+          ],
+
           /*
               Step number 1
-              If a squad has no officer all members are noted internally but no action is taken
+              
+              If a player is solo in a tank squad, he will be noted internally but no action is taken
               Since we sometimes receive wrong data from the game server we note those players
-              and see if these squads still don't have an officer the next time we check
+              and see if these squads still are solo the next time we check
               set to 0 to disable (this means it will move to warn directly)
-              set to 1 to X to note the squad X times before we move to the warn step (we recommend 1)
+              set to 1 to X to note the squad X times before we move to the warn step
+              (we recommend 2 : that should give enough time for mates to join)
           */
           "number_of_notes": 1,
-  
+
           /*
               This is the number of seconds this auto-mod will wait until moving to
               the next note or to warnings if the number_of_notes is reached
           */
           "notes_interval_seconds": 10,
-  
-          /*
-              Deprecated: This option is deprecated and will be removed in a future release.
-              Temporary message used as a warning text for player names that will lead to false-positives in auto-moderation,
-              because of a game-server bug.
-              See https://github.com/MarechJ/hll_rcon_tool/issues/117 for more details.
-          */
-          "whitespace_message": "Your name contains a whitespace at the end (because it is truncated as it is too long). Because of a bug in the game, you might suffer auto-moderation actions as a false-positive. Please change your name and restart your game to avoid this.",
-          
+
           /*
               Step number 2
-              Send a direct warning message to the squads that don't have an officer
-              set to 0 to disable (this means it will move to punish directly), -1 for infinite warn
-              set to 1 or Y to warn squad Y times before we move on to the punish step
+              
+              Send a direct warning message to the solo tank player
+              set to 0 to disable (this means it will move to punish directly), -1 for infinite warnings (will never go to punishes)
+              set to 1 or Y to warn him Y times before we move on to the punish step
           */
           "number_of_warnings": 2,
-  
+
           /*
               This is the text that will be displayed to warn players.
               The following variables are available to fill into the text
               {player_name}, {squad_name}, {received_warnings}, {max_warnings} and {next_check_seconds}
           */
-          "warning_message": "Warning, {player_name}! Your squad ({squad_name}) does not have an officer. Players of squads without an officer will be punished after {max_warnings} warnings (you already received {received_warnings}), then kicked.\\nNext check will happen automatically in {next_check_seconds}s.",
-          
+          "warning_message": "Warning, {player_name} !\\n\\nYou can't play solo tank on this server !\\n\\nYou will be punished after {max_warnings} warnings\\n(you already received {received_warnings})\\n\\nNext check will happen automatically in {next_check_seconds}s.",
+
           /*
               This is the number of seconds this auto-mod will wait until moving to
               the next warning or to the punish if the number_of_warning's is reached
           */
           "warning_interval_seconds": 60,
-      
+
           /*
               Step number 3
-              If the squad still doesn't have an officer after
+              
+              If the player is still solo in his tank after
               the N warnings and the last warning_interval_seconds has elapsed, automod starts punishing
               Set to 0 to disable to punish entirely. I would advise setting warnings to infinity (-1) if you do that
               Set to -1 for infinite punish (will never go to kicks)
               Set to 1 or Z to apply Z punishes before we move to the next step (the kicks)
           */
           "number_of_punishments": 2,
-          
-  
-          
-          /*
-              This is the number of seconds to wait between punishes (if the squad remains without an officer
-              I wouldn't recommend setting a high value here (unless you chose infinite punishes) as once the player has died he has the opportunity to take
-              the officer role, so no excuse. Also it's even more frustrating to respawn run 300m and die again ;)
-          */
-          "punish_interval_seconds": 40,
-  
-          /*
-          This value will disable the punishes until the squad has at least the number of player set below
-          So if you set min_squad_players_for_punish: 3 a squad of 2 will be immune to punishes (and kicks)
-          */
-          "min_squad_players_for_punish": 3,
-          
-          /*
-          This option is the same as above but for the entire server. If the server has less players
-          than the number you set below, not punish / kicks will be applied
-          */
-          "min_server_players_for_punish": 40,
-          
+
           /*
               This is the message that will be used in the punish
               The following variables are available to fill into the text
               {player_name}, {squad_name}, {received_punishes}, {max_punishes} and {next_check_seconds}
           */
-          "punish_message": "Your squad ({squad_name}) must have an officer.\\nYou're being punished by a bot ({received_punishes}/{max_punishes}).\\nNext check in {next_check_seconds} seconds",
-          
+          "punish_message": "\\n\\nYou've been punished by a bot,\\nbecause you're playing solo in the armor squad {squad_name}.\\n\\n(Punition {received_punishes} of {max_punishes} before kick)\\n\\nNext check in {next_check_seconds}s.\\n\\n",
+
+          /*
+              This is the number of seconds to wait between punishes (if the player is still solo tank
+              I wouldn't recommend setting a high value here (unless you chose infinite punishes) as once the player has died he has the opportunity to leave
+              the squad, so no excuse. Also it's even more frustrating to respawn, run 300m and die again ;)
+          */
+          "punish_interval_seconds": 40,
+
+          /* If the server has less players than the number you set below, no punish / kicks will be applied */
+          "min_server_players_for_punish": 40,
+
           /*
               Step number 4
+              
               Set the below value to false if you don't want to kick players after they reached the max amount of punishes
-              note that if you disable punishes it will never go to that step. no matter if it's set to true 
+              note that if you disable punishes it will never go to that step. no matter if it's set to true
           */
           "kick_after_max_punish": true,
-  
-          /* Same behavior as for the punishes, if the squad has less players than the below it won't kick */
-          "min_squad_players_for_kick": 7,
-          
-          /* Same behavior as for the punishes, if the server has less players than the number below the auto-moderator will wait and not kick yet */
+
+          /* If the server has less players than the number below, the auto-moderator will wait and not kick yet */
           "min_server_players_for_kick": 6,
-  
+
           /* After the Step 2 has reached it's max punishes, this is the amount of time in seconds the auto-mod will wait before kicking */
           "kick_grace_period_seconds": 120,
-          
+
           /*
               This is the message that will be used in the kick
               The following variables are available to fill into the text
               {player_name}, {squad_name} and {kick_grace_period}
           */
-          "kick_message": "Your Squad ({squad_name}) must have an officer.\\nYour grace period of {kick_grace_period}s has passed.\\nYou failed to comply with the previous warnings.",
-          
-          /*
-              You can define roles that are immune to punishes and kicks (this must be a list, the syntax is important)
-              Available roles are: 'officer', 'antitank', 'automaticrifleman', 'assault', 'heavymachinegunner',
-                  'support', 'sniper', 'spotter', 'rifleman', 'crewman', 'tankcommander', 'engineer', 'medic'
-          */
-          "immune_roles": [],
-  
-          /* If the level of the player is below this number he/she will be immune to punishes / kicks */
-          "immune_player_level": 15
+          "kick_message": "You've been kicked by a bot.\\n\\nYou were still playing solo in the armor squad {squad_name},\\n{kick_grace_period}s after being punished."
       }
       `;
 
