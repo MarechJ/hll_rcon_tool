@@ -148,7 +148,9 @@ async function sendAction(command, parameters) {
 
 async function _checkResult(data) {
   if (data.result) {
-    return data.result.messages;
+    let unescaped = data.result.messages.map(ele => ele.replaceAll(/\\n/g, '\n'))
+    unescaped = unescaped.map(ele => ele.replaceAll(/\\t/g, '\t'))
+    return unescaped
   }
   return [];
 }
