@@ -410,14 +410,21 @@ class VipId(TypedDict):
 
 # Have to inherit from str to allow for JSON serialization w/ pydantic
 class AllLogTypes(str, enum.Enum):
+    """Both native (from the game server) and synthetic (created by CRCON) log types"""
+
+    admin = "ADMIN"
     admin_banned = "ADMIN BANNED"
+    admin_perma_banned = "ADMIN PERMA BANNED"
+    admin_anti_cheat = "ADMIN ANTI-CHEAT"
+    admin_idle = "ADMIN IDLE"
     admin_kicked = "ADMIN KICKED"
+    admin_misc = "ADMIN MISC"
     camera = "CAMERA"
     chat = "CHAT"
     allies_chat = "CHAT[Allies]"
     allies_team_chat = "CHAT[Allies][Team]"
     allies_unit_chat = "CHAT[Allies][Unit]"
-    cxis_chat = "CHAT[Axis]"
+    axis_chat = "CHAT[Axis]"
     axis_team_chat = "CHAT[Axis][Team]"
     axis_unit_chat = "CHAT[Axis][Unit]"
     connected = "CONNECTED"
@@ -437,6 +444,8 @@ class AllLogTypes(str, enum.Enum):
     vote = "VOTE"
     vote_started = "VOTE STARTED"
     vote_completed = "VOTE COMPLETED"
+    vote_expired = "VOTE EXPIRED"
+    vote_passed = "VOTE PASSED"
 
 
 class InvalidLogTypeError(ValueError):
