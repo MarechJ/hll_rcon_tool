@@ -26,6 +26,7 @@ from rcon.user_config.name_kicks import NameKickUserConfig
 from rcon.user_config.rcon_connection_settings import RconConnectionSettingsUserConfig
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.scorebot import ScorebotUserConfig
+from rcon.user_config.trigger_words import TriggerWordsUserConfig
 from rcon.user_config.standard_messages import (
     StandardBroadcastMessagesUserConfig,
     StandardPunishmentMessagesUserConfig,
@@ -2297,6 +2298,85 @@ def validate_watchlist_discord_webhooks_config(request):
 def set_watchlist_discord_webhooks_config(request):
     command_name = "set_watchlist_discord_webhooks"
     cls = WatchlistWebhooksUserConfig
+    data = _get_data(request)
+
+    response = _audit_user_config_differences(
+        cls, data, command_name, request.user.username
+    )
+
+    if response:
+        return response
+
+    return api_response(
+        result=True,
+        command=command_name,
+        arguments=data,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+# TODO permission
+# @permission_required("api.can_view_trigger_words_config", raise_exception=True)
+def get_trigger_words_config(request):
+    command_name = "get_trigger_words_config"
+
+    try:
+        config = TriggerWordsUserConfig.load_from_db()
+    except Exception as e:
+        logger.exception(e)
+        return api_response(command=command_name, error=str(e), failed=True)
+
+    return api_response(
+        result=config.model_dump(),
+        command=command_name,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+def describe_trigger_words_config(request):
+    command_name = "describe_trigger_words_config"
+
+    return api_response(
+        result=TriggerWordsUserConfig.model_json_schema(),
+        command=command_name,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+# TODO: permission
+# @permission_required("api.can_change_trigger_words_config", raise_exception=True)
+def validate_trigger_words_config(request):
+    command_name = "validate_trigger_words_config"
+    data = _get_data(request)
+
+    response = _validate_user_config(
+        TriggerWordsUserConfig, data=data, command_name=command_name, dry_run=True
+    )
+
+    if response:
+        return response
+
+    return api_response(
+        result=True,
+        command=command_name,
+        arguments=data,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+# TODO: permission
+# @permission_required("api.can_change_trigger_words_config", raise_exception=True)
+def set_trigger_words_config(request):
+    command_name = "set_trigger_words_config"
+    cls = TriggerWordsUserConfig
     data = _get_data(request)
 
     response = _audit_user_config_differences(
