@@ -11,17 +11,17 @@ WHOKILLED_TRIGGER = "!killer"
 
 class TriggerWordsType(TypedDict):
     enabled: bool
-    help_trigger: str
-    vip_trigger: str
-    whokilled_trigger: str
+    help_trigger: dict[str, str]
+    vip_trigger: dict[str, str]
+    whokilled_trigger: dict[str, str]
     custom_triggers: dict[str, str]
 
 
 class TriggerWordsUserConfig(BaseUserConfig):
-    enabled: bool = Field(default=False)
-    help_trigger: str = Field(default=HELP_TRIGGER)
-    vip_trigger: str = Field(default=VIP_TRIGGER)
-    whokilled_trigger: str = Field(default=WHOKILLED_TRIGGER)
+    enabled: bool = dict[str, str] = Field(default_factory=dict)
+    help_trigger: str = dict[str, str] = Field(default_factory=dict)
+    vip_trigger: str = dict[str, str] = Field(default_factory=dict)
+    whokilled_trigger: dict[str, str] = Field(default_factory=dict)
     custom_triggers: dict[str, str] = Field(default_factory=dict)
 
     @staticmethod
