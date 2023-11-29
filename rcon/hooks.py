@@ -36,6 +36,7 @@ from rcon.types import PlayerFlagType, SteamBansType
 from rcon.user_config.auto_mod_no_leader import AutoModNoLeaderUserConfig
 from rcon.user_config.camera_notification import CameraNotificationUserConfig
 from rcon.user_config.real_vip import RealVipUserConfig
+from rcon.user_config.trigger_words import TriggerWordsUserConfig
 from rcon.user_config.vac_game_bans import VacGameBansUserConfig
 from rcon.user_config.webhooks import CameraWebhooksUserConfig
 from rcon.utils import LOG_MAP_NAMES_TO_MAP, UNKNOWN_MAP_NAME, MapsHistory
@@ -65,6 +66,103 @@ def initialise_vote_map(rcon: Rcon, struct_log):
         vote_map.apply_results()
     except:
         logger.exception("Something went wrong in vote map init")
+
+
+@on_chat
+def trigger_words(rcon: Rcon, struct_log: StructuredLogLineType):
+    config = TriggerWordsUserConfig.load_from_db()
+    if not config.enabled:
+        logger.debug("Trigger words are disabled")
+        return
+    chatentry = struct_log.get("sub_content", "").strip()
+    # help_trigger (displays a list of all available commands)
+    if chatentry.startswith(config.help_trigger):
+        replymessage = (
+            "Available commands:\n\n"
+            + config.help_trigger
+            + " : this message\n"
+            + config.vip_trigger
+            + " : your VIP status\n"
+            + config.whokilled_trigger
+            + " : last victim / killer"
+        )
+        votemap_enabled = VoteMap().handle_vote_command(
+            rcon=rcon, struct_log=struct_log
+        )
+        if votemap_enabled:
+            replymessage = replymessage + "\n!vm help : votemap help"
+        if len(config.custom_triggers) != 0:
+            
+        rcon.do_message_player(
+            steam_id_64=struct_log["steam_id_64_1"],
+            message=replymessage
+        )
+    # !myvip (displays VIP status and expiration date if VIP)
+    elif chatentry.startswith("!myvip"):
+        vips_ids = rcon.get_vip_ids()
+        replymessage = "You're not VIP\non this server."
+        for player in vips_ids:
+            if player["steam_id_64"] == struct_log["steam_id_64_1"]:
+                expiration_datetime: datetime | None = player["vip_expiration"]
+                if expiration_datetime == INDEFINITE_VIP_DATE:
+                    expiration_str = "never (unlimited)"
+                else:
+                    expiration_str = expiration_datetime.strftime("%d/%m/%Y, %Hh%M")
+                replymessage = "VIP found !\n\nExpiration:\n" + expiration_str
+                break
+        rcon.do_message_player(
+            steam_id_64=struct_log["steam_id_64_1"],
+            message=replymessage
+        )
+    # !killer (displays the pseudo of the last player who killed me)
+    elif chatentry.startswith("!killer"):
+        eventscache = recent_actions(None)
+        my_events = eventscache[struct_log["steam_id_64_1"]]
+        replymessage = "Your last victim :\n"
+        if my_events.last_victim is not None:
+            last_victim_events = eventscache[my_events.last_victim]
+            replymessage = (
+                replymessage
+                + last_victim_events.player_name
+                + "\n with :\n"
+                + my_events.last_victim_weapon
+            )
+        else:
+            replymessage = (
+                replymessage
+                + "(no kill yet)"
+            )
+        replymessage = (
+            replymessage
+            + "\n\nYour last killer :\n"
+        )
+        if my_events.last_nemesis is not None:
+            last_nemesis_events = eventscache[my_events.last_nemesis]
+            replymessage = (
+                replymessage
+                + last_nemesis_events.player_name
+                + "\n with :\n"
+                + my_events.last_nemesis_weapon
+            )
+        else:
+            replymessage = (
+                replymessage
+                + "(no death yet)"
+            )
+        rcon.do_message_player(
+            steam_id_64=struct_log["steam_id_64_1"],
+            message=replymessage
+        )
+    # Not an hardcoded command : checking custom trigger words as set in config
+    else:
+        # trigger_words = get_config()["TRIGGER_WORDS"]
+        for word, output in custom_triggers.items():
+            if chatentry.startswith(word):
+                replymessage = output
+                rcon.do_message_player(
+                    steam_id_64=struct_log["steam_id_64_1"],
+                    message=replymessage
+                )
 
 
 @on_match_end
