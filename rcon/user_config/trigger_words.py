@@ -16,6 +16,7 @@ class TriggerWordsType(TypedDict):
     whokilled_trigger: str
     custom_triggers: dict[str, str]
 
+
 class TriggerWordsUserConfig(BaseUserConfig):
     enabled: bool = Field(default=False)
     help_trigger: str = Field(default=HELP_TRIGGER)
