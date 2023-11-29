@@ -92,10 +92,10 @@ def trigger_words(rcon: Rcon, struct_log: StructuredLogLineType):
         if votemap_enabled:
             replymessage = replymessage + "\n!vm help : votemap help"
         if len(config.custom_triggers) != 0:
-            
+            pass
+
         rcon.do_message_player(
-            steam_id_64=struct_log["steam_id_64_1"],
-            message=replymessage
+            steam_id_64=struct_log["steam_id_64_1"], message=replymessage
         )
     # !myvip (displays VIP status and expiration date if VIP)
     elif chatentry.startswith("!myvip"):
@@ -111,8 +111,7 @@ def trigger_words(rcon: Rcon, struct_log: StructuredLogLineType):
                 replymessage = "VIP found !\n\nExpiration:\n" + expiration_str
                 break
         rcon.do_message_player(
-            steam_id_64=struct_log["steam_id_64_1"],
-            message=replymessage
+            steam_id_64=struct_log["steam_id_64_1"], message=replymessage
         )
     # !killer (displays the pseudo of the last player who killed me)
     elif chatentry.startswith("!killer"):
@@ -128,14 +127,8 @@ def trigger_words(rcon: Rcon, struct_log: StructuredLogLineType):
                 + my_events.last_victim_weapon
             )
         else:
-            replymessage = (
-                replymessage
-                + "(no kill yet)"
-            )
-        replymessage = (
-            replymessage
-            + "\n\nYour last killer :\n"
-        )
+            replymessage = replymessage + "(no kill yet)"
+        replymessage = replymessage + "\n\nYour last killer :\n"
         if my_events.last_nemesis is not None:
             last_nemesis_events = eventscache[my_events.last_nemesis]
             replymessage = (
@@ -145,13 +138,9 @@ def trigger_words(rcon: Rcon, struct_log: StructuredLogLineType):
                 + my_events.last_nemesis_weapon
             )
         else:
-            replymessage = (
-                replymessage
-                + "(no death yet)"
-            )
+            replymessage = replymessage + "(no death yet)"
         rcon.do_message_player(
-            steam_id_64=struct_log["steam_id_64_1"],
-            message=replymessage
+            steam_id_64=struct_log["steam_id_64_1"], message=replymessage
         )
     # Not an hardcoded command : checking custom trigger words as set in config
     else:
@@ -160,8 +149,7 @@ def trigger_words(rcon: Rcon, struct_log: StructuredLogLineType):
             if chatentry.startswith(word):
                 replymessage = output
                 rcon.do_message_player(
-                    steam_id_64=struct_log["steam_id_64_1"],
-                    message=replymessage
+                    steam_id_64=struct_log["steam_id_64_1"], message=replymessage
                 )
 
 
