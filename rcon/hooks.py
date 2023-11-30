@@ -1,9 +1,10 @@
 import logging
 import re
+from collections import defaultdict
 from datetime import datetime
 from functools import wraps
-from collections import defaultdict
 from threading import Timer
+
 from discord_webhook import DiscordEmbed
 
 from rcon.cache_utils import invalidates
@@ -32,18 +33,18 @@ from rcon.player_history import (
 )
 from rcon.rcon import Rcon, StructuredLogLineType
 from rcon.steam_utils import get_player_bans, get_steam_profile, update_db_player_info
-from rcon.types import PlayerFlagType, SteamBansType, RconInvalidNameActionType
-from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
+from rcon.types import PlayerFlagType, RconInvalidNameActionType, SteamBansType
 from rcon.user_config.auto_mod_no_leader import AutoModNoLeaderUserConfig
 from rcon.user_config.camera_notification import CameraNotificationUserConfig
+from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.real_vip import RealVipUserConfig
 from rcon.user_config.vac_game_bans import VacGameBansUserConfig
 from rcon.user_config.webhooks import CameraWebhooksUserConfig
 from rcon.utils import (
     LOG_MAP_NAMES_TO_MAP,
     UNKNOWN_MAP_NAME,
-    MapsHistory,
     DefaultStringFormat,
+    MapsHistory,
     is_invalid_name_pineapple,
     is_invalid_name_whitespace,
 )

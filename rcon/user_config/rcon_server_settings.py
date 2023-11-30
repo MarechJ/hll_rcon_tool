@@ -1,17 +1,11 @@
 from typing import Optional, TypedDict
 
-from pydantic import (
-    Field,
-    HttpUrl,
-    BeforeValidator,
-    field_serializer,
-    BaseModel,
-)
+from pydantic import BaseModel, BeforeValidator, Field, HttpUrl, field_serializer
+from typing_extensions import Annotated
 
+from rcon.types import RconInvalidNameActionType
 from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
 from rcon.utils import get_server_number
-from rcon.types import RconInvalidNameActionType
-from typing_extensions import Annotated
 
 WHITESPACE_NAME_PLAYER_MESSAGE = """Your name ends in whitespace (or has whitespace in the 20th character)
 
