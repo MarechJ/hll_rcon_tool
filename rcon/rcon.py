@@ -201,7 +201,7 @@ class Rcon(ServerCtl):
             try:
                 player_data: GetDetailedPlayer = future.result()
             except Exception:
-                logger.exception("Failed to get info for %s", futures[future])
+                logger.error("Failed to get info for %s", futures[future])
                 fail_count += 1
                 player_data = self._get_default_info_dict(futures[future][NAME])
             player = futures[future]
