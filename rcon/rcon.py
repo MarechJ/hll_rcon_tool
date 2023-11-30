@@ -1202,11 +1202,17 @@ class Rcon(ServerCtl):
     def do_switch_player_on_death(self, player, by) -> str:
         return super().do_switch_player_on_death(player)
 
-    def do_kick(self, player, reason, by) -> str:
+    def do_kick(self, player, reason, by, steam_id_64: str | None = None) -> str:
         with invalidates(Rcon.get_players):
             res = super().do_kick(player, reason)
+
         safe_save_player_action(
-            rcon=self, player_name=player, action_type="KICK", reason=reason, by=by
+            rcon=self,
+            player_name=player,
+            action_type="KICK",
+            reason=reason,
+            by=by,
+            steam_id_64=steam_id_64,
         )
         return res
 
