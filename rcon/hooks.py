@@ -2,8 +2,8 @@ import logging
 import re
 from datetime import datetime
 from functools import wraps
+from collections import defaultdict
 from threading import Timer
-
 from discord_webhook import DiscordEmbed
 
 from rcon.cache_utils import invalidates
@@ -32,13 +32,21 @@ from rcon.player_history import (
 )
 from rcon.rcon import Rcon, StructuredLogLineType
 from rcon.steam_utils import get_player_bans, get_steam_profile, update_db_player_info
-from rcon.types import PlayerFlagType, SteamBansType
+from rcon.types import PlayerFlagType, SteamBansType, RconInvalidNameActionType
+from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.auto_mod_no_leader import AutoModNoLeaderUserConfig
 from rcon.user_config.camera_notification import CameraNotificationUserConfig
 from rcon.user_config.real_vip import RealVipUserConfig
 from rcon.user_config.vac_game_bans import VacGameBansUserConfig
 from rcon.user_config.webhooks import CameraWebhooksUserConfig
-from rcon.utils import LOG_MAP_NAMES_TO_MAP, UNKNOWN_MAP_NAME, MapsHistory
+from rcon.utils import (
+    LOG_MAP_NAMES_TO_MAP,
+    UNKNOWN_MAP_NAME,
+    MapsHistory,
+    DefaultStringFormat,
+    is_invalid_name_pineapple,
+    is_invalid_name_whitespace,
+)
 from rcon.vote_map import VoteMap
 from rcon.workers import record_stats_worker, temporary_broadcast, temporary_welcome
 
@@ -359,78 +367,188 @@ def update_player_steaminfo_on_connect(rcon, struct_log, _, steam_id_64):
         sess.commit()
 
 
-pendingTimers = {}
+pendingTimers: dict[str, list[tuple[RconInvalidNameActionType, Timer]]] = defaultdict(
+    list
+)
 
 
 @on_connected
 @inject_player_ids
-def notify_false_positives(rcon: Rcon, _, name: str, steam_id_64: str):
-    config = AutoModNoLeaderUserConfig.load_from_db()
+def notify_invalid_names(rcon: Rcon, _, name: str, steam_id_64: str):
+    config = RconServerSettingsUserConfig.load_from_db().invalid_names
 
     if not config.enabled:
-        logger.debug("no_leader automod is disabled")
         return
 
-    if not name.endswith(" "):
+    is_pineappple_name = is_invalid_name_pineapple(name)
+    is_whitespace_name = is_invalid_name_whitespace(name)
+    if not is_whitespace_name and not is_pineappple_name:
         return
 
-    action = c["whitespace_names_action"]
+    action = config.action
 
     logger.info(
-        f"Player '{name}' has a pseudo ending with whitespace. " f"Action = {action}."
+        "Player '%s' (%s) has an invalid name (ends in whitespace or multi byte unicode code point), action=%s",
+        name,
+        steam_id_64,
+        action.value,
     )
 
     try:
         send_to_discord_audit(
-            f"Player with bugged profile joined : `{name}` (`{steam_id_64}`).\n"
-            " If the player take SL role, this will trigger injustified"
-            " punitions on their squad mates.\n"
-            " The player also will be shown as 'unassigned' in Gameview.\n"
-            f" Action = {action}."
+            message=config.audit_message.format_map(
+                DefaultStringFormat(
+                    name=name, steam_id_64=steam_id_64, action=action.value
+                )
+            )
         )
     except Exception:
-        logger.exception("Unable to send to audit")
+        logger.exception(
+            "Unable to send %s %s (%s) to audit", action.value, name, steam_id_64
+        )
 
-    def notify_player():
-        if action == "none":
+    def notify_whitespace_player(action: RconInvalidNameActionType):
+        if action == RconInvalidNameActionType.none:
             return
-
-        if action == "kick":
+        elif action == RconInvalidNameActionType.kick:
             try:
                 rcon.do_kick(
-                    player=name, reason=c["whitespace_names_message"], by="CRCON"
+                    name,
+                    reason=config.whitespace_name_player_message,
+                    by=config.audit_message_author,
                 )
             except Exception as e:
-                logger.error("Could not kick player " + name + "/" + steam_id_64, e)
-
-        if action == "warn":
+                logger.error(
+                    "Could not kick whitespace name player %s/%s: %s",
+                    name,
+                    steam_id_64,
+                    e,
+                )
+        elif action == RconInvalidNameActionType.warn:
             try:
                 rcon.do_message_player(
                     steam_id_64=steam_id_64,
-                    message=config.whitespace_message,
-                    by="CRCON",
+                    message=config.whitespace_name_player_message,
+                    by=config.audit_message_author,
                     save_message=False,
                 )
             except Exception as e:
-                logger.error("Could not message player " + name + "/" + steam_id_64, e)
+                logger.error(
+                    "Could not message whitespace name player %s/%s: %s",
+                    name,
+                    steam_id_64,
+                    e,
+                )
+        elif action == RconInvalidNameActionType.ban:
+            try:
+                rcon.do_temp_ban(
+                    steam_id_64=steam_id_64,
+                    reason=config.whitespace_name_player_message,
+                    by=config.audit_message_author,
+                    duration_hours=config.ban_length_hours,
+                )
+            except Exception as e:
+                logger.error(
+                    "Could not temp ban whitespace name player %s/%s: %s",
+                    name,
+                    steam_id_64,
+                    e,
+                )
 
-    # The player might not yet have finished connecting in order to send messages.
-    t = Timer(10, notify_player)
-    pendingTimers[steam_id_64] = t
+    def notify_pineapple_player(action: RconInvalidNameActionType):
+        if action == RconInvalidNameActionType.none:
+            return
+        elif action == RconInvalidNameActionType.kick:
+            try:
+                # TODO: it is not possible to kick pineapple names, remove them by banning/unbanning
+                rcon.do_temp_ban(
+                    steam_id_64=steam_id_64,
+                    reason=config.pineapple_name_player_message,
+                    by=config.audit_message_author,
+                    duration_hours=1,
+                )
+            except Exception as e:
+                logger.error(
+                    "Could not temp ban (can't kick pineapple names) player %s/%s: %s",
+                    name,
+                    steam_id_64,
+                    e,
+                )
+        elif action == RconInvalidNameActionType.warn:
+            try:
+                rcon.do_message_player(
+                    steam_id_64=steam_id_64,
+                    message=config.pineapple_name_player_message,
+                    by=config.audit_message_author,
+                    save_message=False,
+                )
+            except Exception as e:
+                logger.error(
+                    "Could not message pineapple name player %s/%s: %s",
+                    name,
+                    steam_id_64,
+                    e,
+                )
+        elif action == RconInvalidNameActionType.ban:
+            try:
+                rcon.do_temp_ban(
+                    steam_id_64=steam_id_64,
+                    reason=config.pineapple_name_player_message,
+                    by=config.audit_message_author,
+                    duration_hours=config.ban_length_hours,
+                )
+            except Exception as e:
+                logger.error(
+                    "Could not temp ban player %s/%s: %s",
+                    name,
+                    steam_id_64,
+                    e,
+                )
+
+    # The player might not yet have finished connecting in order to action them.
+    if is_whitespace_name:
+        func = notify_whitespace_player
+    else:
+        func = notify_pineapple_player
+
+    t = Timer(10, func, kwargs={"action": action})
+    pendingTimers[steam_id_64].append((action, t))
     t.start()
+
+    # TODO: it is not possible to kick pineapple names, remove them by banning/unbanning
+    if is_pineappple_name and action == RconInvalidNameActionType.kick:
+        # Give the game server time to update bans so the ban can be removed automatically
+        # and give the notify timer time to finish so the player is actually banned before
+        # trying to remove it
+        # players can't connect if they're banned so this should never fire and remove a
+        # temp ban from any other reason unless there's another hook temp banning on connect
+        t = Timer(15, rcon.do_remove_temp_ban, kwargs={"steam_id_64": steam_id_64})
+        send_to_discord_audit(
+            message=config.audit_kick_unban_message, by=config.audit_message_author
+        )
+        pendingTimers[steam_id_64].append((action, t))
+        t.start()
 
 
 @on_disconnected
 @inject_player_ids
-def cleanup_pending_timers(_, _1, _2, steam_id_64: str):
-    pt: Timer = pendingTimers.pop(steam_id_64, None)
-    if pt is None:
-        return
-    if pt.is_alive():
-        try:
-            pt.cancel()
-        except:
-            pass
+def cleanup_pending_timers(rcon: Rcon, struct_log, name, steam_id_64: str):
+    """Cancel pending timers created by notify_player if the player disconnects
+
+    Only messaging the player should be cancelled if they disconnect early
+    Kicking players is non functional (RCON bug) so they're temp banned/pardoned
+    Temporary banning players doesn't create a timer
+    """
+    pts: list[tuple[RconInvalidNameActionType, Timer]] = pendingTimers.pop(
+        steam_id_64, []
+    )
+    for action, pt in pts:
+        # TODO: Can't kick pineapple names, don't cancel the thread if the ban removal is pending
+        if action != RconInvalidNameActionType.kick and pt.is_alive():
+            try:
+                pt.cancel()
+            except:
+                pass
 
 
 def _set_real_vips(rcon: Rcon, struct_log):
