@@ -1238,9 +1238,24 @@ class Rcon(ServerCtl):
             )
             return res
 
-    def do_remove_temp_ban(self, ban_log) -> str:
+    def do_remove_temp_ban(
+        self, ban_log: str | None = None, steam_id_64: str | None = None
+    ) -> str:
+        """Remove a temp ban by steam ID or game server ban log"""
         with invalidates(Rcon.get_temp_bans):
-            return super().do_remove_temp_ban(ban_log)
+            if ban_log is not None:
+                return super().do_remove_temp_ban(ban_log)
+            else:
+                # If searching for a steam ID, we can only unban with the properly
+                # formatted ban log
+                bans = self.get_temp_bans()
+                for raw_ban in bans:
+                    ban = self._struct_ban(raw_ban, type_="temp")
+                    if steam_id_64 == ban["steam_id_64"]:
+                        return super().do_remove_temp_ban(ban_log=raw_ban)
+
+        # Only get here if we weren't passed a ban log, steam ID or the steam ID wasn't banned
+        raise ValueError(f"{steam_id_64} was not banned")
 
     def do_remove_perma_ban(self, ban_log) -> str:
         with invalidates(Rcon.get_perma_bans):
