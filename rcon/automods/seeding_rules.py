@@ -269,11 +269,7 @@ class SeedingRulesAutomod:
                     or server_player_count > drc.max_players
                 ):
                     self._disable_for_round("disallowed_roles")
-                if (
-                    drc.min_players 
-                    <= server_player_count
-                    <= drc.max_players
-                ):
+                else:
                     self._enable_for_round("disallowed_roles")
 
                 dwc = self.config.disallowed_weapons
@@ -282,11 +278,7 @@ class SeedingRulesAutomod:
                     or server_player_count > dwc.max_players
                 ):
                     self._disable_for_round("disallowed_weapons")
-                if (
-                    dwc.min_players 
-                    <= server_player_count
-                    <= dwc.max_players
-                ):
+                else:
                     self._enable_for_round("disallowed_weapons")
 
                 ecf = self.config.enforce_cap_fight
@@ -295,11 +287,7 @@ class SeedingRulesAutomod:
                     or server_player_count > ecf.max_players
                 ):
                     self._disable_for_round("enforce_cap_fight")
-                if (
-                    ecf.min_players 
-                    <= server_player_count
-                    <= ecf.max_players
-                ):
+                else:
                     self._enable_for_round("enforce_cap_fight")
 
                 violations = []
