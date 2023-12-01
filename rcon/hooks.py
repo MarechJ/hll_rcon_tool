@@ -299,7 +299,10 @@ def welcome_message(rcon: Rcon, steam_id_64, struct_log):
         return
     welcome_txt = config.non_seed_time_welcome_text
     players_count_request = rcon.get_gamestate()
-    players_count = players_count_request["num_allied_players"] + players_count_request["num_axis_players"]
+    players_count = (
+        players_count_request["num_allied_players"]
+        + players_count_request["num_axis_players"]
+    )
     if players_count < config.seed_limit:
         welcome_txt = config.seed_time_welcome_text
 
@@ -312,7 +315,12 @@ def welcome_message(rcon: Rcon, steam_id_64, struct_log):
                 save_message=False,
             )
         except Exception as e:
-            logger.error("Could not send welcome message to player (" + steam_id_64 + ")", e)
+            logger.error(
+                "Could not send welcome message to player ("
+                + steam_id_64
+                + ")",
+                e
+            )
 
     # The player might not yet have finished connecting in order to send messages.
     t = Timer(10, send_welcome_message)
