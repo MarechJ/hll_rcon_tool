@@ -289,6 +289,7 @@ def test_disallowed_roles_does_not_enforce_below_min_players(team_view):
 
 def test_does_nothing_when_enough_players(team_view):
     config = AutoModSeedingUserConfig(
+        enabled=True,
         disallowed_roles=DisallowedRoles(
             roles={
                 Roles.tank_commander: "Tanks",
@@ -321,6 +322,7 @@ def test_does_nothing_when_enough_players(team_view):
 def test_does_nothing_when_not_enough_players(team_view):
     mod = mod_with_config(
         AutoModSeedingUserConfig(
+            enabled=True,
             disallowed_roles=DisallowedRoles(
                 roles={
                     Roles.tank_commander: "Tanks",
@@ -349,6 +351,7 @@ def test_does_nothing_when_not_enough_players(team_view):
 
 def test_cycles_warn_punish_kick_armor_players(team_view):
     config = AutoModSeedingUserConfig(
+        enabled=True,
         number_of_warnings=1,
         warning_interval_seconds=1,
         number_of_punishments=1,
@@ -395,6 +398,7 @@ def test_cycles_warn_punish_kick_armor_players(team_view):
 
 def test_cycles_warn_punish_kick_cap_fight_players(team_view):
     config = AutoModSeedingUserConfig(
+        enabled=True,
         number_of_warnings=1,
         warning_interval_seconds=1,
         number_of_punishments=1,
@@ -447,6 +451,7 @@ def test_cycles_warn_punish_kick_cap_fight_players(team_view):
 
 def test_punishes_commander_cap_fight(team_view):
     config = AutoModSeedingUserConfig(
+        enabled=True,
         number_of_warnings=1,
         warning_interval_seconds=1,
         number_of_punishments=1,
@@ -505,6 +510,7 @@ def test_punishes_commander_cap_fight(team_view):
 
 def test_skips_warning_when_disabled(team_view):
     config = AutoModSeedingUserConfig(
+        enabled=True,
         number_of_warnings=1,
         warning_interval_seconds=1,
         number_of_punishments=1,
@@ -580,6 +586,7 @@ def test_cap_fight_does_not_enforce_below_min_players(team_view):
 
 def test_does_nothing_when_cap_not_reached(team_view):
     config = AutoModSeedingUserConfig(
+        enabled=True,
         number_of_warnings=1,
         warning_interval_seconds=1,
         number_of_punishments=1,
@@ -613,6 +620,7 @@ def test_does_nothing_when_cap_not_reached(team_view):
 
 def test_stops_when_players_reached(team_view):
     config = AutoModSeedingUserConfig(
+        enabled=True,
         number_of_warnings=1,
         warning_interval_seconds=1,
         number_of_punishments=1,
@@ -646,6 +654,7 @@ def test_stops_when_players_reached(team_view):
 
 def test_stops_when_no_violations_anymore(team_view):
     config = AutoModSeedingUserConfig(
+        enabled=True,
         number_of_warnings=1,
         warning_interval_seconds=1,
         number_of_punishments=1,
@@ -714,6 +723,7 @@ def test_disallowed_weapons_does_not_enforce_below_min_players(team_view):
 def test_punishes_when_weapon_disallowed(team_view):
     mod = mod_with_config(
         AutoModSeedingUserConfig(
+            enabled=True,
             disallowed_weapons=DisallowedWeapons(
                 weapons={"MP40": "MP40"},
                 min_players=get_team_count(team_view, "allies")
@@ -722,7 +732,7 @@ def test_punishes_when_weapon_disallowed(team_view):
                 max_players=get_team_count(team_view, "allies")
                 + get_team_count(team_view, "axis")
                 + 1,
-            )
+            ),
         )
     )
     mod.punitions_to_apply(
@@ -736,6 +746,7 @@ def test_punishes_when_weapon_disallowed(team_view):
 def test_does_not_punish_when_weapon_allowed(team_view):
     mod = mod_with_config(
         AutoModSeedingUserConfig(
+            enabled=True,
             disallowed_weapons=DisallowedWeapons(
                 weapons={"MK2_Grenade": "Grenade"},
                 min_players=get_team_count(team_view, "allies")
@@ -744,7 +755,7 @@ def test_does_not_punish_when_weapon_allowed(team_view):
                 max_players=get_team_count(team_view, "allies")
                 + get_team_count(team_view, "axis")
                 + 1,
-            )
+            ),
         )
     )
     mod.punitions_to_apply(
@@ -758,6 +769,7 @@ def test_does_not_punish_when_weapon_allowed(team_view):
 def test_announces_on_connect(team_view):
     mod = mod_with_config(
         AutoModSeedingUserConfig(
+            enabled=True,
             announcement_enabled=True,
             announcement_message="",
             disallowed_weapons=DisallowedWeapons(
@@ -775,6 +787,7 @@ def test_announces_on_connect(team_view):
 
 def test_does_not_announces_when_all_disabled(team_view):
     config = AutoModSeedingUserConfig(
+        enabled=True,
         announcement_enabled=True,
         announcement_message="",
         number_of_warnings=0,
