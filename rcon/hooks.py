@@ -38,6 +38,7 @@ from rcon.user_config.camera_notification import CameraNotificationUserConfig
 from rcon.user_config.real_vip import RealVipUserConfig
 from rcon.user_config.vac_game_bans import VacGameBansUserConfig
 from rcon.user_config.webhooks import CameraWebhooksUserConfig
+from rcon.user_config.welcome import WelcomeUserConfig
 from rcon.utils import LOG_MAP_NAMES_TO_MAP, UNKNOWN_MAP_NAME, MapsHistory
 from rcon.vote_map import VoteMap
 from rcon.workers import record_stats_worker, temporary_broadcast, temporary_welcome
@@ -290,6 +291,36 @@ def ban_if_has_vac_bans(rcon: Rcon, steam_id_64, name):
                 logger.exception("Unable to send vac ban to audit log")
 
 
+# ElGuillermo - feature add 1 - start
+def welcome_message(rcon: Rcon, steam_id_64, struct_log):
+    config = WelcomeUserConfig.load_from_db()
+    if not config.enabled:
+        logger.info("Welcome message is disabled")
+        return
+    welcome_txt = config.non_seed_time_welcome_text
+    players_count_request = rcon.get_gamestate()
+    players_count = players_count_request["num_allied_players"] + players_count_request["num_axis_players"]
+    if len(players_count) < config.seed_limit:
+        welcome_txt = config.seed_time_welcome_text
+
+    def send_welcome_message():
+        try:
+            rcon.do_message_player(
+                steam_id_64=steam_id_64,
+                message=welcome_txt,
+                by="Welcome",
+                save_message=False,
+            )
+        except Exception as e:
+            logger.error("Could not send welcome message to player (" + steam_id_64 + ")", e)
+
+    # The player might not yet have finished connecting in order to send messages.
+    t = Timer(10, send_welcome_message)
+    pendingTimers[steam_id_64] = t
+    t.start()
+# ElGuillermo - feature add 1 - end
+
+
 def inject_player_ids(func):
     @wraps(func)
     def wrapper(rcon, struct_log: StructuredLogLineType):
@@ -325,6 +356,7 @@ def handle_on_connect(rcon: Rcon, struct_log, name, steam_id_64):
     save_start_player_session(steam_id_64, timestamp=timestamp)
     ban_if_blacklisted(rcon, steam_id_64, struct_log["player"])
     ban_if_has_vac_bans(rcon, steam_id_64, struct_log["player"])
+    welcome_message(rcon, steam_id_64, struct_log["player"])
 
 
 @on_disconnected
