@@ -354,7 +354,7 @@ class LogLoop:
                 )
                 started = time.time()
                 hook(self.rcon, log)
-                logger.info(
+                logger.debug(
                     "Ran in %.4f seconds %s.%s on %s",
                     time.time() - started,
                     hook.__module__,
