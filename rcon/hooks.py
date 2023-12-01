@@ -295,7 +295,7 @@ def ban_if_has_vac_bans(rcon: Rcon, steam_id_64, name):
 def welcome_message(rcon: Rcon, steam_id_64, struct_log):
     config = WelcomeUserConfig.load_from_db()
     if not config.enabled:
-        logger.info("Welcome message is disabled")
+        logger.debug("Welcome message is disabled")
         return
     welcome_txt = config.non_seed_time_welcome_text
     players_count_request = rcon.get_gamestate()
