@@ -300,7 +300,7 @@ def welcome_message(rcon: Rcon, steam_id_64, struct_log):
     welcome_txt = config.non_seed_time_welcome_text
     players_count_request = rcon.get_gamestate()
     players_count = players_count_request["num_allied_players"] + players_count_request["num_axis_players"]
-    if len(players_count) < config.seed_limit:
+    if players_count < config.seed_limit:
         welcome_txt = config.seed_time_welcome_text
 
     def send_welcome_message():
