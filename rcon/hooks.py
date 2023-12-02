@@ -38,7 +38,7 @@ from rcon.user_config.camera_notification import CameraNotificationUserConfig
 from rcon.user_config.real_vip import RealVipUserConfig
 from rcon.user_config.vac_game_bans import VacGameBansUserConfig
 from rcon.user_config.webhooks import CameraWebhooksUserConfig
-from rcon.user_config.welcome import WelcomeUserConfig
+from rcon.user_config.message_on_connect import MessageOnConnectUserConfig
 from rcon.utils import LOG_MAP_NAMES_TO_MAP, UNKNOWN_MAP_NAME, MapsHistory
 from rcon.vote_map import VoteMap
 from rcon.workers import record_stats_worker, temporary_broadcast, temporary_welcome
@@ -292,38 +292,38 @@ def ban_if_has_vac_bans(rcon: Rcon, steam_id_64, name):
 
 
 # ElGuillermo - feature add 1 - start
-def welcome_message(rcon: Rcon, steam_id_64, struct_log):
-    config = WelcomeUserConfig.load_from_db()
+def message_on_connect(rcon: Rcon, steam_id_64, struct_log):
+    config = MessageOnConnectUserConfig.load_from_db()
     if not config.enabled:
-        logger.debug("Welcome message is disabled")
+        logger.debug("MessageOnConnect is disabled")
         return
-    welcome_txt = config.non_seed_time_welcome_text
+    message_on_connect_txt = config.non_seed_time_text
     players_count_request = rcon.get_gamestate()
     players_count = (
         players_count_request["num_allied_players"]
         + players_count_request["num_axis_players"]
     )
     if players_count < config.seed_limit:
-        welcome_txt = config.seed_time_welcome_text
+        message_on_connect_txt = config.seed_time_text
 
-    def send_welcome_message():
+    def send_message_on_connect():
         try:
             rcon.do_message_player(
                 steam_id_64=steam_id_64,
-                message=welcome_txt,
-                by="Welcome",
+                message=message_on_connect_txt,
+                by="Message_on_connect",
                 save_message=False,
             )
         except Exception as e:
             logger.error(
-                "Could not send welcome message to player ("
+                "Could not send MessageOnConnect to player ("
                 + steam_id_64
                 + ")",
                 e
             )
 
     # The player might not yet have finished connecting in order to send messages.
-    t = Timer(10, send_welcome_message)
+    t = Timer(10, send_message_on_connect)
     pendingTimers[steam_id_64] = t
     t.start()
 # ElGuillermo - feature add 1 - end
@@ -364,7 +364,7 @@ def handle_on_connect(rcon: Rcon, struct_log, name, steam_id_64):
     save_start_player_session(steam_id_64, timestamp=timestamp)
     ban_if_blacklisted(rcon, steam_id_64, struct_log["player"])
     ban_if_has_vac_bans(rcon, steam_id_64, struct_log["player"])
-    welcome_message(rcon, steam_id_64, struct_log["player"])
+    message_on_connect(rcon, steam_id_64, struct_log["player"])
 
 
 @on_disconnected
@@ -508,20 +508,3 @@ def notify_camera(rcon: Rcon, struct_log):
 
 if __name__ == "__main__":
     from rcon.settings import SERVER_INFO
-
-    log = {
-        "version": 1,
-        "timestamp_ms": 1627734269000,
-        "relative_time_ms": 221.212,
-        "raw": "[543 ms (1627734269)] CONNECTED Dr.WeeD",
-        "line_without_time": "CONNECTED Dr.WeeD",
-        "action": "CONNECTED",
-        "player": "Dr.WeeD",
-        "steam_id_64_1": None,
-        "player2": None,
-        "steam_id_64_2": None,
-        "weapon": None,
-        "message": "Dr.WeeD",
-        "sub_content": None,
-    }
-    real_vips(Rcon(SERVER_INFO), struct_log=log)
