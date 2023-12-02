@@ -305,6 +305,7 @@ def message_on_connect(rcon: Rcon, steam_id_64, struct_log):
     )
     if players_count < config.seed_limit:
         message_on_connect_txt = config.seed_time_text
+    player_name = struct_log["player"]
 
     def send_message_on_connect():
         try:
@@ -316,7 +317,8 @@ def message_on_connect(rcon: Rcon, steam_id_64, struct_log):
             )
         except Exception as e:
             logger.error(
-                "Could not send MessageOnConnect to player ("
+                "Could not send MessageOnConnect to player "
+                + "'" + player_name + "' ("
                 + steam_id_64
                 + ")",
                 e
@@ -508,3 +510,20 @@ def notify_camera(rcon: Rcon, struct_log):
 
 if __name__ == "__main__":
     from rcon.settings import SERVER_INFO
+
+    log = {
+        "version": 1,
+        "timestamp_ms": 1627734269000,
+        "relative_time_ms": 221.212,
+        "raw": "[543 ms (1627734269)] CONNECTED Dr.WeeD",
+        "line_without_time": "CONNECTED Dr.WeeD",
+        "action": "CONNECTED",
+        "player": "Dr.WeeD",
+        "steam_id_64_1": None,
+        "player2": None,
+        "steam_id_64_2": None,
+        "weapon": None,
+        "message": "Dr.WeeD",
+        "sub_content": None,
+    }
+    real_vips(Rcon(SERVER_INFO), struct_log=log)
