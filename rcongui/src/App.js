@@ -51,6 +51,7 @@ import {
   VacGameBans,
   TeamKillBanOnConnect,
   NameKicks,
+  MessageOnConnect,
   ExpiredVIP,
   GTXNameChange
 } from "./components/UserSettings/miscellaneous";
