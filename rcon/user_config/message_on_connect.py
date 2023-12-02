@@ -4,8 +4,24 @@ from pydantic import Field
 
 from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
 
-SEED_TIME_TEXT = "Welcome !\nThe server is seeding\n\nPlease respect the special rules !"
-NON_SEED_TIME_TEXT = "Welcome !\nThe server is NOT in seed !"
+SEED_TIME_TEXT = (
+    "Welcome !\n"
+    "The server is seeding\n\n"
+    "[ All time rules ]\n"
+    "Stay fun, be polite, communicate.\n"
+    "No teamkill, follow officers orders.\n\n"
+    "[ + Seed time rules ]\n"
+    "Do not capture the 4th point\n"
+    "Do not destroy garries in red zone\n\n"
+    "Have a good game !"
+)
+NON_SEED_TIME_TEXT = (
+    "Welcome !\n\n"
+    "[ All time rules ]\n"
+    "Stay fun, be polite, communicate.\n"
+    "No teamkill, follow officers orders.\n\n"
+    "Have a good game !"
+)
 
 
 class MessageOnConnectType(TypedDict):
