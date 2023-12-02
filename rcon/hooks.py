@@ -510,20 +510,3 @@ def notify_camera(rcon: Rcon, struct_log):
 
 if __name__ == "__main__":
     from rcon.settings import SERVER_INFO
-
-    log = {
-        "version": 1,
-        "timestamp_ms": 1627734269000,
-        "relative_time_ms": 221.212,
-        "raw": "[543 ms (1627734269)] CONNECTED Dr.WeeD",
-        "line_without_time": "CONNECTED Dr.WeeD",
-        "action": "CONNECTED",
-        "player": "Dr.WeeD",
-        "steam_id_64_1": None,
-        "player2": None,
-        "steam_id_64_2": None,
-        "weapon": None,
-        "message": "Dr.WeeD",
-        "sub_content": None,
-    }
-    real_vips(Rcon(SERVER_INFO), struct_log=log)
