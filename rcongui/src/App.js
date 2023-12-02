@@ -585,7 +585,7 @@ function App() {
                     </Route>
                     <Route path="/settings/automod-solo-tank">
                       <Grid container spacing={2}>
-                        <SeedingAutoMod
+                        <NoSoloTankAutoMod
                           description="No Solo Tank Auto Mod"
                           getEndpoint="get_auto_mod_solo_tank_config"
                           setEndpoint="set_auto_mod_solo_tank_config"
@@ -668,6 +668,17 @@ function App() {
                           setEndpoint="set_name_kick_config"
                           validateEndpoint="validate_name_kick_config"
                           describeEndpoint="describe_name_kick_config"
+                        />
+                      </Grid>
+                    </Route>
+                    <Route path="/settings/Message-on-connect">
+                      <Grid container spacing={2}>
+                        <MessageOnConnect
+                          description="Message on connect"
+                          getEndpoint="get_message_on_connect_config"
+                          setEndpoint="set_message_on_connect_config"
+                          validateEndpoint="validate_message_on_connect_config"
+                          describeEndpoint="describe_message_on_connect_config"
                         />
                       </Grid>
                     </Route>
