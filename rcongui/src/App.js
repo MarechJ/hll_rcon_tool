@@ -672,7 +672,7 @@ function App() {
                         />
                       </Grid>
                     </Route>
-                    <Route path="/settings/Message-on-connect">
+                    <Route path="/settings/message-on-connect">
                       <Grid container spacing={2}>
                         <MessageOnConnect
                           description="Message on connect"
