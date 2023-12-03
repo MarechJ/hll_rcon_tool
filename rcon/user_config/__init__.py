@@ -7,6 +7,7 @@ from . import (
     auto_mod_solo_tank,
     ban_tk_on_connect,
     camera_notification,
+    message_on_connect,
     expired_vips,
     gtx_server_name,
     log_line_webhooks,
