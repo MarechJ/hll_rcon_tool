@@ -470,9 +470,10 @@ def notify_camera(rcon: Rcon, struct_log):
 def _message_on_connect(rcon: Rcon, struct_log, name, steam_id_64):
     config = MessageOnConnectUserConfig.load_from_db()
     if not config.enabled:
-        logger.info("MessageOnConnect is disabled")
-        return
+        return  # Feature is disabled
+
     message_on_connect_txt = config.non_seed_time_text
+
     players_count_request = rcon.get_gamestate()
     players_count = (
         players_count_request["num_allied_players"]
