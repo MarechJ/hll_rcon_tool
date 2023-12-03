@@ -494,13 +494,11 @@ export const MessageOnConnect = ({
 
         /*
             The message that will be sent during seed time
-            You must escape any \ character (ie : \\n for a new line)
         */
         "seed_time_text": "Welcome !\\nThe server is seeding\\n\\n[ All time rules ]\\nStay fun, be polite, communicate.\\nNo teamkill, follow officers orders.\\n\\n[ + Seed time rules ]\\nDo not capture the 4th point\\nDo not destroy garries in red zone\\n\\nHave a good game !",
 
         /*
             The message that will be sent when NOT in seed
-            You must escape any \ character (ie : \\n for a new line)
         */
         "non_seed_time_text": "Welcome !\\n[ All time rules ]\\nStay fun, be polite, communicate.\\nNo teamkill, follow officers orders.\\n\\nHave a good game !",
     }
