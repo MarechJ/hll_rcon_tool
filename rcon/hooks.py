@@ -291,46 +291,6 @@ def ban_if_has_vac_bans(rcon: Rcon, steam_id_64, name):
                 logger.exception("Unable to send vac ban to audit log")
 
 
-# ElGuillermo - feature add 1 - start
-def message_on_connect(rcon: Rcon, steam_id_64, struct_log):
-    config = MessageOnConnectUserConfig.load_from_db()
-    if not config.enabled:
-        logger.debug("MessageOnConnect is disabled")
-        return
-    message_on_connect_txt = config.non_seed_time_text
-    players_count_request = rcon.get_gamestate()
-    players_count = (
-        players_count_request["num_allied_players"]
-        + players_count_request["num_axis_players"]
-    )
-    if players_count < config.seed_limit:
-        message_on_connect_txt = config.seed_time_text
-    player_name = struct_log["player"]
-
-    def send_message_on_connect():
-        try:
-            rcon.do_message_player(
-                steam_id_64=steam_id_64,
-                message=message_on_connect_txt,
-                by="Message_on_connect",
-                save_message=False,
-            )
-        except Exception as e:
-            logger.error(
-                "Could not send MessageOnConnect to player "
-                + "'" + player_name + "' ("
-                + steam_id_64
-                + ")",
-                e
-            )
-
-    # The player might not yet have finished connecting in order to send messages.
-    t = Timer(10, send_message_on_connect)
-    pendingTimers[steam_id_64] = t
-    t.start()
-# ElGuillermo - feature add 1 - end
-
-
 def inject_player_ids(func):
     @wraps(func)
     def wrapper(rcon, struct_log: StructuredLogLineType):
@@ -366,7 +326,6 @@ def handle_on_connect(rcon: Rcon, struct_log, name, steam_id_64):
     save_start_player_session(steam_id_64, timestamp=timestamp)
     ban_if_blacklisted(rcon, steam_id_64, struct_log["player"])
     ban_if_has_vac_bans(rcon, steam_id_64, struct_log["player"])
-    message_on_connect(rcon, steam_id_64, struct_log["player"])
 
 
 @on_disconnected
@@ -508,5 +467,46 @@ def notify_camera(rcon: Rcon, struct_log):
         temporary_welcome(rcon, struct_log["message"], 60)
 
 
-if __name__ == "__main__":
-    from rcon.settings import SERVER_INFO
+# ElGuillermo - feature add 1 - start
+def _message_on_connect(rcon: Rcon, steam_id_64, struct_log):
+    config = MessageOnConnectUserConfig.load_from_db()
+    if not config.enabled:
+        logger.debug("MessageOnConnect is disabled")
+        return
+    message_on_connect_txt = config.non_seed_time_text
+    players_count_request = rcon.get_gamestate()
+    players_count = (
+        players_count_request["num_allied_players"]
+        + players_count_request["num_axis_players"]
+    )
+    if players_count < config.seed_limit:
+        message_on_connect_txt = config.seed_time_text
+    player_name = struct_log["player"]
+
+    def send_message_on_connect():
+        try:
+            rcon.do_message_player(
+                steam_id_64=steam_id_64,
+                message=message_on_connect_txt,
+                by="Message_on_connect",
+                save_message=False,
+            )
+        except Exception as e:
+            logger.error(
+                "Could not send MessageOnConnect to player "
+                + "'" + player_name + "' ("
+                + steam_id_64
+                + ")",
+                e
+            )
+
+    # The player might not yet have finished connecting in order to send messages.
+    t = Timer(10, send_message_on_connect)
+    pendingTimers[steam_id_64] = t
+    t.start()
+
+@on_connected
+@inject_player_ids
+def message_on_connect(rcon: Rcon, steam_id_64, struct_log):
+    _message_on_connect(rcon, steam_id_64, struct_log["player"])
+# ElGuillermo - feature add 1 - end
