@@ -821,7 +821,7 @@ def set_camera_notification_config(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_view_message_on_connect_config", raise_exception=True)
-def get_expired_vip_config(request):
+def get_message_on_connect_config(request):
     command_name = "get_message_on_connect_config"
 
     try:
