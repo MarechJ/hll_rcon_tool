@@ -471,7 +471,7 @@ def notify_camera(rcon: Rcon, struct_log):
 def _message_on_connect(rcon: Rcon, steam_id_64, struct_log):
     config = MessageOnConnectUserConfig.load_from_db()
     if not config.enabled:
-        logger.debug("MessageOnConnect is disabled")
+        logger.info("MessageOnConnect is disabled")
         return
     message_on_connect_txt = config.non_seed_time_text
     players_count_request = rcon.get_gamestate()
@@ -507,6 +507,6 @@ def _message_on_connect(rcon: Rcon, steam_id_64, struct_log):
 
 @on_connected
 @inject_player_ids
-def message_on_connect(rcon: Rcon, steam_id_64, struct_log):
+def message_on_connect(rcon: Rcon, steam_id_64: str, struct_log):
     _message_on_connect(rcon, steam_id_64, struct_log["player"])
 # ElGuillermo - feature add 1 - end
