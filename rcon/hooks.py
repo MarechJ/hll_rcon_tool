@@ -467,8 +467,7 @@ def notify_camera(rcon: Rcon, struct_log):
         temporary_welcome(rcon, struct_log["message"], 60)
 
 
-# ElGuillermo - feature add 1 - start
-def _message_on_connect(rcon: Rcon, steam_id_64, struct_log):
+def _message_on_connect(rcon: Rcon, struct_log, name, steam_id_64):
     config = MessageOnConnectUserConfig.load_from_db()
     if not config.enabled:
         logger.info("MessageOnConnect is disabled")
@@ -481,7 +480,6 @@ def _message_on_connect(rcon: Rcon, steam_id_64, struct_log):
     )
     if players_count < config.seed_limit:
         message_on_connect_txt = config.seed_time_text
-    player_name = struct_log["player"]
 
     def send_message_on_connect():
         try:
@@ -494,7 +492,7 @@ def _message_on_connect(rcon: Rcon, steam_id_64, struct_log):
         except Exception as e:
             logger.error(
                 "Could not send MessageOnConnect to player "
-                + "'" + player_name + "' ("
+                + "'" + name + "' ("
                 + steam_id_64
                 + ")",
                 e
@@ -507,6 +505,5 @@ def _message_on_connect(rcon: Rcon, steam_id_64, struct_log):
 
 @on_connected
 @inject_player_ids
-def message_on_connect(rcon: Rcon, steam_id_64: str, struct_log):
-    _message_on_connect(rcon, steam_id_64, struct_log["player"])
-# ElGuillermo - feature add 1 - end
+def message_on_connect(rcon: Rcon, struct_log, name, steam_id_64):
+    _message_on_connect(rcon, struct_log, name, steam_id_64)
