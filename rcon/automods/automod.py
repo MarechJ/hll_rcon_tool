@@ -107,7 +107,7 @@ def _do_punitions(
                     aplayer.details.author,
                 )
         except (CommandFailedError, HLLServerError):
-            logger.exception("Failed to %s %s", repr(method), repr(aplayer))
+            # logger.exception("Failed to %s %s", repr(method), repr(aplayer))
             if method == ActionMethod.PUNISH:
                 # Deactivated (spams the Discord channel)
                 # audit(
@@ -115,6 +115,11 @@ def _do_punitions(
                 #     f"--> PUNISH FAILED, will retry: {aplayer}",
                 #     aplayer.details.author,
                 # )
+                logger.warning(
+                    "Couldn't `%s` player `%s`. Will retry.",
+                    repr(method),
+                    repr(aplayer)
+                )
                 for m in mods:
                     m.player_punish_failed(aplayer)
             elif method == ActionMethod.KICK:
@@ -200,7 +205,8 @@ def on_kill(rcon: Rcon, log: StructuredLogLineType):
     red = get_redis_client()
     if not is_first_run_done(red):
         logger.debug(
-            "Kill event received, but not automod run done yet, giving mods time to warmup"
+            "Kill event received, but not automod run done yet, "
+            "giving mods time to warmup"
         )
         return
     mods = enabled_moderators()
@@ -226,7 +232,8 @@ def on_connected(rcon: Rcon, _, name: str, steam_id_64: str):
     red = get_redis_client()
     if not is_first_run_done(red):
         logger.debug(
-            "Kill event received, but not automod run done yet, giving mods time to warmup"
+            "Kill event received, but not automod run done yet, "
+            "giving mods time to warmup"
         )
         return
     mods = enabled_moderators()
@@ -250,7 +257,12 @@ def on_connected(rcon: Rcon, _, name: str, steam_id_64: str):
                     save_message=False,
                 )
         except Exception as e:
-            logger.error("Could not message player " + name + "/" + steam_id_64, e)
+            logger.error(
+                "Could not message player '%s' (%s) : %s",
+                name,
+                steam_id_64,
+                e
+            )
 
     if len(punitions_to_apply.warning) == 0:
         return
