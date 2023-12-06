@@ -107,19 +107,12 @@ def _do_punitions(
                     aplayer.details.author,
                 )
         except (CommandFailedError, HLLServerError):
-            # logger.exception("Failed to %s %s", repr(method), repr(aplayer))
+            logger.warning(
+                "Couldn't `%s` player `%s`. Will retry.",
+                repr(method),
+                repr(aplayer)
+            )
             if method == ActionMethod.PUNISH:
-                # Deactivated (spams the Discord channel)
-                # audit(
-                #     aplayer.details.discord_audit_url,
-                #     f"--> PUNISH FAILED, will retry: {aplayer}",
-                #     aplayer.details.author,
-                # )
-                logger.warning(
-                    "Couldn't `%s` player `%s`. Will retry.",
-                    repr(method),
-                    repr(aplayer)
-                )
                 for m in mods:
                     m.player_punish_failed(aplayer)
             elif method == ActionMethod.KICK:
