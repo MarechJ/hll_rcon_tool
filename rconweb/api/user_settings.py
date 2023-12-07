@@ -898,7 +898,6 @@ def set_message_on_connect_config(request):
     )
 
 
-
 @csrf_exempt
 @login_required()
 @permission_required("api.can_view_expired_vip_config", raise_exception=True)
