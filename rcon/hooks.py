@@ -31,7 +31,11 @@ from rcon.player_history import (
     save_start_player_session,
 )
 from rcon.rcon import Rcon, StructuredLogLineType
-from rcon.steam_utils import get_player_bans, get_steam_profile, update_db_player_info
+from rcon.steam_utils import (
+    get_player_bans,
+    get_steam_profile,
+    update_db_player_info
+)
 from rcon.types import PlayerFlagType, SteamBansType
 from rcon.user_config.auto_mod_no_leader import AutoModNoLeaderUserConfig
 from rcon.user_config.camera_notification import CameraNotificationUserConfig
@@ -41,7 +45,11 @@ from rcon.user_config.webhooks import CameraWebhooksUserConfig
 from rcon.user_config.message_on_connect import MessageOnConnectUserConfig
 from rcon.utils import LOG_MAP_NAMES_TO_MAP, UNKNOWN_MAP_NAME, MapsHistory
 from rcon.vote_map import VoteMap
-from rcon.workers import record_stats_worker, temporary_broadcast, temporary_welcome
+from rcon.workers import (
+    record_stats_worker,
+    temporary_broadcast,
+    temporary_welcome
+)
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +57,10 @@ logger = logging.getLogger(__name__)
 @on_chat
 def count_vote(rcon: Rcon, struct_log: StructuredLogLineType):
     enabled = VoteMap().handle_vote_command(rcon=rcon, struct_log=struct_log)
-    if enabled and (match := re.match(r"\d\s*$", struct_log["sub_content"].strip())):
+    if (
+        enabled
+        and (match := re.match(r"\d\s*$", struct_log["sub_content"].strip()))
+    ):
         rcon.do_message_player(
             steam_id_64=struct_log["steam_id_64_1"],
             message=f"INVALID VOTE\n\nUse: !votemap {match.group()}",
@@ -159,14 +170,18 @@ def record_map_end(rcon: Rcon, struct_log):
         current_map = "bla_"
         logger.error("Unable to get current map")
 
-    map_name = LOG_MAP_NAMES_TO_MAP.get(struct_log["sub_content"], UNKNOWN_MAP_NAME)
+    map_name = LOG_MAP_NAMES_TO_MAP.get(
+        struct_log["sub_content"], UNKNOWN_MAP_NAME
+    )
     log_time = datetime.fromtimestamp(struct_log["timestamp_ms"] / 1000)
 
     if (datetime.utcnow() - log_time).total_seconds() < 60:
         # then we use the current map to be more accurate
         if current_map.split("_")[0].lower() == map_name.split("_")[0].lower():
             maps_history.save_map_end(
-                current_map, end_timestamp=int(struct_log["timestamp_ms"] / 1000)
+                current_map, end_timestamp=int(
+                    struct_log["timestamp_ms"] / 1000
+                )
             )
 
 
@@ -311,7 +326,8 @@ def ban_if_has_vac_bans(rcon: Rcon, steam_id_64, name):
                     number_of_game_bans=bans.get("NumberOfGameBans"),
                 )
                 send_to_discord_audit(
-                    f"`VAC/GAME BAN` -> {dict_to_discord(audit_params)}", "AUTOBAN"
+                    f"`VAC/GAME BAN` -> {dict_to_discord(audit_params)}",
+                    "AUTOBAN"
                 )
             except Exception:
                 logger.exception("Unable to send vac ban to audit log")
@@ -548,4 +564,3 @@ def _message_on_connect(rcon: Rcon, struct_log, name, steam_id_64):
 @inject_player_ids
 def message_on_connect(rcon: Rcon, struct_log, name, steam_id_64):
     _message_on_connect(rcon, struct_log, name, steam_id_64)
-    
