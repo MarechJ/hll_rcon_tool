@@ -29,6 +29,7 @@ from rcon.types import (
     ParsedLogsType,
     PlayerStat,
     StructuredLogLineWithMetaData,
+    AllLogTypes,
 )
 from rcon.user_config.ban_tk_on_connect import BanTeamKillOnConnectUserConfig
 from rcon.user_config.log_line_webhooks import (
@@ -41,81 +42,98 @@ from rcon.utils import FixedLenList, MapsHistory
 logger = logging.getLogger(__name__)
 
 HOOKS: Dict[str, list[Callable]] = {
-    "TEAM KILL": [],
-    "CONNECTED": [],
-    "DISCONNECTED": [],
-    "TK": [],
-    "TK AUTO": [],
-    "TK AUTO BANNED": [],
-    "TK AUTO KICKED": [],
-    "ADMIN BANNED": [],
-    "ADMIN KICKED": [],
-    "CAMERA": [],
-    "CHAT": [],
-    "CHAT[Allies]": [],
-    "CHAT[Allies][Team]": [],
-    "CHAT[Allies][Unit]": [],
-    "CHAT[Axis]": [],
-    "CHAT[Axis][Team]": [],
-    "CHAT[Axis][Unit]": [],
-    "KILL": [],
-    "MATCH START": [],
-    "MATCH ENDED": [],
-    "MATCH": [],
-    "TEAMSWITCH": [],
-    "VOTE": [],
-    "VOTE STARTED": [],
-    "VOTE COMPLETED": [],
+    AllLogTypes.admin.value: [],
+    AllLogTypes.admin_anti_cheat.value: [],
+    AllLogTypes.admin_banned.value: [],
+    AllLogTypes.admin_idle.value: [],
+    AllLogTypes.admin_kicked.value: [],
+    AllLogTypes.admin_misc.value: [],
+    AllLogTypes.admin_perma_banned.value: [],
+    AllLogTypes.allies_chat.value: [],
+    AllLogTypes.allies_team_chat.value: [],
+    AllLogTypes.allies_unit_chat.value: [],
+    AllLogTypes.axis_chat.value: [],
+    AllLogTypes.axis_team_chat.value: [],
+    AllLogTypes.axis_unit_chat.value: [],
+    AllLogTypes.camera.value: [],
+    AllLogTypes.chat.value: [],
+    AllLogTypes.connected.value: [],
+    AllLogTypes.disconnected.value: [],
+    AllLogTypes.kill.value: [],
+    AllLogTypes.match.value: [],
+    AllLogTypes.match_end.value: [],
+    AllLogTypes.match_start.value: [],
+    AllLogTypes.team_kill.value: [],
+    AllLogTypes.team_switch.value: [],
+    AllLogTypes.tk.value: [],
+    AllLogTypes.tk_auto.value: [],
+    AllLogTypes.tk_auto_banned.value: [],
+    AllLogTypes.tk_auto_kicked.value: [],
+    AllLogTypes.vote.value: [],
+    AllLogTypes.vote_completed.value: [],
+    AllLogTypes.vote_expired.value: [],
+    AllLogTypes.vote_passed.value: [],
+    AllLogTypes.vote_started.value: [],
 }
 
 
 def on_kill(func):
-    HOOKS["KILL"].append(func)
+    HOOKS[AllLogTypes.kill.value].append(func)
     return func
 
 
 def on_tk(func):
-    HOOKS["TEAM KILL"].append(func)
+    HOOKS[AllLogTypes.team_kill.value].append(func)
     return func
 
 
 def on_chat(func):
-    HOOKS["CHAT"].append(func)
+    HOOKS[AllLogTypes.chat.value].append(func)
+    HOOKS[AllLogTypes.axis_chat.value].append(func)
+    HOOKS[AllLogTypes.axis_team_chat.value].append(func)
+    HOOKS[AllLogTypes.axis_unit_chat.value].append(func)
+    HOOKS[AllLogTypes.allies_chat.value].append(func)
+    HOOKS[AllLogTypes.allies_team_chat.value].append(func)
+    HOOKS[AllLogTypes.allies_unit_chat.value].append(func)
     return func
 
 
 def on_camera(func):
-    HOOKS["CAMERA"].append(func)
+    HOOKS[AllLogTypes.camera.value].append(func)
     return func
 
 
 def on_chat_axis(func):
-    HOOKS["CHAT[Axis]"].append(func)
+    HOOKS[AllLogTypes.axis_chat.value].append(func)
+    HOOKS[AllLogTypes.axis_team_chat.value].append(func)
+    HOOKS[AllLogTypes.axis_unit_chat.value].append(func)
     return func
 
 
 def on_chat_allies(func):
-    HOOKS["CHAT[Allies]"].append(func)
+    HOOKS[AllLogTypes.allies_chat.value].append(func)
+    HOOKS[AllLogTypes.allies_team_chat.value].append(func)
+    HOOKS[AllLogTypes.allies_unit_chat.value].append(func)
     return func
 
 
 def on_connected(func):
-    HOOKS["CONNECTED"].append(func)
+    HOOKS[AllLogTypes.connected.value].append(func)
     return func
 
 
 def on_disconnected(func):
-    HOOKS["DISCONNECTED"].append(func)
+    HOOKS[AllLogTypes.disconnected.value].append(func)
     return func
 
 
 def on_match_start(func):
-    HOOKS["MATCH START"].append(func)
+    HOOKS[AllLogTypes.match_start.value].append(func)
     return func
 
 
 def on_match_end(func):
-    HOOKS["MATCH ENDED"].append(func)
+    HOOKS[AllLogTypes.match_end.value].append(func)
     return func
 
 
@@ -322,11 +340,11 @@ class LogLoop:
         logger.info("Cleanup done")
 
     def process_hooks(self, log: StructuredLogLineWithMetaData):
-        logger.debug("Processing %s", f"{log['action']}{log['message']}")
+        logger.debug("Processing %s", f"{log['action']} | {log['message']}")
         hooks = []
         started_total = time.time()
         for action_hook, funcs in HOOKS.items():
-            if log["action"].startswith(action_hook):
+            if log["action"] == action_hook:
                 hooks += funcs
 
         for hook in hooks:

@@ -52,6 +52,7 @@ import {
   TeamKillBanOnConnect,
   NameKicks,
   ExpiredVIP,
+  GTXNameChange
 } from "./components/UserSettings/miscellaneous";
 
 const Live = ({ classes }) => {
@@ -388,8 +389,8 @@ function App() {
       ? hllNoBg
       : hll
     : themes[userTheme]
-    ? themes[userTheme]
-    : lightTheme;
+      ? themes[userTheme]
+      : lightTheme;
   const classes = useStyles();
 
   const Router = isEmbed ? BrowserRouter : HashRouter;
@@ -683,7 +684,7 @@ function App() {
                     </Route>
                     <Route path="/settings/gtx-server-name-change">
                       <Grid container spacing={2}>
-                        <ExpiredVIP
+                        <GTXNameChange
                           description="GTX Server Name Change"
                           getEndpoint="get_server_name_change_config"
                           setEndpoint="set_server_name_change_config"

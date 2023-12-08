@@ -1,9 +1,11 @@
+import pytest
+
+from rcon.commands import convert_tabs_to_spaces
 from rcon.utils import (
     exception_in_chain,
     is_invalid_name_pineapple,
     is_invalid_name_whitespace,
 )
-import pytest
 
 
 class TestException(Exception):
@@ -56,6 +58,19 @@ def test_deeply_chained_implicit():
     e.__context__.__cause__.__context__ = DeepChainedException()
 
     assert exception_in_chain(e, DeepChainedException)
+
+
+@pytest.mark.parametrize(
+    "value, expected",
+    [
+        ("some\tcontaining\twords", "some containing words"),
+        ("", ""),
+        ("\t", " "),
+        ("no tabs", "no tabs"),
+    ],
+)
+def test_convert_tabs_to_spaces(value, expected):
+    assert convert_tabs_to_spaces(value) == expected
 
 
 @pytest.mark.parametrize(
