@@ -415,4 +415,6 @@ class RconUser(User):
                 "can_restart_webserver",
                 "Can restart the webserver (Not a complete Docker restart)",
             ),
+            ("can_view_message_on_connect_config", "Can view message on connect config")
+            ("can_change_message_on_connect_config", "Can change message on connect config")
         )
