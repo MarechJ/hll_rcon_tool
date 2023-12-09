@@ -3,11 +3,13 @@ import os
 
 from django.contrib.auth.decorators import permission_required
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
 
 from rcon.user_config.auto_settings import AutoSettingsConfig
 
 from .audit_log import record_audit
 from .auth import api_response, login_required
+from .decorators import require_content_type
 from .multi_servers import forward_request
 from .services import get_supervisor_client
 from .utils import _get_data
@@ -27,6 +29,7 @@ AUTO_SETTINGS_KEY_INDEX_MAP = {v: i for i, v in enumerate(AUTO_SETTINGS_KEY_ORDE
 @csrf_exempt
 @login_required()
 @permission_required("api.can_view_auto_settings", raise_exception=True)
+@require_http_methods(['GET'])
 def get_auto_settings(request):
     data = _get_data(request)
     try:
@@ -57,6 +60,8 @@ def get_auto_settings(request):
 @login_required()
 @permission_required("api.can_change_auto_settings", raise_exception=True)
 @record_audit
+@require_http_methods(['POST'])
+@require_content_type()
 def set_auto_settings(request):
     data = _get_data(request)
     try:

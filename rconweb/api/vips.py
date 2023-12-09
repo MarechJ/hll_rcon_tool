@@ -10,6 +10,7 @@ from django.contrib.auth.decorators import permission_required
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
 
 from rcon.commands import CommandFailedError
 from rcon.discord import send_to_discord_audit
@@ -20,6 +21,7 @@ from rcon.workers import get_job_results, worker_bulk_vip
 
 from .audit_log import record_audit
 from .auth import api_response, login_required
+from .decorators import require_content_type
 from .user_settings import _audit_user_config_differences, _validate_user_config
 from .views import _get_data, ctl
 
@@ -37,6 +39,8 @@ class DocumentForm(forms.Form):
     {"api.can_upload_vip_list", "api.can_remove_all_vips"}, raise_exception=True
 )
 @record_audit
+@require_http_methods(['POST'])
+@require_content_type(['multipart/form-data'])
 def upload_vips(request):
     message = "Upload a VIP file!"
     send_to_discord_audit("upload_vips", request.user.username)
@@ -87,6 +91,8 @@ def upload_vips(request):
 @login_required()
 @permission_required("api.can_upload_vip_list", raise_exception=True)
 @record_audit
+@require_http_methods(['POST'])
+@require_content_type(['multipart/form-data'])
 def async_upload_vips(request):
     errors = []
     send_to_discord_audit("upload_vips", request.user.username)
@@ -156,6 +162,7 @@ def async_upload_vips(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_upload_vip_list", raise_exception=True)
+@require_http_methods(['GET'])
 def async_upload_vips_result(request):
     return api_response(
         result=get_job_results(f"upload_vip_{os.getenv('SERVER_NUMBER')}"),
@@ -167,6 +174,7 @@ def async_upload_vips_result(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_download_vip_list", raise_exception=True)
+@require_http_methods(['GET'])
 def download_vips(request):
     vips = ctl.get_vip_ids()
     vip_lines: List[str]
@@ -204,6 +212,7 @@ def download_vips(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_view_real_vip_config", raise_exception=True)
+@require_http_methods(['GET'])
 def get_real_vip_config(request):
     command_name = "get_real_vip_config"
 
@@ -222,6 +231,7 @@ def get_real_vip_config(request):
 
 @csrf_exempt
 @login_required()
+@require_http_methods(['GET'])
 def describe_real_vip_config(request):
     command_name = "describe_real_vip_config"
 
@@ -235,6 +245,8 @@ def describe_real_vip_config(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_change_real_vip_config", raise_exception=True)
+@require_http_methods(['POST'])
+@require_content_type()
 def validate_real_vip_config(request):
     command_name = "validate_real_vip_config"
     data = _get_data(request)
@@ -258,6 +270,8 @@ def validate_real_vip_config(request):
 @login_required()
 @permission_required("api.can_change_real_vip_config", raise_exception=True)
 @record_audit
+@require_http_methods(['POST'])
+@require_content_type()
 def set_real_vip_config(request):
     command_name = "set_real_vip_config"
     cls = RealVipUserConfig
