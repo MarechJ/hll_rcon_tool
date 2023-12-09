@@ -1,5 +1,7 @@
 from django.contrib.auth.models import User
 from django.db import models
+from django.contrib.auth.hashers import make_password
+from rconweb.settings import SECRET_KEY
 
 
 class DjangoAPIKey(models.Model):
@@ -13,6 +15,12 @@ class DjangoAPIKey(models.Model):
 
     def __str__(self) -> str:
         return f"{self.api_key}"
+
+    def save(self, *args, **kwargs):
+        """Hash the API key"""
+        # If we don't include the salt, the hasher generates its own
+        self.api_key = make_password(self.api_key, salt=SECRET_KEY)
+        super().save()
 
     class Meta:
         ordering = ("date_modified",)
