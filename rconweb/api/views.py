@@ -418,7 +418,7 @@ def expose_api_endpoint(func, command_name, permissions: list[str] | set[str] | 
             if request.method != 'POST':
                 return HttpResponseNotAllowed(['POST'])
             if request.content_type != 'application/json':
-                return HttpResponseBadRequest('Content Type not supported')
+                logger.info("InvalidContentType: %s %s was called with %s, expected one of %s" % (request.method, request.path, request.content_type, ",".join(['application/json'])))
         elif request.method != 'GET':
             return HttpResponseNotAllowed(['GET'])
 
