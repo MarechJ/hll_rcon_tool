@@ -14,7 +14,7 @@ from .utils import _get_data
 @login_required()
 @permission_required("api.can_view_historical_logs", raise_exception=True)
 @require_http_methods(['POST'])
-@require_content_type(['POST'])
+@require_content_type()
 def get_historical_logs(request):
     data = _get_data(request)
     player_name = data.get("player_name")
