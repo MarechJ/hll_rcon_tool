@@ -6,7 +6,6 @@ from functools import wraps
 from subprocess import PIPE, run
 from typing import Callable, List
 
-import pydantic
 from django.contrib.auth.decorators import permission_required
 from django.http import HttpResponse, JsonResponse, HttpResponseNotAllowed, HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt
