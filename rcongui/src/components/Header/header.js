@@ -448,6 +448,15 @@ const Header = ({ classes }) => {
                         <Link
                           color="inherit"
                           component={RouterLink}
+                          to="/settings/message-on-connect"
+                        >
+                          <MenuItem onClick={() => setAnchorElSettings(null)}>
+                            Message on connect
+                          </MenuItem>
+                        </Link>
+                        <Link
+                          color="inherit"
+                          component={RouterLink}
                           to="/settings/log-lines"
                         >
                           <MenuItem onClick={() => setAnchorElSettings(null)}>

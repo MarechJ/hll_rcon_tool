@@ -51,6 +51,7 @@ import {
   VacGameBans,
   TeamKillBanOnConnect,
   NameKicks,
+  MessageOnConnect,
   ExpiredVIP,
   GTXNameChange
 } from "./components/UserSettings/miscellaneous";
@@ -668,6 +669,17 @@ function App() {
                           setEndpoint="set_name_kick_config"
                           validateEndpoint="validate_name_kick_config"
                           describeEndpoint="describe_name_kick_config"
+                        />
+                      </Grid>
+                    </Route>
+                    <Route path="/settings/message-on-connect">
+                      <Grid container spacing={2}>
+                        <MessageOnConnect
+                          description="Message on connect"
+                          getEndpoint="get_message_on_connect_config"
+                          setEndpoint="set_message_on_connect_config"
+                          validateEndpoint="validate_message_on_connect_config"
+                          describeEndpoint="describe_message_on_connect_config"
                         />
                       </Grid>
                     </Route>

@@ -31,16 +31,25 @@ from rcon.player_history import (
     save_start_player_session,
 )
 from rcon.rcon import Rcon, StructuredLogLineType
-from rcon.steam_utils import get_player_bans, get_steam_profile, update_db_player_info
+from rcon.steam_utils import (
+    get_player_bans,
+    get_steam_profile,
+    update_db_player_info
+)
 from rcon.types import PlayerFlagType, SteamBansType
 from rcon.user_config.auto_mod_no_leader import AutoModNoLeaderUserConfig
 from rcon.user_config.camera_notification import CameraNotificationUserConfig
 from rcon.user_config.real_vip import RealVipUserConfig
 from rcon.user_config.vac_game_bans import VacGameBansUserConfig
 from rcon.user_config.webhooks import CameraWebhooksUserConfig
+from rcon.user_config.message_on_connect import MessageOnConnectUserConfig
 from rcon.utils import LOG_MAP_NAMES_TO_MAP, UNKNOWN_MAP_NAME, MapsHistory
 from rcon.vote_map import VoteMap
-from rcon.workers import record_stats_worker, temporary_broadcast, temporary_welcome
+from rcon.workers import (
+    record_stats_worker,
+    temporary_broadcast,
+    temporary_welcome
+)
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +57,10 @@ logger = logging.getLogger(__name__)
 @on_chat
 def count_vote(rcon: Rcon, struct_log: StructuredLogLineType):
     enabled = VoteMap().handle_vote_command(rcon=rcon, struct_log=struct_log)
-    if enabled and (match := re.match(r"\d\s*$", struct_log["sub_content"].strip())):
+    if (
+        enabled
+        and (match := re.match(r"\d\s*$", struct_log["sub_content"].strip()))
+    ):
         rcon.do_message_player(
             steam_id_64=struct_log["steam_id_64_1"],
             message=f"INVALID VOTE\n\nUse: !votemap {match.group()}",
@@ -56,20 +68,26 @@ def count_vote(rcon: Rcon, struct_log: StructuredLogLineType):
 
 
 def initialise_vote_map(rcon: Rcon, struct_log):
-    logger.info("New match started initializing vote map. %s", struct_log)
+    logger.info(
+        "New match started initializing vote map. %s",
+        struct_log
+    )
     try:
         vote_map = VoteMap()
         vote_map.clear_votes()
         vote_map.gen_selection()
         vote_map.reset_last_reminder_time()
         vote_map.apply_results()
-    except:
+    except Exception:
         logger.exception("Something went wrong in vote map init")
 
 
 @on_match_end
 def remind_vote_map(rcon: Rcon, struct_log):
-    logger.info("Match ended reminding to vote map. %s", struct_log)
+    logger.info(
+        "Match ended reminding to vote map. %s",
+        struct_log
+    )
     vote_map = VoteMap()
     vote_map.apply_with_retry()
     vote_map.vote_map_reminder(rcon, force=True)
@@ -78,7 +96,10 @@ def remind_vote_map(rcon: Rcon, struct_log):
 @on_match_start
 def handle_new_match_start(rcon: Rcon, struct_log):
     try:
-        logger.info("New match started recording map %s", struct_log)
+        logger.info(
+            "New match started recording map %s",
+            struct_log
+        )
         with invalidates(Rcon.get_map):
             try:
                 current_map = rcon.get_map().replace("_RESTART", "")
@@ -126,7 +147,7 @@ def handle_new_match_start(rcon: Rcon, struct_log):
             guessed=guessed,
             start_timestamp=int(struct_log["timestamp_ms"] / 1000),
         )
-    except:
+    except Exception:
         raise
     finally:
         initialise_vote_map(rcon, struct_log)
@@ -138,7 +159,10 @@ def handle_new_match_start(rcon: Rcon, struct_log):
 
 @on_match_end
 def record_map_end(rcon: Rcon, struct_log):
-    logger.info("Match ended recording map %s", struct_log)
+    logger.info(
+        "Match ended recording map %s",
+        struct_log
+    )
     maps_history = MapsHistory()
     try:
         current_map = rcon.get_map()
@@ -146,14 +170,18 @@ def record_map_end(rcon: Rcon, struct_log):
         current_map = "bla_"
         logger.error("Unable to get current map")
 
-    map_name = LOG_MAP_NAMES_TO_MAP.get(struct_log["sub_content"], UNKNOWN_MAP_NAME)
+    map_name = LOG_MAP_NAMES_TO_MAP.get(
+        struct_log["sub_content"], UNKNOWN_MAP_NAME
+    )
     log_time = datetime.fromtimestamp(struct_log["timestamp_ms"] / 1000)
 
     if (datetime.utcnow() - log_time).total_seconds() < 60:
         # then we use the current map to be more accurate
         if current_map.split("_")[0].lower() == map_name.split("_")[0].lower():
             maps_history.save_map_end(
-                current_map, end_timestamp=int(struct_log["timestamp_ms"] / 1000)
+                current_map, end_timestamp=int(
+                    struct_log["timestamp_ms"] / 1000
+                )
             )
 
 
@@ -162,7 +190,10 @@ def ban_if_blacklisted(rcon: Rcon, steam_id_64, name):
         player = get_player(sess, steam_id_64)
 
         if not player:
-            logger.error("Can't check blacklist, player not found %s", steam_id_64)
+            logger.error(
+                "Can't check blacklist, player not found %s",
+                steam_id_64
+            )
             return
 
         if player.blacklist and player.blacklist.is_blacklisted:
@@ -190,11 +221,12 @@ def ban_if_blacklisted(rcon: Rcon, steam_id_64, name):
                         f"`BLACKLIST` -> {dict_to_discord(dict(player=name, reason=player.blacklist.reason))}",
                         "BLACKLIST",
                     )
-                except:
+                except Exception:
                     logger.error("Unable to send blacklist to audit log")
-            except:
+            except Exception:
                 send_to_discord_audit(
-                    "Failed to apply ban on blacklisted players, please check the logs and report the error",
+                    "Failed to apply ban on blacklisted players, "
+                    "please check the logs and report the error",
                     "ERROR",
                 )
 
@@ -218,7 +250,10 @@ def should_ban(
     except ValueError:  # In case DaysSinceLastBan can be null
         return
 
-    has_a_ban = bans.get("VACBanned") == True or number_of_game_bans >= max_game_bans
+    has_a_ban = (
+        bans.get("VACBanned") == True
+        or number_of_game_bans >= max_game_bans
+    )
 
     if days_since_last_ban <= 0:
         return False
@@ -234,7 +269,8 @@ def ban_if_has_vac_bans(rcon: Rcon, steam_id_64, name):
 
     max_days_since_ban = config.vac_history_days
     max_game_bans = (
-        float("inf") if config.game_ban_threshhold <= 0 else config.game_ban_threshhold
+        float("inf") if config.game_ban_threshhold <= 0
+        else config.game_ban_threshhold
     )
     whitelist_flags = config.whitelist_flags
 
@@ -245,13 +281,18 @@ def ban_if_has_vac_bans(rcon: Rcon, steam_id_64, name):
         player = get_player(sess, steam_id_64)
 
         if not player:
-            logger.error("Can't check VAC history, player not found %s", steam_id_64)
+            logger.error(
+                "Can't check VAC history, player not found : '%s'",
+                steam_id_64
+            )
             return
 
         bans: SteamBansType | None = get_player_bans(steam_id_64)
         if not bans or not isinstance(bans, dict):
             logger.warning(
-                "Can't fetch Bans for player %s, received %s", steam_id_64, bans
+                "Can't fetch Bans for player %s, received %s",
+                steam_id_64,
+                bans
             )
             # Player couldn't be fetched properly (logged by get_player_bans)
             return
@@ -268,7 +309,8 @@ def ban_if_has_vac_bans(rcon: Rcon, steam_id_64, name):
                 MAX_DAYS_SINCE_BAN=str(max_days_since_ban),
             )
             logger.info(
-                "Player %s was banned due VAC history, last ban: %s days ago",
+                "Player '%s' was banned due VAC history, "
+                "last ban: %s days ago",
                 str(player),
                 bans.get("DaysSinceLastBan"),
             )
@@ -284,9 +326,10 @@ def ban_if_has_vac_bans(rcon: Rcon, steam_id_64, name):
                     number_of_game_bans=bans.get("NumberOfGameBans"),
                 )
                 send_to_discord_audit(
-                    f"`VAC/GAME BAN` -> {dict_to_discord(audit_params)}", "AUTOBAN"
+                    f"`VAC/GAME BAN` -> {dict_to_discord(audit_params)}",
+                    "AUTOBAN"
                 )
-            except:
+            except Exception:
                 logger.exception("Unable to send vac ban to audit log")
 
 
@@ -308,12 +351,15 @@ def handle_on_connect(rcon: Rcon, struct_log, name, steam_id_64):
         rcon.get_player_info.clear_for(struct_log["player"])
         rcon.get_player_info.clear_for(player=struct_log["player"])
     except Exception:
-        logger.exception("Unable to clear cache for %s", steam_id_64)
+        logger.exception(
+            "Unable to clear cache for %s",
+            steam_id_64
+        )
 
     timestamp = int(struct_log["timestamp_ms"]) / 1000
     if not steam_id_64:
         logger.error(
-            "Unable to get player steam ID for %s, can't process connection",
+            "Unable to get player steam ID for '%s', can't process connection",
             struct_log,
         )
         return
@@ -338,19 +384,22 @@ def handle_on_disconnect(rcon, struct_log, _, steam_id_64):
 def update_player_steaminfo_on_connect(rcon, struct_log, _, steam_id_64):
     if not steam_id_64:
         logger.error(
-            "Can't update steam info, no steam id available for %s",
+            "Can't update steam info, no steam id available for '%s'",
             struct_log.get("player"),
         )
         return
     profile = get_steam_profile(steam_id_64)
     if not profile:
         logger.error(
-            "Can't update steam info, no steam profile returned for %s",
+            "Can't update steam info, no steam profile returned for '%s'",
             struct_log.get("player"),
         )
         return
 
-    logger.info("Updating steam profile for player %s", struct_log["player"])
+    logger.info(
+        "Updating steam profile for player '%s'",
+        struct_log["player"]
+    )
     with enter_session() as sess:
         player = _get_set_player(
             sess, player_name=struct_log["player"], steam_id_64=steam_id_64
@@ -368,15 +417,16 @@ def notify_false_positives(rcon: Rcon, _, name: str, steam_id_64: str):
     config = AutoModNoLeaderUserConfig.load_from_db()
 
     if not config.enabled:
-        logger.info("no leader auto mod is disabled")
+        logger.info("no leader automod is disabled")
         return
 
     if not name.endswith(" "):
         return
 
     logger.info(
-        "Detected player name with whitespace at the end: Warning them of false-positive events. Player name: "
-        + name
+        "Detected player name with whitespace at the end. "
+        "Warning them of false-positive events. Player name: %s",
+        name
     )
 
     try:
@@ -395,7 +445,12 @@ def notify_false_positives(rcon: Rcon, _, name: str, steam_id_64: str):
                 save_message=False,
             )
         except Exception as e:
-            logger.error("Could not message player " + name + "/" + steam_id_64, e)
+            logger.error(
+                "Could not message player '%s' (%s) : %s",
+                name,
+                steam_id_64,
+                e
+            )
 
     # The player might not yet have finished connecting in order to send messages.
     t = Timer(10, notify_player)
@@ -412,7 +467,7 @@ def cleanup_pending_timers(_, _1, _2, steam_id_64: str):
     if pt.is_alive():
         try:
             pt.cancel()
-        except:
+        except Exception:
             pass
 
 
@@ -426,9 +481,12 @@ def _set_real_vips(rcon: Rcon, struct_log):
     min_vip_slot = config.minimum_number_vip_slots
     vip_count = rcon.get_vips_count()
 
-    remaining_vip_slots = max(desired_nb_vips - vip_count, max(min_vip_slot, 0))
+    remaining_vip_slots = max(desired_nb_vips - vip_count, min_vip_slot, 0)
     rcon.set_vip_slots_num(remaining_vip_slots)
-    logger.info("Real VIP set slots to %s", remaining_vip_slots)
+    logger.info(
+        "Real VIP set slots to %s",
+        remaining_vip_slots
+    )
 
 
 @on_connected
@@ -466,22 +524,43 @@ def notify_camera(rcon: Rcon, struct_log):
         temporary_welcome(rcon, struct_log["message"], 60)
 
 
-if __name__ == "__main__":
-    from rcon.settings import SERVER_INFO
+def _message_on_connect(rcon: Rcon, struct_log, name, steam_id_64):
+    config = MessageOnConnectUserConfig.load_from_db()
+    if not config.enabled:
+        return  # Feature is disabled
 
-    log = {
-        "version": 1,
-        "timestamp_ms": 1627734269000,
-        "relative_time_ms": 221.212,
-        "raw": "[543 ms (1627734269)] CONNECTED Dr.WeeD",
-        "line_without_time": "CONNECTED Dr.WeeD",
-        "action": "CONNECTED",
-        "player": "Dr.WeeD",
-        "steam_id_64_1": None,
-        "player2": None,
-        "steam_id_64_2": None,
-        "weapon": None,
-        "message": "Dr.WeeD",
-        "sub_content": None,
-    }
-    real_vips(Rcon(SERVER_INFO), struct_log=log)
+    message_on_connect_txt = config.non_seed_time_text
+
+    players_count_request = rcon.get_gamestate()
+    players_count = (
+        players_count_request["num_allied_players"]
+        + players_count_request["num_axis_players"]
+    )
+    if players_count < config.seed_limit:
+        message_on_connect_txt = config.seed_time_text
+
+    def send_message_on_connect():
+        try:
+            rcon.do_message_player(
+                steam_id_64=steam_id_64,
+                message=message_on_connect_txt,
+                by="Message_on_connect",
+                save_message=False,
+            )
+        except Exception as e:
+            logger.error(
+                "Could not send MessageOnConnect to player '%s' (%s) : %s",
+                name,
+                steam_id_64,
+                e
+            )
+
+    # The player might not yet have finished connecting in order to send messages.
+    t = Timer(10, send_message_on_connect)
+    pendingTimers[steam_id_64] = t
+    t.start()
+
+@on_connected
+@inject_player_ids
+def message_on_connect(rcon: Rcon, struct_log, name, steam_id_64):
+    _message_on_connect(rcon, struct_log, name, steam_id_64)

@@ -22,6 +22,7 @@ from rcon.user_config.camera_notification import CameraNotificationUserConfig
 from rcon.user_config.expired_vips import ExpiredVipsUserConfig
 from rcon.user_config.gtx_server_name import GtxServerNameChangeUserConfig
 from rcon.user_config.log_line_webhooks import LogLineWebhookUserConfig
+from rcon.user_config.message_on_connect import MessageOnConnectUserConfig
 from rcon.user_config.name_kicks import NameKickUserConfig
 from rcon.user_config.rcon_connection_settings import RconConnectionSettingsUserConfig
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
@@ -800,6 +801,86 @@ def validate_camera_notification_config(request):
 def set_camera_notification_config(request):
     command_name = "set_camera_notification_config"
     cls = CameraNotificationUserConfig
+    data = _get_data(request)
+
+    response = _audit_user_config_differences(
+        cls, data, command_name, request.user.username
+    )
+
+    if response:
+        return response
+
+    return api_response(
+        result=True,
+        command=command_name,
+        arguments=data,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+@permission_required("api.can_view_message_on_connect_config", raise_exception=True)
+def get_message_on_connect_config(request):
+    command_name = "get_message_on_connect_config"
+
+    try:
+        config = MessageOnConnectUserConfig.load_from_db()
+    except Exception as e:
+        logger.exception(e)
+        return api_response(command=command_name, error=str(e), failed=True)
+
+    return api_response(
+        result=config.model_dump(),
+        command=command_name,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+def describe_message_on_connect_config(request):
+    command_name = "describe_message_on_connect_config"
+
+    return api_response(
+        result=MessageOnConnectUserConfig.model_json_schema(),
+        command=command_name,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+@permission_required("api.can_change_message_on_connect_config", raise_exception=True)
+def validate_message_on_connect_config(request):
+    command_name = "validate_message_on_connect_config"
+    data = _get_data(request)
+
+    response = _validate_user_config(
+        MessageOnConnectUserConfig,
+        data=data,
+        command_name=command_name,
+        dry_run=True,
+    )
+
+    if response:
+        return response
+
+    return api_response(
+        result=True,
+        command=command_name,
+        arguments=data,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+@permission_required("api.can_change_message_on_connect_config", raise_exception=True)
+@record_audit
+def set_message_on_connect_config(request):
+    command_name = "set_message_on_connect_config"
+    cls = MessageOnConnectUserConfig
     data = _get_data(request)
 
     response = _audit_user_config_differences(

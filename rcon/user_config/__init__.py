@@ -10,6 +10,7 @@ from . import (
     expired_vips,
     gtx_server_name,
     log_line_webhooks,
+    message_on_connect,
     name_kicks,
     rcon_connection_settings,
     rcon_server_settings,
