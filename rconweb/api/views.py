@@ -8,7 +8,7 @@ from typing import Callable, List
 
 import pydantic
 from django.contrib.auth.decorators import permission_required
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse, HttpResponseNotAllowed, HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
@@ -406,15 +406,20 @@ def expose_api_endpoint(func, command_name, permissions: list[str] | set[str] | 
     @permission_required(permissions, raise_exception=True)
     @wraps(func)
     def wrapper(request):
-        logger = logging.getLogger("rconweb")
         parameters = inspect.signature(func).parameters
-        command_name = func.__name__
+        cmd = func.__name__
         arguments = {}
-        data = {}
         failure = False
         others = None
         error = ""
         data = _get_data(request)
+
+        if cmd.startswith('set') and request.method != 'POST':
+            return HttpResponseNotAllowed(['POST'])
+        elif cmd.startswith('do') and request.method != 'POST':
+            return HttpResponseNotAllowed(['POST'])
+        elif request.method != 'GET':
+            return HttpResponseNotAllowed(['GET'])
 
         for pname, param in parameters.items():
             if pname == "by":
@@ -425,8 +430,7 @@ def expose_api_endpoint(func, command_name, permissions: list[str] | set[str] | 
                 try:
                     arguments[pname] = data[pname]
                 except KeyError:
-                    # TODO raise 400
-                    raise
+                    return HttpResponseBadRequest()
 
         try:
             logger.debug("%s %s", func.__name__, arguments)
@@ -449,14 +453,13 @@ def expose_api_endpoint(func, command_name, permissions: list[str] | set[str] | 
         )
         if data.get("forward"):
             config = RconServerSettingsUserConfig.load_from_db()
-            if command_name == "do_temp_ban" and not config.broadcast_temp_bans:
+            if cmd == "do_temp_ban" and not config.broadcast_temp_bans:
                 logger.debug("Not broadcasting temp ban due to settings")
                 return response
             try:
-                others = forward_request(request)
+                forward_request(request)
             except:
                 logger.exception("Unexpected error while forwarding request")
-        # logger.debug("%s %s -> %s", func.__name__, arguments, res)
         return response
 
     return wrapper
