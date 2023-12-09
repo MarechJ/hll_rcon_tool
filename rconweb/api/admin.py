@@ -57,11 +57,6 @@ class DjangoAPIKeyAdmin(admin.ModelAdmin):
     list_filter = ("user",)
     search_fields = ("notes",)
 
-    def save_model(self, request, obj, form, change) -> None:
-        # If we don't include the salt, the hasher generates its own
-        obj.api_key = make_password(obj.api_key, salt=SECRET_KEY)
-        return super().save_model(request, obj, form, change)
-
     def get_form(self, request, obj=None, **kwargs):
         form = super().get_form(request, obj, **kwargs)
         return form
