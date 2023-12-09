@@ -585,7 +585,7 @@ function App() {
                     </Route>
                     <Route path="/settings/automod-solo-tank">
                       <Grid container spacing={2}>
-                        <SeedingAutoMod
+                        <NoSoloTankAutoMod
                           description="No Solo Tank Auto Mod"
                           getEndpoint="get_auto_mod_solo_tank_config"
                           setEndpoint="set_auto_mod_solo_tank_config"
