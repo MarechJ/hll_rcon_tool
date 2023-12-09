@@ -149,7 +149,7 @@ class PlayerSteamID(Base):
                 :limit_sessions
             ],
             "sessions_count": len(self.sessions),
-            "total_playtime_seconds": self.get_current_playtime_seconds(),
+            "total_playtime_seconds": self.get_total_playtime_seconds(),
             "current_playtime_seconds": self.get_current_playtime_seconds(),
             "received_actions": [action.to_dict() for action in self.received_actions],
             "penalty_count": self.get_penalty_count(),
