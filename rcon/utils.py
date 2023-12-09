@@ -12,6 +12,15 @@ from rcon.types import MapInfo
 
 logger = logging.getLogger("rcon")
 
+
+class DefaultStringFormat(dict):
+    """Base class for str.format usage to not crash with invalid keys"""
+
+    def __missing__(self, key):
+        logger.error("Invalid key=%s used in string format")
+        return key
+
+
 INDEFINITE_VIP_DATE = datetime(
     year=3000,
     month=1,
@@ -586,3 +595,11 @@ def dict_differences(old: dict[Any, Any], new: dict[Any, Any]) -> dict[Any, Any]
                 diff[k] = new[k]
 
     return diff
+
+
+def is_invalid_name_whitespace(name: str) -> bool:
+    return name.endswith(" ")
+
+
+def is_invalid_name_pineapple(name: str) -> bool:
+    return len(name) == 20 and name.endswith("?")

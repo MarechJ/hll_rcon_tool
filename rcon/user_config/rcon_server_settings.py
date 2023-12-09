@@ -1,9 +1,47 @@
 from typing import Optional, TypedDict
 
-from pydantic import Field, HttpUrl, field_serializer
+from pydantic import BaseModel, BeforeValidator, Field, HttpUrl, field_serializer
+from typing_extensions import Annotated
 
+from rcon.types import RconInvalidNameActionType
 from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
 from rcon.utils import get_server_number
+
+WHITESPACE_NAME_PLAYER_MESSAGE = """Your name ends in whitespace (or has whitespace in the 20th character)
+
+Because of a bug in the game admin tools this server uses will not work properly,
+you might suffer auto-moderation actions as a false-positive.
+
+Please change your name in Steam and restart your game to avoid this.
+
+Please ask T17 to prioritize fixing this bug."""
+
+PINEAPPLE_NAME_PLAYER_MESSAGE = """Your name has a special character around the 20th character (because it is truncated as it is too long)
+
+Because of a bug in the game, admin tools this server uses will not work properly.
+
+Please change your name in Steam and restart your game to avoid this.
+
+Please ask T17 to prioritize fixing this bug."""
+
+
+INVALID_NAME_AUDIT_MESSAGE = """Player with an invalid name (ends in whitespace or a partial character when truncated) joined: {name} ({steam_id_64}
+This will cause errors with various auto mods (no leader, etc) and the `playerinfo` RCON command will not work.
+The player will show as 'unassigned' in Gameview.
+Action taken = {action}"""
+PINEAPPLE_NAMES_AUDIT_UNBAN_MESSAGE = "Unbanning {name} ({steam_id_64}) that was temp banned since the `kick` command will not work with their name"
+
+
+class InvalidNameType(TypedDict):
+    enabled: bool
+    action: RconInvalidNameActionType
+    whitespace_name_player_message: str
+    pineapple_name_player_message: str
+    audit_message: str
+    # TODO: maybe they'll fix kicking pineapple names one day lol
+    audit_kick_unban_message: str
+    audit_message_author: str
+    ban_length_hours: int
 
 
 class RconServerSettingsType(TypedDict):
@@ -17,6 +55,25 @@ class RconServerSettingsType(TypedDict):
     lock_stats_api: bool
     live_stats_refresh_seconds: int
     live_stats_refresh_current_game_seconds: int
+    invalid_names: InvalidNameType
+
+
+def upper_case_action(v):
+    """Allow users to enter actions in any case"""
+    return RconInvalidNameActionType(v.upper())
+
+
+class InvalidName(BaseModel):
+    enabled: bool = Field(default=False)
+    action: Annotated[
+        RconInvalidNameActionType, BeforeValidator(upper_case_action)
+    ] = Field(default=RconInvalidNameActionType.none)
+    whitespace_name_player_message: str = Field(default=WHITESPACE_NAME_PLAYER_MESSAGE)
+    pineapple_name_player_message: str = Field(default=PINEAPPLE_NAME_PLAYER_MESSAGE)
+    audit_message: str = Field(default=INVALID_NAME_AUDIT_MESSAGE)
+    audit_kick_unban_message: str = Field(default=PINEAPPLE_NAMES_AUDIT_UNBAN_MESSAGE)
+    audit_message_author: str = Field(default="CRCON")
+    ban_length_hours: int = Field(default=1)
 
 
 class RconServerSettingsUserConfig(BaseUserConfig):
@@ -33,6 +90,8 @@ class RconServerSettingsUserConfig(BaseUserConfig):
     live_stats_refresh_seconds: int = Field(default=15)
     live_stats_refresh_current_game_seconds: int = Field(default=5)
 
+    invalid_names: InvalidName = Field(default_factory=InvalidName)
+
     @field_serializer("server_url")
     def serialize_server_url(self, server_url: HttpUrl, _info):
         if server_url is not None:
@@ -43,6 +102,22 @@ class RconServerSettingsUserConfig(BaseUserConfig):
     @staticmethod
     def save_to_db(values: RconServerSettingsType, dry_run=False):
         key_check(RconServerSettingsType.__required_keys__, values.keys())
+
+        raw_invalid_names = values.get("invalid_names")
+        validated_invalid_names = InvalidName(
+            enabled=raw_invalid_names.get("enabled"),
+            action=raw_invalid_names.get("action"),
+            whitespace_name_player_message=raw_invalid_names.get(
+                "whitespace_name_player_message"
+            ),
+            pineapple_name_player_message=raw_invalid_names.get(
+                "pineapple_name_player_message"
+            ),
+            audit_message=raw_invalid_names.get("audit_message"),
+            audit_kick_unban_message=raw_invalid_names.get("audit_kick_unban_message"),
+            audit_message_author=raw_invalid_names.get("audit_message_author"),
+            ban_length_hours=raw_invalid_names.get("ban_length_hours"),
+        )
 
         validated_conf = RconServerSettingsUserConfig(
             short_name=values.get("short_name"),
@@ -56,6 +131,7 @@ class RconServerSettingsUserConfig(BaseUserConfig):
             live_stats_refresh_current_game_seconds=values.get(
                 "live_stats_refresh_current_game_seconds"
             ),
+            invalid_names=validated_invalid_names,
         )
 
         if not dry_run:

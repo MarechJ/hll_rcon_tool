@@ -3,13 +3,21 @@ import enum
 from typing import List, Optional, TypedDict
 
 
+# Have to inherit from str to allow for JSON serialization w/ pydantic
+class RconInvalidNameActionType(str, enum.Enum):
+    none = None
+    warn = "WARN"
+    kick = "KICK"
+    ban = "BAN"
+
+
 class ServerInfoType(TypedDict):
     host: str | None
     port: str | None
     password: str | None
 
 
-# # Have to inherit from str to allow for JSON serialization w/ pydantic
+# Have to inherit from str to allow for JSON serialization w/ pydantic
 class Roles(str, enum.Enum):
     commander = "armycommander"
     squad_lead = "officer"

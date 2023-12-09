@@ -8,8 +8,8 @@ from typing import Any, Generator, List, Optional
 import pydantic
 from sqlalchemy import TIMESTAMP, ForeignKey, String, create_engine, text
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.exc import InvalidRequestError, ProgrammingError
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import (
     DeclarativeBase,
     Mapped,

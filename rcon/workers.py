@@ -19,6 +19,7 @@ from rcon.scoreboard import TimeWindowStats
 from rcon.settings import SERVER_INFO
 from rcon.types import MapInfo, PlayerStat
 from rcon.utils import INDEFINITE_VIP_DATE
+
 logger = logging.getLogger("rcon")
 
 
