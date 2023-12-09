@@ -9,6 +9,8 @@ from django.http import JsonResponse, QueryDict
 from django.views.decorators.csrf import csrf_exempt
 
 import discord
+from django.views.decorators.http import require_http_methods
+
 from rcon.discord import send_to_discord_audit
 from rcon.types import InvalidLogTypeError
 from rcon.user_config.auto_broadcast import AutoBroadcastUserConfig
@@ -53,6 +55,7 @@ from rcon.utils import dict_differences
 
 from .audit_log import record_audit
 from .auth import api_response, login_required
+from .decorators import require_content_type
 from .utils import _get_data
 
 logger = getLogger(__name__)
@@ -191,6 +194,7 @@ def _audit_user_config_differences(
 @csrf_exempt
 @login_required()
 @permission_required("api.can_view_auto_broadcast_config", raise_exception=True)
+@require_http_methods(['GET'])
 def get_auto_broadcasts_config(request):
     command_name = "get_auto_broadcasts_config"
 
@@ -209,6 +213,7 @@ def get_auto_broadcasts_config(request):
 
 @csrf_exempt
 @login_required()
+@require_http_methods(['GET'])
 def describe_auto_broadcasts_config(request):
     command_name = "describe_auto_broadcasts_config"
     return api_response(
@@ -221,6 +226,8 @@ def describe_auto_broadcasts_config(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_change_auto_broadcast_config", raise_exception=True)
+@require_http_methods(['POST'])
+@require_content_type()
 def validate_auto_broadcasts_config(request):
     command_name = "validate_auto_broadcasts_config"
     data = _get_data(request)
@@ -243,6 +250,8 @@ def validate_auto_broadcasts_config(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_change_auto_broadcast_config", raise_exception=True)
+@require_http_methods(['POST'])
+@require_content_type()
 @record_audit
 def set_auto_broadcasts_config(request):
     command_name = "set_auto_broadcasts_config"
@@ -266,6 +275,7 @@ def set_auto_broadcasts_config(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_view_votekick_autotoggle_config", raise_exception=True)
+@require_http_methods(['GET'])
 def get_votekick_autotoggle_config(request):
     command_name = "get_votekick_autotoggle_config"
 
@@ -284,6 +294,7 @@ def get_votekick_autotoggle_config(request):
 
 @csrf_exempt
 @login_required()
+@require_http_methods(['GET'])
 def describe_votekick_autotoggle_config(request):
     command_name = "describe_votekick_autotoggle_config"
 
@@ -297,6 +308,8 @@ def describe_votekick_autotoggle_config(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_change_votekick_autotoggle_config", raise_exception=True)
+@require_http_methods(['POST'])
+@require_content_type()
 def validate_votekick_autotoggle_config(request):
     command_name = "validate_votekick_autotoggle_config"
     data = _get_data(request)
@@ -320,6 +333,8 @@ def validate_votekick_autotoggle_config(request):
 @login_required()
 @permission_required("api.can_change_votekick_autotoggle_config", raise_exception=True)
 @record_audit
+@require_http_methods(['POST'])
+@require_content_type()
 def set_votekick_autotoggle_config(request):
     command_name = "set_votekick_autotoggle_config"
     cls = AutoVoteKickUserConfig
@@ -343,6 +358,7 @@ def set_votekick_autotoggle_config(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_view_auto_mod_level_config", raise_exception=True)
+@require_http_methods(['GET'])
 def get_auto_mod_level_config(request):
     command_name = "get_auto_mod_level_config"
 
@@ -361,6 +377,7 @@ def get_auto_mod_level_config(request):
 
 @csrf_exempt
 @login_required()
+@require_http_methods(['GET'])
 def describe_auto_mod_level_config(request):
     command_name = "describe_auto_mod_level_config"
 
@@ -374,6 +391,8 @@ def describe_auto_mod_level_config(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_change_auto_mod_level_config", raise_exception=True)
+@require_http_methods(['POST'])
+@require_content_type()
 def validate_auto_mod_level_config(request):
     command_name = "validate_auto_mod_level_config"
     data = _get_data(request)
@@ -400,6 +419,8 @@ def validate_auto_mod_level_config(request):
 @login_required()
 @permission_required("api.can_change_auto_mod_level_config", raise_exception=True)
 @record_audit
+@require_http_methods(['POST'])
+@require_content_type()
 def set_auto_mod_level_config(request):
     command_name = "set_auto_mod_level_config"
     cls = AutoModLevelUserConfig
@@ -423,6 +444,7 @@ def set_auto_mod_level_config(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_view_auto_mod_no_leader_config", raise_exception=True)
+@require_http_methods(['GET'])
 def get_auto_mod_no_leader_config(request):
     command_name = "get_auto_mod_no_leader_config"
 
@@ -441,6 +463,7 @@ def get_auto_mod_no_leader_config(request):
 
 @csrf_exempt
 @login_required()
+@require_http_methods(['GET'])
 def describe_auto_mod_no_leader_config(request):
     command_name = "describe_auto_mod_no_leader_config"
 
@@ -454,6 +477,8 @@ def describe_auto_mod_no_leader_config(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_change_auto_mod_no_leader_config", raise_exception=True)
+@require_http_methods(['POST'])
+@require_content_type()
 def validate_auto_mod_no_leader_config(request):
     command_name = "validate_auto_mod_no_leader_config"
     data = _get_data(request)
@@ -480,6 +505,8 @@ def validate_auto_mod_no_leader_config(request):
 @login_required()
 @permission_required("api.can_change_auto_mod_no_leader_config", raise_exception=True)
 @record_audit
+@require_http_methods(['POST'])
+@require_content_type()
 def set_auto_mod_no_leader_config(request):
     command_name = "set_auto_mod_no_leader_config"
     cls = AutoModNoLeaderUserConfig
@@ -503,6 +530,7 @@ def set_auto_mod_no_leader_config(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_view_auto_mod_seeding_config", raise_exception=True)
+@require_http_methods(['GET'])
 def get_auto_mod_seeding_config(request) -> JsonResponse:
     command_name = "get_auto_mod_seeding_config"
 
@@ -521,6 +549,7 @@ def get_auto_mod_seeding_config(request) -> JsonResponse:
 
 @csrf_exempt
 @login_required()
+@require_http_methods(['GET'])
 def describe_auto_mod_seeding_config(request):
     command_name = "describe_auto_mod_seeding_config"
 
@@ -534,6 +563,8 @@ def describe_auto_mod_seeding_config(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_change_auto_mod_seeding_config", raise_exception=True)
+@require_http_methods(['POST'])
+@require_content_type()
 def validate_auto_mod_seeding_config(request):
     command_name = "validate_auto_mod_seeding_config"
     data = _get_data(request)
@@ -560,6 +591,8 @@ def validate_auto_mod_seeding_config(request):
 @login_required()
 @permission_required("api.can_change_auto_mod_seeding_config", raise_exception=True)
 @record_audit
+@require_http_methods(['POST'])
+@require_content_type()
 def set_auto_mod_seeding_config(request):
     command_name = "set_auto_mod_seeding_config"
     cls = AutoModSeedingUserConfig
@@ -583,6 +616,7 @@ def set_auto_mod_seeding_config(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_view_auto_mod_solo_tank_config", raise_exception=True)
+@require_http_methods(['GET'])
 def get_auto_mod_solo_tank_config(request) -> JsonResponse:
     command_name = "get_auto_mod_solo_tank_config"
 
@@ -601,6 +635,7 @@ def get_auto_mod_solo_tank_config(request) -> JsonResponse:
 
 @csrf_exempt
 @login_required()
+@require_http_methods(['GET'])
 def describe_auto_mod_solo_tank_config(request):
     command_name = "describe_auto_mod_solo_tank_config"
 
@@ -614,6 +649,8 @@ def describe_auto_mod_solo_tank_config(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_change_auto_mod_solo_tank_config", raise_exception=True)
+@require_http_methods(['POST'])
+@require_content_type()
 def validate_auto_mod_solo_tank_config(request):
     command_name = "validate_auto_mod_solo_tank_config"
     data = _get_data(request)
@@ -640,6 +677,8 @@ def validate_auto_mod_solo_tank_config(request):
 @login_required()
 @permission_required("api.can_change_auto_mod_solo_tank_config", raise_exception=True)
 @record_audit
+@require_http_methods(['POST'])
+@require_content_type()
 def set_auto_mod_solo_tank_config(request):
     command_name = "set_auto_mod_solo_tank_config"
     cls = AutoModNoSoloTankUserConfig
@@ -663,6 +702,7 @@ def set_auto_mod_solo_tank_config(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_view_tk_ban_on_connect_config", raise_exception=True)
+@require_http_methods(['GET'])
 def get_tk_ban_on_connect_config(request):
     command_name = "get_tk_ban_on_connect_config"
 
@@ -681,6 +721,7 @@ def get_tk_ban_on_connect_config(request):
 
 @csrf_exempt
 @login_required()
+@require_http_methods(['GET'])
 def describe_tk_ban_on_connect_config(request):
     command_name = "describe_tk_ban_on_connect_config"
 
@@ -694,6 +735,8 @@ def describe_tk_ban_on_connect_config(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_change_tk_ban_on_connect_config", raise_exception=True)
+@require_http_methods(['POST'])
+@require_content_type()
 def validate_tk_ban_on_connect_config(request):
     command_name = "validate_tk_ban_on_connect_config"
     data = _get_data(request)
@@ -720,6 +763,8 @@ def validate_tk_ban_on_connect_config(request):
 @login_required()
 @permission_required("api.can_change_tk_ban_on_connect_config", raise_exception=True)
 @record_audit
+@require_http_methods(['POST'])
+@require_content_type()
 def set_tk_ban_on_connect_config(request):
     command_name = "set_tk_ban_on_connect_config"
     cls = BanTeamKillOnConnectUserConfig
@@ -743,6 +788,7 @@ def set_tk_ban_on_connect_config(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_view_camera_config", raise_exception=True)
+@require_http_methods(['GET'])
 def get_camera_notification_config(request):
     command_name = "get_camera_notification_config"
 
@@ -761,6 +807,7 @@ def get_camera_notification_config(request):
 
 @csrf_exempt
 @login_required()
+@require_http_methods(['GET'])
 def describe_camera_notification_config(request):
     command_name = "describe_camera_notification_config"
 
@@ -774,6 +821,8 @@ def describe_camera_notification_config(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_change_camera_config", raise_exception=True)
+@require_http_methods(['POST'])
+@require_content_type()
 def validate_camera_notification_config(request):
     command_name = "validate_camera_notification_config"
     data = _get_data(request)
@@ -797,6 +846,8 @@ def validate_camera_notification_config(request):
 @login_required()
 @permission_required("api.can_change_camera_config", raise_exception=True)
 @record_audit
+@require_http_methods(['POST'])
+@require_content_type()
 def set_camera_notification_config(request):
     command_name = "set_camera_notification_config"
     cls = CameraNotificationUserConfig
@@ -820,6 +871,7 @@ def set_camera_notification_config(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_view_expired_vip_config", raise_exception=True)
+@require_http_methods(['GET'])
 def get_expired_vip_config(request):
     command_name = "get_expired_vip_config"
 
@@ -838,6 +890,7 @@ def get_expired_vip_config(request):
 
 @csrf_exempt
 @login_required()
+@require_http_methods(['GET'])
 def describe_expired_vip_config(request):
     command_name = "describe_expired_vip_config"
 
@@ -851,6 +904,8 @@ def describe_expired_vip_config(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_change_expired_vip_config", raise_exception=True)
+@require_http_methods(['POST'])
+@require_content_type()
 def validate_expired_vip_config(request):
     command_name = "validate_expired_vip_config"
     data = _get_data(request)
@@ -877,6 +932,8 @@ def validate_expired_vip_config(request):
 @login_required()
 @permission_required("api.can_change_expired_vip_config", raise_exception=True)
 @record_audit
+@require_http_methods(['POST'])
+@require_content_type()
 def set_expired_vip_config(request):
     command_name = "set_expired_vip_config"
     cls = ExpiredVipsUserConfig
@@ -900,6 +957,7 @@ def set_expired_vip_config(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_view_server_name_change_config", raise_exception=True)
+@require_http_methods(['GET'])
 def get_server_name_change_config(request):
     command_name = "get_server_name_change_config"
 
@@ -918,6 +976,7 @@ def get_server_name_change_config(request):
 
 @csrf_exempt
 @login_required()
+@require_http_methods(['GET'])
 def describe_server_name_change_config(request):
     command_name = "describe_server_name_change_config"
 
@@ -931,6 +990,8 @@ def describe_server_name_change_config(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_change_server_name_change_config", raise_exception=True)
+@require_http_methods(['POST'])
+@require_content_type()
 def validate_server_name_change_config(request):
     command_name = "validate_server_name_change_config"
     data = _get_data(request)
@@ -957,6 +1018,8 @@ def validate_server_name_change_config(request):
 @login_required()
 @permission_required("api.can_change_server_name_change_config", raise_exception=True)
 @record_audit
+@require_http_methods(['POST'])
+@require_content_type()
 def set_server_name_change_config(request):
     command_name = "set_server_name_change_config"
     cls = GtxServerNameChangeUserConfig
@@ -982,6 +1045,7 @@ def set_server_name_change_config(request):
 @permission_required(
     "api.can_view_log_line_discord_webhook_config", raise_exception=True
 )
+@require_http_methods(['GET'])
 def get_log_line_webhook_config(request):
     command_name = "get_log_line_webhook_config"
 
@@ -1000,6 +1064,7 @@ def get_log_line_webhook_config(request):
 
 @csrf_exempt
 @login_required()
+@require_http_methods(['GET'])
 def describe_log_line_webhook_config(request):
     command_name = "describe_log_line_webhook_config"
 
@@ -1015,6 +1080,8 @@ def describe_log_line_webhook_config(request):
 @permission_required(
     "api.can_change_log_line_discord_webhook_config", raise_exception=True
 )
+@require_http_methods(['POST'])
+@require_content_type()
 def validate_log_line_webhook_config(request):
     command_name = "validate_log_line_webhook_config"
     data = _get_data(request)
@@ -1043,6 +1110,8 @@ def validate_log_line_webhook_config(request):
     "api.can_change_log_line_discord_webhook_config", raise_exception=True
 )
 @record_audit
+@require_http_methods(['POST'])
+@require_content_type()
 def set_log_line_webhook_config(request):
     command_name = "set_log_line_webhook_config"
     cls = LogLineWebhookUserConfig
@@ -1066,6 +1135,7 @@ def set_log_line_webhook_config(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_view_name_kick_config", raise_exception=True)
+@require_http_methods(['GET'])
 def get_name_kick_config(request):
     command_name = "get_name_kick_config"
 
@@ -1084,6 +1154,7 @@ def get_name_kick_config(request):
 
 @csrf_exempt
 @login_required()
+@require_http_methods(['GET'])
 def describe_name_kick_config(request):
     command_name = "describe_name_kick_config"
 
@@ -1097,6 +1168,8 @@ def describe_name_kick_config(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_change_name_kick_config", raise_exception=True)
+@require_http_methods(['POST'])
+@require_content_type()
 def validate_name_kick_config(request):
     command_name = "validate_name_kick_config"
     data = _get_data(request)
@@ -1120,6 +1193,8 @@ def validate_name_kick_config(request):
 @login_required()
 @permission_required("api.can_change_name_kick_config", raise_exception=True)
 @record_audit
+@require_http_methods(['POST'])
+@require_content_type()
 def set_name_kick_config(request):
     command_name = "set_name_kick_config"
     cls = NameKickUserConfig
@@ -1145,6 +1220,7 @@ def set_name_kick_config(request):
 @permission_required(
     "api.can_view_rcon_connection_settings_config", raise_exception=True
 )
+@require_http_methods(['GET'])
 def get_rcon_connection_settings_config(request):
     command_name = "get_rcon_connection_settings_config"
 
@@ -1163,6 +1239,7 @@ def get_rcon_connection_settings_config(request):
 
 @csrf_exempt
 @login_required()
+@require_http_methods(['GET'])
 def describe_rcon_connection_settings_config(request):
     command_name = "describe_rcon_connection_settings_config"
 
@@ -1178,6 +1255,8 @@ def describe_rcon_connection_settings_config(request):
 @permission_required(
     "api.can_change_rcon_connection_settings_config", raise_exception=True
 )
+@require_http_methods(['POST'])
+@require_content_type()
 def validate_rcon_connection_settings_config(request):
     command_name = "validate_rcon_connection_settings_config"
     data = _get_data(request)
@@ -1206,6 +1285,8 @@ def validate_rcon_connection_settings_config(request):
     "api.can_change_rcon_connection_settings_config", raise_exception=True
 )
 @record_audit
+@require_http_methods(['POST'])
+@require_content_type()
 def set_rcon_connection_settings_config(request):
     command_name = "set_rcon_connection_settings_config"
     cls = RconConnectionSettingsUserConfig
@@ -1229,6 +1310,7 @@ def set_rcon_connection_settings_config(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_view_rcon_server_settings_config", raise_exception=True)
+@require_http_methods(['GET'])
 def get_rcon_server_settings_config(request):
     command_name = "get_rcon_server_settings_config"
 
@@ -1247,6 +1329,7 @@ def get_rcon_server_settings_config(request):
 
 @csrf_exempt
 @login_required()
+@require_http_methods(['GET'])
 def describe_rcon_server_settings_config(request):
     command_name = "describe_rcon_server_settings_config"
 
@@ -1260,6 +1343,8 @@ def describe_rcon_server_settings_config(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_change_rcon_server_settings_config", raise_exception=True)
+@require_http_methods(['POST'])
+@require_content_type()
 def validate_rcon_server_settings_config(request):
     command_name = "validate_rcon_server_settings_config"
     data = _get_data(request)
@@ -1286,6 +1371,8 @@ def validate_rcon_server_settings_config(request):
 @login_required()
 @permission_required("api.can_change_rcon_server_settings_config", raise_exception=True)
 @record_audit
+@require_http_methods(['POST'])
+@require_content_type()
 def set_rcon_server_settings_config(request):
     command_name = "set_rcon_server_settings_config"
     cls = RconServerSettingsUserConfig
@@ -1309,6 +1396,7 @@ def set_rcon_server_settings_config(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_view_scorebot_config", raise_exception=True)
+@require_http_methods(['GET'])
 def get_scorebot_config(request):
     command_name = "get_scorebot_config"
 
@@ -1327,6 +1415,7 @@ def get_scorebot_config(request):
 
 @csrf_exempt
 @login_required()
+@require_http_methods(['GET'])
 def describe_scorebot_config(request):
     command_name = "describe_scorebot_config"
 
@@ -1346,6 +1435,8 @@ def describe_scorebot_config(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_change_scorebot_config", raise_exception=True)
+@require_http_methods(['POST'])
+@require_content_type()
 def validate_scorebot_config(request):
     command_name = "validate_scorebot_config"
     data = _get_data(request)
@@ -1372,6 +1463,8 @@ def validate_scorebot_config(request):
 @login_required()
 @permission_required("api.can_change_scorebot_config", raise_exception=True)
 @record_audit
+@require_http_methods(['POST'])
+@require_content_type()
 def set_scorebot_config(request):
     command_name = "set_scorebot_config"
     cls = ScorebotUserConfig
@@ -1395,6 +1488,7 @@ def set_scorebot_config(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_view_standard_broadcast_messages", raise_exception=True)
+@require_http_methods(['GET'])
 def get_standard_broadcast_messages(request):
     command_name = "get_standard_broadcast_messages"
 
@@ -1413,6 +1507,7 @@ def get_standard_broadcast_messages(request):
 
 @csrf_exempt
 @login_required()
+@require_http_methods(['GET'])
 def describe_standard_broadcast_messages(request):
     command_name = "describe_standard_broadcast_messages"
 
@@ -1426,6 +1521,8 @@ def describe_standard_broadcast_messages(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_change_standard_broadcast_messages", raise_exception=True)
+@require_http_methods(['POST'])
+@require_content_type()
 def validate_standard_broadcast_messages(request):
     command_name = "validate_standard_broadcast_messages"
     data = _get_data(request)
@@ -1451,6 +1548,8 @@ def validate_standard_broadcast_messages(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_change_standard_broadcast_messages", raise_exception=True)
+@require_http_methods(['POST'])
+@require_content_type()
 def set_standard_broadcast_messages(request):
     command_name = "set_standard_broadcast_messages"
     cls = StandardBroadcastMessagesUserConfig
@@ -1474,6 +1573,7 @@ def set_standard_broadcast_messages(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_view_standard_punishment_messages", raise_exception=True)
+@require_http_methods(['GET'])
 def get_standard_punishments_messages(request):
     command_name = "get_standard_punishments_messages"
 
@@ -1492,6 +1592,7 @@ def get_standard_punishments_messages(request):
 
 @csrf_exempt
 @login_required()
+@require_http_methods(['GET'])
 def describe_standard_punishments_messages(request):
     command_name = "describe_standard_punishments_messages"
 
@@ -1507,6 +1608,8 @@ def describe_standard_punishments_messages(request):
 @permission_required(
     "api.can_change_standard_punishment_messages", raise_exception=True
 )
+@require_http_methods(['POST'])
+@require_content_type()
 def validate_standard_punishments_messages(request):
     command_name = "validate_standard_punishments_messages"
     data = _get_data(request)
@@ -1534,6 +1637,8 @@ def validate_standard_punishments_messages(request):
 @permission_required(
     "api.can_change_standard_punishment_messages", raise_exception=True
 )
+@require_http_methods(['POST'])
+@require_content_type()
 def set_standard_punishments_messages(request):
     command_name = "set_standard_punishments_messages"
     cls = StandardPunishmentMessagesUserConfig
@@ -1557,6 +1662,7 @@ def set_standard_punishments_messages(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_view_standard_welcome_messages", raise_exception=True)
+@require_http_methods(['GET'])
 def get_standard_welcome_messages(request):
     command_name = "get_standard_welcome_messages"
 
@@ -1575,6 +1681,7 @@ def get_standard_welcome_messages(request):
 
 @csrf_exempt
 @login_required()
+@require_http_methods(['GET'])
 def describe_standard_welcome_messages(request):
     command_name = "describe_standard_welcome_messages"
 
@@ -1588,6 +1695,8 @@ def describe_standard_welcome_messages(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_change_standard_welcome_messages", raise_exception=True)
+@require_http_methods(['POST'])
+@require_content_type()
 def validate_standard_welcome_messages(request):
     command_name = "validate_standard_welcome_messages"
     data = _get_data(request)
@@ -1613,6 +1722,8 @@ def validate_standard_welcome_messages(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_change_standard_welcome_messages", raise_exception=True)
+@require_http_methods(['POST'])
+@require_content_type()
 def set_standard_welcome_messages(request):
     command_name = "set_standard_welcome_messages"
     cls = StandardWelcomeMessagesUserConfig
@@ -1642,6 +1753,7 @@ def set_standard_welcome_messages(request):
         "api.can_view_standard_welcome_messages",
     }
 )
+@require_http_methods(['GET'])
 def get_all_standard_message_config(request):
     command_name = "get_all_standard_message_config"
 
@@ -1661,6 +1773,7 @@ def get_all_standard_message_config(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_view_steam_config", raise_exception=True)
+@require_http_methods(['GET'])
 def get_steam_config(request):
     command_name = "get_steam_config"
 
@@ -1679,6 +1792,7 @@ def get_steam_config(request):
 
 @csrf_exempt
 @login_required()
+@require_http_methods(['GET'])
 def describe_steam_config(request):
     command_name = "describe_steam_config"
 
@@ -1692,6 +1806,8 @@ def describe_steam_config(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_change_steam_config", raise_exception=True)
+@require_http_methods(['POST'])
+@require_content_type()
 def validate_steam_config(request):
     command_name = "validate_steam_config"
     data = _get_data(request)
@@ -1715,6 +1831,8 @@ def validate_steam_config(request):
 @login_required()
 @permission_required("api.can_change_steam_config", raise_exception=True)
 @record_audit
+@require_http_methods(['POST'])
+@require_content_type()
 def set_steam_config(request):
     command_name = "set_steam_config"
     cls = SteamUserConfig
@@ -1738,6 +1856,7 @@ def set_steam_config(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_view_vac_game_bans_config", raise_exception=True)
+@require_http_methods(['GET'])
 def get_vac_game_bans_config(request):
     command_name = "get_vac_game_bans_config"
 
@@ -1756,6 +1875,7 @@ def get_vac_game_bans_config(request):
 
 @csrf_exempt
 @login_required()
+@require_http_methods(['GET'])
 def describe_vac_game_bans_config(request):
     command_name = "describe_vac_game_bans_config"
 
@@ -1769,6 +1889,8 @@ def describe_vac_game_bans_config(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_change_vac_game_bans_config", raise_exception=True)
+@require_http_methods(['POST'])
+@require_content_type()
 def validate_vac_game_bans_config(request):
     command_name = "validate_vac_game_bans_config"
     data = _get_data(request)
@@ -1792,6 +1914,8 @@ def validate_vac_game_bans_config(request):
 @login_required()
 @permission_required("api.can_change_vac_game_bans_config", raise_exception=True)
 @record_audit
+@require_http_methods(['POST'])
+@require_content_type()
 def set_vac_game_bans_config(request):
     command_name = "set_vac_game_bans_config"
     cls = VacGameBansUserConfig
@@ -1817,6 +1941,7 @@ def set_vac_game_bans_config(request):
 @permission_required(
     "api.can_view_admin_pings_discord_webhooks_config", raise_exception=True
 )
+@require_http_methods(['GET'])
 def get_admin_pings_discord_webhooks_config(request):
     command_name = "get_admin_pings_discord_webhooks_config"
 
@@ -1835,6 +1960,7 @@ def get_admin_pings_discord_webhooks_config(request):
 
 @csrf_exempt
 @login_required()
+@require_http_methods(['GET'])
 def describe_admin_pings_discord_webhooks_config(request):
     command_name = "describe_admin_pings_discord_webhooks_config"
 
@@ -1850,6 +1976,8 @@ def describe_admin_pings_discord_webhooks_config(request):
 @permission_required(
     "api.can_change_admin_pings_discord_webhooks_config", raise_exception=True
 )
+@require_http_methods(['POST'])
+@require_content_type()
 def validate_admin_pings_discord_webhooks_config(request):
     command_name = "validate_admin_pings_webhooks_config"
     data = _get_data(request)
@@ -1878,6 +2006,8 @@ def validate_admin_pings_discord_webhooks_config(request):
     "api.can_change_admin_pings_discord_webhooks_config", raise_exception=True
 )
 @record_audit
+@require_http_methods(['POST'])
+@require_content_type()
 def set_admin_pings_discord_webhooks_config(request):
     command_name = "set_admin_pings_webhooks_config"
     cls = AdminPingWebhooksUserConfig
@@ -1901,6 +2031,7 @@ def set_admin_pings_discord_webhooks_config(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_view_audit_discord_webhooks_config", raise_exception=True)
+@require_http_methods(['GET'])
 def get_audit_discord_webhooks_config(request):
     command_name = "get_audit_webhooks_config"
 
@@ -1919,6 +2050,7 @@ def get_audit_discord_webhooks_config(request):
 
 @csrf_exempt
 @login_required()
+@require_http_methods(['GET'])
 def describe_audit_discord_webhooks_config(request):
     command_name = "describe_audit_discord_webhooks_config"
 
@@ -1934,6 +2066,8 @@ def describe_audit_discord_webhooks_config(request):
 @permission_required(
     "api.can_change_audit_discord_webhooks_config", raise_exception=True
 )
+@require_http_methods(['POST'])
+@require_content_type()
 def validate_audit_discord_webhooks_config(request):
     command_name = "validate_audit_webhooks_config"
     data = _get_data(request)
@@ -1961,6 +2095,8 @@ def validate_audit_discord_webhooks_config(request):
 @permission_required(
     "api.can_change_audit_discord_webhooks_config", raise_exception=True
 )
+@require_http_methods(['POST'])
+@require_content_type()
 @record_audit
 def set_audit_discord_webhooks_config(request):
     command_name = "set_audit_webhooks_config"
@@ -1987,6 +2123,7 @@ def set_audit_discord_webhooks_config(request):
 @permission_required(
     "api.can_view_camera_discord_webhooks_config", raise_exception=True
 )
+@require_http_methods(['GET'])
 def get_camera_discord_webhooks_config(request):
     command_name = "get_camera_discord_webhooks"
 
@@ -2005,6 +2142,7 @@ def get_camera_discord_webhooks_config(request):
 
 @csrf_exempt
 @login_required()
+@require_http_methods(['GET'])
 def describe_camera_discord_webhooks_config(request):
     command_name = "describe_camera_discord_webhooks_config"
 
@@ -2020,6 +2158,8 @@ def describe_camera_discord_webhooks_config(request):
 @permission_required(
     "api.can_change_camera_discord_webhooks_config", raise_exception=True
 )
+@require_http_methods(['POST'])
+@require_content_type()
 def validate_camera_discord_webhooks_config(request):
     command_name = "validate_camera_discord_webhooks"
     data = _get_data(request)
@@ -2044,6 +2184,8 @@ def validate_camera_discord_webhooks_config(request):
 @permission_required(
     "api.can_change_camera_discord_webhooks_config", raise_exception=True
 )
+@require_http_methods(['POST'])
+@require_content_type()
 def set_camera_discord_webhooks_config(request):
     command_name = "set_camera_discord_webhooks"
     cls = CameraWebhooksUserConfig
@@ -2067,6 +2209,7 @@ def set_camera_discord_webhooks_config(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_view_chat_discord_webhooks_config", raise_exception=True)
+@require_http_methods(['GET'])
 def get_chat_discord_webhooks_config(request):
     command_name = "get_chat_webhooks_config"
 
@@ -2085,6 +2228,7 @@ def get_chat_discord_webhooks_config(request):
 
 @csrf_exempt
 @login_required()
+@require_http_methods(['GET'])
 def describe_chat_discord_webhooks_config(request):
     command_name = "describe_chat_discord_webhooks_config"
 
@@ -2100,6 +2244,8 @@ def describe_chat_discord_webhooks_config(request):
 @permission_required(
     "api.can_change_chat_discord_webhooks_config", raise_exception=True
 )
+@require_http_methods(['POST'])
+@require_content_type()
 def validate_chat_discord_webhooks_config(request):
     command_name = "validate_chat_webhooks_config"
     data = _get_data(request)
@@ -2128,6 +2274,8 @@ def validate_chat_discord_webhooks_config(request):
     "api.can_change_chat_discord_webhooks_config", raise_exception=True
 )
 @record_audit
+@require_http_methods(['POST'])
+@require_content_type()
 def set_chat_discord_webhooks_config(request):
     command_name = "set_chat_webhooks_config"
     cls = ChatWebhooksUserConfig
@@ -2151,6 +2299,7 @@ def set_chat_discord_webhooks_config(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_view_kills_discord_webhooks_config", raise_exception=True)
+@require_http_methods(['GET'])
 def get_kills_discord_webhooks_config(request):
     command_name = "get_kills_webhooks_config"
 
@@ -2169,6 +2318,7 @@ def get_kills_discord_webhooks_config(request):
 
 @csrf_exempt
 @login_required()
+@require_http_methods(['GET'])
 def describe_kills_discord_webhooks_config(request):
     command_name = "describe_kills_discord_webhooks_config"
 
@@ -2184,6 +2334,8 @@ def describe_kills_discord_webhooks_config(request):
 @permission_required(
     "api.can_change_kills_discord_webhooks_config", raise_exception=True
 )
+@require_http_methods(['POST'])
+@require_content_type()
 def validate_kills_discord_webhooks_config(request):
     command_name = "get_kills_webhooks_config"
     data = _get_data(request)
@@ -2212,6 +2364,8 @@ def validate_kills_discord_webhooks_config(request):
     "api.can_change_kills_discord_webhooks_config", raise_exception=True
 )
 @record_audit
+@require_http_methods(['POST'])
+@require_content_type()
 def set_kills_discord_webhooks_config(request):
     command_name = "set_kills_webhooks_config"
     cls = KillsWebhooksUserConfig
@@ -2237,6 +2391,7 @@ def set_kills_discord_webhooks_config(request):
 @permission_required(
     "api.can_view_watchlist_discord_webhooks_config", raise_exception=True
 )
+@require_http_methods(['GET'])
 def get_watchlist_discord_webhooks_config(request):
     command_name = "get_watchlist_discord_webhooks"
 
@@ -2255,6 +2410,7 @@ def get_watchlist_discord_webhooks_config(request):
 
 @csrf_exempt
 @login_required()
+@require_http_methods(['GET'])
 def describe_watchlist_discord_webhooks_config(request):
     command_name = "describe_watchlist_discord_webhooks"
 
@@ -2270,6 +2426,8 @@ def describe_watchlist_discord_webhooks_config(request):
 @permission_required(
     "api.can_change_watchlist_discord_webhooks_config", raise_exception=True
 )
+@require_http_methods(['POST'])
+@require_content_type()
 def validate_watchlist_discord_webhooks_config(request):
     command_name = "validate_watchlist_discord_webhooks"
     data = _get_data(request)
@@ -2294,6 +2452,8 @@ def validate_watchlist_discord_webhooks_config(request):
 @permission_required(
     "api.can_change_watchlist_discord_webhooks_config", raise_exception=True
 )
+@require_http_methods(['POST'])
+@require_content_type()
 def set_watchlist_discord_webhooks_config(request):
     command_name = "set_watchlist_discord_webhooks"
     cls = WatchlistWebhooksUserConfig
@@ -2327,6 +2487,7 @@ def set_watchlist_discord_webhooks_config(request):
     },
     raise_exception=True,
 )
+@require_http_methods(['GET'])
 def get_all_discord_webhooks_config(request):
     command_name = "get_all_discord_webhooks"
 
