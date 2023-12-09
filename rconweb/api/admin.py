@@ -18,23 +18,6 @@ class SteamPlayerInline(admin.StackedInline):
     verbose_name_plural = "steamid"
 
 
-class DjangoAPIKeyInline(admin.StackedInline):
-    model = DjangoAPIKey
-    can_delete = True
-    verbose_name_plural = "API Keys"
-
-    show_change_link = True
-
-    extra = 0
-    readonly_fields = ["date_created", "date_modified"]
-
-
-# Define a new User admin
-class UserAdmin(BaseUserAdmin):
-    inlines = (SteamPlayerInline, DjangoAPIKeyInline)
-    # inlines = [SteamPlayerInline]
-
-
 class DjangoAPIKeyAdminForm(forms.ModelForm):
     class Meta:
         model = DjangoAPIKey
@@ -50,6 +33,25 @@ class DjangoAPIKeyAdminForm(forms.ModelForm):
             raise forms.ValidationError("Duplicate API keys are not allowed")
 
         return self.cleaned_data["api_key"]
+
+
+class DjangoAPIKeyInline(admin.StackedInline):
+    model = DjangoAPIKey
+    form = DjangoAPIKeyAdminForm
+
+    can_delete = True
+    verbose_name_plural = "API Keys"
+
+    show_change_link = True
+
+    extra = 0
+    readonly_fields = ["date_created", "date_modified"]
+
+
+# Define a new User admin
+class UserAdmin(BaseUserAdmin):
+    inlines = (SteamPlayerInline, DjangoAPIKeyInline)
+    # inlines = [SteamPlayerInline]
 
 
 class DjangoAPIKeyAdmin(admin.ModelAdmin):
