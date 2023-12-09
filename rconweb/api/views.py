@@ -414,10 +414,11 @@ def expose_api_endpoint(func, command_name, permissions: list[str] | set[str] | 
         error = ""
         data = _get_data(request)
 
-        if cmd.startswith('set') and request.method != 'POST':
-            return HttpResponseNotAllowed(['POST'])
-        elif cmd.startswith('do') and request.method != 'POST':
-            return HttpResponseNotAllowed(['POST'])
+        if cmd.startswith('set_') or cmd.startswith('do_'):
+            if request.method != 'POST':
+                return HttpResponseNotAllowed(['POST'])
+            if request.content_type != 'application/json':
+                return HttpResponseBadRequest('Content Type not supported')
         elif request.method != 'GET':
             return HttpResponseNotAllowed(['GET'])
 
