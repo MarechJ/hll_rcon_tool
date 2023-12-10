@@ -10,6 +10,7 @@ from sqlalchemy import and_, or_
 from rcon.models import AuditLog, enter_session
 
 from .auth import api_response, login_required
+from .decorators import require_content_type
 from .utils import _get_data
 
 logger = logging.getLogger("rconweb")
@@ -90,7 +91,8 @@ def get_audit_logs_autocomplete(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_view_audit_logs", raise_exception=True)
-@require_http_methods(['GET'])
+@require_http_methods(['POST'])
+@require_content_type()
 def get_audit_logs(request):
     data = _get_data(request)
     and_conditions = []

@@ -175,7 +175,8 @@ def unflag_player(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_view_player_history", raise_exception=True)
-@require_http_methods(['GET'])
+@require_http_methods(['POST'])
+@require_content_type()
 def players_history(request):
     try:
         data = json.loads(request.body)
