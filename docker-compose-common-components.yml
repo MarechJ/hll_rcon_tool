@@ -1,48 +1,40 @@
-version: '2.4'
+version: "2.4"
 
 services:
-    python:
-        image: ${BACKEND_DOCKER_REPOSITORY}:${TAGGED_VERSION}
-        environment:
-            HLL_HOST: ${HLL_HOST}
-            HLL_PORT: ${HLL_PORT}
-            HLL_PASSWORD: ${HLL_PASSWORD}
-            LOGGING_LEVEL: 'INFO'
-            LOGGING_PATH: /logs/
-            HLL_REDIS_HOST: ${HLL_REDIS_HOST} 
-            HLL_REDIS_PORT: ${HLL_REDIS_HOST_PORT}
-            HLL_REDIS_DB: 0
-            HLL_REDIS_URL: redis://${HLL_REDIS_HOST}:${HLL_REDIS_HOST_PORT}/0
-            HLL_DB_USER: ${HLL_DB_USER}
-            HLL_DB_PASSWORD: ${HLL_DB_PASSWORD}
-            HLL_DB_NAME: ${HLL_DB_NAME}
-            HLL_DB_HOST: ${HLL_DB_HOST}
-            HLL_DB_HOST_PORT: ${HLL_DB_HOST_PORT}
-            HLL_DB_URL: postgresql://${HLL_DB_USER}:${HLL_DB_PASSWORD}@${HLL_DB_HOST}:${HLL_DB_HOST_PORT}/${HLL_DB_NAME}
-            DISCORD_WEBHOOK_AUDIT_LOG: ${DISCORD_WEBHOOK_AUDIT_LOG}
-            RCONWEB_API_SECRET: ${RCONWEB_API_SECRET}
-            SERVER_SHORT_NAME: ${SERVER_SHORT_NAME}
-            DISCORD_CHAT_WEBHOOK: ${DISCORD_CHAT_WEBHOOK}
-            DISCORD_CHAT_WEBHOOK_ALLOW_MENTIONS: ${DISCORD_CHAT_WEBHOOK_ALLOW_MENTIONS}
-            RCONWEB_PORT: ${RCONWEB_PORT}
-            DISCORD_PING_TRIGGER_WORDS: ${DISCORD_PING_TRIGGER_WORDS}
-            DISCORD_PING_TRIGGER_ROLES: ${DISCORD_PING_TRIGGER_ROLES}
-            DISCORD_PING_TRIGGER_WEBHOOK: ${DISCORD_PING_TRIGGER_WEBHOOK}
-            DISCORD_KILLS_WEBHOOK: ${DISCORD_KILLS_WEBHOOK}
-            DISCORD_SEND_KILL_UPDATES: ${DISCORD_SEND_KILL_UPDATES}
-            DISCORD_SEND_TEAM_KILL_UPDATES: ${DISCORD_SEND_TEAM_KILL_UPDATES}
-            SUPERVISOR_RPC_URL: http://supervisor:9001/RPC2
-            SERVER_NUMBER: 1
-            NB_API_WORKERS: ${NB_API_WORKERS}
-            NB_API_THREADS: ${NB_API_THREADS}
-            CONFIG_DIR: /config/
-            RCONWEB_EXTERNAL_ADDRESS: ${RCONWEB_EXTERNAL_ADDRESS}
-            RCONWEB_SERVER_URL: ${RCONWEB_SERVER_URL}
-            PUBLIC_STATS_PORT: ${PUBLIC_STATS_PORT}
-            PUBLIC_STATS_PORT_HTTPS: ${PUBLIC_STATS_PORT_HTTPS}
-        restart: always
-        volumes: 
-            - ./logs:/logs/
-            - ./servicediscovery:/servicediscovery
-            - ./static:/static/
-            - ./config:/config/
+  python:
+    image: ${BACKEND_DOCKER_REPOSITORY}:${TAGGED_VERSION}
+    environment:
+      HLL_HOST: ${HLL_HOST}
+      HLL_PORT: ${HLL_PORT}
+      HLL_PASSWORD: ${HLL_PASSWORD}
+      LOGGING_LEVEL: "INFO"
+      LOGGING_PATH: /logs/
+      HLL_REDIS_HOST: ${HLL_REDIS_HOST}
+      HLL_REDIS_PORT: ${HLL_REDIS_HOST_PORT}
+      HLL_REDIS_DB: 0
+      HLL_REDIS_URL: redis://${HLL_REDIS_HOST}:${HLL_REDIS_HOST_PORT}/0
+      HLL_DB_USER: ${HLL_DB_USER}
+      HLL_DB_PASSWORD: ${HLL_DB_PASSWORD}
+      HLL_DB_NAME: ${HLL_DB_NAME}
+      HLL_DB_HOST: ${HLL_DB_HOST}
+      HLL_DB_HOST_PORT: ${HLL_DB_HOST_PORT}
+      HLL_DB_URL: postgresql://${HLL_DB_USER}:${HLL_DB_PASSWORD}@${HLL_DB_HOST}:${HLL_DB_HOST_PORT}/${HLL_DB_NAME}
+      RCONWEB_API_SECRET: ${RCONWEB_API_SECRET}
+      RCONWEB_PORT: ${RCONWEB_PORT}
+      SUPERVISOR_RPC_URL: http://supervisor:9001/RPC2
+      SERVER_NUMBER: 1
+      NB_API_WORKERS: ${NB_API_WORKERS}
+      NB_API_THREADS: ${NB_API_THREADS}
+      CONFIG_DIR: /config/
+      RCONWEB_EXTERNAL_ADDRESS: ${RCONWEB_EXTERNAL_ADDRESS}
+      PUBLIC_STATS_PORT: ${PUBLIC_STATS_PORT}
+      PUBLIC_STATS_PORT_HTTPS: ${PUBLIC_STATS_PORT_HTTPS}
+      GTX_SERVER_NAME_CHANGE_USERNAME: ${GTX_SERVER_NAME_CHANGE_USERNAME}
+      GTX_SERVER_NAME_CHANGE_PASSWORD: ${GTX_SERVER_NAME_CHANGE_PASSWORD}
+      SENTRY_DSN: ${SENTRY_DSN}
+    restart: always
+    volumes:
+      - ./logs:/logs/
+      - ./servicediscovery:/servicediscovery
+      - ./static:/static/
+      - ./config:/config/

@@ -36,7 +36,7 @@ class Blacklist extends React.Component {
   }
 
   componentDidMount() {
-    getSharedMessages("punitions").then((data) =>
+    getSharedMessages("punishments").then((data) =>
       this.setState({ sharedMessages: data })
     );
   }
@@ -44,7 +44,7 @@ class Blacklist extends React.Component {
   render() {
     const { steam_id, name, reason, sharedMessages } = this.state;
     const { classes } = this.props;
-    const textHistory = new TextHistory("punitions");
+    const textHistory = new TextHistory("punishments");
 
     return (
       <ManualPlayerInput

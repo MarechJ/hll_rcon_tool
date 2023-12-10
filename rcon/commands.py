@@ -4,15 +4,18 @@ import threading
 import time
 from contextlib import contextmanager, nullcontext
 from functools import wraps
-from typing import List, Generator
+from typing import Generator, List
 
-from rcon.config import get_config
 from rcon.connection import HLLConnection
-from rcon.models import AdvancedConfigOptions
-from rcon.types import VipId
+from rcon.types import ServerInfoType, VipId
 from rcon.utils import exception_in_chain
 
 logger = logging.getLogger(__name__)
+
+
+def convert_tabs_to_spaces(value: str) -> str:
+    """Convert tabs to a space to not break HLL tab delimited lists"""
+    return value.replace("\t", " ")
 
 
 def escape_string(s):
@@ -97,34 +100,11 @@ class ServerCtl:
     set password not implemented on purpose
     """
 
-    def __init__(self, config, auto_retry=1, max_open=None, max_idle=None):
-        rcon_config = get_config()
-        advanced_settings = None
-        try:
-            advanced_settings = AdvancedConfigOptions(
-                **rcon_config["ADVANCED_CRCON_SETTINGS"]
-            )
-        except ValueError as e:
-            # This might look dumb but pydantic provides useful error messages in the
-            # stack trace and we don't have to remember to keep updating this if we add
-            # any more fields to the ADVANCED_CRCON_SETTINGS config
-            logger.exception(e)
-
-        if max_open is not None:
-            self.maxOpen = max_open
-        elif advanced_settings is not None:
-            self.maxOpen = advanced_settings.thread_pool_size
-        else:
-            self.maxOpen = 20
-
-        if max_idle is not None:
-            self.maxIdle = max_idle
-        elif advanced_settings is not None:
-            self.maxIdle = advanced_settings.thread_pool_size
-        else:
-            self.maxIdle = 20
-
-        # .env fed config from rcon.SERVER_INFO
+    def __init__(
+        self, config: ServerInfoType, auto_retry=1, max_open=20, max_idle=20
+    ) -> None:
+        self.maxOpen: int = max_open
+        self.maxIdle: int = max_idle
         self.config = config
         self.auto_retry = auto_retry
         self.mu = threading.Lock()
@@ -396,6 +376,7 @@ class ServerCtl:
         return self._get_list("get profanity", can_fail=False)
 
     def do_ban_profanities(self, profanities_csv) -> str:
+        profanities_csv = convert_tabs_to_spaces(profanities_csv)
         return self._str_request(f"BanProfanity {profanities_csv}")
 
     def do_unban_profanities(self, profanities_csv) -> str:
@@ -637,6 +618,7 @@ class ServerCtl:
         reason="",
         admin_name="",
     ) -> str:
+        reason = convert_tabs_to_spaces(reason)
         return self._str_request(
             f'tempban "{steam_id_64 or player_name}" {duration_hours} "{reason}" "{admin_name}"',
             log_info=True,
@@ -646,6 +628,7 @@ class ServerCtl:
     def do_perma_ban(
         self, player_name=None, steam_id_64=None, reason="", admin_name=""
     ) -> str:
+        reason = convert_tabs_to_spaces(reason)
         return self._str_request(
             f'permaban "{steam_id_64 or player_name}" "{reason}" "{admin_name}"',
             log_info=True,
@@ -659,6 +642,7 @@ class ServerCtl:
 
     @_escape_params
     def do_add_admin(self, steam_id_64, role, name) -> str:
+        name = convert_tabs_to_spaces(name)
         return self._str_request(
             f'adminadd "{steam_id_64}" "{role}" "{name}"', log_info=True
         )
@@ -668,6 +652,7 @@ class ServerCtl:
 
     @_escape_params
     def do_add_vip(self, steam_id_64, name) -> str:
+        name = convert_tabs_to_spaces(name)
         return self._str_request(f'vipadd {steam_id_64} "{name}"', log_info=True)
 
     def do_remove_vip(self, steam_id_64) -> str:

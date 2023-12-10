@@ -1,7 +1,7 @@
-FROM arm32v7/python:3.11-bullseye
+FROM arm32v7/python:3.11-slim
 
 WORKDIR /code
-RUN apt-get update -y && apt-get install -y cron logrotate
+RUN apt-get update -y && apt-get install -y cron logrotate git procps
 RUN curl https://sh.rustup.rs -sSf | nohup sh -s -- -y --profile minimal
 ENV PATH="/root/.cargo/bin:${PATH}"
 COPY requirements.txt .
@@ -14,5 +14,6 @@ COPY . .
 ENV PYTHONPATH /code/
 RUN chmod +x entrypoint.sh
 RUN chmod +x manage.py
+ENV LOGGING_FILENAME=startup.log
 
 ENTRYPOINT [ "/code/entrypoint.sh" ]

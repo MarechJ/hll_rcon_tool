@@ -5,40 +5,53 @@ import traceback
 from functools import wraps
 from subprocess import PIPE, run
 from typing import Callable, List
-from rcon.utils import get_server_number
 
 from django.contrib.auth.decorators import permission_required
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse, HttpResponseNotAllowed, HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
 
 from rcon.broadcast import get_votes_status
 from rcon.cache_utils import RedisCached, get_redis_pool
 from rcon.commands import CommandFailedError
-from rcon.config import get_config
 from rcon.discord import send_to_discord_audit
 from rcon.gtx import GTXFtp
 from rcon.player_history import add_player_to_blacklist, remove_player_from_blacklist
 from rcon.rcon import Rcon
 from rcon.settings import SERVER_INFO
-from rcon.user_config import (
-    AutoBroadcasts,
-    AutoVoteKickConfig,
-    CameraConfig,
-    DiscordHookConfig,
-    InvalidConfigurationError,
-    StandardMessages,
-)
-from rcon.utils import LONG_HUMAN_MAP_NAMES, MapsHistory, map_name
+from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
+from rcon.utils import LONG_HUMAN_MAP_NAMES, MapsHistory, get_server_number, map_name
 from rcon.watchlist import PlayerWatch
 from rcon.workers import temporary_broadcast, temporary_welcome
 
 from .audit_log import auto_record_audit, record_audit
 from .auth import api_response, login_required
+from .decorators import require_content_type
 from .multi_servers import forward_command, forward_request
 from .utils import _get_data
 
 logger = logging.getLogger("rconweb")
 ctl = Rcon(SERVER_INFO)
+
+
+@csrf_exempt
+@login_required()
+@permission_required("api.can_restart_webserver", raise_exception=True)
+@record_audit
+@require_http_methods(['POST'])
+def restart_gunicorn(request):
+    """Restart gunicorn workers which reconnects Rcon endpoint instances"""
+    exit_code = os.system(f"cat /code/rconweb/gunicorn.pid | xargs kill -HUP")
+    error_msg = None
+    if exit_code == 0:
+        result = "Web server restarted successfully"
+        failed = False
+    else:
+        result = "Web server failed to restart"
+        failed = True
+        error_msg = exit_code
+
+    return api_response(result=result, failed=failed, error=error_msg)
 
 
 def set_temp_msg(request, func, name):
@@ -54,15 +67,20 @@ def set_temp_msg(request, func, name):
     return api_response(failed=failed, error=error, result=None, command=name)
 
 
-# TODO: this is not an exposed endpoint
 @csrf_exempt
 @login_required()
+@permission_required("api.can_change_server_name", raise_exception=True)
 @record_audit
+@require_http_methods(['POST'])
+@require_content_type()
 def set_name(request):
     data = _get_data(request)
     failed = False
     error = None
     try:
+        # TODO: server name won't change until map change
+        # but the cache also needs to be cleared, but can't
+        # immediately clear or it will just refresh
         gtx = GTXFtp.from_config()
         gtx.change_server_name(data["name"])
     except Exception as e:
@@ -90,12 +108,14 @@ def set_temp_welcome(request):
 
 
 @csrf_exempt
+@require_http_methods(['GET'])
 def get_version(request):
     res = run(["git", "describe", "--tags"], stdout=PIPE, stderr=PIPE)
     return api_response(res.stdout.decode(), failed=False, command="get_version")
 
 
 @csrf_exempt
+@require_http_methods(['GET'])
 def public_info(request):
     gamestate = ctl.get_gamestate()
     curr_players, max_players = tuple(map(int, ctl.get_slots().split("/")))
@@ -113,6 +133,7 @@ def public_info(request):
             start=start,
         )
 
+    config = RconServerSettingsUserConfig.load_from_db()
     return api_response(
         result=dict(
             current_map=explode_map_info(gamestate["current_map"], current_map_start),
@@ -124,144 +145,16 @@ def public_info(request):
                 axis=gamestate["num_axis_players"],
             ),
             score=dict(allied=gamestate["allied_score"], axis=gamestate["axis_score"]),
+            # TODO: fix key
             raw_time_remaining=gamestate["raw_time_remaining"],
             vote_status=get_votes_status(none_on_fail=True),
             name=ctl.get_name(),
-            short_name=os.getenv("SERVER_SHORT_NAME", "HLL RCON"),
+            short_name=config.short_name,
             public_stats_port=os.getenv("PUBLIC_STATS_PORT", "Not defined"),
             public_stats_port_https=os.getenv("PUBLIC_STATS_PORT_HTTPS", "Not defined"),
         ),
         failed=False,
         command="public_info",
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_view_discord_webhooks", raise_exception=True)
-def get_hooks(request):
-    return api_response(
-        result=DiscordHookConfig.get_all_hook_types(as_dict=True),
-        command="get_hooks",
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_change_discord_webhooks", raise_exception=True)
-@record_audit
-def set_hooks(request):
-    data = _get_data(request)
-
-    hook_config = DiscordHookConfig(for_type=data["name"])
-    hook_config.set_hooks(data["hooks"])
-
-    audit("set_hooks", request, data)
-    return api_response(
-        result=DiscordHookConfig.get_all_hook_types(),
-        command="set_hooks",
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_view_camera_config", raise_exception=True)
-def get_camera_config(request):
-    config = CameraConfig()
-    return api_response(
-        result={
-            "broadcast": config.is_broadcast(),
-            "welcome": config.is_welcome(),
-        },
-        command="get_camera_config",
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_view_votekick_autotoggle_config", raise_exception=True)
-def get_votekick_autotoggle_config(request):
-    config = AutoVoteKickConfig()
-    return api_response(
-        result={
-            "min_ingame_mods": config.get_min_ingame_mods(),
-            "min_online_mods": config.get_min_online_mods(),
-            "is_enabled": config.is_enabled(),
-            "condition_type": config.get_condition_type(),
-        },
-        command="get_votekick_autotoggle_config",
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_change_votekick_autotoggle_config", raise_exception=True)
-@record_audit
-def set_votekick_autotoggle_config(request):
-    config = AutoVoteKickConfig()
-    data = _get_data(request)
-    funcs = {
-        "min_ingame_mods": config.set_min_ingame_mods,
-        "min_online_mods": config.set_min_online_mods,
-        "is_enabled": config.set_is_enabled,
-        "condition_type": config.set_condition_type,
-    }
-
-    for k, v in data.items():
-        try:
-            funcs[k](v)
-        except KeyError:
-            return api_response(
-                error="{} invalid key".format(k),
-                command="set_votekick_autotoggle_config",
-            )
-
-        audit("set_votekick_autotoggle_config", request, {k: v})
-
-    return api_response(
-        command="set_votekick_autotoggle_config",
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_change_camera_config", raise_exception=True)
-@record_audit
-def set_camera_config(request):
-    config = CameraConfig()
-    data = _get_data(request)
-
-    funcs = {
-        "broadcast": config.set_broadcast,
-        "welcome": config.set_welcome,
-    }
-
-    for k, v in data.items():
-        if not isinstance(v, bool):
-            return api_response(
-                error="Values must be boolean", command="set_camera_config"
-            )
-        try:
-            funcs[k](v)
-        except KeyError:
-            return api_response(
-                error="{} invalid key".format(k), command="set_camera_config"
-            )
-
-        audit("set_camera_config", request, {k: v})
-
-    return api_response(
-        result={
-            "broadcast": config.is_broadcast(),
-            "welcome": config.is_welcome(),
-        },
-        command="set_camera_config",
-        failed=False,
     )
 
 
@@ -315,6 +208,8 @@ def _do_watch(request, add: bool):
 @login_required()
 @permission_required("api.can_add_player_watch", raise_exception=True)
 @record_audit
+@require_http_methods(['POST'])
+@require_content_type()
 def do_watch_player(request):
     return _do_watch(request, add=True)
 
@@ -323,6 +218,8 @@ def do_watch_player(request):
 @login_required()
 @permission_required("api.can_remove_player_watch", raise_exception=True)
 @record_audit
+@require_http_methods(['POST'])
+@require_content_type()
 def do_unwatch_player(request):
     return _do_watch(request, add=False)
 
@@ -331,6 +228,8 @@ def do_unwatch_player(request):
 @login_required()
 @permission_required("api.can_clear_crcon_cache", raise_exception=True)
 @record_audit
+@require_http_methods(['POST'])
+@require_content_type()
 def clear_cache(request):
     res = RedisCached.clear_all_caches(get_redis_pool())
     audit("clear_cache", request, {})
@@ -346,127 +245,10 @@ def clear_cache(request):
 
 @csrf_exempt
 @login_required()
-@permission_required("api.can_view_auto_broadcast_config", raise_exception=True)
-def get_auto_broadcasts_config(request):
-    failed = False
-    config = None
-
-    try:
-        broadcasts = AutoBroadcasts()
-        config = {
-            "messages": ["{} {}".format(m[0], m[1]) for m in broadcasts.get_messages()],
-            "randomized": broadcasts.get_randomize(),
-            "enabled": broadcasts.get_enabled(),
-        }
-    except:
-        logger.exception("Error fetch broadcasts config")
-        failed = True
-
-    return JsonResponse(
-        {
-            "result": config,
-            "command": "get_auto_broadcasts_config",
-            "arguments": None,
-            "failed": failed,
-        }
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_change_auto_broadcast_config", raise_exception=True)
-@record_audit
-def set_auto_broadcasts_config(request):
-    failed = False
-    res = None
-    data = _get_data(request)
-    broadcasts = AutoBroadcasts()
-    config_keys = {
-        "messages": broadcasts.set_messages,
-        "randomized": broadcasts.set_randomize,
-        "enabled": broadcasts.set_enabled,
-    }
-    try:
-        for k, v in data.items():
-            if k in config_keys:
-                config_keys[k](v)
-                audit(set_auto_broadcasts_config.__name__, request, {k: v})
-    except InvalidConfigurationError as e:
-        failed = True
-        res = str(e)
-
-    return JsonResponse(
-        {
-            "result": res,
-            "command": "set_auto_broadcasts_config",
-            "arguments": data,
-            "failed": failed,
-        }
-    )
-
-
-@csrf_exempt
-# TODO: login required?
-@permission_required("api.can_view_shared_standard_messages", raise_exception=True)
-def get_standard_messages(request) -> JsonResponse:
-    failed = False
-    data = _get_data(request)
-
-    try:
-        msgs = StandardMessages()
-        res = msgs.get_messages(data["message_type"])
-    except CommandFailedError as e:
-        failed = True
-        res = repr(e)
-    except:
-        logger.exception("Error fetching standard messages config")
-        failed = True
-        res = "Error setting standard messages config"
-
-    return JsonResponse(
-        {
-            "result": res,
-            "command": "get_standard_messages",
-            "arguments": data,
-            "failed": failed,
-        }
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_change_shared_standard_messages", raise_exception=True)
-@record_audit
-def set_standard_messages(request):
-    failed = False
-    data = _get_data(request)
-
-    try:
-        msgs = StandardMessages()
-        res = msgs.set_messages(data["message_type"], data["messages"])
-        send_to_discord_audit("set_standard_messages", request.user.username)
-    except CommandFailedError as e:
-        failed = True
-        res = repr(e)
-    except:
-        logger.exception("Error setting standard messages config")
-        failed = True
-        res = "Error setting standard messages config"
-
-    return JsonResponse(
-        {
-            "result": res,
-            "command": "get_standard_messages",
-            "arguments": data,
-            "failed": failed,
-        }
-    )
-
-
-@csrf_exempt
-@login_required()
 @permission_required("api.can_blacklist_players", raise_exception=True)
 @record_audit
+@require_http_methods(['POST'])
+@require_content_type()
 def blacklist_player(request):
     data = _get_data(request)
     res = {}
@@ -501,6 +283,8 @@ def blacklist_player(request):
 @login_required()
 @permission_required("api.can_unblacklist_players", raise_exception=True)
 @record_audit
+@require_http_methods(['POST'])
+@require_content_type()
 def unblacklist_player(request):
     data = _get_data(request)
     res = {}
@@ -509,10 +293,11 @@ def unblacklist_player(request):
     try:
         remove_player_from_blacklist(data["steam_id_64"])
         audit("unblacklist", request, data)
-        if get_config()["BANS"]["unblacklist_does_unban"]:
+        config = RconServerSettingsUserConfig.load_from_db()
+        if config.unblacklist_does_unban:
             # also remove bans
             potential_failed_unbans = ctl.do_unban(data["steam_id_64"])
-            if get_config()["MULTI_SERVERS"]["broadcast_unbans"]:
+            if config.broadcast_unbans:
                 forward_command(
                     "/api/do_unban",
                     json=data,
@@ -550,6 +335,8 @@ def unblacklist_player(request):
     raise_exception=True,
 )
 @record_audit
+@require_http_methods(['POST'])
+@require_content_type()
 def unban(request):
     data = _get_data(request)
     res = {}
@@ -560,11 +347,12 @@ def unban(request):
         # also remove bans
         potential_failed_unbans = ctl.do_unban(data["steam_id_64"])
         audit("unban", request, data)
-        if get_config()["MULTI_SERVERS"]["broadcast_unbans"]:
+        config = RconServerSettingsUserConfig.load_from_db()
+        if config.broadcast_unbans:
             results = forward_command(
                 "/api/do_unban", json=data, sessionid=request.COOKIES.get("sessionid")
             )
-        if get_config()["BANS"]["unban_does_unblacklist"]:
+        if config.unban_does_unblacklist:
             try:
                 remove_player_from_blacklist(data["steam_id_64"])
             except CommandFailedError:
@@ -617,15 +405,21 @@ def expose_api_endpoint(func, command_name, permissions: list[str] | set[str] | 
     @permission_required(permissions, raise_exception=True)
     @wraps(func)
     def wrapper(request):
-        logger = logging.getLogger("rconweb")
         parameters = inspect.signature(func).parameters
-        command_name = func.__name__
+        cmd = func.__name__
         arguments = {}
-        data = {}
         failure = False
         others = None
         error = ""
         data = _get_data(request)
+
+        if cmd.startswith('set_') or cmd.startswith('do_'):
+            if request.method != 'POST':
+                return HttpResponseNotAllowed(['POST'])
+            if request.content_type != 'application/json':
+                logger.info("InvalidContentType: %s %s was called with %s, expected one of %s" % (request.method, request.path, request.content_type, ",".join(['application/json'])))
+        elif request.method != 'GET':
+            return HttpResponseNotAllowed(['GET'])
 
         for pname, param in parameters.items():
             if pname == "by":
@@ -636,8 +430,7 @@ def expose_api_endpoint(func, command_name, permissions: list[str] | set[str] | 
                 try:
                     arguments[pname] = data[pname]
                 except KeyError:
-                    # TODO raise 400
-                    raise
+                    return HttpResponseBadRequest()
 
         try:
             logger.debug("%s %s", func.__name__, arguments)
@@ -659,16 +452,14 @@ def expose_api_endpoint(func, command_name, permissions: list[str] | set[str] | 
             )
         )
         if data.get("forward"):
-            if command_name == "do_temp_ban" and not get_config().get(
-                "MULTI_SERVERS", {}
-            ).get("broadcast_temp_bans", True):
+            config = RconServerSettingsUserConfig.load_from_db()
+            if cmd == "do_temp_ban" and not config.broadcast_temp_bans:
                 logger.debug("Not broadcasting temp ban due to settings")
                 return response
             try:
-                others = forward_request(request)
+                forward_request(request)
             except:
                 logger.exception("Unexpected error while forwarding request")
-        # logger.debug("%s %s -> %s", func.__name__, arguments, res)
         return response
 
     return wrapper
@@ -677,12 +468,14 @@ def expose_api_endpoint(func, command_name, permissions: list[str] | set[str] | 
 @login_required()
 @permission_required("api.can_view_connection_info", raise_exception=True)
 @csrf_exempt
+@require_http_methods(['GET'])
 def get_connection_info(request):
+    config = RconServerSettingsUserConfig.load_from_db()
     return api_response(
         {
             "name": ctl.get_name(),
             "port": os.getenv("RCONWEB_PORT"),
-            "link": os.getenv("RCONWEB_SERVER_URL"),
+            "link": str(config.server_url),
             "server_number": int(get_server_number()),
         },
         failed=False,
@@ -693,6 +486,8 @@ def get_connection_info(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_run_raw_commands", raise_exception=True)
+@require_http_methods(['POST'])
+@require_content_type()
 def run_raw_command(request):
     data = _get_data(request)
     command = data.get("command")
@@ -834,23 +629,13 @@ PREFIXES_TO_EXPOSE = ["get_", "set_", "do_"]
 commands = [
     ("blacklist_player", blacklist_player),
     ("unblacklist_player", unblacklist_player),
-    ("get_auto_broadcasts_config", get_auto_broadcasts_config),
-    ("set_auto_broadcasts_config", set_auto_broadcasts_config),
     ("clear_cache", clear_cache),
-    ("get_standard_messages", get_standard_messages),
-    ("set_standard_messages", set_standard_messages),
     ("get_version", get_version),
     ("get_connection_info", get_connection_info),
     ("unban", unban),
-    ("get_hooks", get_hooks),
-    ("set_hooks", set_hooks),
     ("do_unwatch_player", do_unwatch_player),
     ("do_watch_player", do_watch_player),
     ("public_info", public_info),
-    ("set_camera_config", set_camera_config),
-    ("get_camera_config", get_camera_config),
-    ("set_votekick_autotoggle_config", set_votekick_autotoggle_config),
-    ("get_votekick_autotoggle_config", get_votekick_autotoggle_config),
     ("set_name", set_name),
     ("run_raw_command", run_raw_command),
 ]

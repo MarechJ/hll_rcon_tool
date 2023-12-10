@@ -1,5 +1,7 @@
 from django.contrib.auth.models import User
 from django.db import models
+from django.contrib.auth.hashers import make_password
+from rconweb.settings import SECRET_KEY
 
 
 class DjangoAPIKey(models.Model):
@@ -13,6 +15,12 @@ class DjangoAPIKey(models.Model):
 
     def __str__(self) -> str:
         return f"{self.api_key}"
+
+    def save(self, *args, **kwargs):
+        """Hash the API key"""
+        # If we don't include the salt, the hasher generates its own
+        self.api_key = make_password(self.api_key, salt=SECRET_KEY)
+        super().save()
 
     class Meta:
         ordering = ("date_modified",)
@@ -257,4 +265,162 @@ class RconUser(User):
             ("can_view_map_shuffle_enabled", "Can view if map shuffle is enabled"),
             ("can_change_map_shuffle_enabled", "Can enable/disable map shuffle"),
             ("can_view_welcome_message", "Can view the server welcome message"),
+            (
+                "can_view_auto_mod_level_config",
+                "Can view Auto Mod Level enforcement config",
+            ),
+            (
+                "can_change_auto_mod_level_config",
+                "Can change Auto Mod Level enforcement config",
+            ),
+            (
+                "can_view_auto_mod_no_leader_config",
+                "Can view Auto Mod No Leader enforcement config",
+            ),
+            (
+                "can_change_auto_mod_no_leader_config",
+                "Can change Auto Mod No Leader enforcement config",
+            ),
+            (
+                "can_view_auto_mod_seeding_config",
+                "Can view Auto Mod No Seeding enforcement config",
+            ),
+            (
+                "can_change_auto_mod_seeding_config",
+                "Can change Auto Mod No Seeding enforcement config",
+            ),
+            (
+                "can_view_auto_mod_solo_tank_config",
+                "Can view Auto Mod No Solo Tank enforcement config",
+            ),
+            (
+                "can_change_auto_mod_solo_tank_config",
+                "Can change Auto Mod No Solo Tank enforcement config",
+            ),
+            (
+                "can_view_tk_ban_on_connect_config",
+                "Can view team kill ban on connect config",
+            ),
+            (
+                "can_change_tk_ban_on_connect_config",
+                "Can change team kill ban on connect config",
+            ),
+            ("can_view_expired_vip_config", "Can view Expired VIP config"),
+            ("can_change_expired_vip_config", "Can change Expired VIP config"),
+            (
+                "can_view_server_name_change_config",
+                "Can view server name change (GSP credentials!) config",
+            ),
+            (
+                "can_change_server_name_change_config",
+                "Can change server name change (GSP credentials!) config",
+            ),
+            (
+                "can_view_log_line_discord_webhook_config",
+                "Can view log webhook (messages for log events) config",
+            ),
+            (
+                "can_change_log_line_discord_webhook_config",
+                "Can change log webhook (messages for log events) config",
+            ),
+            ("can_view_name_kick_config", "Can view kick players for names config"),
+            ("can_change_name_kick_config", "Can change kick players for names config"),
+            (
+                "can_view_rcon_connection_settings_config",
+                "Can view game server connection settings config",
+            ),
+            (
+                "can_change_rcon_connection_settings_config",
+                "Can change game server connection settings config",
+            ),
+            (
+                "can_view_rcon_server_settings_config",
+                "Can view general CRCON server settings",
+            ),
+            (
+                "can_change_rcon_server_settings_config",
+                "Can change general CRCON server settings",
+            ),
+            ("can_view_scorebot_config", "Can view scorebot config"),
+            ("can_change_scorebot_config", "Can change scorebot config"),
+            (
+                "can_view_standard_broadcast_messages",
+                "Can view shared broadcast messages",
+            ),
+            (
+                "can_change_standard_broadcast_messages",
+                "Can change shared broadcast messages",
+            ),
+            (
+                "can_view_standard_punishment_messages",
+                "Can view shared punishment messages",
+            ),
+            (
+                "can_change_standard_punishment_messages",
+                "Can change shared punishment messages",
+            ),
+            ("can_view_standard_welcome_messages", "Can view shared welcome messages"),
+            (
+                "can_change_standard_welcome_messages",
+                "Can change shared welcome messages",
+            ),
+            ("can_view_steam_config", "Can view steam API config"),
+            ("can_change_steam_config", "Can change steam API config"),
+            (
+                "can_view_vac_game_bans_config",
+                "Can view VAC/Gameban ban on connect config",
+            ),
+            (
+                "can_change_vac_game_bans_config",
+                "Can change VAC/Gameban ban on connect config",
+            ),
+            (
+                "can_view_admin_pings_discord_webhooks_config",
+                "Can view Discord admin ping config",
+            ),
+            (
+                "can_change_admin_pings_discord_webhooks_config",
+                "Can change Discord admin ping config",
+            ),
+            ("can_view_audit_discord_webhooks_config", "Can view Discord audit config"),
+            (
+                "can_change_audit_discord_webhooks_config",
+                "Can change Discord audit config",
+            ),
+            (
+                "can_view_camera_discord_webhooks_config",
+                "Can view Discord admin cam notification config",
+            ),
+            (
+                "can_change_camera_discord_webhooks_config",
+                "Can change Discord admin cam notification config",
+            ),
+            (
+                "can_view_chat_discord_webhooks_config",
+                "Can view Discord chat notification config",
+            ),
+            (
+                "can_change_chat_discord_webhooks_config",
+                "Can change Discord chat notification config",
+            ),
+            (
+                "can_view_kills_discord_webhooks_config",
+                "Can view Discord team/teamkill notification config",
+            ),
+            (
+                "can_change_kills_discord_webhooks_config",
+                "Can change Discord team/teamkill notification config",
+            ),
+            (
+                "can_view_watchlist_discord_webhooks_config",
+                "Can view Discord player watchlist notification config",
+            ),
+            (
+                "can_change_watchlist_discord_webhooks_config",
+                "Can change Discord player watchlist notification config",
+            ),
+            (
+                "can_restart_webserver",
+                "Can restart the webserver (Not a complete Docker restart)",
+            ),
         )

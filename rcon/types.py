@@ -1,6 +1,75 @@
 import datetime
-from typing import List, Optional, TypedDict
 import enum
+from typing import List, Optional, TypedDict
+
+
+# Have to inherit from str to allow for JSON serialization w/ pydantic
+class RconInvalidNameActionType(str, enum.Enum):
+    none = None
+    warn = "WARN"
+    kick = "KICK"
+    ban = "BAN"
+
+
+class ServerInfoType(TypedDict):
+    host: str | None
+    port: str | None
+    password: str | None
+
+
+# Have to inherit from str to allow for JSON serialization w/ pydantic
+class Roles(str, enum.Enum):
+    commander = "armycommander"
+    squad_lead = "officer"
+    rifleman = "rifleman"
+    engineer = "engineer"
+    medic = "medic"
+    anti_tank = "antitank"
+    automatic_rifleman = "automaticrifleman"
+    assault = "assault"
+    machine_gunner = "heavymachinegunner"
+    support = "support"
+    spotter = "spotter"
+    sniper = "sniper"
+    tank_commander = "tankcommander"
+    crewman = "crewman"
+
+
+class InvalidRoleError(ValueError):
+    def __init__(self, role: str) -> None:
+        super().__init__()
+        self.role = role
+
+    def __str__(self) -> str:
+        return self.__repr__()
+
+    def __repr__(self) -> str:
+        return f"{self.role} must be one of ({', '.join(r for r in Roles)})"
+
+    def asdict(self):
+        return {
+            "type": InvalidRoleError.__name__,
+            "role": self.role,
+            "allowed_roles": [r for r in Roles],
+        }
+
+
+ROLES_TO_LABELS = {
+    Roles.commander: "Commander",
+    Roles.squad_lead: "Squad Lead",
+    Roles.rifleman: "Rifleman",
+    Roles.engineer: "Engineer",
+    Roles.medic: "Medic",
+    Roles.anti_tank: "Anti-Tank",
+    Roles.automatic_rifleman: "Automatic Rifleman",
+    Roles.assault: "Assault",
+    Roles.machine_gunner: "Machinegunner",
+    Roles.support: "Support",
+    Roles.spotter: "Spotter",
+    Roles.sniper: "Sniper",
+    Roles.tank_commander: "Tank Commander",
+    Roles.crewman: "Crewman",
+}
 
 
 class PlayerIdsType(TypedDict):
@@ -347,33 +416,60 @@ class VipId(TypedDict):
     name: str
 
 
-# TODO: this will come in from UI settings
 # Have to inherit from str to allow for JSON serialization w/ pydantic
 class AllLogTypes(str, enum.Enum):
+    """Both native (from the game server) and synthetic (created by CRCON) log types"""
+
+    admin = "ADMIN"
+    admin_anti_cheat = "ADMIN ANTI-CHEAT"
     admin_banned = "ADMIN BANNED"
+    admin_idle = "ADMIN IDLE"
     admin_kicked = "ADMIN KICKED"
-    camera = "CAMERA"
-    chat = "CHAT"
+    admin_misc = "ADMIN MISC"
+    admin_perma_banned = "ADMIN PERMA BANNED"
     allies_chat = "CHAT[Allies]"
     allies_team_chat = "CHAT[Allies][Team]"
     allies_unit_chat = "CHAT[Allies][Unit]"
-    cxis_chat = "CHAT[Axis]"
+    axis_chat = "CHAT[Axis]"
     axis_team_chat = "CHAT[Axis][Team]"
     axis_unit_chat = "CHAT[Axis][Unit]"
+    camera = "CAMERA"
+    chat = "CHAT"
     connected = "CONNECTED"
     disconnected = "DISCONNECTED"
     kill = "KILL"
     match = "MATCH"
-    match_start = "MATCH START"
     match_end = "MATCH ENDED"
+    match_start = "MATCH START"
     team_kill = "TEAM KILL"
     team_switch = "TEAMSWITCH"
     # Automatic kicks for team kills
-    # tk= "TK",
+    tk = "TK"
     tk_auto = "TK AUTO"
     tk_auto_banned = "TK AUTO BANNED"
     tk_auto_kicked = "TK AUTO KICKED"
     # Vote kicks
     vote = "VOTE"
-    vote_started = "VOTE STARTED"
     vote_completed = "VOTE COMPLETED"
+    vote_expired = "VOTE EXPIRED"
+    vote_passed = "VOTE PASSED"
+    vote_started = "VOTE STARTED"
+
+
+class InvalidLogTypeError(ValueError):
+    def __init__(self, log_type: str) -> None:
+        super().__init__()
+        self.log_type = log_type
+
+    def __str__(self) -> str:
+        return self.__repr__()
+
+    def __repr__(self) -> str:
+        return f"{self.log_type} must be one of ({', '.join(r for r in AllLogTypes)})"
+
+    def asdict(self):
+        return {
+            "type": InvalidLogTypeError.__name__,
+            "log_type": self.log_type,
+            "allowed_log_types": [log for log in AllLogTypes],
+        }

@@ -3,30 +3,26 @@ import time
 from threading import Timer
 from typing import List
 
+from pydantic import HttpUrl
 from redis.client import Redis
 
 from rcon.automods.level_thresholds import LevelThresholdsAutomod
-from rcon.automods.models import (
-    ActionMethod,
-    LevelThresholdsConfig,
-    NoLeaderConfig,
-    NoSoloTankConfig,
-    PunishPlayer,
-    PunitionsToApply,
-    SeedingRulesConfig,
-)
+from rcon.automods.models import ActionMethod, PunishPlayer, PunitionsToApply
 from rcon.automods.no_leader import NoLeaderAutomod
 from rcon.automods.no_solotank import NoSoloTankAutomod
 from rcon.automods.seeding_rules import SeedingRulesAutomod
 from rcon.cache_utils import get_redis_client
 from rcon.commands import CommandFailedError, HLLServerError
-from rcon.config import get_config
 from rcon.discord import send_to_discord_audit
 from rcon.game_logs import on_connected, on_kill
 from rcon.hooks import inject_player_ids
 from rcon.rcon import Rcon
 from rcon.settings import SERVER_INFO
 from rcon.types import StructuredLogLineType
+from rcon.user_config.auto_mod_level import AutoModLevelUserConfig
+from rcon.user_config.auto_mod_no_leader import AutoModNoLeaderUserConfig
+from rcon.user_config.auto_mod_seeding import AutoModSeedingUserConfig
+from rcon.user_config.auto_mod_solo_tank import AutoModNoSoloTankUserConfig
 
 logger = logging.getLogger(__name__)
 first_run_done_key = "first_run_done"
@@ -111,14 +107,12 @@ def _do_punitions(
                     aplayer.details.author,
                 )
         except (CommandFailedError, HLLServerError):
-            logger.exception("Failed to %s %s", repr(method), repr(aplayer))
+            logger.warning(
+                "Couldn't `%s` player `%s`. Will retry.",
+                repr(method),
+                repr(aplayer)
+            )
             if method == ActionMethod.PUNISH:
-                # Deactivated (spams the Discord channel)
-                # audit(
-                #     aplayer.details.discord_audit_url,
-                #     f"--> PUNISH FAILED, will retry: {aplayer}",
-                #     aplayer.details.author,
-                # )
                 for m in mods:
                     m.player_punish_failed(aplayer)
             elif method == ActionMethod.KICK:
@@ -154,53 +148,19 @@ def do_punitions(rcon: Rcon, punitions_to_apply: PunitionsToApply):
 def enabled_moderators():
     red = get_redis_client()
 
-    try:
-        config = get_config()
-
-        no_leader_config = None
-        if config.get("NOLEADER_AUTO_MOD") is not None:
-            no_leader_config = NoLeaderConfig(**config["NOLEADER_AUTO_MOD"])
-
-        seeding_config = None
-        if config.get("SEEDING_AUTO_MOD") is not None:
-            seeding_config = SeedingRulesConfig(**config["SEEDING_AUTO_MOD"])
-
-        level_thresholds_config = None
-        if config.get("LEVEL_AUTO_MOD") is not None:
-            level_thresholds_config = LevelThresholdsConfig(**config["LEVEL_AUTO_MOD"])
-
-        no_solotank_config = None
-        if config.get("NOSOLOTANK_AUTO_MOD") is not None:
-            no_solotank_config = NoSoloTankConfig(**config["NOSOLOTANK_AUTO_MOD"])
-
-    except Exception as e:
-        logger.exception("Invalid automod config, check your config/config.yml", e)
-        raise
+    level_thresholds_config = AutoModLevelUserConfig.load_from_db()
+    no_leader_config = AutoModNoLeaderUserConfig.load_from_db()
+    seeding_config = AutoModSeedingUserConfig.load_from_db()
+    solo_tank_config = AutoModNoSoloTankUserConfig.load_from_db()
 
     return list(
         filter(
             lambda m: m.enabled(),
             [
-                NoLeaderAutomod(no_leader_config, red)
-                if no_leader_config is not None
-                else NoLeaderAutomod(
-                    NoLeaderConfig(**{"enabled": False}), None
-                ),
-                SeedingRulesAutomod(seeding_config, red)
-                if seeding_config is not None
-                else SeedingRulesAutomod(
-                    SeedingRulesConfig(**{"enabled": False}), None
-                ),
-                LevelThresholdsAutomod(level_thresholds_config, red)
-                if level_thresholds_config is not None
-                else LevelThresholdsAutomod(
-                    LevelThresholdsConfig(**{"enabled": False}), None
-                ),
-                NoSoloTankAutomod(no_solotank_config, red)
-                if no_solotank_config is not None
-                else NoSoloTankAutomod(
-                    NoSoloTankConfig(**{"enabled": False}), None
-                ),
+                NoLeaderAutomod(no_leader_config, red),
+                SeedingRulesAutomod(seeding_config, red),
+                LevelThresholdsAutomod(level_thresholds_config, red),
+                NoSoloTankAutomod(solo_tank_config, red),
             ],
         )
     )
@@ -226,10 +186,10 @@ def punish_squads(rcon: Rcon, r: Redis):
     set_first_run_done(r)
 
 
-def audit(discord_webhook_url: str, msg: str, author: str):
-    if discord_webhook_url is not None and discord_webhook_url != "":
+def audit(discord_webhook_url: HttpUrl | None, msg: str, author: str):
+    if discord_webhook_url is not None:
         send_to_discord_audit(
-            msg, by=author, webhookurl=discord_webhook_url, silent=False
+            msg, by=author, webhookurls=[discord_webhook_url], silent=False
         )
 
 
@@ -238,7 +198,8 @@ def on_kill(rcon: Rcon, log: StructuredLogLineType):
     red = get_redis_client()
     if not is_first_run_done(red):
         logger.debug(
-            "Kill event received, but not automod run done yet, giving mods time to warmup"
+            "Kill event received, but not automod run done yet, "
+            "giving mods time to warmup"
         )
         return
     mods = enabled_moderators()
@@ -264,7 +225,8 @@ def on_connected(rcon: Rcon, _, name: str, steam_id_64: str):
     red = get_redis_client()
     if not is_first_run_done(red):
         logger.debug(
-            "Kill event received, but not automod run done yet, giving mods time to warmup"
+            "Kill event received, but not automod run done yet, "
+            "giving mods time to warmup"
         )
         return
     mods = enabled_moderators()
@@ -288,7 +250,12 @@ def on_connected(rcon: Rcon, _, name: str, steam_id_64: str):
                     save_message=False,
                 )
         except Exception as e:
-            logger.error("Could not message player " + name + "/" + steam_id_64, e)
+            logger.error(
+                "Could not message player '%s' (%s) : %s",
+                name,
+                steam_id_64,
+                e
+            )
 
     if len(punitions_to_apply.warning) == 0:
         return

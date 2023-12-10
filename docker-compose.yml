@@ -1,11 +1,10 @@
-version: '2.4'
+version: "2.4"
 
 networks:
   server1:
   server2:
   server3:
   common:
-
 
 services:
   supervisor_1: &supervisor
@@ -21,7 +20,7 @@ services:
     networks:
       common:
       server1:
-        aliases: 
+        aliases:
           - supervisor
     volumes:
       - ./supervisor_data:/data
@@ -32,8 +31,8 @@ services:
       service: python
     command: web
     depends_on:
-        - postgres
-        - redis
+      - postgres
+      - redis
     networks:
       server1:
         aliases:
@@ -84,7 +83,8 @@ services:
       HLL_DB_NAME: ${HLL_DB_NAME}
       HLL_DB_USER: ${HLL_DB_USER}
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "${HLL_DB_USER}", "-d", "${HLL_DB_NAME}"]
+      test:
+        ["CMD", "pg_isready", "-U", "${HLL_DB_USER}", "-d", "${HLL_DB_NAME}"]
       interval: 15s
       timeout: 30s
       retries: 5
@@ -101,9 +101,9 @@ services:
       HLL_HOST: ${HLL_HOST_2}
       HLL_PORT: ${HLL_PORT_2}
       HLL_PASSWORD: ${HLL_PASSWORD_2}
-      LOGGING_LEVEL: 'INFO'
+      LOGGING_LEVEL: "INFO"
       LOGGING_PATH: /logs/
-      HLL_REDIS_HOST: ${HLL_REDIS_HOST} 
+      HLL_REDIS_HOST: ${HLL_REDIS_HOST}
       HLL_REDIS_PORT: ${HLL_REDIS_HOST_PORT}
       HLL_REDIS_DB: 1
       HLL_REDIS_URL: redis://${HLL_REDIS_HOST}:${HLL_REDIS_HOST_PORT}/1
@@ -113,29 +113,21 @@ services:
       HLL_DB_HOST: ${HLL_DB_HOST}
       HLL_DB_HOST_PORT: ${HLL_DB_HOST_PORT}
       HLL_DB_URL: postgresql://${HLL_DB_USER}:${HLL_DB_PASSWORD}@${HLL_DB_HOST}:${HLL_DB_HOST_PORT}/${HLL_DB_NAME}
-      DISCORD_WEBHOOK_AUDIT_LOG: ${DISCORD_WEBHOOK_AUDIT_LOG_2}
       RCONWEB_API_SECRET: ${RCONWEB_API_SECRET}
-      SERVER_SHORT_NAME: ${SERVER_SHORT_NAME_2}
-      DISCORD_CHAT_WEBHOOK: ${DISCORD_CHAT_WEBHOOK_2}
-      DISCORD_CHAT_WEBHOOK_ALLOW_MENTIONS: ${DISCORD_CHAT_WEBHOOK_ALLOW_MENTIONS}
       RCONWEB_PORT: ${RCONWEB_PORT_2}
-      DISCORD_PING_TRIGGER_WORDS: ${DISCORD_PING_TRIGGER_WORDS_2}
-      DISCORD_PING_TRIGGER_ROLES: ${DISCORD_PING_TRIGGER_ROLES_2}
-      DISCORD_PING_TRIGGER_WEBHOOK: ${DISCORD_PING_TRIGGER_WEBHOOK_2}
-      DISCORD_KILLS_WEBHOOK: ${DISCORD_KILLS_WEBHOOK_2}
-      DISCORD_SEND_KILL_UPDATES: ${DISCORD_SEND_KILL_UPDATES_2}
-      DISCORD_SEND_TEAM_KILL_UPDATES: ${DISCORD_SEND_TEAM_KILL_UPDATES_2}
       SUPERVISOR_RPC_URL: http://supervisor:9001/RPC2
       CONFIG_DIR: /config/
       SERVER_NUMBER: 2
-      RCONWEB_SERVER_URL: ${RCONWEB_SERVER_URL_2}
       PUBLIC_STATS_PORT: ${PUBLIC_STATS_PORT_2}
       PUBLIC_STATS_PORT_HTTPS: ${PUBLIC_STATS_PORT_HTTPS_2}
+      GTX_SERVER_NAME_CHANGE_USERNAME: ${GTX_SERVER_NAME_CHANGE_USERNAME_2}
+      GTX_SERVER_NAME_CHANGE_PASSWORD: ${GTX_SERVER_NAME_CHANGE_PASSWORD_2}
+      SENTRY_DSN: ${SENTRY_DSN_2}
     restart: on-failure
     networks:
       common:
       server2:
-        aliases: 
+        aliases:
           - supervisor
     command: supervisor
     depends_on:
@@ -176,9 +168,9 @@ services:
       HLL_HOST: ${HLL_HOST_3}
       HLL_PORT: ${HLL_PORT_3}
       HLL_PASSWORD: ${HLL_PASSWORD_3}
-      LOGGING_LEVEL: 'INFO'
+      LOGGING_LEVEL: "INFO"
       LOGGING_PATH: /logs/
-      HLL_REDIS_HOST: ${HLL_REDIS_HOST} 
+      HLL_REDIS_HOST: ${HLL_REDIS_HOST}
       HLL_REDIS_PORT: ${HLL_REDIS_HOST_PORT}
       HLL_REDIS_DB: 2
       HLL_REDIS_URL: redis://${HLL_REDIS_HOST}:${HLL_REDIS_HOST_PORT}/2
@@ -188,30 +180,22 @@ services:
       HLL_DB_HOST: ${HLL_DB_HOST}
       HLL_DB_HOST_PORT: ${HLL_DB_HOST_PORT}
       HLL_DB_URL: postgresql://${HLL_DB_USER}:${HLL_DB_PASSWORD}@${HLL_DB_HOST}:${HLL_DB_HOST_PORT}/${HLL_DB_NAME}
-      DISCORD_WEBHOOK_AUDIT_LOG: ${DISCORD_WEBHOOK_AUDIT_LOG_3}
       RCONWEB_API_SECRET: ${RCONWEB_API_SECRET}
-      SERVER_SHORT_NAME: ${SERVER_SHORT_NAME_3}
-      DISCORD_CHAT_WEBHOOK: ${DISCORD_CHAT_WEBHOOK_3}
-      DISCORD_CHAT_WEBHOOK_ALLOW_MENTIONS: ${DISCORD_CHAT_WEBHOOK_ALLOW_MENTIONS}
       RCONWEB_PORT: ${RCONWEB_PORT_3}
-      DISCORD_PING_TRIGGER_WORDS: ${DISCORD_PING_TRIGGER_WORDS_3}
-      DISCORD_PING_TRIGGER_ROLES: ${DISCORD_PING_TRIGGER_ROLES_3}
-      DISCORD_PING_TRIGGER_WEBHOOK: ${DISCORD_PING_TRIGGER_WEBHOOK_3}
-      DISCORD_KILLS_WEBHOOK: ${DISCORD_KILLS_WEBHOOK_3}
-      DISCORD_SEND_KILL_UPDATES: ${DISCORD_SEND_KILL_UPDATES_3}
-      DISCORD_SEND_TEAM_KILL_UPDATES: ${DISCORD_SEND_TEAM_KILL_UPDATES_3}
       SUPERVISOR_RPC_URL: http://supervisor:9001/RPC2
       CONFIG_DIR: /config/
       SERVER_NUMBER: 3
-      RCONWEB_SERVER_URL: ${RCONWEB_SERVER_URL_3}
       PUBLIC_STATS_PORT: ${PUBLIC_STATS_PORT_3}
       PUBLIC_STATS_PORT_HTTPS: ${PUBLIC_STATS_PORT_HTTPS_3}
+      GTX_SERVER_NAME_CHANGE_USERNAME: ${GTX_SERVER_NAME_CHANGE_USERNAME_3}
+      GTX_SERVER_NAME_CHANGE_PASSWORD: ${GTX_SERVER_NAME_CHANGE_PASSWORD_3}
+      SENTRY_DSN: ${SENTRY_DSN_3}
     restart: on-failure
     command: supervisor
     networks:
       common:
       server3:
-        aliases: 
+        aliases:
           - supervisor
     depends_on:
       - frontend_2
@@ -241,5 +225,5 @@ services:
     networks:
       - common
       - server3
-    depends_on: 
+    depends_on:
       - backend_3

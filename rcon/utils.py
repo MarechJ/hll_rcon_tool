@@ -3,7 +3,7 @@ import logging
 import os
 import secrets
 from datetime import datetime, timezone
-from typing import Generic, TypeVar, Any, Iterable
+from typing import Any, Generic, TypeVar, Iterable
 
 import redis
 import redis.exceptions
@@ -12,6 +12,15 @@ from rcon.cache_utils import get_redis_pool
 from rcon.types import MapInfo
 
 logger = logging.getLogger("rcon")
+
+
+class DefaultStringFormat(dict):
+    """Base class for str.format usage to not crash with invalid keys"""
+
+    def __missing__(self, key):
+        logger.error("Invalid key=%s used in string format")
+        return key
+
 
 INDEFINITE_VIP_DATE = datetime(
     year=3000,
@@ -740,3 +749,26 @@ def exception_in_chain(e: BaseException, c) -> bool:
             return True
 
     return False
+
+
+def dict_differences(old: dict[Any, Any], new: dict[Any, Any]) -> dict[Any, Any]:
+    """Compare old/new and return a dict of differences by key"""
+    diff = {}
+    for k, v in old.items():
+        if isinstance(old[k], dict):
+            sub_diff = dict_differences(old[k], new[k])
+            if sub_diff:
+                diff[k] = sub_diff
+        else:
+            if old[k] != new[k]:
+                diff[k] = new[k]
+
+    return diff
+
+
+def is_invalid_name_whitespace(name: str) -> bool:
+    return name.endswith(" ")
+
+
+def is_invalid_name_pineapple(name: str) -> bool:
+    return len(name) == 20 and name.endswith("?")

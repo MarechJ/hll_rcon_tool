@@ -1,18 +1,22 @@
 import datetime
 import logging
 import os
+import re
 import sys
 import time
 import unicodedata
-from typing import Callable, Dict, List
+from collections import defaultdict
+from functools import partial
+from typing import Callable, DefaultDict, Dict, Iterable
 from collections import defaultdict
 import redis.exceptions
+import discord_webhook
+from pydantic import HttpUrl
 from sqlalchemy import and_, desc, or_
 from sqlalchemy.exc import IntegrityError
 
-from rcon.cache_utils import get_redis_client
-from rcon.config import get_config
-from rcon.discord import send_to_discord_audit
+from rcon.cache_utils import get_redis_client, ttl_cache
+from rcon.discord import make_hook, send_to_discord_audit
 from rcon.models import LogLine, PlayerSteamID, enter_session
 from rcon.player_history import (
     add_player_to_blacklist,
@@ -26,7 +30,14 @@ from rcon.types import (
     ParsedLogsType,
     PlayerStat,
     StructuredLogLineWithMetaData,
+    AllLogTypes,
 )
+from rcon.user_config.ban_tk_on_connect import BanTeamKillOnConnectUserConfig
+from rcon.user_config.log_line_webhooks import (
+    DiscordMentionWebhook,
+    LogLineWebhookUserConfig,
+)
+from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.utils import (
     FixedLenList,
     MapsHistory,
@@ -39,89 +50,189 @@ from rcon.utils import (
 
 logger = logging.getLogger(__name__)
 
-HOOKS: Dict[str, List[Callable]] = {
-    "TEAM KILL": [],
-    "CONNECTED": [],
-    "DISCONNECTED": [],
-    "TK": [],
-    "TK AUTO": [],
-    "TK AUTO BANNED": [],
-    "TK AUTO KICKED": [],
-    "ADMIN BANNED": [],
-    "ADMIN KICKED": [],
-    "CAMERA": [],
-    "CHAT": [],
-    "CHAT[Allies]": [],
-    "CHAT[Allies][Team]": [],
-    "CHAT[Allies][Unit]": [],
-    "CHAT[Axis]": [],
-    "CHAT[Axis][Team]": [],
-    "CHAT[Axis][Unit]": [],
-    "KILL": [],
-    "MATCH START": [],
-    "MATCH ENDED": [],
-    "MATCH": [],
-    "TEAMSWITCH": [],
-    "VOTE": [],
-    "VOTE STARTED": [],
-    "VOTE COMPLETED": [],
+HOOKS: Dict[str, list[Callable]] = {
+    AllLogTypes.admin.value: [],
+    AllLogTypes.admin_anti_cheat.value: [],
+    AllLogTypes.admin_banned.value: [],
+    AllLogTypes.admin_idle.value: [],
+    AllLogTypes.admin_kicked.value: [],
+    AllLogTypes.admin_misc.value: [],
+    AllLogTypes.admin_perma_banned.value: [],
+    AllLogTypes.allies_chat.value: [],
+    AllLogTypes.allies_team_chat.value: [],
+    AllLogTypes.allies_unit_chat.value: [],
+    AllLogTypes.axis_chat.value: [],
+    AllLogTypes.axis_team_chat.value: [],
+    AllLogTypes.axis_unit_chat.value: [],
+    AllLogTypes.camera.value: [],
+    AllLogTypes.chat.value: [],
+    AllLogTypes.connected.value: [],
+    AllLogTypes.disconnected.value: [],
+    AllLogTypes.kill.value: [],
+    AllLogTypes.match.value: [],
+    AllLogTypes.match_end.value: [],
+    AllLogTypes.match_start.value: [],
+    AllLogTypes.team_kill.value: [],
+    AllLogTypes.team_switch.value: [],
+    AllLogTypes.tk.value: [],
+    AllLogTypes.tk_auto.value: [],
+    AllLogTypes.tk_auto_banned.value: [],
+    AllLogTypes.tk_auto_kicked.value: [],
+    AllLogTypes.vote.value: [],
+    AllLogTypes.vote_completed.value: [],
+    AllLogTypes.vote_expired.value: [],
+    AllLogTypes.vote_passed.value: [],
+    AllLogTypes.vote_started.value: [],
 }
 
 
 def on_kill(func):
-    HOOKS["KILL"].append(func)
+    HOOKS[AllLogTypes.kill.value].append(func)
     return func
 
 
 def on_tk(func):
-    HOOKS["TEAM KILL"].append(func)
+    HOOKS[AllLogTypes.team_kill.value].append(func)
     return func
 
 
 def on_chat(func):
-    HOOKS["CHAT"].append(func)
+    HOOKS[AllLogTypes.chat.value].append(func)
+    HOOKS[AllLogTypes.axis_chat.value].append(func)
+    HOOKS[AllLogTypes.axis_team_chat.value].append(func)
+    HOOKS[AllLogTypes.axis_unit_chat.value].append(func)
+    HOOKS[AllLogTypes.allies_chat.value].append(func)
+    HOOKS[AllLogTypes.allies_team_chat.value].append(func)
+    HOOKS[AllLogTypes.allies_unit_chat.value].append(func)
     return func
 
 
 def on_camera(func):
-    HOOKS["CAMERA"].append(func)
+    HOOKS[AllLogTypes.camera.value].append(func)
     return func
 
 
 def on_chat_axis(func):
-    HOOKS["CHAT[Axis]"].append(func)
+    HOOKS[AllLogTypes.axis_chat.value].append(func)
+    HOOKS[AllLogTypes.axis_team_chat.value].append(func)
+    HOOKS[AllLogTypes.axis_unit_chat.value].append(func)
     return func
 
 
 def on_chat_allies(func):
-    HOOKS["CHAT[Allies]"].append(func)
+    HOOKS[AllLogTypes.allies_chat.value].append(func)
+    HOOKS[AllLogTypes.allies_team_chat.value].append(func)
+    HOOKS[AllLogTypes.allies_unit_chat.value].append(func)
     return func
 
 
 def on_connected(func):
-    HOOKS["CONNECTED"].append(func)
+    HOOKS[AllLogTypes.connected.value].append(func)
     return func
 
 
 def on_disconnected(func):
-    HOOKS["DISCONNECTED"].append(func)
+    HOOKS[AllLogTypes.disconnected.value].append(func)
     return func
 
 
 def on_match_start(func):
-    HOOKS["MATCH START"].append(func)
+    HOOKS[AllLogTypes.match_start.value].append(func)
     return func
 
 
 def on_match_end(func):
-    HOOKS["MATCH ENDED"].append(func)
+    HOOKS[AllLogTypes.match_end.value].append(func)
     return func
 
 
 def on_generic(key, func) -> Callable:
     """Dynamically register hooks from config.yml LOG_LINE_WEBHOOKS"""
+
+    # equality comparison for partial functions does not work since each newly created object has a different id
+    # we have to directly compare the function and arguments to avoid duplicates
+    for f in HOOKS[key]:
+        if (
+            isinstance(f, partial)
+            and f.func == func.func
+            and f.args == func.args
+            and f.keywords == func.keywords
+        ):
+            logger.info("Skipping %s %s already added", key, func)
+            return func
+
     HOOKS[key].append(func)
     return func
+
+
+def make_allowed_mentions(mentions: Iterable[str]) -> defaultdict[str, list[str]]:
+    """Convert the provided sequence of users and roles to a discord.AllowedMentions
+
+    Similar to discord_chat.make_allowed_mentions but doesn't strip @everyone/@here
+    """
+    allowed_mentions: DefaultDict[str, list[str]] = defaultdict(list)
+
+    for role_or_user in mentions:
+        if match := re.match(r"<@(\d+)>", role_or_user):
+            allowed_mentions["users"].append((match.group(1)))
+        elif match := re.match(r"<@&(\d+)>", role_or_user):
+            allowed_mentions["roles"].append((match.group(1)))
+
+    return allowed_mentions
+
+
+def send_log_line_webhook_message(
+    webhook: DiscordMentionWebhook,
+    _,
+    log_line: Dict[str, str | int | float | None],
+) -> None:
+    """Send a time stammped embed of the log_line and mentions to the provided Discord Webhook"""
+
+    config = RconServerSettingsUserConfig.load_from_db()
+
+    mentions = webhook.user_mentions + webhook.role_mentions
+
+    wh = make_hook(webhook.url)
+    if not wh:
+        logger.error("Error creating discord webhook for: %s", webhook.url)
+        return
+
+    allowed_mentions = make_allowed_mentions(mentions)
+
+    content = " ".join(mentions)
+    description: str = log_line["line_without_time"]
+    embed = discord_webhook.DiscordEmbed(
+        description=description,
+        timestamp=datetime.datetime.utcfromtimestamp(log_line["timestamp_ms"] / 1000),
+    )
+
+    embed.set_footer(text=config.short_name)
+
+    wh.content = content
+    wh.add_embed(embed)
+    wh.allowed_mentions = allowed_mentions["user"] + allowed_mentions["roles"]
+    wh.execute()
+
+
+# I don't think there is a good way to cache invalidate this without
+# circular imports when setting it through LogLineWebhookUserConfig
+# but it is invalidated on service startup
+@ttl_cache(ttl=60 * 5)
+def load_generic_hooks():
+    """Load and validate all the subscribed log line webhooks from config.yml"""
+    logger.info("Loading generic hooks")
+    config = LogLineWebhookUserConfig.load_from_db()
+    for hook in config.webhooks:
+        # mentions = [h.user_mentions + h.role_mentions for h in conf.webhooks]
+        func = partial(send_log_line_webhook_message, hook.webhook)
+
+        # Have to set these attributes as the're used in LogLoop.process_hooks()
+        func.__name__ = send_log_line_webhook_message.__name__
+        func.__module__ = __name__
+
+        for log_type in hook.log_types:
+            logger.info("Adding log type %s, %s", func, log_type.value)
+            on_generic(log_type.value, func)
 
 
 MAX_FAILS = 10
@@ -235,6 +346,7 @@ class LogLoop:
         last_cleanup_time = datetime.datetime.now()
 
         while True:
+            load_generic_hooks()
             logs: ParsedLogsType = self.rcon.get_structured_logs(
                 since_min_ago=since_min
             )
@@ -324,11 +436,11 @@ class LogLoop:
         logger.info("Cleanup done")
 
     def process_hooks(self, log: StructuredLogLineWithMetaData):
-        logger.debug("Processing %s", f"{log['action']}{log['message']}")
+        logger.debug("Processing %s", f"{log['action']} | {log['message']}")
         hooks = []
         started_total = time.time()
         for action_hook, funcs in HOOKS.items():
-            if log["action"].startswith(action_hook):
+            if log["action"] == action_hook:
                 hooks += funcs
 
         for hook in hooks:
@@ -590,11 +702,13 @@ def is_player_kill(player, log):
 
 @on_tk
 def auto_ban_if_tks_right_after_connection(
-    rcon: Rcon, log: StructuredLogLineWithMetaData
+    rcon: Rcon,
+    log: StructuredLogLineWithMetaData,
+    config: BanTeamKillOnConnectUserConfig | None = None,
 ):
-    config = get_config()
-    config = config.get("BAN_TK_ON_CONNECT")
-    if not config or not config.get("enabled"):
+    if config is None:
+        config = BanTeamKillOnConnectUserConfig.load_from_db()
+    if not config or not config.enabled:
         return
 
     player_name = log["player"]
@@ -614,36 +728,33 @@ def auto_ban_if_tks_right_after_connection(
         end=500, player_search=player_name, exact_player_match=True
     )
     logger.debug("Checking TK from %s", player_name)
-    author = config.get("author_name", "Automation")
-    reason = config.get("message", "No reasons provided")
-    discord_msg = config.get("discord_webhook_message", "No message provided")
-    webhook = config.get("discord_webhook_url")
-    max_time_minute = config.get("max_time_after_connect_minutes", 5)
-    excluded_weapons = [w.lower() for w in config.get("exclude_weapons", [])]
-    ignore_after_kill = config.get("ignore_tk_after_n_kills", 1)
-    ignore_after_death = config.get("ignore_tk_after_n_death", 1)
-    whitelist_players = config.get("whitelist_players", {})
-    tk_tolerance_count = config.get("teamkill_tolerance_count", 1)
+    author = config.author_name
+    reason = config.message
+    discord_msg = config.discord_webhook_message
+    webhook = config.discord_webhook_url
+    max_time_minute = config.max_time_after_connect_minutes
+    excluded_weapons = [w.lower() for w in config.excluded_weapons]
+    ignore_after_kill = config.ignore_tk_after_n_kills
+    ignore_after_death = config.ignore_tk_after_n_deaths
+    whitelist_players = config.whitelist_players
+    tk_tolerance_count = config.teamkill_tolerance_count
 
     if player_profile:
-        if whitelist_players.get("is_vip") and player_steam_id in vips:
+        if whitelist_players.is_vip and player_steam_id in vips:
             logger.debug("Not checking player because he's VIP")
             return
 
-        if whitelist_players.get("has_at_least_n_sessions") and player_profile[
-            "sessions_count"
-        ] >= whitelist_players.get("has_at_least_n_sessions"):
+        if (
+            player_profile["sessions_count"]
+            >= whitelist_players.has_at_least_n_sessions
+        ):
             logger.debug(
                 "Not checking player because he has %s sessions",
                 player_profile["sessions_count"],
             )
             return
 
-        flags = whitelist_players.get("has_flag", [])
-        if not isinstance(flags, list):
-            flags = [flags]
-
-        for f in flags:
+        for f in whitelist_players.has_flag:
             if player_has_flag(player_profile, f):
                 logger.debug("Not checking player because he has flag %s", f)
                 return
@@ -695,10 +806,16 @@ def auto_ban_if_tks_right_after_connection(
                 logger.info(
                     "Banned player %s for TEAMKILL after connect %s", player_name, log
                 )
+
+                webhookurls: list[HttpUrl | None] | None
+                if webhook is None:
+                    webhookurls = None
+                else:
+                    webhookurls = [webhook]
                 send_to_discord_audit(
                     discord_msg.format(player=player_name),
                     by=author,
-                    webhookurl=webhook,
+                    webhookurls=webhookurls,
                 )
         elif is_player_death(player_name, log):
             death_counter += 1

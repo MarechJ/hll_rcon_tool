@@ -117,6 +117,7 @@ async function showResponse(response, command, showSuccess) {
           res.result
         )}\n\nError: ${res.error}`
       );
+      return res;
     } else if (showSuccess === true) {
       toast.success(`Done: ${command}`);
     }
@@ -147,14 +148,19 @@ async function sendAction(command, parameters) {
 
 async function _checkResult(data) {
   if (data.result) {
-    return data.result;
+    let unescaped = data.result.messages.map(ele => ele.replaceAll(/\\n/g, '\n'))
+    unescaped = unescaped.map(ele => ele.replaceAll(/\\t/g, '\t'))
+    return unescaped
   }
   return [];
 }
 
 async function getSharedMessages(namespace) {
-  return get(`get_standard_messages?message_type=${namespace}`)
+  return get(`get_standard_${namespace}_messages`)
     .then((res) => res.json())
+    .then((res) => {
+      return res;
+    })
     .then(_checkResult);
 }
 

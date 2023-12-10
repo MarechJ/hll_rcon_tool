@@ -1,7 +1,7 @@
 FROM python:3.11-slim
 
 WORKDIR /code
-RUN apt-get update -y && apt-get install -y cron logrotate git
+RUN apt-get update -y && apt-get install -y cron logrotate git procps
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 RUN pip install gunicorn

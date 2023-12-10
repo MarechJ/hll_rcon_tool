@@ -1,16 +1,20 @@
 from dateutil import parser
 from django.contrib.auth.decorators import permission_required
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
 
 from rcon import game_logs
 
 from .auth import api_csv_response, api_response, login_required
+from .decorators import require_content_type
 from .utils import _get_data
 
 
 @csrf_exempt
 @login_required()
 @permission_required("api.can_view_historical_logs", raise_exception=True)
+@require_http_methods(['POST'])
+@require_content_type()
 def get_historical_logs(request):
     data = _get_data(request)
     player_name = data.get("player_name")
@@ -70,6 +74,8 @@ def get_historical_logs(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_view_recent_logs", raise_exception=True)
+@require_http_methods(['POST'])
+@require_content_type()
 def get_recent_logs(request):
     data = _get_data(request)
     start = int(data.get("start", 0))

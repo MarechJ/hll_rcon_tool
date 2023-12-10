@@ -8,20 +8,22 @@ from django.contrib.auth.decorators import permission_required
 
 from channels.db import database_sync_to_async
 from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.models import Permission
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.hashers import make_password
-from django.contrib.auth.models import User
+from django.contrib.auth.models import Permission, User
 from django.core.exceptions import PermissionDenied
 from django.db.models.signals import post_delete, post_save
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse, QueryDict
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
+from rconweb.settings import SECRET_KEY
 
 from rcon.audit import heartbeat, ingame_mods, online_mods, set_registered_mods
 from rcon.cache_utils import ttl_cache
-from rcon.config import get_config
-from rconweb.settings import SECRET_KEY
+from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
+from .decorators import require_content_type
 from channels.security.websocket import WebsocketDenier
+
 from .models import DjangoAPIKey, SteamPlayer
 
 logger = logging.getLogger("rconweb")
@@ -105,6 +107,9 @@ class RconResponse:
     forwards_results: Any = None
 
     def to_dict(self):
+        # asdict() cannot convert a Django QueryDict properly
+        if isinstance(self.arguments, QueryDict):
+            self.arguments = self.arguments.dict()
         return asdict(self)
 
 
@@ -126,6 +131,8 @@ def api_csv_response(content, name, header):
 
 
 @csrf_exempt
+@require_http_methods(["POST"])
+@require_content_type()
 def do_login(request):
     try:
         data = json.loads(request.body)
@@ -157,6 +164,7 @@ def get_moderators_accounts():
 
 
 @csrf_exempt
+@require_http_methods(["GET"])
 def is_logged_in(request):
     is_auth = request.user.is_authenticated
     if is_auth:
@@ -178,6 +186,7 @@ def is_logged_in(request):
 
 
 @csrf_exempt
+@require_http_methods(["GET"])
 def do_logout(request):
     logout(request)
     return api_response(result=True, command="logout", failed=False)
@@ -249,9 +258,9 @@ def staff_required(request):
 
 
 def stats_login_required(func):
-    config = get_config()
+    config = RconServerSettingsUserConfig.load_from_db()
 
-    if not config.get("LOCK_STATS_API"):
+    if not config.lock_stats_api:
         return func
 
     @wraps(func)
@@ -277,6 +286,7 @@ def stats_login_required(func):
 # TODO: Login required?
 @csrf_exempt
 @permission_required("api.can_view_online_admins", raise_exception=True)
+@require_http_methods(["GET"])
 def get_online_mods(request):
     return api_response(
         command="get_online_mods",
@@ -287,6 +297,7 @@ def get_online_mods(request):
 
 @csrf_exempt
 @permission_required("api.can_view_ingame_admins", raise_exception=True)
+@require_http_methods(["GET"])
 def get_ingame_mods(request):
     return api_response(
         command="get_ingame_mods",
@@ -297,6 +308,7 @@ def get_ingame_mods(request):
 
 @csrf_exempt
 @login_required()
+@require_http_methods(["GET"])
 def get_own_user_permissions(request):
     command_name = "get_own_user_permissions"
 
