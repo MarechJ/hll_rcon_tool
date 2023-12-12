@@ -1,18 +1,20 @@
+from collections import defaultdict
+from logging import getLogger
+
+from rcon.cache_utils import invalidates, ttl_cache
 from rcon.game_logs import on_kill, on_tk
-from rcon.cache_utils import ttl_cache, invalidates
 from rcon.rcon import Rcon
 from rcon.types import MostRecentEvents, StructuredLogLineWithMetaData
-from collections import defaultdict
-
-from logging import getLogger
 
 logger = getLogger(__name__)
 
-RECENT_ACTIONS = None
+RECENT_ACTIONS: defaultdict[str, MostRecentEvents] | None = None
 
 
 @ttl_cache(60, is_method=False)
-def recent_actions(recent_actions) -> defaultdict[str, MostRecentEvents]:
+def recent_actions(
+    recent_actions: defaultdict[str, MostRecentEvents] | None
+) -> defaultdict[str, MostRecentEvents]:
     global RECENT_ACTIONS
     if not RECENT_ACTIONS:
         RECENT_ACTIONS = defaultdict(MostRecentEvents)

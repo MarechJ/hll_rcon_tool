@@ -9,6 +9,7 @@ from rcon.utils import get_server_number
 class RconServerSettingsType(TypedDict):
     short_name: str
     server_url: HttpUrl
+    discord_invite_url: HttpUrl
     lock_stats_api: bool
     unban_does_unblacklist: bool
     unblacklist_does_unban: bool
@@ -22,6 +23,7 @@ class RconServerSettingsType(TypedDict):
 class RconServerSettingsUserConfig(BaseUserConfig):
     short_name: str = Field(default=f"MyServer{get_server_number()}")
     server_url: Optional[HttpUrl] = Field(default=None)
+    discord_invite_url: Optional[HttpUrl] = Field(default=None)
 
     lock_stats_api: bool = Field(default=False)
     unban_does_unblacklist: bool = Field(default=True)
@@ -33,10 +35,10 @@ class RconServerSettingsUserConfig(BaseUserConfig):
     live_stats_refresh_seconds: int = Field(default=15)
     live_stats_refresh_current_game_seconds: int = Field(default=5)
 
-    @field_serializer("server_url")
-    def serialize_server_url(self, server_url: HttpUrl, _info):
-        if server_url is not None:
-            return str(server_url)
+    @field_serializer("server_url", "discord_invite_url")
+    def serialize_urls(self, url: HttpUrl, _info):
+        if url is not None:
+            return str(url)
         else:
             return None
 
@@ -47,6 +49,7 @@ class RconServerSettingsUserConfig(BaseUserConfig):
         validated_conf = RconServerSettingsUserConfig(
             short_name=values.get("short_name"),
             server_url=values.get("server_url"),
+            discord_invite_url=values.get("discord_invite_url"),
             lock_stats_api=values.get("lock_stats_api"),
             unban_does_unblacklist=values.get("unban_does_unblacklist"),
             unblacklist_does_unban=values.get("unblacklist_does_unban"),

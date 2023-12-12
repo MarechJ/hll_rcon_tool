@@ -1,6 +1,27 @@
 import React from "react";
 import UserSetting from ".";
 
+export const TriggerWords = ({
+  description,
+  getEndpoint,
+  setEndpoint,
+  validateEndpoint,
+  describeEndpoint,
+}) => {
+  const notes = ``;
+
+  return (
+    <UserSetting
+      description={description}
+      getEndpoint={getEndpoint}
+      setEndpoint={setEndpoint}
+      validateEndpoint={validateEndpoint}
+      describeEndpoint={describeEndpoint}
+      notes={notes}
+    />
+  );
+};
+
 export const RconConnectionSettings = ({
   description,
   getEndpoint,

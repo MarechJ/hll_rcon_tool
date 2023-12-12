@@ -1,14 +1,15 @@
 import json
 import logging
 import os
+import re
 import secrets
 from datetime import datetime, timezone
-from typing import Any, Generic, TypeVar
+from typing import Any, Generic, Iterable, TypeVar
 
 import redis
 
 from rcon.cache_utils import get_redis_pool
-from rcon.types import MapInfo
+from rcon.types import MapInfo, MessageVariable
 
 logger = logging.getLogger("rcon")
 
@@ -101,6 +102,15 @@ ALL_ROLES = (
 )
 
 ALL_ROLES_KEY_INDEX_MAP = {v: i for i, v in enumerate(ALL_ROLES)}
+
+
+def contains_triggering_word(
+    chat_message: str, trigger_words: list[str] | set[str]
+) -> bool:
+    chat_words = set(re.split("([^a-zA-Z!@])", chat_message))
+    if any(word in chat_words for word in trigger_words):
+        return True
+    return False
 
 
 def get_current_map(rcon):
@@ -586,3 +596,9 @@ def dict_differences(old: dict[Any, Any], new: dict[Any, Any]) -> dict[Any, Any]
                 diff[k] = new[k]
 
     return diff
+
+
+class SafeStringFormat(dict):
+    def __missing__(self, key):
+        logger.error("SafeStringFormat")
+        return key

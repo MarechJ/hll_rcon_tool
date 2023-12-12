@@ -52,7 +52,8 @@ import {
   TeamKillBanOnConnect,
   NameKicks,
   ExpiredVIP,
-  GTXNameChange
+  GTXNameChange,
+  TriggerWords,
 } from "./components/UserSettings/miscellaneous";
 
 const Live = ({ classes }) => {
@@ -389,8 +390,8 @@ function App() {
       ? hllNoBg
       : hll
     : themes[userTheme]
-      ? themes[userTheme]
-      : lightTheme;
+    ? themes[userTheme]
+    : lightTheme;
   const classes = useStyles();
 
   const Router = isEmbed ? BrowserRouter : HashRouter;
@@ -613,6 +614,17 @@ function App() {
                           setEndpoint="set_rcon_server_settings_config"
                           validateEndpoint="validate_rcon_server_settings_config"
                           describeEndpoint="describe_rcon_server_settings_config"
+                        />
+                      </Grid>
+                    </Route>
+                    <Route path="/settings/trigger-words">
+                      <Grid container spacing={2}>
+                        <TriggerWords
+                          description="Trigger Words Settings"
+                          getEndpoint="get_trigger_words_config"
+                          setEndpoint="set_trigger_words_config"
+                          validateEndpoint="validate_trigger_words_config"
+                          describeEndpoint="describe_trigger_words_config"
                         />
                       </Grid>
                     </Route>

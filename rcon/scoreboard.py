@@ -5,6 +5,7 @@ import pickle
 import re
 import time
 from dataclasses import dataclass
+from typing import Callable
 
 from rcon.cache_utils import get_redis_client
 from rcon.game_logs import get_historical_logs_records, get_recent_logs
@@ -12,7 +13,7 @@ from rcon.models import enter_session
 from rcon.player_history import _get_profiles, get_player_profile_by_steam_ids
 from rcon.rcon import Rcon
 from rcon.settings import SERVER_INFO
-from rcon.types import StructuredLogLineWithMetaData
+from rcon.types import StatTypes, StructuredLogLineWithMetaData
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.utils import MapsHistory
 
@@ -576,6 +577,60 @@ def get_cached_live_game_stats():
     stats = red.get("LIVE_GAME_STATS")
     if stats:
         stats = pickle.loads(stats)
+    return stats
+
+
+def get_stat_post_processor(key: StatTypes):
+    if key in (
+        StatTypes.what_is_a_break,
+        StatTypes.survivors,
+    ):
+        return lambda v: round(v / 60, 2)
+    else:
+        return lambda v: v
+
+
+def get_stat(
+    stats,
+    key: StatTypes,
+    limit: int,
+    post_process: Callable | None = None,
+    reverse: bool | None = None,
+):
+    if key in (StatTypes.u_r_still_a_man,):
+        reverse = False
+    else:
+        reverse = True
+
+    if post_process is None:
+        post_process = get_stat_post_processor(key=key)
+
+    assert post_process is not None
+
+    # logger.error(f"{stats=}")
+
+    stat_display_lookup = {
+        StatTypes.top_killers: "kills",
+        StatTypes.top_ratio: "kill_death_ratio",
+        StatTypes.top_performance: "kills_per_minute",
+        StatTypes.try_harders: "deaths_per_minute",
+        StatTypes.top_stamina: "deaths",
+        StatTypes.top_kill_streak: "kills_streak",
+        StatTypes.i_never_give_up: "deaths_without_kill_streak",
+        StatTypes.most_patient: "deaths_by_tk",
+        StatTypes.im_clumsy: "teamkills",
+        StatTypes.i_need_glasses: "teamkills_streak",
+        StatTypes.i_love_voting: "nb_vote_started",
+        StatTypes.what_is_a_break: "time_seconds",
+        StatTypes.survivors: "longest_life_secs",
+        StatTypes.u_r_still_a_man: "shortest_life_secs",
+    }
+
+    stats = sorted(
+        stats, key=lambda stat: stat[stat_display_lookup[key]], reverse=reverse
+    )[:limit]
+
+    logger.error(f"{stats=}")
     return stats
 
 

@@ -403,6 +403,15 @@ const Header = ({ classes }) => {
                         <Link
                           color="inherit"
                           component={RouterLink}
+                          to="/settings/trigger-words"
+                        >
+                          <MenuItem onClick={() => setAnchorElSettings(null)}>
+                            Trigger Words
+                          </MenuItem>
+                        </Link>
+                        <Link
+                          color="inherit"
+                          component={RouterLink}
                           to="/settings/scorebot"
                         >
                           <MenuItem onClick={() => setAnchorElSettings(null)}>
