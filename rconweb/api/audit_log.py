@@ -91,7 +91,7 @@ def get_audit_logs_autocomplete(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_view_audit_logs", raise_exception=True)
-@require_http_methods(['POST'])
+@require_http_methods(['GET'])
 @require_content_type()
 def get_audit_logs(request):
     data = _get_data(request)
