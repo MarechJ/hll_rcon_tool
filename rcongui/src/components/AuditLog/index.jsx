@@ -76,12 +76,12 @@ const AuditLog = ({ classes }) => {
   const [timeSort, setTimeSort] = React.useState("desc");
 
   const getAuditLogs = () => {
-    postData(`${process.env.REACT_APP_API_URL}get_audit_logs`, {
+    get("get_audit_logs?" + new URLSearchParams({
       usernames: usernameSearch,
       commands: commandSearch,
       parameters: paramSearch,
       time_sort: timeSort,
-    })
+    }))
       .then((res) => showResponse(res, "get_audit_logs", false))
       .then((res) => {
         setAuditLogs(fromJS(res.result));

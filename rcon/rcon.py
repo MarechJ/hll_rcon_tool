@@ -201,7 +201,7 @@ class Rcon(ServerCtl):
             try:
                 player_data: GetDetailedPlayer = future.result()
             except Exception:
-                logger.exception("Failed to get info for %s", futures[future])
+                logger.error("Failed to get info for %s", futures[future])
                 fail_count += 1
                 player_data = self._get_default_info_dict(futures[future][NAME])
             player = futures[future]
@@ -1202,11 +1202,17 @@ class Rcon(ServerCtl):
     def do_switch_player_on_death(self, player, by) -> str:
         return super().do_switch_player_on_death(player)
 
-    def do_kick(self, player, reason, by) -> str:
+    def do_kick(self, player, reason, by, steam_id_64: str | None = None) -> str:
         with invalidates(Rcon.get_players):
             res = super().do_kick(player, reason)
+
         safe_save_player_action(
-            rcon=self, player_name=player, action_type="KICK", reason=reason, by=by
+            rcon=self,
+            player_name=player,
+            action_type="KICK",
+            reason=reason,
+            by=by,
+            steam_id_64=steam_id_64,
         )
         return res
 
@@ -1232,9 +1238,24 @@ class Rcon(ServerCtl):
             )
             return res
 
-    def do_remove_temp_ban(self, ban_log) -> str:
+    def do_remove_temp_ban(
+        self, ban_log: str | None = None, steam_id_64: str | None = None
+    ) -> str:
+        """Remove a temp ban by steam ID or game server ban log"""
         with invalidates(Rcon.get_temp_bans):
-            return super().do_remove_temp_ban(ban_log)
+            if ban_log is not None:
+                return super().do_remove_temp_ban(ban_log)
+            else:
+                # If searching for a steam ID, we can only unban with the properly
+                # formatted ban log
+                bans = self.get_temp_bans()
+                for raw_ban in bans:
+                    ban = self._struct_ban(raw_ban, type_="temp")
+                    if steam_id_64 == ban["steam_id_64"]:
+                        return super().do_remove_temp_ban(ban_log=raw_ban)
+
+        # Only get here if we weren't passed a ban log, steam ID or the steam ID wasn't banned
+        raise ValueError(f"{steam_id_64} was not banned")
 
     def do_remove_perma_ban(self, ban_log) -> str:
         with invalidates(Rcon.get_perma_bans):

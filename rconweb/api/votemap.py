@@ -2,12 +2,14 @@ from logging import getLogger
 
 from django.contrib.auth.decorators import permission_required
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
 
 from rcon.user_config.vote_map import VoteMapUserConfig
 from rcon.vote_map import VoteMap
 
 from .audit_log import record_audit
 from .auth import api_response, login_required
+from .decorators import require_content_type
 from .user_settings import _audit_user_config_differences, _validate_user_config
 from .utils import _get_data
 from .views import audit
@@ -18,6 +20,7 @@ logger = getLogger(__name__)
 @csrf_exempt
 @login_required()
 @permission_required("api.can_view_votemap_config", raise_exception=True)
+@require_http_methods(['GET'])
 def get_votemap_config(request):
     command_name = "get_votemap_config"
 
@@ -36,6 +39,7 @@ def get_votemap_config(request):
 
 @csrf_exempt
 @login_required()
+@require_http_methods(['GET'])
 def describe_votemap_config(request):
     command_name = "get_votemap_config"
 
@@ -50,6 +54,8 @@ def describe_votemap_config(request):
 @login_required()
 @permission_required("api.can_change_votemap_config", raise_exception=True)
 @record_audit
+@require_http_methods(['POST'])
+@require_content_type()
 def validate_votemap_config(request):
     command_name = "validate_votemap_config"
     data = _get_data(request)
@@ -73,6 +79,8 @@ def validate_votemap_config(request):
 @login_required()
 @permission_required("api.can_change_votemap_config", raise_exception=True)
 @record_audit
+@require_http_methods(['POST'])
+@require_content_type()
 def set_votemap_config(request):
     command_name = "set_votemap_config"
     cls = VoteMapUserConfig
@@ -96,6 +104,7 @@ def set_votemap_config(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_view_votemap_status", raise_exception=True)
+@require_http_methods(['GET'])
 def get_votemap_status(request):
     v = VoteMap()
     return api_response(
@@ -113,6 +122,8 @@ def get_votemap_status(request):
 @login_required()
 @permission_required("api.can_reset_votemap_state", raise_exception=True)
 @record_audit
+@require_http_methods(['POST'])
+@require_content_type()
 def reset_votemap_state(request):
     if request.method != "POST":
         return api_response(
@@ -139,6 +150,7 @@ def reset_votemap_state(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_view_map_whitelist", raise_exception=True)
+@require_http_methods(['GET'])
 def get_map_whitelist(request):
     v = VoteMap()
     return api_response(
@@ -152,6 +164,8 @@ def get_map_whitelist(request):
 @login_required()
 @permission_required("api.can_add_map_to_whitelist", raise_exception=True)
 @record_audit
+@require_http_methods(['POST'])
+@require_content_type()
 def do_add_map_to_whitelist(request):
     data = _get_data(request)
     try:
@@ -178,6 +192,8 @@ def do_add_map_to_whitelist(request):
 @login_required()
 @permission_required("api.can_add_maps_to_whitelist", raise_exception=True)
 @record_audit
+@require_http_methods(['POST'])
+@require_content_type()
 def do_add_maps_to_whitelist(request):
     data = _get_data(request)
 
@@ -205,6 +221,8 @@ def do_add_maps_to_whitelist(request):
 @login_required()
 @permission_required("api.can_remove_map_from_whitelist", raise_exception=True)
 @record_audit
+@require_http_methods(['POST'])
+@require_content_type()
 def do_remove_map_from_whitelist(request):
     data = _get_data(request)
 
@@ -232,6 +250,8 @@ def do_remove_map_from_whitelist(request):
 @login_required()
 @permission_required("api.can_remove_maps_from_whitelist", raise_exception=True)
 @record_audit
+@require_http_methods(['POST'])
+@require_content_type()
 def do_remove_maps_from_whitelist(request):
     data = _get_data(request)
 
@@ -259,6 +279,8 @@ def do_remove_maps_from_whitelist(request):
 @login_required()
 @permission_required("api.can_reset_map_whitelist", raise_exception=True)
 @record_audit
+@require_http_methods(['POST'])
+@require_content_type()
 def do_reset_map_whitelist(request):
     v = VoteMap()
     audit("do_reset_map_whitelist", request, {})
@@ -275,6 +297,8 @@ def do_reset_map_whitelist(request):
 @login_required()
 @permission_required("api.can_set_map_whitelist", raise_exception=True)
 @record_audit
+@require_http_methods(['POST'])
+@require_content_type()
 def do_set_map_whitelist(request):
     data = _get_data(request)
 

@@ -6,6 +6,7 @@ from dateutil import parser
 from django.contrib.auth.decorators import permission_required
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
 
 from rcon import player_history
 from rcon.commands import CommandFailedError
@@ -23,6 +24,7 @@ from rcon.utils import MapsHistory
 
 from .audit_log import record_audit
 from .auth import api_response, login_required, stats_login_required
+from .decorators import require_content_type
 from .utils import _get_data
 
 logger = logging.getLogger("rconweb")
@@ -30,6 +32,7 @@ logger = logging.getLogger("rconweb")
 
 @csrf_exempt
 @stats_login_required
+@require_http_methods(['GET'])
 def get_previous_map(request):
     command_name = "get_previous_map"
     try:
@@ -48,9 +51,9 @@ def get_previous_map(request):
         return api_response(result=None, command=command_name, failed=True, error=str(e))
 
 
-
 @csrf_exempt
 @stats_login_required
+@require_http_methods(['GET'])
 def get_map_history(request):
     data = _get_data(request)
     res = MapsHistory()[:]
@@ -75,6 +78,7 @@ def get_map_history(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_view_player_profile", raise_exception=True)
+@require_http_methods(['GET'])
 def get_player(request):
     data = _get_data(request)
     res = {}
@@ -108,6 +112,8 @@ def get_player(request):
 @login_required()
 @permission_required("api.can_flag_player", raise_exception=True)
 @record_audit
+@require_http_methods(['POST'])
+@require_content_type()
 def flag_player(request):
     data = _get_data(request)
     res = None
@@ -141,6 +147,8 @@ def flag_player(request):
 @login_required()
 @permission_required("api.can_unflag_player", raise_exception=True)
 @record_audit
+@require_http_methods(['POST'])
+@require_content_type()
 def unflag_player(request):
     # Note is this really not restful
     data = _get_data(request)
@@ -167,6 +175,8 @@ def unflag_player(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_view_player_history", raise_exception=True)
+@require_http_methods(['POST'])
+@require_content_type()
 def players_history(request):
     try:
         data = json.loads(request.body)
@@ -215,6 +225,7 @@ def players_history(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_view_player_messages", raise_exception=True)
+@require_http_methods(['GET'])
 def get_player_messages(request):
     data = _get_data(request)
     res = None
@@ -238,6 +249,7 @@ def get_player_messages(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_view_player_comments", raise_exception=True)
+@require_http_methods(['GET'])
 def get_player_comment(request):
     data = _get_data(request)
     res = None
@@ -261,6 +273,8 @@ def get_player_comment(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_add_player_comments", raise_exception=True)
+@require_http_methods(['POST'])
+@require_content_type()
 @record_audit
 def post_player_comment(request):
     try:

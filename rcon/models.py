@@ -8,8 +8,8 @@ from typing import Any, Generator, List, Optional
 import pydantic
 from sqlalchemy import TIMESTAMP, ForeignKey, String, create_engine, text
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.exc import InvalidRequestError, ProgrammingError
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import (
     DeclarativeBase,
     Mapped,
@@ -149,7 +149,7 @@ class PlayerSteamID(Base):
                 :limit_sessions
             ],
             "sessions_count": len(self.sessions),
-            "total_playtime_seconds": self.get_current_playtime_seconds(),
+            "total_playtime_seconds": self.get_total_playtime_seconds(),
             "current_playtime_seconds": self.get_current_playtime_seconds(),
             "received_actions": [action.to_dict() for action in self.received_actions],
             "penalty_count": self.get_penalty_count(),

@@ -18,23 +18,6 @@ class SteamPlayerInline(admin.StackedInline):
     verbose_name_plural = "steamid"
 
 
-class DjangoAPIKeyInline(admin.StackedInline):
-    model = DjangoAPIKey
-    can_delete = True
-    verbose_name_plural = "API Keys"
-
-    show_change_link = True
-
-    extra = 0
-    readonly_fields = ["date_created", "date_modified"]
-
-
-# Define a new User admin
-class UserAdmin(BaseUserAdmin):
-    inlines = (SteamPlayerInline, DjangoAPIKeyInline)
-    # inlines = [SteamPlayerInline]
-
-
 class DjangoAPIKeyAdminForm(forms.ModelForm):
     class Meta:
         model = DjangoAPIKey
@@ -52,15 +35,29 @@ class DjangoAPIKeyAdminForm(forms.ModelForm):
         return self.cleaned_data["api_key"]
 
 
+class DjangoAPIKeyInline(admin.StackedInline):
+    model = DjangoAPIKey
+    form = DjangoAPIKeyAdminForm
+
+    can_delete = True
+    verbose_name_plural = "API Keys"
+
+    show_change_link = True
+
+    extra = 0
+    readonly_fields = ["date_created", "date_modified"]
+
+
+# Define a new User admin
+class UserAdmin(BaseUserAdmin):
+    inlines = (SteamPlayerInline, DjangoAPIKeyInline)
+    # inlines = [SteamPlayerInline]
+
+
 class DjangoAPIKeyAdmin(admin.ModelAdmin):
     list_display = ("user", "api_key", "date_created", "date_modified", "notes")
     list_filter = ("user",)
     search_fields = ("notes",)
-
-    def save_model(self, request, obj, form, change) -> None:
-        # If we don't include the salt, the hasher generates its own
-        obj.api_key = make_password(obj.api_key, salt=SECRET_KEY)
-        return super().save_model(request, obj, form, change)
 
     def get_form(self, request, obj=None, **kwargs):
         form = super().get_form(request, obj, **kwargs)

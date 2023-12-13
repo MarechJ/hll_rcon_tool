@@ -53,12 +53,13 @@ const Status = ({
             onClose={handleClose}
           >
             {serverList.map((s) => {
-              let link = `${window.location.protocol}//${window.location.hostname
-                }:${s.get("port")}${window.location.pathname}${window.location.hash
-                }`;
+              let link = ""
               if (s.get("link")) {
-                link = `${s.get("link")}${window.location.pathname}${window.location.hash
-                  }`;
+                link = new URL(`${s.get('link')}${window.location.hash}`)
+              } else {
+                // Everyone should be setting their server URL, but for locally hosted instances just swap out the port
+                const regex = /:(\d+)/gm;
+                link = new URL(window.location.href.replace(regex, `:${s.get('port')}`))
               }
               return (
                 <MenuItem onClick={handleClose}>

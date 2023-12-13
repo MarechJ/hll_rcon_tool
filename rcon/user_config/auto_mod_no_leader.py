@@ -10,9 +10,6 @@ PUNISH_MESSAGE = "Your squad ({squad_name}) must have an officer.\nYou're being 
 KICK_MESSAGE = "Your Squad ({squad_name}) must have an officer.\nYour grace period of {kick_grace_period}s has passed.\nYou failed to comply with the previous warnings."
 
 
-WHITESPACE_NAMES_MESSAGE = "Your name contains a whitespace at the end (because it is truncated as it is too long). Because of a bug in the game, you might suffer auto-moderation actions as a false-positive. Please change your name and restart your game to avoid this."
-
-
 class AutoModNoLeaderType(TypedDict):
     enabled: bool
     dry_run: bool
@@ -20,8 +17,6 @@ class AutoModNoLeaderType(TypedDict):
 
     number_of_notes: int
     notes_interval_seconds: int
-
-    whitespace_message: str
 
     number_of_warnings: int
     warning_message: str
@@ -50,8 +45,6 @@ class AutoModNoLeaderUserConfig(BaseUserConfig):
 
     number_of_notes: int = Field(ge=0, default=1)
     notes_interval_seconds: int = Field(ge=1, default=10)
-
-    whitespace_message: str = Field(default=WHITESPACE_NAMES_MESSAGE)
 
     number_of_warnings: int = Field(ge=-1, default=2)
     warning_message: str = Field(default=WARNING_MESSAGE)
@@ -98,7 +91,6 @@ class AutoModNoLeaderUserConfig(BaseUserConfig):
             discord_webhook_url=values.get("discord_webhook_url"),
             number_of_notes=values.get("number_of_notes"),
             notes_interval_seconds=values.get("notes_interval_seconds"),
-            whitespace_message=values.get("whitespace_message"),
             number_of_warnings=values.get("number_of_warnings"),
             warning_message=values.get("warning_message"),
             warning_interval_seconds=values.get("warning_interval_seconds"),
