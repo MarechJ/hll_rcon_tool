@@ -368,9 +368,9 @@ def update_player_steaminfo_on_connect(rcon, struct_log, _, steam_id_64):
         sess.commit()
 
 
-pendingTimers: dict[str, list[tuple[RconInvalidNameActionType, Timer]]] = defaultdict(
-    list
-)
+pendingTimers: dict[
+    str, list[tuple[RconInvalidNameActionType | None, Timer]]
+] = defaultdict(list)
 
 
 @on_connected
@@ -387,29 +387,30 @@ def notify_invalid_names(rcon: Rcon, _, name: str, steam_id_64: str):
         return
 
     action = config.action
+    action_value = action.value if action else None
 
     logger.info(
         "Player '%s' (%s) has an invalid name (ends in whitespace or multi byte unicode code point), action=%s",
         name,
         steam_id_64,
-        action.value,
+        action_value,
     )
 
     try:
         send_to_discord_audit(
             message=config.audit_message.format_map(
                 DefaultStringFormat(
-                    name=name, steam_id_64=steam_id_64, action=action.value
+                    name=name, steam_id_64=steam_id_64, action=action_value
                 )
             )
         )
     except Exception:
         logger.exception(
-            "Unable to send %s %s (%s) to audit", action.value, name, steam_id_64
+            "Unable to send %s %s (%s) to audit", action_value, name, steam_id_64
         )
 
     def notify_whitespace_player(action: RconInvalidNameActionType):
-        if action == RconInvalidNameActionType.none:
+        if action is None:
             return
         elif action == RconInvalidNameActionType.kick:
             try:
@@ -457,7 +458,7 @@ def notify_invalid_names(rcon: Rcon, _, name: str, steam_id_64: str):
                 )
 
     def notify_pineapple_player(action: RconInvalidNameActionType):
-        if action == RconInvalidNameActionType.none:
+        if action is None:
             return
         elif action == RconInvalidNameActionType.kick:
             try:
@@ -540,7 +541,7 @@ def cleanup_pending_timers(rcon: Rcon, struct_log, name, steam_id_64: str):
     Kicking players is non functional (RCON bug) so they're temp banned/pardoned
     Temporary banning players doesn't create a timer
     """
-    pts: list[tuple[RconInvalidNameActionType, Timer]] = pendingTimers.pop(
+    pts: list[tuple[RconInvalidNameActionType | None, Timer]] = pendingTimers.pop(
         steam_id_64, []
     )
     for action, pt in pts:
