@@ -33,10 +33,11 @@ from rcon.player_history import (
     save_start_player_session,
 )
 from rcon.rcon import Rcon, StructuredLogLineType
-from rcon.recent_actions import recent_actions
+from rcon.recent_actions import get_recent_actions
 from rcon.steam_utils import get_player_bans, get_steam_profile, update_db_player_info
 from rcon.types import (
     MessageVariable,
+    MostRecentEvents,
     PlayerFlagType,
     RconInvalidNameActionType,
     SteamBansType,
@@ -95,12 +96,13 @@ def trigger_words(rcon: Rcon, struct_log: StructuredLogLineType):
         logger.debug("Trigger words are disabled")
         return
 
-    event_cache = recent_actions(None)
+    event_cache = get_recent_actions(None)
     steam_id_64: str = struct_log["steam_id_64_1"]
     if steam_id_64 is None:
         return
 
     player_1_cache = event_cache[steam_id_64]
+
     bracket_re = re.compile(r"\{(.*?)\}")
     for trigger in config.trigger_words:
         if not contains_triggering_word(chat_message, trigger.words):
@@ -111,15 +113,17 @@ def trigger_words(rcon: Rcon, struct_log: StructuredLogLineType):
         formatted_message = format_message_string(
             trigger.message,
             populated_variables=populated_variables,
+            # TODO: make an enum for context passed variables
             context={
-                MessageVariable.last_victim.value: player_1_cache.last_victim,
-                MessageVariable.last_nemesis.value: player_1_cache.last_nemesis,
-                MessageVariable.last_victim_weapon.value: player_1_cache.last_victim_weapon,
-                MessageVariable.last_nemesis_weapon.value: player_1_cache.last_nemesis_weapon,
-                MessageVariable.last_tk_victim.value: player_1_cache.last_tk_victim,
-                MessageVariable.last_tk_victim_weapon.value: player_1_cache.last_tk_victim_weapon,
-                MessageVariable.last_nemesis.value: player_1_cache.last_nemesis,
-                MessageVariable.last_nemesis_weapon.value: player_1_cache.last_nemesis_weapon,
+                "last_victim_steam_id_64": player_1_cache.last_victim_steam_id_64,
+                "last_victim_name": player_1_cache.last_victim_name,
+                "last_victim_weapon": player_1_cache.last_victim_weapon,
+                "last_nemesis_steam_id_64": player_1_cache.last_nemesis_steam_id_64,
+                "last_nemesis_name": player_1_cache.last_nemesis_name,
+                "last_nemesis_weapon": player_1_cache.last_nemesis_weapon,
+                "last_tk_victim_steam_id_64": player_1_cache.last_tk_victim_steam_id_64,
+                "last_tk_victim_name": player_1_cache.last_tk_victim_name,
+                "last_tk_victim_weapon": player_1_cache.last_tk_victim_weapon,
             },
         )
         rcon.do_message_player(

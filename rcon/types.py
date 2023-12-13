@@ -41,18 +41,6 @@ class MessageVariable(enum.Enum):
     next_map = "next_map"
     map_rotation = "map_rotation"
 
-    # vote map stuff
-
-    # MostRecentEvents
-    last_victim = "last_victim"
-    last_nemesis = "last_nemesis"
-    last_victim_weapon = "last_victim_weapon"
-    last_nemesis_weapon = "last_nemesis_weapon"
-    last_tk_victim = "last_tk_victim"
-    last_tk_victim_weapon = "last_tk_victim_weapon"
-    last_tk_nemesis = "last_tk_nemesis"
-    last_tk_nemesis_weapon = "last_tk_nemesis_weapon"
-
     # game stats
     top_kills_player_name = "top_kills_player_name"
     top_kills_player_score = "top_kills_player_score"
@@ -81,20 +69,43 @@ class MessageVariable(enum.Enum):
     # top_support_player_score = "best_support_player_score"
 
     # context passed:
-    player_name = "player_name"
-    player_steam_id_64 = "player_steam_id_64"
+
+    # player_name = "player_name"
+    # player_steam_id_64 = "player_steam_id_64"
+
+    # vote map stuff
+
+    # MostRecentEvents
+    # last_victim_steam_id_64 = "last_victim_steam_id_64"
+    # last_victim_name = "last_victim_name"
+    # last_nemesis_steam_id_64 = "last_nemesis_steam_id_64"
+    # last_nemesis_name = "last_nemesis_name"
+    # last_victim_weapon = "last_victim_weapon"
+    # last_nemesis_weapon = "last_nemesis_weapon"
+    # last_tk_victim_steam_id_64 = "last_tk_victim_steam_id_64"
+    # last_tk_victim_name = "last_tk_victim_name"
+    # last_tk_victim_weapon = "last_tk_victim_weapon"
+    # last_tk_nemesis_steam_id_64 = "last_tk_nemesis_steam_id_64"
+    # last_tk_nemesis_name = "last_tk_nemesis_name"1
+    # last_tk_nemesis_weapon = "last_tk_nemesis_weapon"
 
 
 @dataclass
 class MostRecentEvents:
+    # TODO: including the names is probably dumb because we can look them up
+    # this is just a quick bandaid for testing
     player_name: str | None = None
-    last_victim: str | None = None
-    last_nemesis: str | None = None
+    last_victim_steam_id_64: str | None = None
+    last_victim_name: str | None = None
+    last_nemesis_steam_id_64: str | None = None
+    last_nemesis_name: str | None = None
     last_victim_weapon: str | None = None
     last_nemesis_weapon: str | None = None
-    last_tk_victim: str | None = None
+    last_tk_victim_steam_id_64: str | None = None
+    last_tk_victim_name: str | None = None
     last_tk_victim_weapon: str | None = None
-    last_tk_nemesis: str | None = None
+    last_tk_nemesis_steam_id_64: str | None = None
+    last_tk_nemesis_name: str | None = None
     last_tk_nemesis_weapon: str | None = None
 
 
