@@ -1,3 +1,4 @@
+import inspect
 import json
 import logging
 import os
@@ -599,6 +600,17 @@ def dict_differences(old: dict[Any, Any], new: dict[Any, Any]) -> dict[Any, Any]
 
 
 class SafeStringFormat(dict):
+    def __init__(self, *args, **kwargs):
+        logger.info(f"SafeStringFormat {args=} {kwargs=}")
+        super().__init__(*args, **kwargs)
+
     def __missing__(self, key):
-        logger.error("SafeStringFormat")
-        return key
+        called_from = inspect.stack()[1]
+        logger.error(
+            "SafeStringFormat key='%s' not found, called from %s, line number: %s, context=%s",
+            key,
+            called_from.filename,
+            called_from.lineno,
+            called_from.code_context,
+        )
+        return f"{{{key}}}"
