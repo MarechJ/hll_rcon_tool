@@ -97,7 +97,7 @@ def trigger_words(rcon: Rcon, struct_log: StructuredLogLineType):
         if not contains_triggering_word(chat_message, trigger.words):
             continue
 
-        message_vars = re.findall(bracket_re, trigger.message)
+        message_vars: list[str] = re.findall(bracket_re, trigger.message)
         populated_variables = populate_message_variables(vars=message_vars)
         formatted_message = format_message_string(
             trigger.message,

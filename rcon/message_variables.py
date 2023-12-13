@@ -6,7 +6,7 @@ from rcon.audit import ingame_mods, online_mods
 from rcon.rcon import Rcon
 from rcon.scoreboard import get_cached_live_game_stats, get_stat
 from rcon.settings import SERVER_INFO
-from rcon.types import MessageVariable, StatTypes
+from rcon.types import CachedLiveGameStats, MessageVariable, StatTypes
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.webhooks import AdminPingWebhooksUserConfig
 from rcon.utils import SHORT_HUMAN_MAP_NAMES, SafeStringFormat
@@ -27,8 +27,9 @@ def _get_rcon():
 def populate_message_variables(
     vars: Iterable[str],
 ) -> dict[MessageVariable, str | None]:
+    """Return globally available info for message formatting"""
     populated_variables: dict[MessageVariable, str | None] = {}
-    rcon = Rcon(SERVER_INFO)
+    rcon = _get_rcon()
 
     message_variable_to_lookup = {
         MessageVariable.server_name: rcon.get_name,
@@ -39,15 +40,28 @@ def populate_message_variables(
         MessageVariable.num_ingame_mods: lambda: str(len(ingame_mods())),
         MessageVariable.next_map: _next_map,
         MessageVariable.map_rotation: _map_rotation,
-        MessageVariable.top_kills_player_name: _top_kills_player_name,
-        MessageVariable.top_kills_player_score: _top_kills_player_score,
+        MessageVariable.top_kills_player_name: lambda: _generic_score_ties(
+            stat_key=StatTypes.top_killers, tie_key="kills", result_key="player"
+        ),
+        MessageVariable.top_kills_player_score: lambda: _generic_score_top_only(
+            stat_key=StatTypes.top_killers, result_key="kills"
+        ),
+        MessageVariable.top_kill_streak_player_name: lambda: _generic_score_ties(
+            stat_key=StatTypes.top_kill_streak,
+            tie_key="kills_streak",
+            result_key="player",
+        ),
+        MessageVariable.top_kill_streak_player_score: lambda: _generic_score_top_only(
+            stat_key=StatTypes.top_kill_streak, result_key="kills_streak"
+        ),
     }
 
     for raw_var in vars:
         try:
             var = MessageVariable(raw_var)
         except ValueError:
-            logger.error("%s is not a valid MessageVariable", raw_var)
+            # Not logging this because otherwise any context passed variables would
+            # clutter the logs every single message
             continue
 
         populated_variables[var] = message_variable_to_lookup[var]()
@@ -57,20 +71,20 @@ def populate_message_variables(
 
 def format_message_string(
     format_str: str,
-    populated_variables: dict[MessageVariable, str | None],
+    populated_variables: dict[MessageVariable, str | None] | None = None,
     context: dict[str, Any] | None = None,
 ) -> str:
+    """Safely fill format_str"""
     if context is None:
         context = {}
 
+    if populated_variables is None:
+        populated_variables = {}
+
     combined = {k.value: v for k, v in populated_variables.items()} | context
 
-    logger.info(f"{combined=}")
-    logger.error(f"{format_str=}")
-
-    res = format_str.format_map(SafeStringFormat(combined))
-    logger.error(f"{res=}")
-    return res
+    formatted_str = format_str.format_map(SafeStringFormat(**combined))
+    return formatted_str
 
 
 def _server_short_name(config: RconServerSettingsUserConfig | None = None):
@@ -85,7 +99,7 @@ def _discord_invite_url(config: RconServerSettingsUserConfig | None = None):
     return (
         str(config.discord_invite_url)
         if config.discord_invite_url
-        else config.discord_invite_url
+        else "Discord invite URL not set"
     )
 
 
@@ -110,18 +124,28 @@ def _map_rotation(rcon: Rcon | None = None):
     return ", ".join(map_names)
 
 
-def _top_kills_player_name(stats=None, num_ties=3):
+def _generic_score_ties(
+    stat_key: StatTypes,
+    tie_key: str,
+    result_key: str,
+    stats: CachedLiveGameStats | None = None,
+    num_ties=3,
+):
     if stats is None:
         stats = get_cached_live_game_stats()
 
-    metric_stats = get_stat(stats["stats"], key=StatTypes.top_killers, limit=num_ties)
+    metric_stats = get_stat(stats["stats"], key=stat_key, limit=num_ties)
     collect_ties = takewhile(
-        lambda x: x["kills"] == metric_stats[0]["kills"], metric_stats
+        lambda x: x[tie_key] == metric_stats[0][tie_key], metric_stats
     )
-    return ", ".join(p["player"] for p in collect_ties)
+    return ", ".join(p[result_key] for p in collect_ties)
 
 
-def _top_kills_player_score(stats=None):
+def _generic_score_top_only(
+    stat_key: StatTypes,
+    result_key: str,
+    stats: CachedLiveGameStats | None = None,
+):
     stats = get_cached_live_game_stats()
-    metric_stats = get_stat(stats["stats"], key=StatTypes.top_killers, limit=1)
-    return str(metric_stats[0]["kills"])
+    metric_stats = get_stat(stats["stats"], key=stat_key, limit=1)
+    return str(metric_stats[0][result_key])

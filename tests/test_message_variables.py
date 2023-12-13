@@ -28,12 +28,21 @@ def make_mock_stat(player: str, steam_id_64: str, *args, **kwargs):
     }
 
 
-sample_stats = {
+test_populate_top_kills_stats = {
     "stats": [
         make_mock_stat("test1", "1", kills=1),
         make_mock_stat("test2", "2", kills=2),
         make_mock_stat("test3", "3", kills=3),
         make_mock_stat("test4", "4", kills=3),
+    ]
+}
+
+test_populate_top_kill_streaks_stats = {
+    "stats": [
+        make_mock_stat("test1", "1", kills_streak=1),
+        make_mock_stat("test2", "2", kills_streak=2),
+        make_mock_stat("test3", "3", kills_streak=3),
+        make_mock_stat("test4", "4", kills_streak=3),
     ]
 }
 
@@ -123,7 +132,26 @@ def test_populate_map_rotation(monkeypatch, rot, expected):
 )
 def test_populate_top_kills(monkeypatch, var, expected):
     monkeypatch.setattr(
-        rcon.message_variables, "get_cached_live_game_stats", lambda: sample_stats
+        rcon.message_variables,
+        "get_cached_live_game_stats",
+        lambda: test_populate_top_kills_stats,
+    )
+
+    assert populate_message_variables([var.value]).get(var) == expected
+
+
+@pytest.mark.parametrize(
+    "var, expected",
+    [
+        (MessageVariable.top_kill_streak_player_name, "test3, test4"),
+        (MessageVariable.top_kill_streak_player_score, "3"),
+    ],
+)
+def test_populate_top_kill_streaks(monkeypatch, var, expected):
+    monkeypatch.setattr(
+        rcon.message_variables,
+        "get_cached_live_game_stats",
+        lambda: test_populate_top_kill_streaks_stats,
     )
 
     assert populate_message_variables([var.value]).get(var) == expected

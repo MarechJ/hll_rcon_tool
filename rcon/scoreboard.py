@@ -13,7 +13,12 @@ from rcon.models import enter_session
 from rcon.player_history import _get_profiles, get_player_profile_by_steam_ids
 from rcon.rcon import Rcon
 from rcon.settings import SERVER_INFO
-from rcon.types import StatTypes, StructuredLogLineWithMetaData
+from rcon.types import (
+    CachedLiveGameStats,
+    PlayerStatsType,
+    StatTypes,
+    StructuredLogLineWithMetaData,
+)
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.utils import MapsHistory
 
@@ -572,7 +577,7 @@ def current_game_stats():
     return stats
 
 
-def get_cached_live_game_stats():
+def get_cached_live_game_stats() -> CachedLiveGameStats:
     red = get_redis_client()
     stats = red.get("LIVE_GAME_STATS")
     if stats:
@@ -596,7 +601,7 @@ def get_stat(
     limit: int,
     post_process: Callable | None = None,
     reverse: bool | None = None,
-):
+) -> list[PlayerStatsType]:
     if key in (StatTypes.u_r_still_a_man,):
         reverse = False
     else:

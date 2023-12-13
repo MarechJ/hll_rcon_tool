@@ -34,6 +34,8 @@ class MessageVariable(enum.Enum):
     next_map = "next_map"
     map_rotation = "map_rotation"
 
+    # vote map stuff
+
     # MostRecentEvents
     last_victim = "last_victim"
     last_nemesis = "last_nemesis"
@@ -47,8 +49,8 @@ class MessageVariable(enum.Enum):
     # game stats
     top_kills_player_name = "top_kills_player_name"
     top_kills_player_score = "top_kills_player_score"
-    # top_kill_streak_player_name = ""
-    # top_kill_streak_player_score = ""
+    top_kill_streak_player_name = "top_kill_streak_player_name"
+    top_kill_streak_player_score = "top_kill_streak_player_score"
     # top_kill_death_ratio_player_name = ""
     # top_kill_death_ratio_score = ""
     # top_kills_per_min_player_name = ""
@@ -294,6 +296,12 @@ class PlayerStat(TypedDict):
     offense: int
     defense: int
     support: int
+
+
+class CachedLiveGameStats(TypedDict):
+    snapshot_timestamp: datetime.datetime
+    stats: PlayerStatsType
+    refresh_interval_sec: int
 
 
 class MapInfo(TypedDict):
