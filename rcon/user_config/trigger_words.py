@@ -1,15 +1,13 @@
-from typing import TypedDict
 import enum
-from pydantic import Field, BaseModel, field_validator
 import re
-from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config, _listType
+from typing import TypedDict
 
+from pydantic import BaseModel, Field, field_validator
 
-# Have to inherit from str to allow for JSON serialization w/ pydantic
-class MessageVariables(str, enum.Enum):
-    vip_status = "vip_status"
-    vip_expiration = "vip_expiration"
-    # TODO: define all the other variables people can use in a message
+from rcon.types import MessageVariable, MessageVariableContext
+from rcon.user_config.utils import BaseUserConfig, _listType, key_check, set_user_config
+
+MESSAGE_VAR_RE = re.compile(r"\{(.*?)\}")
 
 
 class TriggerWordType(TypedDict):
@@ -29,10 +27,14 @@ class TriggerWord(BaseModel):
     @field_validator("message")
     @classmethod
     def only_valid_variables(cls, v: str) -> str:
-        bracket_re = re.compile(r"\{(.*?)\}")
-        if match := re.match(bracket_re, v):
+        match = re.match(MESSAGE_VAR_RE, v)
+        if match := re.match(MESSAGE_VAR_RE, v):
             for var in match.groups():
-                MessageVariables(var)
+                # Has to either be a valid MessageVariable or MessageVariableContext
+                try:
+                    MessageVariable(var)
+                except ValueError:
+                    MessageVariableContext(var)
 
         return v
 

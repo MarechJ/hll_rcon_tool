@@ -30,6 +30,8 @@ class StatTypes(str, enum.Enum):
 
 
 class MessageVariable(enum.Enum):
+    """Globally available message variables"""
+
     vip_expiration = "vip_expiration"
     server_name = "server_name"
     server_short_name = "server_short_name"
@@ -41,11 +43,15 @@ class MessageVariable(enum.Enum):
     next_map = "next_map"
     map_rotation = "map_rotation"
 
+    # TODO: vote map stuff
+
     # game stats
     top_kills_player_name = "top_kills_player_name"
     top_kills_player_score = "top_kills_player_score"
     top_kill_streak_player_name = "top_kill_streak_player_name"
     top_kill_streak_player_score = "top_kill_streak_player_score"
+
+    # TODO: remaining stats
     # top_kill_death_ratio_player_name = ""
     # top_kill_death_ratio_score = ""
     # top_kills_per_min_player_name = ""
@@ -68,26 +74,26 @@ class MessageVariable(enum.Enum):
     # top_support_player_name = "best_support_player_name"
     # top_support_player_score = "best_support_player_score"
 
-    # context passed:
 
-    # player_name = "player_name"
-    # player_steam_id_64 = "player_steam_id_64"
+class MessageVariableContext(enum.Enum):
+    """Available message variables if context passed"""
 
-    # vote map stuff
+    player_name = "player_name"
+    player_steam_id_64 = "player_steam_id_64"
 
     # MostRecentEvents
-    # last_victim_steam_id_64 = "last_victim_steam_id_64"
-    # last_victim_name = "last_victim_name"
-    # last_nemesis_steam_id_64 = "last_nemesis_steam_id_64"
-    # last_nemesis_name = "last_nemesis_name"
-    # last_victim_weapon = "last_victim_weapon"
-    # last_nemesis_weapon = "last_nemesis_weapon"
-    # last_tk_victim_steam_id_64 = "last_tk_victim_steam_id_64"
-    # last_tk_victim_name = "last_tk_victim_name"
-    # last_tk_victim_weapon = "last_tk_victim_weapon"
-    # last_tk_nemesis_steam_id_64 = "last_tk_nemesis_steam_id_64"
-    # last_tk_nemesis_name = "last_tk_nemesis_name"1
-    # last_tk_nemesis_weapon = "last_tk_nemesis_weapon"
+    last_victim_steam_id_64 = "last_victim_steam_id_64"
+    last_victim_name = "last_victim_name"
+    last_nemesis_steam_id_64 = "last_nemesis_steam_id_64"
+    last_nemesis_name = "last_nemesis_name"
+    last_victim_weapon = "last_victim_weapon"
+    last_nemesis_weapon = "last_nemesis_weapon"
+    last_tk_victim_steam_id_64 = "last_tk_victim_steam_id_64"
+    last_tk_victim_name = "last_tk_victim_name"
+    last_tk_victim_weapon = "last_tk_victim_weapon"
+    last_tk_nemesis_steam_id_64 = "last_tk_nemesis_steam_id_64"
+    last_tk_nemesis_name = "last_tk_nemesis_name"
+    last_tk_nemesis_weapon = "last_tk_nemesis_weapon"
 
 
 @dataclass
