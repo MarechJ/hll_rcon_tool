@@ -5,7 +5,6 @@ from typing import List, Optional, TypedDict
 
 # Have to inherit from str to allow for JSON serialization w/ pydantic
 class RconInvalidNameActionType(str, enum.Enum):
-    none = None
     warn = "WARN"
     kick = "KICK"
     ban = "BAN"

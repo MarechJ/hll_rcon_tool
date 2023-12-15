@@ -475,7 +475,7 @@ def get_connection_info(request):
         {
             "name": ctl.get_name(),
             "port": os.getenv("RCONWEB_PORT"),
-            "link": str(config.server_url),
+            "link": str(config.server_url) if config.server_url else config.server_url,
             "server_number": int(get_server_number()),
         },
         failed=False,

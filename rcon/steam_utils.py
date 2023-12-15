@@ -14,11 +14,19 @@ from rcon.user_config.steam import SteamUserConfig
 
 logger = logging.getLogger(__name__)
 
+last_steam_api_key_warning = datetime.datetime.now()
+
 
 def get_steam_api_key() -> str | None:
+    global last_steam_api_key_warning
+
     config = SteamUserConfig.load_from_db()
     if config.api_key is None or config.api_key == "":
-        logger.warning("Steam API key is not set some features will be disabled.")
+        timestamp = datetime.datetime.now()
+        # Only log once every 5 minutes or it is super spammy
+        if (timestamp - last_steam_api_key_warning).total_seconds() > 300:
+            logger.warning("Steam API key is not set some features will be disabled.")
+            last_steam_api_key_warning = timestamp
 
     return config.api_key
 
@@ -143,7 +151,8 @@ def get_players_have_bans(steamd_ids: List) -> Mapping[str, SteamBanResultType]:
 
     result = dict.fromkeys(steamd_ids, {"steam_bans": None})
     if player_bans is None:
-        logger.warning("Unable to read bans for %s" % steamd_ids)
+        if steamd_ids:
+            logger.warning("Unable to read bans for %s" % steamd_ids)
         return result
 
     for bans in player_bans:

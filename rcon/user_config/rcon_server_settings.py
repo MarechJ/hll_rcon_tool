@@ -58,16 +58,19 @@ class RconServerSettingsType(TypedDict):
     invalid_names: InvalidNameType
 
 
-def upper_case_action(v):
+def upper_case_action(v: str | None):
     """Allow users to enter actions in any case"""
-    return RconInvalidNameActionType(v.upper())
+    if v:
+        return RconInvalidNameActionType(v.upper())
+    else:
+        return v
 
 
 class InvalidName(BaseModel):
     enabled: bool = Field(default=False)
     action: Annotated[
         RconInvalidNameActionType, BeforeValidator(upper_case_action)
-    ] = Field(default=RconInvalidNameActionType.none)
+    ] | None = Field(default=None)
     whitespace_name_player_message: str = Field(default=WHITESPACE_NAME_PLAYER_MESSAGE)
     pineapple_name_player_message: str = Field(default=PINEAPPLE_NAME_PLAYER_MESSAGE)
     audit_message: str = Field(default=INVALID_NAME_AUDIT_MESSAGE)
