@@ -5,7 +5,7 @@ redis==5.0.1
 sqlalchemy==2.0.23
 simplejson==3.19.2
 psycopg2-binary
-sentry-sdk[django]==1.38.0
+sentry-sdk[django]==1.39.1
 python-dateutil==2.8.2
 git+https://github.com/cemathey/python-discord-webhook.git@4d79ab09526b96a2cc86c50ca1c609d7b644c6c7
 requests==2.31.0
