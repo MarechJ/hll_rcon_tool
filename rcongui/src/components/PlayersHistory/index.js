@@ -509,17 +509,19 @@ class PlayersHistory extends React.Component {
     return this.deleteVip(player.get("steam_id_64"), forwardVIP);
   }
   onAddToWatchList(player) {
+    const playerName = player.get("names")?.get(0)?.get("name")
     return this.setDoConfirmPlayer({
-      player: player.get("names").get(0).get("name"),
+      player: playerName,
       actionType: "watchlist",
       steam_id_64: player.get("steam_id_64"),
     });
   }
 
   onRemoveFromWatchList(player) {
+    const playerName = player.get("names")?.get(0)?.get("name")
     return this.removeFromWatchList(
       player.get("steam_id_64"),
-      player.get("names").get(0).get("name")
+      playerName
     );
   }
 
