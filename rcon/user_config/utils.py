@@ -7,6 +7,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from rcon.cache_utils import invalidates, ttl_cache
 from rcon.models import UserConfig, enter_session
 from rcon.utils import get_server_number
+from typing import Type
 
 logger = logging.getLogger(__name__)
 
@@ -84,8 +85,10 @@ class BaseUserConfig(pydantic.BaseModel):
 
     @classmethod
     def load_from_db(cls, default_on_error: bool = True) -> Self:
+        # If the cache is unavailable, it will fall back to creating a default
+        # model instance, but will not persist it to the database and overwrite settings
         conf = get_user_config(cls.KEY(), None)
-        if conf:
+        if conf is not None:
             try:
                 return cls.model_validate(conf)
             except pydantic.ValidationError as e:
@@ -119,8 +122,26 @@ def _get_conf(sess, key):
         return None
 
 
-@ttl_cache(5 * 60 * 60, is_method=False)
-def get_user_config(key: str, default=None) -> str | None:
+def _get_user_config_cache_unavailable(
+    key: str, default=None, cls: Type[BaseUserConfig] | None = None
+) -> str | None:
+    """Return a default model as JSON"""
+    if cls:
+        return cls().model_dump_json()
+    else:
+        raise ValueError(f"cls must not be None")
+
+
+@ttl_cache(
+    5 * 60 * 60,
+    is_method=False,
+    function_cache_unavailable=_get_user_config_cache_unavailable,
+)
+def get_user_config(
+    key: str, default=None, cls: Type[BaseUserConfig] | None = None
+) -> str | None:
+    # cls required as a default parameter so it will be passed through to
+    # _get_user_config_cache_unavailable in the ttl_cache decorator
     logger.debug("Getting user config for %s", key)
     with enter_session() as sess:
         res = _get_conf(sess, key)
