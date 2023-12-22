@@ -96,7 +96,7 @@ def trigger_words(rcon: Rcon, struct_log: StructuredLogLineType):
         logger.debug("Trigger words are disabled")
         return
 
-    event_cache = get_recent_actions(None)
+    event_cache = get_recent_actions()
     steam_id_64: str = struct_log["steam_id_64_1"]
     if steam_id_64 is None:
         return
