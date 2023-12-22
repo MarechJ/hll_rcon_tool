@@ -95,6 +95,8 @@ class MessageVariableContext(enum.Enum):
     last_tk_nemesis_name = "last_tk_nemesis_name"
     last_tk_nemesis_weapon = "last_tk_nemesis_weapon"
 
+    # TODO: automod stuff, etc.
+
 
 @dataclass
 class MostRecentEvents:
