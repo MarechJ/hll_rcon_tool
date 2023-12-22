@@ -99,7 +99,7 @@ class BaseUserConfig(pydantic.BaseModel):
             except pydantic.ValidationError as e:
                 if default_on_error:
                     logger.error(
-                        f"Error loading {cls.KEY()}, returning defaults, validation errors: {e}"
+                        f"Error loading {cls.KEY()}, returning defaults, validation errors:"
                     )
                     logger.error(e)
                     return cls()
