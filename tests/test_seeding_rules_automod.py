@@ -179,7 +179,7 @@ lt = datetime.fromtimestamp(1606340690, tz=timezone.utc)
 kill_event_log: StructuredLogLineType = {
     "version": 1,
     "timestamp_ms": int(lt.timestamp() * 1000),
-    "relative_time_ms": (lt - datetime.now()).total_seconds() * 1000,
+    "relative_time_ms": (lt - datetime.now(tz=timezone.utc)).total_seconds() * 1000,
     "raw": line,
     "line_without_time": "",
     "action": "KILL",
