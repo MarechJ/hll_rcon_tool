@@ -1,8 +1,10 @@
 import datetime
 import logging
 import math
+import re
 import time
-from typing import List, Mapping
+from functools import wraps
+from typing import Any, Mapping
 
 import steam.exceptions
 from steam.webapi import WebAPI
@@ -15,6 +17,39 @@ from rcon.user_config.steam import SteamUserConfig
 logger = logging.getLogger(__name__)
 
 last_steam_api_key_warning = datetime.datetime.now()
+steam_id_64_pattern = re.compile(r"\d{17}")
+
+
+def is_steam_id_64(steam_id_64: str) -> bool:
+    if re.match(steam_id_64_pattern, steam_id_64):
+        return True
+    return False
+
+
+def filter_steam_ids():
+    def decorator(f):
+        @wraps(f)
+        def wrapper(steamd_ids: list[str], *args, **kwargs):
+            steamd_ids = [id_ for id_ in steamd_ids if is_steam_id_64(id_)]
+            return f(*args, steamd_ids=steamd_ids, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
+def filter_steam_id(return_value: Any = None):
+    def decorator(f):
+        @wraps(f)
+        def wrapper(steamd_id: str, *args, **kwargs):
+            if is_steam_id_64(steamd_id):
+                return wrapper(steamd_id=steamd_id, *args, **kwargs)
+            else:
+                return lambda: return_value
+
+        return wrapper
+
+    return decorator
 
 
 def get_steam_api_key() -> str | None:
@@ -32,7 +67,7 @@ def get_steam_api_key() -> str | None:
 
 
 @ttl_cache(60 * 60 * 24, cache_falsy=False, is_method=False)
-def get_steam_profile(steamd_id):
+def get_steam_profile(steamd_id) -> Any | None:
     profiles = get_steam_profiles([steamd_id])
     if not profiles or len(profiles) == 0:
         return None
@@ -40,7 +75,8 @@ def get_steam_profile(steamd_id):
 
 
 @ttl_cache(60 * 60 * 24, cache_falsy=False, is_method=False)
-def get_steam_profiles(steam_ids):
+@filter_steam_ids()
+def get_steam_profiles(steamd_ids: list[str]):
     steam_key = get_steam_api_key()
 
     if not steam_key:
@@ -48,7 +84,7 @@ def get_steam_profiles(steam_ids):
 
     try:
         api = WebAPI(key=steam_key)
-        return api.ISteamUser.GetPlayerSummaries(steamids=",".join(steam_ids))[
+        return api.ISteamUser.GetPlayerSummaries(steamids=",".join(steamd_ids))[
             "response"
         ]["players"]
     except steam.exceptions.SteamError as e:
@@ -65,7 +101,8 @@ def get_steam_profiles(steam_ids):
 
 
 @ttl_cache(60 * 60 * 24 * 7, cache_falsy=True, is_method=False)
-def get_player_country_code(steamd_id):
+@filter_steam_id()
+def get_player_country_code(steamd_id) -> Any | None:
     profile = get_steam_profile(steamd_id)
 
     if not profile:
@@ -76,7 +113,8 @@ def get_player_country_code(steamd_id):
 
 
 @ttl_cache(60 * 60, cache_falsy=True, is_method=False)
-def get_players_country_code(steamd_ids: List[str]) -> Mapping:
+@filter_steam_ids()
+def get_players_country_code(steamd_ids: list[str]) -> Mapping:
     profiles = get_steam_profiles(steamd_ids)
 
     result = dict.fromkeys(steamd_ids, {"country": None})
@@ -92,6 +130,7 @@ def get_players_country_code(steamd_ids: List[str]) -> Mapping:
 
 
 @ttl_cache(60 * 60 * 12, cache_falsy=False, is_method=False)
+@filter_steam_id()
 def get_player_bans(steamd_id) -> SteamBansType | None:
     steam_key = get_steam_api_key()
 
@@ -120,7 +159,8 @@ def get_player_bans(steamd_id) -> SteamBansType | None:
 
 
 @ttl_cache(60 * 60, cache_falsy=False, is_method=False)
-def get_players_ban(steamd_ids: List):
+@filter_steam_ids()
+def get_players_ban(steamd_ids: list[str]):
     steam_key = get_steam_api_key()
 
     if not steam_key:
@@ -146,7 +186,8 @@ def get_players_ban(steamd_ids: List):
 
 
 @ttl_cache(60 * 60 * 12, cache_falsy=False, is_method=False)
-def get_players_have_bans(steamd_ids: List) -> Mapping[str, SteamBanResultType]:
+@filter_steam_ids()
+def get_players_have_bans(steamd_ids: list[str]) -> Mapping[str, SteamBanResultType]:
     player_bans = get_players_ban(steamd_ids)
 
     result = dict.fromkeys(steamd_ids, {"steam_bans": None})
@@ -172,7 +213,8 @@ def get_players_have_bans(steamd_ids: List) -> Mapping[str, SteamBanResultType]:
 
 
 @ttl_cache(60 * 60 * 12, cache_falsy=False, is_method=False)
-def get_player_has_bans(steamd_id):
+@filter_steam_id(return_value=dict())
+def get_player_has_bans(steamd_id: str):
     bans = get_player_bans(steamd_id)
 
     if bans is None:
@@ -218,6 +260,8 @@ def enrich_db_users(chunk_size=100, update_from_days_old=30):
                 logger.warning("Empty query results")
                 continue
             profiles = get_steam_profiles(list(by_ids.keys()))
+            if profiles is None:
+                profiles = []
             logger.info(
                 "Updating steam profiles page %s of %s - result count (query) %s - result count (steam) %s",
                 page + 1,

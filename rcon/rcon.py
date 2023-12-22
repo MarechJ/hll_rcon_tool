@@ -44,7 +44,9 @@ from rcon.utils import (
     ALL_ROLES,
     ALL_ROLES_KEY_INDEX_MAP,
     INDEFINITE_VIP_DATE,
+    _get_default_info_dict,
     get_server_number,
+    parse_raw_player_info,
 )
 
 STEAMID = "steam_id_64"
@@ -105,9 +107,8 @@ class Rcon(ServerCtl):
     player_info_regexp = re.compile(r"(.*)\(((Allies)|(Axis))/(\d+)\)")
     log_time_regexp = re.compile(r".*\((\d+)\).*")
     connect_disconnect_pattern = re.compile(r"(.+) \((\d+)\)")
-    # Checking for steam ID length so people can't exploit it with a name like: short(Axis/123) ->
     kill_teamkill_pattern = re.compile(
-        r"(.*)\((?:Allies|Axis)\/(\d{17})\) -> (.*)\((?:Allies|Axis)\/(\d{17})\) with (.*)"
+        r"(.*)\((?:Allies|Axis)\/(.*)\) -> (.*)\((?:Allies|Axis)\/(.*)\) with (.*)"
     )
     camera_pattern = re.compile(r"\[(.*)\s{1}\((\d+)\)\] (.*)")
     teamswitch_pattern = re.compile(r"TEAMSWITCH\s(.*)\s\((.*\s>\s.*)\)")
@@ -203,7 +204,7 @@ class Rcon(ServerCtl):
             except Exception:
                 logger.error("Failed to get info for %s", futures[future])
                 fail_count += 1
-                player_data = self._get_default_info_dict(futures[future][NAME])
+                player_data = _get_default_info_dict(futures[future][NAME])
             player = futures[future]
             player.update(player_data)
             players_by_id[player[STEAMID]] = player
@@ -398,26 +399,6 @@ class Rcon(ServerCtl):
             "steam_bans": steam_bans,
         }
 
-    def _get_default_info_dict(self, player) -> GetDetailedPlayer:
-        return {
-            "name": player,
-            "steam_id_64": "",
-            "profile": None,
-            "is_vip": False,
-            "unit_id": None,
-            "unit_name": None,
-            "loadout": None,
-            "team": None,
-            "role": None,
-            "kills": 0,
-            "deaths": 0,
-            "combat": 0,
-            "offense": 0,
-            "defense": 0,
-            "support": 0,
-            "level": 0,
-        }
-
     @ttl_cache(ttl=2, cache_falsy=False)
     def get_detailed_player_info(self, player) -> GetDetailedPlayer:
         raw = super().get_player_info(player)
@@ -437,71 +418,7 @@ class Rcon(ServerCtl):
 
         """
 
-        data = self._get_default_info_dict(player)
-        raw_data = {}
-
-        for line in raw.split("\n"):
-            if not line:
-                continue
-            if ": " not in line:
-                logger.warning("Invalid info line: %s", line)
-                continue
-
-            key, val = line.split(": ", 1)
-            raw_data[key.lower()] = val
-
-        logger.debug(raw_data)
-        # Remap keys and parse values
-        data[STEAMID] = raw_data.get("steamid64")  # type: ignore
-        data["team"] = raw_data.get("team", "None")
-        if raw_data["role"].lower() == "armycommander":
-            data["unit_id"], data["unit_name"] = (-1, "Commmand")
-        else:
-            data["unit_id"], data["unit_name"] = (
-                raw_data.get("unit").split(" - ")  # type: ignore
-                if raw_data.get("unit")
-                else ("None", None)
-            )
-        data["kills"], data["deaths"] = (  # type: ignore
-            raw_data.get("kills").split(" - Deaths: ")  # type: ignore
-            if raw_data.get("kills")
-            else ("0", "0")
-        )
-        for k in ["role", "loadout", "level"]:
-            data[k] = raw_data.get(k)
-
-        scores = dict(
-            [
-                score.split(" ", 1)
-                for score in raw_data.get("score", "C 0, O 0, D 0, S 0").split(", ")
-            ]
-        )
-        map_score = {"C": "combat", "O": "offense", "D": "defense", "S": "support"}
-        for key, val in map_score.items():
-            data[map_score[key]] = scores.get(key, "0")
-
-        # Typecast values
-        # cast strings to lower
-        for key in ["team", "unit_name", "role", "loadout"]:
-            data[key] = data[key].lower() if data.get(key) else None
-
-        # cast string numbers to ints
-        for key in [
-            "kills",
-            "deaths",
-            "level",
-            "combat",
-            "offense",
-            "defense",
-            "support",
-            "unit_id",
-        ]:
-            try:
-                data[key] = int(data[key])
-            except (ValueError, TypeError):
-                data[key] = 0
-
-        return data
+        return parse_raw_player_info(raw, player)
 
     @ttl_cache(ttl=60 * 10)
     def get_admin_ids(self) -> list[AdminType]:

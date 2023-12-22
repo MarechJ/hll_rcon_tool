@@ -8,9 +8,13 @@ from typing import Any, Generic, TypeVar
 import redis
 
 from rcon.cache_utils import get_redis_pool
-from rcon.types import MapInfo
+from rcon.types import GetDetailedPlayer, MapInfo
 
 logger = logging.getLogger("rcon")
+
+STEAMID = "steam_id_64"
+NAME = "name"
+ROLE = "role"
 
 
 class DefaultStringFormat(dict):
@@ -603,3 +607,107 @@ def is_invalid_name_whitespace(name: str) -> bool:
 
 def is_invalid_name_pineapple(name: str) -> bool:
     return len(name) == 20 and name.endswith("?")
+
+
+def _get_default_info_dict(player) -> GetDetailedPlayer:
+    return {
+        "name": player,
+        "steam_id_64": "",
+        "profile": None,
+        "is_vip": False,
+        "unit_id": None,
+        "unit_name": None,
+        "loadout": None,
+        "team": None,
+        "role": None,
+        "kills": 0,
+        "deaths": 0,
+        "combat": 0,
+        "offense": 0,
+        "defense": 0,
+        "support": 0,
+        "level": 0,
+    }
+
+
+def parse_raw_player_info(raw: str, player) -> GetDetailedPlayer:
+    """"""
+
+    """
+        Name: T17 Scott
+        steamID64: 01234567890123456
+        Team: Allies            # "None" when not in team
+        Role: Officer
+        Unit: 0 - Able          # Absent when not in unit
+        Loadout: NCO            # Absent when not in team
+        Kills: 0 - Deaths: 0
+        Score: C 50, O 0, D 40, S 10
+        Level: 34
+
+    """
+
+    data = _get_default_info_dict(player)
+    raw_data = {}
+
+    for line in raw.split("\n"):
+        if not line:
+            continue
+        if ": " not in line:
+            logger.warning("Invalid info line: %s", line)
+            continue
+
+        key, val = line.split(": ", 1)
+        raw_data[key.lower()] = val
+
+    logger.debug(raw_data)
+    # Remap keys and parse values
+    data[STEAMID] = raw_data.get("steamid64")  # type: ignore
+    data["team"] = raw_data.get("team", "None")
+    if raw_data["role"].lower() == "armycommander":
+        data["unit_id"], data["unit_name"] = (-1, "Commmand")
+    else:
+        data["unit_id"], data["unit_name"] = (
+            raw_data.get("unit").split(" - ")  # type: ignore
+            if raw_data.get("unit")
+            else ("None", None)
+        )
+    data["kills"], data["deaths"] = (  # type: ignore
+        raw_data.get("kills").split(" - Deaths: ")  # type: ignore
+        if raw_data.get("kills")
+        else ("0", "0")
+    )
+    for k in ["role", "loadout", "level"]:
+        data[k] = raw_data.get(k)
+
+    scores = dict(
+        [
+            score.split(" ", 1)
+            for score in raw_data.get("score", "C 0, O 0, D 0, S 0").split(", ")
+        ]
+    )
+    map_score = {"C": "combat", "O": "offense", "D": "defense", "S": "support"}
+    for key, val in map_score.items():
+        data[map_score[key]] = scores.get(key, "0")
+
+    # Typecast values
+    # cast strings to lower
+    for key in ["team", "unit_name", "role", "loadout"]:
+        data[key] = data[key].lower() if data.get(key) else None
+
+    # cast string numbers to ints
+    for key in [
+        "kills",
+        "deaths",
+        "level",
+        "combat",
+        "offense",
+        "defense",
+        "support",
+        "unit_id",
+    ]:
+        try:
+            data[key] = int(data[key])
+        except (ValueError, TypeError):
+            data[key] = 0
+
+    return data
