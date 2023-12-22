@@ -125,7 +125,6 @@ def _get_user_config_cache_unavailable(
     key: str, default=None, cls: Type[BaseUserConfig] | None = None
 ) -> dict[str, Any]:
     """Return a default model as JSON"""
-    logger.info(f"_get_user_config_cache_unavailable {key=} {default=} {cls=}")
     if cls:
         return cls().model_dump()
     else:
