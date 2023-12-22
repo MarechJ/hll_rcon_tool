@@ -176,7 +176,7 @@ export const NoLeaderAutoMod = ({
 
         /*
             If the "enabled" parameter above is set on "true", the automod won't do anythying below this number of players on the server.
-            Set this parameter to 0 if you want the automod to be always active.
+            Set this parameter to 0 if you want the automod to be always active, regardless the number of players.
         */
         "dont_do_anything_below_this_number_of_players": 0,
 
