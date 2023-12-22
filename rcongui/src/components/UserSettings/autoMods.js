@@ -175,6 +175,12 @@ export const NoLeaderAutoMod = ({
         "enabled": false,
 
         /*
+            If the "enabled" parameter above is set on "true", the automod won't do anythying below this number of players on the server.
+            Set this parameter to 0 if you want the automod to be always active.
+        */
+        "dont_do_anything_below_this_number_of_players": 0,
+
+        /*
             If this is set to true no warning / punish / kick will be applied for real
             It turns the code into a "simulation" mode and only send what it would do to your discord audit log webhook
         */
@@ -240,8 +246,6 @@ export const NoLeaderAutoMod = ({
             Set to 1 or Z to apply Z punishes before we move to the next step (the kicks)
         */
         "number_of_punishments": 2,
-        
-
         
         /*
             This is the number of seconds to wait between punishes (if the squad remains without an officer
