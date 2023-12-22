@@ -99,7 +99,7 @@ class BaseUserConfig(pydantic.BaseModel):
             except pydantic.ValidationError as e:
                 if default_on_error:
                     logger.error(
-                        f"Error loading {cls.KEY()}, returning defaults, validation errors:"
+                        f"Error loading {cls.KEY()}, returning defaults, validation errors: {e}"
                     )
                     logger.error(e)
                     return cls()
@@ -131,6 +131,7 @@ def _get_user_config_cache_unavailable(
     key: str, default=None, cls: Type[BaseUserConfig] | None = None
 ) -> dict[str, Any]:
     """Return a default model as JSON"""
+    logger.info(f"_get_user_config_cache_unavailable {key=} {default=} {cls=}")
     if cls:
         return cls().model_dump()
     else:
