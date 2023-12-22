@@ -5,7 +5,6 @@ import pathlib
 import sqlite3
 import sys
 import time
-from collections import defaultdict
 from sqlite3 import Connection
 from typing import Callable, TypedDict
 from urllib.parse import urljoin
@@ -16,8 +15,7 @@ from requests.exceptions import ConnectionError, RequestException
 import discord
 from discord.embeds import Embed
 from discord.errors import HTTPException, NotFound
-from rcon.cache_utils import ttl_cache
-from rcon.scoreboard import get_stat, get_stat_post_processor
+from rcon.scoreboard import STAT_DISPLAY_LOOKUP, get_stat, get_stat_post_processor
 from rcon.user_config.scorebot import ScorebotUserConfig, StatTypes
 from rcon.utils import UNKNOWN_MAP_NAME
 
@@ -205,7 +203,7 @@ def format_stat(
         post_process = get_stat_post_processor(key)
 
     return "```md\n%s\n```" % "\n".join(
-        f"[#{rank}][{escaped_name(stat)}]: {post_process(stat[key])}"
+        f"[#{rank}][{escaped_name(stat)}]: {post_process(stat[STAT_DISPLAY_LOOKUP[key]])}"
         for rank, stat in enumerate(stats, start=1)
     )
 
@@ -230,7 +228,6 @@ def get_embeds(server_info, stats, config: ScorebotUserConfig):
                 key=stat_display.type,
                 limit=config.top_limit,
             )
-
             current_embed.add_field(
                 name=stat_display.display_format,
                 value=format_stat(stat_values, key=stat_display.type),

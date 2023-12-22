@@ -24,6 +24,23 @@ from rcon.utils import MapsHistory
 
 logger = logging.getLogger(__name__)
 
+STAT_DISPLAY_LOOKUP = {
+    StatTypes.top_killers: "kills",
+    StatTypes.top_ratio: "kill_death_ratio",
+    StatTypes.top_performance: "kills_per_minute",
+    StatTypes.try_harders: "deaths_per_minute",
+    StatTypes.top_stamina: "deaths",
+    StatTypes.top_kill_streak: "kills_streak",
+    StatTypes.i_never_give_up: "deaths_without_kill_streak",
+    StatTypes.most_patient: "deaths_by_tk",
+    StatTypes.im_clumsy: "teamkills",
+    StatTypes.i_need_glasses: "teamkills_streak",
+    StatTypes.i_love_voting: "nb_vote_started",
+    StatTypes.what_is_a_break: "time_seconds",
+    StatTypes.survivors: "longest_life_secs",
+    StatTypes.u_r_still_a_man: "shortest_life_secs",
+}
+
 
 @dataclass
 class Streaks:
@@ -612,30 +629,9 @@ def get_stat(
 
     assert post_process is not None
 
-    # logger.error(f"{stats=}")
-
-    stat_display_lookup = {
-        StatTypes.top_killers: "kills",
-        StatTypes.top_ratio: "kill_death_ratio",
-        StatTypes.top_performance: "kills_per_minute",
-        StatTypes.try_harders: "deaths_per_minute",
-        StatTypes.top_stamina: "deaths",
-        StatTypes.top_kill_streak: "kills_streak",
-        StatTypes.i_never_give_up: "deaths_without_kill_streak",
-        StatTypes.most_patient: "deaths_by_tk",
-        StatTypes.im_clumsy: "teamkills",
-        StatTypes.i_need_glasses: "teamkills_streak",
-        StatTypes.i_love_voting: "nb_vote_started",
-        StatTypes.what_is_a_break: "time_seconds",
-        StatTypes.survivors: "longest_life_secs",
-        StatTypes.u_r_still_a_man: "shortest_life_secs",
-    }
-
     stats = sorted(
-        stats, key=lambda stat: stat[stat_display_lookup[key]], reverse=reverse
+        stats, key=lambda stat: stat[STAT_DISPLAY_LOOKUP[key]], reverse=reverse
     )[:limit]
-
-    logger.error(f"{stats=}")
     return stats
 
 
