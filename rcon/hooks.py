@@ -1,7 +1,7 @@
 import logging
 import re
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timezone
 from functools import wraps
 from threading import Timer
 
@@ -100,9 +100,11 @@ def handle_new_match_start(rcon: Rcon, struct_log):
         )
         guessed = True
         log_map_name = struct_log["sub_content"].rsplit(" ")[0]
-        log_time = datetime.fromtimestamp(struct_log["timestamp_ms"] / 1000)
+        log_time = datetime.fromtimestamp(
+            struct_log["timestamp_ms"] / 1000, tz=timezone.utc
+        )
         # Check that the log is less than 5min old
-        if (datetime.utcnow() - log_time).total_seconds() < 5 * 60:
+        if (datetime.now(tz=timezone.utc) - log_time).total_seconds() < 5 * 60:
             # then we use the current map to be more accurate
             if (
                 current_map.split("_")[0].lower()
@@ -156,9 +158,11 @@ def record_map_end(rcon: Rcon, struct_log):
         logger.error("Unable to get current map")
 
     map_name = LOG_MAP_NAMES_TO_MAP.get(struct_log["sub_content"], UNKNOWN_MAP_NAME)
-    log_time = datetime.fromtimestamp(struct_log["timestamp_ms"] / 1000)
+    log_time = datetime.fromtimestamp(
+        struct_log["timestamp_ms"] / 1000, tz=timezone.utc
+    )
 
-    if (datetime.utcnow() - log_time).total_seconds() < 60:
+    if (datetime.now(tz=timezone.utc) - log_time).total_seconds() < 60:
         # then we use the current map to be more accurate
         if current_map.split("_")[0].lower() == map_name.split("_")[0].lower():
             maps_history.save_map_end(

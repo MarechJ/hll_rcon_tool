@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from discord_webhook import DiscordEmbed
 
@@ -90,7 +90,7 @@ class PlayerWatch:
                 sess, player_name=player_name, steam_id_64=self.steam_id_64
             )
             if player.watchlist:
-                player.watchlist.modified = datetime.utcnow()
+                player.watchlist.modified = datetime.now(tz=timezone.utc)
                 player.watchlist.is_watched = True
                 player.watchlist.reason = reason
                 player.watchlist.by = by

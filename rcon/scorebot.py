@@ -124,15 +124,17 @@ def get_map_image(server_info, config: ScorebotUserConfig):
 
 def get_header_embed(public_info: PublicInfoType, config: ScorebotUserConfig):
     elapsed_time_minutes = (
-        datetime.datetime.now()
-        - datetime.datetime.fromtimestamp(public_info["current_map"]["start"])
+        datetime.datetime.now(tz=datetime.UTC)
+        - datetime.datetime.fromtimestamp(
+            public_info["current_map"]["start"], tz=datetime.UTC
+        )
     ).total_seconds() / 60
 
     embed = discord.Embed(
         title=f"{public_info['name']}",
         description=f"**{public_info['current_map']['human_name']} - {config.elapsed_time_text}{round(elapsed_time_minutes)} min. - {public_info['player_count']}/{public_info['max_player_count']} {config.players_text}**",
         color=13734400,
-        timestamp=datetime.datetime.utcnow(),
+        timestamp=datetime.datetime.now(tz=datetime.UTC),
         url=str(config.base_scoreboard_url),
     )
     total_votes = public_info["vote_status"]["total_votes"]

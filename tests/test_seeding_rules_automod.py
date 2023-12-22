@@ -1,6 +1,6 @@
 import time
 from contextlib import contextmanager
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from unittest.mock import Mock
 
 import pytest
@@ -175,7 +175,7 @@ game_state: GameState = {
 }
 
 line = "[29:42 min (1606340690)] KILL: [CPC] [1.Fjg] FlorianSW(Allies/76561198012102485) -> Karadoc(Axis/76561198080212634) with MK2_Grenade"
-lt = datetime.fromtimestamp(1606340690)
+lt = datetime.fromtimestamp(1606340690, tz=timezone.utc)
 kill_event_log: StructuredLogLineType = {
     "version": 1,
     "timestamp_ms": int(lt.timestamp() * 1000),

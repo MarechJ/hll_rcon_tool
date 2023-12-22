@@ -156,6 +156,7 @@ def get_db_server_stats_for_range(
         server_number = os.getenv("SERVER_NUMBER")
 
     # Turn the timestamps back to naive
+    # TODO: remain/convert to UTC?
     start = datetime.datetime.fromtimestamp(start.timestamp())
     end = datetime.datetime.fromtimestamp(end.timestamp())
     with enter_session() as sess:

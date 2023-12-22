@@ -203,7 +203,9 @@ def enrich_db_users(chunk_size=100, update_from_days_old=30):
 
     from rcon.models import PlayerSteamID, SteamInfo, enter_session
 
-    max_age = datetime.datetime.utcnow() - datetime.timedelta(days=update_from_days_old)
+    max_age = datetime.datetime.now(tz=datetime.UTC) - datetime.timedelta(
+        days=update_from_days_old
+    )
     with enter_session() as sess:
         query = (
             sess.query(PlayerSteamID)

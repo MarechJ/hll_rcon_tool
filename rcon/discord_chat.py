@@ -1,6 +1,6 @@
 import logging
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from functools import lru_cache
 from typing import Iterable
 
@@ -111,7 +111,7 @@ class DiscordWebhookHandler:
         color = CHAT_ACTION_TO_COLOR[action]
 
         embed = DiscordEmbed(
-            description=message, color=color, timestamp=datetime.utcnow()
+            description=message, color=color, timestamp=datetime.now(tz=timezone.utc)
         )
         embed.set_author(
             name=f"{player} {action}", url=STEAM_PROFILE_URL.format(id64=steam_id)

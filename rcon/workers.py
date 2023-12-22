@@ -115,8 +115,8 @@ def record_stats(map_info: MapInfo):
 
 
 def _record_stats(map_info: MapInfo):
-    start = datetime.datetime.utcfromtimestamp(map_info.get("start"))
-    end = datetime.datetime.utcfromtimestamp(map_info.get("end"))
+    start = datetime.datetime.fromtimestamp(map_info.get("start"), tz=datetime.UTC)
+    end = datetime.datetime.fromtimestamp(map_info.get("end"), tz=datetime.UTC)
 
     if not start or not end:
         logger.error("Can't record stats, no time info for %s", map_info)

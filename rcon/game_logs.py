@@ -25,11 +25,11 @@ from rcon.player_history import (
 from rcon.rcon import LOG_ACTIONS, Rcon
 from rcon.settings import SERVER_INFO
 from rcon.types import (
+    AllLogTypes,
     GetDetailedPlayer,
     ParsedLogsType,
     PlayerStat,
     StructuredLogLineWithMetaData,
-    AllLogTypes,
 )
 from rcon.user_config.ban_tk_on_connect import BanTeamKillOnConnectUserConfig
 from rcon.user_config.log_line_webhooks import (
@@ -194,7 +194,9 @@ def send_log_line_webhook_message(
     description: str = log_line["line_without_time"]
     embed = discord_webhook.DiscordEmbed(
         description=description,
-        timestamp=datetime.datetime.utcfromtimestamp(log_line["timestamp_ms"] / 1000),
+        timestamp=datetime.datetime.fromtimestamp(
+            log_line["timestamp_ms"] / 1000, tz=datetime.UTC
+        ),
     )
 
     embed.set_footer(text=config.short_name)
@@ -333,8 +335,8 @@ class LogLoop:
             except ValueError:
                 logger.exception("Invalid key %s", k)
                 continue
-            t = datetime.datetime.fromtimestamp(int(ts) / 1000)
-            if (datetime.datetime.now() - t).total_seconds() > 280 * 60:
+            t = datetime.datetime.fromtimestamp(int(ts) / 1000, tz=datetime.UTC)
+            if (datetime.datetime.now(tz=datetime.UTC) - t).total_seconds() > 280 * 60:
                 logger.debug("Older than 180min, removing: %s", k)
                 self.red.srem(self.duplicate_guard_key, k)
         logger.info("Cleanup done")
@@ -431,7 +433,7 @@ class LogRecorder:
                     LogLine(
                         version=log["version"],
                         event_time=datetime.datetime.fromtimestamp(
-                            log["timestamp_ms"] // 1000
+                            log["timestamp_ms"] // 1000, tz=datetime.UTC
                         ),
                         type=log["action"],
                         player1_name=log["player"],
@@ -688,8 +690,12 @@ def auto_ban_if_tks_right_after_connection(
             if log["timestamp_ms"] - last_connect_time > max_time_minute * 60 * 1000:
                 logger.debug(
                     "Not counting TK as offense due to elapsed time exclusion, last connection time %s, tk time %s",
-                    datetime.datetime.fromtimestamp(last_connect_time / 1000),
-                    datetime.datetime.fromtimestamp(log["timestamp_ms"] / 1000),
+                    datetime.datetime.fromtimestamp(
+                        last_connect_time / 1000, tz=datetime.UTC
+                    ),
+                    datetime.datetime.fromtimestamp(
+                        log["timestamp_ms"] / 1000, tz=datetime.UTC
+                    ),
                 )
                 continue
 

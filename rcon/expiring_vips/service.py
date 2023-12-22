@@ -26,7 +26,7 @@ def remove_expired_vips(rcon_hook: Rcon, webhook_url: Optional[HttpUrl] = None):
             session.query(PlayerVIP)
             .filter(
                 PlayerVIP.server_number == server_number,
-                PlayerVIP.expiration < datetime.utcnow(),
+                PlayerVIP.expiration < datetime.now(tz=timezone.utc),
             )
             .all()
         )

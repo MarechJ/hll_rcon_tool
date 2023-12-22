@@ -105,7 +105,9 @@ class BaseStats:
     def _streaks_accumulator(self, player, log, stats, streaks):
         action = log["action"]
 
-        log_time = datetime.datetime.fromtimestamp(log["timestamp_ms"] / 1000)
+        log_time = datetime.datetime.fromtimestamp(
+            log["timestamp_ms"] / 1000, tz=datetime.UTC
+        )
         if action == "KILL":
             if self._is_player_kill(player, log):
                 streaks.kill += 1
@@ -347,7 +349,9 @@ class TimeWindowStats(BaseStats):
                 # Event time is a key only avaible in the dict coming from the DB and is already a datetime
                 log.get(
                     "event_time",
-                    datetime.datetime.utcfromtimestamp(log["timestamp_ms"] // 1000),
+                    datetime.datetime.fromtimestamp(
+                        log["timestamp_ms"] // 1000, tz=datetime.UTC
+                    ),
                 )
             )
         # if the player is not already in the times record we add the start of the stats window as his session start time
@@ -362,7 +366,9 @@ class TimeWindowStats(BaseStats):
             players_times.setdefault(player, {"start": [], "end": []})["end"].append(
                 log.get(
                     "event_time",
-                    datetime.datetime.utcfromtimestamp(log["timestamp_ms"] // 1000),
+                    datetime.datetime.fromtimestamp(
+                        log["timestamp_ms"] // 1000, tz=datetime.UTC
+                    ),
                 )
             )
         # if we had a player that disconnected but was not in the time record it means he did have any kill / death or other actions like chat, vote
@@ -492,8 +498,8 @@ class TimeWindowStats(BaseStats):
         logs = get_recent_logs(min_timestamp=from_timestamp)
         return self._get_players_stats_for_logs(
             reversed(logs.get("logs", [])),
-            datetime.datetime.utcfromtimestamp(from_timestamp),
-            datetime.datetime.utcnow(),
+            datetime.datetime.fromtimestamp(from_timestamp, tz=datetime.UTC),
+            datetime.datetime.now(tz=datetime.UTC),
             offset_cooldown_time_seconds=0,
         )
 

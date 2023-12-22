@@ -278,9 +278,9 @@ def _save_player_alias(sess, steamid, player_name, timestamp=None):
     )
 
     if timestamp:
-        dt = datetime.datetime.fromtimestamp(timestamp)
+        dt = datetime.datetime.fromtimestamp(timestamp, tz=datetime.UTC)
     else:
-        dt = datetime.datetime.now()
+        dt = datetime.datetime.now(tz=datetime.UTC)
     if not name:
         name = PlayerName(name=player_name, steamid=steamid, last_seen=dt)
         sess.add(name)
@@ -349,7 +349,7 @@ def save_start_player_session(
             )
             return
 
-        start_time = datetime.datetime.fromtimestamp(timestamp)
+        start_time = datetime.datetime.fromtimestamp(timestamp, tz=datetime.UTC)
         already_saved = (
             sess.query(PlayerSession)
             .filter(PlayerSession.steamid == player)
@@ -374,7 +374,7 @@ def save_start_player_session(
         logger.info(
             "Recorded player %s session start at %s",
             steam_id_64,
-            datetime.datetime.fromtimestamp(timestamp),
+            datetime.datetime.fromtimestamp(timestamp, tz=datetime.UTC),
         )
         sess.commit()
 
@@ -403,7 +403,7 @@ def save_end_player_session(steam_id_64, timestamp):
             last_session = PlayerSession(
                 steamid=player,
             )
-        last_session.end = datetime.datetime.fromtimestamp(timestamp)
+        last_session.end = datetime.datetime.fromtimestamp(timestamp, tz=datetime.UTC)
         logger.info(
             "Recorded player %s session end at %s", steam_id_64, last_session.end
         )

@@ -32,28 +32,38 @@ logger = logging.getLogger("rconweb")
 
 @csrf_exempt
 @stats_login_required
-@require_http_methods(['GET'])
+@require_http_methods(["GET"])
 def get_previous_map(request):
     command_name = "get_previous_map"
     try:
         prev_map = MapsHistory()[-1]
         res = {
-            "name": prev_map['name'],
-            "start": datetime.datetime.fromtimestamp(prev_map['start']).isoformat() if prev_map['start'] else None,
-            "end": datetime.datetime.fromtimestamp(prev_map['end']).isoformat() if prev_map['end'] else None,
+            "name": prev_map["name"],
+            "start": datetime.datetime.fromtimestamp(
+                prev_map["start"], tz=datetime.UTC
+            ).isoformat()
+            if prev_map["start"]
+            else None,
+            "end": datetime.datetime.fromtimestamp(
+                prev_map["end"], tz=datetime.UTC
+            ).isoformat()
+            if prev_map["end"]
+            else None,
         }
 
         return api_response(result=res, command=command_name, failed=False)
     except IndexError:
-        return api_response(result=None,command=command_name, failed=False)
+        return api_response(result=None, command=command_name, failed=False)
     except Exception as e:
         logger.exception(e)
-        return api_response(result=None, command=command_name, failed=True, error=str(e))
+        return api_response(
+            result=None, command=command_name, failed=True, error=str(e)
+        )
 
 
 @csrf_exempt
 @stats_login_required
-@require_http_methods(['GET'])
+@require_http_methods(["GET"])
 def get_map_history(request):
     data = _get_data(request)
     res = MapsHistory()[:]
@@ -61,10 +71,14 @@ def get_map_history(request):
         res = [
             dict(
                 name=i["name"],
-                start=datetime.datetime.fromtimestamp(i["start"]).isoformat()
+                start=datetime.datetime.fromtimestamp(
+                    i["start"], tz=datetime.UTC
+                ).isoformat()
                 if i["start"]
                 else None,
-                end=datetime.datetime.fromtimestamp(i["end"]).isoformat()
+                end=datetime.datetime.fromtimestamp(
+                    i["end"], tz=datetime.UTC
+                ).isoformat()
                 if i["end"]
                 else None,
             )
@@ -78,7 +92,7 @@ def get_map_history(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_view_player_profile", raise_exception=True)
-@require_http_methods(['GET'])
+@require_http_methods(["GET"])
 def get_player(request):
     data = _get_data(request)
     res = {}
@@ -112,7 +126,7 @@ def get_player(request):
 @login_required()
 @permission_required("api.can_flag_player", raise_exception=True)
 @record_audit
-@require_http_methods(['POST'])
+@require_http_methods(["POST"])
 @require_content_type()
 def flag_player(request):
     data = _get_data(request)
@@ -147,7 +161,7 @@ def flag_player(request):
 @login_required()
 @permission_required("api.can_unflag_player", raise_exception=True)
 @record_audit
-@require_http_methods(['POST'])
+@require_http_methods(["POST"])
 @require_content_type()
 def unflag_player(request):
     # Note is this really not restful
@@ -175,7 +189,7 @@ def unflag_player(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_view_player_history", raise_exception=True)
-@require_http_methods(['POST'])
+@require_http_methods(["POST"])
 @require_content_type()
 def players_history(request):
     try:
@@ -225,7 +239,7 @@ def players_history(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_view_player_messages", raise_exception=True)
-@require_http_methods(['GET'])
+@require_http_methods(["GET"])
 def get_player_messages(request):
     data = _get_data(request)
     res = None
@@ -249,7 +263,7 @@ def get_player_messages(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_view_player_comments", raise_exception=True)
-@require_http_methods(['GET'])
+@require_http_methods(["GET"])
 def get_player_comment(request):
     data = _get_data(request)
     res = None
@@ -273,7 +287,7 @@ def get_player_comment(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_add_player_comments", raise_exception=True)
-@require_http_methods(['POST'])
+@require_http_methods(["POST"])
 @require_content_type()
 @record_audit
 def post_player_comment(request):

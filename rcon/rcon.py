@@ -2,7 +2,7 @@ import logging
 import os
 import re
 from concurrent.futures import Future, ThreadPoolExecutor, as_completed
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from functools import cached_property
 from time import sleep
 from typing import Any, Iterable, Literal
@@ -1121,7 +1121,7 @@ class Rcon(ServerCtl):
     def _extract_time(raw_timestamp: str) -> datetime:
         """Parse a unix timestamp to a UTC Python datetime"""
         try:
-            return datetime.utcfromtimestamp(int(raw_timestamp))
+            return datetime.fromtimestamp(int(raw_timestamp), tz=timezone.utc)
         except (ValueError, TypeError) as e:
             raise ValueError(f"Time {raw_timestamp} is not a valid integer") from e
 
@@ -1530,7 +1530,7 @@ class Rcon(ServerCtl):
     ) -> ParsedLogsType:
         """Parse a chunk of raw gameserver RCON logs"""
         synthetic_actions = LOG_ACTIONS
-        now = datetime.now()
+        utc_now = datetime.now(tz=timezone.utc)
         parsed_log_lines: list[StructuredLogLineWithMetaData] = []
         actions: set[str] = set()
         players: set[str] = set()
@@ -1545,7 +1545,7 @@ class Rcon(ServerCtl):
                     {
                         "version": 1,
                         "timestamp_ms": int(time.timestamp() * 1000),
-                        "relative_time_ms": (time - now).total_seconds() * 1000,
+                        "relative_time_ms": (time - utc_now).total_seconds() * 1000,
                         "raw": raw_relative_time + " " + raw_log_line,
                         "line_without_time": raw_log_line,
                         "action": log_line["action"],
