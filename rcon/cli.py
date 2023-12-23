@@ -70,8 +70,8 @@ def save_recent_stats():
 def run_enrich_db_users():
     try:
         enrich_db_users()
-    except:
-        logger.exception("DB users enrichment stopped")
+    except Exception as e:
+        logger.exception("DB users enrichment stopped: %s", e)
         sys.exit(1)
 
 
