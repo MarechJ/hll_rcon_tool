@@ -115,9 +115,9 @@ ALL_ROLES_KEY_INDEX_MAP = {v: i for i, v in enumerate(ALL_ROLES)}
 
 
 def contains_triggering_word(
-    chat_message: str, trigger_words: list[str] | set[str]
+    chat_words: set[str],
+    trigger_words: list[str] | set[str],
 ) -> bool:
-    chat_words = set(re.split("([^a-zA-Z!@])", chat_message))
     if any(word in chat_words for word in trigger_words):
         return True
     return False

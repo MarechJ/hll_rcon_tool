@@ -45,7 +45,11 @@ from rcon.types import (
 from rcon.user_config.camera_notification import CameraNotificationUserConfig
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.real_vip import RealVipUserConfig
-from rcon.user_config.trigger_words import MESSAGE_VAR_RE, TriggerWordsUserConfig
+from rcon.user_config.trigger_words import (
+    CHAT_WORDS_RE,
+    MESSAGE_VAR_RE,
+    TriggerWordsUserConfig,
+)
 from rcon.user_config.vac_game_bans import VacGameBansUserConfig
 from rcon.user_config.webhooks import CameraWebhooksUserConfig
 from rcon.utils import (
@@ -103,34 +107,51 @@ def trigger_words(rcon: Rcon, struct_log: StructuredLogLineType):
 
     player_1_cache = event_cache.get(steam_id_64, MostRecentEvents())
 
+    chat_words = set(re.split(CHAT_WORDS_RE, chat_message))
     for trigger in config.trigger_words:
-        if not contains_triggering_word(chat_message, trigger.words):
+        if not (
+            triggered := contains_triggering_word(chat_words, trigger.words)
+        ) and not contains_triggering_word(chat_words, config.describe_words):
             continue
 
-        message_vars: list[str] = re.findall(MESSAGE_VAR_RE, trigger.message)
-        populated_variables = populate_message_variables(vars=message_vars)
-        formatted_message = format_message_string(
-            trigger.message,
-            populated_variables=populated_variables,
-            context={
-                MessageVariableContext.player_name.value: struct_log["player"],
-                MessageVariableContext.player_steam_id_64.value: steam_id_64,
-                MessageVariableContext.last_victim_steam_id_64.value: player_1_cache.last_victim_steam_id_64,
-                MessageVariableContext.last_victim_name.value: player_1_cache.last_victim_name,
-                MessageVariableContext.last_victim_weapon.value: player_1_cache.last_victim_weapon,
-                MessageVariableContext.last_nemesis_steam_id_64.value: player_1_cache.last_nemesis_steam_id_64,
-                MessageVariableContext.last_nemesis_name.value: player_1_cache.last_nemesis_name,
-                MessageVariableContext.last_nemesis_weapon.value: player_1_cache.last_nemesis_weapon,
-                MessageVariableContext.last_tk_victim_steam_id_64.value: player_1_cache.last_tk_victim_steam_id_64,
-                MessageVariableContext.last_tk_victim_name.value: player_1_cache.last_tk_victim_name,
-                MessageVariableContext.last_tk_victim_weapon.value: player_1_cache.last_tk_victim_weapon,
-            },
-        )
-        rcon.do_message_player(
-            steam_id_64=struct_log["steam_id_64_1"],
-            message=formatted_message,
-            save_message=False,
-        )
+        if triggered:
+            message_vars: list[str] = re.findall(MESSAGE_VAR_RE, trigger.message)
+            populated_variables = populate_message_variables(vars=message_vars)
+            formatted_message = format_message_string(
+                trigger.message,
+                populated_variables=populated_variables,
+                context={
+                    MessageVariableContext.player_name.value: struct_log["player"],
+                    MessageVariableContext.player_steam_id_64.value: steam_id_64,
+                    MessageVariableContext.last_victim_steam_id_64.value: player_1_cache.last_victim_steam_id_64,
+                    MessageVariableContext.last_victim_name.value: player_1_cache.last_victim_name,
+                    MessageVariableContext.last_victim_weapon.value: player_1_cache.last_victim_weapon,
+                    MessageVariableContext.last_nemesis_steam_id_64.value: player_1_cache.last_nemesis_steam_id_64,
+                    MessageVariableContext.last_nemesis_name.value: player_1_cache.last_nemesis_name,
+                    MessageVariableContext.last_nemesis_weapon.value: player_1_cache.last_nemesis_weapon,
+                    MessageVariableContext.last_tk_victim_steam_id_64.value: player_1_cache.last_tk_victim_steam_id_64,
+                    MessageVariableContext.last_tk_victim_name.value: player_1_cache.last_tk_victim_name,
+                    MessageVariableContext.last_tk_victim_weapon.value: player_1_cache.last_tk_victim_weapon,
+                },
+            )
+            rcon.do_message_player(
+                steam_id_64=struct_log["steam_id_64_1"],
+                message=formatted_message,
+                save_message=False,
+            )
+        else:
+            description = config.describe_trigger_words()
+            if description:
+                rcon.do_message_player(
+                    steam_id_64=struct_log["steam_id_64_1"],
+                    message="\n".join(description),
+                    save_message=False,
+                )
+            else:
+                logger.warning(
+                    "No descriptions set for trigger words, %s",
+                    ", ".join(config.describe_words),
+                )
 
 
 @on_match_end
