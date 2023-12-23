@@ -121,7 +121,7 @@ class Rcon(ServerCtl):
         r"VOTESYS: Player \[(.*)\] Started a vote of type \(.*\) against \[(.*)\]. VoteID: \[\d+\]"
     )
     vote_complete_pattern = re.compile(r"VOTESYS: Vote \[\d+\] completed. Result: (.*)")
-    vote_expired_pattern = re.compile(r"VOTESYS: Vote \[\d+\] expired")
+    vote_expired_pattern = re.compile(r"VOTESYS: Vote \[\d+\] (expired|prematurely)")
     vote_passed_pattern = re.compile(r"VOTESYS: (Vote Kick \{(.*)\} .*\[(.*)\])")
     # Need the DOTALL flag to allow `.` to capture newlines in multi line messages
     message_pattern = re.compile(

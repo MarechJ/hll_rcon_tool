@@ -12,6 +12,7 @@ from rcon.rcon import Rcon
     [
         (
             """
+[2:14:33 hours (1703272319)] VOTESYS: Vote [3] prematurely expired.
 [29:55 min (1606340690)] KILL: Karadoc(Axis/76561198080212634) -> Bullitt-FR(Allies/76561198000776367) with G43
 [29:42 min (1606340690)] KILL: 湊あくあ(Axis/76561198202984515) -> fguitou(Allies/76561198034763447) with None
 [3:35 min (1675366030)] TEAM KILL: Ð¡Ð°ÑÐºÐ°(Allies/76561198346893462) -> Milk Dick(Allies/76561198044472891) with 155MM HOWITZER [M114]
@@ -44,6 +45,11 @@ to test something]
 [3:41 min (1699465895)] KICK: [Elinho] has been kicked. [Kicked for failing auth]
 """,
             [
+                (
+                    "[2:14:33 hours (1703272319)]",
+                    "1703272319",
+                    "VOTESYS: Vote [3] prematurely expired.",
+                ),
                 (
                     "[29:55 min (1606340690)]",
                     "1606340690",
@@ -653,6 +659,19 @@ def test_kicks(raw_log_line, expected):
                 "weapon": None,
                 "message": "Vote [10] expired before completion",
                 "sub_content": "Vote [10] expired before completion",
+            },
+        ),
+        (
+            "VOTESYS: Vote [3] prematurely expired.",
+            {
+                "action": "VOTE EXPIRED",
+                "player": None,
+                "steam_id_64_1": None,
+                "player2": None,
+                "steam_id_64_2": None,
+                "weapon": None,
+                "message": "Vote [3] prematurely expired.",
+                "sub_content": "Vote [3] prematurely expired.",
             },
         ),
         (
