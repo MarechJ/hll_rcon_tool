@@ -43,7 +43,7 @@ def filter_steam_id(return_value: Any = None):
         @wraps(f)
         def wrapper(steamd_id: str, *args, **kwargs):
             if is_steam_id_64(steamd_id):
-                return wrapper(steamd_id=steamd_id, *args, **kwargs)
+                return f(steamd_id=steamd_id, *args, **kwargs)
             else:
                 return lambda: return_value
 
