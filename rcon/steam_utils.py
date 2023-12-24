@@ -67,6 +67,7 @@ def get_steam_api_key() -> str | None:
 
 
 @ttl_cache(60 * 60 * 24, cache_falsy=False, is_method=False)
+@filter_steam_id()
 def get_steam_profile(steamd_id) -> Any | None:
     profiles = get_steam_profiles([steamd_id])
     if not profiles or len(profiles) == 0:
