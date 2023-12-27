@@ -25,11 +25,11 @@ from rcon.player_history import (
 from rcon.rcon import LOG_ACTIONS, Rcon
 from rcon.settings import SERVER_INFO
 from rcon.types import (
+    AllLogTypes,
     GetDetailedPlayer,
     ParsedLogsType,
     PlayerStat,
     StructuredLogLineWithMetaData,
-    AllLogTypes,
 )
 from rcon.user_config.ban_tk_on_connect import BanTeamKillOnConnectUserConfig
 from rcon.user_config.log_line_webhooks import (

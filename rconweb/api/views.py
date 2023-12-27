@@ -7,7 +7,12 @@ from subprocess import PIPE, run
 from typing import Callable, List
 
 from django.contrib.auth.decorators import permission_required
-from django.http import HttpResponse, JsonResponse, HttpResponseNotAllowed, HttpResponseBadRequest
+from django.http import (
+    HttpResponse,
+    HttpResponseBadRequest,
+    HttpResponseNotAllowed,
+    JsonResponse,
+)
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
@@ -38,7 +43,7 @@ ctl = Rcon(SERVER_INFO)
 @login_required()
 @permission_required("api.can_restart_webserver", raise_exception=True)
 @record_audit
-@require_http_methods(['POST'])
+@require_http_methods(["POST"])
 def restart_gunicorn(request):
     """Restart gunicorn workers which reconnects Rcon endpoint instances"""
     exit_code = os.system(f"cat /code/rconweb/gunicorn.pid | xargs kill -HUP")
@@ -71,7 +76,7 @@ def set_temp_msg(request, func, name):
 @login_required()
 @permission_required("api.can_change_server_name", raise_exception=True)
 @record_audit
-@require_http_methods(['POST'])
+@require_http_methods(["POST"])
 @require_content_type()
 def set_name(request):
     data = _get_data(request)
@@ -108,14 +113,14 @@ def set_temp_welcome(request):
 
 
 @csrf_exempt
-@require_http_methods(['GET'])
+@require_http_methods(["GET"])
 def get_version(request):
     res = run(["git", "describe", "--tags"], stdout=PIPE, stderr=PIPE)
     return api_response(res.stdout.decode(), failed=False, command="get_version")
 
 
 @csrf_exempt
-@require_http_methods(['GET'])
+@require_http_methods(["GET"])
 def public_info(request):
     gamestate = ctl.get_gamestate()
     curr_players, max_players = tuple(map(int, ctl.get_slots().split("/")))
@@ -208,7 +213,7 @@ def _do_watch(request, add: bool):
 @login_required()
 @permission_required("api.can_add_player_watch", raise_exception=True)
 @record_audit
-@require_http_methods(['POST'])
+@require_http_methods(["POST"])
 @require_content_type()
 def do_watch_player(request):
     return _do_watch(request, add=True)
@@ -218,7 +223,7 @@ def do_watch_player(request):
 @login_required()
 @permission_required("api.can_remove_player_watch", raise_exception=True)
 @record_audit
-@require_http_methods(['POST'])
+@require_http_methods(["POST"])
 @require_content_type()
 def do_unwatch_player(request):
     return _do_watch(request, add=False)
@@ -228,7 +233,7 @@ def do_unwatch_player(request):
 @login_required()
 @permission_required("api.can_clear_crcon_cache", raise_exception=True)
 @record_audit
-@require_http_methods(['POST'])
+@require_http_methods(["POST"])
 @require_content_type()
 def clear_cache(request):
     res = RedisCached.clear_all_caches(get_redis_pool())
@@ -247,7 +252,7 @@ def clear_cache(request):
 @login_required()
 @permission_required("api.can_blacklist_players", raise_exception=True)
 @record_audit
-@require_http_methods(['POST'])
+@require_http_methods(["POST"])
 @require_content_type()
 def blacklist_player(request):
     data = _get_data(request)
@@ -283,7 +288,7 @@ def blacklist_player(request):
 @login_required()
 @permission_required("api.can_unblacklist_players", raise_exception=True)
 @record_audit
-@require_http_methods(['POST'])
+@require_http_methods(["POST"])
 @require_content_type()
 def unblacklist_player(request):
     data = _get_data(request)
@@ -335,7 +340,7 @@ def unblacklist_player(request):
     raise_exception=True,
 )
 @record_audit
-@require_http_methods(['POST'])
+@require_http_methods(["POST"])
 @require_content_type()
 def unban(request):
     data = _get_data(request)
@@ -413,13 +418,21 @@ def expose_api_endpoint(func, command_name, permissions: list[str] | set[str] | 
         error = ""
         data = _get_data(request)
 
-        if cmd.startswith('set_') or cmd.startswith('do_'):
-            if request.method != 'POST':
-                return HttpResponseNotAllowed(['POST'])
-            if request.content_type != 'application/json':
-                logger.info("InvalidContentType: %s %s was called with %s, expected one of %s" % (request.method, request.path, request.content_type, ",".join(['application/json'])))
-        elif request.method != 'GET':
-            return HttpResponseNotAllowed(['GET'])
+        if cmd.startswith("set_") or cmd.startswith("do_"):
+            if request.method != "POST":
+                return HttpResponseNotAllowed(["POST"])
+            if request.content_type != "application/json":
+                logger.info(
+                    "InvalidContentType: %s %s was called with %s, expected one of %s"
+                    % (
+                        request.method,
+                        request.path,
+                        request.content_type,
+                        ",".join(["application/json"]),
+                    )
+                )
+        elif request.method != "GET":
+            return HttpResponseNotAllowed(["GET"])
 
         for pname, param in parameters.items():
             if pname == "by":
@@ -468,7 +481,7 @@ def expose_api_endpoint(func, command_name, permissions: list[str] | set[str] | 
 @login_required()
 @permission_required("api.can_view_connection_info", raise_exception=True)
 @csrf_exempt
-@require_http_methods(['GET'])
+@require_http_methods(["GET"])
 def get_connection_info(request):
     config = RconServerSettingsUserConfig.load_from_db()
     return api_response(
@@ -486,7 +499,7 @@ def get_connection_info(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_run_raw_commands", raise_exception=True)
-@require_http_methods(['POST'])
+@require_http_methods(["POST"])
 @require_content_type()
 def run_raw_command(request):
     data = _get_data(request)
