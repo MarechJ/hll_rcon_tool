@@ -91,13 +91,13 @@ def initialise_vote_map(rcon: Rcon, struct_log):
 
 @on_chat
 def trigger_words(rcon: Rcon, struct_log: StructuredLogLineType):
-    chat_message = struct_log["sub_content"]
-    if chat_message is None:
-        return
-
     config = TriggerWordsUserConfig.load_from_db()
     if not config.enabled:
         logger.debug("Trigger words are disabled")
+        return
+
+    chat_message = struct_log["sub_content"]
+    if chat_message is None:
         return
 
     event_cache = get_recent_actions()
