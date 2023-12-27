@@ -1,7 +1,6 @@
 import datetime
 import logging
 import math
-import re
 import time
 from functools import wraps
 from typing import Any, Mapping
@@ -17,11 +16,10 @@ from rcon.user_config.steam import SteamUserConfig
 logger = logging.getLogger(__name__)
 
 last_steam_api_key_warning = datetime.datetime.now()
-steam_id_64_pattern = re.compile(r"\d{17}")
 
 
 def is_steam_id_64(steam_id_64: str) -> bool:
-    if re.match(steam_id_64_pattern, steam_id_64):
+    if len(steam_id_64) == 17 and steam_id_64.isdigit():
         return True
     return False
 
