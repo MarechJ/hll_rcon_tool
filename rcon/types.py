@@ -101,8 +101,6 @@ class MessageVariableContext(enum.Enum):
 
 @dataclass
 class MostRecentEvents:
-    # TODO: including the names is probably dumb because we can look them up
-    # this is just a quick bandaid for testing
     player_name: str | None = None
     last_victim_steam_id_64: str | None = None
     last_nemesis_steam_id_64: str | None = None
