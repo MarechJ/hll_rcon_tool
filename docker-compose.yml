@@ -13,10 +13,7 @@ services:
       service: python
     command: supervisor
     depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      - backend_1
     networks:
       common:
       server1:
@@ -31,8 +28,10 @@ services:
       service: python
     command: web
     depends_on:
-      - postgres
-      - redis
+      postgres:
+          condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       server1:
         aliases:
@@ -131,7 +130,7 @@ services:
           - supervisor
     command: supervisor
     depends_on:
-      - frontend_1
+      - backend_2
   backend_2:
     <<: *backend
     hostname: api_2
@@ -144,7 +143,10 @@ services:
         aliases:
           - backend
     depends_on:
-      - frontend_1
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
   frontend_2:
     <<: *frontend
     ports:
@@ -198,7 +200,7 @@ services:
         aliases:
           - supervisor
     depends_on:
-      - frontend_2
+      - backend_2
   backend_3:
     <<: *backend
     hostname: api_3
@@ -211,7 +213,10 @@ services:
         aliases:
           - backend
     depends_on:
-      - frontend_2
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
   frontend_3:
     <<: *frontend
     ports:
