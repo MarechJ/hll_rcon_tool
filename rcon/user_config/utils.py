@@ -1,5 +1,6 @@
 import logging
-from typing import Any, Iterable, Self
+import os
+from typing import Any, Iterable, Self, Type
 
 import pydantic
 from sqlalchemy.exc import SQLAlchemyError
@@ -7,7 +8,6 @@ from sqlalchemy.exc import SQLAlchemyError
 from rcon.cache_utils import invalidates, ttl_cache
 from rcon.models import UserConfig, enter_session
 from rcon.utils import get_server_number
-from typing import Type
 
 logger = logging.getLogger(__name__)
 
@@ -85,6 +85,11 @@ class BaseUserConfig(pydantic.BaseModel):
 
     @classmethod
     def load_from_db(cls, default_on_error: bool = True) -> Self:
+        # This should never happen in production, but allows tests to run
+        if not os.getenv("HLL_DB_URL"):
+            logger.warning(f"HLL_DB_URL not set, returning a default instance")
+            return cls()
+
         # If the cache is unavailable, it will fall back to creating a default
         # model instance, but will not persist it to the database and overwrite settings
         conf = get_user_config(cls.KEY(), None)
