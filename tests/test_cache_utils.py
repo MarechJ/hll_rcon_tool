@@ -1,8 +1,10 @@
-from rcon.cache_utils import RedisCached, ttl_cache
-from unittest import mock
-import redis.exceptions
-import redis
 from logging import getLogger
+from unittest import mock
+
+import redis
+import redis.exceptions
+
+from rcon.cache_utils import RedisCached, ttl_cache
 
 logger = getLogger(__name__)
 

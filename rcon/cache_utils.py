@@ -2,13 +2,13 @@ import functools
 import logging
 import os
 import pickle
-from typing import Callable
 from contextlib import contextmanager
-from cachetools.func import ttl_cache as cachetools_ttl_cache
+from typing import Callable
 
 import redis
 import redis.exceptions
 import simplejson
+from cachetools.func import ttl_cache as cachetools_ttl_cache
 
 logger = logging.getLogger(__name__)
 
