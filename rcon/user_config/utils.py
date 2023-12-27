@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Iterable, Self
+from typing import Any, Iterable, Self, Type
 
 import pydantic
 from sqlalchemy.exc import SQLAlchemyError
@@ -7,7 +7,6 @@ from sqlalchemy.exc import SQLAlchemyError
 from rcon.cache_utils import invalidates, ttl_cache
 from rcon.models import UserConfig, enter_session
 from rcon.utils import get_server_number
-from typing import Type
 
 logger = logging.getLogger(__name__)
 

@@ -1,4 +1,5 @@
 import pytest
+
 from rcon.hooks import should_ban
 
 

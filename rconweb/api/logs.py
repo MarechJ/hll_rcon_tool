@@ -13,7 +13,7 @@ from .utils import _get_data
 @csrf_exempt
 @login_required()
 @permission_required("api.can_view_historical_logs", raise_exception=True)
-@require_http_methods(['POST'])
+@require_http_methods(["POST"])
 @require_content_type()
 def get_historical_logs(request):
     data = _get_data(request)
@@ -74,7 +74,7 @@ def get_historical_logs(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_view_recent_logs", raise_exception=True)
-@require_http_methods(['POST'])
+@require_http_methods(["POST"])
 @require_content_type()
 def get_recent_logs(request):
     data = _get_data(request)

@@ -29,7 +29,7 @@ AUTO_SETTINGS_KEY_INDEX_MAP = {v: i for i, v in enumerate(AUTO_SETTINGS_KEY_ORDE
 @csrf_exempt
 @login_required()
 @permission_required("api.can_view_auto_settings", raise_exception=True)
-@require_http_methods(['GET'])
+@require_http_methods(["GET"])
 def get_auto_settings(request):
     data = _get_data(request)
     try:
@@ -60,7 +60,7 @@ def get_auto_settings(request):
 @login_required()
 @permission_required("api.can_change_auto_settings", raise_exception=True)
 @record_audit
-@require_http_methods(['POST'])
+@require_http_methods(["POST"])
 @require_content_type()
 def set_auto_settings(request):
     data = _get_data(request)
