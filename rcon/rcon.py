@@ -44,7 +44,7 @@ from rcon.utils import (
     ALL_ROLES,
     ALL_ROLES_KEY_INDEX_MAP,
     INDEFINITE_VIP_DATE,
-    _get_default_info_dict,
+    default_player_info_dict,
     get_server_number,
     parse_raw_player_info,
 )
@@ -204,7 +204,7 @@ class Rcon(ServerCtl):
             except Exception:
                 logger.error("Failed to get info for %s", futures[future])
                 fail_count += 1
-                player_data = _get_default_info_dict(futures[future][NAME])
+                player_data = default_player_info_dict(futures[future][NAME])
             player = futures[future]
             player.update(player_data)
             players_by_id[player[STEAMID]] = player

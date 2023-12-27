@@ -609,7 +609,7 @@ def is_invalid_name_pineapple(name: str) -> bool:
     return len(name) == 20 and name.endswith("?")
 
 
-def _get_default_info_dict(player) -> GetDetailedPlayer:
+def default_player_info_dict(player) -> GetDetailedPlayer:
     return {
         "name": player,
         "steam_id_64": "",
@@ -631,7 +631,7 @@ def _get_default_info_dict(player) -> GetDetailedPlayer:
 
 
 def parse_raw_player_info(raw: str, player) -> GetDetailedPlayer:
-    """"""
+    """Parse the result of the playerinfo command from the game server"""
 
     """
         Name: T17 Scott
@@ -646,7 +646,7 @@ def parse_raw_player_info(raw: str, player) -> GetDetailedPlayer:
 
     """
 
-    data = _get_default_info_dict(player)
+    data = default_player_info_dict(player)
     raw_data = {}
 
     for line in raw.split("\n"):
