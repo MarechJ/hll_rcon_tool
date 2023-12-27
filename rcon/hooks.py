@@ -116,7 +116,9 @@ def trigger_words(rcon: Rcon, struct_log: StructuredLogLineType):
 
         if triggered:
             message_vars: list[str] = re.findall(MESSAGE_VAR_RE, trigger.message)
-            populated_variables = populate_message_variables(vars=message_vars)
+            populated_variables = populate_message_variables(
+                vars=message_vars, steam_id_64=steam_id_64
+            )
             formatted_message = format_message_string(
                 trigger.message,
                 populated_variables=populated_variables,

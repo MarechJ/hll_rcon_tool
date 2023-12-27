@@ -1,3 +1,4 @@
+from datetime import datetime
 from itertools import takewhile
 from logging import getLogger
 from typing import Any, Iterable
@@ -6,7 +7,7 @@ from rcon.audit import ingame_mods, online_mods
 from rcon.rcon import Rcon
 from rcon.scoreboard import get_cached_live_game_stats, get_stat
 from rcon.settings import SERVER_INFO
-from rcon.types import CachedLiveGameStats, MessageVariable, StatTypes
+from rcon.types import CachedLiveGameStats, MessageVariable, StatTypes, VipIdType
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.webhooks import AdminPingWebhooksUserConfig
 from rcon.utils import SHORT_HUMAN_MAP_NAMES, SafeStringFormat
@@ -26,12 +27,17 @@ def _get_rcon():
 
 def populate_message_variables(
     vars: Iterable[str],
+    steam_id_64: str | None = None,
 ) -> dict[MessageVariable, str | None]:
     """Return globally available info for message formatting"""
     populated_variables: dict[MessageVariable, str | None] = {}
     rcon = _get_rcon()
 
     message_variable_to_lookup = {
+        MessageVariable.vip_status: lambda: _is_vip(steam_id_64=steam_id_64, rcon=rcon),
+        MessageVariable.vip_expiration: lambda: _vip_expiration(
+            steam_id_64=steam_id_64, rcon=rcon
+        ),
         MessageVariable.server_name: rcon.get_name,
         MessageVariable.server_short_name: _server_short_name,
         MessageVariable.discord_invite_url: _discord_invite_url,
@@ -87,13 +93,40 @@ def format_message_string(
     return formatted_str
 
 
-def _server_short_name(config: RconServerSettingsUserConfig | None = None):
+def _vip_status(
+    steam_id_64: str | None = None, rcon: Rcon | None = None
+) -> VipIdType | None:
+    if rcon is None:
+        rcon = _get_rcon()
+
+    vip = [v for v in rcon.get_vip_ids() if v["steam_id_64"] == steam_id_64]
+    logger.info(f"{vip=}")
+
+    if vip:
+        return vip[0]
+
+
+def _is_vip(steam_id_64: str | None = None, rcon: Rcon | None = None) -> bool:
+    vip = _vip_status(steam_id_64=steam_id_64, rcon=rcon)
+
+    return vip is not None
+
+
+def _vip_expiration(
+    steam_id_64: str | None = None, rcon: Rcon | None = None
+) -> datetime | None:
+    vip = _vip_status(steam_id_64=steam_id_64, rcon=rcon)
+
+    return vip["vip_expiration"] if vip else None
+
+
+def _server_short_name(config: RconServerSettingsUserConfig | None = None) -> str:
     if config is None:
         config = RconServerSettingsUserConfig.load_from_db()
     return config.short_name
 
 
-def _discord_invite_url(config: RconServerSettingsUserConfig | None = None):
+def _discord_invite_url(config: RconServerSettingsUserConfig | None = None) -> str:
     if config is None:
         config = RconServerSettingsUserConfig.load_from_db()
     return (
@@ -103,7 +136,7 @@ def _discord_invite_url(config: RconServerSettingsUserConfig | None = None):
     )
 
 
-def _admin_ping_trigger_words(config: AdminPingWebhooksUserConfig | None = None):
+def _admin_ping_trigger_words(config: AdminPingWebhooksUserConfig | None = None) -> str:
     if config is None:
         config = AdminPingWebhooksUserConfig.load_from_db()
     return ", ".join(config.trigger_words[:])

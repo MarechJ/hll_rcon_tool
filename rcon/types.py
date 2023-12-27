@@ -32,6 +32,7 @@ class StatTypes(str, enum.Enum):
 class MessageVariable(enum.Enum):
     """Globally available message variables"""
 
+    vip_status = "vip_status"
     vip_expiration = "vip_expiration"
     server_name = "server_name"
     server_short_name = "server_short_name"
