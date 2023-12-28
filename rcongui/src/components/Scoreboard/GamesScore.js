@@ -184,11 +184,7 @@ const GamesScore = ({ classes }) => {
 
   document.title = serverState.get("name", "HLL Stats");
   let started = serverState.get("current_map", new Map()).get("start");
-  started = started
-    ? new Date(Date.now() - new Date(started * 1000))
-      .toISOString()
-      .substr(11, 8)
-    : "N/A";
+  started = started ? moment(moment() - moment(started)).toISOString() : "N/A";
 
   return (
     <>
@@ -221,18 +217,18 @@ const GamesScore = ({ classes }) => {
                 xl
                   ? Math.min(maps.size, 8.5)
                   : lg
-                    ? Math.min(maps.size, 5.5)
-                    : md
-                      ? Math.min(maps.size, 3.5)
-                      : sm
-                        ? Math.min(maps.size, 2.5)
-                        : Math.min(maps.size, 1.5)
+                  ? Math.min(maps.size, 5.5)
+                  : md
+                  ? Math.min(maps.size, 3.5)
+                  : sm
+                  ? Math.min(maps.size, 2.5)
+                  : Math.min(maps.size, 1.5)
               }
               className={styles.gridList}
             >
               {maps.map((m) => {
-                const start = moment(m.get("start") + "Z");
-                const end = moment(m.get("end") + "Z");
+                const start = moment(m.get("start"));
+                const end = moment(m.get("end"));
                 const duration = moment.duration(end - start);
                 const isSelected = (isReturn, isNotReturn) =>
                   m.get("id") === slug ? isReturn : isNotReturn;
@@ -243,7 +239,7 @@ const GamesScore = ({ classes }) => {
                     onClick={() => doSelectMap(m.get("id"))}
                     key={`${m.get("name")}${m.get("start")}${m.get("end")}`}
                   >
-                    <img alt="Map" src={getMapImageUrl(m.get('map_name'))} />
+                    <img alt="Map" src={getMapImageUrl(m.get("map_name"))} />
 
                     <GridListTileBar
                       className={isSelected(
