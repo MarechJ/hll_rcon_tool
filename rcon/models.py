@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from typing import Any, Generator, List, Optional
 
 import pydantic
-from sqlalchemy import TIMESTAMP, ForeignKey, String, create_engine, text
+from sqlalchemy import TIMESTAMP, DateTime, ForeignKey, String, create_engine, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -19,6 +19,7 @@ from sqlalchemy.orm import (
 )
 from sqlalchemy.orm.session import Session, object_session
 from sqlalchemy.schema import UniqueConstraint
+from sqlalchemy.types import TypeDecorator
 
 from rcon.types import (
     AuditLogType,
@@ -60,9 +61,30 @@ def get_engine():
     return _ENGINE
 
 
+class TZDateTime(TypeDecorator):
+    impl = DateTime
+    cache_ok = True
+
+    def process_bind_param(self, value, dialect):
+        if value is not None:
+            if not value.tzinfo or value.tzinfo.utcoffset(value) is None:
+                raise TypeError("tzinfo is required")
+            value = value.astimezone(timezone.utc).replace(tzinfo=None)
+        return value
+
+    def process_result_value(self, value, dialect):
+        if value is not None:
+            value = value.replace(tzinfo=timezone.utc)
+        return value
+
+
 class Base(DeclarativeBase):
     # TODO: Replace dict[str, Any] w/ actual types
-    type_annotation_map = {dict[str, Any]: JSONB, dict[str, int]: JSONB}
+    type_annotation_map = {
+        dict[str, Any]: JSONB,
+        dict[str, int]: JSONB,
+        datetime: TZDateTime,
+    }
 
 
 class PlayerSteamID(Base):
@@ -129,7 +151,7 @@ class PlayerSteamID(Base):
 
         for i, s in enumerate(self.sessions):
             if not s.end and s.start and i == 0:
-                total += (datetime.now() - s.start).total_seconds()
+                total += (datetime.now(tz=timezone.utc) - s.start).total_seconds()
             elif s.end and s.start:
                 total += (s.end - s.start).total_seconds()
 
@@ -138,7 +160,7 @@ class PlayerSteamID(Base):
     def get_current_playtime_seconds(self) -> int:
         if self.sessions:
             start = self.sessions[0].start or self.sessions[0].created
-            return int((datetime.now() - start).total_seconds())
+            return int((datetime.now(tz=timezone.utc) - start).total_seconds())
         return 0
 
     def to_dict(self, limit_sessions=5) -> PlayerProfileType:
