@@ -401,6 +401,13 @@ def save_end_player_session(steam_id_64, timestamp):
             .first()
         )
 
+        if last_session is None:
+            logger.warning(
+                "Can't record player session for %s, last session not found",
+                steam_id_64,
+            )
+            return
+
         if last_session.end:
             logger.warning(
                 "Last session was already ended for %s. Creating a new one instead",

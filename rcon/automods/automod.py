@@ -108,9 +108,7 @@ def _do_punitions(
                 )
         except (CommandFailedError, HLLServerError):
             logger.warning(
-                "Couldn't `%s` player `%s`. Will retry.",
-                repr(method),
-                repr(aplayer)
+                "Couldn't `%s` player `%s`. Will retry.", repr(method), repr(aplayer)
             )
             if method == ActionMethod.PUNISH:
                 for m in mods:
@@ -251,10 +249,7 @@ def on_connected(rcon: Rcon, _, name: str, steam_id_64: str):
                 )
         except Exception as e:
             logger.error(
-                "Could not message player '%s' (%s) : %s",
-                name,
-                steam_id_64,
-                e
+                "Could not message player '%s' (%s) : %s", name, steam_id_64, e
             )
 
     if len(punitions_to_apply.warning) == 0:

@@ -36,7 +36,7 @@ logger = logging.getLogger("rconweb")
 def get_previous_map(request):
     command_name = "get_previous_map"
     try:
-        prev_map = MapsHistory()[-1]
+        prev_map = MapsHistory()[1]
         res = {
             "name": prev_map["name"],
             "start": datetime.datetime.fromtimestamp(
