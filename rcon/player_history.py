@@ -117,7 +117,10 @@ def _get_set_player(sess, player_name, steam_id_64, timestamp=None):
         player = _save_steam_id(sess, steam_id_64)
     if player_name:
         _save_player_alias(
-            sess, player, player_name, timestamp or datetime.datetime.now().timestamp()
+            sess,
+            player,
+            player_name,
+            timestamp or datetime.datetime.now(tz=datetime.UTC).timestamp(),
         )
 
     return player
@@ -299,7 +302,10 @@ def save_player(player_name, steam_id_64, timestamp=None):
     with enter_session() as sess:
         steamid = _save_steam_id(sess, steam_id_64)
         _save_player_alias(
-            sess, steamid, player_name, timestamp or datetime.datetime.now()
+            sess,
+            steamid,
+            player_name,
+            timestamp or datetime.datetime.now(tz=datetime.UTC),
         )
 
 

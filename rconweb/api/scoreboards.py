@@ -140,11 +140,11 @@ def date_scoreboard(request):
     try:
         start = datetime.fromtimestamp(request.GET.get("start"), tz=timezone.utc)
     except (ValueError, KeyError, TypeError) as e:
-        start = datetime.now() - timedelta(minutes=60)
+        start = datetime.now(tz=timezone.utc) - timedelta(minutes=60)
     try:
         end = datetime.fromtimestamp(request.GET.get("end"), tz=timezone.utc)
     except (ValueError, KeyError, TypeError) as e:
-        end = datetime.now()
+        end = datetime.now(tz=timezone.utc)
 
     stats = TimeWindowStats()
 

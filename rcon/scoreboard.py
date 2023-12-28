@@ -304,7 +304,7 @@ class LiveStats(BaseStats):
                 max(players, key=self._get_player_session_time)
             )
             logger.debug("Oldest session: %s", oldest_session_seconds)
-            now = datetime.datetime.now()
+            now = datetime.datetime.now(tz=datetime.UTC)
             min_timestamp = (
                 now - datetime.timedelta(seconds=oldest_session_seconds)
             ).timestamp()

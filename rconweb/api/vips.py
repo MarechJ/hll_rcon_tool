@@ -206,7 +206,7 @@ def download_vips(request):
 
     response[
         "Content-Disposition"
-    ] = f"attachment; filename={datetime.datetime.now().isoformat()}_vips.txt"
+    ] = f"attachment; filename={datetime.datetime.now(tz=datetime.UTC).isoformat()}_vips.txt"
     return response
 
 
