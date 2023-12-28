@@ -720,9 +720,7 @@ class PlayerVIP(Base):
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    expiration: Mapped[datetime] = mapped_column(
-        TIMESTAMP(timezone=True), nullable=False
-    )
+    expiration: Mapped[datetime] = mapped_column(TIMESTAMP, nullable=False)
     # Not making this unique (even though it should be) to avoid breaking existing CRCONs
     server_number: Mapped[int] = mapped_column()
 
@@ -739,7 +737,7 @@ class AuditLog(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     username: Mapped[str] = mapped_column(nullable=False, index=True)
     creation_time: Mapped[datetime] = mapped_column(
-        TIMESTAMP(timezone=True), default=lambda: datetime.now(tz=timezone.utc)
+        TIMESTAMP, default=lambda: datetime.now(tz=timezone.utc)
     )
     # Not making this unique (even though it should be) to avoid breaking existing CRCONs
     command: Mapped[str] = mapped_column(nullable=False, index=True)
