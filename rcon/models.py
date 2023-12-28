@@ -61,10 +61,12 @@ def get_engine():
     return _ENGINE
 
 
+# Sourced without modification from https://docs.sqlalchemy.org/en/20/core/custom_types.html#store-timezone-aware-timestamps-as-timezone-naive-utc
 class TZDateTime(TypeDecorator):
     impl = DateTime
     cache_ok = True
 
+    # Strips time zones before persisting them
     def process_bind_param(self, value, dialect):
         if value is not None:
             if not value.tzinfo or value.tzinfo.utcoffset(value) is None:
@@ -72,6 +74,7 @@ class TZDateTime(TypeDecorator):
             value = value.astimezone(timezone.utc).replace(tzinfo=None)
         return value
 
+    # Add time zone info to results retrieved from the database
     def process_result_value(self, value, dialect):
         if value is not None:
             value = value.replace(tzinfo=timezone.utc)
