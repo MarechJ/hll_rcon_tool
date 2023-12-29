@@ -201,7 +201,7 @@ def send_log_line_webhook_message(
 
     wh.content = content
     wh.add_embed(embed)
-    wh.allowed_mentions = allowed_mentions["user"] + allowed_mentions["roles"]
+    wh.allowed_mentions = allowed_mentions
     wh.execute()
 
 
