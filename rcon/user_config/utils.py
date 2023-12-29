@@ -1,4 +1,5 @@
 import logging
+import os
 from typing import Any, Iterable, Self, Type
 
 import pydantic
@@ -84,6 +85,11 @@ class BaseUserConfig(pydantic.BaseModel):
 
     @classmethod
     def load_from_db(cls, default_on_error: bool = True) -> Self:
+        # This should never happen in production, but allows tests to run
+        if not os.getenv("HLL_DB_URL"):
+            logger.warning(f"HLL_DB_URL not set, returning a default instance")
+            return cls()
+
         # If the cache is unavailable, it will fall back to creating a default
         # model instance, but will not persist it to the database and overwrite settings
         conf = get_user_config(cls.KEY(), default=None, cls=cls)
