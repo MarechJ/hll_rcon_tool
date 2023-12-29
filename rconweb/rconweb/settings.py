@@ -143,6 +143,10 @@ if host := rcon_config.server_url:
         CSRF_TRUSTED_ORIGINS.append(host)
 
 if DEBUG:
+    # Chrome requires these to be set or it won't allow cookies to save between
+    # cross origin requests, by default in debug the backend runs on localhost:8000
+    #  and the frontend on localhost:3000 which are considered different domains
+    SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SAMESITE = "None"
     SESSION_COOKIE_SAMESITE = "None"
 
