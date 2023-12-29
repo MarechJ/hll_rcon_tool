@@ -92,14 +92,14 @@ class BaseUserConfig(pydantic.BaseModel):
 
         # If the cache is unavailable, it will fall back to creating a default
         # model instance, but will not persist it to the database and overwrite settings
-        conf = get_user_config(cls.KEY(), None)
+        conf = get_user_config(cls.KEY(), default=None, cls=cls)
         if conf is not None:
             try:
                 return cls.model_validate(conf)
             except pydantic.ValidationError as e:
                 if default_on_error:
                     logger.error(
-                        f"Validation error loading {cls.KEY()}, returning defaults"
+                        f"Error loading {cls.KEY()}, returning defaults, validation errors:"
                     )
                     logger.error(e)
                     return cls()
@@ -129,10 +129,11 @@ def _get_conf(sess, key):
 
 def _get_user_config_cache_unavailable(
     key: str, default=None, cls: Type[BaseUserConfig] | None = None
-) -> str | None:
+) -> dict[str, Any]:
     """Return a default model as JSON"""
+    logger.info(f"_get_user_config_cache_unavailable {key=} {default=} {cls=}")
     if cls:
-        return cls().model_dump_json()
+        return cls().model_dump()
     else:
         raise ValueError(f"cls must not be None")
 
@@ -144,7 +145,7 @@ def _get_user_config_cache_unavailable(
 )
 def get_user_config(
     key: str, default=None, cls: Type[BaseUserConfig] | None = None
-) -> str | None:
+) -> dict[str, Any] | Any | None:
     # cls required as a default parameter so it will be passed through to
     # _get_user_config_cache_unavailable in the ttl_cache decorator
     logger.debug("Getting user config for %s", key)
