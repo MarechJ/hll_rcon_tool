@@ -165,8 +165,9 @@ def ttl_cache(
     **kwargs,
 ):
     pool = get_redis_pool(decode_responses=False)
-    if os.getenv("DEBUG"):
-        # Allow use of in memory cache when running tests
+    # Allow use of in memory cache and not redis when running tests
+    # but still use redis when running the development web server
+    if os.getenv("DEBUG") and not pool:
         logger.warning(f"Unable to connect to Redis, using memory cache")
         return cachetools_ttl_cache(*args, ttl=ttl, **kwargs)
     if not pool:
