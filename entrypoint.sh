@@ -17,7 +17,11 @@ then
   ./manage.py makemigrations --no-input
   ./manage.py migrate --noinput
   ./manage.py collectstatic --noinput
-  echo "from django.contrib.auth.models import User; User.objects.create_superuser('admin', 'admin@example.com', 'admin') if not User.objects.filter(username='admin').first() else None" | python manage.py shell
+  # If DONT_SEED_ADMIN_USER is not set to any value
+  if [[ -z "$DONT_SEED_ADMIN_USER" ]]
+  then
+    echo "from django.contrib.auth.models import User; User.objects.create_superuser('admin', 'admin@example.com', 'admin') if not User.objects.filter(username='admin').first() else None" | python manage.py shell
+  fi
   export LOGGING_FILENAME=api_$SERVER_NUMBER.log
   gunicorn --preload --pid gunicorn.pid -w $NB_API_WORKERS -k gthread --threads $NB_API_THREADS -t 120 -b 0.0.0.0 rconweb.wsgi
   cd ..
