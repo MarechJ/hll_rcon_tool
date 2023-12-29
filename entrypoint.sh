@@ -17,6 +17,7 @@ then
   ./manage.py makemigrations --no-input
   ./manage.py migrate --noinput
   ./manage.py collectstatic --noinput
+  # If DONT_SEED_ADMIN_USER is not set to any value
   if [[ -z "$DONT_SEED_ADMIN_USER" ]]
   then
     echo "from django.contrib.auth.models import User; User.objects.create_superuser('admin', 'admin@example.com', 'admin') if not User.objects.filter(username='admin').first() else None" | python manage.py shell
