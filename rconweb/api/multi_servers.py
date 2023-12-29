@@ -17,7 +17,7 @@ logger = logging.getLogger("rcon")
 @login_required()
 @permission_required("api.can_view_other_crcon_servers", raise_exception=True)
 @csrf_exempt
-@require_http_methods(['GET'])
+@require_http_methods(["GET"])
 def get_server_list(request):
     api_key = ApiKey()
     keys = api_key.get_all_keys()

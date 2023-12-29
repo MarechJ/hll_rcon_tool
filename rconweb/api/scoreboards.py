@@ -19,7 +19,7 @@ logger = logging.getLogger("rconweb")
 
 @csrf_exempt
 @stats_login_required
-@require_http_methods(['GET'])
+@require_http_methods(["GET"])
 def live_scoreboard(request):
     stats = LiveStats()
     config = RconServerSettingsUserConfig.load_from_db()
@@ -45,7 +45,7 @@ def live_scoreboard(request):
 
 @csrf_exempt
 @stats_login_required
-@require_http_methods(['GET'])
+@require_http_methods(["GET"])
 def get_scoreboard_maps(request):
     data = _get_data(request)
 
@@ -83,7 +83,7 @@ def get_scoreboard_maps(request):
 
 @csrf_exempt
 @stats_login_required
-@require_http_methods(['GET'])
+@require_http_methods(["GET"])
 def get_map_scoreboard(request):
     data = _get_data(request)
     error = None
@@ -114,7 +114,7 @@ def get_map_scoreboard(request):
 
 @csrf_exempt
 @stats_login_required
-@require_http_methods(['GET'])
+@require_http_methods(["GET"])
 def get_live_game_stats(request):
     stats = None
     error_ = None
@@ -135,7 +135,7 @@ def get_live_game_stats(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_view_date_scoreboard", raise_exception=True)
-@require_http_methods(['GET'])
+@require_http_methods(["GET"])
 def date_scoreboard(request):
     try:
         start = datetime.fromtimestamp(request.GET.get("start"))
