@@ -398,7 +398,11 @@ Once the virtual environment is activated in your shell install all of the Pytho
 
 #### Set environment variables
 
-These environment variables are the minimum that need to be set to run the tests, see the following sections for what else needs to be set to run a development instance.
+You can use `dev.env` as a template for what variables need to be set, and after filling in the missing portions, from your shell:
+
+Or you can manually set them as specified in the sections below.
+
+    source dev.env
 
 `SERVER_NUMBER` is an integral part of how CRCON works and is how data is segregated between servers in the database and is normally set in the compose files.
 
@@ -408,26 +412,12 @@ The `HLL_DB_PASSWORD` password must match what you set when the database was fir
 
 The default username and database name is `rcon` if you've seeded the database unless you've configured it differently.
 
-PYTHONPATH needs to be set to your root `hll_rcon_tool` directory (for example `/home/emathey/rcon_dev/hll_rcon_tool`).
-
-    export PYTHONPATH=${pwd}
-
     export HLL_DB_PASSWORD=rcon_dev
     export HLL_DB_NAME=rcon
     export HLL_DB_USER=rcon
     export HLL_DB_HOST=localhost
     export HLL_DB_HOST_PORT=5432
     export HLL_DB_URL=postgresql://${HLL_DB_USER}:${HLL_DB_PASSWORD}@${HLL_DB_HOST}:${HLL_DB_HOST_PORT}/${HLL_DB_NAME}
-
-#### Running Tests
-
-From the root `hll_rcon_tool` directory:
-
-    DEBUG=TRUE pytest tests/    
-
-If you don't set `PYTHONPATH` you'll see errors similar to ` ModuleNotFoundError: No module named 'rcon'`.
-
-If you don't set `DEBUG` to a truthy value, you'll see errors about not being able to connect to redis.
 
 #### Running the development backend
 
@@ -441,10 +431,10 @@ You can *sort of* run a local instance without a game server to connect to, but 
 
 **If you didn't run the production environment first**: Create the database tables (you only need to do this once, unless you've created new migrations).
 
-    alembic upgrade head
-    ./manage.py init_db
-    ./rconweb/manage.py makemigrations --no-input 
-    ./rconweb/manage.py migrate --noinput
+    PYTHONPATH=. alembic upgrade head
+    PYTHONPATH=. ./manage.py init_db
+    PYTHONPATH=. ./rconweb/manage.py makemigrations --no-input 
+    PYTHONPATH=. ./rconweb/manage.py migrate --noinput
 
 Alembic runs the database migrations which creates the tables, and `init_db` installs a postgres extension and sets default values for auto settings.
 
@@ -452,7 +442,7 @@ Alembic runs the database migrations which creates the tables, and `init_db` ins
 
 **If you didn't run the production environment first**: Create a `superuser` account and follow the prompts:
 
-    ./rconweb/manage.py createsuperuser       
+    PYTHONPATH=. ./rconweb/manage.py createsuperuser       
 
 Set the redis environment variables:
 
@@ -467,7 +457,7 @@ Both the `redis` and `postgres` containers should be running (or you should have
 
 Start the Django (backend) development web server:
 
-    DJANGO_DEBUG=true DEBUG=true PYTHONPATH=$(pwd) ./rconweb/manage.py runserver --nothreading
+    DJANGO_DEBUG=true DEBUG=true PYTHONPATH=. ./rconweb/manage.py runserver --nothreading
 
 If you've set all the environment variables correctly, initialized the database and started the Django web server, you'll see something similar to:
 
@@ -516,13 +506,26 @@ Some of these services are required if you want the frontend to work as expected
 Each service you want to run either needs to be run in the background or needs to be run in a separate shell (don't forget to set environment variables in each shell)
 
     # Calculates player stats for the scoreboard
-    ./manage.py live_stats_loop
+    PYTHONPATH=. ./manage.py live_stats_loop
     # Runs hooks (on connected events, on kills, etc.)
-    ./manage.py log_loop
+    PYTHONPATH=. ./manage.py log_loop
     # If you want logs to be saved in the DB
-    ./manage.py log_recorder
+    PYTHONPATH=. ./manage.py log_recorder
 
 Those service are run by supervisor in the production setup, so if you want more info check `config/supervisor.conf`
+
+#### Running Tests
+
+Unfortunately at this moment in time the database needs to be running for the tests to run. The tables don't actually need to exist.
+
+From the root `hll_rcon_tool` directory:
+
+    PYTHONPATH=. DEBUG=TRUE pytest tests/    
+
+If you don't set `PYTHONPATH` you'll see errors similar to ` ModuleNotFoundError: No module named 'rcon'`.
+
+If you don't set `DEBUG` to a truthy value, you'll see errors about not being able to connect to redis.
+
 
 #### To test if your changes will work with the production setup, start the whole stack
 
