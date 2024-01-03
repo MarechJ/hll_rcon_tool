@@ -1264,8 +1264,13 @@ class Rcon(ServerCtl):
                 logger.info("Removing from rotation: '%s'", map_without_number)
                 super().do_remove_map_from_rotation(map_without_number)
 
-            last = current[0]
-            map_number = {last: 1}
+            if len(current) > 0:
+                last = current[0]
+                map_number = {last: 1}
+            else:
+                last = rotation[0]
+                map_number = {}
+
             for map_ in rotation:
                 logger.info("Adding to rotation: '%s'", map_)
                 super().do_add_map_to_rotation(map_, last, map_number.get(last, 1))
