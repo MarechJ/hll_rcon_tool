@@ -2,6 +2,7 @@ import logging
 import os
 
 from rcon.models import enter_session
+from rcon.utils import get_server_number
 from rcon.user_config.utils import (
     _add_conf,
     _remove_conf,
@@ -15,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 class AutoSettingsConfig:
     def __init__(self):
-        server_number = os.getenv("SERVER_NUMBER", 0)
+        server_number = get_server_number()
         self.SETTINGS = f"{server_number}_auto_settings"
 
     def seed_db(self, sess):
