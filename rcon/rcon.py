@@ -16,6 +16,7 @@ from rcon.player_history import (
     add_player_to_blacklist,
     get_profiles,
     safe_save_player_action,
+    save_player,
 )
 from rcon.steam_utils import (
     get_player_country_code,
@@ -740,53 +741,45 @@ class Rcon(ServerCtl):
                 .filter(PlayerSteamID.steam_id_64 == steam_id_64)
                 .one_or_none()
             )
-
-            # If there's no PlayerSteamID record the player has never been on the server before
-            # Adding VIP to them is still valid as it's tracked on the game server
-            # The service that prunes expired VIPs checks for VIPs without a PlayerVIP record
-            # and creates them there as indefinite VIPs
-            if player:
-                vip_record: PlayerVIP | None = (
-                    session.query(PlayerVIP)
-                    .filter(
-                        PlayerVIP.server_number == server_number,
-                        PlayerVIP.playersteamid_id == player.id,
-                    )
-                    .one_or_none()
+            if player is None:
+                # If a player has never been on the server before and their record is
+                # being created from a VIP list upload, their alias will be saved with
+                # whatever name is in the upload file which may have metadata in it since
+                # people use the free form name field in VIP uploads to store stuff
+                save_player(player_name=name, steam_id_64=steam_id_64)
+                # Can't use a return value from save_player or it's not bound
+                # to the session https://docs.sqlalchemy.org/en/20/errors.html#error-bhk3
+                player = (
+                    session.query(PlayerSteamID)
+                    .filter(PlayerSteamID.steam_id_64 == steam_id_64)
+                    .one()
                 )
-                if not vip_record:
-                    new_vip_record = PlayerVIP(
-                        expiration=expiration_date,
-                        playersteamid_id=player.id,
-                        server_number=server_number,
-                    )
-                    logger.info(
-                        f"Added new PlayerVIP record {player.steam_id_64=} {expiration_date=}"
-                    )
-                    # TODO: This is an incredibly dumb fix because I can't get
-                    # the changes to persist otherwise
-                    session.add(new_vip_record)
-                else:
-                    previous_expiration = vip_record.expiration.isoformat()
 
-                    new_vip_record = PlayerVIP(
-                        expiration=expiration_date,
-                        playersteamid_id=player.id,
-                        server_number=server_number,
-                    )
+            vip_record: PlayerVIP | None = (
+                session.query(PlayerVIP)
+                .filter(
+                    PlayerVIP.server_number == server_number,
+                    PlayerVIP.playersteamid_id == player.id,
+                )
+                .one_or_none()
+            )
 
-                    # TODO: This is an incredibly dumb fix because I can't get
-                    # the changes to persist otherwise
-                    session.delete(vip_record)
-                    session.commit()
-                    session.add(new_vip_record)
-                    if player.vip:
-                        expiration_date = player.vip.expiration
-                    else:
-                        expiration_date = new_vip_record.expiration
-                    logger.info(
-                        f"Modified PlayerVIP record {player.steam_id_64=} {expiration} {previous_expiration=}"
-                    )
+            if vip_record is None:
+                vip_record = PlayerVIP(
+                    expiration=expiration_date,
+                    playersteamid_id=player.id,
+                    server_number=server_number,
+                )
+                logger.info(
+                    f"Added new PlayerVIP record {player.steam_id_64=} {expiration_date=}"
+                )
+                session.add(vip_record)
+            else:
+                previous_expiration = vip_record.expiration.isoformat()
+                vip_record.expiration = expiration_date
+                logger.info(
+                    f"Modified PlayerVIP record {player.steam_id_64=} {vip_record.expiration} {previous_expiration=}"
+                )
 
         return result
 
