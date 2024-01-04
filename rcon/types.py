@@ -10,6 +10,12 @@ class RconInvalidNameActionType(str, enum.Enum):
     ban = "BAN"
 
 
+class WindowsStoreIdActionType(str, enum.Enum):
+    kick = "KICK"
+    temp_ban = "TEMP BAN"
+    perma_ban = "PERMA BAN"
+
+
 class ServerInfoType(TypedDict):
     host: str | None
     port: str | None

@@ -32,8 +32,18 @@ from rcon.player_history import (
     save_start_player_session,
 )
 from rcon.rcon import Rcon, StructuredLogLineType
-from rcon.steam_utils import get_player_bans, get_steam_profile, update_db_player_info
-from rcon.types import PlayerFlagType, RconInvalidNameActionType, SteamBansType
+from rcon.steam_utils import (
+    get_player_bans,
+    get_steam_profile,
+    update_db_player_info,
+    is_steam_id_64,
+)
+from rcon.types import (
+    PlayerFlagType,
+    RconInvalidNameActionType,
+    SteamBansType,
+    WindowsStoreIdActionType,
+)
 from rcon.user_config.auto_mod_no_leader import AutoModNoLeaderUserConfig
 from rcon.user_config.camera_notification import CameraNotificationUserConfig
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
@@ -371,6 +381,67 @@ def update_player_steaminfo_on_connect(rcon, struct_log, _, steam_id_64):
 pendingTimers: dict[
     str, list[tuple[RconInvalidNameActionType | None, Timer]]
 ] = defaultdict(list)
+
+
+@on_connected
+@inject_player_ids
+def windows_store_player_check(rcon: Rcon, _, name: str, player_id: str):
+    config = RconServerSettingsUserConfig.load_from_db().windows_store_players
+
+    if not config.enabled or is_steam_id_64(player_id):
+        return
+
+    action = config.action
+    action_value = action.value if action else None
+
+    logger.info(
+        "Windows store player '%s' (%s) connected, action=%s",
+        name,
+        player_id,
+        action_value,
+    )
+
+    try:
+        send_to_discord_audit(
+            message=config.audit_message.format_map(
+                DefaultStringFormat(
+                    name=name, steam_id_64=player_id, action=action_value
+                )
+            )
+        )
+    except Exception:
+        logger.exception(
+            "Unable to send %s %s (%s) to audit", action_value, name, player_id
+        )
+
+    try:
+        if action == WindowsStoreIdActionType.kick:
+            rcon.do_kick(
+                name,
+                reason=config.player_message,
+                by=config.audit_message_author,
+            )
+        elif action == WindowsStoreIdActionType.temp_ban:
+            rcon.do_temp_ban(
+                steam_id_64=player_id,
+                duration_hours=config.temp_ban_length_hours,
+                reason=config.player_message,
+                by=config.audit_message_author,
+            )
+        elif action == WindowsStoreIdActionType.perma_ban:
+            rcon.do_perma_ban(
+                steam_id_64=player_id,
+                reason=config.player_message,
+                by=config.audit_message_author,
+            )
+    except Exception as e:
+        logger.error(
+            "Could not %s whitespace name player %s/%s: %s",
+            action_value,
+            name,
+            player_id,
+            e,
+        )
 
 
 @on_connected
