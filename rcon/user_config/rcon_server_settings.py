@@ -1,4 +1,4 @@
-from typing import Optional, TypedDict
+from typing import Optional, TypedDict, Type
 
 from pydantic import BaseModel, BeforeValidator, Field, HttpUrl, field_serializer
 from typing_extensions import Annotated
@@ -74,18 +74,29 @@ class RconServerSettingsType(TypedDict):
     windows_store_players: WindowsStorePlayersType
 
 
-def upper_case_action(v: str | None):
-    """Allow users to enter actions in any case"""
+def _upper_case_action(
+    v: str | None, cls: Type[RconInvalidNameActionType | WindowsStoreIdActionType]
+):
     if v:
-        return RconInvalidNameActionType(v.upper())
+        return cls(v.upper())
     else:
         return v
+
+
+def upper_case_name_kick_action(v: str | None):
+    """Allow users to enter actions in any case"""
+    return _upper_case_action(v, cls=RconInvalidNameActionType)
+
+
+def upper_case_name_windows_player_action(v: str | None):
+    """Allow users to enter actions in any case"""
+    return _upper_case_action(v, cls=WindowsStoreIdActionType)
 
 
 class InvalidName(BaseModel):
     enabled: bool = Field(default=False)
     action: Annotated[
-        RconInvalidNameActionType, BeforeValidator(upper_case_action)
+        RconInvalidNameActionType, BeforeValidator(upper_case_name_kick_action)
     ] | None = Field(default=None)
     whitespace_name_player_message: str = Field(default=WHITESPACE_NAME_PLAYER_MESSAGE)
     pineapple_name_player_message: str = Field(default=PINEAPPLE_NAME_PLAYER_MESSAGE)
@@ -98,7 +109,7 @@ class InvalidName(BaseModel):
 class WindowsStorePlayer(BaseModel):
     enabled: bool = Field(default=False)
     action: Annotated[
-        WindowsStoreIdActionType, BeforeValidator(upper_case_action)
+        WindowsStoreIdActionType, BeforeValidator(upper_case_name_windows_player_action)
     ] | None = Field(default=None)
     player_message: str = Field(default=WINDOWS_STORE_PLAYER_MESSAGE)
     audit_message: str = Field(default=WINDOWS_STORE_AUDIT_MESSAGE)
