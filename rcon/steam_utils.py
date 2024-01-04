@@ -7,6 +7,7 @@ from typing import Any, Mapping
 
 import steam.exceptions
 from steam.webapi import WebAPI
+from dataclasses import dataclass
 
 from rcon.cache_utils import ttl_cache
 from rcon.models import PlayerSteamID, SteamInfo
@@ -36,6 +37,22 @@ def filter_steam_ids():
     return decorator
 
 
+@dataclass
+class ReturnValue:
+    """Used to return a cacheable/callable object for the redis cache
+
+    This avoids errors like:
+        AttributeError: Can't pickle local object 'filter_steam_id.<locals>.decorator.<locals>.wrapper.<locals>.<lambda>'
+
+    """
+
+    def __init__(self, value: Any = None):
+        self.value = value
+
+    def __call__(self, *args: Any, **kwds: Any) -> Any:
+        return self.value
+
+
 def filter_steam_id(return_value: Any = None):
     def decorator(f):
         @wraps(f)
@@ -43,7 +60,7 @@ def filter_steam_id(return_value: Any = None):
             if is_steam_id_64(steamd_id):
                 return f(steamd_id=steamd_id, *args, **kwargs)
             else:
-                return lambda: return_value
+                return ReturnValue(value=return_value)()
 
         return wrapper
 

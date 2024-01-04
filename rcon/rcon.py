@@ -101,17 +101,15 @@ class Rcon(ServerCtl):
     MAX_SERV_NAME_LEN = 1024  # I totally made up that number. Unable to test
     slots_regexp = re.compile(r"^\d{1,3}/\d{2,3}$")
     map_regexp = re.compile(r"^(\w+_?)+$")
-    chat_regexp = re.compile(
-        r"CHAT\[(Team|Unit)\]\[(.*)\((Allies|Axis)/(\d+)\)\]: (.*)"
-    )
+    chat_regexp = re.compile(r"CHAT\[(Team|Unit)\]\[(.*)\((Allies|Axis)/(.*)\)\]: (.*)")
     player_info_pattern = r"(.*)\(((Allies)|(Axis))/(\d+)\)"
     player_info_regexp = re.compile(r"(.*)\(((Allies)|(Axis))/(\d+)\)")
     log_time_regexp = re.compile(r".*\((\d+)\).*")
-    connect_disconnect_pattern = re.compile(r"(.+) \((\d+)\)")
+    connect_disconnect_pattern = re.compile(r"(.+) \((.*)\)")
     kill_teamkill_pattern = re.compile(
         r"(.*)\((?:Allies|Axis)\/(.*)\) -> (.*)\((?:Allies|Axis)\/(.*)\) with (.*)"
     )
-    camera_pattern = re.compile(r"\[(.*)\s{1}\((\d+)\)\] (.*)")
+    camera_pattern = re.compile(r"\[(.*) \((.*)\)\] (.*)")
     teamswitch_pattern = re.compile(r"TEAMSWITCH\s(.*)\s\((.*\s>\s.*)\)")
     kick_ban_pattern = re.compile(
         r"(KICK|BAN): \[(.*)\] (.*\[(KICKED|BANNED|PERMANENTLY|YOU|Host|Anti-Cheat|[^\]]*)[^\]]*)(?:\])*"
@@ -127,7 +125,7 @@ class Rcon(ServerCtl):
     vote_passed_pattern = re.compile(r"VOTESYS: (Vote Kick \{(.*)\} .*\[(.*)\])")
     # Need the DOTALL flag to allow `.` to capture newlines in multi line messages
     message_pattern = re.compile(
-        r"MESSAGE: player \[(.+)\((\d+)\)\], content \[(.+)\]", re.DOTALL
+        r"MESSAGE: player \[(.+)\((.*)\)\], content \[(.+)\]", re.DOTALL
     )
 
     def __init__(self, *args, pool_size: bool | None = None, **kwargs):
