@@ -16,8 +16,7 @@ from rcon.commands import CommandFailedError, HLLServerError
 from rcon.discord import send_to_discord_audit
 from rcon.game_logs import on_connected, on_kill
 from rcon.hooks import inject_player_ids
-from rcon.rcon import Rcon
-from rcon.settings import SERVER_INFO
+from rcon.rcon import Rcon, get_rcon
 from rcon.types import StructuredLogLineType
 from rcon.user_config.auto_mod_level import AutoModLevelUserConfig
 from rcon.user_config.auto_mod_no_leader import AutoModNoLeaderUserConfig
@@ -262,7 +261,7 @@ def on_connected(rcon: Rcon, _, name: str, steam_id_64: str):
 
 
 def run():
-    rcon = Rcon(SERVER_INFO)
+    rcon = get_rcon()
     red = get_redis_client()
 
     while True:

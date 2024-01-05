@@ -22,8 +22,7 @@ from rcon.player_history import (
     get_player_profile,
     player_has_flag,
 )
-from rcon.rcon import LOG_ACTIONS, Rcon
-from rcon.settings import SERVER_INFO
+from rcon.rcon import LOG_ACTIONS, Rcon, get_rcon
 from rcon.types import (
     AllLogTypes,
     GetDetailedPlayer,
@@ -233,7 +232,7 @@ class LogLoop:
     log_history_key = "log_history"
 
     def __init__(self):
-        self.rcon = Rcon(SERVER_INFO)
+        self.rcon = get_rcon()
         self.red = get_redis_client()
         self.duplicate_guard_key = "unique_logs"
         self.log_history = self.get_log_history_list()

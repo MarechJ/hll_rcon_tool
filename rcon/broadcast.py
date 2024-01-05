@@ -249,9 +249,9 @@ def format_message(ctl, msg):
 
 def run():
     # avoid circular import
-    from rcon.rcon import Rcon
+    from rcon.rcon import get_rcon
 
-    ctl = Rcon(SERVER_INFO)
+    ctl = get_rcon()
 
     while True:
         config = AutoBroadcastUserConfig.load_from_db()

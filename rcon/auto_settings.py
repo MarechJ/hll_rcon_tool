@@ -6,8 +6,7 @@ from datetime import datetime
 import pytz
 
 from rcon.audit import ingame_mods, online_mods
-from rcon.rcon import Rcon
-from rcon.settings import SERVER_INFO
+from rcon.rcon import get_rcon
 from rcon.user_config.auto_settings import AutoSettingsConfig
 from rcon.vote_map import VoteMap
 
@@ -204,7 +203,7 @@ def do_run_commands(rcon, votemap, commands):
 
 
 def run():
-    rcon = Rcon(SERVER_INFO)
+    rcon = get_rcon()
     votemap = VoteMap()
     config = AutoSettingsConfig().get_settings()
 

@@ -12,8 +12,7 @@ from sqlalchemy import and_
 from rcon.cache_utils import get_redis_client, get_redis_pool
 from rcon.models import PlayerOptins, PlayerSteamID, enter_session
 from rcon.player_history import get_player
-from rcon.rcon import CommandFailedError, Rcon, StructuredLogLineType
-from rcon.settings import SERVER_INFO
+from rcon.rcon import CommandFailedError, Rcon, StructuredLogLineType, get_rcon
 from rcon.user_config.vote_map import DefaultMethods, VoteMapUserConfig
 from rcon.utils import (
     ALL_MAPS,
@@ -539,7 +538,7 @@ class VoteMap:
         return {k.decode(): v.decode() for k, v in votes.items()}
 
     def get_current_map(self):
-        map_ = Rcon(SERVER_INFO).get_map()
+        map_ = get_rcon().get_map()
         if map_.endswith("_RESTART"):
             map_ = map_.replace("_RESTART", "")
 
@@ -682,7 +681,7 @@ class VoteMap:
                 logger.error(f"{next_map=} is not part of vote selection {selection=}")
             logger.info(f"Winning map {next_map=}")
 
-        rcon = Rcon(SERVER_INFO)
+        rcon = get_rcon()
         # Apply rotation safely
 
         current_rotation = rcon.get_map_rotation()
