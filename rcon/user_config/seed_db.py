@@ -18,7 +18,11 @@ from rcon.user_config.rcon_connection_settings import RconConnectionSettingsUser
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.real_vip import RealVipUserConfig
 from rcon.user_config.scorebot import ScorebotUserConfig
-from rcon.user_config.standard_messages import StandardBroadcastMessagesUserConfig
+from rcon.user_config.standard_messages import (
+    StandardBroadcastMessagesUserConfig,
+    StandardPunishmentMessagesUserConfig,
+    StandardWelcomeMessagesUserConfig,
+)
 from rcon.user_config.steam import SteamUserConfig
 from rcon.user_config.vac_game_bans import VacGameBansUserConfig
 from rcon.user_config.vote_map import VoteMapUserConfig
@@ -28,6 +32,7 @@ from rcon.user_config.webhooks import (
     CameraWebhooksUserConfig,
     ChatWebhooksUserConfig,
     KillsWebhooksUserConfig,
+    WatchlistWebhooksUserConfig,
 )
 
 logger = logging.getLogger(__name__)
@@ -60,9 +65,12 @@ def seed_default_config():
             RealVipUserConfig.seed_db(sess)
             ScorebotUserConfig.seed_db(sess)
             StandardBroadcastMessagesUserConfig.seed_db(sess)
+            StandardPunishmentMessagesUserConfig.seed_db(sess)
+            StandardWelcomeMessagesUserConfig.seed_db(sess)
             SteamUserConfig.seed_db(sess)
             VacGameBansUserConfig.seed_db(sess)
             VoteMapUserConfig.seed_db(sess)
+            WatchlistWebhooksUserConfig.seed_db(sess)
 
     except Exception as e:
         logger.exception("Failed to seed DB")
