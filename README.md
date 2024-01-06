@@ -122,7 +122,7 @@ cp default.env .env
 
 **Note**: if you don't see the `.env` file you need to activate the show hidden files option on Windows. On Linux don't forget the `-a`: `ls -a`
 
-**Note**: If you make _any_ changes to your `.env` you will have to recreate (`docker compose up -d --force-recreate --remove-orphans` your containers before it will take effect), (if you `docker compose restart` it will not take effect)
+**Note**: If you make _any_ changes to your `.env` you will have to recreate (`docker compose up -d --remove-orphans` your containers before it will take effect), (if you `docker compose restart` it will not take effect)
 
 **Note**: The values in `.env` are used by `docker` when it starts the container and they're referenced in your `compose` files, you should only edit (unless you really know what you are doing) values in `.env` and not the `compose` files.
 
@@ -217,21 +217,23 @@ Check out a tagged release (substitute the release you want):
 Get the newest docker images and restart your containers:
 
     docker compose pull
-    docker compose up -d --force-recreate --remove-orphans
+    docker compose up -d --remove-orphans
 
 #### Windows
+
 Substitute the release you want in `git checkout`:
 
     git fetch --tags
     git checkout v7.0.2
-    docker compose pull && docker compose -f docker-compose.yml -f docker-compose.windows.yml up -d --force-recreate --remove-orphans
+    docker compose pull && docker compose -f docker-compose.yml -f docker-compose.windows.yml up -d --remove-orphans
 
 #### Raspberry-Pi or any ARM32v7
+
 Substitute the release you want in `git checkout`:
 
     git fetch --tags
     git checkout v7.0.2
-    docker compose -f docker-compose.yml -f docker-compose.arm32v7.yml up --build -d --force-recreate --remove-orphans
+    docker compose -f docker-compose.yml -f docker-compose.arm32v7.yml up --build -d --remove-orphans
 
 Or download the [latest zip release](https://github.com/MarechJ/hll_rcon_tool/releases/latest)
 
@@ -307,13 +309,13 @@ If you don't have a `.env` you wou must set the following environment variables 
 
 ### Build the images
 
-    docker compose -f docker-compose.yml -f docker-compose.dev.yml build 
+    docker compose -f docker-compose.yml -f docker-compose.dev.yml build
 
 ### Run it!
 
 Once the images are built (which can take a considerable amount of time depending on your hardware specs), and once it's configured properly (see the installation part of this README), then simply use `docker compose` to create the containers:
 
-    docker compose up -d --force-recreate --remove-orphans
+    docker compose up -d --remove-orphans
 
 If you don't want to use `docker compose` (which you really should, it's just easier) then you would have to properly set/create/run the Docker containers yourself, consult Docker's documentation please.
 
@@ -333,7 +335,7 @@ The `backend` is split into two major components, the `rcon` package and the `rc
 
 The `supervisor` container manages starting and restarting all of the optional/non optional (if you want a fully functioning CRCON) services, all of which are implemented in the `rcon` package or are a standalone program like `rq` or `cron`.
 
-The `frontend` is a combination of `nginx` (used as a reverse proxy) and `gunicorn` web servers that handles all of the HTTP requests and serves all of the responses. The flow is `incoming request` -> `nginx` -> `gunicorn` -> `nginx` -> `outgoing response`. `nginx` handles serving all of the static content like HTML/css/images, and `Django` processes all of the API calls that return dynamic content. 
+The `frontend` is a combination of `nginx` (used as a reverse proxy) and `gunicorn` web servers that handles all of the HTTP requests and serves all of the responses. The flow is `incoming request` -> `nginx` -> `gunicorn` -> `nginx` -> `outgoing response`. `nginx` handles serving all of the static content like HTML/css/images, and `Django` processes all of the API calls that return dynamic content.
 
 #### `rcon` package
 
@@ -369,7 +371,7 @@ The services are managed by [supervisord](http://supervisord.org/) and run insid
 
 [Redis](https://redis.io/) is used for two reasons in CRCON, caching and interprocess communication.
 
-Every round trip to the game server can be significantly slow (in computing terms) and induces some amount of overhead on both CRCON and the game server. 
+Every round trip to the game server can be significantly slow (in computing terms) and induces some amount of overhead on both CRCON and the game server.
 
 Some commands are cached even if they have a very low cache time (such as retrieving logs from the game server) to avoid constantly reprocessing info on very short time frames and others are on a longer cache time because they rarely if ever change (such as the list of available maps from the game server).
 
@@ -385,7 +387,7 @@ CRCON uses postgres 12 with a default configuration.
 
 To run a local instance of CRCON without using the Docker images requires you to do some manual set up.
 
-If you have **never** successfully run the complete CRCON environment from this install, you should do so first so that the database is created/initialized properly. (If you only ever plan on running the tests, you can do this without seeding the database).  If you've done this, you can skip the database migrations/user creation below. It's just easier to do it this way, so I recommend it but it is optional.
+If you have **never** successfully run the complete CRCON environment from this install, you should do so first so that the database is created/initialized properly. (If you only ever plan on running the tests, you can do this without seeding the database). If you've done this, you can skip the database migrations/user creation below. It's just easier to do it this way, so I recommend it but it is optional.
 
 Because of some configuration differences and how Docker determines environment variable precedence, I recommend using separate shells to run local instances and to run the full blown production Docker setup.
 
@@ -394,7 +396,7 @@ To avoid polluting your system Python, you should create/activate a [virtual env
 Once the virtual environment is activated in your shell install all of the Python dependencies:
 
     pip install -r requirements.txt
-    pip install -r requirements-dev.txt  
+    pip install -r requirements-dev.txt
 
 #### Set environment variables
 
@@ -423,7 +425,7 @@ The default username and database name is `rcon` if you've seeded the database u
 
 Make sure you set all of the environment variables from the previous section(s).
 
-You can *sort of* run a local instance without a game server to connect to, but so much depends on one that it's pretty pointless to try to do this without one.
+You can _sort of_ run a local instance without a game server to connect to, but so much depends on one that it's pretty pointless to try to do this without one.
 
     export HLL_HOST=<your game server IP>
     export HLL_PORT=<your game server RCON port>
@@ -433,7 +435,7 @@ You can *sort of* run a local instance without a game server to connect to, but 
 
     PYTHONPATH=. alembic upgrade head
     PYTHONPATH=. ./manage.py init_db
-    PYTHONPATH=. ./rconweb/manage.py makemigrations --no-input 
+    PYTHONPATH=. ./rconweb/manage.py makemigrations --no-input
     PYTHONPATH=. ./rconweb/manage.py migrate --noinput
 
 Alembic runs the database migrations which creates the tables, and `init_db` installs a postgres extension and sets default values for auto settings.
@@ -442,7 +444,7 @@ Alembic runs the database migrations which creates the tables, and `init_db` ins
 
 **If you didn't run the production environment first**: Create a `superuser` account and follow the prompts:
 
-    PYTHONPATH=. ./rconweb/manage.py createsuperuser       
+    PYTHONPATH=. ./rconweb/manage.py createsuperuser
 
 Set the redis environment variables:
 
@@ -453,7 +455,7 @@ Set the redis environment variables:
 
 Both the `redis` and `postgres` containers should be running (or you should have a `redis` and `postgres` installed/configured if you don't want to use the Docker images):
 
-    docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --force-recreate redis postgres
+    docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d redis postgres
 
 Start the Django (backend) development web server:
 
@@ -520,12 +522,11 @@ Unfortunately at this moment in time the database needs to be running for the te
 
 From the root `hll_rcon_tool` directory:
 
-    PYTHONPATH=. DEBUG=TRUE pytest tests/    
+    PYTHONPATH=. DEBUG=TRUE pytest tests/
 
 If you don't set `PYTHONPATH` you'll see errors similar to ` ModuleNotFoundError: No module named 'rcon'`.
 
 If you don't set `DEBUG` to a truthy value, you'll see errors about not being able to connect to redis.
-
 
 #### To test if your changes will work with the production setup, start the whole stack
 
@@ -534,7 +535,7 @@ This should be done from a **separate** shell without the environment variables 
 Building the frontend if you've made any changes to the javascript files or if the build cache isn't available can take a considerable amount of time.
 
     docker compose -f docker-compose.yml -f docker-compose.dev.yml build
-    docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --force-recreate
+    docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
 
 Now test on http://localhost:8010
 

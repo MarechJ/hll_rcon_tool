@@ -22,8 +22,7 @@ from rcon.commands import CommandFailedError
 from rcon.discord import send_to_discord_audit
 from rcon.gtx import GTXFtp
 from rcon.player_history import add_player_to_blacklist, remove_player_from_blacklist
-from rcon.rcon import Rcon
-from rcon.settings import SERVER_INFO
+from rcon.rcon import get_rcon
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.utils import LONG_HUMAN_MAP_NAMES, MapsHistory, get_server_number, map_name
 from rcon.watchlist import PlayerWatch
@@ -36,7 +35,8 @@ from .multi_servers import forward_command, forward_request
 from .utils import _get_data
 
 logger = logging.getLogger("rconweb")
-ctl = Rcon(SERVER_INFO)
+
+ctl = get_rcon()
 
 
 @csrf_exempt
@@ -60,6 +60,7 @@ def restart_gunicorn(request):
 
 
 def set_temp_msg(request, func, name):
+    ctl = get_rcon()
     data = _get_data(request)
     failed = False
     error = None

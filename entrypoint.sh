@@ -11,7 +11,7 @@ then
       exit 0
   fi
   alembic upgrade head
-  ./manage.py init_db
+  python -m rcon.user_config.seed_db
   ./manage.py register_api
   cd rconweb 
   ./manage.py makemigrations --no-input

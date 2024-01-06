@@ -35,8 +35,8 @@ from rcon.rcon import Rcon, StructuredLogLineType
 from rcon.steam_utils import (
     get_player_bans,
     get_steam_profile,
-    update_db_player_info,
     is_steam_id_64,
+    update_db_player_info,
 )
 from rcon.types import (
     PlayerFlagType,
@@ -692,4 +692,3 @@ if __name__ == "__main__":
         "message": "Dr.WeeD",
         "sub_content": None,
     }
-    real_vips(Rcon(SERVER_INFO), struct_log=log)

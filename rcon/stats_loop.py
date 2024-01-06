@@ -5,8 +5,7 @@ import redis
 import redis.exceptions
 
 from rcon.cache_utils import get_redis_client
-from rcon.rcon import Rcon
-from rcon.settings import SERVER_INFO
+from rcon.rcon import Rcon, get_rcon
 
 logger = getLogger(__name__)
 
@@ -111,7 +110,7 @@ class PlayerCount(Series):
 
 
 def run():
-    rcon = Rcon(SERVER_INFO)
+    rcon = get_rcon()
     red = get_redis_client()
     registered_series = [PlayerCount(red)]
     for series in registered_series:

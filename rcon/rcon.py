@@ -5,7 +5,7 @@ from concurrent.futures import Future, ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
 from functools import cached_property
 from time import sleep
-from typing import Any, Iterable, Literal
+from typing import Any, Iterable, Literal, Optional
 
 from dateutil import parser
 
@@ -18,6 +18,7 @@ from rcon.player_history import (
     safe_save_player_action,
     save_player,
 )
+from rcon.settings import SERVER_INFO
 from rcon.steam_utils import (
     get_player_country_code,
     get_player_has_bans,
@@ -34,6 +35,7 @@ from rcon.types import (
     GetPlayersType,
     ParsedLogsType,
     PlayerIdsType,
+    ServerInfoType,
     StatusType,
     StructuredLogLineType,
     StructuredLogLineWithMetaData,
@@ -84,6 +86,30 @@ LOG_ACTIONS = [
     "MESSAGE",
 ]
 logger = logging.getLogger(__name__)
+
+
+CTL: Optional["Rcon"] = None
+
+
+def get_rcon(credentials: ServerInfoType | None = None):
+    """Return a initialized Rcon connection to the game server
+
+    This maintains a single initialized instance across a Python interpreter
+    instance unless someone explicitly chooses to use multiple instances.
+    This also doesn't automatically attempt to connect to the game server on
+    module import.
+
+    Args:
+        credentials: A dict of the game server IP, RCON port and RCON password
+    """
+    global CTL
+
+    if credentials is None:
+        credentials = SERVER_INFO
+
+    if CTL is None:
+        CTL = Rcon(credentials)
+    return CTL
 
 
 class Rcon(ServerCtl):
