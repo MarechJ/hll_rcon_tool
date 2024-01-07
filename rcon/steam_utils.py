@@ -1,16 +1,19 @@
 import datetime
 import logging
 import math
+import sys
 import time
+from dataclasses import dataclass
 from functools import wraps
 from typing import Any, Mapping
 
 import steam.exceptions
+from sqlalchemy import or_
+from sqlalchemy.sql.expression import func
 from steam.webapi import WebAPI
-from dataclasses import dataclass
 
 from rcon.cache_utils import ttl_cache
-from rcon.models import PlayerSteamID, SteamInfo
+from rcon.models import PlayerSteamID, SteamInfo, enter_session
 from rcon.types import SteamBanResultType, SteamBansType
 from rcon.user_config.steam import SteamUserConfig
 
@@ -256,10 +259,11 @@ def update_db_player_info(player: PlayerSteamID, steam_profile):
     player.steaminfo.country = steam_profile.get("loccountrycode")
 
 
-def enrich_db_users(chunk_size=100, update_from_days_old=30):
-    from sqlalchemy import or_
-
-    from rcon.models import PlayerSteamID, SteamInfo, enter_session
+def enrich_db_users(chunk_size=25, update_from_days_old=30):
+    steam_config = SteamUserConfig.load_from_db()
+    if steam_config.api_key is None:
+        logger.warning(f"Unable to run database enrichment, steam API key is not set")
+        sys.exit(0)
 
     max_age = datetime.datetime.utcnow() - datetime.timedelta(days=update_from_days_old)
     with enter_session() as sess:
@@ -267,6 +271,7 @@ def enrich_db_users(chunk_size=100, update_from_days_old=30):
             sess.query(PlayerSteamID)
             .outerjoin(SteamInfo)
             .filter(or_(PlayerSteamID.steaminfo == None, SteamInfo.updated <= max_age))
+            .filter(func.length(PlayerSteamID.steam_id_64) == 17)
         )
 
         pages = math.ceil(query.count() / chunk_size)
@@ -279,7 +284,7 @@ def enrich_db_users(chunk_size=100, update_from_days_old=30):
             if profiles is None:
                 profiles = []
             logger.info(
-                "Updating steam profiles page %s of %s - result count (query) %s - result count (steam) %s",
+                "Updating steam profiles page %s of %s - %s users fetched from database - %s profiles fetched from steam API",
                 page + 1,
                 pages,
                 len(by_ids),
