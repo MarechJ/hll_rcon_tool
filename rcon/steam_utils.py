@@ -262,7 +262,7 @@ def update_db_player_info(player: PlayerSteamID, steam_profile):
 def enrich_db_users(chunk_size=25, update_from_days_old=30):
     steam_config = SteamUserConfig.load_from_db()
     if steam_config.api_key is None:
-        logger.warning(f"Unable to run database enrichment, steam API key is not set")
+        logger.warning("Unable to run database enrichment, steam API key is not set")
         sys.exit(0)
 
     max_age = datetime.datetime.utcnow() - datetime.timedelta(days=update_from_days_old)
