@@ -9,6 +9,7 @@ from typing import Any, Iterable, Literal, Optional
 
 from dateutil import parser
 
+import rcon.steam_utils
 from rcon.cache_utils import get_redis_client, invalidates, ttl_cache
 from rcon.commands import CommandFailedError, ServerCtl, VipId
 from rcon.models import PlayerSteamID, PlayerVIP, enter_session
@@ -19,12 +20,6 @@ from rcon.player_history import (
     save_player,
 )
 from rcon.settings import SERVER_INFO
-from rcon.steam_utils import (
-    get_player_country_code,
-    get_player_has_bans,
-    get_players_country_code,
-    get_players_have_bans,
-)
 from rcon.types import (
     AdminType,
     EnrichedGetPlayersType,
@@ -172,20 +167,26 @@ class Rcon(ServerCtl):
         return self.thread_pool.submit(getattr(self, function_name), *args, **kwargs)
 
     def get_players_fast(self) -> list[GetPlayersType]:
-        players = {}
-        ids = []
+        # TODO: this isn't making API calls anymore, so it's not using the
+        # threadpool anymore and can be merged with `get_players`
+        steam_id_64s = {
+            steam_id_64: {NAME: name, STEAMID: steam_id_64}
+            for name, steam_id_64 in self.get_playerids()
+        }
+        # can't pickle dict keys object
+        profiles = rcon.steam_utils.get_steam_profiles_mult_players(
+            steam_id_64s=[k for k in steam_id_64s.keys()]
+        )
 
-        for name, steam_id_64 in self.get_playerids():
-            players[steam_id_64] = {NAME: name, STEAMID: steam_id_64}
-            ids.append(steam_id_64)
-
-        countries = self.thread_pool.submit(get_players_country_code, ids)
-        bans = self.thread_pool.submit(get_players_have_bans, ids)
-
-        for future in as_completed([countries, bans]):
-            d = future.result()
-            for steamid, data in d.items():
-                players.get(steamid, {}).update(data)
+        players: dict[str, GetPlayersType] = {}
+        for steam_id_64 in steam_id_64s.keys():
+            profile = profiles.get(steam_id_64)
+            players[steam_id_64] = {
+                NAME: steam_id_64s[steam_id_64]["name"],
+                STEAMID: steam_id_64,
+                "country": profile.get("country") if profile else None,
+                "steam_bans": profile.get("bans") if profile else None,
+            }
 
         return list(players.values())
 
@@ -399,8 +400,7 @@ class Rcon(ServerCtl):
             if not steam_id_64:
                 return {}
 
-            country = get_player_country_code(steam_id_64)
-            steam_bans = get_player_has_bans(steam_id_64)
+            profile = rcon.steam_utils.get_steam_profile(steam_id_64=steam_id_64)
 
         except (CommandFailedError, ValueError):
             # Making that debug instead of exception as it's way to spammy
@@ -420,8 +420,8 @@ class Rcon(ServerCtl):
         return {
             NAME: name,
             STEAMID: steam_id,
-            "country": country,
-            "steam_bans": steam_bans,
+            "country": profile.get("country") if profile else None,
+            "steam_bans": profile.get("bans") if profile else None,
         }
 
     @ttl_cache(ttl=2, cache_falsy=False)

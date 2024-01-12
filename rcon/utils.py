@@ -3,7 +3,8 @@ import logging
 import os
 import secrets
 from datetime import datetime, timezone
-from typing import Any, Generic, TypeVar
+from itertools import islice
+from typing import Any, Generic, Iterable, TypeVar
 
 import redis
 
@@ -711,3 +712,12 @@ def parse_raw_player_info(raw: str, player) -> GetDetailedPlayer:
             data[key] = 0
 
     return data
+
+
+# https://docs.python.org/3.12/library/itertools.html#itertools.batched
+def batched(iterable: Iterable[Any], n: int):
+    if n < 1:
+        raise ValueError("n must be at least one")
+    it = iter(iterable)
+    while batch := tuple(islice(it, n)):
+        yield batch
