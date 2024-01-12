@@ -62,13 +62,24 @@ def forward_request(request):
             except json.JSONDecodeError:
                 data = None
             logger.info("Forwarding request: %s %s %s", url, params, data)
-            res = requests.get(
+            res = requests.post(
                 url,
                 params=params,
                 json=data,
                 timeout=5,
                 cookies=dict(sessionid=request.COOKIES.get("sessionid")),
             )
+
+            # Automatically retry HttpResponseNotAllowed errors as GET requests
+            if res.status_code == 405:
+                res = requests.get(
+                    url,
+                    params=params,
+                    json=data,
+                    timeout=5,
+                    cookies=dict(sessionid=request.COOKIES.get("sessionid")),
+                )
+
             if res.ok:
                 r = {"host": host, "response": res.json()}
                 results.append(r)
