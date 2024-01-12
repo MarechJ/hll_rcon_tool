@@ -242,7 +242,7 @@ def get_steam_profiles_mult_players(
     for p in players:
         profiles[p.steam_id_64] = p.steaminfo.to_dict() if p.steaminfo else None
 
-    return dict(profiles)
+    return profiles
 
 
 @ttl_cache(60 * 60 * 12, cache_falsy=False, is_method=False)
