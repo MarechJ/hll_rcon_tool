@@ -41,7 +41,7 @@ def get_votemap_config(request):
 @login_required()
 @require_http_methods(["GET"])
 def describe_votemap_config(request):
-    command_name = "get_votemap_config"
+    command_name = "describe_votemap_config"
 
     return api_response(
         result=VoteMapUserConfig.model_json_schema(),
