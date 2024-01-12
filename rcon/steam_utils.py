@@ -144,7 +144,7 @@ def fetch_steam_player_summary_mult_players(
         chunk_steam_ids = ",".join(chunk)
         try:
             logger.info(
-                f"Fetching player summaries for {len(chunk_steam_ids)} steam IDs"
+                "Fetching player summaries for %s steam IDs", len(chunk_steam_ids)
             )
             raw_result = api.ISteamUser.GetPlayerSummaries(steamids=chunk_steam_ids)
             chunk_profiles: list[SteamPlayerSummaryType] = raw_result["response"][
@@ -186,7 +186,7 @@ def fetch_steam_bans_mult_players(
     try:
         for chunk in batched(steam_id_64s, page_size):
             chunk_steam_ids = ",".join(chunk)
-            logger.info(f"Fetching player bans for {len(chunk_steam_ids)} steam IDs")
+            logger.info("Fetching player bans for %s steam IDs", len(chunk_steam_ids))
             raw_result = api.ISteamUser.GetPlayerBans(  # type: ignore
                 steamids=chunk_steam_ids
             )
@@ -378,7 +378,8 @@ def enrich_db_users(chunk_size=100, update_from_days_old=30):
         for page in range(pages):
             player_chunks = query.limit(chunk_size).all()
             logger.info(
-                f"Updating steam profile/bans for {[player.steam_id_64 for player in player_chunks]}"
+                "Updating steam profile/bans for %s",
+                [player.steam_id_64 for player in player_chunks],
             )
             num_profs, num_bans = update_db_player_info(sess, players=player_chunks)
 
