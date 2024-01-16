@@ -102,12 +102,16 @@ class MessageVariableContext(enum.Enum):
 @dataclass
 class MostRecentEvents:
     player_name: str | None = None
+    last_victim_name: str | None = None
     last_victim_steam_id_64: str | None = None
+    last_nemesis_name: str | None = None
     last_nemesis_steam_id_64: str | None = None
     last_victim_weapon: str | None = None
     last_nemesis_weapon: str | None = None
+    last_tk_victim_name: str | None = None
     last_tk_victim_steam_id_64: str | None = None
     last_tk_victim_weapon: str | None = None
+    last_tk_nemesis_name: str | None = None
     last_tk_nemesis_steam_id_64: str | None = None
     last_tk_nemesis_weapon: str | None = None
 

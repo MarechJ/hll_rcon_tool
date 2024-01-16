@@ -105,29 +105,7 @@ def trigger_words(rcon: Rcon, struct_log: StructuredLogLineType):
     if steam_id_64 is None:
         return
 
-    player_1_cache = event_cache.get(steam_id_64, MostRecentEvents())
-
-    player_nemesis_cache = (
-        event_cache[player_1_cache.last_nemesis_steam_id_64]
-        if player_1_cache.last_nemesis_steam_id_64
-        else MostRecentEvents()
-    )
-    player_victim_cache = (
-        event_cache[player_1_cache.last_victim_steam_id_64]
-        if player_1_cache.last_victim_steam_id_64
-        else MostRecentEvents()
-    )
-    player_tk_nemesis_cache = (
-        event_cache[player_1_cache.last_tk_nemesis_steam_id_64]
-        if player_1_cache.last_tk_nemesis_steam_id_64
-        else MostRecentEvents()
-    )
-    player_tk_victim_cache = (
-        event_cache[player_1_cache.last_tk_victim_steam_id_64]
-        if player_1_cache.last_tk_victim_steam_id_64
-        else MostRecentEvents()
-    )
-
+    player_cache = event_cache.get(steam_id_64, MostRecentEvents())
     chat_words = set(re.split(CHAT_WORDS_RE, chat_message))
     for trigger in config.trigger_words:
         if not (
@@ -146,18 +124,18 @@ def trigger_words(rcon: Rcon, struct_log: StructuredLogLineType):
                 context={
                     MessageVariableContext.player_name.value: struct_log["player"],
                     MessageVariableContext.player_steam_id_64.value: steam_id_64,
-                    MessageVariableContext.last_victim_steam_id_64.value: player_1_cache.last_victim_steam_id_64,
-                    MessageVariableContext.last_victim_name.value: player_victim_cache.player_name,
-                    MessageVariableContext.last_victim_weapon.value: player_1_cache.last_victim_weapon,
-                    MessageVariableContext.last_nemesis_steam_id_64.value: player_1_cache.last_nemesis_steam_id_64,
-                    MessageVariableContext.last_nemesis_name.value: player_nemesis_cache.player_name,
-                    MessageVariableContext.last_nemesis_weapon.value: player_1_cache.last_nemesis_weapon,
-                    MessageVariableContext.last_tk_nemesis_steam_id_64.value: player_1_cache.last_tk_nemesis_steam_id_64,
-                    MessageVariableContext.last_tk_nemesis_name.value: player_tk_nemesis_cache.player_name,
-                    MessageVariableContext.last_tk_nemesis_weapon.value: player_1_cache.last_tk_nemesis_weapon,
-                    MessageVariableContext.last_tk_victim_steam_id_64.value: player_1_cache.last_tk_victim_steam_id_64,
-                    MessageVariableContext.last_tk_victim_name.value: player_tk_victim_cache.player_name,
-                    MessageVariableContext.last_tk_victim_weapon.value: player_1_cache.last_tk_victim_weapon,
+                    MessageVariableContext.last_victim_steam_id_64.value: player_cache.last_victim_steam_id_64,
+                    MessageVariableContext.last_victim_name.value: player_cache.last_victim_name,
+                    MessageVariableContext.last_victim_weapon.value: player_cache.last_victim_weapon,
+                    MessageVariableContext.last_nemesis_steam_id_64.value: player_cache.last_nemesis_steam_id_64,
+                    MessageVariableContext.last_nemesis_name.value: player_cache.last_nemesis_name,
+                    MessageVariableContext.last_nemesis_weapon.value: player_cache.last_nemesis_weapon,
+                    MessageVariableContext.last_tk_nemesis_steam_id_64.value: player_cache.last_tk_nemesis_steam_id_64,
+                    MessageVariableContext.last_tk_nemesis_name.value: player_cache.last_tk_nemesis_name,
+                    MessageVariableContext.last_tk_nemesis_weapon.value: player_cache.last_tk_nemesis_weapon,
+                    MessageVariableContext.last_tk_victim_steam_id_64.value: player_cache.last_tk_victim_steam_id_64,
+                    MessageVariableContext.last_tk_victim_name.value: player_cache.last_tk_victim_name,
+                    MessageVariableContext.last_tk_victim_weapon.value: player_cache.last_tk_victim_weapon,
                 },
             )
             rcon.do_message_player(

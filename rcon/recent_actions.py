@@ -46,15 +46,15 @@ def update_kills(rcon: Rcon, log: StructuredLogLineWithMetaData):
     killer = cached_actions[killer_steam_id]
     victim = cached_actions[victim_steam_id]
 
+    killer.player_name = killer_name
     killer.last_victim_steam_id_64 = victim_steam_id
     killer.last_victim_name = victim_name
     killer.last_victim_weapon = weapon
-    killer.player_name = killer_name
 
+    victim.player_name = victim_name
     victim.last_nemesis_steam_id_64 = killer_steam_id
     victim.last_nemesis_name = killer_name
     victim.last_nemesis_weapon = weapon
-    victim.player_name = victim_name
 
     set_recent_actions(cached_actions)
 
@@ -79,14 +79,14 @@ def update_tks(rcon: Rcon, log: StructuredLogLineWithMetaData):
     killer = cached_actions[killer_steam_id]
     victim = cached_actions[victim_steam_id]
 
-    killer.last_tk_victim_steam_id_64 = victim_steam_id
-    killer.last_victim_name = victim.player_name
-    killer.last_tk_victim_weapon = weapon
     killer.player_name = killer_name
+    killer.last_tk_victim_steam_id_64 = victim_steam_id
+    killer.last_tk_victim_name = victim_name
+    killer.last_tk_victim_weapon = weapon
 
+    victim.player_name = victim_name
     victim.last_tk_nemesis_steam_id_64 = killer_steam_id
     victim.last_tk_nemesis_name = killer_name
     victim.last_tk_nemesis_weapon = weapon
-    victim.player_name = victim_name
 
     set_recent_actions(cached_actions)
