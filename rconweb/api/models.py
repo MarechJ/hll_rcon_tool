@@ -1,6 +1,7 @@
+from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import User
 from django.db import models
-from django.contrib.auth.hashers import make_password
+
 from rconweb.settings import SECRET_KEY
 
 
@@ -423,4 +424,6 @@ class RconUser(User):
                 "can_restart_webserver",
                 "Can restart the webserver (Not a complete Docker restart)",
             ),
+            ("can_view_trigger_words_config", "Can view the trigger words config"),
+            ("can_change_trigger_words_config", "Can change the trigger words config"),
         )

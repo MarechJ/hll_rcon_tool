@@ -2476,8 +2476,7 @@ def set_watchlist_discord_webhooks_config(request):
 
 @csrf_exempt
 @login_required()
-# TODO permission
-# @permission_required("api.can_view_trigger_words_config", raise_exception=True)
+@permission_required("api.can_view_trigger_words_config", raise_exception=True)
 def get_trigger_words_config(request):
     command_name = "get_trigger_words_config"
 
@@ -2508,8 +2507,7 @@ def describe_trigger_words_config(request):
 
 @csrf_exempt
 @login_required()
-# TODO: permission
-# @permission_required("api.can_change_trigger_words_config", raise_exception=True)
+@permission_required("api.can_change_trigger_words_config", raise_exception=True)
 def validate_trigger_words_config(request):
     command_name = "validate_trigger_words_config"
     data = _get_data(request)
@@ -2531,8 +2529,7 @@ def validate_trigger_words_config(request):
 
 @csrf_exempt
 @login_required()
-# TODO: permission
-# @permission_required("api.can_change_trigger_words_config", raise_exception=True)
+@permission_required("api.can_change_trigger_words_config", raise_exception=True)
 def set_trigger_words_config(request):
     command_name = "set_trigger_words_config"
     cls = TriggerWordsUserConfig
