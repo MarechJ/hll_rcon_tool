@@ -295,11 +295,12 @@ def _save_player_alias(sess, steamid, player_name, timestamp=None):
     return name
 
 
-def save_player(player_name, steam_id_64, timestamp=None):
+def save_player(player_name, steam_id_64, timestamp=None) -> None:
+    """Create a PlayerSteamID record if non existent and save the player name alias"""
     with enter_session() as sess:
         steamid = _save_steam_id(sess, steam_id_64)
         _save_player_alias(
-            sess, steamid, player_name, timestamp or datetime.datetime.now()
+            sess, steamid, player_name, timestamp or datetime.datetime.now().timestamp()
         )
 
 
@@ -394,6 +395,13 @@ def save_end_player_session(steam_id_64, timestamp):
             .order_by(PlayerSession.created.desc())
             .first()
         )
+
+        if last_session is None:
+            logger.warning(
+                "Can't record player session for %s, last session not found",
+                steam_id_64,
+            )
+            return
 
         if last_session.end:
             logger.warning(

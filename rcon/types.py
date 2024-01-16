@@ -11,6 +11,12 @@ class RconInvalidNameActionType(str, enum.Enum):
     ban = "BAN"
 
 
+class WindowsStoreIdActionType(str, enum.Enum):
+    kick = "KICK"
+    temp_ban = "TEMP BAN"
+    perma_ban = "PERMA BAN"
+
+
 # Have to inherit from str to allow for JSON serialization w/ pydantic
 class StatTypes(str, enum.Enum):
     top_killers = "TOP_KILLERS"

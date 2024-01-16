@@ -358,11 +358,11 @@ const hllNoBg = createMuiTheme({
 function App() {
   const [isEmbed, setIsEmbed] = React.useState(false);
   const [userTheme, setThemeName] = React.useState(
-    localStorage.getItem("theme")
+    localStorage.getItem("crconTheme")
   );
   const setTheme = (name) => {
     setThemeName(name);
-    localStorage.setItem("theme", name);
+    localStorage.setItem("crconTheme", name);
   };
 
   React.useEffect(() => {

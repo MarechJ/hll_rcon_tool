@@ -11,8 +11,7 @@ from rcon.cache_utils import get_redis_client
 from rcon.game_logs import get_historical_logs_records, get_recent_logs
 from rcon.models import enter_session
 from rcon.player_history import _get_profiles, get_player_profile_by_steam_ids
-from rcon.rcon import Rcon
-from rcon.settings import SERVER_INFO
+from rcon.rcon import get_rcon
 from rcon.types import (
     CachedLiveGameStats,
     PlayerStatsType,
@@ -52,7 +51,7 @@ class Streaks:
 
 class BaseStats:
     def __init__(self):
-        self.rcon = Rcon(SERVER_INFO)
+        self.rcon = get_rcon()
         self.voted_yes_regex = re.compile(".*PV_Favour.*")
         self.voted_no_regex = re.compile(".*PV_Against.*")
         self.red = get_redis_client()

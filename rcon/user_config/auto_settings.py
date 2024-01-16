@@ -1,7 +1,6 @@
 import logging
 import os
 
-from rcon.models import enter_session
 from rcon.user_config.utils import (
     _add_conf,
     _remove_conf,
@@ -158,13 +157,3 @@ DEFAULT_AUTO_SETTINGS = {
         "current_map": {"maps": ["stmariedumont_warfare", "..."], "not": False},
     },
 }
-
-
-def seed_default_config():
-    logger.info("Seeding DB")
-    try:
-        with enter_session() as sess:
-            AutoSettingsConfig().seed_db(sess)
-            sess.commit()
-    except Exception as e:
-        logger.exception("Failed to seed DB")

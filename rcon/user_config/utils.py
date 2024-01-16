@@ -1,13 +1,13 @@
 import logging
+import os
 from typing import Any, Iterable, Self
 
 import pydantic
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm.session import Session
 
-from rcon.cache_utils import invalidates, ttl_cache
 from rcon.models import UserConfig, enter_session
 from rcon.utils import get_server_number
-from typing import Type
 
 logger = logging.getLogger(__name__)
 
@@ -84,32 +84,49 @@ class BaseUserConfig(pydantic.BaseModel):
         )
 
     @classmethod
-    def load_from_db(cls, default_on_error: bool = True) -> Self:
+    def load_from_db(cls, default_on_validation_error: bool = True) -> Self:
+        # This should never happen in production, but allows tests to run
+        if not os.getenv("HLL_DB_URL"):
+            logger.warning(f"HLL_DB_URL not set, returning a default instance")
+            return cls()
+
         # If the cache is unavailable, it will fall back to creating a default
         # model instance, but will not persist it to the database and overwrite settings
-        conf = get_user_config(cls.KEY(), None)
+        conf = get_user_config(cls.KEY(), default=None)
         if conf is not None:
             try:
                 return cls.model_validate(conf)
             except pydantic.ValidationError as e:
-                if default_on_error:
+                if default_on_validation_error:
                     logger.error(
-                        f"Validation error loading {cls.KEY()}, returning defaults"
+                        f"Error loading {cls.KEY()}, returning defaults, validation errors:"
                     )
                     logger.error(e)
                     return cls()
                 else:
                     raise
         else:
-            logger.warning(f"{cls.KEY()} not found, creating defaults")
-            conf = cls()
-            set_user_config(conf.KEY(), conf.model_dump())
+            # This shouldn't happen because we seed the database on startup if the
+            # records don't exist, if someone has manually edited their database that
+            # is on them, previously we would not seed defaults and create/persist an
+            # instance if `get_user_config` did not find a record for any reason.
+            # This was resetting peoples legitimate configs in some scenarios, particularly
+            # when containers were being created/torn down and a service or the backend queried
+            # a model and postgres was unavailable.
+            # Now models are only persisted to the database when they're either explicitly seeded
+            # during backend startup, or if the `save_to_db` method is explicitly called, for
+            # instance through the API, or CLI
+            logger.error(f"{cls.KEY()} not found, returning defaults")
 
         return cls()
 
     @staticmethod
     def save_to_db() -> None:
         raise NotImplementedError
+
+    @classmethod
+    def seed_db(cls, sess: Session):
+        _set_default(sess, key=cls.KEY(), val=cls().model_dump())
 
 
 def _get_conf(sess, key):
@@ -122,26 +139,7 @@ def _get_conf(sess, key):
         return None
 
 
-def _get_user_config_cache_unavailable(
-    key: str, default=None, cls: Type[BaseUserConfig] | None = None
-) -> str | None:
-    """Return a default model as JSON"""
-    if cls:
-        return cls().model_dump_json()
-    else:
-        raise ValueError(f"cls must not be None")
-
-
-@ttl_cache(
-    5 * 60 * 60,
-    is_method=False,
-    function_cache_unavailable=_get_user_config_cache_unavailable,
-)
-def get_user_config(
-    key: str, default=None, cls: Type[BaseUserConfig] | None = None
-) -> str | None:
-    # cls required as a default parameter so it will be passed through to
-    # _get_user_config_cache_unavailable in the ttl_cache decorator
+def get_user_config(key: str, default=None) -> dict[str, Any] | Any | None:
     logger.debug("Getting user config for %s", key)
     with enter_session() as sess:
         res = _get_conf(sess, key)
@@ -171,16 +169,16 @@ def _remove_conf(sess, key):
 
 def _set_default(sess, key, val):
     if _get_conf(sess, key) is None:
+        logger.info("Seeding default values for %s", key)
         _add_conf(sess, key, val)
     return val
 
 
 def set_user_config(key, object_):
-    with invalidates(get_user_config):
-        logger.debug("Setting user config for %s with %s", key, object_)
-        with enter_session() as sess:
-            conf = _get_conf(sess, key)
-            if conf is None:
-                _add_conf(sess, key, object_)
-            else:
-                conf.value = object_
+    logger.debug("Setting user config for %s with %s", key, object_)
+    with enter_session() as sess:
+        conf = _get_conf(sess, key)
+        if conf is None:
+            _add_conf(sess, key, object_)
+        else:
+            conf.value = object_

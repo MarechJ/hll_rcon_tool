@@ -22,14 +22,13 @@ from rcon.player_history import (
     get_player_profile,
     player_has_flag,
 )
-from rcon.rcon import LOG_ACTIONS, Rcon
-from rcon.settings import SERVER_INFO
+from rcon.rcon import LOG_ACTIONS, Rcon, get_rcon
 from rcon.types import (
+    AllLogTypes,
     GetDetailedPlayer,
     ParsedLogsType,
     PlayerStat,
     StructuredLogLineWithMetaData,
-    AllLogTypes,
 )
 from rcon.user_config.ban_tk_on_connect import BanTeamKillOnConnectUserConfig
 from rcon.user_config.log_line_webhooks import (
@@ -201,7 +200,7 @@ def send_log_line_webhook_message(
 
     wh.content = content
     wh.add_embed(embed)
-    wh.allowed_mentions = allowed_mentions["user"] + allowed_mentions["roles"]
+    wh.allowed_mentions = allowed_mentions
     wh.execute()
 
 
@@ -233,7 +232,7 @@ class LogLoop:
     log_history_key = "log_history"
 
     def __init__(self):
-        self.rcon = Rcon(SERVER_INFO)
+        self.rcon = get_rcon()
         self.red = get_redis_client()
         self.duplicate_guard_key = "unique_logs"
         self.log_history = self.get_log_history_list()

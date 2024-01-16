@@ -28,7 +28,7 @@ class DjangoAPIKeyAdminForm(forms.ModelForm):
             raise forms.ValidationError("Minimum API key length is 32 characters")
 
         if DjangoAPIKey.objects.filter(
-            api_key=make_password(self.cleaned_data["api_key"], salt=SECRET_KEY)
+            api_key=make_password(self.cleaned_data["api_key"], salt=SECRET_KEY.replace('$', ""))
         ).exists():
             raise forms.ValidationError("Duplicate API keys are not allowed")
 

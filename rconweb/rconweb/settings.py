@@ -19,12 +19,11 @@ from sentry_sdk import configure_scope
 from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
 
-from rcon.rcon import Rcon
-from rcon.settings import SERVER_INFO
+from rcon.rcon import get_rcon
 
 try:
     ENVIRONMENT = re.sub(
-        "[^0-9a-zA-Z]+", "", (Rcon(SERVER_INFO).get_name() or "default").strip()
+        "[^0-9a-zA-Z]+", "", (get_rcon().get_name() or "default").strip()
     )[:64]
 except:
     ENVIRONMENT = "undefined"
@@ -143,6 +142,10 @@ if host := rcon_config.server_url:
         CSRF_TRUSTED_ORIGINS.append(host)
 
 if DEBUG:
+    # Chrome requires these to be set or it won't allow cookies to save between
+    # cross origin requests, by default in debug the backend runs on localhost:8000
+    #  and the frontend on localhost:3000 which are considered different domains
+    SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SAMESITE = "None"
     SESSION_COOKIE_SAMESITE = "None"
 

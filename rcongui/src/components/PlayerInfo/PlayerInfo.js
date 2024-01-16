@@ -24,6 +24,7 @@ import MessageHistory from "../MessageHistory";
 import { toast } from "react-toastify";
 import { useParams } from "react-router-dom";
 import CollapseCard from "../collapseCard";
+import makeSteamProfileUrl from "../../utils/makeSteamProfileUrl";
 
 const useStyles = makeStyles((theme) => ({
   padding: {
@@ -98,7 +99,10 @@ const Punishment = ({ punishments }) => {
       label: "Time",
       options: {
         customBodyRenderLite: (dataIndex) =>
-          moment.utc(punishments[dataIndex].time).local().format("ddd Do MMM HH:mm:ss"),
+          moment
+            .utc(punishments[dataIndex].time)
+            .local()
+            .format("ddd Do MMM HH:mm:ss"),
       },
     },
   ];
@@ -299,6 +303,13 @@ const PlayerInfoFunc = ({ classes }) => {
                   </Avatar>
                 </Grid>
                 <Grid item>
+                  <Typography variant="h6">
+                    <Link href={makeSteamProfileUrl(steamId64)}>
+                      Steam Profile
+                    </Link>
+                  </Typography>
+                </Grid>
+                <Grid item>
                   <Typography variant="h6">Last connection</Typography>
                   <Typography>
                     {moment(sessions[0]?.end || sessions[0]?.start).format(
@@ -314,7 +325,6 @@ const PlayerInfoFunc = ({ classes }) => {
                       .humanize()}
                   </Typography>
                 </Grid>
-
                 <Grid item>
                   <Typography variant="h6">Player penalties</Typography>
                   <Typography>Perma ban: {penaltyCount.PERMABAN}</Typography>

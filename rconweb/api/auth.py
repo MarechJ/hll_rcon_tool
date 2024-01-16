@@ -14,11 +14,12 @@ from django.db.models.signals import post_delete, post_save
 from django.http import HttpResponse, JsonResponse, QueryDict
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-from rconweb.settings import SECRET_KEY
 
 from rcon.audit import heartbeat, ingame_mods, online_mods, set_registered_mods
 from rcon.cache_utils import ttl_cache
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
+from rconweb.settings import SECRET_KEY
+
 from .decorators import require_content_type
 from .models import DjangoAPIKey, SteamPlayer
 
@@ -72,7 +73,7 @@ def api_csv_response(content, name, header):
 
 
 @csrf_exempt
-@require_http_methods(['POST'])
+@require_http_methods(["POST"])
 @require_content_type()
 def do_login(request):
     try:
@@ -105,7 +106,7 @@ def get_moderators_accounts():
 
 
 @csrf_exempt
-@require_http_methods(['GET'])
+@require_http_methods(["GET"])
 def is_logged_in(request):
     is_auth = request.user.is_authenticated
     if is_auth:
@@ -127,7 +128,7 @@ def is_logged_in(request):
 
 
 @csrf_exempt
-@require_http_methods(['GET'])
+@require_http_methods(["GET"])
 def do_logout(request):
     logout(request)
     return api_response(result=True, command="logout", failed=False)
@@ -155,7 +156,7 @@ def login_required():
             try:
                 # If we don't include the salt, the hasher generates its own
                 # and it will generate different hashed values every time
-                hashed_api_key = make_password(raw_api_key, salt=SECRET_KEY)
+                hashed_api_key = make_password(raw_api_key, salt=SECRET_KEY.replace('$', ''))
                 api_key_model = DjangoAPIKey.objects.get(api_key=hashed_api_key)
 
                 # Retrieve the user to use the normal authentication system
@@ -227,7 +228,7 @@ def stats_login_required(func):
 # TODO: Login required?
 @csrf_exempt
 @permission_required("api.can_view_online_admins", raise_exception=True)
-@require_http_methods(['GET'])
+@require_http_methods(["GET"])
 def get_online_mods(request):
     return api_response(
         command="get_online_mods",
@@ -238,7 +239,7 @@ def get_online_mods(request):
 
 @csrf_exempt
 @permission_required("api.can_view_ingame_admins", raise_exception=True)
-@require_http_methods(['GET'])
+@require_http_methods(["GET"])
 def get_ingame_mods(request):
     return api_response(
         command="get_ingame_mods",
@@ -249,7 +250,7 @@ def get_ingame_mods(request):
 
 @csrf_exempt
 @login_required()
-@require_http_methods(['GET'])
+@require_http_methods(["GET"])
 def get_own_user_permissions(request):
     command_name = "get_own_user_permissions"
 

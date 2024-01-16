@@ -14,7 +14,7 @@ from .views import _get_data
 @csrf_exempt
 @login_required()
 @permission_required("api.can_view_server_stats", raise_exception=True)
-@require_http_methods(['GET'])
+@require_http_methods(["GET"])
 def get_server_stats(request):
     data = _get_data(request)
 

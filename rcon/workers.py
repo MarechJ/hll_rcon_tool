@@ -5,7 +5,6 @@ from concurrent.futures import as_completed
 from datetime import timedelta
 from typing import Set
 
-from dateutil import relativedelta
 from rq import Queue
 from rq.job import Job
 from sqlalchemy import and_
@@ -14,9 +13,8 @@ from sqlalchemy.orm import Session
 from rcon.cache_utils import get_redis_client
 from rcon.models import Maps, PlayerStats, enter_session
 from rcon.player_history import get_player
-from rcon.rcon import Rcon
+from rcon.rcon import get_rcon
 from rcon.scoreboard import TimeWindowStats
-from rcon.settings import SERVER_INFO
 from rcon.types import MapInfo, PlayerStat
 from rcon.utils import INDEFINITE_VIP_DATE
 
@@ -29,9 +27,7 @@ def get_queue(redis_client=None):
 
 
 def broadcast(msg):
-    from rcon.rcon import Rcon
-
-    rcon = Rcon(SERVER_INFO)
+    rcon = get_rcon()
     rcon.set_broadcast(msg)
 
 
@@ -42,9 +38,7 @@ def temporary_broadcast(rcon, message, seconds):
 
 
 def welcome(msg):
-    from rcon.rcon import Rcon
-
-    rcon = Rcon(SERVER_INFO)
+    rcon = get_rcon()
     rcon.set_welcome_message(msg)
 
 
@@ -55,9 +49,7 @@ def temporary_welcome(rcon, message, seconds):
 
 
 def temp_welcome_standalone(msg, seconds):
-    from rcon.rcon import Rcon
-
-    rcon = Rcon(SERVER_INFO)
+    rcon = get_rcon()
     prev = rcon.set_welcome_message(msg, save=False)
     queue = get_queue()
     queue.enqueue_in(timedelta(seconds), welcome, prev)
@@ -281,7 +273,7 @@ def worker_bulk_vip(name_ids, job_key, mode="override"):
 
 def bulk_vip(name_ids, mode="override"):
     errors = []
-    ctl = Rcon(SERVER_INFO)
+    ctl = get_rcon()
     logger.info(f"bulk_vip name_ids {name_ids[0]} type {type(name_ids)}")
     vips = ctl.get_vip_ids()
 

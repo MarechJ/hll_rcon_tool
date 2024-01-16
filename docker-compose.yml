@@ -31,8 +31,10 @@ services:
       service: python
     command: web
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       server1:
         aliases:
@@ -123,6 +125,7 @@ services:
       GTX_SERVER_NAME_CHANGE_USERNAME: ${GTX_SERVER_NAME_CHANGE_USERNAME_2}
       GTX_SERVER_NAME_CHANGE_PASSWORD: ${GTX_SERVER_NAME_CHANGE_PASSWORD_2}
       SENTRY_DSN: ${SENTRY_DSN_2}
+      DONT_SEED_ADMIN_USER: ${DONT_SEED_ADMIN_USER}
     restart: on-failure
     networks:
       common:
@@ -131,7 +134,10 @@ services:
           - supervisor
     command: supervisor
     depends_on:
-      - frontend_1
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
   backend_2:
     <<: *backend
     hostname: api_2
@@ -144,7 +150,10 @@ services:
         aliases:
           - backend
     depends_on:
-      - frontend_1
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
   frontend_2:
     <<: *frontend
     ports:
@@ -190,6 +199,7 @@ services:
       GTX_SERVER_NAME_CHANGE_USERNAME: ${GTX_SERVER_NAME_CHANGE_USERNAME_3}
       GTX_SERVER_NAME_CHANGE_PASSWORD: ${GTX_SERVER_NAME_CHANGE_PASSWORD_3}
       SENTRY_DSN: ${SENTRY_DSN_3}
+      DONT_SEED_ADMIN_USER: ${DONT_SEED_ADMIN_USER}
     restart: on-failure
     command: supervisor
     networks:
@@ -198,7 +208,10 @@ services:
         aliases:
           - supervisor
     depends_on:
-      - frontend_2
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
   backend_3:
     <<: *backend
     hostname: api_3
@@ -211,7 +224,10 @@ services:
         aliases:
           - backend
     depends_on:
-      - frontend_2
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
   frontend_3:
     <<: *frontend
     ports:

@@ -5,7 +5,7 @@ from concurrent.futures import Future, ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
 from functools import cached_property
 from time import sleep
-from typing import Any, Iterable, Literal
+from typing import Any, Iterable, Literal, Optional
 
 from dateutil import parser
 
@@ -16,7 +16,9 @@ from rcon.player_history import (
     add_player_to_blacklist,
     get_profiles,
     safe_save_player_action,
+    save_player,
 )
+from rcon.settings import SERVER_INFO
 from rcon.steam_utils import (
     get_player_country_code,
     get_player_has_bans,
@@ -33,6 +35,7 @@ from rcon.types import (
     GetPlayersType,
     ParsedLogsType,
     PlayerIdsType,
+    ServerInfoType,
     StatusType,
     StructuredLogLineType,
     StructuredLogLineWithMetaData,
@@ -44,7 +47,9 @@ from rcon.utils import (
     ALL_ROLES,
     ALL_ROLES_KEY_INDEX_MAP,
     INDEFINITE_VIP_DATE,
+    default_player_info_dict,
     get_server_number,
+    parse_raw_player_info,
 )
 
 STEAMID = "steam_id_64"
@@ -83,6 +88,30 @@ LOG_ACTIONS = [
 logger = logging.getLogger(__name__)
 
 
+CTL: Optional["Rcon"] = None
+
+
+def get_rcon(credentials: ServerInfoType | None = None):
+    """Return a initialized Rcon connection to the game server
+
+    This maintains a single initialized instance across a Python interpreter
+    instance unless someone explicitly chooses to use multiple instances.
+    This also doesn't automatically attempt to connect to the game server on
+    module import.
+
+    Args:
+        credentials: A dict of the game server IP, RCON port and RCON password
+    """
+    global CTL
+
+    if credentials is None:
+        credentials = SERVER_INFO
+
+    if CTL is None:
+        CTL = Rcon(credentials)
+    return CTL
+
+
 class Rcon(ServerCtl):
     settings = (
         ("team_switch_cooldown", int),
@@ -98,18 +127,15 @@ class Rcon(ServerCtl):
     MAX_SERV_NAME_LEN = 1024  # I totally made up that number. Unable to test
     slots_regexp = re.compile(r"^\d{1,3}/\d{2,3}$")
     map_regexp = re.compile(r"^(\w+_?)+$")
-    chat_regexp = re.compile(
-        r"CHAT\[(Team|Unit)\]\[(.*)\((Allies|Axis)/(\d+)\)\]: (.*)"
-    )
+    chat_regexp = re.compile(r"CHAT\[(Team|Unit)\]\[(.*)\((Allies|Axis)/(.*)\)\]: (.*)")
     player_info_pattern = r"(.*)\(((Allies)|(Axis))/(\d+)\)"
     player_info_regexp = re.compile(r"(.*)\(((Allies)|(Axis))/(\d+)\)")
     log_time_regexp = re.compile(r".*\((\d+)\).*")
-    connect_disconnect_pattern = re.compile(r"(.+) \((\d+)\)")
-    # Checking for steam ID length so people can't exploit it with a name like: short(Axis/123) ->
+    connect_disconnect_pattern = re.compile(r"(.+) \((.*)\)")
     kill_teamkill_pattern = re.compile(
-        r"(.*)\((?:Allies|Axis)\/(\d{17})\) -> (.*)\((?:Allies|Axis)\/(\d{17})\) with (.*)"
+        r"(.*)\((?:Allies|Axis)\/(.*)\) -> (.*)\((?:Allies|Axis)\/(.*)\) with (.*)"
     )
-    camera_pattern = re.compile(r"\[(.*)\s{1}\((\d+)\)\] (.*)")
+    camera_pattern = re.compile(r"\[(.*) \((.*)\)\] (.*)")
     teamswitch_pattern = re.compile(r"TEAMSWITCH\s(.*)\s\((.*\s>\s.*)\)")
     kick_ban_pattern = re.compile(
         r"(KICK|BAN): \[(.*)\] (.*\[(KICKED|BANNED|PERMANENTLY|YOU|Host|Anti-Cheat|[^\]]*)[^\]]*)(?:\])*"
@@ -121,11 +147,11 @@ class Rcon(ServerCtl):
         r"VOTESYS: Player \[(.*)\] Started a vote of type \(.*\) against \[(.*)\]. VoteID: \[\d+\]"
     )
     vote_complete_pattern = re.compile(r"VOTESYS: Vote \[\d+\] completed. Result: (.*)")
-    vote_expired_pattern = re.compile(r"VOTESYS: Vote \[\d+\] expired")
+    vote_expired_pattern = re.compile(r"VOTESYS: Vote \[\d+\] (expired|prematurely)")
     vote_passed_pattern = re.compile(r"VOTESYS: (Vote Kick \{(.*)\} .*\[(.*)\])")
     # Need the DOTALL flag to allow `.` to capture newlines in multi line messages
     message_pattern = re.compile(
-        r"MESSAGE: player \[(.+)\((\d+)\)\], content \[(.+)\]", re.DOTALL
+        r"MESSAGE: player \[(.+)\((.*)\)\], content \[(.+)\]", re.DOTALL
     )
 
     def __init__(self, *args, pool_size: bool | None = None, **kwargs):
@@ -203,7 +229,7 @@ class Rcon(ServerCtl):
             except Exception:
                 logger.error("Failed to get info for %s", futures[future])
                 fail_count += 1
-                player_data = self._get_default_info_dict(futures[future][NAME])
+                player_data = default_player_info_dict(futures[future][NAME])
             player = futures[future]
             player.update(player_data)
             players_by_id[player[STEAMID]] = player
@@ -398,26 +424,6 @@ class Rcon(ServerCtl):
             "steam_bans": steam_bans,
         }
 
-    def _get_default_info_dict(self, player) -> GetDetailedPlayer:
-        return {
-            "name": player,
-            "steam_id_64": "",
-            "profile": None,
-            "is_vip": False,
-            "unit_id": None,
-            "unit_name": None,
-            "loadout": None,
-            "team": None,
-            "role": None,
-            "kills": 0,
-            "deaths": 0,
-            "combat": 0,
-            "offense": 0,
-            "defense": 0,
-            "support": 0,
-            "level": 0,
-        }
-
     @ttl_cache(ttl=2, cache_falsy=False)
     def get_detailed_player_info(self, player) -> GetDetailedPlayer:
         raw = super().get_player_info(player)
@@ -437,71 +443,7 @@ class Rcon(ServerCtl):
 
         """
 
-        data = self._get_default_info_dict(player)
-        raw_data = {}
-
-        for line in raw.split("\n"):
-            if not line:
-                continue
-            if ": " not in line:
-                logger.warning("Invalid info line: %s", line)
-                continue
-
-            key, val = line.split(": ", 1)
-            raw_data[key.lower()] = val
-
-        logger.debug(raw_data)
-        # Remap keys and parse values
-        data[STEAMID] = raw_data.get("steamid64")  # type: ignore
-        data["team"] = raw_data.get("team", "None")
-        if raw_data["role"].lower() == "armycommander":
-            data["unit_id"], data["unit_name"] = (-1, "Commmand")
-        else:
-            data["unit_id"], data["unit_name"] = (
-                raw_data.get("unit").split(" - ")  # type: ignore
-                if raw_data.get("unit")
-                else ("None", None)
-            )
-        data["kills"], data["deaths"] = (  # type: ignore
-            raw_data.get("kills").split(" - Deaths: ")  # type: ignore
-            if raw_data.get("kills")
-            else ("0", "0")
-        )
-        for k in ["role", "loadout", "level"]:
-            data[k] = raw_data.get(k)
-
-        scores = dict(
-            [
-                score.split(" ", 1)
-                for score in raw_data.get("score", "C 0, O 0, D 0, S 0").split(", ")
-            ]
-        )
-        map_score = {"C": "combat", "O": "offense", "D": "defense", "S": "support"}
-        for key, val in map_score.items():
-            data[map_score[key]] = scores.get(key, "0")
-
-        # Typecast values
-        # cast strings to lower
-        for key in ["team", "unit_name", "role", "loadout"]:
-            data[key] = data[key].lower() if data.get(key) else None
-
-        # cast string numbers to ints
-        for key in [
-            "kills",
-            "deaths",
-            "level",
-            "combat",
-            "offense",
-            "defense",
-            "support",
-            "unit_id",
-        ]:
-            try:
-                data[key] = int(data[key])
-            except (ValueError, TypeError):
-                data[key] = 0
-
-        return data
+        return parse_raw_player_info(raw, player)
 
     @ttl_cache(ttl=60 * 10)
     def get_admin_ids(self) -> list[AdminType]:
@@ -740,53 +682,45 @@ class Rcon(ServerCtl):
                 .filter(PlayerSteamID.steam_id_64 == steam_id_64)
                 .one_or_none()
             )
-
-            # If there's no PlayerSteamID record the player has never been on the server before
-            # Adding VIP to them is still valid as it's tracked on the game server
-            # The service that prunes expired VIPs checks for VIPs without a PlayerVIP record
-            # and creates them there as indefinite VIPs
-            if player:
-                vip_record: PlayerVIP | None = (
-                    session.query(PlayerVIP)
-                    .filter(
-                        PlayerVIP.server_number == server_number,
-                        PlayerVIP.playersteamid_id == player.id,
-                    )
-                    .one_or_none()
+            if player is None:
+                # If a player has never been on the server before and their record is
+                # being created from a VIP list upload, their alias will be saved with
+                # whatever name is in the upload file which may have metadata in it since
+                # people use the free form name field in VIP uploads to store stuff
+                save_player(player_name=name, steam_id_64=steam_id_64)
+                # Can't use a return value from save_player or it's not bound
+                # to the session https://docs.sqlalchemy.org/en/20/errors.html#error-bhk3
+                player = (
+                    session.query(PlayerSteamID)
+                    .filter(PlayerSteamID.steam_id_64 == steam_id_64)
+                    .one()
                 )
-                if not vip_record:
-                    new_vip_record = PlayerVIP(
-                        expiration=expiration_date,
-                        playersteamid_id=player.id,
-                        server_number=server_number,
-                    )
-                    logger.info(
-                        f"Added new PlayerVIP record {player.steam_id_64=} {expiration_date=}"
-                    )
-                    # TODO: This is an incredibly dumb fix because I can't get
-                    # the changes to persist otherwise
-                    session.add(new_vip_record)
-                else:
-                    previous_expiration = vip_record.expiration.isoformat()
 
-                    new_vip_record = PlayerVIP(
-                        expiration=expiration_date,
-                        playersteamid_id=player.id,
-                        server_number=server_number,
-                    )
+            vip_record: PlayerVIP | None = (
+                session.query(PlayerVIP)
+                .filter(
+                    PlayerVIP.server_number == server_number,
+                    PlayerVIP.playersteamid_id == player.id,
+                )
+                .one_or_none()
+            )
 
-                    # TODO: This is an incredibly dumb fix because I can't get
-                    # the changes to persist otherwise
-                    session.delete(vip_record)
-                    session.commit()
-                    session.add(new_vip_record)
-                    if player.vip:
-                        expiration_date = player.vip.expiration
-                    else:
-                        expiration_date = new_vip_record.expiration
-                    logger.info(
-                        f"Modified PlayerVIP record {player.steam_id_64=} {expiration} {previous_expiration=}"
-                    )
+            if vip_record is None:
+                vip_record = PlayerVIP(
+                    expiration=expiration_date,
+                    playersteamid_id=player.id,
+                    server_number=server_number,
+                )
+                logger.info(
+                    f"Added new PlayerVIP record {player.steam_id_64=} {expiration_date=}"
+                )
+                session.add(vip_record)
+            else:
+                previous_expiration = vip_record.expiration.isoformat()
+                vip_record.expiration = expiration_date
+                logger.info(
+                    f"Modified PlayerVIP record {player.steam_id_64=} {vip_record.expiration} {previous_expiration=}"
+                )
 
         return result
 
@@ -1354,8 +1288,13 @@ class Rcon(ServerCtl):
                 logger.info("Removing from rotation: '%s'", map_without_number)
                 super().do_remove_map_from_rotation(map_without_number)
 
-            last = current[0]
-            map_number = {last: 1}
+            if len(current) > 0:
+                last = current[0]
+                map_number = {last: 1}
+            else:
+                last = rotation[0]
+                map_number = {}
+
             for map_ in rotation:
                 logger.info("Adding to rotation: '%s'", map_)
                 super().do_add_map_to_rotation(map_, last, map_number.get(last, 1))

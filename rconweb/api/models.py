@@ -20,7 +20,7 @@ class DjangoAPIKey(models.Model):
     def save(self, *args, **kwargs):
         """Hash the API key"""
         # If we don't include the salt, the hasher generates its own
-        self.api_key = make_password(self.api_key, salt=SECRET_KEY)
+        self.api_key = make_password(self.api_key, salt=SECRET_KEY.replace("$", ""))
         super().save()
 
     class Meta:

@@ -18,7 +18,7 @@ from rcon.cache_utils import RedisCached, get_redis_pool, invalidates
 from rcon.discord_chat import get_handler
 from rcon.game_logs import LogLoop, load_generic_hooks
 from rcon.models import enter_session, install_unaccent
-from rcon.rcon import Rcon
+from rcon.rcon import get_rcon
 from rcon.scoreboard import live_stats_loop
 from rcon.server_stats import (
     save_server_stats_for_last_hours,
@@ -26,7 +26,7 @@ from rcon.server_stats import (
 )
 from rcon.settings import SERVER_INFO
 from rcon.steam_utils import enrich_db_users
-from rcon.user_config.auto_settings import AutoSettingsConfig, seed_default_config
+from rcon.user_config.auto_settings import AutoSettingsConfig
 from rcon.user_config.webhooks import (
     BaseMentionWebhookUserConfig,
     BaseUserConfig,
@@ -39,10 +39,32 @@ logger = logging.getLogger(__name__)
 
 @click.group()
 def cli():
-    pass
+    ctl = get_rcon()
+    # Dynamically register all the methods from ServerCtl
+    # use dir instead of inspect.getmembers to avoid touching cached_property
+    # members that would be initialized even if we want to skip them, like connection_pool
+    for name in dir(ctl):
+        if name in EXCLUDED:
+            continue
 
+        func = getattr(ctl, name)
 
-ctl = Rcon(SERVER_INFO)
+        if (
+            not any(name.startswith(prefix) for prefix in PREFIXES_TO_EXPOSE)
+            or name in EXCLUDED
+        ):
+            continue
+        wrapped = do_print(func)
+
+    # Registering the arguments of the function must be done from last
+    # to first as they are decorators
+    for pname, param in [i for i in inspect.signature(func).parameters.items()][::-1]:
+        if param.default != inspect._empty:
+            wrapped = click.option(f"--{pname}", pname, default=param.default)(wrapped)
+        else:
+            wrapped = click.argument(pname)(wrapped)
+
+    cli.command(name=name)(wrapped)
 
 
 @cli.command(name="live_stats_loop")
@@ -70,8 +92,8 @@ def save_recent_stats():
 def run_enrich_db_users():
     try:
         enrich_db_users()
-    except:
-        logger.exception("DB users enrichment stopped")
+    except Exception as e:
+        logger.exception("DB users enrichment stopped: %s", e)
         sys.exit(1)
 
 
@@ -126,7 +148,6 @@ def run_log_recorder(frequency_min, now):
 
 def init(force=False):
     install_unaccent()
-    seed_default_config()
 
 
 @cli.command(name="init_db")
@@ -138,6 +159,7 @@ def do_init(force):
 @cli.command(name="set_maprotation")
 @click.argument("maps", nargs=-1)
 def maprot(maps):
+    ctl = get_rcon()
     ctl.set_maprotation(list(maps))
 
 
@@ -155,6 +177,7 @@ def unregister():
 @click.argument("file", type=click.File("r"))
 @click.option("-p", "--prefix", default="")
 def importvips(file, prefix):
+    ctl = get_rcon()
     for line in file:
         line = line.strip()
         steamid, name = line.split(" ", 1)
@@ -168,6 +191,7 @@ def clear():
 
 @cli.command
 def export_vips():
+    ctl = get_rcon()
     print("/n".join(f"{d['steam_id_64']} {d['name']}" for d in ctl.get_vip_ids()))
 
 
@@ -404,32 +428,6 @@ def reset_user_settings(server: int):
 
 PREFIXES_TO_EXPOSE = ["get_", "set_", "do_"]
 EXCLUDED: Set[str] = {"set_maprotation", "connection_pool"}
-
-# Dynamically register all the methods from ServerCtl
-# use dir instead of inspect.getmembers to avoid touching cached_property
-# members that would be initialized even if we want to skip them, like connection_pool
-for name in dir(ctl):
-    if name in EXCLUDED:
-        continue
-
-    func = getattr(ctl, name)
-
-    if (
-        not any(name.startswith(prefix) for prefix in PREFIXES_TO_EXPOSE)
-        or name in EXCLUDED
-    ):
-        continue
-    wrapped = do_print(func)
-
-    # Registering the arguments of the function must be done from last
-    # to first as they are decorators
-    for pname, param in [i for i in inspect.signature(func).parameters.items()][::-1]:
-        if param.default != inspect._empty:
-            wrapped = click.option(f"--{pname}", pname, default=param.default)(wrapped)
-        else:
-            wrapped = click.argument(pname)(wrapped)
-
-    cli.command(name=name)(wrapped)
 
 if __name__ == "__main__":
     cli()

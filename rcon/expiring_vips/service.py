@@ -7,8 +7,7 @@ from pydantic import HttpUrl
 
 from rcon.discord import send_to_discord_audit
 from rcon.models import PlayerSteamID, PlayerVIP, enter_session
-from rcon.rcon import Rcon
-from rcon.settings import SERVER_INFO
+from rcon.rcon import Rcon, get_rcon
 from rcon.user_config.expired_vips import ExpiredVipsUserConfig
 from rcon.utils import INDEFINITE_VIP_DATE, get_server_number
 
@@ -121,7 +120,7 @@ def remove_expired_vips(rcon_hook: Rcon, webhook_url: Optional[HttpUrl] = None):
 
 
 def run():
-    rcon_hook = Rcon(SERVER_INFO)
+    rcon_hook = get_rcon()
 
     while True:
         config = ExpiredVipsUserConfig.load_from_db()

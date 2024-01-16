@@ -16,8 +16,7 @@ from rcon.models import (
     ServerCount,
     enter_session,
 )
-from rcon.rcon import Rcon
-from rcon.settings import SERVER_INFO
+from rcon.rcon import get_rcon
 
 logger = logging.getLogger(__name__)
 
@@ -244,7 +243,7 @@ def _get_server_stats(
     # Crete a list of minutes for the given time window
     # Bear in mind that a huge window will impact perf a lot
     try:
-        vips = Rcon(SERVER_INFO).get_vip_ids()
+        vips = get_rcon().get_vip_ids()
         vips = {d["steam_id_64"] for d in vips}
     except:
         logger.warning("Unable to get VIP list")

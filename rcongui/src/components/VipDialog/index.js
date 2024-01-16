@@ -15,6 +15,42 @@ import moment from "moment";
 import { PlayerVipSummary } from "./PlayerVipSummary";
 import { ForwardCheckBox } from "../commonComponent";
 
+// this array could probably be moved to a config file
+const vipButtons = [[48, "hours"], [3, "days"], [7, "days"], [30, "days"], [60, "days"], [90, "days"]];
+
+const VipTimeButtons = ({
+  amount,
+  unit,
+  expirationTimestamp,
+  setExpirationTimestamp,
+}) => {
+  const adjustTimestamp = (amount, unit) => {
+    setExpirationTimestamp(
+      moment(expirationTimestamp).add(amount, unit).format()
+    );
+  };
+
+  const setTimestamp = (amount, unit) => {
+    setExpirationTimestamp(moment().add(amount, unit).format());
+  };
+
+  return (
+    <Grid item xs={12}>
+      <ButtonGroup variant="contained">
+        <Button type="primary" onClick={() => setTimestamp(amount, unit)}>
+          = {amount} {unit}
+        </Button>
+        <Button type="primary" onClick={() => adjustTimestamp(amount, unit)}>
+          + {amount} {unit}
+        </Button>
+        <Button type="primary" onClick={() => adjustTimestamp(-amount, unit)}>
+          - {amount} {unit}
+        </Button>
+      </ButtonGroup>
+    </Grid>
+  );
+};
+
 export function VipExpirationDialog(props) {
   const { open, vips, onDeleteVip, handleClose, handleConfirm } = props;
   const [expirationTimestamp, setExpirationTimestamp] = useState();
@@ -30,11 +66,6 @@ export function VipExpirationDialog(props) {
       }
     }
   }, [open, vips]);
-
-  const adjustTimestamp = (amount, unit) =>
-    setExpirationTimestamp(
-      moment(expirationTimestamp).add(amount, unit).format()
-    );
 
   return (
     <Dialog open={open} aria-labelledby="form-dialog-title">
@@ -53,70 +84,15 @@ export function VipExpirationDialog(props) {
             <PlayerVipSummary player={open} isVip={isVip} />
           </Grid>
           <Grid item container spacing={2}>
-            <Grid item xs={12}>
-              <ButtonGroup variant="contained">
-                <Button
-                  type="primary"
-                  onClick={() => adjustTimestamp(7, "days")}
-                >
-                  + 7 Days
-                </Button>
-                <Button
-                  type="primary"
-                  onClick={() => adjustTimestamp(-7, "days")}
-                >
-                  - 7 Days
-                </Button>
-              </ButtonGroup>
-            </Grid>
-            <Grid item xs={12}>
-              <ButtonGroup variant="contained">
-                <Button
-                  type="primary"
-                  onClick={() => adjustTimestamp(30, "days")}
-                >
-                  + 30 Days
-                </Button>
-                <Button
-                  type="primary"
-                  onClick={() => adjustTimestamp(-30, "days")}
-                >
-                  - 30 Days
-                </Button>
-              </ButtonGroup>
-            </Grid>
-            <Grid item xs={12}>
-              <ButtonGroup variant="contained">
-                <Button
-                  type="primary"
-                  onClick={() => adjustTimestamp(60, "days")}
-                >
-                  + 60 Days
-                </Button>
-                <Button
-                  type="primary"
-                  onClick={() => adjustTimestamp(-60, "days")}
-                >
-                  - 60 Days
-                </Button>
-              </ButtonGroup>
-            </Grid>
-            <Grid item xs={12}>
-              <ButtonGroup variant="contained">
-                <Button
-                  type="primary"
-                  onClick={() => adjustTimestamp(90, "days")}
-                >
-                  + 90 Days
-                </Button>
-                <Button
-                  type="primary"
-                  onClick={() => adjustTimestamp(-90, "days")}
-                >
-                  - 90 Days
-                </Button>
-              </ButtonGroup>
-            </Grid>
+            {vipButtons.map(([amount, unit]) => (
+              <VipTimeButtons
+                key={unit}
+                amount={amount}
+                unit={unit}
+                expirationTimestamp={expirationTimestamp}
+                setExpirationTimestamp={setExpirationTimestamp}
+              />
+            ))}
           </Grid>
           <Grid item>
             <MuiPickersUtilsProvider utils={MomentUtils}>
