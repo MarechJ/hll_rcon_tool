@@ -109,7 +109,6 @@ def filter_steam_id(return_value: Any = None):
     return decorator
 
 
-@ttl_cache(60 * 60 * 12, cache_falsy=False, is_method=False)
 @filter_steam_id()
 def fetch_steam_player_summary_player(
     steam_id_64: str,
@@ -206,7 +205,6 @@ def fetch_steam_bans_mult_players(
     return {raw["SteamId"]: raw for raw in raw_bans}
 
 
-@ttl_cache(60 * 60 * 12, cache_falsy=False, is_method=False)
 @filter_steam_id()
 def fetch_steam_bans_player(steam_id_64: str) -> SteamBansType | None:
     """Fetch a single players steam bans
