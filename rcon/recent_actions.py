@@ -2,7 +2,7 @@ from collections import defaultdict
 from logging import getLogger
 
 from rcon.cache_utils import invalidates, ttl_cache
-from rcon.game_logs import on_kill, on_tk
+from rcon.game_logs import on_kill, on_match_start, on_tk
 from rcon.rcon import Rcon
 from rcon.types import MostRecentEvents, StructuredLogLineWithMetaData
 
@@ -11,7 +11,8 @@ logger = getLogger(__name__)
 RECENT_ACTIONS: defaultdict[str, MostRecentEvents] | None = None
 
 
-@ttl_cache(60, is_method=False)
+# 2.5 hours is the max length of a HLL match (full 5 objective offensive round)
+@ttl_cache(60 * 60 * 2.5, is_method=False)
 def get_recent_actions() -> defaultdict[str, MostRecentEvents]:
     global RECENT_ACTIONS
     if RECENT_ACTIONS is None:
@@ -24,6 +25,12 @@ def set_recent_actions(recent_actions: defaultdict[str, MostRecentEvents]):
     global RECENT_ACTIONS
     with invalidates(get_recent_actions):
         RECENT_ACTIONS = recent_actions
+
+
+@on_match_start
+def reset_recent_actions():
+    """Clear the event cache between rounds to prevent unbounded growing"""
+    set_recent_actions(defaultdict(MostRecentEvents))
 
 
 @on_kill
