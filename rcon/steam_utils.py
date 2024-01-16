@@ -10,6 +10,7 @@ import steam.exceptions
 from sqlalchemy import or_, select
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.sql.expression import func
 from steam.webapi import WebAPI
 
 from rcon.cache_utils import ttl_cache
@@ -143,9 +144,7 @@ def fetch_steam_player_summary_mult_players(
     for chunk in batched(steam_id_64s, page_size):
         chunk_steam_ids = ",".join(chunk)
         try:
-            logger.info(
-                "Fetching player summaries for %s steam IDs", len(chunk_steam_ids)
-            )
+            logger.info("Fetching player summaries for %s steam IDs", len(chunk))
             raw_result = api.ISteamUser.GetPlayerSummaries(steamids=chunk_steam_ids)
             chunk_profiles: list[SteamPlayerSummaryType] = raw_result["response"][
                 "players"
@@ -186,7 +185,7 @@ def fetch_steam_bans_mult_players(
     try:
         for chunk in batched(steam_id_64s, page_size):
             chunk_steam_ids = ",".join(chunk)
-            logger.info("Fetching player bans for %s steam IDs", len(chunk_steam_ids))
+            logger.info("Fetching player bans for %s steam IDs", len(chunk))
             raw_result = api.ISteamUser.GetPlayerBans(  # type: ignore
                 steamids=chunk_steam_ids
             )
@@ -358,10 +357,14 @@ def enrich_db_users(chunk_size=100, update_from_days_old=30):
     with enter_session() as sess:
         # Missing JSONB records are surprisingly difficult to identify depending
         # on how they've been persisted but JSONB.NULL should cover the different cases
-        query = (
-            sess.query(PlayerSteamID)
+        # This query can also return many thousands of results, using stream_results and
+        # yield_per doesn't fetch all of the results at once, but pages through them
+        stmt = (
+            select(PlayerSteamID)
+            .execution_options(stream_results=True, yield_per=chunk_size)
             .outerjoin(SteamInfo)
-            .filter(
+            .where(func.length(PlayerSteamID.steam_id_64) == 17)
+            .where(
                 or_(
                     PlayerSteamID.steaminfo == None,
                     SteamInfo.updated <= max_age,
@@ -371,31 +374,27 @@ def enrich_db_users(chunk_size=100, update_from_days_old=30):
             )
         )
 
-        pages = math.ceil(query.count() / chunk_size)
-        logger.info(
-            "Updating steam profiles/bans for %s missing/old users", query.count()
-        )
-        for page in range(pages):
-            player_chunks = query.limit(chunk_size).all()
-            logger.info(
-                "Updating steam profile/bans for %s",
-                [player.steam_id_64 for player in player_chunks],
-            )
-            num_profs, num_bans = update_db_player_info(sess, players=player_chunks)
-
-            if not player_chunks:
-                logger.warning("Empty query results")
+        logger.info("Updating steam profiles/bans for missing/old users")
+        for idx, player_chunks in enumerate(sess.scalars(stmt).partitions()):
+            players = list(player_chunks)
+            if not players:
+                logger.warning("Empty query results for page %s", idx)
                 continue
             logger.info(
-                "Updating steam profiles page %s of %s - %s users fetched from database - %s profiles, %s bans fetched from steam API",
-                page + 1,
-                pages,
-                len(player_chunks),
+                "Updating page %s steam profile/bans, first steam ID of page: %s",
+                idx + 1,
+                players[0],
+            )
+            num_profs, num_bans = update_db_player_info(sess, players=players)
+
+            logger.info(
+                "%s profiles, %s bans fetched from steam API",
                 num_profs,
                 num_bans,
             )
 
-            sess.commit()
+            # Shouldn't really need this with how many API calls we should be able to make
+            # but just to be on the safe side
             time.sleep(1)
 
 
