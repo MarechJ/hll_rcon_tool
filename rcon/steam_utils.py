@@ -22,6 +22,8 @@ from rcon.utils import batched
 logger = logging.getLogger(__name__)
 last_steam_api_key_warning = datetime.datetime.now()
 
+STEAM_API_MAX_STEAM_IDS = 100
+
 STEAM_API: WebAPI | None = None
 
 
@@ -126,7 +128,7 @@ def fetch_steam_player_summary_player(
 @ttl_cache(60 * 60 * 12, cache_falsy=False, is_method=False)
 @filter_steam_ids()
 def fetch_steam_player_summary_mult_players(
-    steam_id_64s: Iterable[str], page_size=100
+    steam_id_64s: Iterable[str],
 ) -> dict[str, SteamPlayerSummaryType]:
     """Fetch steam API profile info for each player
 
@@ -141,7 +143,7 @@ def fetch_steam_player_summary_mult_players(
     # requests for any list larger than 100, but fit as many steam IDs into the
     # same API request as possible to help with rate limiting
     raw_profiles: list[SteamPlayerSummaryType] = []
-    for chunk in batched(steam_id_64s, page_size):
+    for chunk in batched(steam_id_64s, STEAM_API_MAX_STEAM_IDS):
         chunk_steam_ids = ",".join(chunk)
         try:
             logger.info("Fetching player summaries for %s steam IDs", len(chunk))
@@ -167,7 +169,7 @@ def fetch_steam_player_summary_mult_players(
 @ttl_cache(60 * 60 * 12, cache_falsy=False, is_method=False)
 @filter_steam_ids()
 def fetch_steam_bans_mult_players(
-    steam_id_64s: Sequence[str], page_size=100
+    steam_id_64s: Sequence[str],
 ) -> dict[str, SteamBansType]:
     """Fetch steam API ban info for each player
 
@@ -183,7 +185,7 @@ def fetch_steam_bans_mult_players(
     # same API request as possible to help with rate limiting
     raw_bans: list[SteamBansType] = []
     try:
-        for chunk in batched(steam_id_64s, page_size):
+        for chunk in batched(steam_id_64s, STEAM_API_MAX_STEAM_IDS):
             chunk_steam_ids = ",".join(chunk)
             logger.info("Fetching player bans for %s steam IDs", len(chunk))
             raw_result = api.ISteamUser.GetPlayerBans(  # type: ignore
