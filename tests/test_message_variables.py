@@ -225,7 +225,7 @@ def test_trigger_words_hook(
     monkeypatch.setattr(
         rcon.hooks,
         "get_recent_actions",
-        lambda x: {steam_id_64: recent_event},
+        lambda: {steam_id_64: recent_event},
     )
 
     struct_log: StructuredLogLineType = {
