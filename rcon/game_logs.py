@@ -120,7 +120,7 @@ def on_connected(insert_at: int | None = None):
     """Insert the given hook at `insert_at` position, or the end"""
 
     def wrapper(func):
-        if insert_at and isinstance(insert_at, int):
+        if insert_at:
             HOOKS[AllLogTypes.connected.value].insert(insert_at, func)
         else:
             HOOKS[AllLogTypes.connected.value].append(func)
