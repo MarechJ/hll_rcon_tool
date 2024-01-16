@@ -68,7 +68,7 @@ def filter_steam_ids():
             steam_id_64s = sorted(
                 set([id_ for id_ in steam_id_64s if is_steam_id_64(id_)])
             )
-            return f(*args, steam_id_64s=steam_id_64s, **kwargs)
+            return f(steam_id_64s=steam_id_64s, *args, **kwargs)
 
         return wrapper
 
