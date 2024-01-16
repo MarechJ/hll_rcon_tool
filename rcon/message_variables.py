@@ -4,7 +4,7 @@ from logging import getLogger
 from typing import Any, Iterable
 
 from rcon.audit import ingame_mods, online_mods
-from rcon.rcon import Rcon
+from rcon.rcon import Rcon, get_rcon
 from rcon.scoreboard import get_cached_live_game_stats, get_stat
 from rcon.settings import SERVER_INFO
 from rcon.types import CachedLiveGameStats, MessageVariable, StatTypes, VipIdType
@@ -14,16 +14,6 @@ from rcon.utils import SHORT_HUMAN_MAP_NAMES, SafeStringFormat
 
 logger = getLogger(__name__)
 
-rcon = None
-
-
-def _get_rcon():
-    global rcon
-    if rcon is None:
-        rcon = Rcon(SERVER_INFO)
-
-    return rcon
-
 
 def populate_message_variables(
     vars: Iterable[str],
@@ -31,7 +21,7 @@ def populate_message_variables(
 ) -> dict[MessageVariable, str | None]:
     """Return globally available info for message formatting"""
     populated_variables: dict[MessageVariable, str | None] = {}
-    rcon = _get_rcon()
+    rcon = get_rcon()
 
     message_variable_to_lookup = {
         MessageVariable.vip_status: lambda: _is_vip(steam_id_64=steam_id_64, rcon=rcon),
@@ -97,7 +87,7 @@ def _vip_status(
     steam_id_64: str | None = None, rcon: Rcon | None = None
 ) -> VipIdType | None:
     if rcon is None:
-        rcon = _get_rcon()
+        rcon = get_rcon()
 
     vip = [v for v in rcon.get_vip_ids() if v["steam_id_64"] == steam_id_64]
     logger.info(f"{vip=}")
@@ -144,14 +134,14 @@ def _admin_ping_trigger_words(config: AdminPingWebhooksUserConfig | None = None)
 
 def _next_map(rcon: Rcon | None = None):
     if rcon is None:
-        rcon = _get_rcon()
+        rcon = get_rcon()
     map_name = rcon.get_gamestate().get("next_map")
     return SHORT_HUMAN_MAP_NAMES.get(map_name, map_name)
 
 
 def _map_rotation(rcon: Rcon | None = None):
     if rcon is None:
-        rcon = _get_rcon()
+        rcon = get_rcon()
     map_rot = rcon.get_map_rotation()
     map_names = [SHORT_HUMAN_MAP_NAMES.get(map_name, map_name) for map_name in map_rot]
     return ", ".join(map_names)
