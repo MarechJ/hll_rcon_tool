@@ -304,7 +304,7 @@ const PlayerInfoFunc = ({ classes }) => {
                 </Grid>
                 <Grid item>
                   <Typography variant="h6">
-                    <Link href={makeSteamProfileUrl(steamId64)}>
+                    <Link href={makeSteamProfileUrl(steamId64, names[0]?.name)}>
                       Steam Profile
                     </Link>
                   </Typography>

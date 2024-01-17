@@ -49,7 +49,11 @@ export const PlayerStatProfile = pure(({ playerScore, onClose }) => {
                         color="inherit"
                         href={
                           steamProfile.get("profileurl") ||
-                          makeSteamProfileUrl(playerScore.get("steam_id_64"))
+                          makeSteamProfileUrl(
+                            playerScore.get("steam_id_64"),
+                            playerScore.get("player") ||
+                              steamProfile.get("personaname")
+                          )
                         }
                         target="_blank"
                       >

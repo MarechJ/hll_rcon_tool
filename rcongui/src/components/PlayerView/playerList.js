@@ -12,7 +12,7 @@ import {
   faQuestionCircle,
   faStar,
 } from "@fortawesome/free-solid-svg-icons";
-import { faSteam } from "@fortawesome/free-brands-svg-icons";
+import { faSteam, faXbox, faWindows } from "@fortawesome/free-brands-svg-icons";
 import Link from "@material-ui/core/Link";
 import withWidth from "@material-ui/core/withWidth";
 import Icon from "@material-ui/core/Icon";
@@ -368,9 +368,9 @@ const PlayerItem = ({
               className={classes.marginRight}
               target="_blank"
               color="inherit"
-              href={makeSteamProfileUrl(steamID64)}
+              href={makeSteamProfileUrl(steamID64, name)}
             >
-              <FontAwesomeIcon icon={faSteam} />
+              <FontAwesomeIcon icon={(steamID64.length === 17) ? faSteam : faWindows} />
             </Link>
           </React.Fragment>
         }

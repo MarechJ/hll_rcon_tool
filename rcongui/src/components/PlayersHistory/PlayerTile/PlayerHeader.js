@@ -60,9 +60,10 @@ export const PlayerHeader = pure(({ classes, player }) => {
         <Link
           target="_blank"
           color="inherit"
-          href={makeSteamProfileUrl(player.get(
-            "steam_id_64"
-          ))}
+          href={makeSteamProfileUrl(
+            player.get("steam_id_64"),
+            firstName.get("name")
+          )}
         >
           <Avatar src={avatarUrl}>{firstNameLetter}</Avatar>
         </Link>
@@ -153,9 +154,10 @@ export const PlayerHeader = pure(({ classes, player }) => {
                   .map((n) => n.get("name"))
                   .join(" | ")}\nSteamID: ${player.get(
                   "steam_id_64"
-                )}\nSteam URL: ${makeSteamProfileUrl(player.get(
-                  "steam_id_64"
-                ))}\nType of issue:\nDescription:\nEvidence:`;
+                )}\nSteam URL: ${makeSteamProfileUrl(
+                  player.get("steam_id_64"),
+                  player.get("names").first().get("name")
+                )}\nType of issue:\nDescription:\nEvidence:`;
                 if (navigator.clipboard === undefined) {
                   alert(`This feature only works if your rcon uses HTTPS.`);
                   return;
