@@ -64,6 +64,8 @@ def update_kills(rcon: Rcon, log: StructuredLogLineWithMetaData):
     victim.last_nemesis_weapon = weapon
 
     set_recent_actions(cached_actions)
+    # Refresh the redis cache so it's available for interprocess communication
+    get_recent_actions()
 
 
 @on_tk
@@ -97,3 +99,5 @@ def update_tks(rcon: Rcon, log: StructuredLogLineWithMetaData):
     victim.last_tk_nemesis_weapon = weapon
 
     set_recent_actions(cached_actions)
+    # Refresh the redis cache so it's available for interprocess communication
+    get_recent_actions()
