@@ -44,8 +44,8 @@ def get_steam_api_key() -> str | None:
     config = SteamUserConfig.load_from_db()
     if config.api_key is None or config.api_key == "":
         timestamp = datetime.datetime.now()
-        # Only log once every 5 minutes or it is super spammy
-        if (timestamp - last_steam_api_key_warning).total_seconds() > 300:
+        # Only log once an hour or it is super spammy
+        if (timestamp - last_steam_api_key_warning).total_seconds() > 3600:
             logger.warning("Steam API key is not set some features will be disabled.")
             last_steam_api_key_warning = timestamp
 
