@@ -795,6 +795,7 @@ def test_punish_too_little_players(team_view):
         aplayer,
     )
 
+
 def test_dont_punish_below_min_number_of_players(team_view):
     config = AutoModNoLeaderUserConfig(
         dont_do_anything_below_this_number_of_players=40,
@@ -805,7 +806,7 @@ def test_dont_punish_below_min_number_of_players(team_view):
         immune_player_level=10,
         immune_roles=[],
     )
-    
+
     player = team_view["allies"]["squads"]["able"]["players"][0]
 
     mod = NoLeaderAutomod(config, None)
@@ -813,7 +814,7 @@ def test_dont_punish_below_min_number_of_players(team_view):
         team_view,
         "able",
         "allies",
-        {"players": [team_view["allies"]["squads"]['able']]},
+        {"players": [team_view["allies"]["squads"]["able"]]},
         game_state,
     )
     assert to_apply.punish == []

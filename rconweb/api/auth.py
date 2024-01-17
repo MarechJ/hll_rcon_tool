@@ -156,7 +156,9 @@ def login_required():
             try:
                 # If we don't include the salt, the hasher generates its own
                 # and it will generate different hashed values every time
-                hashed_api_key = make_password(raw_api_key, salt=SECRET_KEY.replace('$', ''))
+                hashed_api_key = make_password(
+                    raw_api_key, salt=SECRET_KEY.replace("$", "")
+                )
                 api_key_model = DjangoAPIKey.objects.get(api_key=hashed_api_key)
 
                 # Retrieve the user to use the normal authentication system

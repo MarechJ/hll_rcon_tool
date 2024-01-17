@@ -142,6 +142,7 @@ def test_admin_pings_mention_middle():
     assert content == "<@1212>"
     assert triggered
 
+
 def test_admin_pings_contains_numbers():
     config = AdminPingWebhooksUserConfig(
         trigger_words=["testword123"],
