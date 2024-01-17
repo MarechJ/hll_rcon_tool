@@ -13,8 +13,14 @@ from rcon.types import (
     MostRecentEvents,
     StructuredLogLineType,
 )
-from rcon.user_config.trigger_words import TriggerWord, TriggerWordsUserConfig
-from rcon.utils import contains_triggering_word
+from rcon.user_config.trigger_words import (
+    TriggerWord,
+    TriggerWordsUserConfig,
+    contains_triggering_word,
+    is_command_word,
+    is_description_word,
+    is_help_word,
+)
 
 
 class MockRconServerSettingsUserConfig:
@@ -38,10 +44,14 @@ class MockTriggerWord:
 
 class MockTriggerWordsUserConfig:
     def __init__(
-        self, enabled=True, trigger_words: list[TriggerWord] | None = None
+        self,
+        enabled=True,
+        trigger_words: list[TriggerWord] | None = None,
+        describe_words: list[str] | None = None,
     ) -> None:
         self.enabled = enabled
         self.trigger_words = trigger_words if trigger_words else []
+        self.describe_words = describe_words if describe_words else []
 
 
 def make_mock_stat(player: str, steam_id_64: str, *args, **kwargs):
@@ -182,12 +192,20 @@ def test_populate_top_kill_streaks(monkeypatch, var, expected):
 
 
 @pytest.mark.parametrize(
-    "trigger_word, steam_id_64, recent_event, expected_message",
+    "chat_content, config, steam_id_64, recent_event, expected_message",
     [
         (
-            TriggerWord(
-                words=["!wkm"],
-                message="You were last killed by {last_nemesis_name} with {last_nemesis_weapon}",
+            "!wkm miscellaneous words",
+            TriggerWordsUserConfig(
+                enabled=True,
+                trigger_words=[
+                    TriggerWord(
+                        words=["!wkm"],
+                        message="You were last killed by {last_nemesis_name} with {last_nemesis_weapon}",
+                        description="",
+                    )
+                ],
+                describe_words=["!help"],
             ),
             "1234",
             MostRecentEvents(
@@ -196,9 +214,50 @@ def test_populate_top_kill_streaks(monkeypatch, var, expected):
             "You were last killed by some guy with some weapon",
         ),
         (
-            TriggerWord(
-                words=["!lastkill"],
-                message="Your last kill was {last_victim_name} with {last_victim_weapon}",
+            "in the @wkm middle",
+            TriggerWordsUserConfig(
+                enabled=True,
+                trigger_words=[
+                    TriggerWord(
+                        words=["@wkm"],
+                        message="You were last killed by {last_nemesis_name} with {last_nemesis_weapon}",
+                    )
+                ],
+                describe_words=[],
+            ),
+            "1234",
+            MostRecentEvents(
+                last_nemesis_name="some guy", last_nemesis_weapon="some weapon"
+            ),
+            "You were last killed by some guy with some weapon",
+        ),
+        (
+            "!wkm @wkm",
+            TriggerWordsUserConfig(
+                enabled=True,
+                trigger_words=[
+                    TriggerWord(
+                        words=["!wkm", "@wkm"],
+                        message="You were last killed by {last_nemesis_name} with {last_nemesis_weapon}",
+                    ),
+                ],
+            ),
+            "1234",
+            MostRecentEvents(
+                last_nemesis_name="some guy", last_nemesis_weapon="some weapon"
+            ),
+            "You were last killed by some guy with some weapon",
+        ),
+        (
+            "what was my !lastkill ?lastkill",
+            TriggerWordsUserConfig(
+                enabled=True,
+                trigger_words=[
+                    TriggerWord(
+                        words=["!lastkill"],
+                        message="Your last kill was {last_victim_name} with {last_victim_weapon}",
+                    ),
+                ],
             ),
             "1234",
             MostRecentEvents(
@@ -208,11 +267,10 @@ def test_populate_top_kill_streaks(monkeypatch, var, expected):
         ),
     ],
 )
-def test_trigger_words_hook(
+def test_trigger_words_hook_command_words(
     monkeypatch,
-    # test_format_str: list[str],
-    # test_words: str,
-    trigger_word: TriggerWord,
+    chat_content: str,
+    config: TriggerWordsUserConfig,
     steam_id_64: str,
     recent_event: MostRecentEvents,
     expected_message: str,
@@ -220,7 +278,7 @@ def test_trigger_words_hook(
     monkeypatch.setattr(
         rcon.hooks.TriggerWordsUserConfig,
         "load_from_db",
-        lambda: MockTriggerWordsUserConfig(trigger_words=[trigger_word]),
+        lambda: config,
     )
     monkeypatch.setattr(
         rcon.hooks,
@@ -236,12 +294,193 @@ def test_trigger_words_hook(
         "steam_id_64_2": None,
         "weapon": None,
         "message": "",
-        "sub_content": trigger_word.words[0],
+        "sub_content": chat_content,
     }
 
     with mock.patch("rcon.hooks.Rcon") as rcon_:
         trigger_words(rcon_, struct_log)
-        rcon_.do_message_player.assert_called_with(
+        rcon_.do_message_player.assert_called_once_with(
+            steam_id_64=steam_id_64,
+            message=expected_message,
+            save_message=False,
+        )
+
+
+@pytest.mark.parametrize(
+    "chat_content, config, steam_id_64, recent_event, expected_message",
+    [
+        (
+            "?wkm miscellaneous words",
+            TriggerWordsUserConfig(
+                enabled=True,
+                trigger_words=[
+                    TriggerWord(
+                        words=["!wkm"],
+                        message="You were last killed by {last_nemesis_name} with {last_nemesis_weapon}",
+                        description="Who last killed me",
+                    )
+                ],
+                describe_words=["!help"],
+            ),
+            "1234",
+            MostRecentEvents(
+                last_nemesis_name="some guy", last_nemesis_weapon="some weapon"
+            ),
+            "Who last killed me",
+        ),
+        (
+            "in the ?wkm middle",
+            TriggerWordsUserConfig(
+                enabled=True,
+                trigger_words=[
+                    TriggerWord(
+                        words=["@wkm"],
+                        message="You were last killed by {last_nemesis_name} with {last_nemesis_weapon}",
+                        description="Who last killed me",
+                    )
+                ],
+                describe_words=[],
+            ),
+            "1234",
+            MostRecentEvents(
+                last_nemesis_name="some guy", last_nemesis_weapon="some weapon"
+            ),
+            "Who last killed me",
+        ),
+        (
+            "?wkm ?wkm",
+            TriggerWordsUserConfig(
+                enabled=True,
+                trigger_words=[
+                    TriggerWord(
+                        words=["!wkm", "@wkm"],
+                        message="You were last killed by {last_nemesis_name} with {last_nemesis_weapon}",
+                        description="Who last killed me",
+                    ),
+                ],
+            ),
+            "1234",
+            MostRecentEvents(
+                last_nemesis_name="some guy", last_nemesis_weapon="some weapon"
+            ),
+            "Who last killed me",
+        ),
+        (
+            "what was my ?lastkill",
+            TriggerWordsUserConfig(
+                enabled=True,
+                trigger_words=[
+                    TriggerWord(
+                        words=["!lastkill"],
+                        message="Your last kill was {last_victim_name} with {last_victim_weapon}",
+                        description="Who last killed me",
+                    ),
+                ],
+            ),
+            "1234",
+            MostRecentEvents(
+                last_victim_name="some guy", last_victim_weapon="some weapon"
+            ),
+            "Who last killed me",
+        ),
+    ],
+)
+def test_trigger_words_hook_help_words(
+    monkeypatch,
+    chat_content: str,
+    config: TriggerWordsUserConfig,
+    steam_id_64: str,
+    recent_event: MostRecentEvents,
+    expected_message: str,
+):
+    monkeypatch.setattr(
+        rcon.hooks.TriggerWordsUserConfig,
+        "load_from_db",
+        lambda: config,
+    )
+    monkeypatch.setattr(
+        rcon.hooks,
+        "get_recent_actions",
+        lambda: {steam_id_64: recent_event},
+    )
+
+    struct_log: StructuredLogLineType = {
+        "action": "",
+        "player": None,
+        "steam_id_64_1": steam_id_64,
+        "player2": None,
+        "steam_id_64_2": None,
+        "weapon": None,
+        "message": "",
+        "sub_content": chat_content,
+    }
+
+    with mock.patch("rcon.hooks.Rcon") as rcon_:
+        trigger_words(rcon_, struct_log)
+        rcon_.do_message_player.assert_called_once_with(
+            steam_id_64=steam_id_64,
+            message=expected_message,
+            save_message=False,
+        )
+
+
+@pytest.mark.parametrize(
+    "chat_content, config, steam_id_64, recent_event, expected_message",
+    [
+        (
+            "!help",
+            TriggerWordsUserConfig(
+                enabled=True,
+                trigger_words=[
+                    TriggerWord(
+                        words=["!wkm"],
+                        message="You were last killed by {last_nemesis_name} with {last_nemesis_weapon}",
+                        description="Who last killed me",
+                    )
+                ],
+                describe_words=["!help"],
+            ),
+            "1234",
+            MostRecentEvents(
+                last_nemesis_name="some guy", last_nemesis_weapon="some weapon"
+            ),
+            "!wkm | Who last killed me",
+        ),
+    ],
+)
+def test_trigger_words_hook_description_words(
+    monkeypatch,
+    chat_content: str,
+    config: TriggerWordsUserConfig,
+    steam_id_64: str,
+    recent_event: MostRecentEvents,
+    expected_message: str,
+):
+    monkeypatch.setattr(
+        rcon.hooks.TriggerWordsUserConfig,
+        "load_from_db",
+        lambda: config,
+    )
+    monkeypatch.setattr(
+        rcon.hooks,
+        "get_recent_actions",
+        lambda: {steam_id_64: recent_event},
+    )
+
+    struct_log: StructuredLogLineType = {
+        "action": "",
+        "player": None,
+        "steam_id_64_1": steam_id_64,
+        "player2": None,
+        "steam_id_64_2": None,
+        "weapon": None,
+        "message": "",
+        "sub_content": chat_content,
+    }
+
+    with mock.patch("rcon.hooks.Rcon") as rcon_:
+        trigger_words(rcon_, struct_log)
+        rcon_.do_message_player.assert_called_once_with(
             steam_id_64=steam_id_64,
             message=expected_message,
             save_message=False,
@@ -251,12 +490,15 @@ def test_trigger_words_hook(
 @pytest.mark.parametrize(
     "chat_message, trigger_words, expected",
     [
-        ("this contains a matching word", {"matching"}, True),
-        ("this contains a matching word", {"zebra"}, False),
+        ("this contains a matching word", {"matching"}, "matching"),
+        ("this contains a matching word", {"zebra"}, None),
     ],
 )
 def test_contains_triggering_word(chat_message, trigger_words, expected):
-    assert contains_triggering_word(chat_message, trigger_words) == expected
+    assert (
+        contains_triggering_word(set(chat_message.split()), trigger_words, set())
+        == expected
+    )
 
 
 @pytest.mark.parametrize(
@@ -280,3 +522,28 @@ def test_valid_message_variable_does_not_raise(message):
     TriggerWordsUserConfig(
         trigger_words=[TriggerWord(message=message)],
     )
+
+
+@pytest.mark.parametrize(
+    "word, expected", [("!yes", True), ("yes", False), ("", False)]
+)
+def test_is_command_word(word, expected):
+    assert is_command_word(word) == expected
+
+
+@pytest.mark.parametrize(
+    "word, expected", [("!yes", False), ("yes", False), ("", False), ("?yes", True)]
+)
+def test_is_help(word, expected):
+    assert is_help_word(word) == expected
+
+
+@pytest.mark.parametrize(
+    "words, description_words, expected",
+    [
+        ("some triggering sentence help me", ["help"], True),
+        ("not containing a triggering word", ["zebra"], False),
+    ],
+)
+def test_is_description_word(words, description_words, expected):
+    assert is_description_word(set(words.split()), description_words) == expected

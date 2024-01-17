@@ -118,15 +118,6 @@ ALL_ROLES = (
 ALL_ROLES_KEY_INDEX_MAP = {v: i for i, v in enumerate(ALL_ROLES)}
 
 
-def contains_triggering_word(
-    chat_words: set[str],
-    trigger_words: list[str] | set[str],
-) -> bool:
-    if any(word in chat_words for word in trigger_words):
-        return True
-    return False
-
-
 def get_current_map(rcon):
     map_ = rcon.get_map()
 

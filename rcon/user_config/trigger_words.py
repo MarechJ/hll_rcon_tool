@@ -1,6 +1,7 @@
 import enum
 import re
-from typing import TypedDict
+from functools import cached_property
+from typing import Iterable, TypedDict
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -8,7 +9,33 @@ from rcon.types import MessageVariable, MessageVariableContext
 from rcon.user_config.utils import BaseUserConfig, _listType, key_check, set_user_config
 
 MESSAGE_VAR_RE = re.compile(r"\{(.*?)\}")
-CHAT_WORDS_RE = re.compile(r"([^a-zA-Z!@])")
+VALID_COMMAND_PREFIXES = ("!", "@")
+HELP_PREFIX = "?"
+
+
+def contains_triggering_word(
+    chat_words: set[str], trigger_words: Iterable[str], help_words: Iterable[str]
+) -> str | None:
+    # Force deterministic results if a user puts two command words in the same chat message
+    for word in sorted(chat_words):
+        if word in trigger_words or word in help_words:
+            return word
+
+    return None
+
+
+def is_command_word(
+    word: str, prefixes: Iterable[str] = VALID_COMMAND_PREFIXES
+) -> bool:
+    return any(word.startswith(prefix) for prefix in prefixes)
+
+
+def is_help_word(word: str, prefix: str = HELP_PREFIX) -> bool:
+    return word.startswith(prefix)
+
+
+def is_description_word(words: Iterable[str], description_words: Iterable[str]):
+    return any(word in description_words for word in words)
 
 
 class TriggerWordType(TypedDict):
@@ -28,6 +55,10 @@ class TriggerWord(BaseModel):
     message: str = Field(default="")
     description: str | None = Field(default=None)
 
+    @cached_property
+    def help_words(self) -> set[str]:
+        return set(f"?{word[1:]}" for word in self.words)
+
     @field_validator("message")
     @classmethod
     def only_valid_variables(cls, v: str) -> str:
@@ -42,11 +73,36 @@ class TriggerWord(BaseModel):
 
         return v
 
+    @field_validator("words")
+    @classmethod
+    def only_valid_command_prefixes(cls, vs: list[str]) -> list[str]:
+        for word in vs:
+            if word[0] not in VALID_COMMAND_PREFIXES:
+                raise ValueError(
+                    f"'{word}' command word must start with one of: {VALID_COMMAND_PREFIXES}"
+                )
+
+        return vs
+
 
 class TriggerWordsUserConfig(BaseUserConfig):
     enabled: bool = Field(default=False)
     trigger_words: list[TriggerWord] = Field(default_factory=list)
+
+    # Thes will trigger an automatic help command if `description`s are set on
+    # `trigger_words`
     describe_words: list[str] = Field(default_factory=list)
+
+    @field_validator("describe_words")
+    @classmethod
+    def only_valid_command_prefixes(cls, vs: list[str]) -> list[str]:
+        for word in vs:
+            if word[0] not in VALID_COMMAND_PREFIXES:
+                raise ValueError(
+                    f"'{word}' description command word must start with one of: {VALID_COMMAND_PREFIXES}"
+                )
+
+        return vs
 
     def describe_trigger_words(self) -> list[str]:
         return [

@@ -48,14 +48,16 @@ from rcon.types import (
     SteamBansType,
     WindowsStoreIdActionType,
 )
-from rcon.user_config.auto_mod_no_leader import AutoModNoLeaderUserConfig
 from rcon.user_config.camera_notification import CameraNotificationUserConfig
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.real_vip import RealVipUserConfig
 from rcon.user_config.trigger_words import (
-    CHAT_WORDS_RE,
     MESSAGE_VAR_RE,
     TriggerWordsUserConfig,
+    contains_triggering_word,
+    is_command_word,
+    is_description_word,
+    is_help_word,
 )
 from rcon.user_config.vac_game_bans import VacGameBansUserConfig
 from rcon.user_config.webhooks import CameraWebhooksUserConfig
@@ -64,7 +66,6 @@ from rcon.utils import (
     UNKNOWN_MAP_NAME,
     DefaultStringFormat,
     MapsHistory,
-    contains_triggering_word,
     is_invalid_name_pineapple,
     is_invalid_name_whitespace,
 )
@@ -100,7 +101,6 @@ def initialise_vote_map(rcon: Rcon, struct_log):
 def trigger_words(rcon: Rcon, struct_log: StructuredLogLineType):
     config = TriggerWordsUserConfig.load_from_db()
     if not config.enabled:
-        logger.debug("Trigger words are disabled")
         return
 
     chat_message = struct_log["sub_content"]
@@ -113,14 +113,16 @@ def trigger_words(rcon: Rcon, struct_log: StructuredLogLineType):
         return
 
     player_cache = event_cache.get(steam_id_64, MostRecentEvents())
-    chat_words = set(re.split(CHAT_WORDS_RE, chat_message))
+    chat_words = set(chat_message.split())
     for trigger in config.trigger_words:
         if not (
-            triggered := contains_triggering_word(chat_words, trigger.words)
-        ) and not contains_triggering_word(chat_words, config.describe_words):
+            triggered_word := contains_triggering_word(
+                chat_words, trigger.words, trigger.help_words
+            )
+        ):
             continue
 
-        if triggered:
+        if is_command_word(triggered_word):
             message_vars: list[str] = re.findall(MESSAGE_VAR_RE, trigger.message)
             populated_variables = populate_message_variables(
                 vars=message_vars, steam_id_64=steam_id_64
@@ -150,19 +152,41 @@ def trigger_words(rcon: Rcon, struct_log: StructuredLogLineType):
                 message=formatted_message,
                 save_message=False,
             )
-        else:
-            description = config.describe_trigger_words()
+        # Help words describe a specific command
+        elif is_help_word(triggered_word):
+            description = trigger.description
             if description:
                 rcon.do_message_player(
                     steam_id_64=struct_log["steam_id_64_1"],
-                    message="\n".join(description),
+                    message=description,
                     save_message=False,
                 )
             else:
-                logger.warning(
-                    "No descriptions set for trigger words, %s",
-                    ", ".join(config.describe_words),
+                rcon.do_message_player(
+                    steam_id_64=struct_log["steam_id_64_1"],
+                    message="Description not set, let the admins know!",
+                    save_message=False,
                 )
+                logger.warning(
+                    "No descriptions set for trigger word(s), %s",
+                    ", ".join(trigger.words),
+                )
+
+    # Description words trigger the entire help menu, test outside the loop
+    # since these are global help words
+    if is_description_word(chat_words, config.describe_words):
+        description = config.describe_trigger_words()
+        if description:
+            rcon.do_message_player(
+                steam_id_64=struct_log["steam_id_64_1"],
+                message="\n".join(description),
+                save_message=False,
+            )
+        else:
+            logger.warning(
+                "No descriptions set for trigger words, %s",
+                ", ".join(config.describe_words),
+            )
 
 
 @on_match_end
