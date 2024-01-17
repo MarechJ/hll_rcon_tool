@@ -531,7 +531,7 @@ class Migration(migrations.Migration):
                     ),
                     (
                         "can_change_chat_commands_config",
-                        "Can change the trigger words config",
+                        "Can change the chat commands config",
                     ),
                 ),
             },

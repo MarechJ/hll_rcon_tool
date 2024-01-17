@@ -175,7 +175,7 @@ def chat_commands(rcon: Rcon, struct_log: StructuredLogLineType):
     # Description words trigger the entire help menu, test outside the loop
     # since these are global help words
     if is_description_word(chat_words, config.describe_words):
-        description = config.describe_trigger_words()
+        description = config.describe_chat_commands()
         if description:
             rcon.do_message_player(
                 steam_id_64=struct_log["steam_id_64_1"],

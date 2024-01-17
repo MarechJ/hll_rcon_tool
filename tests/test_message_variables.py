@@ -249,7 +249,7 @@ def test_populate_top_kill_streaks(monkeypatch, var, expected):
         ),
     ],
 )
-def test_trigger_words_hook_command_words(
+def test_chat_commands_hook_command_words(
     monkeypatch,
     chat_content: str,
     config: ChatCommandsUserConfig,
@@ -367,7 +367,7 @@ def test_trigger_words_hook_command_words(
         ),
     ],
 )
-def test_trigger_words_hook_help_words(
+def test_chat_commands_hook_help_words(
     monkeypatch,
     chat_content: str,
     config: ChatCommandsUserConfig,
@@ -430,7 +430,7 @@ def test_trigger_words_hook_help_words(
         ),
     ],
 )
-def test_trigger_words_hook_description_words(
+def test_chat_commands_hook_description_words(
     monkeypatch,
     chat_content: str,
     config: ChatCommandsUserConfig,
@@ -476,7 +476,7 @@ def test_trigger_words_hook_description_words(
         ("this contains a matching word", {"zebra"}, None),
     ],
 )
-def test_contains_triggering_word(chat_message, trigger_words, expected):
+def test_chat_contains_command_word(chat_message, trigger_words, expected):
     assert (
         chat_contains_command_word(set(chat_message.split()), trigger_words, set())
         == expected

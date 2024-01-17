@@ -617,7 +617,7 @@ function App() {
                         />
                       </Grid>
                     </Route>
-                    <Route path="/settings/trigger-words">
+                    <Route path="/settings/chat-commands">
                       <Grid container spacing={2}>
                         <ChatCommands
                           description="Chat Commands Settings"

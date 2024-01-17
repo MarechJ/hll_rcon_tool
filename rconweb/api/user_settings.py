@@ -2477,8 +2477,8 @@ def set_watchlist_discord_webhooks_config(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_view_chat_commands_config", raise_exception=True)
-def get_trigger_words_config(request):
-    command_name = "get_trigger_words_config"
+def get_chat_commands_config(request):
+    command_name = "get_chat_commands_config"
 
     try:
         config = ChatCommandsUserConfig.load_from_db()
@@ -2495,8 +2495,8 @@ def get_trigger_words_config(request):
 
 @csrf_exempt
 @login_required()
-def describe_trigger_words_config(request):
-    command_name = "describe_trigger_words_config"
+def describe_chat_commands_config(request):
+    command_name = "describe_chat_commands_config"
 
     return api_response(
         result=ChatCommandsUserConfig.model_json_schema(),
@@ -2508,8 +2508,8 @@ def describe_trigger_words_config(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_change_chat_commands_config", raise_exception=True)
-def validate_trigger_words_config(request):
-    command_name = "validate_trigger_words_config"
+def validate_chat_commands_config(request):
+    command_name = "validate_chat_commands_config"
     data = _get_data(request)
 
     response = _validate_user_config(
@@ -2530,8 +2530,8 @@ def validate_trigger_words_config(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_change_chat_commands_config", raise_exception=True)
-def set_trigger_words_config(request):
-    command_name = "set_trigger_words_config"
+def set_chat_commands_config(request):
+    command_name = "set_chat_commands_config"
     cls = ChatCommandsUserConfig
     data = _get_data(request)
 

@@ -14,11 +14,11 @@ HELP_PREFIX = "?"
 
 
 def chat_contains_command_word(
-    chat_words: Iterable[str], trigger_words: Iterable[str], help_words: Iterable[str]
+    chat_words: Iterable[str], command_words: Iterable[str], help_words: Iterable[str]
 ) -> str | None:
     # Force deterministic results if a user puts two command words in the same chat message
     for word in sorted(chat_words):
-        if word in trigger_words or word in help_words:
+        if word in command_words or word in help_words:
             return word
 
     return None
@@ -104,7 +104,7 @@ class ChatCommandsUserConfig(BaseUserConfig):
 
         return vs
 
-    def describe_trigger_words(self) -> list[str]:
+    def describe_chat_commands(self) -> list[str]:
         return [
             f"{', '.join(word.words)} | {word.description}"
             for word in self.command_words
@@ -115,14 +115,14 @@ class ChatCommandsUserConfig(BaseUserConfig):
     def save_to_db(values: ChatCommandsType, dry_run=False) -> None:
         key_check(ChatCommandsType.__required_keys__, values.keys())
 
-        raw_trigger_words = values.get("command_words")
-        _listType(values=raw_trigger_words)
+        raw_command_words = values.get("command_words")
+        _listType(values=raw_command_words)
 
-        for obj in raw_trigger_words:
+        for obj in raw_command_words:
             key_check(ChatCommandType.__required_keys__, obj.keys())
 
         validated_words = []
-        for raw_word in raw_trigger_words:
+        for raw_word in raw_command_words:
             words = raw_word.get("words")
             message = raw_word.get("message")
             description = raw_word.get("description")
