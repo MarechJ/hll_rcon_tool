@@ -8,6 +8,7 @@ from typing import Callable, List
 
 from django.contrib.auth.decorators import permission_required
 from django.http import (
+    HttpRequest,
     HttpResponse,
     HttpResponseBadRequest,
     HttpResponseNotAllowed,
@@ -29,7 +30,7 @@ from rcon.watchlist import PlayerWatch
 from rcon.workers import temporary_broadcast, temporary_welcome
 
 from .audit_log import auto_record_audit, record_audit
-from .auth import api_response, login_required
+from .auth import AUTHORIZATION, api_response, login_required
 from .decorators import require_content_type
 from .multi_servers import forward_command, forward_request
 from .utils import _get_data
@@ -291,7 +292,7 @@ def blacklist_player(request):
 @record_audit
 @require_http_methods(["POST"])
 @require_content_type()
-def unblacklist_player(request):
+def unblacklist_player(request: HttpRequest):
     data = _get_data(request)
     res = {}
 
@@ -308,6 +309,7 @@ def unblacklist_player(request):
                     "/api/do_unban",
                     json=data,
                     sessionid=request.COOKIES.get("sessionid"),
+                    auth_header=request.headers.get(AUTHORIZATION),
                 )
 
         failed = False
@@ -356,7 +358,10 @@ def unban(request):
         config = RconServerSettingsUserConfig.load_from_db()
         if config.broadcast_unbans:
             results = forward_command(
-                "/api/do_unban", json=data, sessionid=request.COOKIES.get("sessionid")
+                "/api/do_unban",
+                json=data,
+                sessionid=request.COOKIES.get("sessionid"),
+                auth_header=request.headers.get(AUTHORIZATION),
             )
         if config.unban_does_unblacklist:
             try:
