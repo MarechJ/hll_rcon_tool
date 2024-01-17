@@ -13,8 +13,8 @@ VALID_COMMAND_PREFIXES = ("!", "@")
 HELP_PREFIX = "?"
 
 
-def contains_triggering_word(
-    chat_words: set[str], trigger_words: Iterable[str], help_words: Iterable[str]
+def chat_contains_command_word(
+    chat_words: Iterable[str], trigger_words: Iterable[str], help_words: Iterable[str]
 ) -> str | None:
     # Force deterministic results if a user puts two command words in the same chat message
     for word in sorted(chat_words):
@@ -38,19 +38,19 @@ def is_description_word(words: Iterable[str], description_words: Iterable[str]):
     return any(word in description_words for word in words)
 
 
-class TriggerWordType(TypedDict):
+class ChatCommandType(TypedDict):
     words: list[str]
     message: str
     description: str
 
 
-class TriggerWordsType(TypedDict):
+class ChatCommandsType(TypedDict):
     enabled: bool
-    trigger_words: list[TriggerWordType]
+    command_words: list[ChatCommandType]
     describe_words: list[str]
 
 
-class TriggerWord(BaseModel):
+class ChatCommand(BaseModel):
     words: list[str] = Field(default_factory=list)
     message: str = Field(default="")
     description: str | None = Field(default=None)
@@ -85,12 +85,12 @@ class TriggerWord(BaseModel):
         return vs
 
 
-class TriggerWordsUserConfig(BaseUserConfig):
+class ChatCommandsUserConfig(BaseUserConfig):
     enabled: bool = Field(default=False)
-    trigger_words: list[TriggerWord] = Field(default_factory=list)
+    command_words: list[ChatCommand] = Field(default_factory=list)
 
     # Thes will trigger an automatic help command if `description`s are set on
-    # `trigger_words`
+    # `command_words`
     describe_words: list[str] = Field(default_factory=list)
 
     @field_validator("describe_words")
@@ -107,19 +107,19 @@ class TriggerWordsUserConfig(BaseUserConfig):
     def describe_trigger_words(self) -> list[str]:
         return [
             f"{', '.join(word.words)} | {word.description}"
-            for word in self.trigger_words
+            for word in self.command_words
             if word.description
         ]
 
     @staticmethod
-    def save_to_db(values: TriggerWordsType, dry_run=False) -> None:
-        key_check(TriggerWordsType.__required_keys__, values.keys())
+    def save_to_db(values: ChatCommandsType, dry_run=False) -> None:
+        key_check(ChatCommandsType.__required_keys__, values.keys())
 
-        raw_trigger_words = values.get("trigger_words")
+        raw_trigger_words = values.get("command_words")
         _listType(values=raw_trigger_words)
 
         for obj in raw_trigger_words:
-            key_check(TriggerWordType.__required_keys__, obj.keys())
+            key_check(ChatCommandType.__required_keys__, obj.keys())
 
         validated_words = []
         for raw_word in raw_trigger_words:
@@ -127,14 +127,14 @@ class TriggerWordsUserConfig(BaseUserConfig):
             message = raw_word.get("message")
             description = raw_word.get("description")
             validated_words.append(
-                TriggerWord(words=words, message=message, description=description)
+                ChatCommand(words=words, message=message, description=description)
             )
 
-        validated_conf = TriggerWordsUserConfig(
+        validated_conf = ChatCommandsUserConfig(
             enabled=values.get("enabled"),
-            trigger_words=validated_words,
+            command_words=validated_words,
             describe_words=values.get("describe_words"),
         )
 
         if not dry_run:
-            set_user_config(TriggerWordsUserConfig.KEY(), validated_conf.model_dump())
+            set_user_config(ChatCommandsUserConfig.KEY(), validated_conf.model_dump())

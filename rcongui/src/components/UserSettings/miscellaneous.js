@@ -1,7 +1,7 @@
 import React from "react";
 import UserSetting from ".";
 
-export const TriggerWords = ({
+export const ChatCommands = ({
   description,
   getEndpoint,
   setEndpoint,

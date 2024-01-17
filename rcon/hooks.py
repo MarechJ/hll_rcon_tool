@@ -49,16 +49,16 @@ from rcon.types import (
     WindowsStoreIdActionType,
 )
 from rcon.user_config.camera_notification import CameraNotificationUserConfig
-from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
-from rcon.user_config.real_vip import RealVipUserConfig
-from rcon.user_config.trigger_words import (
+from rcon.user_config.chat_commands import (
     MESSAGE_VAR_RE,
-    TriggerWordsUserConfig,
-    contains_triggering_word,
+    ChatCommandsUserConfig,
+    chat_contains_command_word,
     is_command_word,
     is_description_word,
     is_help_word,
 )
+from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
+from rcon.user_config.real_vip import RealVipUserConfig
 from rcon.user_config.vac_game_bans import VacGameBansUserConfig
 from rcon.user_config.webhooks import CameraWebhooksUserConfig
 from rcon.utils import (
@@ -98,8 +98,8 @@ def initialise_vote_map(rcon: Rcon, struct_log):
 
 
 @on_chat
-def trigger_words(rcon: Rcon, struct_log: StructuredLogLineType):
-    config = TriggerWordsUserConfig.load_from_db()
+def chat_commands(rcon: Rcon, struct_log: StructuredLogLineType):
+    config = ChatCommandsUserConfig.load_from_db()
     if not config.enabled:
         return
 
@@ -114,21 +114,21 @@ def trigger_words(rcon: Rcon, struct_log: StructuredLogLineType):
 
     player_cache = event_cache.get(steam_id_64, MostRecentEvents())
     chat_words = set(chat_message.split())
-    for trigger in config.trigger_words:
+    for command in config.command_words:
         if not (
-            triggered_word := contains_triggering_word(
-                chat_words, trigger.words, trigger.help_words
+            triggered_word := chat_contains_command_word(
+                chat_words, command.words, command.help_words
             )
         ):
             continue
 
         if is_command_word(triggered_word):
-            message_vars: list[str] = re.findall(MESSAGE_VAR_RE, trigger.message)
+            message_vars: list[str] = re.findall(MESSAGE_VAR_RE, command.message)
             populated_variables = populate_message_variables(
                 vars=message_vars, steam_id_64=steam_id_64
             )
             formatted_message = format_message_string(
-                trigger.message,
+                command.message,
                 populated_variables=populated_variables,
                 context={
                     MessageVariableContext.player_name.value: struct_log["player"],
@@ -154,7 +154,7 @@ def trigger_words(rcon: Rcon, struct_log: StructuredLogLineType):
             )
         # Help words describe a specific command
         elif is_help_word(triggered_word):
-            description = trigger.description
+            description = command.description
             if description:
                 rcon.do_message_player(
                     steam_id_64=struct_log["steam_id_64_1"],
@@ -164,12 +164,12 @@ def trigger_words(rcon: Rcon, struct_log: StructuredLogLineType):
             else:
                 rcon.do_message_player(
                     steam_id_64=struct_log["steam_id_64_1"],
-                    message="Description not set, let the admins know!",
+                    message="Command description not set, let the admins know!",
                     save_message=False,
                 )
                 logger.warning(
-                    "No descriptions set for trigger word(s), %s",
-                    ", ".join(trigger.words),
+                    "No descriptions set for chat command word(s), %s",
+                    ", ".join(command.words),
                 )
 
     # Description words trigger the entire help menu, test outside the loop
@@ -184,7 +184,7 @@ def trigger_words(rcon: Rcon, struct_log: StructuredLogLineType):
             )
         else:
             logger.warning(
-                "No descriptions set for trigger words, %s",
+                "No descriptions set for command words, %s",
                 ", ".join(config.describe_words),
             )
 

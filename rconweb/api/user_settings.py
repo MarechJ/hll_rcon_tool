@@ -20,6 +20,7 @@ from rcon.user_config.auto_mod_seeding import AutoModSeedingUserConfig
 from rcon.user_config.auto_mod_solo_tank import AutoModNoSoloTankUserConfig
 from rcon.user_config.ban_tk_on_connect import BanTeamKillOnConnectUserConfig
 from rcon.user_config.camera_notification import CameraNotificationUserConfig
+from rcon.user_config.chat_commands import ChatCommandsUserConfig
 from rcon.user_config.expired_vips import ExpiredVipsUserConfig
 from rcon.user_config.gtx_server_name import GtxServerNameChangeUserConfig
 from rcon.user_config.log_line_webhooks import LogLineWebhookUserConfig
@@ -34,7 +35,6 @@ from rcon.user_config.standard_messages import (
     get_all_message_types,
 )
 from rcon.user_config.steam import SteamUserConfig
-from rcon.user_config.trigger_words import TriggerWordsUserConfig
 from rcon.user_config.utils import (
     DISCORD_AUDIT_FORMAT,
     BaseUserConfig,
@@ -2476,12 +2476,12 @@ def set_watchlist_discord_webhooks_config(request):
 
 @csrf_exempt
 @login_required()
-@permission_required("api.can_view_trigger_words_config", raise_exception=True)
+@permission_required("api.can_view_chat_commands_config", raise_exception=True)
 def get_trigger_words_config(request):
     command_name = "get_trigger_words_config"
 
     try:
-        config = TriggerWordsUserConfig.load_from_db()
+        config = ChatCommandsUserConfig.load_from_db()
     except Exception as e:
         logger.exception(e)
         return api_response(command=command_name, error=str(e), failed=True)
@@ -2499,7 +2499,7 @@ def describe_trigger_words_config(request):
     command_name = "describe_trigger_words_config"
 
     return api_response(
-        result=TriggerWordsUserConfig.model_json_schema(),
+        result=ChatCommandsUserConfig.model_json_schema(),
         command=command_name,
         failed=False,
     )
@@ -2507,13 +2507,13 @@ def describe_trigger_words_config(request):
 
 @csrf_exempt
 @login_required()
-@permission_required("api.can_change_trigger_words_config", raise_exception=True)
+@permission_required("api.can_change_chat_commands_config", raise_exception=True)
 def validate_trigger_words_config(request):
     command_name = "validate_trigger_words_config"
     data = _get_data(request)
 
     response = _validate_user_config(
-        TriggerWordsUserConfig, data=data, command_name=command_name, dry_run=True
+        ChatCommandsUserConfig, data=data, command_name=command_name, dry_run=True
     )
 
     if response:
@@ -2529,10 +2529,10 @@ def validate_trigger_words_config(request):
 
 @csrf_exempt
 @login_required()
-@permission_required("api.can_change_trigger_words_config", raise_exception=True)
+@permission_required("api.can_change_chat_commands_config", raise_exception=True)
 def set_trigger_words_config(request):
     command_name = "set_trigger_words_config"
-    cls = TriggerWordsUserConfig
+    cls = ChatCommandsUserConfig
     data = _get_data(request)
 
     response = _audit_user_config_differences(

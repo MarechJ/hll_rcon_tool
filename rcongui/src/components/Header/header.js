@@ -406,7 +406,7 @@ const Header = ({ classes }) => {
                           to="/settings/trigger-words"
                         >
                           <MenuItem onClick={() => setAnchorElSettings(null)}>
-                            Trigger Words
+                            Chat Commands
                           </MenuItem>
                         </Link>
                         <Link

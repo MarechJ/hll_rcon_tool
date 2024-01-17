@@ -526,11 +526,11 @@ class Migration(migrations.Migration):
                         "Can restart the webserver (Not a complete Docker restart)",
                     ),
                     (
-                        "can_view_trigger_words_config",
-                        "Can view the trigger words config",
+                        "can_view_chat_commands_config",
+                        "Can view the chat commands config",
                     ),
                     (
-                        "can_change_trigger_words_config",
+                        "can_change_chat_commands_config",
                         "Can change the trigger words config",
                     ),
                 ),

@@ -53,7 +53,7 @@ import {
   NameKicks,
   ExpiredVIP,
   GTXNameChange,
-  TriggerWords,
+  ChatCommands,
 } from "./components/UserSettings/miscellaneous";
 
 const Live = ({ classes }) => {
@@ -619,12 +619,12 @@ function App() {
                     </Route>
                     <Route path="/settings/trigger-words">
                       <Grid container spacing={2}>
-                        <TriggerWords
-                          description="Trigger Words Settings"
-                          getEndpoint="get_trigger_words_config"
-                          setEndpoint="set_trigger_words_config"
-                          validateEndpoint="validate_trigger_words_config"
-                          describeEndpoint="describe_trigger_words_config"
+                        <ChatCommands
+                          description="Chat Commands Settings"
+                          getEndpoint="get_chat_commands_config"
+                          setEndpoint="set_chat_commands_config"
+                          validateEndpoint="validate_chat_commands_config"
+                          describeEndpoint="describe_chat_commands_config"
                         />
                       </Grid>
                     </Route>

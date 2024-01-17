@@ -5,7 +5,7 @@ import pytest
 from pydantic import HttpUrl
 
 import rcon.message_variables
-from rcon.hooks import trigger_words
+from rcon.hooks import chat_commands
 from rcon.message_variables import format_message_string, populate_message_variables
 from rcon.types import (
     MessageVariable,
@@ -13,10 +13,10 @@ from rcon.types import (
     MostRecentEvents,
     StructuredLogLineType,
 )
-from rcon.user_config.trigger_words import (
-    TriggerWord,
-    TriggerWordsUserConfig,
-    contains_triggering_word,
+from rcon.user_config.chat_commands import (
+    ChatCommand,
+    ChatCommandsUserConfig,
+    chat_contains_command_word,
     is_command_word,
     is_description_word,
     is_help_word,
@@ -34,24 +34,6 @@ class MockRconServerSettingsUserConfig:
 class MockAdminPingWebhooksUserConfig:
     def __init__(self, trigger_words: list[str]) -> None:
         self.trigger_words = trigger_words
-
-
-class MockTriggerWord:
-    def __init__(self, words: list[str], message: str) -> None:
-        self.words = words
-        self.message = message
-
-
-class MockTriggerWordsUserConfig:
-    def __init__(
-        self,
-        enabled=True,
-        trigger_words: list[TriggerWord] | None = None,
-        describe_words: list[str] | None = None,
-    ) -> None:
-        self.enabled = enabled
-        self.trigger_words = trigger_words if trigger_words else []
-        self.describe_words = describe_words if describe_words else []
 
 
 def make_mock_stat(player: str, steam_id_64: str, *args, **kwargs):
@@ -196,10 +178,10 @@ def test_populate_top_kill_streaks(monkeypatch, var, expected):
     [
         (
             "!wkm miscellaneous words",
-            TriggerWordsUserConfig(
+            ChatCommandsUserConfig(
                 enabled=True,
-                trigger_words=[
-                    TriggerWord(
+                command_words=[
+                    ChatCommand(
                         words=["!wkm"],
                         message="You were last killed by {last_nemesis_name} with {last_nemesis_weapon}",
                         description="",
@@ -215,10 +197,10 @@ def test_populate_top_kill_streaks(monkeypatch, var, expected):
         ),
         (
             "in the @wkm middle",
-            TriggerWordsUserConfig(
+            ChatCommandsUserConfig(
                 enabled=True,
-                trigger_words=[
-                    TriggerWord(
+                command_words=[
+                    ChatCommand(
                         words=["@wkm"],
                         message="You were last killed by {last_nemesis_name} with {last_nemesis_weapon}",
                     )
@@ -233,10 +215,10 @@ def test_populate_top_kill_streaks(monkeypatch, var, expected):
         ),
         (
             "!wkm @wkm",
-            TriggerWordsUserConfig(
+            ChatCommandsUserConfig(
                 enabled=True,
-                trigger_words=[
-                    TriggerWord(
+                command_words=[
+                    ChatCommand(
                         words=["!wkm", "@wkm"],
                         message="You were last killed by {last_nemesis_name} with {last_nemesis_weapon}",
                     ),
@@ -250,10 +232,10 @@ def test_populate_top_kill_streaks(monkeypatch, var, expected):
         ),
         (
             "what was my !lastkill ?lastkill",
-            TriggerWordsUserConfig(
+            ChatCommandsUserConfig(
                 enabled=True,
-                trigger_words=[
-                    TriggerWord(
+                command_words=[
+                    ChatCommand(
                         words=["!lastkill"],
                         message="Your last kill was {last_victim_name} with {last_victim_weapon}",
                     ),
@@ -270,13 +252,13 @@ def test_populate_top_kill_streaks(monkeypatch, var, expected):
 def test_trigger_words_hook_command_words(
     monkeypatch,
     chat_content: str,
-    config: TriggerWordsUserConfig,
+    config: ChatCommandsUserConfig,
     steam_id_64: str,
     recent_event: MostRecentEvents,
     expected_message: str,
 ):
     monkeypatch.setattr(
-        rcon.hooks.TriggerWordsUserConfig,
+        rcon.hooks.ChatCommandsUserConfig,
         "load_from_db",
         lambda: config,
     )
@@ -298,7 +280,7 @@ def test_trigger_words_hook_command_words(
     }
 
     with mock.patch("rcon.hooks.Rcon") as rcon_:
-        trigger_words(rcon_, struct_log)
+        chat_commands(rcon_, struct_log)
         rcon_.do_message_player.assert_called_once_with(
             steam_id_64=steam_id_64,
             message=expected_message,
@@ -311,10 +293,10 @@ def test_trigger_words_hook_command_words(
     [
         (
             "?wkm miscellaneous words",
-            TriggerWordsUserConfig(
+            ChatCommandsUserConfig(
                 enabled=True,
-                trigger_words=[
-                    TriggerWord(
+                command_words=[
+                    ChatCommand(
                         words=["!wkm"],
                         message="You were last killed by {last_nemesis_name} with {last_nemesis_weapon}",
                         description="Who last killed me",
@@ -330,10 +312,10 @@ def test_trigger_words_hook_command_words(
         ),
         (
             "in the ?wkm middle",
-            TriggerWordsUserConfig(
+            ChatCommandsUserConfig(
                 enabled=True,
-                trigger_words=[
-                    TriggerWord(
+                command_words=[
+                    ChatCommand(
                         words=["@wkm"],
                         message="You were last killed by {last_nemesis_name} with {last_nemesis_weapon}",
                         description="Who last killed me",
@@ -349,10 +331,10 @@ def test_trigger_words_hook_command_words(
         ),
         (
             "?wkm ?wkm",
-            TriggerWordsUserConfig(
+            ChatCommandsUserConfig(
                 enabled=True,
-                trigger_words=[
-                    TriggerWord(
+                command_words=[
+                    ChatCommand(
                         words=["!wkm", "@wkm"],
                         message="You were last killed by {last_nemesis_name} with {last_nemesis_weapon}",
                         description="Who last killed me",
@@ -367,10 +349,10 @@ def test_trigger_words_hook_command_words(
         ),
         (
             "what was my ?lastkill",
-            TriggerWordsUserConfig(
+            ChatCommandsUserConfig(
                 enabled=True,
-                trigger_words=[
-                    TriggerWord(
+                command_words=[
+                    ChatCommand(
                         words=["!lastkill"],
                         message="Your last kill was {last_victim_name} with {last_victim_weapon}",
                         description="Who last killed me",
@@ -388,13 +370,13 @@ def test_trigger_words_hook_command_words(
 def test_trigger_words_hook_help_words(
     monkeypatch,
     chat_content: str,
-    config: TriggerWordsUserConfig,
+    config: ChatCommandsUserConfig,
     steam_id_64: str,
     recent_event: MostRecentEvents,
     expected_message: str,
 ):
     monkeypatch.setattr(
-        rcon.hooks.TriggerWordsUserConfig,
+        rcon.hooks.ChatCommandsUserConfig,
         "load_from_db",
         lambda: config,
     )
@@ -416,7 +398,7 @@ def test_trigger_words_hook_help_words(
     }
 
     with mock.patch("rcon.hooks.Rcon") as rcon_:
-        trigger_words(rcon_, struct_log)
+        chat_commands(rcon_, struct_log)
         rcon_.do_message_player.assert_called_once_with(
             steam_id_64=steam_id_64,
             message=expected_message,
@@ -429,10 +411,10 @@ def test_trigger_words_hook_help_words(
     [
         (
             "!help",
-            TriggerWordsUserConfig(
+            ChatCommandsUserConfig(
                 enabled=True,
-                trigger_words=[
-                    TriggerWord(
+                command_words=[
+                    ChatCommand(
                         words=["!wkm"],
                         message="You were last killed by {last_nemesis_name} with {last_nemesis_weapon}",
                         description="Who last killed me",
@@ -451,13 +433,13 @@ def test_trigger_words_hook_help_words(
 def test_trigger_words_hook_description_words(
     monkeypatch,
     chat_content: str,
-    config: TriggerWordsUserConfig,
+    config: ChatCommandsUserConfig,
     steam_id_64: str,
     recent_event: MostRecentEvents,
     expected_message: str,
 ):
     monkeypatch.setattr(
-        rcon.hooks.TriggerWordsUserConfig,
+        rcon.hooks.ChatCommandsUserConfig,
         "load_from_db",
         lambda: config,
     )
@@ -479,7 +461,7 @@ def test_trigger_words_hook_description_words(
     }
 
     with mock.patch("rcon.hooks.Rcon") as rcon_:
-        trigger_words(rcon_, struct_log)
+        chat_commands(rcon_, struct_log)
         rcon_.do_message_player.assert_called_once_with(
             steam_id_64=steam_id_64,
             message=expected_message,
@@ -496,7 +478,7 @@ def test_trigger_words_hook_description_words(
 )
 def test_contains_triggering_word(chat_message, trigger_words, expected):
     assert (
-        contains_triggering_word(set(chat_message.split()), trigger_words, set())
+        chat_contains_command_word(set(chat_message.split()), trigger_words, set())
         == expected
     )
 
@@ -512,15 +494,15 @@ def test_message_formatting(format_str, context, expected):
 @pytest.mark.parametrize("message", [("{unknown}")])
 def test_invalid_message_variable_raises(message):
     with pytest.raises(pydantic.ValidationError):
-        TriggerWordsUserConfig(
-            trigger_words=[TriggerWord(message=message)],
+        ChatCommandsUserConfig(
+            command_words=[ChatCommand(message=message)],
         )
 
 
 @pytest.mark.parametrize("message", [("{vip_expiration}")])
 def test_valid_message_variable_does_not_raise(message):
-    TriggerWordsUserConfig(
-        trigger_words=[TriggerWord(message=message)],
+    ChatCommandsUserConfig(
+        command_words=[ChatCommand(message=message)],
     )
 
 
