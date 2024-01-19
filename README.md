@@ -139,7 +139,7 @@ Per server settings
     HLL_PORT
     HLL_PASSWORD
 
-**You must configure `RCONWEB_SERVER_URL` for each server you're setting up to match the URL you're hosting CRCON on, or you will be unable to access the admin site due to CSRF errors**
+~~You must configure `RCONWEB_SERVER_URL` for each server you're setting up to match the URL you're hosting CRCON on, or you will be unable to access the admin site due to CSRF errors~~
 
 Because of how Django handles CSRF protection, you won't be able to use the admin site until you've configured your server URL. This used to be set in the environment as `RCONWEB_SERVER_URL` but is now set through the GUI (or command line) as the `server_url` value in your CRCON settings (`Settings > CRCON Settings` in the GUI drop down menu) or the value of `RconServerSettingsUserConfig` if you set it via the CLI.
 
