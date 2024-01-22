@@ -310,6 +310,11 @@ class UserConfigType(TypedDict):
     value: str
 
 
+class PlayerVIPType(TypedDict):
+    server_number: int
+    expiration: datetime.datetime
+
+
 class PlayerProfileType(TypedDict):
     id: int
     steam_id_64: str
@@ -325,6 +330,7 @@ class PlayerProfileType(TypedDict):
     flags: List[PlayerFlagType]
     watchlist: Optional[WatchListType]
     steaminfo: Optional[SteamInfoType]
+    vips: Optional[list[PlayerVIPType]]
 
 
 class GetPlayersType(TypedDict):
