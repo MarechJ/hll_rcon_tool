@@ -28,7 +28,7 @@ def set_recent_actions(recent_actions: defaultdict[str, MostRecentEvents]):
 
 
 @on_match_start
-def reset_recent_actions():
+def reset_recent_actions(rcon: Rcon, struct_log):
     """Clear the event cache between rounds to prevent unbounded growing"""
     set_recent_actions(defaultdict(MostRecentEvents))
 
