@@ -6,6 +6,7 @@ from typing import List
 from pydantic import HttpUrl
 from redis.client import Redis
 
+import rcon.game_logs
 from rcon.automods.level_thresholds import LevelThresholdsAutomod
 from rcon.automods.models import ActionMethod, PunishPlayer, PunitionsToApply
 from rcon.automods.no_leader import NoLeaderAutomod
@@ -14,7 +15,6 @@ from rcon.automods.seeding_rules import SeedingRulesAutomod
 from rcon.cache_utils import get_redis_client
 from rcon.commands import CommandFailedError, HLLServerError
 from rcon.discord import send_to_discord_audit
-from rcon.game_logs import on_connected, on_kill
 from rcon.hooks import inject_player_ids
 from rcon.rcon import Rcon, get_rcon
 from rcon.types import StructuredLogLineType
@@ -190,7 +190,7 @@ def audit(discord_webhook_url: HttpUrl | None, msg: str, author: str):
         )
 
 
-@on_kill
+@rcon.game_logs.on_kill
 def on_kill(rcon: Rcon, log: StructuredLogLineType):
     red = get_redis_client()
     if not is_first_run_done(red):
@@ -216,7 +216,7 @@ def on_kill(rcon: Rcon, log: StructuredLogLineType):
 pendingTimers = {}
 
 
-@on_connected
+@rcon.game_logs.on_connected()
 @inject_player_ids
 def on_connected(rcon: Rcon, _, name: str, steam_id_64: str):
     red = get_redis_client()

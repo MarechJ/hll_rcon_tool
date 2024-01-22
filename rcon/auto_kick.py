@@ -14,7 +14,7 @@ from rcon.user_config.name_kicks import NameKickUserConfig
 logger = logging.getLogger(__name__)
 
 
-@on_connected
+@on_connected()
 @inject_player_ids
 def auto_kick(rcon, struct_log, name, steam_id_64):
     config = NameKickUserConfig.load_from_db()

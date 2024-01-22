@@ -7,6 +7,7 @@ from threading import Timer
 
 from discord_webhook import DiscordEmbed
 
+import rcon.steam_utils as steam_utils
 from rcon.cache_utils import invalidates
 from rcon.commands import CommandFailedError, HLLServerError
 from rcon.discord import (
@@ -32,12 +33,6 @@ from rcon.player_history import (
     save_start_player_session,
 )
 from rcon.rcon import Rcon, StructuredLogLineType
-from rcon.steam_utils import (
-    get_player_bans,
-    get_steam_profile,
-    is_steam_id_64,
-    update_db_player_info,
-)
 from rcon.types import (
     PlayerFlagType,
     RconInvalidNameActionType,
@@ -267,12 +262,11 @@ def ban_if_has_vac_bans(rcon: Rcon, steam_id_64, name):
             logger.error("Can't check VAC history, player not found %s", steam_id_64)
             return
 
-        bans: SteamBansType | None = get_player_bans(steam_id_64)
+        bans = player.steaminfo.bans
         if not bans or not isinstance(bans, dict):
             logger.warning(
                 "Can't fetch Bans for player %s, received %s", steam_id_64, bans
             )
-            # Player couldn't be fetched properly (logged by get_player_bans)
             return
 
         if should_ban(
@@ -319,7 +313,7 @@ def inject_player_ids(func):
     return wrapper
 
 
-@on_connected
+@on_connected()
 @inject_player_ids
 def handle_on_connect(rcon: Rcon, struct_log, name, steam_id_64):
     try:
@@ -352,19 +346,13 @@ def handle_on_disconnect(rcon, struct_log, _, steam_id_64):
     save_end_player_session(steam_id_64, struct_log["timestamp_ms"] / 1000)
 
 
-@on_connected
+# Make the steam API call before the handle_on_connect hook so it's available for ban_if_blacklisted
+@on_connected(0)
 @inject_player_ids
-def update_player_steaminfo_on_connect(rcon, struct_log, _, steam_id_64):
+def update_player_steaminfo_on_connect(rcon, struct_log, _, steam_id_64: str):
     if not steam_id_64:
         logger.error(
             "Can't update steam info, no steam id available for %s",
-            struct_log.get("player"),
-        )
-        return
-    profile = get_steam_profile(steam_id_64)
-    if not profile:
-        logger.error(
-            "Can't update steam info, no steam profile returned for %s",
             struct_log.get("player"),
         )
         return
@@ -374,8 +362,10 @@ def update_player_steaminfo_on_connect(rcon, struct_log, _, steam_id_64):
         player = _get_set_player(
             sess, player_name=struct_log["player"], steam_id_64=steam_id_64
         )
-        update_db_player_info(player, profile)
-        sess.commit()
+
+        steam_utils.update_missing_old_steam_info_single_player(
+            sess=sess, player=player
+        )
 
 
 pendingTimers: dict[
@@ -383,12 +373,12 @@ pendingTimers: dict[
 ] = defaultdict(list)
 
 
-@on_connected
+@on_connected()
 @inject_player_ids
 def windows_store_player_check(rcon: Rcon, _, name: str, player_id: str):
     config = RconServerSettingsUserConfig.load_from_db().windows_store_players
 
-    if not config.enabled or is_steam_id_64(player_id):
+    if not config.enabled or steam_utils.is_steam_id_64(player_id):
         return
 
     action = config.action
@@ -444,7 +434,7 @@ def windows_store_player_check(rcon: Rcon, _, name: str, player_id: str):
         )
 
 
-@on_connected
+@on_connected()
 @inject_player_ids
 def notify_invalid_names(rcon: Rcon, _, name: str, steam_id_64: str):
     config = RconServerSettingsUserConfig.load_from_db().invalid_names
@@ -639,7 +629,7 @@ def _set_real_vips(rcon: Rcon, struct_log):
     logger.info("Real VIP set slots to %s", remaining_vip_slots)
 
 
-@on_connected
+@on_connected()
 def do_real_vips(rcon: Rcon, struct_log):
     _set_real_vips(rcon, struct_log)
 

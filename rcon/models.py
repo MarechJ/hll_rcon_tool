@@ -36,7 +36,9 @@ from rcon.types import (
     PlayerSessionType,
     PlayerStatsType,
     ServerCountType,
+    SteamBansType,
     SteamInfoType,
+    SteamPlayerSummaryType,
     WatchListType,
 )
 
@@ -62,7 +64,12 @@ def get_engine():
 
 class Base(DeclarativeBase):
     # TODO: Replace dict[str, Any] w/ actual types
-    type_annotation_map = {dict[str, Any]: JSONB, dict[str, int]: JSONB}
+    type_annotation_map = {
+        dict[str, Any]: JSONB,
+        dict[str, int]: JSONB,
+        SteamPlayerSummaryType: JSONB,
+        SteamBansType: JSONB,
+    }
 
 
 class PlayerSteamID(Base):
@@ -173,12 +180,24 @@ class SteamInfo(Base):
     )
     created: Mapped[datetime] = mapped_column(default=datetime.utcnow)
     updated: Mapped[datetime] = mapped_column(onupdate=datetime.utcnow)
-    profile: Mapped[dict[str, Any]] = mapped_column()
-    country: Mapped[str] = mapped_column(index=True)
-    # TODO: I don't think bans is actually persisted at all
-    bans: Mapped[dict[str, Any]] = mapped_column()
+    profile: Mapped[SteamPlayerSummaryType] = mapped_column(default=JSONB.NULL)
+    country: Mapped[str | None] = mapped_column(index=True)
+    bans: Mapped[SteamBansType] = mapped_column(default=JSONB.NULL)
 
     steamid: Mapped[PlayerSteamID] = relationship(back_populates="steaminfo")
+
+    @property
+    def has_bans(self):
+        return any(
+            self.bans.get(k)
+            for k in [
+                "VACBanned",
+                "NumberOfVACBans",
+                "DaysSinceLastBan",
+                "NumberOfGameBans",
+            ]
+            if self.bans
+        )
 
     def to_dict(self) -> SteamInfoType:
         return {
@@ -186,8 +205,9 @@ class SteamInfo(Base):
             "created": self.created,
             "updated": self.updated,
             "profile": self.profile,
-            "country": self.country,
+            "country": self.country if self.country else None,
             "bans": self.bans,
+            "has_bans": self.has_bans,
         }
 
 

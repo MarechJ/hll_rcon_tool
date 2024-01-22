@@ -116,9 +116,18 @@ def on_chat_allies(func):
     return func
 
 
-def on_connected(func):
-    HOOKS[AllLogTypes.connected.value].append(func)
-    return func
+def on_connected(insert_at: int | None = None):
+    """Insert the given hook at `insert_at` position, or the end"""
+
+    def wrapper(func):
+        if isinstance(insert_at, int):
+            HOOKS[AllLogTypes.connected.value].insert(insert_at, func)
+        else:
+            HOOKS[AllLogTypes.connected.value].append(func)
+
+        return func
+
+    return wrapper
 
 
 def on_disconnected(func):
