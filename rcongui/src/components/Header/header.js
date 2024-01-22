@@ -403,7 +403,7 @@ const Header = ({ classes }) => {
                         <Link
                           color="inherit"
                           component={RouterLink}
-                          to="/settings/trigger-words"
+                          to="/settings/chat-commands"
                         >
                           <MenuItem onClick={() => setAnchorElSettings(null)}>
                             Chat Commands
