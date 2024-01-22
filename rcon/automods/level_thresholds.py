@@ -30,7 +30,11 @@ class LevelThresholdsAutomod:
     red: redis.StrictRedis
     config: AutoModLevelUserConfig
 
-    def __init__(self, config: AutoModLevelUserConfig, red: redis.StrictRedis or None):
+    def __init__(
+            self,
+            config: AutoModLevelUserConfig,
+            red: redis.StrictRedis or None
+        ):
         self.logger = logging.getLogger(__name__)
         self.red = red
         self.config = config
@@ -40,7 +44,9 @@ class LevelThresholdsAutomod:
 
     @contextmanager
     def watch_state(self, team: str, squad_name: str):
-        redis_key = f"level_thresholds_automod{team.lower()}{str(squad_name).lower()}"
+        redis_key = (
+            f"level_thresholds_automod{team.lower()}{str(squad_name).lower()}"
+        )
         watch_status = self.red.get(redis_key)
         if watch_status:
             watch_status = pickle.loads(watch_status)
@@ -51,12 +57,16 @@ class LevelThresholdsAutomod:
             yield watch_status
         except NoLevelViolation:
             self.logger.debug(
-                "Squad %s - %s no level violation clearing state", team, squad_name
+                "Squad %s - %s no level violation clearing state",
+                team,
+                squad_name
             )
             self.red.delete(redis_key)
         else:
             self.red.setex(
-                redis_key, LEVEL_THRESHOLDS_RESET_SECS, pickle.dumps(watch_status)
+                redis_key,
+                LEVEL_THRESHOLDS_RESET_SECS,
+                pickle.dumps(watch_status)
             )
 
     def on_connected(self, name: str, steam_id_64: str) -> PunitionsToApply:
@@ -82,7 +92,8 @@ class LevelThresholdsAutomod:
                     message = message.format(level=min_level) + "\n"
                 except KeyError:
                     self.logger.warning(
-                        f"The automod message ({message}) contains an invalid key"
+                        "The automod message (%s) contains an invalid key",
+                        message
                     )
                 data["min_level_msg"] = message
 
@@ -93,7 +104,8 @@ class LevelThresholdsAutomod:
                     message = message.format(level=max_level) + "\n"
                 except KeyError:
                     self.logger.warning(
-                        f"The automod message ({message}) contains an invalid key"
+                        "The automod message (%s) contains an invalid key",
+                        message
                     )
                 data["max_level_msg"] = message
 
@@ -105,13 +117,15 @@ class LevelThresholdsAutomod:
                     try:
                         message = (
                             message.format(
-                                role=role_config.label, level=role_config.min_level
+                                role=role_config.label,
+                                level=role_config.min_level
                             )
                             + "\n"
                         )
                     except KeyError:
                         self.logger.warning(
-                            f"The automod message ({message}) contains an invalid key"
+                            "The automod message (%s) contains an invalid key",
+                            message
                         )
                     level_thresholds_msg += message
                 data["level_thresholds_msg"] = level_thresholds_msg
@@ -129,7 +143,8 @@ class LevelThresholdsAutomod:
                     message = message.format(**data)
                 except KeyError:
                     self.logger.warning(
-                        f"The automod message for disallowed weapons ({message}) contains an invalid key"
+                        "The automod message (%s) contains an invalid key",
+                        message
                     )
 
                 p.warning.append(
@@ -163,11 +178,15 @@ class LevelThresholdsAutomod:
         }
 
         if method == ActionMethod.MESSAGE:
-            data["received_warnings"] = len(watch_status.warned.get(aplayer.name))
+            data["received_warnings"] = len(
+                watch_status.warned.get(aplayer.name)
+            )
             data["max_warnings"] = self.config.number_of_warnings
             data["next_check_seconds"] = self.config.warning_interval_seconds
         if method == ActionMethod.PUNISH:
-            data["received_punishes"] = len(watch_status.punished.get(aplayer.name))
+            data["received_punishes"] = len(
+                watch_status.punished.get(aplayer.name)
+            )
             data["max_punishes"] = self.config.number_of_punishments
             data["next_check_seconds"] = self.config.punish_interval_seconds
         if method == ActionMethod.KICK:
@@ -188,7 +207,8 @@ class LevelThresholdsAutomod:
             return message.format(**data)
         except KeyError:
             self.logger.warning(
-                f"The automod message of {repr(method)} ({message}) contains an invalid key"
+                "The automod message (%s) contains an invalid key",
+                message
             )
             return message
 
@@ -198,7 +218,9 @@ class LevelThresholdsAutomod:
                 if punishes := watch_status.punished.get(aplayer.name):
                     del punishes[-1]
             except Exception:
-                self.logger.exception("tried to cleanup punished time but failed")
+                self.logger.exception(
+                    "tried to cleanup punished time but failed"
+                )
 
     def punitions_to_apply(
         self,
@@ -211,11 +233,16 @@ class LevelThresholdsAutomod:
         self.logger.debug("Squad %s %s", squad_name, squad)
         punitions_to_apply = PunitionsToApply()
         if not squad_name:
-            self.logger.debug("Skipping None or empty squad %s %s", squad_name, squad)
+            self.logger.debug(
+                "Skipping None or empty squad %s %s",
+                squad_name,
+                squad
+            )
             return punitions_to_apply
 
-        server_player_count = get_team_count(team_view, "allies") + get_team_count(
-            team_view, "axis"
+        server_player_count = (
+            get_team_count(team_view, "allies")
+            + get_team_count(team_view, "axis")
         )
 
         with self.watch_state(team, squad_name) as watch_status:
@@ -241,78 +268,97 @@ class LevelThresholdsAutomod:
 
                 shouldForceKick = False
                 # Global exclusion to avoid "Level 1" HLL bug
-                if aplayer.lvl != 1:
-                    # Server min level threshold check
-                    min_level = self.config.min_level
-                    if min_level > 0 and aplayer.lvl < min_level:
-                        message = self.config.min_level_message
+                if self.config.levelbug_enabled and aplayer.lvl == 1:
+                    continue
+
+                # Server min level threshold check
+                min_level = self.config.min_level
+                if min_level > 0 and aplayer.lvl < min_level:
+                    message = self.config.min_level_message
+                    try:
+                        message = message.format(level=min_level)
+                    except KeyError:
+                        self.logger.warning(
+                            "The automod message (%s) "
+                            "contains an invalid key",
+                            message
+                        )
+                    violations.append(message)
+                    shouldForceKick = True
+
+                # Server max level threshold check
+                max_level = self.config.max_level
+                if max_level > 0 and aplayer.lvl > max_level:
+                    message = self.config.max_level_message
+                    try:
+                        message = message.format(level=max_level)
+                    except KeyError:
+                        self.logger.warning(
+                            "The automod message (%s) "
+                            "contains an invalid key",
+                            message
+                        )
+                    violations.append(message)
+                    shouldForceKick = True
+
+                # Force kick player if not matching global level thresholds
+                if shouldForceKick:
+                    violation_msg = ", ".join(violations)
+                    aplayer.details.message = self.get_message(
+                        watch_status,
+                        aplayer,
+                        violation_msg,
+                        ActionMethod.FORCE_KICK,
+                    )
+                    punitions_to_apply.kick.append(aplayer)
+                    punitions_to_apply.add_squad_state(
+                        team,
+                        squad_name,
+                        squad
+                    )
+                    continue
+
+                # By role level thresholds check
+                if self.config.level_thresholds:
+                    role_config = self.config.level_thresholds.get(
+                        Roles(aplayer.role)
+                    )
+
+                    if (
+                        role_config
+                        and server_player_count >= role_config.min_players
+                        and aplayer.lvl < role_config.min_level
+                    ):
+                        message = self.config.violation_message
                         try:
-                            message = message.format(level=min_level)
+                            message = message.format(
+                                role=role_config.label,
+                                level=role_config.min_level,
+                            )
                         except KeyError:
                             self.logger.warning(
-                                f"The automod message ({message}) contains an invalid key"
+                                "The automod message (%s) "
+                                "contains an invalid key",
+                                message
                             )
                         violations.append(message)
-                        shouldForceKick = True
-
-                    # Server max level threshold check
-                    max_level = self.config.max_level
-                    if max_level > 0 and aplayer.lvl > max_level:
-                        message = self.config.max_level_message
-                        try:
-                            message = message.format(level=max_level)
-                        except KeyError:
-                            self.logger.warning(
-                                f"The automod message ({message}) contains an invalid key"
-                            )
-                        violations.append(message)
-                        shouldForceKick = True
-
-                    # Force kick player if not matching global level thresholds
-                    if shouldForceKick:
-                        violation_msg = ", ".join(violations)
-                        aplayer.details.message = self.get_message(
-                            watch_status,
-                            aplayer,
-                            violation_msg,
-                            ActionMethod.FORCE_KICK,
-                        )
-                        punitions_to_apply.kick.append(aplayer)
-                        punitions_to_apply.add_squad_state(team, squad_name, squad)
-                        continue
-
-                    # By role level thresholds check
-                    if self.config.level_thresholds:
-                        role_config = self.config.level_thresholds.get(
-                            Roles(aplayer.role)
-                        )
-
-                        if (
-                            role_config
-                            and server_player_count >= role_config.min_players
-                            and aplayer.lvl < role_config.min_level
-                        ):
-                            message = self.config.violation_message
-                            try:
-                                message = message.format(
-                                    role=role_config.label,
-                                    level=role_config.min_level,
-                                )
-                            except KeyError:
-                                self.logger.warning(
-                                    f"The automod message ({message}) contains an invalid key"
-                                )
-                            violations.append(message)
 
                 if len(violations) == 0:
                     continue
 
                 violation_msg = ", ".join(violations)
-                state = self.should_warn_player(watch_status, squad_name, aplayer)
+                state = self.should_warn_player(
+                    watch_status,
+                    squad_name,
+                    aplayer
+                )
 
                 if state == PunishStepState.APPLY:
                     aplayer.details.message = self.get_message(
-                        watch_status, aplayer, violation_msg, ActionMethod.MESSAGE
+                        watch_status,
+                        aplayer,
+                        violation_msg,
+                        ActionMethod.MESSAGE
                     )
                     punitions_to_apply.warning.append(aplayer)
                     punitions_to_apply.add_squad_state(team, squad_name, squad)
@@ -323,11 +369,18 @@ class LevelThresholdsAutomod:
                 ]:
                     continue
 
-                state = self.should_punish_player(watch_status, squad_name, aplayer)
+                state = self.should_punish_player(
+                    watch_status,
+                    squad_name,
+                    aplayer
+                )
 
                 if state == PunishStepState.APPLY:
                     aplayer.details.message = self.get_message(
-                        watch_status, aplayer, violation_msg, ActionMethod.PUNISH
+                        watch_status,
+                        aplayer,
+                        violation_msg,
+                        ActionMethod.PUNISH
                     )
                     punitions_to_apply.punish.append(aplayer)
                     punitions_to_apply.add_squad_state(team, squad_name, squad)
@@ -357,7 +410,9 @@ class LevelThresholdsAutomod:
         self, watch_status: WatchStatus, squad_name: str, aplayer: PunishPlayer
     ):
         if self.config.number_of_warnings == 0:
-            self.logger.debug("Warnings are disabled. number_of_warning is set to 0")
+            self.logger.debug(
+                "Warnings are disabled. number_of_warning is set to 0"
+            )
             return PunishStepState.DISABLED
 
         warnings = watch_status.warned.setdefault(aplayer.name, [])
