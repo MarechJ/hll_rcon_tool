@@ -1,7 +1,7 @@
 import datetime
 import enum
 from dataclasses import dataclass
-from typing import List, Optional, TypedDict
+from typing import List, Literal, Optional, TypedDict
 
 
 # Have to inherit from str to allow for JSON serialization w/ pydantic
@@ -219,27 +219,52 @@ class GameServerBanType(TypedDict):
     raw: str
 
 
+class SteamPlayerSummaryType(TypedDict):
+    """Result of steam API ISteamUser.GetPlayerSummaries"""
+
+    avatar: str
+    avatarfull: str
+    avatarhash: str
+    avatarmedium: str
+    # 1 - not visible 3 - visibile
+    communityvisibilitystate: Literal[1] | Literal[3]
+    lastlogoff: int
+    loccityid: int
+    loccountrycode: str
+    locstatecode: str
+    personaname: str
+    personastate: int
+    personastateflags: int
+    primaryclanid: str
+    profilestate: int
+    profileurl: str
+    realname: str
+    steamid: str
+    timecreated: int
+
+
 class SteamBansType(TypedDict):
+    """Result of steam API ISteamUser.GetPlayerBans"""
+
+    SteamId: str
     CommunityBanned: bool
     VACBanned: bool
     NumberOfVACBans: int
     DaysSinceLastBan: int
     NumberOfGameBans: int
     EconomyBan: str
-    has_bans: bool
-
-
-class SteamBanResultType(TypedDict):
-    steam_bans: Optional[SteamBansType]
 
 
 class SteamInfoType(TypedDict):
+    """Dictionary version of SteamInfo model"""
+
     id: int
     created: datetime.datetime
     updated: datetime.datetime
-    profile: dict  # TODO
-    country: str
-    bans: dict  # TODO
+    profile: SteamPlayerSummaryType | None
+    country: str | None
+    bans: SteamBansType | None
+    has_bans: bool
 
 
 class PlayerNameType(TypedDict):
@@ -422,6 +447,11 @@ class UserConfigType(TypedDict):
     value: str
 
 
+class PlayerVIPType(TypedDict):
+    server_number: int
+    expiration: datetime.datetime
+
+
 class PlayerProfileType(TypedDict):
     id: int
     steam_id_64: str
@@ -437,12 +467,13 @@ class PlayerProfileType(TypedDict):
     flags: List[PlayerFlagType]
     watchlist: Optional[WatchListType]
     steaminfo: Optional[SteamInfoType]
+    vips: Optional[list[PlayerVIPType]]
 
 
 class GetPlayersType(TypedDict):
     name: str
     steam_id_64: str
-    country: str
+    country: str | None
     steam_bans: Optional[SteamBansType]
 
 

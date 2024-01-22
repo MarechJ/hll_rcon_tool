@@ -60,6 +60,13 @@ export const LevelAutoMod = ({
             Available properties: {role} matching label's value of previous map and {level} matching level's value from previous map.
         */
         "violation_message": "{role} are not allowed under level {level}",
+
+        /*
+        Enable ('true') or disable ('false') the protection against "level 1 bug" : due to a missed synchro between Steam and the game server,
+        any player can log in as level 1, no matter their real level. They could then be punished if violating level rules.
+        If enabled, level 1 players won't be observed by the automod.
+        */
+        "levelbug_enabled": true,
         
         /*
             a map of roles to label, min_players & min_level that should not be taken by players under the required level only when min_players reached.
