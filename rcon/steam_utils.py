@@ -376,22 +376,26 @@ def enrich_db_users(chunk_size=100, update_from_days_old=30):
 
         logger.info("Updating steam profiles/bans for missing/old users")
         for idx, player_chunks in enumerate(sess.scalars(stmt).partitions()):
-            players = list(player_chunks)
-            if not players:
-                logger.warning("Empty query results for page %s", idx)
-                continue
-            logger.info(
-                "Updating page %s steam profile/bans, first steam ID of page: %s",
-                idx + 1,
-                players[0],
-            )
-            num_profs, num_bans = update_db_player_info(sess, players=players)
+            try:
+                players = list(player_chunks)
+                if not players:
+                    logger.warning("Empty query results for page %s", idx)
+                    continue
+                logger.info(
+                    "Updating page %s steam profile/bans, first steam ID of page: %s",
+                    idx + 1,
+                    players[0],
+                )
+                num_profs, num_bans = update_db_player_info(sess, players=players)
 
-            logger.info(
-                "%s profiles, %s bans fetched from steam API",
-                num_profs,
-                num_bans,
-            )
+                logger.info(
+                    "%s profiles, %s bans fetched from steam API",
+                    num_profs,
+                    num_bans,
+                )
+            except Exception as e:
+                logger.exception(e)
+                logger.error("Error while fetching page %s: %s", idx + 1, e)
 
             # Shouldn't really need this with how many API calls we should be able to make
             # but just to be on the safe side
