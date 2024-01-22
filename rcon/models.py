@@ -40,6 +40,7 @@ from rcon.types import (
     SteamInfoType,
     SteamPlayerSummaryType,
     WatchListType,
+    PlayerVIPType,
 )
 
 logger = logging.getLogger(__name__)
@@ -164,6 +165,7 @@ class PlayerSteamID(Base):
             "flags": [f.to_dict() for f in (self.flags or [])],
             "watchlist": self.watchlist.to_dict() if self.watchlist else None,
             "steaminfo": self.steaminfo.to_dict() if self.steaminfo else None,
+            "vips": [v.to_dict() for v in self.vips],
         }
 
     def __str__(self) -> str:
@@ -701,6 +703,12 @@ class PlayerVIP(Base):
     )
 
     steamid: Mapped[PlayerSteamID] = relationship(back_populates="vips")
+
+    def to_dict(self) -> PlayerVIPType:
+        return {
+            "server_number": self.server_number,
+            "expiration": self.expiration,
+        }
 
 
 class AuditLog(Base):
