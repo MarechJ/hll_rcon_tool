@@ -290,9 +290,16 @@ def update_db_player_info(
 
         country_code = _get_player_country_code(player_prof)
         if player.steaminfo:
-            player.steaminfo.profile = player_prof
-            player.steaminfo.bans = player_ban
-            player.steaminfo.country = country_code
+            # Don't overwrite existing info if there are errors making
+            # the steam API calls
+            if player_prof:
+                player.steaminfo.profile = player_prof
+
+            if player_ban:
+                player.steaminfo.bans = player_ban
+
+            if country_code:
+                player.steaminfo.country = country_code
         else:
             player.steaminfo = SteamInfo(
                 profile=player_prof, bans=player_ban, country=country_code
