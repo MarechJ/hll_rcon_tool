@@ -23,6 +23,7 @@ from rcon.game_logs import (
     on_match_end,
     on_match_start,
 )
+from rcon.message_variables import format_message_string, populate_message_variables
 from rcon.models import enter_session
 from rcon.player_history import (
     _get_set_player,
@@ -33,14 +34,24 @@ from rcon.player_history import (
     save_start_player_session,
 )
 from rcon.rcon import Rcon, StructuredLogLineType
+from rcon.recent_actions import get_recent_actions
 from rcon.types import (
+    MessageVariableContext,
+    MostRecentEvents,
     PlayerFlagType,
     RconInvalidNameActionType,
     SteamBansType,
     WindowsStoreIdActionType,
 )
-from rcon.user_config.auto_mod_no_leader import AutoModNoLeaderUserConfig
 from rcon.user_config.camera_notification import CameraNotificationUserConfig
+from rcon.user_config.chat_commands import (
+    MESSAGE_VAR_RE,
+    ChatCommandsUserConfig,
+    chat_contains_command_word,
+    is_command_word,
+    is_description_word,
+    is_help_word,
+)
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.real_vip import RealVipUserConfig
 from rcon.user_config.vac_game_bans import VacGameBansUserConfig
@@ -79,6 +90,98 @@ def initialise_vote_map(rcon: Rcon, struct_log):
         vote_map.apply_results()
     except:
         logger.exception("Something went wrong in vote map init")
+
+
+@on_chat
+def chat_commands(rcon: Rcon, struct_log: StructuredLogLineType):
+    config = ChatCommandsUserConfig.load_from_db()
+    if not config.enabled:
+        return
+
+    chat_message = struct_log["sub_content"]
+    if chat_message is None:
+        return
+
+    event_cache = get_recent_actions()
+    steam_id_64: str = struct_log["steam_id_64_1"]
+    if steam_id_64 is None:
+        return
+
+    player_cache = event_cache.get(steam_id_64, MostRecentEvents())
+    chat_words = set(chat_message.split())
+    for command in config.command_words:
+        if not (
+            triggered_word := chat_contains_command_word(
+                chat_words, command.words, command.help_words
+            )
+        ):
+            continue
+
+        if is_command_word(triggered_word):
+            message_vars: list[str] = re.findall(MESSAGE_VAR_RE, command.message)
+            populated_variables = populate_message_variables(
+                vars=message_vars, steam_id_64=steam_id_64
+            )
+            formatted_message = format_message_string(
+                command.message,
+                populated_variables=populated_variables,
+                context={
+                    MessageVariableContext.player_name.value: struct_log["player"],
+                    MessageVariableContext.player_steam_id_64.value: steam_id_64,
+                    MessageVariableContext.last_victim_steam_id_64.value: player_cache.last_victim_steam_id_64,
+                    MessageVariableContext.last_victim_name.value: player_cache.last_victim_name,
+                    MessageVariableContext.last_victim_weapon.value: player_cache.last_victim_weapon,
+                    MessageVariableContext.last_nemesis_steam_id_64.value: player_cache.last_nemesis_steam_id_64,
+                    MessageVariableContext.last_nemesis_name.value: player_cache.last_nemesis_name,
+                    MessageVariableContext.last_nemesis_weapon.value: player_cache.last_nemesis_weapon,
+                    MessageVariableContext.last_tk_nemesis_steam_id_64.value: player_cache.last_tk_nemesis_steam_id_64,
+                    MessageVariableContext.last_tk_nemesis_name.value: player_cache.last_tk_nemesis_name,
+                    MessageVariableContext.last_tk_nemesis_weapon.value: player_cache.last_tk_nemesis_weapon,
+                    MessageVariableContext.last_tk_victim_steam_id_64.value: player_cache.last_tk_victim_steam_id_64,
+                    MessageVariableContext.last_tk_victim_name.value: player_cache.last_tk_victim_name,
+                    MessageVariableContext.last_tk_victim_weapon.value: player_cache.last_tk_victim_weapon,
+                },
+            )
+            rcon.do_message_player(
+                steam_id_64=struct_log["steam_id_64_1"],
+                message=formatted_message,
+                save_message=False,
+            )
+        # Help words describe a specific command
+        elif is_help_word(triggered_word):
+            description = command.description
+            if description:
+                rcon.do_message_player(
+                    steam_id_64=struct_log["steam_id_64_1"],
+                    message=description,
+                    save_message=False,
+                )
+            else:
+                rcon.do_message_player(
+                    steam_id_64=struct_log["steam_id_64_1"],
+                    message="Command description not set, let the admins know!",
+                    save_message=False,
+                )
+                logger.warning(
+                    "No descriptions set for chat command word(s), %s",
+                    ", ".join(command.words),
+                )
+
+    # Description words trigger the entire help menu, test outside the loop
+    # since these are global help words
+    if is_description_word(chat_words, config.describe_words):
+        description = config.describe_chat_commands()
+        if description:
+            rcon.do_message_player(
+                steam_id_64=struct_log["steam_id_64_1"],
+                message="\n".join(description),
+                save_message=False,
+            )
+        else:
+            logger.warning(
+                "No descriptions set for command words, %s",
+                ", ".join(config.describe_words),
+            )
 
 
 @on_match_end

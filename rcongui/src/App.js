@@ -52,7 +52,8 @@ import {
   TeamKillBanOnConnect,
   NameKicks,
   ExpiredVIP,
-  GTXNameChange
+  GTXNameChange,
+  ChatCommands,
 } from "./components/UserSettings/miscellaneous";
 
 const Live = ({ classes }) => {
@@ -389,8 +390,8 @@ function App() {
       ? hllNoBg
       : hll
     : themes[userTheme]
-      ? themes[userTheme]
-      : lightTheme;
+    ? themes[userTheme]
+    : lightTheme;
   const classes = useStyles();
 
   const Router = isEmbed ? BrowserRouter : HashRouter;
@@ -613,6 +614,17 @@ function App() {
                           setEndpoint="set_rcon_server_settings_config"
                           validateEndpoint="validate_rcon_server_settings_config"
                           describeEndpoint="describe_rcon_server_settings_config"
+                        />
+                      </Grid>
+                    </Route>
+                    <Route path="/settings/chat-commands">
+                      <Grid container spacing={2}>
+                        <ChatCommands
+                          description="Chat Commands Settings"
+                          getEndpoint="get_chat_commands_config"
+                          setEndpoint="set_chat_commands_config"
+                          validateEndpoint="validate_chat_commands_config"
+                          describeEndpoint="describe_chat_commands_config"
                         />
                       </Grid>
                     </Route>

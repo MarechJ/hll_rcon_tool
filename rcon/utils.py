@@ -1,6 +1,8 @@
+import inspect
 import json
 import logging
 import os
+import re
 import secrets
 from datetime import datetime, timezone
 from itertools import islice
@@ -721,3 +723,16 @@ def batched(iterable: Iterable[Any], n: int):
     it = iter(iterable)
     while batch := tuple(islice(it, n)):
         yield batch
+
+
+class SafeStringFormat(dict):
+    def __missing__(self, key):
+        called_from = inspect.stack()[1]
+        logger.error(
+            "SafeStringFormat key='%s' not found, called from %s, line number: %s, context=%s",
+            key,
+            called_from.filename,
+            called_from.lineno,
+            called_from.code_context,
+        )
+        return f"{{{key}}}"
