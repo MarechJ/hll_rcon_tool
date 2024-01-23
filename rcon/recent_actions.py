@@ -12,7 +12,7 @@ RECENT_ACTIONS: defaultdict[str, MostRecentEvents] | None = None
 
 
 # 2.5 hours is the max length of a HLL match (full 5 objective offensive round)
-@ttl_cache(60 * 60 * 2.5, is_method=False)
+@ttl_cache(9000, is_method=False)
 def get_recent_actions() -> defaultdict[str, MostRecentEvents]:
     global RECENT_ACTIONS
     if RECENT_ACTIONS is None:
