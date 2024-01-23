@@ -10,9 +10,9 @@
 
 # Hell Let Loose (HLL) advanced RCON
 
-An extended RCON tool for Hell Let loose, meant to replace and go WAY beyond the official tool.
+An extended RCON tool for Hell Let loose, meant to replace the official tool and go WAY beyond.
 
-It is essentially a website that you can self host (or if you ask around the discord, some people can probably host it for you)
+It is essentially a website that you can self host (or if you ask around the Discord, some people can probably host it for you)
 
 ## Included features:
 
@@ -49,13 +49,6 @@ It is essentially a website that you can self host (or if you ask around the dis
 - It's more secure / convenient, a website is centralized, meaning that all actions have to go through it, you don't need to give the real RCON password to you moderators, all activity is recorded in one place, you can share configuration with other, etc...
 - It does not require any installation on the client side, you just need a browser
 
-> Yes but I don't know anything about console commands, coding and such?
-
-It's a 2 steps installation (5 if you include the pre-requisites), many not so technical people managed so you probably can too.
-The community grew quite big so if you still don't understand what to do after reading this just go and ask on discord :)
-
-There's also a Wiki made by the community (Thanks [2.Fjg]bn.hall): https://github.com/MarechJ/hll_rcon_tool/wiki
-
 **Join us on discord if you use it, for feedback, troubleshooting and informations about updates:** https://discord.gg/hZx6gn3
 
 Here's a sample:
@@ -68,177 +61,224 @@ Here's a sample:
 
 ### Pre-requisites:
 
-- It's recommended that you use Linux, you _should_ be able to set it up anywhere that you can get Docker to run, but don't expect much or any support if you don't install on Linux
-- Having some very basic shell (command prompt) skills. Feel free to ask for help on the Discord! (please consult Google, Stackoverflow, etc.)
-- Having a dedicated server - This app is meant to run 24/7 - (If you don't have that, you can just run a cheap Virtual Private Server)
-- The below need to be installed on the server where the rcon will run:
-  - (Optional but recommanded) `git`: https://git-scm.com/downloads (if you don't use git you need to download the releases)
-  - `Docker Engine` (Community) installed: https://docs.docker.com/engine/install/
-    - You can also use Docker Desktop but you may have issues with nested virtualization depending on your computer/server/VPS
-  - `Docker Compose` installed: https://docs.docker.com/compose/install/
-    - You should be able to use either `docker-compose` or `docker compose` depending on what you have installed, just adjust the commands below accordingly, but `docker-compose` is deprecated now, this README and release announcements will show `docker compose` examples, if you haven't upgraded it is up to you to modify the commands and know what you are doing.
+- Prefer VPS over your home PC
+  - CRCON is supposed to operate 24/7.
+  - Although it is possible to install it on any computer which is able to run Docker, keep in mind that given the price of electricity and the relative difficulty (and security risks) of allowing users to connect to your PC through your home internet access, it is best to install CRCON on a remote VPS server.
+  - Some VPS providers offer a good enough service for ~10$/month.
+
+- Hardware specifications
+  - Minimum configuration: 2 CPUs (or CPU threads) and 6GB of RAM.
+  - Recommended configuration: 4 CPUs and 8GB of RAM.
+  - Regarding disk space, the CRCON database of a game server where 95+ players connect for 10 hours per day may grow up to 20 GB in a year.
+    As it won't be easy to shrink it, you'll be advised to select an offer with >50 GB of storage.
+
+- Get a Linux distro
+  - It's recommended that you use Linux, most preferably a Debian-based distro, like Ubuntu.
+  - You won't get as much support on forums/Discords if you're using Windows.
+  - Some VPS providers even offer to have Docker enabled Linux distros for free.
+
+  - The below need to be installed on the server where the CRCON will run:
+    - (Optional but recommanded) `git`: https://git-scm.com/downloads
+      - (if you don't use git, you need to download and install the releases in .zip format, and you won't be able to launch automatic updates)
+    - `Docker Engine` (Community) installed: https://docs.docker.com/engine/install/
+      - You can also use Docker Desktop, but you may have issues with nested virtualization depending on your computer/server/VPS.
+    - `Docker Compose` installed: https://docs.docker.com/compose/install/
+      - You should be able to use either `docker-compose` or `docker compose` depending on what you have installed, just adjust the commands below accordingly, but `docker-compose` is deprecated now.
+      - This README and release announcements will show `docker compose` examples, if you haven't upgraded, it is up to you to modify the commands and know what you are doing.
 
 ## Install steps
+  "I don't know anything about console commands, coding and such?"
+  - It's a simple installation, many not so technical people managed, so you probably can too :)
+  - If you still don't understand what to do after reading this, just go and ask on Discord.
+  - ~~There's also a Wiki made by the community (Thanks [2.Fjg]bn.hall): https://github.com/MarechJ/hll_rcon_tool/wiki~~ (The Wiki is obsolete and will be updated soon)
 
-### 1. Get the sources
 
-    git clone https://github.com/MarechJ/hll_rcon_tool.git
-    cd hll_rcon_tool
+### 1. Download CRCON
+Now that you have found a VPS provider, rented a powerful-enough machine that runs a Linux distribution with Git and Docker enabled, it's time to install CRCON !
 
-If you don't have `git` you can also download the [latest zip release](https://github.com/MarechJ/hll_rcon_tool/releases/latest), however it's much less practical for updating.
+- Using an SSH client (don't know which one to get ? Try https://putty.org/),
+  log as root into your distant Linux, using the SSH credentials given by your VPS provider then enter these commands one by one :
+
+  - (get the files) : `git clone https://github.com/MarechJ/hll_rcon_tool.git`
+  - (enter the newly created CRCON dedicated folder) : `cd hll_rcon_tool`
+
+
+### 2. Edit the environment config file
+Now, you're going to create and edit the `.env` file, where you'll tell CRCON how to connect to your HLL game server.
+Here we'll use "nano", a simple text editor that runs into the terminal.
+You can use any other tool you're used to, either local or getting the file from a SFTP connection.
+
+- (make a copy of the environnement config file template) : `cp default.env .env`
+- (install a text editor) : `apt-get update && apt-get install nano`
+- (edit the file) : `nano .env`
+
+In nano, you can move the cursor with the arrow keys.
+You do not have to change all the values. Only these are mandatory :
+
+- (choose a password to give CRCON access to the database.
+  You'll never have to enter it anywhere after that)
+  `HLL_DB_PASSWORD=anythingwithoutanyspace`
+
+- (choose a long string that will be used to scramble users passwords.
+  You'll never have to enter it anywhere after that)
+  `RCONWEB_API_SECRET=anythingwithoutanyspaceordollarsign`
+
+In "SERVER 1" part :
+
+- (Your RCON IP, as provided by the game server provider)
+  `HLL_HOST=123.123.123.123`
+
+- (Your RCON port, as provided by the game server provider)
+  `HLL_PORT=12345`
+
+- (Your RCON password, as provided by the game server provider)
+  `HLL_PASSWORD=xxxxxx`
+
+- That's it ! Triple-check there is no space before/after the `=` signs, nor in the values you've set.
+- Then save the file ([Ctrl]+o, answer 'y') and exit the editor ([Ctrl]+x)
+
+
+### 3. Run CRCON for the first time !
+CRCON now should be able to start and connect to your HLL game server.
+Don't think it's over, as you now have to configure its users.
+
+(Note : Launch process will display a *lot* of text on screen.
+Don't panic, as you do not have to read/do anything)
+
+Linux :
+  - `docker compose up -d --remove-orphans`
+
+Windows :
+  - `docker volume create redis_data`
+  - `docker volume create postgres_data`
+  - `docker compose -f docker-compose.yml -f docker-compose.windows.yml up -d`
+
+Raspberry-Pi or any ARM32v7 :
+  - `docker compose -f docker-compose.yml -f docker-compose.arm32v7.yml up -d --build`
+
+If eveything went well, after a minute or two, you'll end up with some green lines saying "started" displayed. CRCON is on !
+
+
+### 4. Get in the CRCON UI
+- Your new CRCON UI can be reached from all over the world, in any web browser, using your VPS IP on port 8010 :
+- ie : http://yourVPSIP:8010/
+
+- Get in there an click on "LOGIN", in the top menu. The default credentials are `admin`/`admin`
+
+- Don't touch anything yet. You'll have plenty of time to play with the different tools later.
+- Now, we MUST change this admin password, as it is highly insecure !
+
+
+### 5. Prepare to configure users
+Due to browser security checks, we need to declare the VPS IP as "secure" to be able to enter the users management tool.
+
+- In the "SETTINGS" menu, click on "CRCON settings" submenu
+  or directly get to http://yourVPSIP:8010/#/settings/rcon-server
+
+  You'll see a large editable textarea.
+  - The strange code in it is a config JSON formatted text.
+  - Stay cool : for the time being, we only are going to change a single line in it.
+
+- Modify the `server_url` line, specifying your VPS IP and port 8010.
+  - You must keep quotation marks around the url, and a comma after the second closing quotation mark.
+  - ie : `"server_url": "http://123.123.123.123:8010/",`
+
+- Then click on the "SAVE" link, below the textarea (a green confirmation flag should pop in top-right corner of the window)
+
+
+### 6. Restart CRCON
+Yes. Restart it. This is strange, but mandatory : the `server_url` value you've just set has to be loaded BEFORE the main CRCON Docker containers.
+
+- Linux :
+  - `docker compose up -d --remove-orphans`
+
+- Windows :
+  - `docker compose -f docker-compose.yml -f docker-compose.windows.yml up -d`
+
+- Raspberry-Pi or any ARM32v7 :
+  - `docker compose -f docker-compose.yml -f docker-compose.arm32v7.yml up -d --build`
+
+
+### 7. Configure users - change default admin password
+- Now you can get into the users management tool.
+- It's located in `http://yourVPSIP:8010/admin`
+- You should be already logged in. If not, the credentials are `admin`/`admin`.
+
+- First add a new user (you'll find the link), filling the boxes.
+  ![](images/readme_admin_account_setup_1.png)
+  - Don't forget to enter the user's Steam ID : it will be used by CRCON to identify user as an admin.
+    ![](images/readme_admin_account_setup_2.png)
+  - We recommend to NOT CHANGING ANYTHING, except for a select few of your most trusted staff members you can tick the `Superuser status`.
+  - Don't forget to click on the "SAVE" button
+  - Once the user is created, you'll end up on that page: ![](images/readme_admin_account_setup_3.png)
+  - Please note that users won't be able to change their password by themselves unless you tick the `staff status` so that they can access this admin page.
+    However we DO NOT RECOMMEND doing it, as special permissions on admin models won't be managedon the future.
+    To change the password of one of your user, in the users list click on him, then there: ![](images/readme_admin_account_setup_4.png)
+
+- Then get back to the first screen (http://yourVPSIP:8010/admin),
+  (see the red box in the top right): ![](images/readme_admin_password_1.png)
+  - click on "Users" and choose "admin".
+  - You can change the default admin password or uncheck the "Active" status.
+  - Don't forget to click on the "SAVE" button
+
+### 8. Basic configuration is over !
+- Yes ! You did it ! You now have a fully working and secured CRCON ! Congratulations !
+
+- Take the time to explore all the menus and commands.
+- We *know* the UI isn't always simple to navigate and we would be glad if someone decide to help refreshing it ;)
+
+- You'll find a lot of things to customize in the "SETTINGS" menus.
+- Most of the settings are described on their own page.
+- If you have any question, do not hesitate to ask it on the CRCON Discord.
+
+Have fun !
+
+If you feel generous you can donate, the money will be use to reward contributing developers or content creators to create video tutorial, demos, documentation, etc.
+[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/donate?hosted_button_id=56MYGQ2966V7J)
+
+
+### For power users
 
 ### Multiple Game Servers
-
 You can use one CRCON for multiple game servers, or have separate CRCONs for one (or more) game server, but they need to be set up differently, see below.
-
 For instance if you run multiple game servers (for instance US west, US east and/or an event server) it makes more sense to do _one_ CRCON install rather than separate CRCONs for each game server.
 
-#### One CRCON Multiple Game Servers
-
+**One CRCON to manage multiple game servers**
 When using a single CRCON installation for multiple game servers all of your admin accounts will have equal access to all of them, and all of your data will be stored in a single database.
-
 This will make it difficult to separate your servers in the future (for instance if you are trying to use one CRCON for multiple communities by sharing a VPS) without starting from scratch and losing data.
-
 **Note**: Setting up more than **3** game servers in a single installation will require you to edit your `.env` and `docker-compose.yml` and add new sections for each server past the third.
 
-#### Multiple CRCON Installations
+**Multiple CRCON Installations**
+If you do not want to mix admin accounts and database data you can clone it multiple times in different directories (see below) and then set each of them up (and then set up as many game servers per CRCON that you choose).
+This makes more sense when you're sharing the server you host CRCON on with other communities.
+**Note**: When you run two or more CRCONs on the same machine, you will have redis/postgres port conflicts and will need to resolve these in your `.env` and compose files.
 
-If you do not want to mix admin accounts and database data you can clone it multiple times in different directories (see below) and then set each of them up (and then set up as many game servers per CRCON that you choose). This makes more sense when you're sharing the server you host CRCON on with other communities.
-
-**Note**: When you run two or more CRCONs on the same machine you will have redis/postgres port conflicts and will need to resolve these in your `.env` and compose files.
-
-    git clone https://github.com/MarechJ/hll_rcon_tool.git hll_rcon_tool_server_number_2
-    cd hll_rcon_tool_server_number_2
-
-**From here all the commands assume that you are at the root of the git repository you just cloned!**
-
-### 2. Set your server informations. Edit the `.env` file and fill in the blanks (for all your servers) like so:
-
-Make a copy of `default.env` and name it `.env` (it must be named exactly `.env`, this is how Docker identifies it)
-
-```
-cp default.env .env
-```
-
-**Note**: if you don't see the `.env` file you need to activate the show hidden files option on Windows. On Linux don't forget the `-a`: `ls -a`
-
-**Note**: If you make _any_ changes to your `.env` you will have to recreate (`docker compose up -d --remove-orphans` your containers before it will take effect), (if you `docker compose restart` it will not take effect)
-
-**Note**: The values in `.env` are used by `docker` when it starts the container and they're referenced in your `compose` files, you should only edit (unless you really know what you are doing) values in `.env` and not the `compose` files.
-
-The comments in `.env` should be self explanatory, but these are the minimum you need to set the following environment variables. Do not add/delete/comment out/etc. fields unless you know what you are doing.
-
-Global settings (affects all the servers inside of your CRCON installation)
-
-    HLL_DB_PASSWORD
-    RCONWEB_API_SECRET
-
-Per server settings
-
-    HLL_HOST
-    HLL_PORT
-    HLL_PASSWORD
-
-**You must configure `RCONWEB_SERVER_URL` for each server you're setting up to match the URL you're hosting CRCON on, or you will be unable to access the admin site due to CSRF errors**
-
-Because of how Django handles CSRF protection, you won't be able to use the admin site until you've configured your server URL. This used to be set in the environment as `RCONWEB_SERVER_URL` but is now set through the GUI (or command line) as the `server_url` value in your CRCON settings (`Settings > CRCON Settings` in the GUI drop down menu) or the value of `RconServerSettingsUserConfig` if you set it via the CLI.
-
-This must be set to whatever URL you're accessing CRCON from (look at your browser window), such as `http://localhost:8010`, or whatever **your** domain is.
-
-For example if you are hosting using `HTTPS` on `example.com` you would set it to `https://example.com`
-For example if you are hosting using `HTTP` on `127.0.0.1` on port `8010` you would set it to `http://127.0.0.1:8010`
-
-Note: when you're configuring multiple game servers inside one CRCON installation you need to make sure your `RCONWEB_PORT`s are unique and also not otherwise used on the machine your're hosting on, the defaults _should_ work.
-
-### 3. Additional configuration
-
-Many things are configurable, most of it is done through the GUI (or command line) to settings that are saved in the database. `config/supervisord.conf` controls how the services are started/restarted, etc.
-
-**Note** for power users:
-
-You can set the environment variables anyway that Docker accepts (setting them in the shell, specifying them on the command line, etc.) but it is much easier to just use the `.env` file and manage it that way. You can also manually edit the compose files, but it may cause you issues when upgrading and isn't recommended unless you know what you're doing.
-
-[More details](https://docs.docker.com/compose/environment-variables/#set-environment-variables-with-docker-compose-run)
-
-### 4. RUN it!
-
-#### Linux
-
-    docker compose up -d
-
-#### Windows
-
-    docker volume create redis_data
-    docker volume create postgres_data
-    docker compose -f docker-compose.yml -f docker-compose.windows.yml up -d
-
-#### Raspberry-Pi or any ARM32v7
-
-    docker compose -f docker-compose.yml -f docker-compose.arm32v7.yml up -d --build
-
-The web application will be available on `<your server ip>:$RCONWEB_PORT` (you can use http://localhost:8010 if you test from the machine where it's installed)
-
-**Note**: If you are running it on Windows prior to 10 Docker runs in a virtual machine, so you have to [find the IP](https://devilbox.readthedocs.io/en/latest/howto/docker-toolbox/find-docker-toolbox-ip-address.html) of that VM.
-
-### 5. CHANGE YOUR ADMIN PASSWORD
-
-Using your browser go to `<your server ip>:$RCONWEB_PORT/admin` (8010 is the default port) and login with user: `admin` password: `admin`
-FIRST THING YOU MUST DO IS CHANGE YOUR PASSWORD (see the red box in the top right): ![](images/readme_admin_password_1.png)  
-After that you can start adding your users with this: ![](images/readme_admin_account_setup_1.png)  
-Make sure you specify their steam ID it will be used in upcoming features: ![](images/readme_admin_account_setup_2.png)  
-Once the user is created you'll end up on that page: ![](images/readme_admin_account_setup_3.png)  
-I recommend NOT CHANGING ANYTHING except for a select few of your most trusted staff members you can tick the `Superuser status`.
-Please note that users won't be able to change their password by themselves unless you tick the `staff status` so that they can access this admin page, however i DO NOT RECOMMEND doing as I won't be maintaining special permissions on admin models on the future (just manage password for them).
-To change the password of one of your user, in the users list click on him, then there: ![](images/readme_admin_account_setup_4.png)
-
-Please note that the `onlineadmins` variable in the (auto) broadcast is broken due to accounts. It will be fixed and improved later.
-
-You're done, ENJOY!
-
-If you feel generous you can donate, the money will be use to reward contributing developer or content creator to create video tutorial, demos, documentation, etc.
-[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/donate?hosted_button_id=56MYGQ2966V7J)
 
 ### To update to the latest version:
 
-Please join the discord and follow announcements, sometimes the update instructions vary from standard. If you are updating from an older version you should review the announcements in order and make any non-standard changes in order.
+Please join the discord and follow announcements, sometimes the update instructions vary from standard.
+If you are updating from an older version, you should review the announcements in order and make any non-standard changes in order.
 
 ### Normal (most) updates
 
 #### Linux
-
-Pull the changes from github:
-
-    git fetch --tags
-
-Check out a tagged release (substitute the release you want):
-
-    git checkout v7.0.2
-
-Get the newest docker images and restart your containers:
-
-    docker compose pull
-    docker compose up -d --remove-orphans
+(Pull the changes from github) `git fetch --tags`
+(Check out a tagged release): `git checkout v7.0.2`
+(Get the newest docker images and restart your containers): `docker compose pull && docker compose up -d --remove-orphans`
 
 #### Windows
-
-Substitute the release you want in `git checkout`:
-
-    git fetch --tags
-    git checkout v7.0.2
-    docker compose pull && docker compose -f docker-compose.yml -f docker-compose.windows.yml up -d --remove-orphans
+`git fetch --tags`
+`git checkout v7.0.2`
+`docker compose pull && docker compose -f docker-compose.yml -f docker-compose.windows.yml up -d --remove-orphans`
 
 #### Raspberry-Pi or any ARM32v7
-
-Substitute the release you want in `git checkout`:
-
-    git fetch --tags
-    git checkout v7.0.2
-    docker compose -f docker-compose.yml -f docker-compose.arm32v7.yml up --build -d --remove-orphans
+`git fetch --tags`
+`git checkout v7.0.2`
+`docker compose -f docker-compose.yml -f docker-compose.arm32v7.yml up --build -d --remove-orphans`
 
 Or download the [latest zip release](https://github.com/MarechJ/hll_rcon_tool/releases/latest)
 
 **Note**: If you get any sort of `git` error messages when you pull you have to resolve these before you can upgrade. Unless you have been changing files this should never happen.
-
 **Note**: that it's important you get the sources every time, or at least the docker-compose files, as new dependancies might be introduced
 
 ### To downgrade (in case of issue) to a previous version:
@@ -278,18 +318,8 @@ See [User Guide](USERGUIDE.md) for more information on how to use certain featur
 ## Features to come
 
 More or less in order of priorities
-
-- ~~Individual moderators accounts~~
-- ~~Audit trail~~
-- ~~Players sessions history (with records of actions applied to players)~~
-- ~~Deferred bans (from a blacklist)~~
-- ~~Custom preset punish/kick/ban messages~~
-- ~~Performance improvements for the player list view~~
-- ~~Auto randomisation of map rotation (scheduling of the endpoint: /api/do_randomize_map_rotation)~~
-- ~~Full log history (stored permanently)~~
-- ~~Action hooks on chat messages and players connect / disconnect~~
-- ~~Integration with Discord~~
 - Leaderboard and all time stats
+
 
 ## Building your own Docker images
 
