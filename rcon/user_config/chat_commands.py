@@ -1,4 +1,3 @@
-import enum
 import re
 from functools import cached_property
 from typing import Iterable, TypedDict
@@ -62,14 +61,15 @@ class ChatCommand(BaseModel):
     @field_validator("message")
     @classmethod
     def only_valid_variables(cls, v: str) -> str:
-        match = re.match(MESSAGE_VAR_RE, v)
-        if match := re.match(MESSAGE_VAR_RE, v):
-            for var in match.groups():
-                # Has to either be a valid MessageVariable or MessageVariableContext
+        for match in re.findall(MESSAGE_VAR_RE, v):
+            # Has to either be a valid MessageVariable or MessageVariableContext
+            try:
+                MessageVariable[match]
+            except KeyError:
                 try:
-                    MessageVariable(var)
-                except ValueError:
-                    MessageVariableContext(var)
+                    MessageVariableContext[match]
+                except KeyError:
+                    raise ValueError(f"{match} is not a valid message variable")
 
         return v
 
