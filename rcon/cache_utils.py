@@ -30,6 +30,8 @@ class RedisCached:
         serializer=simplejson.dumps,
         deserializer=simplejson.loads,
     ):
+        # TODO: isinstance check ttl_seconds it must be an int
+        # not a float or anything else
         if pool is None:
             pool = get_redis_pool()
 
