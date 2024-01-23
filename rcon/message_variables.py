@@ -54,8 +54,8 @@ def populate_message_variables(
 
     for raw_var in vars:
         try:
-            var = MessageVariable(raw_var)
-        except ValueError:
+            var = MessageVariable[raw_var]
+        except KeyError:
             # Not logging this because otherwise any context passed variables would
             # clutter the logs every single message
             continue
