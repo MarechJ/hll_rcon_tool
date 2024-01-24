@@ -43,7 +43,7 @@ Join us on discord if you use it, for feedback, troubleshooting and informations
 - Put player on a watch list and be notified when they enter your server
 - Live stats, per game or per session with a friendly public version, as well as historical games (bookmarkable)
 
-### Features to come
+## Features to come
 
 - Leaderboard and all time stats
 
@@ -53,7 +53,7 @@ Here's a sample:
 ![Player history overview](/images/Rcon3.png)
 ![Historical logs](/images/Rcon4.png)
 
-### How to use
+## How to use
 
 *Demo video coming soon*
 
