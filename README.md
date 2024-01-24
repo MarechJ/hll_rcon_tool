@@ -99,7 +99,7 @@ These programs need to be installed on the server :
 - `Docker Compose` : https://docs.docker.com/compose/install/  
 Note : `docker-compose` is deprecated.  
 This README and release announcements will show `docker compose` examples.  
-You should be able to use either `docker-compose` or `docker compose`, just adjust the commands below accordingly.
+*You should be able to use `docker-compose`, just adjust the commands below accordingly.*
 
 Some VPS providers offer free installation of linux distributions in which Docker is already activated. Search/ask for it !
 
