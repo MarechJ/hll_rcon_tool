@@ -97,7 +97,7 @@ ie : `!Discord` to display your Discord clan url,
 
 - `Chats`, `kills`, `teamkills`, admin `camera` usage, moderation `bots` actions, etc :  
 almost every action can be forwarded to a dedicated Discord channel.
-- You can set trigger chat words (ie : `@admin`) : an alert will be sent to the Discord users or roles.
+- User-defined trigger words in chat (ie : `@admin`) : an alert will be sent to defined Discord users and/or roles.
 - Scoreboard showing all players kills / deaths / TKs, etc in realtime.
 
 ### Public stats webpage
