@@ -318,7 +318,7 @@ to create video tutorial, demos, documentation, etc.
 
 ---
 
-## Update to the latest version
+# Update to the latest version
 
 Please join the CRCON Discord and follow announcements.  
 Sometimes, update instructions vary from standard.  
@@ -359,7 +359,7 @@ You also can download the [latest zip release](https://github.com/MarechJ/hll_rc
 Unless you have been changing files, this should never happen.  
 **Note**: It's important you get the sources every time, or at least the docker-compose files, as new dependancies might have been introduced
 
-## Downgrade (in case of issue) to a previous version
+# Downgrade (in case of issue) to a previous version
 
 Check the available versions numbers on Docker hub (or Github releases) :  
 https://hub.docker.com/r/maresh/hll_rcon/tags  
