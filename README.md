@@ -75,7 +75,7 @@ All the bots can be finetuned to `warn` and/or `punish` and/or `kick` and/or eve
   - Forbid role access (commander, squad leader, sniper, etc) to players under level X
 - Squad leader enforcement :
   - Force the soldiers to become officer if the squad hasn't got one.  
-- Enforce seed rules :
+- Seed rules enforcement :
   - forbid roles (tank commander, tank crewman, sniper, etc).
   - punish forbidden weapons usage (artillery, bombing, AT canons, etc).
   - warn/punish entrance into enemy zone and capture of the 4th point.
