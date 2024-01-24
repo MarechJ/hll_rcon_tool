@@ -251,7 +251,7 @@ Enter the command(s) that suit(s) your operating system :
 - Raspberry-Pi or any ARM32v7 :
   > `docker compose -f docker-compose.yml -f docker-compose.arm32v7.yml up -d --build`
 
-### 7. Configure users - change default admin password
+### 7. Configure users
 
 Now you can get into the CRCON users management tool, located at : http://yourVPSIP:8010/admin
 
@@ -278,12 +278,12 @@ To change the password of a user, click on its name, then on this link (see imag
 You also can change *your* current password using the dedicated link (top-right red square below) :  
 ![](images/readme_admin_password_1.png)
 
-#### Change admin's password
+#### Change default admin's password
 
 - click on the page title **"Django administration"** to get back to the entry screen.  
 *(This is the same as going to http://yourVPSIP:8010/admin)*
 - click on **Users**, then on **admin**.
-- You can change the default admin password or uncheck the "Active" status.
+- You can change the default admin password (or uncheck the "Active" status to disable admin's account)
 - Click on the **SAVE** button
 
 ### 8. Basic configuration is over !
