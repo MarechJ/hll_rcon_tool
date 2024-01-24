@@ -10,7 +10,7 @@
 
 Join us on discord if you use it, for feedback, troubleshooting and informations about updates: https://discord.gg/hZx6gn3
 
-# Hell Let Loose (HLL) advanced RCON
+# Hell Let Loose (HLL) Community RCON (CRCON)
 
 An extended RCON tool for Hell Let loose, meant to replace the official tool and go WAY beyond.  
 
