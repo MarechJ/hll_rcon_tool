@@ -116,9 +116,20 @@ You can apply temp and perma bans to all server in only one action, sync VIP, se
 
 ## Some images
 
+# Manage your games and players in realtime
+
 ![Live view page](/images/Rcon.png)
-![Settings](/images/Rcon2.png)
+
+# Manage your players database
+
 ![Player history overview](/images/Rcon3.png)
+
+# Automatic server settings
+
+![Settings](/images/Rcon2.png)
+
+# Permanent logs
+
 ![Historical logs](/images/Rcon4.png)
 
 ## Features to come
