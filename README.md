@@ -12,7 +12,7 @@ Join us on discord if you use it, for feedback, troubleshooting and informations
 
 # Hell Let Loose (HLL) advanced RCON
 
-### An extended RCON tool for Hell Let loose, meant to replace the official tool and go WAY beyond.  
+An extended RCON tool for Hell Let loose, meant to replace the official tool and go WAY beyond.  
 
 ## Included features
 
