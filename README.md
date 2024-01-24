@@ -43,23 +43,15 @@ An extended RCON tool for Hell Let loose, meant to replace the official tool and
 - Put player on a watch list and be notified when they enter your server
 - Live stats, per game or per session with a friendly public version, as well as historical games (bookmarkable)
 
-## Features to come
-
-- Leaderboard and all time stats
-
-Here's a sample:
+## Some images
 ![Live view page](/images/Rcon.png)
 ![Settings](/images/Rcon2.png)
 ![Player history overview](/images/Rcon3.png)
 ![Historical logs](/images/Rcon4.png)
 
-## How to use
+## Features to come
 
-*Demo video coming soon*
-
-There's a public endpoint available to anybody without password on http://yourVPSIP:7010/api/scoreboard
-
-See [User Guide](USERGUIDE.md) for more information on how to use certain features of the app.
+- Leaderboard and all time stats
 
 # Installation
 
@@ -369,6 +361,14 @@ Edit your `.env` file and change `TAGGED_VERSION` from `latest` to a specific ta
 (it **must** match the release tag on Docker hub):
 
     TAGGED_VERSION=9.4.1
+
+# How to use
+
+*Demo video coming soon*
+
+There's a public endpoint available to anybody without password on http://yourVPSIP:7010/api/scoreboard
+
+See [User Guide](USERGUIDE.md) for more information on how to use certain features of the app.
 
 # For power users
 
