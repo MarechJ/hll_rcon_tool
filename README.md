@@ -199,9 +199,9 @@ You may encounter a Docker error (*"bla bla **must be unique** bla bla"*) if you
 This version has a bug that prevents Docker containers to start.  
 If you encounter this error, you have to downgrade the docker-compose-plugin package version.  
 - On Ubuntu 20.04 :
-  > apt-get install docker-compose-plugin=2.21.0-1~ubuntu.20.04~focal
+  > `apt-get install docker-compose-plugin=2.21.0-1~ubuntu.20.04~focal`
 - On Ubuntu 22.04 :
-  > apt-get install docker-compose-plugin=2.21.0-1~ubuntu.22.04~jammy
+  > `apt-get install docker-compose-plugin=2.21.0-1~ubuntu.22.04~jammy`
 
 Then enter the start command line(s) above again.
 
