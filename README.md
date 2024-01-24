@@ -92,7 +92,7 @@ You won't get as much support on forums/Discords if you're using Windows.
 These programs need to be installed on the server :
 
 - *(Optional but highly recommanded)* `git` : https://git-scm.com/downloads  
-  (if you don't use git, you'll need to download and install the releases in .zip format,  
+  (if you don't use git, you'll have to manually download and install the releases in .zip format,  
   and you won't be able to update your CRCON as easily as with git)
 - `Docker Engine` (Community) : https://docs.docker.com/engine/install/  
   You can also use Docker Desktop, but you may have issues with nested virtualization, depending on your computer/server/VPS.
