@@ -89,7 +89,7 @@ Some VPS providers rent this type of services for ~$10/month.
 We recommend that you install CRCON on Linux, most preferably on a Debian-based distro, like Ubuntu.  
 You won't get as much support on forums/Discords if you're using Windows.
 
-#### These programs need to be installed on the server :
+These programs need to be installed on the server :
 
 - *(Optional but highly recommanded)* `git` : https://git-scm.com/downloads  
   (if you don't use git, you'll need to download and install the releases in .zip format,  
