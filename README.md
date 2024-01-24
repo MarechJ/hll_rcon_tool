@@ -16,34 +16,104 @@ An extended RCON tool for Hell Let loose, meant to replace the official tool and
 
 ## Included features
 
-- Live view on players + all expected actions: message, punish, kick, temporary ban (choose the time), permanent ban. Search for players, and sort by play time, punishments, name etc. etc.
-- Live updating game view (can see players per team, squad, roles, levels, score, etc.) and perform actions on individuals, squads, the entire team or server.
-- User account and audit logs, each moderator has it's own account so you know who did what on whom and when, all the rcon actions can get forwarded to your discord (change of settings included)
-- Group actions - Easily apply the same action on multiple players with one click (say you want to switch or kick a whole squad)
-- Live logs + filtering by type (kill, chat, vote, etc..), filtering by players
-- Discord webhooks support, so that the chat, TK and kills can be forward to your discord server
-- Trigger word that when written in the ingame chat will create an alert (tag a person(s) or a role(s) on discord) such as: !admin or just any word you want (insults if you want to chase those)
-- Flag player with any emoji / icons you want + comment attached
-- Auto loading of player's country from steam and displayed in live view
-- History of players and player profile: All game sessions of players are recorded, all the names they used in the past, punishments they have received and by which admin, etc
-- Apply actions on players even if they are not online anymore, from the player history you can flag, watch, perma ban, temp ban, lift all bans and add to VIP.
-- Permanent logs, a search tool to look at the entire history of the game logs of your server, export logs as CSV
-- Multi server support, you can host the rcon for multiple servers and they will share the same player database, you can apply temp and perma bans to all server with only one action, synch VIP, settings, broadcast messages etc...
-- Automated broadcast loops
-- Automated settings based on the player count of you server
-- Shared text for punishments and various messages that you can preset so that you never have to type the reason for the kick anymore. It also remember new text you type if you want it (to autocomplete it the next time)
-- Search through bans by name, reason or steam ID (for quick unbanning)
-- Backup of your bans so that if you ever change your game server or add one the bans will be re-applied on the fly if the banned dude tries to join your new server
-- Recording of you map history, you see which map were played and how long they lasted
-- Ban (blacklist) people even if they have never set foot on your server yet
-- Basic scoreboard showing you total kills / death / TK / death by TK for the last N minutes
-- Backup and restore/import of VIPs
-- All the basic settings, map rotation management, sliders for idle kick time, max ping etc..
-- For power users and coders: You can add anything you want in the cron server or in the supervisor service so it's easy to code you own plugin (I myself have a votemap plugin and a bot that verifies players), an HTTP API to use all the features above and a CLI for a subset of those
-- Put player on a watch list and be notified when they enter your server
-- Live stats, per game or per session with a friendly public version, as well as historical games (bookmarkable)
+### Manage your games and players in realtime
+
+- See all the players currently ingame :
+  - Steam profile infos (id, country, bans) or GamePass infos (id)
+  - VIP status
+  - actual session time, number of sessions on your server
+  - current level, team, squad, role and payload
+  - current combat/attack/defense/support scores
+  - current kills and deaths numbers
+
+- Take immediate actions for each one, or select several players and :
+  - send a `message` ingame
+  - `switch` (change) its team, either now or on death
+  - `punish` (kill), `kick`, `temp ban` (you choose the duration) or `perma ban` with a message
+  - put a `watch` on its head (you'll be pinged in Discord when the player connects)
+  - `flag with an emoji` with a comment (helps to find some users quickly in the list  
+  or activate options used by moderation bots)
+
+  You can send prewritten messages templates, or write a new one (and save it as a new template if you want to reuse it later).
+
+- Follow all the game server's actions :
+  - players actions (`connect`, `disconnect`, `switch`, `kill`, `teamkill`, `vote kick`)
+  - game admin actions (`kick`, `temp ban`, `ban`)
+  - automatic actions (`match` start/end, `idle kick`, `anticheat violation`, `high ping kick`)
+  - `messages sent` by admins or bots
+  - `chats` (teams and units)
+
+  You can filter the output, selecting only some types of actions or players involved.
+
+### Manage your players database
+
+- User account and audit logs  
+each moderator has its own account : you can retrace all admins actions.
+- History of players and player profile  
+All players' game sessions are recorded, as all the names they used in the past, punishments they have received, etc.  
+You can search through bans by name, reason or Steam/GamePass id (for quick unbanning).
+- Apply actions on players even if they are not online anymore  
+(`flag`, `watch`, `temp ban`, `perma ban`, lift all bans and add to `VIP` list).
+- Ban (blacklist) people, even if those who have never played on your server.
+- Permanent logs : search through the entire history of the game logs of your server, export logs as CSV.
+- Bans, blacklist and VIP backup/restore
+
+### Automatic server settings
+
+Settings can be applied according to the hour of the day and/or number of players ingame.
+- multiple `broadcasts` and `welcome` messages
+- game server settings  
+(`teamswitch cooldown`, `autobalance threshold`, `idle autokick`, `maximum ping`, `max queue length`, `VIP slots`, `vote kicks`, `profanities` in chat).
+- `maps rotation` or `map vote`  
+(you can set different maps lists while in seed, or during night hours, etc).
+
+### Automatic game admin bots
+
+All the bots can be finetuned to `warn` and/or `punish` and/or `kick` and/or even `ban` players who don't follow rules.  
+- Level enforcement :  
+  - Forbid the server entrance to players under/above level X
+  - Forbid role access (commander, squad leader, sniper, etc) to players under level X
+- Squad leader enforcement :
+  - Force the soldiers to become officer if the squad hasn't got one.  
+- Enforce seed rules :
+  - forbid roles (tank commander, tank crewman, sniper, etc).
+  - punish forbidden weapons usage (artillery, bombing, AT canons, etc).
+  - warn/punish entrance into enemy zone and capture of the 4th point.
+- Forbid solo tank
+  - Player can't stay solo in an armor squad.
+- Kick players who do X teamkills on their arrival.
+- Filter players entrance :
+  - Kick Steam players who have received a VAC/Game ban during the last X days.
+  - Kick players whose pseudo is written with "all chinese" or "all cyrillic" letters (or the opposite ;)),  
+  players whose pseudo contains a certain sequence (ie : "nazi", "fucker", etc).
+  - Warn or kick players whose pseudo contains a space or an emoji in their 20th character :  
+  due to a game server bug, these players can't be managed with RCONs (official or CRCON).
+  - Kick GamePass players :(
+- Chat commands : user defined trigger words that will send user-defined messages.  
+ie : `!Discord` to display your Discord clan url,  
+`!killer` to display the name of your last killer
+
+### Send infos on your Discord server
+
+- `Chats`, `kills`, `teamkills`, admin `camera` usage, moderation `bots` actions, etc :  
+almost every action can be forwarded to a dedicated Discord channel.
+- You can set trigger chat words (ie : `@admin`) : an alert will be sent to the Discord users or roles.
+- Scoreboard showing all players kills / deaths / TKs, etc in realtime.
+
+### Public stats webpage
+
+- Live stats for all the players currently ingame
+- historical games (bookmarkable)
+
+### Power users features
+
+- Multi server support : you can host the CRCON for multiple servers. They will share the player database, you can apply temp and perma bans to all server in only one action, sync VIP, settings, broadcast messages, etc.
+- For coders :
+  - You can add your own features and programs in the CRCON server or in the supervisor service.
+  - All infos and commands are available through an HTTP API.
 
 ## Some images
+
 ![Live view page](/images/Rcon.png)
 ![Settings](/images/Rcon2.png)
 ![Player history overview](/images/Rcon3.png)
@@ -170,7 +240,6 @@ In **SERVER 1** part :
 Triple-check there is **no space before/after the `=` signs, nor in the values you've set**.
 - save the changes with **Ctrl+o** (then type 'y' to validate)  
 - exit nano with **Ctrl+x**
-
 
 ### 3. Run CRCON for the first time !
 
