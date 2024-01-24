@@ -154,14 +154,16 @@ You do not have to change all the values. Only these 5 are mandatory :
 In **SERVER 1** part :
 
 3. Enter your RCON IP, as provided by the game server provider :
+   (this is NO the game server IP)
 
        HLL_HOST=123.123.123.123
 
-4. Enter your RCON port, as provided by the game server provider :
+5. Enter your RCON port, as provided by the game server provider :  
+   (this is NO the game server port)
 
        HLL_PORT=12345
 
-5. Enter your RCON password, as provided by the game server provider :
+6. Enter your RCON password, as provided by the game server provider :
 
        HLL_PASSWORD=yourrconpassword
 
