@@ -26,6 +26,19 @@ import { useParams } from "react-router-dom";
 import CollapseCard from "../collapseCard";
 import makeSteamProfileUrl from "../../utils/makeSteamProfileUrl";
 
+// return a label for steam and windows ids types
+const getLinkLabel = (id) => {
+  if (id.length === 17) {
+    // valid steam id is 17 digits...
+    return "Steam";
+  } else {
+    // xbox gamertags are unique and cost $$ to change...
+    // otherwise assume it's a T17 guid and return
+    // a url to https://xboxgamertag.com/search/ name
+    return "xboxgamertag.com";
+  }
+};
+
 const useStyles = makeStyles((theme) => ({
   padding: {
     padding: theme.spacing(1),
@@ -305,7 +318,7 @@ const PlayerInfoFunc = ({ classes }) => {
                 <Grid item>
                   <Typography variant="h6">
                     <Link href={makeSteamProfileUrl(steamId64, names[0]?.name)}>
-                      Steam Profile
+                      {getLinkLabel(steamId64)} Profile
                     </Link>
                   </Typography>
                 </Grid>
