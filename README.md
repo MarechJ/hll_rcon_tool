@@ -85,7 +85,7 @@ All the bots can be finetuned to `warn` and/or `punish` and/or `kick` and/or eve
 - Filter players entrance :
   - Kick Steam players who have received a VAC/Game ban during the last X days.
   - Kick players whose pseudo is written with "all chinese" or "all cyrillic" letters (or the opposite ;)),  
-  players whose pseudo contains a certain sequence (ie : "nazi", "fucker", etc).
+  or players whose pseudo contains a certain sequence (ie : "nazi", "fucker", etc).
   - Warn or kick players whose pseudo contains a space or an emoji in their 20th character :  
   due to a game server bug, these players can't be managed with RCONs (official or CRCON).
   - Kick GamePass players :(
@@ -182,7 +182,7 @@ These programs need to be installed on the server :
 - `Docker Compose` : https://docs.docker.com/compose/install/  
 Note : `docker-compose` is deprecated.  
 This README and release announcements will show `docker compose` examples.  
-*You should be able to use `docker-compose`, just adjust the commands below accordingly.*
+*You should still be able to use `docker-compose` and will have to adjust the commands below accordingly.*
 
 Some VPS providers offer free installation of linux distributions in which Docker is already activated. Search/ask for it !
 
