@@ -109,7 +109,7 @@ almost every action can be forwarded to a dedicated Discord channel.
 
 - Multi server support : you can manage several game servers with the same CRCON.  
 They will share the players database,
-You can apply temp and perma bans to all server in only one action, sync VIP, settings, broadcast messages, etc.
+You can apply temp and perma bans to all servers in only one action, sync VIP, settings, broadcast messages, etc.
 - For coders :
   - You can add your own plugins in the supervisor service.
   - All infos and commands are available through an HTTP API.
