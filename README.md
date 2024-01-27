@@ -264,14 +264,16 @@ Don't panic, as you do not have to read/do anything. Just watch the magic.
 
 Enter the command(s) that suit(s) your operating system :
 
-- Linux :
+- Linux on x86 :
   > `docker compose up -d --remove-orphans`
-- Windows :
+- Windows on x86 :
   > `docker volume create redis_data`  
   `docker volume create postgres_data`  
   `docker compose -f docker-compose.yml -f docker-compose.windows.yml up -d`
-- Raspberry-Pi or any ARM32v7 :
+- Raspberry-Pi (32 bits) or any ARM32v7 :
   > `docker compose -f docker-compose.yml -f docker-compose.arm32v7.yml up -d --build`
+- Raspberry-Pi (64 bits) or any ARM32v8 :
+  > `docker compose -f docker-compose.yml -f docker-compose.arm64v8.yml up -d --build`
 
 If eveything went well, you'll end up with some green lines saying "started" after a minute or two.  
 CRCON has started !
@@ -320,12 +322,14 @@ to be taken in account, the **server_url** value you've just set has to be decla
 
 Enter the command(s) that suit(s) your operating system :
 
-- Linux :
+- Linux on x86 :
   > `docker compose up -d --remove-orphans`
-- Windows :
+- Windows on x86 :
   > `docker compose -f docker-compose.yml -f docker-compose.windows.yml up -d`
-- Raspberry-Pi or any ARM32v7 :
+- Raspberry-Pi (32 bits) or any ARM32v7 :
   > `docker compose -f docker-compose.yml -f docker-compose.arm32v7.yml up -d --build`
+- Raspberry-Pi (64 bits) or any ARM32v8 :
+  > `docker compose -f docker-compose.yml -f docker-compose.arm64v8.yml up -d --build`
 
 ### 7. Configure users
 
@@ -396,7 +400,7 @@ If you are updating from an older version, you should review the announcements i
 
 ### Normal (most) updates
 
-#### Linux
+#### Linux on x86
 
 - Pull the changes from github
   > `git fetch --tags`
@@ -405,7 +409,7 @@ If you are updating from an older version, you should review the announcements i
 - Get the newest Docker images and restart your containers
   > `docker compose pull && docker compose up -d --remove-orphans`
 
-#### Windows
+#### Windows on x86
 
 - Pull the changes from github
   > `git fetch --tags`
@@ -414,7 +418,7 @@ If you are updating from an older version, you should review the announcements i
 - Get the newest Docker images and restart your containers
   > `docker compose pull && docker compose -f docker-compose.yml -f docker-compose.windows.yml up -d --remove-orphans`
 
-#### Raspberry-Pi or any ARM32v7
+#### Raspberry-Pi (32 bits) or any ARM32v7
 
 - Pull the changes from github
   > `git fetch --tags`
@@ -422,6 +426,15 @@ If you are updating from an older version, you should review the announcements i
   > `git checkout v9.4.1`
 - Get the newest Docker images and restart your containers
   > `docker compose -f docker-compose.yml -f docker-compose.arm32v7.yml up --build -d --remove-orphans`
+
+#### Raspberry-Pi (64 bites) or any ARM32v8
+
+- Pull the changes from github
+  > `git fetch --tags`
+- Check out a tagged release
+  > `git checkout v9.4.1`
+- Get the newest Docker images and restart your containers
+  > `docker compose -f docker-compose.yml -f docker-compose.arm64v8.yml up --build -d --remove-orphans`
 
 You also can download the [latest zip release](https://github.com/MarechJ/hll_rcon_tool/releases/latest) and install it manually (not recommended)
 
