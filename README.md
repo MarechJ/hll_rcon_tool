@@ -275,11 +275,10 @@ Enter the command(s) that suit(s) your operating system :
 - Raspberry-Pi (64 bits) or any ARM32v8 :
   > `docker compose -f docker-compose.yml -f docker-compose.arm64v8.yml up -d --build`
 
-If eveything went well, you'll end up with some green lines saying "started" after a minute or two.  
-CRCON has started !
+If eveything went well, you'll end up with some green lines saying "started" after a minute or two.
 
 If some of the final lines show (red) errors :  
-recheck the values you've entered in the **.env** file and retry the starting process.
+check the values you've entered in the **.env** file and try to start CRCON again.
 
 Then enter the start command line(s) above again.
 
@@ -320,7 +319,7 @@ If a yellow or red flag pops in, you have a syntax error : watch the example abo
 Yes. Restart it. This may sound strange, but it is mandatory :  
 to be taken in account, the **server_url** value you've just set has to be declared during the CRCON Docker containers start.
 
-Enter the command(s) that suit(s) your operating system :
+Enter the command(s) that suit(s) your platform/operating system :
 
 - Linux on x86 :
   > `docker compose up -d --remove-orphans`
@@ -400,41 +399,21 @@ If you are updating from an older version, you should review the announcements i
 
 ### Normal (most) updates
 
-#### Linux on x86
-
 - Pull the changes from github
   > `git fetch --tags`
 - Check out a tagged release
   > `git checkout v9.4.1`
-- Get the newest Docker images and restart your containers
-  > `docker compose pull && docker compose up -d --remove-orphans`
-
-#### Windows on x86
-
-- Pull the changes from github
-  > `git fetch --tags`
-- Check out a tagged release
-  > `git checkout v9.4.1`
-- Get the newest Docker images and restart your containers
-  > `docker compose pull && docker compose -f docker-compose.yml -f docker-compose.windows.yml up -d --remove-orphans`
-
-#### Raspberry-Pi (32 bits) or any ARM32v7
-
-- Pull the changes from github
-  > `git fetch --tags`
-- Check out a tagged release
-  > `git checkout v9.4.1`
-- Get the newest Docker images and restart your containers
-  > `docker compose -f docker-compose.yml -f docker-compose.arm32v7.yml up --build -d --remove-orphans`
-
-#### Raspberry-Pi (64 bites) or any ARM32v8
-
-- Pull the changes from github
-  > `git fetch --tags`
-- Check out a tagged release
-  > `git checkout v9.4.1`
-- Get the newest Docker images and restart your containers
-  > `docker compose -f docker-compose.yml -f docker-compose.arm64v8.yml up --build -d --remove-orphans`
+- Get the newest Docker images
+  > `docker compose pull`
+- Restart your containers
+  - Linux on x86
+    > `docker compose up -d --remove-orphans`
+  - Windows on x86
+    > `docker compose -f docker-compose.yml -f docker-compose.windows.yml up -d --remove-orphans`
+  - Raspberry-Pi (32 bits) or any ARM32v7
+    > `docker compose -f docker-compose.yml -f docker-compose.arm32v7.yml up --build -d --remove-orphans`
+  - Raspberry-Pi (64 bites) or any ARM32v8
+    > `docker compose -f docker-compose.yml -f docker-compose.arm64v8.yml up --build -d --remove-orphans`
 
 You also can download the [latest zip release](https://github.com/MarechJ/hll_rcon_tool/releases/latest) and install it manually (not recommended)
 
