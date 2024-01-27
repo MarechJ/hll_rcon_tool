@@ -279,14 +279,6 @@ CRCON has started !
 If some of the final lines show (red) errors :  
 recheck the values you've entered in the **.env** file and retry the starting process.
 
-You may encounter a Docker error (*"bla bla **must be unique** bla bla"*) if you're using v2.24.1 of the docker-compose-plugin.  
-This version has a bug that prevents Docker containers to start.  
-If you encounter this error, you have to downgrade the docker-compose-plugin package version.  
-- On Ubuntu 20.04 :
-  > `apt-get install docker-compose-plugin=2.21.0-1~ubuntu.20.04~focal`
-- On Ubuntu 22.04 :
-  > `apt-get install docker-compose-plugin=2.21.0-1~ubuntu.22.04~jammy`
-
 Then enter the start command line(s) above again.
 
 ### 4. Get in the CRCON UI
@@ -367,7 +359,9 @@ You also can change *your* current password using the dedicated link (top-right 
 - click on the page title **"Django administration"** to get back to the entry screen.  
 *(This is the same as going to http://yourVPSIP:8010/admin)*
 - click on **Users**, then on **admin**.
-- You can change the default admin password (or uncheck the "Active" status to disable admin's account)
+- Change the default admin password  
+(you also can disable admin's account by unchecking the "Active" status,  
+just make sure there's another user having `Superuser status` and `staff status` activated)
 - Click on the **SAVE** button
 
 ### 8. Basic configuration is over !
