@@ -352,9 +352,9 @@ Don't forget to enter the user's Steam ID (see image below) : it will be used by
 
 Once the user is created, you'll end up on that page: ![](images/readme_admin_account_setup_3.png)
 
-Please note that users won't be allowed to change their password by themselves unless you check `staff status`.
+Don't forget to give yourself the `Superuser status` and `staff status` if you intend to disable the `admin` account !
 
-You can check the `Superuser status` to give all the permissions to your most trusted staff members.
+Please note that users won't be allowed to change their password by themselves unless you check `staff status`.
 
 To change the password of a user, click on its name, then on this link (see image below):  
 ![](images/readme_admin_account_setup_4.png)
