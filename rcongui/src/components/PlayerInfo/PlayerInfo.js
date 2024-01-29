@@ -24,7 +24,7 @@ import MessageHistory from "../MessageHistory";
 import { toast } from "react-toastify";
 import { useParams } from "react-router-dom";
 import CollapseCard from "../collapseCard";
-import makeSteamProfileUrl from "../../utils/makeSteamProfileUrl";
+import makePlayerProfileUrl from "../../utils/makePlayerProfileUrl";
 
 // return a label for steam and windows ids types
 const getLinkLabel = (id) => {
@@ -317,7 +317,7 @@ const PlayerInfoFunc = ({ classes }) => {
                 </Grid>
                 <Grid item>
                   <Typography variant="h6">
-                    <Link href={makeSteamProfileUrl(steamId64, names[0]?.name)}>
+                    <Link href={makePlayerProfileUrl(steamId64, names[0]?.name)}>
                       {getLinkLabel(steamId64)} Profile
                     </Link>
                   </Typography>

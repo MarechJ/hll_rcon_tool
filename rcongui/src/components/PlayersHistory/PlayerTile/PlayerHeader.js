@@ -18,7 +18,7 @@ import KeyboardArrowUpIcon from "@material-ui/icons/KeyboardArrowUp";
 import KeyboardArrowDownIcon from "@material-ui/icons/KeyboardArrowDown";
 import { pure } from "recompose";
 import { getName } from "country-list";
-import makeSteamProfileUrl from "../../../utils/makeSteamProfileUrl";
+import makePlayerProfileUrl from "../../../utils/makePlayerProfileUrl";
 
 const getCountry = (country) => {
   if (country === "" || country === null) {
@@ -60,7 +60,7 @@ export const PlayerHeader = pure(({ classes, player }) => {
         <Link
           target="_blank"
           color="inherit"
-          href={makeSteamProfileUrl(
+          href={makePlayerProfileUrl(
             player.get("steam_id_64"),
             firstName.get("name")
           )}
@@ -154,7 +154,7 @@ export const PlayerHeader = pure(({ classes, player }) => {
                   .map((n) => n.get("name"))
                   .join(" | ")}\nSteamID: ${player.get(
                   "steam_id_64"
-                )}\nSteam URL: ${makeSteamProfileUrl(
+                )}\nSteam URL: ${makePlayerProfileUrl(
                   player.get("steam_id_64"),
                   player.get("names").first().get("name")
                 )}\nType of issue:\nDescription:\nEvidence:`;

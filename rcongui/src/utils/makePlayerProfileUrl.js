@@ -1,6 +1,5 @@
-import { faSteam, faXbox } from "@fortawesome/free-brands-svg-icons";
 
-const makeSteamProfileUrl = (steamId64, name = "") => {
+const makeSteamPlayerUrl = (steamId64, name = "") => {
   if (steamId64.length === 17) {
     // valid steam id is 17 digits...
     return `https://steamcommunity.com/profiles/${steamId64}`;
@@ -12,4 +11,4 @@ const makeSteamProfileUrl = (steamId64, name = "") => {
   }
 };
 
-export default makeSteamProfileUrl;
+export default makePlayerProfileUrl;
