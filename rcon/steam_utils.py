@@ -302,7 +302,7 @@ def update_db_player_info(
                 player.steaminfo.country = country_code
         else:
             player.steaminfo = SteamInfo(
-                profile=player_prof, bans=player_ban, country=country_code
+                profile=player_prof, bans=player_ban, country=country_code, steamid=player
             )
 
     return len(profiles), len(bans)
