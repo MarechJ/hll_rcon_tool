@@ -354,9 +354,7 @@ def update_missing_old_steam_info_single_player(
 
     if player.steaminfo is None:
         steam_info = SteamInfo(
-            profile=profile,
-            country=country_code,
-            bans=bans,
+            profile=profile, country=country_code, bans=bans, player=player
         )
         player.steaminfo = steam_info
     else:
