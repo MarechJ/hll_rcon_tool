@@ -1,5 +1,5 @@
 
-const makeSteamPlayerUrl = (steamId64, name = "") => {
+const makePlayerProfileUrl = (steamId64, name = "") => {
   if (steamId64.length === 17) {
     // valid steam id is 17 digits...
     return `https://steamcommunity.com/profiles/${steamId64}`;
