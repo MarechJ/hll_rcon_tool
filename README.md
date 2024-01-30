@@ -18,101 +18,126 @@ An extended RCON tool for Hell Let loose, meant to replace the official tool and
 
 ### Manage your games and players in realtime
 
-- See all the players currently ingame :
-  - Steam profile infos (id, country, bans) or GamePass infos (id)
+- See all the players currently in game :
+  - Unique player IDs (steam 64 ID or Windows Store ID)
+  - Steam profile (with API key configured) for steam players (country, bans, etc.)
   - VIP status
-  - actual session time, number of sessions on your server
-  - current level, team, squad, role and payload
-  - current combat/attack/defense/support scores
-  - current kills and deaths numbers
-
-- Take immediate actions for each one, or select several players and :
-  - send a `message` ingame
-  - `switch` (change) its team, either now or on death
-  - `punish` (kill), `kick`, `temp ban` (you choose the duration) or `perma ban` with a message
-  - put a `watch` on its head (you'll be pinged in Discord when the player connects)
-  - `flag with an emoji` with a comment (helps to find some users quickly in the list  
+  - Current session (connection time, play time) and session history (total play time, number of sessions, etc.)
+  - Current level, team, squad, role and loadout
+  - Current combat/attack/defense/support scores
+  - Current kills and deaths numbers and miscellanous other statistics like kills per minute
+- Individual player actions or grouped (multiple players at the same time)
+  - `message` the player in game
+  - `team switch` the player immediately or when the player dies
+  - `punish` (kill in game), `kick`, `temp ban` (you choose the duration) or `perma ban` with a message
+  - `watch` players to receive a Discord notification (ping) when they connect
+  - `flag` players (helps to find some users quickly in the player history  
   or activate options used by moderation bots)
 
-  You can send prewritten messages templates, or write a new one (and save it as a new template if you want to reuse it later).
+- Maintain individual (by CRCON account) or shared message templates for punishments, etc.
 
-- Follow all the game server's actions :
-  - players actions (`connect`, `disconnect`, `switch`, `kill`, `teamkill`, `vote kick`)
-  - game admin actions (`kick`, `temp ban`, `ban`)
-  - automatic actions (`match` start/end, `idle kick`, `anticheat violation`, `high ping kick`)
-  - `messages sent` by admins or bots
-  - `chats` (teams and units)
+- A live view that shows you all currently connected players and all of the game server logs, as well as filter them by `action` or `player`:
+  - Player connections/disconnections
+  - Kills, team kills
+  - Messages sent to players from CRCON
+  - Team/unit chat
+  - Automatic game server actions (idle kick, high ping kick, etc.)
+  - Admin actions (kick, temp bans, etc.)
 
-  You can filter the output, selecting only some types of actions or players involved.
+### Admin Accounts / Audit Trail
+- Individual accounts per admin so you never need to share your game server RCON password
+- Fine grained permissions that allow you to restrict exactly what an admin can do
+  - Can be used to create read only accounts (for instance if you run events and want to allow streamers/etc. to view the kill feed)
+  - Can create a tiered admin system (for instance if you want to allow people monitoring seeding to only be able to kick players but not ban them)
+- Audit logs showing which accounts performed which actions for accountability
+- Optional Discord integration to send audit actions to a webhook
+
+### API / API Keys
+- An ever growing number of API endpoints to allow you to write tools without having to fully implement the RCON protocol yourself
+- Ability to generate/authenticate with API keys for easier tool access
 
 ### Manage your players database
+- History of all players who have connected
+  - All names they've played with
+  - All messages they have received in game (some automated messages are not saved)
+  - Their sessions (connect/disconnect times, play time, etc.)
+  - Punishments (kicks, bans, etc.)
+- Filter by player name, player ID (steam/windows store IDs), etc.
+- Apply actions to players even if they are not online anymore
 
-- User account and audit logs  
-each moderator has its own account : you can retrace all admins actions.
-- History of players and player profile  
-All players' game sessions are recorded, as all the names they used in the past, punishments they have received, etc.  
-You can search through bans by name, reason or Steam/GamePass id (for quick unbanning).
-- Apply actions on players even if they are not online anymore  
-(`flag`, `watch`, `temp ban`, `perma ban`, lift all bans and add to `VIP` list).
 - Ban (blacklist) people, even if those who have never played on your server.
 - Permanent logs : search through the entire history of the game logs of your server, export logs as CSV.
 - Bans, blacklist and VIP backup/restore
 
-### Automatic server settings
-
-Settings can be applied according to the hour of the day and/or number of players ingame.
-- multiple `broadcasts` and `welcome` messages
-- game server settings  
+### Automatic server settings (Auto Settings)
+- Settings that can be applied based on different conditions (time of day, number of connected players, current map, number of connected admins, etc.)
+- Change most (but not all) game server/CRCON settings, including but not limited to:
+- `broadcast` and `welcome` messages
+- game server settings
 (`teamswitch cooldown`, `autobalance threshold`, `idle autokick`, `maximum ping`, `max queue length`, `VIP slots`, `vote kicks`, `profanities` in chat).
-- `maps rotation` or `map vote`  
-(you can set different maps lists while in seed, or during night hours, etc).
+- `maps rotation` or `map vote` 
+- Map rotations (late night or seeding rotations, etc.)
+- Map shuffle 
 
-### Automatic game admin bots
+### Automatic Moderation
+#### Auto Mods
+- Automatic enforcement of various rules (within RCON limitations) with the ability to `warn` (message the player), `punish` and/or `kick` in a progressive fashion based on number of warnings/time between warnings
+- Level Enforcement
+  - Remove players from the server who are above or below level limits
+  - Forbid players from playing roles (Commander, Tank Commander, Squad Leader, etc.) who are above or below level limits
+- Squad Leader Enforcement
+  - Forbid squads without squad leads
+- Seeding Enforcement
+  - Ban weapons
+  - Ban roles
+  - Prevent (very limited due to RCON limitations) attacking objectives (for example, only allow the middle point to be contested)
+- No Solo Tank Enforcement
+  - Forbid players from being in a tank squad without other players (can't determine if the squad is locked due to RCON limitations)
 
-All the bots can be finetuned to `warn` and/or `punish` and/or `kick` and/or even `ban` players who don't follow rules.  
-- Level enforcement :  
-  - Forbid the server entrance to players under/above level X
-  - Forbid role access (commander, squad leader, sniper, etc) to players under level X
-- Squad leader enforcement :
-  - Force the soldiers to become officer if the squad hasn't got one.  
-- Seed rules enforcement :
-  - forbid roles (tank commander, tank crewman, sniper, etc).
-  - punish forbidden weapons usage (artillery, bombing, AT canons, etc).
-  - warn/punish entrance into enemy zone and capture of the 4th point.
-- Forbid solo tank
-  - Player can't stay solo in an armor squad.
-- Kick players who do X teamkills on their arrival.
-- Filter players entrance :
-  - Kick Steam players who have received a VAC/Game ban during the last X days.
-  - Kick players whose pseudo is written with "all chinese" or "all cyrillic" letters (or the opposite ;)),  
-  or players whose pseudo contains a certain sequence (ie : "nazi", "fucker", etc).
-  - Warn or kick players whose pseudo contains a space or an emoji in their 20th character :  
-  due to a game server bug, these players can't be managed with RCONs (official or CRCON).
-  - Kick GamePass players :(
+#### Miscellaneous automatic enforcement of rules
+- Set [regular expressions](https://regex101.com/) to remove players based on their name, for example:
+  - Remove players with only numbers in their name
+  - Remove players without at least one character (A-Z or a-z) to avoid all symbol names
+  - Player names that contain words (ie : "nazi", "fucker", etc.)
+  - Any regular expression you can craft should work!
+- Remove players with names that will not work properly with RCON commands because of RCON bugs:
+  - Player names that end in white space (or end in white space after the game trims the name to RCONs 20 byte maximum)
+  - Player names that (due to an RCON bug) have multi byte unicode code points that the game server chops off (pineapple names)
+- Remove game pass players on connect (if your GSP hasn't exposed the file to turn it off at the server level)
+- Automatically perma ban players who only team kill after connecting
+- Automatically perma ban steam players with X number of VAC and/or game bans within Y days (with a Steam API key configured)
+
+### Chat Commands
+- Ability to create your own custom commands that players can trigger with chat messages
+- A limited (but growing) number of variables can be used in the message
+- For example you can create commands to 
 - Chat commands : user defined trigger words that will send user-defined messages.  
 ie : `!Discord` to display your Discord clan url,  
 `!killer` to display the name of your last killer
 
-### Send infos on your Discord server
-
-- `Chats`, `kills`, `teamkills`, admin `camera` usage, moderation `bots` actions, etc :  
-almost every action can be forwarded to a dedicated Discord channel.
-- User-defined trigger words in chat (ie : `@admin`) : an alert will be sent to defined Discord users and/or roles.
-- Scoreboard showing all players kills / deaths / TKs, etc in realtime.
+### Discord Integration
+- Create [Discord webhooks](https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks) to send information from CRCON to your Discord server
+  - Kills/Team kills
+  - Player chat
+  - Admin cam usage
+  - Various automated actions (auto mods, etc.)
+  - Admin actions (audit trail)
+  - Live scoreboard (current map, time remaining, number of players connected, top kills, etc.) that updates in real time
+- Admin pings that will notify (ping) user or roles when certain words are used (`!admin`, etc.)
+- Ability to send any log action (map start, admin kick, etc.) with optional user/role notifications
 
 ### Public stats webpage
 
-- Live stats for all the players currently ingame
-- historical games (bookmarkable)
+- Live game
+- Historical games (bookmarkable)
 
 ### Power users features
-
-- Multi server support : you can manage several game servers with the same CRCON.  
-They will share the players database,
-You can apply temp and perma bans to all servers in only one action, sync VIP, settings, broadcast messages, etc.
-- For coders :
-  - You can add your own plugins in the supervisor service.
-  - All infos and commands are available through an HTTP API.
+- Supports multiple game servers within a single CRCON install
+  - CRCON admin accounts/permissions are shared (and can't be limited by game server)
+  - Shared player history
+  - Shared blacklist (permanent bans stored in CRCON)
+  - Apply actions (except permanent bans due to the blacklist) on a server by server basis, or forward actions to the other servers to keep them in sync
+- Create your own plugins and manage them from the Services section of the settings page
 
 ## Some images
 
@@ -132,25 +157,25 @@ You can apply temp and perma bans to all servers in only one action, sync VIP, s
 
 ![Historical logs](/images/Rcon4.png)
 
-## Features to come
+## Features to come (maybe)
 
 - Leaderboard and all time stats
 
 # Installation
 
+## Minimum Skills
+
+You only need very limited shell skills, you can mostly just follow along with the instructions but you need to understand what a directory is, how to list the contents of a directory, change directories, etc.
+
 ## Install on a VPS, not on your home PC
 
-CRCON is designed to operate as a website,  
-offering A LOT of features that you couldn't get with a desktop app  
-(recording and forwarding of logs, Discord alerts, player profile, etc).
+CRCON is a website and is designed to run permanently (24/7) and be accessible on the Internet since your players (public stats) and admin accounts will connect to it.
 
-A website is more secure / convenient to manage a game server because :
-- you don't need to give the real RCON password to you moderators ;
-- all actions have to go through it : all activity is recorded in one place ;
-- It does not require any installation on the client side, you just need a browser.
+This allows you to maintain a separation between admin accounts and the game server and provides a centralized database for both game server data (logs, etc.) and admin actions
+  - You do not need to share the game server RCON password
+  - Admin actions are recorded/logged
 
-Although it is possible to install CRCON on any computer which is able to run Docker,  
-we recommend installing it on a remote VPS server.
+Because of this, it is much easier to rent a cheap VPS and run it there than to try to install it on a home computer, ensure that connections are forwarded properly and that it is always on/available.erver.
 
 If you decide to install it on a home computer, keep in mind you'll have to :
 - run your computer 24/7  
@@ -169,12 +194,11 @@ Some VPS providers rent this type of services for ~$10/month.
 
 ## Software requirements
 
-We recommend that you install CRCON on Linux, most preferably on a Debian-based distro, like Ubuntu.  
-You won't get as much support on forums/Discords if you're using Windows.
+In theory you can run this anywhere you can use Docker and Docker compose, but unless you have a really good reason you should use Linux (any distro *should* work, but if you're unfamiliar you want to pick a more popular one like Ubuntu or Debian for easier tech support when you Google) instead of Windows or any other operating system.
 
-These programs need to be installed on the server :
+If you run it on Windows, don't expect anyone to be able to help you on the Discord.
 
-- *(Optional but highly recommanded)* `git` : https://git-scm.com/downloads  
+- *(Optional but **highly** recommanded)* `git` : https://git-scm.com/downloads  
   (if you don't use git, you'll have to manually download and install the releases in .zip format,  
   and you won't be able to update your CRCON as easily as with git)
 - `Docker Engine` (Community) : https://docs.docker.com/engine/install/  
@@ -192,6 +216,7 @@ Some VPS providers offer free installation of linux distributions in which Docke
 - Stay cool and follow the drill. It's a simple installation, many not-so-technical people managed to do it, so you probably can too :)
 - ~~There's also a Wiki made by the community (Thanks [2.Fjg]bn.hall): https://github.com/MarechJ/hll_rcon_tool/wiki~~  
 *(The Wiki is obsolete. We hope we'll find the time to update it soon)*
+- Most shell commands/error messages can be Googled, please respect peoples time and make at least a cursory effort to solve the problem yourself before jumping to the Discord
 - If you still don't understand what to do after reading this, just ask on Discord.
 
 Note : all the commands given below are meant to be entered in a Debian-like Linux terminal.
@@ -225,16 +250,15 @@ In nano, you can move the cursor with the arrow keys.
 You do not have to change all the values. Only these 5 are mandatory :
 
 1. Choose a password to give CRCON access to the database  
-  (No need to remember/note it : you'll never have to enter it anywhere) :  
+  (No need to remember/note it : you'll never have to enter it anywhere), check the comments in the `.env` for restriction characters such as `%` :  
 
-       HLL_DB_PASSWORD=anythingwithoutanyspace
+        HLL_DB_PASSWORD=anythingwithoutanyspace
 
-2. Enter a long string that will be used to scramble users passwords  
-  (No need to remember/note it : you'll never have to enter it anywhere) :
+2. Enter a long string that will be used to scramble users passwords, you may want to back this up separately, if you lose it all of your admin accounts will be invalidated and need their passwords reset
 
        RCONWEB_API_SECRET=anythingwithoutanyspaceordollarsign
 
-In **SERVER 1** part :
+Configure each game server you want to setup (server 1, server 2, etc. repeating the steps below for the 2nd/3rd server as necessary)
 
 3. Enter your RCON IP, as provided by the game server provider :  
    (this is NOT the same as the game server IP)
@@ -285,7 +309,11 @@ Then enter the start command line(s) above again.
 ### 4. Get in the CRCON UI
 
 Your CRCON user interface can be reached from all over the world,  
-in any web browser, using your VPS IP on port 8010 : http://yourVPSIP:8010/
+in any web browser.
+
+Each game server is accessed separately, pay attention to the `RCONWEB_PORT` values in your `.env` for each game server
+
+For example **by default** you could reach game server 1 with: http://yourVPSIP:8010/ substituting the IP address of your VPS for `yourVPSIP` in the URL.
 
 - Get in there an click on **LOGIN**, in the top menu.  
 The default credentials are `admin`/`admin`
@@ -296,7 +324,7 @@ Now, we MUST change the admin password, as it is highly insecure !
 
 ### 5. Prepare to configure users
 
-Due to inner security checks, we need to declare the VPS IP/port as "secure" to be able to enter the users management tool.
+Due to inner security checks, we need to declare the VPS IP/port as "secure" to be able to enter the users management tool or you will see `CSRF` errors.
 
 - In the **SETTINGS** menu, click on **CRCON settings** submenu  
   or directly get to http://yourVPSIP:8010/#/settings/rcon-server
@@ -305,30 +333,21 @@ Due to inner security checks, we need to declare the VPS IP/port as "secure" to 
   The strange code in it is a config text, formatted in JSON.  
   Stay cool : for the time being, we only are going to change a single line in it.
 
-- Modify the **server_url** line, entering your VPS IP and port 8010.  
+- Modify the **server_url** line, entering your URL (`http://yourVPSIP:8010` for example).  
 You must have quotation marks `"` around the url, and a comma `,` as the final character on the line.
 
       "server_url": "http://yourVPSIP:8010/",
 
 - Click on the **SAVE** link, below the textarea  
 *(a green confirmation flag should pop in top-right corner of the window)  
-If a yellow or red flag pops in, you have a syntax error : watch the example above to get it right)*
+If a yellow or red flag pops in, you have a syntax error : (watch the example above to get it right)*
 
 ### 6. Restart CRCON
 
 Yes. Restart it. This may sound strange, but it is mandatory :  
 to be taken in account, the **server_url** value you've just set has to be declared during the CRCON Docker containers start.
 
-Enter the command(s) that suit(s) your platform/operating system :
-
-- Linux on x86 :
-  > `docker compose up -d --remove-orphans`
-- Windows on x86 :
-  > `docker compose -f docker-compose.yml -f docker-compose.windows.yml up -d`
-- Raspberry-Pi (32 bits) or any ARM32v7 :
-  > `docker compose -f docker-compose.yml -f docker-compose.arm32v7.yml up -d --build`
-- Raspberry-Pi (64 bits) or any ARM32v8 :
-  > `docker compose -f docker-compose.yml -f docker-compose.arm64v8.yml up -d --build`
+    docker compose restart
 
 ### 7. Configure users
 
