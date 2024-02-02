@@ -3,7 +3,7 @@ import time
 
 from rcon.audit import ingame_mods, online_mods
 from rcon.commands import CommandFailedError
-from rcon.rcon import CommandFailedError, Rcon
+from rcon.rcon import CommandFailedError, Rcon, get_rcon
 from rcon.user_config.auto_kick import AutoVoteKickUserConfig
 from rcon.vote_map import VoteMap
 
@@ -40,9 +40,7 @@ def toggle_votekick(rcon: Rcon):
 
 def run():
     max_fails = 5
-    from rcon.settings import SERVER_INFO
-
-    rcon = Rcon(SERVER_INFO)
+    rcon = get_rcon()
 
     while True:
         try:

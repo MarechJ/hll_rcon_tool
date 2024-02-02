@@ -5,6 +5,7 @@ from typing import Any
 
 from django.http import QueryDict
 from django.http.request import HttpRequest
+from rcon.discord import send_to_discord_audit
 
 logger = getLogger(__name__)
 
@@ -28,3 +29,22 @@ def allow_csv(endpoint):
     def wrapper(request, *args, **kwargs):
         to_csv = _get_data(request).get("to_csv")
         res = endpoint(request, *args, **kwargs)
+
+
+def audit(func_name, request, arguments):
+    dont_audit = ["get_"]
+
+    try:
+        if any(func_name.startswith(s) for s in dont_audit):
+            return
+        args = dict(**arguments)
+        try:
+            del args["by"]
+        except KeyError:
+            pass
+        arguments = " ".join([f"{k}: `{v}`" for k, v in args.items()])
+        send_to_discord_audit(
+            "`{}`: {}".format(func_name, arguments), request.user.username
+        )
+    except:
+        logger.exception("Can't send audit log")

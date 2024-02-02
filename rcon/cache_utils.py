@@ -30,6 +30,8 @@ class RedisCached:
         serializer=simplejson.dumps,
         deserializer=simplejson.loads,
     ):
+        # TODO: isinstance check ttl_seconds it must be an int
+        # not a float or anything else
         if pool is None:
             pool = get_redis_pool()
 
@@ -46,12 +48,12 @@ class RedisCached:
         self.cache_falsy = cache_falsy
 
     @staticmethod
-    def clear_all_caches(pool):
+    def clear_all_caches(pool) -> bool:
         red = redis.Redis(connection_pool=pool)
         keys = list(red.scan_iter(match=f"{RedisCached.PREFIX}*"))
         logger.warning("Wiping cached values %s", keys)
         if not keys:
-            return
+            return 0
         return red.delete(*keys)
 
     @property

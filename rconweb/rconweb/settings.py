@@ -19,12 +19,11 @@ from sentry_sdk import configure_scope
 from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
 
-from rcon.rcon import Rcon
-from rcon.settings import SERVER_INFO
+from rcon.rcon import get_rcon
 
 try:
     ENVIRONMENT = re.sub(
-        "[^0-9a-zA-Z]+", "", (Rcon(SERVER_INFO).get_name() or "default").strip()
+        "[^0-9a-zA-Z]+", "", (get_rcon().get_name() or "default").strip()
     )[:64]
 except:
     ENVIRONMENT = "undefined"

@@ -20,7 +20,7 @@ class DjangoAPIKey(models.Model):
     def save(self, *args, **kwargs):
         """Hash the API key"""
         # If we don't include the salt, the hasher generates its own
-        self.api_key = make_password(self.api_key, salt=SECRET_KEY)
+        self.api_key = make_password(self.api_key, salt=SECRET_KEY.replace("$", ""))
         super().save()
 
     class Meta:
@@ -424,4 +424,6 @@ class RconUser(User):
                 "can_restart_webserver",
                 "Can restart the webserver (Not a complete Docker restart)",
             ),
+            ("can_view_chat_commands_config", "Can view the chat commands config"),
+            ("can_change_chat_commands_config", "Can change the chat comads config"),
         )

@@ -4,16 +4,16 @@ import random
 import re
 from datetime import datetime, timedelta
 from functools import partial
-from typing import Counter
+from typing import Counter, Iterable
 
 import redis
 from sqlalchemy import and_
 
+from rcon.types import VoteMapPlayerVoteType, VoteMapResultType, VoteMapStatusType
 from rcon.cache_utils import get_redis_client, get_redis_pool
 from rcon.models import PlayerOptins, PlayerSteamID, enter_session
 from rcon.player_history import get_player
-from rcon.rcon import CommandFailedError, Rcon, StructuredLogLineType
-from rcon.settings import SERVER_INFO
+from rcon.rcon import CommandFailedError, Rcon, StructuredLogLineType, get_rcon
 from rcon.user_config.vote_map import DefaultMethods, VoteMapUserConfig
 from rcon.utils import (
     ALL_MAPS,
@@ -520,7 +520,7 @@ class VoteMap:
         )
         return selected_map
 
-    def get_vote_overview(self):
+    def get_vote_overview(self) -> VoteMapResultType | None:
         try:
             votes = self.get_votes()
             maps = Counter(votes.values()).most_common()
@@ -534,12 +534,12 @@ class VoteMap:
     def has_voted(self, player_name):
         return self.red.hget("VOTES", player_name) is not None
 
-    def get_votes(self):
+    def get_votes(self) -> VoteMapPlayerVoteType:
         votes = self.red.hgetall("VOTES") or {}
         return {k.decode(): v.decode() for k, v in votes.items()}
 
     def get_current_map(self):
-        map_ = Rcon(SERVER_INFO).get_map()
+        map_ = get_rcon().get_map()
         if map_.endswith("_RESTART"):
             map_ = map_.replace("_RESTART", "")
 
@@ -548,7 +548,7 @@ class VoteMap:
 
         return map_
 
-    def get_map_whitelist(self):
+    def get_map_whitelist(self) -> set[str]:
         res = self.red.get(self.whitelist_key)
         if res is not None:
             return pickle.loads(res)
@@ -559,7 +559,7 @@ class VoteMap:
         whitelist.add(map_name)
         self.do_set_map_whitelist(whitelist)
 
-    def do_add_maps_to_whitelist(self, map_names):
+    def do_add_maps_to_whitelist(self, map_names: Iterable[str]):
         for map_name in map_names:
             self.do_add_map_to_whitelist(map_name)
 
@@ -608,7 +608,7 @@ class VoteMap:
         self.red.lpush("MAP_SELECTION", *selection)
         logger.info("Saved new selection: %s", selection)
 
-    def get_selection(self):
+    def get_selection(self) -> list[str]:
         return [v.decode() for v in self.red.lrange("MAP_SELECTION", 0, -1)]
 
     def pick_least_played_map(self, maps):
@@ -682,7 +682,7 @@ class VoteMap:
                 logger.error(f"{next_map=} is not part of vote selection {selection=}")
             logger.info(f"Winning map {next_map=}")
 
-        rcon = Rcon(SERVER_INFO)
+        rcon = get_rcon()
         # Apply rotation safely
 
         current_rotation = rcon.get_map_rotation()

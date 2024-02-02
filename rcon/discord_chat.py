@@ -127,7 +127,7 @@ class DiscordWebhookHandler:
         content = ""
         triggered = False
         if self.admin_wh_config.trigger_words:
-            msg_words = re.split("([^a-zA-Z!@])", message)
+            msg_words = re.split(r"([^a-zA-Z!@\d])", message)
             for trigger_word in self.admin_wh_config.trigger_words:
                 for i, msg_word in enumerate(msg_words):
                     if trigger_word == msg_word.lower():

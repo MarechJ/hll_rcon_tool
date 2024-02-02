@@ -20,6 +20,7 @@ from rcon.user_config.auto_mod_seeding import AutoModSeedingUserConfig
 from rcon.user_config.auto_mod_solo_tank import AutoModNoSoloTankUserConfig
 from rcon.user_config.ban_tk_on_connect import BanTeamKillOnConnectUserConfig
 from rcon.user_config.camera_notification import CameraNotificationUserConfig
+from rcon.user_config.chat_commands import ChatCommandsUserConfig
 from rcon.user_config.expired_vips import ExpiredVipsUserConfig
 from rcon.user_config.gtx_server_name import GtxServerNameChangeUserConfig
 from rcon.user_config.log_line_webhooks import LogLineWebhookUserConfig
@@ -27,6 +28,7 @@ from rcon.user_config.name_kicks import NameKickUserConfig
 from rcon.user_config.rcon_connection_settings import RconConnectionSettingsUserConfig
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.scorebot import ScorebotUserConfig
+from rcon.user_config.vote_map import VoteMapUserConfig
 from rcon.user_config.standard_messages import (
     StandardBroadcastMessagesUserConfig,
     StandardPunishmentMessagesUserConfig,
@@ -137,74 +139,14 @@ def _validate_user_config(
         )
 
 
-def mask_sensitive_data(
-    values: dict[str, Any],
-    sensitive_keys: set[str] = {
-        "discord_webhook_url",
-        "username",
-        "password",
-        "url",
-        "webhook_urls",
-        "api_key",
-    },
-    masked_value: str = "***",
-) -> None:
-    """Replace the value of any dict key in sensitive_keys with masked_value"""
-    if not isinstance(values, dict):
-        return
-
-    for k, v in values.items():
-        if isinstance(v, dict):
-            mask_sensitive_data(values[k], sensitive_keys=sensitive_keys)
-        elif isinstance(v, list):
-            for ele in v:
-                mask_sensitive_data(ele, sensitive_keys=sensitive_keys)
-
-        if k in sensitive_keys:
-            values[k] = masked_value
-
-
-def _audit_user_config_differences(
-    cls, data, command_name, author
-) -> JsonResponse | None:
-    old_model = cls.load_from_db().model_dump()
-    response = _validate_user_config(
-        cls,
-        data=data,
-        command_name=command_name,
-        dry_run=False,
-    )
-    new_model = cls.load_from_db().model_dump()
-    differences = dict_differences(old_model, new_model)
-    mask_sensitive_data(differences)
-    message = DISCORD_AUDIT_FORMAT.format(
-        command_name=command_name, differences=str(differences)
-    )
-    message = discord.utils.escape_markdown(message)
-    message = discord.utils.escape_mentions(message)
-    send_to_discord_audit(
-        message=message,
-        by=author,
-    )
-
-    return response
-
-
 @csrf_exempt
 @login_required()
-@permission_required("api.can_view_auto_broadcast_config", raise_exception=True)
 @require_http_methods(["GET"])
-def get_auto_broadcasts_config(request):
-    command_name = "get_auto_broadcasts_config"
-
-    try:
-        config = AutoBroadcastUserConfig.load_from_db()
-    except Exception as e:
-        logger.exception(e)
-        return api_response(command=command_name, error=str(e), failed=True)
+def describe_votemap_config(request):
+    command_name = "get_votemap_config"
 
     return api_response(
-        result=config.model_dump(),
+        result=VoteMapUserConfig.model_json_schema(),
         command=command_name,
         failed=False,
     )
@@ -217,75 +159,6 @@ def describe_auto_broadcasts_config(request):
     command_name = "describe_auto_broadcasts_config"
     return api_response(
         result=AutoBroadcastUserConfig.model_json_schema(),
-        command=command_name,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_change_auto_broadcast_config", raise_exception=True)
-@require_http_methods(["POST"])
-@require_content_type()
-def validate_auto_broadcasts_config(request):
-    command_name = "validate_auto_broadcasts_config"
-    data = _get_data(request)
-
-    response = _validate_user_config(
-        AutoBroadcastUserConfig, data=data, command_name=command_name, dry_run=True
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        arguments=data,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_change_auto_broadcast_config", raise_exception=True)
-@require_http_methods(["POST"])
-@require_content_type()
-@record_audit
-def set_auto_broadcasts_config(request):
-    command_name = "set_auto_broadcasts_config"
-    cls = AutoBroadcastUserConfig
-    data = _get_data(request)
-
-    response = _audit_user_config_differences(
-        cls, data, command_name, request.user.username
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_view_votekick_autotoggle_config", raise_exception=True)
-@require_http_methods(["GET"])
-def get_votekick_autotoggle_config(request):
-    command_name = "get_votekick_autotoggle_config"
-
-    try:
-        config = AutoVoteKickUserConfig.load_from_db()
-    except Exception as e:
-        logger.exception(e)
-        return api_response(command=command_name, error=str(e), failed=True)
-
-    return api_response(
-        result=config.model_dump(),
         command=command_name,
         failed=False,
     )
@@ -306,76 +179,6 @@ def describe_votekick_autotoggle_config(request):
 
 @csrf_exempt
 @login_required()
-@permission_required("api.can_change_votekick_autotoggle_config", raise_exception=True)
-@require_http_methods(["POST"])
-@require_content_type()
-def validate_votekick_autotoggle_config(request):
-    command_name = "validate_votekick_autotoggle_config"
-    data = _get_data(request)
-
-    response = _validate_user_config(
-        AutoVoteKickUserConfig, data=data, command_name=command_name, dry_run=True
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        arguments=data,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_change_votekick_autotoggle_config", raise_exception=True)
-@record_audit
-@require_http_methods(["POST"])
-@require_content_type()
-def set_votekick_autotoggle_config(request):
-    command_name = "set_votekick_autotoggle_config"
-    cls = AutoVoteKickUserConfig
-    data = _get_data(request)
-
-    response = _audit_user_config_differences(
-        cls, data, command_name, request.user.username
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        arguments=data,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_view_auto_mod_level_config", raise_exception=True)
-@require_http_methods(["GET"])
-def get_auto_mod_level_config(request):
-    command_name = "get_auto_mod_level_config"
-
-    try:
-        config = AutoModLevelUserConfig.load_from_db()
-    except Exception as e:
-        logger.exception(e)
-        return api_response(command=command_name, error=str(e), failed=True)
-
-    return api_response(
-        result=config.model_dump(),
-        command=command_name,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
 @require_http_methods(["GET"])
 def describe_auto_mod_level_config(request):
     command_name = "describe_auto_mod_level_config"
@@ -383,59 +186,6 @@ def describe_auto_mod_level_config(request):
     return api_response(
         result=AutoModLevelUserConfig.model_json_schema(),
         command=command_name,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_change_auto_mod_level_config", raise_exception=True)
-@require_http_methods(["POST"])
-@require_content_type()
-def validate_auto_mod_level_config(request):
-    command_name = "validate_auto_mod_level_config"
-    data = _get_data(request)
-
-    response = _validate_user_config(
-        AutoModLevelUserConfig,
-        data=data,
-        command_name=command_name,
-        dry_run=True,
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        arguments=data,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_change_auto_mod_level_config", raise_exception=True)
-@record_audit
-@require_http_methods(["POST"])
-@require_content_type()
-def set_auto_mod_level_config(request):
-    command_name = "set_auto_mod_level_config"
-    cls = AutoModLevelUserConfig
-    data = _get_data(request)
-
-    response = _audit_user_config_differences(
-        cls, data, command_name, request.user.username
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        arguments=data,
         failed=False,
     )
 
@@ -475,59 +225,6 @@ def describe_auto_mod_no_leader_config(request):
 
 @csrf_exempt
 @login_required()
-@permission_required("api.can_change_auto_mod_no_leader_config", raise_exception=True)
-@require_http_methods(["POST"])
-@require_content_type()
-def validate_auto_mod_no_leader_config(request):
-    command_name = "validate_auto_mod_no_leader_config"
-    data = _get_data(request)
-
-    response = _validate_user_config(
-        AutoModNoLeaderUserConfig,
-        data=data,
-        command_name=command_name,
-        dry_run=True,
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        arguments=data,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_change_auto_mod_no_leader_config", raise_exception=True)
-@record_audit
-@require_http_methods(["POST"])
-@require_content_type()
-def set_auto_mod_no_leader_config(request):
-    command_name = "set_auto_mod_no_leader_config"
-    cls = AutoModNoLeaderUserConfig
-    data = _get_data(request)
-
-    response = _audit_user_config_differences(
-        cls, data, command_name, request.user.username
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        arguments=data,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
 @permission_required("api.can_view_auto_mod_seeding_config", raise_exception=True)
 @require_http_methods(["GET"])
 def get_auto_mod_seeding_config(request) -> JsonResponse:
@@ -555,59 +252,6 @@ def describe_auto_mod_seeding_config(request):
     return api_response(
         result=AutoModSeedingUserConfig.model_json_schema(),
         command=command_name,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_change_auto_mod_seeding_config", raise_exception=True)
-@require_http_methods(["POST"])
-@require_content_type()
-def validate_auto_mod_seeding_config(request):
-    command_name = "validate_auto_mod_seeding_config"
-    data = _get_data(request)
-
-    response = _validate_user_config(
-        AutoModSeedingUserConfig,
-        data=data,
-        command_name=command_name,
-        dry_run=True,
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        arguments=data,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_change_auto_mod_seeding_config", raise_exception=True)
-@record_audit
-@require_http_methods(["POST"])
-@require_content_type()
-def set_auto_mod_seeding_config(request):
-    command_name = "set_auto_mod_seeding_config"
-    cls = AutoModSeedingUserConfig
-    data = _get_data(request)
-
-    response = _audit_user_config_differences(
-        cls, data, command_name, request.user.username
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        arguments=data,
         failed=False,
     )
 
@@ -647,79 +291,6 @@ def describe_auto_mod_solo_tank_config(request):
 
 @csrf_exempt
 @login_required()
-@permission_required("api.can_change_auto_mod_solo_tank_config", raise_exception=True)
-@require_http_methods(["POST"])
-@require_content_type()
-def validate_auto_mod_solo_tank_config(request):
-    command_name = "validate_auto_mod_solo_tank_config"
-    data = _get_data(request)
-
-    response = _validate_user_config(
-        AutoModNoSoloTankUserConfig,
-        data=data,
-        command_name=command_name,
-        dry_run=True,
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        arguments=data,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_change_auto_mod_solo_tank_config", raise_exception=True)
-@record_audit
-@require_http_methods(["POST"])
-@require_content_type()
-def set_auto_mod_solo_tank_config(request):
-    command_name = "set_auto_mod_solo_tank_config"
-    cls = AutoModNoSoloTankUserConfig
-    data = _get_data(request)
-
-    response = _audit_user_config_differences(
-        cls, data, command_name, request.user.username
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        arguments=data,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_view_tk_ban_on_connect_config", raise_exception=True)
-@require_http_methods(["GET"])
-def get_tk_ban_on_connect_config(request):
-    command_name = "get_tk_ban_on_connect_config"
-
-    try:
-        config = BanTeamKillOnConnectUserConfig.load_from_db()
-    except Exception as e:
-        logger.exception(e)
-        return api_response(command=command_name, error=str(e), failed=True)
-
-    return api_response(
-        result=config.model_dump(),
-        command=command_name,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
 @require_http_methods(["GET"])
 def describe_tk_ban_on_connect_config(request):
     command_name = "describe_tk_ban_on_connect_config"
@@ -727,59 +298,6 @@ def describe_tk_ban_on_connect_config(request):
     return api_response(
         result=BanTeamKillOnConnectUserConfig.model_json_schema(),
         command=command_name,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_change_tk_ban_on_connect_config", raise_exception=True)
-@require_http_methods(["POST"])
-@require_content_type()
-def validate_tk_ban_on_connect_config(request):
-    command_name = "validate_tk_ban_on_connect_config"
-    data = _get_data(request)
-
-    response = _validate_user_config(
-        BanTeamKillOnConnectUserConfig,
-        data=data,
-        command_name=command_name,
-        dry_run=True,
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        arguments=data,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_change_tk_ban_on_connect_config", raise_exception=True)
-@record_audit
-@require_http_methods(["POST"])
-@require_content_type()
-def set_tk_ban_on_connect_config(request):
-    command_name = "set_tk_ban_on_connect_config"
-    cls = BanTeamKillOnConnectUserConfig
-    data = _get_data(request)
-
-    response = _audit_user_config_differences(
-        cls, data, command_name, request.user.username
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        arguments=data,
         failed=False,
     )
 
@@ -2456,6 +1974,82 @@ def validate_watchlist_discord_webhooks_config(request):
 def set_watchlist_discord_webhooks_config(request):
     command_name = "set_watchlist_discord_webhooks"
     cls = WatchlistWebhooksUserConfig
+    data = _get_data(request)
+
+    response = _audit_user_config_differences(
+        cls, data, command_name, request.user.username
+    )
+
+    if response:
+        return response
+
+    return api_response(
+        result=True,
+        command=command_name,
+        arguments=data,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+@permission_required("api.can_view_chat_commands_config", raise_exception=True)
+def get_chat_commands_config(request):
+    command_name = "get_chat_commands_config"
+
+    try:
+        config = ChatCommandsUserConfig.load_from_db()
+    except Exception as e:
+        logger.exception(e)
+        return api_response(command=command_name, error=str(e), failed=True)
+
+    return api_response(
+        result=config.model_dump(),
+        command=command_name,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+def describe_chat_commands_config(request):
+    command_name = "describe_chat_commands_config"
+
+    return api_response(
+        result=ChatCommandsUserConfig.model_json_schema(),
+        command=command_name,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+@permission_required("api.can_change_chat_commands_config", raise_exception=True)
+def validate_chat_commands_config(request):
+    command_name = "validate_chat_commands_config"
+    data = _get_data(request)
+
+    response = _validate_user_config(
+        ChatCommandsUserConfig, data=data, command_name=command_name, dry_run=True
+    )
+
+    if response:
+        return response
+
+    return api_response(
+        result=True,
+        command=command_name,
+        arguments=data,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+@permission_required("api.can_change_chat_commands_config", raise_exception=True)
+def set_chat_commands_config(request):
+    command_name = "set_chat_commands_config"
+    cls = ChatCommandsUserConfig
     data = _get_data(request)
 
     response = _audit_user_config_differences(
