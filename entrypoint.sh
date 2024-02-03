@@ -6,6 +6,11 @@ set -x
 env
 if [ "$1" == 'web' ] 
 then
+  if [ "$HLL_DB_PASSWORD" == '' ] 
+  then
+      echo "HLL_DB_PASSWORD not set"
+      exit 0
+  fi
   if [ "$HLL_HOST" == '' ] 
   then
       exit 0
