@@ -382,6 +382,22 @@ endpoints: list[tuple[str, Callable]] = [
         "set_watchlist_discord_webhooks_config",
         user_settings.set_watchlist_discord_webhooks_config,
     ),
+    (
+        "get_chat_commands_config",
+        user_settings.get_chat_commands_config,
+    ),
+    (
+        "describe_chat_commands_config",
+        user_settings.describe_chat_commands_config,
+    ),
+    (
+        "validate_chat_commands_config",
+        user_settings.validate_chat_commands_config,
+    ),
+    (
+        "set_chat_commands_config",
+        user_settings.set_chat_commands_config,
+    ),
     ("get_all_discord_webhooks_config", user_settings.get_all_discord_webhooks_config),
     ("get_all_standard_message_config", user_settings.get_all_standard_message_config),
     ("do_reconnect_gameserver", views.restart_gunicorn),

@@ -12,7 +12,7 @@ from rcon.types import PlayerProfileType
 from rcon.user_config.webhooks import WatchlistWebhooksUserConfig
 
 
-@on_connected
+@on_connected()
 @inject_player_ids
 def watchdog(rcon: Rcon, log, name: str, steam_id_64: str):
     watcher = PlayerWatch(steam_id_64)

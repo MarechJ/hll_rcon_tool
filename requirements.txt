@@ -2,12 +2,12 @@ Click==8.1.7
 Django==4.2.7
 django-cors-headers==4.3.1
 redis==5.0.1
-sqlalchemy==2.0.23
+sqlalchemy==2.0.25
 simplejson==3.19.2
 psycopg2-binary
-sentry-sdk[django]==1.39.1
+sentry-sdk[django]==1.39.2
 python-dateutil==2.8.2
-git+https://github.com/cemathey/python-discord-webhook.git@4d79ab09526b96a2cc86c50ca1c609d7b644c6c7
+discord-webhook
 requests==2.31.0
 steam==1.4.4
 # Alembic does not use semantic versioning, so be careful with the version numbers https://alembic.sqlalchemy.org/en/latest/front.html#versioning-scheme

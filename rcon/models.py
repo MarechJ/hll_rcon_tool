@@ -36,8 +36,11 @@ from rcon.types import (
     PlayerSessionType,
     PlayerStatsType,
     ServerCountType,
+    SteamBansType,
     SteamInfoType,
+    SteamPlayerSummaryType,
     WatchListType,
+    PlayerVIPType,
 )
 
 logger = logging.getLogger(__name__)
@@ -62,7 +65,12 @@ def get_engine():
 
 class Base(DeclarativeBase):
     # TODO: Replace dict[str, Any] w/ actual types
-    type_annotation_map = {dict[str, Any]: JSONB, dict[str, int]: JSONB}
+    type_annotation_map = {
+        dict[str, Any]: JSONB,
+        dict[str, int]: JSONB,
+        SteamPlayerSummaryType: JSONB,
+        SteamBansType: JSONB,
+    }
 
 
 class PlayerSteamID(Base):
@@ -157,6 +165,7 @@ class PlayerSteamID(Base):
             "flags": [f.to_dict() for f in (self.flags or [])],
             "watchlist": self.watchlist.to_dict() if self.watchlist else None,
             "steaminfo": self.steaminfo.to_dict() if self.steaminfo else None,
+            "vips": [v.to_dict() for v in self.vips],
         }
 
     def __str__(self) -> str:
@@ -173,12 +182,24 @@ class SteamInfo(Base):
     )
     created: Mapped[datetime] = mapped_column(default=datetime.utcnow)
     updated: Mapped[datetime] = mapped_column(onupdate=datetime.utcnow)
-    profile: Mapped[dict[str, Any]] = mapped_column()
-    country: Mapped[str] = mapped_column(index=True)
-    # TODO: I don't think bans is actually persisted at all
-    bans: Mapped[dict[str, Any]] = mapped_column()
+    profile: Mapped[SteamPlayerSummaryType] = mapped_column(default=JSONB.NULL)
+    country: Mapped[str | None] = mapped_column(index=True)
+    bans: Mapped[SteamBansType] = mapped_column(default=JSONB.NULL)
 
     steamid: Mapped[PlayerSteamID] = relationship(back_populates="steaminfo")
+
+    @property
+    def has_bans(self):
+        return any(
+            self.bans.get(k)
+            for k in [
+                "VACBanned",
+                "NumberOfVACBans",
+                "DaysSinceLastBan",
+                "NumberOfGameBans",
+            ]
+            if self.bans
+        )
 
     def to_dict(self) -> SteamInfoType:
         return {
@@ -186,8 +207,9 @@ class SteamInfo(Base):
             "created": self.created,
             "updated": self.updated,
             "profile": self.profile,
-            "country": self.country,
+            "country": self.country if self.country else None,
             "bans": self.bans,
+            "has_bans": self.has_bans,
         }
 
 
@@ -681,6 +703,12 @@ class PlayerVIP(Base):
     )
 
     steamid: Mapped[PlayerSteamID] = relationship(back_populates="vips")
+
+    def to_dict(self) -> PlayerVIPType:
+        return {
+            "server_number": self.server_number,
+            "expiration": self.expiration,
+        }
 
 
 class AuditLog(Base):

@@ -1,10 +1,12 @@
 import pytest
 
 from rcon.commands import convert_tabs_to_spaces
+from rcon.types import GetDetailedPlayer
 from rcon.utils import (
     exception_in_chain,
     is_invalid_name_pineapple,
     is_invalid_name_whitespace,
+    parse_raw_player_info,
 )
 
 
@@ -91,3 +93,106 @@ def test_is_invalid_name_whitespace(name, expected):
 )
 def test_is_invalid_name_pineapple(name, expected):
     assert is_invalid_name_pineapple(name) == expected
+
+
+def mock_get_detailed_player(
+    name,
+    steam_id_64,
+    team,
+    role,
+    unit_id,
+    unit_name,
+    loadout,
+    kills,
+    deaths,
+    combat,
+    defense,
+    offense,
+    support,
+    level,
+    is_vip=False,
+    profile=None,
+) -> GetDetailedPlayer:
+    return {
+        "name": name,
+        "steam_id_64": steam_id_64,
+        "team": team,
+        "role": role,
+        "unit_id": unit_id,
+        "unit_name": unit_name,
+        "combat": combat,
+        "deaths": deaths,
+        "kills": kills,
+        "defense": defense,
+        "level": level,
+        "loadout": loadout,
+        "offense": offense,
+        "support": support,
+        "is_vip": is_vip,
+        "profile": profile,
+    }
+
+
+@pytest.mark.parametrize(
+    "raw, expected",
+    [
+        (
+            """Name: MasterShake
+steamID64: 76561199502921234
+Team: Axis
+Role: Support
+Unit: 9 - JIG
+Loadout: Standard Issue
+Kills: 11 - Deaths: 9
+Score: C 72, O 100, D 220, S 65
+Level: 16
+""",
+            mock_get_detailed_player(
+                name="",
+                steam_id_64="76561199502921234",
+                team="axis",
+                role="support",
+                unit_id=9,
+                unit_name="jig",
+                loadout="standard issue",
+                kills=11,
+                deaths=9,
+                combat=72,
+                offense=100,
+                defense=220,
+                support=65,
+                level=16,
+            ),
+        ),
+        (
+            """Name: MasterShake
+steamID64: a21af8b5-59df-5vbr-88gf-ab4239r4g6f4
+Team: Axis
+Role: Support
+Unit: 9 - JIG
+Loadout: Standard Issue
+Kills: 11 - Deaths: 9
+Score: C 72, O 100, D 220, S 65
+Level: 16
+""",
+            mock_get_detailed_player(
+                name="",
+                steam_id_64="a21af8b5-59df-5vbr-88gf-ab4239r4g6f4",
+                team="axis",
+                role="support",
+                unit_id=9,
+                unit_name="jig",
+                loadout="standard issue",
+                kills=11,
+                deaths=9,
+                combat=72,
+                offense=100,
+                defense=220,
+                support=65,
+                level=16,
+            ),
+        ),
+    ],
+)
+def test_parse_raw_player_info(raw, expected):
+    assert parse_raw_player_info(raw=raw, player="") == expected

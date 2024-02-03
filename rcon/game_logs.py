@@ -22,8 +22,7 @@ from rcon.player_history import (
     get_player_profile,
     player_has_flag,
 )
-from rcon.rcon import LOG_ACTIONS, Rcon
-from rcon.settings import SERVER_INFO
+from rcon.rcon import LOG_ACTIONS, Rcon, get_rcon
 from rcon.types import (
     AllLogTypes,
     GetDetailedPlayer,
@@ -117,9 +116,18 @@ def on_chat_allies(func):
     return func
 
 
-def on_connected(func):
-    HOOKS[AllLogTypes.connected.value].append(func)
-    return func
+def on_connected(insert_at: int | None = None):
+    """Insert the given hook at `insert_at` position, or the end"""
+
+    def wrapper(func):
+        if isinstance(insert_at, int):
+            HOOKS[AllLogTypes.connected.value].insert(insert_at, func)
+        else:
+            HOOKS[AllLogTypes.connected.value].append(func)
+
+        return func
+
+    return wrapper
 
 
 def on_disconnected(func):
@@ -201,7 +209,7 @@ def send_log_line_webhook_message(
 
     wh.content = content
     wh.add_embed(embed)
-    wh.allowed_mentions = allowed_mentions["user"] + allowed_mentions["roles"]
+    wh.allowed_mentions = allowed_mentions
     wh.execute()
 
 
@@ -233,7 +241,7 @@ class LogLoop:
     log_history_key = "log_history"
 
     def __init__(self):
-        self.rcon = Rcon(SERVER_INFO)
+        self.rcon = get_rcon()
         self.red = get_redis_client()
         self.duplicate_guard_key = "unique_logs"
         self.log_history = self.get_log_history_list()

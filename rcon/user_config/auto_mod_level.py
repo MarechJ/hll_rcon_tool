@@ -1,6 +1,12 @@
 from typing import Optional, TypedDict
 
-from pydantic import BaseModel, BeforeValidator, Field, HttpUrl, field_serializer
+from pydantic import (
+    BaseModel,
+    BeforeValidator,
+    Field,
+    HttpUrl,
+    field_serializer
+)
 from pydantic.functional_validators import BeforeValidator
 from typing_extensions import Annotated
 
@@ -34,6 +40,7 @@ class AutoModLevelType(TypedDict):
     max_level: int
     max_level_message: str
     violation_message: str
+    levelbug_enabled: bool
     level_thresholds: dict[Roles, "Role"]
 
     number_of_warnings: int
@@ -82,6 +89,7 @@ class AutoModLevelUserConfig(BaseUserConfig):
     max_level: int = Field(ge=0, le=500, default=0)
     max_level_message: str = Field(default=MAX_LEVEL_MESSAGE)
     violation_message: str = Field(default=VIOLATION_MESSAGE)
+    levelbug_enabled: bool = Field(default=True)
     level_thresholds: Annotated[
         dict[Roles, Role], BeforeValidator(validate_level_thresholds)
     ] = Field(default_factory=dict)
@@ -120,6 +128,7 @@ class AutoModLevelUserConfig(BaseUserConfig):
             max_level=values.get("max_level"),
             max_level_message=values.get("max_level_message"),
             violation_message=values.get("violation_message"),
+            levelbug_enabled=values.get("levelbug_enabled"),
             level_thresholds=values.get("level_thresholds"),
             number_of_warnings=values.get("number_of_warnings"),
             warning_message=values.get("warning_message"),
@@ -133,4 +142,6 @@ class AutoModLevelUserConfig(BaseUserConfig):
         )
 
         if not dry_run:
-            set_user_config(AutoModLevelUserConfig.KEY(), validated_conf.model_dump())
+            set_user_config(
+                AutoModLevelUserConfig.KEY(), validated_conf.model_dump()
+            )

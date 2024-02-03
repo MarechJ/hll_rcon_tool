@@ -12,8 +12,11 @@ from rcon.rcon import Rcon
     [
         (
             """
+[17:46 min (1704335313)] CHAT[Team][WinstonsDomain(Allies/3azzx77e-4ad4-57z3-8gr8-gb9e753e85aq)]: test
+[17:40 min (1704335318)] CHAT[Unit][WinstonsDomain(Allies/3azzx77e-4ad4-57z3-8gr8-gb9e753e85aq)]: test
 [2:14:33 hours (1703272319)] VOTESYS: Vote [3] prematurely expired.
 [29:55 min (1606340690)] KILL: Karadoc(Axis/76561198080212634) -> Bullitt-FR(Allies/76561198000776367) with G43
+[29:55 min (1606340690)] KILL: Karadoc(Axis/a21af8b5-59df-5vbr-88gf-ab4239r4g6f4) -> Bullitt-FR(Allies/76561198000776367) with G43
 [29:42 min (1606340690)] KILL: 湊あくあ(Axis/76561198202984515) -> fguitou(Allies/76561198034763447) with None
 [3:35 min (1675366030)] TEAM KILL: Ð¡Ð°ÑÐºÐ°(Allies/76561198346893462) -> Milk Dick(Allies/76561198044472891) with 155MM HOWITZER [M114]
 [2:07:28 hours (1675358597)] TEAM KILL: Oz(Allies/76561198163789126) -> Sic_Anger(Allies/76561199201574614) with PPSH 41 W/DRUM
@@ -46,6 +49,16 @@ to test something]
 """,
             [
                 (
+                    "[17:46 min (1704335313)]",
+                    "1704335313",
+                    "CHAT[Team][WinstonsDomain(Allies/3azzx77e-4ad4-57z3-8gr8-gb9e753e85aq)]: test",
+                ),
+                (
+                    "[17:40 min (1704335318)]",
+                    "1704335318",
+                    "CHAT[Unit][WinstonsDomain(Allies/3azzx77e-4ad4-57z3-8gr8-gb9e753e85aq)]: test",
+                ),
+                (
                     "[2:14:33 hours (1703272319)]",
                     "1703272319",
                     "VOTESYS: Vote [3] prematurely expired.",
@@ -54,6 +67,11 @@ to test something]
                     "[29:55 min (1606340690)]",
                     "1606340690",
                     "KILL: Karadoc(Axis/76561198080212634) -> Bullitt-FR(Allies/76561198000776367) with G43",
+                ),
+                (
+                    "[29:55 min (1606340690)]",
+                    "1606340690",
+                    "KILL: Karadoc(Axis/a21af8b5-59df-5vbr-88gf-ab4239r4g6f4) -> Bullitt-FR(Allies/76561198000776367) with G43",
                 ),
                 (
                     "[29:42 min (1606340690)]",
@@ -225,6 +243,45 @@ def test_timestamp_parsing(raw_timestamp, expected):
             },
         ),
         (
+            "KILL: Reduktorius(Axis/a21af8b5-59df-5vbr-88gf-ab4239r4g6f4) -> Loch(Allies/76561198086167606) with FG42 x4",
+            {
+                "action": "KILL",
+                "player": "Reduktorius",
+                "steam_id_64_1": "a21af8b5-59df-5vbr-88gf-ab4239r4g6f4",
+                "player2": "Loch",
+                "steam_id_64_2": "76561198086167606",
+                "weapon": "FG42 x4",
+                "message": "Reduktorius(Axis/a21af8b5-59df-5vbr-88gf-ab4239r4g6f4) -> Loch(Allies/76561198086167606) with FG42 x4",
+                "sub_content": None,
+            },
+        ),
+        (
+            "KILL: Reduktorius(Axis/76561198136839181) -> Loch(Allies/a21af8b5-59df-5vbr-88gf-ab4239r4g6f4) with FG42 x4",
+            {
+                "action": "KILL",
+                "player": "Reduktorius",
+                "steam_id_64_1": "76561198136839181",
+                "player2": "Loch",
+                "steam_id_64_2": "a21af8b5-59df-5vbr-88gf-ab4239r4g6f4",
+                "weapon": "FG42 x4",
+                "message": "Reduktorius(Axis/76561198136839181) -> Loch(Allies/a21af8b5-59df-5vbr-88gf-ab4239r4g6f4) with FG42 x4",
+                "sub_content": None,
+            },
+        ),
+        (
+            "KILL: Reduktorius(Axis/a21af8b5-59df-5vbr-88gf-ab4239r4g6fz) -> Loch(Allies/a21af8b5-59df-5vbr-88gf-ab4239r4g6f4) with FG42 x4",
+            {
+                "action": "KILL",
+                "player": "Reduktorius",
+                "steam_id_64_1": "a21af8b5-59df-5vbr-88gf-ab4239r4g6fz",
+                "player2": "Loch",
+                "steam_id_64_2": "a21af8b5-59df-5vbr-88gf-ab4239r4g6f4",
+                "weapon": "FG42 x4",
+                "message": "Reduktorius(Axis/a21af8b5-59df-5vbr-88gf-ab4239r4g6fz) -> Loch(Allies/a21af8b5-59df-5vbr-88gf-ab4239r4g6f4) with FG42 x4",
+                "sub_content": None,
+            },
+        ),
+        (
             "KILL: short(Axis/1234) -> (Axis/76561198136839181) -> Loch(Allies/76561198086167606) with FG42 x4",
             {
                 "action": "KILL",
@@ -234,6 +291,45 @@ def test_timestamp_parsing(raw_timestamp, expected):
                 "steam_id_64_2": "76561198086167606",
                 "weapon": "FG42 x4",
                 "message": "short(Axis/1234) -> (Axis/76561198136839181) -> Loch(Allies/76561198086167606) with FG42 x4",
+                "sub_content": None,
+            },
+        ),
+        (
+            "KILL: short(Axis/1234) -> (Axis/a21af8b5-59df-5vbr-88gf-ab4239r4g6fz) -> Loch(Allies/76561198086167606) with FG42 x4",
+            {
+                "action": "KILL",
+                "player": "short(Axis/1234) -> ",
+                "steam_id_64_1": "a21af8b5-59df-5vbr-88gf-ab4239r4g6fz",
+                "player2": "Loch",
+                "steam_id_64_2": "76561198086167606",
+                "weapon": "FG42 x4",
+                "message": "short(Axis/1234) -> (Axis/a21af8b5-59df-5vbr-88gf-ab4239r4g6fz) -> Loch(Allies/76561198086167606) with FG42 x4",
+                "sub_content": None,
+            },
+        ),
+        (
+            "KILL: short(Axis/1234) -> (Axis/76561198136839181) -> Loch(Allies/a21af8b5-59df-5vbr-88gf-ab4239r4g6fz) with FG42 x4",
+            {
+                "action": "KILL",
+                "player": "short(Axis/1234) -> ",
+                "steam_id_64_1": "76561198136839181",
+                "player2": "Loch",
+                "steam_id_64_2": "a21af8b5-59df-5vbr-88gf-ab4239r4g6fz",
+                "weapon": "FG42 x4",
+                "message": "short(Axis/1234) -> (Axis/76561198136839181) -> Loch(Allies/a21af8b5-59df-5vbr-88gf-ab4239r4g6fz) with FG42 x4",
+                "sub_content": None,
+            },
+        ),
+        (
+            "KILL: short(Axis/1234) -> (Axis/a21af8b5-59df-5vbr-88gf-ab4239r4g6fz) -> Loch(Allies/a21af8b5-59df-5vbr-88gf-ab4239r4g6fx) with FG42 x4",
+            {
+                "action": "KILL",
+                "player": "short(Axis/1234) -> ",
+                "steam_id_64_1": "a21af8b5-59df-5vbr-88gf-ab4239r4g6fz",
+                "player2": "Loch",
+                "steam_id_64_2": "a21af8b5-59df-5vbr-88gf-ab4239r4g6fx",
+                "weapon": "FG42 x4",
+                "message": "short(Axis/1234) -> (Axis/a21af8b5-59df-5vbr-88gf-ab4239r4g6fz) -> Loch(Allies/a21af8b5-59df-5vbr-88gf-ab4239r4g6fx) with FG42 x4",
                 "sub_content": None,
             },
         ),
@@ -250,20 +346,59 @@ def test_kills(
     "raw_log_line, expected",
     [
         (
-            "TEAM KILL: Cyanide(Allies/76561198010856091) -> HoMbRe CaPaZ(Allies/76561197981416155) with GMC CCKW 353 (Transport)",
+            "TEAM KILL: Reduktorius(Axis/76561198136839181) -> Loch(Allies/76561198086167606) with FG42 x4",
             {
                 "action": "TEAM KILL",
-                "player": "Cyanide",
-                "steam_id_64_1": "76561198010856091",
-                "player2": "HoMbRe CaPaZ",
-                "steam_id_64_2": "76561197981416155",
-                "weapon": "GMC CCKW 353 (Transport)",
-                "message": "Cyanide(Allies/76561198010856091) -> HoMbRe CaPaZ(Allies/76561197981416155) with GMC CCKW 353 (Transport)",
+                "player": "Reduktorius",
+                "steam_id_64_1": "76561198136839181",
+                "player2": "Loch",
+                "steam_id_64_2": "76561198086167606",
+                "weapon": "FG42 x4",
+                "message": "Reduktorius(Axis/76561198136839181) -> Loch(Allies/76561198086167606) with FG42 x4",
                 "sub_content": None,
             },
         ),
         (
-            "TEAM KILL: short(Axis/1234) -> (Axis/76561198136839181) -> Loch(Axis/76561198086167606) with FG42 x4",
+            "TEAM KILL: Reduktorius(Axis/a21af8b5-59df-5vbr-88gf-ab4239r4g6f4) -> Loch(Allies/76561198086167606) with FG42 x4",
+            {
+                "action": "TEAM KILL",
+                "player": "Reduktorius",
+                "steam_id_64_1": "a21af8b5-59df-5vbr-88gf-ab4239r4g6f4",
+                "player2": "Loch",
+                "steam_id_64_2": "76561198086167606",
+                "weapon": "FG42 x4",
+                "message": "Reduktorius(Axis/a21af8b5-59df-5vbr-88gf-ab4239r4g6f4) -> Loch(Allies/76561198086167606) with FG42 x4",
+                "sub_content": None,
+            },
+        ),
+        (
+            "TEAM KILL: Reduktorius(Axis/76561198136839181) -> Loch(Allies/a21af8b5-59df-5vbr-88gf-ab4239r4g6f4) with FG42 x4",
+            {
+                "action": "TEAM KILL",
+                "player": "Reduktorius",
+                "steam_id_64_1": "76561198136839181",
+                "player2": "Loch",
+                "steam_id_64_2": "a21af8b5-59df-5vbr-88gf-ab4239r4g6f4",
+                "weapon": "FG42 x4",
+                "message": "Reduktorius(Axis/76561198136839181) -> Loch(Allies/a21af8b5-59df-5vbr-88gf-ab4239r4g6f4) with FG42 x4",
+                "sub_content": None,
+            },
+        ),
+        (
+            "TEAM KILL: Reduktorius(Axis/a21af8b5-59df-5vbr-88gf-ab4239r4g6fz) -> Loch(Allies/a21af8b5-59df-5vbr-88gf-ab4239r4g6f4) with FG42 x4",
+            {
+                "action": "TEAM KILL",
+                "player": "Reduktorius",
+                "steam_id_64_1": "a21af8b5-59df-5vbr-88gf-ab4239r4g6fz",
+                "player2": "Loch",
+                "steam_id_64_2": "a21af8b5-59df-5vbr-88gf-ab4239r4g6f4",
+                "weapon": "FG42 x4",
+                "message": "Reduktorius(Axis/a21af8b5-59df-5vbr-88gf-ab4239r4g6fz) -> Loch(Allies/a21af8b5-59df-5vbr-88gf-ab4239r4g6f4) with FG42 x4",
+                "sub_content": None,
+            },
+        ),
+        (
+            "TEAM KILL: short(Axis/1234) -> (Axis/76561198136839181) -> Loch(Allies/76561198086167606) with FG42 x4",
             {
                 "action": "TEAM KILL",
                 "player": "short(Axis/1234) -> ",
@@ -271,7 +406,46 @@ def test_kills(
                 "player2": "Loch",
                 "steam_id_64_2": "76561198086167606",
                 "weapon": "FG42 x4",
-                "message": "short(Axis/1234) -> (Axis/76561198136839181) -> Loch(Axis/76561198086167606) with FG42 x4",
+                "message": "short(Axis/1234) -> (Axis/76561198136839181) -> Loch(Allies/76561198086167606) with FG42 x4",
+                "sub_content": None,
+            },
+        ),
+        (
+            "TEAM KILL: short(Axis/1234) -> (Axis/a21af8b5-59df-5vbr-88gf-ab4239r4g6fz) -> Loch(Allies/76561198086167606) with FG42 x4",
+            {
+                "action": "TEAM KILL",
+                "player": "short(Axis/1234) -> ",
+                "steam_id_64_1": "a21af8b5-59df-5vbr-88gf-ab4239r4g6fz",
+                "player2": "Loch",
+                "steam_id_64_2": "76561198086167606",
+                "weapon": "FG42 x4",
+                "message": "short(Axis/1234) -> (Axis/a21af8b5-59df-5vbr-88gf-ab4239r4g6fz) -> Loch(Allies/76561198086167606) with FG42 x4",
+                "sub_content": None,
+            },
+        ),
+        (
+            "TEAM KILL: short(Axis/1234) -> (Axis/76561198136839181) -> Loch(Allies/a21af8b5-59df-5vbr-88gf-ab4239r4g6fz) with FG42 x4",
+            {
+                "action": "TEAM KILL",
+                "player": "short(Axis/1234) -> ",
+                "steam_id_64_1": "76561198136839181",
+                "player2": "Loch",
+                "steam_id_64_2": "a21af8b5-59df-5vbr-88gf-ab4239r4g6fz",
+                "weapon": "FG42 x4",
+                "message": "short(Axis/1234) -> (Axis/76561198136839181) -> Loch(Allies/a21af8b5-59df-5vbr-88gf-ab4239r4g6fz) with FG42 x4",
+                "sub_content": None,
+            },
+        ),
+        (
+            "TEAM KILL: short(Axis/1234) -> (Axis/a21af8b5-59df-5vbr-88gf-ab4239r4g6fz) -> Loch(Allies/a21af8b5-59df-5vbr-88gf-ab4239r4g6fx) with FG42 x4",
+            {
+                "action": "TEAM KILL",
+                "player": "short(Axis/1234) -> ",
+                "steam_id_64_1": "a21af8b5-59df-5vbr-88gf-ab4239r4g6fz",
+                "player2": "Loch",
+                "steam_id_64_2": "a21af8b5-59df-5vbr-88gf-ab4239r4g6fx",
+                "weapon": "FG42 x4",
+                "message": "short(Axis/1234) -> (Axis/a21af8b5-59df-5vbr-88gf-ab4239r4g6fz) -> Loch(Allies/a21af8b5-59df-5vbr-88gf-ab4239r4g6fx) with FG42 x4",
                 "sub_content": None,
             },
         ),
@@ -339,6 +513,32 @@ def test_team_kills(
                 "sub_content": None,
             },
         ),
+        (
+            "DISCONNECTED WinstonsDomain (3azzx77e-4ad4-57z3-8gr8-gb9e753e85aq)",
+            {
+                "action": "DISCONNECTED",
+                "player": "WinstonsDomain",
+                "steam_id_64_1": "3azzx77e-4ad4-57z3-8gr8-gb9e753e85aq",
+                "player2": None,
+                "steam_id_64_2": None,
+                "weapon": None,
+                "message": "WinstonsDomain (3azzx77e-4ad4-57z3-8gr8-gb9e753e85aq)",
+                "sub_content": None,
+            },
+        ),
+        (
+            "CONNECTED WinstonsDomain (3azzx77e-4ad4-57z3-8gr8-gb9e753e85aq)",
+            {
+                "action": "CONNECTED",
+                "player": "WinstonsDomain",
+                "steam_id_64_1": "3azzx77e-4ad4-57z3-8gr8-gb9e753e85aq",
+                "player2": None,
+                "steam_id_64_2": None,
+                "weapon": None,
+                "message": "WinstonsDomain (3azzx77e-4ad4-57z3-8gr8-gb9e753e85aq)",
+                "sub_content": None,
+            },
+        ),
     ],
 )
 def test_connect_disconnect(raw_log_line, expected):
@@ -400,6 +600,19 @@ def test_connect_disconnect(raw_log_line, expected):
                 "sub_content": "were we spawning?",
             },
         ),
+        (
+            "CHAT[Unit][WinstonsDomain(Allies/3azzx77e-4ad4-57z3-8gr8-gb9e753e85aq)]: test",
+            {
+                "action": "CHAT[Allies][Unit]",
+                "player": "WinstonsDomain",
+                "steam_id_64_1": "3azzx77e-4ad4-57z3-8gr8-gb9e753e85aq",
+                "player2": None,
+                "steam_id_64_2": None,
+                "weapon": None,
+                "message": "WinstonsDomain: test (3azzx77e-4ad4-57z3-8gr8-gb9e753e85aq)",
+                "sub_content": "test",
+            },
+        ),
     ],
 )
 def test_chat(raw_log_line, expected):
@@ -459,6 +672,19 @@ def test_chat(raw_log_line, expected):
                 "weapon": None,
                 "message": "TEAMSWITCH short(Axis/4567) ->  (None > Axis)",
                 "sub_content": "None > Axis",
+            },
+        ),
+        (
+            "TEAMSWITCH WinstonsDomain (None > Allies)",
+            {
+                "action": "TEAMSWITCH",
+                "player": "WinstonsDomain",
+                "steam_id_64_1": None,
+                "player2": None,
+                "steam_id_64_2": None,
+                "weapon": None,
+                "message": "TEAMSWITCH WinstonsDomain (None > Allies)",
+                "sub_content": "None > Allies",
             },
         ),
     ],
@@ -710,6 +936,45 @@ def test_vote_kicks(raw_log_line, expected):
             },
         ),
         (
+            "Player [makL (76561198006123456)] Left Admin Camera",
+            {
+                "action": "CAMERA",
+                "player": "makL",
+                "steam_id_64_1": "76561198006123456",
+                "player2": None,
+                "steam_id_64_2": None,
+                "weapon": None,
+                "message": "[makL (76561198006123456)] Left Admin Camera",
+                "sub_content": "Left Admin Camera",
+            },
+        ),
+        (
+            "Player [WinstonsDomain (3azzx77e-4ad4-57z3-8gr8-gb9e753e85aq)] Entered Admin Camera",
+            {
+                "action": "CAMERA",
+                "player": "WinstonsDomain",
+                "steam_id_64_1": "3azzx77e-4ad4-57z3-8gr8-gb9e753e85aq",
+                "player2": None,
+                "steam_id_64_2": None,
+                "weapon": None,
+                "message": "[WinstonsDomain (3azzx77e-4ad4-57z3-8gr8-gb9e753e85aq)] Entered Admin Camera",
+                "sub_content": "Entered Admin Camera",
+            },
+        ),
+        (
+            "Player [WinstonsDomain (3azzx77e-4ad4-57z3-8gr8-gb9e753e85aq)] Left Admin Camera",
+            {
+                "action": "CAMERA",
+                "player": "WinstonsDomain",
+                "steam_id_64_1": "3azzx77e-4ad4-57z3-8gr8-gb9e753e85aq",
+                "player2": None,
+                "steam_id_64_2": None,
+                "weapon": None,
+                "message": "[WinstonsDomain (3azzx77e-4ad4-57z3-8gr8-gb9e753e85aq)] Left Admin Camera",
+                "sub_content": "Left Admin Camera",
+            },
+        ),
+        (
             "Player [short(Axis/1234) ->  (76561198312191879)] Entered Admin Camera",
             {
                 "action": "CAMERA",
@@ -780,6 +1045,19 @@ def test_match_start_end(raw_log_line, expected):
             },
         ),
         (
+            "MESSAGE: player [WinstonsDomain(3azzx77e-4ad4-57z3-8gr8-gb9e753e85aq)], content [Please ignore this just need a message in the RCON logs to test something.]",
+            {
+                "action": "MESSAGE",
+                "player": "WinstonsDomain",
+                "steam_id_64_1": "3azzx77e-4ad4-57z3-8gr8-gb9e753e85aq",
+                "player2": None,
+                "steam_id_64_2": None,
+                "weapon": None,
+                "message": "WinstonsDomain(3azzx77e-4ad4-57z3-8gr8-gb9e753e85aq): Please ignore this just need a message in the RCON logs to test something.",
+                "sub_content": "Please ignore this just need a message in the RCON logs to test something.",
+            },
+        ),
+        (
             """MESSAGE: player [ð“¼ð“ºð“¾ð“²ð“­ð“­ [KRKN](76561198370630324)], content [please ignore this
 I just need a multiline message in the RCON logs
 to test something]""",
@@ -791,6 +1069,21 @@ to test something]""",
                 "steam_id_64_2": None,
                 "weapon": None,
                 "message": "ð“¼ð“ºð“¾ð“²ð“­ð“­ [KRKN](76561198370630324): please ignore this I just need a multiline message in the RCON logs to test something",
+                "sub_content": "please ignore this I just need a multiline message in the RCON logs to test something",
+            },
+        ),
+        (
+            """MESSAGE: player [WinstonsDomain(3azzx77e-4ad4-57z3-8gr8-gb9e753e85aq)], content [please ignore this
+I just need a multiline message in the RCON logs
+to test something]""",
+            {
+                "action": "MESSAGE",
+                "player": "WinstonsDomain",
+                "steam_id_64_1": "3azzx77e-4ad4-57z3-8gr8-gb9e753e85aq",
+                "player2": None,
+                "steam_id_64_2": None,
+                "weapon": None,
+                "message": "WinstonsDomain(3azzx77e-4ad4-57z3-8gr8-gb9e753e85aq): please ignore this I just need a multiline message in the RCON logs to test something",
                 "sub_content": "please ignore this I just need a multiline message in the RCON logs to test something",
             },
         ),

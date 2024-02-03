@@ -183,6 +183,8 @@ GROUPS = [
             "can_view_watchlist_discord_webhooks_config",
             "can_change_watchlist_discord_webhooks_config",
             "can_restart_webserver",
+            "can_view_chat_commands_config",
+            "can_change_chat_commands_config",
         ),
     ),
     (
@@ -356,6 +358,8 @@ GROUPS = [
             "can_change_kills_discord_webhooks_config",
             "can_view_watchlist_discord_webhooks_config",
             "can_change_watchlist_discord_webhooks_config",
+            "can_view_chat_commands_config",
+            "can_change_chat_commands_config",
         ),
     ),
     (

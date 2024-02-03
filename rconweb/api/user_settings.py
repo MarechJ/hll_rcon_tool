@@ -20,6 +20,7 @@ from rcon.user_config.auto_mod_seeding import AutoModSeedingUserConfig
 from rcon.user_config.auto_mod_solo_tank import AutoModNoSoloTankUserConfig
 from rcon.user_config.ban_tk_on_connect import BanTeamKillOnConnectUserConfig
 from rcon.user_config.camera_notification import CameraNotificationUserConfig
+from rcon.user_config.chat_commands import ChatCommandsUserConfig
 from rcon.user_config.expired_vips import ExpiredVipsUserConfig
 from rcon.user_config.gtx_server_name import GtxServerNameChangeUserConfig
 from rcon.user_config.log_line_webhooks import LogLineWebhookUserConfig
@@ -2456,6 +2457,82 @@ def validate_watchlist_discord_webhooks_config(request):
 def set_watchlist_discord_webhooks_config(request):
     command_name = "set_watchlist_discord_webhooks"
     cls = WatchlistWebhooksUserConfig
+    data = _get_data(request)
+
+    response = _audit_user_config_differences(
+        cls, data, command_name, request.user.username
+    )
+
+    if response:
+        return response
+
+    return api_response(
+        result=True,
+        command=command_name,
+        arguments=data,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+@permission_required("api.can_view_chat_commands_config", raise_exception=True)
+def get_chat_commands_config(request):
+    command_name = "get_chat_commands_config"
+
+    try:
+        config = ChatCommandsUserConfig.load_from_db()
+    except Exception as e:
+        logger.exception(e)
+        return api_response(command=command_name, error=str(e), failed=True)
+
+    return api_response(
+        result=config.model_dump(),
+        command=command_name,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+def describe_chat_commands_config(request):
+    command_name = "describe_chat_commands_config"
+
+    return api_response(
+        result=ChatCommandsUserConfig.model_json_schema(),
+        command=command_name,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+@permission_required("api.can_change_chat_commands_config", raise_exception=True)
+def validate_chat_commands_config(request):
+    command_name = "validate_chat_commands_config"
+    data = _get_data(request)
+
+    response = _validate_user_config(
+        ChatCommandsUserConfig, data=data, command_name=command_name, dry_run=True
+    )
+
+    if response:
+        return response
+
+    return api_response(
+        result=True,
+        command=command_name,
+        arguments=data,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+@permission_required("api.can_change_chat_commands_config", raise_exception=True)
+def set_chat_commands_config(request):
+    command_name = "set_chat_commands_config"
+    cls = ChatCommandsUserConfig
     data = _get_data(request)
 
     response = _audit_user_config_differences(

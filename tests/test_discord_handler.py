@@ -142,6 +142,30 @@ def test_admin_pings_mention_middle():
     assert content == "<@1212>"
     assert triggered
 
+def test_admin_pings_contains_numbers():
+    config = AdminPingWebhooksUserConfig(
+        trigger_words=["testword123"],
+        hooks=[
+            DiscordMentionWebhook(
+                url=HttpUrl("http://example.com"), user_mentions=["<@1212>"]
+            )
+        ],
+    )
+
+    handler = DiscordWebhookHandler(admin_wh_config=config)
+    content, embed, triggered = handler.create_admin_ping_message(
+        log={
+            "sub_content": "testword123 test @here",
+            "player": "some dude",
+            "steam_id_64_1": "1234",
+            "action": "CHAT[Allies][Team]",
+        }
+    )
+
+    assert embed.description == "__**testword123**__ test @\u200bhere"
+    assert triggered
+    assert content == "<@1212>"
+
 
 def test_kill_message():
     config = KillsWebhooksUserConfig(

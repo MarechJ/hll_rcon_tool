@@ -795,6 +795,31 @@ def test_punish_too_little_players(team_view):
         aplayer,
     )
 
+def test_dont_punish_below_min_number_of_players(team_view):
+    config = AutoModNoLeaderUserConfig(
+        dont_do_anything_below_this_number_of_players=40,
+        number_of_punishments=2,
+        punish_interval_seconds=60,
+        min_squad_players_for_punish=0,
+        min_server_players_for_punish=60,
+        immune_player_level=10,
+        immune_roles=[],
+    )
+    
+    player = team_view["allies"]["squads"]["able"]["players"][0]
+
+    mod = NoLeaderAutomod(config, None)
+    to_apply = mod.punitions_to_apply(
+        team_view,
+        "able",
+        "allies",
+        {"players": [team_view["allies"]["squads"]['able']]},
+        game_state,
+    )
+    assert to_apply.punish == []
+    assert to_apply.warning == []
+    assert to_apply.kick == []
+
 
 def test_punish_small_squad(team_view):
     config = AutoModNoLeaderUserConfig(
@@ -1135,6 +1160,7 @@ def test_ignores_commander(team_view):
 
 def test_watcher(team_view):
     config = AutoModNoLeaderUserConfig(
+        dont_do_anything_below_this_number_of_players=0,
         number_of_notes=0,
         number_of_warnings=1,
         warning_interval_seconds=3,
@@ -1518,6 +1544,7 @@ def test_watcher(team_view):
 
 def test_watcher_no_kick(team_view):
     config = AutoModNoLeaderUserConfig(
+        dont_do_anything_below_this_number_of_players=0,
         number_of_notes=0,
         number_of_warnings=1,
         warning_interval_seconds=3,
@@ -1780,6 +1807,7 @@ def test_watcher_no_kick(team_view):
 
 def test_watcher_resets(team_view):
     config = AutoModNoLeaderUserConfig(
+        dont_do_anything_below_this_number_of_players=0,
         number_of_notes=0,
         number_of_warnings=0,
         warning_interval_seconds=3,
