@@ -64,7 +64,74 @@ const useStyles = makeStyles((theme) => {
       textAlign: "left",
       padding: theme.spacing(2),
     },
+    // from discord_chat.py...
+    // RED = 0xA62019
+    // LIGHT_RED = 0xF93A2F
+    // BLUE = 0x006798
+    // LIGHT_BLUE = 0x0099E1
+    // GREEN = 0x07DA63
     logs: {
+      margin: 0,
+      whiteSpace: "pre-wrap",
+    },
+    logsChatAxis: {
+      color: "#F93A2F",
+      margin: 0,
+      whiteSpace: "pre-wrap",
+    },
+    logsChatAllies: {
+      color: "#006798",
+      margin: 0,
+      whiteSpace: "pre-wrap",
+    },
+    logsAdmin: {
+      color: "grey",
+      margin: 0,
+      whiteSpace: "pre-wrap",
+    },
+    logsTK: {
+      color: "grey",
+      margin: 0,
+      whiteSpace: "pre-wrap",
+    },
+    logsMatch: {
+      color: "grey",
+      margin: 0,
+      whiteSpace: "pre-wrap",
+    },
+    logsVote: {
+      color: "grey",
+      margin: 0,
+      whiteSpace: "pre-wrap",
+    },
+    logsMessage: {
+      color: "grey",
+      margin: 0,
+      whiteSpace: "pre-wrap",
+    },
+    logsTeamKill: {
+      color: "mediumvioletred",
+      fontWeight: "bold",
+      margin: 0,
+      whiteSpace: "pre-wrap",
+    },
+    logsKill: {
+      color: "grey",
+      margin: 0,
+      whiteSpace: "pre-wrap",
+    },
+    logsTeamSwitch: {
+      color: "grey",
+      margin: 0,
+      whiteSpace: "pre-wrap",
+    },
+    logsDisconnected: {
+      color: "grey",
+      margin: 0,
+      whiteSpace: "pre-wrap",
+    },
+    logsConnected: {
+      color: "grey",
       margin: 0,
       whiteSpace: "pre-wrap",
     },
