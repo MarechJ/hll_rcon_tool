@@ -220,7 +220,7 @@ class Logs extends React.Component {
                   color="primary"
                 />
               }
-              label="Hilite Logs"
+              label="Highlight Logs"
               labelPlacement="top"
             />
             </h1>
