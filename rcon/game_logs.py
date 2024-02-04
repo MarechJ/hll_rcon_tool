@@ -10,6 +10,7 @@ from functools import partial
 from typing import Callable, DefaultDict, Dict, Iterable
 
 import discord_webhook
+from discord.utils import escape_markdown
 from pydantic import HttpUrl
 from sqlalchemy import and_, desc, or_
 from sqlalchemy.exc import IntegrityError
@@ -199,7 +200,7 @@ def send_log_line_webhook_message(
     allowed_mentions = make_allowed_mentions(mentions)
 
     content = " ".join(mentions)
-    description: str = log_line["line_without_time"]
+    description: str = escape_markdown(log_line["line_without_time"])
     embed = discord_webhook.DiscordEmbed(
         description=description,
         timestamp=datetime.datetime.utcfromtimestamp(log_line["timestamp_ms"] / 1000),
