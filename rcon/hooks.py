@@ -6,6 +6,7 @@ from functools import wraps
 from threading import Timer
 
 from discord_webhook import DiscordEmbed
+from discord.utils import escape_markdown
 
 import rcon.steam_utils as steam_utils
 from rcon.cache_utils import invalidates
@@ -749,7 +750,7 @@ def notify_camera(rcon: Rcon, struct_log):
     try:
         if hooks := get_prepared_discord_hooks(CameraWebhooksUserConfig):
             embeded = DiscordEmbed(
-                title=f'{struct_log["player"]}  - {struct_log["steam_id_64_1"]}',
+                title=f'{escape_markdown(struct_log["player"])}  - {escape_markdown(struct_log["steam_id_64_1"])}',
                 description=struct_log["sub_content"],
                 color=242424,
             )
