@@ -148,7 +148,7 @@ class RconUser(User):
             ("can_view_auto_settings", "Can view auto settings"),
             ("can_view_autobalance_enabled", "Can view if autobalance is enabled"),
             ("can_view_autobalance_threshold", "Can view the autobalance threshold"),
-            ("can_view_available_services", "Can view serviecs (automod, etc)"),
+            ("can_view_available_services", "Can view services (automod, etc)"),
             ("can_view_broadcast_message", "Can view the current broadcast message"),
             ("can_view_camera_config", "Can view camera notification settings"),
             ("can_view_connection_info", "Can view CRCON's connection info"),
@@ -425,5 +425,5 @@ class RconUser(User):
                 "Can restart the webserver (Not a complete Docker restart)",
             ),
             ("can_view_chat_commands_config", "Can view the chat commands config"),
-            ("can_change_chat_commands_config", "Can change the chat comads config"),
+            ("can_change_chat_commands_config", "Can change the chat commads config"),
         )
