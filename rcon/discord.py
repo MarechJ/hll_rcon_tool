@@ -6,6 +6,7 @@ from typing import List, Type
 import requests
 from discord_webhook import DiscordWebhook
 from pydantic import HttpUrl
+from discord.utils import escape_markdown
 
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.webhooks import (
@@ -100,7 +101,7 @@ def send_to_discord_audit(
         dh_webhooks = [
             DiscordWebhook(
                 url=str(url),
-                content="[{}][**{}**] {}".format(server_config.short_name, by, message),
+                content="[{}][**{}**] {}".format(server_config.short_name, escape_markdown(by), escape_markdown(message)),
             )
             for url in webhookurls
             if url
