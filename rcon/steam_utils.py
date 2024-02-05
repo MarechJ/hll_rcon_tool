@@ -373,52 +373,51 @@ def enrich_db_users(chunk_size=100, update_from_days_old=30):
     """Use the Steam API to update steam profiles/bans for missing or old records"""
     max_age = datetime.datetime.utcnow() - datetime.timedelta(days=update_from_days_old)
     with enter_session() as sess:
-        with sess.no_autoflush:
-            # Missing JSONB records are surprisingly difficult to identify depending
-            # on how they've been persisted but JSONB.NULL should cover the different cases
-            # This query can also return many thousands of results, using stream_results and
-            # yield_per doesn't fetch all of the results at once, but pages through them
-            stmt = (
-                select(PlayerSteamID)
-                .execution_options(stream_results=True, yield_per=chunk_size)
-                .outerjoin(SteamInfo)
-                .where(func.length(PlayerSteamID.steam_id_64) == 17)
-                .where(
-                    or_(
-                        PlayerSteamID.steaminfo == None,
-                        SteamInfo.updated <= max_age,
-                        SteamInfo.bans == JSONB.NULL,
-                        SteamInfo.profile == JSONB.NULL,
-                    )
+        # Missing JSONB records are surprisingly difficult to identify depending
+        # on how they've been persisted but JSONB.NULL should cover the different cases
+        # This query can also return many thousands of results, using stream_results and
+        # yield_per doesn't fetch all of the results at once, but pages through them
+        stmt = (
+            select(PlayerSteamID)
+            .execution_options(stream_results=True, yield_per=chunk_size)
+            .outerjoin(SteamInfo)
+            .where(func.length(PlayerSteamID.steam_id_64) == 17)
+            .where(
+                or_(
+                    PlayerSteamID.steaminfo == None,
+                    SteamInfo.updated <= max_age,
+                    SteamInfo.bans == JSONB.NULL,
+                    SteamInfo.profile == JSONB.NULL,
                 )
             )
+        )
 
-            logger.info("Updating steam profiles/bans for missing/old users")
-            for idx, player_chunks in enumerate(sess.scalars(stmt).partitions()):
-                try:
-                    players = list(player_chunks)
-                    if not players:
-                        logger.warning("Empty query results for page %s", idx)
-                        continue
-                    logger.info(
-                        "Updating page %s steam profile/bans, first steam ID of page: %s",
-                        idx + 1,
-                        players[0],
-                    )
-                    num_profs, num_bans = update_db_player_info(sess, players=players)
+        logger.info("Updating steam profiles/bans for missing/old users")
+        for idx, player_chunks in enumerate(sess.scalars(stmt).partitions()):
+            try:
+                players = list(player_chunks)
+                if not players:
+                    logger.warning("Empty query results for page %s", idx)
+                    continue
+                logger.info(
+                    "Updating page %s steam profile/bans, first steam ID of page: %s",
+                    idx + 1,
+                    players[0],
+                )
+                num_profs, num_bans = update_db_player_info(sess, players=players)
 
-                    logger.info(
-                        "%s profiles, %s bans fetched from steam API",
-                        num_profs,
-                        num_bans,
-                    )
-                except Exception as e:
-                    logger.exception(e)
-                    logger.error("Error while fetching page %s: %s", idx + 1, e)
+                logger.info(
+                    "%s profiles, %s bans fetched from steam API",
+                    num_profs,
+                    num_bans,
+                )
+            except Exception as e:
+                logger.exception(e)
+                logger.error("Error while fetching page %s: %s", idx + 1, e)
 
-                # Shouldn't really need this with how many API calls we should be able to make
-                # but just to be on the safe side
-                time.sleep(1)
+            # Shouldn't really need this with how many API calls we should be able to make
+            # but just to be on the safe side
+            time.sleep(1)
 
 
 if __name__ == "__main__":
