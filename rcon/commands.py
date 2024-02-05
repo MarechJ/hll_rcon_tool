@@ -586,7 +586,7 @@ class ServerCtl:
         after_map_name: str,
         after_map_name_number: int | None = None,
     ) -> str:
-        cmd = f"rotadd /Game/Maps/{map_name} /Game/Maps/{after_map_name}"
+        cmd = f"rotadd {map_name} {after_map_name}"
         if after_map_name_number:
             cmd = f"{cmd} {after_map_name_number}"
 
@@ -595,7 +595,7 @@ class ServerCtl:
     def do_remove_map_from_rotation(
         self, map_name, map_number: int | None = None
     ) -> str:
-        cmd = f"rotdel /Game/Maps/{map_name}"
+        cmd = f"rotdel {map_name}"
         if map_number:
             cmd = f"{cmd} {map_number}"
 
