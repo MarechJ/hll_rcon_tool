@@ -39,32 +39,7 @@ logger = logging.getLogger(__name__)
 
 @click.group()
 def cli():
-    ctl = get_rcon()
-    # Dynamically register all the methods from ServerCtl
-    # use dir instead of inspect.getmembers to avoid touching cached_property
-    # members that would be initialized even if we want to skip them, like connection_pool
-    for name in dir(ctl):
-        if name in EXCLUDED:
-            continue
-
-        func = getattr(ctl, name)
-
-        if (
-            not any(name.startswith(prefix) for prefix in PREFIXES_TO_EXPOSE)
-            or name in EXCLUDED
-        ):
-            continue
-        wrapped = do_print(func)
-
-    # Registering the arguments of the function must be done from last
-    # to first as they are decorators
-    for pname, param in [i for i in inspect.signature(func).parameters.items()][::-1]:
-        if param.default != inspect._empty:
-            wrapped = click.option(f"--{pname}", pname, default=param.default)(wrapped)
-        else:
-            wrapped = click.argument(pname)(wrapped)
-
-    cli.command(name=name)(wrapped)
+    pass
 
 
 @cli.command(name="live_stats_loop")
@@ -428,6 +403,34 @@ def reset_user_settings(server: int):
 
 PREFIXES_TO_EXPOSE = ["get_", "set_", "do_"]
 EXCLUDED: Set[str] = {"set_maprotation", "connection_pool"}
+
+# For this to work correctly with click it has to be at the top level of the module and ran on import
+ctl = get_rcon()
+# Dynamically register all the methods from ServerCtl
+# use dir instead of inspect.getmembers to avoid touching cached_property
+# members that would be initialized even if we want to skip them, like connection_pool
+for name in dir(ctl):
+    if name in EXCLUDED:
+        continue
+
+    func = getattr(ctl, name)
+
+    if (
+        not any(name.startswith(prefix) for prefix in PREFIXES_TO_EXPOSE)
+        or name in EXCLUDED
+    ):
+        continue
+    wrapped = do_print(func)
+
+    # Registering the arguments of the function must be done from last
+    # to first as they are decorators
+    for pname, param in [i for i in inspect.signature(func).parameters.items()][::-1]:
+        if param.default != inspect._empty:
+            wrapped = click.option(f"--{pname}", pname, default=param.default)(wrapped)
+        else:
+            wrapped = click.argument(pname)(wrapped)
+
+    cli.command(name=name)(wrapped)
 
 if __name__ == "__main__":
     cli()
