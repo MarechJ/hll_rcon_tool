@@ -300,9 +300,10 @@ Enter the command(s) that suit(s) your operating system :
 - Raspberry-Pi (64 bits) or any ARM32v8 :
   > `docker compose -f docker-compose.yml -f docker-compose.arm64v8.yml up -d --build`
 
-If eveything went well, you'll end up with some green lines saying "started" after a minute or two.
+If eveything went well, you'll end up with some green lines saying "started" after a minute or two.  
+Note some lines **will** show errors if you do not have set values for 2nd (xxx**_2**-1) or 3rd (xxx**_3**-1) game server. This is normal.
 
-If some of the final lines show (red) errors :  
+If some of the final lines regardinng game server 1 (xxx**_1**-1) show (red) errors :  
 check the values you've entered in the **.env** file and try to start CRCON again.
 
 Then enter the start command line(s) above again.
