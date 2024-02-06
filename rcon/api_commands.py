@@ -504,8 +504,8 @@ class RconAPI(Rcon):
 
     def get_recent_logs(
         self,
-        player_search: list[str] = [],
-        action_filter: list[str] = [],
+        filter_player: list[str] = [],
+        filter_action: list[str] = [],
         inclusive_filter: bool = True,
         start: int = 0,
         end: int = 10000,
@@ -515,8 +515,8 @@ class RconAPI(Rcon):
         return game_logs.get_recent_logs(
             start=start,
             end=end,
-            player_search=player_search,
-            action_filter=action_filter,
+            player_search=filter_player,
+            action_filter=filter_action,
             exact_player_match=exact_player_match,
             exact_action=exact_action,
             inclusive_filter=inclusive_filter,
