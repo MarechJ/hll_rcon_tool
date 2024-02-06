@@ -425,14 +425,18 @@ class RconAPI(Rcon):
 
     @staticmethod
     def toggle_player_watch(
-        steam_id_64: str, player_name: str, reason: str, audit_name: str, add: bool
+        steam_id_64: str,
+        audit_name: str,
+        add: bool,
+        reason: str | None = None,
+        player_name: str | None = None,
     ) -> bool:
         watcher = PlayerWatch(steam_id_64=steam_id_64)
         if add:
             result = watcher.watch(
-                reason=reason,
+                reason=reason or "",
                 by=audit_name,
-                player_name=player_name,
+                player_name=player_name or "",
             )
         else:
             result = watcher.unwatch()
@@ -440,24 +444,32 @@ class RconAPI(Rcon):
         return result
 
     def do_watch_player(
-        self, steam_id_64: str, player_name: str, reason: str, audit_name: str
+        self,
+        steam_id_64: str,
+        reason: str,
+        by: str,
+        player_name: str | None = None,
     ) -> bool:
         return self.toggle_player_watch(
             steam_id_64=steam_id_64,
             player_name=player_name,
             reason=reason,
-            audit_name=audit_name,
+            audit_name=by,
             add=True,
         )
 
     def do_unwatch_player(
-        self, steam_id_64: str, player_name: str, reason: str, audit_name: str
+        self,
+        steam_id_64: str,
+        by: str,
+        reason: str | None = None,
+        player_name: str | None = None,
     ) -> bool:
         return self.toggle_player_watch(
             steam_id_64=steam_id_64,
             player_name=player_name,
             reason=reason,
-            audit_name=audit_name,
+            audit_name=by,
             add=False,
         )
 
