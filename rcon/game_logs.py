@@ -10,11 +10,11 @@ from functools import partial
 from typing import Callable, DefaultDict, Dict, Iterable
 
 import discord_webhook
-from discord.utils import escape_markdown
 from pydantic import HttpUrl
 from sqlalchemy import and_, desc, or_
 from sqlalchemy.exc import IntegrityError
 
+from discord.utils import escape_markdown
 from rcon.cache_utils import get_redis_client, ttl_cache
 from rcon.discord import make_hook, send_to_discord_audit
 from rcon.models import LogLine, PlayerSteamID, enter_session
@@ -536,6 +536,10 @@ def get_recent_logs(
     # `actions_filter`
     log_list = LogLoop.get_log_history_list()
     all_logs = log_list
+
+    if not isinstance(start, int):
+        start = 0
+
     if start != 0:
         all_logs = log_list[start : min(end, len(log_list))]
     logs: list[StructuredLogLineWithMetaData] = []
