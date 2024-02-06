@@ -255,7 +255,8 @@ You do not have to change all the values. Only these 5 are mandatory :
 
         HLL_DB_PASSWORD=anythingwithoutanyspace
 
-3. Enter a long string that will be used to scramble users passwords, you may want to back this up separately, if you lose it all of your admin accounts will be invalidated and need their passwords reset. Do NOT change it after CRCON has been started at least one time : existing passwords would be invalidated.
+3. Enter a long string that will be used to scramble users passwords, you may want to back this up separately, if you lose it all of your admin accounts will be invalidated and need their passwords reset.
+  Do NOT change it after CRCON has been started at least one time : existing passwords would be invalidated.
 
        RCONWEB_API_SECRET=anythingwithoutanyspaceordollarsign
 
@@ -301,9 +302,9 @@ Enter the command(s) that suit(s) your operating system :
   > `docker compose -f docker-compose.yml -f docker-compose.arm64v8.yml up -d --build`
 
 If eveything went well, you'll end up with some green lines saying "started" after a minute or two.  
-Note some lines **will** show errors if you do not have set values for 2nd (xxx**_2**-1) or 3rd (xxx**_3**-1) game server. This is normal.
+Note some lines **will** show errors if you do not have set values for 2nd (xxx **_2** -1) or 3rd (xxx **_3** -1) game server. This is normal.
 
-If some of the final lines regardinng game server 1 (xxx**_1**-1) show (red) errors :  
+If some of the final lines regarding game server 1 (xxx **_1** -1) show (red) errors :  
 check the values you've entered in the **.env** file and try to start CRCON again.
 
 Then enter the start command line(s) above again.
