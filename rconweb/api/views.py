@@ -223,7 +223,7 @@ def expose_api_endpoint(
 
             # get prefixes are automatically skipped in audit
             # TODO: remove deprecated endpoints
-            if name not in ("player",):
+            if name not in ("player", "players_history"):
                 audit(func.__name__, request, arguments)
 
             # Can't serialize pydantic models without an explicit call to .model_dump which we do here,
@@ -503,6 +503,7 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     rcon_api.get_votemap_status: "api.can_view_votemap_status",
     rcon_api.get_watchlist_discord_webhooks_config: "api.can_view_watchlist_discord_webhooks_config",
     rcon_api.get_welcome_message: "api.can_view_welcome_message",
+    # TODO: update this name
     rcon_api.reset_votemap_state: "api.can_reset_votemap_state",
     rcon_api.set_admin_pings_discord_webhooks_config: "api.can_change_admin_pings_discord_webhooks_config",
     rcon_api.set_audit_discord_webhooks_config: "api.can_change_audit_discord_webhooks_config",
