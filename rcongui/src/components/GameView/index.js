@@ -101,7 +101,7 @@ const Squad = ({
   );
 
   const deleteFlag = (flag_id) => {
-    return postData(`${process.env.REACT_APP_API_URL}unflag_player`, {
+    return postData(`${process.env.REACT_APP_API_URL}do_unflag_player`, {
       flag_id: flag_id,
     })
       .then((response) =>
@@ -132,13 +132,11 @@ const Squad = ({
         <ListItemText
           primary={
             <Typography variant="h6">
-              {`${
-                squadName.toUpperCase() === "NULL"
-                  ? "Unassigned"
-                  : squadName.toUpperCase()
-              } - ${squadData.get("players", new IList()).size}/${
-                sizes[squadData.get("type", "infantry")]
-              }`}{" "}
+              {`${squadName.toUpperCase() === "NULL"
+                ? "Unassigned"
+                : squadName.toUpperCase()
+                } - ${squadData.get("players", new IList()).size}/${sizes[squadData.get("type", "infantry")]
+                }`}{" "}
               {squadData.get("has_leader", false) ? (
                 ""
               ) : (
@@ -258,9 +256,9 @@ const Team = ({
       className={classes.root}
     >
       {teamData.get("commander") &&
-      (!showOnlySelected ||
-        (showOnlySelected &&
-          selectedPlayers.contains(teamData.get("commander")?.get("name")))) ? (
+        (!showOnlySelected ||
+          (showOnlySelected &&
+            selectedPlayers.contains(teamData.get("commander")?.get("name")))) ? (
         <PlayerItem
           classes={globalClasses}
           player={teamData.get("commander")}
@@ -560,12 +558,12 @@ const GameView = ({ classes: globalClasses }) => {
 
   const addFlagToPlayers = (_, flag, comment) => {
     selectedPlayers.forEach((name) =>
-      postData(`${process.env.REACT_APP_API_URL}flag_player`, {
+      postData(`${process.env.REACT_APP_API_URL}do_flag_player`, {
         steam_id_64: playerNamesToSteamId.get(name),
         flag: flag,
         comment: comment,
       })
-        .then((response) => showResponse(response, "flag_player", true))
+        .then((response) => showResponse(response, "do_flag_player", true))
         .then(() => setFlag(false))
         .catch(handle_http_errors)
     );

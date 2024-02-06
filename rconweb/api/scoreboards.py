@@ -1,6 +1,7 @@
 import logging
 import os
 from datetime import datetime, timedelta
+from rcon.utils import MapsHistory
 
 from django.contrib.auth.decorators import permission_required
 from django.views.decorators.csrf import csrf_exempt
@@ -130,3 +131,90 @@ def get_live_game_stats(request):
     return api_response(
         result=stats, error=error_, failed=failed, command="get_live_game_stats"
     )
+
+
+@csrf_exempt
+@login_required()
+@permission_required("api.can_view_date_scoreboard", raise_exception=True)
+@require_http_methods(["GET"])
+def date_scoreboard(request):
+    try:
+        start = datetime.fromtimestamp(request.GET.get("start"))
+    except (ValueError, KeyError, TypeError) as e:
+        start = datetime.now() - timedelta(minutes=60)
+    try:
+        end = datetime.fromtimestamp(request.GET.get("end"))
+    except (ValueError, KeyError, TypeError) as e:
+        end = datetime.now()
+
+    stats = TimeWindowStats()
+
+    try:
+        result = stats.get_players_stats_at_time(start, end)
+        error_ = (None,)
+        failed = False
+
+    except Exception as e:
+        logger.exception("Unable to produce date stats")
+        result = {}
+        error_ = ""
+        failed = True
+
+    return api_response(
+        result=result, error=error_, failed=failed, command="date_scoreboard"
+    )
+
+
+@csrf_exempt
+@stats_login_required
+@require_http_methods(["GET"])
+def get_map_history(request):
+    data = _get_data(request)
+    res = MapsHistory()[:]
+    if data.get("pretty"):
+        res = [
+            dict(
+                name=i["name"],
+                start=(
+                    datetime.fromtimestamp(i["start"]).isoformat()
+                    if i["start"]
+                    else None
+                ),
+                end=datetime.fromtimestamp(i["end"]).isoformat() if i["end"] else None,
+            )
+            for i in res
+        ]
+    return api_response(
+        result=res, command="get_map_history", arguments={}, failed=False
+    )
+
+
+@csrf_exempt
+@stats_login_required
+@require_http_methods(["GET"])
+def get_previous_map(request):
+    command_name = "get_previous_map"
+    try:
+        prev_map = MapsHistory()[1]
+        res = {
+            "name": prev_map["name"],
+            "start": (
+                datetime.fromtimestamp(prev_map["start"]).isoformat()
+                if prev_map["start"]
+                else None
+            ),
+            "end": (
+                datetime.fromtimestamp(prev_map["end"]).isoformat()
+                if prev_map["end"]
+                else None
+            ),
+        }
+
+        return api_response(result=res, command=command_name, failed=False)
+    except IndexError:
+        return api_response(result=None, command=command_name, failed=False)
+    except Exception as e:
+        logger.exception(e)
+        return api_response(
+            result=None, command=command_name, failed=True, error=str(e)
+        )

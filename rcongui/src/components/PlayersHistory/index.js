@@ -295,8 +295,8 @@ class PlayersHistory extends React.Component {
     );
 
     this.setState({ isLoading: true });
-    return postData(`${process.env.REACT_APP_API_URL}players_history`, params)
-      .then((response) => showResponse(response, "player_history"))
+    return postData(`${process.env.REACT_APP_API_URL}get_players_history`, params)
+      .then((response) => showResponse(response, "get_players_history"))
       .then((data) => {
         this.setState({ isLoading: false });
         if (data.failed) {
@@ -330,21 +330,21 @@ class PlayersHistory extends React.Component {
   };
 
   addFlagToPlayer(playerObj, flag, comment = null) {
-    return postData(`${process.env.REACT_APP_API_URL}flag_player`, {
+    return postData(`${process.env.REACT_APP_API_URL}do_flag_player`, {
       steam_id_64: playerObj.get("steam_id_64"),
       flag: flag,
       comment: comment,
     })
-      .then((response) => showResponse(response, "flag_player"))
+      .then((response) => showResponse(response, "do_flag_player"))
       .then(this._reloadOnSuccess)
       .catch((error) => toast.error("Unable to connect to API " + error));
   }
 
   deleteFlag(flag_id) {
-    return postData(`${process.env.REACT_APP_API_URL}unflag_player`, {
+    return postData(`${process.env.REACT_APP_API_URL}do_unflag_player`, {
       flag_id: flag_id,
     })
-      .then((response) => showResponse(response, "unflag_player"))
+      .then((response) => showResponse(response, "do_unflag_player"))
       .then(this._reloadOnSuccess)
       .catch((error) => toast.error("Unable to connect to API " + error));
   }
@@ -378,7 +378,7 @@ class PlayersHistory extends React.Component {
       comment,
       `PlayerID ${steamId64} blacklist for ${reason}`
     );
-    postData(`${process.env.REACT_APP_API_URL}blacklist_player`, {
+    postData(`${process.env.REACT_APP_API_URL}do_blacklist_player`, {
       steam_id_64: steamId64,
       reason: reason,
     })
@@ -399,7 +399,7 @@ class PlayersHistory extends React.Component {
       null,
       `PlayerID ${steamId64} removed from blacklist`
     );
-    postData(`${process.env.REACT_APP_API_URL}unblacklist_player`, {
+    postData(`${process.env.REACT_APP_API_URL}do_unblacklist_player`, {
       steam_id_64: steamId64,
     })
       .then((response) =>
@@ -415,7 +415,7 @@ class PlayersHistory extends React.Component {
 
   unBanPlayer(steamId64) {
     this.postComment(steamId64, null, `PlayerID ${steamId64} unbanned`);
-    postData(`${process.env.REACT_APP_API_URL}unban`, {
+    postData(`${process.env.REACT_APP_API_URL}do_unban`, {
       steam_id_64: steamId64,
     })
       .then((response) =>

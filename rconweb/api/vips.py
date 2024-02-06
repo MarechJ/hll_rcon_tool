@@ -15,15 +15,13 @@ from django.views.decorators.http import require_http_methods
 from rcon.commands import CommandFailedError
 from rcon.discord import send_to_discord_audit
 from rcon.models import PlayerSteamID, PlayerVIP, enter_session
-from rcon.user_config.real_vip import RealVipUserConfig
 from rcon.utils import get_server_number
 from rcon.workers import get_job_results, worker_bulk_vip
 
 from .audit_log import record_audit
 from .auth import api_response, login_required
 from .decorators import require_content_type
-from .user_settings import _audit_user_config_differences, _validate_user_config
-from .views import _get_data, ctl
+from .views import rcon_api
 
 logger = logging.getLogger("rconweb")
 
@@ -49,9 +47,9 @@ def upload_vips(request):
         form = DocumentForm(request.POST, request.FILES)
         if form.is_valid():
             message = ""
-            vips = ctl.get_vip_ids()
+            vips = rcon_api.get_vip_ids()
             for vip in vips:
-                ctl.do_remove_vip(vip["steam_id_64"])
+                rcon_api.do_remove_vip(vip["steam_id_64"])
             message = f"{len(vips)} removed\n"
             count = 0
             for name, data in request.FILES.items():
@@ -65,7 +63,7 @@ def upload_vips(request):
                             steam_id, name = l.split(" ", 1)
                             if len(steam_id) != 17:
                                 raise ValueError
-                            ctl.do_add_vip(name.strip(), steam_id)
+                            rcon_api.do_add_vip(name.strip(), steam_id)
                             count += 1
                         except UnicodeDecodeError:
                             message = "File encoding is not supported. Must use UTF8"
@@ -176,7 +174,7 @@ def async_upload_vips_result(request):
 @permission_required("api.can_download_vip_list", raise_exception=True)
 @require_http_methods(["GET"])
 def download_vips(request):
-    vips = ctl.get_vip_ids()
+    vips = rcon_api.get_vip_ids()
     vip_lines: List[str]
 
     # Treating anyone without an explicit expiration date as having indefinite VIP access
@@ -203,90 +201,7 @@ def download_vips(request):
         content_type="text/plain",
     )
 
-    response[
-        "Content-Disposition"
-    ] = f"attachment; filename={datetime.datetime.now().isoformat()}_vips.txt"
+    response["Content-Disposition"] = (
+        f"attachment; filename={datetime.datetime.now().isoformat()}_vips.txt"
+    )
     return response
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_view_real_vip_config", raise_exception=True)
-@require_http_methods(["GET"])
-def get_real_vip_config(request):
-    command_name = "get_real_vip_config"
-
-    try:
-        config = RealVipUserConfig.load_from_db()
-    except Exception as e:
-        logger.exception(e)
-        return api_response(command=command_name, error=str(e), failed=True)
-
-    return api_response(
-        result=config.model_dump(),
-        command=command_name,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@require_http_methods(["GET"])
-def describe_real_vip_config(request):
-    command_name = "describe_real_vip_config"
-
-    return api_response(
-        result=RealVipUserConfig.model_json_schema(),
-        command=command_name,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_change_real_vip_config", raise_exception=True)
-@require_http_methods(["POST"])
-@require_content_type()
-def validate_real_vip_config(request):
-    command_name = "validate_real_vip_config"
-    data = _get_data(request)
-
-    response = _validate_user_config(
-        RealVipUserConfig, data=data, command_name=command_name, dry_run=True
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        arguments=data,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_change_real_vip_config", raise_exception=True)
-@record_audit
-@require_http_methods(["POST"])
-@require_content_type()
-def set_real_vip_config(request):
-    command_name = "set_real_vip_config"
-    cls = RealVipUserConfig
-    data = _get_data(request)
-
-    response = _audit_user_config_differences(
-        cls, data, command_name, request.user.username
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        arguments=data,
-        failed=False,
-    )

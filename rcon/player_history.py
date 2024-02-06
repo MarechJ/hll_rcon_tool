@@ -249,12 +249,12 @@ def get_players_by_appearance(
                     "names_by_match": sorted(
                         (n.name for n in p[0].names), key=cmp_to_key(sort_name_match)
                     ),
-                    "first_seen_timestamp_ms": int(p[1].timestamp() * 1000)
-                    if p[1]
-                    else None,
-                    "last_seen_timestamp_ms": int(p[2].timestamp() * 1000)
-                    if p[2]
-                    else None,
+                    "first_seen_timestamp_ms": (
+                        int(p[1].timestamp() * 1000) if p[1] else None
+                    ),
+                    "last_seen_timestamp_ms": (
+                        int(p[2].timestamp() * 1000) if p[2] else None
+                    ),
                     "vip_expiration": p[0].vip.expiration if p[0].vip else None,
                 }
                 for p in players
@@ -449,20 +449,33 @@ def add_flag_to_player(
         return res, new.to_dict()
 
 
-def remove_flag(flag_id: int) -> tuple[PlayerProfileType, PlayerFlagType]:
+def remove_flag(
+    flag_id: int | None = None, steam_id_64: str | None = None, flag: str | None = None
+) -> tuple[PlayerProfileType, PlayerFlagType]:
     with enter_session() as sess:
-        exists = (
-            sess.query(PlayerFlag).filter(PlayerFlag.id == int(flag_id)).one_or_none()
-        )
+        if isinstance(flag_id, int):
+            exists = (
+                sess.query(PlayerFlag)
+                .filter(PlayerFlag.id == int(flag_id))
+                .one_or_none()
+            )
+        else:
+            exists = (
+                sess.query(PlayerFlag)
+                .filter(PlayerSteamID.steam_id_64 == steam_id_64)
+                .filter(PlayerFlag.flag == flag)
+                .one_or_none()
+            )
+
         if not exists:
             logger.warning("Flag does not exists")
             raise CommandFailedError("Flag does not exists")
         player = exists.steamid.to_dict()
-        flag = exists.to_dict()
+        old_flag = exists.to_dict()
         sess.delete(exists)
         sess.commit()
 
-    return player, flag
+    return player, old_flag
 
 
 def add_player_to_blacklist(steam_id_64, reason, name=None, by=None):

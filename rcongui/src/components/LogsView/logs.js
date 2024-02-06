@@ -58,10 +58,6 @@ const Selector = ({
 class Logs extends React.Component {
   constructor(props) {
     super(props);
-    console.log(
-      "logs_action_type",
-      JSON.parse(localStorage.getItem("logs_action_type"))
-    );
     this.state = {
       logs: [],
       actions: [],
@@ -99,9 +95,8 @@ class Logs extends React.Component {
 
   loadLogs() {
     const { actionsFilter, playersFilter, limit, inclusiveFilter } = this.state;
-
     return postData(`${process.env.REACT_APP_API_URL}get_recent_logs`, {
-      end: limit,
+      end: parseInt(limit),
       filter_action: actionsFilter,
       filter_player: playersFilter,
       inclusive_filter: inclusiveFilter,

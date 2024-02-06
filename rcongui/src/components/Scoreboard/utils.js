@@ -53,7 +53,6 @@ export const getMapName = (mapName) => {
 };
 
 export const getMapImageUrl = (mapName) => {
-  console.log(`mapName=${mapName}`)
   const imageName = map_to_pict.get(getMapName(mapName))
 
   if (imageName === undefined) {

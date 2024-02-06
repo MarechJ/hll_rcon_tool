@@ -10,6 +10,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
 import discord
+from rcon.user_config.real_vip import RealVipUserConfig
 from rcon.discord import send_to_discord_audit
 from rcon.types import InvalidLogTypeError
 from rcon.user_config.auto_broadcast import AutoBroadcastUserConfig
@@ -192,26 +193,6 @@ def describe_auto_mod_level_config(request):
 
 @csrf_exempt
 @login_required()
-@permission_required("api.can_view_auto_mod_no_leader_config", raise_exception=True)
-@require_http_methods(["GET"])
-def get_auto_mod_no_leader_config(request):
-    command_name = "get_auto_mod_no_leader_config"
-
-    try:
-        config = AutoModNoLeaderUserConfig.load_from_db()
-    except Exception as e:
-        logger.exception(e)
-        return api_response(command=command_name, error=str(e), failed=True)
-
-    return api_response(
-        result=config.model_dump(),
-        command=command_name,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
 @require_http_methods(["GET"])
 def describe_auto_mod_no_leader_config(request):
     command_name = "describe_auto_mod_no_leader_config"
@@ -225,52 +206,12 @@ def describe_auto_mod_no_leader_config(request):
 
 @csrf_exempt
 @login_required()
-@permission_required("api.can_view_auto_mod_seeding_config", raise_exception=True)
-@require_http_methods(["GET"])
-def get_auto_mod_seeding_config(request) -> JsonResponse:
-    command_name = "get_auto_mod_seeding_config"
-
-    try:
-        config = AutoModSeedingUserConfig.load_from_db()
-    except Exception as e:
-        logger.exception(e)
-        return api_response(command=command_name, error=str(e), failed=True)
-
-    return api_response(
-        result=config.model_dump(),
-        command=command_name,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
 @require_http_methods(["GET"])
 def describe_auto_mod_seeding_config(request):
     command_name = "describe_auto_mod_seeding_config"
 
     return api_response(
         result=AutoModSeedingUserConfig.model_json_schema(),
-        command=command_name,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_view_auto_mod_solo_tank_config", raise_exception=True)
-@require_http_methods(["GET"])
-def get_auto_mod_solo_tank_config(request) -> JsonResponse:
-    command_name = "get_auto_mod_solo_tank_config"
-
-    try:
-        config = AutoModNoSoloTankUserConfig.load_from_db()
-    except Exception as e:
-        logger.exception(e)
-        return api_response(command=command_name, error=str(e), failed=True)
-
-    return api_response(
-        result=config.model_dump(),
         command=command_name,
         failed=False,
     )
@@ -304,102 +245,12 @@ def describe_tk_ban_on_connect_config(request):
 
 @csrf_exempt
 @login_required()
-@permission_required("api.can_view_camera_config", raise_exception=True)
-@require_http_methods(["GET"])
-def get_camera_notification_config(request):
-    command_name = "get_camera_notification_config"
-
-    try:
-        config = CameraNotificationUserConfig.load_from_db()
-    except Exception as e:
-        logger.exception(e)
-        return api_response(command=command_name, error=str(e), failed=True)
-
-    return api_response(
-        result=config.model_dump(),
-        command=command_name,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
 @require_http_methods(["GET"])
 def describe_camera_notification_config(request):
     command_name = "describe_camera_notification_config"
 
     return api_response(
         result=CameraNotificationUserConfig.model_json_schema(),
-        command=command_name,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_change_camera_config", raise_exception=True)
-@require_http_methods(["POST"])
-@require_content_type()
-def validate_camera_notification_config(request):
-    command_name = "validate_camera_notification_config"
-    data = _get_data(request)
-
-    response = _validate_user_config(
-        CameraNotificationUserConfig, data=data, command_name=command_name, dry_run=True
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        arguments=data,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_change_camera_config", raise_exception=True)
-@record_audit
-@require_http_methods(["POST"])
-@require_content_type()
-def set_camera_notification_config(request):
-    command_name = "set_camera_notification_config"
-    cls = CameraNotificationUserConfig
-    data = _get_data(request)
-
-    response = _audit_user_config_differences(
-        cls, data, command_name, request.user.username
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        arguments=data,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_view_expired_vip_config", raise_exception=True)
-@require_http_methods(["GET"])
-def get_expired_vip_config(request):
-    command_name = "get_expired_vip_config"
-
-    try:
-        config = ExpiredVipsUserConfig.load_from_db()
-    except Exception as e:
-        logger.exception(e)
-        return api_response(command=command_name, error=str(e), failed=True)
-
-    return api_response(
-        result=config.model_dump(),
         command=command_name,
         failed=False,
     )
@@ -420,160 +271,12 @@ def describe_expired_vip_config(request):
 
 @csrf_exempt
 @login_required()
-@permission_required("api.can_change_expired_vip_config", raise_exception=True)
-@require_http_methods(["POST"])
-@require_content_type()
-def validate_expired_vip_config(request):
-    command_name = "validate_expired_vip_config"
-    data = _get_data(request)
-
-    response = _validate_user_config(
-        ExpiredVipsUserConfig,
-        data=data,
-        command_name=command_name,
-        dry_run=True,
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        arguments=data,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_change_expired_vip_config", raise_exception=True)
-@record_audit
-@require_http_methods(["POST"])
-@require_content_type()
-def set_expired_vip_config(request):
-    command_name = "set_expired_vip_config"
-    cls = ExpiredVipsUserConfig
-    data = _get_data(request)
-
-    response = _audit_user_config_differences(
-        cls, data, command_name, request.user.username
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        arguments=data,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_view_server_name_change_config", raise_exception=True)
-@require_http_methods(["GET"])
-def get_server_name_change_config(request):
-    command_name = "get_server_name_change_config"
-
-    try:
-        config = GtxServerNameChangeUserConfig.load_from_db()
-    except Exception as e:
-        logger.exception(e)
-        return api_response(command=command_name, error=str(e), failed=True)
-
-    return api_response(
-        result=config.model_dump(),
-        command=command_name,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
 @require_http_methods(["GET"])
 def describe_server_name_change_config(request):
     command_name = "describe_server_name_change_config"
 
     return api_response(
         result=GtxServerNameChangeUserConfig.model_json_schema(),
-        command=command_name,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_change_server_name_change_config", raise_exception=True)
-@require_http_methods(["POST"])
-@require_content_type()
-def validate_server_name_change_config(request):
-    command_name = "validate_server_name_change_config"
-    data = _get_data(request)
-
-    response = _validate_user_config(
-        GtxServerNameChangeUserConfig,
-        data=data,
-        command_name=command_name,
-        dry_run=True,
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        arguments=data,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_change_server_name_change_config", raise_exception=True)
-@record_audit
-@require_http_methods(["POST"])
-@require_content_type()
-def set_server_name_change_config(request):
-    command_name = "set_server_name_change_config"
-    cls = GtxServerNameChangeUserConfig
-    data = _get_data(request)
-
-    response = _audit_user_config_differences(
-        cls, data, command_name, request.user.username
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        arguments=data,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required(
-    "api.can_view_log_line_discord_webhook_config", raise_exception=True
-)
-@require_http_methods(["GET"])
-def get_log_line_webhook_config(request):
-    command_name = "get_log_line_webhook_config"
-
-    try:
-        config = LogLineWebhookUserConfig.load_from_db()
-    except Exception as e:
-        logger.exception(e)
-        return api_response(command=command_name, error=str(e), failed=True)
-
-    return api_response(
-        result=config.model_dump(),
         command=command_name,
         failed=False,
     )
@@ -594,161 +297,12 @@ def describe_log_line_webhook_config(request):
 
 @csrf_exempt
 @login_required()
-@permission_required(
-    "api.can_change_log_line_discord_webhook_config", raise_exception=True
-)
-@require_http_methods(["POST"])
-@require_content_type()
-def validate_log_line_webhook_config(request):
-    command_name = "validate_log_line_webhook_config"
-    data = _get_data(request)
-
-    response = _validate_user_config(
-        LogLineWebhookUserConfig,
-        data=data,
-        command_name=command_name,
-        dry_run=True,
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        arguments=data,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required(
-    "api.can_change_log_line_discord_webhook_config", raise_exception=True
-)
-@record_audit
-@require_http_methods(["POST"])
-@require_content_type()
-def set_log_line_webhook_config(request):
-    command_name = "set_log_line_webhook_config"
-    cls = LogLineWebhookUserConfig
-    data = _get_data(request)
-
-    response = _audit_user_config_differences(
-        cls, data, command_name, request.user.username
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        arguments=data,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_view_name_kick_config", raise_exception=True)
-@require_http_methods(["GET"])
-def get_name_kick_config(request):
-    command_name = "get_name_kick_config"
-
-    try:
-        config = NameKickUserConfig.load_from_db()
-    except Exception as e:
-        logger.exception(e)
-        return api_response(command=command_name, error=str(e), failed=True)
-
-    return api_response(
-        result=config.model_dump(),
-        command=command_name,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
 @require_http_methods(["GET"])
 def describe_name_kick_config(request):
     command_name = "describe_name_kick_config"
 
     return api_response(
         result=NameKickUserConfig.model_json_schema(),
-        command=command_name,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_change_name_kick_config", raise_exception=True)
-@require_http_methods(["POST"])
-@require_content_type()
-def validate_name_kick_config(request):
-    command_name = "validate_name_kick_config"
-    data = _get_data(request)
-
-    response = _validate_user_config(
-        NameKickUserConfig, data=data, command_name=command_name, dry_run=True
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        arguments=data,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_change_name_kick_config", raise_exception=True)
-@record_audit
-@require_http_methods(["POST"])
-@require_content_type()
-def set_name_kick_config(request):
-    command_name = "set_name_kick_config"
-    cls = NameKickUserConfig
-    data = _get_data(request)
-
-    response = _audit_user_config_differences(
-        cls, data, command_name, request.user.username
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        arguments=data,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required(
-    "api.can_view_rcon_connection_settings_config", raise_exception=True
-)
-@require_http_methods(["GET"])
-def get_rcon_connection_settings_config(request):
-    command_name = "get_rcon_connection_settings_config"
-
-    try:
-        config = RconConnectionSettingsUserConfig.load_from_db()
-    except Exception as e:
-        logger.exception(e)
-        return api_response(command=command_name, error=str(e), failed=True)
-
-    return api_response(
-        result=config.model_dump(),
         command=command_name,
         failed=False,
     )
@@ -769,162 +323,12 @@ def describe_rcon_connection_settings_config(request):
 
 @csrf_exempt
 @login_required()
-@permission_required(
-    "api.can_change_rcon_connection_settings_config", raise_exception=True
-)
-@require_http_methods(["POST"])
-@require_content_type()
-def validate_rcon_connection_settings_config(request):
-    command_name = "validate_rcon_connection_settings_config"
-    data = _get_data(request)
-
-    response = _validate_user_config(
-        RconConnectionSettingsUserConfig,
-        data=data,
-        command_name=command_name,
-        dry_run=True,
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        arguments=data,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required(
-    "api.can_change_rcon_connection_settings_config", raise_exception=True
-)
-@record_audit
-@require_http_methods(["POST"])
-@require_content_type()
-def set_rcon_connection_settings_config(request):
-    command_name = "set_rcon_connection_settings_config"
-    cls = RconConnectionSettingsUserConfig
-    data = _get_data(request)
-
-    response = _audit_user_config_differences(
-        cls, data, command_name, request.user.username
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        arguments=data,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_view_rcon_server_settings_config", raise_exception=True)
-@require_http_methods(["GET"])
-def get_rcon_server_settings_config(request):
-    command_name = "get_rcon_server_settings_config"
-
-    try:
-        config = RconServerSettingsUserConfig.load_from_db()
-    except Exception as e:
-        logger.exception(e)
-        return api_response(command=command_name, error=str(e), failed=True)
-
-    return api_response(
-        result=config.model_dump(),
-        command=command_name,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
 @require_http_methods(["GET"])
 def describe_rcon_server_settings_config(request):
     command_name = "describe_rcon_server_settings_config"
 
     return api_response(
         result=RconServerSettingsUserConfig.model_json_schema(),
-        command=command_name,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_change_rcon_server_settings_config", raise_exception=True)
-@require_http_methods(["POST"])
-@require_content_type()
-def validate_rcon_server_settings_config(request):
-    command_name = "validate_rcon_server_settings_config"
-    data = _get_data(request)
-
-    response = _validate_user_config(
-        RconServerSettingsUserConfig,
-        data=data,
-        command_name=command_name,
-        dry_run=True,
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        arguments=data,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_change_rcon_server_settings_config", raise_exception=True)
-@record_audit
-@require_http_methods(["POST"])
-@require_content_type()
-def set_rcon_server_settings_config(request):
-    command_name = "set_rcon_server_settings_config"
-    cls = RconServerSettingsUserConfig
-    data = _get_data(request)
-
-    response = _audit_user_config_differences(
-        cls, data, command_name, request.user.username
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        arguments=data,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_view_scorebot_config", raise_exception=True)
-@require_http_methods(["GET"])
-def get_scorebot_config(request):
-    command_name = "get_scorebot_config"
-
-    try:
-        config = ScorebotUserConfig.load_from_db()
-    except Exception as e:
-        logger.exception(e)
-        return api_response(command=command_name, error=str(e), failed=True)
-
-    return api_response(
-        result=config.model_dump(),
         command=command_name,
         failed=False,
     )
@@ -951,157 +355,12 @@ def describe_scorebot_config(request):
 
 @csrf_exempt
 @login_required()
-@permission_required("api.can_change_scorebot_config", raise_exception=True)
-@require_http_methods(["POST"])
-@require_content_type()
-def validate_scorebot_config(request):
-    command_name = "validate_scorebot_config"
-    data = _get_data(request)
-
-    response = _validate_user_config(
-        ScorebotUserConfig,
-        data=data,
-        command_name=command_name,
-        dry_run=True,
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        arguments=data,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_change_scorebot_config", raise_exception=True)
-@record_audit
-@require_http_methods(["POST"])
-@require_content_type()
-def set_scorebot_config(request):
-    command_name = "set_scorebot_config"
-    cls = ScorebotUserConfig
-    data = _get_data(request)
-
-    response = _audit_user_config_differences(
-        cls, data, command_name, request.user.username
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        arguments=data,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_view_standard_broadcast_messages", raise_exception=True)
-@require_http_methods(["GET"])
-def get_standard_broadcast_messages(request):
-    command_name = "get_standard_broadcast_messages"
-
-    try:
-        config = StandardBroadcastMessagesUserConfig.load_from_db()
-    except Exception as e:
-        logger.exception(e)
-        return api_response(command=command_name, error=str(e), failed=True)
-
-    return api_response(
-        result=config.model_dump(),
-        command=command_name,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
 @require_http_methods(["GET"])
 def describe_standard_broadcast_messages(request):
     command_name = "describe_standard_broadcast_messages"
 
     return api_response(
         result=StandardBroadcastMessagesUserConfig.model_json_schema(),
-        command=command_name,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_change_standard_broadcast_messages", raise_exception=True)
-@require_http_methods(["POST"])
-@require_content_type()
-def validate_standard_broadcast_messages(request):
-    command_name = "validate_standard_broadcast_messages"
-    data = _get_data(request)
-
-    response = _validate_user_config(
-        StandardBroadcastMessagesUserConfig,
-        data=data,
-        command_name=command_name,
-        dry_run=True,
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        arguments=data,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_change_standard_broadcast_messages", raise_exception=True)
-@require_http_methods(["POST"])
-@require_content_type()
-def set_standard_broadcast_messages(request):
-    command_name = "set_standard_broadcast_messages"
-    cls = StandardBroadcastMessagesUserConfig
-    data = _get_data(request)
-
-    response = _audit_user_config_differences(
-        cls, data, command_name, request.user.username
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        arguments=data,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_view_standard_punishment_messages", raise_exception=True)
-@require_http_methods(["GET"])
-def get_standard_punishments_messages(request):
-    command_name = "get_standard_punishments_messages"
-
-    try:
-        config = StandardPunishmentMessagesUserConfig.load_from_db()
-    except Exception as e:
-        logger.exception(e)
-        return api_response(command=command_name, error=str(e), failed=True)
-
-    return api_response(
-        result=config.model_dump(),
         command=command_name,
         failed=False,
     )
@@ -1122,82 +381,6 @@ def describe_standard_punishments_messages(request):
 
 @csrf_exempt
 @login_required()
-@permission_required(
-    "api.can_change_standard_punishment_messages", raise_exception=True
-)
-@require_http_methods(["POST"])
-@require_content_type()
-def validate_standard_punishments_messages(request):
-    command_name = "validate_standard_punishments_messages"
-    data = _get_data(request)
-
-    response = _validate_user_config(
-        StandardPunishmentMessagesUserConfig,
-        data=data,
-        command_name=command_name,
-        dry_run=True,
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        arguments=data,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required(
-    "api.can_change_standard_punishment_messages", raise_exception=True
-)
-@require_http_methods(["POST"])
-@require_content_type()
-def set_standard_punishments_messages(request):
-    command_name = "set_standard_punishments_messages"
-    cls = StandardPunishmentMessagesUserConfig
-    data = _get_data(request)
-
-    response = _audit_user_config_differences(
-        cls, data, command_name, request.user.username
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        arguments=data,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_view_standard_welcome_messages", raise_exception=True)
-@require_http_methods(["GET"])
-def get_standard_welcome_messages(request):
-    command_name = "get_standard_welcome_messages"
-
-    try:
-        config = StandardWelcomeMessagesUserConfig.load_from_db()
-    except Exception as e:
-        logger.exception(e)
-        return api_response(command=command_name, error=str(e), failed=True)
-
-    return api_response(
-        result=config.model_dump(),
-        command=command_name,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
 @require_http_methods(["GET"])
 def describe_standard_welcome_messages(request):
     command_name = "describe_standard_welcome_messages"
@@ -1205,58 +388,6 @@ def describe_standard_welcome_messages(request):
     return api_response(
         result=StandardWelcomeMessagesUserConfig.model_json_schema(),
         command=command_name,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_change_standard_welcome_messages", raise_exception=True)
-@require_http_methods(["POST"])
-@require_content_type()
-def validate_standard_welcome_messages(request):
-    command_name = "validate_standard_welcome_messages"
-    data = _get_data(request)
-
-    response = _validate_user_config(
-        StandardWelcomeMessagesUserConfig,
-        data=data,
-        command_name=command_name,
-        dry_run=True,
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        arguments=data,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_change_standard_welcome_messages", raise_exception=True)
-@require_http_methods(["POST"])
-@require_content_type()
-def set_standard_welcome_messages(request):
-    command_name = "set_standard_welcome_messages"
-    cls = StandardWelcomeMessagesUserConfig
-    data = _get_data(request)
-
-    response = _audit_user_config_differences(
-        cls, data, command_name, request.user.username
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        arguments=data,
         failed=False,
     )
 
@@ -1289,102 +420,12 @@ def get_all_standard_message_config(request):
 
 @csrf_exempt
 @login_required()
-@permission_required("api.can_view_steam_config", raise_exception=True)
-@require_http_methods(["GET"])
-def get_steam_config(request):
-    command_name = "get_steam_config"
-
-    try:
-        config = SteamUserConfig.load_from_db()
-    except Exception as e:
-        logger.exception(e)
-        return api_response(command=command_name, error=str(e), failed=True)
-
-    return api_response(
-        result=config.model_dump(),
-        command=command_name,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
 @require_http_methods(["GET"])
 def describe_steam_config(request):
     command_name = "describe_steam_config"
 
     return api_response(
         result=SteamUserConfig.model_json_schema(),
-        command=command_name,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_change_steam_config", raise_exception=True)
-@require_http_methods(["POST"])
-@require_content_type()
-def validate_steam_config(request):
-    command_name = "validate_steam_config"
-    data = _get_data(request)
-
-    response = _validate_user_config(
-        SteamUserConfig, data=data, command_name=command_name, dry_run=True
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        arguments=data,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_change_steam_config", raise_exception=True)
-@record_audit
-@require_http_methods(["POST"])
-@require_content_type()
-def set_steam_config(request):
-    command_name = "set_steam_config"
-    cls = SteamUserConfig
-    data = _get_data(request)
-
-    response = _audit_user_config_differences(
-        cls, data, command_name, request.user.username
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        arguments=data,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_view_vac_game_bans_config", raise_exception=True)
-@require_http_methods(["GET"])
-def get_vac_game_bans_config(request):
-    command_name = "get_vac_game_bans_config"
-
-    try:
-        config = VacGameBansUserConfig.load_from_db()
-    except Exception as e:
-        logger.exception(e)
-        return api_response(command=command_name, error=str(e), failed=True)
-
-    return api_response(
-        result=config.model_dump(),
         command=command_name,
         failed=False,
     )
@@ -1405,161 +446,12 @@ def describe_vac_game_bans_config(request):
 
 @csrf_exempt
 @login_required()
-@permission_required("api.can_change_vac_game_bans_config", raise_exception=True)
-@require_http_methods(["POST"])
-@require_content_type()
-def validate_vac_game_bans_config(request):
-    command_name = "validate_vac_game_bans_config"
-    data = _get_data(request)
-
-    response = _validate_user_config(
-        VacGameBansUserConfig, data=data, command_name=command_name, dry_run=True
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        arguments=data,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_change_vac_game_bans_config", raise_exception=True)
-@record_audit
-@require_http_methods(["POST"])
-@require_content_type()
-def set_vac_game_bans_config(request):
-    command_name = "set_vac_game_bans_config"
-    cls = VacGameBansUserConfig
-    data = _get_data(request)
-
-    response = _audit_user_config_differences(
-        cls, data, command_name, request.user.username
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        arguments=data,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required(
-    "api.can_view_admin_pings_discord_webhooks_config", raise_exception=True
-)
-@require_http_methods(["GET"])
-def get_admin_pings_discord_webhooks_config(request):
-    command_name = "get_admin_pings_discord_webhooks_config"
-
-    try:
-        config = AdminPingWebhooksUserConfig.load_from_db()
-    except Exception as e:
-        logger.exception(e)
-        return api_response(command=command_name, error=str(e), failed=True)
-
-    return api_response(
-        result=config.model_dump(),
-        command=command_name,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
 @require_http_methods(["GET"])
 def describe_admin_pings_discord_webhooks_config(request):
     command_name = "describe_admin_pings_discord_webhooks_config"
 
     return api_response(
         result=AdminPingWebhooksUserConfig.model_json_schema(),
-        command=command_name,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required(
-    "api.can_change_admin_pings_discord_webhooks_config", raise_exception=True
-)
-@require_http_methods(["POST"])
-@require_content_type()
-def validate_admin_pings_discord_webhooks_config(request):
-    command_name = "validate_admin_pings_webhooks_config"
-    data = _get_data(request)
-
-    response = _validate_user_config(
-        AdminPingWebhooksUserConfig,
-        data=data,
-        command_name=command_name,
-        dry_run=True,
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        arguments=data,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required(
-    "api.can_change_admin_pings_discord_webhooks_config", raise_exception=True
-)
-@record_audit
-@require_http_methods(["POST"])
-@require_content_type()
-def set_admin_pings_discord_webhooks_config(request):
-    command_name = "set_admin_pings_webhooks_config"
-    cls = AdminPingWebhooksUserConfig
-    data = _get_data(request)
-
-    response = _audit_user_config_differences(
-        cls, data, command_name, request.user.username
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        arguments=data,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_view_audit_discord_webhooks_config", raise_exception=True)
-@require_http_methods(["GET"])
-def get_audit_discord_webhooks_config(request):
-    command_name = "get_audit_webhooks_config"
-
-    try:
-        config = AuditWebhooksUserConfig.load_from_db()
-    except Exception as e:
-        logger.exception(e)
-        return api_response(command=command_name, error=str(e), failed=True)
-
-    return api_response(
-        result=config.model_dump(),
         command=command_name,
         failed=False,
     )
@@ -1580,164 +472,12 @@ def describe_audit_discord_webhooks_config(request):
 
 @csrf_exempt
 @login_required()
-@permission_required(
-    "api.can_change_audit_discord_webhooks_config", raise_exception=True
-)
-@require_http_methods(["POST"])
-@require_content_type()
-def validate_audit_discord_webhooks_config(request):
-    command_name = "validate_audit_webhooks_config"
-    data = _get_data(request)
-
-    response = _validate_user_config(
-        AuditWebhooksUserConfig,
-        data=data,
-        command_name=command_name,
-        dry_run=True,
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        arguments=data,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required(
-    "api.can_change_audit_discord_webhooks_config", raise_exception=True
-)
-@require_http_methods(["POST"])
-@require_content_type()
-@record_audit
-def set_audit_discord_webhooks_config(request):
-    command_name = "set_audit_webhooks_config"
-    cls = AuditWebhooksUserConfig
-    data = _get_data(request)
-
-    response = _audit_user_config_differences(
-        cls, data, command_name, request.user.username
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        arguments=data,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required(
-    "api.can_view_camera_discord_webhooks_config", raise_exception=True
-)
-@require_http_methods(["GET"])
-def get_camera_discord_webhooks_config(request):
-    command_name = "get_camera_discord_webhooks"
-
-    try:
-        config = CameraWebhooksUserConfig.load_from_db()
-    except Exception as e:
-        logger.exception(e)
-        return api_response(command=command_name, error=str(e), failed=True)
-
-    return api_response(
-        result=config.model_dump(),
-        command=command_name,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
 @require_http_methods(["GET"])
 def describe_camera_discord_webhooks_config(request):
     command_name = "describe_camera_discord_webhooks_config"
 
     return api_response(
         result=CameraWebhooksUserConfig.model_json_schema(),
-        command=command_name,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required(
-    "api.can_change_camera_discord_webhooks_config", raise_exception=True
-)
-@require_http_methods(["POST"])
-@require_content_type()
-def validate_camera_discord_webhooks_config(request):
-    command_name = "validate_camera_discord_webhooks"
-    data = _get_data(request)
-
-    response = _validate_user_config(
-        CameraWebhooksUserConfig, data=data, command_name=command_name, dry_run=True
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        arguments=data,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required(
-    "api.can_change_camera_discord_webhooks_config", raise_exception=True
-)
-@require_http_methods(["POST"])
-@require_content_type()
-def set_camera_discord_webhooks_config(request):
-    command_name = "set_camera_discord_webhooks"
-    cls = CameraWebhooksUserConfig
-    data = _get_data(request)
-
-    response = _audit_user_config_differences(
-        cls, data, command_name, request.user.username
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        arguments=data,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_view_chat_discord_webhooks_config", raise_exception=True)
-@require_http_methods(["GET"])
-def get_chat_discord_webhooks_config(request):
-    command_name = "get_chat_webhooks_config"
-
-    try:
-        config = ChatWebhooksUserConfig.load_from_db()
-    except Exception as e:
-        logger.exception(e)
-        return api_response(command=command_name, error=str(e), failed=True)
-
-    return api_response(
-        result=config.model_dump(),
         command=command_name,
         failed=False,
     )
@@ -1758,168 +498,12 @@ def describe_chat_discord_webhooks_config(request):
 
 @csrf_exempt
 @login_required()
-@permission_required(
-    "api.can_change_chat_discord_webhooks_config", raise_exception=True
-)
-@require_http_methods(["POST"])
-@require_content_type()
-def validate_chat_discord_webhooks_config(request):
-    command_name = "validate_chat_webhooks_config"
-    data = _get_data(request)
-
-    response = _validate_user_config(
-        ChatWebhooksUserConfig,
-        data=data,
-        command_name=command_name,
-        dry_run=True,
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        arguments=data,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required(
-    "api.can_change_chat_discord_webhooks_config", raise_exception=True
-)
-@record_audit
-@require_http_methods(["POST"])
-@require_content_type()
-def set_chat_discord_webhooks_config(request):
-    command_name = "set_chat_webhooks_config"
-    cls = ChatWebhooksUserConfig
-    data = _get_data(request)
-
-    response = _audit_user_config_differences(
-        cls, data, command_name, request.user.username
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        arguments=data,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_view_kills_discord_webhooks_config", raise_exception=True)
-@require_http_methods(["GET"])
-def get_kills_discord_webhooks_config(request):
-    command_name = "get_kills_webhooks_config"
-
-    try:
-        config = KillsWebhooksUserConfig.load_from_db()
-    except Exception as e:
-        logger.exception(e)
-        return api_response(command=command_name, error=str(e), failed=True)
-
-    return api_response(
-        result=config.model_dump(),
-        command=command_name,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
 @require_http_methods(["GET"])
 def describe_kills_discord_webhooks_config(request):
     command_name = "describe_kills_discord_webhooks_config"
 
     return api_response(
         result=KillsWebhooksUserConfig.model_json_schema(),
-        command=command_name,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required(
-    "api.can_change_kills_discord_webhooks_config", raise_exception=True
-)
-@require_http_methods(["POST"])
-@require_content_type()
-def validate_kills_discord_webhooks_config(request):
-    command_name = "get_kills_webhooks_config"
-    data = _get_data(request)
-
-    response = _validate_user_config(
-        KillsWebhooksUserConfig,
-        data=data,
-        command_name=command_name,
-        dry_run=True,
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        arguments=data,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required(
-    "api.can_change_kills_discord_webhooks_config", raise_exception=True
-)
-@record_audit
-@require_http_methods(["POST"])
-@require_content_type()
-def set_kills_discord_webhooks_config(request):
-    command_name = "set_kills_webhooks_config"
-    cls = KillsWebhooksUserConfig
-    data = _get_data(request)
-
-    response = _audit_user_config_differences(
-        cls, data, command_name, request.user.username
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        arguments=data,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required(
-    "api.can_view_watchlist_discord_webhooks_config", raise_exception=True
-)
-@require_http_methods(["GET"])
-def get_watchlist_discord_webhooks_config(request):
-    command_name = "get_watchlist_discord_webhooks"
-
-    try:
-        config = WatchlistWebhooksUserConfig.load_from_db()
-    except Exception as e:
-        logger.exception(e)
-        return api_response(command=command_name, error=str(e), failed=True)
-
-    return api_response(
-        result=config.model_dump(),
         command=command_name,
         failed=False,
     )
@@ -1940,129 +524,12 @@ def describe_watchlist_discord_webhooks_config(request):
 
 @csrf_exempt
 @login_required()
-@permission_required(
-    "api.can_change_watchlist_discord_webhooks_config", raise_exception=True
-)
-@require_http_methods(["POST"])
-@require_content_type()
-def validate_watchlist_discord_webhooks_config(request):
-    command_name = "validate_watchlist_discord_webhooks"
-    data = _get_data(request)
-
-    response = _validate_user_config(
-        WatchlistWebhooksUserConfig, data=data, command_name=command_name, dry_run=True
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        arguments=data,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required(
-    "api.can_change_watchlist_discord_webhooks_config", raise_exception=True
-)
-@require_http_methods(["POST"])
-@require_content_type()
-def set_watchlist_discord_webhooks_config(request):
-    command_name = "set_watchlist_discord_webhooks"
-    cls = WatchlistWebhooksUserConfig
-    data = _get_data(request)
-
-    response = _audit_user_config_differences(
-        cls, data, command_name, request.user.username
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        arguments=data,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_view_chat_commands_config", raise_exception=True)
-def get_chat_commands_config(request):
-    command_name = "get_chat_commands_config"
-
-    try:
-        config = ChatCommandsUserConfig.load_from_db()
-    except Exception as e:
-        logger.exception(e)
-        return api_response(command=command_name, error=str(e), failed=True)
-
-    return api_response(
-        result=config.model_dump(),
-        command=command_name,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
 def describe_chat_commands_config(request):
     command_name = "describe_chat_commands_config"
 
     return api_response(
         result=ChatCommandsUserConfig.model_json_schema(),
         command=command_name,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_change_chat_commands_config", raise_exception=True)
-def validate_chat_commands_config(request):
-    command_name = "validate_chat_commands_config"
-    data = _get_data(request)
-
-    response = _validate_user_config(
-        ChatCommandsUserConfig, data=data, command_name=command_name, dry_run=True
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        arguments=data,
-        failed=False,
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_change_chat_commands_config", raise_exception=True)
-def set_chat_commands_config(request):
-    command_name = "set_chat_commands_config"
-    cls = ChatCommandsUserConfig
-    data = _get_data(request)
-
-    response = _audit_user_config_differences(
-        cls, data, command_name, request.user.username
-    )
-
-    if response:
-        return response
-
-    return api_response(
-        result=True,
-        command=command_name,
-        arguments=data,
         failed=False,
     )
 
@@ -2091,3 +558,16 @@ def get_all_discord_webhooks_config(request):
     except Exception as e:
         error_msg = str(e)
         return api_response(command=command_name, error=error_msg)
+
+
+@csrf_exempt
+@login_required()
+@require_http_methods(["GET"])
+def describe_real_vip_config(request):
+    command_name = "describe_real_vip_config"
+
+    return api_response(
+        result=RealVipUserConfig.model_json_schema(),
+        command=command_name,
+        failed=False,
+    )
