@@ -57,7 +57,7 @@ def get_api_documentation(request):
         # manually created endpoints (there could be, if they were defined with different names)
         # but almost all of our endpoints share the name with functions, and those that don't map
         # to entirely different things like `login -> do_login` that are out of scope of RconAPI
-        item["auto_settings_capapbe"] = name in dir(RconAPI)
+        item["auto_settings_capable"] = name in dir(RconAPI)
 
         api_docs.append(item)
 
