@@ -223,7 +223,7 @@ def expose_api_endpoint(
 
             # get prefixes are automatically skipped in audit
             # TODO: remove deprecated endpoints
-            if name not in ("player", "players_history"):
+            if func.__name__ not in ("player", "players_history"):
                 audit(func.__name__, request, arguments)
 
             # Can't serialize pydantic models without an explicit call to .model_dump which we do here,
