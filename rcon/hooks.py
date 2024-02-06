@@ -4,8 +4,10 @@ from collections import defaultdict
 from datetime import datetime
 from functools import wraps
 from threading import Timer
+from typing import Final
 
 from discord_webhook import DiscordEmbed
+from discord.utils import escape_markdown
 
 import rcon.steam_utils as steam_utils
 from rcon.cache_utils import invalidates
@@ -365,7 +367,7 @@ def ban_if_has_vac_bans(rcon: Rcon, steam_id_64, name):
             logger.error("Can't check VAC history, player not found %s", steam_id_64)
             return
 
-        bans = player.steaminfo.bans
+        bans = player.steaminfo.bans if player.steaminfo else None
         if not bans or not isinstance(bans, dict):
             logger.warning(
                 "Can't fetch Bans for player %s, received %s", steam_id_64, bans
@@ -745,12 +747,13 @@ def undo_real_vips(rcon: Rcon, struct_log):
 @on_camera
 def notify_camera(rcon: Rcon, struct_log):
     send_to_discord_audit(message=struct_log["message"], by=struct_log["player"])
+    short_name: Final = RconServerSettingsUserConfig.load_from_db().short_name
 
     try:
         if hooks := get_prepared_discord_hooks(CameraWebhooksUserConfig):
             embeded = DiscordEmbed(
-                title=f'{struct_log["player"]}  - {struct_log["steam_id_64_1"]}',
-                description=struct_log["sub_content"],
+                title=f'{escape_markdown(struct_log["player"])}  - {escape_markdown(struct_log["steam_id_64_1"])}',
+                description=f'{short_name} - {struct_log["sub_content"]}',
                 color=242424,
             )
             for h in hooks:

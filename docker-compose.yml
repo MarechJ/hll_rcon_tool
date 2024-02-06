@@ -13,9 +13,7 @@ services:
       service: python
     command: supervisor
     depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
+      backend_1:
         condition: service_healthy
     networks:
       common:
@@ -30,6 +28,12 @@ services:
       file: docker-compose-common-components.yml
       service: python
     command: web
+    healthcheck:
+      test: ["CMD-SHELL", "if [ -e /code/rconweb/gunicorn.pid ]; then echo 0; else echo 1; fi"]
+      start_period: 30s
+      interval: 15s
+      timeout: 30s
+      retries: 5
     depends_on:
       postgres:
         condition: service_healthy
@@ -55,7 +59,8 @@ services:
       - ./static:/static/
       - ./certs:/certs/
     depends_on:
-      - backend_1
+      backend_1:
+        condition: service_healthy
     networks:
       - server1
       - common
@@ -134,9 +139,7 @@ services:
           - supervisor
     command: supervisor
     depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
+      backend_2:
         condition: service_healthy
   backend_2:
     <<: *backend
@@ -168,7 +171,8 @@ services:
       - common
       - server2
     depends_on:
-      - backend_2
+      backend_2:
+        condition: service_healthy
 
   ############ SERVER 3  #############
   supervisor_3:
@@ -208,9 +212,7 @@ services:
         aliases:
           - supervisor
     depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
+      backend_3:
         condition: service_healthy
   backend_3:
     <<: *backend
@@ -242,4 +244,5 @@ services:
       - common
       - server3
     depends_on:
-      - backend_3
+      backend_3:
+        condition: service_healthy

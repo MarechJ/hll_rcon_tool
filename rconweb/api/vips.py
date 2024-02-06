@@ -23,6 +23,9 @@ from .auth import api_response, login_required
 from .decorators import require_content_type
 from .views import rcon_api
 
+from rcon.steam_utils import is_steam_id_64
+from rcon.win_store_utils import is_windows_store_id
+
 logger = logging.getLogger("rconweb")
 
 
@@ -122,9 +125,9 @@ def async_upload_vips(request):
                             # The last chunk should be treated as part of the players name if it's not a valid date
                             name += possible_timestamp
 
-                    if len(steam_id) != 17:
+                    if not is_steam_id_64(steam_id) and not is_windows_store_id(steam_id):
                         errors.append(
-                            f"{line} has an invalid steam id, expected length of 17"
+                            f"{line} has an invalid player id, expected a 17 digit steam id or a windows store id"
                         )
                         continue
                     if not name:
