@@ -425,5 +425,5 @@ class RconUser(User):
                 "Can restart the webserver (Not a complete Docker restart)",
             ),
             ("can_view_chat_commands_config", "Can view the chat commands config"),
-            ("can_change_chat_commands_config", "Can change the chat comads config"),
+            ("can_change_chat_commands_config", "Can change the chat commands config"),
         )
