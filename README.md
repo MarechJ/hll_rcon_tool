@@ -250,11 +250,12 @@ In nano, you can move the cursor with the arrow keys.
 You do not have to change all the values. Only these 5 are mandatory :
 
 1. Choose a password to give CRCON access to the database  
-  (No need to remember/note it : you'll never have to enter it anywhere), check the comments in the `.env` for restriction characters such as `%` :  
+  (No need to remember/note it : you'll never have to enter it anywhere), check the comments in the `.env` for restriction characters such as `%`.  
+  Do NOT change it after CRCON has been started at least one time : your database would not be accessible.
 
         HLL_DB_PASSWORD=anythingwithoutanyspace
 
-2. Enter a long string that will be used to scramble users passwords, you may want to back this up separately, if you lose it all of your admin accounts will be invalidated and need their passwords reset
+3. Enter a long string that will be used to scramble users passwords, you may want to back this up separately, if you lose it all of your admin accounts will be invalidated and need their passwords reset. Do NOT change it after CRCON has been started at least one time : existing passwords would be invalidated.
 
        RCONWEB_API_SECRET=anythingwithoutanyspaceordollarsign
 
