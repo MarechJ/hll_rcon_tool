@@ -5,6 +5,7 @@ from typing import Any
 
 from django.http import QueryDict
 from django.http.request import HttpRequest
+
 from rcon.discord import send_to_discord_audit
 
 logger = getLogger(__name__)

@@ -5,9 +5,8 @@ from datetime import datetime
 
 import pytz
 
-from rcon.audit import ingame_mods, online_mods
-
 from rcon.api_commands import get_rcon_api
+from rcon.audit import ingame_mods, online_mods
 from rcon.user_config.auto_settings import AutoSettingsConfig
 
 logger = logging.getLogger(__name__)

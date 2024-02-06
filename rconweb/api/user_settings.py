@@ -1,18 +1,9 @@
-import json
-from copy import copy
 from logging import getLogger
-from typing import Any, Type
 
-import pydantic
 from django.contrib.auth.decorators import permission_required
-from django.http import JsonResponse, QueryDict
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
-import discord
-from rcon.user_config.real_vip import RealVipUserConfig
-from rcon.discord import send_to_discord_audit
-from rcon.types import InvalidLogTypeError
 from rcon.user_config.auto_broadcast import AutoBroadcastUserConfig
 from rcon.user_config.auto_kick import AutoVoteKickUserConfig
 from rcon.user_config.auto_mod_level import AutoModLevelUserConfig
@@ -28,8 +19,8 @@ from rcon.user_config.log_line_webhooks import LogLineWebhookUserConfig
 from rcon.user_config.name_kicks import NameKickUserConfig
 from rcon.user_config.rcon_connection_settings import RconConnectionSettingsUserConfig
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
+from rcon.user_config.real_vip import RealVipUserConfig
 from rcon.user_config.scorebot import ScorebotUserConfig
-from rcon.user_config.vote_map import VoteMapUserConfig
 from rcon.user_config.standard_messages import (
     StandardBroadcastMessagesUserConfig,
     StandardPunishmentMessagesUserConfig,
@@ -37,13 +28,8 @@ from rcon.user_config.standard_messages import (
     get_all_message_types,
 )
 from rcon.user_config.steam import SteamUserConfig
-from rcon.user_config.utils import (
-    DISCORD_AUDIT_FORMAT,
-    BaseUserConfig,
-    InvalidKeysConfigurationError,
-    set_user_config,
-)
 from rcon.user_config.vac_game_bans import VacGameBansUserConfig
+from rcon.user_config.vote_map import VoteMapUserConfig
 from rcon.user_config.webhooks import (
     AdminPingWebhooksUserConfig,
     AuditWebhooksUserConfig,
@@ -53,91 +39,10 @@ from rcon.user_config.webhooks import (
     WatchlistWebhooksUserConfig,
     get_all_hook_types,
 )
-from rcon.utils import dict_differences
 
-from .audit_log import record_audit
 from .auth import api_response, login_required
-from .decorators import require_content_type
-from .utils import _get_data
 
 logger = getLogger(__name__)
-
-
-def _validate_user_config(
-    model: Type[BaseUserConfig],
-    data: QueryDict | dict[str, Any],
-    command_name: str,
-    dry_run=True,
-) -> JsonResponse | None:
-    error_msg = None
-
-    # Make a copy for responses, but remove keys from data
-    # so they aren't registered as extra keys and generate
-    # InvalidKeysConfigurationError exceptions
-    arguments = copy(data)
-    if "errors_as_json" in data:
-        errors_as_json: bool = bool(data.pop("errors_as_json"))
-    else:
-        errors_as_json = False
-
-    if "reset_to_default" in data:
-        reset_to_default: bool = bool(data.pop("reset_to_default"))
-    else:
-        reset_to_default = False
-
-    if reset_to_default:
-        try:
-            default = model()
-            result = default.model_dump()
-            set_user_config(default.KEY(), result)
-            return api_response(
-                command=command_name,
-                failed=False,
-                result=result,
-                arguments=arguments,
-            )
-        except pydantic.ValidationError as e:
-            if errors_as_json:
-                error_msg = e.json()
-            else:
-                error_msg = str(e)
-            logger.warning(error_msg)
-            return api_response(
-                command=command_name, failed=True, error=error_msg, arguments=arguments
-            )
-        except Exception as e:
-            error_msg = str(e)
-            logger.exception(e)
-            return api_response(
-                command=command_name, failed=True, error=error_msg, arguments=arguments
-            )
-
-    try:
-        model.save_to_db(values=data, dry_run=dry_run)  # type: ignore
-    except pydantic.ValidationError as e:
-        if errors_as_json:
-            error_msg = e.json()
-        else:
-            error_msg = str(e)
-        logger.warning(error_msg)
-        return api_response(
-            command=command_name, failed=True, error=error_msg, arguments=arguments
-        )
-    except (InvalidKeysConfigurationError, InvalidLogTypeError) as e:
-        if errors_as_json:
-            error_msg = json.dumps([e.asdict()])
-        else:
-            error_msg = str(e)
-        logger.warning(error_msg)
-        return api_response(
-            command=command_name, failed=True, error=error_msg, arguments=arguments
-        )
-    except Exception as e:
-        error_msg = str(e)
-        logger.exception(e)
-        return api_response(
-            command=command_name, failed=True, error=error_msg, arguments=arguments
-        )
 
 
 @csrf_exempt

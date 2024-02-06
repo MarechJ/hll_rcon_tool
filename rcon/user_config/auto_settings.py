@@ -1,7 +1,5 @@
 import logging
-import os
 
-from rcon.utils import get_server_number
 from rcon.user_config.utils import (
     _add_conf,
     _remove_conf,
@@ -9,6 +7,7 @@ from rcon.user_config.utils import (
     get_user_config,
     set_user_config,
 )
+from rcon.utils import get_server_number
 
 logger = logging.getLogger(__name__)
 

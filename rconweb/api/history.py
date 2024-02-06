@@ -7,10 +7,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
 from rcon import player_history
-from rcon.player_history import (
-    get_player_comments,
-    post_player_comments,
-)
+from rcon.player_history import get_player_comments, post_player_comments
 
 from .audit_log import record_audit
 from .auth import login_required

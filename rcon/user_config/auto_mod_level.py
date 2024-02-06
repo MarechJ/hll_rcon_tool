@@ -1,12 +1,6 @@
 from typing import Optional, TypedDict
 
-from pydantic import (
-    BaseModel,
-    BeforeValidator,
-    Field,
-    HttpUrl,
-    field_serializer
-)
+from pydantic import BaseModel, BeforeValidator, Field, HttpUrl, field_serializer
 from pydantic.functional_validators import BeforeValidator
 from typing_extensions import Annotated
 
@@ -142,6 +136,4 @@ class AutoModLevelUserConfig(BaseUserConfig):
         )
 
         if not dry_run:
-            set_user_config(
-                AutoModLevelUserConfig.KEY(), validated_conf.model_dump()
-            )
+            set_user_config(AutoModLevelUserConfig.KEY(), validated_conf.model_dump())

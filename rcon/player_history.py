@@ -9,7 +9,6 @@ from sqlalchemy import func
 from sqlalchemy.orm import contains_eager, selectinload
 from sqlalchemy.sql.functions import ReturnTypeFromArgs
 
-from rcon.types import PlayerProfileType, PlayerFlagType
 from rcon.commands import CommandFailedError
 from rcon.models import (
     BlacklistedPlayer,
@@ -23,6 +22,7 @@ from rcon.models import (
     WatchList,
     enter_session,
 )
+from rcon.types import PlayerFlagType, PlayerProfileType
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 
 
