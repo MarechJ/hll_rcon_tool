@@ -216,7 +216,7 @@ Some VPS providers offer free installation of linux distributions in which Docke
 - Stay cool and follow the drill. It's a simple installation, many not-so-technical people managed to do it, so you probably can too :)
 - ~~There's also a Wiki made by the community (Thanks [2.Fjg]bn.hall): https://github.com/MarechJ/hll_rcon_tool/wiki~~  
 *(The Wiki is obsolete. We hope we'll find the time to update it soon)*
-- Most shell commands/error messages can be Googled, please respect peoples time and make at least a cursory effort to solve the problem yourself before jumping to the Discord
+- Most shell commands/error messages can be Googled, and a *lot* of usual questions already found an answer on the CRCON's Discord. Ask for help on the tech-support channel if you can't find what you're searchig for.
 - If you still don't understand what to do after reading this, just ask on Discord.
 
 Note : all the commands given below are meant to be entered in a Debian-like Linux terminal.
