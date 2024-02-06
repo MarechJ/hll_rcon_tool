@@ -220,8 +220,11 @@ def expose_api_endpoint(
         try:
             logger.debug("%s %s", func.__name__, arguments)
             res = func(**arguments)
-            # TODO: skip special cases that are view only and not actions
-            audit(func.__name__, request, arguments)
+
+            # get prefixes are automatically skipped in audit
+            # TODO: remove deprecated endpoints
+            if name not in ("player",):
+                audit(func.__name__, request, arguments)
 
             # Can't serialize pydantic models without an explicit call to .model_dump which we do here,
             # rather than in RconAPI to preserve typing and internal use as an actual pydantic class
