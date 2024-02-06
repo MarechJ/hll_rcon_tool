@@ -367,7 +367,7 @@ def ban_if_has_vac_bans(rcon: Rcon, steam_id_64, name):
             logger.error("Can't check VAC history, player not found %s", steam_id_64)
             return
 
-        bans = player.steaminfo.bans
+        bans = player.steaminfo.bans if player.steaminfo else None
         if not bans or not isinstance(bans, dict):
             logger.warning(
                 "Can't fetch Bans for player %s, received %s", steam_id_64, bans

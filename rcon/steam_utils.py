@@ -302,7 +302,10 @@ def update_db_player_info(
                 player.steaminfo.country = country_code
         else:
             player.steaminfo = SteamInfo(
-                profile=player_prof, bans=player_ban, country=country_code
+                profile=player_prof,
+                bans=player_ban,
+                country=country_code,
+                steamid=player,
             )
 
     return len(profiles), len(bans)
@@ -326,6 +329,9 @@ def update_missing_old_steam_info_single_player(
         age_limit: timedelta after which a refresh will be attempted from the steam API
     """
 
+    profile = None
+    country_code = None
+    bans = None
     if (
         player.steaminfo is None
         or player.steaminfo
@@ -336,26 +342,31 @@ def update_missing_old_steam_info_single_player(
         profile = fetch_steam_player_summary_player(player.steam_id_64)
         country_code = _get_player_country_code(profile)
         bans = fetch_steam_bans_player(player.steam_id_64)
-        steam_info = SteamInfo(
-            profile=profile,
-            country=country_code,
-            bans=bans,
-        )
-        player.steaminfo = steam_info
+
     elif player.steaminfo and player.steaminfo.bans is None:
-        # Fetch the bans
+        # Fetch the bans if they're missing
         bans = fetch_steam_bans_player(player.steam_id_64)
-        player.steaminfo.bans = bans
     elif (
         player.steaminfo
         and player.steaminfo.profile is None
         or player.steaminfo.country is None
     ):
-        # Fetch the profile
+        # Fetch the profile if the profile or country code is missing
         profile = fetch_steam_player_summary_player(player.steam_id_64)
         country_code = _get_player_country_code(profile)
-        player.steaminfo.profile = profile
-        player.steaminfo.country = country_code
+
+    if player.steaminfo is None:
+        steam_info = SteamInfo(
+            profile=profile, country=country_code, bans=bans, steamid=player
+        )
+        player.steaminfo = steam_info
+    else:
+        if profile:
+            player.steaminfo.profile = profile
+        if country_code:
+            player.steaminfo.country = country_code
+        if bans:
+            player.steaminfo.bans = bans
 
 
 def enrich_db_users(chunk_size=100, update_from_days_old=30):
