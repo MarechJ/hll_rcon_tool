@@ -8,17 +8,17 @@
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/T6T83KY8H)
 
-Join us on discord if you use it, for feedback, troubleshooting and informations about updates: https://discord.gg/hZx6gn3
+Join us on discord if you use it, for feedback, troubleshooting and information about updates and general Hell Let Loose hosting info: https://discord.gg/hZx6gn3
 
 # Hell Let Loose (HLL) Community RCON (CRCON)
 
-An extended RCON tool for Hell Let loose, meant to replace the official tool and go WAY beyond.  
+An extended RCON tool for Hell Let Loose, meant to replace the official tool and go WAY beyond.  
 
 ## Included features
 
 ### Manage your games and players in realtime
 
-- See all the players currently in game :
+- See all the players currently in game (live view with game logs or game view with players by squad/team):
   - Unique player IDs (steam 64 ID or Windows Store ID)
   - Steam profile (with API key configured) for steam players (country, bans, etc.)
   - VIP status
@@ -33,7 +33,7 @@ An extended RCON tool for Hell Let loose, meant to replace the official tool and
   - `watch` players to receive a Discord notification (ping) when they connect
   - `flag` players (helps to find some users quickly in the player history  
   or activate options used by moderation bots)
-
+- Recording of you map history, you see which map were played and how long they lasted
 - Maintain individual (by CRCON account) or shared message templates for punishments, etc.
 
 - A live view that shows you all currently connected players and all of the game server logs, as well as filter them by `action` or `player`:
@@ -172,10 +172,12 @@ You only need very limited shell skills, you can mostly just follow along with t
 CRCON is a website and is designed to run permanently (24/7) and be accessible on the Internet since your players (public stats) and admin accounts will connect to it.
 
 This allows you to maintain a separation between admin accounts and the game server and provides a centralized database for both game server data (logs, etc.) and admin actions
-  - You do not need to share the game server RCON password
+  - You do not need to share the game server RCON password (and should avoid doing so unless you have a good reason or people can skip audit logs)
   - Admin actions are recorded/logged
 
-Because of this, it is much easier to rent a cheap VPS and run it there than to try to install it on a home computer, ensure that connections are forwarded properly and that it is always on/available.erver.
+Because of this, it is much easier to rent a cheap VPS and run it there than to try to install it on a home computer, ensure that connections are forwarded properly and that it is always on/available.
+
+Your users also don't need to install any software, they simply log into the website.
 
 If you decide to install it on a home computer, keep in mind you'll have to :
 - run your computer 24/7  
@@ -190,11 +192,15 @@ If you decide to install it on a home computer, keep in mind you'll have to :
 - Regarding drive space, the CRCON database of a game server where 95+ players connect for 10 hours per day may grow up to 20 GB in a year.  
 As it's not easy to shrink it, you are advised to select an offer with >50 GB of storage.
 
-Some VPS providers rent this type of services for ~$10/month.
+You *can* run on as little as 3.something gb of RAM but as it's not necessarily easy to increase the amount of RAM your VPS has, it's better to pad it a little bit. The more game servers you use within a CRCON install the more RAM/CPU/storage you'll utilize.
+
+Some VPS providers rent this type of services for ~$5-10/month.
 
 ## Software requirements
 
-In theory you can run this anywhere you can use Docker and Docker compose, but unless you have a really good reason you should use Linux (any distro *should* work, but if you're unfamiliar you want to pick a more popular one like Ubuntu or Debian for easier tech support when you Google) instead of Windows or any other operating system.
+In theory you can run this anywhere you can use Docker and Docker Compose, but unless you have a really good reason you should use Linux (any distro *should* work, but if you're unfamiliar you want to pick a more popular one like Ubuntu or Debian for easier tech support when you Google) instead of Windows or any other operating system.
+
+If you use any CPU architecture other than `amd64` you won't be able to use the hosted Docker images and will have to build your own.
 
 If you run it on Windows, don't expect anyone to be able to help you on the Discord.
 
@@ -206,7 +212,7 @@ If you run it on Windows, don't expect anyone to be able to help you on the Disc
 - `Docker Compose` : https://docs.docker.com/compose/install/  
 Note : `docker-compose` is deprecated.  
 This README and release announcements will show `docker compose` examples.  
-*You should still be able to use `docker-compose` and will have to adjust the commands below accordingly.*
+*You should still be able to use `docker-compose` and will have to adjust the commands below accordingly.* but you should really just use the modern version and avoid potential issues. We can't/won't guarantee that future releases will work properly with `docker-compose`
 
 Some VPS providers offer free installation of linux distributions in which Docker is already activated. Search/ask for it !
 
@@ -217,14 +223,14 @@ Some VPS providers offer free installation of linux distributions in which Docke
 - ~~There's also a Wiki made by the community (Thanks [2.Fjg]bn.hall): https://github.com/MarechJ/hll_rcon_tool/wiki~~  
 *(The Wiki is obsolete. We hope we'll find the time to update it soon)*
 - Most shell commands/error messages can be Googled, and a *lot* of usual questions already found an answer on the CRCON's Discord. Ask for help on the tech-support channel if you can't find what you're searching for.
-- If you still don't understand what to do after reading this, just ask on Discord.
+- If you still don't understand what to do after reading this, just ask on Discord, but please respect peoples time and energy and at least attempt to solve your problem by using Google/other resources first.
 
 Note : all the commands given below are meant to be entered in a Debian-like Linux terminal.
 
 ### 1. Download CRCON
 
 Using an SSH client (*don't know which one to get ?* Try https://putty.org/),  
-**log as root** into your distant Linux, using the SSH credentials given by your VPS provider.
+**log in as root** into your distant Linux, using the SSH credentials given by your VPS provider.
 
 Enter these commands in the terminal (*press [Enter] to validate*) :
 
@@ -492,12 +498,14 @@ Also note that you must add this extra keys in your `docker-compose.yml` after H
 #### Multiple CRCON installations
 
 If you do not want to mix admin accounts and database data you can clone it multiple times in different directories (see below) and then set each of them up (and then set up as many game servers per CRCON that you choose).
+
 This makes more sense when you're sharing the server you host CRCON on with other communities.
+
 **Note**: When you run two or more CRCONs on the same machine, you will have redis/postgres port conflicts and will need to resolve these in your `.env` and compose files.
 
 ## Building your own Docker images
 
-Docker images are hosted on [Docker Hub](https://hub.docker.com/r/maresh/hll_rcon), but if you're running a fork, have made local modifications or the release you want isn't available for some reason, you can build your images locally.
+Docker images are hosted on [Docker Hub](https://hub.docker.com/r/maresh/hll_rcon), but if you're running a fork, have made local modifications, aren't using `amd64` as your CPU architecture or the release you want isn't available for some reason, you can build your images locally.
 
 ### Set environment variables
 
