@@ -540,6 +540,9 @@ def get_recent_logs(
     if not isinstance(start, int):
         start = 0
 
+    if not isinstance(end, int):
+        end = 1000
+
     if start != 0:
         all_logs = log_list[start : min(end, len(log_list))]
     logs: list[StructuredLogLineWithMetaData] = []
