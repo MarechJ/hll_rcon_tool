@@ -304,7 +304,7 @@ Enter the command(s) that suit(s) your operating system :
   `docker compose -f docker-compose.yml -f docker-compose.windows.yml up -d`
 - Raspberry-Pi (32 bits) or any ARM32v7 :
   > `docker compose -f docker-compose.yml -f docker-compose.arm32v7.yml up -d --build`
-- Raspberry-Pi (64 bits) or any ARM32v8 :
+- Raspberry-Pi (64 bits) or any ARM64v8 :
   > `docker compose -f docker-compose.yml -f docker-compose.arm64v8.yml up -d --build`
 
 If eveything went well, you'll end up with some green lines saying "started" after a minute or two.  
@@ -440,7 +440,7 @@ If you are updating from an older version, you should review the announcements i
     > `docker compose -f docker-compose.yml -f docker-compose.windows.yml up -d --remove-orphans`
   - Raspberry-Pi (32 bits) or any ARM32v7
     > `docker compose -f docker-compose.yml -f docker-compose.arm32v7.yml up --build -d --remove-orphans`
-  - Raspberry-Pi (64 bites) or any ARM32v8
+  - Raspberry-Pi (64 bites) or any ARM64v8
     > `docker compose -f docker-compose.yml -f docker-compose.arm64v8.yml up --build -d --remove-orphans`
 
 You also can download the [latest zip release](https://github.com/MarechJ/hll_rcon_tool/releases/latest) and install it manually (not recommended)
