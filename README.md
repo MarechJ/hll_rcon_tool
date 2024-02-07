@@ -229,7 +229,7 @@ Note : all the commands given below are meant to be entered in a Debian-like Lin
 
 ### 1. Download CRCON
 
-Using an SSH client (*don't know which one to get ?* Try https://putty.org/),  
+Using an SSH client (*don't know which one to get ?* Try PuTTY : https://www.chiark.greenend.org.uk/~sgtatham/putty/),  
 **log in as root** into your distant Linux, using the SSH credentials given by your VPS provider.
 
 Enter these commands in the terminal (*press [Enter] to validate*) :
