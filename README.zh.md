@@ -35,8 +35,8 @@ CRCON是一个被设计于时刻运行（24/7）的网站。它会实时抓取�
 如果您决定将其安装在家用电脑上，请记住您将需要：
 - 让电脑24小时不间断运行  
 *希望您能忍受嘈杂的风扇声、硬件维护和电费支出；*
-- 开放您的互联网访问，包括路由器和防火墙
-  *这需要网络管理知识，并可能产生安全风险。*
+- 开放您的互联网访问，包括路由器和防火墙  
+*这需要网络管理知识，并可能产生安全风险。*
 
 ## 硬件需求
 
@@ -44,27 +44,27 @@ CRCON是一个被设计于时刻运行（24/7）的网站。它会实时抓取�
 - 推荐配置：4个CPU核心和8GB的RAM
 - 存储空间：如果每天有95+玩家连接，CRCON数据库可能会在一年内增长到20GB。它不容易被缩小，建议您选择提供超过50GB存储空间的服务。
 
-You *can* run on as little as 3.something gb of RAM but as it's not necessarily easy to increase the amount of RAM your VPS has, it's better to pad it a little bit. The more game servers you use within a CRCON install the more RAM/CPU/storage you'll utilize.
 您可以在只有3GB+的RAM配置上运行，但由于增加VPS的RAM量并不容易，最好稍微预留一些。在CRCON中安装使用的服务器越多，您将占用的RAM/CPU/存储空间就越多。
 
 一些服务器供应商提供40～50元一月的新人套餐。
 
 ## 软件需求
 
-理论上，您可以在任何可以使用Docker和Docker Compose的地方运行此软件，但除非您有非常好的理由，否则您应该使用Linux（任何发行版应该都可以支持，但如果您不熟悉，最好选择像Ubuntu或Debian这样更流行的发行版，以便在社区获得技术支持）而不是Windows或任何其他操作系统。
+理论上，您可以在任何可以使用Docker和Docker Compose的地方运行此软件，但除非您有非常好的理由，否则您应该使用Linux（任何发行版应该都可以支持.如果您不熟悉这些，最好选择像Ubuntu或Debian这样更流行的发行版，以便在社区获得技术支持）而不是Windows或任何其他操作系统。
 
 如果您使用除amd64之外的CPU架构，您将无法使用提供的Docker映像。您必须自行构建映像。
 
 如果您在Windows上运行，请不要指望在Discord上有人能提供帮助。
 
 - `git`（可选，但**极度**推荐安装）：https://git-scm.com/downloads  
-  如果您不使用git，您会不得不手动下载并安装以`.zip`格式发布的版本，并且您将无法像使用git那样轻松地更新您的CRCON。
+  如果您不使用git，您只能手动下载并安装以`.zip`格式发布的版本，并且无法像使用git那样轻松地更新您的CRCON。
 - `Docker Engine`(社区版)：https://docs.docker.com/engine/install/  
   您也可以使用`Docker Desktop`，但基于您的计算机/服务器/VPS，可能会遇到嵌套虚拟化问题。
 - `Docker Compose`：https://docs.docker.com/compose/install/  
 注：`docker-compose`已被弃用。 
-本自述文件和发布公告将展示Docker Compose的示例。
-*您应该还能够使用docker-compose，但必须相应地调整下面的命令。* 我们建议您只使用最新的版本，以避免潜在的问题。我们不能保证未来发布的软件能搭配docker-compose正常工作。
+本自述文件和发布公告将展示Docker Compose的示例。  
+*您应该还能够使用docker-compose，但必须相应地调整下面的命令。*   
+我们建议您只使用最新的版本，以避免潜在的问题。我们不能保证未来发布的软件能搭配docker-compose正常工作。
 
 一些VPS提供商免费预先安装了Docker的Linux系统，请联系他们了解详情。
 
@@ -74,14 +74,14 @@ You *can* run on as little as 3.something gb of RAM but as it's not necessarily 
 - 保持冷静，按部就班。这是一个非常简单的安装过程，许多不太懂技术的人都成功完成了，所以你可能也可以！
 - ~~社区还制作了一个百科（感谢[2.Fjg]bn.hall）: https://github.com/MarechJ/hll_rcon_tool/wiki~~  
 *（该百科已过时。我们希望我们能尽快抽出时间更新它）*
-- 大多数Shell命令/错误消息都可以通过百度解决，而且CRCON的Discord上已经有了很多常见问题的答案。如果找不到你要找的内容，请在技术支持频道（tech-support）寻求帮助。
+- 大多数Shell命令/错误消息都可以通过百度/必应搜索解决，而且CRCON的Discord上已经有了很多常见问题的答案。如果找不到你要找的内容，请在技术支持频道（tech-support）寻求帮助。
 - 如果阅读后仍然不明白该怎么做，请在Discord上询问。不过，请您尊重他人的时间和精力，至少先尝试使用百度/其他资源来解决您的问题。
 
 注：以下所有命令都应在类似Debian的包管理模式的Linux终端中使用。
 
 ### 1. 下载CRCON
 
-使用SSH客户端（*不知道应该选择哪一个？*试试https://putty.org/），通过您的您的VPS提供商提供的SSH凭据，**作为root用户**登录到您的远程Linux系统。
+使用SSH客户端（*不知道如何选择？*试试 https://www.chiark.greenend.org.uk/~sgtatham/putty/ ），通过您的您的VPS提供商提供的SSH凭据，**作为root用户**登录到您的远程Linux系统。
 
 在终端中输入以下命令（*按[Enter]键确认*）：
 
@@ -94,8 +94,7 @@ You *can* run on as little as 3.something gb of RAM but as it's not necessarily 
 
 现在，您将创建并编辑一个.env文件，在其中告诉CRCON如何连接到您的HLL游戏服务器。
 
-这里我们将使用**nano**，一个在文本模式下运行的简单文本编辑器。
-
+这里我们将使用**nano**，一个在文本模式下运行的简单文本编辑器。  
 *您可以使用您喜欢的其他工具，无论是本地工具还是通过SFTP连接获取文件。*
 
 - 复制环境配置文件模版：
@@ -109,13 +108,14 @@ You *can* run on as little as 3.something gb of RAM but as it's not necessarily 
 
 您不必更改所有的值。只有以下5个是必需的：
 
-1. 选择一个密码，以便CRCON访问数据库
-  我们无需记住/记录它：您以后不用在任何地方输入它。检查.env中的注释以查看限制字符，如%。
+1. 选择一个密码，以便CRCON访问数据库。  
+  我们无需记住/记录它：您以后不用在任何地方输入它。检查.env中的注释以查看限制字符，如%。  
   在CRCON启动过一次后，请勿更改它：否则您的数据库将无法访问。
 
         HLL_DB_PASSWORD=meiyoukonggedemima
 
-3. 输入一个随机混乱的长字符串，用于加密用户密码，您可能希望备份此字符串。如果丢失，您的所有管理员帐户失效，并且需要重置其密码。
+3. 输入一个随机混乱的长字符串，用于加密用户密码，您可能希望备份此字符串。  
+  如果丢失，您的所有管理员帐户失效，并且需要重置其密码。  
   在CRCON启动过一次后，请勿更改它：否则您的现有账户会失效。
 
        RCONWEB_API_SECRET=zheshiyigehenfuzademeiyoukonggedemima
@@ -136,10 +136,9 @@ You *can* run on as little as 3.something gb of RAM but as it's not necessarily 
 
     请再次确认在`=`前后和您输入的内容之间**没有空格**.
 
-7. 退出nano编辑器回到服务器：
+7. 退出nano编辑器回到CRCON目录：
 
-    按下`Ctrl+o`保存修改（按Y确认）
-
+    按下`Ctrl+o`保存修改（按Y确认）  
     按下`Ctrl+x`退出nano
 
 ### 3. 第一次尝试启动CRCON！
@@ -168,18 +167,13 @@ CRCON现在已配置好可以启动并连接到您的HLL游戏服务器。不过
 
 ### 4. 进入CRCON用户界面
 
-您的CRCON界面可以从世界各地的浏览器中访问。
+您的CRCON界面可以从世界各地的浏览器中访问。  
+每个游戏服务器可以单独访问，请注意您.env中每个游戏服务器的RCONWEB_PORT值。  
+例如，默认情况下，您可以使用以下方式访问游戏服务器1：http://yourVPSIP:8010/ （将URL中的`yourVPSIP`替换为您的VPS的IP地址）。
 
-每个游戏服务器可以单独访问，请注意您.env中每个游戏服务器的RCONWEB_PORT值。
-
-例如，默认情况下，您可以使用以下方式访问游戏服务器1：http://yourVPSIP:8010/（将URL中的`yourVPSIP`替换为您的VPS的IP地址）。
-
-- 打开页面并单击菜单中的**LOGIN**。
-
-使用默认的账户/密码 `admin`/`admin` 登陆总管理账户。
-
-*请先不要碰其他内容，我们还没有设置完成。稍后您有充足的时间探索这个工具*
-
+- 打开页面并单击菜单中的**LOGIN**。  
+- 使用默认的账户/密码 `admin`/`admin` 登陆总管理账户。  
+*请先不要碰其他内容，我们还没有设置完成。稍后您有充足的时间探索这个工具。*  
 现在，总管理员的密码很不安全，我们必须修改密码。
 
 ### 5. 准备配置用户账户
@@ -220,12 +214,10 @@ CRCON现在已配置好可以启动并连接到您的HLL游戏服务器。不过
 - 填写添加用户 **Add User** 的表格  
 记得填写用户的Steam 64位ID，这能让CRCON识别一个玩家是否为管理员  
 ![](images/readme_admin_account_setup_2.png)
-- 点击保存 **SAVE** 按钮
-
+- 点击保存 **SAVE** 按钮  
 用户创建完成后，您将会看到该页面：![](images/readme_admin_account_setup_3.png)
 
-如果您打算禁用admin帐户，不要忘记为自己设置Superuser status和Staff status！
-
+如果您打算禁用admin帐户，不要忘记为自己设置Superuser status和Staff status！  
 除非您把此用户勾选为管理状态（`staff status`），用户不能自行修改账号密码。
 
 要更改用户密码，请单击其名称，然后单击此链接（如下图）：  
