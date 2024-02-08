@@ -5,27 +5,27 @@
 ![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/maresh/hll_rcon)
 ![Docker Pulls](https://img.shields.io/docker/pulls/maresh/hll_rcon)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![zh doc](https://shields.io/badge/中文文档-8A2BE2)](https://github.com/BrycePPM/hll_rcon_tool/blob/master/README.zh.md)
+[![zh doc](https://shields.io/badge/中文文档-8A2BE2)](README.zh.md)
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/T6T83KY8H)
 
-如果您使用Discord，您可以加入我们的频道，以获取故障排除帮助和提供反馈，以及其他人间地狱服务器运营的信息：https://discord.gg/hZx6gn3
+欢迎加入我们的Discord频道，您可以在此获取故障排除帮助和提供反馈，以及其他人间地狱服务器运营的信息：https://discord.gg/hZx6gn3
 
 # 人间地狱（HLL）社区RCON工具 (CRCON)
 
-由人间地狱玩家社区开发的强大的人间地狱服务器管理工具，旨在取代官方提供的软件，并力争做到遥遥领先。
+这是一款由人间地狱玩家社区开发的强大的人间地狱服务器管理工具，旨在取代官方提供的软件，并力争做到遥遥领先。
 
 # 安装指南
 
 ## 技术需求
 
-您只需要非常基本的Shell技能，大部分时间只需按照说明操作即可。不过，您需要了解什么是目录（directory），如何列出目录的内容，更改目录等。
+您只需要非常基本的Shell技能，大部分过程只需按照说明操作即可。不过，您需要了解什么是目录（directory，类似于文件夹），如何列出目录的内容，切换目录等。
 
 ## 请在安装在虚拟服务器（VPS）而不是您的个人电脑上
 
-CRCON是一个被设计于时刻运行（24/7）的网站。它会实时抓取服务器的信息并整理，使其可以通过互联网随时访问。服务器的玩家（数据统计）和管理员将随时连接和查看。
+CRCON是一个需要时刻运行（24/7）的网站。它会实时抓取服务器的信息并整理，使其可以通过互联网随时访问。社区玩家和服务器管理员将随时连接和查看。
 
-这实现了管理员账户和游戏服务器之间保持分离，并为游戏服务器数据（日志、战绩等）和管理员操作提供了一个集中式数据库。
+它实现了管理员账户和游戏服务器之间保持分离，并为游戏服务器数据（日志、战绩等）和管理员操作提供了一个集中式数据库。
   - 您无需分享游戏服务器的RCON密码（除非您有充分理由或允许人们越过审计日志），并且应该避免这样做。
   - 所有管理员操作都会被记录，以供日后追责
 
@@ -37,54 +37,54 @@ CRCON是一个被设计于时刻运行（24/7）的网站。它会实时抓取�
 - 让电脑24小时不间断运行  
 *希望您能忍受嘈杂的风扇声、硬件维护和电费支出；*
 - 开放您的互联网访问，包括路由器和防火墙  
-*这需要网络管理知识，并可能产生安全风险。*
+*这需要网络管理知识，并可能产生信息安全问题。*
 
 ## 硬件需求
 
 - 最低配置：2个CPU核心和6GB的RAM
 - 推荐配置：4个CPU核心和8GB的RAM
-- 存储空间：如果每天有95+玩家连接，CRCON数据库可能会在一年内增长到20GB。它不容易被缩小，建议您选择提供超过50GB存储空间的服务。
+- 存储空间：如果每天有95+玩家连接，CRCON数据库体积可能会在一年内增长到20GB，它不容易被缩小。因此，我们建议您选择提供超过50GB存储空间的服务。
 
 您可以在只有3GB+的RAM配置上运行，但由于增加VPS的RAM量并不容易，最好稍微预留一些。在CRCON中安装使用的服务器越多，您将占用的RAM/CPU/存储空间就越多。
 
-一些服务器供应商提供40～50元一月的新人套餐。
+一些服务器供应商提供每月40～50元的新人套餐。
 
 ## 软件需求
 
-理论上，您可以在任何可以使用Docker和Docker Compose的地方运行此软件，但除非您有非常好的理由，否则您应该使用Linux（任何发行版应该都可以支持.如果您不熟悉这些，最好选择像Ubuntu或Debian这样更流行的发行版，以便在社区获得技术支持）而不是Windows或任何其他操作系统。
+理论上，您可以在任何可以使用Docker和Docker Compose的地方运行此软件，但除非您有非常好的理由，否则您应该使用Linux（任何发行版应该都能够支持。如果您不熟悉这些，最好选择像Ubuntu或Debian这样更流行的发行版，以便在社区获得技术支持）而不是Windows或任何其他操作系统。
 
 如果您使用除amd64之外的CPU架构，您将无法使用提供的Docker映像。您必须自行构建映像。
 
 如果您在Windows上运行，请不要指望在Discord上有人能提供帮助。
 
-- `git`（可选，但**极度**推荐安装）：https://git-scm.com/downloads  
+- `git`（可选，但**极度**推荐使用）：https://git-scm.com/downloads  
   如果您不使用git，您只能手动下载并安装以`.zip`格式发布的版本，并且无法像使用git那样轻松地更新您的CRCON。
 - `Docker Engine`(社区版)：https://docs.docker.com/engine/install/  
   您也可以使用`Docker Desktop`，但基于您的计算机/服务器/VPS，可能会遇到嵌套虚拟化问题。
 - `Docker Compose`：https://docs.docker.com/compose/install/  
-注：`docker-compose`已被弃用。 
+注：`docker-compose`已被弃用。  
 本自述文件和发布公告将展示Docker Compose的示例。  
 *您应该还能够使用docker-compose，但必须相应地调整下面的命令。*   
 我们建议您只使用最新的版本，以避免潜在的问题。我们不能保证未来发布的软件能搭配docker-compose正常工作。
 
-一些VPS提供商免费预先安装了Docker的Linux系统，请联系他们了解详情。
+一些VPS提供商免费预先安装了Docker的Linux系统实例，请联系他们了解详情。
 
 ## 安装步骤
 
 *“我对终端/控制台和代码一无所知，怎么办？”*
 - 保持冷静，按部就班。这是一个非常简单的安装过程，许多不太懂技术的人都成功完成了，所以你可能也可以！
 - ~~社区还制作了一个百科（感谢[2.Fjg]bn.hall）: https://github.com/MarechJ/hll_rcon_tool/wiki~~  
-*（该百科已过时。我们希望我们能尽快抽出时间更新它）*
-- 大多数Shell命令/错误消息都可以通过百度/必应搜索解决，而且CRCON的Discord上已经有了很多常见问题的答案。如果找不到你要找的内容，请在技术支持频道（tech-support）寻求帮助。
+*（该百科已过时，我们希望我们能尽快安排时间更新它）*
+- 大多数Shell命令/错误消息/指南的更详细步骤，都可以通过百度/必应搜索解决，而且CRCON的Discord上已经有了很多常见问题的答案。如果找不到你要找的内容，请在技术支持频道（tech-support）寻求帮助。
 - 如果阅读后仍然不明白该怎么做，请在Discord上询问。不过，请您尊重他人的时间和精力，至少先尝试使用百度/其他资源来解决您的问题。
 
 注：以下所有命令都应在类似Debian的包管理模式的Linux终端中使用。
 
 ### 1. 下载CRCON
 
-使用SSH客户端（*不知道如何选择？*试试 https://www.chiark.greenend.org.uk/~sgtatham/putty/ ），通过您的您的VPS提供商提供的SSH凭据，**作为root用户**登录到您的远程Linux系统。
+使用SSH客户端（*不知道如何选择？* 试试 https://www.chiark.greenend.org.uk/~sgtatham/putty/ ），通过您的VPS供应商提供的SSH凭据，**以root用户身份**登录到您的远程Linux系统。
 
-在终端中输入以下命令（*按[Enter]键确认*）：
+在终端中输入以下命令（*按[Enter]回车键确认输入*）：
 
 - 下载CRCON文件：
   > `git clone https://github.com/MarechJ/hll_rcon_tool.git`
@@ -120,8 +120,8 @@ CRCON是一个被设计于时刻运行（24/7）的网站。它会实时抓取�
   在CRCON启动过一次后，请勿更改它：否则您的现有账户会失效。
 
        RCONWEB_API_SECRET=zheshiyigehenfuzademeiyoukonggedemima
-
-配置您想要设置的每个游戏服务器（服务器1，服务器2等），根据需要重复以下步骤为第2/3个服务器执行相同的操作：
+  
+我们开始配置您想要添加的游戏服务器（以服务器1 / SERVER 1 为例，根据需要重复以下步骤为第2/3个服务器执行相同的操作）：
 
 3. 输入你的RCON IP（由游戏服务器供应商提供，这于游戏服务器IP不一定相同）：
 
@@ -139,14 +139,14 @@ CRCON是一个被设计于时刻运行（24/7）的网站。它会实时抓取�
 
 7. 退出nano编辑器回到CRCON目录：
 
-    按下`Ctrl+o`保存修改（按Y确认）  
-    按下`Ctrl+x`退出nano
+    按下`Ctrl + o`保存修改（按Y确认）  
+    按下`Ctrl + x`退出nano
 
 ### 3. 第一次尝试启动CRCON！
 
-CRCON现在已配置好可以启动并连接到您的HLL游戏服务器。不过，我们后续还有一些步骤，因为我们现在需要配置其用户。
+CRCON现在已配置好可以启动并连接到您的HLL游戏服务器。不过，我们后续还有一些步骤，因为我们需要设置用户账户。
 
-注意：启动过程将显示大量的滚动文本。莫慌，因为您不需阅读/执行任何操作，只需静待魔法的发生。
+注意：启动过程将显示大量的滚动文本。莫慌，因为您不需阅读/执行任何操作，只需静待奇迹的发生。
 
 输入适合您操作系统的命令：
 
@@ -162,7 +162,7 @@ CRCON现在已配置好可以启动并连接到您的HLL游戏服务器。不过
   > `docker compose -f docker-compose.yml -f docker-compose.arm64v8.yml up -d --build`
 
 如果一切正常，你会在几分钟后看到一些写着"started"的绿色文字
-注：如果你没有为预留的服务器2（MyServer2）或服务器3(MyServer3)设置环境参数，在一些行中会显示错误，这是正常的。
+注：如果你没有为预留的服务器2（SERVER 2）或服务器3（SERVER 3）设置环境参数，在一些行中会出现错误，这是正常的。
 
 如果关于服务器1（xxx _1 -1）的最后几行有显示错误（红色），请检查您在.env文件中的输入，并尝试用上面的启动命令重新启动CRCON。
 
@@ -193,12 +193,12 @@ CRCON现在已配置好可以启动并连接到您的HLL游戏服务器。不过
 
 - 点击文本输入区下方的保存按钮（SAVE）  
 *(窗口右上角应弹出绿色的确认标志)  
-如果弹出黄色或红色标志，则表示您有语法错误：（请看上面的示例以正确设置）*
+如果弹出黄色或红色标志，则表示您有语法错误：（请查看上面的示例确认设置正确）*
 
 ### 6. 重启CRCON
 
 重新启动CRCON的容器。这听起来可能有点奇怪，但这是必需的。  
-为了使您刚刚设置的server_url值生效，它必须在CRCON Docker容器启动期间进行声明。
+为了使您刚刚设置的`server_url`值生效，它必须在CRCON Docker容器启动期间进行声明。
 
     docker compose restart
 
@@ -218,8 +218,8 @@ CRCON现在已配置好可以启动并连接到您的HLL游戏服务器。不过
 - 点击保存 **SAVE** 按钮  
 用户创建完成后，您将会看到该页面：![](images/readme_admin_account_setup_3.png)
 
-如果您打算禁用admin帐户，不要忘记为自己设置Superuser status和Staff status！  
-除非您把此用户勾选为管理状态（`staff status`），用户不能自行修改账号密码。
+如果您打算禁用admin帐户，请先为自己添加一个勾选了Superuser status和Staff status的账户！  
+除非您把一个用户勾选为管理状态（`staff status`），用户不能自行修改账号密码。
 
 要更改用户密码，请单击其名称，然后单击此链接（如下图）：  
 ![](images/readme_admin_account_setup_4.png)
@@ -242,9 +242,9 @@ CRCON现在已配置好可以启动并连接到您的HLL游戏服务器。不过
 
 接下来你可以自行探索这个工具的各项功能。
 
-我们明白这个界面设计并不完美。我们很乐意如果有人决定帮助更新它。
+我们明白这个界面设计并不完美。我们很乐意如果有人能加入帮助改善它。
 
-您将在“SETTINGS”菜单中找到许多可以自定义的内容，大多数设置在其各自的页面上都有一些描述/解释。
+您将在“SETTINGS”菜单中找到许多可以自定义的内容，大多数设置在其各自的页面上都有一些解释。
 
 如果您有任何问题，请随时在CRCON Discord上提问。
 
@@ -300,7 +300,7 @@ https://github.com/MarechJ/hll_rcon_tool/releases
 
 # 使用教程
 
-*展示视频即将推出*
+*即将推出展示视频*
 
 有一个公开API端点可供任何人在 http://yourVPSIP:7010/api/scoreboard 上无需密码使用。
 
