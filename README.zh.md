@@ -5,6 +5,7 @@
 ![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/maresh/hll_rcon)
 ![Docker Pulls](https://img.shields.io/docker/pulls/maresh/hll_rcon)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![zh doc](https://shields.io/badge/中文文档-8A2BE2)](https://github.com/BrycePPM/hll_rcon_tool/blob/master/README.zh.md)
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/T6T83KY8H)
 
