@@ -197,7 +197,11 @@ def expose_api_endpoint(
             ):
                 logger.info(json_invalid_content_type_error)
         else:
-            if cmd.startswith("set_") or cmd.startswith("do_"):
+            if (
+                cmd.startswith("set_")
+                or cmd.startswith("do_")
+                or cmd.startswith("validate_")
+            ):
                 if request.method != "POST":
                     return HttpResponseNotAllowed(["POST"])
                 if request.content_type != "application/json":
@@ -205,17 +209,25 @@ def expose_api_endpoint(
             elif request.method != "GET":
                 return HttpResponseNotAllowed(["GET"])
 
-        # Scrape out special case parameters, like the author of a request is the user name making the request
-        for pname, param in parameters.items():
-            if pname == "by":
-                arguments[pname] = request.user.username
-            elif param.default != inspect._empty:
-                arguments[pname] = data.get(pname, param.default)
-            else:
-                try:
-                    arguments[pname] = data[pname]
-                except KeyError:
-                    return HttpResponseBadRequest()
+        # This is a total hack to avoid having to name every single parameter for
+        # every single user config endpoint
+        if "kwargs" in parameters.keys():
+            arguments = data
+        else:
+            # Scrape out special case parameters, like the author of a request is the user name making the request
+            for pname, param in parameters.items():
+                if pname == "by":
+                    arguments[pname] = request.user.username
+                elif param.default != inspect._empty:
+                    arguments[pname] = data.get(pname, param.default)
+                else:
+                    try:
+                        arguments[pname] = data[pname]
+                    except KeyError:
+                        logger.error(
+                            f"Bad request for {request.method} {request.path} {pname=} {param=}"
+                        )
+                        return HttpResponseBadRequest()
 
         try:
             logger.debug("%s %s", func.__name__, arguments)

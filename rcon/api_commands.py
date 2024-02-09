@@ -636,13 +636,14 @@ class RconAPI(Rcon):
 
     def validate_votemap_config(
         self,
-        config: dict[str, Any] | BaseUserConfig,
+        config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
+        **kwargs,
     ) -> bool:
         return self._validate_user_config(
             model=VoteMapUserConfig,
-            data=config,
+            data=config or kwargs,
             dry_run=True,
             errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
@@ -668,13 +669,14 @@ class RconAPI(Rcon):
 
     def validate_auto_broadcasts_config(
         self,
-        config: dict[str, Any] | BaseUserConfig,
+        config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
+        **kwargs,
     ) -> bool:
         return self._validate_user_config(
             model=AutoBroadcastUserConfig,
-            data=config,
+            data=config or kwargs,
             dry_run=True,
             errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
@@ -700,13 +702,14 @@ class RconAPI(Rcon):
 
     def validate_votekick_autotoggle_config(
         self,
-        config: dict[str, Any] | BaseUserConfig,
+        config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
+        **kwargs,
     ) -> bool:
         return self._validate_user_config(
             model=AutoVoteKickUserConfig,
-            data=config,
+            data=config or kwargs,
             dry_run=True,
             errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
@@ -732,13 +735,14 @@ class RconAPI(Rcon):
 
     def validate_auto_mod_level_config(
         self,
-        config: dict[str, Any] | BaseUserConfig,
+        config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
+        **kwargs,
     ) -> bool:
         return self._validate_user_config(
             model=AutoModLevelUserConfig,
-            data=config,
+            data=config or kwargs,
             dry_run=True,
             errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
@@ -764,13 +768,14 @@ class RconAPI(Rcon):
 
     def validate_auto_mod_no_leader_config(
         self,
-        config: dict[str, Any] | BaseUserConfig,
+        config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
+        **kwargs,
     ) -> bool:
         return self._validate_user_config(
             model=AutoModNoLeaderUserConfig,
-            data=config,
+            data=config or kwargs,
             dry_run=True,
             errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
@@ -796,13 +801,14 @@ class RconAPI(Rcon):
 
     def validate_auto_mod_seeding_config(
         self,
-        config: dict[str, Any] | BaseUserConfig,
+        config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
+        **kwargs,
     ) -> bool:
         return self._validate_user_config(
             model=AutoModSeedingUserConfig,
-            data=config,
+            data=config or kwargs,
             dry_run=True,
             errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
@@ -815,7 +821,6 @@ class RconAPI(Rcon):
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
-        logger.info(f"set_auto_mod_seeding_config {kwargs=}")
         return self._validate_user_config(
             model=AutoModSeedingUserConfig,
             data=user_config or kwargs,
@@ -829,13 +834,14 @@ class RconAPI(Rcon):
 
     def validate_auto_mod_solo_tank_config(
         self,
-        config: dict[str, Any] | BaseUserConfig,
+        config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
+        **kwargs,
     ) -> bool:
         return self._validate_user_config(
             model=AutoModNoSoloTankUserConfig,
-            data=config,
+            data=config or kwargs,
             dry_run=True,
             errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
@@ -861,13 +867,14 @@ class RconAPI(Rcon):
 
     def validate_tk_ban_on_connect_config(
         self,
-        config: dict[str, Any] | BaseUserConfig,
+        config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
+        **kwargs,
     ) -> bool:
         return self._validate_user_config(
             model=BanTeamKillOnConnectUserConfig,
-            data=config,
+            data=config or kwargs,
             dry_run=True,
             errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
@@ -895,13 +902,14 @@ class RconAPI(Rcon):
 
     def validate_real_vip_config(
         self,
-        config: dict[str, Any] | BaseUserConfig,
+        config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
+        **kwargs,
     ) -> bool:
         return self._validate_user_config(
             model=RealVipUserConfig,
-            data=config,
+            data=config or kwargs,
             dry_run=True,
             errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
@@ -942,13 +950,14 @@ class RconAPI(Rcon):
 
     def validate_camera_notification_config(
         self,
-        config: dict[str, Any] | BaseUserConfig,
+        config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
+        **kwargs,
     ) -> bool:
         return self._validate_user_config(
             model=CameraNotificationUserConfig,
-            data=config,
+            data=config or kwargs,
             dry_run=True,
             errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
@@ -974,13 +983,14 @@ class RconAPI(Rcon):
 
     def validate_expired_vip_config(
         self,
-        config: dict[str, Any] | BaseUserConfig,
+        config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
+        **kwargs,
     ) -> bool:
         return self._validate_user_config(
             model=ExpiredVipsUserConfig,
-            data=config,
+            data=config or kwargs,
             dry_run=True,
             errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
@@ -1006,13 +1016,14 @@ class RconAPI(Rcon):
 
     def validate_server_name_change_config(
         self,
-        config: dict[str, Any] | BaseUserConfig,
+        config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
+        **kwargs,
     ) -> bool:
         return self._validate_user_config(
             model=GtxServerNameChangeUserConfig,
-            data=config,
+            data=config or kwargs,
             dry_run=True,
             errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
@@ -1038,13 +1049,14 @@ class RconAPI(Rcon):
 
     def validate_log_line_webhook_config(
         self,
-        config: dict[str, Any] | BaseUserConfig,
+        config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
+        **kwargs,
     ) -> bool:
         return self._validate_user_config(
             model=LogLineWebhookUserConfig,
-            data=config,
+            data=config or kwargs,
             dry_run=True,
             errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
@@ -1070,13 +1082,14 @@ class RconAPI(Rcon):
 
     def validate_name_kick_config(
         self,
-        config: dict[str, Any] | BaseUserConfig,
+        config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
+        **kwargs,
     ) -> bool:
         return self._validate_user_config(
             model=NameKickUserConfig,
-            data=config,
+            data=config or kwargs,
             dry_run=True,
             errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
@@ -1102,13 +1115,14 @@ class RconAPI(Rcon):
 
     def validate_rcon_connection_settings_config(
         self,
-        config: dict[str, Any] | BaseUserConfig,
+        config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
+        **kwargs,
     ) -> bool:
         return self._validate_user_config(
             model=RconConnectionSettingsUserConfig,
-            data=config,
+            data=config or kwargs,
             dry_run=True,
             errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
@@ -1134,13 +1148,14 @@ class RconAPI(Rcon):
 
     def validate_rcon_server_settings_config(
         self,
-        config: dict[str, Any] | BaseUserConfig,
+        config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
+        **kwargs,
     ) -> bool:
         return self._validate_user_config(
             model=RconServerSettingsUserConfig,
-            data=config,
+            data=config or kwargs,
             dry_run=True,
             errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
@@ -1166,13 +1181,14 @@ class RconAPI(Rcon):
 
     def validate_scorebot_config(
         self,
-        config: dict[str, Any] | BaseUserConfig,
+        config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
+        **kwargs,
     ) -> bool:
         return self._validate_user_config(
             model=ScorebotUserConfig,
-            data=config,
+            data=config or kwargs,
             dry_run=True,
             errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
@@ -1198,13 +1214,14 @@ class RconAPI(Rcon):
 
     def validate_standard_broadcast_messages(
         self,
-        config: dict[str, Any] | BaseUserConfig,
+        config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
+        **kwargs,
     ) -> bool:
         return self._validate_user_config(
             model=StandardBroadcastMessagesUserConfig,
-            data=config,
+            data=config or kwargs,
             dry_run=True,
             errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
@@ -1230,13 +1247,14 @@ class RconAPI(Rcon):
 
     def validate_standard_punishments_messages(
         self,
-        config: dict[str, Any] | BaseUserConfig,
+        config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
+        **kwargs,
     ) -> bool:
         return self._validate_user_config(
             model=StandardBroadcastMessagesUserConfig,
-            data=config,
+            data=config or kwargs,
             dry_run=True,
             errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
@@ -1262,13 +1280,14 @@ class RconAPI(Rcon):
 
     def validate_standard_welcome_messages(
         self,
-        config: dict[str, Any] | BaseUserConfig,
+        config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
+        **kwargs,
     ) -> bool:
         return self._validate_user_config(
             model=StandardWelcomeMessagesUserConfig,
-            data=config,
+            data=config or kwargs,
             dry_run=True,
             errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
@@ -1294,13 +1313,14 @@ class RconAPI(Rcon):
 
     def validate_steam_config(
         self,
-        config: dict[str, Any] | BaseUserConfig,
+        config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
+        **kwargs,
     ) -> bool:
         return self._validate_user_config(
             model=SteamUserConfig,
-            data=config,
+            data=config or kwargs,
             dry_run=True,
             errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
@@ -1326,13 +1346,14 @@ class RconAPI(Rcon):
 
     def validate_vac_game_bans_config(
         self,
-        config: dict[str, Any] | BaseUserConfig,
+        config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
+        **kwargs,
     ) -> bool:
         return self._validate_user_config(
             model=VacGameBansUserConfig,
-            data=config,
+            data=config or kwargs,
             dry_run=True,
             errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
@@ -1358,13 +1379,14 @@ class RconAPI(Rcon):
 
     def validate_admin_pings_discord_webhooks_config(
         self,
-        config: dict[str, Any] | BaseUserConfig,
+        config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
+        **kwargs,
     ) -> bool:
         return self._validate_user_config(
             model=AdminPingWebhooksUserConfig,
-            data=config,
+            data=config or kwargs,
             dry_run=True,
             errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
@@ -1390,13 +1412,14 @@ class RconAPI(Rcon):
 
     def validate_audit_discord_webhooks_config(
         self,
-        config: dict[str, Any] | BaseUserConfig,
+        config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
+        **kwargs,
     ) -> bool:
         return self._validate_user_config(
             model=AdminPingWebhooksUserConfig,
-            data=config,
+            data=config or kwargs,
             dry_run=True,
             errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
@@ -1422,13 +1445,14 @@ class RconAPI(Rcon):
 
     def validate_camera_discord_webhooks_config(
         self,
-        config: dict[str, Any] | BaseUserConfig,
+        config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
+        **kwargs,
     ) -> bool:
         return self._validate_user_config(
             model=CameraWebhooksUserConfig,
-            data=config,
+            data=config or kwargs,
             dry_run=True,
             errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
@@ -1487,13 +1511,14 @@ class RconAPI(Rcon):
 
     def validate_kills_discord_webhooks_config(
         self,
-        config: dict[str, Any] | BaseUserConfig,
+        config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
+        **kwargs,
     ) -> bool:
         return self._validate_user_config(
             model=KillsWebhooksUserConfig,
-            data=config,
+            data=config or kwargs,
             dry_run=True,
             errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
@@ -1519,13 +1544,14 @@ class RconAPI(Rcon):
 
     def validate_watchlist_discord_webhooks_config(
         self,
-        config: dict[str, Any] | BaseUserConfig,
+        config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
+        **kwargs,
     ) -> bool:
         return self._validate_user_config(
             model=WatchlistWebhooksUserConfig,
-            data=config,
+            data=config or kwargs,
             dry_run=True,
             errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
@@ -1551,13 +1577,14 @@ class RconAPI(Rcon):
 
     def validate_chat_commands_config(
         self,
-        config: dict[str, Any] | BaseUserConfig,
+        config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
+        **kwargs,
     ) -> bool:
         return self._validate_user_config(
             model=ChatCommandsUserConfig,
-            data=config,
+            data=config or kwargs,
             dry_run=True,
             errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
