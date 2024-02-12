@@ -17,6 +17,7 @@ from django.http import (
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
+from discord.utils import escape_markdown
 from rcon.api_commands import get_rcon_api
 from rcon.broadcast import get_votes_status
 from rcon.commands import CommandFailedError
@@ -156,9 +157,13 @@ def audit(func_name, request, arguments):
             del args["by"]
         except KeyError:
             pass
-        arguments = " ".join([f"{k}: `{v}`" for k, v in args.items()])
+        arguments = " ".join(
+            [f"{k}: `{escape_markdown(str(v))}`" for k, v in args.items()]
+        )
         send_to_discord_audit(
-            "`{}`: {}".format(func_name, arguments), request.user.username
+            "`{}`: {}".format(func_name, arguments),
+            request.user.username,
+            md_escape_message=False,
         )
     except:
         logger.exception("Can't send audit log")

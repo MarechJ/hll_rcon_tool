@@ -6,8 +6,8 @@ from typing import List, Type
 import requests
 from discord_webhook import DiscordWebhook
 from pydantic import HttpUrl
-from discord.utils import escape_markdown
 
+from discord.utils import escape_markdown
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.webhooks import (
     AuditWebhooksUserConfig,
@@ -81,7 +81,12 @@ def dict_to_discord(d):
 
 
 def send_to_discord_audit(
-    message, by=None, silent=True, webhookurls: list[HttpUrl | None] | None = None
+    message,
+    by: str | None = None,
+    silent=True,
+    webhookurls: list[HttpUrl | None] | None = None,
+    md_escape_message: bool = True,
+    md_escape_author: bool = True,
 ):
     config = None
 
@@ -101,7 +106,11 @@ def send_to_discord_audit(
         dh_webhooks = [
             DiscordWebhook(
                 url=str(url),
-                content="[{}][**{}**] {}".format(server_config.short_name, escape_markdown(by), escape_markdown(message)),
+                content="[{}][**{}**] {}".format(
+                    server_config.short_name,
+                    escape_markdown(by) if md_escape_author else by,
+                    escape_markdown(message) if md_escape_message else message,
+                ),
             )
             for url in webhookurls
             if url
