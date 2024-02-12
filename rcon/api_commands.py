@@ -1238,7 +1238,7 @@ class RconAPI(Rcon):
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
-            model=StandardBroadcastMessagesUserConfig,
+            model=StandardPunishmentMessagesUserConfig,
             data=config or kwargs,
             dry_run=False,
             errors_as_json=errors_as_json,
@@ -1253,7 +1253,7 @@ class RconAPI(Rcon):
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
-            model=StandardBroadcastMessagesUserConfig,
+            model=StandardPunishmentMessagesUserConfig,
             data=config or kwargs,
             dry_run=True,
             errors_as_json=errors_as_json,
@@ -1403,7 +1403,7 @@ class RconAPI(Rcon):
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
-            model=AdminPingWebhooksUserConfig,
+            model=AuditWebhooksUserConfig,
             data=config or kwargs,
             dry_run=False,
             errors_as_json=errors_as_json,
