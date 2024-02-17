@@ -67,8 +67,10 @@ const useStyles = makeStyles((theme) => {
     // from discord_chat.py...
     // RED = 0xA62019
     // LIGHT_RED = 0xF93A2F
-    // BLUE = 0x006798
-    // LIGHT_BLUE = 0x0099E1
+    // BLUE = 0x006798 : hsl(199, 100%, 30%)
+    // try for better contrast on dark mode : hsl(199, 100%, 40%)
+    // BLUE = 0x008bcc
+    // LIGHT_BLUE = 0x0099E1 : hsl(199, 100%, 43%)
     // GREEN = 0x07DA63
     logs: {
       margin: 0,
@@ -80,7 +82,7 @@ const useStyles = makeStyles((theme) => {
       whiteSpace: "pre-wrap",
     },
     logsChatAllies: {
-      color: "#006798",
+      color: "#008bcc",
       margin: 0,
       whiteSpace: "pre-wrap",
     },

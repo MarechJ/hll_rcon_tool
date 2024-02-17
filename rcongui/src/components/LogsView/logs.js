@@ -58,8 +58,6 @@ const formatClass = (action, classes, highlightLogs) => {
         return classes.logsDisconnected;
       case "connected":
         return classes.logsConnected;
-      default:
-        return classes.logs;
     }
   }
   return classes.logs;
@@ -136,7 +134,7 @@ class Logs extends React.Component {
     this.setActionsFilterInclusivity =
       this.setActionsFilterInclusivity.bind(this);
     this.setLimit = this.setLimit.bind(this);
-    this.sethighlightLogs = this.sethighlightLogs.bind(this);
+    this.setHighlightLogs = this.setHighlightLogs.bind(this);
   }
 
   componentDidMount() {
@@ -180,7 +178,7 @@ class Logs extends React.Component {
     localStorage.setItem("logs_limit", limit);
   }
 
-  sethighlightLogs(highlightLogs) {
+  setHighlightLogs(highlightLogs) {
     this.setState({ highlightLogs });
     localStorage.setItem("logs_highlight_logs", highlightLogs);
   }
@@ -216,7 +214,7 @@ class Logs extends React.Component {
               control={
                 <Switch
                   checked={highlightLogs}
-                  onChange={(e) => this.sethighlightLogs(e.target.checked)}
+                  onChange={(e) => this.setHighlightLogs(e.target.checked)}
                   color="primary"
                 />
               }
