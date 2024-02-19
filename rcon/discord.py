@@ -112,8 +112,6 @@ def send_to_discord_audit(
         # we get a future, not a response, but i don't see code using the responses
         for hook in dh_webhooks:
             DiscordAsyncio().send_webhook(hook)
-        # responses = [hook.execute() for hook in dh_webhooks]
-        # return responses
     except:
         logger.exception("Can't send audit log")
         if not silent:
