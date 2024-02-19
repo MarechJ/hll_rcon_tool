@@ -16,6 +16,7 @@ from rcon.user_config.webhooks import (
     CameraWebhooksUserConfig,
     WatchlistWebhooksUserConfig,
 )
+from rcon.discord_asyncio import DiscordAsyncio
 
 
 @lru_cache
@@ -101,14 +102,18 @@ def send_to_discord_audit(
         dh_webhooks = [
             DiscordWebhook(
                 url=str(url),
-                content="[{}][**{}**] {}".format(server_config.short_name, escape_markdown(by), escape_markdown(message)),
+                content=f"[{server_config.short_name}][**{escape_markdown(str(by))}**] {escape_markdown(message)}",
             )
             for url in webhookurls
             if url
         ]
 
-        responses = [hook.execute() for hook in dh_webhooks]
-        return responses
+        # use DiscordAsyncio to send webhooks asynchronously
+        # we get a future, not a response, but i don't see code using the responses
+        for hook in dh_webhooks:
+            DiscordAsyncio().send_webhook(hook)
+        # responses = [hook.execute() for hook in dh_webhooks]
+        # return responses
     except:
         logger.exception("Can't send audit log")
         if not silent:
