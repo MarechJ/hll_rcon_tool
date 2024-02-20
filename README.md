@@ -5,6 +5,7 @@
 ![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/maresh/hll_rcon)
 ![Docker Pulls](https://img.shields.io/docker/pulls/maresh/hll_rcon)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![README zh](https://shields.io/badge/中文文档-8A2BE2)](README.zh.md)
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/T6T83KY8H)
 
@@ -304,7 +305,7 @@ Enter the command(s) that suit(s) your operating system :
   `docker compose -f docker-compose.yml -f docker-compose.windows.yml up -d`
 - Raspberry-Pi (32 bits) or any ARM32v7 :
   > `docker compose -f docker-compose.yml -f docker-compose.arm32v7.yml up -d --build`
-- Raspberry-Pi (64 bits) or any ARM32v8 :
+- Raspberry-Pi (64 bits) or any ARM64v8 :
   > `docker compose -f docker-compose.yml -f docker-compose.arm64v8.yml up -d --build`
 
 If eveything went well, you'll end up with some green lines saying "started" after a minute or two.  
@@ -440,7 +441,7 @@ If you are updating from an older version, you should review the announcements i
     > `docker compose -f docker-compose.yml -f docker-compose.windows.yml up -d --remove-orphans`
   - Raspberry-Pi (32 bits) or any ARM32v7
     > `docker compose -f docker-compose.yml -f docker-compose.arm32v7.yml up --build -d --remove-orphans`
-  - Raspberry-Pi (64 bites) or any ARM32v8
+  - Raspberry-Pi (64 bits) or any ARM64v8
     > `docker compose -f docker-compose.yml -f docker-compose.arm64v8.yml up --build -d --remove-orphans`
 
 You also can download the [latest zip release](https://github.com/MarechJ/hll_rcon_tool/releases/latest) and install it manually (not recommended)
