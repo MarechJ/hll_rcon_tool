@@ -181,6 +181,12 @@ def get_map_side(map_):
 
 LOG_MAP_NAMES_TO_MAP = CaseInsensitiveDict(
     {
+        # TODO: Add these when they're provided to us
+        "ELA_S_1942_P_Skirmish": "",
+        "ELA_S_1942_Night_P_Skirmish": "",
+        "DRL_S_1944_P_Skirmish": "",
+        "DRL_S_1944_Night_P_Skirmish": "",
+        "DRL_S_1944_Day_P_Skirmish": "",
         "CARENTAN OFFENSIVE": "carentan_offensive_ger",
         "CARENTAN WARFARE": "carentan_warfare",
         "FOY OFFENSIVE": "foy_offensive_ger",
@@ -216,6 +222,11 @@ LOG_MAP_NAMES_TO_MAP = CaseInsensitiveDict(
 
 LONG_HUMAN_MAP_NAMES = CaseInsensitiveDict(
     {
+        "ELA_S_1942_P_Skirmish": "El Alamein Dawn Phased Skirmish",
+        "ELA_S_1942_Night_P_Skirmish": "El Alamein Night Phased Skirmish",
+        "DRL_S_1944_P_Skirmish": "Driel Dawn Phased Skirmish",
+        "DRL_S_1944_Night_P_Skirmish": "Driel Night Phased Skirmish",
+        "DRL_S_1944_Day_P_Skirmish": "Driel Day Phased Skirmish",
         "carentan_offensive_ger": "Carentan Offensive (GER)",
         "carentan_offensive_us": "Carentan Offensive (US)",
         "carentan_warfare_night": "Carentan (Night)",
@@ -280,6 +291,11 @@ LONG_HUMAN_MAP_NAMES = CaseInsensitiveDict(
 
 SHORT_HUMAN_MAP_NAMES = CaseInsensitiveDict(
     {
+        "ELA_S_1942_P_Skirmish": "El Alamein Dawn P. Skirm",
+        "ELA_S_1942_Night_P_Skirmish": "El Alamein Night P. Skirm",
+        "DRL_S_1944_P_Skirmish": "Driel Dawn P. Skirm",
+        "DRL_S_1944_Night_P_Skirmish": "Driel Night P. Skirm",
+        "DRL_S_1944_Day_P_Skirmish": "Driel Day P. Skirm",
         "carentan_offensive_ger": "Carentan Off. (GER)",
         "carentan_offensive_us": "Carentan Off. (US)",
         "carentan_warfare_night": "Carentan (Night)",
@@ -344,6 +360,11 @@ SHORT_HUMAN_MAP_NAMES = CaseInsensitiveDict(
 
 NO_MOD_LONG_HUMAN_MAP_NAMES = CaseInsensitiveDict(
     {
+        "ELA_S_1942_P_Skirmish": "El Alamein Dawn Phased Skirmish",
+        "ELA_S_1942_Night_P_Skirmish": "El Alamein Night Phased Skirmish",
+        "DRL_S_1944_P_Skirmish": "Driel Dawn Phased Skirmish",
+        "DRL_S_1944_Night_P_Skirmish": "Driel Night Phased Skirmish",
+        "DRL_S_1944_Day_P_Skirmish": "Driel Day Phased Skirmish",   
         "carentan_offensive_ger": "Carentan (GER)",
         "carentan_offensive_us": "Carentan (US)",
         "carentan_warfare_night": "Carentan (Night)",
@@ -408,6 +429,11 @@ NO_MOD_LONG_HUMAN_MAP_NAMES = CaseInsensitiveDict(
 
 NO_MOD_SHORT_HUMAN_MAP_NAMES = CaseInsensitiveDict(
     {
+        "ELA_S_1942_P_Skirmish": "El Alamein Dawn P. Skirm",
+        "ELA_S_1942_Night_P_Skirmish": "El Alamein Night P. Skirm",
+        "DRL_S_1944_P_Skirmish": "Driel Dawn P. Skirm",
+        "DRL_S_1944_Night_P_Skirmish": "Driel Night P. Skirm",
+        "DRL_S_1944_Day_P_Skirmish": "Driel Day P. Skirm",
         "carentan_offensive_ger": "Carentan (GER)",
         "carentan_offensive_us": "Carentan (US)",
         "carentan_warfare_night": "Carentan (Night)",
