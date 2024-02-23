@@ -35,6 +35,7 @@ const VoteMapConfig = () => {
       mapAsObject
     )
       .then((res) => showResponse(res, "set_votemap_config", true))
+      .then(resetVotes)
       .then(loadData)
       .catch(handle_http_errors);
   };

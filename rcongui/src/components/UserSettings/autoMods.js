@@ -12,11 +12,11 @@ export const LevelAutoMod = ({
     {
         /* 
             This auto-moderator has 2 features:
-            1. Global server min/max level: No warning, players are kick after connection if they does'not match level requirements
-            2. Min level by role: 3 steps, 1. warning via direct message (Y times), 2. punish (Z times) 3. kick
-            Note that the state cycle for a given squad only resets once the rule-violation is fixed. So for example if you
-            disabled the kick and have 3 punishes configured, once the 3 punishes are
-            through that's it, nothing will happen anymore for that player if they still break level thresholds rules.
+            1. Global server min/max level: No warning, players are kick after connection if they don't match level requirements
+            2. Min level by role: 3 steps, 1. warning via direct message (Y times), 2. punish (Z times) 3. kick.
+            Note that the state cycle for a given squad only resets once the rule-violation is fixed. So, for example, if you
+            disabled the kick and have 3 punishes configured, once the 3 punishes are through, that's it :
+            nothing will happen anymore to the players, even if they still break level thresholds rules.
         
         */
         
@@ -45,12 +45,14 @@ export const LevelAutoMod = ({
         
         /* 
             This allows to configure a global minimum level on the whole server and the matching kick message to display to players.
+            Set to 0 to disable.
         */
         "min_level": 0,
         "min_level_message": "Access to this server is not allowed under level {level}",
         
         /*
             This allows to configure a global maximum level on the whole server and the matching kick message to display to players.
+            Set to 0 to disable.
         */
         "max_level": 0,
         "max_level_message": "Access to this server is not allowed over level {level}",
