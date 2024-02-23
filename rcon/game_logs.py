@@ -658,7 +658,8 @@ def auto_ban_if_tks_right_after_connection(
             return
 
         if (
-            player_profile["sessions_count"]
+            whitelist_players.has_at_least_n_sessions != 0
+            and player_profile["sessions_count"]
             >= whitelist_players.has_at_least_n_sessions
         ):
             logger.debug(
