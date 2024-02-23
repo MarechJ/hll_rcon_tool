@@ -542,7 +542,7 @@ class VoteMap:
         if map_.endswith("_RESTART"):
             map_ = map_.replace("_RESTART", "")
 
-        if map_ not in ALL_MAPS:
+        if map_.lower() not in ALL_MAPS:
             raise ValueError("Invalid current map %s", map_)
 
         return map_
@@ -641,7 +641,8 @@ class VoteMap:
             all_maps = [m for m in ALL_MAPS if not "off" in m]
 
         if not maps_history:
-            raise ValueError("Map history is empty")
+            choice = random.choice([m for m in self.get_map_whitelist()])
+            return choice
 
         return {
             DefaultMethods.least_played_suggestions: partial(
@@ -692,14 +693,17 @@ class VoteMap:
             rcon.do_remove_map_from_rotation(map_)
 
         current_next_map = current_rotation[0]
-        if current_next_map != next_map:
+        if current_next_map.lower() != next_map.lower():
             # Replace the only map left in rotation
             rcon.do_add_map_to_rotation(next_map)
             rcon.do_remove_map_from_rotation(current_next_map)
 
         # Check that it worked
         current_rotation = rcon.get_map_rotation()
-        if len(current_rotation) != 1 or current_rotation[0] != next_map:
+        if (
+            len(current_rotation) != 1
+            or current_rotation[0].lower() != next_map.lower()
+        ):
             raise ValueError(
                 f"Applying the winning map {next_map=} failed: {current_rotation=}"
             )
