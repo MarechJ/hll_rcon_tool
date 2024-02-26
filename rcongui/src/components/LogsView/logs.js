@@ -62,7 +62,7 @@ const formatClass = (action, classes, highlightLogs) => {
   }
   return classes.logs;
 };
-  
+
 const Selector = ({
   classes,
   defaultValue,
@@ -125,7 +125,7 @@ class Logs extends React.Component {
         100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000, 100000,
       ],
       highlightLogs: localStorage.getItem("logs_highlight_logs")
-        ? localStorage.getItem("logs_highlight_logs")
+        ? localStorage.getItem("logs_highlight_logs") === 'true'
         : false,
     };
 
@@ -210,17 +210,17 @@ class Logs extends React.Component {
               <IconButton onClick={onFullScreen}>
                 {isFullScreen ? <FullscreenExitIcon /> : <FullscreenIcon />}
               </IconButton>
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={highlightLogs}
-                  onChange={(e) => this.setHighlightLogs(e.target.checked)}
-                  color="primary"
-                />
-              }
-              label="Highlight Logs"
-              labelPlacement="top"
-            />
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={highlightLogs}
+                    onChange={(e) => this.setHighlightLogs(e.target.checked)}
+                    color="primary"
+                  />
+                }
+                label="Highlight Logs"
+                labelPlacement="top"
+              />
             </h1>
             <ListItemText secondary="30s auto refresh" />
             <AutoRefreshLine
