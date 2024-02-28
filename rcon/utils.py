@@ -39,84 +39,6 @@ INDEFINITE_VIP_DATE = datetime(
 
 UNKNOWN_MAP_NAME = "unknown"
 
-
-class CaseInsensitiveTuple:
-    def __init__(self, values: Iterable[str]) -> None:
-        self.values = tuple(v.lower() for v in values)
-
-    def __contains__(self, key):
-        return key.lower() in self.values
-
-    def __getitem__(self, key):  # -> Any
-        return self.values.__getitem__(key)
-
-
-# Use tuple to be immutable and case insensitive so it doesn't matter how the game
-# server returns them
-ALL_MAPS = CaseInsensitiveTuple(
-    [
-        "carentan_offensive_ger",
-        "carentan_offensive_us",
-        "carentan_warfare_night",
-        "carentan_warfare",
-        "driel_offensive_ger",
-        "driel_offensive_us",
-        "driel_warfare_night",
-        "driel_warfare",
-        "elalamein_offensive_CW",
-        "elalamein_offensive_ger",
-        "elalamein_warfare_night",
-        "elalamein_warfare",
-        "foy_offensive_ger",
-        "foy_offensive_us",
-        "foy_warfare_night",
-        "foy_warfare",
-        "hill400_offensive_ger",
-        "hill400_offensive_us",
-        # "hill400_warfare_night",
-        "hill400_warfare",
-        "hurtgenforest_offensive_ger",
-        "hurtgenforest_offensive_us",
-        "hurtgenforest_warfare_V2_night",
-        "hurtgenforest_warfare_V2",
-        "kharkov_offensive_ger",
-        "kharkov_offensive_rus",
-        "kharkov_warfare_night",
-        "kharkov_warfare",
-        "kursk_offensive_ger",
-        "kursk_offensive_rus",
-        "kursk_warfare_night",
-        "kursk_warfare",
-        "omahabeach_offensive_ger",
-        "omahabeach_offensive_us",
-        # "omahabeach_warfare_night",
-        "omahabeach_warfare",
-        "purpleheartlane_offensive_ger",
-        "purpleheartlane_offensive_us",
-        "purpleheartlane_warfare_night",
-        "purpleheartlane_warfare",
-        "remagen_offensive_ger",
-        "remagen_offensive_us",
-        "remagen_warfare_night",
-        "remagen_warfare",
-        "stalingrad_offensive_ger",
-        "stalingrad_offensive_rus",
-        "stalingrad_warfare_night",
-        "stalingrad_warfare",
-        "stmariedumont_off_ger",
-        "stmariedumont_off_us",
-        "stmariedumont_warfare",
-        "stmereeglise_offensive_ger",
-        "stmereeglise_offensive_us",
-        "stmereeglise_warfare_night",
-        "stmereeglise_warfare",
-        "utahbeach_offensive_ger",
-        "utahbeach_offensive_us",
-        # "utahbeach_warfare_night",
-        "utahbeach_warfare",
-    ]
-)
-
 ALL_ROLES = (
     "armycommander",
     "officer",
@@ -181,6 +103,12 @@ def get_map_side(map_):
 
 LOG_MAP_NAMES_TO_MAP = CaseInsensitiveDict(
     {
+        # TODO: These are incorrectly listed as warfare, pending T17 fixing it
+        # "": "ELA_S_1942_P_Skirmish",
+        # "": "ELA_S_1942_Night_P_Skirmish",
+        # "": "DRL_S_1944_P_Skirmish",
+        # "": "DRL_S_1944_Night_P_Skirmish",
+        # "": "DRL_S_1944_Day_P_Skirmish",
         "CARENTAN OFFENSIVE": "carentan_offensive_ger",
         "CARENTAN WARFARE": "carentan_warfare",
         "FOY OFFENSIVE": "foy_offensive_ger",
@@ -216,6 +144,11 @@ LOG_MAP_NAMES_TO_MAP = CaseInsensitiveDict(
 
 LONG_HUMAN_MAP_NAMES = CaseInsensitiveDict(
     {
+        "ELA_S_1942_P_Skirmish": "El Alamein Dawn Skirmish",
+        "ELA_S_1942_Night_P_Skirmish": "El Alamein Night Skirmish",
+        "DRL_S_1944_P_Skirmish": "Driel Dawn Skirmish",
+        "DRL_S_1944_Night_P_Skirmish": "Driel Night Skirmish",
+        "DRL_S_1944_Day_P_Skirmish": "Driel Day Skirmish",
         "carentan_offensive_ger": "Carentan Offensive (GER)",
         "carentan_offensive_us": "Carentan Offensive (US)",
         "carentan_warfare_night": "Carentan (Night)",
@@ -280,6 +213,11 @@ LONG_HUMAN_MAP_NAMES = CaseInsensitiveDict(
 
 SHORT_HUMAN_MAP_NAMES = CaseInsensitiveDict(
     {
+        "ELA_S_1942_P_Skirmish": "El Alamein Dawn Skirm",
+        "ELA_S_1942_Night_P_Skirmish": "El Alamein Night Skirm",
+        "DRL_S_1944_P_Skirmish": "Driel Dawn Skirm",
+        "DRL_S_1944_Night_P_Skirmish": "Driel Night Skirm",
+        "DRL_S_1944_Day_P_Skirmish": "Driel Day Skirm",
         "carentan_offensive_ger": "Carentan Off. (GER)",
         "carentan_offensive_us": "Carentan Off. (US)",
         "carentan_warfare_night": "Carentan (Night)",
@@ -344,6 +282,11 @@ SHORT_HUMAN_MAP_NAMES = CaseInsensitiveDict(
 
 NO_MOD_LONG_HUMAN_MAP_NAMES = CaseInsensitiveDict(
     {
+        "ELA_S_1942_P_Skirmish": "El Alamein Dawn Skirmish",
+        "ELA_S_1942_Night_P_Skirmish": "El Alamein Night Skirmish",
+        "DRL_S_1944_P_Skirmish": "Driel Dawn Skirmish",
+        "DRL_S_1944_Night_P_Skirmish": "Driel Night Skirmish",
+        "DRL_S_1944_Day_P_Skirmish": "Driel Day Skirmish",
         "carentan_offensive_ger": "Carentan (GER)",
         "carentan_offensive_us": "Carentan (US)",
         "carentan_warfare_night": "Carentan (Night)",
@@ -408,6 +351,11 @@ NO_MOD_LONG_HUMAN_MAP_NAMES = CaseInsensitiveDict(
 
 NO_MOD_SHORT_HUMAN_MAP_NAMES = CaseInsensitiveDict(
     {
+        "ELA_S_1942_P_Skirmish": "El Alamein Dawn Skirm",
+        "ELA_S_1942_Night_P_Skirmish": "El Alamein Night Skirm",
+        "DRL_S_1944_P_Skirmish": "Driel Dawn Skirm",
+        "DRL_S_1944_Night_P_Skirmish": "Driel Night Skirm",
+        "DRL_S_1944_Day_P_Skirmish": "Driel Day Skirm",
         "carentan_offensive_ger": "Carentan (GER)",
         "carentan_offensive_us": "Carentan (US)",
         "carentan_warfare_night": "Carentan (Night)",

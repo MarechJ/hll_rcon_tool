@@ -16,7 +16,6 @@ from rcon.rcon import CommandFailedError, Rcon, StructuredLogLineType, get_rcon
 from rcon.types import VoteMapPlayerVoteType, VoteMapResultType
 from rcon.user_config.vote_map import DefaultMethods, VoteMapUserConfig
 from rcon.utils import (
-    ALL_MAPS,
     LONG_HUMAN_MAP_NAMES,
     NO_MOD_LONG_HUMAN_MAP_NAMES,
     NO_MOD_SHORT_HUMAN_MAP_NAMES,
@@ -85,10 +84,13 @@ def suggest_next_maps(
             current_map,
         )
     except RestrictiveFilterError:
-        logger.warning("Falling back on ALL_MAPS since the filters are too restrictive")
+        logger.warning(
+            "Falling back on all possible maps since the filters are too restrictive"
+        )
+        rcon = get_rcon()
         return _suggest_next_maps(
             maps_history,
-            set(ALL_MAPS),
+            rcon.get_maps(),
             selection_size,
             exclude_last_n,
             offensive_ratio,
@@ -174,6 +176,7 @@ def _suggest_next_maps(
 # TODO:  Handle empty selection (None)
 class VoteMap:
     def __init__(self) -> None:
+        self.rcon = get_rcon()
         self.red = get_redis_client()
         self.reminder_time_key = "last_vote_reminder"
         self.optin_name = "votemap_reminder"
@@ -539,12 +542,9 @@ class VoteMap:
         return {k.decode(): v.decode() for k, v in votes.items()}
 
     def get_current_map(self):
-        map_ = get_rcon().get_map()
+        map_ = self.rcon.get_map()
         if map_.endswith("_RESTART"):
             map_ = map_.replace("_RESTART", "")
-
-        if map_.lower() not in ALL_MAPS:
-            raise ValueError("Invalid current map %s", map_)
 
         return map_
 
@@ -552,20 +552,25 @@ class VoteMap:
         res = self.red.get(self.whitelist_key)
         if res is not None:
             return pickle.loads(res)
-        return set(ALL_MAPS)
+        return set(map_.lower() for map_ in self.rcon.get_maps())
 
-    def do_add_map_to_whitelist(self, map_name):
+    def do_add_map_to_whitelist(self, map_name: str):
+        if map_name not in self.rcon.get_maps():
+            raise ValueError(
+                f"`{map_name}` is not a valid map on the game server, you may need to clear your cache"
+            )
+
         whitelist = self.get_map_whitelist()
-        whitelist.add(map_name)
+        whitelist.add(map_name.lower())
         self.do_set_map_whitelist(whitelist)
 
     def do_add_maps_to_whitelist(self, map_names: Iterable[str]):
         for map_name in map_names:
-            self.do_add_map_to_whitelist(map_name)
+            self.do_add_map_to_whitelist(map_name.lower())
 
-    def do_remove_map_from_whitelist(self, map_name):
+    def do_remove_map_from_whitelist(self, map_name: str):
         whitelist = self.get_map_whitelist()
-        whitelist.discard(map_name)
+        whitelist.discard(map_name.lower())
         self.do_set_map_whitelist(whitelist)
 
     def do_remove_maps_from_whitelist(self, map_names):
@@ -573,7 +578,7 @@ class VoteMap:
             self.do_remove_map_from_whitelist(map_name)
 
     def do_reset_map_whitelist(self):
-        self.do_set_map_whitelist(ALL_MAPS)
+        self.do_set_map_whitelist(self.rcon.get_maps())
 
     def do_set_map_whitelist(self, map_names):
         self.red.set(self.whitelist_key, pickle.dumps(set(map_names)))
@@ -583,7 +588,7 @@ class VoteMap:
 
         logger.debug(
             f"""Generating new map selection for vote map with the following criteria:
-            {ALL_MAPS}
+            {self.rcon.get_maps()}
             {config.number_of_options=}
             {config.ratio_of_offensives=}
             {config.number_last_played_to_exclude=}
@@ -632,14 +637,14 @@ class VoteMap:
         selection = self.get_selection()
         maps_history = MapsHistory()
         config = VoteMapUserConfig.load_from_db()
-        all_maps = ALL_MAPS
+        all_maps = self.rcon.get_maps()
 
         if not config.allow_default_to_offensive:
             logger.debug(
                 "Not allowing default to offensive, removing all offensive maps"
             )
             selection = [m for m in selection if not "off" in m]
-            all_maps = [m for m in ALL_MAPS if not "off" in m]
+            all_maps = [m for m in all_maps if not "off" in m]
 
         if not maps_history:
             choice = random.choice([m for m in self.get_map_whitelist()])
@@ -677,8 +682,10 @@ class VoteMap:
         else:
             logger.info(f"{votes=}")
             next_map = first[0][0]
-            if next_map not in ALL_MAPS:
-                logger.error(f"{next_map=} is not part of the all map list {ALL_MAPS=}")
+            if next_map not in self.rcon.get_maps():
+                logger.error(
+                    f"{next_map=} is not part of the all map list maps={self.rcon.get_maps()}"
+                )
             if next_map not in (selection := self.get_selection()):
                 logger.error(f"{next_map=} is not part of vote selection {selection=}")
             logger.info(f"Winning map {next_map=}")
