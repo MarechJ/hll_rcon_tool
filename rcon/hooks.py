@@ -35,7 +35,7 @@ from rcon.player_history import (
     save_player,
     save_start_player_session,
 )
-from rcon.rcon import Rcon, StructuredLogLineType
+from rcon.rcon import Rcon, StructuredLogLineWithMetaData
 from rcon.recent_actions import get_recent_actions
 from rcon.types import (
     MessageVariableContext,
@@ -58,9 +58,8 @@ from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.real_vip import RealVipUserConfig
 from rcon.user_config.vac_game_bans import VacGameBansUserConfig
 from rcon.user_config.webhooks import CameraWebhooksUserConfig
+from rcon.maps import UNKNOWN_MAP_NAME, LOG_MAP_NAMES_TO_MAP
 from rcon.utils import (
-    LOG_MAP_NAMES_TO_MAP,
-    UNKNOWN_MAP_NAME,
     DefaultStringFormat,
     MapsHistory,
     is_invalid_name_pineapple,
@@ -73,7 +72,7 @@ logger = logging.getLogger(__name__)
 
 
 @on_chat
-def count_vote(rcon: Rcon, struct_log: StructuredLogLineType):
+def count_vote(rcon: Rcon, struct_log: StructuredLogLineWithMetaData):
     enabled = VoteMap().handle_vote_command(rcon=rcon, struct_log=struct_log)
     if enabled and (match := re.match(r"\d\s*$", struct_log["sub_content"].strip())):
         rcon.do_message_player(
@@ -95,7 +94,7 @@ def initialise_vote_map(rcon: Rcon, struct_log):
 
 
 @on_chat
-def chat_commands(rcon: Rcon, struct_log: StructuredLogLineType):
+def chat_commands(rcon: Rcon, struct_log: StructuredLogLineWithMetaData):
     config = ChatCommandsUserConfig.load_from_db()
     if not config.enabled:
         return
@@ -410,7 +409,7 @@ def ban_if_has_vac_bans(rcon: Rcon, steam_id_64, name):
 
 def inject_player_ids(func):
     @wraps(func)
-    def wrapper(rcon, struct_log: StructuredLogLineType):
+    def wrapper(rcon, struct_log: StructuredLogLineWithMetaData):
         name = struct_log["player"]
         steam_id_64 = struct_log["steam_id_64_1"]
         return func(rcon, struct_log, name, steam_id_64)
@@ -473,9 +472,9 @@ def update_player_steaminfo_on_connect(rcon, struct_log, _, steam_id_64: str):
         )
 
 
-pendingTimers: dict[
-    str, list[tuple[RconInvalidNameActionType | None, Timer]]
-] = defaultdict(list)
+pendingTimers: dict[str, list[tuple[RconInvalidNameActionType | None, Timer]]] = (
+    defaultdict(list)
+)
 
 
 @on_connected()
