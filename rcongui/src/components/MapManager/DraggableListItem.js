@@ -31,7 +31,10 @@ const DraggableListItem = ({ item, index, onRemove }) => {
 
     if (fullName.search("offensive") !== -1 || fullName.search("off") !== -1) {
       labels.push("offensive");
-    } else {
+    } else if (fullName.toLowerCase().search('skirmish') !== -1) {
+      labels.push('skirmish')
+    }
+    else {
       labels.push("warfare");
     }
     if (
@@ -43,7 +46,7 @@ const DraggableListItem = ({ item, index, onRemove }) => {
     if (fullName.toLowerCase().endsWith("ger")) {
       labels.push("axis");
     }
-    if (fullName.search("night") !== -1) {
+    if (fullName.toLowerCase().search("night") !== -1) {
       labels.push("night");
     }
     return labels;
@@ -55,6 +58,7 @@ const DraggableListItem = ({ item, index, onRemove }) => {
     warfare: "default",
     allies: "primary",
     axis: "secondary",
+    skirmish: "secondary",
   };
 
   const labelsVariant = {
@@ -63,6 +67,7 @@ const DraggableListItem = ({ item, index, onRemove }) => {
     warfare: "default",
     axis: "outlined",
     allies: "outlined",
+    skirmish: "default",
   };
 
   const classes = useStyles();
