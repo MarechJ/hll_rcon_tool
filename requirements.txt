@@ -13,7 +13,7 @@ steam==1.4.4
 # Alembic does not use semantic versioning, so be careful with the version numbers https://alembic.sqlalchemy.org/en/latest/front.html#versioning-scheme
 alembic==1.13.1
 # rq-scheduler doesn't work with rq > 1.13.0 right now because of a deprecated `ColorizingStreamHandler` import
-rq==1.15.1
+rq==1.16.0
 rq-scheduler==0.13.1
 paramiko==3.4.0
 ftpretty==0.4.0
