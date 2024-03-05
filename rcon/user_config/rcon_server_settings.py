@@ -96,9 +96,12 @@ def upper_case_name_windows_player_action(v: str | None):
 
 class InvalidName(BaseModel):
     enabled: bool = Field(default=False)
-    action: Annotated[
-        RconInvalidNameActionType, BeforeValidator(upper_case_name_kick_action)
-    ] | None = Field(default=None)
+    action: (
+        Annotated[
+            RconInvalidNameActionType, BeforeValidator(upper_case_name_kick_action)
+        ]
+        | None
+    ) = Field(default=None)
     whitespace_name_player_message: str = Field(default=WHITESPACE_NAME_PLAYER_MESSAGE)
     pineapple_name_player_message: str = Field(default=PINEAPPLE_NAME_PLAYER_MESSAGE)
     audit_message: str = Field(default=INVALID_NAME_AUDIT_MESSAGE)
@@ -109,9 +112,13 @@ class InvalidName(BaseModel):
 
 class WindowsStorePlayer(BaseModel):
     enabled: bool = Field(default=False)
-    action: Annotated[
-        WindowsStoreIdActionType, BeforeValidator(upper_case_name_windows_player_action)
-    ] | None = Field(default=None)
+    action: (
+        Annotated[
+            WindowsStoreIdActionType,
+            BeforeValidator(upper_case_name_windows_player_action),
+        ]
+        | None
+    ) = Field(default=None)
     player_message: str = Field(default=WINDOWS_STORE_PLAYER_MESSAGE)
     audit_message: str = Field(default=WINDOWS_STORE_AUDIT_MESSAGE)
     audit_message_author: str = Field(default="CRCON")
@@ -119,7 +126,8 @@ class WindowsStorePlayer(BaseModel):
 
 
 class RconServerSettingsUserConfig(BaseUserConfig):
-    short_name: str = Field(default=f"MyServer{get_server_number()}")
+    # Use a callable to defer calling get_server_number until it's used and not on import
+    short_name: str = Field(default_factory=lambda: f"MyServer{get_server_number()}")
     server_url: Optional[HttpUrl] = Field(default=None)
     discord_invite_url: Optional[HttpUrl] = Field(default=None)
 
