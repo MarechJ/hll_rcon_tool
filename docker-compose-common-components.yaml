@@ -1,10 +1,8 @@
-# linux/x86_64
-
 services:
   # These containers are created only once regardless of the number of game servers
   # that you run inside of CRCON
   redis:
-    image: redis:alpine
+    image: ${REDIS_IMAGE}
     command: redis-server /usr/local/etc/redis/redis.conf
     restart: always
     healthcheck:
@@ -18,7 +16,7 @@ services:
     networks:
       - common
   postgres:
-    image: postgres:12-alpine
+    image: ${POSTGRES_IMAGE}
     environment:
       # If a password is not defined this container will fail to create
       POSTGRES_PASSWORD: ${HLL_DB_PASSWORD}

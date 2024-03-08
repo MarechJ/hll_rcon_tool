@@ -1,0 +1,22 @@
+networks:
+  common:
+
+services:
+  # This container is used for things that should only run once regardless of
+  # the number of game servers used, for instance database migrations
+  maintenance:
+    build:
+      context: .
+      dockerfile: Dockerfile
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+  supervisor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile-frontend

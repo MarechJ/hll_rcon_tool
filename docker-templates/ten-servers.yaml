@@ -1,5 +1,5 @@
 include:
-  - docker-compose-common-components-arm64.yml
+  - docker-compose-common-components.yaml
 
 networks:
   server1:
@@ -19,9 +19,7 @@ networks:
 # for merging later, if they're defined under services: docker will want to start them
 # compose ignores any fields that start with x-
 x-backend: &backend
-  build:
-    context: .
-    dockerfile: Dockerfile-arm64
+  image: ${BACKEND_DOCKER_REPOSITORY}:${TAGGED_VERSION}
   environment: &backend-env
     LOGGING_LEVEL: "INFO"
     LOGGING_PATH: /logs/
@@ -65,9 +63,7 @@ x-backend: &backend
     - ./static:/static/
     - ./config:/config/
 x-supervisor: &supervisor
-  build:
-    context: .
-    dockerfile: Dockerfile-arm64
+  image: ${BACKEND_DOCKER_REPOSITORY}:${TAGGED_VERSION}
   restart: on-failure
   command: supervisor
   volumes:
@@ -75,9 +71,7 @@ x-supervisor: &supervisor
     - ./supervisor_data:/data
     - ./config:/config/
 x-frontend: &frontend
-  build:
-    context: .
-    dockerfile: Dockerfile-frontend-arm64
+  image: ${FRONTEND_DOCKER_REPOSITORY}:${TAGGED_VERSION}
   environment:
     RCONWEB_EXTERNAL_ADDRESS: ${RCONWEB_EXTERNAL_ADDRESS}
   restart: always
