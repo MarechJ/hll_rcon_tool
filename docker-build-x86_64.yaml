@@ -8,15 +8,19 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: ${BACKEND_DOCKER_REPOSITORY}:${TAGGED_VERSION}
   backend:
     build:
       context: .
       dockerfile: Dockerfile
+    image: ${BACKEND_DOCKER_REPOSITORY}:${TAGGED_VERSION}
   supervisor:
     build:
       context: .
       dockerfile: Dockerfile
+    image: ${BACKEND_DOCKER_REPOSITORY}:${TAGGED_VERSION}
   frontend:
     build:
       context: .
       dockerfile: Dockerfile-frontend
+    image: ${FRONTEND_DOCKER_REPOSITORY}:${TAGGED_VERSION}
