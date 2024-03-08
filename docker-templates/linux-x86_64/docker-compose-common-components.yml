@@ -1,0 +1,70 @@
+# linux/x86_64
+
+services:
+  # These containers are created only once regardless of the number of game servers
+  # that you run inside of CRCON
+  redis:
+    image: redis:alpine
+    command: redis-server /usr/local/etc/redis/redis.conf
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+      interval: 15s
+      timeout: 30s
+      retries: 5
+    volumes:
+      - ./redis_data:/data
+      - ./config:/usr/local/etc/redis
+    networks:
+      - common
+  postgres:
+    image: postgres:12-alpine
+    environment:
+      # If a password is not defined this container will fail to create
+      POSTGRES_PASSWORD: ${HLL_DB_PASSWORD}
+      POSTGRES_USER: ${HLL_DB_USER}
+      POSTGRES_DB: ${HLL_DB_NAME}
+      PGDATA: /data
+      HLL_DB_NAME: ${HLL_DB_NAME}
+      HLL_DB_USER: ${HLL_DB_USER}
+    restart: always
+    healthcheck:
+      test:
+        ["CMD", "pg_isready", "-U", "${HLL_DB_USER}", "-d", "${HLL_DB_NAME}"]
+      interval: 15s
+      timeout: 30s
+      retries: 5
+      start_period: 80s
+    volumes:
+      - ./db_data:/data
+    networks:
+      - common
+  # This container is used for things that should only run once regardless of
+  # the number of game servers used, for instance database migrations
+  maintenance:
+    image: ${BACKEND_DOCKER_REPOSITORY}:${TAGGED_VERSION}
+    environment:
+      HLL_MAINTENANCE_CONTAINER: true
+      HLL_DB_USER: ${HLL_DB_USER}
+      HLL_DB_PASSWORD: ${HLL_DB_PASSWORD}
+      HLL_DB_NAME: ${HLL_DB_NAME}
+      HLL_DB_HOST: ${HLL_DB_HOST}
+      HLL_DB_HOST_PORT: ${HLL_DB_HOST_PORT}
+      HLL_DB_URL: postgresql://${HLL_DB_USER}:${HLL_DB_PASSWORD}@${HLL_DB_HOST}:${HLL_DB_HOST_PORT}/${HLL_DB_NAME}
+    command: maintenance
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "if [ -e /code/maintenance-container-healthy ]; then echo 0; else echo 1; fi"]
+      start_period: 30s
+      interval: 15s
+      timeout: 30s
+      retries: 5
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./logs:/logs/
+    networks:
+      - common
