@@ -3,6 +3,15 @@ include:
 
 networks:
   server1:
+  # server2:
+  # server3:
+  # server4:
+  # server5:
+  # server6:
+  # server7:
+  # server8:
+  # server9:
+  # server10:
   common:
 
 # This is defined here and not in common-components because anchors don't
@@ -119,3 +128,21 @@ services:
     networks:
       common:
       server1:
+
+  ########### SERVER 2  #############
+
+  ########### SERVER 3  #############
+
+  ########### SERVER 4  #############
+
+  ########### SERVER 5  #############
+
+  ########### SERVER 6  #############
+
+  ########### SERVER 7  #############
+
+  ########### SERVER 8  #############
+
+  ########### SERVER 9  #############
+
+  ########### SERVER 10 #############
