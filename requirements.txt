@@ -1,7 +1,7 @@
 Click==8.1.7
 Django==4.2.10
 django-cors-headers==4.3.1
-redis==5.0.1
+redis==5.0.3
 sqlalchemy==2.0.27
 simplejson==3.19.2
 psycopg2-binary
