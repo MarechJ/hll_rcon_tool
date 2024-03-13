@@ -3,15 +3,15 @@ include:
 
 networks:
   server1:
-  # server2:
-  # server3:
-  # server4:
-  # server5:
-  # server6:
-  # server7:
-  # server8:
-  # server9:
-  # server10:
+  server2:
+  server3:
+  server4:
+  server5:
+  server6:
+  server7:
+  server8:
+  server9:
+  server10:
   common:
 
 # This is defined here and not in common-components because anchors don't
@@ -85,12 +85,12 @@ services:
     <<: *backend
     environment: &env_1
       <<: *backend-env
-      SERVER_NUMBER: 1
+      SERVER_NUMBER: ${SERVER_NUMBER}
       HLL_HOST: ${HLL_HOST}
       HLL_PORT: ${HLL_PORT}
       HLL_PASSWORD: ${HLL_PASSWORD}
-      HLL_REDIS_DB: 0
-      HLL_REDIS_URL: redis://${HLL_REDIS_HOST}:${HLL_REDIS_HOST_PORT}/0
+      HLL_REDIS_DB: ${HLL_REDIS_DB}
+      HLL_REDIS_URL: redis://${HLL_REDIS_HOST}:${HLL_REDIS_HOST_PORT}/${HLL_REDIS_DB}
       RCONWEB_PORT: ${RCONWEB_PORT}
       PUBLIC_STATS_PORT: ${PUBLIC_STATS_PORT}
       PUBLIC_STATS_PORT_HTTPS: ${PUBLIC_STATS_PORT_HTTPS}
