@@ -207,10 +207,6 @@ class PlayerView extends Component {
     );
   }
 
-  componentDidMount() {
-    this.loadPlayers();
-  }
-
   filterChange(filter) {
     clearTimeout(this.state.filterTimeout); // switch to lodash debounce
     this.setState({
