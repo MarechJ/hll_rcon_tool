@@ -21,7 +21,6 @@
     "google-palette": "^1.1.0",
     "immutable": "^4.0.0-rc.12",
     "lodash": "^4.17.19",
-    "material-ui": "^0.20.2",
     "moment": "^2.29.4",
     "monaco-editor": "^0.28.1",
     "mui-datatables": "^3.7.4",
