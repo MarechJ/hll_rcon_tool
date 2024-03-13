@@ -13,6 +13,7 @@ from rcon.cache_utils import get_redis_client, get_redis_pool
 from rcon.models import PlayerOptins, PlayerSteamID, enter_session
 from rcon.player_history import get_player
 from rcon.rcon import CommandFailedError, Rcon, StructuredLogLineType, get_rcon
+from rcon.types import VoteMapPlayerVoteType, VoteMapResultType
 from rcon.user_config.vote_map import DefaultMethods, VoteMapUserConfig
 from rcon.utils import (
     LONG_HUMAN_MAP_NAMES,
@@ -522,7 +523,7 @@ class VoteMap:
         )
         return selected_map
 
-    def get_vote_overview(self):
+    def get_vote_overview(self) -> VoteMapResultType | None:
         try:
             votes = self.get_votes()
             maps = Counter(votes.values()).most_common()
@@ -536,7 +537,7 @@ class VoteMap:
     def has_voted(self, player_name):
         return self.red.hget("VOTES", player_name) is not None
 
-    def get_votes(self):
+    def get_votes(self) -> VoteMapPlayerVoteType:
         votes = self.red.hgetall("VOTES") or {}
         return {k.decode(): v.decode() for k, v in votes.items()}
 
@@ -547,7 +548,7 @@ class VoteMap:
 
         return map_
 
-    def get_map_whitelist(self):
+    def get_map_whitelist(self) -> set[str]:
         res = self.red.get(self.whitelist_key)
         if res is not None:
             return pickle.loads(res)
@@ -612,7 +613,7 @@ class VoteMap:
         self.red.lpush("MAP_SELECTION", *selection)
         logger.info("Saved new selection: %s", selection)
 
-    def get_selection(self):
+    def get_selection(self) -> list[str]:
         return [v.decode() for v in self.red.lrange("MAP_SELECTION", 0, -1)]
 
     def pick_least_played_map(self, maps):

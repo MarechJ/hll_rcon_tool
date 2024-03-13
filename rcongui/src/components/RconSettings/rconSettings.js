@@ -390,8 +390,8 @@ class RconSettings extends React.Component {
   }
 
   async clearCache() {
-    return postData(`${process.env.REACT_APP_API_URL}clear_cache`, {})
-      .then((res) => showResponse(res, "clear_cache", true))
+    return postData(`${process.env.REACT_APP_API_URL}do_clear_cache`, {})
+      .then((res) => showResponse(res, "do_clear_cache", true))
       .catch(handle_http_errors);
   }
 

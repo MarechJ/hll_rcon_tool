@@ -53,7 +53,21 @@ def record_audit(func):
 
 def auto_record_audit(name):
     def wrapper(func):
-        if name.startswith("do_") or name.startswith("set_"):
+        if (
+            name.startswith("do_")
+            or name.startswith("set_")
+            or name.startswith("reset")
+            or name
+            # TODO: remove deprecated endpoints check
+            in (
+                "blacklist_player",
+                "clear_cache",
+                "flag_player",
+                "unflag_player",
+                "unban",
+                "unblacklist_player",
+            )
+        ):
             return record_audit(func)
         else:
             return func

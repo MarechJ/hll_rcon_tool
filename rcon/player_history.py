@@ -22,6 +22,7 @@ from rcon.models import (
     WatchList,
     enter_session,
 )
+from rcon.types import PlayerFlagType, PlayerProfileType
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 
 
@@ -32,7 +33,7 @@ class unaccent(ReturnTypeFromArgs):
 logger = logging.getLogger(__name__)
 
 
-def player_has_flag(player_dict, flag):
+def player_has_flag(player_dict, flag) -> bool:
     flags = player_dict.get("flags") or []
 
     return flag in {flag["flag"] for flag in flags}
@@ -133,18 +134,18 @@ def remove_accent(s):
 
 
 def get_players_by_appearance(
-    page=1,
-    page_size=500,
-    last_seen_from: datetime.datetime = None,
-    last_seen_till: datetime.datetime = None,
-    player_name=None,
-    blacklisted=None,
-    steam_id_64=None,
-    is_watched=None,
-    exact_name_match=False,
-    ignore_accent=True,
-    flags=None,
-    country=None,
+    page: int = 1,
+    page_size: int = 500,
+    last_seen_from: datetime.datetime | None = None,
+    last_seen_till: datetime.datetime | None = None,
+    steam_id_64: str | None = None,
+    player_name: str | None = None,
+    blacklisted: bool | None = None,
+    is_watched: bool | None = None,
+    exact_name_match: bool = False,
+    ignore_accent: bool = True,
+    flags: str | list[str] | None = None,
+    country: str | None = None,
 ):
     if page <= 0:
         raise ValueError("page needs to be >= 1")
@@ -248,12 +249,12 @@ def get_players_by_appearance(
                     "names_by_match": sorted(
                         (n.name for n in p[0].names), key=cmp_to_key(sort_name_match)
                     ),
-                    "first_seen_timestamp_ms": int(p[1].timestamp() * 1000)
-                    if p[1]
-                    else None,
-                    "last_seen_timestamp_ms": int(p[2].timestamp() * 1000)
-                    if p[2]
-                    else None,
+                    "first_seen_timestamp_ms": (
+                        int(p[1].timestamp() * 1000) if p[1] else None
+                    ),
+                    "last_seen_timestamp_ms": (
+                        int(p[2].timestamp() * 1000) if p[2] else None
+                    ),
                     "vip_expiration": p[0].vip.expiration if p[0].vip else None,
                 }
                 for p in players
@@ -425,15 +426,20 @@ def save_end_player_session(steam_id_64, timestamp):
         sess.commit()
 
 
-def add_flag_to_player(steam_id_64, flag, comment=None, player_name=None):
+def add_flag_to_player(
+    steam_id_64: str,
+    flag: str,
+    comment: str | None = None,
+    player_name: str | None = None,
+) -> tuple[PlayerProfileType, PlayerFlagType]:
     with enter_session() as sess:
         player = _get_set_player(sess, player_name=player_name, steam_id_64=steam_id_64)
-        exits = (
+        exists = (
             sess.query(PlayerFlag)
             .filter(PlayerFlag.playersteamid_id == player.id, PlayerFlag.flag == flag)
             .all()
         )
-        if exits:
+        if exists:
             logger.warning("Flag already exists")
             raise CommandFailedError("Flag already exists")
         new = PlayerFlag(flag=flag, comment=comment, steamid=player)
@@ -443,20 +449,33 @@ def add_flag_to_player(steam_id_64, flag, comment=None, player_name=None):
         return res, new.to_dict()
 
 
-def remove_flag(flag_id):
+def remove_flag(
+    flag_id: int | None = None, steam_id_64: str | None = None, flag: str | None = None
+) -> tuple[PlayerProfileType, PlayerFlagType]:
     with enter_session() as sess:
-        exits = (
-            sess.query(PlayerFlag).filter(PlayerFlag.id == int(flag_id)).one_or_none()
-        )
-        if not exits:
+        if isinstance(flag_id, int):
+            exists = (
+                sess.query(PlayerFlag)
+                .filter(PlayerFlag.id == int(flag_id))
+                .one_or_none()
+            )
+        else:
+            exists = (
+                sess.query(PlayerFlag)
+                .filter(PlayerSteamID.steam_id_64 == steam_id_64)
+                .filter(PlayerFlag.flag == flag)
+                .one_or_none()
+            )
+
+        if not exists:
             logger.warning("Flag does not exists")
             raise CommandFailedError("Flag does not exists")
-        player = exits.steamid.to_dict()
-        flag = exits.to_dict()
-        sess.delete(exits)
+        player = exists.steamid.to_dict()
+        old_flag = exists.to_dict()
+        sess.delete(exists)
         sess.commit()
 
-    return player, flag
+    return player, old_flag
 
 
 def add_player_to_blacklist(steam_id_64, reason, name=None, by=None):

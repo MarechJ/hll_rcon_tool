@@ -553,31 +553,6 @@ class Rcon(ServerCtl):
         bans.reverse()
         return temp_bans + bans
 
-    def do_unban(self, steam_id_64) -> list[str]:
-        """Remove all temporary and permanent bans from the steam_id_64"""
-        bans = self.get_bans()
-        type_to_func = {
-            "temp": self.do_remove_temp_ban,
-            "perma": self.do_remove_perma_ban,
-        }
-        failed_ban_removals: list[str] = []
-        for b in bans:
-            if b.get("steam_id_64") == steam_id_64:
-                # TODO: This is no longer true as of U13
-                # The game server will sometimes continue to report expired temporary bans
-                # (verified as of 10 Aug 2022 U12 Hotfix)
-                # which will prevent removing permanent bans if we don't catch the failed removal
-
-                # We swallow exceptions here and test for failed unbans in views.py
-                try:
-                    type_to_func[b["type"]](b["raw"])
-                except CommandFailedError:
-                    message = f"Unable to remove {b['type']} ban from {steam_id_64}"
-                    logger.exception(message)
-                    failed_ban_removals.append(message)
-
-        return failed_ban_removals
-
     def get_ban(self, steam_id_64) -> list[GameServerBanType]:
         """
         get all bans from steam_id_64

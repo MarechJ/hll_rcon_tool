@@ -121,7 +121,7 @@ class BaseUserConfig(pydantic.BaseModel):
         return cls()
 
     @staticmethod
-    def save_to_db() -> None:
+    def save_to_db(values: dict[str, Any], dry_run: bool) -> None:
         raise NotImplementedError
 
     @classmethod

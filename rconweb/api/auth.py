@@ -228,29 +228,6 @@ def stats_login_required(func):
     return wrapper
 
 
-# TODO: Login required?
-@csrf_exempt
-@permission_required("api.can_view_online_admins", raise_exception=True)
-@require_http_methods(["GET"])
-def get_online_mods(request):
-    return api_response(
-        command="get_online_mods",
-        result=online_mods(),
-        failed=False,
-    )
-
-
-@csrf_exempt
-@permission_required("api.can_view_ingame_admins", raise_exception=True)
-@require_http_methods(["GET"])
-def get_ingame_mods(request):
-    return api_response(
-        command="get_ingame_mods",
-        result=ingame_mods(),
-        failed=False,
-    )
-
-
 @csrf_exempt
 @login_required()
 @require_http_methods(["GET"])

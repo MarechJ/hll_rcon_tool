@@ -242,7 +242,7 @@ class LogsHistory extends React.Component {
           let id = this.state.logs[dataIndex]?.player1_id;
           let name = this.state.logs[dataIndex]?.player_name;
           return id ? (
-            <Link color="inherit" target="_blank" href={`/api/player?id=${id}`}>
+            <Link color="inherit" target="_blank" href={`/api/get_player_profile?steam_id_64=${id}`}>
               {name}
             </Link>
           ) : (
@@ -259,7 +259,7 @@ class LogsHistory extends React.Component {
           let id = this.state.logs[dataIndex]?.player2_id;
           let name = this.state.logs[dataIndex]?.player2_name;
           return id ? (
-            <Link color="inherit" target="_blank" href={`/api/player?id=${id}`}>
+            <Link color="inherit" target="_blank" href={`/api/get_player_profile?steam_id_64=${id}`}>
               {name}
             </Link>
           ) : (

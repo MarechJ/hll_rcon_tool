@@ -35,12 +35,12 @@ from rcon.types import (
     PlayerProfileType,
     PlayerSessionType,
     PlayerStatsType,
+    PlayerVIPType,
     ServerCountType,
     SteamBansType,
     SteamInfoType,
     SteamPlayerSummaryType,
     WatchListType,
-    PlayerVIPType,
 )
 
 logger = logging.getLogger(__name__)

@@ -9,7 +9,7 @@ from django.views.decorators.http import require_http_methods
 from rcon.models import Maps, enter_session
 from rcon.scoreboard import LiveStats, TimeWindowStats, get_cached_live_game_stats
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
-from rcon.utils import LONG_HUMAN_MAP_NAMES, map_name
+from rcon.utils import LONG_HUMAN_MAP_NAMES, MapsHistory, map_name
 
 from .auth import api_response, login_required, stats_login_required
 from .views import _get_data
@@ -162,3 +162,58 @@ def date_scoreboard(request):
     return api_response(
         result=result, error=error_, failed=failed, command="date_scoreboard"
     )
+
+
+@csrf_exempt
+@stats_login_required
+@require_http_methods(["GET"])
+def get_map_history(request):
+    data = _get_data(request)
+    res = MapsHistory()[:]
+    if data.get("pretty"):
+        res = [
+            dict(
+                name=i["name"],
+                start=(
+                    datetime.fromtimestamp(i["start"]).isoformat()
+                    if i["start"]
+                    else None
+                ),
+                end=datetime.fromtimestamp(i["end"]).isoformat() if i["end"] else None,
+            )
+            for i in res
+        ]
+    return api_response(
+        result=res, command="get_map_history", arguments={}, failed=False
+    )
+
+
+@csrf_exempt
+@stats_login_required
+@require_http_methods(["GET"])
+def get_previous_map(request):
+    command_name = "get_previous_map"
+    try:
+        prev_map = MapsHistory()[1]
+        res = {
+            "name": prev_map["name"],
+            "start": (
+                datetime.fromtimestamp(prev_map["start"]).isoformat()
+                if prev_map["start"]
+                else None
+            ),
+            "end": (
+                datetime.fromtimestamp(prev_map["end"]).isoformat()
+                if prev_map["end"]
+                else None
+            ),
+        }
+
+        return api_response(result=res, command=command_name, failed=False)
+    except IndexError:
+        return api_response(result=None, command=command_name, failed=False)
+    except Exception as e:
+        logger.exception(e)
+        return api_response(
+            result=None, command=command_name, failed=True, error=str(e)
+        )

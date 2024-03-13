@@ -32,7 +32,7 @@ export default function LogsTable({ logs, downloadCSV }) {
           let id = logs[dataIndex].player1_id;
           let name = logs[dataIndex].player_name;
           return id ? (
-            <Link color="inherit" target="_blank" href={`/api/player?id=${id}`}>
+            <Link color="inherit" target="_blank" href={`/api/get_player_profile?steam_id_64=${id}`}>
               {name}
             </Link>
           ) : (
@@ -49,7 +49,7 @@ export default function LogsTable({ logs, downloadCSV }) {
           let id = logs[dataIndex].player2_id;
           let name = logs[dataIndex].player2_name;
           return id ? (
-            <Link color="inherit" target="_blank" href={`/api/player?id=${id}`}>
+            <Link color="inherit" target="_blank" href={`/api/get_player_profile?steam_id_64=${id}`}>
               {name}
             </Link>
           ) : (

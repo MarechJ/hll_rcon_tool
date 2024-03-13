@@ -362,8 +362,16 @@ class CachedLiveGameStats(TypedDict):
 
 class MapInfo(TypedDict):
     name: str
-    start: None | float
-    end: None | float
+    start: float | None
+    end: float | None
+    guessed: bool
+    player_stats: dict[str, PlayerStat]
+
+
+class MapInfoISODates(TypedDict):
+    name: str
+    start: str | None
+    end: str | None
     guessed: bool
     player_stats: dict[str, PlayerStat]
 
@@ -399,6 +407,11 @@ class ServerCountType(TypedDict):
     players: List[PlayerAtCountType]
     map: str
     vip_count: int
+
+
+class AdminUserType(TypedDict):
+    username: str
+    steam_id_64: str
 
 
 class AuditLogType(TypedDict):
@@ -562,6 +575,23 @@ class VACGameBansConfigType(TypedDict):
 class VipId(TypedDict):
     steam_id_64: str
     name: str
+
+
+class VoteMapPlayerVoteType(TypedDict):
+    player_name: str
+    map_name: str
+
+
+class VoteMapResultType(TypedDict):
+    total_votes: int
+    winning_maps: list[tuple[str, int]]
+
+
+# TODO: finish this typing
+class VoteMapStatusType(TypedDict):
+    votes: VoteMapPlayerVoteType
+    selection: list[str]
+    results: VoteMapResultType | None
 
 
 # Have to inherit from str to allow for JSON serialization w/ pydantic
