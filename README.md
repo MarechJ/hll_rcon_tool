@@ -201,11 +201,11 @@ Some VPS providers rent this type of services for ~$5-10/month.
 
 In theory you can run this anywhere you can use Docker and Docker Compose, but unless you have a really good reason you should use Linux (any distro *should* work, but if you're unfamiliar you want to pick a more popular one like Ubuntu or Debian for easier tech support when you Google) instead of Windows or any other operating system.
 
-If you use any CPU architecture other than `amd64` you won't be able to use the hosted Docker images and will have to build your own.
+We provide pre-built Docker images for `linux/amd64`, `linux/arm64` and `linux/arm32`. If you use a different operating system or architecture you will need to build your own images.
 
-If you run it on Windows, don't expect anyone to be able to help you on the Discord.
+If you run it on Windows, don't expect anyone to be able to help you on the Discord. If you **really** need to run it on Windows and have no other options try using [Windows Subsystem for Linux](https://learn.microsoft.com/en-us/windows/wsl/install).
 
-- *(Optional but **highly** recommanded)* `git` : https://git-scm.com/downloads  
+- *(Optional but **highly** recommended)* `git` : https://git-scm.com/downloads  
   (if you don't use git, you'll have to manually download and install the releases in .zip format,  
   and you won't be able to update your CRCON as easily as with git)
 - `Docker Engine` (Community) : https://docs.docker.com/engine/install/  
@@ -214,6 +214,7 @@ If you run it on Windows, don't expect anyone to be able to help you on the Disc
 Note : `docker-compose` is deprecated.  
 This README and release announcements will show `docker compose` examples.  
 *You should still be able to use `docker-compose` and will have to adjust the commands below accordingly.* but you should really just use the modern version and avoid potential issues. We can't/won't guarantee that future releases will work properly with `docker-compose`
+- *(Optional but **highly** recommended)* Some sort of text editor that supports syntax highlighting/etc. The instructions below use `nano` in the examples which is a shell based editor that can be difficult to edit with. [Visual Studio Code](https://code.visualstudio.com/) is a free and fully featured text editor and also allows you to [remotely edit files over SSH](https://code.visualstudio.com/docs/remote/ssh) which is very handy when editing files on your VPS.
 
 Some VPS providers offer free installation of linux distributions in which Docker is already activated. Search/ask for it !
 
@@ -221,8 +222,9 @@ Some VPS providers offer free installation of linux distributions in which Docke
 
 *"I don't know anything about console commands, coding and such ?"*
 - Stay cool and follow the drill. It's a simple installation, many not-so-technical people managed to do it, so you probably can too :)
-- ~~There's also a Wiki made by the community (Thanks [2.Fjg]bn.hall): https://github.com/MarechJ/hll_rcon_tool/wiki~~  
-*(The Wiki is obsolete. We hope we'll find the time to update it soon)*
+- The [Wiki](https://github.com/MarechJ/hll_rcon_tool/wiki) has been receiving regular updates but it is not versioned so it may be a little out of date, or contain features/information that is not applicable to you if you are on an older release.
+  - Wiki updates are highly appreciated! This is an easy way to contribute if you don't have any programming skills.
+  - Translations are also very welcome, there are many people with no or limited English who use CRCON
 - Most shell commands/error messages can be Googled, and a *lot* of usual questions already found an answer on the CRCON's Discord. Ask for help on the tech-support channel if you can't find what you're searching for.
 - If you still don't understand what to do after reading this, just ask on Discord, but please respect peoples time and energy and at least attempt to solve your problem by using Google/other resources first.
 
@@ -245,6 +247,8 @@ Enter these commands in the terminal (*press [Enter] to validate*) :
 Now, you're going to create and edit an **.env** file, in which you'll tell CRCON how to connect to your HLL game server.  
 Here we'll use **nano**, a simple text editor that runs in text mode.  
 *You can use any other tool you're used to, either local or getting the file from a SFTP connection.*
+
+The file **must** be named `.env` or Docker will not detect it. **Don't** edit `default.env`.
 
 - make a copy of the environnement config file template :  
   > `cp default.env .env`
@@ -287,34 +291,124 @@ Triple-check there is **no space before/after the `=` signs, nor in the values y
 - save the changes with **Ctrl+o** (then type 'y' to validate)  
 - exit nano with **Ctrl+x**
 
+### 3. Create a Docker Compose File
+
+You need a compose file to be able to use the `docker compose` commands, you will have to manually create (and then update it based on your needs).
+
+The `docker-templates/` contains two example templates, one for a single game server and one for up to ten game servers.
+
+This example shows using a single server, if you are configuring more than one you can copy either one and either add more servers (`one-server.yaml`) or delete the servers you don't care about (`ten-servers.yaml`).
+
+For `docker compose` to detect the file, it needs to be [named](https://docs.docker.com/compose/compose-application-model/) `compose.yaml`:
+
+Make a copy of the compose template you want to start with:
+> cp docker-templates/one-server.yaml compose.yaml
+
+When you edit your `compose.yaml` (**don't edit the templates!**) there are two places that need to be updated for it to work properly if you are **adding more servers**.
+
+#### Networks
+
+The `networks` section at the top **must** contain a definition for each server (**don't** remove the `common` network). For each server you are using add a network for it (you can reference `docker-templates/ten-servers.yaml` for examples)
+
+If you are no longer using or runnning fewer servers you can leave the extra networks, it won't hurt anything it will just create extra unused networks.
+
+```yaml
+  networks:
+    common:
+    server1:
+    server2:
+    server3:
+```
+
+#### Services
+
+The `services` section defines what containers Docker will actually start when you run commands like `docker compose up -d`, so you need to add a service definition for each server you are trying to run.
+
+**For example** if you used `one-server.yaml` as your starting template for `compose.yaml` and you wanted to add a 2nd server, you would copy the appropriate section from `docker-templates/ten-servers.yaml` and add it to your `compose.yaml`.
+
+It is **very important** that you copy the appropriate server numbers, if you use the same server number twice only one of them will start and you will have issues.
+
+You also need to be **very careful** and match the **indentation levels** appropriately or Docker will not be able to read the file.
+
+```yaml
+########### SERVER 2  #############
+  backend_2:
+    <<: *backend
+    environment: &env_2
+      <<: *backend-env
+      SERVER_NUMBER: ${SERVER_NUMBER_2}
+      HLL_HOST: ${HLL_HOST_2}
+      HLL_PORT: ${HLL_PORT_2}
+      HLL_PASSWORD: ${HLL_PASSWORD_2}
+      HLL_REDIS_DB: ${HLL_REDIS_DB_2}
+      HLL_REDIS_URL: redis://${HLL_REDIS_HOST}:${HLL_REDIS_HOST_PORT}/${HLL_REDIS_DB_2}
+      RCONWEB_PORT: ${RCONWEB_PORT_2}
+      PUBLIC_STATS_PORT: ${PUBLIC_STATS_PORT_2}
+      PUBLIC_STATS_PORT_HTTPS: ${PUBLIC_STATS_PORT_HTTPS_2}
+      GTX_SERVER_NAME_CHANGE_USERNAME: ${GTX_SERVER_NAME_CHANGE_USERNAME_2}
+      GTX_SERVER_NAME_CHANGE_PASSWORD: ${GTX_SERVER_NAME_CHANGE_PASSWORD_2}
+      SENTRY_DSN: ${SENTRY_DSN_2}
+    hostname: api_2
+    networks:
+      common:
+      server2:
+        aliases:
+          - backend
+  supervisor_2:
+    <<: *supervisor
+    environment:
+      <<: *env_2
+    depends_on:
+      backend_2:
+        condition: service_healthy
+    networks:
+      common:
+      server2:
+        aliases:
+          - supervisor
+  frontend_2:
+    <<: *frontend
+    ports:
+      - ${RCONWEB_PORT_2}:80
+      - ${RCONWEB_PORT_HTTPS_2}:443
+      - ${PUBLIC_STATS_PORT_2}:81
+      - ${PUBLIC_STATS_PORT_HTTPS_2}:444
+    depends_on:
+      backend_2:
+        condition: service_healthy
+    networks:
+      common:
+      server2:
+```
+
 ### 3. Run CRCON for the first time !
 
-CRCON is now configured to start and connect to your HLL game server.  
+CRCON is now configured to start and connect to your HLL game server(s).
+
 But do not think it's over yet, as we now have to configure its users.
 
 Note : Launch process will display a *lot* of scrolling text.  
 Don't panic, as you do not have to read/do anything. Just watch the magic.
 
-Enter the command(s) that suit(s) your operating system :
+> `docker compose up -d --remove-orphans`
 
-- Linux on x86 :
-  > `docker compose up -d --remove-orphans`
-- Windows on x86 :
-  > `docker volume create redis_data`  
-  `docker volume create postgres_data`  
-  `docker compose -f docker-compose.yml -f docker-compose.windows.yml up -d`
-- Raspberry-Pi (32 bits) or any ARM32v7 :
-  > `docker compose -f docker-compose.yml -f docker-compose.arm32v7.yml up -d --build`
-- Raspberry-Pi (64 bits) or any ARM64v8 :
-  > `docker compose -f docker-compose.yml -f docker-compose.arm64v8.yml up -d --build`
+If everything went well you will see output similar to (this is an example for a single game server and edited to fit):
 
-If eveything went well, you'll end up with some green lines saying "started" after a minute or two.  
-Note some lines **will** show errors if you do not have set values for 2nd (xxx **_2** -1) or 3rd (xxx **_3** -1) game server. This is normal.
+```sh
+❯ docker compose up -d
+[+] Running 8/8
+ ✔ Network hll_rcon_tool_common    Created   0.1s
+ ✔ Network hll_rcon_tool_server1   Created   0.1s
+ ✔ Container hll_rcon_tool-redis-1   Healthy   0.2s
+ ✔ Container hll_rcon_tool-postgres-1   Healthy  0.2s
+ ✔ Container hll_rcon_tool-maintenance-1   Healthy   0.1s
+ ✔ Container hll_rcon_tool-backend_1-1   Healthy   0.1s
+ ✔ Container hll_rcon_tool-supervisor_1-1    Started   0.1s
+ ✔ Container hll_rcon_tool-frontend_1-1    Started   0.1s
+```
 
-If some of the final lines regarding game server 1 (xxx **_1** -1) show (red) errors :  
-check the values you've entered in the **.env** file and try to start CRCON again.
+If any of the containers report a status of `Error` and you receive messages about `unhealthy` services something is misconfigured **or** you have extra game servers in `compose.yaml` that you haven't configured in your `.env`.
 
-Then enter the start command line(s) above again.
 
 ### 4. Get in the CRCON UI
 
@@ -435,14 +529,7 @@ If you are updating from an older version, you should review the announcements i
 - Get the newest Docker images
   > `docker compose pull`
 - Restart your containers
-  - Linux on x86
-    > `docker compose up -d --remove-orphans`
-  - Windows on x86
-    > `docker compose -f docker-compose.yml -f docker-compose.windows.yml up -d --remove-orphans`
-  - Raspberry-Pi (32 bits) or any ARM32v7
-    > `docker compose -f docker-compose.yml -f docker-compose.arm32v7.yml up --build -d --remove-orphans`
-  - Raspberry-Pi (64 bits) or any ARM64v8
-    > `docker compose -f docker-compose.yml -f docker-compose.arm64v8.yml up --build -d --remove-orphans`
+  > `docker compose up -d --remove-orphans`
 
 You also can download the [latest zip release](https://github.com/MarechJ/hll_rcon_tool/releases/latest) and install it manually (not recommended)
 
@@ -479,22 +566,10 @@ For instance if you run multiple game servers (for instance US west, US east and
 #### One CRCON to manage multiple game servers
 
 When using a single CRCON installation for multiple game servers all of your admin accounts will have equal access to all of them, and all of your data will be stored in a single database.
+
 This will make it difficult to separate your servers in the future (for instance if you are trying to use one CRCON for multiple communities by sharing a VPS) without starting from scratch and losing data.
-**Note**: Setting up more than **3** game servers in a single installation will require you to edit your `.env` and `docker-compose.yml` and add new sections for each server past the third.
 
-#### Manage more than 3 servers
-
-You can copy the the last server section in the docker-compose.yml file and paste it, while replacing all the \_3 by \_4, also add the required variable in your .env (copy a whole section and replace the \_3 to \_4 suffix)
-Also note that you must add this extra keys in your `docker-compose.yml` after HLL_REDIS_URL. And mind the DB number that should change with each server
-
-```
-      ....
-      HLL_REDIS_URL: redis://redis:6379/1
-      HLL_REDIS_HOST: redis
-      HLL_REDIS_PORT: 6379
-      HLL_REDIS_DB: 1
-      ....
-```
+You will need to update your `compose.yaml` to have a definition for each extra server you want to run, you can copy and paste each extra server from `docker-templates/ten-servers.yaml` (refer to the installation guide below for specifics)
 
 #### Multiple CRCON installations
 
@@ -506,23 +581,29 @@ This makes more sense when you're sharing the server you host CRCON on with othe
 
 ## Building your own Docker images
 
-Docker images are hosted on [Docker Hub](https://hub.docker.com/r/maresh/hll_rcon), but if you're running a fork, have made local modifications, aren't using `amd64` as your CPU architecture or the release you want isn't available for some reason, you can build your images locally.
+Docker images are hosted on [Docker Hub](https://hub.docker.com/r/maresh/hll_rcon), but if you're running a fork, have made local modifications, are running CPU architecture we don't have pre-built images for or the release you want isn't available for some reason, you can build your images locally.
 
 ### Set environment variables
 
-If you don't already have a `.env` file created use `default.env` to make a template and you'll be able to build the images without setting the :
+If you don't already have a `.env` file created use `default.env` to make a template, otherwise the build will fail due to unset environment variables:
 
 > cp default.env .env
 
-If you don't have a `.env` you wou must set the following environment variables to something, or the build will fail with an error that looks like `invalid tag ":": invalid reference format` (just use a copy of `default.env`):
+If you don't have a `.env` you must set the following environment variables to something, or the build will fail with an error that looks like `invalid tag ":": invalid reference format` (just use a copy of `default.env`):
 
     BACKEND_DOCKER_REPOSITORY=
     FRONTEND_DOCKER_REPOSITORY=
     TAGGED_VERSION=
 
+### Create a Docker Compose File
+
+Refer to the installation guide if you do not already have a `compose.yaml` file created.
+
 ### Build the images
 
-> docker compose -f docker-compose.yml -f docker-compose.dev.yml build
+Building the images can take a significant amount of time and you must be connected to the internet for it to fetch resources.
+
+> docker compose build
 
 ### Run it !
 
@@ -669,7 +750,7 @@ Set the redis environment variables:
 
 Both the `redis` and `postgres` containers should be running (or you should have a `redis` and `postgres` installed/configured if you don't want to use the Docker images):
 
-> docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d redis postgres
+> docker compose up -d redis postgres
 
 Start the Django (backend) development web server:
 
@@ -750,14 +831,11 @@ This should be done from a **separate** shell without the environment variables 
 
 Building the frontend if you've made any changes to the javascript files or if the build cache isn't available can take a considerable amount of time.
 
-> docker compose -f docker-compose.yml -f docker-compose.dev.yml build
-
-> docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+> docker compose build
+> docker compose up -d
 
 Now test on http://localhost:8010
 
 #### General notes:
 
 If you have problems with dependancies or versions of python or nodejs please refer to the respective Dockerfile that can act as a guide on how to setup a development environment.
-
-If you need a refresher on which process needs what variables have a look at the docker-compose.yml file.
