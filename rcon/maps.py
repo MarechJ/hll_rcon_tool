@@ -167,12 +167,20 @@ class Layer(pydantic.BaseModel):
             return str(self) == str(other)
         return NotImplemented
 
+    @property
+    def attacking_faction(self):
+        if self.attackers == Team.ALLIES:
+            return self.map.allies
+        elif self.attackers == Team.AXIS:
+            return self.map.axis
+        return None
+
     def pretty(self):
         out = self.map.prettyname
         if self.gamemode == Gamemode.OFFENSIVE:
             out += " Off."
             if self.attackers:
-                out += f" {self.attackers.value.upper()}"
+                out += f" {self.attacking_faction.value.upper()}"
         elif self.gamemode.is_small():
             # TODO: Remove once more Skirmish modes release
             out += " Skirmish"
@@ -184,8 +192,8 @@ class Layer(pydantic.BaseModel):
 
     @property
     def opposite_side(self) -> Literal[Team.AXIS, Team.ALLIES] | None:
-        if self.gamemode == Gamemode.OFFENSIVE:
-            return Team.AXIS if self.attackers == Faction.GER else Team.ALLIES
+        if self.attackers:
+            return get_opposite_side(self.attackers)
 
 
 MAPS = {
@@ -838,7 +846,7 @@ def categorize_maps(maps: Iterable[Layer]) -> dict[Gamemode, list[Layer]]:
 
 def safe_get_map_name(map_name: str, pretty: bool = True) -> str:
     """Return the RCON map name if not found"""
-    map_ = LAYERS.get(map_name)
+    map_ = parse_layer(map_name)
 
     if map_ is None:
         return map_name

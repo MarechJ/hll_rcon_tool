@@ -20,7 +20,7 @@ def test_smoke_all_variables():
     "winning_maps, expected",
     [
         ([(parse_layer("carentan_warfare"), 2)], "Carentan Warfare (2 vote(s))"),
-        ([(parse_layer("driel_offensive_ger"), 2)], "Driel Off. AXIS (2 vote(s))"),
+        ([(parse_layer("driel_offensive_ger"), 2)], "Driel Off. GER (2 vote(s))"),
     ],
 )
 def test_format_winning_map(winning_maps, expected) -> None:
