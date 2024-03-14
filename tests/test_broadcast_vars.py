@@ -1,6 +1,7 @@
 from rcon import broadcast
 from rcon.rcon import get_rcon
 from rcon.broadcast import format_winning_map
+from rcon.maps import parse_layer
 import pytest
 from unittest import mock
 
@@ -18,8 +19,8 @@ def test_smoke_all_variables():
 @pytest.mark.parametrize(
     "winning_maps, expected",
     [
-        ([("carentan_warfare", 2)], "Carentan Warfare (2 vote(s))"),
-        ([("driel_offensive_ger", 2)], "Driel Off. AXIS (2 vote(s))"),
+        ([(parse_layer("carentan_warfare"), 2)], "Carentan Warfare (2 vote(s))"),
+        ([(parse_layer("driel_offensive_ger"), 2)], "Driel Off. AXIS (2 vote(s))"),
     ],
 )
 def test_format_winning_map(winning_maps, expected) -> None:

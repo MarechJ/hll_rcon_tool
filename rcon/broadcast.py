@@ -55,7 +55,9 @@ def format_winning_map(
 
     # Example warfare map: Carentan Warfare (2 vote(s))
     # Example offensive map: Driel Off. AXIS (2 vote(s))
-    return ", ".join(f"{map_} ({num_votes} vote(s))" for map_, num_votes in wins)
+    return ", ".join(
+        f"{map_.pretty()} ({num_votes} vote(s))" for map_, num_votes in wins
+    )
 
 
 logger = logging.getLogger(__name__)
@@ -127,7 +129,7 @@ def format_map_vote(rcon, format_type="line"):
     vote_dict = numbered_maps(selection)
     # map 1: 0, map 2: 1, etc.
     maps_to_numbers = dict(zip(vote_dict.values(), vote_dict.keys()))
-    items = [f"[{k}] {v}" for k, v in vote_dict.items()]
+    items = [f"[{k}] {v.pretty()}" for k, v in vote_dict.items()]
     if format_type == "line":
         return " // ".join(items)
     if format_type == "max_length":
@@ -203,7 +205,8 @@ def _get_vars(ctl: Rcon):
 
     def get_next_map():
         map_name: str = ctl.get_next_map()
-        return map_name
+        smart_map = maps.parse_layer(map_name)
+        return smart_map.pretty()
 
     vote_status = get_votes_status()
 
