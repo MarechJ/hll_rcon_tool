@@ -697,13 +697,13 @@ LAYERS = {
         ),
         Layer(
             id="ELA_S_1942_P_Skirmish",
-            map=MAPS["driel"],
+            map=MAPS["elalamein"],
             gamemode=Gamemode.CONTROL,
             environment=Environment.DAY,
         ),
         Layer(
             id="ELA_S_1942_Night_P_Skirmish",
-            map=MAPS["driel"],
+            map=MAPS["elalamein"],
             gamemode=Gamemode.CONTROL,
             environment=Environment.DUSK,
         ),
