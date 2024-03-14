@@ -1,8 +1,5 @@
 export const UNKNOWN_MAP_NAME = 'unknown';
 
-export const SKIRMISH_MAPS = [
-  'ELA_S_1942_P_Skirmish', 'ELA_S_1942_Night_P_Skirmish', 'DRL_S_1944_P_Skirmish', 'DRL_S_1944_Night_P_Skirmish', 'DRL_S_1944_Day_P_Skirmish'
-]
 
 export const SKIRMISH_TAG_LOOKUP = new Map([
   ['ELA', 'elalamein'],
