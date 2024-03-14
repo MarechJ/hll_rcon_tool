@@ -2,17 +2,8 @@ include:
   - docker-compose-common-components.yaml
 
 networks:
-  server1:
-  server2:
-  server3:
-  server4:
-  server5:
-  server6:
-  server7:
-  server8:
-  server9:
-  server10:
   common:
+  server1:
 
 # This is defined here and not in common-components because anchors don't
 # work between files and are prefixed with x- because they are just anchors
