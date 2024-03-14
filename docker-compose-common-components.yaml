@@ -40,6 +40,9 @@ services:
   # This container is used for things that should only run once regardless of
   # the number of game servers used, for instance database migrations
   maintenance:
+    build:
+      context: .
+      dockerfile: Dockerfile
     image: ${BACKEND_DOCKER_REPOSITORY}:${TAGGED_VERSION}
     environment:
       HLL_MAINTENANCE_CONTAINER: true
