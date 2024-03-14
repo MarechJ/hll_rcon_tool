@@ -29,9 +29,9 @@ const DraggableListItem = ({ item, index, onRemove }) => {
   const getLabels = (fullName) => {
     const labels = [];
 
-    if (fullName.search("offensive") !== -1 || fullName.search("off") !== -1) {
+    if (fullName.toLowerCase().includes("offensive") || fullName.toLowerCase().includes("off")) {
       labels.push("offensive");
-    } else if (fullName.toLowerCase().search('skirmish') !== -1) {
+    } else if (fullName.toLowerCase().includes('skirmish')) {
       labels.push('skirmish')
     }
     else {
@@ -46,7 +46,7 @@ const DraggableListItem = ({ item, index, onRemove }) => {
     if (fullName.toLowerCase().endsWith("ger")) {
       labels.push("axis");
     }
-    if (fullName.toLowerCase().search("night") !== -1) {
+    if (fullName.toLowerCase().includes("night")) {
       labels.push("night");
     }
     return labels;
