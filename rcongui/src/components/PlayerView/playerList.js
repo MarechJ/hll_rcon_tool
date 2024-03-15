@@ -24,7 +24,6 @@ import Popover from "@material-ui/core/Popover";
 import Typography from "@material-ui/core/Typography";
 import { makeStyles } from "@material-ui/core/styles";
 import { Link as RouterLink } from "react-router-dom";
-import { pure } from "recompose";
 import {
   Avatar,
   Badge,
@@ -547,5 +546,5 @@ const CompactList = ({
   );
 };
 
-export default withWidth()(pure(CompactList));
+export default withWidth()(CompactList);
 export { PlayerItem, CompactList, ScoreListText, ScoreChips, KDChips };

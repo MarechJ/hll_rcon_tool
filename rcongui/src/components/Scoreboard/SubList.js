@@ -12,7 +12,6 @@ import {
 } from "@material-ui/core";
 import ExpandLess from "@material-ui/icons/ExpandLess";
 import ExpandMore from "@material-ui/icons/ExpandMore";
-import { pure } from "recompose";
 
 const useStyles = makeStyles((theme) => ({
   nested: {
@@ -20,7 +19,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export const SubList = pure(
+export const SubList =
   ({ playerScore, dataMapKey, title, subtitle, openDefault, sortByKey }) => {
     let data = dataMapKey
       ? playerScore.get(dataMapKey) || new Map()
@@ -65,4 +64,3 @@ export const SubList = pure(
       </React.Fragment>
     );
   }
-);

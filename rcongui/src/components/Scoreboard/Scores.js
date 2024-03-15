@@ -21,7 +21,6 @@ import Autocomplete from "@material-ui/lab/Autocomplete";
 import { makeStyles } from "@material-ui/core/styles";
 import AddIcon from "@material-ui/icons/Add";
 import RemoveIcon from "@material-ui/icons/Remove";
-import { pure } from "recompose";
 import { PlayerStatProfile } from "./PlayerStatProfile";
 import MUIDataTable from "mui-datatables";
 import { Button } from "@material-ui/core";
@@ -35,7 +34,7 @@ export const safeGetSteamProfile = (scoreObj) =>
       : new Map()
     : new Map();
 
-const PlayerItem = pure(({ score, rank, postProcess, statKey, onClick }) => {
+const PlayerItem = ({ score, rank, postProcess, statKey, onClick }) => {
   const steamProfile = safeGetSteamProfile(score);
   const avatarUrl = steamProfile ? steamProfile.get("avatar", null) : null;
 
@@ -64,126 +63,123 @@ const PlayerItem = pure(({ score, rank, postProcess, statKey, onClick }) => {
       </ListItem>
     </React.Fragment>
   );
-});
+}
 
-const TopList = pure(
-  ({
-    iconUrl,
-    scores,
-    statType,
-    statKey,
-    reversed,
-    postProcessFunc,
-    onPlayerClick,
-    playersFilter,
-  }) => {
-    const postProcess = postProcessFunc ? postProcessFunc : (val) => val;
-    const defaultNum = playersFilter.size !== 0 ? 9999 : 10;
-    const [top, setTop] = React.useState(defaultNum);
-    const toggle = () => (top === 9999 ? setTop(defaultNum) : setTop(9999));
-    const show = top === 9999 ? "Show less" : "Show all";
-    const showButton = top === 9999 ? <RemoveIcon /> : <AddIcon />;
-    const sortedScore = React.useMemo(() => {
-      const compareFunc = reversed
-        ? (a, b) => (a > b ? -1 : a === b ? 0 : 1)
-        : undefined;
-      if (playersFilter.size !== 0) {
-        return scores.sortBy((s) => s.get(statKey), compareFunc);
-      } else {
-        return scores.sortBy((s) => s.get(statKey), compareFunc).slice(0, top);
-      }
-    }, [top, playersFilter, scores, reversed, statKey]);
+const TopList = ({
+  iconUrl,
+  scores,
+  statType,
+  statKey,
+  reversed,
+  postProcessFunc,
+  onPlayerClick,
+  playersFilter,
+}) => {
+  const postProcess = postProcessFunc ? postProcessFunc : (val) => val;
+  const defaultNum = playersFilter.size !== 0 ? 9999 : 10;
+  const [top, setTop] = React.useState(defaultNum);
+  const toggle = () => (top === 9999 ? setTop(defaultNum) : setTop(9999));
+  const show = top === 9999 ? "Show less" : "Show all";
+  const showButton = top === 9999 ? <RemoveIcon /> : <AddIcon />;
+  const sortedScore = React.useMemo(() => {
+    const compareFunc = reversed
+      ? (a, b) => (a > b ? -1 : a === b ? 0 : 1)
+      : undefined;
+    if (playersFilter.size !== 0) {
+      return scores.sortBy((s) => s.get(statKey), compareFunc);
+    } else {
+      return scores.sortBy((s) => s.get(statKey), compareFunc).slice(0, top);
+    }
+  }, [top, playersFilter, scores, reversed, statKey]);
 
-    return (
-      <List>
-        <React.Fragment>
-          <ListItem>
-            <ListItemAvatar style={{ visibility: "visible" }}>
-              <Avatar src={iconUrl}>#</Avatar>
-            </ListItemAvatar>
-            <ListItemText
-              primary={<Typography variant="h6">name</Typography>}
-            />
-            <ListItemSecondaryAction>
-              <Typography variant="h6">{statType}</Typography>
-            </ListItemSecondaryAction>
-          </ListItem>
-        </React.Fragment>
-        {sortedScore.map((s, idx) =>
-          playersFilter.size === 0 ||
-            playersFilter.includes(
-              s.get("player") ||
-              s.get("steaminfo")?.get("profile")?.get("personaname")
-            ) ? (
-            <PlayerItem
-              key={statKey + idx}
-              score={s}
-              rank={idx + 1}
-              postProcess={postProcess}
-              statKey={statKey}
-              onClick={() => onPlayerClick(s)}
-            />
-          ) : (
-            ""
-          )
-        )}
+  return (
+    <List>
+      <React.Fragment>
         <ListItem>
-          <ListItemAvatar style={{ visibility: "hidden" }}>
-            <Avatar>#</Avatar>
+          <ListItemAvatar style={{ visibility: "visible" }}>
+            <Avatar src={iconUrl}>#</Avatar>
           </ListItemAvatar>
-          <ListItemText primary={<Link onClick={toggle}>{show}</Link>} />
+          <ListItemText
+            primary={<Typography variant="h6">name</Typography>}
+          />
           <ListItemSecondaryAction>
-            <IconButton onClick={toggle} color="secondary">
-              {showButton}
-            </IconButton>
+            <Typography variant="h6">{statType}</Typography>
           </ListItemSecondaryAction>
         </ListItem>
-      </List>
-    );
-  }
-);
+      </React.Fragment>
+      {sortedScore.map((s, idx) =>
+        playersFilter.size === 0 ||
+          playersFilter.includes(
+            s.get("player") ||
+            s.get("steaminfo")?.get("profile")?.get("personaname")
+          ) ? (
+          <PlayerItem
+            key={statKey + idx}
+            score={s}
+            rank={idx + 1}
+            postProcess={postProcess}
+            statKey={statKey}
+            onClick={() => onPlayerClick(s)}
+          />
+        ) : (
+          ""
+        )
+      )}
+      <ListItem>
+        <ListItemAvatar style={{ visibility: "hidden" }}>
+          <Avatar>#</Avatar>
+        </ListItemAvatar>
+        <ListItemText primary={<Link onClick={toggle}>{show}</Link>} />
+        <ListItemSecondaryAction>
+          <IconButton onClick={toggle} color="secondary">
+            {showButton}
+          </IconButton>
+        </ListItemSecondaryAction>
+      </ListItem>
+    </List>
+  );
+}
 
-const RankBoard = pure(
-  ({
-    classes,
-    iconUrl,
-    scores,
-    title,
-    statType,
-    statKey,
-    reversed,
-    postProcessFunc,
-    onPlayerClick,
-    playersFilter,
-  }) => (
-    <React.Fragment>
-      <AppBar position="relative" style={{ minHeight: "144px" }}>
-        <Toolbar style={{ minHeight: "inherit" }}>
-          <Typography
-            variant="h2"
-            align="center"
-            className={classes.grow}
-            display="block"
-          >
-            {title}
-          </Typography>
-        </Toolbar>
-      </AppBar>
-      <Paper elevation={3}>
-        <TopList
-          iconUrl={iconUrl}
-          scores={scores}
-          statType={statType}
-          statKey={statKey}
-          reversed={reversed}
-          postProcessFunc={postProcessFunc}
-          onPlayerClick={onPlayerClick}
-          playersFilter={playersFilter}
-        />
-      </Paper>
-    </React.Fragment>
-  )
-);
+
+const RankBoard = ({
+  classes,
+  iconUrl,
+  scores,
+  title,
+  statType,
+  statKey,
+  reversed,
+  postProcessFunc,
+  onPlayerClick,
+  playersFilter,
+}) => (
+  <React.Fragment>
+    <AppBar position="relative" style={{ minHeight: "144px" }}>
+      <Toolbar style={{ minHeight: "inherit" }}>
+        <Typography
+          variant="h2"
+          align="center"
+          className={classes.grow}
+          display="block"
+        >
+          {title}
+        </Typography>
+      </Toolbar>
+    </AppBar>
+    <Paper elevation={3}>
+      <TopList
+        iconUrl={iconUrl}
+        scores={scores}
+        statType={statType}
+        statKey={statKey}
+        reversed={reversed}
+        postProcessFunc={postProcessFunc}
+        onPlayerClick={onPlayerClick}
+        playersFilter={playersFilter}
+      />
+    </Paper>
+  </React.Fragment>
+)
 
 const useStyles = makeStyles((theme) => ({
   black: {
@@ -191,7 +187,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const RawScores = pure(({ classes, scores }) => {
+const RawScores = ({ classes, scores }) => {
   const lastState = window.localStorage.getItem("rawStats");
   const [show, setShow] = React.useState(
     lastState !== null
@@ -337,7 +333,7 @@ const RawScores = pure(({ classes, scores }) => {
       )}
     </Grid>
   );
-});
+}
 
 function commaSeperatedListRenderer(value) {
   const pairs = toPairs(value);
@@ -346,7 +342,7 @@ function commaSeperatedListRenderer(value) {
     .join(", ");
 }
 
-const Scores = pure(({ classes, scores, durationToHour, type }) => {
+const Scores = ({ classes, scores, durationToHour, type }) => {
   const [highlight, setHighlight] = React.useState(null);
   const doHighlight = (playerScore) => {
     setHighlight(playerScore);
@@ -662,6 +658,6 @@ const Scores = pure(({ classes, scores, durationToHour, type }) => {
       )}
     </React.Fragment>
   );
-});
+}
 
 export default Scores;

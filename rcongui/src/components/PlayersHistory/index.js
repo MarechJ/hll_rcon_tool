@@ -23,7 +23,7 @@ import { omitBy } from "lodash/object";
 import SearchBar from "./searchBar";
 import { fromJS, List, Map } from "immutable";
 import FlagIcon from "@material-ui/icons/Flag";
-import "emoji-mart/css/emoji-mart.css";
+// import "emoji-mart/css/emoji-mart.css";
 import { Picker } from "emoji-mart";
 import Dialog from "@material-ui/core/Dialog";
 import DialogActions from "@material-ui/core/DialogActions";

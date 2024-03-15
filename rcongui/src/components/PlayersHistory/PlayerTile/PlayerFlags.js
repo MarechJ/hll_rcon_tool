@@ -3,7 +3,7 @@ import React from "react";
 import { List } from "immutable";
 import Tooltip from "@material-ui/core/Tooltip";
 import { getEmojiFlag } from "../../../utils/emoji";
-import "emoji-mart/css/emoji-mart.css";
+// import "emoji-mart/css/emoji-mart.css";
 
 export const PlayerFlags = ({ player, classes, onDeleteFlag }) => {
   return (

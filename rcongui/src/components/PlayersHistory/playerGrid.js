@@ -1,6 +1,6 @@
 import { Grid, GridList, GridListTile, makeStyles } from "@material-ui/core";
 import React from "react";
-import "emoji-mart/css/emoji-mart.css";
+// import "emoji-mart/css/emoji-mart.css";
 import { ActionButton } from "./PlayerTile/ActionButton";
 import { PlayerHeader } from "./PlayerTile/PlayerHeader";
 import { PlayerFlags } from "./PlayerTile/PlayerFlags";
@@ -8,7 +8,6 @@ import { PlayerSighthings } from "./PlayerTile/PlayerSighthings";
 import { PlayerPenalties } from "./PlayerTile/PlayerPenalties";
 import { PlayerBan } from "./PlayerTile/PlayerBan";
 import withWidth from "@material-ui/core/withWidth";
-import { pure } from "recompose";
 
 const useStyles = makeStyles((theme) => ({
   paperTile: {
@@ -116,4 +115,4 @@ const PlayerGrid = withWidth()(
   }
 );
 
-export default pure(PlayerGrid);
+export default PlayerGrid;

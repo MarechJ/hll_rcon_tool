@@ -2,7 +2,7 @@ import * as React from "react";
 import makeStyles from "@material-ui/core/styles/makeStyles";
 import Paper from "@material-ui/core/Paper";
 import DraggableList from "./DraggableList";
-import { getItems, reorder } from "./helpers";
+import { reorder } from "./helpers";
 import {
   get,
   handle_http_errors,

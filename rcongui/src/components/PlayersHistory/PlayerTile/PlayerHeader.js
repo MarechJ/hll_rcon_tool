@@ -16,7 +16,6 @@ import AnnouncementIcon from "@material-ui/icons/Announcement";
 import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
 import KeyboardArrowUpIcon from "@material-ui/icons/KeyboardArrowUp";
 import KeyboardArrowDownIcon from "@material-ui/icons/KeyboardArrowDown";
-import { pure } from "recompose";
 import { getName } from "country-list";
 import makePlayerProfileUrl from "../../../utils/makePlayerProfileUrl";
 
@@ -34,7 +33,7 @@ const getCountry = (country) => {
   );
 };
 
-export const PlayerHeader = pure(({ classes, player }) => {
+export const PlayerHeader = ({ classes, player }) => {
   const [showAll, setShowAll] = React.useState(false);
   const hasMultipleName = player.get("names") && player.get("names").size > 1;
 
@@ -150,14 +149,14 @@ export const PlayerHeader = pure(({ classes, player }) => {
                   .get("names")
                   .first()
                   .get("name")}\nAliases: ${player
-                  .get("names", new List())
-                  .map((n) => n.get("name"))
-                  .join(" | ")}\nSteamID: ${player.get(
-                  "steam_id_64"
-                )}\nSteam URL: ${makePlayerProfileUrl(
-                  player.get("steam_id_64"),
-                  player.get("names").first().get("name")
-                )}\nType of issue:\nDescription:\nEvidence:`;
+                    .get("names", new List())
+                    .map((n) => n.get("name"))
+                    .join(" | ")}\nSteamID: ${player.get(
+                      "steam_id_64"
+                    )}\nSteam URL: ${makePlayerProfileUrl(
+                      player.get("steam_id_64"),
+                      player.get("names").first().get("name")
+                    )}\nType of issue:\nDescription:\nEvidence:`;
                 if (navigator.clipboard === undefined) {
                   alert(`This feature only works if your rcon uses HTTPS.`);
                   return;
@@ -182,4 +181,4 @@ export const PlayerHeader = pure(({ classes, player }) => {
       </ListItemSecondaryAction>
     </ListItem>
   );
-});
+}
