@@ -612,7 +612,7 @@ def get_stat_post_processor(key: StatTypes):
 
 
 def get_stat(
-    stats,
+    stats: list[PlayerStatsType],
     key: StatTypes,
     limit: int,
     post_process: Callable | None = None,
