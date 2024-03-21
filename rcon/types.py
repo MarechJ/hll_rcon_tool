@@ -621,3 +621,8 @@ class InvalidLogTypeError(ValueError):
             "log_type": self.log_type,
             "allowed_log_types": [log for log in AllLogTypes],
         }
+
+
+class VoteOverview(TypedDict):
+    total_votes: int
+    winning_maps: list[tuple[str, int]]
