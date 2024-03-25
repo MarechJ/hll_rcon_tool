@@ -1,0 +1,577 @@
+include:
+  - docker-compose-common-components.yaml
+
+networks:
+  common:
+  server1:
+  server2:
+  server3:
+  server4:
+  server5:
+  server6:
+  server7:
+  server8:
+  server9:
+  server10:
+
+# This is defined here and not in common-components because anchors don't
+# work between files and are prefixed with x- because they are just anchors
+# for merging later, if they're defined under services: docker will want to start them
+# compose ignores any fields that start with x-
+x-backend: &backend
+  build:
+    context: .
+    dockerfile: Dockerfile
+  image: ${BACKEND_DOCKER_REPOSITORY}:${TAGGED_VERSION}
+  environment: &backend-env
+    LOGGING_LEVEL: "INFO"
+    LOGGING_PATH: /logs/
+    CONFIG_DIR: /config/
+    HLL_REDIS_HOST: ${HLL_REDIS_HOST}
+    HLL_REDIS_PORT: ${HLL_REDIS_HOST_PORT}
+    HLL_DB_USER: ${HLL_DB_USER}
+    HLL_DB_PASSWORD: ${HLL_DB_PASSWORD}
+    HLL_DB_NAME: ${HLL_DB_NAME}
+    HLL_DB_HOST: ${HLL_DB_HOST}
+    HLL_DB_HOST_PORT: ${HLL_DB_HOST_PORT}
+    HLL_DB_URL: postgresql://${HLL_DB_USER}:${HLL_DB_PASSWORD}@${HLL_DB_HOST}:${HLL_DB_HOST_PORT}/${HLL_DB_NAME}
+    RCONWEB_API_SECRET: ${RCONWEB_API_SECRET}
+    SUPERVISOR_RPC_URL: http://supervisor:9001/RPC2
+    NB_API_WORKERS: ${NB_API_WORKERS}
+    NB_API_THREADS: ${NB_API_THREADS}
+    RCONWEB_EXTERNAL_ADDRESS: ${RCONWEB_EXTERNAL_ADDRESS}
+    DONT_SEED_ADMIN_USER: ${DONT_SEED_ADMIN_USER}
+  command: web
+  restart: on-failure
+  healthcheck:
+    test:
+      [
+        "CMD-SHELL",
+        "if [ -e /code/rconweb/gunicorn.pid ]; then echo 0; else echo 1; fi",
+      ]
+    start_period: 30s
+    interval: 15s
+    timeout: 30s
+    retries: 5
+  depends_on:
+    postgres:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+    maintenance:
+      condition: service_healthy
+  volumes:
+    - ./logs:/logs/
+    - ./servicediscovery:/servicediscovery
+    - ./static:/static/
+    - ./config:/config/
+x-supervisor: &supervisor
+  build:
+    context: .
+    dockerfile: Dockerfile-frontend
+  image: ${FRONTEND_DOCKER_REPOSITORY}:${TAGGED_VERSION}
+  restart: on-failure
+  command: supervisor
+  volumes:
+    - ./logs:/logs/
+    - ./supervisor_data:/data
+    - ./config:/config/
+x-frontend: &frontend
+  image: ${FRONTEND_DOCKER_REPOSITORY}:${TAGGED_VERSION}
+  environment:
+    RCONWEB_EXTERNAL_ADDRESS: ${RCONWEB_EXTERNAL_ADDRESS}
+  restart: always
+  volumes:
+    - ./static:/static/
+    - ./certs:/certs/
+
+services:
+  ########### SERVER 1  #############
+  backend_1:
+    <<: *backend
+    environment: &env_1
+      <<: *backend-env
+      SERVER_NUMBER: ${SERVER_NUMBER}
+      HLL_HOST: ${HLL_HOST}
+      HLL_PORT: ${HLL_PORT}
+      HLL_PASSWORD: ${HLL_PASSWORD}
+      HLL_REDIS_DB: ${HLL_REDIS_DB}
+      HLL_REDIS_URL: redis://${HLL_REDIS_HOST}:${HLL_REDIS_HOST_PORT}/${HLL_REDIS_DB}
+      RCONWEB_PORT: ${RCONWEB_PORT}
+      PUBLIC_STATS_PORT: ${PUBLIC_STATS_PORT}
+      PUBLIC_STATS_PORT_HTTPS: ${PUBLIC_STATS_PORT_HTTPS}
+      GTX_SERVER_NAME_CHANGE_USERNAME: ${GTX_SERVER_NAME_CHANGE_USERNAME}
+      GTX_SERVER_NAME_CHANGE_PASSWORD: ${GTX_SERVER_NAME_CHANGE_PASSWORD}
+      SENTRY_DSN: ${SENTRY_DSN}
+    hostname: api_1
+    networks:
+      common:
+      server1:
+        aliases:
+          - backend
+  supervisor_1:
+    <<: *supervisor
+    environment:
+      <<: *env_1
+    depends_on:
+      backend_1:
+        condition: service_healthy
+    networks:
+      common:
+      server1:
+        aliases:
+          - supervisor
+  frontend_1:
+    <<: *frontend
+    ports:
+      - ${RCONWEB_PORT}:80
+      - ${RCONWEB_PORT_HTTPS}:443
+      - ${PUBLIC_STATS_PORT}:81
+      - ${PUBLIC_STATS_PORT_HTTPS}:444
+    depends_on:
+      backend_1:
+        condition: service_healthy
+    networks:
+      common:
+      server1:
+
+  ########### SERVER 2  #############
+  backend_2:
+    <<: *backend
+    environment: &env_2
+      <<: *backend-env
+      SERVER_NUMBER: ${SERVER_NUMBER_2}
+      HLL_HOST: ${HLL_HOST_2}
+      HLL_PORT: ${HLL_PORT_2}
+      HLL_PASSWORD: ${HLL_PASSWORD_2}
+      HLL_REDIS_DB: ${HLL_REDIS_DB_2}
+      HLL_REDIS_URL: redis://${HLL_REDIS_HOST}:${HLL_REDIS_HOST_PORT}/${HLL_REDIS_DB_2}
+      RCONWEB_PORT: ${RCONWEB_PORT_2}
+      PUBLIC_STATS_PORT: ${PUBLIC_STATS_PORT_2}
+      PUBLIC_STATS_PORT_HTTPS: ${PUBLIC_STATS_PORT_HTTPS_2}
+      GTX_SERVER_NAME_CHANGE_USERNAME: ${GTX_SERVER_NAME_CHANGE_USERNAME_2}
+      GTX_SERVER_NAME_CHANGE_PASSWORD: ${GTX_SERVER_NAME_CHANGE_PASSWORD_2}
+      SENTRY_DSN: ${SENTRY_DSN_2}
+    hostname: api_2
+    networks:
+      common:
+      server2:
+        aliases:
+          - backend
+  supervisor_2:
+    <<: *supervisor
+    environment:
+      <<: *env_2
+    depends_on:
+      backend_2:
+        condition: service_healthy
+    networks:
+      common:
+      server2:
+        aliases:
+          - supervisor
+  frontend_2:
+    <<: *frontend
+    ports:
+      - ${RCONWEB_PORT_2}:80
+      - ${RCONWEB_PORT_HTTPS_2}:443
+      - ${PUBLIC_STATS_PORT_2}:81
+      - ${PUBLIC_STATS_PORT_HTTPS_2}:444
+    depends_on:
+      backend_2:
+        condition: service_healthy
+    networks:
+      common:
+      server2:
+
+  ########### SERVER 3  #############
+  backend_3:
+    <<: *backend
+    environment: &env_3
+      <<: *backend-env
+      SERVER_NUMBER: ${SERVER_NUMBER_3}
+      HLL_HOST: ${HLL_HOST_3}
+      HLL_PORT: ${HLL_PORT_3}
+      HLL_PASSWORD: ${HLL_PASSWORD_3}
+      HLL_REDIS_DB: ${HLL_REDIS_DB_3}
+      HLL_REDIS_URL: redis://${HLL_REDIS_HOST}:${HLL_REDIS_HOST_PORT}/${HLL_REDIS_DB_3}
+      RCONWEB_PORT: ${RCONWEB_PORT_3}
+      PUBLIC_STATS_PORT: ${PUBLIC_STATS_PORT_3}
+      PUBLIC_STATS_PORT_HTTPS: ${PUBLIC_STATS_PORT_HTTPS_3}
+      GTX_SERVER_NAME_CHANGE_USERNAME: ${GTX_SERVER_NAME_CHANGE_USERNAME_3}
+      GTX_SERVER_NAME_CHANGE_PASSWORD: ${GTX_SERVER_NAME_CHANGE_PASSWORD_3}
+      SENTRY_DSN: ${SENTRY_DSN_3}
+    hostname: api_3
+    networks:
+      common:
+      server3:
+        aliases:
+          - backend
+  supervisor_3:
+    <<: *supervisor
+    environment:
+      <<: *env_3
+    depends_on:
+      backend_3:
+        condition: service_healthy
+    networks:
+      common:
+      server3:
+        aliases:
+          - supervisor
+  frontend_3:
+    <<: *frontend
+    ports:
+      - ${RCONWEB_PORT_3}:80
+      - ${RCONWEB_PORT_HTTPS_3}:443
+      - ${PUBLIC_STATS_PORT_3}:81
+      - ${PUBLIC_STATS_PORT_HTTPS_3}:444
+    depends_on:
+      backend_3:
+        condition: service_healthy
+    networks:
+      common:
+      server3:
+
+  ########### SERVER 4  #############
+  backend_4:
+    <<: *backend
+    environment: &env_4
+      <<: *backend-env
+      SERVER_NUMBER: ${SERVER_NUMBER_4}
+      HLL_HOST: ${HLL_HOST_4}
+      HLL_PORT: ${HLL_PORT_4}
+      HLL_PASSWORD: ${HLL_PASSWORD_4}
+      HLL_REDIS_DB: ${HLL_REDIS_DB_4}
+      HLL_REDIS_URL: redis://${HLL_REDIS_HOST}:${HLL_REDIS_HOST_PORT}/${HLL_REDIS_DB_4}
+      RCONWEB_PORT: ${RCONWEB_PORT_4}
+      PUBLIC_STATS_PORT: ${PUBLIC_STATS_PORT_4}
+      PUBLIC_STATS_PORT_HTTPS: ${PUBLIC_STATS_PORT_HTTPS_4}
+      GTX_SERVER_NAME_CHANGE_USERNAME: ${GTX_SERVER_NAME_CHANGE_USERNAME_4}
+      GTX_SERVER_NAME_CHANGE_PASSWORD: ${GTX_SERVER_NAME_CHANGE_PASSWORD_4}
+      SENTRY_DSN: ${SENTRY_DSN_4}
+    hostname: api_4
+    networks:
+      common:
+      server4:
+        aliases:
+          - backend
+  supervisor_4:
+    <<: *supervisor
+    environment:
+      <<: *env_4
+    depends_on:
+      backend_4:
+        condition: service_healthy
+    networks:
+      common:
+      server4:
+        aliases:
+          - supervisor
+  frontend_4:
+    <<: *frontend
+    ports:
+      - ${RCONWEB_PORT_4}:80
+      - ${RCONWEB_PORT_HTTPS_4}:443
+      - ${PUBLIC_STATS_PORT_4}:81
+      - ${PUBLIC_STATS_PORT_HTTPS_4}:444
+    depends_on:
+      backend_4:
+        condition: service_healthy
+    networks:
+      common:
+      server4:
+
+  ########### SERVER 5  #############
+  backend_5:
+    <<: *backend
+    environment: &env_5
+      <<: *backend-env
+      SERVER_NUMBER: ${SERVER_NUMBER_5}
+      HLL_HOST: ${HLL_HOST_5}
+      HLL_PORT: ${HLL_PORT_5}
+      HLL_PASSWORD: ${HLL_PASSWORD_5}
+      HLL_REDIS_DB: ${HLL_REDIS_DB_5}
+      HLL_REDIS_URL: redis://${HLL_REDIS_HOST}:${HLL_REDIS_HOST_PORT}/${HLL_REDIS_DB_5}
+      RCONWEB_PORT: ${RCONWEB_PORT_5}
+      PUBLIC_STATS_PORT: ${PUBLIC_STATS_PORT_5}
+      PUBLIC_STATS_PORT_HTTPS: ${PUBLIC_STATS_PORT_HTTPS_5}
+      GTX_SERVER_NAME_CHANGE_USERNAME: ${GTX_SERVER_NAME_CHANGE_USERNAME_5}
+      GTX_SERVER_NAME_CHANGE_PASSWORD: ${GTX_SERVER_NAME_CHANGE_PASSWORD_5}
+      SENTRY_DSN: ${SENTRY_DSN_5}
+    hostname: api_5
+    networks:
+      common:
+      server5:
+        aliases:
+          - backend
+  supervisor_5:
+    <<: *supervisor
+    environment:
+      <<: *env_5
+    depends_on:
+      backend_5:
+        condition: service_healthy
+    networks:
+      common:
+      server5:
+        aliases:
+          - supervisor
+  frontend_5:
+    <<: *frontend
+    ports:
+      - ${RCONWEB_PORT_5}:80
+      - ${RCONWEB_PORT_HTTPS_5}:443
+      - ${PUBLIC_STATS_PORT_5}:81
+      - ${PUBLIC_STATS_PORT_HTTPS_5}:444
+    depends_on:
+      backend_5:
+        condition: service_healthy
+    networks:
+      common:
+      server5:
+
+  ########### SERVER 6  #############
+  backend_6:
+    <<: *backend
+    environment: &env_6
+      <<: *backend-env
+      SERVER_NUMBER: ${SERVER_NUMBER_6}
+      HLL_HOST: ${HLL_HOST_6}
+      HLL_PORT: ${HLL_PORT_6}
+      HLL_PASSWORD: ${HLL_PASSWORD_6}
+      HLL_REDIS_DB: ${HLL_REDIS_DB_6}
+      HLL_REDIS_URL: redis://${HLL_REDIS_HOST}:${HLL_REDIS_HOST_PORT}/${HLL_REDIS_DB_6}
+      RCONWEB_PORT: ${RCONWEB_PORT_6}
+      PUBLIC_STATS_PORT: ${PUBLIC_STATS_PORT_6}
+      PUBLIC_STATS_PORT_HTTPS: ${PUBLIC_STATS_PORT_HTTPS_6}
+      GTX_SERVER_NAME_CHANGE_USERNAME: ${GTX_SERVER_NAME_CHANGE_USERNAME_6}
+      GTX_SERVER_NAME_CHANGE_PASSWORD: ${GTX_SERVER_NAME_CHANGE_PASSWORD_6}
+      SENTRY_DSN: ${SENTRY_DSN_6}
+    hostname: api_6
+    networks:
+      common:
+      server6:
+        aliases:
+          - backend
+  supervisor_6:
+    <<: *supervisor
+    environment:
+      <<: *env_6
+    depends_on:
+      backend_6:
+        condition: service_healthy
+    networks:
+      common:
+      server6:
+        aliases:
+          - supervisor
+  frontend_6:
+    <<: *frontend
+    ports:
+      - ${RCONWEB_PORT_6}:80
+      - ${RCONWEB_PORT_HTTPS_6}:443
+      - ${PUBLIC_STATS_PORT_6}:81
+      - ${PUBLIC_STATS_PORT_HTTPS_6}:444
+    depends_on:
+      backend_6:
+        condition: service_healthy
+    networks:
+      common:
+      server6:
+
+  ########### SERVER 7  #############
+  backend_7:
+    <<: *backend
+    environment: &env_7
+      <<: *backend-env
+      SERVER_NUMBER: ${SERVER_NUMBER_7}
+      HLL_HOST: ${HLL_HOST_7}
+      HLL_PORT: ${HLL_PORT_7}
+      HLL_PASSWORD: ${HLL_PASSWORD_7}
+      HLL_REDIS_DB: ${HLL_REDIS_DB_7}
+      HLL_REDIS_URL: redis://${HLL_REDIS_HOST}:${HLL_REDIS_HOST_PORT}/${HLL_REDIS_DB_7}
+      RCONWEB_PORT: ${RCONWEB_PORT_7}
+      PUBLIC_STATS_PORT: ${PUBLIC_STATS_PORT_7}
+      PUBLIC_STATS_PORT_HTTPS: ${PUBLIC_STATS_PORT_HTTPS_7}
+      GTX_SERVER_NAME_CHANGE_USERNAME: ${GTX_SERVER_NAME_CHANGE_USERNAME_7}
+      GTX_SERVER_NAME_CHANGE_PASSWORD: ${GTX_SERVER_NAME_CHANGE_PASSWORD_7}
+      SENTRY_DSN: ${SENTRY_DSN_7}
+    hostname: api_7
+    networks:
+      common:
+      server7:
+        aliases:
+          - backend
+  supervisor_7:
+    <<: *supervisor
+    environment:
+      <<: *env_7
+    depends_on:
+      backend_7:
+        condition: service_healthy
+    networks:
+      common:
+      server7:
+        aliases:
+          - supervisor
+  frontend_7:
+    <<: *frontend
+    ports:
+      - ${RCONWEB_PORT_7}:80
+      - ${RCONWEB_PORT_HTTPS_7}:443
+      - ${PUBLIC_STATS_PORT_7}:81
+      - ${PUBLIC_STATS_PORT_HTTPS_7}:444
+    depends_on:
+      backend_7:
+        condition: service_healthy
+    networks:
+      common:
+      server7:
+
+  ########### SERVER 8  #############
+  backend_8:
+    <<: *backend
+    environment: &env_8
+      <<: *backend-env
+      SERVER_NUMBER: ${SERVER_NUMBER_8}
+      HLL_HOST: ${HLL_HOST_8}
+      HLL_PORT: ${HLL_PORT_8}
+      HLL_PASSWORD: ${HLL_PASSWORD_8}
+      HLL_REDIS_DB: ${HLL_REDIS_DB_8}
+      HLL_REDIS_URL: redis://${HLL_REDIS_HOST}:${HLL_REDIS_HOST_PORT}/${HLL_REDIS_DB_8}
+      RCONWEB_PORT: ${RCONWEB_PORT_8}
+      PUBLIC_STATS_PORT: ${PUBLIC_STATS_PORT_8}
+      PUBLIC_STATS_PORT_HTTPS: ${PUBLIC_STATS_PORT_HTTPS_8}
+      GTX_SERVER_NAME_CHANGE_USERNAME: ${GTX_SERVER_NAME_CHANGE_USERNAME_8}
+      GTX_SERVER_NAME_CHANGE_PASSWORD: ${GTX_SERVER_NAME_CHANGE_PASSWORD_8}
+      SENTRY_DSN: ${SENTRY_DSN_8}
+    hostname: api_8
+    networks:
+      common:
+      server8:
+        aliases:
+          - backend
+  supervisor_8:
+    <<: *supervisor
+    environment:
+      <<: *env_8
+    depends_on:
+      backend_8:
+        condition: service_healthy
+    networks:
+      common:
+      server8:
+        aliases:
+          - supervisor
+  frontend_8:
+    <<: *frontend
+    ports:
+      - ${RCONWEB_PORT_8}:80
+      - ${RCONWEB_PORT_HTTPS_8}:443
+      - ${PUBLIC_STATS_PORT_8}:81
+      - ${PUBLIC_STATS_PORT_HTTPS_8}:444
+    depends_on:
+      backend_8:
+        condition: service_healthy
+    networks:
+      common:
+      server8:
+
+  ########### SERVER 9  #############
+  backend_9:
+    <<: *backend
+    environment: &env_9
+      <<: *backend-env
+      SERVER_NUMBER: ${SERVER_NUMBER_9}
+      HLL_HOST: ${HLL_HOST_9}
+      HLL_PORT: ${HLL_PORT_9}
+      HLL_PASSWORD: ${HLL_PASSWORD_9}
+      HLL_REDIS_DB: ${HLL_REDIS_DB_9}
+      HLL_REDIS_URL: redis://${HLL_REDIS_HOST}:${HLL_REDIS_HOST_PORT}/${HLL_REDIS_DB_9}
+      RCONWEB_PORT: ${RCONWEB_PORT_9}
+      PUBLIC_STATS_PORT: ${PUBLIC_STATS_PORT_9}
+      PUBLIC_STATS_PORT_HTTPS: ${PUBLIC_STATS_PORT_HTTPS_9}
+      GTX_SERVER_NAME_CHANGE_USERNAME: ${GTX_SERVER_NAME_CHANGE_USERNAME_9}
+      GTX_SERVER_NAME_CHANGE_PASSWORD: ${GTX_SERVER_NAME_CHANGE_PASSWORD_9}
+      SENTRY_DSN: ${SENTRY_DSN_9}
+    hostname: api_9
+    networks:
+      common:
+      server9:
+        aliases:
+          - backend
+  supervisor_9:
+    <<: *supervisor
+    environment:
+      <<: *env_9
+    depends_on:
+      backend_9:
+        condition: service_healthy
+    networks:
+      common:
+      server9:
+        aliases:
+          - supervisor
+  frontend_9:
+    <<: *frontend
+    ports:
+      - ${RCONWEB_PORT_9}:80
+      - ${RCONWEB_PORT_HTTPS_9}:443
+      - ${PUBLIC_STATS_PORT_9}:81
+      - ${PUBLIC_STATS_PORT_HTTPS_9}:444
+    depends_on:
+      backend_9:
+        condition: service_healthy
+    networks:
+      common:
+      server9:
+
+  ########### SERVER 10 #############
+  backend_10:
+    <<: *backend
+    environment: &env_10
+      <<: *backend-env
+      SERVER_NUMBER: ${SERVER_NUMBER_10}
+      HLL_HOST: ${HLL_HOST_10}
+      HLL_PORT: ${HLL_PORT_10}
+      HLL_PASSWORD: ${HLL_PASSWORD_10}
+      HLL_REDIS_DB: ${HLL_REDIS_DB_10}
+      HLL_REDIS_URL: redis://${HLL_REDIS_HOST}:${HLL_REDIS_HOST_PORT}/${HLL_REDIS_DB_10}
+      RCONWEB_PORT: ${RCONWEB_PORT_10}
+      PUBLIC_STATS_PORT: ${PUBLIC_STATS_PORT_10}
+      PUBLIC_STATS_PORT_HTTPS: ${PUBLIC_STATS_PORT_HTTPS_10}
+      GTX_SERVER_NAME_CHANGE_USERNAME: ${GTX_SERVER_NAME_CHANGE_USERNAME_10}
+      GTX_SERVER_NAME_CHANGE_PASSWORD: ${GTX_SERVER_NAME_CHANGE_PASSWORD_10}
+      SENTRY_DSN: ${SENTRY_DSN_10}
+    hostname: api_10
+    networks:
+      common:
+      server10:
+        aliases:
+          - backend
+  supervisor_10:
+    <<: *supervisor
+    environment:
+      <<: *env_10
+    depends_on:
+      backend_10:
+        condition: service_healthy
+    networks:
+      common:
+      server10:
+        aliases:
+          - supervisor
+  frontend_10:
+    <<: *frontend
+    ports:
+      - ${RCONWEB_PORT_10}:80
+      - ${RCONWEB_PORT_HTTPS_10}:443
+      - ${PUBLIC_STATS_PORT_10}:81
+      - ${PUBLIC_STATS_PORT_HTTPS_10}:444
+    depends_on:
+      backend_10:
+        condition: service_healthy
+    networks:
+      common:
+      server10:
