@@ -256,7 +256,7 @@ class LogStream:
         key="log_stream",
         maxlen: int = 100_000,
     ) -> None:
-        self.rcon = rcon or Rcon(SERVER_INFO)
+        self.rcon = rcon or get_rcon()
         self.red = red or get_redis_client()
         self.log_history_key = key
         self.log_stream = Stream(key=key, maxlen=maxlen)
