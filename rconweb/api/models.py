@@ -1,6 +1,7 @@
+from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import User
 from django.db import models
-from django.contrib.auth.hashers import make_password
+
 from rconweb.settings import SECRET_KEY
 
 
@@ -19,7 +20,7 @@ class DjangoAPIKey(models.Model):
     def save(self, *args, **kwargs):
         """Hash the API key"""
         # If we don't include the salt, the hasher generates its own
-        self.api_key = make_password(self.api_key, salt=SECRET_KEY)
+        self.api_key = make_password(self.api_key, salt=SECRET_KEY.replace("$", ""))
         super().save()
 
     class Meta:
@@ -147,7 +148,7 @@ class RconUser(User):
             ("can_view_auto_settings", "Can view auto settings"),
             ("can_view_autobalance_enabled", "Can view if autobalance is enabled"),
             ("can_view_autobalance_threshold", "Can view the autobalance threshold"),
-            ("can_view_available_services", "Can view serviecs (automod, etc)"),
+            ("can_view_available_services", "Can view services (automod, etc)"),
             ("can_view_broadcast_message", "Can view the current broadcast message"),
             ("can_view_camera_config", "Can view camera notification settings"),
             ("can_view_connection_info", "Can view CRCON's connection info"),
@@ -423,4 +424,6 @@ class RconUser(User):
                 "can_restart_webserver",
                 "Can restart the webserver (Not a complete Docker restart)",
             ),
+            ("can_view_chat_commands_config", "Can view the chat commands config"),
+            ("can_change_chat_commands_config", "Can change the chat commands config"),
         )

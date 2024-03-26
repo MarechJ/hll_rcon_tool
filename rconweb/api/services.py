@@ -30,7 +30,7 @@ def get_supervisor_client():
 @csrf_exempt
 @login_required()
 @permission_required("api.can_view_available_services", raise_exception=True)
-@require_http_methods(['GET'])
+@require_http_methods(["GET"])
 def get_services(request):
     info = {
         "broadcasts": "The automatic broadcasts.",
@@ -60,7 +60,7 @@ def get_services(request):
 @login_required()
 @permission_required("api.can_toggle_services", raise_exception=True)
 @record_audit
-@require_http_methods(['POST'])
+@require_http_methods(["POST"])
 @require_content_type()
 def do_service(request):
     data = _get_data(request)

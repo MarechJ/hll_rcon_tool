@@ -3,6 +3,7 @@ from typing import Optional, TypedDict
 
 from pydantic import BaseModel, Field, HttpUrl, field_serializer, field_validator
 
+from rcon.types import StatTypes
 from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
 from rcon.utils import get_server_number
 
@@ -58,24 +59,6 @@ I_LOVE_VOTING = "I :heart: VOTING\n*num. votes started*"
 WHAT_IS_A_BREAK = "WHAT IS A BREAK?\n*ingame time*"
 SURVIVORS = ":clock1: SURVIVORS\n*longest life (min.)*"
 U_R_STILL_A_MAN = "U'R STILL A MAN\n*shortest life (min.)*"
-
-
-# # Have to inherit from str to allow for JSON serialization w/ pydantic
-class StatTypes(str, enum.Enum):
-    top_killers = "TOP_KILLERS"
-    top_ratio = "TOP_RATIO"
-    top_performance = "TOP_PERFORMANCE"
-    try_harders = "TRY_HARDERS"
-    top_stamina = "TOP_STAMINA"
-    top_kill_streak = "TOP_KILL_STREAK"
-    most_patient = "MOST_PATIENT"
-    i_never_give_up = "I_NEVER_GIVE_UP"
-    im_clumsy = "IM_CLUMSY"
-    i_need_glasses = "I_NEED_GLASSES"
-    i_love_voting = "I_LOVE_VOTING"
-    what_is_a_break = "WHAT_IS_A_BREAK"
-    survivors = "SURVIVORS"
-    u_r_still_a_man = "U_R_STILL_A_MAN"
 
 
 def seed_default_displays():

@@ -12,6 +12,7 @@ KICK_MESSAGE = "Your Squad ({squad_name}) must have an officer.\nYour grace peri
 
 class AutoModNoLeaderType(TypedDict):
     enabled: bool
+    dont_do_anything_below_this_number_of_players: int
     dry_run: bool
     discord_webhook_url: Optional[HttpUrl]
 
@@ -40,6 +41,7 @@ class AutoModNoLeaderType(TypedDict):
 
 class AutoModNoLeaderUserConfig(BaseUserConfig):
     enabled: bool = Field(default=False)
+    dont_do_anything_below_this_number_of_players: int = Field(ge=0, le=100, default=40)
     dry_run: bool = Field(default=True)
     discord_webhook_url: Optional[HttpUrl] = Field(default=None)
 
@@ -87,6 +89,7 @@ class AutoModNoLeaderUserConfig(BaseUserConfig):
 
         validated_conf = AutoModNoLeaderUserConfig(
             enabled=values.get("enabled"),
+            dont_do_anything_below_this_number_of_players=values.get("dont_do_anything_below_this_number_of_players"),
             dry_run=values.get("dry_run"),
             discord_webhook_url=values.get("discord_webhook_url"),
             number_of_notes=values.get("number_of_notes"),

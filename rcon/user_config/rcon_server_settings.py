@@ -1,9 +1,9 @@
-from typing import Optional, TypedDict
+from typing import Optional, Type, TypedDict
 
 from pydantic import BaseModel, BeforeValidator, Field, HttpUrl, field_serializer
 from typing_extensions import Annotated
 
-from rcon.types import RconInvalidNameActionType
+from rcon.types import RconInvalidNameActionType, WindowsStoreIdActionType
 from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
 from rcon.utils import get_server_number
 
@@ -31,6 +31,12 @@ The player will show as 'unassigned' in Gameview.
 Action taken = {action}"""
 PINEAPPLE_NAMES_AUDIT_UNBAN_MESSAGE = "Unbanning {name} ({steam_id_64}) that was temp banned since the `kick` command will not work with their name"
 
+WINDOWS_STORE_PLAYER_MESSAGE = "Windows store players are not allowed on this server."
+
+WINDOWS_STORE_AUDIT_MESSAGE = (
+    "Windows store player {name} ({steam_id_64} connected, action taken = {action})"
+)
+
 
 class InvalidNameType(TypedDict):
     enabled: bool
@@ -44,9 +50,19 @@ class InvalidNameType(TypedDict):
     ban_length_hours: int
 
 
+class WindowsStorePlayersType(TypedDict):
+    enabled: bool
+    action: WindowsStoreIdActionType
+    player_message: str
+    audit_message: str
+    audit_message_author: str
+    temp_ban_length_hours: int
+
+
 class RconServerSettingsType(TypedDict):
     short_name: str
     server_url: HttpUrl
+    discord_invite_url: HttpUrl
     lock_stats_api: bool
     unban_does_unblacklist: bool
     unblacklist_does_unban: bool
@@ -56,18 +72,33 @@ class RconServerSettingsType(TypedDict):
     live_stats_refresh_seconds: int
     live_stats_refresh_current_game_seconds: int
     invalid_names: InvalidNameType
+    windows_store_players: WindowsStorePlayersType
 
 
-def upper_case_action(v):
+def _upper_case_action(
+    v: str | None, cls: Type[RconInvalidNameActionType | WindowsStoreIdActionType]
+):
+    if v:
+        return cls(v.upper())
+    else:
+        return v
+
+
+def upper_case_name_kick_action(v: str | None):
     """Allow users to enter actions in any case"""
-    return RconInvalidNameActionType(v.upper())
+    return _upper_case_action(v, cls=RconInvalidNameActionType)
+
+
+def upper_case_name_windows_player_action(v: str | None):
+    """Allow users to enter actions in any case"""
+    return _upper_case_action(v, cls=WindowsStoreIdActionType)
 
 
 class InvalidName(BaseModel):
     enabled: bool = Field(default=False)
     action: Annotated[
-        RconInvalidNameActionType, BeforeValidator(upper_case_action)
-    ] = Field(default=RconInvalidNameActionType.none)
+        RconInvalidNameActionType, BeforeValidator(upper_case_name_kick_action)
+    ] | None = Field(default=None)
     whitespace_name_player_message: str = Field(default=WHITESPACE_NAME_PLAYER_MESSAGE)
     pineapple_name_player_message: str = Field(default=PINEAPPLE_NAME_PLAYER_MESSAGE)
     audit_message: str = Field(default=INVALID_NAME_AUDIT_MESSAGE)
@@ -76,9 +107,21 @@ class InvalidName(BaseModel):
     ban_length_hours: int = Field(default=1)
 
 
+class WindowsStorePlayer(BaseModel):
+    enabled: bool = Field(default=False)
+    action: Annotated[
+        WindowsStoreIdActionType, BeforeValidator(upper_case_name_windows_player_action)
+    ] | None = Field(default=None)
+    player_message: str = Field(default=WINDOWS_STORE_PLAYER_MESSAGE)
+    audit_message: str = Field(default=WINDOWS_STORE_AUDIT_MESSAGE)
+    audit_message_author: str = Field(default="CRCON")
+    temp_ban_length_hours: int = Field(default=1)
+
+
 class RconServerSettingsUserConfig(BaseUserConfig):
     short_name: str = Field(default=f"MyServer{get_server_number()}")
     server_url: Optional[HttpUrl] = Field(default=None)
+    discord_invite_url: Optional[HttpUrl] = Field(default=None)
 
     lock_stats_api: bool = Field(default=False)
     unban_does_unblacklist: bool = Field(default=True)
@@ -91,11 +134,14 @@ class RconServerSettingsUserConfig(BaseUserConfig):
     live_stats_refresh_current_game_seconds: int = Field(default=5)
 
     invalid_names: InvalidName = Field(default_factory=InvalidName)
+    windows_store_players: WindowsStorePlayer = Field(
+        default_factory=WindowsStorePlayer
+    )
 
-    @field_serializer("server_url")
-    def serialize_server_url(self, server_url: HttpUrl, _info):
-        if server_url is not None:
-            return str(server_url)
+    @field_serializer("server_url", "discord_invite_url")
+    def serialize_urls(self, url: HttpUrl, _info):
+        if url is not None:
+            return str(url)
         else:
             return None
 
@@ -118,10 +164,20 @@ class RconServerSettingsUserConfig(BaseUserConfig):
             audit_message_author=raw_invalid_names.get("audit_message_author"),
             ban_length_hours=raw_invalid_names.get("ban_length_hours"),
         )
+        raw_win_store_players = values.get("windows_store_players")
+        validated_win_store_players = WindowsStorePlayer(
+            enabled=raw_win_store_players.get("enabled"),
+            action=raw_win_store_players.get("action"),
+            player_message=raw_win_store_players.get("player_message"),
+            audit_message=raw_win_store_players.get("audit_message"),
+            audit_message_author=raw_win_store_players.get("audit_message_author"),
+            temp_ban_length_hours=raw_win_store_players.get("temp_ban_length_hours"),
+        )
 
         validated_conf = RconServerSettingsUserConfig(
             short_name=values.get("short_name"),
             server_url=values.get("server_url"),
+            discord_invite_url=values.get("discord_invite_url"),
             lock_stats_api=values.get("lock_stats_api"),
             unban_does_unblacklist=values.get("unban_does_unblacklist"),
             unblacklist_does_unban=values.get("unblacklist_does_unban"),
@@ -132,6 +188,7 @@ class RconServerSettingsUserConfig(BaseUserConfig):
                 "live_stats_refresh_current_game_seconds"
             ),
             invalid_names=validated_invalid_names,
+            windows_store_players=validated_win_store_players,
         )
 
         if not dry_run:

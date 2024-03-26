@@ -111,7 +111,12 @@ def get_profiles(steam_ids, nb_sessions=1):
         return [p.to_dict(limit_sessions=nb_sessions) for p in players]
 
 
-def _get_set_player(sess, player_name, steam_id_64, timestamp=None):
+def _get_set_player(
+    sess,
+    steam_id_64: str,
+    player_name: str | None = None,
+    timestamp: float | None = None,
+):
     player = get_player(sess, steam_id_64)
     if player is None:
         player = _save_steam_id(sess, steam_id_64)
@@ -295,11 +300,12 @@ def _save_player_alias(sess, steamid, player_name, timestamp=None):
     return name
 
 
-def save_player(player_name, steam_id_64, timestamp=None):
+def save_player(player_name, steam_id_64, timestamp=None) -> None:
+    """Create a PlayerSteamID record if non existent and save the player name alias"""
     with enter_session() as sess:
         steamid = _save_steam_id(sess, steam_id_64)
         _save_player_alias(
-            sess, steamid, player_name, timestamp or datetime.datetime.now()
+            sess, steamid, player_name, timestamp or datetime.datetime.now().timestamp()
         )
 
 
@@ -311,7 +317,9 @@ def save_player_action(
             steam_id_64
             or rcon.get_player_info(player_name, can_fail=True)["steam_id_64"]
         )
-        player = _get_set_player(sess, player_name, _steam_id_64, timestamp=timestamp)
+        player = _get_set_player(
+            sess, player_name=player_name, steam_id_64=_steam_id_64, timestamp=timestamp
+        )
         sess.add(
             PlayersAction(
                 action_type=action_type.upper(), steamid=player, reason=reason, by=by
@@ -394,6 +402,13 @@ def save_end_player_session(steam_id_64, timestamp):
             .order_by(PlayerSession.created.desc())
             .first()
         )
+
+        if last_session is None:
+            logger.warning(
+                "Can't record player session for %s, last session not found",
+                steam_id_64,
+            )
+            return
 
         if last_session.end:
             logger.warning(

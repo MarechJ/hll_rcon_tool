@@ -16,11 +16,12 @@ from django.db.models.signals import post_delete, post_save
 from django.http import HttpResponse, JsonResponse, QueryDict
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-from rconweb.settings import SECRET_KEY
 
 from rcon.audit import heartbeat, ingame_mods, online_mods, set_registered_mods
 from rcon.cache_utils import ttl_cache
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
+from rconweb.settings import SECRET_KEY
+
 from .decorators import require_content_type
 from channels.security.websocket import WebsocketDenier
 
@@ -28,7 +29,8 @@ from .models import DjangoAPIKey, SteamPlayer
 
 logger = logging.getLogger("rconweb")
 
-AUTHORIZATION_HEADER = "HTTP_AUTHORIZATION"
+HTTP_AUTHORIZATION_HEADER = "HTTP_AUTHORIZATION"
+AUTHORIZATION = "AUTHORIZATION"
 BEARER = ("BEARER", "BEARER:")
 
 
@@ -203,9 +205,9 @@ def login_required():
             # Extract the header and bearer key if present, otherwise fall back on
             # requiring the user to be logged in
             try:
-                header_name, raw_api_key = request.META[AUTHORIZATION_HEADER].split(
-                    maxsplit=1
-                )
+                header_name, raw_api_key = request.META[
+                    HTTP_AUTHORIZATION_HEADER
+                ].split(maxsplit=1)
                 if not header_name.upper().strip() in BEARER:
                     raw_api_key = None
             except (KeyError, ValueError):
@@ -214,7 +216,9 @@ def login_required():
             try:
                 # If we don't include the salt, the hasher generates its own
                 # and it will generate different hashed values every time
-                hashed_api_key = make_password(raw_api_key, salt=SECRET_KEY)
+                hashed_api_key = make_password(
+                    raw_api_key, salt=SECRET_KEY.replace("$", "")
+                )
                 api_key_model = DjangoAPIKey.objects.get(api_key=hashed_api_key)
 
                 # Retrieve the user to use the normal authentication system

@@ -403,6 +403,15 @@ const Header = ({ classes }) => {
                         <Link
                           color="inherit"
                           component={RouterLink}
+                          to="/settings/chat-commands"
+                        >
+                          <MenuItem onClick={() => setAnchorElSettings(null)}>
+                            Chat Commands
+                          </MenuItem>
+                        </Link>
+                        <Link
+                          color="inherit"
+                          component={RouterLink}
                           to="/settings/scorebot"
                         >
                           <MenuItem onClick={() => setAnchorElSettings(null)}>

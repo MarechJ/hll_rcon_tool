@@ -13,9 +13,7 @@ services:
       service: python
     command: supervisor
     depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
+      backend_1:
         condition: service_healthy
     networks:
       common:
@@ -30,9 +28,17 @@ services:
       file: docker-compose-common-components.yml
       service: python
     command: web
+    healthcheck:
+      test: ["CMD-SHELL", "if [ -e /code/rconweb/gunicorn.pid ]; then echo 0; else echo 1; fi"]
+      start_period: 30s
+      interval: 15s
+      timeout: 30s
+      retries: 5
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       server1:
         aliases:
@@ -53,7 +59,8 @@ services:
       - ./static:/static/
       - ./certs:/certs/
     depends_on:
-      - backend_1
+      backend_1:
+        condition: service_healthy
     networks:
       - server1
       - common
@@ -123,6 +130,7 @@ services:
       GTX_SERVER_NAME_CHANGE_USERNAME: ${GTX_SERVER_NAME_CHANGE_USERNAME_2}
       GTX_SERVER_NAME_CHANGE_PASSWORD: ${GTX_SERVER_NAME_CHANGE_PASSWORD_2}
       SENTRY_DSN: ${SENTRY_DSN_2}
+      DONT_SEED_ADMIN_USER: ${DONT_SEED_ADMIN_USER}
     restart: on-failure
     networks:
       common:
@@ -131,7 +139,8 @@ services:
           - supervisor
     command: supervisor
     depends_on:
-      - frontend_1
+      backend_2:
+        condition: service_healthy
   backend_2:
     <<: *backend
     hostname: api_2
@@ -144,7 +153,10 @@ services:
         aliases:
           - backend
     depends_on:
-      - frontend_1
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
   frontend_2:
     <<: *frontend
     ports:
@@ -159,7 +171,8 @@ services:
       - common
       - server2
     depends_on:
-      - backend_2
+      backend_2:
+        condition: service_healthy
 
   ############ SERVER 3  #############
   supervisor_3:
@@ -190,6 +203,7 @@ services:
       GTX_SERVER_NAME_CHANGE_USERNAME: ${GTX_SERVER_NAME_CHANGE_USERNAME_3}
       GTX_SERVER_NAME_CHANGE_PASSWORD: ${GTX_SERVER_NAME_CHANGE_PASSWORD_3}
       SENTRY_DSN: ${SENTRY_DSN_3}
+      DONT_SEED_ADMIN_USER: ${DONT_SEED_ADMIN_USER}
     restart: on-failure
     command: supervisor
     networks:
@@ -198,7 +212,8 @@ services:
         aliases:
           - supervisor
     depends_on:
-      - frontend_2
+      backend_3:
+        condition: service_healthy
   backend_3:
     <<: *backend
     hostname: api_3
@@ -211,7 +226,10 @@ services:
         aliases:
           - backend
     depends_on:
-      - frontend_2
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
   frontend_3:
     <<: *frontend
     ports:
@@ -226,4 +244,5 @@ services:
       - common
       - server3
     depends_on:
-      - backend_3
+      backend_3:
+        condition: service_healthy

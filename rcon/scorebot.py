@@ -5,7 +5,6 @@ import pathlib
 import sqlite3
 import sys
 import time
-from collections import defaultdict
 from sqlite3 import Connection
 from typing import Callable, TypedDict
 from urllib.parse import urljoin
@@ -16,10 +15,9 @@ from requests.exceptions import ConnectionError, RequestException
 import discord
 from discord.embeds import Embed
 from discord.errors import HTTPException, NotFound
-from rcon.cache_utils import ttl_cache
+from rcon.scoreboard import STAT_DISPLAY_LOOKUP, get_stat, get_stat_post_processor
 from rcon.user_config.scorebot import ScorebotUserConfig, StatTypes
-from rcon.utils import UNKNOWN_MAP_NAME
-
+from rcon.maps import UNKNOWN_MAP_NAME
 
 class _PublicInfoCurrentMapType(TypedDict):
     just_name: str
@@ -195,20 +193,16 @@ def escaped_name(stat):
     )
 
 
-def get_stat(
+def format_stat(
     stats,
-    key: str,
-    limit: int,
+    key: StatTypes,
     post_process: Callable | None = None,
-    reverse=True,
-    **kwargs,
 ):
     if post_process is None:
-        post_process = lambda v: v
-    stats = sorted(stats, key=lambda stat: stat[key], reverse=reverse)[:limit]
+        post_process = get_stat_post_processor(key)
 
     return "```md\n%s\n```" % "\n".join(
-        f"[#{rank}][{escaped_name(stat)}]: {post_process(stat[key])}"
+        f"[#{rank}][{escaped_name(stat)}]: {post_process(stat[STAT_DISPLAY_LOOKUP[key]])}"
         for rank, stat in enumerate(stats, start=1)
     )
 
@@ -216,27 +210,6 @@ def get_stat(
 def get_embeds(server_info, stats, config: ScorebotUserConfig):
     embeds = []
     embeds.append(get_header_embed(server_info, config))
-
-    stat_display_lookup = {
-        StatTypes.top_killers: "kills",
-        StatTypes.top_ratio: "kill_death_ratio",
-        StatTypes.top_performance: "kills_per_minute",
-        StatTypes.try_harders: "deaths_per_minute",
-        StatTypes.top_stamina: "deaths",
-        StatTypes.top_kill_streak: "kills_streak",
-        StatTypes.i_never_give_up: "deaths_without_kill_streak",
-        StatTypes.most_patient: "deaths_by_tk",
-        StatTypes.im_clumsy: "teamkills",
-        StatTypes.i_need_glasses: "teamkills_streak",
-        StatTypes.i_love_voting: "nb_vote_started",
-        StatTypes.what_is_a_break: "time_seconds",
-        StatTypes.survivors: "longest_life_secs",
-        StatTypes.u_r_still_a_man: "shortest_life_secs",
-    }
-
-    stat_display_lambda_lookup = {}
-    stat_display_lambda_lookup[StatTypes.what_is_a_break] = lambda v: round(v / 60, 2)
-    stat_display_lambda_lookup[StatTypes.survivors] = lambda v: round(v / 60, 2)
 
     current_embed = Embed(
         color=13734400,
@@ -249,20 +222,14 @@ def get_embeds(server_info, stats, config: ScorebotUserConfig):
         embeds.append(current_embed)
     else:
         for idx, stat_display in enumerate(config.stats_to_display):
-            if stat_display.type in (StatTypes.u_r_still_a_man,):
-                reverse = False
-            else:
-                reverse = True
-
+            stat_values = get_stat(
+                stats,
+                key=stat_display.type,
+                limit=config.top_limit,
+            )
             current_embed.add_field(
                 name=stat_display.display_format,
-                value=get_stat(
-                    stats,
-                    stat_display_lookup[stat_display.type],
-                    config.top_limit,
-                    post_process=stat_display_lambda_lookup.get(stat_display.type),
-                    reverse=reverse,
-                ),
+                value=format_stat(stat_values, key=stat_display.type),
             )
             if idx % 2:
                 embeds.append(current_embed)

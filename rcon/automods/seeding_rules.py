@@ -302,9 +302,19 @@ class SeedingRulesAutomod:
                             )
                         )
 
-                if "offensive" in game_state["current_map"] or game_state[
-                    "current_map"
-                ].startswith("stmariedumont_off"):
+                # TODO: update this when we update how maps are stored
+                if (
+                    "offensive" in game_state["current_map"]
+                    or game_state["current_map"].startswith("stmariedumont_off")
+                    or game_state["current_map"]
+                    in (
+                        "ELA_S_1942_P_Skirmish",
+                        "ELA_S_1942_Night_P_Skirmish",
+                        "DRL_S_1944_P_Skirmish",
+                        "DRL_S_1944_Night_P_Skirmish",
+                        "DRL_S_1944_Day_P_Skirmish",
+                    )
+                ):
                     self._disable_for_round("enforce_cap_fight")
 
                 if not self._is_seeding_rule_disabled("enforce_cap_fight") and (

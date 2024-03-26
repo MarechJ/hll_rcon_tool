@@ -5,7 +5,7 @@ from typing import List
 from redis import BlockingConnectionPool, Redis
 
 from rcon.cache_utils import get_redis_pool
-from rcon.settings import SERVER_INFO
+from rcon.rcon import get_rcon
 
 logger = logging.getLogger(__name__)
 
@@ -60,15 +60,13 @@ def set_registered_mods(moderators_name_steamids: List[tuple]):
 
 
 def ingame_mods(rcon=None):
-    from rcon.rcon import Rcon
-
     red = _red()
     mods = red.hgetall("moderators") or {}
 
     if not mods:
         return []
 
-    rcon = rcon or Rcon(SERVER_INFO)
+    rcon = rcon or get_rcon()
     players = rcon.get_players()
     mods_ids = set(v.decode() for v in mods.values())
     ig_mods = []

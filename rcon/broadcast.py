@@ -1,22 +1,20 @@
 import logging
 import random
+from typing import Sequence
+import math
 import time
 from functools import partial
 
+from rcon.rcon import Rcon
 from rcon.audit import ingame_mods, online_mods
 from rcon.commands import CommandFailedError
 from rcon.settings import SERVER_INFO
 from rcon.user_config.auto_broadcast import AutoBroadcastUserConfig
 from rcon.user_config.vote_map import VoteMapUserConfig
-from rcon.utils import (
-    LONG_HUMAN_MAP_NAMES,
-    NO_MOD_LONG_HUMAN_MAP_NAMES,
-    NO_MOD_SHORT_HUMAN_MAP_NAMES,
-    SHORT_HUMAN_MAP_NAMES,
-    categorize_maps,
-    numbered_maps,
-)
+from rcon.maps import numbered_maps, categorize_maps
+from rcon import maps
 from rcon.vote_map import VoteMap
+from rcon.types import VoteOverview
 
 
 class LazyPrinter:
@@ -36,12 +34,17 @@ class LazyPrinter:
             return self.default
 
 
-def get_votes_status(none_on_fail=False):
+def get_votes_status(none_on_fail=False) -> VoteOverview | None:
     return VoteMap().get_vote_overview()
 
 
-def format_winning_map(ctl, winning_maps, display_count=2, default=None):
-    nextmap = ctl.get_next_map()
+def format_winning_map(
+    ctl: Rcon,
+    winning_maps: Sequence[tuple[maps.Layer, int]],
+    display_count=2,
+    default=None,
+):
+    nextmap: str = ctl.get_next_map()
     if not winning_maps:
         if default:
             return str(default)
@@ -49,8 +52,11 @@ def format_winning_map(ctl, winning_maps, display_count=2, default=None):
     wins = winning_maps[:display_count]
     if display_count == 0:
         wins = winning_maps
+
+    # Example warfare map: Carentan Warfare (2 vote(s))
+    # Example offensive map: Driel Off. AXIS (2 vote(s))
     return ", ".join(
-        f"{LONG_HUMAN_MAP_NAMES[m]} ({count} vote(s))" for m, count in wins
+        f"{map_.pretty()} ({num_votes} vote(s))" for map_, num_votes in wins
     )
 
 
@@ -67,7 +73,7 @@ def chunks(lst, n):
 
 def scrolling_votemap(rcon, winning_maps, repeat=10):
     config = VoteMapUserConfig.load_from_db()
-    vote_options = format_map_vote(rcon, "line", short_names=False)
+    vote_options = format_map_vote(rcon, "line")
     if not vote_options:
         return ""
     separator = "  ***  "
@@ -106,23 +112,24 @@ def format_by_line_length(possible_votes, max_length=50):
     return "\n".join(lines)
 
 
-def join_vote_options(join_char, selection, human_name_map, maps_to_numbers):
-    return join_char.join(
-        f"[{maps_to_numbers[m]}] {human_name_map[m]}" for m in selection
-    )
+def join_vote_options(
+    selection: list[maps.Layer],
+    maps_to_numbers: dict[maps.Layer, str],
+    join_char: str = " ",
+):
+    return join_char.join(f"[{maps_to_numbers[m]}] {m.pretty()}" for m in selection)
 
 
-def format_map_vote(rcon, format_type="line", short_names=True):
+def format_map_vote(rcon, format_type="line"):
     selection = VoteMap().get_selection()
     if not selection:
         return ""
-    human_map = SHORT_HUMAN_MAP_NAMES if short_names else LONG_HUMAN_MAP_NAMES
-    human_map_mod = (
-        NO_MOD_SHORT_HUMAN_MAP_NAMES if short_names else NO_MOD_LONG_HUMAN_MAP_NAMES
-    )
+
+    # 0: map 1, 1: map 2, etc.
     vote_dict = numbered_maps(selection)
+    # map 1: 0, map 2: 1, etc.
     maps_to_numbers = dict(zip(vote_dict.values(), vote_dict.keys()))
-    items = [f"[{k}] {human_map.get(v, v)}" for k, v in vote_dict.items()]
+    items = [f"[{k}] {v.pretty()}" for k, v in vote_dict.items()]
     if format_type == "line":
         return " // ".join(items)
     if format_type == "max_length":
@@ -132,24 +139,45 @@ def format_map_vote(rcon, format_type="line", short_names=True):
     if format_type.startswith("by_mod"):
         categorized = categorize_maps(selection)
         off = join_vote_options(
-            "  ", categorized["offensive"], human_map_mod, maps_to_numbers
+            selection=categorized[maps.Gamemode.OFFENSIVE],
+            maps_to_numbers=maps_to_numbers,
         )
         warfare = join_vote_options(
-            "  ", categorized["warfare"], human_map_mod, maps_to_numbers
+            selection=categorized[maps.Gamemode.WARFARE],
+            maps_to_numbers=maps_to_numbers,
+        )
+        control_skirmish = join_vote_options(
+            selection=categorized[maps.Gamemode.CONTROL],
+            maps_to_numbers=maps_to_numbers,
         )
         if format_type == "by_mod_line":
-            return "OFFENSIVE: {} WARFARE: {}".format(off, warfare)
+            return "OFFENSIVE: {} WARFARE: {} CONTROL SKIRMISH: {}".format(
+                off, warfare, control_skirmish
+            )
         if format_type == "by_mod_vertical":
-            return "OFFENSIVE:\n{}\nWARFARE:\n{}".format(off, warfare)
+            return "OFFENSIVE:\n{}\nWARFARE:\n{}\nCONTROL SKIRMISH:\n{}".format(
+                off, warfare, control_skirmish
+            )
         if format_type == "by_mod_split":
-            return "OFFENSIVE: {}\nWARFARE: {}".format(off, warfare)
+            return "OFFENSIVE: {}\nWARFARE: {}\nCONTROL SKIRMISH: {}".format(
+                off, warfare, control_skirmish
+            )
         if format_type == "by_mod_vertical_all":
-            return "OFFENSIVE:\n{}\nWARFARE:\n{}".format(
+            return "OFFENSIVE:\n{}\nWARFARE:\n{}\nCONTROL SKIRMISH:\n{}".format(
                 join_vote_options(
-                    "\n", categorized["offensive"], human_map_mod, maps_to_numbers
+                    selection=categorized[maps.Gamemode.OFFENSIVE],
+                    maps_to_numbers=maps_to_numbers,
+                    join_char="\n",
                 ),
                 join_vote_options(
-                    "\n", categorized["warfare"], human_map_mod, maps_to_numbers
+                    selection=categorized[maps.Gamemode.WARFARE],
+                    maps_to_numbers=maps_to_numbers,
+                    join_char="\n",
+                ),
+                join_vote_options(
+                    selection=categorized[maps.Gamemode.CONTROL],
+                    maps_to_numbers=maps_to_numbers,
+                    join_char="\n",
                 ),
             )
 
@@ -162,7 +190,7 @@ def get_ingame_mods():
     return [mod["username"] for mod in ingame_mods()]
 
 
-def _get_vars(ctl):
+def _get_vars(ctl: Rcon):
     get_vip_names = lambda: [d["name"] for d in ctl.get_vip_ids()]
     get_admin_names = lambda: [d["name"] for d in ctl.get_admin_ids()]
     get_owner_names = lambda: [
@@ -176,8 +204,9 @@ def _get_vars(ctl):
     ]
 
     def get_next_map():
-        m = ctl.get_next_map()
-        return LONG_HUMAN_MAP_NAMES.get(m, m)
+        map_name: str = ctl.get_next_map()
+        smart_map = maps.parse_layer(map_name)
+        return smart_map.pretty()
 
     vote_status = get_votes_status()
 
@@ -214,7 +243,8 @@ def _get_vars(ctl):
         "votenextmap_by_mod_split": LazyPrinter(
             partial(format_map_vote, ctl, format_type="by_mod_split")
         ),
-        "total_votes": vote_status.get("total_votes"),
+        # TODO: fix this after verifying Redis format
+        "total_votes": vote_status.get("total_votes") if vote_status else math.nan,
         "winning_maps_short": LazyPrinter(
             partial(
                 format_winning_map, ctl, vote_status["winning_maps"], display_count=2
@@ -249,9 +279,9 @@ def format_message(ctl, msg):
 
 def run():
     # avoid circular import
-    from rcon.rcon import Rcon
+    from rcon.rcon import get_rcon
 
-    ctl = Rcon(SERVER_INFO)
+    ctl = get_rcon()
 
     while True:
         config = AutoBroadcastUserConfig.load_from_db()

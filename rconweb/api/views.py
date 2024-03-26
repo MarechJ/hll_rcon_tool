@@ -7,7 +7,13 @@ from subprocess import PIPE, run
 from typing import Callable, List
 
 from django.contrib.auth.decorators import permission_required
-from django.http import HttpResponse, JsonResponse, HttpResponseNotAllowed, HttpResponseBadRequest
+from django.http import (
+    HttpRequest,
+    HttpResponse,
+    HttpResponseBadRequest,
+    HttpResponseNotAllowed,
+    JsonResponse,
+)
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
@@ -17,28 +23,29 @@ from rcon.commands import CommandFailedError
 from rcon.discord import send_to_discord_audit
 from rcon.gtx import GTXFtp
 from rcon.player_history import add_player_to_blacklist, remove_player_from_blacklist
-from rcon.rcon import Rcon
-from rcon.settings import SERVER_INFO
+from rcon.rcon import get_rcon
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
-from rcon.utils import LONG_HUMAN_MAP_NAMES, MapsHistory, get_server_number, map_name
+from rcon.maps import safe_get_map_name, parse_layer
+from rcon.utils import MapsHistory, get_server_number
 from rcon.watchlist import PlayerWatch
 from rcon.workers import temporary_broadcast, temporary_welcome
 
 from .audit_log import auto_record_audit, record_audit
-from .auth import api_response, login_required
+from .auth import AUTHORIZATION, api_response, login_required
 from .decorators import require_content_type
 from .multi_servers import forward_command, forward_request
 from .utils import _get_data
 
 logger = logging.getLogger("rconweb")
-ctl = Rcon(SERVER_INFO)
+
+ctl = get_rcon()
 
 
 @csrf_exempt
 @login_required()
 @permission_required("api.can_restart_webserver", raise_exception=True)
 @record_audit
-@require_http_methods(['POST'])
+@require_http_methods(["POST"])
 def restart_gunicorn(request):
     """Restart gunicorn workers which reconnects Rcon endpoint instances"""
     exit_code = os.system(f"cat /code/rconweb/gunicorn.pid | xargs kill -HUP")
@@ -55,6 +62,7 @@ def restart_gunicorn(request):
 
 
 def set_temp_msg(request, func, name):
+    ctl = get_rcon()
     data = _get_data(request)
     failed = False
     error = None
@@ -71,7 +79,7 @@ def set_temp_msg(request, func, name):
 @login_required()
 @permission_required("api.can_change_server_name", raise_exception=True)
 @record_audit
-@require_http_methods(['POST'])
+@require_http_methods(["POST"])
 @require_content_type()
 def set_name(request):
     data = _get_data(request)
@@ -108,14 +116,14 @@ def set_temp_welcome(request):
 
 
 @csrf_exempt
-@require_http_methods(['GET'])
+@require_http_methods(["GET"])
 def get_version(request):
     res = run(["git", "describe", "--tags"], stdout=PIPE, stderr=PIPE)
     return api_response(res.stdout.decode(), failed=False, command="get_version")
 
 
 @csrf_exempt
-@require_http_methods(['GET'])
+@require_http_methods(["GET"])
 def public_info(request):
     gamestate = ctl.get_gamestate()
     curr_players, max_players = tuple(map(int, ctl.get_slots().split("/")))
@@ -127,8 +135,8 @@ def public_info(request):
 
     def explode_map_info(game_map: str, start) -> dict:
         return dict(
-            just_name=map_name(game_map),
-            human_name=LONG_HUMAN_MAP_NAMES.get(game_map, game_map),
+            just_name=parse_layer(game_map).map.id,
+            human_name=safe_get_map_name(game_map),
             name=game_map,
             start=start,
         )
@@ -208,7 +216,7 @@ def _do_watch(request, add: bool):
 @login_required()
 @permission_required("api.can_add_player_watch", raise_exception=True)
 @record_audit
-@require_http_methods(['POST'])
+@require_http_methods(["POST"])
 @require_content_type()
 def do_watch_player(request):
     return _do_watch(request, add=True)
@@ -218,7 +226,7 @@ def do_watch_player(request):
 @login_required()
 @permission_required("api.can_remove_player_watch", raise_exception=True)
 @record_audit
-@require_http_methods(['POST'])
+@require_http_methods(["POST"])
 @require_content_type()
 def do_unwatch_player(request):
     return _do_watch(request, add=False)
@@ -228,7 +236,7 @@ def do_unwatch_player(request):
 @login_required()
 @permission_required("api.can_clear_crcon_cache", raise_exception=True)
 @record_audit
-@require_http_methods(['POST'])
+@require_http_methods(["POST"])
 @require_content_type()
 def clear_cache(request):
     res = RedisCached.clear_all_caches(get_redis_pool())
@@ -247,7 +255,7 @@ def clear_cache(request):
 @login_required()
 @permission_required("api.can_blacklist_players", raise_exception=True)
 @record_audit
-@require_http_methods(['POST'])
+@require_http_methods(["POST"])
 @require_content_type()
 def blacklist_player(request):
     data = _get_data(request)
@@ -283,9 +291,9 @@ def blacklist_player(request):
 @login_required()
 @permission_required("api.can_unblacklist_players", raise_exception=True)
 @record_audit
-@require_http_methods(['POST'])
+@require_http_methods(["POST"])
 @require_content_type()
-def unblacklist_player(request):
+def unblacklist_player(request: HttpRequest):
     data = _get_data(request)
     res = {}
 
@@ -302,6 +310,7 @@ def unblacklist_player(request):
                     "/api/do_unban",
                     json=data,
                     sessionid=request.COOKIES.get("sessionid"),
+                    auth_header=request.headers.get(AUTHORIZATION),
                 )
 
         failed = False
@@ -335,7 +344,7 @@ def unblacklist_player(request):
     raise_exception=True,
 )
 @record_audit
-@require_http_methods(['POST'])
+@require_http_methods(["POST"])
 @require_content_type()
 def unban(request):
     data = _get_data(request)
@@ -350,7 +359,10 @@ def unban(request):
         config = RconServerSettingsUserConfig.load_from_db()
         if config.broadcast_unbans:
             results = forward_command(
-                "/api/do_unban", json=data, sessionid=request.COOKIES.get("sessionid")
+                "/api/do_unban",
+                json=data,
+                sessionid=request.COOKIES.get("sessionid"),
+                auth_header=request.headers.get(AUTHORIZATION),
             )
         if config.unban_does_unblacklist:
             try:
@@ -413,13 +425,21 @@ def expose_api_endpoint(func, command_name, permissions: list[str] | set[str] | 
         error = ""
         data = _get_data(request)
 
-        if cmd.startswith('set_') or cmd.startswith('do_'):
-            if request.method != 'POST':
-                return HttpResponseNotAllowed(['POST'])
-            if request.content_type != 'application/json':
-                logger.info("InvalidContentType: %s %s was called with %s, expected one of %s" % (request.method, request.path, request.content_type, ",".join(['application/json'])))
-        elif request.method != 'GET':
-            return HttpResponseNotAllowed(['GET'])
+        if cmd.startswith("set_") or cmd.startswith("do_"):
+            if request.method != "POST":
+                return HttpResponseNotAllowed(["POST"])
+            if request.content_type != "application/json":
+                logger.info(
+                    "InvalidContentType: %s %s was called with %s, expected one of %s"
+                    % (
+                        request.method,
+                        request.path,
+                        request.content_type,
+                        ",".join(["application/json"]),
+                    )
+                )
+        elif request.method != "GET":
+            return HttpResponseNotAllowed(["GET"])
 
         for pname, param in parameters.items():
             if pname == "by":
@@ -468,14 +488,14 @@ def expose_api_endpoint(func, command_name, permissions: list[str] | set[str] | 
 @login_required()
 @permission_required("api.can_view_connection_info", raise_exception=True)
 @csrf_exempt
-@require_http_methods(['GET'])
+@require_http_methods(["GET"])
 def get_connection_info(request):
     config = RconServerSettingsUserConfig.load_from_db()
     return api_response(
         {
             "name": ctl.get_name(),
             "port": os.getenv("RCONWEB_PORT"),
-            "link": str(config.server_url),
+            "link": str(config.server_url) if config.server_url else config.server_url,
             "server_number": int(get_server_number()),
         },
         failed=False,
@@ -486,7 +506,7 @@ def get_connection_info(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_run_raw_commands", raise_exception=True)
-@require_http_methods(['POST'])
+@require_http_methods(["POST"])
 @require_content_type()
 def run_raw_command(request):
     data = _get_data(request)

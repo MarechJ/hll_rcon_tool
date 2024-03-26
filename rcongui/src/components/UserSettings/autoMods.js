@@ -12,11 +12,11 @@ export const LevelAutoMod = ({
     {
         /* 
             This auto-moderator has 2 features:
-            1. Global server min/max level: No warning, players are kick after connection if they does'not match level requirements
-            2. Min level by role: 3 steps, 1. warning via direct message (Y times), 2. punish (Z times) 3. kick
-            Note that the state cycle for a given squad only resets once the rule-violation is fixed. So for example if you
-            disabled the kick and have 3 punishes configured, once the 3 punishes are
-            through that's it, nothing will happen anymore for that player if they still break level thresholds rules.
+            1. Global server min/max level: No warning, players are kick after connection if they don't match level requirements
+            2. Min level by role: 3 steps, 1. warning via direct message (Y times), 2. punish (Z times) 3. kick.
+            Note that the state cycle for a given squad only resets once the rule-violation is fixed. So, for example, if you
+            disabled the kick and have 3 punishes configured, once the 3 punishes are through, that's it :
+            nothing will happen anymore to the players, even if they still break level thresholds rules.
         
         */
         
@@ -45,12 +45,14 @@ export const LevelAutoMod = ({
         
         /* 
             This allows to configure a global minimum level on the whole server and the matching kick message to display to players.
+            Set to 0 to disable.
         */
         "min_level": 0,
         "min_level_message": "Access to this server is not allowed under level {level}",
         
         /*
             This allows to configure a global maximum level on the whole server and the matching kick message to display to players.
+            Set to 0 to disable.
         */
         "max_level": 0,
         "max_level_message": "Access to this server is not allowed over level {level}",
@@ -60,6 +62,13 @@ export const LevelAutoMod = ({
             Available properties: {role} matching label's value of previous map and {level} matching level's value from previous map.
         */
         "violation_message": "{role} are not allowed under level {level}",
+
+        /*
+        Enable ('true') or disable ('false') the protection against "level 1 bug" : due to a missed synchro between Steam and the game server,
+        any player can log in as level 1, no matter their real level. They could then be punished if violating level rules.
+        If enabled, level 1 players won't be observed by the automod.
+        */
+        "levelbug_enabled": true,
         
         /*
             a map of roles to label, min_players & min_level that should not be taken by players under the required level only when min_players reached.
@@ -175,6 +184,12 @@ export const NoLeaderAutoMod = ({
         "enabled": false,
 
         /*
+            If the "enabled" parameter above is set on "true", the automod won't do anythying below this number of players on the server.
+            Set this parameter to 0 if you want the automod to be always active, regardless the number of players.
+        */
+        "dont_do_anything_below_this_number_of_players": 0,
+
+        /*
             If this is set to true no warning / punish / kick will be applied for real
             It turns the code into a "simulation" mode and only send what it would do to your discord audit log webhook
         */
@@ -240,8 +255,6 @@ export const NoLeaderAutoMod = ({
             Set to 1 or Z to apply Z punishes before we move to the next step (the kicks)
         */
         "number_of_punishments": 2,
-        
-
         
         /*
             This is the number of seconds to wait between punishes (if the squad remains without an officer

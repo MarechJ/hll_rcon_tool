@@ -2,31 +2,26 @@ import logging
 import pickle
 import random
 import re
-from datetime import datetime, timedelta
+from datetime import datetime
 from functools import partial
-from typing import Counter
+from typing import Counter, Iterable
 
 import redis
 from sqlalchemy import and_
 
-from rcon.cache_utils import get_redis_client, get_redis_pool
+from rcon import maps
+from rcon.types import StructuredLogLineWithMetaData, VoteOverview
+from rcon.cache_utils import get_redis_client
+from rcon.maps import (
+    categorize_maps,
+    numbered_maps,
+    sort_maps_by_gamemode,
+)
 from rcon.models import PlayerOptins, PlayerSteamID, enter_session
 from rcon.player_history import get_player
-from rcon.rcon import CommandFailedError, Rcon, StructuredLogLineType
-from rcon.settings import SERVER_INFO
+from rcon.rcon import CommandFailedError, Rcon, get_rcon
 from rcon.user_config.vote_map import DefaultMethods, VoteMapUserConfig
-from rcon.utils import (
-    ALL_MAPS,
-    LONG_HUMAN_MAP_NAMES,
-    NO_MOD_LONG_HUMAN_MAP_NAMES,
-    NO_MOD_SHORT_HUMAN_MAP_NAMES,
-    SHORT_HUMAN_MAP_NAMES,
-    MapsHistory,
-    categorize_maps,
-    get_map_side,
-    map_name,
-    numbered_maps,
-)
+from rcon.utils import MapsHistory
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +45,9 @@ class VoteMapNoInitialised(Exception):
     pass
 
 
-def _get_random_map_selection(maps, nb_to_return, history=None):
+def _get_random_map_selection(
+    maps: list[maps.Layer], nb_to_return: int, history=None
+) -> list[maps.Layer]:
     # if history:
     # Calculate weights to stir selection towards least played maps
     try:
@@ -62,111 +59,139 @@ def _get_random_map_selection(maps, nb_to_return, history=None):
 
 
 def suggest_next_maps(
-    maps_history,
-    whitelist_maps,
-    selection_size=6,
-    exclude_last_n=4,
-    offensive_ratio=0.5,
-    consider_offensive_as_same_map=True,
-    allow_consecutive_offensive=True,
-    allow_consecutive_offensives_of_opposite_side=False,
-    current_map=None,
+    maps_history: MapsHistory,
+    current_map: maps.Layer,
+    whitelist_maps: set[maps.Layer],
+    num_warfare: int,
+    num_offensive: int,
+    num_skirmish_control: int,
+    exclude_last_n: int = 4,
+    consider_offensive_as_same_map: bool = True,
+    allow_consecutive_offensive: bool = True,
+    allow_consecutive_offensives_of_opposite_side: bool = False,
+    consider_skirmishes_as_same_map: bool = True,
+    allow_consecutive_skirmishes: bool = True,
 ):
+    history_as_layers = [maps.parse_layer(m) for m in maps_history]
     try:
         return _suggest_next_maps(
-            maps_history,
-            whitelist_maps,
-            selection_size,
-            exclude_last_n,
-            offensive_ratio,
-            consider_offensive_as_same_map,
-            allow_consecutive_offensive,
-            allow_consecutive_offensives_of_opposite_side,
-            current_map,
+            maps_history=history_as_layers,
+            current_map=current_map,
+            allowed_maps=whitelist_maps,
+            num_warfare=num_warfare,
+            num_offensive=num_offensive,
+            num_skirmish_control=num_skirmish_control,
+            exclude_last_n=exclude_last_n,
+            consider_offensive_as_same_map=consider_offensive_as_same_map,
+            allow_consecutive_offensive=allow_consecutive_offensive,
+            allow_consecutive_offensives_of_opposite_side=allow_consecutive_offensives_of_opposite_side,
+            consider_skirmishes_as_same_map=consider_skirmishes_as_same_map,
+            allow_consecutive_skirmishes=allow_consecutive_skirmishes,
         )
     except RestrictiveFilterError:
-        logger.warning("Falling back on ALL_MAPS since the filters are too restrictive")
+        logger.warning(
+            "Falling back on all possible maps since the filters are too restrictive"
+        )
+        rcon = get_rcon()
         return _suggest_next_maps(
-            maps_history,
-            set(ALL_MAPS),
-            selection_size,
-            exclude_last_n,
-            offensive_ratio,
-            consider_offensive_as_same_map,
-            allow_consecutive_offensive,
-            allow_consecutive_offensives_of_opposite_side,
-            current_map,
+            maps_history=history_as_layers,
+            current_map=current_map,
+            allowed_maps=set(maps.parse_layer(m) for m in rcon.get_maps()),
+            num_warfare=num_warfare,
+            num_offensive=num_offensive,
+            num_skirmish_control=num_skirmish_control,
+            exclude_last_n=exclude_last_n,
+            consider_offensive_as_same_map=consider_offensive_as_same_map,
+            allow_consecutive_offensive=allow_consecutive_offensive,
+            allow_consecutive_offensives_of_opposite_side=allow_consecutive_offensives_of_opposite_side,
+            consider_skirmishes_as_same_map=consider_skirmishes_as_same_map,
+            allow_consecutive_skirmishes=allow_consecutive_skirmishes,
         )
 
 
 def _suggest_next_maps(
-    maps_history,
-    allowed_maps,
-    selection_size,
-    exclude_last_n,
-    offsensive_ratio,
-    consider_offensive_as_same_map,
-    allow_consecutive_offensive,
-    allow_consecutive_offensives_of_opposite_side,
-    current_map,
-):
+    maps_history: list[maps.Layer],
+    current_map: maps.Layer,
+    allowed_maps: set[maps.Layer],
+    exclude_last_n: int,
+    num_warfare: int,
+    num_offensive: int,
+    num_skirmish_control: int,
+    consider_offensive_as_same_map: bool,
+    allow_consecutive_offensive: bool,
+    allow_consecutive_offensives_of_opposite_side: bool,
+    consider_skirmishes_as_same_map: bool,
+    allow_consecutive_skirmishes: bool,
+) -> list[maps.Layer]:
+
     if exclude_last_n > 0:
-        last_n_map = set(m["name"] for m in maps_history[:exclude_last_n])
+        last_n_maps = set(m for m in maps_history[:exclude_last_n])
     else:
-        last_n_map = set()
-    logger.info("Excluding last %s player maps: %s", exclude_last_n, last_n_map)
-    remaining_maps = allowed_maps - last_n_map
+        last_n_maps: set[maps.Layer] = set()
+    logger.info("Excluding last %s player maps: %s", exclude_last_n, last_n_maps)
+    remaining_maps = set(allowed_maps) - last_n_maps
     logger.info("Remaining maps to suggest from: %s", remaining_maps)
 
-    try:
-        current_map = current_map or maps_history[0]["name"]
-    except (IndexError, KeyError):
-        logger.exception("Unable to get current map for generating selection")
-        raise
+    current_side = current_map.attackers
 
-    current_side = get_map_side(current_map)
-
-    if consider_offensive_as_same_map:
-        last_names = set(map_name(m) for m in last_n_map)
-        logger.info("Considering offensive mode as same map, excluding %s", last_names)
-        remaining_maps = set(m for m in remaining_maps if not map_name(m) in last_names)
+    if consider_offensive_as_same_map or consider_skirmishes_as_same_map:
+        # use the id `carentan`, `hill400` etc. to get the base map regardless of game type
+        map_ids = set(m.map for m in last_n_maps)
+        logger.info(
+            "Considering offensive/skirmish mode as same map, excluding %s", map_ids
+        )
+        remaining_maps = set(m for m in remaining_maps if m.map not in map_ids)
         logger.info("Remaining maps to suggest from: %s", remaining_maps)
 
     if not allow_consecutive_offensives_of_opposite_side and current_side:
-        opposite_side = ["us", "rus"] if current_side == "ger" else ["ger"]
+        # TODO: make sure this is correct
+        remaining_maps = [m for m in remaining_maps if m.opposite_side != current_side]
         logger.info(
-            "Not allowing consecutive offensive with opposite side: %s", opposite_side
+            "Not allowing consecutive offensive with opposite side: %s",
+            maps.get_opposite_side(current_side),
         )
-        remaining_maps = [
-            m for m in remaining_maps if get_map_side(m) not in opposite_side
-        ]
         logger.info("Remaining maps to suggest from: %s", remaining_maps)
 
     # Handle case if all maps got excluded
     categorized_maps = categorize_maps(remaining_maps)
-    if offsensive_ratio == 0:
-        nb_offensive = 0
-    else:
-        nb_offensive = round(offsensive_ratio * selection_size)
-    warfares = []
 
-    offensives = _get_random_map_selection(categorized_maps["offensive"], nb_offensive)
+    warfares: list[maps.Layer] = _get_random_map_selection(
+        categorized_maps[maps.Gamemode.WARFARE], num_warfare
+    )
+    offensives: list[maps.Layer] = _get_random_map_selection(
+        categorized_maps[maps.Gamemode.OFFENSIVE], num_offensive
+    )
+    skirmishes_control: list[maps.Layer] = _get_random_map_selection(
+        categorized_maps[maps.Gamemode.CONTROL], num_skirmish_control
+    )
 
-    if not allow_consecutive_offensive and "offensive" in current_map:
+    if (
+        not allow_consecutive_offensive
+        and current_map.gamemode == maps.Gamemode.OFFENSIVE
+    ):
         logger.info(
-            "Current map %s is offensive. Excluding all offsensives from suggestions",
+            "Current map %s is offensive. Excluding all offensives from suggestions",
             current_map,
         )
         offensives = []
 
-    warfares = _get_random_map_selection(
-        categorized_maps["warfare"], selection_size - len(offensives)
-    )
-    selection = offensives + warfares
+    if not allow_consecutive_skirmishes and current_map.gamemode in (
+        maps.Gamemode.CONTROL,
+        maps.Gamemode.PHASED,
+        maps.Gamemode.MAJORITY,
+    ):
+        logger.info(
+            "Current map %s is skirmish. Excluding all skirmishes from suggestions",
+            current_map,
+        )
+        skirmishes_control = []
+
+    selection = sort_maps_by_gamemode(offensives + warfares + skirmishes_control)
 
     if not selection:
         logger.error("No maps can be suggested with the given parameters.")
         raise RestrictiveFilterError("Unable to suggest map")
+
     logger.info("Suggestion %s", selection)
     return selection
 
@@ -174,104 +199,121 @@ def _suggest_next_maps(
 # TODO:  Handle empty selection (None)
 class VoteMap:
     def __init__(self) -> None:
+        self.rcon = get_rcon()
         self.red = get_redis_client()
         self.reminder_time_key = "last_vote_reminder"
         self.optin_name = "votemap_reminder"
         self.whitelist_key = "votemap_whitelist"
 
+    # TODO: fix votes typing
+    @staticmethod
     def join_vote_options(
-        self, join_char, selection, human_name_map, maps_to_numbers, votes, total_votes
-    ):
+        selection: list[maps.Layer],
+        maps_to_numbers: dict[maps.Layer, str],
+        ranked_votes: Counter[maps.Layer],
+        total_votes: int,
+        join_char: str = " ",
+    ) -> str:
         return join_char.join(
-            f"[{maps_to_numbers[m]}] {human_name_map[m]} - {votes[m]}/{total_votes} votes"
+            f"[{maps_to_numbers[m]}] {m.pretty()} - {ranked_votes[m]}/{total_votes} votes"
             for m in selection
         )
 
-    def format_map_vote(self, format_type="vertical", short_names=True):
-        selection = self.get_selection()
-        if not selection:
+    @staticmethod
+    def format_map_vote(
+        selection: list[maps.Layer],
+        votes: dict[str, maps.Layer],
+        format_type="vertical",
+    ) -> str:
+        if len(selection) == 0:
             logger.warning("No vote map selection")
             return ""
 
-        votes = self.get_votes()
         total_votes = len(votes)
-        votes = Counter(votes.values())
-        human_map = SHORT_HUMAN_MAP_NAMES if short_names else LONG_HUMAN_MAP_NAMES
-        human_map_mod = (
-            NO_MOD_SHORT_HUMAN_MAP_NAMES if short_names else NO_MOD_LONG_HUMAN_MAP_NAMES
-        )
+        ranked_votes = Counter(votes.values())
+
+        # 0: map 1, 1: map 2, etc.
         vote_dict = numbered_maps(selection)
+        # map 1: 0, map 2: 1, etc.
         maps_to_numbers = dict(zip(vote_dict.values(), vote_dict.keys()))
+
         items = [
-            f"[{k}] {human_map.get(v, v)} - {votes[v]}/{total_votes} votes"
+            f"[{k}] {v} - {ranked_votes[v]}/{total_votes} votes"
             for k, v in vote_dict.items()
         ]
 
         if format_type == "vertical":
             return "\n".join(items)
-        if format_type.startswith("by_mod"):
+        elif format_type.startswith("by_mod"):
             categorized = categorize_maps(selection)
-
-            off = self.join_vote_options(
-                "  ",
-                categorized["offensive"],
-                human_map_mod,
-                maps_to_numbers,
-                votes,
-                total_votes,
+            # TODO: these aren't actually used anywhere
+            off = VoteMap.join_vote_options(
+                selection=categorized[maps.Gamemode.OFFENSIVE],
+                maps_to_numbers=maps_to_numbers,
+                ranked_votes=ranked_votes,
+                total_votes=len(votes),
+                join_char="  ",
             )
-            warfare = self.join_vote_options(
-                "  ",
-                categorized["warfare"],
-                human_map_mod,
-                maps_to_numbers,
-                votes,
-                total_votes,
+            warfare = VoteMap.join_vote_options(
+                selection=categorized[maps.Gamemode.WARFARE],
+                maps_to_numbers=maps_to_numbers,
+                ranked_votes=ranked_votes,
+                total_votes=len(votes),
+                join_char="  ",
             )
+            # TODO: include skirmish
 
             vote_string = ""
-            if categorized["warfare"]:
-                vote_string = "WARFARES:\n{}".format(
-                    self.join_vote_options(
-                        "\n",
-                        categorized["warfare"],
-                        human_map_mod,
-                        maps_to_numbers,
-                        votes,
-                        total_votes,
-                    )
+            if categorized[maps.Gamemode.WARFARE]:
+                vote_options = VoteMap.join_vote_options(
+                    selection=categorized[maps.Gamemode.WARFARE],
+                    maps_to_numbers=maps_to_numbers,
+                    ranked_votes=ranked_votes,
+                    total_votes=len(votes),
+                    join_char="\n",
                 )
-            if categorized["offensive"]:
+                vote_string = f"WARFARES:\n{vote_options}"
+            if categorized[maps.Gamemode.OFFENSIVE]:
                 if vote_string:
                     vote_string += "\n\n"
-                vote_string = "{}OFFENSIVES:\n{}".format(
-                    vote_string,
-                    self.join_vote_options(
-                        "\n",
-                        categorized["offensive"],
-                        human_map_mod,
-                        maps_to_numbers,
-                        votes,
-                        total_votes,
-                    ),
+                vote_options = VoteMap.join_vote_options(
+                    selection=categorized[maps.Gamemode.OFFENSIVE],
+                    maps_to_numbers=maps_to_numbers,
+                    ranked_votes=ranked_votes,
+                    total_votes=len(votes),
+                    join_char="\n",
                 )
+                vote_string += f"OFFENSIVES:\n{vote_options}"
+            if categorized[maps.Gamemode.CONTROL]:
+                if vote_string:
+                    vote_string += "\n\n"
+                vote_options = VoteMap.join_vote_options(
+                    selection=categorized[maps.Gamemode.CONTROL],
+                    maps_to_numbers=maps_to_numbers,
+                    ranked_votes=ranked_votes,
+                    total_votes=len(votes),
+                    join_char="\n",
+                )
+                vote_string += f"CONTROL SKIRMISHES:\n{vote_options}"
 
             return vote_string
+        else:
+            return ""
 
-    def get_last_reminder_time(self):
-        res = self.red.get(self.reminder_time_key)
+    def get_last_reminder_time(self) -> datetime:
+        res: bytes = self.red.get(self.reminder_time_key)  # type: ignore
         if res is not None:
-            res = pickle.loads(res)
-        return res
+            as_date: datetime = pickle.loads(res)
+        return as_date
 
-    def set_last_reminder_time(self, the_time: datetime = None):
+    def set_last_reminder_time(self, the_time: datetime | None = None) -> None:
         dt = the_time or datetime.now()
         self.red.set(self.reminder_time_key, pickle.dumps(dt))
 
-    def reset_last_reminder_time(self):
+    def reset_last_reminder_time(self) -> None:
         self.red.delete(self.reminder_time_key)
 
-    def is_time_for_reminder(self):
+    def is_time_for_reminder(self) -> bool:
         config = VoteMapUserConfig.load_from_db()
         reminder_freq_min = config.reminder_frequency_minutes
         if reminder_freq_min == 0:
@@ -338,32 +380,42 @@ class VoteMap:
                 rcon.do_message_player(
                     steam_id_64=steamid,
                     message=vote_map_message.format(
-                        map_selection=self.format_map_vote("by_mod_vertical_all")
+                        map_selection=self.format_map_vote(
+                            selection=self.get_selection(),
+                            votes=self.get_votes(),
+                            format_type="by_mod_vertical_all",
+                        )
                     ),
                 )
             except CommandFailedError:
                 logger.warning("Unable to message %s", name)
 
-    def handle_vote_command(self, rcon, struct_log: StructuredLogLineType) -> bool:
-        message = struct_log.get("sub_content", "").strip()
+    def handle_vote_command(
+        self, rcon, struct_log: StructuredLogLineWithMetaData
+    ) -> bool:
+        sub_content = struct_log.get("sub_content")
+
+        message = sub_content.strip() if sub_content else ""
         config = VoteMapUserConfig.load_from_db()
         if not message.lower().startswith(("!votemap", "!vm")):
             return config.enabled
 
         steam_id_64_1 = struct_log["steam_id_64_1"]
         if not config.enabled:
-            # rcon.do_message_player(
-            #     steam_id_64=steam_id_64_1,
-            #     message="Vote map is not enabled on this server",
-            # )
             return config.enabled
 
         if match := re.match(r"(!votemap|!vm)\s*(\d+)", message, re.IGNORECASE):
             logger.info("Registering vote %s", struct_log)
             vote = match.group(2)
             try:
+                # shouldn't be possible but making the type checker happy
+                player = (
+                    struct_log["player"]
+                    if struct_log["player"]
+                    else "PlayerNameNotFound"
+                )
                 map_name = self.register_vote(
-                    struct_log["player"], struct_log["timestamp_ms"] / 1000, vote
+                    player, struct_log["timestamp_ms"] // 1000, vote
                 )
             except InvalidVoteError:
                 rcon.do_message_player(
@@ -403,7 +455,11 @@ class VoteMap:
             rcon.do_message_player(
                 steam_id_64=steam_id_64_1,
                 message=vote_map_message.format(
-                    map_selection=self.format_map_vote("by_mod_vertical_all")
+                    map_selection=self.format_map_vote(
+                        selection=self.get_selection(),
+                        votes=self.get_votes(),
+                        format_type="by_mod_vertical_all",
+                    )
                 ),
             )
             return config.enabled
@@ -486,8 +542,9 @@ class VoteMap:
         rcon.do_message_player(steam_id_64=steam_id_64_1, message=config.help_text)
         return config.enabled
 
-    def register_vote(self, player_name, vote_timestamp, vote_content):
+    def register_vote(self, player_name: str, vote_timestamp: int, vote_content: str):
         try:
+            # Map history is used when generating selections
             current_map = MapsHistory()[0]
             min_time = current_map["start"]
         except IndexError as e:
@@ -499,7 +556,7 @@ class VoteMap:
                 "Map history is corrupted - Can't register vote"
             ) from e
 
-        if vote_timestamp < min_time:
+        if min_time is None or vote_timestamp < min_time:
             logger.warning(
                 f"Vote is too old {player_name=}, {vote_timestamp=}, {vote_content=}, {current_map=}"
             )
@@ -509,7 +566,8 @@ class VoteMap:
         try:
             vote_idx = int(vote_content)
             selected_map = selection[vote_idx]
-            self.red.hset("VOTES", player_name, selected_map)
+            # Winston: utahbeach_warfare
+            self.red.hset("VOTES", player_name, str(selected_map))
         except (TypeError, ValueError, IndexError):
             raise InvalidVoteError(
                 f"Vote must be a number between 0 and {len(selection) - 1}"
@@ -520,52 +578,80 @@ class VoteMap:
         )
         return selected_map
 
-    def get_vote_overview(self):
+    def get_vote_overview(self) -> VoteOverview | None:
         try:
             votes = self.get_votes()
             maps = Counter(votes.values()).most_common()
-            return {"total_votes": len(votes), "winning_maps": maps}
+            return {
+                "total_votes": len(votes),
+                "winning_maps": [(str(m), v) for m, v in maps],
+            }
         except Exception:
             logger.exception("Can't produce vote overview")
 
-    def clear_votes(self):
+    def clear_votes(self) -> None:
+        """Clear all votes"""
         self.red.delete("VOTES")
 
-    def has_voted(self, player_name):
+    def has_voted(self, player_name: str) -> bool:
+        """Return if the player name has a value set"""
         return self.red.hget("VOTES", player_name) is not None
 
-    def get_votes(self):
-        votes = self.red.hgetall("VOTES") or {}
+    def _get_votes(self) -> dict[str, str]:
+        """Returns a dict of player names and the map name they voted for"""
+        votes: dict[bytes, bytes] = self.red.hgetall("VOTES") or {}  # type: ignore
+        # Redis votes are a hash
+        # 127.0.0.1:6379[1]> HKEYS VOTES
+        # 1) "Winston"
+        # 2) "SodiumEnglish"
+        # 127.0.0.1:6379[1]> HGET VOTES Winston
+        # "hurtgenforest_warfare_v2_night"
+        # 127.0.0.1:6379[1]> HGET VOTES SodiumEnglish
+        # "kharkov_warfare"
+        # 127.0.0.1:6379[1]> HGETALL VOTES
+        # 1) "Winston"
+        # 2) "utahbeach_warfare"
+        # 3) "SodiumEnglish"
+        # 4) "foy_offensive_us"
         return {k.decode(): v.decode() for k, v in votes.items()}
 
-    def get_current_map(self):
-        map_ = Rcon(SERVER_INFO).get_map()
+    def get_votes(self) -> dict[str, maps.Layer]:
+        votes = self._get_votes()
+        return {k: maps.parse_layer(v) for k, v in votes.items()}
+
+    def get_current_map(self) -> maps.Layer:
+        """Return the current map name with _RESTART stripped if present"""
+        map_ = self.rcon.get_map()
         if map_.endswith("_RESTART"):
             map_ = map_.replace("_RESTART", "")
 
-        if map_ not in ALL_MAPS:
-            raise ValueError("Invalid current map %s", map_)
+        return maps.parse_layer(map_)
 
-        return map_
-
-    def get_map_whitelist(self):
+    def get_map_whitelist(self) -> set[maps.Layer]:
+        """Return the set of map names on the whitelist or all possible game server maps if not configured"""
         res = self.red.get(self.whitelist_key)
         if res is not None:
-            return pickle.loads(res)
-        return set(ALL_MAPS)
+            return pickle.loads(res)  # type: ignore
 
-    def do_add_map_to_whitelist(self, map_name):
+        return set(maps.parse_layer(map_) for map_ in self.rcon.get_maps())
+
+    def do_add_map_to_whitelist(self, map_name: str):
+        if map_name not in self.rcon.get_maps():
+            raise ValueError(
+                f"`{map_name}` is not a valid map on the game server, you may need to clear your cache"
+            )
+
         whitelist = self.get_map_whitelist()
-        whitelist.add(map_name)
+        whitelist.add(maps.parse_layer(map_name))
         self.do_set_map_whitelist(whitelist)
 
-    def do_add_maps_to_whitelist(self, map_names):
+    def do_add_maps_to_whitelist(self, map_names: Iterable[str]):
         for map_name in map_names:
-            self.do_add_map_to_whitelist(map_name)
+            self.do_add_map_to_whitelist(map_name.lower())
 
-    def do_remove_map_from_whitelist(self, map_name):
+    def do_remove_map_from_whitelist(self, map_name: str):
         whitelist = self.get_map_whitelist()
-        whitelist.discard(map_name)
+        whitelist.discard(maps.parse_layer(map_name))
         self.do_set_map_whitelist(whitelist)
 
     def do_remove_maps_from_whitelist(self, map_names):
@@ -573,9 +659,9 @@ class VoteMap:
             self.do_remove_map_from_whitelist(map_name)
 
     def do_reset_map_whitelist(self):
-        self.do_set_map_whitelist(ALL_MAPS)
+        self.do_set_map_whitelist(self.rcon.get_maps())
 
-    def do_set_map_whitelist(self, map_names):
+    def do_set_map_whitelist(self, map_names) -> None:
         self.red.set(self.whitelist_key, pickle.dumps(set(map_names)))
 
     def gen_selection(self):
@@ -583,33 +669,39 @@ class VoteMap:
 
         logger.debug(
             f"""Generating new map selection for vote map with the following criteria:
-            {ALL_MAPS}
-            {config.number_of_options=}
-            {config.ratio_of_offensives=}
-            {config.number_last_played_to_exclude=}
-            {config.consider_offensive_same_map=}
-            {config.allow_consecutive_offensives=}
-            {config.allow_consecutive_offensives_opposite_sides=}
-            {config.default_method.value=}
+            {self.rcon.get_maps()}
+            {config}
         """
         )
         selection = suggest_next_maps(
-            MapsHistory(),
-            self.get_map_whitelist(),
-            selection_size=config.number_of_options,
+            maps_history=MapsHistory(),
+            current_map=self.get_current_map(),
+            whitelist_maps=self.get_map_whitelist(),
+            num_warfare=config.num_warfare_options,
+            num_offensive=config.num_offensive_options,
+            num_skirmish_control=config.num_skirmish_control_options,
             exclude_last_n=config.number_last_played_to_exclude,
-            offensive_ratio=config.ratio_of_offensives,
             consider_offensive_as_same_map=config.consider_offensive_same_map,
+            consider_skirmishes_as_same_map=config.consider_skirmishes_as_same_map,
             allow_consecutive_offensive=config.allow_consecutive_offensives,
             allow_consecutive_offensives_of_opposite_side=config.allow_consecutive_offensives_opposite_sides,
-            current_map=self.get_current_map(),
         )
-        self.red.delete("MAP_SELECTION")
-        self.red.lpush("MAP_SELECTION", *selection)
+
+        self.set_selection(selection=selection)
         logger.info("Saved new selection: %s", selection)
 
-    def get_selection(self):
-        return [v.decode() for v in self.red.lrange("MAP_SELECTION", 0, -1)]
+    def _get_selection(self) -> list[str]:
+        """Return the current map suggestions"""
+        return [v.decode() for v in self.red.lrange("MAP_SELECTION", 0, -1)]  # type: ignore
+
+    def get_selection(self) -> list[maps.Layer]:
+        return sort_maps_by_gamemode(
+            [maps.parse_layer(name) for name in self._get_selection()]
+        )
+
+    def set_selection(self, selection: Iterable[maps.Layer]) -> None:
+        self.red.delete("MAP_SELECTION")
+        self.red.lpush("MAP_SELECTION", *[str(map_) for map_ in selection])
 
     def pick_least_played_map(self, maps):
         maps_history = MapsHistory()
@@ -632,17 +724,23 @@ class VoteMap:
         selection = self.get_selection()
         maps_history = MapsHistory()
         config = VoteMapUserConfig.load_from_db()
-        all_maps = ALL_MAPS
+        all_maps = [maps.parse_layer(m) for m in self.rcon.get_maps()]
 
         if not config.allow_default_to_offensive:
             logger.debug(
                 "Not allowing default to offensive, removing all offensive maps"
             )
-            selection = [m for m in selection if not "off" in m]
-            all_maps = [m for m in ALL_MAPS if not "off" in m]
+            selection = [m for m in selection if m.gamemode != maps.Gamemode.OFFENSIVE]
+            all_maps = [m for m in all_maps if m.gamemode != maps.Gamemode.OFFENSIVE]
+
+        if not config.allow_default_to_skirmish:
+            logger.debug("Not allowing default to skirmish, removing all skirmish maps")
+            selection = [m for m in selection if not m.gamemode.is_small()]
+            all_maps = [m for m in all_maps if not m.gamemode.is_small()]
 
         if not maps_history:
-            raise ValueError("Map history is empty")
+            choice = random.choice([m for m in self.get_map_whitelist()])
+            return choice
 
         return {
             DefaultMethods.least_played_suggestions: partial(
@@ -652,10 +750,10 @@ class VoteMap:
                 self.pick_least_played_map, all_maps
             ),
             DefaultMethods.random_all_maps: lambda: random.choice(
-                list(set(all_maps) - set([maps_history[0]["name"]]))
+                list(set(all_maps) - set([maps.parse_layer(maps_history[0]["name"])]))
             ),
             DefaultMethods.random_suggestions: lambda: random.choice(
-                list(set(selection) - set([maps_history[0]["name"]]))
+                list(set(selection) - set([maps.parse_layer(maps_history[0]["name"])]))
             ),
         }[config.default_method]()
 
@@ -676,16 +774,18 @@ class VoteMap:
         else:
             logger.info(f"{votes=}")
             next_map = first[0][0]
-            if next_map not in ALL_MAPS:
-                logger.error(f"{next_map=} is not part of the all map list {ALL_MAPS=}")
+            if next_map not in self.rcon.get_maps():
+                logger.error(
+                    f"{next_map=} is not part of the all map list maps={self.rcon.get_maps()}"
+                )
             if next_map not in (selection := self.get_selection()):
                 logger.error(f"{next_map=} is not part of vote selection {selection=}")
             logger.info(f"Winning map {next_map=}")
 
-        rcon = Rcon(SERVER_INFO)
+        rcon = get_rcon()
         # Apply rotation safely
 
-        current_rotation = rcon.get_map_rotation()
+        current_rotation = [maps.parse_layer(m) for m in rcon.get_map_rotation()]
 
         while len(current_rotation) > 1:
             # Make sure only 1 map is in rotation
@@ -695,7 +795,7 @@ class VoteMap:
         current_next_map = current_rotation[0]
         if current_next_map != next_map:
             # Replace the only map left in rotation
-            rcon.do_add_map_to_rotation(next_map)
+            rcon.do_add_map_to_rotation(str(next_map))
             rcon.do_remove_map_from_rotation(current_next_map)
 
         # Check that it worked
@@ -723,59 +823,3 @@ class VoteMap:
 
         if not success:
             logger.warning("Unable to set votemap results")
-
-
-# DEPRECATED see hooks.py
-def on_map_change(old_map: str, new_map: str):
-    logger.info("Running on_map_change hooks with %s %s", old_map, new_map)
-    # try:
-    #     config = VoteMapConfig()
-
-    #     if config.get_vote_enabled():
-    #         votemap = VoteMap()
-    #         votemap.gen_selection()
-    #         votemap.clear_votes()
-    #         votemap.apply_with_retry(nb_retry=4)
-    #         # temporary_welcome_in(
-    #         #    "%s{votenextmap_vertical}" % config.get_votemap_instruction_text(),
-    #         #    seconds=60 * 20,
-    #         #    restore_after_seconds=60 * 5,
-    #         # )
-    # except Exception:
-    #     logger.exception("Unexpected error while running vote map")
-    # try:
-    #    record_stats_worker(MapsHistory()[1])
-    # except Exception:
-    #    logger.exception("Unexpected error while running stats worker")
-
-
-# DEPRECATED see hooks.py
-class MapsRecorder:
-    def __init__(self, rcon: Rcon):
-        self.rcon = rcon
-        self.red = redis.Redis(connection_pool=get_redis_pool())
-        self.maps_history = MapsHistory()
-        self.prev_map = None
-        self._restore_state()
-
-    def _restore_state(self):
-        current_map = self.rcon.get_map()
-        self.prev_map = current_map
-
-        try:
-            last = self.maps_history[0]
-        except IndexError:
-            logger.warning("Map history is empty, can't restore state")
-            return
-
-        started_time = datetime.fromtimestamp(last.get("start"))
-        elapsed_time = datetime.now() - started_time
-
-        if last.get("name") == current_map.replace(
-            "_RESTART", ""
-        ) and elapsed_time < timedelta(minutes=90):
-            logging.info("State recovered successfully")
-        else:
-            logging.warning(
-                "The map recorder was offline for too long, the maps history will have gaps"
-            )

@@ -9,7 +9,7 @@ from django.views.decorators.http import require_http_methods
 from rcon.models import Maps, enter_session
 from rcon.scoreboard import LiveStats, TimeWindowStats, get_cached_live_game_stats
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
-from rcon.utils import LONG_HUMAN_MAP_NAMES, map_name
+from rcon.maps import safe_get_map_name, parse_layer
 
 from .auth import api_response, login_required, stats_login_required
 from .views import _get_data
@@ -19,7 +19,7 @@ logger = logging.getLogger("rconweb")
 
 @csrf_exempt
 @stats_login_required
-@require_http_methods(['GET'])
+@require_http_methods(["GET"])
 def live_scoreboard(request):
     stats = LiveStats()
     config = RconServerSettingsUserConfig.load_from_db()
@@ -45,7 +45,7 @@ def live_scoreboard(request):
 
 @csrf_exempt
 @stats_login_required
-@require_http_methods(['GET'])
+@require_http_methods(["GET"])
 def get_scoreboard_maps(request):
     data = _get_data(request)
 
@@ -69,8 +69,8 @@ def get_scoreboard_maps(request):
                 "total": total,
                 "maps": [
                     dict(
-                        just_name=map_name(r.map_name),
-                        long_name=LONG_HUMAN_MAP_NAMES.get(r.map_name, r.map_name),
+                        just_name=parse_layer(r.map_name).map.id,
+                        long_name=safe_get_map_name(r.map_name),
                         **r.to_dict(),
                     )
                     for r in res
@@ -83,7 +83,7 @@ def get_scoreboard_maps(request):
 
 @csrf_exempt
 @stats_login_required
-@require_http_methods(['GET'])
+@require_http_methods(["GET"])
 def get_map_scoreboard(request):
     data = _get_data(request)
     error = None
@@ -114,7 +114,7 @@ def get_map_scoreboard(request):
 
 @csrf_exempt
 @stats_login_required
-@require_http_methods(['GET'])
+@require_http_methods(["GET"])
 def get_live_game_stats(request):
     stats = None
     error_ = None
@@ -135,7 +135,7 @@ def get_live_game_stats(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_view_date_scoreboard", raise_exception=True)
-@require_http_methods(['GET'])
+@require_http_methods(["GET"])
 def date_scoreboard(request):
     try:
         start = datetime.fromtimestamp(request.GET.get("start"))

@@ -11,6 +11,7 @@ from typing import Callable, DefaultDict, Dict, Iterable
 from collections import defaultdict
 import redis.exceptions
 import discord_webhook
+from discord.utils import escape_markdown
 from pydantic import HttpUrl
 from sqlalchemy import and_, desc, or_
 from sqlalchemy.exc import IntegrityError
@@ -23,14 +24,13 @@ from rcon.player_history import (
     get_player_profile,
     player_has_flag,
 )
-from rcon.rcon import LOG_ACTIONS, Rcon
-from rcon.settings import SERVER_INFO
+from rcon.rcon import LOG_ACTIONS, Rcon, get_rcon
 from rcon.types import (
+    AllLogTypes,
     GetDetailedPlayer,
     ParsedLogsType,
     PlayerStat,
     StructuredLogLineWithMetaData,
-    AllLogTypes,
 )
 from rcon.user_config.ban_tk_on_connect import BanTeamKillOnConnectUserConfig
 from rcon.user_config.log_line_webhooks import (
@@ -126,9 +126,18 @@ def on_chat_allies(func):
     return func
 
 
-def on_connected(func):
-    HOOKS[AllLogTypes.connected.value].append(func)
-    return func
+def on_connected(insert_at: int | None = None):
+    """Insert the given hook at `insert_at` position, or the end"""
+
+    def wrapper(func):
+        if isinstance(insert_at, int):
+            HOOKS[AllLogTypes.connected.value].insert(insert_at, func)
+        else:
+            HOOKS[AllLogTypes.connected.value].append(func)
+
+        return func
+
+    return wrapper
 
 
 def on_disconnected(func):
@@ -200,7 +209,7 @@ def send_log_line_webhook_message(
     allowed_mentions = make_allowed_mentions(mentions)
 
     content = " ".join(mentions)
-    description: str = log_line["line_without_time"]
+    description: str = escape_markdown(log_line["line_without_time"])
     embed = discord_webhook.DiscordEmbed(
         description=description,
         timestamp=datetime.datetime.utcfromtimestamp(log_line["timestamp_ms"] / 1000),
@@ -210,7 +219,7 @@ def send_log_line_webhook_message(
 
     wh.content = content
     wh.add_embed(embed)
-    wh.allowed_mentions = allowed_mentions["user"] + allowed_mentions["roles"]
+    wh.allowed_mentions = allowed_mentions
     wh.execute()
 
 
@@ -329,7 +338,7 @@ class LogLoop:
     log_history_key = "log_history"
 
     def __init__(self):
-        self.rcon = Rcon(SERVER_INFO)
+        self.rcon = get_rcon()
         self.red = get_redis_client()
         self.duplicate_guard_key = "unique_logs"
         self.log_history = self.get_log_history_list()
@@ -745,7 +754,8 @@ def auto_ban_if_tks_right_after_connection(
             return
 
         if (
-            player_profile["sessions_count"]
+            whitelist_players.has_at_least_n_sessions != 0
+            and player_profile["sessions_count"]
             >= whitelist_players.has_at_least_n_sessions
         ):
             logger.debug(
