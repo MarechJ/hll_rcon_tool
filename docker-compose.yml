@@ -7,63 +7,7 @@ networks:
   common:
 
 services:
-  supervisor_1: &supervisor
-    extends:
-      file: docker-compose-common-components.yml
-      service: python
-    command: supervisor
-    depends_on:
-      backend_1:
-        condition: service_healthy
-    networks:
-      common:
-      server1:
-        aliases:
-          - supervisor
-    volumes:
-      - ./supervisor_data:/data
-  backend_1: &backend
-    hostname: api
-    extends:
-      file: docker-compose-common-components.yml
-      service: python
-    command: web
-    healthcheck:
-      test: ["CMD-SHELL", "if [ -e /code/rconweb/gunicorn.pid ]; then echo 0; else echo 1; fi"]
-      start_period: 30s
-      interval: 15s
-      timeout: 30s
-      retries: 5
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    networks:
-      server1:
-        aliases:
-          - backend
-      common:
-  frontend_1: &frontend
-    image: ${FRONTEND_DOCKER_REPOSITORY}:${TAGGED_VERSION}
-    ports:
-      - ${RCONWEB_PORT}:80
-      - ${RCONWEB_PORT_HTTPS}:443
-      - ${PUBLIC_STATS_PORT}:81
-      - ${PUBLIC_STATS_PORT_HTTPS}:444
-    restart: always
-    environment:
-      RCONWEB_EXTERNAL_ADDRESS: ${RCONWEB_EXTERNAL_ADDRESS}
-      HLL_HOST: ${HLL_HOST}
-    volumes:
-      - ./static:/static/
-      - ./certs:/certs/
-    depends_on:
-      backend_1:
-        condition: service_healthy
-    networks:
-      - server1
-      - common
+  # CRCON wide components
   redis:
     image: redis:alpine
     restart: always
@@ -100,10 +44,100 @@ services:
       - ./db_data:/data
     networks:
       - common
+  maintenance:
+    image: ${BACKEND_DOCKER_REPOSITORY}:${TAGGED_VERSION}
+    environment:
+      HLL_MAINTENANCE_CONTAINER: HLL_MAINTENANCE_CONTAINER
+      HLL_DB_USER: ${HLL_DB_USER}
+      HLL_DB_PASSWORD: ${HLL_DB_PASSWORD}
+      HLL_DB_NAME: ${HLL_DB_NAME}
+      HLL_DB_HOST: ${HLL_DB_HOST}
+      HLL_DB_HOST_PORT: ${HLL_DB_HOST_PORT}
+      HLL_DB_URL: postgresql://${HLL_DB_USER}:${HLL_DB_PASSWORD}@${HLL_DB_HOST}:${HLL_DB_HOST_PORT}/${HLL_DB_NAME}
+    command: maintenance
+    healthcheck:
+      test: ["CMD-SHELL", "if [ -e /code/maintenance-container-healthy ]; then echo 0; else echo 1; fi"]
+      start_period: 30s
+      interval: 15s
+      timeout: 30s
+      retries: 5
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: always
+    volumes:
+      - ./logs:/logs/
+    networks:
+      - common
+
+  ########### SERVER 1  #############
+  backend_1: &backend
+    hostname: api
+    extends:
+      file: docker-compose-common-components.yml
+      service: python
+    command: web
+    healthcheck:
+      test: ["CMD-SHELL", "if [ -e /code/rconweb/gunicorn.pid ]; then echo 0; else echo 1; fi"]
+      start_period: 30s
+      interval: 15s
+      timeout: 30s
+      retries: 5
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      maintenance:
+        condition: service_healthy
+    networks:
+      server1:
+        aliases:
+          - backend
+      common:
+  supervisor_1: &supervisor
+    extends:
+      file: docker-compose-common-components.yml
+      service: python
+    command: supervisor
+    depends_on:
+      backend_1:
+        condition: service_healthy
+    networks:
+      common:
+      server1:
+        aliases:
+          - supervisor
+    volumes:
+      - ./supervisor_data:/data
+  
+  frontend_1: &frontend
+    image: ${FRONTEND_DOCKER_REPOSITORY}:${TAGGED_VERSION}
+    ports:
+      - ${RCONWEB_PORT}:80
+      - ${RCONWEB_PORT_HTTPS}:443
+      - ${PUBLIC_STATS_PORT}:81
+      - ${PUBLIC_STATS_PORT_HTTPS}:444
+    restart: always
+    environment:
+      RCONWEB_EXTERNAL_ADDRESS: ${RCONWEB_EXTERNAL_ADDRESS}
+      HLL_HOST: ${HLL_HOST}
+    volumes:
+      - ./static:/static/
+      - ./certs:/certs/
+    depends_on:
+      backend_1:
+        condition: service_healthy
+    networks:
+      - server1
+      - common
 
   ########### SERVER 2  #############
-  supervisor_2:
-    <<: *supervisor
+  backend_2:
+    <<: *backend
+    hostname: api_2
     environment: &env2
       HLL_HOST: ${HLL_HOST_2}
       HLL_PORT: ${HLL_PORT_2}
@@ -136,14 +170,16 @@ services:
       common:
       server2:
         aliases:
-          - supervisor
-    command: supervisor
+          - backend
     depends_on:
-      backend_2:
+      postgres:
         condition: service_healthy
-  backend_2:
-    <<: *backend
-    hostname: api_2
+      redis:
+        condition: service_healthy
+      maintenance:
+        condition: service_healthy
+  supervisor_2:
+    <<: *supervisor
     environment:
       <<: *env2
     restart: on-failure
@@ -151,11 +187,10 @@ services:
       common:
       server2:
         aliases:
-          - backend
+          - supervisor
+    command: supervisor
     depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
+      backend_2:
         condition: service_healthy
   frontend_2:
     <<: *frontend
@@ -175,8 +210,9 @@ services:
         condition: service_healthy
 
   ############ SERVER 3  #############
-  supervisor_3:
-    <<: *supervisor
+  backend_3:
+    <<: *backend
+    hostname: api_3
     environment: &env3
       HLL_HOST: ${HLL_HOST_3}
       HLL_PORT: ${HLL_PORT_3}
@@ -205,21 +241,6 @@ services:
       SENTRY_DSN: ${SENTRY_DSN_3}
       DONT_SEED_ADMIN_USER: ${DONT_SEED_ADMIN_USER}
     restart: on-failure
-    command: supervisor
-    networks:
-      common:
-      server3:
-        aliases:
-          - supervisor
-    depends_on:
-      backend_3:
-        condition: service_healthy
-  backend_3:
-    <<: *backend
-    hostname: api_3
-    environment:
-      <<: *env3
-    restart: on-failure
     networks:
       common:
       server3:
@@ -229,6 +250,22 @@ services:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      maintenance:
+        condition: service_healthy
+  supervisor_3:
+    <<: *supervisor
+    environment:
+      <<: *env3
+    restart: on-failure
+    command: supervisor
+    networks:
+      common:
+      server3:
+        aliases:
+          - supervisor
+    depends_on:
+      backend_3:
         condition: service_healthy
   frontend_3:
     <<: *frontend
