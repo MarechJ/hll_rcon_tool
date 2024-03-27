@@ -17,8 +17,7 @@ from discord.embeds import Embed
 from discord.errors import HTTPException, NotFound
 from rcon.scoreboard import STAT_DISPLAY_LOOKUP, get_stat, get_stat_post_processor
 from rcon.user_config.scorebot import ScorebotUserConfig, StatTypes
-from rcon.utils import UNKNOWN_MAP_NAME
-
+from rcon.maps import UNKNOWN_MAP_NAME
 
 class _PublicInfoCurrentMapType(TypedDict):
     just_name: str

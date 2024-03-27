@@ -25,7 +25,8 @@ from rcon.gtx import GTXFtp
 from rcon.player_history import add_player_to_blacklist, remove_player_from_blacklist
 from rcon.rcon import get_rcon
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
-from rcon.utils import LONG_HUMAN_MAP_NAMES, MapsHistory, get_server_number, map_name
+from rcon.maps import safe_get_map_name, parse_layer
+from rcon.utils import MapsHistory, get_server_number
 from rcon.watchlist import PlayerWatch
 from rcon.workers import temporary_broadcast, temporary_welcome
 
@@ -134,8 +135,8 @@ def public_info(request):
 
     def explode_map_info(game_map: str, start) -> dict:
         return dict(
-            just_name=map_name(game_map),
-            human_name=LONG_HUMAN_MAP_NAMES.get(game_map, game_map),
+            just_name=parse_layer(game_map).map.id,
+            human_name=safe_get_map_name(game_map),
             name=game_map,
             start=start,
         )
