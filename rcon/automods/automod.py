@@ -232,7 +232,11 @@ def on_connected(rcon: Rcon, _, name: str, steam_id_64: str):
         return
 
     # get detailed player info for use by on_connected_hook
-    detailed_player_info: GetDetailedPlayer = rcon.get_detailed_player_info(name)
+    detailed_player_info: GetDetailedPlayer | None = None
+    try:
+        detailed_player_info = rcon.get_detailed_player_info(name)
+    except Exception as e:
+        logger.error(f"get_detailed_player_info threw an exception for {name}: {e}")
 
     punitions_to_apply: PunitionsToApply = PunitionsToApply()
     for mod in mods:

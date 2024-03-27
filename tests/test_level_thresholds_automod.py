@@ -112,6 +112,38 @@ def test_announces_on_connect():
     )
 
 
+def test_announces_on_connect_partially_impacted():
+    mod = mod_with_config(
+        AutoModLevelUserConfig(
+            enabled=True,
+            announcement_enabled=True,
+            only_announce_impacted_players=True,
+            announcement_message="message\n{min_level_msg}{max_level_msg}{level_thresholds_msg}",
+            min_level=10,
+            min_level_message="min level is {level}",
+            max_level=100,
+            max_level_message="max level is {level}",
+            violation_message="{role} needs level {level}",
+            level_thresholds={
+                Roles.spotter: dict(label="Spotter", min_players=0, min_level=50)
+            },
+        )
+    )
+
+    player = mock_get_detailed_player(
+        name="A_NAME",
+        steam_id_64="A_STEAM_ID",
+        level=20,
+    )
+    punitions = mod.on_connected(player["name"], player["steam_id_64"], player)
+    print(punitions)
+    assert 1 == len(punitions.warning)
+    assert (
+        "message\nSpotter needs level 50\n"
+        == punitions.warning[0].details.message
+    )
+
+
 def test_announces_on_connect_not_impacted():
     mod = mod_with_config(
         AutoModLevelUserConfig(
@@ -138,3 +170,31 @@ def test_announces_on_connect_not_impacted():
     punitions = mod.on_connected(player["name"], player["steam_id_64"], player)
     print(punitions)
     assert 0 == len(punitions.warning)
+
+def test_announces_on_connect_detailed_player_info_is_none():
+    mod = mod_with_config(
+        AutoModLevelUserConfig(
+            enabled=True,
+            announcement_enabled=True,
+            only_announce_impacted_players=True,
+            announcement_message="message\n{min_level_msg}{max_level_msg}{level_thresholds_msg}",
+            min_level=10,
+            min_level_message="min level is {level}",
+            max_level=100,
+            max_level_message="max level is {level}",
+            violation_message="{role} needs level {level}",
+            level_thresholds={
+                Roles.spotter: dict(label="Spotter", min_players=0, min_level=10)
+            },
+        )
+    )
+
+    player = None
+
+    punitions = mod.on_connected("A_NAME", "A_STEAM_ID", player)
+    print(punitions)
+    assert 1 == len(punitions.warning)
+    assert (
+        "message\nmin level is 10\nmax level is 100\nSpotter needs level 10\n"
+        == punitions.warning[0].details.message
+    )

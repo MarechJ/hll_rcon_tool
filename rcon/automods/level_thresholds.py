@@ -70,7 +70,7 @@ class LevelThresholdsAutomod:
             )
 
     def on_connected(
-        self, name: str, steam_id_64: str, detailed_player_info: GetDetailedPlayer
+        self, name: str, steam_id_64: str, detailed_player_info: GetDetailedPlayer | None
     ) -> PunitionsToApply:
         p: PunitionsToApply = PunitionsToApply()
 
@@ -89,9 +89,10 @@ class LevelThresholdsAutomod:
 
             # Populate min_level message if configured
             if min_level > 0:
-                # only set info message if player level is impacted the threshold
+                # only set info message if player level is impacted by the threshold
                 if (
                     not self.config.only_announce_impacted_players
+                    or detailed_player_info is None
                     or detailed_player_info["level"] < min_level
                 ):
                     message = self.config.min_level_message
@@ -106,9 +107,10 @@ class LevelThresholdsAutomod:
 
             # Populate max_level message if configured
             if max_level > 0:
-                # only set info message if player level is impacted the threshold
+                # only set info message if player level is impacted by the threshold
                 if (
                     not self.config.only_announce_impacted_players
+                    or detailed_player_info is None
                     or detailed_player_info["level"] > max_level
                 ):
                     message = self.config.max_level_message
@@ -125,9 +127,10 @@ class LevelThresholdsAutomod:
             if self.config.level_thresholds:
                 level_thresholds_msg = ""
                 for role, role_config in self.config.level_thresholds.items():
-                    # only set info message if player level is impacted the threshold
+                    # only set info message if player level is impacted by the threshold
                     if (
                         not self.config.only_announce_impacted_players
+                        or detailed_player_info is None
                         or detailed_player_info["level"] < role_config.min_level
                     ):
                         message = self.config.violation_message
