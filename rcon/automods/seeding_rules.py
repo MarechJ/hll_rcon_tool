@@ -21,7 +21,7 @@ from rcon.automods.num_or_inf import num_or_inf
 from rcon.cache_utils import get_redis_client
 from rcon.game_logs import on_match_start
 from rcon.rcon import StructuredLogLineType
-from rcon.types import GameState, Roles
+from rcon.types import GameState, Roles, GetDetailedPlayer
 from rcon.user_config.auto_mod_seeding import AutoModSeedingUserConfig
 
 SEEDING_RULES_RESET_SECS = 120
@@ -79,7 +79,9 @@ class SeedingRulesAutomod:
                 redis_key, SEEDING_RULES_RESET_SECS, pickle.dumps(watch_status)
             )
 
-    def on_connected(self, name: str, steam_id_64: str) -> PunitionsToApply:
+    def on_connected(
+        self, name: str, steam_id_64: str, detailed_player_info: GetDetailedPlayer | None = None
+    ) -> PunitionsToApply:
         p: PunitionsToApply = PunitionsToApply()
 
         disallowed_roles = set(self.config.disallowed_roles.roles.values())

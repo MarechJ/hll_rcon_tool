@@ -32,6 +32,11 @@ export const LevelAutoMod = ({
         "announcement_enabled": true,
 
         /*
+            Only make the announce to players that are impacted by the level thresholds rules.
+        */
+       "only_announce_impacted_players": true,
+
+        /*
             Available fields: {min_level_msg} from min_level_message value,
             {max_level_msg} from max_level_message value, {level_thresholds_msg} from level_thresholds's message value
         */
