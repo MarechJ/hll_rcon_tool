@@ -15,7 +15,7 @@ class LogStreamConfigType(TypedDict):
 class LogStreamUserConfig(BaseUserConfig):
     enabled: bool = Field(default=False)
     stream_size: int = Field(ge=1, le=100_000, default=1000)
-    startup_since_mins: int = Field(default=150)
+    startup_since_mins: int = Field(default=2)
     refresh_frequency_sec: int = Field(default=1)
     refresh_since_mins: int = Field(default=2)
 
