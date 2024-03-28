@@ -32,6 +32,7 @@ from rcon.types import (
     PlayerStat,
     StructuredLogLineWithMetaData,
 )
+from rcon.user_config.log_stream import LogStreamUserConfig
 from rcon.user_config.ban_tk_on_connect import BanTeamKillOnConnectUserConfig
 from rcon.user_config.log_line_webhooks import (
     DiscordMentionWebhook,
@@ -254,12 +255,17 @@ class LogStream:
         rcon: Rcon | None = None,
         red: redis.StrictRedis | None = None,
         key="log_stream",
-        maxlen: int = 100_000,
+        maxlen: int | None = None,
     ) -> None:
+        config = LogStreamUserConfig.load_from_db()
         self.rcon = rcon or get_rcon()
         self.red = red or get_redis_client()
         self.log_history_key = key
-        self.log_stream = Stream(key=key, maxlen=maxlen)
+        self.log_stream = Stream(key=key, maxlen=maxlen or config.stream_size)
+
+    def clear(self):
+        logger.info("Clearing stream")
+        self.red.delete(self.log_history_key)
 
     def bucket_by_timestamp(self, logs: list[StructuredLogLineWithMetaData]):
         """Organize logs by their game server timestamp
@@ -288,17 +294,25 @@ class LogStream:
 
         return ordered_logs
 
-    def run(self, loop_frequency_secs=1, initial_since_min=150, active_since_min=2):
+    def run(
+        self,
+        loop_frequency_secs: int | None = None,
+        initial_since_min: int | None = None,
+        active_since_min: int | None = None,
+    ):
         """Poll the game server and add new logs to the stream"""
 
-        since_min = initial_since_min
+        config = LogStreamUserConfig.load_from_db()
+
+        since_min = initial_since_min or config.startup_since_mins
         logs = self.rcon.get_structured_logs(since_min_ago=since_min)["logs"]
-        since_min = active_since_min
-        logger.info("Starting log_stream, clearing previous stream")
-        self.red.delete(self.log_history_key)
+        since_min = active_since_min or config.refresh_since_mins
 
         last_seen_id = None
         while True:
+            config = LogStreamUserConfig.load_from_db()
+            if not config.enabled:
+                break
             ordered_logs = self.bucket_by_timestamp(logs)
             new_logs = 0
             for timestamp, log_bucket in ordered_logs:
@@ -313,7 +327,7 @@ class LogStream:
 
             if new_logs:
                 logger.info(f"Added {new_logs} new logs {last_seen_id=}")
-            time.sleep(loop_frequency_secs)
+            time.sleep(loop_frequency_secs or config.refresh_frequency_sec)
             logs = self.rcon.get_structured_logs(since_min_ago=since_min)["logs"]
 
     def logs_since(

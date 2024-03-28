@@ -27,6 +27,7 @@ from rcon.server_stats import (
 from rcon.settings import SERVER_INFO
 from rcon.steam_utils import enrich_db_users
 from rcon.user_config.auto_settings import AutoSettingsConfig
+from rcon.user_config.log_stream import LogStreamUserConfig
 from rcon.user_config.webhooks import (
     BaseMentionWebhookUserConfig,
     BaseUserConfig,
@@ -87,7 +88,11 @@ def run_log_loop():
 @cli.command(name="log_stream")
 def run_log_stream():
     try:
-        LogStream().run()
+        config = LogStreamUserConfig.load_from_db()
+        stream = LogStream()
+        stream.clear()
+        if config.enabled:
+            stream.run()
     except:
         logger.exception("Log stream stopped")
         sys.exit(1)

@@ -8,6 +8,7 @@ import asyncio
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from logging import getLogger
 from rcon.types import StructuredLogLineWithMetaData, AllLogTypes
+from rcon.user_config.log_stream import LogStreamUserConfig
 
 logger = getLogger(__name__)
 
@@ -37,6 +38,18 @@ class LogStreamConsumer(AsyncJsonWebsocketConsumer):
         await super().websocket_disconnect(*args, **kwargs)
 
     async def receive_json(self, content, **kwargs):
+        config = LogStreamUserConfig.load_from_db()
+
+        if not config.enabled:
+            response: LogStreamResponse = {
+                "error": "Log stream is not enabled in your config",
+                # TODO: should this be None?
+                "last_seen_id": None,
+                "logs": [],
+            }
+            await self.send_json(response)
+            return await self.websocket_disconnect()
+
         last_seen: StreamID = content.get("last_seen_id")
         raw_actions: list[str] | None = content.get("actions")
 
@@ -58,6 +71,18 @@ class LogStreamConsumer(AsyncJsonWebsocketConsumer):
 
         log_stream = LogStream()
         while self.connected:
+            config = LogStreamUserConfig.load_from_db()
+
+            if not config.enabled:
+                response: LogStreamResponse = {
+                    "error": "Log stream is not enabled in your config",
+                    # TODO: should this be None?
+                    "last_seen_id": None,
+                    "logs": [],
+                }
+                await self.send_json(response)
+                return await self.websocket_disconnect()
+
             try:
                 logs = log_stream.logs_since(last_seen=last_seen)
                 json_logs: list[LogStreamObject] = []

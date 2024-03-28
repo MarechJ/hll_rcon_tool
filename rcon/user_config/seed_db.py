@@ -13,6 +13,7 @@ from rcon.user_config.camera_notification import CameraNotificationUserConfig
 from rcon.user_config.expired_vips import ExpiredVipsUserConfig
 from rcon.user_config.gtx_server_name import GtxServerNameChangeUserConfig
 from rcon.user_config.log_line_webhooks import LogLineWebhookUserConfig
+from rcon.user_config.log_stream import LogStreamUserConfig
 from rcon.user_config.name_kicks import NameKickUserConfig
 from rcon.user_config.rcon_connection_settings import RconConnectionSettingsUserConfig
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
@@ -59,6 +60,7 @@ def seed_default_config():
             GtxServerNameChangeUserConfig.seed_db(sess)
             KillsWebhooksUserConfig.seed_db(sess)
             LogLineWebhookUserConfig.seed_db(sess)
+            LogStreamUserConfig.seed_db(sess)
             NameKickUserConfig.seed_db(sess)
             RconConnectionSettingsUserConfig.seed_db(sess)
             RconServerSettingsUserConfig.seed_db(sess)

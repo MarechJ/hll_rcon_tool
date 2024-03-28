@@ -185,6 +185,8 @@ GROUPS = [
             "can_restart_webserver",
             "can_view_chat_commands_config",
             "can_change_chat_commands_config",
+            "can_view_log_stream_config",
+            "can_change_log_stream_config",
         ),
     ),
     (
@@ -360,6 +362,8 @@ GROUPS = [
             "can_change_watchlist_discord_webhooks_config",
             "can_view_chat_commands_config",
             "can_change_chat_commands_config",
+            "can_view_log_stream_config",
+            "can_change_log_stream_config",
         ),
     ),
     (
