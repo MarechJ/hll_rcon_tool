@@ -53,11 +53,22 @@ class LogStreamConsumer(AsyncJsonWebsocketConsumer):
         last_seen: StreamID = content.get("last_seen_id")
         raw_actions: list[str] | None = content.get("actions")
 
-        actions_filter: list[AllLogTypes]
-        if raw_actions:
-            actions_filter = [AllLogTypes(v.upper()) for v in raw_actions]
-        else:
-            actions_filter = []
+        try:
+            actions_filter: list[AllLogTypes]
+            if raw_actions:
+                actions_filter = [AllLogTypes(v.upper()) for v in raw_actions]
+            else:
+                actions_filter = []
+        except ValueError as e:
+            logger.error(e)
+            response: LogStreamResponse = {
+                "error": str(e),
+                # TODO: should this be None?
+                "last_seen_id": None,
+                "logs": [],
+            }
+            await self.send_json(response)
+            return await self.websocket_disconnect()
 
         send_all = False
         if len(actions_filter) == 0:
