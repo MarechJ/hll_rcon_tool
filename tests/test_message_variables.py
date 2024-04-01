@@ -120,7 +120,9 @@ def test_populate_num_ingame_mods(monkeypatch, mods, expected):
     assert populate_message_variables([var.value]).get(var) == expected
 
 
-@pytest.mark.parametrize("map_name, expected", [("carentan_warfare", "Carentan")])
+@pytest.mark.parametrize(
+    "map_name, expected", [("carentan_warfare", "Carentan Warfare")]
+)
 def test_populate_next_map(monkeypatch, map_name, expected):
     var = MessageVariable.next_map
     monkeypatch.setattr(
@@ -131,7 +133,12 @@ def test_populate_next_map(monkeypatch, map_name, expected):
 
 @pytest.mark.parametrize(
     "rot, expected",
-    [(["carentan_warfare", "utahbeach_warfare"], "Carentan, Utah")],
+    [
+        (
+            ["carentan_warfare", "utahbeach_warfare"],
+            "Carentan Warfare, Utah Beach Warfare",
+        )
+    ],
 )
 def test_populate_map_rotation(monkeypatch, rot, expected):
     var = MessageVariable.map_rotation

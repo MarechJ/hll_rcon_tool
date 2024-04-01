@@ -671,3 +671,8 @@ class PublicInfoType(TypedDict):
     raw_time_remaining: str
     vote_status: _PublicInfoVoteStatusType
     name: _PublicInfoNameType
+
+
+class VoteOverview(TypedDict):
+    total_votes: int
+    winning_maps: list[tuple[str, int]]

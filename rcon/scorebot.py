@@ -15,7 +15,8 @@ from discord.embeds import Embed
 from discord.errors import HTTPException, NotFound
 from rcon.scoreboard import STAT_DISPLAY_LOOKUP, get_stat, get_stat_post_processor
 from rcon.user_config.scorebot import ScorebotUserConfig, StatTypes
-from rcon.utils import UNKNOWN_MAP_NAME, get_server_number
+from rcon.maps import UNKNOWN_MAP_NAME
+from rcon.utils import get_server_number
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, Session
 from sqlalchemy import create_engine, select
 from typing import Generator
