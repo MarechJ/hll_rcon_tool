@@ -18,7 +18,7 @@ from rcon.automods.models import (
     WatchStatus,
 )
 from rcon.automods.num_or_inf import num_or_inf
-from rcon.types import GameState
+from rcon.types import GameState, GetDetailedPlayer
 from rcon.user_config.auto_mod_level import AutoModLevelUserConfig, Roles
 
 LEVEL_THRESHOLDS_RESET_SECS = 120
@@ -69,7 +69,9 @@ class LevelThresholdsAutomod:
                 pickle.dumps(watch_status)
             )
 
-    def on_connected(self, name: str, steam_id_64: str) -> PunitionsToApply:
+    def on_connected(
+        self, name: str, steam_id_64: str, detailed_player_info: GetDetailedPlayer | None
+    ) -> PunitionsToApply:
         p: PunitionsToApply = PunitionsToApply()
 
         min_level = self.config.min_level
@@ -87,56 +89,74 @@ class LevelThresholdsAutomod:
 
             # Populate min_level message if configured
             if min_level > 0:
-                message = self.config.min_level_message
-                try:
-                    message = message.format(level=min_level) + "\n"
-                except KeyError:
-                    self.logger.warning(
-                        "The automod message (%s) contains an invalid key",
-                        message
-                    )
-                data["min_level_msg"] = message
-
-            # Populate max_level message if configured
-            if max_level > 0:
-                message = self.config.max_level_message
-                try:
-                    message = message.format(level=max_level) + "\n"
-                except KeyError:
-                    self.logger.warning(
-                        "The automod message (%s) contains an invalid key",
-                        message
-                    )
-                data["max_level_msg"] = message
-
-            # Populate level thresholds by role message if configured
-            if self.config.level_thresholds:
-                level_thresholds_msg = ""
-                for role, role_config in self.config.level_thresholds.items():
-                    message = self.config.violation_message
+                # only set info message if player level is impacted by the threshold
+                if (
+                    not self.config.only_announce_impacted_players
+                    or detailed_player_info is None
+                    or detailed_player_info["level"] < min_level
+                ):
+                    message = self.config.min_level_message
                     try:
-                        message = (
-                            message.format(
-                                role=role_config.label,
-                                level=role_config.min_level
-                            )
-                            + "\n"
-                        )
+                        message = message.format(level=min_level) + "\n"
                     except KeyError:
                         self.logger.warning(
                             "The automod message (%s) contains an invalid key",
                             message
                         )
-                    level_thresholds_msg += message
+                    data["min_level_msg"] = message
+
+            # Populate max_level message if configured
+            if max_level > 0:
+                # only set info message if player level is impacted by the threshold
+                if (
+                    not self.config.only_announce_impacted_players
+                    or detailed_player_info is None
+                    or detailed_player_info["level"] > max_level
+                ):
+                    message = self.config.max_level_message
+                    try:
+                        message = message.format(level=max_level) + "\n"
+                    except KeyError:
+                        self.logger.warning(
+                            "The automod message (%s) contains an invalid key",
+                            message
+                        )
+                    data["max_level_msg"] = message
+
+            # Populate level thresholds by role message if configured
+            if self.config.level_thresholds:
+                level_thresholds_msg = ""
+                for role, role_config in self.config.level_thresholds.items():
+                    # only set info message if player level is impacted by the threshold
+                    if (
+                        not self.config.only_announce_impacted_players
+                        or detailed_player_info is None
+                        or detailed_player_info["level"] < role_config.min_level
+                    ):
+                        message = self.config.violation_message
+                        try:
+                            message = (
+                                message.format(
+                                    role=role_config.label,
+                                    level=role_config.min_level
+                                )
+                                + "\n"
+                            )
+                        except KeyError:
+                            self.logger.warning(
+                                "The automod message (%s) contains an invalid key",
+                                message
+                            )
+                        level_thresholds_msg += message
                 data["level_thresholds_msg"] = level_thresholds_msg
 
             self.logger.debug("ON_CONNECTED: generated messages %s", data)
 
             # Format and send annoucement message with previous data if required
             if (
-                data.get("min_level_msg") is not None
-                or data.get("max_level_msg") is not None
-                or data.get("level_thresholds_msg") is not None
+                data.get("min_level_msg") != ""
+                or data.get("max_level_msg") != ""
+                or data.get("level_thresholds_msg") != ""
             ):
                 message = self.config.announcement_message
                 try:

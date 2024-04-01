@@ -33,6 +33,7 @@ class AutoModLevelType(TypedDict):
     enabled: bool
     discord_webhook_url: Optional[HttpUrl]
     announcement_enabled: bool
+    only_announce_impacted_players: bool
     announcement_message: str
     force_kick_message: str
     min_level: int
@@ -82,6 +83,7 @@ class AutoModLevelUserConfig(BaseUserConfig):
     enabled: bool = Field(default=False)
     discord_webhook_url: Optional[HttpUrl] = Field(default=None)
     announcement_enabled: bool = Field(default=True)
+    only_announce_impacted_players: bool = Field(default=False)
     announcement_message: str = Field(default=ANNOUNCE_MESSAGE)
     force_kick_message: str = Field(default=FORCEKICK_MESSAGE)
     min_level: int = Field(ge=0, le=500, default=0)
@@ -121,6 +123,9 @@ class AutoModLevelUserConfig(BaseUserConfig):
             enabled=values.get("enabled"),
             discord_webhook_url=values.get("discord_webhook_url"),
             announcement_enabled=values.get("announcement_enabled"),
+            only_announce_impacted_players=values.get(
+                "only_announce_impacted_players"
+            ),
             announcement_message=values.get("announcement_message"),
             force_kick_message=values.get("force_kick_message"),
             min_level=values.get("min_level"),
