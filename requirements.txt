@@ -5,7 +5,7 @@ redis==5.0.3
 sqlalchemy==2.0.29
 simplejson==3.19.2
 psycopg2-binary
-sentry-sdk[django]==1.43.0
+sentry-sdk[django]==1.44.0
 python-dateutil==2.9.0.post0
 discord-webhook[async]
 requests==2.31.0
