@@ -4,8 +4,23 @@ set -e
 set -x 
 
 env
-if [ "$1" == 'web' ] 
+# Only run the database migrations in the maintenance container
+if [ "$1" == 'maintenance' ] 
 then
+  alembic upgrade head
+  cd rconweb 
+  ./manage.py makemigrations --no-input
+  ./manage.py migrate --noinput
+  # Create this file after migrations which is how Docker determines the container is healthy
+  touch maintenance-container-healthy
+  # Keep the container running until it's explicitly created again
+  sleep infinity
+fi
+
+# Check if we're in a backend container
+if [ "$1" == 'web' ] 
+then  
+  # If the database password isn't set, bail early
   if [ "$HLL_DB_PASSWORD" == '' ] 
   then
       echo "HLL_DB_PASSWORD not set"
@@ -15,12 +30,10 @@ then
   then
       exit 0
   fi
-  alembic upgrade head
-  python -m rcon.user_config.seed_db
+
   ./manage.py register_api
+  python -m rcon.user_config.seed_db
   cd rconweb 
-  ./manage.py makemigrations --no-input
-  ./manage.py migrate --noinput
   ./manage.py collectstatic --noinput
   # If DONT_SEED_ADMIN_USER is not set to any value
   if [[ -z "$DONT_SEED_ADMIN_USER" ]]
@@ -29,6 +42,7 @@ then
   fi
   export LOGGING_FILENAME=api_$SERVER_NUMBER.log
   daphne -b 0.0.0.0 -p 8001 rconweb.asgi:application &
+  # Successfully running gunicorn will create the pid file which is how Docker determines the container is healthy
   gunicorn --preload --pid gunicorn.pid -w $NB_API_WORKERS -k gthread --threads $NB_API_THREADS -t 120 -b 0.0.0.0 rconweb.wsgi
   cd ..
   ./manage.py unregister_api

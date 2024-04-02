@@ -660,27 +660,21 @@ commands = [
     ("run_raw_command", run_raw_command),
 ]
 
-logger.info("Initializing endpoint")
+if not os.getenv("HLL_MAINTENANCE_CONTAINER"):
+    logger.info("Initializing endpoint")
 
-try:
-    # Dynamically register all the methods from ServerCtl
-    for name, func in inspect.getmembers(ctl):
-        if not any(name.startswith(prefix) for prefix in PREFIXES_TO_EXPOSE):
-            continue
-
-        commands.append(
-            (name, expose_api_endpoint(func, name, ENDPOINT_PERMISSIONS[func])),
-        )
-    logger.info("Done Initializing endpoint")
-except:
-    logger.exception("Failed to initialized endpoints - Most likely bad configuration")
-    raise
-
-# Warm the cache as fetching steam profile 1 by 1 takes a while
-if not os.getenv("DJANGO_DEBUG", None):
     try:
-        logger.warning("Warming up the cache this may take minutes")
-        ctl.get_players()
-        logger.warning("Cache warm up done")
+        # Dynamically register all the methods from ServerCtl
+        for name, func in inspect.getmembers(ctl):
+            if not any(name.startswith(prefix) for prefix in PREFIXES_TO_EXPOSE):
+                continue
+
+            commands.append(
+                (name, expose_api_endpoint(func, name, ENDPOINT_PERMISSIONS[func])),
+            )
+        logger.info("Done Initializing endpoint")
     except:
-        logger.exception("Failed to warm the cache")
+        logger.exception(
+            "Failed to initialized endpoints - Most likely bad configuration"
+        )
+        raise
