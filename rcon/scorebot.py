@@ -2,11 +2,9 @@ import datetime
 import logging
 import os
 import pathlib
-import sqlite3
 import sys
 import time
-from sqlite3 import Connection
-from typing import Callable, TypedDict
+from typing import Callable
 from urllib.parse import urljoin
 
 import requests
@@ -18,59 +16,74 @@ from discord.errors import HTTPException, NotFound
 from rcon.scoreboard import STAT_DISPLAY_LOOKUP, get_stat, get_stat_post_processor
 from rcon.user_config.scorebot import ScorebotUserConfig, StatTypes
 from rcon.maps import UNKNOWN_MAP_NAME
+from rcon.utils import get_server_number
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, Session
+from sqlalchemy import create_engine, select
+from typing import Generator
+from rcon.types import PublicInfoType, PlayerStatsType
+from contextlib import contextmanager
 
-class _PublicInfoCurrentMapType(TypedDict):
-    just_name: str
-    human_name: str
-    name: str
-    start: int
-
-
-class _PublicInfoNextMapType(TypedDict):
-    just_name: str
-    human_name: str
-    name: str
-    start: int | None
-
-
-class _PublicInfoPlayerType(TypedDict):
-    allied: int
-    axis: int
-
-
-class _PublicInfoScoreType(TypedDict):
-    allied: str
-    axis: str
-
-
-class _PublicInfoVoteStatusType(TypedDict):
-    total_votes: int
-    winning_maps: list[str]
-
-
-class _PublicInfoNameType(TypedDict):
-    name: str
-    short_name: str
-    public_stats_port: str
-    public_stats_port_https: str
-
-
-class PublicInfoType(TypedDict):
-    """TypedDict for rcon.views.public_info"""
-
-    current_map: _PublicInfoCurrentMapType
-    next_map: _PublicInfoNextMapType
-    player_count: int
-    max_player_count: int
-    players: _PublicInfoPlayerType
-    score: _PublicInfoScoreType
-    raw_time_remaining: str
-    vote_status: _PublicInfoVoteStatusType
-    name: _PublicInfoNameType
-
+# TODO: This env var isn't actually exposed anywhere
+root_path = os.getenv("DISCORD_BOT_DATA_PATH", "/data")
+full_path = pathlib.Path(root_path) / pathlib.Path("scorebot.db")
 
 logger = logging.getLogger("rcon")
 
+engine = create_engine(f"sqlite:///file:{full_path}?mode=rwc&uri=true", echo=False)
+
+
+@contextmanager
+def enter_session() -> Generator[Session, None, None]:
+    with Session(engine) as session:
+        session.begin()
+        try:
+            yield session
+        except:
+            session.rollback()
+            raise
+        else:
+            session.commit()
+
+
+class Base(DeclarativeBase):
+    pass
+
+
+class ScorebotMessage(Base):
+    __tablename__ = "stats_messages"
+
+    server_number: Mapped[int] = mapped_column(primary_key=True)
+    message_type: Mapped[str] = mapped_column(default="live", primary_key=True)
+    message_id: Mapped[int] = mapped_column(primary_key=True)
+    webhook: Mapped[str] = mapped_column(primary_key=True)
+
+
+def fetch_existing(
+    session: Session, server_number: str, webhook_url: str
+) -> ScorebotMessage | None:
+    stmt = (
+        select(ScorebotMessage)
+        .where(ScorebotMessage.server_number == server_number)
+        .where(ScorebotMessage.webhook == webhook_url)
+    )
+    return session.scalars(stmt).one_or_none()
+
+
+def cleanup_orphaned_messages(
+    session: Session, server_number: int, webhook_url: str
+) -> None:
+    stmt = (
+        select(ScorebotMessage)
+        .where(ScorebotMessage.server_number == server_number)
+        .where(ScorebotMessage.webhook == webhook_url)
+    )
+    res = session.scalars(stmt).one_or_none()
+
+    if res:
+        session.delete(res)
+
+
+# TODO: Need to update this when we get Abu style maps in
 map_to_pict = {
     "carentan": "maps/carentan.webp",
     "carentan_night": "maps/carentan-night.webp",
@@ -104,7 +117,8 @@ map_to_pict = {
 }
 
 
-def get_map_image(server_info, config: ScorebotUserConfig):
+# TODO: Update this when we get improved map types
+def get_map_image(server_info: PublicInfoType, config: ScorebotUserConfig):
     map_name: str = server_info["current_map"]["name"]
 
     try:
@@ -248,7 +262,7 @@ def get_embeds(server_info, stats, config: ScorebotUserConfig):
     return embeds
 
 
-def get_stats(stats_url: str):
+def get_stats(stats_url: str) -> list[PlayerStatsType]:
     stats = requests.get(stats_url, verify=False).json()
     try:
         stats = stats["result"]["stats"]
@@ -258,49 +272,53 @@ def get_stats(stats_url: str):
     return stats
 
 
-def cleanup_orphaned_messages(conn: Connection, server_number: int, webhook_url: str):
-    conn.execute(
-        "DELETE FROM stats_messages WHERE server_number = ? AND message_type = ? AND webhook = ?",
-        (server_number, "live", webhook_url),
-    )
-    conn.commit()
+def send_or_edit_message(
+    session: Session,
+    webhook: discord.SyncWebhook,
+    embeds: list[discord.Embed],
+    server_number: int,
+    message_id: int | None = None,
+    edit: bool = True,
+):
 
-
-def create_table(conn):
     try:
-        conn.execute(
-            """
-            CREATE TABLE IF NOT EXISTS stats_messages (
-                server_number INT,
-                message_type VARCHAR(50),
-                message_id VARCHAR(200),
-                webhook VARCHAR(500)
-            )
-            """
+        # Force creation of a new message if message ID isn't set
+        if not edit or message_id is None:
+            logger.info(f"Creating a new scorebot message")
+            message = webhook.send(embeds=embeds, wait=True)
+            return message.id
+        else:
+            webhook.edit_message(message_id, embeds=embeds)
+            return message_id
+    except NotFound as ex:
+        logger.error(
+            "Message with ID: %s in our records does not exist",
+            message_id,
         )
-        conn.commit()
+        cleanup_orphaned_messages(
+            session=session,
+            server_number=server_number,
+            webhook_url=webhook.url,
+        )
+        return None
+    except (HTTPException, RequestException, ConnectionError):
+        logger.exception(
+            "Temporary failure when trying to edit message ID: %s", message_id
+        )
     except Exception as e:
-        logger.exception(e)
-
-
-def fetch_existing(conn, server_number: int, webhook_url: str):
-    message_id = conn.execute(
-        "SELECT message_id FROM stats_messages WHERE server_number = ? AND message_type = ? AND webhook = ?",
-        (server_number, "live", webhook_url),
-    )
-    message_id = message_id.fetchone()
-
-    return message_id
+        logger.exception("Unable to edit message. Deleting record", e)
+        cleanup_orphaned_messages(
+            session=session,
+            server_number=server_number,
+            webhook_url=webhook.url,
+        )
+        return None
 
 
 def run():
     config = ScorebotUserConfig.load_from_db()
     try:
-        path = os.getenv("DISCORD_BOT_DATA_PATH", "/data")
-        path = pathlib.Path(path) / pathlib.Path("scorebot.db")
-        conn = sqlite3.connect(str(path))
-        server_number = int(os.getenv("SERVER_NUMBER", 0))
-        create_table(conn)
+        server_number = get_server_number()
         # TODO handle webhook change
         # TODO handle invalid message id
 
@@ -320,7 +338,9 @@ def run():
             sys.exit(-1)
 
         try:
-            public_info = requests.get(config.info_url, verify=False).json()["result"]
+            public_info: PublicInfoType = requests.get(
+                config.info_url, verify=False
+            ).json()["result"]
         except requests.exceptions.JSONDecodeError as e:
             logger.error(
                 f"Bad result (invalid JSON) from {config.info_url}, check your CRCON backend status"
@@ -331,23 +351,8 @@ def run():
             raise
 
         stats = get_stats(config.stats_url)
-        for webhook in webhooks:
-            message_id = fetch_existing(conn, server_number, webhook.url)
-
-            if message_id:
-                (message_id,) = message_id
-                logger.info("Resuming with message_id %s" % message_id)
-            else:
-                message = webhook.send(
-                    embeds=get_embeds(public_info, stats, config), wait=True
-                )
-                conn.execute(
-                    "INSERT INTO stats_messages VALUES (?, ?, ?, ?)",
-                    (server_number, "live", message.id, webhook.url),
-                )
-                conn.commit()
-                message_id = message.id
-
+        message_id: int | None = None
+        seen_messages: set[int] = set()
         while True:
             config = ScorebotUserConfig.load_from_db()
             try:
@@ -363,24 +368,44 @@ def run():
             stats = get_stats(config.stats_url)
 
             for webhook in webhooks:
-                try:
-                    webhook.edit_message(
-                        message_id, embeds=get_embeds(public_info, stats, config)
+                with enter_session() as session:
+                    db_message = fetch_existing(
+                        session=session,
+                        server_number=server_number,
+                        webhook_url=webhook.url,
                     )
-                except NotFound as ex:
-                    logger.exception(
-                        "Message with ID in our records does not exist, cleaning up and restarting"
-                    )
-                    cleanup_orphaned_messages(conn, server_number, webhook.url)
-                    raise ex
-                except (HTTPException, RequestException, ConnectionError):
-                    logger.exception("Temporary failure when trying to edit message")
-                    time.sleep(5)
-                except Exception as e:
-                    logger.exception("Unable to edit message. Deleting record", e)
-                    cleanup_orphaned_messages(conn, server_number, webhook.url)
-                    raise e
-                time.sleep(config.refresh_time_secs)
+                    embeds = get_embeds(public_info, stats, config)
+                    if db_message:
+                        message_id = db_message.message_id
+                        if message_id not in seen_messages:
+                            logger.info("Resuming with message_id %s" % message_id)
+                            seen_messages.add(message_id)
+                        message_id = send_or_edit_message(
+                            session=session,
+                            webhook=webhook,
+                            embeds=embeds,
+                            server_number=server_number,
+                            message_id=message_id,
+                            edit=True,
+                        )
+                    else:
+                        message_id = send_or_edit_message(
+                            session=session,
+                            webhook=webhook,
+                            embeds=embeds,
+                            server_number=server_number,
+                            message_id=None,
+                            edit=False,
+                        )
+                        if message_id:
+                            db_message = ScorebotMessage(
+                                server_number=server_number,
+                                message_id=message_id,
+                                webhook=webhook.url,
+                            )
+                            session.add(db_message)
+
+            time.sleep(config.refresh_time_secs)
     except Exception as e:
         logger.exception("The bot stopped", e)
         raise
@@ -388,6 +413,8 @@ def run():
 
 if __name__ == "__main__":
     try:
+        logger.info("Attempting to start scorebot")
+        Base.metadata.create_all(engine)
         run()
     except Exception as e:
         logger.exception(e)
