@@ -206,6 +206,7 @@ def expose_api_endpoint(
                 cmd.startswith("set_")
                 or cmd.startswith("do_")
                 or cmd.startswith("validate_")
+                or cmd.startswith("reset_")
             ):
                 if request.method != "POST":
                     return HttpResponseNotAllowed(["POST"])
