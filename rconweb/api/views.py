@@ -23,9 +23,10 @@ from rcon.broadcast import get_votes_status
 from rcon.commands import CommandFailedError
 from rcon.discord import send_to_discord_audit
 from rcon.gtx import GTXFtp
+from rcon.maps import parse_layer, safe_get_map_name
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.utils import BaseUserConfig
-from rcon.utils import LONG_HUMAN_MAP_NAMES, MapsHistory, get_server_number, map_name
+from rcon.utils import MapsHistory, get_server_number
 
 from .audit_log import auto_record_audit, record_audit
 from .auth import AUTHORIZATION, api_response, login_required
@@ -115,8 +116,8 @@ def public_info(request):
 
     def explode_map_info(game_map: str, start) -> dict:
         return dict(
-            just_name=map_name(game_map),
-            human_name=LONG_HUMAN_MAP_NAMES.get(game_map, game_map),
+            just_name=parse_layer(game_map).map.id,
+            human_name=safe_get_map_name(game_map),
             name=game_map,
             start=start,
         )
@@ -652,30 +653,33 @@ commands = [
     ("run_raw_command", run_raw_command),
 ]
 
-logger.info("Initializing endpoints")
+if not os.getenv("HLL_MAINTENANCE_CONTAINER"):
+    logger.info("Initializing endpoint")
 
-try:
-    # Dynamically register all the methods from ServerCtl
-    # TODO: remove deprecated endpoints check once endpoints are removed
-    for name, func in inspect.getmembers(rcon_api):
-        if (
-            not any(name.startswith(prefix) for prefix in PREFIXES_TO_EXPOSE)
-            and name not in DEPRECATED_ENDPOINTS
-        ):
-            continue
+    try:
+        # Dynamically register all the methods from ServerCtl
+        # TODO: remove deprecated endpoints check once endpoints are removed
+        for name, func in inspect.getmembers(rcon_api):
+            if (
+                not any(name.startswith(prefix) for prefix in PREFIXES_TO_EXPOSE)
+                and name not in DEPRECATED_ENDPOINTS
+            ):
+                continue
 
-        commands.append(
-            (
-                name,
-                expose_api_endpoint(
-                    func,
+            commands.append(
+                (
                     name,
-                    ENDPOINT_PERMISSIONS[func],
-                    allowed_methods_special_cases=ALLOWED_METHODS_SPECIAL_CASES,
+                    expose_api_endpoint(
+                        func,
+                        name,
+                        ENDPOINT_PERMISSIONS[func],
+                        allowed_methods_special_cases=ALLOWED_METHODS_SPECIAL_CASES,
+                    ),
                 ),
-            ),
+            )
+        logger.info("Done Initializing endpoint")
+    except:
+        logger.exception(
+            "Failed to initialized endpoints - Most likely bad configuration"
         )
-    logger.info("Done Initializing endpoint")
-except:
-    logger.exception("Failed to initialized endpoints - Most likely bad configuration")
-    raise
+        raise

@@ -21,7 +21,7 @@ from rcon.automods.num_or_inf import num_or_inf
 from rcon.cache_utils import get_redis_client
 from rcon.game_logs import on_match_start
 from rcon.rcon import StructuredLogLineType
-from rcon.types import GameState, Roles
+from rcon.types import GameState, Roles, GetDetailedPlayer
 from rcon.user_config.auto_mod_seeding import AutoModSeedingUserConfig
 
 SEEDING_RULES_RESET_SECS = 120
@@ -79,7 +79,9 @@ class SeedingRulesAutomod:
                 redis_key, SEEDING_RULES_RESET_SECS, pickle.dumps(watch_status)
             )
 
-    def on_connected(self, name: str, steam_id_64: str) -> PunitionsToApply:
+    def on_connected(
+        self, name: str, steam_id_64: str, detailed_player_info: GetDetailedPlayer | None = None
+    ) -> PunitionsToApply:
         p: PunitionsToApply = PunitionsToApply()
 
         disallowed_roles = set(self.config.disallowed_roles.roles.values())
@@ -302,9 +304,19 @@ class SeedingRulesAutomod:
                             )
                         )
 
-                if "offensive" in game_state["current_map"] or game_state[
-                    "current_map"
-                ].startswith("stmariedumont_off"):
+                # TODO: update this when we update how maps are stored
+                if (
+                    "offensive" in game_state["current_map"]
+                    or game_state["current_map"].startswith("stmariedumont_off")
+                    or game_state["current_map"]
+                    in (
+                        "ELA_S_1942_P_Skirmish",
+                        "ELA_S_1942_Night_P_Skirmish",
+                        "DRL_S_1944_P_Skirmish",
+                        "DRL_S_1944_Night_P_Skirmish",
+                        "DRL_S_1944_Day_P_Skirmish",
+                    )
+                ):
                     self._disable_for_round("enforce_cap_fight")
 
                 if not self._is_seeding_rule_disabled("enforce_cap_fight") and (

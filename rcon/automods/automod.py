@@ -17,7 +17,7 @@ from rcon.commands import CommandFailedError, HLLServerError
 from rcon.discord import send_to_discord_audit
 from rcon.hooks import inject_player_ids
 from rcon.rcon import Rcon, get_rcon
-from rcon.types import StructuredLogLineType
+from rcon.types import StructuredLogLineType, GetDetailedPlayer
 from rcon.user_config.auto_mod_level import AutoModLevelUserConfig
 from rcon.user_config.auto_mod_no_leader import AutoModNoLeaderUserConfig
 from rcon.user_config.auto_mod_seeding import AutoModSeedingUserConfig
@@ -231,11 +231,20 @@ def on_connected(rcon: Rcon, _, name: str, steam_id_64: str):
         logger.debug("No automod is enabled")
         return
 
+    # get detailed player info for use by on_connected_hook
+    detailed_player_info: GetDetailedPlayer | None = None
+    try:
+        detailed_player_info = rcon.get_detailed_player_info(name)
+    except Exception as e:
+        logger.error(f"get_detailed_player_info threw an exception for {name}: {e}")
+
     punitions_to_apply: PunitionsToApply = PunitionsToApply()
     for mod in mods:
         on_connected_hook = getattr(mod, "on_connected", None)
         if callable(on_connected_hook):
-            punitions_to_apply.merge(mod.on_connected(name, steam_id_64))
+            punitions_to_apply.merge(
+                mod.on_connected(name, steam_id_64, detailed_player_info)
+            )
 
     def notify_player():
         try:

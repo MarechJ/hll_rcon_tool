@@ -550,8 +550,8 @@ class RconAPI(Rcon):
 
         # TODO: finish this typing
         return {
-            "votes": v.get_votes(),
-            "selection": v.get_selection(),
+            "votes": {k: str(v) for k, v in v.get_votes().items()},
+            "selection": [str(m) for m in v.get_selection()],
             "results": v.get_vote_overview(),
         }
 

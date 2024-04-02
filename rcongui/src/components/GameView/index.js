@@ -132,11 +132,13 @@ const Squad = ({
         <ListItemText
           primary={
             <Typography variant="h6">
-              {`${squadName.toUpperCase() === "NULL"
-                ? "Unassigned"
-                : squadName.toUpperCase()
-                } - ${squadData.get("players", new IList()).size}/${sizes[squadData.get("type", "infantry")]
-                }`}{" "}
+              {`${
+                squadName.toUpperCase() === "NULL"
+                  ? "Unassigned"
+                  : squadName.toUpperCase()
+              } - ${squadData.get("players", new IList()).size}/${
+                sizes[squadData.get("type", "infantry")]
+              }`}{" "}
               {squadData.get("has_leader", false) ? (
                 ""
               ) : (
@@ -256,9 +258,9 @@ const Team = ({
       className={classes.root}
     >
       {teamData.get("commander") &&
-        (!showOnlySelected ||
-          (showOnlySelected &&
-            selectedPlayers.contains(teamData.get("commander")?.get("name")))) ? (
+      (!showOnlySelected ||
+        (showOnlySelected &&
+          selectedPlayers.contains(teamData.get("commander")?.get("name")))) ? (
         <PlayerItem
           classes={globalClasses}
           player={teamData.get("commander")}
@@ -618,7 +620,7 @@ const GameView = ({ classes: globalClasses }) => {
                   multiple
                   clearOnEscape
                   id="tags-outlined"
-                  options={allPlayerNames}
+                  options={allPlayerNames.sort((a, b) => a.localeCompare(b))}
                   value={autoCompleteSelectedPlayers}
                   filterSelectedOptions
                   onChange={(e, val) => {

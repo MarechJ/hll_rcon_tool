@@ -1,12 +1,22 @@
 export const UNKNOWN_MAP_NAME = 'unknown';
 
+
+export const SKIRMISH_TAG_LOOKUP = new Map([
+  ['ELA', 'elalamein'],
+  ['DRL', 'driel'],
+])
+
 export const map_to_pict = new Map([
   ["carentan", "/maps/carentan.webp"],
   ["carentan_night", "/maps/carentan-night.webp"],
   ["driel", "/maps/driel.webp"],
+  ["driel skirmish", "/maps/driel.webp"],
   ["driel_night", "/maps/driel-night.webp"],
+  ["driel skirmish night", "/maps/driel-night.webp"],
   ["elalamein", "/maps/elalamein.webp"],
+  ["elalamein skirmish", "/maps/elalamein.webp"],
   ["elalamein_night", "/maps/elalamein-night.webp"],
+  ["elalamein skirmish night", "/maps/elalamein-night.webp"],
   ["foy", "/maps/foy.webp"],
   ["foy_night", "/maps/foy-night.webp"],
   ["hill400", "/maps/hill400.webp"],
@@ -39,16 +49,24 @@ export const getMapName = (mapName) => {
     return UNKNOWN_MAP_NAME;
   }
 
+
   const parts = mapName.split("_");
-  if (parts && parts.length > 0) {
+  if (parts && SKIRMISH_TAG_LOOKUP.get(parts[0])) {
+    let base_name = SKIRMISH_TAG_LOOKUP.get(parts[0])
+    if (mapName.toLowerCase().search('night') !== -1) {
+      return base_name + ' skirmish' + ' night'
+    } else {
+      return base_name + ' skirmish'
+    }
+  }
+  else if (parts && parts.length > 0) {
     if (parts.at(-1).toLowerCase() == "night") {
       return parts[0] + "_night"
     } else {
-
-
       return parts[0];
     }
   }
+
   return UNKNOWN_MAP_NAME;
 };
 
