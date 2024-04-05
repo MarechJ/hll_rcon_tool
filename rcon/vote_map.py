@@ -300,10 +300,11 @@ class VoteMap:
         else:
             return ""
 
-    def get_last_reminder_time(self) -> datetime:
+    def get_last_reminder_time(self) -> datetime | None:
+        as_date: datetime | None = None
         res: bytes = self.red.get(self.reminder_time_key)  # type: ignore
         if res is not None:
-            as_date: datetime = pickle.loads(res)
+            as_date = pickle.loads(res)
         return as_date
 
     def set_last_reminder_time(self, the_time: datetime | None = None) -> None:
