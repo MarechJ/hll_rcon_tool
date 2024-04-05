@@ -136,11 +136,12 @@ def reset_votemap_state(request):
     v.clear_votes()
     v.gen_selection()
     v.apply_results()
+
     return api_response(
         failed=False,
         result={
-            "votes": v.get_votes(),
-            "selection": v.get_selection(),
+            "votes": {k: v.model_dump() for k, v in v.get_votes().items()},
+            "selection": [m.model_dump() for m in v.get_selection()],
             "results": v.get_vote_overview(),
         },
         command="reset_votemap_state",
