@@ -72,7 +72,7 @@ def suggest_next_maps(
     consider_skirmishes_as_same_map: bool = True,
     allow_consecutive_skirmishes: bool = True,
 ):
-    history_as_layers = [maps.parse_layer(m) for m in maps_history]
+    history_as_layers = [maps.parse_layer(m["name"]) for m in maps_history]
     try:
         return _suggest_next_maps(
             maps_history=history_as_layers,
