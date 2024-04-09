@@ -1,22 +1,26 @@
 import os
+import re
 import socket
 from logging.config import dictConfig
+from subprocess import PIPE, run
 
 from rcon.types import ServerInfoType
-from subprocess import run, PIPE
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
-import re
 
 try:
-    TAG_VERSION = run(["git", "describe", "--tags"], stdout=PIPE, stderr=PIPE).stdout.decode().strip()
+    TAG_VERSION = (
+        run(["git", "describe", "--tags"], stdout=PIPE, stderr=PIPE)
+        .stdout.decode()
+        .strip()
+    )
 except Exception:
     TAG_VERSION = "unknown"
 
 try:
     config = RconServerSettingsUserConfig.load_from_db()
-    ENVIRONMENT = re.sub(
-            "[^0-9a-zA-Z]+", "", (config.short_name or "default").strip()
-        )[:64]
+    ENVIRONMENT = re.sub("[^0-9a-zA-Z]+", "", (config.short_name or "default").strip())[
+        :64
+    ]
 except Exception:
     ENVIRONMENT = "undefined"
 

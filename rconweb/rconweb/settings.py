@@ -14,18 +14,21 @@ import logging
 import os
 import re
 import socket
+from subprocess import PIPE, run
 
-from typing import Final
 import sentry_sdk
 from sentry_sdk import configure_scope
 from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
-from subprocess import run, PIPE
 
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 
 try:
-    TAG_VERSION = run(["git", "describe", "--tags"], stdout=PIPE, stderr=PIPE).stdout.decode().strip()
+    TAG_VERSION = (
+        run(["git", "describe", "--tags"], stdout=PIPE, stderr=PIPE)
+        .stdout.decode()
+        .strip()
+    )
 except Exception:
     TAG_VERSION = "unknown"
 
@@ -34,9 +37,9 @@ HLL_MAINTENANCE_CONTAINER = os.getenv("HLL_MAINTENANCE_CONTAINER")
 
 try:
     config = RconServerSettingsUserConfig.load_from_db()
-    ENVIRONMENT = re.sub(
-            "[^0-9a-zA-Z]+", "", (config.short_name or "default").strip()
-        )[:64]
+    ENVIRONMENT = re.sub("[^0-9a-zA-Z]+", "", (config.short_name or "default").strip())[
+        :64
+    ]
 except Exception:
     ENVIRONMENT = "undefined"
 
