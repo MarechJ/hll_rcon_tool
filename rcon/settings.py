@@ -3,6 +3,22 @@ import socket
 from logging.config import dictConfig
 
 from rcon.types import ServerInfoType
+from subprocess import run, PIPE
+from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
+import re
+
+try:
+    TAG_VERSION = run(["git", "describe", "--tags"], stdout=PIPE, stderr=PIPE).stdout.decode().strip()
+except Exception:
+    TAG_VERSION = "unknown"
+
+try:
+    config = RconServerSettingsUserConfig.load_from_db()
+    ENVIRONMENT = re.sub(
+            "[^0-9a-zA-Z]+", "", (config.short_name or "default").strip()
+        )[:64]
+except Exception:
+    ENVIRONMENT = "undefined"
 
 # TODO: Use a config style that is not required at import time
 
@@ -30,7 +46,7 @@ LOGGING = {
     "disable_existing_loggers": False,
     "formatters": {
         "console": {
-            "format": "[%(asctime)s][%(levelname)s] %(name)s "
+            "format": f"[%(asctime)s][%(levelname)s][{ENVIRONMENT}][{TAG_VERSION}] %(name)s "
             "%(filename)s:%(funcName)s:%(lineno)d | %(message)s",
         },
     },

@@ -36,6 +36,8 @@ from .decorators import require_content_type
 from .multi_servers import forward_command, forward_request
 from .utils import _get_data
 
+from rconweb.settings import TAG_VERSION
+
 logger = logging.getLogger("rconweb")
 
 ctl = get_rcon()
@@ -469,6 +471,7 @@ def expose_api_endpoint(func, command_name, permissions: list[str] | set[str] | 
                 failed=failure,
                 error=error,
                 forward_results=others,
+                version=TAG_VERSION
             )
         )
         if data.get("forward"):

@@ -15,24 +15,29 @@ import os
 import re
 import socket
 
+from typing import Final
 import sentry_sdk
 from sentry_sdk import configure_scope
 from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
+from subprocess import run, PIPE
 
-from rcon.rcon import get_rcon
+from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
+
+try:
+    TAG_VERSION = run(["git", "describe", "--tags"], stdout=PIPE, stderr=PIPE).stdout.decode().strip()
+except Exception:
+    TAG_VERSION = "unknown"
 
 HLL_MAINTENANCE_CONTAINER = os.getenv("HLL_MAINTENANCE_CONTAINER")
 
 
 try:
-    if HLL_MAINTENANCE_CONTAINER:
-        ENVIRONMENT = "undefined"
-    else:
-        ENVIRONMENT = re.sub(
-            "[^0-9a-zA-Z]+", "", (get_rcon().get_name() or "default").strip()
+    config = RconServerSettingsUserConfig.load_from_db()
+    ENVIRONMENT = re.sub(
+            "[^0-9a-zA-Z]+", "", (config.short_name or "default").strip()
         )[:64]
-except:
+except Exception:
     ENVIRONMENT = "undefined"
 
 LOGGING = {
@@ -40,7 +45,7 @@ LOGGING = {
     "disable_existing_loggers": False,
     "formatters": {
         "console": {
-            "format": f"[%(asctime)s][%(levelname)s][{ENVIRONMENT}] %(name)s "
+            "format": f"[%(asctime)s][%(levelname)s][{ENVIRONMENT}][{TAG_VERSION}] %(name)s "
             "%(filename)s:%(funcName)s:%(lineno)d | %(message)s",
         },
     },
