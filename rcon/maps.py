@@ -157,7 +157,7 @@ class Layer(pydantic.BaseModel):
         return self.id
 
     def __repr__(self) -> str:
-        return str(self)
+        return f"{self.__class__}(id={self.id}, map={self.map}, attackers={self.attackers}, environment={self.environment})"
 
     def __hash__(self) -> int:
         return hash(self.id)
@@ -719,7 +719,10 @@ LAYERS = {
 }
 
 
-def parse_layer(layer_name: str):
+def parse_layer(layer_name: str | Layer):
+    if isinstance(layer_name, Layer):
+        layer_name = str(layer_name)
+
     layer = LAYERS.get(layer_name)
     if layer:
         return layer
