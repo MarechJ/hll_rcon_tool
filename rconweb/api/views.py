@@ -22,13 +22,14 @@ from rcon.cache_utils import RedisCached, get_redis_pool
 from rcon.commands import CommandFailedError
 from rcon.discord import send_to_discord_audit
 from rcon.gtx import GTXFtp
+from rcon.maps import parse_layer, safe_get_map_name
 from rcon.player_history import add_player_to_blacklist, remove_player_from_blacklist
 from rcon.rcon import get_rcon
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
-from rcon.maps import safe_get_map_name, parse_layer
 from rcon.utils import MapsHistory, get_server_number
 from rcon.watchlist import PlayerWatch
 from rcon.workers import temporary_broadcast, temporary_welcome
+from rconweb.settings import TAG_VERSION
 
 from .audit_log import auto_record_audit, record_audit
 from .auth import AUTHORIZATION, api_response, login_required
@@ -469,6 +470,7 @@ def expose_api_endpoint(func, command_name, permissions: list[str] | set[str] | 
                 failed=failure,
                 error=error,
                 forward_results=others,
+                version=TAG_VERSION,
             )
         )
         if data.get("forward"):
