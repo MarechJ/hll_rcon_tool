@@ -129,7 +129,7 @@ def _suggest_next_maps(
     else:
         last_n_maps: set[maps.Layer] = set()
     logger.info("Excluding last %s player maps: %s", exclude_last_n, last_n_maps)
-    remaining_maps = set(allowed_maps) - last_n_maps
+    remaining_maps = [maps.parse_layer(m) for m in allowed_maps - last_n_maps]
     logger.info("Remaining maps to suggest from: %s", remaining_maps)
 
     current_side = current_map.attackers
@@ -140,12 +140,18 @@ def _suggest_next_maps(
         logger.info(
             "Considering offensive/skirmish mode as same map, excluding %s", map_ids
         )
-        remaining_maps = set(m for m in remaining_maps if m.map not in map_ids)
+        remaining_maps = [
+            maps.parse_layer(m) for m in remaining_maps if m.map not in map_ids
+        ]
         logger.info("Remaining maps to suggest from: %s", remaining_maps)
 
     if not allow_consecutive_offensives_of_opposite_side and current_side:
         # TODO: make sure this is correct
-        remaining_maps = [m for m in remaining_maps if m.opposite_side != current_side]
+        remaining_maps = [
+            maps.parse_layer(m)
+            for m in remaining_maps
+            if m.opposite_side != current_side
+        ]
         logger.info(
             "Not allowing consecutive offensive with opposite side: %s",
             maps.get_opposite_side(current_side),
