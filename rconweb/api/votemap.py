@@ -140,8 +140,9 @@ def reset_votemap_state(request):
     return api_response(
         failed=False,
         result={
-            "votes": {k: v.model_dump() for k, v in v.get_votes().items()},
-            "selection": [m.model_dump() for m in v.get_selection()],
+            # TODO: update this when we return `Layer`s instead of strings
+            "votes": {k: str(v) for k, v in v.get_votes().items()},
+            "selection": [str(m) for m in v.get_selection()],
             "results": v.get_vote_overview(),
         },
         command="reset_votemap_state",
@@ -156,7 +157,8 @@ def get_map_whitelist(request):
     v = VoteMap()
     return api_response(
         failed=False,
-        result=[map for map in v.get_map_whitelist()],
+        # TODO: update this when we return `Layer`s instead of strings
+        result=[str(map) for map in v.get_map_whitelist()],
         command="get_map_whitelist",
     )
 
