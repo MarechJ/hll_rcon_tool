@@ -481,6 +481,15 @@ const Header = ({ classes }) => {
                             GTX Server Name Change
                           </MenuItem>
                         </Link>
+                        <Link
+                          color="inherit"
+                          component={RouterLink}
+                          to="/settings/log-stream"
+                        >
+                          <MenuItem onClick={() => setAnchorElSettings(null)}>
+                            Log Stream
+                          </MenuItem>
+                        </Link>
                       </Menu>
                       <Link
                         variant="button"

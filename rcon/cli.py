@@ -16,7 +16,7 @@ from rcon import auto_settings, broadcast, game_logs, routines
 from rcon.automods import automod
 from rcon.cache_utils import RedisCached, get_redis_pool, invalidates
 from rcon.discord_chat import get_handler
-from rcon.game_logs import LogLoop, load_generic_hooks
+from rcon.game_logs import LogLoop, LogStream, load_generic_hooks
 from rcon.models import enter_session, install_unaccent
 from rcon.rcon import get_rcon
 from rcon.scoreboard import live_stats_loop
@@ -27,6 +27,7 @@ from rcon.server_stats import (
 from rcon.settings import SERVER_INFO
 from rcon.steam_utils import enrich_db_users
 from rcon.user_config.auto_settings import AutoSettingsConfig
+from rcon.user_config.log_stream import LogStreamUserConfig
 from rcon.user_config.webhooks import (
     BaseMentionWebhookUserConfig,
     BaseUserConfig,
@@ -82,6 +83,19 @@ def run_log_loop():
         except:
             logger.exception("Chat recorder stopped")
             sys.exit(1)
+
+
+@cli.command(name="log_stream")
+def run_log_stream():
+    try:
+        config = LogStreamUserConfig.load_from_db()
+        stream = LogStream()
+        stream.clear()
+        if config.enabled:
+            stream.run()
+    except:
+        logger.exception("Log stream stopped")
+        sys.exit(1)
 
 
 @cli.command(name="deprecated_log_loop")
