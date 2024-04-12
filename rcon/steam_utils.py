@@ -142,25 +142,27 @@ def fetch_steam_player_summary_mult_players(
     # requests for any list larger than 100, but fit as many steam IDs into the
     # same API request as possible to help with rate limiting
     raw_profiles: list[SteamPlayerSummaryType] = []
-    for chunk in batched(steam_id_64s, STEAM_API_MAX_STEAM_IDS):
-        chunk_steam_ids = ",".join(chunk)
-        try:
-            logger.info("Fetching player summaries for %s steam IDs", len(chunk))
-            raw_result = api.ISteamUser.GetPlayerSummaries(steamids=chunk_steam_ids)
-            chunk_profiles: list[SteamPlayerSummaryType] = raw_result["response"][
-                "players"
-            ]
-            raw_profiles.extend(chunk_profiles)
-        except steam.exceptions.SteamError as e:
-            logger.error(e)
-        except AttributeError:
-            logger.error("Steam API key is invalid, can't fetch steam profile")
-            break
-        except IndexError:
-            logger.error("Steam: no player(s) found")
-        except Exception as e:
-            logger.exception(e)
-            logger.error("Unexpected error while fetching steam profile")
+
+    if api.key:
+        for chunk in batched(steam_id_64s, STEAM_API_MAX_STEAM_IDS):
+            chunk_steam_ids = ",".join(chunk)
+            try:
+                logger.info("Fetching player summaries for %s steam IDs", len(chunk))
+                raw_result = api.ISteamUser.GetPlayerSummaries(steamids=chunk_steam_ids)
+                chunk_profiles: list[SteamPlayerSummaryType] = raw_result["response"][
+                    "players"
+                ]
+                raw_profiles.extend(chunk_profiles)
+            except steam.exceptions.SteamError as e:
+                logger.error(e)
+            except AttributeError:
+                logger.error("Steam API key is invalid, can't fetch steam profile")
+                break
+            except IndexError:
+                logger.error("Steam: no player(s) found")
+            except Exception as e:
+                logger.exception(e)
+                logger.error("Unexpected error while fetching steam profile")
 
     return {raw["steamid"]: raw for raw in raw_profiles}
 
@@ -183,24 +185,25 @@ def fetch_steam_bans_mult_players(
     # requests for any list larger than 100, but fit as many steam IDs into the
     # same API request as possible to help with rate limiting
     raw_bans: list[SteamBansType] = []
-    try:
-        for chunk in batched(steam_id_64s, STEAM_API_MAX_STEAM_IDS):
-            chunk_steam_ids = ",".join(chunk)
-            logger.info("Fetching player bans for %s steam IDs", len(chunk))
-            raw_result = api.ISteamUser.GetPlayerBans(  # type: ignore
-                steamids=chunk_steam_ids
-            )
-            chunk_bans: SteamBansType = raw_result["players"]
-            raw_bans.extend(chunk_bans)  # type: ignore
+    if api.key:
+        try:
+            for chunk in batched(steam_id_64s, STEAM_API_MAX_STEAM_IDS):
+                chunk_steam_ids = ",".join(chunk)
+                logger.info("Fetching player bans for %s steam IDs", len(chunk))
+                raw_result = api.ISteamUser.GetPlayerBans(  # type: ignore
+                    steamids=chunk_steam_ids
+                )
+                chunk_bans: SteamBansType = raw_result["players"]
+                raw_bans.extend(chunk_bans)  # type: ignore
 
-    except steam.exceptions.SteamError as e:
-        logger.error(e)
-    except AttributeError:
-        logger.error("Steam API key is invalid, can't fetch steam profile")
-    except IndexError:
-        logger.error("Steam no player found")
-    except:
-        logger.error("Unexpected error while fetching steam bans")
+        except steam.exceptions.SteamError as e:
+            logger.error(e)
+        except AttributeError:
+            logger.error("Steam API key is invalid, can't fetch steam profile")
+        except IndexError:
+            logger.error("Steam no player found")
+        except:
+            logger.error("Unexpected error while fetching steam bans")
 
     return {raw["SteamId"]: raw for raw in raw_bans}
 
@@ -359,6 +362,7 @@ def update_missing_old_steam_info_single_player(
         steam_info = SteamInfo(
             profile=profile, country=country_code, bans=bans, steamid=player
         )
+        sess.add(steam_info)
         player.steaminfo = steam_info
     else:
         if profile:

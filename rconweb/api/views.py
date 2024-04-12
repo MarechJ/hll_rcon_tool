@@ -27,6 +27,7 @@ from rcon.maps import parse_layer, safe_get_map_name
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.utils import BaseUserConfig
 from rcon.utils import MapsHistory, get_server_number
+from rconweb.settings import TAG_VERSION
 
 from .audit_log import auto_record_audit, record_audit
 from .auth import AUTHORIZATION, api_response, login_required
@@ -263,6 +264,7 @@ def expose_api_endpoint(
                 failed=failure,
                 error=error,
                 forward_results=others,
+                version=TAG_VERSION,
             )
         )
 

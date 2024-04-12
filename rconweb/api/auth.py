@@ -5,6 +5,8 @@ from dataclasses import asdict, dataclass
 from functools import wraps
 from typing import Any
 
+from channels.db import database_sync_to_async
+from channels.security.websocket import WebsocketDenier
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.hashers import make_password
@@ -18,7 +20,7 @@ from django.views.decorators.http import require_http_methods
 from rcon.audit import heartbeat, ingame_mods, online_mods, set_registered_mods
 from rcon.cache_utils import ttl_cache
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
-from rconweb.settings import SECRET_KEY
+from rconweb.settings import SECRET_KEY, TAG_VERSION
 
 from .decorators import require_content_type
 from .models import DjangoAPIKey, SteamPlayer
@@ -40,6 +42,61 @@ post_save.connect(update_mods, sender=SteamPlayer)
 post_delete.connect(update_mods, sender=SteamPlayer)
 
 
+@database_sync_to_async
+def get_user(api_key) -> User:
+    user = DjangoAPIKey.objects.get(api_key=api_key)
+    return user.user
+
+
+@database_sync_to_async
+def has_perm(scope) -> bool:
+    return scope["user"].has_perm(("api.can_view_structured_logs"))
+
+
+class APITokenAuthMiddleware:
+    def __init__(self, app) -> None:
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        ENDPOINT = "/ws/logs"
+        headers = dict(scope["headers"])
+        headers = {k.decode(): v.decode() for k, v in headers.items()}
+        try:
+            header_name, raw_api_key = headers.get("authorization", "").split(
+                maxsplit=1
+            )
+            if not header_name.upper().strip() in BEARER:
+                raw_api_key = None
+        except (KeyError, ValueError):
+            raw_api_key = None
+            logger.info(f"Couldn't parse API key {raw_api_key=}")
+
+        try:
+            # If we don't include the salt, the hasher generates its own
+            # and it will generate different hashed values every time
+            hashed_api_key = make_password(raw_api_key, salt=SECRET_KEY)
+
+            # Retrieve the user to use the normal authentication system
+            # to include their permissions
+            scope["user"] = await get_user(hashed_api_key)
+        except DjangoAPIKey.DoesNotExist:
+            scope["user"] = None
+            logger.info(
+                "API key not associated with a user, denying connection to %s", ENDPOINT
+            )
+            denier = WebsocketDenier()
+            return await denier(scope, receive, send)
+
+        if not await has_perm(scope):
+            logger.warning(
+                "User %s does not have permission to view %s", scope["user"], ENDPOINT
+            )
+            denier = WebsocketDenier()
+            return await denier(scope, receive, send)
+
+        return await self.app(scope, receive, send)
+
+
 @dataclass
 class RconResponse:
     result: Any = None
@@ -48,6 +105,7 @@ class RconResponse:
     failed: bool = True
     error: str = None
     forwards_results: Any = None
+    version: str | None = None
 
     def to_dict(self):
         # asdict() cannot convert a Django QueryDict properly
@@ -58,7 +116,9 @@ class RconResponse:
 
 def api_response(*args, **kwargs):
     status_code = kwargs.pop("status_code", 200)
-    return JsonResponse(RconResponse(*args, **kwargs).to_dict(), status=status_code)
+    return JsonResponse(
+        RconResponse(version=TAG_VERSION, *args, **kwargs).to_dict(), status=status_code
+    )
 
 
 def api_csv_response(content, name, header):

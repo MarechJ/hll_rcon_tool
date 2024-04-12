@@ -39,6 +39,7 @@ from rcon.user_config.chat_commands import ChatCommandsUserConfig
 from rcon.user_config.expired_vips import ExpiredVipsUserConfig
 from rcon.user_config.gtx_server_name import GtxServerNameChangeUserConfig
 from rcon.user_config.log_line_webhooks import LogLineWebhookUserConfig
+from rcon.user_config.log_stream import LogStreamUserConfig
 from rcon.user_config.name_kicks import NameKickUserConfig
 from rcon.user_config.rcon_connection_settings import RconConnectionSettingsUserConfig
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
@@ -549,6 +550,7 @@ class RconAPI(Rcon):
         v = VoteMap()
 
         # TODO: finish this typing
+        # TODO: update this when we return `Layer`s instead of strings
         return {
             "votes": {k: str(v) for k, v in v.get_votes().items()},
             "selection": [str(m) for m in v.get_selection()],
@@ -566,7 +568,8 @@ class RconAPI(Rcon):
     def get_map_whitelist(self) -> list[str]:
         v = VoteMap()
 
-        return [map for map in v.get_map_whitelist()]
+        # TODO: update this when we return `Layer`s instead of strings
+        return [str(map) for map in v.get_map_whitelist()]
 
     def do_add_map_to_whitelist(self, map_name: str):
         v = VoteMap()
@@ -1584,6 +1587,39 @@ class RconAPI(Rcon):
     ) -> bool:
         return self._validate_user_config(
             model=ChatCommandsUserConfig,
+            data=config or kwargs,
+            dry_run=True,
+            errors_as_json=errors_as_json,
+            reset_to_default=reset_to_default,
+        )
+
+    def get_log_stream_config(request):
+        return LogStreamUserConfig.load_from_db()
+
+    def set_log_stream_config(
+        self,
+        config: dict[str, Any] | BaseUserConfig | None = None,
+        errors_as_json: bool = False,
+        reset_to_default: bool = False,
+        **kwargs,
+    ) -> bool:
+        return self._validate_user_config(
+            model=LogStreamUserConfig,
+            data=config or kwargs,
+            dry_run=False,
+            errors_as_json=errors_as_json,
+            reset_to_default=reset_to_default,
+        )
+
+    def validate_log_stream_config(
+        self,
+        config: dict[str, Any] | BaseUserConfig | None = None,
+        errors_as_json: bool = False,
+        reset_to_default: bool = False,
+        **kwargs,
+    ) -> bool:
+        return self._validate_user_config(
+            model=LogStreamUserConfig,
             data=config or kwargs,
             dry_run=True,
             errors_as_json=errors_as_json,

@@ -73,7 +73,7 @@ def suggest_next_maps(
     consider_skirmishes_as_same_map: bool = True,
     allow_consecutive_skirmishes: bool = True,
 ):
-    history_as_layers = [maps.parse_layer(m) for m in maps_history]
+    history_as_layers = [maps.parse_layer(m["name"]) for m in maps_history]
     try:
         return _suggest_next_maps(
             maps_history=history_as_layers,
@@ -129,7 +129,7 @@ def _suggest_next_maps(
     else:
         last_n_maps: set[maps.Layer] = set()
     logger.info("Excluding last %s player maps: %s", exclude_last_n, last_n_maps)
-    remaining_maps = set(allowed_maps) - last_n_maps
+    remaining_maps = [maps.parse_layer(m) for m in allowed_maps - last_n_maps]
     logger.info("Remaining maps to suggest from: %s", remaining_maps)
 
     current_side = current_map.attackers
@@ -140,12 +140,18 @@ def _suggest_next_maps(
         logger.info(
             "Considering offensive/skirmish mode as same map, excluding %s", map_ids
         )
-        remaining_maps = set(m for m in remaining_maps if m.map not in map_ids)
+        remaining_maps = [
+            maps.parse_layer(m) for m in remaining_maps if m.map not in map_ids
+        ]
         logger.info("Remaining maps to suggest from: %s", remaining_maps)
 
     if not allow_consecutive_offensives_of_opposite_side and current_side:
         # TODO: make sure this is correct
-        remaining_maps = [m for m in remaining_maps if m.opposite_side != current_side]
+        remaining_maps = [
+            maps.parse_layer(m)
+            for m in remaining_maps
+            if m.opposite_side != current_side
+        ]
         logger.info(
             "Not allowing consecutive offensive with opposite side: %s",
             maps.get_opposite_side(current_side),
@@ -300,10 +306,11 @@ class VoteMap:
         else:
             return ""
 
-    def get_last_reminder_time(self) -> datetime:
+    def get_last_reminder_time(self) -> datetime | None:
+        as_date: datetime | None = None
         res: bytes = self.red.get(self.reminder_time_key)  # type: ignore
         if res is not None:
-            as_date: datetime = pickle.loads(res)
+            as_date = pickle.loads(res)
         return as_date
 
     def set_last_reminder_time(self, the_time: datetime | None = None) -> None:
