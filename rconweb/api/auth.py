@@ -20,7 +20,7 @@ from django.views.decorators.http import require_http_methods
 from rcon.audit import heartbeat, ingame_mods, online_mods, set_registered_mods
 from rcon.cache_utils import ttl_cache
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
-from rconweb.settings import SECRET_KEY
+from rconweb.settings import SECRET_KEY, TAG_VERSION
 
 from .decorators import require_content_type
 from channels.security.websocket import WebsocketDenier
@@ -107,6 +107,7 @@ class RconResponse:
     failed: bool = True
     error: str = None
     forwards_results: Any = None
+    version: str | None = None
 
     def to_dict(self):
         # asdict() cannot convert a Django QueryDict properly
@@ -117,7 +118,7 @@ class RconResponse:
 
 def api_response(*args, **kwargs):
     status_code = kwargs.pop("status_code", 200)
-    return JsonResponse(RconResponse(*args, **kwargs).to_dict(), status=status_code)
+    return JsonResponse(RconResponse(version=TAG_VERSION, *args, **kwargs).to_dict(), status=status_code)
 
 
 def api_csv_response(content, name, header):
