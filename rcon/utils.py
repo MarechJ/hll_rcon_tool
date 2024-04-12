@@ -1,16 +1,14 @@
 import inspect
-import json
+import orjson
 import logging
 import os
-import re
 import secrets
 from datetime import datetime, timezone
 from itertools import islice
-from typing import Any, Generic, Iterable, TypeVar
-from requests.structures import CaseInsensitiveDict
-
+from typing import Any, Generic, Iterable, TypeVar, Iterable
 
 import redis
+import redis.exceptions
 
 from rcon.cache_utils import get_redis_pool
 from rcon.types import GetDetailedPlayer, MapInfo
@@ -37,7 +35,6 @@ INDEFINITE_VIP_DATE = datetime(
     tzinfo=timezone.utc,
 )
 
-UNKNOWN_MAP_NAME = "unknown"
 
 ALL_ROLES = (
     "armycommander",
@@ -68,362 +65,180 @@ def get_current_map(rcon):
     return map_
 
 
-def numbered_maps(maps):
-    return {str(idx): map_ for idx, map_ in enumerate(maps)}
-
-
-def categorize_maps(maps):
-    warfare_offsensive = {
-        "warfare": [],
-        "offensive": [],
-    }
-    for m in maps:
-        if "offensive" in m or m.startswith("stmariedumont_off"):
-            warfare_offsensive["offensive"].append(m)
-        if "warfare" in m:
-            warfare_offsensive["warfare"].append(m)
-
-    return warfare_offsensive
-
-
-def map_name(map_):
-    name, *rest = map_.split("_")
-    # if "night" in map_:
-    #    return f"{name}_night"
-    return name
-
-
-def get_map_side(map_):
-    try:
-        parts = map_.split("_")
-        return parts[2].lower() if parts[2] in ["us", "ger", "rus"] else None
-    except IndexError:
-        return None
-
-
-LOG_MAP_NAMES_TO_MAP = CaseInsensitiveDict(
-    {
-        # TODO: These are incorrectly listed as warfare, pending T17 fixing it
-        # "": "ELA_S_1942_P_Skirmish",
-        # "": "ELA_S_1942_Night_P_Skirmish",
-        # "": "DRL_S_1944_P_Skirmish",
-        # "": "DRL_S_1944_Night_P_Skirmish",
-        # "": "DRL_S_1944_Day_P_Skirmish",
-        "CARENTAN OFFENSIVE": "carentan_offensive_ger",
-        "CARENTAN WARFARE": "carentan_warfare",
-        "FOY OFFENSIVE": "foy_offensive_ger",
-        "FOY WARFARE": "foy_warfare",
-        "HILL 400 OFFENSIVE": "hill400_offensive_ger",
-        "HILL 400 WARFARE": "hill400_warfare",
-        "HÜRTGEN FOREST OFFENSIVE": "hurtgenforest_offensive_ger",
-        "HÜRTGEN FOREST WARFARE": "hurtgenforest_warfare_V2",
-        "KURSK OFFENSIVE": "kursk_offensive_ger",
-        "KURSK WARFARE": "kursk_warfare",
-        "Kharkov OFFENSIVE": "kharkov_offensive_rus",
-        "Kharkov WARFARE": "kharkov_warfare",
-        "PURPLE HEART LANE OFFENSIVE": "purpleheartlane_offensive_ger",
-        "PURPLE HEART LANE WARFARE": "purpleheartlane_warfare",
-        "REMAGEN OFFENSIVE": "remagen_offensive_ger",
-        "REMAGEN WARFARE": "remagen_warfare",
-        "SAINTE-MÈRE-ÉGLISE OFFENSIVE": "stmereeglise_offensive_ger",
-        "SAINTE-MÈRE-ÉGLISE WARFARE": "stmereeglise_warfare",
-        "ST MARIE DU MONT OFFENSIVE": "stmariedumont_off_ger",
-        "ST MARIE DU MONT WARFARE": "stmariedumont_warfare",
-        "STALINGRAD OFFENSIVE": "stalingrad_offensive_ger",
-        "STALINGRAD WARFARE": "stalingrad_warfare",
-        "UTAH BEACH OFFENSIVE": "utahbeach_offensive_ger",
-        "UTAH BEACH WARFARE": "utahbeach_warfare",
-        "OMAHA BEACH WARFARE": "omahabeach_warfare",
-        "OMAHA BEACH OFFENSIVE": "omahabeach_offensive_ger",
-        "DRIEL WARFARE": "driel_warfare",
-        "DRIEL OFFENSIVE": "driel_offensive_ger",
-        "EL ALAMEIN WARFARE": "elalamein_warfare",
-        "EL ALAMEIN OFFENSIVE": "elalamein_offensive_ger",
-    }
-)
-
-LONG_HUMAN_MAP_NAMES = CaseInsensitiveDict(
-    {
-        "ELA_S_1942_P_Skirmish": "El Alamein Dawn Skirmish",
-        "ELA_S_1942_Night_P_Skirmish": "El Alamein Night Skirmish",
-        "DRL_S_1944_P_Skirmish": "Driel Dawn Skirmish",
-        "DRL_S_1944_Night_P_Skirmish": "Driel Night Skirmish",
-        "DRL_S_1944_Day_P_Skirmish": "Driel Day Skirmish",
-        "carentan_offensive_ger": "Carentan Offensive (GER)",
-        "carentan_offensive_us": "Carentan Offensive (US)",
-        "carentan_warfare_night": "Carentan (Night)",
-        "carentan_warfare": "Carentan",
-        "driel_offensive_ger": "Driel Offensive (GER)",
-        "driel_offensive_us": "Driel Offensive (UK)",
-        "driel_warfare_night": "Driel (Night)",
-        "driel_warfare": "Driel",
-        "elalamein_offensive_CW": "El Alamein Offensive (UK)",
-        "elalamein_offensive_ger": "El Alamein Offensive (GER)",
-        "elalamein_warfare_night": "El Alamein (Night)",
-        "elalamein_warfare": "El Alamein",
-        "foy_offensive_ger": "Foy Offensive (GER)",
-        "foy_offensive_us": "Foy Offensive (US)",
-        "foy_warfare_night": "Foy (Night)",
-        "foy_warfare": "Foy",
-        "hill400_offensive_ger": "Hill 400 Offensive (GER)",
-        "hill400_offensive_us": "Hill 400 Offensive (US)",
-        "hill400_warfare_night": "Hill 400 (Night)",
-        "hill400_warfare": "Hill 400",
-        "hurtgenforest_offensive_ger": "Hürtgen Forest Offensive (GER)",
-        "hurtgenforest_offensive_us": "Hürtgen Forest Offensive (US)",
-        "hurtgenforest_warfare_V2_night": "Hürtgen Forest (Night)",
-        "hurtgenforest_warfare_V2": "Hürtgen Forest",
-        "kharkov_offensive_ger": "Kharkov Offensive (GER)",
-        "kharkov_offensive_rus": "Kharkov Offensive (RUS)",
-        "kharkov_warfare_night": "Kharkov (Night)",
-        "kharkov_warfare": "Kharkov",
-        "kursk_offensive_ger": "Kursk Offensive (GER)",
-        "kursk_offensive_rus": "Kursk Offensive (RUS)",
-        "kursk_warfare_night": "Kursk (Night)",
-        "kursk_warfare": "Kursk",
-        "omahabeach_offensive_ger": "Omaha Beach Offensive (GER)",
-        "omahabeach_offensive_us": "Omaha Beach Offensive (US)",
-        "omahabeach_warfare_night": "Omaha Beach (Night)",
-        "omahabeach_warfare": "Omaha Beach",
-        "purpleheartlane_offensive_ger": "Purple Heart Lane Offensive (GER)",
-        "purpleheartlane_offensive_us": "Purple Heart Lane Offensive (US)",
-        "purpleheartlane_warfare_night": "Purple Heart Lane (Night)",
-        "purpleheartlane_warfare": "Purple Heart Lane",
-        "remagen_offensive_ger": "Remagen Offensive (GER)",
-        "remagen_offensive_us": "Remagen Offensive (US)",
-        "remagen_warfare_night": "Remagen (Night)",
-        "remagen_warfare": "Remagen",
-        "stalingrad_offensive_ger": "Stalingrad Offensive (GER)",
-        "stalingrad_offensive_rus": "Stalingrad Offensive (RUS)",
-        "stalingrad_warfare_night": "Stalingrad (Night)",
-        "stalingrad_warfare": "Stalingrad",
-        "stmariedumont_off_ger": "Ste Marie du Mont Offensive (GER)",
-        "stmariedumont_off_us": "Ste Marie du Mont Offensive (US)",
-        "stmariedumont_warfare": "Ste Marie du Mont",
-        "stmereeglise_offensive_ger": "Ste Mère Église Offensive (GER)",
-        "stmereeglise_offensive_us": "Ste Mère Église Offensive (US)",
-        "stmereeglise_warfare_night": "Ste Mère Église (Night)",
-        "stmereeglise_warfare": "Ste Mère Église",
-        "utahbeach_offensive_ger": "Utah Beach Offensive (GER)",
-        "utahbeach_offensive_us": "Utah Beach Offensive (US)",
-        "utahbeach_warfare_night": "Utah Beach (Night)",
-        "utahbeach_warfare": "Utah Beach",
-    }
-)
-
-SHORT_HUMAN_MAP_NAMES = CaseInsensitiveDict(
-    {
-        "ELA_S_1942_P_Skirmish": "El Alamein Dawn Skirm",
-        "ELA_S_1942_Night_P_Skirmish": "El Alamein Night Skirm",
-        "DRL_S_1944_P_Skirmish": "Driel Dawn Skirm",
-        "DRL_S_1944_Night_P_Skirmish": "Driel Night Skirm",
-        "DRL_S_1944_Day_P_Skirmish": "Driel Day Skirm",
-        "carentan_offensive_ger": "Carentan Off. (GER)",
-        "carentan_offensive_us": "Carentan Off. (US)",
-        "carentan_warfare_night": "Carentan (Night)",
-        "carentan_warfare": "Carentan",
-        "driel_offensive_ger": "Driel Off. (GER)",
-        "driel_offensive_us": "Driel Off. (UK)",
-        "driel_warfare_night": "Driel (Night)",
-        "driel_warfare": "Driel",
-        "elalamein_offensive_CW": "El Alamein Off. (UK)",
-        "elalamein_offensive_ger": "El Alamein Off. (GER)",
-        "elalamein_warfare_night": "El Alamein (Night)",
-        "elalamein_warfare": "El Alamein",
-        "foy_offensive_ger": "Foy Off. (GER)",
-        "foy_offensive_us": "Foy Off. (US)",
-        "foy_warfare_night": "Foy (Night)",
-        "foy_warfare": "Foy",
-        "hill400_offensive_ger": "Hill400 Off. (GER)",
-        "hill400_offensive_us": "Hill400 Off. (US)",
-        "hill400_warfare_night": "Hill400 (Night)",
-        "hill400_warfare": "Hill400",
-        "hurtgenforest_offensive_ger": "Hürtgen Off. (GER)",
-        "hurtgenforest_offensive_us": "Hürtgen Off. (US)",
-        "hurtgenforest_warfare_V2_night": "Hürtgen (Night)",
-        "hurtgenforest_warfare_V2": "Hürtgen",
-        "kharkov_offensive_ger": "Kharkov Off. (GER)",
-        "kharkov_offensive_rus": "Kharkov Off. (RUS)",
-        "kharkov_warfare_night": "Kharkov (Night)",
-        "kharkov_warfare": "Kharkov",
-        "kursk_offensive_ger": "Kursk Off. (GER)",
-        "kursk_offensive_rus": "Kursk Off. (RUS)",
-        "kursk_warfare_night": "Kursk (Night)",
-        "kursk_warfare": "Kursk",
-        "omahabeach_offensive_ger": "Omaha Off. (GER)",
-        "omahabeach_offensive_us": "Omaha Off. (US)",
-        "omahabeach_warfare_night": "Omaha (Night)",
-        "omahabeach_warfare": "Omaha",
-        "purpleheartlane_offensive_ger": "PHL Off. (GER)",
-        "purpleheartlane_offensive_us": "PHL Off. (US)",
-        "purpleheartlane_warfare_night": "PHL (Night)",
-        "purpleheartlane_warfare": "PHL",
-        "remagen_offensive_ger": "Remagen Off. (GER)",
-        "remagen_offensive_us": "Remagen Off. (US)",
-        "remagen_warfare_night": "Remagen (Night)",
-        "remagen_warfare": "Remagen",
-        "stalingrad_offensive_ger": "Stalingrad Off. (GER)",
-        "stalingrad_offensive_rus": "Stalingrad Off. (RUS)",
-        "stalingrad_warfare_night": "Stalingrad (Night)",
-        "stalingrad_warfare": "Stalingrad",
-        "stmariedumont_off_ger": "SMDM Off. (GER)",
-        "stmariedumont_off_us": "SMDM Off. (US)",
-        "stmariedumont_warfare": "SMDM",
-        "stmereeglise_offensive_ger": "SME Off. (GER)",
-        "stmereeglise_offensive_us": "SME Off. (US)",
-        "stmereeglise_warfare_night": "SME (Night)",
-        "stmereeglise_warfare": "SME",
-        "utahbeach_offensive_ger": "Utah Off. (GER)",
-        "utahbeach_offensive_us": "Utah Off. (US)",
-        "utahbeach_warfare_night": "Utah (Night)",
-        "utahbeach_warfare": "Utah",
-    }
-)
-
-NO_MOD_LONG_HUMAN_MAP_NAMES = CaseInsensitiveDict(
-    {
-        "ELA_S_1942_P_Skirmish": "El Alamein Dawn Skirmish",
-        "ELA_S_1942_Night_P_Skirmish": "El Alamein Night Skirmish",
-        "DRL_S_1944_P_Skirmish": "Driel Dawn Skirmish",
-        "DRL_S_1944_Night_P_Skirmish": "Driel Night Skirmish",
-        "DRL_S_1944_Day_P_Skirmish": "Driel Day Skirmish",
-        "carentan_offensive_ger": "Carentan (GER)",
-        "carentan_offensive_us": "Carentan (US)",
-        "carentan_warfare_night": "Carentan (Night)",
-        "carentan_warfare": "Carentan",
-        "driel_offensive_ger": "Driel (GER)",
-        "driel_offensive_us": "Driel (UK)",
-        "driel_warfare_night": "Driel (Night)",
-        "driel_warfare": "Driel",
-        "elalamein_offensive_CW": "El Alamein (UK)",
-        "elalamein_offensive_ger": "El Alamein (GER)",
-        "elalamein_warfare_night": "El Alamein (Night)",
-        "elalamein_warfare": "El Alamein",
-        "foy_offensive_ger": "Foy (GER)",
-        "foy_offensive_us": "Foy (US)",
-        "foy_warfare_night": "Foy (Night)",
-        "foy_warfare": "Foy",
-        "hill400_offensive_ger": "Hill 400 (GER)",
-        "hill400_offensive_us": "Hill 400 (US)",
-        "hill400_warfare_night": "Hill 400 (Night)",
-        "hill400_warfare": "Hill 400",
-        "hurtgenforest_offensive_ger": "Hürtgen Forest (GER)",
-        "hurtgenforest_offensive_us": "Hürtgen Forest (US)",
-        "hurtgenforest_warfare_V2_night": "Hürtgen Forest (Night)",
-        "hurtgenforest_warfare_V2": "Hürtgen Forest",
-        "kharkov_offensive_ger": "Kharkov (GER)",
-        "kharkov_offensive_rus": "Kharkov (RUS)",
-        "kharkov_warfare_night": "Kharkov (Night)",
-        "kharkov_warfare": "Kharkov",
-        "kursk_offensive_ger": "Kursk (GER)",
-        "kursk_offensive_rus": "Kursk (RUS)",
-        "kursk_warfare_night": "Kursk (Night)",
-        "kursk_warfare": "Kursk",
-        "omahabeach_offensive_ger": "Omaha Beach (GER)",
-        "omahabeach_offensive_us": "Omaha Beach (US)",
-        "omahabeach_warfare_night": "Omaha Beach (Night)",
-        "omahabeach_warfare": "Omaha Beach",
-        "purpleheartlane_offensive_ger": "Purple Heart Lane (GER)",
-        "purpleheartlane_offensive_us": "Purple Heart Lane (US)",
-        "purpleheartlane_warfare_night": "Purple Heart Lane (Night)",
-        "purpleheartlane_warfare": "Purple Heart Lane",
-        "remagen_offensive_ger": "Remagen (GER)",
-        "remagen_offensive_us": "Remagen (US)",
-        "remagen_warfare_night": "Remagen (Night)",
-        "remagen_warfare": "Remagen",
-        "stalingrad_offensive_ger": "Stalingrad (GER)",
-        "stalingrad_offensive_rus": "Stalingrad (RUS)",
-        "stalingrad_warfare_night": "Stalingrad (Night)",
-        "stalingrad_warfare": "Stalingrad",
-        "stmariedumont_off_ger": "Ste Marie du Mont (GER)",
-        "stmariedumont_off_us": "Ste Marie du Mont (US)",
-        "stmariedumont_warfare": "Ste Marie du Mont",
-        "stmereeglise_offensive_ger": "Ste Mère Église (GER)",
-        "stmereeglise_offensive_us": "Ste Mère Église (US)",
-        "stmereeglise_warfare_night": "Ste Mère Église (Night)",
-        "stmereeglise_warfare": "Ste Mère Église",
-        "utahbeach_offensive_ger": "Utah Beach (GER)",
-        "utahbeach_offensive_us": "Utah Beach (US)",
-        "utahbeach_warfare_night": "Utah Beach (Night)",
-        "utahbeach_warfare": "Utah Beach",
-    }
-)
-
-NO_MOD_SHORT_HUMAN_MAP_NAMES = CaseInsensitiveDict(
-    {
-        "ELA_S_1942_P_Skirmish": "El Alamein Dawn Skirm",
-        "ELA_S_1942_Night_P_Skirmish": "El Alamein Night Skirm",
-        "DRL_S_1944_P_Skirmish": "Driel Dawn Skirm",
-        "DRL_S_1944_Night_P_Skirmish": "Driel Night Skirm",
-        "DRL_S_1944_Day_P_Skirmish": "Driel Day Skirm",
-        "carentan_offensive_ger": "Carentan (GER)",
-        "carentan_offensive_us": "Carentan (US)",
-        "carentan_warfare_night": "Carentan (Night)",
-        "carentan_warfare": "Carentan",
-        "driel_offensive_ger": "Driel (GER)",
-        "driel_offensive_us": "Driel (UK)",
-        "driel_warfare_night": "Driel (Night)",
-        "driel_warfare": "Driel",
-        "elalamein_offensive_CW": "El Alamein (UK)",
-        "elalamein_offensive_ger": "El Alamein (GER)",
-        "elalamein_warfare_night": "El Alamein (Night)",
-        "elalamein_warfare": "El Alamein",
-        "foy_offensive_ger": "Foy (GER)",
-        "foy_offensive_us": "Foy (US)",
-        "foy_warfare_night": "Foy (Night)",
-        "foy_warfare": "Foy",
-        "hill400_offensive_ger": "Hill400 (GER)",
-        "hill400_offensive_us": "Hill400 (US)",
-        "hill400_warfare_night": "Hill400 (Night)",
-        "hill400_warfare": "Hill400",
-        "hurtgenforest_offensive_ger": "Hürtgen (GER)",
-        "hurtgenforest_offensive_us": "Hürtgen (US)",
-        "hurtgenforest_warfare_V2_night": "Hürtgen (Night)",
-        "hurtgenforest_warfare_V2": "Hürtgen",
-        "kharkov_offensive_ger": "Kharkov (GER)",
-        "kharkov_offensive_rus": "Kharkov (RUS)",
-        "kharkov_warfare_night": "Kharkov (Night)",
-        "kharkov_warfare": "Kharkov",
-        "kursk_offensive_ger": "Kursk (GER)",
-        "kursk_offensive_rus": "Kursk (RUS)",
-        "kursk_warfare_night": "Kursk (Night)",
-        "kursk_warfare": "Kursk",
-        "omahabeach_offensive_ger": "Omaha (GER)",
-        "omahabeach_offensive_us": "Omaha (US)",
-        "omahabeach_warfare_night": "Omaha (Night)",
-        "omahabeach_warfare": "Omaha",
-        "purpleheartlane_offensive_ger": "PHL (GER)",
-        "purpleheartlane_offensive_us": "PHL (US)",
-        "purpleheartlane_warfare_night": "PHL (Night)",
-        "purpleheartlane_warfare": "PHL",
-        "remagen_offensive_ger": "Remagen (GER)",
-        "remagen_offensive_us": "Remagen (US)",
-        "remagen_warfare_night": "Remagen (Night)",
-        "remagen_warfare": "Remagen",
-        "stalingrad_offensive_ger": "Stalingrad (GER)",
-        "stalingrad_offensive_rus": "Stalingrad (RUS)",
-        "stalingrad_warfare_night": "Stalingrad (Night)",
-        "stalingrad_warfare": "Stalingrad",
-        "stmariedumont_off_ger": "SMDM (GER)",
-        "stmariedumont_off_us": "SMDM (US)",
-        "stmariedumont_warfare": "SMDM",
-        "stmereeglise_offensive_ger": "SME (GER)",
-        "stmereeglise_offensive_us": "SME (US)",
-        "stmereeglise_warfare_night": "SME (Night)",
-        "stmereeglise_warfare": "SME",
-        "utahbeach_offensive_ger": "Utah (GER)",
-        "utahbeach_offensive_us": "Utah (US)",
-        "utahbeach_warfare_night": "Utah (Night)",
-        "utahbeach_warfare": "Utah",
-    }
-)
-
 T = TypeVar("T")
+
+# Represents a redis stream ID, these are by default
+# the unix timestamp of when the element was added
+# with a 0 indexed sequence number when there are
+# multiple entries at the same timestamp
+# ex: "1526919030474-0"
+StreamID = str | None
+
+REDIS_STREAM_OUT_OF_ORDER = (
+    "The ID specified in XADD is equal or smaller than the target stream top item"
+)
+REDIS_STREAM_INVALID_ID = "Invalid stream ID specified as stream command argument"
+
+
+class StreamOlderElement(Exception):
+    """Raised when trying to add an element older than the newest element"""
+
+
+class StreamInvalidID(Exception):
+    """Raised when a stream does not contain the requested element"""
+
+
+class StreamNoElements(Exception):
+    """Raised when a stream query returns no elements"""
+
+
+class Stream(Generic[T]):
+    def __init__(
+        self, key, serializer=orjson.dumps, deserializer=orjson.loads, maxlen=10_000
+    ) -> None:
+        self.red = redis.StrictRedis(connection_pool=get_redis_pool())
+        self.key = key
+        self.serializer = serializer
+        self.deserializer = deserializer
+        self.maxlen = maxlen
+
+    def _to_compatible_object(self, obj: dict[Any, Any]) -> T:
+        return {self.serializer(k): self.serializer(v) for k, v in obj.items()}
+
+    def _from_compatible_object(self, raw_obj: dict[bytes, bytes]):
+        return {self.deserializer(k): self.deserializer(v) for k, v in raw_obj.items()}
+
+    def __len__(self) -> int:
+        return self.red.xlen(self.key)  # type: ignore
+
+    def __getitem__(self, key: StreamID) -> tuple[StreamID, T]:
+        id_: bytes
+        obj: dict[bytes, bytes]
+        try:
+            id_, obj = next(self.range(min_id=key, max_id=key))
+            return (id_.decode(), self._to_compatible_object(obj))
+        except IndexError:
+            raise KeyError(key)
+
+    def add(
+        self,
+        obj: dict[Any, Any],
+        custom_id: str | None = None,
+        approximate_size=True,
+        make_non_existent_stream=True,
+        min_id_to_retain: StreamID | None = None,
+        limit: int | None = None,
+    ) -> StreamID:
+        """Serialize and add the given object returning its redis stream ID"""
+        custom_id = custom_id or "*"
+
+        # Redis can only store key/value pairs that are
+        # bytes | memoryview | str | int | float
+        # so we serialize keys and values when adding
+        # and deserialize when returning
+        compatible_dict = self._to_compatible_object(obj)
+
+        try:
+            added_id: StreamID = self.red.xadd(
+                name=self.key,
+                fields=compatible_dict,
+                id=custom_id,
+                maxlen=self.maxlen,
+                approximate=approximate_size,
+                nomkstream=not make_non_existent_stream,
+                minid=min_id_to_retain,
+                limit=limit,
+            )
+            return added_id.decode()
+        except redis.exceptions.ResponseError as e:
+            if e.args[0] == REDIS_STREAM_OUT_OF_ORDER:
+                raise StreamOlderElement
+            else:
+                raise
+
+    def delete(self, *ids) -> int:
+        """Delete ids from the stream returning the number deleted"""
+        return self.red.xdel(self.key, *ids)
+
+    def read(
+        self,
+        last_id: str | None = None,
+        count: int | None = None,
+        block_ms: int | None = None,
+    ):
+        if last_id is None:
+            last_id = "$"
+
+        try:
+            response = self.red.xread(
+                streams={self.key: last_id}, count=count, block=block_ms
+            )
+        except redis.exceptions.ResponseError:
+            raise StreamInvalidID(REDIS_STREAM_INVALID_ID)
+
+        body: dict[bytes, bytes]
+        if response:
+            body = response[0][1]
+            id_: bytes
+            return [
+                (id_.decode(), self._from_compatible_object(obj)) for id_, obj in body
+            ]
+        else:
+            raise StreamNoElements
+
+    def range(
+        self, min_id="-", max_id="+", count: int | None = None, exclusive_start=False
+    ):
+        if exclusive_start:
+            min_id = "(" + min_id
+
+        response: Iterable[tuple[bytes, dict[bytes, bytes]]] = self.red.xrange(
+            self.key, min=min_id, max=max_id, count=count
+        )
+        id_: bytes
+        body: dict[bytes, bytes]
+        if response:
+            for id_, body in response:
+                yield id_.decode(), self._from_compatible_object(body)
+
+    def rev_range(
+        self, max_id="+", min_id="-", count: int | None = None, exclusive_start=False
+    ):
+        if exclusive_start:
+            max_id = "(" + max_id
+
+        response: Iterable[tuple[bytes, dict[bytes, bytes]]] = self.red.xrevrange(
+            self.key, max=max_id, min=min_id, count=count
+        )
+
+        id_: bytes
+        body: dict[bytes, bytes]
+        if response:
+            for id_, body in response:
+                yield id_.decode(), self._from_compatible_object(body)
+
+    def info(self, full: bool = False):
+        response = self.red.xinfo_stream(self.key, full=full)
+        return response
+
+    def head(self) -> tuple[StreamID, T] | None:
+        try:
+            id_, obj = list(self.range(count=1))[0]
+            return id_, obj
+        except IndexError:
+            return None
+
+    def tail(self) -> tuple[StreamID, T] | None:
+        try:
+            id_, obj = list(self.rev_range(count=1))[0]
+            return id_, obj
+        except IndexError:
+            return None
 
 
 class FixedLenList(Generic[T]):
     def __init__(
-        self, key, max_len=100, serializer=json.dumps, deserializer=json.loads
+        self, key, max_len=100, serializer=orjson.dumps, deserializer=orjson.loads
     ):
         self.red = redis.StrictRedis(connection_pool=get_redis_pool())
         self.max_len = max_len
@@ -441,7 +256,7 @@ class FixedLenList(Generic[T]):
     def update(self, index, obj):
         self.red.lset(self.key, index, self.serializer(obj))
 
-    def __getitem__(self, index) -> T:
+    def __getitem__(self, index: slice | int) -> T:
         if isinstance(index, slice):
             if index.step:
                 raise ValueError("Step is not supported")

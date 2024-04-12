@@ -28,6 +28,7 @@ from rcon.user_config.name_kicks import NameKickUserConfig
 from rcon.user_config.rcon_connection_settings import RconConnectionSettingsUserConfig
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.scorebot import ScorebotUserConfig
+from rcon.user_config.log_stream import LogStreamUserConfig
 from rcon.user_config.standard_messages import (
     StandardBroadcastMessagesUserConfig,
     StandardPunishmentMessagesUserConfig,
@@ -2533,6 +2534,82 @@ def validate_chat_commands_config(request):
 def set_chat_commands_config(request):
     command_name = "set_chat_commands_config"
     cls = ChatCommandsUserConfig
+    data = _get_data(request)
+
+    response = _audit_user_config_differences(
+        cls, data, command_name, request.user.username
+    )
+
+    if response:
+        return response
+
+    return api_response(
+        result=True,
+        command=command_name,
+        arguments=data,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+@permission_required("api.can_view_log_stream_config", raise_exception=True)
+def get_log_stream_config(request):
+    command_name = "get_log_stream_config"
+
+    try:
+        config = LogStreamUserConfig.load_from_db()
+    except Exception as e:
+        logger.exception(e)
+        return api_response(command=command_name, error=str(e), failed=True)
+
+    return api_response(
+        result=config.model_dump(),
+        command=command_name,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+def describe_log_stream_config(request):
+    command_name = "describe_log_stream_config"
+
+    return api_response(
+        result=LogStreamUserConfig.model_json_schema(),
+        command=command_name,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+@permission_required("api.can_change_log_stream_config", raise_exception=True)
+def validate_log_stream_config(request) -> JsonResponse:
+    command_name = "validate_log_stream_config"
+    data = _get_data(request)
+
+    response = _validate_user_config(
+        LogStreamUserConfig, data=data, command_name=command_name, dry_run=True
+    )
+
+    if response:
+        return response
+
+    return api_response(
+        result=True,
+        command=command_name,
+        arguments=data,
+        failed=False,
+    )
+
+
+@csrf_exempt
+@login_required()
+@permission_required("api.can_change_log_stream_config", raise_exception=True)
+def set_log_stream_config(request):
+    command_name = "set_log_stream_config"
+    cls = LogStreamUserConfig
     data = _get_data(request)
 
     response = _audit_user_config_differences(

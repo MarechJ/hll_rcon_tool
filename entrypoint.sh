@@ -31,7 +31,6 @@ then
       exit 0
   fi
 
-  ./manage.py register_api
   python -m rcon.user_config.seed_db
   cd rconweb 
   ./manage.py collectstatic --noinput
@@ -41,6 +40,7 @@ then
     echo "from django.contrib.auth.models import User; User.objects.create_superuser('admin', 'admin@example.com', 'admin') if not User.objects.filter(username='admin').first() else None" | python manage.py shell
   fi
   export LOGGING_FILENAME=api_$SERVER_NUMBER.log
+  daphne -b 0.0.0.0 -p 8001 rconweb.asgi:application &
   # Successfully running gunicorn will create the pid file which is how Docker determines the container is healthy
   gunicorn --preload --pid gunicorn.pid -w $NB_API_WORKERS -k gthread --threads $NB_API_THREADS -t 120 -b 0.0.0.0 rconweb.wsgi
   cd ..

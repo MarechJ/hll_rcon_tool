@@ -621,3 +621,58 @@ class InvalidLogTypeError(ValueError):
             "log_type": self.log_type,
             "allowed_log_types": [log for log in AllLogTypes],
         }
+
+
+class _PublicInfoCurrentMapType(TypedDict):
+    just_name: str
+    human_name: str
+    name: str
+    start: int
+
+
+class _PublicInfoNextMapType(TypedDict):
+    just_name: str
+    human_name: str
+    name: str
+    start: int | None
+
+
+class _PublicInfoPlayerType(TypedDict):
+    allied: int
+    axis: int
+
+
+class _PublicInfoScoreType(TypedDict):
+    allied: int
+    axis: int
+
+
+class _PublicInfoVoteStatusType(TypedDict):
+    total_votes: int
+    winning_maps: list[str]
+
+
+class _PublicInfoNameType(TypedDict):
+    name: str
+    short_name: str
+    public_stats_port: int
+    public_stats_port_https: int
+
+
+class PublicInfoType(TypedDict):
+    """TypedDict for rcon.views.public_info"""
+
+    current_map: _PublicInfoCurrentMapType
+    next_map: _PublicInfoNextMapType
+    player_count: int
+    max_player_count: int
+    players: _PublicInfoPlayerType
+    score: _PublicInfoScoreType
+    raw_time_remaining: str
+    vote_status: _PublicInfoVoteStatusType
+    name: _PublicInfoNameType
+
+
+class VoteOverview(TypedDict):
+    total_votes: int
+    winning_maps: list[tuple[str, int]]

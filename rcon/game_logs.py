@@ -8,7 +8,8 @@ import unicodedata
 from collections import defaultdict
 from functools import partial
 from typing import Callable, DefaultDict, Dict, Iterable
-
+from collections import defaultdict
+import redis.exceptions
 import discord_webhook
 from discord.utils import escape_markdown
 from pydantic import HttpUrl
@@ -31,13 +32,22 @@ from rcon.types import (
     PlayerStat,
     StructuredLogLineWithMetaData,
 )
+from rcon.user_config.log_stream import LogStreamUserConfig
 from rcon.user_config.ban_tk_on_connect import BanTeamKillOnConnectUserConfig
 from rcon.user_config.log_line_webhooks import (
     DiscordMentionWebhook,
     LogLineWebhookUserConfig,
 )
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
-from rcon.utils import FixedLenList, MapsHistory
+from rcon.utils import (
+    FixedLenList,
+    MapsHistory,
+    get_server_number,
+    Stream,
+    StreamOlderElement,
+    StreamID,
+    StreamNoElements,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -238,6 +248,107 @@ def load_generic_hooks():
 MAX_FAILS = 10
 
 
+class LogStream:
+    # Each CRCON uses its own redis database, no need for keys to be unique across servers
+    def __init__(
+        self,
+        rcon: Rcon | None = None,
+        red: redis.StrictRedis | None = None,
+        key="log_stream",
+        maxlen: int | None = None,
+    ) -> None:
+        config = LogStreamUserConfig.load_from_db()
+        self.rcon = rcon or get_rcon()
+        self.red = red or get_redis_client()
+        self.log_history_key = key
+        self.log_stream = Stream(key=key, maxlen=maxlen or config.stream_size)
+
+    def clear(self):
+        logger.info("Clearing stream")
+        self.red.delete(self.log_history_key)
+
+    def bucket_by_timestamp(self, logs: list[StructuredLogLineWithMetaData]):
+        """Organize logs by their game server timestamp
+
+        Redis streams must be in sequential order, we use custom keys that are the
+        unix timestamp of the time the log occurred on the game server, but each
+        timestamp can have multiple logs.
+
+        Return each unique timestamp and the logs that occured at that time
+        """
+        # logs has the newest logs first, oldest last
+        buckets: dict[datetime.datetime, list[StructuredLogLineWithMetaData]] = (
+            defaultdict(list)
+        )
+
+        ordered_logs: list[
+            tuple[datetime.datetime, list[StructuredLogLineWithMetaData]]
+        ] = []
+
+        for log in reversed(logs):
+            timestamp = datetime.datetime.fromtimestamp(log["timestamp_ms"] / 1000)
+            buckets[timestamp].append(log)
+
+        for timestamp in buckets.keys():
+            ordered_logs.append((timestamp, buckets[timestamp]))
+
+        return ordered_logs
+
+    def run(
+        self,
+        loop_frequency_secs: int | None = None,
+        initial_since_min: int | None = None,
+        active_since_min: int | None = None,
+    ):
+        """Poll the game server and add new logs to the stream"""
+
+        config = LogStreamUserConfig.load_from_db()
+
+        since_min = initial_since_min or config.startup_since_mins
+        logs = self.rcon.get_structured_logs(since_min_ago=since_min)["logs"]
+        since_min = active_since_min or config.refresh_since_mins
+
+        last_seen_id = None
+        while True:
+            config = LogStreamUserConfig.load_from_db()
+            if not config.enabled:
+                break
+            ordered_logs = self.bucket_by_timestamp(logs)
+            new_logs = 0
+            for timestamp, log_bucket in ordered_logs:
+                for idx, log in enumerate(log_bucket):
+                    timestamp_ms = log["timestamp_ms"] // 1000
+                    stream_id = f"{timestamp_ms}-{idx}"
+                    try:
+                        last_seen_id = self.log_stream.add(custom_id=stream_id, obj=log)
+                        new_logs += 1
+                    except StreamOlderElement:
+                        continue
+
+            if new_logs:
+                logger.info(f"Added {new_logs} new logs {last_seen_id=}")
+            time.sleep(loop_frequency_secs or config.refresh_frequency_sec)
+            logs = self.rcon.get_structured_logs(since_min_ago=since_min)["logs"]
+
+    def logs_since(
+        self, last_seen: StreamID | None = None, block_ms=500
+    ) -> list[tuple[StreamID, StructuredLogLineWithMetaData]]:
+        """Return a list of logs more recent than the last_seen ID"""
+        try:
+            if last_seen is None:
+                logs: list[tuple[StreamID, StructuredLogLineWithMetaData]] = [
+                    self.log_stream.tail()
+                ]
+            else:
+                logs: list[tuple[StreamID, StructuredLogLineWithMetaData]] = (
+                    self.log_stream.read(last_id=last_seen, block_ms=block_ms)
+                )
+            return logs
+        except StreamNoElements:
+            response: list[tuple[StreamID, StructuredLogLineWithMetaData]] = []
+            return response
+
+
 class LogLoop:
     log_history_key = "log_history"
 
@@ -251,7 +362,7 @@ class LogLoop:
 
     @staticmethod
     def get_log_history_list() -> FixedLenList:
-        return FixedLenList(key=LogLoop.log_history_key, max_len=100000)
+        return FixedLenList(key=LogLoop.log_history_key, max_len=100_000)
 
     def run(self, loop_frequency_secs=2, cleanup_frequency_minutes=10):
         since_min = 180
@@ -388,7 +499,7 @@ class LogRecorder:
     def __init__(self, dump_frequency_min=5, run_immediately=False):
         self.dump_frequency_min = dump_frequency_min
         self.run_immediately = run_immediately
-        self.server_id = os.getenv("SERVER_NUMBER")
+        self.server_id = get_server_number()
         if not self.server_id:
             raise ValueError("SERVER_NUMBER is not set, can't record logs")
 

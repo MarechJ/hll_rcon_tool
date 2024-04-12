@@ -9,7 +9,7 @@ from django.views.decorators.http import require_http_methods
 from rcon.models import Maps, enter_session
 from rcon.scoreboard import LiveStats, TimeWindowStats, get_cached_live_game_stats
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
-from rcon.utils import LONG_HUMAN_MAP_NAMES, map_name
+from rcon.maps import safe_get_map_name, parse_layer
 
 from .auth import api_response, login_required, stats_login_required
 from .views import _get_data
@@ -69,8 +69,8 @@ def get_scoreboard_maps(request):
                 "total": total,
                 "maps": [
                     dict(
-                        just_name=map_name(r.map_name),
-                        long_name=LONG_HUMAN_MAP_NAMES.get(r.map_name, r.map_name),
+                        just_name=parse_layer(r.map_name).map.id,
+                        long_name=safe_get_map_name(r.map_name),
                         **r.to_dict(),
                     )
                     for r in res

@@ -573,11 +573,7 @@ You will need to update your `compose.yaml` to have a definition for each extra 
 
 #### Multiple CRCON installations
 
-If you do not want to mix admin accounts and database data you can clone it multiple times in different directories (see below) and then set each of them up (and then set up as many game servers per CRCON that you choose).
-
-This makes more sense when you're sharing the server you host CRCON on with other communities.
-
-**Note**: When you run two or more CRCONs on the same machine, you will have redis/postgres port conflicts and will need to resolve these in your `.env` and compose files.
+Please [see the Wiki](https://github.com/MarechJ/hll_rcon_tool/wiki/Multiple-CRCON-Instances) for instructions on managing multiple installs on the same host machine.
 
 ## Building your own Docker images
 

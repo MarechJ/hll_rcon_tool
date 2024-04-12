@@ -54,6 +54,7 @@ import {
   ExpiredVIP,
   GTXNameChange,
   ChatCommands,
+  LogStream
 } from "./components/UserSettings/miscellaneous";
 
 const Live = ({ classes }) => {
@@ -390,8 +391,8 @@ function App() {
       ? hllNoBg
       : hll
     : themes[userTheme]
-    ? themes[userTheme]
-    : lightTheme;
+      ? themes[userTheme]
+      : lightTheme;
   const classes = useStyles();
 
   const Router = isEmbed ? BrowserRouter : HashRouter;
@@ -702,6 +703,17 @@ function App() {
                           setEndpoint="set_server_name_change_config"
                           validateEndpoint="validate_server_name_change_config"
                           describeEndpoint="describe_server_name_change_config"
+                        />
+                      </Grid>
+                    </Route>
+                    <Route path="/settings/log-stream">
+                      <Grid container spacing={2}>
+                        <LogStream
+                          description="Log Stream"
+                          getEndpoint="get_log_stream_config"
+                          setEndpoint="set_log_stream_config"
+                          validateEndpoint="validate_log_stream_config"
+                          describeEndpoint="describe_log_stream_config"
                         />
                       </Grid>
                     </Route>
