@@ -608,6 +608,9 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     rcon_api.validate_votekick_autotoggle_config: "api.can_change_votekick_autotoggle_config",
     rcon_api.validate_votemap_config: "api.can_change_votemap_config",
     rcon_api.validate_watchlist_discord_webhooks_config: "api.can_change_watchlist_discord_webhooks_config",
+    rcon_api.get_log_stream_config: "api.can_view_log_stream_config",
+    rcon_api.set_log_stream_config: "api.can_change_log_stream_config",
+    rcon_api.validate_log_stream_config: "api.can_change_log_stream_config",
 }
 
 PREFIXES_TO_EXPOSE = [
