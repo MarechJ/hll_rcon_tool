@@ -3,11 +3,11 @@ Django==4.2.10
 django-cors-headers==4.3.1
 redis==5.0.3
 sqlalchemy==2.0.29
-channels==4.0.0
+channels==4.1.0
 orjson==3.9.15
 simplejson==3.19.2
 psycopg2-binary
-sentry-sdk[django]==1.44.1
+sentry-sdk[django]==1.45.0
 python-dateutil==2.9.0.post0
 discord-webhook[async]
 requests==2.31.0
@@ -20,7 +20,7 @@ paramiko==3.4.0
 ftpretty==0.4.0
 pytz>=2023.3
 pandas>=1.4.1,<2.0.0
-pydantic==2.6.4
+pydantic==2.7.0
 discord.py==2.3.2
 # django-directory
 # django-dirctory is currently incompatible with Django 4.0+, PR is pending to fix django-directory upstream
