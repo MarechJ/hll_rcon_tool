@@ -7,9 +7,9 @@ from threading import Timer
 from typing import Final
 
 from discord_webhook import DiscordEmbed
-from discord.utils import escape_markdown
 
 import rcon.steam_utils as steam_utils
+from discord.utils import escape_markdown
 from rcon.cache_utils import invalidates
 from rcon.commands import CommandFailedError, HLLServerError
 from rcon.discord import (
@@ -25,6 +25,7 @@ from rcon.game_logs import (
     on_match_end,
     on_match_start,
 )
+from rcon.maps import LOG_MAP_NAMES_TO_MAP, UNKNOWN_MAP_NAME
 from rcon.message_variables import format_message_string, populate_message_variables
 from rcon.models import enter_session
 from rcon.player_history import (
@@ -58,7 +59,6 @@ from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.real_vip import RealVipUserConfig
 from rcon.user_config.vac_game_bans import VacGameBansUserConfig
 from rcon.user_config.webhooks import CameraWebhooksUserConfig
-from rcon.maps import UNKNOWN_MAP_NAME, LOG_MAP_NAMES_TO_MAP
 from rcon.utils import (
     DefaultStringFormat,
     MapsHistory,
@@ -291,7 +291,7 @@ def ban_if_blacklisted(rcon: Rcon, steam_id_64, name):
                     player.blacklist.reason,
                 )
                 rcon.do_perma_ban(
-                    player=name,
+                    player_name=name,
                     reason=player.blacklist.reason,
                     by=f"BLACKLIST: {player.blacklist.by}",
                 )
@@ -389,7 +389,7 @@ def ban_if_has_vac_bans(rcon: Rcon, steam_id_64, name):
                 str(player),
                 bans.get("DaysSinceLastBan"),
             )
-            rcon.do_perma_ban(player=name, reason=reason, by="VAC BOT")
+            rcon.do_perma_ban(player_name=name, reason=reason, by="VAC BOT")
 
             try:
                 audit_params = dict(
@@ -472,9 +472,9 @@ def update_player_steaminfo_on_connect(rcon, struct_log, _, steam_id_64: str):
         )
 
 
-pendingTimers: dict[str, list[tuple[RconInvalidNameActionType | None, Timer]]] = (
-    defaultdict(list)
-)
+pendingTimers: dict[
+    str, list[tuple[RconInvalidNameActionType | None, Timer]]
+] = defaultdict(list)
 
 
 @on_connected()

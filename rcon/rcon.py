@@ -387,14 +387,14 @@ class Rcon(ServerCtl):
         return False
 
     @ttl_cache(ttl=60 * 60 * 24, cache_falsy=False)
-    def get_player_info(self, player, can_fail=False):
+    def get_player_info(self, player_name, can_fail=False):
         try:
             try:
-                raw = super().get_player_info(player, can_fail=can_fail)
+                raw = super().get_player_info(player_name, can_fail=can_fail)
                 name, steam_id_64, *rest = raw.split("\n")
             except (CommandFailedError, Exception):
                 sleep(2)
-                name = player
+                name = player_name
                 steam_id_lookup: PlayerIdsType = self.get_playerids(as_dict=True)  # type: ignore
                 steam_id_64 = steam_id_lookup.get(name)
             if not steam_id_64:
@@ -404,15 +404,15 @@ class Rcon(ServerCtl):
 
         except (CommandFailedError, ValueError):
             # Making that debug instead of exception as it's way to spammy
-            logger.exception("Can't get player info for %s", player)
+            logger.exception("Can't get player info for %s", player_name)
             # logger.exception("Can't get player info for %s", player)
             return {}
         name = name.split(": ", 1)[-1]
         steam_id = steam_id_64.split(": ", 1)[-1]
-        if name != player:
+        if name != player_name:
             logger.error(
                 "get_player_info('%s') returned for a different name: %s %s",
-                player,
+                player_name,
                 name,
                 steam_id,
             )
@@ -425,8 +425,8 @@ class Rcon(ServerCtl):
         }
 
     @ttl_cache(ttl=2, cache_falsy=False)
-    def get_detailed_player_info(self, player) -> GetDetailedPlayer:
-        raw = super().get_player_info(player)
+    def get_detailed_player_info(self, player_name) -> GetDetailedPlayer:
+        raw = super().get_player_info(player_name)
         if not raw:
             raise CommandFailedError("Got bad data")
 
@@ -443,7 +443,7 @@ class Rcon(ServerCtl):
 
         """
 
-        return parse_raw_player_info(raw, player)
+        return parse_raw_player_info(raw, player_name)
 
     @ttl_cache(ttl=60 * 10)
     def get_admin_ids(self) -> list[AdminType]:
@@ -711,17 +711,17 @@ class Rcon(ServerCtl):
 
     def do_message_player(
         self,
-        player=None,
+        player_name=None,
         steam_id_64=None,
         message: str = "",
         by: str = "",
         save_message: bool = False,
     ) -> str:
-        res = super().do_message_player(player, steam_id_64, message)
+        res = super().do_message_player(player_name, steam_id_64, message)
         if save_message:
             safe_save_player_action(
                 rcon=self,
-                player_name=player,
+                player_name=player_name,
                 action_type="MESSAGE",
                 reason=message,
                 by=by,
@@ -1098,26 +1098,30 @@ class Rcon(ServerCtl):
         with invalidates(self.get_profanities):
             return super().do_ban_profanities(",".join(profanities))
 
-    def do_punish(self, player, reason, by) -> str:
-        res = super().do_punish(player, reason)
+    def do_punish(self, player_name, reason, by) -> str:
+        res = super().do_punish(player_name, reason)
         safe_save_player_action(
-            rcon=self, player_name=player, action_type="PUNISH", reason=reason, by=by
+            rcon=self,
+            player_name=player_name,
+            action_type="PUNISH",
+            reason=reason,
+            by=by,
         )
         return res
 
-    def do_switch_player_now(self, player, by) -> str:
-        return super().do_switch_player_now(player)
+    def do_switch_player_now(self, player_name, by) -> str:
+        return super().do_switch_player_now(player_name)
 
-    def do_switch_player_on_death(self, player, by) -> str:
-        return super().do_switch_player_on_death(player)
+    def do_switch_player_on_death(self, player_name, by) -> str:
+        return super().do_switch_player_on_death(player_name)
 
-    def do_kick(self, player, reason, by, steam_id_64: str | None = None) -> str:
+    def do_kick(self, player_name, reason, by, steam_id_64: str | None = None) -> str:
         with invalidates(Rcon.get_players):
-            res = super().do_kick(player, reason)
+            res = super().do_kick(player_name, reason)
 
         safe_save_player_action(
             rcon=self,
-            player_name=player,
+            player_name=player_name,
             action_type="KICK",
             reason=reason,
             by=by,
@@ -1126,20 +1130,20 @@ class Rcon(ServerCtl):
         return res
 
     def do_temp_ban(
-        self, player=None, steam_id_64=None, duration_hours=2, reason="", by=""
+        self, player_name=None, steam_id_64=None, duration_hours=2, reason="", by=""
     ) -> str:
         with invalidates(Rcon.get_players, Rcon.get_temp_bans):
-            if player and re.match(r"\d+", player):
-                info = self.get_player_info(player)
+            if player_name and re.match(r"\d+", player_name):
+                info = self.get_player_info(player_name)
                 steam_id_64 = info.get(STEAMID, None)
 
             res = super().do_temp_ban(
-                player, steam_id_64, duration_hours, reason, admin_name=by
+                player_name, steam_id_64, duration_hours, reason, admin_name=by
             )
 
             safe_save_player_action(
                 rcon=self,
-                player_name=player,
+                player_name=player_name,
                 action_type="TEMPBAN",
                 reason=reason,
                 by=by,
@@ -1170,16 +1174,16 @@ class Rcon(ServerCtl):
         with invalidates(Rcon.get_perma_bans):
             return super().do_remove_perma_ban(ban_log)
 
-    def do_perma_ban(self, player=None, steam_id_64=None, reason="", by="") -> str:
+    def do_perma_ban(self, player_name=None, steam_id_64=None, reason="", by="") -> str:
         with invalidates(Rcon.get_players, Rcon.get_perma_bans):
-            if player and re.match(r"\d+", player):
-                info = self.get_player_info(player)
+            if player_name and re.match(r"\d+", player_name):
+                info = self.get_player_info(player_name)
                 steam_id_64 = info.get(STEAMID, None)
 
-            res = super().do_perma_ban(player, steam_id_64, reason, admin_name=by)
+            res = super().do_perma_ban(player_name, steam_id_64, reason, admin_name=by)
             safe_save_player_action(
                 rcon=self,
-                player_name=player,
+                player_name=player_name,
                 action_type="PERMABAN",
                 reason=reason,
                 by=by,
@@ -1189,7 +1193,7 @@ class Rcon(ServerCtl):
                 # TODO: this will never work when banning by name because they're already removed
                 # from the server before you can get their steam ID
                 if not steam_id_64:
-                    info = self.get_player_info(player)
+                    info = self.get_player_info(player_name)
                     steam_id_64 = info["steam_id_64"]
                 # TODO add author
                 add_player_to_blacklist(steam_id_64, reason, by=by)

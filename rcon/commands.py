@@ -407,14 +407,14 @@ class ServerCtl:
             logger.exception("Bad playerinfo data")
             return False
 
-    def get_player_info(self, player, can_fail=True) -> str:
-        data = self._str_request(f"playerinfo {player}", can_fail=can_fail)
-        if not self._is_info_correct(player, data):
-            data = self._str_request(f"playerinfo {player}", can_fail=can_fail)
-        if not self._is_info_correct(player, data):
+    def get_player_info(self, player_name, can_fail=True) -> str:
+        data = self._str_request(f"playerinfo {player_name}", can_fail=can_fail)
+        if not self._is_info_correct(player_name, data):
+            data = self._str_request(f"playerinfo {player_name}", can_fail=can_fail)
+        if not self._is_info_correct(player_name, data):
             raise BrokenHllConnection() from CommandFailedError(
                 "The game server is returning the wrong player info for %s we got %s",
-                player,
+                player_name,
                 data,
             )
         return data
@@ -574,11 +574,11 @@ class ServerCtl:
     def do_reset_votekick_threshold(self) -> str:
         return self._str_request(f"resetvotekickthreshold", log_info=True)
 
-    def do_switch_player_on_death(self, player) -> str:
-        return self._str_request(f"switchteamondeath {player}", log_info=True)
+    def do_switch_player_on_death(self, player_name) -> str:
+        return self._str_request(f"switchteamondeath {player_name}", log_info=True)
 
-    def do_switch_player_now(self, player) -> str:
-        return self._str_request(f"switchteamnow {player}", log_info=True)
+    def do_switch_player_now(self, player_name) -> str:
+        return self._str_request(f"switchteamnow {player_name}", log_info=True)
 
     def do_add_map_to_rotation(
         self,
@@ -602,12 +602,12 @@ class ServerCtl:
         return self._str_request(cmd, can_fail=False, log_info=True)
 
     @_escape_params
-    def do_punish(self, player, reason) -> str:
-        return self._str_request(f'punish "{player}" "{reason}"', log_info=True)
+    def do_punish(self, player_name, reason) -> str:
+        return self._str_request(f'punish "{player_name}" "{reason}"', log_info=True)
 
     @_escape_params
-    def do_kick(self, player, reason) -> str:
-        return self._str_request(f'kick "{player}" "{reason}"', log_info=True)
+    def do_kick(self, player_name, reason) -> str:
+        return self._str_request(f'kick "{player_name}" "{reason}"', log_info=True)
 
     @_escape_params
     def do_temp_ban(
@@ -659,9 +659,9 @@ class ServerCtl:
         return self._str_request(f"vipdel {steam_id_64}", log_info=True)
 
     @_escape_params
-    def do_message_player(self, player=None, steam_id_64=None, message="") -> str:
+    def do_message_player(self, player_name=None, steam_id_64=None, message="") -> str:
         return self._str_request(
-            f'message "{steam_id_64 or player}" {message}',
+            f'message "{steam_id_64 or player_name}" {message}',
             log_info=True,
         )
 

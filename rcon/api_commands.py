@@ -128,7 +128,7 @@ class RconAPI(Rcon):
         # Attempt to perma ban on the server for immediate removal
         try:
             self.do_perma_ban(
-                player=player_name,
+                player_name=player_name,
                 steam_id_64=steam_id_64,
                 reason=reason,
                 by=audit_name if audit_name else "",
