@@ -2,6 +2,7 @@ db_data/
 logs/
 servicediscovery/
 redis_data/
+docker-templates/
 *.yml
 *.log
 *.pyc

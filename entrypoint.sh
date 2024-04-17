@@ -32,7 +32,6 @@ then
   fi
 
   python -m rcon.user_config.seed_db
-  ./manage.py register_api
   cd rconweb 
   ./manage.py collectstatic --noinput
   # If DONT_SEED_ADMIN_USER is not set to any value

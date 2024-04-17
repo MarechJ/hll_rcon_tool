@@ -23,6 +23,9 @@ from sentry_sdk.integrations.logging import LoggingIntegration
 
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 
+HLL_MAINTENANCE_CONTAINER = os.getenv("HLL_MAINTENANCE_CONTAINER")
+
+
 try:
     TAG_VERSION = (
         run(["git", "describe", "--tags"], stdout=PIPE, stderr=PIPE)
