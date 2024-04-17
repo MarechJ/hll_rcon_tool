@@ -1,9 +1,9 @@
 ![Website](https://img.shields.io/website?down_color=red&up_color=orange&up_message=hllrcon.app&url=https%3A%2F%2Fhllrcon.app)
 ![Discord](https://img.shields.io/discord/685692524442026020?color=%237289da&label=discord)
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/marechj/hll_rcon_tool)
-![Docker Cloud Automated build](https://img.shields.io/docker/cloud/automated/maresh/hll_rcon)
-![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/maresh/hll_rcon)
-![Docker Pulls](https://img.shields.io/docker/pulls/maresh/hll_rcon)
+![Docker Cloud Automated build](https://img.shields.io/docker/cloud/automated/cericmathey/hll_rcon)
+![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/cericmathey/hll_rcon)
+![Docker Pulls](https://img.shields.io/docker/pulls/cericmathey/hll_rcon)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![zh doc](https://shields.io/badge/中文文档-8A2BE2)](README.zh.md)
 
@@ -292,7 +292,7 @@ CRCON现在已配置好可以启动并连接到您的HLL游戏服务器。不过
 # 回退到旧版本（出现问题时）
 
 在Docker Hub（或GitHub）上查看可用的版本号：  
-https://hub.docker.com/r/maresh/hll_rcon/tags  
+https://hub.docker.com/r/cericmathey/hll_rcon/tags  
 https://github.com/MarechJ/hll_rcon_tool/releases
 
 编辑您的.env文件，并将TAGGED_VERSION从latest更改为特定的标记版本。它必须与Docker Hub上的发布标记匹配，例如：

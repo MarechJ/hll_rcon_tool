@@ -201,7 +201,7 @@ def handle_new_match_start(rcon: Rcon, struct_log):
             try:
                 current_map = rcon.get_map().replace("_RESTART", "")
             except (CommandFailedError, HLLServerError):
-                current_map = "bla_"
+                current_map = UNKNOWN_MAP_NAME
                 logger.error("Unable to get current map")
 
         map_name_to_save = LOG_MAP_NAMES_TO_MAP.get(
@@ -261,7 +261,7 @@ def record_map_end(rcon: Rcon, struct_log):
     try:
         current_map = rcon.get_map()
     except (CommandFailedError, HLLServerError):
-        current_map = "bla_"
+        current_map = UNKNOWN_MAP_NAME
         logger.error("Unable to get current map")
 
     map_name = LOG_MAP_NAMES_TO_MAP.get(struct_log["sub_content"], UNKNOWN_MAP_NAME)
