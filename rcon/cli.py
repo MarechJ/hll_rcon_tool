@@ -170,7 +170,7 @@ def importvips(file, prefix):
     for line in file:
         line = line.strip()
         steamid, name = line.split(" ", 1)
-        ctl.do_add_vip(name=f"{prefix}{name}", steam_id_64=steamid)
+        ctl.do_add_vip(name=f"{prefix}{name}", player_id=steamid)
 
 
 @cli.command(name="clear_cache")

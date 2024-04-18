@@ -55,9 +55,12 @@ def test_ban_excluded_weapon(*args):
         },
     ]
 
-    with mock.patch("rcon.game_logs.Rcon") as rcon, mock.patch(
-        "rcon.game_logs.get_recent_logs", return_value={"logs": logs}
-    ) as get:
+    with (
+        mock.patch("rcon.game_logs.Rcon") as rcon,
+        mock.patch(
+            "rcon.game_logs.get_recent_logs", return_value={"logs": logs}
+        ) as get,
+    ):
         rcon.get_vips_ids = mock.MagicMock(return_value=[])
         auto_ban_if_tks_right_after_connection(rcon, tk_log)
         rcon.do_perma_ban.assert_not_called()
@@ -109,9 +112,12 @@ def test_ban_success(*args):
             has_flag=["✅"], is_vip=True, has_at_least_n_sessions=10
         ),
     )
-    with mock.patch("rcon.game_logs.Rcon") as rcon, mock.patch(
-        "rcon.game_logs.get_recent_logs", return_value={"logs": logs}
-    ) as get:
+    with (
+        mock.patch("rcon.game_logs.Rcon") as rcon,
+        mock.patch(
+            "rcon.game_logs.get_recent_logs", return_value={"logs": logs}
+        ) as get,
+    ):
         rcon.get_vips_ids = mock.MagicMock(return_value=[])
         auto_ban_if_tks_right_after_connection(rcon, tk_log, config)
         rcon.do_perma_ban.assert_called()
@@ -174,9 +180,12 @@ def test_ban_ignored_kill(*args):
             has_flag=["✅"], is_vip=True, has_at_least_n_sessions=10
         ),
     )
-    with mock.patch("rcon.game_logs.Rcon") as rcon, mock.patch(
-        "rcon.game_logs.get_recent_logs", return_value={"logs": logs}
-    ) as get:
+    with (
+        mock.patch("rcon.game_logs.Rcon") as rcon,
+        mock.patch(
+            "rcon.game_logs.get_recent_logs", return_value={"logs": logs}
+        ) as get,
+    ):
         rcon.get_vips_ids = mock.MagicMock(return_value=[])
         auto_ban_if_tks_right_after_connection(rcon, tk_log, config)
         rcon.do_perma_ban.assert_not_called()
@@ -241,9 +250,12 @@ def test_ban_count_one_death(*args):
         ),
     )
 
-    with mock.patch("rcon.game_logs.Rcon") as rcon, mock.patch(
-        "rcon.game_logs.get_recent_logs", return_value={"logs": logs}
-    ) as get:
+    with (
+        mock.patch("rcon.game_logs.Rcon") as rcon,
+        mock.patch(
+            "rcon.game_logs.get_recent_logs", return_value={"logs": logs}
+        ) as get,
+    ):
         rcon.get_vips_ids = mock.MagicMock(return_value=[])
         auto_ban_if_tks_right_after_connection(rcon, tk_log, config)
         rcon.do_perma_ban.assert_called()
@@ -320,9 +332,12 @@ def test_ban_ignored_2_death(*args):
         ),
     )
 
-    with mock.patch("rcon.game_logs.Rcon") as rcon, mock.patch(
-        "rcon.game_logs.get_recent_logs", return_value={"logs": logs}
-    ) as get:
+    with (
+        mock.patch("rcon.game_logs.Rcon") as rcon,
+        mock.patch(
+            "rcon.game_logs.get_recent_logs", return_value={"logs": logs}
+        ) as get,
+    ):
         rcon.get_vips_ids = mock.MagicMock(return_value=[])
         auto_ban_if_tks_right_after_connection(rcon, tk_log, config)
         rcon.do_perma_ban.assert_not_called()

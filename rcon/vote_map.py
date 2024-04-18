@@ -385,7 +385,7 @@ class VoteMap:
 
             try:
                 rcon.do_message_player(
-                    steam_id_64=steamid,
+                    player_id=steamid,
                     message=vote_map_message.format(
                         map_selection=self.format_map_vote(
                             selection=self.get_selection(),
@@ -425,16 +425,14 @@ class VoteMap:
                     player, struct_log["timestamp_ms"] // 1000, vote
                 )
             except InvalidVoteError:
-                rcon.do_message_player(
-                    steam_id_64=steam_id_64_1, message="Invalid vote."
-                )
+                rcon.do_message_player(player_id=steam_id_64_1, message="Invalid vote.")
                 if config.help_text:
                     rcon.do_message_player(
-                        steam_id_64=steam_id_64_1, message=config.help_text
+                        player_id=steam_id_64_1, message=config.help_text
                     )
             except VoteMapNoInitialised:
                 rcon.do_message_player(
-                    steam_id_64=steam_id_64_1,
+                    player_id=steam_id_64_1,
                     message="We can't register you vote at this time.\nVoteMap not initialised",
                 )
                 raise
@@ -443,7 +441,7 @@ class VoteMap:
                     msg = msg.format(
                         player_name=struct_log["player"], map_name=map_name
                     )
-                    rcon.do_message_player(steam_id_64=steam_id_64_1, message=msg)
+                    rcon.do_message_player(player_id=steam_id_64_1, message=msg)
             finally:
                 self.apply_results()
                 return config.enabled
@@ -453,14 +451,14 @@ class VoteMap:
             and config.help_text
         ):
             logger.info("Showing help %s", struct_log)
-            rcon.do_message_player(steam_id_64=steam_id_64_1, message=config.help_text)
+            rcon.do_message_player(player_id=steam_id_64_1, message=config.help_text)
             return config.enabled
 
         if re.match(r"(!votemap|!vm)$", message, re.IGNORECASE):
             logger.info("Showing selection %s", struct_log)
             vote_map_message = config.instruction_text
             rcon.do_message_player(
-                steam_id_64=steam_id_64_1,
+                player_id=steam_id_64_1,
                 message=vote_map_message.format(
                     map_selection=self.format_map_vote(
                         selection=self.get_selection(),
@@ -474,7 +472,7 @@ class VoteMap:
         if re.match(r"(!votemap|!vm)\s*never$", message, re.IGNORECASE):
             if not config.allow_opt_out:
                 rcon.do_message_player(
-                    steam_id_64=steam_id_64_1,
+                    player_id=steam_id_64_1,
                     message="You can't opt-out of vote map on this server",
                 )
                 return config.enabled
@@ -505,7 +503,7 @@ class VoteMap:
                 try:
                     sess.commit()
                     rcon.do_message_player(
-                        steam_id_64=steam_id_64_1, message="VoteMap Unsubscribed OK"
+                        player_id=steam_id_64_1, message="VoteMap Unsubscribed OK"
                     )
                 except Exception as e:
                     logger.exception("Unable to add optin. Already exists?")
@@ -540,13 +538,13 @@ class VoteMap:
                 try:
                     sess.commit()
                     rcon.do_message_player(
-                        steam_id_64=steam_id_64_1, message="VoteMap Subscribed OK"
+                        player_id=steam_id_64_1, message="VoteMap Subscribed OK"
                     )
                 except Exception as e:
                     logger.exception("Unable to update optin. Already exists?")
             return config.enabled
 
-        rcon.do_message_player(steam_id_64=steam_id_64_1, message=config.help_text)
+        rcon.do_message_player(player_id=steam_id_64_1, message=config.help_text)
         return config.enabled
 
     def register_vote(self, player_name: str, vote_timestamp: int, vote_content: str):

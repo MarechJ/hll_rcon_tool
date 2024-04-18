@@ -47,11 +47,11 @@ def get_player(sess, steam_id_64) -> PlayerSteamID | None:
     )
 
 
-def get_player_profile(steam_id_64, nb_sessions):
+def get_player_profile(player_id, nb_sessions):
     with enter_session() as sess:
         player = (
             sess.query(PlayerSteamID)
-            .filter(PlayerSteamID.steam_id_64 == steam_id_64)
+            .filter(PlayerSteamID.steam_id_64 == player_id)
             .one_or_none()
         )
         if player is None:
@@ -75,10 +75,10 @@ def get_player_profile_by_ids(sess, ids):
     )
 
 
-def get_player_profile_by_steam_ids(sess, steam_ids):
+def get_player_profile_by_steam_ids(sess, player_ids):
     return (
         sess.query(PlayerSteamID)
-        .filter(PlayerSteamID.steam_id_64.in_(steam_ids))
+        .filter(PlayerSteamID.steam_id_64.in_(player_ids))
         .options(
             selectinload(PlayerSteamID.names),
             selectinload(PlayerSteamID.received_actions),

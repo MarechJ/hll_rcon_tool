@@ -33,7 +33,7 @@ import { getEmojiFlag } from "../../utils/emoji";
 import PlayerGrid from "./playerGrid";
 import { VipExpirationDialog } from "../VipDialog";
 import { vipListFromServer } from "../VipDialog/vipFromServer";
-import { banListFromServer } from '../PlayersHistory/PlayerTile/PlayerBan'
+import { banListFromServer } from "../PlayersHistory/PlayerTile/PlayerBan";
 
 const PlayerSummary = ({ player, flag }) => (
   <React.Fragment>
@@ -172,7 +172,7 @@ class PlayersHistory extends React.Component {
     };
 
     this.getPlayerHistory = this.getPlayerHistory.bind(this);
-    this.loadBans = this.loadBans.bind(this)
+    this.loadBans = this.loadBans.bind(this);
     this.blacklistPlayer = this.blacklistPlayer.bind(this);
     this.unblacklistPlayer = this.unblacklistPlayer.bind(this);
     this.addFlagToPlayer = this.addFlagToPlayer.bind(this);
@@ -232,7 +232,7 @@ class PlayersHistory extends React.Component {
     const name = player.get("names").get(0).get("name");
 
     return sendAction("do_add_vip", {
-      steam_id_64: steamID64,
+      player_id: steamID64,
       name: name,
       expiration: expirationTimestamp,
       forward: forwardVIP,
@@ -281,7 +281,7 @@ class PlayersHistory extends React.Component {
         page_size: pageSize,
         page: page,
         player_name: byName,
-        steam_id_64: bySteamId,
+        player_id: bySteamId,
         blacklisted: blacklistedOnly,
         last_seen_from: lastSeenFrom,
         last_seen_until: lastSeenUntil,
@@ -295,7 +295,10 @@ class PlayersHistory extends React.Component {
     );
 
     this.setState({ isLoading: true });
-    return postData(`${process.env.REACT_APP_API_URL}get_players_history`, params)
+    return postData(
+      `${process.env.REACT_APP_API_URL}get_players_history`,
+      params
+    )
       .then((response) => showResponse(response, "get_players_history"))
       .then((data) => {
         this.setState({ isLoading: false });
@@ -331,7 +334,7 @@ class PlayersHistory extends React.Component {
 
   addFlagToPlayer(playerObj, flag, comment = null) {
     return postData(`${process.env.REACT_APP_API_URL}do_flag_player`, {
-      steam_id_64: playerObj.get("steam_id_64"),
+      player_id: playerObj.get("steam_id_64"),
       flag: flag,
       comment: comment,
     })
@@ -400,7 +403,7 @@ class PlayersHistory extends React.Component {
       `PlayerID ${steamId64} removed from blacklist`
     );
     postData(`${process.env.REACT_APP_API_URL}do_unblacklist_player`, {
-      steam_id_64: steamId64,
+      player_id: steamId64,
     })
       .then((response) =>
         showResponse(
@@ -434,7 +437,7 @@ class PlayersHistory extends React.Component {
 
   removeFromWatchList(steamId64, playerName) {
     postData(`${process.env.REACT_APP_API_URL}do_unwatch_player`, {
-      steam_id_64: steamId64,
+      player_id: steamId64,
       player_name: playerName,
     })
       .then((response) =>
@@ -509,7 +512,7 @@ class PlayersHistory extends React.Component {
     return this.deleteVip(player.get("steam_id_64"), forwardVIP);
   }
   onAddToWatchList(player) {
-    const playerName = player.get("names")?.get(0)?.get("name")
+    const playerName = player.get("names")?.get(0)?.get("name");
     return this.setDoConfirmPlayer({
       player: playerName,
       actionType: "watchlist",
@@ -518,11 +521,8 @@ class PlayersHistory extends React.Component {
   }
 
   onRemoveFromWatchList(player) {
-    const playerName = player.get("names")?.get(0)?.get("name")
-    return this.removeFromWatchList(
-      player.get("steam_id_64"),
-      playerName
-    );
+    const playerName = player.get("names")?.get(0)?.get("name");
+    return this.removeFromWatchList(player.get("steam_id_64"), playerName);
   }
 
   render() {

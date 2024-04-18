@@ -17,7 +17,7 @@ from rcon.commands import CommandFailedError, HLLServerError
 from rcon.discord import send_to_discord_audit
 from rcon.hooks import inject_player_ids
 from rcon.rcon import Rcon, get_rcon
-from rcon.types import StructuredLogLineType, GetDetailedPlayer
+from rcon.types import GetDetailedPlayer, StructuredLogLineType
 from rcon.user_config.auto_mod_level import AutoModLevelUserConfig
 from rcon.user_config.auto_mod_no_leader import AutoModNoLeaderUserConfig
 from rcon.user_config.auto_mod_seeding import AutoModSeedingUserConfig
@@ -250,7 +250,7 @@ def on_connected(rcon: Rcon, _, name: str, steam_id_64: str):
         try:
             for p in punitions_to_apply.warning:
                 rcon.do_message_player(
-                    steam_id_64=p.steam_id_64,
+                    player_id=p.steam_id_64,
                     message=p.details.message,
                     by=p.details.author,
                     save_message=False,

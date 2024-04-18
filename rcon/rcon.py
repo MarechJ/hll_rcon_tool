@@ -466,13 +466,13 @@ class Rcon(ServerCtl):
 
         return online
 
-    def do_add_admin(self, steam_id_64, role, name) -> str:
+    def do_add_admin(self, player_id, role, name) -> str:
         with invalidates(Rcon.get_admin_ids):
-            return super().do_add_admin(steam_id_64, role, name)
+            return super().do_add_admin(player_id, role, name)
 
-    def do_remove_admin(self, steam_id_64) -> str:
+    def do_remove_admin(self, player_id) -> str:
         with invalidates(Rcon.get_admin_ids):
-            return super().do_remove_admin(steam_id_64)
+            return super().do_remove_admin(player_id)
 
     @ttl_cache(ttl=60)
     def get_perma_bans(self) -> list[str]:
@@ -553,14 +553,14 @@ class Rcon(ServerCtl):
         bans.reverse()
         return temp_bans + bans
 
-    def get_ban(self, steam_id_64) -> list[GameServerBanType]:
+    def get_ban(self, player_id) -> list[GameServerBanType]:
         """
-        get all bans from steam_id_64
-        @param steam_id_64: steam_id_64 of a user
+        get all bans from player_id
+        @param player_id: steam_id_64 or windows store ID of a user
         @return: a array of bans
         """
         bans = self.get_bans()
-        return list(filter(lambda x: x.get("steam_id_64") == steam_id_64, bans))
+        return list(filter(lambda x: x.get("steam_id_64") == player_id, bans))
 
     @ttl_cache(ttl=60 * 5)
     def get_vip_ids(self) -> list[VipIdType]:
@@ -591,23 +591,23 @@ class Rcon(ServerCtl):
 
         return sorted(player_dicts, key=lambda d: d[NAME])
 
-    def do_remove_vip(self, steam_id_64) -> str:
+    def do_remove_vip(self, player_id) -> str:
         """Removes VIP status on the game server and removes their PlayerVIP record."""
 
         # Remove VIP before anything else in case we have errors
         with invalidates(Rcon.get_vip_ids):
-            result = super().do_remove_vip(steam_id_64)
+            result = super().do_remove_vip(player_id)
 
         server_number = get_server_number()
         with enter_session() as session:
             player: PlayerSteamID | None = (
                 session.query(PlayerSteamID)
-                .filter(PlayerSteamID.steam_id_64 == steam_id_64)
+                .filter(PlayerSteamID.steam_id_64 == player_id)
                 .one_or_none()
             )
             if player and player.vip:
                 logger.info(
-                    f"Removed VIP from {steam_id_64} expired: {player.vip.expiration}"
+                    f"Removed VIP from {player_id} expired: {player.vip.expiration}"
                 )
                 # TODO: This is an incredibly dumb fix because I can't get
                 # the changes to persist otherwise
@@ -621,19 +621,19 @@ class Rcon(ServerCtl):
                 )
                 session.delete(vip_record)
             elif player and not player.vip:
-                logger.warning(f"{steam_id_64} has no PlayerVIP record")
+                logger.warning(f"{player_id} has no PlayerVIP record")
             else:
                 # This is okay since you can give VIP to someone who has never been on a game server
                 # or that your instance of CRCON hasn't seen before, but you might want to prune these
-                logger.warning(f"{steam_id_64} has no PlayerSteamID record")
+                logger.warning(f"{player_id} has no PlayerSteamID record")
 
         return result
 
-    def do_add_vip(self, name, steam_id_64, expiration: str = "") -> str:
+    def do_add_vip(self, name, player_id, expiration: str = "") -> str:
         """Adds VIP status on the game server and adds or updates their PlayerVIP record."""
         with invalidates(Rcon.get_vip_ids):
             # Add VIP before anything else in case we have errors
-            result = super().do_add_vip(steam_id_64, name)
+            result = super().do_add_vip(player_id, name)
 
         # postgres and Python have different max date limits
         # https://docs.python.org/3.8/library/datetime.html#datetime.MAXYEAR
@@ -645,7 +645,7 @@ class Rcon(ServerCtl):
         try:
             expiration_date = parser.parse(expiration)
         except (parser.ParserError, OverflowError):
-            logger.warning(f"Unable to parse {expiration=} for {name=} {steam_id_64=}")
+            logger.warning(f"Unable to parse {expiration=} for {name=} {player_id=}")
             # For our purposes (human lifespans) we can use 200 years in the future as
             # the equivalent of indefinite VIP access
             expiration_date = INDEFINITE_VIP_DATE
@@ -654,7 +654,7 @@ class Rcon(ServerCtl):
         with enter_session() as session:
             player: PlayerSteamID | None = (
                 session.query(PlayerSteamID)
-                .filter(PlayerSteamID.steam_id_64 == steam_id_64)
+                .filter(PlayerSteamID.steam_id_64 == player_id)
                 .one_or_none()
             )
             if player is None:
@@ -662,12 +662,12 @@ class Rcon(ServerCtl):
                 # being created from a VIP list upload, their alias will be saved with
                 # whatever name is in the upload file which may have metadata in it since
                 # people use the free form name field in VIP uploads to store stuff
-                save_player(player_name=name, steam_id_64=steam_id_64)
+                save_player(player_name=name, steam_id_64=player_id)
                 # Can't use a return value from save_player or it's not bound
                 # to the session https://docs.sqlalchemy.org/en/20/errors.html#error-bhk3
                 player = (
                     session.query(PlayerSteamID)
-                    .filter(PlayerSteamID.steam_id_64 == steam_id_64)
+                    .filter(PlayerSteamID.steam_id_64 == player_id)
                     .one()
                 )
 
@@ -712,12 +712,12 @@ class Rcon(ServerCtl):
     def do_message_player(
         self,
         player_name=None,
-        steam_id_64=None,
+        player_id=None,
         message: str = "",
         by: str = "",
         save_message: bool = False,
     ) -> str:
-        res = super().do_message_player(player_name, steam_id_64, message)
+        res = super().do_message_player(player_name, player_id, message)
         if save_message:
             safe_save_player_action(
                 rcon=self,
@@ -725,7 +725,7 @@ class Rcon(ServerCtl):
                 action_type="MESSAGE",
                 reason=message,
                 by=by,
-                steam_id_64=steam_id_64,
+                steam_id_64=player_id,
             )
         return res
 
@@ -930,7 +930,7 @@ class Rcon(ServerCtl):
 
         return msg
 
-    def set_welcome_message(self, msg, save=True):
+    def set_welcome_message(self, message, save=True):
         from rcon.broadcast import format_message
 
         prev: bytes | None = None
@@ -938,18 +938,18 @@ class Rcon(ServerCtl):
         try:
             red = get_redis_client()
             if save:
-                prev = red.set("WELCOME_MESSAGE", msg, get=True)  # type: ignore
+                prev = red.set("WELCOME_MESSAGE", message, get=True)  # type: ignore
             else:
                 prev = red.get("WELCOME_MESSAGE")  # type:ignore
             red.expire("WELCOME_MESSAGE", 60 * 60 * 24 * 7)
         except Exception:
-            logger.exception("Can't save message in redis: %s", msg)
+            logger.exception("Can't save message in redis: %s", message)
 
         try:
-            formatted = format_message(self, msg)
+            formatted = format_message(self, message)
         except Exception:
             logger.exception("Unable to format message")
-            formatted = msg
+            formatted = message
 
         super().set_welcome_message(formatted)
         return prev.decode() if prev else ""
@@ -961,7 +961,7 @@ class Rcon(ServerCtl):
             return msg.decode()
         return msg
 
-    def set_broadcast(self, msg, save=True) -> str:
+    def set_broadcast(self, message, save=True) -> str:
         from rcon.broadcast import format_message
 
         prev: bytes | None = None
@@ -969,18 +969,18 @@ class Rcon(ServerCtl):
         try:
             red = get_redis_client()
             if save:
-                prev = red.set("BROADCAST_MESSAGE", msg, get=True)  # type: ignore
+                prev = red.set("BROADCAST_MESSAGE", message, get=True)  # type: ignore
             else:
                 prev = red.get("BROADCAST_MESSAGE")  # type: ignore
             red.expire("BROADCAST_MESSAGE", 60 * 30)
         except Exception:
-            logger.exception("Can't save message in redis: %s", msg)
+            logger.exception("Can't save message in redis: %s", message)
 
         try:
-            formatted = format_message(self, msg)
+            formatted = format_message(self, message)
         except Exception:
             logger.exception("Unable to format message")
-            formatted = msg
+            formatted = message
 
         super().set_broadcast(formatted)
         return prev.decode() if prev else ""
@@ -1115,7 +1115,7 @@ class Rcon(ServerCtl):
     def do_switch_player_on_death(self, player_name, by) -> str:
         return super().do_switch_player_on_death(player_name)
 
-    def do_kick(self, player_name, reason, by, steam_id_64: str | None = None) -> str:
+    def do_kick(self, player_name, reason, by, player_id: str | None = None) -> str:
         with invalidates(Rcon.get_players):
             res = super().do_kick(player_name, reason)
 
@@ -1125,20 +1125,20 @@ class Rcon(ServerCtl):
             action_type="KICK",
             reason=reason,
             by=by,
-            steam_id_64=steam_id_64,
+            steam_id_64=player_id,
         )
         return res
 
     def do_temp_ban(
-        self, player_name=None, steam_id_64=None, duration_hours=2, reason="", by=""
+        self, player_name=None, player_id=None, duration_hours=2, reason="", by=""
     ) -> str:
         with invalidates(Rcon.get_players, Rcon.get_temp_bans):
             if player_name and re.match(r"\d+", player_name):
                 info = self.get_player_info(player_name)
-                steam_id_64 = info.get(STEAMID, None)
+                player_id = info.get(STEAMID, None)
 
             res = super().do_temp_ban(
-                player_name, steam_id_64, duration_hours, reason, admin_name=by
+                player_name, player_id, duration_hours, reason, admin_name=by
             )
 
             safe_save_player_action(
@@ -1147,12 +1147,12 @@ class Rcon(ServerCtl):
                 action_type="TEMPBAN",
                 reason=reason,
                 by=by,
-                steam_id_64=steam_id_64,
+                steam_id_64=player_id,
             )
             return res
 
     def do_remove_temp_ban(
-        self, ban_log: str | None = None, steam_id_64: str | None = None
+        self, ban_log: str | None = None, player_id: str | None = None
     ) -> str:
         """Remove a temp ban by steam ID or game server ban log"""
         with invalidates(Rcon.get_temp_bans):
@@ -1164,39 +1164,39 @@ class Rcon(ServerCtl):
                 bans = self.get_temp_bans()
                 for raw_ban in bans:
                     ban = self._struct_ban(raw_ban, type_="temp")
-                    if steam_id_64 == ban["steam_id_64"]:
+                    if player_id == ban["steam_id_64"]:
                         return super().do_remove_temp_ban(ban_log=raw_ban)
 
         # Only get here if we weren't passed a ban log, steam ID or the steam ID wasn't banned
-        raise ValueError(f"{steam_id_64} was not banned")
+        raise ValueError(f"{player_id} was not banned")
 
     def do_remove_perma_ban(self, ban_log) -> str:
         with invalidates(Rcon.get_perma_bans):
             return super().do_remove_perma_ban(ban_log)
 
-    def do_perma_ban(self, player_name=None, steam_id_64=None, reason="", by="") -> str:
+    def do_perma_ban(self, player_name=None, player_id=None, reason="", by="") -> str:
         with invalidates(Rcon.get_players, Rcon.get_perma_bans):
             if player_name and re.match(r"\d+", player_name):
                 info = self.get_player_info(player_name)
-                steam_id_64 = info.get(STEAMID, None)
+                player_id = info.get(STEAMID, None)
 
-            res = super().do_perma_ban(player_name, steam_id_64, reason, admin_name=by)
+            res = super().do_perma_ban(player_name, player_id, reason, admin_name=by)
             safe_save_player_action(
                 rcon=self,
                 player_name=player_name,
                 action_type="PERMABAN",
                 reason=reason,
                 by=by,
-                steam_id_64=steam_id_64,
+                steam_id_64=player_id,
             )
             try:
                 # TODO: this will never work when banning by name because they're already removed
                 # from the server before you can get their steam ID
-                if not steam_id_64:
+                if not player_id:
                     info = self.get_player_info(player_name)
-                    steam_id_64 = info["steam_id_64"]
+                    player_id = info["steam_id_64"]
                 # TODO add author
-                add_player_to_blacklist(steam_id_64, reason, by=by)
+                add_player_to_blacklist(player_id, reason, by=by)
             except:
                 logger.exception("Unable to blacklist")
             return res
@@ -1230,18 +1230,18 @@ class Rcon(ServerCtl):
         with invalidates(Rcon.get_map_rotation):
             super().do_remove_map_from_rotation(map_name, map_number)
 
-    def do_remove_maps_from_rotation(self, maps) -> Literal["SUCCESS"]:
+    def do_remove_maps_from_rotation(self, map_names) -> Literal["SUCCESS"]:
         with invalidates(Rcon.get_map_rotation):
-            for map_name in maps:
+            for map_name in map_names:
                 super().do_remove_map_from_rotation(map_name)
             return "SUCCESS"
 
-    def do_add_maps_to_rotation(self, maps) -> Literal["SUCCESS"]:
+    def do_add_maps_to_rotation(self, map_names) -> Literal["SUCCESS"]:
         with invalidates(Rcon.get_map_rotation):
             existing = self.get_map_rotation()
             last = existing[len(existing) - 1]
             map_numbers = {last: existing.count(last)}
-            for map_name in maps:
+            for map_name in map_names:
                 super().do_add_map_to_rotation(map_name, last, map_numbers.get(last, 1))
                 last = map_name
                 map_numbers[last] = map_numbers.get(last, 0) + 1

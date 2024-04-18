@@ -186,7 +186,7 @@ const PlayerInfoFunc = ({ classes }) => {
    * @param steamId64
    */
   const fetchPlayerBan = (steamId64) => {
-    get(`get_ban?steam_id_64=${steamId64}`)
+    get(`get_ban?player_id=${steamId64}`)
       .then((response) => showResponse(response, "get_ban", false))
       .then((data) => {
         const temp = data.result.find((ban, index) => {
@@ -210,7 +210,7 @@ const PlayerInfoFunc = ({ classes }) => {
    * @param steamId64
    */
   const fetchPlayer = (steamId64) => {
-    get(`get_player_profile?steam_id_64=${steamId64}`)
+    get(`get_player_profile?player_id=${steamId64}`)
       .then((response) => showResponse(response, "get_user", false))
       .then((data) => {
         if (
@@ -317,7 +317,9 @@ const PlayerInfoFunc = ({ classes }) => {
                 </Grid>
                 <Grid item>
                   <Typography variant="h6">
-                    <Link href={makePlayerProfileUrl(steamId64, names[0]?.name)}>
+                    <Link
+                      href={makePlayerProfileUrl(steamId64, names[0]?.name)}
+                    >
                       {getLinkLabel(steamId64)} Profile
                     </Link>
                   </Typography>
@@ -348,7 +350,7 @@ const PlayerInfoFunc = ({ classes }) => {
                 <Grid item>
                   <Typography variant="h6">
                     <Link
-                      href={`${process.env.REACT_APP_API_URL}get_player_profile?steam_id_64=${steamId64}`}
+                      href={`${process.env.REACT_APP_API_URL}get_player_profile?player_id=${steamId64}`}
                     >
                       Raw profile
                     </Link>
@@ -463,7 +465,7 @@ class PlayerInfo extends React.Component {
    * @param steamId64
    */
   fetchPlayerBan(steamId64) {
-    get(`get_ban?steam_id_64=${steamId64}`)
+    get(`get_ban?player_id=${steamId64}`)
       .then((response) => showResponse(response, "get_ban", false))
       .then((data) => {
         const temp = data.result.find((ban, index) => {
@@ -487,7 +489,7 @@ class PlayerInfo extends React.Component {
    * @param steamId64
    */
   fetchPlayer(steamId64) {
-    get(`get_player_profile?steam_id_64=${steamId64}`)
+    get(`get_player_profile?player_id=${steamId64}`)
       .then((response) => showResponse(response, "get_user", false))
       .then((data) => {
         if (
@@ -600,7 +602,7 @@ class PlayerInfo extends React.Component {
                     <Typography>
                       {moment(
                         this.state.sessions[0]?.end ||
-                        this.state.sessions[0]?.start
+                          this.state.sessions[0]?.start
                       ).format("ddd Do MMM HH:mm:ss")}
                     </Typography>
                   </Grid>
@@ -631,7 +633,7 @@ class PlayerInfo extends React.Component {
                   <Grid item>
                     <Typography variant="h6">
                       <Link
-                        href={`${process.env.REACT_APP_API_URL}get_player_profile?steam_id_64=${steamId64}`}
+                        href={`${process.env.REACT_APP_API_URL}get_player_profile?player_id=${steamId64}`}
                       >
                         Raw profile
                       </Link>

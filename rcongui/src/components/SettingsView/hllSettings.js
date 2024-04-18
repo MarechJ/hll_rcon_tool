@@ -283,13 +283,13 @@ class HLLSettings extends React.Component {
   }
 
   async addMapsToRotation(maps) {
-    return sendAction("do_add_maps_to_rotation", { maps: maps }).then(
+    return sendAction("do_add_maps_to_rotation", { map_names: maps }).then(
       this.loadMapRotation
     );
   }
 
   async removeMapsFromRotation(maps) {
-    return sendAction("do_remove_maps_from_rotation", { maps: maps }).then(
+    return sendAction("do_remove_maps_from_rotation", { map_names: maps }).then(
       this.loadMapRotation
     );
   }
@@ -369,7 +369,7 @@ class HLLSettings extends React.Component {
             onSave={(val) =>
               this.setState({ welcomeMessage: val }, () =>
                 sendAction("set_welcome_message", {
-                  msg: val,
+                  message: val,
                   forward: forwardWelcome,
                 })
               )
@@ -393,7 +393,7 @@ class HLLSettings extends React.Component {
             onSave={(val) =>
               this.setState({ broadcastMessage: val }, () =>
                 sendAction("set_broadcast", {
-                  msg: val,
+                  message: val,
                   forward: forwardBroadcast,
                 })
               )
@@ -415,7 +415,7 @@ class HLLSettings extends React.Component {
               onFowardChange={() => this.toggle("forwardVIP")}
               onAdd={(name, steamID64, expirationTimestamp) =>
                 sendAction("do_add_vip", {
-                  steam_id_64: steamID64,
+                  player_id: steamID64,
                   name: name,
                   forward: forwardVIP,
                   expiration: expirationTimestamp,
@@ -443,13 +443,13 @@ class HLLSettings extends React.Component {
               classes={classes}
               onAdd={(name, steamID64, role) =>
                 sendAction("do_add_admin", {
-                  steam_id_64: steamID64,
+                  player_id: steamID64,
                   name: name,
                   role: role,
                 }).then(this.loadAdmins)
               }
               onDelete={(name, steamID64, role) =>
-                sendAction("do_remove_admin", { steam_id_64: steamID64 }).then(
+                sendAction("do_remove_admin", { player_id: steamID64 }).then(
                   this.loadAdmins
                 )
               }

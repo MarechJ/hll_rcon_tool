@@ -105,7 +105,7 @@ class RconAPI(Rcon):
 
     def do_blacklist_player(
         self,
-        steam_id_64: str,
+        player_id: str,
         reason: str,
         player_name: str | None = None,
         audit_name: str | None = None,
@@ -119,7 +119,7 @@ class RconAPI(Rcon):
         banned if they are on the list.
 
         Args:
-            steam_id_64: steam_id_64 or windows store ID
+            player_id: steam_id_64 or windows store ID
             reason: The reason the player was blacklisted
             player_name: The players name which will be added as an alias
             audit_name: The person/tool that is blacklisting the player
@@ -129,7 +129,7 @@ class RconAPI(Rcon):
         try:
             self.do_perma_ban(
                 player_name=player_name,
-                steam_id_64=steam_id_64,
+                player_id=player_id,
                 reason=reason,
                 by=audit_name if audit_name else "",
             )
@@ -138,7 +138,7 @@ class RconAPI(Rcon):
             logger.error(
                 "%s while attempting to perma ban in do_blacklist_player %s, %s",
                 e,
-                steam_id_64,
+                player_id,
                 player_name,
             )
 
@@ -147,14 +147,14 @@ class RconAPI(Rcon):
         # whether or not the player is perma banned or blacklisted
         # legacy game server versions would not let you perma ban a player who was not connected
         add_player_to_blacklist(
-            steam_id_64=steam_id_64, reason=reason, name=player_name, by=audit_name
+            steam_id_64=player_id, reason=reason, name=player_name, by=audit_name
         )
 
         return True
 
     def blacklist_player(
         self,
-        steam_id_64: str,
+        player_id: str,
         reason: str,
         player_name: str | None = None,
         audit_name: str | None = None,
@@ -162,7 +162,7 @@ class RconAPI(Rcon):
         """This is DEPRECATED use do_blacklist_player instead, it will be removed in a future release"""
         # TODO: remove this deprecated endpoint
         return self.do_blacklist_player(
-            steam_id_64=steam_id_64,
+            player_id=player_id,
             reason=reason,
             player_name=player_name,
             audit_name=audit_name,
@@ -170,12 +170,12 @@ class RconAPI(Rcon):
 
     def do_unban(
         self,
-        steam_id_64: str,
+        player_id: str,
     ) -> bool:
-        """Remove all temporary and permanent bans from the steam_id_64
+        """Remove all temporary and permanent bans from the player_id
 
         Args:
-            steam_id_64: steam_id_64 or windows store ID
+            player_id: steam_id_64 or windows store ID
         """
         # logger.info(f"do_unban {steam_id_64=} {kwargs=}")
         bans = self.get_bans()
@@ -184,29 +184,29 @@ class RconAPI(Rcon):
             "perma": self.do_remove_perma_ban,
         }
         for b in bans:
-            if b.get("steam_id_64") == steam_id_64:
+            if b.get("steam_id_64") == player_id:
                 type_to_func[b["type"]](b["raw"])
 
         # unban broadcasting is handled in `rconweb.api.views.expose_api_endpoints`
         config = RconServerSettingsUserConfig.load_from_db()
         if config.unban_does_unblacklist:
-            remove_player_from_blacklist(steam_id_64=steam_id_64)
+            remove_player_from_blacklist(steam_id_64=player_id)
 
         return True
 
     def unban(
         self,
-        steam_id_64: str,
+        player_id: str,
     ) -> bool:
         """This is DEPRECATED use do_unban instead, it will be removed in a future release"""
         # TODO: remove this deprecated endpoint
         return self.do_unban(
-            steam_id_64=steam_id_64,
+            player_id=player_id,
         )
 
     def do_unblacklist_player(
         self,
-        steam_id_64: str,
+        player_id: str,
     ) -> bool:
         """
         Remove a player from the blacklist
@@ -217,18 +217,18 @@ class RconAPI(Rcon):
         banned if they are on the list.
 
         Args:
-            steam_id_64: steam_id_64 or windows store ID
+            player_id: steam_id_64 or windows store ID
         """
 
-        remove_player_from_blacklist(steam_id_64=steam_id_64)
+        remove_player_from_blacklist(steam_id_64=player_id)
 
         return True
 
     def unblacklist_player(
         self,
-        steam_id_64: str,
+        player_id: str,
     ):
-        return self.do_unblacklist_player(steam_id_64=steam_id_64)
+        return self.do_unblacklist_player(player_id=player_id)
 
     def do_clear_cache(self) -> bool:
         """Clear every key in this servers Redis cache
@@ -245,13 +245,13 @@ class RconAPI(Rcon):
 
     def get_player_profile(
         self,
-        steam_id_64: str | None = None,
+        player_id: str | None = None,
         player_db_id: int | None = None,
         num_sessions: int = 10,
     ) -> PlayerProfileType | None:
-        if steam_id_64:
+        if player_id:
             return player_history.get_player_profile(
-                steam_id_64=steam_id_64, nb_sessions=num_sessions
+                player_id=player_id, nb_sessions=num_sessions
             )
         else:
             return player_history.get_player_profile_by_id(
@@ -260,14 +260,14 @@ class RconAPI(Rcon):
 
     def player(
         self,
-        steam_id_64: str | None = None,
+        player_id: str | None = None,
         player_db_id: int | None = None,
         num_sessions: int = 10,
     ):
         """This is DEPRECATED use get_player_profile instead, it will be removed in a future release"""
         # TODO: remove this deprecated endpoint
         return self.get_player_profile(
-            steam_id_64=steam_id_64,
+            player_id=player_id,
             player_db_id=player_db_id,
             num_sessions=num_sessions,
         )
@@ -278,7 +278,7 @@ class RconAPI(Rcon):
         page_size: int = 500,
         last_seen_from: datetime | None = None,
         last_seen_till: datetime | None = None,
-        steam_id_64: str | None = None,
+        player_id: str | None = None,
         player_name: str | None = None,
         blacklisted: bool | None = None,
         is_watched: bool | None = None,
@@ -287,13 +287,14 @@ class RconAPI(Rcon):
         flags: str | list[str] | None = None,
         country: str | None = None,
     ):
+        # TODO: this isn't used, can we remove it?
         type_map = {
             "last_seen_from": parser.parse,
             "last_seen_till": parser.parse,
             "player_name": str,
             "blacklisted": bool,
             "is_watched": bool,
-            "steam_id_64": str,
+            "player_id": str,
             "page": int,
             "page_size": int,
             "ignore_accent": bool,
@@ -309,7 +310,7 @@ class RconAPI(Rcon):
             last_seen_till=last_seen_till,
             player_name=player_name,
             blacklisted=blacklisted,
-            steam_id_64=steam_id_64,
+            steam_id_64=player_id,
             is_watched=is_watched,
             exact_name_match=exact_name_match,
             ignore_accent=ignore_accent,
@@ -323,7 +324,7 @@ class RconAPI(Rcon):
         page_size: int = 500,
         last_seen_from: datetime | None = None,
         last_seen_till: datetime | None = None,
-        steam_id_64: str | None = None,
+        player_id: str | None = None,
         player_name: str | None = None,
         blacklisted: bool | None = None,
         is_watched: bool | None = None,
@@ -339,7 +340,7 @@ class RconAPI(Rcon):
             page_size=page_size,
             last_seen_from=last_seen_from,
             last_seen_till=last_seen_till,
-            steam_id_64=steam_id_64,
+            player_id=player_id,
             player_name=player_name,
             blacklisted=blacklisted,
             is_watched=is_watched,
@@ -351,19 +352,19 @@ class RconAPI(Rcon):
 
     def do_flag_player(
         self,
-        steam_id_64: str,
+        player_id: str,
         flag: str,
         player_name: str | None = None,
         comment: str | None = None,
     ) -> PlayerFlagType:
-        """Adds a new flag to the specified steam_id_64
+        """Adds a new flag to the specified player_id
 
         Flags are used to label users and some tools use the flags to whitelist
         users. They are traditionally an emoji (the frontend uses an emoji picker)
         but there is no length restriction in the database.
 
         Args:
-            steam_id_64: steam_id_64 or windows store ID
+            player_id: steam_id_64 or windows store ID
             player_name: The players name which will be added as an alias
             flag:
             comment:
@@ -372,7 +373,7 @@ class RconAPI(Rcon):
         """
 
         player, new_flag = add_flag_to_player(
-            steam_id_64=steam_id_64, flag=flag, comment=comment, player_name=player_name
+            steam_id_64=player_id, flag=flag, comment=comment, player_name=player_name
         )
         # TODO: can we preserve discord auditing with player aliases?
         # data["player_name"] = " | ".join(n["name"] for n in player["names"])
@@ -381,7 +382,7 @@ class RconAPI(Rcon):
 
     def flag_player(
         self,
-        steam_id_64: str,
+        player_id: str,
         flag: str,
         player_name: str | None = None,
         comment: str | None = None,
@@ -389,24 +390,24 @@ class RconAPI(Rcon):
         """This is DEPRECATED use do_flag_player instead, it will be removed in a future release"""
         # TODO: remove this deprecated endpoint
         return self.do_flag_player(
-            steam_id_64=steam_id_64, player_name=player_name, flag=flag, comment=comment
+            player_id=player_id, player_name=player_name, flag=flag, comment=comment
         )
 
     def do_unflag_player(
         self,
         flag_id: int | None = None,
-        steam_id_64: str | None = None,
+        player_id: str | None = None,
         flag: str | None = None,
     ) -> PlayerFlagType:
         """Flags can be removed either by flag_id (database key) or by passing a player ID and flag
 
         Args:
             flag_id: The database primary key of the flag record to delete
-            steam_id_64: steam_id_64 or windows store ID
-            flag: The flag to remove from `steam_id_64` if present
+            player_id: steam_id_64 or windows store ID
+            flag: The flag to remove from `player_id` if present
         """
         player, removed_flag = remove_flag(
-            flag_id=flag_id, steam_id_64=steam_id_64, flag=flag
+            flag_id=flag_id, steam_id_64=player_id, flag=flag
         )
         return removed_flag
 
@@ -426,13 +427,13 @@ class RconAPI(Rcon):
 
     @staticmethod
     def toggle_player_watch(
-        steam_id_64: str,
+        player_id: str,
         audit_name: str,
         add: bool,
         reason: str | None = None,
         player_name: str | None = None,
     ) -> bool:
-        watcher = PlayerWatch(steam_id_64=steam_id_64)
+        watcher = PlayerWatch(steam_id_64=player_id)
         if add:
             result = watcher.watch(
                 reason=reason or "",
@@ -446,13 +447,13 @@ class RconAPI(Rcon):
 
     def do_watch_player(
         self,
-        steam_id_64: str,
+        player_id: str,
         reason: str,
         by: str,
         player_name: str | None = None,
     ) -> bool:
         return self.toggle_player_watch(
-            steam_id_64=steam_id_64,
+            player_id=player_id,
             player_name=player_name,
             reason=reason,
             audit_name=by,
@@ -461,13 +462,13 @@ class RconAPI(Rcon):
 
     def do_unwatch_player(
         self,
-        steam_id_64: str,
+        player_id: str,
         by: str,
         reason: str | None = None,
         player_name: str | None = None,
     ) -> bool:
         return self.toggle_player_watch(
-            steam_id_64=steam_id_64,
+            player_id=player_id,
             player_name=player_name,
             reason=reason,
             audit_name=by,
@@ -487,7 +488,7 @@ class RconAPI(Rcon):
     def get_historical_logs(
         self,
         player_name: str | None = None,
-        steam_id_64: str | None = None,
+        player_id: str | None = None,
         action: str | None = None,
         limit: int = 1000,
         from_: datetime | None = None,
@@ -500,7 +501,7 @@ class RconAPI(Rcon):
         lines = game_logs.get_historical_logs(
             player_name=player_name,
             action=action,
-            steam_id_64=steam_id_64,
+            player_id=player_id,
             limit=limit,
             from_=from_,
             till=till,

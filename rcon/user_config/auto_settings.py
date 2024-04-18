@@ -69,7 +69,7 @@ DEFAULT_AUTO_SETTINGS = {
         "do_unban_profanities": {"profanities": ["word1", "word2"]},
         "set_profanities": {"profanities": ["word1", "word2"]},
         "set_autobalance_enabled": {"bool_str": "on/off"},
-        "set_welcome_message": {"msg": "A welcome message", "save": True},
+        "set_welcome_message": {"message": "A welcome message", "save": True},
         "set_map": {"map_name": "stmariedumont_warfare"},
         "set_idle_autokick_time": {"minutes": 0},
         "set_max_ping_autokick": {"max_ms": 0},
@@ -77,27 +77,21 @@ DEFAULT_AUTO_SETTINGS = {
         "set_team_switch_cooldown": {"minutes": 0},
         "set_queue_length": {"num": 6},
         "set_vip_slots_num": {"num": 1},
-        "set_broadcast": {"msg": "A broadcast message", "save": True},
+        "set_broadcast": {"message": "A broadcast message", "save": True},
         "set_votekick_enabled": {"bool_str": "on/off"},
         "set_votekick_threshold": {
             "threshold_pairs_str": "PlayerCount,Threshold[,PlayerCount,Threshold,...]"
         },
         "do_reset_votekick_threshold": {},
-        "do_switch_player_on_death": {"player": "12345678901234567"},
-        "do_switch_player_now": {"player": "12345678901234567"},
+        "do_switch_player_on_death": {"player_name": "12345678901234567"},
+        "do_switch_player_now": {"player_name": "12345678901234567"},
         "do_add_map_to_rotation": {"map_name": "stmariedumont_warfare"},
         "do_add_maps_to_rotation": {
-            "maps": ["stmariedumont_warfare", "kursk_offensive_rus"]
+            "map_names": ["stmariedumont_warfare", "kursk_offensive_rus"]
         },
         "do_remove_map_from_rotation": {"map_name": "stmariedumont_warfare"},
         "do_remove_maps_from_rotation": {
-            "maps": ["stmariedumont_warfare", "kursk_offensive_rus"]
-        },
-        "do_randomize_map_rotation": {
-            "maps": [
-                "An optional list of maps",
-                "that will replace the current rotation",
-            ]
+            "map_names": ["stmariedumont_warfare", "kursk_offensive_rus"]
         },
         "set_maprotation": {
             "rotation": [
@@ -106,30 +100,30 @@ DEFAULT_AUTO_SETTINGS = {
             ]
         },
         "set_map_shuffle_enabled": {"enabled": False},
-        "do_punish": {"player": "12345678901234567", "reason": "Get rekt"},
-        "do_kick": {"player": "12345678901234567", "reason": "Get rekt"},
+        "do_punish": {"player_name": "12345678901234567", "reason": "Get rekt"},
+        "do_kick": {"player_name": "12345678901234567", "reason": "Get rekt"},
         "do_temp_ban": {
             "player_name": "Optional, a player's name",
-            "steam_id_64": "Required if player_name not provided, a player's steam64id",
+            "player_id": "Required if player_name not provided, a player's steam64id",
             "duration_hours": "Optional, defaults to 2",
             "reason": "Optional, defaults to nothing",
             "admin_name": "Optional, defaults to nothing",
         },
         "do_perma_ban": {
             "player_name": "Optional, a player's name",
-            "steam_id_64": "Required if player_name not provided, a player's steam64id",
+            "player_id": "Required if player_name not provided, a player's steam64id",
             "reason": "Optional, defaults to nothing",
             "admin_name": "Optional, defaults to nothing",
         },
-        "do_unban": {"steam_id_64": "12345678901234567"},
+        "do_unban": {"player_id": "12345678901234567"},
         "do_add_admin": {
-            "steam_id_64": "1234567890123456",
+            "player_id": "1234567890123456",
             "role": "senior",
             "name": "A comment",
         },
-        "do_remove_admin": {"steam_id_64": "1234567890123456"},
-        "do_add_vip": {"steam_id_64": "1234567890123456", "name": "A comment"},
-        "do_remove_vip": {"steam_id_64": "1234567890123456"},
+        "do_remove_admin": {"player_id": "1234567890123456"},
+        "do_add_vip": {"player_id": "1234567890123456", "name": "A comment"},
+        "do_remove_vip": {"player_id": "1234567890123456"},
         "do_remove_all_vips": {},
         "do_add_map_to_whitelist": {"map_name": "stmariedumont_warfare"},
         "do_add_maps_to_whitelist": {
@@ -154,6 +148,6 @@ DEFAULT_AUTO_SETTINGS = {
         },
         "online_mods": {"min": 0, "max": 100, "not": False},
         "ingame_mods": {"min": 0, "max": 100, "not": False},
-        "current_map": {"maps": ["stmariedumont_warfare", "..."], "not": False},
+        "current_map": {"map_names": ["stmariedumont_warfare", "..."], "not": False},
     },
 }

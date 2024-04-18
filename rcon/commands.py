@@ -520,8 +520,8 @@ class ServerCtl:
         """
         return self._str_request(f"setautobalanceenabled {bool_str}")
 
-    def set_welcome_message(self, msg) -> str:
-        return self._str_request(f"say {msg}", log_info=True, can_fail=False)
+    def set_welcome_message(self, message) -> str:
+        return self._str_request(f"say {message}", log_info=True, can_fail=False)
 
     def set_map(self, map_name) -> str:
         return self._str_request(f"map {map_name}", log_info=True)
@@ -556,8 +556,10 @@ class ServerCtl:
         return self._str_request(f"setnumvipslots {num}", log_info=True)
 
     @_escape_params
-    def set_broadcast(self, msg):
-        return self._str_request(f'broadcast "{msg}"', log_info=True, can_fail=False)
+    def set_broadcast(self, message):
+        return self._str_request(
+            f'broadcast "{message}"', log_info=True, can_fail=False
+        )
 
     def set_votekick_enabled(self, bool_str) -> str:
         """
@@ -613,14 +615,14 @@ class ServerCtl:
     def do_temp_ban(
         self,
         player_name=None,
-        steam_id_64=None,
+        player_id=None,
         duration_hours=2,
         reason="",
         admin_name="",
     ) -> str:
         reason = convert_tabs_to_spaces(reason)
         return self._str_request(
-            f'tempban "{steam_id_64 or player_name}" {duration_hours} "{reason}" "{admin_name}"',
+            f'tempban "{player_id or player_name}" {duration_hours} "{reason}" "{admin_name}"',
             log_info=True,
         )
 
@@ -641,27 +643,27 @@ class ServerCtl:
         return self._str_request(f"pardonpermaban {ban_log}", log_info=True)
 
     @_escape_params
-    def do_add_admin(self, steam_id_64, role, name) -> str:
+    def do_add_admin(self, player_id, role, name) -> str:
         name = convert_tabs_to_spaces(name)
         return self._str_request(
-            f'adminadd "{steam_id_64}" "{role}" "{name}"', log_info=True
+            f'adminadd "{player_id}" "{role}" "{name}"', log_info=True
         )
 
-    def do_remove_admin(self, steam_id_64) -> str:
-        return self._str_request(f"admindel {steam_id_64}", log_info=True)
+    def do_remove_admin(self, player_id) -> str:
+        return self._str_request(f"admindel {player_id}", log_info=True)
 
     @_escape_params
-    def do_add_vip(self, steam_id_64, name) -> str:
+    def do_add_vip(self, player_id, name) -> str:
         name = convert_tabs_to_spaces(name)
-        return self._str_request(f'vipadd {steam_id_64} "{name}"', log_info=True)
+        return self._str_request(f'vipadd {player_id} "{name}"', log_info=True)
 
-    def do_remove_vip(self, steam_id_64) -> str:
-        return self._str_request(f"vipdel {steam_id_64}", log_info=True)
+    def do_remove_vip(self, player_id) -> str:
+        return self._str_request(f"vipdel {player_id}", log_info=True)
 
     @_escape_params
-    def do_message_player(self, player_name=None, steam_id_64=None, message="") -> str:
+    def do_message_player(self, player_name=None, player_id=None, message="") -> str:
         return self._str_request(
-            f'message "{steam_id_64 or player_name}" {message}',
+            f'message "{player_id or player_name}" {message}',
             log_info=True,
         )
 

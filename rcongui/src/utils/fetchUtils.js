@@ -148,9 +148,11 @@ async function sendAction(command, parameters) {
 
 async function _checkResult(data) {
   if (data.result) {
-    let unescaped = data.result.messages.map(ele => ele.replaceAll(/\\n/g, '\n'))
-    unescaped = unescaped.map(ele => ele.replaceAll(/\\t/g, '\t'))
-    return unescaped
+    let unescaped = data.result.messages.map((ele) =>
+      ele.replaceAll(/\\n/g, "\n")
+    );
+    unescaped = unescaped.map((ele) => ele.replaceAll(/\\t/g, "\t"));
+    return unescaped;
   }
   return [];
 }
@@ -166,7 +168,7 @@ async function getSharedMessages(namespace) {
 
 async function addPlayerToWatchList(steam_id_64, reason, playerName) {
   return postData(`${process.env.REACT_APP_API_URL}do_watch_player`, {
-    steam_id_64: steam_id_64,
+    player_id: steam_id_64,
     reason: reason,
     player_name: playerName,
   })

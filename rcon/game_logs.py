@@ -828,7 +828,7 @@ def auto_ban_if_tks_right_after_connection(
                 )
                 try:
                     rcon.do_perma_ban(
-                        steam_id_64=player_steam_id,
+                        player_id=player_steam_id,
                         reason=reason,
                         by=author,
                     )
@@ -863,7 +863,7 @@ def get_historical_logs_records(
     sess,
     player_name=None,
     action=None,
-    steam_id_64=None,
+    player_id=None,
     limit=1000,
     from_=None,
     till=None,
@@ -890,11 +890,11 @@ def get_historical_logs_records(
 
     q = q.filter(and_(*time_filter))
 
-    if steam_id_64:
+    if player_id:
         # Handle not found
         player = (
             sess.query(PlayerSteamID)
-            .filter(PlayerSteamID.steam_id_64 == steam_id_64)
+            .filter(PlayerSteamID.steam_id_64 == player_id)
             .one_or_none()
         )
         id_ = player.id if player else 0
@@ -936,7 +936,7 @@ def get_historical_logs_records(
 def get_historical_logs(
     player_name=None,
     action=None,
-    steam_id_64=None,
+    player_id=None,
     limit=1000,
     from_=None,
     till=None,
@@ -951,7 +951,7 @@ def get_historical_logs(
             sess,
             player_name,
             action,
-            steam_id_64,
+            player_id,
             limit,
             from_,
             till,

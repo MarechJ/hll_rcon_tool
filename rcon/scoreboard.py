@@ -191,9 +191,11 @@ class BaseStats:
             stats = {
                 "player": p["name"],
                 "steam_id_64": p.get("steam_id_64"),
-                "steaminfo": profile.steaminfo.to_dict()
-                if profile and profile.steaminfo
-                else None,
+                "steaminfo": (
+                    profile.steaminfo.to_dict()
+                    if profile and profile.steaminfo
+                    else None
+                ),
                 "kills": 0,
                 "kills_streak": 0,
                 "deaths": 0,
@@ -477,6 +479,7 @@ class TimeWindowStats(BaseStats):
         # we create and hashmap where the key is the steam ID of a player and the value his DB profile.
         # The DB rows are eagerly loaded (at least the ones we need later on) if you need more rows make sure to eager load them as well otherwise it will add significan slowness
         # The profiles are attached to the current DB session
+        # TODO: do we need to update steam_id_64 to player_id ?
         with enter_session() as sess:
             profiles_by_id = {
                 profile.steam_id_64: profile

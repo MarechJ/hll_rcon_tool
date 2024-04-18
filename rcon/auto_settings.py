@@ -103,9 +103,9 @@ class IngameModsCondition(OnlineModsCondition):
 
 class CurrentMapCondition(BaseCondition):
     def __init__(
-        self, maps=[], inverse=False, *args, **kwargs
+        self, map_names=[], inverse=False, *args, **kwargs
     ):  # Avoid unexpected arguments
-        self.maps = maps
+        self.map_names = map_names
         self.inverse = inverse
         self.metric_name = "current_map"
         self.metric_source = "rcon"
@@ -113,12 +113,12 @@ class CurrentMapCondition(BaseCondition):
     def is_valid(self, **metric_sources):
         metric_source = metric_sources[self.metric_source]
         comparand = self.metric_getter(metric_source)
-        res = comparand in self.maps
+        res = comparand in self.map_names
         logger.info(
             "Applying condition %s: %s in %s = %s. Inverse: %s",
             self.metric_name,
             comparand,
-            self.maps,
+            self.map_names,
             res,
             self.inverse,
         )

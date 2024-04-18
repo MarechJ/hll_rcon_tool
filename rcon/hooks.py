@@ -76,7 +76,7 @@ def count_vote(rcon: Rcon, struct_log: StructuredLogLineWithMetaData):
     enabled = VoteMap().handle_vote_command(rcon=rcon, struct_log=struct_log)
     if enabled and (match := re.match(r"\d\s*$", struct_log["sub_content"].strip())):
         rcon.do_message_player(
-            steam_id_64=struct_log["steam_id_64_1"],
+            player_id=struct_log["steam_id_64_1"],
             message=f"INVALID VOTE\n\nUse: !votemap {match.group()}",
         )
 
@@ -144,7 +144,7 @@ def chat_commands(rcon: Rcon, struct_log: StructuredLogLineWithMetaData):
                 },
             )
             rcon.do_message_player(
-                steam_id_64=struct_log["steam_id_64_1"],
+                player_id=struct_log["steam_id_64_1"],
                 message=formatted_message,
                 save_message=False,
             )
@@ -153,13 +153,13 @@ def chat_commands(rcon: Rcon, struct_log: StructuredLogLineWithMetaData):
             description = command.description
             if description:
                 rcon.do_message_player(
-                    steam_id_64=struct_log["steam_id_64_1"],
+                    player_id=struct_log["steam_id_64_1"],
                     message=description,
                     save_message=False,
                 )
             else:
                 rcon.do_message_player(
-                    steam_id_64=struct_log["steam_id_64_1"],
+                    player_id=struct_log["steam_id_64_1"],
                     message="Command description not set, let the admins know!",
                     save_message=False,
                 )
@@ -174,7 +174,7 @@ def chat_commands(rcon: Rcon, struct_log: StructuredLogLineWithMetaData):
         description = config.describe_chat_commands()
         if description:
             rcon.do_message_player(
-                steam_id_64=struct_log["steam_id_64_1"],
+                player_id=struct_log["steam_id_64_1"],
                 message="\n".join(description),
                 save_message=False,
             )
@@ -517,14 +517,14 @@ def windows_store_player_check(rcon: Rcon, _, name: str, player_id: str):
             )
         elif action == WindowsStoreIdActionType.temp_ban:
             rcon.do_temp_ban(
-                steam_id_64=player_id,
+                player_id=player_id,
                 duration_hours=config.temp_ban_length_hours,
                 reason=config.player_message,
                 by=config.audit_message_author,
             )
         elif action == WindowsStoreIdActionType.perma_ban:
             rcon.do_perma_ban(
-                steam_id_64=player_id,
+                player_id=player_id,
                 reason=config.player_message,
                 by=config.audit_message_author,
             )
@@ -594,7 +594,7 @@ def notify_invalid_names(rcon: Rcon, _, name: str, steam_id_64: str):
         elif action == RconInvalidNameActionType.warn:
             try:
                 rcon.do_message_player(
-                    steam_id_64=steam_id_64,
+                    player_id=steam_id_64,
                     message=config.whitespace_name_player_message,
                     by=config.audit_message_author,
                     save_message=False,
@@ -609,7 +609,7 @@ def notify_invalid_names(rcon: Rcon, _, name: str, steam_id_64: str):
         elif action == RconInvalidNameActionType.ban:
             try:
                 rcon.do_temp_ban(
-                    steam_id_64=steam_id_64,
+                    player_id=steam_id_64,
                     reason=config.whitespace_name_player_message,
                     by=config.audit_message_author,
                     duration_hours=config.ban_length_hours,
@@ -629,7 +629,7 @@ def notify_invalid_names(rcon: Rcon, _, name: str, steam_id_64: str):
             try:
                 # TODO: it is not possible to kick pineapple names, remove them by banning/unbanning
                 rcon.do_temp_ban(
-                    steam_id_64=steam_id_64,
+                    player_id=steam_id_64,
                     reason=config.pineapple_name_player_message,
                     by=config.audit_message_author,
                     duration_hours=1,
@@ -644,7 +644,7 @@ def notify_invalid_names(rcon: Rcon, _, name: str, steam_id_64: str):
         elif action == RconInvalidNameActionType.warn:
             try:
                 rcon.do_message_player(
-                    steam_id_64=steam_id_64,
+                    player_id=steam_id_64,
                     message=config.pineapple_name_player_message,
                     by=config.audit_message_author,
                     save_message=False,
@@ -659,7 +659,7 @@ def notify_invalid_names(rcon: Rcon, _, name: str, steam_id_64: str):
         elif action == RconInvalidNameActionType.ban:
             try:
                 rcon.do_temp_ban(
-                    steam_id_64=steam_id_64,
+                    player_id=steam_id_64,
                     reason=config.pineapple_name_player_message,
                     by=config.audit_message_author,
                     duration_hours=config.ban_length_hours,

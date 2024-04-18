@@ -76,7 +76,7 @@ class PlayerView extends Component {
 
   addFlagToPlayer(playerObj, flag, comment = null) {
     return postData(`${process.env.REACT_APP_API_URL}do_flag_player`, {
-      steam_id_64: playerObj.get("steam_id_64"),
+      player_id: playerObj.get("steam_id_64"),
       flag: flag,
       comment: comment,
     })

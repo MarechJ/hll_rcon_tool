@@ -561,7 +561,7 @@ const GameView = ({ classes: globalClasses }) => {
   const addFlagToPlayers = (_, flag, comment) => {
     selectedPlayers.forEach((name) =>
       postData(`${process.env.REACT_APP_API_URL}do_flag_player`, {
-        steam_id_64: playerNamesToSteamId.get(name),
+        player_id: playerNamesToSteamId.get(name),
         flag: flag,
         comment: comment,
       })

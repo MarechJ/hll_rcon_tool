@@ -242,7 +242,11 @@ class LogsHistory extends React.Component {
           let id = this.state.logs[dataIndex]?.player1_id;
           let name = this.state.logs[dataIndex]?.player_name;
           return id ? (
-            <Link color="inherit" target="_blank" href={`/api/get_player_profile?steam_id_64=${id}`}>
+            <Link
+              color="inherit"
+              target="_blank"
+              href={`/api/get_player_profile?player_id=${id}`}
+            >
               {name}
             </Link>
           ) : (
@@ -259,7 +263,11 @@ class LogsHistory extends React.Component {
           let id = this.state.logs[dataIndex]?.player2_id;
           let name = this.state.logs[dataIndex]?.player2_name;
           return id ? (
-            <Link color="inherit" target="_blank" href={`/api/get_player_profile?steam_id_64=${id}`}>
+            <Link
+              color="inherit"
+              target="_blank"
+              href={`/api/get_player_profile?player_id=${id}`}
+            >
               {name}
             </Link>
           ) : (
@@ -312,7 +320,7 @@ class LogsHistory extends React.Component {
     postData(`${process.env.REACT_APP_API_URL}get_historical_logs`, {
       player_name: name,
       log_type: type,
-      steam_id_64: steamId64,
+      player_id: steamId64,
       from: from,
       till: till,
       limit: limit,
@@ -333,7 +341,7 @@ class LogsHistory extends React.Component {
     postData(`${process.env.REACT_APP_API_URL}get_historical_logs`, {
       player_name: this.state.name,
       log_type: this.state.type,
-      steam_id_64: this.state.steamId64,
+      player_id: this.state.steamId64,
       from: this.state.from,
       till: this.state.till,
       limit: this.state.limit,
