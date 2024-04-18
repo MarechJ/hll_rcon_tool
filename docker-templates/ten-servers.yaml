@@ -68,8 +68,8 @@ x-backend: &backend
 x-supervisor: &supervisor
   build:
     context: .
-    dockerfile: Dockerfile-frontend
-  image: ${FRONTEND_DOCKER_REPOSITORY}:${TAGGED_VERSION}
+    dockerfile: Dockerfile
+  image: ${BACKEND_DOCKER_REPOSITORY}:${TAGGED_VERSION}
   restart: on-failure
   command: supervisor
   volumes:
