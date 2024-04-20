@@ -1,5 +1,13 @@
 import pytest
-from rcon.maps import Layer, MAPS, Gamemode, numbered_maps
+
+from rcon.maps import (
+    MAPS,
+    UNKNOWN_MAP_NAME,
+    Gamemode,
+    Layer,
+    numbered_maps,
+    parse_layer,
+)
 
 SMDM_WARFARE = Layer(
     id="stmariedumont_warfare",
@@ -22,3 +30,7 @@ SME_WARFARE = Layer(
 )
 def test_numbered_maps(maps, expected):
     assert numbered_maps(maps=maps) == expected
+
+
+def test_parse_layer():
+    assert parse_layer(layer_name="unknown").id == UNKNOWN_MAP_NAME

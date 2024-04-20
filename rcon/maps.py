@@ -1,7 +1,7 @@
 import re
 from enum import Enum
 from logging import getLogger
-from typing import Iterable, Literal, Union, Sequence
+from typing import Iterable, Literal, Sequence, Union
 
 import pydantic
 from requests.structures import CaseInsensitiveDict
@@ -12,6 +12,7 @@ RE_LAYER_NAME = re.compile(
     r"(?P<tag>\w{3})_(?P<size>S|L)_(?P<year>\d{4})_(?:(?P<environment>\w+)_)?P_(?P<gamemode>\w+)$"
 )
 
+UNKNOWN_MODE = "unknown"
 UNKNOWN_MAP_NAME = "unknown"
 UNKNOWN_MAP_TAG = "UNK"
 
@@ -779,7 +780,12 @@ def parse_layer(layer_name: str | Layer):
 
 
 def _parse_legacy_layer(layer_name: str):
-    _map, _mode = layer_name.split("_", 1)
+    try:
+        _map, _mode = layer_name.split("_", 1)
+    except ValueError:
+        _map = UNKNOWN_MAP_NAME
+        _mode = UNKNOWN_MODE
+
     map = MAPS.get(_map)
 
     if _mode.startswith("off"):
