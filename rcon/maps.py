@@ -9,7 +9,10 @@ from requests.structures import CaseInsensitiveDict
 logger = getLogger(__name__)
 
 RE_LAYER_NAME = re.compile(
-    r"(?P<tag>\w{3})_(?P<size>S|L)_(?P<year>\d{4})_(?:(?P<environment>\w+)_)?P_(?P<gamemode>\w+)$"
+    r"^(?P<tag>[A-Z]{3,5})_(?P<size>S|L)_(?P<year>\d{4})_(?:(?P<environment>\w+)_)?P_(?P<gamemode>\w+)$"
+)
+RE_LEGACY_LAYER_NAME = re.compile(
+    r"^(?P<name>[a-z0-9]+)_(?:(?P<offensive>off(?:ensive)?)_?(?P<attackers>[a-zA-Z]+)|(?P<gamemode>[a-z]+)(?:_V2)?)(?:_(?P<environment>[a-z]+))?$"
 )
 
 UNKNOWN_MODE = "unknown"
@@ -49,27 +52,8 @@ LOG_MAP_NAMES_TO_MAP = CaseInsensitiveDict(
         "DRIEL OFFENSIVE": "driel_offensive_ger",
         "EL ALAMEIN WARFARE": "elalamein_warfare",
         "EL ALAMEIN OFFENSIVE": "elalamein_offensive_ger",
-    }
-)
-
-LEGACY_MAP_TAGS = CaseInsensitiveDict(
-    {
-        "stmereeglise": "SME",
-        "stmariedumont": "BRC",
-        "utahbeach": "UTA",
-        "omahabeach": "OMA",
-        "purpleheartlane": "PHL",
-        "carentan": "CAR",
-        "hurtgenforest": "HUR",
-        "hill400": "HIL",
-        "foy": "FOY",
-        "kursk": "KUR",
-        "stalingrad": "STA",
-        "remagen": "REM",
-        "kharkov": "KHA",
-        "driel": "DRL",
-        "elalamein": "ELA",
-        UNKNOWN_MAP_NAME: UNKNOWN_MAP_TAG,
+        "MORTAIN WARFARE": "mortain_warfare_day",
+        "MORTAIN OFFENSIVE": "mortain_offensiveUS_day",
     }
 )
 
@@ -111,18 +95,24 @@ class Team(str, Enum):
 
 
 class Environment(str, Enum):
+    DAWN = "Dawn"
     DAY = "Day"
     DUSK = "Dusk"
-    DAWN = "Dawn"
     NIGHT = "Night"
+    OVERCAST = "Overcast"
+    RAIN = "Rain"
 
 
-class Faction(str, Enum):
-    US = "us"
-    GER = "ger"
-    RUS = "rus"
-    GB = "gb"
-    CW = "gb"
+class Faction(Enum):
+    class Faction(pydantic.BaseModel):
+        name: str
+        team: Team
+
+    CW = Faction(name="gb", team=Team.ALLIES)
+    GB = Faction(name="gb", team=Team.ALLIES)
+    GER = Faction(name="ger", team=Team.AXIS)
+    RUS = Faction(name="rus", team=Team.ALLIES)
+    US = Faction(name="us", team=Team.ALLIES)
 
 
 class Map(pydantic.BaseModel):
@@ -183,7 +173,7 @@ class Layer(pydantic.BaseModel):
         if self.gamemode == Gamemode.OFFENSIVE:
             out += " Off."
             if self.attackers:
-                out += f" {self.attacking_faction.value.upper()}"
+                out += f" {self.attacking_faction.value.name.upper()}"
         elif self.gamemode.is_small():
             # TODO: Remove once more Skirmish modes release
             out += " Skirmish"
@@ -335,6 +325,15 @@ MAPS = {
             prettyname="El Alamein",
             shortname="Alamein",
             allies=Faction.GB,
+            axis=Faction.GER,
+        ),
+        Map(
+            id="mortain",
+            name="MORTAIN",
+            tag="MOR",
+            prettyname="Mortain",
+            shortname="MOR",
+            allies=Faction.US,
             axis=Faction.GER,
         ),
     )
@@ -718,6 +717,67 @@ LAYERS = {
             gamemode=Gamemode.CONTROL,
             environment=Environment.DUSK,
         ),
+        Layer(
+            id="SMDM_S_1944_Day_P_Skirmish",
+            map=MAPS["stmariedumont"],
+            gamemode=Gamemode.CONTROL,
+        ),
+        Layer(
+            id="SMDM_S_1944_Night_P_Skirmish",
+            map=MAPS["stmariedumont"],
+            gamemode=Gamemode.CONTROL,
+            environment=Environment.NIGHT,
+        ),
+        Layer(
+            id="SMDM_S_1944_Rain_P_Skirmish",
+            map=MAPS["stmariedumont"],
+            gamemode=Gamemode.CONTROL,
+            environment=Environment.RAIN,
+        ),
+        Layer(id="mortain_warfare_day", map=MAPS["mortain"], gamemode=Gamemode.WARFARE),
+        Layer(
+            id="mortain_warfare_overcast",
+            map=MAPS["mortain"],
+            gamemode=Gamemode.WARFARE,
+            environment=Environment.OVERCAST,
+        ),
+        Layer(
+            id="mortain_offensiveUS_day",
+            map=MAPS["mortain"],
+            gamemode=Gamemode.OFFENSIVE,
+            attackers=Team.ALLIES,
+        ),
+        Layer(
+            id="mortain_offensiveUS_overcast",
+            map=MAPS["mortain"],
+            gamemode=Gamemode.OFFENSIVE,
+            attackers=Team.ALLIES,
+            environment=Environment.OVERCAST,
+        ),
+        Layer(
+            id="mortain_offensiveger_day",
+            map=MAPS["mortain"],
+            gamemode=Gamemode.OFFENSIVE,
+            attackers=Team.AXIS,
+        ),
+        Layer(
+            id="mortain_offensiveger_overcast",
+            map=MAPS["mortain"],
+            gamemode=Gamemode.OFFENSIVE,
+            attackers=Team.AXIS,
+            environment=Environment.OVERCAST,
+        ),
+        Layer(
+            id="mortain_skirmish_day",
+            map=MAPS["mortain"],
+            gamemode=Gamemode.CONTROL,
+        ),
+        Layer(
+            id="mortain_skirmish_overcast",
+            map=MAPS["mortain"],
+            gamemode=Gamemode.CONTROL,
+            environment=Environment.OVERCAST,
+        ),
     )
 }
 
@@ -765,9 +825,12 @@ def parse_layer(layer_name: str | Layer):
         else:
             attackers = None
 
-    try:
-        environment = Environment[layer_data["environment"].upper()]
-    except KeyError:
+    if layer_data["environment"]:
+        try:
+            environment = Environment[layer_data["environment"].upper()]
+        except KeyError:
+            environment = Environment.DAY
+    else:
         environment = Environment.DAY
 
     return Layer(
@@ -780,47 +843,48 @@ def parse_layer(layer_name: str | Layer):
 
 
 def _parse_legacy_layer(layer_name: str):
-    try:
-        _map, _mode = layer_name.split("_", 1)
-    except ValueError:
-        _map = UNKNOWN_MAP_NAME
-        _mode = UNKNOWN_MODE
+    layer_match = RE_LEGACY_LAYER_NAME.match(layer_name)
+    if not layer_match:
+        raise ValueError("Unparsable layer '%s'" % layer_name)
 
-    map = MAPS.get(_map)
+    layer_data = layer_match.groupdict()
 
-    if _mode.startswith("off"):
-        mode = Gamemode.OFFENSIVE
-        try:
-            attackers = Faction[_mode.split("_", 1)[1].upper()]
-        except KeyError:
-            attackers = Faction.GER
-        attacking_team = Team.AXIS if attackers == Faction.GER else Team.ALLIES
-    else:
-        mode = Gamemode.WARFARE
-        attackers = None
-        attacking_team = None
-    night = _mode.endswith("night")
-
-    if not map:
-        map = Map(
-            id=_map.lower(),
-            name=_map.upper(),
-            tag=LEGACY_MAP_TAGS[_map.lower()],
-            prettyname=_map.capitalize(),
-            shortname=_map.capitalize(),
-            allies=(
-                attackers if attackers and attacking_team == Team.ALLIES else Faction.US
-            ),
+    name = layer_data["name"]
+    map_ = MAPS.get(layer_data["name"])
+    if not map_:
+        map_ = Map(
+            id=name,
+            name=name.capitalize(),
+            tag=name.upper(),
+            prettyname=name.capitalize(),
+            shortname=name.capitalize(),
+            allies=Faction.US,
             axis=Faction.GER,
         )
 
-    return Layer(
-        id=layer_name,
-        map=map,
-        gamemode=mode,
-        attackers=attacking_team,
-        environment=Environment.NIGHT if night else Environment.DAY,
-    )
+    result = Layer(id=layer_name, map=map_, gamemode=Gamemode.WARFARE)
+
+    if layer_data["offensive"]:
+        result.gamemode = Gamemode.OFFENSIVE
+        try:
+            result.attackers = Faction[layer_data["attackers"].upper()].value.team
+        except KeyError:
+            pass
+
+    elif layer_data["gamemode"]:
+        try:
+            result.gamemode = Gamemode[layer_data["gamemode"].upper()]
+        except KeyError:
+            pass
+
+    environment = layer_data["environment"]
+    if environment:
+        try:
+            result.environment = Environment[environment.upper()]
+        except KeyError:
+            pass
+
+    return result
 
 
 def get_opposite_side(team: Team) -> Literal[Team.AXIS, Team.ALLIES]:
