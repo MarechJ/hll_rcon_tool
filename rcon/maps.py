@@ -193,6 +193,15 @@ MAPS = {
     m.id: m
     for m in (
         Map(
+            id=UNKNOWN_MAP_NAME,
+            name=UNKNOWN_MAP_NAME,
+            tag="",
+            prettyname=UNKNOWN_MAP_NAME,
+            shortname=UNKNOWN_MAP_NAME,
+            allies=Faction.US,
+            axis=Faction.GER,
+        ),
+        Map(
             id="stmereeglise",
             name="SAINTE-MÈRE-ÉGLISE",
             tag="SME",
@@ -342,6 +351,9 @@ MAPS = {
 LAYERS = {
     l.id: l
     for l in (
+        Layer(
+            id=UNKNOWN_MAP_NAME, map=MAPS[UNKNOWN_MAP_NAME], gamemode=Gamemode.WARFARE
+        ),
         Layer(
             id="stmereeglise_warfare",
             map=MAPS["stmereeglise"],
@@ -782,9 +794,11 @@ LAYERS = {
 }
 
 
-def parse_layer(layer_name: str | Layer):
+def parse_layer(layer_name: str | Layer) -> Layer:
     if isinstance(layer_name, Layer):
         layer_name = str(layer_name)
+    elif is_server_loading_map(map_name=layer_name):
+        return LAYERS[UNKNOWN_MAP_NAME]
 
     layer = LAYERS.get(layer_name)
     if layer:
@@ -930,3 +944,7 @@ def safe_get_map_name(map_name: str, pretty: bool = True) -> str:
         return map_.pretty()
     else:
         return map_.map.name
+
+
+def is_server_loading_map(map_name: str) -> bool:
+    return "untitled" in map_name.lower()
