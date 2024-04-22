@@ -930,8 +930,3 @@ def safe_get_map_name(map_name: str, pretty: bool = True) -> str:
         return map_.pretty()
     else:
         return map_.map.name
-
-
-def is_between_matches(map_name: str) -> bool:
-    """The game server returns map names like Untitled_46 when the server is loading a map"""
-    return "untitled" in map_name.lower()
