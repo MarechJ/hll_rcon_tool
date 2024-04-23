@@ -1,13 +1,16 @@
 import pytest
 
 from rcon.maps import (
+    LAYERS,
     MAPS,
-    Team,
+    UNKNOWN_MAP_NAME,
+    Environment,
     Gamemode,
     Layer,
+    Team,
+    is_server_loading_map,
     numbered_maps,
     parse_layer,
-    Environment,
 )
 
 MOR_WARFARE_DAY = Layer(
@@ -102,6 +105,8 @@ SMDM_SKIRMISH_RAIN = Layer(
     environment=Environment.RAIN,
 )
 
+UNKNOWN_MAP = LAYERS[UNKNOWN_MAP_NAME]
+
 
 @pytest.mark.parametrize(
     "maps, expected",
@@ -116,6 +121,8 @@ def test_numbered_maps(maps, expected):
 @pytest.mark.parametrize(
     "layer_name, expected",
     [
+        ("unknown", UNKNOWN_MAP),
+        ("Untitled_46", UNKNOWN_MAP),
         ("mortain_warfare_day", MOR_WARFARE_DAY),
         ("mortain_warfare_overcast", MOR_WARFARE_OVERCAST),
         ("mortain_offensiveUS_day", MOR_US_OFFENSIVE_DAY),
@@ -132,3 +139,10 @@ def test_numbered_maps(maps, expected):
 )
 def test_parse_layer(layer_name, expected):
     assert parse_layer(layer_name=layer_name) == expected
+
+
+@pytest.mark.parametrize(
+    "map_name, expected", [("Untitled_46", True), ("carentan_warfare", False)]
+)
+def test_is_server_loading_map(map_name, expected):
+    assert is_server_loading_map(map_name=map_name) == expected
