@@ -326,6 +326,8 @@ class ApiKey:
         if not REDIS_PARTS["PORT"]:
             raise ValueError("HLL_REDIS_PORT must be set")
 
+        # For the multi server stuff (server discovery, forwarding, etc.)
+        # they must share the same redis database for this, db 0 is unused by default
         self.red = redis.StrictRedis(
             host=REDIS_PARTS["HOST"], port=REDIS_PARTS["PORT"], db=0
         )

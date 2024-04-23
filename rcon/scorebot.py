@@ -135,10 +135,13 @@ def get_map_image(server_info: PublicInfoType, config: ScorebotUserConfig):
 
 
 def get_header_embed(public_info: PublicInfoType, config: ScorebotUserConfig):
-    elapsed_time_minutes = (
-        datetime.datetime.now()
-        - datetime.datetime.fromtimestamp(public_info["current_map"]["start"])
-    ).total_seconds() / 60
+    try:
+        elapsed_time_minutes = (
+            datetime.datetime.now()
+            - datetime.datetime.fromtimestamp(public_info["current_map"]["start"])
+        ).total_seconds() / 60
+    except TypeError:
+        elapsed_time_minutes = 0.0
 
     embed = discord.Embed(
         title=f"{public_info['name']}",

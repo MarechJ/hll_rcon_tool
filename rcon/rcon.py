@@ -12,6 +12,7 @@ from dateutil import parser
 import rcon.steam_utils
 from rcon.cache_utils import get_redis_client, invalidates, ttl_cache
 from rcon.commands import CommandFailedError, ServerCtl, VipId
+from rcon.maps import UNKNOWN_MAP_NAME, Layer, is_server_loading_map, parse_layer
 from rcon.models import PlayerSteamID, PlayerVIP, enter_session
 from rcon.player_history import (
     add_player_to_blacklist,
@@ -158,6 +159,18 @@ class Rcon(ServerCtl):
             self.pool_size = pool_size
         else:
             self.pool_size = config.thread_pool_size
+
+        self._current_map = parse_layer(UNKNOWN_MAP_NAME)
+
+    @property
+    def current_map(self) -> Layer:
+        """Store the last valid map we've seen, game server reports Untitled_ maps when loading"""
+        return self._current_map
+
+    @current_map.setter
+    def current_map(self, map_name: str):
+        if not is_server_loading_map(map_name):
+            self._current_map = parse_layer(map_name)
 
     @cached_property
     def thread_pool(self):
@@ -784,7 +797,8 @@ class Rcon(ServerCtl):
             raise ValueError("Game server returned junk for get_gamestate")
 
         raw_time_remaining = raw_time_remaining.split("Remaining Time: ")[1]
-        current_map = raw_current_map.split(": ")[1]
+        # Handle Untitled_ style map names when maps are loading
+        self.current_map = raw_current_map.split(": ")[1]
         next_map = raw_next_map.split(": ")[1]
 
         return {
@@ -796,7 +810,8 @@ class Rcon(ServerCtl):
                 hours=float(hours), minutes=float(mins), seconds=float(secs)
             ),
             "raw_time_remaining": raw_time_remaining,
-            "current_map": current_map,
+            # TODO: Update this when we return Layers from the API
+            "current_map": str(self.current_map),
             "next_map": next_map,
         }
 
@@ -848,7 +863,10 @@ class Rcon(ServerCtl):
         if not self.map_regexp.match(current_map):
             raise CommandFailedError("Server returned wrong data")
 
-        return current_map
+        self.current_map = current_map
+
+        # TODO: Update this when we return Layers from the API
+        return str(self.current_map)
 
     @ttl_cache(ttl=60 * 5)
     def get_current_map_sequence(self) -> list[str]:
