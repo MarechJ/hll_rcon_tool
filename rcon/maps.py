@@ -351,6 +351,9 @@ MAPS = {
 LAYERS = {
     l.id: l
     for l in (
+        # In older versions (prior to v9.8.0) map names could be recorded as bla_
+        # if the map name could not be retrieved from the game server
+        Layer(id="bla_", map=MAPS[UNKNOWN_MAP_NAME], gamemode=Gamemode.WARFARE),
         Layer(
             id=UNKNOWN_MAP_NAME, map=MAPS[UNKNOWN_MAP_NAME], gamemode=Gamemode.WARFARE
         ),
