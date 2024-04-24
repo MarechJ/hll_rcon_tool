@@ -1040,12 +1040,6 @@ class Rcon(ServerCtl):
                 raise
         return settings
 
-    def do_save_setting(self, name, value):
-        if not name in dict(self.settings):
-            raise ValueError(f"'{name}' can't be save with this method")
-
-        return getattr(self, f"set_{name}")(value)
-
     @staticmethod
     def _extract_time(raw_timestamp: str) -> datetime:
         """Parse a unix timestamp to a UTC Python datetime"""
