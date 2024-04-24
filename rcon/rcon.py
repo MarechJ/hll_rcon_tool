@@ -479,9 +479,9 @@ class Rcon(ServerCtl):
 
         return online
 
-    def do_add_admin(self, player_id, role, name) -> str:
+    def do_add_admin(self, player_id, role, description) -> str:
         with invalidates(Rcon.get_admin_ids):
-            return super().do_add_admin(player_id, role, name)
+            return super().do_add_admin(player_id, role, description)
 
     def do_remove_admin(self, player_id) -> str:
         with invalidates(Rcon.get_admin_ids):
@@ -642,11 +642,11 @@ class Rcon(ServerCtl):
 
         return result
 
-    def do_add_vip(self, name, player_id, expiration: str = "") -> str:
+    def do_add_vip(self, description, player_id, expiration: str = "") -> str:
         """Adds VIP status on the game server and adds or updates their PlayerVIP record."""
         with invalidates(Rcon.get_vip_ids):
             # Add VIP before anything else in case we have errors
-            result = super().do_add_vip(player_id, name)
+            result = super().do_add_vip(player_id, description)
 
         # postgres and Python have different max date limits
         # https://docs.python.org/3.8/library/datetime.html#datetime.MAXYEAR
@@ -658,7 +658,9 @@ class Rcon(ServerCtl):
         try:
             expiration_date = parser.parse(expiration)
         except (parser.ParserError, OverflowError):
-            logger.warning(f"Unable to parse {expiration=} for {name=} {player_id=}")
+            logger.warning(
+                f"Unable to parse {expiration=} for {description=} {player_id=}"
+            )
             # For our purposes (human lifespans) we can use 200 years in the future as
             # the equivalent of indefinite VIP access
             expiration_date = INDEFINITE_VIP_DATE
@@ -675,7 +677,7 @@ class Rcon(ServerCtl):
                 # being created from a VIP list upload, their alias will be saved with
                 # whatever name is in the upload file which may have metadata in it since
                 # people use the free form name field in VIP uploads to store stuff
-                save_player(player_name=name, steam_id_64=player_id)
+                save_player(player_name=description, steam_id_64=player_id)
                 # Can't use a return value from save_player or it's not bound
                 # to the session https://docs.sqlalchemy.org/en/20/errors.html#error-bhk3
                 player = (

@@ -233,7 +233,7 @@ class PlayersHistory extends React.Component {
 
     return sendAction("do_add_vip", {
       player_id: steamID64,
-      name: name,
+      description: name,
       expiration: expirationTimestamp,
       forward: forwardVIP,
     }).then(this._reloadOnSuccess);

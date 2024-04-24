@@ -119,10 +119,10 @@ DEFAULT_AUTO_SETTINGS = {
         "do_add_admin": {
             "player_id": "1234567890123456",
             "role": "senior",
-            "name": "A comment",
+            "description": "A comment",
         },
         "do_remove_admin": {"player_id": "1234567890123456"},
-        "do_add_vip": {"player_id": "1234567890123456", "name": "A comment"},
+        "do_add_vip": {"player_id": "1234567890123456", "description": "A comment"},
         "do_remove_vip": {"player_id": "1234567890123456"},
         "do_remove_all_vips": {},
         "do_add_map_to_whitelist": {"map_name": "stmariedumont_warfare"},

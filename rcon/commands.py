@@ -643,19 +643,19 @@ class ServerCtl:
         return self._str_request(f"pardonpermaban {ban_log}", log_info=True)
 
     @_escape_params
-    def do_add_admin(self, player_id, role, name) -> str:
-        name = convert_tabs_to_spaces(name)
+    def do_add_admin(self, player_id, role, description) -> str:
+        description = convert_tabs_to_spaces(description)
         return self._str_request(
-            f'adminadd "{player_id}" "{role}" "{name}"', log_info=True
+            f'adminadd "{player_id}" "{role}" "{description}"', log_info=True
         )
 
     def do_remove_admin(self, player_id) -> str:
         return self._str_request(f"admindel {player_id}", log_info=True)
 
     @_escape_params
-    def do_add_vip(self, player_id, name) -> str:
-        name = convert_tabs_to_spaces(name)
-        return self._str_request(f'vipadd {player_id} "{name}"', log_info=True)
+    def do_add_vip(self, player_id, description) -> str:
+        description = convert_tabs_to_spaces(description)
+        return self._str_request(f'vipadd {player_id} "{description}"', log_info=True)
 
     def do_remove_vip(self, player_id) -> str:
         return self._str_request(f"vipdel {player_id}", log_info=True)

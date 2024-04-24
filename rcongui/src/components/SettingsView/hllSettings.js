@@ -416,7 +416,7 @@ class HLLSettings extends React.Component {
               onAdd={(name, steamID64, expirationTimestamp) =>
                 sendAction("do_add_vip", {
                   player_id: steamID64,
-                  name: name,
+                  description: name,
                   forward: forwardVIP,
                   expiration: expirationTimestamp,
                 }).then(this.loadVips)
@@ -444,7 +444,7 @@ class HLLSettings extends React.Component {
               onAdd={(name, steamID64, role) =>
                 sendAction("do_add_admin", {
                   player_id: steamID64,
-                  name: name,
+                  description: name,
                   role: role,
                 }).then(this.loadAdmins)
               }

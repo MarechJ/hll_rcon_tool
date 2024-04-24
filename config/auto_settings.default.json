@@ -175,7 +175,7 @@
     },
     "do_add_vip": {
       "player_id": "1234567890123456",
-      "name": "A comment"
+      "description": "A comment"
     },
     "do_remove_vip": {
       "player_id": "1234567890123456"
