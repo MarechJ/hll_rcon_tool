@@ -72,7 +72,7 @@ def _do_punitions(
         try:
             if method == ActionMethod.MESSAGE:
                 if not aplayer.details.dry_run:
-                    rcon.do_message_player(
+                    rcon.message_player(
                         aplayer.name,
                         aplayer.steam_id_64,
                         aplayer.details.message,
@@ -86,7 +86,7 @@ def _do_punitions(
 
             if method == ActionMethod.PUNISH:
                 if not aplayer.details.dry_run:
-                    rcon.do_punish(
+                    rcon.punish(
                         aplayer.name, aplayer.details.message, by=aplayer.details.author
                     )
                 audit(
@@ -97,7 +97,7 @@ def _do_punitions(
 
             if method == ActionMethod.KICK:
                 if not aplayer.details.dry_run:
-                    rcon.do_kick(
+                    rcon.kick(
                         aplayer.name, aplayer.details.message, by=aplayer.details.author
                     )
                 audit(
@@ -249,7 +249,7 @@ def on_connected(rcon: Rcon, _, name: str, steam_id_64: str):
     def notify_player():
         try:
             for p in punitions_to_apply.warning:
-                rcon.do_message_player(
+                rcon.message_player(
                     player_id=p.steam_id_64,
                     message=p.details.message,
                     by=p.details.author,

@@ -63,7 +63,7 @@ def test_ban_excluded_weapon(*args):
     ):
         rcon.get_vips_ids = mock.MagicMock(return_value=[])
         auto_ban_if_tks_right_after_connection(rcon, tk_log)
-        rcon.do_perma_ban.assert_not_called()
+        rcon.perma_ban.assert_not_called()
 
 
 @mock.patch("rcon.game_logs.get_player_profile", autospec=True, return_value=None)
@@ -120,7 +120,7 @@ def test_ban_success(*args):
     ):
         rcon.get_vips_ids = mock.MagicMock(return_value=[])
         auto_ban_if_tks_right_after_connection(rcon, tk_log, config)
-        rcon.do_perma_ban.assert_called()
+        rcon.perma_ban.assert_called()
 
 
 @mock.patch("rcon.game_logs.get_player_profile", autospec=True, return_value=None)
@@ -188,7 +188,7 @@ def test_ban_ignored_kill(*args):
     ):
         rcon.get_vips_ids = mock.MagicMock(return_value=[])
         auto_ban_if_tks_right_after_connection(rcon, tk_log, config)
-        rcon.do_perma_ban.assert_not_called()
+        rcon.perma_ban.assert_not_called()
 
 
 @mock.patch("rcon.game_logs.get_player_profile", autospec=True, return_value=None)
@@ -258,7 +258,7 @@ def test_ban_count_one_death(*args):
     ):
         rcon.get_vips_ids = mock.MagicMock(return_value=[])
         auto_ban_if_tks_right_after_connection(rcon, tk_log, config)
-        rcon.do_perma_ban.assert_called()
+        rcon.perma_ban.assert_called()
 
 
 @mock.patch("rcon.game_logs.get_player_profile", autospec=True, return_value=None)
@@ -340,4 +340,4 @@ def test_ban_ignored_2_death(*args):
     ):
         rcon.get_vips_ids = mock.MagicMock(return_value=[])
         auto_ban_if_tks_right_after_connection(rcon, tk_log, config)
-        rcon.do_perma_ban.assert_not_called()
+        rcon.perma_ban.assert_not_called()

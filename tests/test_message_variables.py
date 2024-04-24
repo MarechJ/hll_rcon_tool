@@ -288,7 +288,7 @@ def test_chat_commands_hook_command_words(
 
     with mock.patch("rcon.hooks.Rcon") as rcon_:
         chat_commands(rcon_, struct_log)
-        rcon_.do_message_player.assert_called_once_with(
+        rcon_.message_player.assert_called_once_with(
             player_id=steam_id_64,
             message=expected_message,
             save_message=False,
@@ -406,7 +406,7 @@ def test_chat_commands_hook_help_words(
 
     with mock.patch("rcon.hooks.Rcon") as rcon_:
         chat_commands(rcon_, struct_log)
-        rcon_.do_message_player.assert_called_once_with(
+        rcon_.message_player.assert_called_once_with(
             player_id=steam_id_64,
             message=expected_message,
             save_message=False,
@@ -469,7 +469,7 @@ def test_chat_commands_hook_description_words(
 
     with mock.patch("rcon.hooks.Rcon") as rcon_:
         chat_commands(rcon_, struct_log)
-        rcon_.do_message_player.assert_called_once_with(
+        rcon_.message_player.assert_called_once_with(
             player_id=steam_id_64,
             message=expected_message,
             save_message=False,

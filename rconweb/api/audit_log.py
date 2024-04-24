@@ -52,6 +52,7 @@ def record_audit(func):
 
 def auto_record_audit(name):
     def wrapper(func):
+        # TODO: change this to inverse, only don't audit get_
         if (
             name.startswith("do_")
             or name.startswith("set_")

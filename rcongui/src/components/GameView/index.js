@@ -101,7 +101,7 @@ const Squad = ({
   );
 
   const deleteFlag = (flag_id) => {
-    return postData(`${process.env.REACT_APP_API_URL}do_unflag_player`, {
+    return postData(`${process.env.REACT_APP_API_URL}unflag_player`, {
       flag_id: flag_id,
     })
       .then((response) =>
@@ -560,12 +560,12 @@ const GameView = ({ classes: globalClasses }) => {
 
   const addFlagToPlayers = (_, flag, comment) => {
     selectedPlayers.forEach((name) =>
-      postData(`${process.env.REACT_APP_API_URL}do_flag_player`, {
+      postData(`${process.env.REACT_APP_API_URL}flag_player`, {
         player_id: playerNamesToSteamId.get(name),
         flag: flag,
         comment: comment,
       })
-        .then((response) => showResponse(response, "do_flag_player", true))
+        .then((response) => showResponse(response, "flag_player", true))
         .then(() => setFlag(false))
         .catch(handle_http_errors)
     );

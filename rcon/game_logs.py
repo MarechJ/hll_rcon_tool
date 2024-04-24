@@ -827,7 +827,7 @@ def auto_ban_if_tks_right_after_connection(
                     "Banning player %s for TEAMKILL after connect %s", player_name, log
                 )
                 try:
-                    rcon.do_perma_ban(
+                    rcon.perma_ban(
                         player_id=player_steam_id,
                         reason=reason,
                         by=author,

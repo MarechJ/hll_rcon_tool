@@ -103,7 +103,7 @@ class RconAPI(Rcon):
     def __init__(self, *args, pool_size: bool | None = None, **kwargs):
         super().__init__(*args, pool_size=pool_size, **kwargs)
 
-    def do_blacklist_player(
+    def blacklist_player(
         self,
         player_id: str,
         reason: str,
@@ -127,7 +127,7 @@ class RconAPI(Rcon):
 
         # Attempt to perma ban on the server for immediate removal
         try:
-            self.do_perma_ban(
+            self.perma_ban(
                 player_name=player_name,
                 player_id=player_id,
                 reason=reason,
@@ -136,13 +136,13 @@ class RconAPI(Rcon):
         except Exception as e:
             logger.exception(e)
             logger.error(
-                "%s while attempting to perma ban in do_blacklist_player %s, %s",
+                "%s while attempting to perma ban in blacklist_player %s, %s",
                 e,
                 player_id,
                 player_name,
             )
 
-        # This is redundant since the player is added to the blacklist in `do_perma_ban`
+        # This is redundant since the player is added to the blacklist in `perma_ban`
         # but including it here to preserve functionality with the blacklist regardless of
         # whether or not the player is perma banned or blacklisted
         # legacy game server versions would not let you perma ban a player who was not connected
@@ -152,23 +152,7 @@ class RconAPI(Rcon):
 
         return True
 
-    def blacklist_player(
-        self,
-        player_id: str,
-        reason: str,
-        player_name: str | None = None,
-        audit_name: str | None = None,
-    ):
-        """This is DEPRECATED use do_blacklist_player instead, it will be removed in a future release"""
-        # TODO: remove this deprecated endpoint
-        return self.do_blacklist_player(
-            player_id=player_id,
-            reason=reason,
-            player_name=player_name,
-            audit_name=audit_name,
-        )
-
-    def do_unban(
+    def unban(
         self,
         player_id: str,
     ) -> bool:
@@ -177,11 +161,10 @@ class RconAPI(Rcon):
         Args:
             player_id: steam_id_64 or windows store ID
         """
-        # logger.info(f"do_unban {steam_id_64=} {kwargs=}")
         bans = self.get_bans()
         type_to_func = {
-            "temp": self.do_remove_temp_ban,
-            "perma": self.do_remove_perma_ban,
+            "temp": self.remove_temp_ban,
+            "perma": self.remove_perma_ban,
         }
         for b in bans:
             if b.get("steam_id_64") == player_id:
@@ -194,17 +177,7 @@ class RconAPI(Rcon):
 
         return True
 
-    def unban(
-        self,
-        player_id: str,
-    ) -> bool:
-        """This is DEPRECATED use do_unban instead, it will be removed in a future release"""
-        # TODO: remove this deprecated endpoint
-        return self.do_unban(
-            player_id=player_id,
-        )
-
-    def do_unblacklist_player(
+    def unblacklist_player(
         self,
         player_id: str,
     ) -> bool:
@@ -224,13 +197,7 @@ class RconAPI(Rcon):
 
         return True
 
-    def unblacklist_player(
-        self,
-        player_id: str,
-    ):
-        return self.do_unblacklist_player(player_id=player_id)
-
-    def do_clear_cache(self) -> bool:
+    def clear_cache(self) -> bool:
         """Clear every key in this servers Redis cache
 
         Many things in CRCON are cached in Redis to avoid excessively polling
@@ -239,9 +206,6 @@ class RconAPI(Rcon):
         """
         # TODO: allow clearing specific cache keys
         return RedisCached.clear_all_caches(get_redis_pool())
-
-    def clear_cache(self):
-        return self.do_clear_cache()
 
     def get_player_profile(
         self,
@@ -257,20 +221,6 @@ class RconAPI(Rcon):
             return player_history.get_player_profile_by_id(
                 id=player_db_id, nb_sessions=num_sessions
             )
-
-    def player(
-        self,
-        player_id: str | None = None,
-        player_db_id: int | None = None,
-        num_sessions: int = 10,
-    ):
-        """This is DEPRECATED use get_player_profile instead, it will be removed in a future release"""
-        # TODO: remove this deprecated endpoint
-        return self.get_player_profile(
-            player_id=player_id,
-            player_db_id=player_db_id,
-            num_sessions=num_sessions,
-        )
 
     def get_players_history(
         self,
@@ -318,39 +268,7 @@ class RconAPI(Rcon):
             country=country,
         )
 
-    def players_history(
-        self,
-        page: int = 1,
-        page_size: int = 500,
-        last_seen_from: datetime | None = None,
-        last_seen_till: datetime | None = None,
-        player_id: str | None = None,
-        player_name: str | None = None,
-        blacklisted: bool | None = None,
-        is_watched: bool | None = None,
-        exact_name_match: bool = False,
-        ignore_accent: bool = True,
-        flags: str | list[str] | None = None,
-        country: str | None = None,
-    ):
-        """This is DEPRECATED use get_players_history instead, it will be removed in a future release"""
-        # TODO: remove this deprecated endpoint
-        return self.get_players_history(
-            page=page,
-            page_size=page_size,
-            last_seen_from=last_seen_from,
-            last_seen_till=last_seen_till,
-            player_id=player_id,
-            player_name=player_name,
-            blacklisted=blacklisted,
-            is_watched=is_watched,
-            exact_name_match=exact_name_match,
-            ignore_accent=ignore_accent,
-            flags=flags,
-            country=country,
-        )
-
-    def do_flag_player(
+    def flag_player(
         self,
         player_id: str,
         flag: str,
@@ -380,20 +298,7 @@ class RconAPI(Rcon):
 
         return new_flag
 
-    def flag_player(
-        self,
-        player_id: str,
-        flag: str,
-        player_name: str | None = None,
-        comment: str | None = None,
-    ):
-        """This is DEPRECATED use do_flag_player instead, it will be removed in a future release"""
-        # TODO: remove this deprecated endpoint
-        return self.do_flag_player(
-            player_id=player_id, player_name=player_name, flag=flag, comment=comment
-        )
-
-    def do_unflag_player(
+    def unflag_player(
         self,
         flag_id: int | None = None,
         player_id: str | None = None,
@@ -410,11 +315,6 @@ class RconAPI(Rcon):
             flag_id=flag_id, steam_id_64=player_id, flag=flag
         )
         return removed_flag
-
-    def unflag_player(self, flag_id: int):
-        """This is DEPRECATED use do_unflag_player instead, it will be removed in a future release"""
-        # TODO: remove this deprecated endpoint
-        return self.do_unflag_player(flag_id=flag_id)
 
     def set_server_name(self, name: str):
         # TODO: server name won't change until map change
@@ -445,7 +345,7 @@ class RconAPI(Rcon):
 
         return result
 
-    def do_watch_player(
+    def watch_player(
         self,
         player_id: str,
         reason: str,
@@ -460,7 +360,7 @@ class RconAPI(Rcon):
             add=True,
         )
 
-    def do_unwatch_player(
+    def unwatch_player(
         self,
         player_id: str,
         by: str,
@@ -572,29 +472,29 @@ class RconAPI(Rcon):
         # TODO: update this when we return `Layer`s instead of strings
         return [str(map) for map in v.get_map_whitelist()]
 
-    def do_add_map_to_whitelist(self, map_name: str):
+    def add_map_to_whitelist(self, map_name: str):
         v = VoteMap()
-        v.do_add_map_to_whitelist(map_name=map_name)
+        v.add_map_to_whitelist(map_name=map_name)
 
-    def do_add_maps_to_whitelist(self, map_names: Iterable[str]):
+    def add_maps_to_vm_whitelist(self, map_names: Iterable[str]):
         v = VoteMap()
-        v.do_add_maps_to_whitelist(map_names=map_names)
+        v.add_maps_to_vm_whitelist(map_names=map_names)
 
-    def do_remove_map_from_whitelist(self, map_name: str):
+    def remove_map_from_vm_whitelist(self, map_name: str):
         v = VoteMap()
-        v.do_remove_map_from_whitelist(map_name=map_name)
+        v.remove_map_from_vm_whitelist(map_name=map_name)
 
-    def do_remove_maps_from_whitelist(self, map_names: Iterable[str]):
+    def remove_maps_from_vm_whitelist(self, map_names: Iterable[str]):
         v = VoteMap()
-        v.do_remove_maps_from_whitelist(map_names=map_names)
+        v.remove_maps_from_vm_whitelist(map_names=map_names)
 
-    def do_reset_map_whitelist(self):
+    def reset_map_vm_whitelist(self):
         v = VoteMap()
-        v.do_reset_map_whitelist()
+        v.reset_map_vm_whitelist()
 
-    def do_set_map_whitelist(self, map_names: Iterable[str]):
+    def set_map_vm_whitelist(self, map_names: Iterable[str]):
         v = VoteMap()
-        v.do_set_map_whitelist(map_names=map_names)
+        v.set_map_vm_whitelist(map_names=map_names)
 
     @staticmethod
     def _validate_user_config(

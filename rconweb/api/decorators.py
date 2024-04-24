@@ -10,7 +10,7 @@ logger = logging.getLogger("rconweb")
 ENDPOINT_HTTP_METHODS: dict[str, list[str]] = {}
 
 
-def require_http_methods(request_method_list):
+def require_http_methods(request_method_list: list[str]):
     def decorator(
         func,
     ):  # -> _Wrapped[Callable[..., Any], Any, Callable[..., Any], Any]:  # -> _Wrapped[Callable[..., Any], Any, Callable[..., Any], Any]:  # -> _Wrapped[Callable[..., Any], Any, Callable[..., Any], Any]:
@@ -22,7 +22,7 @@ def require_http_methods(request_method_list):
         ENDPOINT_HTTP_METHODS[func.__name__] = request_method_list
 
         @wraps(func)
-        @django_require_http_methods(func)
+        @django_require_http_methods(request_method_list)
         def inner(*args, **kwargs):
             return func(*args, **kwargs)
 

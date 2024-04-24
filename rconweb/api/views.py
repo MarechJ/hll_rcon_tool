@@ -186,7 +186,6 @@ def expose_api_endpoint(
     @wraps(func)
     def wrapper(request: HttpRequest):
         parameters = inspect.signature(func).parameters
-        cmd = func.__name__
         arguments = {}
         failure = False
         others = None
@@ -256,14 +255,10 @@ def expose_api_endpoint(
         # using forward_command and not forward_request so that the `forwarded`parameter
         # is passed to avoid infinite loops of forwarding
         config = RconServerSettingsUserConfig.load_from_db()
-        if not config.broadcast_temp_bans and func == rcon_api.do_temp_ban:
+        if not config.broadcast_temp_bans and func == rcon_api.temp_ban:
             logger.debug("Not broadcasting temp ban due to settings")
             return response
-        # TODO: remove deprecated endpoints
-        elif config.unblacklist_does_unban and func in (
-            rcon_api.unblacklist_player,
-            rcon_api.do_unblacklist_player,
-        ):
+        elif config.unblacklist_does_unban and func == rcon_api.unblacklist_player:
             try:
                 forward_command(
                     path=request.path,
@@ -273,8 +268,7 @@ def expose_api_endpoint(
                 )
             except Exception as e:
                 logger.error("Unexpected error while forwarding request: %s", e)
-        # TODO: remove deprecated endpoints
-        elif config.broadcast_unbans and func in (rcon_api.do_unban, rcon_api.unban):
+        elif config.broadcast_unbans and func == rcon_api.unban:
             try:
                 forward_command(
                     path=request.path,
@@ -343,40 +337,35 @@ def run_raw_command(request):
 
 
 ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
-    rcon_api.do_add_admin: "api.can_add_admin_roles",
-    rcon_api.do_add_map_to_rotation: "api.can_add_map_to_rotation",
-    rcon_api.do_add_map_to_whitelist: "api.can_add_map_to_whitelist",
-    rcon_api.do_add_maps_to_rotation: "api.can_add_maps_to_rotation",
-    rcon_api.do_add_maps_to_whitelist: "api.can_add_maps_to_whitelist",
-    rcon_api.do_add_vip: "api.can_add_vip",
-    rcon_api.do_ban_profanities: "api.can_ban_profanities",
-    rcon_api.do_blacklist_player: "api.can_blacklist_players",
-    # TODO: remove this deprecated endpoint
+    rcon_api.add_admin: "api.can_add_admin_roles",
+    rcon_api.add_map_to_rotation: "api.can_add_map_to_rotation",
+    rcon_api.add_map_to_whitelist: "api.can_add_map_to_whitelist",
+    rcon_api.add_maps_to_rotation: "api.can_add_maps_to_rotation",
+    rcon_api.add_maps_to_vm_whitelist: "api.can_add_maps_to_whitelist",
+    rcon_api.add_vip: "api.can_add_vip",
+    rcon_api.ban_profanities: "api.can_ban_profanities",
     rcon_api.blacklist_player: "api.can_blacklist_players",
-    rcon_api.do_clear_cache: "api.can_clear_crcon_cache",
-    # TODO: remove this deprecated endpoint
     rcon_api.clear_cache: "api.can_clear_crcon_cache",
-    rcon_api.do_flag_player: "api.can_flag_player",
-    # TODO: remove this deprecated endpoint
     rcon_api.flag_player: "api.can_flag_player",
-    rcon_api.do_kick: "api.can_kick_players",
-    rcon_api.do_message_player: "api.can_message_players",
-    rcon_api.do_perma_ban: {
+    rcon_api.kick: "api.can_kick_players",
+    rcon_api.message_player: "api.can_message_players",
+    rcon_api.perma_ban: {
         "api.can_perma_ban_players",
         "api.can_blacklist_players",
     },
-    rcon_api.do_punish: "api.can_punish_players",
-    rcon_api.do_remove_admin: "api.can_remove_admin_roles",
-    rcon_api.do_remove_all_vips: "api.can_remove_all_vips",
-    rcon_api.do_remove_map_from_rotation: "api.can_remove_map_from_rotation",
-    rcon_api.do_remove_map_from_whitelist: "api.can_remove_map_from_whitelist",
-    rcon_api.do_remove_maps_from_rotation: "api.can_remove_maps_from_rotation",
-    rcon_api.do_remove_maps_from_whitelist: "api.can_remove_maps_from_whitelist",
-    rcon_api.do_remove_perma_ban: "api.can_remove_perma_bans",
-    rcon_api.do_remove_temp_ban: "api.can_remove_temp_bans",
-    rcon_api.do_remove_vip: "api.can_remove_vip",
-    rcon_api.do_reset_map_whitelist: "api.can_reset_map_whitelist",
-    rcon_api.do_reset_votekick_threshold: "api.can_reset_votekick_threshold",
+    rcon_api.punish: "api.can_punish_players",
+    rcon_api.remove_admin: "api.can_remove_admin_roles",
+    rcon_api.remove_all_vips: "api.can_remove_all_vips",
+    rcon_api.remove_map_from_rotation: "api.can_remove_map_from_rotation",
+    rcon_api.remove_map_from_vm_whitelist: "api.can_remove_map_from_whitelist",
+    rcon_api.remove_maps_from_rotation: "api.can_remove_maps_from_rotation",
+    rcon_api.remove_maps_from_vm_whitelist: "api.can_remove_maps_from_whitelist",
+    rcon_api.remove_perma_ban: "api.can_remove_perma_bans",
+    rcon_api.remove_temp_ban: "api.can_remove_temp_bans",
+    rcon_api.remove_vip: "api.can_remove_vip",
+    rcon_api.reset_map_vm_whitelist: "api.can_reset_map_whitelist",
+    rcon_api.reset_votekick_threshold: "api.can_reset_votekick_threshold",
+    # TODO: remove this
     rcon_api.do_save_setting: {
         "api.can_change_team_switch_cooldown",
         "api.can_change_autobalance_threshold",
@@ -388,30 +377,20 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
         "api.can_change_votekick_enabled",
         "api.can_change_votekick_threshold",
     },
-    rcon_api.do_set_map_whitelist: "api.can_set_map_whitelist",
-    rcon_api.do_switch_player_now: "api.can_switch_players_immediately",
-    rcon_api.do_switch_player_on_death: "api.can_switch_players_on_death",
-    rcon_api.do_temp_ban: "api.can_temp_ban_players",
-    rcon_api.do_unban_profanities: "api.can_unban_profanities",
-    rcon_api.do_unban: {
-        "api.can_remove_temp_bans",
-        "api.can_remove_perma_bans",
-        "api.can_unblacklist_players",
-    },
-    # TODO: remove this deprecated endpoint
+    rcon_api.set_map_vm_whitelist: "api.can_set_map_whitelist",
+    rcon_api.switch_player_now: "api.can_switch_players_immediately",
+    rcon_api.switch_player_on_death: "api.can_switch_players_on_death",
+    rcon_api.temp_ban: "api.can_temp_ban_players",
+    rcon_api.unban_profanities: "api.can_unban_profanities",
     rcon_api.unban: {
         "api.can_remove_temp_bans",
         "api.can_remove_perma_bans",
         "api.can_unblacklist_players",
     },
-    rcon_api.do_unblacklist_player: "api.can_unblacklist_players",
-    # TODO: remove this deprecated endpoint
     rcon_api.unblacklist_player: "api.can_unblacklist_players",
-    rcon_api.do_unflag_player: "api.can_unflag_player",
-    # TODO: remove this deprecated endpoint
     rcon_api.unflag_player: "api.can_unflag_player",
-    rcon_api.do_unwatch_player: "api.can_remove_player_watch",
-    rcon_api.do_watch_player: "api.can_add_player_watch",
+    rcon_api.unwatch_player: "api.can_remove_player_watch",
+    rcon_api.watch_player: "api.can_add_player_watch",
     rcon_api.get_admin_groups: "api.can_view_admin_groups",
     rcon_api.get_admin_ids: "api.can_view_admin_ids",
     rcon_api.get_admin_pings_discord_webhooks_config: "api.can_view_admin_pings_discord_webhooks_config",
@@ -455,13 +434,9 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     rcon_api.get_perma_bans: "api.can_view_perma_bans",
     rcon_api.get_player_info: "api.can_view_player_info",
     rcon_api.get_player_profile: "api.can_view_player_profile",
-    # TODO: remove this deprecated endpoint
-    rcon_api.player: "api.can_view_player_profile",
     rcon_api.get_playerids: "api.can_view_playerids",
     rcon_api.get_players_fast: "api.can_view_players",
     rcon_api.get_players_history: "api.can_view_player_history",
-    # TODO: remove this deprecated endpoint
-    rcon_api.players_history: "api.can_view_player_history",
     rcon_api.get_players: "api.can_view_get_players",
     rcon_api.get_profanities: "api.can_view_profanities",
     rcon_api.get_queue_length: "api.can_view_queue_length",
@@ -607,60 +582,25 @@ PREFIXES_TO_EXPOSE = [
 # TODO: remove deprecated endpoints
 DEPRECATED_ENDPOINTS = (
     "date_scoreboard",
-    "players_history",
     "flag_player",
     "unflag_player",
-    "players_history",
     "player",
-    "clear_cache",
     "unblacklist_player",
-    "blacklist_player",
     "unban",
 )
 
 RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
-    rcon_api.do_add_admin: ["POST"],
-    rcon_api.do_add_map_to_rotation: ["POST"],
-    rcon_api.do_add_map_to_whitelist: ["POST"],
-    rcon_api.do_add_maps_to_rotation: ["POST"],
-    rcon_api.do_add_maps_to_whitelist: ["POST"],
-    rcon_api.do_add_vip: ["POST"],
-    rcon_api.do_ban_profanities: ["POST"],
-    rcon_api.do_blacklist_player: ["POST"],
+    rcon_api.add_admin: ["POST"],
+    rcon_api.add_map_to_rotation: ["POST"],
+    rcon_api.add_map_to_whitelist: ["POST"],
+    rcon_api.add_maps_to_rotation: ["POST"],
+    rcon_api.add_maps_to_vm_whitelist: ["POST"],
+    rcon_api.add_vip: ["POST"],
+    rcon_api.ban_profanities: ["POST"],
     rcon_api.blacklist_player: ["POST"],
-    rcon_api.do_clear_cache: ["POST"],
     rcon_api.clear_cache: ["POST"],
-    rcon_api.do_flag_player: ["POST"],
-    rcon_api.flag_player: ["POST"],
-    rcon_api.do_kick: ["POST"],
-    rcon_api.do_message_player: ["POST"],
-    rcon_api.do_perma_ban: ["POST"],
-    rcon_api.do_punish: ["POST"],
-    rcon_api.do_remove_admin: ["POST"],
-    rcon_api.do_remove_all_vips: ["POST"],
-    rcon_api.do_remove_map_from_rotation: ["POST"],
-    rcon_api.do_remove_map_from_whitelist: ["POST"],
-    rcon_api.do_remove_maps_from_rotation: ["POST"],
-    rcon_api.do_remove_maps_from_whitelist: ["POST"],
-    rcon_api.do_remove_perma_ban: ["POST"],
-    rcon_api.do_remove_temp_ban: ["POST"],
-    rcon_api.do_remove_vip: ["POST"],
-    rcon_api.do_reset_map_whitelist: ["POST"],
-    rcon_api.do_reset_votekick_threshold: ["POST"],
     rcon_api.do_save_setting: ["POST"],
-    rcon_api.do_set_map_whitelist: ["POST"],
-    rcon_api.do_switch_player_now: ["POST"],
-    rcon_api.do_switch_player_on_death: ["POST"],
-    rcon_api.do_temp_ban: ["POST"],
-    rcon_api.do_unban_profanities: ["POST"],
-    rcon_api.do_unban: ["POST"],
-    rcon_api.unban: ["POST"],
-    rcon_api.do_unblacklist_player: ["POST"],
-    rcon_api.unblacklist_player: ["POST"],
-    rcon_api.do_unflag_player: ["POST"],
-    rcon_api.unflag_player: ["POST"],
-    rcon_api.do_unwatch_player: ["POST"],
-    rcon_api.do_watch_player: ["POST"],
+    rcon_api.flag_player: ["POST"],
     rcon_api.get_admin_groups: ["GET"],
     rcon_api.get_admin_ids: ["GET"],
     rcon_api.get_admin_pings_discord_webhooks_config: ["GET"],
@@ -689,6 +629,7 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.get_ingame_mods: ["GET"],
     rcon_api.get_kills_discord_webhooks_config: ["GET"],
     rcon_api.get_log_line_webhook_config: ["GET"],
+    rcon_api.get_log_stream_config: ["POST"],
     rcon_api.get_logs: ["GET"],
     rcon_api.get_map_rotation: ["GET"],
     rcon_api.get_map_shuffle_enabled: ["GET"],
@@ -704,11 +645,9 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.get_perma_bans: ["GET"],
     rcon_api.get_player_info: ["GET"],
     rcon_api.get_player_profile: ["GET"],
-    rcon_api.player: ["GET"],
     rcon_api.get_playerids: ["GET"],
     rcon_api.get_players_fast: ["GET"],
     rcon_api.get_players_history: ["GET", "POST"],
-    rcon_api.players_history: ["GET", "POST"],
     rcon_api.get_players: ["GET"],
     rcon_api.get_profanities: ["GET"],
     rcon_api.get_queue_length: ["GET"],
@@ -744,6 +683,21 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.get_votemap_status: ["GET"],
     rcon_api.get_watchlist_discord_webhooks_config: ["GET"],
     rcon_api.get_welcome_message: ["GET"],
+    rcon_api.kick: ["POST"],
+    rcon_api.message_player: ["POST"],
+    rcon_api.perma_ban: ["POST"],
+    rcon_api.punish: ["POST"],
+    rcon_api.remove_admin: ["POST"],
+    rcon_api.remove_all_vips: ["POST"],
+    rcon_api.remove_map_from_rotation: ["POST"],
+    rcon_api.remove_map_from_vm_whitelist: ["POST"],
+    rcon_api.remove_maps_from_rotation: ["POST"],
+    rcon_api.remove_maps_from_vm_whitelist: ["POST"],
+    rcon_api.remove_perma_ban: ["POST"],
+    rcon_api.remove_temp_ban: ["POST"],
+    rcon_api.remove_vip: ["POST"],
+    rcon_api.reset_map_vm_whitelist: ["POST"],
+    rcon_api.reset_votekick_threshold: ["POST"],
     rcon_api.reset_votemap_state: ["POST"],
     rcon_api.set_admin_pings_discord_webhooks_config: ["POST"],
     rcon_api.set_audit_discord_webhooks_config: ["POST"],
@@ -763,7 +717,9 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.set_idle_autokick_time: ["POST"],
     rcon_api.set_kills_discord_webhooks_config: ["POST"],
     rcon_api.set_log_line_webhook_config: ["POST"],
+    rcon_api.set_log_stream_config: ["POST"],
     rcon_api.set_map_shuffle_enabled: ["POST"],
+    rcon_api.set_map_vm_whitelist: ["POST"],
     rcon_api.set_map: ["POST"],
     rcon_api.set_maprotation: ["POST"],
     rcon_api.set_max_ping_autokick: ["POST"],
@@ -790,6 +746,14 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.set_votemap_config: ["POST"],
     rcon_api.set_watchlist_discord_webhooks_config: ["POST"],
     rcon_api.set_welcome_message: ["POST"],
+    rcon_api.switch_player_now: ["POST"],
+    rcon_api.switch_player_on_death: ["POST"],
+    rcon_api.temp_ban: ["POST"],
+    rcon_api.unban_profanities: ["POST"],
+    rcon_api.unban: ["POST"],
+    rcon_api.unblacklist_player: ["POST"],
+    rcon_api.unflag_player: ["POST"],
+    rcon_api.unwatch_player: ["POST"],
     rcon_api.validate_admin_pings_discord_webhooks_config: ["POST"],
     rcon_api.validate_audit_discord_webhooks_config: ["POST"],
     rcon_api.validate_auto_broadcasts_config: ["POST"],
@@ -804,6 +768,7 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.validate_expired_vip_config: ["POST"],
     rcon_api.validate_kills_discord_webhooks_config: ["POST"],
     rcon_api.validate_log_line_webhook_config: ["POST"],
+    rcon_api.validate_log_stream_config: ["POST"],
     rcon_api.validate_name_kick_config: ["POST"],
     rcon_api.validate_rcon_connection_settings_config: ["POST"],
     rcon_api.validate_rcon_server_settings_config: ["POST"],
@@ -819,9 +784,7 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.validate_votekick_autotoggle_config: ["POST"],
     rcon_api.validate_votemap_config: ["POST"],
     rcon_api.validate_watchlist_discord_webhooks_config: ["POST"],
-    rcon_api.get_log_stream_config: ["POST"],
-    rcon_api.set_log_stream_config: ["POST"],
-    rcon_api.validate_log_stream_config: ["POST"],
+    rcon_api.watch_player: ["POST"],
 }
 
 # Check to make sure that ENDPOINT_HTTP_METHODS and ENDPOINT_PERMISSIONS have the same endpoints
@@ -837,13 +800,10 @@ if len(MISSING_ENDPOINTS) > 0:
 # TODO: remove deprecated endpoints
 ALLOWED_METHODS_SPECIAL_CASES: dict[Callable, list[str]] = {
     rcon_api.get_players_history: ["GET", "POST"],
-    rcon_api.players_history: ["GET", "POST"],
     rcon_api.get_historical_logs: ["GET", "POST"],
     rcon_api.get_recent_logs: ["GET", "POST"],
-    rcon_api.flag_player: ["POST"],
     rcon_api.unflag_player: ["POST"],
     rcon_api.clear_cache: ["POST"],
-    rcon_api.blacklist_player: ["POST"],
     rcon_api.unblacklist_player: ["POST"],
     rcon_api.unban: ["POST"],
 }
@@ -863,7 +823,7 @@ if not os.getenv("HLL_MAINTENANCE_CONTAINER"):
         # Dynamically register all the methods from ServerCtl
         # TODO: remove deprecated endpoints check once endpoints are removed
         for func in ENDPOINT_PERMISSIONS.keys():
-            name = func.__qualname__
+            name = func.__name__
             commands.append(
                 (
                     name,
@@ -875,7 +835,7 @@ if not os.getenv("HLL_MAINTENANCE_CONTAINER"):
                     ),
                 ),
             )
-        logger.info("Done Initializing endpoint")
+        logger.info("Done Initializing endpoints")
     except:
         logger.exception(
             "Failed to initialized endpoints - Most likely bad configuration"

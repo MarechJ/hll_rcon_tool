@@ -50,7 +50,7 @@ def upload_vips(request):
             message = ""
             vips = rcon_api.get_vip_ids()
             for vip in vips:
-                rcon_api.do_remove_vip(vip["steam_id_64"])
+                rcon_api.remove_vip(vip["steam_id_64"])
             message = f"{len(vips)} removed\n"
             count = 0
             for name, data in request.FILES.items():
@@ -64,7 +64,7 @@ def upload_vips(request):
                             steam_id, name = l.split(" ", 1)
                             if len(steam_id) != 17:
                                 raise ValueError
-                            rcon_api.do_add_vip(name.strip(), steam_id)
+                            rcon_api.add_vip(name.strip(), steam_id)
                             count += 1
                         except UnicodeDecodeError:
                             message = "File encoding is not supported. Must use UTF8"

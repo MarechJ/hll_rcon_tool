@@ -22,12 +22,12 @@ class Blacklist extends React.Component {
   }
 
   async blacklistPlayer() {
-    return postData(`${process.env.REACT_APP_API_URL}do_blacklist_player`, {
+    return postData(`${process.env.REACT_APP_API_URL}blacklist_player`, {
       steam_id_64: this.state.steam_id,
       name: this.state.name,
       reason: this.state.reason,
     })
-      .then((res) => showResponse(res, "do_blacklist_player", true))
+      .then((res) => showResponse(res, "blacklist_player", true))
       .then(
         (res) =>
           !res.failed && this.setState({ steam_id: "", name: "", reason: "" })

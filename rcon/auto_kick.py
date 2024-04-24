@@ -35,7 +35,7 @@ def auto_kick(rcon, struct_log, name, steam_id_64):
 
         if re.match(r, name):
             logger.info("%s matched player %s", r, name)
-            rcon.do_kick(player=name, reason=config.kick_reason, by="NAME_KICK")
+            rcon.kick(player=name, reason=config.kick_reason, by="NAME_KICK")
             try:
                 webhookurls: list[HttpUrl | None] | None
                 if config.discord_webhook_url is None:

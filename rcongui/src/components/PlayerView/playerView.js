@@ -75,28 +75,28 @@ class PlayerView extends Component {
   }
 
   addFlagToPlayer(playerObj, flag, comment = null) {
-    return postData(`${process.env.REACT_APP_API_URL}do_flag_player`, {
+    return postData(`${process.env.REACT_APP_API_URL}flag_player`, {
       player_id: playerObj.get("steam_id_64"),
       flag: flag,
       comment: comment,
     })
-      .then((response) => showResponse(response, "do_flag_player", true))
+      .then((response) => showResponse(response, "flag_player", true))
       .then(() => this.setState({ flag: false }))
       .then(this.loadPlayers)
       .catch(handle_http_errors);
   }
 
   deleteFlag(flag_id) {
-    return postData(`${process.env.REACT_APP_API_URL}do_unflag_player`, {
+    return postData(`${process.env.REACT_APP_API_URL}unflag_player`, {
       flag_id: flag_id,
     })
-      .then((response) => showResponse(response, "do_unflag_player", true))
+      .then((response) => showResponse(response, "unflag_player", true))
       .then(this.loadPlayers)
       .catch(handle_http_errors);
   }
 
   unBan(ban) {
-    postData(`${process.env.REACT_APP_API_URL}do_unban`, {
+    postData(`${process.env.REACT_APP_API_URL}unban`, {
       steam_id_64: ban.steam_id_64,
     })
       .then((response) =>

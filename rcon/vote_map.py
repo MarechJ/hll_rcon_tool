@@ -384,7 +384,7 @@ class VoteMap:
                 continue
 
             try:
-                rcon.do_message_player(
+                rcon.message_player(
                     player_id=steamid,
                     message=vote_map_message.format(
                         map_selection=self.format_map_vote(
@@ -425,13 +425,13 @@ class VoteMap:
                     player, struct_log["timestamp_ms"] // 1000, vote
                 )
             except InvalidVoteError:
-                rcon.do_message_player(player_id=steam_id_64_1, message="Invalid vote.")
+                rcon.message_player(player_id=steam_id_64_1, message="Invalid vote.")
                 if config.help_text:
-                    rcon.do_message_player(
+                    rcon.message_player(
                         player_id=steam_id_64_1, message=config.help_text
                     )
             except VoteMapNoInitialised:
-                rcon.do_message_player(
+                rcon.message_player(
                     player_id=steam_id_64_1,
                     message="We can't register you vote at this time.\nVoteMap not initialised",
                 )
@@ -441,7 +441,7 @@ class VoteMap:
                     msg = msg.format(
                         player_name=struct_log["player"], map_name=map_name
                     )
-                    rcon.do_message_player(player_id=steam_id_64_1, message=msg)
+                    rcon.message_player(player_id=steam_id_64_1, message=msg)
             finally:
                 self.apply_results()
                 return config.enabled
@@ -451,13 +451,13 @@ class VoteMap:
             and config.help_text
         ):
             logger.info("Showing help %s", struct_log)
-            rcon.do_message_player(player_id=steam_id_64_1, message=config.help_text)
+            rcon.message_player(player_id=steam_id_64_1, message=config.help_text)
             return config.enabled
 
         if re.match(r"(!votemap|!vm)$", message, re.IGNORECASE):
             logger.info("Showing selection %s", struct_log)
             vote_map_message = config.instruction_text
-            rcon.do_message_player(
+            rcon.message_player(
                 player_id=steam_id_64_1,
                 message=vote_map_message.format(
                     map_selection=self.format_map_vote(
@@ -471,7 +471,7 @@ class VoteMap:
 
         if re.match(r"(!votemap|!vm)\s*never$", message, re.IGNORECASE):
             if not config.allow_opt_out:
-                rcon.do_message_player(
+                rcon.message_player(
                     player_id=steam_id_64_1,
                     message="You can't opt-out of vote map on this server",
                 )
@@ -502,7 +502,7 @@ class VoteMap:
                     )
                 try:
                     sess.commit()
-                    rcon.do_message_player(
+                    rcon.message_player(
                         player_id=steam_id_64_1, message="VoteMap Unsubscribed OK"
                     )
                 except Exception as e:
@@ -537,14 +537,14 @@ class VoteMap:
                     )
                 try:
                     sess.commit()
-                    rcon.do_message_player(
+                    rcon.message_player(
                         player_id=steam_id_64_1, message="VoteMap Subscribed OK"
                     )
                 except Exception as e:
                     logger.exception("Unable to update optin. Already exists?")
             return config.enabled
 
-        rcon.do_message_player(player_id=steam_id_64_1, message=config.help_text)
+        rcon.message_player(player_id=steam_id_64_1, message=config.help_text)
         return config.enabled
 
     def register_vote(self, player_name: str, vote_timestamp: int, vote_content: str):
@@ -640,7 +640,7 @@ class VoteMap:
 
         return set(maps.parse_layer(map_) for map_ in self.rcon.get_maps())
 
-    def do_add_map_to_whitelist(self, map_name: str):
+    def add_map_to_whitelist(self, map_name: str):
         if map_name not in self.rcon.get_maps():
             raise ValueError(
                 f"`{map_name}` is not a valid map on the game server, you may need to clear your cache"
@@ -648,25 +648,25 @@ class VoteMap:
 
         whitelist = self.get_map_whitelist()
         whitelist.add(maps.parse_layer(map_name))
-        self.do_set_map_whitelist(whitelist)
+        self.set_map_vm_whitelist(whitelist)
 
-    def do_add_maps_to_whitelist(self, map_names: Iterable[str]):
+    def add_maps_to_vm_whitelist(self, map_names: Iterable[str]):
         for map_name in map_names:
-            self.do_add_map_to_whitelist(map_name.lower())
+            self.add_map_to_whitelist(map_name.lower())
 
-    def do_remove_map_from_whitelist(self, map_name: str):
+    def remove_map_from_vm_whitelist(self, map_name: str):
         whitelist = self.get_map_whitelist()
         whitelist.discard(maps.parse_layer(map_name))
-        self.do_set_map_whitelist(whitelist)
+        self.set_map_vm_whitelist(whitelist)
 
-    def do_remove_maps_from_whitelist(self, map_names):
+    def remove_maps_from_vm_whitelist(self, map_names):
         for map_name in map_names:
-            self.do_remove_map_from_whitelist(map_name)
+            self.remove_map_from_vm_whitelist(map_name)
 
-    def do_reset_map_whitelist(self):
-        self.do_set_map_whitelist(self.rcon.get_maps())
+    def reset_map_vm_whitelist(self):
+        self.set_map_vm_whitelist(self.rcon.get_maps())
 
-    def do_set_map_whitelist(self, map_names) -> None:
+    def set_map_vm_whitelist(self, map_names) -> None:
         self.red.set(self.whitelist_key, pickle.dumps(set(map_names)))
 
     def gen_selection(self):
@@ -795,13 +795,13 @@ class VoteMap:
         while len(current_rotation) > 1:
             # Make sure only 1 map is in rotation
             map_ = current_rotation.pop(1)
-            rcon.do_remove_map_from_rotation(map_)
+            rcon.remove_map_from_rotation(map_)
 
         current_next_map = current_rotation[0]
         if current_next_map != next_map:
             # Replace the only map left in rotation
-            rcon.do_add_map_to_rotation(str(next_map))
-            rcon.do_remove_map_from_rotation(current_next_map)
+            rcon.add_map_to_rotation(str(next_map))
+            rcon.remove_map_from_rotation(current_next_map)
 
         # Check that it worked
         current_rotation = rcon.get_map_rotation()

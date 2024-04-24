@@ -479,13 +479,13 @@ class Rcon(ServerCtl):
 
         return online
 
-    def do_add_admin(self, player_id, role, description) -> str:
+    def add_admin(self, player_id, role, description) -> str:
         with invalidates(Rcon.get_admin_ids):
-            return super().do_add_admin(player_id, role, description)
+            return super().add_admin(player_id, role, description)
 
-    def do_remove_admin(self, player_id) -> str:
+    def remove_admin(self, player_id) -> str:
         with invalidates(Rcon.get_admin_ids):
-            return super().do_remove_admin(player_id)
+            return super().remove_admin(player_id)
 
     @ttl_cache(ttl=60)
     def get_perma_bans(self) -> list[str]:
@@ -604,12 +604,12 @@ class Rcon(ServerCtl):
 
         return sorted(player_dicts, key=lambda d: d[NAME])
 
-    def do_remove_vip(self, player_id) -> str:
+    def remove_vip(self, player_id) -> str:
         """Removes VIP status on the game server and removes their PlayerVIP record."""
 
         # Remove VIP before anything else in case we have errors
         with invalidates(Rcon.get_vip_ids):
-            result = super().do_remove_vip(player_id)
+            result = super().remove_vip(player_id)
 
         server_number = get_server_number()
         with enter_session() as session:
@@ -642,11 +642,11 @@ class Rcon(ServerCtl):
 
         return result
 
-    def do_add_vip(self, description, player_id, expiration: str = "") -> str:
+    def add_vip(self, description, player_id, expiration: str = "") -> str:
         """Adds VIP status on the game server and adds or updates their PlayerVIP record."""
         with invalidates(Rcon.get_vip_ids):
             # Add VIP before anything else in case we have errors
-            result = super().do_add_vip(player_id, description)
+            result = super().add_vip(player_id, description)
 
         # postgres and Python have different max date limits
         # https://docs.python.org/3.8/library/datetime.html#datetime.MAXYEAR
@@ -714,17 +714,17 @@ class Rcon(ServerCtl):
 
         return result
 
-    def do_remove_all_vips(self) -> Literal["SUCCESS"]:
+    def remove_all_vips(self) -> Literal["SUCCESS"]:
         vips = self.get_vip_ids()
         for vip in vips:
             try:
-                self.do_remove_vip(vip["steam_id_64"])
+                self.remove_vip(vip["steam_id_64"])
             except (CommandFailedError, ValueError):
                 raise
 
         return "SUCCESS"
 
-    def do_message_player(
+    def message_player(
         self,
         player_name=None,
         player_id=None,
@@ -732,7 +732,7 @@ class Rcon(ServerCtl):
         by: str = "",
         save_message: bool = False,
     ) -> str:
-        res = super().do_message_player(player_name, player_id, message)
+        res = super().message_player(player_name, player_id, message)
         if save_message:
             safe_save_player_action(
                 rcon=self,
@@ -852,7 +852,7 @@ class Rcon(ServerCtl):
                     raise CommandFailedError(res)
             except CommandFailedError:
                 maps = self.get_map_rotation()
-                self.do_add_map_to_rotation(
+                self.add_map_to_rotation(
                     map_name, maps[len(maps) - 1], maps.count(maps[len(maps) - 1])
                 )
                 if res := super().set_map(map_name) != "SUCCESS":
@@ -1090,9 +1090,9 @@ class Rcon(ServerCtl):
                 logger.error("Unable to set votekick threshold: %s", res)
                 raise CommandFailedError(res)
 
-    def do_reset_votekick_threshold(self) -> str:
+    def reset_votekick_threshold(self) -> str:
         with invalidates(self.get_votekick_threshold):
-            return super().do_reset_votekick_threshold()
+            return super().reset_votekick_threshold()
 
     def set_profanities(self, profanities: list[str]) -> list[str]:
         current = self.get_profanities()
@@ -1100,26 +1100,26 @@ class Rcon(ServerCtl):
             removed = set(current) - set(profanities)
             added = set(profanities) - set(current)
             if removed:
-                self.do_unban_profanities(list(removed))
+                self.unban_profanities(list(removed))
             if added:
-                self.do_ban_profanities(list(added))
+                self.ban_profanities(list(added))
 
         return profanities
 
-    def do_unban_profanities(self, profanities) -> str:
+    def unban_profanities(self, profanities) -> str:
         if not isinstance(profanities, list):
             profanities = [profanities]
         with invalidates(self.get_profanities):
-            return super().do_unban_profanities(",".join(profanities))
+            return super().unban_profanities(",".join(profanities))
 
-    def do_ban_profanities(self, profanities) -> str:
+    def ban_profanities(self, profanities) -> str:
         if not isinstance(profanities, list):
             profanities = [profanities]
         with invalidates(self.get_profanities):
-            return super().do_ban_profanities(",".join(profanities))
+            return super().ban_profanities(",".join(profanities))
 
-    def do_punish(self, player_name, reason, by) -> str:
-        res = super().do_punish(player_name, reason)
+    def punish(self, player_name, reason, by) -> str:
+        res = super().punish(player_name, reason)
         safe_save_player_action(
             rcon=self,
             player_name=player_name,
@@ -1129,15 +1129,15 @@ class Rcon(ServerCtl):
         )
         return res
 
-    def do_switch_player_now(self, player_name, by) -> str:
-        return super().do_switch_player_now(player_name)
+    def switch_player_now(self, player_name, by) -> str:
+        return super().switch_player_now(player_name)
 
-    def do_switch_player_on_death(self, player_name, by) -> str:
-        return super().do_switch_player_on_death(player_name)
+    def switch_player_on_death(self, player_name, by) -> str:
+        return super().switch_player_on_death(player_name)
 
-    def do_kick(self, player_name, reason, by, player_id: str | None = None) -> str:
+    def kick(self, player_name, reason, by, player_id: str | None = None) -> str:
         with invalidates(Rcon.get_players):
-            res = super().do_kick(player_name, reason)
+            res = super().kick(player_name, reason)
 
         safe_save_player_action(
             rcon=self,
@@ -1149,7 +1149,7 @@ class Rcon(ServerCtl):
         )
         return res
 
-    def do_temp_ban(
+    def temp_ban(
         self, player_name=None, player_id=None, duration_hours=2, reason="", by=""
     ) -> str:
         with invalidates(Rcon.get_players, Rcon.get_temp_bans):
@@ -1157,7 +1157,7 @@ class Rcon(ServerCtl):
                 info = self.get_player_info(player_name)
                 player_id = info.get(STEAMID, None)
 
-            res = super().do_temp_ban(
+            res = super().temp_ban(
                 player_name, player_id, duration_hours, reason, admin_name=by
             )
 
@@ -1171,13 +1171,13 @@ class Rcon(ServerCtl):
             )
             return res
 
-    def do_remove_temp_ban(
+    def remove_temp_ban(
         self, ban_log: str | None = None, player_id: str | None = None
     ) -> str:
         """Remove a temp ban by steam ID or game server ban log"""
         with invalidates(Rcon.get_temp_bans):
             if ban_log is not None:
-                return super().do_remove_temp_ban(ban_log)
+                return super().remove_temp_ban(ban_log)
             else:
                 # If searching for a steam ID, we can only unban with the properly
                 # formatted ban log
@@ -1185,22 +1185,22 @@ class Rcon(ServerCtl):
                 for raw_ban in bans:
                     ban = self._struct_ban(raw_ban, type_="temp")
                     if player_id == ban["steam_id_64"]:
-                        return super().do_remove_temp_ban(ban_log=raw_ban)
+                        return super().remove_temp_ban(ban_log=raw_ban)
 
         # Only get here if we weren't passed a ban log, steam ID or the steam ID wasn't banned
         raise ValueError(f"{player_id} was not banned")
 
-    def do_remove_perma_ban(self, ban_log) -> str:
+    def remove_perma_ban(self, ban_log) -> str:
         with invalidates(Rcon.get_perma_bans):
-            return super().do_remove_perma_ban(ban_log)
+            return super().remove_perma_ban(ban_log)
 
-    def do_perma_ban(self, player_name=None, player_id=None, reason="", by="") -> str:
+    def perma_ban(self, player_name=None, player_id=None, reason="", by="") -> str:
         with invalidates(Rcon.get_players, Rcon.get_perma_bans):
             if player_name and re.match(r"\d+", player_name):
                 info = self.get_player_info(player_name)
                 player_id = info.get(STEAMID, None)
 
-            res = super().do_perma_ban(player_name, player_id, reason, admin_name=by)
+            res = super().perma_ban(player_name, player_id, reason, admin_name=by)
             safe_save_player_action(
                 rcon=self,
                 player_name=player_name,
@@ -1230,7 +1230,7 @@ class Rcon(ServerCtl):
                 raise CommandFailedError("Server return wrong data")
         return l
 
-    def do_add_map_to_rotation(
+    def add_map_to_rotation(
         self,
         map_name,
         after_map_name: str | None = None,
@@ -1242,27 +1242,25 @@ class Rcon(ServerCtl):
                 after_map_name = current[len(current) - 1]
                 after_map_name_number = current.count(after_map_name)
 
-            super().do_add_map_to_rotation(
-                map_name, after_map_name, after_map_name_number
-            )
+            super().add_map_to_rotation(map_name, after_map_name, after_map_name_number)
 
-    def do_remove_map_from_rotation(self, map_name, map_number: int | None = None):
+    def remove_map_from_rotation(self, map_name, map_number: int | None = None):
         with invalidates(Rcon.get_map_rotation):
-            super().do_remove_map_from_rotation(map_name, map_number)
+            super().remove_map_from_rotation(map_name, map_number)
 
-    def do_remove_maps_from_rotation(self, map_names) -> Literal["SUCCESS"]:
+    def remove_maps_from_rotation(self, map_names) -> Literal["SUCCESS"]:
         with invalidates(Rcon.get_map_rotation):
             for map_name in map_names:
-                super().do_remove_map_from_rotation(map_name)
+                super().remove_map_from_rotation(map_name)
             return "SUCCESS"
 
-    def do_add_maps_to_rotation(self, map_names) -> Literal["SUCCESS"]:
+    def add_maps_to_rotation(self, map_names) -> Literal["SUCCESS"]:
         with invalidates(Rcon.get_map_rotation):
             existing = self.get_map_rotation()
             last = existing[len(existing) - 1]
             map_numbers = {last: existing.count(last)}
             for map_name in map_names:
-                super().do_add_map_to_rotation(map_name, last, map_numbers.get(last, 1))
+                super().add_map_to_rotation(map_name, last, map_numbers.get(last, 1))
                 last = map_name
                 map_numbers[last] = map_numbers.get(last, 0) + 1
             return "SUCCESS"
@@ -1285,7 +1283,7 @@ class Rcon(ServerCtl):
             for map_ in current[1:]:
                 map_without_number = map_.rsplit(" ")[0]
                 logger.info("Removing from rotation: '%s'", map_without_number)
-                super().do_remove_map_from_rotation(map_without_number)
+                super().remove_map_from_rotation(map_without_number)
 
             if len(current) > 0:
                 last = current[0]
@@ -1296,12 +1294,12 @@ class Rcon(ServerCtl):
 
             for map_ in rotation:
                 logger.info("Adding to rotation: '%s'", map_)
-                super().do_add_map_to_rotation(map_, last, map_number.get(last, 1))
+                super().add_map_to_rotation(map_, last, map_number.get(last, 1))
                 last = map_
                 map_number[last] = map_number.get(last, 0) + 1
 
             # Now we can remove the first from the previous rotation
-            super().do_remove_map_from_rotation(current[0], 1)
+            super().remove_map_from_rotation(current[0], 1)
 
         return self.get_map_rotation()
 

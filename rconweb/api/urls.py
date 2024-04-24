@@ -20,7 +20,7 @@ from . import (
 from .auth import api_response
 from .decorators import ENDPOINT_HTTP_METHODS
 
-logger = getLogger(__name__)
+logger = getLogger("rconweb")
 
 
 def _get_empty(value):
@@ -198,6 +198,9 @@ endpoints: list[tuple[str, Callable]] = [
     ("get_all_standard_message_config", user_settings.get_all_standard_message_config),
     ("do_reconnect_gameserver", views.restart_gunicorn),
 ] + [(name, func) for name, func in views.commands]
+
+for name, func in endpoints:
+    logger.info(f"adding {name=} {func=} to URLs")
 
 # Expose endpoints though Django
 urlpatterns = [path(name, func, name=name) for name, func in endpoints] + [

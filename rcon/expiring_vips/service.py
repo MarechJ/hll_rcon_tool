@@ -50,7 +50,7 @@ def remove_expired_vips(rcon_hook: Rcon, webhook_url: Optional[HttpUrl] = None):
                 by=SERVICE_NAME,
                 webhookurls=webhookurls,
             )
-            rcon_hook.do_remove_vip(vip.steamid.steam_id_64)
+            rcon_hook.remove_vip(vip.steamid.steam_id_64)
 
         # Look for anyone with VIP but without a record and create one for them
         vip_ids = rcon_hook.get_vip_ids()

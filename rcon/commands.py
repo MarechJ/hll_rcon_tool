@@ -375,11 +375,11 @@ class ServerCtl:
     def get_profanities(self) -> list[str]:
         return self._get_list("get profanity", can_fail=False)
 
-    def do_ban_profanities(self, profanities_csv) -> str:
+    def ban_profanities(self, profanities_csv) -> str:
         profanities_csv = convert_tabs_to_spaces(profanities_csv)
         return self._str_request(f"BanProfanity {profanities_csv}")
 
-    def do_unban_profanities(self, profanities_csv) -> str:
+    def unban_profanities(self, profanities_csv) -> str:
         return self._str_request(f"UnbanProfanity {profanities_csv}")
 
     def get_name(self) -> str:
@@ -573,16 +573,16 @@ class ServerCtl:
         """
         return self._str_request(f"setvotekickthreshold {threshold_pairs_str}")
 
-    def do_reset_votekick_threshold(self) -> str:
+    def reset_votekick_threshold(self) -> str:
         return self._str_request(f"resetvotekickthreshold", log_info=True)
 
-    def do_switch_player_on_death(self, player_name) -> str:
+    def switch_player_on_death(self, player_name) -> str:
         return self._str_request(f"switchteamondeath {player_name}", log_info=True)
 
-    def do_switch_player_now(self, player_name) -> str:
+    def switch_player_now(self, player_name) -> str:
         return self._str_request(f"switchteamnow {player_name}", log_info=True)
 
-    def do_add_map_to_rotation(
+    def add_map_to_rotation(
         self,
         map_name: str,
         after_map_name: str,
@@ -594,9 +594,7 @@ class ServerCtl:
 
         return self._str_request(cmd, can_fail=False, log_info=True)
 
-    def do_remove_map_from_rotation(
-        self, map_name, map_number: int | None = None
-    ) -> str:
+    def remove_map_from_rotation(self, map_name, map_number: int | None = None) -> str:
         cmd = f"rotdel {map_name}"
         if map_number:
             cmd = f"{cmd} {map_number}"
@@ -604,15 +602,15 @@ class ServerCtl:
         return self._str_request(cmd, can_fail=False, log_info=True)
 
     @_escape_params
-    def do_punish(self, player_name, reason) -> str:
+    def punish(self, player_name, reason) -> str:
         return self._str_request(f'punish "{player_name}" "{reason}"', log_info=True)
 
     @_escape_params
-    def do_kick(self, player_name, reason) -> str:
+    def kick(self, player_name, reason) -> str:
         return self._str_request(f'kick "{player_name}" "{reason}"', log_info=True)
 
     @_escape_params
-    def do_temp_ban(
+    def temp_ban(
         self,
         player_name=None,
         player_id=None,
@@ -627,7 +625,7 @@ class ServerCtl:
         )
 
     @_escape_params
-    def do_perma_ban(
+    def perma_ban(
         self, player_name=None, steam_id_64=None, reason="", admin_name=""
     ) -> str:
         reason = convert_tabs_to_spaces(reason)
@@ -636,32 +634,32 @@ class ServerCtl:
             log_info=True,
         )
 
-    def do_remove_temp_ban(self, ban_log) -> str:
+    def remove_temp_ban(self, ban_log) -> str:
         return self._str_request(f"pardontempban {ban_log}", log_info=True)
 
-    def do_remove_perma_ban(self, ban_log) -> str:
+    def remove_perma_ban(self, ban_log) -> str:
         return self._str_request(f"pardonpermaban {ban_log}", log_info=True)
 
     @_escape_params
-    def do_add_admin(self, player_id, role, description) -> str:
+    def add_admin(self, player_id, role, description) -> str:
         description = convert_tabs_to_spaces(description)
         return self._str_request(
             f'adminadd "{player_id}" "{role}" "{description}"', log_info=True
         )
 
-    def do_remove_admin(self, player_id) -> str:
+    def remove_admin(self, player_id) -> str:
         return self._str_request(f"admindel {player_id}", log_info=True)
 
     @_escape_params
-    def do_add_vip(self, player_id, description) -> str:
+    def add_vip(self, player_id, description) -> str:
         description = convert_tabs_to_spaces(description)
         return self._str_request(f'vipadd {player_id} "{description}"', log_info=True)
 
-    def do_remove_vip(self, player_id) -> str:
+    def remove_vip(self, player_id) -> str:
         return self._str_request(f"vipdel {player_id}", log_info=True)
 
     @_escape_params
-    def do_message_player(self, player_name=None, player_id=None, message="") -> str:
+    def message_player(self, player_name=None, player_id=None, message="") -> str:
         return self._str_request(
             f'message "{player_id or player_name}" {message}',
             log_info=True,

@@ -65,8 +65,8 @@ DEFAULT_AUTO_SETTINGS = {
         "can_invoke_multiple_rules": "Whether or not to allow the invocation of multiple rules e.g. don't stop after the first fulfilled rule. Allowed values: true / false",
     },
     "_available_commands": {
-        "do_ban_profanities": {"profanities": ["word1", "word2"]},
-        "do_unban_profanities": {"profanities": ["word1", "word2"]},
+        "ban_profanities": {"profanities": ["word1", "word2"]},
+        "unban_profanities": {"profanities": ["word1", "word2"]},
         "set_profanities": {"profanities": ["word1", "word2"]},
         "set_autobalance_enabled": {"bool_str": "on/off"},
         "set_welcome_message": {"message": "A welcome message", "save": True},
@@ -82,15 +82,15 @@ DEFAULT_AUTO_SETTINGS = {
         "set_votekick_threshold": {
             "threshold_pairs_str": "PlayerCount,Threshold[,PlayerCount,Threshold,...]"
         },
-        "do_reset_votekick_threshold": {},
-        "do_switch_player_on_death": {"player_name": "12345678901234567"},
-        "do_switch_player_now": {"player_name": "12345678901234567"},
-        "do_add_map_to_rotation": {"map_name": "stmariedumont_warfare"},
-        "do_add_maps_to_rotation": {
+        "reset_votekick_threshold": {},
+        "switch_player_on_death": {"player_name": "12345678901234567"},
+        "switch_player_now": {"player_name": "12345678901234567"},
+        "add_map_to_rotation": {"map_name": "stmariedumont_warfare"},
+        "add_maps_to_rotation": {
             "map_names": ["stmariedumont_warfare", "kursk_offensive_rus"]
         },
-        "do_remove_map_from_rotation": {"map_name": "stmariedumont_warfare"},
-        "do_remove_maps_from_rotation": {
+        "remove_map_from_rotation": {"map_name": "stmariedumont_warfare"},
+        "remove_maps_from_rotation": {
             "map_names": ["stmariedumont_warfare", "kursk_offensive_rus"]
         },
         "set_maprotation": {
@@ -100,41 +100,41 @@ DEFAULT_AUTO_SETTINGS = {
             ]
         },
         "set_map_shuffle_enabled": {"enabled": False},
-        "do_punish": {"player_name": "12345678901234567", "reason": "Get rekt"},
-        "do_kick": {"player_name": "12345678901234567", "reason": "Get rekt"},
-        "do_temp_ban": {
+        "punish": {"player_name": "12345678901234567", "reason": "Get rekt"},
+        "kick": {"player_name": "12345678901234567", "reason": "Get rekt"},
+        "temp_ban": {
             "player_name": "Optional, a player's name",
             "player_id": "Required if player_name not provided, a player's steam64id",
             "duration_hours": "Optional, defaults to 2",
             "reason": "Optional, defaults to nothing",
             "admin_name": "Optional, defaults to nothing",
         },
-        "do_perma_ban": {
+        "perma_ban": {
             "player_name": "Optional, a player's name",
             "player_id": "Required if player_name not provided, a player's steam64id",
             "reason": "Optional, defaults to nothing",
             "admin_name": "Optional, defaults to nothing",
         },
-        "do_unban": {"player_id": "12345678901234567"},
-        "do_add_admin": {
+        "unban": {"player_id": "12345678901234567"},
+        "add_admin": {
             "player_id": "1234567890123456",
             "role": "senior",
             "description": "A comment",
         },
-        "do_remove_admin": {"player_id": "1234567890123456"},
-        "do_add_vip": {"player_id": "1234567890123456", "description": "A comment"},
-        "do_remove_vip": {"player_id": "1234567890123456"},
-        "do_remove_all_vips": {},
-        "do_add_map_to_whitelist": {"map_name": "stmariedumont_warfare"},
-        "do_add_maps_to_whitelist": {
+        "remove_admin": {"player_id": "1234567890123456"},
+        "add_vip": {"player_id": "1234567890123456", "description": "A comment"},
+        "remove_vip": {"player_id": "1234567890123456"},
+        "remove_all_vips": {},
+        "add_map_to_whitelist": {"map_name": "stmariedumont_warfare"},
+        "add_maps_to_vm_whitelist": {
             "map_names": ["stmariedumont_warfare", "kursk_offensive_rus"]
         },
-        "do_remove_map_from_whitelist": {"map_name": "stmariedumont_warfare"},
-        "do_remove_maps_from_whitelist": {
+        "remove_map_from_vm_whitelist": {"map_name": "stmariedumont_warfare"},
+        "do_remove_maps_from_vm_whitelist": {
             "map_names": ["stmariedumont_warfare", "kursk_offensive_rus"]
         },
-        "do_reset_map_whitelist": {},
-        "do_set_map_whitelist": {
+        "reset_map_vm_whitelist": {},
+        "set_map_vm_whitelist": {
             "map_names": ["stmariedumont_warfare", "kursk_offensive_rus"]
         },
     },
