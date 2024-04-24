@@ -90,7 +90,7 @@ endpoints: list[tuple[str, Callable]] = [
     ("get_map_history", scoreboards.get_map_history),
     ("get_previous_map", scoreboards.get_previous_map),
     ("get_live_game_stats", scoreboards.get_live_game_stats),
-    ("describe_votemap_config", votemap.describe_votemap_config),
+    ("describe_votemap_config", user_settings.describe_votemap_config),
     ("get_player_messages", history.get_player_messages),
     ("get_player_comment", history.get_player_comment),
     ("post_player_comment", history.post_player_comment),
