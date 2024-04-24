@@ -3,13 +3,12 @@ from xmlrpc.client import Fault, ServerProxy
 
 from django.contrib.auth.decorators import permission_required
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_http_methods
 
 from rcon.discord import send_to_discord_audit
 
 from .audit_log import record_audit
 from .auth import api_response, login_required
-from .decorators import require_content_type
+from .decorators import require_content_type, require_http_methods
 from .utils import _get_data
 
 supervisor_client = None

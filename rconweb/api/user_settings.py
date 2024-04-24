@@ -2,7 +2,6 @@ from logging import getLogger
 
 from django.contrib.auth.decorators import permission_required
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_http_methods
 
 from rcon.user_config.auto_broadcast import AutoBroadcastUserConfig
 from rcon.user_config.auto_kick import AutoVoteKickUserConfig
@@ -42,6 +41,7 @@ from rcon.user_config.webhooks import (
 )
 
 from .auth import api_response, login_required
+from .decorators import require_http_methods
 
 logger = getLogger(__name__)
 
@@ -430,6 +430,7 @@ def describe_watchlist_discord_webhooks_config(request):
 
 @csrf_exempt
 @login_required()
+@require_http_methods(["GET"])
 def describe_chat_commands_config(request):
     command_name = "describe_chat_commands_config"
 

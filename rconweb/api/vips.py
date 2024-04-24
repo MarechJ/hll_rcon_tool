@@ -10,21 +10,19 @@ from django.contrib.auth.decorators import permission_required
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_http_methods
 
 from rcon.commands import CommandFailedError
 from rcon.discord import send_to_discord_audit
 from rcon.models import PlayerSteamID, PlayerVIP, enter_session
+from rcon.steam_utils import is_steam_id_64
 from rcon.utils import get_server_number
+from rcon.win_store_utils import is_windows_store_id
 from rcon.workers import get_job_results, worker_bulk_vip
 
 from .audit_log import record_audit
 from .auth import api_response, login_required
-from .decorators import require_content_type
+from .decorators import require_content_type, require_http_methods
 from .views import rcon_api
-
-from rcon.steam_utils import is_steam_id_64
-from rcon.win_store_utils import is_windows_store_id
 
 logger = logging.getLogger("rconweb")
 
@@ -125,7 +123,9 @@ def async_upload_vips(request):
                             # The last chunk should be treated as part of the players name if it's not a valid date
                             name += possible_timestamp
 
-                    if not is_steam_id_64(steam_id) and not is_windows_store_id(steam_id):
+                    if not is_steam_id_64(steam_id) and not is_windows_store_id(
+                        steam_id
+                    ):
                         errors.append(
                             f"{line} has an invalid player id, expected a 17 digit steam id or a windows store id"
                         )
@@ -204,7 +204,7 @@ def download_vips(request):
         content_type="text/plain",
     )
 
-    response["Content-Disposition"] = (
-        f"attachment; filename={datetime.datetime.now().isoformat()}_vips.txt"
-    )
+    response[
+        "Content-Disposition"
+    ] = f"attachment; filename={datetime.datetime.now().isoformat()}_vips.txt"
     return response

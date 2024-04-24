@@ -4,7 +4,6 @@ from datetime import datetime, timedelta
 
 from django.contrib.auth.decorators import permission_required
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_http_methods
 
 from rcon.maps import parse_layer, safe_get_map_name
 from rcon.models import Maps, enter_session
@@ -13,6 +12,7 @@ from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.utils import MapsHistory
 
 from .auth import api_response, login_required, stats_login_required
+from .decorators import require_http_methods
 from .views import _get_data
 
 logger = logging.getLogger("rconweb")

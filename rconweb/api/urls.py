@@ -1,4 +1,5 @@
 from inspect import _empty, getdoc, signature, unwrap
+from logging import getLogger
 from typing import Callable
 
 from django.urls import path
@@ -15,9 +16,11 @@ from . import (
     user_settings,
     views,
     vips,
-    votemap,
 )
 from .auth import api_response
+from .decorators import ENDPOINT_HTTP_METHODS
+
+logger = getLogger(__name__)
 
 
 def _get_empty(value):
@@ -48,7 +51,7 @@ def get_api_documentation(request):
             }
             arguments[k] = expanded_args
 
-        item["endpoint"] = name
+        item["endpoint"] = func.__name__
         item["arguments"] = arguments
         item["return_type"] = _get_empty(sig.return_annotation)
         item["doc_string"] = getdoc(func)
@@ -58,6 +61,11 @@ def get_api_documentation(request):
         # but almost all of our endpoints share the name with functions, and those that don't map
         # to entirely different things like `login -> do_login` that are out of scope of RconAPI
         item["auto_settings_capable"] = name in dir(RconAPI)
+
+        try:
+            item["allowed_http_methods"] = ENDPOINT_HTTP_METHODS[func.__name__]
+        except KeyError:
+            raise ValueError(f"ENDPOINT_HTTP_METHODS key error {func.__name__=}")
 
         api_docs.append(item)
 

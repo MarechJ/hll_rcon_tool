@@ -1,6 +1,7 @@
 import inspect
 import logging
 import os
+import sys
 import traceback
 from functools import wraps
 from subprocess import PIPE, run
@@ -15,7 +16,6 @@ from django.http import (
     JsonResponse,
 )
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_http_methods
 
 from discord.utils import escape_markdown
 from rcon.api_commands import get_rcon_api
@@ -31,7 +31,7 @@ from rconweb.settings import TAG_VERSION
 
 from .audit_log import auto_record_audit, record_audit
 from .auth import AUTHORIZATION, api_response, login_required
-from .decorators import require_content_type
+from .decorators import require_content_type, require_http_methods
 from .multi_servers import forward_command
 from .utils import _get_data
 
@@ -176,12 +176,13 @@ def expose_api_endpoint(
     func: Callable,
     command_name: str,
     permissions: list[str] | set[str] | str,
-    allowed_methods_special_cases: dict[Callable, list[str]],
+    endpoint_allowed_http_methods: dict[Callable, list[str]],
 ):
     @csrf_exempt
     @login_required()
     @auto_record_audit(command_name)
     @permission_required(permissions, raise_exception=True)
+    @require_http_methods(endpoint_allowed_http_methods[func])
     @wraps(func)
     def wrapper(request: HttpRequest):
         parameters = inspect.signature(func).parameters
@@ -193,29 +194,12 @@ def expose_api_endpoint(
         data = _get_data(request)
 
         json_invalid_content_type_error = f"InvalidContentType: {request.method} {request.path} was called with {request.content_type}, expected one of {','.join(['application/json'])}"
-        # Allow HTTP methods that can't be determined by prefix (do_ set_, etc)
-        if func in allowed_methods_special_cases:
-            if request.method not in allowed_methods_special_cases[func]:
-                return HttpResponseNotAllowed([request.method])
-            # There's nothing in RconAPI that will accept file uploads or any other weird content types
-            # but if we added that we would have to update this
-            elif (
-                request.method == "POST" and request.content_type != "application/json"
-            ):
-                logger.info(json_invalid_content_type_error)
-        else:
-            if (
-                cmd.startswith("set_")
-                or cmd.startswith("do_")
-                or cmd.startswith("validate_")
-                or cmd.startswith("reset_")
-            ):
-                if request.method != "POST":
-                    return HttpResponseNotAllowed(["POST"])
-                if request.content_type != "application/json":
-                    logger.warning(json_invalid_content_type_error)
-            elif request.method != "GET":
-                return HttpResponseNotAllowed(["GET"])
+        if request.method not in endpoint_allowed_http_methods[func]:
+            return HttpResponseNotAllowed([request.method])
+        # There's nothing in RconAPI that will accept file uploads or any other weird content types
+        # but if we added that we would have to update this
+        elif request.method == "POST" and request.content_type != "application/json":
+            logger.info(json_invalid_content_type_error)
 
         # This is a total hack to avoid having to name every single parameter for
         # every single user config endpoint
@@ -242,8 +226,7 @@ def expose_api_endpoint(
             res = func(**arguments)
 
             # get prefixes are automatically skipped in audit
-            # TODO: remove deprecated endpoints
-            if func.__name__ not in ("player", "players_history"):
+            if request.method != "GET":
                 audit(func.__name__, request, arguments)
 
             # Can't serialize pydantic models without an explicit call to .model_dump which we do here,
@@ -635,6 +618,221 @@ DEPRECATED_ENDPOINTS = (
     "unban",
 )
 
+RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
+    rcon_api.do_add_admin: ["POST"],
+    rcon_api.do_add_map_to_rotation: ["POST"],
+    rcon_api.do_add_map_to_whitelist: ["POST"],
+    rcon_api.do_add_maps_to_rotation: ["POST"],
+    rcon_api.do_add_maps_to_whitelist: ["POST"],
+    rcon_api.do_add_vip: ["POST"],
+    rcon_api.do_ban_profanities: ["POST"],
+    rcon_api.do_blacklist_player: ["POST"],
+    rcon_api.blacklist_player: ["POST"],
+    rcon_api.do_clear_cache: ["POST"],
+    rcon_api.clear_cache: ["POST"],
+    rcon_api.do_flag_player: ["POST"],
+    rcon_api.flag_player: ["POST"],
+    rcon_api.do_kick: ["POST"],
+    rcon_api.do_message_player: ["POST"],
+    rcon_api.do_perma_ban: ["POST"],
+    rcon_api.do_punish: ["POST"],
+    rcon_api.do_remove_admin: ["POST"],
+    rcon_api.do_remove_all_vips: ["POST"],
+    rcon_api.do_remove_map_from_rotation: ["POST"],
+    rcon_api.do_remove_map_from_whitelist: ["POST"],
+    rcon_api.do_remove_maps_from_rotation: ["POST"],
+    rcon_api.do_remove_maps_from_whitelist: ["POST"],
+    rcon_api.do_remove_perma_ban: ["POST"],
+    rcon_api.do_remove_temp_ban: ["POST"],
+    rcon_api.do_remove_vip: ["POST"],
+    rcon_api.do_reset_map_whitelist: ["POST"],
+    rcon_api.do_reset_votekick_threshold: ["POST"],
+    rcon_api.do_save_setting: ["POST"],
+    rcon_api.do_set_map_whitelist: ["POST"],
+    rcon_api.do_switch_player_now: ["POST"],
+    rcon_api.do_switch_player_on_death: ["POST"],
+    rcon_api.do_temp_ban: ["POST"],
+    rcon_api.do_unban_profanities: ["POST"],
+    rcon_api.do_unban: ["POST"],
+    rcon_api.unban: ["POST"],
+    rcon_api.do_unblacklist_player: ["POST"],
+    rcon_api.unblacklist_player: ["POST"],
+    rcon_api.do_unflag_player: ["POST"],
+    rcon_api.unflag_player: ["POST"],
+    rcon_api.do_unwatch_player: ["POST"],
+    rcon_api.do_watch_player: ["POST"],
+    rcon_api.get_admin_groups: ["GET"],
+    rcon_api.get_admin_ids: ["GET"],
+    rcon_api.get_admin_pings_discord_webhooks_config: ["GET"],
+    rcon_api.get_audit_discord_webhooks_config: ["GET"],
+    rcon_api.get_auto_broadcasts_config: ["GET"],
+    rcon_api.get_auto_mod_level_config: ["GET"],
+    rcon_api.get_auto_mod_no_leader_config: ["GET"],
+    rcon_api.get_auto_mod_seeding_config: ["GET"],
+    rcon_api.get_auto_mod_solo_tank_config: ["GET"],
+    rcon_api.get_autobalance_enabled: ["GET"],
+    rcon_api.get_autobalance_threshold: ["GET"],
+    rcon_api.get_ban: ["GET"],
+    rcon_api.get_bans: ["GET"],
+    rcon_api.get_broadcast_message: ["GET"],
+    rcon_api.get_camera_discord_webhooks_config: ["GET"],
+    rcon_api.get_camera_notification_config: ["GET"],
+    rcon_api.get_chat_commands_config: ["GET"],
+    rcon_api.get_chat_discord_webhooks_config: ["GET"],
+    rcon_api.get_current_map_sequence: ["GET"],
+    rcon_api.get_detailed_player_info: ["GET"],
+    rcon_api.get_detailed_players: ["GET"],
+    rcon_api.get_expired_vip_config: ["GET"],
+    rcon_api.get_gamestate: ["GET"],
+    rcon_api.get_historical_logs: ["GET", "POST"],
+    rcon_api.get_idle_autokick_time: ["GET"],
+    rcon_api.get_ingame_mods: ["GET"],
+    rcon_api.get_kills_discord_webhooks_config: ["GET"],
+    rcon_api.get_log_line_webhook_config: ["GET"],
+    rcon_api.get_logs: ["GET"],
+    rcon_api.get_map_rotation: ["GET"],
+    rcon_api.get_map_shuffle_enabled: ["GET"],
+    rcon_api.get_map_whitelist: ["GET"],
+    rcon_api.get_map: ["GET"],
+    rcon_api.get_maps: ["GET"],
+    rcon_api.get_max_ping_autokick: ["GET"],
+    rcon_api.get_name_kick_config: ["GET"],
+    rcon_api.get_name: ["GET"],
+    rcon_api.get_next_map: ["GET"],
+    rcon_api.get_online_console_admins: ["GET"],
+    rcon_api.get_online_mods: ["GET"],
+    rcon_api.get_perma_bans: ["GET"],
+    rcon_api.get_player_info: ["GET"],
+    rcon_api.get_player_profile: ["GET"],
+    rcon_api.player: ["GET"],
+    rcon_api.get_playerids: ["GET"],
+    rcon_api.get_players_fast: ["GET"],
+    rcon_api.get_players_history: ["GET", "POST"],
+    rcon_api.players_history: ["GET", "POST"],
+    rcon_api.get_players: ["GET"],
+    rcon_api.get_profanities: ["GET"],
+    rcon_api.get_queue_length: ["GET"],
+    rcon_api.get_rcon_connection_settings_config: ["GET"],
+    rcon_api.get_rcon_server_settings_config: ["GET"],
+    rcon_api.get_real_vip_config: ["GET"],
+    rcon_api.get_recent_logs: ["GET", "POST"],
+    rcon_api.get_round_time_remaining: ["GET"],
+    rcon_api.get_scorebot_config: ["GET"],
+    rcon_api.get_server_name_change_config: ["GET"],
+    rcon_api.get_server_settings: ["GET"],
+    rcon_api.get_server_stats: ["GET"],
+    rcon_api.get_slots: ["GET"],
+    rcon_api.get_standard_broadcast_messages: ["GET"],
+    rcon_api.get_standard_punishments_messages: ["GET"],
+    rcon_api.get_standard_welcome_messages: ["GET"],
+    rcon_api.get_status: ["GET"],
+    rcon_api.get_steam_config: ["GET"],
+    rcon_api.get_structured_logs: ["GET"],
+    rcon_api.get_team_objective_scores: ["GET"],
+    rcon_api.get_team_switch_cooldown: ["GET"],
+    rcon_api.get_team_view: ["GET"],
+    rcon_api.get_temp_bans: ["GET"],
+    rcon_api.get_tk_ban_on_connect_config: ["GET"],
+    rcon_api.get_vac_game_bans_config: ["GET"],
+    rcon_api.get_vip_ids: ["GET"],
+    rcon_api.get_vip_slots_num: ["GET"],
+    rcon_api.get_vips_count: ["GET"],
+    rcon_api.get_votekick_autotoggle_config: ["GET"],
+    rcon_api.get_votekick_enabled: ["GET"],
+    rcon_api.get_votekick_threshold: ["GET"],
+    rcon_api.get_votemap_config: ["GET"],
+    rcon_api.get_votemap_status: ["GET"],
+    rcon_api.get_watchlist_discord_webhooks_config: ["GET"],
+    rcon_api.get_welcome_message: ["GET"],
+    rcon_api.reset_votemap_state: ["POST"],
+    rcon_api.set_admin_pings_discord_webhooks_config: ["POST"],
+    rcon_api.set_audit_discord_webhooks_config: ["POST"],
+    rcon_api.set_auto_broadcasts_config: ["POST"],
+    rcon_api.set_auto_mod_level_config: ["POST"],
+    rcon_api.set_auto_mod_no_leader_config: ["POST"],
+    rcon_api.set_auto_mod_seeding_config: ["POST"],
+    rcon_api.set_auto_mod_solo_tank_config: ["POST"],
+    rcon_api.set_autobalance_enabled: ["POST"],
+    rcon_api.set_autobalance_threshold: ["POST"],
+    rcon_api.set_broadcast: ["POST"],
+    rcon_api.set_camera_discord_webhooks_config: ["POST"],
+    rcon_api.set_camera_notification_config: ["POST"],
+    rcon_api.set_chat_commands_config: ["POST"],
+    rcon_api.set_chat_discord_webhooks_config: ["POST"],
+    rcon_api.set_expired_vip_config: ["POST"],
+    rcon_api.set_idle_autokick_time: ["POST"],
+    rcon_api.set_kills_discord_webhooks_config: ["POST"],
+    rcon_api.set_log_line_webhook_config: ["POST"],
+    rcon_api.set_map_shuffle_enabled: ["POST"],
+    rcon_api.set_map: ["POST"],
+    rcon_api.set_maprotation: ["POST"],
+    rcon_api.set_max_ping_autokick: ["POST"],
+    rcon_api.set_name_kick_config: ["POST"],
+    rcon_api.set_profanities: ["POST"],
+    rcon_api.set_queue_length: ["POST"],
+    rcon_api.set_rcon_connection_settings_config: ["POST"],
+    rcon_api.set_rcon_server_settings_config: ["POST"],
+    rcon_api.set_real_vip_config: ["POST"],
+    rcon_api.set_scorebot_config: ["POST"],
+    rcon_api.set_server_name_change_config: ["POST"],
+    rcon_api.set_server_name: ["POST"],
+    rcon_api.set_standard_broadcast_messages: ["POST"],
+    rcon_api.set_standard_punishments_messages: ["POST"],
+    rcon_api.set_standard_welcome_messages: ["POST"],
+    rcon_api.set_steam_config: ["POST"],
+    rcon_api.set_team_switch_cooldown: ["POST"],
+    rcon_api.set_tk_ban_on_connect_config: ["POST"],
+    rcon_api.set_vac_game_bans_config: ["POST"],
+    rcon_api.set_vip_slots_num: ["POST"],
+    rcon_api.set_votekick_autotoggle_config: ["POST"],
+    rcon_api.set_votekick_enabled: ["POST"],
+    rcon_api.set_votekick_threshold: ["POST"],
+    rcon_api.set_votemap_config: ["POST"],
+    rcon_api.set_watchlist_discord_webhooks_config: ["POST"],
+    rcon_api.set_welcome_message: ["POST"],
+    rcon_api.validate_admin_pings_discord_webhooks_config: ["POST"],
+    rcon_api.validate_audit_discord_webhooks_config: ["POST"],
+    rcon_api.validate_auto_broadcasts_config: ["POST"],
+    rcon_api.validate_auto_mod_level_config: ["POST"],
+    rcon_api.validate_auto_mod_no_leader_config: ["POST"],
+    rcon_api.validate_auto_mod_seeding_config: ["POST"],
+    rcon_api.validate_auto_mod_solo_tank_config: ["POST"],
+    rcon_api.validate_camera_discord_webhooks_config: ["POST"],
+    rcon_api.validate_camera_notification_config: ["POST"],
+    rcon_api.validate_chat_commands_config: ["POST"],
+    rcon_api.validate_chat_discord_webhooks_config: ["POST"],
+    rcon_api.validate_expired_vip_config: ["POST"],
+    rcon_api.validate_kills_discord_webhooks_config: ["POST"],
+    rcon_api.validate_log_line_webhook_config: ["POST"],
+    rcon_api.validate_name_kick_config: ["POST"],
+    rcon_api.validate_rcon_connection_settings_config: ["POST"],
+    rcon_api.validate_rcon_server_settings_config: ["POST"],
+    rcon_api.validate_real_vip_config: ["POST"],
+    rcon_api.validate_scorebot_config: ["POST"],
+    rcon_api.validate_server_name_change_config: ["POST"],
+    rcon_api.validate_standard_broadcast_messages: ["POST"],
+    rcon_api.validate_standard_punishments_messages: ["POST"],
+    rcon_api.validate_standard_welcome_messages: ["POST"],
+    rcon_api.validate_steam_config: ["POST"],
+    rcon_api.validate_tk_ban_on_connect_config: ["POST"],
+    rcon_api.validate_vac_game_bans_config: ["POST"],
+    rcon_api.validate_votekick_autotoggle_config: ["POST"],
+    rcon_api.validate_votemap_config: ["POST"],
+    rcon_api.validate_watchlist_discord_webhooks_config: ["POST"],
+    rcon_api.get_log_stream_config: ["POST"],
+    rcon_api.set_log_stream_config: ["POST"],
+    rcon_api.validate_log_stream_config: ["POST"],
+}
+
+# Check to make sure that ENDPOINT_HTTP_METHODS and ENDPOINT_PERMISSIONS have the same endpoints
+MISSING_ENDPOINTS = set(
+    k for k in RCON_ENDPOINT_HTTP_METHODS.keys()
+).symmetric_difference(set(k for k in ENDPOINT_PERMISSIONS))
+
+if len(MISSING_ENDPOINTS) > 0:
+    logger.error(f"{MISSING_ENDPOINTS=}")
+    sys.exit(1)
+
 # Some get_ and deprecated endpoints accept POST requests
 # TODO: remove deprecated endpoints
 ALLOWED_METHODS_SPECIAL_CASES: dict[Callable, list[str]] = {
@@ -659,26 +857,21 @@ commands = [
 ]
 
 if not os.getenv("HLL_MAINTENANCE_CONTAINER"):
-    logger.info("Initializing endpoint")
+    logger.info("Initializing endpoints")
 
     try:
         # Dynamically register all the methods from ServerCtl
         # TODO: remove deprecated endpoints check once endpoints are removed
-        for name, func in inspect.getmembers(rcon_api):
-            if (
-                not any(name.startswith(prefix) for prefix in PREFIXES_TO_EXPOSE)
-                and name not in DEPRECATED_ENDPOINTS
-            ):
-                continue
-
+        for func in ENDPOINT_PERMISSIONS.keys():
+            name = func.__qualname__
             commands.append(
                 (
                     name,
                     expose_api_endpoint(
-                        func,
-                        name,
-                        ENDPOINT_PERMISSIONS[func],
-                        allowed_methods_special_cases=ALLOWED_METHODS_SPECIAL_CASES,
+                        func=func,
+                        command_name=name,
+                        permissions=ENDPOINT_PERMISSIONS[func],
+                        endpoint_allowed_http_methods=RCON_ENDPOINT_HTTP_METHODS,
                     ),
                 ),
             )
