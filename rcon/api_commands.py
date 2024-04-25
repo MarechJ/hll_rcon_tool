@@ -375,10 +375,6 @@ class RconAPI(Rcon):
             add=False,
         )
 
-    def run_raw_command(self):
-        # TODO: how to handle both get/post methods
-        pass
-
     def get_online_mods(self) -> list[str]:
         return online_mods()
 
