@@ -16,6 +16,10 @@ def main():
         ) from exc
     execute_from_command_line(sys.argv)
 
+    # Make all the endpoints be exposed at startup to catch any crashing issues
+    if not os.getenv("HLL_MAINTENANCE_CONTAINER"):
+        import api.views
+
 
 if __name__ == "__main__":
     main()
