@@ -14,8 +14,6 @@ def require_http_methods(request_method_list: list[str]):
     def decorator(
         func,
     ):  # -> _Wrapped[Callable[..., Any], Any, Callable[..., Any], Any]:  # -> _Wrapped[Callable[..., Any], Any, Callable[..., Any], Any]:  # -> _Wrapped[Callable[..., Any], Any, Callable[..., Any], Any]:
-        logger.info(f"adding {func.__name__} to ENDPOINT_HTTP_METHODS")
-
         if func.__name__ in ENDPOINT_HTTP_METHODS:
             raise ValueError(f"{func.__name__} already added to ENDPOINT_HTTP_METHODS")
 
