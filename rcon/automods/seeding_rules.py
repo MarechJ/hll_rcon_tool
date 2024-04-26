@@ -315,6 +315,11 @@ class SeedingRulesAutomod:
                         "DRL_S_1944_P_Skirmish",
                         "DRL_S_1944_Night_P_Skirmish",
                         "DRL_S_1944_Day_P_Skirmish",
+                        "mortain_skirmish_day",
+                        "mortain_skirmish_overcast",
+                        "SMDM_S_1944_Night_P_Skirmish",
+                        "SMDM_S_1944_Day_P_Skirmish",
+                        "SMDM_S_1944_Rain_P_Skirmish"
                     )
                 ):
                     self._disable_for_round("enforce_cap_fight")
