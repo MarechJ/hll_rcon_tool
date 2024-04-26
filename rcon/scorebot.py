@@ -89,8 +89,12 @@ map_to_pict = {
     "carentan_night": "maps/carentan-night.webp",
     "driel": "maps/driel.webp",
     "driel_night": "maps/driel-night.webp",
+    "drl": "maps/driel.webp",
+    "drl_night": "maps/driel-night.webp",
     "elalamein": "maps/elalamein.webp",
     "elalamein_night": "maps/elalamein-night.webp",
+    "ela": "maps/elalamein.webp",
+    "ela_night": "maps/elalamein-night.webp",
     "foy": "maps/foy.webp",
     "foy_night": "maps/foy-night.webp",
     "hill400": "maps/hill400.webp",
@@ -101,6 +105,8 @@ map_to_pict = {
     "kharkov_night": "maps/kharkov-night.webp",
     "kursk": "maps/kursk.webp",
     "kursk_night": "maps/kursk-night.webp",
+    "mortain": "maps/mortain.webp",
+    "mortain_night": "maps/mortain.webp",
     "omahabeach": "maps/omaha.webp",
     "omahabeach_night": "maps/omaha-night.webp",
     "purpleheartlane": "maps/phl.webp",
@@ -109,6 +115,8 @@ map_to_pict = {
     "stalingrad_night": "maps/stalingrad-night.webp",
     "stmariedumont": "maps/smdm.webp",
     "stmariedumont_night": "maps/smdm-night.webp",
+    "smdm": "maps/smdm.webp",
+    "smdm_night": "maps/smdm-night.webp",
     "stmereeglise": "maps/sme.webp",
     "stmereeglise_night": "maps/sme-night.webp",
     "utahbeach": "maps/utah.webp",
@@ -122,7 +130,7 @@ def get_map_image(server_info: PublicInfoType, config: ScorebotUserConfig):
     map_name: str = server_info["current_map"]["name"]
 
     try:
-        base_map_name, _ = map_name.split("_", maxsplit=1)
+        base_map_name, _ = map_name.lower().split("_", maxsplit=1)
     except ValueError:
         base_map_name = map_name
 
