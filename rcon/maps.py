@@ -188,6 +188,16 @@ class Layer(pydantic.BaseModel):
         if self.attackers:
             return get_opposite_side(self.attackers)
 
+    @property
+    def map_image_url_stub(self):
+        """The map image URL with path and file extension"""
+        return f"maps/{self.map.id}-{self.environment.value}.webp".lower()
+
+    @property
+    def map_image_name(self):
+        """The map image name with file extension but without maps/ path"""
+        return f"{self.map.id}-{self.environment.value}.webp".lower()
+
 
 MAPS = {
     m.id: m
