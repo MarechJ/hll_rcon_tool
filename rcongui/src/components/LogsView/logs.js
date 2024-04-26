@@ -386,7 +386,7 @@ class Logs extends React.Component {
                     / (COLT M1911|WALTHER P38|LUGER P08|NAGANT M1895|TOKAREV TT33|Webley MK VI)$/, ' ⚠️$1⚠️').replace(
                     / (M1 GARAND|M1 CARBINE|GEWEHR 43|SVT40)$/, ' ⚠️$1⚠️').replace(
                     / (M97 TRENCH GUN)$/, ' ⚠️$1⚠️').replace(
-                    / (M1903 SPRINGFIELD|M1919 SPRINGFIELD|KARABINER 98K x8|FG42 x4|SCOPED MOSIN NAGANT 91\/30|SCOPED SVT40|Lee-Enfield Pattern 1914 Sniper)$/, ' ⚠️$1⚠️').replace(
+                    / (M1903 SPRINGFIELD|M1919 SPRINGFIELD|KARABINER 98K x8|FG42 x4|SCOPED MOSIN NAGANT 91\/30|SCOPED SVT40|Lee-Enfield Pattern 1914 Sniper|Rifle No.4 Mk I Sniper)$/, ' ⚠️$1⚠️').replace(
                     / (M1A1 THOMPSON|M3 GREASE GUN|MP40|PPSH 41|PPSH 41 W\/DRUM|Sten Gun|Lanchester|M1928A1 THOMPSON)$/, ' ⚠️$1⚠️').replace(
                     // MESSAGE
                     /^(.*)\((([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})|(\d{17}))\): (.*)$/, '$1 📢$5').replace(
