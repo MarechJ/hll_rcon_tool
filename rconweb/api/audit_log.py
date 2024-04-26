@@ -52,22 +52,10 @@ def record_audit(func):
 
 def auto_record_audit(name):
     def wrapper(func):
-        # TODO: change this to inverse, only don't audit get_
-        if (
-            name.startswith("do_")
-            or name.startswith("set_")
-            or name.startswith("reset")
-            or name
-            # TODO: remove deprecated endpoints check
-            in (
-                "blacklist_player",
-                "clear_cache",
-                "flag_player",
-                "unflag_player",
-                "unban",
-                "unblacklist_player",
-            )
-        ):
+        # A few get_ methods can be called w/ POST but don't modify anything
+        # so filtering like this should work since this is only for the RconAPI exposed
+        # endpoints, manually defined endpoints use the @record_audit endpoint
+        if not name.startswith("get_") and not name.startswith("validate_"):
             return record_audit(func)
         else:
             return func

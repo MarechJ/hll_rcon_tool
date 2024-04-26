@@ -221,12 +221,16 @@ def expose_api_endpoint(
                         return HttpResponseBadRequest()
 
         try:
-            logger.debug("%s %s", func.__name__, arguments)
+            logger.debug("%s %s", command_name, arguments)
             res = func(**arguments)
 
-            # get prefixes are automatically skipped in audit
-            if request.method != "GET":
-                audit(func.__name__, request, arguments)
+            # A few get_ methods can be called w/ POST but don't modify anything
+            # so filtering like this should work since this is only for the RconAPI exposed
+            # endpoints, manually defined endpoints use the @record_audit endpoint
+            if not command_name.startswith("get_") and not command_name.startswith(
+                "validate_"
+            ):
+                audit(command_name, request, arguments)
 
             # Can't serialize pydantic models without an explicit call to .model_dump which we do here,
             # rather than in RconAPI to preserve typing and internal use as an actual pydantic class
@@ -241,7 +245,7 @@ def expose_api_endpoint(
         response = JsonResponse(
             dict(
                 result=res,
-                command=func.__name__,
+                command=command_name,
                 arguments=data,
                 failed=failure,
                 error=error,
