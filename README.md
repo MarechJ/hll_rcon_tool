@@ -1,9 +1,9 @@
 ![Website](https://img.shields.io/website?down_color=red&up_color=orange&up_message=hllrcon.app&url=https%3A%2F%2Fhllrcon.app)
 ![Discord](https://img.shields.io/discord/685692524442026020?color=%237289da&label=discord)
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/marechj/hll_rcon_tool)
-![Docker Cloud Automated build](https://img.shields.io/docker/cloud/automated/cericmathey/hll_rcon)
-![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/cericmathey/hll_rcon)
-![Docker Pulls](https://img.shields.io/docker/pulls/cericmathey/hll_rcon)
+![Docker Cloud Automated build](https://img.shields.io/docker/cloud/automated/cericmathey/hll_rcon_tool)
+![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/cericmathey/hll_rcon_tool)
+![Docker Pulls](https://img.shields.io/docker/pulls/cericmathey/hll_rcon_tool)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![README zh](https://shields.io/badge/中文文档-8A2BE2)](README.zh.md)
 
