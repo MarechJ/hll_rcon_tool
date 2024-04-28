@@ -540,7 +540,7 @@ Unless you have been changing files, this should never happen.
 # Downgrade (in case of issue) to a previous version
 
 Check the available versions numbers on Docker hub (or Github releases) :  
-https://hub.docker.com/r/cericmathey/hll_rcon/tags  
+https://hub.docker.com/r/cericmathey/hll_rcon_tool/tags  
 https://github.com/MarechJ/hll_rcon_tool/releases
 
 Edit your `.env` file and change `TAGGED_VERSION` from `latest` to a specific tagged release  
@@ -577,7 +577,7 @@ Please [see the Wiki](https://github.com/MarechJ/hll_rcon_tool/wiki/Multiple-CRC
 
 ## Building your own Docker images
 
-Docker images are hosted on [Docker Hub](https://hub.docker.com/r/cericmathey/hll_rcon), but if you're running a fork, have made local modifications, are running CPU architecture we don't have pre-built images for or the release you want isn't available for some reason, you can build your images locally.
+Docker images are hosted on [Docker Hub](https://hub.docker.com/r/cericmathey/hll_rcon_tool), but if you're running a fork, have made local modifications, are running CPU architecture we don't have pre-built images for or the release you want isn't available for some reason, you can build your images locally.
 
 ### Set environment variables
 
