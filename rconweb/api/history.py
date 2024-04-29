@@ -2,14 +2,13 @@ import json
 import logging
 
 from django.contrib.auth.decorators import permission_required
-from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
 from rcon import player_history
 from rcon.player_history import get_player_comments, post_player_comments
 
 from .audit_log import record_audit
-from .auth import login_required
+from .auth import RconJsonResponse, login_required
 from .decorators import require_content_type, require_http_methods
 from .utils import _get_data
 
@@ -30,7 +29,7 @@ def get_player_messages(request):
         logger.exception("Unable to get player message history")
         failed = True
 
-    return JsonResponse(
+    return RconJsonResponse(
         {
             "result": res,
             "command": "player_messages",
@@ -54,7 +53,7 @@ def get_player_comment(request):
         logger.exception("Unable to get player comments")
         failed = True
 
-    return JsonResponse(
+    return RconJsonResponse(
         {
             "result": res,
             "command": "player_comments",
@@ -87,7 +86,7 @@ def post_player_comment(request):
         failed = True
         logger.exception("Unable to get player comments")
 
-    return JsonResponse(
+    return RconJsonResponse(
         {
             "result": "",
             "command": "player_comments",

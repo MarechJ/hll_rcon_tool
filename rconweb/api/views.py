@@ -13,7 +13,6 @@ from django.http import (
     HttpResponse,
     HttpResponseBadRequest,
     HttpResponseNotAllowed,
-    JsonResponse,
 )
 from django.views.decorators.csrf import csrf_exempt
 
@@ -30,7 +29,7 @@ from rcon.utils import MapsHistory, get_server_number
 from rconweb.settings import TAG_VERSION
 
 from .audit_log import auto_record_audit, record_audit
-from .auth import AUTHORIZATION, api_response, login_required
+from .auth import AUTHORIZATION, RconJsonResponse, api_response, login_required
 from .decorators import require_content_type, require_http_methods
 from .multi_servers import forward_command
 from .utils import _get_data
@@ -242,7 +241,7 @@ def expose_api_endpoint(
             error = e.args[0] if e.args else None
             res = None
 
-        response = JsonResponse(
+        response = RconJsonResponse(
             dict(
                 result=res,
                 command=command_name,
@@ -251,7 +250,7 @@ def expose_api_endpoint(
                 error=error,
                 forward_results=others,
                 version=TAG_VERSION,
-            )
+            ),
         )
 
         # Handle all the special cases of forwarding commands here so we don't

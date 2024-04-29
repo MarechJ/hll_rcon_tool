@@ -5,15 +5,16 @@ from dataclasses import asdict, dataclass
 from functools import wraps
 from typing import Any
 
+import orjson
+import pydantic
 from channels.db import database_sync_to_async
 from channels.security.websocket import WebsocketDenier
 from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import Permission, User
 from django.core.exceptions import PermissionDenied
 from django.db.models.signals import post_delete, post_save
-from django.http import HttpResponse, JsonResponse, QueryDict
+from django.http import HttpResponse, QueryDict
 from django.views.decorators.csrf import csrf_exempt
 
 from rcon.audit import heartbeat, ingame_mods, online_mods, set_registered_mods
@@ -113,9 +114,23 @@ class RconResponse:
         return asdict(self)
 
 
+class RconJsonResponse(HttpResponse):
+    """Similar to JsonResponse but use orjson for speed + automatically serialize pydantic objects"""
+
+    @staticmethod
+    def _orjson_dump_pydantic(o):
+        if isinstance(o, pydantic.BaseModel):
+            return o.model_dump()
+
+    def __init__(self, data, **kwargs):
+        data = orjson.dumps(data, default=RconJsonResponse._orjson_dump_pydantic)
+        kwargs.setdefault("content_type", "application/json")
+        super().__init__(content=data, **kwargs)
+
+
 def api_response(*args, **kwargs):
     status_code = kwargs.pop("status_code", 200)
-    return JsonResponse(
+    return RconJsonResponse(
         RconResponse(version=TAG_VERSION, *args, **kwargs).to_dict(), status=status_code
     )
 
