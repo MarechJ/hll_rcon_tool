@@ -210,11 +210,11 @@ If you run it on Windows, don't expect anyone to be able to help you on the Disc
   and you won't be able to update your CRCON as easily as with git)
 - `Docker Engine` (Community) : https://docs.docker.com/engine/install/  
   You can also use Docker Desktop, but you may have issues with nested virtualization, depending on your computer/server/VPS.
-- `Docker Compose` : https://docs.docker.com/compose/install/  
-Note : `docker-compose` is deprecated.  
-This README and release announcements will show `docker compose` examples.  
-*You should still be able to use `docker-compose` and will have to adjust the commands below accordingly.* but you should really just use the modern version and avoid potential issues. We can't/won't guarantee that future releases will work properly with `docker-compose`
-- *(Optional but **highly** recommended)* Some sort of text editor that supports syntax highlighting/etc. The instructions below use `nano` in the examples which is a shell based editor that can be difficult to edit with. [Visual Studio Code](https://code.visualstudio.com/) is a free and fully featured text editor and also allows you to [remotely edit files over SSH](https://code.visualstudio.com/docs/remote/ssh) which is very handy when editing files on your VPS.
+- `Docker Compose` plugin for Docker : https://docs.docker.com/compose/install/  
+Note : `docker-compose` has been deprecated in july 2023, errors **will** occur if you try to use it. 
+- *(Optional but **highly** recommended)* Some sort of text editor that supports syntax highlighting/etc.
+The instructions below use `nano` in the examples which is a shell based editor that can be difficult to edit with.
+[Visual Studio Code](https://code.visualstudio.com/) is a free and fully featured text editor and also allows you to [remotely edit files over SSH](https://code.visualstudio.com/docs/remote/ssh) which is very handy when editing files on your VPS.
 
 Some VPS providers offer free installation of linux distributions in which Docker is already activated. Search/ask for it !
 
