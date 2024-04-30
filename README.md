@@ -324,7 +324,7 @@ cp docker-templates/one-server.yaml compose.yaml
 If you only want to manage one gamer server, you're done with the compose file. Go for step 4 ("Run CRCON for the first time !").
 
 If you want to **manage 2 or more servers** :  
-You'll have to edit your `compose.yaml` (**don't edit the templates !**)
+You'll have to edit your `compose.yaml` (**DO NOT** edit the templates !)
 You can either :  
 - copy `one-server.yaml` and add more servers in it - look at `ten-servers.yaml` to get an example ;  
 - copy `ten-servers.yaml`, fill your servers infos and delete the parts about servers you don't need.
@@ -333,7 +333,7 @@ There are two places that need to be updated for the `compose.yaml` to work prop
 
 #### Networks
 
-The `networks` section (at the top) **must** contain a definition for each server (** DO NOT** remove the `common` network).  
+The `networks` section (at the top) **must** contain a definition for each server (**DO NOT** remove the `common` network !).  
 Add a network For each server you are using (you can reference `docker-templates/ten-servers.yaml` for examples)
 
 If you are no longer using all your servers, you can leave the extra networks.  
