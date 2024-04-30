@@ -244,7 +244,9 @@ git clone https://github.com/MarechJ/hll_rcon_tool.git
 ```
 
 Get in the newly created CRCON dedicated folder :
-> cd hll_rcon_tool
+```console
+cd hll_rcon_tool
+```
 
 ### 2. Edit the environment config file
 
@@ -255,13 +257,19 @@ Here we'll use **nano**, a simple text editor that runs in text mode.
 The file **must** be named `.env` or Docker will not detect it. **Don't** edit `default.env`.
 
 Make a copy of the environnement config file template :
-> cp default.env .env
+```console
+cp default.env .env
+```
 
 Install the nano text editor :
-> apt-get update && apt-get install nano
+```console
+apt-get update && apt-get install nano
+```
 
 Launch nano to edit the .env file :
-> nano .env
+```console
+nano .env
+```
 
 In nano, you can move the cursor with the arrow keys.  
 You do not have to change all the values. Only these 5 are mandatory :
@@ -399,7 +407,9 @@ But do not think it's over yet, as we now have to configure its users.
 Note : Launch process will display a *lot* of scrolling text.  
 Don't panic, as you do not have to read/do anything. Just watch the magic.
 
-> `docker compose up -d --remove-orphans`
+```console
+docker compose up -d --remove-orphans
+```
 
 If everything went well you will see output similar to (this is an example for a single game server and edited to fit):
 
