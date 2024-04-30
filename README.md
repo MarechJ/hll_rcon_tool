@@ -211,10 +211,10 @@ If you run it on Windows, don't expect anyone to be able to help you on the Disc
 - `Docker Engine` (Community) : https://docs.docker.com/engine/install/  
   You can also use Docker Desktop, but you may have issues with nested virtualization, depending on your computer/server/VPS.
 - `Docker Compose` plugin for Docker : https://docs.docker.com/compose/install/  
-Note : `docker-compose` has been deprecated in july 2023, errors **will** occur if you try to use it. 
-- *(Optional but **highly** recommended)* Some sort of text editor that supports syntax highlighting/etc.
-The instructions below use `nano` in the examples which is a shell based editor that can be difficult to edit with.
-[Visual Studio Code](https://code.visualstudio.com/) is a free and fully featured text editor and also allows you to [remotely edit files over SSH](https://code.visualstudio.com/docs/remote/ssh) which is very handy when editing files on your VPS.
+  Note : `docker-compose` has been deprecated in july 2023, errors **will** occur if you try to use it.
+- *(Optional but **highly** recommended)* Some sort of text editor that supports syntax highlighting/etc.  
+  The instructions below use `nano` in the examples which is a shell based editor that can be difficult to edit with.  
+  [Visual Studio Code](https://code.visualstudio.com/) is a free and fully featured text editor and also allows you to [remotely edit files over SSH](https://code.visualstudio.com/docs/remote/ssh) which is very handy when editing files on your VPS.
 
 Some VPS providers offer free installation of linux distributions in which Docker is already activated. Search/ask for it !
 
