@@ -290,7 +290,7 @@ You do not have to change all the values. Only these 5 are mandatory :
 Configure each game server you want to setup (server 1, server 2, etc. repeating the steps below for the 2nd/3rd server as necessary)
 
 3. Enter your RCON IP, as provided by the game server provider :  
-   (this is NOT the same as the game server IP)
+   (this may be not the same as the game server IP)
 
        HLL_HOST=123.123.123.123
 
@@ -304,35 +304,40 @@ Configure each game server you want to setup (server 1, server 2, etc. repeating
        HLL_PASSWORD=yourrconpassword
 
 Triple-check there is **no space before/after the `=` signs, nor in the values you've set**.
-- save the changes with **Ctrl+o** (then type 'y' to validate)  
-- exit nano with **Ctrl+x**
+- save the changes with `Ctrl`+`o` (then type `y` to validate)  
+- exit nano with `Ctrl`+`x`
 
 ---
 ### 3. Create a Docker Compose File
 
 You need a compose file to be able to use the `docker compose` commands, you will have to manually create (and then update it based on your needs).
 
-The `docker-templates/` contains two example templates, one for a single game server and one for up to ten game servers.
-
-This example shows using a single server, if you are configuring more than one you can copy either one and either add more servers (`one-server.yaml`) or delete the servers you don't care about (`ten-servers.yaml`).
+The `docker-templates/` folder contains two example templates, one for a single game server, the other for up to 10 game servers.
 
 For `docker compose` to detect the file, it needs to be [named](https://docs.docker.com/compose/compose-application-model/) `compose.yaml`:
 
-Make a copy of the compose template you want to start with:
+Make a copy of the compose template (this is for "one game server") :
 ```console
 cp docker-templates/one-server.yaml compose.yaml
 ```
 
-If you only want to manage one gamer server, you're done with the compose files. Go for step 4 ("Run CRCON for the first time !").
+If you only want to manage one gamer server, you're done with the compose file. Go for step 4 ("Run CRCON for the first time !").
 
-If you want to **manage 2 or more servers**, you'll have to edit your `compose.yaml` (**don't edit the templates !**)  
-there are two places that need to be updated for it to work properly :
+If you want to **manage 2 or more servers** :  
+You'll have to edit your `compose.yaml` (**don't edit the templates !**)
+You can either :  
+- copy `one-server.yaml` and add more servers in it - look at `ten-servers.yaml` to get an example ;  
+- copy `ten-servers.yaml`, fill your servers infos and delete the parts about servers you don't need.
+
+There are two places that need to be updated for the `compose.yaml` to work properly :
 
 #### Networks
 
-The `networks` section at the top **must** contain a definition for each server (**don't** remove the `common` network). For each server you are using add a network for it (you can reference `docker-templates/ten-servers.yaml` for examples)
+The `networks` section (at the top) **must** contain a definition for each server (** DO NOT** remove the `common` network).  
+Add a network For each server you are using (you can reference `docker-templates/ten-servers.yaml` for examples)
 
-If you are no longer using or runnning fewer servers you can leave the extra networks, it won't hurt anything it will just create extra unused networks.
+If you are no longer using all your servers, you can leave the extra networks.  
+It won't hurt anything : it will just create extra unused networks.
 
 ```yaml
   networks:
@@ -348,7 +353,7 @@ The `services` section defines what containers Docker will actually start when y
 
 **For example** if you used `one-server.yaml` as your starting template for `compose.yaml` and you wanted to add a 2nd server, you would copy the appropriate section from `docker-templates/ten-servers.yaml` and add it to your `compose.yaml`.
 
-It is **very important** that you copy the appropriate server numbers, if you use the same server number twice only one of them will start and you will have issues.
+It is **very important** that you copy the appropriate server numbers, if you use the same server number twice, only one of them will start and you will have issues.
 
 You also need to be **very careful** and match the **indentation levels** appropriately or Docker will not be able to read the file.
 
