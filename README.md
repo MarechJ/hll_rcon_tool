@@ -9,7 +9,8 @@
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/T6T83KY8H)
 
-Join us on discord if you use it, for feedback, troubleshooting and information about updates and general Hell Let Loose hosting info: https://discord.gg/hZx6gn3
+Join us on Discord (https://discord.gg/hZx6gn3),  
+for feedback, troubleshooting and information about updates and general Hell Let Loose hosting info: https://discord.gg/hZx6gn3
 
 # Hell Let Loose (HLL) Community RCON (CRCON)
 
@@ -237,10 +238,10 @@ Using an SSH client (*don't know which one to get ?* Try PuTTY : https://www.chi
 
 Enter these commands in the terminal (*press [Enter] to validate*) :
 
-- download the CRCON files :  
-  > `git clone https://github.com/MarechJ/hll_rcon_tool.git`
-- get in the newly created CRCON dedicated folder :  
-  > `cd hll_rcon_tool`
+- download the CRCON files :
+> `git clone https://github.com/MarechJ/hll_rcon_tool.git`
+- get in the newly created CRCON dedicated folder :
+> `cd hll_rcon_tool`
 
 ### 2. Edit the environment config file
 
@@ -250,12 +251,12 @@ Here we'll use **nano**, a simple text editor that runs in text mode.
 
 The file **must** be named `.env` or Docker will not detect it. **Don't** edit `default.env`.
 
-- make a copy of the environnement config file template :  
-  > `cp default.env .env`
-- install the nano text editor :  
-  > `apt-get update && apt-get install nano`
-- launch nano to edit the .env file :  
-  > `nano .env`
+- make a copy of the environnement config file template :
+> `cp default.env .env`
+- install the nano text editor :
+> `apt-get update && apt-get install nano`
+- launch nano to edit the .env file :
+> `nano .env`
 
 In nano, you can move the cursor with the arrow keys.  
 You do not have to change all the values. Only these 5 are mandatory :
@@ -304,7 +305,8 @@ For `docker compose` to detect the file, it needs to be [named](https://docs.doc
 Make a copy of the compose template you want to start with:
 > cp docker-templates/one-server.yaml compose.yaml
 
-When you edit your `compose.yaml` (**don't edit the templates!**) there are two places that need to be updated for it to work properly if you are **adding more servers**.
+If you are **adding more servers**, you'll have to edit your `compose.yaml` (**don't edit the templates !**)  
+there are two places that need to be updated for it to work properly :
 
 #### Networks
 
