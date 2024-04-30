@@ -231,6 +231,7 @@ Some VPS providers offer free installation of linux distributions in which Docke
 
 Note : all the commands given below are meant to be entered in a Debian-like Linux terminal.
 
+---
 ### 1. Download CRCON
 
 Using an SSH client (*don't know which one to get ?* Try PuTTY : https://www.chiark.greenend.org.uk/~sgtatham/putty/),  
@@ -248,6 +249,7 @@ Get in the newly created CRCON dedicated folder :
 cd hll_rcon_tool
 ```
 
+---
 ### 2. Edit the environment config file
 
 Now, you're going to create and edit an **.env** file, in which you'll tell CRCON how to connect to your HLL game server.  
@@ -305,6 +307,7 @@ Triple-check there is **no space before/after the `=` signs, nor in the values y
 - save the changes with **Ctrl+o** (then type 'y' to validate)  
 - exit nano with **Ctrl+x**
 
+---
 ### 3. Create a Docker Compose File
 
 You need a compose file to be able to use the `docker compose` commands, you will have to manually create (and then update it based on your needs).
@@ -400,7 +403,8 @@ You also need to be **very careful** and match the **indentation levels** approp
       server2:
 ```
 
-### 3. Run CRCON for the first time !
+---
+### 4. Run CRCON for the first time !
 
 CRCON is now configured to start and connect to your HLL game server(s).
 
@@ -409,6 +413,7 @@ But do not think it's over yet, as we now have to configure its users.
 Note : Launch process will display a *lot* of scrolling text.  
 Don't panic, as you do not have to read/do anything. Just watch the magic.
 
+Enter this command :
 ```console
 docker compose up -d --remove-orphans
 ```
@@ -430,7 +435,8 @@ If everything went well you will see output similar to (this is an example for a
 
 If any of the containers report a status of `Error` and you receive messages about `unhealthy` services something is misconfigured **or** you have extra game servers in `compose.yaml` that you haven't configured in your `.env`.
 
-### 4. Get in the CRCON UI
+---
+### 5. Get in the CRCON UI
 
 Your CRCON user interface can be reached from all over the world, in any web browser.
 
@@ -445,7 +451,8 @@ The default credentials are `admin`/`admin`
 
 Now, we MUST change the admin password, as it is highly insecure !
 
-### 5. Prepare to configure users
+---
+### 6. Prepare to configure users
 
 Due to inner security checks, we need to declare the VPS IP/port as "secure" to be able to enter the users management tool or you will see `CSRF` errors.
 
@@ -467,7 +474,8 @@ You must have quotation marks `"` around the url, and a comma `,` as the final c
 *(a green confirmation flag should pop in top-right corner of the window)  
 If a yellow or red flag pops in, you have a syntax error : (watch the example above to get it right)*
 
-### 6. Restart CRCON
+---
+### 7. Restart CRCON
 
 Yes. Restart it. This may sound strange, but it is mandatory :  
 to be taken in account, the **server_url** value you've just set has to be declared during the CRCON Docker containers start.
@@ -476,7 +484,8 @@ to be taken in account, the **server_url** value you've just set has to be decla
 docker compose restart
 ```
 
-### 7. Configure users
+---
+### 8. Configure users
 
 Now you can get into the CRCON users management tool, located at : http://yourVPSIP:8010/admin
 
@@ -513,7 +522,8 @@ You also can change *your* current password using the dedicated link (top-right 
 just make sure there's another user having `Superuser status` and `staff status` activated)
 - Click on the **SAVE** button
 
-### 8. Basic configuration is over !
+---
+### 9. Basic configuration is over !
 
 Yes ! You did it ! You now have a fully working and secured CRCON ! Congratulations !
 
