@@ -316,11 +316,13 @@ This example shows using a single server, if you are configuring more than one y
 For `docker compose` to detect the file, it needs to be [named](https://docs.docker.com/compose/compose-application-model/) `compose.yaml`:
 
 Make a copy of the compose template you want to start with:
-> cp docker-templates/one-server.yaml compose.yaml
+```console
+cp docker-templates/one-server.yaml compose.yaml
+```
 
 If you only want to manage one gamer server, you're done with the compose files. Go for step 3 ("Run CRCON for the first time !").
 
-If you want to **add more servers**, you'll have to edit your `compose.yaml` (**don't edit the templates !**)  
+If you want to **manage 2 or more servers**, you'll have to edit your `compose.yaml` (**don't edit the templates !**)  
 there are two places that need to be updated for it to work properly :
 
 #### Networks
@@ -428,11 +430,9 @@ If everything went well you will see output similar to (this is an example for a
 
 If any of the containers report a status of `Error` and you receive messages about `unhealthy` services something is misconfigured **or** you have extra game servers in `compose.yaml` that you haven't configured in your `.env`.
 
-
 ### 4. Get in the CRCON UI
 
-Your CRCON user interface can be reached from all over the world,  
-in any web browser.
+Your CRCON user interface can be reached from all over the world, in any web browser.
 
 Each game server is accessed separately, pay attention to the `RCONWEB_PORT` values in your `.env` for each game server
 
@@ -459,7 +459,9 @@ Due to inner security checks, we need to declare the VPS IP/port as "secure" to 
 - Modify the **server_url** line, entering your URL (`http://yourVPSIP:8010` for example).  
 You must have quotation marks `"` around the url, and a comma `,` as the final character on the line.
 
-      "server_url": "http://yourVPSIP:8010/",
+```json
+"server_url": "http://yourVPSIP:8010/",
+```
 
 - Click on the **SAVE** link, below the textarea  
 *(a green confirmation flag should pop in top-right corner of the window)  
@@ -470,7 +472,9 @@ If a yellow or red flag pops in, you have a syntax error : (watch the example ab
 Yes. Restart it. This may sound strange, but it is mandatory :  
 to be taken in account, the **server_url** value you've just set has to be declared during the CRCON Docker containers start.
 
-    docker compose restart
+```console
+docker compose restart
+```
 
 ### 7. Configure users
 
