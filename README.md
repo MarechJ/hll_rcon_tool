@@ -239,7 +239,9 @@ Using an SSH client (*don't know which one to get ?* Try PuTTY : https://www.chi
 Enter these commands in the terminal (*press [Enter] to validate*) :
 
 Download the CRCON files :
-> git clone https://github.com/MarechJ/hll_rcon_tool.git
+```console
+git clone https://github.com/MarechJ/hll_rcon_tool.git
+```
 
 Get in the newly created CRCON dedicated folder :
 > cd hll_rcon_tool
