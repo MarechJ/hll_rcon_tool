@@ -238,9 +238,9 @@ Using an SSH client (*don't know which one to get ?* Try PuTTY : https://www.chi
 
 Enter these commands in the terminal (*press [Enter] to validate*) :
 
-- download the CRCON files :
+Download the CRCON files :
 > `git clone https://github.com/MarechJ/hll_rcon_tool.git`
-- get in the newly created CRCON dedicated folder :
+Get in the newly created CRCON dedicated folder :
 > `cd hll_rcon_tool`
 
 ### 2. Edit the environment config file
@@ -251,11 +251,11 @@ Here we'll use **nano**, a simple text editor that runs in text mode.
 
 The file **must** be named `.env` or Docker will not detect it. **Don't** edit `default.env`.
 
-- make a copy of the environnement config file template :
+Make a copy of the environnement config file template :
 > `cp default.env .env`
-- install the nano text editor :
+Install the nano text editor :
 > `apt-get update && apt-get install nano`
-- launch nano to edit the .env file :
+Launch nano to edit the .env file :
 > `nano .env`
 
 In nano, you can move the cursor with the arrow keys.  
@@ -305,7 +305,9 @@ For `docker compose` to detect the file, it needs to be [named](https://docs.doc
 Make a copy of the compose template you want to start with:
 > cp docker-templates/one-server.yaml compose.yaml
 
-If you are **adding more servers**, you'll have to edit your `compose.yaml` (**don't edit the templates !**)  
+If you only Want to manage one gamer server, you're done with the compose files. Go for step 3 ("Run CRCON for the first time !").
+
+If you want to **add more servers**, you'll have to edit your `compose.yaml` (**don't edit the templates !**)  
 there are two places that need to be updated for it to work properly :
 
 #### Networks
