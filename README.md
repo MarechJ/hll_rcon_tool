@@ -308,7 +308,7 @@ For `docker compose` to detect the file, it needs to be [named](https://docs.doc
 Make a copy of the compose template you want to start with:
 > cp docker-templates/one-server.yaml compose.yaml
 
-If you only Want to manage one gamer server, you're done with the compose files. Go for step 3 ("Run CRCON for the first time !").
+If you only want to manage one gamer server, you're done with the compose files. Go for step 3 ("Run CRCON for the first time !").
 
 If you want to **add more servers**, you'll have to edit your `compose.yaml` (**don't edit the templates !**)  
 there are two places that need to be updated for it to work properly :
