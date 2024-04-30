@@ -207,27 +207,28 @@ We provide pre-built Docker images for `linux/amd64`, `linux/arm64` and `linux/a
 If you run it on Windows, don't expect anyone to be able to help you on the Discord. If you **really** need to run it on Windows and have no other options try using [Windows Subsystem for Linux](https://learn.microsoft.com/en-us/windows/wsl/install).
 
 - *(Optional but **highly** recommended)* `git` : https://git-scm.com/downloads  
-  (if you don't use git, you'll have to manually download and install the releases in .zip format,  
+  (if you don't use git, you'll have to manually download and install the CRCON releases in .zip format,  
   and you won't be able to update your CRCON as easily as with git)
 - `Docker Engine` (Community) : https://docs.docker.com/engine/install/  
   You can also use Docker Desktop, but you may have issues with nested virtualization, depending on your computer/server/VPS.
-- `Docker Compose` plugin for Docker : https://docs.docker.com/compose/install/  
+- `Compose` plugin for Docker : https://docs.docker.com/compose/install/  
   Note : `docker-compose` has been deprecated in july 2023, errors **will** occur if you try to use it.
 - *(Optional but **highly** recommended)* Some sort of text editor that supports syntax highlighting/etc.  
-  The instructions below use `nano` in the examples which is a shell based editor that can be difficult to edit with.  
-  [Visual Studio Code](https://code.visualstudio.com/) is a free and fully featured text editor and also allows you to [remotely edit files over SSH](https://code.visualstudio.com/docs/remote/ssh) which is very handy when editing files on your VPS.
+  The instructions below use `nano` in the examples, which is a very small shell based editor that can be difficult to edit with.  
+  [Visual Studio Code](https://code.visualstudio.com/) is a free and fully featured text editor that allows you to [remotely edit files over SSH](https://code.visualstudio.com/docs/remote/ssh) which is very handy when editing files on your VPS.
 
 Some VPS providers offer free installation of linux distributions in which Docker is already activated. Search/ask for it !
 
 ## Install steps
 
-*"I don't know anything about console commands, coding and such ?"*
+*"I don't know anything about Linux, console commands, coding and such..."*
 - Stay cool and follow the drill. It's a simple installation, many not-so-technical people managed to do it, so you probably can too :)
-- The [Wiki](https://github.com/MarechJ/hll_rcon_tool/wiki) has been receiving regular updates but it is not versioned so it may be a little out of date, or contain features/information that is not applicable to you if you are on an older release.
-  - Wiki updates are highly appreciated! This is an easy way to contribute if you don't have any programming skills.
-  - Translations are also very welcome, there are many people with no or limited English who use CRCON
-- Most shell commands/error messages can be Googled, and a *lot* of usual questions already found an answer on the CRCON's Discord. Ask for help on the tech-support channel if you can't find what you're searching for.
-- If you still don't understand what to do after reading this, just ask on Discord, but please respect peoples time and energy and at least attempt to solve your problem by using Google/other resources first.
+- The [Wiki](https://github.com/MarechJ/hll_rcon_tool/wiki) has been receiving regular updates but it is not versioned so it may be a little out of date, or contain features/informations that is not applicable to you if you are on an older release.
+- Wiki updates are highly appreciated ! This is an easy way to contribute if you don't have any programming skills.
+- Translations are also very welcome, there are many people with no or limited English who use CRCON
+- Most shell commands/error messages can be Googled, and a *lot* of usual questions already found an answer on the CRCON's Discord.  
+Ask for help on the tech-support channel if you can't find what you're searching for.
+- If you still don't understand what to do after reading this, just ask on Discord, but please respect people's time and energy and -at least- attempt to solve your problem by using Google/other resources first.
 
 Note : all the commands given below are meant to be entered in a Debian-like Linux terminal.
 
