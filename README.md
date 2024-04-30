@@ -239,9 +239,10 @@ Using an SSH client (*don't know which one to get ?* Try PuTTY : https://www.chi
 Enter these commands in the terminal (*press [Enter] to validate*) :
 
 Download the CRCON files :
-> `git clone https://github.com/MarechJ/hll_rcon_tool.git`
+> git clone https://github.com/MarechJ/hll_rcon_tool.git
+
 Get in the newly created CRCON dedicated folder :
-> `cd hll_rcon_tool`
+> cd hll_rcon_tool
 
 ### 2. Edit the environment config file
 
@@ -252,11 +253,13 @@ Here we'll use **nano**, a simple text editor that runs in text mode.
 The file **must** be named `.env` or Docker will not detect it. **Don't** edit `default.env`.
 
 Make a copy of the environnement config file template :
-> `cp default.env .env`
+> cp default.env .env
+
 Install the nano text editor :
-> `apt-get update && apt-get install nano`
+> apt-get update && apt-get install nano
+
 Launch nano to edit the .env file :
-> `nano .env`
+> nano .env
 
 In nano, you can move the cursor with the arrow keys.  
 You do not have to change all the values. Only these 5 are mandatory :
