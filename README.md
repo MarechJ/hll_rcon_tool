@@ -452,11 +452,11 @@ Make a copy of the `one-server.yaml` compose template :
 cp docker-templates/one-server.yaml compose.yaml
 ```
 
-Go to step 4 ([Run CRCON for the first time](#4-run-crcon-for-the-first-time)).
+That's it ! Go to step 4 ([Run CRCON for the first time](#4-run-crcon-for-the-first-time)).
 
 #### 3-2. Managing two or more game servers
 
-Make a copy of the `ten-servers.yaml` compose template, then edit the newly created `compose.yaml` to fit your needs
+Make a copy of the `ten-servers.yaml` compose template, then edit the newly created `compose.yaml` to fit your needs.
 
 You can either :  
 
@@ -635,14 +635,14 @@ Failing to do so **will** lead to `CSRF errors` when accessing the admin panel.
   The strange code in it is a config text, formatted in JSON.  
   Stay cool : for the time being, we only are going to change a single line in it.
 
-- Modify the **server_url** line, entering your CRCON URL (ie : `http://yourVPSIP:8010`).  
+- Modify the `server_url` line, entering your CRCON URL (ie : `http://yourVPSIP:8010`).  
   You must have quotation marks `"` around the url, and a comma `,` as the final character on the line.
 
 ```json
 "server_url": "http://123.123.123.123:8010/",
 ```
 
-- Click on the **SAVE** link, located below the textarea *(a green confirmation flag should pop in the top-right corner of the window).  
+- Click on the `SAVE` link, located below the textarea *(a green confirmation flag should pop in the top-right corner of the window).  
 If a yellow or red flag pops in, you have a syntax error in your code : watch the example above to get it right*
 
 ---
@@ -650,7 +650,7 @@ If a yellow or red flag pops in, you have a syntax error in your code : watch th
 ### 7. Restart CRCON
 
 Yes. Restart it. This may sound strange, but it is mandatory :  
-to be taken in account, the **server_url** value you've just set has to be declared during the CRCON Docker containers start.
+to be taken in account, the `server_url` value you've just set has to be declared during the CRCON Docker containers start.
 
 ```shell
 docker compose restart
@@ -666,14 +666,15 @@ You should be already logged in. If not, the credentials are still `admin`/`admi
 
 #### Add a new user
 
-- Click on the **+Add** link.
-![readme_admin_account_setup_1](images/readme_admin_account_setup_1.png)
-- Fill the **Add User** form  
-Don't forget to enter the user's Steam ID (see image below) : it will be used by CRCON to identify this user as an admin.
-![readme_admin_account_setup_2](images/readme_admin_account_setup_2.png)
-- Click on the **SAVE** link
+Click on the `+ Add` link.  
+![readme_admin_account_setup_1](images/readme_admin_account_setup_1.png)  
+Fill the `Add User` form  
+Don't forget to enter the user's Steam ID (see image below) : it will be used by CRCON to identify this user as an admin.  
+![readme_admin_account_setup_2](images/readme_admin_account_setup_2.png)  
+Click on the `SAVE` link.
 
-Once the user is created, you'll end up on that page: ![readme_admin_account_setup_3](images/readme_admin_account_setup_3.png)
+Once the user is created, you'll end up on that page:  
+![readme_admin_account_setup_3](images/readme_admin_account_setup_3.png)
 
 Don't forget to give yourself the `Superuser status` and `staff status` if you intend to disable the `admin` account !
 
@@ -687,13 +688,13 @@ You also can change *your* current password using the dedicated link (top-right 
 
 #### Change default admin's password
 
-- click on the page title **"Django administration"** to get back to the entry screen.  
+- click on the page title (`Django administration`) to get back to the main page.  
 *(This is the same as going to <http://yourVPSIP:8010/admin>)*
-- click on **Users**, then on **admin**.
+- click on `Users`, then on `admin`.
 - Change the default admin password  
 (you also can disable admin's account by unchecking the "Active" status,  
 just make sure there's another user having `Superuser status` and `staff status` activated)
-- Click on the **SAVE** button
+- Click on the `SAVE` button
 
 ---
 
@@ -703,23 +704,21 @@ just make sure there's another user having `Superuser status` and `staff status`
 
 Take your time to explore all the menus and commands.
 
-You'll find a lot of things to customize in the "SETTINGS" menus.  
+You'll find a lot of things to customize in the `SETTINGS` menus.  
 (Most of the settings are described/explained on their own page.  
 There is a lot of questions/answers about them on Discord, too).
 
 We *know* the user interface isn't always intuitive :/  
-Someone is actually working on a new version (thanks @Dorf !).
+Someone is actually working on a tremendous new version (thanks @Dorf !).
 
-If you have any question, feel free to join us on Discord and ask it.
+If you have any question (or just want to come and say hi), feel free to join us on Discord.
 
 Have fun !
 
----
-
-If you feel generous you can donate (thanks !).  
-The money will be used to reward contributing developers or content creators  
-to create video tutorial, demos, documentation, etc.  
-[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/donate?hosted_button_id=56MYGQ2966V7J)
+> [!NOTE]
+> Feel free to support CRCON's development (thanks !).  
+The money will be used to reward contributing developers and people who create video tutorials, demos, documentation, etc.  
+> [![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/donate?hosted_button_id=56MYGQ2966V7J)
 
 ---
 
