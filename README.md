@@ -294,7 +294,8 @@ If you use a different operating system or architecture, you will need to build 
 - Please respect people's time and energy and try first to search Google/Discord for a solution.  
 If you're really stuck, you should [ask for help](https://discord.com/channels/685692524442026020/685695097349734469).
 
-Note : All the commands given below are meant to be entered in a Debian-based (like Ubuntu) Linux terminal.
+> [!TIP]
+> All the commands given below are meant to be entered in a Debian-based (like Ubuntu) Linux terminal.
 
 ---
 
@@ -352,7 +353,9 @@ You do not have to change all the values. Only these 5 are mandatory :
 1. Choose a password to give CRCON access to its database  
   No need to remember/note it : you'll never have to enter it anywhere.  
   Check the comments in the `.env` for restricted characters, such as `%`.  
-  ⚠️ Do NOT change it after CRCON has been started at least one time : your database would not be accessible.
+
+  > [!CAUTION]
+  > Do NOT change it after CRCON has been started at least one time : your database would not be accessible.
 
     ```shell
     HLL_DB_PASSWORD=anythingwithoutanyspace
@@ -360,11 +363,13 @@ You do not have to change all the values. Only these 5 are mandatory :
 
 2. Enter a string that will be used to scramble users passwords. The longer the better.  
   You may want to back this up separately. If you lose it, all of your admin accounts will be invalidated and need their passwords reset.  
-  ⚠️ Do NOT change it after CRCON has been started at least one time : existing passwords would be invalidated.
 
-    ```shell
-    RCONWEB_API_SECRET=anythingwithoutanyspaceordollarsign
-    ```
+  > [!CAUTION]
+  > Do not change the string after CRCON has been started at least one time : existing passwords would be invalidated.
+
+  ```shell
+  RCONWEB_API_SECRET=anythingwithoutanyspaceordollarsign
+  ```
 
 Configure the game server(s) you want to manage.  
 If you want to manage more than one game server, repeat the steps below for the 2nd, 3rd, etc.
@@ -389,7 +394,8 @@ If you want to manage more than one game server, repeat the steps below for the 
     HLL_PASSWORD=yourrconpassword
     ```
 
-⚠️ Triple-check there is **no space before/after the `=` signs, nor in the values you've set**.
+> [!IMPORTANT]
+> Triple-check there is **no space before/after the `=` signs, nor in the values you've set**.
 
 - save the changes with `Ctrl`+`o` (then type `y` to validate)  
 - exit nano with `Ctrl`+`x`
@@ -406,7 +412,8 @@ The `docker-templates/` folder contains two example templates :
 - `one-server.yaml` for a single game server ;
 - `ten-servers.yaml` for up to 10 game servers.  
 
-⚠️ DO NOT edit these files.
+> [!CAUTION]
+> Do not edit these files.
 
 For `docker compose` to detect the file, it needs to be [named](https://docs.docker.com/compose/compose-application-model/) `compose.yaml`:
 
@@ -441,7 +448,8 @@ There are two places that need to be updated for the `compose.yaml` to work prop
 
 The `networks` section (at the top) **must** contain a definition for each server.
 
-⚠️ DO NOT remove the `common:` network.
+> [!CAUTION]
+> DO NOT remove the `common:` network.
 
 Add a network for each server you are using (look at `docker-templates/ten-servers.yaml` for examples)
 
@@ -462,9 +470,12 @@ The `services` section defines what containers Docker will actually start when y
 
 **For example** if you used `one-server.yaml` as your starting template for `compose.yaml` and you wanted to add a 2nd server, you would copy the appropriate section from `docker-templates/ten-servers.yaml` and add it to your `compose.yaml`.
 
-⚠️ It is **very important** that you copy the appropriate server numbers, if you use the same server number twice, only one of them will start and you **will** encounter issues.
+> [!CAUTION]
+> You have to use the appropriate server numbers.  
+If you use the same server number twice, only one of them will start and you **will** encounter issues.
 
-⚠️ You also need to be **very careful** and match the **indentation levels** appropriately or Docker will not be able to read the file.
+> [!CAUTION]
+> You need to be **very careful** and match the **indentation levels** appropriately or Docker will not be able to read the file.
 
 ```yaml
 ########### SERVER 2  #############
@@ -523,9 +534,11 @@ The `services` section defines what containers Docker will actually start when y
 
 CRCON is now ready to start and connect to your HLL game server(s).
 
-⚠️ Do not think it's over yet, as we now have to configure its users.
+> [!CAUTION]
+> Do not think it's over yet, as we now have to configure its users.
 
-Note : Launch process will display a *lot* of scrolling text.  
+> [!NOTE]
+> Launch process will display a *lot* of scrolling text.  
 Don't panic, as you do not have to read/do anything. Just watch the magic.
 
 Enter this command :
@@ -727,6 +740,12 @@ Check the available versions numbers on Docker hub (or Github releases) :
 
 Edit your `.env` file and change `TAGGED_VERSION` from `latest` to a specific tagged release  
 (it **must** match the release tag on Docker hub):
+
+```shell
+TAGGED_VERSION=9.4.1
+```
+
+Then restart
 
 ```shell
 TAGGED_VERSION=9.4.1
