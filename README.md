@@ -175,23 +175,30 @@ Change most (but not all) game server/CRCON settings, including but not limited 
 
 ### Minimum skills
 
-You'll only need *very limited* shell skills.  
-You can mostly just follow along with the instructions, but you need to understand what a directory is, how to list the contents of a directory, change directories, etc.
+"I don't know anything about VPS, Linux, console commands, coding and such..."
+
+- Every step is explained in detail, with examples. You'll only need *very limited* shell skills.  
+- You'll find even more explanations on the [Wiki](https://github.com/MarechJ/hll_rcon_tool/wiki), which has been receiving regular updates recently. But as it is not versioned, it may be a little out of date with the newer CRCON release, or contain features/informations that is not applicable to you if you are running an older one.  
+  - Wiki updates are highly appreciated ! This is an easy way to contribute if you don't have any programming skills ;  
+  - Translations are also very welcome, there are many people with no or limited English who use CRCON.
+- Most shell commands/error messages can be Googled, and a *lot* of usual questions already found an answer on the CRCON's Discord : search for them !  
+- Please respect people's time and energy and try first to search Google/Discord for a solution.  
+If you're really stuck, you should [ask for help](https://discord.com/channels/685692524442026020/685695097349734469).
 
 ### Install it on a VPS, not on your home PC
 
 CRCON is designed to run permanently (24/7) as a website,  
 being accessible on the Internet for your players (to access public stats) and game server admins (to manage the games).
 
+So, we strongly suggest you rent a cheap VPS to host your CRCON !
+
 Why is it designed this way :
 
 - Your users only need a web browser to access CRCON ;
 - You don't have to give access to the game server's provider services or RCON password  
-(and you should not give it, as any outside-CRCON admin action won't be logged) ;
-- It provides a centralized database for game server data (logs, etc.) and admin actions ;
+(you should never give these, as any admin action taken outside CRCON won't be logged) ;
+- It provides a centralized database for game server data (logs, etc.) ;
 - It allows to keep a record/log of all admin actions.
-
-So, to install CRCON, we strongly suggest you rent a cheap VPS to host it.
 
 If you still decide to install it on a home computer, keep in mind you'll have to :
 
@@ -298,15 +305,7 @@ The instructions below use `nano`, which is a tiny shell based editor that can b
 
 ## Install steps
 
-"I don't know anything about VPS, Linux, console commands, coding and such..."
-
-- Stay cool and follow the drill. It's a simple installation, many not-so-technical people managed to do it, so you probably can too :)
-- The [Wiki](https://github.com/MarechJ/hll_rcon_tool/wiki) has been receiving regular updates but it is not versioned, so it may be a little out of date with the newer CRCON release, or contain features/informations that is not applicable to you if you are running an older one.  
-  - Wiki updates are highly appreciated ! This is an easy way to contribute if you don't have any programming skills ;  
-  - Translations are also very welcome, there are many people with no or limited English who use CRCON.
-- Most shell commands/error messages can be Googled, and a *lot* of usual questions already found an answer on the CRCON's Discord : search for them !  
-- Please respect people's time and energy and try first to search Google/Discord for a solution.  
-If you're really stuck, you should [ask for help](https://discord.com/channels/685692524442026020/685695097349734469).
+Stay cool and follow the drill. It's a simple installation, many not-so-technical people managed to do it, so you probably can too :)
 
 > [!TIP]
 > All the commands given below are meant to be entered in a Debian-based (like Ubuntu) Linux terminal.
