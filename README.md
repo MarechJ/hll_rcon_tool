@@ -183,7 +183,7 @@ You can mostly just follow along with the instructions, but you need to understa
 CRCON is designed to run permanently (24/7) as a website,  
 being accessible on the Internet for your players (to access public stats) and game server admins (to manage the games).
 
-Why is it designed his way :
+Why is it designed this way :
 
 - Your users only need a web browser to access CRCON ;
 - You don't have to give access to the game server's provider services or RCON password  
