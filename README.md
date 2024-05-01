@@ -362,7 +362,7 @@ cp docker-templates/one-server.yaml compose.yaml
 ```
 
 If you only want to manage one gamer server, you're done with the compose file.  
-  Go for step 4 ("Run CRCON for the first time !").
+  Go for step 4 ([Run CRCON for the first time](#4-run-crcon-for-the-first-time)).
 
 If you want to **manage 2 or more servers** :  
 You'll have to edit your `compose.yaml` (**DO NOT** edit the templates !)
