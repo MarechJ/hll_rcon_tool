@@ -43,7 +43,8 @@ def auto_kick(rcon, struct_log, name, steam_id_64):
                 else:
                     webhookurls = [config.discord_webhook_url]
                 send_to_discord_audit(
-                    f"`{name}` kicked from regexp `{r}`",
+                    message=f"`{name}` kicked from regexp `{r}`",
+                    command_name="kick",
                     by="NAME_KICK",
                     webhookurls=webhookurls,
                 )

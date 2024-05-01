@@ -1,6 +1,6 @@
 import logging
 import os
-from typing import Any, Iterable, Self
+from typing import Any, Iterable, Self, Type
 
 import pydantic
 from sqlalchemy.exc import SQLAlchemyError
@@ -12,7 +12,7 @@ from rcon.utils import get_server_number
 logger = logging.getLogger(__name__)
 
 USER_CONFIG_KEY_FORMAT = "{server}_{cls_name}"
-DISCORD_AUDIT_FORMAT = "[{command_name}] changed values: {differences}"
+DISCORD_AUDIT_FORMAT = "changed values: `{differences}`"
 
 
 # Sourced without modification from https://stackoverflow.com/a/17246726
@@ -182,3 +182,64 @@ def set_user_config(key, object_):
             _add_conf(sess, key, object_)
         else:
             conf.value = object_
+
+
+def validate_user_config(
+    model: Type[BaseUserConfig],
+    data: dict[str, Any] | BaseUserConfig,
+    dry_run: bool = True,
+    errors_as_json: bool = False,
+    reset_to_default: bool = False,
+) -> bool:
+    if reset_to_default:
+        try:
+            default = model()
+            result = default.model_dump()
+            set_user_config(default.KEY(), result)
+            return True
+        except pydantic.ValidationError as e:
+            if errors_as_json:
+                error_msg = e.json()
+            else:
+                error_msg = str(e)
+            logger.warning(error_msg)
+            return False
+
+    try:
+        model.save_to_db(values=data, dry_run=dry_run)
+    except pydantic.ValidationError as e:
+        if errors_as_json:
+            error_msg = e.json()
+        else:
+            error_msg = str(e)
+        logger.warning(error_msg)
+        return False
+
+    return True
+
+
+def mask_sensitive_data(
+    values: dict[str, Any],
+    sensitive_keys: set[str] = {
+        "discord_webhook_url",
+        "username",
+        "password",
+        "url",
+        "webhook_urls",
+        "api_key",
+    },
+    masked_value: str = "***",
+) -> None:
+    """Replace the value of any dict key in sensitive_keys with masked_value"""
+    if not isinstance(values, dict):
+        return
+
+    for k, v in values.items():
+        if isinstance(v, dict):
+            mask_sensitive_data(values[k], sensitive_keys=sensitive_keys)
+        elif isinstance(v, list):
+            for ele in v:
+                mask_sensitive_data(ele, sensitive_keys=sensitive_keys)
+
+        if k in sensitive_keys:
+            values[k] = masked_value

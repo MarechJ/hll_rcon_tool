@@ -305,15 +305,17 @@ def ban_if_blacklisted(rcon: Rcon, steam_id_64, name):
                 )
                 try:
                     send_to_discord_audit(
-                        f"`BLACKLIST` -> {dict_to_discord(dict(player=name, reason=player.blacklist.reason))}",
-                        "BLACKLIST",
+                        message=f"{dict_to_discord(dict(player=name, reason=player.blacklist.reason))}",
+                        command_name="blacklist",
+                        by="BLACKLIST",
                     )
                 except:
                     logger.error("Unable to send blacklist to audit log")
             except:
                 send_to_discord_audit(
-                    "Failed to apply ban on blacklisted players, please check the logs and report the error",
-                    "ERROR",
+                    message="Failed to apply ban on blacklisted players, please check the logs and report the error",
+                    command_name="blacklist",
+                    by="ERROR",
                 )
 
 
@@ -401,7 +403,9 @@ def ban_if_has_vac_bans(rcon: Rcon, steam_id_64, name):
                     number_of_game_bans=bans.get("NumberOfGameBans"),
                 )
                 send_to_discord_audit(
-                    f"`VAC/GAME BAN` -> {dict_to_discord(audit_params)}", "AUTOBAN"
+                    message=f"{dict_to_discord(audit_params)}",
+                    command_name="blacklist",
+                    by="VAC/GAME BAN",
                 )
             except:
                 logger.exception("Unable to send vac ban to audit log")
@@ -501,7 +505,8 @@ def windows_store_player_check(rcon: Rcon, _, name: str, player_id: str):
                 DefaultStringFormat(
                     name=name, steam_id_64=player_id, action=action_value
                 )
-            )
+            ),
+            command_name=str(action_value),
         )
     except Exception:
         logger.exception(
@@ -567,7 +572,8 @@ def notify_invalid_names(rcon: Rcon, _, name: str, steam_id_64: str):
                 DefaultStringFormat(
                     name=name, steam_id_64=steam_id_64, action=action_value
                 )
-            )
+            ),
+            command_name=str(action_value),
         )
     except Exception:
         logger.exception(
@@ -691,7 +697,9 @@ def notify_invalid_names(rcon: Rcon, _, name: str, steam_id_64: str):
         # temp ban from any other reason unless there's another hook temp banning on connect
         t = Timer(15, rcon.remove_temp_ban, kwargs={"steam_id_64": steam_id_64})
         send_to_discord_audit(
-            message=config.audit_kick_unban_message, by=config.audit_message_author
+            message=config.audit_kick_unban_message,
+            command_name="kick",
+            by=config.audit_message_author,
         )
         pendingTimers[steam_id_64].append((action, t))
         t.start()
@@ -745,7 +753,9 @@ def undo_real_vips(rcon: Rcon, struct_log):
 
 @on_camera
 def notify_camera(rcon: Rcon, struct_log):
-    send_to_discord_audit(message=struct_log["message"], by=struct_log["player"])
+    send_to_discord_audit(
+        command_name="camera", message=struct_log["message"], by=struct_log["player"]
+    )
     short_name: Final = RconServerSettingsUserConfig.load_from_db().short_name
 
     try:

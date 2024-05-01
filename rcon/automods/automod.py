@@ -79,9 +79,10 @@ def _do_punitions(
                         by=aplayer.details.author,
                     )
                 audit(
-                    aplayer.details.discord_audit_url,
-                    f"-> WARNING: {aplayer}",
-                    aplayer.details.author,
+                    discord_webhook_url=aplayer.details.discord_audit_url,
+                    command_name="message_player",
+                    msg=f"-> WARNING: {aplayer}",
+                    author=aplayer.details.author,
                 )
 
             if method == ActionMethod.PUNISH:
@@ -90,9 +91,10 @@ def _do_punitions(
                         aplayer.name, aplayer.details.message, by=aplayer.details.author
                     )
                 audit(
-                    aplayer.details.discord_audit_url,
-                    f"--> PUNISHING: {aplayer}",
-                    aplayer.details.author,
+                    discord_webhook_url=aplayer.details.discord_audit_url,
+                    command_name="punish",
+                    msg=f"--> PUNISHING: {aplayer}",
+                    author=aplayer.details.author,
                 )
 
             if method == ActionMethod.KICK:
@@ -101,9 +103,10 @@ def _do_punitions(
                         aplayer.name, aplayer.details.message, by=aplayer.details.author
                     )
                 audit(
-                    aplayer.details.discord_audit_url,
-                    f"---> KICKING <---: {aplayer}",
-                    aplayer.details.author,
+                    discord_webhook_url=aplayer.details.discord_audit_url,
+                    command_name="kick",
+                    msg=f"---> KICKING <---: {aplayer}",
+                    author=aplayer.details.author,
                 )
         except (CommandFailedError, HLLServerError):
             logger.warning(
@@ -114,9 +117,10 @@ def _do_punitions(
                     m.player_punish_failed(aplayer)
             elif method == ActionMethod.KICK:
                 audit(
-                    aplayer.details.discord_audit_url,
-                    f"---> KICK FAILED, will retry <---: {aplayer}",
-                    aplayer.details.author,
+                    discord_webhook_url=aplayer.details.discord_audit_url,
+                    command_name="kick",
+                    msg=f"---> KICK FAILED, will retry <---: {aplayer}",
+                    author=aplayer.details.author,
                 )
 
 
@@ -183,10 +187,16 @@ def punish_squads(rcon: Rcon, r: Redis):
     set_first_run_done(r)
 
 
-def audit(discord_webhook_url: HttpUrl | None, msg: str, author: str):
+def audit(
+    discord_webhook_url: HttpUrl | None, command_name: str, msg: str, author: str
+):
     if discord_webhook_url is not None:
         send_to_discord_audit(
-            msg, by=author, webhookurls=[discord_webhook_url], silent=False
+            message=msg,
+            command_name=command_name,
+            by=author,
+            webhookurls=[discord_webhook_url],
+            silent=False,
         )
 
 

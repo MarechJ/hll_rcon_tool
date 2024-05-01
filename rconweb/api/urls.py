@@ -199,9 +199,6 @@ endpoints: list[tuple[str, Callable]] = [
     ("do_reconnect_gameserver", views.restart_gunicorn),
 ] + [(name, func) for name, func in views.commands]
 
-for name, func in endpoints:
-    logger.info(f"adding {name=} {func=} to URLs")
-
 # Expose endpoints though Django
 urlpatterns = [path(name, func, name=name) for name, func in endpoints] + [
     path("get_api_documentation", get_api_documentation, name="get_api_documentation")

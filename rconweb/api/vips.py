@@ -42,7 +42,9 @@ class DocumentForm(forms.Form):
 @require_content_type(["multipart/form-data"])
 def upload_vips(request):
     message = "Upload a VIP file!"
-    send_to_discord_audit("upload_vips", request.user.username)
+    send_to_discord_audit(
+        message="upload_vips", command_name="upload_vips", by=request.user.username
+    )
     # Handle file upload
     if request.method == "POST":
         form = DocumentForm(request.POST, request.FILES)
@@ -94,7 +96,9 @@ def upload_vips(request):
 @require_content_type(["multipart/form-data"])
 def async_upload_vips(request):
     errors = []
-    send_to_discord_audit("upload_vips", request.user.username)
+    send_to_discord_audit(
+        message="upload_vips", command_name="upload_vips", by=request.user.username
+    )
     # Handle file upload
     vips = []
     if request.method == "POST":

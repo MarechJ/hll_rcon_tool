@@ -32,6 +32,7 @@ def allow_csv(endpoint):
         res = endpoint(request, *args, **kwargs)
 
 
+# TODO: this isn't used anywhere
 def audit(func_name, request, arguments):
     dont_audit = ["get_"]
 

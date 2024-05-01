@@ -845,7 +845,8 @@ def auto_ban_if_tks_right_after_connection(
                 else:
                     webhookurls = [webhook]
                 send_to_discord_audit(
-                    discord_msg.format(player=player_name),
+                    message=discord_msg.format(player=player_name),
+                    command_name="blacklist",
                     by=author,
                     webhookurls=webhookurls,
                 )

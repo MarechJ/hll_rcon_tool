@@ -82,7 +82,9 @@ def do_service(request):
     try:
         res = actions[action.upper()](service_name)
         send_to_discord_audit(
-            f"do_service {service_name} {action}", request.user.username
+            message=f"{service_name} {action}",
+            command_name=f"service {action}",
+            by=request.user.username,
         )
     except Fault as e:
         error = repr(e)

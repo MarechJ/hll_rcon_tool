@@ -24,7 +24,6 @@ from rcon.discord import send_to_discord_audit
 from rcon.gtx import GTXFtp
 from rcon.maps import parse_layer, safe_get_map_name
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
-from rcon.user_config.utils import BaseUserConfig
 from rcon.utils import MapsHistory, get_server_number
 from rconweb.settings import TAG_VERSION
 
@@ -148,7 +147,10 @@ def public_info(request):
 
 
 def audit(func_name, request, arguments):
-    dont_audit = ["get_"]
+    # A few get_ methods can be called w/ POST but don't modify anything
+    # so filtering like this should work since this is only for the RconAPI exposed
+    # endpoints, manually defined endpoints use the @record_audit endpoint
+    dont_audit = ["get_", "validate_"]
 
     try:
         if any(func_name.startswith(s) for s in dont_audit):
@@ -162,8 +164,9 @@ def audit(func_name, request, arguments):
             [f"{k}: `{escape_markdown(str(v))}`" for k, v in args.items()]
         )
         send_to_discord_audit(
-            "`{}`: {}".format(func_name, arguments),
-            request.user.username,
+            message=f"{arguments}",
+            command_name=func_name,
+            by=request.user.username,
             md_escape_message=False,
         )
     except:
@@ -203,6 +206,7 @@ def expose_api_endpoint(
         # every single user config endpoint
         if "kwargs" in parameters.keys():
             arguments = data
+            arguments["by"] = request.user.username
         else:
             # Scrape out special case parameters, like the author of a request is the user name making the request
             for pname, param in parameters.items():
@@ -226,15 +230,13 @@ def expose_api_endpoint(
             # A few get_ methods can be called w/ POST but don't modify anything
             # so filtering like this should work since this is only for the RconAPI exposed
             # endpoints, manually defined endpoints use the @record_audit endpoint
-            if not command_name.startswith("get_") and not command_name.startswith(
-                "validate_"
+            # also skip auditing user config endpoints, those are handled in RconAPI
+            if (
+                not command_name.startswith("get_")
+                and not command_name.startswith("validate_")
+                and not command_name.endswith("_config")
             ):
                 audit(command_name, request, arguments)
-
-            # Can't serialize pydantic models without an explicit call to .model_dump which we do here,
-            # rather than in RconAPI to preserve typing and internal use as an actual pydantic class
-            if isinstance(res, BaseUserConfig):
-                res = res.model_dump()
 
         except CommandFailedError as e:
             failure = True

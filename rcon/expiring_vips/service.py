@@ -46,7 +46,8 @@ def remove_expired_vips(rcon_hook: Rcon, webhook_url: Optional[HttpUrl] = None):
             else:
                 webhookurls = [webhook_url]
             send_to_discord_audit(
-                message,
+                message=message,
+                command_name="remove_vip",
                 by=SERVICE_NAME,
                 webhookurls=webhookurls,
             )

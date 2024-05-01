@@ -1,13 +1,14 @@
+import inspect
 from datetime import datetime
 from logging import getLogger
 from typing import Any, Iterable, Literal, Optional, Type
 
-import pydantic
 from dateutil import parser
 
 from rcon import game_logs, player_history
 from rcon.audit import ingame_mods, online_mods
 from rcon.cache_utils import RedisCached, get_redis_pool
+from rcon.discord import audit_user_config_differences
 from rcon.gtx import GTXFtp
 from rcon.player_history import (
     add_flag_to_player,
@@ -51,7 +52,7 @@ from rcon.user_config.standard_messages import (
     StandardWelcomeMessagesUserConfig,
 )
 from rcon.user_config.steam import SteamUserConfig
-from rcon.user_config.utils import BaseUserConfig, set_user_config
+from rcon.user_config.utils import BaseUserConfig, validate_user_config
 from rcon.user_config.vac_game_bans import VacGameBansUserConfig
 from rcon.user_config.vote_map import VoteMapUserConfig
 from rcon.user_config.webhooks import (
@@ -102,6 +103,34 @@ class RconAPI(Rcon):
 
     def __init__(self, *args, pool_size: bool | None = None, **kwargs):
         super().__init__(*args, pool_size=pool_size, **kwargs)
+
+    @staticmethod
+    def _validate_user_config(
+        command_name: str,
+        by: str,
+        model: Type[BaseUserConfig],
+        data: dict[str, Any] | BaseUserConfig,
+        dry_run: bool = True,
+        errors_as_json: bool = False,
+        reset_to_default: bool = False,
+    ):
+        old_model = model.load_from_db()
+        res = validate_user_config(
+            model=model,
+            data=data,
+            dry_run=dry_run,
+            errors_as_json=errors_as_json,
+            reset_to_default=reset_to_default,
+        )
+
+        if res:
+            audit_user_config_differences(
+                old_model=old_model,
+                new_model=data,
+                command_name=command_name,
+                author=by,
+            )
+        return res
 
     def blacklist_player(
         self,
@@ -492,56 +521,20 @@ class RconAPI(Rcon):
         v = VoteMap()
         v.set_map_vm_whitelist(map_names=map_names)
 
-    @staticmethod
-    def _validate_user_config(
-        model: Type[BaseUserConfig],
-        data: dict[str, Any] | BaseUserConfig,
-        dry_run: bool = True,
-        errors_as_json: bool = False,
-        reset_to_default: bool = False,
-    ) -> bool:
-        if isinstance(data, BaseUserConfig):
-            dumped_model = data.model_dump()
-        else:
-            dumped_model = data
-
-        if reset_to_default:
-            try:
-                default = model()
-                result = default.model_dump()
-                set_user_config(default.KEY(), result)
-                return True
-            except pydantic.ValidationError as e:
-                if errors_as_json:
-                    error_msg = e.json()
-                else:
-                    error_msg = str(e)
-                logger.warning(error_msg)
-                return False
-
-        try:
-            model.save_to_db(values=dumped_model, dry_run=dry_run)
-        except pydantic.ValidationError as e:
-            if errors_as_json:
-                error_msg = e.json()
-            else:
-                error_msg = str(e)
-            logger.warning(error_msg)
-            return False
-
-        return True
-
     def get_votemap_config(self) -> VoteMapUserConfig:
         return VoteMapUserConfig.load_from_db()
 
     def validate_votemap_config(
         self,
+        by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            by=by,
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
             model=VoteMapUserConfig,
             data=config or kwargs,
             dry_run=True,
@@ -551,12 +544,15 @@ class RconAPI(Rcon):
 
     def set_votemap_config(
         self,
+        by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            by=by,
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
             model=VoteMapUserConfig,
             data=config or kwargs,
             dry_run=False,
@@ -569,12 +565,15 @@ class RconAPI(Rcon):
 
     def validate_auto_broadcasts_config(
         self,
+        by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
             model=AutoBroadcastUserConfig,
             data=config or kwargs,
             dry_run=True,
@@ -584,12 +583,15 @@ class RconAPI(Rcon):
 
     def set_auto_broadcasts_config(
         self,
+        by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
             model=AutoBroadcastUserConfig,
             data=config or kwargs,
             dry_run=False,
@@ -602,12 +604,15 @@ class RconAPI(Rcon):
 
     def validate_votekick_autotoggle_config(
         self,
+        by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
             model=AutoVoteKickUserConfig,
             data=config or kwargs,
             dry_run=True,
@@ -617,12 +622,15 @@ class RconAPI(Rcon):
 
     def set_votekick_autotoggle_config(
         self,
+        by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
             model=AutoVoteKickUserConfig,
             data=config or kwargs,
             dry_run=False,
@@ -635,12 +643,15 @@ class RconAPI(Rcon):
 
     def validate_auto_mod_level_config(
         self,
+        by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
             model=AutoModLevelUserConfig,
             data=config or kwargs,
             dry_run=True,
@@ -650,12 +661,15 @@ class RconAPI(Rcon):
 
     def set_auto_mod_level_config(
         self,
+        by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
             model=AutoModLevelUserConfig,
             data=config or kwargs,
             dry_run=False,
@@ -668,12 +682,15 @@ class RconAPI(Rcon):
 
     def validate_auto_mod_no_leader_config(
         self,
+        by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
             model=AutoModNoLeaderUserConfig,
             data=config or kwargs,
             dry_run=True,
@@ -683,12 +700,15 @@ class RconAPI(Rcon):
 
     def set_auto_mod_no_leader_config(
         self,
+        by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
             model=AutoModNoLeaderUserConfig,
             data=config or kwargs,
             dry_run=False,
@@ -701,12 +721,15 @@ class RconAPI(Rcon):
 
     def validate_auto_mod_seeding_config(
         self,
+        by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
             model=AutoModSeedingUserConfig,
             data=config or kwargs,
             dry_run=True,
@@ -716,12 +739,15 @@ class RconAPI(Rcon):
 
     def set_auto_mod_seeding_config(
         self,
+        by: str,
         user_config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
             model=AutoModSeedingUserConfig,
             data=user_config or kwargs,
             dry_run=False,
@@ -734,12 +760,15 @@ class RconAPI(Rcon):
 
     def validate_auto_mod_solo_tank_config(
         self,
+        by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
             model=AutoModNoSoloTankUserConfig,
             data=config or kwargs,
             dry_run=True,
@@ -749,12 +778,15 @@ class RconAPI(Rcon):
 
     def set_auto_mod_solo_tank_config(
         self,
+        by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
             model=AutoModNoSoloTankUserConfig,
             data=config or kwargs,
             dry_run=False,
@@ -767,12 +799,15 @@ class RconAPI(Rcon):
 
     def validate_tk_ban_on_connect_config(
         self,
+        by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
             model=BanTeamKillOnConnectUserConfig,
             data=config or kwargs,
             dry_run=True,
@@ -782,12 +817,15 @@ class RconAPI(Rcon):
 
     def set_tk_ban_on_connect_config(
         self,
+        by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
             model=BanTeamKillOnConnectUserConfig,
             data=config or kwargs,
             dry_run=False,
@@ -802,12 +840,15 @@ class RconAPI(Rcon):
 
     def validate_real_vip_config(
         self,
+        by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
             model=RealVipUserConfig,
             data=config or kwargs,
             dry_run=True,
@@ -817,12 +858,15 @@ class RconAPI(Rcon):
 
     def set_real_vip_config(
         self,
+        by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
             model=RealVipUserConfig,
             data=config or kwargs,
             dry_run=False,
@@ -835,12 +879,15 @@ class RconAPI(Rcon):
 
     def set_camera_notification_config(
         self,
+        by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
             model=CameraNotificationUserConfig,
             data=config or kwargs,
             dry_run=False,
@@ -850,12 +897,15 @@ class RconAPI(Rcon):
 
     def validate_camera_notification_config(
         self,
+        by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
             model=CameraNotificationUserConfig,
             data=config or kwargs,
             dry_run=True,
@@ -868,12 +918,15 @@ class RconAPI(Rcon):
 
     def set_expired_vip_config(
         self,
+        by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
             model=ExpiredVipsUserConfig,
             data=config or kwargs,
             dry_run=False,
@@ -883,12 +936,15 @@ class RconAPI(Rcon):
 
     def validate_expired_vip_config(
         self,
+        by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
             model=ExpiredVipsUserConfig,
             data=config or kwargs,
             dry_run=True,
@@ -901,12 +957,15 @@ class RconAPI(Rcon):
 
     def set_server_name_change_config(
         self,
+        by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
             model=GtxServerNameChangeUserConfig,
             data=config or kwargs,
             dry_run=False,
@@ -916,12 +975,15 @@ class RconAPI(Rcon):
 
     def validate_server_name_change_config(
         self,
+        by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
             model=GtxServerNameChangeUserConfig,
             data=config or kwargs,
             dry_run=True,
@@ -934,12 +996,15 @@ class RconAPI(Rcon):
 
     def set_log_line_webhook_config(
         self,
+        by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
             model=LogLineWebhookUserConfig,
             data=config or kwargs,
             dry_run=False,
@@ -949,12 +1014,15 @@ class RconAPI(Rcon):
 
     def validate_log_line_webhook_config(
         self,
+        by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
             model=LogLineWebhookUserConfig,
             data=config or kwargs,
             dry_run=True,
@@ -967,12 +1035,15 @@ class RconAPI(Rcon):
 
     def set_name_kick_config(
         self,
+        by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
             model=NameKickUserConfig,
             data=config or kwargs,
             dry_run=False,
@@ -982,12 +1053,15 @@ class RconAPI(Rcon):
 
     def validate_name_kick_config(
         self,
+        by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
             model=NameKickUserConfig,
             data=config or kwargs,
             dry_run=True,
@@ -1000,12 +1074,15 @@ class RconAPI(Rcon):
 
     def set_rcon_connection_settings_config(
         self,
+        by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
             model=RconConnectionSettingsUserConfig,
             data=config or kwargs,
             dry_run=False,
@@ -1015,12 +1092,15 @@ class RconAPI(Rcon):
 
     def validate_rcon_connection_settings_config(
         self,
+        by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
             model=RconConnectionSettingsUserConfig,
             data=config or kwargs,
             dry_run=True,
@@ -1033,12 +1113,15 @@ class RconAPI(Rcon):
 
     def set_rcon_server_settings_config(
         self,
+        by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
             model=RconServerSettingsUserConfig,
             data=config or kwargs,
             dry_run=False,
@@ -1048,12 +1131,15 @@ class RconAPI(Rcon):
 
     def validate_rcon_server_settings_config(
         self,
+        by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
             model=RconServerSettingsUserConfig,
             data=config or kwargs,
             dry_run=True,
@@ -1066,12 +1152,15 @@ class RconAPI(Rcon):
 
     def set_scorebot_config(
         self,
+        by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
             model=ScorebotUserConfig,
             data=config or kwargs,
             dry_run=False,
@@ -1081,12 +1170,15 @@ class RconAPI(Rcon):
 
     def validate_scorebot_config(
         self,
+        by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
             model=ScorebotUserConfig,
             data=config or kwargs,
             dry_run=True,
@@ -1099,12 +1191,15 @@ class RconAPI(Rcon):
 
     def set_standard_broadcast_messages(
         self,
+        by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
             model=StandardBroadcastMessagesUserConfig,
             data=config or kwargs,
             dry_run=False,
@@ -1114,12 +1209,15 @@ class RconAPI(Rcon):
 
     def validate_standard_broadcast_messages(
         self,
+        by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
             model=StandardBroadcastMessagesUserConfig,
             data=config or kwargs,
             dry_run=True,
@@ -1132,12 +1230,15 @@ class RconAPI(Rcon):
 
     def set_standard_punishments_messages(
         self,
+        by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
             model=StandardPunishmentMessagesUserConfig,
             data=config or kwargs,
             dry_run=False,
@@ -1147,12 +1248,15 @@ class RconAPI(Rcon):
 
     def validate_standard_punishments_messages(
         self,
+        by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
             model=StandardPunishmentMessagesUserConfig,
             data=config or kwargs,
             dry_run=True,
@@ -1165,12 +1269,15 @@ class RconAPI(Rcon):
 
     def set_standard_welcome_messages(
         self,
+        by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
             model=StandardWelcomeMessagesUserConfig,
             data=config or kwargs,
             dry_run=False,
@@ -1180,12 +1287,15 @@ class RconAPI(Rcon):
 
     def validate_standard_welcome_messages(
         self,
+        by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
             model=StandardWelcomeMessagesUserConfig,
             data=config or kwargs,
             dry_run=True,
@@ -1198,12 +1308,15 @@ class RconAPI(Rcon):
 
     def set_steam_config(
         self,
+        by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
             model=SteamUserConfig,
             data=config or kwargs,
             dry_run=False,
@@ -1213,12 +1326,15 @@ class RconAPI(Rcon):
 
     def validate_steam_config(
         self,
+        by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
             model=SteamUserConfig,
             data=config or kwargs,
             dry_run=True,
@@ -1231,12 +1347,15 @@ class RconAPI(Rcon):
 
     def set_vac_game_bans_config(
         self,
+        by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
             model=VacGameBansUserConfig,
             data=config or kwargs,
             dry_run=False,
@@ -1246,12 +1365,15 @@ class RconAPI(Rcon):
 
     def validate_vac_game_bans_config(
         self,
+        by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
             model=VacGameBansUserConfig,
             data=config or kwargs,
             dry_run=True,
@@ -1264,12 +1386,15 @@ class RconAPI(Rcon):
 
     def set_admin_pings_discord_webhooks_config(
         self,
+        by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
             model=AdminPingWebhooksUserConfig,
             data=config or kwargs,
             dry_run=False,
@@ -1279,12 +1404,15 @@ class RconAPI(Rcon):
 
     def validate_admin_pings_discord_webhooks_config(
         self,
+        by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
             model=AdminPingWebhooksUserConfig,
             data=config or kwargs,
             dry_run=True,
@@ -1297,12 +1425,15 @@ class RconAPI(Rcon):
 
     def set_audit_discord_webhooks_config(
         self,
+        by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
             model=AuditWebhooksUserConfig,
             data=config or kwargs,
             dry_run=False,
@@ -1312,12 +1443,15 @@ class RconAPI(Rcon):
 
     def validate_audit_discord_webhooks_config(
         self,
+        by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
             model=AuditWebhooksUserConfig,
             data=config or kwargs,
             dry_run=True,
@@ -1330,12 +1464,15 @@ class RconAPI(Rcon):
 
     def set_camera_discord_webhooks_config(
         self,
+        by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
             model=CameraWebhooksUserConfig,
             data=config or kwargs,
             dry_run=False,
@@ -1345,12 +1482,15 @@ class RconAPI(Rcon):
 
     def validate_camera_discord_webhooks_config(
         self,
+        by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
             model=CameraWebhooksUserConfig,
             data=config or kwargs,
             dry_run=True,
@@ -1363,12 +1503,15 @@ class RconAPI(Rcon):
 
     def set_chat_discord_webhooks_config(
         self,
+        by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
             model=ChatWebhooksUserConfig,
             data=config or kwargs,
             dry_run=False,
@@ -1378,12 +1521,15 @@ class RconAPI(Rcon):
 
     def validate_chat_discord_webhooks_config(
         self,
+        by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
             model=ChatWebhooksUserConfig,
             data=config or kwargs,
             dry_run=True,
@@ -1396,12 +1542,15 @@ class RconAPI(Rcon):
 
     def set_kills_discord_webhooks_config(
         self,
+        by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            by=by,
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
             model=KillsWebhooksUserConfig,
             data=config or kwargs,
             dry_run=False,
@@ -1411,12 +1560,15 @@ class RconAPI(Rcon):
 
     def validate_kills_discord_webhooks_config(
         self,
+        by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
             model=KillsWebhooksUserConfig,
             data=config or kwargs,
             dry_run=True,
@@ -1429,12 +1581,15 @@ class RconAPI(Rcon):
 
     def set_watchlist_discord_webhooks_config(
         self,
+        by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
             model=WatchlistWebhooksUserConfig,
             data=config or kwargs,
             dry_run=False,
@@ -1444,12 +1599,15 @@ class RconAPI(Rcon):
 
     def validate_watchlist_discord_webhooks_config(
         self,
+        by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
             model=WatchlistWebhooksUserConfig,
             data=config or kwargs,
             dry_run=True,
@@ -1462,12 +1620,15 @@ class RconAPI(Rcon):
 
     def set_chat_commands_config(
         self,
+        by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
             model=ChatCommandsUserConfig,
             data=config or kwargs,
             dry_run=False,
@@ -1477,12 +1638,15 @@ class RconAPI(Rcon):
 
     def validate_chat_commands_config(
         self,
+        by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
             model=ChatCommandsUserConfig,
             data=config or kwargs,
             dry_run=True,
@@ -1490,17 +1654,20 @@ class RconAPI(Rcon):
             reset_to_default=reset_to_default,
         )
 
-    def get_log_stream_config(request):
+    def get_log_stream_config(self):
         return LogStreamUserConfig.load_from_db()
 
     def set_log_stream_config(
         self,
+        by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
             model=LogStreamUserConfig,
             data=config or kwargs,
             dry_run=False,
@@ -1510,12 +1677,15 @@ class RconAPI(Rcon):
 
     def validate_log_stream_config(
         self,
+        by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
         errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
         return self._validate_user_config(
+            command_name=inspect.currentframe().f_code.co_name,  # type: ignore
+            by=by,
             model=LogStreamUserConfig,
             data=config or kwargs,
             dry_run=True,
