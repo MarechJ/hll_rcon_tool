@@ -342,7 +342,7 @@ Here we'll use **nano**, a simple text editor that runs in text mode.
 
 > [!CAUTION]
 > Do not edit `default.env`.  
-> The file must be named `.env` or Docker will not detect it.  
+> The file you're about to create must be named `.env` or Docker will not detect it.  
 
 Make a copy of the environnement config file template :
 
@@ -432,7 +432,7 @@ HLL_PASSWORD=yourrconpassword
 ### 3. Create a Docker Compose File
 
 You need a compose file to be able to use the `docker compose` commands.  
-You will have to manually create (and then update it based on your needs).
+You will have to create it from a template, then update it to your needs.
 
 The `docker-templates/` folder contains two example templates :  
 
@@ -442,18 +442,21 @@ The `docker-templates/` folder contains two example templates :
 > [!CAUTION]
 > Do not edit these files.
 
-For `docker compose` to detect the file, it needs to be [named](https://docs.docker.com/compose/compose-application-model/) `compose.yaml`:
+For `docker compose` to detect the file, it needs to be in project's root and [named](https://docs.docker.com/compose/compose-application-model/) `compose.yaml`.
 
-Make a copy of the compose template (this is for "one game server") :
+#### 3-1. Managing a single game server
+
+Make a copy of the `one-server.yaml` compose template :
 
 ```shell
 cp docker-templates/one-server.yaml compose.yaml
 ```
 
-If you only want to manage one gamer server, you're done with the compose file.  
-Go for step 4 ([Run CRCON for the first time](#4-run-crcon-for-the-first-time)).
+Go to step 4 ([Run CRCON for the first time](#4-run-crcon-for-the-first-time)).
 
-If you want to **manage 2 or more servers**, you'll have to edit your `compose.yaml`
+#### 3-2. Managing two or more game servers
+
+Make a copy of the `ten-servers.yaml` compose template, then edit the newly created `compose.yaml` to fit your needs
 
 You can either :  
 
@@ -471,7 +474,7 @@ You can either :
 
 There are two places that need to be updated for the `compose.yaml` to work properly :
 
-#### Networks
+##### Networks
 
 The `networks` section (at the top) **must** contain a definition for each server.
 
@@ -491,18 +494,11 @@ It won't hurt anything : it will just create extra unused networks.
     server3:
 ```
 
-#### Services
+##### Services
 
 The `services` section defines what containers Docker will actually start when you run commands like `docker compose up -d`, so you need to add a service definition for each server you are trying to run.
 
 **For example** if you used `one-server.yaml` as your starting template for `compose.yaml` and you wanted to add a 2nd server, you would copy the appropriate section from `docker-templates/ten-servers.yaml` and add it to your `compose.yaml`.
-
-> [!CAUTION]
-> You have to use the appropriate server numbers.  
-If you use the same server number twice, only one of them will start and you **will** encounter issues.
-
-> [!CAUTION]
-> You need to be **very careful** and match the **indentation levels** appropriately or Docker will not be able to read the file.
 
 ```yaml
 ########### SERVER 2  #############
@@ -554,6 +550,13 @@ If you use the same server number twice, only one of them will start and you **w
       common:
       server2:
 ```
+
+> [!CAUTION]
+> You have to use the appropriate server numbers.  
+If you use the same server number twice, only one of them will start and you **will** encounter issues.
+
+> [!CAUTION]
+> You need to be **very careful** and match the **indentation levels** appropriately or Docker will not be able to read the file.
 
 ---
 
