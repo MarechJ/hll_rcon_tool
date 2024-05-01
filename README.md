@@ -581,7 +581,8 @@ Now, you **MUST** change the admin password, as it is highly insecure !
 
 ### 6. Prepare to configure users
 
-Due to inner security checks, we need to declare the VPS IP/port as "secure" to be able to enter the users management tool or you will see `CSRF` errors.
+Due to inner security checks, we need to declare the VPS IP/port as "secure" to be able to enter the users management tool.  
+Failing to do so **will** lead to `CSRF` errors when accessing the admin panel.
 
 - In the **SETTINGS** menu, click on **CRCON settings** submenu  
   or directly get to <http://yourVPSIP:8010/#/settings/rcon-server>
