@@ -716,10 +716,8 @@ You also can download the [latest zip release](https://github.com/MarechJ/hll_rc
 
 > [!NOTE]
 > If you get `git` error messages when you pull, you have to resolve these before you can upgrade.  
-Unless you have been changing files, this should never happen.
-
-> [!NOTE]
-> It's important you get the sources every time, or at least the Docker compose files, as new dependancies might have been introduced.
+(Unless you have been changing files, this should never happen).  
+  It's important you get the sources every time, or at least the Docker compose files, as new dependancies might have been introduced.
 
 ## Downgrade (in case of issue) to a previous version
 
