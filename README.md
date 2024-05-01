@@ -248,41 +248,41 @@ If you use a different operating system or architecture, you will need to build 
 
 - `Docker Engine` (Community) : <https://docs.docker.com/engine/install/>  
 
-  > [!WARNING]
-  > You can also use [Docker Desktop](https://www.docker.com/products/docker-desktop/), but you may encounter issues with nested virtualization, depending on your computer/server/VPS.
+> [!WARNING]
+> You can also use [Docker Desktop](https://www.docker.com/products/docker-desktop/), but you may encounter issues with nested virtualization, depending on your computer/server/VPS.
   
-  You can check if `Docker engine` is installed by entering this command :  
+You can check if `Docker engine` is installed by entering this command :  
 
-  ```shell
-  docker version
-  ```  
+```shell
+docker version
+```  
 
-  You should get a (multiline) reply like `Client: Docker Engine - Community - Version 26.1.0...`
+You should get a (multiline) reply like `Client: Docker Engine - Community - Version 26.1.0...`
   
-  If not : install `Docker` by entering this command :  
+If not : install `Docker` by entering this command :  
 
-  ```shell
-  apt install docker.io
-  ```
+```shell
+apt install docker.io
+```
 
 - `Compose` plugin for Docker : <https://docs.docker.com/compose/install/>  
   
-  > [!CAUTION]
-  > `docker-compose` has been deprecated in july 2023, errors **will** occur if you try to use it.
+> [!CAUTION]
+> `docker-compose` has been deprecated in july 2023, errors **will** occur if you try to use it.
   
-  You can check if Docker `Compose` plugin is installed by entering this command :  
+You can check if Docker `Compose` plugin is installed by entering this command :  
 
-  ```shell
-  docker compose version
-  ```  
+```shell
+docker compose version
+```  
 
-  You should get a reply like `Docker Compose version v2.26.1`
+You should get a reply like `Docker Compose version v2.26.1`
   
-  If not : install the Docker `Compose` plugin by entering this command :  
+If not : install the Docker `Compose` plugin by entering this command :  
 
-  ```shell
-  apt install docker-compose-plugin
-  ```
+```shell
+apt install docker-compose-plugin
+```
 
 - *(Optional but **highly** recommended)* Any text editor that supports syntax highlighting.  
   The instructions below use `nano`, which is a tiny shell based editor that can be difficult to work with.  
