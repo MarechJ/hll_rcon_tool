@@ -213,8 +213,7 @@ As it's not easy to shrink it, you are advised to select an hosting plan with >5
 > Some VPS providers even offer free installation of linux distributions in which Docker is already activated. Search/ask for it !
 
 > [!NOTE]
-> You *can* run CRCON on as little as 3.x GB of RAM, but as it's not easy to increase the amount of RAM your VPS has, it's better to pad it a little bit.  
-The more game servers you manage within a CRCON install, the more RAM/CPU/storage you'll need.
+> You *can* run CRCON on as little as 3.x GB of RAM, but as it's not easy to increase the amount of RAM your VPS has, it's better to pad it a little bit. The more game servers you manage within a CRCON install, the more RAM/CPU/storage you'll need.
 
 ### Software requirements
 
@@ -225,7 +224,8 @@ If you're unfamiliar with Linux, you are advised to pick a VPS plan using a popu
 
 If you *really* need to run it on Windows and have no other option, try using [Windows Subsystem for Linux](https://learn.microsoft.com/en-us/windows/wsl/install).
 
-We provide pre-built Docker images for `linux/amd64`, `linux/arm64` and `linux/arm32`.  
+> [!NOTE]
+> We provide pre-built Docker images for `linux/amd64`, `linux/arm64` and `linux/arm32`.  
 If you use a different operating system or architecture, you will need to build your own images.
 
 - `git` *(optional but **highly** recommended)* : <https://git-scm.com/downloads>  
