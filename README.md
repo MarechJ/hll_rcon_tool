@@ -347,56 +347,65 @@ Launch nano to edit the .env file :
 nano .env
 ```
 
-In nano, you can move the cursor with the arrow keys.  
+> [!TIP]
+> In nano, you can move the cursor with the arrow keys.  
+
 You do not have to change all the values. Only these 5 are mandatory :
 
-1. Choose a password to give CRCON access to its database  
+#### 2-1. Choose a password to give CRCON access to its database  
 
-  ```Dotenv
-  HLL_DB_PASSWORD=anythingwithoutanyspace
-  ```
+```Dotenv
+HLL_DB_PASSWORD=anythingwithoutanyspace
+```
 
-  > [!TIP]
-  > No need to remember/note it : you'll never have to enter it anywhere.  
+> [!TIP]
+> No need to remember/note it : you'll never have to enter it anywhere.  
   Check the comments in the `.env` for restricted characters, such as `%`.
 
-  > [!CAUTION]
-  > Do not change the password after CRCON has been started at least one time : your database would not be accessible.
+> [!CAUTION]
+> Do not change the password after CRCON has been started at least one time : your database would not be accessible.
 
-2. Enter a string that will be used to scramble users passwords. The longer the better.  
+#### 2-2. Enter a string that will be used to scramble users passwords. The longer the better
 
-  > [!TIP]
-  > You may want to back this up separately. If you lose it, all of your admin accounts will be invalidated and need their passwords reset.
+```Dotenv
+RCONWEB_API_SECRET=anythingwithoutanyspaceordollarsign
+```
 
-  ```Dotenv
-  RCONWEB_API_SECRET=anythingwithoutanyspaceordollarsign
-  ```
+> [!TIP]
+> You may want to back this up separately. If you lose it, all of your admin accounts will be invalidated and need their passwords reset.
 
-  > [!CAUTION]
-  > Do not change the string after CRCON has been started at least one time : existing passwords would be invalidated.
+> [!CAUTION]
+> Do not change the string after CRCON has been started at least one time : existing passwords would be invalidated.
 
 Configure the game server(s) you want to manage.  
 If you want to manage more than one game server, repeat the steps below for the 2nd, 3rd, etc.
 
-3. Enter your RCON IP, as provided by the game server provider :  
-   (this may be not the same as the game server IP)
+#### 2-3. **RCON IP**
 
-    ```Dotenv
-    HLL_HOST=123.123.123.123
-    ```
+```Dotenv
+HLL_HOST=123.123.123.123
+```
 
-4. Enter your RCON port, as provided by the game server provider :  
-   (this is NOT the same as the game server port)
+> [!NOTE]
+> As provided by the game server provider. This may be not the same as the game server IP.
 
-    ```Dotenv
-    HLL_PORT=12345
-    ```
+#### 2-4. **RCON port**
 
-5. Enter your RCON password, as provided by the game server provider :
+```Dotenv
+HLL_PORT=12345
+```
 
-    ```Dotenv
-    HLL_PASSWORD=yourrconpassword
-    ```
+> [!NOTE]
+> As provided by the game server provider. This is not the same as the game server IP.
+
+#### 2-5. **RCON password**
+
+```Dotenv
+HLL_PASSWORD=yourrconpassword
+```
+
+> [!NOTE]
+> As provided by the game server provider. This is not the same as the game server IP.
 
 > [!IMPORTANT]
 > Triple-check there is **no space before/after the `=` signs, nor in the values you've set**.
