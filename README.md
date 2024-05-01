@@ -225,6 +225,19 @@ If you use a different operating system or architecture, you will need to build 
 - *(Optional but **highly** recommended)* `git` : <https://git-scm.com/downloads>  
   (if you don't use git, you'll have to manually download and install the CRCON releases in .zip format,  
   and you won't be able to update your CRCON as easily as with git)
+  - You can check git is installed by entering this command in your temrinal :  
+
+    ```shell
+    git version
+    ```  
+
+    That should reply something like `git version 2.34.1`  
+    if not : you can install `git`by entering this :  
+
+    ```shell
+    apt install git-all
+    ```
+  
 - `Docker Engine` (Community) : <https://docs.docker.com/engine/install/>  
   You can also use Docker Desktop, but you may have issues with nested virtualization, depending on your computer/server/VPS.
 - `Compose` plugin for Docker : <https://docs.docker.com/compose/install/>  
@@ -273,7 +286,7 @@ cd hll_rcon_tool
 
 ### 2. Edit the environment config file
 
-Now, you're going to create and edit an `.env` file, in which you'll tell CRCON how to connect to your HLL game server.  
+Now, you're going to create and edit an `.env` file, in which you'll tell CRCON how to connect to your HLL game server(s).  
 Here we'll use **nano**, a simple text editor that runs in text mode.  
 *You can use any other tool you're used to, either local or getting the file from a SFTP connection.*
 
@@ -301,7 +314,7 @@ nano .env
 In nano, you can move the cursor with the arrow keys.  
 You do not have to change all the values. Only these 5 are mandatory :
 
-1. Choose a password to give CRCON access to the database  
+1. Choose a password to give CRCON access to its database  
   No need to remember/note it : you'll never have to enter it anywhere.
   Check the comments in the `.env` for restriction characters such as `%`.  
   ⚠️ Do NOT change it after CRCON has been started at least one time : your database would not be accessible.
@@ -310,7 +323,7 @@ You do not have to change all the values. Only these 5 are mandatory :
     HLL_DB_PASSWORD=anythingwithoutanyspace
     ```
 
-2. Enter a long string that will be used to scramble users passwords.
+2. Enter a (long) string that will be used to scramble users passwords.
   You may want to back this up separately. If you lose it, all of your admin accounts will be invalidated and need their passwords reset.  
   ⚠️ Do NOT change it after CRCON has been started at least one time : existing passwords would be invalidated.
 
@@ -318,7 +331,8 @@ You do not have to change all the values. Only these 5 are mandatory :
     RCONWEB_API_SECRET=anythingwithoutanyspaceordollarsign
     ```
 
-Configure each game server you want to setup (server 1, server 2, etc. repeating the steps below for the 2nd, 3rd... server as necessary)
+Configure the game server(s) you want to manage.  
+If you want to manage more than one game server, repeat the steps below for the 2nd, 3rd, etc.
 
 3. Enter your RCON IP, as provided by the game server provider :  
    (this may be not the same as the game server IP)
