@@ -375,7 +375,7 @@ def set_user_settings(server: int, input: click.Path, dry_run=True):
                 server=server, cls_name=cls.__name__
             )
             print(f"setting {key=} class={cls.__name__}")
-            rcon.user_config.utils.set_user_config(key, model.model_dump())
+            rcon.user_config.utils.set_user_config(key, model)
 
         if auto_settings_key in user_settings:
             rcon.user_config.utils.set_user_config(
@@ -410,7 +410,7 @@ def reset_user_settings(server: int):
             server=server, cls_name=cls.__name__
         )
         print(f"Resetting {key}")
-        rcon.user_config.utils.set_user_config(key, model.model_dump())
+        rcon.user_config.utils.set_user_config(key, model)
 
     print("Done")
 

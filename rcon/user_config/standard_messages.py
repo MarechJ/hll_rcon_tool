@@ -22,7 +22,7 @@ class BaseStandardMessageUserConfig(BaseUserConfig):
         validated_conf = cls(messages=messages)
 
         if not dry_run:
-            set_user_config(validated_conf.KEY(), validated_conf.model_dump())
+            set_user_config(validated_conf.KEY(), validated_conf)
 
 
 class StandardWelcomeMessagesUserConfig(BaseStandardMessageUserConfig):

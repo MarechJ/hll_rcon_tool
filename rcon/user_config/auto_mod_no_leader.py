@@ -89,7 +89,9 @@ class AutoModNoLeaderUserConfig(BaseUserConfig):
 
         validated_conf = AutoModNoLeaderUserConfig(
             enabled=values.get("enabled"),
-            dont_do_anything_below_this_number_of_players=values.get("dont_do_anything_below_this_number_of_players"),
+            dont_do_anything_below_this_number_of_players=values.get(
+                "dont_do_anything_below_this_number_of_players"
+            ),
             dry_run=values.get("dry_run"),
             discord_webhook_url=values.get("discord_webhook_url"),
             number_of_notes=values.get("number_of_notes"),
@@ -112,6 +114,4 @@ class AutoModNoLeaderUserConfig(BaseUserConfig):
         )
 
         if not dry_run:
-            set_user_config(
-                AutoModNoLeaderUserConfig.KEY(), validated_conf.model_dump()
-            )
+            set_user_config(AutoModNoLeaderUserConfig.KEY(), validated_conf)

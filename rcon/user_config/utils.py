@@ -126,7 +126,7 @@ class BaseUserConfig(pydantic.BaseModel):
 
     @classmethod
     def seed_db(cls, sess: Session):
-        _set_default(sess, key=cls.KEY(), val=cls().model_dump())
+        _set_default(sess, key=cls.KEY(), val=cls())
 
 
 def _get_conf(sess, key):
@@ -167,14 +167,20 @@ def _remove_conf(sess, key):
         sess.commit()
 
 
-def _set_default(sess, key, val):
+def _set_default(sess: Session, key: str, val: dict[str, Any] | BaseUserConfig):
+    if isinstance(val, BaseUserConfig):
+        val = val.model_dump()
+
     if _get_conf(sess, key) is None:
         logger.info("Seeding default values for %s", key)
         _add_conf(sess, key, val)
     return val
 
 
-def set_user_config(key, object_):
+def set_user_config(key: str, object_: dict[str, Any] | BaseUserConfig):
+    if isinstance(object_, BaseUserConfig):
+        object_ = object_.model_dump()
+
     logger.debug("Setting user config for %s with %s", key, object_)
     with enter_session() as sess:
         conf = _get_conf(sess, key)
@@ -194,8 +200,7 @@ def validate_user_config(
     if reset_to_default:
         try:
             default = model()
-            result = default.model_dump()
-            set_user_config(default.KEY(), result)
+            set_user_config(default.KEY(), default)
             return True
         except pydantic.ValidationError as e:
             if errors_as_json:

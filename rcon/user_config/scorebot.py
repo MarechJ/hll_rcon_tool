@@ -252,4 +252,4 @@ class ScorebotUserConfig(BaseUserConfig):
         )
 
         if not dry_run:
-            set_user_config(validated_conf.KEY(), validated_conf.model_dump())
+            set_user_config(validated_conf.KEY(), validated_conf)
