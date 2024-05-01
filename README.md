@@ -208,13 +208,13 @@ Sum it up : renting a low-end VPS will be cheaper* ;
 - Regarding drive space, the CRCON database of a game server where 95+ players connect for 10 hours per day may grow up to 20 GB in a year.  
 As it's not easy to shrink it, you are advised to select an hosting plan with >50 GB of storage.
 
-  > [!TIP]
-  > Some VPS providers rent this type of services for ~$5-10/month.  
-  > Some VPS providers even offer free installation of linux distributions in which Docker is already activated. Search/ask for it !
+> [!TIP]
+> Some VPS providers rent this type of services for ~$5-10/month.  
+> Some VPS providers even offer free installation of linux distributions in which Docker is already activated. Search/ask for it !
 
-  > [!NOTE]
-  > You *can* run CRCON on as little as 3.x GB of RAM, but as it's not easy to increase the amount of RAM your VPS has, it's better to pad it a little bit.  
-  The more game servers you manage within a CRCON install, the more RAM/CPU/storage you'll need.
+> [!NOTE]
+> You *can* run CRCON on as little as 3.x GB of RAM, but as it's not easy to increase the amount of RAM your VPS has, it's better to pad it a little bit.  
+The more game servers you manage within a CRCON install, the more RAM/CPU/storage you'll need.
 
 ### Software requirements
 
