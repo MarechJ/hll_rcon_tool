@@ -248,6 +248,9 @@ If you use a different operating system or architecture, you will need to build 
 
 - `Docker Engine` (Community) : <https://docs.docker.com/engine/install/>  
 
+> [!WARNING]
+> You can also try to use [Docker Desktop](https://www.docker.com/products/docker-desktop/), but you may encounter issues with nested virtualization, depending on your computer/server/VPS.
+
   You can check if `Docker engine` is installed by entering this command :  
 
   ```shell
@@ -261,9 +264,6 @@ If you use a different operating system or architecture, you will need to build 
   ```shell
   apt install docker.io
   ```
-
-  > [!WARNING]
-  > You can also use [Docker Desktop](https://www.docker.com/products/docker-desktop/), but you may encounter issues with nested virtualization, depending on your computer/server/VPS.
 
 - `Compose` plugin for Docker : <https://docs.docker.com/compose/install/>  
   
