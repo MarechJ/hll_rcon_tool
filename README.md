@@ -337,7 +337,7 @@ cp default.env .env
 Install the nano text editor :
 
 ```shell
-apt-get update && apt-get install nano
+apt update && apt install nano
 ```
 
 Launch nano to edit the .env file :
