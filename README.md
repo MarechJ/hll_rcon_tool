@@ -253,11 +253,12 @@ cd hll_rcon_tool
 ---
 ### 2. Edit the environment config file
 
-Now, you're going to create and edit an **.env** file, in which you'll tell CRCON how to connect to your HLL game server.  
+Now, you're going to create and edit an `.env` file, in which you'll tell CRCON how to connect to your HLL game server.  
 Here we'll use **nano**, a simple text editor that runs in text mode.  
 *You can use any other tool you're used to, either local or getting the file from a SFTP connection.*
 
-The file **must** be named `.env` or Docker will not detect it. **Don't** edit `default.env`.
+The file **must** be named `.env` or Docker will not detect it.
+⚠️ DO NOT edit `default.env`.
 
 Make a copy of the environnement config file template :
 ```console
@@ -278,17 +279,19 @@ In nano, you can move the cursor with the arrow keys.
 You do not have to change all the values. Only these 5 are mandatory :
 
 1. Choose a password to give CRCON access to the database  
-  (No need to remember/note it : you'll never have to enter it anywhere), check the comments in the `.env` for restriction characters such as `%`.  
-  Do NOT change it after CRCON has been started at least one time : your database would not be accessible.
+  No need to remember/note it : you'll never have to enter it anywhere.
+  Check the comments in the `.env` for restriction characters such as `%`.  
+  ⚠️ Do NOT change it after CRCON has been started at least one time : your database would not be accessible.
 
         HLL_DB_PASSWORD=anythingwithoutanyspace
 
-3. Enter a long string that will be used to scramble users passwords, you may want to back this up separately, if you lose it all of your admin accounts will be invalidated and need their passwords reset.
-  Do NOT change it after CRCON has been started at least one time : existing passwords would be invalidated.
+3. Enter a long string that will be used to scramble users passwords.
+  You may want to back this up separately. If you lose it, all of your admin accounts will be invalidated and need their passwords reset.
+  ⚠️ Do NOT change it after CRCON has been started at least one time : existing passwords would be invalidated.
 
        RCONWEB_API_SECRET=anythingwithoutanyspaceordollarsign
 
-Configure each game server you want to setup (server 1, server 2, etc. repeating the steps below for the 2nd/3rd server as necessary)
+Configure each game server you want to setup (server 1, server 2, etc. repeating the steps below for the 2nd, 3rd... server as necessary)
 
 3. Enter your RCON IP, as provided by the game server provider :  
    (this may be not the same as the game server IP)
@@ -313,7 +316,7 @@ Triple-check there is **no space before/after the `=` signs, nor in the values y
 
 You need a compose file to be able to use the `docker compose` commands, you will have to manually create (and then update it based on your needs).
 
-The `docker-templates/` folder contains two example templates, one for a single game server, the other for up to 10 game servers.
+The `docker-templates/` folder contains two example templates : `one-server.yaml` for a single game server, `ten-servers.yaml` for up to 10 game servers.
 
 For `docker compose` to detect the file, it needs to be [named](https://docs.docker.com/compose/compose-application-model/) `compose.yaml`:
 
@@ -322,7 +325,8 @@ Make a copy of the compose template (this is for "one game server") :
 cp docker-templates/one-server.yaml compose.yaml
 ```
 
-If you only want to manage one gamer server, you're done with the compose file. Go for step 4 ("Run CRCON for the first time !").
+If you only want to manage one gamer server, you're done with the compose file.  
+  Go for step 4 ("Run CRCON for the first time !").
 
 If you want to **manage 2 or more servers** :  
 You'll have to edit your `compose.yaml` (**DO NOT** edit the templates !)
@@ -354,9 +358,9 @@ The `services` section defines what containers Docker will actually start when y
 
 **For example** if you used `one-server.yaml` as your starting template for `compose.yaml` and you wanted to add a 2nd server, you would copy the appropriate section from `docker-templates/ten-servers.yaml` and add it to your `compose.yaml`.
 
-It is **very important** that you copy the appropriate server numbers, if you use the same server number twice, only one of them will start and you will have issues.
+⚠️ It is **very important** that you copy the appropriate server numbers, if you use the same server number twice, only one of them will start and you will have issues.
 
-You also need to be **very careful** and match the **indentation levels** appropriately or Docker will not be able to read the file.
+⚠️ You also need to be **very careful** and match the **indentation levels** appropriately or Docker will not be able to read the file.
 
 ```yaml
 ########### SERVER 2  #############
@@ -439,16 +443,18 @@ If everything went well you will see output similar to (this is an example for a
  ✔ Container hll_rcon_tool-frontend_1-1    Started   0.1s
 ```
 
-If any of the containers report a status of `Error` and you receive messages about `unhealthy` services something is misconfigured **or** you have extra game servers in `compose.yaml` that you haven't configured in your `.env`.
+If any of the containers report an `Error` status and if you receive messages about `unhealthy` services, something is misconfigured  
+  **or**  
+  you have extra game servers in `compose.yaml` that you haven't configured in your `.env`.
 
 ---
 ### 5. Get in the CRCON UI
 
 Your CRCON user interface can be reached from all over the world, in any web browser.
 
-Each game server is accessed separately, pay attention to the `RCONWEB_PORT` values in your `.env` for each game server
+Each game server is accessed separately, pay attention to the `RCONWEB_PORT` values in your `.env` for each game server.
 
-For example **by default** you could reach game server 1 with: http://yourVPSIP:8010/ substituting the IP address of your VPS for `yourVPSIP` in the URL.
+For example **by default**, you can reach game server 1 on http://yourVPSIP:8010/ (substitute the IP address of your VPS for `yourVPSIP` in the URL).
 
 - Get in there an click on **LOGIN**, in the top menu.  
 The default credentials are `admin`/`admin`
@@ -470,7 +476,7 @@ Due to inner security checks, we need to declare the VPS IP/port as "secure" to 
   Stay cool : for the time being, we only are going to change a single line in it.
 
 - Modify the **server_url** line, entering your URL (`http://yourVPSIP:8010` for example).  
-You must have quotation marks `"` around the url, and a comma `,` as the final character on the line.
+  You must have quotation marks `"` around the url, and a comma `,` as the final character on the line.
 
 ```json
 "server_url": "http://yourVPSIP:8010/",
