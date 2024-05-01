@@ -277,7 +277,7 @@ Now, you're going to create and edit an `.env` file, in which you'll tell CRCON 
 Here we'll use **nano**, a simple text editor that runs in text mode.  
 *You can use any other tool you're used to, either local or getting the file from a SFTP connection.*
 
-The file **must** be named `.env` or Docker will not detect it.
+The file **must** be named `.env` or Docker will not detect it.  
 ⚠️ DO NOT edit `default.env`.
 
 Make a copy of the environnement config file template :
@@ -311,7 +311,7 @@ You do not have to change all the values. Only these 5 are mandatory :
     ```
 
 2. Enter a long string that will be used to scramble users passwords.
-  You may want to back this up separately. If you lose it, all of your admin accounts will be invalidated and need their passwords reset.
+  You may want to back this up separately. If you lose it, all of your admin accounts will be invalidated and need their passwords reset.  
   ⚠️ Do NOT change it after CRCON has been started at least one time : existing passwords would be invalidated.
 
     ```shell
@@ -612,13 +612,28 @@ If you are updating from an older version, you should review the announcements i
 ### Normal (most) updates
 
 - Pull the changes from github
-  > `git fetch --tags`
+
+  ```shell
+  git fetch --tags
+  ```
+
 - Check out a tagged release
-  > `git checkout v9.4.1`
+
+  ```shell
+  git checkout v9.4.1
+  ```
+
 - Get the newest Docker images
-  > `docker compose pull`
+
+  ```shell
+  docker compose pull
+  ```
+
 - Restart your containers
-  > `docker compose up -d --remove-orphans`
+
+  ```shell
+  docker compose up -d --remove-orphans
+  ```
 
 You also can download the [latest zip release](https://github.com/MarechJ/hll_rcon_tool/releases/latest) and install it manually (NOT recommended)
 
