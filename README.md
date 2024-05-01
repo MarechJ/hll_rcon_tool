@@ -208,8 +208,9 @@ Sum it up : renting a low-end VPS will be cheaper* ;
 - Regarding drive space, the CRCON database of a game server where 95+ players connect for 10 hours per day may grow up to 20 GB in a year.  
 As it's not easy to shrink it, you are advised to select an hosting plan with >50 GB of storage.
 
-Some VPS providers rent this type of services for ~$5-10/month.  
-Some VPS providers even offer free installation of linux distributions in which Docker is already activated. Search/ask for it !
+> [!TIP]
+> Some VPS providers rent this type of services for ~$5-10/month.  
+> Some VPS providers even offer free installation of linux distributions in which Docker is already activated. Search/ask for it !
 
 You *can* run CRCON on as little as 3.x GB of RAM, but as it's not easy to increase the amount of RAM your VPS has, it's better to pad it a little bit.  
 The more game servers you manage within a CRCON install, the more RAM/CPU/storage you'll need.
@@ -245,7 +246,9 @@ If you use a different operating system or architecture, you will need to build 
   ```
 
 - `Docker Engine` (Community) : <https://docs.docker.com/engine/install/>  
-  ⚠️ You can also use [Docker Desktop](https://www.docker.com/products/docker-desktop/), but you may have issues with nested virtualization, depending on your computer/server/VPS.
+
+  > [!WARNING]
+  > You can also use [Docker Desktop](https://www.docker.com/products/docker-desktop/), but you may encounter issues with nested virtualization, depending on your computer/server/VPS.
   
   You can check if `Docker engine` is installed by entering this command :  
 
@@ -262,7 +265,9 @@ If you use a different operating system or architecture, you will need to build 
   ```
 
 - `Compose` plugin for Docker : <https://docs.docker.com/compose/install/>  
-  ⚠️ `docker-compose` has been deprecated in july 2023, errors **will** occur if you try to use it.
+  
+  > [!CAUTION]
+  > `docker-compose` has been deprecated in july 2023, errors **will** occur if you try to use it.
   
   You can check if Docker `Compose` plugin is installed by entering this command :  
 
@@ -326,8 +331,9 @@ Now, you're going to create and edit an `.env` file, in which you'll tell CRCON 
 Here we'll use **nano**, a simple text editor that runs in text mode.  
 *You can use any other tool you're used to, either local or getting the file from a SFTP connection.*
 
-The file **must** be named `.env` or Docker will not detect it.  
-⚠️ DO NOT edit `default.env`.
+> [!CAUTION]
+> Do not edit `default.env`.  
+> The file must be named `.env` or Docker will not detect it.  
 
 Make a copy of the environnement config file template :
 
@@ -365,7 +371,9 @@ HLL_DB_PASSWORD=anythingwithoutanyspace
 > [!CAUTION]
 > Do not change the password after CRCON has been started at least one time : your database would not be accessible.
 
-#### 2-2. Enter a string that will be used to scramble users passwords. The longer the better
+#### 2-2. Invent a string that will be used to scramble users passwords
+
+The longer the better.
 
 ```Dotenv
 RCONWEB_API_SECRET=anythingwithoutanyspaceordollarsign
@@ -382,33 +390,30 @@ If you want to manage more than one game server, repeat the steps below for the 
 
 #### 2-3. **RCON IP**
 
+As provided by the game server provider. This may be not the same as the game server IP.
+
 ```Dotenv
 HLL_HOST=123.123.123.123
 ```
 
-> [!NOTE]
-> As provided by the game server provider. This may be not the same as the game server IP.
-
 #### 2-4. **RCON port**
+
+As provided by the game server provider. This is not the same as the game server IP.
 
 ```Dotenv
 HLL_PORT=12345
 ```
 
-> [!NOTE]
-> As provided by the game server provider. This is not the same as the game server IP.
-
 #### 2-5. **RCON password**
+
+As provided by the game server provider. This is not the same as the game server IP.
 
 ```Dotenv
 HLL_PASSWORD=yourrconpassword
 ```
 
-> [!NOTE]
-> As provided by the game server provider. This is not the same as the game server IP.
-
 > [!IMPORTANT]
-> Triple-check there is **no space before/after the `=` signs, nor in the values you've set**.
+> Triple-check there is no space before/after the `=` signs, nor in the values you've set.
 
 - save the changes with `Ctrl`+`o` (then type `y` to validate)  
 - exit nano with `Ctrl`+`x`
