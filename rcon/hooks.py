@@ -754,7 +754,7 @@ def undo_real_vips(rcon: Rcon, struct_log):
 @on_camera
 def notify_camera(rcon: Rcon, struct_log):
     send_to_discord_audit(
-        command_name="camera", message=struct_log["message"], by=struct_log["player"]
+        command_name="camera", message=struct_log["message"], by="CRCON"
     )
     short_name: Final = RconServerSettingsUserConfig.load_from_db().short_name
 
