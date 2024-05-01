@@ -1,3 +1,7 @@
+# Hell Let Loose (HLL) Community RCON (CRCON)
+
+An extended RCON tool for Hell Let Loose, meant to replace the official tool and go WAY beyond.
+
 ![Website](https://img.shields.io/website?down_color=red&up_color=orange&up_message=hllrcon.app&url=https%3A%2F%2Fhllrcon.app)
 ![Discord](https://img.shields.io/discord/685692524442026020?color=%237289da&label=discord)
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/marechj/hll_rcon_tool)
@@ -9,12 +13,7 @@
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/T6T83KY8H)
 
-Join us on Discord (https://discord.gg/hZx6gn3),  
-for feedback, troubleshooting and information about updates and general Hell Let Loose hosting info: https://discord.gg/hZx6gn3
-
-# Hell Let Loose (HLL) Community RCON (CRCON)
-
-An extended RCON tool for Hell Let Loose, meant to replace the official tool and go WAY beyond.  
+Join us on Discord for feedback, troubleshooting and information about updates and general Hell Let Loose hosting info : <https://discord.gg/hZx6gn3>
 
 ## Included features
 
@@ -47,6 +46,7 @@ An extended RCON tool for Hell Let Loose, meant to replace the official tool and
   - Admin actions (kick, temp bans, etc.)
 
 ### Admin Accounts / Audit Trail
+
 - Individual accounts per admin so you never need to share your game server RCON password
 - Fine grained permissions that allow you to restrict exactly what an admin can do
   - Can be used to create read only accounts (for instance if you run events and want to allow streamers/etc. to view the kill feed)
@@ -55,10 +55,12 @@ An extended RCON tool for Hell Let Loose, meant to replace the official tool and
 - Optional Discord integration to send audit actions to a webhook
 
 ### API / API Keys
+
 - An ever growing number of API endpoints to allow you to write tools without having to fully implement the RCON protocol yourself
 - Ability to generate/authenticate with API keys for easier tool access
 
 ### Manage your players database
+
 - History of all players who have connected
   - All names they've played with
   - All messages they have received in game (some automated messages are not saved)
@@ -71,18 +73,21 @@ An extended RCON tool for Hell Let Loose, meant to replace the official tool and
 - Permanent logs : search through the entire history of the game logs of your server, export logs as CSV.
 - Bans, blacklist and VIP backup/restore
 
-### Automatic server settings (Auto Settings)
-- Settings that can be applied based on different conditions (time of day, number of connected players, current map, number of connected admins, etc.)
-- Change most (but not all) game server/CRCON settings, including but not limited to:
-- `broadcast` and `welcome` messages
-- game server settings
-(`teamswitch cooldown`, `autobalance threshold`, `idle autokick`, `maximum ping`, `max queue length`, `VIP slots`, `vote kicks`, `profanities` in chat).
-- `maps rotation` or `map vote` 
-- Map rotations (late night or seeding rotations, etc.)
-- Map shuffle 
+### Automatic server settings
+
+Settings that can be applied based on different conditions (time of day, number of connected players, current map, number of connected admins, etc.)
+Change most (but not all) game server/CRCON settings, including but not limited to :  
+
+- `broadcast` and `welcome` messages ;
+- game server settings (`teamswitch cooldown`, `autobalance threshold`, `idle autokick`, `maximum ping`, `max queue length`, `VIP slots`, `vote kicks`, `profanities` in chat) ;
+- `vote for next map` ;
+- Map rotations (late night or seeding rotations, etc.) ;
+- Map shuffle.
 
 ### Automatic Moderation
+
 #### Auto Mods
+
 - Automatic enforcement of various rules (within RCON limitations) with the ability to `warn` (message the player), `punish` and/or `kick` in a progressive fashion based on number of warnings/time between warnings
 - Level Enforcement
   - Remove players from the server who are above or below level limits
@@ -97,6 +102,7 @@ An extended RCON tool for Hell Let Loose, meant to replace the official tool and
   - Forbid players from being in a tank squad without other players (can't determine if the squad is locked due to RCON limitations)
 
 #### Miscellaneous automatic enforcement of rules
+
 - Set [regular expressions](https://regex101.com/) to remove players based on their name, for example:
   - Remove players with only numbers in their name
   - Remove players without at least one character (A-Z or a-z) to avoid all symbol names
@@ -110,14 +116,15 @@ An extended RCON tool for Hell Let Loose, meant to replace the official tool and
 - Automatically perma ban steam players with X number of VAC and/or game bans within Y days (with a Steam API key configured)
 
 ### Chat Commands
-- Ability to create your own custom commands that players can trigger with chat messages
-- A limited (but growing) number of variables can be used in the message
-- For example you can create commands to 
-- Chat commands : user defined trigger words that will send user-defined messages.  
-ie : `!Discord` to display your Discord clan url,  
-`!killer` to display the name of your last killer
+
+- Ability to create your own custom commands that players can trigger with chat messages.
+- A limited (but growing) number of variables can be used in the message.
+- For example, you can create commands to :  
+  - `!Discord` to display your Discord clan url,  
+  - `!killer` to display the name of your last killer
 
 ### Discord Integration
+
 - Create [Discord webhooks](https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks) to send information from CRCON to your Discord server
   - Kills/Team kills
   - Player chat
@@ -134,6 +141,7 @@ ie : `!Discord` to display your Discord clan url,
 - Historical games (bookmarkable)
 
 ### Power users features
+
 - Supports multiple game servers within a single CRCON install
   - CRCON admin accounts/permissions are shared (and can't be limited by game server)
   - Shared player history
@@ -163,56 +171,64 @@ ie : `!Discord` to display your Discord clan url,
 
 - Leaderboard and all time stats
 
-# Installation
+## Installation
 
-## Minimum Skills
+### Minimum skills
 
-You only need very limited shell skills, you can mostly just follow along with the instructions but you need to understand what a directory is, how to list the contents of a directory, change directories, etc.
+You only need very limited shell skills.  
+You can mostly just follow along with the instructions, but you need to understand what a directory is, how to list the contents of a directory, change directories, etc.
 
-## Install on a VPS, not on your home PC
+### Install on a VPS, not on your home PC
 
-CRCON is a website and is designed to run permanently (24/7) and be accessible on the Internet since your players (public stats) and admin accounts will connect to it.
+CRCON is a website and is designed to run permanently (24/7) and be accessible on the Internet since your players (public stats) and game server admins will connect to it.
 
-This allows you to maintain a separation between admin accounts and the game server and provides a centralized database for both game server data (logs, etc.) and admin actions
-  - You do not need to share the game server RCON password (and should avoid doing so unless you have a good reason or people can skip audit logs)
-  - Admin actions are recorded/logged
+Your users don't need to install any software, they simply log into the website.
+
+This allows you to :
+
+- maintain a separation between admin accounts and the game server and provides a centralized database for both game server data (logs, etc.) and admin actions ;
+- avoid to share the game server RCON password (and should avoid doing so unless you have a good reason, as admins could skip audit logs) ;
+- record/log all admin actions.
 
 Because of this, it is much easier to rent a cheap VPS and run it there than to try to install it on a home computer, ensure that connections are forwarded properly and that it is always on/available.
 
-Your users also don't need to install any software, they simply log into the website.
-
 If you decide to install it on a home computer, keep in mind you'll have to :
+
 - run your computer 24/7  
 *hope you like noisy fans, hardware maintenance and electricity bills* ;
 - open your home internet access and let people connect to your computer.  
-  *This requires network management knowledge and could lead to security risks.*
+*This requires network management knowledge and could lead to security risks.*
 
-## Hardware requirements
+### Hardware requirements
 
 - Minimum : 2 CPU cores and 6GB of RAM.
-- Recommended : 4 CPU cores and 8GB of RAM.
+- **Recommended : 4 CPU cores and 8GB of RAM.**
 - Regarding drive space, the CRCON database of a game server where 95+ players connect for 10 hours per day may grow up to 20 GB in a year.  
-As it's not easy to shrink it, you are advised to select an offer with >50 GB of storage.
-
-You *can* run on as little as 3.something gb of RAM but as it's not necessarily easy to increase the amount of RAM your VPS has, it's better to pad it a little bit. The more game servers you use within a CRCON install the more RAM/CPU/storage you'll utilize.
+As it's not easy to shrink it, you are advised to select an hosting plan with >50 GB of storage.
 
 Some VPS providers rent this type of services for ~$5-10/month.
 
-## Software requirements
+You *can* run on as little as 3.x GB of RAM, but as it's not easy to increase the amount of RAM your VPS has, it's better to pad it a little bit. The more game servers you manage within a CRCON install, the more RAM/CPU/storage you'll need.
 
-In theory you can run this anywhere you can use Docker and Docker Compose, but unless you have a really good reason you should use Linux (any distro *should* work, but if you're unfamiliar you want to pick a more popular one like Ubuntu or Debian for easier tech support when you Google) instead of Windows or any other operating system.
+### Software requirements
 
-We provide pre-built Docker images for `linux/amd64`, `linux/arm64` and `linux/arm32`. If you use a different operating system or architecture you will need to build your own images.
+In theory, you can run this anywhere you can use Docker and Docker Compose, but unless you have a really good reason, you should use Linux.  
+This will ensure better tech support when you'll search for help on Google instead of Windows or any other operating system.
+Any distribution *should* work, but if you're unfamiliar with Linuxes, you are advised to pick a popular distribution, like **Ubuntu server** or **Debian server**.
 
-If you run it on Windows, don't expect anyone to be able to help you on the Discord. If you **really** need to run it on Windows and have no other options try using [Windows Subsystem for Linux](https://learn.microsoft.com/en-us/windows/wsl/install).
+If you run it on Windows, don't expect anyone to be able to help you on the Discord.  
+If you **really** need to run it on Windows and have no other options, try using [Windows Subsystem for Linux](https://learn.microsoft.com/en-us/windows/wsl/install).
 
-- *(Optional but **highly** recommended)* `git` : https://git-scm.com/downloads  
+We provide pre-built Docker images for `linux/amd64`, `linux/arm64` and `linux/arm32`.  
+If you use a different operating system or architecture, you will need to build your own images.
+
+- *(Optional but **highly** recommended)* `git` : <https://git-scm.com/downloads>  
   (if you don't use git, you'll have to manually download and install the CRCON releases in .zip format,  
   and you won't be able to update your CRCON as easily as with git)
-- `Docker Engine` (Community) : https://docs.docker.com/engine/install/  
+- `Docker Engine` (Community) : <https://docs.docker.com/engine/install/>  
   You can also use Docker Desktop, but you may have issues with nested virtualization, depending on your computer/server/VPS.
-- `Compose` plugin for Docker : https://docs.docker.com/compose/install/  
-  Note : `docker-compose` has been deprecated in july 2023, errors **will** occur if you try to use it.
+- `Compose` plugin for Docker : <https://docs.docker.com/compose/install/>  
+  ⚠️ `docker-compose` has been deprecated in july 2023, errors **will** occur if you try to use it.
 - *(Optional but **highly** recommended)* Some sort of text editor that supports syntax highlighting/etc.  
   The instructions below use `nano` in the examples, which is a very small shell based editor that can be difficult to edit with.  
   [Visual Studio Code](https://code.visualstudio.com/) is a free and fully featured text editor that allows you to [remotely edit files over SSH](https://code.visualstudio.com/docs/remote/ssh) which is very handy when editing files on your VPS.
@@ -221,36 +237,40 @@ Some VPS providers offer free installation of linux distributions in which Docke
 
 ## Install steps
 
-*"I don't know anything about Linux, console commands, coding and such..."*
-- Stay cool and follow the drill. It's a simple installation, many not-so-technical people managed to do it, so you probably can too :)
-- The [Wiki](https://github.com/MarechJ/hll_rcon_tool/wiki) has been receiving regular updates but it is not versioned so it may be a little out of date, or contain features/informations that is not applicable to you if you are on an older release.
-- Wiki updates are highly appreciated ! This is an easy way to contribute if you don't have any programming skills.
-- Translations are also very welcome, there are many people with no or limited English who use CRCON
-- Most shell commands/error messages can be Googled, and a *lot* of usual questions already found an answer on the CRCON's Discord.  
-Ask for help on the tech-support channel if you can't find what you're searching for.
-- If you still don't understand what to do after reading this, just ask on Discord, but please respect people's time and energy and -at least- attempt to solve your problem by using Google/other resources first.
+"I don't know anything about Linux, console commands, coding and such..."
 
-Note : all the commands given below are meant to be entered in a Debian-like Linux terminal.
+- Stay cool and follow the drill. It's a simple installation, many not-so-technical people managed to do it, so you probably can too :)
+- The [Wiki](https://github.com/MarechJ/hll_rcon_tool/wiki) has been receiving regular updates but it is not versioned so it may be a little out of date, or contain features/informations that is not applicable to you if you are on an older release.  
+  - Wiki updates are highly appreciated ! This is an easy way to contribute if you don't have any programming skills.  
+  - Translations are also very welcome, there are many people with no or limited English who use CRCON
+- Most shell commands/error messages can be Googled, and a *lot* of usual questions already found an answer on the CRCON's Discord : search for them !  
+- Ask for help on the tech-support channel if you can't find what you're searching for, but please respect people's time and energy and -at least- attempt to solve your problem by using Google/other resources first.
+
+All the commands given below are meant to be entered in a Debian-like Linux terminal.
 
 ---
+
 ### 1. Download CRCON
 
-Using an SSH client (*don't know which one to get ?* Try PuTTY : https://www.chiark.greenend.org.uk/~sgtatham/putty/),  
+Using an SSH client (*don't know which one to get ?* Try PuTTY : <https://www.chiark.greenend.org.uk/~sgtatham/putty/>),  
 **log in as root** into your distant Linux, using the SSH credentials given by your VPS provider.
 
 Enter these commands in the terminal (*press [Enter] to validate*) :
 
 Download the CRCON files :
-```console
+
+```shell
 git clone https://github.com/MarechJ/hll_rcon_tool.git
 ```
 
 Get in the newly created CRCON dedicated folder :
-```console
+
+```shell
 cd hll_rcon_tool
 ```
 
 ---
+
 ### 2. Edit the environment config file
 
 Now, you're going to create and edit an `.env` file, in which you'll tell CRCON how to connect to your HLL game server.  
@@ -261,17 +281,20 @@ The file **must** be named `.env` or Docker will not detect it.
 ⚠️ DO NOT edit `default.env`.
 
 Make a copy of the environnement config file template :
-```console
+
+```shell
 cp default.env .env
 ```
 
 Install the nano text editor :
-```console
+
+```shell
 apt-get update && apt-get install nano
 ```
 
 Launch nano to edit the .env file :
-```console
+
+```shell
 nano .env
 ```
 
@@ -283,35 +306,47 @@ You do not have to change all the values. Only these 5 are mandatory :
   Check the comments in the `.env` for restriction characters such as `%`.  
   ⚠️ Do NOT change it after CRCON has been started at least one time : your database would not be accessible.
 
-        HLL_DB_PASSWORD=anythingwithoutanyspace
+    ```shell
+    HLL_DB_PASSWORD=anythingwithoutanyspace
+    ```
 
-3. Enter a long string that will be used to scramble users passwords.
+2. Enter a long string that will be used to scramble users passwords.
   You may want to back this up separately. If you lose it, all of your admin accounts will be invalidated and need their passwords reset.
   ⚠️ Do NOT change it after CRCON has been started at least one time : existing passwords would be invalidated.
 
-       RCONWEB_API_SECRET=anythingwithoutanyspaceordollarsign
+    ```shell
+    RCONWEB_API_SECRET=anythingwithoutanyspaceordollarsign
+    ```
 
 Configure each game server you want to setup (server 1, server 2, etc. repeating the steps below for the 2nd, 3rd... server as necessary)
 
 3. Enter your RCON IP, as provided by the game server provider :  
    (this may be not the same as the game server IP)
 
-       HLL_HOST=123.123.123.123
+    ```shell
+    HLL_HOST=123.123.123.123
+    ```
 
-5. Enter your RCON port, as provided by the game server provider :  
+4. Enter your RCON port, as provided by the game server provider :  
    (this is NOT the same as the game server port)
 
-       HLL_PORT=12345
+    ```shell
+    HLL_PORT=12345
+    ```
 
-6. Enter your RCON password, as provided by the game server provider :
+5. Enter your RCON password, as provided by the game server provider :
 
-       HLL_PASSWORD=yourrconpassword
+    ```shell
+    HLL_PASSWORD=yourrconpassword
+    ```
 
 Triple-check there is **no space before/after the `=` signs, nor in the values you've set**.
+
 - save the changes with `Ctrl`+`o` (then type `y` to validate)  
 - exit nano with `Ctrl`+`x`
 
 ---
+
 ### 3. Create a Docker Compose File
 
 You need a compose file to be able to use the `docker compose` commands, you will have to manually create (and then update it based on your needs).
@@ -321,7 +356,8 @@ The `docker-templates/` folder contains two example templates : `one-server.yaml
 For `docker compose` to detect the file, it needs to be [named](https://docs.docker.com/compose/compose-application-model/) `compose.yaml`:
 
 Make a copy of the compose template (this is for "one game server") :
-```console
+
+```shell
 cp docker-templates/one-server.yaml compose.yaml
 ```
 
@@ -331,6 +367,7 @@ If you only want to manage one gamer server, you're done with the compose file.
 If you want to **manage 2 or more servers** :  
 You'll have to edit your `compose.yaml` (**DO NOT** edit the templates !)
 You can either :  
+
 - copy `one-server.yaml` and add more servers in it - look at `ten-servers.yaml` to get an example ;  
 - copy `ten-servers.yaml`, fill your servers infos and delete the parts about servers you don't need.
 
@@ -414,7 +451,8 @@ The `services` section defines what containers Docker will actually start when y
 ```
 
 ---
-### 4. Run CRCON for the first time !
+
+### 4. Run CRCON for the first time
 
 CRCON is now configured to start and connect to your HLL game server(s).
 
@@ -424,13 +462,14 @@ Note : Launch process will display a *lot* of scrolling text.
 Don't panic, as you do not have to read/do anything. Just watch the magic.
 
 Enter this command :
-```console
+
+```shell
 docker compose up -d --remove-orphans
 ```
 
 If everything went well you will see output similar to (this is an example for a single game server and edited to fit):
 
-```sh
+```shell
 ❯ docker compose up -d
 [+] Running 8/8
  ✔ Network hll_rcon_tool_common    Created   0.1s
@@ -448,13 +487,14 @@ If any of the containers report an `Error` status and if you receive messages ab
   you have extra game servers in `compose.yaml` that you haven't configured in your `.env`.
 
 ---
+
 ### 5. Get in the CRCON UI
 
 Your CRCON user interface can be reached from all over the world, in any web browser.
 
 Each game server is accessed separately, pay attention to the `RCONWEB_PORT` values in your `.env` for each game server.
 
-For example **by default**, you can reach game server 1 on http://yourVPSIP:8010/ (substitute the IP address of your VPS for `yourVPSIP` in the URL).
+For example **by default**, you can reach game server 1 on <http://yourVPSIP:8010/> (substitute the IP address of your VPS for `yourVPSIP` in the URL).
 
 - Get in there an click on **LOGIN**, in the top menu.  
 The default credentials are `admin`/`admin`
@@ -464,12 +504,13 @@ The default credentials are `admin`/`admin`
 Now, we MUST change the admin password, as it is highly insecure !
 
 ---
+
 ### 6. Prepare to configure users
 
 Due to inner security checks, we need to declare the VPS IP/port as "secure" to be able to enter the users management tool or you will see `CSRF` errors.
 
 - In the **SETTINGS** menu, click on **CRCON settings** submenu  
-  or directly get to http://yourVPSIP:8010/#/settings/rcon-server
+  or directly get to <http://yourVPSIP:8010/#/settings/rcon-server>
 
   You'll see a large editable textarea.  
   The strange code in it is a config text, formatted in JSON.  
@@ -487,47 +528,49 @@ Due to inner security checks, we need to declare the VPS IP/port as "secure" to 
 If a yellow or red flag pops in, you have a syntax error : (watch the example above to get it right)*
 
 ---
+
 ### 7. Restart CRCON
 
 Yes. Restart it. This may sound strange, but it is mandatory :  
 to be taken in account, the **server_url** value you've just set has to be declared during the CRCON Docker containers start.
 
-```console
+```shell
 docker compose restart
 ```
 
 ---
+
 ### 8. Configure users
 
-Now you can get into the CRCON users management tool, located at : http://yourVPSIP:8010/admin
+Now you can get into the CRCON users management tool, located at : <http://yourVPSIP:8010/admin>
 
 You should be already logged in. If not, the credentials are still `admin`/`admin`.
 
 #### Add a new user
 
 - Click on the **+Add** link.
-![](images/readme_admin_account_setup_1.png)
+![readme_admin_account_setup_1](images/readme_admin_account_setup_1.png)
 - Fill the **Add User** form  
 Don't forget to enter the user's Steam ID (see image below) : it will be used by CRCON to identify this user as an admin.
-![](images/readme_admin_account_setup_2.png)
+![readme_admin_account_setup_2](images/readme_admin_account_setup_2.png)
 - Click on the **SAVE** link
 
-Once the user is created, you'll end up on that page: ![](images/readme_admin_account_setup_3.png)
+Once the user is created, you'll end up on that page: ![readme_admin_account_setup_3](images/readme_admin_account_setup_3.png)
 
 Don't forget to give yourself the `Superuser status` and `staff status` if you intend to disable the `admin` account !
 
 Please note that users won't be allowed to change their password by themselves unless you check `staff status`.
 
 To change the password of a user, click on its name, then on this link (see image below):  
-![](images/readme_admin_account_setup_4.png)
+![readme_admin_account_setup_4](images/readme_admin_account_setup_4.png)
 
 You also can change *your* current password using the dedicated link (top-right red square below) :  
-![](images/readme_admin_password_1.png)
+![readme_admin_password_1](images/readme_admin_password_1.png)
 
 #### Change default admin's password
 
 - click on the page title **"Django administration"** to get back to the entry screen.  
-*(This is the same as going to http://yourVPSIP:8010/admin)*
+*(This is the same as going to <http://yourVPSIP:8010/admin>)*
 - click on **Users**, then on **admin**.
 - Change the default admin password  
 (you also can disable admin's account by unchecking the "Active" status,  
@@ -535,7 +578,8 @@ just make sure there's another user having `Superuser status` and `staff status`
 - Click on the **SAVE** button
 
 ---
-### 9. Basic configuration is over !
+
+### 9. Basic configuration is over
 
 Yes ! You did it ! You now have a fully working and secured CRCON ! Congratulations !
 
@@ -559,7 +603,7 @@ to create video tutorial, demos, documentation, etc.
 
 ---
 
-# Update to the latest version
+## Update to the latest version
 
 Please join the CRCON Discord and follow announcements.  
 Sometimes, update instructions vary from standard.  
@@ -576,45 +620,48 @@ If you are updating from an older version, you should review the announcements i
 - Restart your containers
   > `docker compose up -d --remove-orphans`
 
-You also can download the [latest zip release](https://github.com/MarechJ/hll_rcon_tool/releases/latest) and install it manually (not recommended)
+You also can download the [latest zip release](https://github.com/MarechJ/hll_rcon_tool/releases/latest) and install it manually (NOT recommended)
 
 **Note**: If you get `git` error messages when you pull, you have to resolve these before you can upgrade.  
 Unless you have been changing files, this should never happen.  
-**Note**: It's important you get the sources every time, or at least the docker-compose files, as new dependancies might have been introduced
+**Note**: It's important you get the sources every time, or at least the Docker compose files, as new dependancies might have been introduced.
 
-# Downgrade (in case of issue) to a previous version
+## Downgrade (in case of issue) to a previous version
 
 Check the available versions numbers on Docker hub (or Github releases) :  
-https://hub.docker.com/r/cericmathey/hll_rcon/tags  
-https://github.com/MarechJ/hll_rcon_tool/releases
+<https://hub.docker.com/r/cericmathey/hll_rcon/tags>  
+<https://github.com/MarechJ/hll_rcon_tool/releases>
 
 Edit your `.env` file and change `TAGGED_VERSION` from `latest` to a specific tagged release  
 (it **must** match the release tag on Docker hub):
 
-    TAGGED_VERSION=9.4.1
+```shell
+TAGGED_VERSION=9.4.1
+```
 
-# How to use
+## How to use
 
-*Demo video coming soon*
+(Demo video coming soon)
 
-There's a public endpoint available to anybody without password on http://yourVPSIP:7010/api/scoreboard
+There's a public endpoint available to anybody without password on <http://yourVPSIP:7010/api/scoreboard>
 
 See [User Guide](USERGUIDE.md) for more information on how to use certain features of the app.
 
-# For power users
+## For power users
 
-## Multiple Game Servers
+### Multiple Game Servers
 
-You can use one CRCON for multiple game servers, or have separate CRCONs for one (or more) game server, but they need to be set up differently, see below.
-For instance if you run multiple game servers (for instance US west, US east and/or an event server) it makes more sense to do _one_ CRCON install rather than separate CRCONs for each game server.
+You can use one CRCON for multiple game servers, or have separate CRCONs for one (or more) game server(s), but they need to be set up differently (see below).
+If you run multiple game servers (for instance US west, US east and/or an event server), it makes more sense to do *one* CRCON install, rather than separate CRCONs for each game server.
 
 #### One CRCON to manage multiple game servers
 
-When using a single CRCON installation for multiple game servers all of your admin accounts will have equal access to all of them, and all of your data will be stored in a single database.
+When using a single CRCON installation for multiple game servers, all of your admin accounts will have equal access to all of them, and all of your data will be stored in a single database.
 
-This will make it difficult to separate your servers in the future (for instance if you are trying to use one CRCON for multiple communities by sharing a VPS) without starting from scratch and losing data.
+This will make it difficult to separate your servers in the future (if you are trying to use one CRCON for multiple communities by sharing a VPS) without starting from scratch and losing data.
 
-You will need to update your `compose.yaml` to have a definition for each extra server you want to run, you can copy and paste each extra server from `docker-templates/ten-servers.yaml` (refer to the installation guide below for specifics)
+You will need to update your `compose.yaml` to have a definition for each extra server you want to run.  
+You can copy and paste each extra server from `docker-templates/ten-servers.yaml` (refer to the installation guide below for specifics)
 
 #### Multiple CRCON installations
 
@@ -622,21 +669,25 @@ Please [see the Wiki](https://github.com/MarechJ/hll_rcon_tool/wiki/Multiple-CRC
 
 ## Building your own Docker images
 
-Docker images are hosted on [Docker Hub](https://hub.docker.com/r/cericmathey/hll_rcon), but if you're running a fork, have made local modifications, are running CPU architecture we don't have pre-built images for or the release you want isn't available for some reason, you can build your images locally.
+Docker images are hosted on [Docker Hub](https://hub.docker.com/r/cericmathey/hll_rcon), but if you're running a fork, have made local modifications, are running CPU architecture we don't have pre-built images for, or the release you want isn't available for some reason, you can build your images locally.
 
 ### Set environment variables
 
 If you don't already have a `.env` file created use `default.env` to make a template, otherwise the build will fail due to unset environment variables:
 
-> cp default.env .env
+```shell
+cp default.env .env
+```
 
-If you don't have a `.env` you must set the following environment variables to something, or the build will fail with an error that looks like `invalid tag ":": invalid reference format` (just use a copy of `default.env`):
+If you don't have a `.env`, you must set the following environment variables to something, or the build will fail with an error that looks like `invalid tag ":": invalid reference format` (just use a copy of `default.env`):
 
-    BACKEND_DOCKER_REPOSITORY=
-    FRONTEND_DOCKER_REPOSITORY=
-    TAGGED_VERSION=
+```shell
+BACKEND_DOCKER_REPOSITORY=
+FRONTEND_DOCKER_REPOSITORY=
+TAGGED_VERSION=
+```
 
-### Create a Docker Compose File
+### Create a Docker Compose file
 
 Refer to the installation guide if you do not already have a `compose.yaml` file created.
 
@@ -644,33 +695,43 @@ Refer to the installation guide if you do not already have a `compose.yaml` file
 
 Building the images can take a significant amount of time and you must be connected to the internet for it to fetch resources.
 
-> docker compose build
+```shell
+docker compose build
+```
 
-### Run it !
+### Run it
 
-Once the images are built (which can take a considerable amount of time depending on your hardware specs), and once it's configured properly (see the installation part of this README), then simply use `docker compose` to create the containers:
+Once the images are built (which can take a considerable amount of time depending on your hardware specs), and once it's configured properly (see the installation part of this README), then simply enter this command to create the containers :
 
-> docker compose up -d --remove-orphans
+```shell
+docker compose up -d --remove-orphans
+```
 
-If you don't want to use `docker compose` (which you really should, it's just easier) then you would have to properly set/create/run the Docker containers yourself, consult Docker's documentation please.
+If you don't want to use `docker compose` (which you really should, it's just easier), then you would have to properly set/create/run the Docker containers yourself. Please consult Docker's documentation.
 
 ## Development environment
 
-Pull requests are always welcome! It can be a bit tricky setting up a local environment and it is hard to contribute without having a HLL game server to connect to (and it's impossible to host one yourself, they won't release the server files).
+Pull requests are always welcome ! It can be a bit tricky setting up a local environment and it is hard to contribute without having a HLL game server to connect to (and it's impossible to host one yourself, as T17 won't release the server files).
 
 ### Overview / Project Structure
 
-The project is split up into several main components (the `backend`, `frontend`, services run by `supervisord` and `redis` and `postgres` that is shared across each image), and is intended to be run using Docker and `docker compose`. Each CRCON install can manage multiple game servers, and each game server (server 1, server 2, etc.) has its own set of images (backend_1, frontend_1, supervisor_1, etc.)
+The project is split up into several main components :
 
-The `backend` is split into two major components, the `rcon` package and the `rconweb` package which is a `Django` web (`WSGI`) application.
+- `backend`, split into two major components :
+  - `rcon` package :  
+    Handles the implementation of the [HLL RCON protocol](https://gist.github.com/timraay/5634d85eab552b5dfafb9fd61273dc52) and implements most of the core behavior/features that CRCON has.
+  - `rconweb` package, which is a `Django` web (`WSGI`) application :  
+    Handles all of the web portions (URL routing, authentication, sessions, etc.) once a HTTP request has been received by `nginx` in the `frontend`.
+- `frontend` :  
+    A combination of `nginx` (used as a reverse proxy) and `gunicorn` web servers that handles all of the HTTP requests and serves all of the responses.  
+    The flow is `incoming request` -> `nginx` -> `gunicorn` -> `nginx` -> `outgoing response`.  
+    `nginx` handles serving all of the static content like HTML/css/images, and `Django` processes all of the API calls that return dynamic content.
+- `supervisord` :  
+    Manages starting and restarting all of the optional/non optional (if you want a fully functioning CRCON) services, all of which are implemented in the `rcon` package or are standalone programs like `rq` or `cron`.
+- `maintenance`, `redis` and `postgres`, that is shared across each image.
 
-`rcon` handles the implementation of the [HLL RCON protocol](https://gist.github.com/timraay/5634d85eab552b5dfafb9fd61273dc52) and implements most of the core behavior/features that CRCON has.
-
-`rconweb` handles all of the web portions (URL routing, authentication, sessions, etc.) once a HTTP request has been received by `nginx` in the `frontend`.
-
-The `supervisor` container manages starting and restarting all of the optional/non optional (if you want a fully functioning CRCON) services, all of which are implemented in the `rcon` package or are a standalone program like `rq` or `cron`.
-
-The `frontend` is a combination of `nginx` (used as a reverse proxy) and `gunicorn` web servers that handles all of the HTTP requests and serves all of the responses. The flow is `incoming request` -> `nginx` -> `gunicorn` -> `nginx` -> `outgoing response`. `nginx` handles serving all of the static content like HTML/css/images, and `Django` processes all of the API calls that return dynamic content.
+It is intended to be run using Docker and `docker compose`.  
+Each CRCON install can manage multiple game servers, and each game server (server 1, server 2, etc.) has its own set of images (backend_1, frontend_1, supervisor_1, etc.).
 
 #### `rcon` package
 
@@ -696,7 +757,8 @@ Some endpoints are explicitly exposed, but some (`Rcon` methods) are implicitly 
 
 #### `supervisord`
 
-Due to the fact that Python is notoriously [single threaded](https://stackoverflow.com/questions/1294382/what-is-the-global-interpreter-lock-gil-in-cpython), some core parts of CRCON have been broken out into services that run in their own Python interpreter so they can take advantage of multiple cores/threads on the system. This also enables faster network access since each individual network request (to the game server, steam API, discord, etc.) blocks until completion.
+Due to the fact that Python is notoriously [single threaded](https://stackoverflow.com/questions/1294382/what-is-the-global-interpreter-lock-gil-in-cpython), some core parts of CRCON have been broken out into services that run in their own Python interpreter, so they can take advantage of multiple cores/threads on the system.  
+This also enables faster network access since each individual network request (to the game server, steam API, Discord, etc.) blocks until completion.
 
 Other portions are optional services and have been split so users have more control over what runs.
 
@@ -708,7 +770,7 @@ The services are managed by [supervisord](http://supervisord.org/) and run insid
 
 Every round trip to the game server can be significantly slow (in computing terms) and induces some amount of overhead on both CRCON and the game server.
 
-Some commands are cached even if they have a very low cache time (such as retrieving logs from the game server) to avoid constantly reprocessing info on very short time frames and others are on a longer cache time because they rarely if ever change (such as the list of available maps from the game server).
+Some commands are cached, even if they have a very low cache time (such as retrieving logs from the game server) to avoid constantly reprocessing info on very short time frames and others are on a longer cache time because they rarely (if ever) change (such as the list of available maps from the game server).
 
 This also condenses requests that occur almost simultaneously to be reduced to a single request that makes it to the game server, the remaining requests will be resolved from the cache (unless they happened before the first request has completed and cached its results).
 
@@ -728,11 +790,12 @@ Because of some configuration differences and how Docker determines environment 
 
 To avoid polluting your system Python, you should create/activate a [virtual environment](https://realpython.com/python-virtual-environments-a-primer/), I use [pyenv](https://github.com/pyenv/pyenv) but set up is outside the scope of this README.
 
-Once the virtual environment is activated in your shell install all of the Python dependencies:
+Once the virtual environment is activated in your shell install all of the Python dependencies :
 
-> pip install -r requirements.txt
-
-> pip install -r requirements-dev.txt
+```shell
+pip install -r requirements.txt
+pip install -r requirements-dev.txt
+```
 
 #### Set environment variables
 
@@ -740,39 +803,49 @@ You can use `dev.env` as a template for what variables need to be set, and after
 
 Or you can manually set them as specified in the sections below.
 
-> source dev.env
+```shell
+source dev.env
+```
 
 `SERVER_NUMBER` is an integral part of how CRCON works and is how data is segregated between servers in the database and is normally set in the compose files.
 
-    export SERVER_NUMBER=1
+```shell
+export SERVER_NUMBER=1
+```
 
 The `HLL_DB_PASSWORD` password must match what you set when the database was first created, or you can connect to the postgres docker container and [reset the password](https://stackoverflow.com/questions/12720967/how-can-i-change-a-postgresql-user-password) for your database user if needed.
 
-The default username and database name is `rcon` if you've seeded the database unless you've configured it differently.
+The default username and database name is `rcon` if you've seeded the database, unless you've configured it differently.
 
-    export HLL_DB_PASSWORD=rcon_dev
-    export HLL_DB_NAME=rcon
-    export HLL_DB_USER=rcon
-    export HLL_DB_HOST=localhost
-    export HLL_DB_HOST_PORT=5432
-    export HLL_DB_URL=postgresql://${HLL_DB_USER}:${HLL_DB_PASSWORD}@${HLL_DB_HOST}:${HLL_DB_HOST_PORT}/${HLL_DB_NAME}
+```shell
+export HLL_DB_PASSWORD=rcon_dev
+export HLL_DB_NAME=rcon
+export HLL_DB_USER=rcon
+export HLL_DB_HOST=localhost
+export HLL_DB_HOST_PORT=5432
+export HLL_DB_URL=postgresql://${HLL_DB_USER}:${HLL_DB_PASSWORD}@${HLL_DB_HOST}:${HLL_DB_HOST_PORT}/${HLL_DB_NAME}
+```
 
 #### Running the development backend
 
 Make sure you set all of the environment variables from the previous section(s).
 
-You can _sort of_ run a local instance without a game server to connect to, but so much depends on one that it's pretty pointless to try to do this without one.
+You can *sort of* run a local instance without a game server to connect to, but so much depends on one that it's pretty pointless to try to do this without one.
 
-    export HLL_HOST=<your game server IP>
-    export HLL_PORT=<your game server RCON port>
-    export HLL_PASSWORD=<your game server RCON password>
+```shell
+export HLL_HOST=<your game server IP>
+export HLL_PORT=<your game server RCON port>
+export HLL_PASSWORD=<your game server RCON password>
+```
 
-**If you didn't run the production environment first**: Create the database tables (you only need to do this once, unless you've created new migrations).
+**If you didn't run the production environment first** : create the database tables (you only need to do this once, unless you've created new migrations).
 
-    PYTHONPATH=. alembic upgrade head
-    PYTHONPATH=. ./manage.py init_db
-    PYTHONPATH=. ./rconweb/manage.py makemigrations --no-input
-    PYTHONPATH=. ./rconweb/manage.py migrate --noinput
+```shell
+PYTHONPATH=. alembic upgrade head
+PYTHONPATH=. ./manage.py init_db
+PYTHONPATH=. ./rconweb/manage.py makemigrations --no-input
+PYTHONPATH=. ./rconweb/manage.py migrate --noinput
+```
 
 Alembic runs the database migrations which creates the tables, and `init_db` installs a postgres extension and sets default values for auto settings.
 
@@ -780,26 +853,35 @@ Alembic runs the database migrations which creates the tables, and `init_db` ins
 
 **If you didn't run the production environment first**: Create a `superuser` account and follow the prompts:
 
-    PYTHONPATH=. ./rconweb/manage.py createsuperuser
+```shell
+PYTHONPATH=. ./rconweb/manage.py createsuperuser
+```
 
 Set the redis environment variables:
 
-    export HLL_REDIS_HOST=localhost
-    export HLL_REDIS_HOST_PORT=6379
-    export HLL_REDIS_DB=1
-    export HLL_REDIS_URL=redis://${HLL_REDIS_HOST}:${HLL_REDIS_HOST_PORT}/1
+```shell
+export HLL_REDIS_HOST=localhost
+export HLL_REDIS_HOST_PORT=6379
+export HLL_REDIS_DB=1
+export HLL_REDIS_URL=redis://${HLL_REDIS_HOST}:${HLL_REDIS_HOST_PORT}/1
+```
 
 Both the `redis` and `postgres` containers should be running (or you should have a `redis` and `postgres` installed/configured if you don't want to use the Docker images):
 
-> docker compose up -d redis postgres
+```shell
+docker compose up -d redis postgres
+```
 
 Start the Django (backend) development web server:
 
-    DJANGO_DEBUG=true DEBUG=true PYTHONPATH=. ./rconweb/manage.py runserver --nothreading
+```shell
+DJANGO_DEBUG=true DEBUG=true PYTHONPATH=. ./rconweb/manage.py runserver --nothreading
+```
 
 If you've set all the environment variables correctly, initialized the database and started the Django web server, you'll see something similar to:
 
-    System check identified some issues:
+```shell
+System check identified some issues:
 
     WARNINGS:
     api.DjangoAPIKey: (models.W042) Auto-created primary key used when not defining a primary key type, by default 'django.db.models.AutoField'.
@@ -812,8 +894,9 @@ If you've set all the environment variables correctly, initialized the database 
     Django version 4.2.7, using settings 'rconweb.settings'
     Starting development server at http://127.0.0.1:8000/
     Quit the server with CONTROL-C.
+```
 
-You can now open your browser (or use any other tool like [Postman](https://www.postman.com/)) to make API calls (http://127.0.0.1:8000/api/ will list all the available endpoints), or use the admin site (http://127.0.0.1:8000/admin/).
+You can now open your browser (or use any other tool like [Postman](https://www.postman.com/)) to make API calls (<http://127.0.0.1:8000/api/> will list all the available endpoints), or use the admin site (<http://127.0.0.1:8000/admin/>).
 
 Any changes to the files in `rcon/` or `rconweb/` will cause the backend webserver to reload with the changes.
 
@@ -821,21 +904,23 @@ Any changes to the files in `rcon/` or `rconweb/` will cause the backend webserv
 
 Once you have the development backend running, from another shell you can run the development frontend web server:
 
-> cd rcongui
-
-> npm install
-
-> npm start
+```shell
+cd rcongui  
+npm install  
+npm start
+```
 
 You should see something similar to:
 
-    VITE v4.3.9  ready in 320 ms
+```shell
+VITE v4.3.9  ready in 320 ms
 
-    ➜  Local:   http://localhost:3000/
-    ➜  Network: use --host to expose
-    ➜  press h to show help
+➜  Local:   http://localhost:3000/
+➜  Network: use --host to expose
+➜  press h to show help
+```
 
-You can now open your browser (http://localhost:3000/) to use the frontend, any modifications to the frontend (javascript files) in `rcongui` will cause it to recompile/update.
+You can now open your browser (<http://localhost:3000/>) to use the frontend, any modifications to the frontend (javascript files) in `rcongui` will cause it to recompile/update.
 
 #### Running services
 
@@ -843,14 +928,16 @@ Running the Django development web server **only** starts the backend web server
 
 Some of these services are required if you want the frontend to work as expected, such as `log_loop` (runs all of the hooks) or `log_recorder` that saves log lines to the database.
 
-Each service you want to run either needs to be run in the background or needs to be run in a separate shell (don't forget to set environment variables in each shell)
+Each service you want to run either needs to be run in the background or needs to be run in a separate shell (don't forget to set environment variables in each shell).
 
-    # Calculates player stats for the scoreboard
-    PYTHONPATH=. ./manage.py live_stats_loop
-    # Runs hooks (on connected events, on kills, etc.)
-    PYTHONPATH=. ./manage.py log_loop
-    # If you want logs to be saved in the DB
-    PYTHONPATH=. ./manage.py log_recorder
+```shell
+# Calculates player stats for the scoreboard
+PYTHONPATH=. ./manage.py live_stats_loop
+# Runs hooks (on connected events, on kills, etc.)
+PYTHONPATH=. ./manage.py log_loop
+# If you want logs to be saved in the DB
+PYTHONPATH=. ./manage.py log_recorder
+```
 
 Those service are run by supervisor in the production setup, so if you want more info check `config/supervisor.conf`
 
@@ -860,9 +947,11 @@ Unfortunately at this moment in time the database needs to be running for the te
 
 From the root `hll_rcon_tool` directory:
 
-    PYTHONPATH=. DEBUG=TRUE pytest tests/
+```shell
+PYTHONPATH=. DEBUG=TRUE pytest tests/
+```
 
-If you don't set `PYTHONPATH` you'll see errors similar to ` ModuleNotFoundError: No module named 'rcon'`.
+If you don't set `PYTHONPATH` you'll see errors similar to `ModuleNotFoundError: No module named 'rcon'`.
 
 If you don't set `DEBUG` to a truthy value, you'll see errors about not being able to connect to redis.
 
@@ -872,11 +961,13 @@ This should be done from a **separate** shell without the environment variables 
 
 Building the frontend if you've made any changes to the javascript files or if the build cache isn't available can take a considerable amount of time.
 
-> docker compose build
-> docker compose up -d
+```shell
+docker compose build
+docker compose up -d
+```
 
-Now test on http://localhost:8010
+Now test on <http://localhost:8010>
 
-#### General notes:
+#### General notes
 
-If you have problems with dependancies or versions of python or nodejs please refer to the respective Dockerfile that can act as a guide on how to setup a development environment.
+If you have problems with dependancies or versions of python or nodejs, please refer to the respective Dockerfile that can act as a guide on how to setup a development environment.
