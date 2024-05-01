@@ -205,8 +205,7 @@ Sum it up : renting a low-end VPS will be cheaper* ;
 
 - Minimum : 2 CPU cores and 6GB of RAM.
 - **Recommended : 4 CPU cores and 8GB of RAM.**
-- Regarding drive space, the CRCON database of a game server where 95+ players connect for 10 hours per day may grow up to 20 GB in a year.  
-As it's not easy to shrink it, you are advised to select an hosting plan with >50 GB of storage.
+- Regarding drive space, the CRCON database of a game server where 95+ players connect for 10 hours per day may grow up to 20 GB in a year. As it's not easy to shrink it, you are advised to select an hosting plan with >50 GB of storage.
 
 > [!TIP]
 > Some VPS providers rent this type of services for ~$5-10/month.  
@@ -228,44 +227,50 @@ If you *really* need to run it on Windows and have no other option, try using [W
 > We provide pre-built Docker images for `linux/amd64`, `linux/arm64` and `linux/arm32`.  
 If you use a different operating system or architecture, you will need to build your own images.
 
-- `git` *(optional but **highly** recommended)* : <https://git-scm.com/downloads>  
-  If you don't use `git`, you'll have to manually download and install the CRCON releases in .zip format,  
-  and you won't be able to update your CRCON as easily as with `git`)
+#### 1. git
+
+*(optional but highly recommended)* : <https://git-scm.com/downloads>  
+
+If you don't use `git`, you'll have to manually download and install the CRCON releases in .zip format, and you won't be able to update your CRCON as easily as with `git`)
   
-  You can check if git is installed by entering this command in your terminal :  
+You can check if git is installed by entering this command in your terminal :  
 
-  ```shell
-  git version
-  ```  
+```shell
+git version
+```  
 
-  You should get a reply like `git version 2.34.1`
+You should get a reply like `git version 2.34.1`
   
-  If not : install `git` by entering this command :  
+If not : install `git` by entering this command :  
 
-  ```shell
-  apt install git-all
-  ```
+```shell
+apt install git-all
+```
 
-- `Docker Engine` (Community) : <https://docs.docker.com/engine/install/>  
+#### 2. Docker Engine
+
+(Community edition) : <https://docs.docker.com/engine/install/>  
 
 > [!WARNING]
 > You can also try to use [Docker Desktop](https://www.docker.com/products/docker-desktop/), but you may encounter issues with nested virtualization, depending on your computer/server/VPS.
 
-  You can check if `Docker engine` is installed by entering this command :  
+You can check if `Docker engine` is installed by entering this command :  
 
-  ```shell
-  docker version
-  ```  
+```shell
+docker version
+```  
 
-  You should get a (multiline) reply like `Client: Docker Engine - Community - Version 26.1.0...`
+You should get a (multiline) reply like `Client: Docker Engine - Community - Version 26.1.0...`
   
-  If not : install `Docker` by entering this command :  
+If not : install `Docker` by entering this command :  
 
-  ```shell
-  apt install docker.io
-  ```
+```shell
+apt install docker.io
+```
 
-- `Compose` plugin for Docker : <https://docs.docker.com/compose/install/>  
+#### 3. Compose plugin for Docker
+
+Source : <https://docs.docker.com/compose/install/>  
   
 > [!CAUTION]
 > `docker-compose` has been deprecated in july 2023, errors **will** occur if you try to use it.
@@ -284,8 +289,11 @@ If not : install the Docker `Compose` plugin by entering this command :
 apt install docker-compose-plugin
 ```
 
-- *(Optional but **highly** recommended)* Any text editor that supports syntax highlighting.  
-  The instructions below use `nano`, which is a tiny shell based editor that can be difficult to work with.  
+#### 4. Any text editor that supports syntax highlighting
+
+*(Optional but **highly** recommended)*
+
+The instructions below use `nano`, which is a tiny shell based editor that can be difficult to work with.  
   You should try [Visual Studio Code](https://code.visualstudio.com/), which is a free and fully featured text editor that allows you to [remotely edit files over SSH](https://code.visualstudio.com/docs/remote/ssh) which is very handy when editing files on your VPS.
 
 ## Install steps
