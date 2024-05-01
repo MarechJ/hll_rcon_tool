@@ -474,7 +474,7 @@ You can either :
 
 There are two places that need to be updated for the `compose.yaml` to work properly :
 
-##### Networks
+##### 3.2.1 Networks
 
 The `networks` section (at the top) **must** contain a definition for each server.
 
@@ -494,11 +494,11 @@ It won't hurt anything : it will just create extra unused networks.
     server3:
 ```
 
-##### Services
+##### 3.2.2 Services
 
 The `services` section defines what containers Docker will actually start when you run commands like `docker compose up -d`, so you need to add a service definition for each server you are trying to run.
 
-**For example** if you used `one-server.yaml` as your starting template for `compose.yaml` and you wanted to add a 2nd server, you would copy the appropriate section from `docker-templates/ten-servers.yaml` and add it to your `compose.yaml`.
+**For example**, if you used `one-server.yaml` as your starting template for `compose.yaml` and you wanted to add a 2nd server, you would copy the appropriate section from `docker-templates/ten-servers.yaml` and add it to your `compose.yaml` :
 
 ```yaml
 ########### SERVER 2  #############
@@ -564,8 +564,8 @@ If you use the same server number twice, only one of them will start and you **w
 
 CRCON is now ready to start and connect to your HLL game server(s).
 
-> [!CAUTION]
-> Do not think it's over yet, as we now have to configure its users.
+> [!WARNING]
+> Do not think it's over yet, as we now have to configure CRCON's users.
 
 > [!NOTE]
 > Launch process will display a *lot* of scrolling text.  
@@ -616,7 +616,8 @@ For example : **by default**, you can reach game server 1 on <http://yourVPSIP:8
 - Get in there an click on **LOGIN**, in the top menu.  
 The default credentials are `admin`/`admin`
 
-⚠️ DO NOT touch anything yet. You'll have plenty of time to play with the different tools later.
+> [!WARNING]
+> Do not touch anything yet. You'll have plenty of time to play with the different tools later.
 
 Now, you **MUST** change the admin password, as it is highly insecure !
 
@@ -625,25 +626,24 @@ Now, you **MUST** change the admin password, as it is highly insecure !
 ### 6. Prepare to configure users
 
 Due to inner security checks, we need to declare the VPS IP/port as "secure" to be able to enter the users management tool.  
-Failing to do so **will** lead to `CSRF` errors when accessing the admin panel.
+Failing to do so **will** lead to `CSRF errors` when accessing the admin panel.
 
-- In the **SETTINGS** menu, click on **CRCON settings** submenu  
+- In the `SETTINGS` menu, click on `CRCON settings` submenu  
   or directly get to <http://yourVPSIP:8010/#/settings/rcon-server>
 
   You'll see a large editable textarea.  
   The strange code in it is a config text, formatted in JSON.  
   Stay cool : for the time being, we only are going to change a single line in it.
 
-- Modify the **server_url** line, entering your URL (`http://yourVPSIP:8010` for example).  
+- Modify the **server_url** line, entering your CRCON URL (ie : `http://yourVPSIP:8010`).  
   You must have quotation marks `"` around the url, and a comma `,` as the final character on the line.
 
 ```json
-"server_url": "http://yourVPSIP:8010/",
+"server_url": "http://123.123.123.123:8010/",
 ```
 
-- Click on the **SAVE** link, below the textarea  
-*(a green confirmation flag should pop in top-right corner of the window)  
-If a yellow or red flag pops in, you have a syntax error : (watch the example above to get it right)*
+- Click on the **SAVE** link, located below the textarea *(a green confirmation flag should pop in the top-right corner of the window).  
+If a yellow or red flag pops in, you have a syntax error in your code : watch the example above to get it right*
 
 ---
 
