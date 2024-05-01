@@ -351,25 +351,29 @@ In nano, you can move the cursor with the arrow keys.
 You do not have to change all the values. Only these 5 are mandatory :
 
 1. Choose a password to give CRCON access to its database  
-  No need to remember/note it : you'll never have to enter it anywhere.  
-  Check the comments in the `.env` for restricted characters, such as `%`.  
 
-  > [!CAUTION]
-  > Do NOT change it after CRCON has been started at least one time : your database would not be accessible.
-
-    ```shell
+    ```Dotenv
     HLL_DB_PASSWORD=anythingwithoutanyspace
     ```
 
+    > [!TIP]
+    > No need to remember/note it : you'll never have to enter it anywhere.  
+    Check the comments in the `.env` for restricted characters, such as `%`.
+
+    > [!CAUTION]
+    > Do not change the password after CRCON has been started at least one time : your database would not be accessible.
+
 2. Enter a string that will be used to scramble users passwords. The longer the better.  
-  You may want to back this up separately. If you lose it, all of your admin accounts will be invalidated and need their passwords reset.  
 
-  > [!CAUTION]
-  > Do not change the string after CRCON has been started at least one time : existing passwords would be invalidated.
+    > [!TIP]
+    > You may want to back this up separately. If you lose it, all of your admin accounts will be invalidated and need their passwords reset.
 
-  ```shell
-  RCONWEB_API_SECRET=anythingwithoutanyspaceordollarsign
-  ```
+    ```Dotenv
+    RCONWEB_API_SECRET=anythingwithoutanyspaceordollarsign
+    ```
+
+    > [!CAUTION]
+    > Do not change the string after CRCON has been started at least one time : existing passwords would be invalidated.
 
 Configure the game server(s) you want to manage.  
 If you want to manage more than one game server, repeat the steps below for the 2nd, 3rd, etc.
@@ -377,20 +381,20 @@ If you want to manage more than one game server, repeat the steps below for the 
 3. Enter your RCON IP, as provided by the game server provider :  
    (this may be not the same as the game server IP)
 
-    ```shell
+    ```Dotenv
     HLL_HOST=123.123.123.123
     ```
 
 4. Enter your RCON port, as provided by the game server provider :  
    (this is NOT the same as the game server port)
 
-    ```shell
+    ```Dotenv
     HLL_PORT=12345
     ```
 
 5. Enter your RCON password, as provided by the game server provider :
 
-    ```shell
+    ```Dotenv
     HLL_PASSWORD=yourrconpassword
     ```
 
