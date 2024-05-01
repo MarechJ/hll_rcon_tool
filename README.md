@@ -714,9 +714,12 @@ If you are updating from an older version, you should review the announcements i
 
 You also can download the [latest zip release](https://github.com/MarechJ/hll_rcon_tool/releases/latest) and install it manually (NOT recommended)
 
-**Note**: If you get `git` error messages when you pull, you have to resolve these before you can upgrade.  
-Unless you have been changing files, this should never happen.  
-**Note**: It's important you get the sources every time, or at least the Docker compose files, as new dependancies might have been introduced.
+> [!NOTE]
+> If you get `git` error messages when you pull, you have to resolve these before you can upgrade.  
+Unless you have been changing files, this should never happen.
+
+> [!NOTE]
+> It's important you get the sources every time, or at least the Docker compose files, as new dependancies might have been introduced.
 
 ## Downgrade (in case of issue) to a previous version
 
