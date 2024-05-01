@@ -389,7 +389,7 @@ If you want to manage more than one game server, repeat the steps below for the 
     HLL_PASSWORD=yourrconpassword
     ```
 
-Triple-check there is **no space before/after the `=` signs, nor in the values you've set**.
+⚠️ Triple-check there is **no space before/after the `=` signs, nor in the values you've set**.
 
 - save the changes with `Ctrl`+`o` (then type `y` to validate)  
 - exit nano with `Ctrl`+`x`
