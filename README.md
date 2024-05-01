@@ -119,7 +119,7 @@ Change most (but not all) game server/CRCON settings, including but not limited 
 
 - Ability to create your own custom commands that players can trigger with chat messages.
 - A limited (but growing) number of variables can be used in the message.
-- For example, you can create commands to :  
+- For example, you can create commands like :  
   - `!Discord` to display your Discord clan url,  
   - `!killer` to display the name of your last killer
 
