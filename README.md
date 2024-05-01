@@ -352,28 +352,28 @@ You do not have to change all the values. Only these 5 are mandatory :
 
 1. Choose a password to give CRCON access to its database  
 
-    ```Dotenv
-    HLL_DB_PASSWORD=anythingwithoutanyspace
-    ```
+  ```Dotenv
+  HLL_DB_PASSWORD=anythingwithoutanyspace
+  ```
 
-    > [!TIP]
-    > No need to remember/note it : you'll never have to enter it anywhere.  
-    Check the comments in the `.env` for restricted characters, such as `%`.
+  > [!TIP]
+  > No need to remember/note it : you'll never have to enter it anywhere.  
+  Check the comments in the `.env` for restricted characters, such as `%`.
 
-    > [!CAUTION]
-    > Do not change the password after CRCON has been started at least one time : your database would not be accessible.
+  > [!CAUTION]
+  > Do not change the password after CRCON has been started at least one time : your database would not be accessible.
 
 2. Enter a string that will be used to scramble users passwords. The longer the better.  
 
-    > [!TIP]
-    > You may want to back this up separately. If you lose it, all of your admin accounts will be invalidated and need their passwords reset.
+  > [!TIP]
+  > You may want to back this up separately. If you lose it, all of your admin accounts will be invalidated and need their passwords reset.
 
-    ```Dotenv
-    RCONWEB_API_SECRET=anythingwithoutanyspaceordollarsign
-    ```
+  ```Dotenv
+  RCONWEB_API_SECRET=anythingwithoutanyspaceordollarsign
+  ```
 
-    > [!CAUTION]
-    > Do not change the string after CRCON has been started at least one time : existing passwords would be invalidated.
+  > [!CAUTION]
+  > Do not change the string after CRCON has been started at least one time : existing passwords would be invalidated.
 
 Configure the game server(s) you want to manage.  
 If you want to manage more than one game server, repeat the steps below for the 2nd, 3rd, etc.
