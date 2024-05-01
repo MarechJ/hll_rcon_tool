@@ -573,9 +573,9 @@ For example : **by default**, you can reach game server 1 on <http://yourVPSIP:8
 - Get in there an click on **LOGIN**, in the top menu.  
 The default credentials are `admin`/`admin`
 
-*Don't touch anything yet. You'll have plenty of time to play with the different tools later.*
+⚠️ DO NOT touch anything yet. You'll have plenty of time to play with the different tools later.
 
-Now, we MUST change the admin password, as it is highly insecure !
+Now, you **MUST** change the admin password, as it is highly insecure !
 
 ---
 
