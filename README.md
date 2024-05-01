@@ -230,8 +230,8 @@ If you use a different operating system or architecture, you will need to build 
 - `Compose` plugin for Docker : <https://docs.docker.com/compose/install/>  
   ⚠️ `docker-compose` has been deprecated in july 2023, errors **will** occur if you try to use it.
 - *(Optional but **highly** recommended)* Some sort of text editor that supports syntax highlighting/etc.  
-  The instructions below use `nano` in the examples, which is a very small shell based editor that can be difficult to edit with.  
-  [Visual Studio Code](https://code.visualstudio.com/) is a free and fully featured text editor that allows you to [remotely edit files over SSH](https://code.visualstudio.com/docs/remote/ssh) which is very handy when editing files on your VPS.
+  The instructions below use `nano` in the examples, which is a tiny shell based editor that can be difficult to work with.  
+  You should try [Visual Studio Code](https://code.visualstudio.com/), which is a free and fully featured text editor that allows you to [remotely edit files over SSH](https://code.visualstudio.com/docs/remote/ssh) which is very handy when editing files on your VPS.
 
 Some VPS providers offer free installation of linux distributions in which Docker is already activated. Search/ask for it !
 
