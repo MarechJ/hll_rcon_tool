@@ -5,9 +5,9 @@ An extended RCON tool for Hell Let Loose, meant to replace the official tool and
 ![Website](https://img.shields.io/website?down_color=red&up_color=orange&up_message=hllrcon.app&url=https%3A%2F%2Fhllrcon.app)
 ![Discord](https://img.shields.io/discord/685692524442026020?color=%237289da&label=discord)
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/marechj/hll_rcon_tool)
-![Docker Cloud Automated build](https://img.shields.io/docker/cloud/automated/cericmathey/hll_rcon)
-![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/cericmathey/hll_rcon)
-![Docker Pulls](https://img.shields.io/docker/pulls/cericmathey/hll_rcon)
+![Docker Cloud Automated build](https://img.shields.io/docker/cloud/automated/cericmathey/hll_rcon_tool)
+![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/cericmathey/hll_rcon_tool)
+![Docker Pulls](https://img.shields.io/docker/pulls/cericmathey/hll_rcon_tool)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![README zh](https://shields.io/badge/中文文档-8A2BE2)](README.zh.md)
 
@@ -777,7 +777,7 @@ You also can download the [latest zip release](https://github.com/MarechJ/hll_rc
 ## Downgrade (in case of issue) to a previous version
 
 Check the available versions numbers on Docker hub (or Github releases) :  
-<https://hub.docker.com/r/cericmathey/hll_rcon/tags>  
+<https://hub.docker.com/r/cericmathey/hll_rcon_tool/tags>  
 <https://github.com/MarechJ/hll_rcon_tool/releases>
 
 Edit your `.env` file and change `TAGGED_VERSION` from `latest` to a specific tagged release  
@@ -823,7 +823,7 @@ Please [see the Wiki](https://github.com/MarechJ/hll_rcon_tool/wiki/Multiple-CRC
 
 ## Building your own Docker images
 
-Docker images are hosted on [Docker Hub](https://hub.docker.com/r/cericmathey/hll_rcon), but if you're running a fork, have made local modifications, are running CPU architecture we don't have pre-built images for, or the release you want isn't available for some reason, you can build your images locally.
+Docker images are hosted on [Docker Hub](https://hub.docker.com/r/cericmathey/hll_rcon_tool), but if you're running a fork, have made local modifications, are running CPU architecture we don't have pre-built images for, or the release you want isn't available for some reason, you can build your images locally.
 
 ### Set environment variables
 
