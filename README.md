@@ -250,7 +250,7 @@ git version
 
 You should get a reply like `git version 2.34.1`
   
-If not : install `git` by entering this command :  
+If you're using a debian-based distribution (ie : Ubuntu), you can install `git` by entering this command :  
 
 ```shell
 apt install git-all
@@ -271,11 +271,13 @@ docker version
 
 You should get a (multiline) reply like `Client: Docker Engine - Community - Version 26.1.0...`
   
-If not : install `Docker` by entering this command :  
+If you're using a debian-based distribution (ie : Ubuntu), you can install `Docker` by entering this command :  
 
 ```shell
 apt install docker.io
 ```
+
+You'll find other arch/distro Docker engine installation procedures on <https://docs.docker.com/engine/install/>
 
 #### 3. Compose plugin for Docker
 
@@ -292,11 +294,13 @@ docker compose version
 
 You should get a reply like `Docker Compose version v2.26.1`
   
-If not : install the Docker `Compose` plugin by entering this command :  
+If you're using a debian-based distribution (ie : Ubuntu), you can install the Docker `Compose` plugin by entering this command :  
 
 ```shell
 apt install docker-compose-plugin
 ```
+
+You'll find other arch/distro Docker engine installation procedures on <https://docs.docker.com/compose/install/>
 
 #### 4. Any text editor that supports syntax highlighting
 
