@@ -790,7 +790,8 @@ TAGGED_VERSION=9.4.1
 Then restart
 
 ```shell
-TAGGED_VERSION=9.4.1
+docker compose pull
+docker compose up -d --remove-orphans
 ```
 
 ## How to use
