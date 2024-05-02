@@ -177,11 +177,13 @@ Change most (but not all) game server/CRCON settings, including but not limited 
 
 "I don't know anything about VPS, Linux, console commands, coding and such..."
 
-- Every step is explained in detail, with examples. You'll only need *very limited* shell skills.  
-- You'll find even more explanations on the [Wiki](https://github.com/MarechJ/hll_rcon_tool/wiki), which has been receiving regular updates recently. But as it is not versioned, it may be a little out of date with the newer CRCON release, or contain features/informations that is not applicable to you if you are running an older one.  
-  - Wiki updates are highly appreciated ! This is an easy way to contribute if you don't have any programming skills ;  
+Relax :
+
+- You'll only need *very limited* shell skills. Every step is explained in detail, with examples.
+- You'll find even more explanations on the [Wiki](https://github.com/MarechJ/hll_rcon_tool/wiki). But as it is not versioned, it may be a little out of date with the newer CRCON release, or contain features/informations that is not applicable to you if you are running an older one.
+  - Wiki updates are highly appreciated ! This is an easy way to contribute if you don't have any programming skills ;
   - Translations are also very welcome, there are many people with no or limited English who use CRCON.
-- Most shell commands/error messages can be Googled, and a *lot* of usual questions already found an answer on the CRCON's Discord : search for them !  
+- Most shell commands/error messages can be Googled, and a *lot* of usual questions already found an answer on the CRCON's Discord : search for them !
 - Please respect people's time and energy and try first to search Google/Discord for a solution.  
 If you're really stuck, you should [ask for help](https://discord.com/channels/685692524442026020/685695097349734469).
 
@@ -223,7 +225,7 @@ Sum it up : renting a low-end VPS will be cheaper* ;
 
 ### Software requirements
 
-In theory, you can install CRCON on any operating system/architecture that runs [Docker engine](https://docs.docker.com/engine/) and Docker [Compose](https://docs.docker.com/compose/install/) plugin.  
+In theory, you can install CRCON on any operating system/architecture that runs [Docker engine](https://docs.docker.com/engine/) and Docker [Compose](https://docs.docker.com/compose/) plugin.  
 Unless you have a really good reason not to do so, you should use Linux.  
 This will ensure better tech support when you'll search for help on Google, as Docker and CRCON userbases are very scarce on Windows.  
 If you're unfamiliar with Linux, you are advised to pick a VPS plan using a popular distribution, like [Ubuntu server](https://ubuntu.com/server) or [Debian](https://www.debian.org/).
@@ -430,8 +432,9 @@ HLL_PASSWORD=yourrconpassword
 
 ### 3. Create a Docker Compose File
 
-You need a compose file to be able to use the `docker compose` commands.  
-You will have to create it from a template, then update it to your needs.
+`docker compose` commands need a special file to know what to do.  
+It will be created from a template.  
+If you intend to manage more than one HLL game server, you'll have to modify it to fit your needs.
 
 The `docker-templates/` folder contains two example templates :  
 
@@ -482,9 +485,6 @@ The `networks` section (at the top) **must** contain a definition for each serve
 
 Add a network for each server you are using (look at `docker-templates/ten-servers.yaml` for examples)
 
-If you are no longer using all your servers, you can leave the extra networks.  
-It won't hurt anything : it will just create extra unused networks.
-
 ```yaml
   networks:
     common:
@@ -493,9 +493,13 @@ It won't hurt anything : it will just create extra unused networks.
     server3:
 ```
 
+> [!NOTE]
+> If you are no longer managing all the defined game servers, you can leave their dedicated network.  
+> It won't hurt anything : it will just create extra unused networks.
+
 ##### 3.2.2 Services
 
-The `services` section defines what containers Docker will actually start when you run commands like `docker compose up -d`, so you need to add a service definition for each server you are trying to run.
+The `services` section defines what containers Docker will actually start when you run commands like `docker compose up -d`, so you need to add a service definition for each server you are trying to run (or delete the ones you won't use).
 
 **For example**, if you used `one-server.yaml` as your starting template for `compose.yaml` and you wanted to add a 2nd server, you would copy the appropriate section from `docker-templates/ten-servers.yaml` and add it to your `compose.yaml` :
 
