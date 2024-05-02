@@ -704,8 +704,8 @@ You also can change *your* current password using the dedicated link (top-right 
 - click on the page title (`Django administration`) to get back to the main page.  
 *(This is the same as going to <http://yourVPSIP:8010/admin>)*
 - click on `Users`, then on `admin`.
-- Change the default admin password  
-(you also can disable admin's account by unchecking the "Active" status,  
+- Change the admin's default password  
+(you also can disable admin's account by unchecking the `Active` status,  
 just make sure there's another user having `Superuser status` and `staff status` activated)
 - Click on the `SAVE` button
 
