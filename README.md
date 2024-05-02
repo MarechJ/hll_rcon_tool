@@ -238,7 +238,7 @@ If you use a different operating system or architecture, you will need to build 
 
 #### 1. git
 
-*(optional but highly recommended)* : <https://git-scm.com/downloads>  
+*(optional but highly recommended)*
 
 If you don't use `git`, you'll have to manually download and install the CRCON releases in .zip format, and you won't be able to update your CRCON as easily as with `git`)
   
@@ -250,7 +250,7 @@ git version
 
 You should get a reply like `git version 2.34.1`
   
-If not, you'll find installation procedures on <https://git-scm.com/download/linux>
+If not, you'll find installation procedures on <https://git-scm.com/download/>
 
 #### 2. Docker Engine
 
@@ -269,8 +269,6 @@ If not, you'll find installation procedures on <https://docs.docker.com/engine/i
 
 #### 3. Compose plugin for Docker
 
-Source : <https://docs.docker.com/compose/>  
-  
 > [!CAUTION]
 > `docker-compose` has been deprecated in july 2023, errors **will** occur if you try to use it.
   
