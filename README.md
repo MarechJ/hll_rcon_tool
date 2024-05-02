@@ -233,7 +233,7 @@ If you're unfamiliar with Linux, you are advised to pick a VPS plan using a popu
 If you *really* need to run it on Windows and have no other option, try using [Windows Subsystem for Linux](https://learn.microsoft.com/en-us/windows/wsl/install).
 
 > [!NOTE]
-> We provide pre-built Docker images for `linux/amd64`, `linux/arm64` and `linux/arm32`.  
+> We provide pre-built Docker images for `linux/amd64` and `linux/arm64`.  
 If you use a different operating system or architecture, you will need to build your own images.
 
 #### 1. git
