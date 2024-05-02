@@ -783,7 +783,7 @@ Check the available versions numbers on Docker hub (or Github releases) :
 Edit your `.env` file and change `TAGGED_VERSION` from `latest` to a specific tagged release  
 (it **must** match the release tag on Docker hub):
 
-```shell
+```Dotenv
 TAGGED_VERSION=9.4.1
 ```
 
