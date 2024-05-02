@@ -155,7 +155,7 @@ def test_is_server_loading_map(map_name, expected):
 
 
 def test_all_map_images_exist():
-    ALL_MAP_IMAGES = ["maps/" + f for f in os.listdir(Path("./rcongui/public/maps"))]
+    ALL_MAP_IMAGES = [f for f in os.listdir(Path("./rcongui/public/maps"))]
 
     for l in LAYERS.values():
-        assert l.map_image_url_stub in ALL_MAP_IMAGES
+        assert l.image_name in ALL_MAP_IMAGES

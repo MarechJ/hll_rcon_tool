@@ -2,9 +2,12 @@ import re
 from enum import Enum
 from logging import getLogger
 from typing import Iterable, Literal, Sequence, Union
+from urllib.parse import urljoin
 
 import pydantic
 from requests.structures import CaseInsensitiveDict
+
+from rcon.user_config.scorebot import ScorebotUserConfig
 
 logger = getLogger(__name__)
 
@@ -90,17 +93,17 @@ class Gamemode(str, Enum):
 
 
 class Team(str, Enum):
-    ALLIES = "Allies"
-    AXIS = "Axis"
+    ALLIES = "allies"
+    AXIS = "axis"
 
 
 class Environment(str, Enum):
-    DAWN = "Dawn"
-    DAY = "Day"
-    DUSK = "Dusk"
-    NIGHT = "Night"
-    OVERCAST = "Overcast"
-    RAIN = "Rain"
+    DAWN = "dawn"
+    DAY = "day"
+    DUSK = "dusk"
+    NIGHT = "night"
+    OVERCAST = "overcast"
+    RAIN = "rain"
 
 
 class Faction(Enum):
@@ -119,7 +122,7 @@ class Map(pydantic.BaseModel):
     id: str
     name: str
     tag: str
-    prettyname: str
+    pretty_name: str
     shortname: str
     allies: "Faction"
     axis: "Faction"
@@ -168,8 +171,10 @@ class Layer(pydantic.BaseModel):
             return self.map.axis
         return None
 
-    def pretty(self):
-        out = self.map.prettyname
+    @pydantic.computed_field
+    @property
+    def pretty_name(self) -> str:
+        out = self.map.pretty_name
         if self.gamemode == Gamemode.OFFENSIVE:
             out += " Off."
             if self.attackers:
@@ -180,7 +185,7 @@ class Layer(pydantic.BaseModel):
         else:
             out += f" {self.gamemode.value.capitalize()}"
         if self.environment != Environment.DAY:
-            out += f" ({self.environment.value})"
+            out += f" ({self.environment.value.title()})"
         return out
 
     @property
@@ -188,15 +193,18 @@ class Layer(pydantic.BaseModel):
         if self.attackers:
             return get_opposite_side(self.attackers)
 
+    @pydantic.computed_field
     @property
-    def map_image_url_stub(self):
-        """The map image URL with path and file extension"""
-        return f"maps/{self.map.id}-{self.environment.value}.webp".lower()
-
-    @property
-    def map_image_name(self):
-        """The map image name with file extension but without maps/ path"""
+    def image_name(self) -> str:
         return f"{self.map.id}-{self.environment.value}.webp".lower()
+
+    @pydantic.computed_field
+    @property
+    def image_url(self) -> str | None:
+        """Returns the map image URL if the scoreboard URL is configured"""
+        config = ScorebotUserConfig.load_from_db()
+        if config.base_scoreboard_url:
+            return urljoin(str(config.base_scoreboard_url), self.image_name)
 
 
 MAPS = {
@@ -206,7 +214,7 @@ MAPS = {
             id=UNKNOWN_MAP_NAME,
             name=UNKNOWN_MAP_NAME,
             tag="",
-            prettyname=UNKNOWN_MAP_NAME,
+            pretty_name=UNKNOWN_MAP_NAME,
             shortname=UNKNOWN_MAP_NAME,
             allies=Faction.US,
             axis=Faction.GER,
@@ -215,7 +223,7 @@ MAPS = {
             id="stmereeglise",
             name="SAINTE-MÈRE-ÉGLISE",
             tag="SME",
-            prettyname="St. Mere Eglise",
+            pretty_name="St. Mere Eglise",
             shortname="SME",
             allies=Faction.US,
             axis=Faction.GER,
@@ -224,7 +232,7 @@ MAPS = {
             id="stmariedumont",
             name="ST MARIE DU MONT",
             tag="BRC",
-            prettyname="St. Marie Du Mont",
+            pretty_name="St. Marie Du Mont",
             shortname="SMDM",
             allies=Faction.US,
             axis=Faction.GER,
@@ -233,7 +241,7 @@ MAPS = {
             id="utahbeach",
             name="UTAH BEACH",
             tag="UTA",
-            prettyname="Utah Beach",
+            pretty_name="Utah Beach",
             shortname="Utah",
             allies=Faction.US,
             axis=Faction.GER,
@@ -242,7 +250,7 @@ MAPS = {
             id="omahabeach",
             name="OMAHA BEACH",
             tag="OMA",
-            prettyname="Omaha Beach",
+            pretty_name="Omaha Beach",
             shortname="Omaha",
             allies=Faction.US,
             axis=Faction.GER,
@@ -251,7 +259,7 @@ MAPS = {
             id="purpleheartlane",
             name="PURPLE HEART LANE",
             tag="PHL",
-            prettyname="Purple Heart Lane",
+            pretty_name="Purple Heart Lane",
             shortname="PHL",
             allies=Faction.US,
             axis=Faction.GER,
@@ -260,7 +268,7 @@ MAPS = {
             id="carentan",
             name="CARENTAN",
             tag="CAR",
-            prettyname="Carentan",
+            pretty_name="Carentan",
             shortname="Carentan",
             allies=Faction.US,
             axis=Faction.GER,
@@ -269,7 +277,7 @@ MAPS = {
             id="hurtgenforest",
             name="HÜRTGEN FOREST",
             tag="HUR",
-            prettyname="Hurtgen Forest",
+            pretty_name="Hurtgen Forest",
             shortname="Hurtgen",
             allies=Faction.US,
             axis=Faction.GER,
@@ -278,7 +286,7 @@ MAPS = {
             id="hill400",
             name="HILL 400",
             tag="HIL",
-            prettyname="Hill 400",
+            pretty_name="Hill 400",
             shortname="Hill 400",
             allies=Faction.US,
             axis=Faction.GER,
@@ -287,7 +295,7 @@ MAPS = {
             id="foy",
             name="FOY",
             tag="FOY",
-            prettyname="Foy",
+            pretty_name="Foy",
             shortname="Foy",
             allies=Faction.US,
             axis=Faction.GER,
@@ -296,7 +304,7 @@ MAPS = {
             id="kursk",
             name="KURSK",
             tag="KUR",
-            prettyname="Kursk",
+            pretty_name="Kursk",
             shortname="Kursk",
             allies=Faction.RUS,
             axis=Faction.GER,
@@ -305,7 +313,7 @@ MAPS = {
             id="stalingrad",
             name="STALINGRAD",
             tag="STA",
-            prettyname="Stalingrad",
+            pretty_name="Stalingrad",
             shortname="Stalingrad",
             allies=Faction.RUS,
             axis=Faction.GER,
@@ -314,7 +322,7 @@ MAPS = {
             id="remagen",
             name="REMAGEN",
             tag="REM",
-            prettyname="Remagen",
+            pretty_name="Remagen",
             shortname="Remagen",
             allies=Faction.US,
             axis=Faction.GER,
@@ -323,7 +331,7 @@ MAPS = {
             id="kharkov",
             name="Kharkov",
             tag="KHA",
-            prettyname="Kharkov",
+            pretty_name="Kharkov",
             shortname="Kharkov",
             allies=Faction.RUS,
             axis=Faction.GER,
@@ -332,7 +340,7 @@ MAPS = {
             id="driel",
             name="DRIEL",
             tag="DRL",
-            prettyname="Driel",
+            pretty_name="Driel",
             shortname="Driel",
             allies=Faction.GB,
             axis=Faction.GER,
@@ -341,7 +349,7 @@ MAPS = {
             id="elalamein",
             name="EL ALAMEIN",
             tag="ELA",
-            prettyname="El Alamein",
+            pretty_name="El Alamein",
             shortname="Alamein",
             allies=Faction.GB,
             axis=Faction.GER,
@@ -350,7 +358,7 @@ MAPS = {
             id="mortain",
             name="MORTAIN",
             tag="MOR",
-            prettyname="Mortain",
+            pretty_name="Mortain",
             shortname="MOR",
             allies=Faction.US,
             axis=Faction.GER,
@@ -836,7 +844,7 @@ def parse_layer(layer_name: str | Layer) -> Layer:
             id=tag.lower(),
             name=tag,
             tag=tag,
-            prettyname=tag.capitalize(),
+            pretty_name=tag.capitalize(),
             shortname=tag,
             allies=Faction.US,
             axis=Faction.GER,
@@ -883,7 +891,7 @@ def _parse_legacy_layer(layer_name: str):
             id=name,
             name=name.capitalize(),
             tag=name.upper(),
-            prettyname=name.capitalize(),
+            pretty_name=name.capitalize(),
             shortname=name.capitalize(),
             allies=Faction.US,
             axis=Faction.GER,
@@ -954,7 +962,7 @@ def safe_get_map_name(map_name: str, pretty: bool = True) -> str:
         return map_name
 
     if pretty:
-        return map_.pretty()
+        return map_.pretty_name
     else:
         return map_.map.name
 

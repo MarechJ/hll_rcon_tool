@@ -561,8 +561,8 @@ class GameState(TypedDict):
     axis_score: int
     raw_time_remaining: str
     time_remaining: datetime.timedelta
-    current_map: str
-    next_map: str
+    current_map: "LayerType"
+    next_map: "LayerType"
 
 
 class VACGameBansConfigType(TypedDict):
@@ -653,17 +653,34 @@ class InvalidLogTypeError(ValueError):
         }
 
 
-class _PublicInfoCurrentMapType(TypedDict):
-    just_name: str
-    human_name: str
+class MapType(TypedDict):
+    id: str
     name: str
+    tag: str
+    prettyname: str
+    shortname: str
+    allies: str
+    axis: str
+
+
+class LayerType(TypedDict):
+    id: str
+    map: MapType
+    gamemode: str
+    attackers: str | None
+    environment: str
+    pretty_name: str
+    image_name: str
+    image_url: str | None
+
+
+class _PublicInfoCurrentMapType(TypedDict):
+    map: LayerType
     start: int
 
 
 class _PublicInfoNextMapType(TypedDict):
-    just_name: str
-    human_name: str
-    name: str
+    map: LayerType
     start: int | None
 
 

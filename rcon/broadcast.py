@@ -1,20 +1,20 @@
 import logging
-import random
-from typing import Sequence
 import math
+import random
 import time
 from functools import partial
+from typing import Sequence
 
-from rcon.rcon import Rcon
+from rcon import maps
 from rcon.audit import ingame_mods, online_mods
 from rcon.commands import CommandFailedError
+from rcon.maps import categorize_maps, numbered_maps
+from rcon.rcon import Rcon
 from rcon.settings import SERVER_INFO
+from rcon.types import VoteOverview
 from rcon.user_config.auto_broadcast import AutoBroadcastUserConfig
 from rcon.user_config.vote_map import VoteMapUserConfig
-from rcon.maps import numbered_maps, categorize_maps
-from rcon import maps
 from rcon.vote_map import VoteMap
-from rcon.types import VoteOverview
 
 
 class LazyPrinter:
@@ -56,7 +56,7 @@ def format_winning_map(
     # Example warfare map: Carentan Warfare (2 vote(s))
     # Example offensive map: Driel Off. AXIS (2 vote(s))
     return ", ".join(
-        f"{map_.pretty()} ({num_votes} vote(s))" for map_, num_votes in wins
+        f"{map_.pretty_name} ({num_votes} vote(s))" for map_, num_votes in wins
     )
 
 
@@ -117,7 +117,7 @@ def join_vote_options(
     maps_to_numbers: dict[maps.Layer, str],
     join_char: str = " ",
 ):
-    return join_char.join(f"[{maps_to_numbers[m]}] {m.pretty()}" for m in selection)
+    return join_char.join(f"[{maps_to_numbers[m]}] {m.pretty_name}" for m in selection)
 
 
 def format_map_vote(rcon, format_type="line"):
@@ -129,7 +129,7 @@ def format_map_vote(rcon, format_type="line"):
     vote_dict = numbered_maps(selection)
     # map 1: 0, map 2: 1, etc.
     maps_to_numbers = dict(zip(vote_dict.values(), vote_dict.keys()))
-    items = [f"[{k}] {v.pretty()}" for k, v in vote_dict.items()]
+    items = [f"[{k}] {v.pretty_name}" for k, v in vote_dict.items()]
     if format_type == "line":
         return " // ".join(items)
     if format_type == "max_length":
@@ -206,7 +206,7 @@ def _get_vars(ctl: Rcon):
     def get_next_map():
         map_name: str = ctl.get_next_map()
         smart_map = maps.parse_layer(map_name)
-        return smart_map.pretty()
+        return smart_map.pretty_name
 
     vote_status = get_votes_status()
 

@@ -221,7 +221,7 @@ class VoteMap:
         join_char: str = " ",
     ) -> str:
         return join_char.join(
-            f"[{maps_to_numbers[m]}] {m.pretty()} - {ranked_votes[m]}/{total_votes} votes"
+            f"[{maps_to_numbers[m]}] {m.pretty_name} - {ranked_votes[m]}/{total_votes} votes"
             for m in selection
         )
 
