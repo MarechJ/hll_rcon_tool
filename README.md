@@ -254,8 +254,6 @@ If not, you'll find installation procedures on <https://git-scm.com/download/lin
 
 #### 2. Docker Engine
 
-(Community edition) : <https://docs.docker.com/engine/install/>  
-
 > [!WARNING]
 > You can also try to use [Docker Desktop](https://www.docker.com/products/docker-desktop/), but you may encounter issues with nested virtualization, depending on your computer/server/VPS.
 
