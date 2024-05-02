@@ -457,7 +457,7 @@ That's it ! Go to step 4 ([Run CRCON for the first time](#4-run-crcon-for-the-fi
 
 #### 3-2. Managing two or more game servers
 
-Make a copy of the `ten-servers.yaml` compose template, then edit the newly created `compose.yaml` to fit your needs.
+Make a copy of the compose template, then edit the newly created `compose.yaml` to fit your needs.
 
 You can either :  
 
