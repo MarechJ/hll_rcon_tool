@@ -250,11 +250,7 @@ git version
 
 You should get a reply like `git version 2.34.1`
   
-If you're using a debian-based distribution (ie : Ubuntu), you can install `git` by entering this command :  
-
-```shell
-apt install git-all
-```
+If not, you'll find installation procedures on <https://git-scm.com/download/linux>
 
 #### 2. Docker Engine
 
@@ -271,13 +267,7 @@ docker version
 
 You should get a (multiline) reply like `Client: Docker Engine - Community - Version 26.1.0...`
   
-If you're using a debian-based distribution (ie : Ubuntu), you can install `Docker` by entering this command :  
-
-```shell
-apt install docker.io
-```
-
-You'll find other arch/distro Docker engine installation procedures on <https://docs.docker.com/engine/install/>
+If not, you'll find installation procedures on <https://docs.docker.com/engine/install/>
 
 #### 3. Compose plugin for Docker
 
@@ -294,13 +284,7 @@ docker compose version
 
 You should get a reply like `Docker Compose version v2.26.1`
   
-If you're using a debian-based distribution (ie : Ubuntu), you can install the Docker `Compose` plugin by entering this command :  
-
-```shell
-apt install docker-compose-plugin
-```
-
-You'll find other arch/distro Docker engine installation procedures on <https://docs.docker.com/compose/install/>
+If not, you'll find installation procedures on <https://docs.docker.com/compose/install/>
 
 #### 4. Any text editor that supports syntax highlighting
 
@@ -355,7 +339,7 @@ Make a copy of the environnement config file template :
 cp default.env .env
 ```
 
-Install the nano text editor :
+Install the nano text editor (debian-based command) :
 
 ```shell
 apt update && apt install nano
