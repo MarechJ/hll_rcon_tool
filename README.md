@@ -670,11 +670,13 @@ Now you can get into the CRCON users management tool, located at : <http://yourV
 
 #### Add a new user
 
-Click on the `+ Add` link.  
+Click on the `+ Add` link.
+
 ![readme_admin_account_setup_1](images/readme_admin_account_setup_1.png)
 
 Fill the `Add User` form  
-Don't forget to enter the user's Steam ID (see image below) : it will be used by CRCON to identify this user as an admin.  
+Don't forget to enter the user's Steam ID (see image below) : it will be used by CRCON to identify this user as an admin.
+
 ![readme_admin_account_setup_2](images/readme_admin_account_setup_2.png)
 
 Click on the `SAVE` link.
@@ -683,9 +685,11 @@ Once the user is created, you'll end up on that page :
 
 ![readme_admin_account_setup_3](images/readme_admin_account_setup_3.png)
 
-Don't forget to give yourself the `Superuser status` and `staff status` if you intend to disable the `admin` account !
+> [!WARNING]
+> Don't forget to give yourself the `Superuser status` and `staff status` if you intend to disable the `admin` account !
 
-Please note that users won't be allowed to change their password by themselves unless you check `staff status`.
+> [!NOTE]
+> Users won't be allowed to change their password by themselves unless you check `staff status` on their profile.
 
 To change the password of a user, click on its name, then on this link (see image below) :
 
