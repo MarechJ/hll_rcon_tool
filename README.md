@@ -238,7 +238,7 @@ If you use a different operating system or architecture, you will need to build 
 
 #### 1. git
 
-*(optional but highly recommended)*
+*(Optional but **highly** recommended)*
 
 If you don't use `git`, you'll have to manually download and install the CRCON releases in .zip format, and you won't be able to update your CRCON as easily as with `git`)
   
