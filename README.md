@@ -626,8 +626,6 @@ For example : **by default**, you can reach game server 1 on <http://yourVPSIP:8
 
 ### 6. Prepare to configure users
 
-We **MUST** change the admin's default password, as it is insanely insecure !
-
 Due to inner security checks, we need to declare the VPS IP/port as "secure" to be able to enter the users management tool.  
 Failing to do so **will** lead to `CSRF errors` when accessing the admin panel.
 
@@ -701,13 +699,17 @@ You also can change *your* current password using the dedicated link (top-right 
 
 #### Change admin's default password
 
+You **MUST** change the admin's default credentials, as they are insanely insecure.
+
 - click on the page title (`Django administration`) to get back to the main page.  
-*(This is the same as going to <http://yourVPSIP:8010/admin>)*
-- click on `Users`, then on `admin`.
-- Change the admin's default password  
-(you also can disable admin's account by unchecking the `Active` status,  
-just make sure there's another user having `Superuser status` and `staff status` activated)
+*(This is the same as going to <http://yourVPSIP:8010/admin>)* ;
+- click on `Users`, then on `admin` ;
+- Change the admin's default password ;
 - Click on the `SAVE` button
+
+> [!TIP]
+> (you also can disable admin's account by unchecking the `Active` status.  
+> just make sure there's another user having `Superuser status` and `staff status` activated).
 
 ---
 
