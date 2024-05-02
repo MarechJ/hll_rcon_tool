@@ -407,7 +407,7 @@ HLL_HOST=123.123.123.123
 
 #### 2-4. **RCON port**
 
-As provided by the game server provider. This is not the same as the game server IP.
+As provided by the game server provider. This is not the same as the game server port.
 
 ```Dotenv
 HLL_PORT=12345
@@ -415,7 +415,7 @@ HLL_PORT=12345
 
 #### 2-5. **RCON password**
 
-As provided by the game server provider. This is not the same as the game server IP.
+As provided by the game server provider.
 
 ```Dotenv
 HLL_PASSWORD=yourrconpassword
