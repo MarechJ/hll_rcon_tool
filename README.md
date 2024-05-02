@@ -279,7 +279,7 @@ apt install docker.io
 
 #### 3. Compose plugin for Docker
 
-Source : <https://docs.docker.com/compose/install/>  
+Source : <https://docs.docker.com/compose/>  
   
 > [!CAUTION]
 > `docker-compose` has been deprecated in july 2023, errors **will** occur if you try to use it.
@@ -395,7 +395,6 @@ RCONWEB_API_SECRET=anythingwithoutanyspaceordollarsign
 > [!CAUTION]
 > Do not change the string after CRCON has been started at least one time : existing passwords would be invalidated.
 
-Configure the game server(s) you want to manage.  
 If you want to manage more than one game server, repeat the steps below for the 2nd, 3rd, etc.
 
 #### 2-3. **RCON IP**
@@ -433,7 +432,7 @@ HLL_PASSWORD=yourrconpassword
 ### 3. Create a Docker Compose File
 
 `docker compose` commands need a special file to know what to do.  
-It will be created from a template.  
+This file will be created from a template.  
 If you intend to manage more than one HLL game server, you'll have to modify it to fit your needs.
 
 The `docker-templates/` folder contains two example templates :  
@@ -462,7 +461,7 @@ Make a copy of the `ten-servers.yaml` compose template, then edit the newly crea
 
 You can either :  
 
-- (easier) copy `ten-servers.yaml` and delete the parts about servers you don't need.
+- (easier) copy `ten-servers.yaml` and delete the parts about servers you don't need (see below).
 
   ```shell
   cp docker-templates/ten-servers.yaml compose.yaml
@@ -474,14 +473,11 @@ You can either :
   cp docker-templates/one-server.yaml compose.yaml
   ```
 
-There are two places that need to be updated for the `compose.yaml` to work properly :
+There are two places that need to be updated for the `compose.yaml` to work properly, according to your servers number :
 
 ##### 3.2.1 Networks
 
 The `networks` section (at the top) **must** contain a definition for each server.
-
-> [!CAUTION]
-> DO NOT remove the `common:` network.
 
 Add a network for each server you are using (look at `docker-templates/ten-servers.yaml` for examples)
 
@@ -494,12 +490,15 @@ Add a network for each server you are using (look at `docker-templates/ten-serve
 ```
 
 > [!NOTE]
-> If you are no longer managing all the defined game servers, you can leave their dedicated network.  
-> It won't hurt anything : it will just create extra unused networks.
+> If you are no longer managing all the defined game servers, you can delete their dedicated networks.  
+> Failing to do so won't hurt anything : it will just create extra unused networks.
+
+> [!CAUTION]
+> Do not remove the `common:` network.
 
 ##### 3.2.2 Services
 
-The `services` section defines what containers Docker will actually start when you run commands like `docker compose up -d`, so you need to add a service definition for each server you are trying to run (or delete the ones you won't use).
+The `services` section defines what containers Docker will actually start when you run commands like `docker compose up -d`, so you need to add a service definition for each server you are willing to run (or delete the ones you don't use).
 
 **For example**, if you used `one-server.yaml` as your starting template for `compose.yaml` and you wanted to add a 2nd server, you would copy the appropriate section from `docker-templates/ten-servers.yaml` and add it to your `compose.yaml` :
 
@@ -568,7 +567,7 @@ If you use the same server number twice, only one of them will start and you **w
 CRCON is now ready to start and connect to your HLL game server(s).
 
 > [!WARNING]
-> Do not think it's over yet, as we now have to configure CRCON's users.
+> Do not think it's over yet, as we now have to configure CRCON's users and secure the default admin account.
 
 > [!NOTE]
 > Launch process will display a *lot* of scrolling text.  
@@ -595,12 +594,12 @@ If everything went well, you will see output similar to (this is an example for 
  ✔ Container hll_rcon_tool-frontend_1-1    Started  0.1s
 ```
 
-If any of the containers report an `Error` status, and/or if you see messages about `unhealthy` services, something is misconfigured.  
+If any of the containers report an `Error` status, and/or if you see messages about `Unhealthy` services, something is misconfigured.  
 First thing to check :  
 
 - one game server :  
   - double check all the values in `.env` ;
-  - ensure you copied `docker-templates/one-server.yaml` to `compose.yaml` (not `docker-templates/ten-servers.yaml`).
+  - ensure you created `compose.yaml` from `docker-templates/one-server.yaml` (not `docker-templates/ten-servers.yaml`).
 - more than 1 game server :  
   - double check all the values in `.env` ;
   - you may have extra servers in `compose.yaml` that aren't configured in `.env`.
@@ -616,17 +615,18 @@ Each game server is accessed separately, pay attention to the `RCONWEB_PORT` val
 For example : **by default**, you can reach game server 1 on <http://yourVPSIP:8010/>  
 (substitute the IP address of your VPS for `yourVPSIP` in the URL).
 
-- Get in there an click on **LOGIN**, in the top menu.  
-The default credentials are `admin`/`admin`
+- Enter your server's URL in a web browser ;  
+- Click on `LOGIN`, in the top menu  
+*The default credentials are `admin`/`admin`* ;
 
 > [!WARNING]
 > Do not touch anything yet. You'll have plenty of time to play with the different tools later.
 
-Now, you **MUST** change the admin password, as it is highly insecure !
-
 ---
 
 ### 6. Prepare to configure users
+
+We **MUST** change the admin's default password, as it is insanely insecure !
 
 Due to inner security checks, we need to declare the VPS IP/port as "secure" to be able to enter the users management tool.  
 Failing to do so **will** lead to `CSRF errors` when accessing the admin panel.
@@ -653,7 +653,7 @@ If a yellow or red flag pops in, you have a syntax error in your code : watch th
 ### 7. Restart CRCON
 
 Yes. Restart it. This may sound strange, but it is mandatory :  
-to be taken in account, the `server_url` value you've just set has to be declared during the CRCON Docker containers start.
+to be taken in account, the `server_url` value you've just set has to be read during the CRCON Docker containers start.
 
 ```shell
 docker compose restart
@@ -665,31 +665,37 @@ docker compose restart
 
 Now you can get into the CRCON users management tool, located at : <http://yourVPSIP:8010/admin>
 
-You should be already logged in. If not, the credentials are still `admin`/`admin`.
+> [!NOTE]
+> You should be already logged in. If not, the credentials are still `admin`/`admin`.
 
 #### Add a new user
 
 Click on the `+ Add` link.  
-![readme_admin_account_setup_1](images/readme_admin_account_setup_1.png)  
+![readme_admin_account_setup_1](images/readme_admin_account_setup_1.png)
+
 Fill the `Add User` form  
 Don't forget to enter the user's Steam ID (see image below) : it will be used by CRCON to identify this user as an admin.  
-![readme_admin_account_setup_2](images/readme_admin_account_setup_2.png)  
+![readme_admin_account_setup_2](images/readme_admin_account_setup_2.png)
+
 Click on the `SAVE` link.
 
-Once the user is created, you'll end up on that page:  
+Once the user is created, you'll end up on that page :
+
 ![readme_admin_account_setup_3](images/readme_admin_account_setup_3.png)
 
 Don't forget to give yourself the `Superuser status` and `staff status` if you intend to disable the `admin` account !
 
 Please note that users won't be allowed to change their password by themselves unless you check `staff status`.
 
-To change the password of a user, click on its name, then on this link (see image below):  
+To change the password of a user, click on its name, then on this link (see image below) :
+
 ![readme_admin_account_setup_4](images/readme_admin_account_setup_4.png)
 
-You also can change *your* current password using the dedicated link (top-right red square below) :  
+You also can change *your* current password using the dedicated link (top-right red square below) :
+
 ![readme_admin_password_1](images/readme_admin_password_1.png)
 
-#### Change default admin's password
+#### Change admin's default password
 
 - click on the page title (`Django administration`) to get back to the main page.  
 *(This is the same as going to <http://yourVPSIP:8010/admin>)*
