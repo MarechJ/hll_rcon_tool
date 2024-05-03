@@ -322,7 +322,7 @@ cd hll_rcon_tool
 ### 2. Edit the environment config file
 
 Now, you're going to create and edit an `.env` file, in which you'll tell CRCON how to connect to your HLL game server(s).  
-Here we'll use **nano**, a simple text editor that runs in text mode.  
+Here we'll use `nano`, a simple text editor that runs in text mode.  
 *You can use any other tool you're used to, either local or getting the file from a SFTP connection.*
 
 > [!CAUTION]
