@@ -108,16 +108,17 @@ class Environment(str, Enum):
     RAIN = "rain"
 
 
-class Faction(Enum):
-    class Faction(pydantic.BaseModel):
-        name: str
-        team: Team
+class _Faction(pydantic.BaseModel):
+    name: str
+    team: Team
 
-    CW = Faction(name="gb", team=Team.ALLIES)
-    GB = Faction(name="gb", team=Team.ALLIES)
-    GER = Faction(name="ger", team=Team.AXIS)
-    RUS = Faction(name="rus", team=Team.ALLIES)
-    US = Faction(name="us", team=Team.ALLIES)
+
+class Faction(Enum):
+    CW = _Faction(name="gb", team=Team.ALLIES)
+    GB = _Faction(name="gb", team=Team.ALLIES)
+    GER = _Faction(name="ger", team=Team.AXIS)
+    RUS = _Faction(name="rus", team=Team.ALLIES)
+    US = _Faction(name="us", team=Team.ALLIES)
 
 
 class Map(pydantic.BaseModel):
