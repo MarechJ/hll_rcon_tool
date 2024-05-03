@@ -3,6 +3,8 @@ import enum
 from dataclasses import dataclass
 from typing import List, Literal, Optional, TypedDict
 
+import typing_extensions
+
 
 # Have to inherit from str to allow for JSON serialization w/ pydantic
 class RconInvalidNameActionType(str, enum.Enum):
@@ -653,7 +655,7 @@ class InvalidLogTypeError(ValueError):
         }
 
 
-class MapType(TypedDict):
+class MapType(typing_extensions.TypedDict):
     id: str
     name: str
     tag: str
@@ -663,7 +665,7 @@ class MapType(TypedDict):
     axis: str
 
 
-class LayerType(TypedDict):
+class LayerType(typing_extensions.TypedDict):
     id: str
     map: MapType
     gamemode: str

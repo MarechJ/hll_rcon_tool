@@ -1,12 +1,14 @@
 import re
 from enum import Enum
 from logging import getLogger
-from typing import Iterable, Literal, Sequence, Union
+from typing import TYPE_CHECKING, Any, Iterable, Literal, Sequence, Union
 from urllib.parse import urljoin
 
 import pydantic
 from requests.structures import CaseInsensitiveDict
+from typing_extensions import Literal
 
+from rcon.types import LayerType
 from rcon.user_config.scorebot import ScorebotUserConfig
 
 logger = getLogger(__name__)
@@ -163,6 +165,28 @@ class Layer(pydantic.BaseModel):
             return str(self) == str(other)
         return NotImplemented
 
+    if TYPE_CHECKING:
+        # Ensure type checkers see the correct return type
+        def model_dump(
+            self,
+            *,
+            mode: Literal["json", "python"] | str = "python",
+            include: Any = None,
+            exclude: Any = None,
+            by_alias: bool = False,
+            exclude_unset: bool = False,
+            exclude_defaults: bool = False,
+            exclude_none: bool = False,
+            round_trip: bool = False,
+            warnings: bool = True,
+        ) -> LayerType:
+            ...
+
+    else:
+
+        def model_dump(self, **kwargs):
+            return super().model_dump(**kwargs)
+
     @property
     def attacking_faction(self):
         if self.attackers == Team.ALLIES:
@@ -204,7 +228,7 @@ class Layer(pydantic.BaseModel):
         """Returns the map image URL if the scoreboard URL is configured"""
         config = ScorebotUserConfig.load_from_db()
         if config.base_scoreboard_url:
-            return urljoin(str(config.base_scoreboard_url), self.image_name)
+            return urljoin(str(config.base_scoreboard_url), f"maps/{self.image_name}")
 
 
 MAPS = {
