@@ -335,20 +335,20 @@ Make a copy of the environnement config file template :
 cp default.env .env
 ```
 
-Install the nano text editor (debian-based command) :
+Install the `nano` text editor (debian-based command) :
 
 ```shell
-apt update && apt install nano
+apt update && apt install `nano`
 ```
 
-Launch nano to edit the .env file :
+Launch `nano` to edit the .env file :
 
 ```shell
 nano .env
 ```
 
 > [!TIP]
-> In nano, you can move the cursor with the arrow keys.  
+> In `nano`, you can move the cursor with the arrow keys.  
 
 You do not have to change all the values. Only these 5 are mandatory :
 
