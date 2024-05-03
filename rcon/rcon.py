@@ -161,6 +161,7 @@ class Rcon(ServerCtl):
             self.pool_size = config.thread_pool_size
 
         self._current_map = parse_layer(UNKNOWN_MAP_NAME)
+        self._next_map = parse_layer(UNKNOWN_MAP_NAME)
 
     @property
     def current_map(self) -> Layer:
@@ -171,6 +172,15 @@ class Rcon(ServerCtl):
     def current_map(self, map_name: str):
         if not is_server_loading_map(map_name):
             self._current_map = parse_layer(map_name)
+
+    @property
+    def next_map(self) -> Layer:
+        """Store the next map as reported by the `gamestate` command"""
+        return self._next_map
+
+    @next_map.setter
+    def next_map(self, map_name: str):
+        self._next_map = parse_layer(map_name)
 
     @cached_property
     def thread_pool(self):
@@ -801,20 +811,19 @@ class Rcon(ServerCtl):
         raw_time_remaining = raw_time_remaining.split("Remaining Time: ")[1]
         # Handle Untitled_ style map names when maps are loading
         self.current_map = raw_current_map.split(": ")[1]
-        next_map = raw_next_map.split(": ")[1]
+        self.next_map = raw_next_map.split(": ")[1]
 
         return {
             "num_allied_players": int(num_allied_players),
             "num_axis_players": int(num_axis_players),
             "allied_score": int(allied_score),
             "axis_score": int(axis_score),
+            "raw_time_remaining": raw_time_remaining,
             "time_remaining": timedelta(
                 hours=float(hours), minutes=float(mins), seconds=float(secs)
             ),
-            "raw_time_remaining": raw_time_remaining,
-            # TODO: Update this when we return Layers from the API
-            "current_map": str(self.current_map),
-            "next_map": next_map,
+            "current_map": self.current_map.model_dump(),
+            "next_map": self.next_map.model_dump(),
         }
 
     @ttl_cache(ttl=2, cache_falsy=False)
