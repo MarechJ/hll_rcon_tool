@@ -868,16 +868,14 @@ class Rcon(ServerCtl):
                     raise CommandFailedError(res)
 
     @ttl_cache(ttl=10)
-    def get_map(self) -> str:
-        # TODO: think about whether or not the new gamestate command can simplify this
+    def get_map(self) -> Layer:
         current_map = super().get_map()
         if not self.map_regexp.match(current_map):
             raise CommandFailedError("Server returned wrong data")
 
         self.current_map = current_map
 
-        # TODO: Update this when we return Layers from the API
-        return str(self.current_map)
+        return self.current_map
 
     @ttl_cache(ttl=60 * 5)
     def get_current_map_sequence(self) -> list[str]:
