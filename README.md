@@ -338,7 +338,7 @@ cp default.env .env
 Install the `nano` text editor (debian-based command) :
 
 ```shell
-apt update && apt install `nano`
+apt update && apt install nano
 ```
 
 Launch `nano` to edit the `.env` file :
