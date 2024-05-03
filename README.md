@@ -341,7 +341,7 @@ Install the `nano` text editor (debian-based command) :
 apt update && apt install `nano`
 ```
 
-Launch `nano` to edit the .env file :
+Launch `nano` to edit the `.env` file :
 
 ```shell
 nano .env
