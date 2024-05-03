@@ -113,19 +113,11 @@ def public_info(request):
         logger.error("Can't get current map time, map_recorder is probably offline")
         current_map_start = None
 
-    def explode_map_info(game_map: str, start) -> dict:
-        return dict(
-            just_name=parse_layer(game_map).map.id,
-            human_name=safe_get_map_name(game_map),
-            name=game_map,
-            start=start,
-        )
-
     config = RconServerSettingsUserConfig.load_from_db()
     return api_response(
         result=dict(
-            current_map=explode_map_info(gamestate["current_map"], current_map_start),
-            next_map=explode_map_info(gamestate["next_map"], None),
+            current_map=dict(map=gamestate["current_map"], start=current_map_start),
+            next_map=dict(map=gamestate["next_map"], start=None),
             player_count=curr_players,
             max_player_count=max_players,
             players=dict(

@@ -17,7 +17,6 @@ import moment from "moment";
 import useMediaQuery from "@material-ui/core/useMediaQuery";
 import { useTheme } from "@material-ui/core/styles";
 import Scores from "./Scores";
-import { getMapImageUrl } from "./utils";
 import { fade } from "@material-ui/core/styles/colorManipulator";
 import { Link as RouterLink } from "react-router-dom";
 
@@ -176,8 +175,8 @@ const LiveScore = ({ classes, endpoint, explainText, title }) => {
   let started = serverState.get("current_map", new Map()).get("start");
   started = started
     ? new Date(Date.now() - new Date(started * 1000))
-      .toISOString()
-      .substr(11, 8)
+        .toISOString()
+        .substr(11, 8)
     : "N/A";
 
   return (
@@ -282,7 +281,7 @@ const LiveHeader = ({
       ?.get("winning_maps")
       ?.get(0) || ["", 0];
     const totalVotes = serverState.get("vote_status")?.get("total_votes");
-    const nextMap = serverState.get("next_map")?.get("name");
+    const nextMap = serverState.get("next_map")?.get("map")?.get("pretty_name");
 
     if (map === nextMap) {
       return `Nextmap ${nextMap} with ${nbVotes} out of ${totalVotes} votes`;
@@ -325,13 +324,17 @@ const LiveHeader = ({
           <GridListTile>
             <img
               alt="Map"
-              src={getMapImageUrl(serverState.get('name'))}
+              src={`maps/${serverState
+                .get("current_map")
+                ?.get("map")
+                ?.get("image_name")}`}
             />
             <GridListTileBar
               className={styles.titleBarTop}
               title={serverState
                 .get("current_map", new Map())
-                .get("human_name", "N/A")}
+                .get("map", new Map())
+                .get("pretty_name")}
               subtitle=""
               titlePosition="top"
             />

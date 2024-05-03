@@ -4,24 +4,23 @@ import os
 import pathlib
 import sys
 import time
-from typing import Callable
+from contextlib import contextmanager
+from typing import Callable, Generator
 from urllib.parse import urljoin
 
 import requests
 from requests.exceptions import ConnectionError, RequestException
+from sqlalchemy import create_engine, select
+from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
 
 import discord
 from discord.embeds import Embed
 from discord.errors import HTTPException, NotFound
-from rcon.scoreboard import STAT_DISPLAY_LOOKUP, get_stat, get_stat_post_processor
-from rcon.user_config.scorebot import ScorebotUserConfig, StatTypes
 from rcon.maps import UNKNOWN_MAP_NAME
+from rcon.scoreboard import STAT_DISPLAY_LOOKUP, get_stat, get_stat_post_processor
+from rcon.types import PlayerStatsType, PublicInfoType
+from rcon.user_config.scorebot import ScorebotUserConfig, StatTypes
 from rcon.utils import get_server_number
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, Session
-from sqlalchemy import create_engine, select
-from typing import Generator
-from rcon.types import PublicInfoType, PlayerStatsType
-from contextlib import contextmanager
 
 # TODO: This env var isn't actually exposed anywhere
 root_path = os.getenv("DISCORD_BOT_DATA_PATH", "/data")
@@ -117,20 +116,15 @@ map_to_pict = {
 }
 
 
-# TODO: Update this when we get improved map types
 def get_map_image(server_info: PublicInfoType, config: ScorebotUserConfig):
-    map_name: str = server_info["current_map"]["name"]
-
     try:
-        base_map_name, _ = map_name.split("_", maxsplit=1)
-    except ValueError:
-        base_map_name = map_name
+        url = server_info["current_map"]["map"]["image_url"]
+        if not url:
+            image_name = server_info["current_map"]["map"]["image_name"]
+            url = urljoin(str(config.base_scoreboard_url), f"maps/{image_name}")
+    except (IndexError, KeyError, TypeError):
+        url = urljoin(str(config.base_scoreboard_url), f"maps/{UNKNOWN_MAP_NAME}.webp")
 
-    if "night" in map_name.lower():
-        base_map_name = base_map_name + "_night"
-
-    img = map_to_pict.get(base_map_name, UNKNOWN_MAP_NAME)
-    url = urljoin(str(config.base_scoreboard_url), img)
     return url
 
 
@@ -145,7 +139,7 @@ def get_header_embed(public_info: PublicInfoType, config: ScorebotUserConfig):
 
     embed = discord.Embed(
         title=f"{public_info['name']}",
-        description=f"**{public_info['current_map']['human_name']} - {config.elapsed_time_text}{round(elapsed_time_minutes)} min. - {public_info['player_count']}/{public_info['max_player_count']} {config.players_text}**",
+        description=f"**{public_info['current_map']['map']['pretty_name']} - {config.elapsed_time_text}{round(elapsed_time_minutes)} min. - {public_info['player_count']}/{public_info['max_player_count']} {config.players_text}**",
         color=13734400,
         timestamp=datetime.datetime.utcnow(),
         url=str(config.base_scoreboard_url),
@@ -156,7 +150,7 @@ def get_header_embed(public_info: PublicInfoType, config: ScorebotUserConfig):
         winning_map_votes = public_info["vote_status"]["winning_maps"][0][1]
 
     embed.add_field(
-        name=f"{config.next_map_text} {public_info['next_map']['human_name']}",
+        name=f"{config.next_map_text} {public_info['next_map']['map']['pretty_name']}",
         value=f"{winning_map_votes}/{total_votes} {config.vote_text}",
     )
 
@@ -283,7 +277,6 @@ def send_or_edit_message(
     message_id: int | None = None,
     edit: bool = True,
 ):
-
     try:
         # Force creation of a new message if message ID isn't set
         if not edit or message_id is None:
