@@ -414,14 +414,20 @@ class LogLoop:
                 steam_id,
                 PlayerStat(
                     combat=player["combat"],
+                    p_combat=0,
                     offense=player["offense"],
+                    p_offense=0,
                     defense=player["defense"],
+                    p_defense=0,
                     support=player["support"],
+                    p_support=0,
                 ),
             )
             for stat in ["combat", "offense", "defense", "support"]:
-                if player[stat] > p[stat]:
-                    p[stat] = player[stat]
+                if player[stat] < p[stat]:
+                    p['p_' + stat] = p['p_' + stat] + p[stat]
+
+                p[stat] = player[stat]
             map_players[steam_id] = p
         maps.update(0, m)
 

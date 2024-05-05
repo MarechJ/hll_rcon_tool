@@ -349,9 +349,13 @@ class PlayerStatsType(TypedDict):
 
 class PlayerStat(TypedDict):
     combat: int
+    p_combat: int
     offense: int
+    p_offense: int
     defense: int
+    p_defense: int
     support: int
+    p_support: int
 
 
 class CachedLiveGameStats(TypedDict):

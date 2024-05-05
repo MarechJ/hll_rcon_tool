@@ -167,7 +167,7 @@ def record_stats_from_map(
                     defense=existing.defense,
                     support=existing.support,
                 )
-            map_stats = ps.get(steam_id_64, default_stat)
+            map_stats: PlayerStat = ps.get(steam_id_64, default_stat)
             player_stat = dict(
                 playersteamid_id=player_record.id,
                 map_id=map_.id,
@@ -193,10 +193,10 @@ def record_stats_from_map(
                 most_killed=stats.get("most_killed"),
                 death_by=stats.get("death_by"),
                 death_by_weapons=stats.get("death_by_weapons"),
-                combat=map_stats.get("combat"),
-                offense=map_stats.get("offense"),
-                defense=map_stats.get("defense"),
-                support=map_stats.get("support"),
+                combat=map_stats.get("combat") + map_stats.get("p_combat"),
+                offense=map_stats.get("offense") + map_stats.get('p_offense'),
+                defense=map_stats.get("defense") + map_stats.get('p_defense'),
+                support=map_stats.get("support") + map_stats.get('p_support'),
             )
             if existing is not None and force != True:
                 continue
