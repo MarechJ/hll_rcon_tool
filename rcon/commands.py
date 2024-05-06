@@ -523,7 +523,7 @@ class ServerCtl:
     def set_welcome_message(self, message) -> str:
         return self._str_request(f"say {message}", log_info=True, can_fail=False)
 
-    def set_map(self, map_name) -> str:
+    def set_map(self, map_name: str) -> str:
         return self._str_request(f"map {map_name}", log_info=True)
 
     def get_current_map_sequence(self) -> list[str]:
@@ -594,7 +594,9 @@ class ServerCtl:
 
         return self._str_request(cmd, can_fail=False, log_info=True)
 
-    def remove_map_from_rotation(self, map_name, map_number: int | None = None) -> str:
+    def remove_map_from_rotation(
+        self, map_name: str, map_number: int | None = None
+    ) -> str:
         cmd = f"rotdel {map_name}"
         if map_number:
             cmd = f"{cmd} {map_number}"
