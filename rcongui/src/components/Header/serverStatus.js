@@ -53,13 +53,15 @@ const Status = ({
             onClose={handleClose}
           >
             {serverList.map((s) => {
-              let link = ""
+              let link = "";
               if (s.get("link")) {
-                link = new URL(`${s.get('link')}${window.location.hash}`)
+                link = new URL(`${s.get("link")}${window.location.hash}`);
               } else {
                 // Everyone should be setting their server URL, but for locally hosted instances just swap out the port
                 const regex = /:(\d+)/gm;
-                link = new URL(window.location.href.replace(regex, `:${s.get('port')}`))
+                link = new URL(
+                  window.location.href.replace(regex, `:${s.get("port")}`)
+                );
               }
               return (
                 <MenuItem onClick={handleClose}>
@@ -71,7 +73,8 @@ const Status = ({
             })}
           </Menu>
           <small style={{ display: "block" }}>
-            {nbPlayers} ({balance}) - {map} - {timeRemaining} - {score}
+            {nbPlayers} ({balance}) - {map.pretty_name} - {timeRemaining} -{" "}
+            {score}
           </small>
         </Grid>
       </Grid>
@@ -86,7 +89,7 @@ class ServerStatus extends React.Component {
     this.state = {
       name: "",
       nbPlayers: "",
-      map: "",
+      map: new Map(),
       serverList: List(),
       refreshIntervalSec: 10,
       listRefreshIntervalSec: 30,

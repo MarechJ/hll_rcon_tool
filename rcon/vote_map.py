@@ -790,18 +790,18 @@ class VoteMap:
         rcon = get_rcon()
         # Apply rotation safely
 
-        current_rotation = [maps.parse_layer(m) for m in rcon.get_map_rotation()]
+        current_rotation = rcon.get_map_rotation()
 
         while len(current_rotation) > 1:
             # Make sure only 1 map is in rotation
             map_ = current_rotation.pop(1)
-            rcon.remove_map_from_rotation(map_)
+            rcon.remove_map_from_rotation(map_.id)
 
         current_next_map = current_rotation[0]
         if current_next_map != next_map:
             # Replace the only map left in rotation
             rcon.add_map_to_rotation(str(next_map))
-            rcon.remove_map_from_rotation(current_next_map)
+            rcon.remove_map_from_rotation(current_next_map.id)
 
         # Check that it worked
         current_rotation = rcon.get_map_rotation()

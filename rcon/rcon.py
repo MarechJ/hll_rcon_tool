@@ -848,19 +848,18 @@ class Rcon(ServerCtl):
         return result["time_remaining"]
 
     @ttl_cache(ttl=60)
-    def get_next_map(self) -> str:
+    def get_next_map(self) -> Layer:
         """Return the next map in the rotation as determined by the gameserver through the gamestate command"""
-        gamestate = self.get_gamestate()
-        return gamestate["next_map"]
+        return self.next_map
 
-    def set_map(self, map_name) -> None:
+    def set_map(self, map_name: str) -> None:
         with invalidates(Rcon.get_map):
             try:
                 res = super().set_map(map_name)
                 if res != "SUCCESS":
                     raise CommandFailedError(res)
             except CommandFailedError:
-                maps = self.get_map_rotation()
+                maps = [map_.id for map_ in self.get_map_rotation()]
                 self.add_map_to_rotation(
                     map_name, maps[len(maps) - 1], maps.count(maps[len(maps) - 1])
                 )
@@ -1025,7 +1024,7 @@ class Rcon(ServerCtl):
         slots = self.get_slots()
         return {
             "name": self.get_name(),
-            "map": self.get_map(),
+            "map": self.current_map.model_dump(),
             "nb_players": slots,
             "short_name": config.short_name,
             "player_count": slots.split("/")[0],
@@ -1033,8 +1032,8 @@ class Rcon(ServerCtl):
         }
 
     @ttl_cache(ttl=60 * 60 * 24)
-    def get_maps(self) -> list[str]:
-        return super().get_maps()
+    def get_maps(self) -> list[Layer]:
+        return [parse_layer(m) for m in super().get_maps()]
 
     # TODO: fix typing
     def get_server_settings(self):
@@ -1223,41 +1222,44 @@ class Rcon(ServerCtl):
             return res
 
     @ttl_cache(60 * 5)
-    def get_map_rotation(self) -> list[str]:
+    def get_map_rotation(self) -> list[Layer]:
         l = super().get_map_rotation()
 
+        maps: list[Layer] = []
         for map_ in l:
             if not self.map_regexp.match(map_):
                 raise CommandFailedError("Server return wrong data")
-        return l
+
+            maps.append(parse_layer(map_))
+        return maps
 
     def add_map_to_rotation(
         self,
-        map_name,
+        map_name: str,
         after_map_name: str | None = None,
         after_map_name_number: int | None = None,
     ) -> None:
         with invalidates(Rcon.get_map_rotation):
             if after_map_name is None:
-                current = self.get_map_rotation()
+                current = [map_.id for map_ in self.get_map_rotation()]
                 after_map_name = current[len(current) - 1]
                 after_map_name_number = current.count(after_map_name)
 
             super().add_map_to_rotation(map_name, after_map_name, after_map_name_number)
 
-    def remove_map_from_rotation(self, map_name, map_number: int | None = None):
+    def remove_map_from_rotation(self, map_name: str, map_number: int | None = None):
         with invalidates(Rcon.get_map_rotation):
             super().remove_map_from_rotation(map_name, map_number)
 
-    def remove_maps_from_rotation(self, map_names) -> Literal["SUCCESS"]:
+    def remove_maps_from_rotation(self, map_names: list[str]) -> Literal["SUCCESS"]:
         with invalidates(Rcon.get_map_rotation):
             for map_name in map_names:
                 super().remove_map_from_rotation(map_name)
             return "SUCCESS"
 
-    def add_maps_to_rotation(self, map_names) -> Literal["SUCCESS"]:
+    def add_maps_to_rotation(self, map_names: list[str]) -> Literal["SUCCESS"]:
         with invalidates(Rcon.get_map_rotation):
-            existing = self.get_map_rotation()
+            existing = [map_.id for map_ in self.get_map_rotation()]
             last = existing[len(existing) - 1]
             map_numbers = {last: existing.count(last)}
             for map_name in map_names:
@@ -1266,7 +1268,7 @@ class Rcon(ServerCtl):
                 map_numbers[last] = map_numbers.get(last, 0) + 1
             return "SUCCESS"
 
-    def set_maprotation(self, rotation) -> list[str]:
+    def set_maprotation(self, rotation: list[str]) -> list[Layer]:
         if not rotation:
             raise CommandFailedError("Empty rotation")
 
@@ -1274,11 +1276,12 @@ class Rcon(ServerCtl):
         logger.info("Apply map rotation %s", rotation)
 
         with invalidates(Rcon.get_map_rotation):
-            current = self.get_map_rotation()
+            current_as_layers = self.get_map_rotation()
+            current = [map_.id for map_ in current_as_layers]
             logger.info("Current rotation: %s", current)
             if rotation == current:
                 logger.debug("Map rotation is the same, nothing to do")
-                return current
+                return current_as_layers
 
             # we remove all but the first
             for map_ in current[1:]:

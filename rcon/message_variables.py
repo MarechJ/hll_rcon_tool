@@ -4,10 +4,10 @@ from logging import getLogger
 from typing import Any, Iterable
 
 from rcon.audit import ingame_mods, online_mods
+from rcon.maps import safe_get_map_name
 from rcon.rcon import Rcon, get_rcon
 from rcon.scoreboard import get_cached_live_game_stats, get_stat
 from rcon.settings import SERVER_INFO
-from rcon.maps import safe_get_map_name
 from rcon.types import CachedLiveGameStats, MessageVariable, StatTypes, VipIdType
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.webhooks import AdminPingWebhooksUserConfig
@@ -145,7 +145,7 @@ def _map_rotation(rcon: Rcon | None = None):
     if rcon is None:
         rcon = get_rcon()
     map_rot = rcon.get_map_rotation()
-    map_names = [safe_get_map_name(map_name) for map_name in map_rot]
+    map_names = [map_.pretty_name for map_ in map_rot]
     return ", ".join(map_names)
 
 

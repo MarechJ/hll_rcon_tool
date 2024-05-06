@@ -197,7 +197,7 @@ class AdminType(TypedDict):
 
 class StatusType(TypedDict):
     name: str
-    map: str
+    map: "LayerType"
     nb_players: str
     short_name: str
     player_count: str
