@@ -475,11 +475,9 @@ class RconAPI(Rcon):
     def get_votemap_status(self) -> VoteMapStatusType:
         v = VoteMap()
 
-        # TODO: finish this typing
-        # TODO: update this when we return `Layer`s instead of strings
         return {
-            "votes": {k: str(v) for k, v in v.get_votes().items()},
-            "selection": [str(m) for m in v.get_selection()],
+            "votes": v.get_votes(),
+            "selection": [m for m in v.get_selection()],
             "results": v.get_vote_overview(),
         }
 

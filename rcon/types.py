@@ -3,7 +3,7 @@ import enum
 from dataclasses import dataclass
 from typing import List, Literal, Optional, TypedDict
 
-import typing_extensions
+from rcon.maps import Layer, LayerType
 
 
 # Have to inherit from str to allow for JSON serialization w/ pydantic
@@ -586,13 +586,13 @@ class VoteMapPlayerVoteType(TypedDict):
 
 class VoteMapResultType(TypedDict):
     total_votes: int
-    winning_maps: list[tuple[str, int]]
+    winning_maps: list[tuple[Layer, int]]
 
 
 # TODO: finish this typing
 class VoteMapStatusType(TypedDict):
-    votes: VoteMapPlayerVoteType
-    selection: list[str]
+    votes: dict[str, Layer]
+    selection: list[Layer]
     results: VoteMapResultType | None
 
 
@@ -655,27 +655,6 @@ class InvalidLogTypeError(ValueError):
         }
 
 
-class MapType(typing_extensions.TypedDict):
-    id: str
-    name: str
-    tag: str
-    prettyname: str
-    shortname: str
-    allies: str
-    axis: str
-
-
-class LayerType(typing_extensions.TypedDict):
-    id: str
-    map: MapType
-    gamemode: str
-    attackers: str | None
-    environment: str
-    pretty_name: str
-    image_name: str
-    image_url: str | None
-
-
 class _PublicInfoCurrentMapType(TypedDict):
     map: LayerType
     start: int
@@ -720,8 +699,3 @@ class PublicInfoType(TypedDict):
     raw_time_remaining: str
     vote_status: _PublicInfoVoteStatusType
     name: _PublicInfoNameType
-
-
-class VoteOverview(TypedDict):
-    total_votes: int
-    winning_maps: list[tuple[str, int]]

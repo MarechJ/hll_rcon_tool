@@ -11,7 +11,7 @@ from rcon.commands import CommandFailedError
 from rcon.maps import categorize_maps, numbered_maps
 from rcon.rcon import Rcon
 from rcon.settings import SERVER_INFO
-from rcon.types import VoteOverview
+from rcon.types import VoteMapResultType
 from rcon.user_config.auto_broadcast import AutoBroadcastUserConfig
 from rcon.user_config.vote_map import VoteMapUserConfig
 from rcon.vote_map import VoteMap
@@ -34,7 +34,7 @@ class LazyPrinter:
             return self.default
 
 
-def get_votes_status(none_on_fail=False) -> VoteOverview | None:
+def get_votes_status(none_on_fail=False) -> VoteMapResultType | None:
     return VoteMap().get_vote_overview()
 
 
@@ -44,7 +44,7 @@ def format_winning_map(
     display_count=2,
     default=None,
 ):
-    nextmap: str = ctl.get_next_map()
+    nextmap = ctl.get_next_map()
     if not winning_maps:
         if default:
             return str(default)

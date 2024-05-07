@@ -19,7 +19,6 @@ from rcon.types import (
     StructuredLogLineWithMetaData,
     VoteMapPlayerVoteType,
     VoteMapResultType,
-    VoteOverview,
 )
 from rcon.user_config.vote_map import DefaultMethods, VoteMapUserConfig
 from rcon.utils import MapsHistory
@@ -583,13 +582,13 @@ class VoteMap:
         )
         return selected_map
 
-    def get_vote_overview(self) -> VoteOverview | None:
+    def get_vote_overview(self) -> VoteMapResultType | None:
         try:
             votes = self.get_votes()
             maps = Counter(votes.values()).most_common()
             return {
                 "total_votes": len(votes),
-                "winning_maps": [(str(m), v) for m, v in maps],
+                "winning_maps": [(m, v) for m, v in maps],
             }
         except Exception:
             logger.exception("Can't produce vote overview")
