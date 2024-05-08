@@ -12,6 +12,8 @@ from rcon.utils import exception_in_chain
 
 logger = logging.getLogger(__name__)
 
+SUCCESS = "SUCCESS"
+
 
 def convert_tabs_to_spaces(value: str) -> str:
     """Convert tabs to a space to not break HLL tab delimited lists"""
@@ -641,11 +643,13 @@ class ServerCtl:
         return self._str_request(f"pardonpermaban {ban_log}", log_info=True)
 
     @_escape_params
-    def add_admin(self, player_id, role, description) -> str:
+    def add_admin(self, player_id, role, description) -> bool:
         description = convert_tabs_to_spaces(description)
-        return self._str_request(
+        res = self._str_request(
             f'adminadd "{player_id}" "{role}" "{description}"', log_info=True
         )
+
+        return res == SUCCESS
 
     def remove_admin(self, player_id) -> str:
         return self._str_request(f"admindel {player_id}", log_info=True)

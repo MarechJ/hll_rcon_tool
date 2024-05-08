@@ -474,7 +474,7 @@ class Rcon(ServerCtl):
 
         return online
 
-    def add_admin(self, player_id, role, description) -> str:
+    def add_admin(self, player_id, role, description) -> bool:
         with invalidates(Rcon.get_admin_ids):
             return super().add_admin(player_id, role, description)
 
