@@ -327,7 +327,7 @@ const LiveHeader = ({
               src={`maps/${serverState
                 .get("current_map")
                 ?.get("map")
-                ?.get("image_name")}`}
+                ?.get("image_name", "unknown.webp")}`}
             />
             <GridListTileBar
               className={styles.titleBarTop}

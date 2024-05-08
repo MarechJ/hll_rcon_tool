@@ -242,14 +242,17 @@ const GamesScore = ({ classes }) => {
                     onClick={() => doSelectMap(m.get("id"))}
                     key={`${m.get("name")}${m.get("start")}${m.get("end")}`}
                   >
-                    <img alt="Map" src={m.get("image_name")} />
+                    <img
+                      alt="Map"
+                      src={`maps/${m.get("map", new Map()).get("image_name")}`}
+                    />
 
                     <GridListTileBar
                       className={isSelected(
                         styles.selectedTitleBarTop,
                         styles.titleBarTop
                       )}
-                      title={m.get("long_name")}
+                      title={m.get("map", new Map()).get("pretty_name")}
                       subtitle={`${duration.humanize()}`}
                       titlePosition="top"
                     />
