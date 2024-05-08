@@ -19,7 +19,7 @@ METRICS = {
     "player_count": lambda rcon: int(rcon.get_slots().split("/")[0]),
     "online_mods": lambda: len(online_mods()),
     "ingame_mods": lambda: len(ingame_mods()),
-    "current_map": lambda rcon: rcon.get_map().replace("_RESTART", ""),
+    "current_map": lambda rcon: str(rcon.current_map),
     "time_of_day": lambda tz: datetime.now(tz=tz),
 }
 CONFIG_DIR = os.getenv("CONFIG_DIR", "config/")
