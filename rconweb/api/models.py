@@ -214,7 +214,7 @@ class RconUser(User):
             ),
             (
                 "can_view_players",
-                "Can view get_players_fast endpoint for all connected players ",
+                "Can view get_players endpoint for all connected players ",
             ),
             ("can_view_profanities", "Can view profanities (censored game chat)"),
             ("can_view_queue_length", "Can view the maximum size of the server queue"),

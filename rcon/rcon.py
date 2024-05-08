@@ -189,56 +189,39 @@ class Rcon(ServerCtl):
     def run_in_pool(self, function_name: str, *args, **kwargs):
         return self.thread_pool.submit(getattr(self, function_name), *args, **kwargs)
 
-    def get_players_fast(self) -> list[GetPlayersType]:
-        # TODO: this isn't making API calls anymore, so it's not using the
-        # threadpool anymore and can be merged with `get_players`
+    @ttl_cache(ttl=5)
+    def get_players(self) -> list[EnrichedGetPlayersType]:
         steam_id_64s = {
             steam_id_64: {NAME: name, STEAMID: steam_id_64}
             for name, steam_id_64 in self.get_playerids()
         }
         # can't pickle dict keys object
-        profiles = rcon.steam_utils.get_steam_profiles_mult_players(
+        steam_profiles = rcon.steam_utils.get_steam_profiles_mult_players(
             steam_id_64s=[k for k in steam_id_64s.keys()]
         )
 
-        players: dict[str, GetPlayersType] = {}
+        vip_player_ids = set(v["steam_id_64"] for v in super().get_vip_ids())
+        profiles = {
+            p["steam_id_64"]: p
+            for p in get_profiles([player_id for player_id in steam_id_64s.keys()])
+        }
+
+        players: dict[str, EnrichedGetPlayersType] = {}
         for steam_id_64 in steam_id_64s.keys():
-            profile = profiles.get(steam_id_64)
+            profile = steam_profiles.get(steam_id_64)
             players[steam_id_64] = {
                 NAME: steam_id_64s[steam_id_64]["name"],
                 STEAMID: steam_id_64,
                 "country": profile.get("country") if profile else None,
                 "steam_bans": profile.get("bans") if profile else None,
+                "profile": profiles.get(steam_id_64),
+                "is_vip": steam_id_64 in vip_player_ids,
             }
 
-        return list(players.values())
-
-    @ttl_cache(ttl=5)
-    def get_players(self) -> list[EnrichedGetPlayersType]:
-        players = self.get_players_fast()
-
-        vips = set(v["steam_id_64"] for v in super().get_vip_ids())
-        steam_ids = [p.get(STEAMID) for p in players if p.get(STEAMID)]
-        profiles = {p["steam_id_64"]: p for p in get_profiles(steam_ids)}
-
-        updated_players: list[EnrichedGetPlayersType] = []
-
-        for p in players:
-            try:
-                updated_players.append(
-                    {
-                        **p,
-                        "profile": profiles.get(p.get(STEAMID)),
-                        "is_vip": p.get(STEAMID) in vips,
-                    }
-                )
-            except KeyError:
-                logger.error(f"Unable to retrieve profile information for player {p}")
-
-        return updated_players
+        return [p for p in players.values()]
 
     def get_detailed_players(self) -> GetDetailedPlayers:
-        players = self.get_players_fast()
+        players = self.get_players()
         fail_count = 0
         players_by_id: dict[str, GetDetailedPlayer] = {}
 
@@ -251,7 +234,9 @@ class Rcon(ServerCtl):
             try:
                 player_data: GetDetailedPlayer = future.result()
             except Exception:
-                logger.error("Failed to get info for %s", futures[future])
+                logger.error(
+                    "Failed to get info for %s", futures[future]["steam_id_64"]
+                )
                 fail_count += 1
                 player_data = default_player_info_dict(futures[future][NAME])
             player = futures[future]
