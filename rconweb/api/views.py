@@ -183,7 +183,7 @@ def expose_api_endpoint(
         arguments = {}
         failure = False
         others = None
-        error = ""
+        error: str | None = None
         data = _get_data(request)
 
         json_invalid_content_type_error = f"InvalidContentType: {request.method} {request.path} was called with {request.content_type}, expected one of {','.join(['application/json'])}"
