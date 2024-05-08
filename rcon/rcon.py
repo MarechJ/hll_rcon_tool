@@ -1223,14 +1223,16 @@ class Rcon(ServerCtl):
         map_name: str,
         after_map_name: str | None = None,
         after_map_name_number: int | None = None,
-    ) -> None:
+    ) -> str:
         with invalidates(Rcon.get_map_rotation):
             if after_map_name is None:
                 current = [map_.id for map_ in self.get_map_rotation()]
                 after_map_name = current[len(current) - 1]
                 after_map_name_number = current.count(after_map_name)
 
-            super().add_map_to_rotation(map_name, after_map_name, after_map_name_number)
+            return super().add_map_to_rotation(
+                map_name, after_map_name, after_map_name_number
+            )
 
     def remove_map_from_rotation(self, map_name: str, map_number: int | None = None):
         with invalidates(Rcon.get_map_rotation):
