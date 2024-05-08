@@ -1,12 +1,12 @@
 import inspect
-import orjson
 import logging
 import os
 import secrets
 from datetime import datetime, timezone
 from itertools import islice
-from typing import Any, Generic, Iterable, TypeVar, Iterable
+from typing import Any, Generic, Iterable, TypeVar
 
+import orjson
 import redis
 import redis.exceptions
 
@@ -54,15 +54,6 @@ ALL_ROLES = (
 )
 
 ALL_ROLES_KEY_INDEX_MAP = {v: i for i, v in enumerate(ALL_ROLES)}
-
-
-def get_current_map(rcon):
-    map_ = rcon.get_map()
-
-    if map_.endswith("_RESTART"):
-        map_ = map_.replace("_RESTART", "")
-
-    return map_
 
 
 T = TypeVar("T")

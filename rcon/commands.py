@@ -386,8 +386,6 @@ class ServerCtl:
         return self._str_request("get name", can_fail=False)
 
     def get_map(self) -> str:
-        # server adds a _RESTART suffix after the name when the map is
-        # loading
         return self._str_request("get map", can_fail=False)
 
     def get_maps(self) -> list[str]:

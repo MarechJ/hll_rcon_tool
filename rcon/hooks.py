@@ -25,7 +25,7 @@ from rcon.game_logs import (
     on_match_end,
     on_match_start,
 )
-from rcon.maps import LOG_MAP_NAMES_TO_MAP, UNKNOWN_MAP_NAME
+from rcon.maps import UNKNOWN_MAP_NAME, parse_layer
 from rcon.message_variables import format_message_string, populate_message_variables
 from rcon.models import enter_session
 from rcon.player_history import (
@@ -199,39 +199,34 @@ def handle_new_match_start(rcon: Rcon, struct_log):
         logger.info("New match started recording map %s", struct_log)
         with invalidates(Rcon.get_map):
             try:
-                current_map = rcon.get_map().replace("_RESTART", "")
+                # Don't use the current_map property and clear the cache to pull the new map name
+                current_map = rcon.get_map()
             except (CommandFailedError, HLLServerError):
-                current_map = UNKNOWN_MAP_NAME
-                logger.error("Unable to get current map")
+                current_map = parse_layer(UNKNOWN_MAP_NAME)
+                logger.error(
+                    "Unable to get current map, falling back to recording map as %s",
+                    UNKNOWN_MAP_NAME,
+                )
 
-        map_name_to_save = LOG_MAP_NAMES_TO_MAP.get(
-            struct_log["sub_content"], UNKNOWN_MAP_NAME
-        )
         guessed = True
-        log_map_name = struct_log["sub_content"].rsplit(" ")[0]
+        log_map_name = struct_log["sub_content"].rsplit(" ", 1)[0]
         log_time = datetime.fromtimestamp(struct_log["timestamp_ms"] / 1000)
         # Check that the log is less than 5min old
         if (datetime.utcnow() - log_time).total_seconds() < 5 * 60:
             # then we use the current map to be more accurate
-            if (
-                current_map.split("_")[0].lower()
-                == map_name_to_save.split("_")[0].lower()
-            ):
+            if current_map.map.name.lower() == log_map_name.lower():
                 map_name_to_save = current_map
                 guessed = False
-            elif map_name_to_save == UNKNOWN_MAP_NAME:
-                map_name_to_save = current_map
-                guessed = True
             else:
+                map_name_to_save = parse_layer(UNKNOWN_MAP_NAME)
                 logger.warning(
-                    "Got recent match start but map don't match %s != %s",
-                    map_name_to_save,
-                    current_map,
+                    "Got recent match start but map doesn't match %s != %s",
+                    log_map_name,
+                    current_map.map.name,
                 )
 
         # TODO added guess - check if it's already in there - set prev end if None
         maps_history = MapsHistory()
-
         if len(maps_history) > 0:
             if maps_history[0]["end"] is None and maps_history[0]["name"]:
                 maps_history.save_map_end(
@@ -240,7 +235,7 @@ def handle_new_match_start(rcon: Rcon, struct_log):
                 )
 
         maps_history.save_new_map(
-            new_map=map_name_to_save,
+            new_map=str(map_name_to_save),
             guessed=guessed,
             start_timestamp=int(struct_log["timestamp_ms"] / 1000),
         )
@@ -259,20 +254,34 @@ def record_map_end(rcon: Rcon, struct_log):
     logger.info("Match ended recording map %s", struct_log)
     maps_history = MapsHistory()
     try:
-        current_map = rcon.get_map()
+        current_map = rcon.current_map
     except (CommandFailedError, HLLServerError):
-        current_map = UNKNOWN_MAP_NAME
-        logger.error("Unable to get current map")
+        current_map = parse_layer(UNKNOWN_MAP_NAME)
+        logger.error(
+            "Unable to get current map, falling back to recording map as %s",
+            current_map,
+        )
 
-    map_name = LOG_MAP_NAMES_TO_MAP.get(struct_log["sub_content"], UNKNOWN_MAP_NAME)
+    # Log map names are inconsistently formatted but should match the map name that each Layer has
+    log_map_name = struct_log["sub_content"]
     log_time = datetime.fromtimestamp(struct_log["timestamp_ms"] / 1000)
 
+    # The log event loop can receive and process old log lines sometimes
+    # Check to make sure that if we're processing an old logl ine
     if (datetime.utcnow() - log_time).total_seconds() < 60:
         # then we use the current map to be more accurate
-        if current_map.split("_")[0].lower() == map_name.split("_")[0].lower():
+        if current_map.map.name.lower() in log_map_name.lower():
             maps_history.save_map_end(
-                current_map, end_timestamp=int(struct_log["timestamp_ms"] / 1000)
+                str(current_map), end_timestamp=int(struct_log["timestamp_ms"] / 1000)
             )
+        return
+
+    # If we're processing an old match
+    current_map = parse_layer(UNKNOWN_MAP_NAME)
+    logger.info(f"Recording map end: {current_map}")
+    maps_history.save_map_end(
+        str(current_map), end_timestamp=int(struct_log["timestamp_ms"] / 1000)
+    )
 
 
 def ban_if_blacklisted(rcon: Rcon, steam_id_64, name):

@@ -623,14 +623,6 @@ class VoteMap:
         votes = self._get_votes()
         return {k: maps.parse_layer(v) for k, v in votes.items()}
 
-    def get_current_map(self) -> maps.Layer:
-        """Return the current map name with _RESTART stripped if present"""
-        map_ = self.rcon.get_map()
-        if map_.endswith("_RESTART"):
-            map_ = map_.replace("_RESTART", "")
-
-        return maps.parse_layer(map_)
-
     def get_map_whitelist(self) -> set[maps.Layer]:
         """Return the set of map names on the whitelist or all possible game server maps if not configured"""
         res = self.red.get(self.whitelist_key)
@@ -679,7 +671,7 @@ class VoteMap:
         )
         selection = suggest_next_maps(
             maps_history=MapsHistory(),
-            current_map=self.get_current_map(),
+            current_map=self.rcon.current_map,
             whitelist_maps=self.get_map_whitelist(),
             num_warfare=config.num_warfare_options,
             num_offensive=config.num_offensive_options,

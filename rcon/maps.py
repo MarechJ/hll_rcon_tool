@@ -2,14 +2,11 @@ import re
 from enum import Enum
 from logging import getLogger
 from typing import TYPE_CHECKING, Any, Iterable, Literal, Sequence, Union
-from urllib.parse import urljoin
 
 import pydantic
+import typing_extensions
 from requests.structures import CaseInsensitiveDict
 from typing_extensions import Literal
-
-from rcon.types import LayerType
-from rcon.user_config.scorebot import ScorebotUserConfig
 
 logger = getLogger(__name__)
 
@@ -25,46 +22,28 @@ UNKNOWN_MAP_NAME = "unknown"
 UNKNOWN_MAP_TAG = "UNK"
 
 
-LOG_MAP_NAMES_TO_MAP = CaseInsensitiveDict(
-    {
-        "CARENTAN OFFENSIVE": "carentan_offensive_ger",
-        "CARENTAN WARFARE": "carentan_warfare",
-        "FOY OFFENSIVE": "foy_offensive_ger",
-        "FOY WARFARE": "foy_warfare",
-        "HILL 400 OFFENSIVE": "hill400_offensive_ger",
-        "HILL 400 WARFARE": "hill400_warfare",
-        "HÜRTGEN FOREST OFFENSIVE": "hurtgenforest_offensive_ger",
-        "HÜRTGEN FOREST WARFARE": "hurtgenforest_warfare_V2",
-        "KURSK OFFENSIVE": "kursk_offensive_ger",
-        "KURSK WARFARE": "kursk_warfare",
-        "Kharkov OFFENSIVE": "kharkov_offensive_rus",
-        "Kharkov WARFARE": "kharkov_warfare",
-        "PURPLE HEART LANE OFFENSIVE": "purpleheartlane_offensive_ger",
-        "PURPLE HEART LANE WARFARE": "purpleheartlane_warfare",
-        "REMAGEN OFFENSIVE": "remagen_offensive_ger",
-        "REMAGEN WARFARE": "remagen_warfare",
-        "SAINTE-MÈRE-ÉGLISE OFFENSIVE": "stmereeglise_offensive_ger",
-        "SAINTE-MÈRE-ÉGLISE WARFARE": "stmereeglise_warfare",
-        "ST MARIE DU MONT OFFENSIVE": "stmariedumont_off_ger",
-        "ST MARIE DU MONT WARFARE": "stmariedumont_warfare",
-        "STALINGRAD OFFENSIVE": "stalingrad_offensive_ger",
-        "STALINGRAD WARFARE": "stalingrad_warfare",
-        "UTAH BEACH OFFENSIVE": "utahbeach_offensive_ger",
-        "UTAH BEACH WARFARE": "utahbeach_warfare",
-        "OMAHA BEACH WARFARE": "omahabeach_warfare",
-        "OMAHA BEACH OFFENSIVE": "omahabeach_offensive_ger",
-        "DRIEL WARFARE": "driel_warfare",
-        "DRIEL OFFENSIVE": "driel_offensive_ger",
-        "EL ALAMEIN WARFARE": "elalamein_warfare",
-        "EL ALAMEIN OFFENSIVE": "elalamein_offensive_ger",
-        "MORTAIN WARFARE": "mortain_warfare_day",
-        "MORTAIN OFFENSIVE": "mortain_offensiveUS_day",
-    }
-)
+class MapType(typing_extensions.TypedDict):
+    id: str
+    name: str
+    tag: str
+    prettyname: str
+    shortname: str
+    allies: str
+    axis: str
+
+
+class LayerType(typing_extensions.TypedDict):
+    id: str
+    map: MapType
+    gamemode: str
+    attackers: str | None
+    environment: str
+    pretty_name: str
+    image_name: str
+    image_url: str | None
+
 
 # Sourced with some minor modifications from https://github.com/timraay/Gamewatch/blob/master/
-
-
 class Gamemode(str, Enum):
     WARFARE = "warfare"
     OFFENSIVE = "offensive"
@@ -222,14 +201,6 @@ class Layer(pydantic.BaseModel):
     @property
     def image_name(self) -> str:
         return f"{self.map.id}-{self.environment.value}.webp".lower()
-
-    @pydantic.computed_field
-    @property
-    def image_url(self) -> str | None:
-        """Returns the map image URL if the scoreboard URL is configured"""
-        config = ScorebotUserConfig.load_from_db()
-        if config.base_scoreboard_url:
-            return urljoin(str(config.base_scoreboard_url), f"maps/{self.image_name}")
 
 
 MAPS = {

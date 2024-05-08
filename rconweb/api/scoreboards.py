@@ -63,19 +63,27 @@ def get_scoreboard_maps(request):
         total = query.count()
         res = query.limit(page_size).offset((page - 1) * page_size).all()
 
+        maps = []
+        for r in res:
+            r = r.to_dict()
+            maps.append(
+                dict(
+                    map=parse_layer(r["map_name"]),
+                    id=r["id"],
+                    creation_time=r["creation_time"],
+                    start=r["start"],
+                    end=r["end"],
+                    server_number=r["server_number"],
+                    player_stats=r["player_stats"],
+                )
+            )
+
         return api_response(
             result={
                 "page": page,
                 "page_size": page_size,
                 "total": total,
-                "maps": [
-                    dict(
-                        just_name=parse_layer(r.map_name).map.id,
-                        long_name=safe_get_map_name(r.map_name),
-                        **r.to_dict(),
-                    )
-                    for r in res
-                ],
+                "maps": maps,
             },
             failed=False,
             command="get_scoreboard_maps",
