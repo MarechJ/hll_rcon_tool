@@ -413,7 +413,7 @@ class ServerCountType(TypedDict):
 
 class AdminUserType(TypedDict):
     username: str
-    steam_id_64: str
+    player_id: str
 
 
 class AuditLogType(TypedDict):
