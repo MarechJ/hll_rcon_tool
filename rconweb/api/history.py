@@ -4,8 +4,8 @@ import logging
 from django.contrib.auth.decorators import permission_required
 from django.views.decorators.csrf import csrf_exempt
 
+import rcon.player_history as player_history
 from rcon import player_history
-from rcon.player_history import get_player_comments, post_player_comments
 
 from .audit_log import record_audit
 from .auth import RconJsonResponse, login_required
@@ -43,11 +43,11 @@ def get_player_messages(request):
 @login_required()
 @permission_required("api.can_view_player_comments", raise_exception=True)
 @require_http_methods(["GET"])
-def get_player_comment(request):
+def get_player_comments(request):
     data = _get_data(request)
     res = None
     try:
-        res = get_player_comments(steam_id_64=data["steam_id_64"])
+        res = player_history.get_player_comments(steam_id_64=data["player_id"])
         failed = False
     except:
         logger.exception("Unable to get player comments")
@@ -56,7 +56,7 @@ def get_player_comment(request):
     return RconJsonResponse(
         {
             "result": res,
-            "command": "player_comments",
+            "command": "get_player_comments",
             "arguments": data,
             "failed": failed,
         }
@@ -76,8 +76,8 @@ def post_player_comment(request):
         data = request.GET
 
     try:
-        post_player_comments(
-            steam_id_64=data["steam_id_64"],
+        player_history.post_player_comment(
+            steam_id_64=data["player_id"],
             comment=data["comment"],
             user=request.user.username,
         )
@@ -88,8 +88,8 @@ def post_player_comment(request):
 
     return RconJsonResponse(
         {
-            "result": "",
-            "command": "player_comments",
+            "result": None,
+            "command": "post_player_comment",
             "arguments": data,
             "failed": failed,
         }

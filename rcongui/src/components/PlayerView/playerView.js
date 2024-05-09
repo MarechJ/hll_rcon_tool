@@ -167,7 +167,7 @@ class PlayerView extends Component {
         }
       }
       postData(`${process.env.REACT_APP_API_URL}post_player_comment`, {
-        steam_id_64: steamid,
+        player_id: steamid,
         comment: comment,
       })
         .then((response) =>

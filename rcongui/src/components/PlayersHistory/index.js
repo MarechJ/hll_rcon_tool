@@ -211,7 +211,7 @@ class PlayersHistory extends React.Component {
       `PlayerID ${steamId64} temp banned ${durationHours} for ${reason}`
     );
     postData(`${process.env.REACT_APP_API_URL}temp_ban`, {
-      steam_id_64: steamId64,
+      player_id: steamId64,
       reason: reason,
       duration_hours: durationHours,
       forward: true,
@@ -354,20 +354,20 @@ class PlayersHistory extends React.Component {
 
   postComment(steamId64, comment, action) {
     postData(`${process.env.REACT_APP_API_URL}post_player_comment`, {
-      steam_id_64: steamId64,
+      player_id: steamId64,
       comment: action,
     })
       .then((response) => {
-        return showResponse(response, "post_player_comments", false);
+        return showResponse(response, "post_player_comment", false);
       })
       .then(() => {
         if (comment && comment !== "" && comment !== null) {
           postData(`${process.env.REACT_APP_API_URL}post_player_comment`, {
-            steam_id_64: steamId64,
+            player_id: steamId64,
             comment: comment,
           })
             .then((response) => {
-              return showResponse(response, "post_player_comments", false);
+              return showResponse(response, "post_player_comment", false);
             })
             .catch((error) => toast.error("Unable to connect to API " + error));
         }
@@ -382,7 +382,7 @@ class PlayersHistory extends React.Component {
       `PlayerID ${steamId64} blacklist for ${reason}`
     );
     postData(`${process.env.REACT_APP_API_URL}blacklist_player`, {
-      steam_id_64: steamId64,
+      player_id: steamId64,
       reason: reason,
     })
       .then((response) =>
@@ -419,7 +419,7 @@ class PlayersHistory extends React.Component {
   unBanPlayer(steamId64) {
     this.postComment(steamId64, null, `PlayerID ${steamId64} unbanned`);
     postData(`${process.env.REACT_APP_API_URL}unban`, {
-      steam_id_64: steamId64,
+      player_id: steamId64,
     })
       .then((response) =>
         showResponse(response, `PlayerID ${steamId64} unbanned`, true)

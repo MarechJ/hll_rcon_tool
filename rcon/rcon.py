@@ -498,7 +498,7 @@ class Rcon(ServerCtl):
             return {
                 "type": type_,
                 "name": None,
-                "steam_id_64": None,
+                "player_id": None,
                 "timestamp": None,
                 "ban_time": None,
                 "reason": None,
@@ -530,7 +530,7 @@ class Rcon(ServerCtl):
         return {
             "type": type_,
             "name": name,
-            "steam_id_64": steamd_id_64,
+            "player_id": steamd_id_64,
             # TODO FIX
             "timestamp": None,
             "ban_time": date,
@@ -561,14 +561,14 @@ class Rcon(ServerCtl):
         bans.reverse()
         return temp_bans + bans
 
-    def get_ban(self, player_id) -> list[GameServerBanType]:
+    def get_ban(self, player_id: str) -> list[GameServerBanType]:
         """
         get all bans from player_id
         @param player_id: steam_id_64 or windows store ID of a user
         @return: a array of bans
         """
         bans = self.get_bans()
-        return list(filter(lambda x: x.get("steam_id_64") == player_id, bans))
+        return list(filter(lambda x: x.get("player_id") == player_id, bans))
 
     @ttl_cache(ttl=60 * 5)
     def get_vip_ids(self) -> list[VipIdType]:

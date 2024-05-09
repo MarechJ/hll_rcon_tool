@@ -546,7 +546,7 @@ const GameView = ({ classes: globalClasses }) => {
 
         if (comment) {
           postData(`${process.env.REACT_APP_API_URL}post_player_comment`, {
-            steam_id_64: steam_id_64,
+            player_id: steam_id_64,
             comment: comment,
           })
             .then((response) =>

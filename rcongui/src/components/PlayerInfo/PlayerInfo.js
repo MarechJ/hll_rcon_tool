@@ -252,7 +252,7 @@ const PlayerInfoFunc = ({ classes }) => {
   };
 
   const fetchPlayerComments = (steamId64) => {
-    get(`get_player_comment?steam_id_64=${steamId64}`)
+    get(`get_player_comments?player_id=${steamId64}`)
       .then((response) => showResponse(response, "get_player_comments", false))
       .then((data) => {
         if (
@@ -268,11 +268,11 @@ const PlayerInfoFunc = ({ classes }) => {
 
   const handleNewComment = (newComment) => {
     postData(`${process.env.REACT_APP_API_URL}post_player_comment`, {
-      steam_id_64: steamId64,
+      player_id: steamId64,
       comment: newComment,
     })
       .then((response) => {
-        return showResponse(response, "post_player_comments", false);
+        return showResponse(response, "post_player_comment", false);
       })
       .then(() => {
         fetchPlayerComments(steamId64);
@@ -518,7 +518,7 @@ class PlayerInfo extends React.Component {
   }
 
   fetchPlayerComments(steamId64) {
-    get(`get_player_comment?steam_id_64=${steamId64}`)
+    get(`get_player_comments?player_id=${steamId64}`)
       .then((response) => showResponse(response, "get_player_comments", false))
       .then((data) => {
         if (
@@ -535,11 +535,11 @@ class PlayerInfo extends React.Component {
   handleNewComment(newComment) {
     const { steamId64 } = this.props.match.params;
     postData(`${process.env.REACT_APP_API_URL}post_player_comment`, {
-      steam_id_64: steamId64,
+      player_id: steamId64,
       comment: newComment,
     })
       .then((response) => {
-        return showResponse(response, "post_player_comments", false);
+        return showResponse(response, "post_player_comment", false);
       })
       .then(() => {
         this.fetchPlayerComments(steamId64);

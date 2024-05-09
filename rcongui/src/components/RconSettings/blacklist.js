@@ -23,7 +23,7 @@ class Blacklist extends React.Component {
 
   async blacklistPlayer() {
     return postData(`${process.env.REACT_APP_API_URL}blacklist_player`, {
-      steam_id_64: this.state.steam_id,
+      player_id: this.state.steam_id,
       name: this.state.name,
       reason: this.state.reason,
     })

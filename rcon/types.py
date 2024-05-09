@@ -213,7 +213,7 @@ class VipIdType(TypedDict):
 class GameServerBanType(TypedDict):
     type: str
     name: str | None
-    steam_id_64: str | None
+    player_id: str | None
     timestamp: datetime.datetime | None
     ban_time: str | None
     reason: str | None
@@ -471,18 +471,20 @@ class PlayerProfileType(TypedDict):
     id: int
     steam_id_64: str
     created: datetime.datetime
-    names: List[PlayerNameType]
-    sessions: List[PlayerSessionType]
+    names: list[PlayerNameType]
+    sessions: list[PlayerSessionType]
     sessions_count: int
     total_playtime_seconds: int
     current_playtime_seconds: int
-    received_actions: List[PlayerActionType]
+    received_actions: list[PlayerActionType]
     penalty_count: PenaltyCountType
     blacklist: Optional[BlackListType]
-    flags: List[PlayerFlagType]
+    flags: list[PlayerFlagType]
     watchlist: Optional[WatchListType]
     steaminfo: Optional[SteamInfoType]
     vips: Optional[list[PlayerVIPType]]
+    bans: list[GameServerBanType]
+    comments: list[PlayerCommentType]
 
 
 class GetPlayersType(TypedDict):

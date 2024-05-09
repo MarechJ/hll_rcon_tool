@@ -196,7 +196,7 @@ class RconAPI(Rcon):
             "perma": self.remove_perma_ban,
         }
         for b in bans:
-            if b.get("steam_id_64") == player_id:
+            if b.get("player_id") == player_id:
                 type_to_func[b["type"]](b["raw"])
 
         # unban broadcasting is handled in `rconweb.api.views.expose_api_endpoints`
@@ -238,18 +238,20 @@ class RconAPI(Rcon):
 
     def get_player_profile(
         self,
-        player_id: str | None = None,
-        player_db_id: int | None = None,
+        player_id: str,
         num_sessions: int = 10,
     ) -> PlayerProfileType | None:
-        if player_id:
-            return player_history.get_player_profile(
-                player_id=player_id, nb_sessions=num_sessions
-            )
-        else:
-            return player_history.get_player_profile_by_id(
-                id=player_db_id, nb_sessions=num_sessions
-            )
+        profile = player_history.get_player_profile(
+            player_id=player_id, nb_sessions=num_sessions
+        )
+        if profile:
+            bans = self.get_ban(player_id=player_id)
+            profile["bans"] = bans
+
+            comments = player_history.get_player_comments(steam_id_64=player_id)
+            profile["comments"] = comments
+
+        return profile
 
     def get_players_history(
         self,
