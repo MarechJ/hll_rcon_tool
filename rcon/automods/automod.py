@@ -98,7 +98,7 @@ def _do_punitions(
             if method == ActionMethod.KICK:
                 if not aplayer.details.dry_run:
                     rcon.do_kick(
-                        aplayer.name, aplayer.details.message, by=aplayer.details.author
+                        player=aplayer.name,reason= aplayer.details.message, by=aplayer.details.author, steam_id_64=aplayer.steam_id_64
                     )
                 audit(
                     aplayer.details.discord_audit_url,
