@@ -127,7 +127,7 @@ def send_to_discord_audit(
 
     # Flatten messages with newlines
     message = message.replace("\n", " ")
-    logger.info("Audit: [%s] %s", by, message)
+    logger.info("Audit: [%s] %s, %s", by, command_name, message)
     if not webhookurls:
         logger.debug("No webhooks set for audit log")
         return
