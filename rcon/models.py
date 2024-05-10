@@ -97,6 +97,7 @@ class PlayerSteamID(Base):
     steaminfo: Mapped["SteamInfo"] = relationship(back_populates="steamid")
     comments: Mapped[list["PlayerComment"]] = relationship(back_populates="player")
     stats: Mapped["PlayerStats"] = relationship(back_populates="steam_id_64")
+    bans: Mapped[list["PlayerBan"]] = relationship(back_populates="steamid")
 
     vips: Mapped[list["PlayerVIP"]] = relationship(
         back_populates="steamid",
@@ -733,7 +734,54 @@ class AuditLog(Base):
             "command_arguments": self.command_arguments,
             "command_result": self.command_result,
         }
+    
+class BanList(Base):
+    __tablename__: str = "ban_list"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str]
+    servers: Mapped[Optional[int]]
+    
+    bans: Mapped[list['PlayerBan']] = relationship(back_populates="ban_list")
 
+    def get_server_numbers(self) -> Optional[list[int]]:
+        if self.servers is None:
+            return None
+        
+        server_numbers = []
+        # bin() returns '0b...', so we slice of the first two characters and then iterate over the remaining
+        # characters from back to front.
+        # eg. bin(7) -> '0b1011' -> [1, 1, 0, 1] -> [1, 2, 4]
+        for i, c in enumerate(bin(self.servers)[:1:-1], 1):
+            if c == '1':
+                server_numbers.append(i)
+        return server_numbers
+    
+    def set_server_numbers(self, *server_numbers):
+        result = 0
+        for number in server_numbers:
+            if number <= 0:
+                raise ValueError("Server number must be greater than zero")
+            # Shift the positive bit to create a mask and then merge that mask with the result
+            # eg. [1, 2, 4] -> 0001, 0010, 1000 -> 1011
+            result |= (1 << (number - 1))
+        self.servers = result
+    
+    def set_all_servers(self):
+        self.servers = None
+
+class PlayerBan(Base):
+    __tablename__: str = "player_ban"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    
+    playersteamid_id: Mapped[int] = mapped_column(
+        ForeignKey("steam_id_64.id"), nullable=False, index=True
+    )
+    banlist_id: Mapped[int] = mapped_column(
+        ForeignKey("ban_list.id"), nullable=False, index=True
+    )
+
+    steam_64_id: Mapped['PlayerSteamID'] = relationship(back_populates="bans")
+    ban_list: Mapped['BanList'] = relationship(back_populates="bans")
 
 def install_unaccent():
     with enter_session() as sess:
