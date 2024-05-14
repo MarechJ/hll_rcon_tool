@@ -8,6 +8,7 @@ from typing import Final
 
 from discord_webhook import DiscordEmbed
 
+from rcon.blacklist import is_player_blacklisted
 import rcon.steam_utils as steam_utils
 from discord.utils import escape_markdown
 from rcon.cache_utils import invalidates
@@ -285,47 +286,46 @@ def record_map_end(rcon: Rcon, struct_log):
 
 
 def ban_if_blacklisted(rcon: Rcon, steam_id_64, name):
-    with enter_session() as sess:
-        player = get_player(sess, steam_id_64)
-
-        if not player:
-            logger.error("Can't check blacklist, player not found %s", steam_id_64)
-            return
-
-        if player.blacklist and player.blacklist.is_blacklisted:
-            try:
-                logger.info(
-                    "Player %s was banned due blacklist, reason: %s",
-                    str(name),
-                    player.blacklist.reason,
-                )
-                rcon.perma_ban(
-                    player_name=name,
-                    reason=player.blacklist.reason,
-                    by=f"BLACKLIST: {player.blacklist.by}",
-                )
-                safe_save_player_action(
-                    rcon=rcon,
-                    player_name=name,
-                    action_type="PERMABAN",
-                    reason=player.blacklist.reason,
-                    by=f"BLACKLIST: {player.blacklist.by}",
-                    steam_id_64=steam_id_64,
-                )
-                try:
-                    send_to_discord_audit(
-                        message=f"{dict_to_discord(dict(player=name, reason=player.blacklist.reason))}",
-                        command_name="blacklist",
-                        by="BLACKLIST",
-                    )
-                except:
-                    logger.error("Unable to send blacklist to audit log")
-            except:
-                send_to_discord_audit(
-                    message="Failed to apply ban on blacklisted players, please check the logs and report the error",
-                    command_name="blacklist",
-                    by="ERROR",
-                )
+    blacklist = is_player_blacklisted(steam_id_64)
+    if not blacklist:
+        return False
+    
+    try:
+        logger.info(
+            "Player %s was banned due blacklist, reason: %s",
+            str(name),
+            blacklist.reason,
+        )
+        rcon.perma_ban(
+            player_name=name,
+            reason=blacklist.reason,
+            by=f"BLACKLIST: {blacklist.admin_name}",
+        )
+        safe_save_player_action(
+            rcon=rcon,
+            player_name=name,
+            action_type="PERMABAN",
+            reason=blacklist.reason,
+            by=f"BLACKLIST: {blacklist.admin_name}",
+            steam_id_64=steam_id_64,
+        )
+        try:
+            send_to_discord_audit(
+                message=f"{dict_to_discord(dict(player=name, reason=blacklist.reason))}",
+                command_name="blacklist",
+                by="BLACKLIST",
+            )
+        except:
+            logger.error("Unable to send blacklist to audit log")
+    except:
+        send_to_discord_audit(
+            message="Failed to apply ban on blacklisted players, please check the logs and report the error",
+            command_name="blacklist",
+            by="ERROR",
+        )
+        return False
+    
+    return True
 
 
 def should_ban(
@@ -452,8 +452,14 @@ def handle_on_connect(rcon: Rcon, struct_log, name, steam_id_64):
         steam_id_64,
         timestamp=int(struct_log["timestamp_ms"]) / 1000,
     )
+
+    blacklisted = ban_if_blacklisted(rcon, steam_id_64, struct_log["player"])
+    if blacklisted:
+        # We don't need the player potentially blacklisted a second
+        # time because of VAC bans. So we return here.
+        return
+    
     save_start_player_session(steam_id_64, timestamp=timestamp)
-    ban_if_blacklisted(rcon, steam_id_64, struct_log["player"])
     ban_if_has_vac_bans(rcon, steam_id_64, struct_log["player"])
 
 

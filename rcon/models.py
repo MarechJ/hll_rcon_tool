@@ -1,12 +1,13 @@
+from enum import StrEnum
 import logging
 import os
 import re
 from contextlib import contextmanager
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Generator, List, Optional
 
 import pydantic
-from sqlalchemy import TIMESTAMP, ForeignKey, String, create_engine, text
+from sqlalchemy import TIMESTAMP, Enum, ForeignKey, String, create_engine, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -91,13 +92,13 @@ class PlayerSteamID(Base):
         back_populates="steamid",
         order_by="desc(PlayersAction.time)",
     )
-    blacklist: Mapped["BlacklistedPlayer"] = relationship(back_populates="steamid")
+    legacy_blacklist: Mapped["BlacklistedPlayer"] = relationship(back_populates="steamid")
     flags: Mapped[list["PlayerFlag"]] = relationship(back_populates="steamid")
     watchlist: Mapped["WatchList"] = relationship(back_populates="steamid")
     steaminfo: Mapped["SteamInfo"] = relationship(back_populates="steamid")
     comments: Mapped[list["PlayerComment"]] = relationship(back_populates="player")
     stats: Mapped["PlayerStats"] = relationship(back_populates="steam_id_64")
-    bans: Mapped[list["PlayerBan"]] = relationship(back_populates="steamid")
+    blacklists: Mapped[list["BlacklistRecord"]] = relationship(back_populates="steamid")
 
     vips: Mapped[list["PlayerVIP"]] = relationship(
         back_populates="steamid",
@@ -162,7 +163,7 @@ class PlayerSteamID(Base):
             "current_playtime_seconds": self.get_current_playtime_seconds(),
             "received_actions": [action.to_dict() for action in self.received_actions],
             "penalty_count": self.get_penalty_count(),
-            "blacklist": self.blacklist.to_dict() if self.blacklist else None,
+            "blacklist": self.legacy_blacklist.to_dict() if self.legacy_blacklist else None,
             "flags": [f.to_dict() for f in (self.flags or [])],
             "watchlist": self.watchlist.to_dict() if self.watchlist else None,
             "steaminfo": self.steaminfo.to_dict() if self.steaminfo else None,
@@ -734,14 +735,20 @@ class AuditLog(Base):
             "command_arguments": self.command_arguments,
             "command_result": self.command_result,
         }
-    
-class BanList(Base):
-    __tablename__: str = "ban_list"
+
+class BlacklistSyncMethod(StrEnum):
+    KICK_ONLY = "kick_only"
+    BAN_ON_CONNECT = "ban_on_connect"
+    BAN_IMMEDIATELY = "ban_immediately"
+
+class Blacklist(Base):
+    __tablename__: str = "blacklist"
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str]
+    sync: Mapped[BlacklistSyncMethod] = mapped_column(Enum(BlacklistSyncMethod), default=BlacklistSyncMethod.KICK_ONLY)
     servers: Mapped[Optional[int]]
     
-    bans: Mapped[list['PlayerBan']] = relationship(back_populates="ban_list")
+    records: Mapped[list['BlacklistRecord']] = relationship(back_populates="blacklist")
 
     def get_server_numbers(self) -> Optional[list[int]]:
         if self.servers is None:
@@ -769,19 +776,31 @@ class BanList(Base):
     def set_all_servers(self):
         self.servers = None
 
-class PlayerBan(Base):
-    __tablename__: str = "player_ban"
+class BlacklistRecord(Base):
+    __tablename__: str = "blacklist_record"
     id: Mapped[int] = mapped_column(primary_key=True)
+    reason: Mapped[str]
+    admin_name: Mapped[str]
+    created_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True),
+        default_factory=lambda: datetime.now(tz=timezone.utc)
+    )
+    expires_at: Mapped[Optional[datetime]] = mapped_column(TIMESTAMP(timezone=True))
     
     playersteamid_id: Mapped[int] = mapped_column(
         ForeignKey("steam_id_64.id"), nullable=False, index=True
     )
-    banlist_id: Mapped[int] = mapped_column(
-        ForeignKey("ban_list.id"), nullable=False, index=True
+    blacklist_id: Mapped[int] = mapped_column(
+        ForeignKey("blacklist.id"), nullable=False, index=True
     )
 
-    steam_64_id: Mapped['PlayerSteamID'] = relationship(back_populates="bans")
-    ban_list: Mapped['BanList'] = relationship(back_populates="bans")
+    steamid: Mapped['PlayerSteamID'] = relationship(back_populates="blacklists")
+    blacklist: Mapped['Blacklist'] = relationship(back_populates="records")
+
+    def expires_in(self):
+        if not self.expires_at:
+            return
+        return self.expires_at - datetime.now()
 
 def install_unaccent():
     with enter_session() as sess:

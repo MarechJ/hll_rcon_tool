@@ -66,7 +66,7 @@ def get_player_profile_by_ids(sess, ids):
         .options(
             selectinload(PlayerSteamID.names),
             selectinload(PlayerSteamID.received_actions),
-            selectinload(PlayerSteamID.blacklist),
+            selectinload(PlayerSteamID.legacy_blacklist),
             selectinload(PlayerSteamID.flags),
             selectinload(PlayerSteamID.watchlist),
             selectinload(PlayerSteamID.steaminfo),
@@ -82,7 +82,7 @@ def get_player_profile_by_steam_ids(sess, player_ids):
         .options(
             selectinload(PlayerSteamID.names),
             selectinload(PlayerSteamID.received_actions),
-            selectinload(PlayerSteamID.blacklist),
+            selectinload(PlayerSteamID.legacy_blacklist),
             selectinload(PlayerSteamID.flags),
             selectinload(PlayerSteamID.watchlist),
             selectinload(PlayerSteamID.steaminfo),
@@ -189,9 +189,9 @@ def get_players_by_appearance(
 
         if blacklisted is True:
             query = (
-                query.join(PlayerSteamID.blacklist)
+                query.join(PlayerSteamID.legacy_blacklist)
                 .filter(BlacklistedPlayer.is_blacklisted == True)
-                .options(contains_eager(PlayerSteamID.blacklist))
+                .options(contains_eager(PlayerSteamID.legacy_blacklist))
             )
         if is_watched is True:
             query = (
@@ -485,17 +485,17 @@ def add_player_to_blacklist(steam_id_64, reason, name=None, by=None):
         if not player:
             raise CommandFailedError(f"Player with steam id {steam_id_64} not found")
 
-        if player.blacklist:
-            if player.blacklist.is_blacklisted:
+        if player.legacy_blacklist:
+            if player.legacy_blacklist.is_blacklisted:
                 logger.warning(
                     "Player %s was already blacklisted with %s, updating reason to %s",
                     str(player),
-                    player.blacklist.reason,
+                    player.legacy_blacklist.reason,
                     reason,
                 )
-            player.blacklist.is_blacklisted = True
-            player.blacklist.reason = reason
-            player.blacklist.by = by
+            player.legacy_blacklist.is_blacklisted = True
+            player.legacy_blacklist.reason = reason
+            player.legacy_blacklist.by = by
         else:
             logger.info("Player %s blacklisted for %s", str(player), reason)
             sess.add(
@@ -513,10 +513,10 @@ def remove_player_from_blacklist(steam_id_64):
         if not player:
             raise CommandFailedError(f"Player with steam id {steam_id_64} not found")
 
-        if not player.blacklist:
+        if not player.legacy_blacklist:
             raise CommandFailedError(f"Player {player} was not blacklisted")
 
-        player.blacklist.is_blacklisted = False
+        player.legacy_blacklist.is_blacklisted = False
         sess.commit()
 
 

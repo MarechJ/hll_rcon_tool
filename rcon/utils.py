@@ -339,7 +339,7 @@ class ApiKey:
     def delete_key(self):
         self.red.delete(self.key)
 
-    def get_all_keys(self):
+    def get_all_keys(self) -> dict[str, str]:
         return {
             k.decode(): self.red.get(k.decode()).decode()
             for k in self.red.keys(f"{self.key_prefix}*")
