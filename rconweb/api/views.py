@@ -336,7 +336,7 @@ def run_raw_command(request):
 ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     rcon_api.add_admin: "api.can_add_admin_roles",
     rcon_api.add_map_to_rotation: "api.can_add_map_to_rotation",
-    rcon_api.add_map_to_whitelist: "api.can_add_map_to_whitelist",
+    rcon_api.add_map_to_vm_whitelist: "api.can_add_map_to_whitelist",
     rcon_api.add_maps_to_rotation: "api.can_add_maps_to_rotation",
     rcon_api.add_maps_to_vm_whitelist: "api.can_add_maps_to_whitelist",
     rcon_api.add_vip: "api.can_add_vip",
@@ -576,7 +576,7 @@ DEPRECATED_ENDPOINTS = (
 RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.add_admin: ["POST"],
     rcon_api.add_map_to_rotation: ["POST"],
-    rcon_api.add_map_to_whitelist: ["POST"],
+    rcon_api.add_map_to_vm_whitelist: ["POST"],
     rcon_api.add_maps_to_rotation: ["POST"],
     rcon_api.add_maps_to_vm_whitelist: ["POST"],
     rcon_api.add_vip: ["POST"],

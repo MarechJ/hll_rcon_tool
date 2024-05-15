@@ -505,7 +505,7 @@ class RconAPI(Rcon):
         # TODO: update this when we return `Layer`s instead of strings
         return [str(map) for map in v.get_map_whitelist()]
 
-    def add_map_to_whitelist(self, map_name: str):
+    def add_map_to_vm_whitelist(self, map_name: str):
         v = VoteMap()
         v.add_map_to_whitelist(map_name=map_name)
 
