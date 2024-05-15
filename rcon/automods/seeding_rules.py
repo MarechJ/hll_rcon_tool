@@ -20,8 +20,9 @@ from rcon.automods.models import (
 from rcon.automods.num_or_inf import num_or_inf
 from rcon.cache_utils import get_redis_client
 from rcon.game_logs import on_match_start
+from rcon.maps import Gamemode, parse_layer
 from rcon.rcon import StructuredLogLineType
-from rcon.types import GameState, Roles, GetDetailedPlayer
+from rcon.types import GameState, GetDetailedPlayer, Roles
 from rcon.user_config.auto_mod_seeding import AutoModSeedingUserConfig
 
 SEEDING_RULES_RESET_SECS = 120
@@ -48,9 +49,7 @@ class SeedingRulesAutomod:
     red: redis.StrictRedis
     config: AutoModSeedingUserConfig
 
-    def __init__(
-        self, config: AutoModSeedingUserConfig, red: redis.StrictRedis or None
-    ):
+    def __init__(self, config: AutoModSeedingUserConfig, red: redis.StrictRedis | None):
         self.logger = logging.getLogger(__name__)
         self.red = red
         self.config = config
@@ -80,7 +79,10 @@ class SeedingRulesAutomod:
             )
 
     def on_connected(
-        self, name: str, steam_id_64: str, detailed_player_info: GetDetailedPlayer | None = None
+        self,
+        name: str,
+        player_id: str,
+        detailed_player_info: GetDetailedPlayer | None = None,
     ) -> PunitionsToApply:
         p: PunitionsToApply = PunitionsToApply()
 
@@ -109,7 +111,7 @@ class SeedingRulesAutomod:
 
             p.warning.append(
                 PunishPlayer(
-                    steam_id_64=steam_id_64,
+                    player_id=player_id,
                     name=name,
                     squad="",
                     team="",
@@ -135,8 +137,8 @@ class SeedingRulesAutomod:
             "disallowed_weapons"
         ):
             aplayer = PunishPlayer(
-                steam_id_64=log["steam_id_64_1"],
-                name=log["player"],
+                player_id=log["player_id_1"],
+                name=log["player_name_1"],
                 squad="",
                 team="",
                 role="",
@@ -252,7 +254,7 @@ class SeedingRulesAutomod:
 
             for player in squad["players"]:
                 aplayer = PunishPlayer(
-                    steam_id_64=player["steam_id_64"],
+                    player_id=player["player_id"],
                     name=player["name"],
                     team=team,
                     squad=squad_name,
@@ -305,17 +307,12 @@ class SeedingRulesAutomod:
                         )
 
                 # TODO: update this when we update how maps are stored
-                if (
-                    "offensive" in game_state["current_map"]
-                    or game_state["current_map"].startswith("stmariedumont_off")
-                    or game_state["current_map"]
-                    in (
-                        "ELA_S_1942_P_Skirmish",
-                        "ELA_S_1942_Night_P_Skirmish",
-                        "DRL_S_1944_P_Skirmish",
-                        "DRL_S_1944_Night_P_Skirmish",
-                        "DRL_S_1944_Day_P_Skirmish",
-                    )
+                current_map = parse_layer(game_state["current_map"]["id"])
+                if current_map.gamemode in (
+                    Gamemode.OFFENSIVE,
+                    Gamemode.CONTROL,
+                    Gamemode.PHASED,
+                    Gamemode.MAJORITY,
                 ):
                     self._disable_for_round("enforce_cap_fight")
 

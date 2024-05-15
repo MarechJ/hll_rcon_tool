@@ -88,19 +88,19 @@ class MessageVariableContext(enum.Enum):
     """Available message variables if context passed"""
 
     player_name = "player_name"
-    player_steam_id_64 = "player_steam_id_64"
+    player_id = "player_id"
 
     # MostRecentEvents
-    last_victim_steam_id_64 = "last_victim_steam_id_64"
+    last_victim_player_id = "last_victim_player_id"
     last_victim_name = "last_victim_name"
-    last_nemesis_steam_id_64 = "last_nemesis_steam_id_64"
+    last_nemesis_player_id = "last_nemesis_player_id"
     last_nemesis_name = "last_nemesis_name"
     last_victim_weapon = "last_victim_weapon"
     last_nemesis_weapon = "last_nemesis_weapon"
-    last_tk_victim_steam_id_64 = "last_tk_victim_steam_id_64"
+    last_tk_victim_player_id = "last_tk_victim_player_id"
     last_tk_victim_name = "last_tk_victim_name"
     last_tk_victim_weapon = "last_tk_victim_weapon"
-    last_tk_nemesis_steam_id_64 = "last_tk_nemesis_steam_id_64"
+    last_tk_nemesis_player_id = "last_tk_nemesis_player_id"
     last_tk_nemesis_name = "last_tk_nemesis_name"
     last_tk_nemesis_weapon = "last_tk_nemesis_weapon"
 
@@ -111,16 +111,16 @@ class MessageVariableContext(enum.Enum):
 class MostRecentEvents:
     player_name: str | None = None
     last_victim_name: str | None = None
-    last_victim_steam_id_64: str | None = None
+    last_victim_player_id: str | None = None
     last_nemesis_name: str | None = None
-    last_nemesis_steam_id_64: str | None = None
+    last_nemesis_player_id: str | None = None
     last_victim_weapon: str | None = None
     last_nemesis_weapon: str | None = None
     last_tk_victim_name: str | None = None
-    last_tk_victim_steam_id_64: str | None = None
+    last_tk_victim_player_id: str | None = None
     last_tk_victim_weapon: str | None = None
     last_tk_nemesis_name: str | None = None
-    last_tk_nemesis_steam_id_64: str | None = None
+    last_tk_nemesis_player_id: str | None = None
     last_tk_nemesis_weapon: str | None = None
 
 
@@ -190,7 +190,7 @@ class PlayerIdsType(TypedDict):
 
 
 class AdminType(TypedDict):
-    steam_id_64: str
+    player_id: str
     name: str
     role: str
 
@@ -205,7 +205,7 @@ class StatusType(TypedDict):
 
 
 class VipIdType(TypedDict):
-    steam_id_64: str
+    player_id: str
     name: str
     vip_expiration: datetime.datetime | None
 
@@ -272,21 +272,21 @@ class SteamInfoType(TypedDict):
 class PlayerNameType(TypedDict):
     id: int
     name: str
-    steam_id_64: str
+    player_id: str
     created: datetime.datetime
     last_seen: datetime.datetime
 
 
 class PlayerSessionType(TypedDict):
     id: int
-    steam_id_64: str
+    player_id: str
     start: Optional[datetime.datetime]
     end: Optional[datetime.datetime]
     created: datetime.datetime
 
 
 class BlackListType(TypedDict):
-    steam_id_64: str
+    player_id: str
     is_blacklisted: bool
     reason: Optional[str]
     by: Optional[str]
@@ -305,7 +305,7 @@ class DBLogLineType(TypedDict):
     creation_time: datetime.datetime
     event_time: datetime.datetime
     type: Optional[str]
-    player_name: Optional[str]
+    player1_name: Optional[str]
     player1_id: Optional[str]
     player2_name: Optional[str]
     player2_id: Optional[str]
@@ -317,8 +317,7 @@ class DBLogLineType(TypedDict):
 
 class PlayerStatsType(TypedDict):
     id: int
-    player_id: int
-    steam_id_64: str
+    player_id: str
     player: Optional[str]
     steaminfo: Optional[SteamInfoType]
     map_id: int
@@ -391,13 +390,12 @@ class MapsType(TypedDict):
 class PlayerCommentType(TypedDict):
     id: int
     creation_time: datetime.datetime
-    playersteamid_id: int
     by: Optional[str]
     content: str
 
 
 class PlayerAtCountType(TypedDict):
-    steam_id_64: str
+    player_id: str
     name: str
     vip: Optional[bool]
 
@@ -449,7 +447,7 @@ class PlayerOptinsType(TypedDict):
 class WatchListType(TypedDict):
     id: int
     modified: datetime.datetime
-    steam_id_64: str
+    player_id: str
     is_watched: bool
     reason: str
     by: str
@@ -469,7 +467,7 @@ class PlayerVIPType(TypedDict):
 
 class PlayerProfileType(TypedDict):
     id: int
-    steam_id_64: str
+    player_id: str
     created: datetime.datetime
     names: list[PlayerNameType]
     sessions: list[PlayerSessionType]
@@ -483,20 +481,16 @@ class PlayerProfileType(TypedDict):
     watchlist: Optional[WatchListType]
     steaminfo: Optional[SteamInfoType]
     vips: Optional[list[PlayerVIPType]]
+
+
+class PlayerProfileTypeEnriched(PlayerProfileType):
     bans: list[GameServerBanType]
     comments: list[PlayerCommentType]
 
 
-class GetPlayersType(TypedDict):
-    name: str
-    steam_id_64: str
-    country: str | None
-    steam_bans: Optional[SteamBansType]
-
-
 class GetDetailedPlayer(TypedDict):
     name: str
-    steam_id_64: str
+    player_id: str
     profile: PlayerProfileType | None
     is_vip: bool
     unit_id: Optional[int]
@@ -518,17 +512,21 @@ class GetDetailedPlayers(TypedDict):
     fail_count: int
 
 
-class EnrichedGetPlayersType(GetPlayersType):
+class GetPlayersType(TypedDict):
+    name: str
+    player_id: str
+    country: str | None
+    steam_bans: Optional[SteamBansType]
     is_vip: bool
     profile: PlayerProfileType | None
 
 
 class StructuredLogLineType(TypedDict):
     action: str
-    player: str | None
-    steam_id_64_1: str | None
-    player2: str | None
-    steam_id_64_2: str | None
+    player_name_1: str | None
+    player_id_1: str | None
+    player_name_2: str | None
+    player_id_2: str | None
     weapon: str | None
     message: str
     sub_content: str | None
@@ -537,14 +535,15 @@ class StructuredLogLineType(TypedDict):
 class StructuredLogLineWithMetaData(TypedDict):
     version: int
     timestamp_ms: int
-    relative_time_ms: float
+    event_time: datetime.datetime
+    relative_time_ms: float | None
     raw: str
-    line_without_time: str
+    line_without_time: str | None
     action: str
-    player: str | None
-    steam_id_64_1: str | None
-    player2: str | None
-    steam_id_64_2: str | None
+    player_name_1: str | None
+    player_id_1: str | None
+    player_name_2: str | None
+    player_id_2: str | None
     weapon: str | None
     message: str
     sub_content: str | None
@@ -577,7 +576,7 @@ class VACGameBansConfigType(TypedDict):
 
 
 class VipId(TypedDict):
-    steam_id_64: str
+    player_id: str
     name: str
 
 

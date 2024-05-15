@@ -12,7 +12,7 @@ from sqlalchemy import and_
 from rcon import maps
 from rcon.cache_utils import get_redis_client
 from rcon.maps import categorize_maps, numbered_maps, sort_maps_by_gamemode
-from rcon.models import PlayerOptins, PlayerSteamID, enter_session
+from rcon.models import PlayerID, PlayerOptins, enter_session
 from rcon.player_history import get_player
 from rcon.rcon import CommandFailedError, Rcon, get_rcon
 from rcon.types import (
@@ -356,35 +356,37 @@ class VoteMap:
         self.set_last_reminder_time()
         players = rcon.get_playerids()
         # Get optins
-        steamd_ids = [steamid for _, steamid in players]
+        player_ids = [player_id for _, player_id in players]
         opted_out = {}
 
         try:
             with enter_session() as sess:
                 res = (
                     sess.query(PlayerOptins)
-                    .join(PlayerSteamID)
+                    .join(PlayerID)
                     .filter(
                         and_(
-                            PlayerSteamID.steam_id_64.in_(steamd_ids),
+                            PlayerID.player_id.in_(player_ids),
                             PlayerOptins.optin_name == self.optin_name,
                             PlayerOptins.optin_value == "false",
                         )
                     )
                     .all()
                 )
-                opted_out = {p.steamid.steam_id_64 for p in res}
+                opted_out = {p.player.player_id for p in res}
         except Exception:
             logger.exception("Can't get optins")
 
-        for name, steamid in players:
-            if self.has_voted(name) or (steamid in opted_out and config.allow_opt_out):
+        for name, player_id in players:
+            if self.has_voted(name) or (
+                player_id in opted_out and config.allow_opt_out
+            ):
                 logger.info("Not showing reminder to %s", name)
                 continue
 
             try:
                 rcon.message_player(
-                    player_id=steamid,
+                    player_id=player_id,
                     message=vote_map_message.format(
                         map_selection=self.format_map_vote(
                             selection=self.get_selection(),
@@ -406,7 +408,7 @@ class VoteMap:
         if not message.lower().startswith(("!votemap", "!vm")):
             return config.enabled
 
-        steam_id_64_1 = struct_log["steam_id_64_1"]
+        player_id_1 = struct_log["player_id_1"]
         if not config.enabled:
             return config.enabled
 
@@ -416,31 +418,29 @@ class VoteMap:
             try:
                 # shouldn't be possible but making the type checker happy
                 player = (
-                    struct_log["player"]
-                    if struct_log["player"]
+                    struct_log["player_name_1"]
+                    if struct_log["player_name_1"]
                     else "PlayerNameNotFound"
                 )
                 map_name = self.register_vote(
                     player, struct_log["timestamp_ms"] // 1000, vote
                 )
             except InvalidVoteError:
-                rcon.message_player(player_id=steam_id_64_1, message="Invalid vote.")
+                rcon.message_player(player_id=player_id_1, message="Invalid vote.")
                 if config.help_text:
-                    rcon.message_player(
-                        player_id=steam_id_64_1, message=config.help_text
-                    )
+                    rcon.message_player(player_id=player_id_1, message=config.help_text)
             except VoteMapNoInitialised:
                 rcon.message_player(
-                    player_id=steam_id_64_1,
+                    player_id=player_id_1,
                     message="We can't register you vote at this time.\nVoteMap not initialised",
                 )
                 raise
             else:
                 if msg := config.thank_you_text:
                     msg = msg.format(
-                        player_name=struct_log["player"], map_name=map_name
+                        player_name=struct_log["player_name_1"], map_name=map_name
                     )
-                    rcon.message_player(player_id=steam_id_64_1, message=msg)
+                    rcon.message_player(player_id=player_id_1, message=msg)
             finally:
                 self.apply_results()
                 return config.enabled
@@ -450,14 +450,14 @@ class VoteMap:
             and config.help_text
         ):
             logger.info("Showing help %s", struct_log)
-            rcon.message_player(player_id=steam_id_64_1, message=config.help_text)
+            rcon.message_player(player_id=player_id_1, message=config.help_text)
             return config.enabled
 
         if re.match(r"(!votemap|!vm)$", message, re.IGNORECASE):
             logger.info("Showing selection %s", struct_log)
             vote_map_message = config.instruction_text
             rcon.message_player(
-                player_id=steam_id_64_1,
+                player_id=player_id_1,
                 message=vote_map_message.format(
                     map_selection=self.format_map_vote(
                         selection=self.get_selection(),
@@ -471,19 +471,19 @@ class VoteMap:
         if re.match(r"(!votemap|!vm)\s*never$", message, re.IGNORECASE):
             if not config.allow_opt_out:
                 rcon.message_player(
-                    player_id=steam_id_64_1,
+                    player_id=player_id_1,
                     message="You can't opt-out of vote map on this server",
                 )
                 return config.enabled
 
             logger.info("Player opting out of vote %s", struct_log)
             with enter_session() as sess:
-                player = get_player(sess, steam_id_64_1)
+                player = get_player(sess, player_id_1)
                 existing = (
                     sess.query(PlayerOptins)
                     .filter(
                         and_(
-                            PlayerOptins.playersteamid_id == player.id,
+                            PlayerOptins.player_id_id == player.id,
                             PlayerOptins.optin_name == self.optin_name,
                         )
                     )
@@ -494,7 +494,7 @@ class VoteMap:
                 else:
                     sess.add(
                         PlayerOptins(
-                            steamid=player,
+                            player=player,
                             optin_name=self.optin_name,
                             optin_value="false",
                         )
@@ -502,7 +502,7 @@ class VoteMap:
                 try:
                     sess.commit()
                     rcon.message_player(
-                        player_id=steam_id_64_1, message="VoteMap Unsubscribed OK"
+                        player_id=player_id_1, message="VoteMap Unsubscribed OK"
                     )
                 except Exception as e:
                     logger.exception("Unable to add optin. Already exists?")
@@ -513,12 +513,12 @@ class VoteMap:
         if re.match(r"(!votemap|!vm)\s*allow$", message, re.IGNORECASE):
             logger.info("Player opting in for vote %s", struct_log)
             with enter_session() as sess:
-                player = get_player(sess, steam_id_64_1)
+                player = get_player(sess, player_id_1)
                 existing = (
                     sess.query(PlayerOptins)
                     .filter(
                         and_(
-                            PlayerOptins.playersteamid_id == player.id,
+                            PlayerOptins.player_id_id == player.id,
                             PlayerOptins.optin_name == self.optin_name,
                         )
                     )
@@ -529,7 +529,7 @@ class VoteMap:
                 else:
                     sess.add(
                         PlayerOptins(
-                            steamid=player,
+                            player=player,
                             optin_name=self.optin_name,
                             optin_value="true",
                         )
@@ -537,13 +537,13 @@ class VoteMap:
                 try:
                     sess.commit()
                     rcon.message_player(
-                        player_id=steam_id_64_1, message="VoteMap Subscribed OK"
+                        player_id=player_id_1, message="VoteMap Subscribed OK"
                     )
                 except Exception as e:
                     logger.exception("Unable to update optin. Already exists?")
             return config.enabled
 
-        rcon.message_player(player_id=steam_id_64_1, message=config.help_text)
+        rcon.message_player(player_id=player_id_1, message=config.help_text)
         return config.enabled
 
     def register_vote(self, player_name: str, vote_timestamp: int, vote_content: str):

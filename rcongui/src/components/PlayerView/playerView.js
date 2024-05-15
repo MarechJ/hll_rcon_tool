@@ -35,7 +35,7 @@ const PlayerSummary = ({ player, flag }) => {
           ? player.get("names", []).map((n) => <Chip label={n.get("name")} />)
           : "No name recorded"}
       </p>
-      <p>Steamd id: {player.get("steam_id_64", "")}</p>
+      <p>Player ID: {player.get("player_id", "")}</p>
     </React.Fragment>
   ) : (
     ""
@@ -76,7 +76,7 @@ class PlayerView extends Component {
 
   addFlagToPlayer(playerObj, flag, comment = null) {
     return postData(`${process.env.REACT_APP_API_URL}flag_player`, {
-      player_id: playerObj.get("steam_id_64"),
+      player_id: playerObj.get("player_id"),
       flag: flag,
       comment: comment,
     })
@@ -97,7 +97,7 @@ class PlayerView extends Component {
 
   unBan(ban) {
     postData(`${process.env.REACT_APP_API_URL}unban`, {
-      steam_id_64: ban.steam_id_64,
+      player_id: ban.player_id,
     })
       .then((response) =>
         showResponse(response, `Remove ${ban.type} ban for ${ban.name}`, true)
@@ -112,7 +112,7 @@ class PlayerView extends Component {
     message = null,
     comment = null,
     duration_hours = 2,
-    steam_id_64 = null,
+    player_id = null,
     save_message = true
   ) {
     if (message === null) {
@@ -128,13 +128,13 @@ class PlayerView extends Component {
         doConfirm: {
           player: player_name,
           actionType: actionType,
-          steam_id_64: steam_id_64,
+          player_id: player_id,
         },
       });
     } else {
       const data = {
         player: player_name,
-        steam_id_64: steam_id_64,
+        player_id: player_id,
         reason: message,
         comment: comment,
         duration_hours: duration_hours,
@@ -151,23 +151,23 @@ class PlayerView extends Component {
         .then(this.loadPlayers)
         .catch(handle_http_errors);
     }
-    // Work around to the fact that the steam is not always know in this scope (as is changes the behaviour of the temp / perma ban commands)
+    // Work around to the fact that the player ID is not always know in this scope (as is changes the behaviour of the temp / perma ban commands)
     if (comment) {
-      let steamid = steam_id_64;
-      if (!steamid) {
+      let playerId = player_id;
+      if (!playerId) {
         try {
           console.log(this.state.players);
-          steamid = this.state.players
+          playerId = this.state.players
             .filter((p) => p.get("name") === player_name)
             .get(0)
-            .get("steam_id_64");
-          console.log(steamid);
+            .get("player_id");
+          console.log(playerId);
         } catch (err) {
-          console.log("Unable to get steamId", err);
+          console.log("Unable to get player ID", err);
         }
       }
       postData(`${process.env.REACT_APP_API_URL}post_player_comment`, {
-        player_id: steamid,
+        player_id: playerId,
         comment: comment,
       })
         .then((response) =>
@@ -290,7 +290,7 @@ class PlayerView extends Component {
             message = null,
             comment = null,
             duration_hours = 2,
-            steam_id_64 = null
+            player_id = null
           ) =>
             this.handleAction(
               actionType,
@@ -298,7 +298,7 @@ class PlayerView extends Component {
               message,
               comment,
               duration_hours,
-              steam_id_64
+              player_id
             )
           }
           handleToggle={() => 1}
@@ -330,7 +330,7 @@ class PlayerView extends Component {
             reason,
             comment,
             duration_hours = 2,
-            steam_id_64 = null
+            player_id = null
           ) => {
             this.handleAction(
               action,
@@ -338,7 +338,7 @@ class PlayerView extends Component {
               reason,
               comment,
               duration_hours,
-              steam_id_64
+              player_id
             );
             this.setState({ doConfirm: false });
           }}

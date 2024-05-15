@@ -23,7 +23,7 @@ def get_player_messages(request):
     data = _get_data(request)
     res = None
     try:
-        res = player_history.get_player_messages(steam_id_64=data.get("steam_id_64"))
+        res = player_history.get_player_messages(player_id=data.get("player_id"))
         failed = False
     except:
         logger.exception("Unable to get player message history")
@@ -47,7 +47,7 @@ def get_player_comments(request):
     data = _get_data(request)
     res = None
     try:
-        res = player_history.get_player_comments(steam_id_64=data["player_id"])
+        res = player_history.get_player_comments(player_id=data["player_id"])
         failed = False
     except:
         logger.exception("Unable to get player comments")
@@ -77,7 +77,7 @@ def post_player_comment(request):
 
     try:
         player_history.post_player_comment(
-            steam_id_64=data["player_id"],
+            player_id=data["player_id"],
             comment=data["comment"],
             user=request.user.username,
         )

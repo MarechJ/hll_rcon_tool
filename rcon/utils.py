@@ -15,7 +15,7 @@ from rcon.types import GetDetailedPlayer, MapInfo
 
 logger = logging.getLogger("rcon")
 
-STEAMID = "steam_id_64"
+PLAYER_ID = "player_id"
 NAME = "name"
 ROLE = "role"
 
@@ -399,7 +399,7 @@ def is_invalid_name_pineapple(name: str) -> bool:
 def default_player_info_dict(player) -> GetDetailedPlayer:
     return {
         "name": player,
-        "steam_id_64": "",
+        "player_id": "",
         "profile": None,
         "is_vip": False,
         "unit_id": None,
@@ -448,7 +448,7 @@ def parse_raw_player_info(raw: str, player) -> GetDetailedPlayer:
 
     logger.debug(raw_data)
     # Remap keys and parse values
-    data[STEAMID] = raw_data.get("steamid64")  # type: ignore
+    data[PLAYER_ID] = raw_data.get("steamid64")  # type: ignore
     data["team"] = raw_data.get("team", "None")
     if raw_data["role"].lower() == "armycommander":
         data["unit_id"], data["unit_name"] = (-1, "Commmand")

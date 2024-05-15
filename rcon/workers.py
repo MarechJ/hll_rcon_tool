@@ -107,13 +107,15 @@ def record_stats(map_info: MapInfo):
 
 
 def _record_stats(map_info: MapInfo):
-    start = datetime.datetime.utcfromtimestamp(map_info.get("start"))
-    end = datetime.datetime.utcfromtimestamp(map_info.get("end"))
+    raw_start = map_info.get("start")
+    raw_end = map_info.get("end")
 
-    if not start or not end:
+    if not raw_start or not raw_end:
         logger.error("Can't record stats, no time info for %s", map_info)
         return
 
+    start = datetime.datetime.utcfromtimestamp(raw_start)
+    end = datetime.datetime.utcfromtimestamp(raw_end)
     with enter_session() as sess:
         map_ = get_or_create_map(
             sess=sess,
@@ -136,26 +138,26 @@ def record_stats_from_map(
 
     seen_players: Set[str] = set()
     for player, stats in player_stats.items():
-        if steam_id_64 := stats.get("steam_id_64"):
+        if player_id := stats.get("player_id"):
             # If a player has changed their name and had stats recorded under two or more
             # names in the same match it will otherwise try to insert duplicate records
             # This will only record stats for the first instance of the player it sees, the other(s)
             # will be lost of course
-            if steam_id_64 in seen_players:
-                logger.info(f"Failed to record duplicate stats for {steam_id_64}")
+            if player_id in seen_players:
+                logger.info(f"Failed to record duplicate stats for {player_id}")
                 continue
-            seen_players.add(steam_id_64)
+            seen_players.add(player_id)
 
-            player_record = get_player(sess, steam_id_64=steam_id_64)
+            player_record = get_player(sess, player_id=player_id)
             if not player_record:
-                logger.error("Can't find DB record for %s", steam_id_64)
+                logger.error("Can't find DB record for %s", player_id)
                 continue
 
             existing: PlayerStats | None = (
                 sess.query(PlayerStats)
                 .filter(
                     PlayerStats.map_id == map_.id,
-                    PlayerStats.playersteamid_id == player_record.id,
+                    PlayerStats.player_id_id == player_record.id,
                 )
                 .one_or_none()
             )
@@ -167,9 +169,9 @@ def record_stats_from_map(
                     defense=existing.defense,
                     support=existing.support,
                 )
-            map_stats = ps.get(steam_id_64, default_stat)
+            map_stats = ps.get(player_id, default_stat)
             player_stat = dict(
-                playersteamid_id=player_record.id,
+                player_id_id=player_record.id,
                 map_id=map_.id,
                 name=stats.get("player"),
                 kills=stats.get("kills"),
@@ -235,7 +237,7 @@ def record_stats_from_map(
                 player_stat_record = PlayerStats(**player_stat)
                 sess.add(player_stat_record)
         else:
-            logger.error("Stat object does not contain a steam id: %s", stats)
+            logger.error("Stat object does not contain a player ID: %s", stats)
 
 
 def get_job_results(job_key):
@@ -278,7 +280,7 @@ def bulk_vip(name_ids, mode="override"):
     vips = ctl.get_vip_ids()
 
     removal_futures = {
-        ctl.run_in_pool("remove_vip", vip["steam_id_64"]): vip
+        ctl.run_in_pool("remove_vip", vip["player_id"]): vip
         for idx, vip in enumerate(vips)
     }
     for future in as_completed(removal_futures):
@@ -290,22 +292,22 @@ def bulk_vip(name_ids, mode="override"):
             logger.exception(f"Failed to remove vip from {removal_futures[future]}")
 
     processed_additions = []
-    for name, steam_id, expiration_timestamp in name_ids:
+    for name, player_id, expiration_timestamp in name_ids:
         if not expiration_timestamp:
             expiration_timestamp = INDEFINITE_VIP_DATE.isoformat()
         else:
             expiration_timestamp = expiration_timestamp.isoformat()
 
-        processed_additions.append((name, steam_id, expiration_timestamp))
+        processed_additions.append((name, player_id, expiration_timestamp))
 
     add_futures = {
         ctl.run_in_pool(
             "add_vip",
             name,
-            steam_id,
+            player_id,
             expiration=expiration_timestamp,
-        ): steam_id
-        for idx, (name, steam_id, expiration_timestamp) in enumerate(
+        ): player_id
+        for idx, (name, player_id, expiration_timestamp) in enumerate(
             processed_additions
         )
     }

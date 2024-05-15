@@ -1,21 +1,21 @@
 from rcon.automods.models import PunishDetails, PunishPlayer, PunitionsToApply
 
 first_player: PunishPlayer = PunishPlayer(
-    steam_id_64="A_STEAM_ID",
+    player_id="A_STEAM_ID",
     details=PunishDetails(author="", message="first warning"),
     name="",
     squad="",
     team="",
 )
 same_player: PunishPlayer = PunishPlayer(
-    steam_id_64="A_STEAM_ID",
+    player_id="A_STEAM_ID",
     details=PunishDetails(author="", message="second warning"),
     name="",
     squad="",
     team="",
 )
 second_player: PunishPlayer = PunishPlayer(
-    steam_id_64="ANOTHER_STEAM_ID", name="", squad="", team=""
+    player_id="ANOTHER_STEAM_ID", name="", squad="", team=""
 )
 
 
@@ -31,7 +31,7 @@ def test_merge_warnings():
     assert len(s.warning) == 3
     assert s.warning[0].details.message == "first warning"
     assert s.warning[1].details.message == "second warning"
-    assert s.warning[0].steam_id_64 == s.warning[1].steam_id_64
+    assert s.warning[0].player_id == s.warning[1].player_id
 
 
 def test_merge_punishes():
@@ -45,7 +45,7 @@ def test_merge_punishes():
 
     assert len(s.punish) == 2
     assert s.punish[0].details.message == "first warning"
-    assert s.punish[1].steam_id_64 == second_player.steam_id_64
+    assert s.punish[1].player_id == second_player.player_id
 
 
 def test_merge_kicks():
@@ -59,4 +59,4 @@ def test_merge_kicks():
 
     assert len(s.kick) == 2
     assert s.kick[0].details.message == "first warning"
-    assert s.kick[1].steam_id_64 == second_player.steam_id_64
+    assert s.kick[1].player_id == second_player.player_id

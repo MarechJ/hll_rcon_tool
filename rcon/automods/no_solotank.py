@@ -143,7 +143,7 @@ class NoSoloTankAutomod:
 
             for player in squad["players"]:
                 aplayer = PunishPlayer(
-                    steam_id_64=player["steam_id_64"],
+                    player_id=player["player_id"],
                     name=player["name"],
                     team=team,
                     squad=squad_name,

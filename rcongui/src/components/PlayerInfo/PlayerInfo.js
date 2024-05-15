@@ -150,7 +150,7 @@ const Is = ({ bool, text }) =>
   );
 
 const PlayerInfoFunc = ({ classes }) => {
-  const { steamId64 } = useParams();
+  const { playerId } = useParams();
   const [created, setCreated] = React.useState("0");
   const [names, setNames] = React.useState([]);
   const [sessions, setSessions] = React.useState([]);
@@ -182,11 +182,11 @@ const PlayerInfoFunc = ({ classes }) => {
   const [messages, setMessages] = React.useState(undefined);
 
   /**
-   * fetch bans that currently affect the steamId64
-   * @param steamId64
+   * fetch bans that currently affect the playerId
+   * @param playerId
    */
-  const fetchPlayerBan = (steamId64) => {
-    get(`get_ban?player_id=${steamId64}`)
+  const fetchPlayerBan = (playerId) => {
+    get(`get_ban?player_id=${playerId}`)
       .then((response) => showResponse(response, "get_ban", false))
       .then((data) => {
         const temp = data.result.find((ban, index) => {
@@ -207,10 +207,10 @@ const PlayerInfoFunc = ({ classes }) => {
 
   /**
    * fetch Player data
-   * @param steamId64
+   * @param playerId
    */
-  const fetchPlayer = (steamId64) => {
-    get(`get_player_profile?player_id=${steamId64}`)
+  const fetchPlayer = (playerId) => {
+    get(`get_player_profile?player_id=${playerId}`)
       .then((response) => showResponse(response, "get_user", false))
       .then((data) => {
         if (
@@ -236,8 +236,8 @@ const PlayerInfoFunc = ({ classes }) => {
       .catch(handle_http_errors);
   };
 
-  const fetchMessages = (steamId64) => {
-    get(`get_player_messages?steam_id_64=${steamId64}`)
+  const fetchMessages = (playerId) => {
+    get(`get_player_messages?player_id=${playerId}`)
       .then((response) => showResponse(response, "get_player_messages", false))
       .then((data) => {
         if (
@@ -251,8 +251,8 @@ const PlayerInfoFunc = ({ classes }) => {
       .catch(handle_http_errors);
   };
 
-  const fetchPlayerComments = (steamId64) => {
-    get(`get_player_comments?player_id=${steamId64}`)
+  const fetchPlayerComments = (playerId) => {
+    get(`get_player_comments?player_id=${playerId}`)
       .then((response) => showResponse(response, "get_player_comments", false))
       .then((data) => {
         if (
@@ -268,24 +268,24 @@ const PlayerInfoFunc = ({ classes }) => {
 
   const handleNewComment = (newComment) => {
     postData(`${process.env.REACT_APP_API_URL}post_player_comment`, {
-      player_id: steamId64,
+      player_id: playerId,
       comment: newComment,
     })
       .then((response) => {
         return showResponse(response, "post_player_comment", false);
       })
       .then(() => {
-        fetchPlayerComments(steamId64);
+        fetchPlayerComments(playerId);
       })
       .catch((error) => toast.error("Unable to connect to API " + error));
   };
 
   React.useEffect(() => {
-    fetchPlayer(steamId64);
-    fetchPlayerBan(steamId64);
-    fetchMessages(steamId64);
-    fetchPlayerComments(steamId64);
-  }, [steamId64]);
+    fetchPlayer(playerId);
+    fetchPlayerBan(playerId);
+    fetchMessages(playerId);
+    fetchPlayerComments(playerId);
+  }, [playerId]);
 
   return (
     <Grid container className={classes.root}>
@@ -317,10 +317,8 @@ const PlayerInfoFunc = ({ classes }) => {
                 </Grid>
                 <Grid item>
                   <Typography variant="h6">
-                    <Link
-                      href={makePlayerProfileUrl(steamId64, names[0]?.name)}
-                    >
-                      {getLinkLabel(steamId64)} Profile
+                    <Link href={makePlayerProfileUrl(playerId, names[0]?.name)}>
+                      {getLinkLabel(playerId)} Profile
                     </Link>
                   </Typography>
                 </Grid>
@@ -350,7 +348,7 @@ const PlayerInfoFunc = ({ classes }) => {
                 <Grid item>
                   <Typography variant="h6">
                     <Link
-                      href={`${process.env.REACT_APP_API_URL}get_player_profile?player_id=${steamId64}`}
+                      href={`${process.env.REACT_APP_API_URL}get_player_profile?player_id=${playerId}`}
                     >
                       Raw profile
                     </Link>
@@ -428,7 +426,7 @@ class PlayerInfo extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      steam_id_64: "",
+      player_id: "",
       created: "0",
       names: [],
       sessions: [],
@@ -461,11 +459,11 @@ class PlayerInfo extends React.Component {
   }
 
   /**
-   * fetch bans that currently affect the steamId64
-   * @param steamId64
+   * fetch bans that currently affect the playerId
+   * @param playerId
    */
-  fetchPlayerBan(steamId64) {
-    get(`get_ban?player_id=${steamId64}`)
+  fetchPlayerBan(playerId) {
+    get(`get_ban?player_id=${playerId}`)
       .then((response) => showResponse(response, "get_ban", false))
       .then((data) => {
         const temp = data.result.find((ban, index) => {
@@ -486,10 +484,10 @@ class PlayerInfo extends React.Component {
 
   /**
    * fetch Player data
-   * @param steamId64
+   * @param playerId
    */
-  fetchPlayer(steamId64) {
-    get(`get_player_profile?player_id=${steamId64}`)
+  fetchPlayer(playerId) {
+    get(`get_player_profile?player_id=${playerId}`)
       .then((response) => showResponse(response, "get_user", false))
       .then((data) => {
         if (
@@ -517,8 +515,8 @@ class PlayerInfo extends React.Component {
       .catch(handle_http_errors);
   }
 
-  fetchPlayerComments(steamId64) {
-    get(`get_player_comments?player_id=${steamId64}`)
+  fetchPlayerComments(playerId) {
+    get(`get_player_comments?player_id=${playerId}`)
       .then((response) => showResponse(response, "get_player_comments", false))
       .then((data) => {
         if (
@@ -533,27 +531,27 @@ class PlayerInfo extends React.Component {
   }
 
   handleNewComment(newComment) {
-    const { steamId64 } = this.props.match.params;
+    const { playerId } = this.props.match.params;
     postData(`${process.env.REACT_APP_API_URL}post_player_comment`, {
-      player_id: steamId64,
+      player_id: playerId,
       comment: newComment,
     })
       .then((response) => {
         return showResponse(response, "post_player_comment", false);
       })
       .then(() => {
-        this.fetchPlayerComments(steamId64);
+        this.fetchPlayerComments(playerId);
       })
       .catch((error) => toast.error("Unable to connect to API " + error));
   }
 
   componentDidMount() {
     this._mounted = true;
-    const { steamId64 } = this.props.match.params;
-    if (steamId64 !== undefined) {
-      this.fetchPlayer(steamId64);
-      this.fetchPlayerBan(steamId64);
-      this.fetchPlayerComments(steamId64);
+    const { playerId } = this.props.match.params;
+    if (playerId !== undefined) {
+      this.fetchPlayer(playerId);
+      this.fetchPlayerBan(playerId);
+      this.fetchPlayerComments(playerId);
     }
   }
 
@@ -567,7 +565,7 @@ class PlayerInfo extends React.Component {
   render() {
     // TODO Fix mobile responsiveness
     const { classes } = this.props;
-    const { steamId64 } = this.props.match.params;
+    const { playerId } = this.props.match.params;
 
     return (
       <Grid container className={classes.root}>
@@ -633,7 +631,7 @@ class PlayerInfo extends React.Component {
                   <Grid item>
                     <Typography variant="h6">
                       <Link
-                        href={`${process.env.REACT_APP_API_URL}get_player_profile?player_id=${steamId64}`}
+                        href={`${process.env.REACT_APP_API_URL}get_player_profile?player_id=${playerId}`}
                       >
                         Raw profile
                       </Link>

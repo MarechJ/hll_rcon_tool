@@ -54,7 +54,7 @@ import {
   ExpiredVIP,
   GTXNameChange,
   ChatCommands,
-  LogStream
+  LogStream,
 } from "./components/UserSettings/miscellaneous";
 
 const Live = ({ classes }) => {
@@ -391,8 +391,8 @@ function App() {
       ? hllNoBg
       : hll
     : themes[userTheme]
-      ? themes[userTheme]
-      : lightTheme;
+    ? themes[userTheme]
+    : lightTheme;
   const classes = useStyles();
 
   const Router = isEmbed ? BrowserRouter : HashRouter;
@@ -453,7 +453,7 @@ function App() {
                     </Grid>
                   </Grid>
                 </Route>
-                <Route path="/player/:steamId64">
+                <Route path="/player/:player_id">
                   <Grid container>
                     <PlayerInfo classes={classes} />
                   </Grid>

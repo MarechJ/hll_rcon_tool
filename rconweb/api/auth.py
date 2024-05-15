@@ -186,13 +186,13 @@ def is_logged_in(request):
     is_auth = request.user.is_authenticated
     if is_auth:
         try:
-            steam_id = None
+            player_id = None
             try:
-                steam_id = request.user.steamplayer.steam_id_64
+                player_id = request.user.steamplayer.player_id
             except:
-                logger.warning("%s's steam id is not set ", request.user.username)
+                logger.warning("%s's player ID is not set", request.user.username)
             try:
-                heartbeat(request.user.username, steam_id)
+                heartbeat(request.user.username, player_id)
             except:
                 logger.exception("Unable to register mods")
         except:

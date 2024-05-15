@@ -10,7 +10,7 @@ from typing import Callable
 from rcon.cache_utils import get_redis_client
 from rcon.game_logs import get_historical_logs_records, get_recent_logs
 from rcon.models import enter_session
-from rcon.player_history import _get_profiles, get_player_profile_by_steam_ids
+from rcon.player_history import _get_profiles, get_player_profile_by_player_ids
 from rcon.rcon import get_rcon
 from rcon.types import (
     CachedLiveGameStats,
@@ -22,6 +22,8 @@ from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.utils import MapsHistory
 
 logger = logging.getLogger(__name__)
+
+PLAYER_ID = "player_id"
 
 STAT_DISPLAY_LOOKUP = {
     StatTypes.top_killers: "kills",
@@ -74,19 +76,19 @@ class BaseStats:
                 log["raw"],
             )
 
-    def _add_kill(self, stats, player, log):
+    def _add_kill(self, stats, player, log: StructuredLogLineWithMetaData):
         self._add_kd("kills", "deaths", stats, player, log)
         if self._is_player_kill(player, log):
             stats["weapons"][log["weapon"]] = stats["weapons"].get(log["weapon"], 0) + 1
-            stats["most_killed"][log["player2"]] = (
-                stats["most_killed"].get(log["player2"], 0) + 1
+            stats["most_killed"][log["player_name_2"]] = (
+                stats["most_killed"].get(log["player_name_2"], 0) + 1
             )
         if self._is_player_death(player, log):
             stats["death_by_weapons"][log["weapon"]] = (
                 stats["death_by_weapons"].get(log["weapon"], 0) + 1
             )
-            stats["death_by"][log["player"]] = (
-                stats["death_by"].get(log["player"], 0) + 1
+            stats["death_by"][log["player_name_1"]] = (
+                stats["death_by"].get(log["player_name_1"], 0) + 1
             )
 
     def _add_tk(self, stats, player, log):
@@ -172,7 +174,7 @@ class BaseStats:
     ):
         """
         players is expected to be a list of dict, such as:
-        [{"steam_id_64": ..., "name": ...}, ...]
+        [{"player_id": ..., "name": ...}, ...]
         """
         stats_by_player = {}
 
@@ -187,10 +189,10 @@ class BaseStats:
             player_logs: list[StructuredLogLineWithMetaData] = indexed_logs.get(
                 p["name"], []
             )
-            profile = profiles_by_id.get(p.get("steam_id_64"))
+            profile = profiles_by_id.get(p.get(PLAYER_ID))
             stats = {
                 "player": p["name"],
-                "steam_id_64": p.get("steam_id_64"),
+                PLAYER_ID: p.get(PLAYER_ID),
                 "steaminfo": (
                     profile.steaminfo.to_dict()
                     if profile and profile.steaminfo
@@ -290,15 +292,15 @@ class LiveStats(BaseStats):
     ) -> dict[str, list[StructuredLogLineWithMetaData]]:
         logs_indexed = {}
         for l in logs:
-            player = indexed_players.get(l["player"])
-            player2 = indexed_players.get(l["player2"])
+            player = indexed_players.get(l["player_name_1"])
+            player2 = indexed_players.get(l["player_name_2"])
 
             try:
                 # Only consider stats for a player from his last connection (so a disconnect reconnect should reset stats) otherwise multiple sessions could be blended into one, even if they are far apart
                 if player and self._is_log_from_current_session(now, player, l):
-                    logs_indexed.setdefault(l["player"], []).append(l)
+                    logs_indexed.setdefault(l["player_name_1"], []).append(l)
                 if player2 and self._is_log_from_current_session(now, player2, l):
-                    logs_indexed.setdefault(l["player2"], []).append(l)
+                    logs_indexed.setdefault(l["player_name_2"], []).append(l)
             except KeyError:
                 logger.exception("Invalid log line %s", l)
 
@@ -310,13 +312,13 @@ class LiveStats(BaseStats):
             logger.debug("No players")
             return {}
 
-        players = [p for p in players if p.get("steam_id_64")]
+        players = [p for p in players if p.get(PLAYER_ID)]
 
         with enter_session() as sess:
             profiles_by_id = {
-                profile.steam_id_64: profile
+                profile.player_id: profile
                 for profile in _get_profiles(
-                    sess, [p["steam_id_64"] for p in players], nb_sessions=1
+                    sess, [p[PLAYER_ID] for p in players], nb_sessions=1
                 )
             }
             logger.info(
@@ -430,20 +432,20 @@ class TimeWindowStats(BaseStats):
                 indexed_logs.setdefault(player, []).append(log)
 
                 # Create a list of dict for players, for backward compatibility with the parent class that holds the computation logic
-                if steamid := log.get("steam_id_64_1"):
-                    players.add((player, steamid))
+                if player_id := log.get("player_id_1"):
+                    players.add((player, player_id))
 
             if player2 := log.get("player2"):
                 self._set_start_end_times(player2, players_times, log, from_)
                 indexed_logs.setdefault(player2, []).append(log)
 
-                if steamid2 := log.get("steam_id_64_2"):
-                    players.add((player2, steamid2))
+                if player_id_2 := log.get("player_id_2"):
+                    players.add((player2, player_id_2))
 
         # Convert the unique set of players into a list of dict for compatibility with parent class
         players = [
-            dict(name=player_name, steam_id_64=player_steamid)
-            for player_name, player_steamid in players
+            dict(name=player_name, player_id=player_id)
+            for player_name, player_id in players
         ]
         # Here we massage the session times for a player. 1 session should be a pair of times a start and an end
         for player, times in players_times.items():
@@ -476,15 +478,14 @@ class TimeWindowStats(BaseStats):
         self.times = players_times
 
         logger.debug("Indexing profiles by id")
-        # we create and hashmap where the key is the steam ID of a player and the value his DB profile.
+        # we create and hashmap where the key is the player ID (steam/windows) of a player and the value his DB profile.
         # The DB rows are eagerly loaded (at least the ones we need later on) if you need more rows make sure to eager load them as well otherwise it will add significan slowness
         # The profiles are attached to the current DB session
-        # TODO: do we need to update steam_id_64 to player_id ?
         with enter_session() as sess:
             profiles_by_id = {
-                profile.steam_id_64: profile
-                for profile in get_player_profile_by_steam_ids(
-                    sess, [p["steam_id_64"] for p in players]
+                profile.player_id: profile
+                for profile in get_player_profile_by_player_ids(
+                    sess, [p[PLAYER_ID] for p in players]
                 )
             }
 
@@ -583,11 +584,10 @@ def current_game_stats():
     stats = TimeWindowStats().get_players_stats_from_time(current_map["start"])
     for name in stats:
         stat = stats.setdefault(name)
-        map_stat = current_map.get("player_stats", dict()).get(
-            stat["steam_id_64"], None
-        )
+        player_stats = current_map.get("player_stats", dict())
+        map_stat = player_stats.get(stat[PLAYER_ID], None)
         if map_stat is None:
-            logger.info("No stats for: " + stat["steam_id_64"])
+            logger.info("No stats for: " + stat[PLAYER_ID])
             continue
         stat["combat"] = map_stat["combat"]
         stat["offense"] = map_stat["offense"]

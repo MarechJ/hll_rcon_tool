@@ -15,7 +15,7 @@ from rcon.automods.models import (
     WatchStatus,
 )
 from rcon.automods.seeding_rules import SeedingRulesAutomod
-from rcon.types import GameState, StructuredLogLineType
+from rcon.types import GameState, StructuredLogLineWithMetaData
 from rcon.user_config.auto_mod_seeding import (
     AutoModSeedingUserConfig,
     DisallowedRoles,
@@ -50,7 +50,7 @@ def team_view():
                 "profile": None,
                 "role": "armycommander",
                 "steam_bans": None,
-                "steam_id_64": "76561198206929556",
+                "player_id": "76561198206929556",
                 "support": 264,
                 "team": "allies",
                 "unit_id": -1,
@@ -84,7 +84,7 @@ def team_view():
                             "profile": None,
                             "role": "tankcommander",
                             "steam_bans": None,
-                            "steam_id_64": "76561198206929555",
+                            "player_id": "76561198206929555",
                             "support": 264,
                             "team": "allies",
                             "unit_id": 1,
@@ -104,7 +104,7 @@ def team_view():
                             "profile": None,
                             "role": "crewman",
                             "steam_bans": None,
-                            "steam_id_64": "76561198206929556",
+                            "player_id": "76561198206929556",
                             "support": 264,
                             "team": "allies",
                             "unit_id": 1,
@@ -148,7 +148,7 @@ def team_view():
                             "profile": None,
                             "role": "spotter",
                             "steam_bans": None,
-                            "steam_id_64": "76561198206929555",
+                            "player_id": "76561198206929555",
                             "support": 264,
                             "team": "axis",
                             "unit_id": 1,
@@ -167,8 +167,30 @@ def team_view():
 game_state: GameState = {
     "allied_score": 3,
     "axis_score": 2,
-    "current_map": "",
-    "next_map": "",
+    "current_map": {
+        "id": "carentan_warfare",
+        "map": {
+            "id": "carentan",
+            "name": "CARENTAN",
+            "tag": "CAR",
+            "pretty_name": "Carentan",
+            "shortname": "Carentan",
+            "allies": {"name": "us", "team": "allies"},
+            "axis": {"name": "ger", "team": "axis"},
+        },
+    },
+    "next_map": {
+        "id": "foy_warfare",
+        "map": {
+            "id": "foy",
+            "name": "FOY",
+            "tag": "FOY",
+            "pretty_name": "Foy",
+            "shortname": "Foy",
+            "allies": {"name": "us", "team": "allies"},
+            "axis": {"name": "ger", "team": "axis"},
+        },
+    },
     "num_allied_players": 30,
     "num_axis_players": 30,
     "time_remaining": timedelta(10),
@@ -176,17 +198,18 @@ game_state: GameState = {
 
 line = "[29:42 min (1606340690)] KILL: [CPC] [1.Fjg] FlorianSW(Allies/76561198012102485) -> Karadoc(Axis/76561198080212634) with MK2_Grenade"
 lt = datetime.fromtimestamp(1606340690)
-kill_event_log: StructuredLogLineType = {
+kill_event_log: StructuredLogLineWithMetaData = {
     "version": 1,
     "timestamp_ms": int(lt.timestamp() * 1000),
+    "event_time": lt,
     "relative_time_ms": (lt - datetime.now()).total_seconds() * 1000,
     "raw": line,
     "line_without_time": "",
     "action": "KILL",
-    "player": "[1.Fjg] FlorianSW",
-    "steam_id_64_1": "76561198012102485",
-    "player2": "Karadoc",
-    "steam_id_64_2": "76561198080212634",
+    "player_name_1": "[1.Fjg] FlorianSW",
+    "player_id_1": "76561198012102485",
+    "player_name_2": "Karadoc",
+    "player_id_2": "76561198080212634",
     "weapon": "MP40",
     "message": "",
     "sub_content": "",
@@ -194,7 +217,7 @@ kill_event_log: StructuredLogLineType = {
 
 expected_warned_players = [
     PunishPlayer(
-        steam_id_64="76561198206929555",
+        player_id="76561198206929555",
         name="WilliePeter",
         squad="able",
         team="allies",
@@ -208,7 +231,7 @@ expected_warned_players = [
         ),
     ),
     PunishPlayer(
-        steam_id_64="76561198206929556",
+        player_id="76561198206929556",
         name="AnotherPeter",
         squad="able",
         team="allies",
@@ -490,7 +513,7 @@ def test_punishes_commander_cap_fight(team_view):
 
     assert [
         PunishPlayer(
-            steam_id_64="76561198206929556",
+            player_id="76561198206929556",
             name="FamousCommander",
             squad="Commander",
             team="allies",

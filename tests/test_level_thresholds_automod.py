@@ -2,18 +2,10 @@ from contextlib import contextmanager
 from datetime import timedelta
 from unittest.mock import Mock
 
-from rcon.automods.models import (
-    NoLevelViolation,
-    WatchStatus,
-)
 from rcon.automods.level_thresholds import LevelThresholdsAutomod
-from rcon.user_config.auto_mod_level import (
-    AutoModLevelUserConfig,
-    Role,
-    Roles,
-)
+from rcon.automods.models import NoLevelViolation, WatchStatus
+from rcon.user_config.auto_mod_level import AutoModLevelUserConfig, Role, Roles
 from tests.test_utils import mock_get_detailed_player
-
 
 state = {}
 redis_store = {}
@@ -72,10 +64,10 @@ def test_announces_on_connect_disabled():
 
     player = mock_get_detailed_player(
         name="A_NAME",
-        steam_id_64="A_STEAM_ID",
+        player_id="A_STEAM_ID",
         level=1,
     )
-    punitions = mod.on_connected(player["name"], player["steam_id_64"], player)
+    punitions = mod.on_connected(player["name"], player["player_id"], player)
     print(punitions)
     assert 0 == len(punitions.warning)
 
@@ -100,10 +92,10 @@ def test_announces_on_connect():
 
     player = mock_get_detailed_player(
         name="A_NAME",
-        steam_id_64="A_STEAM_ID",
+        player_id="A_STEAM_ID",
         level=100,
     )
-    punitions = mod.on_connected(player["name"], player["steam_id_64"], player)
+    punitions = mod.on_connected(player["name"], player["player_id"], player)
     print(punitions)
     assert 1 == len(punitions.warning)
     assert (
@@ -132,16 +124,13 @@ def test_announces_on_connect_partially_impacted():
 
     player = mock_get_detailed_player(
         name="A_NAME",
-        steam_id_64="A_STEAM_ID",
+        player_id="A_STEAM_ID",
         level=20,
     )
-    punitions = mod.on_connected(player["name"], player["steam_id_64"], player)
+    punitions = mod.on_connected(player["name"], player["player_id"], player)
     print(punitions)
     assert 1 == len(punitions.warning)
-    assert (
-        "message\nSpotter needs level 50\n"
-        == punitions.warning[0].details.message
-    )
+    assert "message\nSpotter needs level 50\n" == punitions.warning[0].details.message
 
 
 def test_announces_on_connect_not_impacted():
@@ -164,12 +153,13 @@ def test_announces_on_connect_not_impacted():
 
     player = mock_get_detailed_player(
         name="A_NAME",
-        steam_id_64="A_STEAM_ID",
+        player_id="A_STEAM_ID",
         level=100,
     )
-    punitions = mod.on_connected(player["name"], player["steam_id_64"], player)
+    punitions = mod.on_connected(player["name"], player["player_id"], player)
     print(punitions)
     assert 0 == len(punitions.warning)
+
 
 def test_announces_on_connect_detailed_player_info_is_none():
     mod = mod_with_config(

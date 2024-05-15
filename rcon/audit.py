@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 
 HEARTBEAT_KEY_PREFIX = "heartbeat_"
 KNOWN_MODS_KEY = "mods"
+PLAYER_ID = "player_id"
 
 RED_POOL = None
 
@@ -71,10 +72,8 @@ def ingame_mods(rcon=None) -> list[AdminUserType]:
     mods_ids = set(v.decode() for v in mods.values())
     ig_mods: list[AdminUserType] = []
     for player in players:
-        if player["steam_id_64"] in mods_ids:
-            ig_mods.append(
-                {"username": player["name"], "player_id": player["steam_id_64"]}
-            )
+        if player[PLAYER_ID] in mods_ids:
+            ig_mods.append({"username": player["name"], PLAYER_ID: player[PLAYER_ID]})
 
     return ig_mods
 

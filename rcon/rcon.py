@@ -13,7 +13,7 @@ import rcon.steam_utils
 from rcon.cache_utils import get_redis_client, invalidates, ttl_cache
 from rcon.commands import CommandFailedError, ServerCtl, VipId
 from rcon.maps import UNKNOWN_MAP_NAME, Layer, is_server_loading_map, parse_layer
-from rcon.models import PlayerSteamID, PlayerVIP, enter_session
+from rcon.models import PlayerID, PlayerVIP, enter_session
 from rcon.player_history import (
     add_player_to_blacklist,
     get_profiles,
@@ -23,7 +23,6 @@ from rcon.player_history import (
 from rcon.settings import SERVER_INFO
 from rcon.types import (
     AdminType,
-    EnrichedGetPlayersType,
     GameServerBanType,
     GameState,
     GetDetailedPlayer,
@@ -48,7 +47,7 @@ from rcon.utils import (
     parse_raw_player_info,
 )
 
-STEAMID = "steam_id_64"
+PLAYER_ID = "player_id"
 NAME = "name"
 ROLE = "role"
 # The base level of actions that will always show up in the Live view
@@ -190,32 +189,32 @@ class Rcon(ServerCtl):
         return self.thread_pool.submit(getattr(self, function_name), *args, **kwargs)
 
     @ttl_cache(ttl=5)
-    def get_players(self) -> list[EnrichedGetPlayersType]:
-        steam_id_64s = {
-            steam_id_64: {NAME: name, STEAMID: steam_id_64}
-            for name, steam_id_64 in self.get_playerids()
+    def get_players(self) -> list[GetPlayersType]:
+        player_ids = {
+            player_id: {NAME: name, PLAYER_ID: player_id}
+            for name, player_id in self.get_playerids()
         }
         # can't pickle dict keys object
         steam_profiles = rcon.steam_utils.get_steam_profiles_mult_players(
-            steam_id_64s=[k for k in steam_id_64s.keys()]
+            steam_id_64s=[k for k in player_ids.keys()]
         )
 
-        vip_player_ids = set(v["steam_id_64"] for v in super().get_vip_ids())
+        vip_player_ids = set(v[PLAYER_ID] for v in super().get_vip_ids())
         profiles = {
-            p["steam_id_64"]: p
-            for p in get_profiles([player_id for player_id in steam_id_64s.keys()])
+            p[PLAYER_ID]: p
+            for p in get_profiles([player_id for player_id in player_ids.keys()])
         }
 
-        players: dict[str, EnrichedGetPlayersType] = {}
-        for steam_id_64 in steam_id_64s.keys():
-            profile = steam_profiles.get(steam_id_64)
-            players[steam_id_64] = {
-                NAME: steam_id_64s[steam_id_64]["name"],
-                STEAMID: steam_id_64,
+        players: dict[str, GetPlayersType] = {}
+        for player_id in player_ids.keys():
+            profile = steam_profiles.get(player_id)
+            players[player_id] = {
+                NAME: player_ids[player_id]["name"],
+                PLAYER_ID: player_id,
                 "country": profile.get("country") if profile else None,
                 "steam_bans": profile.get("bans") if profile else None,
-                "profile": profiles.get(steam_id_64),
-                "is_vip": steam_id_64 in vip_player_ids,
+                "profile": profiles.get(player_id),
+                "is_vip": player_id in vip_player_ids,
             }
 
         return [p for p in players.values()]
@@ -234,14 +233,12 @@ class Rcon(ServerCtl):
             try:
                 player_data: GetDetailedPlayer = future.result()
             except Exception:
-                logger.error(
-                    "Failed to get info for %s", futures[future]["steam_id_64"]
-                )
+                logger.error("Failed to get info for %s", futures[future][PLAYER_ID])
                 fail_count += 1
                 player_data = default_player_info_dict(futures[future][NAME])
             player = futures[future]
             player.update(player_data)
-            players_by_id[player[STEAMID]] = player
+            players_by_id[player[PLAYER_ID]] = player
 
         return {
             "players": players_by_id,
@@ -257,22 +254,22 @@ class Rcon(ServerCtl):
 
         logger.debug("Getting DB profiles")
         steam_profiles = {
-            profile[STEAMID]: profile
+            profile[PLAYER_ID]: profile
             for profile in get_profiles(list(players_by_id.keys()))
         }
 
         logger.debug("Getting VIP list")
         try:
-            vips = set(v[STEAMID] for v in super().get_vip_ids())
+            vips = set(v[PLAYER_ID] for v in super().get_vip_ids())
         except Exception:
             logger.exception("Failed to get VIPs")
             vips = set()
 
         for player in players_by_id.values():
-            steam_id_64 = player[STEAMID]
-            profile = steam_profiles.get(player.get("steam_id_64"), {}) or {}
+            player_id = player[PLAYER_ID]
+            profile = steam_profiles.get(player.get(PLAYER_ID), {}) or {}
             player["profile"] = profile
-            player["is_vip"] = steam_id_64 in vips
+            player["is_vip"] = player_id in vips
 
             teams.setdefault(player.get("team"), {}).setdefault(
                 player.get("unit_name"), {}
@@ -286,7 +283,7 @@ class Rcon(ServerCtl):
                     squad["players"],
                     key=lambda player: (
                         ALL_ROLES_KEY_INDEX_MAP.get(player.get("role"), len(ALL_ROLES)),
-                        player.get("steam_id_64"),
+                        player.get(PLAYER_ID),
                     ),
                 )
                 squad["type"] = self._guess_squad_type(squad)
@@ -356,21 +353,21 @@ class Rcon(ServerCtl):
         player_dict: PlayerIdsType = {}  # type: ignore
         for playerinfo in raw_list:
             # playerinfo='some_dude : 76561199400000000
-            name, steamid = playerinfo.rsplit(":", 1)
+            name, player_id = playerinfo.rsplit(":", 1)
             name = name[:-1]
-            steamid = steamid[1:]
-            player_dict[name] = steamid
-            player_list.append((name, steamid))
+            player_id = player_id[1:]
+            player_dict[name] = player_id
+            player_list.append((name, player_id))
 
         return player_dict if as_dict else player_list
 
     def get_vips_count(self) -> int:
         players = self.get_playerids()
 
-        vips = {v["steam_id_64"] for v in self.get_vip_ids()}
+        vips = {v[PLAYER_ID] for v in self.get_vip_ids()}
         vip_count = 0
-        for _, steamid in players:
-            if steamid in vips:
+        for _, player_id in players:
+            if player_id in vips:
                 vip_count += 1
 
         return vip_count
@@ -399,16 +396,16 @@ class Rcon(ServerCtl):
         try:
             try:
                 raw = super().get_player_info(player_name, can_fail=can_fail)
-                name, steam_id_64, *rest = raw.split("\n")
+                name, player_id, *rest = raw.split("\n")
             except (CommandFailedError, Exception):
                 sleep(2)
                 name = player_name
-                steam_id_lookup: PlayerIdsType = self.get_playerids(as_dict=True)  # type: ignore
-                steam_id_64 = steam_id_lookup.get(name)
-            if not steam_id_64:
+                player_id_lookup: PlayerIdsType = self.get_playerids(as_dict=True)  # type: ignore
+                player_id = player_id_lookup.get(name)
+            if not player_id:
                 return {}
 
-            profile = rcon.steam_utils.get_steam_profile(steam_id_64=steam_id_64)
+            profile = rcon.steam_utils.get_steam_profile(steam_id_64=player_id)
 
         except (CommandFailedError, ValueError):
             # Making that debug instead of exception as it's way to spammy
@@ -416,18 +413,18 @@ class Rcon(ServerCtl):
             # logger.exception("Can't get player info for %s", player)
             return {}
         name = name.split(": ", 1)[-1]
-        steam_id = steam_id_64.split(": ", 1)[-1]
+        player_id = player_id.split(": ", 1)[-1]
         if name != player_name:
             logger.error(
                 "get_player_info('%s') returned for a different name: %s %s",
                 player_name,
                 name,
-                steam_id,
+                player_id,
             )
             return {}
         return {
             NAME: name,
-            STEAMID: steam_id,
+            PLAYER_ID: player_id,
             "country": profile.get("country") if profile else None,
             "steam_bans": profile.get("bans") if profile else None,
         }
@@ -458,18 +455,18 @@ class Rcon(ServerCtl):
         res = super().get_admin_ids()
         admins: list[AdminType] = []
         for item in res:
-            steam_id_64, role, name = item.split(" ", 2)
-            admins.append({STEAMID: steam_id_64, NAME: name[1:-1], ROLE: role})
+            player_id, role, name = item.split(" ", 2)
+            admins.append({PLAYER_ID: player_id, NAME: name[1:-1], ROLE: role})
         return admins
 
     def get_online_console_admins(self) -> list[str]:
         admins = self.get_admin_ids()
         players = self.get_players()
         online: list[str] = []
-        admins_ids = set(a["steam_id_64"] for a in admins)
+        admins_ids: set[str] = set(a[PLAYER_ID] for a in admins)
 
         for player in players:
-            if player["steam_id_64"] in admins_ids:
+            if player[PLAYER_ID] in admins_ids:
                 online.append(player["name"])
 
         return online
@@ -498,7 +495,7 @@ class Rcon(ServerCtl):
             return {
                 "type": type_,
                 "name": None,
-                "player_id": None,
+                PLAYER_ID: None,
                 "timestamp": None,
                 "ban_time": None,
                 "reason": None,
@@ -508,7 +505,7 @@ class Rcon(ServerCtl):
 
         # name, time = ban.split(', banned on ')
         # '76561197984877751 : nickname "Dr.WeeD" banned for 2 hours on 2020.12.03-12.40.08 for "None" by admin "test"'
-        steamd_id_64, rest = ban.split(" :", 1)
+        player_id, rest = ban.split(" :", 1)
         name = None
         reason = None
         by = None
@@ -530,7 +527,7 @@ class Rcon(ServerCtl):
         return {
             "type": type_,
             "name": name,
-            "player_id": steamd_id_64,
+            PLAYER_ID: player_id,
             # TODO FIX
             "timestamp": None,
             "ban_time": date,
@@ -568,7 +565,7 @@ class Rcon(ServerCtl):
         @return: a array of bans
         """
         bans = self.get_bans()
-        return list(filter(lambda x: x.get("player_id") == player_id, bans))
+        return list(filter(lambda x: x.get(PLAYER_ID) == player_id, bans))
 
     @ttl_cache(ttl=60 * 5)
     def get_vip_ids(self) -> list[VipIdType]:
@@ -585,16 +582,16 @@ class Rcon(ServerCtl):
                 .all()
             )
             vip_expirations = {
-                player.steamid.steam_id_64: player.expiration for player in players
+                player.player.player_id: player.expiration for player in players
             }
 
         for item in res:
             player: VipIdType = {
-                STEAMID: item["steam_id_64"],
+                PLAYER_ID: item[PLAYER_ID],
                 NAME: item["name"],
                 "vip_expiration": None,
             }
-            player["vip_expiration"] = vip_expirations.get(item["steam_id_64"], None)
+            player["vip_expiration"] = vip_expirations.get(item[PLAYER_ID], None)
             player_dicts.append(player)
 
         return sorted(player_dicts, key=lambda d: d[NAME])
@@ -608,9 +605,9 @@ class Rcon(ServerCtl):
 
         server_number = get_server_number()
         with enter_session() as session:
-            player: PlayerSteamID | None = (
-                session.query(PlayerSteamID)
-                .filter(PlayerSteamID.steam_id_64 == player_id)
+            player: PlayerID | None = (
+                session.query(PlayerID)
+                .filter(PlayerID.player_id == player_id)
                 .one_or_none()
             )
             if player and player.vip:
@@ -622,7 +619,7 @@ class Rcon(ServerCtl):
                 vip_record: PlayerVIP | None = (
                     session.query(PlayerVIP)
                     .filter(
-                        PlayerVIP.playersteamid_id == player.id,
+                        PlayerVIP.player_id_id == player.id,
                         PlayerVIP.server_number == server_number,
                     )
                     .one_or_none()
@@ -637,7 +634,7 @@ class Rcon(ServerCtl):
 
         return result
 
-    def add_vip(self, description, player_id, expiration: str = "") -> str:
+    def add_vip(self, player_id: str, description: str, expiration: str = "") -> str:
         """Adds VIP status on the game server and adds or updates their PlayerVIP record."""
         with invalidates(Rcon.get_vip_ids):
             # Add VIP before anything else in case we have errors
@@ -662,9 +659,9 @@ class Rcon(ServerCtl):
 
         # Find a player and update their expiration date if it exists or create a new record if not
         with enter_session() as session:
-            player: PlayerSteamID | None = (
-                session.query(PlayerSteamID)
-                .filter(PlayerSteamID.steam_id_64 == player_id)
+            player: PlayerID | None = (
+                session.query(PlayerID)
+                .filter(PlayerID.player_id == player_id)
                 .one_or_none()
             )
             if player is None:
@@ -672,12 +669,12 @@ class Rcon(ServerCtl):
                 # being created from a VIP list upload, their alias will be saved with
                 # whatever name is in the upload file which may have metadata in it since
                 # people use the free form name field in VIP uploads to store stuff
-                save_player(player_name=description, steam_id_64=player_id)
+                save_player(player_name=description, player_id=player_id)
                 # Can't use a return value from save_player or it's not bound
                 # to the session https://docs.sqlalchemy.org/en/20/errors.html#error-bhk3
                 player = (
-                    session.query(PlayerSteamID)
-                    .filter(PlayerSteamID.steam_id_64 == player_id)
+                    session.query(PlayerID)
+                    .filter(PlayerID.player_id == player_id)
                     .one()
                 )
 
@@ -685,7 +682,7 @@ class Rcon(ServerCtl):
                 session.query(PlayerVIP)
                 .filter(
                     PlayerVIP.server_number == server_number,
-                    PlayerVIP.playersteamid_id == player.id,
+                    PlayerVIP.player_id_id == player.id,
                 )
                 .one_or_none()
             )
@@ -693,18 +690,18 @@ class Rcon(ServerCtl):
             if vip_record is None:
                 vip_record = PlayerVIP(
                     expiration=expiration_date,
-                    playersteamid_id=player.id,
+                    player_id_id=player.id,
                     server_number=server_number,
                 )
                 logger.info(
-                    f"Added new PlayerVIP record {player.steam_id_64=} {expiration_date=}"
+                    f"Added new PlayerVIP record {player.player_id=} {expiration_date=}"
                 )
                 session.add(vip_record)
             else:
                 previous_expiration = vip_record.expiration.isoformat()
                 vip_record.expiration = expiration_date
                 logger.info(
-                    f"Modified PlayerVIP record {player.steam_id_64=} {vip_record.expiration} {previous_expiration=}"
+                    f"Modified PlayerVIP record {player.player_id=} {vip_record.expiration} {previous_expiration=}"
                 )
 
         return result
@@ -713,7 +710,7 @@ class Rcon(ServerCtl):
         vips = self.get_vip_ids()
         for vip in vips:
             try:
-                self.remove_vip(vip["steam_id_64"])
+                self.remove_vip(vip[PLAYER_ID])
             except (CommandFailedError, ValueError):
                 raise
 
@@ -735,7 +732,7 @@ class Rcon(ServerCtl):
                 action_type="MESSAGE",
                 reason=message,
                 by=by,
-                steam_id_64=player_id,
+                player_id=player_id,
             )
         return res
 
@@ -1066,7 +1063,7 @@ class Rcon(ServerCtl):
         with invalidates(self.get_votekick_enabled):
             return super().set_votekick_enabled("on" if bool_ else "off")
 
-    def set_votekick_threshold(self, threshold_pairs) -> None:
+    def set_votekick_threshold(self, threshold_pairs: str) -> None:
         # TODO: use proper data structure
         with invalidates(self.get_votekick_threshold):
             res = super().set_votekick_threshold(threshold_pairs)
@@ -1091,19 +1088,19 @@ class Rcon(ServerCtl):
 
         return profanities
 
-    def unban_profanities(self, profanities) -> str:
+    def unban_profanities(self, profanities: list[str]) -> str:
         if not isinstance(profanities, list):
             profanities = [profanities]
         with invalidates(self.get_profanities):
             return super().unban_profanities(",".join(profanities))
 
-    def ban_profanities(self, profanities) -> str:
+    def ban_profanities(self, profanities: list[str]) -> str:
         if not isinstance(profanities, list):
             profanities = [profanities]
         with invalidates(self.get_profanities):
             return super().ban_profanities(",".join(profanities))
 
-    def punish(self, player_name, reason, by) -> str:
+    def punish(self, player_name: str, reason: str, by: str) -> str:
         res = super().punish(player_name, reason)
         safe_save_player_action(
             rcon=self,
@@ -1130,7 +1127,7 @@ class Rcon(ServerCtl):
             action_type="KICK",
             reason=reason,
             by=by,
-            steam_id_64=player_id,
+            player_id=player_id,
         )
         return res
 
@@ -1140,7 +1137,7 @@ class Rcon(ServerCtl):
         with invalidates(Rcon.get_players, Rcon.get_temp_bans):
             if player_name and re.match(r"\d+", player_name):
                 info = self.get_player_info(player_name)
-                player_id = info.get(STEAMID, None)
+                player_id = info.get(PLAYER_ID, None)
 
             res = super().temp_ban(
                 player_name, player_id, duration_hours, reason, admin_name=by
@@ -1152,7 +1149,7 @@ class Rcon(ServerCtl):
                 action_type="TEMPBAN",
                 reason=reason,
                 by=by,
-                steam_id_64=player_id,
+                player_id=player_id,
             )
             return res
 
@@ -1169,7 +1166,7 @@ class Rcon(ServerCtl):
                 bans = self.get_temp_bans()
                 for raw_ban in bans:
                     ban = self._struct_ban(raw_ban, type_="temp")
-                    if player_id == ban["steam_id_64"]:
+                    if player_id == ban[PLAYER_ID]:
                         return super().remove_temp_ban(ban_log=raw_ban)
 
         # Only get here if we weren't passed a ban log, steam ID or the steam ID wasn't banned
@@ -1183,7 +1180,7 @@ class Rcon(ServerCtl):
         with invalidates(Rcon.get_players, Rcon.get_perma_bans):
             if player_name and re.match(r"\d+", player_name):
                 info = self.get_player_info(player_name)
-                player_id = info.get(STEAMID, None)
+                player_id = info.get(PLAYER_ID, None)
 
             res = super().perma_ban(player_name, player_id, reason, admin_name=by)
             safe_save_player_action(
@@ -1192,14 +1189,14 @@ class Rcon(ServerCtl):
                 action_type="PERMABAN",
                 reason=reason,
                 by=by,
-                steam_id_64=player_id,
+                player_id=player_id,
             )
             try:
                 # TODO: this will never work when banning by name because they're already removed
                 # from the server before you can get their steam ID
                 if not player_id:
                     info = self.get_player_info(player_name)
-                    player_id = info["steam_id_64"]
+                    player_id = info[PLAYER_ID]
                 # TODO add author
                 add_player_to_blacklist(player_id, reason, by=by)
             except:
@@ -1300,8 +1297,8 @@ class Rcon(ServerCtl):
 
         player: str | None = None
         player2: str | None = None
-        steam_id_64_1: str | None = None
-        steam_id_64_2: str | None = None
+        player_id_1: str | None = None
+        player_id_2: str | None = None
         weapon: str | None = None
         action: str | None = None
         content: str = raw_line
@@ -1312,23 +1309,23 @@ class Rcon(ServerCtl):
             # TEAM KILL: SonofJack(Allies/71234567891234567) -> Joseph Cannon(Allies/71234567891234576) with M1 GARAND
             action, content = raw_line.split(": ", 1)
             if match := re.match(Rcon.kill_teamkill_pattern, content):
-                player, steam_id_64_1, player2, steam_id_64_2, weapon = match.groups()
+                player, player_id_1, player2, player_id_2, weapon = match.groups()
             else:
                 raise ValueError(f"Unable to parse line: {raw_line}")
         elif raw_line.startswith("DISCONNECTED") or raw_line.startswith("CONNECTED"):
-            action, name_and_steam_id = raw_line.split(" ", 1)
-            if match := re.match(Rcon.connect_disconnect_pattern, name_and_steam_id):
-                player, steam_id_64_1 = match.groups()
-                content = name_and_steam_id
+            action, name_and_player_id = raw_line.split(" ", 1)
+            if match := re.match(Rcon.connect_disconnect_pattern, name_and_player_id):
+                player, player_id_1 = match.groups()
+                content = name_and_player_id
             else:
                 raise ValueError(f"Unable to parse line: {raw_line}")
         elif raw_line.startswith("CHAT"):
             # CHAT[Team][Azure(Allies/71234567891234567)]: supply truck bot hq for nodes
             # CHAT[Unit][dominguez1987(Axis/71234567891234567)]: back
             if match := Rcon.chat_regexp.match(raw_line):
-                scope, player, side, steam_id_64_1, sub_content = match.groups()
+                scope, player, side, player_id_1, sub_content = match.groups()
                 action = f"CHAT[{side}][{scope}]"
-                content = f"{player}: {sub_content} ({steam_id_64_1})"
+                content = f"{player}: {sub_content} ({player_id_1})"
         elif raw_line.upper().startswith("TEAMSWITCH"):
             # TEAMSWITCH Plebs_23 (Axis > None)
             # TEAMSWITCH SupremeOneechan (None > Allies)
@@ -1403,7 +1400,7 @@ class Rcon(ServerCtl):
             _, content = raw_line.split(" ", 1)
 
             if match := re.match(Rcon.camera_pattern, content):
-                player, steam_id_64_1, sub_content = match.groups()
+                player, player_id_1, sub_content = match.groups()
             else:
                 raise ValueError(f"Unable to parse line: {raw_line}")
 
@@ -1421,8 +1418,8 @@ class Rcon(ServerCtl):
             raw_line = raw_line.replace("\n", " ")
             content = raw_line
             if match := re.match(Rcon.message_pattern, raw_line):
-                player, steam_id_64_1, message_content = match.groups()
-                content = f"{player}({steam_id_64_1}): {message_content}"
+                player, player_id_1, message_content = match.groups()
+                content = f"{player}({player_id_1}): {message_content}"
                 sub_content = message_content
             else:
                 raise ValueError(f"Unable to parse line: {raw_line}")
@@ -1432,10 +1429,10 @@ class Rcon(ServerCtl):
 
         return {
             "action": action,
-            "player": player,
-            "steam_id_64_1": steam_id_64_1,
-            "player2": player2,
-            "steam_id_64_2": steam_id_64_2,
+            "player_name_1": player,
+            "player_id_1": player_id_1,
+            "player_name_2": player2,
+            "player_id_2": player_id_2,
             "weapon": weapon,
             "message": content,
             "sub_content": sub_content,
@@ -1472,14 +1469,15 @@ class Rcon(ServerCtl):
                     {
                         "version": 1,
                         "timestamp_ms": int(time.timestamp() * 1000),
+                        "event_time": datetime.fromtimestamp(int(raw_timestamp)),
                         "relative_time_ms": (time - now).total_seconds() * 1000,
                         "raw": raw_relative_time + " " + raw_log_line,
                         "line_without_time": raw_log_line,
                         "action": log_line["action"],
-                        "player": log_line["player"],
-                        "steam_id_64_1": log_line["steam_id_64_1"],
-                        "player2": log_line["player2"],
-                        "steam_id_64_2": log_line["steam_id_64_2"],
+                        "player_name_1": log_line["player_name_1"],
+                        "player_id_1": log_line["player_id_1"],
+                        "player_name_2": log_line["player_name_2"],
+                        "player_id_2": log_line["player_id_2"],
                         "weapon": log_line["weapon"],
                         "message": log_line["message"],
                         "sub_content": log_line["sub_content"],
@@ -1497,10 +1495,10 @@ class Rcon(ServerCtl):
             if filter_player and filter_player not in raw_log_line:
                 continue
 
-            if player := log_line["player"]:
+            if player := log_line["player_name_1"]:
                 players.add(player)
 
-            if player2 := log_line["player2"]:
+            if player2 := log_line["player_name_2"]:
                 players.add(player2)
 
             actions.add(log_line["action"])

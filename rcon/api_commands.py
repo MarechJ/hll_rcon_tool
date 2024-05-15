@@ -22,9 +22,11 @@ from rcon.server_stats import get_db_server_stats_for_range
 from rcon.settings import SERVER_INFO
 from rcon.types import (
     AdminUserType,
+    GameServerBanType,
     ParsedLogsType,
+    PlayerCommentType,
     PlayerFlagType,
-    PlayerProfileType,
+    PlayerProfileTypeEnriched,
     ServerInfoType,
     VoteMapStatusType,
 )
@@ -67,6 +69,8 @@ from rcon.vote_map import VoteMap
 from rcon.watchlist import PlayerWatch
 
 logger = getLogger(__name__)
+
+PLAYER_ID = "player_id"
 
 CTL: Optional["RconAPI"] = None
 
@@ -176,7 +180,7 @@ class RconAPI(Rcon):
         # whether or not the player is perma banned or blacklisted
         # legacy game server versions would not let you perma ban a player who was not connected
         add_player_to_blacklist(
-            steam_id_64=player_id, reason=reason, name=player_name, by=audit_name
+            player_id=player_id, reason=reason, name=player_name, by=audit_name
         )
 
         return True
@@ -196,13 +200,13 @@ class RconAPI(Rcon):
             "perma": self.remove_perma_ban,
         }
         for b in bans:
-            if b.get("player_id") == player_id:
+            if b.get(PLAYER_ID) == player_id:
                 type_to_func[b["type"]](b["raw"])
 
         # unban broadcasting is handled in `rconweb.api.views.expose_api_endpoints`
         config = RconServerSettingsUserConfig.load_from_db()
         if config.unban_does_unblacklist:
-            remove_player_from_blacklist(steam_id_64=player_id)
+            remove_player_from_blacklist(player_id=player_id)
 
         return True
 
@@ -222,7 +226,7 @@ class RconAPI(Rcon):
             player_id: steam_id_64 or windows store ID
         """
 
-        remove_player_from_blacklist(steam_id_64=player_id)
+        remove_player_from_blacklist(player_id=player_id)
 
         return True
 
@@ -240,17 +244,37 @@ class RconAPI(Rcon):
         self,
         player_id: str,
         num_sessions: int = 10,
-    ) -> PlayerProfileType | None:
-        profile = player_history.get_player_profile(
+    ) -> PlayerProfileTypeEnriched | None:
+        raw_profile = player_history.get_player_profile(
             player_id=player_id, nb_sessions=num_sessions
         )
-        if profile:
+
+        bans: list[GameServerBanType] = []
+        comments: list[PlayerCommentType] = []
+        profile: PlayerProfileTypeEnriched | None = None
+        if raw_profile:
             bans = self.get_ban(player_id=player_id)
-            profile["bans"] = bans
+            comments = player_history.get_player_comments(player_id=player_id)
 
-            comments = player_history.get_player_comments(steam_id_64=player_id)
-            profile["comments"] = comments
-
+            profile = {
+                "id": raw_profile["id"],
+                "player_id": raw_profile["player_id"],
+                "created": raw_profile["created"],
+                "names": raw_profile["names"],
+                "sessions": raw_profile["sessions"],
+                "sessions_count": raw_profile["sessions_count"],
+                "total_playtime_seconds": raw_profile["total_playtime_seconds"],
+                "current_playtime_seconds": raw_profile["current_playtime_seconds"],
+                "received_actions": raw_profile["received_actions"],
+                "penalty_count": raw_profile["penalty_count"],
+                "blacklist": raw_profile["blacklist"],
+                "flags": raw_profile["flags"],
+                "watchlist": raw_profile["watchlist"],
+                "steaminfo": raw_profile["steaminfo"],
+                "vips": raw_profile["vips"],
+                "bans": bans,
+                "comments": comments,
+            }
         return profile
 
     def get_players_history(
@@ -268,22 +292,6 @@ class RconAPI(Rcon):
         flags: str | list[str] | None = None,
         country: str | None = None,
     ):
-        # TODO: this isn't used, can we remove it?
-        type_map = {
-            "last_seen_from": parser.parse,
-            "last_seen_till": parser.parse,
-            "player_name": str,
-            "blacklisted": bool,
-            "is_watched": bool,
-            "player_id": str,
-            "page": int,
-            "page_size": int,
-            "ignore_accent": bool,
-            "exact_name_match": bool,
-            "country": str,
-            "flags": lambda s: [f for f in s.split(",") if f] if s else "",
-        }
-
         return get_players_by_appearance(
             page=page,
             page_size=page_size,
@@ -291,7 +299,7 @@ class RconAPI(Rcon):
             last_seen_till=last_seen_till,
             player_name=player_name,
             blacklisted=blacklisted,
-            steam_id_64=player_id,
+            player_id=player_id,
             is_watched=is_watched,
             exact_name_match=exact_name_match,
             ignore_accent=ignore_accent,
@@ -322,7 +330,7 @@ class RconAPI(Rcon):
         """
 
         player, new_flag = add_flag_to_player(
-            steam_id_64=player_id, flag=flag, comment=comment, player_name=player_name
+            player_id=player_id, flag=flag, comment=comment, player_name=player_name
         )
         # TODO: can we preserve discord auditing with player aliases?
         # data["player_name"] = " | ".join(n["name"] for n in player["names"])
@@ -343,7 +351,7 @@ class RconAPI(Rcon):
             flag: The flag to remove from `player_id` if present
         """
         player, removed_flag = remove_flag(
-            flag_id=flag_id, steam_id_64=player_id, flag=flag
+            flag_id=flag_id, player_id=player_id, flag=flag
         )
         return removed_flag
 
@@ -364,7 +372,7 @@ class RconAPI(Rcon):
         reason: str | None = None,
         player_name: str | None = None,
     ) -> bool:
-        watcher = PlayerWatch(steam_id_64=player_id)
+        watcher = PlayerWatch(player_id=player_id)
         if add:
             result = watcher.watch(
                 reason=reason or "",

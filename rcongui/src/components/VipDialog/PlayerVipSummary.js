@@ -22,7 +22,7 @@ export function PlayerVipSummary({ player, isVip }) {
         <Typography variant="body2">Name: {playerNames}</Typography>
       </Grid>
       <Grid item xs={12}>
-        <Typography>Steam ID: {player && player.get("steam_id_64")}</Typography>
+        <Typography>Player ID: {player && player.get("player_id")}</Typography>
       </Grid>
       <Grid item xs={12}>
         <Typography>

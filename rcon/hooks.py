@@ -76,7 +76,7 @@ def count_vote(rcon: Rcon, struct_log: StructuredLogLineWithMetaData):
     enabled = VoteMap().handle_vote_command(rcon=rcon, struct_log=struct_log)
     if enabled and (match := re.match(r"\d\s*$", struct_log["sub_content"].strip())):
         rcon.message_player(
-            player_id=struct_log["steam_id_64_1"],
+            player_id=struct_log["player_id_1"],
             message=f"INVALID VOTE\n\nUse: !votemap {match.group()}",
         )
 
@@ -104,11 +104,11 @@ def chat_commands(rcon: Rcon, struct_log: StructuredLogLineWithMetaData):
         return
 
     event_cache = get_recent_actions()
-    steam_id_64: str = struct_log["steam_id_64_1"]
-    if steam_id_64 is None:
+    player_id: str = struct_log["player_id_1"]
+    if player_id is None:
         return
 
-    player_cache = event_cache.get(steam_id_64, MostRecentEvents())
+    player_cache = event_cache.get(player_id, MostRecentEvents())
     chat_words = set(chat_message.split())
     for command in config.command_words:
         if not (
@@ -121,30 +121,32 @@ def chat_commands(rcon: Rcon, struct_log: StructuredLogLineWithMetaData):
         if is_command_word(triggered_word):
             message_vars: list[str] = re.findall(MESSAGE_VAR_RE, command.message)
             populated_variables = populate_message_variables(
-                vars=message_vars, steam_id_64=steam_id_64
+                vars=message_vars, player_id=player_id
             )
             formatted_message = format_message_string(
                 command.message,
                 populated_variables=populated_variables,
                 context={
-                    MessageVariableContext.player_name.value: struct_log["player"],
-                    MessageVariableContext.player_steam_id_64.value: steam_id_64,
-                    MessageVariableContext.last_victim_steam_id_64.value: player_cache.last_victim_steam_id_64,
+                    MessageVariableContext.player_name.value: struct_log[
+                        "player_name_1"
+                    ],
+                    MessageVariableContext.player_id.value: player_id,
+                    MessageVariableContext.last_victim_player_id.value: player_cache.last_victim_player_id,
                     MessageVariableContext.last_victim_name.value: player_cache.last_victim_name,
                     MessageVariableContext.last_victim_weapon.value: player_cache.last_victim_weapon,
-                    MessageVariableContext.last_nemesis_steam_id_64.value: player_cache.last_nemesis_steam_id_64,
+                    MessageVariableContext.last_nemesis_player_id.value: player_cache.last_nemesis_player_id,
                     MessageVariableContext.last_nemesis_name.value: player_cache.last_nemesis_name,
                     MessageVariableContext.last_nemesis_weapon.value: player_cache.last_nemesis_weapon,
-                    MessageVariableContext.last_tk_nemesis_steam_id_64.value: player_cache.last_tk_nemesis_steam_id_64,
+                    MessageVariableContext.last_tk_nemesis_player_id.value: player_cache.last_tk_nemesis_player_id,
                     MessageVariableContext.last_tk_nemesis_name.value: player_cache.last_tk_nemesis_name,
                     MessageVariableContext.last_tk_nemesis_weapon.value: player_cache.last_tk_nemesis_weapon,
-                    MessageVariableContext.last_tk_victim_steam_id_64.value: player_cache.last_tk_victim_steam_id_64,
+                    MessageVariableContext.last_tk_victim_player_id.value: player_cache.last_tk_victim_player_id,
                     MessageVariableContext.last_tk_victim_name.value: player_cache.last_tk_victim_name,
                     MessageVariableContext.last_tk_victim_weapon.value: player_cache.last_tk_victim_weapon,
                 },
             )
             rcon.message_player(
-                player_id=struct_log["steam_id_64_1"],
+                player_id=struct_log["player_id_1"],
                 message=formatted_message,
                 save_message=False,
             )
@@ -153,13 +155,13 @@ def chat_commands(rcon: Rcon, struct_log: StructuredLogLineWithMetaData):
             description = command.description
             if description:
                 rcon.message_player(
-                    player_id=struct_log["steam_id_64_1"],
+                    player_id=struct_log["player_id_1"],
                     message=description,
                     save_message=False,
                 )
             else:
                 rcon.message_player(
-                    player_id=struct_log["steam_id_64_1"],
+                    player_id=struct_log["player_id_1"],
                     message="Command description not set, let the admins know!",
                     save_message=False,
                 )
@@ -174,7 +176,7 @@ def chat_commands(rcon: Rcon, struct_log: StructuredLogLineWithMetaData):
         description = config.describe_chat_commands()
         if description:
             rcon.message_player(
-                player_id=struct_log["steam_id_64_1"],
+                player_id=struct_log["player_id_1"],
                 message="\n".join(description),
                 save_message=False,
             )
@@ -224,6 +226,8 @@ def handle_new_match_start(rcon: Rcon, struct_log):
                     log_map_name,
                     current_map.map.name,
                 )
+        else:
+            map_name_to_save = str(current_map)
 
         # TODO added guess - check if it's already in there - set prev end if None
         maps_history = MapsHistory()
@@ -284,12 +288,12 @@ def record_map_end(rcon: Rcon, struct_log):
     )
 
 
-def ban_if_blacklisted(rcon: Rcon, steam_id_64, name):
+def ban_if_blacklisted(rcon: Rcon, player_id: str, name: str):
     with enter_session() as sess:
-        player = get_player(sess, steam_id_64)
+        player = get_player(sess, player_id)
 
         if not player:
-            logger.error("Can't check blacklist, player not found %s", steam_id_64)
+            logger.error("Can't check blacklist, player not found %s", player_id)
             return
 
         if player.blacklist and player.blacklist.is_blacklisted:
@@ -310,7 +314,7 @@ def ban_if_blacklisted(rcon: Rcon, steam_id_64, name):
                     action_type="PERMABAN",
                     reason=player.blacklist.reason,
                     by=f"BLACKLIST: {player.blacklist.by}",
-                    steam_id_64=steam_id_64,
+                    player_id=player_id,
                 )
                 try:
                     send_to_discord_audit(
@@ -358,7 +362,7 @@ def should_ban(
     return False
 
 
-def ban_if_has_vac_bans(rcon: Rcon, steam_id_64, name):
+def ban_if_has_vac_bans(rcon: Rcon, player_id: str, name: str):
     config = VacGameBansUserConfig.load_from_db()
 
     max_days_since_ban = config.vac_history_days
@@ -371,16 +375,16 @@ def ban_if_has_vac_bans(rcon: Rcon, steam_id_64, name):
         return  # Feature is disabled
 
     with enter_session() as sess:
-        player = get_player(sess, steam_id_64)
+        player = get_player(sess, player_id)
 
         if not player:
-            logger.error("Can't check VAC history, player not found %s", steam_id_64)
+            logger.error("Can't check VAC history, player not found %s", player_id)
             return
 
         bans = player.steaminfo.bans if player.steaminfo else None
         if not bans or not isinstance(bans, dict):
             logger.warning(
-                "Can't fetch Bans for player %s, received %s", steam_id_64, bans
+                "Can't fetch Bans for player %s, received %s", player_id, bans
             )
             return
 
@@ -405,7 +409,7 @@ def ban_if_has_vac_bans(rcon: Rcon, steam_id_64, name):
             try:
                 audit_params = dict(
                     player=name,
-                    steam_id_64=player.steam_id_64,
+                    player_id=player.player_id,
                     reason=reason,
                     days_since_last_ban=bans.get("DaysSinceLastBan"),
                     vac_banned=bans.get("VACBanned"),
@@ -423,61 +427,68 @@ def ban_if_has_vac_bans(rcon: Rcon, steam_id_64, name):
 def inject_player_ids(func):
     @wraps(func)
     def wrapper(rcon, struct_log: StructuredLogLineWithMetaData):
-        name = struct_log["player"]
-        steam_id_64 = struct_log["steam_id_64_1"]
-        return func(rcon, struct_log, name, steam_id_64)
+        name = struct_log["player_name_1"]
+        player_id = struct_log["player_id_1"]
+        return func(rcon, struct_log, name, player_id)
 
     return wrapper
 
 
 @on_connected()
 @inject_player_ids
-def handle_on_connect(rcon: Rcon, struct_log, name, steam_id_64):
+def handle_on_connect(
+    rcon: Rcon, struct_log: StructuredLogLineWithMetaData, name: str, player_id: str
+):
     try:
         rcon.get_players.cache_clear()
-        rcon.get_player_info.clear_for(struct_log["player"])
-        rcon.get_player_info.clear_for(player=struct_log["player"])
+        rcon.get_player_info.clear_for(player=struct_log["player_name_1"])
     except Exception:
-        logger.exception("Unable to clear cache for %s", steam_id_64)
+        logger.exception("Unable to clear cache for %s", player_id)
 
     timestamp = int(struct_log["timestamp_ms"]) / 1000
-    if not steam_id_64:
+    if not player_id:
         logger.error(
-            "Unable to get player steam ID for %s, can't process connection",
+            "Unable to get player ID for %s, can't process connection",
             struct_log,
         )
         return
     save_player(
-        struct_log["player"],
-        steam_id_64,
+        struct_log["player_name_1"],
+        player_id,
         timestamp=int(struct_log["timestamp_ms"]) / 1000,
     )
-    save_start_player_session(steam_id_64, timestamp=timestamp)
-    ban_if_blacklisted(rcon, steam_id_64, struct_log["player"])
-    ban_if_has_vac_bans(rcon, steam_id_64, struct_log["player"])
+    save_start_player_session(player_id, timestamp=timestamp)
+    ban_if_blacklisted(rcon, player_id, struct_log["player_name_1"])
+    ban_if_has_vac_bans(rcon, player_id, struct_log["player_name_1"])
 
 
 @on_disconnected
 @inject_player_ids
-def handle_on_disconnect(rcon, struct_log, _, steam_id_64):
-    save_end_player_session(steam_id_64, struct_log["timestamp_ms"] / 1000)
+def handle_on_disconnect(rcon, struct_log, _, player_id: str):
+    save_end_player_session(player_id, struct_log["timestamp_ms"] / 1000)
 
 
 # Make the steam API call before the handle_on_connect hook so it's available for ban_if_blacklisted
 @on_connected(0)
 @inject_player_ids
-def update_player_steaminfo_on_connect(rcon, struct_log, _, steam_id_64: str):
-    if not steam_id_64:
+def update_player_steaminfo_on_connect(
+    rcon, struct_log: StructuredLogLineWithMetaData, _, player_id: str
+):
+    if not player_id:
         logger.error(
             "Can't update steam info, no steam id available for %s",
-            struct_log.get("player"),
+            struct_log.get("player_name_1"),
         )
         return
 
-    logger.info("Updating steam profile for player %s", struct_log["player"])
+    logger.info(
+        "Updating steam profile for player %s %s",
+        struct_log["player_name_1"],
+        struct_log["player_id_1"],
+    )
     with enter_session() as sess:
         player = _get_set_player(
-            sess, player_name=struct_log["player"], steam_id_64=steam_id_64
+            sess, player_name=struct_log["player_name_1"], player_id=player_id
         )
 
         steam_utils.update_missing_old_steam_info_single_player(
@@ -511,9 +522,7 @@ def windows_store_player_check(rcon: Rcon, _, name: str, player_id: str):
     try:
         send_to_discord_audit(
             message=config.audit_message.format_map(
-                DefaultStringFormat(
-                    name=name, steam_id_64=player_id, action=action_value
-                )
+                DefaultStringFormat(name=name, player_id=player_id, action=action_value)
             ),
             command_name=str(action_value),
         )
@@ -554,7 +563,7 @@ def windows_store_player_check(rcon: Rcon, _, name: str, player_id: str):
 
 @on_connected()
 @inject_player_ids
-def notify_invalid_names(rcon: Rcon, _, name: str, steam_id_64: str):
+def notify_invalid_names(rcon: Rcon, _, name: str, player_id: str):
     config = RconServerSettingsUserConfig.load_from_db().invalid_names
 
     if not config.enabled:
@@ -571,22 +580,20 @@ def notify_invalid_names(rcon: Rcon, _, name: str, steam_id_64: str):
     logger.info(
         "Player '%s' (%s) has an invalid name (ends in whitespace or multi byte unicode code point), action=%s",
         name,
-        steam_id_64,
+        player_id,
         action_value,
     )
 
     try:
         send_to_discord_audit(
             message=config.audit_message.format_map(
-                DefaultStringFormat(
-                    name=name, steam_id_64=steam_id_64, action=action_value
-                )
+                DefaultStringFormat(name=name, player_id=player_id, action=action_value)
             ),
             command_name=str(action_value),
         )
     except Exception:
         logger.exception(
-            "Unable to send %s %s (%s) to audit", action_value, name, steam_id_64
+            "Unable to send %s %s (%s) to audit", action_value, name, player_id
         )
 
     def notify_whitespace_player(action: RconInvalidNameActionType):
@@ -603,13 +610,13 @@ def notify_invalid_names(rcon: Rcon, _, name: str, steam_id_64: str):
                 logger.error(
                     "Could not kick whitespace name player %s/%s: %s",
                     name,
-                    steam_id_64,
+                    player_id,
                     e,
                 )
         elif action == RconInvalidNameActionType.warn:
             try:
                 rcon.message_player(
-                    player_id=steam_id_64,
+                    player_id=player_id,
                     message=config.whitespace_name_player_message,
                     by=config.audit_message_author,
                     save_message=False,
@@ -618,13 +625,13 @@ def notify_invalid_names(rcon: Rcon, _, name: str, steam_id_64: str):
                 logger.error(
                     "Could not message whitespace name player %s/%s: %s",
                     name,
-                    steam_id_64,
+                    player_id,
                     e,
                 )
         elif action == RconInvalidNameActionType.ban:
             try:
                 rcon.temp_ban(
-                    player_id=steam_id_64,
+                    player_id=player_id,
                     reason=config.whitespace_name_player_message,
                     by=config.audit_message_author,
                     duration_hours=config.ban_length_hours,
@@ -633,7 +640,7 @@ def notify_invalid_names(rcon: Rcon, _, name: str, steam_id_64: str):
                 logger.error(
                     "Could not temp ban whitespace name player %s/%s: %s",
                     name,
-                    steam_id_64,
+                    player_id,
                     e,
                 )
 
@@ -644,7 +651,7 @@ def notify_invalid_names(rcon: Rcon, _, name: str, steam_id_64: str):
             try:
                 # TODO: it is not possible to kick pineapple names, remove them by banning/unbanning
                 rcon.temp_ban(
-                    player_id=steam_id_64,
+                    player_id=player_id,
                     reason=config.pineapple_name_player_message,
                     by=config.audit_message_author,
                     duration_hours=1,
@@ -653,13 +660,13 @@ def notify_invalid_names(rcon: Rcon, _, name: str, steam_id_64: str):
                 logger.error(
                     "Could not temp ban (can't kick pineapple names) player %s/%s: %s",
                     name,
-                    steam_id_64,
+                    player_id,
                     e,
                 )
         elif action == RconInvalidNameActionType.warn:
             try:
                 rcon.message_player(
-                    player_id=steam_id_64,
+                    player_id=player_id,
                     message=config.pineapple_name_player_message,
                     by=config.audit_message_author,
                     save_message=False,
@@ -668,13 +675,13 @@ def notify_invalid_names(rcon: Rcon, _, name: str, steam_id_64: str):
                 logger.error(
                     "Could not message pineapple name player %s/%s: %s",
                     name,
-                    steam_id_64,
+                    player_id,
                     e,
                 )
         elif action == RconInvalidNameActionType.ban:
             try:
                 rcon.temp_ban(
-                    player_id=steam_id_64,
+                    player_id=player_id,
                     reason=config.pineapple_name_player_message,
                     by=config.audit_message_author,
                     duration_hours=config.ban_length_hours,
@@ -683,7 +690,7 @@ def notify_invalid_names(rcon: Rcon, _, name: str, steam_id_64: str):
                 logger.error(
                     "Could not temp ban player %s/%s: %s",
                     name,
-                    steam_id_64,
+                    player_id,
                     e,
                 )
 
@@ -694,7 +701,7 @@ def notify_invalid_names(rcon: Rcon, _, name: str, steam_id_64: str):
         func = notify_pineapple_player
 
     t = Timer(10, func, kwargs={"action": action})
-    pendingTimers[steam_id_64].append((action, t))
+    pendingTimers[player_id].append((action, t))
     t.start()
 
     # TODO: it is not possible to kick pineapple names, remove them by banning/unbanning
@@ -704,19 +711,19 @@ def notify_invalid_names(rcon: Rcon, _, name: str, steam_id_64: str):
         # trying to remove it
         # players can't connect if they're banned so this should never fire and remove a
         # temp ban from any other reason unless there's another hook temp banning on connect
-        t = Timer(15, rcon.remove_temp_ban, kwargs={"steam_id_64": steam_id_64})
+        t = Timer(15, rcon.remove_temp_ban, kwargs={"player_id": player_id})
         send_to_discord_audit(
             message=config.audit_kick_unban_message,
             command_name="kick",
             by=config.audit_message_author,
         )
-        pendingTimers[steam_id_64].append((action, t))
+        pendingTimers[player_id].append((action, t))
         t.start()
 
 
 @on_disconnected
 @inject_player_ids
-def cleanup_pending_timers(rcon: Rcon, struct_log, name, steam_id_64: str):
+def cleanup_pending_timers(rcon: Rcon, struct_log, name, player_id: str):
     """Cancel pending timers created by notify_player if the player disconnects
 
     Only messaging the player should be cancelled if they disconnect early
@@ -724,7 +731,7 @@ def cleanup_pending_timers(rcon: Rcon, struct_log, name, steam_id_64: str):
     Temporary banning players doesn't create a timer
     """
     pts: list[tuple[RconInvalidNameActionType | None, Timer]] = pendingTimers.pop(
-        steam_id_64, []
+        player_id, []
     )
     for action, pt in pts:
         # TODO: Can't kick pineapple names, don't cancel the thread if the ban removal is pending
@@ -770,7 +777,7 @@ def notify_camera(rcon: Rcon, struct_log):
     try:
         if hooks := get_prepared_discord_hooks(CameraWebhooksUserConfig):
             embeded = DiscordEmbed(
-                title=f'{escape_markdown(struct_log["player"])}  - {escape_markdown(struct_log["steam_id_64_1"])}',
+                title=f'{escape_markdown(struct_log["player_name_1"])}  - {escape_markdown(struct_log["player_id_1"])}',
                 description=f'{short_name} - {struct_log["sub_content"]}',
                 color=242424,
             )
@@ -786,23 +793,3 @@ def notify_camera(rcon: Rcon, struct_log):
 
     if config.welcome:
         temporary_welcome(rcon, struct_log["message"], 60)
-
-
-if __name__ == "__main__":
-    from rcon.settings import SERVER_INFO
-
-    log = {
-        "version": 1,
-        "timestamp_ms": 1627734269000,
-        "relative_time_ms": 221.212,
-        "raw": "[543 ms (1627734269)] CONNECTED Dr.WeeD",
-        "line_without_time": "CONNECTED Dr.WeeD",
-        "action": "CONNECTED",
-        "player": "Dr.WeeD",
-        "steam_id_64_1": None,
-        "player2": None,
-        "steam_id_64_2": None,
-        "weapon": None,
-        "message": "Dr.WeeD",
-        "sub_content": None,
-    }

@@ -24,7 +24,7 @@ def test_no_mentions():
         log={
             "sub_content": "test message",
             "player": "some dude",
-            "steam_id_64_1": "1234",
+            "player_id_1": "1234",
             "action": "CHAT[Allies][Team]",
         }
     )
@@ -46,7 +46,7 @@ def test_chat_mentions_are_escaped():
         log={
             "sub_content": "test message @here",
             "player": "some dude",
-            "steam_id_64_1": "1234",
+            "player_id_1": "1234",
             "action": "CHAT[Allies][Team]",
         }
     )
@@ -61,7 +61,7 @@ def test_admin_ping_mentions_always_escaped():
         log={
             "sub_content": "test message @here",
             "player": "some dude",
-            "steam_id_64_1": "1234",
+            "player_id_1": "1234",
             "action": "CHAT[Allies][Team]",
         },
         allow_mentions=False,
@@ -85,7 +85,7 @@ def test_mentions_are_not_escaped():
         log={
             "sub_content": "test message @here",
             "player": "some dude",
-            "steam_id_64_1": "1234",
+            "player_id_1": "1234",
             "action": "CHAT[Allies][Team]",
         }
     )
@@ -108,7 +108,7 @@ def test_admin_pings_mention_start():
         log={
             "sub_content": "!admin test @here",
             "player": "some dude",
-            "steam_id_64_1": "1234",
+            "player_id_1": "1234",
             "action": "CHAT[Allies][Team]",
         }
     )
@@ -133,7 +133,7 @@ def test_admin_pings_mention_middle():
         log={
             "sub_content": "test !admin @here",
             "player": "some dude",
-            "steam_id_64_1": "1234",
+            "player_id_1": "1234",
             "action": "CHAT[Allies][Team]",
         }
     )
@@ -141,6 +141,7 @@ def test_admin_pings_mention_middle():
     assert embed.description == "test __**!admin**__ @\u200bhere"
     assert content == "<@1212>"
     assert triggered
+
 
 def test_admin_pings_contains_numbers():
     config = AdminPingWebhooksUserConfig(
@@ -157,7 +158,7 @@ def test_admin_pings_contains_numbers():
         log={
             "sub_content": "testword123 test @here",
             "player": "some dude",
-            "steam_id_64_1": "1234",
+            "player_id_1": "1234",
             "action": "CHAT[Allies][Team]",
         }
     )
@@ -180,9 +181,9 @@ def test_kill_message():
         log={
             "action": "KILL",
             "player": "EL MONO LOKO",
-            "steam_id_64_1": "76561198823171234",
+            "player_id_1": "76561198823171234",
             "player2": "zerothreeOG",
-            "steam_id_64_2": "76561199371581234",
+            "player_id_2": "76561199371581234",
             "weapon": "MG42",
         },
     )
@@ -212,9 +213,9 @@ def test_team_kill_message():
         log={
             "action": "TEAM KILL",
             "player": "EL MONO LOKO",
-            "steam_id_64_1": "76561198823171234",
+            "player_id_1": "76561198823171234",
             "player2": "zerothreeOG",
-            "steam_id_64_2": "76561199371581234",
+            "player_id_2": "76561199371581234",
             "weapon": "MG42",
         },
     )

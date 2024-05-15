@@ -413,17 +413,17 @@ class HLLSettings extends React.Component {
               classes={classes}
               forward={forwardVIP}
               onFowardChange={() => this.toggle("forwardVIP")}
-              onAdd={(name, steamID64, expirationTimestamp) =>
+              onAdd={(name, player_id, expirationTimestamp) =>
                 sendAction("add_vip", {
-                  player_id: steamID64,
+                  player_id: player_id,
                   description: name,
                   forward: forwardVIP,
                   expiration: expirationTimestamp,
                 }).then(this.loadVips)
               }
-              onDelete={(name, steamID64) =>
+              onDelete={(name, player_id) =>
                 sendAction("remove_vip", {
-                  steam_id_64: steamID64,
+                  player_id: player_id,
                   forward: forwardVIP,
                 }).then(this.loadVips)
               }
@@ -441,15 +441,15 @@ class HLLSettings extends React.Component {
               peopleList={admins}
               roles={adminRoles}
               classes={classes}
-              onAdd={(name, steamID64, role) =>
+              onAdd={(name, playerId, role) =>
                 sendAction("add_admin", {
-                  player_id: steamID64,
+                  player_id: playerId,
                   description: name,
                   role: role,
                 }).then(this.loadAdmins)
               }
-              onDelete={(name, steamID64, role) =>
-                sendAction("remove_admin", { player_id: steamID64 }).then(
+              onDelete={(name, playerId, role) =>
+                sendAction("remove_admin", { player_id: playerId }).then(
                   this.loadAdmins
                 )
               }

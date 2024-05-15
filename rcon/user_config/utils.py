@@ -4,7 +4,7 @@ from typing import Any, Iterable, Self, Type
 
 import pydantic
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm.session import Session
+from sqlalchemy.orm import Session
 
 from rcon.models import UserConfig, enter_session
 from rcon.utils import get_server_number
@@ -140,11 +140,11 @@ def _get_conf(sess, key):
 
 
 def get_user_config(key: str, default=None) -> dict[str, Any] | Any | None:
-    logger.debug("Getting user config for %s", key)
+    # logger.debug("Getting user config for %s", key)
     with enter_session() as sess:
         res = _get_conf(sess, key)
         res = res.value if res else default
-        logger.debug("User config for %s is %s", key, res)
+        # logger.debug("User config for %s is %s", key, res)
         return res
 
 

@@ -25,16 +25,16 @@ Please change your name in Steam and restart your game to avoid this.
 Please ask T17 to prioritize fixing this bug."""
 
 
-INVALID_NAME_AUDIT_MESSAGE = """Player with an invalid name (ends in whitespace or a partial character when truncated) joined: {name} ({steam_id_64}
+INVALID_NAME_AUDIT_MESSAGE = """Player with an invalid name (ends in whitespace or a partial character when truncated) joined: {name} ({player_id}
 This will cause errors with various auto mods (no leader, etc) and the `playerinfo` RCON command will not work.
 The player will show as 'unassigned' in Gameview.
 Action taken = {action}"""
-PINEAPPLE_NAMES_AUDIT_UNBAN_MESSAGE = "Unbanning {name} ({steam_id_64}) that was temp banned since the `kick` command will not work with their name"
+PINEAPPLE_NAMES_AUDIT_UNBAN_MESSAGE = "Unbanning {name} ({player_id}) that was temp banned since the `kick` command will not work with their name"
 
 WINDOWS_STORE_PLAYER_MESSAGE = "Windows store players are not allowed on this server."
 
 WINDOWS_STORE_AUDIT_MESSAGE = (
-    "Windows store player {name} ({steam_id_64} connected, action taken = {action})"
+    "Windows store player {name} ({player_id} connected, action taken = {action})"
 )
 
 

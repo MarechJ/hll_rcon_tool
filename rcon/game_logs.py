@@ -14,11 +14,12 @@ import redis.exceptions
 from pydantic import HttpUrl
 from sqlalchemy import and_, desc, or_
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
 
 from discord.utils import escape_markdown
 from rcon.cache_utils import get_redis_client, ttl_cache
 from rcon.discord import make_hook, send_to_discord_audit
-from rcon.models import LogLine, PlayerSteamID, enter_session
+from rcon.models import LogLine, PlayerID, enter_session
 from rcon.player_history import (
     add_player_to_blacklist,
     get_player_profile,
@@ -407,11 +408,11 @@ class LogLoop:
         # from the previous map may leak into the current one
         if m["start"] > datetime.datetime.now().timestamp() - 30:
             return
-        for steam_id in players:
-            player = players.get(steam_id)
+        for player_id in players:
+            player = players.get(player_id)
             map_players = m.setdefault("player_stats", dict())
             p = map_players.get(
-                steam_id,
+                player_id,
                 PlayerStat(
                     combat=player["combat"],
                     offense=player["offense"],
@@ -422,7 +423,7 @@ class LogLoop:
             for stat in ["combat", "offense", "defense", "support"]:
                 if player[stat] > p[stat]:
                     p[stat] = player[stat]
-            map_players[steam_id] = p
+            map_players[player_id] = p
         maps.update(0, m)
 
     def record_line(self, log: StructuredLogLineWithMetaData):
@@ -439,7 +440,7 @@ class LogLoop:
         if not isinstance(last_line, dict):
             logger.error("Can't check against last_line, invalid_format %s", last_line)
         elif last_line and last_line["timestamp_ms"] > log["timestamp_ms"]:
-            logger.error("Received old log record, ignoring")
+            logger.warning("Received old log record, ignoring")
             return None
 
         self.log_history.add(log)
@@ -533,19 +534,17 @@ class LogRecorder:
                 return to_store
         return to_store
 
-    def _get_steamid_record(self, sess, steam_id_64):
-        if not steam_id_64:
+    def _get_player_id_record(self, sess: Session, player_id: str):
+        if not player_id:
             return None
         return (
-            sess.query(PlayerSteamID)
-            .filter(PlayerSteamID.steam_id_64 == steam_id_64)
-            .one_or_none()
+            sess.query(PlayerID).filter(PlayerID.player_id == player_id).one_or_none()
         )
 
     def _save_logs(self, sess, to_store: list[StructuredLogLineWithMetaData]):
         for log in to_store:
-            steamid_1 = self._get_steamid_record(sess, log["steam_id_64_1"])
-            steamid_2 = self._get_steamid_record(sess, log["steam_id_64_2"])
+            player_1 = self._get_player_id_record(sess, log["player_id_1"])
+            player_2 = self._get_player_id_record(sess, log["player_id_2"])
             try:
                 sess.add(
                     LogLine(
@@ -554,10 +553,10 @@ class LogRecorder:
                             log["timestamp_ms"] // 1000
                         ),
                         type=log["action"],
-                        player1_name=log["player"],
-                        player2_name=log["player2"],
-                        steamid1=steamid_1,
-                        steamid2=steamid_2,
+                        player1_name=log["player_name_1"],
+                        player2_name=log["player_name_2"],
+                        player_1=player_1,
+                        player_2=player_2,
                         raw=log["raw"],
                         content=log["message"],
                         server=os.getenv("SERVER_NUMBER"),
@@ -674,8 +673,10 @@ def get_recent_logs(
         if player_search:
             for player_name_search in player_search:
                 if is_player(
-                    player_name_search, line["player"], exact_player_match
-                ) or is_player(player_name_search, line["player2"], exact_player_match):
+                    player_name_search, line["player_name_1"], exact_player_match
+                ) or is_player(
+                    player_name_search, line["player_name_2"], exact_player_match
+                ):
                     # Filter out anything that isn't in action_filter
                     if (
                         action_filter
@@ -710,9 +711,9 @@ def get_recent_logs(
         elif not player_search and not action_filter:
             logs.append(line)
 
-        if p1 := line["player"]:
+        if p1 := line["player_name_1"]:
             all_players.add(p1)
-        if p2 := line["player2"]:
+        if p2 := line["player_name_2"]:
             all_players.add(p2)
         actions.add(line["action"])
 
@@ -724,11 +725,11 @@ def get_recent_logs(
 
 
 def is_player_death(player, log):
-    return log["action"] == "KILL" and player == log["player2"]
+    return log["action"] == "KILL" and player == log["player_name_2"]
 
 
 def is_player_kill(player, log):
-    return log["action"] == "KILL" and player == log["player"]
+    return log["action"] == "KILL" and player == log["player_name_1"]
 
 
 @on_tk
@@ -742,16 +743,16 @@ def auto_ban_if_tks_right_after_connection(
     if not config or not config.enabled:
         return
 
-    player_name = log["player"]
-    player_steam_id = log["steam_id_64_1"]
+    player_name = log["player_name_1"]
+    player_id = log["player_id_1"]
     player_profile = None
     vips = {}
     try:
-        player_profile = get_player_profile(player_steam_id, 0)
+        player_profile = get_player_profile(player_id, 0)
     except:
         logger.exception("Unable to get player profile")
     try:
-        vips = set(v["steam_id_64"] for v in rcon.get_vip_ids())
+        vips = set(v["player_id"] for v in rcon.get_vip_ids())
     except:
         logger.exception("Unable to get VIPS")
 
@@ -771,7 +772,7 @@ def auto_ban_if_tks_right_after_connection(
     tk_tolerance_count = config.teamkill_tolerance_count
 
     if player_profile:
-        if whitelist_players.is_vip and player_steam_id in vips:
+        if whitelist_players.is_vip and player_id in vips:
             logger.debug("Not checking player because he's VIP")
             return
 
@@ -807,7 +808,7 @@ def auto_ban_if_tks_right_after_connection(
             continue
         if (
             log["action"] == "TEAM KILL"
-            and log["player"] == player_name
+            and log["player_name_1"] == player_name
             and last_action_is_connect
         ):
             if excluded_weapons and log["weapon"].lower() in excluded_weapons:
@@ -828,13 +829,13 @@ def auto_ban_if_tks_right_after_connection(
                 )
                 try:
                     rcon.perma_ban(
-                        player_id=player_steam_id,
+                        player_id=player_id,
                         reason=reason,
                         by=author,
                     )
                 except:
                     logger.exception("Can't perma, trying blacklist")
-                    add_player_to_blacklist(player_steam_id, reason, by=author)
+                    add_player_to_blacklist(player_id, reason, by=author)
                 logger.info(
                     "Banned player %s for TEAMKILL after connect %s", player_name, log
                 )
@@ -894,13 +895,11 @@ def get_historical_logs_records(
     if player_id:
         # Handle not found
         player = (
-            sess.query(PlayerSteamID)
-            .filter(PlayerSteamID.steam_id_64 == player_id)
-            .one_or_none()
+            sess.query(PlayerID).filter(PlayerID.player_id == player_id).one_or_none()
         )
         id_ = player.id if player else 0
         q = q.filter(
-            or_(LogLine.player1_steamid == id_, LogLine.player2_steamid == id_)
+            or_(LogLine.player1_player_id == id_, LogLine.player2_player_id == id_)
         )
 
     if player_name and not exact_player_match:

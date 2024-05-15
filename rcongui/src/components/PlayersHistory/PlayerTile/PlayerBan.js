@@ -22,7 +22,7 @@ export function banListFromServer(data) {
 }
 
 export const PlayerBan = ({ classes, bans, player }) => {
-  const playerBans = bans.get(player.get("steam_id_64"));
+  const playerBans = bans.get(player.get("player_id"));
   const formattedBans = {};
 
   playerBans?.forEach((b) =>
