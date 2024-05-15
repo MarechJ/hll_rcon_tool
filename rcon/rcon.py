@@ -1241,16 +1241,22 @@ class Rcon(ServerCtl):
                 super().remove_map_from_rotation(map_name)
             return "SUCCESS"
 
-    def add_maps_to_rotation(self, map_names: list[str]) -> Literal["SUCCESS"]:
+    def add_maps_to_rotation(self, map_names: list[str]) -> list[tuple[str, str]]:
+        """Add the given maps to the rotation, returns the game server response for each map"""
         with invalidates(Rcon.get_map_rotation):
             existing = [map_.id for map_ in self.get_map_rotation()]
             last = existing[len(existing) - 1]
             map_numbers = {last: existing.count(last)}
+            results: list[tuple[str, str]] = []
             for map_name in map_names:
-                super().add_map_to_rotation(map_name, last, map_numbers.get(last, 1))
+                res = super().add_map_to_rotation(
+                    map_name, last, map_numbers.get(last, 1)
+                )
+                results.append((map_name, res))
                 last = map_name
                 map_numbers[last] = map_numbers.get(last, 0) + 1
-            return "SUCCESS"
+
+        return results
 
     def set_maprotation(self, rotation: list[str]) -> list[Layer]:
         if not rotation:
