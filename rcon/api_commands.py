@@ -499,35 +499,35 @@ class RconAPI(Rcon):
 
         return self.get_votemap_status()
 
-    def get_map_whitelist(self) -> list[str]:
+    def get_votemap_whitelist(self) -> list[str]:
         v = VoteMap()
 
         # TODO: update this when we return `Layer`s instead of strings
         return [str(map) for map in v.get_map_whitelist()]
 
-    def add_map_to_vm_whitelist(self, map_name: str):
+    def add_map_to_votemap_whitelist(self, map_name: str):
         v = VoteMap()
         v.add_map_to_whitelist(map_name=map_name)
 
-    def add_maps_to_vm_whitelist(self, map_names: Iterable[str]):
+    def add_maps_to_votemap_whitelist(self, map_names: Iterable[str]):
         v = VoteMap()
-        v.add_maps_to_vm_whitelist(map_names=map_names)
+        v.add_maps_to_whitelist(map_names=map_names)
 
-    def remove_map_from_vm_whitelist(self, map_name: str):
+    def remove_map_from_votemap_whitelist(self, map_name: str):
         v = VoteMap()
-        v.remove_map_from_vm_whitelist(map_name=map_name)
+        v.remove_map_from_whitelist(map_name=map_name)
 
-    def remove_maps_from_vm_whitelist(self, map_names: Iterable[str]):
+    def remove_maps_from_votemap_whitelist(self, map_names: Iterable[str]):
         v = VoteMap()
-        v.remove_maps_from_vm_whitelist(map_names=map_names)
+        v.remove_maps_from_whitelist(map_names=map_names)
 
-    def reset_map_vm_whitelist(self):
+    def reset_map_votemap_whitelist(self):
         v = VoteMap()
-        v.reset_map_vm_whitelist()
+        v.reset_map_whitelist()
 
-    def set_map_vm_whitelist(self, map_names: Iterable[str]):
+    def set_map_votemap_whitelist(self, map_names: Iterable[str]):
         v = VoteMap()
-        v.set_map_vm_whitelist(map_names=map_names)
+        v.set_map_whitelist(map_names=map_names)
 
     def get_votemap_config(self) -> VoteMapUserConfig:
         return VoteMapUserConfig.load_from_db()

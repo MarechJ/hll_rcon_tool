@@ -125,16 +125,16 @@ DEFAULT_AUTO_SETTINGS = {
         "add_vip": {"player_id": "1234567890123456", "description": "A comment"},
         "remove_vip": {"player_id": "1234567890123456"},
         "remove_all_vips": {},
-        "add_map_to_whitelist": {"map_name": "stmariedumont_warfare"},
-        "add_maps_to_vm_whitelist": {
+        "add_map_to_votemap_whitelist": {"map_name": "stmariedumont_warfare"},
+        "add_maps_to_votemap_whitelist": {
             "map_names": ["stmariedumont_warfare", "kursk_offensive_rus"]
         },
-        "remove_map_from_vm_whitelist": {"map_name": "stmariedumont_warfare"},
-        "do_remove_maps_from_vm_whitelist": {
+        "remove_map_from_votemap_whitelist": {"map_name": "stmariedumont_warfare"},
+        "do_remove_maps_from_votemap_whitelist": {
             "map_names": ["stmariedumont_warfare", "kursk_offensive_rus"]
         },
-        "reset_map_vm_whitelist": {},
-        "set_map_vm_whitelist": {
+        "reset_map_votemap_whitelist": {},
+        "set_map_votemap_whitelist": {
             "map_names": ["stmariedumont_warfare", "kursk_offensive_rus"]
         },
     },

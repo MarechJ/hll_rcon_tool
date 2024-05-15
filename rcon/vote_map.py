@@ -639,25 +639,25 @@ class VoteMap:
 
         whitelist = self.get_map_whitelist()
         whitelist.add(maps.parse_layer(map_name))
-        self.set_map_vm_whitelist(whitelist)
+        self.set_map_whitelist(whitelist)
 
-    def add_maps_to_vm_whitelist(self, map_names: Iterable[str]):
+    def add_maps_to_whitelist(self, map_names: Iterable[str]):
         for map_name in map_names:
             self.add_map_to_whitelist(map_name.lower())
 
-    def remove_map_from_vm_whitelist(self, map_name: str):
+    def remove_map_from_whitelist(self, map_name: str):
         whitelist = self.get_map_whitelist()
         whitelist.discard(maps.parse_layer(map_name))
-        self.set_map_vm_whitelist(whitelist)
+        self.set_map_whitelist(whitelist)
 
-    def remove_maps_from_vm_whitelist(self, map_names):
+    def remove_maps_from_whitelist(self, map_names):
         for map_name in map_names:
-            self.remove_map_from_vm_whitelist(map_name)
+            self.remove_map_from_whitelist(map_name)
 
-    def reset_map_vm_whitelist(self):
-        self.set_map_vm_whitelist(self.rcon.get_maps())
+    def reset_map_whitelist(self):
+        self.set_map_whitelist(self.rcon.get_maps())
 
-    def set_map_vm_whitelist(self, map_names) -> None:
+    def set_map_whitelist(self, map_names) -> None:
         self.red.set(self.whitelist_key, pickle.dumps(set(map_names)))
 
     def gen_selection(self):
