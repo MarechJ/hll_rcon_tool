@@ -655,8 +655,8 @@ class ServerCtl:
 
         return res == SUCCESS
 
-    def remove_admin(self, player_id) -> str:
-        return self._str_request(f"admindel {player_id}", log_info=True)
+    def remove_admin(self, player_id) -> bool:
+        return self._str_request(f"admindel {player_id}", log_info=True) == SUCCESS
 
     @_escape_params
     def add_vip(self, player_id: str, description: str) -> str:

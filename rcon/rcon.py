@@ -475,7 +475,7 @@ class Rcon(ServerCtl):
         with invalidates(Rcon.get_admin_ids):
             return super().add_admin(player_id, role, description)
 
-    def remove_admin(self, player_id) -> str:
+    def remove_admin(self, player_id) -> bool:
         with invalidates(Rcon.get_admin_ids):
             return super().remove_admin(player_id)
 
