@@ -377,9 +377,9 @@ class ServerCtl:
     def get_profanities(self) -> list[str]:
         return self._get_list("get profanity", can_fail=False)
 
-    def ban_profanities(self, profanities: str) -> str:
+    def ban_profanities(self, profanities: str) -> bool:
         profanities = convert_tabs_to_spaces(profanities)
-        return self._str_request(f"BanProfanity {profanities}")
+        return self._str_request(f"BanProfanity {profanities}") == SUCCESS
 
     def unban_profanities(self, profanities: str) -> str:
         return self._str_request(f"UnbanProfanity {profanities}")

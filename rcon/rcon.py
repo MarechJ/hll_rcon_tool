@@ -1097,7 +1097,7 @@ class Rcon(ServerCtl):
         with invalidates(self.get_profanities):
             return super().unban_profanities(",".join(profanities))
 
-    def ban_profanities(self, profanities: list[str]) -> str:
+    def ban_profanities(self, profanities: list[str]) -> bool:
         if not isinstance(profanities, list):
             profanities = [profanities]
         with invalidates(self.get_profanities):
