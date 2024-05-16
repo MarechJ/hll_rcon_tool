@@ -231,7 +231,7 @@ class RconAPI(Rcon):
         return True
 
     def clear_cache(self) -> bool:
-        """Clear every key in this servers Redis cache
+        """Clear every key in this servers Redis cache and return number of deleted keys
 
         Many things in CRCON are cached in Redis to avoid excessively polling
         the game server, this clears the entire cache which is sometimes necessary
