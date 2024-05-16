@@ -213,7 +213,9 @@ def expose_api_endpoint(
                         logger.error(
                             f"Bad request for {request.method} {request.path} {pname=} {param=}"
                         )
-                        return HttpResponseBadRequest()
+                        return HttpResponseBadRequest(
+                            f"Missing mandatory parameter: {pname}"
+                        )
 
         try:
             logger.debug("%s %s", command_name, arguments)
