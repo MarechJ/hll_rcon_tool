@@ -11,7 +11,7 @@ def test_watchlist_hook():
         "action": "DISCONNECTED",
         "player": "Boulard",
         "player_id_1": None,
-        "player2": None,
+        "player_name_2": None,
         "player_id_2": None,
         "weapon": None,
         "message": "Boulard",

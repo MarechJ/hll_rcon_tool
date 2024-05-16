@@ -59,10 +59,10 @@ class BaseStats:
         self.red = get_redis_client()
 
     def _is_player_death(self, player, log):
-        return player["name"] == log["player2"]
+        return player["name"] == log["player_name_2"]
 
     def _is_player_kill(self, player, log):
-        return player["name"] == log["player"]
+        return player["name"] == log["player_name_1"]
 
     def _add_kd(self, attacker_key, victim_key, stats, player, log):
         if self._is_player_kill(player, log):
@@ -425,7 +425,7 @@ class TimeWindowStats(BaseStats):
 
         for log in logs:
             # player is the player name
-            if player := log.get("player"):
+            if player := log.get("player_name_1"):
                 # Check if this log line in a disconnect / connect and stores it it is
                 self._set_start_end_times(player, players_times, log, from_)
                 # index logs by player names, so that you can fetch all logs for a given player easily
@@ -435,7 +435,7 @@ class TimeWindowStats(BaseStats):
                 if player_id := log.get("player_id_1"):
                     players.add((player, player_id))
 
-            if player2 := log.get("player2"):
+            if player2 := log.get("player_name_2"):
                 self._set_start_end_times(player2, players_times, log, from_)
                 indexed_logs.setdefault(player2, []).append(log)
 
