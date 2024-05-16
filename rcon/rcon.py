@@ -965,7 +965,12 @@ class Rcon(ServerCtl):
         super().set_welcome_message(formatted)
         return prev.decode() if prev else ""
 
-    def get_broadcast_message(self) -> str | bytes:
+    def get_broadcast_message(self) -> str | bytes | None:
+        """Returns the current broadcast message if the cache is set
+
+        There is no RCON command to get the current broadcast message so it can only
+        be retrieved if it was set by CRCON and the cache has not expired
+        """
         red = get_redis_client()
         msg: bytes = red.get("BROADCAST_MESSAGE")  # type: ignore
         if isinstance(msg, (str, bytes)):
