@@ -51,7 +51,7 @@ def get_api_documentation(request):
             }
             arguments[k] = expanded_args
 
-        item["endpoint"] = func.__name__
+        item["endpoint"] = name
         item["arguments"] = arguments
         item["return_type"] = _get_empty(sig.return_annotation)
         item["doc_string"] = getdoc(func)
