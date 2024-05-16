@@ -634,12 +634,15 @@ class Rcon(ServerCtl):
 
         return result
 
-    def add_vip(self, player_id: str, description: str, expiration: str = "") -> str:
+    def add_vip(
+        self, player_id: str, description: str, expiration: str | None = None
+    ) -> str:
         """Adds VIP status on the game server and adds or updates their PlayerVIP record."""
         with invalidates(Rcon.get_vip_ids):
             # Add VIP before anything else in case we have errors
             result = super().add_vip(player_id, description)
 
+        expiration = expiration or ""
         # postgres and Python have different max date limits
         # https://docs.python.org/3.8/library/datetime.html#datetime.MAXYEAR
         # https://www.postgresql.org/docs/12/datatype-datetime.html
