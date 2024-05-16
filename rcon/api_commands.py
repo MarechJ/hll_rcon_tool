@@ -1,5 +1,5 @@
 import inspect
-from datetime import datetime
+from datetime import datetime, timedelta
 from logging import getLogger
 from typing import Any, Iterable, Literal, Optional, Type
 
@@ -18,6 +18,7 @@ from rcon.player_history import (
     remove_player_from_blacklist,
 )
 from rcon.rcon import Rcon
+from rcon.scoreboard import TimeWindowStats
 from rcon.server_stats import get_db_server_stats_for_range
 from rcon.settings import SERVER_INFO
 from rcon.types import (
@@ -1700,3 +1701,25 @@ class RconAPI(Rcon):
             errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
+
+    def get_date_scoreboard(self, start: int, end: int):
+        try:
+            start_date = datetime.fromtimestamp(int(start))
+        except (ValueError, KeyError, TypeError) as e:
+            logger.error(e)
+            start_date = datetime.now() - timedelta(minutes=60)
+        try:
+            end_date = datetime.fromtimestamp(int(end))
+        except (ValueError, KeyError, TypeError) as e:
+            logger.error(e)
+            end_date = datetime.now()
+
+        stats = TimeWindowStats()
+
+        try:
+            result = stats.get_players_stats_at_time(start_date, end_date)
+        except Exception as e:
+            logger.exception("Unable to produce date stats: %s", e)
+            result = {}
+
+        return result

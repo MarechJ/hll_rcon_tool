@@ -555,6 +555,7 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     rcon_api.get_log_stream_config: "api.can_view_log_stream_config",
     rcon_api.set_log_stream_config: "api.can_change_log_stream_config",
     rcon_api.validate_log_stream_config: "api.can_change_log_stream_config",
+    rcon_api.get_date_scoreboard: "api.can_view_date_scoreboard",
 }
 
 PREFIXES_TO_EXPOSE = [
@@ -769,6 +770,7 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.validate_votemap_config: ["POST"],
     rcon_api.validate_watchlist_discord_webhooks_config: ["POST"],
     rcon_api.watch_player: ["POST"],
+    rcon_api.get_date_scoreboard: ["GET"],
 }
 
 # Check to make sure that ENDPOINT_HTTP_METHODS and ENDPOINT_PERMISSIONS have the same endpoints

@@ -89,7 +89,6 @@ endpoints: list[tuple[str, Callable]] = [
     ("async_upload_vips", vips.async_upload_vips),
     ("async_upload_vips_result", vips.async_upload_vips_result),
     ("download_vips", vips.download_vips),
-    ("get_date_scoreboard", scoreboards.date_scoreboard),
     ("live_scoreboard", scoreboards.live_scoreboard),
     ("get_scoreboard_maps", scoreboards.get_scoreboard_maps),
     ("get_map_scoreboard", scoreboards.get_map_scoreboard),
