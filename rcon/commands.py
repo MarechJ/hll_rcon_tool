@@ -659,9 +659,12 @@ class ServerCtl:
         return self._str_request(f"admindel {player_id}", log_info=True) == SUCCESS
 
     @_escape_params
-    def add_vip(self, player_id: str, description: str) -> str:
+    def add_vip(self, player_id: str, description: str) -> bool:
         description = convert_tabs_to_spaces(description)
-        return self._str_request(f'vipadd {player_id} "{description}"', log_info=True)
+        return (
+            self._str_request(f'vipadd {player_id} "{description}"', log_info=True)
+            == SUCCESS
+        )
 
     def remove_vip(self, player_id) -> str:
         return self._str_request(f"vipdel {player_id}", log_info=True)
