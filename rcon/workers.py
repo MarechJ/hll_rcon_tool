@@ -286,35 +286,35 @@ def bulk_vip(name_ids, mode="override"):
     for future in as_completed(removal_futures):
         try:
             result = future.result()
-            if result != "SUCCESS":
+            if not result:
                 errors.append(f"Failed to add {removal_futures[future]}")
         except Exception:
             logger.exception(f"Failed to remove vip from {removal_futures[future]}")
 
     processed_additions = []
-    for name, player_id, expiration_timestamp in name_ids:
+    for description, player_id, expiration_timestamp in name_ids:
         if not expiration_timestamp:
             expiration_timestamp = INDEFINITE_VIP_DATE.isoformat()
         else:
             expiration_timestamp = expiration_timestamp.isoformat()
 
-        processed_additions.append((name, player_id, expiration_timestamp))
+        processed_additions.append((description, player_id, expiration_timestamp))
 
     add_futures = {
         ctl.run_in_pool(
             "add_vip",
-            name,
-            player_id,
+            player_id=player_id,
+            description=description,
             expiration=expiration_timestamp,
         ): player_id
-        for idx, (name, player_id, expiration_timestamp) in enumerate(
+        for idx, (description, player_id, expiration_timestamp) in enumerate(
             processed_additions
         )
     }
     for future in as_completed(add_futures):
         try:
             result = future.result()
-            if result != "SUCCESS":
+            if not result:
                 errors.append(f"Failed to add {add_futures[future]}")
         except Exception:
             logger.exception(f"Failed to add vip to {add_futures[future]}")

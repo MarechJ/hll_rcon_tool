@@ -133,7 +133,7 @@ def async_upload_vips(request):
                         player_id
                     ):
                         errors.append(
-                            f"{line} has an invalid player ID, expected a 17 digit steam id or a windows store id"
+                            f"{line} has an invalid player ID: `{player_id}`, expected a 17 digit steam id or a windows store id. {is_steam_id=} {is_win_id=}"
                         )
                         continue
                     if not name:
