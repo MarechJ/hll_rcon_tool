@@ -203,7 +203,7 @@ def is_logged_in(request):
 
 
 @csrf_exempt
-@require_http_methods(["GET"])
+@require_http_methods(["GET", "POST"])
 def do_logout(request):
     logout(request)
     return api_response(result=True, command="logout", failed=False)
