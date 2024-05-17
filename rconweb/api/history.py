@@ -41,30 +41,6 @@ def get_player_messages(request):
 
 @csrf_exempt
 @login_required()
-@permission_required("api.can_view_player_comments", raise_exception=True)
-@require_http_methods(["GET"])
-def get_player_comments(request):
-    data = _get_data(request)
-    res = None
-    try:
-        res = player_history.get_player_comments(player_id=data["player_id"])
-        failed = False
-    except:
-        logger.exception("Unable to get player comments")
-        failed = True
-
-    return RconJsonResponse(
-        {
-            "result": res,
-            "command": "get_player_comments",
-            "arguments": data,
-            "failed": failed,
-        }
-    )
-
-
-@csrf_exempt
-@login_required()
 @permission_required("api.can_add_player_comments", raise_exception=True)
 @require_http_methods(["POST"])
 @require_content_type()

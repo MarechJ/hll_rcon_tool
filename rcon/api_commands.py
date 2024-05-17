@@ -278,6 +278,9 @@ class RconAPI(Rcon):
             }
         return profile
 
+    def get_player_comments(self, player_id: str) -> list[PlayerCommentType]:
+        return player_history.get_player_comments(player_id=player_id)
+
     def get_players_history(
         self,
         page: int = 1,
