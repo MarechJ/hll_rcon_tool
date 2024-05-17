@@ -477,16 +477,27 @@ class Rcon(ServerCtl):
 
     @ttl_cache(ttl=60)
     def get_perma_bans(self) -> list[GameServerBanType]:
-        return [
-            self._struct_ban(ban=ban, type_=PERMA_BAN)
-            for ban in super().get_perma_bans()
-        ]
+        bans: list[GameServerBanType] = []
+        for raw_ban in super().get_perma_bans():
+            try:
+                ban = self._struct_ban(ban=raw_ban, type_=PERMA_BAN)
+                bans.append(ban)
+            except ValueError:
+                logger.exception("Invalid perma ban line: %s", raw_ban)
+
+        return bans
 
     @ttl_cache(ttl=60)
     def get_temp_bans(self) -> list[GameServerBanType]:
-        return [
-            self._struct_ban(ban=ban, type_=TEMP_BAN) for ban in super().get_temp_bans()
-        ]
+        bans: list[GameServerBanType] = []
+        for raw_ban in super().get_temp_bans():
+            try:
+                ban = self._struct_ban(ban=raw_ban, type_=TEMP_BAN)
+                bans.append(ban)
+            except ValueError:
+                logger.exception("Invalid temp ban line: %s", raw_ban)
+
+        return bans
 
     def _struct_ban(self, ban, type_) -> GameServerBanType:
         # Avoid errors on empty temp bans
@@ -537,25 +548,11 @@ class Rcon(ServerCtl):
 
     def get_bans(self) -> list[GameServerBanType]:
         try:
-            temp_bans = []
-            for b in self.get_temp_bans():
-                try:
-                    temp_bans.append(self._struct_ban(b, TEMP_BAN))
-                except ValueError:
-                    logger.exception("Invalid temp ban line: %s", b)
-            bans = []
-            for b in self.get_perma_bans():
-                try:
-                    bans.append(self._struct_ban(b, PERMA_BAN))
-                except ValueError:
-                    logger.exception("Invalid perm ban line: %s", b)
+            return self.get_temp_bans() + self.get_perma_bans()
         except Exception:
             self.get_temp_bans.cache_clear()
             self.get_perma_bans.cache_clear()
             raise
-        # Most recent first
-        bans.reverse()
-        return temp_bans + bans
 
     def get_ban(self, player_id: str) -> list[GameServerBanType]:
         """
