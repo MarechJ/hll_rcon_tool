@@ -520,3 +520,43 @@ class SafeStringFormat(dict):
             called_from.code_context,
         )
         return f"{{{key}}}"
+
+
+class SingletonMeta(type):
+    _instances = {}
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super(SingletonMeta, cls).__call__(*args, **kwargs)
+        return cls._instances[cls]
+
+class MissingType(metaclass=SingletonMeta):
+    def __bool__(self):
+        return False
+    def __iter__(self):
+        return
+        yield
+    def __repr__(self):
+        return "MISSING"
+
+MISSING = MissingType()
+
+
+def server_numbers_to_mask(*server_numbers):
+    result = 0
+    for number in server_numbers:
+        if number <= 0 or number > 32:
+            raise ValueError("Server number must be between 1 and 32")
+        # Shift the positive bit to create a mask and then merge that mask with the result
+        # eg. [1, 2, 4] -> 0001, 0010, 1000 -> 1011
+        result |= (1 << (number - 1))
+    return result
+
+def mask_to_server_numbers(mask: int) -> set[int]:
+    server_numbers = set()
+    # bin() returns '0b...', so we slice of the first two characters and then iterate over the remaining
+    # characters from back to front.
+    # eg. bin(7) -> '0b1011' -> [1, 1, 0, 1] -> [1, 2, 4]
+    for i, c in enumerate(bin(mask)[:1:-1], 1):
+        if c == '1':
+            server_numbers.add(i)
+    return server_numbers

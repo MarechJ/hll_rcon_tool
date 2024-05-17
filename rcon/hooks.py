@@ -710,7 +710,7 @@ def notify_invalid_names(rcon: Rcon, _, name: str, steam_id_64: str):
         # trying to remove it
         # players can't connect if they're banned so this should never fire and remove a
         # temp ban from any other reason unless there's another hook temp banning on connect
-        t = Timer(15, rcon.remove_temp_ban, kwargs={"steam_id_64": steam_id_64})
+        t = Timer(15, rcon.remove_temp_ban, kwargs={"ban_log": steam_id_64})
         send_to_discord_audit(
             message=config.audit_kick_unban_message,
             command_name="kick",

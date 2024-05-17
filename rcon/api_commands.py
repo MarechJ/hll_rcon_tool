@@ -1,18 +1,18 @@
 import inspect
 from datetime import datetime
 from logging import getLogger
-from typing import Any, Iterable, Literal, Optional, Type
+from typing import Any, Iterable, Literal, Optional, Sequence, Type
 
 from dateutil import parser
 
 from rcon import game_logs, player_history
 from rcon.audit import ingame_mods, online_mods
+from rcon.blacklist import add_record_to_blacklist, create_blacklist, delete_blacklist, edit_blacklist, edit_record_from_blacklist, remove_record_from_blacklist
 from rcon.cache_utils import RedisCached, get_redis_pool
 from rcon.discord import audit_user_config_differences
 from rcon.gtx import GTXFtp
 from rcon.player_history import (
     add_flag_to_player,
-    add_player_to_blacklist,
     get_players_by_appearance,
     remove_flag,
     remove_player_from_blacklist,
@@ -22,6 +22,7 @@ from rcon.server_stats import get_db_server_stats_for_range
 from rcon.settings import SERVER_INFO
 from rcon.types import (
     AdminUserType,
+    BlacklistSyncMethod,
     ParsedLogsType,
     PlayerFlagType,
     PlayerProfileType,
@@ -63,6 +64,7 @@ from rcon.user_config.webhooks import (
     KillsWebhooksUserConfig,
     WatchlistWebhooksUserConfig,
 )
+from rcon.utils import MISSING
 from rcon.vote_map import VoteMap
 from rcon.watchlist import PlayerWatch
 
@@ -132,54 +134,147 @@ class RconAPI(Rcon):
             )
         return res
 
-    def blacklist_player(
+    def create_blacklist(
         self,
-        player_id: str,
-        reason: str,
-        player_name: str | None = None,
-        audit_name: str | None = None,
-    ) -> bool:
+        name: str,
+        sync: BlacklistSyncMethod = BlacklistSyncMethod.KICK_ONLY,
+        servers: Sequence[int] | None = None,
+    ):
         """
-        Add a player to the blacklist
+        Creates a new, empty blacklist.
 
-        The blacklist is a permanent ban list stored in CRCON so it persists
-        between game servers if you move providers or your files are reset and
-        each player is automatically checked when they connect and permanently
-        banned if they are on the list.
+        Blacklists are collections of ban-like records stored by CRCON
+        to provide greater flexibility and scalability.
 
         Args:
-            player_id: steam_id_64 or windows store ID
-            reason: The reason the player was blacklisted
-            player_name: The players name which will be added as an alias
-            audit_name: The person/tool that is blacklisting the player
+            name:
+                Name for the list
+            sync:
+                Method to use for synchronizing an active record with the
+                game server. See `BlacklistSyncMethod` for more details.
+            servers:
+                A sequence of server numbers which this blacklist will
+                apply to. `None` means all servers.
         """
-
-        # Attempt to perma ban on the server for immediate removal
-        try:
-            self.perma_ban(
-                player_name=player_name,
-                player_id=player_id,
-                reason=reason,
-                by=audit_name if audit_name else "",
-            )
-        except Exception as e:
-            logger.exception(e)
-            logger.error(
-                "%s while attempting to perma ban in blacklist_player %s, %s",
-                e,
-                player_id,
-                player_name,
-            )
-
-        # This is redundant since the player is added to the blacklist in `perma_ban`
-        # but including it here to preserve functionality with the blacklist regardless of
-        # whether or not the player is perma banned or blacklisted
-        # legacy game server versions would not let you perma ban a player who was not connected
-        add_player_to_blacklist(
-            steam_id_64=player_id, reason=reason, name=player_name, by=audit_name
+        return create_blacklist(
+            name=name,
+            sync=sync,
+            servers=servers,
         )
 
-        return True
+    def edit_blacklist(
+        self,
+        blacklist_id: int,
+        name: str = MISSING,
+        sync: BlacklistSyncMethod = MISSING,
+        servers: Sequence[int] | None = MISSING,
+    ):
+        """
+        Edits a blacklist.
+
+        Blacklists are collections of ban-like records stored by CRCON
+        to provide greater flexibility and scalability.
+
+        Args:
+            blacklist_id: The ID of the blacklist
+            name: What to name the blacklist
+            sync: Method to use for synchronizing records with the game
+            servers: List of server numbers this blacklist applies to. `None` means all.
+        """
+        return edit_blacklist(
+            blacklist_id,
+            name=name,
+            sync=sync,
+            servers=servers,
+        )
+
+    def delete_blacklist(
+        self,
+        blacklist_id: int,
+    ):
+        """
+        Removes a blacklist alongside all of its records.
+
+        Blacklists are collections of ban-like records stored by CRCON
+        to provide greater flexibility and scalability.
+
+        Args:
+            blacklist_id: The ID of the blacklist
+        """
+        return delete_blacklist(blacklist_id)
+
+    def add_blacklist_record(
+        self,
+        player_id: str,
+        blacklist_id: int,
+        reason: str,
+        expires_at: datetime | None = None,
+        admin_name: str = "",
+    ):
+        """
+        Adds a new record to a blacklist.
+
+        Blacklists are collections of ban-like records stored by CRCON
+        to provide greater flexibility and scalability.
+
+        Args:
+            player_id: steam_id_64 or windows store ID to blacklist
+            blacklist_id: The ID of the blacklist to use
+            reason: The reason the player was blacklisted for
+            expires_at: When the blacklist should expire, if ever
+            admin_name: The person/tool that is blacklisting the player
+        """
+        return add_record_to_blacklist(
+            player_id=player_id,
+            blacklist_id=blacklist_id,
+            reason=reason,
+            expires_at=expires_at,
+            admin_name=admin_name,
+        )
+
+    def edit_blacklist_record(
+        self,
+        record_id: int,
+        blacklist_id: int = MISSING,
+        reason: str = MISSING,
+        expires_at: datetime | None = MISSING,
+    ) -> bool:
+        """
+        Edits a blacklist record.
+
+        Blacklists are collections of ban-like records stored by CRCON
+        to provide greater flexibility and scalability.
+
+        The blacklisted player ID cannot be edited. You instead need to
+        delete this record and create a new one.
+
+        Args:
+            record_id: The ID of the record
+            blacklist_id: The ID of the blacklist this record should be part of
+            reason: The reason the player was blacklisted for
+            expires_at: When the blacklist should expire, if ever
+        """
+        return edit_record_from_blacklist(
+            record_id,
+            blacklist_id=blacklist_id,
+            reason=reason,
+            expires_at=expires_at,
+        )
+    
+    def remove_blacklist_record(
+        self,
+        record_id: int,
+    ):
+        """
+        Removes a blacklist record.
+
+        Blacklists are collections of ban-like records stored by CRCON
+        to provide greater flexibility and scalability.
+
+        Args:
+            record_id: The ID of the record
+        """
+        return remove_record_from_blacklist(record_id)
 
     def unban(
         self,
@@ -203,26 +298,6 @@ class RconAPI(Rcon):
         config = RconServerSettingsUserConfig.load_from_db()
         if config.unban_does_unblacklist:
             remove_player_from_blacklist(steam_id_64=player_id)
-
-        return True
-
-    def unblacklist_player(
-        self,
-        player_id: str,
-    ) -> bool:
-        """
-        Remove a player from the blacklist
-
-        The blacklist is a permanent ban list stored in CRCON so it persists
-        between game servers if you move providers or your files are reset and
-        each player is automatically checked when they connect and permanently
-        banned if they are on the list.
-
-        Args:
-            player_id: steam_id_64 or windows store ID
-        """
-
-        remove_player_from_blacklist(steam_id_64=player_id)
 
         return True
 

@@ -185,10 +185,6 @@ ROLES_TO_LABELS = {
 }
 
 
-class PlayerIdsType(TypedDict):
-    name: str
-
-
 class AdminType(TypedDict):
     steam_id_64: str
     name: str
@@ -290,6 +286,42 @@ class BlackListType(TypedDict):
     is_blacklisted: bool
     reason: Optional[str]
     by: Optional[str]
+
+
+class BlacklistSyncMethod(str, enum.Enum):
+    """Enumeration of all available methods when it comes to enforcing
+    blacklists. Each method has its pros and cons."""
+
+    KICK_ONLY = "kick_only"
+    """Kick only: Kick a player as soon as they connect. This means the ban
+    reason is always visible and variables remain up-to-date. However, the
+    player must wait in queue before being told they are banned."""
+
+    BAN_ON_CONNECT = "ban_on_connect"
+    """Ban on connect: Ban a player as soon as they connect. This is a balance
+    between the other two options and guarantees the player sees the ban reason
+    (exactly) once."""
+
+    BAN_IMMEDIATELY = "ban_immediately"
+    """Ban immediately: Immediately ban the player from the server. Unless they
+    are online at the time of the ban, they will never be able to actually see
+    the reason they were banned."""
+
+
+class BlacklistType(TypedDict):
+    id: int
+    name: str
+    sync: BlacklistSyncMethod
+    servers: Optional[int]
+
+class BlacklistRecordType(TypedDict):
+    id: int
+    blacklist: BlacklistType
+    player_id: str
+    reason: str
+    admin_name: str
+    created_at: datetime
+    expires_at: Optional[datetime.datetime]
 
 
 class PlayerActionType(TypedDict):

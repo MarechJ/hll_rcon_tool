@@ -1,10 +1,9 @@
-from enum import StrEnum
 import logging
 import os
 import re
 from contextlib import contextmanager
 from datetime import datetime, timezone
-from typing import Any, Generator, List, Optional
+from typing import Any, Generator, List, Optional, Sequence, overload
 
 import pydantic
 from sqlalchemy import TIMESTAMP, Enum, ForeignKey, String, create_engine, text
@@ -24,6 +23,9 @@ from sqlalchemy.schema import UniqueConstraint
 from rcon.types import (
     AuditLogType,
     BlackListType,
+    BlacklistRecordType,
+    BlacklistSyncMethod,
+    BlacklistType,
     DBLogLineType,
     MapsType,
     PenaltyCountType,
@@ -43,6 +45,7 @@ from rcon.types import (
     SteamPlayerSummaryType,
     WatchListType,
 )
+from rcon.utils import mask_to_server_numbers, server_numbers_to_mask
 
 logger = logging.getLogger(__name__)
 
@@ -736,10 +739,7 @@ class AuditLog(Base):
             "command_result": self.command_result,
         }
 
-class BlacklistSyncMethod(StrEnum):
-    KICK_ONLY = "kick_only"
-    BAN_ON_CONNECT = "ban_on_connect"
-    BAN_IMMEDIATELY = "ban_immediately"
+
 
 class Blacklist(Base):
     __tablename__: str = "blacklist"
@@ -748,33 +748,30 @@ class Blacklist(Base):
     sync: Mapped[BlacklistSyncMethod] = mapped_column(Enum(BlacklistSyncMethod), default=BlacklistSyncMethod.KICK_ONLY)
     servers: Mapped[Optional[int]]
     
-    records: Mapped[list['BlacklistRecord']] = relationship(back_populates="blacklist")
+    records: Mapped[list['BlacklistRecord']] = relationship(back_populates="blacklist", cascade="all, delete")
 
-    def get_server_numbers(self) -> Optional[list[int]]:
+    def get_server_numbers(self) -> Optional[set[int]]:
         if self.servers is None:
             return None
         
-        server_numbers = []
-        # bin() returns '0b...', so we slice of the first two characters and then iterate over the remaining
-        # characters from back to front.
-        # eg. bin(7) -> '0b1011' -> [1, 1, 0, 1] -> [1, 2, 4]
-        for i, c in enumerate(bin(self.servers)[:1:-1], 1):
-            if c == '1':
-                server_numbers.append(i)
-        return server_numbers
+        return mask_to_server_numbers(self.servers)
     
-    def set_server_numbers(self, *server_numbers):
-        result = 0
-        for number in server_numbers:
-            if number <= 0:
-                raise ValueError("Server number must be greater than zero")
-            # Shift the positive bit to create a mask and then merge that mask with the result
-            # eg. [1, 2, 4] -> 0001, 0010, 1000 -> 1011
-            result |= (1 << (number - 1))
-        self.servers = result
+    def set_server_numbers(self, server_numbers: Sequence[int] | None):
+        if server_numbers is None:
+            self.set_all_servers()
+        else:
+            self.servers = server_numbers_to_mask(*server_numbers)
     
     def set_all_servers(self):
         self.servers = None
+
+    def to_dict(self) -> BlacklistType:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "sync": self.sync.value,
+            "servers": list(self.get_server_numbers()),
+        }
 
 class BlacklistRecord(Base):
     __tablename__: str = "blacklist_record"
@@ -791,7 +788,7 @@ class BlacklistRecord(Base):
         ForeignKey("steam_id_64.id"), nullable=False, index=True
     )
     blacklist_id: Mapped[int] = mapped_column(
-        ForeignKey("blacklist.id"), nullable=False, index=True
+        ForeignKey("blacklist.id", ondelete="CASCADE"), nullable=False, index=True
     )
 
     steamid: Mapped['PlayerSteamID'] = relationship(back_populates="blacklists")
@@ -799,8 +796,24 @@ class BlacklistRecord(Base):
 
     def expires_in(self):
         if not self.expires_at:
-            return
-        return self.expires_at - datetime.now()
+            return None
+        return self.expires_at - datetime.now(tz=timezone.utc)
+
+    def is_expired(self):
+        if not self.expires_at:
+            return None
+        return self.expires_at <= datetime.now(tz=timezone.utc)
+
+    def to_dict(self) -> BlacklistRecordType:
+        return {
+            "id": self.id,
+            "blacklist": self.blacklist.to_dict(),
+            "player_id": self.steamid.steam_id_64,
+            "reason": self.reason,
+            "admin_name": self.admin_name,
+            "created_at": self.created_at,
+            "expires_at": self.expires_at,
+        }
 
 def install_unaccent():
     with enter_session() as sess:

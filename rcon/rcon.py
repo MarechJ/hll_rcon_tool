@@ -5,7 +5,7 @@ from concurrent.futures import Future, ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
 from functools import cached_property
 from time import sleep
-from typing import Any, Iterable, Literal, Optional
+from typing import Any, Iterable, Literal, Optional, overload
 
 from dateutil import parser
 
@@ -349,11 +349,16 @@ class Rcon(ServerCtl):
         # Defined here to avoid circular imports with commands.py
         return super().get_logs(*args, **kwargs)
 
-    def get_playerids(self, as_dict=False) -> PlayerIdsType | list[tuple[str, str]]:
+    @overload
+    def get_playerids(self, as_dict: Literal[False] = False) -> list[tuple[str, str]]: ...
+    @overload
+    def get_playerids(self, as_dict: Literal[True] = False) -> dict[str, str]: ...
+
+    def get_playerids(self, as_dict=False) -> dict[str, str] | list[tuple[str, str]]:
         raw_list = super().get_playerids()
 
         player_list: list[tuple[str, str]] = []
-        player_dict: PlayerIdsType = {}  # type: ignore
+        player_dict: dict[str, str] = {}
         for playerinfo in raw_list:
             # playerinfo='some_dude : 76561199400000000
             name, steamid = playerinfo.rsplit(":", 1)
@@ -403,7 +408,7 @@ class Rcon(ServerCtl):
             except (CommandFailedError, Exception):
                 sleep(2)
                 name = player_name
-                steam_id_lookup: PlayerIdsType = self.get_playerids(as_dict=True)  # type: ignore
+                steam_id_lookup = self.get_playerids(as_dict=True)
                 steam_id_64 = steam_id_lookup.get(name)
             if not steam_id_64:
                 return {}
@@ -1156,26 +1161,13 @@ class Rcon(ServerCtl):
             )
             return res
 
-    def remove_temp_ban(
-        self, ban_log: str | None = None, player_id: str | None = None
-    ) -> str:
-        """Remove a temp ban by steam ID or game server ban log"""
+    def remove_temp_ban(self, ban_log: str) -> str:
+        """Remove a temp ban by ban log. Note that a player ID is a valid ban log."""
         with invalidates(Rcon.get_temp_bans):
-            if ban_log is not None:
-                return super().remove_temp_ban(ban_log)
-            else:
-                # If searching for a steam ID, we can only unban with the properly
-                # formatted ban log
-                bans = self.get_temp_bans()
-                for raw_ban in bans:
-                    ban = self._struct_ban(raw_ban, type_="temp")
-                    if player_id == ban["steam_id_64"]:
-                        return super().remove_temp_ban(ban_log=raw_ban)
+            return super().remove_temp_ban(ban_log)
 
-        # Only get here if we weren't passed a ban log, steam ID or the steam ID wasn't banned
-        raise ValueError(f"{player_id} was not banned")
-
-    def remove_perma_ban(self, ban_log) -> str:
+    def remove_perma_ban(self, ban_log: str) -> str:
+        """Remove a perma ban by ban log. Note that a player ID is a valid ban log."""
         with invalidates(Rcon.get_perma_bans):
             return super().remove_perma_ban(ban_log)
 
