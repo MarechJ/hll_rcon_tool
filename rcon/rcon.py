@@ -465,18 +465,6 @@ class Rcon(ServerCtl):
             admins.append({PLAYER_ID: player_id, NAME: name[1:-1], ROLE: role})
         return admins
 
-    def get_online_console_admins(self) -> list[str]:
-        admins = self.get_admin_ids()
-        players = self.get_players()
-        online: list[str] = []
-        admins_ids: set[str] = set(a[PLAYER_ID] for a in admins)
-
-        for player in players:
-            if player[PLAYER_ID] in admins_ids:
-                online.append(player["name"])
-
-        return online
-
     def add_admin(self, player_id, role, description) -> bool:
         with invalidates(Rcon.get_admin_ids):
             return super().add_admin(player_id, role, description)
