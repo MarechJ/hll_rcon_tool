@@ -50,10 +50,12 @@ from rcon.utils import (
 PLAYER_ID = "player_id"
 NAME = "name"
 ROLE = "role"
+
+TEMP_BAN = "temp"
+PERMA_BAN = "perma"
+
 # The base level of actions that will always show up in the Live view
 # actions filter from the call to `get_recent_logs`
-
-
 LOG_ACTIONS = [
     "DISCONNECTED",
     "CHAT[Allies]",
@@ -474,14 +476,17 @@ class Rcon(ServerCtl):
             return super().remove_admin(player_id)
 
     @ttl_cache(ttl=60)
-    def get_perma_bans(self) -> list[str]:
-        return super().get_perma_bans()
+    def get_perma_bans(self) -> list[GameServerBanType]:
+        return [
+            self._struct_ban(ban=ban, type_=PERMA_BAN)
+            for ban in super().get_perma_bans()
+        ]
 
     @ttl_cache(ttl=60)
-    def get_temp_bans(self) -> list[str]:
-        res = super().get_temp_bans()
-        logger.debug(res)
-        return res
+    def get_temp_bans(self) -> list[GameServerBanType]:
+        return [
+            self._struct_ban(ban=ban, type_=TEMP_BAN) for ban in super().get_temp_bans()
+        ]
 
     def _struct_ban(self, ban, type_) -> GameServerBanType:
         # Avoid errors on empty temp bans
@@ -535,13 +540,13 @@ class Rcon(ServerCtl):
             temp_bans = []
             for b in self.get_temp_bans():
                 try:
-                    temp_bans.append(self._struct_ban(b, "temp"))
+                    temp_bans.append(self._struct_ban(b, TEMP_BAN))
                 except ValueError:
                     logger.exception("Invalid temp ban line: %s", b)
             bans = []
             for b in self.get_perma_bans():
                 try:
-                    bans.append(self._struct_ban(b, "perma"))
+                    bans.append(self._struct_ban(b, PERMA_BAN))
                 except ValueError:
                     logger.exception("Invalid perm ban line: %s", b)
         except Exception:
@@ -1176,7 +1181,7 @@ class Rcon(ServerCtl):
                 # formatted ban log
                 bans = self.get_temp_bans()
                 for raw_ban in bans:
-                    ban = self._struct_ban(raw_ban, type_="temp")
+                    ban = self._struct_ban(raw_ban, type_=TEMP_BAN)
                     if player_id == ban[PLAYER_ID]:
                         return super().remove_temp_ban(ban_log=raw_ban)
 
