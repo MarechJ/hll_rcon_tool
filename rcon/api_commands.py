@@ -415,7 +415,7 @@ class RconAPI(Rcon):
             add=False,
         )
 
-    def get_online_mods(self) -> list[str]:
+    def get_online_mods(self) -> list[AdminUserType]:
         return online_mods()
 
     def get_ingame_mods(self) -> list[AdminUserType]:
