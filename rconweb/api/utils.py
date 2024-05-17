@@ -3,7 +3,6 @@ from functools import wraps
 from logging import getLogger
 from typing import Any
 
-from django.http import QueryDict
 from django.http.request import HttpRequest
 
 from rcon.discord import send_to_discord_audit
@@ -11,9 +10,11 @@ from rcon.discord import send_to_discord_audit
 logger = getLogger(__name__)
 
 
-def _get_data(request: HttpRequest) -> QueryDict | dict[str, Any]:
+def _get_data(request: HttpRequest) -> dict[str, Any]:
     if request.method == "GET":
-        return request.GET
+        # QueryDict is immutable by default, need to return a mutable dict because it is
+        # modified when processing arguments
+        return request.GET.dict()
     # This is only used (currently) by the async_upload_vips endpoint which doesn't
     # include a parseable JSON body, but form data and it pulls the data itself
     elif request.method == "POST" and request.FILES:
