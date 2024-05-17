@@ -369,12 +369,14 @@ class TimeWindowStats(BaseStats):
             return
         # A CONNECT means the begining of a session for the player
         if log["action"] == "CONNECTED":
-            players_times.setdefault(player, {"start": [], "end": []})["start"].append(
-                # Event time is a key only avaible in the dict coming from the DB and is already a datetime
-                log.get(
-                    "event_time",
-                    datetime.datetime.utcfromtimestamp(log["timestamp_ms"] // 1000),
+            try:
+                event_time = datetime.datetime.fromisoformat(log.get("event_time"))
+            except (TypeError, ValueError):
+                event_time = datetime.datetime.utcfromtimestamp(
+                    log["timestamp_ms"] // 1000
                 )
+            players_times.setdefault(player, {"start": [], "end": []})["start"].append(
+                event_time
             )
         # if the player is not already in the times record we add the start of the stats window as his session start time
         # we didn't see a CONNECTED before, so it means that the player was here before the current window.
@@ -385,11 +387,14 @@ class TimeWindowStats(BaseStats):
             )
         # if the player was already in the time record and we see a disconnect we log it as the end of his session
         if player in players_times and log["action"] == "DISCONNECTED":
-            players_times.setdefault(player, {"start": [], "end": []})["end"].append(
-                log.get(
-                    "event_time",
-                    datetime.datetime.utcfromtimestamp(log["timestamp_ms"] // 1000),
+            try:
+                event_time = datetime.datetime.fromisoformat(log.get("event_time"))
+            except (TypeError, ValueError):
+                event_time = datetime.datetime.utcfromtimestamp(
+                    log["timestamp_ms"] // 1000
                 )
+            players_times.setdefault(player, {"start": [], "end": []})["end"].append(
+                event_time
             )
         # if we had a player that disconnected but was not in the time record it means he did have any kill / death or other actions like chat, vote
         # This player won't have a session time (most likely and AFK one)
