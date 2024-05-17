@@ -342,9 +342,15 @@ class Rcon(ServerCtl):
         # Defined here to avoid circular imports with commands.py
         return super().get_admin_groups()
 
-    def get_logs(self, *args, **kwargs) -> str:
+    def get_logs(self, since_min_ago: str, filter_: str = "", by: str = "") -> str:
+        """Returns raw text logs from the game server with no parsing performed
+
+        You most likely want to use a different method/endpoint to get parsed logs.
+        """
+
+        # by is included as it's passed in as part of the API exposure
         # Defined here to avoid circular imports with commands.py
-        return super().get_logs(*args, **kwargs)
+        return super().get_logs(since_min_ago=since_min_ago, filter_=filter_)
 
     def get_playerids(self, as_dict=False) -> PlayerIdsType | list[tuple[str, str]]:
         raw_list = super().get_playerids()
