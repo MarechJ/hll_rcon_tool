@@ -453,7 +453,7 @@ function App() {
                     </Grid>
                   </Grid>
                 </Route>
-                <Route path="/player/:player_id">
+                <Route path="/player/:playerId">
                   <Grid container>
                     <PlayerInfo classes={classes} />
                   </Grid>
