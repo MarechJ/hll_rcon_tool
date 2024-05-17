@@ -199,7 +199,7 @@ def remind_vote_map(rcon: Rcon, struct_log):
 def handle_new_match_start(rcon: Rcon, struct_log):
     try:
         logger.info("New match started recording map %s", struct_log)
-        with invalidates(Rcon.get_map):
+        with invalidates(Rcon.get_map, Rcon.get_next_map):
             try:
                 # Don't use the current_map property and clear the cache to pull the new map name
                 current_map = rcon.get_map()

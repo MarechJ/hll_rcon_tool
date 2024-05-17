@@ -841,10 +841,15 @@ class Rcon(ServerCtl):
     @ttl_cache(ttl=60)
     def get_next_map(self) -> Layer:
         """Return the next map in the rotation as determined by the gameserver through the gamestate command"""
+        # On initialization this is set to UNKNOWN_MAP_NAME and isn't updated until the first time
+        # get_gamestate is called, so refresh it to make sure it is always correct
+        # especially because the next map can change due to map rotation changes
+        self.get_gamestate()
+
         return self.next_map
 
     def set_map(self, map_name: str) -> None:
-        with invalidates(Rcon.get_map):
+        with invalidates(Rcon.get_map, Rcon.get_next_map):
             try:
                 res = super().set_map(map_name)
                 if res != "SUCCESS":
@@ -876,7 +881,11 @@ class Rcon(ServerCtl):
         return super().get_map_shuffle_enabled()
 
     def set_map_shuffle_enabled(self, enabled: bool) -> None:
-        with invalidates(Rcon.get_current_map_sequence, Rcon.get_map_shuffle_enabled):
+        with invalidates(
+            Rcon.get_current_map_sequence,
+            Rcon.get_map_shuffle_enabled,
+            Rcon.get_next_map,
+        ):
             return super().set_map_shuffle_enabled(enabled)
 
     @ttl_cache(ttl=60 * 30)
@@ -1235,7 +1244,7 @@ class Rcon(ServerCtl):
         after_map_name: str | None = None,
         after_map_name_number: int | None = None,
     ) -> str:
-        with invalidates(Rcon.get_map_rotation):
+        with invalidates(Rcon.get_map_rotation, Rcon.get_next_map):
             if after_map_name is None:
                 current = [map_.id for map_ in self.get_map_rotation()]
                 after_map_name = current[len(current) - 1]
@@ -1246,18 +1255,18 @@ class Rcon(ServerCtl):
             )
 
     def remove_map_from_rotation(self, map_name: str, map_number: int | None = None):
-        with invalidates(Rcon.get_map_rotation):
+        with invalidates(Rcon.get_map_rotation, Rcon.get_next_map):
             super().remove_map_from_rotation(map_name, map_number)
 
     def remove_maps_from_rotation(self, map_names: list[str]) -> Literal["SUCCESS"]:
-        with invalidates(Rcon.get_map_rotation):
+        with invalidates(Rcon.get_map_rotation, Rcon.get_next_map):
             for map_name in map_names:
                 super().remove_map_from_rotation(map_name)
             return "SUCCESS"
 
     def add_maps_to_rotation(self, map_names: list[str]) -> list[tuple[str, str]]:
         """Add the given maps to the rotation, returns the game server response for each map"""
-        with invalidates(Rcon.get_map_rotation):
+        with invalidates(Rcon.get_map_rotation, Rcon.get_next_map):
             existing = [map_.id for map_ in self.get_map_rotation()]
             last = existing[len(existing) - 1]
             map_numbers = {last: existing.count(last)}
@@ -1279,7 +1288,7 @@ class Rcon(ServerCtl):
         rotation = list(rotation)
         logger.info("Apply map rotation %s", rotation)
 
-        with invalidates(Rcon.get_map_rotation):
+        with invalidates(Rcon.get_map_rotation, Rcon.get_next_map):
             current_as_layers = self.get_map_rotation()
             current = [map_.id for map_ in current_as_layers]
             logger.info("Current rotation: %s", current)
