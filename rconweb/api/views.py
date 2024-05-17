@@ -615,7 +615,7 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.get_ingame_mods: ["GET"],
     rcon_api.get_kills_discord_webhooks_config: ["GET"],
     rcon_api.get_log_line_webhook_config: ["GET"],
-    rcon_api.get_log_stream_config: ["POST"],
+    rcon_api.get_log_stream_config: ["GET"],
     rcon_api.get_logs: ["GET"],
     rcon_api.get_map_rotation: ["GET"],
     rcon_api.get_map_shuffle_enabled: ["GET"],
