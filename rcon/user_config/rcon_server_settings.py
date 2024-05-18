@@ -58,6 +58,11 @@ class WindowsStorePlayersType(TypedDict):
     audit_message_author: str
     temp_ban_length_hours: int
 
+class MessageEnhancementsType(TypedDict):
+    enabled: bool
+    message_header: str
+    message_footer: str
+
 
 class RconServerSettingsType(TypedDict):
     short_name: str
@@ -73,6 +78,7 @@ class RconServerSettingsType(TypedDict):
     live_stats_refresh_current_game_seconds: int
     invalid_names: InvalidNameType
     windows_store_players: WindowsStorePlayersType
+    message_enhancements: MessageEnhancementsType
 
 
 def _upper_case_action(
@@ -124,6 +130,10 @@ class WindowsStorePlayer(BaseModel):
     audit_message_author: str = Field(default="CRCON")
     temp_ban_length_hours: int = Field(default=1)
 
+class MessageEnhancements(BaseModel):
+    enabled: bool = Field(default=False)
+    message_header: str = Field(default="")
+    message_footer: str = Field(default="")
 
 class RconServerSettingsUserConfig(BaseUserConfig):
     # Use a callable to defer calling get_server_number until it's used and not on import
@@ -145,6 +155,7 @@ class RconServerSettingsUserConfig(BaseUserConfig):
     windows_store_players: WindowsStorePlayer = Field(
         default_factory=WindowsStorePlayer
     )
+    message_enhancements: MessageEnhancements = Field(default_factory=MessageEnhancements)
 
     @field_serializer("server_url", "discord_invite_url")
     def serialize_urls(self, url: HttpUrl, _info):
@@ -181,6 +192,12 @@ class RconServerSettingsUserConfig(BaseUserConfig):
             audit_message_author=raw_win_store_players.get("audit_message_author"),
             temp_ban_length_hours=raw_win_store_players.get("temp_ban_length_hours"),
         )
+        raw_validated_message_enhancements = values.get("message_enhancements")
+        validated_message_enhancements = MessageEnhancements(
+            enabled=raw_validated_message_enhancements.get("enabled"),
+            message_header=raw_validated_message_enhancements.get("message_header"),
+            message_footer=raw_validated_message_enhancements.get("message_footer"),
+        )
 
         validated_conf = RconServerSettingsUserConfig(
             short_name=values.get("short_name"),
@@ -197,6 +214,7 @@ class RconServerSettingsUserConfig(BaseUserConfig):
             ),
             invalid_names=validated_invalid_names,
             windows_store_players=validated_win_store_players,
+            message_enhancements=validated_message_enhancements,
         )
 
         if not dry_run:
