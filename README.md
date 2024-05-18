@@ -786,7 +786,7 @@ docker compose up -d --remove-orphans
 
 There's a public endpoint available to anybody without password on <http://yourVPSIP:7010/api/scoreboard>
 
-See [User Guide](USERGUIDE.md) for more information on how to use certain features of the app.
+See the [Wiki](https://github.com/MarechJ/hll_rcon_tool/wiki/) for instructions on how to use certain features of the app.
 
 ## For power users
 
