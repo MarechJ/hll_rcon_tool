@@ -1063,11 +1063,14 @@ class Rcon(ServerCtl):
         return super().get_votekick_enabled() == "on"
 
     @ttl_cache(ttl=60 * 10)
-    def get_votekick_threshold(self) -> str:
+    def get_votekick_threshold(self) -> list[tuple[int, int]]:
         res = super().get_votekick_threshold()
-        if isinstance(res, str):
-            return res.strip()
-        return res
+
+        if res == "":
+            return []
+
+        pairs = res.split(",")
+        return [(int(pair[0]), int(pair[1])) for pair in zip(pairs[0::2], pairs[1::2])]
 
     def set_autobalance_enabled(self, bool_) -> str:
         with invalidates(self.get_autobalance_enabled):
