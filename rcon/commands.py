@@ -437,7 +437,7 @@ class ServerCtl:
     def get_votekick_enabled(self) -> str:
         return self._str_request("get votekickenabled", can_fail=False)
 
-    def get_votekick_threshold(self) -> str:
+    def get_votekick_thresholds(self) -> str:
         return self._str_request("get votekickthreshold", can_fail=False)
 
     def get_map_rotation(self) -> list[str]:
@@ -567,13 +567,13 @@ class ServerCtl:
         """
         return self._str_request(f"setvotekickenabled {bool_}")
 
-    def set_votekick_threshold(self, threshold_pairs: str) -> str:
+    def set_votekick_thresholds(self, threshold_pairs: str) -> str:
         """
         PlayerCount,Threshold[,PlayerCount,Threshold,...]
         """
         return self._str_request(f"setvotekickthreshold {threshold_pairs}")
 
-    def reset_votekick_threshold(self) -> str:
+    def reset_votekick_thresholds(self) -> str:
         return self._str_request(f"resetvotekickthreshold", log_info=True)
 
     def switch_player_on_death(self, player_name) -> str:

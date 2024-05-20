@@ -119,7 +119,7 @@ class Rcon(ServerCtl):
         ("vip_slots_num", int),
         ("autobalance_enabled", bool),
         ("votekick_enabled", bool),
-        ("votekick_threshold", str),
+        ("votekick_thresholds", str),
     )
     MAX_SERV_NAME_LEN = 1024  # I totally made up that number. Unable to test
     slots_regexp = re.compile(r"^\d{1,3}/\d{2,3}$")
@@ -1063,8 +1063,8 @@ class Rcon(ServerCtl):
         return super().get_votekick_enabled() == "on"
 
     @ttl_cache(ttl=60 * 10)
-    def get_votekick_threshold(self) -> list[tuple[int, int]]:
-        res = super().get_votekick_threshold()
+    def get_votekick_thresholds(self) -> list[tuple[int, int]]:
+        res = super().get_votekick_thresholds()
 
         if res == "":
             return []
@@ -1080,18 +1080,18 @@ class Rcon(ServerCtl):
         with invalidates(self.get_votekick_enabled):
             return super().set_votekick_enabled("on" if bool_ else "off")
 
-    def set_votekick_threshold(self, threshold_pairs: str) -> None:
+    def set_votekick_thresholds(self, threshold_pairs: str) -> None:
         # TODO: use proper data structure
-        with invalidates(self.get_votekick_threshold):
-            res = super().set_votekick_threshold(threshold_pairs)
+        with invalidates(self.get_votekick_thresholds):
+            res = super().set_votekick_thresholds(threshold_pairs)
             logger.info("Threshold res %s", res)
             if res.lower().startswith("error"):
                 logger.error("Unable to set votekick threshold: %s", res)
                 raise CommandFailedError(res)
 
-    def reset_votekick_threshold(self) -> str:
-        with invalidates(self.get_votekick_threshold):
-            return super().reset_votekick_threshold()
+    def reset_votekick_thresholds(self) -> str:
+        with invalidates(self.get_votekick_thresholds):
+            return super().reset_votekick_thresholds()
 
     def set_profanities(self, profanities: list[str]) -> list[str]:
         current = self.get_profanities()

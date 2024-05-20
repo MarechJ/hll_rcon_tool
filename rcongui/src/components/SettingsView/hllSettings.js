@@ -210,7 +210,7 @@ class HLLSettings extends React.Component {
   }
 
   async loadVotekickThreshold() {
-    return this._loadToState("get_votekick_threshold", false, (data) =>
+    return this._loadToState("get_votekick_thresholds", false, (data) =>
       this.setState({ votekickThreshold: data.result })
     );
   }
@@ -262,22 +262,22 @@ class HLLSettings extends React.Component {
   }
 
   async saveVotekickThreshold() {
-    return postData(`${process.env.REACT_APP_API_URL}set_votekick_threshold`, {
+    return postData(`${process.env.REACT_APP_API_URL}set_votekick_thresholds`, {
       threshold_pairs: this.state.votekickThreshold,
     })
-      .then((res) => showResponse(res, "set_votekick_threshold", true))
+      .then((res) => showResponse(res, "set_votekick_thresholds", true))
       .then(this.loadVotekickThreshold)
       .catch(handle_http_errors);
   }
 
   async resetVotekickThreshold() {
     return postData(
-      `${process.env.REACT_APP_API_URL}reset_votekick_threshold`,
+      `${process.env.REACT_APP_API_URL}reset_votekick_thresholds`,
       {
         threshold_pairs: this.state.votekickThreshold,
       }
     )
-      .then((res) => showResponse(res, "reset_votekick_threshold", true))
+      .then((res) => showResponse(res, "reset_votekick_thresholds", true))
       .then(this.loadVotekickThreshold)
       .catch(handle_http_errors);
   }
