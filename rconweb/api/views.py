@@ -252,20 +252,7 @@ def expose_api_endpoint(
         # using forward_command and not forward_request so that the `forwarded`parameter
         # is passed to avoid infinite loops of forwarding
         config = RconServerSettingsUserConfig.load_from_db()
-        if not config.broadcast_temp_bans and func == rcon_api.temp_ban:
-            logger.debug("Not broadcasting temp ban due to settings")
-            return response
-        elif config.unblacklist_does_unban and func == rcon_api.unblacklist_player:
-            try:
-                forward_command(
-                    path=request.path,
-                    sessionid=request.COOKIES.get("sessionid"),
-                    auth_header=request.headers.get(AUTHORIZATION),
-                    json=data,
-                )
-            except Exception as e:
-                logger.error("Unexpected error while forwarding request: %s", e)
-        elif config.broadcast_unbans and func == rcon_api.unban:
+        if config.broadcast_unbans and func == rcon_api.unban:
             try:
                 forward_command(
                     path=request.path,

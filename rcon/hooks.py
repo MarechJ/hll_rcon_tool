@@ -8,7 +8,7 @@ from typing import Final
 
 from discord_webhook import DiscordEmbed
 
-from rcon.blacklist import is_player_blacklisted
+from rcon.blacklist import apply_blacklist_punishment, is_player_blacklisted, synchronize_ban
 import rcon.steam_utils as steam_utils
 from discord.utils import escape_markdown
 from rcon.cache_utils import invalidates
@@ -286,46 +286,17 @@ def record_map_end(rcon: Rcon, struct_log):
 
 
 def ban_if_blacklisted(rcon: Rcon, steam_id_64, name):
-    blacklist = is_player_blacklisted(steam_id_64)
-    if not blacklist:
-        return False
+    with enter_session() as sess:
+        blacklist = is_player_blacklisted(sess, steam_id_64)
+        if not blacklist:
+            return False
     
-    try:
-        logger.info(
-            "Player %s was banned due blacklist, reason: %s",
-            str(name),
-            blacklist.reason,
-        )
-        rcon.perma_ban(
-            player_name=name,
-            reason=blacklist.reason,
-            by=f"BLACKLIST: {blacklist.admin_name}",
-        )
-        safe_save_player_action(
-            rcon=rcon,
-            player_name=name,
-            action_type="PERMABAN",
-            reason=blacklist.reason,
-            by=f"BLACKLIST: {blacklist.admin_name}",
-            steam_id_64=steam_id_64,
-        )
-        try:
-            send_to_discord_audit(
-                message=f"{dict_to_discord(dict(player=name, reason=blacklist.reason))}",
-                command_name="blacklist",
-                by="BLACKLIST",
-            )
-        except:
-            logger.error("Unable to send blacklist to audit log")
-    except:
-        send_to_discord_audit(
-            message="Failed to apply ban on blacklisted players, please check the logs and report the error",
-            command_name="blacklist",
-            by="ERROR",
-        )
-        return False
-    
-    return True
+    return apply_blacklist_punishment(
+        rcon,
+        blacklist,
+        player_id=steam_id_64,
+        player_name=name
+    )
 
 
 def should_ban(

@@ -65,7 +65,7 @@ class RconServerSettingsType(TypedDict):
     discord_invite_url: HttpUrl
     lock_stats_api: bool
     unban_does_unblacklist: bool
-    unblacklist_does_unban: bool
+    # unblacklist_does_unban: bool
     broadcast_temp_bans: bool
     broadcast_unbans: bool
     lock_stats_api: bool
@@ -132,10 +132,10 @@ class RconServerSettingsUserConfig(BaseUserConfig):
     discord_invite_url: Optional[HttpUrl] = Field(default=None)
 
     lock_stats_api: bool = Field(default=False)
-    unban_does_unblacklist: bool = Field(default=True)
-    unblacklist_does_unban: bool = Field(default=True)
-    broadcast_temp_bans: bool = Field(default=True)
-    broadcast_unbans: bool = Field(default=True)
+    # unban_does_unblacklist: bool = Field(default=True)
+    # unblacklist_does_unban: bool = Field(default=True)
+    # broadcast_temp_bans: bool = Field(default=True)
+    broadcast_unbans: bool = Field(default=False)
 
     lock_stats_api: bool = Field(default=False)
     live_stats_refresh_seconds: int = Field(default=15)
@@ -187,9 +187,9 @@ class RconServerSettingsUserConfig(BaseUserConfig):
             server_url=values.get("server_url"),
             discord_invite_url=values.get("discord_invite_url"),
             lock_stats_api=values.get("lock_stats_api"),
-            unban_does_unblacklist=values.get("unban_does_unblacklist"),
-            unblacklist_does_unban=values.get("unblacklist_does_unban"),
-            broadcast_temp_bans=values.get("broadcast_temp_bans"),
+            # unban_does_unblacklist=values.get("unban_does_unblacklist"),
+            # unblacklist_does_unban=values.get("unblacklist_does_unban"),
+            # broadcast_temp_bans=values.get("broadcast_temp_bans"),
             broadcast_unbans=values.get("broadcast_unbans"),
             live_stats_refresh_seconds=values.get("live_stats_refresh_seconds"),
             live_stats_refresh_current_game_seconds=values.get(

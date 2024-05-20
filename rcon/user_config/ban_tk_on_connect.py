@@ -38,6 +38,7 @@ class BanTeamKillOnConnectUserConfig(BaseUserConfig):
     enabled: bool = Field(default=False)
     message: str = Field(default=MESSAGE)
     author_name: str = Field(default="HATERS GONNA HATE")
+    blacklist_id: int | None = None
     excluded_weapons: list[str] = Field(default_factory=list)
     max_time_after_connect_minutes: int = Field(ge=1, default=5)
     ignore_tk_after_n_kills: int = Field(ge=1, default=1)
@@ -71,6 +72,7 @@ class BanTeamKillOnConnectUserConfig(BaseUserConfig):
         validated_conf = BanTeamKillOnConnectUserConfig(
             enabled=values.get("enabled"),
             message=values.get("message"),
+            blacklist_id=values.get("blacklist_id"),
             author_name=values.get("author_name"),
             excluded_weapons=values.get("excluded_weapons"),
             max_time_after_connect_minutes=values.get("max_time_after_connect_minutes"),

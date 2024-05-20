@@ -5,13 +5,13 @@ import os
 import unicodedata
 from functools import cmp_to_key
 
-from sqlalchemy import func
+from sqlalchemy import func, or_
 from sqlalchemy.orm import contains_eager, selectinload
 from sqlalchemy.sql.functions import ReturnTypeFromArgs
 
 from rcon.commands import CommandFailedError
 from rcon.models import (
-    BlacklistedPlayer,
+    BlacklistRecord,
     PlayerComment,
     PlayerFlag,
     PlayerName,
@@ -188,10 +188,16 @@ def get_players_by_appearance(
                 query = query.join(PlayerSteamID.names).filter(search == player_name)
 
         if blacklisted is True:
-            query = (
-                query.join(PlayerSteamID.legacy_blacklist)
-                .filter(BlacklistedPlayer.is_blacklisted == True)
-                .options(contains_eager(PlayerSteamID.legacy_blacklist))
+            query = query.filter(
+                sess.query(BlacklistRecord)
+                .where(
+                    BlacklistRecord.playersteamid_id == PlayerSteamID.id,
+                    or_(
+                        BlacklistRecord.expires_at.is_(None),
+                        BlacklistRecord.expires_at < func.now(),
+                    )
+                )
+                .exists()
             )
         if is_watched is True:
             query = (
@@ -478,48 +484,6 @@ def remove_flag(
     return player, old_flag
 
 
-def add_player_to_blacklist(steam_id_64, reason, name=None, by=None):
-    # TODO save author of blacklist
-    with enter_session() as sess:
-        player = _get_set_player(sess, steam_id_64=steam_id_64, player_name=name)
-        if not player:
-            raise CommandFailedError(f"Player with steam id {steam_id_64} not found")
-
-        if player.legacy_blacklist:
-            if player.legacy_blacklist.is_blacklisted:
-                logger.warning(
-                    "Player %s was already blacklisted with %s, updating reason to %s",
-                    str(player),
-                    player.legacy_blacklist.reason,
-                    reason,
-                )
-            player.legacy_blacklist.is_blacklisted = True
-            player.legacy_blacklist.reason = reason
-            player.legacy_blacklist.by = by
-        else:
-            logger.info("Player %s blacklisted for %s", str(player), reason)
-            sess.add(
-                BlacklistedPlayer(
-                    steamid=player, is_blacklisted=True, reason=reason, by=by
-                )
-            )
-
-        sess.commit()
-
-
-def remove_player_from_blacklist(steam_id_64):
-    with enter_session() as sess:
-        player = get_player(sess, steam_id_64)
-        if not player:
-            raise CommandFailedError(f"Player with steam id {steam_id_64} not found")
-
-        if not player.legacy_blacklist:
-            raise CommandFailedError(f"Player {player} was not blacklisted")
-
-        player.legacy_blacklist.is_blacklisted = False
-        sess.commit()
-
-
 def get_player_messages(steam_id_64):
     with enter_session() as sess:
         player = (
@@ -588,8 +552,6 @@ if __name__ == "__main__":
             * 1000
         ),
     )
-    add_player_to_blacklist("4242", "test")
-    remove_player_from_blacklist("4242")
 
     import pprint
 

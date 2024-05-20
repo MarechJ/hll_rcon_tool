@@ -15,7 +15,6 @@ from rcon.commands import CommandFailedError, ServerCtl, VipId
 from rcon.maps import UNKNOWN_MAP_NAME, Layer, is_server_loading_map, parse_layer
 from rcon.models import PlayerSteamID, PlayerVIP, enter_session
 from rcon.player_history import (
-    add_player_to_blacklist,
     get_profiles,
     safe_save_player_action,
     save_player,
@@ -1186,16 +1185,6 @@ class Rcon(ServerCtl):
                 by=by,
                 steam_id_64=player_id,
             )
-            try:
-                # TODO: this will never work when banning by name because they're already removed
-                # from the server before you can get their steam ID
-                if not player_id:
-                    info = self.get_player_info(player_name)
-                    player_id = info["steam_id_64"]
-                # TODO add author
-                add_player_to_blacklist(player_id, reason, by=by)
-            except:
-                logger.exception("Unable to blacklist")
             return res
 
     @ttl_cache(60 * 5)

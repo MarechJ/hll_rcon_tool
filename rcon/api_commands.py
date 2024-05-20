@@ -7,7 +7,7 @@ from dateutil import parser
 
 from rcon import game_logs, player_history
 from rcon.audit import ingame_mods, online_mods
-from rcon.blacklist import add_record_to_blacklist, create_blacklist, delete_blacklist, edit_blacklist, edit_record_from_blacklist, remove_record_from_blacklist
+from rcon.blacklist import add_record_to_blacklist, create_blacklist, delete_blacklist, edit_blacklist, edit_record_from_blacklist, expire_all_player_blacklists, remove_record_from_blacklist
 from rcon.cache_utils import RedisCached, get_redis_pool
 from rcon.discord import audit_user_config_differences
 from rcon.gtx import GTXFtp
@@ -15,7 +15,6 @@ from rcon.player_history import (
     add_flag_to_player,
     get_players_by_appearance,
     remove_flag,
-    remove_player_from_blacklist,
 )
 from rcon.rcon import Rcon
 from rcon.server_stats import get_db_server_stats_for_range
@@ -231,7 +230,7 @@ class RconAPI(Rcon):
             expires_at=expires_at,
             admin_name=admin_name,
         )
-
+    
     def edit_blacklist_record(
         self,
         record_id: int,
@@ -264,7 +263,7 @@ class RconAPI(Rcon):
     def remove_blacklist_record(
         self,
         record_id: int,
-    ):
+    ) -> bool:
         """
         Removes a blacklist record.
 
@@ -275,6 +274,21 @@ class RconAPI(Rcon):
             record_id: The ID of the record
         """
         return remove_record_from_blacklist(record_id)
+    
+    blacklist_player = add_blacklist_record
+
+    def unblacklist_player(
+        self,
+        player_id: str
+    ) -> bool:
+        """Expires all blacklists of a player
+
+        Args:
+            player_id: steam_id_64 or windows store ID
+        """
+        expire_all_player_blacklists(player_id)
+        return True
+
 
     def unban(
         self,
@@ -293,11 +307,6 @@ class RconAPI(Rcon):
         for b in bans:
             if b.get("steam_id_64") == player_id:
                 type_to_func[b["type"]](b["raw"])
-
-        # unban broadcasting is handled in `rconweb.api.views.expose_api_endpoints`
-        config = RconServerSettingsUserConfig.load_from_db()
-        if config.unban_does_unblacklist:
-            remove_player_from_blacklist(steam_id_64=player_id)
 
         return True
 

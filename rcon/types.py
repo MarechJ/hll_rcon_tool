@@ -281,13 +281,6 @@ class PlayerSessionType(TypedDict):
     created: datetime.datetime
 
 
-class BlackListType(TypedDict):
-    steam_id_64: str
-    is_blacklisted: bool
-    reason: Optional[str]
-    by: Optional[str]
-
-
 class BlacklistSyncMethod(str, enum.Enum):
     """Enumeration of all available methods when it comes to enforcing
     blacklists. Each method has its pros and cons."""
@@ -510,7 +503,7 @@ class PlayerProfileType(TypedDict):
     current_playtime_seconds: int
     received_actions: List[PlayerActionType]
     penalty_count: PenaltyCountType
-    blacklist: Optional[BlackListType]
+    blacklists: List[BlacklistRecordType]
     flags: List[PlayerFlagType]
     watchlist: Optional[WatchListType]
     steaminfo: Optional[SteamInfoType]

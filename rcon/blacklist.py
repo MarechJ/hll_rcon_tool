@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from enum import IntEnum, auto
 import orjson
 import logging
@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from typing import Literal, Sequence, overload
 
 from rcon.cache_utils import get_redis_client
+from rcon.commands import CommandFailedError
 from rcon.discord import dict_to_discord, send_to_discord_audit
 from rcon.models import BlacklistSyncMethod, PlayerSteamID, Blacklist, BlacklistRecord, enter_session
 from rcon.player_history import _get_set_player
@@ -37,7 +38,7 @@ def get_blacklist(sess: Session, blacklist_id: int, strict: bool = False) -> Bla
 def get_blacklist(sess: Session, blacklist_id: int, strict: bool = False) -> Blacklist | None:
     blacklist = sess.get(Blacklist, blacklist_id)
     if not blacklist and strict:
-        raise ValueError("No blacklist found with ID %s" % blacklist_id)
+        raise CommandFailedError("No blacklist found with ID %s" % blacklist_id)
     return blacklist
 
 @overload
@@ -50,7 +51,7 @@ def get_record(sess: Session, record_id: int, strict: bool = False) -> Blacklist
 def get_record(sess: Session, record_id: int, strict: bool = False):
     record = sess.get(BlacklistRecord, record_id)
     if not record and strict:
-        raise ValueError("No record found with ID %s" % record_id)
+        raise CommandFailedError("No record found with ID %s" % record_id)
     return record
 
 
@@ -186,6 +187,9 @@ def format_reason(record: BlacklistRecord):
     # TODO: Inject variables
     return record.reason
 
+def round_timedelta_to_hours(td: timedelta):
+    return min(round(td.total_seconds() / (60 * 60)), 1)
+
 class BanState(IntEnum):
     NONE = 0
     TEMP = 1
@@ -250,21 +254,35 @@ def synchronize_ban(rcon: Rcon, player_id: str, new_record: BlacklistRecord | No
     player_name = rcon.get_playerids(as_dict=True).get(player_id)
     is_online = player_name is not None
 
-    if not is_online:
-        if new_record.blacklist.sync == BlacklistSyncMethod.BAN_IMMEDIATELY:
-            # We have to ban the player despite them being offline. We
-            # need to grab the last seen playername from the DB.
-            player_name = new_record.steamid.names[0].name
-        else:
-            # We only kick or ban the player once they come online, so
-            # we don't need to do anything as of now.
-            return
+    if new_record.blacklist.sync != BlacklistSyncMethod.BAN_IMMEDIATELY and not is_online:
+        # We only kick or ban the player once they come online, so
+        # we don't need to do anything as of now.
+        return
+    
+    apply_blacklist_punishment(
+        rcon,
+        new_record,
+        player_id=player_id,
+        player_name=player_name
+    )
 
+def apply_blacklist_punishment(
+    rcon: Rcon,
+    record: BlacklistRecord,
+    player_id: str = None,
+    player_name: str = None,
+):
     try:
-        reason = format_reason(new_record)
+        state = get_ban_state_from_record(record)
+        reason = format_reason(record)
+
+        if player_id is None:
+            player_id = record.steamid.steam_id_64
+        if player_name is None:
+            player_name = record.steamid.names[0].name
 
         # Apply any bans/kicks
-        match new_state:
+        match state:
             case BanState.NONE:
                 logger.info(
                     "Player %s was kicked due to blacklist, reason: %s",
@@ -274,23 +292,23 @@ def synchronize_ban(rcon: Rcon, player_id: str, new_record: BlacklistRecord | No
                 rcon.kick(
                     player_name=player_name,
                     reason=reason,
-                    by=f"BLACKLIST: {new_record.admin_name}",
+                    by=f"BLACKLIST: {record.admin_name}",
                     player_id=player_id
                 )
         
             case BanState.TEMP:
-                hours = min(round(new_record.expires_in().total_seconds() / (60 * 60)), 1)
+                hours = round_timedelta_to_hours(record.expires_at)
                 logger.info(
                     "Player %s was banned until %s due to blacklist, reason: %s",
                     player_name,
-                    new_record.expires_at,
+                    record.expires_at,
                     reason,
                 )
                 rcon.temp_ban(
                     player_id=player_id,
                     duration_hours=hours,
                     reason=reason,
-                    by=f"BLACKLIST: {new_record.admin_name}",
+                    by=f"BLACKLIST: {record.admin_name}",
                 )
 
             case BanState.PERMA:
@@ -302,7 +320,7 @@ def synchronize_ban(rcon: Rcon, player_id: str, new_record: BlacklistRecord | No
                 rcon.perma_ban(
                     player_id=player_id,
                     reason=reason,
-                    by=f"BLACKLIST: {new_record.admin_name}",
+                    by=f"BLACKLIST: {record.admin_name}",
                 )
 
     except:
@@ -311,6 +329,7 @@ def synchronize_ban(rcon: Rcon, player_id: str, new_record: BlacklistRecord | No
             command_name="blacklist",
             by="ERROR",
         )
+        return False
     
     else:
         try:
@@ -321,6 +340,7 @@ def synchronize_ban(rcon: Rcon, player_id: str, new_record: BlacklistRecord | No
             )
         except:
             logger.error("Unable to send blacklist to audit log")
+        return True
 
 
 def add_record_to_blacklist(player_id: str, blacklist_id: int, reason: str, expires_at: datetime | None = None, admin_name: str = ""):
@@ -549,6 +569,73 @@ def delete_blacklist(blacklist_id: int):
 
 
 
+def blacklist_or_ban(
+    rcon: Rcon,
+    blacklist_id: int | None,
+    player_id: str,
+    reason: str,
+    expires_at: datetime | None = None,
+    admin_name: str = "",
+):
+    # First try blacklisting the player if a blacklist_id is provided
+    if blacklist_id is not None:
+        try:
+            # Note the "return"
+            return add_record_to_blacklist(
+                player_id=player_id,
+                blacklist_id=blacklist_id,
+                reason=reason,
+                expires_at=expires_at,
+                admin_name=admin_name,
+            )
+        except:
+            logger.exception("Failed to blacklist player, banning them instead")
+
+    if expires_at:
+        rcon.temp_ban(
+            player_id=player_id,
+            reason=reason,
+            duration_hours=round_timedelta_to_hours(
+                expires_at - datetime.now(tz=timezone.utc)
+            ),
+            by=admin_name
+        )
+    else:
+        rcon.perma_ban(
+            player_id=player_id,
+            reason=reason,
+            by=admin_name
+        )
+
+def expire_all_player_blacklists(player_id: str):
+    with enter_session() as sess:
+        records = get_player_blacklist_records(
+            sess,
+            player_id=player_id,
+            include_expired=False,
+        )
+
+        if not records:
+            return
+        
+        expire_time = datetime.now(tz=timezone.utc)
+        server_mask = 0
+
+        for record in records:
+            record.expires_at = expire_time
+            server_mask |= record.blacklist.servers
+        sess.commit()
+        
+        BlacklistCommandHandler.send(
+            BlacklistCommand(
+                command=BlacklistCommandType.EXPIRE_ALL,
+                # server_mask=server_mask,
+                server_mask=2**32 - 1,
+            )
+        )
+
+
+
 
 class BlacklistCommandType(IntEnum):
     CREATE_RECORD = auto()
@@ -557,6 +644,7 @@ class BlacklistCommandType(IntEnum):
     # CREATE_LIST = auto()
     EDIT_LIST = auto()
     DELETE_LIST = auto()
+    EXPIRE_ALL = auto()
 
 
 class BlacklistCreateRecordCommand(BaseModel):
@@ -577,6 +665,9 @@ class BlacklistDeleteListCommand(BaseModel):
     blacklist: BlacklistType
     banned_players: dict[str, tuple[datetime, datetime | None]]
     perma_banned: list[str]
+
+class BlacklistExpireAllCommand(BaseModel):
+    player_id: str
 
 @dataclass
 class BlacklistCommand:
@@ -636,15 +727,25 @@ class BlacklistCommandHandler:
                                 BlacklistCreateRecordCommand.model_validate(cmd.payload)
                             )
                         case BlacklistCommandType.EDIT_RECORD:
-                            pass
+                            self.handle_edit_record(
+                                BlacklistEditRecordCommand.model_validate(cmd.payload)
+                            )
                         case BlacklistCommandType.DELETE_RECORD:
                             self.handle_delete_record(
                                 BlacklistDeleteRecordCommand.model_validate(cmd.payload)
                             )
                         case BlacklistCommandType.EDIT_LIST:
-                            pass
+                            self.handle_edit_list(
+                                BlacklistEditListCommand.model_validate(cmd.payload)
+                            )
                         case BlacklistCommandType.DELETE_LIST:
-                            pass
+                            self.handle_delete_list(
+                                BlacklistDeleteListCommand.model_validate(cmd.payload)
+                            )
+                        case BlacklistCommandType.EXPIRE_ALL:
+                            self.handle_expire_all(
+                                BlacklistExpireAllCommand.model_validate(cmd.payload)
+                            )
                 except:
                     logger.exception("Error whilst executing %s command with payload %s", cmd.command.name, cmd.payload)
 
@@ -810,3 +911,10 @@ class BlacklistCommandHandler:
                         synchronize_ban(self.rcon, player_id, new_record, old_state)
                 except:
                     logger.exception("Failed to synchronize ban for player %s after deleting blacklist", player_id)
+
+    def handle_expire_all(self, payload: BlacklistExpireAllCommand):
+        """Handle all of a player's active blacklist records being expired.
+        
+        Since this is typically done as a means of """
+        self.rcon.remove_temp_ban(payload.player_id)
+        self.rcon.remove_perma_ban(payload.player_id)

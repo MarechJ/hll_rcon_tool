@@ -95,7 +95,6 @@ class PlayerSteamID(Base):
         back_populates="steamid",
         order_by="desc(PlayersAction.time)",
     )
-    legacy_blacklist: Mapped["BlacklistedPlayer"] = relationship(back_populates="steamid")
     flags: Mapped[list["PlayerFlag"]] = relationship(back_populates="steamid")
     watchlist: Mapped["WatchList"] = relationship(back_populates="steamid")
     steaminfo: Mapped["SteamInfo"] = relationship(back_populates="steamid")
@@ -354,28 +353,6 @@ class PlayerSession(Base):
             "start": self.start,
             "end": self.end,
             "created": self.created,
-        }
-
-
-class BlacklistedPlayer(Base):
-    __tablename__ = "player_blacklist"
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    playersteamid_id: Mapped[int] = mapped_column(
-        ForeignKey("steam_id_64.id"), nullable=False, index=True, unique=True
-    )
-    is_blacklisted: Mapped[bool] = mapped_column(default=False)
-    reason: Mapped[str] = mapped_column()
-    by: Mapped[str] = mapped_column()
-
-    steamid: Mapped[PlayerSteamID] = relationship(back_populates="blacklist")
-
-    def to_dict(self) -> BlackListType:
-        return {
-            "steam_id_64": self.steamid.steam_id_64,
-            "is_blacklisted": self.is_blacklisted,
-            "reason": self.reason,
-            "by": self.by,
         }
 
 

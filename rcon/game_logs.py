@@ -16,11 +16,11 @@ from sqlalchemy import and_, desc, or_
 from sqlalchemy.exc import IntegrityError
 
 from discord.utils import escape_markdown
+from rcon.blacklist import blacklist_or_ban
 from rcon.cache_utils import get_redis_client, ttl_cache
 from rcon.discord import make_hook, send_to_discord_audit
 from rcon.models import LogLine, PlayerSteamID, enter_session
 from rcon.player_history import (
-    add_player_to_blacklist,
     get_player_profile,
     player_has_flag,
 )
@@ -826,15 +826,13 @@ def auto_ban_if_tks_right_after_connection(
                 logger.info(
                     "Banning player %s for TEAMKILL after connect %s", player_name, log
                 )
-                try:
-                    rcon.perma_ban(
-                        player_id=player_steam_id,
-                        reason=reason,
-                        by=author,
-                    )
-                except:
-                    logger.exception("Can't perma, trying blacklist")
-                    add_player_to_blacklist(player_steam_id, reason, by=author)
+                blacklist_or_ban(
+                    rcon=rcon,
+                    blacklist_id=config.blacklist_id,
+                    player_id=player_steam_id,
+                    reason=reason,
+                    admin_name=author,
+                )
                 logger.info(
                     "Banned player %s for TEAMKILL after connect %s", player_name, log
                 )
