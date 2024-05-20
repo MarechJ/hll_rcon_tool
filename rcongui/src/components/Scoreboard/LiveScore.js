@@ -67,7 +67,7 @@ const useStyles = makeStyles((theme) => ({
 const LiveSessionScore = ({ classes }) => (
   <LiveScore
     classes={classes}
-    endpoint="live_scoreboard"
+    endpoint="get_live_scoreboard"
     title="LIVE SESSIONS"
     explainText={
       <React.Fragment>

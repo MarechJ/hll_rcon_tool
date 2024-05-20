@@ -21,7 +21,8 @@ logger = logging.getLogger("rconweb")
 @csrf_exempt
 @stats_login_required
 @require_http_methods(["GET"])
-def live_scoreboard(request):
+def get_live_scoreboard(request):
+    """Return stats for all currently connected players (stats are reset on disconnect, not match start)"""
     stats = LiveStats()
     config = RconServerSettingsUserConfig.load_from_db()
     try:
@@ -125,6 +126,7 @@ def get_map_scoreboard(request):
 @stats_login_required
 @require_http_methods(["GET"])
 def get_live_game_stats(request):
+    """Return stats for the currently playing match"""
     stats = None
     error_ = None
     failed = True
