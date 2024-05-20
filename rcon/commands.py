@@ -636,11 +636,14 @@ class ServerCtl:
         player_id: str | None = None,
         reason: str = "",
         admin_name: str = "",
-    ) -> str:
+    ) -> bool:
         reason = convert_tabs_to_spaces(reason)
-        return self._str_request(
-            f'permaban "{player_id or player_name}" "{reason}" "{admin_name}"',
-            log_info=True,
+        return (
+            self._str_request(
+                f'permaban "{player_id or player_name}" "{reason}" "{admin_name}"',
+                log_info=True,
+            )
+            == SUCCESS
         )
 
     def remove_temp_ban(self, ban_log) -> str:

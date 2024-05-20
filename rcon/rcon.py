@@ -1193,8 +1193,9 @@ class Rcon(ServerCtl):
         with invalidates(Rcon.get_perma_bans):
             return super().remove_perma_ban(ban_log)
 
-    def perma_ban(self, player_name=None, player_id=None, reason="", by="") -> str:
+    def perma_ban(self, player_name=None, player_id=None, reason="", by="") -> bool:
         with invalidates(Rcon.get_players, Rcon.get_perma_bans):
+            # TODO: this won't work with windows store IDs
             if player_name and re.match(r"\d+", player_name):
                 info = self.get_player_info(player_name)
                 player_id = info.get(PLAYER_ID, None)
