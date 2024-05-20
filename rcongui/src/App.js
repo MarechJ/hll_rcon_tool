@@ -749,13 +749,6 @@ function App() {
                     </Grid>
                   </Grid>
                 </Route>
-                <Route path="/server">
-                  <Grid container>
-                    <Grid item sm={12} lg={12}>
-                      <ServerStatsPage classes={classes} />
-                    </Grid>
-                  </Grid>
-                </Route>
               </React.Fragment>
             ) : (
               ""

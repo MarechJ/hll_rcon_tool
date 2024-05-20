@@ -227,7 +227,6 @@ class RconUser(User):
                 "Can view the amount of time left in the round",
             ),
             ("can_view_server_name", "Can view the server name"),
-            ("can_view_server_stats", "Can view the get_server_stats endpoint"),
             (
                 "can_view_shared_standard_messages",
                 "Can view the shared standard messages",
