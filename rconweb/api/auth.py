@@ -128,7 +128,11 @@ class RconJsonResponse(HttpResponse):
             raise ValueError(f"Cannot serialize {o}, {type(o)}to JSON")
 
     def __init__(self, data, **kwargs):
-        data = orjson.dumps(data, default=RconJsonResponse._orjson_dump_pydantic)
+        data = orjson.dumps(
+            data,
+            default=RconJsonResponse._orjson_dump_pydantic,
+            option=orjson.OPT_NON_STR_KEYS,
+        )
         kwargs.setdefault("content_type", "application/json")
         super().__init__(content=data, **kwargs)
 
