@@ -1134,7 +1134,7 @@ class Rcon(ServerCtl):
     def switch_player_on_death(self, player_name, by) -> str:
         return super().switch_player_on_death(player_name)
 
-    def kick(self, player_name, reason, by, player_id: str | None = None) -> str:
+    def kick(self, player_name, reason, by, player_id: str | None = None) -> bool:
         with invalidates(Rcon.get_players):
             res = super().kick(player_name, reason)
 

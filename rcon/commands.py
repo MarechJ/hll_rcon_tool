@@ -608,8 +608,11 @@ class ServerCtl:
         return self._str_request(f'punish "{player_name}" "{reason}"', log_info=True)
 
     @_escape_params
-    def kick(self, player_name: str, reason: str) -> str:
-        return self._str_request(f'kick "{player_name}" "{reason}"', log_info=True)
+    def kick(self, player_name: str, reason: str) -> bool:
+        return (
+            self._str_request(f'kick "{player_name}" "{reason}"', log_info=True)
+            == SUCCESS
+        )
 
     @_escape_params
     def temp_ban(
