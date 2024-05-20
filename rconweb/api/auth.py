@@ -1,4 +1,5 @@
 import csv
+import datetime
 import json
 import logging
 from dataclasses import asdict, dataclass
@@ -121,6 +122,10 @@ class RconJsonResponse(HttpResponse):
     def _orjson_dump_pydantic(o):
         if isinstance(o, pydantic.BaseModel):
             return o.model_dump()
+        elif isinstance(o, datetime.timedelta):
+            return o.total_seconds()
+        else:
+            raise ValueError(f"Cannot serialize {o}, {type(o)}to JSON")
 
     def __init__(self, data, **kwargs):
         data = orjson.dumps(data, default=RconJsonResponse._orjson_dump_pydantic)
