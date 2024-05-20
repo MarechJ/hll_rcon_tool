@@ -281,6 +281,13 @@ class RconAPI(Rcon):
     def get_player_comments(self, player_id: str) -> list[PlayerCommentType]:
         return player_history.get_player_comments(player_id=player_id)
 
+    def post_player_comment(self, player_id: str, comment: str, by: str):
+        return player_history.post_player_comment(
+            player_id=player_id,
+            comment=comment,
+            user=by,
+        )
+
     def get_player_messages(self, player_id: str):
         return player_history.get_player_messages(player_id=player_id)
 
