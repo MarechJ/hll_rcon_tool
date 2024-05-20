@@ -9,7 +9,6 @@ from . import (
     audit_log,
     auth,
     auto_settings,
-    history,
     multi_servers,
     scoreboards,
     services,
