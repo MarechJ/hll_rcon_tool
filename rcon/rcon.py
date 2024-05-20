@@ -927,8 +927,8 @@ class Rcon(ServerCtl):
             return super().set_queue_length(num)
 
     @ttl_cache(ttl=60 * 10)
-    def get_vip_slots_num(self) -> str:
-        return super().get_vip_slots_num()
+    def get_vip_slots_num(self) -> int:
+        return int(super().get_vip_slots_num())
 
     def set_vip_slots_num(self, num) -> str:
         with invalidates(Rcon.get_vip_slots_num):
