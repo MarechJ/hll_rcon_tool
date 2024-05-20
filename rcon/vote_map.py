@@ -586,6 +586,7 @@ class VoteMap:
         try:
             votes = self.get_votes()
             maps = Counter(votes.values()).most_common()
+            # TODO RELEASE: Return descriptive dicts not tuples
             return {
                 "total_votes": len(votes),
                 "winning_maps": [(m, v) for m, v in maps],
