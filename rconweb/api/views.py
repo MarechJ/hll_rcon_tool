@@ -201,6 +201,8 @@ def expose_api_endpoint(
             arguments["by"] = request.user.username
         else:
             # Scrape out special case parameters, like the author of a request is the user name making the request
+            # This does not cast argument types, so things that come in from GET parameters are all going to be strings
+            # so we need to handle this properly inside methods if the types matter
             for pname, param in parameters.items():
                 if pname == "by":
                     arguments[pname] = request.user.username
