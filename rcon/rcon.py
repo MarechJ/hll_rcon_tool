@@ -794,15 +794,17 @@ class Rcon(ServerCtl):
         self.current_map = raw_current_map.split(": ")[1]
         self.next_map = raw_next_map.split(": ")[1]
 
+        time_remaining = timedelta(
+            hours=float(hours), minutes=float(mins), seconds=float(secs)
+        )
+
         return {
             "num_allied_players": int(num_allied_players),
             "num_axis_players": int(num_axis_players),
             "allied_score": int(allied_score),
             "axis_score": int(axis_score),
             "raw_time_remaining": raw_time_remaining,
-            "time_remaining": timedelta(
-                hours=float(hours), minutes=float(mins), seconds=float(secs)
-            ),
+            "time_remaining": time_remaining,
             "current_map": self.current_map.model_dump(),
             "next_map": self.next_map.model_dump(),
         }
@@ -822,11 +824,10 @@ class Rcon(ServerCtl):
         return result["allied_score"], result["axis_score"]
 
     @ttl_cache(ttl=2, cache_falsy=False)
-    def get_round_time_remaining(self) -> timedelta:
-        """Returns the amount of time left in the round as a timedelta"""
+    def get_round_time_remaining(self) -> float:
+        """Returns the amount of time left in the round as seconds"""
         result = self.get_gamestate()
-
-        return result["time_remaining"]
+        return result["time_remaining"].total_seconds()
 
     @ttl_cache(ttl=60)
     def get_next_map(self) -> Layer:
