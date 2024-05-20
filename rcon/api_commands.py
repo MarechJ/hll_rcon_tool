@@ -478,17 +478,6 @@ class RconAPI(Rcon):
             inclusive_filter=inclusive_filter,
         )
 
-    def get_server_stats(
-        self,
-        by_map,
-        with_players,
-        start: datetime | None = None,
-        end: datetime | None = None,
-    ):
-        return get_db_server_stats_for_range(
-            start=start, end=end, by_map=by_map, with_player_list=with_players
-        )
-
     def get_votemap_status(self) -> VoteMapStatusType:
         v = VoteMap()
 
