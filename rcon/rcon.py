@@ -1075,7 +1075,7 @@ class Rcon(ServerCtl):
         pairs = res.split(",")
         return [(int(pair[0]), int(pair[1])) for pair in zip(pairs[0::2], pairs[1::2])]
 
-    def set_autobalance_enabled(self, bool_) -> str:
+    def set_autobalance_enabled(self, bool_) -> bool:
         with invalidates(self.get_autobalance_enabled):
             return super().set_autobalance_enabled("on" if bool_ else "off")
 

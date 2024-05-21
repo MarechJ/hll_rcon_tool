@@ -514,11 +514,11 @@ class ServerCtl:
     def get_vip_slots_num(self) -> str:
         return self._str_request("get numvipslots", can_fail=False)
 
-    def set_autobalance_enabled(self, bool_: str) -> str:
+    def set_autobalance_enabled(self, bool_: str) -> bool:
         """
         String bool is on / off
         """
-        return self._str_request(f"setautobalanceenabled {bool_}")
+        return self._str_request(f"setautobalanceenabled {bool_}") == SUCCESS
 
     def set_welcome_message(self, message) -> str:
         return self._str_request(f"say {message}", log_info=True, can_fail=False)
