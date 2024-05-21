@@ -83,7 +83,7 @@ endpoints: list[tuple[str, Callable]] = [
     ("get_own_user_permissions", auth.get_own_user_permissions),
     ("get_services", services.get_services),
     ("do_service", services.do_service),
-    ("server_list", multi_servers.get_server_list),
+    ("get_server_list", multi_servers.get_server_list),
     ("upload_vips", vips.upload_vips),
     ("async_upload_vips", vips.async_upload_vips),
     ("async_upload_vips_result", vips.async_upload_vips_result),

@@ -178,8 +178,8 @@ class ServerStatus extends React.Component {
   }
 
   async loadServerList() {
-    return get(`server_list`)
-      .then((response) => showResponse(response, "server_list", false))
+    return get(`get_server_list`)
+      .then((response) => showResponse(response, "get_server_list", false))
       .then((data) => {
         this.setState({
           serverList: fromJS(data.result || []),
