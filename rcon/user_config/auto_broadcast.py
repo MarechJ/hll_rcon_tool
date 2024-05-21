@@ -67,8 +67,17 @@ class AutoBroadcastUserConfig(BaseUserConfig):
         validated_messages = []
         raw_message: str
         for raw_message in raw_messages:
-            raw_message = raw_message.replace("\\n", "\n")
-            time, message = RawAutoBroadCastMessage(value=raw_message).time_and_message
+            # TODO: Fix this bandaid once the UI gets overhauled
+            # Accept dict like objects when not set through the UI
+            if isinstance(raw_message, dict):
+                time = raw_message["time_sec"]
+                message = raw_message["message"]
+            # The UI passes these in as strings
+            else:
+                raw_message = raw_message.replace("\\n", "\n")
+                time, message = RawAutoBroadCastMessage(
+                    value=raw_message
+                ).time_and_message
             validated_messages.append(
                 AutoBroadcastMessage(time_sec=int(time), message=message)
             )
