@@ -983,26 +983,23 @@ class Rcon(ServerCtl):
             return msg.decode()
         return msg
 
-    def set_broadcast(self, message, save=True) -> str:
+    def set_broadcast(self, message: str) -> str:
+        """Set the in game broadcast message and return the previous message if set"""
         from rcon.broadcast import format_message
-
-        prev: bytes | None = None
-
-        try:
-            red = get_redis_client()
-            if save:
-                prev = red.set("BROADCAST_MESSAGE", message, get=True)  # type: ignore
-            else:
-                prev = red.get("BROADCAST_MESSAGE")  # type: ignore
-            red.expire("BROADCAST_MESSAGE", 60 * 30)
-        except Exception:
-            logger.exception("Can't save message in redis: %s", message)
 
         try:
             formatted = format_message(self, message)
         except Exception:
             logger.exception("Unable to format message")
             formatted = message
+
+        prev: bytes | None = None
+        try:
+            red = get_redis_client()
+            prev = red.set("BROADCAST_MESSAGE", message, get=True)  # type: ignore
+            red.expire("BROADCAST_MESSAGE", 60 * 30)
+        except Exception:
+            logger.exception("Can't save message in redis: %s", message)
 
         super().set_broadcast(formatted)
         return prev.decode() if prev else ""

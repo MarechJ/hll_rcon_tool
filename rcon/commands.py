@@ -559,7 +559,7 @@ class ServerCtl:
         return self._str_request(f"setnumvipslots {num}", log_info=True)
 
     @_escape_params
-    def set_broadcast(self, message):
+    def set_broadcast(self, message: str):
         return self._str_request(
             f'broadcast "{message}"', log_info=True, can_fail=False
         )
