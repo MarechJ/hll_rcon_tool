@@ -22,6 +22,7 @@ from rcon.settings import SERVER_INFO
 from rcon.types import (
     AdminUserType,
     BlacklistSyncMethod,
+    BlacklistType,
     ParsedLogsType,
     PlayerFlagType,
     PlayerProfileType,
@@ -209,7 +210,7 @@ class RconAPI(Rcon):
         reason: str,
         expires_at: datetime | None = None,
         admin_name: str = "",
-    ):
+    ) -> BlacklistType:
         """
         Adds a new record to a blacklist.
 
@@ -230,7 +231,7 @@ class RconAPI(Rcon):
             expires_at=expires_at,
             admin_name=admin_name,
         )
-    
+
     def edit_blacklist_record(
         self,
         record_id: int,

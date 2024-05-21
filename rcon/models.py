@@ -22,7 +22,6 @@ from sqlalchemy.schema import UniqueConstraint
 
 from rcon.types import (
     AuditLogType,
-    BlackListType,
     BlacklistRecordType,
     BlacklistSyncMethod,
     BlacklistType,
