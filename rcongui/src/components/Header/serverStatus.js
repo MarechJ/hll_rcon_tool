@@ -154,7 +154,7 @@ class ServerStatus extends React.Component {
           numCurrentPlayers: data.result.current_players,
           maxPlayers: data.result.max_players,
         });
-        document.title = `(${data?.result.player_count}) ${data?.result.short_name}`;
+        document.title = `(${data?.result.current_players}) ${data?.result.short_name}`;
       })
       .catch(handle_http_errors);
   }
