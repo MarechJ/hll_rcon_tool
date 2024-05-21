@@ -906,7 +906,7 @@ class Rcon(ServerCtl):
     def get_idle_autokick_time(self) -> int:
         return int(super().get_idle_autokick_time())
 
-    def set_idle_autokick_time(self, minutes) -> str:
+    def set_idle_autokick_time(self, minutes) -> bool:
         with invalidates(Rcon.get_idle_autokick_time):
             return super().set_idle_autokick_time(minutes)
 

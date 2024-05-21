@@ -537,8 +537,8 @@ class ServerCtl:
         if current != enabled:
             self._str_request(f"togglemapshuffle")
 
-    def set_idle_autokick_time(self, minutes) -> str:
-        return self._str_request(f"setkickidletime {minutes}", log_info=True)
+    def set_idle_autokick_time(self, minutes) -> bool:
+        return self._str_request(f"setkickidletime {minutes}", log_info=True) == SUCCESS
 
     def set_max_ping_autokick(self, max_ms) -> str:
         return self._str_request(f"sethighping {max_ms}", log_info=True)
