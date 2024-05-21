@@ -1254,7 +1254,7 @@ class Rcon(ServerCtl):
 
     def remove_map_from_rotation(self, map_name: str, map_number: int | None = None):
         with invalidates(Rcon.get_map_rotation, Rcon.get_next_map):
-            super().remove_map_from_rotation(map_name, map_number)
+            return super().remove_map_from_rotation(map_name, map_number)
 
     def remove_maps_from_rotation(self, map_names: list[str]) -> Literal["SUCCESS"]:
         with invalidates(Rcon.get_map_rotation, Rcon.get_next_map):
