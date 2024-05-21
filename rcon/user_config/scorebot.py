@@ -8,7 +8,7 @@ from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
 from rcon.utils import get_server_number
 
 STATS_ENDPOINT = "/api/get_live_game_stats"
-INFO_ENDPOINT = "/api/public_info"
+INFO_ENDPOINT = "/api/get_public_info"
 PAST_GAMES_ENDPOINT = "/#/gamescoreboard"
 
 STAT_TYPES = (

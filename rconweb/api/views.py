@@ -18,13 +18,19 @@ from django.views.decorators.csrf import csrf_exempt
 
 from discord.utils import escape_markdown
 from rcon.api_commands import get_rcon_api
-from rcon.broadcast import get_votes_status
 from rcon.commands import CommandFailedError
 from rcon.discord import send_to_discord_audit
 from rcon.gtx import GTXFtp
-from rcon.maps import parse_layer, safe_get_map_name
+from rcon.types import (
+    PublicInfoMapType,
+    PublicInfoNameType,
+    PublicInfoPlayerType,
+    PublicInfoScoreType,
+    PublicInfoType,
+)
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.utils import MapsHistory, get_server_number
+from rcon.vote_map import VoteMap
 from rconweb.settings import TAG_VERSION
 
 from .audit_log import auto_record_audit, record_audit
@@ -104,9 +110,7 @@ def get_version(request):
 
 @csrf_exempt
 @require_http_methods(["GET"])
-def public_info(request):
-    gamestate = rcon_api.get_gamestate()
-    curr_players, max_players = tuple(map(int, rcon_api.get_slots().split("/")))
+def get_public_info(request):
     try:
         current_map_start = MapsHistory(max_len=1)[0]["start"]
     except IndexError:
@@ -114,27 +118,56 @@ def public_info(request):
         current_map_start = None
 
     config = RconServerSettingsUserConfig.load_from_db()
-    return api_response(
-        result=dict(
-            current_map=dict(map=gamestate["current_map"], start=current_map_start),
-            next_map=dict(map=gamestate["next_map"], start=None),
-            player_count=curr_players,
-            max_player_count=max_players,
-            players=dict(
-                allied=gamestate["num_allied_players"],
-                axis=gamestate["num_axis_players"],
-            ),
-            score=dict(allied=gamestate["allied_score"], axis=gamestate["axis_score"]),
-            # TODO: fix key
-            raw_time_remaining=gamestate["raw_time_remaining"],
-            vote_status=get_votes_status(none_on_fail=True),
-            name=rcon_api.get_name(),
-            short_name=config.short_name,
-            public_stats_port=os.getenv("PUBLIC_STATS_PORT", "Not defined"),
-            public_stats_port_https=os.getenv("PUBLIC_STATS_PORT_HTTPS", "Not defined"),
+    gamestate = rcon_api.get_gamestate()
+    curr_players, max_players = rcon_api.get_slots()
+
+    current_map: PublicInfoMapType = {
+        "map": gamestate["current_map"],
+        "start": current_map_start,
+    }
+
+    next_map: PublicInfoMapType = {
+        "map": gamestate["next_map"],
+        "start": None,
+    }
+
+    score: PublicInfoScoreType = {
+        "allied": gamestate["allied_score"],
+        "axis": gamestate["axis_score"],
+    }
+    players: PublicInfoPlayerType = {
+        "allied": gamestate["num_allied_players"],
+        "axis": gamestate["num_axis_players"],
+    }
+    vote_status = VoteMap().get_vote_overview()
+
+    public_stats_port = os.getenv("PUBLIC_STATS_PORT", None)
+    public_stats_port_https = os.getenv("PUBLIC_STATS_PORT_HTTPS", None)
+    name: PublicInfoNameType = {
+        "name": rcon_api.get_name(),
+        "short_name": config.short_name,
+        "public_stats_port": int(public_stats_port) if public_stats_port else None,
+        "public_stats_port_https": (
+            int(public_stats_port_https) if public_stats_port_https else None
         ),
+    }
+
+    res: PublicInfoType = {
+        "current_map": current_map,
+        "next_map": next_map,
+        "player_count": curr_players,
+        "max_player_count": max_players,
+        "player_count_by_team": players,
+        "score": score,
+        "time_remaining": gamestate["time_remaining"].total_seconds(),
+        "vote_status": vote_status,
+        "name": name,
+    }
+
+    return api_response(
+        result=res,
         failed=False,
-        command="public_info",
+        command="get_public_info",
     )
 
 
@@ -801,7 +834,7 @@ ALLOWED_METHODS_SPECIAL_CASES: dict[Callable, list[str]] = {
 commands = [
     ("get_version", get_version),
     ("get_connection_info", get_connection_info),
-    ("public_info", public_info),
+    ("get_public_info", get_public_info),
     ("set_name", set_name),
     ("run_raw_command", run_raw_command),
 ]

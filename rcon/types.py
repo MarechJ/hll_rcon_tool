@@ -656,47 +656,37 @@ class InvalidLogTypeError(ValueError):
         }
 
 
-class _PublicInfoCurrentMapType(TypedDict):
+class PublicInfoMapType(TypedDict):
     map: LayerType
-    start: int
+    start: float | None
 
 
-class _PublicInfoNextMapType(TypedDict):
-    map: LayerType
-    start: int | None
-
-
-class _PublicInfoPlayerType(TypedDict):
+class PublicInfoPlayerType(TypedDict):
     allied: int
     axis: int
 
 
-class _PublicInfoScoreType(TypedDict):
+class PublicInfoScoreType(TypedDict):
     allied: int
     axis: int
 
 
-class _PublicInfoVoteStatusType(TypedDict):
-    total_votes: int
-    winning_maps: list[str]
-
-
-class _PublicInfoNameType(TypedDict):
+class PublicInfoNameType(TypedDict):
     name: str
     short_name: str
-    public_stats_port: int
-    public_stats_port_https: int
+    public_stats_port: int | None
+    public_stats_port_https: int | None
 
 
 class PublicInfoType(TypedDict):
-    """TypedDict for rcon.views.public_info"""
+    """TypedDict for rcon.views.get_public_info"""
 
-    current_map: _PublicInfoCurrentMapType
-    next_map: _PublicInfoNextMapType
+    current_map: PublicInfoMapType
+    next_map: PublicInfoMapType
     player_count: int
     max_player_count: int
-    players: _PublicInfoPlayerType
-    score: _PublicInfoScoreType
-    raw_time_remaining: str
-    vote_status: _PublicInfoVoteStatusType
-    name: _PublicInfoNameType
+    player_count_by_team: PublicInfoPlayerType
+    score: PublicInfoScoreType
+    time_remaining: float
+    vote_status: VoteMapResultType | None
+    name: PublicInfoNameType

@@ -76,8 +76,8 @@ const ServerInfo = ({ classes }) => {
   const getData = () => {
     setIsLoading(true);
 
-    get("public_info")
-      .then((res) => showResponse(res, "public_info", false))
+    get("get_public_info")
+      .then((res) => showResponse(res, "get_public_info", false))
       .then((data) => setServerState(fromJS(data.result)))
       .then(() => setIsLoading(false))
       .catch(handle_http_errors);
