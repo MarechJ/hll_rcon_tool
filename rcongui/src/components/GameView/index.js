@@ -325,7 +325,7 @@ const GameView = ({ classes: globalClasses }) => {
         {
           player: null,
           actionType: actionType,
-          steam_id_64: null,
+          player_id: null,
         }
   */
   const [confirmAction, setConfirmAction] = React.useState(false);
@@ -350,7 +350,7 @@ const GameView = ({ classes: globalClasses }) => {
     []
   );
 
-  const playerNamesToSteamId = React.useMemo(() => {
+  const playerNamesToPlayerId = React.useMemo(() => {
     if (!teamView) {
       return new Map();
     }
@@ -363,7 +363,7 @@ const GameView = ({ classes: globalClasses }) => {
         .entrySeq()
         .forEach(([key, value]) =>
           value.get("players", new IList()).forEach((player) => {
-            namesToId[player.get("name")] = player.get("steam_id_64");
+            namesToId[player.get("name")] = player.get("player_id");
           })
         );
 
@@ -371,7 +371,7 @@ const GameView = ({ classes: globalClasses }) => {
         .get(key, new Map())
         .get("commander", new Map());
       if (commander) {
-        namesToId[commander.get("name")] = commander.get("steam_id_64");
+        namesToId[commander.get("name")] = commander.get("player_id");
       }
     });
     return fromJS(namesToId);
@@ -516,7 +516,7 @@ const GameView = ({ classes: globalClasses }) => {
       setConfirmAction({
         player: null,
         actionType: actionType,
-        steam_id_64: null,
+        player_id: null,
       });
     } else {
       playerNames.forEach((playerName) => {
@@ -525,10 +525,10 @@ const GameView = ({ classes: globalClasses }) => {
           selectPlayer(playerName, "delete");
           return;
         }
-        const steam_id_64 = playerNamesToSteamId.get(playerName, null);
+        const player_id = playerNamesToPlayerId.get(playerName, null);
         const data = {
           player: playerName,
-          steam_id_64: steam_id_64,
+          player_id: player_id,
           reason: message,
           comment: comment,
           duration_hours: duration_hours,
@@ -537,8 +537,7 @@ const GameView = ({ classes: globalClasses }) => {
         if (actionType === "temp_ban") {
           data["forward"] = "yes";
         }
-        console.log(`Posting do_${actionType}`, data);
-        postData(`${process.env.REACT_APP_API_URL}do_${actionType}`, data)
+        postData(`${process.env.REACT_APP_API_URL}${actionType}`, data)
           .then((response) =>
             showResponse(response, `${actionType} ${playerName}`, true)
           )
@@ -546,7 +545,7 @@ const GameView = ({ classes: globalClasses }) => {
 
         if (comment) {
           postData(`${process.env.REACT_APP_API_URL}post_player_comment`, {
-            steam_id_64: steam_id_64,
+            player_id: player_id,
             comment: comment,
           })
             .then((response) =>
@@ -561,7 +560,7 @@ const GameView = ({ classes: globalClasses }) => {
   const addFlagToPlayers = (_, flag, comment) => {
     selectedPlayers.forEach((name) =>
       postData(`${process.env.REACT_APP_API_URL}flag_player`, {
-        player_id: playerNamesToSteamId.get(name),
+        player_id: playerNamesToPlayerId.get(name),
         flag: flag,
         comment: comment,
       })
@@ -595,7 +594,7 @@ const GameView = ({ classes: globalClasses }) => {
               reason,
               comment,
               duration_hours = 2,
-              steam_id_64 = null
+              player_id = null
             ) => {
               handleAction(
                 action,
@@ -654,7 +653,7 @@ const GameView = ({ classes: globalClasses }) => {
                       setConfirmAction({
                         player: "All selected players",
                         actionType: actionType,
-                        steam_id_64: null,
+                        player_id: null,
                       });
                     }
                   }}

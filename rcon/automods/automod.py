@@ -74,7 +74,7 @@ def _do_punitions(
                 if not aplayer.details.dry_run:
                     rcon.message_player(
                         aplayer.name,
-                        aplayer.steam_id_64,
+                        aplayer.player_id,
                         aplayer.details.message,
                         by=aplayer.details.author,
                     )
@@ -228,7 +228,7 @@ pendingTimers = {}
 
 @rcon.game_logs.on_connected()
 @inject_player_ids
-def on_connected(rcon: Rcon, _, name: str, steam_id_64: str):
+def on_connected(rcon: Rcon, _, name: str, player_id: str):
     red = get_redis_client()
     if not is_first_run_done(red):
         logger.debug(
@@ -253,29 +253,27 @@ def on_connected(rcon: Rcon, _, name: str, steam_id_64: str):
         on_connected_hook = getattr(mod, "on_connected", None)
         if callable(on_connected_hook):
             punitions_to_apply.merge(
-                mod.on_connected(name, steam_id_64, detailed_player_info)
+                mod.on_connected(name, player_id, detailed_player_info)
             )
 
     def notify_player():
         try:
             for p in punitions_to_apply.warning:
                 rcon.message_player(
-                    player_id=p.steam_id_64,
+                    player_id=p.player_id,
                     message=p.details.message,
                     by=p.details.author,
                     save_message=False,
                 )
         except Exception as e:
-            logger.error(
-                "Could not message player '%s' (%s) : %s", name, steam_id_64, e
-            )
+            logger.error("Could not message player '%s' (%s) : %s", name, player_id, e)
 
     if len(punitions_to_apply.warning) == 0:
         return
 
     # The player might not yet have finished connecting in order to send messages.
     t = Timer(20, notify_player)
-    pendingTimers[steam_id_64] = t
+    pendingTimers[player_id] = t
     t.start()
 
 

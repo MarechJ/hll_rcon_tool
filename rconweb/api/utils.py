@@ -3,7 +3,6 @@ from functools import wraps
 from logging import getLogger
 from typing import Any
 
-from django.http import QueryDict
 from django.http.request import HttpRequest
 
 from rcon.discord import send_to_discord_audit
@@ -11,9 +10,21 @@ from rcon.discord import send_to_discord_audit
 logger = getLogger(__name__)
 
 
-def _get_data(request: HttpRequest) -> QueryDict | dict[str, Any]:
+def _get_data(request: HttpRequest) -> dict[Any, Any] | Any:
     if request.method == "GET":
-        return request.GET
+        parsed_get = {}
+
+        # Allow passing lists of parameters, otherwise only the last value is captured
+        # for instance without this api/get_recent_logs?filter_action=KILL&filter_action=CHAT
+        # otherwise it would result in: filter_action = 'CHAT'
+        # rather than: filter_action = ['KILL', 'CHAT']
+        for key in request.GET.keys():
+            v = request.GET.getlist(key)
+            if len(v) == 1:
+                v = v[0]
+            parsed_get[key] = v
+
+        return parsed_get
     # This is only used (currently) by the async_upload_vips endpoint which doesn't
     # include a parseable JSON body, but form data and it pulls the data itself
     elif request.method == "POST" and request.FILES:

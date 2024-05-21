@@ -10,8 +10,6 @@ from rcon.audit import ingame_mods, online_mods
 from rcon.commands import CommandFailedError
 from rcon.maps import categorize_maps, numbered_maps
 from rcon.rcon import Rcon
-from rcon.settings import SERVER_INFO
-from rcon.types import VoteMapResultType
 from rcon.user_config.auto_broadcast import AutoBroadcastUserConfig
 from rcon.user_config.vote_map import VoteMapUserConfig
 from rcon.vote_map import VoteMap
@@ -32,10 +30,6 @@ class LazyPrinter:
         except:
             logger.exception("Unable to get data for broacasts")
             return self.default
-
-
-def get_votes_status(none_on_fail=False) -> VoteMapResultType | None:
-    return VoteMap().get_vote_overview()
 
 
 def format_winning_map(
@@ -208,7 +202,7 @@ def _get_vars(ctl: Rcon):
         smart_map = maps.parse_layer(map_name)
         return smart_map.pretty_name
 
-    vote_status = get_votes_status()
+    vote_status = VoteMap().get_vote_overview()
 
     subs = {
         "nextmap": LazyPrinter(get_next_map),

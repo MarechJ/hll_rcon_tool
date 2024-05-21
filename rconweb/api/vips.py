@@ -13,7 +13,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from rcon.commands import CommandFailedError
 from rcon.discord import send_to_discord_audit
-from rcon.models import PlayerSteamID, PlayerVIP, enter_session
+from rcon.models import PlayerID, PlayerVIP, enter_session
 from rcon.steam_utils import is_steam_id_64
 from rcon.utils import get_server_number
 from rcon.win_store_utils import is_windows_store_id
@@ -52,7 +52,7 @@ def upload_vips(request):
             message = ""
             vips = rcon_api.get_vip_ids()
             for vip in vips:
-                rcon_api.remove_vip(vip["steam_id_64"])
+                rcon_api.remove_vip(vip["player_id"])
             message = f"{len(vips)} removed\n"
             count = 0
             for name, data in request.FILES.items():
@@ -66,7 +66,9 @@ def upload_vips(request):
                             steam_id, name = l.split(" ", 1)
                             if len(steam_id) != 17:
                                 raise ValueError
-                            rcon_api.add_vip(name.strip(), steam_id)
+                            rcon_api.add_vip(
+                                player_id=steam_id, description=name.strip()
+                            )
                             count += 1
                         except UnicodeDecodeError:
                             message = "File encoding is not supported. Must use UTF8"
@@ -110,7 +112,7 @@ def async_upload_vips(request):
                     if not line:
                         continue
 
-                    steam_id, *name_chunks, possible_timestamp = line.strip().split()
+                    player_id, *name_chunks, possible_timestamp = line.strip().split()
                     # No possible time stamp if name_chunks is empty (only a 2 element list)
                     if not name_chunks:
                         name = possible_timestamp
@@ -122,24 +124,24 @@ def async_upload_vips(request):
                             expiration_timestamp = parser.parse(possible_timestamp)
                         except:
                             logger.warning(
-                                f"Unable to parse {possible_timestamp=} for {name=} {steam_id=}"
+                                f"Unable to parse {possible_timestamp=} for {name=} {player_id=}"
                             )
                             # The last chunk should be treated as part of the players name if it's not a valid date
                             name += possible_timestamp
 
-                    if not is_steam_id_64(steam_id) and not is_windows_store_id(
-                        steam_id
+                    if not is_steam_id_64(player_id) and not is_windows_store_id(
+                        player_id
                     ):
                         errors.append(
-                            f"{line} has an invalid player id, expected a 17 digit steam id or a windows store id"
+                            f"{line} has an invalid player ID: `{player_id}`, expected a 17 digit steam id or a windows store id. {is_steam_id=} {is_win_id=}"
                         )
                         continue
                     if not name:
                         errors.append(
-                            f"{line} doesn't have a name attached to the steamid"
+                            f"{line} doesn't have a name attached to the player ID"
                         )
                         continue
-                    vips.append((name, steam_id, expiration_timestamp))
+                    vips.append((name, player_id, expiration_timestamp))
                 except UnicodeDecodeError:
                     errors.append("File encoding is not supported. Must use UTF8")
                     break
@@ -190,16 +192,16 @@ def download_vips(request):
     )
     with enter_session() as session:
         players = (
-            session.query(PlayerSteamID)
+            session.query(PlayerID)
             .join(PlayerVIP)
             .filter(PlayerVIP.server_number == get_server_number())
             .all()
         )
         for player in players:
-            expiration_lookup[player.steam_id_64] = player.vip.expiration
+            expiration_lookup[player.player_id] = player.vip.expiration
 
     vip_lines = [
-        f"{vip['steam_id_64']} {vip['name']} {expiration_lookup[vip['steam_id_64']].isoformat()}"
+        f"{vip['player_id']} {vip['name']} {expiration_lookup[vip['player_id']].isoformat()}"
         for vip in vips
     ]
 

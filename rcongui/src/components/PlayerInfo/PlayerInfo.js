@@ -149,8 +149,8 @@ const Is = ({ bool, text }) =>
     ""
   );
 
-const PlayerInfoFunc = ({ classes }) => {
-  const { steamId64 } = useParams();
+const PlayerInfo = ({ classes }) => {
+  const { playerId } = useParams();
   const [created, setCreated] = React.useState("0");
   const [names, setNames] = React.useState([]);
   const [sessions, setSessions] = React.useState([]);
@@ -182,11 +182,11 @@ const PlayerInfoFunc = ({ classes }) => {
   const [messages, setMessages] = React.useState(undefined);
 
   /**
-   * fetch bans that currently affect the steamId64
-   * @param steamId64
+   * fetch bans that currently affect the playerId
+   * @param playerId
    */
-  const fetchPlayerBan = (steamId64) => {
-    get(`get_ban?player_id=${steamId64}`)
+  const fetchPlayerBan = (playerId) => {
+    get(`get_ban?player_id=${playerId}`)
       .then((response) => showResponse(response, "get_ban", false))
       .then((data) => {
         const temp = data.result.find((ban, index) => {
@@ -207,10 +207,10 @@ const PlayerInfoFunc = ({ classes }) => {
 
   /**
    * fetch Player data
-   * @param steamId64
+   * @param playerId
    */
-  const fetchPlayer = (steamId64) => {
-    get(`get_player_profile?player_id=${steamId64}`)
+  const fetchPlayer = (playerId) => {
+    get(`get_player_profile?player_id=${playerId}`)
       .then((response) => showResponse(response, "get_user", false))
       .then((data) => {
         if (
@@ -236,8 +236,8 @@ const PlayerInfoFunc = ({ classes }) => {
       .catch(handle_http_errors);
   };
 
-  const fetchMessages = (steamId64) => {
-    get(`get_player_messages?steam_id_64=${steamId64}`)
+  const fetchMessages = (playerId) => {
+    get(`get_player_messages?player_id=${playerId}`)
       .then((response) => showResponse(response, "get_player_messages", false))
       .then((data) => {
         if (
@@ -251,8 +251,8 @@ const PlayerInfoFunc = ({ classes }) => {
       .catch(handle_http_errors);
   };
 
-  const fetchPlayerComments = (steamId64) => {
-    get(`get_player_comment?steam_id_64=${steamId64}`)
+  const fetchPlayerComments = (playerId) => {
+    get(`get_player_comments?player_id=${playerId}`)
       .then((response) => showResponse(response, "get_player_comments", false))
       .then((data) => {
         if (
@@ -268,24 +268,24 @@ const PlayerInfoFunc = ({ classes }) => {
 
   const handleNewComment = (newComment) => {
     postData(`${process.env.REACT_APP_API_URL}post_player_comment`, {
-      steam_id_64: steamId64,
+      player_id: playerId,
       comment: newComment,
     })
       .then((response) => {
-        return showResponse(response, "post_player_comments", false);
+        return showResponse(response, "post_player_comment", false);
       })
       .then(() => {
-        fetchPlayerComments(steamId64);
+        fetchPlayerComments(playerId);
       })
       .catch((error) => toast.error("Unable to connect to API " + error));
   };
 
   React.useEffect(() => {
-    fetchPlayer(steamId64);
-    fetchPlayerBan(steamId64);
-    fetchMessages(steamId64);
-    fetchPlayerComments(steamId64);
-  }, [steamId64]);
+    fetchPlayer(playerId);
+    fetchPlayerBan(playerId);
+    fetchMessages(playerId);
+    fetchPlayerComments(playerId);
+  }, [playerId]);
 
   return (
     <Grid container className={classes.root}>
@@ -317,10 +317,8 @@ const PlayerInfoFunc = ({ classes }) => {
                 </Grid>
                 <Grid item>
                   <Typography variant="h6">
-                    <Link
-                      href={makePlayerProfileUrl(steamId64, names[0]?.name)}
-                    >
-                      {getLinkLabel(steamId64)} Profile
+                    <Link href={makePlayerProfileUrl(playerId, names[0]?.name)}>
+                      {getLinkLabel(playerId)} Profile
                     </Link>
                   </Typography>
                 </Grid>
@@ -350,7 +348,7 @@ const PlayerInfoFunc = ({ classes }) => {
                 <Grid item>
                   <Typography variant="h6">
                     <Link
-                      href={`${process.env.REACT_APP_API_URL}get_player_profile?player_id=${steamId64}`}
+                      href={`${process.env.REACT_APP_API_URL}get_player_profile?player_id=${playerId}`}
                     >
                       Raw profile
                     </Link>
@@ -423,281 +421,4 @@ const PlayerInfoFunc = ({ classes }) => {
   );
 };
 
-class PlayerInfo extends React.Component {
-  _mounted = false;
-  constructor(props) {
-    super(props);
-    this.state = {
-      steam_id_64: "",
-      created: "0",
-      names: [],
-      sessions: [],
-      sessions_count: 1086,
-      total_playtime_seconds: 4495950,
-      current_playtime_seconds: 17455,
-      received_actions: [],
-      penalty_count: {
-        TEMPBAN: 0,
-        PERMABAN: 0,
-        PUNISH: 0,
-        KICK: 0,
-      },
-      blacklist: {
-        is_blacklisted: false,
-        reason: "",
-        by: "",
-      },
-      flags: [],
-      watchlist: {},
-      steaminfo: {},
-      perma: false,
-      temp: false,
-      vip: false,
-      loaded: false,
-      comments: undefined,
-      messages: undefined,
-    };
-    this.handleNewComment = this.handleNewComment.bind(this);
-  }
-
-  /**
-   * fetch bans that currently affect the steamId64
-   * @param steamId64
-   */
-  fetchPlayerBan(steamId64) {
-    get(`get_ban?player_id=${steamId64}`)
-      .then((response) => showResponse(response, "get_ban", false))
-      .then((data) => {
-        const temp = data.result.find((ban, index) => {
-          return ban.type === "temp";
-        });
-        const perma = data.result.find((ban, index) => {
-          return ban.type === "perma";
-        });
-        if (temp !== undefined && this._mounted) {
-          this.setState({ temp: true });
-        }
-        if (perma !== undefined && this._mounted) {
-          this.setState({ perma: true });
-        }
-      })
-      .catch(handle_http_errors);
-  }
-
-  /**
-   * fetch Player data
-   * @param steamId64
-   */
-  fetchPlayer(steamId64) {
-    get(`get_player_profile?player_id=${steamId64}`)
-      .then((response) => showResponse(response, "get_user", false))
-      .then((data) => {
-        if (
-          data.result !== undefined &&
-          data.result !== null &&
-          Object.keys(data.result).length !== 0
-        ) {
-          this.setState({
-            created: data.result.created,
-            names: data.result.names,
-            sessions: data.result.sessions,
-            sessions_count: data.result.sessions_count,
-            total_playtime_seconds: data.result.total_playtime_seconds,
-            current_playtime_seconds: data.result.current_playtime_seconds,
-            received_actions: data.result.received_actions,
-            penalty_count: data.result.penalty_count,
-            blacklist: data.result.blacklist,
-            flags: data.result.flags,
-            watchlist: data.result.watchlist,
-            steaminfo: data.result.steaminfo,
-            loaded: true,
-          });
-        }
-      })
-      .catch(handle_http_errors);
-  }
-
-  fetchPlayerComments(steamId64) {
-    get(`get_player_comment?steam_id_64=${steamId64}`)
-      .then((response) => showResponse(response, "get_player_comments", false))
-      .then((data) => {
-        if (
-          data.result !== undefined &&
-          data.result !== null &&
-          Object.keys(data.result).length !== 0
-        ) {
-          this.setState({ comments: data.result });
-        }
-      })
-      .catch(handle_http_errors);
-  }
-
-  handleNewComment(newComment) {
-    const { steamId64 } = this.props.match.params;
-    postData(`${process.env.REACT_APP_API_URL}post_player_comment`, {
-      steam_id_64: steamId64,
-      comment: newComment,
-    })
-      .then((response) => {
-        return showResponse(response, "post_player_comments", false);
-      })
-      .then(() => {
-        this.fetchPlayerComments(steamId64);
-      })
-      .catch((error) => toast.error("Unable to connect to API " + error));
-  }
-
-  componentDidMount() {
-    this._mounted = true;
-    const { steamId64 } = this.props.match.params;
-    if (steamId64 !== undefined) {
-      this.fetchPlayer(steamId64);
-      this.fetchPlayerBan(steamId64);
-      this.fetchPlayerComments(steamId64);
-    }
-  }
-
-  componentWillUnmount() {
-    this._mounted = false;
-    this.setState = (state, callback) => {
-      return;
-    };
-  }
-
-  render() {
-    // TODO Fix mobile responsiveness
-    const { classes } = this.props;
-    const { steamId64 } = this.props.match.params;
-
-    return (
-      <Grid container className={classes.root}>
-        {this.state.loaded ? (
-          <Grid item sm={12} className={classes.marginTop}>
-            <Grid container>
-              <Grid item xl={2} lg={2} md={2} sm={3} xs={12}>
-                <Grid
-                  container
-                  justify="center"
-                  alignContent="center"
-                  wrap="wrap"
-                  direction="column"
-                  spacing={3}
-                >
-                  <Grid item>
-                    <Avatar
-                      style={{
-                        height: "150px",
-                        width: "150px",
-                        fontSize: "5rem",
-                      }}
-                      variant="square"
-                      className={classes.square}
-                      src={this.state.steaminfo?.profile?.avatarfull}
-                    >
-                      {this.state.names[0]?.name[0].toUpperCase()}
-                    </Avatar>
-                  </Grid>
-                  <Grid item>
-                    <Typography variant="h6">Last connection</Typography>
-                    <Typography>
-                      {moment(
-                        this.state.sessions[0]?.end ||
-                          this.state.sessions[0]?.start
-                      ).format("ddd Do MMM HH:mm:ss")}
-                    </Typography>
-                  </Grid>
-                  <Grid item>
-                    <Typography variant="h6">Total play time</Typography>
-                    <Typography>
-                      {moment
-                        .duration(this.state.total_playtime_seconds, "seconds")
-                        .humanize()}
-                    </Typography>
-                  </Grid>
-
-                  <Grid item>
-                    <Typography variant="h6">Player penalties</Typography>
-                    <Typography>
-                      Perma ban: {this.state.penalty_count.PERMABAN}
-                    </Typography>
-                    <Typography>
-                      Temp ban: {this.state.penalty_count.TEMPBAN}
-                    </Typography>
-                    <Typography>
-                      Kick: {this.state.penalty_count.KICK}
-                    </Typography>
-                    <Typography>
-                      Punish: {this.state.penalty_count.PUNISH}
-                    </Typography>
-                  </Grid>
-                  <Grid item>
-                    <Typography variant="h6">
-                      <Link
-                        href={`${process.env.REACT_APP_API_URL}get_player_profile?player_id=${steamId64}`}
-                      >
-                        Raw profile
-                      </Link>
-                    </Typography>
-                  </Grid>
-                </Grid>
-              </Grid>
-              <Grid item xl={7} lg={7} md={7} sm={5} xs={12}>
-                <Grid
-                  container
-                  spacing={3}
-                  justify="flex-start"
-                  alignItems="flex-start"
-                  alignContent="flex-start"
-                >
-                  <Grid item sm={12}>
-                    <Grid
-                      container
-                      justify="flex-start"
-                      alignItems="flex-start"
-                      alignContent="flex-start"
-                    >
-                      <NamePopOver names={this.state.names} />
-                    </Grid>
-                  </Grid>
-                  <Grid item sm={12}>
-                    <Grid container spacing={2}>
-                      {[
-                        [this.state.vip, "VIP"],
-                        [this.state.perma, "IS PERMABANNED"],
-                        [this.state.temp, "IS TEMPBANNED"],
-                        [
-                          this.state.blacklist?.is_blacklisted,
-                          "IS BLACKLISTED",
-                        ],
-                      ].map((e) => (
-                        <Is bool={e[0]} text={e[1]} />
-                      ))}
-                    </Grid>
-                  </Grid>
-                  <Grid item sm={12}>
-                    <Punishment punishments={this.state.received_actions} />
-                  </Grid>
-                </Grid>
-              </Grid>
-              <Grid item xl={3} lg={3} md={3} sm={4} xs={12}>
-                <Grid item xs={12}>
-                  <Typography variant="h3">Comments</Typography>
-                </Grid>
-                <Grid item xs={12}>
-                  <ChatContent
-                    data={this.state.comments}
-                    handleMessageSend={this.handleNewComment}
-                  />
-                </Grid>
-              </Grid>
-            </Grid>
-          </Grid>
-        ) : (
-          <div>pending</div>
-        )}
-      </Grid>
-    );
-  }
-}
-
-export default withRouter(PlayerInfoFunc);
+export default withRouter(PlayerInfo);

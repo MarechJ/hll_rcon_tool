@@ -210,7 +210,7 @@ class HLLSettings extends React.Component {
   }
 
   async loadVotekickThreshold() {
-    return this._loadToState("get_votekick_threshold", false, (data) =>
+    return this._loadToState("get_votekick_thresholds", false, (data) =>
       this.setState({ votekickThreshold: data.result })
     );
   }
@@ -262,22 +262,22 @@ class HLLSettings extends React.Component {
   }
 
   async saveVotekickThreshold() {
-    return postData(`${process.env.REACT_APP_API_URL}set_votekick_threshold`, {
+    return postData(`${process.env.REACT_APP_API_URL}set_votekick_thresholds`, {
       threshold_pairs: this.state.votekickThreshold,
     })
-      .then((res) => showResponse(res, "set_votekick_threshold", true))
+      .then((res) => showResponse(res, "set_votekick_thresholds", true))
       .then(this.loadVotekickThreshold)
       .catch(handle_http_errors);
   }
 
   async resetVotekickThreshold() {
     return postData(
-      `${process.env.REACT_APP_API_URL}reset_votekick_threshold`,
+      `${process.env.REACT_APP_API_URL}reset_votekick_thresholds`,
       {
         threshold_pairs: this.state.votekickThreshold,
       }
     )
-      .then((res) => showResponse(res, "reset_votekick_threshold", true))
+      .then((res) => showResponse(res, "reset_votekick_thresholds", true))
       .then(this.loadVotekickThreshold)
       .catch(handle_http_errors);
   }
@@ -413,17 +413,17 @@ class HLLSettings extends React.Component {
               classes={classes}
               forward={forwardVIP}
               onFowardChange={() => this.toggle("forwardVIP")}
-              onAdd={(name, steamID64, expirationTimestamp) =>
+              onAdd={(name, player_id, expirationTimestamp) =>
                 sendAction("add_vip", {
-                  player_id: steamID64,
+                  player_id: player_id,
                   description: name,
                   forward: forwardVIP,
                   expiration: expirationTimestamp,
                 }).then(this.loadVips)
               }
-              onDelete={(name, steamID64) =>
+              onDelete={(name, player_id) =>
                 sendAction("remove_vip", {
-                  steam_id_64: steamID64,
+                  player_id: player_id,
                   forward: forwardVIP,
                 }).then(this.loadVips)
               }
@@ -441,15 +441,15 @@ class HLLSettings extends React.Component {
               peopleList={admins}
               roles={adminRoles}
               classes={classes}
-              onAdd={(name, steamID64, role) =>
+              onAdd={(name, playerId, role) =>
                 sendAction("add_admin", {
-                  player_id: steamID64,
+                  player_id: playerId,
                   description: name,
                   role: role,
                 }).then(this.loadAdmins)
               }
-              onDelete={(name, steamID64, role) =>
-                sendAction("remove_admin", { player_id: steamID64 }).then(
+              onDelete={(name, playerId, role) =>
+                sendAction("remove_admin", { player_id: playerId }).then(
                   this.loadAdmins
                 )
               }

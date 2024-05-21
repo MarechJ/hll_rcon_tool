@@ -16,18 +16,18 @@ logger = logging.getLogger(__name__)
 
 @on_connected()
 @inject_player_ids
-def auto_kick(rcon, struct_log, name, steam_id_64):
+def auto_kick(rcon, struct_log, name: str, player_id: str):
     config = NameKickUserConfig.load_from_db()
 
     for r in config.regular_expressions:
         try:
-            profile = get_player_profile(steam_id_64, 0)
+            profile = get_player_profile(player_id, 0)
             for f in config.whitelist_flags:
                 if player_has_flag(profile, f):
                     logger.debug(
                         "Not checking nickname validity for whitelisted player %s (%s)",
                         name,
-                        steam_id_64,
+                        player_id,
                     )
                     return
         except:

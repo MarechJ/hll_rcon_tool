@@ -1,9 +1,7 @@
 import inspect
-from datetime import datetime
+from datetime import datetime, timedelta
 from logging import getLogger
 from typing import Any, Iterable, Literal, Optional, Sequence, Type
-
-from dateutil import parser
 
 from rcon import game_logs, player_history
 from rcon.audit import ingame_mods, online_mods
@@ -17,15 +15,17 @@ from rcon.player_history import (
     remove_flag,
 )
 from rcon.rcon import Rcon
-from rcon.server_stats import get_db_server_stats_for_range
+from rcon.scoreboard import TimeWindowStats
 from rcon.settings import SERVER_INFO
 from rcon.types import (
     AdminUserType,
     BlacklistSyncMethod,
     BlacklistType,
+    GameServerBanType,
     ParsedLogsType,
+    PlayerCommentType,
     PlayerFlagType,
-    PlayerProfileType,
+    PlayerProfileTypeEnriched,
     ServerInfoType,
     VoteMapStatusType,
 )
@@ -69,6 +69,8 @@ from rcon.vote_map import VoteMap
 from rcon.watchlist import PlayerWatch
 
 logger = getLogger(__name__)
+
+PLAYER_ID = "player_id"
 
 CTL: Optional["RconAPI"] = None
 
@@ -305,14 +307,16 @@ class RconAPI(Rcon):
             "temp": self.remove_temp_ban,
             "perma": self.remove_perma_ban,
         }
+        success = False
         for b in bans:
-            if b.get("steam_id_64") == player_id:
+            if b.get(PLAYER_ID) == player_id:
+                success = True
                 type_to_func[b["type"]](b["raw"])
 
-        return True
+        return success
 
     def clear_cache(self) -> bool:
-        """Clear every key in this servers Redis cache
+        """Clear every key in this servers Redis cache and return number of deleted keys
 
         Many things in CRCON are cached in Redis to avoid excessively polling
         the game server, this clears the entire cache which is sometimes necessary
@@ -323,18 +327,53 @@ class RconAPI(Rcon):
 
     def get_player_profile(
         self,
-        player_id: str | None = None,
-        player_db_id: int | None = None,
+        player_id: str,
         num_sessions: int = 10,
-    ) -> PlayerProfileType | None:
-        if player_id:
-            return player_history.get_player_profile(
-                player_id=player_id, nb_sessions=num_sessions
-            )
-        else:
-            return player_history.get_player_profile_by_id(
-                id=player_db_id, nb_sessions=num_sessions
-            )
+    ) -> PlayerProfileTypeEnriched | None:
+        raw_profile = player_history.get_player_profile(
+            player_id=player_id, nb_sessions=num_sessions
+        )
+
+        bans: list[GameServerBanType] = []
+        comments: list[PlayerCommentType] = []
+        profile: PlayerProfileTypeEnriched | None = None
+        if raw_profile:
+            bans = self.get_ban(player_id=player_id)
+            comments = player_history.get_player_comments(player_id=player_id)
+
+            profile = {
+                "id": raw_profile["id"],
+                "player_id": raw_profile["player_id"],
+                "created": raw_profile["created"],
+                "names": raw_profile["names"],
+                "sessions": raw_profile["sessions"],
+                "sessions_count": raw_profile["sessions_count"],
+                "total_playtime_seconds": raw_profile["total_playtime_seconds"],
+                "current_playtime_seconds": raw_profile["current_playtime_seconds"],
+                "received_actions": raw_profile["received_actions"],
+                "penalty_count": raw_profile["penalty_count"],
+                "blacklist": raw_profile["blacklist"],
+                "flags": raw_profile["flags"],
+                "watchlist": raw_profile["watchlist"],
+                "steaminfo": raw_profile["steaminfo"],
+                "vips": raw_profile["vips"],
+                "bans": bans,
+                "comments": comments,
+            }
+        return profile
+
+    def get_player_comments(self, player_id: str) -> list[PlayerCommentType]:
+        return player_history.get_player_comments(player_id=player_id)
+
+    def post_player_comment(self, player_id: str, comment: str, by: str):
+        return player_history.post_player_comment(
+            player_id=player_id,
+            comment=comment,
+            user=by,
+        )
+
+    def get_player_messages(self, player_id: str):
+        return player_history.get_player_messages(player_id=player_id)
 
     def get_players_history(
         self,
@@ -351,22 +390,6 @@ class RconAPI(Rcon):
         flags: str | list[str] | None = None,
         country: str | None = None,
     ):
-        # TODO: this isn't used, can we remove it?
-        type_map = {
-            "last_seen_from": parser.parse,
-            "last_seen_till": parser.parse,
-            "player_name": str,
-            "blacklisted": bool,
-            "is_watched": bool,
-            "player_id": str,
-            "page": int,
-            "page_size": int,
-            "ignore_accent": bool,
-            "exact_name_match": bool,
-            "country": str,
-            "flags": lambda s: [f for f in s.split(",") if f] if s else "",
-        }
-
         return get_players_by_appearance(
             page=page,
             page_size=page_size,
@@ -374,7 +397,7 @@ class RconAPI(Rcon):
             last_seen_till=last_seen_till,
             player_name=player_name,
             blacklisted=blacklisted,
-            steam_id_64=player_id,
+            player_id=player_id,
             is_watched=is_watched,
             exact_name_match=exact_name_match,
             ignore_accent=ignore_accent,
@@ -405,7 +428,7 @@ class RconAPI(Rcon):
         """
 
         player, new_flag = add_flag_to_player(
-            steam_id_64=player_id, flag=flag, comment=comment, player_name=player_name
+            player_id=player_id, flag=flag, comment=comment, player_name=player_name
         )
         # TODO: can we preserve discord auditing with player aliases?
         # data["player_name"] = " | ".join(n["name"] for n in player["names"])
@@ -426,7 +449,7 @@ class RconAPI(Rcon):
             flag: The flag to remove from `player_id` if present
         """
         player, removed_flag = remove_flag(
-            flag_id=flag_id, steam_id_64=player_id, flag=flag
+            flag_id=flag_id, player_id=player_id, flag=flag
         )
         return removed_flag
 
@@ -447,7 +470,7 @@ class RconAPI(Rcon):
         reason: str | None = None,
         player_name: str | None = None,
     ) -> bool:
-        watcher = PlayerWatch(steam_id_64=player_id)
+        watcher = PlayerWatch(player_id=player_id)
         if add:
             result = watcher.watch(
                 reason=reason or "",
@@ -489,7 +512,7 @@ class RconAPI(Rcon):
             add=False,
         )
 
-    def get_online_mods(self) -> list[str]:
+    def get_online_mods(self) -> list[AdminUserType]:
         return online_mods()
 
     def get_ingame_mods(self) -> list[AdminUserType]:
@@ -546,17 +569,6 @@ class RconAPI(Rcon):
             inclusive_filter=inclusive_filter,
         )
 
-    def get_server_stats(
-        self,
-        by_map,
-        with_players,
-        start: datetime | None = None,
-        end: datetime | None = None,
-    ):
-        return get_db_server_stats_for_range(
-            start=start, end=end, by_map=by_map, with_player_list=with_players
-        )
-
     def get_votemap_status(self) -> VoteMapStatusType:
         v = VoteMap()
 
@@ -574,35 +586,35 @@ class RconAPI(Rcon):
 
         return self.get_votemap_status()
 
-    def get_map_whitelist(self) -> list[str]:
+    def get_votemap_whitelist(self) -> list[str]:
         v = VoteMap()
 
         # TODO: update this when we return `Layer`s instead of strings
         return [str(map) for map in v.get_map_whitelist()]
 
-    def add_map_to_whitelist(self, map_name: str):
+    def add_map_to_votemap_whitelist(self, map_name: str):
         v = VoteMap()
         v.add_map_to_whitelist(map_name=map_name)
 
-    def add_maps_to_vm_whitelist(self, map_names: Iterable[str]):
+    def add_maps_to_votemap_whitelist(self, map_names: Iterable[str]):
         v = VoteMap()
-        v.add_maps_to_vm_whitelist(map_names=map_names)
+        v.add_maps_to_whitelist(map_names=map_names)
 
-    def remove_map_from_vm_whitelist(self, map_name: str):
+    def remove_map_from_votemap_whitelist(self, map_name: str):
         v = VoteMap()
-        v.remove_map_from_vm_whitelist(map_name=map_name)
+        v.remove_map_from_whitelist(map_name=map_name)
 
-    def remove_maps_from_vm_whitelist(self, map_names: Iterable[str]):
+    def remove_maps_from_votemap_whitelist(self, map_names: Iterable[str]):
         v = VoteMap()
-        v.remove_maps_from_vm_whitelist(map_names=map_names)
+        v.remove_maps_from_whitelist(map_names=map_names)
 
-    def reset_map_vm_whitelist(self):
+    def reset_map_votemap_whitelist(self):
         v = VoteMap()
-        v.reset_map_vm_whitelist()
+        v.reset_map_whitelist()
 
-    def set_map_vm_whitelist(self, map_names: Iterable[str]):
+    def set_map_votemap_whitelist(self, map_names: Iterable[str]):
         v = VoteMap()
-        v.set_map_vm_whitelist(map_names=map_names)
+        v.set_map_whitelist(map_names=map_names)
 
     def get_votemap_config(self) -> VoteMapUserConfig:
         return VoteMapUserConfig.load_from_db()
@@ -1775,3 +1787,25 @@ class RconAPI(Rcon):
             errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
+
+    def get_date_scoreboard(self, start: int, end: int):
+        try:
+            start_date = datetime.fromtimestamp(int(start))
+        except (ValueError, KeyError, TypeError) as e:
+            logger.error(e)
+            start_date = datetime.now() - timedelta(minutes=60)
+        try:
+            end_date = datetime.fromtimestamp(int(end))
+        except (ValueError, KeyError, TypeError) as e:
+            logger.error(e)
+            end_date = datetime.now()
+
+        stats = TimeWindowStats()
+
+        try:
+            result = stats.get_players_stats_at_time(start_date, end_date)
+        except Exception as e:
+            logger.exception("Unable to produce date stats: %s", e)
+            result = {}
+
+        return result

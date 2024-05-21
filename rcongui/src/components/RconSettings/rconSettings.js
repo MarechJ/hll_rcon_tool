@@ -39,7 +39,7 @@ import AutoSettings from "./autoSettings";
 
 const ManualWatchList = ({ classes }) => {
   const [name, setName] = React.useState("");
-  const [steamId64, setSteamId64] = React.useState("");
+  const [playerId, setPlayerId] = React.useState("");
   const [reason, setReason] = React.useState("");
   const [sharedMessages, setSharedMessages] = React.useState([]);
 
@@ -52,8 +52,8 @@ const ManualWatchList = ({ classes }) => {
     <ManualPlayerInput
       name={name}
       setName={setName}
-      steam_id={steamId64}
-      setSteamId={setSteamId64}
+      playerId={playerId}
+      setPlayerId={setPlayerId}
       reason={reason}
       setReason={setReason}
       textHistory={textHistory}
@@ -61,7 +61,7 @@ const ManualWatchList = ({ classes }) => {
       classes={classes}
       actionName="Watch"
       tooltipText="You will get a notification on you watchlist discord hook when this player enters your server"
-      onSubmit={() => addPlayerToWatchList(steamId64, reason, null, name)}
+      onSubmit={() => addPlayerToWatchList(playerId, reason, null, name)}
     />
   );
 };
@@ -613,7 +613,7 @@ class RconSettings extends React.Component {
           </Button>
         </Grid>
         <Grid item className={classes.paddingTop} justify="center" xs={12}>
-          <Typography variant="h5">Blacklist player by Steam ID</Typography>
+          <Typography variant="h5">Blacklist player by Player ID</Typography>
         </Grid>
         <Grid item className={classes.paddingTop} justify="center" xs={12}>
           <Blacklist classes={classes} />

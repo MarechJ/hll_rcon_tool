@@ -1,4 +1,5 @@
 import csv
+import datetime
 import json
 import logging
 from dataclasses import asdict, dataclass
@@ -121,9 +122,17 @@ class RconJsonResponse(HttpResponse):
     def _orjson_dump_pydantic(o):
         if isinstance(o, pydantic.BaseModel):
             return o.model_dump()
+        elif isinstance(o, datetime.timedelta):
+            return o.total_seconds()
+        else:
+            raise ValueError(f"Cannot serialize {o}, {type(o)}to JSON")
 
     def __init__(self, data, **kwargs):
-        data = orjson.dumps(data, default=RconJsonResponse._orjson_dump_pydantic)
+        data = orjson.dumps(
+            data,
+            default=RconJsonResponse._orjson_dump_pydantic,
+            option=orjson.OPT_NON_STR_KEYS,
+        )
         kwargs.setdefault("content_type", "application/json")
         super().__init__(content=data, **kwargs)
 
@@ -186,13 +195,13 @@ def is_logged_in(request):
     is_auth = request.user.is_authenticated
     if is_auth:
         try:
-            steam_id = None
+            player_id = None
             try:
-                steam_id = request.user.steamplayer.steam_id_64
+                player_id = request.user.steamplayer.player_id
             except:
-                logger.warning("%s's steam id is not set ", request.user.username)
+                logger.warning("%s's player ID is not set", request.user.username)
             try:
-                heartbeat(request.user.username, steam_id)
+                heartbeat(request.user.username, player_id)
             except:
                 logger.exception("Unable to register mods")
         except:
@@ -203,7 +212,7 @@ def is_logged_in(request):
 
 
 @csrf_exempt
-@require_http_methods(["GET"])
+@require_http_methods(["GET", "POST"])
 def do_logout(request):
     logout(request)
     return api_response(result=True, command="logout", failed=False)

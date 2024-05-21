@@ -14,7 +14,7 @@ from sqlalchemy.sql.expression import func
 from steam.webapi import WebAPI
 
 from rcon.cache_utils import ttl_cache
-from rcon.models import PlayerSteamID, SteamInfo, enter_session
+from rcon.models import PlayerID, SteamInfo, enter_session
 from rcon.types import SteamBansType, SteamInfoType, SteamPlayerSummaryType
 from rcon.user_config.steam import SteamUserConfig
 from rcon.utils import batched
@@ -52,25 +52,23 @@ def get_steam_api_key() -> str | None:
     return config.api_key
 
 
-def is_steam_id_64(steam_id_64: str) -> bool:
+def is_steam_id_64(player_id: str) -> bool:
     """Test if an ID is a steam_id_64 or a windows store ID"""
-    if len(steam_id_64) == 17 and steam_id_64.isdigit():
+    if len(player_id) == 17 and player_id.isdigit():
         return True
     return False
 
 
 def filter_steam_ids():
-    """Remove any non steam ID player IDs from `steam_id_64s`"""
+    """Remove any non steam ID player IDs from `player_ids`"""
 
     def decorator(f):
         @wraps(f)
-        def wrapper(steam_id_64s: Iterable[str], *args, **kwargs):
+        def wrapper(player_ids: Iterable[str], *args, **kwargs):
             # Remove any duplicates and sort to force redis cache hits even if the
             # originating call has steam IDs in different orders
-            steam_id_64s = sorted(
-                set([id_ for id_ in steam_id_64s if is_steam_id_64(id_)])
-            )
-            return f(steam_id_64s=steam_id_64s, *args, **kwargs)
+            player_ids = sorted(set([id_ for id_ in player_ids if is_steam_id_64(id_)]))
+            return f(player_ids=player_ids, *args, **kwargs)
 
         return wrapper
 
@@ -98,9 +96,9 @@ def filter_steam_id(return_value: Any = None):
 
     def decorator(f):
         @wraps(f)
-        def wrapper(steam_id_64: str, *args, **kwargs):
-            if is_steam_id_64(steam_id_64):
-                return f(steam_id_64=steam_id_64, *args, **kwargs)
+        def wrapper(player_id: str, *args, **kwargs):
+            if is_steam_id_64(player_id):
+                return f(player_id=player_id, *args, **kwargs)
             else:
                 return ReturnValue(value=return_value)()
 
@@ -111,7 +109,7 @@ def filter_steam_id(return_value: Any = None):
 
 @filter_steam_id()
 def fetch_steam_player_summary_player(
-    steam_id_64: str,
+    player_id: str,
 ) -> SteamPlayerSummaryType | None:
     """Fetch a single players steam profile
 
@@ -119,15 +117,15 @@ def fetch_steam_player_summary_player(
     in advance, instead use `fetch_steam_player_summary_mult_players` and pass all
     the steam IDs at once to reduce API calls
     """
-    player_prof = fetch_steam_player_summary_mult_players(steam_id_64s=[steam_id_64])
+    player_prof = fetch_steam_player_summary_mult_players(player_ids=[player_id])
     if player_prof:
-        return player_prof.get(steam_id_64)
+        return player_prof.get(player_id)
 
 
 @ttl_cache(60 * 60 * 12, cache_falsy=False, is_method=False)
 @filter_steam_ids()
 def fetch_steam_player_summary_mult_players(
-    steam_id_64s: Iterable[str],
+    player_ids: Iterable[str],
 ) -> dict[str, SteamPlayerSummaryType]:
     """Fetch steam API profile info for each player
 
@@ -144,7 +142,7 @@ def fetch_steam_player_summary_mult_players(
     raw_profiles: list[SteamPlayerSummaryType] = []
 
     if api.key:
-        for chunk in batched(steam_id_64s, STEAM_API_MAX_STEAM_IDS):
+        for chunk in batched(player_ids, STEAM_API_MAX_STEAM_IDS):
             chunk_steam_ids = ",".join(chunk)
             try:
                 logger.info("Fetching player summaries for %s steam IDs", len(chunk))
@@ -170,7 +168,7 @@ def fetch_steam_player_summary_mult_players(
 @ttl_cache(60 * 60 * 12, cache_falsy=False, is_method=False)
 @filter_steam_ids()
 def fetch_steam_bans_mult_players(
-    steam_id_64s: Sequence[str],
+    player_ids: Sequence[str],
 ) -> dict[str, SteamBansType]:
     """Fetch steam API ban info for each player
 
@@ -187,7 +185,7 @@ def fetch_steam_bans_mult_players(
     raw_bans: list[SteamBansType] = []
     if api.key:
         try:
-            for chunk in batched(steam_id_64s, STEAM_API_MAX_STEAM_IDS):
+            for chunk in batched(player_ids, STEAM_API_MAX_STEAM_IDS):
                 chunk_steam_ids = ",".join(chunk)
                 logger.info("Fetching player bans for %s steam IDs", len(chunk))
                 raw_result = api.ISteamUser.GetPlayerBans(  # type: ignore
@@ -209,16 +207,16 @@ def fetch_steam_bans_mult_players(
 
 
 @filter_steam_id()
-def fetch_steam_bans_player(steam_id_64: str) -> SteamBansType | None:
+def fetch_steam_bans_player(player_id: str) -> SteamBansType | None:
     """Fetch a single players steam bans
 
     This should never be used in any context where you know more than one steam ID
     in advance, instead use `fetch_steam_bans_mult_players` and pass all
     the steam IDs at once to reduce API calls
     """
-    player = fetch_steam_bans_mult_players(steam_id_64s=[steam_id_64])
+    player = fetch_steam_bans_mult_players(player_ids=[player_id])
     if player:
-        return player.get(steam_id_64)
+        return player.get(player_id)
 
 
 @ttl_cache(60 * 60 * 12, cache_falsy=False, is_method=False)
@@ -227,9 +225,9 @@ def get_steam_profiles_mult_players(
 ) -> dict[str, SteamInfoType | None]:
     """Query the database for the specified players steam info (profile/country/bans)"""
     stmt = (
-        select(PlayerSteamID)
-        .options(joinedload(PlayerSteamID.steaminfo))
-        .where(PlayerSteamID.steam_id_64.in_(steam_id_64s))
+        select(PlayerID)
+        .options(joinedload(PlayerID.steaminfo))
+        .where(PlayerID.player_id.in_(steam_id_64s))
     )
 
     profiles: dict[str, SteamInfoType | None] = dict.fromkeys(steam_id_64s, None)
@@ -242,7 +240,7 @@ def get_steam_profiles_mult_players(
         players = sess.scalars(stmt).all()
 
     for p in players:
-        profiles[p.steam_id_64] = p.steaminfo.to_dict() if p.steaminfo else None
+        profiles[p.player_id] = p.steaminfo.to_dict() if p.steaminfo else None
 
     return profiles
 
@@ -266,9 +264,7 @@ def _get_player_country_code(profile: SteamPlayerSummaryType | None):
     return profile.get("loccountrycode", "private" if is_private else None)
 
 
-def update_db_player_info(
-    sess: Session, players: list[PlayerSteamID]
-) -> tuple[int, int]:
+def update_db_player_info(sess: Session, players: list[PlayerID]) -> tuple[int, int]:
     """Fetch steam API info for each player and update their database record
 
     This should be used in any context where we're updating more than a single
@@ -279,13 +275,13 @@ def update_db_player_info(
             called from within an active session so the database records will be updated
         player: A list of player records
     """
-    steam_id_64s = [player.steam_id_64 for player in players]
-    profiles = fetch_steam_player_summary_mult_players(steam_id_64s=steam_id_64s)
-    bans = fetch_steam_bans_mult_players(steam_id_64s=steam_id_64s)
+    steam_id_64s = [player.player_id for player in players]
+    profiles = fetch_steam_player_summary_mult_players(player_ids=steam_id_64s)
+    bans = fetch_steam_bans_mult_players(player_ids=steam_id_64s)
 
     for player in players:
-        player_prof = profiles.get(player.steam_id_64)
-        player_ban = bans.get(player.steam_id_64)
+        player_prof = profiles.get(player.player_id)
+        player_ban = bans.get(player.player_id)
 
         # Don't edit the record and change the updated time if we have no new information
         if player_prof is None and player_ban is None:
@@ -308,7 +304,7 @@ def update_db_player_info(
                 profile=player_prof,
                 bans=player_ban,
                 country=country_code,
-                steamid=player,
+                player=player,
             )
 
     return len(profiles), len(bans)
@@ -316,7 +312,7 @@ def update_db_player_info(
 
 def update_missing_old_steam_info_single_player(
     sess: Session,
-    player: PlayerSteamID,
+    player: PlayerID,
     age_limit: datetime.timedelta = datetime.timedelta(hours=12),
 ):
     """Fetch steam API info if missing or older than age_limit for a single player
@@ -342,25 +338,25 @@ def update_missing_old_steam_info_single_player(
         and (datetime.datetime.utcnow() - player.steaminfo.updated) >= age_limit
     ):
         # Fetch both the profile and bans
-        profile = fetch_steam_player_summary_player(player.steam_id_64)
+        profile = fetch_steam_player_summary_player(player.player_id)
         country_code = _get_player_country_code(profile)
-        bans = fetch_steam_bans_player(player.steam_id_64)
+        bans = fetch_steam_bans_player(player.player_id)
 
     elif player.steaminfo and player.steaminfo.bans is None:
         # Fetch the bans if they're missing
-        bans = fetch_steam_bans_player(player.steam_id_64)
+        bans = fetch_steam_bans_player(player.player_id)
     elif (
         player.steaminfo
         and player.steaminfo.profile is None
         or player.steaminfo.country is None
     ):
         # Fetch the profile if the profile or country code is missing
-        profile = fetch_steam_player_summary_player(player.steam_id_64)
+        profile = fetch_steam_player_summary_player(player.player_id)
         country_code = _get_player_country_code(profile)
 
     if player.steaminfo is None:
         steam_info = SteamInfo(
-            profile=profile, country=country_code, bans=bans, steamid=player
+            profile=profile, country=country_code, bans=bans, player=player
         )
         sess.add(steam_info)
         player.steaminfo = steam_info
@@ -382,13 +378,13 @@ def enrich_db_users(chunk_size=100, update_from_days_old=30):
         # This query can also return many thousands of results, using stream_results and
         # yield_per doesn't fetch all of the results at once, but pages through them
         stmt = (
-            select(PlayerSteamID)
+            select(PlayerID)
             .execution_options(stream_results=True, yield_per=chunk_size)
             .outerjoin(SteamInfo)
-            .where(func.length(PlayerSteamID.steam_id_64) == 17)
+            .where(func.length(PlayerID.player_id) == 17)
             .where(
                 or_(
-                    PlayerSteamID.steaminfo == None,
+                    PlayerID.steaminfo == None,
                     SteamInfo.updated <= max_age,
                     SteamInfo.bans == JSONB.NULL,
                     SteamInfo.profile == JSONB.NULL,

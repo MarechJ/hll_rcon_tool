@@ -21,7 +21,8 @@ logger = logging.getLogger("rconweb")
 @csrf_exempt
 @stats_login_required
 @require_http_methods(["GET"])
-def live_scoreboard(request):
+def get_live_scoreboard(request):
+    """Return stats for all currently connected players (stats are reset on disconnect, not match start)"""
     stats = LiveStats()
     config = RconServerSettingsUserConfig.load_from_db()
     try:
@@ -125,6 +126,7 @@ def get_map_scoreboard(request):
 @stats_login_required
 @require_http_methods(["GET"])
 def get_live_game_stats(request):
+    """Return stats for the currently playing match"""
     stats = None
     error_ = None
     failed = True
@@ -138,38 +140,6 @@ def get_live_game_stats(request):
 
     return api_response(
         result=stats, error=error_, failed=failed, command="get_live_game_stats"
-    )
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_view_date_scoreboard", raise_exception=True)
-@require_http_methods(["GET"])
-def date_scoreboard(request):
-    try:
-        start = datetime.fromtimestamp(request.GET.get("start"))
-    except (ValueError, KeyError, TypeError) as e:
-        start = datetime.now() - timedelta(minutes=60)
-    try:
-        end = datetime.fromtimestamp(request.GET.get("end"))
-    except (ValueError, KeyError, TypeError) as e:
-        end = datetime.now()
-
-    stats = TimeWindowStats()
-
-    try:
-        result = stats.get_players_stats_at_time(start, end)
-        error_ = (None,)
-        failed = False
-
-    except Exception as e:
-        logger.exception("Unable to produce date stats")
-        result = {}
-        error_ = ""
-        failed = True
-
-    return api_response(
-        result=result, error=error_, failed=failed, command="date_scoreboard"
     )
 
 

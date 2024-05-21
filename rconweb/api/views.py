@@ -18,13 +18,19 @@ from django.views.decorators.csrf import csrf_exempt
 
 from discord.utils import escape_markdown
 from rcon.api_commands import get_rcon_api
-from rcon.broadcast import get_votes_status
 from rcon.commands import CommandFailedError
 from rcon.discord import send_to_discord_audit
 from rcon.gtx import GTXFtp
-from rcon.maps import parse_layer, safe_get_map_name
+from rcon.types import (
+    PublicInfoMapType,
+    PublicInfoNameType,
+    PublicInfoPlayerType,
+    PublicInfoScoreType,
+    PublicInfoType,
+)
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.utils import MapsHistory, get_server_number
+from rcon.vote_map import VoteMap
 from rconweb.settings import TAG_VERSION
 
 from .audit_log import auto_record_audit, record_audit
@@ -104,9 +110,7 @@ def get_version(request):
 
 @csrf_exempt
 @require_http_methods(["GET"])
-def public_info(request):
-    gamestate = rcon_api.get_gamestate()
-    curr_players, max_players = tuple(map(int, rcon_api.get_slots().split("/")))
+def get_public_info(request):
     try:
         current_map_start = MapsHistory(max_len=1)[0]["start"]
     except IndexError:
@@ -114,27 +118,56 @@ def public_info(request):
         current_map_start = None
 
     config = RconServerSettingsUserConfig.load_from_db()
-    return api_response(
-        result=dict(
-            current_map=dict(map=gamestate["current_map"], start=current_map_start),
-            next_map=dict(map=gamestate["next_map"], start=None),
-            player_count=curr_players,
-            max_player_count=max_players,
-            players=dict(
-                allied=gamestate["num_allied_players"],
-                axis=gamestate["num_axis_players"],
-            ),
-            score=dict(allied=gamestate["allied_score"], axis=gamestate["axis_score"]),
-            # TODO: fix key
-            raw_time_remaining=gamestate["raw_time_remaining"],
-            vote_status=get_votes_status(none_on_fail=True),
-            name=rcon_api.get_name(),
-            short_name=config.short_name,
-            public_stats_port=os.getenv("PUBLIC_STATS_PORT", "Not defined"),
-            public_stats_port_https=os.getenv("PUBLIC_STATS_PORT_HTTPS", "Not defined"),
+    gamestate = rcon_api.get_gamestate()
+    curr_players, max_players = rcon_api.get_slots()
+
+    current_map: PublicInfoMapType = {
+        "map": gamestate["current_map"],
+        "start": current_map_start,
+    }
+
+    next_map: PublicInfoMapType = {
+        "map": gamestate["next_map"],
+        "start": None,
+    }
+
+    score: PublicInfoScoreType = {
+        "allied": gamestate["allied_score"],
+        "axis": gamestate["axis_score"],
+    }
+    players: PublicInfoPlayerType = {
+        "allied": gamestate["num_allied_players"],
+        "axis": gamestate["num_axis_players"],
+    }
+    vote_status = VoteMap().get_vote_overview()
+
+    public_stats_port = os.getenv("PUBLIC_STATS_PORT", None)
+    public_stats_port_https = os.getenv("PUBLIC_STATS_PORT_HTTPS", None)
+    name: PublicInfoNameType = {
+        "name": rcon_api.get_name(),
+        "short_name": config.short_name,
+        "public_stats_port": int(public_stats_port) if public_stats_port else None,
+        "public_stats_port_https": (
+            int(public_stats_port_https) if public_stats_port_https else None
         ),
+    }
+
+    res: PublicInfoType = {
+        "current_map": current_map,
+        "next_map": next_map,
+        "player_count": curr_players,
+        "max_player_count": max_players,
+        "player_count_by_team": players,
+        "score": score,
+        "time_remaining": gamestate["time_remaining"].total_seconds(),
+        "vote_status": vote_status,
+        "name": name,
+    }
+
+    return api_response(
+        result=res,
         failed=False,
-        command="public_info",
+        command="get_public_info",
     )
 
 
@@ -183,7 +216,7 @@ def expose_api_endpoint(
         arguments = {}
         failure = False
         others = None
-        error = ""
+        error: str | None = None
         data = _get_data(request)
 
         json_invalid_content_type_error = f"InvalidContentType: {request.method} {request.path} was called with {request.content_type}, expected one of {','.join(['application/json'])}"
@@ -201,6 +234,8 @@ def expose_api_endpoint(
             arguments["by"] = request.user.username
         else:
             # Scrape out special case parameters, like the author of a request is the user name making the request
+            # This does not cast argument types, so things that come in from GET parameters are all going to be strings
+            # so we need to handle this properly inside methods if the types matter
             for pname, param in parameters.items():
                 if pname == "by":
                     arguments[pname] = request.user.username
@@ -213,7 +248,9 @@ def expose_api_endpoint(
                         logger.error(
                             f"Bad request for {request.method} {request.path} {pname=} {param=}"
                         )
-                        return HttpResponseBadRequest()
+                        return HttpResponseBadRequest(
+                            f"Missing mandatory parameter: {pname}"
+                        )
 
         try:
             logger.debug("%s %s", command_name, arguments)
@@ -323,9 +360,9 @@ def run_raw_command(request):
 ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     rcon_api.add_admin: "api.can_add_admin_roles",
     rcon_api.add_map_to_rotation: "api.can_add_map_to_rotation",
-    rcon_api.add_map_to_whitelist: "api.can_add_map_to_whitelist",
+    rcon_api.add_map_to_votemap_whitelist: "api.can_add_map_to_whitelist",
     rcon_api.add_maps_to_rotation: "api.can_add_maps_to_rotation",
-    rcon_api.add_maps_to_vm_whitelist: "api.can_add_maps_to_whitelist",
+    rcon_api.add_maps_to_votemap_whitelist: "api.can_add_maps_to_whitelist",
     rcon_api.add_vip: "api.can_add_vip",
     rcon_api.ban_profanities: "api.can_ban_profanities",
     rcon_api.blacklist_player: "api.can_blacklist_players",
@@ -341,15 +378,15 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     rcon_api.remove_admin: "api.can_remove_admin_roles",
     rcon_api.remove_all_vips: "api.can_remove_all_vips",
     rcon_api.remove_map_from_rotation: "api.can_remove_map_from_rotation",
-    rcon_api.remove_map_from_vm_whitelist: "api.can_remove_map_from_whitelist",
+    rcon_api.remove_map_from_votemap_whitelist: "api.can_remove_map_from_whitelist",
     rcon_api.remove_maps_from_rotation: "api.can_remove_maps_from_rotation",
-    rcon_api.remove_maps_from_vm_whitelist: "api.can_remove_maps_from_whitelist",
+    rcon_api.remove_maps_from_votemap_whitelist: "api.can_remove_maps_from_whitelist",
     rcon_api.remove_perma_ban: "api.can_remove_perma_bans",
     rcon_api.remove_temp_ban: "api.can_remove_temp_bans",
     rcon_api.remove_vip: "api.can_remove_vip",
-    rcon_api.reset_map_vm_whitelist: "api.can_reset_map_whitelist",
-    rcon_api.reset_votekick_threshold: "api.can_reset_votekick_threshold",
-    rcon_api.set_map_vm_whitelist: "api.can_set_map_whitelist",
+    rcon_api.reset_map_votemap_whitelist: "api.can_reset_map_whitelist",
+    rcon_api.reset_votekick_thresholds: "api.can_reset_votekick_threshold",
+    rcon_api.set_map_votemap_whitelist: "api.can_set_map_whitelist",
     rcon_api.switch_player_now: "api.can_switch_players_immediately",
     rcon_api.switch_player_on_death: "api.can_switch_players_on_death",
     rcon_api.temp_ban: "api.can_temp_ban_players",
@@ -394,19 +431,21 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     rcon_api.get_logs: "api.can_view_game_logs",
     rcon_api.get_map_rotation: "api.can_view_map_rotation",
     rcon_api.get_map_shuffle_enabled: "api.can_view_map_shuffle_enabled",
-    rcon_api.get_map_whitelist: "api.can_view_map_whitelist",
+    rcon_api.get_votemap_whitelist: "api.can_view_map_whitelist",
     rcon_api.get_map: "api.can_view_current_map",
     rcon_api.get_maps: "api.can_view_all_maps",
     rcon_api.get_max_ping_autokick: "api.can_view_max_ping_autokick",
     rcon_api.get_name_kick_config: "api.can_view_name_kick_config",
     rcon_api.get_name: "api.can_view_server_name",
     rcon_api.get_next_map: "api.can_view_next_map",
-    rcon_api.get_online_console_admins: "api.can_view_online_console_admins",
     rcon_api.get_online_mods: "api.can_view_online_admins",
     rcon_api.get_perma_bans: "api.can_view_perma_bans",
     rcon_api.get_player_info: "api.can_view_player_info",
     rcon_api.get_player_profile: "api.can_view_player_profile",
     rcon_api.get_playerids: "api.can_view_playerids",
+    rcon_api.get_player_comments: "api.can_view_player_comments",
+    rcon_api.post_player_comment: "api.can_add_player_comments",
+    rcon_api.get_player_messages: "api.can_view_player_messages",
     rcon_api.get_players_history: "api.can_view_player_history",
     rcon_api.get_players: "api.can_view_get_players",
     rcon_api.get_profanities: "api.can_view_profanities",
@@ -429,7 +468,6 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
         "api.can_view_votekick_enabled",
         "api.can_view_votekick_threshold",
     },
-    rcon_api.get_server_stats: "api.can_view_server_stats",
     rcon_api.get_slots: "api.can_view_player_slots",
     rcon_api.get_standard_broadcast_messages: "api.can_view_standard_broadcast_messages",
     rcon_api.get_standard_punishments_messages: "api.can_view_standard_punishment_messages",
@@ -448,7 +486,7 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     rcon_api.get_vips_count: "api.can_view_vip_count",
     rcon_api.get_votekick_autotoggle_config: "api.can_view_votekick_autotoggle_config",
     rcon_api.get_votekick_enabled: "api.can_view_votekick_enabled",
-    rcon_api.get_votekick_threshold: "api.can_view_votekick_threshold",
+    rcon_api.get_votekick_thresholds: "api.can_view_votekick_threshold",
     rcon_api.get_votemap_config: "api.can_view_votemap_config",
     rcon_api.get_votemap_status: "api.can_view_votemap_status",
     rcon_api.get_watchlist_discord_webhooks_config: "api.can_view_watchlist_discord_webhooks_config",
@@ -504,7 +542,7 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     rcon_api.set_vip_slots_num: "api.can_change_vip_slots",
     rcon_api.set_votekick_autotoggle_config: "api.can_change_votekick_autotoggle_config",
     rcon_api.set_votekick_enabled: "api.can_change_votekick_enabled",
-    rcon_api.set_votekick_threshold: "api.can_change_votekick_threshold",
+    rcon_api.set_votekick_thresholds: "api.can_change_votekick_threshold",
     rcon_api.set_votemap_config: "api.can_change_votemap_config",
     rcon_api.set_watchlist_discord_webhooks_config: "api.can_change_watchlist_discord_webhooks_config",
     rcon_api.set_welcome_message: "api.can_change_welcome_message",
@@ -540,6 +578,7 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     rcon_api.get_log_stream_config: "api.can_view_log_stream_config",
     rcon_api.set_log_stream_config: "api.can_change_log_stream_config",
     rcon_api.validate_log_stream_config: "api.can_change_log_stream_config",
+    rcon_api.get_date_scoreboard: "api.can_view_date_scoreboard",
 }
 
 PREFIXES_TO_EXPOSE = [
@@ -563,9 +602,9 @@ DEPRECATED_ENDPOINTS = (
 RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.add_admin: ["POST"],
     rcon_api.add_map_to_rotation: ["POST"],
-    rcon_api.add_map_to_whitelist: ["POST"],
+    rcon_api.add_map_to_votemap_whitelist: ["POST"],
     rcon_api.add_maps_to_rotation: ["POST"],
-    rcon_api.add_maps_to_vm_whitelist: ["POST"],
+    rcon_api.add_maps_to_votemap_whitelist: ["POST"],
     rcon_api.add_vip: ["POST"],
     rcon_api.ban_profanities: ["POST"],
     rcon_api.blacklist_player: ["POST"],
@@ -599,23 +638,25 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.get_ingame_mods: ["GET"],
     rcon_api.get_kills_discord_webhooks_config: ["GET"],
     rcon_api.get_log_line_webhook_config: ["GET"],
-    rcon_api.get_log_stream_config: ["POST"],
+    rcon_api.get_log_stream_config: ["GET"],
     rcon_api.get_logs: ["GET"],
     rcon_api.get_map_rotation: ["GET"],
     rcon_api.get_map_shuffle_enabled: ["GET"],
-    rcon_api.get_map_whitelist: ["GET"],
+    rcon_api.get_votemap_whitelist: ["GET"],
     rcon_api.get_map: ["GET"],
     rcon_api.get_maps: ["GET"],
     rcon_api.get_max_ping_autokick: ["GET"],
     rcon_api.get_name_kick_config: ["GET"],
     rcon_api.get_name: ["GET"],
     rcon_api.get_next_map: ["GET"],
-    rcon_api.get_online_console_admins: ["GET"],
     rcon_api.get_online_mods: ["GET"],
     rcon_api.get_perma_bans: ["GET"],
     rcon_api.get_player_info: ["GET"],
     rcon_api.get_player_profile: ["GET"],
     rcon_api.get_playerids: ["GET"],
+    rcon_api.get_player_comments: ["GET"],
+    rcon_api.post_player_comment: ["POST"],
+    rcon_api.get_player_messages: ["GET"],
     rcon_api.get_players_history: ["GET", "POST"],
     rcon_api.get_players: ["GET"],
     rcon_api.get_profanities: ["GET"],
@@ -628,7 +669,6 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.get_scorebot_config: ["GET"],
     rcon_api.get_server_name_change_config: ["GET"],
     rcon_api.get_server_settings: ["GET"],
-    rcon_api.get_server_stats: ["GET"],
     rcon_api.get_slots: ["GET"],
     rcon_api.get_standard_broadcast_messages: ["GET"],
     rcon_api.get_standard_punishments_messages: ["GET"],
@@ -647,7 +687,7 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.get_vips_count: ["GET"],
     rcon_api.get_votekick_autotoggle_config: ["GET"],
     rcon_api.get_votekick_enabled: ["GET"],
-    rcon_api.get_votekick_threshold: ["GET"],
+    rcon_api.get_votekick_thresholds: ["GET"],
     rcon_api.get_votemap_config: ["GET"],
     rcon_api.get_votemap_status: ["GET"],
     rcon_api.get_watchlist_discord_webhooks_config: ["GET"],
@@ -659,14 +699,14 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.remove_admin: ["POST"],
     rcon_api.remove_all_vips: ["POST"],
     rcon_api.remove_map_from_rotation: ["POST"],
-    rcon_api.remove_map_from_vm_whitelist: ["POST"],
+    rcon_api.remove_map_from_votemap_whitelist: ["POST"],
     rcon_api.remove_maps_from_rotation: ["POST"],
-    rcon_api.remove_maps_from_vm_whitelist: ["POST"],
+    rcon_api.remove_maps_from_votemap_whitelist: ["POST"],
     rcon_api.remove_perma_ban: ["POST"],
     rcon_api.remove_temp_ban: ["POST"],
     rcon_api.remove_vip: ["POST"],
-    rcon_api.reset_map_vm_whitelist: ["POST"],
-    rcon_api.reset_votekick_threshold: ["POST"],
+    rcon_api.reset_map_votemap_whitelist: ["POST"],
+    rcon_api.reset_votekick_thresholds: ["POST"],
     rcon_api.reset_votemap_state: ["POST"],
     rcon_api.set_admin_pings_discord_webhooks_config: ["POST"],
     rcon_api.set_audit_discord_webhooks_config: ["POST"],
@@ -688,7 +728,7 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.set_log_line_webhook_config: ["POST"],
     rcon_api.set_log_stream_config: ["POST"],
     rcon_api.set_map_shuffle_enabled: ["POST"],
-    rcon_api.set_map_vm_whitelist: ["POST"],
+    rcon_api.set_map_votemap_whitelist: ["POST"],
     rcon_api.set_map: ["POST"],
     rcon_api.set_maprotation: ["POST"],
     rcon_api.set_max_ping_autokick: ["POST"],
@@ -711,7 +751,7 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.set_vip_slots_num: ["POST"],
     rcon_api.set_votekick_autotoggle_config: ["POST"],
     rcon_api.set_votekick_enabled: ["POST"],
-    rcon_api.set_votekick_threshold: ["POST"],
+    rcon_api.set_votekick_thresholds: ["POST"],
     rcon_api.set_votemap_config: ["POST"],
     rcon_api.set_watchlist_discord_webhooks_config: ["POST"],
     rcon_api.set_welcome_message: ["POST"],
@@ -754,6 +794,7 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.validate_votemap_config: ["POST"],
     rcon_api.validate_watchlist_discord_webhooks_config: ["POST"],
     rcon_api.watch_player: ["POST"],
+    rcon_api.get_date_scoreboard: ["GET"],
 }
 
 # Check to make sure that ENDPOINT_HTTP_METHODS and ENDPOINT_PERMISSIONS have the same endpoints
@@ -780,7 +821,7 @@ ALLOWED_METHODS_SPECIAL_CASES: dict[Callable, list[str]] = {
 commands = [
     ("get_version", get_version),
     ("get_connection_info", get_connection_info),
-    ("public_info", public_info),
+    ("get_public_info", get_public_info),
     ("set_name", set_name),
     ("run_raw_command", run_raw_command),
 ]

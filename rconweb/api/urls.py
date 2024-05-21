@@ -9,7 +9,6 @@ from . import (
     audit_log,
     auth,
     auto_settings,
-    history,
     multi_servers,
     scoreboards,
     services,
@@ -51,7 +50,7 @@ def get_api_documentation(request):
             }
             arguments[k] = expanded_args
 
-        item["endpoint"] = func.__name__
+        item["endpoint"] = name
         item["arguments"] = arguments
         item["return_type"] = _get_empty(sig.return_annotation)
         item["doc_string"] = getdoc(func)
@@ -89,19 +88,13 @@ endpoints: list[tuple[str, Callable]] = [
     ("async_upload_vips", vips.async_upload_vips),
     ("async_upload_vips_result", vips.async_upload_vips_result),
     ("download_vips", vips.download_vips),
-    # TODO: remove deprecated endpoint
-    ("date_scoreboard", scoreboards.date_scoreboard),
-    ("get_date_scoreboard", scoreboards.date_scoreboard),
-    ("live_scoreboard", scoreboards.live_scoreboard),
+    ("get_live_scoreboard", scoreboards.get_live_scoreboard),
     ("get_scoreboard_maps", scoreboards.get_scoreboard_maps),
     ("get_map_scoreboard", scoreboards.get_map_scoreboard),
     ("get_map_history", scoreboards.get_map_history),
     ("get_previous_map", scoreboards.get_previous_map),
     ("get_live_game_stats", scoreboards.get_live_game_stats),
     ("describe_votemap_config", user_settings.describe_votemap_config),
-    ("get_player_messages", history.get_player_messages),
-    ("get_player_comment", history.get_player_comment),
-    ("post_player_comment", history.post_player_comment),
     ("get_auto_settings", auto_settings.get_auto_settings),
     ("set_auto_settings", auto_settings.set_auto_settings),
     ("get_audit_logs", audit_log.get_audit_logs),

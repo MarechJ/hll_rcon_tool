@@ -67,7 +67,7 @@ const useStyles = makeStyles((theme) => ({
 const LiveSessionScore = ({ classes }) => (
   <LiveScore
     classes={classes}
-    endpoint="live_scoreboard"
+    endpoint="get_live_scoreboard"
     title="LIVE SESSIONS"
     explainText={
       <React.Fragment>
@@ -155,8 +155,8 @@ const LiveScore = ({ classes, endpoint, explainText, title }) => {
         // TODO add code to sync the refresh time with one of the server by checking the last refresh timestamp
       })
       .catch(handle_http_errors);
-    get("public_info")
-      .then((res) => showResponse(res, "public_info", false))
+    get("get_public_info")
+      .then((res) => showResponse(res, "get_public_info", false))
       .then((data) => setServerState(fromJS(data.result)))
       .then(() => setIsLoading(false))
       .catch(handle_http_errors);

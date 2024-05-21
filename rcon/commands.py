@@ -12,6 +12,8 @@ from rcon.utils import exception_in_chain
 
 logger = logging.getLogger(__name__)
 
+SUCCESS = "SUCCESS"
+
 
 def convert_tabs_to_spaces(value: str) -> str:
     """Convert tabs to a space to not break HLL tab delimited lists"""
@@ -375,12 +377,12 @@ class ServerCtl:
     def get_profanities(self) -> list[str]:
         return self._get_list("get profanity", can_fail=False)
 
-    def ban_profanities(self, profanities_csv) -> str:
-        profanities_csv = convert_tabs_to_spaces(profanities_csv)
-        return self._str_request(f"BanProfanity {profanities_csv}")
+    def ban_profanities(self, profanities: str) -> bool:
+        profanities = convert_tabs_to_spaces(profanities)
+        return self._str_request(f"BanProfanity {profanities}") == SUCCESS
 
-    def unban_profanities(self, profanities_csv) -> str:
-        return self._str_request(f"UnbanProfanity {profanities_csv}")
+    def unban_profanities(self, profanities: str) -> str:
+        return self._str_request(f"UnbanProfanity {profanities}")
 
     def get_name(self) -> str:
         return self._str_request("get name", can_fail=False)
@@ -435,7 +437,7 @@ class ServerCtl:
     def get_votekick_enabled(self) -> str:
         return self._str_request("get votekickenabled", can_fail=False)
 
-    def get_votekick_threshold(self) -> str:
+    def get_votekick_thresholds(self) -> str:
         return self._str_request("get votekickthreshold", can_fail=False)
 
     def get_map_rotation(self) -> list[str]:
@@ -451,11 +453,11 @@ class ServerCtl:
             vip_ids: List[VipId] = []
             for item in res:
                 try:
-                    steam_id_64, name = item.split(" ", 1)
+                    player_id, name = item.split(" ", 1)
                     name = name.replace('"', "")
                     name = name.replace("\n", "")
                     name = name.strip()
-                    vip_ids.append({"steam_id_64": steam_id_64, "name": name})
+                    vip_ids.append({"player_id": player_id, "name": name})
                 except ValueError as e:
                     raise BrokenHllConnection() from e
             return vip_ids
@@ -512,11 +514,11 @@ class ServerCtl:
     def get_vip_slots_num(self) -> str:
         return self._str_request("get numvipslots", can_fail=False)
 
-    def set_autobalance_enabled(self, bool_str) -> str:
+    def set_autobalance_enabled(self, bool_: str) -> str:
         """
         String bool is on / off
         """
-        return self._str_request(f"setautobalanceenabled {bool_str}")
+        return self._str_request(f"setautobalanceenabled {bool_}")
 
     def set_welcome_message(self, message) -> str:
         return self._str_request(f"say {message}", log_info=True, can_fail=False)
@@ -559,19 +561,19 @@ class ServerCtl:
             f'broadcast "{message}"', log_info=True, can_fail=False
         )
 
-    def set_votekick_enabled(self, bool_str) -> str:
+    def set_votekick_enabled(self, bool_: str) -> str:
         """
         String bool is on / off
         """
-        return self._str_request(f"setvotekickenabled {bool_str}")
+        return self._str_request(f"setvotekickenabled {bool_}")
 
-    def set_votekick_threshold(self, threshold_pairs_str) -> str:
+    def set_votekick_thresholds(self, threshold_pairs: str) -> str:
         """
         PlayerCount,Threshold[,PlayerCount,Threshold,...]
         """
-        return self._str_request(f"setvotekickthreshold {threshold_pairs_str}")
+        return self._str_request(f"setvotekickthreshold {threshold_pairs}")
 
-    def reset_votekick_threshold(self) -> str:
+    def reset_votekick_thresholds(self) -> str:
         return self._str_request(f"resetvotekickthreshold", log_info=True)
 
     def switch_player_on_death(self, player_name) -> str:
@@ -602,12 +604,15 @@ class ServerCtl:
         return self._str_request(cmd, can_fail=False, log_info=True)
 
     @_escape_params
-    def punish(self, player_name, reason) -> str:
+    def punish(self, player_name: str, reason: str) -> str:
         return self._str_request(f'punish "{player_name}" "{reason}"', log_info=True)
 
     @_escape_params
-    def kick(self, player_name, reason) -> str:
-        return self._str_request(f'kick "{player_name}" "{reason}"', log_info=True)
+    def kick(self, player_name: str, reason: str) -> bool:
+        return (
+            self._str_request(f'kick "{player_name}" "{reason}"', log_info=True)
+            == SUCCESS
+        )
 
     @_escape_params
     def temp_ban(
@@ -626,12 +631,19 @@ class ServerCtl:
 
     @_escape_params
     def perma_ban(
-        self, player_name=None, steam_id_64=None, reason="", admin_name=""
-    ) -> str:
+        self,
+        player_name: str | None = None,
+        player_id: str | None = None,
+        reason: str = "",
+        admin_name: str = "",
+    ) -> bool:
         reason = convert_tabs_to_spaces(reason)
-        return self._str_request(
-            f'permaban "{steam_id_64 or player_name}" "{reason}" "{admin_name}"',
-            log_info=True,
+        return (
+            self._str_request(
+                f'permaban "{player_id or player_name}" "{reason}" "{admin_name}"',
+                log_info=True,
+            )
+            == SUCCESS
         )
 
     def remove_temp_ban(self, ban_log) -> str:
@@ -641,19 +653,24 @@ class ServerCtl:
         return self._str_request(f"pardonpermaban {ban_log}", log_info=True)
 
     @_escape_params
-    def add_admin(self, player_id, role, description) -> str:
+    def add_admin(self, player_id, role, description) -> bool:
         description = convert_tabs_to_spaces(description)
-        return self._str_request(
+        res = self._str_request(
             f'adminadd "{player_id}" "{role}" "{description}"', log_info=True
         )
 
-    def remove_admin(self, player_id) -> str:
-        return self._str_request(f"admindel {player_id}", log_info=True)
+        return res == SUCCESS
+
+    def remove_admin(self, player_id) -> bool:
+        return self._str_request(f"admindel {player_id}", log_info=True) == SUCCESS
 
     @_escape_params
-    def add_vip(self, player_id, description) -> str:
+    def add_vip(self, player_id: str, description: str) -> bool:
         description = convert_tabs_to_spaces(description)
-        return self._str_request(f'vipadd {player_id} "{description}"', log_info=True)
+        return (
+            self._str_request(f'vipadd {player_id} "{description}"', log_info=True)
+            == SUCCESS
+        )
 
     def remove_vip(self, player_id) -> str:
         return self._str_request(f"vipdel {player_id}", log_info=True)
