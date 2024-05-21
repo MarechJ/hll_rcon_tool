@@ -243,12 +243,12 @@ class HLLSettings extends React.Component {
     const endpointToParameters = {
       set_team_switch_cooldown: "minutes",
       set_autobalance_threshold: "max_diff",
-      set_autobalance_enabled: "bool_",
+      set_autobalance_enabled: "value",
       set_idle_autokick_time: "minutes",
       set_max_ping_autokick: "max_ms",
       set_queue_length: "num",
       set_vip_slots_num: "num",
-      set_votekick_enabled: "bool_",
+      set_votekick_enabled: "value",
       set_votekick_threshold: "threshold_pairs",
     };
 
