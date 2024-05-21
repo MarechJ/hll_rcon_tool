@@ -12,7 +12,7 @@ from typing import Literal, Sequence, overload
 from rcon.cache_utils import get_redis_client
 from rcon.commands import CommandFailedError
 from rcon.discord import dict_to_discord, send_to_discord_audit
-from rcon.models import BlacklistSyncMethod, PlayerSteamID, Blacklist, BlacklistRecord, enter_session
+from rcon.models import BlacklistSyncMethod, PlayerID, Blacklist, BlacklistRecord, enter_session
 from rcon.player_history import _get_set_player
 from rcon.rcon import Rcon, get_rcon
 from rcon.types import BlacklistRecordType, BlacklistType
@@ -75,11 +75,11 @@ def get_player_blacklist_records(
 ) -> ScalarResult[BlacklistRecord]:
     stmt = (
         select(BlacklistRecord)
-        .join(BlacklistRecord.steamid)
+        .join(BlacklistRecord.player)
         .join(BlacklistRecord.blacklist)
         .filter(
             # Record must target the given player
-            PlayerSteamID.steam_id_64 == player_id,
+            PlayerID.player_id == player_id,
         )
     )
 
@@ -277,9 +277,9 @@ def apply_blacklist_punishment(
         reason = format_reason(record)
 
         if player_id is None:
-            player_id = record.steamid.steam_id_64
+            player_id = record.player.player_id
         if player_name is None:
-            player_name = record.steamid.names[0].name
+            player_name = record.player.names[0].name
 
         # Apply any bans/kicks
         match state:
@@ -536,7 +536,7 @@ def delete_blacklist(blacklist_id: int):
         # Format is {player_id: (r.created_at, r.expired_at)}
         banned_players: dict[str, tuple[datetime, datetime | None]] = {}
         for record in records:
-            player_id = record.steamid.steam_id_64
+            player_id = record.player.player_id
 
             # Players can be on the same blacklist multiple times. Here we check
             # whether we have already seen a record of that player and if it has
@@ -872,7 +872,7 @@ class BlacklistCommandHandler:
 
                     synchronize_ban(
                         rcon=self.rcon,
-                        player_id=record.steamid.steam_id_64,
+                        player_id=record.player.player_id,
                         new_record=record if is_banned else None,
                         old_state=old_state
                     )
