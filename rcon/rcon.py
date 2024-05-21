@@ -1020,13 +1020,13 @@ class Rcon(ServerCtl):
     @ttl_cache(ttl=5, cache_falsy=False)
     def get_status(self) -> StatusType:
         config = RconServerSettingsUserConfig.load_from_db()
-        slots = self.get_slots()
+        current_players, max_players = self.get_slots()
         return {
             "name": self.get_name(),
             "map": self.current_map.model_dump(),
-            "nb_players": slots,
+            "current_players": current_players,
+            "max_players": max_players,
             "short_name": config.short_name,
-            "player_count": slots.split("/")[0],
             "server_number": int(get_server_number()),
         }
 
