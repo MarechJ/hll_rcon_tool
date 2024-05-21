@@ -10,7 +10,7 @@ psycopg2-binary
 sentry-sdk[django]==1.45.0
 python-dateutil==2.9.0.post0
 discord-webhook[async]
-requests==2.31.0
+requests==2.32.0
 steam==1.4.4
 # Alembic does not use semantic versioning, so be careful with the version numbers https://alembic.sqlalchemy.org/en/latest/front.html#versioning-scheme
 alembic==1.13.1
