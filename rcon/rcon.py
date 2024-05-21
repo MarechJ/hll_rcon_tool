@@ -1092,7 +1092,7 @@ class Rcon(ServerCtl):
                 logger.error("Unable to set votekick threshold: %s", res)
                 raise CommandFailedError(res)
 
-    def reset_votekick_thresholds(self) -> str:
+    def reset_votekick_thresholds(self) -> bool:
         with invalidates(self.get_votekick_thresholds):
             return super().reset_votekick_thresholds()
 

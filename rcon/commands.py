@@ -573,8 +573,8 @@ class ServerCtl:
         """
         return self._str_request(f"setvotekickthreshold {threshold_pairs}")
 
-    def reset_votekick_thresholds(self) -> str:
-        return self._str_request(f"resetvotekickthreshold", log_info=True)
+    def reset_votekick_thresholds(self) -> bool:
+        return self._str_request(f"resetvotekickthreshold", log_info=True) == SUCCESS
 
     def switch_player_on_death(self, player_name) -> str:
         return self._str_request(f"switchteamondeath {player_name}", log_info=True)
