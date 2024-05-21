@@ -705,7 +705,7 @@ class Rcon(ServerCtl):
 
         return result
 
-    def remove_all_vips(self) -> Literal["SUCCESS"]:
+    def remove_all_vips(self) -> bool:
         vips = self.get_vip_ids()
         for vip in vips:
             try:
@@ -713,7 +713,7 @@ class Rcon(ServerCtl):
             except (CommandFailedError, ValueError):
                 raise
 
-        return "SUCCESS"
+        return True
 
     def message_player(
         self,
