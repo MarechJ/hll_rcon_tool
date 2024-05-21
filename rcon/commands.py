@@ -675,8 +675,8 @@ class ServerCtl:
             == SUCCESS
         )
 
-    def remove_vip(self, player_id) -> str:
-        return self._str_request(f"vipdel {player_id}", log_info=True)
+    def remove_vip(self, player_id) -> bool:
+        return self._str_request(f"vipdel {player_id}", log_info=True) == SUCCESS
 
     @_escape_params
     def message_player(self, player_name=None, player_id=None, message="") -> str:

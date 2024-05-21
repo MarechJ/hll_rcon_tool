@@ -592,7 +592,7 @@ class Rcon(ServerCtl):
 
         return sorted(player_dicts, key=lambda d: d[NAME])
 
-    def remove_vip(self, player_id) -> str:
+    def remove_vip(self, player_id) -> bool:
         """Removes VIP status on the game server and removes their PlayerVIP record."""
 
         # Remove VIP before anything else in case we have errors
