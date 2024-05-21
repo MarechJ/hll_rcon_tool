@@ -1120,7 +1120,7 @@ class Rcon(ServerCtl):
         with invalidates(self.get_profanities):
             return super().ban_profanities(",".join(profanities))
 
-    def punish(self, player_name: str, reason: str, by: str) -> str:
+    def punish(self, player_name: str, reason: str, by: str) -> bool:
         res = super().punish(player_name, reason)
         safe_save_player_action(
             rcon=self,

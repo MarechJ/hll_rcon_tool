@@ -604,8 +604,11 @@ class ServerCtl:
         return self._str_request(cmd, can_fail=False, log_info=True)
 
     @_escape_params
-    def punish(self, player_name: str, reason: str) -> str:
-        return self._str_request(f'punish "{player_name}" "{reason}"', log_info=True)
+    def punish(self, player_name: str, reason: str) -> bool:
+        return (
+            self._str_request(f'punish "{player_name}" "{reason}"', log_info=True)
+            == SUCCESS
+        )
 
     @_escape_params
     def kick(self, player_name: str, reason: str) -> bool:
