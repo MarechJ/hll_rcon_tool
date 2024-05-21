@@ -544,7 +544,10 @@ class ServerCtl:
         return self._str_request(f"sethighping {max_ms}", log_info=True)
 
     def set_autobalance_threshold(self, max_diff: int):
-        return self._str_request(f"setautobalancethreshold {max_diff}", log_info=True)
+        return (
+            self._str_request(f"setautobalancethreshold {max_diff}", log_info=True)
+            == SUCCESS
+        )
 
     def set_team_switch_cooldown(self, minutes):
         return self._str_request(f"setteamswitchcooldown {minutes}", log_info=True)

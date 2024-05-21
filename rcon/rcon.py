@@ -898,7 +898,7 @@ class Rcon(ServerCtl):
     def get_autobalance_threshold(self) -> int:
         return int(super().get_autobalance_threshold())
 
-    def set_autobalance_threshold(self, max_diff) -> str:
+    def set_autobalance_threshold(self, max_diff: int) -> bool:
         with invalidates(Rcon.get_autobalance_threshold):
             return super().set_autobalance_threshold(max_diff)
 
