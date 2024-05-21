@@ -1008,11 +1008,14 @@ class Rcon(ServerCtl):
         return prev.decode() if prev else ""
 
     @ttl_cache(ttl=5)
-    def get_slots(self) -> str:
+    def get_slots(self) -> tuple[int, int]:
+        """Return the current number of connected players and max players allowed"""
         res = super().get_slots()
         if not self.slots_regexp.match(res):
             raise CommandFailedError("Server returned crap")
-        return res
+
+        current, max = tuple(map(int, res.split("/", maxsplit=1)))
+        return current, max
 
     @ttl_cache(ttl=5, cache_falsy=False)
     def get_status(self) -> StatusType:
