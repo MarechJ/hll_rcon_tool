@@ -1175,8 +1175,8 @@ class Rcon(ServerCtl):
 
     def remove_temp_ban(
         self, ban_log: str | None = None, player_id: str | None = None
-    ) -> str:
-        """Remove a temp ban by steam ID or game server ban log"""
+    ) -> bool:
+        """Remove a temp ban by player ID or game server ban log"""
         with invalidates(Rcon.get_temp_bans):
             if ban_log is not None:
                 return super().remove_temp_ban(ban_log)
@@ -1184,17 +1184,28 @@ class Rcon(ServerCtl):
                 # If searching for a steam ID, we can only unban with the properly
                 # formatted ban log
                 bans = self.get_temp_bans()
-                for raw_ban in bans:
-                    ban = self._struct_ban(raw_ban, type_=TEMP_BAN)
+                for ban in bans:
                     if player_id == ban[PLAYER_ID]:
-                        return super().remove_temp_ban(ban_log=raw_ban)
+                        return super().remove_temp_ban(ban_log=ban["raw"])
 
-        # Only get here if we weren't passed a ban log, steam ID or the steam ID wasn't banned
-        raise ValueError(f"{player_id} was not banned")
+        return False
 
-    def remove_perma_ban(self, ban_log) -> str:
+    def remove_perma_ban(
+        self, ban_log: str | None = None, player_id: str | None = None
+    ) -> bool:
+        """Remove a player ban by player ID or game server ban log"""
+
+        # TODO: this doesn't remove the blacklist, pending Abus banlist changes
         with invalidates(Rcon.get_perma_bans):
-            return super().remove_perma_ban(ban_log)
+            if ban_log is not None:
+                return super().remove_perma_ban(ban_log)
+            else:
+                bans = self.get_perma_bans()
+                for ban in bans:
+                    if player_id == ban[PLAYER_ID]:
+                        return super().remove_perma_ban(ban_log=ban["raw"])
+
+        return False
 
     def perma_ban(self, player_name=None, player_id=None, reason="", by="") -> bool:
         with invalidates(Rcon.get_players, Rcon.get_perma_bans):

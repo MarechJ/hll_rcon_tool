@@ -649,11 +649,11 @@ class ServerCtl:
             == SUCCESS
         )
 
-    def remove_temp_ban(self, ban_log) -> str:
-        return self._str_request(f"pardontempban {ban_log}", log_info=True)
+    def remove_temp_ban(self, ban_log) -> bool:
+        return self._str_request(f"pardontempban {ban_log}", log_info=True) == SUCCESS
 
-    def remove_perma_ban(self, ban_log) -> str:
-        return self._str_request(f"pardonpermaban {ban_log}", log_info=True)
+    def remove_perma_ban(self, ban_log) -> bool:
+        return self._str_request(f"pardonpermaban {ban_log}", log_info=True) == SUCCESS
 
     @_escape_params
     def add_admin(self, player_id, role, description) -> bool:
