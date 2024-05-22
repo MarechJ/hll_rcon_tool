@@ -526,7 +526,7 @@ class RconAPI(Rcon):
         v = VoteMap()
         v.reset_map_whitelist()
 
-    def set_map_votemap_whitelist(self, map_names: Iterable[str]):
+    def set_votemap_whitelist(self, map_names: Iterable[str]):
         v = VoteMap()
         v.set_map_whitelist(map_names=map_names)
 

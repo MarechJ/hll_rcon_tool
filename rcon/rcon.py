@@ -1287,18 +1287,18 @@ class Rcon(ServerCtl):
 
         return results
 
-    def set_maprotation(self, rotation: list[str]) -> list[Layer]:
-        if not rotation:
+    def set_maprotation(self, map_names: list[str]) -> list[Layer]:
+        if not map_names:
             raise CommandFailedError("Empty rotation")
 
-        rotation = list(rotation)
-        logger.info("Apply map rotation %s", rotation)
+        map_names = list(map_names)
+        logger.info("Apply map rotation %s", map_names)
 
         with invalidates(Rcon.get_map_rotation, Rcon.get_next_map):
             current_as_layers = self.get_map_rotation()
             current = [map_.id for map_ in current_as_layers]
             logger.info("Current rotation: %s", current)
-            if rotation == current:
+            if map_names == current:
                 logger.debug("Map rotation is the same, nothing to do")
                 return current_as_layers
 
@@ -1312,10 +1312,10 @@ class Rcon(ServerCtl):
                 last = current[0]
                 map_number = {last: 1}
             else:
-                last = rotation[0]
+                last = map_names[0]
                 map_number = {}
 
-            for map_ in rotation:
+            for map_ in map_names:
                 logger.info("Adding to rotation: '%s'", map_)
                 super().add_map_to_rotation(map_, last, map_number.get(last, 1))
                 last = map_
