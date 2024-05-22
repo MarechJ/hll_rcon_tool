@@ -890,7 +890,7 @@ class Rcon(ServerCtl):
     def get_team_switch_cooldown(self) -> int:
         return int(super().get_team_switch_cooldown())
 
-    def set_team_switch_cooldown(self, minutes) -> str:
+    def set_team_switch_cooldown(self, minutes: int) -> bool:
         with invalidates(Rcon.get_team_switch_cooldown):
             return super().set_team_switch_cooldown(minutes)
 

@@ -549,8 +549,11 @@ class ServerCtl:
             == SUCCESS
         )
 
-    def set_team_switch_cooldown(self, minutes):
-        return self._str_request(f"setteamswitchcooldown {minutes}", log_info=True)
+    def set_team_switch_cooldown(self, minutes: int) -> bool:
+        return (
+            self._str_request(f"setteamswitchcooldown {minutes}", log_info=True)
+            == SUCCESS
+        )
 
     def set_queue_length(self, value: int) -> bool:
         return (
