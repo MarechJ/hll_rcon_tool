@@ -930,9 +930,9 @@ class Rcon(ServerCtl):
     def get_vip_slots_num(self) -> int:
         return int(super().get_vip_slots_num())
 
-    def set_vip_slots_num(self, num) -> str:
+    def set_vip_slots_num(self, value: int) -> bool:
         with invalidates(Rcon.get_vip_slots_num):
-            return super().set_vip_slots_num(num)
+            return super().set_vip_slots_num(value)
 
     def get_welcome_message(self):
         red = get_redis_client()

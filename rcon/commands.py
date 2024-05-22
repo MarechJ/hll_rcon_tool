@@ -560,8 +560,8 @@ class ServerCtl:
             self._str_request(f"setmaxqueuedplayers {value}", log_info=True) == SUCCESS
         )
 
-    def set_vip_slots_num(self, num):
-        return self._str_request(f"setnumvipslots {num}", log_info=True)
+    def set_vip_slots_num(self, value: int) -> bool:
+        return self._str_request(f"setnumvipslots {value}", log_info=True) == SUCCESS
 
     @_escape_params
     def set_broadcast(self, message: str):
