@@ -21,7 +21,6 @@ from discord.utils import escape_markdown
 from rcon.api_commands import get_rcon_api
 from rcon.commands import CommandFailedError
 from rcon.discord import send_to_discord_audit
-from rcon.gtx import GTXFtp
 from rcon.types import (
     PublicInfoMapType,
     PublicInfoNameType,
@@ -76,30 +75,6 @@ def set_temp_msg(request, func, name):
         error = repr(e)
 
     return api_response(failed=failed, error=error, result=None, command=name)
-
-
-@csrf_exempt
-@login_required()
-@permission_required("api.can_change_server_name", raise_exception=True)
-@record_audit
-@require_http_methods(["POST"])
-@require_content_type()
-def set_name(request):
-    data = _get_data(request)
-    failed = False
-    error = None
-    try:
-        # TODO: server name won't change until map change
-        # but the cache also needs to be cleared, but can't
-        # immediately clear or it will just refresh
-        gtx = GTXFtp.from_config()
-        gtx.change_server_name(data["name"])
-    except Exception as e:
-        failed = True
-        error = repr(e)
-    return api_response(
-        failed=failed, error=error, result=None, command="set_server_name"
-    )
 
 
 @csrf_exempt
@@ -846,7 +821,6 @@ commands = [
     ("get_version", get_version),
     ("get_connection_info", get_connection_info),
     ("get_public_info", get_public_info),
-    ("set_name", set_name),
     ("run_raw_command", run_raw_command),
 ]
 

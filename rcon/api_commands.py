@@ -371,7 +371,7 @@ class RconAPI(Rcon):
         # TODO: server name won't change until map change
         # but the cache also needs to be cleared, but can't
         # immediately clear or it will just refresh but we
-        # can use a timer
+        # can use a timer or clear the cache on match start
 
         gtx = GTXFtp.from_config()
         gtx.change_server_name(new_name=name)
