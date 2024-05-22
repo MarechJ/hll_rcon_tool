@@ -12,6 +12,11 @@ class AutoBroadcastType(TypedDict):
     messages: Iterable[str]
 
 
+class AutoBroadcastMessageType(TypedDict):
+    time_sec: int
+    message: str
+
+
 class AutoBroadcastMessage(BaseModel):
     time_sec: int = Field(ge=1)
     message: str
