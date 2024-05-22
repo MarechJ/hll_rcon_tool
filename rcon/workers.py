@@ -13,7 +13,6 @@ from sqlalchemy.orm import Session
 from rcon.cache_utils import get_redis_client
 from rcon.models import Maps, PlayerStats, enter_session
 from rcon.player_history import get_player
-from rcon.rcon import get_rcon
 from rcon.scoreboard import TimeWindowStats
 from rcon.types import MapInfo, PlayerStat
 from rcon.utils import INDEFINITE_VIP_DATE
@@ -27,7 +26,9 @@ def get_queue(redis_client=None):
 
 
 def broadcast(msg):
-    rcon = get_rcon()
+    from rcon.api_commands import get_rcon_api
+
+    rcon = get_rcon_api()
     rcon.set_broadcast(msg)
 
 
@@ -38,19 +39,23 @@ def temporary_broadcast(rcon, message, seconds):
 
 
 def welcome(msg):
-    rcon = get_rcon()
+    from rcon.api_commands import get_rcon_api
+
+    rcon = get_rcon_api()
     rcon.set_welcome_message(msg)
 
 
 def temporary_welcome(rcon, message, seconds):
-    prev = rcon.set_welcome_message(message, save=False)
+    prev = rcon.set_welcome_message(message)
     queue = get_queue()
     queue.enqueue_in(timedelta(seconds=seconds), welcome, prev)
 
 
 def temp_welcome_standalone(msg, seconds):
-    rcon = get_rcon()
-    prev = rcon.set_welcome_message(msg, save=False)
+    from rcon.api_commands import get_rcon_api
+
+    rcon = get_rcon_api()
+    prev = rcon.set_welcome_message(msg)
     queue = get_queue()
     queue.enqueue_in(timedelta(seconds), welcome, prev)
 
@@ -274,8 +279,10 @@ def worker_bulk_vip(name_ids, job_key, mode="override"):
 
 
 def bulk_vip(name_ids, mode="override"):
+    from rcon.api_commands import get_rcon_api
+
+    ctl = get_rcon_api()
     errors = []
-    ctl = get_rcon()
     logger.info(f"bulk_vip name_ids {name_ids[0]} type {type(name_ids)}")
     vips = ctl.get_vip_ids()
 

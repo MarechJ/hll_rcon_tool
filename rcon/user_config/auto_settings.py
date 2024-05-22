@@ -69,7 +69,7 @@ DEFAULT_AUTO_SETTINGS = {
         "unban_profanities": {"profanities": ["word1", "word2"]},
         "set_profanities": {"profanities": ["word1", "word2"]},
         "set_autobalance_enabled": {"value": "on/off"},
-        "set_welcome_message": {"message": "A welcome message", "save": True},
+        "set_welcome_message": {"message": "A welcome message"},
         "set_map": {"map_name": "stmariedumont_warfare"},
         "set_idle_autokick_time": {"minutes": 0},
         "set_max_ping_autokick": {"max_ms": 0},

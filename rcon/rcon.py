@@ -948,26 +948,22 @@ class Rcon(ServerCtl):
 
         return msg
 
-    def set_welcome_message(self, message, save=True):
+    def set_welcome_message(self, message: str) -> str:
+        """Set the in game welcome (rules) message and return the previous message if set"""
         from rcon.broadcast import format_message
-
-        prev: bytes | None = None
-
-        try:
-            red = get_redis_client()
-            if save:
-                prev = red.set("WELCOME_MESSAGE", message, get=True)  # type: ignore
-            else:
-                prev = red.get("WELCOME_MESSAGE")  # type:ignore
-            red.expire("WELCOME_MESSAGE", 60 * 60 * 24 * 7)
-        except Exception:
-            logger.exception("Can't save message in redis: %s", message)
 
         try:
             formatted = format_message(self, message)
         except Exception:
             logger.exception("Unable to format message")
             formatted = message
+
+        prev: bytes | None = None
+        try:
+            red = get_redis_client()
+            prev = red.set("WELCOME_MESSAGE", message, get=True)  # type: ignore
+        except Exception:
+            logger.exception("Can't save message in redis: %s", message)
 
         super().set_welcome_message(formatted)
         return prev.decode() if prev else ""
