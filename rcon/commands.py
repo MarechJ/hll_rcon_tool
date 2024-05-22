@@ -540,8 +540,8 @@ class ServerCtl:
     def set_idle_autokick_time(self, minutes) -> bool:
         return self._str_request(f"setkickidletime {minutes}", log_info=True) == SUCCESS
 
-    def set_max_ping_autokick(self, max_ms) -> str:
-        return self._str_request(f"sethighping {max_ms}", log_info=True)
+    def set_max_ping_autokick(self, max_ms) -> bool:
+        return self._str_request(f"sethighping {max_ms}", log_info=True) == SUCCESS
 
     def set_autobalance_threshold(self, max_diff: int):
         return (

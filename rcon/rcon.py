@@ -914,7 +914,7 @@ class Rcon(ServerCtl):
     def get_max_ping_autokick(self) -> int:
         return int(super().get_max_ping_autokick())
 
-    def set_max_ping_autokick(self, max_ms) -> str:
+    def set_max_ping_autokick(self, max_ms) -> bool:
         with invalidates(Rcon.get_max_ping_autokick):
             return super().set_max_ping_autokick(max_ms)
 
