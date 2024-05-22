@@ -4,6 +4,7 @@ import re
 from concurrent.futures import Future, ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
 from functools import cached_property
+from itertools import chain
 from time import sleep
 from typing import Any, Iterable, Literal, Optional
 
@@ -11,7 +12,7 @@ from dateutil import parser
 
 import rcon.steam_utils
 from rcon.cache_utils import get_redis_client, invalidates, ttl_cache
-from rcon.commands import CommandFailedError, ServerCtl, VipId
+from rcon.commands import SUCCESS, CommandFailedError, ServerCtl, VipId
 from rcon.maps import UNKNOWN_MAP_NAME, Layer, is_server_loading_map, parse_layer
 from rcon.models import PlayerID, PlayerVIP, enter_session
 from rcon.player_history import (
@@ -843,14 +844,14 @@ class Rcon(ServerCtl):
         with invalidates(Rcon.get_map, Rcon.get_next_map):
             try:
                 res = super().set_map(map_name)
-                if res != "SUCCESS":
+                if res != SUCCESS:
                     raise CommandFailedError(res)
             except CommandFailedError:
                 maps = [map_.id for map_ in self.get_map_rotation()]
                 self.add_map_to_rotation(
                     map_name, maps[len(maps) - 1], maps.count(maps[len(maps) - 1])
                 )
-                if res := super().set_map(map_name) != "SUCCESS":
+                if res := super().set_map(map_name) != SUCCESS:
                     raise CommandFailedError(res)
 
     @ttl_cache(ttl=10)
@@ -1080,14 +1081,17 @@ class Rcon(ServerCtl):
         with invalidates(self.get_votekick_enabled):
             return super().set_votekick_enabled("on" if value else "off")
 
-    def set_votekick_thresholds(self, threshold_pairs: str) -> None:
-        # TODO: use proper data structure
+    def set_votekick_thresholds(
+        self, threshold_pairs: list[tuple[int, int]]
+    ) -> str | bool:
         with invalidates(self.get_votekick_thresholds):
-            res = super().set_votekick_thresholds(threshold_pairs)
-            logger.info("Threshold res %s", res)
-            if res.lower().startswith("error"):
+            flattened = [str(val) for val in chain.from_iterable(threshold_pairs)]
+            res = super().set_votekick_thresholds(",".join(flattened))
+            if res != SUCCESS:
                 logger.error("Unable to set votekick threshold: %s", res)
                 raise CommandFailedError(res)
+            else:
+                return res == SUCCESS
 
     def reset_votekick_thresholds(self) -> bool:
         with invalidates(self.get_votekick_thresholds):
@@ -1268,7 +1272,7 @@ class Rcon(ServerCtl):
         with invalidates(Rcon.get_map_rotation, Rcon.get_next_map):
             for map_name in map_names:
                 super().remove_map_from_rotation(map_name)
-            return "SUCCESS"
+            return SUCCESS
 
     def add_maps_to_rotation(self, map_names: list[str]) -> list[tuple[str, str]]:
         """Add the given maps to the rotation, returns the game server response for each map"""
