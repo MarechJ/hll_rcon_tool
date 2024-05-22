@@ -552,8 +552,10 @@ class ServerCtl:
     def set_team_switch_cooldown(self, minutes):
         return self._str_request(f"setteamswitchcooldown {minutes}", log_info=True)
 
-    def set_queue_length(self, num):
-        return self._str_request(f"setmaxqueuedplayers {num}", log_info=True)
+    def set_queue_length(self, value: int) -> bool:
+        return (
+            self._str_request(f"setmaxqueuedplayers {value}", log_info=True) == SUCCESS
+        )
 
     def set_vip_slots_num(self, num):
         return self._str_request(f"setnumvipslots {num}", log_info=True)
