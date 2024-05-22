@@ -584,11 +584,16 @@ class ServerCtl:
     def reset_votekick_thresholds(self) -> bool:
         return self._str_request(f"resetvotekickthreshold", log_info=True) == SUCCESS
 
-    def switch_player_on_death(self, player_name) -> str:
-        return self._str_request(f"switchteamondeath {player_name}", log_info=True)
+    def switch_player_on_death(self, player_name) -> bool:
+        return (
+            self._str_request(f"switchteamondeath {player_name}", log_info=True)
+            == SUCCESS
+        )
 
-    def switch_player_now(self, player_name) -> str:
-        return self._str_request(f"switchteamnow {player_name}", log_info=True)
+    def switch_player_now(self, player_name: str) -> bool:
+        return (
+            self._str_request(f"switchteamnow {player_name}", log_info=True) == SUCCESS
+        )
 
     def add_map_to_rotation(
         self,

@@ -1128,10 +1128,10 @@ class Rcon(ServerCtl):
         )
         return res
 
-    def switch_player_now(self, player_name, by) -> str:
+    def switch_player_now(self, player_name: str) -> bool:
         return super().switch_player_now(player_name)
 
-    def switch_player_on_death(self, player_name, by) -> str:
+    def switch_player_on_death(self, player_name, by) -> bool:
         return super().switch_player_on_death(player_name)
 
     def kick(self, player_name, reason, by, player_id: str | None = None) -> bool:
