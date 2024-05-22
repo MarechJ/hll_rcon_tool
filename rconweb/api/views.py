@@ -5,8 +5,9 @@ import sys
 import traceback
 from functools import wraps
 from subprocess import PIPE, run
-from typing import Callable
+from typing import Any, Callable
 
+import pydantic
 from django.contrib.auth.decorators import permission_required
 from django.http import (
     HttpRequest,
@@ -217,6 +218,8 @@ def expose_api_endpoint(
         failure = False
         others = None
         error: str | None = None
+        errors_as_json: bool = False
+        res: Any = None
         data = _get_data(request)
 
         json_invalid_content_type_error = f"InvalidContentType: {request.method} {request.path} was called with {request.content_type}, expected one of {','.join(['application/json'])}"
@@ -230,6 +233,8 @@ def expose_api_endpoint(
         # This is a total hack to avoid having to name every single parameter for
         # every single user config endpoint
         if "kwargs" in parameters.keys():
+            if data.pop("errors_as_json", None):
+                errors_as_json = True
             arguments = data
             arguments["by"] = request.user.username
         else:
@@ -267,10 +272,16 @@ def expose_api_endpoint(
             ):
                 audit(command_name, request, arguments)
 
+        # This is a bit janky but catch any UserConfig validation errors that have bubbled up and convert
+        # the error message as required
+        except pydantic.ValidationError as e:
+            if errors_as_json:
+                error = e.json()
+            else:
+                error = str(e)
         except CommandFailedError as e:
             failure = True
             error = e.args[0] if e.args else None
-            res = None
 
         response = RconJsonResponse(
             dict(

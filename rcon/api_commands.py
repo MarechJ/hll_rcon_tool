@@ -116,7 +116,6 @@ class RconAPI(Rcon):
         model: Type[BaseUserConfig],
         data: dict[str, Any] | BaseUserConfig,
         dry_run: bool = True,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
     ):
         old_model = model.load_from_db()
@@ -124,7 +123,6 @@ class RconAPI(Rcon):
             model=model,
             data=data,
             dry_run=dry_run,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -539,7 +537,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -549,7 +546,6 @@ class RconAPI(Rcon):
             model=VoteMapUserConfig,
             data=config or kwargs,
             dry_run=True,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -557,7 +553,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -567,7 +562,6 @@ class RconAPI(Rcon):
             model=VoteMapUserConfig,
             data=config or kwargs,
             dry_run=False,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -578,7 +572,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -588,7 +581,6 @@ class RconAPI(Rcon):
             model=AutoBroadcastUserConfig,
             data=config or kwargs,
             dry_run=True,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -596,7 +588,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -606,7 +597,6 @@ class RconAPI(Rcon):
             model=AutoBroadcastUserConfig,
             data=config or kwargs,
             dry_run=False,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -617,7 +607,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -627,7 +616,6 @@ class RconAPI(Rcon):
             model=AutoVoteKickUserConfig,
             data=config or kwargs,
             dry_run=True,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -635,7 +623,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -645,7 +632,6 @@ class RconAPI(Rcon):
             model=AutoVoteKickUserConfig,
             data=config or kwargs,
             dry_run=False,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -656,7 +642,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -666,7 +651,6 @@ class RconAPI(Rcon):
             model=AutoModLevelUserConfig,
             data=config or kwargs,
             dry_run=True,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -674,7 +658,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -684,7 +667,6 @@ class RconAPI(Rcon):
             model=AutoModLevelUserConfig,
             data=config or kwargs,
             dry_run=False,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -695,7 +677,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -705,7 +686,6 @@ class RconAPI(Rcon):
             model=AutoModNoLeaderUserConfig,
             data=config or kwargs,
             dry_run=True,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -713,7 +693,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -723,7 +702,6 @@ class RconAPI(Rcon):
             model=AutoModNoLeaderUserConfig,
             data=config or kwargs,
             dry_run=False,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -734,7 +712,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -744,7 +721,6 @@ class RconAPI(Rcon):
             model=AutoModSeedingUserConfig,
             data=config or kwargs,
             dry_run=True,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -752,7 +728,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         user_config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -762,7 +737,6 @@ class RconAPI(Rcon):
             model=AutoModSeedingUserConfig,
             data=user_config or kwargs,
             dry_run=False,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -773,7 +747,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -783,7 +756,6 @@ class RconAPI(Rcon):
             model=AutoModNoSoloTankUserConfig,
             data=config or kwargs,
             dry_run=True,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -791,7 +763,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -801,7 +772,6 @@ class RconAPI(Rcon):
             model=AutoModNoSoloTankUserConfig,
             data=config or kwargs,
             dry_run=False,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -812,7 +782,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -822,7 +791,6 @@ class RconAPI(Rcon):
             model=BanTeamKillOnConnectUserConfig,
             data=config or kwargs,
             dry_run=True,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -830,7 +798,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -840,7 +807,6 @@ class RconAPI(Rcon):
             model=BanTeamKillOnConnectUserConfig,
             data=config or kwargs,
             dry_run=False,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -853,7 +819,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -863,7 +828,6 @@ class RconAPI(Rcon):
             model=RealVipUserConfig,
             data=config or kwargs,
             dry_run=True,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -871,7 +835,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -881,7 +844,6 @@ class RconAPI(Rcon):
             model=RealVipUserConfig,
             data=config or kwargs,
             dry_run=False,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -892,7 +854,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -902,7 +863,6 @@ class RconAPI(Rcon):
             model=CameraNotificationUserConfig,
             data=config or kwargs,
             dry_run=False,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -910,7 +870,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -920,7 +879,6 @@ class RconAPI(Rcon):
             model=CameraNotificationUserConfig,
             data=config or kwargs,
             dry_run=True,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -931,7 +889,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -941,7 +898,6 @@ class RconAPI(Rcon):
             model=ExpiredVipsUserConfig,
             data=config or kwargs,
             dry_run=False,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -949,7 +905,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -959,7 +914,6 @@ class RconAPI(Rcon):
             model=ExpiredVipsUserConfig,
             data=config or kwargs,
             dry_run=True,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -970,7 +924,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -980,7 +933,6 @@ class RconAPI(Rcon):
             model=GtxServerNameChangeUserConfig,
             data=config or kwargs,
             dry_run=False,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -988,7 +940,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -998,7 +949,6 @@ class RconAPI(Rcon):
             model=GtxServerNameChangeUserConfig,
             data=config or kwargs,
             dry_run=True,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -1009,7 +959,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -1019,7 +968,6 @@ class RconAPI(Rcon):
             model=LogLineWebhookUserConfig,
             data=config or kwargs,
             dry_run=False,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -1027,7 +975,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -1037,7 +984,6 @@ class RconAPI(Rcon):
             model=LogLineWebhookUserConfig,
             data=config or kwargs,
             dry_run=True,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -1048,7 +994,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -1058,7 +1003,6 @@ class RconAPI(Rcon):
             model=NameKickUserConfig,
             data=config or kwargs,
             dry_run=False,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -1066,7 +1010,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -1076,7 +1019,6 @@ class RconAPI(Rcon):
             model=NameKickUserConfig,
             data=config or kwargs,
             dry_run=True,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -1087,7 +1029,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -1097,7 +1038,6 @@ class RconAPI(Rcon):
             model=RconConnectionSettingsUserConfig,
             data=config or kwargs,
             dry_run=False,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -1105,7 +1045,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -1115,7 +1054,6 @@ class RconAPI(Rcon):
             model=RconConnectionSettingsUserConfig,
             data=config or kwargs,
             dry_run=True,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -1126,7 +1064,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -1136,7 +1073,6 @@ class RconAPI(Rcon):
             model=RconServerSettingsUserConfig,
             data=config or kwargs,
             dry_run=False,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -1144,7 +1080,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -1154,7 +1089,6 @@ class RconAPI(Rcon):
             model=RconServerSettingsUserConfig,
             data=config or kwargs,
             dry_run=True,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -1165,7 +1099,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -1175,7 +1108,6 @@ class RconAPI(Rcon):
             model=ScorebotUserConfig,
             data=config or kwargs,
             dry_run=False,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -1183,7 +1115,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -1193,7 +1124,6 @@ class RconAPI(Rcon):
             model=ScorebotUserConfig,
             data=config or kwargs,
             dry_run=True,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -1204,7 +1134,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -1214,7 +1143,6 @@ class RconAPI(Rcon):
             model=StandardBroadcastMessagesUserConfig,
             data=config or kwargs,
             dry_run=False,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -1222,7 +1150,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -1232,7 +1159,6 @@ class RconAPI(Rcon):
             model=StandardBroadcastMessagesUserConfig,
             data=config or kwargs,
             dry_run=True,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -1243,7 +1169,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -1253,7 +1178,6 @@ class RconAPI(Rcon):
             model=StandardPunishmentMessagesUserConfig,
             data=config or kwargs,
             dry_run=False,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -1261,7 +1185,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -1271,7 +1194,6 @@ class RconAPI(Rcon):
             model=StandardPunishmentMessagesUserConfig,
             data=config or kwargs,
             dry_run=True,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -1282,7 +1204,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -1292,7 +1213,6 @@ class RconAPI(Rcon):
             model=StandardWelcomeMessagesUserConfig,
             data=config or kwargs,
             dry_run=False,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -1300,7 +1220,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -1310,7 +1229,6 @@ class RconAPI(Rcon):
             model=StandardWelcomeMessagesUserConfig,
             data=config or kwargs,
             dry_run=True,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -1321,7 +1239,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -1331,7 +1248,6 @@ class RconAPI(Rcon):
             model=SteamUserConfig,
             data=config or kwargs,
             dry_run=False,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -1339,7 +1255,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -1349,7 +1264,6 @@ class RconAPI(Rcon):
             model=SteamUserConfig,
             data=config or kwargs,
             dry_run=True,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -1360,7 +1274,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -1370,7 +1283,6 @@ class RconAPI(Rcon):
             model=VacGameBansUserConfig,
             data=config or kwargs,
             dry_run=False,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -1378,7 +1290,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -1388,7 +1299,6 @@ class RconAPI(Rcon):
             model=VacGameBansUserConfig,
             data=config or kwargs,
             dry_run=True,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -1399,7 +1309,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -1409,7 +1318,6 @@ class RconAPI(Rcon):
             model=AdminPingWebhooksUserConfig,
             data=config or kwargs,
             dry_run=False,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -1417,7 +1325,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -1427,7 +1334,6 @@ class RconAPI(Rcon):
             model=AdminPingWebhooksUserConfig,
             data=config or kwargs,
             dry_run=True,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -1438,7 +1344,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -1448,7 +1353,6 @@ class RconAPI(Rcon):
             model=AuditWebhooksUserConfig,
             data=config or kwargs,
             dry_run=False,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -1456,7 +1360,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -1466,7 +1369,6 @@ class RconAPI(Rcon):
             model=AuditWebhooksUserConfig,
             data=config or kwargs,
             dry_run=True,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -1477,7 +1379,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -1487,7 +1388,6 @@ class RconAPI(Rcon):
             model=CameraWebhooksUserConfig,
             data=config or kwargs,
             dry_run=False,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -1495,7 +1395,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -1505,7 +1404,6 @@ class RconAPI(Rcon):
             model=CameraWebhooksUserConfig,
             data=config or kwargs,
             dry_run=True,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -1516,7 +1414,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -1526,7 +1423,6 @@ class RconAPI(Rcon):
             model=ChatWebhooksUserConfig,
             data=config or kwargs,
             dry_run=False,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -1534,7 +1430,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -1544,7 +1439,6 @@ class RconAPI(Rcon):
             model=ChatWebhooksUserConfig,
             data=config or kwargs,
             dry_run=True,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -1555,7 +1449,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -1565,7 +1458,6 @@ class RconAPI(Rcon):
             model=KillsWebhooksUserConfig,
             data=config or kwargs,
             dry_run=False,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -1573,7 +1465,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -1583,7 +1474,6 @@ class RconAPI(Rcon):
             model=KillsWebhooksUserConfig,
             data=config or kwargs,
             dry_run=True,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -1594,7 +1484,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -1604,7 +1493,6 @@ class RconAPI(Rcon):
             model=WatchlistWebhooksUserConfig,
             data=config or kwargs,
             dry_run=False,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -1612,7 +1500,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -1622,7 +1509,6 @@ class RconAPI(Rcon):
             model=WatchlistWebhooksUserConfig,
             data=config or kwargs,
             dry_run=True,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -1633,7 +1519,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -1643,7 +1528,6 @@ class RconAPI(Rcon):
             model=ChatCommandsUserConfig,
             data=config or kwargs,
             dry_run=False,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -1651,7 +1535,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -1661,7 +1544,6 @@ class RconAPI(Rcon):
             model=ChatCommandsUserConfig,
             data=config or kwargs,
             dry_run=True,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -1672,7 +1554,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -1682,7 +1563,6 @@ class RconAPI(Rcon):
             model=LogStreamUserConfig,
             data=config or kwargs,
             dry_run=False,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
@@ -1690,7 +1570,6 @@ class RconAPI(Rcon):
         self,
         by: str,
         config: dict[str, Any] | BaseUserConfig | None = None,
-        errors_as_json: bool = False,
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
@@ -1700,7 +1579,6 @@ class RconAPI(Rcon):
             model=LogStreamUserConfig,
             data=config or kwargs,
             dry_run=True,
-            errors_as_json=errors_as_json,
             reset_to_default=reset_to_default,
         )
 
