@@ -569,11 +569,11 @@ class ServerCtl:
             f'broadcast "{message}"', log_info=True, can_fail=False
         )
 
-    def set_votekick_enabled(self, value: str) -> str:
+    def set_votekick_enabled(self, value: str) -> bool:
         """
         String bool is on / off
         """
-        return self._str_request(f"setvotekickenabled {value}")
+        return self._str_request(f"setvotekickenabled {value}") == SUCCESS
 
     def set_votekick_thresholds(self, threshold_pairs: str) -> str:
         """

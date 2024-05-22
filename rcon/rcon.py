@@ -1076,7 +1076,7 @@ class Rcon(ServerCtl):
         with invalidates(self.get_autobalance_enabled):
             return super().set_autobalance_enabled("on" if value else "off")
 
-    def set_votekick_enabled(self, value: bool) -> str:
+    def set_votekick_enabled(self, value: bool) -> bool:
         with invalidates(self.get_votekick_enabled):
             return super().set_votekick_enabled("on" if value else "off")
 
