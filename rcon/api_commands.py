@@ -379,7 +379,7 @@ class RconAPI(Rcon):
     @staticmethod
     def toggle_player_watch(
         player_id: str,
-        audit_name: str,
+        audit_name: str | None,
         add: bool,
         reason: str | None = None,
         player_name: str | None = None,
@@ -414,15 +414,12 @@ class RconAPI(Rcon):
     def unwatch_player(
         self,
         player_id: str,
-        by: str,
-        reason: str | None = None,
-        player_name: str | None = None,
     ) -> bool:
         return self.toggle_player_watch(
             player_id=player_id,
-            player_name=player_name,
-            reason=reason,
-            audit_name=by,
+            player_name=None,
+            reason=None,
+            audit_name=None,
             add=False,
         )
 
