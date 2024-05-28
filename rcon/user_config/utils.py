@@ -63,7 +63,7 @@ class InvalidKeysConfigurationError(Exception):
     def __repr__(self) -> str:
         return f"missing keys=({', '.join(self.missing_keys)}) | Extra keys = ({', '.join(self.extra_keys)}) | Mandatory keys=({', '.join(self.mandatory_keys)}) | Provided keys=({', '.join(self.provided_keys)})"
 
-    def asdict(self):
+    def asdict(self) -> dict[str, Any]:
         return {
             "type": InvalidKeysConfigurationError.__name__,
             "missing_keys": sorted([k for k in self.missing_keys]),

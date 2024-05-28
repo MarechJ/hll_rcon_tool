@@ -29,6 +29,7 @@ from rcon.types import (
     PublicInfoType,
 )
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
+from rcon.user_config.utils import InvalidKeysConfigurationError
 from rcon.utils import MapsHistory, get_server_number
 from rcon.vote_map import VoteMap
 from rconweb.settings import TAG_VERSION
@@ -252,6 +253,11 @@ def expose_api_endpoint(
         except pydantic.ValidationError as e:
             if errors_as_json:
                 error = e.json()
+            else:
+                error = str(e)
+        except InvalidKeysConfigurationError as e:
+            if errors_as_json:
+                error = e.asdict()
             else:
                 error = str(e)
         except CommandFailedError as e:
