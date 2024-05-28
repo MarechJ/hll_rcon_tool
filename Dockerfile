@@ -3,10 +3,12 @@ FROM python:3.11-slim
 WORKDIR /code
 RUN apt-get update -y && apt-get install -y cron logrotate git procps
 COPY requirements.txt .
-RUN pip install -r requirements.txt
-RUN pip install gunicorn
-RUN pip install daphne
-RUN pip install supervisor
+# Save Docker container disk space since the cache is useless there
+# and don't generate .pyc
+RUN pip install -r requirements.txt --no-compile --no-cache-dir
+RUN pip install gunicorn --no-compile --no-cache-dir
+RUN pip install daphne --no-compile --no-cache-dir
+RUN pip install supervisor --no-compile --no-cache-dir
 COPY . .
 ENV PYTHONPATH /code/
 RUN chmod +x entrypoint.sh
