@@ -25,7 +25,7 @@ def _get_data(request: HttpRequest) -> dict[Any, Any] | Any:
             parsed_get[key] = v
 
         return parsed_get
-    # This is only used (currently) by the async_upload_vips endpoint which doesn't
+    # This is only used (currently) by the upload_vips endpoint which doesn't
     # include a parseable JSON body, but form data and it pulls the data itself
     elif request.method == "POST" and request.FILES:
         return {}

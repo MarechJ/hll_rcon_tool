@@ -84,22 +84,22 @@ const VipUpload = ({ classes }) => {
     const formData = new FormData();
     formData.append("File", selectedFile);
 
-    fetch(`${process.env.REACT_APP_API_URL}async_upload_vips`, {
+    fetch(`${process.env.REACT_APP_API_URL}upload_vips`, {
       method: "POST",
       body: formData,
       mode: "cors", // no-cors, *cors, same-origin
       cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
       credentials: "include", // include, *same-origin, omit
     })
-      .then((res) => showResponse(res, "upload_vip", true))
+      .then((res) => showResponse(res, "upload_vips", true))
       .then((res) => (!res.failed ? pollResult() : ""))
       .catch(handle_http_errors);
     setIsFilePicked(false);
   };
 
   const getResult = () =>
-    get("async_upload_vips_result")
-      .then((res) => showResponse(res, "async_upload_vips_result", false))
+    get("upload_vips_result")
+      .then((res) => showResponse(res, "upload_vips_result", false))
       .then((res) => {
         setResult(JSON.stringify(res.result, null, 2));
         console.log(res);
