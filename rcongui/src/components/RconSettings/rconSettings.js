@@ -407,11 +407,8 @@ class RconSettings extends React.Component {
   }
 
   async reconnectToGameServer() {
-    return postData(
-      `${process.env.REACT_APP_API_URL}do_reconnect_gameserver`,
-      {}
-    )
-      .then((res) => showResponse(res, "do_reconnect_gameserver", true))
+    return postData(`${process.env.REACT_APP_API_URL}reconnect_gameserver`, {})
+      .then((res) => showResponse(res, "reconnect_gameserver", true))
       .catch(handle_http_errors);
   }
 

@@ -188,7 +188,7 @@ endpoints: list[tuple[str, Callable]] = [
     ("describe_real_vip_config", user_settings.describe_real_vip_config),
     ("get_all_discord_webhooks_config", user_settings.get_all_discord_webhooks_config),
     ("get_all_standard_message_config", user_settings.get_all_standard_message_config),
-    ("do_reconnect_gameserver", views.restart_gunicorn),
+    ("reconnect_gameserver", views.restart_gunicorn),
 ] + [(name, func) for name, func in views.commands]
 
 # Expose endpoints though Django
