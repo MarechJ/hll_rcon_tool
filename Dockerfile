@@ -6,9 +6,7 @@ COPY requirements.txt .
 # Save Docker container disk space since the cache is useless there
 # and don't generate .pyc
 RUN pip install -r requirements.txt --no-compile --no-cache-dir
-RUN pip install gunicorn --no-compile --no-cache-dir
-RUN pip install daphne --no-compile --no-cache-dir
-RUN pip install supervisor --no-compile --no-cache-dir
+RUN pip install gunicorn daphne supervisor --no-compile --no-cache-dir
 COPY . .
 ENV PYTHONPATH /code/
 RUN chmod +x entrypoint.sh
