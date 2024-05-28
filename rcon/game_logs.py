@@ -336,9 +336,10 @@ class LogStream:
         """Return a list of logs more recent than the last_seen ID"""
         try:
             if last_seen is None:
-                logs: list[tuple[StreamID, StructuredLogLineWithMetaData]] = [
-                    self.log_stream.tail()
-                ]
+                logs: list[tuple[StreamID, StructuredLogLineWithMetaData]] = []
+                tail_log: tuple[StreamID, StructuredLogLineWithMetaData] = self.log_stream.tail()
+                if tail_log:
+                    logs.append(tail_log)
             else:
                 logs: list[tuple[StreamID, StructuredLogLineWithMetaData]] = (
                     self.log_stream.read(last_id=last_seen, block_ms=block_ms)
