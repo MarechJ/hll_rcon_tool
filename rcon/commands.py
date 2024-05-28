@@ -633,16 +633,19 @@ class ServerCtl:
     @_escape_params
     def temp_ban(
         self,
-        player_name=None,
-        player_id=None,
-        duration_hours=2,
-        reason="",
-        admin_name="",
-    ) -> str:
+        player_name: str | None = None,
+        player_id: str | None = None,
+        duration_hours: int = 2,
+        reason: str = "",
+        admin_name: str = "",
+    ) -> bool:
         reason = convert_tabs_to_spaces(reason)
-        return self._str_request(
-            f'tempban "{player_id or player_name}" {duration_hours} "{reason}" "{admin_name}"',
-            log_info=True,
+        return (
+            self._str_request(
+                f'tempban "{player_id or player_name}" {duration_hours} "{reason}" "{admin_name}"',
+                log_info=True,
+            )
+            == SUCCESS
         )
 
     @_escape_params

@@ -1149,8 +1149,13 @@ class Rcon(ServerCtl):
         return res
 
     def temp_ban(
-        self, player_name=None, player_id=None, duration_hours=2, reason="", by=""
-    ) -> str:
+        self,
+        player_name: str | None = None,
+        player_id: str | None = None,
+        duration_hours: int = 2,
+        reason: str = "",
+        by: str = "",
+    ) -> bool:
         with invalidates(Rcon.get_players, Rcon.get_temp_bans):
             if player_name and re.match(r"\d+", player_name):
                 info = self.get_player_info(player_name)
