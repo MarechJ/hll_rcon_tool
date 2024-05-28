@@ -44,6 +44,8 @@ def get_api_documentation(request):
         for k, v in sig.parameters.items():
             if k == "request":
                 continue
+            elif k == "self":
+                continue
             expanded_args = {
                 "default": _get_empty(v.default),
                 "annotation": _get_empty(v.annotation),
