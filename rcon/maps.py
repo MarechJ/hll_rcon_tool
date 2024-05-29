@@ -22,6 +22,8 @@ UNKNOWN_MAP_NAME = "unknown"
 UNKNOWN_MAP_TAG = "UNK"
 
 
+# TypedDicts to represent the serialized output from the API and
+# pydantic model dumps to python dicts
 class MapType(typing_extensions.TypedDict):
     id: str
     name: str
@@ -43,7 +45,18 @@ class LayerType(typing_extensions.TypedDict):
     image_url: str | None
 
 
+class FactionType(typing_extensions.TypedDict):
+    name: str
+    team: str
+
+
 # Sourced with some minor modifications from https://github.com/timraay/Gamewatch/blob/master/
+
+
+# These pydantic models/enums can easily be copied in whole when writing Python code that
+# interacts with the CRCON API and enables much easier parsing of results
+# for example where result is a plain python dictionary containing a serialized Layer:
+# Layer.model_validate(result)
 class GameMode(str, Enum):
     WARFARE = "warfare"
     OFFENSIVE = "offensive"
@@ -181,7 +194,7 @@ class Layer(pydantic.BaseModel):
         out = self.map.pretty_name
         if self.game_mode == GameMode.OFFENSIVE:
             out += " Off."
-            if self.attackers:
+            if self.attackers and self.attacking_faction:
                 out += f" {self.attacking_faction.name.upper()}"
         elif self.game_mode.is_small():
             # TODO: Remove once more Skirmish modes release
