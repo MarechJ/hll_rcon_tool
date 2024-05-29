@@ -27,12 +27,12 @@ const DraggableListItem = ({ item, index, onRemove }) => {
   const getLabels = (layer) => {
     const labels = [];
 
-    if (layer.gamemode === "offensive") {
+    if (layer.game_mode === "offensive") {
       labels.push("offensive");
     } else if (
-      layer.gamemode === "control" ||
-      layer.gamemode === "phased" ||
-      layer.gamemode === "majority"
+      layer.game_mode === "control" ||
+      layer.game_mode === "phased" ||
+      layer.game_mode === "majority"
     ) {
       labels.push("skirmish");
     } else {

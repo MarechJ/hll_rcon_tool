@@ -9,7 +9,7 @@ from rcon.maps import (
     MAPS,
     UNKNOWN_MAP_NAME,
     Environment,
-    Gamemode,
+    GameMode,
     Layer,
     Team,
     is_server_loading_map,
@@ -20,41 +20,41 @@ from rcon.maps import (
 logger = getLogger(__name__)
 
 MOR_WARFARE_DAY = Layer(
-    id="mortain_warfare_day", map=MAPS["mortain"], gamemode=Gamemode.WARFARE
+    id="mortain_warfare_day", map=MAPS["mortain"], game_mode=GameMode.WARFARE
 )
 
 MOR_WARFARE_OVERCAST = Layer(
     id="mortain_warfare_overcast",
     map=MAPS["mortain"],
-    gamemode=Gamemode.WARFARE,
+    game_mode=GameMode.WARFARE,
     environment=Environment.OVERCAST,
 )
 
 MOR_US_OFFENSIVE_DAY = Layer(
     id="mortain_offensiveUS_day",
     map=MAPS["mortain"],
-    gamemode=Gamemode.OFFENSIVE,
+    game_mode=GameMode.OFFENSIVE,
     attackers=Team.ALLIES,
 )
 
 MOR_US_OFFENSIVE_OVERCAST = Layer(
     id="mortain_offensiveUS_overcast",
     map=MAPS["mortain"],
-    gamemode=Gamemode.OFFENSIVE,
+    game_mode=GameMode.OFFENSIVE,
     attackers=Team.ALLIES,
 )
 
 MOR_GER_OFFENSIVE_DAY = Layer(
     id="mortain_offensiveger_day",
     map=MAPS["mortain"],
-    gamemode=Gamemode.OFFENSIVE,
+    game_mode=GameMode.OFFENSIVE,
     attackers=Team.AXIS,
 )
 
 MOR_GER_OFFENSIVE_OVERCAST = Layer(
     id="mortain_offensiveger_overcast",
     map=MAPS["mortain"],
-    gamemode=Gamemode.OFFENSIVE,
+    game_mode=GameMode.OFFENSIVE,
     attackers=Team.AXIS,
     environment=Environment.OVERCAST,
 )
@@ -62,12 +62,12 @@ MOR_GER_OFFENSIVE_OVERCAST = Layer(
 MOR_CONTROL_DAY = Layer(
     id="mortain_skirmish_day",
     map=MAPS["mortain"],
-    gamemode=Gamemode.CONTROL,
+    game_mode=GameMode.CONTROL,
 )
 MOR_CONTROL_OVERCAST = Layer(
     id="mortain_skirmish_overcast",
     map=MAPS["mortain"],
-    gamemode=Gamemode.CONTROL,
+    game_mode=GameMode.CONTROL,
     environment=Environment.OVERCAST,
 )
 
@@ -75,39 +75,39 @@ MOR_CONTROL_OVERCAST = Layer(
 SMDM_WARFARE = Layer(
     id="stmariedumont_warfare",
     map=MAPS["stmariedumont"],
-    gamemode=Gamemode.WARFARE,
+    game_mode=GameMode.WARFARE,
 )
 
 SMDM_WARFARE_NIGHT = Layer(
     id="stmariedumont_warfare_night",
     map=MAPS["stmariedumont"],
-    gamemode=Gamemode.WARFARE,
+    game_mode=GameMode.WARFARE,
     environment=Environment.NIGHT,
 )
 
 SME_WARFARE = Layer(
     id="stmereeglise_warfare",
     map=MAPS["stmereeglise"],
-    gamemode=Gamemode.WARFARE,
+    game_mode=GameMode.WARFARE,
 )
 
 SMDM_SKIRMISH_DAY = Layer(
     id="SMDM_S_1944_Day_P_Skirmish",
     map=MAPS["stmariedumont"],
-    gamemode=Gamemode.CONTROL,
+    game_mode=GameMode.CONTROL,
 )
 
 SMDM_SKIRMISH_NIGHT = Layer(
     id="SMDM_S_1944_Night_P_Skirmish",
     map=MAPS["stmariedumont"],
-    gamemode=Gamemode.CONTROL,
+    game_mode=GameMode.CONTROL,
     environment=Environment.NIGHT,
 )
 
 SMDM_SKIRMISH_RAIN = Layer(
     id="SMDM_S_1944_Rain_P_Skirmish",
     map=MAPS["stmariedumont"],
-    gamemode=Gamemode.CONTROL,
+    game_mode=GameMode.CONTROL,
     environment=Environment.RAIN,
 )
 

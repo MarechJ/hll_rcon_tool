@@ -161,18 +161,18 @@ def _suggest_next_maps(
     categorized_maps = categorize_maps(remaining_maps)
 
     warfares: list[maps.Layer] = _get_random_map_selection(
-        categorized_maps[maps.Gamemode.WARFARE], num_warfare
+        categorized_maps[maps.GameMode.WARFARE], num_warfare
     )
     offensives: list[maps.Layer] = _get_random_map_selection(
-        categorized_maps[maps.Gamemode.OFFENSIVE], num_offensive
+        categorized_maps[maps.GameMode.OFFENSIVE], num_offensive
     )
     skirmishes_control: list[maps.Layer] = _get_random_map_selection(
-        categorized_maps[maps.Gamemode.CONTROL], num_skirmish_control
+        categorized_maps[maps.GameMode.CONTROL], num_skirmish_control
     )
 
     if (
         not allow_consecutive_offensive
-        and current_map.gamemode == maps.Gamemode.OFFENSIVE
+        and current_map.game_mode == maps.GameMode.OFFENSIVE
     ):
         logger.info(
             "Current map %s is offensive. Excluding all offensives from suggestions",
@@ -180,10 +180,10 @@ def _suggest_next_maps(
         )
         offensives = []
 
-    if not allow_consecutive_skirmishes and current_map.gamemode in (
-        maps.Gamemode.CONTROL,
-        maps.Gamemode.PHASED,
-        maps.Gamemode.MAJORITY,
+    if not allow_consecutive_skirmishes and current_map.game_mode in (
+        maps.GameMode.CONTROL,
+        maps.GameMode.PHASED,
+        maps.GameMode.MAJORITY,
     ):
         logger.info(
             "Current map %s is skirmish. Excluding all skirmishes from suggestions",
@@ -253,14 +253,14 @@ class VoteMap:
             categorized = categorize_maps(selection)
             # TODO: these aren't actually used anywhere
             off = VoteMap.join_vote_options(
-                selection=categorized[maps.Gamemode.OFFENSIVE],
+                selection=categorized[maps.GameMode.OFFENSIVE],
                 maps_to_numbers=maps_to_numbers,
                 ranked_votes=ranked_votes,
                 total_votes=len(votes),
                 join_char="  ",
             )
             warfare = VoteMap.join_vote_options(
-                selection=categorized[maps.Gamemode.WARFARE],
+                selection=categorized[maps.GameMode.WARFARE],
                 maps_to_numbers=maps_to_numbers,
                 ranked_votes=ranked_votes,
                 total_votes=len(votes),
@@ -269,31 +269,31 @@ class VoteMap:
             # TODO: include skirmish
 
             vote_string = ""
-            if categorized[maps.Gamemode.WARFARE]:
+            if categorized[maps.GameMode.WARFARE]:
                 vote_options = VoteMap.join_vote_options(
-                    selection=categorized[maps.Gamemode.WARFARE],
+                    selection=categorized[maps.GameMode.WARFARE],
                     maps_to_numbers=maps_to_numbers,
                     ranked_votes=ranked_votes,
                     total_votes=len(votes),
                     join_char="\n",
                 )
                 vote_string = f"WARFARES:\n{vote_options}"
-            if categorized[maps.Gamemode.OFFENSIVE]:
+            if categorized[maps.GameMode.OFFENSIVE]:
                 if vote_string:
                     vote_string += "\n\n"
                 vote_options = VoteMap.join_vote_options(
-                    selection=categorized[maps.Gamemode.OFFENSIVE],
+                    selection=categorized[maps.GameMode.OFFENSIVE],
                     maps_to_numbers=maps_to_numbers,
                     ranked_votes=ranked_votes,
                     total_votes=len(votes),
                     join_char="\n",
                 )
                 vote_string += f"OFFENSIVES:\n{vote_options}"
-            if categorized[maps.Gamemode.CONTROL]:
+            if categorized[maps.GameMode.CONTROL]:
                 if vote_string:
                     vote_string += "\n\n"
                 vote_options = VoteMap.join_vote_options(
-                    selection=categorized[maps.Gamemode.CONTROL],
+                    selection=categorized[maps.GameMode.CONTROL],
                     maps_to_numbers=maps_to_numbers,
                     ranked_votes=ranked_votes,
                     total_votes=len(votes),
@@ -727,13 +727,13 @@ class VoteMap:
             logger.debug(
                 "Not allowing default to offensive, removing all offensive maps"
             )
-            selection = [m for m in selection if m.gamemode != maps.Gamemode.OFFENSIVE]
-            all_maps = [m for m in all_maps if m.gamemode != maps.Gamemode.OFFENSIVE]
+            selection = [m for m in selection if m.game_mode != maps.GameMode.OFFENSIVE]
+            all_maps = [m for m in all_maps if m.game_mode != maps.GameMode.OFFENSIVE]
 
         if not config.allow_default_to_skirmish:
             logger.debug("Not allowing default to skirmish, removing all skirmish maps")
-            selection = [m for m in selection if not m.gamemode.is_small()]
-            all_maps = [m for m in all_maps if not m.gamemode.is_small()]
+            selection = [m for m in selection if not m.game_mode.is_small()]
+            all_maps = [m for m in all_maps if not m.game_mode.is_small()]
 
         if not maps_history:
             choice = random.choice([m for m in self.get_map_whitelist()])
