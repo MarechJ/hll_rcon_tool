@@ -87,17 +87,17 @@ class Environment(str, Enum):
     RAIN = "rain"
 
 
-class _Faction(pydantic.BaseModel):
+class FactionName(Enum):
+    CW = "cw"
+    GB = "gb"
+    GER = "ger"
+    RUS = "rus"
+    US = "us"
+
+
+class Faction(pydantic.BaseModel):
     name: str
     team: Team
-
-
-class Faction(Enum):
-    CW = _Faction(name="gb", team=Team.ALLIES)
-    GB = _Faction(name="gb", team=Team.ALLIES)
-    GER = _Faction(name="ger", team=Team.AXIS)
-    RUS = _Faction(name="rus", team=Team.ALLIES)
-    US = _Faction(name="us", team=Team.ALLIES)
 
 
 class Map(pydantic.BaseModel):
@@ -182,7 +182,7 @@ class Layer(pydantic.BaseModel):
         if self.game_mode == GameMode.OFFENSIVE:
             out += " Off."
             if self.attackers:
-                out += f" {self.attacking_faction.value.name.upper()}"
+                out += f" {self.attacking_faction.name.upper()}"
         elif self.game_mode.is_small():
             # TODO: Remove once more Skirmish modes release
             out += " Skirmish"
@@ -212,8 +212,8 @@ MAPS = {
             tag="",
             pretty_name=UNKNOWN_MAP_NAME,
             shortname=UNKNOWN_MAP_NAME,
-            allies=Faction.US,
-            axis=Faction.GER,
+            allies=Faction(name=FactionName.US.value, team=Team.ALLIES),
+            axis=Faction(name=FactionName.GER.value, team=Team.AXIS),
         ),
         Map(
             id="stmereeglise",
@@ -221,8 +221,8 @@ MAPS = {
             tag="SME",
             pretty_name="St. Mere Eglise",
             shortname="SME",
-            allies=Faction.US,
-            axis=Faction.GER,
+            allies=Faction(name=FactionName.US.value, team=Team.ALLIES),
+            axis=Faction(name=FactionName.GER.value, team=Team.AXIS),
         ),
         Map(
             id="stmariedumont",
@@ -230,8 +230,8 @@ MAPS = {
             tag="BRC",
             pretty_name="St. Marie Du Mont",
             shortname="SMDM",
-            allies=Faction.US,
-            axis=Faction.GER,
+            allies=Faction(name=FactionName.US.value, team=Team.ALLIES),
+            axis=Faction(name=FactionName.GER.value, team=Team.AXIS),
         ),
         Map(
             id="utahbeach",
@@ -239,8 +239,8 @@ MAPS = {
             tag="UTA",
             pretty_name="Utah Beach",
             shortname="Utah",
-            allies=Faction.US,
-            axis=Faction.GER,
+            allies=Faction(name=FactionName.US.value, team=Team.ALLIES),
+            axis=Faction(name=FactionName.GER.value, team=Team.AXIS),
         ),
         Map(
             id="omahabeach",
@@ -248,8 +248,8 @@ MAPS = {
             tag="OMA",
             pretty_name="Omaha Beach",
             shortname="Omaha",
-            allies=Faction.US,
-            axis=Faction.GER,
+            allies=Faction(name=FactionName.US.value, team=Team.ALLIES),
+            axis=Faction(name=FactionName.GER.value, team=Team.AXIS),
         ),
         Map(
             id="purpleheartlane",
@@ -257,8 +257,8 @@ MAPS = {
             tag="PHL",
             pretty_name="Purple Heart Lane",
             shortname="PHL",
-            allies=Faction.US,
-            axis=Faction.GER,
+            allies=Faction(name=FactionName.US.value, team=Team.ALLIES),
+            axis=Faction(name=FactionName.GER.value, team=Team.AXIS),
         ),
         Map(
             id="carentan",
@@ -266,8 +266,8 @@ MAPS = {
             tag="CAR",
             pretty_name="Carentan",
             shortname="Carentan",
-            allies=Faction.US,
-            axis=Faction.GER,
+            allies=Faction(name=FactionName.US.value, team=Team.ALLIES),
+            axis=Faction(name=FactionName.GER.value, team=Team.AXIS),
         ),
         Map(
             id="hurtgenforest",
@@ -275,8 +275,8 @@ MAPS = {
             tag="HUR",
             pretty_name="Hurtgen Forest",
             shortname="Hurtgen",
-            allies=Faction.US,
-            axis=Faction.GER,
+            allies=Faction(name=FactionName.US.value, team=Team.ALLIES),
+            axis=Faction(name=FactionName.GER.value, team=Team.AXIS),
         ),
         Map(
             id="hill400",
@@ -284,8 +284,8 @@ MAPS = {
             tag="HIL",
             pretty_name="Hill 400",
             shortname="Hill 400",
-            allies=Faction.US,
-            axis=Faction.GER,
+            allies=Faction(name=FactionName.US.value, team=Team.ALLIES),
+            axis=Faction(name=FactionName.GER.value, team=Team.AXIS),
         ),
         Map(
             id="foy",
@@ -293,8 +293,8 @@ MAPS = {
             tag="FOY",
             pretty_name="Foy",
             shortname="Foy",
-            allies=Faction.US,
-            axis=Faction.GER,
+            allies=Faction(name=FactionName.US.value, team=Team.ALLIES),
+            axis=Faction(name=FactionName.GER.value, team=Team.AXIS),
         ),
         Map(
             id="kursk",
@@ -302,8 +302,8 @@ MAPS = {
             tag="KUR",
             pretty_name="Kursk",
             shortname="Kursk",
-            allies=Faction.RUS,
-            axis=Faction.GER,
+            allies=Faction(name=FactionName.RUS.value, team=Team.ALLIES),
+            axis=Faction(name=FactionName.GER.value, team=Team.AXIS),
         ),
         Map(
             id="stalingrad",
@@ -311,8 +311,8 @@ MAPS = {
             tag="STA",
             pretty_name="Stalingrad",
             shortname="Stalingrad",
-            allies=Faction.RUS,
-            axis=Faction.GER,
+            allies=Faction(name=FactionName.RUS.value, team=Team.ALLIES),
+            axis=Faction(name=FactionName.GER.value, team=Team.AXIS),
         ),
         Map(
             id="remagen",
@@ -320,8 +320,8 @@ MAPS = {
             tag="REM",
             pretty_name="Remagen",
             shortname="Remagen",
-            allies=Faction.US,
-            axis=Faction.GER,
+            allies=Faction(name=FactionName.US.value, team=Team.ALLIES),
+            axis=Faction(name=FactionName.GER.value, team=Team.AXIS),
         ),
         Map(
             id="kharkov",
@@ -329,8 +329,8 @@ MAPS = {
             tag="KHA",
             pretty_name="Kharkov",
             shortname="Kharkov",
-            allies=Faction.RUS,
-            axis=Faction.GER,
+            allies=Faction(name=FactionName.RUS.value, team=Team.ALLIES),
+            axis=Faction(name=FactionName.GER.value, team=Team.AXIS),
         ),
         Map(
             id="driel",
@@ -338,8 +338,8 @@ MAPS = {
             tag="DRL",
             pretty_name="Driel",
             shortname="Driel",
-            allies=Faction.GB,
-            axis=Faction.GER,
+            allies=Faction(name=FactionName.GB.value, team=Team.ALLIES),
+            axis=Faction(name=FactionName.GER.value, team=Team.AXIS),
         ),
         Map(
             id="elalamein",
@@ -347,8 +347,8 @@ MAPS = {
             tag="ELA",
             pretty_name="El Alamein",
             shortname="Alamein",
-            allies=Faction.GB,
-            axis=Faction.GER,
+            allies=Faction(name=FactionName.GB.value, team=Team.ALLIES),
+            axis=Faction(name=FactionName.GER.value, team=Team.AXIS),
         ),
         Map(
             id="mortain",
@@ -356,8 +356,8 @@ MAPS = {
             tag="MOR",
             pretty_name="Mortain",
             shortname="MOR",
-            allies=Faction.US,
-            axis=Faction.GER,
+            allies=Faction(name=FactionName.US.value, team=Team.ALLIES),
+            axis=Faction(name=FactionName.GER.value, team=Team.AXIS),
         ),
     )
 }
@@ -844,8 +844,8 @@ def parse_layer(layer_name: str | Layer) -> Layer:
             tag=tag,
             pretty_name=tag.capitalize(),
             shortname=tag,
-            allies=Faction.US,
-            axis=Faction.GER,
+            allies=Faction(name=FactionName.US.value, team=Team.ALLIES),
+            axis=Faction(name=FactionName.GER.value, team=Team.AXIS),
         )
 
     try:
@@ -891,8 +891,8 @@ def _parse_legacy_layer(layer_name: str):
             tag=name.upper(),
             pretty_name=name.capitalize(),
             shortname=name.capitalize(),
-            allies=Faction.US,
-            axis=Faction.GER,
+            allies=Faction(name=FactionName.US.value, team=Team.ALLIES),
+            axis=Faction(name=FactionName.GER.value, team=Team.AXIS),
         )
 
     result = Layer(id=layer_name, map=map_, game_mode=GameMode.WARFARE)
