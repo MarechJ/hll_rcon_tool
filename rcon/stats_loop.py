@@ -103,7 +103,8 @@ class PlayerCount(Series):
         super().__init__(*args, **kwargs)
 
     def snapshot(self, rcon):
-        current_players, max_players = rcon.get_slots()
+        slots = rcon.get_slots()
+        current_players = slots["current_players"]
 
         self.client.ts().add(self.NAME, "*", float(current_players))
 

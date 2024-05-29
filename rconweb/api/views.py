@@ -96,7 +96,9 @@ def get_public_info(request):
 
     config = RconServerSettingsUserConfig.load_from_db()
     gamestate = rcon_api.get_gamestate()
-    curr_players, max_players = rcon_api.get_slots()
+    slots = rcon_api.get_slots()
+    current_players = slots["current_players"]
+    max_players = slots["max_players"]
 
     current_map: PublicInfoMapType = {
         "map": gamestate["current_map"],
@@ -132,7 +134,7 @@ def get_public_info(request):
     res: PublicInfoType = {
         "current_map": current_map,
         "next_map": next_map,
-        "player_count": curr_players,
+        "player_count": current_players,
         "max_player_count": max_players,
         "player_count_by_team": players,
         "score": score,

@@ -694,3 +694,8 @@ class PublicInfoType(TypedDict):
     time_remaining: float
     vote_status: VoteMapResultType | None
     name: PublicInfoNameType
+
+
+class SlotsType(TypedDict):
+    current_players: int
+    max_players: int

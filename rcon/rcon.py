@@ -32,6 +32,7 @@ from rcon.types import (
     ParsedLogsType,
     PlayerIdsType,
     ServerInfoType,
+    SlotsType,
     StatusType,
     StructuredLogLineType,
     StructuredLogLineWithMetaData,
@@ -1002,19 +1003,21 @@ class Rcon(ServerCtl):
         return prev.decode() if prev else ""
 
     @ttl_cache(ttl=5)
-    def get_slots(self) -> tuple[int, int]:
+    def get_slots(self) -> SlotsType:
         """Return the current number of connected players and max players allowed"""
         res = super().get_slots()
         if not self.slots_regexp.match(res):
             raise CommandFailedError("Server returned crap")
 
-        current, max = tuple(map(int, res.split("/", maxsplit=1)))
-        return current, max
+        current_players, max_players = tuple(map(int, res.split("/", maxsplit=1)))
+        return {"current_players": current_players, "max_players": max_players}
 
     @ttl_cache(ttl=5, cache_falsy=False)
     def get_status(self) -> StatusType:
         config = RconServerSettingsUserConfig.load_from_db()
-        current_players, max_players = self.get_slots()
+        slots = self.get_slots()
+        current_players = slots["current_players"]
+        max_players = slots["max_players"]
         return {
             "name": self.get_name(),
             "map": self.current_map.model_dump(),
