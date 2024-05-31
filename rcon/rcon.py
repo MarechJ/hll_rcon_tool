@@ -4,6 +4,7 @@ import re
 from concurrent.futures import Future, ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
 from functools import cached_property
+from itertools import chain
 from time import sleep
 from typing import Any, Iterable, Literal, Optional, overload
 
@@ -11,7 +12,7 @@ from dateutil import parser
 
 import rcon.steam_utils
 from rcon.cache_utils import get_redis_client, invalidates, ttl_cache
-from rcon.commands import CommandFailedError, ServerCtl, VipId
+from rcon.commands import SUCCESS, CommandFailedError, ServerCtl, VipId
 from rcon.maps import UNKNOWN_MAP_NAME, Layer, is_server_loading_map, parse_layer
 from rcon.models import PlayerID, PlayerVIP, enter_session
 from rcon.player_history import (
@@ -30,6 +31,7 @@ from rcon.types import (
     ParsedLogsType,
     PlayerIdsType,
     ServerInfoType,
+    SlotsType,
     StatusType,
     StructuredLogLineType,
     StructuredLogLineWithMetaData,
@@ -596,7 +598,7 @@ class Rcon(ServerCtl):
 
         return sorted(player_dicts, key=lambda d: d[NAME])
 
-    def remove_vip(self, player_id) -> str:
+    def remove_vip(self, player_id) -> bool:
         """Removes VIP status on the game server and removes their PlayerVIP record."""
 
         # Remove VIP before anything else in case we have errors
@@ -709,7 +711,7 @@ class Rcon(ServerCtl):
 
         return result
 
-    def remove_all_vips(self) -> Literal["SUCCESS"]:
+    def remove_all_vips(self) -> bool:
         vips = self.get_vip_ids()
         for vip in vips:
             try:
@@ -717,7 +719,7 @@ class Rcon(ServerCtl):
             except (CommandFailedError, ValueError):
                 raise
 
-        return "SUCCESS"
+        return True
 
     def message_player(
         self,
@@ -847,14 +849,14 @@ class Rcon(ServerCtl):
         with invalidates(Rcon.get_map, Rcon.get_next_map):
             try:
                 res = super().set_map(map_name)
-                if res != "SUCCESS":
+                if res != SUCCESS:
                     raise CommandFailedError(res)
             except CommandFailedError:
                 maps = [map_.id for map_ in self.get_map_rotation()]
                 self.add_map_to_rotation(
                     map_name, maps[len(maps) - 1], maps.count(maps[len(maps) - 1])
                 )
-                if res := super().set_map(map_name) != "SUCCESS":
+                if res := super().set_map(map_name) != SUCCESS:
                     raise CommandFailedError(res)
 
     @ttl_cache(ttl=10)
@@ -894,7 +896,7 @@ class Rcon(ServerCtl):
     def get_team_switch_cooldown(self) -> int:
         return int(super().get_team_switch_cooldown())
 
-    def set_team_switch_cooldown(self, minutes) -> str:
+    def set_team_switch_cooldown(self, minutes: int) -> bool:
         with invalidates(Rcon.get_team_switch_cooldown):
             return super().set_team_switch_cooldown(minutes)
 
@@ -902,7 +904,7 @@ class Rcon(ServerCtl):
     def get_autobalance_threshold(self) -> int:
         return int(super().get_autobalance_threshold())
 
-    def set_autobalance_threshold(self, max_diff) -> str:
+    def set_autobalance_threshold(self, max_diff: int) -> bool:
         with invalidates(Rcon.get_autobalance_threshold):
             return super().set_autobalance_threshold(max_diff)
 
@@ -910,7 +912,7 @@ class Rcon(ServerCtl):
     def get_idle_autokick_time(self) -> int:
         return int(super().get_idle_autokick_time())
 
-    def set_idle_autokick_time(self, minutes) -> str:
+    def set_idle_autokick_time(self, minutes) -> bool:
         with invalidates(Rcon.get_idle_autokick_time):
             return super().set_idle_autokick_time(minutes)
 
@@ -918,7 +920,7 @@ class Rcon(ServerCtl):
     def get_max_ping_autokick(self) -> int:
         return int(super().get_max_ping_autokick())
 
-    def set_max_ping_autokick(self, max_ms) -> str:
+    def set_max_ping_autokick(self, max_ms) -> bool:
         with invalidates(Rcon.get_max_ping_autokick):
             return super().set_max_ping_autokick(max_ms)
 
@@ -926,17 +928,17 @@ class Rcon(ServerCtl):
     def get_queue_length(self) -> int:
         return int(super().get_queue_length())
 
-    def set_queue_length(self, num) -> str:
+    def set_queue_length(self, value: int) -> bool:
         with invalidates(Rcon.get_queue_length):
-            return super().set_queue_length(num)
+            return super().set_queue_length(value)
 
     @ttl_cache(ttl=60 * 10)
     def get_vip_slots_num(self) -> int:
         return int(super().get_vip_slots_num())
 
-    def set_vip_slots_num(self, num) -> str:
+    def set_vip_slots_num(self, value: int) -> bool:
         with invalidates(Rcon.get_vip_slots_num):
-            return super().set_vip_slots_num(num)
+            return super().set_vip_slots_num(value)
 
     def get_welcome_message(self):
         red = get_redis_client()
@@ -951,26 +953,22 @@ class Rcon(ServerCtl):
 
         return msg
 
-    def set_welcome_message(self, message, save=True):
+    def set_welcome_message(self, message: str) -> str:
+        """Set the in game welcome (rules) message and return the previous message if set"""
         from rcon.broadcast import format_message
-
-        prev: bytes | None = None
-
-        try:
-            red = get_redis_client()
-            if save:
-                prev = red.set("WELCOME_MESSAGE", message, get=True)  # type: ignore
-            else:
-                prev = red.get("WELCOME_MESSAGE")  # type:ignore
-            red.expire("WELCOME_MESSAGE", 60 * 60 * 24 * 7)
-        except Exception:
-            logger.exception("Can't save message in redis: %s", message)
 
         try:
             formatted = format_message(self, message)
         except Exception:
             logger.exception("Unable to format message")
             formatted = message
+
+        prev: bytes | None = None
+        try:
+            red = get_redis_client()
+            prev = red.set("WELCOME_MESSAGE", message, get=True)  # type: ignore
+        except Exception:
+            logger.exception("Can't save message in redis: %s", message)
 
         super().set_welcome_message(formatted)
         return prev.decode() if prev else ""
@@ -987,20 +985,9 @@ class Rcon(ServerCtl):
             return msg.decode()
         return msg
 
-    def set_broadcast(self, message, save=True) -> str:
+    def set_broadcast(self, message: str) -> str:
+        """Set the in game broadcast message and return the previous message if set"""
         from rcon.broadcast import format_message
-
-        prev: bytes | None = None
-
-        try:
-            red = get_redis_client()
-            if save:
-                prev = red.set("BROADCAST_MESSAGE", message, get=True)  # type: ignore
-            else:
-                prev = red.get("BROADCAST_MESSAGE")  # type: ignore
-            red.expire("BROADCAST_MESSAGE", 60 * 30)
-        except Exception:
-            logger.exception("Can't save message in redis: %s", message)
 
         try:
             formatted = format_message(self, message)
@@ -1008,29 +995,39 @@ class Rcon(ServerCtl):
             logger.exception("Unable to format message")
             formatted = message
 
+        prev: bytes | None = None
+        try:
+            red = get_redis_client()
+            prev = red.set("BROADCAST_MESSAGE", message, get=True)  # type: ignore
+            red.expire("BROADCAST_MESSAGE", 60 * 30)
+        except Exception:
+            logger.exception("Can't save message in redis: %s", message)
+
         super().set_broadcast(formatted)
         return prev.decode() if prev else ""
 
     @ttl_cache(ttl=5)
-    def get_slots(self) -> tuple[int, int]:
+    def get_slots(self) -> SlotsType:
         """Return the current number of connected players and max players allowed"""
         res = super().get_slots()
         if not self.slots_regexp.match(res):
             raise CommandFailedError("Server returned crap")
 
-        current, max = tuple(map(int, res.split("/", maxsplit=1)))
-        return current, max
+        current_players, max_players = tuple(map(int, res.split("/", maxsplit=1)))
+        return {"current_players": current_players, "max_players": max_players}
 
     @ttl_cache(ttl=5, cache_falsy=False)
     def get_status(self) -> StatusType:
         config = RconServerSettingsUserConfig.load_from_db()
         slots = self.get_slots()
+        current_players = slots["current_players"]
+        max_players = slots["max_players"]
         return {
             "name": self.get_name(),
             "map": self.current_map.model_dump(),
-            "nb_players": slots,
+            "current_players": current_players,
+            "max_players": max_players,
             "short_name": config.short_name,
-            "player_count": slots.split("/")[0],
             "server_number": int(get_server_number()),
         }
 
@@ -1079,24 +1076,27 @@ class Rcon(ServerCtl):
         pairs = res.split(",")
         return [(int(pair[0]), int(pair[1])) for pair in zip(pairs[0::2], pairs[1::2])]
 
-    def set_autobalance_enabled(self, bool_) -> str:
+    def set_autobalance_enabled(self, value: bool) -> bool:
         with invalidates(self.get_autobalance_enabled):
-            return super().set_autobalance_enabled("on" if bool_ else "off")
+            return super().set_autobalance_enabled("on" if value else "off")
 
-    def set_votekick_enabled(self, bool_) -> str:
+    def set_votekick_enabled(self, value: bool) -> bool:
         with invalidates(self.get_votekick_enabled):
-            return super().set_votekick_enabled("on" if bool_ else "off")
+            return super().set_votekick_enabled("on" if value else "off")
 
-    def set_votekick_thresholds(self, threshold_pairs: str) -> None:
-        # TODO: use proper data structure
+    def set_votekick_thresholds(
+        self, threshold_pairs: list[tuple[int, int]]
+    ) -> str | bool:
         with invalidates(self.get_votekick_thresholds):
-            res = super().set_votekick_thresholds(threshold_pairs)
-            logger.info("Threshold res %s", res)
-            if res.lower().startswith("error"):
+            flattened = [str(val) for val in chain.from_iterable(threshold_pairs)]
+            res = super().set_votekick_thresholds(",".join(flattened))
+            if res != SUCCESS:
                 logger.error("Unable to set votekick threshold: %s", res)
                 raise CommandFailedError(res)
+            else:
+                return res == SUCCESS
 
-    def reset_votekick_thresholds(self) -> str:
+    def reset_votekick_thresholds(self) -> bool:
         with invalidates(self.get_votekick_thresholds):
             return super().reset_votekick_thresholds()
 
@@ -1112,7 +1112,7 @@ class Rcon(ServerCtl):
 
         return profanities
 
-    def unban_profanities(self, profanities: list[str]) -> str:
+    def unban_profanities(self, profanities: list[str]) -> bool:
         if not isinstance(profanities, list):
             profanities = [profanities]
         with invalidates(self.get_profanities):
@@ -1124,7 +1124,7 @@ class Rcon(ServerCtl):
         with invalidates(self.get_profanities):
             return super().ban_profanities(",".join(profanities))
 
-    def punish(self, player_name: str, reason: str, by: str) -> str:
+    def punish(self, player_name: str, reason: str, by: str) -> bool:
         res = super().punish(player_name, reason)
         safe_save_player_action(
             rcon=self,
@@ -1135,10 +1135,10 @@ class Rcon(ServerCtl):
         )
         return res
 
-    def switch_player_now(self, player_name, by) -> str:
+    def switch_player_now(self, player_name: str) -> bool:
         return super().switch_player_now(player_name)
 
-    def switch_player_on_death(self, player_name, by) -> str:
+    def switch_player_on_death(self, player_name, by) -> bool:
         return super().switch_player_on_death(player_name)
 
     def kick(self, player_name, reason, by, player_id: str | None = None) -> bool:
@@ -1156,8 +1156,13 @@ class Rcon(ServerCtl):
         return res
 
     def temp_ban(
-        self, player_name=None, player_id=None, duration_hours=2, reason="", by=""
-    ) -> str:
+        self,
+        player_name: str | None = None,
+        player_id: str | None = None,
+        duration_hours: int = 2,
+        reason: str = "",
+        by: str = "",
+    ) -> bool:
         with invalidates(Rcon.get_players, Rcon.get_temp_bans):
             if player_name and re.match(r"\d+", player_name):
                 info = self.get_player_info(player_name)
@@ -1235,13 +1240,13 @@ class Rcon(ServerCtl):
 
     def remove_map_from_rotation(self, map_name: str, map_number: int | None = None):
         with invalidates(Rcon.get_map_rotation, Rcon.get_next_map):
-            super().remove_map_from_rotation(map_name, map_number)
+            return super().remove_map_from_rotation(map_name, map_number)
 
     def remove_maps_from_rotation(self, map_names: list[str]) -> Literal["SUCCESS"]:
         with invalidates(Rcon.get_map_rotation, Rcon.get_next_map):
             for map_name in map_names:
                 super().remove_map_from_rotation(map_name)
-            return "SUCCESS"
+            return SUCCESS
 
     def add_maps_to_rotation(self, map_names: list[str]) -> list[tuple[str, str]]:
         """Add the given maps to the rotation, returns the game server response for each map"""
@@ -1260,18 +1265,18 @@ class Rcon(ServerCtl):
 
         return results
 
-    def set_maprotation(self, rotation: list[str]) -> list[Layer]:
-        if not rotation:
+    def set_maprotation(self, map_names: list[str]) -> list[Layer]:
+        if not map_names:
             raise CommandFailedError("Empty rotation")
 
-        rotation = list(rotation)
-        logger.info("Apply map rotation %s", rotation)
+        map_names = list(map_names)
+        logger.info("Apply map rotation %s", map_names)
 
         with invalidates(Rcon.get_map_rotation, Rcon.get_next_map):
             current_as_layers = self.get_map_rotation()
             current = [map_.id for map_ in current_as_layers]
             logger.info("Current rotation: %s", current)
-            if rotation == current:
+            if map_names == current:
                 logger.debug("Map rotation is the same, nothing to do")
                 return current_as_layers
 
@@ -1285,10 +1290,10 @@ class Rcon(ServerCtl):
                 last = current[0]
                 map_number = {last: 1}
             else:
-                last = rotation[0]
+                last = map_names[0]
                 map_number = {}
 
-            for map_ in rotation:
+            for map_ in map_names:
                 logger.info("Adding to rotation: '%s'", map_)
                 super().add_map_to_rotation(map_, last, map_number.get(last, 1))
                 last = map_

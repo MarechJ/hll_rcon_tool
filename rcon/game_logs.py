@@ -337,9 +337,12 @@ class LogStream:
         """Return a list of logs more recent than the last_seen ID"""
         try:
             if last_seen is None:
-                logs: list[tuple[StreamID, StructuredLogLineWithMetaData]] = [
-                    self.log_stream.tail()
-                ]
+                logs: list[tuple[StreamID, StructuredLogLineWithMetaData]] = []
+                tail_log: tuple[
+                    StreamID, StructuredLogLineWithMetaData
+                ] = self.log_stream.tail()
+                if tail_log:
+                    logs.append(tail_log)
             else:
                 logs: list[
                     tuple[StreamID, StructuredLogLineWithMetaData]
@@ -415,14 +418,20 @@ class LogLoop:
                 player_id,
                 PlayerStat(
                     combat=player["combat"],
+                    p_combat=0,
                     offense=player["offense"],
+                    p_offense=0,
                     defense=player["defense"],
+                    p_defense=0,
                     support=player["support"],
+                    p_support=0,
                 ),
             )
             for stat in ["combat", "offense", "defense", "support"]:
-                if player[stat] > p[stat]:
-                    p[stat] = player[stat]
+                if player[stat] < p[stat]:
+                    p["p_" + stat] = p["p_" + stat] + p[stat]
+
+                p[stat] = player[stat]
             map_players[player_id] = p
         maps.update(0, m)
 

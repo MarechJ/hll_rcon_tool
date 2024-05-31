@@ -44,6 +44,8 @@ def get_api_documentation(request):
         for k, v in sig.parameters.items():
             if k == "request":
                 continue
+            elif k == "self":
+                continue
             expanded_args = {
                 "default": _get_empty(v.default),
                 "annotation": _get_empty(v.annotation),
@@ -83,10 +85,9 @@ endpoints: list[tuple[str, Callable]] = [
     ("get_own_user_permissions", auth.get_own_user_permissions),
     ("get_services", services.get_services),
     ("do_service", services.do_service),
-    ("server_list", multi_servers.get_server_list),
+    ("get_server_list", multi_servers.get_server_list),
     ("upload_vips", vips.upload_vips),
-    ("async_upload_vips", vips.async_upload_vips),
-    ("async_upload_vips_result", vips.async_upload_vips_result),
+    ("upload_vips_result", vips.upload_vips_result),
     ("download_vips", vips.download_vips),
     ("get_live_scoreboard", scoreboards.get_live_scoreboard),
     ("get_scoreboard_maps", scoreboards.get_scoreboard_maps),
@@ -189,7 +190,7 @@ endpoints: list[tuple[str, Callable]] = [
     ("describe_real_vip_config", user_settings.describe_real_vip_config),
     ("get_all_discord_webhooks_config", user_settings.get_all_discord_webhooks_config),
     ("get_all_standard_message_config", user_settings.get_all_standard_message_config),
-    ("do_reconnect_gameserver", views.restart_gunicorn),
+    ("reconnect_gameserver", views.restart_gunicorn),
 ] + [(name, func) for name, func in views.commands]
 
 # Expose endpoints though Django

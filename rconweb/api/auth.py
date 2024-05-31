@@ -125,7 +125,7 @@ class RconJsonResponse(HttpResponse):
         elif isinstance(o, datetime.timedelta):
             return o.total_seconds()
         else:
-            raise ValueError(f"Cannot serialize {o}, {type(o)}to JSON")
+            raise ValueError(f"Cannot serialize {o}, {type(o)} to JSON")
 
     def __init__(self, data, **kwargs):
         data = orjson.dumps(

@@ -194,9 +194,9 @@ class AdminType(TypedDict):
 class StatusType(TypedDict):
     name: str
     map: "LayerType"
-    nb_players: str
+    current_players: int
+    max_players: int
     short_name: str
-    player_count: str
     server_number: int
 
 
@@ -375,9 +375,13 @@ class PlayerStatsType(TypedDict):
 
 class PlayerStat(TypedDict):
     combat: int
+    p_combat: int
     offense: int
+    p_offense: int
     defense: int
+    p_defense: int
     support: int
+    p_support: int
 
 
 class CachedLiveGameStats(TypedDict):
@@ -715,3 +719,8 @@ class PublicInfoType(TypedDict):
     time_remaining: float
     vote_status: VoteMapResultType | None
     name: PublicInfoNameType
+
+
+class SlotsType(TypedDict):
+    current_players: int
+    max_players: int

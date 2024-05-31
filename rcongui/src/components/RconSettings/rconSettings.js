@@ -334,6 +334,17 @@ class RconSettings extends React.Component {
         )
       )
       .then((data) => {
+        // This is janky, but convert saved broadcasts from an object to a string
+        let formattedMessages = new Array();
+        if (this.state.standardMessagesType == "broadcast") {
+          data.result.messages.forEach((m) =>
+            formattedMessages.push(`${m.time_sec} ${m.message}`)
+          );
+          data.result.messages = formattedMessages;
+        }
+        return data;
+      })
+      .then((data) => {
         return (
           !data.failed &&
           this.setState({
@@ -396,11 +407,8 @@ class RconSettings extends React.Component {
   }
 
   async reconnectToGameServer() {
-    return postData(
-      `${process.env.REACT_APP_API_URL}do_reconnect_gameserver`,
-      {}
-    )
-      .then((res) => showResponse(res, "do_reconnect_gameserver", true))
+    return postData(`${process.env.REACT_APP_API_URL}reconnect_gameserver`, {})
+      .then((res) => showResponse(res, "reconnect_gameserver", true))
       .catch(handle_http_errors);
   }
 

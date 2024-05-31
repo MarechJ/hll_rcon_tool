@@ -514,6 +514,7 @@ def windows_store_player_check(rcon: Rcon, _, name: str, player_id: str):
                 name,
                 reason=config.player_message,
                 by=config.audit_message_author,
+                player_id=player_id,
             )
         elif action == WindowsStoreIdActionType.temp_ban:
             rcon.temp_ban(
@@ -582,6 +583,7 @@ def notify_invalid_names(rcon: Rcon, _, name: str, player_id: str):
                     name,
                     reason=config.whitespace_name_player_message,
                     by=config.audit_message_author,
+                    player_id=player_id,
                 )
             except Exception as e:
                 logger.error(

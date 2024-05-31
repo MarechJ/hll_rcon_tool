@@ -100,7 +100,10 @@ def _do_punitions(
             if method == ActionMethod.KICK:
                 if not aplayer.details.dry_run:
                     rcon.kick(
-                        aplayer.name, aplayer.details.message, by=aplayer.details.author
+                        player_name=aplayer.name,
+                        reason=aplayer.details.message,
+                        by=aplayer.details.author,
+                        player_id=aplayer.player_id,
                     )
                 audit(
                     discord_webhook_url=aplayer.details.discord_audit_url,

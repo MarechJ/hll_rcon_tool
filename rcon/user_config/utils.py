@@ -63,7 +63,7 @@ class InvalidKeysConfigurationError(Exception):
     def __repr__(self) -> str:
         return f"missing keys=({', '.join(self.missing_keys)}) | Extra keys = ({', '.join(self.extra_keys)}) | Mandatory keys=({', '.join(self.mandatory_keys)}) | Provided keys=({', '.join(self.provided_keys)})"
 
-    def asdict(self):
+    def asdict(self) -> dict[str, Any]:
         return {
             "type": InvalidKeysConfigurationError.__name__,
             "missing_keys": sorted([k for k in self.missing_keys]),
@@ -194,33 +194,13 @@ def validate_user_config(
     model: Type[BaseUserConfig],
     data: dict[str, Any] | BaseUserConfig,
     dry_run: bool = True,
-    errors_as_json: bool = False,
     reset_to_default: bool = False,
-) -> bool:
+) -> None:
     if reset_to_default:
-        try:
-            default = model()
-            set_user_config(default.KEY(), default)
-            return True
-        except pydantic.ValidationError as e:
-            if errors_as_json:
-                error_msg = e.json()
-            else:
-                error_msg = str(e)
-            logger.warning(error_msg)
-            return False
+        default = model()
+        set_user_config(default.KEY(), default)
 
-    try:
-        model.save_to_db(values=data, dry_run=dry_run)
-    except pydantic.ValidationError as e:
-        if errors_as_json:
-            error_msg = e.json()
-        else:
-            error_msg = str(e)
-        logger.warning(error_msg)
-        return False
-
-    return True
+    model.save_to_db(values=data, dry_run=dry_run)
 
 
 def mask_sensitive_data(

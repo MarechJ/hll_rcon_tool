@@ -14,7 +14,8 @@ import { fromJS, List } from "immutable";
 const Status = ({
   classes,
   name,
-  nbPlayers,
+  numCurrentPlayers,
+  maxPlayers,
   map,
   serverList,
   timeRemaining,
@@ -73,8 +74,8 @@ const Status = ({
             })}
           </Menu>
           <small style={{ display: "block" }}>
-            {nbPlayers} ({balance}) - {map.pretty_name} - {timeRemaining} -{" "}
-            {score}
+            {numCurrentPlayers}/{maxPlayers} ({balance}) - {map.pretty_name} -{" "}
+            {timeRemaining} - {score}
           </small>
         </Grid>
       </Grid>
@@ -88,7 +89,8 @@ class ServerStatus extends React.Component {
 
     this.state = {
       name: "",
-      nbPlayers: "",
+      numCurrentPlayers: 0,
+      maxPlayers: 0,
       map: new Map(),
       serverList: List(),
       refreshIntervalSec: 10,
@@ -149,9 +151,10 @@ class ServerStatus extends React.Component {
         this.setState({
           name: data?.result.name,
           map: data?.result.map,
-          nbPlayers: data.result.nb_players,
+          numCurrentPlayers: data.result.current_players,
+          maxPlayers: data.result.max_players,
         });
-        document.title = `(${data?.result.player_count}) ${data?.result.short_name}`;
+        document.title = `(${data?.result.current_players}) ${data?.result.short_name}`;
       })
       .catch(handle_http_errors);
   }
@@ -175,8 +178,8 @@ class ServerStatus extends React.Component {
   }
 
   async loadServerList() {
-    return get(`server_list`)
-      .then((response) => showResponse(response, "server_list", false))
+    return get(`get_server_list`)
+      .then((response) => showResponse(response, "get_server_list", false))
       .then((data) => {
         this.setState({
           serverList: fromJS(data.result || []),
@@ -189,7 +192,8 @@ class ServerStatus extends React.Component {
     const {
       map,
       name,
-      nbPlayers,
+      numCurrentPlayers,
+      maxPlayers,
       serverList,
       rawTimeRemaining,
       axisScore,
@@ -203,7 +207,8 @@ class ServerStatus extends React.Component {
       <Status
         classes={classes}
         name={name}
-        nbPlayers={nbPlayers}
+        numCurrentPlayers={numCurrentPlayers}
+        maxPlayers={maxPlayers}
         map={map}
         serverList={serverList}
         timeRemaining={rawTimeRemaining}

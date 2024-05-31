@@ -381,8 +381,8 @@ class ServerCtl:
         profanities = convert_tabs_to_spaces(profanities)
         return self._str_request(f"BanProfanity {profanities}") == SUCCESS
 
-    def unban_profanities(self, profanities: str) -> str:
-        return self._str_request(f"UnbanProfanity {profanities}")
+    def unban_profanities(self, profanities: str) -> bool:
+        return self._str_request(f"UnbanProfanity {profanities}") == SUCCESS
 
     def get_name(self) -> str:
         return self._str_request("get name", can_fail=False)
@@ -514,11 +514,11 @@ class ServerCtl:
     def get_vip_slots_num(self) -> str:
         return self._str_request("get numvipslots", can_fail=False)
 
-    def set_autobalance_enabled(self, bool_: str) -> str:
+    def set_autobalance_enabled(self, value: str) -> bool:
         """
         String bool is on / off
         """
-        return self._str_request(f"setautobalanceenabled {bool_}")
+        return self._str_request(f"setautobalanceenabled {value}") == SUCCESS
 
     def set_welcome_message(self, message) -> str:
         return self._str_request(f"say {message}", log_info=True, can_fail=False)
@@ -537,35 +537,43 @@ class ServerCtl:
         if current != enabled:
             self._str_request(f"togglemapshuffle")
 
-    def set_idle_autokick_time(self, minutes) -> str:
-        return self._str_request(f"setkickidletime {minutes}", log_info=True)
+    def set_idle_autokick_time(self, minutes) -> bool:
+        return self._str_request(f"setkickidletime {minutes}", log_info=True) == SUCCESS
 
-    def set_max_ping_autokick(self, max_ms) -> str:
-        return self._str_request(f"sethighping {max_ms}", log_info=True)
+    def set_max_ping_autokick(self, max_ms) -> bool:
+        return self._str_request(f"sethighping {max_ms}", log_info=True) == SUCCESS
 
     def set_autobalance_threshold(self, max_diff: int):
-        return self._str_request(f"setautobalancethreshold {max_diff}", log_info=True)
+        return (
+            self._str_request(f"setautobalancethreshold {max_diff}", log_info=True)
+            == SUCCESS
+        )
 
-    def set_team_switch_cooldown(self, minutes):
-        return self._str_request(f"setteamswitchcooldown {minutes}", log_info=True)
+    def set_team_switch_cooldown(self, minutes: int) -> bool:
+        return (
+            self._str_request(f"setteamswitchcooldown {minutes}", log_info=True)
+            == SUCCESS
+        )
 
-    def set_queue_length(self, num):
-        return self._str_request(f"setmaxqueuedplayers {num}", log_info=True)
+    def set_queue_length(self, value: int) -> bool:
+        return (
+            self._str_request(f"setmaxqueuedplayers {value}", log_info=True) == SUCCESS
+        )
 
-    def set_vip_slots_num(self, num):
-        return self._str_request(f"setnumvipslots {num}", log_info=True)
+    def set_vip_slots_num(self, value: int) -> bool:
+        return self._str_request(f"setnumvipslots {value}", log_info=True) == SUCCESS
 
     @_escape_params
-    def set_broadcast(self, message):
+    def set_broadcast(self, message: str):
         return self._str_request(
             f'broadcast "{message}"', log_info=True, can_fail=False
         )
 
-    def set_votekick_enabled(self, bool_: str) -> str:
+    def set_votekick_enabled(self, value: str) -> bool:
         """
         String bool is on / off
         """
-        return self._str_request(f"setvotekickenabled {bool_}")
+        return self._str_request(f"setvotekickenabled {value}") == SUCCESS
 
     def set_votekick_thresholds(self, threshold_pairs: str) -> str:
         """
@@ -573,14 +581,19 @@ class ServerCtl:
         """
         return self._str_request(f"setvotekickthreshold {threshold_pairs}")
 
-    def reset_votekick_thresholds(self) -> str:
-        return self._str_request(f"resetvotekickthreshold", log_info=True)
+    def reset_votekick_thresholds(self) -> bool:
+        return self._str_request(f"resetvotekickthreshold", log_info=True) == SUCCESS
 
-    def switch_player_on_death(self, player_name) -> str:
-        return self._str_request(f"switchteamondeath {player_name}", log_info=True)
+    def switch_player_on_death(self, player_name) -> bool:
+        return (
+            self._str_request(f"switchteamondeath {player_name}", log_info=True)
+            == SUCCESS
+        )
 
-    def switch_player_now(self, player_name) -> str:
-        return self._str_request(f"switchteamnow {player_name}", log_info=True)
+    def switch_player_now(self, player_name: str) -> bool:
+        return (
+            self._str_request(f"switchteamnow {player_name}", log_info=True) == SUCCESS
+        )
 
     def add_map_to_rotation(
         self,
@@ -604,8 +617,11 @@ class ServerCtl:
         return self._str_request(cmd, can_fail=False, log_info=True)
 
     @_escape_params
-    def punish(self, player_name: str, reason: str) -> str:
-        return self._str_request(f'punish "{player_name}" "{reason}"', log_info=True)
+    def punish(self, player_name: str, reason: str) -> bool:
+        return (
+            self._str_request(f'punish "{player_name}" "{reason}"', log_info=True)
+            == SUCCESS
+        )
 
     @_escape_params
     def kick(self, player_name: str, reason: str) -> bool:
@@ -617,16 +633,19 @@ class ServerCtl:
     @_escape_params
     def temp_ban(
         self,
-        player_name=None,
-        player_id=None,
-        duration_hours=2,
-        reason="",
-        admin_name="",
-    ) -> str:
+        player_name: str | None = None,
+        player_id: str | None = None,
+        duration_hours: int = 2,
+        reason: str = "",
+        admin_name: str = "",
+    ) -> bool:
         reason = convert_tabs_to_spaces(reason)
-        return self._str_request(
-            f'tempban "{player_id or player_name}" {duration_hours} "{reason}" "{admin_name}"',
-            log_info=True,
+        return (
+            self._str_request(
+                f'tempban "{player_id or player_name}" {duration_hours} "{reason}" "{admin_name}"',
+                log_info=True,
+            )
+            == SUCCESS
         )
 
     @_escape_params
@@ -646,11 +665,11 @@ class ServerCtl:
             == SUCCESS
         )
 
-    def remove_temp_ban(self, ban_log) -> str:
-        return self._str_request(f"pardontempban {ban_log}", log_info=True)
+    def remove_temp_ban(self, ban_log) -> bool:
+        return self._str_request(f"pardontempban {ban_log}", log_info=True) == SUCCESS
 
-    def remove_perma_ban(self, ban_log) -> str:
-        return self._str_request(f"pardonpermaban {ban_log}", log_info=True)
+    def remove_perma_ban(self, ban_log) -> bool:
+        return self._str_request(f"pardonpermaban {ban_log}", log_info=True) == SUCCESS
 
     @_escape_params
     def add_admin(self, player_id, role, description) -> bool:
@@ -672,8 +691,8 @@ class ServerCtl:
             == SUCCESS
         )
 
-    def remove_vip(self, player_id) -> str:
-        return self._str_request(f"vipdel {player_id}", log_info=True)
+    def remove_vip(self, player_id) -> bool:
+        return self._str_request(f"vipdel {player_id}", log_info=True) == SUCCESS
 
     @_escape_params
     def message_player(self, player_name=None, player_id=None, message="") -> str:

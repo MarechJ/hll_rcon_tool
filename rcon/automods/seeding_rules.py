@@ -20,7 +20,7 @@ from rcon.automods.models import (
 from rcon.automods.num_or_inf import num_or_inf
 from rcon.cache_utils import get_redis_client
 from rcon.game_logs import on_match_start
-from rcon.maps import Gamemode, parse_layer
+from rcon.maps import GameMode, parse_layer
 from rcon.rcon import StructuredLogLineType
 from rcon.types import GameState, GetDetailedPlayer, Roles
 from rcon.user_config.auto_mod_seeding import AutoModSeedingUserConfig
@@ -270,7 +270,7 @@ class SeedingRulesAutomod:
                 drc = self.config.disallowed_roles
                 if (
                     server_player_count < drc.min_players
-                    or server_player_count > drc.max_players
+                    or server_player_count >= drc.max_players
                 ):
                     self._disable_for_round("disallowed_roles")
                 else:
@@ -279,7 +279,7 @@ class SeedingRulesAutomod:
                 dwc = self.config.disallowed_weapons
                 if (
                     server_player_count < dwc.min_players
-                    or server_player_count > dwc.max_players
+                    or server_player_count >= dwc.max_players
                 ):
                     self._disable_for_round("disallowed_weapons")
                 else:
@@ -288,7 +288,7 @@ class SeedingRulesAutomod:
                 ecf = self.config.enforce_cap_fight
                 if (
                     server_player_count < ecf.min_players
-                    or server_player_count > ecf.max_players
+                    or server_player_count >= ecf.max_players
                 ):
                     self._disable_for_round("enforce_cap_fight")
                 else:
@@ -308,11 +308,11 @@ class SeedingRulesAutomod:
 
                 # TODO: update this when we update how maps are stored
                 current_map = parse_layer(game_state["current_map"]["id"])
-                if current_map.gamemode in (
-                    Gamemode.OFFENSIVE,
-                    Gamemode.CONTROL,
-                    Gamemode.PHASED,
-                    Gamemode.MAJORITY,
+                if current_map.game_mode in (
+                    GameMode.OFFENSIVE,
+                    GameMode.CONTROL,
+                    GameMode.PHASED,
+                    GameMode.MAJORITY,
                 ):
                     self._disable_for_round("enforce_cap_fight")
 

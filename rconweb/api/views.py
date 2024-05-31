@@ -5,8 +5,9 @@ import sys
 import traceback
 from functools import wraps
 from subprocess import PIPE, run
-from typing import Callable
+from typing import Any, Callable
 
+import pydantic
 from django.contrib.auth.decorators import permission_required
 from django.http import (
     HttpRequest,
@@ -20,7 +21,6 @@ from discord.utils import escape_markdown
 from rcon.api_commands import get_rcon_api
 from rcon.commands import CommandFailedError
 from rcon.discord import send_to_discord_audit
-from rcon.gtx import GTXFtp
 from rcon.types import (
     PublicInfoMapType,
     PublicInfoNameType,
@@ -29,6 +29,7 @@ from rcon.types import (
     PublicInfoType,
 )
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
+from rcon.user_config.utils import InvalidKeysConfigurationError
 from rcon.utils import MapsHistory, get_server_number
 from rcon.vote_map import VoteMap
 from rconweb.settings import TAG_VERSION
@@ -78,30 +79,6 @@ def set_temp_msg(request, func, name):
 
 
 @csrf_exempt
-@login_required()
-@permission_required("api.can_change_server_name", raise_exception=True)
-@record_audit
-@require_http_methods(["POST"])
-@require_content_type()
-def set_name(request):
-    data = _get_data(request)
-    failed = False
-    error = None
-    try:
-        # TODO: server name won't change until map change
-        # but the cache also needs to be cleared, but can't
-        # immediately clear or it will just refresh
-        gtx = GTXFtp.from_config()
-        gtx.change_server_name(data["name"])
-    except Exception as e:
-        failed = True
-        error = repr(e)
-    return api_response(
-        failed=failed, error=error, result=None, command="set_server_name"
-    )
-
-
-@csrf_exempt
 @require_http_methods(["GET"])
 def get_version(request):
     res = run(["git", "describe", "--tags"], stdout=PIPE, stderr=PIPE)
@@ -119,7 +96,9 @@ def get_public_info(request):
 
     config = RconServerSettingsUserConfig.load_from_db()
     gamestate = rcon_api.get_gamestate()
-    curr_players, max_players = rcon_api.get_slots()
+    slots = rcon_api.get_slots()
+    current_players = slots["current_players"]
+    max_players = slots["max_players"]
 
     current_map: PublicInfoMapType = {
         "map": gamestate["current_map"],
@@ -155,7 +134,7 @@ def get_public_info(request):
     res: PublicInfoType = {
         "current_map": current_map,
         "next_map": next_map,
-        "player_count": curr_players,
+        "player_count": current_players,
         "max_player_count": max_players,
         "player_count_by_team": players,
         "score": score,
@@ -217,6 +196,8 @@ def expose_api_endpoint(
         failure = False
         others = None
         error: str | None = None
+        errors_as_json: bool = False
+        res: Any = None
         data = _get_data(request)
 
         json_invalid_content_type_error = f"InvalidContentType: {request.method} {request.path} was called with {request.content_type}, expected one of {','.join(['application/json'])}"
@@ -230,6 +211,8 @@ def expose_api_endpoint(
         # This is a total hack to avoid having to name every single parameter for
         # every single user config endpoint
         if "kwargs" in parameters.keys():
+            if data.pop("errors_as_json", None):
+                errors_as_json = True
             arguments = data
             arguments["by"] = request.user.username
         else:
@@ -267,10 +250,21 @@ def expose_api_endpoint(
             ):
                 audit(command_name, request, arguments)
 
+        # This is a bit janky but catch any UserConfig validation errors that have bubbled up and convert
+        # the error message as required
+        except pydantic.ValidationError as e:
+            if errors_as_json:
+                error = e.json()
+            else:
+                error = str(e)
+        except InvalidKeysConfigurationError as e:
+            if errors_as_json:
+                error = e.asdict()
+            else:
+                error = str(e)
         except CommandFailedError as e:
             failure = True
             error = e.args[0] if e.args else None
-            res = None
 
         response = RconJsonResponse(
             dict(
@@ -386,7 +380,7 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     rcon_api.remove_vip: "api.can_remove_vip",
     rcon_api.reset_map_votemap_whitelist: "api.can_reset_map_whitelist",
     rcon_api.reset_votekick_thresholds: "api.can_reset_votekick_threshold",
-    rcon_api.set_map_votemap_whitelist: "api.can_set_map_whitelist",
+    rcon_api.set_votemap_whitelist: "api.can_set_map_whitelist",
     rcon_api.switch_player_now: "api.can_switch_players_immediately",
     rcon_api.switch_player_on_death: "api.can_switch_players_on_death",
     rcon_api.temp_ban: "api.can_temp_ban_players",
@@ -728,7 +722,7 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.set_log_line_webhook_config: ["POST"],
     rcon_api.set_log_stream_config: ["POST"],
     rcon_api.set_map_shuffle_enabled: ["POST"],
-    rcon_api.set_map_votemap_whitelist: ["POST"],
+    rcon_api.set_votemap_whitelist: ["POST"],
     rcon_api.set_map: ["POST"],
     rcon_api.set_maprotation: ["POST"],
     rcon_api.set_max_ping_autokick: ["POST"],
@@ -822,7 +816,6 @@ commands = [
     ("get_version", get_version),
     ("get_connection_info", get_connection_info),
     ("get_public_info", get_public_info),
-    ("set_name", set_name),
     ("run_raw_command", run_raw_command),
 ]
 

@@ -594,10 +594,10 @@ def current_game_stats():
         if map_stat is None:
             logger.info("No stats for: " + stat[PLAYER_ID])
             continue
-        stat["combat"] = map_stat["combat"]
-        stat["offense"] = map_stat["offense"]
-        stat["defense"] = map_stat["defense"]
-        stat["support"] = map_stat["support"]
+        stat["combat"] = map_stat["combat"] + map_stat["p_combat"]
+        stat["offense"] = map_stat["offense"] + map_stat["p_offense"]
+        stat["defense"] = map_stat["defense"] + map_stat["p_defense"]
+        stat["support"] = map_stat["support"] + map_stat["p_support"]
     return stats
 
 

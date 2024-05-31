@@ -133,15 +133,15 @@ def format_map_vote(rcon, format_type="line"):
     if format_type.startswith("by_mod"):
         categorized = categorize_maps(selection)
         off = join_vote_options(
-            selection=categorized[maps.Gamemode.OFFENSIVE],
+            selection=categorized[maps.GameMode.OFFENSIVE],
             maps_to_numbers=maps_to_numbers,
         )
         warfare = join_vote_options(
-            selection=categorized[maps.Gamemode.WARFARE],
+            selection=categorized[maps.GameMode.WARFARE],
             maps_to_numbers=maps_to_numbers,
         )
         control_skirmish = join_vote_options(
-            selection=categorized[maps.Gamemode.CONTROL],
+            selection=categorized[maps.GameMode.CONTROL],
             maps_to_numbers=maps_to_numbers,
         )
         if format_type == "by_mod_line":
@@ -159,17 +159,17 @@ def format_map_vote(rcon, format_type="line"):
         if format_type == "by_mod_vertical_all":
             return "OFFENSIVE:\n{}\nWARFARE:\n{}\nCONTROL SKIRMISH:\n{}".format(
                 join_vote_options(
-                    selection=categorized[maps.Gamemode.OFFENSIVE],
+                    selection=categorized[maps.GameMode.OFFENSIVE],
                     maps_to_numbers=maps_to_numbers,
                     join_char="\n",
                 ),
                 join_vote_options(
-                    selection=categorized[maps.Gamemode.WARFARE],
+                    selection=categorized[maps.GameMode.WARFARE],
                     maps_to_numbers=maps_to_numbers,
                     join_char="\n",
                 ),
                 join_vote_options(
-                    selection=categorized[maps.Gamemode.CONTROL],
+                    selection=categorized[maps.GameMode.CONTROL],
                     maps_to_numbers=maps_to_numbers,
                     join_char="\n",
                 ),

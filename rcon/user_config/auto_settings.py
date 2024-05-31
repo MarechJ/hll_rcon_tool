@@ -68,8 +68,8 @@ DEFAULT_AUTO_SETTINGS = {
         "ban_profanities": {"profanities": ["word1", "word2"]},
         "unban_profanities": {"profanities": ["word1", "word2"]},
         "set_profanities": {"profanities": ["word1", "word2"]},
-        "set_autobalance_enabled": {"bool_": "on/off"},
-        "set_welcome_message": {"message": "A welcome message", "save": True},
+        "set_autobalance_enabled": {"value": "on/off"},
+        "set_welcome_message": {"message": "A welcome message"},
         "set_map": {"map_name": "stmariedumont_warfare"},
         "set_idle_autokick_time": {"minutes": 0},
         "set_max_ping_autokick": {"max_ms": 0},
@@ -78,7 +78,7 @@ DEFAULT_AUTO_SETTINGS = {
         "set_queue_length": {"num": 6},
         "set_vip_slots_num": {"num": 1},
         "set_broadcast": {"message": "A broadcast message", "save": True},
-        "set_votekick_enabled": {"bool_": "on/off"},
+        "set_votekick_enabled": {"value": "on/off"},
         "set_votekick_threshold": {
             "threshold_pairs_str": "PlayerCount,Threshold[,PlayerCount,Threshold,...]"
         },
