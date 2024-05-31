@@ -5,7 +5,15 @@ from typing import Any, Iterable, Literal, Optional, Sequence, Type
 
 from rcon import game_logs, player_history
 from rcon.audit import ingame_mods, online_mods
-from rcon.blacklist import add_record_to_blacklist, create_blacklist, delete_blacklist, edit_blacklist, edit_record_from_blacklist, expire_all_player_blacklists, remove_record_from_blacklist
+from rcon.blacklist import (
+    add_record_to_blacklist,
+    create_blacklist,
+    delete_blacklist,
+    edit_blacklist,
+    edit_record_from_blacklist,
+    expire_all_player_blacklists,
+    remove_record_from_blacklist,
+)
 from rcon.cache_utils import RedisCached, get_redis_pool
 from rcon.discord import audit_user_config_differences
 from rcon.gtx import GTXFtp
