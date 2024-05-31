@@ -913,8 +913,11 @@ class BlacklistCommandHandler:
                     logger.exception("Failed to synchronize ban for player %s after deleting blacklist", player_id)
 
     def handle_expire_all(self, payload: BlacklistExpireAllCommand):
-        """Handle all of a player's active blacklist records being expired.
+        """Handle all of a player's active blacklist records being expired,
+        effectively granting them access to the server whilst keeping all
+        previous blacklists logged.
         
-        Since this is typically done as a means of """
+        Note that if a player was only temporarily blacklisted but also had
+        a permanent ban, that permanent ban will also be removed."""
         self.rcon.remove_temp_ban(payload.player_id)
         self.rcon.remove_perma_ban(payload.player_id)
