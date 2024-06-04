@@ -153,17 +153,10 @@ def get_players_by_appearance(
     if isinstance(last_seen_till, str):
         last_seen_till = parser.parse(last_seen_till)
 
-    if isinstance(blacklisted, str):
-        blacklisted = strtobool(blacklisted)
-
-    if isinstance(is_watched, str):
-        is_watched = strtobool(is_watched)
-
-    if isinstance(exact_name_match, str):
-        exact_name_match = strtobool(exact_name_match)
-
-    if isinstance(ignore_accent, str):
-        ignore_accent = strtobool(ignore_accent)
+    blacklisted = strtobool(blacklisted)
+    is_watched = strtobool(is_watched)
+    exact_name_match = strtobool(exact_name_match)
+    ignore_accent = strtobool(ignore_accent)
 
     if page <= 0:
         raise ValueError("page needs to be >= 1")

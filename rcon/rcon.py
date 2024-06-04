@@ -360,9 +360,7 @@ class Rcon(ServerCtl):
     def get_playerids(
         self, as_dict: bool = False
     ) -> PlayerIdsType | list[tuple[str, str]]:
-        if not isinstance(as_dict, bool):
-            as_dict = strtobool(as_dict)
-
+        as_dict = strtobool(as_dict)
         raw_list = super().get_playerids()
 
         player_list: list[tuple[str, str]] = []
