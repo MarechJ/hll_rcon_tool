@@ -402,7 +402,7 @@ class Rcon(ServerCtl):
         return False
 
     @ttl_cache(ttl=60 * 60 * 24, cache_falsy=False)
-    def get_player_info(self, player_name, can_fail=False):
+    def get_player_info(self, player_name: str, can_fail=False):
         try:
             try:
                 raw = super().get_player_info(player_name, can_fail=can_fail)
@@ -440,7 +440,7 @@ class Rcon(ServerCtl):
         }
 
     @ttl_cache(ttl=2, cache_falsy=False)
-    def get_detailed_player_info(self, player_name) -> GetDetailedPlayer:
+    def get_detailed_player_info(self, player_name: str) -> GetDetailedPlayer:
         raw = super().get_player_info(player_name)
         if not raw:
             raise CommandFailedError("Got bad data")

@@ -407,7 +407,7 @@ class ServerCtl:
             logger.exception("Bad playerinfo data")
             return False
 
-    def get_player_info(self, player_name, can_fail=True) -> str:
+    def get_player_info(self, player_name: str, can_fail=True) -> str:
         data = self._str_request(f"playerinfo {player_name}", can_fail=can_fail)
         if not self._is_info_correct(player_name, data):
             data = self._str_request(f"playerinfo {player_name}", can_fail=can_fail)
