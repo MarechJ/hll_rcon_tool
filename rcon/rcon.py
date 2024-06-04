@@ -338,7 +338,10 @@ class Rcon(ServerCtl):
 
     @ttl_cache(ttl=1)
     def get_structured_logs(
-        self, since_min_ago, filter_action=None, filter_player=None
+        self,
+        since_min_ago: int,
+        filter_action: str | None = None,
+        filter_player: str | None = None,
     ) -> ParsedLogsType:
         raw = super().get_logs(since_min_ago)
         return self.parse_logs(raw, filter_action, filter_player)
@@ -1497,7 +1500,9 @@ class Rcon(ServerCtl):
 
     @staticmethod
     def parse_logs(
-        raw_logs: str, filter_action=None, filter_player=None
+        raw_logs: str,
+        filter_action: str | None = None,
+        filter_player: str | None = None,
     ) -> ParsedLogsType:
         """Parse a chunk of raw gameserver RCON logs"""
         synthetic_actions = LOG_ACTIONS
