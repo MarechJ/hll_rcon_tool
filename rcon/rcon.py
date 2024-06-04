@@ -47,6 +47,7 @@ from rcon.utils import (
     default_player_info_dict,
     get_server_number,
     parse_raw_player_info,
+    strtobool,
 )
 
 PLAYER_ID = "player_id"
@@ -356,7 +357,12 @@ class Rcon(ServerCtl):
         # Defined here to avoid circular imports with commands.py
         return super().get_logs(since_min_ago=since_min_ago, filter_=filter_)
 
-    def get_playerids(self, as_dict=False) -> PlayerIdsType | list[tuple[str, str]]:
+    def get_playerids(
+        self, as_dict: bool = False
+    ) -> PlayerIdsType | list[tuple[str, str]]:
+        if not isinstance(as_dict, bool):
+            as_dict = strtobool(as_dict)
+
         raw_list = super().get_playerids()
 
         player_list: list[tuple[str, str]] = []
