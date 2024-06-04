@@ -5,6 +5,7 @@ import os
 import unicodedata
 from functools import cmp_to_key
 
+from dateutil import parser
 from sqlalchemy import func
 from sqlalchemy.orm import Session, contains_eager, selectinload
 from sqlalchemy.sql.functions import ReturnTypeFromArgs
@@ -25,6 +26,7 @@ from rcon.models import (
 )
 from rcon.types import PlayerCommentType, PlayerFlagType, PlayerProfileType
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
+from rcon.utils import strtobool
 
 
 class unaccent(ReturnTypeFromArgs):
@@ -142,6 +144,27 @@ def get_players_by_appearance(
     flags: str | list[str] | None = None,
     country: str | None = None,
 ):
+    page = int(page)
+    page_size = int(page_size)
+
+    if isinstance(last_seen_from, str):
+        last_seen_from = parser.parse(last_seen_from)
+
+    if isinstance(last_seen_till, str):
+        last_seen_till = parser.parse(last_seen_till)
+
+    if isinstance(blacklisted, str):
+        blacklisted = strtobool(blacklisted)
+
+    if isinstance(is_watched, str):
+        is_watched = strtobool(is_watched)
+
+    if isinstance(exact_name_match, str):
+        exact_name_match = strtobool(exact_name_match)
+
+    if isinstance(ignore_accent, str):
+        ignore_accent = strtobool(ignore_accent)
+
     if page <= 0:
         raise ValueError("page needs to be >= 1")
     if page_size <= 0:
