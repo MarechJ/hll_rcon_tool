@@ -48,6 +48,7 @@ from rcon.utils import (
     StreamNoElements,
     StreamOlderElement,
     get_server_number,
+    strtobool,
 )
 
 logger = logging.getLogger(__name__)
@@ -640,14 +641,14 @@ def is_action(action_filter, action, exact_match=False):
 
 
 def get_recent_logs(
-    start=0,
-    end=100000,
-    player_search=None,
-    action_filter=None,
-    min_timestamp=None,
-    exact_player_match=False,
-    exact_action=False,
-    inclusive_filter=True,
+    start: int = 0,
+    end: int = 100000,
+    player_search: list[str] | str = [],
+    action_filter: list[str] = [],
+    min_timestamp: float | None = None,
+    exact_player_match: bool = False,
+    exact_action: bool = False,
+    inclusive_filter: bool = True,
 ) -> ParsedLogsType:
     # The default behavior is to only show log lines with actions in `actions_filter`
     # inclusive_filter=True retains this default behavior
@@ -661,6 +662,13 @@ def get_recent_logs(
 
     if not isinstance(end, int):
         end = 1000
+
+    if not isinstance(min_timestamp, float) and min_timestamp:
+        min_timestamp = float(min_timestamp)
+
+    exact_player_match = strtobool(exact_player_match)
+    exact_action = strtobool(exact_action)
+    inclusive_filter = strtobool(inclusive_filter)
 
     if start != 0:
         all_logs = log_list[start : min(end, len(log_list))]

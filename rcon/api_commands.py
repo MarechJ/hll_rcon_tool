@@ -462,7 +462,7 @@ class RconAPI(Rcon):
 
     def get_recent_logs(
         self,
-        filter_player: list[str] = [],
+        filter_player: list[str] | str = [],
         filter_action: list[str] = [],
         inclusive_filter: bool = True,
         start: int = 0,
