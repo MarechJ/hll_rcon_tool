@@ -44,7 +44,9 @@ def get_player(sess: Session, player_id: str) -> PlayerID | None:
     return sess.query(PlayerID).filter(PlayerID.player_id == player_id).one_or_none()
 
 
-def get_player_profile(player_id, nb_sessions):
+def get_player_profile(player_id: str, nb_sessions: int):
+    nb_sessions = int(nb_sessions)
+
     with enter_session() as sess:
         player = (
             sess.query(PlayerID).filter(PlayerID.player_id == player_id).one_or_none()
