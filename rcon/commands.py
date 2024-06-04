@@ -470,7 +470,10 @@ class ServerCtl:
 
     @_auto_retry
     def get_logs(
-        self, since_min_ago, filter_="", conn: HLLConnection | None = None
+        self,
+        since_min_ago: str | int,
+        filter_: str = "",
+        conn: HLLConnection | None = None,
     ) -> str:
         if conn is None:
             raise ValueError("conn parameter should never be None")
