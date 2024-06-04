@@ -11,6 +11,7 @@ from typing import Callable, DefaultDict, Dict, Iterable
 
 import discord_webhook
 import redis.exceptions
+from dateutil import parser
 from pydantic import HttpUrl
 from sqlalchemy import and_, desc, or_
 from sqlalchemy.exc import IntegrityError
@@ -880,17 +881,27 @@ def auto_ban_if_tks_right_after_connection(
 
 def get_historical_logs_records(
     sess,
-    player_name=None,
-    action=None,
-    player_id=None,
-    limit=1000,
-    from_=None,
-    till=None,
-    time_sort="desc",
-    exact_player_match=False,
-    exact_action=True,
-    server_filter=None,
+    player_name: str | None = None,
+    action: str | None = None,
+    player_id: str | None = None,
+    limit: int = 1000,
+    from_: datetime.datetime | None = None,
+    till: datetime.datetime | None = None,
+    time_sort: str = "desc",
+    exact_player_match: bool = False,
+    exact_action: bool = True,
+    server_filter: str | None = None,
 ):
+    limit = int(limit)
+    exact_player_match = strtobool(exact_player_match)
+    exact_action = strtobool(exact_action)
+
+    if isinstance(from_, str):
+        from_ = parser.parse(from_)
+
+    if isinstance(till, str):
+        till = parser.parse(till)
+
     names = []
     name_filters = []
 
@@ -951,16 +962,16 @@ def get_historical_logs_records(
 
 
 def get_historical_logs(
-    player_name=None,
-    action=None,
-    player_id=None,
-    limit=1000,
-    from_=None,
-    till=None,
+    player_name: str | None = None,
+    action: str | None = None,
+    player_id: str | None = None,
+    limit: int = 1000,
+    from_: datetime.datetime | None = None,
+    till: datetime.datetime | None = None,
     time_sort="desc",
-    exact_player_match=False,
-    exact_action=True,
-    server_filter=None,
+    exact_player_match: bool = False,
+    exact_action: bool = True,
+    server_filter: str | None = None,
     output=None,
 ):
     with enter_session() as sess:
