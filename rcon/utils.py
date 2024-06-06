@@ -531,6 +531,9 @@ def strtobool(val) -> bool:
     if val is None:
         return False
 
+    if isinstance(val, bool):
+        return val
+
     # sourced from https://stackoverflow.com/a/18472142 with modification
     val = val.lower()
     if val in ("y", "yes", "t", "true", "on", "1"):
