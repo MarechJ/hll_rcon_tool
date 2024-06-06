@@ -350,7 +350,9 @@ class Rcon(ServerCtl):
         # Defined here to avoid circular imports with commands.py
         return super().get_admin_groups()
 
-    def get_logs(self, since_min_ago: str, filter_: str = "", by: str = "") -> str:
+    def get_logs(
+        self, since_min_ago: str | int, filter_: str = "", by: str = ""
+    ) -> str:
         """Returns raw text logs from the game server with no parsing performed
 
         You most likely want to use a different method/endpoint to get parsed logs.
