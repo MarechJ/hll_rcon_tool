@@ -162,7 +162,7 @@ def record_stats_from_map(
                 sess.query(PlayerStats)
                 .filter(
                     PlayerStats.map_id == map_.id,
-                    PlayerStats.player_id_id == player_record.id,
+                    PlayerStats.playersteamid_id == player_record.id,
                 )
                 .one_or_none()
             )

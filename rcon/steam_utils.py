@@ -227,7 +227,7 @@ def get_steam_profiles_mult_players(
     stmt = (
         select(PlayerID)
         .options(joinedload(PlayerID.steaminfo))
-        .where(PlayerID.player_id.in_(steam_id_64s))
+        .where(PlayerID.steam_id_64.in_(steam_id_64s))
     )
 
     profiles: dict[str, SteamInfoType | None] = dict.fromkeys(steam_id_64s, None)
@@ -240,7 +240,7 @@ def get_steam_profiles_mult_players(
         players = sess.scalars(stmt).all()
 
     for p in players:
-        profiles[p.player_id] = p.steaminfo.to_dict() if p.steaminfo else None
+        profiles[p.steam_id_64] = p.steaminfo.to_dict() if p.steaminfo else None
 
     return profiles
 
@@ -275,13 +275,13 @@ def update_db_player_info(sess: Session, players: list[PlayerID]) -> tuple[int, 
             called from within an active session so the database records will be updated
         player: A list of player records
     """
-    steam_id_64s = [player.player_id for player in players]
+    steam_id_64s = [player.steam_id_64 for player in players]
     profiles = fetch_steam_player_summary_mult_players(player_ids=steam_id_64s)
     bans = fetch_steam_bans_mult_players(player_ids=steam_id_64s)
 
     for player in players:
-        player_prof = profiles.get(player.player_id)
-        player_ban = bans.get(player.player_id)
+        player_prof = profiles.get(player.steam_id_64)
+        player_ban = bans.get(player.steam_id_64)
 
         # Don't edit the record and change the updated time if we have no new information
         if player_prof is None and player_ban is None:
@@ -338,20 +338,20 @@ def update_missing_old_steam_info_single_player(
         and (datetime.datetime.utcnow() - player.steaminfo.updated) >= age_limit
     ):
         # Fetch both the profile and bans
-        profile = fetch_steam_player_summary_player(player.player_id)
+        profile = fetch_steam_player_summary_player(player.steam_id_64)
         country_code = _get_player_country_code(profile)
-        bans = fetch_steam_bans_player(player.player_id)
+        bans = fetch_steam_bans_player(player.steam_id_64)
 
     elif player.steaminfo and player.steaminfo.bans is None:
         # Fetch the bans if they're missing
-        bans = fetch_steam_bans_player(player.player_id)
+        bans = fetch_steam_bans_player(player.steam_id_64)
     elif (
         player.steaminfo
         and player.steaminfo.profile is None
         or player.steaminfo.country is None
     ):
         # Fetch the profile if the profile or country code is missing
-        profile = fetch_steam_player_summary_player(player.player_id)
+        profile = fetch_steam_player_summary_player(player.steam_id_64)
         country_code = _get_player_country_code(profile)
 
     if player.steaminfo is None:
@@ -381,7 +381,7 @@ def enrich_db_users(chunk_size=100, update_from_days_old=30):
             select(PlayerID)
             .execution_options(stream_results=True, yield_per=chunk_size)
             .outerjoin(SteamInfo)
-            .where(func.length(PlayerID.player_id) == 17)
+            .where(func.length(PlayerID.steam_id_64) == 17)
             .where(
                 or_(
                     PlayerID.steaminfo == None,

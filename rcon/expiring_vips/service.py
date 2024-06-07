@@ -37,7 +37,7 @@ def remove_expired_vips(rcon_hook: Rcon, webhook_url: Optional[HttpUrl] = None):
                 name = vip.player.names[0].name
             except IndexError:
                 name = "No name found"
-            message = f"Removing VIP from `{name}`/`{vip.player.player_id}` expired `{vip.expiration}`"
+            message = f"Removing VIP from `{name}`/`{vip.player.steam_id_64}` expired `{vip.expiration}`"
             logger.info(message)
 
             webhookurls: list[HttpUrl | None] | None
@@ -51,7 +51,7 @@ def remove_expired_vips(rcon_hook: Rcon, webhook_url: Optional[HttpUrl] = None):
                 by=SERVICE_NAME,
                 webhookurls=webhookurls,
             )
-            rcon_hook.remove_vip(vip.player.player_id)
+            rcon_hook.remove_vip(vip.player.steam_id_64)
 
         # Look for anyone with VIP but without a record and create one for them
         vip_ids = rcon_hook.get_vip_ids()
@@ -76,7 +76,7 @@ def remove_expired_vips(rcon_hook: Rcon, webhook_url: Optional[HttpUrl] = None):
         for raw_player in missing_expiration_records:
             player: PlayerID = (
                 session.query(PlayerID)
-                .filter(PlayerID.player_id == raw_player["player_id"])
+                .filter(PlayerID.steam_id_64 == raw_player["player_id"])
                 .one_or_none()
             )
 
@@ -85,7 +85,7 @@ def remove_expired_vips(rcon_hook: Rcon, webhook_url: Optional[HttpUrl] = None):
                 vip_record = (
                     session.query(PlayerVIP)
                     .filter(
-                        PlayerVIP.player_id_id == player.id,
+                        PlayerVIP.playersteamid_id == player.id,
                         PlayerVIP.server_number == get_server_number(),
                     )
                     .one_or_none()
@@ -107,7 +107,7 @@ def remove_expired_vips(rcon_hook: Rcon, webhook_url: Optional[HttpUrl] = None):
                     name = "No name found"
 
                 logger.info(
-                    f"Creating missing VIP expiration (indefinite) record for {name} / {player.player_id}"
+                    f"Creating missing VIP expiration (indefinite) record for {name} / {player.steam_id_64}"
                 )
             else:
                 logger.info(

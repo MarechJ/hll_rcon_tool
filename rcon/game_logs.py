@@ -549,7 +549,7 @@ class LogRecorder:
         if not player_id:
             return None
         return (
-            sess.query(PlayerID).filter(PlayerID.player_id == player_id).one_or_none()
+            sess.query(PlayerID).filter(PlayerID.steam_id_64 == player_id).one_or_none()
         )
 
     def _save_logs(self, sess, to_store: list[StructuredLogLineWithMetaData]):
@@ -923,11 +923,11 @@ def get_historical_logs_records(
     if player_id:
         # Handle not found
         player = (
-            sess.query(PlayerID).filter(PlayerID.player_id == player_id).one_or_none()
+            sess.query(PlayerID).filter(PlayerID.steam_id_64 == player_id).one_or_none()
         )
         id_ = player.id if player else 0
         q = q.filter(
-            or_(LogLine.player1_player_id == id_, LogLine.player2_player_id == id_)
+            or_(LogLine.player1_steamid == id_, LogLine.player2_steamid == id_)
         )
 
     if player_name and not exact_player_match:

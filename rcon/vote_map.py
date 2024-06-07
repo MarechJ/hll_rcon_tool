@@ -366,14 +366,14 @@ class VoteMap:
                     .join(PlayerID)
                     .filter(
                         and_(
-                            PlayerID.player_id.in_(player_ids),
+                            PlayerID.steam_id_64.in_(player_ids),
                             PlayerOptins.optin_name == self.optin_name,
                             PlayerOptins.optin_value == "false",
                         )
                     )
                     .all()
                 )
-                opted_out = {p.player.player_id for p in res}
+                opted_out = {p.player.steam_id_64 for p in res}
         except Exception:
             logger.exception("Can't get optins")
 
@@ -483,7 +483,7 @@ class VoteMap:
                     sess.query(PlayerOptins)
                     .filter(
                         and_(
-                            PlayerOptins.player_id_id == player.id,
+                            PlayerOptins.playersteamid_id == player.id,
                             PlayerOptins.optin_name == self.optin_name,
                         )
                     )
@@ -518,7 +518,7 @@ class VoteMap:
                     sess.query(PlayerOptins)
                     .filter(
                         and_(
-                            PlayerOptins.player_id_id == player.id,
+                            PlayerOptins.playersteamid_id == player.id,
                             PlayerOptins.optin_name == self.optin_name,
                         )
                     )
@@ -582,15 +582,13 @@ class VoteMap:
         )
         return selected_map
 
-    def get_vote_overview(self) -> VoteMapResultType | None:
+    def get_vote_overview(self) -> list[VoteMapResultType] | None:
         try:
             votes = self.get_votes()
             maps = Counter(votes.values()).most_common()
             # TODO RELEASE: Return descriptive dicts not tuples
-            return {
-                "total_votes": len(votes),
-                "winning_maps": [(m, v) for m, v in maps],
-            }
+            return [{"map": m, "num_votes": v} for m, v in maps]
+
         except Exception:
             logger.exception("Can't produce vote overview")
 

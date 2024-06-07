@@ -43,7 +43,7 @@ def player_has_flag(player_dict, flag) -> bool:
 
 
 def get_player(sess: Session, player_id: str) -> PlayerID | None:
-    return sess.query(PlayerID).filter(PlayerID.player_id == player_id).one_or_none()
+    return sess.query(PlayerID).filter(PlayerID.steam_id_64 == player_id).one_or_none()
 
 
 def get_player_profile(player_id: str, nb_sessions: int):
@@ -51,7 +51,7 @@ def get_player_profile(player_id: str, nb_sessions: int):
 
     with enter_session() as sess:
         player = (
-            sess.query(PlayerID).filter(PlayerID.player_id == player_id).one_or_none()
+            sess.query(PlayerID).filter(PlayerID.steam_id_64 == player_id).one_or_none()
         )
         if player is None:
             return
@@ -77,7 +77,7 @@ def get_player_profile_by_ids(sess, ids):
 def get_player_profile_by_player_ids(sess, player_ids):
     return (
         sess.query(PlayerID)
-        .filter(PlayerID.player_id.in_(player_ids))
+        .filter(PlayerID.steam_id_64.in_(player_ids))
         .options(
             selectinload(PlayerID.names),
             selectinload(PlayerID.received_actions),
@@ -99,7 +99,7 @@ def get_player_profile_by_id(id, nb_sessions):
 
 
 def _get_profiles(sess, player_ids, nb_sessions=0):
-    return sess.query(PlayerID).filter(PlayerID.player_id.in_(player_ids)).all()
+    return sess.query(PlayerID).filter(PlayerID.steam_id_64.in_(player_ids)).all()
 
 
 def get_profiles(player_ids, nb_sessions=1):
@@ -166,7 +166,7 @@ def get_players_by_appearance(
     with enter_session() as sess:
         sub = (
             sess.query(
-                PlayerSession.player_id_id,
+                PlayerSession.playersteamid_id,
                 func.min(
                     func.coalesce(PlayerSession.start, PlayerSession.created)
                 ).label("first"),
@@ -174,7 +174,7 @@ def get_players_by_appearance(
                     "last"
                 ),
             )
-            .group_by(PlayerSession.player_id_id)
+            .group_by(PlayerSession.playersteamid_id)
             .subquery()
         )
         query = sess.query(PlayerID, sub.c.first, sub.c.last).outerjoin(
@@ -182,7 +182,7 @@ def get_players_by_appearance(
         )
 
         if player_id:
-            query = query.filter(PlayerID.player_id.ilike("%{}%".format(player_id)))
+            query = query.filter(PlayerID.steam_id_64.ilike("%{}%".format(player_id)))
 
         if player_name:
             search = PlayerName.name
@@ -277,7 +277,7 @@ def _save_player_id(sess, player_id: str) -> PlayerID:
     player = get_player(sess, player_id)
 
     if not player:
-        player = PlayerID(player_id=player_id)
+        player = PlayerID(steam_id_64=player_id)
         sess.add(player)
         logger.info("Adding first time seen %s", player_id)
         sess.commit()
@@ -299,7 +299,9 @@ def _save_player_alias(sess, player: PlayerID, player_name: str, timestamp=None)
     if not name:
         name = PlayerName(name=player_name, player=player, last_seen=dt)
         sess.add(name)
-        logger.info("Adding player %s with new name %s", player.player_id, player_name)
+        logger.info(
+            "Adding player %s with new name %s", player.steam_id_64, player_name
+        )
         sess.commit()
     else:
         name.last_seen = dt
@@ -449,7 +451,7 @@ def add_flag_to_player(
         player = _get_set_player(sess, player_name=player_name, player_id=player_id)
         exists = (
             sess.query(PlayerFlag)
-            .filter(PlayerFlag.player_id_id == player.id, PlayerFlag.flag == flag)
+            .filter(PlayerFlag.playersteamid_id == player.id, PlayerFlag.flag == flag)
             .all()
         )
         if exists:
@@ -475,7 +477,7 @@ def remove_flag(
         else:
             exists = (
                 sess.query(PlayerFlag)
-                .filter(PlayerID.player_id == player_id)
+                .filter(PlayerID.steam_id_64 == player_id)
                 .filter(PlayerFlag.flag == flag)
                 .one_or_none()
             )

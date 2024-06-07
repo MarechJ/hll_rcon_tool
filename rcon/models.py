@@ -78,9 +78,9 @@ class Base(DeclarativeBase):
 
 
 class PlayerID(Base):
-    __tablename__ = "player_id"
+    __tablename__ = "steam_id_64"
     id: Mapped[int] = mapped_column(primary_key=True)
-    player_id: Mapped[str] = mapped_column(nullable=False, index=True, unique=True)
+    steam_id_64: Mapped[str] = mapped_column(nullable=False, index=True, unique=True)
     created: Mapped[datetime] = mapped_column(default=datetime.utcnow)
     names: Mapped[list["PlayerName"]] = relationship(
         back_populates="player",
@@ -119,7 +119,7 @@ class PlayerID(Base):
             object_session(self)
             .query(PlayerVIP)  # type: ignore
             .filter(
-                PlayerVIP.player_id_id == self.id,
+                PlayerVIP.playersteamid_id == self.id,
                 PlayerVIP.server_number == self.server_number,
             )
             .one_or_none()
@@ -154,7 +154,7 @@ class PlayerID(Base):
     def to_dict(self, limit_sessions=5) -> PlayerProfileType:
         return {
             "id": self.id,
-            PLAYER_ID: self.player_id,
+            PLAYER_ID: self.steam_id_64,
             "created": self.created,
             "names": [name.to_dict() for name in self.names],
             "sessions": [session.to_dict() for session in self.sessions][
@@ -174,15 +174,15 @@ class PlayerID(Base):
 
     def __str__(self) -> str:
         aka = " | ".join([n.name for n in self.names])
-        return f"{self.player_id} {aka}"
+        return f"{self.steam_id_64} {aka}"
 
 
 class SteamInfo(Base):
     __tablename__ = "steam_info"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    player_id_id: Mapped[int] = mapped_column(
-        ForeignKey("player_id.id"), nullable=False, index=True, unique=True
+    playersteamid_id: Mapped[int] = mapped_column(
+        ForeignKey("steam_id_64.id"), nullable=False, index=True, unique=True
     )
     created: Mapped[datetime] = mapped_column(default=datetime.utcnow)
     updated: Mapped[datetime] = mapped_column(onupdate=datetime.utcnow)
@@ -222,8 +222,8 @@ class WatchList(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     modified: Mapped[datetime] = mapped_column(default=datetime.utcnow)
-    player_id_id: Mapped[int] = mapped_column(
-        ForeignKey("player_id.id"), nullable=False, index=True, unique=True
+    playersteamid_id: Mapped[int] = mapped_column(
+        ForeignKey("steam_id_64.id"), nullable=False, index=True, unique=True
     )
     is_watched: Mapped[bool] = mapped_column(nullable=False)
     reason: Mapped[str] = mapped_column(default="")
@@ -236,7 +236,7 @@ class WatchList(Base):
         return {
             "id": self.id,
             "modified": self.modified,
-            PLAYER_ID: self.player.player_id,
+            PLAYER_ID: self.player.steam_id_64,
             "is_watched": self.is_watched,
             "reason": self.reason,
             "by": self.by,
@@ -256,12 +256,12 @@ class UserConfig(Base):
 class PlayerFlag(Base):
     __tablename__ = "player_flags"
     __table_args__ = (
-        UniqueConstraint("player_id_id", "flag", name="unique_flag_player_id"),
+        UniqueConstraint("playersteamid_id", "flag", name="unique_flag_player_id"),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    player_id_id: Mapped[int] = mapped_column(
-        ForeignKey("player_id.id"), nullable=False, index=True
+    playersteamid_id: Mapped[int] = mapped_column(
+        ForeignKey("steam_id_64.id"), nullable=False, index=True
     )
     flag: Mapped[str] = mapped_column(nullable=False, index=True)
     comment: Mapped[str] = mapped_column(String, nullable=True)
@@ -281,12 +281,14 @@ class PlayerFlag(Base):
 class PlayerOptins(Base):
     __tablename__ = "player_optins"
     __table_args__ = (
-        UniqueConstraint("player_id_id", "optin_name", name="unique_optins_player_id"),
+        UniqueConstraint(
+            "playersteamid_id", "optin_name", name="unique_optins_player_id"
+        ),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    player_id_id: Mapped[int] = mapped_column(
-        ForeignKey("player_id.id"), nullable=False, index=True
+    playersteamid_id: Mapped[int] = mapped_column(
+        ForeignKey("steam_id_64.id"), nullable=False, index=True
     )
     optin_name: Mapped[str] = mapped_column(nullable=False, index=True)
     optin_value: Mapped[str] = mapped_column(nullable=True)
@@ -306,12 +308,12 @@ class PlayerOptins(Base):
 class PlayerName(Base):
     __tablename__ = "player_names"
     __table_args__ = (
-        UniqueConstraint("player_id_id", "name", name="unique_name_steamid"),
+        UniqueConstraint("playersteamid_id", "name", name="unique_name_steamid"),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    player_id_id: Mapped[int] = mapped_column(
-        ForeignKey("player_id.id"), nullable=False, index=True
+    playersteamid_id: Mapped[int] = mapped_column(
+        ForeignKey("steam_id_64.id"), nullable=False, index=True
     )
     name: Mapped[str] = mapped_column(nullable=False)
     created: Mapped[datetime] = mapped_column(default=datetime.utcnow)
@@ -323,7 +325,7 @@ class PlayerName(Base):
         return {
             "id": self.id,
             "name": self.name,
-            PLAYER_ID: self.player.player_id,
+            PLAYER_ID: self.player.steam_id_64,
             "created": self.created,
             "last_seen": self.last_seen,
         }
@@ -333,8 +335,8 @@ class PlayerSession(Base):
     __tablename__ = "player_sessions"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    player_id_id: Mapped[int] = mapped_column(
-        ForeignKey("player_id.id"), nullable=False, index=True
+    playersteamid_id: Mapped[int] = mapped_column(
+        ForeignKey("steam_id_64.id"), nullable=False, index=True
     )
     start: Mapped[datetime] = mapped_column()
     end: Mapped[datetime] = mapped_column()
@@ -347,7 +349,7 @@ class PlayerSession(Base):
     def to_dict(self) -> PlayerSessionType:
         return {
             "id": self.id,
-            PLAYER_ID: self.player.player_id,
+            PLAYER_ID: self.player.steam_id_64,
             "start": self.start,
             "end": self.end,
             "created": self.created,
@@ -358,8 +360,8 @@ class BlacklistedPlayer(Base):
     __tablename__ = "player_blacklist"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    player_id_id: Mapped[int] = mapped_column(
-        ForeignKey("player_id.id"), nullable=False, index=True, unique=True
+    playersteamid_id: Mapped[int] = mapped_column(
+        ForeignKey("steam_id_64.id"), nullable=False, index=True, unique=True
     )
     is_blacklisted: Mapped[bool] = mapped_column(default=False)
     reason: Mapped[str] = mapped_column()
@@ -369,7 +371,7 @@ class BlacklistedPlayer(Base):
 
     def to_dict(self) -> BlackListType:
         return {
-            PLAYER_ID: self.player.player_id,
+            PLAYER_ID: self.player.steam_id_64,
             "is_blacklisted": self.is_blacklisted,
             "reason": self.reason,
             "by": self.by,
@@ -381,8 +383,8 @@ class PlayersAction(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     action_type: Mapped[str] = mapped_column(nullable=False)
-    player_id_id: Mapped[int] = mapped_column(
-        ForeignKey("player_id.id"), nullable=False, index=True
+    playersteamid_id: Mapped[int] = mapped_column(
+        ForeignKey("steam_id_64.id"), nullable=False, index=True
     )
     reason: Mapped[str] = mapped_column()
     by: Mapped[str] = mapped_column()
@@ -409,18 +411,18 @@ class LogLine(Base):
     event_time: Mapped[datetime] = mapped_column(nullable=False, index=True)
     type: Mapped[str] = mapped_column(nullable=True)
     player1_name: Mapped[str] = mapped_column(nullable=True)
-    player1_player_id: Mapped[int] = mapped_column(
-        ForeignKey("player_id.id"), nullable=True, index=True
+    player1_steamid: Mapped[int] = mapped_column(
+        ForeignKey("steam_id_64.id"), nullable=True, index=True
     )
     player2_name: Mapped[str] = mapped_column(nullable=True)
-    player2_player_id: Mapped[int] = mapped_column(
-        ForeignKey("player_id.id"), nullable=True, index=True
+    player2_steamid: Mapped[int] = mapped_column(
+        ForeignKey("steam_id_64.id"), nullable=True, index=True
     )
     weapon: Mapped[str] = mapped_column()
     raw: Mapped[str] = mapped_column(nullable=False)
     content: Mapped[str] = mapped_column()
-    player_1: Mapped[PlayerID] = relationship(foreign_keys=[player1_player_id])
-    player_2: Mapped[PlayerID] = relationship(foreign_keys=[player2_player_id])
+    player_1: Mapped[PlayerID] = relationship(foreign_keys=[player1_steamid])
+    player_2: Mapped[PlayerID] = relationship(foreign_keys=[player2_steamid])
     server: Mapped[str] = mapped_column()
 
     def get_weapon(self) -> str | None:
@@ -444,9 +446,9 @@ class LogLine(Base):
             "event_time": self.event_time,
             "type": self.type,
             "player1_name": self.player1_name,
-            "player1_id": self.player_1.player_id if self.player_1 else None,
+            "player1_id": self.player_1.steam_id_64 if self.player_1 else None,
             "player2_name": self.player2_name,
-            "player2_id": self.player_2.player_id if self.player_2 else None,
+            "player2_id": self.player_2.steam_id_64 if self.player_2 else None,
             "raw": self.raw,
             "content": self.content,
             "server": self.server,
@@ -464,9 +466,9 @@ class LogLine(Base):
             "line_without_time": None,  # TODO
             "action": self.type,
             "player_name_1": self.player1_name,
-            "player_id_1": self.player_1.player_id if self.player_1 else None,
+            "player_id_1": self.player_1.steam_id_64 if self.player_1 else None,
             "player_name_2": self.player2_name,
-            "player_id_2": self.player_2.player_id if self.player_2 else None,
+            "player_id_2": self.player_2.steam_id_64 if self.player_2 else None,
             "weapon": self.get_weapon(),
             "message": self.content,
             "sub_content": None,  # TODO
@@ -510,12 +512,12 @@ class Maps(Base):
 class PlayerStats(Base):
     __tablename__ = "player_stats"
     __table_args__ = (
-        UniqueConstraint("player_id_id", "map_id", name="unique_map_player"),
+        UniqueConstraint("playersteamid_id", "map_id", name="unique_map_player"),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    player_id_id: Mapped[int] = mapped_column(
-        ForeignKey("player_id.id"), nullable=False, index=True
+    playersteamid_id: Mapped[int] = mapped_column(
+        ForeignKey("steam_id_64.id"), nullable=False, index=True
     )
     map_id: Mapped[int] = mapped_column(
         ForeignKey("map_history.id"), nullable=False, index=True
@@ -548,7 +550,7 @@ class PlayerStats(Base):
     death_by_weapons: Mapped[dict[str, int]] = mapped_column()
 
     player: Mapped[PlayerID] = relationship(
-        foreign_keys=[player_id_id], back_populates="stats"
+        foreign_keys=[playersteamid_id], back_populates="stats"
     )
     map: Mapped[Maps] = relationship(back_populates="player_stats")
 
@@ -556,8 +558,8 @@ class PlayerStats(Base):
         # TODO: Fix typing
         return {
             "id": self.id,
-            "player_id_id": self.player_id_id,
-            PLAYER_ID: self.player.player_id,
+            "player_id_id": self.playersteamid_id,
+            PLAYER_ID: self.player.steam_id_64,
             "player": self.name,
             "steaminfo": (
                 self.player.steaminfo.to_dict()
@@ -598,8 +600,8 @@ class PlayerComment(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     creation_time: Mapped[datetime] = mapped_column(TIMESTAMP, default=datetime.utcnow)
     by: Mapped[str] = mapped_column()
-    player_id_id: Mapped[int] = mapped_column(
-        ForeignKey("player_id.id"), nullable=False, index=True
+    playersteamid_id: Mapped[int] = mapped_column(
+        ForeignKey("steam_id_64.id"), nullable=False, index=True
     )
     content: Mapped[str] = mapped_column(nullable=False)
 
@@ -609,7 +611,7 @@ class PlayerComment(Base):
         return {
             "id": self.id,
             "creation_time": self.creation_time,
-            "player_id_id": self.player_id_id,
+            "player_id": self.player.steam_id_64,
             "content": self.content,
             "by": self.by,
         }
@@ -658,12 +660,12 @@ class PlayerAtCount(Base):
     __tablename__ = "player_at_count"
     __table_args__ = (
         UniqueConstraint(
-            "player_id_id", "servercount_id", name="unique_player_at_count"
+            "playersteamid_id", "servercount_id", name="unique_player_at_count"
         ),
     )
     id: Mapped[int] = mapped_column(primary_key=True)
-    player_id_id: Mapped[int] = mapped_column(
-        ForeignKey("player_id.id"), nullable=False, index=True
+    playersteamid_id: Mapped[int] = mapped_column(
+        ForeignKey("steam_id_64.id"), nullable=False, index=True
     )
     servercount_id: Mapped[int] = mapped_column(
         ForeignKey("server_counts.id"), nullable=False, index=True
@@ -676,11 +678,11 @@ class PlayerAtCount(Base):
         try:
             name = self.player.names[0].name
         except:
-            logger.exception("Unable to load name for %s", self.player.player_id)
+            logger.exception("Unable to load name for %s", self.player.steam_id_64)
             name = ""
 
         return {
-            PLAYER_ID: self.player.player_id,
+            PLAYER_ID: self.player.steam_id_64,
             "name": name,
             "vip": self.vip,
         }
@@ -690,7 +692,7 @@ class PlayerVIP(Base):
     __tablename__: str = "player_vip"
     __table_args__ = (
         UniqueConstraint(
-            "player_id_id", "server_number", name="unique_player_server_vip"
+            "playersteamid_id", "server_number", name="unique_player_server_vip"
         ),
     )
 
@@ -701,8 +703,8 @@ class PlayerVIP(Base):
     # Not making this unique (even though it should be) to avoid breaking existing CRCONs
     server_number: Mapped[int] = mapped_column()
 
-    player_id_id: Mapped[int] = mapped_column(
-        ForeignKey("player_id.id"), nullable=False, index=True
+    playersteamid_id: Mapped[int] = mapped_column(
+        ForeignKey("steam_id_64.id"), nullable=False, index=True
     )
 
     player: Mapped[PlayerID] = relationship(back_populates="vips")

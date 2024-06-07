@@ -393,6 +393,7 @@ class MapsType(TypedDict):
 
 class PlayerCommentType(TypedDict):
     id: int
+    player_id: str
     creation_time: datetime.datetime
     by: Optional[str]
     content: str
@@ -590,8 +591,8 @@ class VoteMapPlayerVoteType(TypedDict):
 
 
 class VoteMapResultType(TypedDict):
-    total_votes: int
-    winning_maps: list[tuple[Layer, int]]
+    map: Layer
+    num_votes: int
 
 
 # TODO: finish this typing

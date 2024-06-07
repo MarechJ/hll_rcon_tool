@@ -139,7 +139,7 @@ def download_vips(request):
             .all()
         )
         for player in players:
-            expiration_lookup[player.player_id] = player.vip.expiration
+            expiration_lookup[player.steam_id_64] = player.vip.expiration
 
     vip_lines = [
         f"{vip['player_id']} {vip['name']} {expiration_lookup[vip['player_id']].isoformat()}"
