@@ -429,4 +429,5 @@ class RconUser(User):
             ("can_change_chat_commands_config", "Can change the chat commands config"),
             ("can_view_log_stream_config", "Can view the Log Stream config"),
             ("can_change_log_stream_config", "Can change the Log Stream config"),
+            ("can_view_server_stats", "Can view the get_server_stats endpoint"),
         )
