@@ -96,7 +96,7 @@ def remove_expired_vips(rcon_hook: Rcon, webhook_url: Optional[HttpUrl] = None):
                 else:
                     vip_record = PlayerVIP(
                         expiration=expiration_date,
-                        player_id_id=player.id,
+                        playersteamid_id=player.id,
                         server_number=server_number,
                     )
                     session.add(vip_record)

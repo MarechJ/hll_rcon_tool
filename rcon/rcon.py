@@ -700,7 +700,7 @@ class Rcon(ServerCtl):
             if vip_record is None:
                 vip_record = PlayerVIP(
                     expiration=expiration_date,
-                    player_id_id=player.id,
+                    playersteamid_id=player.id,
                     server_number=server_number,
                 )
                 logger.info(

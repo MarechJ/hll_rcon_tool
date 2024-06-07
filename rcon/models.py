@@ -558,7 +558,6 @@ class PlayerStats(Base):
         # TODO: Fix typing
         return {
             "id": self.id,
-            "player_id_id": self.playersteamid_id,
             PLAYER_ID: self.player.steam_id_64,
             "player": self.name,
             "steaminfo": (

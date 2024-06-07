@@ -176,7 +176,7 @@ def record_stats_from_map(
                 )
             map_stats: PlayerStat = ps.get(player_id, default_stat)
             player_stat = dict(
-                player_id_id=player_record.id,
+                playersteamid_id=player_record.id,
                 map_id=map_.id,
                 name=stats.get("player"),
                 kills=stats.get("kills"),

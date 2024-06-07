@@ -129,7 +129,7 @@ def save_server_stats_for_range(start, end):
                     players_at_counts = [
                         PlayerAtCount(
                             servercount_id=server_count.id,
-                            player_id_id=player.id,
+                            playersteamid_id=player.id,
                             vip=is_vip,
                         )
                         for player, is_vip in item["players"]

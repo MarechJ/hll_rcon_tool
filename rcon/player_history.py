@@ -178,7 +178,7 @@ def get_players_by_appearance(
             .subquery()
         )
         query = sess.query(PlayerID, sub.c.first, sub.c.last).outerjoin(
-            sub, sub.c.player_id_id == PlayerID.id
+            sub, sub.c.playersteamid_id == PlayerID.id
         )
 
         if player_id:
