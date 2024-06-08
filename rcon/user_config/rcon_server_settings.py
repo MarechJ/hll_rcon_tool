@@ -64,9 +64,9 @@ class RconServerSettingsType(TypedDict):
     server_url: HttpUrl
     discord_invite_url: HttpUrl
     lock_stats_api: bool
-    unban_does_unblacklist: bool
+    # unban_does_unblacklist: bool
     # unblacklist_does_unban: bool
-    broadcast_temp_bans: bool
+    # broadcast_temp_bans: bool
     broadcast_unbans: bool
     lock_stats_api: bool
     live_stats_refresh_seconds: int

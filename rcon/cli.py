@@ -9,6 +9,7 @@ import click
 import pydantic
 import yaml
 
+from rcon.blacklist import BlacklistCommandHandler
 import rcon.expiring_vips.service
 import rcon.user_config
 import rcon.user_config.utils
@@ -126,6 +127,11 @@ def run_expiring_vips():
 @cli.command(name="automod")
 def run_automod():
     automod.run()
+
+
+@cli.command(name="blacklists")
+def run_blacklists():
+    BlacklistCommandHandler().run()
 
 
 @cli.command(name="log_recorder")

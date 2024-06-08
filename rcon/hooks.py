@@ -295,12 +295,12 @@ def ban_if_blacklisted(rcon: Rcon, player_id: str, name: str):
         if not blacklist:
             return False
     
-    return apply_blacklist_punishment(
-        rcon,
-        blacklist,
-        player_id=player_id,
-        player_name=name
-    )
+        return apply_blacklist_punishment(
+            rcon,
+            blacklist,
+            player_id=player_id,
+            player_name=name
+        )
 
 
 def should_ban(
@@ -429,14 +429,14 @@ def handle_on_connect(
         timestamp=int(struct_log["timestamp_ms"]) / 1000,
     )
 
-    blacklisted = ban_if_blacklisted(rcon, player_id, struct_log["player"])
+    blacklisted = ban_if_blacklisted(rcon, player_id, struct_log["player_name_1"])
     if blacklisted:
         # We don't need the player potentially blacklisted a second
         # time because of VAC bans. So we return here.
         return
     
     save_start_player_session(player_id, timestamp=timestamp)
-    ban_if_has_vac_bans(rcon, player_id, struct_log["player"])
+    ban_if_has_vac_bans(rcon, player_id, struct_log["player_name_1"])
 
 
 @on_disconnected

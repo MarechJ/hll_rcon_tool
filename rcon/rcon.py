@@ -29,7 +29,6 @@ from rcon.types import (
     GetDetailedPlayers,
     GetPlayersType,
     ParsedLogsType,
-    PlayerIdsType,
     ServerInfoType,
     SlotsType,
     StatusType,

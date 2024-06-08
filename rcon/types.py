@@ -1,7 +1,10 @@
 import datetime
 import enum
 from dataclasses import dataclass
-from typing import List, Literal, Optional, TypedDict
+from typing import List, Literal, Optional
+# # TODO: On Python 3.11.* specifically, Pydantic requires we use typing_extensions.TypedDict
+# over typing.TypedDict. Once we bump our Python image we can replace this.
+from typing_extensions import TypedDict
 
 from rcon.maps import Layer, LayerType
 
@@ -281,6 +284,13 @@ class PlayerSessionType(TypedDict):
     created: datetime.datetime
 
 
+class BasicPlayerProfileType(TypedDict):
+    id: int
+    player_id: str
+    created: datetime.datetime
+    names: list[PlayerNameType]
+    steaminfo: Optional[SteamInfoType]
+
 class BlacklistSyncMethod(str, enum.Enum):
     """Enumeration of all available methods when it comes to enforcing
     blacklists. Each method has its pros and cons."""
@@ -305,16 +315,26 @@ class BlacklistType(TypedDict):
     id: int
     name: str
     sync: BlacklistSyncMethod
-    servers: Optional[int]
+    servers: Optional[List[int]]
 
 class BlacklistRecordType(TypedDict):
     id: int
-    blacklist: BlacklistType
     player_id: str
     reason: str
     admin_name: str
-    created_at: datetime
+    created_at: datetime.datetime
     expires_at: Optional[datetime.datetime]
+    is_active: bool
+
+class BlacklistWithRecordsType(BlacklistType):
+    records: List[BlacklistRecordType]
+
+class BlacklistRecordWithBlacklistType(BlacklistRecordType):
+    blacklist: BlacklistType
+
+class BlacklistRecordWithPlayerType(BlacklistRecordWithBlacklistType):
+    player: BasicPlayerProfileType
+    formatted_reason: str
 
 
 class PlayerActionType(TypedDict):
@@ -494,21 +514,17 @@ class PlayerVIPType(TypedDict):
     expiration: datetime.datetime
 
 
-class PlayerProfileType(TypedDict):
-    id: int
-    player_id: str
-    created: datetime.datetime
-    names: list[PlayerNameType]
+class PlayerProfileType(BasicPlayerProfileType):
     sessions: list[PlayerSessionType]
     sessions_count: int
     total_playtime_seconds: int
     current_playtime_seconds: int
     received_actions: list[PlayerActionType]
     penalty_count: PenaltyCountType
-    blacklists: list[BlacklistRecordType]
+    blacklists: list[BlacklistRecordWithBlacklistType]
+    is_blacklisted: bool
     flags: list[PlayerFlagType]
     watchlist: Optional[WatchListType]
-    steaminfo: Optional[SteamInfoType]
     vips: Optional[list[PlayerVIPType]]
 
 

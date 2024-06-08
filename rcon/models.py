@@ -3,7 +3,7 @@ import os
 import re
 from contextlib import contextmanager
 from datetime import datetime, timezone
-from typing import Any, Generator, List, Optional, Sequence, overload
+from typing import Any, Generator, List, Literal, Optional, Sequence, overload
 
 import pydantic
 from sqlalchemy import TIMESTAMP, Enum, ForeignKey, String, create_engine, text
@@ -24,8 +24,11 @@ from sqlalchemy.schema import UniqueConstraint
 from rcon.types import (
     AuditLogType,
     BlacklistRecordType,
+    BlacklistRecordWithBlacklistType,
+    BlacklistRecordWithPlayerType,
     BlacklistSyncMethod,
     BlacklistType,
+    BlacklistWithRecordsType,
     DBLogLineType,
     MapsType,
     PenaltyCountType,
@@ -46,7 +49,7 @@ from rcon.types import (
     StructuredLogLineWithMetaData,
     WatchListType,
 )
-from rcon.utils import mask_to_server_numbers, server_numbers_to_mask
+from rcon.utils import humanize_timedelta, mask_to_server_numbers, server_numbers_to_mask
 
 logger = logging.getLogger(__name__)
 
@@ -155,6 +158,7 @@ class PlayerID(Base):
         return 0
 
     def to_dict(self, limit_sessions=5) -> PlayerProfileType:
+        blacklists = [record.to_dict() for record in self.blacklists]
         return {
             "id": self.id,
             PLAYER_ID: self.player_id,
@@ -168,7 +172,8 @@ class PlayerID(Base):
             "current_playtime_seconds": self.get_current_playtime_seconds(),
             "received_actions": [action.to_dict() for action in self.received_actions],
             "penalty_count": self.get_penalty_count(),
-            "blacklist": self.legacy_blacklist.to_dict() if self.legacy_blacklist else None,
+            "blacklists": blacklists,
+            "is_blacklisted": any(record["is_active"] for record in blacklists),
             "flags": [f.to_dict() for f in (self.flags or [])],
             "watchlist": self.watchlist.to_dict() if self.watchlist else None,
             "steaminfo": self.steaminfo.to_dict() if self.steaminfo else None,
@@ -744,13 +749,23 @@ class Blacklist(Base):
     def set_all_servers(self):
         self.servers = None
 
-    def to_dict(self) -> BlacklistType:
-        return {
+    @overload
+    def to_dict(self, with_records: Literal[True]) -> BlacklistWithRecordsType: ...
+    @overload
+    def to_dict(self, with_records: Literal[False]) -> BlacklistType: ...
+    @overload
+    def to_dict(self, with_records: bool = False) -> BlacklistType: ...
+
+    def to_dict(self, with_records: bool = False) -> BlacklistType:
+        res = {
             "id": self.id,
             "name": self.name,
             "sync": self.sync.value,
-            "servers": list(self.get_server_numbers()),
+            "servers": None if self.servers is None else list(self.get_server_numbers()),
         }
+        if with_records:
+            res["records"] = [record.to_dict(with_blacklist=False) for record in self.records]
+        return res
 
 class BlacklistRecord(Base):
     __tablename__: str = "blacklist_record"
@@ -759,12 +774,12 @@ class BlacklistRecord(Base):
     admin_name: Mapped[str]
     created_at: Mapped[datetime] = mapped_column(
         TIMESTAMP(timezone=True),
-        default_factory=lambda: datetime.now(tz=timezone.utc)
+        default=lambda: datetime.now(tz=timezone.utc)
     )
     expires_at: Mapped[Optional[datetime]] = mapped_column(TIMESTAMP(timezone=True))
     
     player_id_id: Mapped[int] = mapped_column(
-        ForeignKey("steam_id_64.id"), nullable=False, index=True
+        ForeignKey("player_id.id"), nullable=False, index=True
     )
     blacklist_id: Mapped[int] = mapped_column(
         ForeignKey("blacklist.id", ondelete="CASCADE"), nullable=False, index=True
@@ -783,16 +798,55 @@ class BlacklistRecord(Base):
             return None
         return self.expires_at <= datetime.now(tz=timezone.utc)
 
-    def to_dict(self) -> BlacklistRecordType:
-        return {
+    def get_formatted_reason(self):
+        variables = {
+            "player_id": self.player.player_id,
+            "player_name": self.player.names[0].name if self.player.names else "",
+            "banned_at": self.created_at.strftime("%d %b %H:%M"),
+            "banned_until": self.expires_at.strftime("%d %b %H:%M") if self.expires_at else "forever",
+            "expires_at": self.expires_at.strftime("%d %b %H:%M") if self.expires_at else "never",
+            "duration": humanize_timedelta(self.expires_at - self.created_at) if self.expires_at else "forever",
+            "expires": humanize_timedelta(self.expires_at).replace("forever", "never"),
+            "ban_id": self.id,
+            "admin_name": self.admin_name,
+            "blacklist_name": self.blacklist.name,
+        }
+        return self.reason.format(**variables)
+
+    # I know this isn't entirely representative but I cba to add 4 different types, 3 is already more than enough
+    @overload
+    def to_dict(self, with_blacklist: Literal[True] = True, with_player: Literal[False] = False) -> BlacklistRecordWithBlacklistType: ...
+    @overload
+    def to_dict(self, with_blacklist: Literal[True] = True, with_player: Literal[True] = False) -> BlacklistRecordWithPlayerType: ...
+    @overload
+    def to_dict(self, with_blacklist: Literal[False] = True, with_player: bool = False) -> BlacklistRecordType: ...
+
+    def to_dict(self, with_blacklist: bool = True, with_player: bool = False) -> BlacklistRecordWithBlacklistType:
+        res = {
             "id": self.id,
-            "blacklist": self.blacklist.to_dict(),
-            "player_id": self.steamid.steam_id_64,
+            "player_id": self.player.player_id,
             "reason": self.reason,
             "admin_name": self.admin_name,
             "created_at": self.created_at,
             "expires_at": self.expires_at,
+            "is_active": not self.is_expired(),
         }
+        
+        if with_blacklist:
+            res["blacklist"] = self.blacklist.to_dict(with_records=False)
+        
+        if with_player:
+            res["player"] = {
+                "id": self.player.id,
+                "player_id": self.player.player_id,
+                "created": self.player.created,
+                "names": [name.to_dict() for name in self.player.names],
+                "steaminfo": self.player.steaminfo.to_dict() if self.player.steaminfo else None,
+            }
+            res["formatted_reason"] = self.get_formatted_reason()
+        
+        return res
+
 
 def install_unaccent():
     with enter_session() as sess:

@@ -359,14 +359,12 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     rcon_api.add_maps_to_votemap_whitelist: "api.can_add_maps_to_whitelist",
     rcon_api.add_vip: "api.can_add_vip",
     rcon_api.ban_profanities: "api.can_ban_profanities",
-    rcon_api.blacklist_player: "api.can_blacklist_players",
     rcon_api.clear_cache: "api.can_clear_crcon_cache",
     rcon_api.flag_player: "api.can_flag_player",
     rcon_api.kick: "api.can_kick_players",
     rcon_api.message_player: "api.can_message_players",
     rcon_api.perma_ban: {
         "api.can_perma_ban_players",
-        "api.can_blacklist_players",
     },
     rcon_api.punish: "api.can_punish_players",
     rcon_api.remove_admin: "api.can_remove_admin_roles",
@@ -388,9 +386,7 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     rcon_api.unban: {
         "api.can_remove_temp_bans",
         "api.can_remove_perma_bans",
-        "api.can_unblacklist_players",
     },
-    rcon_api.unblacklist_player: "api.can_unblacklist_players",
     rcon_api.unflag_player: "api.can_unflag_player",
     rcon_api.unwatch_player: "api.can_remove_player_watch",
     rcon_api.watch_player: "api.can_add_player_watch",
@@ -573,6 +569,20 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     rcon_api.set_log_stream_config: "api.can_change_log_stream_config",
     rcon_api.validate_log_stream_config: "api.can_change_log_stream_config",
     rcon_api.get_date_scoreboard: "api.can_view_date_scoreboard",
+    rcon_api.get_blacklists: "api.can_view_blacklists",
+    rcon_api.get_blacklist: "api.can_view_blacklists",
+    rcon_api.create_blacklist: "api.can_create_blacklists",
+    rcon_api.edit_blacklist: "api.can_change_blacklists",
+    rcon_api.delete_blacklist: "api.can_delete_blacklists",
+    rcon_api.get_blacklist_records: "can_view_blacklists",
+    rcon_api.add_blacklist_record: "api.can_add_blacklist_records",
+    rcon_api.edit_blacklist_record: "api.can_change_blacklist_records",
+    rcon_api.delete_blacklist_record: "api.can_delete_blacklist_records",
+    rcon_api.unblacklist_player: {
+        "api.can_delete_blacklist_records",
+        "api.can_remove_temp_bans",
+        "api.can_remove_perma_bans",
+    },
 }
 
 PREFIXES_TO_EXPOSE = [
@@ -589,7 +599,6 @@ DEPRECATED_ENDPOINTS = (
     "flag_player",
     "unflag_player",
     "player",
-    "unblacklist_player",
     "unban",
 )
 
@@ -601,7 +610,6 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.add_maps_to_votemap_whitelist: ["POST"],
     rcon_api.add_vip: ["POST"],
     rcon_api.ban_profanities: ["POST"],
-    rcon_api.blacklist_player: ["POST"],
     rcon_api.clear_cache: ["POST"],
     rcon_api.flag_player: ["POST"],
     rcon_api.get_admin_groups: ["GET"],
@@ -754,7 +762,6 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.temp_ban: ["POST"],
     rcon_api.unban_profanities: ["POST"],
     rcon_api.unban: ["POST"],
-    rcon_api.unblacklist_player: ["POST"],
     rcon_api.unflag_player: ["POST"],
     rcon_api.unwatch_player: ["POST"],
     rcon_api.validate_admin_pings_discord_webhooks_config: ["POST"],
@@ -789,6 +796,16 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.validate_watchlist_discord_webhooks_config: ["POST"],
     rcon_api.watch_player: ["POST"],
     rcon_api.get_date_scoreboard: ["GET"],
+    rcon_api.get_blacklists: ["GET"],
+    rcon_api.get_blacklist: ["GET"],
+    rcon_api.create_blacklist: ["POST"],
+    rcon_api.edit_blacklist: ["POST"],
+    rcon_api.delete_blacklist: ["POST"],
+    rcon_api.get_blacklist_records: ["GET"],
+    rcon_api.add_blacklist_record: ["POST"],
+    rcon_api.edit_blacklist_record: ["POST"],
+    rcon_api.delete_blacklist_record: ["POST"],
+    rcon_api.unblacklist_player: ["POST"],
 }
 
 # Check to make sure that ENDPOINT_HTTP_METHODS and ENDPOINT_PERMISSIONS have the same endpoints
@@ -808,7 +825,6 @@ ALLOWED_METHODS_SPECIAL_CASES: dict[Callable, list[str]] = {
     rcon_api.get_recent_logs: ["GET", "POST"],
     rcon_api.unflag_player: ["POST"],
     rcon_api.clear_cache: ["POST"],
-    rcon_api.unblacklist_player: ["POST"],
     rcon_api.unban: ["POST"],
 }
 

@@ -18,6 +18,7 @@ class BanTeamKillOnConnectType(TypedDict):
     enabled: bool
     message: str
     author_name: str
+    blacklist_id: int | None
     excluded_weapons: list[str]
     max_time_after_connect_minutes: int
     ignore_tk_after_n_kills: int

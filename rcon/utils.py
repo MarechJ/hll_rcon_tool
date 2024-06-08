@@ -2,7 +2,7 @@ import inspect
 import logging
 import os
 import secrets
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from itertools import islice
 from typing import Any, Generic, Iterable, TypeVar
 
@@ -560,3 +560,60 @@ def mask_to_server_numbers(mask: int) -> set[int]:
         if c == '1':
             server_numbers.add(i)
     return server_numbers
+
+def humanize_timedelta(td: timedelta | datetime | None) -> str:
+    """Converts a timedelta to a human-readable string.
+    
+    Example:
+    timedelta(-60*60*24*2.5) => "2 days ago"
+    timedelta(60*60 - 5) => "in an hour"
+    None => "forever"
+    """
+    if td is None:
+        return "forever"
+    
+    if isinstance(td, datetime):
+        td = td - datetime.now(tz=timezone.utc)
+    
+    seconds = int(td.total_seconds())
+    if seconds < 0:
+        fmt = "{} ago"
+        seconds = abs(seconds)
+    else:
+        fmt = "in {}"
+
+    minutes = seconds / 60
+    if int(minutes) <= 1:
+        return fmt.format("a minute")
+    elif minutes < 59:
+        return fmt.format(f"{int(minutes)} minutes")
+    
+    hours = minutes / 60
+    if int(hours) <= 1:
+        return fmt.format(f"an hour")
+    elif hours < 23.5:
+        return fmt.format(f"{int(hours)} hours")
+    
+    days = hours / 24
+    if int(days) <= 1:
+        return fmt.format(f"a day")
+    elif days < 6.9:
+        return fmt.format(f"{int(days)} days")
+    
+    weeks = days / 7
+    if int(weeks) <= 1:
+        return fmt.format(f"a week")
+    elif days < 29.9:
+        return fmt.format(f"{int(weeks)} weeks")
+    
+    months = days / 30
+    if int(months) <= 1:
+        return fmt.format(f"a month")
+    elif months < 11.95:
+        return fmt.format(f"{int(months)} months")
+    
+    years = days / 365
+    if int(years) <= 1:
+        return fmt.format(f"a year")
+    return fmt.format("{} years")
+    

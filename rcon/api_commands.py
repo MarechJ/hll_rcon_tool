@@ -3,20 +3,12 @@ from datetime import datetime, timedelta
 from logging import getLogger
 from typing import Any, Iterable, Literal, Optional, Sequence, Type
 
-from rcon import game_logs, player_history
+from rcon import blacklist, game_logs, player_history
 from rcon.audit import ingame_mods, online_mods
-from rcon.blacklist import (
-    add_record_to_blacklist,
-    create_blacklist,
-    delete_blacklist,
-    edit_blacklist,
-    edit_record_from_blacklist,
-    expire_all_player_blacklists,
-    remove_record_from_blacklist,
-)
 from rcon.cache_utils import RedisCached, get_redis_pool
 from rcon.discord import audit_user_config_differences
 from rcon.gtx import GTXFtp
+from rcon.models import enter_session
 from rcon.player_history import (
     add_flag_to_player,
     get_players_by_appearance,
@@ -27,8 +19,10 @@ from rcon.scoreboard import TimeWindowStats
 from rcon.settings import SERVER_INFO
 from rcon.types import (
     AdminUserType,
+    BlacklistRecordWithPlayerType,
     BlacklistSyncMethod,
     BlacklistType,
+    BlacklistWithRecordsType,
     GameServerBanType,
     ParsedLogsType,
     PlayerCommentType,
@@ -141,6 +135,27 @@ class RconAPI(Rcon):
                 author=by,
             )
         return res
+    
+    def get_blacklists(self) -> list[BlacklistType]:
+        """Get all blacklists.
+        
+        Blacklists are collections of ban-like records stored by CRCON
+        to provide greater flexibility and scalability.
+        """
+        with enter_session() as sess:
+            return [bl.to_dict(with_records=False) for bl in blacklist.get_blacklists(sess)]
+    
+    def get_blacklist(self, blacklist_id: int) -> BlacklistWithRecordsType:
+        """Get a blacklist and its respective records.
+        
+        Blacklists are collections of ban-like records stored by CRCON
+        to provide greater flexibility and scalability.
+
+        Args:
+            blacklist_id: The ID of the blacklist
+        """
+        with enter_session() as sess:
+            return blacklist.get_blacklist(sess, blacklist_id, strict=True).to_dict(with_records=True)
 
     def create_blacklist(
         self,
@@ -164,9 +179,9 @@ class RconAPI(Rcon):
                 A sequence of server numbers which this blacklist will
                 apply to. `None` means all servers.
         """
-        return create_blacklist(
+        return blacklist.create_blacklist(
             name=name,
-            sync=sync,
+            sync=BlacklistSyncMethod(sync.lower()),
             servers=servers,
         )
 
@@ -189,7 +204,9 @@ class RconAPI(Rcon):
             sync: Method to use for synchronizing records with the game
             servers: List of server numbers this blacklist applies to. `None` means all.
         """
-        return edit_blacklist(
+        if sync:
+            sync = BlacklistSyncMethod(sync.lower())
+        return blacklist.edit_blacklist(
             blacklist_id,
             name=name,
             sync=sync,
@@ -209,7 +226,40 @@ class RconAPI(Rcon):
         Args:
             blacklist_id: The ID of the blacklist
         """
-        return delete_blacklist(blacklist_id)
+        return blacklist.delete_blacklist(blacklist_id)
+
+    def get_blacklist_records(
+        self,
+        player_id: str = None,
+        reason: str = None,
+        blacklist_id: int = None,
+        exclude_expired: bool = False,
+        page_size: int = 50,
+        page: int = 1,
+    ):
+        page_size = int(page_size)
+        page = int(page)
+        if blacklist_id is not None:
+            blacklist_id = int(blacklist_id)
+        with enter_session() as sess:
+            records, total = blacklist.search_blacklist_records(
+                sess,
+                player_id=player_id,
+                reason=reason,
+                blacklist_id=blacklist_id,
+                exclude_expired=exclude_expired,
+                page_size=page_size,
+                page=page,
+            )
+            return {
+                "records": [
+                    record.to_dict(with_blacklist=True, with_player=True)
+                    for record in records
+                ],
+                "page": page,
+                "page_size": page_size,
+                "total": total,
+            }
 
     def add_blacklist_record(
         self,
@@ -232,7 +282,7 @@ class RconAPI(Rcon):
             expires_at: When the blacklist should expire, if ever
             admin_name: The person/tool that is blacklisting the player
         """
-        return add_record_to_blacklist(
+        return blacklist.add_record_to_blacklist(
             player_id=player_id,
             blacklist_id=blacklist_id,
             reason=reason,
@@ -262,14 +312,14 @@ class RconAPI(Rcon):
             reason: The reason the player was blacklisted for
             expires_at: When the blacklist should expire, if ever
         """
-        return edit_record_from_blacklist(
+        return blacklist.edit_record_from_blacklist(
             record_id,
             blacklist_id=blacklist_id,
             reason=reason,
             expires_at=expires_at,
         )
     
-    def remove_blacklist_record(
+    def delete_blacklist_record(
         self,
         record_id: int,
     ) -> bool:
@@ -282,20 +332,18 @@ class RconAPI(Rcon):
         Args:
             record_id: The ID of the record
         """
-        return remove_record_from_blacklist(record_id)
+        return blacklist.remove_record_from_blacklist(record_id)
     
-    blacklist_player = add_blacklist_record
-
     def unblacklist_player(
         self,
         player_id: str
     ) -> bool:
-        """Expires all blacklists of a player
+        """Expires all blacklists of a player and unbans them from all servers.
 
         Args:
             player_id: steam_id_64 or windows store ID
         """
-        expire_all_player_blacklists(player_id)
+        blacklist.expire_all_player_blacklists(player_id)
         return True
 
 
@@ -303,7 +351,10 @@ class RconAPI(Rcon):
         self,
         player_id: str,
     ) -> bool:
-        """Remove all temporary and permanent bans from the player_id
+        """Remove all temporary and permanent bans from the player_id.
+
+        This does not remove any blacklists, meaning the player may be immediately banned
+        again. To remove any bans or blacklists, use `unblacklist_player` instead.
 
         Args:
             player_id: steam_id_64 or windows store ID
@@ -347,25 +398,11 @@ class RconAPI(Rcon):
             bans = self.get_ban(player_id=player_id)
             comments = player_history.get_player_comments(player_id=player_id)
 
-            profile = {
-                "id": raw_profile["id"],
-                "player_id": raw_profile["player_id"],
-                "created": raw_profile["created"],
-                "names": raw_profile["names"],
-                "sessions": raw_profile["sessions"],
-                "sessions_count": raw_profile["sessions_count"],
-                "total_playtime_seconds": raw_profile["total_playtime_seconds"],
-                "current_playtime_seconds": raw_profile["current_playtime_seconds"],
-                "received_actions": raw_profile["received_actions"],
-                "penalty_count": raw_profile["penalty_count"],
-                "blacklist": raw_profile["blacklist"],
-                "flags": raw_profile["flags"],
-                "watchlist": raw_profile["watchlist"],
-                "steaminfo": raw_profile["steaminfo"],
-                "vips": raw_profile["vips"],
+            profile = raw_profile.copy()
+            profile.update({
                 "bans": bans,
                 "comments": comments,
-            }
+            })
         return profile
 
     def get_player_comments(self, player_id: str) -> list[PlayerCommentType]:

@@ -10,7 +10,9 @@ BAN_ON_VAC_HISTORY_REASON = "VAC/Game ban history ({DAYS_SINCE_LAST_BAN} days ag
 class VacGameBansType(TypedDict):
     vac_history_days: int
     game_ban_threshhold: int
+    blacklist_id: int | None
     ban_on_vac_history_reason: str
+    auto_expire: bool
     whitelist_flags: list[str]
 
 

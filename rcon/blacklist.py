@@ -1,22 +1,24 @@
 from datetime import datetime, timedelta, timezone
 from enum import IntEnum, auto
+import os
 import orjson
 import logging
 import struct
 from pydantic import BaseModel, field_validator
 from pydantic.dataclasses import dataclass
-from sqlalchemy import ScalarResult, func, or_, select
-from sqlalchemy.orm import Session
+import redis
+from sqlalchemy import func, or_, select
+from sqlalchemy.orm import Session, selectinload
 from typing import Literal, Sequence, overload
 
 from rcon.cache_utils import get_redis_client
 from rcon.commands import CommandFailedError
 from rcon.discord import dict_to_discord, send_to_discord_audit
-from rcon.models import BlacklistSyncMethod, PlayerID, Blacklist, BlacklistRecord, enter_session
-from rcon.player_history import _get_set_player
+from rcon.models import BlacklistSyncMethod, PlayerID, Blacklist, BlacklistRecord, PlayerName, enter_session, get_engine
+from rcon.player_history import _get_set_player, remove_accent, unaccent
 from rcon.rcon import Rcon, get_rcon
-from rcon.types import BlacklistRecordType, BlacklistType
-from rcon.utils import MISSING, get_server_number
+from rcon.types import BlacklistRecordType, BlacklistRecordWithBlacklistType, BlacklistType
+from rcon.utils import MISSING, get_server_number, humanize_timedelta
 
 logger = logging.getLogger(__name__)
 red = get_redis_client()
@@ -27,6 +29,9 @@ def get_server_number_mask():
     server_number = SERVER_NUMBER
     return 1 << (server_number - 1)
 
+
+def get_blacklists(sess: Session):
+    return sess.scalars(select(Blacklist).order_by(Blacklist.id)).all()
 
 @overload
 def get_blacklist(sess: Session, blacklist_id: int, strict: Literal[True]) -> Blacklist: ...
@@ -61,7 +66,7 @@ def get_active_blacklist_records(sess: Session, blacklist_id: int):
         BlacklistRecord.blacklist_id == blacklist_id,
         or_(
             BlacklistRecord.expires_at.is_(None),
-            BlacklistRecord.expires_at < func.now(),
+            BlacklistRecord.expires_at > func.now(),
         )
     )
     return sess.scalars(stmt)
@@ -72,7 +77,7 @@ def get_player_blacklist_records(
     include_expired = True,
     include_other_servers = True,
     exclude: set[int] = None
-) -> ScalarResult[BlacklistRecord]:
+) -> list[BlacklistRecord]:
     stmt = (
         select(BlacklistRecord)
         .join(BlacklistRecord.player)
@@ -88,7 +93,7 @@ def get_player_blacklist_records(
             # Record must not have expired yet
             or_(
                 BlacklistRecord.expires_at.is_(None),
-                BlacklistRecord.expires_at < func.now(),
+                BlacklistRecord.expires_at > func.now(),
             )
         )
     
@@ -97,7 +102,7 @@ def get_player_blacklist_records(
             # Blacklist must be enabled on the given server
             or_(
                 Blacklist.servers.is_(None),
-                Blacklist.servers.bitwise_and(get_server_number_mask())
+                Blacklist.servers.bitwise_and(get_server_number_mask()) != 0
             )
         )
     
@@ -106,8 +111,65 @@ def get_player_blacklist_records(
             BlacklistRecord.id.not_in(exclude)
         )
 
-    blacklists = sess.scalars(stmt)
-    return blacklists
+    records = sess.scalars(stmt).all()
+    return records
+
+def search_blacklist_records(
+    sess: Session,
+    player_id: str = None,
+    reason: str = None,
+    blacklist_id: int = None,
+    exclude_expired: bool = False,
+    page_size: int = 50,
+    page: int = 1,
+) -> tuple[list[BlacklistRecord], int]:
+    if page <= 0:
+        raise ValueError("page needs to be >= 1")
+    if page_size <= 0:
+        raise ValueError("page_size needs to be >= 1")
+    
+    filters = []
+
+    if player_id:
+        filters.append(
+            PlayerID.player_id == player_id
+        )
+    if reason:
+        clean_reason = remove_accent(reason)
+        filters.append(or_(
+            unaccent(BlacklistRecord.reason).ilike(f"%{clean_reason}%"),
+            PlayerID.names.any(
+                unaccent(PlayerName.name).ilike(f"%{clean_reason}%")
+            ),
+        ))
+    if blacklist_id:
+        filters.append(
+            BlacklistRecord.blacklist_id == blacklist_id
+        )
+    if exclude_expired:
+        filters.append(or_(
+            BlacklistRecord.expires_at.is_(None),
+            BlacklistRecord.expires_at > func.now(),
+        ))
+    
+    total = sess.execute(
+        select(func.count(BlacklistRecord.id))
+            .join(BlacklistRecord.player)
+            .filter(*filters)
+    ).scalar_one()
+
+    stmt = (
+        select(BlacklistRecord)
+            .join(BlacklistRecord.player)
+            .filter(*filters)
+            .order_by(BlacklistRecord.created_at.desc())
+            .limit(page_size)
+            .offset((page - 1) * page_size)
+            .options(selectinload(BlacklistRecord.blacklist))
+            .options(selectinload(BlacklistRecord.player).selectinload(PlayerID.names))
+            .options(selectinload(BlacklistRecord.player).selectinload(PlayerID.steaminfo))
+    )
+    return sess.scalars(stmt).all(), total
 
 def is_player_blacklisted(sess: Session, player_id: str, exclude: set[int] = {}) -> BlacklistRecord | None:
     """Determine whether a player is blacklisted, and return
@@ -182,13 +244,10 @@ def get_highest_priority_record(records: Sequence[BlacklistRecord]):
             highest = record
     return highest
 
-
-def format_reason(record: BlacklistRecord):
-    # TODO: Inject variables
-    return record.reason
-
-def round_timedelta_to_hours(td: timedelta):
-    return min(round(td.total_seconds() / (60 * 60)), 1)
+def round_timedelta_to_hours(td: timedelta | datetime):
+    if isinstance(td, datetime):
+        td = td - datetime.now(tz=timezone.utc)
+    return max(round(td.total_seconds() / (60 * 60)), 1)
 
 class BanState(IntEnum):
     NONE = 0
@@ -237,21 +296,29 @@ def synchronize_ban(rcon: Rcon, player_id: str, new_record: BlacklistRecord | No
     old_state : BanState
         The current (and possibly outdated) state of the player's ban
     """
+    logger.info("Synchronizing ban for player %s", player_id)
     new_state = get_ban_state_from_record(new_record)
 
-    # Remove the existing ban if it will not be overwritten later
-    if new_state != old_state:
-        if old_state == BanState.TEMP:
-            rcon.remove_temp_ban(player_id)
-        elif old_state == BanState.PERMA:
-            rcon.remove_perma_ban(player_id)
+    # Remove the existing ban if it will not be overwritten later. Also remove if the
+    # player is to be banned upon connecting, so that they can see the updated ban reason
+    if (
+        new_state != old_state
+        or new_record.blacklist.sync == BlacklistSyncMethod.BAN_ON_CONNECT
+    ):
+        try:
+            if old_state == BanState.TEMP:
+                rcon.remove_temp_ban(player_id)
+            elif old_state == BanState.PERMA:
+                rcon.remove_perma_ban(player_id)
+        except CommandFailedError:
+            pass
 
     # If there is no new record we are done and can return
     if new_record is None:
         return
     
     # Check whether the player is online (and grab their name)
-    player_name = rcon.get_playerids(as_dict=True).get(player_id)
+    player_name = next((p_name for p_name, p_id in rcon.get_playerids() if p_id == player_id), None)
     is_online = player_name is not None
 
     if new_record.blacklist.sync != BlacklistSyncMethod.BAN_IMMEDIATELY and not is_online:
@@ -272,9 +339,10 @@ def apply_blacklist_punishment(
     player_id: str = None,
     player_name: str = None,
 ):
+    logger.info("Applying punishment to %s", player_id)
     try:
         state = get_ban_state_from_record(record)
-        reason = format_reason(record)
+        reason = record.get_formatted_reason()
 
         if player_id is None:
             player_id = record.player.player_id
@@ -324,11 +392,15 @@ def apply_blacklist_punishment(
                 )
 
     except:
-        send_to_discord_audit(
-            message="Failed to apply blacklist, please check the logs and report the error",
-            command_name="blacklist",
-            by="ERROR",
-        )
+        logger.exception("Failed to apply blacklist")
+        try:
+            send_to_discord_audit(
+                message="Failed to apply blacklist, please check the logs and report the error",
+                command_name="blacklist",
+                by="ERROR",
+            )
+        except:
+            logger.error("Unable to send blacklist error to audit log")
         return False
     
     else:
@@ -352,7 +424,7 @@ def add_record_to_blacklist(player_id: str, blacklist_id: int, reason: str, expi
         blacklist = get_blacklist(sess, blacklist_id, True)
 
         record = BlacklistRecord(
-            steamid=player,
+            player=player,
             blacklist=blacklist,
             reason=reason,
             expires_at=expires_at,
@@ -363,16 +435,16 @@ def add_record_to_blacklist(player_id: str, blacklist_id: int, reason: str, expi
 
         res = record.to_dict()
 
-    BlacklistCommandHandler.send(
-        BlacklistCommand(
-            command=BlacklistCommandType.CREATE_RECORD,
-            server_mask=blacklist.servers,
-            payload=BlacklistCreateRecordCommand(
-                player_id=player_id,
-                record_id=record.id,
+        BlacklistCommandHandler.send(
+            BlacklistCommand(
+                command=BlacklistCommandType.CREATE_RECORD,
+                server_mask=blacklist.servers,
+                payload=BlacklistCreateRecordCommand(
+                    player_id=player_id,
+                    record_id=record.id,
+                ).model_dump()
             )
         )
-    )
     
     return res
 
@@ -422,7 +494,7 @@ def edit_record_from_blacklist(
                     server_mask=server_mask,
                     payload=BlacklistEditRecordCommand(
                         old_record=old_record
-                    )
+                    ).model_dump()
                 )
             )
     
@@ -446,7 +518,7 @@ def remove_record_from_blacklist(record_id: str):
                     server_mask=record.blacklist.servers,
                     payload=BlacklistDeleteRecordCommand(
                         old_record=res,
-                    )
+                    ).model_dump()
                 )
             )
 
@@ -507,13 +579,16 @@ def edit_blacklist(
                 payload=BlacklistEditListCommand(
                     old_blacklist=old_blacklist,
                     new_blacklist=new_blacklist
-                )
+                ).model_dump()
             )
         )
     
         return new_blacklist
 
 def delete_blacklist(blacklist_id: int):
+    if blacklist_id == 0:
+        raise ValueError("The default blacklist cannot be deleted")
+    
     with enter_session() as sess:
         blacklist = get_blacklist(sess, blacklist_id)
         if not blacklist:
@@ -558,10 +633,10 @@ def delete_blacklist(blacklist_id: int):
             BlacklistCommand(
                 command=BlacklistCommandType.DELETE_LIST,
                 server_mask=blacklist.servers,
-                payload=BlacklistDeleteRecordCommand(
+                payload=BlacklistDeleteListCommand(
                     blacklist=res,
                     banned_players=banned_players,
-                )
+                ).model_dump()
             )
         )
 
@@ -615,22 +690,26 @@ def expire_all_player_blacklists(player_id: str):
             include_expired=False,
         )
 
-        if not records:
-            return
-        
-        expire_time = datetime.now(tz=timezone.utc)
-        server_mask = 0
+        if records:
+            expire_time = datetime.now(tz=timezone.utc)
+            server_mask = 0
 
-        for record in records:
-            record.expires_at = expire_time
-            server_mask |= record.blacklist.servers
-        sess.commit()
+            for record in records:
+                record.expires_at = expire_time
+                servers = record.blacklist.servers
+                if servers is None:
+                    servers = 2**32 - 1
+                server_mask |= servers
+            sess.commit()
         
         BlacklistCommandHandler.send(
             BlacklistCommand(
                 command=BlacklistCommandType.EXPIRE_ALL,
                 # server_mask=server_mask,
                 server_mask=2**32 - 1,
+                payload=BlacklistExpireAllCommand(
+                    player_id=player_id
+                ).model_dump()
             )
         )
 
@@ -649,13 +728,13 @@ class BlacklistCommandType(IntEnum):
 
 class BlacklistCreateRecordCommand(BaseModel):
     player_id: str
-    record_id: str
+    record_id: int
 
 class BlacklistEditRecordCommand(BaseModel):
-    old_record: BlacklistRecordType
+    old_record: BlacklistRecordWithBlacklistType
 
 class BlacklistDeleteRecordCommand(BaseModel):
-    old_record: BlacklistRecordType
+    old_record: BlacklistRecordWithBlacklistType
 
 class BlacklistEditListCommand(BaseModel):
     old_blacklist: BlacklistType
@@ -664,7 +743,6 @@ class BlacklistEditListCommand(BaseModel):
 class BlacklistDeleteListCommand(BaseModel):
     blacklist: BlacklistType
     banned_players: dict[str, tuple[datetime, datetime | None]]
-    perma_banned: list[str]
 
 class BlacklistExpireAllCommand(BaseModel):
     player_id: str
@@ -684,7 +762,7 @@ class BlacklistCommand:
         return v
     
     def encode(self):
-        return struct.pack("II", self.command) + orjson.dumps(self.payload)
+        return struct.pack("II", self.command, self.server_mask) + orjson.dumps(self.payload)
     
     @classmethod
     def decode(cls, data: bytes):
@@ -701,11 +779,24 @@ class BlacklistCommandHandler:
     CHANNEL = "blacklist"
 
     def __init__(self) -> None:
-        self.pubsub = red.pubsub(ignore_subscribe_messages=True)
+        redis_url = os.getenv("HLL_REDIS_URL")
+        if not redis_url:
+            raise RuntimeError("HLL_REDIS_URL not set")
+
+        # Initialize our own little Redis client, because the shared one has
+        # a global timeout and attempts to decode our little packets
+        self.red = redis.Redis.from_url(
+            redis_url,
+            single_connection_client=True,
+            decode_responses=False
+        )
+
+        self.pubsub = self.red.pubsub(ignore_subscribe_messages=True)
         self.rcon = get_rcon()
     
     def run(self):
         """Run the command handler loop. This is a blocking call."""
+        logger.info("Starting blacklist command handler loop")
 
         # Subscribe to channel
         self.pubsub.subscribe(self.CHANNEL)
@@ -718,7 +809,9 @@ class BlacklistCommandHandler:
 
                 if not (cmd.server_mask & get_server_number_mask()):
                     # Command is not meant for this server
-                    return
+                    continue
+
+                logger.info("Handling %s command" % cmd.command.name)
 
                 try:
                     match cmd.command:
@@ -746,11 +839,14 @@ class BlacklistCommandHandler:
                             self.handle_expire_all(
                                 BlacklistExpireAllCommand.model_validate(cmd.payload)
                             )
+                        case _:
+                            logger.error("Unknown command %r", cmd.command)
                 except:
                     logger.exception("Error whilst executing %s command with payload %s", cmd.command.name, cmd.payload)
 
             except:
                 logger.exception("Failed to parse data %s", data)
+            logger.info("Ready for next message!")
     
     @staticmethod
     def send(cmd: BlacklistCommand):
@@ -763,11 +859,12 @@ class BlacklistCommandHandler:
     def handle_create_record(self, payload: BlacklistCreateRecordCommand):
         """Handle a new record being created."""
         with enter_session() as sess:
-            new_record = is_player_blacklisted(sess, player_id=payload.player_id)
-            
-            if new_record is None or new_record.id != payload.record_id:
+            top_record = is_player_blacklisted(sess, player_id=payload.player_id)
+
+            if top_record is None or top_record.id != payload.record_id:
                 # The new ban does not have priority, so we don't
                 # have to do anything
+                logger.info("Newly created record does not take priority and will be ignored")
                 return
             
             old_record = is_player_blacklisted(
@@ -779,7 +876,7 @@ class BlacklistCommandHandler:
             synchronize_ban(
                 self.rcon,
                 player_id=payload.player_id,
-                new_record=new_record,
+                new_record=top_record,
                 old_state=get_ban_state_from_record(old_record)
             )
             
@@ -787,8 +884,9 @@ class BlacklistCommandHandler:
         """Handle a record being edited.
         
         This simply will synchronize the player's ban if either the old
-        or new ban had or has priority. If none of the attributes below
-        were changed, this method may be avoided.
+        or new ban had or has priority. You may assume at least one of
+        the attributes below were changed, otherwise this method can and
+        should be avoided.
         - record.expires_at
         - record.reason
         - record.blacklist.sync"""
@@ -796,14 +894,25 @@ class BlacklistCommandHandler:
         with enter_session() as sess:
             new_record = is_player_blacklisted(sess, player_id=old_record["player_id"])
 
+            if not new_record:
+                synchronize_ban(
+                    self.rcon,
+                    player_id=old_record["player_id"],
+                    new_record=None,
+                    old_state=get_ban_state_from_record(old_record)
+                )
+
             # Check whether the old or new record had or has priority
-            if (
+            elif (
                 new_record.id == old_record["id"]
-                or _is_higher_priority_record(
-                    old_record["created_at"],
-                    old_record["expires_at"],
-                    new_record.created_at,
-                    new_record.expires_at
+                or (
+                    SERVER_NUMBER in old_record["blacklist"]["servers"]
+                    and _is_higher_priority_record(
+                        old_record["created_at"],
+                        old_record["expires_at"],
+                        new_record.created_at,
+                        new_record.expires_at
+                    )
                 )
             ):
                 synchronize_ban(
@@ -849,33 +958,42 @@ class BlacklistCommandHandler:
         old_blacklist = payload.old_blacklist
         new_blacklist = payload.new_blacklist
 
-        was_banned = (
-            SERVER_NUMBER in old_blacklist["servers"]
+        was_banning = (
+            (
+                old_blacklist["servers"] is None
+                or SERVER_NUMBER in old_blacklist["servers"]
+            )
             and old_blacklist["sync"] != BlacklistSyncMethod.KICK_ONLY
         )
 
-        is_banned = (
-            SERVER_NUMBER in new_blacklist["servers"]
+        is_banning = (
+            (
+                new_blacklist["servers"] is None
+                or SERVER_NUMBER in new_blacklist["servers"]
+            )
             and new_blacklist["sync"] != BlacklistSyncMethod.KICK_ONLY
         )
 
-        if was_banned != is_banned:
-            with enter_session() as sess:
-                records = get_active_blacklist_records(sess, new_blacklist["id"])
-                for record in records:
-                    if not was_banned:
-                        old_state = BanState.NONE
-                    elif record.expires_at is None:
-                        old_state = BanState.PERMA
-                    else:
-                        old_state = BanState.TEMP
+        if was_banning == is_banning:
+            # TODO: Differentiate betweeen BAN_ON_CONNECT and BAN_IMMEDIATELY
+            return
+        
+        with enter_session() as sess:
+            records = get_active_blacklist_records(sess, new_blacklist["id"])
+            for record in records:
+                if not was_banning:
+                    old_state = BanState.NONE
+                elif record.expires_at is None:
+                    old_state = BanState.PERMA
+                else:
+                    old_state = BanState.TEMP
 
-                    synchronize_ban(
-                        rcon=self.rcon,
-                        player_id=record.player.player_id,
-                        new_record=record if is_banned else None,
-                        old_state=old_state
-                    )
+                synchronize_ban(
+                    rcon=self.rcon,
+                    player_id=record.player.player_id,
+                    new_record=record if is_banning else None,
+                    old_state=old_state
+                )
 
     def handle_delete_list(self, payload: BlacklistDeleteListCommand):
         """Handle a blacklist being deleted.
@@ -919,5 +1037,18 @@ class BlacklistCommandHandler:
         
         Note that if a player was only temporarily blacklisted but also had
         a permanent ban, that permanent ban will also be removed."""
-        self.rcon.remove_temp_ban(payload.player_id)
-        self.rcon.remove_perma_ban(payload.player_id)
+        # Check if the player is temp-banned
+        if next(
+            (True for ban in self.rcon.get_temp_bans() if ban["player_id"] == payload.player_id),
+            False
+        ):
+            # Remove their temp-ban
+            self.rcon.remove_temp_ban(payload.player_id)
+
+        # Check if the player is perma-banned
+        if next(
+            (True for ban in self.rcon.get_perma_bans() if ban["player_id"] == payload.player_id),
+            False
+        ):
+            # Remove their perma-ban
+            self.rcon.remove_perma_ban(payload.player_id)

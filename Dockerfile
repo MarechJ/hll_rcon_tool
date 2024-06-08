@@ -11,6 +11,7 @@ COPY . .
 ENV PYTHONPATH /code/
 RUN chmod +x entrypoint.sh
 RUN chmod +x manage.py
+RUN chmod +x rconweb/manage.py
 ENV LOGGING_FILENAME=startup.log
 
 ENTRYPOINT [ "/code/entrypoint.sh" ]
