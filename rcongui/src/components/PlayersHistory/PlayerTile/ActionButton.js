@@ -35,7 +35,7 @@ export const ActionButton = ({
           </Tooltip>
         ) : (
           <Tooltip
-            title="Add the player to the blacklist. They will be perma banned at their next connection (applies to all servers)"
+            title="Blacklist the player"
             arrow
           >
             <BlockIcon size="small" onClick={onBlacklist} />
@@ -67,7 +67,7 @@ export const ActionButton = ({
       <Button>
         {isVip ? (
           <Tooltip title="Remove player from VIPs." arrow>
-            <StarBorder color="primary" onClick={onAddVip} />
+            <StarBorder color="primary" onClick={onDeleteVip} />
           </Tooltip>
         ) : (
           <Tooltip title="Add player to VIPs." arrow>
