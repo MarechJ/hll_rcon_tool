@@ -20,7 +20,7 @@ import { pure } from "recompose";
 import { getName } from "country-list";
 import makePlayerProfileUrl from "../../../utils/makePlayerProfileUrl";
 
-const getCountry = (country) => {
+export const getCountry = (country) => {
   if (country === "" || country === null) {
     return "";
   }
@@ -99,7 +99,7 @@ export const PlayerHeader = pure(({ classes, player }) => {
                 ) : (
                   ""
                 )}
-                {namesByMatch.get(0, "")} {getCountry(country)}
+                {namesByMatch.get(0, firstName?.get("name"))} {getCountry(country)}
               </Typography>
             )}
           </React.Fragment>

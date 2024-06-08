@@ -400,7 +400,7 @@ class PlayersHistory extends React.Component {
     this.postComment(
       playerId,
       null,
-      `Player ID ${playerId} removed from blacklist`
+      `Expired all blacklists for player ID ${playerId}`
     );
     postData(`${process.env.REACT_APP_API_URL}unblacklist_player`, {
       player_id: playerId,
@@ -408,7 +408,7 @@ class PlayersHistory extends React.Component {
       .then((response) =>
         showResponse(
           response,
-          `Player ID ${playerId} removed from blacklist`,
+          `Expired all blacklists for player ID ${playerId}`,
           true
         )
       )

@@ -23,12 +23,15 @@ export function banListFromServer(data) {
 
 export const PlayerBan = ({ classes, bans, player }) => {
   const playerBans = bans.get(player.get("player_id"));
-  const formattedBans = {};
-
+  const formattedBans = [];
+  
+  if (player.get("is_blacklisted")) {
+    formattedBans.push("IS BLACKLISTED");
+  }
   playerBans?.forEach((b) =>
     b.get("type") === "temp"
-      ? (formattedBans.temp = "IS TEMP BANNED")
-      : (formattedBans.perma = "IS PERMA BANNED")
+      ? formattedBans.push("IS TEMPBANNED")
+      : formattedBans.push("IS PERMABANNED")
   );
   return (
     <Grid
@@ -37,24 +40,13 @@ export const PlayerBan = ({ classes, bans, player }) => {
       spacing={0}
       className={classes.noPaddingMargin}
     >
-      <Grid item xs={6}>
-        {formattedBans.temp ? (
+      {formattedBans.map((formattedBan) => (
+        <Grid item xs={6}>
           <Typography variant="h7" color="secondary">
-            {formattedBans.temp}
+            {formattedBan}
           </Typography>
-        ) : (
-          ""
-        )}
-      </Grid>
-      <Grid item xs={6}>
-        {formattedBans.perma ? (
-          <Typography variant="h7" color="secondary">
-            {formattedBans.perma}
-          </Typography>
-        ) : (
-          ""
-        )}
-      </Grid>
+        </Grid>
+      ))}
     </Grid>
   );
 };

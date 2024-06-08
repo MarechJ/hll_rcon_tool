@@ -144,6 +144,7 @@ class LoginBox extends React.Component {
           onClick={() =>
             isLoggedIn === true ? this.logout() : this.setState({ open: true })
           }
+          to="#"
         >
           {isLoggedIn === true ? "Logout" : "Login"}
         </Link>
@@ -257,6 +258,13 @@ const Header = ({ classes }) => {
                           to="/combined_history"
                         >
                           <MenuItem onClick={handleClose}>Combined</MenuItem>
+                        </Link>
+                        <Link
+                          color="inherit"
+                          component={RouterLink}
+                          to="/blacklists"
+                        >
+                          <MenuItem onClick={handleClose}>Blacklists</MenuItem>
                         </Link>
                         <Link
                           color="inherit"

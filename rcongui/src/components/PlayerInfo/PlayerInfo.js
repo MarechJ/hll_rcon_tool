@@ -166,11 +166,7 @@ const PlayerInfo = ({ classes }) => {
     PUNISH: 0,
     KICK: 0,
   });
-  const [blacklist, setBlacklist] = React.useState({
-    is_blacklisted: false,
-    reason: "",
-    by: "",
-  });
+  const [isBlacklisted, setIsBlacklisted] = React.useState(false);
   const [flags, setFlags] = React.useState([]);
   const [watchlist, setWatchlist] = React.useState({});
   const [steaminfo, setSteaminfo] = React.useState({});
@@ -226,7 +222,7 @@ const PlayerInfo = ({ classes }) => {
           setCurrentPlaytimeSeconds(data.result.current_playtime_seconds);
           setReceivedActions(data.result.received_actions);
           setPenaltyCount(data.result.penalty_count);
-          setBlacklist(data.result.blacklist);
+          setIsBlacklisted(data.result.is_blacklisted);
           setFlags(data.result.flags);
           setWatchlist(data.result.watchlist);
           setSteaminfo(data.result.steaminfo);
@@ -378,9 +374,9 @@ const PlayerInfo = ({ classes }) => {
                   <Grid container spacing={2}>
                     {[
                       [vip, "VIP"],
+                      [isBlacklisted, "IS BLACKLISTED"],
                       [perma, "IS PERMABANNED"],
                       [temp, "IS TEMPBANNED"],
-                      [blacklist?.is_blacklisted, "IS BLACKLISTED"],
                     ].map((e) => (
                       <Is bool={e[0]} text={e[1]} />
                     ))}

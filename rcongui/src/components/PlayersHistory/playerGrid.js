@@ -85,10 +85,7 @@ const PlayerGrid = withWidth()(
                       <Grid container justify="center">
                         <Grid item>
                           <ActionButton
-                            blacklisted={
-                              player.get("blacklist") &&
-                              player.get("blacklist").get("is_blacklisted")
-                            }
+                            blacklisted={player.get("is_blacklisted")}
                             onUnBlacklist={() => onUnBlacklist(player)}
                             onBlacklist={() => onBlacklist(player)}
                             onTempBan={() => onTempBan(player)}

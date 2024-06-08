@@ -25,7 +25,6 @@ import {
   LiveSessionScore,
 } from "./components/Scoreboard/LiveScore";
 import ServerInfo from "./components/Embeds/ServerInfo";
-import ServerStatsPage from "./components/ServerStats";
 import GameView from "./components/GameView";
 import AuditLog from "./components/AuditLog";
 import {
@@ -56,6 +55,8 @@ import {
   ChatCommands,
   LogStream,
 } from "./components/UserSettings/miscellaneous";
+import BlacklistRecords from "./components/Blacklist/BlacklistRecords";
+import BlacklistLists from "./components/Blacklist/BlacklistLists";
 
 const Live = ({ classes }) => {
   const [mdSize, setMdSize] = React.useState(6);
@@ -732,6 +733,24 @@ function App() {
                       <LogsHistory classes={classes} />
                     </Grid>
                   </Grid>
+                </Route>
+                <Route path="/blacklists">
+                  <Switch>
+                    <Route path="/blacklists/manage">
+                      <Grid container>
+                        <Grid item sm={12} lg={12}>
+                          <BlacklistLists classes={classes} />
+                        </Grid>
+                      </Grid>
+                    </Route>
+                    <Route path="/blacklists/" exact>
+                      <Grid container>
+                        <Grid item sm={12} lg={12}>
+                          <BlacklistRecords classes={classes} />
+                        </Grid>
+                      </Grid>
+                    </Route>
+                  </Switch>
                 </Route>
                 <Route path="/combined_history">
                   <Grid container spacing={2}>
