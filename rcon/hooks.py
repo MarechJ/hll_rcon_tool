@@ -1,14 +1,14 @@
 import logging
 import re
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from functools import wraps
 from threading import Timer
 from typing import Final
 
 from discord_webhook import DiscordEmbed
 
-from rcon.blacklist import apply_blacklist_punishment, is_player_blacklisted, synchronize_ban
+from rcon.blacklist import apply_blacklist_punishment, blacklist_or_ban, is_player_blacklisted, synchronize_ban
 import rcon.steam_utils as steam_utils
 from discord.utils import escape_markdown
 from rcon.cache_utils import invalidates
@@ -366,33 +366,29 @@ def ban_if_has_vac_bans(rcon: Rcon, player_id: str, name: str):
             player_flags=player.flags,
             whitelist_flags=whitelist_flags,
         ):
+            days_since_last_ban = bans["DaysSinceLastBan"]
             reason = config.ban_on_vac_history_reason.format(
-                DAYS_SINCE_LAST_BAN=bans.get("DaysSinceLastBan"),
+                DAYS_SINCE_LAST_BAN=days_since_last_ban,
                 MAX_DAYS_SINCE_BAN=str(max_days_since_ban),
+            )
+            if config.auto_expire:
+                days_until_expire = max_days_since_ban - days_since_last_ban
+                expires_at = datetime.now(tz=timezone.utc) + timedelta(days=days_until_expire)
+            else:
+                expires_at = None
+            blacklist_or_ban(
+                rcon=rcon,
+                blacklist_id=config.blacklist_id,
+                player_id=player_id,
+                reason=reason,
+                expires_at=expires_at,
+                admin_name="VAC BOT"
             )
             logger.info(
                 "Player %s was banned due VAC history, last ban: %s days ago",
                 str(player),
                 bans.get("DaysSinceLastBan"),
             )
-            rcon.perma_ban(player_name=name, reason=reason, by="VAC BOT")
-
-            try:
-                audit_params = dict(
-                    player=name,
-                    player_id=player.player_id,
-                    reason=reason,
-                    days_since_last_ban=bans.get("DaysSinceLastBan"),
-                    vac_banned=bans.get("VACBanned"),
-                    number_of_game_bans=bans.get("NumberOfGameBans"),
-                )
-                send_to_discord_audit(
-                    message=f"{dict_to_discord(audit_params)}",
-                    command_name="blacklist",
-                    by="VAC/GAME BAN",
-                )
-            except:
-                logger.exception("Unable to send vac ban to audit log")
 
 
 def inject_player_ids(func):
