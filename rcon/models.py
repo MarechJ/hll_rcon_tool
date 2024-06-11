@@ -760,7 +760,8 @@ def enter_session() -> Generator[Session, None, None]:
         yield sess
         # Only commit if there were no exceptions, otherwise rollback
         sess.commit()
-    except (ProgrammingError, InvalidRequestError):
+    except (ProgrammingError, InvalidRequestError) as e:
+        logger.exception(e)
         sess.rollback()
     finally:
         sess.close()
