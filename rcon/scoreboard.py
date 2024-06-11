@@ -316,7 +316,7 @@ class LiveStats(BaseStats):
 
         with enter_session() as sess:
             profiles_by_id = {
-                profile.steam_id_64: profile
+                profile.player_id: profile
                 for profile in _get_profiles(
                     sess, [p[PLAYER_ID] for p in players], nb_sessions=1
                 )
@@ -488,7 +488,7 @@ class TimeWindowStats(BaseStats):
         # The profiles are attached to the current DB session
         with enter_session() as sess:
             profiles_by_id = {
-                profile.steam_id_64: profile
+                profile.player_id: profile
                 for profile in get_player_profile_by_player_ids(
                     sess, [p[PLAYER_ID] for p in players]
                 )

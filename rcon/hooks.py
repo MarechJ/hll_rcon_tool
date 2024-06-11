@@ -409,7 +409,7 @@ def ban_if_has_vac_bans(rcon: Rcon, player_id: str, name: str):
             try:
                 audit_params = dict(
                     player=name,
-                    player_id=player.steam_id_64,
+                    player_id=player.player_id,
                     reason=reason,
                     days_since_last_ban=bans.get("DaysSinceLastBan"),
                     vac_banned=bans.get("VACBanned"),
@@ -496,9 +496,9 @@ def update_player_steaminfo_on_connect(
         )
 
 
-pendingTimers: dict[
-    str, list[tuple[RconInvalidNameActionType | None, Timer]]
-] = defaultdict(list)
+pendingTimers: dict[str, list[tuple[RconInvalidNameActionType | None, Timer]]] = (
+    defaultdict(list)
+)
 
 
 @on_connected()

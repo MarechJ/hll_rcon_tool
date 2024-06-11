@@ -589,7 +589,7 @@ class Rcon(ServerCtl):
                 .all()
             )
             vip_expirations = {
-                player.player.steam_id_64: player.expiration for player in players
+                player.player.player_id: player.expiration for player in players
             }
 
         for item in res:
@@ -614,7 +614,7 @@ class Rcon(ServerCtl):
         with enter_session() as session:
             player: PlayerID | None = (
                 session.query(PlayerID)
-                .filter(PlayerID.steam_id_64 == player_id)
+                .filter(PlayerID.player_id == player_id)
                 .one_or_none()
             )
             if player and player.vip:
@@ -626,7 +626,7 @@ class Rcon(ServerCtl):
                 vip_record: PlayerVIP | None = (
                     session.query(PlayerVIP)
                     .filter(
-                        PlayerVIP.playersteamid_id == player.id,
+                        PlayerVIP.player_id_id == player.id,
                         PlayerVIP.server_number == server_number,
                     )
                     .one_or_none()
@@ -671,7 +671,7 @@ class Rcon(ServerCtl):
         with enter_session() as session:
             player: PlayerID | None = (
                 session.query(PlayerID)
-                .filter(PlayerID.steam_id_64 == player_id)
+                .filter(PlayerID.player_id == player_id)
                 .one_or_none()
             )
             if player is None:
@@ -684,7 +684,7 @@ class Rcon(ServerCtl):
                 # to the session https://docs.sqlalchemy.org/en/20/errors.html#error-bhk3
                 player = (
                     session.query(PlayerID)
-                    .filter(PlayerID.steam_id_64 == player_id)
+                    .filter(PlayerID.player_id == player_id)
                     .one()
                 )
 
@@ -692,7 +692,7 @@ class Rcon(ServerCtl):
                 session.query(PlayerVIP)
                 .filter(
                     PlayerVIP.server_number == server_number,
-                    PlayerVIP.playersteamid_id == player.id,
+                    PlayerVIP.player_id_id == player.id,
                 )
                 .one_or_none()
             )
@@ -700,18 +700,18 @@ class Rcon(ServerCtl):
             if vip_record is None:
                 vip_record = PlayerVIP(
                     expiration=expiration_date,
-                    playersteamid_id=player.id,
+                    player_id_id=player.id,
                     server_number=server_number,
                 )
                 logger.info(
-                    f"Added new PlayerVIP record {player.steam_id_64=} {expiration_date=}"
+                    f"Added new PlayerVIP record {player.player_id=} {expiration_date=}"
                 )
                 session.add(vip_record)
             else:
                 previous_expiration = vip_record.expiration.isoformat()
                 vip_record.expiration = expiration_date
                 logger.info(
-                    f"Modified PlayerVIP record {player.steam_id_64=} {vip_record.expiration} {previous_expiration=}"
+                    f"Modified PlayerVIP record {player.player_id=} {vip_record.expiration} {previous_expiration=}"
                 )
 
         return result

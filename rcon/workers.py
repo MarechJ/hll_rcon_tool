@@ -162,7 +162,7 @@ def record_stats_from_map(
                 sess.query(PlayerStats)
                 .filter(
                     PlayerStats.map_id == map_.id,
-                    PlayerStats.playersteamid_id == player_record.id,
+                    PlayerStats.player_id_id == player_record.id,
                 )
                 .one_or_none()
             )
@@ -176,7 +176,7 @@ def record_stats_from_map(
                 )
             map_stats: PlayerStat = ps.get(player_id, default_stat)
             player_stat = dict(
-                playersteamid_id=player_record.id,
+                player_id_id=player_record.id,
                 map_id=map_.id,
                 name=stats.get("player"),
                 kills=stats.get("kills"),
@@ -200,10 +200,10 @@ def record_stats_from_map(
                 most_killed=stats.get("most_killed"),
                 death_by=stats.get("death_by"),
                 death_by_weapons=stats.get("death_by_weapons"),
-                combat=map_stats.get("combat") + map_stats.get("p_combat"),
-                offense=map_stats.get("offense") + map_stats.get("p_offense"),
-                defense=map_stats.get("defense") + map_stats.get("p_defense"),
-                support=map_stats.get("support") + map_stats.get("p_support"),
+                combat=map_stats.get("combat", 0) + map_stats.get("p_combat", 0),
+                offense=map_stats.get("offense", 0) + map_stats.get("p_offense", 0),
+                defense=map_stats.get("defense", 0) + map_stats.get("p_defense", 0),
+                support=map_stats.get("support", 0) + map_stats.get("p_support", 0),
             )
             if existing is not None and force != True:
                 continue

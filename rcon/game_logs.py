@@ -280,9 +280,9 @@ class LogStream:
         Return each unique timestamp and the logs that occured at that time
         """
         # logs has the newest logs first, oldest last
-        buckets: dict[
-            datetime.datetime, list[StructuredLogLineWithMetaData]
-        ] = defaultdict(list)
+        buckets: dict[datetime.datetime, list[StructuredLogLineWithMetaData]] = (
+            defaultdict(list)
+        )
 
         ordered_logs: list[
             tuple[datetime.datetime, list[StructuredLogLineWithMetaData]]
@@ -340,15 +340,15 @@ class LogStream:
         try:
             if last_seen is None:
                 logs: list[tuple[StreamID, StructuredLogLineWithMetaData]] = []
-                tail_log: tuple[
-                    StreamID, StructuredLogLineWithMetaData
-                ] = self.log_stream.tail()
+                tail_log: tuple[StreamID, StructuredLogLineWithMetaData] = (
+                    self.log_stream.tail()
+                )
                 if tail_log:
                     logs.append(tail_log)
             else:
-                logs: list[
-                    tuple[StreamID, StructuredLogLineWithMetaData]
-                ] = self.log_stream.read(last_id=last_seen, block_ms=block_ms)
+                logs: list[tuple[StreamID, StructuredLogLineWithMetaData]] = (
+                    self.log_stream.read(last_id=last_seen, block_ms=block_ms)
+                )
             return logs
         except StreamNoElements:
             response: list[tuple[StreamID, StructuredLogLineWithMetaData]] = []
@@ -549,7 +549,7 @@ class LogRecorder:
         if not player_id:
             return None
         return (
-            sess.query(PlayerID).filter(PlayerID.steam_id_64 == player_id).one_or_none()
+            sess.query(PlayerID).filter(PlayerID.player_id == player_id).one_or_none()
         )
 
     def _save_logs(self, sess, to_store: list[StructuredLogLineWithMetaData]):
@@ -880,7 +880,7 @@ def auto_ban_if_tks_right_after_connection(
 
 
 def get_historical_logs_records(
-    sess,
+    sess: Session,
     player_name: str | None = None,
     action: str | None = None,
     player_id: str | None = None,
@@ -923,11 +923,11 @@ def get_historical_logs_records(
     if player_id:
         # Handle not found
         player = (
-            sess.query(PlayerID).filter(PlayerID.steam_id_64 == player_id).one_or_none()
+            sess.query(PlayerID).filter(PlayerID.player_id == player_id).one_or_none()
         )
         id_ = player.id if player else 0
         q = q.filter(
-            or_(LogLine.player1_steamid == id_, LogLine.player2_steamid == id_)
+            or_(LogLine.player1_player_id == id_, LogLine.player2_player_id == id_)
         )
 
     if player_name and not exact_player_match:

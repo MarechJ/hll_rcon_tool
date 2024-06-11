@@ -366,14 +366,14 @@ class VoteMap:
                     .join(PlayerID)
                     .filter(
                         and_(
-                            PlayerID.steam_id_64.in_(player_ids),
+                            PlayerID.player_id.in_(player_ids),
                             PlayerOptins.optin_name == self.optin_name,
                             PlayerOptins.optin_value == "false",
                         )
                     )
                     .all()
                 )
-                opted_out = {p.player.steam_id_64 for p in res}
+                opted_out = {p.player.player_id for p in res}
         except Exception:
             logger.exception("Can't get optins")
 
@@ -483,7 +483,7 @@ class VoteMap:
                     sess.query(PlayerOptins)
                     .filter(
                         and_(
-                            PlayerOptins.playersteamid_id == player.id,
+                            PlayerOptins.player_id_id == player.id,
                             PlayerOptins.optin_name == self.optin_name,
                         )
                     )
@@ -518,7 +518,7 @@ class VoteMap:
                     sess.query(PlayerOptins)
                     .filter(
                         and_(
-                            PlayerOptins.playersteamid_id == player.id,
+                            PlayerOptins.player_id_id == player.id,
                             PlayerOptins.optin_name == self.optin_name,
                         )
                     )
