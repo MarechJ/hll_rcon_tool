@@ -49,7 +49,7 @@ from rcon.types import (
     StructuredLogLineWithMetaData,
     WatchListType,
 )
-from rcon.utils import humanize_timedelta, mask_to_server_numbers, server_numbers_to_mask
+from rcon.utils import SafeStringFormat, humanize_timedelta, mask_to_server_numbers, server_numbers_to_mask
 
 logger = logging.getLogger(__name__)
 
@@ -811,7 +811,7 @@ class BlacklistRecord(Base):
             "admin_name": self.admin_name,
             "blacklist_name": self.blacklist.name,
         }
-        return self.reason.format(**variables)
+        return self.reason.format_map(SafeStringFormat(**variables))
 
     # I know this isn't entirely representative but I cba to add 4 different types, 3 is already more than enough
     @overload
