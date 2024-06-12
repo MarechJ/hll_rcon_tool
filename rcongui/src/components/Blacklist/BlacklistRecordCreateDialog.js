@@ -15,6 +15,8 @@ export default function BlacklistRecordCreateDialog({
   blacklists,
   onSubmit,
   initialValues,
+  titleText="Blacklist Player",
+  submitText="Blacklist Player",
   disablePlayerId,
 }) {
   const [blacklist, setBlacklist] = React.useState("");
@@ -67,7 +69,7 @@ export default function BlacklistRecordCreateDialog({
         },
       }}
     >
-      <DialogTitle>Blacklist Player</DialogTitle>
+      <DialogTitle>{titleText}</DialogTitle>
       <DialogContent>
         <DialogContentText>
           By blacklisting a player you are revoking their access to one or more servers.
@@ -179,7 +181,7 @@ export default function BlacklistRecordCreateDialog({
       </DialogContent>
       <DialogActions>
         <Button onClick={handleClose}>Cancel</Button>
-        <Button type="submit" disabled={blacklist === ""}>Blacklist Player</Button>
+        <Button type="submit" disabled={blacklist === ""}>{submitText}</Button>
       </DialogActions>
     </Dialog>
   );

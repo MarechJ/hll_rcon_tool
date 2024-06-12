@@ -355,6 +355,8 @@ const BlacklistRecordGrid = withWidth()(
           blacklists={blacklists}
           initialValues={editDialogInitialValues}
           onSubmit={onEditDialogSubmit}
+          titleText="Edit Blacklist Record"
+          submitText="Save"
           disablePlayerId
         />
       </React.Fragment>
