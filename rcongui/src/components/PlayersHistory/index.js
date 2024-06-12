@@ -34,6 +34,7 @@ import PlayerGrid from "./playerGrid";
 import { VipExpirationDialog } from "../VipDialog";
 import { vipListFromServer } from "../VipDialog/vipFromServer";
 import { banListFromServer } from "../PlayersHistory/PlayerTile/PlayerBan";
+import BlacklistRecordCreateDialog from "../Blacklist/BlacklistRecordCreateDialog";
 
 const PlayerSummary = ({ player, flag }) => (
   <React.Fragment>
@@ -169,6 +170,9 @@ class PlayersHistory extends React.Component {
       flags: "",
       country: "",
       bans: new Map(),
+      blacklists: undefined,
+      blacklistDialogOpen: false,
+      blacklistDialogInitialValues: undefined,
     };
 
     this.getPlayerHistory = this.getPlayerHistory.bind(this);
@@ -178,6 +182,7 @@ class PlayersHistory extends React.Component {
     this.addFlagToPlayer = this.addFlagToPlayer.bind(this);
     this.deleteFlag = this.deleteFlag.bind(this);
     this.loadVips = this.loadVips.bind(this);
+    this.loadBlacklists = this.loadBlacklists.bind(this);
     this.addVip = this.addVip.bind(this);
     this.deleteVip = this.deleteVip.bind(this);
     this.unBanPlayer = this.unBanPlayer.bind(this);
@@ -257,6 +262,14 @@ class PlayersHistory extends React.Component {
     return this._loadToState("get_vip_ids", false, (data) =>
       this.setState({
         vips: vipListFromServer(data.result),
+      })
+    );
+  }
+
+  loadBlacklists() {
+    return this._loadToState("get_blacklists", false, (data) =>
+      this.setState({
+        blacklists: data.result,
       })
     );
   }
@@ -375,25 +388,28 @@ class PlayersHistory extends React.Component {
       .catch((error) => toast.error("Unable to connect to API " + error));
   }
 
-  blacklistPlayer(playerId, reason, comment) {
+  blacklistPlayer({
+    blacklistId,
+    playerId,
+    expiresAt,
+    reason
+  }) {
     this.postComment(
       playerId,
-      comment,
+      null,
       `Player ID ${playerId} blacklist for ${reason}`
     );
-    postData(`${process.env.REACT_APP_API_URL}blacklist_player`, {
+    postData(`${process.env.REACT_APP_API_URL}add_blacklist_record`, {
+      blacklist_id: blacklistId,
       player_id: playerId,
-      reason: reason,
+      expires_at: expiresAt || null,
+      reason
     })
       .then((response) =>
-        showResponse(
-          response,
-          `PlayerID ${playerId} blacklist for ${reason}`,
-          true
-        )
+        showResponse(response, `Player ID ${playerId} was blacklisted`, true)
       )
       .then(this._reloadOnSuccess)
-      .catch((error) => toast.error("Unable to connect to API " + error));
+      .catch(handle_http_errors);
   }
 
   unblacklistPlayer(playerId) {
@@ -479,11 +495,15 @@ class PlayersHistory extends React.Component {
 
   /* Shortcut function for the grid list */
   onBlacklist(player) {
-    return this.setDoConfirmPlayer({
-      player: player.get("player_id"),
-      actionType: "blacklist",
-      player_id: player.get("player_id"),
+    this.setState({
+      blacklistDialogOpen: true,
+      blacklistDialogInitialValues: {
+        playerId: player.get("player_id")
+      }
     });
+    if (!this.state.blacklists) {
+      this.loadBlacklists()
+    }
   }
 
   onUnBlacklist(player) {
@@ -548,6 +568,9 @@ class PlayersHistory extends React.Component {
       exactMatch,
       flags,
       country,
+      blacklists,
+      blacklistDialogOpen,
+      blacklistDialogInitialValues,
     } = this.state;
 
     // Perfomance is crappy. It's less crappy after switcing to immutables but still...
@@ -662,6 +685,14 @@ class PlayersHistory extends React.Component {
             this.addVip(playerObj, expirationTimestamp, forwardVIP);
             this.setDoVIPPlayer(false);
           }}
+        />
+        <BlacklistRecordCreateDialog
+          open={blacklistDialogOpen}
+          setOpen={(value) => this.setState({ blacklistDialogOpen: value })}
+          blacklists={blacklists}
+          initialValues={blacklistDialogInitialValues}
+          onSubmit={this.blacklistPlayer}
+          disablePlayerId
         />
       </Grid>
     );

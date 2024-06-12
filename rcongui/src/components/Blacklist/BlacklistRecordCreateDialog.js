@@ -27,7 +27,7 @@ export default function BlacklistRecordCreateDialog({
   React.useEffect(() => {
     if (initialValues) {
       if (initialValues.blacklistId !== undefined) {
-        const blacklist = blacklists.find((b) => b.id === initialValues.blacklistId);
+        const blacklist = blacklists?.find((b) => b.id === initialValues.blacklistId);
         if (blacklist) setBlacklist(blacklist);
       };
       if (initialValues.playerId !== undefined) setPlayerId(initialValues.playerId);
@@ -81,7 +81,7 @@ export default function BlacklistRecordCreateDialog({
             value={blacklist}
             onChange={(e) => setBlacklist(e.target.value)}
           >
-            { blacklists.map(
+            { blacklists?.map(
               (b) => <MenuItem key={b.id} value={b}>{b.name}</MenuItem>
             ) }
           </Select>
