@@ -66,6 +66,18 @@ const BlacklistRecordTile = ({
   const reason = record.get("formatted_reason")
   const createdAt = moment(record.get("created_at"));
   const now = moment();
+
+  function getReportTemplate() {
+    const template =
+      `Name: ${
+        firstName || ""
+      }\nPlayer ID: ${
+        player.get("player_id")
+      }\nSteam URL: ${
+        makePlayerProfileUrl(player.get("player_id"), firstName) || "Unknown"
+      }\nType of issue:\nDescription:\nEvidence:`;
+    return template;
+  }
   
   return (
     <Grid
@@ -137,8 +149,7 @@ const BlacklistRecordTile = ({
         <ListItemSecondaryAction>
           <Tooltip title="Copy Player ID to clipboard">
             <Typography variant="body2">
-              <FileCopyIcon
-                fontSize="small"
+              <IconButton
                 size="small"
                 style={{ cursor: "pointer" }}
                 onClick={() => {
@@ -156,28 +167,18 @@ const BlacklistRecordTile = ({
                     }
                   );
                 }}
-              />
+              >
+                <FileCopyIcon fontSize="small"/>
+              </IconButton>
             </Typography>
           </Tooltip>
           <Tooltip title="Copy report template to clipboard">
             <Typography variant="body2">
-              <AnnouncementIcon
-                fontSize="small"
+              <IconButton
                 size="small"
                 style={{ cursor: "pointer" }}
                 onClick={() => {
-                  var text = `Name: ${player
-                    .get("names")
-                    .first()
-                    .get("name")}\nAliases: ${player
-                    .get("names", new List())
-                    .map((n) => n.get("name"))
-                    .join(" | ")}\Player ID: ${player.get(
-                    "player_id"
-                  )}\nSteam URL: ${makePlayerProfileUrl(
-                    player.get("player_id"),
-                    player.get("names").first().get("name")
-                  )}\nType of issue:\nDescription:\nEvidence:`;
+                  const text = getReportTemplate();
                   if (navigator.clipboard === undefined) {
                     alert(`This feature only works if your rcon uses HTTPS.`);
                     return;
@@ -196,7 +197,9 @@ const BlacklistRecordTile = ({
                     );
                   }
                 }}
-              />
+              >
+                <AnnouncementIcon fontSize="small"/>
+              </IconButton>
             </Typography>
           </Tooltip>
         </ListItemSecondaryAction>
