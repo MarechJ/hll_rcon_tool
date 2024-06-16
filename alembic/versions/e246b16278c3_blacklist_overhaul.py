@@ -43,8 +43,8 @@ def upgrade():
                VALUES (0, 'Default', 'KICK_ONLY', NULL)
                ON CONFLICT DO NOTHING""")
     # Migrate old blacklist records
-    op.execute("""INSERT INTO blacklist_record(reason, admin_name, player_id_id, blacklist_id)
-               SELECT reason, by, player_id_id, 1 FROM player_blacklist""")
+    op.execute("""INSERT INTO blacklist_record(reason, admin_name, created_at, player_id_id, blacklist_id)
+               SELECT reason, by, NOW(), player_id_id, 0 FROM player_blacklist""")
 
     ### Do not drop the old table yet - that way people can always recover their old bans if needed.
     # op.drop_table('player_blacklist')
