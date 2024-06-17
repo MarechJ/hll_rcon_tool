@@ -128,5 +128,14 @@ class LogStreamConsumer(AsyncJsonWebsocketConsumer):
     async def send_json(self, content, close=False):
         return await super().send_json(content, close)
 
+from api.auth import APITokenAuthMiddleware
 
-urlpatterns = [path("ws/logs", LogStreamConsumer.as_asgi())]
+urlpatterns = [
+    path(
+        "ws/logs",
+        APITokenAuthMiddleware(
+            app=LogStreamConsumer.as_asgi(),
+            perms="api.can_view_structured_logs"
+        )
+    )
+]

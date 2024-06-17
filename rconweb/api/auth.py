@@ -4,7 +4,7 @@ import json
 import logging
 from dataclasses import asdict, dataclass
 from functools import wraps
-from typing import Any
+from typing import Any, Sequence
 
 import orjson
 import pydantic
@@ -50,16 +50,21 @@ def get_user(api_key) -> User:
 
 
 @database_sync_to_async
-def has_perm(scope) -> bool:
-    return scope["user"].has_perm(("api.can_view_structured_logs"))
+def has_perms(scope, perms: tuple[str, ...]) -> bool:
+    return scope["user"].has_perms(perms)
 
 
 class APITokenAuthMiddleware:
-    def __init__(self, app) -> None:
+    def __init__(self, app, perms: str | Sequence[str]) -> None:
         self.app = app
+        if isinstance(perms, str):
+            self.perms = (perms,)
+        else:
+            self.perms = tuple(perms)
 
     async def __call__(self, scope, receive, send):
-        ENDPOINT = "/ws/logs"
+        ENDPOINT = scope["path"]
+        logger.info("Incoming websocket connection on %s", ENDPOINT)
         headers = dict(scope["headers"])
         headers = {k.decode(): v.decode() for k, v in headers.items()}
         try:
@@ -88,7 +93,7 @@ class APITokenAuthMiddleware:
             denier = WebsocketDenier()
             return await denier(scope, receive, send)
 
-        if not await has_perm(scope):
+        if not await has_perms(scope, self.perms):
             logger.warning(
                 "User %s does not have permission to view %s", scope["user"], ENDPOINT
             )
