@@ -574,7 +574,7 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     rcon_api.create_blacklist: "api.can_create_blacklists",
     rcon_api.edit_blacklist: "api.can_change_blacklists",
     rcon_api.delete_blacklist: "api.can_delete_blacklists",
-    rcon_api.get_blacklist_records: "can_view_blacklists",
+    rcon_api.get_blacklist_records: "api.can_view_blacklists",
     rcon_api.add_blacklist_record: "api.can_add_blacklist_records",
     rcon_api.edit_blacklist_record: "api.can_change_blacklist_records",
     rcon_api.delete_blacklist_record: "api.can_delete_blacklist_records",
