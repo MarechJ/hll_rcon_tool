@@ -20,7 +20,7 @@ paramiko==3.4.0
 ftpretty==0.4.0
 pytz>=2023.3
 pandas>=1.4.1,<2.0.0
-pydantic==2.7.1
+pydantic==2.7.4
 discord.py==2.3.2
 # django-directory
 # django-dirctory is currently incompatible with Django 4.0+, PR is pending to fix django-directory upstream
