@@ -146,7 +146,6 @@ const LiveScore = ({ classes, endpoint, explainText, title }) => {
 
   const getData = () => {
     setIsLoading(true);
-    console.log("Loading data");
     get(endpoint)
       .then((res) => showResponse(res, endpoint, false))
       .then((data) => {

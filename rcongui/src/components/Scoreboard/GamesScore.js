@@ -95,7 +95,6 @@ const useStyles = makeStyles((theme) => ({
 const GamesScore = ({ classes }) => {
   let { slug } = useParams();
   slug = parseInt(slug);
-  console.log("Slug ", slug);
   const styles = useStyles();
   const [scores, setScores] = React.useState(new iList());
   const [serverState, setServerState] = React.useState(new Map());
@@ -124,7 +123,6 @@ const GamesScore = ({ classes }) => {
   };
   const doSelectMap = (map_id) => {
     window.location.hash = `#/gamescoreboard/${map_id}`;
-    console.log(`Change to ${map_id}`);
   };
 
   const [hasCopiedLink, setHasCopiedLink] = React.useState(false);
@@ -237,6 +235,10 @@ const GamesScore = ({ classes }) => {
                 const isSelected = (isReturn, isNotReturn) =>
                   m.get("id") === slug ? isReturn : isNotReturn;
 
+                let score = '';
+                if (m.get('result')) {
+                  score = <div>Axis {m.get('result').get('axis')} - {m.get('result').get('allied')} Allied</div>
+                }
                 return (
                   <GridListTile
                     className={styles.clickable}
@@ -251,7 +253,10 @@ const GamesScore = ({ classes }) => {
                         styles.titleBarTop
                       )}
                       title={m.get("long_name")}
-                      subtitle={`${duration.humanize()}`}
+                      subtitle={<>
+                        <div>{duration.humanize()}</div>
+                        {score}
+                      </>}
                       titlePosition="top"
                     />
                     <GridListTileBar

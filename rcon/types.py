@@ -379,6 +379,7 @@ class MapsType(TypedDict):
     end: Optional[datetime.datetime]
     server_number: Optional[int]
     map_name: str
+    result: Optional[dict[str, int]]
     player_stats: List[PlayerStatsType]
 
 
