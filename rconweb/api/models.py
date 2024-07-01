@@ -29,8 +29,10 @@ class DjangoAPIKey(models.Model):
 
 
 class SteamPlayer(models.Model):
+    """Associate a players in game ID (steam or windows) with their Django user"""
+
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    steam_id_64 = models.CharField(max_length=100)
+    steam_id_64 = models.CharField(max_length=100, verbose_name="Player ID")
     default_permissions = ()
 
 
@@ -214,7 +216,7 @@ class RconUser(User):
             ),
             (
                 "can_view_players",
-                "Can view get_players_fast endpoint for all connected players ",
+                "Can view get_players endpoint for all connected players ",
             ),
             ("can_view_profanities", "Can view profanities (censored game chat)"),
             ("can_view_queue_length", "Can view the maximum size of the server queue"),
@@ -225,7 +227,6 @@ class RconUser(User):
                 "Can view the amount of time left in the round",
             ),
             ("can_view_server_name", "Can view the server name"),
-            ("can_view_server_stats", "Can view the get_server_stats endpoint"),
             (
                 "can_view_shared_standard_messages",
                 "Can view the shared standard messages",
@@ -428,4 +429,5 @@ class RconUser(User):
             ("can_change_chat_commands_config", "Can change the chat commands config"),
             ("can_view_log_stream_config", "Can view the Log Stream config"),
             ("can_change_log_stream_config", "Can change the Log Stream config"),
+            ("can_view_server_stats", "Can view the get_server_stats endpoint"),
         )

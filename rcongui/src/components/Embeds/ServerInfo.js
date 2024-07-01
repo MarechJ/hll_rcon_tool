@@ -15,7 +15,6 @@ import {
 import { fade } from "@material-ui/core/styles/colorManipulator";
 import { get, handle_http_errors, showResponse } from "../../utils/fetchUtils";
 import { List as iList, Map, fromJS } from "immutable";
-import { getMapImageUrl } from "../Scoreboard/utils";
 
 const useStyles = makeStyles((theme) => ({
   padRight: {
@@ -72,13 +71,13 @@ const ServerInfo = ({ classes }) => {
   const [serverState, setServerState] = React.useState(new Map());
   const [isLoading, setIsLoading] = React.useState(true);
   const isXs = useMediaQuery(theme.breakpoints.down("sm"));
-  const [mapName, setMapName] = React.useState("")
+  const [mapName, setMapName] = React.useState("");
 
   const getData = () => {
     setIsLoading(true);
 
-    get("public_info")
-      .then((res) => showResponse(res, "public_info", false))
+    get("get_public_info")
+      .then((res) => showResponse(res, "get_public_info", false))
       .then((data) => setServerState(fromJS(data.result)))
       .then(() => setIsLoading(false))
       .catch(handle_http_errors);
@@ -92,16 +91,16 @@ const ServerInfo = ({ classes }) => {
   }, []);
 
   React.useEffect(() => {
-    if (serverState.get('current_map') !== undefined) {
-      setMapName(serverState.get('current_map').get('name'))
+    if (serverState.get("current_map") !== undefined) {
+      setMapName(serverState.get("current_map")?.get("name"));
     }
-  }, [serverState])
+  }, [serverState]);
 
   let started = serverState.get("current_map", new Map()).get("start");
   started = started
     ? new Date(Date.now() - new Date(started * 1000))
-      .toISOString()
-      .substr(11, 8)
+        .toISOString()
+        .substr(11, 8)
     : "N/A";
 
   const nextMapString = React.useMemo(() => {
@@ -123,14 +122,18 @@ const ServerInfo = ({ classes }) => {
       <GridListTile>
         <img
           alt="Map"
-          src={getMapImageUrl(mapName)}
+          src={`maps/${serverState
+            .get("current_map")
+            ?.get("map")
+            ?.get("image_name")}`}
         />
         <GridListTileBar
           className={styles.titleBarTop}
           title={serverState.get("name")}
           subtitle={serverState
             .get("current_map", new Map())
-            .get("human_name", "N/A")}
+            .get("map")
+            ?.get("pretty_name")}
           titlePosition="top"
         />
         <GridListTileBar

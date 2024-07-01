@@ -21,14 +21,14 @@ import { Picker } from "emoji-mart";
 
 const SearchBar = ({
   name,
-  steamId,
+  playerId,
   lastSeenFrom,
   lastSeenUntil,
   blacklistedOnly,
   pageSize,
   setPageSize,
   setName,
-  setSteamId,
+  setPlayerId,
   setLastSeenFrom,
   setLastSeenUntil,
   setBlacklistedOnly,
@@ -92,9 +92,9 @@ const SearchBar = ({
         </Grid>
         <Grid item>
           <TextField
-            label="Search by Steam ID"
-            value={steamId}
-            onChange={(e) => setSteamId(e.target.value)}
+            label="Search by Player ID"
+            value={playerId}
+            onChange={(e) => setPlayerId(e.target.value)}
           />
         </Grid>
         <Grid item>

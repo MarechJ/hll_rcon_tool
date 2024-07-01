@@ -177,11 +177,11 @@ export const RconServerSettings = ({
           /* The message used when actioning a player whose name is incorrectly shortened by the game server */
           "pineapple_name_player_message": "Your name has a special character around the 20th character (because it is truncated as it is too long)\\n\\nBecause of a bug in the game, admin tools this server uses will not work properly.\\n\\nPlease change your name in Steam and restart your game to avoid this.\\n\\nPlease ask T17 to prioritize fixing this bug.",
           
-          /* The message sent to the discord audit log, {name} {steam_id_64} and {action} are valid message variables */
-          "audit_message": "Player with an invalid name (ends in whitespace or a partial character when truncated) joined: {name} ({steam_id_64}\\nThis will cause errors with various auto mods (no leader, etc) and the \`playerinfo\` RCON command will not work.\\nThe player will show as 'unassigned' in Gameview.\\nAction taken = {action}",
+          /* The message sent to the discord audit log, {name} {player_id} and {action} are valid message variables */
+          "audit_message": "Player with an invalid name (ends in whitespace or a partial character when truncated) joined: {name} ({player_id}\\nThis will cause errors with various auto mods (no leader, etc) and the \`playerinfo\` RCON command will not work.\\nThe player will show as 'unassigned' in Gameview.\\nAction taken = {action}",
           
-          /* Due to a bug with how the kick command works, if a player can't be kicked they'll be removed by temporarily banning them, {name} {steam_id_64} and {action} are valid message variables */
-          "audit_kick_unban_message": "Unbanning {name} ({steam_id_64}) that was temp banned since the \`kick\` command will not work with their name",
+          /* Due to a bug with how the kick command works, if a player can't be kicked they'll be removed by temporarily banning them, {name} {player_id} and {action} are valid message variables */
+          "audit_kick_unban_message": "Unbanning {name} ({player_id}) that was temp banned since the \`kick\` command will not work with their name",
           "audit_message_author": "CRCON",
           
           /* The length in hours if a player is temporarily banned */
@@ -203,8 +203,8 @@ export const RconServerSettings = ({
           /* The message used when actioning a player */
           "player_message": "Windows store players are not allowed on this server.",
           
-          /* The message sent to the discord audit log, {name} {steam_id_64} and {action} are valid message variables */
-          "audit_message": "Windows store player {name} ({steam_id_64} connected, action taken = {action})",
+          /* The message sent to the discord audit log, {name} {player_id} and {action} are valid message variables */
+          "audit_message": "Windows store player {name} ({player_id} connected, action taken = {action})",
           "audit_message_author": "CRCON",
 
           /* The length in hours if a player is temporarily banned */

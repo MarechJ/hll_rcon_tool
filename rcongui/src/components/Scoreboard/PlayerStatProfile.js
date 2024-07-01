@@ -50,7 +50,7 @@ export const PlayerStatProfile = pure(({ playerScore, onClose }) => {
                         href={
                           steamProfile.get("profileurl") ||
                           makePlayerProfileUrl(
-                            playerScore.get("steam_id_64"),
+                            playerScore.get("player_id"),
                             playerScore.get("player") ||
                               steamProfile.get("personaname")
                           )

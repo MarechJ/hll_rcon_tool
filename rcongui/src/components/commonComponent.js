@@ -57,8 +57,8 @@ export const WithPopver = ({ classes, popoverContent, children }) => {
 export const ManualPlayerInput = ({
   name,
   setName,
-  steam_id,
-  setSteamId,
+  playerId,
+  setPlayerId,
   reason,
   setReason,
   sharedMessages,
@@ -71,13 +71,13 @@ export const ManualPlayerInput = ({
   <Grid container spacing={1} justify="space-between">
     <Grid item xs={6} md={3}>
       <TextField
-        id="steam-id"
-        label="Steam ID"
+        id="playerId"
+        label="Player ID"
         helperText="Required"
-        value={steam_id}
+        value={playerId}
         required
         fullWidth
-        onChange={(e) => setSteamId(e.target.value)}
+        onChange={(e) => setPlayerId(e.target.value)}
       />
     </Grid>
     <Grid item xs={6} md={3}>
@@ -113,7 +113,7 @@ export const ManualPlayerInput = ({
         <Button
           color="secondary"
           variant="outlined"
-          disabled={steam_id === "" || reason === ""}
+          disabled={playerId === "" || reason === ""}
           onClick={() => {
             onSubmit();
             textHistory.saveText(reason);

@@ -32,4 +32,4 @@ class VacGameBansUserConfig(BaseUserConfig):
         )
 
         if not dry_run:
-            set_user_config(VacGameBansUserConfig.KEY(), validated_conf.model_dump())
+            set_user_config(VacGameBansUserConfig.KEY(), validated_conf)

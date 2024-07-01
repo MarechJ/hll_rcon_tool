@@ -16,7 +16,14 @@ import { PlayerVipSummary } from "./PlayerVipSummary";
 import { ForwardCheckBox } from "../commonComponent";
 
 // this array could probably be moved to a config file
-const vipButtons = [[48, "hours"], [3, "days"], [7, "days"], [30, "days"], [60, "days"], [90, "days"]];
+const vipButtons = [
+  [48, "hours"],
+  [3, "days"],
+  [7, "days"],
+  [30, "days"],
+  [60, "days"],
+  [90, "days"],
+];
 
 const VipTimeButtons = ({
   amount,
@@ -60,7 +67,7 @@ export function VipExpirationDialog(props) {
   /* open is either a boolean or the passed in player Map */
   useEffect(() => {
     if (!(typeof open === "boolean") && open) {
-      setIsVip(!!vips.get(open.get("steam_id_64")));
+      setIsVip(!!vips.get(open.get("player_id")));
       if (open.get("vip_expiration")) {
         setExpirationTimestamp(open.get("vip_expiration"));
       }
@@ -112,7 +119,11 @@ export function VipExpirationDialog(props) {
       <DialogActions>
         <Button
           onClick={() => {
-            handleConfirm(open, moment("3000-01-01T00:00:00+00:00").format(), forward);
+            handleConfirm(
+              open,
+              moment("3000-01-01T00:00:00+00:00").format(),
+              forward
+            );
           }}
           color="primary"
         >

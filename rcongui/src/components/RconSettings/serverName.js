@@ -18,10 +18,10 @@ const ServerName = ({ classes }) => {
   }, []);
 
   const save = () => {
-    postData(`${process.env.REACT_APP_API_URL}set_name`, {
+    postData(`${process.env.REACT_APP_API_URL}set_server_name`, {
       name: name,
     })
-      .then((res) => showResponse(res, "set_name", true))
+      .then((res) => showResponse(res, "set_server_name", true))
       .catch(handle_http_errors);
   };
 

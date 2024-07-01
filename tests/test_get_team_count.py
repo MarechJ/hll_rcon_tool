@@ -12,7 +12,7 @@ def team_view():
         "allies": {
             "combat": 0,
             "commander": {
-                "steam_id_64": "76561198206929556",
+                "player_id": "76561198206929556",
             },
             "count": 0,
             "deaths": 0,
@@ -29,10 +29,10 @@ def team_view():
                     "offense": 960,
                     "players": [
                         {
-                            "steam_id_64": "76561198206929555",
+                            "player_id": "76561198206929555",
                         },
                         {
-                            "steam_id_64": "76561198206929556",
+                            "player_id": "76561198206929556",
                         },
                     ],
                     "support": 264,
@@ -59,7 +59,7 @@ def team_view():
                     "offense": 960,
                     "players": [
                         {
-                            "steam_id_64": "76561198206929555",
+                            "player_id": "76561198206929555",
                         },
                     ],
                     "support": 264,

@@ -61,7 +61,7 @@ export const PlayerHeader = pure(({ classes, player }) => {
           target="_blank"
           color="inherit"
           href={makePlayerProfileUrl(
-            player.get("steam_id_64"),
+            player.get("player_id"),
             firstName.get("name")
           )}
         >
@@ -108,9 +108,9 @@ export const PlayerHeader = pure(({ classes, player }) => {
           <Link
             color="inherit"
             component={RouterLink}
-            to={`/player/${player.get("steam_id_64")}`}
+            to={`/player/${player.get("player_id")}`}
           >
-            {player.get("steam_id_64")}
+            {player.get("player_id")}
           </Link>
         }
       />
@@ -126,7 +126,7 @@ export const PlayerHeader = pure(({ classes, player }) => {
                   alert("This feature only works if your rcon uses HTTPS");
                   return;
                 }
-                var text = player.get("steam_id_64");
+                var text = player.get("player_id");
                 navigator.clipboard.writeText(text).then(
                   function () {
                     console.log("Async: Copying to clipboard was successful!");
@@ -152,10 +152,10 @@ export const PlayerHeader = pure(({ classes, player }) => {
                   .get("name")}\nAliases: ${player
                   .get("names", new List())
                   .map((n) => n.get("name"))
-                  .join(" | ")}\nSteamID: ${player.get(
-                  "steam_id_64"
+                  .join(" | ")}\Player ID: ${player.get(
+                  "player_id"
                 )}\nSteam URL: ${makePlayerProfileUrl(
-                  player.get("steam_id_64"),
+                  player.get("player_id"),
                   player.get("names").first().get("name")
                 )}\nType of issue:\nDescription:\nEvidence:`;
                 if (navigator.clipboard === undefined) {

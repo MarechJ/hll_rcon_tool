@@ -40,7 +40,7 @@ def team_view():
                 "profile": None,
                 "role": "armycommander",
                 "steam_bans": None,
-                "steam_id_64": "76561198192586863",
+                "player_id": "76561198192586863",
                 "support": 792,
                 "team": "allies",
                 "unit_id": -1,
@@ -74,7 +74,7 @@ def team_view():
                             "profile": None,
                             "role": "antitank",
                             "steam_bans": None,
-                            "steam_id_64": "76561198041932445",
+                            "player_id": "76561198041932445",
                             "steaminfo": None,
                             "support": 1539,
                             "team": "allies",
@@ -95,7 +95,7 @@ def team_view():
                             "profile": None,
                             "role": "support",
                             "steam_bans": None,
-                            "steam_id_64": "76561198033248786",
+                            "player_id": "76561198033248786",
                             "steaminfo": None,
                             "support": 135,
                             "team": "allies",
@@ -116,7 +116,7 @@ def team_view():
                             "profile": None,
                             "role": "officer",
                             "steam_bans": None,
-                            "steam_id_64": "76561198109929335",
+                            "player_id": "76561198109929335",
                             "steaminfo": None,
                             "support": 1992,
                             "team": "allies",
@@ -137,7 +137,7 @@ def team_view():
                             "profile": None,
                             "role": "assault",
                             "steam_bans": None,
-                            "steam_id_64": "76561197970119908",
+                            "player_id": "76561197970119908",
                             "steaminfo": None,
                             "support": 55,
                             "team": "allies",
@@ -158,7 +158,7 @@ def team_view():
                             "profile": None,
                             "role": "medic",
                             "steam_bans": None,
-                            "steam_id_64": "76561198103085637",
+                            "player_id": "76561198103085637",
                             "steaminfo": None,
                             "support": 550,
                             "team": "allies",
@@ -179,7 +179,7 @@ def team_view():
                             "profile": None,
                             "role": "engineer",
                             "steam_bans": None,
-                            "steam_id_64": "76561198087754443",
+                            "player_id": "76561198087754443",
                             "steaminfo": None,
                             "support": 556,
                             "team": "allies",
@@ -212,7 +212,7 @@ def team_view():
                             "profile": None,
                             "role": "heavymachinegunner",
                             "steam_bans": None,
-                            "steam_id_64": "76561198055458575",
+                            "player_id": "76561198055458575",
                             "steaminfo": None,
                             "support": 270,
                             "team": "allies",
@@ -233,7 +233,7 @@ def team_view():
                             "profile": None,
                             "role": "rifleman",
                             "steam_bans": None,
-                            "steam_id_64": "76561198985998769",
+                            "player_id": "76561198985998769",
                             "steaminfo": None,
                             "support": 290,
                             "team": "allies",
@@ -254,7 +254,7 @@ def team_view():
                             "profile": None,
                             "role": "assault",
                             "steam_bans": None,
-                            "steam_id_64": "76561198393093210",
+                            "player_id": "76561198393093210",
                             "steaminfo": None,
                             "support": 30,
                             "team": "allies",
@@ -275,7 +275,7 @@ def team_view():
                             "profile": None,
                             "role": "engineer",
                             "steam_bans": None,
-                            "steam_id_64": "76561198026310990",
+                            "player_id": "76561198026310990",
                             "steaminfo": None,
                             "support": 524,
                             "team": "allies",
@@ -296,7 +296,7 @@ def team_view():
                             "profile": None,
                             "role": "antitank",
                             "steam_bans": None,
-                            "steam_id_64": "76561198198563101",
+                            "player_id": "76561198198563101",
                             "steaminfo": None,
                             "support": 0,
                             "team": "allies",
@@ -317,7 +317,7 @@ def team_view():
                             "profile": None,
                             "role": "rifleman",
                             "steam_bans": None,
-                            "steam_id_64": "76561198028236925",
+                            "player_id": "76561198028236925",
                             "steaminfo": None,
                             "support": 0,
                             "team": "allies",
@@ -355,7 +355,7 @@ def team_view():
                     "VACBanned": False,
                     "has_bans": False,
                 },
-                "steam_id_64": "76561199229309017",
+                "player_id": "76561199229309017",
                 "support": 874,
                 "team": "axis",
                 "unit_id": 0,
@@ -389,7 +389,7 @@ def team_view():
                             "profile": None,
                             "role": "assault",
                             "steam_bans": None,
-                            "steam_id_64": "76561198979089668",
+                            "player_id": "76561198979089668",
                             "support": 125,
                             "team": "axis",
                             "unit_id": 0,
@@ -409,7 +409,7 @@ def team_view():
                             "profile": None,
                             "role": "officer",
                             "steam_bans": None,
-                            "steam_id_64": "76561198041823654",
+                            "player_id": "76561198041823654",
                             "support": 2181,
                             "team": "axis",
                             "unit_id": 0,
@@ -429,7 +429,7 @@ def team_view():
                             "profile": None,
                             "role": "engineer",
                             "steam_bans": None,
-                            "steam_id_64": "76561198892700816",
+                            "player_id": "76561198892700816",
                             "support": 0,
                             "team": "axis",
                             "unit_id": 0,
@@ -449,7 +449,7 @@ def team_view():
                             "profile": None,
                             "role": "antitank",
                             "steam_bans": None,
-                            "steam_id_64": "76561198354354474",
+                            "player_id": "76561198354354474",
                             "support": 0,
                             "team": "axis",
                             "unit_id": 0,
@@ -469,7 +469,7 @@ def team_view():
                             "profile": None,
                             "role": "heavymachinegunner",
                             "steam_bans": None,
-                            "steam_id_64": "76561198046677517",
+                            "player_id": "76561198046677517",
                             "support": 0,
                             "team": "axis",
                             "unit_id": 0,
@@ -489,7 +489,7 @@ def team_view():
                             "profile": None,
                             "role": "automaticrifleman",
                             "steam_bans": None,
-                            "steam_id_64": "76561199027409370",
+                            "player_id": "76561199027409370",
                             "support": 0,
                             "team": "axis",
                             "unit_id": 0,
@@ -521,7 +521,7 @@ def team_view():
                             "profile": None,
                             "role": "spotter",
                             "steam_bans": None,
-                            "steam_id_64": "76561198206929555",
+                            "player_id": "76561198206929555",
                             "support": 264,
                             "team": "axis",
                             "unit_id": 1,
@@ -541,7 +541,7 @@ def team_view():
                             "profile": None,
                             "role": "sniper",
                             "steam_bans": None,
-                            "steam_id_64": "76561199166765040",
+                            "player_id": "76561199166765040",
                             "support": 0,
                             "team": "axis",
                             "unit_id": 1,
@@ -572,7 +572,7 @@ def construct_aplayer(
     player_dict: dict, team_name: str = "allies", squad_name: str = "able"
 ):
     return PunishPlayer(
-        steam_id_64=player_dict["steam_id_64"],
+        player_id=player_dict["player_id"],
         name=player_dict["name"],
         team=team_name,
         squad=squad_name,
@@ -795,6 +795,7 @@ def test_punish_too_little_players(team_view):
         aplayer,
     )
 
+
 def test_dont_punish_below_min_number_of_players(team_view):
     config = AutoModNoLeaderUserConfig(
         dont_do_anything_below_this_number_of_players=40,
@@ -805,7 +806,7 @@ def test_dont_punish_below_min_number_of_players(team_view):
         immune_player_level=10,
         immune_roles=[],
     )
-    
+
     player = team_view["allies"]["squads"]["able"]["players"][0]
 
     mod = NoLeaderAutomod(config, None)
@@ -813,7 +814,7 @@ def test_dont_punish_below_min_number_of_players(team_view):
         team_view,
         "able",
         "allies",
-        {"players": [team_view["allies"]["squads"]['able']]},
+        {"players": [team_view["allies"]["squads"]["able"]]},
         game_state,
     )
     assert to_apply.punish == []
@@ -1192,7 +1193,7 @@ def test_watcher(team_view):
     rcon.get_team_view.return_value = team_view
     expected_warned_players = [
         PunishPlayer(
-            steam_id_64="76561198055458575",
+            player_id="76561198055458575",
             name="Lawless",
             squad="baker",
             team="allies",
@@ -1206,7 +1207,7 @@ def test_watcher(team_view):
             ),
         ),
         PunishPlayer(
-            steam_id_64="76561198985998769",
+            player_id="76561198985998769",
             name="Major_Winters",
             squad="baker",
             team="allies",
@@ -1220,7 +1221,7 @@ def test_watcher(team_view):
             ),
         ),
         PunishPlayer(
-            steam_id_64="76561198393093210",
+            player_id="76561198393093210",
             name="Toomz",
             squad="baker",
             team="allies",
@@ -1234,7 +1235,7 @@ def test_watcher(team_view):
             ),
         ),
         PunishPlayer(
-            steam_id_64="76561198026310990",
+            player_id="76561198026310990",
             name="Zones (BEL)",
             squad="baker",
             team="allies",
@@ -1248,7 +1249,7 @@ def test_watcher(team_view):
             ),
         ),
         PunishPlayer(
-            steam_id_64="76561198198563101",
+            player_id="76561198198563101",
             name="Pavooloni",
             squad="baker",
             team="allies",
@@ -1262,7 +1263,7 @@ def test_watcher(team_view):
             ),
         ),
         PunishPlayer(
-            steam_id_64="76561198028236925",
+            player_id="76561198028236925",
             name="Kjjuj",
             squad="baker",
             team="allies",
@@ -1276,7 +1277,7 @@ def test_watcher(team_view):
             ),
         ),
         PunishPlayer(
-            steam_id_64="76561198979089668",
+            player_id="76561198979089668",
             name="emfoor",
             squad="able",
             team="axis",
@@ -1290,7 +1291,7 @@ def test_watcher(team_view):
             ),
         ),
         PunishPlayer(
-            steam_id_64="76561198041823654",
+            player_id="76561198041823654",
             name="Makaj",
             squad="able",
             team="axis",
@@ -1304,7 +1305,7 @@ def test_watcher(team_view):
             ),
         ),
         PunishPlayer(
-            steam_id_64="76561198892700816",
+            player_id="76561198892700816",
             name="tinner2115",
             squad="able",
             team="axis",
@@ -1318,7 +1319,7 @@ def test_watcher(team_view):
             ),
         ),
         PunishPlayer(
-            steam_id_64="76561198354354474",
+            player_id="76561198354354474",
             name="Cuervo",
             squad="able",
             team="axis",
@@ -1332,7 +1333,7 @@ def test_watcher(team_view):
             ),
         ),
         PunishPlayer(
-            steam_id_64="76561198046677517",
+            player_id="76561198046677517",
             name="capitanodrew",
             squad="able",
             team="axis",
@@ -1346,7 +1347,7 @@ def test_watcher(team_view):
             ),
         ),
         PunishPlayer(
-            steam_id_64="76561198206929555",
+            player_id="76561198206929555",
             name="WilliePeter",
             squad="baker",
             team="axis",
@@ -1360,7 +1361,7 @@ def test_watcher(team_view):
             ),
         ),
         PunishPlayer(
-            steam_id_64="76561199166765040",
+            player_id="76561199166765040",
             name="DarkVisionary",
             squad="baker",
             team="axis",
@@ -1390,7 +1391,7 @@ def test_watcher(team_view):
             name="baker",
             players=[
                 PunishPlayer(
-                    steam_id_64="76561198055458575",
+                    player_id="76561198055458575",
                     name="Lawless",
                     squad="baker",
                     team="allies",
@@ -1398,7 +1399,7 @@ def test_watcher(team_view):
                     lvl=88,
                 ),
                 PunishPlayer(
-                    steam_id_64="76561198985998769",
+                    player_id="76561198985998769",
                     name="Major_Winters",
                     squad="baker",
                     team="allies",
@@ -1406,7 +1407,7 @@ def test_watcher(team_view):
                     lvl=82,
                 ),
                 PunishPlayer(
-                    steam_id_64="76561198393093210",
+                    player_id="76561198393093210",
                     name="Toomz",
                     squad="baker",
                     team="allies",
@@ -1414,7 +1415,7 @@ def test_watcher(team_view):
                     lvl=69,
                 ),
                 PunishPlayer(
-                    steam_id_64="76561198026310990",
+                    player_id="76561198026310990",
                     name="Zones (BEL)",
                     squad="baker",
                     team="allies",
@@ -1422,7 +1423,7 @@ def test_watcher(team_view):
                     lvl=59,
                 ),
                 PunishPlayer(
-                    steam_id_64="76561198198563101",
+                    player_id="76561198198563101",
                     name="Pavooloni",
                     squad="baker",
                     team="allies",
@@ -1430,7 +1431,7 @@ def test_watcher(team_view):
                     lvl=71,
                 ),
                 PunishPlayer(
-                    steam_id_64="76561198028236925",
+                    player_id="76561198028236925",
                     name="Kjjuj",
                     squad="baker",
                     team="allies",
@@ -1444,7 +1445,7 @@ def test_watcher(team_view):
             name="able",
             players=[
                 PunishPlayer(
-                    steam_id_64="76561198979089668",
+                    player_id="76561198979089668",
                     name="emfoor",
                     squad="able",
                     team="axis",
@@ -1452,7 +1453,7 @@ def test_watcher(team_view):
                     lvl=110,
                 ),
                 PunishPlayer(
-                    steam_id_64="76561198041823654",
+                    player_id="76561198041823654",
                     name="Makaj",
                     squad="able",
                     team="axis",
@@ -1460,7 +1461,7 @@ def test_watcher(team_view):
                     lvl=43,
                 ),
                 PunishPlayer(
-                    steam_id_64="76561198892700816",
+                    player_id="76561198892700816",
                     name="tinner2115",
                     squad="able",
                     team="axis",
@@ -1468,7 +1469,7 @@ def test_watcher(team_view):
                     lvl=170,
                 ),
                 PunishPlayer(
-                    steam_id_64="76561198354354474",
+                    player_id="76561198354354474",
                     name="Cuervo",
                     squad="able",
                     team="axis",
@@ -1476,7 +1477,7 @@ def test_watcher(team_view):
                     lvl=129,
                 ),
                 PunishPlayer(
-                    steam_id_64="76561198046677517",
+                    player_id="76561198046677517",
                     name="capitanodrew",
                     squad="able",
                     team="axis",
@@ -1484,7 +1485,7 @@ def test_watcher(team_view):
                     lvl=67,
                 ),
                 PunishPlayer(
-                    steam_id_64="76561199027409370",
+                    player_id="76561199027409370",
                     name="Dr.FishShitz",
                     squad="able",
                     team="axis",
@@ -1498,7 +1499,7 @@ def test_watcher(team_view):
             name="baker",
             players=[
                 PunishPlayer(
-                    steam_id_64="76561198206929555",
+                    player_id="76561198206929555",
                     name="WilliePeter",
                     squad="baker",
                     team="axis",
@@ -1506,7 +1507,7 @@ def test_watcher(team_view):
                     lvl=123,
                 ),
                 PunishPlayer(
-                    steam_id_64="76561199166765040",
+                    player_id="76561199166765040",
                     name="DarkVisionary",
                     squad="baker",
                     team="axis",
@@ -1575,7 +1576,7 @@ def test_watcher_no_kick(team_view):
     rcon.get_team_view.return_value = team_view
     expected_warned_players = [
         PunishPlayer(
-            steam_id_64="76561198055458575",
+            player_id="76561198055458575",
             name="Lawless",
             squad="baker",
             team="allies",
@@ -1589,7 +1590,7 @@ def test_watcher_no_kick(team_view):
             ),
         ),
         PunishPlayer(
-            steam_id_64="76561198985998769",
+            player_id="76561198985998769",
             name="Major_Winters",
             squad="baker",
             team="allies",
@@ -1603,7 +1604,7 @@ def test_watcher_no_kick(team_view):
             ),
         ),
         PunishPlayer(
-            steam_id_64="76561198393093210",
+            player_id="76561198393093210",
             name="Toomz",
             squad="baker",
             team="allies",
@@ -1617,7 +1618,7 @@ def test_watcher_no_kick(team_view):
             ),
         ),
         PunishPlayer(
-            steam_id_64="76561198026310990",
+            player_id="76561198026310990",
             name="Zones (BEL)",
             squad="baker",
             team="allies",
@@ -1631,7 +1632,7 @@ def test_watcher_no_kick(team_view):
             ),
         ),
         PunishPlayer(
-            steam_id_64="76561198198563101",
+            player_id="76561198198563101",
             name="Pavooloni",
             squad="baker",
             team="allies",
@@ -1645,7 +1646,7 @@ def test_watcher_no_kick(team_view):
             ),
         ),
         PunishPlayer(
-            steam_id_64="76561198028236925",
+            player_id="76561198028236925",
             name="Kjjuj",
             squad="baker",
             team="allies",
@@ -1659,7 +1660,7 @@ def test_watcher_no_kick(team_view):
             ),
         ),
         PunishPlayer(
-            steam_id_64="76561198979089668",
+            player_id="76561198979089668",
             name="emfoor",
             squad="able",
             team="axis",
@@ -1673,7 +1674,7 @@ def test_watcher_no_kick(team_view):
             ),
         ),
         PunishPlayer(
-            steam_id_64="76561198041823654",
+            player_id="76561198041823654",
             name="Makaj",
             squad="able",
             team="axis",
@@ -1687,7 +1688,7 @@ def test_watcher_no_kick(team_view):
             ),
         ),
         PunishPlayer(
-            steam_id_64="76561198892700816",
+            player_id="76561198892700816",
             name="tinner2115",
             squad="able",
             team="axis",
@@ -1701,7 +1702,7 @@ def test_watcher_no_kick(team_view):
             ),
         ),
         PunishPlayer(
-            steam_id_64="76561198354354474",
+            player_id="76561198354354474",
             name="Cuervo",
             squad="able",
             team="axis",
@@ -1715,7 +1716,7 @@ def test_watcher_no_kick(team_view):
             ),
         ),
         PunishPlayer(
-            steam_id_64="76561198046677517",
+            player_id="76561198046677517",
             name="capitanodrew",
             squad="able",
             team="axis",
@@ -1729,7 +1730,7 @@ def test_watcher_no_kick(team_view):
             ),
         ),
         PunishPlayer(
-            steam_id_64="76561199027409370",
+            player_id="76561199027409370",
             name="Dr.FishShitz",
             squad="able",
             team="axis",
@@ -1743,7 +1744,7 @@ def test_watcher_no_kick(team_view):
             ),
         ),
         PunishPlayer(
-            steam_id_64="76561198206929555",
+            player_id="76561198206929555",
             name="WilliePeter",
             squad="baker",
             team="axis",
@@ -1757,7 +1758,7 @@ def test_watcher_no_kick(team_view):
             ),
         ),
         PunishPlayer(
-            steam_id_64="76561199166765040",
+            player_id="76561199166765040",
             name="DarkVisionary",
             squad="baker",
             team="axis",
@@ -1838,7 +1839,7 @@ def test_watcher_resets(team_view):
     rcon.get_team_view.return_value = team_view
     expected_players = [
         PunishPlayer(
-            steam_id_64="76561198055458575",
+            player_id="76561198055458575",
             name="Lawless",
             squad="baker",
             team="allies",
@@ -1852,7 +1853,7 @@ def test_watcher_resets(team_view):
             ),
         ),
         PunishPlayer(
-            steam_id_64="76561198985998769",
+            player_id="76561198985998769",
             name="Major_Winters",
             squad="baker",
             team="allies",
@@ -1866,7 +1867,7 @@ def test_watcher_resets(team_view):
             ),
         ),
         PunishPlayer(
-            steam_id_64="76561198393093210",
+            player_id="76561198393093210",
             name="Toomz",
             squad="baker",
             team="allies",
@@ -1880,7 +1881,7 @@ def test_watcher_resets(team_view):
             ),
         ),
         PunishPlayer(
-            steam_id_64="76561198026310990",
+            player_id="76561198026310990",
             name="Zones (BEL)",
             squad="baker",
             team="allies",
@@ -1894,7 +1895,7 @@ def test_watcher_resets(team_view):
             ),
         ),
         PunishPlayer(
-            steam_id_64="76561198198563101",
+            player_id="76561198198563101",
             name="Pavooloni",
             squad="baker",
             team="allies",
@@ -1908,7 +1909,7 @@ def test_watcher_resets(team_view):
             ),
         ),
         PunishPlayer(
-            steam_id_64="76561198028236925",
+            player_id="76561198028236925",
             name="Kjjuj",
             squad="baker",
             team="allies",
@@ -1922,7 +1923,7 @@ def test_watcher_resets(team_view):
             ),
         ),
         PunishPlayer(
-            steam_id_64="76561198979089668",
+            player_id="76561198979089668",
             name="emfoor",
             squad="able",
             team="axis",
@@ -1936,7 +1937,7 @@ def test_watcher_resets(team_view):
             ),
         ),
         PunishPlayer(
-            steam_id_64="76561198041823654",
+            player_id="76561198041823654",
             name="Makaj",
             squad="able",
             team="axis",
@@ -1950,7 +1951,7 @@ def test_watcher_resets(team_view):
             ),
         ),
         PunishPlayer(
-            steam_id_64="76561198892700816",
+            player_id="76561198892700816",
             name="tinner2115",
             squad="able",
             team="axis",
@@ -1964,7 +1965,7 @@ def test_watcher_resets(team_view):
             ),
         ),
         PunishPlayer(
-            steam_id_64="76561198354354474",
+            player_id="76561198354354474",
             name="Cuervo",
             squad="able",
             team="axis",
@@ -1978,7 +1979,7 @@ def test_watcher_resets(team_view):
             ),
         ),
         PunishPlayer(
-            steam_id_64="76561198046677517",
+            player_id="76561198046677517",
             name="capitanodrew",
             squad="able",
             team="axis",
@@ -1992,7 +1993,7 @@ def test_watcher_resets(team_view):
             ),
         ),
         PunishPlayer(
-            steam_id_64="76561199027409370",
+            player_id="76561199027409370",
             name="Dr.FishShitz",
             squad="able",
             team="axis",

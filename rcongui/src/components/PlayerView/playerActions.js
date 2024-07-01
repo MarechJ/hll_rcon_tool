@@ -217,7 +217,7 @@ class ReasonDialog extends React.Component {
                 reason,
                 comment,
                 durationMultiplier * durationNumber,
-                open.steam_id_64
+                open.player_id
               );
               this.setState({ reason: "", comment: "" });
             }}

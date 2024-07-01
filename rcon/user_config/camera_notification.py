@@ -23,6 +23,4 @@ class CameraNotificationUserConfig(BaseUserConfig):
         )
 
         if not dry_run:
-            set_user_config(
-                CameraNotificationUserConfig.KEY(), validated_conf.model_dump()
-            )
+            set_user_config(CameraNotificationUserConfig.KEY(), validated_conf)

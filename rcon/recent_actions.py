@@ -35,31 +35,31 @@ def reset_recent_actions(rcon: Rcon, struct_log):
 
 @on_kill
 def update_kills(rcon: Rcon, log: StructuredLogLineWithMetaData):
-    killer_name = log["player"]
-    killer_steam_id = log["steam_id_64_1"]
-    victim_name = log["player2"]
-    victim_steam_id = log["steam_id_64_2"]
+    killer_name = log["player_name_1"]
+    killer_player_id = log["player_id_1"]
+    victim_name = log["player_name_2"]
+    victim_player_id = log["player_id_2"]
     weapon = log["weapon"]
 
-    if not killer_steam_id or not victim_steam_id:
+    if not killer_player_id or not victim_player_id:
         logger.error(
-            "update_kills called with killer_steam_id=%s victim_steam_id=%s",
-            killer_steam_id,
-            victim_steam_id,
+            "update_kills called with killer_player_id=%s victim_player_id=%s",
+            killer_player_id,
+            victim_player_id,
         )
         return
 
     cached_actions = get_recent_actions()
-    killer = cached_actions[killer_steam_id]
-    victim = cached_actions[victim_steam_id]
+    killer = cached_actions[killer_player_id]
+    victim = cached_actions[victim_player_id]
 
     killer.player_name = killer_name
-    killer.last_victim_steam_id_64 = victim_steam_id
+    killer.last_victim_player_id = victim_player_id
     killer.last_victim_name = victim_name
     killer.last_victim_weapon = weapon
 
     victim.player_name = victim_name
-    victim.last_nemesis_steam_id_64 = killer_steam_id
+    victim.last_nemesis_player_id = killer_player_id
     victim.last_nemesis_name = killer_name
     victim.last_nemesis_weapon = weapon
 
@@ -70,31 +70,31 @@ def update_kills(rcon: Rcon, log: StructuredLogLineWithMetaData):
 
 @on_tk
 def update_tks(rcon: Rcon, log: StructuredLogLineWithMetaData):
-    killer_name = log["player"]
-    killer_steam_id = log["steam_id_64_1"]
-    victim_name = log["player2"]
-    victim_steam_id = log["steam_id_64_2"]
+    killer_name = log["player_name_1"]
+    killer_player_id = log["player_id_1"]
+    victim_name = log["player_name_2"]
+    victim_player_id = log["player_id_2"]
     weapon = log["weapon"]
 
-    if not killer_steam_id or not victim_steam_id:
+    if not killer_player_id or not victim_player_id:
         logger.error(
-            "update_kills called with killer_steam_id=%s victim_steam_id=%s",
-            killer_steam_id,
-            victim_steam_id,
+            "update_kills called with killer_player_id=%s victim_player_id=%s",
+            killer_player_id,
+            victim_player_id,
         )
         return
 
     cached_actions = get_recent_actions()
-    killer = cached_actions[killer_steam_id]
-    victim = cached_actions[victim_steam_id]
+    killer = cached_actions[killer_player_id]
+    victim = cached_actions[victim_player_id]
 
     killer.player_name = killer_name
-    killer.last_tk_victim_steam_id_64 = victim_steam_id
+    killer.last_tk_victim_player_id = victim_player_id
     killer.last_tk_victim_name = victim_name
     killer.last_tk_victim_weapon = weapon
 
     victim.player_name = victim_name
-    victim.last_tk_nemesis_steam_id_64 = killer_steam_id
+    victim.last_tk_nemesis_player_id = killer_player_id
     victim.last_tk_nemesis_name = killer_name
     victim.last_tk_nemesis_weapon = weapon
 

@@ -1,3 +1,5 @@
+from datetime import datetime
+from logging import getLogger
 from unittest import mock
 
 import pydantic
@@ -6,12 +8,13 @@ from pydantic import HttpUrl
 
 import rcon.message_variables
 from rcon.hooks import chat_commands
+from rcon.maps import parse_layer
 from rcon.message_variables import format_message_string, populate_message_variables
 from rcon.types import (
     MessageVariable,
     MessageVariableContext,
     MostRecentEvents,
-    StructuredLogLineType,
+    StructuredLogLineWithMetaData,
 )
 from rcon.user_config.chat_commands import (
     ChatCommand,
@@ -21,6 +24,8 @@ from rcon.user_config.chat_commands import (
     is_description_word,
     is_help_word,
 )
+
+logger = getLogger(__name__)
 
 
 class MockRconServerSettingsUserConfig:
@@ -36,10 +41,10 @@ class MockAdminPingWebhooksUserConfig:
         self.trigger_words = trigger_words
 
 
-def make_mock_stat(player: str, steam_id_64: str, *args, **kwargs):
+def make_mock_stat(player: str, player_id: str, *args, **kwargs):
     return {
         "player": player,
-        "steam_id_64": steam_id_64,
+        "player_id": player_id,
         **kwargs,
     }
 
@@ -125,8 +130,12 @@ def test_populate_num_ingame_mods(monkeypatch, mods, expected):
 )
 def test_populate_next_map(monkeypatch, map_name, expected):
     var = MessageVariable.next_map
+    logger.error(f"{map_name=}")
+    logger.error(f"{parse_layer(map_name)=}")
     monkeypatch.setattr(
-        rcon.message_variables.Rcon, "get_gamestate", lambda x: {"next_map": map_name}
+        rcon.message_variables.Rcon,
+        "next_map",
+        parse_layer(map_name),
     )
     assert populate_message_variables([var.value]).get(var) == expected
 
@@ -142,7 +151,11 @@ def test_populate_next_map(monkeypatch, map_name, expected):
 )
 def test_populate_map_rotation(monkeypatch, rot, expected):
     var = MessageVariable.map_rotation
-    monkeypatch.setattr(rcon.message_variables.Rcon, "get_map_rotation", lambda x: rot)
+    monkeypatch.setattr(
+        rcon.message_variables.Rcon,
+        "get_map_rotation",
+        lambda x: [parse_layer(m) for m in rot],
+    )
     assert populate_message_variables([var.value]).get(var) == expected
 
 
@@ -181,7 +194,7 @@ def test_populate_top_kill_streaks(monkeypatch, var, expected):
 
 
 @pytest.mark.parametrize(
-    "chat_content, config, steam_id_64, recent_event, expected_message",
+    "chat_content, config, player_id, recent_event, expected_message",
     [
         (
             "!wkm miscellaneous words",
@@ -260,7 +273,7 @@ def test_chat_commands_hook_command_words(
     monkeypatch,
     chat_content: str,
     config: ChatCommandsUserConfig,
-    steam_id_64: str,
+    player_id: str,
     recent_event: MostRecentEvents,
     expected_message: str,
 ):
@@ -272,15 +285,21 @@ def test_chat_commands_hook_command_words(
     monkeypatch.setattr(
         rcon.hooks,
         "get_recent_actions",
-        lambda: {steam_id_64: recent_event},
+        lambda: {player_id: recent_event},
     )
 
-    struct_log: StructuredLogLineType = {
+    struct_log: StructuredLogLineWithMetaData = {
+        "version": 1,
+        "timestamp_ms": int(datetime.now().timestamp()),
+        "event_time": datetime.now(),
+        "relative_time_ms": None,
+        "line_without_time": "",
+        "raw": "",
         "action": "",
-        "player": None,
-        "steam_id_64_1": steam_id_64,
-        "player2": None,
-        "steam_id_64_2": None,
+        "player_name_1": None,
+        "player_id_1": player_id,
+        "player_name_2": None,
+        "player_id_2": None,
         "weapon": None,
         "message": "",
         "sub_content": chat_content,
@@ -288,15 +307,15 @@ def test_chat_commands_hook_command_words(
 
     with mock.patch("rcon.hooks.Rcon") as rcon_:
         chat_commands(rcon_, struct_log)
-        rcon_.do_message_player.assert_called_once_with(
-            steam_id_64=steam_id_64,
+        rcon_.message_player.assert_called_once_with(
+            player_id=player_id,
             message=expected_message,
             save_message=False,
         )
 
 
 @pytest.mark.parametrize(
-    "chat_content, config, steam_id_64, recent_event, expected_message",
+    "chat_content, config, player_id, recent_event, expected_message",
     [
         (
             "?wkm miscellaneous words",
@@ -378,7 +397,7 @@ def test_chat_commands_hook_help_words(
     monkeypatch,
     chat_content: str,
     config: ChatCommandsUserConfig,
-    steam_id_64: str,
+    player_id: str,
     recent_event: MostRecentEvents,
     expected_message: str,
 ):
@@ -390,15 +409,21 @@ def test_chat_commands_hook_help_words(
     monkeypatch.setattr(
         rcon.hooks,
         "get_recent_actions",
-        lambda: {steam_id_64: recent_event},
+        lambda: {player_id: recent_event},
     )
 
-    struct_log: StructuredLogLineType = {
+    struct_log: StructuredLogLineWithMetaData = {
+        "version": 1,
+        "timestamp_ms": int(datetime.now().timestamp()),
+        "event_time": datetime.now(),
+        "relative_time_ms": None,
+        "line_without_time": "",
+        "raw": "",
         "action": "",
-        "player": None,
-        "steam_id_64_1": steam_id_64,
-        "player2": None,
-        "steam_id_64_2": None,
+        "player_name_1": None,
+        "player_id_1": player_id,
+        "player_name_2": None,
+        "player_id_2": None,
         "weapon": None,
         "message": "",
         "sub_content": chat_content,
@@ -406,15 +431,15 @@ def test_chat_commands_hook_help_words(
 
     with mock.patch("rcon.hooks.Rcon") as rcon_:
         chat_commands(rcon_, struct_log)
-        rcon_.do_message_player.assert_called_once_with(
-            steam_id_64=steam_id_64,
+        rcon_.message_player.assert_called_once_with(
+            player_id=player_id,
             message=expected_message,
             save_message=False,
         )
 
 
 @pytest.mark.parametrize(
-    "chat_content, config, steam_id_64, recent_event, expected_message",
+    "chat_content, config, player_id, recent_event, expected_message",
     [
         (
             "!help",
@@ -441,7 +466,7 @@ def test_chat_commands_hook_description_words(
     monkeypatch,
     chat_content: str,
     config: ChatCommandsUserConfig,
-    steam_id_64: str,
+    player_id: str,
     recent_event: MostRecentEvents,
     expected_message: str,
 ):
@@ -453,15 +478,21 @@ def test_chat_commands_hook_description_words(
     monkeypatch.setattr(
         rcon.hooks,
         "get_recent_actions",
-        lambda: {steam_id_64: recent_event},
+        lambda: {player_id: recent_event},
     )
 
-    struct_log: StructuredLogLineType = {
+    struct_log: StructuredLogLineWithMetaData = {
+        "version": 1,
+        "timestamp_ms": int(datetime.now().timestamp()),
+        "event_time": datetime.now(),
+        "relative_time_ms": None,
+        "line_without_time": "",
+        "raw": "",
         "action": "",
-        "player": None,
-        "steam_id_64_1": steam_id_64,
-        "player2": None,
-        "steam_id_64_2": None,
+        "player_name_1": None,
+        "player_id_1": player_id,
+        "player_name_2": None,
+        "player_id_2": None,
         "weapon": None,
         "message": "",
         "sub_content": chat_content,
@@ -469,8 +500,8 @@ def test_chat_commands_hook_description_words(
 
     with mock.patch("rcon.hooks.Rcon") as rcon_:
         chat_commands(rcon_, struct_log)
-        rcon_.do_message_player.assert_called_once_with(
-            steam_id_64=steam_id_64,
+        rcon_.message_player.assert_called_once_with(
+            player_id=player_id,
             message=expected_message,
             save_message=False,
         )

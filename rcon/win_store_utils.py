@@ -1,5 +1,8 @@
-from typing import Final
 import re
+from logging import getLogger
+from typing import Final
+
+logger = getLogger(__name__)
 
 WIN_STORE_PLAYER_ID_REGEX: Final = (
     "^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$"

@@ -97,7 +97,7 @@ def test_is_invalid_name_pineapple(name, expected):
 
 def mock_get_detailed_player(
     name="",
-    steam_id_64="0",
+    player_id="0",
     team="",
     role="",
     unit_id=0,
@@ -115,7 +115,7 @@ def mock_get_detailed_player(
 ) -> GetDetailedPlayer:
     return {
         "name": name,
-        "steam_id_64": steam_id_64,
+        "player_id": player_id,
         "team": team,
         "role": role,
         "unit_id": unit_id,
@@ -149,7 +149,7 @@ Level: 16
 """,
             mock_get_detailed_player(
                 name="",
-                steam_id_64="76561199502921234",
+                player_id="76561199502921234",
                 team="axis",
                 role="support",
                 unit_id=9,
@@ -177,7 +177,7 @@ Level: 16
 """,
             mock_get_detailed_player(
                 name="",
-                steam_id_64="a21af8b5-59df-5vbr-88gf-ab4239r4g6f4",
+                player_id="a21af8b5-59df-5vbr-88gf-ab4239r4g6f4",
                 team="axis",
                 role="support",
                 unit_id=9,

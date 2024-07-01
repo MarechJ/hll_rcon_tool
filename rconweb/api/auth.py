@@ -1,30 +1,29 @@
 import csv
+import datetime
 import json
 import logging
 from dataclasses import asdict, dataclass
 from functools import wraps
 from typing import Any
-from django.contrib.auth.decorators import permission_required
 
+import orjson
+import pydantic
 from channels.db import database_sync_to_async
+from channels.security.websocket import WebsocketDenier
 from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import Permission, User
 from django.core.exceptions import PermissionDenied
 from django.db.models.signals import post_delete, post_save
-from django.http import HttpResponse, JsonResponse, QueryDict
+from django.http import HttpResponse, QueryDict
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_http_methods
 
 from rcon.audit import heartbeat, ingame_mods, online_mods, set_registered_mods
 from rcon.cache_utils import ttl_cache
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rconweb.settings import SECRET_KEY, TAG_VERSION
 
-from .decorators import require_content_type
-from channels.security.websocket import WebsocketDenier
-
+from .decorators import require_content_type, require_http_methods
 from .models import DjangoAPIKey, SteamPlayer
 
 logger = logging.getLogger("rconweb")
@@ -116,9 +115,33 @@ class RconResponse:
         return asdict(self)
 
 
+class RconJsonResponse(HttpResponse):
+    """Similar to JsonResponse but use orjson for speed + automatically serialize pydantic objects"""
+
+    @staticmethod
+    def _orjson_dump_pydantic(o):
+        if isinstance(o, pydantic.BaseModel):
+            return o.model_dump()
+        elif isinstance(o, datetime.timedelta):
+            return o.total_seconds()
+        else:
+            raise ValueError(f"Cannot serialize {o}, {type(o)} to JSON")
+
+    def __init__(self, data, **kwargs):
+        data = orjson.dumps(
+            data,
+            default=RconJsonResponse._orjson_dump_pydantic,
+            option=orjson.OPT_NON_STR_KEYS,
+        )
+        kwargs.setdefault("content_type", "application/json")
+        super().__init__(content=data, **kwargs)
+
+
 def api_response(*args, **kwargs):
     status_code = kwargs.pop("status_code", 200)
-    return JsonResponse(RconResponse(version=TAG_VERSION, *args, **kwargs).to_dict(), status=status_code)
+    return RconJsonResponse(
+        RconResponse(version=TAG_VERSION, *args, **kwargs).to_dict(), status=status_code
+    )
 
 
 def api_csv_response(content, name, header):
@@ -172,13 +195,13 @@ def is_logged_in(request):
     is_auth = request.user.is_authenticated
     if is_auth:
         try:
-            steam_id = None
+            player_id = None
             try:
-                steam_id = request.user.steamplayer.steam_id_64
+                player_id = request.user.steamplayer.player_id
             except:
-                logger.warning("%s's steam id is not set ", request.user.username)
+                logger.warning("%s's player ID is not set", request.user.username)
             try:
-                heartbeat(request.user.username, steam_id)
+                heartbeat(request.user.username, player_id)
             except:
                 logger.exception("Unable to register mods")
         except:
@@ -189,7 +212,7 @@ def is_logged_in(request):
 
 
 @csrf_exempt
-@require_http_methods(["GET"])
+@require_http_methods(["GET", "POST"])
 def do_logout(request):
     logout(request)
     return api_response(result=True, command="logout", failed=False)
@@ -286,29 +309,6 @@ def stats_login_required(func):
             )
 
     return wrapper
-
-
-# TODO: Login required?
-@csrf_exempt
-@permission_required("api.can_view_online_admins", raise_exception=True)
-@require_http_methods(["GET"])
-def get_online_mods(request):
-    return api_response(
-        command="get_online_mods",
-        result=online_mods(),
-        failed=False,
-    )
-
-
-@csrf_exempt
-@permission_required("api.can_view_ingame_admins", raise_exception=True)
-@require_http_methods(["GET"])
-def get_ingame_mods(request):
-    return api_response(
-        command="get_ingame_mods",
-        result=ingame_mods(),
-        failed=False,
-    )
 
 
 @csrf_exempt

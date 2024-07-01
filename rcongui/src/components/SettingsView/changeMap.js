@@ -33,12 +33,12 @@ const ChangeMap = ({ classes, availableMaps, changeMap }) => {
         >
           {availableMaps.map((m) => (
             <MenuItem
-              key={m}
+              key={m.pretty_name}
               onClick={() => {
-                changeMap(m).then(handleClose);
+                changeMap(m.id).then(handleClose);
               }}
             >
-              {m}
+              {m.pretty_name}
             </MenuItem>
           ))}
         </Menu>

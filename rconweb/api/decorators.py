@@ -1,7 +1,32 @@
 import logging
 from functools import wraps
 
+from django.views.decorators.http import (
+    require_http_methods as django_require_http_methods,
+)
+
 logger = logging.getLogger("rconweb")
+
+ENDPOINT_HTTP_METHODS: dict[str, list[str]] = {}
+
+
+def require_http_methods(request_method_list: list[str]):
+    def decorator(
+        func,
+    ):  # -> _Wrapped[Callable[..., Any], Any, Callable[..., Any], Any]:  # -> _Wrapped[Callable[..., Any], Any, Callable[..., Any], Any]:  # -> _Wrapped[Callable[..., Any], Any, Callable[..., Any], Any]:
+        if func.__name__ in ENDPOINT_HTTP_METHODS:
+            raise ValueError(f"{func.__name__} already added to ENDPOINT_HTTP_METHODS")
+
+        ENDPOINT_HTTP_METHODS[func.__name__] = request_method_list
+
+        @wraps(func)
+        @django_require_http_methods(request_method_list)
+        def inner(*args, **kwargs):
+            return func(*args, **kwargs)
+
+        return inner
+
+    return decorator
 
 
 def require_content_type(content_type_list: list[str] = None):

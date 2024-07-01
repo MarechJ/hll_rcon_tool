@@ -34,7 +34,7 @@ const MapRotation = ({ classes }) => {
   const saveRotation = () => {
     setRotationIsSaving(true);
     return postData(`${process.env.REACT_APP_API_URL}set_maprotation`, {
-      rotation: rotation,
+      rotation: rotation.map((m) => m.id),
     })
       .then((res) => {
         showResponse(res, `set_maprotation`, true);
@@ -123,6 +123,8 @@ const MapRotation = ({ classes }) => {
               multiple
               disableCloseOnSelect
               options={maps}
+              getOptionLabel={(m) => m.pretty_name}
+              isOptionEqualToValue={(option, value) => option.id == value.id}
               onChange={(e, v) => setMapsToAdd(v)}
               renderInput={(params) => (
                 <TextField

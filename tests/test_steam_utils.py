@@ -17,28 +17,28 @@ def test_is_steam_id_64(id_, expected):
 
 
 @filter_steam_id()
-def should_filter_single_id(steam_id_64: str):
-    return steam_id_64
+def should_filter_single_id(player_id: str):
+    return player_id
 
 
 @filter_steam_ids()
-def should_filter_multiple_ids(steam_id_64s: list[str]):
-    return steam_id_64s
+def should_filter_multiple_ids(player_ids: list[str]):
+    return player_ids
 
 
 @pytest.mark.parametrize(
-    "steam_id_64, expected",
+    "player_id, expected",
     [
         ("76561198080212634", "76561198080212634"),
         ("a21af8b5-59df-5vbr-88gf-ab4239r4g6f4", None),
     ],
 )
-def test_steam_id_filter(steam_id_64, expected):
-    assert should_filter_single_id(steam_id_64) == expected
+def test_steam_id_filter(player_id, expected):
+    assert should_filter_single_id(player_id) == expected
 
 
 @pytest.mark.parametrize(
-    "steam_id_64s, expected",
+    "player_ids, expected",
     [
         (["76561198080212634"], ["76561198080212634"]),
         ([], []),
@@ -48,5 +48,5 @@ def test_steam_id_filter(steam_id_64, expected):
         ),
     ],
 )
-def test_steam_ids_filter(steam_id_64s, expected: list[str]):
-    assert should_filter_multiple_ids(steam_id_64s) == expected
+def test_steam_ids_filter(player_ids, expected: list[str]):
+    assert should_filter_multiple_ids(player_ids) == expected

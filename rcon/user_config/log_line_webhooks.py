@@ -62,4 +62,4 @@ class LogLineWebhookUserConfig(BaseUserConfig):
         validated_conf = LogLineWebhookUserConfig(webhooks=validated_log_lines)
 
         if not dry_run:
-            set_user_config(LogLineWebhookUserConfig.KEY(), validated_conf.model_dump())
+            set_user_config(LogLineWebhookUserConfig.KEY(), validated_conf)

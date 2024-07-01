@@ -1,12 +1,12 @@
 import inspect
-import orjson
 import logging
 import os
 import secrets
 from datetime import datetime, timezone
 from itertools import islice
-from typing import Any, Generic, Iterable, TypeVar, Iterable
+from typing import Any, Generic, Iterable, TypeVar
 
+import orjson
 import redis
 import redis.exceptions
 
@@ -15,7 +15,7 @@ from rcon.types import GetDetailedPlayer, MapInfo
 
 logger = logging.getLogger("rcon")
 
-STEAMID = "steam_id_64"
+PLAYER_ID = "player_id"
 NAME = "name"
 ROLE = "role"
 
@@ -54,15 +54,6 @@ ALL_ROLES = (
 )
 
 ALL_ROLES_KEY_INDEX_MAP = {v: i for i, v in enumerate(ALL_ROLES)}
-
-
-def get_current_map(rcon):
-    map_ = rcon.get_map()
-
-    if map_.endswith("_RESTART"):
-        map_ = map_.replace("_RESTART", "")
-
-    return map_
 
 
 T = TypeVar("T")
@@ -408,7 +399,7 @@ def is_invalid_name_pineapple(name: str) -> bool:
 def default_player_info_dict(player) -> GetDetailedPlayer:
     return {
         "name": player,
-        "steam_id_64": "",
+        "player_id": "",
         "profile": None,
         "is_vip": False,
         "unit_id": None,
@@ -457,7 +448,7 @@ def parse_raw_player_info(raw: str, player) -> GetDetailedPlayer:
 
     logger.debug(raw_data)
     # Remap keys and parse values
-    data[STEAMID] = raw_data.get("steamid64")  # type: ignore
+    data[PLAYER_ID] = raw_data.get("steamid64")  # type: ignore
     data["team"] = raw_data.get("team", "None")
     if raw_data["role"].lower() == "armycommander":
         data["unit_id"], data["unit_name"] = (-1, "Commmand")
@@ -529,3 +520,25 @@ class SafeStringFormat(dict):
             called_from.code_context,
         )
         return f"{{{key}}}"
+
+
+def strtobool(val) -> bool:
+    """Convert a string representation of truth to true (1) or false (0).
+    True values are 'y', 'yes', 't', 'true', 'on', and '1'; false values
+    are 'n', 'no', 'f', 'false', 'off', and '0'.  Raises ValueError if
+    'val' is anything else.
+    """
+    if val is None:
+        return False
+
+    if isinstance(val, bool):
+        return val
+
+    # sourced from https://stackoverflow.com/a/18472142 with modification
+    val = val.lower()
+    if val in ("y", "yes", "t", "true", "on", "1"):
+        return True
+    elif val in ("n", "no", "f", "false", "off", "0"):
+        return False
+    else:
+        raise ValueError("invalid truth value %r" % (val,))

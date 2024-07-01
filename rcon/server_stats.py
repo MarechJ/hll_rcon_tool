@@ -11,8 +11,8 @@ from sqlalchemy.sql.functions import coalesce
 from rcon.models import (
     Maps,
     PlayerAtCount,
+    PlayerID,
     PlayerSession,
-    PlayerSteamID,
     ServerCount,
     enter_session,
 )
@@ -129,7 +129,7 @@ def save_server_stats_for_range(start, end):
                     players_at_counts = [
                         PlayerAtCount(
                             servercount_id=server_count.id,
-                            playersteamid_id=player.id,
+                            player_id_id=player.id,
                             vip=is_vip,
                         )
                         for player, is_vip in item["players"]
@@ -174,8 +174,8 @@ def get_db_server_stats_for_range(
         if with_player_list:
             query = query.options(
                 joinedload(ServerCount.players)
-                .joinedload(PlayerAtCount.steamid)
-                .joinedload(PlayerSteamID.names)
+                .joinedload(PlayerAtCount.player)
+                .joinedload(PlayerID.names)
             )
         last_datapoint = None
         if by_map:
@@ -244,7 +244,7 @@ def _get_server_stats(
     # Bear in mind that a huge window will impact perf a lot
     try:
         vips = get_rcon().get_vip_ids()
-        vips = {d["steam_id_64"] for d in vips}
+        vips = {d["player_id"] for d in vips}
     except:
         logger.warning("Unable to get VIP list")
         vips = set()
@@ -286,7 +286,7 @@ def _get_server_stats(
                 PlayerSession.server_number == server_number,
             )
         )
-        .options(joinedload(PlayerSession.steamid).joinedload(PlayerSteamID.names))
+        .options(joinedload(PlayerSession.player).joinedload(PlayerID.names))
     )
     q = q.all()
     print("Found players: ", len(q))
