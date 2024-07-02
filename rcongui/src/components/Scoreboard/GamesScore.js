@@ -199,7 +199,7 @@ const GamesScore = ({ classes }) => {
       >
         <Grid item xs={12} className={styles.transparentPaper}>
           <Typography color="secondary" variant="h4">
-            {serverState.get("name")}
+            {serverState.get("name", new Map()).get("name")}
           </Typography>
         </Grid>
         {!maps.size ? (

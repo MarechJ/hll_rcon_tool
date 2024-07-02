@@ -49,7 +49,12 @@ from rcon.types import (
     StructuredLogLineWithMetaData,
     WatchListType,
 )
-from rcon.utils import SafeStringFormat, humanize_timedelta, mask_to_server_numbers, server_numbers_to_mask
+from rcon.utils import (
+    SafeStringFormat,
+    humanize_timedelta,
+    mask_to_server_numbers,
+    server_numbers_to_mask,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -84,9 +89,11 @@ class Base(DeclarativeBase):
 
 
 class PlayerID(Base):
-    __tablename__ = "player_id"
+    __tablename__ = "steam_id_64"
     id: Mapped[int] = mapped_column(primary_key=True)
-    player_id: Mapped[str] = mapped_column(nullable=False, index=True, unique=True)
+    player_id: Mapped[str] = mapped_column(
+        "steam_id_64", nullable=False, index=True, unique=True
+    )
     created: Mapped[datetime] = mapped_column(default=datetime.utcnow)
     names: Mapped[list["PlayerName"]] = relationship(
         back_populates="player",
@@ -190,7 +197,11 @@ class SteamInfo(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     player_id_id: Mapped[int] = mapped_column(
-        ForeignKey("player_id.id"), nullable=False, index=True, unique=True
+        "playersteamid_id",
+        ForeignKey("steam_id_64.id"),
+        nullable=False,
+        index=True,
+        unique=True,
     )
     created: Mapped[datetime] = mapped_column(default=datetime.utcnow)
     updated: Mapped[datetime] = mapped_column(onupdate=datetime.utcnow)
@@ -231,7 +242,11 @@ class WatchList(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     modified: Mapped[datetime] = mapped_column(default=datetime.utcnow)
     player_id_id: Mapped[int] = mapped_column(
-        ForeignKey("player_id.id"), nullable=False, index=True, unique=True
+        "playersteamid_id",
+        ForeignKey("steam_id_64.id"),
+        nullable=False,
+        index=True,
+        unique=True,
     )
     is_watched: Mapped[bool] = mapped_column(nullable=False)
     reason: Mapped[str] = mapped_column(default="")
@@ -264,12 +279,12 @@ class UserConfig(Base):
 class PlayerFlag(Base):
     __tablename__ = "player_flags"
     __table_args__ = (
-        UniqueConstraint("player_id_id", "flag", name="unique_flag_player_id"),
+        UniqueConstraint("playersteamid_id", "flag", name="unique_flag_player_id"),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     player_id_id: Mapped[int] = mapped_column(
-        ForeignKey("player_id.id"), nullable=False, index=True
+        "playersteamid_id", ForeignKey("steam_id_64.id"), nullable=False, index=True
     )
     flag: Mapped[str] = mapped_column(nullable=False, index=True)
     comment: Mapped[str] = mapped_column(String, nullable=True)
@@ -289,12 +304,14 @@ class PlayerFlag(Base):
 class PlayerOptins(Base):
     __tablename__ = "player_optins"
     __table_args__ = (
-        UniqueConstraint("player_id_id", "optin_name", name="unique_optins_player_id"),
+        UniqueConstraint(
+            "playersteamid_id", "optin_name", name="unique_optins_player_id"
+        ),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     player_id_id: Mapped[int] = mapped_column(
-        ForeignKey("player_id.id"), nullable=False, index=True
+        "playersteamid_id", ForeignKey("steam_id_64.id"), nullable=False, index=True
     )
     optin_name: Mapped[str] = mapped_column(nullable=False, index=True)
     optin_value: Mapped[str] = mapped_column(nullable=True)
@@ -314,12 +331,12 @@ class PlayerOptins(Base):
 class PlayerName(Base):
     __tablename__ = "player_names"
     __table_args__ = (
-        UniqueConstraint("player_id_id", "name", name="unique_name_steamid"),
+        UniqueConstraint("playersteamid_id", "name", name="unique_name_steamid"),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     player_id_id: Mapped[int] = mapped_column(
-        ForeignKey("player_id.id"), nullable=False, index=True
+        "playersteamid_id", ForeignKey("steam_id_64.id"), nullable=False, index=True
     )
     name: Mapped[str] = mapped_column(nullable=False)
     created: Mapped[datetime] = mapped_column(default=datetime.utcnow)
@@ -342,7 +359,7 @@ class PlayerSession(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     player_id_id: Mapped[int] = mapped_column(
-        ForeignKey("player_id.id"), nullable=False, index=True
+        "playersteamid_id", ForeignKey("steam_id_64.id"), nullable=False, index=True
     )
     start: Mapped[datetime] = mapped_column()
     end: Mapped[datetime] = mapped_column()
@@ -368,7 +385,7 @@ class PlayersAction(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     action_type: Mapped[str] = mapped_column(nullable=False)
     player_id_id: Mapped[int] = mapped_column(
-        ForeignKey("player_id.id"), nullable=False, index=True
+        "playersteamid_id", ForeignKey("steam_id_64.id"), nullable=False, index=True
     )
     reason: Mapped[str] = mapped_column()
     by: Mapped[str] = mapped_column()
@@ -396,11 +413,11 @@ class LogLine(Base):
     type: Mapped[str] = mapped_column(nullable=True)
     player1_name: Mapped[str] = mapped_column(nullable=True)
     player1_player_id: Mapped[int] = mapped_column(
-        ForeignKey("player_id.id"), nullable=True, index=True
+        "player1_steamid", ForeignKey("steam_id_64.id"), nullable=True, index=True
     )
     player2_name: Mapped[str] = mapped_column(nullable=True)
     player2_player_id: Mapped[int] = mapped_column(
-        ForeignKey("player_id.id"), nullable=True, index=True
+        "player2_steamid", ForeignKey("steam_id_64.id"), nullable=True, index=True
     )
     weapon: Mapped[str] = mapped_column()
     raw: Mapped[str] = mapped_column(nullable=False)
@@ -496,12 +513,12 @@ class Maps(Base):
 class PlayerStats(Base):
     __tablename__ = "player_stats"
     __table_args__ = (
-        UniqueConstraint("player_id_id", "map_id", name="unique_map_player"),
+        UniqueConstraint("playersteamid_id", "map_id", name="unique_map_player"),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     player_id_id: Mapped[int] = mapped_column(
-        ForeignKey("player_id.id"), nullable=False, index=True
+        "playersteamid_id", ForeignKey("steam_id_64.id"), nullable=False, index=True
     )
     map_id: Mapped[int] = mapped_column(
         ForeignKey("map_history.id"), nullable=False, index=True
@@ -542,7 +559,6 @@ class PlayerStats(Base):
         # TODO: Fix typing
         return {
             "id": self.id,
-            "player_id_id": self.player_id_id,
             PLAYER_ID: self.player.player_id,
             "player": self.name,
             "steaminfo": (
@@ -585,7 +601,7 @@ class PlayerComment(Base):
     creation_time: Mapped[datetime] = mapped_column(TIMESTAMP, default=datetime.utcnow)
     by: Mapped[str] = mapped_column()
     player_id_id: Mapped[int] = mapped_column(
-        ForeignKey("player_id.id"), nullable=False, index=True
+        "playersteamid_id", ForeignKey("steam_id_64.id"), nullable=False, index=True
     )
     content: Mapped[str] = mapped_column(nullable=False)
 
@@ -595,7 +611,7 @@ class PlayerComment(Base):
         return {
             "id": self.id,
             "creation_time": self.creation_time,
-            "player_id_id": self.player_id_id,
+            "player_id": self.player.player_id,
             "content": self.content,
             "by": self.by,
         }
@@ -644,12 +660,12 @@ class PlayerAtCount(Base):
     __tablename__ = "player_at_count"
     __table_args__ = (
         UniqueConstraint(
-            "player_id_id", "servercount_id", name="unique_player_at_count"
+            "playersteamid_id", "servercount_id", name="unique_player_at_count"
         ),
     )
     id: Mapped[int] = mapped_column(primary_key=True)
     player_id_id: Mapped[int] = mapped_column(
-        ForeignKey("player_id.id"), nullable=False, index=True
+        "playersteamid_id", ForeignKey("steam_id_64.id"), nullable=False, index=True
     )
     servercount_id: Mapped[int] = mapped_column(
         ForeignKey("server_counts.id"), nullable=False, index=True
@@ -676,7 +692,7 @@ class PlayerVIP(Base):
     __tablename__: str = "player_vip"
     __table_args__ = (
         UniqueConstraint(
-            "player_id_id", "server_number", name="unique_player_server_vip"
+            "playersteamid_id", "server_number", name="unique_player_server_vip"
         ),
     )
 
@@ -688,7 +704,7 @@ class PlayerVIP(Base):
     server_number: Mapped[int] = mapped_column()
 
     player_id_id: Mapped[int] = mapped_column(
-        ForeignKey("player_id.id"), nullable=False, index=True
+        "playersteamid_id", ForeignKey("steam_id_64.id"), nullable=False, index=True
     )
 
     player: Mapped[PlayerID] = relationship(back_populates="vips")
@@ -724,28 +740,31 @@ class AuditLog(Base):
         }
 
 
-
 class Blacklist(Base):
     __tablename__: str = "blacklist"
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str]
-    sync: Mapped[BlacklistSyncMethod] = mapped_column(Enum(BlacklistSyncMethod), default=BlacklistSyncMethod.KICK_ONLY)
+    sync: Mapped[BlacklistSyncMethod] = mapped_column(
+        Enum(BlacklistSyncMethod), default=BlacklistSyncMethod.KICK_ONLY
+    )
     servers: Mapped[Optional[int]]
-    
-    records: Mapped[list['BlacklistRecord']] = relationship(back_populates="blacklist", cascade="all, delete")
+
+    records: Mapped[list["BlacklistRecord"]] = relationship(
+        back_populates="blacklist", cascade="all, delete"
+    )
 
     def get_server_numbers(self) -> Optional[set[int]]:
         if self.servers is None:
             return None
-        
+
         return mask_to_server_numbers(self.servers)
-    
+
     def set_server_numbers(self, server_numbers: Sequence[int] | None):
         if server_numbers is None:
             self.set_all_servers()
         else:
             self.servers = server_numbers_to_mask(*server_numbers)
-    
+
     def set_all_servers(self):
         self.servers = None
 
@@ -761,11 +780,16 @@ class Blacklist(Base):
             "id": self.id,
             "name": self.name,
             "sync": self.sync.value,
-            "servers": None if self.servers is None else list(self.get_server_numbers()),
+            "servers": (
+                None if self.servers is None else list(self.get_server_numbers())
+            ),
         }
         if with_records:
-            res["records"] = [record.to_dict(with_blacklist=False) for record in self.records]
+            res["records"] = [
+                record.to_dict(with_blacklist=False) for record in self.records
+            ]
         return res
+
 
 class BlacklistRecord(Base):
     __tablename__: str = "blacklist_record"
@@ -773,11 +797,10 @@ class BlacklistRecord(Base):
     reason: Mapped[str]
     admin_name: Mapped[str]
     created_at: Mapped[datetime] = mapped_column(
-        TIMESTAMP(timezone=True),
-        default=lambda: datetime.now(tz=timezone.utc)
+        TIMESTAMP(timezone=True), default=lambda: datetime.now(tz=timezone.utc)
     )
     expires_at: Mapped[Optional[datetime]] = mapped_column(TIMESTAMP(timezone=True))
-    
+
     player_id_id: Mapped[int] = mapped_column(
         ForeignKey("player_id.id"), nullable=False, index=True
     )
@@ -785,8 +808,8 @@ class BlacklistRecord(Base):
         ForeignKey("blacklist.id", ondelete="CASCADE"), nullable=False, index=True
     )
 
-    player: Mapped['PlayerID'] = relationship(back_populates="blacklists")
-    blacklist: Mapped['Blacklist'] = relationship(back_populates="records")
+    player: Mapped["PlayerID"] = relationship(back_populates="blacklists")
+    blacklist: Mapped["Blacklist"] = relationship(back_populates="records")
 
     def expires_in(self):
         if not self.expires_at:
@@ -803,9 +826,19 @@ class BlacklistRecord(Base):
             "player_id": self.player.player_id,
             "player_name": self.player.names[0].name if self.player.names else "",
             "banned_at": self.created_at.strftime("%d %b %H:%M"),
-            "banned_until": self.expires_at.strftime("%d %b %H:%M") if self.expires_at else "forever",
-            "expires_at": self.expires_at.strftime("%d %b %H:%M") if self.expires_at else "never",
-            "duration": humanize_timedelta(self.expires_at - self.created_at) if self.expires_at else "forever",
+            "banned_until": (
+                self.expires_at.strftime("%d %b %H:%M")
+                if self.expires_at
+                else "forever"
+            ),
+            "expires_at": (
+                self.expires_at.strftime("%d %b %H:%M") if self.expires_at else "never"
+            ),
+            "duration": (
+                humanize_timedelta(self.expires_at - self.created_at)
+                if self.expires_at
+                else "forever"
+            ),
             "expires": humanize_timedelta(self.expires_at).replace("forever", "never"),
             "ban_id": self.id,
             "admin_name": self.admin_name,
@@ -815,13 +848,21 @@ class BlacklistRecord(Base):
 
     # I know this isn't entirely representative but I cba to add 4 different types, 3 is already more than enough
     @overload
-    def to_dict(self, with_blacklist: Literal[True] = True, with_player: Literal[False] = False) -> BlacklistRecordWithBlacklistType: ...
+    def to_dict(
+        self, with_blacklist: Literal[True] = True, with_player: Literal[False] = False
+    ) -> BlacklistRecordWithBlacklistType: ...
     @overload
-    def to_dict(self, with_blacklist: Literal[True] = True, with_player: Literal[True] = False) -> BlacklistRecordWithPlayerType: ...
+    def to_dict(
+        self, with_blacklist: Literal[True] = True, with_player: Literal[True] = False
+    ) -> BlacklistRecordWithPlayerType: ...
     @overload
-    def to_dict(self, with_blacklist: Literal[False] = True, with_player: bool = False) -> BlacklistRecordType: ...
+    def to_dict(
+        self, with_blacklist: Literal[False] = True, with_player: bool = False
+    ) -> BlacklistRecordType: ...
 
-    def to_dict(self, with_blacklist: bool = True, with_player: bool = False) -> BlacklistRecordWithBlacklistType:
+    def to_dict(
+        self, with_blacklist: bool = True, with_player: bool = False
+    ) -> BlacklistRecordWithBlacklistType:
         res = {
             "id": self.id,
             "player_id": self.player.player_id,
@@ -831,20 +872,22 @@ class BlacklistRecord(Base):
             "expires_at": self.expires_at,
             "is_active": not self.is_expired(),
         }
-        
+
         if with_blacklist:
             res["blacklist"] = self.blacklist.to_dict(with_records=False)
-        
+
         if with_player:
             res["player"] = {
                 "id": self.player.id,
                 "player_id": self.player.player_id,
                 "created": self.player.created,
                 "names": [name.to_dict() for name in self.player.names],
-                "steaminfo": self.player.steaminfo.to_dict() if self.player.steaminfo else None,
+                "steaminfo": (
+                    self.player.steaminfo.to_dict() if self.player.steaminfo else None
+                ),
             }
             res["formatted_reason"] = self.get_formatted_reason()
-        
+
         return res
 
 
@@ -869,7 +912,8 @@ def enter_session() -> Generator[Session, None, None]:
         yield sess
         # Only commit if there were no exceptions, otherwise rollback
         sess.commit()
-    except (ProgrammingError, InvalidRequestError):
+    except (ProgrammingError, InvalidRequestError) as e:
+        logger.exception(e)
         sess.rollback()
     finally:
         sess.close()

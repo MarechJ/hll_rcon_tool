@@ -1,9 +1,10 @@
 import inspect
+from collections import defaultdict
 from datetime import datetime, timedelta
 from logging import getLogger
 from typing import Any, Iterable, Literal, Optional, Sequence, Type
 
-from rcon import blacklist, game_logs, player_history
+from rcon import blacklist, game_logs, maps, player_history
 from rcon.audit import ingame_mods, online_mods
 from rcon.cache_utils import RedisCached, get_redis_pool
 from rcon.discord import audit_user_config_differences
@@ -591,7 +592,7 @@ class RconAPI(Rcon):
 
     def get_recent_logs(
         self,
-        filter_player: list[str] = [],
+        filter_player: list[str] | str = [],
         filter_action: list[str] = [],
         inclusive_filter: bool = True,
         start: int = 0,
@@ -609,16 +610,23 @@ class RconAPI(Rcon):
             inclusive_filter=inclusive_filter,
         )
 
-    def get_votemap_status(self) -> VoteMapStatusType:
+    def get_votemap_status(self) -> list[VoteMapStatusType]:
         v = VoteMap()
 
-        return {
-            "votes": v.get_votes(),
-            "selection": [m for m in v.get_selection()],
-            "results": v.get_vote_overview(),
-        }
+        votes = v.get_votes()
+        votes_by_map: dict[maps.Layer, list[str]] = defaultdict(list)
+        for player, map_ in votes.items():
+            votes_by_map[map_].append(player)
 
-    def reset_votemap_state(self) -> VoteMapStatusType:
+        selection = v.get_selection()
+
+        result = []
+        for map_ in selection:
+            result.append({"map": map_, "voters": votes_by_map[map_]})
+
+        return sorted(result, key=lambda m: len(m["voters"]), reverse=True)
+
+    def reset_votemap_state(self) -> list[VoteMapStatusType]:
         v = VoteMap()
         v.clear_votes()
         v.gen_selection()

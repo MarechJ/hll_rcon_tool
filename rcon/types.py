@@ -438,6 +438,7 @@ class MapsType(TypedDict):
 
 class PlayerCommentType(TypedDict):
     id: int
+    player_id: str
     creation_time: datetime.datetime
     by: Optional[str]
     content: str
@@ -631,15 +632,14 @@ class VoteMapPlayerVoteType(TypedDict):
 
 
 class VoteMapResultType(TypedDict):
-    total_votes: int
-    winning_maps: list[tuple[Layer, int]]
+    map: Layer
+    num_votes: int
 
 
 # TODO: finish this typing
 class VoteMapStatusType(TypedDict):
-    votes: dict[str, Layer]
-    selection: list[Layer]
-    results: VoteMapResultType | None
+    map: Layer
+    voters: dict[Layer, list[str]]
 
 
 # Have to inherit from str to allow for JSON serialization w/ pydantic
@@ -733,7 +733,7 @@ class PublicInfoType(TypedDict):
     player_count_by_team: PublicInfoPlayerType
     score: PublicInfoScoreType
     time_remaining: float
-    vote_status: VoteMapResultType | None
+    vote_status: list[VoteMapStatusType]
     name: PublicInfoNameType
 
 

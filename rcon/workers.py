@@ -200,10 +200,10 @@ def record_stats_from_map(
                 most_killed=stats.get("most_killed"),
                 death_by=stats.get("death_by"),
                 death_by_weapons=stats.get("death_by_weapons"),
-                combat=map_stats.get("combat") + map_stats.get("p_combat"),
-                offense=map_stats.get("offense") + map_stats.get("p_offense"),
-                defense=map_stats.get("defense") + map_stats.get("p_defense"),
-                support=map_stats.get("support") + map_stats.get("p_support"),
+                combat=map_stats.get("combat", 0) + map_stats.get("p_combat", 0),
+                offense=map_stats.get("offense", 0) + map_stats.get("p_offense", 0),
+                defense=map_stats.get("defense", 0) + map_stats.get("p_defense", 0),
+                support=map_stats.get("support", 0) + map_stats.get("p_support", 0),
             )
             if existing is not None and force != True:
                 continue

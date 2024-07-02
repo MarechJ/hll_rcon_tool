@@ -118,7 +118,7 @@ def get_public_info(request):
         "allied": gamestate["num_allied_players"],
         "axis": gamestate["num_axis_players"],
     }
-    vote_status = VoteMap().get_vote_overview()
+    vote_status = rcon_api.get_votemap_status()
 
     public_stats_port = os.getenv("PUBLIC_STATS_PORT", None)
     public_stats_port_https = os.getenv("PUBLIC_STATS_PORT_HTTPS", None)

@@ -237,7 +237,7 @@ def run():
             )
 
         for rule in config["rules"]:
-            conditions = []
+            conditions: list[BaseCondition] = []
             commands = rule.get("commands", {})
             for c_name, c_params in rule.get("conditions", {}).items():
                 try:
@@ -262,16 +262,16 @@ def run():
                 rule_matched = True
                 if can_invoke_multiple_rules:
                     logger.info(
-                        f"Rule validation succeded, moving to next one. ({can_invoke_multiple_rules=})"
+                        f"Rule conditions met, can invoke multiple rules and moving to next one. ({can_invoke_multiple_rules=})"
                     )
                     continue
                 else:
                     logger.info(
-                        f"Rule validation succeded, ignoring potential other rules. ({can_invoke_multiple_rules=})"
+                        f"Rule conditions met, cannot invoke multiple rules, ignoring potential other rules. ({can_invoke_multiple_rules=})"
                     )
                     break
 
-            logger.info("Rule validation failed, moving to next one.")
+            logger.info("Rule `%s` conditions not met, moving to next one.", rule)
 
         if not rule_matched:
             if always_apply_defaults:

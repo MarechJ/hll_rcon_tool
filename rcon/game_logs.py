@@ -11,6 +11,7 @@ from typing import Callable, DefaultDict, Dict, Iterable
 
 import discord_webhook
 import redis.exceptions
+from dateutil import parser
 from pydantic import HttpUrl
 from sqlalchemy import and_, desc, or_
 from sqlalchemy.exc import IntegrityError
@@ -48,6 +49,7 @@ from rcon.utils import (
     StreamNoElements,
     StreamOlderElement,
     get_server_number,
+    strtobool,
 )
 
 logger = logging.getLogger(__name__)
@@ -278,9 +280,9 @@ class LogStream:
         Return each unique timestamp and the logs that occured at that time
         """
         # logs has the newest logs first, oldest last
-        buckets: dict[
-            datetime.datetime, list[StructuredLogLineWithMetaData]
-        ] = defaultdict(list)
+        buckets: dict[datetime.datetime, list[StructuredLogLineWithMetaData]] = (
+            defaultdict(list)
+        )
 
         ordered_logs: list[
             tuple[datetime.datetime, list[StructuredLogLineWithMetaData]]
@@ -338,15 +340,15 @@ class LogStream:
         try:
             if last_seen is None:
                 logs: list[tuple[StreamID, StructuredLogLineWithMetaData]] = []
-                tail_log: tuple[
-                    StreamID, StructuredLogLineWithMetaData
-                ] = self.log_stream.tail()
+                tail_log: tuple[StreamID, StructuredLogLineWithMetaData] = (
+                    self.log_stream.tail()
+                )
                 if tail_log:
                     logs.append(tail_log)
             else:
-                logs: list[
-                    tuple[StreamID, StructuredLogLineWithMetaData]
-                ] = self.log_stream.read(last_id=last_seen, block_ms=block_ms)
+                logs: list[tuple[StreamID, StructuredLogLineWithMetaData]] = (
+                    self.log_stream.read(last_id=last_seen, block_ms=block_ms)
+                )
             return logs
         except StreamNoElements:
             response: list[tuple[StreamID, StructuredLogLineWithMetaData]] = []
@@ -640,14 +642,14 @@ def is_action(action_filter, action, exact_match=False):
 
 
 def get_recent_logs(
-    start=0,
-    end=100000,
-    player_search=None,
-    action_filter=None,
-    min_timestamp=None,
-    exact_player_match=False,
-    exact_action=False,
-    inclusive_filter=True,
+    start: int = 0,
+    end: int = 100000,
+    player_search: list[str] | str = [],
+    action_filter: list[str] = [],
+    min_timestamp: float | None = None,
+    exact_player_match: bool = False,
+    exact_action: bool = False,
+    inclusive_filter: bool = True,
 ) -> ParsedLogsType:
     # The default behavior is to only show log lines with actions in `actions_filter`
     # inclusive_filter=True retains this default behavior
@@ -661,6 +663,13 @@ def get_recent_logs(
 
     if not isinstance(end, int):
         end = 1000
+
+    if not isinstance(min_timestamp, float) and min_timestamp:
+        min_timestamp = float(min_timestamp)
+
+    exact_player_match = strtobool(exact_player_match)
+    exact_action = strtobool(exact_action)
+    inclusive_filter = strtobool(inclusive_filter)
 
     if start != 0:
         all_logs = log_list[start : min(end, len(log_list))]
@@ -869,18 +878,28 @@ def auto_ban_if_tks_right_after_connection(
 
 
 def get_historical_logs_records(
-    sess,
-    player_name=None,
-    action=None,
-    player_id=None,
-    limit=1000,
-    from_=None,
-    till=None,
-    time_sort="desc",
-    exact_player_match=False,
-    exact_action=True,
-    server_filter=None,
+    sess: Session,
+    player_name: str | None = None,
+    action: str | None = None,
+    player_id: str | None = None,
+    limit: int = 1000,
+    from_: datetime.datetime | None = None,
+    till: datetime.datetime | None = None,
+    time_sort: str = "desc",
+    exact_player_match: bool = False,
+    exact_action: bool = True,
+    server_filter: str | None = None,
 ):
+    limit = int(limit)
+    exact_player_match = strtobool(exact_player_match)
+    exact_action = strtobool(exact_action)
+
+    if isinstance(from_, str):
+        from_ = parser.parse(from_)
+
+    if isinstance(till, str):
+        till = parser.parse(till)
+
     names = []
     name_filters = []
 
@@ -941,16 +960,16 @@ def get_historical_logs_records(
 
 
 def get_historical_logs(
-    player_name=None,
-    action=None,
-    player_id=None,
-    limit=1000,
-    from_=None,
-    till=None,
+    player_name: str | None = None,
+    action: str | None = None,
+    player_id: str | None = None,
+    limit: int = 1000,
+    from_: datetime.datetime | None = None,
+    till: datetime.datetime | None = None,
     time_sort="desc",
-    exact_player_match=False,
-    exact_action=True,
-    server_filter=None,
+    exact_player_match: bool = False,
+    exact_action: bool = True,
+    server_filter: str | None = None,
     output=None,
 ):
     with enter_session() as sess:

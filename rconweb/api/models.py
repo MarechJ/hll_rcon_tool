@@ -429,7 +429,10 @@ class RconUser(User):
             ("can_change_log_stream_config", "Can change the Log Stream config"),
             ("can_view_blacklists", "Can view available blacklists"),
             ("can_add_blacklist_records", "Can add players to blacklists"),
-            ("can_change_blacklist_records", "Can unblacklist players and edit blacklist records"),
+            (
+                "can_change_blacklist_records",
+                "Can unblacklist players and edit blacklist records",
+            ),
             ("can_delete_blacklist_records", "Can delete blacklist records"),
             ("can_create_blacklists", "Can create blacklists"),
             ("can_change_blacklists", "Can change blacklists"),

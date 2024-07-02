@@ -5,6 +5,7 @@ import os
 import unicodedata
 from functools import cmp_to_key
 
+from dateutil import parser
 from sqlalchemy import func, or_
 from sqlalchemy.orm import contains_eager, selectinload, Session
 from sqlalchemy.sql.functions import ReturnTypeFromArgs
@@ -25,6 +26,7 @@ from rcon.models import (
 )
 from rcon.types import PlayerCommentType, PlayerFlagType, PlayerProfileType
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
+from rcon.utils import strtobool
 
 
 class unaccent(ReturnTypeFromArgs):
@@ -44,7 +46,9 @@ def get_player(sess: Session, player_id: str) -> PlayerID | None:
     return sess.query(PlayerID).filter(PlayerID.player_id == player_id).one_or_none()
 
 
-def get_player_profile(player_id, nb_sessions):
+def get_player_profile(player_id: str, nb_sessions: int):
+    nb_sessions = int(nb_sessions)
+
     with enter_session() as sess:
         player = (
             sess.query(PlayerID).filter(PlayerID.player_id == player_id).one_or_none()
@@ -140,6 +144,20 @@ def get_players_by_appearance(
     flags: str | list[str] | None = None,
     country: str | None = None,
 ):
+    page = int(page)
+    page_size = int(page_size)
+
+    if isinstance(last_seen_from, str):
+        last_seen_from = parser.parse(last_seen_from)
+
+    if isinstance(last_seen_till, str):
+        last_seen_till = parser.parse(last_seen_till)
+
+    blacklisted = strtobool(blacklisted)
+    is_watched = strtobool(is_watched)
+    exact_name_match = strtobool(exact_name_match)
+    ignore_accent = strtobool(ignore_accent)
+
     if page <= 0:
         raise ValueError("page needs to be >= 1")
     if page_size <= 0:
@@ -186,7 +204,7 @@ def get_players_by_appearance(
                     or_(
                         BlacklistRecord.expires_at.is_(None),
                         BlacklistRecord.expires_at < func.now(),
-                    )
+                    ),
                 )
                 .exists()
             )

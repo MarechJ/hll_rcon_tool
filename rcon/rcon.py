@@ -45,6 +45,7 @@ from rcon.utils import (
     default_player_info_dict,
     get_server_number,
     parse_raw_player_info,
+    strtobool,
 )
 
 PLAYER_ID = "player_id"
@@ -335,7 +336,10 @@ class Rcon(ServerCtl):
 
     @ttl_cache(ttl=1)
     def get_structured_logs(
-        self, since_min_ago, filter_action=None, filter_player=None
+        self,
+        since_min_ago: int,
+        filter_action: str | None = None,
+        filter_player: str | None = None,
     ) -> ParsedLogsType:
         raw = super().get_logs(since_min_ago)
         return self.parse_logs(raw, filter_action, filter_player)
@@ -344,7 +348,9 @@ class Rcon(ServerCtl):
         # Defined here to avoid circular imports with commands.py
         return super().get_admin_groups()
 
-    def get_logs(self, since_min_ago: str, filter_: str = "", by: str = "") -> str:
+    def get_logs(
+        self, since_min_ago: str | int, filter_: str = "", by: str = ""
+    ) -> str:
         """Returns raw text logs from the game server with no parsing performed
 
         You most likely want to use a different method/endpoint to get parsed logs.
@@ -355,7 +361,9 @@ class Rcon(ServerCtl):
         return super().get_logs(since_min_ago=since_min_ago, filter_=filter_)
 
     @overload
-    def get_playerids(self, as_dict: Literal[False] = False) -> list[tuple[str, str]]: ...
+    def get_playerids(
+        self, as_dict: Literal[False] = False
+    ) -> list[tuple[str, str]]: ...
     @overload
     def get_playerids(self, as_dict: Literal[True] = False) -> dict[str, str]: ...
 
@@ -405,7 +413,7 @@ class Rcon(ServerCtl):
         return False
 
     @ttl_cache(ttl=60 * 60 * 24, cache_falsy=False)
-    def get_player_info(self, player_name, can_fail=False):
+    def get_player_info(self, player_name: str, can_fail=False):
         try:
             try:
                 raw = super().get_player_info(player_name, can_fail=can_fail)
@@ -443,7 +451,7 @@ class Rcon(ServerCtl):
         }
 
     @ttl_cache(ttl=2, cache_falsy=False)
-    def get_detailed_player_info(self, player_name) -> GetDetailedPlayer:
+    def get_detailed_player_info(self, player_name: str) -> GetDetailedPlayer:
         raw = super().get_player_info(player_name)
         if not raw:
             raise CommandFailedError("Got bad data")
@@ -1181,15 +1189,39 @@ class Rcon(ServerCtl):
             )
             return res
 
-    def remove_temp_ban(self, ban_log: str) -> str:
-        """Remove a temp ban by ban log. Note that a player ID is a valid ban log."""
+    def remove_temp_ban(
+        self, ban_log: str | None = None, player_id: str | None = None
+    ) -> bool:
+        """Remove a temp ban by player ID or game server ban log"""
         with invalidates(Rcon.get_temp_bans):
-            return super().remove_temp_ban(ban_log)
+            if ban_log is not None:
+                return super().remove_temp_ban(ban_log)
+            else:
+                # If searching for a steam ID, we can only unban with the properly
+                # formatted ban log
+                bans = self.get_temp_bans()
+                for ban in bans:
+                    if player_id == ban[PLAYER_ID]:
+                        return super().remove_temp_ban(ban_log=ban["raw"])
 
-    def remove_perma_ban(self, ban_log: str) -> str:
-        """Remove a perma ban by ban log. Note that a player ID is a valid ban log."""
+        return False
+
+    def remove_perma_ban(
+        self, ban_log: str | None = None, player_id: str | None = None
+    ) -> bool:
+        """Remove a player ban by player ID or game server ban log"""
+
+        # TODO: this doesn't remove the blacklist, pending Abus banlist changes
         with invalidates(Rcon.get_perma_bans):
-            return super().remove_perma_ban(ban_log)
+            if ban_log is not None:
+                return super().remove_perma_ban(ban_log)
+            else:
+                bans = self.get_perma_bans()
+                for ban in bans:
+                    if player_id == ban[PLAYER_ID]:
+                        return super().remove_perma_ban(ban_log=ban["raw"])
+
+        return False
 
     def perma_ban(self, player_name=None, player_id=None, reason="", by="") -> bool:
         with invalidates(Rcon.get_players, Rcon.get_perma_bans):
@@ -1462,7 +1494,9 @@ class Rcon(ServerCtl):
 
     @staticmethod
     def parse_logs(
-        raw_logs: str, filter_action=None, filter_player=None
+        raw_logs: str,
+        filter_action: str | None = None,
+        filter_player: str | None = None,
     ) -> ParsedLogsType:
         """Parse a chunk of raw gameserver RCON logs"""
         synthetic_actions = LOG_ACTIONS

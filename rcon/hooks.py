@@ -469,9 +469,9 @@ def update_player_steaminfo_on_connect(
         )
 
 
-pendingTimers: dict[
-    str, list[tuple[RconInvalidNameActionType | None, Timer]]
-] = defaultdict(list)
+pendingTimers: dict[str, list[tuple[RconInvalidNameActionType | None, Timer]]] = (
+    defaultdict(list)
+)
 
 
 @on_connected()

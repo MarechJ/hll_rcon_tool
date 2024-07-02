@@ -362,6 +362,14 @@ class Migration(migrations.Migration):
                     ),
                     ("can_reset_map_whitelist", "Can reset the votemap whitelist"),
                     ("can_set_map_whitelist", "Can set the votemap whitelist"),
+                    (
+                        "can_change_log_stream_config",
+                        "Can change the Log Stream config",
+                    ),
+                    (
+                        "can_change_standard_welcome_messages",
+                        "Can change shared welcome messages",
+                    ),
                 ),
                 "default_permissions": (),
             },
