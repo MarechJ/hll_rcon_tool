@@ -408,6 +408,24 @@ LAYERS = {
             attackers=Team.AXIS,
         ),
         Layer(
+            id="SME_S_1944_Day_P_Skirmish",
+            map=MAPS["stmereeglise"],
+            gamemode=Gamemode.CONTROL,
+            environment=Environment.DAY,
+        ),
+        Layer(
+            id="SME_S_1944_Morning_P_Skirmish",
+            map=MAPS["stmereeglise"],
+            gamemode=Gamemode.CONTROL,
+            environment=Environment.DAWN,
+        ),
+        Layer(
+            id="SME_S_1944_Night_P_Skirmish",
+            map=MAPS["stmereeglise"],
+            gamemode=Gamemode.CONTROL,
+            environment=Environment.NIGHT,
+        ),
+        Layer(
             id="stmariedumont_warfare",
             map=MAPS["stmariedumont"],
             game_mode=GameMode.WARFARE,
@@ -521,6 +539,24 @@ LAYERS = {
             map=MAPS["carentan"],
             game_mode=GameMode.OFFENSIVE,
             attackers=Team.AXIS,
+        ),
+        Layer(
+            id="CAR_S_1944_Day_P_Skirmish",
+            map=MAPS["carentan"],
+            gamemode=Gamemode.CONTROL,
+            environment=Environment.DAY,
+        ),
+        Layer(
+            id="CAR_S_1944_Rain_P_Skirmish",
+            map=MAPS["carentan"],
+            gamemode=Gamemode.CONTROL,
+            environment=Environment.RAIN,
+        ),
+        Layer(
+            id="CAR_S_1944_Dusk_P_Skirmish",
+            map=MAPS["carentan"],
+            gamemode=Gamemode.CONTROL,
+            environment=Environment.DUSK,
         ),
         Layer(
             id="hurtgenforest_warfare_V2",

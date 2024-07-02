@@ -1,10 +1,10 @@
 Click==8.1.7
 Django==4.2.10
-django-cors-headers==4.3.1
+django-cors-headers==4.4.0
 redis==5.0.4
 sqlalchemy==2.0.30
 channels==4.1.0
-orjson==3.10.1
+orjson==3.10.5
 simplejson==3.19.2
 psycopg2-binary
 sentry-sdk[django]==1.45.0
@@ -21,8 +21,8 @@ ftpretty==0.4.0
 pytz>=2023.3
 pandas>=1.4.1,<2.0.0
 numpy>=1.26.0,<2.0.0
-pydantic==2.7.1
-discord.py==2.3.2
+pydantic==2.7.4
+discord.py==2.4.0
 # django-directory
 # django-dirctory is currently incompatible with Django 4.0+, PR is pending to fix django-directory upstream
 git+https://github.com/cemathey/django-directory@f51ee1e8dc50edf453fee4a0d9631c0e46fe9433
