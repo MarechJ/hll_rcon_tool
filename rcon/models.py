@@ -802,7 +802,7 @@ class BlacklistRecord(Base):
     expires_at: Mapped[Optional[datetime]] = mapped_column(TIMESTAMP(timezone=True))
 
     player_id_id: Mapped[int] = mapped_column(
-        ForeignKey("player_id.id"), nullable=False, index=True
+        ForeignKey("steam_id_64.id"), nullable=False, index=True
     )
     blacklist_id: Mapped[int] = mapped_column(
         ForeignKey("blacklist.id", ondelete="CASCADE"), nullable=False, index=True
