@@ -127,7 +127,7 @@ def _record_stats(map_info: MapInfo):
 
 
 def record_stats_from_map(
-    sess: Session, map_, ps: dict[str, PlayerStat] = (), force: bool = False
+    sess: Session, map_: Maps, ps: dict[str, PlayerStat] = (), force: bool = False
 ):
     stats = TimeWindowStats()
     player_stats = stats.get_players_stats_at_time(
@@ -159,13 +159,26 @@ def record_stats_from_map(
                 )
                 .one_or_none()
             )
-            default_stat = PlayerStat(combat=0, offense=0, defense=0, support=0)
+            default_stat = PlayerStat(
+                combat=0,
+                offense=0,
+                defense=0,
+                support=0,
+                p_combat=0,
+                p_offense=0,
+                p_defense=0,
+                p_support=0,
+            )
             if existing is not None:
                 default_stat = PlayerStat(
                     combat=existing.combat,
+                    p_combat=0,
                     offense=existing.offense,
+                    p_offense=0,
                     defense=existing.defense,
+                    p_defense=0,
                     support=existing.support,
+                    p_support=0,
                 )
             map_stats: PlayerStat = ps.get(steam_id_64, default_stat)
             player_stat = dict(
