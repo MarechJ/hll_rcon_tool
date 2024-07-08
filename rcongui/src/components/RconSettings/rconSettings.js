@@ -621,12 +621,6 @@ class RconSettings extends React.Component {
           </Button>
         </Grid>
         <Grid item className={classes.paddingTop} justify="center" xs={12}>
-          <Typography variant="h5">Blacklist player by Player ID</Typography>
-        </Grid>
-        <Grid item className={classes.paddingTop} justify="center" xs={12}>
-          <Blacklist classes={classes} />
-        </Grid>
-        <Grid item className={classes.paddingTop} justify="center" xs={12}>
           <Typography variant="h5">Add player to watchlist</Typography>
         </Grid>
         <Grid item xs={12}>
