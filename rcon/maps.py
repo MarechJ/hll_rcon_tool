@@ -172,8 +172,7 @@ class Layer(pydantic.BaseModel):
             exclude_none: bool = False,
             round_trip: bool = False,
             warnings: bool = True,
-        ) -> LayerType:
-            ...
+        ) -> LayerType: ...
 
     else:
 
@@ -410,19 +409,19 @@ LAYERS = {
         Layer(
             id="SME_S_1944_Day_P_Skirmish",
             map=MAPS["stmereeglise"],
-            gamemode=Gamemode.CONTROL,
+            game_mode=GameMode.CONTROL,
             environment=Environment.DAY,
         ),
         Layer(
             id="SME_S_1944_Morning_P_Skirmish",
             map=MAPS["stmereeglise"],
-            gamemode=Gamemode.CONTROL,
+            game_mode=GameMode.CONTROL,
             environment=Environment.DAWN,
         ),
         Layer(
             id="SME_S_1944_Night_P_Skirmish",
             map=MAPS["stmereeglise"],
-            gamemode=Gamemode.CONTROL,
+            game_mode=GameMode.CONTROL,
             environment=Environment.NIGHT,
         ),
         Layer(
@@ -543,19 +542,19 @@ LAYERS = {
         Layer(
             id="CAR_S_1944_Day_P_Skirmish",
             map=MAPS["carentan"],
-            gamemode=Gamemode.CONTROL,
+            game_mode=GameMode.CONTROL,
             environment=Environment.DAY,
         ),
         Layer(
             id="CAR_S_1944_Rain_P_Skirmish",
             map=MAPS["carentan"],
-            gamemode=Gamemode.CONTROL,
+            game_mode=GameMode.CONTROL,
             environment=Environment.RAIN,
         ),
         Layer(
             id="CAR_S_1944_Dusk_P_Skirmish",
             map=MAPS["carentan"],
-            gamemode=Gamemode.CONTROL,
+            game_mode=GameMode.CONTROL,
             environment=Environment.DUSK,
         ),
         Layer(
