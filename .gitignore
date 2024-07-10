@@ -151,3 +151,6 @@ certs/
 
 # scorebot database
 supervisor_data/
+
+# Logs
+logs/
