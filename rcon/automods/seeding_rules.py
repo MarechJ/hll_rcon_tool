@@ -310,6 +310,9 @@ class SeedingRulesAutomod:
                     or game_state["current_map"].startswith("stmariedumont_off")
                     or game_state["current_map"]
                     in (
+                        "CAR_S_1944_Day_P_Skirmish",
+                        "CAR_S_1944_Rain_P_Skirmish",
+                        "CAR_S_1944_Dusk_P_Skirmish",
                         "ELA_S_1942_P_Skirmish",
                         "ELA_S_1942_Night_P_Skirmish",
                         "DRL_S_1944_P_Skirmish",
@@ -319,7 +322,10 @@ class SeedingRulesAutomod:
                         "mortain_skirmish_overcast",
                         "SMDM_S_1944_Night_P_Skirmish",
                         "SMDM_S_1944_Day_P_Skirmish",
-                        "SMDM_S_1944_Rain_P_Skirmish"
+                        "SMDM_S_1944_Rain_P_Skirmish",
+                        "SME_S_1944_Day_P_Skirmish",
+                        "SME_S_1944_Morning_P_Skirmish",
+                        "SME_S_1944_Night_P_Skirmish"
                     )
                 ):
                     self._disable_for_round("enforce_cap_fight")
