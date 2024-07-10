@@ -20,6 +20,7 @@ from rcon.automods.models import (
 from rcon.automods.num_or_inf import num_or_inf
 from rcon.cache_utils import get_redis_client
 from rcon.game_logs import on_match_start
+from rcon.maps import parse_layer, Gamemode
 from rcon.rcon import StructuredLogLineType
 from rcon.types import GameState, Roles, GetDetailedPlayer
 from rcon.user_config.auto_mod_seeding import AutoModSeedingUserConfig
@@ -49,7 +50,7 @@ class SeedingRulesAutomod:
     config: AutoModSeedingUserConfig
 
     def __init__(
-        self, config: AutoModSeedingUserConfig, red: redis.StrictRedis or None
+        self, config: AutoModSeedingUserConfig, red: redis.StrictRedis | None
     ):
         self.logger = logging.getLogger(__name__)
         self.red = red
@@ -304,24 +305,8 @@ class SeedingRulesAutomod:
                             )
                         )
 
-                # TODO: update this when we update how maps are stored
-                if (
-                    "offensive" in game_state["current_map"]
-                    or game_state["current_map"].startswith("stmariedumont_off")
-                    or game_state["current_map"]
-                    in (
-                        "ELA_S_1942_P_Skirmish",
-                        "ELA_S_1942_Night_P_Skirmish",
-                        "DRL_S_1944_P_Skirmish",
-                        "DRL_S_1944_Night_P_Skirmish",
-                        "DRL_S_1944_Day_P_Skirmish",
-                        "mortain_skirmish_day",
-                        "mortain_skirmish_overcast",
-                        "SMDM_S_1944_Night_P_Skirmish",
-                        "SMDM_S_1944_Day_P_Skirmish",
-                        "SMDM_S_1944_Rain_P_Skirmish"
-                    )
-                ):
+                layer = parse_layer(game_state["current_map"])
+                if layer.gamemode != Gamemode.WARFARE:
                     self._disable_for_round("enforce_cap_fight")
 
                 if not self._is_seeding_rule_disabled("enforce_cap_fight") and (
