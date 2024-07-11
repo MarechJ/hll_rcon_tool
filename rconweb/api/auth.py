@@ -197,7 +197,7 @@ def is_logged_in(request):
         try:
             player_id = None
             try:
-                player_id = request.user.steamplayer.player_id
+                player_id = request.user.steamplayer.steam_id_64
             except:
                 logger.warning("%s's player ID is not set", request.user.username)
             try:
