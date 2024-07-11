@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 USER_CONFIG_NAME_PATTERN = re.compile(r"set_.*_config")
 
 METRICS = {
-    "player_count": lambda rcon: int(rcon.get_slots().split("/")[0]),
+    "player_count": lambda rcon: int(rcon.get_slots()["current_players"]),
     "online_mods": lambda: len(online_mods()),
     "ingame_mods": lambda: len(ingame_mods()),
     "current_map": lambda rcon: str(rcon.current_map),
