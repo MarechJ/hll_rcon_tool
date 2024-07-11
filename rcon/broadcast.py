@@ -199,9 +199,7 @@ def _get_vars(ctl: Rcon):
     ]
 
     def get_next_map():
-        map_name: str = ctl.get_next_map().pretty_name
-        smart_map = maps.parse_layer(map_name)
-        return smart_map.pretty_name
+        return ctl.get_next_map().pretty_name
 
     vote_results = VoteMap().get_vote_overview()
     if vote_results:
