@@ -73,7 +73,7 @@ def upgrade():
     # Migrate old blacklist records
     op.execute(
         """INSERT INTO blacklist_record(reason, admin_name, created_at, player_id_id, blacklist_id)
-               SELECT reason, by, NOW(), playersteamid_id, 0 FROM player_blacklist"""
+               SELECT COALESCE(reason, 'No ban reason provided'), COALESCE(by, 'CRCON'), NOW(), playersteamid_id, 0 FROM player_blacklist"""
     )
 
     ### Do not drop the old table yet - that way people can always recover their old bans if needed.
