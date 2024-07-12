@@ -133,7 +133,7 @@ class PlayerView extends Component {
       });
     } else {
       const data = {
-        player: player_name,
+        player_name: player_name,
         player_id: player_id,
         reason: message,
         comment: comment,
