@@ -34,7 +34,7 @@ const MapRotation = ({ classes }) => {
   const saveRotation = () => {
     setRotationIsSaving(true);
     return postData(`${process.env.REACT_APP_API_URL}set_maprotation`, {
-      rotation: rotation.map((m) => m.id),
+      map_names: rotation.map((m) => m.id),
     })
       .then((res) => {
         showResponse(res, `set_maprotation`, true);
