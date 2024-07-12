@@ -514,7 +514,7 @@ const GameView = ({ classes: globalClasses }) => {
   ) => {
     if (!message && !isMessageLessAction(actionType)) {
       setConfirmAction({
-        player: null,
+        player_name: null,
         actionType: actionType,
         player_id: null,
       });
