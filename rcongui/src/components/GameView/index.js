@@ -527,7 +527,7 @@ const GameView = ({ classes: globalClasses }) => {
         }
         const player_id = playerNamesToPlayerId.get(playerName, null);
         const data = {
-          player: playerName,
+          player_name: playerName,
           player_id: player_id,
           reason: message,
           comment: comment,
