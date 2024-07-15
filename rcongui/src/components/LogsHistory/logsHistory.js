@@ -319,7 +319,7 @@ class LogsHistory extends React.Component {
     });
     postData(`${process.env.REACT_APP_API_URL}get_historical_logs`, {
       player_name: name,
-      log_type: type,
+      action: type,
       player_id: playerId,
       from: from,
       till: till,
@@ -340,7 +340,7 @@ class LogsHistory extends React.Component {
   handleDownload() {
     postData(`${process.env.REACT_APP_API_URL}get_historical_logs`, {
       player_name: this.state.name,
-      log_type: this.state.type,
+      action: this.state.type,
       player_id: this.state.playerId,
       from: this.state.from,
       till: this.state.till,

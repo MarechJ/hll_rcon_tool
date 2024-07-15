@@ -136,19 +136,21 @@ class RconAPI(Rcon):
                 author=by,
             )
         return res
-    
+
     def get_blacklists(self) -> list[BlacklistType]:
         """Get all blacklists.
-        
+
         Blacklists are collections of ban-like records stored by CRCON
         to provide greater flexibility and scalability.
         """
         with enter_session() as sess:
-            return [bl.to_dict(with_records=False) for bl in blacklist.get_blacklists(sess)]
-    
+            return [
+                bl.to_dict(with_records=False) for bl in blacklist.get_blacklists(sess)
+            ]
+
     def get_blacklist(self, blacklist_id: int) -> BlacklistWithRecordsType:
         """Get a blacklist and its respective records.
-        
+
         Blacklists are collections of ban-like records stored by CRCON
         to provide greater flexibility and scalability.
 
@@ -156,7 +158,9 @@ class RconAPI(Rcon):
             blacklist_id: The ID of the blacklist
         """
         with enter_session() as sess:
-            return blacklist.get_blacklist(sess, blacklist_id, strict=True).to_dict(with_records=True)
+            return blacklist.get_blacklist(sess, blacklist_id, strict=True).to_dict(
+                with_records=True
+            )
 
     def create_blacklist(
         self,
@@ -319,7 +323,7 @@ class RconAPI(Rcon):
             reason=reason,
             expires_at=expires_at,
         )
-    
+
     def delete_blacklist_record(
         self,
         record_id: int,
@@ -334,11 +338,8 @@ class RconAPI(Rcon):
             record_id: The ID of the record
         """
         return blacklist.remove_record_from_blacklist(record_id)
-    
-    def unblacklist_player(
-        self,
-        player_id: str
-    ) -> bool:
+
+    def unblacklist_player(self, player_id: str) -> bool:
         """Expires all blacklists of a player and unbans them from all servers.
 
         Args:
@@ -346,7 +347,6 @@ class RconAPI(Rcon):
         """
         blacklist.expire_all_player_blacklists(player_id)
         return True
-
 
     def unban(
         self,
@@ -400,10 +400,12 @@ class RconAPI(Rcon):
             comments = player_history.get_player_comments(player_id=player_id)
 
             profile = raw_profile.copy()
-            profile.update({
-                "bans": bans,
-                "comments": comments,
-            })
+            profile.update(
+                {
+                    "bans": bans,
+                    "comments": comments,
+                }
+            )
         return profile
 
     def get_player_comments(self, player_id: str) -> list[PlayerCommentType]:
@@ -571,6 +573,7 @@ class RconAPI(Rcon):
         exact_player_match: bool = False,
         exact_action: bool = True,
         output: str | None = None,
+        server_filter: str | None = None,
     ):
         lines = game_logs.get_historical_logs(
             player_name=player_name,
@@ -582,6 +585,7 @@ class RconAPI(Rcon):
             time_sort=time_sort,
             exact_player_match=exact_player_match,
             exact_action=exact_action,
+            server_filter=server_filter,
         )
 
         if output and output.upper() == "CSV":
