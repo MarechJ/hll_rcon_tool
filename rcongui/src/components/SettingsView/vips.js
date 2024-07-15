@@ -216,7 +216,7 @@ const VipEditableList = ({
           classes={classes}
           name={name}
           setName={setName}
-          player_id={player_id}
+          playerId={player_id}
           setPlayerId={setPlayerId}
           onAdd={onOpenAddVipDialog}
         />
