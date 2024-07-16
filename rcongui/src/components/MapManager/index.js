@@ -95,7 +95,7 @@ const MapRotation = ({ classes }) => {
   };
 
   const hasChanged = React.useMemo(
-    () => currentRotation.toString() === rotation.toString(),
+    () => currentRotation.map((o) => o.id).toString() === rotation.map((o) => o.id).toString(),
     [currentRotation, rotation]
   );
 
