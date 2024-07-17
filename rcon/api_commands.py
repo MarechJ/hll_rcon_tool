@@ -586,6 +586,7 @@ class RconAPI(Rcon):
             exact_player_match=exact_player_match,
             exact_action=exact_action,
             server_filter=server_filter,
+            output=output,
         )
 
         if output and output.upper() == "CSV":
