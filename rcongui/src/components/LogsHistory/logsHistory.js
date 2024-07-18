@@ -302,7 +302,6 @@ class LogsHistory extends React.Component {
     exactPlayer = false,
     exactAction = false,
     server = null,
-    output = null
   ) {
     this.setState({
       isLoading: true,
@@ -328,7 +327,6 @@ class LogsHistory extends React.Component {
       exact_player: exactPlayer,
       exact_action: exactAction,
       server_filter: server,
-      output: output,
     })
       .then((res) => showResponse(res, "get_historical_logs", false))
       .then((res) => {
@@ -338,7 +336,7 @@ class LogsHistory extends React.Component {
   }
 
   handleDownload() {
-    postData(`${process.env.REACT_APP_API_URL}get_historical_logs`, {
+    postData(`${process.env.REACT_APP_API_URL}get_historical_logs_csv`, {
       player_name: this.state.name,
       action: this.state.type,
       player_id: this.state.playerId,
@@ -349,7 +347,6 @@ class LogsHistory extends React.Component {
       exact_player: this.state.exactPlayer,
       exact_action: this.state.exactAction,
       server_filter: this.state.server,
-      output: "csv",
     })
       .then((res) => res.blob())
       .then((blob) => {

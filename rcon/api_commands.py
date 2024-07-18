@@ -572,7 +572,6 @@ class RconAPI(Rcon):
         time_sort: Literal["desc", "asc"] = "desc",
         exact_player_match: bool = False,
         exact_action: bool = True,
-        output: str | None = None,
         server_filter: str | None = None,
     ):
         lines = game_logs.get_historical_logs(
@@ -586,14 +585,9 @@ class RconAPI(Rcon):
             exact_player_match=exact_player_match,
             exact_action=exact_action,
             server_filter=server_filter,
-            output=output,
         )
 
-        if output and output.upper() == "CSV":
-            # TODO: csv output
-            pass
-        else:
-            return lines
+        return lines
 
     def get_recent_logs(
         self,

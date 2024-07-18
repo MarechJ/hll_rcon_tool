@@ -15,6 +15,7 @@ from . import (
     user_settings,
     views,
     vips,
+    history,
 )
 from .auth import api_response
 from .decorators import ENDPOINT_HTTP_METHODS
@@ -81,6 +82,7 @@ def get_api_documentation(request):
 endpoints: list[tuple[str, Callable]] = [
     ("login", auth.do_login),
     ("logout", auth.do_logout),
+    ("get_historical_logs_csv", history.get_historical_logs_csv),
     ("is_logged_in", auth.is_logged_in),
     ("get_own_user_permissions", auth.get_own_user_permissions),
     ("get_services", services.get_services),

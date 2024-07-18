@@ -145,12 +145,15 @@ def api_response(*args, **kwargs):
 
 
 def api_csv_response(content, name, header):
+    # TODO Probably want to put command name, etc. in this like the other
+    # RCON response methods
     response = HttpResponse(
         content_type="text/csv",
     )
     response["Content-Disposition"] = 'attachment; filename="%s"' % name
 
     writer = csv.DictWriter(response, fieldnames=header, dialect="excel")
+    writer.writerow({k: k for k in header})
     writer.writerows(content)
 
     return response

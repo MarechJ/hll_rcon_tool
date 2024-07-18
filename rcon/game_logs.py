@@ -970,7 +970,6 @@ def get_historical_logs(
     exact_player_match: bool = False,
     exact_action: bool = True,
     server_filter: str | None = None,
-    output=None,
 ):
     with enter_session() as sess:
         res = get_historical_logs_records(
@@ -986,15 +985,5 @@ def get_historical_logs(
             exact_action,
             server_filter,
         )
-        lines = []
-        for r in res:
-            r = r.to_dict()
-            if output != "CSV" and output != "csv":
-                r["event_time"] = r["event_time"].timestamp()
-            else:
-                del r["id"]
-                del r["version"]
-                del r["creation_time"]
-                del r["raw"]
-            lines.append(r)
-        return lines
+
+        return [row.to_dict() for row in res]
