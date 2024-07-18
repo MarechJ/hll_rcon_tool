@@ -110,7 +110,7 @@ def get_profiles(player_ids, nb_sessions=1):
 
 
 def _get_set_player(
-    sess,
+    sess: Session,
     player_id: str,
     player_name: str | None = None,
     timestamp: float | None = None,
