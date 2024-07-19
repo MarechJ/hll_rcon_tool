@@ -4,7 +4,7 @@ from rcon.api_commands import get_rcon_api
 from dateutil import parser
 from django.contrib.auth.decorators import permission_required
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_http_methods
+from .decorators import require_http_methods
 
 
 from .auth import api_csv_response, login_required
@@ -15,7 +15,7 @@ from .utils import _get_data
 @csrf_exempt
 @login_required()
 @permission_required("api.can_view_historical_logs", raise_exception=True)
-@require_http_methods(["POST"])
+@require_http_methods(["GET", "POST"])
 @require_content_type()
 def get_historical_logs_csv(request):
     rcon_api = get_rcon_api()
