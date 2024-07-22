@@ -40,26 +40,7 @@ DEFAULT_AUTO_SETTINGS = {
         "set_max_ping_autokick": {"max_ms": 500},
         "set_team_switch_cooldown": {"minutes": 15},
     },
-    "rules": [
-        {
-            "conditions": {"player_count": {"min": 0, "max": 30}},
-            "commands": {
-                "set_idle_autokick_time": {"minutes": 0},
-                "set_autobalance_threshold": {"max_diff": 1},
-                "set_max_ping_autokick": {"max_ms": 0},
-                "set_team_switch_cooldown": {"minutes": 5},
-            },
-        },
-        {
-            "conditions": {"player_count": {"min": 30, "max": 50}},
-            "commands": {
-                "set_idle_autokick_time": {"minutes": 0},
-                "set_autobalance_threshold": {"max_diff": 2},
-                "set_max_ping_autokick": {"max_ms": 1000},
-                "set_team_switch_cooldown": {"minutes": 10},
-            },
-        },
-    ],
+    "rules": [],
     "_available_settings": {
         "always_apply_defaults": "Whether or not to apply the settings defined in the default section in each iteration. Allowed values: true / false",
         "can_invoke_multiple_rules": "Whether or not to allow the invocation of multiple rules e.g. don't stop after the first fulfilled rule. Allowed values: true / false",
@@ -130,7 +111,7 @@ DEFAULT_AUTO_SETTINGS = {
             "map_names": ["stmariedumont_warfare", "kursk_offensive_rus"]
         },
         "remove_map_from_votemap_whitelist": {"map_name": "stmariedumont_warfare"},
-        "do_remove_maps_from_votemap_whitelist": {
+        "remove_maps_from_votemap_whitelist": {
             "map_names": ["stmariedumont_warfare", "kursk_offensive_rus"]
         },
         "reset_map_votemap_whitelist": {},
