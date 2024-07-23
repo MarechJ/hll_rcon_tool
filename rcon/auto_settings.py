@@ -201,6 +201,10 @@ def do_run_commands(rcon, commands):
                 config: BaseUserConfig = rcon.__getattribute__(get_config_command)()
                 # get the existing config, override anything set in params
                 merged_params = config.model_dump() | params
+
+                if "by" not in merged_params:
+                    merged_params["by"] = "AutoSettings"
+
                 rcon.__getattribute__(command)(**merged_params)
             else:
                 # Non user config settings
