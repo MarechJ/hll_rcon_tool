@@ -209,6 +209,10 @@ def do_run_commands(rcon, commands):
             else:
                 # Non user config settings
                 rcon.__getattribute__(command)(**params)
+        except AttributeError as e:
+            logger.exception(
+                "%s is not a valid command, double check the name!", command
+            )
         except Exception as e:
             logger.exception("Unable to apply %s %s: %s", command, params, e)
         time.sleep(5)  # go easy on the server
