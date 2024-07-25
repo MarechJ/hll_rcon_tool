@@ -226,8 +226,7 @@ class LogsHistory extends React.Component {
       label: "Time",
       options: {
         customBodyRenderLite: (dataIndex) =>
-          moment
-            .unix(this.state.logs[dataIndex]?.event_time)
+          moment(this.state.logs[dataIndex]?.event_time)
             .local()
             .format("ddd Do MMM HH:mm:ss"),
       },
@@ -240,7 +239,7 @@ class LogsHistory extends React.Component {
       options: {
         customBodyRenderLite: (dataIndex) => {
           let id = this.state.logs[dataIndex]?.player1_id;
-          let name = this.state.logs[dataIndex]?.player_name;
+          let name = this.state.logs[dataIndex]?.player1_name;
           return id ? (
             <Link
               color="inherit"
