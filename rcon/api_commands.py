@@ -369,7 +369,7 @@ class RconAPI(Rcon):
         for b in bans:
             if b.get(PLAYER_ID) == player_id:
                 success = True
-                type_to_func[b["type"]](b["raw"])
+                type_to_func[b["type"]](b["player_id"])
 
         return success
 

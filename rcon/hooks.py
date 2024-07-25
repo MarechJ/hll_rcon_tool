@@ -8,7 +8,12 @@ from typing import Final
 
 from discord_webhook import DiscordEmbed
 
-from rcon.blacklist import apply_blacklist_punishment, blacklist_or_ban, is_player_blacklisted, synchronize_ban
+from rcon.blacklist import (
+    apply_blacklist_punishment,
+    blacklist_or_ban,
+    is_player_blacklisted,
+    synchronize_ban,
+)
 import rcon.steam_utils as steam_utils
 from discord.utils import escape_markdown
 from rcon.cache_utils import invalidates
@@ -294,12 +299,9 @@ def ban_if_blacklisted(rcon: Rcon, player_id: str, name: str):
         blacklist = is_player_blacklisted(sess, player_id)
         if not blacklist:
             return False
-    
+
         return apply_blacklist_punishment(
-            rcon,
-            blacklist,
-            player_id=player_id,
-            player_name=name
+            rcon, blacklist, player_id=player_id, player_name=name
         )
 
 
@@ -373,7 +375,9 @@ def ban_if_has_vac_bans(rcon: Rcon, player_id: str, name: str):
             )
             if config.auto_expire:
                 days_until_expire = max_days_since_ban - days_since_last_ban
-                expires_at = datetime.now(tz=timezone.utc) + timedelta(days=days_until_expire)
+                expires_at = datetime.now(tz=timezone.utc) + timedelta(
+                    days=days_until_expire
+                )
             else:
                 expires_at = None
             blacklist_or_ban(
@@ -382,7 +386,7 @@ def ban_if_has_vac_bans(rcon: Rcon, player_id: str, name: str):
                 player_id=player_id,
                 reason=reason,
                 expires_at=expires_at,
-                admin_name="VAC BOT"
+                admin_name="VAC BOT",
             )
             logger.info(
                 "Player %s was banned due VAC history, last ban: %s days ago",
@@ -430,7 +434,7 @@ def handle_on_connect(
         # We don't need the player potentially blacklisted a second
         # time because of VAC bans. So we return here.
         return
-    
+
     save_start_player_session(player_id, timestamp=timestamp)
     ban_if_has_vac_bans(rcon, player_id, struct_log["player_name_1"])
 
@@ -686,7 +690,7 @@ def notify_invalid_names(rcon: Rcon, _, name: str, player_id: str):
         # trying to remove it
         # players can't connect if they're banned so this should never fire and remove a
         # temp ban from any other reason unless there's another hook temp banning on connect
-        t = Timer(15, rcon.remove_temp_ban, kwargs={"ban_log": player_id})
+        t = Timer(15, rcon.remove_temp_ban, kwargs={"player_id": player_id})
         send_to_discord_audit(
             message=config.audit_kick_unban_message,
             command_name="kick",
