@@ -248,7 +248,7 @@ def stats_login_required(func):
 
     @wraps(func)
     def wrapper(request, *args, **kwargs):
-        request = check_api_key(request)
+        check_api_key(request)
 
 
         if not request.user.is_authenticated:
