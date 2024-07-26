@@ -270,6 +270,30 @@ def stats_login_required(func):
 
     @wraps(func)
     def wrapper(request, *args, **kwargs):
+        try:
+            header_name, raw_api_key = request.META[
+                HTTP_AUTHORIZATION_HEADER
+            ].split(maxsplit=1)
+            if not header_name.upper().strip() in BEARER:
+                raw_api_key = None
+        except (KeyError, ValueError):
+            raw_api_key = None
+
+        try:
+            # If we don't include the salt, the hasher generates its own
+            # and it will generate different hashed values every time
+            hashed_api_key = make_password(
+                raw_api_key, salt=SECRET_KEY.replace("$", "")
+            )
+            api_key_model = DjangoAPIKey.objects.get(api_key=hashed_api_key)
+
+            # Retrieve the user to use the normal authentication system
+            # to include their permissions
+            request.user = api_key_model.user
+        except DjangoAPIKey.DoesNotExist:
+            pass
+
+
         if not request.user.is_authenticated:
             return api_response(
                 command=request.path,
