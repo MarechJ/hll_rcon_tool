@@ -195,6 +195,33 @@ def do_logout(request):
     return api_response(result=True, command="logout", failed=False)
 
 
+def check_api_key(request):
+    # Extract the header and bearer key if present, otherwise fall back on
+    # requiring the user to be logged in
+    try:
+        header_name, raw_api_key = request.META[
+            HTTP_AUTHORIZATION_HEADER
+        ].split(maxsplit=1)
+        if not header_name.upper().strip() in BEARER:
+            raw_api_key = None
+    except (KeyError, ValueError):
+        raw_api_key = None
+
+    try:
+        # If we don't include the salt, the hasher generates its own
+        # and it will generate different hashed values every time
+        hashed_api_key = make_password(
+            raw_api_key, salt=SECRET_KEY.replace("$", "")
+        )
+        api_key_model = DjangoAPIKey.objects.get(api_key=hashed_api_key)
+
+        # Retrieve the user to use the normal authentication system
+        # to include their permissions
+        request.user = api_key_model.user
+    except DjangoAPIKey.DoesNotExist:
+        pass
+
+
 def login_required():
     """Flag this endpoint as one that requires the user
     to be logged in.
@@ -316,29 +343,3 @@ def get_own_user_permissions(request):
         failed=False,
     )
 
-
-def check_api_key(request):
-    # Extract the header and bearer key if present, otherwise fall back on
-    # requiring the user to be logged in
-    try:
-        header_name, raw_api_key = request.META[
-            HTTP_AUTHORIZATION_HEADER
-        ].split(maxsplit=1)
-        if not header_name.upper().strip() in BEARER:
-            raw_api_key = None
-    except (KeyError, ValueError):
-        raw_api_key = None
-
-    try:
-        # If we don't include the salt, the hasher generates its own
-        # and it will generate different hashed values every time
-        hashed_api_key = make_password(
-            raw_api_key, salt=SECRET_KEY.replace("$", "")
-        )
-        api_key_model = DjangoAPIKey.objects.get(api_key=hashed_api_key)
-
-        # Retrieve the user to use the normal authentication system
-        # to include their permissions
-        request.user = api_key_model.user
-    except DjangoAPIKey.DoesNotExist:
-        pass
