@@ -275,6 +275,7 @@ def stats_login_required(func):
 
     @wraps(func)
     def wrapper(request, *args, **kwargs):
+        # Check if API-Key is used
         check_api_key(request)
 
 
