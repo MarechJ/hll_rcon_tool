@@ -209,6 +209,17 @@ export const RconServerSettings = ({
 
           /* The length in hours if a player is temporarily banned */
           "temp_ban_length_hours": 1
+        },
+
+        /* Enhancement for all admin messages */
+        "message_enhancements": {
+          "enabled": false,
+
+          /* A header note that is shown for all admin message popups */
+          "message_header": "",
+          
+          /* A footer note that is shown for all admin message popups */
+          "message_footer": ""
         }
     }
     `;

@@ -755,6 +755,16 @@ class Rcon(ServerCtl):
         by: str = "",
         save_message: bool = False,
     ) -> str:
+        config = RconServerSettingsUserConfig.load_from_db()
+        if config.message_enhancements.enabled:
+            message_header: str = config.message_enhancements.message_header
+            if message_header:
+                message = f"{message_header}\n\n{message}"
+            message_footer: str = config.message_enhancements.message_footer
+            # append to message if not empty. separate with blank line.
+            if message_footer:
+                message = f"{message}\n\n{message_footer}"
+
         res = super().do_message_player(player, steam_id_64, message)
         if save_message:
             safe_save_player_action(
