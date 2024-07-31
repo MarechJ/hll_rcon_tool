@@ -85,11 +85,9 @@ def cleanup_orphaned_messages(
 
 def get_map_image(server_info: PublicInfoType, config: ScorebotUserConfig):
     try:
-        url = server_info["current_map"]["map"]["image_url"]
-        if not url:
-            image_name = server_info["current_map"]["map"]["image_name"]
-            url = urljoin(str(config.base_scoreboard_url), f"maps/{image_name}")
-    except (IndexError, KeyError, TypeError):
+        image_name = server_info["current_map"]["map"]["image_name"]
+        url = urljoin(str(config.base_scoreboard_url), f"maps/{image_name}")
+    except (IndexError, KeyError, TypeError) as e:
         url = urljoin(str(config.base_scoreboard_url), f"maps/{UNKNOWN_MAP_NAME}.webp")
 
     return url
