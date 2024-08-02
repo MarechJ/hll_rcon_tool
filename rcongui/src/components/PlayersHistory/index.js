@@ -219,7 +219,6 @@ class PlayersHistory extends React.Component {
       player_id: playerId,
       reason: reason,
       duration_hours: durationHours,
-      forward: true,
     })
       .then((response) =>
         showResponse(

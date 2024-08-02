@@ -132,13 +132,11 @@ const Squad = ({
         <ListItemText
           primary={
             <Typography variant="h6">
-              {`${
-                squadName.toUpperCase() === "NULL"
+              {`${squadName.toUpperCase() === "NULL"
                   ? "Unassigned"
                   : squadName.toUpperCase()
-              } - ${squadData.get("players", new IList()).size}/${
-                sizes[squadData.get("type", "infantry")]
-              }`}{" "}
+                } - ${squadData.get("players", new IList()).size}/${sizes[squadData.get("type", "infantry")]
+                }`}{" "}
               {squadData.get("has_leader", false) ? (
                 ""
               ) : (
@@ -258,9 +256,9 @@ const Team = ({
       className={classes.root}
     >
       {teamData.get("commander") &&
-      (!showOnlySelected ||
-        (showOnlySelected &&
-          selectedPlayers.contains(teamData.get("commander")?.get("name")))) ? (
+        (!showOnlySelected ||
+          (showOnlySelected &&
+            selectedPlayers.contains(teamData.get("commander")?.get("name")))) ? (
         <PlayerItem
           classes={globalClasses}
           player={teamData.get("commander")}
@@ -534,9 +532,7 @@ const GameView = ({ classes: globalClasses }) => {
           duration_hours: duration_hours,
           message: message,
         };
-        if (actionType === "temp_ban") {
-          data["forward"] = "yes";
-        }
+
         postData(`${process.env.REACT_APP_API_URL}${actionType}`, data)
           .then((response) =>
             showResponse(response, `${actionType} ${playerName}`, true)

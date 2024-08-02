@@ -141,9 +141,7 @@ class PlayerView extends Component {
         message: message,
         save_message: save_message,
       };
-      if (actionType === "temp_ban") {
-        data["forward"] = "yes";
-      }
+
       postData(`${process.env.REACT_APP_API_URL}${actionType}`, data)
         .then((response) =>
           showResponse(response, `${actionType} ${player_name}`, true)
