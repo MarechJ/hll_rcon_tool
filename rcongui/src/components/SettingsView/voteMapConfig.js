@@ -314,8 +314,7 @@ const VoteMapConfig = () => {
             <Typography variant="body1">Map selection:</Typography>
             <pre>
               {status
-                .get("selection", new List())
-                .map((v) => `${v.get("pretty_name")}\n`)}
+                .map((v) => `${v.get('map', new Map()).get("pretty_name")}\n`)}
             </pre>
           </Grid>
           <Grid item xs={6} sm={4}>
@@ -328,8 +327,7 @@ const VoteMapConfig = () => {
                 })
                 .map(
                   (o) =>
-                    `${o.get("map", new Map()).get("pretty_name")}: ${
-                      o.get("voters", new List()).size
+                    `${o.get("map", new Map()).get("pretty_name")}: ${o.get("voters", new List()).size
                     }\n`
                 )}
             </pre>
