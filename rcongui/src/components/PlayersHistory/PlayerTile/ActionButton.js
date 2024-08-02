@@ -45,7 +45,7 @@ export const ActionButton = ({
 
       <Button>
         <Tooltip
-          title="Apply temp ban to player (time will start from now). (applied to all servers)"
+          title="Apply temp ban to player (time will start from now). Applies only to the current server, use the Blacklist feature with an expiration date to apply to all servers"
           arrow
         >
           <AccessTimeIcon size="small" onClick={onTempBan} />
