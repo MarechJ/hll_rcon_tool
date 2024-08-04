@@ -36,7 +36,7 @@ def auto_kick(rcon, struct_log, name: str, player_id: str):
         if re.match(r, name):
             logger.info("%s matched player %s", r, name)
             rcon.kick(
-                player=name,
+                player_name=name,
                 reason=config.kick_reason,
                 by="NAME_KICK",
                 player_id=player_id,
