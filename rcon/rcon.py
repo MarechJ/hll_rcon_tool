@@ -1489,6 +1489,20 @@ class Rcon(ServerCtl):
             time = Rcon._extract_time(raw_timestamp)
             try:
                 log_line = Rcon.parse_log_line(raw_log_line)
+                
+                if filter_action and not log_line["action"].startswith(filter_action):
+                    continue
+    
+                if filter_player and filter_player not in raw_log_line:
+                    continue
+    
+                if player := log_line["player_name_1"]:
+                    players.add(player)
+    
+                if player2 := log_line["player_name_2"]:
+                    players.add(player2)
+    
+                actions.add(log_line["action"])
                 parsed_log_lines.append(
                     {
                         "version": 1,
@@ -1512,20 +1526,6 @@ class Rcon(ServerCtl):
                     f"Unable to parse line: '{raw_relative_time} {raw_timestamp} {raw_log_line}'"
                 )
                 continue
-
-            if filter_action and not log_line["action"].startswith(filter_action):
-                continue
-
-            if filter_player and filter_player not in raw_log_line:
-                continue
-
-            if player := log_line["player_name_1"]:
-                players.add(player)
-
-            if player2 := log_line["player_name_2"]:
-                players.add(player2)
-
-            actions.add(log_line["action"])
 
         parsed_log_lines.reverse()
 
