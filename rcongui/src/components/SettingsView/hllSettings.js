@@ -170,15 +170,15 @@ class HLLSettings extends React.Component {
       .then((data) =>
         data.failed === false
           ? this.setState({
-              autoBalanceThres: data.result.autobalance_threshold,
-              teamSwitchCooldownMin: data.result.team_switch_cooldown,
-              idleAutokickMin: data.result.idle_autokick_time,
-              maxPingMs: data.result.max_ping_autokick,
-              queueLength: data.result.queue_length,
-              vipSlots: data.result.vip_slots_num,
-              autobalanceEnabled: data.result.autobalance_enabled,
-              votekickEnabled: data.result.votekick_enabled,
-            })
+            autoBalanceThres: data.result.autobalance_threshold,
+            teamSwitchCooldownMin: data.result.team_switch_cooldown,
+            idleAutokickMin: data.result.idle_autokick_time,
+            maxPingMs: data.result.max_ping_autokick,
+            queueLength: data.result.queue_length,
+            vipSlots: data.result.vip_slots_num,
+            autobalanceEnabled: data.result.autobalance_enabled,
+            votekickEnabled: data.result.votekick_enabled,
+          })
           : null
       )
       .catch(handle_http_errors);
@@ -246,8 +246,8 @@ class HLLSettings extends React.Component {
       set_autobalance_enabled: "value",
       set_idle_autokick_time: "minutes",
       set_max_ping_autokick: "max_ms",
-      set_queue_length: "num",
-      set_vip_slots_num: "num",
+      set_queue_length: "value",
+      set_vip_slots_num: "value",
       set_votekick_enabled: "value",
       set_votekick_threshold: "threshold_pairs",
     };
