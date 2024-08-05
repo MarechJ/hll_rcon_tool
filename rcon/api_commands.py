@@ -194,7 +194,7 @@ class RconAPI(Rcon):
         self,
         blacklist_id: int,
         name: str = MISSING,
-        sync: BlacklistSyncMethod = MISSING,
+        sync_method: BlacklistSyncMethod = MISSING,
         servers: Sequence[int] | None = MISSING,
     ):
         """
@@ -209,12 +209,12 @@ class RconAPI(Rcon):
             sync: Method to use for synchronizing records with the game
             servers: List of server numbers this blacklist applies to. `None` means all.
         """
-        if sync:
-            sync = BlacklistSyncMethod(sync.lower())
+        if sync_method:
+            sync_method = BlacklistSyncMethod(sync_method.lower())
         return blacklist.edit_blacklist(
             blacklist_id,
             name=name,
-            sync=sync,
+            sync=sync_method,
             servers=servers,
         )
 
