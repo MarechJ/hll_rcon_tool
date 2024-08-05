@@ -451,7 +451,7 @@ def parse_raw_player_info(raw: str, player) -> GetDetailedPlayer:
     data[PLAYER_ID] = raw_data.get("steamid64")  # type: ignore
     data["team"] = raw_data.get("team", "None")
     if raw_data["role"].lower() == "armycommander":
-        data["unit_id"], data["unit_name"] = (-1, "Commmand")
+        data["unit_id"], data["unit_name"] = (-1, "Command")
     else:
         data["unit_id"], data["unit_name"] = (
             raw_data.get("unit").split(" - ")  # type: ignore
