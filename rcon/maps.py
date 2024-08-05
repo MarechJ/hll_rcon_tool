@@ -948,7 +948,7 @@ def _parse_legacy_layer(layer_name: str):
     if layer_data["offensive"]:
         result.game_mode = GameMode.OFFENSIVE
         try:
-            result.attackers = Faction[layer_data["attackers"].upper()].value.team
+            result.attackers = Team[FactionName[layer_data["attackers"].upper()].value]
         except KeyError:
             pass
 
