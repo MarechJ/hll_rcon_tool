@@ -22,11 +22,6 @@ const useStyles = makeStyles((theme) => ({
     minHeight: "100%",
     padding: theme.spacing(2),
   },
-  paperTile: {
-    backgroundColor: theme.palette.background.paper,
-    minHeight: "100%",
-    padding: theme.spacing(2),
-  },
   root: {
     display: "flex",
     flexWrap: "wrap",
@@ -69,25 +64,22 @@ const BlacklistRecordTile = ({
 
   function getReportTemplate() {
     const template =
-      `Name: ${
-        firstName || ""
-      }\nPlayer ID: ${
-        player.get("player_id")
-      }\nSteam URL: ${
-        makePlayerProfileUrl(player.get("player_id"), firstName) || "Unknown"
+      `Name: ${firstName || ""
+      }\nPlayer ID: ${player.get("player_id")
+      }\nSteam URL: ${makePlayerProfileUrl(player.get("player_id"), firstName) || "Unknown"
       }\nType of issue:\nDescription:\nEvidence:`;
     return template;
   }
-  
+
   return (
     <Grid
       container
       className={myClasses.paperTile}
-      style={isExpired ? {background: "linear-gradient(rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.05))"} : {}}
+      style={isExpired ? { background: "linear-gradient(rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.05))" } : {}}
       direction="column"
       justify="space-between"
     >
-      <ListItem alignItems="flex-start" style={{paddingBottom: 0}}>
+      <ListItem alignItems="flex-start" style={{ paddingBottom: 0 }}>
         <ListItemAvatar>
           <Link
             target="_blank"
@@ -168,7 +160,7 @@ const BlacklistRecordTile = ({
                   );
                 }}
               >
-                <FileCopyIcon fontSize="small"/>
+                <FileCopyIcon fontSize="small" />
               </IconButton>
             </Typography>
           </Tooltip>
@@ -198,22 +190,22 @@ const BlacklistRecordTile = ({
                   }
                 }}
               >
-                <AnnouncementIcon fontSize="small"/>
+                <AnnouncementIcon fontSize="small" />
               </IconButton>
             </Typography>
           </Tooltip>
         </ListItemSecondaryAction>
       </ListItem>
-        <Typography variant={reason.length > 65 ? "body2" : "body1"}>
-          {reason.length > 110
-            ? reason.substring(0, 108) + "..."
-            : reason
-          }
-        </Typography>
+      <Typography variant={reason.length > 65 ? "body2" : "body1"}>
+        {reason.length > 110
+          ? reason.substring(0, 108) + "..."
+          : reason
+        }
+      </Typography>
       <Grid
         container
         justify="space-between"
-        spacing={0}  
+        spacing={0}
         className={classes.noPaddingMargin}
       >
         <Grid
@@ -236,8 +228,8 @@ const BlacklistRecordTile = ({
                 {expiresAt
                   ? (
                     now.isBefore(expiresAt)
-                    ? `Expires in ${moment.duration(now.diff(expiresAt)).humanize()}`
-                    : `Expired ${moment.duration(now.diff(expiresAt)).humanize()} ago`
+                      ? `Expires in ${moment.duration(now.diff(expiresAt)).humanize()}`
+                      : `Expired ${moment.duration(now.diff(expiresAt)).humanize()} ago`
                   )
                   : `Never expires`
                 }
@@ -348,7 +340,7 @@ const BlacklistRecordGrid = withWidth()(
                     />
                   </GridListTile>
                 );
-                })}
+              })}
             </GridList>
           </Grid>
         </Grid>
