@@ -2,6 +2,7 @@ import datetime
 import enum
 from dataclasses import dataclass
 from typing import List, Literal, Optional
+
 # # TODO: On Python 3.11.* specifically, Pydantic requires we use typing_extensions.TypedDict
 # over typing.TypedDict. Once we bump our Python image we can replace this.
 from typing_extensions import TypedDict
@@ -291,6 +292,7 @@ class BasicPlayerProfileType(TypedDict):
     names: list[PlayerNameType]
     steaminfo: Optional[SteamInfoType]
 
+
 class BlacklistSyncMethod(str, enum.Enum):
     """Enumeration of all available methods when it comes to enforcing
     blacklists. Each method has its pros and cons."""
@@ -317,6 +319,7 @@ class BlacklistType(TypedDict):
     sync: BlacklistSyncMethod
     servers: Optional[List[int]]
 
+
 class BlacklistRecordType(TypedDict):
     id: int
     player_id: str
@@ -326,11 +329,14 @@ class BlacklistRecordType(TypedDict):
     expires_at: Optional[datetime.datetime]
     is_active: bool
 
+
 class BlacklistWithRecordsType(BlacklistType):
     records: List[BlacklistRecordType]
 
+
 class BlacklistRecordWithBlacklistType(BlacklistRecordType):
     blacklist: BlacklistType
+
 
 class BlacklistRecordWithPlayerType(BlacklistRecordWithBlacklistType):
     player: BasicPlayerProfileType
@@ -740,3 +746,18 @@ class PublicInfoType(TypedDict):
 class SlotsType(TypedDict):
     current_players: int
     max_players: int
+
+
+class DjangoPermission(TypedDict):
+    permission: str
+    description: str
+
+
+class DjangoGroup(TypedDict):
+    name: str
+
+
+class DjangoUserPermissions(TypedDict):
+    permissions: list[DjangoPermission]
+    groups: list[DjangoGroup]
+    is_superuser: bool
