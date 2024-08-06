@@ -6,7 +6,7 @@ import {
 import useStyles from "../useStyles";
 import BlacklistRecordsSearch from "./BlacklistRecordsSearch";
 import React from "react";
-import { get, handle_http_errors, postData, showResponse } from "../../utils/fetchUtils";
+import { addPlayerToBlacklist, get, getBlacklists, handle_http_errors, postData, showResponse } from "../../utils/fetchUtils";
 import Pagination from "@material-ui/lab/Pagination";
 import BlacklistRecordGrid from "./BlacklistRecordGrid";
 import { List, fromJS } from "immutable";
@@ -41,15 +41,8 @@ const BlacklistRecords = ({ classes: globalClasses }) => {
     pageSize: 50
   });
 
-  function loadBlacklists() {
-    return get("get_blacklists")
-      .then((response) => showResponse(response, "get_blacklists", false))
-      .then((data) => {
-        if (data.result) {
-          setBlacklists(data.result);
-        }
-      })
-      .catch(handle_http_errors);
+  async function loadBlacklists() {
+    setBlacklists(await getBlacklists())
   }
   
   function loadRecords() {
@@ -73,23 +66,9 @@ const BlacklistRecords = ({ classes: globalClasses }) => {
       .catch(handle_http_errors);
   }
 
-  function createRecord({
-    blacklistId,
-    playerId,
-    expiresAt,
-    reason
-  }) {
-    postData(`${process.env.REACT_APP_API_URL}add_blacklist_record`, {
-      blacklist_id: blacklistId,
-      player_id: playerId,
-      expires_at: expiresAt || null,
-      reason
-    })
-      .then((response) =>
-        showResponse(response, `Player ID ${playerId} was blacklisted`, true)
-      )
-      .catch(handle_http_errors)
-      .then(() => loadRecords());
+  async function createRecord(recordDetails) {
+    await addPlayerToBlacklist(recordDetails)
+    loadRecords()
   }
 
   React.useEffect(() => {
@@ -128,7 +107,7 @@ const BlacklistRecords = ({ classes: globalClasses }) => {
             <BlacklistRecordCreateButton
               blacklists={blacklists}
               onSubmit={createRecord}
-            />
+            >Create New Record</BlacklistRecordCreateButton>
           </Grid>
           <Grid item xl={12}>
             <Button

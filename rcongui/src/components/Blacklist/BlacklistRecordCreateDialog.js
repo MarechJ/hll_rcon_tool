@@ -8,6 +8,7 @@ import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import { FormControl, Grid, InputLabel, MenuItem, Select, Typography } from '@material-ui/core';
 import moment from "moment";
+import { getServerStatus } from '../../utils/fetchUtils';
 
 export default function BlacklistRecordCreateDialog({
   open,
@@ -15,14 +16,20 @@ export default function BlacklistRecordCreateDialog({
   blacklists,
   onSubmit,
   initialValues,
-  titleText="Blacklist Player",
-  submitText="Blacklist Player",
+  titleText = "Blacklist Player",
+  submitText = "Blacklist Player",
   disablePlayerId,
+  hasManyIDs = false,
 }) {
   const [blacklist, setBlacklist] = React.useState("");
   const [playerId, setPlayerId] = React.useState("");
   const [expiresAt, setExpiresAt] = React.useState("");
   const [reason, setReason] = React.useState("");
+  const [currentServer, setCurrentServer] = React.useState({})
+
+  React.useEffect(() => {
+    getServerStatus().then(server => setCurrentServer(server)).catch(() => setCurrentServer({}))
+  }, [])
 
   React.useEffect(() => {
     if (initialValues) {
@@ -49,6 +56,39 @@ export default function BlacklistRecordCreateDialog({
     setExpiresAt("")
     setReason("")
   };
+
+  const displayBlacklistWarning = () => {
+    const affectsAllServers = blacklist.servers === null
+
+    if (affectsAllServers) {
+      return null;
+    }
+
+    let text = "";
+    const affectsNone = blacklist.servers.length === 0;
+    const failedToLoadCurrentServer = !("server_number" in currentServer);
+    const affectsOnlyOtherServers = blacklist.servers.length > 0 && !blacklist.servers.includes(currentServer?.server_number ?? -1)
+
+    if (affectsNone)
+    {
+      text = "This blacklist does not affect any servers!"
+    } 
+    else if (failedToLoadCurrentServer)
+    {
+      text = `Failed to load current server information!\n`
+      text += `This blacklist MAY NOT affect THIS server. Affected servers: [${blacklist.servers.join(", ")}]`
+    }
+    else if (affectsOnlyOtherServers) 
+    {
+      text = `This blacklist DOES NOT affect THIS server! Affected servers: [${blacklist.servers.join(", ")}]`
+    }
+
+    return (
+      <Typography variant="caption" color="secondary">
+        {text}
+      </Typography>
+    )
+  }
 
   return (
     <Dialog
@@ -81,22 +121,15 @@ export default function BlacklistRecordCreateDialog({
             value={blacklist}
             onChange={(e) => setBlacklist(e.target.value)}
           >
-            { blacklists?.map(
+            {blacklists?.map(
               (b) => <MenuItem key={b.id} value={b}>{b.name}</MenuItem>
-            ) }
+            )}
           </Select>
         </FormControl>
 
-        { blacklist ? (
+        {blacklist && (
           <React.Fragment>
-            { blacklist.servers !== null && !blacklist.servers.includes(process.env.SERVER_NUMBER) ? (
-              <Typography variant="caption" color="secondary">
-                { blacklist.servers.size > 0
-                  ? `This blacklist only affects server ${blacklist.servers.join(", ").replace()}!`
-                  : `This blacklist does not affect any servers!` }
-              </Typography>
-            ) : "" }
-
+            {displayBlacklistWarning()}
             <TextField
               required
               margin="dense"
@@ -109,6 +142,7 @@ export default function BlacklistRecordCreateDialog({
               fullWidth
               disabled={disablePlayerId}
               variant="standard"
+              multiline={hasManyIDs}
             />
 
             <Grid container
@@ -143,17 +177,17 @@ export default function BlacklistRecordCreateDialog({
                   }}
                   fullWidth
                 >
-                  <MenuItem value={60*60}>1 hour</MenuItem>
-                  <MenuItem value={60*60*6}>6 hours</MenuItem>
-                  <MenuItem value={60*60*12}>12 hours</MenuItem>
-                  <MenuItem value={60*60*24}>1 day</MenuItem>
-                  <MenuItem value={60*60*24*2}>2 days</MenuItem>
-                  <MenuItem value={60*60*24*3}>3 days</MenuItem>
-                  <MenuItem value={60*60*24*5}>5 days</MenuItem>
-                  <MenuItem value={60*60*24*7}>7 days</MenuItem>
-                  <MenuItem value={60*60*24*14}>14 days</MenuItem>
-                  <MenuItem value={60*60*24*30}>30 days</MenuItem>
-                  <MenuItem value={60*60*24*365}>365 days</MenuItem>
+                  <MenuItem value={60 * 60}>1 hour</MenuItem>
+                  <MenuItem value={60 * 60 * 6}>6 hours</MenuItem>
+                  <MenuItem value={60 * 60 * 12}>12 hours</MenuItem>
+                  <MenuItem value={60 * 60 * 24}>1 day</MenuItem>
+                  <MenuItem value={60 * 60 * 24 * 2}>2 days</MenuItem>
+                  <MenuItem value={60 * 60 * 24 * 3}>3 days</MenuItem>
+                  <MenuItem value={60 * 60 * 24 * 5}>5 days</MenuItem>
+                  <MenuItem value={60 * 60 * 24 * 7}>7 days</MenuItem>
+                  <MenuItem value={60 * 60 * 24 * 14}>14 days</MenuItem>
+                  <MenuItem value={60 * 60 * 24 * 30}>30 days</MenuItem>
+                  <MenuItem value={60 * 60 * 24 * 365}>365 days</MenuItem>
                   <MenuItem value={null}>Never</MenuItem>
                 </Select>
               </Grid>
@@ -175,9 +209,9 @@ export default function BlacklistRecordCreateDialog({
               {duration}, {expires}, {ban_id}, {blacklist_name}"
             />
           </React.Fragment>
-        ) : "" }
+        )}
 
-        
+
       </DialogContent>
       <DialogActions>
         <Button onClick={handleClose}>Cancel</Button>
@@ -192,6 +226,7 @@ export function BlacklistRecordCreateButton({
   onSubmit,
   initialValues,
   disablePlayerId,
+  children,
 }) {
   const [open, setOpen] = React.useState(false);
 
@@ -201,13 +236,13 @@ export function BlacklistRecordCreateButton({
 
   return (
     <React.Fragment>
-      <Button 
+      <Button
         variant="contained"
         color="primary"
         size="large"
         onClick={handleClickOpen}
       >
-        Create New Record
+        {children}
       </Button>
       <BlacklistRecordCreateDialog
         open={open}
