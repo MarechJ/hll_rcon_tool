@@ -210,6 +210,18 @@ async function getBlacklists() {
   }
 }
 
+async function getServerStatus() {
+  try {
+    const response = await get("get_status");
+    const data = await response.json();
+    if (data.result) {
+      return data.result;
+    }    
+  } catch (error) {
+    handle_http_errors(error)
+  }
+}
+
 export {
   postData,
   showResponse,
@@ -222,4 +234,5 @@ export {
   addPlayerToWatchList,
   addPlayerToBlacklist,
   getBlacklists,
+  getServerStatus,
 };

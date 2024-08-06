@@ -8,6 +8,7 @@ import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import { FormControl, Grid, InputLabel, MenuItem, Select, Typography } from '@material-ui/core';
 import moment from "moment";
+import { getServerStatus } from '../../utils/fetchUtils';
 
 export default function BlacklistRecordCreateDialog({
   open,
@@ -24,6 +25,11 @@ export default function BlacklistRecordCreateDialog({
   const [playerId, setPlayerId] = React.useState("");
   const [expiresAt, setExpiresAt] = React.useState("");
   const [reason, setReason] = React.useState("");
+  const [currentServer, setCurrentServer] = React.useState({})
+
+  React.useEffect(() => {
+    getServerStatus().then(server => setCurrentServer(server)).catch(() => setCurrentServer({}))
+  }, [])
 
   React.useEffect(() => {
     if (initialValues) {
@@ -51,16 +57,37 @@ export default function BlacklistRecordCreateDialog({
     setReason("")
   };
 
-  const getBlacklistHelperText = () => {
-    if (blacklist.servers === null) {
-      return "This blacklist affects ALL servers!"
+  const displayBlacklistWarning = () => {
+    const affectsAllServers = blacklist.servers === null
+
+    if (affectsAllServers) {
+      return null;
     }
 
-    if (blacklist.servers.length > 0) {
-      return `This blacklist only affects server ${blacklist.servers.join(", ").replace()}!`
+    let text = "";
+    const affectsNone = blacklist.servers.length === 0;
+    const failedToLoadCurrentServer = !("server_number" in currentServer);
+    const affectsOnlyOtherServers = blacklist.servers.length > 0 && !blacklist.servers.includes(currentServer?.server_number ?? -1)
+
+    if (affectsNone)
+    {
+      text = "This blacklist does not affect any servers!"
+    } 
+    else if (failedToLoadCurrentServer)
+    {
+      text = `Failed to load current server information!\n`
+      text += `This blacklist MAY NOT affect THIS server. Affected servers: [${blacklist.servers.join(", ")}]`
+    }
+    else if (affectsOnlyOtherServers) 
+    {
+      text = `This blacklist DOES NOT affect THIS server! Affected servers: [${blacklist.servers.join(", ")}]`
     }
 
-    return "This blacklist does not affect any servers!"
+    return (
+      <Typography variant="caption" color="secondary">
+        {text}
+      </Typography>
+    )
   }
 
   return (
@@ -102,10 +129,7 @@ export default function BlacklistRecordCreateDialog({
 
         {blacklist && (
           <React.Fragment>
-            <Typography variant="caption" color="secondary">
-                {getBlacklistHelperText()}
-            </Typography>
-
+            {displayBlacklistWarning()}
             <TextField
               required
               margin="dense"
