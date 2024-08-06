@@ -178,6 +178,38 @@ async function addPlayerToWatchList(player_id, reason, playerName) {
     .catch(handle_http_errors);
 }
 
+async function addPlayerToBlacklist({
+  blacklistId,
+  playerId,
+  expiresAt,
+  reason
+}) {
+  try {
+    const response = await postData(`${process.env.REACT_APP_API_URL}add_blacklist_record`, {
+      blacklist_id: blacklistId,
+      player_id: playerId,
+      expires_at: expiresAt || null,
+      reason
+    })
+
+    return showResponse(response, `Player ID ${playerId} was blacklisted`, true)
+  } catch (error) {
+    handle_http_errors(error)
+  }
+}
+
+async function getBlacklists() {
+  try {
+    const response = await get("get_blacklists")
+    const data = await showResponse(response, "get_blacklists", false)
+    if (data.result) {
+      return data.result;
+    }    
+  } catch (error) {
+    handle_http_errors(error)
+  }
+}
+
 export {
   postData,
   showResponse,
@@ -188,4 +220,6 @@ export {
   LoginError,
   sendAction,
   addPlayerToWatchList,
+  addPlayerToBlacklist,
+  getBlacklists,
 };

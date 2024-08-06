@@ -24,6 +24,7 @@ import { Grid } from "@material-ui/core";
 import Tooltip from "@material-ui/core/Tooltip";
 import MessageIcon from "@material-ui/icons/Message";
 import VisibilityIcon from "@material-ui/icons/Visibility";
+import BlockIcon from "@material-ui/icons/Block";
 
 const Duration = ({
   durationNumber,
@@ -112,6 +113,8 @@ class ReasonDialog extends React.Component {
         return `Permanently Ban ${playerName}`;
       case "message_player":
         return `Message ${playerName}`;
+      case "add_blacklist_record":
+          return `Add ${playerName} to a blacklist`;
       default:
         return "";
     }
@@ -241,6 +244,7 @@ const PlayerActions = ({
   disable = false,
   penaltyCount = Map(),
   disableAll = false,
+  onBlacklist,
 }) => {
   const [anchorEl, setAnchorEl] = React.useState(null);
   const [isOpen, setOpen] = React.useState(false);
@@ -315,6 +319,11 @@ const PlayerActions = ({
             </Badge>
           </Button>
         ))}
+        <Tooltip title="Blacklist Player">
+            <Button size="small" onClick={onBlacklist}>
+              <BlockIcon fontSize="small" />
+            </Button>
+        </Tooltip>
         {onFlag ? (
           <Tooltip title="Flag Player">
             <Button size="small" onClick={onFlag}>

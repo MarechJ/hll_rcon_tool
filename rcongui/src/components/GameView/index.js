@@ -26,7 +26,9 @@ import ListItemText from "@material-ui/core/ListItemText";
 import Collapse from "@material-ui/core/Collapse";
 import { PlayerItem, KDChips, ScoreChips } from "../PlayerView/playerList";
 import {
+  addPlayerToBlacklist,
   get,
+  getBlacklists,
   handle_http_errors,
   postData,
   showResponse,
@@ -39,6 +41,7 @@ import {
 import { toast } from "react-toastify";
 import { FlagDialog } from "../PlayersHistory";
 import Padlock from "../SettingsView/padlock";
+import BlacklistRecordCreateDialog from "../Blacklist/BlacklistRecordCreateDialog";
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -133,8 +136,8 @@ const Squad = ({
           primary={
             <Typography variant="h6">
               {`${squadName.toUpperCase() === "NULL"
-                  ? "Unassigned"
-                  : squadName.toUpperCase()
+                ? "Unassigned"
+                : squadName.toUpperCase()
                 } - ${squadData.get("players", new IList()).size}/${sizes[squadData.get("type", "infantry")]
                 }`}{" "}
               {squadData.get("has_leader", false) ? (
@@ -314,6 +317,8 @@ const GameView = ({ classes: globalClasses }) => {
   const [resfreshFreqSecs, setResfreshFreqSecs] = React.useState(5);
   const [intervalHandle, setIntervalHandle] = React.useState(null);
   const [flag, setFlag] = React.useState(false);
+  const [blacklistDialogOpen, setBlacklistDialogOpen] = React.useState(false);
+  const [blacklists, setBlacklists] = React.useState([]);
   const [sortType, setSortType] = React.useState(
     localStorage.getItem("game_view_sorting")
       ? localStorage.getItem("game_view_sorting")
@@ -429,13 +434,11 @@ const GameView = ({ classes: globalClasses }) => {
       force !== "add" &&
       (selectedPlayers.includes(playerName) || force === "delete")
     ) {
-      console.log("Deleting", playerName, selectedPlayers);
       setSelectedPlayers(selectedPlayers.delete(playerName));
     } else if (
       force !== "delete" &&
       (!selectedPlayers.includes(playerName) || force === "add")
     ) {
-      console.log("Adding", playerName, selectedPlayers);
       setSelectedPlayers(selectedPlayers.add(playerName));
     }
   };
@@ -448,13 +451,11 @@ const GameView = ({ classes: globalClasses }) => {
         force !== "add" &&
         (selectedPlayers.includes(playerName) || force === "delete")
       ) {
-        console.log("Deletingss", playerName, selectedPlayers);
         newSelectedPlayer = newSelectedPlayer.delete(playerName);
       } else if (
         force !== "delete" &&
         (!selectedPlayers.includes(playerName) || force === "add")
       ) {
-        console.log("Addingss", playerName, selectedPlayers);
         newSelectedPlayer = newSelectedPlayer.add(playerName);
       }
     });
@@ -566,6 +567,33 @@ const GameView = ({ classes: globalClasses }) => {
     );
   };
 
+  function blacklistManyPlayers(payload) {
+    const filteredPlayers = playerNamesToPlayerId?.filter(p => p !== undefined).toJS();
+
+    Promise.allSettled(Object.entries(filteredPlayers).map(([_, playerId]) => (
+      addPlayerToBlacklist({
+        ...payload,
+        playerId,
+      })
+    )))
+
+  }
+
+  async function handleBlacklistOpen(player) {
+    const blacklists = await getBlacklists();
+    setBlacklists(blacklists);
+    setBlacklistDialogOpen(true)
+  }
+
+  function selectedPlayersToRows() {
+    const filteredPlayers = playerNamesToPlayerId?.filter(p => p !== undefined).toJS();
+    const selected = []
+    for (const [player, id] of Object.entries(filteredPlayers)) {
+      selected.push(`${player} -> ${id}`)
+    }
+    return selected.join(",\n")
+  }
+
   return (
     <Grid container spacing={2} className={globalClasses.padding}>
       {teamView ? (
@@ -580,6 +608,15 @@ const GameView = ({ classes: globalClasses }) => {
             handleClose={() => setFlag(false)}
             handleConfirm={addFlagToPlayers}
             SummaryRenderer={SimplePlayerRenderer}
+          />
+          <BlacklistRecordCreateDialog
+            open={blacklistDialogOpen}
+            blacklists={blacklists}
+            initialValues={selectedPlayers && { playerId: selectedPlayersToRows() }}
+            onSubmit={blacklistManyPlayers}
+            setOpen={() => setBlacklistDialogOpen(false)}
+            disablePlayerId={true}
+            hasManyIDs={true}
           />
           <ReasonDialog
             open={confirmAction}
@@ -654,6 +691,7 @@ const GameView = ({ classes: globalClasses }) => {
                     }
                   }}
                   onFlag={() => setFlag(true)}
+                  onBlacklist={handleBlacklistOpen}
                 />
               </Grid>
               <Grid item>
@@ -697,48 +735,28 @@ const GameView = ({ classes: globalClasses }) => {
               </Grid>
             </Grid>
           </Grid>
-          <Grid item xs={12} md={12} lg={6}>
-            <Team
-              classes={globalClasses}
-              teamName="Allies"
-              teamData={teamView.get("allies")}
-              selectedPlayers={selectedPlayers}
-              selectPlayer={selectPlayer}
-              selectMultiplePlayers={selectMultiplePlayers}
-              selectAll={() => selectAllTeam("allies")}
-              deselectAll={() => deselectAllTeam("allies")}
-              sortFunc={sortTypeToFunc[sortType]}
-              showOnlySelected={showOnlySelected && selectedPlayers.size !== 0}
-            />
-          </Grid>
-          <Grid item xs={12} md={12} lg={6}>
-            <Team
-              classes={globalClasses}
-              teamName="Axis"
-              teamData={teamView.get("axis")}
-              selectedPlayers={selectedPlayers}
-              selectPlayer={selectPlayer}
-              selectMultiplePlayers={selectMultiplePlayers}
-              selectAll={() => selectAllTeam("axis")}
-              deselectAll={() => deselectAllTeam("axis")}
-              sortFunc={sortTypeToFunc[sortType]}
-              showOnlySelected={showOnlySelected && selectedPlayers.size !== 0}
-            />
-          </Grid>
-          <Grid item xs={12} md={12}>
-            <Team
-              classes={globalClasses}
-              teamName="Unassigned"
-              teamData={teamView.get("none")}
-              selectedPlayers={selectedPlayers}
-              selectPlayer={selectPlayer}
-              selectMultiplePlayers={selectMultiplePlayers}
-              selectAll={() => selectAllTeam("none")}
-              deselectAll={() => deselectAllTeam("none")}
-              sortFunc={sortTypeToFunc[sortType]}
-              showOnlySelected={showOnlySelected && selectedPlayers.size !== 0}
-            />
-          </Grid>
+          {
+            [
+              { label: "Allies", name: "allies" },
+              { label: "Axis", name: "axis" },
+              { label: "Unassigned", name: "none" }
+            ].map((team) => (
+              <Grid item xs={12} md={12} lg={team.name === "none" ? 12 : 6}>
+                <Team
+                  key={team.name}
+                  classes={globalClasses}
+                  teamName={team.label}
+                  teamData={teamView.get(team.name)}
+                  selectedPlayers={selectedPlayers}
+                  selectPlayer={selectPlayer}
+                  selectMultiplePlayers={selectMultiplePlayers}
+                  selectAll={() => selectAllTeam(team.name)}
+                  deselectAll={() => deselectAllTeam(team.name)}
+                  sortFunc={sortTypeToFunc[sortType]}
+                  showOnlySelected={showOnlySelected && selectedPlayers.size !== 0}
+                />
+              </Grid>
+            ))}
         </Fragment>
       ) : (
         <Grid item xs={12} className={globalClasses.doublePadding}>

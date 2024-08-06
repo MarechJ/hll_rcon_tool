@@ -22,11 +22,6 @@ const useStyles = makeStyles((theme) => ({
     minHeight: "100%",
     padding: theme.spacing(2),
   },
-  paperTile: {
-    backgroundColor: theme.palette.background.paper,
-    minHeight: "100%",
-    padding: theme.spacing(2),
-  },
   root: {
     display: "flex",
     flexWrap: "wrap",
