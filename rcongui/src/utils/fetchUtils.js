@@ -2,6 +2,12 @@ import React from "react";
 
 import { toast } from "react-toastify";
 
+const CRCON_API = `${process.env.REACT_APP_API_URL}`
+
+export function execute(command, data) {
+  return postData(CRCON_API + command, data)
+}
+
 function LoginError(message) {
   this.message = message;
   this.name = "LoginError";
@@ -222,6 +228,42 @@ async function getServerStatus() {
   }
 }
 
+async function getVips() {
+  try {
+    const response = await get("get_vip_ids");
+    const data = await response.json();
+    if (data.result) {
+      return data.result;
+    }    
+  } catch (error) {
+    handle_http_errors(error)
+  }
+}
+
+async function addPlayerVip(player) {
+  try {
+    const response = await execute("add_vip", player);
+    const data = showResponse(response, "add_vip", true)
+    if (data.result) {
+      return data.result;
+    }    
+  } catch (error) {
+    handle_http_errors(error)
+  }
+}
+
+async function removePlayerVip(player) {
+  try {
+    const response = await execute("remove_vip", player);
+    const data = showResponse(response, "remove_vip", true)
+    if (data.result) {
+      return data.result;
+    }    
+  } catch (error) {
+    handle_http_errors(error)
+  }
+}
+
 export {
   postData,
   showResponse,
@@ -235,4 +277,7 @@ export {
   addPlayerToBlacklist,
   getBlacklists,
   getServerStatus,
+  addPlayerVip,
+  removePlayerVip,
+  getVips,
 };

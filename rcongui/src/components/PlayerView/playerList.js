@@ -320,6 +320,7 @@ const PlayerItem = ({
   onSelect,
   isSelected,
   onBlacklist,
+  onVipDialogOpen,
 }) => {
   const profile = player.get("profile") ? player.get("profile") : new Map();
   const name = player.get("name");
@@ -412,6 +413,7 @@ const PlayerItem = ({
             handleAction={handleAction}
             onFlag={onFlag}
             onBlacklist={onBlacklist}
+            onVipDialogOpen={onVipDialogOpen}
             displayCount={nbButtons}
             isWatched={
               profile.get("watchlist")
@@ -498,6 +500,7 @@ const CompactList = ({
   onFlag: onFlagClick,
   onDeleteFlag: onDeleteFlagClick,
   onBlacklist: onBlacklistClick,
+  onVipDialogOpen,
 }) => {
   const myPlayers = React.useMemo(() => {
     let myPlayers = players;
@@ -548,6 +551,7 @@ const CompactList = ({
           }
           onDeleteFlag={onDeleteFlagClick}
           onBlacklist={() => onBlacklistClick(player)}
+          onVipDialogOpen={() => onVipDialogOpen(player)}
         />
       ))}
     </List>
