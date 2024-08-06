@@ -7,16 +7,15 @@ from rcon.discord import send_to_discord_audit
 from rcon.game_logs import on_connected
 from rcon.hooks import inject_player_ids
 from rcon.player_history import get_player_profile, player_has_flag
-from rcon.rcon import Rcon
-from rcon.settings import SERVER_INFO
 from rcon.user_config.name_kicks import NameKickUserConfig
+from rcon.api_commands import RconAPI
 
 logger = logging.getLogger(__name__)
 
 
 @on_connected()
 @inject_player_ids
-def auto_kick(rcon, struct_log, name: str, player_id: str):
+def auto_kick(rcon: RconAPI, struct_log, name: str, player_id: str):
     config = NameKickUserConfig.load_from_db()
 
     for r in config.regular_expressions:
