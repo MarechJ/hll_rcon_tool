@@ -25,17 +25,26 @@ class RoleType(TypedDict):
 
 class AutoModLevelType(TypedDict):
     enabled: bool
+    dry_run: bool
     discord_webhook_url: Optional[HttpUrl]
+    whitelist_flags: list[str]
+
     announcement_enabled: bool
     only_announce_impacted_players: bool
     announcement_message: str
+
     force_kick_message: str
+
     min_level: int
     min_level_message: str
+
     max_level: int
     max_level_message: str
+
     violation_message: str
+
     levelbug_enabled: bool
+
     level_thresholds: dict[Roles, "Role"]
 
     number_of_warnings: int
@@ -75,7 +84,9 @@ def validate_level_thresholds(vs):
 
 class AutoModLevelUserConfig(BaseUserConfig):
     enabled: bool = Field(default=False)
+    dry_run: bool = Field(default=True)
     discord_webhook_url: Optional[HttpUrl] = Field(default=None)
+    whitelist_flags: list[str] = Field(default_factory=list)
     announcement_enabled: bool = Field(default=True)
     only_announce_impacted_players: bool = Field(default=False)
     announcement_message: str = Field(default=ANNOUNCE_MESSAGE)
@@ -115,7 +126,9 @@ class AutoModLevelUserConfig(BaseUserConfig):
 
         validated_conf = AutoModLevelUserConfig(
             enabled=values.get("enabled"),
+            dry_run=values.get("dry_run"),
             discord_webhook_url=values.get("discord_webhook_url"),
+            whitelist_flags=values.get("whitelist_flags"),
             announcement_enabled=values.get("announcement_enabled"),
             only_announce_impacted_players=values.get("only_announce_impacted_players"),
             announcement_message=values.get("announcement_message"),
