@@ -24,8 +24,8 @@ class AutoModNoSoloTankType(TypedDict):
     enabled: bool
     dry_run: bool
     discord_webhook_url: Optional[HttpUrl]
-
     whitelist_flags: list[str]
+
     number_of_notes: int
     notes_interval_seconds: int
 
@@ -48,7 +48,6 @@ class AutoModNoSoloTankUserConfig(BaseUserConfig):
     enabled: bool = Field(default=False)
     dry_run: bool = Field(default=True)
     discord_webhook_url: Optional[HttpUrl] = Field(default=None)
-
     whitelist_flags: list[str] = Field(default_factory=list)
 
     number_of_notes: int = Field(ge=0, default=1)
