@@ -6,7 +6,7 @@ from typing import Literal
 
 import redis
 
-from rcon.automods.get_team_count import get_team_count
+# from rcon.automods.get_team_count import get_team_count
 from rcon.automods.is_time import is_time
 from rcon.automods.models import (
     ActionMethod,
@@ -32,8 +32,9 @@ class NoLeaderAutomod:
     config: AutoModNoLeaderUserConfig
 
     def __init__(
-        self, config: AutoModNoLeaderUserConfig, red: redis.StrictRedis or None
-    ):
+            self, config: AutoModNoLeaderUserConfig,
+            red: redis.StrictRedis or None
+        ):
         self.logger = logging.getLogger(__name__)
         self.red = red
         self.config = config
@@ -41,8 +42,32 @@ class NoLeaderAutomod:
     def enabled(self):
         return self.config.enabled
 
+    @contextmanager
+    def watch_state(self, team: str, squad_name: str):
+        redis_key = f"no_leader_watch{team.lower()}{str(squad_name).lower()}"
+        watch_status = self.red.get(redis_key)
+        if watch_status:
+            watch_status = pickle.loads(watch_status)
+        else:  # No punishments so far, starting a fresh one
+            watch_status = WatchStatus()
+
+        try:
+            yield watch_status
+        except (SquadHasLeader, SquadCycleOver):
+            self.logger.debug(
+                "Squad %s - %s has a leader, clearing state", team, squad_name
+            )
+            self.red.delete(redis_key)
+        else:
+            self.red.setex(
+                redis_key, LEADER_WATCH_RESET_SECS, pickle.dumps(watch_status)
+            )
+
     def get_message(
-        self, watch_status: WatchStatus, aplayer: PunishPlayer, method: ActionMethod
+        self,
+        watch_status: WatchStatus,
+        aplayer: PunishPlayer,
+        method: ActionMethod
     ):
         data = {}
 
@@ -85,27 +110,6 @@ class NoLeaderAutomod:
             except Exception:
                 self.logger.exception("tried to cleanup punished time but failed")
 
-    @contextmanager
-    def watch_state(self, team: str, squad_name: str):
-        redis_key = f"no_leader_watch{team.lower()}{str(squad_name).lower()}"
-        watch_status = self.red.get(redis_key)
-        if watch_status:
-            watch_status = pickle.loads(watch_status)
-        else:  # No punishments so far, starting a fresh one
-            watch_status = WatchStatus()
-
-        try:
-            yield watch_status
-        except (SquadHasLeader, SquadCycleOver):
-            self.logger.debug(
-                "Squad %s - %s has a leader, clearing state", team, squad_name
-            )
-            self.red.delete(redis_key)
-        else:
-            self.red.setex(
-                redis_key, LEADER_WATCH_RESET_SECS, pickle.dumps(watch_status)
-            )
-
     def punitions_to_apply(
         self,
         team_view,
@@ -114,28 +118,37 @@ class NoLeaderAutomod:
         squad: dict,
         game_state: GameState,
     ) -> PunitionsToApply:
+        self.logger.debug("Squad %s %s", squad_name, squad)
         punitions_to_apply = PunitionsToApply()
 
-        if (
-            get_team_count(team_view, "allies") + get_team_count(team_view, "axis")
-        ) < self.config.dont_do_anything_below_this_number_of_players:
-            self.logger.debug("Server below min player count : disabling")
+        # (obsolete)
+        # if (
+        #     get_team_count(team_view, "allies") + get_team_count(team_view, "axis")
+        # ) < self.config.dont_do_anything_below_this_number_of_players:
+        #     self.logger.debug("Server below min player count : disabling")
+        #     return punitions_to_apply
+
+        if squad_name == "Commander":
+            self.logger.debug("Skipping commander")
             return punitions_to_apply
 
         if not squad_name:
             self.logger.debug("Skipping None or empty squad %s %s", squad_name, squad)
             return punitions_to_apply
 
-        if squad_name == "Commander":
-            self.logger.debug("Skipping commander")
-            return punitions_to_apply
-
         with self.watch_state(team, squad_name) as watch_status:
-            if squad["has_leader"]:
-                raise SquadHasLeader()
 
             if squad_name is None or squad is None:
                 raise SquadHasLeader()
+
+            if squad["has_leader"]:
+                self.logger.debug("A leader has entered %s %s", squad_name, squad)
+                raise SquadHasLeader()
+
+            if squad["players"][0]["profile"]["flags"] is not None:
+                for flagnb in squad["players"][0]["profile"]["flags"]:
+                    if flagnb["flag"] in self.config.whitelist_flags:
+                        raise SquadHasLeader()
 
             self.logger.debug("Squad %s - %s doesn't have leader", team, squad_name)
             author = AUTOMOD_USERNAME + ("-DryRun" if self.config.dry_run else "")
@@ -155,16 +168,19 @@ class NoLeaderAutomod:
                     ),
                 )
 
-                state = self.should_note_player(watch_status, squad_name, aplayer)
-                if state == PunishStepState.APPLY:
-                    punitions_to_apply.add_squad_state(team, squad_name, squad)
-                if not state in [
-                    PunishStepState.DISABLED,
-                    PunishStepState.GO_TO_NEXT_STEP,
-                ]:
-                    continue
+                # (obsolete)
+                # state = self.should_note_player(watch_status, squad_name, aplayer)
+                # if state == PunishStepState.APPLY:
+                #     punitions_to_apply.add_squad_state(team, squad_name, squad)
+                # if not state in [
+                #     PunishStepState.DISABLED,
+                #     PunishStepState.GO_TO_NEXT_STEP,
+                # ]:
+                #     continue
 
-                state = self.should_warn_player(watch_status, squad_name, aplayer)
+                state = self.should_warn_player(
+                    watch_status, squad_name, aplayer
+                )
 
                 if state == PunishStepState.APPLY:
                     aplayer.details.message = self.get_message(
@@ -172,10 +188,11 @@ class NoLeaderAutomod:
                     )
                     punitions_to_apply.warning.append(aplayer)
                     punitions_to_apply.add_squad_state(team, squad_name, squad)
-                if (
-                    state == PunishStepState.WAIT
-                ):  # only here to make the tests pass, otherwise useless
+
+                if state == PunishStepState.WAIT:
+                    # only here to make the tests pass, otherwise useless
                     punitions_to_apply.add_squad_state(team, squad_name, squad)
+
                 if not state in [
                     PunishStepState.DISABLED,
                     PunishStepState.GO_TO_NEXT_STEP,
@@ -192,6 +209,7 @@ class NoLeaderAutomod:
                     )
                     punitions_to_apply.punish.append(aplayer)
                     punitions_to_apply.add_squad_state(team, squad_name, squad)
+
                 if not state in [
                     PunishStepState.DISABLED,
                     PunishStepState.GO_TO_NEXT_STEP,
@@ -210,38 +228,39 @@ class NoLeaderAutomod:
 
         return punitions_to_apply
 
-    def should_note_player(
-        self, watch_status: WatchStatus, squad_name: str, aplayer: PunishPlayer
-    ):
-        if self.config.number_of_notes == 0:
-            self.logger.debug("Notes are disabled. number_of_notes is set to 0")
-            return PunishStepState.DISABLED
+    # (obsolete)
+    # def should_note_player(
+    #     self, watch_status: WatchStatus, squad_name: str, aplayer: PunishPlayer
+    # ):
+    #     if self.config.number_of_notes == 0:
+    #         self.logger.debug("Notes are disabled. number_of_notes is set to 0")
+    #         return PunishStepState.DISABLED
 
-        notes = watch_status.noted.setdefault(aplayer.name, [])
+    #     notes = watch_status.noted.setdefault(aplayer.name, [])
 
-        if not is_time(notes, self.config.notes_interval_seconds):
-            self.logger.debug(
-                "Waiting to note: %s in %s", aplayer.short_repr(), squad_name
-            )
-            return PunishStepState.WAIT
+    #     if not is_time(notes, self.config.notes_interval_seconds):
+    #         self.logger.debug(
+    #             "Waiting to note: %s in %s", aplayer.short_repr(), squad_name
+    #         )
+    #         return PunishStepState.WAIT
 
-        if len(notes) < self.config.number_of_notes:
-            self.logger.info(
-                "%s Will be noted (%s/%s)",
-                aplayer.short_repr(),
-                len(notes),
-                num_or_inf(self.config.number_of_notes),
-            )
-            notes.append(datetime.now())
-            return PunishStepState.APPLY
+    #     if len(notes) < self.config.number_of_notes:
+    #         self.logger.info(
+    #             "%s Will be noted (%s/%s)",
+    #             aplayer.short_repr(),
+    #             len(notes),
+    #             num_or_inf(self.config.number_of_notes),
+    #         )
+    #         notes.append(datetime.now())
+    #         return PunishStepState.APPLY
 
-        self.logger.info(
-            "%s Max notes reached (%s/%s). Moving on to warn.",
-            aplayer.short_repr(),
-            len(notes),
-            self.config.number_of_notes,
-        )
-        return PunishStepState.GO_TO_NEXT_STEP
+    #     self.logger.info(
+    #         "%s Max notes reached (%s/%s). Moving on to warn.",
+    #         aplayer.short_repr(),
+    #         len(notes),
+    #         self.config.number_of_notes,
+    #     )
+    #     return PunishStepState.GO_TO_NEXT_STEP
 
     def should_warn_player(
         self, watch_status: WatchStatus, squad_name: str, aplayer: PunishPlayer
@@ -298,15 +317,17 @@ class NoLeaderAutomod:
             self.logger.debug("Punish is disabled")
             return PunishStepState.DISABLED
 
-        if (
-            get_team_count(team_view, "allies") + get_team_count(team_view, "axis")
-        ) < self.config.min_server_players_for_punish:
-            self.logger.debug("Server below min player count for punish")
-            return PunishStepState.WAIT
+        # (obsolete)
+        # if (
+        #     get_team_count(team_view, "allies") + get_team_count(team_view, "axis")
+        # ) < self.config.min_server_players_for_punish:
+        #     self.logger.debug("Server below min player count for punish")
+        #     return PunishStepState.WAIT
 
-        if len(squad["players"]) < self.config.min_squad_players_for_punish:
-            self.logger.debug("Squad %s below min player count for punish", squad_name)
-            return PunishStepState.WAIT
+        # (obsolete)
+        # if len(squad["players"]) < self.config.min_squad_players_for_punish:
+        #     self.logger.debug("Squad %s below min player count for punish", squad_name)
+        #     return PunishStepState.WAIT
 
         if (
             aplayer.lvl <= self.config.immune_player_level
@@ -354,15 +375,17 @@ class NoLeaderAutomod:
             self.logger.debug("Kick is disabled")
             return PunishStepState.DISABLED
 
-        if (
-            get_team_count(team_view, "allies") + get_team_count(team_view, "axis")
-        ) < self.config.min_server_players_for_kick:
-            self.logger.debug("Server below min player count for punish")
-            return PunishStepState.WAIT
+        # (obsolete)
+        # if (
+        #     get_team_count(team_view, "allies") + get_team_count(team_view, "axis")
+        # ) < self.config.min_server_players_for_kick:
+        #     self.logger.debug("Server below min player count for punish")
+        #     return PunishStepState.WAIT
 
-        if len(squad["players"]) < self.config.min_squad_players_for_kick:
-            self.logger.debug("Squad %s below min player count for punish", squad_name)
-            return PunishStepState.WAIT
+        # (obsolete)
+        # if len(squad["players"]) < self.config.min_squad_players_for_kick:
+        #     self.logger.debug("Squad %s below min player count for punish", squad_name)
+        #     return PunishStepState.WAIT
 
         if (
             aplayer.lvl <= self.config.immune_player_level
