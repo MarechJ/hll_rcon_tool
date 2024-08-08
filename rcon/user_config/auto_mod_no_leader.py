@@ -15,6 +15,7 @@ class AutoModNoLeaderType(TypedDict):
     dont_do_anything_below_this_number_of_players: int
     dry_run: bool
     discord_webhook_url: Optional[HttpUrl]
+    whitelist_flags: list[str]
 
     number_of_notes: int
     notes_interval_seconds: int
@@ -44,6 +45,7 @@ class AutoModNoLeaderUserConfig(BaseUserConfig):
     dont_do_anything_below_this_number_of_players: int = Field(ge=0, le=100, default=40)
     dry_run: bool = Field(default=True)
     discord_webhook_url: Optional[HttpUrl] = Field(default=None)
+    whitelist_flags: list[str] = Field(default_factory=list)
 
     number_of_notes: int = Field(ge=0, default=1)
     notes_interval_seconds: int = Field(ge=1, default=10)
@@ -65,7 +67,7 @@ class AutoModNoLeaderUserConfig(BaseUserConfig):
     kick_message: str = Field(default=KICK_MESSAGE)
 
     immune_roles: list[Roles] = Field(default_factory=list)
-    immune_player_level: int = Field(ge=0, le=500, default=15)
+    immune_player_level: int = Field(ge=0, le=500, default=0)
 
     @field_serializer("discord_webhook_url")
     def serialize_server_url(self, discord_webhook_url: HttpUrl, _info):
@@ -94,6 +96,7 @@ class AutoModNoLeaderUserConfig(BaseUserConfig):
             ),
             dry_run=values.get("dry_run"),
             discord_webhook_url=values.get("discord_webhook_url"),
+            whitelist_flags=values.get("whitelist_flags"),
             number_of_notes=values.get("number_of_notes"),
             notes_interval_seconds=values.get("notes_interval_seconds"),
             number_of_warnings=values.get("number_of_warnings"),
