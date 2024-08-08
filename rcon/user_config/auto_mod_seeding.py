@@ -1,6 +1,6 @@
 from typing import Optional, TypedDict
 
-from pydantic import BaseModel, Field, HttpUrl, field_serializer
+from pydantic import BaseModel, Field, HttpUrl, field_serializer, field_validator
 
 from rcon.types import Roles
 from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
@@ -49,7 +49,10 @@ class EnforceCapFightType(TypedDict):
 
 class AutoModSeedingType(TypedDict):
     enabled: bool
+    dry_run: bool
     discord_webhook_url: Optional[HttpUrl]
+    whitelist_flags: list[str]
+
     announcement_enabled: bool
     announcement_message: str
 
@@ -69,6 +72,8 @@ class AutoModSeedingType(TypedDict):
     disallowed_weapons: DisallowedWeaponsType
     enforce_cap_fight: EnforceCapFightType
 
+    immune_roles: list[Roles]
+    immune_player_level: int
 
 class DisallowedRoles(BaseModel):
     min_players: int = Field(ge=0, le=100, default=5)
@@ -94,7 +99,10 @@ class EnforceCapFight(BaseModel):
 
 class AutoModSeedingUserConfig(BaseUserConfig):
     enabled: bool = Field(default=False)
+    dry_run: bool = Field(default=True)
     discord_webhook_url: Optional[HttpUrl] = Field(default=None)
+    whitelist_flags: list[str] = Field(default_factory=list)
+
     announcement_enabled: bool = Field(default=False)
     announcement_message: str = Field(default=ANNOUNCEMENT_MESSAGE)
 
@@ -113,6 +121,18 @@ class AutoModSeedingUserConfig(BaseUserConfig):
     disallowed_roles: DisallowedRoles = Field(default_factory=DisallowedRoles)
     disallowed_weapons: DisallowedWeapons = Field(default_factory=DisallowedWeapons)
     enforce_cap_fight: EnforceCapFight = Field(default_factory=EnforceCapFight)
+
+    immune_roles: list[Roles] = Field(default_factory=list)
+    immune_player_level: int = Field(ge=0, le=500, default=0)
+
+    @field_validator("immune_roles")
+    @classmethod
+    def validate_roles(cls, vs):
+        validated_immune_roles: list[Roles] = []
+        for raw_role in vs:
+            validated_immune_roles.append(Roles(raw_role))
+
+        return validated_immune_roles
 
     @field_serializer("discord_webhook_url")
     def serialize_server_url(self, discord_webhook_url: HttpUrl, _info):
@@ -149,7 +169,9 @@ class AutoModSeedingUserConfig(BaseUserConfig):
 
         validated_conf = AutoModSeedingUserConfig(
             enabled=values.get("enabled"),
+            dry_run=values.get("dry_run"),
             discord_webhook_url=values.get("discord_webhook_url"),
+            whitelist_flags=values.get("whitelist_flags"),
             announcement_enabled=values.get("announcement_enabled"),
             announcement_message=values.get("announcement_message"),
             number_of_warnings=values.get("number_of_warnings"),
@@ -164,6 +186,8 @@ class AutoModSeedingUserConfig(BaseUserConfig):
             disallowed_roles=disallowed_roles,
             disallowed_weapons=disallowed_weapons,
             enforce_cap_fight=enforce_cap_fight,
+            immune_roles=values.get("immune_roles"),
+            immune_player_level=values.get("immune_player_level"),
         )
 
         if not dry_run:
