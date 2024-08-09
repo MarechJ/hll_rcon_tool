@@ -134,21 +134,25 @@ class PlayerView extends Component {
     this.setState({ vipPlayers: vips })
   }
 
-  addPlayerVip(player, expiresAt, forward) {
+  async addPlayerVip(player, expiresAt, forward) {
     // action
-    addPlayerVip({
+    await addPlayerVip({
       player_id: player.get("player_id"),
       description: player.get("name"),
       expiration: expiresAt,
       forward: forward,
     })
-    // update vipPlayers
+    // update state
+    await this.loadPlayers()
+    await this.getVips()
   }
 
-  removePlayerVip(player) {
+  async removePlayerVip(player) {
     // action
-    removePlayerVip({ player_id: player.get("player_id") })
-    // update vipPlayers
+    await removePlayerVip({ player_id: player.get("player_id") })
+    // update state
+    await this.loadPlayers()
+    await this.getVips()
   }
 
   unBan(ban) {
