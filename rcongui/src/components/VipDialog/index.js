@@ -17,7 +17,6 @@ import { ForwardCheckBox } from "../commonComponent";
 
 const vipButtons = [
   [2, "hours"],
-  [6, "hours"],
   [1, "day"],
   [1, "week"],
   [1, "month"]
@@ -126,6 +125,7 @@ export function VipExpirationDialog({ open, vips, onDeleteVip, handleClose, hand
             />
           </MuiPickersUtilsProvider>
           <Box>
+            <Button variant="outlined" size="small" color="secondary" style={{ display: "block", width: "100%", marginBottom: 4 }} onClick={() => setExpirationTimestamp(moment().add(15, "minutes"))}>Help to join!</Button>
             {vipButtons.map(([amount, unit], index) => (
               <VipTimeButtons
                 key={unit + index}
