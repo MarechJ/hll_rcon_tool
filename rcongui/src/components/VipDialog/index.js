@@ -14,6 +14,7 @@ import MomentUtils from "@date-io/moment";
 import moment from "moment";
 import { PlayerVipSummary } from "./PlayerVipSummary";
 import { ForwardCheckBox } from "../commonComponent";
+import { fromJS } from "immutable";
 
 // this array could probably be moved to a config file
 const vipButtons = [
@@ -59,10 +60,15 @@ const VipTimeButtons = ({
 };
 
 export function VipExpirationDialog(props) {
-  const { open, vips, onDeleteVip, handleClose, handleConfirm } = props;
+  const { open, vips, onDeleteVip, handleClose, handleConfirm, player } = props;
   const [expirationTimestamp, setExpirationTimestamp] = useState();
   const [isVip, setIsVip] = useState(false);
   const [forward, setForward] = useState(false);
+
+  let vipPlayer = open && player && vips.find(vip => vip.player_id === player.get("player_id"));
+  if (vipPlayer) {
+    vipPlayer.names = [vipPlayer.name]
+  }
 
   /* open is either a boolean or the passed in player Map */
   useEffect(() => {
@@ -70,6 +76,13 @@ export function VipExpirationDialog(props) {
       setIsVip(!!vips.get(open.get("player_id")));
       if (open.get("vip_expiration")) {
         setExpirationTimestamp(open.get("vip_expiration"));
+      }
+    }
+
+    if (open && player) {
+      setIsVip(player.get("is_vip"))
+      if (vipPlayer) {
+        setExpirationTimestamp(moment.utc(vipPlayer.vip_expiration).format("YYYY-MM-DD HH:mm:ssZ"));
       }
     }
   }, [open, vips]);
@@ -88,12 +101,12 @@ export function VipExpirationDialog(props) {
             />
           </Grid>
           <Grid item>
-            <PlayerVipSummary player={open} isVip={isVip} />
+            <PlayerVipSummary player={fromJS(vipPlayer) ?? open} isVip={isVip} />
           </Grid>
           <Grid item container spacing={2}>
-            {vipButtons.map(([amount, unit]) => (
+            {vipButtons.map(([amount, unit], index) => (
               <VipTimeButtons
-                key={unit}
+                key={unit + index}
                 amount={amount}
                 unit={unit}
                 expirationTimestamp={expirationTimestamp}
@@ -120,7 +133,7 @@ export function VipExpirationDialog(props) {
         <Button
           onClick={() => {
             handleConfirm(
-              open,
+              player ?? open,
               moment("3000-01-01T00:00:00+00:00").format(),
               forward
             );
@@ -134,7 +147,7 @@ export function VipExpirationDialog(props) {
             color="secondary"
             onClick={() => {
               setExpirationTimestamp(moment().format());
-              onDeleteVip(open, forward);
+              onDeleteVip(player ?? open, forward);
               handleClose();
             }}
           >
@@ -152,7 +165,7 @@ export function VipExpirationDialog(props) {
         <Button
           onClick={() => {
             handleConfirm(
-              open,
+              player ?? open,
               moment.utc(expirationTimestamp).format("YYYY-MM-DD HH:mm:ssZ"),
               forward
             );
