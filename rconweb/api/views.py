@@ -220,7 +220,7 @@ def expose_api_endpoint(
             # This does not cast argument types, so things that come in from GET parameters are all going to be strings
             # so we need to handle this properly inside methods if the types matter
             for pname, param in parameters.items():
-                if pname == "by":
+                if pname in ("by", "admin_name"):
                     arguments[pname] = request.user.username
                 elif param.default != inspect._empty:
                     arguments[pname] = data.get(pname, param.default)
