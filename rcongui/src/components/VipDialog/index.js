@@ -71,10 +71,6 @@ export function VipExpirationDialog({ open, vips, onDeleteVip, handleClose, hand
   const [isVip, setIsVip] = useState(false);
   const [forward, setForward] = useState(false);
 
-  const currentVipExpiration = typeof open === "object" ? open?.get("vip_expiration")
-                              : player?.has("vip_expiration") ? player?.get("vip_expiration") :
-                              vips.find(vipObj => vipObj.player_id === player?.get("player_id"))?.vip_expiration
-
   useEffect(() => {
     // handle old usage
     if (typeof open === "object") {
@@ -104,6 +100,14 @@ export function VipExpirationDialog({ open, vips, onDeleteVip, handleClose, hand
 
     setIsVip(false);
   }, [open, vips]);
+
+  if (!open || !player) {
+    return null;
+  }
+
+  const currentVipExpiration = typeof open === "object" ? open?.get("vip_expiration")
+  : player?.has("vip_expiration") ? player?.get("vip_expiration") :
+  vips?.find(vipObj => vipObj.player_id === player?.get("player_id"))?.vip_expiration
 
   return (
     <Dialog open={open} maxWidth="xs" fullWidth={true} onClose={handleClose} aria-labelledby="form-dialog-title">
