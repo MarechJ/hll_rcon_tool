@@ -1,12 +1,6 @@
 from typing import Optional, TypedDict
 
-from pydantic import (
-    BaseModel,
-    BeforeValidator,
-    Field,
-    HttpUrl,
-    field_serializer
-)
+from pydantic import BaseModel, BeforeValidator, Field, HttpUrl, field_serializer
 from pydantic.functional_validators import BeforeValidator
 from typing_extensions import Annotated
 
@@ -123,9 +117,7 @@ class AutoModLevelUserConfig(BaseUserConfig):
             enabled=values.get("enabled"),
             discord_webhook_url=values.get("discord_webhook_url"),
             announcement_enabled=values.get("announcement_enabled"),
-            only_announce_impacted_players=values.get(
-                "only_announce_impacted_players"
-            ),
+            only_announce_impacted_players=values.get("only_announce_impacted_players"),
             announcement_message=values.get("announcement_message"),
             force_kick_message=values.get("force_kick_message"),
             min_level=values.get("min_level"),
@@ -147,6 +139,4 @@ class AutoModLevelUserConfig(BaseUserConfig):
         )
 
         if not dry_run:
-            set_user_config(
-                AutoModLevelUserConfig.KEY(), validated_conf.model_dump()
-            )
+            set_user_config(AutoModLevelUserConfig.KEY(), validated_conf)

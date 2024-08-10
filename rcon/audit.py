@@ -6,11 +6,13 @@ from redis import BlockingConnectionPool, Redis
 
 from rcon.cache_utils import get_redis_pool
 from rcon.rcon import get_rcon
+from rcon.types import AdminUserType
 
 logger = logging.getLogger(__name__)
 
 HEARTBEAT_KEY_PREFIX = "heartbeat_"
 KNOWN_MODS_KEY = "mods"
+PLAYER_ID = "player_id"
 
 RED_POOL = None
 
@@ -29,21 +31,13 @@ def _heartbeat_key(uniqueid):
     return f"{HEARTBEAT_KEY_PREFIX}{uniqueid}"
 
 
-def heartbeat(username, steam_id_64, timeout=120):
+def heartbeat(username, player_id, timeout=120):
     red = _red()
     return red.setex(
         _heartbeat_key(username),
         timeout,
-        json.dumps(dict(username=username, steam_id_64=steam_id_64)),
+        json.dumps(dict(username=username, player_id=player_id)),
     )
-
-
-def online_mods():
-    red = _red()
-
-    return [
-        json.loads(red.get(u)) for u in red.scan_iter(f"{HEARTBEAT_KEY_PREFIX}*", 1)
-    ]
 
 
 # This exists only no to create a weird interdependancy / tight coupling with the API layer.
@@ -59,7 +53,14 @@ def set_registered_mods(moderators_name_steamids: List[tuple]):
         red.hset("moderators", k, v)
 
 
-def ingame_mods(rcon=None):
+def online_mods(rcon=None) -> list[AdminUserType]:
+    red = _red()
+    return [
+        json.loads(red.get(u)) for u in red.scan_iter(f"{HEARTBEAT_KEY_PREFIX}*", 1)
+    ]
+
+
+def ingame_mods(rcon=None) -> list[AdminUserType]:
     red = _red()
     mods = red.hgetall("moderators") or {}
 
@@ -69,12 +70,10 @@ def ingame_mods(rcon=None):
     rcon = rcon or get_rcon()
     players = rcon.get_players()
     mods_ids = set(v.decode() for v in mods.values())
-    ig_mods = []
+    ig_mods: list[AdminUserType] = []
     for player in players:
-        if player["steam_id_64"] in mods_ids:
-            ig_mods.append(
-                {"username": player["name"], "steam_id_64": player["steam_id_64"]}
-            )
+        if player[PLAYER_ID] in mods_ids:
+            ig_mods.append({"username": player["name"], PLAYER_ID: player[PLAYER_ID]})
 
     return ig_mods
 

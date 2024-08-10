@@ -2,6 +2,12 @@ import React from "react";
 
 import { toast } from "react-toastify";
 
+const CRCON_API = `${process.env.REACT_APP_API_URL}`
+
+export function execute(command, data) {
+  return postData(CRCON_API + command, data)
+}
+
 function LoginError(message) {
   this.message = message;
   this.name = "LoginError";
@@ -148,9 +154,11 @@ async function sendAction(command, parameters) {
 
 async function _checkResult(data) {
   if (data.result) {
-    let unescaped = data.result.messages.map(ele => ele.replaceAll(/\\n/g, '\n'))
-    unescaped = unescaped.map(ele => ele.replaceAll(/\\t/g, '\t'))
-    return unescaped
+    let unescaped = data.result.messages.map((ele) =>
+      ele.replaceAll(/\\n/g, "\n")
+    );
+    unescaped = unescaped.map((ele) => ele.replaceAll(/\\t/g, "\t"));
+    return unescaped;
   }
   return [];
 }
@@ -164,16 +172,96 @@ async function getSharedMessages(namespace) {
     .then(_checkResult);
 }
 
-async function addPlayerToWatchList(steam_id_64, reason, playerName) {
-  return postData(`${process.env.REACT_APP_API_URL}do_watch_player`, {
-    steam_id_64: steam_id_64,
+async function addPlayerToWatchList(player_id, reason, playerName) {
+  return postData(`${process.env.REACT_APP_API_URL}watch_player`, {
+    player_id: player_id,
     reason: reason,
     player_name: playerName,
   })
     .then((response) =>
-      showResponse(response, `PlayerID ${steam_id_64} watched`, true)
+      showResponse(response, `Player ID ${player_id} watched`, true)
     )
     .catch(handle_http_errors);
+}
+
+async function addPlayerToBlacklist({
+  blacklistId,
+  playerId,
+  expiresAt,
+  reason
+}) {
+  try {
+    const response = await postData(`${process.env.REACT_APP_API_URL}add_blacklist_record`, {
+      blacklist_id: blacklistId,
+      player_id: playerId,
+      expires_at: expiresAt || null,
+      reason
+    })
+
+    return showResponse(response, `Player ID ${playerId} was blacklisted`, true)
+  } catch (error) {
+    handle_http_errors(error)
+  }
+}
+
+async function getBlacklists() {
+  try {
+    const response = await get("get_blacklists")
+    const data = await showResponse(response, "get_blacklists", false)
+    if (data.result) {
+      return data.result;
+    }    
+  } catch (error) {
+    handle_http_errors(error)
+  }
+}
+
+async function getServerStatus() {
+  try {
+    const response = await get("get_status");
+    const data = await response.json();
+    if (data.result) {
+      return data.result;
+    }    
+  } catch (error) {
+    handle_http_errors(error)
+  }
+}
+
+async function getVips() {
+  try {
+    const response = await get("get_vip_ids");
+    const data = await response.json();
+    if (data.result) {
+      return data.result;
+    }    
+  } catch (error) {
+    handle_http_errors(error)
+  }
+}
+
+async function addPlayerVip(player) {
+  try {
+    const response = await execute("add_vip", player);
+    const data = showResponse(response, "add_vip", true)
+    if (data.result) {
+      return data.result;
+    }    
+  } catch (error) {
+    handle_http_errors(error)
+  }
+}
+
+async function removePlayerVip(player) {
+  try {
+    const response = await execute("remove_vip", player);
+    const data = showResponse(response, "remove_vip", true)
+    if (data.result) {
+      return data.result;
+    }    
+  } catch (error) {
+    handle_http_errors(error)
+  }
 }
 
 export {
@@ -186,4 +274,10 @@ export {
   LoginError,
   sendAction,
   addPlayerToWatchList,
+  addPlayerToBlacklist,
+  getBlacklists,
+  getServerStatus,
+  addPlayerVip,
+  removePlayerVip,
+  getVips,
 };

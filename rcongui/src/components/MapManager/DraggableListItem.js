@@ -13,7 +13,6 @@ import {
 } from "@material-ui/core";
 import Avatar from "@material-ui/core/Avatar";
 import DeleteIcon from "@material-ui/icons/Delete";
-import { getMapName, getMapImageUrl } from "../Scoreboard/utils";
 
 const useStyles = makeStyles({
   draggingListItem: {
@@ -25,28 +24,29 @@ const useStyles = makeStyles({
 });
 
 const DraggableListItem = ({ item, index, onRemove }) => {
-
-  const getLabels = (fullName) => {
+  const getLabels = (layer) => {
     const labels = [];
 
-    if (fullName.toLowerCase().includes("offensive") || fullName.toLowerCase().includes("off")) {
+    if (layer.game_mode === "offensive") {
       labels.push("offensive");
-    } else if (fullName.toLowerCase().includes('skirmish')) {
-      labels.push('skirmish')
-    }
-    else {
+      if (
+        layer.attackers == "allies"
+      ) {
+        labels.push("allies");
+      } else {
+        labels.push("axis");
+      }
+    } else if (
+      layer.game_mode === "control" ||
+      layer.game_mode === "phased" ||
+      layer.game_mode === "majority"
+    ) {
+      labels.push("skirmish");
+    } else {
       labels.push("warfare");
     }
-    if (
-      fullName.toLowerCase().endsWith("us") ||
-      fullName.toLowerCase().endsWith("rus")
-    ) {
-      labels.push("allies");
-    }
-    if (fullName.toLowerCase().endsWith("ger")) {
-      labels.push("axis");
-    }
-    if (fullName.toLowerCase().includes("night")) {
+
+    if (layer.environment !== "day") {
       labels.push("night");
     }
     return labels;
@@ -72,7 +72,7 @@ const DraggableListItem = ({ item, index, onRemove }) => {
 
   const classes = useStyles();
   return (
-    <Draggable draggableId={item + index} index={index}>
+    <Draggable draggableId={item.id + index} index={index}>
       {(provided, snapshot) => (
         <ListItem
           ref={provided.innerRef}
@@ -85,13 +85,13 @@ const DraggableListItem = ({ item, index, onRemove }) => {
           }
         >
           <ListItemAvatar>
-            <Avatar src={getMapImageUrl(item)} />
+            <Avatar src={`maps/${item.image_name}`} />
           </ListItemAvatar>
           <ListItemText
             primary={
               <>
                 <Typography display="inline" variant="h6">
-                  {getMapName(item)}{" "}
+                  {item.pretty_name}{" "}
                   {getLabels(item).map((e) => (
                     <Chip
                       size="small"
@@ -103,7 +103,7 @@ const DraggableListItem = ({ item, index, onRemove }) => {
                 </Typography>
               </>
             }
-            secondary={<>{item}</>}
+            secondary={<>{item.id}</>}
           />
           <ListItemSecondaryAction>
             <IconButton

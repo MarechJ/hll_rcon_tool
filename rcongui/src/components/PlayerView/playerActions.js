@@ -24,6 +24,8 @@ import { Grid } from "@material-ui/core";
 import Tooltip from "@material-ui/core/Tooltip";
 import MessageIcon from "@material-ui/icons/Message";
 import VisibilityIcon from "@material-ui/icons/Visibility";
+import BlockIcon from "@material-ui/icons/Block";
+import StarIcon from "@material-ui/icons/Star";
 
 const Duration = ({
   durationNumber,
@@ -112,6 +114,8 @@ class ReasonDialog extends React.Component {
         return `Permanently Ban ${playerName}`;
       case "message_player":
         return `Message ${playerName}`;
+      case "add_blacklist_record":
+        return `Add ${playerName} to a blacklist`;
       default:
         return "";
     }
@@ -217,7 +221,7 @@ class ReasonDialog extends React.Component {
                 reason,
                 comment,
                 durationMultiplier * durationNumber,
-                open.steam_id_64
+                open.player_id
               );
               this.setState({ reason: "", comment: "" });
             }}
@@ -241,6 +245,8 @@ const PlayerActions = ({
   disable = false,
   penaltyCount = Map(),
   disableAll = false,
+  onBlacklist,
+  onVipDialogOpen,
 }) => {
   const [anchorEl, setAnchorEl] = React.useState(null);
   const [isOpen, setOpen] = React.useState(false);
@@ -315,6 +321,16 @@ const PlayerActions = ({
             </Badge>
           </Button>
         ))}
+        <Tooltip title="Blacklist Player">
+          <Button size="small" onClick={onBlacklist}>
+            <BlockIcon fontSize="small" />
+          </Button>
+        </Tooltip>
+        <Tooltip title={"Manage player's VIP"} arrow>
+          <Button>
+            <StarIcon size="small" onClick={onVipDialogOpen} />
+          </Button>
+        </Tooltip>
         {onFlag ? (
           <Tooltip title="Flag Player">
             <Button size="small" onClick={onFlag}>

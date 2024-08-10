@@ -40,7 +40,7 @@ const PlayerGrid = withWidth()(
     onRemoveFromWatchList,
     width,
     vips,
-    bans
+    bans,
   }) => {
     const myClasses = useStyles();
 
@@ -59,7 +59,7 @@ const PlayerGrid = withWidth()(
             {players.map((player) => {
               return (
                 <GridListTile
-                  key={player.get("steam_id_64")}
+                  key={player.get("player_id")}
                   style={{ minHeight: "100%" }}
                 >
                   <Grid
@@ -75,22 +75,23 @@ const PlayerGrid = withWidth()(
                         classes={classes}
                         onDeleteFlag={onDeleteFlag}
                       />
-                      <PlayerBan classes={classes} bans={bans} player={player} />
+                      <PlayerBan
+                        classes={classes}
+                        bans={bans}
+                        player={player}
+                      />
                       <PlayerSighthings classes={classes} player={player} />
                       <PlayerPenalties classes={classes} player={player} />
                       <Grid container justify="center">
                         <Grid item>
                           <ActionButton
-                            blacklisted={
-                              player.get("blacklist") &&
-                              player.get("blacklist").get("is_blacklisted")
-                            }
+                            blacklisted={player.get("is_blacklisted")}
                             onUnBlacklist={() => onUnBlacklist(player)}
                             onBlacklist={() => onBlacklist(player)}
                             onTempBan={() => onTempBan(player)}
                             onUnban={() => onUnban(player)}
                             onflag={() => onflag(player)}
-                            isVip={vips.get(player.get("steam_id_64"))}
+                            isVip={vips.get(player.get("player_id"))}
                             onAddVip={() => onAddVip(player)}
                             onDeleteVip={() => onDeleteVip(player)}
                             isWatched={

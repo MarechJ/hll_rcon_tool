@@ -94,7 +94,7 @@ class BaseMentionWebhookUserConfig(BaseUserConfig):
         validated_conf = cls(hooks=validated_hooks)
 
         if not dry_run:
-            set_user_config(validated_conf.KEY(), validated_conf.model_dump())
+            set_user_config(validated_conf.KEY(), validated_conf)
 
 
 class BaseWebhookUserConfig(BaseUserConfig):
@@ -112,7 +112,7 @@ class BaseWebhookUserConfig(BaseUserConfig):
         validated_conf = cls(hooks=validated_hooks)
 
         if not dry_run:
-            set_user_config(validated_conf.KEY(), validated_conf.model_dump())
+            set_user_config(validated_conf.KEY(), validated_conf)
 
 
 class WatchlistWebhooksUserConfig(BaseMentionWebhookUserConfig):
@@ -153,7 +153,7 @@ class AdminPingWebhooksUserConfig(BaseMentionWebhookUserConfig):
         )
 
         if not dry_run:
-            set_user_config(validated_conf.KEY(), validated_conf.model_dump())
+            set_user_config(validated_conf.KEY(), validated_conf)
 
 
 class ChatWebhooksUserConfig(BaseWebhookUserConfig):
@@ -174,7 +174,7 @@ class ChatWebhooksUserConfig(BaseWebhookUserConfig):
         )
 
         if not dry_run:
-            set_user_config(validated_conf.KEY(), validated_conf.model_dump())
+            set_user_config(validated_conf.KEY(), validated_conf)
 
 
 class AuditWebhooksUserConfig(BaseWebhookUserConfig):
@@ -201,7 +201,7 @@ class KillsWebhooksUserConfig(BaseWebhookUserConfig):
         )
 
         if not dry_run:
-            set_user_config(validated_conf.KEY(), validated_conf.model_dump())
+            set_user_config(validated_conf.KEY(), validated_conf)
 
 
 def parse_raw_mention_hooks(

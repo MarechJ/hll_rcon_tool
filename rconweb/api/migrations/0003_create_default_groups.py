@@ -17,7 +17,6 @@ GROUPS = [
             "can_add_player_watch",
             "can_add_vip",
             "can_ban_profanities",
-            "can_blacklist_players",
             "can_change_auto_broadcast_config",
             "can_change_auto_settings",
             "can_change_autobalance_enabled",
@@ -68,7 +67,6 @@ GROUPS = [
             "can_temp_ban_players",
             "can_toggle_services",
             "can_unban_profanities",
-            "can_unblacklist_players",
             "can_unflag_player",
             "can_upload_vip_list",
             "can_view_admin_groups",
@@ -121,7 +119,6 @@ GROUPS = [
             "can_view_recent_logs",
             "can_view_round_time_remaining",
             "can_view_server_name",
-            "can_view_server_stats",
             "can_view_shared_standard_messages",
             "can_view_structured_logs",
             "can_view_team_objective_scores",
@@ -202,7 +199,6 @@ GROUPS = [
             "can_add_player_watch",
             "can_add_vip",
             "can_ban_profanities",
-            "can_blacklist_players",
             "can_change_auto_broadcast_config",
             "can_change_auto_settings",
             "can_change_autobalance_enabled",
@@ -252,7 +248,6 @@ GROUPS = [
             "can_temp_ban_players",
             "can_toggle_services",
             "can_unban_profanities",
-            "can_unblacklist_players",
             "can_unflag_player",
             "can_upload_vip_list",
             "can_view_admin_groups",
@@ -305,7 +300,6 @@ GROUPS = [
             "can_view_recent_logs",
             "can_view_round_time_remaining",
             "can_view_server_name",
-            "can_view_server_stats",
             "can_view_shared_standard_messages",
             "can_view_structured_logs",
             "can_view_team_objective_scores",
@@ -372,7 +366,6 @@ GROUPS = [
         (
             "can_add_player_comments",
             "can_add_player_watch",
-            "can_blacklist_players",
             "can_flag_player",
             "can_kick_players",
             "can_message_players",
@@ -384,7 +377,6 @@ GROUPS = [
             "can_switch_players_immediately",
             "can_switch_players_on_death",
             "can_temp_ban_players",
-            "can_unblacklist_players",
             "can_unflag_player",
             "can_view_admin_groups",
             "can_view_admin_ids",
@@ -436,7 +428,6 @@ GROUPS = [
             "can_view_recent_logs",
             "can_view_round_time_remaining",
             "can_view_server_name",
-            "can_view_server_stats",
             "can_view_shared_standard_messages",
             "can_view_structured_logs",
             "can_view_team_objective_scores",
@@ -509,7 +500,6 @@ GROUPS = [
             "can_view_recent_logs",
             "can_view_round_time_remaining",
             "can_view_server_name",
-            "can_view_server_stats",
             "can_view_shared_standard_messages",
             "can_view_structured_logs",
             "can_view_team_objective_scores",
@@ -554,9 +544,12 @@ def create_default_groups(apps, schema_editor):
         for raw_permission in permissions:
             # Permissions are created in an earlier migration so they should exist
             # If they don't we want to fail now and fix it
-            permission = Permission.objects.get(
-                content_type=content_type, codename=raw_permission
-            )
+            try:
+                permission = Permission.objects.get(
+                    content_type=content_type, codename=raw_permission
+                )
+            except:
+                raise ValueError(raw_permission)
             group.permissions.add(permission)
 
 

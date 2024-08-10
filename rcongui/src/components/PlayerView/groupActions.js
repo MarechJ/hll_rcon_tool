@@ -123,7 +123,7 @@ const GroupActions = ({
                     message,
                     comment,
                     durationNumber * durationMultiplier,
-                    p.steam_id_64
+                    p.player_id
                   );
                 })
               }

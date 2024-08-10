@@ -1,26 +1,32 @@
 import logging
 import os
+import re
 import time
 from datetime import datetime
 
 import pytz
 
+from rcon.api_commands import get_rcon_api
 from rcon.audit import ingame_mods, online_mods
-from rcon.rcon import get_rcon
 from rcon.user_config.auto_settings import AutoSettingsConfig
-from rcon.vote_map import VoteMap
+from rcon.user_config.utils import BaseUserConfig
 
 logger = logging.getLogger(__name__)
 
+USER_CONFIG_NAME_PATTERN = re.compile(r"set_.*_config")
 
 METRICS = {
-    "player_count": lambda rcon: int(rcon.get_slots().split("/")[0]),
+    "player_count": lambda rcon: int(rcon.get_slots()["current_players"]),
     "online_mods": lambda: len(online_mods()),
     "ingame_mods": lambda: len(ingame_mods()),
-    "current_map": lambda rcon: rcon.get_map().replace("_RESTART", ""),
+    "current_map": lambda rcon: str(rcon.current_map),
     "time_of_day": lambda tz: datetime.now(tz=tz),
 }
 CONFIG_DIR = os.getenv("CONFIG_DIR", "config/")
+
+
+def is_user_config_func(name: str) -> bool:
+    return re.match(USER_CONFIG_NAME_PATTERN, name) is not None
 
 
 class BaseCondition:
@@ -97,9 +103,9 @@ class IngameModsCondition(OnlineModsCondition):
 
 class CurrentMapCondition(BaseCondition):
     def __init__(
-        self, maps=[], inverse=False, *args, **kwargs
+        self, map_names=[], inverse=False, *args, **kwargs
     ):  # Avoid unexpected arguments
-        self.maps = maps
+        self.map_names = map_names
         self.inverse = inverse
         self.metric_name = "current_map"
         self.metric_source = "rcon"
@@ -107,12 +113,12 @@ class CurrentMapCondition(BaseCondition):
     def is_valid(self, **metric_sources):
         metric_source = metric_sources[self.metric_source]
         comparand = self.metric_getter(metric_source)
-        res = comparand in self.maps
+        res = comparand in self.map_names
         logger.info(
             "Applying condition %s: %s in %s = %s. Inverse: %s",
             self.metric_name,
             comparand,
-            self.maps,
+            self.map_names,
             res,
             self.inverse,
         )
@@ -181,30 +187,39 @@ def create_condition(name, **kwargs):
         raise ValueError("Invalid condition type: %s" % name)
 
 
-def do_run_commands(rcon, votemap, commands):
+def do_run_commands(rcon, commands):
     for command, params in commands.items():
         try:
             logger.info("Applying %s %s", command, params)
-            votemap_commands = {
-                "do_add_map_to_whitelist": votemap.do_add_map_to_whitelist,
-                "do_add_maps_to_whitelist": votemap.do_add_maps_to_whitelist,
-                "do_remove_map_from_whitelist": votemap.do_remove_map_from_whitelist,
-                "do_remove_maps_from_whitelist": votemap.do_remove_maps_from_whitelist,
-                "do_reset_map_whitelist": votemap.do_reset_map_whitelist,
-                "do_set_map_whitelist": votemap.do_set_map_whitelist,
-            }
-            if command in votemap_commands.keys():
-                votemap_commands[command](**params)
+
+            # Allow people to apply partial changes to a user config to make
+            # auto settings less gigantic
+            if is_user_config_func(command):
+                # super dirty we should probably make an actual look up table
+                # but all the names are consistent
+                get_config_command = f"g{command[1:]}"
+                config: BaseUserConfig = rcon.__getattribute__(get_config_command)()
+                # get the existing config, override anything set in params
+                merged_params = config.model_dump() | params
+
+                if "by" not in merged_params:
+                    merged_params["by"] = "AutoSettings"
+
+                rcon.__getattribute__(command)(**merged_params)
             else:
+                # Non user config settings
                 rcon.__getattribute__(command)(**params)
-        except:
-            logger.exception("Unable to apply %s %s", command, params)
+        except AttributeError as e:
+            logger.exception(
+                "%s is not a valid command, double check the name!", command
+            )
+        except Exception as e:
+            logger.exception("Unable to apply %s %s: %s", command, params, e)
         time.sleep(5)  # go easy on the server
 
 
 def run():
-    rcon = get_rcon()
-    votemap = VoteMap()
+    rcon = get_rcon_api()
     config = AutoSettingsConfig().get_settings()
 
     while True:
@@ -222,7 +237,6 @@ def run():
             }
             do_run_commands(
                 rcon,
-                votemap,
                 {
                     name: params
                     for (name, params) in default_commands.items()
@@ -231,7 +245,7 @@ def run():
             )
 
         for rule in config["rules"]:
-            conditions = []
+            conditions: list[BaseCondition] = []
             commands = rule.get("commands", {})
             for c_name, c_params in rule.get("conditions", {}).items():
                 try:
@@ -250,29 +264,29 @@ def run():
             if all([c.is_valid(rcon=rcon) for c in conditions]):
                 if always_apply_defaults:
                     # Overwrites the saved commands in case they're duplicate
-                    do_run_commands(rcon, votemap, {**saved_commands, **commands})
+                    do_run_commands(rcon, {**saved_commands, **commands})
                 else:
-                    do_run_commands(rcon, votemap, commands)
+                    do_run_commands(rcon, commands)
                 rule_matched = True
                 if can_invoke_multiple_rules:
                     logger.info(
-                        f"Rule validation succeded, moving to next one. ({can_invoke_multiple_rules=})"
+                        f"Rule conditions met, can invoke multiple rules and moving to next one. ({can_invoke_multiple_rules=})"
                     )
                     continue
                 else:
                     logger.info(
-                        f"Rule validation succeded, ignoring potential other rules. ({can_invoke_multiple_rules=})"
+                        f"Rule conditions met, cannot invoke multiple rules, ignoring potential other rules. ({can_invoke_multiple_rules=})"
                     )
                     break
 
-            logger.info("Rule validation failed, moving to next one.")
+            logger.info("Rule `%s` conditions not met, moving to next one.", rule)
 
         if not rule_matched:
             if always_apply_defaults:
                 # The saved commands were never ran yet, so we do that here
-                do_run_commands(rcon, votemap, saved_commands)
+                do_run_commands(rcon, saved_commands)
             else:
-                do_run_commands(rcon, votemap, default_commands)
+                do_run_commands(rcon, default_commands)
         time.sleep(60)
 
 

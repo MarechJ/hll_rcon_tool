@@ -170,7 +170,8 @@ const Flag = ({ data, onDeleteFlag }) => (
 );
 
 const formatPunitions = (profile) => {
-  const formatTime = (item) => moment.utc(item.get("time")).local().format("ddd Do MMM HH:mm:ss");
+  const formatTime = (item) =>
+    moment.utc(item.get("time")).local().format("ddd Do MMM HH:mm:ss");
   return profile
     .get("received_actions", [])
     .map((item) => (
@@ -318,10 +319,12 @@ const PlayerItem = ({
   avatarBackround,
   onSelect,
   isSelected,
+  onBlacklist,
+  onVipDialogOpen,
 }) => {
   const profile = player.get("profile") ? player.get("profile") : new Map();
   const name = player.get("name");
-  const steamID64 = player.get("steam_id_64");
+  const player_id = player.get("player_id");
   const localClasses = useStyles();
 
   return (
@@ -349,7 +352,7 @@ const PlayerItem = ({
       )}
 
       <ListItemText
-        id={`checkbox-list-label-${steamID64}`}
+        id={`checkbox-list-label-${player_id}`}
         primary={
           <React.Fragment>
             <WithPopOver content={formatPunitions(profile)}>{name}</WithPopOver>
@@ -368,9 +371,11 @@ const PlayerItem = ({
               className={classes.marginRight}
               target="_blank"
               color="inherit"
-              href={makePlayerProfileUrl(steamID64, name)}
+              href={makePlayerProfileUrl(player_id, name)}
             >
-              <FontAwesomeIcon icon={(steamID64.length === 17) ? faSteam : faWindows} />
+              <FontAwesomeIcon
+                icon={player_id.length === 17 ? faSteam : faWindows}
+              />
             </Link>
           </React.Fragment>
         }
@@ -383,9 +388,9 @@ const PlayerItem = ({
             <Link
               color="inherit"
               component={RouterLink}
-              to={`/player/${player.get("steam_id_64")}`}
+              to={`/player/${player.get("player_id")}`}
             >
-              {steamID64} <Icon component={OpenInNewIcon} fontSize="inherit" />
+              {player_id} <Icon component={OpenInNewIcon} fontSize="inherit" />
             </Link>
             <div className={classes.noPaddingMargin}>
               {profile.get("flags", []).map((d) => (
@@ -407,6 +412,8 @@ const PlayerItem = ({
             size="small"
             handleAction={handleAction}
             onFlag={onFlag}
+            onBlacklist={onBlacklist}
+            onVipDialogOpen={onVipDialogOpen}
             displayCount={nbButtons}
             isWatched={
               profile.get("watchlist")
@@ -490,8 +497,10 @@ const CompactList = ({
   handleAction,
   sortType,
   width,
-  onFlag,
-  onDeleteFlag,
+  onFlag: onFlagClick,
+  onDeleteFlag: onDeleteFlagClick,
+  onBlacklist: onBlacklistClick,
+  onVipDialogOpen,
 }) => {
   const myPlayers = React.useMemo(() => {
     let myPlayers = players;
@@ -518,7 +527,7 @@ const CompactList = ({
           classes={classes}
           nbButtons={sizes[width]}
           player={player}
-          key={player.get("steam_id_64")}
+          key={player.get("player_id")}
           handleAction={(actionType) =>
             handleAction(
               actionType,
@@ -526,13 +535,13 @@ const CompactList = ({
               null,
               null,
               2,
-              player.get("steam_id_64")
+              player.get("player_id")
             )
           }
           onFlag={() =>
-            onFlag(
+            onFlagClick(
               Map({
-                steam_id_64: player.get("steam_id_64"),
+                player_id: player.get("player_id"),
                 names: (player.get("profile")
                   ? player.get("profile")
                   : new Map()
@@ -540,7 +549,9 @@ const CompactList = ({
               })
             )
           }
-          onDeleteFlag={onDeleteFlag}
+          onDeleteFlag={onDeleteFlagClick}
+          onBlacklist={() => onBlacklistClick(player)}
+          onVipDialogOpen={() => onVipDialogOpen(player)}
         />
       ))}
     </List>

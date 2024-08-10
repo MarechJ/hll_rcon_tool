@@ -170,15 +170,15 @@ class HLLSettings extends React.Component {
       .then((data) =>
         data.failed === false
           ? this.setState({
-              autoBalanceThres: data.result.autobalance_threshold,
-              teamSwitchCooldownMin: data.result.team_switch_cooldown,
-              idleAutokickMin: data.result.idle_autokick_time,
-              maxPingMs: data.result.max_ping_autokick,
-              queueLength: data.result.queue_length,
-              vipSlots: data.result.vip_slots_num,
-              autobalanceEnabled: data.result.autobalance_enabled,
-              votekickEnabled: data.result.votekick_enabled,
-            })
+            autoBalanceThres: data.result.autobalance_threshold,
+            teamSwitchCooldownMin: data.result.team_switch_cooldown,
+            idleAutokickMin: data.result.idle_autokick_time,
+            maxPingMs: data.result.max_ping_autokick,
+            queueLength: data.result.queue_length,
+            vipSlots: data.result.vip_slots_num,
+            autobalanceEnabled: data.result.autobalance_enabled,
+            votekickEnabled: data.result.votekick_enabled,
+          })
           : null
       )
       .catch(handle_http_errors);
@@ -210,7 +210,7 @@ class HLLSettings extends React.Component {
   }
 
   async loadVotekickThreshold() {
-    return this._loadToState("get_votekick_threshold", false, (data) =>
+    return this._loadToState("get_votekick_thresholds", false, (data) =>
       this.setState({ votekickThreshold: data.result })
     );
   }
@@ -243,12 +243,12 @@ class HLLSettings extends React.Component {
     const endpointToParameters = {
       set_team_switch_cooldown: "minutes",
       set_autobalance_threshold: "max_diff",
-      set_autobalance_enabled: "bool_",
+      set_autobalance_enabled: "value",
       set_idle_autokick_time: "minutes",
       set_max_ping_autokick: "max_ms",
-      set_queue_length: "num",
-      set_vip_slots_num: "num",
-      set_votekick_enabled: "bool_",
+      set_queue_length: "value",
+      set_vip_slots_num: "value",
+      set_votekick_enabled: "value",
       set_votekick_threshold: "threshold_pairs",
     };
 
@@ -262,34 +262,34 @@ class HLLSettings extends React.Component {
   }
 
   async saveVotekickThreshold() {
-    return postData(`${process.env.REACT_APP_API_URL}set_votekick_threshold`, {
+    return postData(`${process.env.REACT_APP_API_URL}set_votekick_thresholds`, {
       threshold_pairs: this.state.votekickThreshold,
     })
-      .then((res) => showResponse(res, "set_votekick_threshold", true))
+      .then((res) => showResponse(res, "set_votekick_thresholds", true))
       .then(this.loadVotekickThreshold)
       .catch(handle_http_errors);
   }
 
   async resetVotekickThreshold() {
     return postData(
-      `${process.env.REACT_APP_API_URL}do_reset_votekick_threshold`,
+      `${process.env.REACT_APP_API_URL}reset_votekick_thresholds`,
       {
         threshold_pairs: this.state.votekickThreshold,
       }
     )
-      .then((res) => showResponse(res, "do_reset_votekick_threshold", true))
+      .then((res) => showResponse(res, "reset_votekick_thresholds", true))
       .then(this.loadVotekickThreshold)
       .catch(handle_http_errors);
   }
 
   async addMapsToRotation(maps) {
-    return sendAction("do_add_maps_to_rotation", { maps: maps }).then(
+    return sendAction("add_maps_to_rotation", { map_names: maps }).then(
       this.loadMapRotation
     );
   }
 
   async removeMapsFromRotation(maps) {
-    return sendAction("do_remove_maps_from_rotation", { maps: maps }).then(
+    return sendAction("remove_maps_from_rotation", { map_names: maps }).then(
       this.loadMapRotation
     );
   }
@@ -369,7 +369,7 @@ class HLLSettings extends React.Component {
             onSave={(val) =>
               this.setState({ welcomeMessage: val }, () =>
                 sendAction("set_welcome_message", {
-                  msg: val,
+                  message: val,
                   forward: forwardWelcome,
                 })
               )
@@ -393,7 +393,7 @@ class HLLSettings extends React.Component {
             onSave={(val) =>
               this.setState({ broadcastMessage: val }, () =>
                 sendAction("set_broadcast", {
-                  msg: val,
+                  message: val,
                   forward: forwardBroadcast,
                 })
               )
@@ -413,17 +413,17 @@ class HLLSettings extends React.Component {
               classes={classes}
               forward={forwardVIP}
               onFowardChange={() => this.toggle("forwardVIP")}
-              onAdd={(name, steamID64, expirationTimestamp) =>
-                sendAction("do_add_vip", {
-                  steam_id_64: steamID64,
-                  name: name,
+              onAdd={(name, player_id, expirationTimestamp) =>
+                sendAction("add_vip", {
+                  player_id: player_id,
+                  description: name,
                   forward: forwardVIP,
                   expiration: expirationTimestamp,
                 }).then(this.loadVips)
               }
-              onDelete={(name, steamID64) =>
-                sendAction("do_remove_vip", {
-                  steam_id_64: steamID64,
+              onDelete={(name, player_id) =>
+                sendAction("remove_vip", {
+                  player_id: player_id,
                   forward: forwardVIP,
                 }).then(this.loadVips)
               }
@@ -441,15 +441,15 @@ class HLLSettings extends React.Component {
               peopleList={admins}
               roles={adminRoles}
               classes={classes}
-              onAdd={(name, steamID64, role) =>
-                sendAction("do_add_admin", {
-                  steam_id_64: steamID64,
-                  name: name,
+              onAdd={(name, playerId, role) =>
+                sendAction("add_admin", {
+                  player_id: playerId,
+                  description: name,
                   role: role,
                 }).then(this.loadAdmins)
               }
-              onDelete={(name, steamID64, role) =>
-                sendAction("do_remove_admin", { steam_id_64: steamID64 }).then(
+              onDelete={(name, playerId, role) =>
+                sendAction("remove_admin", { player_id: playerId }).then(
                   this.loadAdmins
                 )
               }

@@ -25,8 +25,8 @@ const AddVipItem = ({
   classes,
   name,
   setName,
-  steamID64,
-  setSteamID64,
+  playerId,
+  setPlayerId,
   onAdd,
 }) => (
   <ListItem>
@@ -46,9 +46,9 @@ const AddVipItem = ({
           InputLabelProps={{
             shrink: true,
           }}
-          label="SteamID64"
-          value={steamID64}
-          onChange={(e) => setSteamID64(e.target.value)}
+          label="Player ID"
+          value={playerId}
+          onChange={(e) => setPlayerId(e.target.value)}
         />
       </Grid>
     </Grid>
@@ -56,7 +56,7 @@ const AddVipItem = ({
       <IconButton
         edge="end"
         aria-label="delete"
-        onClick={() => onAdd(name, steamID64)}
+        onClick={() => onAdd(name, playerId)}
       >
         <AddIcon />
       </IconButton>
@@ -84,22 +84,22 @@ const VipUpload = ({ classes }) => {
     const formData = new FormData();
     formData.append("File", selectedFile);
 
-    fetch(`${process.env.REACT_APP_API_URL}async_upload_vips`, {
+    fetch(`${process.env.REACT_APP_API_URL}upload_vips`, {
       method: "POST",
       body: formData,
       mode: "cors", // no-cors, *cors, same-origin
       cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
       credentials: "include", // include, *same-origin, omit
     })
-      .then((res) => showResponse(res, "upload_vip", true))
+      .then((res) => showResponse(res, "upload_vips", true))
       .then((res) => (!res.failed ? pollResult() : ""))
       .catch(handle_http_errors);
     setIsFilePicked(false);
   };
 
   const getResult = () =>
-    get("async_upload_vips_result")
-      .then((res) => showResponse(res, "async_upload_vips_result", false))
+    get("upload_vips_result")
+      .then((res) => showResponse(res, "upload_vips_result", false))
       .then((res) => {
         setResult(JSON.stringify(res.result, null, 2));
         console.log(res);
@@ -133,7 +133,7 @@ const VipUpload = ({ classes }) => {
         ) : (
           <Tooltip
             title={`Caution this does a total override, deletes all vip then re-add from file.
-            The format is a simple text file (same as the downloaded one), one person per line with the steam id first then the name.
+            The format is a simple text file (same as the downloaded one), one person per line with the player ID first then the name.
             eg: 76561198107873800 Thats my name.
             
             This is not forwarded to your other servers (if you have them)`}
@@ -178,7 +178,7 @@ const VipEditableList = ({
   onFowardChange,
 }) => {
   const [name, setName] = React.useState("");
-  const [steamID64, setSteamID64] = React.useState("");
+  const [player_id, setPlayerId] = React.useState("");
   const [VIPPlayer, setVIPPlayer] = React.useState(false);
 
   const formatExpirationDate = (player) => {
@@ -195,7 +195,7 @@ const VipEditableList = ({
     }
   };
 
-  function onOpenAddVipDialog(name, steamId64) {
+  function onOpenAddVipDialog(name, player_id) {
     return setVIPPlayer(
       fromJS({
         names: [
@@ -203,7 +203,7 @@ const VipEditableList = ({
             name: name,
           },
         ],
-        steam_id_64: steamId64,
+        player_id: player_id,
       })
     );
   }
@@ -216,21 +216,21 @@ const VipEditableList = ({
           classes={classes}
           name={name}
           setName={setName}
-          steamID64={steamID64}
-          setSteamID64={setSteamID64}
+          playerId={player_id}
+          setPlayerId={setPlayerId}
           onAdd={onOpenAddVipDialog}
         />
         {peopleList.map((obj) => (
-          <ListItem key={obj.steam_id_64}>
+          <ListItem key={obj.player_id}>
             <ListItemText
               primary={obj.name}
-              secondary={obj.steam_id_64 + " " + formatExpirationDate(obj)}
+              secondary={obj.player_id + " " + formatExpirationDate(obj)}
             />
             <ListItemSecondaryAction>
               <IconButton
                 edge="end"
                 aria-label="delete"
-                onClick={() => onDelete(obj.name, obj.steam_id_64)}
+                onClick={() => onDelete(obj.name, obj.player_id)}
               >
                 <DeleteIcon />
               </IconButton>
@@ -241,8 +241,8 @@ const VipEditableList = ({
           classes={classes}
           name={name}
           setName={setName}
-          steamID64={steamID64}
-          setSteamID64={setSteamID64}
+          player_id={player_id}
+          setPlayerId={setPlayerId}
           onAdd={onOpenAddVipDialog}
         />
         <ForwardCheckBox bool={forward} onChange={onFowardChange} />
@@ -250,14 +250,14 @@ const VipEditableList = ({
           open={VIPPlayer}
           vips={vipListFromServer(peopleList)}
           onDeleteVip={(playerObj) =>
-            onDelete(nameOf(playerObj), playerObj.get("steam_id_64"))
+            onDelete(nameOf(playerObj), playerObj.get("player_id"))
           }
           handleClose={() => setVIPPlayer(false)}
           handleConfirm={(playerObj, expirationTimestamp) => {
             console.log(`vips.js expirationTimestamp=${expirationTimestamp}`);
             onAdd(
               nameOf(playerObj),
-              playerObj.get("steam_id_64"),
+              playerObj.get("player_id"),
               expirationTimestamp
             );
             setVIPPlayer(false);
