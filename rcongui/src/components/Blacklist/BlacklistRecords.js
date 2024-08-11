@@ -38,7 +38,6 @@ const MyPagination = ({ classes, pageSize, total, page, setPage }) => (
 
 const BlacklistRecords = ({ classes: globalClasses }) => {
   const classes = useStyles();
-
   // inital state, first render
   const [isLoading, setIsLoading] = React.useState(true);
   // when fetching loading records
@@ -54,6 +53,15 @@ const BlacklistRecords = ({ classes: globalClasses }) => {
     exclude_expired: false,
     page_size: 50
   });
+
+  React.useEffect(
+    () => {
+      if (!blacklists.length) {
+        loadBlacklists();
+      }
+      loadRecords();
+    }, [searchQuery, page]
+  );
 
   async function loadBlacklists() {
     setBlacklists(await getBlacklists())
@@ -77,15 +85,6 @@ const BlacklistRecords = ({ classes: globalClasses }) => {
     }
   }
 
-  React.useEffect(
-    () => { 
-      if (!blacklists.length) {
-        loadBlacklists();
-      }
-      loadRecords();
-    }, [searchQuery, page]
-  );
-
   async function createRecord(recordDetails) {
     await addPlayerToBlacklist(recordDetails)
     loadRecords()
@@ -99,16 +98,12 @@ const BlacklistRecords = ({ classes: globalClasses }) => {
           <Skeleton variant="rect" height={140} />
         </Grid>
         <Grid container item xl={3} xs={12} justify="center" spacing={2}>
-        <Grid item xl={12}>
-        <Skeleton variant="rect" width={200} height={42} style={{ margin: "0 auto", borderRadius: 5 }} />
-        </Grid>
-        <Grid item xl={12}>
-        <Skeleton variant="rect" width={155} height={42} style={{ margin: "0 auto", borderRadius: 5 }} />
-        </Grid>
-          {/* <Box style={{ display: "flex", flexDirection: "row", gap: 16, justifyContent: "center" }}>
-            
-            
-          </Box> */}
+          <Grid item xl={12}>
+            <Skeleton variant="rect" width={200} height={42} style={{ margin: "0 auto", borderRadius: 5 }} />
+          </Grid>
+          <Grid item xl={12}>
+            <Skeleton variant="rect" width={155} height={42} style={{ margin: "0 auto", borderRadius: 5 }} />
+          </Grid>
         </Grid>
         <Grid item xs={12}>
           <Skeleton variant="rect" width={360} height={32} style={{ margin: "0 auto" }} />
