@@ -1,6 +1,6 @@
 import React from "react";
 import { Link as RouterLink } from "react-router-dom";
-import { Avatar, Grid, GridList, GridListTile, IconButton, Link, ListItem, ListItemAvatar, ListItemSecondaryAction, ListItemText, Tooltip, Typography, makeStyles } from "@material-ui/core";
+import { Avatar, Grid, GridList, GridListTile, IconButton, Link, List as MaterialList, ListItem, ListItemAvatar, ListItemSecondaryAction, ListItemText, Tooltip, Typography, makeStyles } from "@material-ui/core";
 import "emoji-mart/css/emoji-mart.css";
 import withWidth from "@material-ui/core/withWidth";
 import FileCopyIcon from "@material-ui/icons/FileCopy";
@@ -79,123 +79,125 @@ const BlacklistRecordTile = ({
       direction="column"
       justify="space-between"
     >
-      <ListItem alignItems="flex-start" style={{ paddingBottom: 0 }}>
-        <ListItemAvatar>
-          <Link
-            target="_blank"
-            color="inherit"
-            href={makePlayerProfileUrl(
-              player.get("player_id"),
-              firstName
-            )}
-          >
-            <Avatar src={avatarUrl}>{firstNameLetter}</Avatar>
-          </Link>
-        </ListItemAvatar>
-        <ListItemText
-          primary={
-            <React.Fragment>
-              {showAll ? (
-                <Typography variant="body1">
-                  {hasMultipleNames ? (
-                    <IconButton
-                      size="small"
-                      color="primary"
-                      onClick={() => setShowAll(false)}
-                    >
-                      <KeyboardArrowUpIcon fontSize="inherit" />
-                    </IconButton>
-                  ) : (
-                    ""
-                  )}
-                  {playerNames.map((n) => n.get("name")).join(" | ")}
-                </Typography>
-              ) : (
-                <Typography variant="body1">
-                  {hasMultipleNames ? (
-                    <IconButton
-                      size="small"
-                      color="primary"
-                      onClick={() => setShowAll(true)}
-                    >
-                      <KeyboardArrowDownIcon fontSize="inherit" />
-                    </IconButton>
-                  ) : (
-                    ""
-                  )}
-                  {firstName} {getCountry(country)}
-                </Typography>
-              )}
-            </React.Fragment>
-          }
-          secondary={
+      <MaterialList>
+        <ListItem component={"div"} alignItems="flex-start" style={{ paddingBottom: 0 }}>
+          <ListItemAvatar>
             <Link
+              target="_blank"
               color="inherit"
-              component={RouterLink}
-              to={`/player/${player.get("player_id")}`}
+              href={makePlayerProfileUrl(
+                player.get("player_id"),
+                firstName
+              )}
             >
-              {player.get("player_id")}
+              <Avatar src={avatarUrl}>{firstNameLetter}</Avatar>
             </Link>
-          }
-        />
-        <ListItemSecondaryAction>
-          <Tooltip title="Copy Player ID to clipboard">
-            <Typography variant="body2">
-              <IconButton
-                size="small"
-                style={{ cursor: "pointer" }}
-                onClick={() => {
-                  if (navigator.clipboard === undefined) {
-                    alert("This feature only works if your rcon uses HTTPS");
-                    return;
-                  }
-                  var text = player.get("player_id");
-                  navigator.clipboard.writeText(text).then(
-                    function () {
-                      console.log("Async: Copying to clipboard was successful!");
-                    },
-                    function (err) {
-                      console.error("Async: Could not copy text: ", err);
-                    }
-                  );
-                }}
+          </ListItemAvatar>
+          <ListItemText
+            primary={
+              <React.Fragment>
+                {showAll ? (
+                  <Typography variant="body1">
+                    {hasMultipleNames ? (
+                      <IconButton
+                        size="small"
+                        color="primary"
+                        onClick={() => setShowAll(false)}
+                      >
+                        <KeyboardArrowUpIcon fontSize="inherit" />
+                      </IconButton>
+                    ) : (
+                      ""
+                    )}
+                    {playerNames.map((n) => n.get("name")).join(" | ")}
+                  </Typography>
+                ) : (
+                  <Typography variant="body1">
+                    {hasMultipleNames ? (
+                      <IconButton
+                        size="small"
+                        color="primary"
+                        onClick={() => setShowAll(true)}
+                      >
+                        <KeyboardArrowDownIcon fontSize="inherit" />
+                      </IconButton>
+                    ) : (
+                      ""
+                    )}
+                    {firstName} {getCountry(country)}
+                  </Typography>
+                )}
+              </React.Fragment>
+            }
+            secondary={
+              <Link
+                color="inherit"
+                component={RouterLink}
+                to={`/player/${player.get("player_id")}`}
               >
-                <FileCopyIcon fontSize="small" />
-              </IconButton>
-            </Typography>
-          </Tooltip>
-          <Tooltip title="Copy report template to clipboard">
-            <Typography variant="body2">
-              <IconButton
-                size="small"
-                style={{ cursor: "pointer" }}
-                onClick={() => {
-                  const text = getReportTemplate();
-                  if (navigator.clipboard === undefined) {
-                    alert(`This feature only works if your rcon uses HTTPS.`);
-                    return;
-                  }
-                  if (navigator.clipboard === undefined) {
-                  } else {
+                {player.get("player_id")}
+              </Link>
+            }
+          />
+          <ListItemSecondaryAction>
+            <Tooltip title="Copy Player ID to clipboard">
+              <Typography variant="body2">
+                <IconButton
+                  size="small"
+                  style={{ cursor: "pointer" }}
+                  onClick={() => {
+                    if (navigator.clipboard === undefined) {
+                      alert("This feature only works if your rcon uses HTTPS");
+                      return;
+                    }
+                    var text = player.get("player_id");
                     navigator.clipboard.writeText(text).then(
                       function () {
-                        console.log(
-                          "Async: Copying to clipboard was successful!"
-                        );
+                        console.log("Async: Copying to clipboard was successful!");
                       },
                       function (err) {
                         console.error("Async: Could not copy text: ", err);
                       }
                     );
-                  }
-                }}
-              >
-                <AnnouncementIcon fontSize="small" />
-              </IconButton>
-            </Typography>
-          </Tooltip>
-        </ListItemSecondaryAction>
-      </ListItem>
+                  }}
+                >
+                  <FileCopyIcon fontSize="small" />
+                </IconButton>
+              </Typography>
+            </Tooltip>
+            <Tooltip title="Copy report template to clipboard">
+              <Typography variant="body2">
+                <IconButton
+                  size="small"
+                  style={{ cursor: "pointer" }}
+                  onClick={() => {
+                    const text = getReportTemplate();
+                    if (navigator.clipboard === undefined) {
+                      alert(`This feature only works if your rcon uses HTTPS.`);
+                      return;
+                    }
+                    if (navigator.clipboard === undefined) {
+                    } else {
+                      navigator.clipboard.writeText(text).then(
+                        function () {
+                          console.log(
+                            "Async: Copying to clipboard was successful!"
+                          );
+                        },
+                        function (err) {
+                          console.error("Async: Could not copy text: ", err);
+                        }
+                      );
+                    }
+                  }}
+                >
+                  <AnnouncementIcon fontSize="small" />
+                </IconButton>
+              </Typography>
+            </Tooltip>
+          </ListItemSecondaryAction>
+        </ListItem>
+      </MaterialList>
       <Typography variant={reason.length > 65 ? "body2" : "body1"}>
         {reason.length > 110
           ? reason.substring(0, 108) + "..."

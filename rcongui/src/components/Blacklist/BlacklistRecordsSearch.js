@@ -6,6 +6,7 @@ const BlacklistRecordsSearch = ({
   classes,
   blacklists,
   onSearch,
+  disabled,
 }) => {
   const [playerIdQuery, setPlayerIdQuery] = React.useState("");
   const [reasonQuery, setReasonQuery] = React.useState("");
@@ -87,17 +88,18 @@ const BlacklistRecordsSearch = ({
         <Grid item xs={3}>
           <Button
             type="submit"
+            disabled={disabled}
             variant="contained"
             color="primary"
             size="large"
             onClick={(e) => {
               e.preventDefault();
               onSearch({
-                playerId: playerIdQuery,
+                player_id: playerIdQuery,
                 reason: reasonQuery,
-                blacklistId: blacklistQuery === "" ? null : blacklistQuery,
-                excludeExpired: excludeExpired,
-                pageSize: pageSize,
+                blacklist_id: blacklistQuery === "" ? null : blacklistQuery,
+                exclude_expired: excludeExpired,
+                page_size: pageSize,
               });
             }}
           >

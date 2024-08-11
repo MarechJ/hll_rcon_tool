@@ -1,4 +1,5 @@
 import {
+  Box,
   Button,
   Grid,
   LinearProgress,
@@ -11,6 +12,16 @@ import Pagination from "@material-ui/lab/Pagination";
 import BlacklistRecordGrid from "./BlacklistRecordGrid";
 import { List, fromJS } from "immutable";
 import { BlacklistRecordCreateButton } from "./BlacklistRecordCreateDialog";
+import { Skeleton } from "@material-ui/lab";
+
+async function getBlacklistRecords(searchParams) {
+  let path = "get_blacklist_records?"
+  // remove all params = 0 or being falsy
+  let searchParamsString = Object.entries(searchParams).filter(param => param && param !== 0)
+  path += searchParamsString
+  const response = await get(path)
+  return showResponse(response, "get_blacklist_records")
+}
 
 const MyPagination = ({ classes, pageSize, total, page, setPage }) => (
   <Pagination
@@ -28,62 +39,89 @@ const MyPagination = ({ classes, pageSize, total, page, setPage }) => (
 const BlacklistRecords = ({ classes: globalClasses }) => {
   const classes = useStyles();
 
-  const [isLoading, setIsLoading] = React.useState(false);
+  // inital state, first render
+  const [isLoading, setIsLoading] = React.useState(true);
+  // when fetching loading records
+  const [isFetching, setIsFetching] = React.useState(false);
   const [blacklists, setBlacklists] = React.useState([]);
   const [records, setRecords] = React.useState(List());
   const [totalRecords, setTotalRecords] = React.useState(0);
   const [page, setPage] = React.useState(1);
   const [searchQuery, setSearchQuery] = React.useState({
-    playerId: undefined,
+    player_id: undefined,
     reason: undefined,
-    blacklistId: undefined,
-    excludeExpired: false,
-    pageSize: 50
+    blacklist_id: undefined,
+    exclude_expired: false,
+    page_size: 50
   });
 
   async function loadBlacklists() {
     setBlacklists(await getBlacklists())
   }
-  
-  function loadRecords() {
-    setIsLoading(true)
-    return get("get_blacklist_records?" + new URLSearchParams(Object.entries({
-      player_id: searchQuery.playerId,
-      reason: searchQuery.reason,
-      blacklist_id: searchQuery.blacklistId,
-      exclude_expired: searchQuery.excludeExpired,
-      page: page,
-      page_size: searchQuery.pageSize,
-    }).filter(([_, v]) => v && v !== 0)))
-      .then((response) => showResponse(response, "get_blacklist_records"))
-      .then((data) => {
-        setIsLoading(false);
-        if (data.result) {
-          setRecords(fromJS(data.result.records));
-          setTotalRecords(data.result.total);
-        }
-      })
-      .catch(handle_http_errors);
+
+  async function loadRecords() {
+    setIsFetching(true)
+    try {
+      const data = await getBlacklistRecords({ ...searchQuery, page })
+      const records = data.result;
+      if (records) {
+        setRecords(fromJS(records.records))
+        setTotalRecords(records.total)
+      }
+      setIsFetching(false)
+      // delay UI, this can be removed along with skeletons
+      await new Promise((res) => setTimeout(res, 500))
+      setIsLoading(false)
+    } catch (error) {
+      handle_http_errors(error)
+    }
   }
+
+  React.useEffect(
+    () => { 
+      if (!blacklists.length) {
+        loadBlacklists();
+      }
+      loadRecords();
+    }, [searchQuery, page]
+  );
 
   async function createRecord(recordDetails) {
     await addPlayerToBlacklist(recordDetails)
     loadRecords()
   }
 
-  React.useEffect(() => {
-    loadBlacklists();
-  }, []);
-
-  React.useEffect(
-    () => { setPage(1); },
-    [searchQuery]
-  );
-
-  React.useEffect(
-    () => { loadRecords(); },
-    [searchQuery, page]
-  );
+  // If you don't like the loading skeletons, just return `null`
+  if (isLoading) {
+    return (
+      <Grid container spacing={4} justify="center" className={globalClasses.padding}>
+        <Grid item xl={6} xs={12}>
+          <Skeleton variant="rect" height={140} />
+        </Grid>
+        <Grid container item xl={3} xs={12} justify="center" spacing={2}>
+        <Grid item xl={12}>
+        <Skeleton variant="rect" width={200} height={42} style={{ margin: "0 auto", borderRadius: 5 }} />
+        </Grid>
+        <Grid item xl={12}>
+        <Skeleton variant="rect" width={155} height={42} style={{ margin: "0 auto", borderRadius: 5 }} />
+        </Grid>
+          {/* <Box style={{ display: "flex", flexDirection: "row", gap: 16, justifyContent: "center" }}>
+            
+            
+          </Box> */}
+        </Grid>
+        <Grid item xs={12}>
+          <Skeleton variant="rect" width={360} height={32} style={{ margin: "0 auto" }} />
+        </Grid>
+        <Grid item xs={12}>
+          <Skeleton variant="rect" height={140} />
+        </Grid>
+        <Grid item xs={12}>
+          <Skeleton variant="rect" width={360} height={32} style={{ margin: "0 auto" }} />
+        </Grid>
+      </Grid>
+    )
+  }
 
   return (
     <Grid container spacing={4} justify="center" className={globalClasses.padding}>
@@ -92,6 +130,7 @@ const BlacklistRecords = ({ classes: globalClasses }) => {
           classes={classes}
           blacklists={blacklists}
           onSearch={setSearchQuery}
+          disabled={isLoading || isFetching}
         />
       </Grid>
       <Grid item xl={3} xs={12}>
@@ -101,7 +140,7 @@ const BlacklistRecords = ({ classes: globalClasses }) => {
           alignContent="center"
           alignItems="center"
           justify="center"
-          style={{paddingTop: 6}}
+          style={{ paddingTop: 6 }}
         >
           <Grid item xl={12}>
             <BlacklistRecordCreateButton
@@ -134,7 +173,7 @@ const BlacklistRecords = ({ classes: globalClasses }) => {
         />
       </Grid>
       <Grid item xs={12}>
-        {isLoading ? <LinearProgress color="secondary" /> : ""}
+        {isFetching ? <LinearProgress color="secondary" /> : ""}
         <BlacklistRecordGrid
           classes={classes}
           blacklists={blacklists}
