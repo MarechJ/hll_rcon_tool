@@ -129,7 +129,7 @@ const ServerInfo = ({ classes }) => {
         />
         <GridListTileBar
           className={styles.titleBarTop}
-          title={serverState.get("name")}
+          title={serverState.get("name", new Map()).get("name")}
           subtitle={serverState
             .get("current_map", new Map())
             .get("map")

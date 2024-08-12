@@ -181,7 +181,7 @@ const GamesScore = ({ classes }) => {
     getData();
   }, []);
 
-  document.title = serverState.get("name", "HLL Stats");
+  document.title = serverState.get("name", new Map()).get("name", "HLL Stats");
   let started = serverState.get("current_map", new Map()).get("start");
   started = started
     ? new Date(Date.now() - new Date(started * 1000))
