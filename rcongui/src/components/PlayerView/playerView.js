@@ -1,7 +1,9 @@
 import React, { Component } from "react";
 import "react-toastify/dist/ReactToastify.css";
 import {
+  addPlayerToBlacklist,
   get,
+  getBlacklists,
   handle_http_errors,
   postData,
   showResponse,
@@ -16,6 +18,7 @@ import Unban from "./unban";
 import { fromJS, List } from "immutable";
 import { FlagDialog } from "../PlayersHistory";
 import { getEmojiFlag } from "../../utils/emoji";
+import BlacklistRecordCreateDialog from "../Blacklist/BlacklistRecordCreateDialog";
 
 function stripDiacritics(string) {
   return typeof string.normalize !== "undefined"
@@ -60,6 +63,9 @@ class PlayerView extends Component {
       openGroupAction: false,
       openUnban: false,
       flag: false,
+      blacklistOpen: false,
+      blacklists: [],
+      blacklistTarget: null,
     };
 
     this.onPlayerSelected = this.onPlayerSelected.bind(this);
@@ -71,6 +77,8 @@ class PlayerView extends Component {
     this.unBan = this.unBan.bind(this);
     this.addFlagToPlayer = this.addFlagToPlayer.bind(this);
     this.deleteFlag = this.deleteFlag.bind(this);
+    this.blacklistPlayer = this.blacklistPlayer.bind(this)
+    this.handleBlacklistOpen = this.handleBlacklistOpen.bind(this)
     this.sortTypeChange = this.sortTypeChange.bind(this);
   }
 
@@ -93,6 +101,15 @@ class PlayerView extends Component {
       .then((response) => showResponse(response, "unflag_player", true))
       .then(this.loadPlayers)
       .catch(handle_http_errors);
+  }
+
+  blacklistPlayer(payload) {
+    addPlayerToBlacklist(payload)
+  }
+  
+  async handleBlacklistOpen(player) {
+    const blacklists = await getBlacklists();
+    this.setState({ blacklists, blacklistOpen: true, blacklistTarget: player })
   }
 
   unBan(ban) {
@@ -133,7 +150,7 @@ class PlayerView extends Component {
       });
     } else {
       const data = {
-        player: player_name,
+        player_name: player_name,
         player_id: player_id,
         reason: message,
         comment: comment,
@@ -141,9 +158,7 @@ class PlayerView extends Component {
         message: message,
         save_message: save_message,
       };
-      if (actionType === "temp_ban") {
-        data["forward"] = "yes";
-      }
+
       postData(`${process.env.REACT_APP_API_URL}${actionType}`, data)
         .then((response) =>
           showResponse(response, `${actionType} ${player_name}`, true)
@@ -253,6 +268,9 @@ class PlayerView extends Component {
       sortType,
       bannedPlayers,
       flag,
+      blacklistOpen,
+      blacklists,
+      blacklistTarget,
     } = this.state;
 
     return (
@@ -304,6 +322,7 @@ class PlayerView extends Component {
           handleToggle={() => 1}
           onFlag={(player) => this.setState({ flag: player })}
           onDeleteFlag={(flagId) => this.deleteFlag(flagId)}
+          onBlacklist={this.handleBlacklistOpen}
         />
 
         <GroupActions
@@ -348,6 +367,14 @@ class PlayerView extends Component {
           handleClose={() => this.setState({ flag: false })}
           handleConfirm={this.addFlagToPlayer}
           SummaryRenderer={PlayerSummary}
+        />
+        <BlacklistRecordCreateDialog
+          open={blacklistOpen}
+          blacklists={blacklists}
+          initialValues={blacklistTarget && { playerId: blacklistTarget.get("player_id") }}
+          onSubmit={this.blacklistPlayer}
+          setOpen={() => this.setState({ blacklistOpen: !blacklistOpen })}
+          disablePlayerId={true}
         />
       </React.Fragment>
     );

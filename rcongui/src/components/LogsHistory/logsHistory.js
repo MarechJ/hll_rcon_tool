@@ -226,8 +226,7 @@ class LogsHistory extends React.Component {
       label: "Time",
       options: {
         customBodyRenderLite: (dataIndex) =>
-          moment
-            .unix(this.state.logs[dataIndex]?.event_time)
+          moment(this.state.logs[dataIndex]?.event_time)
             .local()
             .format("ddd Do MMM HH:mm:ss"),
       },
@@ -240,7 +239,7 @@ class LogsHistory extends React.Component {
       options: {
         customBodyRenderLite: (dataIndex) => {
           let id = this.state.logs[dataIndex]?.player1_id;
-          let name = this.state.logs[dataIndex]?.player_name;
+          let name = this.state.logs[dataIndex]?.player1_name;
           return id ? (
             <Link
               color="inherit"
@@ -302,7 +301,6 @@ class LogsHistory extends React.Component {
     exactPlayer = false,
     exactAction = false,
     server = null,
-    output = null
   ) {
     this.setState({
       isLoading: true,
@@ -319,7 +317,7 @@ class LogsHistory extends React.Component {
     });
     postData(`${process.env.REACT_APP_API_URL}get_historical_logs`, {
       player_name: name,
-      log_type: type,
+      action: type,
       player_id: playerId,
       from: from,
       till: till,
@@ -328,7 +326,6 @@ class LogsHistory extends React.Component {
       exact_player: exactPlayer,
       exact_action: exactAction,
       server_filter: server,
-      output: output,
     })
       .then((res) => showResponse(res, "get_historical_logs", false))
       .then((res) => {
@@ -338,9 +335,9 @@ class LogsHistory extends React.Component {
   }
 
   handleDownload() {
-    postData(`${process.env.REACT_APP_API_URL}get_historical_logs`, {
+    postData(`${process.env.REACT_APP_API_URL}get_historical_logs_csv`, {
       player_name: this.state.name,
-      log_type: this.state.type,
+      action: this.state.type,
       player_id: this.state.playerId,
       from: this.state.from,
       till: this.state.till,
@@ -349,7 +346,6 @@ class LogsHistory extends React.Component {
       exact_player: this.state.exactPlayer,
       exact_action: this.state.exactAction,
       server_filter: this.state.server,
-      output: "csv",
     })
       .then((res) => res.blob())
       .then((blob) => {

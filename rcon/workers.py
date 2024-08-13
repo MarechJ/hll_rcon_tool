@@ -134,7 +134,7 @@ def _record_stats(map_info: MapInfo):
 
 
 def record_stats_from_map(
-    sess: Session, map_, ps: dict[str, PlayerStat] = (), force: bool = False
+    sess: Session, map_: Maps, ps: dict[str, PlayerStat] = (), force: bool = False
 ):
     stats = TimeWindowStats()
     player_stats = stats.get_players_stats_at_time(
@@ -166,13 +166,26 @@ def record_stats_from_map(
                 )
                 .one_or_none()
             )
-            default_stat = PlayerStat(combat=0, offense=0, defense=0, support=0)
+            default_stat = PlayerStat(
+                combat=0,
+                offense=0,
+                defense=0,
+                support=0,
+                p_combat=0,
+                p_offense=0,
+                p_defense=0,
+                p_support=0,
+            )
             if existing is not None:
                 default_stat = PlayerStat(
                     combat=existing.combat,
+                    p_combat=0,
                     offense=existing.offense,
+                    p_offense=0,
                     defense=existing.defense,
+                    p_defense=0,
                     support=existing.support,
+                    p_support=0,
                 )
             map_stats: PlayerStat = ps.get(player_id, default_stat)
             player_stat = dict(
@@ -200,10 +213,10 @@ def record_stats_from_map(
                 most_killed=stats.get("most_killed"),
                 death_by=stats.get("death_by"),
                 death_by_weapons=stats.get("death_by_weapons"),
-                combat=map_stats.get("combat") + map_stats.get("p_combat"),
-                offense=map_stats.get("offense") + map_stats.get("p_offense"),
-                defense=map_stats.get("defense") + map_stats.get("p_defense"),
-                support=map_stats.get("support") + map_stats.get("p_support"),
+                combat=map_stats.get("combat", 0) + map_stats.get("p_combat", 0),
+                offense=map_stats.get("offense", 0) + map_stats.get("p_offense", 0),
+                defense=map_stats.get("defense", 0) + map_stats.get("p_defense", 0),
+                support=map_stats.get("support", 0) + map_stats.get("p_support", 0),
             )
             if existing is not None and force != True:
                 continue

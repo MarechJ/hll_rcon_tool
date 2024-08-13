@@ -150,14 +150,14 @@ export const PlayerHeader = pure(({ classes, player }) => {
                   .get("names")
                   .first()
                   .get("name")}\nAliases: ${player
-                  .get("names", new List())
-                  .map((n) => n.get("name"))
-                  .join(" | ")}\Player ID: ${player.get(
-                  "player_id"
-                )}\nSteam URL: ${makePlayerProfileUrl(
-                  player.get("player_id"),
-                  player.get("names").first().get("name")
-                )}\nType of issue:\nDescription:\nEvidence:`;
+                    .get("names", new List())
+                    .map((n) => n.get("name"))
+                    .join(" | ")}\nPlayer ID: ${player.get(
+                      "player_id"
+                    )}\nSteam URL: ${makePlayerProfileUrl(
+                      player.get("player_id"),
+                      player.get("names").first().get("name")
+                    )}\nType of issue:\nDescription:\nEvidence:`;
                 if (navigator.clipboard === undefined) {
                   alert(`This feature only works if your rcon uses HTTPS.`);
                   return;

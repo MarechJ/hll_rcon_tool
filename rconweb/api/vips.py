@@ -151,7 +151,7 @@ def download_vips(request):
         content_type="text/plain",
     )
 
-    response[
-        "Content-Disposition"
-    ] = f"attachment; filename={datetime.datetime.now().isoformat()}_vips.txt"
+    response["Content-Disposition"] = (
+        f"attachment; filename={datetime.datetime.now().isoformat()}_vips.txt"
+    )
     return response

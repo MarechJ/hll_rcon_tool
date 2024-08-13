@@ -1,6 +1,14 @@
 import json
 from typing import Any, TypedDict
 
+
+import os
+from logging import getLogger
+
+logger = getLogger(__name__)
+from typing import Self
+from rcon.user_config.utils import get_user_config
+
 import pydantic
 from pydantic import Field
 
@@ -46,6 +54,67 @@ class StandardPunishmentMessagesUserConfig(BaseStandardMessageUserConfig):
 class StandardBroadcastMessagesUserConfig(BaseUserConfig):
     messages: list[AutoBroadcastMessage] = Field(default_factory=list)
 
+    @classmethod
+    def load_from_db(cls, default_on_validation_error: bool = True) -> Self:
+        # This is a bandaid that allows us to port old style broadcasts which were
+        # a list of strings in the format `time message`
+
+        # This should never happen in production, but allows tests to run
+        if not os.getenv("HLL_DB_URL"):
+            logger.warning(f"HLL_DB_URL not set, returning a default instance")
+            return cls()
+
+        # If the cache is unavailable, it will fall back to creating a default
+        # model instance, but will not persist it to the database and overwrite settings
+        conf = get_user_config(cls.KEY(), default=None)
+        if conf is not None:
+            try:
+                # This is the only difference between this and BaseUserConfig.load_from_db
+                validated_messages: list[AutoBroadcastMessage] = []
+                if (
+                    "messages" in conf
+                    and conf["messages"]
+                    and isinstance(conf["messages"][-1], str)
+                ):
+                    for raw_message in conf["messages"]:
+                        time, text = raw_message.split(maxsplit=1)
+                        validated_messages.append(
+                            AutoBroadcastMessage(time_sec=int(time), message=text)
+                        )
+
+                    config = StandardBroadcastMessagesUserConfig(
+                        messages=validated_messages
+                    )
+                    StandardBroadcastMessagesUserConfig.save_to_db(
+                        values=config.model_dump()
+                    )
+                    return config
+                else:
+                    return cls.model_validate(conf)
+            except pydantic.ValidationError as e:
+                if default_on_validation_error:
+                    logger.error(
+                        f"Error loading {cls.KEY()}, returning defaults, validation errors:"
+                    )
+                    logger.error(e)
+                    return cls()
+                else:
+                    raise
+        else:
+            # This shouldn't happen because we seed the database on startup if the
+            # records don't exist, if someone has manually edited their database that
+            # is on them, previously we would not seed defaults and create/persist an
+            # instance if `get_user_config` did not find a record for any reason.
+            # This was resetting peoples legitimate configs in some scenarios, particularly
+            # when containers were being created/torn down and a service or the backend queried
+            # a model and postgres was unavailable.
+            # Now models are only persisted to the database when they're either explicitly seeded
+            # during backend startup, or if the `save_to_db` method is explicitly called, for
+            # instance through the API, or CLI
+            logger.error(f"{cls.KEY()} not found, returning defaults")
+
+        return cls()
+
     @staticmethod
     def save_to_db(values: StandardBroadcastMessagesType, dry_run=False):
         key_check(StandardBroadcastMessagesType.__required_keys__, values.keys())
@@ -79,9 +148,7 @@ class StandardBroadcastMessagesUserConfig(BaseUserConfig):
             set_user_config(StandardBroadcastMessagesUserConfig.KEY(), validated_conf)
 
 
-def get_all_message_types(
-    as_dict=False, as_json=False
-) -> (
+def get_all_message_types(as_dict=False, as_json=False) -> (
     dict[str, dict[str, Any]]
     | str
     | tuple[

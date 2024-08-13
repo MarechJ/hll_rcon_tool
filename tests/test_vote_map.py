@@ -162,6 +162,24 @@ def test_parse_layer(layer_name, expected):
                 attackers=Team.ALLIES,
             ),
         ),
+        (
+            "hill400_offensive_US",
+            Layer(
+                id="hill400_offensive_US",
+                map=MAPS["hill400"],
+                game_mode=GameMode.OFFENSIVE,
+                attackers=Team.ALLIES,
+            ),
+        ),
+        (
+            "hill400_offensive_us",
+            Layer(
+                id="hill400_offensive_us",
+                map=MAPS["hill400"],
+                game_mode=GameMode.OFFENSIVE,
+                attackers=Team.ALLIES,
+            ),
+        ),
     ],
 )
 def test_parse_legacy_layer(layer_name, expected):

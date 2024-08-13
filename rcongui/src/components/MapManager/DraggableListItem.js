@@ -29,6 +29,13 @@ const DraggableListItem = ({ item, index, onRemove }) => {
 
     if (layer.game_mode === "offensive") {
       labels.push("offensive");
+      if (
+        layer.attackers == "allies"
+      ) {
+        labels.push("allies");
+      } else {
+        labels.push("axis");
+      }
     } else if (
       layer.game_mode === "control" ||
       layer.game_mode === "phased" ||
@@ -38,15 +45,7 @@ const DraggableListItem = ({ item, index, onRemove }) => {
     } else {
       labels.push("warfare");
     }
-    if (
-      layer.map.allies.name == "us" ||
-      layer.map.allies.name == "rus" ||
-      layer.map.allies.name == "gb"
-    ) {
-      labels.push("allies");
-    } else {
-      labels.push("axis");
-    }
+
     if (layer.environment !== "day") {
       labels.push("night");
     }

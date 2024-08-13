@@ -582,15 +582,14 @@ class VoteMap:
         )
         return selected_map
 
-    def get_vote_overview(self) -> VoteMapResultType | None:
+    def get_vote_overview(self) -> dict[maps.Layer, int] | None:
         try:
             votes = self.get_votes()
             maps = Counter(votes.values()).most_common()
-            # TODO RELEASE: Return descriptive dicts not tuples
-            return {
-                "total_votes": len(votes),
-                "winning_maps": [(m, v) for m, v in maps],
-            }
+
+            # take advantage of python dicts being ordered so the winner is always the first item
+            return {m: v for m, v in maps}
+
         except Exception:
             logger.exception("Can't produce vote overview")
 

@@ -301,28 +301,34 @@ const VoteMapConfig = () => {
           <Grid item xs={12} sm={4}>
             <Typography variant="body1">Votes:</Typography>
             <pre>
-              {status
-                .get("votes", new Map())
-                .entrySeq()
-                .map((o) => `${o[0]}: ${o[1].get("pretty_name")}\n`)}
+              {status.map((o) => {
+                return o.get("voters").map((vote) => {
+                  return `${vote}: ${o
+                    .get("map", new Map())
+                    .get("pretty_name")}\n`;
+                });
+              })}
             </pre>
           </Grid>
           <Grid item xs={6} sm={4}>
             <Typography variant="body1">Map selection:</Typography>
             <pre>
               {status
-                .get("selection", new List())
-                .map((v) => `${v.get("pretty_name")}\n`)}
+                .map((v) => `${v.get('map', new Map()).get("pretty_name")}\n`)}
             </pre>
           </Grid>
           <Grid item xs={6} sm={4}>
             <Typography variant="body1">Results:</Typography>
             <pre>
               {status
-                .get("results", new Map())
-                .get("winning_maps", new List())
+                .filter((o) => {
+                  // console.log(`o=${JSON.stringify(o)}`);
+                  return o.get("voters").size > 0;
+                })
                 .map(
-                  (o) => `${o.get(0).get("pretty_name")}: ${o.get(1)} vote(s)\n`
+                  (o) =>
+                    `${o.get("map", new Map()).get("pretty_name")}: ${o.get("voters", new List()).size
+                    }\n`
                 )}
             </pre>
           </Grid>

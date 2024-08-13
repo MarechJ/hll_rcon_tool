@@ -181,7 +181,7 @@ const GamesScore = ({ classes }) => {
     getData();
   }, []);
 
-  document.title = serverState.get("name", "HLL Stats");
+  document.title = serverState.get("name", new Map()).get("name", "HLL Stats");
   let started = serverState.get("current_map", new Map()).get("start");
   started = started
     ? new Date(Date.now() - new Date(started * 1000))
@@ -199,7 +199,7 @@ const GamesScore = ({ classes }) => {
       >
         <Grid item xs={12} className={styles.transparentPaper}>
           <Typography color="secondary" variant="h4">
-            {serverState.get("name")}
+            {serverState.get("name", new Map()).get("name")}
           </Typography>
         </Grid>
         {!maps.size ? (

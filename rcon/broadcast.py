@@ -10,6 +10,7 @@ from rcon.audit import ingame_mods, online_mods
 from rcon.commands import CommandFailedError
 from rcon.maps import categorize_maps, numbered_maps
 from rcon.rcon import Rcon
+from rcon.types import VoteMapResultType
 from rcon.user_config.auto_broadcast import AutoBroadcastUserConfig
 from rcon.user_config.vote_map import VoteMapUserConfig
 from rcon.vote_map import VoteMap
@@ -198,11 +199,13 @@ def _get_vars(ctl: Rcon):
     ]
 
     def get_next_map():
-        map_name: str = ctl.get_next_map().pretty_name
-        smart_map = maps.parse_layer(map_name)
-        return smart_map.pretty_name
+        return ctl.get_next_map().pretty_name
 
-    vote_status = VoteMap().get_vote_overview()
+    vote_results = VoteMap().get_vote_overview()
+    if vote_results:
+        vote_status = [(m, v) for m, v in vote_results.items()]
+    else:
+        vote_status = []
 
     subs = {
         "nextmap": LazyPrinter(get_next_map),
@@ -237,21 +240,14 @@ def _get_vars(ctl: Rcon):
         "votenextmap_by_mod_split": LazyPrinter(
             partial(format_map_vote, ctl, format_type="by_mod_split")
         ),
-        # TODO: fix this after verifying Redis format
-        "total_votes": vote_status.get("total_votes") if vote_status else math.nan,
+        "total_votes": sum(v for m, v in vote_status) if vote_status else math.nan,
         "winning_maps_short": LazyPrinter(
-            partial(
-                format_winning_map, ctl, vote_status["winning_maps"], display_count=2
-            )
+            partial(format_winning_map, ctl, vote_status, display_count=2)
         ),
         "winning_maps_all": LazyPrinter(
-            partial(
-                format_winning_map, ctl, vote_status["winning_maps"], display_count=0
-            )
+            partial(format_winning_map, ctl, vote_status, display_count=0)
         ),
-        "scrolling_votemap": LazyPrinter(
-            partial(scrolling_votemap, ctl, vote_status["winning_maps"])
-        ),
+        "scrolling_votemap": LazyPrinter(partial(scrolling_votemap, ctl, vote_status)),
         "online_mods": LazyPrinter(get_online_mods, is_list=True),
         "ingame_mods": LazyPrinter(get_ingame_mods, is_list=True),
     }

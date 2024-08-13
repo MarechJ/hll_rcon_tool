@@ -319,6 +319,7 @@ const PlayerItem = ({
   avatarBackround,
   onSelect,
   isSelected,
+  onBlacklist,
 }) => {
   const profile = player.get("profile") ? player.get("profile") : new Map();
   const name = player.get("name");
@@ -410,6 +411,7 @@ const PlayerItem = ({
             size="small"
             handleAction={handleAction}
             onFlag={onFlag}
+            onBlacklist={onBlacklist}
             displayCount={nbButtons}
             isWatched={
               profile.get("watchlist")
@@ -493,8 +495,9 @@ const CompactList = ({
   handleAction,
   sortType,
   width,
-  onFlag,
-  onDeleteFlag,
+  onFlag: onFlagClick,
+  onDeleteFlag: onDeleteFlagClick,
+  onBlacklist: onBlacklistClick,
 }) => {
   const myPlayers = React.useMemo(() => {
     let myPlayers = players;
@@ -533,7 +536,7 @@ const CompactList = ({
             )
           }
           onFlag={() =>
-            onFlag(
+            onFlagClick(
               Map({
                 player_id: player.get("player_id"),
                 names: (player.get("profile")
@@ -543,7 +546,8 @@ const CompactList = ({
               })
             )
           }
-          onDeleteFlag={onDeleteFlag}
+          onDeleteFlag={onDeleteFlagClick}
+          onBlacklist={() => onBlacklistClick(player)}
         />
       ))}
     </List>

@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 USER_CONFIG_NAME_PATTERN = re.compile(r"set_.*_config")
 
 METRICS = {
-    "player_count": lambda rcon: int(rcon.get_slots().split("/")[0]),
+    "player_count": lambda rcon: int(rcon.get_slots()["current_players"]),
     "online_mods": lambda: len(online_mods()),
     "ingame_mods": lambda: len(ingame_mods()),
     "current_map": lambda rcon: str(rcon.current_map),
@@ -201,10 +201,18 @@ def do_run_commands(rcon, commands):
                 config: BaseUserConfig = rcon.__getattribute__(get_config_command)()
                 # get the existing config, override anything set in params
                 merged_params = config.model_dump() | params
+
+                if "by" not in merged_params:
+                    merged_params["by"] = "AutoSettings"
+
                 rcon.__getattribute__(command)(**merged_params)
             else:
                 # Non user config settings
                 rcon.__getattribute__(command)(**params)
+        except AttributeError as e:
+            logger.exception(
+                "%s is not a valid command, double check the name!", command
+            )
         except Exception as e:
             logger.exception("Unable to apply %s %s: %s", command, params, e)
         time.sleep(5)  # go easy on the server
@@ -237,7 +245,7 @@ def run():
             )
 
         for rule in config["rules"]:
-            conditions = []
+            conditions: list[BaseCondition] = []
             commands = rule.get("commands", {})
             for c_name, c_params in rule.get("conditions", {}).items():
                 try:
@@ -262,16 +270,16 @@ def run():
                 rule_matched = True
                 if can_invoke_multiple_rules:
                     logger.info(
-                        f"Rule validation succeded, moving to next one. ({can_invoke_multiple_rules=})"
+                        f"Rule conditions met, can invoke multiple rules and moving to next one. ({can_invoke_multiple_rules=})"
                     )
                     continue
                 else:
                     logger.info(
-                        f"Rule validation succeded, ignoring potential other rules. ({can_invoke_multiple_rules=})"
+                        f"Rule conditions met, cannot invoke multiple rules, ignoring potential other rules. ({can_invoke_multiple_rules=})"
                     )
                     break
 
-            logger.info("Rule validation failed, moving to next one.")
+            logger.info("Rule `%s` conditions not met, moving to next one.", rule)
 
         if not rule_matched:
             if always_apply_defaults:

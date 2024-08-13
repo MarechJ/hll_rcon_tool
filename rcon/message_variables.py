@@ -132,10 +132,10 @@ def _admin_ping_trigger_words(config: AdminPingWebhooksUserConfig | None = None)
     return ", ".join(config.trigger_words[:])
 
 
-def _next_map(rcon: Rcon | None = None):
+def _next_map(rcon: Rcon | None = None) -> str:
     if rcon is None:
         rcon = get_rcon()
-    return rcon.next_map.pretty_name
+    return rcon.get_next_map().pretty_name
 
 
 def _map_rotation(rcon: Rcon | None = None):

@@ -25,6 +25,9 @@ def get_server_list(request):
     keys = api_key.get_all_keys()
     my_key = api_key.get_key()
 
+    auth_header: str | None = request.headers.get(AUTHORIZATION)
+    headers = {"AUTHORIZATION": auth_header} if auth_header else {}
+    
     logger.debug(keys)
     names = []
     for host, key in keys.items():
@@ -36,6 +39,7 @@ def get_server_list(request):
                 url,
                 timeout=5,
                 cookies=dict(sessionid=request.COOKIES.get("sessionid")),
+                headers=headers,
             )
             if res.ok:
                 names.append(res.json()["result"])

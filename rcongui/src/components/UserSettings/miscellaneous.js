@@ -129,17 +129,6 @@ export const RconServerSettings = ({
         */
         "lock_stats_api": false,
 
-        /* If you unban a player (temp or perma) it will also remove their blacklist (if any) */
-        "unban_does_unblacklist": true,
-
-        /* Same as above but the other way around, remove a player from the blacklist will unban him */
-        "unblacklist_does_unban": true,
-        
-        /*
-            This option when turned on will forward your temp ban to all your servers
-            When it is off the temp ban is only applied on the server where the command was received
-        */
-        "broadcast_temp_bans": true,
 
         /*
             This option when turned on will forward the unban to all your servers

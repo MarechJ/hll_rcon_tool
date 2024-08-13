@@ -1,9 +1,10 @@
 import inspect
+from collections import defaultdict
 from datetime import datetime, timedelta
 from logging import getLogger
 from typing import Any, Iterable, Literal, Optional, Sequence, Type
 
-from rcon import blacklist, game_logs, player_history
+from rcon import blacklist, game_logs, maps, player_history
 from rcon.audit import ingame_mods, online_mods
 from rcon.cache_utils import RedisCached, get_redis_pool
 from rcon.discord import audit_user_config_differences
@@ -135,19 +136,21 @@ class RconAPI(Rcon):
                 author=by,
             )
         return res
-    
+
     def get_blacklists(self) -> list[BlacklistType]:
         """Get all blacklists.
-        
+
         Blacklists are collections of ban-like records stored by CRCON
         to provide greater flexibility and scalability.
         """
         with enter_session() as sess:
-            return [bl.to_dict(with_records=False) for bl in blacklist.get_blacklists(sess)]
-    
+            return [
+                bl.to_dict(with_records=False) for bl in blacklist.get_blacklists(sess)
+            ]
+
     def get_blacklist(self, blacklist_id: int) -> BlacklistWithRecordsType:
         """Get a blacklist and its respective records.
-        
+
         Blacklists are collections of ban-like records stored by CRCON
         to provide greater flexibility and scalability.
 
@@ -155,7 +158,9 @@ class RconAPI(Rcon):
             blacklist_id: The ID of the blacklist
         """
         with enter_session() as sess:
-            return blacklist.get_blacklist(sess, blacklist_id, strict=True).to_dict(with_records=True)
+            return blacklist.get_blacklist(sess, blacklist_id, strict=True).to_dict(
+                with_records=True
+            )
 
     def create_blacklist(
         self,
@@ -189,7 +194,7 @@ class RconAPI(Rcon):
         self,
         blacklist_id: int,
         name: str = MISSING,
-        sync: BlacklistSyncMethod = MISSING,
+        sync_method: BlacklistSyncMethod = MISSING,
         servers: Sequence[int] | None = MISSING,
     ):
         """
@@ -204,12 +209,12 @@ class RconAPI(Rcon):
             sync: Method to use for synchronizing records with the game
             servers: List of server numbers this blacklist applies to. `None` means all.
         """
-        if sync:
-            sync = BlacklistSyncMethod(sync.lower())
+        if sync_method:
+            sync_method = BlacklistSyncMethod(sync_method.lower())
         return blacklist.edit_blacklist(
             blacklist_id,
             name=name,
-            sync=sync,
+            sync=sync_method,
             servers=servers,
         )
 
@@ -318,7 +323,7 @@ class RconAPI(Rcon):
             reason=reason,
             expires_at=expires_at,
         )
-    
+
     def delete_blacklist_record(
         self,
         record_id: int,
@@ -333,11 +338,8 @@ class RconAPI(Rcon):
             record_id: The ID of the record
         """
         return blacklist.remove_record_from_blacklist(record_id)
-    
-    def unblacklist_player(
-        self,
-        player_id: str
-    ) -> bool:
+
+    def unblacklist_player(self, player_id: str) -> bool:
         """Expires all blacklists of a player and unbans them from all servers.
 
         Args:
@@ -345,7 +347,6 @@ class RconAPI(Rcon):
         """
         blacklist.expire_all_player_blacklists(player_id)
         return True
-
 
     def unban(
         self,
@@ -368,7 +369,7 @@ class RconAPI(Rcon):
         for b in bans:
             if b.get(PLAYER_ID) == player_id:
                 success = True
-                type_to_func[b["type"]](b["raw"])
+                type_to_func[b["type"]](b["player_id"])
 
         return success
 
@@ -399,10 +400,12 @@ class RconAPI(Rcon):
             comments = player_history.get_player_comments(player_id=player_id)
 
             profile = raw_profile.copy()
-            profile.update({
-                "bans": bans,
-                "comments": comments,
-            })
+            profile.update(
+                {
+                    "bans": bans,
+                    "comments": comments,
+                }
+            )
         return profile
 
     def get_player_comments(self, player_id: str) -> list[PlayerCommentType]:
@@ -569,7 +572,7 @@ class RconAPI(Rcon):
         time_sort: Literal["desc", "asc"] = "desc",
         exact_player_match: bool = False,
         exact_action: bool = True,
-        output: str | None = None,
+        server_filter: str | None = None,
     ):
         lines = game_logs.get_historical_logs(
             player_name=player_name,
@@ -581,17 +584,14 @@ class RconAPI(Rcon):
             time_sort=time_sort,
             exact_player_match=exact_player_match,
             exact_action=exact_action,
+            server_filter=server_filter,
         )
 
-        if output and output.upper() == "CSV":
-            # TODO: csv output
-            pass
-        else:
-            return lines
+        return lines
 
     def get_recent_logs(
         self,
-        filter_player: list[str] = [],
+        filter_player: list[str] | str = [],
         filter_action: list[str] = [],
         inclusive_filter: bool = True,
         start: int = 0,
@@ -609,16 +609,23 @@ class RconAPI(Rcon):
             inclusive_filter=inclusive_filter,
         )
 
-    def get_votemap_status(self) -> VoteMapStatusType:
+    def get_votemap_status(self) -> list[VoteMapStatusType]:
         v = VoteMap()
 
-        return {
-            "votes": v.get_votes(),
-            "selection": [m for m in v.get_selection()],
-            "results": v.get_vote_overview(),
-        }
+        votes = v.get_votes()
+        votes_by_map: dict[maps.Layer, list[str]] = defaultdict(list)
+        for player, map_ in votes.items():
+            votes_by_map[map_].append(player)
 
-    def reset_votemap_state(self) -> VoteMapStatusType:
+        selection = v.get_selection()
+
+        result = []
+        for map_ in selection:
+            result.append({"map": map_, "voters": votes_by_map[map_]})
+
+        return sorted(result, key=lambda m: len(m["voters"]), reverse=True)
+
+    def reset_votemap_state(self) -> list[VoteMapStatusType]:
         v = VoteMap()
         v.clear_votes()
         v.gen_selection()

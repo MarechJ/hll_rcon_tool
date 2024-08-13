@@ -8,6 +8,7 @@ from contextlib import contextmanager
 from typing import Callable, Generator
 from urllib.parse import urljoin
 
+from datetime import timedelta
 import requests
 from requests.exceptions import ConnectionError, RequestException
 from sqlalchemy import create_engine, select
@@ -84,11 +85,9 @@ def cleanup_orphaned_messages(
 
 def get_map_image(server_info: PublicInfoType, config: ScorebotUserConfig):
     try:
-        url = server_info["current_map"]["map"]["image_url"]
-        if not url:
-            image_name = server_info["current_map"]["map"]["image_name"]
-            url = urljoin(str(config.base_scoreboard_url), f"maps/{image_name}")
-    except (IndexError, KeyError, TypeError):
+        image_name = server_info["current_map"]["map"]["image_name"]
+        url = urljoin(str(config.base_scoreboard_url), f"maps/{image_name}")
+    except (IndexError, KeyError, TypeError) as e:
         url = urljoin(str(config.base_scoreboard_url), f"maps/{UNKNOWN_MAP_NAME}.webp")
 
     return url
@@ -104,16 +103,18 @@ def get_header_embed(public_info: PublicInfoType, config: ScorebotUserConfig):
         elapsed_time_minutes = 0.0
 
     embed = discord.Embed(
-        title=f"{public_info['name']}",
+        title=f"{public_info['name']['name']}",
         description=f"**{public_info['current_map']['map']['pretty_name']} - {config.elapsed_time_text}{round(elapsed_time_minutes)} min. - {public_info['player_count']}/{public_info['max_player_count']} {config.players_text}**",
         color=13734400,
         timestamp=datetime.datetime.utcnow(),
         url=str(config.base_scoreboard_url),
     )
-    total_votes = public_info["vote_status"]["total_votes"]
-    winning_map_votes = 0
-    if len(public_info["vote_status"]["winning_maps"]) >= 1:
-        winning_map_votes = public_info["vote_status"]["winning_maps"][0][1]
+
+    total_votes = sum(len(m["voters"]) for m in public_info["vote_status"])
+    try:
+        winning_map_votes = len(public_info["vote_status"][0]["voters"])
+    except IndexError:
+        winning_map_votes = 0
 
     embed.add_field(
         name=f"{config.next_map_text} {public_info['next_map']['map']['pretty_name']}",
@@ -124,13 +125,13 @@ def get_header_embed(public_info: PublicInfoType, config: ScorebotUserConfig):
 
     embed.add_field(
         name=f"{config.allied_players_text}",
-        value=f"{public_info['players']['allied']}",
+        value=f"{public_info['player_count_by_team']['allied']}",
         inline=True,
     )
 
     embed.add_field(
         name=f"{config.axis_players_text}",
-        value=f"{public_info['players']['axis']}",
+        value=f"{public_info['player_count_by_team']['axis']}",
         inline=True,
     )
 
@@ -146,7 +147,7 @@ def get_header_embed(public_info: PublicInfoType, config: ScorebotUserConfig):
 
     embed.add_field(
         name=f"{config.time_remaining_text}",
-        value=f"{public_info['raw_time_remaining']}",
+        value=f"{timedelta(seconds=public_info['time_remaining'])}",
         inline=True,
     )
 

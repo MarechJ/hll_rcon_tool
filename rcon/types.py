@@ -2,6 +2,7 @@ import datetime
 import enum
 from dataclasses import dataclass
 from typing import List, Literal, Optional
+
 # # TODO: On Python 3.11.* specifically, Pydantic requires we use typing_extensions.TypedDict
 # over typing.TypedDict. Once we bump our Python image we can replace this.
 from typing_extensions import TypedDict
@@ -291,6 +292,7 @@ class BasicPlayerProfileType(TypedDict):
     names: list[PlayerNameType]
     steaminfo: Optional[SteamInfoType]
 
+
 class BlacklistSyncMethod(str, enum.Enum):
     """Enumeration of all available methods when it comes to enforcing
     blacklists. Each method has its pros and cons."""
@@ -317,6 +319,7 @@ class BlacklistType(TypedDict):
     sync: BlacklistSyncMethod
     servers: Optional[List[int]]
 
+
 class BlacklistRecordType(TypedDict):
     id: int
     player_id: str
@@ -326,11 +329,14 @@ class BlacklistRecordType(TypedDict):
     expires_at: Optional[datetime.datetime]
     is_active: bool
 
+
 class BlacklistWithRecordsType(BlacklistType):
     records: List[BlacklistRecordType]
 
+
 class BlacklistRecordWithBlacklistType(BlacklistRecordType):
     blacklist: BlacklistType
+
 
 class BlacklistRecordWithPlayerType(BlacklistRecordWithBlacklistType):
     player: BasicPlayerProfileType
@@ -438,6 +444,7 @@ class MapsType(TypedDict):
 
 class PlayerCommentType(TypedDict):
     id: int
+    player_id: str
     creation_time: datetime.datetime
     by: Optional[str]
     content: str
@@ -631,15 +638,14 @@ class VoteMapPlayerVoteType(TypedDict):
 
 
 class VoteMapResultType(TypedDict):
-    total_votes: int
-    winning_maps: list[tuple[Layer, int]]
+    map: Layer
+    num_votes: int
 
 
 # TODO: finish this typing
 class VoteMapStatusType(TypedDict):
-    votes: dict[str, Layer]
-    selection: list[Layer]
-    results: VoteMapResultType | None
+    map: Layer
+    voters: dict[Layer, list[str]]
 
 
 # Have to inherit from str to allow for JSON serialization w/ pydantic
@@ -733,10 +739,25 @@ class PublicInfoType(TypedDict):
     player_count_by_team: PublicInfoPlayerType
     score: PublicInfoScoreType
     time_remaining: float
-    vote_status: VoteMapResultType | None
+    vote_status: list[VoteMapStatusType]
     name: PublicInfoNameType
 
 
 class SlotsType(TypedDict):
     current_players: int
     max_players: int
+
+
+class DjangoPermission(TypedDict):
+    permission: str
+    description: str
+
+
+class DjangoGroup(TypedDict):
+    name: str
+
+
+class DjangoUserPermissions(TypedDict):
+    permissions: list[DjangoPermission]
+    groups: list[DjangoGroup]
+    is_superuser: bool

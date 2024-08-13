@@ -12,12 +12,13 @@ from channels.db import database_sync_to_async
 from channels.security.websocket import WebsocketDenier
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.hashers import make_password
-from django.contrib.auth.models import Permission, User
+from django.contrib.auth.models import Permission, User, Group
 from django.core.exceptions import PermissionDenied
 from django.db.models.signals import post_delete, post_save
 from django.http import HttpResponse, QueryDict
 from django.views.decorators.csrf import csrf_exempt
 
+from rcon.types import DjangoGroup, DjangoPermission, DjangoUserPermissions
 from rcon.audit import heartbeat, ingame_mods, online_mods, set_registered_mods
 from rcon.cache_utils import ttl_cache
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
@@ -150,12 +151,15 @@ def api_response(*args, **kwargs):
 
 
 def api_csv_response(content, name, header):
+    # TODO Probably want to put command name, etc. in this like the other
+    # RCON response methods
     response = HttpResponse(
         content_type="text/csv",
     )
     response["Content-Disposition"] = 'attachment; filename="%s"' % name
 
     writer = csv.DictWriter(response, fieldnames=header, dialect="excel")
+    writer.writerow({k: k for k in header})
     writer.writerows(content)
 
     return response
@@ -202,7 +206,7 @@ def is_logged_in(request):
         try:
             player_id = None
             try:
-                player_id = request.user.steamplayer.player_id
+                player_id = request.user.steamplayer.steam_id_64
             except:
                 logger.warning("%s's player ID is not set", request.user.username)
             try:
@@ -223,6 +227,31 @@ def do_logout(request):
     return api_response(result=True, command="logout", failed=False)
 
 
+def check_api_key(request):
+    # Extract the header and bearer key if present, otherwise fall back on
+    # requiring the user to be logged in
+    try:
+        header_name, raw_api_key = request.META[HTTP_AUTHORIZATION_HEADER].split(
+            maxsplit=1
+        )
+        if not header_name.upper().strip() in BEARER:
+            raw_api_key = None
+    except (KeyError, ValueError):
+        raw_api_key = None
+
+    try:
+        # If we don't include the salt, the hasher generates its own
+        # and it will generate different hashed values every time
+        hashed_api_key = make_password(raw_api_key, salt=SECRET_KEY.replace("$", ""))
+        api_key_model = DjangoAPIKey.objects.get(api_key=hashed_api_key)
+
+        # Retrieve the user to use the normal authentication system
+        # to include their permissions
+        request.user = api_key_model.user
+    except DjangoAPIKey.DoesNotExist:
+        pass
+
+
 def login_required():
     """Flag this endpoint as one that requires the user
     to be logged in.
@@ -231,30 +260,8 @@ def login_required():
     def decorator(func):
         @wraps(func)
         def wrapper(request, *args, **kwargs):
-            # Extract the header and bearer key if present, otherwise fall back on
-            # requiring the user to be logged in
-            try:
-                header_name, raw_api_key = request.META[
-                    HTTP_AUTHORIZATION_HEADER
-                ].split(maxsplit=1)
-                if not header_name.upper().strip() in BEARER:
-                    raw_api_key = None
-            except (KeyError, ValueError):
-                raw_api_key = None
-
-            try:
-                # If we don't include the salt, the hasher generates its own
-                # and it will generate different hashed values every time
-                hashed_api_key = make_password(
-                    raw_api_key, salt=SECRET_KEY.replace("$", "")
-                )
-                api_key_model = DjangoAPIKey.objects.get(api_key=hashed_api_key)
-
-                # Retrieve the user to use the normal authentication system
-                # to include their permissions
-                request.user = api_key_model.user
-            except DjangoAPIKey.DoesNotExist:
-                pass
+            # Check if API-Key is used
+            check_api_key(request)
 
             if not request.user.is_authenticated:
                 return api_response(
@@ -298,6 +305,9 @@ def stats_login_required(func):
 
     @wraps(func)
     def wrapper(request, *args, **kwargs):
+        # Check if API-Key is used
+        check_api_key(request)
+
         if not request.user.is_authenticated:
             return api_response(
                 command=request.path,
@@ -322,20 +332,35 @@ def stats_login_required(func):
 def get_own_user_permissions(request):
     command_name = "get_own_user_permissions"
 
+    unique_permissions: set[tuple[str, str]] = set()
+    trimmed_groups: list[DjangoGroup] = []
+
     permissions = Permission.objects.filter(user=request.user)
-    trimmed_permissions = [
+    for p in permissions.values():
+        unique_permissions.add((p["codename"], p["name"]))
+
+    groups = Group.objects.filter(user=request.user)
+    for g in groups:
+        trimmed_groups.append({"name": g.name})
+        for p in g.permissions.values():
+            unique_permissions.add((p["codename"], p["name"]))
+
+    trimmed_permissions: list[DjangoPermission] = [
         {
-            "permission": p["codename"],
-            "description": p["name"],
+            "permission": permission,
+            "description": description,
         }
-        for p in permissions.values()
+        for permission, description in unique_permissions
     ]
+
+    result: DjangoUserPermissions = {
+        "permissions": trimmed_permissions,
+        "groups": trimmed_groups,
+        "is_superuser": request.user.is_superuser,
+    }
 
     return api_response(
         command=command_name,
-        result={
-            "permissions": trimmed_permissions,
-            "is_superuser": request.user.is_superuser,
-        },
+        result=result,
         failed=False,
     )

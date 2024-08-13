@@ -407,7 +407,7 @@ class ServerCtl:
             logger.exception("Bad playerinfo data")
             return False
 
-    def get_player_info(self, player_name, can_fail=True) -> str:
+    def get_player_info(self, player_name: str, can_fail=True) -> str:
         data = self._str_request(f"playerinfo {player_name}", can_fail=can_fail)
         if not self._is_info_correct(player_name, data):
             data = self._str_request(f"playerinfo {player_name}", can_fail=can_fail)
@@ -470,7 +470,10 @@ class ServerCtl:
 
     @_auto_retry
     def get_logs(
-        self, since_min_ago, filter_="", conn: HLLConnection | None = None
+        self,
+        since_min_ago: str | int,
+        filter_: str = "",
+        conn: HLLConnection | None = None,
     ) -> str:
         if conn is None:
             raise ValueError("conn parameter should never be None")
@@ -665,11 +668,13 @@ class ServerCtl:
             == SUCCESS
         )
 
-    def remove_temp_ban(self, ban_log) -> bool:
-        return self._str_request(f"pardontempban {ban_log}", log_info=True) == SUCCESS
+    def remove_temp_ban(self, player_id: str) -> bool:
+        return self._str_request(f"pardontempban {player_id}", log_info=True) == SUCCESS
 
-    def remove_perma_ban(self, ban_log) -> bool:
-        return self._str_request(f"pardonpermaban {ban_log}", log_info=True) == SUCCESS
+    def remove_perma_ban(self, player_id: str) -> bool:
+        return (
+            self._str_request(f"pardonpermaban {player_id}", log_info=True) == SUCCESS
+        )
 
     @_escape_params
     def add_admin(self, player_id, role, description) -> bool:
