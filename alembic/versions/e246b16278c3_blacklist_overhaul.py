@@ -93,3 +93,4 @@ def downgrade():
     # )
     op.drop_table("blacklist_record")
     op.drop_table("blacklist")
+    op.execute("DROP TYPE blacklistsyncmethod")
