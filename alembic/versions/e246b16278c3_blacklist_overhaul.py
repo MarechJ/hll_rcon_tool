@@ -91,11 +91,5 @@ def downgrade():
     #     sa.ForeignKeyConstraint(['player_id_id'], ['player_id.id'], name='player_blacklist_player_id_id_fkey'),
     #     sa.PrimaryKeyConstraint('id', name='player_blacklist_pkey')
     # )
-    op.create_index(
-        "ix_player_blacklist_player_id_id",
-        "player_blacklist",
-        ["player_id_id"],
-        unique=True,
-    )
     op.drop_table("blacklist_record")
     op.drop_table("blacklist")
