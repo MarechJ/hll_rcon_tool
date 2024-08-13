@@ -17,7 +17,7 @@ from rcon.blacklist import (
 )
 from rcon.barricade import *
 
-logger = getLogger(__name__)
+logger = getLogger("rconweb")
 
 
 @database_sync_to_async
@@ -50,7 +50,7 @@ def ban_player(player_id: str, blacklist_id: int, reason: str):
         logger.exception("Failed to blacklist player %s", player_id)
         return None
     else:
-        return record["id"]
+        return str(record["id"])
 
 @database_sync_to_async
 def unban_player(record_id: int):
@@ -89,6 +89,7 @@ class BarricadeConsumer(AsyncJsonWebsocketConsumer):
         self._processing: set[int] = set()
         self._resp_cache = TTLCache(9999, ttl=60)
         self._last_seen_session = datetime.utcnow()
+        self._scan_players_task = None
 
     async def websocket_connect(self, *args, **kwargs):
         await super().websocket_connect(*args, **kwargs)
@@ -211,6 +212,7 @@ class BarricadeConsumer(AsyncJsonWebsocketConsumer):
                 response = request.response_error(e.error, **e.kwargs)
             except Exception as e:
                 # ...whereas these typically indicate a server error
+                logger.error("Internal error when handling Barricade request: %r", request, exc_info=e)
                 response = request.response_error(f"{type(e).__name__}: {e}")
         
             # Respond
@@ -262,12 +264,12 @@ class BarricadeConsumer(AsyncJsonWebsocketConsumer):
 
         record_ids = await asyncio.gather(*[
             # The client expects strings, not ints
-            str(ban_player(
+            ban_player(
                 player_id=player_id,
                 blacklist_id=blacklist_id,
-                reason=reason,
-            ))
-            for player_id, reason in payload.player_ids
+                reason=reason or payload.config.reason,
+            )
+            for player_id, reason in payload.player_ids.items()
         ])
 
         return {"ban_ids": dict(zip(payload.player_ids.keys(), record_ids))}
