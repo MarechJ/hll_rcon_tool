@@ -11,15 +11,15 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, selectinload
 from typing import Literal, Sequence, overload
 
+from rcon.barricade import ScanPlayersRequestPayload, ServerRequestType, send_to_barricade
 from rcon.cache_utils import get_redis_client
 from rcon.commands import CommandFailedError
 from rcon.discord import dict_to_discord, send_to_discord_audit
-from rcon.models import BlacklistSyncMethod, PlayerID, Blacklist, BlacklistRecord, PlayerName, enter_session, get_engine
+from rcon.models import BlacklistSyncMethod, PlayerID, Blacklist, BlacklistRecord, PlayerName, enter_session
 from rcon.player_history import _get_set_player, remove_accent, unaccent
 from rcon.rcon import Rcon, get_rcon
 from rcon.types import BlacklistRecordType, BlacklistRecordWithBlacklistType, BlacklistType
-from rcon.utils import MISSING, get_server_number, humanize_timedelta
-from rconweb.api.barricade import ScanPlayersRequestPayload, ServerRequestType, send_to_barricade
+from rcon.utils import MISSING, get_server_number
 
 logger = logging.getLogger(__name__)
 red = get_redis_client()
