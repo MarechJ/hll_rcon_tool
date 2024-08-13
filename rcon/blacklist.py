@@ -19,7 +19,7 @@ from rcon.player_history import _get_set_player, remove_accent, unaccent
 from rcon.rcon import Rcon, get_rcon
 from rcon.types import BlacklistRecordType, BlacklistRecordWithBlacklistType, BlacklistType
 from rcon.utils import MISSING, get_server_number, humanize_timedelta
-from rconweb.api.barricade import AlertPlayerRequestPayload, ServerRequestType, send_to_barricade
+from rconweb.api.barricade import ScanPlayersRequestPayload, ServerRequestType, send_to_barricade
 
 logger = logging.getLogger(__name__)
 red = get_redis_client()
@@ -1071,6 +1071,6 @@ class BlacklistCommandHandler:
 
         if online_player_ids:
             send_to_barricade(
-                request_type=ServerRequestType.ALERT_PLAYER,
-                payload=AlertPlayerRequestPayload(player_ids=online_player_ids)
+                request_type=ServerRequestType.SCAN_PLAYERS,
+                payload=ScanPlayersRequestPayload(player_ids=online_player_ids)
             )
