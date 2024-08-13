@@ -11,14 +11,15 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, selectinload
 from typing import Literal, Sequence, overload
 
+from rcon.barricade import ScanPlayersRequestPayload, ServerRequestType, send_to_barricade
 from rcon.cache_utils import get_redis_client
 from rcon.commands import CommandFailedError
 from rcon.discord import dict_to_discord, send_to_discord_audit
-from rcon.models import BlacklistSyncMethod, PlayerID, Blacklist, BlacklistRecord, PlayerName, enter_session, get_engine
+from rcon.models import BlacklistSyncMethod, PlayerID, Blacklist, BlacklistRecord, PlayerName, enter_session
 from rcon.player_history import _get_set_player, remove_accent, unaccent
 from rcon.rcon import Rcon, get_rcon
 from rcon.types import BlacklistRecordType, BlacklistRecordWithBlacklistType, BlacklistType
-from rcon.utils import MISSING, get_server_number, humanize_timedelta
+from rcon.utils import MISSING, get_server_number
 
 logger = logging.getLogger(__name__)
 red = get_redis_client()
@@ -724,6 +725,7 @@ class BlacklistCommandType(IntEnum):
     EDIT_LIST = auto()
     DELETE_LIST = auto()
     EXPIRE_ALL = auto()
+    BARRICADE_WARN_ONLINE = auto()
 
 
 class BlacklistCreateRecordCommand(BaseModel):
@@ -746,6 +748,9 @@ class BlacklistDeleteListCommand(BaseModel):
 
 class BlacklistExpireAllCommand(BaseModel):
     player_id: str
+
+class BlacklistBarricadeWarnOnlineCommand(BaseModel):
+    player_ids: list[str]
 
 @dataclass
 class BlacklistCommand:
@@ -838,6 +843,10 @@ class BlacklistCommandHandler:
                         case BlacklistCommandType.EXPIRE_ALL:
                             self.handle_expire_all(
                                 BlacklistExpireAllCommand.model_validate(cmd.payload)
+                            )
+                        case BlacklistCommandType.BARRICADE_WARN_ONLINE:
+                            self.handle_barricade_warn_online(
+                                BlacklistBarricadeWarnOnlineCommand.model_validate(cmd.payload)
                             )
                         case _:
                             logger.error("Unknown command %r", cmd.command)
@@ -1052,3 +1061,16 @@ class BlacklistCommandHandler:
         ):
             # Remove their perma-ban
             self.rcon.remove_perma_ban(payload.player_id)
+
+    def handle_barricade_warn_online(self, payload: BlacklistBarricadeWarnOnlineCommand):
+        online_player_ids = [
+            player_id
+            for _, player_id in self.rcon.get_playerids()
+            if player_id in payload.player_ids
+        ]
+
+        if online_player_ids:
+            send_to_barricade(
+                request_type=ServerRequestType.SCAN_PLAYERS,
+                payload=ScanPlayersRequestPayload(player_ids=online_player_ids)
+            )
