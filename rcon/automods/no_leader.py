@@ -129,10 +129,10 @@ class NoLeaderAutomod:
         self.logger.debug("Squad %s %s", squad_name, squad)
         punitions_to_apply = PunitionsToApply()
 
+        server_player_count = get_team_count(team_view, "allies") + get_team_count(team_view, "axis")
+
         # (obsolete - kept for legacy - can be set in autosettings)
-        if (
-            get_team_count(team_view, "allies") + get_team_count(team_view, "axis")
-        ) < self.config.dont_do_anything_below_this_number_of_players:
+        if server_player_count < self.config.dont_do_anything_below_this_number_of_players:
             self.logger.debug("Server below min player count : disabling")
             return punitions_to_apply
 
