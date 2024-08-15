@@ -126,7 +126,7 @@ export const ManualPlayerInput = ({
   </Grid>
 );
 
-export const ForwardCheckBox = ({ bool, onChange }) => (
+export const ForwardCheckBox = ({ bool, onChange, label = "Forward to all servers" }) => (
   <FormControlLabel
     control={
       <Checkbox
@@ -136,7 +136,7 @@ export const ForwardCheckBox = ({ bool, onChange }) => (
         }}
       />
     }
-    label="Forward to all servers"
+    label={label}
   />
 );
 

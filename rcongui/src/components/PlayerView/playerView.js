@@ -2,10 +2,13 @@ import React, { Component } from "react";
 import "react-toastify/dist/ReactToastify.css";
 import {
   addPlayerToBlacklist,
+  addPlayerVip,
   get,
   getBlacklists,
+  getVips,
   handle_http_errors,
   postData,
+  removePlayerVip,
   showResponse,
 } from "../../utils/fetchUtils";
 import AutoRefreshBar from "./header";
@@ -15,10 +18,11 @@ import Chip from "@material-ui/core/Chip";
 import { ReasonDialog } from "./playerActions";
 import GroupActions from "./groupActions";
 import Unban from "./unban";
-import { fromJS, List } from "immutable";
+import { fromJS, List, Map, OrderedSet } from "immutable";
 import { FlagDialog } from "../PlayersHistory";
 import { getEmojiFlag } from "../../utils/emoji";
 import BlacklistRecordCreateDialog from "../Blacklist/BlacklistRecordCreateDialog";
+import { VipExpirationDialog } from "../VipDialog";
 
 function stripDiacritics(string) {
   return typeof string.normalize !== "undefined"
@@ -65,7 +69,9 @@ class PlayerView extends Component {
       flag: false,
       blacklistOpen: false,
       blacklists: [],
-      blacklistTarget: null,
+      playerTarget: null,
+      vipDialogOpen: false,
+      vipPlayers: [],
     };
 
     this.onPlayerSelected = this.onPlayerSelected.bind(this);
@@ -79,6 +85,10 @@ class PlayerView extends Component {
     this.deleteFlag = this.deleteFlag.bind(this);
     this.blacklistPlayer = this.blacklistPlayer.bind(this)
     this.handleBlacklistOpen = this.handleBlacklistOpen.bind(this)
+    this.handleVipDialogOpen = this.handleVipDialogOpen.bind(this)
+    this.removePlayerVip = this.removePlayerVip.bind(this);
+    this.addPlayerVip = this.addPlayerVip.bind(this)
+    this.getVips = this.getVips.bind(this);
     this.sortTypeChange = this.sortTypeChange.bind(this);
   }
 
@@ -109,7 +119,40 @@ class PlayerView extends Component {
   
   async handleBlacklistOpen(player) {
     const blacklists = await getBlacklists();
-    this.setState({ blacklists, blacklistOpen: true, blacklistTarget: player })
+    this.setState({ blacklists, blacklistOpen: true, playerTarget: player })
+  }
+
+  handleVipDialogOpen(player) {
+    this.setState({
+      vipDialogOpen: true,
+      playerTarget: player,
+    })
+  }
+
+  async getVips() {
+    const vips = await getVips();
+    this.setState({ vipPlayers: vips })
+  }
+
+  async addPlayerVip(player, expiresAt, forward) {
+    // action
+    await addPlayerVip({
+      player_id: player.get("player_id"),
+      description: player.get("name"),
+      expiration: expiresAt,
+      forward: forward,
+    })
+    // update state
+    await this.loadPlayers()
+    await this.getVips()
+  }
+
+  async removePlayerVip(player) {
+    // action
+    await removePlayerVip({ player_id: player.get("player_id") })
+    // update state
+    await this.loadPlayers()
+    await this.getVips()
   }
 
   unBan(ban) {
@@ -171,12 +214,10 @@ class PlayerView extends Component {
       let playerId = player_id;
       if (!playerId) {
         try {
-          console.log(this.state.players);
           playerId = this.state.players
             .filter((p) => p.get("name") === player_name)
             .get(0)
             .get("player_id");
-          console.log(playerId);
         } catch (err) {
           console.log("Unable to get player ID", err);
         }
@@ -255,6 +296,7 @@ class PlayerView extends Component {
 
   componentDidMount() {
     this.loadPlayers();
+    this.getVips();
   }
   render() {
     const { classes, isFullScreen, onFullScreen } = this.props;
@@ -270,7 +312,9 @@ class PlayerView extends Component {
       flag,
       blacklistOpen,
       blacklists,
-      blacklistTarget,
+      playerTarget,
+      vipDialogOpen,
+      vipPlayers,
     } = this.state;
 
     return (
@@ -323,6 +367,7 @@ class PlayerView extends Component {
           onFlag={(player) => this.setState({ flag: player })}
           onDeleteFlag={(flagId) => this.deleteFlag(flagId)}
           onBlacklist={this.handleBlacklistOpen}
+          onVipDialogOpen={this.handleVipDialogOpen}
         />
 
         <GroupActions
@@ -371,10 +416,18 @@ class PlayerView extends Component {
         <BlacklistRecordCreateDialog
           open={blacklistOpen}
           blacklists={blacklists}
-          initialValues={blacklistTarget && { playerId: blacklistTarget.get("player_id") }}
+          initialValues={playerTarget && { playerId: playerTarget.get("player_id") }}
           onSubmit={this.blacklistPlayer}
           setOpen={() => this.setState({ blacklistOpen: !blacklistOpen })}
           disablePlayerId={true}
+        />
+        <VipExpirationDialog
+          open={vipDialogOpen}
+          player={playerTarget}
+          vips={vipPlayers}
+          onDeleteVip={this.removePlayerVip}
+          handleClose={() => this.setState({ vipDialogOpen: false, playerTarget: null })}
+          handleConfirm={this.addPlayerVip}
         />
       </React.Fragment>
     );

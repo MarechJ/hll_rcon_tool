@@ -6,9 +6,63 @@ import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
 import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
-import { FormControl, Grid, InputLabel, MenuItem, Select, Typography } from '@material-ui/core';
+import { FormControl, Grid, InputLabel, makeStyles, MenuItem, Select, Typography } from '@material-ui/core';
 import moment from "moment";
-import { getServerStatus } from '../../utils/fetchUtils';
+import { getServerStatus, getSharedMessages } from '../../utils/fetchUtils';
+import TextHistory from '../textHistory';
+
+const ONE_HOUR = 60 * 60;
+const ONE_DAY = ONE_HOUR * 24;
+const presetTimes = [
+  { label: "1 hour", value: ONE_HOUR },
+  { label: "6 hours", value: ONE_HOUR * 6 },
+  { label: "12 hours", value: ONE_HOUR * 12 },
+  { label: "1 day", value: ONE_DAY },
+  { label: "2 days", value: ONE_DAY * 2 },
+  { label: "3 days", value: ONE_DAY * 3 },
+  { label: "5 days", value: ONE_DAY * 5 },
+  { label: "7 days", value: ONE_DAY * 7 },
+  { label: "14 days", value: ONE_DAY * 14 },
+  { label: "30 days", value: ONE_DAY * 30 },
+  { label: "365 days", value: ONE_DAY * 365 },
+  { label: "Never", value: null }
+];
+
+function BlacklistServerWarning({ blacklist, currentServer }) {
+  const affectsAllServers = blacklist.servers === null
+
+  if (affectsAllServers) {
+    return null;
+  }
+
+  let text = "";
+  const affectsNone = blacklist.servers.length === 0;
+  const failedToLoadCurrentServer = !("server_number" in currentServer);
+  const affectsOnlyOtherServers = blacklist.servers.length > 0 && !blacklist.servers.includes(currentServer?.server_number ?? -1)
+
+  if (affectsNone) {
+    text = "This blacklist does not affect any servers!"
+  }
+  else if (failedToLoadCurrentServer) {
+    text = `Failed to load current server information!\n`
+    text += `This blacklist MAY NOT affect THIS server. Affected servers: [${blacklist.servers.join(", ")}]`
+  }
+  else if (affectsOnlyOtherServers) {
+    text = `This blacklist DOES NOT affect THIS server! Affected servers: [${blacklist.servers.join(", ")}]`
+  }
+
+  return (
+    <Typography variant="caption" color="secondary">
+      {text}
+    </Typography>
+  )
+}
+
+const useStyles = makeStyles((theme) => ({
+  selectEmpty: {
+    marginTop: theme.spacing(2.7),
+  },
+}));
 
 export default function BlacklistRecordCreateDialog({
   open,
@@ -26,10 +80,25 @@ export default function BlacklistRecordCreateDialog({
   const [expiresAt, setExpiresAt] = React.useState("");
   const [reason, setReason] = React.useState("");
   const [currentServer, setCurrentServer] = React.useState({})
+  const [punishMessages, setPunishMessages] = React.useState([])
+  const [selectedMessage, setSelectedMessage] = React.useState("")
+  const classes = useStyles();
+
+  const handlePunishMessageChange = (event) => {
+    setSelectedMessage(event.target.value ?? "")
+    setReason(punishMessages[event.target.value] ?? "");
+  };
 
   React.useEffect(() => {
-    getServerStatus().then(server => setCurrentServer(server)).catch(() => setCurrentServer({}))
-  }, [])
+    if (open) {
+      const messageType = "punishments"
+      getServerStatus().then(server => setCurrentServer(server)).catch(() => setCurrentServer({}))
+      getSharedMessages(messageType).then(sharedMessages => {
+        const locallyStoredMessages = new TextHistory(messageType).getTexts();
+        setPunishMessages(sharedMessages.concat(locallyStoredMessages))
+      })
+    }
+  }, [open])
 
   React.useEffect(() => {
     if (initialValues) {
@@ -57,39 +126,6 @@ export default function BlacklistRecordCreateDialog({
     setReason("")
   };
 
-  const displayBlacklistWarning = () => {
-    const affectsAllServers = blacklist.servers === null
-
-    if (affectsAllServers) {
-      return null;
-    }
-
-    let text = "";
-    const affectsNone = blacklist.servers.length === 0;
-    const failedToLoadCurrentServer = !("server_number" in currentServer);
-    const affectsOnlyOtherServers = blacklist.servers.length > 0 && !blacklist.servers.includes(currentServer?.server_number ?? -1)
-
-    if (affectsNone)
-    {
-      text = "This blacklist does not affect any servers!"
-    } 
-    else if (failedToLoadCurrentServer)
-    {
-      text = `Failed to load current server information!\n`
-      text += `This blacklist MAY NOT affect THIS server. Affected servers: [${blacklist.servers.join(", ")}]`
-    }
-    else if (affectsOnlyOtherServers) 
-    {
-      text = `This blacklist DOES NOT affect THIS server! Affected servers: [${blacklist.servers.join(", ")}]`
-    }
-
-    return (
-      <Typography variant="caption" color="secondary">
-        {text}
-      </Typography>
-    )
-  }
-
   return (
     <Dialog
       open={open}
@@ -105,6 +141,7 @@ export default function BlacklistRecordCreateDialog({
             reason
           }
           onSubmit(data);
+          setSelectedMessage("")
           handleClose();
         },
       }}
@@ -129,7 +166,8 @@ export default function BlacklistRecordCreateDialog({
 
         {blacklist && (
           <React.Fragment>
-            {displayBlacklistWarning()}
+            <BlacklistServerWarning blacklist={blacklist} currentServer={currentServer} />
+            {/* PLAYER ID */}
             <TextField
               required
               margin="dense"
@@ -144,9 +182,9 @@ export default function BlacklistRecordCreateDialog({
               variant="standard"
               multiline={hasManyIDs}
             />
-
+            {/* EXPIRY */}
             <Grid container
-              spacing={5}
+              spacing={2}
               alignItems="center"
             >
               <Grid item xs={8}>
@@ -166,9 +204,7 @@ export default function BlacklistRecordCreateDialog({
                 />
               </Grid>
               <Grid item xs={4}>
-                <InputLabel>Preset Times</InputLabel>
                 <Select
-                  placeholder="Preset Times"
                   value={""}
                   onChange={(e) => {
                     e.target.value
@@ -176,41 +212,69 @@ export default function BlacklistRecordCreateDialog({
                       : setExpiresAt("");
                   }}
                   fullWidth
+                  displayEmpty
+                  className={classes.selectEmpty}
                 >
-                  <MenuItem value={60 * 60}>1 hour</MenuItem>
-                  <MenuItem value={60 * 60 * 6}>6 hours</MenuItem>
-                  <MenuItem value={60 * 60 * 12}>12 hours</MenuItem>
-                  <MenuItem value={60 * 60 * 24}>1 day</MenuItem>
-                  <MenuItem value={60 * 60 * 24 * 2}>2 days</MenuItem>
-                  <MenuItem value={60 * 60 * 24 * 3}>3 days</MenuItem>
-                  <MenuItem value={60 * 60 * 24 * 5}>5 days</MenuItem>
-                  <MenuItem value={60 * 60 * 24 * 7}>7 days</MenuItem>
-                  <MenuItem value={60 * 60 * 24 * 14}>14 days</MenuItem>
-                  <MenuItem value={60 * 60 * 24 * 30}>30 days</MenuItem>
-                  <MenuItem value={60 * 60 * 24 * 365}>365 days</MenuItem>
-                  <MenuItem value={null}>Never</MenuItem>
+                  <MenuItem value="">
+                    <em>Preset Times</em>
+                  </MenuItem>
+                  {presetTimes.map(({ value, label }) => (
+                    <MenuItem key={label} value={value}>{label}</MenuItem>
+                  ))}
                 </Select>
               </Grid>
             </Grid>
-            <TextField
-              required
-              multiline
-              margin="dense"
-              id="reason"
-              name="reason"
-              label="Reason"
-              type="reason"
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              fullWidth
-              variant="standard"
-              helperText="Available variables:
+            {/* REASON */}
+            <Grid container
+              spacing={2}
+              alignItems="top"
+            >
+              <Grid item xs={8}>
+                <TextField
+                  required
+                  multiline
+                  margin="dense"
+                  id="reason"
+                  name="reason"
+                  label="Reason"
+                  type="reason"
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                  fullWidth
+                  variant="standard"
+                  helperText="Available variables:
               {player_id}, {player_name}, {banned_at}, {banned_until}, {expires_at},
               {duration}, {expires}, {ban_id}, {blacklist_name}"
-            />
+                />
+              </Grid>
+              <Grid item xs={4}>
+                <Select
+                  id="saved-messages-select"
+                  value={selectedMessage}
+                  onChange={handlePunishMessageChange}
+                  inputProps={{ 'aria-label': 'Saved Messages' }}
+                  fullWidth
+                  displayEmpty
+                  className={classes.selectEmpty}
+                >
+                  <MenuItem value="">
+                    <em>Saved Messages</em>
+                  </MenuItem>
+                  {punishMessages.map((message, i) => {
+                    let label = message.substring(0, 16);
+                    if (message.length > 16) {
+                      label += "...";
+                    }
+                    return (
+                      <MenuItem key={label + i} value={i}>{label}</MenuItem>
+                    )
+                  })}
+                </Select>
+              </Grid>
+            </Grid>
+
           </React.Fragment>
         )}
-
 
       </DialogContent>
       <DialogActions>
