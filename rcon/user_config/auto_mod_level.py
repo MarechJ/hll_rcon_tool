@@ -25,6 +25,7 @@ class RoleType(TypedDict):
 
 class AutoModLevelType(TypedDict):
     enabled: bool
+    dont_do_anything_below_this_number_of_players: int
     dry_run: bool
     discord_webhook_url: Optional[HttpUrl]
     whitelist_flags: list[str]
@@ -78,6 +79,7 @@ def validate_level_thresholds(vs):
 
 class AutoModLevelUserConfig(BaseUserConfig):
     enabled: bool = Field(default=False)
+    dont_do_anything_below_this_number_of_players: int = Field(ge=0, le=100, default=40)
     dry_run: bool = Field(default=True)
     discord_webhook_url: Optional[HttpUrl] = Field(default=None)
     whitelist_flags: list[str] = Field(default_factory=list)
@@ -121,6 +123,9 @@ class AutoModLevelUserConfig(BaseUserConfig):
 
         validated_conf = AutoModLevelUserConfig(
             enabled=values.get("enabled"),
+            dont_do_anything_below_this_number_of_players=values.get(
+                "dont_do_anything_below_this_number_of_players"
+            ),
             dry_run=values.get("dry_run"),
             discord_webhook_url=values.get("discord_webhook_url"),
             whitelist_flags=values.get("whitelist_flags"),
