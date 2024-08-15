@@ -1489,7 +1489,6 @@ class Rcon(ServerCtl):
             time = Rcon._extract_time(raw_timestamp)
             try:
                 log_line = Rcon.parse_log_line(raw_log_line)
-<<<<<<< HEAD
                 if filter_action and not log_line["action"].startswith(filter_action):
                     continue
     
@@ -1501,15 +1500,7 @@ class Rcon(ServerCtl):
     
                 if player2 := log_line["player2"]:
                     players.add(player2)
-=======
-
-                if filter_action and not log_line["action"].startswith(filter_action):
-                    continue
-
-                if filter_player and filter_player not in raw_log_line:
-                    continue
-
->>>>>>> origin/feat/banlists
+                    
                 parsed_log_lines.append(
                     {
                         "version": 1,
