@@ -131,17 +131,17 @@ class NoLeaderAutomod:
 
         server_player_count = get_team_count(team_view, "allies") + get_team_count(team_view, "axis")
 
-        # (obsolete - kept for legacy - can be set in autosettings)
+        # dont_do_anything_below_this_number_of_players
         if server_player_count < self.config.dont_do_anything_below_this_number_of_players:
             self.logger.debug("Server below min player count : disabling")
             return punitions_to_apply
 
-        if squad_name == "Commander":
-            self.logger.debug("Skipping commander")
-            return punitions_to_apply
-
         if not squad_name:
             self.logger.debug("Skipping None or empty squad %s %s", squad_name, squad)
+            return punitions_to_apply
+
+        if squad_name == "Commander":
+            self.logger.debug("Skipping commander")
             return punitions_to_apply
 
         with self.watch_state(team, squad_name) as watch_status:
@@ -153,12 +153,8 @@ class NoLeaderAutomod:
                 self.logger.debug("A leader has entered %s %s", squad_name, squad)
                 raise SquadHasLeader()
 
-            if squad["players"][0]["profile"]["flags"] is not None:
-                for flagnb in squad["players"][0]["profile"]["flags"]:
-                    if flagnb["flag"] in self.config.whitelist_flags:
-                        raise SquadHasLeader()
-
             self.logger.debug("Squad %s - %s doesn't have leader", team, squad_name)
+
             author = AUTOMOD_USERNAME + ("-DryRun" if self.config.dry_run else "")
 
             for player in squad["players"]:
@@ -176,7 +172,6 @@ class NoLeaderAutomod:
                     ),
                 )
 
-                # (obsolete)
                 state = self.should_note_player(watch_status, squad_name, aplayer)
                 if state == PunishStepState.APPLY:
                     punitions_to_apply.add_squad_state(team, squad_name, squad)
@@ -228,6 +223,7 @@ class NoLeaderAutomod:
                 state = self.should_kick_player(
                     watch_status, team_view, squad_name, squad, aplayer
                 )
+
                 if state == PunishStepState.APPLY:
                     aplayer.details.message = self.get_message(
                         watch_status, aplayer, ActionMethod.KICK
@@ -238,22 +234,33 @@ class NoLeaderAutomod:
         return punitions_to_apply
 
 
-    # (obsolete)
     def should_note_player(
         self, watch_status: WatchStatus, squad_name: str, aplayer: PunishPlayer
     ):
+        # number_of_notes
         if self.config.number_of_notes == 0:
             self.logger.debug("Notes are disabled. number_of_notes is set to 0")
             return PunishStepState.DISABLED
 
+        # immune_player_level
+        # immune_roles
+        if (
+            aplayer.lvl <= self.config.immune_player_level
+            or aplayer.role in self.config.immune_roles
+        ):
+            self.logger.info("%s is immune to notes", aplayer.short_repr())
+            return PunishStepState.IMMUNED
+
         notes = watch_status.noted.setdefault(aplayer.name, [])
 
+        # notes_interval_seconds
         if not is_time(notes, self.config.notes_interval_seconds):
             self.logger.debug(
                 "Waiting to note: %s in %s", aplayer.short_repr(), squad_name
             )
             return PunishStepState.WAIT
 
+        # number_of_notes
         if len(notes) < self.config.number_of_notes:
             self.logger.info(
                 "%s Will be noted (%s/%s)",
@@ -276,10 +283,13 @@ class NoLeaderAutomod:
     def should_warn_player(
         self, watch_status: WatchStatus, squad_name: str, aplayer: PunishPlayer
     ):
+        # number_of_warnings
         if self.config.number_of_warnings == 0:
             self.logger.debug("Warnings are disabled. number_of_warning is set to 0")
             return PunishStepState.DISABLED
 
+        # immune_player_level
+        # immune_roles
         if (
             aplayer.lvl <= self.config.immune_player_level
             or aplayer.role in self.config.immune_roles
@@ -289,12 +299,14 @@ class NoLeaderAutomod:
 
         warnings = watch_status.warned.setdefault(aplayer.name, [])
 
+        # warning_interval_seconds
         if not is_time(warnings, self.config.warning_interval_seconds):
             self.logger.debug(
                 "Waiting to warn: %s in %s", aplayer.short_repr(), squad_name
             )
             return PunishStepState.WAIT
 
+        # number_of_warnings
         if (
             len(warnings) < self.config.number_of_warnings
             or self.config.number_of_warnings == -1
@@ -325,22 +337,25 @@ class NoLeaderAutomod:
         squad,
         aplayer: PunishPlayer,
     ):
+        # number_of_punishments
         if self.config.number_of_punishments == 0:
             self.logger.debug("Punish is disabled")
             return PunishStepState.DISABLED
 
-        # (obsolete - kept for legacy - can be set in autosettings)
+        # min_server_players_for_punish
         if (
             get_team_count(team_view, "allies") + get_team_count(team_view, "axis")
         ) < self.config.min_server_players_for_punish:
             self.logger.debug("Server below min player count for punish")
             return PunishStepState.WAIT
 
-        # (obsolete - kept for legacy - can be set in autosettings)
+        # min_squad_players_for_punish
         if len(squad["players"]) < self.config.min_squad_players_for_punish:
             self.logger.debug("Squad %s below min player count for punish", squad_name)
             return PunishStepState.WAIT
 
+        # immune_player_level
+        # immune_roles
         if (
             aplayer.lvl <= self.config.immune_player_level
             or aplayer.role in self.config.immune_roles
@@ -350,10 +365,12 @@ class NoLeaderAutomod:
 
         punishes = watch_status.punished.setdefault(aplayer.name, [])
 
+        # punish_interval_seconds
         if not is_time(punishes, self.config.punish_interval_seconds):
             self.logger.debug("Waiting to punish %s", squad_name)
             return PunishStepState.WAIT
 
+        # number_of_punishments
         if (
             len(punishes) < self.config.number_of_punishments
             or self.config.number_of_punishments == -1
@@ -384,22 +401,25 @@ class NoLeaderAutomod:
         squad,
         aplayer: PunishPlayer,
     ):
+        # kick_after_max_punish
         if not self.config.kick_after_max_punish:
             self.logger.debug("Kick is disabled")
             return PunishStepState.DISABLED
 
-        # (obsolete - kept for legacy - can be set in autosettings)
+        # min_server_players_for_kick
         if (
             get_team_count(team_view, "allies") + get_team_count(team_view, "axis")
         ) < self.config.min_server_players_for_kick:
             self.logger.debug("Server below min player count for punish")
             return PunishStepState.WAIT
 
-        # (obsolete - kept for legacy - can be set in autosettings)
+        # min_squad_players_for_kick
         if len(squad["players"]) < self.config.min_squad_players_for_kick:
             self.logger.debug("Squad %s below min player count for punish", squad_name)
             return PunishStepState.WAIT
 
+        # immune_player_level
+        # immune_roles
         if (
             aplayer.lvl <= self.config.immune_player_level
             or aplayer.role in self.config.immune_roles
@@ -413,6 +433,7 @@ class NoLeaderAutomod:
             self.logger.error("Trying to kick player without prior punishes")
             return PunishStepState.DISABLED
 
+        # kick_grace_period_seconds
         if datetime.now() - last_time < timedelta(
             seconds=self.config.kick_grace_period_seconds
         ):
