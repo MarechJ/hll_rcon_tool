@@ -87,7 +87,10 @@ export function VipExpirationDialog({ open, vips, onDeleteVip, handleClose, hand
       if (player?.has("is_vip") && player.get("is_vip")) {
         setIsVip(true)
         // but the expiration date needs to be found from "api/get_vip_ids"
-        setExpirationTimestamp(moment.utc(vips.find(vipObj => vipObj.player_id === player.get("player_id"))?.vip_expiration).format("YYYY-MM-DD HH:mm:ssZ"))
+        let p = vips.find(vipObj => vipObj.player_id === player.get("player_id"))
+        let pExpiration = p?.vip_expiration
+        // A player can have VIP on the server but no corresponding record w/ expiration in CRCON
+        setExpirationTimestamp(moment.utc(pExpiration ? pExpiration : moment()).format("YYYY-MM-DD HH:mm:ssZ"))
         return
       }
       // if player provided from "api/get_players_history" we need to look inside "api/get_vip_ids" and find him there
@@ -106,8 +109,8 @@ export function VipExpirationDialog({ open, vips, onDeleteVip, handleClose, hand
   }
 
   const currentVipExpiration = typeof open === "object" ? open?.get("vip_expiration")
-  : player?.has("vip_expiration") ? player?.get("vip_expiration") :
-  vips?.find(vipObj => vipObj.player_id === player?.get("player_id"))?.vip_expiration
+    : player?.has("vip_expiration") ? player?.get("vip_expiration") :
+      vips?.find(vipObj => vipObj.player_id === player?.get("player_id"))?.vip_expiration
 
   return (
     <Dialog open={open} maxWidth="xs" fullWidth={true} onClose={handleClose} aria-labelledby="form-dialog-title">
