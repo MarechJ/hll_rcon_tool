@@ -138,6 +138,8 @@ class LevelThresholdsAutomod:
                         "The automod message (%s) contains an invalid key", message
                     )
 
+                author = AUTOMOD_USERNAME + ("-DryRun" if self.config.dry_run else "")
+
                 p.warning.append(
                     PunishPlayer(
                         player_id=player_id,
@@ -147,8 +149,8 @@ class LevelThresholdsAutomod:
                         role="",
                         lvl=0,
                         details=PunishDetails(
-                            author=AUTOMOD_USERNAME,
-                            dry_run=False,
+                            author=author,
+                            dry_run=self.config.dry_run,
                             discord_audit_url=self.config.discord_webhook_url,
                             message=message,
                         ),
@@ -248,7 +250,7 @@ class LevelThresholdsAutomod:
 
         server_player_count = get_team_count(team_view, "allies") + get_team_count(team_view, "axis")
 
-        # (obsolete - kept for legacy - can be set in autosettings)
+        # dont_do_anything_below_this_number_of_players
         if server_player_count < self.config.dont_do_anything_below_this_number_of_players:
             self.logger.debug("Server below min player count : disabling")
             return punitions_to_apply
@@ -261,11 +263,6 @@ class LevelThresholdsAutomod:
 
             if squad_name is None or squad is None:
                 raise NoLevelViolation()
-
-            if squad["players"][0]["profile"]["flags"] is not None:
-                for flagnb in squad["players"][0]["profile"]["flags"]:
-                    if flagnb["flag"] in self.config.whitelist_flags:
-                        raise NoLevelViolation()
 
             author = AUTOMOD_USERNAME + ("-DryRun" if self.config.dry_run else "")
 
@@ -286,10 +283,16 @@ class LevelThresholdsAutomod:
 
                 violations = []
 
-                shouldForceKick = False
+                # if squad["players"][0]["profile"]["flags"] is not None:
+                #     for flagnb in squad["players"][0]["profile"]["flags"]:
+                #         if flagnb["flag"] in self.config.whitelist_flags:
+                #             raise NoLevelViolation()
+
                 # Global exclusion to avoid "Level 1" HLL bug
                 if self.config.levelbug_enabled and aplayer.lvl == 1:
                     continue
+
+                shouldForceKick = False
 
                 # Server min level threshold check
                 min_level = self.config.min_level
@@ -381,7 +384,7 @@ class LevelThresholdsAutomod:
                     continue
 
                 state = self.should_punish_player(
-                    watch_status, squad_name, aplayer
+                    watch_status, team_view, squad_name, squad, aplayer
                 )
 
                 if state == PunishStepState.APPLY:
@@ -397,7 +400,9 @@ class LevelThresholdsAutomod:
                 ]:
                     continue
 
-                state = self.should_kick_player(watch_status, aplayer)
+                state = self.should_kick_player(
+                    watch_status, team_view, squad_name, squad, aplayer
+                )
 
                 if state == PunishStepState.APPLY:
                     aplayer.details.message = self.get_message(
@@ -418,18 +423,25 @@ class LevelThresholdsAutomod:
     def should_warn_player(
         self, watch_status: WatchStatus, squad_name: str, aplayer: PunishPlayer
     ):
+        # number_of_warnings
         if self.config.number_of_warnings == 0:
             self.logger.debug("Warnings are disabled. number_of_warning is set to 0")
             return PunishStepState.DISABLED
 
+        # (not applicable)
+        # immune_player_level
+        # immune_roles
+
         warnings = watch_status.warned.setdefault(aplayer.name, [])
 
+        # warning_interval_seconds
         if not is_time(warnings, self.config.warning_interval_seconds):
             self.logger.debug(
                 "Waiting to warn: %s in %s", aplayer.short_repr(), squad_name
             )
             return PunishStepState.WAIT
 
+        # number_of_warnings
         if (
             len(warnings) < self.config.number_of_warnings
             or self.config.number_of_warnings == -1
@@ -455,19 +467,40 @@ class LevelThresholdsAutomod:
     def should_punish_player(
         self,
         watch_status: WatchStatus,
+        team_view,
         squad_name: str,
+        squad,
         aplayer: PunishPlayer,
     ):
+        # number_of_punishments
         if self.config.number_of_punishments == 0:
             self.logger.debug("Punish is disabled")
             return PunishStepState.DISABLED
 
+        # min_server_players_for_punish
+        if (
+            get_team_count(team_view, "allies") + get_team_count(team_view, "axis")
+        ) < self.config.min_server_players_for_punish:
+            self.logger.debug("Server below min player count for punish")
+            return PunishStepState.WAIT
+
+        # min_squad_players_for_punish
+        if len(squad["players"]) < self.config.min_squad_players_for_punish:
+            self.logger.debug("Squad %s below min player count for punish", squad_name)
+            return PunishStepState.WAIT
+
+        # (not applicable)
+        # immune_player_level
+        # immune_roles
+
         punishes = watch_status.punished.setdefault(aplayer.name, [])
 
+        # punish_interval_seconds
         if not is_time(punishes, self.config.punish_interval_seconds):
             self.logger.debug("Waiting to punish %s", squad_name)
             return PunishStepState.WAIT
 
+        # number_of_punishments
         if (
             len(punishes) < self.config.number_of_punishments
             or self.config.number_of_punishments == -1
@@ -493,11 +526,31 @@ class LevelThresholdsAutomod:
     def should_kick_player(
         self,
         watch_status: WatchStatus,
+        team_view,
+        squad_name: str,
+        squad,
         aplayer: PunishPlayer,
     ):
+        # kick_after_max_punish
         if not self.config.kick_after_max_punish:
             self.logger.debug("Kick is disabled")
             return PunishStepState.DISABLED
+
+        # min_server_players_for_kick
+        if (
+            get_team_count(team_view, "allies") + get_team_count(team_view, "axis")
+        ) < self.config.min_server_players_for_kick:
+            self.logger.debug("Server below min player count for punish")
+            return PunishStepState.WAIT
+
+        # min_squad_players_for_kick
+        if len(squad["players"]) < self.config.min_squad_players_for_kick:
+            self.logger.debug("Squad %s below min player count for punish", squad_name)
+            return PunishStepState.WAIT
+
+        # (not applicable)
+        # immune_player_level
+        # immune_roles
 
         try:
             last_time = watch_status.punished.get(aplayer.name, [])[-1]
@@ -505,6 +558,7 @@ class LevelThresholdsAutomod:
             self.logger.error("Trying to kick player without prior punishes")
             return PunishStepState.DISABLED
 
+        # kick_grace_period_seconds
         if datetime.now() - last_time < timedelta(
             seconds=self.config.kick_grace_period_seconds
         ):
