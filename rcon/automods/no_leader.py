@@ -161,8 +161,10 @@ class NoLeaderAutomod:
                 aplayer = PunishPlayer(
                     player_id=player["player_id"],
                     name=player["name"],
-                    team=team,
                     squad=squad_name,
+                    team=team,
+                    # flags=player.get('profile', {}).get('flags', []),
+                    flags=player.get('profile', {}).get('flags', []),
                     role=player.get("role"),
                     lvl=int(player.get("level")),
                     details=PunishDetails(
@@ -171,6 +173,13 @@ class NoLeaderAutomod:
                         discord_audit_url=self.config.discord_webhook_url,
                     ),
                 )
+
+                # whitelist_flags
+                if any(
+                    flag_entry.flag in self.config.whitelist_flags
+                    for flag_entry in aplayer.flags
+                ):
+                    continue
 
                 state = self.should_note_player(watch_status, squad_name, aplayer)
                 if state == PunishStepState.APPLY:
@@ -248,7 +257,7 @@ class NoLeaderAutomod:
             aplayer.lvl <= self.config.immune_player_level
             or aplayer.role in self.config.immune_roles
         ):
-            self.logger.info("%s is immune to notes", aplayer.short_repr())
+            self.logger.debug("%s is immune to notes", aplayer.short_repr())
             return PunishStepState.IMMUNED
 
         notes = watch_status.noted.setdefault(aplayer.name, [])
@@ -294,7 +303,7 @@ class NoLeaderAutomod:
             aplayer.lvl <= self.config.immune_player_level
             or aplayer.role in self.config.immune_roles
         ):
-            self.logger.info("%s is immune to warnings", aplayer.short_repr())
+            self.logger.debug("%s is immune to warnings", aplayer.short_repr())
             return PunishStepState.IMMUNED
 
         warnings = watch_status.warned.setdefault(aplayer.name, [])
@@ -360,7 +369,7 @@ class NoLeaderAutomod:
             aplayer.lvl <= self.config.immune_player_level
             or aplayer.role in self.config.immune_roles
         ):
-            self.logger.info("%s is immune to punishment", aplayer.short_repr())
+            self.logger.debug("%s is immune to punishment", aplayer.short_repr())
             return PunishStepState.IMMUNED
 
         punishes = watch_status.punished.setdefault(aplayer.name, [])
@@ -424,7 +433,7 @@ class NoLeaderAutomod:
             aplayer.lvl <= self.config.immune_player_level
             or aplayer.role in self.config.immune_roles
         ):
-            self.logger.info("%s is immune to kick", aplayer.short_repr())
+            self.logger.debug("%s is immune to kick", aplayer.short_repr())
             return PunishStepState.IMMUNED
 
         try:
