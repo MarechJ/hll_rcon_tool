@@ -152,10 +152,10 @@ class NoSoloTankAutomod:
 
             # Bad implementation
             # Only works because the squad has only one member
-            if squad["players"][0]["profile"]["flags"] is not None:
-                for flagnb in squad["players"][0]["profile"]["flags"]:
-                    if flagnb["flag"] in self.config.whitelist_flags:
-                        raise NoSoloTanker()
+            # if squad["players"][0]["profile"]["flags"] is not None:
+            #     for flagnb in squad["players"][0]["profile"]["flags"]:
+            #         if flagnb["flag"] in self.config.whitelist_flags:
+            #             raise NoSoloTanker()
 
             self.logger.debug("Squad %s - %s is solo tank", team, squad_name)
 
@@ -165,8 +165,10 @@ class NoSoloTankAutomod:
                 aplayer = PunishPlayer(
                     player_id=player["player_id"],
                     name=player["name"],
-                    team=team,
                     squad=squad_name,
+                    team=team,
+                    # flags=player.get('profile', {}).get('flags', []),
+                    flags=player.get('profile', {}).get('flags', []),
                     role=player.get("role"),
                     lvl=int(player.get("level")),
                     details=PunishDetails(
@@ -175,6 +177,18 @@ class NoSoloTankAutomod:
                         discord_audit_url=self.config.discord_webhook_url,
                     ),
                 )
+
+                # self.logger.info(
+                #     f"{self.config.whitelist_flags=}"
+                # )
+                # self.logger.info(
+                #     f"{aplayer.flags=}"
+                # )
+
+                # whitelist_flags
+                for flag_entry in aplayer.flags:
+                    if flag_entry['flag'] in self.config.whitelist_flags:
+                        continue
 
                 state = self.should_warn_player(
                     watch_status, squad_name, aplayer
