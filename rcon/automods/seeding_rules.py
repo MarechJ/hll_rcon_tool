@@ -279,8 +279,10 @@ class SeedingRulesAutomod:
                 aplayer = PunishPlayer(
                     player_id=player["player_id"],
                     name=player["name"],
-                    team=team,
                     squad=squad_name,
+                    team=team,
+                    # flags=player.get('profile', {}).get('flags', []),
+                    flags=player.get('profile', {}).get('flags', []),
                     role=player.get("role"),
                     lvl=int(player.get("level")),
                     details=PunishDetails(
@@ -316,6 +318,13 @@ class SeedingRulesAutomod:
                     self._disable_for_round("enforce_cap_fight")
                 else:
                     self._enable_for_round("enforce_cap_fight")
+
+                # whitelist_flags
+                if any(
+                    flag_entry.flag in self.config.whitelist_flags
+                    for flag_entry in aplayer.flags
+                ):
+                    continue
 
                 violations = []
 
@@ -441,7 +450,7 @@ class SeedingRulesAutomod:
             aplayer.lvl <= self.config.immune_player_level
             or aplayer.role in self.config.immune_roles
         ):
-            self.logger.info("%s is immune to warnings", aplayer.short_repr())
+            self.logger.debug("%s is immune to warnings", aplayer.short_repr())
             return PunishStepState.IMMUNED
 
         warnings = watch_status.warned.setdefault(aplayer.name, [])
@@ -506,7 +515,7 @@ class SeedingRulesAutomod:
             aplayer.lvl <= self.config.immune_player_level
             or aplayer.role in self.config.immune_roles
         ):
-            self.logger.info("%s is immune to punishment", aplayer.short_repr())
+            self.logger.debug("%s is immune to punishment", aplayer.short_repr())
             return PunishStepState.IMMUNED
 
         punishes = watch_status.punished.setdefault(aplayer.name, [])
@@ -569,7 +578,7 @@ class SeedingRulesAutomod:
             aplayer.lvl <= self.config.immune_player_level
             or aplayer.role in self.config.immune_roles
         ):
-            self.logger.info("%s is immune to kick", aplayer.short_repr())
+            self.logger.debug("%s is immune to kick", aplayer.short_repr())
             return PunishStepState.IMMUNED
 
         try:
