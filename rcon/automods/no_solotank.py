@@ -150,13 +150,6 @@ class NoSoloTankAutomod:
                 self.logger.debug("Squad is not solo anymore %s %s", squad_name, squad)
                 raise NoSoloTanker()
 
-            # Bad implementation
-            # Only works because the squad has only one member
-            # if squad["players"][0]["profile"]["flags"] is not None:
-            #     for flagnb in squad["players"][0]["profile"]["flags"]:
-            #         if flagnb["flag"] in self.config.whitelist_flags:
-            #             raise NoSoloTanker()
-
             self.logger.debug("Squad %s - %s is solo tank", team, squad_name)
 
             author = AUTOMOD_USERNAME + ("-DryRun" if self.config.dry_run else "")
@@ -167,7 +160,6 @@ class NoSoloTankAutomod:
                     name=player["name"],
                     squad=squad_name,
                     team=team,
-                    # flags=player.get('profile', {}).get('flags', []),
                     flags=player.get('profile', {}).get('flags', []),
                     role=player.get("role"),
                     lvl=int(player.get("level")),
@@ -178,17 +170,12 @@ class NoSoloTankAutomod:
                     ),
                 )
 
-                # self.logger.info(
-                #     f"{self.config.whitelist_flags=}"
-                # )
-                # self.logger.info(
-                #     f"{aplayer.flags=}"
-                # )
-
                 # whitelist_flags
-                for flag_entry in aplayer.flags:
-                    if flag_entry['flag'] in self.config.whitelist_flags:
-                        continue
+                if any(
+                    flag_entry.flag in self.config.whitelist_flags
+                    for flag_entry in aplayer.flags
+                ):
+                    continue
 
                 state = self.should_warn_player(
                     watch_status, squad_name, aplayer
@@ -257,7 +244,7 @@ class NoSoloTankAutomod:
         if (
             aplayer.lvl <= self.config.immune_player_level
         ):
-            self.logger.info("%s is immune to notes", aplayer.short_repr())
+            self.logger.debug("%s is immune to notes", aplayer.short_repr())
             return PunishStepState.IMMUNED
 
         notes = watch_status.noted.setdefault(aplayer.name, [])
@@ -304,7 +291,7 @@ class NoSoloTankAutomod:
         if (
             aplayer.lvl <= self.config.immune_player_level
         ):
-            self.logger.info("%s is immune to warnings", aplayer.short_repr())
+            self.logger.debug("%s is immune to warnings", aplayer.short_repr())
             return PunishStepState.IMMUNED
 
         warnings = watch_status.warned.setdefault(aplayer.name, [])
@@ -368,7 +355,7 @@ class NoSoloTankAutomod:
         if (
             aplayer.lvl <= self.config.immune_player_level
         ):
-            self.logger.info("%s is immune to punishment", aplayer.short_repr())
+            self.logger.debug("%s is immune to punishment", aplayer.short_repr())
             return PunishStepState.IMMUNED
 
         punishes = watch_status.punished.setdefault(aplayer.name, [])
@@ -430,7 +417,7 @@ class NoSoloTankAutomod:
         if (
             aplayer.lvl <= self.config.immune_player_level
         ):
-            self.logger.info("%s is immune to kick", aplayer.short_repr())
+            self.logger.debug("%s is immune to kick", aplayer.short_repr())
             return PunishStepState.IMMUNED
 
         try:
