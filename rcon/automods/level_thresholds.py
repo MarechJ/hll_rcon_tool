@@ -1,3 +1,7 @@
+"""
+Enforces the min/max global and per-role levels requirements
+"""
+
 import logging
 import pickle
 from contextlib import contextmanager
@@ -27,6 +31,9 @@ AUTOMOD_USERNAME = "LevelThresholdsAutomod"
 
 
 class LevelThresholdsAutomod:
+    """
+    Imported from rcon/automods/automod.py
+    """
     logger: logging.Logger
     red: redis.StrictRedis
     config: AutoModLevelUserConfig
@@ -41,12 +48,21 @@ class LevelThresholdsAutomod:
 
 
     def enabled(self):
+        """
+        Global on/off switch
+        """
         return self.config.enabled
 
 
     def on_connected(
-        self, name: str, player_id: str, detailed_player_info: GetDetailedPlayer | None
+        self,
+        name: str,
+        player_id: str,
+        detailed_player_info: GetDetailedPlayer | None
     ) -> PunitionsToApply:
+        """
+        Sends a one-time levels rules reminder message to players on connect
+        """
         p: PunitionsToApply = PunitionsToApply()
 
         min_level = self.config.min_level
@@ -124,7 +140,7 @@ class LevelThresholdsAutomod:
 
             self.logger.debug("ON_CONNECTED: generated messages %s", data)
 
-            # Format and send annoucement message with previous data if required
+            # Format and send announcement message with previous data if required
             if (
                 data.get("min_level_msg") != ""
                 or data.get("max_level_msg") != ""
@@ -135,7 +151,8 @@ class LevelThresholdsAutomod:
                     message = message.format(**data)
                 except KeyError:
                     self.logger.warning(
-                        "The automod message (%s) contains an invalid key", message
+                        "The automod message (%s) contains an invalid key",
+                        message
                     )
 
                 author = AUTOMOD_USERNAME + ("-DryRun" if self.config.dry_run else "")
@@ -146,6 +163,7 @@ class LevelThresholdsAutomod:
                         name=name,
                         squad="",
                         team="",
+                        flags=[],
                         role="",
                         lvl=0,
                         details=PunishDetails(
@@ -162,6 +180,9 @@ class LevelThresholdsAutomod:
 
     @contextmanager
     def watch_state(self, team: str, squad_name: str):
+        """
+        Observe and actualize the current moderation step
+        """
         redis_key = f"level_thresholds_automod{team.lower()}{str(squad_name).lower()}"
         watch_status = self.red.get(redis_key)
         if watch_status:
@@ -189,6 +210,10 @@ class LevelThresholdsAutomod:
         violation_msg: str,
         method: ActionMethod,
     ):
+        """
+        Construct the message sent to the player
+        according to the actual moderation step
+        """
         data: dict[str, str | int] = {
             "violation": violation_msg,
         }
@@ -229,6 +254,10 @@ class LevelThresholdsAutomod:
 
 
     def player_punish_failed(self, aplayer):
+        """
+        A dead/unspawned player can't be punished
+        Resets the timer from the last unsuccessful punish.
+        """
         with self.watch_state(aplayer.team, aplayer.squad) as watch_status:
             try:
                 if punishes := watch_status.punished.get(aplayer.name):
@@ -245,10 +274,18 @@ class LevelThresholdsAutomod:
         squad: dict,
         game_state: GameState,
     ) -> PunitionsToApply:
+        """
+        Observe all squads/players
+        Find the ones who trespass rules
+        Sends them to their next moderation step
+        """
         self.logger.debug("Squad %s %s", squad_name, squad)
         punitions_to_apply = PunitionsToApply()
 
-        server_player_count = get_team_count(team_view, "allies") + get_team_count(team_view, "axis")
+        server_player_count = (
+            get_team_count(team_view, "allies")
+            + get_team_count(team_view, "axis")
+        )
 
         # dont_do_anything_below_this_number_of_players
         if server_player_count < self.config.dont_do_anything_below_this_number_of_players:
@@ -256,13 +293,13 @@ class LevelThresholdsAutomod:
             return punitions_to_apply
 
         if not squad_name:
-            self.logger.debug("Skipping None or empty squad %s %s", squad_name, squad)
+            self.logger.debug("Skipping None or empty squad - (%s) %s", team, squad_name)
             return punitions_to_apply
 
         with self.watch_state(team, squad_name) as watch_status:
 
-            if squad_name is None or squad is None:
-                raise NoLevelViolation()
+            # if squad_name is None or squad is None:
+            #     raise NoLevelViolation()
 
             author = AUTOMOD_USERNAME + ("-DryRun" if self.config.dry_run else "")
 
@@ -272,7 +309,6 @@ class LevelThresholdsAutomod:
                     name=player["name"],
                     squad=squad_name,
                     team=team,
-                    # flags=player.get('profile', {}).get('flags', []),
                     flags=player.get('profile', {}).get('flags', []),
                     role=player.get("role"),
                     lvl=int(player.get("level")),
@@ -283,20 +319,13 @@ class LevelThresholdsAutomod:
                     ),
                 )
 
-                # whitelist_flags
-                if any(
-                    flag_entry.flag in self.config.whitelist_flags
-                    for flag_entry in aplayer.flags
-                ):
-                    continue
-
                 # Global exclusion to avoid "Level 1" HLL bug
                 if self.config.levelbug_enabled and aplayer.lvl == 1:
                     continue
 
                 violations = []
 
-                shouldForceKick = False
+                should_force_kick = False
 
                 # Server min level threshold check
                 min_level = self.config.min_level
@@ -310,11 +339,12 @@ class LevelThresholdsAutomod:
                             message,
                         )
                     violations.append(message)
-                    shouldForceKick = True
+                    should_force_kick = True
 
                 # Server max level threshold check
                 max_level = self.config.max_level
-                if max_level > 0 and aplayer.lvl > max_level:
+                # if max_level > 0 and aplayer.lvl > max_level:
+                if aplayer.lvl > max_level > 0:
                     message = self.config.max_level_message
                     try:
                         message = message.format(level=max_level)
@@ -324,10 +354,10 @@ class LevelThresholdsAutomod:
                             message,
                         )
                     violations.append(message)
-                    shouldForceKick = True
+                    should_force_kick = True
 
                 # Force kick player if not matching global level thresholds
-                if shouldForceKick:
+                if should_force_kick:
                     violation_msg = ", ".join(violations)
                     aplayer.details.message = self.get_message(
                         watch_status,
@@ -345,7 +375,7 @@ class LevelThresholdsAutomod:
 
                     if (
                         role_config
-                        and server_player_count >= role_config.min_players  # (obsolete - kept for legacy - can be set in autosettings)
+                        and server_player_count >= role_config.min_players
                         and aplayer.lvl < role_config.min_level
                     ):
                         message = self.config.violation_message
@@ -366,6 +396,9 @@ class LevelThresholdsAutomod:
 
                 violation_msg = ", ".join(violations)
 
+                # Note (not applicable)
+
+                # Warning
                 state = self.should_warn_player(
                     watch_status, squad_name, aplayer
                 )
@@ -387,6 +420,7 @@ class LevelThresholdsAutomod:
                 ]:
                     continue
 
+                # Punish
                 state = self.should_punish_player(
                     watch_status, team_view, squad_name, squad, aplayer
                 )
@@ -404,6 +438,7 @@ class LevelThresholdsAutomod:
                 ]:
                     continue
 
+                # Kick
                 state = self.should_kick_player(
                     watch_status, team_view, squad_name, squad, aplayer
                 )
@@ -424,17 +459,34 @@ class LevelThresholdsAutomod:
         return punitions_to_apply
 
 
+    # (not applicable)
+    # def should_note_player()
+
+
     def should_warn_player(
         self, watch_status: WatchStatus, squad_name: str, aplayer: PunishPlayer
     ):
+        """
+        Send a message to trespassers
+        telling them they must follow the rules
+        before being punished and kicked
+        """
         # number_of_warnings
         if self.config.number_of_warnings == 0:
             self.logger.debug("Warnings are disabled. number_of_warning is set to 0")
             return PunishStepState.DISABLED
 
+        # whitelist_flags
+        if any(
+            flag_entry.flag in self.config.whitelist_flags
+            for flag_entry in aplayer.flags
+        ):
+            self.logger.debug("%s is immune to warnings", aplayer.short_repr())
+            return PunishStepState.IMMUNED
+
         # (not applicable)
-        # immune_player_level
         # immune_roles
+        # immune_player_level
 
         warnings = watch_status.warned.setdefault(aplayer.name, [])
 
@@ -476,10 +528,32 @@ class LevelThresholdsAutomod:
         squad,
         aplayer: PunishPlayer,
     ):
+        """
+        Punish (kill) trespassers
+        telling them they must follow the rules
+        before being kicked
+        """
         # number_of_punishments
         if self.config.number_of_punishments == 0:
             self.logger.debug("Punish is disabled")
             return PunishStepState.DISABLED
+
+        # whitelist_flags
+        if any(
+            flag_entry.flag in self.config.whitelist_flags
+            for flag_entry in aplayer.flags
+        ):
+            self.logger.debug("%s is immune to punishment", aplayer.short_repr())
+            return PunishStepState.IMMUNED
+
+        # (not applicable)
+        # immune_roles
+        # immune_player_level
+
+        # min_squad_players_for_punish
+        if len(squad["players"]) < self.config.min_squad_players_for_punish:
+            self.logger.debug("Squad %s below min player count for punish", squad_name)
+            return PunishStepState.WAIT
 
         # min_server_players_for_punish
         if (
@@ -487,15 +561,6 @@ class LevelThresholdsAutomod:
         ) < self.config.min_server_players_for_punish:
             self.logger.debug("Server below min player count for punish")
             return PunishStepState.WAIT
-
-        # min_squad_players_for_punish
-        if len(squad["players"]) < self.config.min_squad_players_for_punish:
-            self.logger.debug("Squad %s below min player count for punish", squad_name)
-            return PunishStepState.WAIT
-
-        # (not applicable)
-        # immune_player_level
-        # immune_roles
 
         punishes = watch_status.punished.setdefault(aplayer.name, [])
 
@@ -535,10 +600,31 @@ class LevelThresholdsAutomod:
         squad,
         aplayer: PunishPlayer,
     ):
+        """
+        Kick (disconnect) trespassers
+        telling them they must follow the rules
+        """
         # kick_after_max_punish
         if not self.config.kick_after_max_punish:
             self.logger.debug("Kick is disabled")
             return PunishStepState.DISABLED
+
+        # whitelist_flags
+        if any(
+            flag_entry.flag in self.config.whitelist_flags
+            for flag_entry in aplayer.flags
+        ):
+            self.logger.debug("%s is immune to kick", aplayer.short_repr())
+            return PunishStepState.IMMUNED
+
+        # (not applicable)
+        # immune_roles
+        # immune_player_level
+
+        # min_squad_players_for_kick
+        if len(squad["players"]) < self.config.min_squad_players_for_kick:
+            self.logger.debug("Squad %s below min player count for punish", squad_name)
+            return PunishStepState.WAIT
 
         # min_server_players_for_kick
         if (
@@ -546,15 +632,6 @@ class LevelThresholdsAutomod:
         ) < self.config.min_server_players_for_kick:
             self.logger.debug("Server below min player count for punish")
             return PunishStepState.WAIT
-
-        # min_squad_players_for_kick
-        if len(squad["players"]) < self.config.min_squad_players_for_kick:
-            self.logger.debug("Squad %s below min player count for punish", squad_name)
-            return PunishStepState.WAIT
-
-        # (not applicable)
-        # immune_player_level
-        # immune_roles
 
         try:
             last_time = watch_status.punished.get(aplayer.name, [])[-1]
