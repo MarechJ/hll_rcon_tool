@@ -118,6 +118,12 @@ export default function BlacklistRecordCreateDialog({
     }
   }, [open])
 
+  React.useEffect(() => {
+    if (blacklists.length == 1) {
+      setBlacklist(blacklists[0])
+    }
+  })
+
   const handleClose = () => {
     setOpen(false);
     setBlacklist("")
