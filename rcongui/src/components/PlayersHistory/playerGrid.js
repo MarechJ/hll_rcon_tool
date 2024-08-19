@@ -36,6 +36,7 @@ const PlayerGrid = withWidth()(
     onAddVip,
     onDeleteVip,
     onTempBan,
+    onPermaBan,
     onAddToWatchList,
     onRemoveFromWatchList,
     width,
@@ -89,6 +90,7 @@ const PlayerGrid = withWidth()(
                             onUnBlacklist={() => onUnBlacklist(player)}
                             onBlacklist={() => onBlacklist(player)}
                             onTempBan={() => onTempBan(player)}
+                            onPermaBan={() => onPermaBan(player)}
                             onUnban={() => onUnban(player)}
                             onflag={() => onflag(player)}
                             isVip={vips.get(player.get("player_id"))}

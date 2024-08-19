@@ -187,6 +187,7 @@ class PlayersHistory extends React.Component {
     this.deleteVip = this.deleteVip.bind(this);
     this.unBanPlayer = this.unBanPlayer.bind(this);
     this.tempBan = this.tempBan.bind(this);
+    this.permaBan = this.permaBan.bind(this);
     this.addToWatchlist = this.addToWatchlist.bind(this);
     this.removeFromWatchList = this.removeFromWatchList.bind(this);
     this.setDoFlag = this.setDoFlag.bind(this);
@@ -203,6 +204,7 @@ class PlayersHistory extends React.Component {
     this.removeFromWatchList = this.removeFromWatchList.bind(this);
     this.onUnban = this.onUnban.bind(this);
     this.onTempBan = this.onTempBan.bind(this);
+    this.onPermaBan = this.onPermaBan.bind(this);
     this.onAddVip = this.onAddVip.bind(this);
     this.onDeleteVip = this.onDeleteVip.bind(this);
     this.onAddToWatchList = this.onAddToWatchList.bind(this);
@@ -224,6 +226,27 @@ class PlayersHistory extends React.Component {
         showResponse(
           response,
           `Player ID ${playerId} temp banned ${durationHours} for ${reason}`,
+          true
+        )
+      )
+      .then(this._reloadOnSuccess)
+      .catch((error) => toast.error("Unable to connect to API " + error));
+  }
+
+  permaBan(playerId, reason, comment) {
+    this.postComment(
+      playerId,
+      comment,
+      `Player ID ${playerId} perma banned for ${reason}`
+    );
+    postData(`${process.env.REACT_APP_API_URL}perma_ban`, {
+      player_id: playerId,
+      reason: reason,
+    })
+      .then((response) =>
+        showResponse(
+          response,
+          `Player ID ${playerId} perma banned for ${reason}`,
           true
         )
       )
@@ -521,6 +544,14 @@ class PlayersHistory extends React.Component {
     });
   }
 
+  onPermaBan(player) {
+    return this.setDoConfirmPlayer({
+      player: player.get("player_id"),
+      actionType: "perma_ban",
+      player_id: player.get("player_id"),
+    });
+  }
+
   onAddVip(player) {
     return this.setDoVIPPlayer({
       player,
@@ -629,6 +660,7 @@ class PlayersHistory extends React.Component {
             onflag={this.setDoFlag}
             onUnban={this.onUnban}
             onTempBan={this.onTempBan}
+            onPermaBan={this.onPermaBan}
             onAddVip={this.setDoVIPPlayer}
             onDeleteVip={this.onDeleteVip}
             onAddToWatchList={this.onAddToWatchList}
@@ -660,6 +692,8 @@ class PlayersHistory extends React.Component {
               this.blacklistPlayer(playerId, reason, comment);
             } else if (actionType === "temp_ban") {
               this.tempBan(playerId, reason, durationHours, comment);
+            } else if (actionType === "perma_ban") {
+              this.permaBan(playerId, reason, comment);
             } else if (actionType === "watchlist") {
               this.addToWatchlist(playerId, reason, comment, player);
             }

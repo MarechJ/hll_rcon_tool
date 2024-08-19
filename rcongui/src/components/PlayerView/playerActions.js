@@ -267,10 +267,10 @@ const PlayerActions = ({
   const actions = [
     ["punish", "PUNISH"],
     ["kick", "KICK"],
-    ["temp_ban", "TEMP BAN"],
+    // ["temp_ban", "TEMP BAN"],
     ["switch_player_now", "SWITCH"],
     ["switch_player_on_death", "SWITCH ON DEATH"],
-    ["perma_ban", "PERMA BAN"],
+    // ["perma_ban", "PERMA BAN"],
   ];
   const show = Math.min(displayCount, actions.length);
 
