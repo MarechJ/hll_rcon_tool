@@ -1031,7 +1031,7 @@ class Rcon(ServerCtl):
         max_players = slots["max_players"]
         return {
             "name": self.get_name(),
-            "map": self.current_map.model_dump(),
+            "map": self.get_gamestate()["current_map"],
             "current_players": current_players,
             "max_players": max_players,
             "short_name": config.short_name,
