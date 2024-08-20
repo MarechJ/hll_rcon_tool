@@ -815,6 +815,12 @@ LAYERS = {
             id="mortain_warfare_day", map=MAPS["mortain"], game_mode=GameMode.WARFARE
         ),
         Layer(
+            id="mortain_warfare_evening",
+            map=MAPS["mortain"],
+            game_mode=GameMode.WARFARE,
+            environment=Environment.DUSK,
+        ),
+        Layer(
             id="mortain_warfare_overcast",
             map=MAPS["mortain"],
             game_mode=GameMode.WARFARE,
@@ -834,6 +840,13 @@ LAYERS = {
             environment=Environment.OVERCAST,
         ),
         Layer(
+            id="mortain_offensiveUS_evening",
+            map=MAPS["mortain"],
+            game_mode=GameMode.OFFENSIVE,
+            attackers=Team.ALLIES,
+            environment=Environment.DUSK,
+        ),
+        Layer(
             id="mortain_offensiveger_day",
             map=MAPS["mortain"],
             game_mode=GameMode.OFFENSIVE,
@@ -847,6 +860,13 @@ LAYERS = {
             environment=Environment.OVERCAST,
         ),
         Layer(
+            id="mortain_offensiveger_evening",
+            map=MAPS["mortain"],
+            game_mode=GameMode.OFFENSIVE,
+            attackers=Team.AXIS,
+            environment=Environment.DUSK,
+        ),
+        Layer(
             id="mortain_skirmish_day",
             map=MAPS["mortain"],
             game_mode=GameMode.CONTROL,
@@ -856,6 +876,12 @@ LAYERS = {
             map=MAPS["mortain"],
             game_mode=GameMode.CONTROL,
             environment=Environment.OVERCAST,
+        ),
+        Layer(
+            id="mortain_skirmish_evening",
+            map=MAPS["mortain"],
+            game_mode=GameMode.CONTROL,
+            environment=Environment.DUSK,
         ),
     )
 }
