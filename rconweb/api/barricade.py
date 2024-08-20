@@ -12,8 +12,13 @@ from sqlalchemy import exists, func
 
 from rcon import models
 from rcon.blacklist import (
-    BlacklistBarricadeWarnOnlineCommand, BlacklistCommand, BlacklistCommandHandler, BlacklistCommandType,
-    add_record_to_blacklist, get_player_blacklist_records, remove_record_from_blacklist
+    BlacklistBarricadeWarnOnlineCommand,
+    BlacklistCommand,
+    BlacklistCommandHandler,
+    BlacklistCommandType,
+    add_record_to_blacklist,
+    get_player_blacklist_records,
+    remove_record_from_blacklist,
 )
 from rcon.barricade import *
 
@@ -26,6 +31,7 @@ def assert_blacklist_exists(blacklist_id: int):
     with models.enter_session() as sess:
         if not sess.query(stmt):
             raise BarricadeRequestError("Blacklist does not exist")
+
 
 @database_sync_to_async
 def ban_player(player_id: str, blacklist_id: int, reason: str):
@@ -44,7 +50,7 @@ def ban_player(player_id: str, blacklist_id: int, reason: str):
             player_id=player_id,
             blacklist_id=blacklist_id,
             reason=reason,
-            admin_name="Barricade"
+            admin_name="Barricade",
         )
     except:
         logger.exception("Failed to blacklist player %s", player_id)
@@ -52,32 +58,36 @@ def ban_player(player_id: str, blacklist_id: int, reason: str):
     else:
         return str(record["id"])
 
+
 @database_sync_to_async
 def unban_player(record_id: int):
     try:
-        remove_record_from_blacklist(
-            record_id=record_id
-        )
+        remove_record_from_blacklist(record_id=record_id)
         return True
     except:
         logger.exception("Failed to remove blacklist record #%s", record_id)
         return False
 
+
 @database_sync_to_async
 def get_joined_players_since(since: datetime):
     with models.enter_session() as sess:
-        rows = sess.query(models.PlayerID.player_id, models.PlayerSession.start) \
-            .filter(models.PlayerSession.start > since) \
-            .filter(models.PlayerSession.end.is_(None)) \
-            .order_by(models.PlayerSession.start) \
-            .join(models.PlayerSession.player) \
+        rows = (
+            sess.query(models.PlayerID.player_id, models.PlayerSession.start)
+            .filter(models.PlayerSession.start > since)
+            .filter(models.PlayerSession.end.is_(None))
+            .order_by(models.PlayerSession.start)
+            .join(models.PlayerSession.player)
             .all()
+        )
         return rows
+
 
 @database_sync_to_async
 def get_most_recent_session_date():
     with models.enter_session() as sess:
         return sess.query(func.max(models.PlayerSession.start)).scalar()
+
 
 class BarricadeConsumer(AsyncJsonWebsocketConsumer):
     groups = [GROUP_NAME]
@@ -98,20 +108,20 @@ class BarricadeConsumer(AsyncJsonWebsocketConsumer):
         if self._scan_players_task and not self._scan_players_task.done():
             self._scan_players_task.cancel()
         self._scan_players_task = asyncio.create_task(self._scan_players_loop())
-    
+
     async def websocket_disconnect(self, message):
         await super().websocket_disconnect(message)
         logger.info("Closed connection with Barricade client")
 
         if self._scan_players_task and not self._scan_players_task.done():
             self._scan_players_task.cancel()
-    
+
     async def _scan_players_loop(self):
         self._last_seen_session = await get_most_recent_session_date()
 
         while True:
             await asyncio.sleep(60)
-            
+
             try:
                 rows = await get_joined_players_since(self._last_seen_session)
                 if not rows:
@@ -120,9 +130,7 @@ class BarricadeConsumer(AsyncJsonWebsocketConsumer):
                 self._last_seen_session = rows[-1][1]
                 await self.send_request(
                     ServerRequestType.SCAN_PLAYERS,
-                    ScanPlayersRequestPayload(
-                        player_ids=[row[0] for row in rows]
-                    )
+                    ScanPlayersRequestPayload(player_ids=[row[0] for row in rows]),
                 )
             except Exception:
                 logger.exception("Failed to perform scan_players task")
@@ -143,7 +151,9 @@ class BarricadeConsumer(AsyncJsonWebsocketConsumer):
             logger.error("Received malformed Barricade request: %s", content)
             return
 
-    async def send_request(self, request_type: ServerRequestType, payload: dict | None) -> dict | None:
+    async def send_request(
+        self, request_type: ServerRequestType, payload: dict | None
+    ) -> dict | None:
         # Send request
         request = RequestBody(
             id=next(self._counter),
@@ -163,19 +173,24 @@ class BarricadeConsumer(AsyncJsonWebsocketConsumer):
             logger.error("Barricade did not respond in time to request: %r", request)
             raise
         except BarricadeRequestError as e:
-            logger.error("Barricade returned error \"%s\" %s for request: %r", e.error, e.kwargs, request)
+            logger.error(
+                'Barricade returned error "%s" %s for request: %r',
+                e.error,
+                e.kwargs,
+                request,
+            )
             raise
         finally:
             # Remove waiter
             if request.id in self._waiters:
                 del self._waiters[request.id]
-        
+
         return response.response
-        
+
     async def handle_request(self, request: RequestBody):
         if request.id in self._processing:
             return
-       
+
         if cached_response := self._resp_cache.get(request.id):
             await self.send_json(cached_response)
             return
@@ -201,9 +216,9 @@ class BarricadeConsumer(AsyncJsonWebsocketConsumer):
                         )
                     case _:
                         raise BarricadeRequestError("No such command")
-                
+
                 response = request.response_ok(result)
-                    
+
             except pydantic.ValidationError as e:
                 logger.warn("Failed to validate payload: %s", e)
                 response = request.response_error("Failed to validate payload")
@@ -212,9 +227,13 @@ class BarricadeConsumer(AsyncJsonWebsocketConsumer):
                 response = request.response_error(e.error, **e.kwargs)
             except Exception as e:
                 # ...whereas these typically indicate a server error
-                logger.error("Internal error when handling Barricade request: %r", request, exc_info=e)
+                logger.error(
+                    "Internal error when handling Barricade request: %r",
+                    request,
+                    exc_info=e,
+                )
                 response = request.response_error(f"{type(e).__name__}: {e}")
-        
+
             # Respond
             dumped_response = response.model_dump()
             self._resp_cache[response.id] = dumped_response
@@ -228,22 +247,24 @@ class BarricadeConsumer(AsyncJsonWebsocketConsumer):
 
         # Make sure response is being awaited
         if not waiter:
-            logger.warning("Discarding response since it is not being awaited: %r", response)
+            logger.warning(
+                "Discarding response since it is not being awaited: %r", response
+            )
             return
-        
+
         # Make sure waiter is still available
         if waiter.done():
-            logger.warning("Discarding response since waiter is already marked done: %r", response)
+            logger.warning(
+                "Discarding response since waiter is already marked done: %r", response
+            )
             return
-        
+
         # Set response
         if response.failed:
-            waiter.set_exception(
-                BarricadeRequestError(**response.response)
-            )
+            waiter.set_exception(BarricadeRequestError(**response.response))
         else:
             waiter.set_result(response.response)
-    
+
     async def handle_broadcast(self, event):
         try:
             return await self.send_request(event["request_type"], event["payload"])
@@ -259,18 +280,20 @@ class BarricadeConsumer(AsyncJsonWebsocketConsumer):
             blacklist_id = int(payload.config.banlist_id)
         except ValueError:
             raise BarricadeRequestError("Invalid banlist ID")
-        
+
         await assert_blacklist_exists(blacklist_id)
 
-        record_ids = await asyncio.gather(*[
-            # The client expects strings, not ints
-            ban_player(
-                player_id=player_id,
-                blacklist_id=blacklist_id,
-                reason=reason or payload.config.reason,
-            )
-            for player_id, reason in payload.player_ids.items()
-        ])
+        record_ids = await asyncio.gather(
+            *[
+                # The client expects strings, not ints
+                ban_player(
+                    player_id=player_id,
+                    blacklist_id=blacklist_id,
+                    reason=reason or payload.config.reason,
+                )
+                for player_id, reason in payload.player_ids.items()
+            ]
+        )
 
         return {"ban_ids": dict(zip(payload.player_ids.keys(), record_ids))}
 
@@ -282,11 +305,10 @@ class BarricadeConsumer(AsyncJsonWebsocketConsumer):
             except ValueError:
                 continue
             record_ids.append(record_id)
-        
-        successes = await asyncio.gather(*[
-            unban_player(record_id)
-            for record_id in record_ids
-        ])
+
+        successes = await asyncio.gather(
+            *[unban_player(record_id) for record_id in record_ids]
+        )
 
         successful_record_ids = [
             record_id
@@ -297,10 +319,7 @@ class BarricadeConsumer(AsyncJsonWebsocketConsumer):
         response = {"ban_ids": successful_record_ids}
 
         if len(successful_record_ids) != len(payload.record_ids):
-            raise BarricadeRequestError(
-                "Could not unban all players",
-                **response
-            )
+            raise BarricadeRequestError("Could not unban all players", **response)
         else:
             return response
 
@@ -310,9 +329,10 @@ class BarricadeConsumer(AsyncJsonWebsocketConsumer):
                 command=BlacklistCommandType.BARRICADE_WARN_ONLINE,
                 payload=BlacklistBarricadeWarnOnlineCommand(
                     player_ids=[player.player_id for player in payload.players]
-                )
+                ),
             )
         )
+
 
 from api.auth import APITokenAuthMiddleware
 
@@ -327,7 +347,7 @@ urlpatterns = [
                 "api.can_add_blacklist_records",
                 "api.can_change_blacklist_records",
                 "api.can_delete_blacklist_records",
-            )
-        )
+            ),
+        ),
     )
 ]

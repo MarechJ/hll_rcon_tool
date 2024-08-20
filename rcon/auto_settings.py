@@ -47,14 +47,12 @@ class BaseCondition:
         self.metric_name = ""
         self.metric_source = "rcon"
 
-
     @property
     def metric_getter(self):
         try:
             return METRICS[self.metric_name]
         except:
             return None
-
 
     def is_valid(self, **metric_sources):
         metric_source = metric_sources[self.metric_source]
@@ -86,7 +84,6 @@ class OnlineModsCondition(BaseCondition):
         super().__init__(*args, **kwargs)
         self.metric_name = "online_mods"
         self.metric_source = None
-
 
     def is_valid(self, **metric_sources):
         comparand = self.metric_getter()
@@ -122,7 +119,6 @@ class CurrentMapCondition(BaseCondition):
         self.metric_name = "current_map"
         self.metric_source = "rcon"
 
-
     def is_valid(self, **metric_sources):
         metric_source = metric_sources[self.metric_source]
         comparand = self.metric_getter(metric_source)
@@ -156,7 +152,6 @@ class TimeOfDayCondition(BaseCondition):
             self.tz = pytz.timezone(timezone)
         self.metric_name = "time_of_day"
         self.metric_source = None
-
 
     def is_valid(self, **metric_sources):
         try:

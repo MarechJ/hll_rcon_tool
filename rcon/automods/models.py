@@ -122,7 +122,7 @@ class PunitionsToApply:
                             name=p.get("name"),
                             squad=p.get("unit_name"),
                             team=p.get("team"),
-                            flags=p.get('profile', {}).get('flags', []),
+                            flags=p.get("profile", {}).get("flags", []),
                             role=p.get("role"),
                             lvl=p.get("level"),
                         )

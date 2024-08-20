@@ -112,14 +112,16 @@ with configure_scope() as scope:
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Needed for WS broadcasting functionality
-# See https://channels.readthedocs.io/en/stable/topics/channel_layers.html 
+# See https://channels.readthedocs.io/en/stable/topics/channel_layers.html
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [{
-                "address": os.getenv("HLL_REDIS_URL"),
-            }],
+            "hosts": [
+                {
+                    "address": os.getenv("HLL_REDIS_URL"),
+                }
+            ],
         },
     },
 }

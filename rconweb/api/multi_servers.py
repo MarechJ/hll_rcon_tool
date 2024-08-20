@@ -27,7 +27,7 @@ def get_server_list(request):
 
     auth_header: str | None = request.headers.get(AUTHORIZATION)
     headers = {"AUTHORIZATION": auth_header} if auth_header else {}
-    
+
     logger.debug(keys)
     names = []
     for host, key in keys.items():
