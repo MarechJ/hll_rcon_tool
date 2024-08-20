@@ -1,5 +1,4 @@
 import logging
-import os
 import re
 import time
 from datetime import datetime
@@ -8,21 +7,31 @@ import pytz
 
 from rcon.api_commands import get_rcon_api
 from rcon.audit import ingame_mods, online_mods
+from rcon.commands import BrokenHllConnection, CommandFailedError
 from rcon.user_config.auto_settings import AutoSettingsConfig
 from rcon.user_config.utils import BaseUserConfig
+
 
 logger = logging.getLogger(__name__)
 
 USER_CONFIG_NAME_PATTERN = re.compile(r"set_.*_config")
 
+
+def _get_current_map_metric(rcon):
+    try:
+        rcon.current_map = str(rcon.get_map())
+    except (CommandFailedError, BrokenHllConnection):
+        logger.exception("Failed to get current map")
+    return str(rcon.current_map)
+
+
 METRICS = {
     "player_count": lambda rcon: int(rcon.get_slots()["current_players"]),
     "online_mods": lambda: len(online_mods()),
     "ingame_mods": lambda: len(ingame_mods()),
-    "current_map": lambda rcon: str(rcon.current_map),
+    "current_map": _get_current_map_metric,
     "time_of_day": lambda tz: datetime.now(tz=tz),
 }
-CONFIG_DIR = os.getenv("CONFIG_DIR", "config/")
 
 
 def is_user_config_func(name: str) -> bool:
@@ -38,12 +47,14 @@ class BaseCondition:
         self.metric_name = ""
         self.metric_source = "rcon"
 
+
     @property
     def metric_getter(self):
         try:
             return METRICS[self.metric_name]
         except:
             return None
+
 
     def is_valid(self, **metric_sources):
         metric_source = metric_sources[self.metric_source]
@@ -75,6 +86,7 @@ class OnlineModsCondition(BaseCondition):
         super().__init__(*args, **kwargs)
         self.metric_name = "online_mods"
         self.metric_source = None
+
 
     def is_valid(self, **metric_sources):
         comparand = self.metric_getter()
@@ -110,6 +122,7 @@ class CurrentMapCondition(BaseCondition):
         self.metric_name = "current_map"
         self.metric_source = "rcon"
 
+
     def is_valid(self, **metric_sources):
         metric_source = metric_sources[self.metric_source]
         comparand = self.metric_getter(metric_source)
@@ -143,6 +156,7 @@ class TimeOfDayCondition(BaseCondition):
             self.tz = pytz.timezone(timezone)
         self.metric_name = "time_of_day"
         self.metric_source = None
+
 
     def is_valid(self, **metric_sources):
         try:
