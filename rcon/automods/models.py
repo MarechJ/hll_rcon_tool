@@ -7,6 +7,7 @@ from typing import List, Mapping, Optional, TypedDict
 from pydantic import HttpUrl
 from pydantic.dataclasses import dataclass
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -68,11 +69,20 @@ class PunishDetails:
 
 
 @dataclass
+class Flag:
+    id: int
+    flag: str
+    comment: Optional[str]
+    modified: datetime
+
+
+@dataclass
 class PunishPlayer:
     player_id: str
     name: str
     squad: str
     team: str
+    flags: List[Flag]
     role: str = None
     lvl: int = None
     details: PunishDetails = None
@@ -80,7 +90,7 @@ class PunishPlayer:
     def short_repr(self):
         return (
             f"{self.__class__.__name__}"
-            f"(name={self.name}, lvl={self.lvl}, role={self.role})"
+            f"(name={self.name}, lvl={self.lvl}, role={self.role}, flags={self.flags})"
         )
 
 
@@ -112,6 +122,7 @@ class PunitionsToApply:
                             name=p.get("name"),
                             squad=p.get("unit_name"),
                             team=p.get("team"),
+                            flags=p.get('profile', {}).get('flags', []),
                             role=p.get("role"),
                             lvl=p.get("level"),
                         )
