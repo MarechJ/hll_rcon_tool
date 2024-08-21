@@ -583,6 +583,9 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
         "api.can_remove_temp_bans",
         "api.can_remove_perma_bans",
     },
+    rcon_api.get_objective_row: "api.can_view_current_map",
+    rcon_api.get_objective_rows: "api.can_view_current_map",
+    rcon_api.set_game_layout: "api.can_change_game_layout"
 }
 
 PREFIXES_TO_EXPOSE = [
