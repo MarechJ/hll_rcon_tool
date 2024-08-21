@@ -248,6 +248,7 @@ const VipEditableList = ({
         <ForwardCheckBox bool={forward} onChange={onFowardChange} />
         <VipExpirationDialog
           open={VIPPlayer}
+          player={VIPPlayer}
           vips={vipListFromServer(peopleList)}
           onDeleteVip={(playerObj) =>
             onDelete(nameOf(playerObj), playerObj.get("player_id"))

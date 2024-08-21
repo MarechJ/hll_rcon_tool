@@ -711,6 +711,7 @@ class PlayersHistory extends React.Component {
         />
         <VipExpirationDialog
           open={doVIPPlayer}
+          player={doVIPPlayer}
           vips={vips}
           onDeleteVip={this.onDeleteVip}
           handleClose={() => this.setDoVIPPlayer(false)}
