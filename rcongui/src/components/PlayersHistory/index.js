@@ -170,7 +170,7 @@ class PlayersHistory extends React.Component {
       flags: "",
       country: "",
       bans: new Map(),
-      blacklists: undefined,
+      blacklists: [],
       blacklistDialogOpen: false,
       blacklistDialogInitialValues: undefined,
     };
