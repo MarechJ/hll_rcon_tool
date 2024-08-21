@@ -1,7 +1,13 @@
 import datetime
 import enum
 from dataclasses import dataclass
-from typing import List, Literal, Optional, TypedDict
+from typing import List, Literal, Optional
+
+# # TODO: On Python 3.11.* specifically, Pydantic requires we use typing_extensions.TypedDict
+# over typing.TypedDict. Once we bump our Python image we can replace this.
+from typing_extensions import TypedDict
+
+from rcon.maps import Layer, LayerType
 
 
 # Have to inherit from str to allow for JSON serialization w/ pydantic
@@ -86,19 +92,19 @@ class MessageVariableContext(enum.Enum):
     """Available message variables if context passed"""
 
     player_name = "player_name"
-    player_steam_id_64 = "player_steam_id_64"
+    player_id = "player_id"
 
     # MostRecentEvents
-    last_victim_steam_id_64 = "last_victim_steam_id_64"
+    last_victim_player_id = "last_victim_player_id"
     last_victim_name = "last_victim_name"
-    last_nemesis_steam_id_64 = "last_nemesis_steam_id_64"
+    last_nemesis_player_id = "last_nemesis_player_id"
     last_nemesis_name = "last_nemesis_name"
     last_victim_weapon = "last_victim_weapon"
     last_nemesis_weapon = "last_nemesis_weapon"
-    last_tk_victim_steam_id_64 = "last_tk_victim_steam_id_64"
+    last_tk_victim_player_id = "last_tk_victim_player_id"
     last_tk_victim_name = "last_tk_victim_name"
     last_tk_victim_weapon = "last_tk_victim_weapon"
-    last_tk_nemesis_steam_id_64 = "last_tk_nemesis_steam_id_64"
+    last_tk_nemesis_player_id = "last_tk_nemesis_player_id"
     last_tk_nemesis_name = "last_tk_nemesis_name"
     last_tk_nemesis_weapon = "last_tk_nemesis_weapon"
 
@@ -109,16 +115,16 @@ class MessageVariableContext(enum.Enum):
 class MostRecentEvents:
     player_name: str | None = None
     last_victim_name: str | None = None
-    last_victim_steam_id_64: str | None = None
+    last_victim_player_id: str | None = None
     last_nemesis_name: str | None = None
-    last_nemesis_steam_id_64: str | None = None
+    last_nemesis_player_id: str | None = None
     last_victim_weapon: str | None = None
     last_nemesis_weapon: str | None = None
     last_tk_victim_name: str | None = None
-    last_tk_victim_steam_id_64: str | None = None
+    last_tk_victim_player_id: str | None = None
     last_tk_victim_weapon: str | None = None
     last_tk_nemesis_name: str | None = None
-    last_tk_nemesis_steam_id_64: str | None = None
+    last_tk_nemesis_player_id: str | None = None
     last_tk_nemesis_weapon: str | None = None
 
 
@@ -183,27 +189,23 @@ ROLES_TO_LABELS = {
 }
 
 
-class PlayerIdsType(TypedDict):
-    name: str
-
-
 class AdminType(TypedDict):
-    steam_id_64: str
+    player_id: str
     name: str
     role: str
 
 
 class StatusType(TypedDict):
     name: str
-    map: str
-    nb_players: str
+    map: "LayerType"
+    current_players: int
+    max_players: int
     short_name: str
-    player_count: str
     server_number: int
 
 
 class VipIdType(TypedDict):
-    steam_id_64: str
+    player_id: str
     name: str
     vip_expiration: datetime.datetime | None
 
@@ -211,7 +213,7 @@ class VipIdType(TypedDict):
 class GameServerBanType(TypedDict):
     type: str
     name: str | None
-    steam_id_64: str | None
+    player_id: str | None
     timestamp: datetime.datetime | None
     ban_time: str | None
     reason: str | None
@@ -270,24 +272,75 @@ class SteamInfoType(TypedDict):
 class PlayerNameType(TypedDict):
     id: int
     name: str
-    steam_id_64: str
+    player_id: str
     created: datetime.datetime
     last_seen: datetime.datetime
 
 
 class PlayerSessionType(TypedDict):
     id: int
-    steam_id_64: str
+    player_id: str
     start: Optional[datetime.datetime]
     end: Optional[datetime.datetime]
     created: datetime.datetime
 
 
-class BlackListType(TypedDict):
-    steam_id_64: str
-    is_blacklisted: bool
-    reason: Optional[str]
-    by: Optional[str]
+class BasicPlayerProfileType(TypedDict):
+    id: int
+    player_id: str
+    created: datetime.datetime
+    names: list[PlayerNameType]
+    steaminfo: Optional[SteamInfoType]
+
+
+class BlacklistSyncMethod(str, enum.Enum):
+    """Enumeration of all available methods when it comes to enforcing
+    blacklists. Each method has its pros and cons."""
+
+    KICK_ONLY = "kick_only"
+    """Kick only: Kick a player as soon as they connect. This means the ban
+    reason is always visible and variables remain up-to-date. However, the
+    player must wait in queue before being told they are banned."""
+
+    BAN_ON_CONNECT = "ban_on_connect"
+    """Ban on connect: Ban a player as soon as they connect. This is a balance
+    between the other two options and guarantees the player sees the ban reason
+    (exactly) once."""
+
+    BAN_IMMEDIATELY = "ban_immediately"
+    """Ban immediately: Immediately ban the player from the server. Unless they
+    are online at the time of the ban, they will never be able to actually see
+    the reason they were banned."""
+
+
+class BlacklistType(TypedDict):
+    id: int
+    name: str
+    sync: BlacklistSyncMethod
+    servers: Optional[List[int]]
+
+
+class BlacklistRecordType(TypedDict):
+    id: int
+    player_id: str
+    reason: str
+    admin_name: str
+    created_at: datetime.datetime
+    expires_at: Optional[datetime.datetime]
+    is_active: bool
+
+
+class BlacklistWithRecordsType(BlacklistType):
+    records: List[BlacklistRecordType]
+
+
+class BlacklistRecordWithBlacklistType(BlacklistRecordType):
+    blacklist: BlacklistType
+
+
+class BlacklistRecordWithPlayerType(BlacklistRecordWithBlacklistType):
+    player: BasicPlayerProfileType
+    formatted_reason: str
 
 
 class PlayerActionType(TypedDict):
@@ -303,7 +356,7 @@ class DBLogLineType(TypedDict):
     creation_time: datetime.datetime
     event_time: datetime.datetime
     type: Optional[str]
-    player_name: Optional[str]
+    player1_name: Optional[str]
     player1_id: Optional[str]
     player2_name: Optional[str]
     player2_id: Optional[str]
@@ -315,8 +368,7 @@ class DBLogLineType(TypedDict):
 
 class PlayerStatsType(TypedDict):
     id: int
-    player_id: int
-    steam_id_64: str
+    player_id: str
     player: Optional[str]
     steaminfo: Optional[SteamInfoType]
     map_id: int
@@ -366,8 +418,16 @@ class CachedLiveGameStats(TypedDict):
 
 class MapInfo(TypedDict):
     name: str
-    start: None | float
-    end: None | float
+    start: float | None
+    end: float | None
+    guessed: bool
+    player_stats: dict[str, PlayerStat]
+
+
+class MapInfoISODates(TypedDict):
+    name: str
+    start: str | None
+    end: str | None
     guessed: bool
     player_stats: dict[str, PlayerStat]
 
@@ -384,14 +444,14 @@ class MapsType(TypedDict):
 
 class PlayerCommentType(TypedDict):
     id: int
+    player_id: str
     creation_time: datetime.datetime
-    playersteamid_id: int
     by: Optional[str]
     content: str
 
 
 class PlayerAtCountType(TypedDict):
-    steam_id_64: str
+    player_id: str
     name: str
     vip: Optional[bool]
 
@@ -403,6 +463,11 @@ class ServerCountType(TypedDict):
     players: List[PlayerAtCountType]
     map: str
     vip_count: int
+
+
+class AdminUserType(TypedDict):
+    username: str
+    player_id: str
 
 
 class AuditLogType(TypedDict):
@@ -438,7 +503,7 @@ class PlayerOptinsType(TypedDict):
 class WatchListType(TypedDict):
     id: int
     modified: datetime.datetime
-    steam_id_64: str
+    player_id: str
     is_watched: bool
     reason: str
     by: str
@@ -456,34 +521,28 @@ class PlayerVIPType(TypedDict):
     expiration: datetime.datetime
 
 
-class PlayerProfileType(TypedDict):
-    id: int
-    steam_id_64: str
-    created: datetime.datetime
-    names: List[PlayerNameType]
-    sessions: List[PlayerSessionType]
+class PlayerProfileType(BasicPlayerProfileType):
+    sessions: list[PlayerSessionType]
     sessions_count: int
     total_playtime_seconds: int
     current_playtime_seconds: int
-    received_actions: List[PlayerActionType]
+    received_actions: list[PlayerActionType]
     penalty_count: PenaltyCountType
-    blacklist: Optional[BlackListType]
-    flags: List[PlayerFlagType]
+    blacklists: list[BlacklistRecordWithBlacklistType]
+    is_blacklisted: bool
+    flags: list[PlayerFlagType]
     watchlist: Optional[WatchListType]
-    steaminfo: Optional[SteamInfoType]
     vips: Optional[list[PlayerVIPType]]
 
 
-class GetPlayersType(TypedDict):
-    name: str
-    steam_id_64: str
-    country: str | None
-    steam_bans: Optional[SteamBansType]
+class PlayerProfileTypeEnriched(PlayerProfileType):
+    bans: list[GameServerBanType]
+    comments: list[PlayerCommentType]
 
 
 class GetDetailedPlayer(TypedDict):
     name: str
-    steam_id_64: str
+    player_id: str
     profile: PlayerProfileType | None
     is_vip: bool
     unit_id: Optional[int]
@@ -505,17 +564,21 @@ class GetDetailedPlayers(TypedDict):
     fail_count: int
 
 
-class EnrichedGetPlayersType(GetPlayersType):
+class GetPlayersType(TypedDict):
+    name: str
+    player_id: str
+    country: str | None
+    steam_bans: Optional[SteamBansType]
     is_vip: bool
     profile: PlayerProfileType | None
 
 
 class StructuredLogLineType(TypedDict):
     action: str
-    player: str | None
-    steam_id_64_1: str | None
-    player2: str | None
-    steam_id_64_2: str | None
+    player_name_1: str | None
+    player_id_1: str | None
+    player_name_2: str | None
+    player_id_2: str | None
     weapon: str | None
     message: str
     sub_content: str | None
@@ -524,14 +587,15 @@ class StructuredLogLineType(TypedDict):
 class StructuredLogLineWithMetaData(TypedDict):
     version: int
     timestamp_ms: int
-    relative_time_ms: float
+    event_time: datetime.datetime
+    relative_time_ms: float | None
     raw: str
-    line_without_time: str
+    line_without_time: str | None
     action: str
-    player: str | None
-    steam_id_64_1: str | None
-    player2: str | None
-    steam_id_64_2: str | None
+    player_name_1: str | None
+    player_id_1: str | None
+    player_name_2: str | None
+    player_id_2: str | None
     weapon: str | None
     message: str
     sub_content: str | None
@@ -552,8 +616,8 @@ class GameState(TypedDict):
     axis_score: int
     raw_time_remaining: str
     time_remaining: datetime.timedelta
-    current_map: str
-    next_map: str
+    current_map: "LayerType"
+    next_map: "LayerType"
 
 
 class VACGameBansConfigType(TypedDict):
@@ -564,8 +628,24 @@ class VACGameBansConfigType(TypedDict):
 
 
 class VipId(TypedDict):
-    steam_id_64: str
+    player_id: str
     name: str
+
+
+class VoteMapPlayerVoteType(TypedDict):
+    player_name: str
+    map_name: str
+
+
+class VoteMapResultType(TypedDict):
+    map: Layer
+    num_votes: int
+
+
+# TODO: finish this typing
+class VoteMapStatusType(TypedDict):
+    map: Layer
+    voters: dict[Layer, list[str]]
 
 
 # Have to inherit from str to allow for JSON serialization w/ pydantic
@@ -627,56 +707,57 @@ class InvalidLogTypeError(ValueError):
         }
 
 
-class _PublicInfoCurrentMapType(TypedDict):
-    just_name: str
-    human_name: str
-    name: str
-    start: int
+class PublicInfoMapType(TypedDict):
+    map: LayerType
+    start: float | None
 
 
-class _PublicInfoNextMapType(TypedDict):
-    just_name: str
-    human_name: str
-    name: str
-    start: int | None
-
-
-class _PublicInfoPlayerType(TypedDict):
+class PublicInfoPlayerType(TypedDict):
     allied: int
     axis: int
 
 
-class _PublicInfoScoreType(TypedDict):
+class PublicInfoScoreType(TypedDict):
     allied: int
     axis: int
 
 
-class _PublicInfoVoteStatusType(TypedDict):
-    total_votes: int
-    winning_maps: list[str]
-
-
-class _PublicInfoNameType(TypedDict):
+class PublicInfoNameType(TypedDict):
     name: str
     short_name: str
-    public_stats_port: int
-    public_stats_port_https: int
+    public_stats_port: int | None
+    public_stats_port_https: int | None
 
 
 class PublicInfoType(TypedDict):
-    """TypedDict for rcon.views.public_info"""
+    """TypedDict for rcon.views.get_public_info"""
 
-    current_map: _PublicInfoCurrentMapType
-    next_map: _PublicInfoNextMapType
+    current_map: PublicInfoMapType
+    next_map: PublicInfoMapType
     player_count: int
     max_player_count: int
-    players: _PublicInfoPlayerType
-    score: _PublicInfoScoreType
-    raw_time_remaining: str
-    vote_status: _PublicInfoVoteStatusType
-    name: _PublicInfoNameType
+    player_count_by_team: PublicInfoPlayerType
+    score: PublicInfoScoreType
+    time_remaining: float
+    vote_status: list[VoteMapStatusType]
+    name: PublicInfoNameType
 
 
-class VoteOverview(TypedDict):
-    total_votes: int
-    winning_maps: list[tuple[str, int]]
+class SlotsType(TypedDict):
+    current_players: int
+    max_players: int
+
+
+class DjangoPermission(TypedDict):
+    permission: str
+    description: str
+
+
+class DjangoGroup(TypedDict):
+    name: str
+
+
+class DjangoUserPermissions(TypedDict):
+    permissions: list[DjangoPermission]
+    groups: list[DjangoGroup]
+    is_superuser: bool

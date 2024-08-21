@@ -28,6 +28,4 @@ class RconConnectionSettingsUserConfig(BaseUserConfig):
         )
 
         if not dry_run:
-            set_user_config(
-                RconConnectionSettingsUserConfig.KEY(), validated_conf.model_dump()
-            )
+            set_user_config(RconConnectionSettingsUserConfig.KEY(), validated_conf)

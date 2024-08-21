@@ -35,7 +35,7 @@ const useStyles = makeStyles((theme) => ({
 const LogsFilter = ({ onSubmit, onChange }) => {
   const classes = useStyles();
   const [name, setName] = React.useState("");
-  const [steamId64, setSteamId64] = React.useState("");
+  const [playerId, setPlayerId] = React.useState("");
   const [type, setType] = React.useState("");
   const [server, setServer] = React.useState("");
   const [from, setFrom] = React.useState(null);
@@ -52,9 +52,9 @@ const LogsFilter = ({ onSubmit, onChange }) => {
           <Grid container spacing={1} justify="space-evenly">
             <Grid item>
               <TextField
-                label="Steam id"
-                value={steamId64}
-                onChange={(e) => setSteamId64(e.target.value)}
+                label="Player ID"
+                value={playerId}
+                onChange={(e) => setPlayerId(e.target.value)}
               />
             </Grid>
             <Grid item>
@@ -156,7 +156,7 @@ const LogsFilter = ({ onSubmit, onChange }) => {
                   onSubmit(
                     name,
                     type,
-                    steamId64,
+                    playerId,
                     from,
                     till,
                     limit,
@@ -171,7 +171,7 @@ const LogsFilter = ({ onSubmit, onChange }) => {
                   onSubmit(
                     name,
                     type,
-                    steamId64,
+                    playerId,
                     from,
                     till,
                     limit,
@@ -201,7 +201,7 @@ class LogsHistory extends React.Component {
       isLoading: false,
       name: null,
       type: null,
-      steamId64: null,
+      playerId: null,
       from: null,
       till: null,
       limit: 10000,
@@ -226,8 +226,7 @@ class LogsHistory extends React.Component {
       label: "Time",
       options: {
         customBodyRenderLite: (dataIndex) =>
-          moment
-            .unix(this.state.logs[dataIndex]?.event_time)
+          moment(this.state.logs[dataIndex]?.event_time)
             .local()
             .format("ddd Do MMM HH:mm:ss"),
       },
@@ -240,9 +239,13 @@ class LogsHistory extends React.Component {
       options: {
         customBodyRenderLite: (dataIndex) => {
           let id = this.state.logs[dataIndex]?.player1_id;
-          let name = this.state.logs[dataIndex]?.player_name;
+          let name = this.state.logs[dataIndex]?.player1_name;
           return id ? (
-            <Link color="inherit" target="_blank" href={`/api/player?id=${id}`}>
+            <Link
+              color="inherit"
+              target="_blank"
+              href={`/api/get_player_profile?player_id=${id}`}
+            >
               {name}
             </Link>
           ) : (
@@ -259,7 +262,11 @@ class LogsHistory extends React.Component {
           let id = this.state.logs[dataIndex]?.player2_id;
           let name = this.state.logs[dataIndex]?.player2_name;
           return id ? (
-            <Link color="inherit" target="_blank" href={`/api/player?id=${id}`}>
+            <Link
+              color="inherit"
+              target="_blank"
+              href={`/api/get_player_profile?player_id=${id}`}
+            >
               {name}
             </Link>
           ) : (
@@ -286,7 +293,7 @@ class LogsHistory extends React.Component {
   getHistoricalLogs(
     name = null,
     type = null,
-    steamId64 = null,
+    playerId = null,
     from = null,
     till = null,
     limit = 10000,
@@ -294,13 +301,12 @@ class LogsHistory extends React.Component {
     exactPlayer = false,
     exactAction = false,
     server = null,
-    output = null
   ) {
     this.setState({
       isLoading: true,
       name: name,
       type: type,
-      steamId64: steamId64,
+      playerId: playerId,
       from: from,
       till: till,
       limit: limit,
@@ -311,8 +317,8 @@ class LogsHistory extends React.Component {
     });
     postData(`${process.env.REACT_APP_API_URL}get_historical_logs`, {
       player_name: name,
-      log_type: type,
-      steam_id_64: steamId64,
+      action: type,
+      player_id: playerId,
       from: from,
       till: till,
       limit: limit,
@@ -320,7 +326,6 @@ class LogsHistory extends React.Component {
       exact_player: exactPlayer,
       exact_action: exactAction,
       server_filter: server,
-      output: output,
     })
       .then((res) => showResponse(res, "get_historical_logs", false))
       .then((res) => {
@@ -330,10 +335,10 @@ class LogsHistory extends React.Component {
   }
 
   handleDownload() {
-    postData(`${process.env.REACT_APP_API_URL}get_historical_logs`, {
+    postData(`${process.env.REACT_APP_API_URL}get_historical_logs_csv`, {
       player_name: this.state.name,
-      log_type: this.state.type,
-      steam_id_64: this.state.steamId64,
+      action: this.state.type,
+      player_id: this.state.playerId,
       from: this.state.from,
       till: this.state.till,
       limit: this.state.limit,
@@ -341,7 +346,6 @@ class LogsHistory extends React.Component {
       exact_player: this.state.exactPlayer,
       exact_action: this.state.exactAction,
       server_filter: this.state.server,
-      output: "csv",
     })
       .then((res) => res.blob())
       .then((blob) => {

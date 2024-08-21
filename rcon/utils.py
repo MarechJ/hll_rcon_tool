@@ -1,12 +1,12 @@
 import inspect
-import orjson
 import logging
 import os
 import secrets
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from itertools import islice
-from typing import Any, Generic, Iterable, TypeVar, Iterable
+from typing import Any, Generic, Iterable, TypeVar
 
+import orjson
 import redis
 import redis.exceptions
 
@@ -15,7 +15,7 @@ from rcon.types import GetDetailedPlayer, MapInfo
 
 logger = logging.getLogger("rcon")
 
-STEAMID = "steam_id_64"
+PLAYER_ID = "player_id"
 NAME = "name"
 ROLE = "role"
 
@@ -54,15 +54,6 @@ ALL_ROLES = (
 )
 
 ALL_ROLES_KEY_INDEX_MAP = {v: i for i, v in enumerate(ALL_ROLES)}
-
-
-def get_current_map(rcon):
-    map_ = rcon.get_map()
-
-    if map_.endswith("_RESTART"):
-        map_ = map_.replace("_RESTART", "")
-
-    return map_
 
 
 T = TypeVar("T")
@@ -348,7 +339,7 @@ class ApiKey:
     def delete_key(self):
         self.red.delete(self.key)
 
-    def get_all_keys(self):
+    def get_all_keys(self) -> dict[str, str]:
         return {
             k.decode(): self.red.get(k.decode()).decode()
             for k in self.red.keys(f"{self.key_prefix}*")
@@ -408,7 +399,7 @@ def is_invalid_name_pineapple(name: str) -> bool:
 def default_player_info_dict(player) -> GetDetailedPlayer:
     return {
         "name": player,
-        "steam_id_64": "",
+        "player_id": "",
         "profile": None,
         "is_vip": False,
         "unit_id": None,
@@ -457,10 +448,10 @@ def parse_raw_player_info(raw: str, player) -> GetDetailedPlayer:
 
     logger.debug(raw_data)
     # Remap keys and parse values
-    data[STEAMID] = raw_data.get("steamid64")  # type: ignore
+    data[PLAYER_ID] = raw_data.get("steamid64")  # type: ignore
     data["team"] = raw_data.get("team", "None")
     if raw_data["role"].lower() == "armycommander":
-        data["unit_id"], data["unit_name"] = (-1, "Commmand")
+        data["unit_id"], data["unit_name"] = (-1, "Command")
     else:
         data["unit_id"], data["unit_name"] = (
             raw_data.get("unit").split(" - ")  # type: ignore
@@ -529,3 +520,128 @@ class SafeStringFormat(dict):
             called_from.code_context,
         )
         return f"{{{key}}}"
+
+
+class SingletonMeta(type):
+    _instances = {}
+
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super(SingletonMeta, cls).__call__(*args, **kwargs)
+        return cls._instances[cls]
+
+
+class MissingType(metaclass=SingletonMeta):
+    def __bool__(self):
+        return False
+
+    def __iter__(self):
+        return
+        yield
+
+    def __repr__(self):
+        return "MISSING"
+
+
+MISSING = MissingType()
+
+
+def server_numbers_to_mask(*server_numbers):
+    result = 0
+    for number in server_numbers:
+        if number <= 0 or number > 32:
+            raise ValueError("Server number must be between 1 and 32")
+        # Shift the positive bit to create a mask and then merge that mask with the result
+        # eg. [1, 2, 4] -> 0001, 0010, 1000 -> 1011
+        result |= 1 << (number - 1)
+    return result
+
+
+def mask_to_server_numbers(mask: int) -> set[int]:
+    server_numbers = set()
+    # bin() returns '0b...', so we slice of the first two characters and then iterate over the remaining
+    # characters from back to front.
+    # eg. bin(7) -> '0b1011' -> [1, 1, 0, 1] -> [1, 2, 4]
+    for i, c in enumerate(bin(mask)[:1:-1], 1):
+        if c == "1":
+            server_numbers.add(i)
+    return server_numbers
+
+
+def humanize_timedelta(td: timedelta | datetime | None) -> str:
+    """Converts a timedelta to a human-readable string.
+
+    Example:
+    timedelta(-60*60*24*2.5) => "2 days ago"
+    timedelta(60*60 - 5) => "in an hour"
+    None => "forever"
+    """
+    if td is None:
+        return "forever"
+
+    if isinstance(td, datetime):
+        td = td - datetime.now(tz=timezone.utc)
+
+    seconds = int(td.total_seconds())
+    if seconds < 0:
+        fmt = "{} ago"
+        seconds = abs(seconds)
+    else:
+        fmt = "in {}"
+
+    minutes = seconds / 60
+    if int(minutes) <= 1:
+        return fmt.format("a minute")
+    elif minutes < 59:
+        return fmt.format(f"{int(minutes)} minutes")
+
+    hours = minutes / 60
+    if int(hours) <= 1:
+        return fmt.format(f"an hour")
+    elif hours < 23.5:
+        return fmt.format(f"{int(hours)} hours")
+
+    days = hours / 24
+    if int(days) <= 1:
+        return fmt.format(f"a day")
+    elif days < 6.9:
+        return fmt.format(f"{int(days)} days")
+
+    weeks = days / 7
+    if int(weeks) <= 1:
+        return fmt.format(f"a week")
+    elif days < 29.9:
+        return fmt.format(f"{int(weeks)} weeks")
+
+    months = days / 30
+    if int(months) <= 1:
+        return fmt.format(f"a month")
+    elif months < 11.95:
+        return fmt.format(f"{int(months)} months")
+
+    years = days / 365
+    if int(years) <= 1:
+        return fmt.format(f"a year")
+    return fmt.format("{} years")
+
+
+def strtobool(val) -> bool:
+    """Convert a string representation of truth to true (1) or false (0).
+    True values are 'y', 'yes', 't', 'true', 'on', and '1'; false values
+    are 'n', 'no', 'f', 'false', 'off', and '0'.  Raises ValueError if
+    'val' is anything else.
+    """
+    if val is None:
+        return False
+
+    if isinstance(val, bool):
+        return val
+
+    # sourced from https://stackoverflow.com/a/18472142 with modification
+    val = val.lower()
+    if val in ("y", "yes", "t", "true", "on", "1"):
+        return True
+    elif val in ("n", "no", "f", "false", "off", "0"):
+        return False
+    else:
+        raise ValueError("invalid truth value %r" % (val,))

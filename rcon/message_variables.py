@@ -7,7 +7,6 @@ from rcon.audit import ingame_mods, online_mods
 from rcon.rcon import Rcon, get_rcon
 from rcon.scoreboard import get_cached_live_game_stats, get_stat
 from rcon.settings import SERVER_INFO
-from rcon.maps import safe_get_map_name
 from rcon.types import CachedLiveGameStats, MessageVariable, StatTypes, VipIdType
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.webhooks import AdminPingWebhooksUserConfig
@@ -18,16 +17,16 @@ logger = getLogger(__name__)
 
 def populate_message_variables(
     vars: Iterable[str],
-    steam_id_64: str | None = None,
+    player_id: str | None = None,
 ) -> dict[MessageVariable, str | None]:
     """Return globally available info for message formatting"""
     populated_variables: dict[MessageVariable, str | None] = {}
     rcon = get_rcon()
 
     message_variable_to_lookup = {
-        MessageVariable.vip_status: lambda: _is_vip(steam_id_64=steam_id_64, rcon=rcon),
+        MessageVariable.vip_status: lambda: _is_vip(player_id=player_id, rcon=rcon),
         MessageVariable.vip_expiration: lambda: _vip_expiration(
-            steam_id_64=steam_id_64, rcon=rcon
+            player_id=player_id, rcon=rcon
         ),
         MessageVariable.server_name: rcon.get_name,
         MessageVariable.server_short_name: _server_short_name,
@@ -85,28 +84,28 @@ def format_message_string(
 
 
 def _vip_status(
-    steam_id_64: str | None = None, rcon: Rcon | None = None
+    player_id: str | None = None, rcon: Rcon | None = None
 ) -> VipIdType | None:
     if rcon is None:
         rcon = get_rcon()
 
-    vip = [v for v in rcon.get_vip_ids() if v["steam_id_64"] == steam_id_64]
+    vip = [v for v in rcon.get_vip_ids() if v["player_id"] == player_id]
     logger.info(f"{vip=}")
 
     if vip:
         return vip[0]
 
 
-def _is_vip(steam_id_64: str | None = None, rcon: Rcon | None = None) -> bool:
-    vip = _vip_status(steam_id_64=steam_id_64, rcon=rcon)
+def _is_vip(player_id: str | None = None, rcon: Rcon | None = None) -> bool:
+    vip = _vip_status(player_id=player_id, rcon=rcon)
 
     return vip is not None
 
 
 def _vip_expiration(
-    steam_id_64: str | None = None, rcon: Rcon | None = None
+    player_id: str | None = None, rcon: Rcon | None = None
 ) -> datetime | None:
-    vip = _vip_status(steam_id_64=steam_id_64, rcon=rcon)
+    vip = _vip_status(player_id=player_id, rcon=rcon)
 
     return vip["vip_expiration"] if vip else None
 
@@ -133,19 +132,17 @@ def _admin_ping_trigger_words(config: AdminPingWebhooksUserConfig | None = None)
     return ", ".join(config.trigger_words[:])
 
 
-def _next_map(rcon: Rcon | None = None):
+def _next_map(rcon: Rcon | None = None) -> str:
     if rcon is None:
         rcon = get_rcon()
-    map_name = rcon.get_gamestate().get("next_map")
-
-    return safe_get_map_name(map_name)
+    return rcon.get_next_map().pretty_name
 
 
 def _map_rotation(rcon: Rcon | None = None):
     if rcon is None:
         rcon = get_rcon()
     map_rot = rcon.get_map_rotation()
-    map_names = [safe_get_map_name(map_name) for map_name in map_rot]
+    map_names = [map_.pretty_name for map_ in map_rot]
     return ", ".join(map_names)
 
 

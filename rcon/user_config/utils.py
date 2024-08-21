@@ -1,10 +1,10 @@
 import logging
 import os
-from typing import Any, Iterable, Self
+from typing import Any, Iterable, Self, Type
 
 import pydantic
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm.session import Session
+from sqlalchemy.orm import Session
 
 from rcon.models import UserConfig, enter_session
 from rcon.utils import get_server_number
@@ -12,7 +12,7 @@ from rcon.utils import get_server_number
 logger = logging.getLogger(__name__)
 
 USER_CONFIG_KEY_FORMAT = "{server}_{cls_name}"
-DISCORD_AUDIT_FORMAT = "[{command_name}] changed values: {differences}"
+DISCORD_AUDIT_FORMAT = "changed values: `{differences}`"
 
 
 # Sourced without modification from https://stackoverflow.com/a/17246726
@@ -63,7 +63,7 @@ class InvalidKeysConfigurationError(Exception):
     def __repr__(self) -> str:
         return f"missing keys=({', '.join(self.missing_keys)}) | Extra keys = ({', '.join(self.extra_keys)}) | Mandatory keys=({', '.join(self.mandatory_keys)}) | Provided keys=({', '.join(self.provided_keys)})"
 
-    def asdict(self):
+    def asdict(self) -> dict[str, Any]:
         return {
             "type": InvalidKeysConfigurationError.__name__,
             "missing_keys": sorted([k for k in self.missing_keys]),
@@ -121,12 +121,12 @@ class BaseUserConfig(pydantic.BaseModel):
         return cls()
 
     @staticmethod
-    def save_to_db() -> None:
+    def save_to_db(values: dict[str, Any], dry_run: bool) -> None:
         raise NotImplementedError
 
     @classmethod
     def seed_db(cls, sess: Session):
-        _set_default(sess, key=cls.KEY(), val=cls().model_dump())
+        _set_default(sess, key=cls.KEY(), val=cls())
 
 
 def _get_conf(sess, key):
@@ -140,11 +140,11 @@ def _get_conf(sess, key):
 
 
 def get_user_config(key: str, default=None) -> dict[str, Any] | Any | None:
-    logger.debug("Getting user config for %s", key)
+    # logger.debug("Getting user config for %s", key)
     with enter_session() as sess:
         res = _get_conf(sess, key)
         res = res.value if res else default
-        logger.debug("User config for %s is %s", key, res)
+        # logger.debug("User config for %s is %s", key, res)
         return res
 
 
@@ -167,14 +167,20 @@ def _remove_conf(sess, key):
         sess.commit()
 
 
-def _set_default(sess, key, val):
+def _set_default(sess: Session, key: str, val: dict[str, Any] | BaseUserConfig):
+    if isinstance(val, BaseUserConfig):
+        val = val.model_dump()
+
     if _get_conf(sess, key) is None:
         logger.info("Seeding default values for %s", key)
         _add_conf(sess, key, val)
     return val
 
 
-def set_user_config(key, object_):
+def set_user_config(key: str, object_: dict[str, Any] | BaseUserConfig):
+    if isinstance(object_, BaseUserConfig):
+        object_ = object_.model_dump()
+
     logger.debug("Setting user config for %s with %s", key, object_)
     with enter_session() as sess:
         conf = _get_conf(sess, key)
@@ -182,3 +188,43 @@ def set_user_config(key, object_):
             _add_conf(sess, key, object_)
         else:
             conf.value = object_
+
+
+def validate_user_config(
+    model: Type[BaseUserConfig],
+    data: dict[str, Any] | BaseUserConfig,
+    dry_run: bool = True,
+    reset_to_default: bool = False,
+) -> None:
+    if reset_to_default:
+        default = model()
+        set_user_config(default.KEY(), default)
+
+    model.save_to_db(values=data, dry_run=dry_run)
+
+
+def mask_sensitive_data(
+    values: dict[str, Any],
+    sensitive_keys: set[str] = {
+        "discord_webhook_url",
+        "username",
+        "password",
+        "url",
+        "webhook_urls",
+        "api_key",
+    },
+    masked_value: str = "***",
+) -> None:
+    """Replace the value of any dict key in sensitive_keys with masked_value"""
+    if not isinstance(values, dict):
+        return
+
+    for k, v in values.items():
+        if isinstance(v, dict):
+            mask_sensitive_data(values[k], sensitive_keys=sensitive_keys)
+        elif isinstance(v, list):
+            for ele in v:
+                mask_sensitive_data(ele, sensitive_keys=sensitive_keys)
+
+        if k in sensitive_keys:
+            values[k] = masked_value

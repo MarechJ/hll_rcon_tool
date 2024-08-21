@@ -11,16 +11,16 @@ import os
 
 from django.core.asgi import get_asgi_application
 from channels.routing import ProtocolTypeRouter, URLRouter
-from api.log_stream import urlpatterns
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "rconweb.settings")
 django_asgi_app = get_asgi_application()
 
-from api.auth import APITokenAuthMiddleware
+# This has to be imported *after* setting DJANGO_SETTINGS_MODULE
+from api import log_stream, barricade
 
 application = ProtocolTypeRouter(
     {
         "http": django_asgi_app,
-        "websocket": APITokenAuthMiddleware(URLRouter(urlpatterns)),
+        "websocket": URLRouter(log_stream.urlpatterns + barricade.urlpatterns),
     }
 )

@@ -7,6 +7,7 @@ from typing import List, Mapping, Optional, TypedDict
 from pydantic import HttpUrl
 from pydantic.dataclasses import dataclass
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -68,11 +69,20 @@ class PunishDetails:
 
 
 @dataclass
+class Flag:
+    id: int
+    flag: str
+    comment: Optional[str]
+    modified: datetime
+
+
+@dataclass
 class PunishPlayer:
-    steam_id_64: str
+    player_id: str
     name: str
     squad: str
     team: str
+    flags: List[Flag]
     role: str = None
     lvl: int = None
     details: PunishDetails = None
@@ -80,7 +90,7 @@ class PunishPlayer:
     def short_repr(self):
         return (
             f"{self.__class__.__name__}"
-            f"(name={self.name}, lvl={self.lvl}, role={self.role})"
+            f"(name={self.name}, lvl={self.lvl}, role={self.role}, flags={self.flags})"
         )
 
 
@@ -108,10 +118,11 @@ class PunitionsToApply:
                     name=squad_name,
                     players=[
                         PunishPlayer(
-                            steam_id_64=p.get("steam_id_64"),
+                            player_id=p.get("player_id"),
                             name=p.get("name"),
                             squad=p.get("unit_name"),
                             team=p.get("team"),
+                            flags=p.get("profile", {}).get("flags", []),
                             role=p.get("role"),
                             lvl=p.get("level"),
                         )
@@ -126,10 +137,10 @@ class PunitionsToApply:
         if len(o.warning) != 0:
             self.warning.extend(o.warning)
         for p in o.punish:
-            if not any(sp.steam_id_64 == p.steam_id_64 for sp in self.punish):
+            if not any(sp.player_id == p.player_id for sp in self.punish):
                 self.punish.append(p)
         for k in o.kick:
-            if not any(sk.steam_id_64 == k.steam_id_64 for sk in self.kick):
+            if not any(sk.player_id == k.player_id for sk in self.kick):
                 self.kick.append(k)
         for s in o.squads_state:
             if any(s.team == ss.team and s.name == ss.name for ss in self.squads_state):

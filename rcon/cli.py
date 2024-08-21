@@ -9,6 +9,7 @@ import click
 import pydantic
 import yaml
 
+from rcon.blacklist import BlacklistCommandHandler
 import rcon.expiring_vips.service
 import rcon.user_config
 import rcon.user_config.utils
@@ -128,6 +129,11 @@ def run_automod():
     automod.run()
 
 
+@cli.command(name="blacklists")
+def run_blacklists():
+    BlacklistCommandHandler().run()
+
+
 @cli.command(name="log_recorder")
 @click.option("-t", "--frequency-min", default=5)
 @click.option("-n", "--now", is_flag=True)
@@ -169,8 +175,8 @@ def importvips(file, prefix):
     ctl = get_rcon()
     for line in file:
         line = line.strip()
-        steamid, name = line.split(" ", 1)
-        ctl.do_add_vip(name=f"{prefix}{name}", steam_id_64=steamid)
+        player_id, name = line.split(" ", 1)
+        ctl.add_vip(player_id=player_id, description=f"{prefix}{name}")
 
 
 @cli.command(name="clear_cache")
@@ -181,7 +187,7 @@ def clear():
 @cli.command
 def export_vips():
     ctl = get_rcon()
-    print("/n".join(f"{d['steam_id_64']} {d['name']}" for d in ctl.get_vip_ids()))
+    print("/n".join(f"{d['player_id']} {d['name']}" for d in ctl.get_vip_ids()))
 
 
 def do_print(func):
@@ -375,7 +381,7 @@ def set_user_settings(server: int, input: click.Path, dry_run=True):
                 server=server, cls_name=cls.__name__
             )
             print(f"setting {key=} class={cls.__name__}")
-            rcon.user_config.utils.set_user_config(key, model.model_dump())
+            rcon.user_config.utils.set_user_config(key, model)
 
         if auto_settings_key in user_settings:
             rcon.user_config.utils.set_user_config(
@@ -410,7 +416,7 @@ def reset_user_settings(server: int):
             server=server, cls_name=cls.__name__
         )
         print(f"Resetting {key}")
-        rcon.user_config.utils.set_user_config(key, model.model_dump())
+        rcon.user_config.utils.set_user_config(key, model)
 
     print("Done")
 
