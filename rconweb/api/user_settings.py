@@ -443,6 +443,7 @@ def describe_chat_commands_config(request):
 
 @csrf_exempt
 @login_required()
+@require_http_methods(["GET"])
 def describe_log_stream_config(request):
     command_name = "describe_log_stream_config"
 
