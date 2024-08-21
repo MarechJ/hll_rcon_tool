@@ -523,7 +523,7 @@ class PlayersHistory extends React.Component {
         playerId: player.get("player_id")
       }
     });
-    if (!this.state.blacklists) {
+    if (!this.state.blacklists.length) {
       this.loadBlacklists()
     }
   }
