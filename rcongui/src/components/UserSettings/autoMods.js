@@ -769,6 +769,7 @@ export const SeedingAutoMod = ({
                     The number is exclusive.
                     ie : if you use 30, this rule will be enforced for players 1 to 29,
                     once the 30th player has connected, this rule will NOT be enforced anymore.
+                    - set to 0 to disable
                 */
                 "max_players": 100,
 
