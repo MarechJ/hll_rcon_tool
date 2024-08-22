@@ -15,10 +15,10 @@ import { BlacklistRecordCreateButton } from "./BlacklistRecordCreateDialog";
 import { Skeleton } from "@material-ui/lab";
 
 async function getBlacklistRecords(searchParams) {
-  let path = "get_blacklist_records?"
-  // remove all params = 0 or being falsy
-  let searchParamsString = Object.entries(searchParams).filter(param => param && param !== 0)
-  path += searchParamsString
+  let path = "get_blacklist_records?" + new URLSearchParams(
+    Object.entries(searchParams)
+      .filter(([_, v]) => v && v !== 0)
+  );
   const response = await get(path)
   return showResponse(response, "get_blacklist_records")
 }
