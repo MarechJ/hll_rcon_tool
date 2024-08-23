@@ -7,13 +7,13 @@ from functools import cmp_to_key
 
 from dateutil import parser
 from sqlalchemy import func, or_
-from sqlalchemy.orm import contains_eager, selectinload, Session
+from sqlalchemy.orm import Session, contains_eager, selectinload
 from sqlalchemy.sql.functions import ReturnTypeFromArgs
 
 from rcon.commands import CommandFailedError
 from rcon.models import (
     BlacklistRecord,
-    PlayerActionType,
+    PlayerActionState,
     PlayerComment,
     PlayerFlag,
     PlayerID,
@@ -24,7 +24,12 @@ from rcon.models import (
     WatchList,
     enter_session,
 )
-from rcon.types import PlayerCommentType, PlayerFlagType, PlayerProfileType
+from rcon.types import (
+    PlayerActionState,
+    PlayerCommentType,
+    PlayerFlagType,
+    PlayerProfileType,
+)
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.utils import strtobool
 
@@ -325,7 +330,7 @@ def save_player(player_name: str, player_id: str, timestamp: int | None = None) 
 
 def save_player_action(
     rcon,
-    action_type,
+    action_type: PlayerActionState,
     player_name: str,
     by: str,
     reason: str = "",
@@ -341,14 +346,17 @@ def save_player_action(
         )
         sess.add(
             PlayersAction(
-                action_type=action_type.upper(), player=player, reason=reason, by=by
+                action_type=action_type.name.upper(),
+                player=player,
+                reason=reason,
+                by=by,
             )
         )
 
 
 def safe_save_player_action(
     rcon,
-    action_type,
+    action_type: PlayerActionState,
     player_name: str,
     by: str,
     reason: str = "",
@@ -497,15 +505,15 @@ def remove_flag(
     return player, old_flag
 
 
-def get_player_messages(player_id: str) -> list[PlayerActionType]:
+def get_player_messages(player_id: str) -> list[PlayerActionState]:
     with enter_session() as sess:
         player = sess.query(PlayerID).filter_by(player_id=player_id).one_or_none()
-        actions: list[PlayerActionType] = []
+        actions: list[PlayerActionState] = []
         if player:
             actions = [
                 action.to_dict()
                 for action in player.received_actions
-                if action.action_type == "MESSAGE"
+                if action.action_type == PlayerActionState.MESSAGE.value
             ]
 
         return actions
