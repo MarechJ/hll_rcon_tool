@@ -63,7 +63,7 @@ const NamePopOver = ({ names }) => {
   return (
     <Grid item>
       <Button endIcon={<ExpandMore />} onClick={handleClick}>
-        <Typography variant="h3">{names[0].name}</Typography>
+        <Typography variant="h3">{names.length ? names[0].name : "Player has no recorded names"}</Typography>
       </Button>
       <Popover
         id={id}
