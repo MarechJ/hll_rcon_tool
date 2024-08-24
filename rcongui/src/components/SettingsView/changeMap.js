@@ -1,7 +1,7 @@
 import React from "react";
 import { Grid, Button, Menu, MenuItem } from "@material-ui/core";
 
-const ChangeMap = ({ classes, availableMaps, changeMap }) => {
+const ChangeMap = ({ availableMaps, changeMap }) => {
   const [anchorEl, setAnchorEl] = React.useState(null);
 
   const handleClick = (event) => {

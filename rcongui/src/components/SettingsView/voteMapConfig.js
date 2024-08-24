@@ -71,6 +71,66 @@ const VoteMapConfig = () => {
       alignContent="center"
       alignItems="center"
     >
+            <Grid item xs={12}>
+        <Grid
+          container
+          justify="flex-start"
+          alignContent="stretch"
+          alignItems="stretch"
+          orientation="column"
+        >
+          <Grid item xs={12}>
+            <Typography variant="h6">Current vote status</Typography>
+          </Grid>
+          <Grid item xs={12} sm={4}>
+            <Typography variant="body1">Votes:</Typography>
+            <pre>
+              {status.map((o) => {
+                return o.get("voters").map((vote) => {
+                  return `${vote}: ${o
+                    .get("map", new Map())
+                    .get("pretty_name")}\n`;
+                });
+              })}
+            </pre>
+          </Grid>
+          <Grid item xs={6} sm={4}>
+            <Typography variant="body1">Map selection:</Typography>
+            <pre>
+              {status
+                .map((v) => `${v.get('map', new Map()).get("pretty_name")}\n`)}
+            </pre>
+          </Grid>
+          <Grid item xs={6} sm={4}>
+            <Typography variant="body1">Results:</Typography>
+            <pre>
+              {status
+                .filter((o) => {
+                  // console.log(`o=${JSON.stringify(o)}`);
+                  return o.get("voters").size > 0;
+                })
+                .map(
+                  (o) =>
+                    `${o.get("map", new Map()).get("pretty_name")}: ${o.get("voters", new List()).size
+                    }\n`
+                )}
+            </pre>
+          </Grid>
+          <Grid xs={12}>
+            <Button
+              variant="outlined"
+              color="secondary"
+              onClick={() => {
+                if (window.confirm("Are you sure?") === true) {
+                  resetVotes().then(loadData);
+                }
+              }}
+            >
+              RESET SELECTION & VOTES
+            </Button>
+          </Grid>
+        </Grid>
+      </Grid>
       <Grid item xs={12}>
         <Padlock
           label="Next Map Vote Enabled"
@@ -286,66 +346,6 @@ const VoteMapConfig = () => {
           checked={config.get("allow_default_to_skirmish", false)}
           handleChange={(v) => saveConfig({ allow_default_to_skirmish: v })}
         />
-      </Grid>
-      <Grid item xs={12}>
-        <Grid
-          container
-          justify="flex-start"
-          alignContent="stretch"
-          alignItems="stretch"
-          orientation="column"
-        >
-          <Grid item xs={12}>
-            <Typography variant="h6">Current vote status</Typography>
-          </Grid>
-          <Grid item xs={12} sm={4}>
-            <Typography variant="body1">Votes:</Typography>
-            <pre>
-              {status.map((o) => {
-                return o.get("voters").map((vote) => {
-                  return `${vote}: ${o
-                    .get("map", new Map())
-                    .get("pretty_name")}\n`;
-                });
-              })}
-            </pre>
-          </Grid>
-          <Grid item xs={6} sm={4}>
-            <Typography variant="body1">Map selection:</Typography>
-            <pre>
-              {status
-                .map((v) => `${v.get('map', new Map()).get("pretty_name")}\n`)}
-            </pre>
-          </Grid>
-          <Grid item xs={6} sm={4}>
-            <Typography variant="body1">Results:</Typography>
-            <pre>
-              {status
-                .filter((o) => {
-                  // console.log(`o=${JSON.stringify(o)}`);
-                  return o.get("voters").size > 0;
-                })
-                .map(
-                  (o) =>
-                    `${o.get("map", new Map()).get("pretty_name")}: ${o.get("voters", new List()).size
-                    }\n`
-                )}
-            </pre>
-          </Grid>
-          <Grid xs={12}>
-            <Button
-              variant="outlined"
-              color="secondary"
-              onClick={() => {
-                if (window.confirm("Are you sure?") === true) {
-                  resetVotes().then(loadData);
-                }
-              }}
-            >
-              RESET SELECTION & VOTES
-            </Button>
-          </Grid>
-        </Grid>
       </Grid>
     </Grid>
   );
