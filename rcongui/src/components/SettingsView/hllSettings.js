@@ -2,10 +2,7 @@ import React from "react";
 import {
   Button,
   Grid,
-  Link,
   TextField,
-  Typography,
-  Tooltip,
 } from "@material-ui/core";
 import { range } from "lodash/util";
 import {
@@ -20,14 +17,9 @@ import AdminsEditableList from "./admins";
 import CollapseCard from "../collapseCard";
 import ServerMessage from "./serverMessage";
 import NumSlider from "./numSlider";
-import ChangeMap from "./changeMap";
-import Padlock from "./padlock";
+import Padlock from "../shared/padlock";
 import AutoRefreshLine from "../autoRefreshLine";
 import { ForwardCheckBox, WordList } from "../commonComponent";
-import VoteMapConfig from "./voteMapConfig";
-import HelpIcon from "@material-ui/icons/Help";
-import MapRotation from "../MapManager";
-import MapRotationSettings from "../MapManager/settings";
 
 const ProfanityFiler = ({
   words,

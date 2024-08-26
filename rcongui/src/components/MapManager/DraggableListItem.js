@@ -8,13 +8,11 @@ import ListItemText from "@material-ui/core/ListItemText";
 import {
   ListItemSecondaryAction,
   IconButton,
-  Chip,
-  Typography,
-  Box,
   createStyles,
 } from "@material-ui/core";
 import Avatar from "@material-ui/core/Avatar";
 import DeleteIcon from "@material-ui/icons/Delete";
+import { MapDetail } from "./map-detail";
 
 const useStyles = makeStyles((theme) => createStyles({
   draggingListItem: {
@@ -24,58 +22,6 @@ const useStyles = makeStyles((theme) => createStyles({
     borderBottom: `1px solid ${theme.palette.divider}`,
   },
 }));
-
-const getLabels = (layer) => {
-  const labels = [];
-
-  if (layer.game_mode === "offensive") {
-    labels.push("offensive");
-    if (
-      layer.attackers == "allies"
-    ) {
-      labels.push("allies");
-    } else {
-      labels.push("axis");
-    }
-  } else if (
-    layer.game_mode === "control" ||
-    layer.game_mode === "phased" ||
-    layer.game_mode === "majority"
-  ) {
-    labels.push("skirmish");
-  } else {
-    labels.push("warfare");
-  }
-
-  labels.push(layer.environment);
-  return labels;
-};
-
-const labelsColors = {
-  offensive: "primary",
-  night: "secondary",
-  dusk: "secondary",
-  dawn: "secondary",
-  rain: "secondary",
-  overcast: "secondary",
-  warfare: "default",
-  allies: "primary",
-  axis: "secondary",
-  skirmish: "secondary",
-};
-
-const labelsVariant = {
-  offensive: "default",
-  night: "default",
-  dusk: "default",
-  dawn: "default",
-  rain: "default",
-  overcast: "default",
-  warfare: "default",
-  axis: "outlined",
-  allies: "outlined",
-  skirmish: "default",
-};
 
 const DraggableListItem = ({ item, index, onRemove }) => {
   const classes = useStyles();
@@ -95,24 +41,8 @@ const DraggableListItem = ({ item, index, onRemove }) => {
             <Avatar src={`maps/${item.image_name}`} />
           </ListItemAvatar>
           <ListItemText
-            primary={
-              <Box>
-                <Typography variant="subtitle2">
-                  {item.pretty_name}
-                </Typography>
-                <Box style={{ display: "flex", gap: "0.25rem", flexWrap: "wrap" }}>
-                  {getLabels(item).map((type) => (
-                    <Chip
-                      key={index + type}
-                      size="small"
-                      variant={labelsVariant[type]}
-                      color={labelsColors[type]}
-                      label={type}
-                    />
-                  ))}
-                </Box>
-              </Box>
-            }
+            primary={item.map.pretty_name}
+            secondary={<MapDetail mapLayer={item} />}
           />
           <ListItemSecondaryAction>
             <IconButton

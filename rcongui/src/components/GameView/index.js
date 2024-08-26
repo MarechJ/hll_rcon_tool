@@ -40,7 +40,7 @@ import {
 } from "../PlayerView/playerActions";
 import { toast } from "react-toastify";
 import { FlagDialog } from "../PlayersHistory";
-import Padlock from "../SettingsView/padlock";
+import Padlock from "../shared/padlock";
 import BlacklistRecordCreateDialog from "../Blacklist/BlacklistRecordCreateDialog";
 
 const useStyles = makeStyles((theme) => ({

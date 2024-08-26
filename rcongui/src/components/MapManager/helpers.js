@@ -18,3 +18,16 @@ export const getItems = (count) =>
     //secondary: faker.company.catchPhrase()
     //}
   );
+
+export const unifiedGamemodeName = (modeName) => {
+  switch (modeName) {
+    case "control":
+    case "phased":
+    case "majority":
+      return "skirmish";
+    default:
+      return modeName;
+  }
+}
+
+export const getMapLayerImageSrc = (mapLayer) => `maps/${mapLayer.image_name}`;
