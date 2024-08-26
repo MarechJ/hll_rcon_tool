@@ -143,8 +143,12 @@ class PlayerID(Base):
     def get_penalty_count(self) -> PenaltyCountType:
         counts = defaultdict(int)
         for action in self.received_actions:
-            if PlayerActionState[action.action_type] in PlayerActionState:
-                counts[PlayerActionState[action.action_type]] += 1
+
+            try:
+                action = PlayerActionState[action.action_type]
+                counts[action] += 1
+            except KeyError:
+                continue
 
         return {
             PlayerActionState.KICK.name: counts[PlayerActionState.KICK],
