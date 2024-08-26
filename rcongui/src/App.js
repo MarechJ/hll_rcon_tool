@@ -25,7 +25,6 @@ import {
   LiveSessionScore,
 } from "./components/Scoreboard/LiveScore";
 import ServerInfo from "./components/Embeds/ServerInfo";
-import ServerStatsPage from "./components/ServerStats";
 import GameView from "./components/GameView";
 import AuditLog from "./components/AuditLog";
 import {
@@ -54,8 +53,10 @@ import {
   ExpiredVIP,
   GTXNameChange,
   ChatCommands,
-  LogStream
+  LogStream,
 } from "./components/UserSettings/miscellaneous";
+import BlacklistRecords from "./components/Blacklist/BlacklistRecords";
+import BlacklistLists from "./components/Blacklist/BlacklistLists";
 
 const Live = ({ classes }) => {
   const [mdSize, setMdSize] = React.useState(6);
@@ -391,8 +392,8 @@ function App() {
       ? hllNoBg
       : hll
     : themes[userTheme]
-      ? themes[userTheme]
-      : lightTheme;
+    ? themes[userTheme]
+    : lightTheme;
   const classes = useStyles();
 
   const Router = isEmbed ? BrowserRouter : HashRouter;
@@ -453,7 +454,7 @@ function App() {
                     </Grid>
                   </Grid>
                 </Route>
-                <Route path="/player/:steamId64">
+                <Route path="/player/:playerId">
                   <Grid container>
                     <PlayerInfo classes={classes} />
                   </Grid>
@@ -733,6 +734,24 @@ function App() {
                     </Grid>
                   </Grid>
                 </Route>
+                <Route path="/blacklists">
+                  <Switch>
+                    <Route path="/blacklists/manage">
+                      <Grid container>
+                        <Grid item sm={12} lg={12}>
+                          <BlacklistLists classes={classes} />
+                        </Grid>
+                      </Grid>
+                    </Route>
+                    <Route path="/blacklists/" exact>
+                      <Grid container>
+                        <Grid item sm={12} lg={12}>
+                          <BlacklistRecords classes={classes} />
+                        </Grid>
+                      </Grid>
+                    </Route>
+                  </Switch>
+                </Route>
                 <Route path="/combined_history">
                   <Grid container spacing={2}>
                     <Grid item sm={12}>
@@ -746,13 +765,6 @@ function App() {
                     </Grid>
                     <Grid item sm={12}>
                       <LogsHistory classes={classes} />
-                    </Grid>
-                  </Grid>
-                </Route>
-                <Route path="/server">
-                  <Grid container>
-                    <Grid item sm={12} lg={12}>
-                      <ServerStatsPage classes={classes} />
                     </Grid>
                   </Grid>
                 </Route>

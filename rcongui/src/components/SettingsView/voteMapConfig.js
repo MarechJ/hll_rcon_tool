@@ -150,7 +150,11 @@ const VoteMapConfig = () => {
           inputProps={{ min: 2, max: 10 }}
           label="Total # Options:"
           helperText="The combined total of warfare, offensive and skirmish options."
-          value={config.get("num_warfare_options", 0) + config.get("num_offensive_options", 0) + config.get("num_skirmish_control_options", 0)}
+          value={
+            config.get("num_warfare_options", 0) +
+            config.get("num_offensive_options", 0) +
+            config.get("num_skirmish_control_options", 0)
+          }
         />
       </Grid>
       <Grid item>
@@ -158,7 +162,7 @@ const VoteMapConfig = () => {
           type="number"
           label="Warfare"
           helperText="Number of warfare maps to offer"
-          value={config.get('num_warfare_options', false)}
+          value={config.get("num_warfare_options", false)}
           onChange={(e) => saveConfig({ num_warfare_options: e.target.value })}
         />
       </Grid>
@@ -167,8 +171,10 @@ const VoteMapConfig = () => {
           type="number"
           label="Offensive"
           helperText="Number of offensive maps to offer"
-          value={config.get('num_offensive_options', false)}
-          onChange={(e) => saveConfig({ num_offensive_options: e.target.value })}
+          value={config.get("num_offensive_options", false)}
+          onChange={(e) =>
+            saveConfig({ num_offensive_options: e.target.value })
+          }
         />
       </Grid>
       <Grid item>
@@ -176,8 +182,10 @@ const VoteMapConfig = () => {
           type="number"
           label="Control Skirmish"
           helperText="Number of control skirmish maps to offer"
-          value={config.get('num_skirmish_control_options', false)}
-          onChange={(e) => saveConfig({ num_skirmish_control_options: e.target.value })}
+          value={config.get("num_skirmish_control_options", false)}
+          onChange={(e) =>
+            saveConfig({ num_skirmish_control_options: e.target.value })
+          }
         />
       </Grid>
       <Grid item>
@@ -206,7 +214,9 @@ const VoteMapConfig = () => {
         <Padlock
           label="Consider skirmish maps as being the same when excluding:"
           checked={config.get("consider_skirmishes_as_same_map", false)}
-          handleChange={(v) => saveConfig({ consider_skirmishes_as_same_map: v })}
+          handleChange={(v) =>
+            saveConfig({ consider_skirmishes_as_same_map: v })
+          }
         />
       </Grid>
 
@@ -291,25 +301,35 @@ const VoteMapConfig = () => {
           <Grid item xs={12} sm={4}>
             <Typography variant="body1">Votes:</Typography>
             <pre>
-              {status
-                .get("votes", new Map())
-                .entrySeq()
-                .map((o) => `${o[0]}: ${o[1]}\n`)}
+              {status.map((o) => {
+                return o.get("voters").map((vote) => {
+                  return `${vote}: ${o
+                    .get("map", new Map())
+                    .get("pretty_name")}\n`;
+                });
+              })}
             </pre>
           </Grid>
           <Grid item xs={6} sm={4}>
             <Typography variant="body1">Map selection:</Typography>
             <pre>
-              {status.get("selection", new List()).map((v) => `${v}\n`)}
+              {status
+                .map((v) => `${v.get('map', new Map()).get("pretty_name")}\n`)}
             </pre>
           </Grid>
           <Grid item xs={6} sm={4}>
             <Typography variant="body1">Results:</Typography>
             <pre>
               {status
-                .get("results", new Map())
-                .get("winning_maps", new List())
-                .map((o) => `${o.get(0)}: ${o.get(1)} vote(s)\n`)}
+                .filter((o) => {
+                  // console.log(`o=${JSON.stringify(o)}`);
+                  return o.get("voters").size > 0;
+                })
+                .map(
+                  (o) =>
+                    `${o.get("map", new Map()).get("pretty_name")}: ${o.get("voters", new List()).size
+                    }\n`
+                )}
             </pre>
           </Grid>
           <Grid xs={12}>

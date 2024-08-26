@@ -29,8 +29,10 @@ class DjangoAPIKey(models.Model):
 
 
 class SteamPlayer(models.Model):
+    """Associate a players in game ID (steam or windows) with their Django user"""
+
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    steam_id_64 = models.CharField(max_length=100)
+    steam_id_64 = models.CharField(max_length=100, verbose_name="Player ID")
     default_permissions = ()
 
 
@@ -52,7 +54,6 @@ class RconUser(User):
             ("can_add_player_watch", "Can add a watch to players"),
             ("can_add_vip", "Can add VIP status to players"),
             ("can_ban_profanities", "Can ban profanities (censored game chat)"),
-            ("can_blacklist_players", "Can add players to the blacklist"),
             (
                 "can_change_auto_broadcast_config",
                 "Can change the automated broadcast settings",
@@ -126,7 +127,6 @@ class RconUser(User):
             ("can_temp_ban_players", "Can temporarily ban players"),
             ("can_toggle_services", "Can enable/disable services (automod, etc)"),
             ("can_unban_profanities", "Can unban profanities (censored game chat)"),
-            ("can_unblacklist_players", "Can remove players from the blacklist"),
             ("can_unflag_player", "Can remove flags from players"),
             ("can_upload_vip_list", "Can upload a VIP list"),
             ("can_view_admin_groups", "Can view available admin roles"),
@@ -214,7 +214,7 @@ class RconUser(User):
             ),
             (
                 "can_view_players",
-                "Can view get_players_fast endpoint for all connected players ",
+                "Can view get_players endpoint for all connected players ",
             ),
             ("can_view_profanities", "Can view profanities (censored game chat)"),
             ("can_view_queue_length", "Can view the maximum size of the server queue"),
@@ -225,7 +225,6 @@ class RconUser(User):
                 "Can view the amount of time left in the round",
             ),
             ("can_view_server_name", "Can view the server name"),
-            ("can_view_server_stats", "Can view the get_server_stats endpoint"),
             (
                 "can_view_shared_standard_messages",
                 "Can view the shared standard messages",
@@ -428,4 +427,14 @@ class RconUser(User):
             ("can_change_chat_commands_config", "Can change the chat commands config"),
             ("can_view_log_stream_config", "Can view the Log Stream config"),
             ("can_change_log_stream_config", "Can change the Log Stream config"),
+            ("can_view_blacklists", "Can view available blacklists"),
+            ("can_add_blacklist_records", "Can add players to blacklists"),
+            (
+                "can_change_blacklist_records",
+                "Can unblacklist players and edit blacklist records",
+            ),
+            ("can_delete_blacklist_records", "Can delete blacklist records"),
+            ("can_create_blacklists", "Can create blacklists"),
+            ("can_change_blacklists", "Can change blacklists"),
+            ("can_delete_blacklists", "Can delete blacklists"),
         )

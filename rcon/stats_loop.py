@@ -104,9 +104,9 @@ class PlayerCount(Series):
 
     def snapshot(self, rcon):
         slots = rcon.get_slots()
-        nb, _ = slots.split("/")
+        current_players = slots["current_players"]
 
-        self.client.ts().add(self.NAME, "*", float(nb))
+        self.client.ts().add(self.NAME, "*", float(current_players))
 
 
 def run():
