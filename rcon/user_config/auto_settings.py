@@ -35,10 +35,6 @@ DEFAULT_AUTO_SETTINGS = {
     "always_apply_defaults": False,
     "can_invoke_multiple_rules": False,
     "defaults": {
-        "set_idle_autokick_time": {"minutes": 10},
-        "set_autobalance_threshold": {"max_diff": 3},
-        "set_max_ping_autokick": {"max_ms": 500},
-        "set_team_switch_cooldown": {"minutes": 15},
     },
     "rules": [],
     "_available_settings": {
