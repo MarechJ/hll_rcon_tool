@@ -611,7 +611,7 @@ def edit_record_from_blacklist(
             update_penalty_count(
                 player_id=record.player.player_id,
                 player_names=player_names,
-                action=PlayerActionState.TEMPBAN,
+                action=PlayerActionState.PERMABAN,
                 admin_name=new_record["admin_name"],
             )
         # perma ban -> temp ban
@@ -619,7 +619,7 @@ def edit_record_from_blacklist(
             update_penalty_count(
                 player_id=record.player.player_id,
                 player_names=player_names,
-                action=PlayerActionState.PERMABAN,
+                action=PlayerActionState.TEMPBAN,
                 admin_name=new_record["admin_name"],
             )
 
