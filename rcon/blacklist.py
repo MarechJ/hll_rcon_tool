@@ -51,13 +51,13 @@ SERVER_NUMBER = int(get_server_number())
 
 def update_penalty_count(
     player_id: str,
-    player: PlayerID,
+    player_names: list[str],
     action: PlayerActionState,
     admin_name: str = "",
 ):
     """Save the action when blacklist records are added/edited for penalty count calculation"""
     try:
-        player_name = player.names[0].name
+        player_name = player_names[0]
     except IndexError:
         player_name = ""
 
@@ -508,6 +508,7 @@ def add_record_to_blacklist(
 ):
     with enter_session() as sess:
         player = _get_set_player(sess, player_id)
+        player_names = [n.name for n in player.names]
         if not player:
             raise RuntimeError(
                 "Unable to create player Steam ID, check the DB connection"
@@ -544,7 +545,10 @@ def add_record_to_blacklist(
         action = PlayerActionState.PERMABAN
 
     update_penalty_count(
-        player_id=player_id, player=player, action=action, admin_name=admin_name
+        player_id=player_id,
+        player_names=player_names,
+        action=action,
+        admin_name=admin_name,
     )
 
     return res
@@ -558,6 +562,8 @@ def edit_record_from_blacklist(
 ):
     with enter_session() as sess:
         record = get_record(sess, record_id, True)
+        player_names = [n.name for n in record.player.names]
+
         # Save old state
         old_record = record.to_dict()
         old_server_mask = record.blacklist.servers
@@ -604,7 +610,7 @@ def edit_record_from_blacklist(
         if old_record["expires_at"] and not new_record["expires_at"]:
             update_penalty_count(
                 player_id=record.player.player_id,
-                player=record.player,
+                player_names=player_names,
                 action=PlayerActionState.TEMPBAN,
                 admin_name=new_record["admin_name"],
             )
@@ -612,7 +618,7 @@ def edit_record_from_blacklist(
         elif not old_record["expires_at"] and new_record["expires_at"]:
             update_penalty_count(
                 player_id=record.player.player_id,
-                player=record.player,
+                player_names=player_names,
                 action=PlayerActionState.PERMABAN,
                 admin_name=new_record["admin_name"],
             )
