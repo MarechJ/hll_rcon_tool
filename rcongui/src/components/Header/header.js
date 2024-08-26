@@ -10,6 +10,33 @@ import Menu from "@material-ui/core/Menu";
 import MenuItem from "@material-ui/core/MenuItem";
 import { navMenus } from "./nav-data";
 import { LoginBox } from "./login";
+import { Box, createStyles, makeStyles } from "@material-ui/core";
+
+const useStyles = makeStyles((theme) => createStyles({
+  root: {
+    display: "flex",
+    flexGrow: 1,
+    flexDirection: "column",
+    justifyContent: "center",
+    alignItems: "start",
+    padding: theme.spacing(0.25),
+    minHeight: 0,
+    gap: theme.spacing(0.25),
+    [theme.breakpoints.up("md")]: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      gap: theme.spacing(2),
+      padding: theme.spacing(0.5),
+    }
+  },
+  nav: {
+    display: "flex",
+    flexDirection: "row",
+    flexGrow: 1,
+    justifyContent: "space-between",
+  },
+}))
 
 const initialMenuState = navMenus.reduce((state, menu) => {
   state[menu.name] = false;
@@ -20,6 +47,7 @@ const initialMenuState = navMenus.reduce((state, menu) => {
 const Header = ({ classes }) => {
   const [openedMenu, setOpenedMenu] = React.useState(initialMenuState);
   const [anchorEl, setAnchorEl] = React.useState(null);
+  const localClasses = useStyles()
 
   const handleOpenMenu = (name) => (event) => {
     setOpenedMenu({
@@ -39,19 +67,11 @@ const Header = ({ classes }) => {
 
   return (
     <Grid container>
-      <div className={classes.grow}>
-        <AppBar position="static" elevation={0} className={classes.appBar}>
-          <Toolbar>
-            <ServerStatus />
-            <nav
-              style={{
-                display: "flex",
-                flexGrow: 1,
-                justifyContent: "start",
-                padding: "0 2rem",
-                gap: "0.5rem",
-              }}
-            >
+      <AppBar position="static">
+        <Toolbar className={localClasses.root}>
+          <ServerStatus />
+          <Box className={localClasses.nav}>
+            <nav>
               {navMenus.map((menu) => (
                 <React.Fragment key={menu.name}>
                   <Button color="inherit" onClick={handleOpenMenu(menu.name)}>
@@ -70,16 +90,8 @@ const Header = ({ classes }) => {
                     }}
                   >
                     {menu.links.map((link) => (
-                      <MenuItem onClick={handleCloseMenu(menu.name)}>
-                        <Link
-                          variant="button"
-                          color="inherit"
-                          component={RouterLink}
-                          to={link.to}
-                          key={link.to}
-                        >
-                          {link.name}
-                        </Link>
+                      <MenuItem component={RouterLink} to={link.to} key={link.to} color="inherit" onClick={handleCloseMenu(menu.name)}>
+                        {link.name}
                       </MenuItem>
                     ))}
                   </Menu>
@@ -87,9 +99,9 @@ const Header = ({ classes }) => {
               ))}
             </nav>
             <LoginBox classes={classes} component={RouterLink} />
-          </Toolbar>
-        </AppBar>
-      </div>
+          </Box>
+        </Toolbar>
+      </AppBar>
     </Grid>
   );
 };

@@ -1,7 +1,7 @@
 import React from "react";
 import { get } from "../../utils/fetchUtils";
 import ChangeMap from "../SettingsView/changeMap";
-import { Box, Grid, Tab, Tabs, Typography, useTheme, useMediaQuery } from "@material-ui/core";
+import { Box, Grid, Tab, Tabs, Typography, useTheme, useMediaQuery, Divider } from "@material-ui/core";
 import { Link, useLocation, Switch, Route } from "react-router-dom";
 import MapRotation from ".";
 import VoteMapConfig from "../SettingsView/voteMapConfig";
@@ -27,16 +27,15 @@ export function MapManager({ match }) {
   }, []);
 
   return (
-    <div style={{ textAlign: "left", padding: "0 1.5rem" }}>
-      <Grid container>
-        <Grid item xs={12} md={3} lg={2}>
-          <h1>Map Manager</h1>
+    <div style={{ textAlign: "left", padding: "0.5rem" }}>
+      <Grid container spacing={2}>
+        <Grid item xs={12} md={true}>
           <Tabs
             orientation={isMdScreen ? "vertical" : "horizontal"}
-            variant={!isMdScreen && "scrollable"}
-            scrollButtons="on"
+            variant={!isMdScreen ? "scrollable" : "fullWidth"}
             value={tabs[location]}
             aria-label="nav tabs example"
+            scrollButtons="on"
           >
             <LinkTab label="Map Change" to="change" {...a11yProps(0)} />
             <LinkTab label="Rotation" to="rotation" {...a11yProps(1)} />
@@ -44,14 +43,15 @@ export function MapManager({ match }) {
             <LinkTab label="Votemap" to="votemap" {...a11yProps(3)} />
           </Tabs>
         </Grid>
-        <Grid item xs={12} md={9} lg={10}>
+        <Grid item xs={12} md={10}>
             <Switch>
                 <TabPanel path={"/settings/maps/change"} index={0}>
                     Page One
                 </TabPanel>
                 <TabPanel path={"/settings/maps/rotation"} index={1}>
-                  <MapRotation classes={{}} />
-                  <MapRotationSettings classes={{}} />
+                  <MapRotation />
+                  <Typography style={{ margin: "1.5rem 0", borderBottom: "1px solid" }} variant="h6">Other settings</Typography>
+                  <MapRotationSettings />
                 </TabPanel>
                 <TabPanel path={"/settings/maps/objectives"} index={2}>
                     Page Three
