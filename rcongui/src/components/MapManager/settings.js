@@ -3,7 +3,7 @@ import {get, handle_http_errors, postData, showResponse,} from "../../utils/fetc
 import {Grid, Typography} from "@material-ui/core";
 import Padlock from "../SettingsView/padlock";
 
-const MapRotationSettings = ({classes}) => {
+const MapRotationSettings = () => {
   const [shuffleEnabled, setShuffleEnabled] = React.useState(false);
 
   const loadToState = (command, showSuccess, stateSetter) => {

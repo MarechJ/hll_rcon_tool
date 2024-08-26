@@ -178,7 +178,7 @@ def search_blacklist_records(
                 ),
             )
         )
-    if blacklist_id:
+    if blacklist_id is not None:
         filters.append(BlacklistRecord.blacklist_id == blacklist_id)
     if exclude_expired:
         filters.append(

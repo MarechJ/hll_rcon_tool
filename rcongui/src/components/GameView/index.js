@@ -314,8 +314,8 @@ const GameView = ({ classes: globalClasses }) => {
   const [selectedPlayers, setSelectedPlayers] = React.useState(
     new OrderedSet()
   );
-  const [resfreshFreqSecs, setResfreshFreqSecs] = React.useState(5);
-  const [intervalHandle, setIntervalHandle] = React.useState(null);
+  const [refreshFreqSecs, setResfreshFreqSecs] = React.useState(5);
+  const intervalHandleRef = React.useRef(null);
   const [flag, setFlag] = React.useState(false);
   const [blacklistDialogOpen, setBlacklistDialogOpen] = React.useState(false);
   const [blacklists, setBlacklists] = React.useState([]);
@@ -476,30 +476,23 @@ const GameView = ({ classes: globalClasses }) => {
       .catch(handle_http_errors);
   };
 
-  const myInterval = React.useMemo(
-    () => (func, ms) => {
-      const handle = setTimeout(async () => {
-        try {
-          await func();
-        } catch (e) {
-          console.warn("Error in periodic refresh", e);
-        }
-        myInterval(func, ms);
-      }, ms);
-      setIntervalHandle(handle);
-    },
-    []
-  );
-
   React.useEffect(() => {
     loadData();
   }, []);
 
   React.useEffect(() => {
-    clearTimeout(intervalHandle);
-    myInterval(loadData, resfreshFreqSecs * 1000);
-    return () => clearInterval(intervalHandle);
-  }, [resfreshFreqSecs, myInterval]);
+    // Set up the interval
+    intervalHandleRef.current = setInterval(() => {
+      loadData().catch(e => console.warn("Error in periodic refresh", e));
+    }, refreshFreqSecs * 1000);
+
+    // Clear the interval on component unmount or when refreshFreqSecs changes
+    return () => {
+      if (intervalHandleRef.current) {
+        clearInterval(intervalHandleRef.current);
+      }
+    };
+  }, [refreshFreqSecs]);
 
   const isMessageLessAction = (actionType) =>
     actionType.startsWith("switch_") || actionType.startsWith("unwatch_");
@@ -729,7 +722,7 @@ const GameView = ({ classes: globalClasses }) => {
                   inputProps={{ min: 2, max: 6000 }}
                   label="Refresh seconds"
                   helperText=""
-                  value={resfreshFreqSecs}
+                  value={refreshFreqSecs}
                   onChange={(e) => setResfreshFreqSecs(e.target.value)}
                 />
               </Grid>

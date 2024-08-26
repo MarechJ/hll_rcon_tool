@@ -49,7 +49,7 @@ export default function BlacklistListCreateDialog({
   }
 
   function toggleAllServers(enabled) {
-    setServerNumbers(enabled ? null : Object.keys(servers).map(parseInt));
+    setServerNumbers(enabled ? null : Object.keys(servers).map(n => parseInt(n)));
   }
 
   function toggleServer(number, enabled) {

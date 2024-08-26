@@ -170,7 +170,7 @@ class PlayersHistory extends React.Component {
       flags: "",
       country: "",
       bans: new Map(),
-      blacklists: undefined,
+      blacklists: [],
       blacklistDialogOpen: false,
       blacklistDialogInitialValues: undefined,
     };
@@ -523,7 +523,7 @@ class PlayersHistory extends React.Component {
         playerId: player.get("player_id")
       }
     });
-    if (!this.state.blacklists) {
+    if (!this.state.blacklists.length) {
       this.loadBlacklists()
     }
   }
@@ -711,6 +711,7 @@ class PlayersHistory extends React.Component {
         />
         <VipExpirationDialog
           open={doVIPPlayer}
+          player={doVIPPlayer}
           vips={vips}
           onDeleteVip={this.onDeleteVip}
           handleClose={() => this.setDoVIPPlayer(false)}
