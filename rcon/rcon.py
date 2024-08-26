@@ -1133,7 +1133,7 @@ class Rcon(ServerCtl):
         safe_save_player_action(
             rcon=self,
             player_name=player_name,
-            action_type=PlayerActionState.MESSAGE,
+            action_type=PlayerActionState.PUNISH,
             reason=reason,
             by=by,
         )
