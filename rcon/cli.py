@@ -34,6 +34,9 @@ from rcon.user_config.webhooks import (
     BaseUserConfig,
     BaseWebhookUserConfig,
 )
+from rcon.models import PlayerID, enter_session
+from sqlalchemy import update
+from sqlalchemy import func as pg_func
 from rcon.utils import ApiKey
 
 logger = logging.getLogger(__name__)
@@ -419,6 +422,19 @@ def reset_user_settings(server: int):
         rcon.user_config.utils.set_user_config(key, model)
 
     print("Done")
+
+
+@cli.command(name="convert_win_player_ids")
+def convert_win_player_ids():
+    with enter_session() as session:
+        logger.info(f"Converting old style windows store player IDs to new style")
+        stmt = (
+            update(PlayerID)
+            .filter(PlayerID.player_id.like("%-%"))
+            .values(player_id=pg_func.md5(PlayerID.player_id))
+        )
+        result = session.execute(stmt)
+        logger.info(f"Converted {result.rowcount} player IDs")
 
 
 PREFIXES_TO_EXPOSE = ["get_", "set_", "do_"]
