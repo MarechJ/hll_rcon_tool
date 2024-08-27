@@ -1,21 +1,16 @@
 import React from "react";
-import { get } from "../../utils/fetchUtils";
-import ChangeMap from "../SettingsView/changeMap";
 import {
-  Box,
   Grid,
   Tab,
   Tabs,
-  Typography,
   useTheme,
   useMediaQuery,
-  Divider,
   Container,
 } from "@material-ui/core";
-import { Link, useLocation, Switch, Route } from "react-router-dom";
-import MapRotation from ".";
-import VoteMapConfig from "./votemap/voteMapConfig";
-import MapRotationSettings from "./settings";
+import { Link, Switch, Route } from "react-router-dom";
+import VoteMapConfig from "./votemap/votemap";
+import MapRotationConfig from "./map-rotation/map-rotation";
+import MapChange from "./map-change/map-change";
 
 const tabs = {
   change: 0,
@@ -25,19 +20,12 @@ const tabs = {
 };
 
 export function MapManager({ match }) {
-  const [maps, setMaps] = React.useState([]);
   const theme = useTheme();
   const isMdScreen = useMediaQuery(theme.breakpoints.up("md"));
   let location = match.params.path;
 
-  React.useEffect(() => {
-    get("get_maps")
-      .then((res) => res.json())
-      .then((data) => setMaps(data.result));
-  }, []);
-
   return (
-    <Container maxWidth="xl" style={{ padding: "1rem" }}>
+    <Container maxWidth="xl" style={{ padding: theme.spacing(2) }}>
       <Grid container spacing={2}>
         <Grid item xs={12} md={true}>
           <Tabs
@@ -56,20 +44,13 @@ export function MapManager({ match }) {
         <Grid item xs={12} md={10}>
           <Switch>
             <TabPanel path={"/settings/maps/change"} index={0}>
-              Page One
+              <MapChange />
             </TabPanel>
             <TabPanel path={"/settings/maps/rotation"} index={1}>
-              <MapRotation />
-              <Typography
-                style={{ margin: "1.5rem 0", borderBottom: "1px solid" }}
-                variant="h6"
-              >
-                Other settings
-              </Typography>
-              <MapRotationSettings />
+              <MapRotationConfig />
             </TabPanel>
             <TabPanel path={"/settings/maps/objectives"} index={2}>
-              Page Three
+              <h1>TODO - OBJECTIVES</h1>
             </TabPanel>
             <TabPanel path={"/settings/maps/votemap"} index={3}>
               <VoteMapConfig />

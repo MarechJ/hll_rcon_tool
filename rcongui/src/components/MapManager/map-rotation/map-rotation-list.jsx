@@ -1,17 +1,13 @@
 import * as React from "react";
-import makeStyles from "@material-ui/core/styles/makeStyles";
-import Paper from "@material-ui/core/Paper";
-import DraggableList from "./DraggableList";
-import { getItems, reorder } from "./helpers";
+import DraggableList from "../DraggableList";
+import { reorder } from "../helpers";
 import {
   get,
   handle_http_errors,
   postData,
-  sendAction,
   showResponse,
-} from "../../utils/fetchUtils";
-import { Box, Button, CircularProgress, Grid, Typography } from "@material-ui/core";
-import Chip from "@material-ui/core/Chip";
+} from "../../../utils/fetchUtils";
+import { Box, Button, CircularProgress, Grid } from "@material-ui/core";
 import Autocomplete from "@material-ui/lab/Autocomplete";
 import TextField from "@material-ui/core/TextField";
 import { Alert } from "@material-ui/lab";
