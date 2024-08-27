@@ -505,10 +505,10 @@ def remove_flag(
     return player, old_flag
 
 
-def get_player_messages(player_id: str) -> list[PlayerActionState]:
+def get_player_messages(player_id: str) -> list[PlayerActionType]:
     with enter_session() as sess:
         player = sess.query(PlayerID).filter_by(player_id=player_id).one_or_none()
-        actions: list[PlayerActionState] = []
+        actions: list[PlayerActionType] = []
         if player:
             actions = [
                 action.to_dict()
