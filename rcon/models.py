@@ -1,6 +1,7 @@
 import logging
 import os
 import re
+from collections import defaultdict
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from typing import Any, Generator, List, Literal, Optional, Sequence, overload
@@ -32,6 +33,7 @@ from rcon.types import (
     DBLogLineType,
     MapsType,
     PenaltyCountType,
+    PlayerActionState,
     PlayerActionType,
     PlayerAtCountType,
     PlayerCommentType,
@@ -139,13 +141,21 @@ class PlayerID(Base):
         )
 
     def get_penalty_count(self) -> PenaltyCountType:
-        penalities_type = {"KICK", "PUNISH", "TEMPBAN", "PERMABAN"}
-        counts: PenaltyCountType = {"KICK": 0, "PUNISH": 0, "TEMPBAN": 0, "PERMABAN": 0}
+        counts = defaultdict(int)
         for action in self.received_actions:
-            if action.action_type in penalities_type:
-                counts[action.action_type] += 1
 
-        return counts
+            try:
+                action = PlayerActionState[action.action_type]
+                counts[action] += 1
+            except KeyError:
+                continue
+
+        return {
+            PlayerActionState.KICK.name: counts[PlayerActionState.KICK],
+            PlayerActionState.PUNISH.name: counts[PlayerActionState.PUNISH],
+            PlayerActionState.TEMPBAN.name: counts[PlayerActionState.TEMPBAN],
+            PlayerActionState.PERMABAN.name: counts[PlayerActionState.PERMABAN],
+        }
 
     def get_total_playtime_seconds(self) -> int:
         total = 0

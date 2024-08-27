@@ -8,14 +8,14 @@ from typing import Final
 
 from discord_webhook import DiscordEmbed
 
+import rcon.steam_utils as steam_utils
+from discord.utils import escape_markdown
 from rcon.blacklist import (
     apply_blacklist_punishment,
     blacklist_or_ban,
     is_player_blacklisted,
     synchronize_ban,
 )
-import rcon.steam_utils as steam_utils
-from discord.utils import escape_markdown
 from rcon.cache_utils import invalidates
 from rcon.commands import CommandFailedError, HLLServerError
 from rcon.discord import (
@@ -37,7 +37,6 @@ from rcon.models import enter_session
 from rcon.player_history import (
     _get_set_player,
     get_player,
-    safe_save_player_action,
     save_end_player_session,
     save_player,
     save_start_player_session,

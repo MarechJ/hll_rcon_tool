@@ -479,6 +479,14 @@ class AuditLogType(TypedDict):
     command_result: Optional[str]
 
 
+class PlayerActionState(enum.Enum):
+    KICK = 0
+    PUNISH = 1
+    TEMPBAN = 2
+    PERMABAN = 3
+    MESSAGE = 4
+
+
 class PenaltyCountType(TypedDict):
     KICK: int
     PUNISH: int

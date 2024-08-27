@@ -207,7 +207,7 @@ const PlayerInfo = ({ classes }) => {
    */
   const fetchPlayer = (playerId) => {
     get(`get_player_profile?player_id=${playerId}`)
-      .then((response) => showResponse(response, "get_user", false))
+      .then((response) => showResponse(response, "get_player_profile", false))
       .then((data) => {
         if (
           data.result !== undefined &&

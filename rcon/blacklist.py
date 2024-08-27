@@ -1,15 +1,16 @@
+import logging
+import os
+import struct
 from datetime import datetime, timedelta, timezone
 from enum import IntEnum, auto
-import os
+from typing import Literal, Sequence, overload
+
 import orjson
-import logging
-import struct
+import redis
 from pydantic import BaseModel, field_validator
 from pydantic.dataclasses import dataclass
-import redis
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, selectinload
-from typing import Literal, Sequence, overload
 
 from rcon.barricade import (
     ScanPlayersRequestPayload,
@@ -20,19 +21,25 @@ from rcon.cache_utils import get_redis_client
 from rcon.commands import CommandFailedError
 from rcon.discord import dict_to_discord, send_to_discord_audit
 from rcon.models import (
-    BlacklistSyncMethod,
-    PlayerID,
     Blacklist,
     BlacklistRecord,
+    BlacklistSyncMethod,
+    PlayerID,
     PlayerName,
     enter_session,
 )
-from rcon.player_history import _get_set_player, remove_accent, unaccent
+from rcon.player_history import (
+    _get_set_player,
+    remove_accent,
+    safe_save_player_action,
+    unaccent,
+)
 from rcon.rcon import Rcon, get_rcon
 from rcon.types import (
     BlacklistRecordType,
     BlacklistRecordWithBlacklistType,
     BlacklistType,
+    PlayerActionState,
 )
 from rcon.utils import MISSING, get_server_number
 
@@ -40,6 +47,32 @@ logger = logging.getLogger(__name__)
 red = get_redis_client()
 
 SERVER_NUMBER = int(get_server_number())
+
+
+def update_penalty_count(
+    player_id: str,
+    player_names: list[str],
+    action: PlayerActionState,
+    admin_name: str = "",
+):
+    """Save the action when blacklist records are added/edited for penalty count calculation"""
+    try:
+        player_name = player_names[0]
+    except IndexError:
+        player_name = ""
+
+    try:
+        safe_save_player_action(
+            rcon=None,
+            action_type=action,
+            player_name=player_name,
+            player_id=player_id,
+            by=admin_name,
+        )
+    except Exception as e:
+        # Don't let errors prevent adding/editing blacklist records
+        logger.error(f"Unable to save player {action=} while adding blacklist record")
+        logger.exception(e)
 
 
 def get_server_number_mask():
@@ -475,6 +508,7 @@ def add_record_to_blacklist(
 ):
     with enter_session() as sess:
         player = _get_set_player(sess, player_id)
+        player_names = [n.name for n in player.names]
         if not player:
             raise RuntimeError(
                 "Unable to create player Steam ID, check the DB connection"
@@ -505,6 +539,18 @@ def add_record_to_blacklist(
             )
         )
 
+    if expires_at:
+        action = PlayerActionState.TEMPBAN
+    else:
+        action = PlayerActionState.PERMABAN
+
+    update_penalty_count(
+        player_id=player_id,
+        player_names=player_names,
+        action=action,
+        admin_name=admin_name,
+    )
+
     return res
 
 
@@ -516,6 +562,8 @@ def edit_record_from_blacklist(
 ):
     with enter_session() as sess:
         record = get_record(sess, record_id, True)
+        player_names = [n.name for n in record.player.names]
+
         # Save old state
         old_record = record.to_dict()
         old_server_mask = record.blacklist.servers
@@ -556,6 +604,40 @@ def edit_record_from_blacklist(
                         old_record=old_record
                     ).model_dump(),
                 )
+            )
+
+        current_time = datetime.now(tz=timezone.utc)
+        # temp ban -> perma ban
+        if old_record["expires_at"] and not new_record["expires_at"]:
+            update_penalty_count(
+                player_id=record.player.player_id,
+                player_names=player_names,
+                action=PlayerActionState.PERMABAN,
+                admin_name=new_record["admin_name"],
+            )
+        # perma ban -> temp ban that isn't already expired
+        elif (
+            not old_record["expires_at"]
+            and new_record["expires_at"]
+            and new_record["expires_at"] > current_time
+        ):
+            update_penalty_count(
+                player_id=record.player.player_id,
+                player_names=player_names,
+                action=PlayerActionState.TEMPBAN,
+                admin_name=new_record["admin_name"],
+            )
+        # temp ban -> different duration temp ban that isn't already expired
+        elif (
+            old_record["expires_at"]
+            and new_record["expires_at"]
+            and new_record["expires_at"] > current_time
+        ):
+            update_penalty_count(
+                player_id=record.player.player_id,
+                player_names=player_names,
+                action=PlayerActionState.TEMPBAN,
+                admin_name=new_record["admin_name"],
             )
 
         return new_record
