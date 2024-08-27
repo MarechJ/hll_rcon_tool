@@ -606,6 +606,7 @@ def edit_record_from_blacklist(
                 )
             )
 
+        current_time = datetime.now(tz=timezone.utc)
         # temp ban -> perma ban
         if old_record["expires_at"] and not new_record["expires_at"]:
             update_penalty_count(
@@ -614,8 +615,24 @@ def edit_record_from_blacklist(
                 action=PlayerActionState.PERMABAN,
                 admin_name=new_record["admin_name"],
             )
-        # perma ban -> temp ban
-        elif not old_record["expires_at"] and new_record["expires_at"]:
+        # perma ban -> temp ban that isn't already expired
+        elif (
+            not old_record["expires_at"]
+            and new_record["expires_at"]
+            and new_record["expires_at"] > current_time
+        ):
+            update_penalty_count(
+                player_id=record.player.player_id,
+                player_names=player_names,
+                action=PlayerActionState.TEMPBAN,
+                admin_name=new_record["admin_name"],
+            )
+        # temp ban -> different duration temp ban that isn't already expired
+        elif (
+            old_record["expires_at"]
+            and new_record["expires_at"]
+            and new_record["expires_at"] > current_time
+        ):
             update_penalty_count(
                 player_id=record.player.player_id,
                 player_names=player_names,
