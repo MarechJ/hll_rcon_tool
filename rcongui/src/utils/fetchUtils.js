@@ -264,6 +264,54 @@ async function removePlayerVip(player) {
   }
 }
 
+async function resetVotemapState() {
+  try {
+    const response = await execute("reset_votemap_state");
+    const data = showResponse(response, "reset_votemap_state", true)
+    if (data.result) {
+      return data.result;
+    }    
+  } catch (error) {
+    handle_http_errors(error)
+  }
+}
+
+async function updateVotemapConfig(config) {
+  try {
+    const response = await execute("set_votemap_config", config);
+    const data = showResponse(response, "set_votemap_config", true)
+    if (data.result) {
+      return data.result;
+    }    
+  } catch (error) {
+    handle_http_errors(error)
+  }
+}
+
+async function getVotemapStatus() {
+  try {
+    const response = await get("get_votemap_status")
+    const data = await response.json()
+    if (data.result) {
+      return data.result;
+    }    
+  } catch (error) {
+    handle_http_errors(error)
+  }
+}
+
+async function getVotemapConfig() {
+  try {
+    const response = await get("get_votemap_config")
+    const data = await response.json()
+    if (data.result) {
+      return data.result;
+    }    
+  } catch (error) {
+    handle_http_errors(error)
+  }
+}
+
 export {
   postData,
   showResponse,
@@ -280,4 +328,8 @@ export {
   addPlayerVip,
   removePlayerVip,
   getVips,
+  resetVotemapState,
+  getVotemapStatus,
+  getVotemapConfig,
+  updateVotemapConfig,
 };
