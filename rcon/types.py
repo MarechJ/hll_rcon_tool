@@ -607,7 +607,7 @@ class ParsedLogsType(TypedDict):
     logs: list[StructuredLogLineWithMetaData]
 
 
-class GameState(TypedDict):
+class GameStateType(TypedDict):
     """TypedDict for Rcon.get_gamestate"""
 
     num_allied_players: int

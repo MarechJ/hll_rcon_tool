@@ -184,6 +184,8 @@ GROUPS = [
             "can_change_chat_commands_config",
             "can_view_log_stream_config",
             "can_change_log_stream_config",
+            "can_view_seed_vip_config",
+            "can_change_seed_vip_config",
         ),
     ),
     (
@@ -358,6 +360,8 @@ GROUPS = [
             "can_change_chat_commands_config",
             "can_view_log_stream_config",
             "can_change_log_stream_config",
+            "can_view_seed_vip_config",
+            "can_change_seed_vip_config",
         ),
     ),
     (

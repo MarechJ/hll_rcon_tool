@@ -15,16 +15,12 @@ from rcon.cache_utils import get_redis_client, invalidates, ttl_cache
 from rcon.commands import SUCCESS, CommandFailedError, ServerCtl, VipId
 from rcon.maps import UNKNOWN_MAP_NAME, Layer, is_server_loading_map, parse_layer
 from rcon.models import PlayerID, PlayerVIP, enter_session
-from rcon.player_history import (
-    get_profiles,
-    safe_save_player_action,
-    save_player,
-)
+from rcon.player_history import get_profiles, safe_save_player_action, save_player
 from rcon.settings import SERVER_INFO
 from rcon.types import (
     AdminType,
     GameServerBanType,
-    GameState,
+    GameStateType,
     GetDetailedPlayer,
     GetDetailedPlayers,
     GetPlayersType,
@@ -748,7 +744,7 @@ class Rcon(ServerCtl):
             )
         return res
 
-    def get_gamestate(self) -> GameState:
+    def get_gamestate(self) -> GameStateType:
         """
         Returns player counts, team scores, remaining match time and current/next map
 

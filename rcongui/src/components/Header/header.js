@@ -498,6 +498,15 @@ const Header = ({ classes }) => {
                             Log Stream
                           </MenuItem>
                         </Link>
+                        <Link
+                          color="inherit"
+                          component={RouterLink}
+                          to="/settings/seed-vip"
+                        >
+                          <MenuItem onClick={() => setAnchorElSettings(null)}>
+                            Seed VIP
+                          </MenuItem>
+                        </Link>
                       </Menu>
                       <Link
                         variant="button"

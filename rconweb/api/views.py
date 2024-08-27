@@ -583,6 +583,9 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
         "api.can_remove_temp_bans",
         "api.can_remove_perma_bans",
     },
+    rcon_api.get_seed_vip_config: "api.can_view_seed_vip_config",
+    rcon_api.set_seed_vip_config: "api.can_change_seed_vip_config",
+    rcon_api.validate_seed_vip_config: "api.can_change_seed_vip_config",
 }
 
 PREFIXES_TO_EXPOSE = [
@@ -669,6 +672,7 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.get_recent_logs: ["GET", "POST"],
     rcon_api.get_round_time_remaining: ["GET"],
     rcon_api.get_scorebot_config: ["GET"],
+    rcon_api.get_seed_vip_config: ["GET"],
     rcon_api.get_server_name_change_config: ["GET"],
     rcon_api.get_server_settings: ["GET"],
     rcon_api.get_slots: ["GET"],
@@ -741,6 +745,7 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.set_rcon_server_settings_config: ["POST"],
     rcon_api.set_real_vip_config: ["POST"],
     rcon_api.set_scorebot_config: ["POST"],
+    rcon_api.set_seed_vip_config: ["POST"],
     rcon_api.set_server_name_change_config: ["POST"],
     rcon_api.set_server_name: ["POST"],
     rcon_api.set_standard_broadcast_messages: ["POST"],
@@ -784,6 +789,7 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.validate_rcon_server_settings_config: ["POST"],
     rcon_api.validate_real_vip_config: ["POST"],
     rcon_api.validate_scorebot_config: ["POST"],
+    rcon_api.validate_seed_vip_config: ["POST"],
     rcon_api.validate_server_name_change_config: ["POST"],
     rcon_api.validate_standard_broadcast_messages: ["POST"],
     rcon_api.validate_standard_punishments_messages: ["POST"],
