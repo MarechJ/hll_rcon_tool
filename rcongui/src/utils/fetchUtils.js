@@ -312,6 +312,18 @@ async function getVotemapConfig() {
   }
 }
 
+async function changeMap(mapId) {
+  try {
+    const response = await execute("set_map", { map_name: mapId });
+    const data = showResponse(response, `Map changed to ${mapId}`, true)
+    if (data.result) {
+      return data.result;
+    }    
+  } catch (error) {
+    handle_http_errors(error)
+  }
+}
+
 export {
   postData,
   showResponse,
@@ -332,4 +344,5 @@ export {
   getVotemapStatus,
   getVotemapConfig,
   updateVotemapConfig,
+  changeMap,
 };

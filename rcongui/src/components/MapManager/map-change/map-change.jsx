@@ -2,23 +2,38 @@ import {
   Box,
   Button,
   createStyles,
+  IconButton,
+  List,
   makeStyles,
-  Typography,
 } from "@material-ui/core";
-import { Alert } from "@material-ui/lab";
 import React from "react";
-import { get, getServerStatus } from "../../../utils/fetchUtils";
-import { MapList } from "../map-list";
+import { changeMap, get, getServerStatus } from "../../../utils/fetchUtils";
+import MapSearch from "./map-search";
+import { MapListItem } from "../map-list-item";
+import CheckCircleOutlineIcon from "@material-ui/icons/CheckCircleOutline";
+import ReplayIcon from '@material-ui/icons/Replay';
+import LockIcon from '@material-ui/icons/Lock';
+import Skeleton from '@material-ui/lab/Skeleton';
 
 const useStyles = makeStyles((theme) =>
   createStyles({
+    main: {
+      display: "flex",
+      flexDirection: "column",
+      gap: theme.spacing(1),
+    },
     panel: {
       display: "flex",
       flexDirection: "row",
       gap: theme.spacing(1),
       alignItems: "center",
-      paddingTop: theme.spacing(1),
-      paddingBottom: theme.spacing(1),
+    },
+    maps: {
+      maxWidth: theme.breakpoints.values.sm,
+      position: "relative",
+      overflow: "auto",
+      minHeight: 500,
+      maxHeight: "70vh",
     },
   })
 );
@@ -28,8 +43,19 @@ const UPDATE_INTERVAL = 60 * 1000;
 function MapChange() {
   const [currentMap, setCurrentMap] = React.useState(null);
   const [maps, setMaps] = React.useState([]);
+  const [nameFilter, setNameFilter] = React.useState("");
+  const [modeFilters, setModeFilters] = React.useState({
+    warfare: true,
+    offensive: true,
+    skirmish: true,
+  });
+  const [selected, setSelected] = React.useState("");
   const statusIntervalRef = React.useRef(null);
   const classes = useStyles();
+  const filteredMaps = maps.filter((map) =>
+    modeFilters[map.game_mode] &&
+    map.pretty_name.toLowerCase().includes(nameFilter.toLowerCase())
+  );
 
   const updateServerStatus = async () => {
     const status = await getServerStatus();
@@ -41,9 +67,31 @@ function MapChange() {
   const getMaps = async () => {
     const response = await get("get_maps");
     const data = await response.json();
-    if (data.result) {
-      setMaps(data.result);
+    const mapLayers = data.result;
+    if (mapLayers) {
+      mapLayers.sort((layerA, layerB) => layerA.map.shortname - layerB.map.shortname)
+      setMaps(mapLayers);
     }
+  };
+
+  const handleOnInputChange = (e) => {
+    setNameFilter(e.target.value);
+  };
+
+  const handleConfirmMap = (mapLayer) => {
+    changeMap(mapLayer.id);
+    setSelected("");
+  };
+
+  const handleResetMap = () => {
+    changeMap(currentMap.id);
+  };
+
+  const handleModeFilterClick = (filter) => {
+    setModeFilters((prevFilters) => ({
+      ...prevFilters,
+      [filter]: !prevFilters[filter],
+    }));
   };
 
   React.useEffect(() => {
@@ -57,24 +105,59 @@ function MapChange() {
   }, []);
 
   return (
-    <>
-      <Alert severity="info">
-        Any change will replace the current map in 60 seconds.
-      </Alert>
+    <Box className={classes.main}>
       <Box className={classes.panel}>
-        <Typography variant="subtitle1" component={"span"}>Current map: {currentMap?.pretty_name ?? "Loading..."}</Typography>
-        <Button variant="outlined" size="small">
+        <Button
+          startIcon={<ReplayIcon />}
+          color="secondary"
+          onClick={handleResetMap}
+          variant="outlined"
+          size="small"
+        >
+          Map Reset
+        </Button>
+        <Button startIcon={<LockIcon />} disabled variant="outlined" size="small">
           Switch Allies
         </Button>
-        <Button variant="outlined" size="small">
+        <Button startIcon={<LockIcon />} disabled variant="outlined" size="small">
           Switch Axis
         </Button>
-        <Button variant="outlined" size="small">
-          Reset
-        </Button>
       </Box>
-      <MapList mapLayers={maps} />
-    </>
+      {currentMap ? (
+        <MapListItem style={{ borderBottom: "none" }} mapLayer={currentMap} primary={`>>> ${currentMap.pretty_name} <<<`} component={Box} />
+      ) : (
+        <Skeleton variant="rect" height={60} />
+      )}
+      <MapSearch
+        onChange={handleOnInputChange}
+        filters={modeFilters}
+        onFilter={handleModeFilterClick}
+      />
+      <List dense={true} className={classes.maps}>
+        {filteredMaps.map((mapLayer, index) => (
+          <MapListItem
+            button
+            onClick={() => {
+              setSelected(mapLayer.id);
+            }}
+            key={`${index}#${mapLayer.id}`}
+            mapLayer={mapLayer}
+            renderAction={(mapLayer) =>
+              selected === mapLayer.id && (
+                <IconButton
+                  edge="end"
+                  color="secondary"
+                  aria-label="confirm"
+                  onClick={() => handleConfirmMap(mapLayer)}
+                >
+                  <CheckCircleOutlineIcon />
+                </IconButton>
+              )
+            }
+          />
+        ))}
+      </List>
+    </Box>
   );
 }
 
