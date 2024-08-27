@@ -4,7 +4,9 @@ import logging
 import sys
 from datetime import datetime, timedelta
 from typing import Any, Set, Type
-
+from rcon.models import PlayerSteamID, enter_session
+from sqlalchemy import update
+from sqlalchemy import func as pg_func
 import click
 import pydantic
 import yaml
@@ -413,6 +415,18 @@ def reset_user_settings(server: int):
         rcon.user_config.utils.set_user_config(key, model.model_dump())
 
     print("Done")
+
+@cli.command(name="convert_win_player_ids")
+def convert_win_player_ids():
+    with enter_session() as session:
+        logger.info(f"Converting old style windows store player IDs to new style")
+        stmt = (
+            update(PlayerSteamID)
+            .filter(PlayerSteamID.steam_id_64.like("%-%"))
+            .values(steam_id_64=pg_func.md5(PlayerSteamID.steam_id_64))
+        )
+        result = session.execute(stmt)
+        logger.info(f"Converted {result.rowcount} player IDs")
 
 
 PREFIXES_TO_EXPOSE = ["get_", "set_", "do_"]
