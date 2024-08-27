@@ -191,6 +191,7 @@ GROUPS = [
             "can_create_blacklists",
             "can_change_blacklists",
             "can_delete_blacklists",
+            "can_change_game_layout",
         ),
     ),
     (
@@ -372,6 +373,7 @@ GROUPS = [
             "can_create_blacklists",
             "can_change_blacklists",
             "can_delete_blacklists",
+            "can_change_game_layout",
         ),
     ),
     (
