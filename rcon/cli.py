@@ -564,6 +564,7 @@ def convert_win_player_ids():
                 logger.info(f"{p.player_id} already has a converted ID")
                 player_ids_to_merge.add(p.player_id)
             else:
+                updated += 1
                 p.player_id = pg_func.md5(p.player_id)
 
         logger.info(f"Converted {updated} player IDs")
