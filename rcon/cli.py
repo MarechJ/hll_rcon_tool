@@ -561,12 +561,10 @@ def convert_win_player_ids():
             )
             res = session.execute(already_exists_stmt).one_or_none()
             if res:
-                logger.info(
-                    f"{p.player_id} already has a converted ID ({pg_func.md5(p.player_id)})"
-                )
+                logger.info(f"{p.player_id} already has a converted ID")
                 player_ids_to_merge.add(p.player_id)
             else:
-                p.player_id = pg_func(p.player_id)
+                p.player_id = pg_func.md5(p.player_id)
 
         logger.info(f"Converted {updated} player IDs")
 
