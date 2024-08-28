@@ -1320,14 +1320,11 @@ class Rcon(ServerCtl):
         return super().get_objective_row(row)
     
     def get_objective_rows(self) -> List[List[str]]:
-        try:
-            return [
-                self.get_objective_row(row)
-                for row in range(5)
-            ]
-        except CommandFailedError:
-            return []
-    
+        return [
+            self.get_objective_row(row)
+            for row in range(5)
+        ]
+
     def set_game_layout(self, objectives: Sequence[str | int | None], random_constraints: GameLayoutRandomConstraints = 0):
         if len(objectives) != 5:
             raise ValueError("5 objectives must be provided")

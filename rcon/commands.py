@@ -728,7 +728,7 @@ class ServerCtl:
         if len(objectives) != 5:
             raise ValueError("5 objectives must be provided")
         return (
-            self._str_request(f'changelayout "{objectives[0]}" "{objectives[1]}" "{objectives[2]}" "{objectives[3]}" "{objectives[4]}"', log_info=True)
+            self._str_request(f'gamelayout "{objectives[0]}" "{objectives[1]}" "{objectives[2]}" "{objectives[3]}" "{objectives[4]}"', log_info=True)
             == SUCCESS
         )
 
