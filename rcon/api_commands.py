@@ -1736,3 +1736,6 @@ class RconAPI(Rcon):
             result = {}
 
         return result
+
+    def get_objective_row(self, row: int):
+        return super().get_objective_row(int(row))
