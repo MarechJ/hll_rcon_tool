@@ -29,6 +29,7 @@ from rcon.types import (
     PlayerCommentType,
     PlayerFlagType,
     PlayerProfileType,
+    PlayerActionType
 )
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.utils import strtobool
