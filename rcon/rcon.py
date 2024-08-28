@@ -1343,7 +1343,7 @@ class Rcon(ServerCtl):
                 elif obj in ("right", "bottom"):
                     parsed_objs.append(obj_row[2])
                 else:
-                    raise ValueError("Objective %s does not exist in row %s" % (obj, row + 1))
+                    raise ValueError("Objective %s does not exist in row %s" % (obj, row))
             
             elif isinstance(obj, int):
                 # Use index of the objective
