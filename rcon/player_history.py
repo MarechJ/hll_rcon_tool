@@ -26,6 +26,7 @@ from rcon.models import (
 )
 from rcon.types import (
     PlayerActionState,
+    PlayerActionType,
     PlayerCommentType,
     PlayerFlagType,
     PlayerProfileType,
