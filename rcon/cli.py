@@ -8,17 +8,19 @@ from typing import Any, Set, Type
 import click
 import pydantic
 import yaml
+from sqlalchemy import func as pg_func
+from sqlalchemy import select, text, update
 
-from rcon.blacklist import BlacklistCommandHandler
 import rcon.expiring_vips.service
 import rcon.user_config
 import rcon.user_config.utils
 from rcon import auto_settings, broadcast, game_logs, routines
 from rcon.automods import automod
+from rcon.blacklist import BlacklistCommandHandler
 from rcon.cache_utils import RedisCached, get_redis_pool, invalidates
 from rcon.discord_chat import get_handler
 from rcon.game_logs import LogLoop, LogStream, load_generic_hooks
-from rcon.models import enter_session, install_unaccent
+from rcon.models import PlayerID, enter_session, install_unaccent
 from rcon.rcon import get_rcon
 from rcon.scoreboard import live_stats_loop
 from rcon.server_stats import (
@@ -34,9 +36,6 @@ from rcon.user_config.webhooks import (
     BaseUserConfig,
     BaseWebhookUserConfig,
 )
-from rcon.models import PlayerID, enter_session
-from sqlalchemy import update, select, text
-from sqlalchemy import func as pg_func
 from rcon.utils import ApiKey
 
 logger = logging.getLogger(__name__)
@@ -424,13 +423,14 @@ def reset_user_settings(server: int):
     print("Done")
 
 
-@cli.command(name="merge_duplicate_player_ids")
-def merge_duplicate_player_ids():
-    logger.info(f"Merging duplicate player ID records")
+def _merge_duplicate_player_ids(existing_ids: set[str] | None = None):
     players = {}
 
     with enter_session() as session:
-        stmt = select(PlayerID)
+        if existing_ids:
+            stmt = select(PlayerID).filter(PlayerID.player_id.in_(existing_ids))
+        else:
+            stmt = select(PlayerID)
         rows = session.execute(stmt).scalars()
 
         for player in rows:
@@ -536,20 +536,45 @@ def merge_duplicate_player_ids():
                 text("DELETE FROM steam_id_64 WHERE id = ANY(:ids)"), {"ids": ids}
             )
 
-        logger.info(f"Duplicate player ID merge complete")
+
+@cli.command(name="merge_duplicate_player_ids")
+def merge_duplicate_player_ids():
+    logger.info(f"Merging duplicate player ID records")
+    _merge_duplicate_player_ids()
+    logger.info(f"Duplicate player ID merge complete")
 
 
 @cli.command(name="convert_win_player_ids")
 def convert_win_player_ids():
+    player_ids_to_merge: set[str] = set()
+    updated = 0
+    # .values(player_id=pg_func.md5(PlayerID.player_id))
     with enter_session() as session:
         logger.info(f"Converting old style windows store player IDs to new style")
-        stmt = (
-            update(PlayerID)
-            .filter(PlayerID.player_id.like("%-%"))
-            .values(player_id=pg_func.md5(PlayerID.player_id))
+        old_style_stmt = select(PlayerID).filter(PlayerID.player_id.like("%-%"))
+        old_style_rows = session.execute(old_style_stmt).scalars()
+
+        for p in old_style_rows:
+            logger.info(f"updating {p.player_id}")
+            already_exists_stmt = select(PlayerID).filter(
+                PlayerID.player_id == pg_func.md5(p.player_id)
+            )
+            res = session.execute(already_exists_stmt).one_or_none()
+            if res:
+                logger.info(
+                    f"{p.player_id} already has a converted ID ({pg_func.md5(p.player_id)})"
+                )
+                player_ids_to_merge.add(p.player_id)
+            else:
+                p.player_id = pg_func(p.player_id)
+
+        logger.info(f"Converted {updated} player IDs")
+
+    if player_ids_to_merge:
+        logger.info(
+            f"{len(player_ids_to_merge)} old style player IDs already existed, merging them"
         )
-        result = session.execute(stmt)
-        logger.info(f"Converted {result.rowcount} player IDs")
+        _merge_duplicate_player_ids(existing_ids=player_ids_to_merge)
 
 
 PREFIXES_TO_EXPOSE = ["get_", "set_", "do_"]
