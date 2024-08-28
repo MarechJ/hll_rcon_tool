@@ -551,7 +551,6 @@ def merge_duplicate_player_ids():
 def convert_win_player_ids():
     player_ids_to_merge: set[str] = set()
     updated = 0
-    # .values(player_id=pg_func.md5(PlayerID.player_id))
     with enter_session() as session:
         logger.info(f"Converting old style windows store player IDs to new style")
         old_style_stmt = select(PlayerID).filter(PlayerID.player_id.like("%-%"))
