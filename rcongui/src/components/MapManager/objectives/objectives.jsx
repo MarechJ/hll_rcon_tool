@@ -6,23 +6,21 @@ import {
   FormControlLabel,
   FormLabel,
   makeStyles,
-  Paper,
   Radio,
   RadioGroup,
   Typography,
 } from "@material-ui/core";
 import React from "react";
-import { getServerStatus } from "../../../utils/fetchUtils";
-import { generateInitialState, getTacMapImageSrc } from "../helpers";
-import { Skeleton } from "@material-ui/lab";
+import { changeGameLayout, getServerStatus } from "../../../utils/fetchUtils";
+import {
+  generateInitialState,
+  getTacMapImageSrc,
+  unifiedGamemodeName,
+} from "../helpers";
+import { Alert, AlertTitle, Skeleton } from "@material-ui/lab";
 import clsx from "clsx";
 
 const UPDATE_INTERVAL = 5 * 1000;
-
-const UP = [-1, 0];
-const DOWN = [1, 0];
-const LEFT = [0, -1];
-const RIGHT = [0, 1];
 
 const flip = (o) =>
   o.map((row, x) => {
@@ -89,6 +87,9 @@ const useStyles = makeStyles((theme) =>
     },
     controlContainer: {
       width: "fit-content",
+      display: "flex",
+      flexDirection: "column",
+      gap: theme.spacing(2),
     },
     controlBtn: {
       border: "4px ridge black",
@@ -129,16 +130,19 @@ const useStyles = makeStyles((theme) =>
 function MapObjectives() {
   const [currentMap, setCurrentMap] = React.useState(null);
   const [randomConstraint, setRandomConstraint] = React.useState("0");
-  const [objectives, setObjectives] = React.useState(
-    generateInitialState("horizontal", false)
-  );
+  const [objectives, setObjectives] = React.useState(null);
   const statusIntervalRef = React.useRef(null);
   const classes = useStyles();
 
   const updateServerStatus = async () => {
     const status = await getServerStatus();
     if (status) {
-      (status.map.orientation = "horizontal"), setCurrentMap(status.map);
+      if (unifiedGamemodeName(status.map.game_mode) === "skirmish") {
+        setObjectives(null);
+      }
+      if (status.map.id !== currentMap?.id) {
+        setCurrentMap(status.map);
+      }
     }
   };
 
@@ -151,30 +155,6 @@ function MapObjectives() {
     const targetIndex = index % size;
     const targetRow = Math.floor(index / size);
 
-    // Helper function to check if adjacent cells in a specific direction are selected
-    const isAdjacentSelected = (dx, dy, rowIndex, colIndex) => {
-      const newRow = rowIndex + dx;
-      const newCol = colIndex + dy;
-
-      if (newRow >= 0 && newRow < size && newCol >= 0 && newCol < size) {
-        if (currentMap.orientation === "vertical") {
-          const adjacentSelected = objectives[newRow].indexOf(true);
-          return (
-            adjacentSelected >= 0 &&
-            Math.abs(adjacentSelected - targetIndex) > 1
-          );
-        } else {
-          const adjacentSelected = objectives.findIndex(
-            (row) => row[newCol] === true
-          );
-          return (
-            adjacentSelected >= 0 && Math.abs(adjacentSelected - targetRow) > 1
-          );
-        }
-      }
-      return false;
-    };
-
     // Is unavailable
     if (isButtonUnavailable(state)) {
       return true;
@@ -183,30 +163,13 @@ function MapObjectives() {
     // Is selected
     if (state === true) return false;
 
-    // Check for vertical orientation
-    if (currentMap.orientation === "vertical") {
+    // Is unselected
+    if (currentMap.map.orientation === "vertical") {
       // but there is another selected in the row
       if (objectives[targetRow].includes(true)) return true;
-
-      // Check adjacent cells vertically (UP, DOWN)
-      if (
-        isAdjacentSelected(UP[0], UP[1], targetRow, targetIndex) ||
-        isAdjacentSelected(DOWN[0], DOWN[1], targetRow, targetIndex)
-      ) {
-        return true;
-      }
     } else {
-      // Check for horizontal orientation
       // but there is another selected in the column
       if (objectives.some((row) => row[targetIndex] === true)) return true;
-
-      // Check adjacent cells horizontally (LEFT, RIGHT)
-      if (
-        isAdjacentSelected(LEFT[0], LEFT[1], targetRow, targetIndex) ||
-        isAdjacentSelected(RIGHT[0], RIGHT[1], targetRow, targetIndex)
-      ) {
-        return true;
-      }
     }
 
     return false;
@@ -224,11 +187,14 @@ function MapObjectives() {
     );
   };
 
-  const handleChangeLayoutClick = () => {
-    const payload = reduceToInts(
+  const handleChangeLayoutClick = async () => {
+    const values = reduceToInts(
       objectives[1][0] !== null ? flip(objectives) : objectives
     );
-    console.log(payload);
+    await changeGameLayout({
+      objectives: values,
+      random_constraints: Number(randomConstraint),
+    });
   };
 
   const handleConstraintChange = (event) => {
@@ -242,7 +208,36 @@ function MapObjectives() {
       UPDATE_INTERVAL
     );
     return () => clearInterval(statusIntervalRef.current);
-  }, []);
+  }, [currentMap]);
+
+  React.useEffect(() => {
+    if (currentMap) {
+      setObjectives(generateInitialState(currentMap.map.orientation));
+    }
+  }, [currentMap]);
+
+  if (currentMap && unifiedGamemodeName(currentMap.game_mode) === "skirmish") {
+    return (
+      <Box className={clsx(classes.main, classes.gridContainer)}>
+        <Alert severity="error">
+            <AlertTitle>Error</AlertTitle>
+            <strong>{currentMap.pretty_name}</strong> - Skirmish mode cannot have the game layout changed!
+        </Alert>
+        <Skeleton variant="rect" height={650} />
+        <Skeleton variant="rect" height={250} />
+      </Box>
+    );
+  }
+
+  if (!objectives) {
+    return (
+      <Box className={clsx(classes.main, classes.gridContainer)}>
+        <Skeleton variant="rect" height={30} />
+        <Skeleton variant="rect" height={650} />
+        <Skeleton variant="rect" height={250} />
+      </Box>
+    );
+  }
 
   return (
     <Box className={classes.main}>
@@ -290,10 +285,10 @@ function MapObjectives() {
         <Skeleton width="100%" height={"100%"} />
       )}
       <Box className={classes.controlContainer}>
-        <Typography>
+        <Alert severity="info">
           When you omit any objective selection, the objectives will be chosen
           by the following constraints.
-        </Typography>
+        </Alert>
         <FormControl component="fieldset">
           <FormLabel component="legend">Random contraints</FormLabel>
           <RadioGroup

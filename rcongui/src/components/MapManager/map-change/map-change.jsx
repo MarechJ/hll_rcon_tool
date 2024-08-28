@@ -11,9 +11,10 @@ import { changeMap, get, getServerStatus } from "../../../utils/fetchUtils";
 import MapSearch from "./map-search";
 import { MapListItem } from "../map-list-item";
 import CheckCircleOutlineIcon from "@material-ui/icons/CheckCircleOutline";
-import ReplayIcon from '@material-ui/icons/Replay';
-import LockIcon from '@material-ui/icons/Lock';
-import Skeleton from '@material-ui/lab/Skeleton';
+import ReplayIcon from "@material-ui/icons/Replay";
+import LockIcon from "@material-ui/icons/Lock";
+import Skeleton from "@material-ui/lab/Skeleton";
+import { unifiedGamemodeName } from "../helpers";
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -46,15 +47,16 @@ function MapChange() {
   const [nameFilter, setNameFilter] = React.useState("");
   const [modeFilters, setModeFilters] = React.useState({
     warfare: true,
-    offensive: true,
-    skirmish: true,
+    offensive: false,
+    skirmish: false,
   });
   const [selected, setSelected] = React.useState("");
   const statusIntervalRef = React.useRef(null);
   const classes = useStyles();
-  const filteredMaps = maps.filter((map) =>
-    modeFilters[map.game_mode] &&
-    map.pretty_name.toLowerCase().includes(nameFilter.toLowerCase())
+  const filteredMaps = maps.filter(
+    (map) =>
+      modeFilters[unifiedGamemodeName(map.game_mode)] &&
+      map.pretty_name.toLowerCase().includes(nameFilter.toLowerCase())
   );
 
   const updateServerStatus = async () => {
@@ -69,7 +71,6 @@ function MapChange() {
     const data = await response.json();
     const mapLayers = data.result;
     if (mapLayers) {
-      mapLayers.sort((layerA, layerB) => layerA.map.shortname - layerB.map.shortname)
       setMaps(mapLayers);
     }
   };
@@ -116,15 +117,30 @@ function MapChange() {
         >
           Map Reset
         </Button>
-        <Button startIcon={<LockIcon />} disabled variant="outlined" size="small">
+        <Button
+          startIcon={<LockIcon />}
+          disabled
+          variant="outlined"
+          size="small"
+        >
           Switch Allies
         </Button>
-        <Button startIcon={<LockIcon />} disabled variant="outlined" size="small">
+        <Button
+          startIcon={<LockIcon />}
+          disabled
+          variant="outlined"
+          size="small"
+        >
           Switch Axis
         </Button>
       </Box>
       {currentMap ? (
-        <MapListItem style={{ borderBottom: "none" }} mapLayer={currentMap} primary={`>>> ${currentMap.pretty_name} <<<`} component={Box} />
+        <MapListItem
+          style={{ borderBottom: "none" }}
+          mapLayer={currentMap}
+          primary={`>>> ${currentMap.pretty_name} <<<`}
+          component={Box}
+        />
       ) : (
         <Skeleton variant="rect" height={60} />
       )}

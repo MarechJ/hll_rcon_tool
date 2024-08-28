@@ -324,6 +324,18 @@ async function changeMap(mapId) {
   }
 }
 
+async function changeGameLayout(payload) {
+  try {
+    const response = await execute("set_game_layout", payload);
+    const data = showResponse(response, "set_game_layout", true)
+    if (data.result) {
+      return data.result;
+    }    
+  } catch (error) {
+    handle_http_errors(error)
+  }
+}
+
 export {
   postData,
   showResponse,
@@ -345,4 +357,5 @@ export {
   getVotemapConfig,
   updateVotemapConfig,
   changeMap,
+  changeGameLayout,
 };
