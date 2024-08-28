@@ -424,10 +424,14 @@ def reset_user_settings(server: int):
 
 
 def _merge_duplicate_player_ids(existing_ids: set[str] | None = None):
+    logger.info(f"Merging duplicate player ID records")
     players = {}
 
     with enter_session() as session:
         if existing_ids:
+            logger.info(
+                f"Attempting to merge {len(existing_ids)} already converted IDs"
+            )
             stmt = select(PlayerID).filter(PlayerID.player_id.in_(existing_ids))
         else:
             stmt = select(PlayerID)
@@ -535,13 +539,12 @@ def _merge_duplicate_player_ids(existing_ids: set[str] | None = None):
             session.execute(
                 text("DELETE FROM steam_id_64 WHERE id = ANY(:ids)"), {"ids": ids}
             )
+    logger.info(f"Duplicate player ID merge complete")
 
 
 @cli.command(name="merge_duplicate_player_ids")
 def merge_duplicate_player_ids():
-    logger.info(f"Merging duplicate player ID records")
     _merge_duplicate_player_ids()
-    logger.info(f"Duplicate player ID merge complete")
 
 
 @cli.command(name="convert_win_player_ids")
