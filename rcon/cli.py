@@ -35,7 +35,7 @@ from rcon.user_config.webhooks import (
     BaseWebhookUserConfig,
 )
 from rcon.models import PlayerID, enter_session
-from sqlalchemy import update
+from sqlalchemy import update, select, text
 from sqlalchemy import func as pg_func
 from rcon.utils import ApiKey
 
@@ -423,6 +423,46 @@ def reset_user_settings(server: int):
 
     print("Done")
 
+@cli.command(name="merge_duplicate_player_ids")
+def merge_duplicate_player_ids():
+    logger.info(f"Merging duplicate player ID records")
+    players = {}
+
+    with enter_session() as session:
+        stmt = select(PlayerID)
+        rows = session.execute(stmt).scalars()
+
+        for player in rows:
+            id_, steamid, date = player.id, player.player_id, player.created
+
+            if steamid in players:
+                players[steamid].append(id_)
+            else:
+                players[steamid] = [id_]
+
+        duplicate_players = dict(filter(lambda p: len(p[1]) > 1, players.items()))
+        for steamid, ids in duplicate_players.items():
+            logger.info(f"Merging {steamid}")
+            keep = ids.pop(0)
+
+            session.execute(text("UPDATE blacklist_record SET player_id_id = :keep WHERE player_id_id = ANY(:ids)"), {"keep": keep, "ids": ids})
+            session.execute(text("UPDATE log_lines SET player1_steamid = :keep WHERE player1_steamid = ANY(:ids)"),  {"keep": keep, "ids": ids})
+            session.execute(text("UPDATE log_lines SET player2_steamid = :keep WHERE player2_steamid = ANY(:ids)"),  {"keep": keep, "ids": ids})
+            session.execute(text("UPDATE player_at_count SET playersteamid_id = :keep WHERE playersteamid_id = ANY(:ids)"),  {"keep": keep, "ids": ids})
+            session.execute(text("UPDATE player_blacklist SET playersteamid_id = :keep WHERE playersteamid_id = ANY(:ids)"), {"keep": keep, "ids": ids})
+            session.execute(text("UPDATE player_comments SET playersteamid_id = :keep WHERE playersteamid_id = ANY(:ids)"), {"keep": keep, "ids": ids})
+            session.execute(text("UPDATE player_flags SET playersteamid_id = :keep WHERE playersteamid_id = ANY(:ids)"),  {"keep": keep, "ids": ids})
+            session.execute(text("UPDATE player_optins SET playersteamid_id = :keep WHERE playersteamid_id = ANY(:ids)"),  {"keep": keep, "ids": ids})
+            session.execute(text("UPDATE player_sessions SET playersteamid_id = :keep WHERE playersteamid_id = ANY(:ids)"),  {"keep": keep, "ids": ids})
+            session.execute(text("UPDATE player_stats SET playersteamid_id = :keep WHERE playersteamid_id = ANY(:ids)"), {"keep": keep, "ids": ids})
+            session.execute(text("UPDATE player_vip SET playersteamid_id = :keep WHERE playersteamid_id = ANY(:ids)"),  {"keep": keep, "ids": ids})
+            session.execute(text("UPDATE player_watchlist SET playersteamid_id = :keep WHERE playersteamid_id = ANY(:ids)"),  {"keep": keep, "ids": ids})
+            session.execute(text("UPDATE players_actions SET playersteamid_id = :keep WHERE playersteamid_id = ANY(:ids)"),  {"keep": keep, "ids": ids})
+            session.execute(text("DELETE FROM steam_info WHERE playersteamid_id = ANY(:ids)"), {"ids": ids})
+            session.execute(text("DELETE FROM player_names WHERE playersteamid_id = ANY(:ids)"), {"ids": ids})
+            session.execute(text("DELETE FROM steam_id_64 WHERE id = ANY(:ids)"), {"ids": ids})
+
+        logger.info(f"Duplicate player ID merge complete")
 
 @cli.command(name="convert_win_player_ids")
 def convert_win_player_ids():
