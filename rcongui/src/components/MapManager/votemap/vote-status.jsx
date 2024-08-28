@@ -1,9 +1,9 @@
 import * as React from "react";
-import { List } from "@material-ui/core";
+import { List, Typography } from "@material-ui/core";
 import { MapListItem } from "../map-list-item";
 
 export function VoteStatus({ voteStatus, ...props }) {
-  return (
+  return voteStatus.length ? (
     <List dense={true} {...props}>
       {voteStatus.map((mapStatus, index) => {
         const { map, voters } = mapStatus;
@@ -18,5 +18,7 @@ export function VoteStatus({ voteStatus, ...props }) {
         );
       })}
     </List>
+  ) : (
+    <Typography variant="h4" component={"div"} style={{ padding: 8 }}>No VoteMap History</Typography>
   );
 }

@@ -30,4 +30,32 @@ export const unifiedGamemodeName = (modeName) => {
   }
 }
 
+export const generateInitialState = (orientation, defaultState = false) => {
+  const gridSize = 5;
+  const blocked = null;
+
+  const blockedRowTemplate = Array(gridSize).fill(blocked);
+  const verticalRowTemplate = [
+    blocked,
+    defaultState,
+    defaultState,
+    defaultState,
+    blocked,
+  ];
+  const horizontalRowTemplate = Array(gridSize).fill(defaultState);
+
+  return Array(gridSize)
+    .fill(null)
+    .map((_, row) => {
+      if (orientation === "vertical") {
+        return verticalRowTemplate;
+      }
+      if (row === 0 || row === gridSize - 1) {
+        return blockedRowTemplate;
+      }
+      return horizontalRowTemplate;
+    });
+};
+
 export const getMapLayerImageSrc = (mapLayer) => `maps/${mapLayer.image_name}`;
+export const getTacMapImageSrc = (mapLayer) => `tac-maps/${mapLayer.map.id}.webp`;

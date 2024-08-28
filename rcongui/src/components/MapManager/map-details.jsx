@@ -1,11 +1,12 @@
 import {
+  Avatar,
   Box,
   createStyles,
   Divider,
   makeStyles,
   Typography,
 } from "@material-ui/core";
-import { unifiedGamemodeName } from "./helpers";
+import { getMapLayerImageSrc, unifiedGamemodeName } from "./helpers";
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -18,7 +19,7 @@ const useStyles = makeStyles((theme) =>
   })
 );
 
-export function MapDetail({ mapLayer }) {
+export function MapDetails({ mapLayer }) {
   const classes = useStyles();
 
   const gameMode = unifiedGamemodeName(mapLayer.game_mode)
@@ -36,4 +37,10 @@ export function MapDetail({ mapLayer }) {
       <Typography variant="caption">{mapLayer.environment}</Typography>
     </Box>
   );
+}
+
+export function MapAvatar({ mapLayer }) {
+  return (
+    <Avatar src={getMapLayerImageSrc(mapLayer)} />
+  )
 }

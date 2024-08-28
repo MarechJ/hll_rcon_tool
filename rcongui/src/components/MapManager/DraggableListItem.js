@@ -12,7 +12,7 @@ import {
 } from "@material-ui/core";
 import Avatar from "@material-ui/core/Avatar";
 import DeleteIcon from "@material-ui/icons/Delete";
-import { MapDetail } from "./map-detail";
+import { MapDetails } from "./map-details";
 
 const useStyles = makeStyles((theme) => createStyles({
   draggingListItem: {
@@ -42,7 +42,7 @@ const DraggableListItem = ({ item, index, onRemove }) => {
           </ListItemAvatar>
           <ListItemText
             primary={item.map.pretty_name}
-            secondary={<MapDetail mapLayer={item} />}
+            secondary={<MapDetails mapLayer={item} />}
           />
           <ListItemSecondaryAction>
             <IconButton

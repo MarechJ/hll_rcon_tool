@@ -11,6 +11,7 @@ import { Link, Switch, Route } from "react-router-dom";
 import VoteMapConfig from "./votemap/votemap";
 import MapRotationConfig from "./map-rotation/map-rotation";
 import MapChange from "./map-change/map-change";
+import MapObjectives from "./objectives/objectives";
 
 const tabs = {
   change: 0,
@@ -50,7 +51,7 @@ export function MapManager({ match }) {
               <MapRotationConfig />
             </TabPanel>
             <TabPanel path={"/settings/maps/objectives"} index={2}>
-              <h1>TODO - OBJECTIVES</h1>
+              <MapObjectives />
             </TabPanel>
             <TabPanel path={"/settings/maps/votemap"} index={3}>
               <VoteMapConfig />
