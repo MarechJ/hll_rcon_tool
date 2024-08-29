@@ -302,7 +302,7 @@ Stay cool and follow the drill. It's a simple installation, many not-so-technica
 
 Open an SSH session on your VPS. That's a text-only based terminal we'll use to enter commands on the distant VPS.
 
-Windows users can use the `Powershell` tool that's already available in their Startmenu.
+Windows users can use the `PowerShell` tool that's already available in their Startmenu.
 To launch it, open the StartMenu, search for `PowerShell` and click on its icon.
 Then, to connect to the VPS, just enter this command, where `123.123.123.123` is the VPS IP.
 > [!NOTE]
