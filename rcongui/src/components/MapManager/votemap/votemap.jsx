@@ -155,7 +155,7 @@ const VoteMapConfig = () => {
               color="secondary"
               onClick={() => {
                 if (window.confirm("Are you sure?") === true) {
-                  resetState().then(loadData);
+                  resetState()
                 }
               }}
             >

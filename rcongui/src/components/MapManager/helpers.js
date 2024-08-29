@@ -30,30 +30,31 @@ export const unifiedGamemodeName = (modeName) => {
   }
 }
 
-export const generateInitialState = (orientation, defaultState = false) => {
+export const generateObjectivesGrid = (orientation) => {
   const gridSize = 5;
+  const defaultState = false
   const blocked = null;
 
-  const blockedRowTemplate = Array(gridSize).fill(blocked);
-  const verticalRowTemplate = [
+  const blockedRowTemplate = () => Array(gridSize).fill(blocked);
+  const verticalRowTemplate = () => [
     blocked,
     defaultState,
     defaultState,
     defaultState,
     blocked,
   ];
-  const horizontalRowTemplate = Array(gridSize).fill(defaultState);
+  const horizontalRowTemplate = () => Array(gridSize).fill(defaultState);
 
   return Array(gridSize)
     .fill(null)
     .map((_, row) => {
       if (orientation === "vertical") {
-        return verticalRowTemplate;
+        return verticalRowTemplate();
       }
       if (row === 0 || row === gridSize - 1) {
-        return blockedRowTemplate;
+        return blockedRowTemplate();
       }
-      return horizontalRowTemplate;
+      return horizontalRowTemplate();
     });
 };
 
