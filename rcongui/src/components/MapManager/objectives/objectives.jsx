@@ -1,19 +1,18 @@
 import {
   Box,
   Button,
+  Checkbox,
   createStyles,
   FormControl,
   FormControlLabel,
+  FormGroup,
   FormLabel,
   makeStyles,
-  Radio,
-  RadioGroup,
-  Typography,
 } from "@material-ui/core";
 import React from "react";
-import { changeGameLayout, getServerStatus } from "../../../utils/fetchUtils";
+import { changeGameLayout, getMapObjectives, getServerStatus } from "../../../utils/fetchUtils";
 import {
-  generateInitialState,
+  generateObjectivesGrid,
   getTacMapImageSrc,
   unifiedGamemodeName,
 } from "../helpers";
@@ -129,7 +128,10 @@ const useStyles = makeStyles((theme) =>
 
 function MapObjectives() {
   const [currentMap, setCurrentMap] = React.useState(null);
-  const [randomConstraint, setRandomConstraint] = React.useState("0");
+  const [randomConstraint, setRandomConstraint] = React.useState({
+    "1": false,
+    "2": false,
+  });
   const [objectives, setObjectives] = React.useState(null);
   const statusIntervalRef = React.useRef(null);
   const classes = useStyles();
@@ -187,18 +189,46 @@ function MapObjectives() {
     );
   };
 
+  const handleResetLayoutClick = () => {
+    setObjectives(generateObjectivesGrid(currentMap.map.orientation))
+  }
+
   const handleChangeLayoutClick = async () => {
-    const values = reduceToInts(
+    const chosenObjectives = reduceToInts(
       objectives[1][0] !== null ? flip(objectives) : objectives
     );
-    await changeGameLayout({
-      objectives: values,
-      random_constraints: Number(randomConstraint),
+
+    const constraintValue = Object.entries(randomConstraint).reduce((acc, [value, used]) => {
+      if (used) return acc + Number(value);
+      return acc;
+    }, 0)
+
+    const newLayout = await changeGameLayout({
+      objectives: chosenObjectives,
+      random_constraints: constraintValue,
     });
+
+    const mapObjectives = await getMapObjectives();
+    if (mapObjectives && newLayout) {
+      // generate clear grid
+      const finalObjectives = generateObjectivesGrid(currentMap.map.orientation);
+      const isHorizontal = currentMap.map.orientation === "horizontal";
+      // update the grid with the new objectives
+      newLayout.forEach((objective, rowIndex) => {
+        const row = rowIndex
+        const col = mapObjectives[rowIndex].indexOf(objective)
+        if (isHorizontal) {
+          finalObjectives[col + 1][row] = true;
+        } else {
+          finalObjectives[row][col + 1] = true;
+        }
+      })
+      setObjectives(finalObjectives);
+    }
   };
 
   const handleConstraintChange = (event) => {
-    setRandomConstraint(event.target.value);
+    setRandomConstraint({ ...randomConstraint, [event.target.name]: event.target.checked });
   };
 
   React.useEffect(() => {
@@ -212,7 +242,7 @@ function MapObjectives() {
 
   React.useEffect(() => {
     if (currentMap) {
-      setObjectives(generateInitialState(currentMap.map.orientation));
+      setObjectives(generateObjectivesGrid(currentMap.map.orientation));
     }
   }, [currentMap]);
 
@@ -248,7 +278,14 @@ function MapObjectives() {
           size="small"
           onClick={handleChangeLayoutClick}
         >
-          CHANGE LAYOUT
+          CONFIRM LAYOUT
+        </Button>
+        <Button
+          variant="outlined"
+          size="small"
+          onClick={handleResetLayoutClick}
+        >
+          CLEAR LAYOUT
         </Button>
       </Box>
       {currentMap ? (
@@ -265,7 +302,7 @@ function MapObjectives() {
             {objectives.flat().map((state, index) => {
               return (
                 <Button
-                  key={index}
+                  key={`${index}${state}`}
                   onClick={() => handleSelectClick(index)}
                   disabled={isButtonDisabled(state, index)}
                   className={clsx(
@@ -286,38 +323,20 @@ function MapObjectives() {
       )}
       <Box className={classes.controlContainer}>
         <Alert severity="info">
-          When you omit any objective selection, the objectives will be chosen
-          by the following constraints.
+          If you do not select one or more objectives, they will be chosen randomly based on the following criteria:
         </Alert>
         <FormControl component="fieldset">
-          <FormLabel component="legend">Random contraints</FormLabel>
-          <RadioGroup
-            aria-label="Random contraints"
-            name="random-constraints"
-            value={randomConstraint}
-            onChange={handleConstraintChange}
-          >
+          <FormLabel component="legend">Optional criteria</FormLabel>
+          <FormGroup>
             <FormControlLabel
-              value={"0"}
-              control={<Radio />}
-              label={"No constraints"}
+              control={<Checkbox checked={randomConstraint["1"]} name={"1"} onChange={handleConstraintChange} />}
+              label="Objectives must be adjacent"
             />
             <FormControlLabel
-              value={"1"}
-              control={<Radio />}
-              label="Points must be adjacent"
+              control={<Checkbox checked={randomConstraint["2"]} name={"2"} onChange={handleConstraintChange} />}
+              label="Objectives must not be aligned in a straight line"
             />
-            <FormControlLabel
-              value={"2"}
-              control={<Radio />}
-              label="No straight line"
-            />
-            <FormControlLabel
-              value={"3"}
-              control={<Radio />}
-              label="Adjacent and No line combined"
-            />
-          </RadioGroup>
+          </FormGroup>
         </FormControl>
       </Box>
     </Box>
