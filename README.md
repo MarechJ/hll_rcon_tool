@@ -300,10 +300,20 @@ Stay cool and follow the drill. It's a simple installation, many not-so-technica
 
 ### 1. Download CRCON
 
-Using an SSH client (*don't know which one to get ?* Try PuTTY : <https://www.chiark.greenend.org.uk/~sgtatham/putty/>),  
+Open an SSH session on your VPS. That's a text-only based terminal we'll use to enter commands on the distant VPS.
+
+Windows users can use the `Powershell` tool that's already available in their Startmenu.
+To connect to the VPS, just enter this command, where `123.123.123.123` is the VPS IP.
+All commands must be validated with the [Enter] key.
+```
+ssh root@123.123.123.123
+```
+You'll get a password prompt. Type your VPS password (it won't display for security reasons), then [Enter].
+
+You also can use an SSH client (*don't know which one to get ?* Try PuTTY : <https://www.chiark.greenend.org.uk/~sgtatham/putty/>),  
 **log in as root** into your distant Linux, using the SSH credentials given by your VPS provider.
 
-Enter these commands in the terminal (*press [Enter] to validate*) :
+Once you're in, enter these commands in the terminal (*press the [Enter] key to validate*) :
 
 Download the CRCON files :
 
