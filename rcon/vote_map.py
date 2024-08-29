@@ -127,9 +127,15 @@ def _suggest_next_maps(
         last_n_maps = set(m for m in maps_history[:exclude_last_n])
     else:
         last_n_maps: set[maps.Layer] = set()
-    logger.info("Excluding last %s player maps: %s", exclude_last_n, last_n_maps)
+    logger.info(
+        "Excluding last %s player maps: %s",
+        exclude_last_n,
+        [m.pretty_name for m in last_n_maps],
+    )
     remaining_maps = [maps.parse_layer(m) for m in allowed_maps - last_n_maps]
-    logger.info("Remaining maps to suggest from: %s", remaining_maps)
+    logger.info(
+        "Remaining maps to suggest from: %s", [m.pretty_name for m in remaining_maps]
+    )
 
     current_side = current_map.attackers
 
@@ -142,7 +148,10 @@ def _suggest_next_maps(
         remaining_maps = [
             maps.parse_layer(m) for m in remaining_maps if m.map not in map_ids
         ]
-        logger.info("Remaining maps to suggest from: %s", remaining_maps)
+        logger.info(
+            "Remaining maps to suggest from: %s",
+            [m.pretty_name for m in remaining_maps],
+        )
 
     if not allow_consecutive_offensives_of_opposite_side and current_side:
         # TODO: make sure this is correct
@@ -155,7 +164,10 @@ def _suggest_next_maps(
             "Not allowing consecutive offensive with opposite side: %s",
             maps.get_opposite_side(current_side),
         )
-        logger.info("Remaining maps to suggest from: %s", remaining_maps)
+        logger.info(
+            "Remaining maps to suggest from: %s",
+            [m.pretty_name for m in remaining_maps],
+        )
 
     # Handle case if all maps got excluded
     categorized_maps = categorize_maps(remaining_maps)
@@ -197,7 +209,7 @@ def _suggest_next_maps(
         logger.error("No maps can be suggested with the given parameters.")
         raise RestrictiveFilterError("Unable to suggest map")
 
-    logger.info("Suggestion %s", selection)
+    logger.info("Suggestion %s", [m.pretty_name for m in selection])
     return selection
 
 
@@ -684,7 +696,7 @@ class VoteMap:
         )
 
         self.set_selection(selection=selection)
-        logger.info("Saved new selection: %s", selection)
+        logger.info("Saved new selection: %s", [m.pretty_name for m in selection])
 
     def _get_selection(self) -> list[str]:
         """Return the current map suggestions"""
