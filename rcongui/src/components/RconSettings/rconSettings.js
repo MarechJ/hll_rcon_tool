@@ -19,7 +19,7 @@ import {
 import Blacklist from "./blacklist";
 import { toast } from "react-toastify";
 import _ from "lodash";
-import Padlock from "../../components/SettingsView/padlock";
+import Padlock from "../shared/padlock";
 import TextHistoryManager, { SelectNameSpace } from "./textHistoryManager";
 import TextHistory from "../textHistory";
 import ServicesList from "../Services";

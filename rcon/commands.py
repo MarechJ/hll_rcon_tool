@@ -4,7 +4,7 @@ import threading
 import time
 from contextlib import contextmanager, nullcontext
 from functools import wraps
-from typing import Generator, List
+from typing import Generator, List, Sequence
 
 from rcon.connection import HLLConnection
 from rcon.types import ServerInfoType, VipId
@@ -366,12 +366,30 @@ class ServerCtl:
 
     @_auto_retry
     def _get_list(
-        self, item: str, can_fail=True, conn: HLLConnection | None = None
+        self,
+        item: str,
+        can_fail=True,
+        conn: HLLConnection | None = None,
+        fail_msgs: Sequence[str] = [],
     ) -> list[str]:
         if conn is None:
             raise ValueError("conn parameter should never be None")
 
         res = self._bytes_request(item, can_fail=can_fail, conn=conn)
+
+        # Some commands do not return "FAIL" when they fail. Normally we can handle them in the command implementation,
+        # but not with lists, where we need to do it here.
+        try:
+            decoded_res = res.decode()
+        except UnicodeDecodeError:
+            pass
+        else:
+            if decoded_res in fail_msgs:
+                if can_fail:
+                    raise CommandFailedError(decoded_res)
+                else:
+                    raise HLLServerError(f"Got FAIL for {item}: {decoded_res}")
+
         return self._read_list(res, conn)
 
     def get_profanities(self) -> list[str]:
@@ -719,6 +737,23 @@ class ServerCtl:
 
         return self._str_request("get gamestate", can_fail=False).split("\n")
 
+    def get_objective_row(self, row: int):
+        if not (0 <= row <= 4):
+            raise ValueError('Row must be between 0 and 4')
+        
+        return self._get_list(
+            f'get objectiverow_{row}',
+            fail_msgs="Cannot execute command for this gamemode."
+        )
+
+    def set_game_layout(self, objectives: Sequence[str]):
+        if len(objectives) != 5:
+            raise ValueError("5 objectives must be provided")
+        self._str_request(
+            f'gamelayout "{objectives[0]}" "{objectives[1]}" "{objectives[2]}" "{objectives[3]}" "{objectives[4]}"', log_info=True,
+            can_fail=False
+        )
+        return list(objectives)
 
 if __name__ == "__main__":
     from rcon.settings import SERVER_INFO

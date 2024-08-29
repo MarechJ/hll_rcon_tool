@@ -1,12 +1,13 @@
 import logging
 import os
+import random
 import re
 from concurrent.futures import Future, ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
 from functools import cached_property
 from itertools import chain
 from time import sleep
-from typing import Any, Iterable, Literal, Optional, overload
+from typing import Any, Iterable, List, Literal, Optional, Sequence, overload
 
 from dateutil import parser
 
@@ -19,6 +20,7 @@ from rcon.player_history import get_profiles, safe_save_player_action, save_play
 from rcon.settings import SERVER_INFO
 from rcon.types import (
     AdminType,
+    GameLayoutRandomConstraints,
     GameServerBanType,
     GameState,
     GetDetailedPlayer,
@@ -1309,6 +1311,96 @@ class Rcon(ServerCtl):
             super().remove_map_from_rotation(current[0], 1)
 
         return self.get_map_rotation()
+    
+    @ttl_cache(ttl=10)
+    def get_objective_row(self, row: int):
+        return super().get_objective_row(row)
+    
+    def get_objective_rows(self) -> List[List[str]]:
+        return [
+            self.get_objective_row(row)
+            for row in range(5)
+        ]
+
+    def set_game_layout(self, objectives: Sequence[str | int | None], random_constraints: GameLayoutRandomConstraints = 0):
+        if len(objectives) != 5:
+            raise ValueError("5 objectives must be provided")
+        
+        obj_rows = self.get_objective_rows()
+        parsed_objs: list[str] = []
+        for row, (obj, obj_row) in enumerate(zip(objectives, obj_rows)):
+            if isinstance(obj, str):
+                # Verify whether the objective exists, or if it can be logically determined
+                if obj in obj_row:
+                    parsed_objs.append(obj)
+                elif obj in ("left", "top"):
+                    parsed_objs.append(obj_row[0])
+                elif obj in ("center", "mid"):
+                    parsed_objs.append(obj_row[1])
+                elif obj in ("right", "bottom"):
+                    parsed_objs.append(obj_row[2])
+                else:
+                    raise ValueError("Objective %s does not exist in row %s" % (obj, row))
+            
+            elif isinstance(obj, int):
+                # Use index of the objective
+                if not (0 <= obj <= 2):
+                    raise ValueError("Objective index %s is out of range 0-2 in row %s" % (obj, row + 1))
+                parsed_objs.append(obj_row[obj])
+
+            elif obj is None:
+                # Choose randomly
+                if random_constraints:
+                    # Sort later
+                    parsed_objs.append(None)
+                else:
+                    # No constraints, no need for a special algorithm
+                    parsed_objs.append(random.choice(obj_row))
+
+        # Special algorithm to apply randomness with constraints. Prioritizes rows with already
+        # determined neighbors to avoid conflicts in situations with two neighbors.
+        while None in parsed_objs:
+            # If no rows are predetermined, determine the middle row first
+            if all(obj is None for obj in parsed_objs):
+                parsed_objs[2] = random.choice(obj_rows[2])
+
+            for row, obj in enumerate(parsed_objs):
+                # Skip if row is already determined
+                if obj is not None:
+                    continue
+
+                # Get the indices of the objectives of neighboring rows, if they are already determined
+                neighbors = []
+                if row > 0 and parsed_objs[row - 1] is not None:
+                    neighbors.append(obj_rows[row - 1].index(parsed_objs[row - 1]))
+                if row < 4 and parsed_objs[row + 1] is not None:
+                    neighbors.append(obj_rows[row + 1].index(parsed_objs[row + 1]))
+                
+                # Skip this row for now if neither of its neighbors had their objective determined yet
+                if not neighbors:
+                    continue
+
+                # Create a list of available objectives
+                obj_row = obj_rows[row]
+                obj_choices = obj_row.copy()
+                for neighbor_idx in neighbors:
+                    # Apply constraints
+                    if random_constraints & GameLayoutRandomConstraints.ALWAYS_ADJACENT:
+                        # Cannot have two objectives follow each other up on opposite sides of the map
+                        if neighbor_idx == 0:
+                            obj_choices[2] = None
+                        elif neighbor_idx == 2:
+                            obj_choices[0] = None
+                    if random_constraints & GameLayoutRandomConstraints.ALWAYS_DIAGONAL:
+                        # Cannot have two objectives in a straight row
+                        obj_choices[neighbor_idx] = None
+                
+                # Pick an objective. If none are viable, discard constraints.
+                parsed_objs[row] = random.choice(
+                    [c for c in obj_choices if c is not None] or obj_row
+                )
+
+        return super().set_game_layout(parsed_objs)
 
     @staticmethod
     def parse_log_line(raw_line: str) -> StructuredLogLineType:

@@ -1,21 +1,18 @@
 import * as React from "react";
-import makeStyles from "@material-ui/core/styles/makeStyles";
-import Paper from "@material-ui/core/Paper";
-import DraggableList from "./DraggableList";
-import { getItems, reorder } from "./helpers";
+import DraggableList from "../DraggableList";
+import { reorder } from "../helpers";
 import {
   get,
   handle_http_errors,
   postData,
-  sendAction,
   showResponse,
-} from "../../utils/fetchUtils";
-import { Button, CircularProgress, Grid, Typography } from "@material-ui/core";
-import Chip from "@material-ui/core/Chip";
+} from "../../../utils/fetchUtils";
+import { Box, Button, CircularProgress, Grid } from "@material-ui/core";
 import Autocomplete from "@material-ui/lab/Autocomplete";
 import TextField from "@material-ui/core/TextField";
+import { Alert } from "@material-ui/lab";
 
-const MapRotation = ({ classes }) => {
+const MapRotation = () => {
   const [maps, setMaps] = React.useState([]);
   const [currentRotation, setCurrentRotation] = React.useState([]);
   const [rotation, setRotation] = React.useState([]);
@@ -100,14 +97,55 @@ const MapRotation = ({ classes }) => {
   );
 
   return (
-    <Grid container spacing={2} className={classes.doublePadding}>
+    <Grid container spacing={2}>
       <Grid item xs={12}>
-        <Typography variant="caption">Drag and drop to reorder</Typography>
-      </Grid>
-      <Grid item xs={12}>
-        <Button variant="text" onClick={loadAllData}>
-          <Typography variant="caption">Refresh</Typography>{" "}
-        </Button>
+        {voteMapConfig.enabled && <Alert style={{ margin: "0.25rem 0 1rem 0" }} severity="warning" >You can't change the rotation while votemap is on</Alert>}
+        <Box style={{ display: "flex", justifyContent: "space-between", marginBottom: "1rem" }}>
+          <Button size="small" variant="outlined" onClick={loadAllData}>
+            Refresh
+          </Button>
+          <Box style={{ display: "flex", gap: "0.5rem" }}>
+            <Button
+              size="small"
+              variant="outlined"
+              disabled={voteMapConfig.enabled}
+              onClick={() => {
+                setRotation(rotation.concat(mapsToAdd));
+              }}
+            >
+              Add
+            </Button>
+            <Button
+              variant="outlined"
+              disabled={hasChanged || rotationIsSaving || voteMapConfig.enabled}
+              onClick={saveRotation}
+              size="small"
+            >
+              {rotationIsSaving ? (
+                <CircularProgress size={20} />
+              ) : (
+                "Save rotation"
+              )}
+            </Button>
+          </Box>
+        </Box>
+          <Autocomplete
+            multiple
+            disabled={voteMapConfig.enabled}
+            size="small"
+            disableCloseOnSelect
+            options={maps}
+            getOptionLabel={(m) => m.pretty_name}
+            isOptionEqualToValue={(option, value) => option.id == value.id}
+            onChange={(e, v) => setMapsToAdd(v)}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                variant="outlined"
+                label="Select maps"
+              />
+            )}
+          />
       </Grid>
       <Grid item xs={12}>
         <DraggableList
@@ -115,56 +153,6 @@ const MapRotation = ({ classes }) => {
           onDragEnd={onDragEnd}
           onRemove={onRemoveItem}
         />
-      </Grid>
-      <Grid item xs={12}>
-        <Grid container spacing={1} alignItems="stretch">
-          <Grid item xs={10}>
-            <Autocomplete
-              multiple
-              disableCloseOnSelect
-              options={maps}
-              getOptionLabel={(m) => m.pretty_name}
-              isOptionEqualToValue={(option, value) => option.id == value.id}
-              onChange={(e, v) => setMapsToAdd(v)}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  variant="outlined"
-                  label="Select maps to add"
-                />
-              )}
-            />
-          </Grid>
-          <Grid item xs={2}>
-            <Button
-              fullWidth
-              style={{ height: "100%" }}
-              variant="outlined"
-              onClick={() => {
-                setRotation(rotation.concat(mapsToAdd));
-              }}
-            >
-              Add
-            </Button>
-          </Grid>
-        </Grid>
-      </Grid>
-      <Grid item xs={12}>
-        <Button
-          color="primary"
-          variant="outlined"
-          fullWidth
-          disabled={hasChanged || rotationIsSaving || voteMapConfig.enabled}
-          onClick={saveRotation}
-        >
-          {rotationIsSaving ? (
-            <CircularProgress />
-          ) : voteMapConfig.enabled ? (
-            "You can't change the rotation while votemap is on"
-          ) : (
-            "Save rotation"
-          )}
-        </Button>
       </Grid>
     </Grid>
   );

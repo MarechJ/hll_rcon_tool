@@ -2,10 +2,7 @@ import React from "react";
 import {
   Button,
   Grid,
-  Link,
   TextField,
-  Typography,
-  Tooltip,
 } from "@material-ui/core";
 import { range } from "lodash/util";
 import {
@@ -20,14 +17,9 @@ import AdminsEditableList from "./admins";
 import CollapseCard from "../collapseCard";
 import ServerMessage from "./serverMessage";
 import NumSlider from "./numSlider";
-import ChangeMap from "./changeMap";
-import Padlock from "./padlock";
+import Padlock from "../shared/padlock";
 import AutoRefreshLine from "../autoRefreshLine";
 import { ForwardCheckBox, WordList } from "../commonComponent";
-import VoteMapConfig from "./voteMapConfig";
-import HelpIcon from "@material-ui/icons/Help";
-import MapRotation from "../MapManager";
-import MapRotationSettings from "../MapManager/settings";
 
 const ProfanityFiler = ({
   words,
@@ -342,20 +334,6 @@ class HLLSettings extends React.Component {
             statusRefreshIntervalMs={500}
             classes={classes}
           />
-        </Grid>
-        <Grid
-          container
-          xs={12}
-          className={classes.paddingBottom}
-          justify="center"
-        >
-          <Grid item xs={12}>
-            <ChangeMap
-              classes={classes}
-              availableMaps={availableMaps}
-              changeMap={this.changeMap}
-            />
-          </Grid>
         </Grid>
         <Grid item className={classes.paper} sm={6} xs={12}>
           <ServerMessage
@@ -685,29 +663,6 @@ class HLLSettings extends React.Component {
           </Grid>
         </Grid>
 
-        <Grid container className={classes.paddingTop} justify="center" xs={12}>
-          <Grid item>
-            <Typography variant="h5" gutterBottom>
-              Vote Map config{" "}
-              <Tooltip title="When enabled this feature will managed you map rotation automatically. To display the voting options to the players you must set one of the 'votemap_' variables in your automatic broadcasts">
-                <HelpIcon fontSize="small" />
-              </Tooltip>
-            </Typography>
-          </Grid>
-        </Grid>
-        <Grid container className={classes.paper} xs={12}>
-          <VoteMapConfig />
-        </Grid>
-        <Grid container className={classes.paddingTop} justify="center">
-          <Grid item xs={12}>
-            <Typography variant="h5">Map rotation</Typography>
-
-            <MapRotation classes={classes} />
-            <Typography variant="h5">Map rotation settings</Typography>
-
-            <MapRotationSettings classes={classes} />
-          </Grid>
-        </Grid>
         <Grid item xs={12}>
           <ProfanityFiler
             words={profanities}

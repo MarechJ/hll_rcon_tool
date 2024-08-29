@@ -1,9 +1,9 @@
 import * as React from "react";
-import {get, handle_http_errors, postData, showResponse,} from "../../utils/fetchUtils";
+import {get, handle_http_errors, postData, showResponse,} from "../../../utils/fetchUtils";
 import {Grid, Typography} from "@material-ui/core";
-import Padlock from "../SettingsView/padlock";
+import Padlock from "../../shared/padlock";
 
-const MapRotationSettings = ({classes}) => {
+const MapRotationSettings = () => {
   const [shuffleEnabled, setShuffleEnabled] = React.useState(false);
 
   const loadToState = (command, showSuccess, stateSetter) => {

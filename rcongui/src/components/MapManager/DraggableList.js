@@ -4,16 +4,17 @@ import {
   DragDropContext,
   Droppable,
 } from "react-beautiful-dnd";
+import { List } from "@material-ui/core";
 
 const DraggableList = React.memo(({ items, onDragEnd, onRemove }) => {
   return (
     <DragDropContext onDragEnd={onDragEnd}>
       <Droppable droppableId="droppable-list">
         {(provided) => (
-          <div
+          <List
+            dense={true}
             ref={provided.innerRef}
             {...provided.droppableProps}
-            style={{ "list-style-type": "none" }}
           >
             {items.map((item, index) => (
               <DraggableListItem
@@ -24,7 +25,7 @@ const DraggableList = React.memo(({ items, onDragEnd, onRemove }) => {
               />
             ))}
             {provided.placeholder}
-          </div>
+          </List>
         )}
       </Droppable>
     </DragDropContext>
