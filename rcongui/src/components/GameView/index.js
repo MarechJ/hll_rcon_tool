@@ -561,9 +561,12 @@ const GameView = ({ classes: globalClasses }) => {
   };
 
   function blacklistManyPlayers(payload) {
-    const filteredPlayers = playerNamesToPlayerId?.filter(p => p !== undefined).toJS();
+    const playersToBlacklist = selectedPlayers
+    .toJS()
+    .map(playerName => playerNamesToPlayerId.get(playerName))
+    .filter(p => p !== undefined)
 
-    Promise.allSettled(Object.entries(filteredPlayers).map(([_, playerId]) => (
+    Promise.allSettled(playersToBlacklist.map((playerId) => (
       addPlayerToBlacklist({
         ...payload,
         playerId,
@@ -579,12 +582,13 @@ const GameView = ({ classes: globalClasses }) => {
   }
 
   function selectedPlayersToRows() {
-    const filteredPlayers = playerNamesToPlayerId?.filter(p => p !== undefined).toJS();
-    const selected = []
-    for (const [player, id] of Object.entries(filteredPlayers)) {
-      selected.push(`${player} -> ${id}`)
-    }
-    return selected.join(",\n")
+    return selectedPlayers
+    .toJS()
+    .filter(p => playerNamesToPlayerId.get(p) !== undefined)
+    .map(player => {
+      const id = playerNamesToPlayerId.get(player)
+      return `${player} -> ${id}`
+    }).join(",\n")
   }
 
   return (
