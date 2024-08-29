@@ -362,6 +362,9 @@ class LiveStats(BaseStats):
 
 
 class TimeWindowStats(BaseStats):
+    def __init__(self):
+        self.match_end_result_regex = re.compile("MATCH ENDED `.+` ALLIED \((\d) - (\d)\) AXIS")
+
     def _set_start_end_times(
         self, player, players_times, log, from_, offset_warmup_time_seconds=180
     ):
@@ -518,6 +521,23 @@ class TimeWindowStats(BaseStats):
             return self._get_players_stats_for_logs(
                 [row.compatible_dict() for row in rows], from_, until
             )
+
+    def map_result(self, from_, until, server_number=None) -> dict[str, int]:
+        server_number = server_number or os.getenv("SERVER_NUMBER")
+        with enter_session() as sess:
+            rows = get_historical_logs_records(
+                sess,
+                action="MATCH ENDED",
+                from_=from_,
+                till=until,
+                time_sort="asc",
+                server_filter=server_number,
+                limit=1,
+            )
+            if len(rows) == 0:
+                return {'Allied': 2, 'Axis': 2}
+            (allied, axis) = self.match_end_result_regex.match(rows[0].compatible_dict().get('message')).groups()
+            return {'Allied': int(allied), 'Axis': int(axis)}
 
     def get_players_stats_from_time(self, from_timestamp):
         logs = get_recent_logs(min_timestamp=from_timestamp)

@@ -439,6 +439,7 @@ class MapsType(TypedDict):
     end: Optional[datetime.datetime]
     server_number: Optional[int]
     map_name: str
+    result: Optional[dict[str, int]]
     player_stats: List[PlayerStatsType]
 
 
@@ -477,6 +478,14 @@ class AuditLogType(TypedDict):
     command: str
     command_arguments: Optional[str]
     command_result: Optional[str]
+
+
+class PlayerActionState(enum.Enum):
+    KICK = 0
+    PUNISH = 1
+    TEMPBAN = 2
+    PERMABAN = 3
+    MESSAGE = 4
 
 
 class PenaltyCountType(TypedDict):

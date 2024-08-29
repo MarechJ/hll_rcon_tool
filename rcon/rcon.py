@@ -16,11 +16,7 @@ from rcon.cache_utils import get_redis_client, invalidates, ttl_cache
 from rcon.commands import SUCCESS, CommandFailedError, ServerCtl, VipId
 from rcon.maps import UNKNOWN_MAP_NAME, Layer, is_server_loading_map, parse_layer
 from rcon.models import PlayerID, PlayerVIP, enter_session
-from rcon.player_history import (
-    get_profiles,
-    safe_save_player_action,
-    save_player,
-)
+from rcon.player_history import get_profiles, safe_save_player_action, save_player
 from rcon.settings import SERVER_INFO
 from rcon.types import (
     AdminType,
@@ -31,6 +27,7 @@ from rcon.types import (
     GetDetailedPlayers,
     GetPlayersType,
     ParsedLogsType,
+    PlayerActionState,
     ServerInfoType,
     SlotsType,
     StatusType,
@@ -743,7 +740,7 @@ class Rcon(ServerCtl):
             safe_save_player_action(
                 rcon=self,
                 player_name=player_name,
-                action_type="MESSAGE",
+                action_type=PlayerActionState.MESSAGE,
                 reason=message,
                 by=by,
                 player_id=player_id,
@@ -1138,7 +1135,7 @@ class Rcon(ServerCtl):
         safe_save_player_action(
             rcon=self,
             player_name=player_name,
-            action_type="PUNISH",
+            action_type=PlayerActionState.PUNISH,
             reason=reason,
             by=by,
         )
@@ -1157,7 +1154,7 @@ class Rcon(ServerCtl):
         safe_save_player_action(
             rcon=self,
             player_name=player_name,
-            action_type="KICK",
+            action_type=PlayerActionState.KICK,
             reason=reason,
             by=by,
             player_id=player_id,
@@ -1184,7 +1181,7 @@ class Rcon(ServerCtl):
             safe_save_player_action(
                 rcon=self,
                 player_name=player_name,
-                action_type="TEMPBAN",
+                action_type=PlayerActionState.TEMPBAN,
                 reason=reason,
                 by=by,
                 player_id=player_id,
@@ -1214,7 +1211,7 @@ class Rcon(ServerCtl):
             safe_save_player_action(
                 rcon=self,
                 player_name=player_name,
-                action_type="PERMABAN",
+                action_type=PlayerActionState.PERMABAN,
                 reason=reason,
                 by=by,
                 player_id=player_id,

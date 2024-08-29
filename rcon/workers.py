@@ -140,6 +140,8 @@ def record_stats_from_map(
     player_stats = stats.get_players_stats_at_time(
         from_=map_.start, until=map_.end, server_number=str(map_.server_number)
     )
+    map_.result = stats.map_result(from_=map_.start, until=map_.end, server_number=str(map_.server_number))
+    sess.add(map_)
 
     seen_players: Set[str] = set()
     for player, stats in player_stats.items():

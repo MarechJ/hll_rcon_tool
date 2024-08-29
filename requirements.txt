@@ -1,5 +1,5 @@
 Click==8.1.7
-Django==4.2.10
+Django==4.2.15
 django-cors-headers==4.4.0
 redis==5.0.4
 sqlalchemy==2.0.30
@@ -14,7 +14,7 @@ discord-webhook[async]
 requests==2.32.2
 steam==1.4.4
 # Alembic does not use semantic versioning, so be careful with the version numbers https://alembic.sqlalchemy.org/en/latest/front.html#versioning-scheme
-alembic==1.13.1
+alembic==1.13.2
 rq==1.16.2
 rq-scheduler==0.13.1
 paramiko==3.4.0

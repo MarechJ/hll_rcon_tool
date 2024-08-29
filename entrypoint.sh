@@ -8,6 +8,12 @@ env
 if [ "$1" == 'maintenance' ] 
 then
   alembic upgrade head
+  # Convert old stye player IDs to new style (md5 hash)
+  # TODO: we can eventually remove this in a few releases once old installs have updated their game servers and CRCON
+  # SERVER_NUMBER is mandatory and not otherwise set in the maintenance container; only want it to run once
+  # LOGGING_PATH and LOGGING_FILENAME need to be passed to get it to log to the directory that is bind mounted
+  SERVER_NUMBER=1 LOGGING_PATH=/logs/ LOGGING_FILENAME=startup.log python -m rcon.cli merge_duplicate_player_ids
+  SERVER_NUMBER=1 LOGGING_PATH=/logs/ LOGGING_FILENAME=startup.log python -m rcon.cli convert_win_player_ids
   cd rconweb 
   ./manage.py makemigrations --no-input
   ./manage.py migrate --noinput

@@ -63,7 +63,7 @@ const NamePopOver = ({ names }) => {
   return (
     <Grid item>
       <Button endIcon={<ExpandMore />} onClick={handleClick}>
-        <Typography variant="h3">{names[0].name}</Typography>
+        <Typography variant="h3">{names.length ? names[0].name : "Player has no recorded names"}</Typography>
       </Button>
       <Popover
         id={id}
@@ -207,7 +207,7 @@ const PlayerInfo = ({ classes }) => {
    */
   const fetchPlayer = (playerId) => {
     get(`get_player_profile?player_id=${playerId}`)
-      .then((response) => showResponse(response, "get_user", false))
+      .then((response) => showResponse(response, "get_player_profile", false))
       .then((data) => {
         if (
           data.result !== undefined &&
