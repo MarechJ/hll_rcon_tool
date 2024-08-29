@@ -689,7 +689,9 @@ class RconAPI(Rcon):
         reset_to_default: bool = False,
         **kwargs,
     ) -> bool:
-        return self._validate_user_config(
+        old_config = VoteMapUserConfig.load_from_db()
+
+        res = self._validate_user_config(
             by=by,
             command_name=inspect.currentframe().f_code.co_name,  # type: ignore
             model=VoteMapUserConfig,
@@ -697,6 +699,14 @@ class RconAPI(Rcon):
             dry_run=False,
             reset_to_default=reset_to_default,
         )
+
+        new_config = VoteMapUserConfig.load_from_db()
+
+        # on -> off or off -> on
+        if old_config.enabled != new_config:
+            self.reset_votemap_state()
+
+        return True
 
     def get_auto_broadcasts_config(self) -> AutoBroadcastUserConfig:
         return AutoBroadcastUserConfig.load_from_db()
