@@ -34,7 +34,7 @@ export const getCountry = (country) => {
   );
 };
 
-export const PlayerHeader = pure(({ classes, player }) => {
+export const PlayerHeader = pure(({ player }) => {
   const [showAll, setShowAll] = React.useState(false);
   const hasMultipleName = player.get("names") && player.get("names").size > 1;
 

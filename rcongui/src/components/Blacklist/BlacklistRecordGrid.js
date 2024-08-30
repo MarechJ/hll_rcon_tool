@@ -31,14 +31,16 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const BlacklistRecordTile = ({
-  classes,
   record,
   onEdit,
   onExpire,
   onDelete,
 }) => {
   const [showAll, setShowAll] = React.useState(false);
-  const myClasses = useStyles();
+  const [isExpired, setIsExpired] = React.useState(!record.get("is_active"));
+  const [expiresAt, setExpiresAt] = React.useState(
+    record.get("expires_at") ? moment(record.get("expires_at")) : null
+  );
 
   const expiresAt = record.get("expires_at") ? moment(record.get("expires_at")) : null
   const isExpired = !record.get("is_active")
@@ -72,7 +74,6 @@ const BlacklistRecordTile = ({
   return (
     <Grid
       container
-      className={myClasses.paperTile}
       style={isExpired ? { background: "linear-gradient(rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.05))" } : {}}
       direction="column"
       justify="space-between"
@@ -206,13 +207,13 @@ const BlacklistRecordTile = ({
         container
         justify="space-between"
         spacing={0}
-        className={classes.noPaddingMargin}
+        
       >
         <Grid
           container
           justify="space-around"
           spacing={0}
-          className={classes.noPaddingMargin}
+          
         >
           <Grid item>
             <Tooltip title={createdAt.format("LLLL")} arrow>
@@ -252,7 +253,6 @@ const BlacklistRecordTile = ({
 
 const BlacklistRecordGrid = withWidth()(
   ({
-    classes,
     blacklists,
     records,
     onRefresh,
@@ -330,7 +330,7 @@ const BlacklistRecordGrid = withWidth()(
                     key={record.get("id")}
                   >
                     <BlacklistRecordTile
-                      classes={classes}
+                      
                       record={record}
                       onEdit={onEditRecord}
                       onExpire={onExpireRecord}

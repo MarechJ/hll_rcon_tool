@@ -1,7 +1,6 @@
 import {
   Grid,
   Typography,
-  makeStyles,
   GridList,
   GridListTile,
   GridListTileBar,
@@ -15,86 +14,14 @@ import React from "react";
 import { get, handle_http_errors, showResponse } from "../../utils/fetchUtils";
 import { List as iList, Map, fromJS, List } from "immutable";
 import moment from "moment";
-import { useTheme } from "@material-ui/core/styles";
 import Scores from "./Scores";
-import { fade } from "@material-ui/core/styles/colorManipulator";
 import { CopyToClipboard } from "react-copy-to-clipboard";
 import { useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 
-const useStyles = makeStyles((theme) => ({
-  singleLine: {
-    display: "flex",
-    flexWrap: "wrap",
-    justifyContent: "space-around",
-    overflow: "hidden",
-  },
-  transparentPaper: {
-    backgroundColor: fade(theme.palette.background.paper, 0.6),
-    borderRadius: "0px",
-  },
-  clickable: {
-    cursor: "pointer",
-  },
-  gridList: {
-    flexWrap: "nowrap",
-    // Promote the list into his own layer on Chrome. This cost memory but helps keeping high FPS.
-    transform: "translateZ(0)",
-  },
-  selectedMap: {
-    color: theme.palette.secondary.main,
-  },
-  titleBar: {
-    background:
-      "linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 70%, rgba(0,0,0,0) 100%)",
-  },
-  titleBarTop: {
-    background:
-      "linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 70%, rgba(0,0,0,0) 100%)",
-  },
-  selectedTitleBar: {
-    background:
-      "linear-gradient(to top, rgba(244,123,0,0.3) 0%, rgba(0,0,0,0)  70%, rgba(0,0,0,0) 100%)",
-  },
-  selectedTitleBarTop: {
-    background:
-      "linear-gradient(to bottom, rgba(244,123,0,0.3) 0%, rgba(0,0,0,0) 70%, rgba(0,0,0,0) 100%)",
-  },
-  paper: {
-    backgroundColor: theme.palette.background.paper,
-  },
-  root: {
-    display: "flex",
-  },
-  details: {
-    display: "flex",
-    flexDirection: "column",
-  },
-  content: {
-    flex: "1 0 auto",
-  },
-  cover: {
-    width: 200,
-  },
-  controls: {
-    display: "flex",
-    alignItems: "center",
-    paddingLeft: theme.spacing(1),
-    paddingBottom: theme.spacing(1),
-  },
-  playIcon: {
-    height: 38,
-    width: 38,
-  },
-  black: {
-    backgroundColor: theme.palette.primary.main,
-  },
-}));
-
-const GamesScore = ({ classes }) => {
+const GamesScore = () => {
   let { slug } = useParams();
   slug = parseInt(slug);
-  const styles = useStyles();
   const [scores, setScores] = React.useState(new iList());
   const [serverState, setServerState] = React.useState(new Map());
   const [isLoading, setIsLoading] = React.useState(true);
@@ -105,11 +32,6 @@ const GamesScore = ({ classes }) => {
   const [mapsTotal, setMapsTotal] = React.useState(0);
 
   const refreshIntervalSec = 10;
-  const theme = useTheme();
-  const sm = useMediaQuery(theme.breakpoints.up("sm"));
-  const md = useMediaQuery(theme.breakpoints.up("md"));
-  const lg = useMediaQuery(theme.breakpoints.up("lg"));
-  const xl = useMediaQuery(theme.breakpoints.up("xl"));
   const durationToHour = (val) =>
     new Date(val * 1000).toISOString().substr(11, 5);
 
@@ -193,15 +115,15 @@ const GamesScore = ({ classes }) => {
         container
         spacing={2}
         justify="center"
-        className={classes.gridContainer}
+        
       >
-        <Grid item xs={12} className={styles.transparentPaper}>
+        <Grid item xs={12}>
           <Typography color="secondary" variant="h4">
             {serverState.get("name", new Map()).get("name")}
           </Typography>
         </Grid>
         {!maps.size ? (
-          <Grid item className={styles.paper}>
+          <Grid item>
             <Typography variant="h2">No games recorded yet</Typography>
           </Grid>
         ) : (
@@ -211,21 +133,10 @@ const GamesScore = ({ classes }) => {
             </Typography>
           </Grid>
         )}
-        <Grid item xs={12} className={`${classes.doublePadding}`}>
-          <div className={styles.singleLine}>
+        <Grid item xs={12}>
+          <div>
             <GridList
-              cols={
-                xl
-                  ? Math.min(maps.size, 8.5)
-                  : lg
-                  ? Math.min(maps.size, 5.5)
-                  : md
-                  ? Math.min(maps.size, 3.5)
-                  : sm
-                  ? Math.min(maps.size, 2.5)
-                  : Math.min(maps.size, 1.5)
-              }
-              className={styles.gridList}
+              cols={2}
             >
               {maps.map((m) => {
                 const start = moment(m.get("start") + "Z");
@@ -240,7 +151,6 @@ const GamesScore = ({ classes }) => {
                 }
                 return (
                   <GridListTile
-                    className={styles.clickable}
                     onClick={() => doSelectMap(m.get("id"))}
                     key={`${m.get("name")}${m.get("start")}${m.get("end")}`}
                   >
@@ -250,10 +160,6 @@ const GamesScore = ({ classes }) => {
                     />
 
                     <GridListTileBar
-                      className={isSelected(
-                        styles.selectedTitleBarTop,
-                        styles.titleBarTop
-                      )}
                       title={m.get("map", new Map()).get("pretty_name")}
                       subtitle={<>
                         <div>{duration.humanize()}</div>
@@ -262,10 +168,6 @@ const GamesScore = ({ classes }) => {
                       titlePosition="top"
                     />
                     <GridListTileBar
-                      className={isSelected(
-                        styles.selectedTitleBar,
-                        styles.titleBar
-                      )}
                       title={`${start.format("dddd, MMM Do ")}`}
                       subtitle={`Started at: ${start.format("HH:mm")}`}
                       actionIcon={isSelected(
@@ -300,12 +202,11 @@ const GamesScore = ({ classes }) => {
         container
         spacing={2}
         justify="center"
-        className={classes.gridContainer}
+        
       >
         <Scores
-          classes={classes}
+          
           serverState={serverState}
-          styles={styles}
           started={started}
           lastRefresh={lastRefresh}
           refreshIntervalSec={refreshIntervalSec}

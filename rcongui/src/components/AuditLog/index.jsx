@@ -66,7 +66,7 @@ const AuditLogsTable = ({ auditLogs }) => {
   );
 };
 
-const AuditLog = ({ classes }) => {
+const AuditLog = () => {
   const [auditLogs, setAuditLogs] = React.useState(new IList());
   const [usernames, setUsernames] = React.useState(new IList());
   const [commands, setCommands] = React.useState(new IList());
@@ -113,7 +113,6 @@ const AuditLog = ({ classes }) => {
     <Grid
       container
       spacing={2}
-      className={classes.doublePadding}
       justify="flex-start"
       alignItems="center"
     >
@@ -163,11 +162,10 @@ const AuditLog = ({ classes }) => {
           label="Parameters search"
           value={paramSearch}
           onChange={(e) => setParamSearch(e.target.value)}
-          className={classes.marginBottom}
         />
       </Grid>
       <Grid item>
-        <FormControl className={classes.formControl}>
+        <FormControl>
           <InputLabel htmlFor="age-native-simple">Time sort</InputLabel>
           <Select
             native

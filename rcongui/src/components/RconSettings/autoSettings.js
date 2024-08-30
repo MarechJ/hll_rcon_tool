@@ -10,7 +10,6 @@ const AutoSettings = ({
   forward,
   onFowardChange,
   onEditorMount,
-  theme,
 }) => (
   <Grid container>
     <Grid xs={12}>
@@ -24,7 +23,6 @@ const AutoSettings = ({
           tabSize: 2,
         }}
         onMount={onEditorMount}
-        theme={theme}
       />
     </Grid>
     <Grid xs={12}>

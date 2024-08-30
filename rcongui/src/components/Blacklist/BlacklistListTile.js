@@ -12,7 +12,6 @@ import DeleteIcon from "@material-ui/icons/Delete";
 import { SYNC_METHODS } from "./BlacklistListCreateDialog";
 
 const BlacklistListTile = ({
-  classes,
   blacklist,
   servers,
   onEdit,
@@ -29,7 +28,6 @@ const BlacklistListTile = ({
         justify="space-between"
         alignItems="center"
         spacing={2}
-        className={classes.padding}
         style={{paddingLeft: 18}}
       >
         <Grid item>

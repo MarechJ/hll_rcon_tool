@@ -12,7 +12,12 @@ import React from "react";
 import { get, handle_http_errors, postData, showResponse } from "../../utils/fetchUtils";
 import BlacklistListTile from "./BlacklistListTile";
 import BlacklistListCreateDialog, { BlacklistListCreateButton } from "./BlacklistListCreateDialog";
-import { Link } from "react-router-dom";
+const SYNC_METHODS = {
+  kick_only: "Kick Only",
+  ban_on_connect: "Ban On Connect",
+  ban_immediately: "Ban Immediately",
+}
+const BlacklistLists = () => {
 
 const BlacklistLists = ({ classes }) => {
   const [isLoading, setIsLoading] = React.useState(false);
@@ -135,7 +140,7 @@ const BlacklistLists = ({ classes }) => {
 
   return (
     <React.Fragment>
-      <Grid container spacing={3} direction="column" justify="center" className={classes.padding}>
+      <Grid container spacing={3} direction="column" justify="center">
         <Grid item>
           {isLoading ? <LinearProgress color="secondary" /> : ""}
         </Grid>
@@ -143,7 +148,6 @@ const BlacklistLists = ({ classes }) => {
           {blacklists.map((blacklist) => (
             <Grid key={blacklist.id} item style={{ width: "100%", maxWidth: 1600 }}>
               <BlacklistListTile
-                classes={classes}
                 servers={servers}
                 blacklist={blacklist}
                 onEdit={onEditBlacklist}

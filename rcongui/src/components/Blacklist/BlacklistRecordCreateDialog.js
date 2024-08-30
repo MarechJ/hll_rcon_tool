@@ -61,12 +61,6 @@ function BlacklistServerWarning({ blacklist, currentServer }) {
   );
 }
 
-const useStyles = makeStyles((theme) => ({
-  selectEmpty: {
-    marginTop: theme.spacing(2.7),
-  },
-}));
-
 export default function BlacklistRecordCreateDialog({
   open,
   setOpen,
@@ -85,7 +79,6 @@ export default function BlacklistRecordCreateDialog({
   const [currentServer, setCurrentServer] = React.useState({});
   const [punishMessages, setPunishMessages] = React.useState([]);
   const [selectedMessage, setSelectedMessage] = React.useState("");
-  const classes = useStyles();
 
   const handlePunishMessageChange = (event) => {
     setSelectedMessage(event.target.value ?? "");
@@ -222,20 +215,30 @@ export default function BlacklistRecordCreateDialog({
                   variant="standard"
                 />
               </Grid>
-              <Grid item xs={12}>
-                {presetTimes.map(([amount, unit], index) => (
-                  <TimePickerButtons
-                    key={unit + index}
-                    amount={amount}
-                    unit={unit}
-                    expirationTimestamp={expiresAt}
-                    setExpirationTimestamp={(timestamp) => {
-                      setExpiresAt(
-                        moment(timestamp).format("YYYY-MM-DDTHH:mm")
-                      );
-                    }}
-                  />
-                ))}
+              <Grid item xs={4}>
+                <Select
+                  value={""}
+                  onChange={(e) => {
+                    e.target.value
+                      ? setExpiresAt(
+                          moment()
+                            .add(e.target.value, "seconds")
+                            .format("YYYY-MM-DDTHH:mm")
+                        )
+                      : setExpiresAt("");
+                  }}
+                  fullWidth
+                  displayEmpty
+                >
+                  <MenuItem value="">
+                    <em>Preset Times</em>
+                  </MenuItem>
+                  {presetTimes.map(({ value, label }) => (
+                    <MenuItem key={label} value={value}>
+                      {label}
+                    </MenuItem>
+                  ))}
+                </Select>
               </Grid>
             </Grid>
             {/* REASON */}
@@ -266,7 +269,6 @@ export default function BlacklistRecordCreateDialog({
                   inputProps={{ "aria-label": "Saved Messages" }}
                   fullWidth
                   displayEmpty
-                  className={classes.selectEmpty}
                 >
                   <MenuItem value="">
                     <em>Saved Messages</em>

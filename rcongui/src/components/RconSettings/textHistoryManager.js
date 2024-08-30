@@ -63,7 +63,7 @@ class TextHistoryList extends React.Component {
   }
 }
 
-const TextHistoryManager = ({ classes }) => {
+const TextHistoryManager = () => {
   const [namespace, setNamespace] = React.useState("");
   const nameSpaces = getAllNamespaces();
 
@@ -78,12 +78,12 @@ const TextHistoryManager = ({ classes }) => {
               values={nameSpaces}
             />
           </Grid>
-          <Grid xs={12} className={classes.padding}>
+          <Grid xs={12}>
             <TextHistoryList namespace={namespace} />
           </Grid>
         </React.Fragment>
       ) : (
-        <Grid xs={12} className={classes.padding}>
+        <Grid xs={12}>
           No text recorded yet
         </Grid>
       )}

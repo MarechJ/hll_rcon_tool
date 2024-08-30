@@ -43,7 +43,6 @@ class Blacklist extends React.Component {
 
   render() {
     const { playerId, name, reason, sharedMessages } = this.state;
-    const { classes } = this.props;
     const textHistory = new TextHistory("punishments");
 
     return (
@@ -59,7 +58,6 @@ class Blacklist extends React.Component {
         tooltipText="Blacklisted players will instantly be banned when entering the server."
         onSubmit={this.blacklistPlayer}
         actionName="Blacklist"
-        classes={classes}
       />
     );
   }

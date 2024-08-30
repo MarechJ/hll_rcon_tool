@@ -15,8 +15,8 @@ import {
 import DeleteIcon from "@material-ui/icons/Delete";
 import AddIcon from "@material-ui/icons/Add";
 
-const AdminRole = ({ classes, role, setRole, roles }) => (
-  <FormControl className={classes.formControl}>
+const AdminRole = ({ role, setRole, roles }) => (
+  <FormControl >
     <InputLabel shrink>Role</InputLabel>
     <Select value={role} onChange={(e) => setRole(e.target.value)} displayEmpty>
       {roles.map((r) => (
@@ -27,7 +27,6 @@ const AdminRole = ({ classes, role, setRole, roles }) => (
 );
 
 const AddAdminItem = ({
-  classes,
   name,
   setName,
   playerId,
@@ -39,7 +38,7 @@ const AddAdminItem = ({
 }) => (
   <ListItem>
     <Grid container>
-      <Grid item xs={4} className={classes.paddingRight}>
+      <Grid item xs={4} >
         <TextField
           InputLabelProps={{
             shrink: true,
@@ -49,7 +48,7 @@ const AddAdminItem = ({
           onChange={(e) => setName(e.target.value)}
         />
       </Grid>
-      <Grid item xs={4} className={classes.paddingLeft}>
+      <Grid item xs={4} >
         <TextField
           InputLabelProps={{
             shrink: true,
@@ -59,9 +58,9 @@ const AddAdminItem = ({
           onChange={(e) => setPlayerId(e.target.value)}
         />
       </Grid>
-      <Grid item xs={4} className={classes.paddingLeft}>
+      <Grid item xs={4} >
         <AdminRole
-          classes={classes}
+          
           role={role}
           setRole={setRole}
           roles={roles}
@@ -87,7 +86,6 @@ const AddAdminItem = ({
 );
 
 const AdminsEditableList = ({
-  classes,
   peopleList,
   roles,
   onDelete,
@@ -101,7 +99,7 @@ const AdminsEditableList = ({
     <React.Fragment>
       <List dense>
         <AddAdminItem
-          classes={classes}
+          
           name={name}
           setName={setName}
           playerId={playerId}
@@ -129,7 +127,7 @@ const AdminsEditableList = ({
           </ListItem>
         ))}
         <AddAdminItem
-          classes={classes}
+          
           name={name}
           setName={setName}
           playerId={playerId}

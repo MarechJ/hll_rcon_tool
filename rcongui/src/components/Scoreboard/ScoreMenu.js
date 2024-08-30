@@ -2,14 +2,14 @@ import React from "react";
 import { AppBar, Link, Toolbar } from "@material-ui/core";
 import { Link as RouterLink } from "react-router-dom";
 
-const ScoreMenu = ({ classes }) => (
+const ScoreMenu = () => (
   <AppBar position="static">
     <Toolbar>
-      <nav className={classes.title}>
+      <nav >
         <Link
           variant="button"
           color="inherit"
-          className={classes.firstLink}
+          
           component={RouterLink}
           to="/"
         >
@@ -18,7 +18,7 @@ const ScoreMenu = ({ classes }) => (
         <Link
           variant="button"
           color="inherit"
-          className={classes.firstLink}
+          
           component={RouterLink}
           to="/livescore"
         >
@@ -27,7 +27,7 @@ const ScoreMenu = ({ classes }) => (
         <Link
           variant="button"
           color="inherit"
-          className={classes.firstLink}
+          
           component={RouterLink}
           to="/gamescoreboard"
         >

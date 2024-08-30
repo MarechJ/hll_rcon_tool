@@ -27,11 +27,10 @@ export const Penalites = ({ player }) => (
   </div>
 );
 
-export const PlayerPenalties = ({ classes, player }) => (
+export const PlayerPenalties = ({ player }) => (
   <Grid container>
-    <Grid item xs={12} className={classes.paddingBottom}>
+    <Grid item xs={12}>
       <WithPopver
-        classes={classes}
         popoverContent={<Penalites player={player} />}
       >
         <small>

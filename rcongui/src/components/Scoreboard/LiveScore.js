@@ -4,7 +4,6 @@ import {
   Grid,
   Toolbar,
   Typography,
-  makeStyles,
   LinearProgress,
   GridList,
   GridListTile,
@@ -15,58 +14,11 @@ import { get, handle_http_errors, showResponse } from "../../utils/fetchUtils";
 import { List as iList, Map, fromJS } from "immutable";
 import moment from "moment";
 import useMediaQuery from "@material-ui/core/useMediaQuery";
-import { useTheme } from "@material-ui/core/styles";
 import Scores from "./Scores";
-import { fade } from "@material-ui/core/styles/colorManipulator";
 import { Link as RouterLink } from "react-router-dom";
 
-const useStyles = makeStyles((theme) => ({
-  padRight: {
-    paddingRight: theme.spacing(1),
-  },
-  paper: {
-    backgroundColor: theme.palette.background.paper,
-  },
-  transparentPaper: {
-    backgroundColor: fade(theme.palette.background.paper, 0.6),
-    borderRadius: "0px",
-  },
-  root: {
-    display: "flex",
-  },
-  details: {
-    display: "flex",
-    flexDirection: "column",
-  },
-  content: {
-    flex: "1 0 auto",
-  },
-  cover: {
-    width: 200,
-  },
-  controls: {
-    display: "flex",
-    alignItems: "center",
-    paddingLeft: theme.spacing(1),
-    paddingBottom: theme.spacing(1),
-  },
-  playIcon: {
-    height: 38,
-    width: 38,
-  },
-  titleBar: {
-    background:
-      "linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 70%, rgba(0,0,0,0) 100%)",
-  },
-  titleBarTop: {
-    background:
-      "linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 70%, rgba(0,0,0,0) 100%)",
-  },
-}));
-
-const LiveSessionScore = ({ classes }) => (
+const LiveSessionScore = () => (
   <LiveScore
-    classes={classes}
     endpoint="get_live_scoreboard"
     title="LIVE SESSIONS"
     explainText={
@@ -97,9 +49,8 @@ const LiveSessionScore = ({ classes }) => (
   />
 );
 
-const LiveGameScore = ({ classes }) => (
+const LiveGameScore = () => (
   <LiveScore
-    classes={classes}
     endpoint="get_live_game_stats"
     title="CURRENT GAME"
     explainText={
@@ -129,8 +80,7 @@ const LiveGameScore = ({ classes }) => (
   />
 );
 
-const LiveScore = ({ classes, endpoint, explainText, title }) => {
-  const styles = useStyles();
+const LiveScore = ({ endpoint, explainText, title }) => {
   const [stats, setStats] = React.useState(new iList());
   const [serverState, setServerState] = React.useState(new Map());
   const [isLoading, setIsLoading] = React.useState(true);
@@ -184,12 +134,10 @@ const LiveScore = ({ classes, endpoint, explainText, title }) => {
         container
         spacing={2}
         justify="center"
-        className={classes.gridContainer}
       >
         <Grid
           item
           xs={12}
-          className={`${classes.doublePadding} ${styles.transparentPaper}`}
         >
           {process.env.REACT_APP_PUBLIC_BUILD ? (
             <Typography color="secondary" variant="h4">
@@ -214,12 +162,9 @@ const LiveScore = ({ classes, endpoint, explainText, title }) => {
             md={10}
             lg={10}
             xl={8}
-            className={classes.doublePadding}
           >
             <LiveHeader
-              classes={classes}
               serverState={serverState}
-              styles={styles}
               started={started}
               lastRefresh={lastRefresh}
               refreshIntervalSec={refreshIntervalSec}
@@ -238,12 +183,11 @@ const LiveScore = ({ classes, endpoint, explainText, title }) => {
         container
         spacing={2}
         justify="center"
-        className={classes.gridContainer}
+        
       >
         <Scores
-          classes={classes}
+          
           serverState={serverState}
-          styles={styles}
           started={started}
           lastRefresh={lastRefresh}
           refreshIntervalSec={refreshIntervalSec}
@@ -260,9 +204,7 @@ const LiveScore = ({ classes, endpoint, explainText, title }) => {
 };
 
 const LiveHeader = ({
-  classes,
   serverState,
-  styles,
   started,
   lastRefresh,
   refreshIntervalSec,
@@ -272,8 +214,6 @@ const LiveHeader = ({
   explainText,
   title,
 }) => {
-  const theme = useTheme();
-  const isXs = useMediaQuery(theme.breakpoints.down("sm"));
   const nextMapString = React.useMemo(() => {
     const [map, nbVotes] = serverState
       .get("vote_status")
@@ -290,10 +230,10 @@ const LiveHeader = ({
 
   return (
     <AppBar position="relative" style={{ minHeight: "144px" }}>
-      <Toolbar className={classes.doublePadding}>
-        <GridList cols={isXs ? 1 : 2}>
+      <Toolbar>
+        <GridList cols={1}>
           <GridListTile>
-            <Grid container spacing={1} className={styles.padRight}>
+            <Grid container spacing={1}>
               <Grid item xs={12}>
                 <Typography variant="h4" display="inline" color="inherit">
                   {title}
@@ -314,7 +254,7 @@ const LiveHeader = ({
               <Grid item xs={12}>
                 <LinearProgress
                   style={{ visibility: isLoading ? "visible" : "hidden" }}
-                  className={classes.grow}
+                  
                   color="secondary"
                 />
               </Grid>
@@ -329,7 +269,6 @@ const LiveHeader = ({
                 ?.get("image_name", "unknown.webp")}`}
             />
             <GridListTileBar
-              className={styles.titleBarTop}
               title={serverState
                 .get("current_map", new Map())
                 .get("map", new Map())
@@ -338,7 +277,6 @@ const LiveHeader = ({
               titlePosition="top"
             />
             <GridListTileBar
-              className={styles.titleBarBottom}
               title={`Elapsed: ${started} - Players: ${serverState.get(
                 "player_count"
               )}/${serverState.get("max_player_count")}`}

@@ -7,28 +7,12 @@ import {
   Chip,
   Drawer,
   Grid,
-  makeStyles,
   TextField,
 } from "@material-ui/core";
 import IconButton from "@material-ui/core/IconButton";
 import Typography from "@material-ui/core/Typography";
 import moment from "moment";
 
-const useStyles = makeStyles((theme) => ({
-  message: {
-    whiteSpace: "pre-wrap",
-    marginTop: "5px",
-    marginBottom: "5px",
-  },
-  date: {
-    color: theme.palette.disabledColor,
-  },
-  padding: {
-    padding: theme.spacing(1),
-    overflow: "auto",
-    maxHeight: "68vh",
-  },
-}));
 
 const AlwaysScrollToBottom = () => {
   const elementRef = useRef();
@@ -37,7 +21,6 @@ const AlwaysScrollToBottom = () => {
 };
 
 const ChatContent = ({ data, handleMessageSend }) => {
-  const classes = useStyles();
   const [comment, setComment] = React.useState("");
 
   return (
@@ -49,7 +32,6 @@ const ChatContent = ({ data, handleMessageSend }) => {
           alignContent="flex-start"
           alignItems="flex-end"
           direction="column"
-          className={classes.padding}
           wrap="nowrap"
         >
           {data?.map((message, index) => {
@@ -68,7 +50,7 @@ const ChatContent = ({ data, handleMessageSend }) => {
                       color="primary"
                       variant="default"
                       label={
-                        <Typography align="left" className={classes.message}>
+                        <Typography align="left" >
                           {message.content}
                         </Typography>
                       }
@@ -78,7 +60,7 @@ const ChatContent = ({ data, handleMessageSend }) => {
                     <Typography
                       variant="caption"
                       display="block"
-                      className={classes.date}
+                      
                       color="textSecondary"
                     >
                       {moment
@@ -98,7 +80,7 @@ const ChatContent = ({ data, handleMessageSend }) => {
           justify="flex-start"
           alignContent="flex-start"
           alignItems="center"
-          className={classes.padding}
+          
         >
           <Grid item xs={10}>
             <TextField
@@ -133,7 +115,6 @@ const ChatContent = ({ data, handleMessageSend }) => {
 };
 
 const ChatWidget = ({ data, handleMessageSend }) => {
-  const classes = useStyles();
   const [open, setOpen] = useState(false);
 
   const handleChange = (reason) => {
@@ -144,9 +125,9 @@ const ChatWidget = ({ data, handleMessageSend }) => {
   };
   // TODO replace with builtin speeddial from MUI
   return (
-    <div className={classes.chatPosition}>
+    <div >
       <Badge color="secondary" overlap="circle" badgeContent={data?.length}>
-        <Grid container className={classes.shape}>
+        <Grid container >
           <IconButton onClick={handleChange}>
             <Comment style={{ color: "white" }} />
           </IconButton>
@@ -156,7 +137,7 @@ const ChatWidget = ({ data, handleMessageSend }) => {
         <ChatContent
           data={data}
           handleMessageSend={handleMessageSend}
-          classes={classes}
+          
         />
       </Drawer>
     </div>

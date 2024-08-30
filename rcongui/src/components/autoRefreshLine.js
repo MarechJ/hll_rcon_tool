@@ -3,7 +3,6 @@ import LinearProgress from "@material-ui/core/LinearProgress";
 
 const AutoRefreshLine = ({
   intervalFunction,
-  classes,
   execEveryMs,
   statusRefreshIntervalMs = 1000,
 }) => {
@@ -35,7 +34,7 @@ const AutoRefreshLine = ({
       <LinearProgress
         variant="determinate"
         value={completed}
-        className={classes.marginBottom}
+        
       />
     </React.Fragment>
   );

@@ -16,7 +16,6 @@ import { getSharedMessages } from "../../utils/fetchUtils";
 
 const Reason = ({
   handleMessageChange,
-  extraClasses,
   helperText = "Leave blank if you want a confirmation popup",
   message,
   label = "In Game Message/Punish/Kick/Ban message",
@@ -38,7 +37,6 @@ const Reason = ({
       <Autocomplete
         freeSolo
         fullWidth
-        className={extraClasses}
         options={sharedMessages.concat(autoCompletehistory)}
         inputValue={message}
         onInputChange={(e, value) => {
@@ -78,7 +76,6 @@ const Reason = ({
 };
 
 const TextInputBar = ({
-  classes,
   handleChange,
   total,
   showCount,
@@ -91,7 +88,7 @@ const TextInputBar = ({
     <Grid item xs={12} spacing={2}>
       <Grid container justify="flex-start" direction="row" alignItems="center">
         <Grid item xs={12} lg={3}>
-          <FormControl className={classes.formControl}>
+          <FormControl >
             <InputLabel>Sort</InputLabel>
             <Select
               value={sortType}
@@ -116,7 +113,7 @@ const TextInputBar = ({
             <FormHelperText>Sort the player list</FormHelperText>
           </FormControl>
         </Grid>
-        <Grid item xs={12} md={3} className={classes.textLeft}>
+        <Grid item xs={12} md={3} >
           <TextField
             label="Filter"
             helperText={`Showing: ${showCount} / ${total}`}
@@ -126,7 +123,7 @@ const TextInputBar = ({
             }}
           />
         </Grid>
-        <Grid item xs={12} lg={6} className={classes.textLeft}>
+        <Grid item xs={12} lg={6} >
           <Reason handleMessageChange={handleMessageChange} />
         </Grid>
       </Grid>

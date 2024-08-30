@@ -13,7 +13,8 @@ import { Alert } from "@material-ui/lab";
 import { MapAutocomplete } from "../map-autocomplete";
 import MapRotationConfig from "./map-rotation-config";
 
-const MapRotation = ({ maps }) => {
+const MapRotation = () => {
+  const [maps, setMaps] = React.useState([]);
   const [currentRotation, setCurrentRotation] = React.useState([]);
   const [rotation, setRotation] = React.useState([]);
   const [mapsToAdd, setMapsToAdd] = React.useState([]);

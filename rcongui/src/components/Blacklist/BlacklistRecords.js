@@ -1,5 +1,9 @@
-import { Box, Button, Grid, LinearProgress } from "@material-ui/core";
-import useStyles from "../useStyles";
+import {
+  Box,
+  Button,
+  Grid,
+  LinearProgress,
+} from "@material-ui/core";
 import BlacklistRecordsSearch from "./BlacklistRecordsSearch";
 import React from "react";
 import {
@@ -26,7 +30,7 @@ async function getBlacklistRecords(searchParams) {
   return showResponse(response, "get_blacklist_records")
 }
 
-const MyPagination = ({ classes, pageSize, total, page, setPage }) => (
+const MyPagination = ({ pageSize, total, page, setPage }) => (
   <Pagination
     count={Math.ceil(total / pageSize)}
     page={page}
@@ -35,12 +39,10 @@ const MyPagination = ({ classes, pageSize, total, page, setPage }) => (
     color="standard"
     showFirstButton
     showLastButton
-    className={classes.pagination}
   />
 );
 
-const BlacklistRecords = ({ classes: globalClasses }) => {
-  const classes = useStyles();
+const BlacklistRecords = () => {
   // inital state, first render
   const [isLoading, setIsLoading] = React.useState(true);
   // when fetching loading records
@@ -94,12 +96,7 @@ const BlacklistRecords = ({ classes: globalClasses }) => {
   // If you don't like the loading skeletons, just return `null`
   if (isLoading) {
     return (
-      <Grid
-        container
-        spacing={4}
-        justify="center"
-        className={globalClasses.padding}
-      >
+      <Grid container spacing={4} justify="center">
         <Grid item xl={6} xs={12}>
           <Skeleton variant="rect" height={140} />
         </Grid>
@@ -145,15 +142,9 @@ const BlacklistRecords = ({ classes: globalClasses }) => {
   }
 
   return (
-    <Grid
-      container
-      spacing={4}
-      justify="center"
-      className={globalClasses.padding}
-    >
+    <Grid container spacing={4} justify="center">
       <Grid item xl={6} xs={12}>
         <BlacklistRecordsSearch
-          classes={classes}
           blacklists={blacklists}
           onSearch={setSearchQuery}
           disabled={isLoading || isFetching}
@@ -191,7 +182,6 @@ const BlacklistRecords = ({ classes: globalClasses }) => {
       </Grid>
       <Grid item xs={12}>
         <MyPagination
-          classes={classes}
           pageSize={searchQuery.pageSize}
           page={page}
           setPage={setPage}
@@ -201,15 +191,13 @@ const BlacklistRecords = ({ classes: globalClasses }) => {
       <Grid item xs={12}>
         {isFetching ? <LinearProgress color="secondary" /> : ""}
         <BlacklistRecordGrid
-          classes={classes}
           blacklists={blacklists}
           records={records}
           onRefresh={loadRecords}
         />
       </Grid>
-      <Grid item xs={12} className={classes.padding}>
+      <Grid item xs={12}>
         <MyPagination
-          classes={classes}
           pageSize={searchQuery.pageSize}
           page={page}
           setPage={setPage}

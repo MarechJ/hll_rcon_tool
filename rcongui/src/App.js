@@ -3,7 +3,6 @@ import "./App.css";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import PlayerView from "./components/PlayerView";
-import useStyles from "./components/useStyles";
 import Grid from "@material-ui/core/Grid";
 import Logs from "./components/LogsView/logs";
 import CssBaseline from "@material-ui/core/CssBaseline";
@@ -61,17 +60,17 @@ import BlacklistRecords from "./components/Blacklist/BlacklistRecords";
 import BlacklistLists from "./components/Blacklist/BlacklistLists";
 import { MapManager } from "./components/MapManager/map-manager";
 
-const Live = ({ classes }) => {
+const Live = () => {
   const [mdSize, setMdSize] = React.useState(6);
   const [direction, setDirection] = React.useState("");
   const isFullScreen = () => mdSize !== 6;
   const toggleMdSize = () => (isFullScreen() ? setMdSize(6) : setMdSize(12));
 
   return (
-    <Grid container spacing={1} direction={direction}>
+    <Grid container spacing={1}>
       <Grid item sm={12} md={mdSize}>
         <PlayerView
-          classes={classes}
+          
           onFullScreen={() => {
             setDirection("");
             toggleMdSize();
@@ -81,7 +80,7 @@ const Live = ({ classes }) => {
       </Grid>
       <Grid item sm={12} md={mdSize}>
         <Logs
-          classes={classes}
+          
           onFullScreen={() => {
             direction === "column-reverse"
               ? setDirection("")
@@ -397,12 +396,11 @@ function App() {
     : themes[userTheme]
     ? themes[userTheme]
     : lightTheme;
-  const classes = useStyles();
 
   const Router = isEmbed ? BrowserRouter : HashRouter;
 
   return (
-    <div className={"App"}>
+    <div>
       <ThemeProvider theme={theme}>
         {isEmbed ? "" : <CssBaseline />}
         <ToastContainer />
@@ -410,70 +408,68 @@ function App() {
           {isEmbed ? (
             ""
           ) : !process.env.REACT_APP_PUBLIC_BUILD ? (
-            <Header classes={classes} />
+            <Header  />
           ) : (
-            <ScoreMenu classes={classes} />
+            <ScoreMenu  />
           )}
 
-          <div className={classes.grow}>
-            <Switch>
-              <Route path="/gameview" exact>
-                <GameView classes={classes} />
-              </Route>
-              <Route path="/serverinfo" exact>
-                <ServerInfo classes={classes} />
-              </Route>
-              <Route path="/auditlogs" exact>
-                <AuditLog classes={classes} />
-              </Route>
-              <Route
-                path="/livescore"
-                default={process.env.REACT_APP_PUBLIC_BUILD}
-                exact
-              >
-                <LiveSessionScore classes={classes} />
-              </Route>
-              <Route
-                path={
-                  process.env.REACT_APP_PUBLIC_BUILD ? "/" : "/livegamescore"
-                }
-                default={process.env.REACT_APP_PUBLIC_BUILD}
-                exact
-              >
-                <LiveGameScore classes={classes} />
-              </Route>
-              <Route path="/gamescoreboard/:slug">
-                <GamesScore classes={classes} />
-              </Route>
-              <Route path="/gamescoreboard">
-                <GamesScore classes={classes} />
-              </Route>
-              {!process.env.REACT_APP_PUBLIC_BUILD ? (
-                <React.Fragment>
-                  <Route path="/" exact>
-                    <Live classes={classes} />
-                  </Route>
-                  <Route path="/history">
-                    <Grid container>
-                      <Grid item sm={12} lg={12}>
-                        <PlayersHistory classes={classes} />
-                      </Grid>
+          <Switch>
+            <Route path="/gameview" exact>
+              <GameView  />
+            </Route>
+            <Route path="/serverinfo" exact>
+              <ServerInfo  />
+            </Route>
+            <Route path="/auditlogs" exact>
+              <AuditLog  />
+            </Route>
+            <Route
+              path="/livescore"
+              default={process.env.REACT_APP_PUBLIC_BUILD}
+              exact
+            >
+              <LiveSessionScore  />
+            </Route>
+            <Route
+              path={process.env.REACT_APP_PUBLIC_BUILD ? "/" : "/livegamescore"}
+              default={process.env.REACT_APP_PUBLIC_BUILD}
+              exact
+            >
+              <LiveGameScore  />
+            </Route>
+            <Route path="/gamescoreboard/:slug">
+              <GamesScore  />
+            </Route>
+            <Route path="/gamescoreboard">
+              <GamesScore  />
+            </Route>
+            {!process.env.REACT_APP_PUBLIC_BUILD ? (
+              <React.Fragment>
+                <Route path="/" exact>
+                  <Live  />
+                </Route>
+                <Route path="/history">
+                  <Grid container>
+                    <Grid item sm={12} lg={12}>
+                      <PlayersHistory  />
                     </Grid>
-                  </Route>
-                  <Route path="/player/:playerId">
-                    <Grid container>
-                      <PlayerInfo classes={classes} />
-                    </Grid>
-                  </Route>
+                  </Grid>
+                </Route>
+                <Route path="/player/:playerId">
+                  <Grid container>
+                    <PlayerInfo  />
+                  </Grid>
+                </Route>
+                <Route path="/settings/">
                   <Switch>
                     <Route exact path="/settings">
                       <Grid container>
                         <Grid item sm={12} lg={6}>
-                          <HLLSettings classes={classes} />
+                          <HLLSettings  />
                         </Grid>
                         <Grid item sm={12} lg={6}>
                           <RconSettings
-                            classes={classes}
+                            
                             themeName={userTheme ? userTheme : "Light"}
                             themeNames={Object.keys(themes)}
                             setTheme={setTheme}
@@ -735,15 +731,36 @@ function App() {
                         />
                       </Grid>
                     </Route>
-                    <Route path="/settings/seed-vip">
-                      <Grid container spacing={2}>
-                        <SeedVIP
-                          description="Seed VIP"
-                          getEndpoint="get_seed_vip_config"
-                          setEndpoint="set_seed_vip_config"
-                          validateEndpoint="validate_seed_vip_config"
-                          describeEndpoint="describe_seed_vip_config"
-                        />
+                  </Switch>
+                </Route>
+                <Route path="/services">
+                  <Grid container>
+                    <Grid item sm={12} lg={12}>
+                      <ServicesList  />
+                    </Grid>
+                  </Grid>
+                </Route>
+                <Route path="/logs">
+                  <Grid container>
+                    <Grid item sm={12} lg={12}>
+                      <LogsHistory  />
+                    </Grid>
+                  </Grid>
+                </Route>
+                <Route path="/blacklists">
+                  <Switch>
+                    <Route path="/blacklists/manage">
+                      <Grid container>
+                        <Grid item sm={12} lg={12}>
+                          <BlacklistLists  />
+                        </Grid>
+                      </Grid>
+                    </Route>
+                    <Route path="/blacklists/" exact>
+                      <Grid container>
+                        <Grid item sm={12} lg={12}>
+                          <BlacklistRecords  />
+                        </Grid>
                       </Grid>
                     </Route>
                   </Switch>
@@ -753,12 +770,8 @@ function App() {
                         <ServicesList classes={classes} />
                       </Grid>
                     </Grid>
-                  </Route>
-                  <Route path="/logs">
-                    <Grid container>
-                      <Grid item sm={12} lg={12}>
-                        <LogsHistory classes={classes} />
-                      </Grid>
+                    <Grid item sm={12}>
+                      <PlayersHistory  />
                     </Grid>
                   </Route>
                   <Route path="/blacklists">
@@ -794,14 +807,17 @@ function App() {
                         <LogsHistory classes={classes} />
                       </Grid>
                     </Grid>
-                  </Route>
-                </React.Fragment>
-              ) : (
-                ""
-              )}
-            </Switch>
-          </div>
-          {isEmbed ? "" : <Footer classes={classes} />}
+                    <Grid item sm={12}>
+                      <LogsHistory  />
+                    </Grid>
+                  </Grid>
+                </Route>
+              </React.Fragment>
+            ) : (
+              ""
+            )}
+          </Switch>
+          {isEmbed ? "" : <Footer  />}
         </Router>
       </ThemeProvider>
     </div>

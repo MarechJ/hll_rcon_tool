@@ -9,7 +9,6 @@ import FormHelperText from "@material-ui/core/FormHelperText";
 
 const Unban = ({
   bannedPlayers,
-  classes,
   width,
   handleUnban,
   onReload,
@@ -32,7 +31,6 @@ const Unban = ({
       <DialogContent dividers>
         {bannedPlayers !== null ? (
           <Autocomplete
-            className={classes.marginBottom}
             multiple
             clearOnEscape
             id="tags-outlined"
@@ -53,11 +51,11 @@ const Unban = ({
         ) : (
           "Unable to show bans. Please retry"
         )}
-        <FormHelperText className={classes.paddingBottom}>
+        <FormHelperText >
           Don't forget to remove the Blacklisting as well for permabans
         </FormHelperText>
         <Button
-          className={classes.margin}
+          
           autoFocus
           onClick={onReload}
           variant="outlined"

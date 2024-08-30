@@ -6,7 +6,7 @@ import {
   showResponse,
 } from "../../utils/fetchUtils";
 
-const Footer = ({ classes }) => {
+const Footer = () => {
   const [repoData, setRepoData] = React.useState([]);
   const [apiVersion, setApiVersion] = React.useState("N/A");
 
@@ -29,7 +29,7 @@ const Footer = ({ classes }) => {
 
   return (
     <Grid container>
-      <Grid item className={classes.paddingTop} xs={12}>
+      <Grid item xs={12}>
         <Typography
           color="textSecondary"
           variant="caption"
