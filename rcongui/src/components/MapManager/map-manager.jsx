@@ -6,9 +6,7 @@ import {
   useTheme,
   useMediaQuery,
   Container,
-  makeStyles,
-  Box,
-} from "@material-ui/core";
+} from "@mui/material";
 import { Link, Switch, Route } from "react-router-dom";
 import VoteMapConfig from "./votemap/votemap";
 import MapRotationConfig from "./map-rotation/map-rotation";
@@ -77,16 +75,16 @@ export function MapManager({ match }) {
   }, []);
 
   return (
-    <Container maxWidth="xl" className={classes.container}>
-      <Grid container>
+    (<Container maxWidth="xl" style={{ padding: theme.spacing(2) }}>
+      <Grid container spacing={2}>
         <Grid item xs={12} md={true}>
           <Tabs
             orientation={isMdScreen ? "vertical" : "horizontal"}
             variant={!isMdScreen ? "scrollable" : "fullWidth"}
             value={tabs[location]}
             aria-label="nav tabs example"
-            className={classes.tabs}
-          >
+            scrollButtons
+            allowScrollButtonsMobile>
             <LinkTab label="Map Change" to="change" {...a11yProps(0)} />
             <LinkTab label="Rotation" to="rotation" {...a11yProps(1)} />
             <LinkTab label="Objectives" to="objectives" {...a11yProps(2)} />
@@ -115,7 +113,7 @@ export function MapManager({ match }) {
           </Box>
         </Grid>
       </Grid>
-    </Container>
+    </Container>)
   );
 }
 

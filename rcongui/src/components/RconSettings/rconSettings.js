@@ -6,7 +6,7 @@ import {
   TextField,
   Typography,
   Tooltip,
-} from "@material-ui/core";
+} from "@mui/material";
 import {
   addPlayerToWatchList,
   get,
@@ -21,17 +21,17 @@ import Padlock from "../shared/padlock";
 import TextHistoryManager, { SelectNameSpace } from "./textHistoryManager";
 import TextHistory from "../textHistory";
 import ServicesList from "../Services";
-import InputLabel from "@material-ui/core/InputLabel";
-import MenuItem from "@material-ui/core/MenuItem";
-import FormHelperText from "@material-ui/core/FormHelperText";
-import FormControl from "@material-ui/core/FormControl";
-import Select from "@material-ui/core/Select";
+import InputLabel from "@mui/material/InputLabel";
+import MenuItem from "@mui/material/MenuItem";
+import FormHelperText from "@mui/material/FormHelperText";
+import FormControl from "@mui/material/FormControl";
+import Select from "@mui/material/Select";
 import { ManualPlayerInput, WordList } from "../commonComponent";
-import DeleteIcon from "@material-ui/icons/Delete";
-import AddIcon from "@material-ui/icons/Add";
-import SaveIcon from "@material-ui/icons/Save";
+import DeleteIcon from "@mui/icons-material/Delete";
+import AddIcon from "@mui/icons-material/Add";
+import SaveIcon from "@mui/icons-material/Save";
 import RealVip from "./realVip";
-import HelpIcon from "@material-ui/icons/Help";
+import HelpIcon from "@mui/icons-material/Help";
 import ServerName from "./serverName";
 import AutoSettings from "./autoSettings";
 
@@ -75,7 +75,7 @@ const Hook = ({
   const [myRoles, setMyRoles] = React.useState(roles);
 
   return (
-    <Grid container spacing={1}>
+    (<Grid container spacing={1}>
       <Grid item xs={4}>
         <TextField
           label="webhook url"
@@ -97,16 +97,10 @@ const Hook = ({
       <Grid item xs={2}>
         {actionType === "delete" ? (
           <React.Fragment>
-            <IconButton
-              edge="start"
-              onClick={() => onDeleteHook(myHook, myRoles)}
-            >
+            <IconButton edge="start" onClick={() => onDeleteHook(myHook, myRoles)} size="large">
               <DeleteIcon />
             </IconButton>
-            <IconButton
-              edge="start"
-              onClick={() => onUpdateHook(myHook, myRoles)}
-            >
+            <IconButton edge="start" onClick={() => onUpdateHook(myHook, myRoles)} size="large">
               <SaveIcon />
             </IconButton>
           </React.Fragment>
@@ -118,12 +112,12 @@ const Hook = ({
               setMyRoles("");
               setMyHook("");
             }}
-          >
+            size="large">
             <AddIcon />
           </IconButton>
         )}
       </Grid>
-    </Grid>
+    </Grid>)
   );
 };
 
@@ -468,7 +462,7 @@ class RconSettings extends React.Component {
     } = this.state;
 
     return (
-      <Grid container spacing={3}>
+      (<Grid container spacing={3}>
         <Grid item xs={12}>
           <h2>Advanced RCON settings</h2>
         </Grid>
@@ -476,7 +470,7 @@ class RconSettings extends React.Component {
           <Typography variant="h6">Automated broadcast cycle</Typography>
         </Grid>
         <Grid item xs={12}>
-          <Grid container justify="space-evenly">
+          <Grid container justifyContent="space-evenly">
             <Grid item>
               <Padlock
                 handleChange={(v) =>
@@ -511,7 +505,7 @@ class RconSettings extends React.Component {
             label="Auto broadcast messages"
             multiline
             rows={4}
-            rowsMax={30}
+            maxRows={30}
             value={_.join(
               broadcastMessages.map((m) => m.replace(/\n/g, "\\n")),
               "\n"
@@ -547,7 +541,7 @@ class RconSettings extends React.Component {
           container
           spacing={1}
           alignContent="center"
-          justify="center"
+          justifyContent="center"
           alignItems="center"
           
         >
@@ -575,7 +569,7 @@ class RconSettings extends React.Component {
             fullWidth
             label="Shared standard messages"
             multiline
-            rowsMax={30}
+            maxRows={30}
             rows={4}
             value={_.join(
               standardMessages.map((m) => m.replace(/\n/g, "\\n")),
@@ -598,17 +592,17 @@ class RconSettings extends React.Component {
             Save shared messages
           </Button>
         </Grid>
-        <Grid item  justify="center" xs={12}>
+        <Grid item  justifyContent="center" xs={12}>
           <Typography variant="h5">Add player to watchlist</Typography>
         </Grid>
         <Grid item xs={12}>
           <ManualWatchList  />
         </Grid>
-        <Grid item  justify="center" xs={12}>
+        <Grid item  justifyContent="center" xs={12}>
           <Typography variant="h5">Manage services</Typography>
         </Grid>
-        <Grid item  justify="center" xs={12}>
-          <Grid container justify="center">
+        <Grid item  justifyContent="center" xs={12}>
+          <Grid container justifyContent="center">
             <Grid item md={8} xs={12}>
               <ServicesList  />
             </Grid>
@@ -635,7 +629,7 @@ class RconSettings extends React.Component {
         >
           <WebhooksConfig type="camera" />
         </Grid> */}
-        <Grid item  justify="center" xs={12}>
+        <Grid item  justifyContent="center" xs={12}>
           <Typography variant="h5">
             Auto votekick toggle{" "}
             <Tooltip title="When enabled this feature manages the votekicks ingame by turning it off if the conditions you set below are met, and turning it back on if they are NOT met">
@@ -647,7 +641,7 @@ class RconSettings extends React.Component {
         <Grid
           container
           alignContent="center"
-          justify="center"
+          justifyContent="center"
           alignItems="center"
           spacing={1}
         >
@@ -715,13 +709,13 @@ class RconSettings extends React.Component {
             />
           </Grid>
         </Grid>
-        <Grid item  justify="center" xs={12}>
+        <Grid item  justifyContent="center" xs={12}>
           <Typography variant="h5">Camera notification config</Typography>
         </Grid>
         <Grid
           container
           alignContent="center"
-          justify="center"
+          justifyContent="center"
           alignItems="center"
         >
           <Padlock
@@ -742,7 +736,7 @@ class RconSettings extends React.Component {
         <Grid
           container
           alignContent="center"
-          justify="center"
+          justifyContent="center"
           alignItems="center"
         >
           <Grid item xs={12}>
@@ -767,7 +761,7 @@ class RconSettings extends React.Component {
         <Grid
           container
           alignContent="center"
-          justify="center"
+          justifyContent="center"
           alignItems="center"
         >
           <Grid item xs={12}>
@@ -782,11 +776,10 @@ class RconSettings extends React.Component {
             <ServerName  />
           </Grid>
         </Grid>
-
         <Grid
           container
           alignContent="center"
-          justify="center"
+          justifyContent="center"
           alignItems="center"
         >
           <Grid item xs={12}>
@@ -810,12 +803,11 @@ class RconSettings extends React.Component {
             onEditorMount={this.handleEditorDidMount}
           />
         </Grid>
-
         <Grid
           item
           xs={12}
           alignContent="center"
-          justify="center"
+          justifyContent="center"
           alignItems="center"
         >
           <Button
@@ -830,7 +822,7 @@ class RconSettings extends React.Component {
           item
           xs={12}
           alignContent="center"
-          justify="center"
+          justifyContent="center"
           alignItems="center"
         >
           <Button
@@ -841,7 +833,7 @@ class RconSettings extends React.Component {
             Reconnect To Gameserver
           </Button>
         </Grid>
-      </Grid>
+      </Grid>)
     );
   }
 }

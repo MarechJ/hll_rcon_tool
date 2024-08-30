@@ -1,14 +1,14 @@
 import React from "react";
 import clsx from "clsx";
-import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
-import ExpandLessIcon from "@material-ui/icons/ExpandLess";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import {
   IconButton,
   Card,
   CardHeader,
   CardContent,
   Collapse,
-} from "@material-ui/core";
+} from "@mui/material";
 
 const CollapseCard = ({
   title,
@@ -27,7 +27,7 @@ const CollapseCard = ({
   }, [startOpen]);
 
   return (
-    <Card>
+    (<Card>
       <CardHeader
         title={title}
         action={
@@ -35,7 +35,7 @@ const CollapseCard = ({
             onClick={handleExpandClick}
             aria-expanded={expanded}
             aria-label="show more"
-          >
+            size="large">
             {expanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
           </IconButton>
         }
@@ -43,7 +43,7 @@ const CollapseCard = ({
       <Collapse in={expanded} unmountOnExit>
         <CardContent>{children}</CardContent>
       </Collapse>
-    </Card>
+    </Card>)
   );
 };
 

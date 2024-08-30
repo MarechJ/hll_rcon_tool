@@ -1,40 +1,38 @@
-import {
-  Box,
-  Button,
-  createStyles,
-  List,
-  makeStyles,
-} from "@material-ui/core";
+import { Box, Button, IconButton, List } from "@mui/material";
 import React from "react";
 import {
   changeMap,
 } from "../../../utils/fetchUtils";
 import MapSearch from "./map-search";
 import { MapListItem } from "../map-list-item";
-import CheckCircleOutlineIcon from "@material-ui/icons/CheckCircleOutline";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import ReplayIcon from "@mui/icons-material/Replay";
+import LockIcon from "@mui/icons-material/Lock";
+import Skeleton from '@mui/material/Skeleton';
 import { unifiedGamemodeName } from "../helpers";
+import { styled } from '@mui/material/styles';
 
-const useStyles = makeStyles((theme) =>
-  createStyles({
-    main: {
-      display: "flex",
-      flexDirection: "column",
-      gap: theme.spacing(1),
-    },
-    panel: {
-      display: "flex",
-      flexDirection: "row",
-      gap: theme.spacing(1),
-      alignItems: "center",
-    },
-    maps: {
-      position: "relative",
-      overflow: "auto",
-      minHeight: 500,
-      maxHeight: "70vh",
-    },
-  })
-);
+const Main = styled('div')(({ theme }) => ({
+  display: "flex",
+  flexDirection: "column",
+  gap: theme.spacing(1),
+}));
+
+const Panel = styled('div')(({ theme }) => ({
+  display: "flex",
+  flexDirection: "row",
+  gap: theme.spacing(1),
+  alignItems: "center",
+}));
+
+const Maps = styled(List)(({ theme }) => ({
+  maxWidth: theme.breakpoints.values.sm,
+  position: "relative",
+  overflow: "auto",
+  minHeight: 500,
+  maxHeight: "70vh",
+}));
+
 
 
 function MapChange({ maps }) {
@@ -45,7 +43,7 @@ function MapChange({ maps }) {
     skirmish: false,
   });
   const [selected, setSelected] = React.useState("");
-  const classes = useStyles();
+  const statusIntervalRef = React.useRef(null);
   const filteredMaps = maps.filter(
     (map) =>
       modeFilters[unifiedGamemodeName(map.game_mode)] &&
@@ -69,13 +67,50 @@ function MapChange({ maps }) {
   };
 
   return (
-    <Box className={classes.main}>
+    (<Main>
+      <Panel>
+        <Button
+          startIcon={<ReplayIcon />}
+          color="secondary"
+          onClick={handleResetMap}
+          variant="outlined"
+          size="small"
+        >
+          Map Reset
+        </Button>
+        <Button
+          startIcon={<LockIcon />}
+          disabled
+          variant="outlined"
+          size="small"
+        >
+          Switch Allies
+        </Button>
+        <Button
+          startIcon={<LockIcon />}
+          disabled
+          variant="outlined"
+          size="small"
+        >
+          Switch Axis
+        </Button>
+      </Panel>
+      {currentMap ? (
+        <MapListItem
+          style={{ borderBottom: "none" }}
+          mapLayer={currentMap}
+          primary={`>>> ${currentMap.pretty_name} <<<`}
+          component={Box}
+        />
+      ) : (
+        <Skeleton variant="rectangular" height={60} />
+      )}
       <MapSearch
         onChange={handleOnInputChange}
         filters={modeFilters}
         onFilter={handleModeFilterClick}
       />
-      <List dense={true} className={classes.maps}>
+      <Maps dense={true}>
         {filteredMaps.map((mapLayer, index) => (
           <MapListItem
             button
@@ -92,15 +127,15 @@ function MapChange({ maps }) {
                   color="secondary"
                   aria-label="confirm"
                   onClick={() => handleConfirmMap(mapLayer)}
-                >
-                  Confirm
-                </Button>
+                  size="large">
+                  <CheckCircleOutlineIcon />
+                </IconButton>
               )
             }
           />
         ))}
-      </List>
-    </Box>
+      </Maps>
+    </Main>)
   );
 }
 

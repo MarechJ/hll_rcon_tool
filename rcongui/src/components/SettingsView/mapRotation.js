@@ -1,18 +1,20 @@
 import React from "react";
-import Grid from "@material-ui/core/Grid";
-import List from "@material-ui/core/List";
-import ListItem from "@material-ui/core/ListItem";
-import ListItemIcon from "@material-ui/core/ListItemIcon";
-import ListItemText from "@material-ui/core/ListItemText";
-import Checkbox from "@material-ui/core/Checkbox";
-import Button from "@material-ui/core/Button";
-import Paper from "@material-ui/core/Paper";
-import Divider from "@material-ui/core/Divider";
-import withWidth from "@material-ui/core/withWidth";
-import KeyboardArrowUpIcon from "@material-ui/icons/KeyboardArrowUp";
-import KeyboardArrowDownIcon from "@material-ui/icons/KeyboardArrowDown";
-import KeyboardArrowLeftIcon from "@material-ui/icons/KeyboardArrowLeft";
-import KeyboardArrowRightIcon from "@material-ui/icons/KeyboardArrowRight";
+import Grid from "@mui/material/Grid";
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
+import ListItemIcon from "@mui/material/ListItemIcon";
+import ListItemText from "@mui/material/ListItemText";
+import Checkbox from "@mui/material/Checkbox";
+import Button from "@mui/material/Button";
+import Paper from "@mui/material/Paper";
+import Divider from "@mui/material/Divider";
+import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
+import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
+
+// FIXME checkout https://mui.com/components/use-media-query/#migrating-from-withwidth
+const withWidth = () => (WrappedComponent) => (props) => <WrappedComponent {...props} width="xs" />;
 
 function not(a, b) {
   return a.filter((value) => b.indexOf(value) === -1);
@@ -90,7 +92,7 @@ const MapRotationTransferList = ({
   );
 
   return (
-    <Grid container spacing={2} justify="center" alignItems="center">
+    (<Grid container spacing={2} justifyContent="center" alignItems="center">
       <Grid item xs={12} sm={5}>
         {customList(availableMaps, "Remaining unused maps")}
       </Grid>
@@ -129,7 +131,7 @@ const MapRotationTransferList = ({
       <Grid item xs={12} sm={5}>
         {customList(mapRotation, "Current map rotation")}
       </Grid>
-    </Grid>
+    </Grid>)
   );
 };
 

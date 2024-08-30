@@ -14,8 +14,8 @@ import {
   Select,
   Switch,
   TextField,
-} from "@material-ui/core";
-import CloseIcon from "@material-ui/icons/Close";
+} from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
 import { DateTimePicker, MuiPickersUtilsProvider } from "@material-ui/pickers";
 import { Picker } from "emoji-mart";
 
@@ -48,13 +48,13 @@ const SearchBar = ({
   //const toggleEmojis = () => setShowEmojiPicker(!showEmojiPicker)
 
   return (
-    <form>
+    (<form>
       <Grid
         container
         spacing={1}
         alignContent="center"
         alignItems="center"
-        justify="space-evenly"
+        justifyContent="space-evenly"
       >
         <Grid item>
           <TextField
@@ -108,7 +108,7 @@ const SearchBar = ({
               <CardHeader
                 title="Pick emojis"
                 action={
-                  <IconButton onClick={() => setShowEmojiPicker(false)}>
+                  <IconButton onClick={() => setShowEmojiPicker(false)} size="large">
                     <CloseIcon />
                   </IconButton>
                 }
@@ -211,7 +211,7 @@ const SearchBar = ({
           </Button>
         </Grid>
       </Grid>
-    </form>
+    </form>)
   );
 };
 

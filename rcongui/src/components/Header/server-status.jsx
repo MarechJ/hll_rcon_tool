@@ -1,25 +1,22 @@
 import React, { useState, useEffect } from "react";
 import "react-toastify/dist/ReactToastify.css";
 import { get, handle_http_errors, showResponse } from "../../utils/fetchUtils";
-import { createStyles, makeStyles } from "@material-ui/core/styles";
-import Menu from "@material-ui/core/Menu";
-import MenuItem from "@material-ui/core/MenuItem";
-import Link from "@material-ui/core/Link";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
+import Link from "@mui/material/Link";
 import { fromJS, List } from "immutable";
-import { Box, IconButton, Typography } from "@material-ui/core";
-import SwapVertIcon from '@material-ui/icons/SwapVert';
+import { Box, IconButton, Typography } from "@mui/material";
+import SwapVertIcon from '@mui/icons-material/SwapVert';
+import { styled } from "@mui/material/styles";
 
-const useStyles = makeStyles((theme) =>
-  createStyles({
-    root: {
-      paddingLeft: theme.spacing(1),
-    },
-    menu: {
-      display: "flex",
-      gap: theme.spacing(1),
-    },
-  })
-);
+const Wrapper = styled('div')(({ theme }) => ({
+  paddingLeft: theme.spacing(1),
+}));
+
+const MenuBox = styled('div')(({ theme }) => ({
+  display: "flex",
+  gap: theme.spacing(1),
+}));
 
 const ServerStatus = () => {
   const [anchorEl, setAnchorEl] = useState(null);
@@ -31,7 +28,6 @@ const ServerStatus = () => {
   const [timeRemaining, setTimeRemaining] = useState("0:00:00");
   const [balance, setBalance] = useState("0vs0");
   const [score, setScore] = useState("0:0");
-  const classes = useStyles();
 
   const refreshIntervalSec = 10;
   const listRefreshIntervalSec = 30;
@@ -97,8 +93,8 @@ const ServerStatus = () => {
   }, []);
 
   return (
-    <Box className={classes.root}>
-      <Box className={classes.menu}>
+    (<Wrapper>
+      <MenuBox>
         <Typography variant="subtitle2" component={"span"} color="inherit">
           {name}
         </Typography>
@@ -111,7 +107,7 @@ const ServerStatus = () => {
             <SwapVertIcon fontSize="inherit" />
           </IconButton>
         )}
-      </Box>
+      </MenuBox>
       <Menu
         id="simple-menu"
         anchorEl={anchorEl}
@@ -142,7 +138,7 @@ const ServerStatus = () => {
         {numCurrentPlayers}/{maxPlayers} ({balance}) -{" "}
         {map?.pretty_name ?? "Unknown Map"} - {timeRemaining} - {score}
       </Typography>
-    </Box>
+    </Wrapper>)
   );
 };
 

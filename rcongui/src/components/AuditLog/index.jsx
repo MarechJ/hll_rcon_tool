@@ -5,17 +5,17 @@ import {
   postData,
   showResponse,
 } from "../../utils/fetchUtils";
-import InputLabel from "@material-ui/core/InputLabel";
-import FormControl from "@material-ui/core/FormControl";
-import Select from "@material-ui/core/Select";
+import InputLabel from "@mui/material/InputLabel";
+import FormControl from "@mui/material/FormControl";
+import Select from "@mui/material/Select";
 
-import { Button } from "@material-ui/core";
-import Autocomplete from "@material-ui/lab/Autocomplete";
-import TextField from "@material-ui/core/TextField";
+import { Button } from "@mui/material";
+import Autocomplete from '@mui/material/Autocomplete';
+import TextField from "@mui/material/TextField";
 import moment from "moment";
 import { List as IList, fromJS } from "immutable";
 
-import { Grid } from "@material-ui/core";
+import { Grid } from "@mui/material";
 
 import MUIDataTable from "mui-datatables";
 
@@ -53,7 +53,7 @@ const AuditLogsTable = ({ auditLogs }) => {
   };
 
   return (
-    <Grid container justify="center">
+    (<Grid container justifyContent="center">
       <Grid item>
         <MUIDataTable
           title={"Audit logs"}
@@ -62,7 +62,7 @@ const AuditLogsTable = ({ auditLogs }) => {
           options={options}
         />
       </Grid>
-    </Grid>
+    </Grid>)
   );
 };
 
@@ -110,10 +110,10 @@ const AuditLog = () => {
   }, []);
 
   return (
-    <Grid
+    (<Grid
       container
       spacing={2}
-      justify="flex-start"
+      justifyContent="flex-start"
       alignItems="center"
     >
       <Grid item xs={3}>
@@ -189,7 +189,7 @@ const AuditLog = () => {
       <Grid item xs={12}>
         <AuditLogsTable auditLogs={auditLogs} />
       </Grid>
-    </Grid>
+    </Grid>)
   );
 };
 

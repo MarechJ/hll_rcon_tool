@@ -1,36 +1,21 @@
 import React, { useEffect } from "react";
-import { toast } from "react-toastify";
 import {
   postData,
   showResponse,
-  get,
-  handle_http_errors,
 } from "../../utils/fetchUtils";
-import Grid from "@material-ui/core/Grid";
-import { makeStyles } from "@material-ui/core/styles";
-import LogsTable from "./logTable";
+import Grid from "@mui/material/Grid";
 import MomentUtils from "@date-io/moment";
 import { DateTimePicker, MuiPickersUtilsProvider } from "@material-ui/pickers";
-import { Button, LinearProgress, TextField } from "@material-ui/core";
-import InputLabel from "@material-ui/core/InputLabel";
-import MenuItem from "@material-ui/core/MenuItem";
-import FormControl from "@material-ui/core/FormControl";
-import Select from "@material-ui/core/Select";
-import FormControlLabel from "@material-ui/core/FormControlLabel";
-import Switch from "@material-ui/core/Switch";
+import { Button, LinearProgress, TextField } from "@mui/material";
+import InputLabel from "@mui/material/InputLabel";
+import MenuItem from "@mui/material/MenuItem";
+import FormControl from "@mui/material/FormControl";
+import Select from "@mui/material/Select";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import Switch from "@mui/material/Switch";
 import MUIDataTable from "mui-datatables";
 import moment from "moment";
-import Link from "@material-ui/core/Link";
-
-const useStyles = makeStyles((theme) => ({
-  flexContainer: {
-    display: "flex",
-    flexDirection: "row",
-  },
-  margin: {
-    margin: theme.spacing(2),
-  },
-}));
+import Link from "@mui/material/Link";
 
 const LogsFilter = ({ onSubmit, onChange }) => {
   const [name, setName] = React.useState("");
@@ -45,10 +30,10 @@ const LogsFilter = ({ onSubmit, onChange }) => {
   const [order, setOrder] = React.useState("desc");
 
   return (
-    <Grid container spacing={1}>
+    (<Grid container spacing={1}>
       <Grid item xs={12} >
         <form >
-          <Grid container spacing={1} justify="space-evenly">
+          <Grid container spacing={1} justifyContent="space-evenly">
             <Grid item>
               <TextField
                 label="Player ID"
@@ -187,7 +172,7 @@ const LogsFilter = ({ onSubmit, onChange }) => {
           </Grid>
         </form>
       </Grid>
-    </Grid>
+    </Grid>)
   );
 };
 
@@ -366,7 +351,7 @@ class LogsHistory extends React.Component {
     const { isLoading } = this.state;
 
     return (
-      <Grid container>
+      (<Grid container>
         <Grid item xs={12}>
           <LogsFilter onSubmit={this.getHistoricalLogs} />
         </Grid>
@@ -378,9 +363,9 @@ class LogsHistory extends React.Component {
           ""
         )}
         <Grid item xs={12}>
-          <Grid container justify="center">
+          <Grid container justifyContent="center">
             <Grid item>
-              <Grid container justify="center">
+              <Grid container justifyContent="center">
                 <Grid item>
                   <MUIDataTable
                     title={"Game logs"}
@@ -393,7 +378,7 @@ class LogsHistory extends React.Component {
             </Grid>
           </Grid>
         </Grid>
-      </Grid>
+      </Grid>)
     );
   }
 }

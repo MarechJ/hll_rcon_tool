@@ -2,19 +2,15 @@ import * as React from "react";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import makeStyles from "@material-ui/core/styles/makeStyles";
 import {
-  List,
-  ListItem,
-  ListItemAvatar,
-  ListItemText,
-  ListItemSecondaryAction,
-  IconButton,
-  createStyles,
-  Tooltip,
-} from "@material-ui/core";
-import Avatar from "@material-ui/core/Avatar";
-import DeleteIcon from "@material-ui/icons/Delete";
-import InputIcon from "@material-ui/icons/Input";
-import { MapDescription } from "../map-details";
+  get,
+  handle_http_errors,
+  postData,
+  showResponse,
+} from "../../../utils/fetchUtils";
+import { Box, Button, CircularProgress, Grid } from "@mui/material";
+import Autocomplete from '@mui/material/Autocomplete';
+import TextField from "@mui/material/TextField";
+import { Alert } from '@mui/material';
 
 const useStyles = makeStyles((theme) =>
   createStyles({

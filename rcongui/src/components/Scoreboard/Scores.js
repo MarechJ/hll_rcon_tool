@@ -16,14 +16,14 @@ import {
   Divider,
   IconButton,
   TextField,
-} from "@material-ui/core";
-import Autocomplete from "@material-ui/lab/Autocomplete";
-import AddIcon from "@material-ui/icons/Add";
-import RemoveIcon from "@material-ui/icons/Remove";
+} from "@mui/material";
+import Autocomplete from '@mui/material/Autocomplete';
+import AddIcon from "@mui/icons-material/Add";
+import RemoveIcon from "@mui/icons-material/Remove";
 import { pure } from "recompose";
 import { PlayerStatProfile } from "./PlayerStatProfile";
 import MUIDataTable from "mui-datatables";
-import { Button } from "@material-ui/core";
+import { Button } from "@mui/material";
 import { fromJS } from "immutable";
 import { toPairs, sortBy } from "lodash";
 
@@ -94,7 +94,7 @@ const TopList = pure(
     }, [top, playersFilter, scores, reversed, statKey]);
 
     return (
-      <List>
+      (<List>
         <React.Fragment>
           <ListItem>
             <ListItemAvatar style={{ visibility: "visible" }}>
@@ -132,12 +132,12 @@ const TopList = pure(
           </ListItemAvatar>
           <ListItemText primary={<Link onClick={toggle}>{show}</Link>} />
           <ListItemSecondaryAction>
-            <IconButton onClick={toggle} color="secondary">
+            <IconButton onClick={toggle} color="secondary" size="large">
               {showButton}
             </IconButton>
           </ListItemSecondaryAction>
         </ListItem>
-      </List>
+      </List>)
     );
   }
 );

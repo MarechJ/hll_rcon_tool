@@ -1,15 +1,4 @@
-import {
-  Box,
-  Button,
-  Checkbox,
-  CircularProgress,
-  createStyles,
-  FormControl,
-  FormControlLabel,
-  FormGroup,
-  FormLabel,
-  makeStyles,
-} from "@material-ui/core";
+import { Box, Button, Checkbox, FormControl, FormControlLabel, FormGroup, FormLabel } from "@mui/material";
 import React from "react";
 import { changeGameLayout, getMapObjectives, getServerStatus } from "../../../utils/fetchUtils";
 import {
@@ -17,8 +6,9 @@ import {
   getTacMapImageSrc,
   unifiedGamemodeName,
 } from "../helpers";
-import { Alert, AlertTitle, Skeleton } from "@material-ui/lab";
+import { Alert, AlertTitle, Skeleton } from '@mui/material';
 import clsx from "clsx";
+import { styled } from "@mui/material/styles"
 
 const UPDATE_INTERVAL = 5 * 1000;
 const CONFIRM_DELAY = 10 * 1000;
@@ -38,95 +28,94 @@ const reduceToInts = (arr) =>
     return acc.concat(i === -1 ? null : i - 1);
   }, []);
 
-const useStyles = makeStyles((theme) =>
-  createStyles({
-    main: {
-      display: "flex",
-      flexDirection: "column",
-      gap: theme.spacing(1),
+  const Container = styled('div')(({ theme }) => ({
+    display: "flex",
+    flexDirection: "column",
+    gap: theme.spacing(1),
+  }));
+  
+  const ActionPanel = styled('div')(({ theme }) => ({
+    display: "flex",
+    flexDirection: "row",
+    gap: theme.spacing(1),
+    alignItems: "center",
+  }));
+  
+  const MapWrapper = styled('div')({
+    position: "absolute",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+  });
+  
+  const MapImg = styled('img')({
+    width: "100%",
+    height: "100%",
+    touchAction: "none",
+  });
+  
+  const ObjectivesGrid = styled('div')({
+    position: "relative",
+    display: "grid",
+    gridTemplateColumns: "repeat(5, 1fr)",
+    gridTemplateRows: "repeat(5, 1fr)",
+    width: "100%",
+    height: "100%",
+  });
+  
+  const ControlGrid = styled('div')(({ theme }) => ({
+    position: "relative",
+    display: "grid",
+    gridTemplateColumns: "repeat(5, 1fr)",
+    gridTemplateRows: "repeat(5, 1fr)",
+    gap: theme.spacing(0.5),
+    width: "100%",
+    height: "100%",
+  }));
+  
+  const ObjectivesContainer = styled('div')({
+    position: "relative",
+    maxWidth: 650,
+    minWidth: 280,
+    aspectRatio: "1 / 1",
+  });
+  
+  const ControlContainer = styled('div')(({ theme }) => ({
+    width: "fit-content",
+    display: "flex",
+    flexDirection: "column",
+    gap: theme.spacing(2),
+  }));
+  
+  const ControlButton = styled('button')(({ theme, state }) => ({
+    border: "4px ridge black",
+    minWidth: 0,
+    padding: 0,
+    borderRadius: 0,
+    opacity: 0.35,
+    "&:hover": {
+      borderStyle: "inset",
     },
-    panel: {
-      display: "flex",
-      flexDirection: "row",
-      gap: theme.spacing(1),
-      alignItems: "center",
-    },
-    map: {
-      position: "absolute",
-      top: 0,
-      left: 0,
-      width: "100%",
-      height: "100%",
-    },
-    mapImg: {
-      width: "100%",
-      height: "100%",
-      touchAction: "none",
-    },
-    grid: {
-      position: "relative",
-      display: "grid",
-      gridTemplateColumns: "repeat(5, 1fr)",
-      gridTemplateRows: "repeat(5, 1fr)",
-      width: "100%",
-      height: "100%",
-    },
-    controlGrid: {
-      position: "relative",
-      display: "grid",
-      gridTemplateColumns: "repeat(5, 1fr)",
-      gridTemplateRows: "repeat(5, 1fr)",
-      gap: theme.spacing(0.5),
-      width: "100%",
-      height: "100%",
-    },
-    gridContainer: {
-      position: "relative",
-      maxWidth: 650,
-      minWidth: 280,
-      aspectRatio: "1 / 1",
-    },
-    controlContainer: {
-      width: "fit-content",
-      display: "flex",
-      flexDirection: "column",
-      gap: theme.spacing(2),
-    },
-    controlBtn: {
-      border: "4px ridge black",
-      minWidth: 0,
-      padding: 0,
-      borderRadius: 0,
-      opacity: 0.35,
-      "&:hover": {
-        borderStyle: "inset",
-      },
-    },
-    controlBtnSelected: {
+    ...(state === true && {
       background: theme.palette.success.main,
       borderStyle: "inset",
       "&:hover": {
         background: theme.palette.success.dark,
       },
-    },
-    selected: {
-      opacity: 0.25,
-      background: theme.palette.success.main,
-      border: "2px solid",
-      borderColor: "2px solid white",
-    },
-    unavailable: {
+    }),
+    ...(state === false && {
       backgroundImage:
         "repeating-linear-gradient(45deg, #ff7700 0, #ff7700 2px, transparent 0, transparent 50%);",
       backgroundSize: "10px 10px",
-    },
-    disabled: {
+    }),
+    ...(state === null && {
       backgroundImage:
         "repeating-linear-gradient(45deg, #000 0, #000 2px, transparent 0, transparent 50%);",
       backgroundSize: "20px 20px",
-    },
-  })
-);
+    }),
+  }));
+  
 
 function MapObjectives() {
   const [currentMap, setCurrentMap] = React.useState(null);
@@ -137,8 +126,6 @@ function MapObjectives() {
   const [objectives, setObjectives] = React.useState(null);
   const [isSaving, setIsSaving] = React.useState(false);
   const statusIntervalRef = React.useRef(null);
-  const savingTimeoutRef = React.useRef(null);
-  const classes = useStyles();
 
   const updateServerStatus = async () => {
     const status = await getServerStatus();
@@ -260,30 +247,30 @@ function MapObjectives() {
 
   if (currentMap && unifiedGamemodeName(currentMap.game_mode) === "skirmish") {
     return (
-      <Box className={clsx(classes.main, classes.gridContainer)}>
+      (<Container>
         <Alert severity="error">
             <AlertTitle>Error</AlertTitle>
             <strong>{currentMap.pretty_name}</strong> - Skirmish mode cannot have the game layout changed!
         </Alert>
-        <Skeleton variant="rect" height={650} />
-        <Skeleton variant="rect" height={250} />
-      </Box>
+        <Skeleton variant="rectangular" height={650} />
+        <Skeleton variant="rectangular" height={250} />
+      </Container>)
     );
   }
 
   if (!objectives) {
     return (
-      <Box className={clsx(classes.main, classes.gridContainer)}>
-        <Skeleton variant="rect" height={30} />
-        <Skeleton variant="rect" height={650} />
-        <Skeleton variant="rect" height={250} />
-      </Box>
+      (<Container>
+        <Skeleton variant="rectangular" height={30} />
+        <Skeleton variant="rectangular" height={650} />
+        <Skeleton variant="rectangular" height={250} />
+      </Container>)
     );
   }
 
   return (
-    <Box className={classes.main}>
-      <Box className={classes.panel}>
+    <Container>
+      <ActionPanel>
         <Button
           disabled={isSaving}
           startIcon={isSaving && <CircularProgress size={20} />}
@@ -301,41 +288,33 @@ function MapObjectives() {
         >
           CLEAR LAYOUT
         </Button>
-      </Box>
+      </ActionPanel>
       {currentMap ? (
-        <Box className={classes.gridContainer}>
-          <Box className={classes.map}>
-            <img
-              className={classes.mapImg}
+        <ObjectivesContainer>
+          <MapWrapper>
+            <MapImg
               src={getTacMapImageSrc(currentMap)}
               alt=""
               draggable={false}
             />
-          </Box>
-          <Box className={classes.grid}>
+          </MapWrapper>
+          <ObjectivesGrid>
             {objectives.flat().map((state, index) => {
               return (
-                <Button
+                <ControlButton
                   key={`${index}${state}`}
                   onClick={() => handleSelectClick(index)}
                   disabled={isButtonDisabled(state, index)}
-                  className={clsx(
-                    classes.controlBtn,
-                    isButtonUnavailable(state) && classes.unavailable,
-                    state === true && classes.controlBtnSelected,
-                    state === false &&
-                      isButtonDisabled(state, index) &&
-                      classes.disabled
-                  )}
-                ></Button>
+                  state={state}
+                ></ControlButton>
               );
             })}
-          </Box>
-        </Box>
+          </ObjectivesGrid>
+        </ObjectivesContainer>
       ) : (
         <Skeleton width="100%" height={"100%"} />
       )}
-      <Box className={classes.controlContainer}>
+      <Box>
         <Alert severity="info">
           If you do not select one or more objectives, they will be chosen randomly based on the following criteria:
         </Alert>
@@ -353,7 +332,7 @@ function MapObjectives() {
           </FormGroup>
         </FormControl>
       </Box>
-    </Box>
+    </Container>
   );
 }
 

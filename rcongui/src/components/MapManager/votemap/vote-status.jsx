@@ -1,5 +1,5 @@
 import * as React from "react";
-import { List, Typography } from "@material-ui/core";
+import { List, Typography } from "@mui/material";
 import { MapListItem } from "../map-list-item";
 
 export function VoteStatus({ voteStatus, ...props }) {

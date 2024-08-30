@@ -7,9 +7,14 @@ import {
   DialogTitle,
   Grid,
   LinearProgress,
-} from "@material-ui/core";
+  Paper,
+  Tooltip,
+  Typography,
+} from "@mui/material";
 import React from "react";
 import { get, handle_http_errors, postData, showResponse } from "../../utils/fetchUtils";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
 import BlacklistListTile from "./BlacklistListTile";
 import BlacklistListCreateDialog, { BlacklistListCreateButton } from "./BlacklistListCreateDialog";
 const SYNC_METHODS = {
@@ -139,8 +144,8 @@ const BlacklistLists = ({ classes }) => {
   }, []);
 
   return (
-    <React.Fragment>
-      <Grid container spacing={3} direction="column" justify="center">
+    (<React.Fragment>
+      <Grid container spacing={3} direction="column" justifyContent="center">
         <Grid item>
           {isLoading ? <LinearProgress color="secondary" /> : ""}
         </Grid>
@@ -157,7 +162,7 @@ const BlacklistLists = ({ classes }) => {
           ))}
         </Grid>
         <Grid item>
-          <Grid container spacing={2} justify="center">
+          <Grid container spacing={2} justifyContent="center">
             <Grid item>
               <BlacklistListCreateButton
                 servers={servers}
@@ -178,7 +183,6 @@ const BlacklistLists = ({ classes }) => {
           </Grid>
         </Grid>
       </Grid>
-      {/* CREATE DIALOG */}
       <BlacklistListCreateDialog
         open={editDialogOpen}
         setOpen={setEditDialogOpen}
@@ -186,29 +190,8 @@ const BlacklistLists = ({ classes }) => {
         onSubmit={onEditDialogSubmit}
         initialValues={editDialogInitialValues}
       />
-      {/* DELETE DIALOG */}
-      <Dialog
-        open={selectedBlacklist !== null}
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description"
-      >
-        <DialogTitle id="alert-dialog-title">{selectedBlacklist ? `Delete blacklist "${selectedBlacklist?.name}"?` : "Loading..."}</DialogTitle>
-        <DialogContent>
-          <DialogContentText id="alert-dialog-description">
-            Are you certain you want to permanently delete the blacklist and all associated records?
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDeleteDialog} color="primary">
-            Cancel
-          </Button>
-          <Button onClick={handleBlacklistDelete} color="secondary" autoFocus>
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </React.Fragment>
-  )
+    </React.Fragment>)
+  );
 }
 
 export default BlacklistLists;

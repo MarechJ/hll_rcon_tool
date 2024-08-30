@@ -1,8 +1,8 @@
 import React, { Fragment } from "react";
-import List from "@material-ui/core/List";
-import ListItem from "@material-ui/core/ListItem";
-import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
-import ListItemText from "@material-ui/core/ListItemText";
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
+import ListItemSecondaryAction from "@mui/material/ListItemSecondaryAction";
+import ListItemText from "@mui/material/ListItemText";
 import "react-toastify/dist/ReactToastify.css";
 import { PlayerActions } from "./playerActions";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -13,15 +13,14 @@ import {
   faStar,
 } from "@fortawesome/free-solid-svg-icons";
 import { faSteam, faXbox, faWindows } from "@fortawesome/free-brands-svg-icons";
-import Link from "@material-ui/core/Link";
-import withWidth from "@material-ui/core/withWidth";
-import Icon from "@material-ui/core/Icon";
-import OpenInNewIcon from "@material-ui/icons/OpenInNew";
+import Link from "@mui/material/Link";
+import Icon from "@mui/material/Icon";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import { getEmojiFlag } from "../../utils/emoji";
 import { List as IList, Map } from "immutable";
 import { getName } from "country-list";
-import Popover from "@material-ui/core/Popover";
-import Typography from "@material-ui/core/Typography";
+import Popover from "@mui/material/Popover";
+import Typography from "@mui/material/Typography";
 import { Link as RouterLink } from "react-router-dom";
 import { pure } from "recompose";
 import {
@@ -31,9 +30,12 @@ import {
   Chip,
   Grid,
   ListItemAvatar,
-} from "@material-ui/core";
+} from "@mui/material";
 import makePlayerProfileUrl from "../../utils/makePlayerProfileUrl";
 import moment from "moment";
+
+// FIXME checkout https://mui.com/components/use-media-query/#migrating-from-withwidth
+const withWidth = () => (WrappedComponent) => (props) => <WrappedComponent {...props} width="xs" />;
 
 const zeroPad = (num, places) => String(num).padStart(places, "0");
 

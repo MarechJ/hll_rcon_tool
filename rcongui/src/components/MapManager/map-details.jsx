@@ -1,39 +1,19 @@
-import {
-  Avatar,
-  Box,
-  Divider,
-  makeStyles,
-  Typography,
-} from "@material-ui/core";
+import { Avatar, Box, Divider, Typography } from "@mui/material";
 import { getMapLayerImageSrc, unifiedGamemodeName } from "./helpers";
+import { styled } from "@mui/material/styles"
 
-const useStyles = makeStyles((theme) => ({
-  descriptionRoot: {
-    display: "flex",
-    flexWrap: "wrap",
-    gap: theme.spacing(0.5),
-    textTransform: "capitalize",
-  },
-  mapBox: {
-    display: "flex",
-    gap: theme.spacing(1),
-    alignItems: "center",
-  },
-  mapBoxAvatar: {
-    display: "none",
-    [theme.breakpoints.up("sm")]: {
-      display: "block",
-    },
-  },
+const Wrapper = styled('div')(({ theme }) => ({
+  display: "flex",
+  flexWrap: "wrap",
+  gap: theme.spacing(0.5),
+  textTransform: "capitalize",
 }));
 
-export function MapDescription({ mapLayer }) {
-  const classes = useStyles();
-
-  const gameMode = unifiedGamemodeName(mapLayer.game_mode);
+export function MapDetails({ mapLayer }) {
+  const gameMode = unifiedGamemodeName(mapLayer.game_mode)
 
   return (
-    <Box className={classes.descriptionRoot}>
+    <Wrapper>
       <Typography variant="caption">{gameMode}</Typography>
       {gameMode === "offensive" && (
         <>
@@ -43,7 +23,7 @@ export function MapDescription({ mapLayer }) {
       )}
       <Divider orientation="vertical" flexItem />
       <Typography variant="caption">{mapLayer.environment}</Typography>
-    </Box>
+    </Wrapper>
   );
 }
 

@@ -9,7 +9,7 @@ import {
   Switch,
   Tooltip,
   FormControlLabel,
-} from "@material-ui/core";
+} from "@mui/material";
 import {
   get,
   handle_http_errors,

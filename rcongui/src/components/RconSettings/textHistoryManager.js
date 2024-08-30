@@ -6,12 +6,12 @@ import {
   ListItem,
   ListItemSecondaryAction,
   ListItemText,
-} from "@material-ui/core";
-import DeleteIcon from "@material-ui/icons/Delete";
+} from "@mui/material";
+import DeleteIcon from "@mui/icons-material/Delete";
 import TextHistory, { getAllNamespaces } from "../textHistory";
-import InputLabel from "@material-ui/core/InputLabel";
-import FormControl from "@material-ui/core/FormControl";
-import Select from "@material-ui/core/Select";
+import InputLabel from "@mui/material/InputLabel";
+import FormControl from "@mui/material/FormControl";
+import Select from "@mui/material/Select";
 
 const SelectNameSpace = ({ value, values, handleChange }) => (
   <FormControl>
@@ -40,7 +40,7 @@ class TextHistoryList extends React.Component {
     const texts = textHistory.getTexts();
 
     return (
-      <List dense>
+      (<List dense>
         {texts.map((text, idx) => (
           <ListItem key={idx}>
             <ListItemText primary={text} />
@@ -52,13 +52,13 @@ class TextHistoryList extends React.Component {
                   textHistory.deleteTextByIdx(idx);
                   this.forceUpdate();
                 }}
-              >
+                size="large">
                 <DeleteIcon />
               </IconButton>
             </ListItemSecondaryAction>
           </ListItem>
         ))}
-      </List>
+      </List>)
     );
   }
 }

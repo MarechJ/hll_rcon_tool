@@ -1,12 +1,25 @@
 import React from "react";
 import { Link as RouterLink } from "react-router-dom";
-import { Avatar, Grid, GridList, GridListTile, IconButton, Link, List as MaterialList, ListItem, ListItemAvatar, ListItemSecondaryAction, ListItemText, Tooltip, Typography, makeStyles } from "@material-ui/core";
+import {
+  Avatar,
+  Grid,
+  ImageList,
+  ImageListItem,
+  IconButton,
+  Link,
+  List as MaterialList,
+  ListItem,
+  ListItemAvatar,
+  ListItemSecondaryAction,
+  ListItemText,
+  Tooltip,
+  Typography,
+} from "@mui/material";
 import "emoji-mart/css/emoji-mart.css";
-import withWidth from "@material-ui/core/withWidth";
-import FileCopyIcon from "@material-ui/icons/FileCopy";
-import KeyboardArrowDownIcon from "@material-ui/icons/KeyboardArrowDown";
-import KeyboardArrowUpIcon from "@material-ui/icons/KeyboardArrowUp";
-import AnnouncementIcon from "@material-ui/icons/Announcement";
+import FileCopyIcon from "@mui/icons-material/FileCopy";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
+import AnnouncementIcon from "@mui/icons-material/Announcement";
 import { pure } from "recompose";
 import makePlayerProfileUrl from "../../utils/makePlayerProfileUrl";
 import { getCountry } from "../PlayersHistory/PlayerTile/PlayerHeader";
@@ -15,20 +28,6 @@ import moment from "moment";
 import BlacklistRecordActionRow from "./BlacklistRecordActionRow";
 import BlacklistRecordCreateDialog from "./BlacklistRecordCreateDialog";
 import { handle_http_errors, postData, showResponse } from "../../utils/fetchUtils";
-
-const useStyles = makeStyles((theme) => ({
-  paperTile: {
-    backgroundColor: theme.palette.background.paper,
-    minHeight: "100%",
-    padding: theme.spacing(2),
-  },
-  root: {
-    display: "flex",
-    flexWrap: "wrap",
-    justifyContent: "space-around",
-    overflow: "hidden",
-  },
-}));
 
 const BlacklistRecordTile = ({
   record,
@@ -72,11 +71,11 @@ const BlacklistRecordTile = ({
   }
 
   return (
-    <Grid
+    (<Grid
       container
       style={isExpired ? { background: "linear-gradient(rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.05))" } : {}}
       direction="column"
-      justify="space-between"
+      justifyContent="space-between"
     >
       <MaterialList>
         <ListItem component={"div"} alignItems="flex-start" style={{ paddingBottom: 0 }}>
@@ -205,13 +204,13 @@ const BlacklistRecordTile = ({
       </Typography>
       <Grid
         container
-        justify="space-between"
+        justifyContent="space-between"
         spacing={0}
         
       >
         <Grid
           container
-          justify="space-around"
+          justifyContent="space-around"
           spacing={0}
           
         >
@@ -247,12 +246,11 @@ const BlacklistRecordTile = ({
           onDelete={() => onDelete(record)}
         />
       </Grid>
-    </Grid>
-  )
+    </Grid>)
+  );
 }
 
-const BlacklistRecordGrid = withWidth()(
-  ({
+const BlacklistRecordGrid = ({
     blacklists,
     records,
     onRefresh,
@@ -323,10 +321,10 @@ const BlacklistRecordGrid = withWidth()(
       <React.Fragment>
         <Grid container>
           <Grid item xs={12}>
-            <GridList cols={size} cellHeight={210} spacing={12}>
+            <ImageList cols={size} cellHeight={210} spacing={12}>
               {records.map((record) => {
                 return (
-                  <GridListTile
+                  <ImageListItem
                     key={record.get("id")}
                   >
                     <BlacklistRecordTile
@@ -336,10 +334,10 @@ const BlacklistRecordGrid = withWidth()(
                       onExpire={onExpireRecord}
                       onDelete={onDeleteRecord}
                     />
-                  </GridListTile>
+                  </ImageListItem>
                 );
               })}
-            </GridList>
+            </ImageList>
           </Grid>
         </Grid>
         <BlacklistRecordCreateDialog
@@ -355,6 +353,5 @@ const BlacklistRecordGrid = withWidth()(
       </React.Fragment>
     );
   }
-);
 
 export default pure(BlacklistRecordGrid);

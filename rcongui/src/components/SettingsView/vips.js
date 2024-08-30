@@ -10,9 +10,9 @@ import {
   Button,
   Tooltip,
   Typography,
-} from "@material-ui/core";
-import DeleteIcon from "@material-ui/icons/Delete";
-import AddIcon from "@material-ui/icons/Add";
+} from "@mui/material";
+import DeleteIcon from "@mui/icons-material/Delete";
+import AddIcon from "@mui/icons-material/Add";
 import { ForwardCheckBox } from "../commonComponent";
 import { get, handle_http_errors, showResponse } from "../../utils/fetchUtils";
 
@@ -56,7 +56,7 @@ const AddVipItem = ({
         edge="end"
         aria-label="delete"
         onClick={() => onAdd(name, playerId)}
-      >
+        size="large">
         <AddIcon />
       </IconButton>
     </ListItemSecondaryAction>
@@ -207,7 +207,7 @@ const VipEditableList = ({
   }
 
   return (
-    <React.Fragment>
+    (<React.Fragment>
       <List dense>
         <ForwardCheckBox bool={forward} onChange={onFowardChange} />
         <AddVipItem
@@ -229,7 +229,7 @@ const VipEditableList = ({
                 edge="end"
                 aria-label="delete"
                 onClick={() => onDelete(obj.name, obj.player_id)}
-              >
+                size="large">
                 <DeleteIcon />
               </IconButton>
             </ListItemSecondaryAction>
@@ -263,7 +263,7 @@ const VipEditableList = ({
           }}
         />
       </List>
-    </React.Fragment>
+    </React.Fragment>)
   );
 };
 

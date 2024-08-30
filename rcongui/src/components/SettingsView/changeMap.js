@@ -1,5 +1,5 @@
 import React from "react";
-import { Grid, Button, Menu, MenuItem } from "@material-ui/core";
+import { Grid, Button, Menu, MenuItem } from "@mui/material";
 
 const ChangeMap = ({ availableMaps, changeMap }) => {
   const [anchorEl, setAnchorEl] = React.useState(null);

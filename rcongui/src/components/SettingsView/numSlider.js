@@ -1,5 +1,5 @@
 import React from "react";
-import { Slider, Typography } from "@material-ui/core";
+import { Slider, Typography } from "@mui/material";
 
 const NumSlider = ({
   text,

@@ -1,5 +1,5 @@
 import React from "react";
-import { AppBar, Link, Toolbar } from "@material-ui/core";
+import { AppBar, Link, Toolbar } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
 
 const ScoreMenu = () => (

@@ -4,23 +4,25 @@ import {
   postData,
   showResponse,
 } from "../../utils/fetchUtils";
-import InputLabel from "@material-ui/core/InputLabel";
-import MenuItem from "@material-ui/core/MenuItem";
-import FormControl from "@material-ui/core/FormControl";
-import FormControlLabel from "@material-ui/core/FormControlLabel";
-import Select from "@material-ui/core/Select";
-import Grid from "@material-ui/core/Grid";
-import { Button, IconButton, Switch } from "@material-ui/core";
-import Autocomplete from "@material-ui/lab/Autocomplete";
-import TextField from "@material-ui/core/TextField";
-import RefreshIcon from "@material-ui/icons/Refresh";
-import Paper from "@material-ui/core/Paper";
+import InputLabel from "@mui/material/InputLabel";
+import MenuItem from "@mui/material/MenuItem";
+import FormControl from "@mui/material/FormControl";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import Select from "@mui/material/Select";
+import Grid from "@mui/material/Grid";
+import { Button, IconButton, Switch } from "@mui/material";
+import Autocomplete from '@mui/material/Autocomplete';
+import TextField from "@mui/material/TextField";
+import RefreshIcon from "@mui/icons-material/Refresh";
+import Paper from "@mui/material/Paper";
 import moment from "moment";
-import withWidth from "@material-ui/core/withWidth";
 import AutoRefreshLine from "../autoRefreshLine";
-import ListItemText from "@material-ui/core/ListItemText";
-import FullscreenIcon from "@material-ui/icons/Fullscreen";
-import FullscreenExitIcon from "@material-ui/icons/FullscreenExit";
+import ListItemText from "@mui/material/ListItemText";
+import FullscreenIcon from "@mui/icons-material/Fullscreen";
+import FullscreenExitIcon from "@mui/icons-material/FullscreenExit";
+
+// FIXME checkout https://mui.com/components/use-media-query/#migrating-from-withwidth
+const withWidth = () => (WrappedComponent) => (props) => <WrappedComponent {...props} width="xs" />;
 
 const formatClass = (action, classes, highlightLogs) => {
   // if the message is a chat message
@@ -188,15 +190,15 @@ class Logs extends React.Component {
     } = this.state;
 
     return (
-      <React.Fragment>
-        <Grid container justify="flex-start">
+      (<React.Fragment>
+        <Grid container justifyContent="flex-start">
           <Grid
             item
             xs={12}
           >
             <h1 >
               Logs view{" "}
-              <IconButton onClick={onFullScreen}>
+              <IconButton onClick={onFullScreen} size="large">
                 {isFullScreen ? <FullscreenExitIcon /> : <FullscreenIcon />}
               </IconButton>
               <FormControlLabel
@@ -220,7 +222,7 @@ class Logs extends React.Component {
             />
           </Grid>
         </Grid>
-        <Grid container justify="space-around" >
+        <Grid container justifyContent="space-around" >
           <Grid  item xs={12} sm={12} md={12} lg={2}>
             <Selector
               values={limitOptions}
@@ -303,7 +305,7 @@ class Logs extends React.Component {
             </Button>
           </Grid>
         </Grid>
-        <Grid container justify="center" alignItems="center">
+        <Grid container justifyContent="center" alignItems="center">
           <Grid item  xs={12}>
             <Paper >
               {logs.map((l) => (
@@ -321,7 +323,7 @@ class Logs extends React.Component {
             </Paper>
           </Grid>
         </Grid>
-      </React.Fragment>
+      </React.Fragment>)
     );
   }
 }
