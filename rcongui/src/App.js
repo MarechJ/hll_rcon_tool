@@ -10,7 +10,7 @@ import HLLSettings from "./components/SettingsView/hllSettings";
 import { ThemeProvider } from "@material-ui/styles";
 import { HashRouter, Route, Switch, BrowserRouter } from "react-router-dom";
 import LogsHistory from "./components/LogsHistory";
-import { createMuiTheme } from "@material-ui/core/styles";
+import { createTheme } from "@material-ui/core/styles";
 import PlayersHistory from "./components/PlayersHistory";
 import Header, { Footer } from "./components/Header";
 import RconSettings from "./components/RconSettings";
@@ -95,20 +95,20 @@ const Live = () => {
 };
 
 // Easy way to make ugly ass themes: https://material.io/resources/color/#!/?view.left=0&view.right=0&primary.color=33691E&secondary.color=3E2723
-const darkTheme = createMuiTheme({
+const darkTheme = createTheme({
   editor: "vs-dark",
   palette: {
     type: "dark",
   },
 });
 
-const lightTheme = createMuiTheme({
+const lightTheme = createTheme({
   palette: {
     type: "light",
   },
 });
 
-const GreenYellowDarkTheme = createMuiTheme({
+const GreenYellowDarkTheme = createTheme({
   editor: "vs-dark",
   palette: {
     primary: {
@@ -135,7 +135,7 @@ const GreenYellowDarkTheme = createMuiTheme({
   },
 });
 
-const GreenYellowLightTheme = createMuiTheme({
+const GreenYellowLightTheme = createTheme({
   palette: {
     primary: {
       light: "#5edfca",
@@ -152,7 +152,7 @@ const GreenYellowLightTheme = createMuiTheme({
   },
 });
 
-const YellowGreenTheme = createMuiTheme({
+const YellowGreenTheme = createTheme({
   palette: {
     secondary: {
       light: "#5edfca",
@@ -169,7 +169,7 @@ const YellowGreenTheme = createMuiTheme({
   },
 });
 
-const RedTheme = createMuiTheme({
+const RedTheme = createTheme({
   palette: {
     primary: {
       light: "#ff7961",
@@ -186,7 +186,7 @@ const RedTheme = createMuiTheme({
   },
 });
 
-const GreyBlueDarkTheme = createMuiTheme({
+const GreyBlueDarkTheme = createTheme({
   editor: "vs-dark",
   palette: {
     primary: {
@@ -213,7 +213,7 @@ const GreyBlueDarkTheme = createMuiTheme({
   },
 });
 
-const PurplePinkTheme = createMuiTheme({
+const PurplePinkTheme = createTheme({
   palette: {
     primary: {
       light: "#d05ce3",
@@ -230,7 +230,7 @@ const PurplePinkTheme = createMuiTheme({
   },
 });
 
-const CamoDarkTheme = createMuiTheme({
+const CamoDarkTheme = createTheme({
   editor: "vs-dark",
   palette: {
     primary: {
@@ -257,7 +257,7 @@ const CamoDarkTheme = createMuiTheme({
   },
 });
 
-const CamoLight = createMuiTheme({
+const CamoLight = createTheme({
   palette: {
     primary: {
       light: "#629749",
@@ -283,7 +283,7 @@ const CamoLight = createMuiTheme({
   },
 });
 
-const hll = createMuiTheme({
+const hll = createTheme({
   palette: {
     primary: {
       light: "#484848",
@@ -326,7 +326,7 @@ const hll = createMuiTheme({
   },
 });
 
-const hllNoBg = createMuiTheme({
+const hllNoBg = createTheme({
   palette: {
     primary: {
       light: "#484848",

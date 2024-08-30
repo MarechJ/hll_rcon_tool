@@ -3,7 +3,6 @@ import Grid from "@material-ui/core/Grid";
 import ListItemText from "@material-ui/core/ListItemText";
 import LinearProgress from "@material-ui/core/LinearProgress";
 import "react-toastify/dist/ReactToastify.css";
-import useStyles from "../useStyles";
 import Button from "@material-ui/core/Button";
 import Link from "@material-ui/core/Link";
 import { toast } from "react-toastify";
