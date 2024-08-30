@@ -7,7 +7,6 @@ import { getSharedMessages } from "../../utils/fetchUtils";
 import { ForwardCheckBox } from "../commonComponent";
 
 const ServerMessage = ({
-  classes,
   type,
   autocompleteKey,
   value,
@@ -30,7 +29,7 @@ const ServerMessage = ({
       alignContent="center"
       justify="center"
     >
-      <Grid item xs={12} className={classes.paddingBottom}>
+      <Grid item xs={12} >
         <Autocomplete
           freeSolo
           options={sharedMessages.concat(textHistory.getTexts())}

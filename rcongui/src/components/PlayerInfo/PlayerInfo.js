@@ -10,7 +10,6 @@ import {
   Button,
   Grid,
   Link,
-  makeStyles,
   Popover,
 } from "@material-ui/core";
 import Typography from "@material-ui/core/Typography";
@@ -18,7 +17,6 @@ import { ExpandMore } from "@material-ui/icons";
 import moment from "moment";
 import MUIDataTable from "mui-datatables";
 import { withRouter } from "react-router";
-import "./PlayerInfo.css";
 import { ChatContent } from "../ChatWidget";
 import MessageHistory from "../MessageHistory";
 import { toast } from "react-toastify";
@@ -39,12 +37,6 @@ const getLinkLabel = (id) => {
   }
 };
 
-const useStyles = makeStyles((theme) => ({
-  padding: {
-    padding: theme.spacing(1),
-  },
-}));
-
 const NamePopOver = ({ names }) => {
   const [anchorEl, setAnchorEl] = React.useState(null);
 
@@ -58,7 +50,6 @@ const NamePopOver = ({ names }) => {
 
   const open = Boolean(anchorEl);
   const id = open ? "name-popover" : undefined;
-  const styles = useStyles();
   // TODO replace with a List with sublist so that on can copy past the names, also see at what time it was created + last seen
   return (
     <Grid item>
@@ -79,7 +70,7 @@ const NamePopOver = ({ names }) => {
           horizontal: "center",
         }}
       >
-        <Grid container className={styles.padding}>
+        <Grid container>
           {names.map((name, index) => {
             return (
               <Grid item xs={12}>
@@ -149,7 +140,7 @@ const Is = ({ bool, text }) =>
     ""
   );
 
-const PlayerInfo = ({ classes }) => {
+const PlayerInfo = () => {
   const { playerId } = useParams();
   const [created, setCreated] = React.useState("0");
   const [names, setNames] = React.useState([]);
@@ -284,9 +275,9 @@ const PlayerInfo = ({ classes }) => {
   }, [playerId]);
 
   return (
-    <Grid container className={classes.root}>
+    <Grid container >
       {loaded ? (
-        <Grid item sm={12} className={classes.marginTop}>
+        <Grid item sm={12} >
           <Grid container spacing={2}>
             <Grid item xl={2} lg={2} md={2} sm={3} xs={12}>
               <Grid
@@ -305,7 +296,7 @@ const PlayerInfo = ({ classes }) => {
                       fontSize: "5rem",
                     }}
                     variant="square"
-                    className={classes.square}
+                    
                     src={steaminfo?.profile?.avatarfull}
                   >
                     {names[0]?.name[0].toUpperCase()}
@@ -390,7 +381,7 @@ const PlayerInfo = ({ classes }) => {
             <Grid item xl={3} xs={12}>
               <Grid container spacing={1}>
                 <Grid item xs={12}>
-                  <CollapseCard title="Comments" classes={classes} startOpen>
+                  <CollapseCard title="Comments" startOpen>
                     <ChatContent
                       data={comments}
                       handleMessageSend={handleNewComment}
@@ -400,7 +391,6 @@ const PlayerInfo = ({ classes }) => {
                 <Grid item xs={12}>
                   <CollapseCard
                     title="Message History"
-                    classes={classes}
                     startOpen
                   >
                     <MessageHistory data={messages} />

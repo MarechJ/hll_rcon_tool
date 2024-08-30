@@ -18,7 +18,6 @@ import {
   TextField,
 } from "@material-ui/core";
 import Autocomplete from "@material-ui/lab/Autocomplete";
-import { makeStyles } from "@material-ui/core/styles";
 import AddIcon from "@material-ui/icons/Add";
 import RemoveIcon from "@material-ui/icons/Remove";
 import { pure } from "recompose";
@@ -145,7 +144,6 @@ const TopList = pure(
 
 const RankBoard = pure(
   ({
-    classes,
     iconUrl,
     scores,
     title,
@@ -162,7 +160,7 @@ const RankBoard = pure(
           <Typography
             variant="h2"
             align="center"
-            className={classes.grow}
+            
             display="block"
           >
             {title}
@@ -185,13 +183,8 @@ const RankBoard = pure(
   )
 );
 
-const useStyles = makeStyles((theme) => ({
-  black: {
-    backgroundColor: theme.palette.primary.main,
-  },
-}));
 
-const RawScores = pure(({ classes, scores }) => {
+const RawScores = pure(({ scores }) => {
   const lastState = window.localStorage.getItem("rawStats");
   const [show, setShow] = React.useState(
     lastState !== null
@@ -277,7 +270,7 @@ const RawScores = pure(({ classes, scores }) => {
     },
   ]);
   return (
-    <Grid container spacing={2} className={classes.gridContainer}>
+    <Grid container spacing={2} >
       <Grid item xs={12}>
         <Button
           onClick={() => {
@@ -346,7 +339,7 @@ function commaSeperatedListRenderer(value) {
     .join(", ");
 }
 
-const Scores = pure(({ classes, scores, durationToHour, type }) => {
+const Scores = pure(({ scores, durationToHour, type }) => {
   const [highlight, setHighlight] = React.useState(null);
   const doHighlight = (playerScore) => {
     setHighlight(playerScore);
@@ -354,7 +347,6 @@ const Scores = pure(({ classes, scores, durationToHour, type }) => {
   };
   const [playersFilter, setPlayersFilter] = React.useState(new iList());
   const undoHighlight = () => setHighlight(null);
-  const styles = useStyles();
 
   return (
     <React.Fragment>
@@ -369,7 +361,7 @@ const Scores = pure(({ classes, scores, durationToHour, type }) => {
             ""
           ) : (
             <Grid item xs={12}>
-              <RawScores scores={scores} classes={classes} />{" "}
+              <RawScores scores={scores}  />{" "}
             </Grid>
           )}
 
@@ -378,7 +370,6 @@ const Scores = pure(({ classes, scores, durationToHour, type }) => {
               <Grid
                 item
                 xs={12}
-                className={`${styles.black} ${classes.doublePadding}`}
               >
                 <Paper>
                   <Autocomplete
@@ -403,7 +394,7 @@ const Scores = pure(({ classes, scores, durationToHour, type }) => {
               </Grid>
             </Grid>
           </Grid>
-          <Grid item xs={12} className={classes.doublePadding}>
+          <Grid item xs={12} >
             <Typography variant="caption">
               You can click on a player to see their details
             </Typography>
@@ -411,7 +402,7 @@ const Scores = pure(({ classes, scores, durationToHour, type }) => {
 
           <Grid item xs={12} md={6} lg={3} xl={2}>
             <RankBoard
-              classes={classes}
+              
               iconUrl={"icons/bomb.png"}
               scores={scores}
               title="TOP KILLERS"
@@ -424,7 +415,7 @@ const Scores = pure(({ classes, scores, durationToHour, type }) => {
           </Grid>
           <Grid item xs={12} md={6} lg={3} xl={2}>
             <RankBoard
-              classes={classes}
+              
               iconUrl={"icons/invincible.webp"}
               scores={scores}
               title="TOP RATIO"
@@ -437,7 +428,7 @@ const Scores = pure(({ classes, scores, durationToHour, type }) => {
           </Grid>
           <Grid item xs={12} md={6} lg={3} xl={2}>
             <RankBoard
-              classes={classes}
+              
               iconUrl={"icons/efficiency.png"}
               scores={scores}
               title="TOP PERF."
@@ -450,7 +441,7 @@ const Scores = pure(({ classes, scores, durationToHour, type }) => {
           </Grid>
           <Grid item xs={12} md={6} lg={3} xl={2}>
             <RankBoard
-              classes={classes}
+              
               iconUrl={"icons/tryhard.png"}
               scores={scores}
               title="TRY HARDERS"
@@ -463,7 +454,7 @@ const Scores = pure(({ classes, scores, durationToHour, type }) => {
           </Grid>
           <Grid item xs={12} md={6} lg={3} xl={2}>
             <RankBoard
-              classes={classes}
+              
               iconUrl={"icons/stamina.png"}
               scores={scores}
               title="TOP STAMINA"
@@ -476,7 +467,7 @@ const Scores = pure(({ classes, scores, durationToHour, type }) => {
           </Grid>
           <Grid item xs={12} md={6} lg={3} xl={2}>
             <RankBoard
-              classes={classes}
+              
               iconUrl={"icons/streak_line.png"}
               scores={scores}
               title="TOP KILL STREAK"
@@ -489,7 +480,7 @@ const Scores = pure(({ classes, scores, durationToHour, type }) => {
           </Grid>
           <Grid item xs={12} md={6} lg={3} xl={2}>
             <RankBoard
-              classes={classes}
+              
               iconUrl={"icons/nevergiveup.png"}
               scores={scores}
               title="I NEVER GIVE UP"
@@ -502,7 +493,7 @@ const Scores = pure(({ classes, scores, durationToHour, type }) => {
           </Grid>
           <Grid item xs={12} md={6} lg={3} xl={2}>
             <RankBoard
-              classes={classes}
+              
               iconUrl={"icons/patience.png"}
               scores={scores}
               title="MOST PATIENT"
@@ -515,7 +506,7 @@ const Scores = pure(({ classes, scores, durationToHour, type }) => {
           </Grid>
           <Grid item xs={12} md={6} lg={3} xl={2}>
             <RankBoard
-              classes={classes}
+              
               iconUrl={"icons/clumsy.png"}
               scores={scores}
               title="YES I'M CLUMSY"
@@ -528,7 +519,7 @@ const Scores = pure(({ classes, scores, durationToHour, type }) => {
           </Grid>
           <Grid item xs={12} md={6} lg={3} xl={2}>
             <RankBoard
-              classes={classes}
+              
               iconUrl={"icons/glasses.png"}
               scores={scores}
               title="I NEED GLASSES"
@@ -541,7 +532,7 @@ const Scores = pure(({ classes, scores, durationToHour, type }) => {
           </Grid>
           <Grid item xs={12} md={6} lg={3} xl={2}>
             <RankBoard
-              classes={classes}
+              
               iconUrl={"icons/vote.ico"}
               scores={scores}
               title="I ❤ VOTING"
@@ -554,7 +545,7 @@ const Scores = pure(({ classes, scores, durationToHour, type }) => {
           </Grid>
           <Grid item xs={12} md={6} lg={3} xl={2}>
             <RankBoard
-              classes={classes}
+              
               iconUrl={"icons/sleep.png"}
               scores={scores}
               title="What is a break?"
@@ -569,7 +560,7 @@ const Scores = pure(({ classes, scores, durationToHour, type }) => {
           <React.Fragment>
             <Grid item xs={12} md={6} lg={3} xl={2}>
               <RankBoard
-                classes={classes}
+                
                 iconUrl={"icons/survivor.png"}
                 scores={scores}
                 title="SURVIVOR"
@@ -583,7 +574,7 @@ const Scores = pure(({ classes, scores, durationToHour, type }) => {
             </Grid>
             <Grid item xs={12} md={6} lg={3} xl={2}>
               <RankBoard
-                classes={classes}
+                
                 iconUrl={"icons/early.png"}
                 scores={scores}
                 title="U'R STILL A MAN"
@@ -596,7 +587,7 @@ const Scores = pure(({ classes, scores, durationToHour, type }) => {
             </Grid>
             <Grid item xs={12} md={6} lg={3} xl={2}>
               <RankBoard
-                classes={classes}
+                
                 iconUrl={"icons/early.png"}
                 scores={scores}
                 title="COMBAT SCORE"
@@ -609,7 +600,7 @@ const Scores = pure(({ classes, scores, durationToHour, type }) => {
             </Grid>
             <Grid item xs={12} md={6} lg={3} xl={2}>
               <RankBoard
-                classes={classes}
+                
                 iconUrl={"icons/early.png"}
                 scores={scores}
                 title="ATTACK SCORE"
@@ -622,7 +613,7 @@ const Scores = pure(({ classes, scores, durationToHour, type }) => {
             </Grid>
             <Grid item xs={12} md={6} lg={3} xl={2}>
               <RankBoard
-                classes={classes}
+                
                 iconUrl={"icons/early.png"}
                 scores={scores}
                 title="DEFENSE SCORE"
@@ -635,7 +626,7 @@ const Scores = pure(({ classes, scores, durationToHour, type }) => {
             </Grid>
             <Grid item xs={12} md={6} lg={3} xl={2}>
               <RankBoard
-                classes={classes}
+                
                 iconUrl={"icons/early.png"}
                 scores={scores}
                 title="SUPPORT SCORE"
@@ -648,7 +639,7 @@ const Scores = pure(({ classes, scores, durationToHour, type }) => {
             </Grid>
             {process.env.REACT_APP_PUBLIC_BUILD ? (
               <Grid item xs={12}>
-                <RawScores scores={scores} classes={classes} />{" "}
+                <RawScores scores={scores}  />{" "}
               </Grid>
             ) : (
               ""

@@ -22,7 +22,6 @@ import { List as IList, Map } from "immutable";
 import { getName } from "country-list";
 import Popover from "@material-ui/core/Popover";
 import Typography from "@material-ui/core/Typography";
-import { makeStyles } from "@material-ui/core/styles";
 import { Link as RouterLink } from "react-router-dom";
 import { pure } from "recompose";
 import {
@@ -38,30 +37,7 @@ import moment from "moment";
 
 const zeroPad = (num, places) => String(num).padStart(places, "0");
 
-const useStyles = makeStyles((theme) => ({
-  popover: {
-    pointerEvents: "none",
-  },
-  paper: {
-    padding: theme.spacing(1),
-  },
-  paperBackground: {
-    backgroundColor: theme.palette.type == "dark" ? "" : "grey",
-  },
-  darkBackground: {
-    backgroundColor: theme.palette.type == "dark" ? "" : "grey",
-  },
-  primaryBackground: {
-    backgroundColor: theme.palette.primary.dark,
-  },
-  customBadge: {
-    backgroundColor: "grey",
-    color: "white",
-  },
-}));
-
 function WithPopOver(props) {
-  const classes = useStyles();
   const [anchorEl, setAnchorEl] = React.useState(null);
 
   const handlePopoverOpen = (event) => {
@@ -87,10 +63,6 @@ function WithPopOver(props) {
       </Typography>
       <Popover
         id="mouse-over-popover"
-        className={classes.popover}
-        classes={{
-          paper: classes.paper,
-        }}
         open={open}
         anchorEl={anchorEl}
         anchorOrigin={{
@@ -183,7 +155,7 @@ const formatPunitions = (profile) => {
     ));
 };
 
-const ScoreChips = ({ player, backgroundClass }) => {
+const ScoreChips = ({ player }) => {
   return (
     <Fragment>
       <Grid item>
@@ -192,7 +164,6 @@ const ScoreChips = ({ player, backgroundClass }) => {
           variant="outlined"
           avatar={
             <Avatar
-              className={backgroundClass}
               alt="Combat"
               src="icons/roles/score_combat.png"
             />
@@ -206,7 +177,6 @@ const ScoreChips = ({ player, backgroundClass }) => {
           variant="outlined"
           avatar={
             <Avatar
-              className={backgroundClass}
               alt="Offensive"
               src="icons/roles/score_offensive.png"
             />
@@ -220,7 +190,6 @@ const ScoreChips = ({ player, backgroundClass }) => {
           variant="outlined"
           avatar={
             <Avatar
-              className={backgroundClass}
               alt="Defensive"
               src="icons/roles/score_defensive.png"
             />
@@ -234,7 +203,6 @@ const ScoreChips = ({ player, backgroundClass }) => {
           variant="outlined"
           avatar={
             <Avatar
-              className={backgroundClass}
               alt="Support"
               src="icons/roles/score_support.png"
             />
@@ -246,8 +214,7 @@ const ScoreChips = ({ player, backgroundClass }) => {
   );
 };
 
-const KDChips = ({ classes, player }) => {
-  const localClasses = useStyles();
+const KDChips = ({ player }) => {
 
   return (
     <Fragment>
@@ -285,23 +252,20 @@ const KDChips = ({ classes, player }) => {
   );
 };
 
-const ScoreListText = ({ classes, player }) => {
-  const localClasses = useStyles();
+const ScoreListText = ({ player }) => {
 
   return (
     <ListItemText
-      className={localClasses.alignRight}
       primary={
         <Grid container spacing={1}>
           <ScoreChips
-            backgroundClass={localClasses.darkBackground}
             player={player}
           />
         </Grid>
       }
       secondary={
         <Grid container spacing={1}>
-          <KDChips classes={classes} player={player} />
+          <KDChips player={player} />
         </Grid>
       }
     />
@@ -309,14 +273,12 @@ const ScoreListText = ({ classes, player }) => {
 };
 
 const PlayerItem = ({
-  classes,
   player,
   handleAction,
   nbButtons,
   onFlag,
   onDeleteFlag,
   playerHasExtraInfo,
-  avatarBackround,
   onSelect,
   isSelected,
   onBlacklist,
@@ -325,7 +287,6 @@ const PlayerItem = ({
   const profile = player.get("profile") ? player.get("profile") : new Map();
   const name = player.get("name");
   const player_id = player.get("player_id");
-  const localClasses = useStyles();
 
   return (
     <ListItem key={name} dense selected={isSelected}>
@@ -334,7 +295,6 @@ const PlayerItem = ({
           <Badge
             badgeContent={player.get("level", 0)}
             max={999}
-            classes={{ badge: localClasses.customBadge }}
             anchorOrigin={{
               vertical: "bottom",
               horizontal: "right",
@@ -342,7 +302,6 @@ const PlayerItem = ({
           >
             <Avatar
               variant="square"
-              className={avatarBackround || localClasses.darkBackground}
               src={`icons/roles/${player.get("role", "rifleman")}.png`}
             ></Avatar>
           </Badge>
@@ -368,7 +327,6 @@ const PlayerItem = ({
               ""
             )}
             <Link
-              className={classes.marginRight}
               target="_blank"
               color="inherit"
               href={makePlayerProfileUrl(player_id, name)}
@@ -392,7 +350,7 @@ const PlayerItem = ({
             >
               {player_id} <Icon component={OpenInNewIcon} fontSize="inherit" />
             </Link>
-            <div className={classes.noPaddingMargin}>
+            <div>
               {profile.get("flags", []).map((d) => (
                 <Flag key={d} data={d} onDeleteFlag={onDeleteFlag} />
               ))}
@@ -401,7 +359,7 @@ const PlayerItem = ({
         }
       />
       {playerHasExtraInfo ? (
-        <ScoreListText classes={classes} player={player} />
+        <ScoreListText player={player} />
       ) : (
         ""
       )}
@@ -493,7 +451,6 @@ const getSortedPlayers = (players, sortType) => {
 
 const CompactList = ({
   players,
-  classes,
   handleAction,
   sortType,
   width,
@@ -521,10 +478,9 @@ const CompactList = ({
   };
 
   return (
-    <List className={classes.root}>
+    <List>
       {myPlayers.map((player) => (
         <PlayerItem
-          classes={classes}
           nbButtons={sizes[width]}
           player={player}
           key={player.get("player_id")}

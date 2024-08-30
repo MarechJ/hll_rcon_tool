@@ -31,7 +31,6 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const MessageHistory = ({ data }) => {
-  const classes = useStyles();
   const [comment, setComment] = React.useState("");
 
   return (
@@ -43,7 +42,6 @@ const MessageHistory = ({ data }) => {
           alignContent="flex-start"
           alignItems="flex-end"
           direction="column"
-          className={classes.padding}
           wrap="nowrap"
         >
           {data?.map((message, index) => {
@@ -62,7 +60,7 @@ const MessageHistory = ({ data }) => {
                       color="primary"
                       variant="default"
                       label={
-                        <Typography align="left" className={classes.message}>
+                        <Typography align="left" >
                           {message.reason}
                         </Typography>
                       }
@@ -72,7 +70,7 @@ const MessageHistory = ({ data }) => {
                     <Typography
                       variant="caption"
                       display="block"
-                      className={classes.date}
+                      
                       color="textSecondary"
                     >
                       {moment

@@ -26,24 +26,20 @@ const Process = ({
   status,
   isOn,
   onToggle,
-  classes,
 }) => (
   <Grid
     container
     justify="space-around"
     spacing={1}
-    className={classes.padding}
   >
     <Grid item xs={12} spacing={1}>
       <Grid container>
         <Grid item xs={6}>
           <Grid
             container
-            className={`${classes.alignLeft} ${classes.noPaddingMarginBottom}`}
           >
             <Grid item xs={12}>
               <Typography
-                className={classes.noPaddingMarginBottom}
                 variant="h6"
               >
                 {name}
@@ -51,7 +47,7 @@ const Process = ({
               <ListItemText
                 primary=""
                 secondary={description}
-                className={classes.noPaddingMargin}
+                
               />
             </Grid>
           </Grid>
@@ -61,7 +57,7 @@ const Process = ({
           <ListItemText
             primary=""
             secondary={upTime}
-            className={classes.noPaddingMargin}
+            
           />
         </Grid>
         <Grid item xs={2}>
@@ -128,14 +124,13 @@ class ServicesList extends React.Component {
 
   render() {
     const { services } = this.state;
-    const { classes } = this.props;
 
     return (
       <Grid container spacing={1}>
         <Grid item xs={12}>
           {services.map((s) => (
             <Process
-              classes={classes}
+              
               name={s.get("name")}
               description={s.get("info")}
               status={s.get("statename")}

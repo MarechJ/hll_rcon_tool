@@ -3,7 +3,7 @@ import React from "react";
 import Tooltip from "@material-ui/core/Tooltip";
 import moment from "moment";
 
-export const PlayerSighthings = ({ classes, player }) => {
+export const PlayerSighthings = ({ player }) => {
   const first_seen = moment(player.get("first_seen_timestamp_ms"));
   const last_seen = moment(player.get("last_seen_timestamp_ms"));
 
@@ -35,7 +35,6 @@ export const PlayerSighthings = ({ classes, player }) => {
       container
       justify="space-between"
       spacing={0}
-      className={classes.noPaddingMargin}
     >
       {vip_expiration ? (
         <Grid item xs={12}>

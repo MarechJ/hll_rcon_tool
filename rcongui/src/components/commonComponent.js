@@ -11,7 +11,7 @@ import Chip from "@material-ui/core/Chip";
 import Autocomplete from "@material-ui/lab/Autocomplete";
 import TextField from "@material-ui/core/TextField";
 
-export const WithPopver = ({ classes, popoverContent, children }) => {
+export const WithPopver = ({ popoverContent, children }) => {
   const [anchorEl, setAnchorEl] = React.useState(null);
 
   const handlePopoverOpen = (event) => {
@@ -31,10 +31,6 @@ export const WithPopver = ({ classes, popoverContent, children }) => {
       </div>
       <Popover
         id="mouse-over-popover"
-        className={classes.popover}
-        classes={{
-          paper: classes.paper,
-        }}
         open={open}
         anchorEl={anchorEl}
         anchorOrigin={{
@@ -66,7 +62,6 @@ export const ManualPlayerInput = ({
   onSubmit,
   actionName,
   tooltipText,
-  classes,
 }) => (
   <Grid container spacing={1} justify="space-between">
     <Grid item xs={6} md={3}>
@@ -107,7 +102,6 @@ export const ManualPlayerInput = ({
       item
       xs={12}
       md={2}
-      className={`${classes.padding} ${classes.margin}`}
     >
       <Tooltip fullWidth title={tooltipText} arrow>
         <Button

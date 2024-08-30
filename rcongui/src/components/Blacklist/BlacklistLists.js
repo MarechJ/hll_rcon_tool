@@ -8,7 +8,6 @@ import {
   Tooltip,
   Typography,
 } from "@material-ui/core";
-import useStyles from "../useStyles";
 import React from "react";
 import { get, handle_http_errors, postData, showResponse } from "../../utils/fetchUtils";
 import EditIcon from "@material-ui/icons/Edit";
@@ -20,8 +19,7 @@ const SYNC_METHODS = {
   ban_on_connect: "Ban On Connect",
   ban_immediately: "Ban Immediately",
 }
-const BlacklistLists = ({ classes: globalClasses }) => {
-  const classes = useStyles();
+const BlacklistLists = () => {
 
   const [isLoading, setIsLoading] = React.useState(false);
   const [blacklists, setBlacklists] = React.useState([]);
@@ -122,7 +120,7 @@ const BlacklistLists = ({ classes: globalClasses }) => {
 
   return (
     <React.Fragment>
-      <Grid container spacing={3} direction="column" justify="center" className={globalClasses.padding}>
+      <Grid container spacing={3} direction="column" justify="center">
         <Grid item>
           {isLoading ? <LinearProgress color="secondary" /> : ""}
         </Grid>
@@ -130,7 +128,6 @@ const BlacklistLists = ({ classes: globalClasses }) => {
           {blacklists.map((blacklist) => (
             <Grid key={blacklist.id} item style={{width: "100%", maxWidth: 1600}}>
               <BlacklistListTile
-                classes={globalClasses}
                 servers={servers}
                 blacklist={blacklist}
                 onEdit={onEditBlacklist}

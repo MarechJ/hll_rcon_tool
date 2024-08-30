@@ -11,7 +11,6 @@ import {
 } from "@material-ui/core";
 
 const CollapseCard = ({
-  classes,
   title,
   children,
   onExpand,
@@ -33,9 +32,6 @@ const CollapseCard = ({
         title={title}
         action={
           <IconButton
-            className={clsx(classes.expand, {
-              [classes.expandOpen]: expanded,
-            })}
             onClick={handleExpandClick}
             aria-expanded={expanded}
             aria-label="show more"

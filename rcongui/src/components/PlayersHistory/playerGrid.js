@@ -1,4 +1,4 @@
-import { Grid, GridList, GridListTile, makeStyles } from "@material-ui/core";
+import { Grid, GridList, GridListTile } from "@material-ui/core";
 import React from "react";
 import "emoji-mart/css/emoji-mart.css";
 import { ActionButton } from "./PlayerTile/ActionButton";
@@ -10,23 +10,8 @@ import { PlayerBan } from "./PlayerTile/PlayerBan";
 import withWidth from "@material-ui/core/withWidth";
 import { pure } from "recompose";
 
-const useStyles = makeStyles((theme) => ({
-  paperTile: {
-    backgroundColor: theme.palette.background.paper,
-    minHeight: "100%",
-    padding: theme.spacing(2),
-  },
-  root: {
-    display: "flex",
-    flexWrap: "wrap",
-    justifyContent: "space-around",
-    overflow: "hidden",
-  },
-}));
-
 const PlayerGrid = withWidth()(
   ({
-    classes,
     players,
     onBlacklist,
     onUnBlacklist,
@@ -43,7 +28,6 @@ const PlayerGrid = withWidth()(
     vips,
     bans,
   }) => {
-    const myClasses = useStyles();
 
     const size = {
       xs: 1,
@@ -65,24 +49,21 @@ const PlayerGrid = withWidth()(
                 >
                   <Grid
                     container
-                    className={myClasses.paperTile}
                     direction="column"
                     justify="space-between"
                   >
-                    <PlayerHeader classes={classes} player={player} />
+                    <PlayerHeader player={player} />
                     <React.Fragment>
                       <PlayerFlags
                         player={player}
-                        classes={classes}
                         onDeleteFlag={onDeleteFlag}
                       />
                       <PlayerBan
-                        classes={classes}
                         bans={bans}
                         player={player}
                       />
-                      <PlayerSighthings classes={classes} player={player} />
-                      <PlayerPenalties classes={classes} player={player} />
+                      <PlayerSighthings player={player} />
+                      <PlayerPenalties player={player} />
                       <Grid container justify="center">
                         <Grid item>
                           <ActionButton

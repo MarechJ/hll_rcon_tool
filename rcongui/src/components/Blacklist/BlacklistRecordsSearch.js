@@ -3,7 +3,6 @@ import React from "react";
 import { get, handle_http_errors, showResponse } from "../../utils/fetchUtils";
 
 const BlacklistRecordsSearch = ({
-  classes,
   blacklists,
   onSearch,
   disabled,
@@ -15,7 +14,7 @@ const BlacklistRecordsSearch = ({
   const [pageSize, setPageSize] = React.useState(50);
 
   return (
-    <form className={classes.flexContainer}>
+    <form>
       <Grid
         container
         spacing={2}

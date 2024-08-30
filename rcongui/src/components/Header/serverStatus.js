@@ -12,7 +12,6 @@ import Link from "@material-ui/core/Link";
 import { fromJS, List } from "immutable";
 
 const Status = ({
-  classes,
   name,
   numCurrentPlayers,
   maxPlayers,
@@ -36,12 +35,11 @@ const Status = ({
 
   return (
     <React.Fragment>
-      <Grid container className={classes.alignLeft} spacing={1}>
+      <Grid container  spacing={1}>
         <Grid item>
           <Link variant="button" color="inherit" onClick={handleClick}>
             <strong
               style={{ display: "block" }}
-              className={`${classes.ellipsis}`}
             >
               {isSmall ? `${name.substring(0, 40)}...` : name}
             </strong>
@@ -201,11 +199,9 @@ class ServerStatus extends React.Component {
       numAxisPlayers,
       numAlliedPlayers,
     } = this.state;
-    const { classes } = this.props;
 
     return (
       <Status
-        classes={classes}
         name={name}
         numCurrentPlayers={numCurrentPlayers}
         maxPlayers={maxPlayers}

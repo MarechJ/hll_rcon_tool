@@ -70,12 +70,6 @@ function BlacklistServerWarning({ blacklist, currentServer }) {
   );
 }
 
-const useStyles = makeStyles((theme) => ({
-  selectEmpty: {
-    marginTop: theme.spacing(2.7),
-  },
-}));
-
 export default function BlacklistRecordCreateDialog({
   open,
   setOpen,
@@ -94,7 +88,6 @@ export default function BlacklistRecordCreateDialog({
   const [currentServer, setCurrentServer] = React.useState({});
   const [punishMessages, setPunishMessages] = React.useState([]);
   const [selectedMessage, setSelectedMessage] = React.useState("");
-  const classes = useStyles();
 
   const handlePunishMessageChange = (event) => {
     setSelectedMessage(event.target.value ?? "");
@@ -242,7 +235,6 @@ export default function BlacklistRecordCreateDialog({
                   }}
                   fullWidth
                   displayEmpty
-                  className={classes.selectEmpty}
                 >
                   <MenuItem value="">
                     <em>Preset Times</em>
@@ -283,7 +275,6 @@ export default function BlacklistRecordCreateDialog({
                   inputProps={{ "aria-label": "Saved Messages" }}
                   fullWidth
                   displayEmpty
-                  className={classes.selectEmpty}
                 >
                   <MenuItem value="">
                     <em>Saved Messages</em>

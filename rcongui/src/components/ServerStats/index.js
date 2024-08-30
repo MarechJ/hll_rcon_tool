@@ -22,7 +22,6 @@ import { DateTimePicker, MuiPickersUtilsProvider } from "@material-ui/pickers";
 import palette from "google-palette";
 import "chartjs-adapter-moment";
 import { Bar } from "react-chartjs-2";
-import { makeStyles } from "@material-ui/core/styles";
 import { get, handle_http_errors, showResponse } from "../../utils/fetchUtils";
 import { fromJS } from "immutable";
 import {
@@ -62,20 +61,6 @@ function hexToRgb(hex) {
         ")"
     : null;
 }
-
-const useStyles = makeStyles((theme) => ({
-  modal: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  paper: {
-    backgroundColor: theme.palette.background.paper,
-    border: "2px solid #000",
-    boxShadow: theme.shadows[5],
-    padding: theme.spacing(2, 4, 3),
-  },
-}));
 
 function DetailsDialog({
   datasetElementIndex,
@@ -240,7 +225,7 @@ function MetricsParams({
   );
 }
 
-const ServerStatsPage = ({ classes }) => {
+const ServerStatsPage = () => {
   const [stats, setStats] = React.useState({});
   const [dataPoint, setDatapoint] = React.useState({});
   const [datasetsIndex, setDatasetsIndex] = React.useState(null);
@@ -277,7 +262,6 @@ const ServerStatsPage = ({ classes }) => {
       ),
     [stats]
   );
-  const styles = useStyles();
   const datasets = React.useMemo(
     () =>
       Object.keys(stats)
@@ -411,7 +395,6 @@ const ServerStatsPage = ({ classes }) => {
       <Grid
         container
         spacing={2}
-        className={classes.doublePadding}
         alignContent="center"
         alignItems="center"
         style={{ paddingTop: 0 }}

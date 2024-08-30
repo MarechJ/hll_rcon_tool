@@ -7,7 +7,7 @@ import {
   showResponse,
 } from "../../utils/fetchUtils";
 
-const ServerName = ({ classes }) => {
+const ServerName = () => {
   const [name, setName] = React.useState("");
   const isFirstRender = React.useRef(true);
 
@@ -26,7 +26,7 @@ const ServerName = ({ classes }) => {
   };
 
   return (
-    <Grid container className={classes.doublePadding}>
+    <Grid container>
       <Grid item xs={10}>
         <TextField
           fullWidth

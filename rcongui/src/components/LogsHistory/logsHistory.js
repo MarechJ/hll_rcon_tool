@@ -33,7 +33,6 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const LogsFilter = ({ onSubmit, onChange }) => {
-  const classes = useStyles();
   const [name, setName] = React.useState("");
   const [playerId, setPlayerId] = React.useState("");
   const [type, setType] = React.useState("");
@@ -47,8 +46,8 @@ const LogsFilter = ({ onSubmit, onChange }) => {
 
   return (
     <Grid container spacing={1}>
-      <Grid item xs={12} className={classes.margin}>
-        <form className={classes.flexContainer}>
+      <Grid item xs={12} >
+        <form >
           <Grid container spacing={1} justify="space-evenly">
             <Grid item>
               <TextField
@@ -133,7 +132,7 @@ const LogsFilter = ({ onSubmit, onChange }) => {
               </MuiPickersUtilsProvider>
             </Grid>
             <Grid item>
-              <FormControl className={classes.formControl}>
+              <FormControl >
                 <InputLabel id="time_sort_label">Time sort</InputLabel>
                 <Select
                   labelId="time_sort_label"
@@ -364,7 +363,6 @@ class LogsHistory extends React.Component {
   }
 
   render() {
-    const { classes } = this.props;
     const { isLoading } = this.state;
 
     return (
@@ -373,7 +371,7 @@ class LogsHistory extends React.Component {
           <LogsFilter onSubmit={this.getHistoricalLogs} />
         </Grid>
         {isLoading ? (
-          <Grid itemx xs={12} className={classes.doublePadding}>
+          <Grid itemx xs={12} >
             <LinearProgress color="secondary" />
           </Grid>
         ) : (

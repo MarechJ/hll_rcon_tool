@@ -132,14 +132,12 @@ class LoginBox extends React.Component {
 
   render() {
     const { open, username, password, isLoggedIn } = this.state;
-    const { classes } = this.props;
 
     return (
       <React.Fragment>
         <Link
           variant="button"
           color="inherit"
-          className={classes.link}
           component={RouterLink}
           onClick={() =>
             isLoggedIn === true ? this.logout() : this.setState({ open: true })
@@ -162,8 +160,7 @@ class LoginBox extends React.Component {
   }
 }
 
-// TODO: Make this reactive, it's causing the view on mobile to be bigger then it should
-const Header = ({ classes }) => {
+const Header = () => {
   const [anchorEl, setAnchorEl] = React.useState(null);
   const [anchorElScores, setAnchorElScores] = React.useState(null);
   const [anchorElSettings, setAnchorElSettings] = React.useState(null);
@@ -178,23 +175,23 @@ const Header = ({ classes }) => {
   };
 
   return (
-    <Grid container className={classes.grow}>
-      <div className={classes.grow}>
-        <AppBar position="static" elevation={0} className={classes.appBar}>
-          <Toolbar className={classes.toolbar}>
+    <Grid container >
+      <div >
+        <AppBar position="static" elevation={0} >
+          <Toolbar >
             <Grid container>
               <Grid item xs={12}>
                 <Grid container alignContent="flex-start" alignItems="center">
                   <Grid item>
-                    <ServerStatus classes={classes} />
+                    <ServerStatus  />
                   </Grid>
-                  <Grid item className={classes.doublePaddingLeft}></Grid>
-                  <Grid item className={classes.doublePaddingLeft}>
-                    <nav className={classes.title}>
+                  <Grid item ></Grid>
+                  <Grid item >
+                    <nav >
                       <Link
                         variant="button"
                         color="inherit"
-                        className={classes.firstLink}
+                        
                         onClick={(e) => setAnchorElLive(e.currentTarget)}
                       >
                         Live
@@ -230,7 +227,7 @@ const Header = ({ classes }) => {
                       <Link
                         variant="button"
                         color="inherit"
-                        className={classes.link}
+                        
                         onClick={handleClick}
                       >
                         History
@@ -277,7 +274,7 @@ const Header = ({ classes }) => {
                       <Link
                         variant="button"
                         color="inherit"
-                        className={classes.link}
+                        
                         onClick={(e) => {
                           setAnchorElSettings(e.currentTarget);
                         }}
@@ -502,7 +499,7 @@ const Header = ({ classes }) => {
                       <Link
                         variant="button"
                         color="inherit"
-                        className={classes.link}
+                        
                         onClick={(e) => setAnchorElScores(e.currentTarget)}
                       >
                         Stats
@@ -547,7 +544,7 @@ const Header = ({ classes }) => {
                         {/* <Link
                           variant="button"
                           color="inherit"
-                          className={classes.link}
+                          
                           component={RouterLink}
                           to="/server"
                         >
@@ -557,7 +554,7 @@ const Header = ({ classes }) => {
                         </Link> */}
                       </Menu>
 
-                      <LoginBox classes={classes} component={RouterLink} />
+                      <LoginBox  component={RouterLink} />
                     </nav>
                   </Grid>
                 </Grid>

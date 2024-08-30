@@ -22,7 +22,6 @@ import { fromJS } from "immutable";
 import { vipListFromServer } from "../VipDialog/vipFromServer";
 
 const AddVipItem = ({
-  classes,
   name,
   setName,
   playerId,
@@ -31,7 +30,7 @@ const AddVipItem = ({
 }) => (
   <ListItem>
     <Grid container>
-      <Grid item xs={6} className={classes.paddingRight}>
+      <Grid item xs={6} >
         <TextField
           InputLabelProps={{
             shrink: true,
@@ -41,7 +40,7 @@ const AddVipItem = ({
           onChange={(e) => setName(e.target.value)}
         />
       </Grid>
-      <Grid item xs={6} className={classes.paddingLeft}>
+      <Grid item xs={6} >
         <TextField
           InputLabelProps={{
             shrink: true,
@@ -70,7 +69,7 @@ function setIntervalLimited(callback, interval, x) {
   }
 }
 
-const VipUpload = ({ classes }) => {
+const VipUpload = () => {
   const [selectedFile, setSelectedFile] = React.useState();
   const [isFilePicked, setIsFilePicked] = React.useState(false);
   const [result, setResult] = React.useState(null);
@@ -170,7 +169,6 @@ function nameOf(playerObj) {
 }
 
 const VipEditableList = ({
-  classes,
   peopleList,
   onDelete,
   onAdd,
@@ -213,7 +211,7 @@ const VipEditableList = ({
       <List dense>
         <ForwardCheckBox bool={forward} onChange={onFowardChange} />
         <AddVipItem
-          classes={classes}
+          
           name={name}
           setName={setName}
           playerId={player_id}
@@ -238,7 +236,7 @@ const VipEditableList = ({
           </ListItem>
         ))}
         <AddVipItem
-          classes={classes}
+          
           name={name}
           setName={setName}
           playerId={player_id}

@@ -23,7 +23,6 @@ function intersection(a, b) {
 }
 
 const MapRotationTransferList = ({
-  classes,
   availableMaps,
   mapRotation,
   addToRotation,
@@ -59,7 +58,7 @@ const MapRotationTransferList = ({
   };
 
   const customList = (items, title) => (
-    <Paper className={classes.transferList}>
+    <Paper >
       <h4>{title}</h4>
       <Divider />
       <List dense component="div" role="list">
@@ -100,7 +99,7 @@ const MapRotationTransferList = ({
           <Button
             variant="outlined"
             size="small"
-            className={classes.transferListButton}
+            
             onClick={handleCheckedRight}
             disabled={leftChecked.length === 0}
             aria-label="move selected right"
@@ -114,7 +113,7 @@ const MapRotationTransferList = ({
           <Button
             variant="outlined"
             size="small"
-            className={classes.transferListButton}
+            
             onClick={handleCheckedLeft}
             disabled={rightChecked.length === 0}
             aria-label="move selected left"

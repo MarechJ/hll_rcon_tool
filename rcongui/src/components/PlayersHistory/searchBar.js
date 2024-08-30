@@ -35,7 +35,6 @@ const SearchBar = ({
   isWatchedOnly,
   setIsWatchedOnly,
   onSearch,
-  classes,
   ignoreAccent,
   setIgnoreAccent,
   exactMatch,
@@ -49,7 +48,7 @@ const SearchBar = ({
   //const toggleEmojis = () => setShowEmojiPicker(!showEmojiPicker)
 
   return (
-    <form className={classes.flexContainer}>
+    <form>
       <Grid
         container
         spacing={1}

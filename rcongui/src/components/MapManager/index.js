@@ -15,7 +15,7 @@ import Chip from "@material-ui/core/Chip";
 import Autocomplete from "@material-ui/lab/Autocomplete";
 import TextField from "@material-ui/core/TextField";
 
-const MapRotation = ({ classes }) => {
+const MapRotation = () => {
   const [maps, setMaps] = React.useState([]);
   const [currentRotation, setCurrentRotation] = React.useState([]);
   const [rotation, setRotation] = React.useState([]);
@@ -100,7 +100,7 @@ const MapRotation = ({ classes }) => {
   );
 
   return (
-    <Grid container spacing={2} className={classes.doublePadding}>
+    <Grid container spacing={2}>
       <Grid item xs={12}>
         <Typography variant="caption">Drag and drop to reorder</Typography>
       </Grid>

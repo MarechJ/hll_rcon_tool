@@ -17,7 +17,7 @@ import {
   showResponse,
 } from "../../utils/fetchUtils";
 
-const RealVip = ({ classes }) => {
+const RealVip = () => {
   const [enabled, setEnabled] = React.useState(null);
   const [maxVipSlot, setMaxVipSlot] = React.useState(-1);
   const [minVipSlot, setMinVipSlot] = React.useState(-1);

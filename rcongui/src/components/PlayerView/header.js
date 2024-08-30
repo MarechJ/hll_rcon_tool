@@ -21,7 +21,6 @@ const AutoRefreshBar = ({
   onFullScreenClick,
   isFullScreen,
 }) => {
-  const classes = useStyles();
   const [completed, setCompleted] = React.useState(0);
 
   React.useEffect(() => {
@@ -44,7 +43,7 @@ const AutoRefreshBar = ({
 
   return (
     <React.Fragment>
-      <Grid className={classes.textLeft} container justify="flex-start">
+      <Grid  container justify="flex-start">
         <Grid item xs={12}>
           <Grid container justify="space-between">
             <Grid style={{ textAlign: "left" }} item xs={6}>
@@ -57,7 +56,7 @@ const AutoRefreshBar = ({
             </Grid>
             <Grid item xs={6} style={{ textAlign: "right" }}>
               <ButtonGroup
-                className={classes.margin}
+                
                 orientation="vertical"
                 color="primary"
                 variant="contained"
@@ -83,7 +82,7 @@ const AutoRefreshBar = ({
       <LinearProgress
         variant="determinate"
         value={completed}
-        className={classes.marginBottom}
+        
       />
     </React.Fragment>
   );

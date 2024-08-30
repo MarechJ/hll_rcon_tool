@@ -5,7 +5,6 @@ import {
   ListItem,
   ListItemSecondaryAction,
   ListItemText,
-  makeStyles,
   Typography,
   IconButton,
   Collapse,
@@ -14,18 +13,11 @@ import ExpandLess from "@material-ui/icons/ExpandLess";
 import ExpandMore from "@material-ui/icons/ExpandMore";
 import { pure } from "recompose";
 
-const useStyles = makeStyles((theme) => ({
-  nested: {
-    paddingLeft: theme.spacing(4),
-  },
-}));
-
 export const SubList = pure(
   ({ playerScore, dataMapKey, title, subtitle, openDefault, sortByKey }) => {
     let data = dataMapKey
       ? playerScore.get(dataMapKey) || new Map()
       : playerScore;
-    const styles = useStyles();
     const [open, setOpen] = React.useState(openDefault);
 
     if (sortByKey)
@@ -51,7 +43,7 @@ export const SubList = pure(
             {data
               .entrySeq()
               .map(([key, value]) => (
-                <ListItem className={styles.nested}>
+                <ListItem>
                   <ListItemText primary={key} />
                   <ListItemSecondaryAction>
                     <Typography variant="h6" color="secondary">
