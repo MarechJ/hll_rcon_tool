@@ -6,7 +6,14 @@ import {
 } from "@material-ui/core";
 import BlacklistRecordsSearch from "./BlacklistRecordsSearch";
 import React from "react";
-import { addPlayerToBlacklist, get, getBlacklists, handle_http_errors, postData, showResponse } from "../../utils/fetchUtils";
+import {
+  addPlayerToBlacklist,
+  get,
+  getBlacklists,
+  handle_http_errors,
+  postData,
+  showResponse,
+} from "../../utils/fetchUtils";
 import Pagination from "@material-ui/lab/Pagination";
 import BlacklistRecordGrid from "./BlacklistRecordGrid";
 import { List, fromJS } from "immutable";
@@ -48,43 +55,41 @@ const BlacklistRecords = () => {
     reason: undefined,
     blacklist_id: undefined,
     exclude_expired: false,
-    page_size: 50
+    page_size: 50,
   });
 
-  React.useEffect(
-    () => {
-      if (!blacklists.length) {
-        loadBlacklists();
-      }
-      loadRecords();
-    }, [searchQuery, page]
-  );
+  React.useEffect(() => {
+    if (!blacklists.length) {
+      loadBlacklists();
+    }
+    loadRecords();
+  }, [searchQuery, page]);
 
   async function loadBlacklists() {
-    setBlacklists(await getBlacklists())
+    setBlacklists(await getBlacklists());
   }
 
   async function loadRecords() {
-    setIsFetching(true)
+    setIsFetching(true);
     try {
-      const data = await getBlacklistRecords({ ...searchQuery, page })
+      const data = await getBlacklistRecords({ ...searchQuery, page });
       const records = data.result;
       if (records) {
-        setRecords(fromJS(records.records))
-        setTotalRecords(records.total)
+        setRecords(fromJS(records.records));
+        setTotalRecords(records.total);
       }
-      setIsFetching(false)
+      setIsFetching(false);
       // delay UI, this can be removed along with skeletons
-      await new Promise((res) => setTimeout(res, 500))
-      setIsLoading(false)
+      await new Promise((res) => setTimeout(res, 500));
+      setIsLoading(false);
     } catch (error) {
-      handle_http_errors(error)
+      handle_http_errors(error);
     }
   }
 
   async function createRecord(recordDetails) {
-    await addPlayerToBlacklist(recordDetails)
-    loadRecords()
+    await addPlayerToBlacklist(recordDetails);
+    loadRecords();
   }
 
   // If you don't like the loading skeletons, just return `null`
@@ -96,23 +101,43 @@ const BlacklistRecords = () => {
         </Grid>
         <Grid container item xl={3} xs={12} justify="center" spacing={2}>
           <Grid item xl={12}>
-            <Skeleton variant="rect" width={200} height={42} style={{ margin: "0 auto", borderRadius: 5 }} />
+            <Skeleton
+              variant="rect"
+              width={200}
+              height={42}
+              style={{ margin: "0 auto", borderRadius: 5 }}
+            />
           </Grid>
           <Grid item xl={12}>
-            <Skeleton variant="rect" width={155} height={42} style={{ margin: "0 auto", borderRadius: 5 }} />
+            <Skeleton
+              variant="rect"
+              width={155}
+              height={42}
+              style={{ margin: "0 auto", borderRadius: 5 }}
+            />
           </Grid>
         </Grid>
         <Grid item xs={12}>
-          <Skeleton variant="rect" width={360} height={32} style={{ margin: "0 auto" }} />
+          <Skeleton
+            variant="rect"
+            width={360}
+            height={32}
+            style={{ margin: "0 auto" }}
+          />
         </Grid>
         <Grid item xs={12}>
           <Skeleton variant="rect" height={140} />
         </Grid>
         <Grid item xs={12}>
-          <Skeleton variant="rect" width={360} height={32} style={{ margin: "0 auto" }} />
+          <Skeleton
+            variant="rect"
+            width={360}
+            height={32}
+            style={{ margin: "0 auto" }}
+          />
         </Grid>
       </Grid>
-    )
+    );
   }
 
   return (
@@ -137,7 +162,9 @@ const BlacklistRecords = () => {
             <BlacklistRecordCreateButton
               blacklists={blacklists}
               onSubmit={createRecord}
-            >Create New Record</BlacklistRecordCreateButton>
+            >
+              Create New Record
+            </BlacklistRecordCreateButton>
           </Grid>
           <Grid item xl={12}>
             <Button
@@ -179,7 +206,7 @@ const BlacklistRecords = () => {
         />
       </Grid>
     </Grid>
-  )
-}
+  );
+};
 
-export default BlacklistRecords
+export default BlacklistRecords;

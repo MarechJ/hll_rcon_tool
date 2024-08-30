@@ -243,7 +243,7 @@ async function getVips() {
 async function addPlayerVip(player) {
   try {
     const response = await execute("add_vip", player);
-    const data = showResponse(response, "add_vip", true)
+    const data = await showResponse(response, "add_vip", true)
     if (data.result) {
       return data.result;
     }    
@@ -255,7 +255,91 @@ async function addPlayerVip(player) {
 async function removePlayerVip(player) {
   try {
     const response = await execute("remove_vip", player);
-    const data = showResponse(response, "remove_vip", true)
+    const data = await showResponse(response, "remove_vip", true)
+    if (data.result) {
+      return data.result;
+    }    
+  } catch (error) {
+    handle_http_errors(error)
+  }
+}
+
+async function resetVotemapState() {
+  try {
+    const response = await execute("reset_votemap_state");
+    const data = await showResponse(response, "reset_votemap_state", true)
+    if (data.result) {
+      return data.result;
+    }
+  } catch (error) {
+    handle_http_errors(error)
+  }
+}
+
+async function updateVotemapConfig(config) {
+  try {
+    const response = await execute("set_votemap_config", config);
+    const data = await showResponse(response, "set_votemap_config", true)
+    if (data.result) {
+      return data.result;
+    }    
+  } catch (error) {
+    handle_http_errors(error)
+  }
+}
+
+async function getVotemapStatus() {
+  try {
+    const response = await get("get_votemap_status")
+    const data = await response.json()
+    if (data.result) {
+      return data.result;
+    }    
+  } catch (error) {
+    handle_http_errors(error)
+  }
+}
+
+async function getVotemapConfig() {
+  try {
+    const response = await get("get_votemap_config")
+    const data = await response.json()
+    if (data.result) {
+      return data.result;
+    }    
+  } catch (error) {
+    handle_http_errors(error)
+  }
+}
+
+async function changeMap(mapId) {
+  try {
+    const response = await execute("set_map", { map_name: mapId });
+    const data = await showResponse(response, `Map changed to ${mapId}`, true)
+    if (data.result) {
+      return data.result;
+    }    
+  } catch (error) {
+    handle_http_errors(error)
+  }
+}
+
+async function changeGameLayout(payload) {
+  try {
+    const response = await execute("set_game_layout", payload);
+    const data = await showResponse(response, "set_game_layout", true)
+    if (data.result) {
+      return data.result;
+    }    
+  } catch (error) {
+    handle_http_errors(error)
+  }
+}
+
+async function getMapObjectives() {
+  try {
+    const response = await get("get_objective_rows")
+    const data = await response.json()
     if (data.result) {
       return data.result;
     }    
@@ -280,4 +364,11 @@ export {
   addPlayerVip,
   removePlayerVip,
   getVips,
+  resetVotemapState,
+  getVotemapStatus,
+  getVotemapConfig,
+  updateVotemapConfig,
+  changeMap,
+  changeGameLayout,
+  getMapObjectives,
 };

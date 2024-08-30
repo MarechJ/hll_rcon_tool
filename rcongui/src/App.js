@@ -56,6 +56,7 @@ import {
 } from "./components/UserSettings/miscellaneous";
 import BlacklistRecords from "./components/Blacklist/BlacklistRecords";
 import BlacklistLists from "./components/Blacklist/BlacklistLists";
+import { MapManager } from "./components/MapManager/map-manager";
 
 const Live = () => {
   const [mdSize, setMdSize] = React.useState(6);
@@ -459,7 +460,7 @@ function App() {
                 </Route>
                 <Route path="/settings/">
                   <Switch>
-                    <Route path="/settings/settings">
+                    <Route exact path="/settings">
                       <Grid container>
                         <Grid item sm={12} lg={6}>
                           <HLLSettings  />
@@ -474,6 +475,7 @@ function App() {
                         </Grid>
                       </Grid>
                     </Route>
+                    <Route path="/settings/maps/:path" component={MapManager} />
                     <Route path="/settings/audit-webhooks">
                       <Grid container spacing={2}>
                         <AuditWebhooks

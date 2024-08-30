@@ -437,4 +437,5 @@ class RconUser(User):
             ("can_create_blacklists", "Can create blacklists"),
             ("can_change_blacklists", "Can change blacklists"),
             ("can_delete_blacklists", "Can delete blacklists"),
+            ("can_change_game_layout", "Can change game layout"),
         )

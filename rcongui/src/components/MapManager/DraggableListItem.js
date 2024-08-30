@@ -8,69 +8,24 @@ import ListItemText from "@material-ui/core/ListItemText";
 import {
   ListItemSecondaryAction,
   IconButton,
-  Chip,
-  Typography,
+  createStyles,
 } from "@material-ui/core";
 import Avatar from "@material-ui/core/Avatar";
 import DeleteIcon from "@material-ui/icons/Delete";
+import { MapDetails } from "./map-details";
 
-const useStyles = makeStyles({
+const useStyles = makeStyles((theme) => createStyles({
   draggingListItem: {
-    background: "rgb(235,235,235)",
+    boxShadow: "rgba(6, 24, 44, 0.4) 0px 0px 0px 2px, rgba(6, 24, 44, 0.65) 0px 4px 6px -1px, rgba(255, 255, 255, 0.08) 0px 1px 0px 0px inset"
   },
-  noDot: {
-    listStyleType: "none",
+  base: {
+    borderBottom: `1px solid ${theme.palette.divider}`,
   },
-});
+}));
 
 const DraggableListItem = ({ item, index, onRemove }) => {
-  const getLabels = (layer) => {
-    const labels = [];
-
-    if (layer.game_mode === "offensive") {
-      labels.push("offensive");
-      if (
-        layer.attackers == "allies"
-      ) {
-        labels.push("allies");
-      } else {
-        labels.push("axis");
-      }
-    } else if (
-      layer.game_mode === "control" ||
-      layer.game_mode === "phased" ||
-      layer.game_mode === "majority"
-    ) {
-      labels.push("skirmish");
-    } else {
-      labels.push("warfare");
-    }
-
-    if (layer.environment !== "day") {
-      labels.push("night");
-    }
-    return labels;
-  };
-
-  const labelsColors = {
-    offensive: "primary",
-    night: "secondary",
-    warfare: "default",
-    allies: "primary",
-    axis: "secondary",
-    skirmish: "secondary",
-  };
-
-  const labelsVariant = {
-    offensive: "default",
-    night: "default",
-    warfare: "default",
-    axis: "outlined",
-    allies: "outlined",
-    skirmish: "default",
-  };
-
   const classes = useStyles();
+
   return (
     <Draggable draggableId={item.id + index} index={index}>
       {(provided, snapshot) => (
@@ -79,31 +34,15 @@ const DraggableListItem = ({ item, index, onRemove }) => {
           {...provided.draggableProps}
           {...provided.dragHandleProps}
           className={
-            snapshot.isDragging
-              ? classes.draggingListItem + " " + classes.noDot
-              : classes.noDot
+            snapshot.isDragging ? classes.draggingListItem : classes.base
           }
         >
           <ListItemAvatar>
             <Avatar src={`maps/${item.image_name}`} />
           </ListItemAvatar>
           <ListItemText
-            primary={
-              <>
-                <Typography display="inline" variant="h6">
-                  {item.pretty_name}{" "}
-                  {getLabels(item).map((e) => (
-                    <Chip
-                      size="small"
-                      variant={labelsVariant[e]}
-                      color={labelsColors[e]}
-                      label={e}
-                    />
-                  ))}
-                </Typography>
-              </>
-            }
-            secondary={<>{item.id}</>}
+            primary={item.map.pretty_name}
+            secondary={<MapDetails mapLayer={item} />}
           />
           <ListItemSecondaryAction>
             <IconButton

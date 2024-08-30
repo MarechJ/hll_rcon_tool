@@ -770,3 +770,8 @@ class DjangoUserPermissions(TypedDict):
     permissions: list[DjangoPermission]
     groups: list[DjangoGroup]
     is_superuser: bool
+
+
+class GameLayoutRandomConstraints(enum.IntFlag):
+    ALWAYS_ADJACENT = enum.auto()
+    ALWAYS_DIAGONAL = enum.auto()
