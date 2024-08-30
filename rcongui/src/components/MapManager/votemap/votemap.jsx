@@ -8,9 +8,7 @@ import {
   TextField,
   Typography,
   Snackbar,
-  makeStyles,
-  createStyles,
-} from "@material-ui/core";
+} from "@mui/material";
 import React from "react";
 import {
   getVotemapConfig,
@@ -22,28 +20,29 @@ import Padlock from "../../shared/padlock";
 import { VoteStatus } from "./vote-status";
 import { messageFieldConfigs, padlockConfigs, textFieldConfigs } from "./configs-data";
 import { isEmpty, isEqual } from "lodash";
-import { Alert } from "@material-ui/lab";
+import { Alert } from '@mui/material';
+import { styled } from "@mui/material/styles"
 
-const useStyles = makeStyles((theme) => createStyles({
-  spacing: {
-    marginTop: theme.spacing(1),
-    marginBottom: theme.spacing(1),
-  },
-  messages: {
-    maxWidth: theme.breakpoints.values.md,
-  },
-  container: {
-    display: "flex",
-    flexDirection: "column",
-    gap: theme.spacing(2),
-  },
-  numberFields: { 
-    display: "flex",
-    flexDirection: "column",
-    gap: theme.spacing(1),
-    maxWidth: theme.breakpoints.values.sm,
-  },
-}))
+const Messages = styled('div')(({ theme }) => ({
+  maxWidth: theme.breakpoints.values.md,
+}));
+
+const Container = styled('div')(({ theme }) => ({
+  display: "flex",
+  flexDirection: "column",
+  gap: theme.spacing(2),
+  marginTop: theme.spacing(1),
+  marginBottom: theme.spacing(1),
+}));
+
+const NumberFields = styled('div')(({ theme }) => ({
+  display: "flex",
+  flexDirection: "column",
+  gap: theme.spacing(1),
+  maxWidth: theme.breakpoints.values.sm,
+  marginTop: theme.spacing(1),
+  marginBottom: theme.spacing(1),
+}));
 
 const UPDATE_INTERVAL = 15 * 1000
 
@@ -54,8 +53,6 @@ const VoteMapConfig = () => {
   const [status, setStatus] = React.useState([]);
   const statusIntervalRef = React.useRef(null)
   const configIntervalRef = React.useRef(null)
-
-  const classes = useStyles();
 
   const config = {
     ..._config,
@@ -142,7 +139,7 @@ const VoteMapConfig = () => {
           </Button>
         }>The config has changed!</Alert>
       </Snackbar>
-      <Box className={classes.container}>
+      <Container>
         <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <Padlock
             label="Enabled"
@@ -172,11 +169,10 @@ const VoteMapConfig = () => {
         </Box>
 
         <Typography variant="h6">In-Game Texts</Typography>
-        <Box className={classes.messages}>
+        <Messages>
           {messageFieldConfigs.map((configItem) => (
             <TextField
               key={configItem.name}
-              className={classes.spacing}
               fullWidth
               variant="filled"
               multiline
@@ -187,11 +183,11 @@ const VoteMapConfig = () => {
               onChange={handleConfigChange(configItem.name)}
             />
           ))}
-        </Box>
+        </Messages>
 
         <Typography variant="h6">Other settings</Typography>
 
-        <FormControl className={classes.spacing}>
+        <FormControl>
           <InputLabel>Default map method (when no votes)</InputLabel>
           <NativeSelect
             value={config.default_method ?? ""}
@@ -221,7 +217,7 @@ const VoteMapConfig = () => {
           />
         ))}
 
-        <Box className={classes.numberFields}>
+        <NumberFields>
           {textFieldConfigs.map((configItem) => (
             <TextField
               key={configItem.name}
@@ -235,8 +231,8 @@ const VoteMapConfig = () => {
               onChange={handleConfigChange(configItem.name)}
             />
           ))}
-        </Box>
-      </Box>
+        </NumberFields>
+      </Container>
     </>
   );
 };

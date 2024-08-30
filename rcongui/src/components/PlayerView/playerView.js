@@ -14,7 +14,7 @@ import {
 import AutoRefreshBar from "./header";
 import TextInputBar from "./textInputBar";
 import CompactList from "./playerList";
-import Chip from "@material-ui/core/Chip";
+import Chip from "@mui/material/Chip";
 import { ReasonDialog } from "./playerActions";
 import GroupActions from "./groupActions";
 import Unban from "./unban";

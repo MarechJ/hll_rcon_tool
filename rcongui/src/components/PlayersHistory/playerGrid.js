@@ -1,4 +1,4 @@
-import { Grid, GridList, GridListTile } from "@material-ui/core";
+import { Grid, ImageList, ImageListItem } from "@mui/material";
 import React from "react";
 import "emoji-mart/css/emoji-mart.css";
 import { ActionButton } from "./PlayerTile/ActionButton";
@@ -7,8 +7,10 @@ import { PlayerFlags } from "./PlayerTile/PlayerFlags";
 import { PlayerSighthings } from "./PlayerTile/PlayerSighthings";
 import { PlayerPenalties } from "./PlayerTile/PlayerPenalties";
 import { PlayerBan } from "./PlayerTile/PlayerBan";
-import withWidth from "@material-ui/core/withWidth";
 import { pure } from "recompose";
+
+// FIXME checkout https://mui.com/components/use-media-query/#migrating-from-withwidth
+const withWidth = () => (WrappedComponent) => (props) => <WrappedComponent {...props} width="xs" />;
 
 const PlayerGrid = withWidth()(
   ({
@@ -38,19 +40,19 @@ const PlayerGrid = withWidth()(
     }[width];
 
     return (
-      <Grid container>
+      (<Grid container>
         <Grid item xs={12}>
-          <GridList cols={size} cellHeight={240} spacing={12}>
+          <ImageList cols={size} cellHeight={240} spacing={12}>
             {players.map((player) => {
               return (
-                <GridListTile
+                (<ImageListItem
                   key={player.get("player_id")}
                   style={{ minHeight: "100%" }}
                 >
                   <Grid
                     container
                     direction="column"
-                    justify="space-between"
+                    justifyContent="space-between"
                   >
                     <PlayerHeader player={player} />
                     <React.Fragment>
@@ -64,7 +66,7 @@ const PlayerGrid = withWidth()(
                       />
                       <PlayerSighthings player={player} />
                       <PlayerPenalties player={player} />
-                      <Grid container justify="center">
+                      <Grid container justifyContent="center">
                         <Grid item>
                           <ActionButton
                             blacklisted={player.get("is_blacklisted")}
@@ -90,12 +92,12 @@ const PlayerGrid = withWidth()(
                       </Grid>
                     </React.Fragment>
                   </Grid>
-                </GridListTile>
+                </ImageListItem>)
               );
             })}
-          </GridList>
+          </ImageList>
         </Grid>
-      </Grid>
+      </Grid>)
     );
   }
 );

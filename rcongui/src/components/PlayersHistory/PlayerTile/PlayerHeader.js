@@ -6,16 +6,16 @@ import {
   ListItemAvatar,
   ListItemText,
   Typography,
-} from "@material-ui/core";
+} from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
 import React from "react";
 import { List, Map } from "immutable";
-import Tooltip from "@material-ui/core/Tooltip";
-import FileCopyIcon from "@material-ui/icons/FileCopy";
-import AnnouncementIcon from "@material-ui/icons/Announcement";
-import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
-import KeyboardArrowUpIcon from "@material-ui/icons/KeyboardArrowUp";
-import KeyboardArrowDownIcon from "@material-ui/icons/KeyboardArrowDown";
+import Tooltip from "@mui/material/Tooltip";
+import FileCopyIcon from "@mui/icons-material/FileCopy";
+import AnnouncementIcon from "@mui/icons-material/Announcement";
+import ListItemSecondaryAction from "@mui/material/ListItemSecondaryAction";
+import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import { pure } from "recompose";
 import { getName } from "country-list";
 import makePlayerProfileUrl from "../../../utils/makePlayerProfileUrl";

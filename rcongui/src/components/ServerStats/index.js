@@ -11,12 +11,12 @@ import {
   Legend,
   registerables,
 } from "chart.js";
-import StarIcon from "@material-ui/icons/Star";
-import LinearProgress from "@material-ui/core/LinearProgress";
-import Switch from "@material-ui/core/Switch";
-import FormGroup from "@material-ui/core/FormGroup";
-import FormControlLabel from "@material-ui/core/FormControlLabel";
-import FormControl from "@material-ui/core/FormControl";
+import StarIcon from "@mui/icons-material/Star";
+import LinearProgress from "@mui/material/LinearProgress";
+import Switch from "@mui/material/Switch";
+import FormGroup from "@mui/material/FormGroup";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import FormControl from "@mui/material/FormControl";
 import MomentUtils from "@date-io/moment";
 import { DateTimePicker, MuiPickersUtilsProvider } from "@material-ui/pickers";
 import palette from "google-palette";
@@ -36,7 +36,7 @@ import {
   DialogContentText,
   Button,
   TextareaAutosize,
-} from "@material-ui/core";
+} from "@mui/material";
 
 ChartJS.register(
   CategoryScale,
@@ -141,11 +141,11 @@ function MetricsParams({
   toggleShowControls,
 }) {
   return (
-    <Grid
+    (<Grid
       container
       alignContent="center"
       alignItems="center"
-      justify="center"
+      justifyContent="center"
       spacing={2}
     >
       <Grid item>
@@ -221,7 +221,7 @@ function MetricsParams({
           Hide controls
         </Button>
       </Grid>
-    </Grid>
+    </Grid>)
   );
 }
 

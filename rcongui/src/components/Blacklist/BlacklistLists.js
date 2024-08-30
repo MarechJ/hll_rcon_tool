@@ -7,11 +7,11 @@ import {
   Paper,
   Tooltip,
   Typography,
-} from "@material-ui/core";
+} from "@mui/material";
 import React from "react";
 import { get, handle_http_errors, postData, showResponse } from "../../utils/fetchUtils";
-import EditIcon from "@material-ui/icons/Edit";
-import DeleteIcon from "@material-ui/icons/Delete";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
 import BlacklistListTile from "./BlacklistListTile";
 import BlacklistListCreateDialog, { BlacklistListCreateButton } from "./BlacklistListCreateDialog";
 const SYNC_METHODS = {
@@ -119,8 +119,8 @@ const BlacklistLists = () => {
   }, []);
 
   return (
-    <React.Fragment>
-      <Grid container spacing={3} direction="column" justify="center">
+    (<React.Fragment>
+      <Grid container spacing={3} direction="column" justifyContent="center">
         <Grid item>
           {isLoading ? <LinearProgress color="secondary" /> : ""}
         </Grid>
@@ -137,7 +137,7 @@ const BlacklistLists = () => {
           ))}
         </Grid>
         <Grid item>
-          <Grid container spacing={2} justify="center">
+          <Grid container spacing={2} justifyContent="center">
             <Grid item>
               <BlacklistListCreateButton
                 servers={servers}
@@ -160,7 +160,6 @@ const BlacklistLists = () => {
           </Grid>
         </Grid>
       </Grid>
-      
       <BlacklistListCreateDialog
         open={editDialogOpen}
         setOpen={setEditDialogOpen}
@@ -168,8 +167,8 @@ const BlacklistLists = () => {
         onSubmit={onEditDialogSubmit}
         initialValues={editDialogInitialValues}
       />
-    </React.Fragment>
-  )
+    </React.Fragment>)
+  );
 }
 
 export default BlacklistLists;

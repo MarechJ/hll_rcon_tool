@@ -1,7 +1,4 @@
-import { makeStyles } from "@material-ui/core/styles";
-
-const useStyles = makeStyles((theme) => {
-  return {
+const styles = {
     root: {
       flexGrow: 1,
     },
@@ -25,12 +22,12 @@ const useStyles = makeStyles((theme) => {
         marginLeft: theme.spacing(1),
         width: "auto",
       },
-      [theme.breakpoints.down("xs")]: {
+      [theme.breakpoints.down('sm')]: {
         display: "none",
       },
     },
     paddingXs: {
-      [theme.breakpoints.down("xs")]: {
+      [theme.breakpoints.down('sm')]: {
         paddingTop: theme.spacing(2),
       },
     },
@@ -269,7 +266,4 @@ const useStyles = makeStyles((theme) => {
     alignRight: {
       textAlign: "right",
     },
-  };
-});
-
-export default useStyles;
+};

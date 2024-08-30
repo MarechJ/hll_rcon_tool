@@ -3,7 +3,7 @@ import {
   Button,
   Grid,
   TextField,
-} from "@material-ui/core";
+} from "@mui/material";
 import { range } from "lodash/util";
 import {
   get,
@@ -323,7 +323,7 @@ class HLLSettings extends React.Component {
     } = this.state;
 
     return (
-      <Grid container spacing={3} >
+      (<Grid container spacing={3} >
         <Grid item xs={12}>
           <h2>HLL Game Server settings </h2>
           <small>(1min autorefresh)</small>
@@ -338,7 +338,7 @@ class HLLSettings extends React.Component {
           container
           xs={12}
           
-          justify="center"
+          justifyContent="center"
         >
           <Grid item xs={12}>
             <ChangeMap
@@ -452,7 +452,7 @@ class HLLSettings extends React.Component {
           
           xs={12}
           alignContent="center"
-          justify="center"
+          justifyContent="center"
         >
           <Grid item>
             <Padlock
@@ -613,7 +613,6 @@ class HLLSettings extends React.Component {
             }
           />
         </Grid>
-
         <Grid item  xs={12} md={6}>
           <Padlock
             label="Auto balance enabled"
@@ -675,8 +674,7 @@ class HLLSettings extends React.Component {
             </Grid>
           </Grid>
         </Grid>
-
-        <Grid container  justify="center" xs={12}>
+        <Grid container  justifyContent="center" xs={12}>
           <Grid item>
             <Typography variant="h5" gutterBottom>
               Vote Map config{" "}
@@ -689,7 +687,7 @@ class HLLSettings extends React.Component {
         <Grid container  xs={12}>
           <VoteMapConfig />
         </Grid>
-        <Grid container  justify="center">
+        <Grid container  justifyContent="center">
           <Grid item xs={12}>
             <Typography variant="h5">Map rotation</Typography>
 
@@ -708,7 +706,7 @@ class HLLSettings extends React.Component {
             onFowardChange={() => this.toggle("forwardProfanities")}
           />
         </Grid>
-      </Grid>
+      </Grid>)
     );
   }
 }

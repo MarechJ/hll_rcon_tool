@@ -1,27 +1,23 @@
-import { createStyles, makeStyles, Typography } from "@material-ui/core";
+import { Typography } from "@mui/material";
 import MapRotationSettings from "./map-rotation-config";
 import MapRotation from "./map-rotation-list";
+import { styled } from '@mui/material/styles';
 
-const useStyles = makeStyles((theme) =>
-  createStyles({
-    text: {
-      marginTop: theme.spacing(2),
-      marginBottom: theme.spacing(2),
-      borderBottom: "1px solid",
-      borderColor: theme.palette.divider,
-    },
-  })
-);
+const Title = styled(Typography)(({ theme }) => ({
+  marginTop: theme.spacing(2),
+  marginBottom: theme.spacing(2),
+  borderBottom: "1px solid",
+  borderColor: theme.palette.divider,
+}));
 
 function MapRotationConfig() {
-  const classes = useStyles();
 
   return (
     <>
       <MapRotation />
-      <Typography className={classes.text} variant="h6">
+      <Title variant="h6">
         Other settings
-      </Typography>
+      </Title>
       <MapRotationSettings />
     </>
   );

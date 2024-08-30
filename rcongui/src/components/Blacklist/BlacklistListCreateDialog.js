@@ -1,12 +1,12 @@
 import * as React from 'react';
-import Button from '@material-ui/core/Button';
-import TextField from '@material-ui/core/TextField';
-import Dialog from '@material-ui/core/Dialog';
-import DialogActions from '@material-ui/core/DialogActions';
-import DialogContent from '@material-ui/core/DialogContent';
-import DialogContentText from '@material-ui/core/DialogContentText';
-import DialogTitle from '@material-ui/core/DialogTitle';
-import { Checkbox, FormControl, FormControlLabel, FormGroup, Grid, InputLabel, MenuItem, Select, Switch, Typography } from '@material-ui/core';
+import Button from '@mui/material/Button';
+import TextField from '@mui/material/TextField';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogTitle from '@mui/material/DialogTitle';
+import { Checkbox, FormControl, FormControlLabel, FormGroup, Grid, InputLabel, MenuItem, Select, Switch, Typography } from '@mui/material';
 
 export const SYNC_METHODS = {
   kick_only: "Kick Only",
@@ -67,7 +67,7 @@ export default function BlacklistListCreateDialog({
   }
 
   return (
-    <Dialog
+    (<Dialog
       open={open}
       onClose={handleClose}
       PaperProps={{
@@ -91,7 +91,7 @@ export default function BlacklistListCreateDialog({
           scalability than regular bans.
         </DialogContentText>
 
-        <Grid container justify="space-between" spacing={4}>
+        <Grid container justifyContent="space-between" spacing={4}>
           <Grid item xs={6}>
             <TextField
               required
@@ -157,7 +157,7 @@ export default function BlacklistListCreateDialog({
         <Button onClick={handleClose}>Cancel</Button>
         <Button type="submit" disabled={name === "" || syncMethod === ""}>{submitText}</Button>
       </DialogActions>
-    </Dialog>
+    </Dialog>)
   );
 }
 

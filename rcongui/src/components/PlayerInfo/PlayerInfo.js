@@ -11,9 +11,9 @@ import {
   Grid,
   Link,
   Popover,
-} from "@material-ui/core";
-import Typography from "@material-ui/core/Typography";
-import { ExpandMore } from "@material-ui/icons";
+} from "@mui/material";
+import Typography from "@mui/material/Typography";
+import { ExpandMore } from "@mui/icons-material";
 import moment from "moment";
 import MUIDataTable from "mui-datatables";
 import { withRouter } from "react-router";
@@ -275,14 +275,14 @@ const PlayerInfo = () => {
   }, [playerId]);
 
   return (
-    <Grid container >
+    (<Grid container >
       {loaded ? (
         <Grid item sm={12} >
           <Grid container spacing={2}>
             <Grid item xl={2} lg={2} md={2} sm={3} xs={12}>
               <Grid
                 container
-                justify="center"
+                justifyContent="center"
                 alignContent="center"
                 wrap="wrap"
                 direction="column"
@@ -347,14 +347,14 @@ const PlayerInfo = () => {
               <Grid
                 container
                 spacing={3}
-                justify="flex-start"
+                justifyContent="flex-start"
                 alignItems="flex-start"
                 alignContent="flex-start"
               >
                 <Grid item sm={12}>
                   <Grid
                     container
-                    justify="flex-start"
+                    justifyContent="flex-start"
                     alignItems="flex-start"
                     alignContent="flex-start"
                   >
@@ -403,7 +403,7 @@ const PlayerInfo = () => {
       ) : (
         <div>pending</div>
       )}
-    </Grid>
+    </Grid>)
   );
 };
 

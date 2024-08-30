@@ -1,13 +1,13 @@
-import { Grid, Link } from "@material-ui/core";
+import { Grid, Link } from "@mui/material";
 import React from "react";
 import { List } from "immutable";
-import Tooltip from "@material-ui/core/Tooltip";
+import Tooltip from "@mui/material/Tooltip";
 import { getEmojiFlag } from "../../../utils/emoji";
 import "emoji-mart/css/emoji-mart.css";
 
 export const PlayerFlags = ({ player, onDeleteFlag }) => {
   return (
-    <Grid container alignItems="center" justify="center">
+    (<Grid container alignItems="center" justifyContent="center">
       <Grid item style={{ height: "22px" }}></Grid>
       {player.get("flags", new List()).map((d) => (
         <Grid
@@ -28,6 +28,6 @@ export const PlayerFlags = ({ player, onDeleteFlag }) => {
           </Tooltip>
         </Grid>
       ))}
-    </Grid>
+    </Grid>)
   );
 };

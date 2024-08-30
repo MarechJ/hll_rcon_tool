@@ -1,4 +1,4 @@
-import { Grid, GridListTile } from "@material-ui/core";
+import { Grid, ImageListItem } from "@mui/material";
 import React from "react";
 import { ActionButton } from "./ActionButton";
 import { PlayerHeader } from "./PlayerHeader";
@@ -9,11 +9,11 @@ import { PlayerPenalties } from "./PlayerPenalties";
 export default ({ onDeleteFlag, player }) => {
 
   return (
-    <GridListTile style={{ minHeight: "100%" }}>
+    (<ImageListItem style={{ minHeight: "100%" }}>
       <Grid
         container
         direction="column"
-        justify="space-between"
+        justifyContent="space-between"
       >
         <PlayerHeader player={player} />
         <PlayerFlags
@@ -22,7 +22,7 @@ export default ({ onDeleteFlag, player }) => {
         />
         <PlayerSighthings player={player} />
         <PlayerPenalties player={player} />
-        <Grid container justify="center">
+        <Grid container justifyContent="center">
           <Grid item>
             <ActionButton
               blacklisted={false}
@@ -41,6 +41,6 @@ export default ({ onDeleteFlag, player }) => {
           </Grid>
         </Grid>
       </Grid>
-    </GridListTile>
+    </ImageListItem>)
   );
 };

@@ -1,43 +1,36 @@
-import {
-  Box,
-  Button,
-  createStyles,
-  IconButton,
-  List,
-  makeStyles,
-} from "@material-ui/core";
+import { Box, Button, IconButton, List } from "@mui/material";
 import React from "react";
 import { changeMap, get, getServerStatus } from "../../../utils/fetchUtils";
 import MapSearch from "./map-search";
 import { MapListItem } from "../map-list-item";
-import CheckCircleOutlineIcon from "@material-ui/icons/CheckCircleOutline";
-import ReplayIcon from "@material-ui/icons/Replay";
-import LockIcon from "@material-ui/icons/Lock";
-import Skeleton from "@material-ui/lab/Skeleton";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import ReplayIcon from "@mui/icons-material/Replay";
+import LockIcon from "@mui/icons-material/Lock";
+import Skeleton from '@mui/material/Skeleton';
 import { unifiedGamemodeName } from "../helpers";
+import { styled } from '@mui/material/styles';
 
-const useStyles = makeStyles((theme) =>
-  createStyles({
-    main: {
-      display: "flex",
-      flexDirection: "column",
-      gap: theme.spacing(1),
-    },
-    panel: {
-      display: "flex",
-      flexDirection: "row",
-      gap: theme.spacing(1),
-      alignItems: "center",
-    },
-    maps: {
-      maxWidth: theme.breakpoints.values.sm,
-      position: "relative",
-      overflow: "auto",
-      minHeight: 500,
-      maxHeight: "70vh",
-    },
-  })
-);
+const Main = styled('div')(({ theme }) => ({
+  display: "flex",
+  flexDirection: "column",
+  gap: theme.spacing(1),
+}));
+
+const Panel = styled('div')(({ theme }) => ({
+  display: "flex",
+  flexDirection: "row",
+  gap: theme.spacing(1),
+  alignItems: "center",
+}));
+
+const Maps = styled(List)(({ theme }) => ({
+  maxWidth: theme.breakpoints.values.sm,
+  position: "relative",
+  overflow: "auto",
+  minHeight: 500,
+  maxHeight: "70vh",
+}));
+
 
 const UPDATE_INTERVAL = 60 * 1000;
 
@@ -52,7 +45,6 @@ function MapChange() {
   });
   const [selected, setSelected] = React.useState("");
   const statusIntervalRef = React.useRef(null);
-  const classes = useStyles();
   const filteredMaps = maps.filter(
     (map) =>
       modeFilters[unifiedGamemodeName(map.game_mode)] &&
@@ -106,8 +98,8 @@ function MapChange() {
   }, []);
 
   return (
-    <Box className={classes.main}>
-      <Box className={classes.panel}>
+    (<Main>
+      <Panel>
         <Button
           startIcon={<ReplayIcon />}
           color="secondary"
@@ -133,7 +125,7 @@ function MapChange() {
         >
           Switch Axis
         </Button>
-      </Box>
+      </Panel>
       {currentMap ? (
         <MapListItem
           style={{ borderBottom: "none" }}
@@ -142,14 +134,14 @@ function MapChange() {
           component={Box}
         />
       ) : (
-        <Skeleton variant="rect" height={60} />
+        <Skeleton variant="rectangular" height={60} />
       )}
       <MapSearch
         onChange={handleOnInputChange}
         filters={modeFilters}
         onFilter={handleModeFilterClick}
       />
-      <List dense={true} className={classes.maps}>
+      <Maps dense={true}>
         {filteredMaps.map((mapLayer, index) => (
           <MapListItem
             button
@@ -165,15 +157,15 @@ function MapChange() {
                   color="secondary"
                   aria-label="confirm"
                   onClick={() => handleConfirmMap(mapLayer)}
-                >
+                  size="large">
                   <CheckCircleOutlineIcon />
                 </IconButton>
               )
             }
           />
         ))}
-      </List>
-    </Box>
+      </Maps>
+    </Main>)
   );
 }
 

@@ -5,10 +5,10 @@ import {
   Paper,
   Tooltip,
   Typography,
-} from "@material-ui/core";
+} from "@mui/material";
 import React from "react";
-import EditIcon from "@material-ui/icons/Edit";
-import DeleteIcon from "@material-ui/icons/Delete";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
 import { SYNC_METHODS } from "./BlacklistListCreateDialog";
 
 const BlacklistListTile = ({
@@ -23,9 +23,9 @@ const BlacklistListTile = ({
   }
 
   return (
-    <Paper>
+    (<Paper>
       <Grid container
-        justify="space-between"
+        justifyContent="space-between"
         alignItems="center"
         spacing={2}
         style={{paddingLeft: 18}}
@@ -64,19 +64,22 @@ const BlacklistListTile = ({
         
         <Grid item>
           <Tooltip title="Edit">
-            <IconButton onClick={() => onEdit(blacklist)}>
+            <IconButton onClick={() => onEdit(blacklist)} size="large">
               <EditIcon/>
             </IconButton>
           </Tooltip>
           <Tooltip title="Delete">
-            <IconButton onClick={() => onDelete(blacklist)} disabled={blacklist.id === 0}>
+            <IconButton
+              onClick={() => onDelete(blacklist)}
+              disabled={blacklist.id === 0}
+              size="large">
               <DeleteIcon/>
             </IconButton>
           </Tooltip>
         </Grid>
       </Grid>
-    </Paper>
-  )
+    </Paper>)
+  );
 }
 
 export default BlacklistListTile;

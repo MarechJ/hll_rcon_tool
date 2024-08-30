@@ -1,4 +1,4 @@
-import { Button, FormControl, FormControlLabel, Grid, InputLabel, MenuItem, Select, Switch, TextField } from "@material-ui/core";
+import { Button, FormControl, FormControlLabel, Grid, InputLabel, MenuItem, Select, Switch, TextField } from "@mui/material";
 import React from "react";
 import { get, handle_http_errors, showResponse } from "../../utils/fetchUtils";
 
@@ -14,13 +14,13 @@ const BlacklistRecordsSearch = ({
   const [pageSize, setPageSize] = React.useState(50);
 
   return (
-    <form>
+    (<form>
       <Grid
         container
         spacing={2}
         alignContent="center"
         alignItems="center"
-        justify="space-evenly"
+        justifyContent="space-evenly"
       >
         <Grid item xs={4}>
           <TextField
@@ -106,7 +106,7 @@ const BlacklistRecordsSearch = ({
           </Button>
         </Grid>
       </Grid>
-    </form>
+    </form>)
   );
 }
 

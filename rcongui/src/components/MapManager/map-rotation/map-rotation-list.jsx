@@ -7,10 +7,10 @@ import {
   postData,
   showResponse,
 } from "../../../utils/fetchUtils";
-import { Box, Button, CircularProgress, Grid } from "@material-ui/core";
-import Autocomplete from "@material-ui/lab/Autocomplete";
-import TextField from "@material-ui/core/TextField";
-import { Alert } from "@material-ui/lab";
+import { Box, Button, CircularProgress, Grid } from "@mui/material";
+import Autocomplete from '@mui/material/Autocomplete';
+import TextField from "@mui/material/TextField";
+import { Alert } from '@mui/material';
 
 const MapRotation = () => {
   const [maps, setMaps] = React.useState([]);

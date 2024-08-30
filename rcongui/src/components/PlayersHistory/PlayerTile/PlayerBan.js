@@ -1,5 +1,5 @@
 import React from "react";
-import { Grid, Typography } from "@material-ui/core";
+import { Grid, Typography } from "@mui/material";
 import { fromJS } from "immutable";
 import { reduce } from "lodash";
 
@@ -34,9 +34,9 @@ export const PlayerBan = ({ bans, player }) => {
       : formattedBans.push("IS PERMABANNED")
   );
   return (
-    <Grid
+    (<Grid
       container
-      justify="space-between"
+      justifyContent="space-between"
       spacing={0}
     >
       {formattedBans.map((formattedBan) => (
@@ -46,6 +46,6 @@ export const PlayerBan = ({ bans, player }) => {
           </Typography>
         </Grid>
       ))}
-    </Grid>
+    </Grid>)
   );
 };

@@ -1,6 +1,6 @@
-import { Grid } from "@material-ui/core";
+import { Grid } from "@mui/material";
 import React from "react";
-import Tooltip from "@material-ui/core/Tooltip";
+import Tooltip from "@mui/material/Tooltip";
 import moment from "moment";
 
 export const PlayerSighthings = ({ player }) => {
@@ -31,9 +31,9 @@ export const PlayerSighthings = ({ player }) => {
   }
 
   return (
-    <Grid
+    (<Grid
       container
-      justify="space-between"
+      justifyContent="space-between"
       spacing={0}
     >
       {vip_expiration ? (
@@ -45,7 +45,6 @@ export const PlayerSighthings = ({ player }) => {
       ) : (
         ""
       )}
-
       <Grid item xs={6}>
         <Tooltip title={first_seen.format("LLLL")} arrow>
           <small>
@@ -60,6 +59,6 @@ export const PlayerSighthings = ({ player }) => {
           </small>
         </Tooltip>
       </Grid>
-    </Grid>
+    </Grid>)
   );
 };

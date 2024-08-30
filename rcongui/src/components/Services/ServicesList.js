@@ -1,11 +1,11 @@
 import React from "react";
-import { Grid } from "@material-ui/core";
-import ListItemText from "@material-ui/core/ListItemText";
+import { Grid } from "@mui/material";
+import ListItemText from "@mui/material/ListItemText";
 import "react-toastify/dist/ReactToastify.css";
 import { fromJS, List as IList } from "immutable";
-import Typography from "@material-ui/core/Typography";
-import Switch from "@material-ui/core/Switch";
-import Chip from "@material-ui/core/Chip";
+import Typography from "@mui/material/Typography";
+import Switch from "@mui/material/Switch";
+import Chip from "@mui/material/Chip";
 import { get, postData, showResponse } from "../../utils/fetchUtils";
 
 const StatusToColor = {
@@ -29,7 +29,7 @@ const Process = ({
 }) => (
   <Grid
     container
-    justify="space-around"
+    justifyContent="space-around"
     spacing={1}
   >
     <Grid item xs={12} spacing={1}>

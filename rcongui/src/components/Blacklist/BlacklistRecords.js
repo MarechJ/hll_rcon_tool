@@ -3,7 +3,7 @@ import {
   Button,
   Grid,
   LinearProgress,
-} from "@material-ui/core";
+} from "@mui/material";
 import BlacklistRecordsSearch from "./BlacklistRecordsSearch";
 import React from "react";
 import {
@@ -14,11 +14,11 @@ import {
   postData,
   showResponse,
 } from "../../utils/fetchUtils";
-import Pagination from "@material-ui/lab/Pagination";
+import Pagination from '@mui/material/Pagination';
 import BlacklistRecordGrid from "./BlacklistRecordGrid";
 import { List, fromJS } from "immutable";
 import { BlacklistRecordCreateButton } from "./BlacklistRecordCreateDialog";
-import { Skeleton } from "@material-ui/lab";
+import { Skeleton } from '@mui/material';
 
 async function getBlacklistRecords(searchParams) {
   let path = "get_blacklist_records?" + new URLSearchParams(
@@ -95,14 +95,14 @@ const BlacklistRecords = () => {
   // If you don't like the loading skeletons, just return `null`
   if (isLoading) {
     return (
-      <Grid container spacing={4} justify="center">
+      (<Grid container spacing={4} justifyContent="center">
         <Grid item xl={6} xs={12}>
-          <Skeleton variant="rect" height={140} />
+          <Skeleton variant="rectangular" height={140} />
         </Grid>
-        <Grid container item xl={3} xs={12} justify="center" spacing={2}>
+        <Grid container item xl={3} xs={12} justifyContent="center" spacing={2}>
           <Grid item xl={12}>
             <Skeleton
-              variant="rect"
+              variant="rectangular"
               width={200}
               height={42}
               style={{ margin: "0 auto", borderRadius: 5 }}
@@ -110,7 +110,7 @@ const BlacklistRecords = () => {
           </Grid>
           <Grid item xl={12}>
             <Skeleton
-              variant="rect"
+              variant="rectangular"
               width={155}
               height={42}
               style={{ margin: "0 auto", borderRadius: 5 }}
@@ -119,29 +119,29 @@ const BlacklistRecords = () => {
         </Grid>
         <Grid item xs={12}>
           <Skeleton
-            variant="rect"
+            variant="rectangular"
             width={360}
             height={32}
             style={{ margin: "0 auto" }}
           />
         </Grid>
         <Grid item xs={12}>
-          <Skeleton variant="rect" height={140} />
+          <Skeleton variant="rectangular" height={140} />
         </Grid>
         <Grid item xs={12}>
           <Skeleton
-            variant="rect"
+            variant="rectangular"
             width={360}
             height={32}
             style={{ margin: "0 auto" }}
           />
         </Grid>
-      </Grid>
+      </Grid>)
     );
   }
 
   return (
-    <Grid container spacing={4} justify="center">
+    (<Grid container spacing={4} justifyContent="center">
       <Grid item xl={6} xs={12}>
         <BlacklistRecordsSearch
           blacklists={blacklists}
@@ -155,7 +155,7 @@ const BlacklistRecords = () => {
           spacing={3}
           alignContent="center"
           alignItems="center"
-          justify="center"
+          justifyContent="center"
           style={{ paddingTop: 6 }}
         >
           <Grid item xl={12}>
@@ -205,7 +205,7 @@ const BlacklistRecords = () => {
           total={totalRecords}
         />
       </Grid>
-    </Grid>
+    </Grid>)
   );
 };
 

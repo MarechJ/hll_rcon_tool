@@ -1,15 +1,15 @@
 import {
   Grid,
   Typography,
-  GridList,
-  GridListTile,
-  GridListTileBar,
+  ImageList,
+  ImageListItem,
+  ImageListItemBar,
   IconButton,
-} from "@material-ui/core";
-import useMediaQuery from "@material-ui/core/useMediaQuery";
-import VisibilityIcon from "@material-ui/icons/Visibility";
-import LinkIcon from "@material-ui/icons/Link";
-import CheckIcon from "@material-ui/icons/Check";
+} from "@mui/material";
+import useMediaQuery from "@mui/material/useMediaQuery";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import LinkIcon from "@mui/icons-material/Link";
+import CheckIcon from "@mui/icons-material/Check";
 import React from "react";
 import { get, handle_http_errors, showResponse } from "../../utils/fetchUtils";
 import { List as iList, Map, fromJS, List } from "immutable";
@@ -109,116 +109,110 @@ const GamesScore = () => {
         .substr(11, 8)
     : "N/A";
 
-  return (
-    <>
-      <Grid
-        container
-        spacing={2}
-        justify="center"
-        
-      >
-        <Grid item xs={12}>
-          <Typography color="secondary" variant="h4">
-            {serverState.get("name", new Map()).get("name")}
+  return (<>
+    <Grid
+      container
+      spacing={2}
+      justifyContent="center"
+      
+    >
+      <Grid item xs={12}>
+        <Typography color="secondary" variant="h4">
+          {serverState.get("name", new Map()).get("name")}
+        </Typography>
+      </Grid>
+      {!maps.size ? (
+        <Grid item>
+          <Typography variant="h2">No games recorded yet</Typography>
+        </Grid>
+      ) : (
+        <Grid item>
+          <Typography variant="caption">
+            Select a game below to see its stats
           </Typography>
         </Grid>
-        {!maps.size ? (
-          <Grid item>
-            <Typography variant="h2">No games recorded yet</Typography>
-          </Grid>
-        ) : (
-          <Grid item>
-            <Typography variant="caption">
-              Select a game below to see its stats
-            </Typography>
-          </Grid>
-        )}
-        <Grid item xs={12}>
-          <div>
-            <GridList
-              cols={2}
-            >
-              {maps.map((m) => {
-                const start = moment(m.get("start") + "Z");
-                const end = moment(m.get("end") + "Z");
-                const duration = moment.duration(end - start);
-                const isSelected = (isReturn, isNotReturn) =>
-                  m.get("id") === slug ? isReturn : isNotReturn;
+      )}
+      <Grid item xs={12}>
+        <div>
+          <ImageList
+            cols={2}
+          >
+            {maps.map((m) => {
+              const start = moment(m.get("start") + "Z");
+              const end = moment(m.get("end") + "Z");
+              const duration = moment.duration(end - start);
+              const isSelected = (isReturn, isNotReturn) =>
+                m.get("id") === slug ? isReturn : isNotReturn;
 
-                let score = '';
-                if (m.get('result')) {
-                  score = <div>Axis {m.get('result').get('axis')} - {m.get('result').get('allied')} Allied</div>
-                }
-                return (
-                  <GridListTile
-                    onClick={() => doSelectMap(m.get("id"))}
-                    key={`${m.get("name")}${m.get("start")}${m.get("end")}`}
-                  >
-                    <img
-                      alt="Map"
-                      src={`maps/${m.get("map", new Map()).get("image_name")}`}
-                    />
-
-                    <GridListTileBar
-                      title={m.get("map", new Map()).get("pretty_name")}
-                      subtitle={<>
-                        <div>{duration.humanize()}</div>
-                        {score}
-                      </>}
-                      titlePosition="top"
-                    />
-                    <GridListTileBar
-                      title={`${start.format("dddd, MMM Do ")}`}
-                      subtitle={`Started at: ${start.format("HH:mm")}`}
-                      actionIcon={isSelected(
-                        <IconButton color="inherit">
-                          <CopyToClipboard
-                            text={getShareableLink()}
-                            onCopy={onCopyLink}
-                          >
-                            {hasCopiedLink ? (
-                              <CheckIcon color="inherit" />
-                            ) : (
-                              <LinkIcon color="inherit" />
-                            )}
-                          </CopyToClipboard>
-                        </IconButton>,
-                        <IconButton
-                          color="inherit"
-                          onClick={() => doSelectMap(m.get("id"))}
+              let score = '';
+              if (m.get('result')) {
+                score = <div>Axis {m.get('result').get('axis')} - {m.get('result').get('allied')} Allied</div>
+              }
+              return (
+                (<ImageListItem
+                  onClick={() => doSelectMap(m.get("id"))}
+                  key={`${m.get("name")}${m.get("start")}${m.get("end")}`}
+                >
+                  <img
+                    alt="Map"
+                    src={`maps/${m.get("map", new Map()).get("image_name")}`}
+                  />
+                  <ImageListItemBar
+                    title={m.get("map", new Map()).get("pretty_name")}
+                    subtitle={<>
+                      <div>{duration.humanize()}</div>
+                      {score}
+                    </>}
+                    titlePosition="top"
+                  />
+                  <ImageListItemBar
+                    title={`${start.format("dddd, MMM Do ")}`}
+                    subtitle={`Started at: ${start.format("HH:mm")}`}
+                    actionIcon={isSelected(
+                      <IconButton color="inherit" size="large">
+                        <CopyToClipboard
+                          text={getShareableLink()}
+                          onCopy={onCopyLink}
                         >
-                          <VisibilityIcon color="inherit" />
-                        </IconButton>
-                      )}
-                    />
-                  </GridListTile>
-                );
-              })}
-            </GridList>
-          </div>
-        </Grid>
+                          {hasCopiedLink ? (
+                            <CheckIcon color="inherit" />
+                          ) : (
+                            <LinkIcon color="inherit" />
+                          )}
+                        </CopyToClipboard>
+                      </IconButton>,
+                      <IconButton color="inherit" onClick={() => doSelectMap(m.get("id"))} size="large">
+                        <VisibilityIcon color="inherit" />
+                      </IconButton>
+                    )}
+                  />
+                </ImageListItem>)
+              );
+            })}
+          </ImageList>
+        </div>
       </Grid>
-      <Grid
-        container
-        spacing={2}
-        justify="center"
+    </Grid>
+    <Grid
+      container
+      spacing={2}
+      justifyContent="center"
+      
+    >
+      <Scores
         
-      >
-        <Scores
-          
-          serverState={serverState}
-          started={started}
-          lastRefresh={lastRefresh}
-          refreshIntervalSec={refreshIntervalSec}
-          setPaused={setPaused}
-          isPaused={isPaused}
-          isLoading={isLoading}
-          scores={scores}
-          durationToHour={durationToHour}
-        />
-      </Grid>
-    </>
-  );
+        serverState={serverState}
+        started={started}
+        lastRefresh={lastRefresh}
+        refreshIntervalSec={refreshIntervalSec}
+        setPaused={setPaused}
+        isPaused={isPaused}
+        isLoading={isLoading}
+        scores={scores}
+        durationToHour={durationToHour}
+      />
+    </Grid>
+  </>);
 };
 
 export default GamesScore;

@@ -8,9 +8,9 @@ import {
   Typography,
   IconButton,
   Collapse,
-} from "@material-ui/core";
-import ExpandLess from "@material-ui/icons/ExpandLess";
-import ExpandMore from "@material-ui/icons/ExpandMore";
+} from "@mui/material";
+import ExpandLess from "@mui/icons-material/ExpandLess";
+import ExpandMore from "@mui/icons-material/ExpandMore";
 import { pure } from "recompose";
 
 export const SubList = pure(
@@ -26,14 +26,14 @@ export const SubList = pure(
       data = data.sort().reverse()
 
     return (
-      <React.Fragment>
+      (<React.Fragment>
         <ListItem button onClick={() => setOpen(!open)}>
           <ListItemText
             primary={<Typography variant="h5">{title}</Typography>}
             secondary={subtitle}
           />
           <ListItemSecondaryAction>
-            <IconButton onClick={() => setOpen(!open)}>
+            <IconButton onClick={() => setOpen(!open)} size="large">
               {open ? <ExpandLess /> : <ExpandMore />}
             </IconButton>
           </ListItemSecondaryAction>
@@ -54,7 +54,7 @@ export const SubList = pure(
               ))}
           </List>
         </Collapse>
-      </React.Fragment>
+      </React.Fragment>)
     );
   }
 );

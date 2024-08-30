@@ -9,7 +9,7 @@ import {
 } from "../../utils/fetchUtils";
 import { toast } from "react-toastify";
 import { reduce } from "lodash";
-import Pagination from "@material-ui/lab/Pagination";
+import Pagination from '@mui/material/Pagination';
 import {
   Button,
   Chip,
@@ -17,18 +17,18 @@ import {
   LinearProgress,
   TextField,
   Typography,
-} from "@material-ui/core";
+} from "@mui/material";
 import { ReasonDialog } from "../PlayerView/playerActions";
 import { omitBy } from "lodash/object";
 import SearchBar from "./searchBar";
 import { fromJS, List, Map } from "immutable";
-import FlagIcon from "@material-ui/icons/Flag";
+import FlagIcon from "@mui/icons-material/Flag";
 import "emoji-mart/css/emoji-mart.css";
 import { Picker } from "emoji-mart";
-import Dialog from "@material-ui/core/Dialog";
-import DialogActions from "@material-ui/core/DialogActions";
-import DialogContent from "@material-ui/core/DialogContent";
-import DialogTitle from "@material-ui/core/DialogTitle";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
 import { getEmojiFlag } from "../../utils/emoji";
 import PlayerGrid from "./playerGrid";
 import { VipExpirationDialog } from "../VipDialog";
@@ -67,7 +67,7 @@ class FlagDialog extends React.Component {
     const { flag, comment } = this.state;
 
     return (
-      <Dialog open={open} aria-labelledby="form-dialog-title">
+      (<Dialog open={open} aria-labelledby="form-dialog-title">
         <DialogTitle id="form-dialog-title">
           <SummaryRenderer player={open} flag={flag} />
         </DialogTitle>
@@ -76,7 +76,7 @@ class FlagDialog extends React.Component {
             container
             alignContent="center"
             alignItems="center"
-            justify="center"
+            justifyContent="center"
             spacing={2}
           >
             <Grid item xs={12}>
@@ -91,7 +91,7 @@ class FlagDialog extends React.Component {
             container
             alignContent="center"
             alignItems="center"
-            justify="center"
+            justifyContent="center"
             spacing={2}
           >
             <Grid item xs={12}>
@@ -121,7 +121,7 @@ class FlagDialog extends React.Component {
             Confirm
           </Button>
         </DialogActions>
-      </Dialog>
+      </Dialog>)
     );
   }
 }

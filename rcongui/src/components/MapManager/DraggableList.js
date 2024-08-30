@@ -4,7 +4,7 @@ import {
   DragDropContext,
   Droppable,
 } from "react-beautiful-dnd";
-import { List } from "@material-ui/core";
+import { List } from "@mui/material";
 
 const DraggableList = React.memo(({ items, onDragEnd, onRemove }) => {
   return (

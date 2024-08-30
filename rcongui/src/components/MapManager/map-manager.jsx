@@ -6,7 +6,7 @@ import {
   useTheme,
   useMediaQuery,
   Container,
-} from "@material-ui/core";
+} from "@mui/material";
 import { Link, Switch, Route } from "react-router-dom";
 import VoteMapConfig from "./votemap/votemap";
 import MapRotationConfig from "./map-rotation/map-rotation";
@@ -26,7 +26,7 @@ export function MapManager({ match }) {
   let location = match.params.path;
 
   return (
-    <Container maxWidth="xl" style={{ padding: theme.spacing(2) }}>
+    (<Container maxWidth="xl" style={{ padding: theme.spacing(2) }}>
       <Grid container spacing={2}>
         <Grid item xs={12} md={true}>
           <Tabs
@@ -34,8 +34,8 @@ export function MapManager({ match }) {
             variant={!isMdScreen ? "scrollable" : "fullWidth"}
             value={tabs[location]}
             aria-label="nav tabs example"
-            scrollButtons="on"
-          >
+            scrollButtons
+            allowScrollButtonsMobile>
             <LinkTab label="Map Change" to="change" {...a11yProps(0)} />
             <LinkTab label="Rotation" to="rotation" {...a11yProps(1)} />
             <LinkTab label="Objectives" to="objectives" {...a11yProps(2)} />
@@ -59,7 +59,7 @@ export function MapManager({ match }) {
           </Switch>
         </Grid>
       </Grid>
-    </Container>
+    </Container>)
   );
 }
 

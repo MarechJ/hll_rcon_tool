@@ -1,9 +1,9 @@
-import { ButtonGroup, Button, Grid } from "@material-ui/core";
+import { ButtonGroup, Button, Grid } from "@mui/material";
 import React from "react";
-import Tooltip from "@material-ui/core/Tooltip";
-import EditIcon from "@material-ui/icons/Edit";
-import TimerOffIcon from "@material-ui/icons/TimerOff";
-import DeleteIcon from "@material-ui/icons/Delete";
+import Tooltip from "@mui/material/Tooltip";
+import EditIcon from "@mui/icons-material/Edit";
+import TimerOffIcon from "@mui/icons-material/TimerOff";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 const BlacklistRecordActionRow = ({
   isExpired,
@@ -12,7 +12,7 @@ const BlacklistRecordActionRow = ({
   onDelete,
 }) => {
   return (
-    <Grid container justify="center">
+    (<Grid container justifyContent="center">
       <Grid item>
         <ButtonGroup size="small" variant="text">
           <Button>
@@ -37,7 +37,7 @@ const BlacklistRecordActionRow = ({
           </Button>
         </ButtonGroup>
       </Grid>
-    </Grid>
+    </Grid>)
   );
 };
 
