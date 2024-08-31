@@ -192,6 +192,7 @@ def expose_api_endpoint(
     @wraps(func)
     def wrapper(request: HttpRequest):
         parameters = inspect.signature(func).parameters
+        aliases = getattr(func, '_parameter_aliases', {})
         arguments = {}
         failure = False
         others = None
@@ -219,6 +220,9 @@ def expose_api_endpoint(
             # Scrape out special case parameters, like the author of a request is the user name making the request
             # This does not cast argument types, so things that come in from GET parameters are all going to be strings
             # so we need to handle this properly inside methods if the types matter
+            for alias, pname in aliases.items():
+                if alias in data:
+                    data[pname] = data.pop(alias)
             for pname, param in parameters.items():
                 if pname in ("by", "admin_name"):
                     arguments[pname] = request.user.username
@@ -844,10 +848,10 @@ commands = [
 if not os.getenv("HLL_MAINTENANCE_CONTAINER"):
     logger.info("Initializing endpoints")
 
-    try:
-        # Dynamically register all the methods from ServerCtl
-        # TODO: remove deprecated endpoints check once endpoints are removed
-        for func in ENDPOINT_PERMISSIONS.keys():
+    # Dynamically register all the methods from ServerCtl
+    # TODO: remove deprecated endpoints check once endpoints are removed
+    for func in ENDPOINT_PERMISSIONS.keys():
+        try:
             name = func.__name__
             commands.append(
                 (
@@ -860,9 +864,9 @@ if not os.getenv("HLL_MAINTENANCE_CONTAINER"):
                     ),
                 ),
             )
-        logger.info("Done Initializing endpoints")
-    except:
-        logger.exception(
-            "Failed to initialized endpoints - Most likely bad configuration"
-        )
-        raise
+        except:
+            logger.exception(
+                "Failed to initialized endpoint for %r - Most likely bad configuration", func
+            )
+            raise
+    logger.info("Done Initializing endpoints")

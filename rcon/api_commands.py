@@ -84,12 +84,14 @@ def parameter_aliases(alias_to_param: Dict[str, str]):
     
     Takes a mapping of aliases to their parameter name."""
     def decorator(func):
-        @functools.wraps
+        @functools.wraps(func)
         def wrapper(*args, **kwargs):
             for alias, param in alias_to_param.items():
                 if alias in kwargs:
                     kwargs[param] = kwargs.pop(alias)
             return func(*args, **kwargs)
+        
+        wrapper._parameter_aliases = alias_to_param
         return wrapper
     return decorator
 
