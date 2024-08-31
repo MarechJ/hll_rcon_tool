@@ -25,7 +25,7 @@ const AutoSettings = ({
         onMount={onEditorMount}
       />
     </Grid>
-    <Typography variant="caption" align="left" color="textSecondary">
+    <Typography variant="caption" align="left">
       For more info on how to use Auto Settings see{" "}
       <a href="https://youtu.be/2IKZwHj9PJw" target="_blank">
         this video

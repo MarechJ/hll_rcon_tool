@@ -3,6 +3,8 @@ import {
   Button,
   Grid,
   TextField,
+  Tooltip,
+  Typography,
 } from "@mui/material";
 import { range } from "lodash/util";
 import {
@@ -20,6 +22,7 @@ import NumSlider from "./numSlider";
 import Padlock from "../shared/padlock";
 import AutoRefreshLine from "../autoRefreshLine";
 import { ForwardCheckBox, WordList } from "../commonComponent";
+import { Help as HelpIcon } from "@mui/icons-material"
 
 const ProfanityFiler = ({
   words,
@@ -105,7 +108,6 @@ class HLLSettings extends React.Component {
     this.saveSetting = this.saveSetting.bind(this);
     this.addMapsToRotation = this.addMapsToRotation.bind(this);
     this.removeMapsFromRotation = this.removeMapsFromRotation.bind(this);
-    this.changeMap = this.changeMap.bind(this);
     this.toggleLockSliders = this.toggleLockSliders.bind(this);
     this.loadProfanities = this.loadProfanities.bind(this);
     this.setProfanities = this.setProfanities.bind(this);
@@ -333,20 +335,6 @@ class HLLSettings extends React.Component {
             statusRefreshIntervalMs={500}
             
           />
-        </Grid>
-        <Grid
-          container
-          xs={12}
-          
-          justifyContent="center"
-        >
-          <Grid item xs={12}>
-            <ChangeMap
-              
-              availableMaps={availableMaps}
-              changeMap={this.changeMap}
-            />
-          </Grid>
         </Grid>
         <Grid item  sm={6} xs={12}>
           <ServerMessage
@@ -672,29 +660,6 @@ class HLLSettings extends React.Component {
                 RESET
               </Button>
             </Grid>
-          </Grid>
-        </Grid>
-        <Grid container  justifyContent="center" xs={12}>
-          <Grid item>
-            <Typography variant="h5" gutterBottom>
-              Vote Map config{" "}
-              <Tooltip title="When enabled this feature will managed you map rotation automatically. To display the voting options to the players you must set one of the 'votemap_' variables in your automatic broadcasts">
-                <HelpIcon fontSize="small" />
-              </Tooltip>
-            </Typography>
-          </Grid>
-        </Grid>
-        <Grid container  xs={12}>
-          <VoteMapConfig />
-        </Grid>
-        <Grid container  justifyContent="center">
-          <Grid item xs={12}>
-            <Typography variant="h5">Map rotation</Typography>
-
-            <MapRotation  />
-            <Typography variant="h5">Map rotation settings</Typography>
-
-            <MapRotationSettings  />
           </Grid>
         </Grid>
         <Grid item xs={12}>

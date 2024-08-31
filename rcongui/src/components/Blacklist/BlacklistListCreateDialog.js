@@ -120,7 +120,7 @@ export default function BlacklistListCreateDialog({
             </FormControl>
           </Grid>
         </Grid>
-          <Typography variant="caption" color="textSecondary">
+          <Typography variant="caption">
             {SYNC_METHOD_DESCRIPTIONS[syncMethod]}
           </Typography>
         <br/>

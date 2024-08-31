@@ -13,7 +13,7 @@ import _HLL_No_Background from './hllNoBg';
 import _GreyBlueDark from './greyBlueDark';
 import _CamoLight from './camoLight';
 import _CamoDark from './camoDark';
-import { createTheme } from '@mui/material';
+import { createTheme } from '@mui/material/styles';
 
 const withOtherStyles = (theme) => createTheme(theme, {
   breakpoints: {

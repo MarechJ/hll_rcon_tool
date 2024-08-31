@@ -3,7 +3,7 @@ import { Draggable } from "react-beautiful-dnd";
 import ListItem from "@mui/material/ListItem";
 import ListItemAvatar from "@mui/material/ListItemAvatar";
 import ListItemText from "@mui/material/ListItemText";
-import { ListItemSecondaryAction, IconButton } from "@mui/material";
+import { ListItemSecondaryAction, IconButton, Typography } from "@mui/material";
 import Avatar from "@mui/material/Avatar";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { MapDetails } from "./map-details";

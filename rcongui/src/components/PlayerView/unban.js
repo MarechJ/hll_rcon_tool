@@ -6,12 +6,8 @@ import Dialog from "@mui/material/Dialog";
 import { DialogActions, DialogContent, DialogTitle } from "../dialog";
 import FormHelperText from "@mui/material/FormHelperText";
 
-// FIXME checkout https://mui.com/components/use-media-query/#migrating-from-withwidth
-const withWidth = () => (WrappedComponent) => (props) => <WrappedComponent {...props} width="xs" />;
-
 const Unban = ({
   bannedPlayers,
-  width,
   handleUnban,
   onReload,
   onClose,
@@ -24,8 +20,6 @@ const Unban = ({
       onClose={onClose}
       aria-labelledby="customized-dialog-title"
       open={open}
-      fullWidth={width}
-      maxWidth={width}
     >
       <DialogTitle id="customized-dialog-title" onClose={onClose}>
         Unban players
@@ -84,4 +78,4 @@ const Unban = ({
   );
 };
 
-export default withWidth()(Unban);
+export default Unban;

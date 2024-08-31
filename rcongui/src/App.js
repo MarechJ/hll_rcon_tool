@@ -3,19 +3,18 @@ import "./App.css";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import PlayerView from "./components/PlayerView";
-import Grid from "@material-ui/core/Grid";
+import Grid from "@mui/material/Grid";
 import Logs from "./components/LogsView/logs";
-import CssBaseline from "@material-ui/core/CssBaseline";
+import CssBaseline from "@mui/material/CssBaseline";
 import HLLSettings from "./components/SettingsView/hllSettings";
-import { ThemeProvider } from "@material-ui/styles";
+import { ThemeProvider } from "@mui/material/styles";
 import { HashRouter, Route, Switch, BrowserRouter } from "react-router-dom";
 import LogsHistory from "./components/LogsHistory";
-import { createTheme } from "@material-ui/core/styles";
 import PlayersHistory from "./components/PlayersHistory";
 import Header, { Footer } from "./components/Header";
 import RconSettings from "./components/RconSettings";
 import ServicesList from "./components/Services";
-import { Typography } from "@material-ui/core";
+import { Typography } from "@mui/material";
 import ScoreMenu from "./components/Scoreboard/ScoreMenu";
 import GamesScore from "./components/Scoreboard/GamesScore";
 import PlayerInfo from "./components/PlayerInfo";
@@ -58,6 +57,10 @@ import BlacklistRecords from "./components/Blacklist/BlacklistRecords";
 import BlacklistLists from "./components/Blacklist/BlacklistLists";
 import { MapManager } from "./components/MapManager/map-manager";
 import themes from "./themes"
+import dayjs from 'dayjs';
+import relativeTimePlugin from 'dayjs/plugin/relativeTime';
+
+dayjs.extend(relativeTimePlugin);
 
 const Live = () => {
   const [mdSize, setMdSize] = React.useState(6);

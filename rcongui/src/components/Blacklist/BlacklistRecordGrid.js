@@ -15,12 +15,10 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import "emoji-mart/css/emoji-mart.css";
 import FileCopyIcon from "@mui/icons-material/FileCopy";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import AnnouncementIcon from "@mui/icons-material/Announcement";
-import { pure } from "recompose";
 import makePlayerProfileUrl from "../../utils/makePlayerProfileUrl";
 import { getCountry } from "../PlayersHistory/PlayerTile/PlayerHeader";
 import { List } from "immutable";
@@ -254,7 +252,6 @@ const BlacklistRecordGrid = ({
     blacklists,
     records,
     onRefresh,
-    width,
   }) => {
     const [editDialogOpen, setEditDialogOpen] = React.useState(false);
     const [editDialogInitialValues, setEditDialogInitialValues] = React.useState();
@@ -315,7 +312,7 @@ const BlacklistRecordGrid = ({
       md: 3,
       lg: 4,
       xl: 5,
-    }[width];
+    }[2];
 
     return (
       <React.Fragment>
@@ -354,4 +351,4 @@ const BlacklistRecordGrid = ({
     );
   }
 
-export default pure(BlacklistRecordGrid);
+export default BlacklistRecordGrid;

@@ -85,7 +85,6 @@ const ChatContent = ({ data, handleMessageSend }) => {
               id="message"
               label="Add comment"
               multiline
-              variant="outlined"
               fullWidth
               value={comment}
               onChange={(e) => setComment(e.target.value)}

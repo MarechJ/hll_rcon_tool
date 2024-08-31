@@ -22,7 +22,6 @@ import { getName } from "country-list";
 import Popover from "@mui/material/Popover";
 import Typography from "@mui/material/Typography";
 import { Link as RouterLink } from "react-router-dom";
-import { pure } from "recompose";
 import {
   Avatar,
   Badge,
@@ -34,8 +33,6 @@ import {
 import makePlayerProfileUrl from "../../utils/makePlayerProfileUrl";
 import moment from "moment";
 
-// FIXME checkout https://mui.com/components/use-media-query/#migrating-from-withwidth
-const withWidth = () => (WrappedComponent) => (props) => <WrappedComponent {...props} width="xs" />;
 
 const zeroPad = (num, places) => String(num).padStart(places, "0");
 
@@ -131,17 +128,19 @@ const getBans = (profile) => {
   );
 };
 
-const Flag = ({ data, onDeleteFlag }) => (
-  <Link
-    onClick={() =>
-      window.confirm("Delete flag?") ? onDeleteFlag(data.get("id")) : ""
-    }
-  >
-    <WithPopOver content={`Comment: ${data.get("comment")}`}>
-      {getEmojiFlag(data.get("flag"), 22)}
-    </WithPopOver>
-  </Link>
-);
+const Flag = ({ data, onDeleteFlag }) => {
+  return (
+    <Link
+      onClick={() =>
+        window.confirm("Delete flag?") ? onDeleteFlag(data.get("id")) : ""
+      }
+    >
+      <WithPopOver content={`Comment: ${data.get("comment")}`}>
+        {getEmojiFlag(data.get("flag"), 22)}
+      </WithPopOver>
+    </Link>
+  )
+};
 
 const formatPunitions = (profile) => {
   const formatTime = (item) =>
@@ -455,7 +454,6 @@ const CompactList = ({
   players,
   handleAction,
   sortType,
-  width,
   onFlag: onFlagClick,
   onDeleteFlag: onDeleteFlagClick,
   onBlacklist: onBlacklistClick,
@@ -483,7 +481,7 @@ const CompactList = ({
     <List>
       {myPlayers.map((player) => (
         <PlayerItem
-          nbButtons={sizes[width]}
+          nbButtons={sizes["sm"]}
           player={player}
           key={player.get("player_id")}
           handleAction={(actionType) =>
@@ -516,5 +514,5 @@ const CompactList = ({
   );
 };
 
-export default withWidth()(pure(CompactList));
+export default CompactList;
 export { PlayerItem, CompactList, ScoreListText, ScoreChips, KDChips };
