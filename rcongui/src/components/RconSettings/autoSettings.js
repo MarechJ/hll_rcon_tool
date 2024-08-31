@@ -25,6 +25,19 @@ const AutoSettings = ({
         onMount={onEditorMount}
       />
     </Grid>
+    <Typography variant="caption" align="left">
+      For more info on how to use Auto Settings see{" "}
+      <a href="https://youtu.be/2IKZwHj9PJw" target="_blank">
+        this video
+      </a>{" "}
+      or{" "}
+      <a
+        href="https://cdn.discordapp.com/attachments/729998051288285256/886276109484826634/autosettings_flow.PNG"
+        target="_blank"
+      >
+        this flowchart
+      </a>
+    </Typography>
     <Grid xs={12}>
       <ForwardCheckBox bool={forward} onChange={onFowardChange} />
       <Button variant="outlined" color="secondary" onClick={onSave}>

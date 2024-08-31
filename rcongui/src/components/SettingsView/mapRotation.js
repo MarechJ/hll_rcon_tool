@@ -13,9 +13,6 @@ import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 
-// FIXME checkout https://mui.com/components/use-media-query/#migrating-from-withwidth
-const withWidth = () => (WrappedComponent) => (props) => <WrappedComponent {...props} width="xs" />;
-
 function not(a, b) {
   return a.filter((value) => b.indexOf(value) === -1);
 }
@@ -29,7 +26,6 @@ const MapRotationTransferList = ({
   mapRotation,
   addToRotation,
   removeFromRotation,
-  width,
 }) => {
   const [checked, setChecked] = React.useState([]);
 
@@ -106,11 +102,7 @@ const MapRotationTransferList = ({
             disabled={leftChecked.length === 0}
             aria-label="move selected right"
           >
-            {width === "xs" ? (
-              <KeyboardArrowDownIcon />
-            ) : (
-              <KeyboardArrowRightIcon />
-            )}
+            <KeyboardArrowDownIcon />
           </Button>
           <Button
             variant="outlined"
@@ -120,11 +112,7 @@ const MapRotationTransferList = ({
             disabled={rightChecked.length === 0}
             aria-label="move selected left"
           >
-            {width === "xs" ? (
-              <KeyboardArrowUpIcon />
-            ) : (
-              <KeyboardArrowLeftIcon />
-            )}
+            <KeyboardArrowUpIcon />
           </Button>
         </Grid>
       </Grid>
@@ -135,4 +123,4 @@ const MapRotationTransferList = ({
   );
 };
 
-export default withWidth()(MapRotationTransferList);
+export default MapRotationTransferList;

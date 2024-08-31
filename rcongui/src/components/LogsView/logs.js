@@ -21,9 +21,6 @@ import ListItemText from "@mui/material/ListItemText";
 import FullscreenIcon from "@mui/icons-material/Fullscreen";
 import FullscreenExitIcon from "@mui/icons-material/FullscreenExit";
 
-// FIXME checkout https://mui.com/components/use-media-query/#migrating-from-withwidth
-const withWidth = () => (WrappedComponent) => (props) => <WrappedComponent {...props} width="xs" />;
-
 const formatClass = (action, classes, highlightLogs) => {
   // if the message is a chat message
   if (highlightLogs) {
@@ -206,7 +203,6 @@ class Logs extends React.Component {
                   <Switch
                     checked={highlightLogs}
                     onChange={(e) => this.setHighlightLogs(e.target.checked)}
-                    color="primary"
                   />
                 }
                 label="Highlight Logs"
@@ -328,4 +324,4 @@ class Logs extends React.Component {
   }
 }
 
-export default withWidth()(Logs);
+export default Logs;

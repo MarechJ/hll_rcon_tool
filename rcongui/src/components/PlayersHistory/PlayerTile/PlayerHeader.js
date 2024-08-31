@@ -16,7 +16,6 @@ import AnnouncementIcon from "@mui/icons-material/Announcement";
 import ListItemSecondaryAction from "@mui/material/ListItemSecondaryAction";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
-import { pure } from "recompose";
 import { getName } from "country-list";
 import makePlayerProfileUrl from "../../../utils/makePlayerProfileUrl";
 
@@ -34,7 +33,7 @@ export const getCountry = (country) => {
   );
 };
 
-export const PlayerHeader = pure(({ player }) => {
+export const PlayerHeader = ({ player }) => {
   const [showAll, setShowAll] = React.useState(false);
   const hasMultipleName = player.get("names") && player.get("names").size > 1;
 
@@ -182,4 +181,4 @@ export const PlayerHeader = pure(({ player }) => {
       </ListItemSecondaryAction>
     </ListItem>
   );
-});
+};

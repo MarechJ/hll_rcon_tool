@@ -8,8 +8,9 @@ import {
   DialogTitle,
 } from "@mui/material";
 
-import { DateTimePicker, MuiPickersUtilsProvider } from "@material-ui/pickers";
-import MomentUtils from "@date-io/moment";
+import { DesktopDateTimePicker } from '@mui/x-date-pickers/DesktopDateTimePicker';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import moment from "moment";
 import { PlayerVipSummary } from "./PlayerVipSummary";
 import { ForwardCheckBox } from "../commonComponent";
@@ -82,7 +83,7 @@ export function VipExpirationDialog({ open, vips, onDeleteVip, handleClose, hand
       <DialogContent>
         <Box style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
           <PlayerVipSummary player={player ?? open} vipExpiration={currentVipExpiration} isVip={isVip} />
-          <MuiPickersUtilsProvider utils={MomentUtils}>
+          {/* <MuiPickersUtilsProvider utils={MomentUtils}>
             <DateTimePicker
               label="New VIP Expiration"
               value={expirationTimestamp}
@@ -92,7 +93,14 @@ export function VipExpirationDialog({ open, vips, onDeleteVip, handleClose, hand
               format="YYYY/MM/DD HH:mm"
               maxDate={moment("3000-01-01T00:00:00+00:00")}
             />
-          </MuiPickersUtilsProvider>
+          </MuiPickersUtilsProvider> */}
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+          <DesktopDateTimePicker
+            label="New VIP Expiration"
+            onChange={(value) => console.log(value)} // send value to hook form
+            format='LLL'
+          />
+        </LocalizationProvider>
           <Box>
             <Button variant="outlined" size="small" color="secondary" style={{ display: "block", width: "100%", marginBottom: 4 }} onClick={() => setExpirationTimestamp(moment().add(15, "minutes"))}>Help to join!</Button>
             {presetTimes.map(([amount, unit], index) => (

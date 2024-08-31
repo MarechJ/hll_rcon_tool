@@ -18,7 +18,7 @@ const NumSlider = ({
     <Typography variant="h5" id="discrete-slider-always" gutterBottom>
       {text}
     </Typography>
-    <Typography variant="caption" color="textSecondary">
+    <Typography variant="caption">
       {helpText}
     </Typography>
     <Slider

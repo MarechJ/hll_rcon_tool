@@ -4,8 +4,9 @@ import {
   showResponse,
 } from "../../utils/fetchUtils";
 import Grid from "@mui/material/Grid";
-import MomentUtils from "@date-io/moment";
-import { DateTimePicker, MuiPickersUtilsProvider } from "@material-ui/pickers";
+import { DesktopDateTimePicker } from '@mui/x-date-pickers/DesktopDateTimePicker';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { Button, LinearProgress, TextField } from "@mui/material";
 import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
@@ -56,7 +57,6 @@ const LogsFilter = ({ onSubmit, onChange }) => {
                   />
                 }
                 label="Exact"
-                color="Secondary"
                 labelPlacement="top"
                 className="MuiFormLabel-root"
               />
@@ -97,24 +97,38 @@ const LogsFilter = ({ onSubmit, onChange }) => {
               />
             </Grid>
             <Grid item>
-              <MuiPickersUtilsProvider utils={MomentUtils}>
+              {/* <MuiPickersUtilsProvider utils={MomentUtils}>
                 <DateTimePicker
                   label="From time"
                   format="YYYY/MM/DD HH:mm"
                   value={from}
                   onChange={setFrom}
                 />
-              </MuiPickersUtilsProvider>
+              </MuiPickersUtilsProvider> */}
+              <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <DesktopDateTimePicker
+                  label="From time"
+                  onChange={(value) => console.log(value)} // send value to hook form
+                  format='LLL'
+                />
+              </LocalizationProvider>
             </Grid>
             <Grid item>
-              <MuiPickersUtilsProvider utils={MomentUtils}>
+              {/* <MuiPickersUtilsProvider utils={MomentUtils}>
                 <DateTimePicker
                   label="Till time"
                   format="YYYY/MM/DD HH:mm"
                   value={till}
                   onChange={setTill}
                 />
-              </MuiPickersUtilsProvider>
+              </MuiPickersUtilsProvider> */}
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <DesktopDateTimePicker
+                label="Till time"
+                onChange={(value) => console.log(value)} // send value to hook form
+                format='LLL'
+              />
+            </LocalizationProvider>
             </Grid>
             <Grid item>
               <FormControl >

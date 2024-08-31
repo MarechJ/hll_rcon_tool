@@ -1,5 +1,4 @@
 import React from "react";
-import MomentUtils from "@date-io/moment";
 import {
   Button,
   Card,
@@ -16,8 +15,11 @@ import {
   TextField,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import { DateTimePicker, MuiPickersUtilsProvider } from "@material-ui/pickers";
-import { Picker } from "emoji-mart";
+import { DesktopDateTimePicker } from '@mui/x-date-pickers/DesktopDateTimePicker';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import data from '@emoji-mart/data'
+import EmojiPicker from "@emoji-mart/react";
 
 const SearchBar = ({
   name,
@@ -114,9 +116,15 @@ const SearchBar = ({
                 }
               />
               <CardContent>
-                <Picker
-                  onSelect={(emoji) => setFlags(flags + emoji.native + ",")}
-                />
+              <EmojiPicker
+                style={{ border: '1px solid red' }}
+                dynamicWidth={true}
+                perLine={8}
+                data={data}
+                onEmojiSelect={(emoji) =>
+                  setFlags(flags + emoji.native + ",")
+                }
+              />
               </CardContent>
             </Card>
           ) : (
@@ -132,24 +140,38 @@ const SearchBar = ({
           />
         </Grid>
         <Grid item>
-          <MuiPickersUtilsProvider utils={MomentUtils}>
+          {/* <MuiPickersUtilsProvider utils={MomentUtils}>
             <DateTimePicker
               label="Last seen from"
               value={lastSeenFrom}
               onChange={setLastSeenFrom}
               format="YYYY/MM/DD HH:mm"
             />
-          </MuiPickersUtilsProvider>
+          </MuiPickersUtilsProvider> */}
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DesktopDateTimePicker
+              label="Last seen from"
+              onChange={(value) => console.log(value)} // send value to hook form
+              format='LLL'
+            />
+          </LocalizationProvider>
         </Grid>
         <Grid item>
-          <MuiPickersUtilsProvider utils={MomentUtils}>
+          {/* <MuiPickersUtilsProvider utils={MomentUtils}>
             <DateTimePicker
               label="Last seen until"
               value={lastSeenUntil}
               onChange={setLastSeenUntil}
               format="YYYY/MM/DD HH:mm"
             />
-          </MuiPickersUtilsProvider>
+          </MuiPickersUtilsProvider> */}
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DesktopDateTimePicker
+              label="Last seen until"
+              onChange={(value) => console.log(value)} // send value to hook form
+              format='LLL'
+            />
+          </LocalizationProvider>
         </Grid>
         <Grid item>
           <FormControlLabel

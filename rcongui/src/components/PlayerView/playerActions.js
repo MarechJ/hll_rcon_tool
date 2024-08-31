@@ -153,7 +153,6 @@ class ReasonDialog extends React.Component {
                 rows={4}
                 maxRows={10}
                 label={actionType === "message_player" ? "Message" : "Reason"}
-                variant="outlined"
                 margin="dense"
                 helperText="The message that will be displayed to the player. A message is mandatory"
               />
@@ -169,7 +168,6 @@ class ReasonDialog extends React.Component {
               value={comment}
               onChange={(e) => this.setState({ comment: e.target.value })}
               label="Comment"
-              variant="outlined"
               margin="dense"
               helperText="A comment that will NOT be displayed to the player"
             />
@@ -289,8 +287,6 @@ const PlayerActions = ({
         {show > 1 ? (
           <Tooltip title="Watch Player">
             <Button
-              color={isWatched ? "primary" : "default"}
-              variant={isWatched ? "contained" : "outlined"}
               size="small"
               onClick={() =>
                 handleAction(isWatched ? "unwatch_player" : "watch_player")
@@ -310,7 +306,6 @@ const PlayerActions = ({
           >
             <Badge
               size="small"
-              color="primary"
               max={9}
               badgeContent={penaltyCount.get(
                 remap_penalties[actions[idx][0]],
@@ -370,7 +365,6 @@ const PlayerActions = ({
               }
             >
               <VisibilityIcon
-                color={isWatched ? "primary" : "default"}
                 fontSize="small"
               />
             </MenuItem>

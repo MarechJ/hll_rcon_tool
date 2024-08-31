@@ -17,13 +17,12 @@ import Switch from "@mui/material/Switch";
 import FormGroup from "@mui/material/FormGroup";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import FormControl from "@mui/material/FormControl";
-import MomentUtils from "@date-io/moment";
-import { DateTimePicker, MuiPickersUtilsProvider } from "@material-ui/pickers";
+import { DesktopDateTimePicker } from '@mui/x-date-pickers/DesktopDateTimePicker';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import palette from "google-palette";
-import "chartjs-adapter-moment";
 import { Bar } from "react-chartjs-2";
 import { get, handle_http_errors, showResponse } from "../../utils/fetchUtils";
-import { fromJS } from "immutable";
 import {
   Dialog,
   DialogTitle,
@@ -149,24 +148,38 @@ function MetricsParams({
       spacing={2}
     >
       <Grid item>
-        <MuiPickersUtilsProvider utils={MomentUtils}>
+        {/* <MuiPickersUtilsProvider utils={MomentUtils}>
           <DateTimePicker
             label="From time"
             format="YYYY/MM/DD HH:mm"
             value={from}
             onChange={setFrom}
           />
-        </MuiPickersUtilsProvider>
+        </MuiPickersUtilsProvider> */}
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DesktopDateTimePicker
+              label="From time"
+              onChange={(value) => console.log(value)} // send value to hook form
+              format='LLL'
+            />
+          </LocalizationProvider>
       </Grid>
       <Grid item>
-        <MuiPickersUtilsProvider utils={MomentUtils}>
+        {/* <MuiPickersUtilsProvider utils={MomentUtils}>
           <DateTimePicker
             label="Till time"
             format="YYYY/MM/DD HH:mm"
             value={till}
             onChange={setTill}
           />
-        </MuiPickersUtilsProvider>
+        </MuiPickersUtilsProvider> */}
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DesktopDateTimePicker
+              label="Till time"
+              onChange={(value) => console.log(value)} // send value to hook form
+              format='LLL'
+            />
+          </LocalizationProvider>
       </Grid>
       <Grid item>
         <Grid container direction="column">

@@ -8,7 +8,6 @@ import {
   showResponse,
 } from "../../utils/fetchUtils";
 import { toast } from "react-toastify";
-import { reduce } from "lodash";
 import Pagination from '@mui/material/Pagination';
 import {
   Button,
@@ -23,8 +22,7 @@ import { omitBy } from "lodash/object";
 import SearchBar from "./searchBar";
 import { fromJS, List, Map } from "immutable";
 import FlagIcon from "@mui/icons-material/Flag";
-import "emoji-mart/css/emoji-mart.css";
-import { Picker } from "emoji-mart";
+import data from '@emoji-mart/data'
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
@@ -35,6 +33,7 @@ import { VipExpirationDialog } from "../VipDialog";
 import { vipListFromServer } from "../VipDialog/vipFromServer";
 import { banListFromServer } from "../PlayersHistory/PlayerTile/PlayerBan";
 import BlacklistRecordCreateDialog from "../Blacklist/BlacklistRecordCreateDialog";
+import EmojiPicker from "@emoji-mart/react";
 
 const PlayerSummary = ({ player, flag }) => (
   <React.Fragment>
@@ -95,8 +94,11 @@ class FlagDialog extends React.Component {
             spacing={2}
           >
             <Grid item xs={12}>
-              <Picker
-                onSelect={(emoji) => this.setState({ flag: emoji.native })}
+            <EmojiPicker
+                style={{ border: '1px solid red' }}
+                perLine={8}
+                data={data}
+                onEmojiSelect={(emoji) => this.setState({ flag: emoji.native })}
               />
             </Grid>
           </Grid>
@@ -137,8 +139,6 @@ const MyPagination = ({ pageSize, total, page, setPage }) => (
     count={Math.ceil(total / pageSize)}
     page={page}
     onChange={(e, val) => setPage(val)}
-    variant="outlined"
-    color="default"
     showFirstButton
     showLastButton
   />

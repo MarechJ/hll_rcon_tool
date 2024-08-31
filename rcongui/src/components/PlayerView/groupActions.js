@@ -13,9 +13,6 @@ import { List } from "immutable";
 import { sortBy } from "lodash/collection";
 import { getSharedMessages } from "../../utils/fetchUtils";
 
-// FIXME checkout https://mui.com/components/use-media-query/#migrating-from-withwidth
-const withWidth = () => (WrappedComponent) => (props) => <WrappedComponent {...props} width="xs" />;
-
 const compactProfile = (player) => {
   let s = "";
   if (!player || !player.profile) {
@@ -34,7 +31,6 @@ const compactProfile = (player) => {
 
 const GroupActions = ({
   players,
-  width,
   handleAction,
   onClose,
   open,
@@ -46,7 +42,7 @@ const GroupActions = ({
   const [saveMessage, setSaveMessage] = React.useState(true);
   const [comment, setComment] = React.useState("");
   const textHistory = new TextHistory("punishments");
-  const nbButton = ["xs"].indexOf(width) !== -1 ? 3 : 6;
+  const nbButton = 3;
   const [sharedMessages, setSharedMessages] = React.useState([]);
   React.useEffect(() => {
     getSharedMessages("punishments").then((data) => setSharedMessages(data));
@@ -60,8 +56,6 @@ const GroupActions = ({
       onClose={onClose}
       aria-labelledby="customized-dialog-title"
       open={open}
-      fullWidth={width}
-      maxWidth={width}
     >
       <DialogTitle id="customized-dialog-title" onClose={onClose}>
         Apply same action on all selected players
@@ -154,4 +148,4 @@ const GroupActions = ({
   );
 };
 
-export default withWidth()(GroupActions);
+export default GroupActions;
