@@ -48,9 +48,11 @@ const MapRotationSettings = () => {
             <Typography variant={'caption'}>Will reset to default enabled when server restarts.</Typography>
           </div>}
           checked={shuffleEnabled}
-          handleChange={(v) => {
-            toggleShuffleEnabled(!shuffleEnabled);
-            setShuffleEnabled(v);
+          handleChange={async (enabled) => {
+            const result = await toggleShuffleEnabled(!shuffleEnabled);
+            if (result && !result.failed) {
+              setShuffleEnabled(enabled);
+            }
           }}
         />
       </Grid>
