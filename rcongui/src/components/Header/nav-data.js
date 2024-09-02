@@ -65,6 +65,10 @@ export const navMenus = [
         to: "/settings/camera-webhooks",
       },
       {
+        name: "Chat Webhooks",
+        to: "/settings/chat-webhooks",
+      },
+      {
         name: "Kill/TK Webhooks",
         to: "/settings/kill-webhooks",
       },
@@ -82,7 +86,7 @@ export const navMenus = [
       },
       {
         name: "No Solo Tank Auto Mod",
-        to: "/settings/chat-webhooks",
+        to: "/settings/automod-solo-tank",
       },
       {
         name: "RCON Game Server Connection",
