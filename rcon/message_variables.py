@@ -81,13 +81,13 @@ def populate_message_variables(
             sum(v for m, v in vote_status()) if vote_status() else math.nan
         ),
         MessageVariable.winning_maps_short: partial(
-            format_winning_map, rcon, vote_status, display_count=2
+            format_winning_map, rcon, winning_maps=vote_status(), display_count=2
         ),
         MessageVariable.winning_maps_all: partial(
-            format_winning_map, rcon, vote_status, display_count=0
+            format_winning_map, rcon, winning_maps=vote_status(), display_count=0
         ),
         MessageVariable.scrolling_votemap: partial(
-            scrolling_votemap, rcon, vote_status
+            scrolling_votemap, rcon, winning_maps=vote_status()
         ),
         # Deprecated: Taken over from previous auto-broadcast
         MessageVariable.admin_names: lambda: [d["name"] for d in rcon.get_admin_ids()],
