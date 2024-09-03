@@ -31,7 +31,12 @@ def populate_message_variables(
     if rcon is None:
         rcon = get_rcon()
 
-    vote_results = vote_status()
+    vote_results: list[tuple[Layer, int]] | None = None
+    def fetch_vote_results():
+        nonlocal vote_results
+        if vote_results is None:
+            vote_results = vote_status()
+        return vote_results
 
     message_variable_to_lookup = {
         MessageVariable.vip_status: lambda: _is_vip(player_id=player_id, rcon=rcon),
@@ -80,17 +85,11 @@ def populate_message_variables(
             format_map_vote, format_type="by_mod_split"
         ),
         MessageVariable.total_votes: lambda: (
-            sum(v for m, v in vote_results) if vote_results else math.nan
+            sum(v for m, v in fetch_vote_results()) if fetch_vote_results() else math.nan
         ),
-        MessageVariable.winning_maps_short: partial(
-            format_winning_map, rcon, winning_maps=vote_results, display_count=2
-        ),
-        MessageVariable.winning_maps_all: partial(
-            format_winning_map, rcon, winning_maps=vote_results, display_count=0
-        ),
-        MessageVariable.scrolling_votemap: partial(
-            scrolling_votemap, rcon, winning_maps=vote_results
-        ),
+        MessageVariable.winning_maps_short: lambda: format_winning_map(rcon, fetch_vote_results(), 2),
+        MessageVariable.winning_maps_all: lambda: format_winning_map(rcon, fetch_vote_results(), 0),
+        MessageVariable.scrolling_votemap: lambda: scrolling_votemap(rcon, fetch_vote_results()),
         # Deprecated: Taken over from previous auto-broadcast
         MessageVariable.admin_names: lambda: [d["name"] for d in rcon.get_admin_ids()],
         MessageVariable.owner_names: lambda: [
