@@ -9,7 +9,7 @@ from pydantic import HttpUrl
 import rcon.message_variables
 from rcon.hooks import chat_commands
 from rcon.maps import parse_layer
-from rcon.message_variables import format_message_string, populate_message_variables
+from rcon.message_variables import format_message_string, populate_message_variables, format_winning_map
 from rcon.types import (
     MessageVariable,
     MessageVariableContext,
@@ -567,3 +567,20 @@ def test_is_help(word, expected):
 )
 def test_is_description_word(words, description_words, expected):
     assert is_description_word(set(words.split()), description_words) == expected
+
+
+# @mock.patch("rcon.get_next_map", autospec=True, return_value="carentan_warfare")
+@pytest.mark.parametrize(
+    "winning_maps, expected",
+    [
+        ([(parse_layer("carentan_warfare"), 2)], "Carentan Warfare (2 vote(s))"),
+        ([(parse_layer("driel_offensive_ger"), 2)], "Driel Off. GER (2 vote(s))"),
+    ],
+)
+def test_format_winning_map(winning_maps, expected) -> None:
+    with (
+        mock.patch("rcon.game_logs.Rcon", autospec=True) as ctl,
+        # mock.patch("rcon.get_next_map", return_value="carentan_warfare") as _,
+    ):
+        assert format_winning_map(ctl=ctl, winning_maps=winning_maps) == expected
+
