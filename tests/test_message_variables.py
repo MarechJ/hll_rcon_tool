@@ -9,7 +9,11 @@ from pydantic import HttpUrl
 import rcon.message_variables
 from rcon.hooks import chat_commands
 from rcon.maps import parse_layer
-from rcon.message_variables import format_message_string, populate_message_variables, format_winning_map
+from rcon.message_variables import (
+    format_message_string,
+    format_winning_map,
+    populate_message_variables,
+)
 from rcon.types import (
     MessageVariable,
     MessageVariableContext,
@@ -583,4 +587,3 @@ def test_format_winning_map(winning_maps, expected) -> None:
         # mock.patch("rcon.get_next_map", return_value="carentan_warfare") as _,
     ):
         assert format_winning_map(ctl=ctl, winning_maps=winning_maps) == expected
-

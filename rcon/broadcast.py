@@ -4,7 +4,7 @@ import re
 import time
 
 from rcon.commands import CommandFailedError
-from rcon.message_variables import populate_message_variables, format_message_string
+from rcon.message_variables import format_message_string, populate_message_variables
 from rcon.types import MessageVariable
 from rcon.user_config.auto_broadcast import AutoBroadcastUserConfig
 from rcon.user_config.chat_commands import MESSAGE_VAR_RE

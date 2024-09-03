@@ -1,14 +1,14 @@
 import math
+import random
 from datetime import datetime
 from functools import partial
 from itertools import takewhile
 from logging import getLogger
-import random
 from typing import Any, Iterable, Sequence
 
 from rcon import maps
 from rcon.audit import ingame_mods, online_mods
-from rcon.maps import numbered_maps, categorize_maps, Layer
+from rcon.maps import Layer, categorize_maps, numbered_maps
 from rcon.rcon import Rcon, get_rcon
 from rcon.scoreboard import get_cached_live_game_stats, get_stat
 from rcon.types import CachedLiveGameStats, MessageVariable, StatTypes, VipIdType
@@ -22,9 +22,9 @@ logger = getLogger(__name__)
 
 
 def populate_message_variables(
-        vars: Iterable[str],
-        player_id: str | None = None,
-        rcon: Rcon | None = None,
+    vars: Iterable[str],
+    player_id: str | None = None,
+    rcon: Rcon | None = None,
 ) -> dict[MessageVariable, str | None]:
     """Return globally available info for message formatting"""
     populated_variables: dict[MessageVariable, str | None] = {}
@@ -58,19 +58,37 @@ def populate_message_variables(
         MessageVariable.top_kill_streak_player_score: lambda: _generic_score_top_only(
             stat_key=StatTypes.top_kill_streak, result_key="kills_streak"
         ),
-
         MessageVariable.votenextmap_line: partial(format_map_vote, format_type="line"),
-        MessageVariable.votenextmap_noscroll: partial(format_map_vote, format_type="max_length"),
-        MessageVariable.votenextmap_vertical: partial(format_map_vote, format_type="vertical"),
-        MessageVariable.votenextmap_by_mod_line: partial(format_map_vote, format_type="by_mod_line"),
-        MessageVariable.votenextmap_by_mod_vertical: partial(format_map_vote, format_type="by_mod_vertical"),
-        MessageVariable.votenextmap_by_mod_vertical_all: partial(format_map_vote, format_type="by_mod_vertical_all"),
-        MessageVariable.votenextmap_by_mod_split: partial(format_map_vote, format_type="by_mod_split"),
-        MessageVariable.total_votes: lambda: sum(v for m, v in vote_status()) if vote_status() else math.nan,
-        MessageVariable.winning_maps_short: partial(format_winning_map, rcon, vote_status, display_count=2),
-        MessageVariable.winning_maps_all: partial(format_winning_map, rcon, vote_status, display_count=0),
-        MessageVariable.scrolling_votemap: partial(scrolling_votemap, rcon, vote_status),
-
+        MessageVariable.votenextmap_noscroll: partial(
+            format_map_vote, format_type="max_length"
+        ),
+        MessageVariable.votenextmap_vertical: partial(
+            format_map_vote, format_type="vertical"
+        ),
+        MessageVariable.votenextmap_by_mod_line: partial(
+            format_map_vote, format_type="by_mod_line"
+        ),
+        MessageVariable.votenextmap_by_mod_vertical: partial(
+            format_map_vote, format_type="by_mod_vertical"
+        ),
+        MessageVariable.votenextmap_by_mod_vertical_all: partial(
+            format_map_vote, format_type="by_mod_vertical_all"
+        ),
+        MessageVariable.votenextmap_by_mod_split: partial(
+            format_map_vote, format_type="by_mod_split"
+        ),
+        MessageVariable.total_votes: lambda: (
+            sum(v for m, v in vote_status()) if vote_status() else math.nan
+        ),
+        MessageVariable.winning_maps_short: partial(
+            format_winning_map, rcon, vote_status, display_count=2
+        ),
+        MessageVariable.winning_maps_all: partial(
+            format_winning_map, rcon, vote_status, display_count=0
+        ),
+        MessageVariable.scrolling_votemap: partial(
+            scrolling_votemap, rcon, vote_status
+        ),
         # Deprecated: Taken over from previous auto-broadcast
         MessageVariable.admin_names: lambda: [d["name"] for d in rcon.get_admin_ids()],
         MessageVariable.owner_names: lambda: [
@@ -83,7 +101,9 @@ def populate_message_variables(
             d["name"] for d in rcon.get_admin_ids() if d["role"] == "junior"
         ],
         MessageVariable.vip_names: lambda: [d["name"] for d in rcon.get_vip_ids()],
-        MessageVariable.random_vip_name: lambda: random.choice([d["name"] for d in rcon.get_vip_ids()]),
+        MessageVariable.random_vip_name: lambda: random.choice(
+            [d["name"] for d in rcon.get_vip_ids()]
+        ),
         MessageVariable.online_mods: lambda: [mod["username"] for mod in online_mods()],
         MessageVariable.ingame_mods: lambda: [mod["username"] for mod in ingame_mods()],
     }
@@ -126,10 +146,10 @@ def scrolling_votemap(rcon, winning_maps, repeat=10):
 
 
 def format_winning_map(
-        ctl: Rcon,
-        winning_maps: Sequence[tuple[maps.Layer, int]],
-        display_count=2,
-        default=None,
+    ctl: Rcon,
+    winning_maps: Sequence[tuple[maps.Layer, int]],
+    display_count=2,
+    default=None,
 ):
     nextmap = ctl.get_next_map()
     if not winning_maps:
@@ -154,6 +174,7 @@ def vote_status() -> list[tuple[Layer, int]]:
     else:
         return []
 
+
 def format_by_line_length(possible_votes, max_length=50):
     """
     Note: I've tried to format with a nice aligned table but it's not
@@ -172,9 +193,9 @@ def format_by_line_length(possible_votes, max_length=50):
 
 
 def join_vote_options(
-        selection: list[maps.Layer],
-        maps_to_numbers: dict[maps.Layer, str],
-        join_char: str = " ",
+    selection: list[maps.Layer],
+    maps_to_numbers: dict[maps.Layer, str],
+    join_char: str = " ",
 ):
     return join_char.join(f"[{maps_to_numbers[m]}] {m.pretty_name}" for m in selection)
 
@@ -242,9 +263,9 @@ def format_map_vote(format_type="line"):
 
 
 def format_message_string(
-        format_str: str,
-        populated_variables: dict[MessageVariable, str | None] | None = None,
-        context: dict[str, Any] | None = None,
+    format_str: str,
+    populated_variables: dict[MessageVariable, str | None] | None = None,
+    context: dict[str, Any] | None = None,
 ) -> str:
     """Safely fill format_str"""
     if context is None:
@@ -260,7 +281,7 @@ def format_message_string(
 
 
 def _vip_status(
-        player_id: str | None = None, rcon: Rcon | None = None
+    player_id: str | None = None, rcon: Rcon | None = None
 ) -> VipIdType | None:
     if rcon is None:
         rcon = get_rcon()
@@ -279,7 +300,7 @@ def _is_vip(player_id: str | None = None, rcon: Rcon | None = None) -> bool:
 
 
 def _vip_expiration(
-        player_id: str | None = None, rcon: Rcon | None = None
+    player_id: str | None = None, rcon: Rcon | None = None
 ) -> datetime | None:
     vip = _vip_status(player_id=player_id, rcon=rcon)
 
@@ -323,11 +344,11 @@ def _map_rotation(rcon: Rcon | None = None):
 
 
 def _generic_score_ties(
-        stat_key: StatTypes,
-        tie_key: str,
-        result_key: str,
-        stats: CachedLiveGameStats | None = None,
-        num_ties=3,
+    stat_key: StatTypes,
+    tie_key: str,
+    result_key: str,
+    stats: CachedLiveGameStats | None = None,
+    num_ties=3,
 ):
     if stats is None:
         stats = get_cached_live_game_stats()
@@ -341,9 +362,9 @@ def _generic_score_ties(
 
 
 def _generic_score_top_only(
-        stat_key: StatTypes,
-        result_key: str,
-        stats: CachedLiveGameStats | None = None,
+    stat_key: StatTypes,
+    result_key: str,
+    stats: CachedLiveGameStats | None = None,
 ):
     stats = get_cached_live_game_stats()
     metric_stats = get_stat(stats["stats"], key=stat_key, limit=1)
