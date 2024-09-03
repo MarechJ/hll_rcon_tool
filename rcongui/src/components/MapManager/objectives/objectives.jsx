@@ -2,6 +2,7 @@ import {
   Box,
   Button,
   Checkbox,
+  CircularProgress,
   createStyles,
   FormControl,
   FormControlLabel,
@@ -20,6 +21,7 @@ import { Alert, AlertTitle, Skeleton } from "@material-ui/lab";
 import clsx from "clsx";
 
 const UPDATE_INTERVAL = 5 * 1000;
+const CONFIRM_DELAY = 10 * 1000;
 
 const flip = (o) =>
   o.map((row, x) => {
@@ -133,7 +135,9 @@ function MapObjectives() {
     "2": false,
   });
   const [objectives, setObjectives] = React.useState(null);
+  const [isSaving, setIsSaving] = React.useState(false);
   const statusIntervalRef = React.useRef(null);
+  const savingTimeoutRef = React.useRef(null);
   const classes = useStyles();
 
   const updateServerStatus = async () => {
@@ -194,6 +198,7 @@ function MapObjectives() {
   }
 
   const handleChangeLayoutClick = async () => {
+    setIsSaving(true);
     const chosenObjectives = reduceToInts(
       objectives[1][0] !== null ? flip(objectives) : objectives
     );
@@ -230,6 +235,13 @@ function MapObjectives() {
   const handleConstraintChange = (event) => {
     setRandomConstraint({ ...randomConstraint, [event.target.name]: event.target.checked });
   };
+
+  React.useEffect(() => {
+    if (isSaving) {
+      savingTimeoutRef.current = setTimeout(() => setIsSaving(false), CONFIRM_DELAY)
+    }
+    return () => clearTimeout(savingTimeoutRef.current)
+  }, [isSaving])
 
   React.useEffect(() => {
     updateServerStatus();
@@ -273,6 +285,8 @@ function MapObjectives() {
     <Box className={classes.main}>
       <Box className={classes.panel}>
         <Button
+          disabled={isSaving}
+          startIcon={isSaving && <CircularProgress size={20} />}
           color="secondary"
           variant="outlined"
           size="small"

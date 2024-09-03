@@ -13,7 +13,6 @@ const useStyles = makeStyles((theme) => ({
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    maxWidth: theme.breakpoints.values.sm,
     [theme.breakpoints.up("sm")]: {
       flexDirection: "row",
     },
@@ -82,7 +81,7 @@ export default function MapSearch({ onChange, onSearch, onFilter, filters }) {
       </Box>
       <Divider className={classes.smDivider} orientation="horizontal" />
       <Box className={classes.chips}>
-        {Object.entries(filters).map(([filter, isApplied]) => (
+        {Object.entries(filters)?.map(([filter, isApplied]) => (
           <Chip
             key={filter}
             size="small"

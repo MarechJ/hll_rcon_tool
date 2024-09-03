@@ -1,161 +1,105 @@
 import * as React from "react";
-import DraggableList from "../DraggableList";
-import { reorder } from "../helpers";
+import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+import makeStyles from "@material-ui/core/styles/makeStyles";
 import {
-  get,
-  handle_http_errors,
-  postData,
-  showResponse,
-} from "../../../utils/fetchUtils";
-import { Box, Button, CircularProgress, Grid } from "@material-ui/core";
-import Autocomplete from "@material-ui/lab/Autocomplete";
-import TextField from "@material-ui/core/TextField";
-import { Alert } from "@material-ui/lab";
+  List,
+  ListItem,
+  ListItemAvatar,
+  ListItemText,
+  ListItemSecondaryAction,
+  IconButton,
+  createStyles,
+  Tooltip,
+} from "@material-ui/core";
+import Avatar from "@material-ui/core/Avatar";
+import DeleteIcon from "@material-ui/icons/Delete";
+import InputIcon from "@material-ui/icons/Input";
+import { MapDetails } from "../map-details";
 
-const MapRotation = () => {
-  const [maps, setMaps] = React.useState([]);
-  const [currentRotation, setCurrentRotation] = React.useState([]);
-  const [rotation, setRotation] = React.useState([]);
-  const [mapsToAdd, setMapsToAdd] = React.useState([]);
-  const [rotationIsSaving, setRotationIsSaving] = React.useState(false);
-  const [voteMapConfig, setVoteMapConfig] = React.useState({});
-  const [lastRefresh, setLastRefresh] = React.useState(null);
+const useStyles = makeStyles((theme) =>
+  createStyles({
+    draggingListItem: {
+      boxShadow:
+        "rgba(6, 24, 44, 0.4) 0px 0px 0px 2px, rgba(6, 24, 44, 0.65) 0px 4px 6px -1px, rgba(255, 255, 255, 0.08) 0px 1px 0px 0px inset",
+    },
+    base: {
+      borderBottom: `1px solid ${theme.palette.divider}`,
+    },
+    secondaryAction: {
+      display: "flex",
+      flexDirection: "row",
+      gap: theme.spacing(2),
+    },
+  })
+);
 
-  const loadToState = (command, showSuccess, stateSetter) => {
-    return get(command)
-      .then((res) => showResponse(res, command, showSuccess))
-      .then((res) => (res.failed === false ? stateSetter(res) : null))
-      .catch(handle_http_errors);
-  };
-
-  const saveRotation = () => {
-    setRotationIsSaving(true);
-    return postData(`${process.env.REACT_APP_API_URL}set_maprotation`, {
-      map_names: rotation.map((m) => m.id),
-    })
-      .then((res) => {
-        showResponse(res, `set_maprotation`, true);
-        setRotationIsSaving(false);
-        loadMapRotation();
-      })
-      .catch((e) => {
-        handle_http_errors(e);
-        loadMapRotation();
-        setRotationIsSaving(false);
-      });
-  };
-
-  const getVoteMapConfig = () => {
-    get("get_votemap_config")
-      .then((res) => showResponse(res, "get_votemap_config", false))
-      .then((data) => (data.failed ? "" : setVoteMapConfig(data.result)))
-      .catch(handle_http_errors);
-  };
-
-  const loadMapRotation = () => {
-    return loadToState("get_map_rotation", false, (data) => {
-      setCurrentRotation(Array.from(data.result));
-      setRotation(Array.from(data.result));
-    });
-  };
-
-  const loadAllMaps = () => {
-    return loadToState("get_maps", false, (data) => setMaps(data.result));
-  };
-
-  const loadAllData = () => {
-    getVoteMapConfig();
-    loadMapRotation();
-    loadAllMaps();
-    setLastRefresh(new Date());
-  };
-
-  React.useEffect(() => {
-    loadAllData();
-    const handle = setInterval(getVoteMapConfig, 10000);
-
-    return () => clearInterval(handle);
-  }, []);
-
-  const onDragEnd = ({ destination, source }) => {
-    // dropped outside the list
-    if (!destination) return;
-
-    const newRotation = reorder(rotation, source.index, destination.index);
-
-    setRotation(newRotation);
-  };
-
-  const onRemoveItem = (index) => {
-    rotation.splice(index, 1);
-    setRotation(Array.from(rotation));
-  };
-
-  const hasChanged = React.useMemo(
-    () => currentRotation.map((o) => o.id).toString() === rotation.map((o) => o.id).toString(),
-    [currentRotation, rotation]
-  );
+const DraggableList = React.memo(({ maps, onDragEnd, onRemove, onChange, isSaved }) => {
+  const classes = useStyles();
 
   return (
-    <Grid container spacing={2}>
-      <Grid item xs={12}>
-        {voteMapConfig.enabled && <Alert style={{ margin: "0.25rem 0 1rem 0" }} severity="warning" >You can't change the rotation while votemap is on</Alert>}
-        <Box style={{ display: "flex", justifyContent: "space-between", marginBottom: "1rem" }}>
-          <Button size="small" variant="outlined" onClick={loadAllData}>
-            Refresh
-          </Button>
-          <Box style={{ display: "flex", gap: "0.5rem" }}>
-            <Button
-              size="small"
-              variant="outlined"
-              disabled={voteMapConfig.enabled}
-              onClick={() => {
-                setRotation(rotation.concat(mapsToAdd));
-              }}
-            >
-              Add
-            </Button>
-            <Button
-              variant="outlined"
-              disabled={hasChanged || rotationIsSaving || voteMapConfig.enabled}
-              onClick={saveRotation}
-              size="small"
-            >
-              {rotationIsSaving ? (
-                <CircularProgress size={20} />
-              ) : (
-                "Save rotation"
-              )}
-            </Button>
-          </Box>
-        </Box>
-          <Autocomplete
-            multiple
-            disabled={voteMapConfig.enabled}
-            size="small"
-            disableCloseOnSelect
-            options={maps}
-            getOptionLabel={(m) => m.pretty_name}
-            isOptionEqualToValue={(option, value) => option.id == value.id}
-            onChange={(e, v) => setMapsToAdd(v)}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                variant="outlined"
-                label="Select maps"
-              />
-            )}
-          />
-      </Grid>
-      <Grid item xs={12}>
-        <DraggableList
-          items={rotation}
-          onDragEnd={onDragEnd}
-          onRemove={onRemoveItem}
-        />
-      </Grid>
-    </Grid>
+    <DragDropContext onDragEnd={onDragEnd}>
+      <Droppable droppableId="droppable-list">
+        {(provided) => (
+          <List
+            dense={true}
+            ref={provided.innerRef}
+            {...provided.droppableProps}
+          >
+            {maps.map((mapLayer, index, thisList) => (
+              <Draggable draggableId={mapLayer.id + index} index={index}>
+                {(provided, snapshot) => (
+                  <ListItem
+                    ref={provided.innerRef}
+                    {...provided.draggableProps}
+                    {...provided.dragHandleProps}
+                    className={
+                      snapshot.isDragging
+                        ? classes.draggingListItem
+                        : classes.base
+                    }
+                  >
+                    <ListItemAvatar>
+                      <Avatar src={`maps/${mapLayer.image_name}`} />
+                    </ListItemAvatar>
+                    <ListItemText
+                      primary={mapLayer.map.pretty_name}
+                      secondary={<MapDetails mapLayer={mapLayer} />}
+                    />
+                    <ListItemSecondaryAction
+                      className={classes.secondaryAction}
+                    >
+                      {thisList.findIndex(aMapLayer => aMapLayer.id === mapLayer.id) === index && (
+                        <Tooltip title={"Change map"}>
+                          <span>
+                            <IconButton
+                            edge="end"
+                            aria-label="set map"
+                            disabled={!isSaved}
+                            onClick={() => onChange(mapLayer)}
+                          >
+                            <InputIcon />
+                          </IconButton>
+                          </span>
+                        </Tooltip>
+                      )}
+                      <IconButton
+                        edge="end"
+                        aria-label="delete"
+                        onClick={() => onRemove(index)}
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    </ListItemSecondaryAction>
+                  </ListItem>
+                )}
+              </Draggable>
+            ))}
+            {provided.placeholder}
+          </List>
+        )}
+      </Droppable>
+    </DragDropContext>
   );
-};
+});
 
-export default MapRotation;
+export default DraggableList;

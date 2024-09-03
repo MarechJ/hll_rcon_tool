@@ -39,8 +39,8 @@ export function MapDetails({ mapLayer }) {
   );
 }
 
-export function MapAvatar({ mapLayer }) {
+export function MapAvatar({ mapLayer, ...props }) {
   return (
-    <Avatar src={getMapLayerImageSrc(mapLayer)} />
+    <Avatar src={getMapLayerImageSrc(mapLayer)} {...props} />
   )
 }
