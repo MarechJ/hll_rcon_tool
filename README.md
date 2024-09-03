@@ -421,7 +421,7 @@ HLL_PASSWORD=yourrconpassword
 > [!IMPORTANT]
 > Triple-check there is no space before/after the `=` signs, nor in the values you've set.
 
-- save the changes with `Ctrl`+`o` (then type `ENTER` to validate)  
+- save the changes with `Ctrl`+`o` (then press the `[ENTER]` key to validate)  
 - exit nano with `Ctrl`+`x`
 
 ---

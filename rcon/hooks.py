@@ -221,7 +221,7 @@ def handle_new_match_start(rcon: Rcon, struct_log):
         # Check that the log is less than 5min old
         if (datetime.utcnow() - log_time).total_seconds() < 5 * 60:
             # then we use the current map to be more accurate
-            if current_map.map.name.lower() == log_map_name.lower():
+            if current_map.map.name.lower() == log_map_name.lower().removesuffix(" night"):
                 map_name_to_save = current_map
                 guessed = False
             else:

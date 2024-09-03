@@ -262,7 +262,7 @@ MAPS = {
             shortname="Utah",
             allies=Faction(name=FactionName.US.value, team=Team.ALLIES),
             axis=Faction(name=FactionName.GER.value, team=Team.AXIS),
-            orientation=Orientation.VERTICAL,
+            orientation=Orientation.HORIZONTAL,
         ),
         Map(
             id="omahabeach",
@@ -272,7 +272,7 @@ MAPS = {
             shortname="Omaha",
             allies=Faction(name=FactionName.US.value, team=Team.ALLIES),
             axis=Faction(name=FactionName.GER.value, team=Team.AXIS),
-            orientation=Orientation.VERTICAL,
+            orientation=Orientation.HORIZONTAL,
         ),
         Map(
             id="purpleheartlane",
