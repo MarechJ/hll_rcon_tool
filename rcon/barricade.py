@@ -2,7 +2,22 @@ from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from datetime import datetime
 from enum import Enum
+import os
 import pydantic
+
+from django.conf import settings as django_settings
+django_settings.configure(CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [
+                {
+                    "address": os.getenv("HLL_REDIS_URL"),
+                }
+            ],
+        },
+    },
+})
 
 GROUP_NAME = "barricade"
 
@@ -63,7 +78,7 @@ class UnbanPlayersRequestPayload(pydantic.BaseModel):
 
 
 class NewReportRequestPayloadPlayer(pydantic.BaseModel):
-    player_id: int
+    player_id: str
     player_name: str
     bm_rcon_url: str | None
 

@@ -1224,5 +1224,5 @@ class BlacklistCommandHandler:
         if online_player_ids:
             send_to_barricade(
                 request_type=ServerRequestType.SCAN_PLAYERS,
-                payload=ScanPlayersRequestPayload(player_ids=online_player_ids),
+                payload=ScanPlayersRequestPayload(player_ids=online_player_ids).model_dump(),
             )

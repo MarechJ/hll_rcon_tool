@@ -327,9 +327,10 @@ class BarricadeConsumer(AsyncJsonWebsocketConsumer):
         BlacklistCommandHandler.send(
             BlacklistCommand(
                 command=BlacklistCommandType.BARRICADE_WARN_ONLINE,
+                server_mask=None,
                 payload=BlacklistBarricadeWarnOnlineCommand(
                     player_ids=[player.player_id for player in payload.players]
-                ),
+                ).model_dump(),
             )
         )
 
