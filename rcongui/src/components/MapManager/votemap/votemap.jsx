@@ -42,7 +42,6 @@ import { MapAutocomplete } from "../map-autocomplete";
 import { MapListItem } from "../map-list-item";
 import DeleteIcon from "@material-ui/icons/Delete";
 
-
 const useStyles = makeStyles((theme) =>
   createStyles({
     spacing: {
@@ -85,7 +84,8 @@ const UPDATE_INTERVAL = 15 * 1000;
 const VoteMapConfig = ({ maps }) => {
   const [_config, setConfig] = React.useState({});
   const [configChanges, setConfigChanges] = React.useState({});
-  const [whitelistState, setWhitelistState] = React.useState([]);
+  const [whitelist, setWhitelist] = React.useState([]);
+  const [mapsToAdd, setMapsToAdd] = React.useState([]);
   const [incomingChanges, setIncomingChanges] = React.useState(null);
   const [status, setStatus] = React.useState([]);
   const statusIntervalRef = React.useRef(null);
@@ -99,14 +99,23 @@ const VoteMapConfig = ({ maps }) => {
   };
 
   const hasChanges = Object.keys(configChanges).length > 0;
-  const whitelist = React.useMemo(() => {
-    if (!maps.length || !whitelistState.length) {
-      return [];
-    }
-    return whitelistState.map((mapId) =>
-      maps.find((mapLayer) => mapLayer.id === mapId)
-    );
-  }, [maps, whitelistState]);
+
+  const autocompleteSelection = React.useMemo(() => {
+    if (!maps.length) return [];
+
+    const mapSelection = maps.reduce((acc, map) => {
+      acc[map.id] = map;
+      return acc;
+    }, {});
+
+    whitelist.forEach((map) => {
+      if (map.id in mapSelection) {
+        delete mapSelection[map.id];
+      }
+    });
+
+    return Object.values(mapSelection);
+  }, [maps, whitelist]);
 
   async function updateConfig() {
     await updateVotemapConfig(config);
@@ -137,23 +146,33 @@ const VoteMapConfig = ({ maps }) => {
   }
 
   async function getWhitelist() {
-    const whitelist = await getVotemapWhitelist();
-    if (whitelist) {
-      setWhitelistState(whitelist);
+    if (!maps.length) return;
+    const whitelistRaw = await getVotemapWhitelist();
+    if (whitelistRaw) {
+      setWhitelist(
+        whitelistRaw.map((mapId) =>
+          maps.find((mapLayer) => mapLayer.id === mapId)
+        )
+      );
     }
   }
 
-  async function setWhitelist(whitelist) {
-    const result = await setVotemapWhitelist(whitelist);
-    if (result) {
-      await getWhitelist();
+  async function submitWhitelist() {
+    const whitelistRaw = whitelist.map((map) => map.id);
+    const returnedWhitelist = await setVotemapWhitelist(whitelistRaw);
+    if (returnedWhitelist) {
+      getWhitelist();
     }
   }
 
   async function resetWhitelist() {
-    const newWhitelist = await resetVotemapWhitelist();
-    if (newWhitelist) {
-      setWhitelistState(newWhitelist);
+    const whitelistRaw = await resetVotemapWhitelist();
+    if (whitelistRaw) {
+      setWhitelist(
+        whitelistRaw.map((mapId) =>
+          maps.find((mapLayer) => mapLayer.id === mapId)
+        )
+      );
     }
   }
 
@@ -185,7 +204,6 @@ const VoteMapConfig = ({ maps }) => {
   React.useEffect(() => {
     getConfig();
     getStatus();
-    getWhitelist();
   }, []);
 
   React.useEffect(() => {
@@ -208,6 +226,10 @@ const VoteMapConfig = ({ maps }) => {
       acceptIncomingConfigChanges();
     }
   }, [incomingChanges, configChanges]);
+
+  React.useEffect(() => {
+    getWhitelist();
+  }, [maps]);
 
   return (
     <>
@@ -382,13 +404,14 @@ const VoteMapConfig = ({ maps }) => {
           </AccordionSummary>
 
           <AccordionActions>
+            <Button size="small" variant="outlined" onClick={getWhitelist}>
+              Refresh
+            </Button>
             <Button
               color={"secondary"}
               size="small"
               variant="outlined"
-              onClick={() => {
-                console.log("TODO");
-              }}
+              onClick={submitWhitelist}
             >
               Save whitelist
             </Button>
@@ -397,26 +420,45 @@ const VoteMapConfig = ({ maps }) => {
           <AccordionDetails>
             <Box component={"section"} className={classes.section}>
               {/* TODO: Provide only those that are not in the list */}
-              <MapAutocomplete options={maps} />
+              <Box style={{ display: "flex", gap: "0.5rem" }}>
+                <MapAutocomplete
+                  options={autocompleteSelection}
+                  style={{ flexGrow: 1 }}
+                  onChange={(e, v) => setMapsToAdd(v)}
+                  value={mapsToAdd}
+                />
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={() => {
+                    setWhitelist(whitelist.concat(mapsToAdd));
+                    setMapsToAdd([]);
+                  }}
+                  style={{ width: 60 }}
+                >
+                  Add
+                </Button>
+              </Box>
               <List dense={true}>
-                {whitelist.map((mapLayer, index) => (
+                {whitelist.map((thisMapLayer, index) => (
                   <MapListItem
-                    button
-                    onClick={() => {
-                      console.log("TODO");
-                      // setSelected(mapLayer.id);
-                    }}
-                    key={`${index}#${mapLayer.id}`}
-                    mapLayer={mapLayer}
-                    renderAction={(mapLayer) =>
-                        <IconButton
+                    key={`${index}#${thisMapLayer.id}`}
+                    mapLayer={thisMapLayer}
+                    renderAction={(thisMapLayer) => (
+                      <IconButton
                         edge="end"
                         aria-label="delete"
-                        onClick={() => setWhitelistState(prevWhitelist => prevWhitelist.filter((mapId => mapId !== mapLayer.id)))}
+                        onClick={() =>
+                          setWhitelist((prevWhitelist) =>
+                            prevWhitelist.filter(
+                              (mapLayer) => mapLayer.id !== thisMapLayer.id
+                            )
+                          )
+                        }
                       >
                         <DeleteIcon />
                       </IconButton>
-                    }
+                    )}
                   />
                 ))}
               </List>

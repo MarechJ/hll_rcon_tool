@@ -14,7 +14,7 @@ import {
 import Avatar from "@material-ui/core/Avatar";
 import DeleteIcon from "@material-ui/icons/Delete";
 import InputIcon from "@material-ui/icons/Input";
-import { MapDetails } from "../map-details";
+import { MapDescription } from "../map-details";
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -63,7 +63,7 @@ const DraggableList = React.memo(({ maps, onDragEnd, onRemove, onChange, isSaved
                     </ListItemAvatar>
                     <ListItemText
                       primary={mapLayer.map.pretty_name}
-                      secondary={<MapDetails mapLayer={mapLayer} />}
+                      secondary={<MapDescription mapLayer={mapLayer} />}
                     />
                     <ListItemSecondaryAction
                       className={classes.secondaryAction}

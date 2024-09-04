@@ -1,31 +1,39 @@
 import {
   Avatar,
   Box,
-  createStyles,
   Divider,
   makeStyles,
   Typography,
 } from "@material-ui/core";
 import { getMapLayerImageSrc, unifiedGamemodeName } from "./helpers";
 
-const useStyles = makeStyles((theme) =>
-  createStyles({
-    root: {
-      display: "flex",
-      flexWrap: "wrap",
-      gap: theme.spacing(0.5),
-      textTransform: "capitalize",
+const useStyles = makeStyles((theme) => ({
+  descriptionRoot: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: theme.spacing(0.5),
+    textTransform: "capitalize",
+  },
+  mapBox: {
+    display: "flex",
+    gap: theme.spacing(1),
+    alignItems: "center",
+  },
+  mapBoxAvatar: {
+    display: "none",
+    [theme.breakpoints.up("sm")]: {
+      display: "block",
     },
-  })
-);
+  },
+}));
 
-export function MapDetails({ mapLayer }) {
+export function MapDescription({ mapLayer }) {
   const classes = useStyles();
 
-  const gameMode = unifiedGamemodeName(mapLayer.game_mode)
+  const gameMode = unifiedGamemodeName(mapLayer.game_mode);
 
   return (
-    <Box className={classes.root}>
+    <Box className={classes.descriptionRoot}>
       <Typography variant="caption">{gameMode}</Typography>
       {gameMode === "offensive" && (
         <>
@@ -40,7 +48,19 @@ export function MapDetails({ mapLayer }) {
 }
 
 export function MapAvatar({ mapLayer, ...props }) {
+  return <Avatar src={getMapLayerImageSrc(mapLayer)} {...props} />;
+}
+
+export function MapDetail({ mapLayer }) {
+  const classes = useStyles();
+
   return (
-    <Avatar src={getMapLayerImageSrc(mapLayer)} {...props} />
-  )
+    <Box className={classes.mapBox}>
+      <MapAvatar mapLayer={mapLayer} className={classes.mapBoxAvatar} />
+      <Box>
+        <Typography variant="subtitle1">{mapLayer.map.pretty_name}</Typography>
+        <MapDescription mapLayer={mapLayer} />
+      </Box>
+    </Box>
+  );
 }

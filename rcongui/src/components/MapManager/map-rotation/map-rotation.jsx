@@ -9,8 +9,6 @@ import {
   showResponse,
 } from "../../../utils/fetchUtils";
 import { Box, Button, CircularProgress, Grid } from "@material-ui/core";
-import Autocomplete from "@material-ui/lab/Autocomplete";
-import TextField from "@material-ui/core/TextField";
 import { Alert } from "@material-ui/lab";
 import { MapAutocomplete } from "../map-autocomplete";
 

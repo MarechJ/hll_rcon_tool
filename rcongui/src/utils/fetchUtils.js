@@ -374,10 +374,10 @@ async function getVotemapWhitelist() {
 
 async function setVotemapWhitelist(payload) {
   try {
-    const response = await execute("set_votemap_whitelist", payload);
+    const response = await execute("set_votemap_whitelist", { map_names: payload });
     const data = await showResponse(response, "set_votemap_whitelist", true)
-    if (data.result) {
-      return data.result;
+    if (data) {
+      return data?.arguments?.map_names;
     }    
   } catch (error) {
     handle_http_errors(error)
