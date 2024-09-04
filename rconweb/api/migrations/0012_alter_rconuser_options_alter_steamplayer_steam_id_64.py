@@ -162,7 +162,7 @@ class Migration(migrations.Migration):
                     ("can_view_admin_groups", "Can view available admin roles"),
                     (
                         "can_view_admin_ids",
-                        "Can view the name/steam IDs/role of everyone with a HLL games erver admin role",
+                        "Can view the name/steam IDs/role of everyone with a HLL game server admin role",
                     ),
                     (
                         "can_view_admins",
