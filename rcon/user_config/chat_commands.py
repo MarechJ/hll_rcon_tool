@@ -144,8 +144,9 @@ class ChatCommandsUserConfig(BaseUserConfig):
             message = raw_word.get("message")
             command = raw_word.get("command")
             description = raw_word.get("description")
+            enabled = raw_word.get("enabled")
             validated_words.append(
-                ChatCommand(words=words, message=message, description=description, command=command)
+                ChatCommand(words=words, message=message, description=description, command=command, enabled=enabled)
             )
 
         validated_conf = ChatCommandsUserConfig(

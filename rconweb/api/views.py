@@ -589,7 +589,8 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
     },
     rcon_api.get_objective_row: "api.can_view_current_map",
     rcon_api.get_objective_rows: "api.can_view_current_map",
-    rcon_api.set_game_layout: "api.can_change_game_layout"
+    rcon_api.set_game_layout: "api.can_change_game_layout",
+    rcon_api.set_chat_command_enabled: "api.can_change_chat_command_status"
 }
 
 PREFIXES_TO_EXPOSE = [
@@ -816,6 +817,7 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.edit_blacklist_record: ["POST"],
     rcon_api.delete_blacklist_record: ["POST"],
     rcon_api.unblacklist_player: ["POST"],
+    rcon_api.set_chat_command_enabled: ["POST"],
 }
 
 # Check to make sure that ENDPOINT_HTTP_METHODS and ENDPOINT_PERMISSIONS have the same endpoints
