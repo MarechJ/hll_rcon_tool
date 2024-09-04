@@ -29,18 +29,9 @@ logger = getLogger(__name__)
 
 def run():
     config = SeedVIPUserConfig.load_from_db()
-    rcon_api = get_rcon_api()
+    current_lang = config.language
 
-    try:
-        if config.language:
-            logger.info(f"Attempting to activate language={config.language}")
-            # The language to translate to if using the `nice_time_delta` and `nice_expiration_date` settings
-            # Any valid language code shoud work, look here for examples: https://gist.github.com/jacobbubu/1836273
-            humanize.activate(config.language)
-    except FileNotFoundError:
-        logger.error(
-            f"Unable to activate language={config.language}, defaulting to English"
-        )
+    rcon_api = get_rcon_api()
 
     to_add_vip_steam_ids: set[str] = set()
     no_reward_steam_ids: set[str] = set()
@@ -56,10 +47,29 @@ def run():
 
     gamestate = get_gamestate(rcon=rcon_api)
     is_seeding = not is_seeded(config=config, gamestate=gamestate)
+
     try:
         while True:
             # Reload the config each loop to catch changes to the config
             config = SeedVIPUserConfig.load_from_db()
+
+            try:
+                if current_lang != config.language:
+                    logger.info(f"Deactivating language={current_lang}")
+                    humanize.deactivate()
+
+                if config.language:
+                    # The language to translate to if using the `nice_time_delta` and `nice_expiration_date` settings
+                    # Any valid language code shoud work, look here for examples: https://gist.github.com/jacobbubu/1836273
+                    current_lang = config.language
+                    humanize.activate(config.language)
+                    logger.info(f"Activated language={config.language}")
+            except FileNotFoundError as e:
+                logger.exception(e)
+                logger.error(
+                    f"Unable to activate language={config.language}, defaulting to English"
+                )
+
             online_players = get_online_players(rcon=rcon_api)
             if online_players is None:
                 logger.debug(
