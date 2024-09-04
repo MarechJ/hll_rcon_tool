@@ -1773,7 +1773,6 @@ class RconAPI(Rcon):
     def set_chat_command_enabled(self, word: str, enabled: bool):
         c = ChatCommandsUserConfig.load_from_db()
         for command in c.command_words:
-            if word not in command.words:
-                continue
-            command.enabled = enabled
+            if word in command.words:
+                command.enabled = enabled
         ChatCommandsUserConfig.save_to_db(c.model_dump())
