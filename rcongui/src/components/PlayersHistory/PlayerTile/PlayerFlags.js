@@ -1,16 +1,17 @@
-import { Grid, Link } from "@mui/material";
+import { Link } from "@mui/material";
 import React from "react";
 import { List } from "immutable";
 import Tooltip from "@mui/material/Tooltip";
 import { getEmojiFlag } from "../../../utils/emoji";
+import Grid from "@mui/material/Unstable_Grid2";
 
 export const PlayerFlags = ({ player, onDeleteFlag }) => {
   return (
     (<Grid container alignItems="center" justifyContent="center">
-      <Grid item style={{ height: "22px" }}></Grid>
+      <Grid style={{ height: "22px" }}></Grid>
       {player.get("flags", new List()).map((d) => (
         <Grid
-          item
+          
           style={{ height: "22px" }}
         >
           <Tooltip

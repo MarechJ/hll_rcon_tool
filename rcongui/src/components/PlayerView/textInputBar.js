@@ -1,5 +1,5 @@
 import React from "react";
-import Grid from "@mui/material/Grid";
+import Grid from "@mui/material/Unstable_Grid2";
 import TextField from "@mui/material/TextField";
 import "react-toastify/dist/ReactToastify.css";
 import TextHistory from "../textHistory";
@@ -85,9 +85,9 @@ const TextInputBar = ({
 }) => {
   /* todo refactor */
   return (
-    (<Grid item xs={12} spacing={2}>
+    (<Grid xs={12} spacing={2}>
       <Grid container justifyContent="flex-start" direction="row" alignItems="center">
-        <Grid item xs={12} lg={3}>
+        <Grid xs={12} lg={3}>
           <FormControl >
             <InputLabel>Sort</InputLabel>
             <Select
@@ -113,7 +113,7 @@ const TextInputBar = ({
             <FormHelperText>Sort the player list</FormHelperText>
           </FormControl>
         </Grid>
-        <Grid item xs={12} md={3} >
+        <Grid xs={12} md={3} >
           <TextField
             label="Filter"
             helperText={`Showing: ${showCount} / ${total}`}
@@ -123,7 +123,7 @@ const TextInputBar = ({
             }}
           />
         </Grid>
-        <Grid item xs={12} lg={6} >
+        <Grid xs={12} lg={6} >
           <Reason handleMessageChange={handleMessageChange} />
         </Grid>
       </Grid>

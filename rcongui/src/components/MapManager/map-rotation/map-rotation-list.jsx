@@ -1,6 +1,6 @@
 import * as React from "react";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
-import makeStyles from "@material-ui/core/styles/makeStyles";
+import makeStyles from '@mui/styles/makeStyles';
 import {
   List,
   ListItem,
@@ -8,12 +8,12 @@ import {
   ListItemText,
   ListItemSecondaryAction,
   IconButton,
-  createStyles,
   Tooltip,
-} from "@material-ui/core";
-import Avatar from "@material-ui/core/Avatar";
-import DeleteIcon from "@material-ui/icons/Delete";
-import InputIcon from "@material-ui/icons/Input";
+} from "@mui/material";
+import createStyles from '@mui/styles/createStyles';
+import Avatar from "@mui/material/Avatar";
+import DeleteIcon from "@mui/icons-material/Delete";
+import InputIcon from "@mui/icons-material/Input";
 import { MapDescription } from "../map-details";
 
 const useStyles = makeStyles((theme) =>
@@ -37,7 +37,7 @@ const DraggableList = React.memo(({ maps, onDragEnd, onRemove, onChange, isSaved
   const classes = useStyles();
 
   return (
-    <DragDropContext onDragEnd={onDragEnd}>
+    (<DragDropContext onDragEnd={onDragEnd}>
       <Droppable droppableId="droppable-list">
         {(provided) => (
           <List
@@ -72,11 +72,11 @@ const DraggableList = React.memo(({ maps, onDragEnd, onRemove, onChange, isSaved
                         <Tooltip title={"Change map"}>
                           <span>
                             <IconButton
-                            edge="end"
-                            aria-label="set map"
-                            disabled={!isSaved}
-                            onClick={() => onChange(mapLayer)}
-                          >
+                              edge="end"
+                              aria-label="set map"
+                              disabled={!isSaved}
+                              onClick={() => onChange(mapLayer)}
+                              size="large">
                             <InputIcon />
                           </IconButton>
                           </span>
@@ -86,7 +86,7 @@ const DraggableList = React.memo(({ maps, onDragEnd, onRemove, onChange, isSaved
                         edge="end"
                         aria-label="delete"
                         onClick={() => onRemove(index)}
-                      >
+                        size="large">
                         <DeleteIcon />
                       </IconButton>
                     </ListItemSecondaryAction>
@@ -98,7 +98,7 @@ const DraggableList = React.memo(({ maps, onDragEnd, onRemove, onChange, isSaved
           </List>
         )}
       </Droppable>
-    </DragDropContext>
+    </DragDropContext>)
   );
 });
 

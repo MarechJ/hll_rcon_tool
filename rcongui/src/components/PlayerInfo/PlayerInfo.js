@@ -8,7 +8,6 @@ import React from "react";
 import {
   Avatar,
   Button,
-  Grid,
   Link,
   Popover,
 } from "@mui/material";
@@ -23,6 +22,7 @@ import { toast } from "react-toastify";
 import { useParams } from "react-router-dom";
 import CollapseCard from "../collapseCard";
 import makePlayerProfileUrl from "../../utils/makePlayerProfileUrl";
+import Grid from "@mui/material/Unstable_Grid2";
 
 // return a label for steam and windows ids types
 const getLinkLabel = (id) => {
@@ -52,7 +52,7 @@ const NamePopOver = ({ names }) => {
   const id = open ? "name-popover" : undefined;
   // TODO replace with a List with sublist so that on can copy past the names, also see at what time it was created + last seen
   return (
-    <Grid item>
+    <Grid>
       <Button endIcon={<ExpandMore />} onClick={handleClick}>
         <Typography variant="h3">{names.length ? names[0].name : "Player has no recorded names"}</Typography>
       </Button>
@@ -73,7 +73,7 @@ const NamePopOver = ({ names }) => {
         <Grid container>
           {names.map((name, index) => {
             return (
-              <Grid item xs={12}>
+              <Grid xs={12}>
                 <Typography key={index} variant="body2">
                   {name.name}
                 </Typography>
@@ -131,7 +131,7 @@ const Punishment = ({ punishments }) => {
 
 const Is = ({ bool, text }) =>
   bool ? (
-    <Grid item>
+    <Grid>
       <Typography color="secondary" variant="button">
         {text}
       </Typography>
@@ -277,9 +277,9 @@ const PlayerInfo = () => {
   return (
     (<Grid container >
       {loaded ? (
-        <Grid item sm={12} >
+        <Grid sm={12} >
           <Grid container spacing={2}>
-            <Grid item xl={2} lg={2} md={2} sm={3} xs={12}>
+            <Grid xl={2} lg={2} md={2} sm={3} xs={12}>
               <Grid
                 container
                 justifyContent="center"
@@ -288,7 +288,7 @@ const PlayerInfo = () => {
                 direction="column"
                 spacing={3}
               >
-                <Grid item>
+                <Grid>
                   <Avatar
                     style={{
                       height: "150px",
@@ -302,14 +302,14 @@ const PlayerInfo = () => {
                     {names[0]?.name[0].toUpperCase()}
                   </Avatar>
                 </Grid>
-                <Grid item>
+                <Grid>
                   <Typography variant="h6">
                     <Link href={makePlayerProfileUrl(playerId, names[0]?.name)}>
                       {getLinkLabel(playerId)} Profile
                     </Link>
                   </Typography>
                 </Grid>
-                <Grid item>
+                <Grid>
                   <Typography variant="h6">Last connection</Typography>
                   <Typography>
                     {moment(sessions[0]?.end || sessions[0]?.start).format(
@@ -317,7 +317,7 @@ const PlayerInfo = () => {
                     )}
                   </Typography>
                 </Grid>
-                <Grid item>
+                <Grid>
                   <Typography variant="h6">Total play time</Typography>
                   <Typography>
                     {moment
@@ -325,14 +325,14 @@ const PlayerInfo = () => {
                       .humanize()}
                   </Typography>
                 </Grid>
-                <Grid item>
+                <Grid>
                   <Typography variant="h6">Player penalties</Typography>
                   <Typography>Perma ban: {penaltyCount.PERMABAN}</Typography>
                   <Typography>Temp ban: {penaltyCount.TEMPBAN}</Typography>
                   <Typography>Kick: {penaltyCount.KICK}</Typography>
                   <Typography>Punish: {penaltyCount.PUNISH}</Typography>
                 </Grid>
-                <Grid item>
+                <Grid>
                   <Typography variant="h6">
                     <Link
                       href={`${process.env.REACT_APP_API_URL}get_player_profile?player_id=${playerId}`}
@@ -343,7 +343,7 @@ const PlayerInfo = () => {
                 </Grid>
               </Grid>
             </Grid>
-            <Grid item xl={7} lg={7} md={7} sm={5} xs={12}>
+            <Grid xl={7} lg={7} md={7} sm={5} xs={12}>
               <Grid
                 container
                 spacing={3}
@@ -351,7 +351,7 @@ const PlayerInfo = () => {
                 alignItems="flex-start"
                 alignContent="flex-start"
               >
-                <Grid item sm={12}>
+                <Grid sm={12}>
                   <Grid
                     container
                     justifyContent="flex-start"
@@ -361,7 +361,7 @@ const PlayerInfo = () => {
                     <NamePopOver names={names} />
                   </Grid>
                 </Grid>
-                <Grid item sm={12}>
+                <Grid sm={12}>
                   <Grid container spacing={2}>
                     {[
                       [vip, "VIP"],
@@ -373,14 +373,14 @@ const PlayerInfo = () => {
                     ))}
                   </Grid>
                 </Grid>
-                <Grid item sm={12}>
+                <Grid sm={12}>
                   <Punishment punishments={receivedActions} />
                 </Grid>
               </Grid>
             </Grid>
-            <Grid item xl={3} xs={12}>
+            <Grid xl={3} xs={12}>
               <Grid container spacing={1}>
-                <Grid item xs={12}>
+                <Grid xs={12}>
                   <CollapseCard title="Comments" startOpen>
                     <ChatContent
                       data={comments}
@@ -388,7 +388,7 @@ const PlayerInfo = () => {
                     />
                   </CollapseCard>
                 </Grid>
-                <Grid item xs={12}>
+                <Grid xs={12}>
                   <CollapseCard
                     title="Message History"
                     startOpen

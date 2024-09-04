@@ -1,7 +1,7 @@
 import React from "react";
 import Link from "@mui/material/Link";
 import moment from "moment";
-import { Grid } from "@mui/material";
+import Grid from "@mui/material/Unstable_Grid2";
 
 import MUIDataTable from "mui-datatables";
 
@@ -86,7 +86,7 @@ export default function LogsTable({ logs, downloadCSV }) {
 
   return (
     (<Grid container justifyContent="center">
-      <Grid item>
+      <Grid>
         <MUIDataTable
           title={"Game logs"}
           data={logs}

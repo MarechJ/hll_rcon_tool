@@ -1,5 +1,5 @@
 import React from "react";
-import Grid from "@mui/material/Grid";
+import Grid from "@mui/material/Unstable_Grid2";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import ListItemIcon from "@mui/material/ListItemIcon";
@@ -89,10 +89,10 @@ const MapRotationTransferList = ({
 
   return (
     (<Grid container spacing={2} justifyContent="center" alignItems="center">
-      <Grid item xs={12} sm={5}>
+      <Grid xs={12} sm={5}>
         {customList(availableMaps, "Remaining unused maps")}
       </Grid>
-      <Grid item xs={12} sm={2}>
+      <Grid xs={12} sm={2}>
         <Grid container direction="column" alignItems="center">
           <Button
             variant="outlined"
@@ -116,7 +116,7 @@ const MapRotationTransferList = ({
           </Button>
         </Grid>
       </Grid>
-      <Grid item xs={12} sm={5}>
+      <Grid xs={12} sm={5}>
         {customList(mapRotation, "Current map rotation")}
       </Grid>
     </Grid>)

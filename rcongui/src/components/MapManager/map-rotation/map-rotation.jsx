@@ -8,9 +8,10 @@ import {
   postData,
   showResponse,
 } from "../../../utils/fetchUtils";
-import { Box, Button, CircularProgress, Grid } from "@material-ui/core";
-import { Alert } from "@material-ui/lab";
+import { Box, Button, CircularProgress } from "@mui/material";
+import { Alert } from '@mui/material';
 import { MapAutocomplete } from "../map-autocomplete";
+import Grid from "@mui/material/Unstable_Grid2";
 
 const MapRotation = ({ maps }) => {
   const [currentRotation, setCurrentRotation] = React.useState([]);
@@ -98,7 +99,7 @@ const MapRotation = ({ maps }) => {
 
   return (
     <Grid container spacing={2}>
-      <Grid item xs={12}>
+      <Grid xs={12}>
         {voteMapConfig.enabled && (
           <Alert style={{ margin: "0.25rem 0 1rem 0" }} severity="warning">
             You can't change the rotation while votemap is on
@@ -150,7 +151,7 @@ const MapRotation = ({ maps }) => {
           </Button>
         </Box>
       </Grid>
-      <Grid item xs={12}>
+      <Grid xs={12}>
         <DraggableList
           maps={rotation}
           onDragEnd={onDragEnd}

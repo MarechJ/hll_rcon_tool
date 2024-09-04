@@ -15,7 +15,7 @@ import TextField from "@mui/material/TextField";
 import moment from "moment";
 import { List as IList, fromJS } from "immutable";
 
-import { Grid } from "@mui/material";
+import Grid from "@mui/material/Unstable_Grid2";
 
 import MUIDataTable from "mui-datatables";
 
@@ -54,7 +54,7 @@ const AuditLogsTable = ({ auditLogs }) => {
 
   return (
     (<Grid container justifyContent="center">
-      <Grid item>
+      <Grid>
         <MUIDataTable
           title={"Audit logs"}
           data={auditLogs.toJS()}
@@ -116,7 +116,7 @@ const AuditLog = () => {
       justifyContent="flex-start"
       alignItems="center"
     >
-      <Grid item xs={3}>
+      <Grid xs={3}>
         <Autocomplete
           multiple
           clearOnEscape
@@ -137,7 +137,7 @@ const AuditLog = () => {
           )}
         />
       </Grid>
-      <Grid item xs={3}>
+      <Grid xs={3}>
         <Autocomplete
           multiple
           clearOnEscape
@@ -157,14 +157,14 @@ const AuditLog = () => {
           )}
         />
       </Grid>
-      <Grid item>
+      <Grid>
         <TextField
           label="Parameters search"
           value={paramSearch}
           onChange={(e) => setParamSearch(e.target.value)}
         />
       </Grid>
-      <Grid item>
+      <Grid>
         <FormControl>
           <InputLabel htmlFor="age-native-simple">Time sort</InputLabel>
           <Select
@@ -181,12 +181,12 @@ const AuditLog = () => {
           </Select>
         </FormControl>
       </Grid>
-      <Grid item>
+      <Grid>
         <Button variant="contained" onClick={getAuditLogs}>
           Search
         </Button>
       </Grid>
-      <Grid item xs={12}>
+      <Grid xs={12}>
         <AuditLogsTable auditLogs={auditLogs} />
       </Grid>
     </Grid>)

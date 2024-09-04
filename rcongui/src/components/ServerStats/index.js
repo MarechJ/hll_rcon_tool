@@ -26,7 +26,6 @@ import { get, handle_http_errors, showResponse } from "../../utils/fetchUtils";
 import {
   Dialog,
   DialogTitle,
-  Grid,
   Link,
   Modal,
   Typography,
@@ -36,6 +35,7 @@ import {
   Button,
   TextareaAutosize,
 } from "@mui/material";
+import Grid from "@mui/material/Unstable_Grid2";
 
 ChartJS.register(
   CategoryScale,
@@ -147,7 +147,7 @@ function MetricsParams({
       justifyContent="center"
       spacing={2}
     >
-      <Grid item>
+      <Grid>
         {/* <MuiPickersUtilsProvider utils={MomentUtils}>
           <DateTimePicker
             label="From time"
@@ -164,7 +164,7 @@ function MetricsParams({
             />
           </LocalizationProvider>
       </Grid>
-      <Grid item>
+      <Grid>
         {/* <MuiPickersUtilsProvider utils={MomentUtils}>
           <DateTimePicker
             label="Till time"
@@ -181,7 +181,7 @@ function MetricsParams({
             />
           </LocalizationProvider>
       </Grid>
-      <Grid item>
+      <Grid>
         <Grid container direction="column">
           <Link
             component="button"
@@ -212,7 +212,7 @@ function MetricsParams({
           </Link>
         </Grid>
       </Grid>
-      <Grid item>
+      <Grid>
         <FormControl component="fieldset">
           <FormGroup aria-label="position" row>
             <FormControlLabel
@@ -224,12 +224,12 @@ function MetricsParams({
           </FormGroup>
         </FormControl>
       </Grid>
-      <Grid item>
+      <Grid>
         <Button onClick={loadData} variant="contained" color="primary">
           Load data
         </Button>
       </Grid>
-      <Grid item>
+      <Grid>
         <Button onClick={toggleShowControls} variant="text">
           Hide controls
         </Button>
@@ -386,7 +386,7 @@ const ServerStatsPage = () => {
         hasNextDataPoint={hasNextDataPoint}
       />
       <Grid container>
-        <Grid item xs={12}>
+        <Grid xs={12}>
           {showControls ? (
             <MetricsParams
               from={from}
@@ -412,10 +412,10 @@ const ServerStatsPage = () => {
         alignItems="center"
         style={{ paddingTop: 0 }}
       >
-        <Grid item xs={12}>
+        <Grid xs={12}>
           {dataLoading ? <LinearProgress color="secondary" /> : ""}
         </Grid>
-        <Grid item xs={12}>
+        <Grid xs={12}>
           <Bar
             options={{
               onClick: (e, el) => {

@@ -1,7 +1,8 @@
 import React from "react";
-import { Button, Grid, Typography } from "@mui/material";
+import { Button } from "@mui/material";
 import { ForwardCheckBox } from "../commonComponent";
 import Editor from "@monaco-editor/react";
+import Grid from "@mui/material/Unstable_Grid2";
 
 const AutoSettings = ({
   words,

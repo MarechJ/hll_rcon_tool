@@ -1,9 +1,11 @@
-import { ButtonGroup, Button, Grid } from "@mui/material";
+import { ButtonGroup, Button } from "@mui/material";
 import React from "react";
 import Tooltip from "@mui/material/Tooltip";
 import EditIcon from "@mui/icons-material/Edit";
 import TimerOffIcon from "@mui/icons-material/TimerOff";
 import DeleteIcon from "@mui/icons-material/Delete";
+import Grid from "@mui/material/Unstable_Grid2";
+
 
 const BlacklistRecordActionRow = ({
   isExpired,
@@ -13,7 +15,7 @@ const BlacklistRecordActionRow = ({
 }) => {
   return (
     (<Grid container justifyContent="center">
-      <Grid item>
+      <Grid>
         <ButtonGroup size="small" variant="text">
           <Button>
             <Tooltip

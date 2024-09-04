@@ -1,7 +1,6 @@
 import React from "react";
 import { Set } from "immutable";
 import {
-  Grid,
   Link,
   Avatar,
   List,
@@ -13,6 +12,7 @@ import {
   Paper,
   IconButton,
 } from "@mui/material";
+import Grid from "@mui/material/Unstable_Grid2";
 import CancelIcon from "@mui/icons-material/Cancel";
 import { safeGetSteamProfile } from "./Scores";
 import { SubList } from "./SubList";
@@ -32,9 +32,9 @@ export const PlayerStatProfile = ({ playerScore, onClose }) => {
   ]);
 
   return (
-    (<Grid item xs={12}>
+    (<Grid xs={12}>
       <Grid container justifyContent="center">
-        <Grid item xs={12} md={6} lg={4} xl={2}>
+        <Grid xs={12} md={6} lg={4} xl={2}>
           <Paper>
             <List>
               <ListItem divider>

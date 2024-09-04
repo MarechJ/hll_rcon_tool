@@ -1,14 +1,6 @@
 import React from "react";
-import {
-  Grid,
-  Tab,
-  Tabs,
-  useTheme,
-  useMediaQuery,
-  Container,
-  makeStyles,
-  Box,
-} from "@material-ui/core";
+import { Grid, Tab, Tabs, useTheme, useMediaQuery, Container, Box } from "@mui/material";
+import makeStyles from '@mui/styles/makeStyles';
 import { Link, Switch, Route } from "react-router-dom";
 import VoteMapConfig from "./votemap/votemap";
 import MapRotationConfig from "./map-rotation/map-rotation";
@@ -79,7 +71,7 @@ export function MapManager({ match }) {
   return (
     <Container maxWidth="xl" className={classes.container}>
       <Grid container>
-        <Grid item xs={12} md={true}>
+        <Grid xs={12} md={true}>
           <Tabs
             orientation={isMdScreen ? "vertical" : "horizontal"}
             variant={!isMdScreen ? "scrollable" : "fullWidth"}
@@ -93,7 +85,7 @@ export function MapManager({ match }) {
             <LinkTab label="Votemap" to="votemap" {...a11yProps(3)} />
           </Tabs>
         </Grid>
-        <Grid item xs={12} md={10}>
+        <Grid xs={12} md={10}>
           <Box className={classes.main}>
             <MapState gameState={gameState} />
             <Box className={classes.page}>
@@ -115,7 +107,7 @@ export function MapManager({ match }) {
           </Box>
         </Grid>
       </Grid>
-    </Container>)
+    </Container>
   );
 }
 

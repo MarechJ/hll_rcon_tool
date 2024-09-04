@@ -3,7 +3,7 @@ import { get, postData, showResponse } from "../../utils/fetchUtils";
 import Editor from "@monaco-editor/react";
 import { Button } from "@mui/material";
 import { withRouter } from "react-router";
-import Grid from "@mui/material/Grid";
+import Grid from "@mui/material/Unstable_Grid2";
 import { CopyBlock, dracula } from "react-code-blocks";
 import { toast } from "react-toastify";
 
@@ -60,16 +60,16 @@ const UserSetting = ({
 
   return (<>
     <Grid container spacing={2}>
-      <Grid item xs={12}>
+      <Grid xs={12}>
         <h1>{description}</h1>
       </Grid>
-      <Grid item xs={12}>
+      <Grid xs={12}>
         <Button onClick={() => getData(getEndpoint)}>Refresh</Button>
         <Button onClick={() => sendData(validateEndpoint)}>Validate</Button>
         <Button onClick={() => sendData(setEndpoint)}>Save</Button>
       </Grid>
       <Grid
-        item
+        
         xs={12}
         justifyContent="center"
         spacing={2}
@@ -86,7 +86,7 @@ const UserSetting = ({
           theme="vs-dark"
         />
       </Grid>
-      <Grid item xs={12}>
+      <Grid xs={12}>
         <h2>errors</h2>
         {errors.map((ele) => {
           return ele.type === "InvalidConfigurationError" ? (
@@ -114,19 +114,19 @@ const UserSetting = ({
           );
         })}
       </Grid>
-      <Grid item xs={12}>
+      <Grid xs={12}>
         <Button onClick={() => getData(getEndpoint)}>Refresh</Button>
         <Button onClick={() => sendData(validateEndpoint)}>Validate</Button>
         <Button onClick={() => sendData(setEndpoint)}>Save</Button>
       </Grid>
     </Grid>
-    <Grid item xs={12}>
+    <Grid xs={12}>
       <h1>Documentation</h1>
       <div style={{ textAlign: "left" }}>
         <CopyBlock text={notes} language="json" wrapLines theme={dracula} />
       </div>
     </Grid>
-    <Grid item xs={12}>
+    <Grid xs={12}>
       <h1>Model Schema</h1>
       <div style={{ textAlign: "left" }}>
         <CopyBlock text={schema} language="json" wrapLines theme={dracula} />

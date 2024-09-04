@@ -1,5 +1,5 @@
-import { TextField } from "@material-ui/core";
-import { Autocomplete } from "@material-ui/lab";
+import { TextField } from "@mui/material";
+import { Autocomplete } from '@mui/material';
 import { MapDetail } from "./map-details";
 
 export function MapAutocomplete({ options, onChange, ...props }) {

@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
 import Badge from "@mui/material/Badge";
 import { Comment, Send } from "@mui/icons-material";
-import { Box, Button, Chip, Drawer, Grid, TextField } from "@mui/material";
+import { Box, Button, Chip, Drawer, TextField } from "@mui/material";
 import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
 import moment from "moment";
+import Grid from "@mui/material/Unstable_Grid2";
 
 const MessageHistory = ({ data }) => {
   const [comment, setComment] = React.useState("");
@@ -22,7 +23,7 @@ const MessageHistory = ({ data }) => {
         >
           {data?.map((message, index) => {
             return (
-              (<Grid item key={index}>
+              (<Grid key={index}>
                 <Grid
                   container
                   justifyContent="flex-start"
@@ -30,7 +31,7 @@ const MessageHistory = ({ data }) => {
                   alignItems="flex-end"
                   direction="column"
                 >
-                  <Grid item>
+                  <Grid>
                     <Chip
                       style={{ height: "auto", paddingTop: "-10px" }}
                       color="primary"
@@ -40,7 +41,7 @@ const MessageHistory = ({ data }) => {
                         </Typography>
                       } />
                   </Grid>
-                  <Grid item>
+                  <Grid>
                     <Typography
                       variant="caption"
                       display="block"

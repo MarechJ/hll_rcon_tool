@@ -1,5 +1,5 @@
 import React from "react";
-import Grid from "@mui/material/Grid";
+import Grid from "@mui/material/Unstable_Grid2";
 import Button from "@mui/material/Button";
 import ButtonGroup from "@mui/material/ButtonGroup";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
@@ -38,7 +38,7 @@ export default function SplitButton({ options, clickHandlers, buttonProps }) {
 
   return (
     <Grid container direction="column" alignItems="center">
-      <Grid item xs={12}>
+      <Grid xs={12}>
         <ButtonGroup {...buttonProps} ref={anchorRef} aria-label="split button">
           <Button onClick={handleClick}>{options[selectedIndex]}</Button>
           <Button

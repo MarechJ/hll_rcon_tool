@@ -2,7 +2,7 @@ import React from "react";
 import {
   Button,
   ButtonGroup,
-} from "@material-ui/core";
+} from "@mui/material";
 import moment from "moment";
 
 export const TimePickerButtons = ({

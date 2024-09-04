@@ -6,12 +6,12 @@ import {
   Button,
   Chip,
   Drawer,
-  Grid,
   TextField,
 } from "@mui/material";
 import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
 import moment from "moment";
+import Grid from "@mui/material/Unstable_Grid2";
 
 
 const AlwaysScrollToBottom = () => {
@@ -36,7 +36,7 @@ const ChatContent = ({ data, handleMessageSend }) => {
         >
           {data?.map((message, index) => {
             return (
-              (<Grid item key={index}>
+              (<Grid key={index}>
                 <Grid
                   container
                   justifyContent="flex-start"
@@ -44,7 +44,7 @@ const ChatContent = ({ data, handleMessageSend }) => {
                   alignItems="flex-end"
                   direction="column"
                 >
-                  <Grid item>
+                  <Grid>
                     <Chip
                       style={{ height: "auto", paddingTop: "-10px" }}
                       color="primary"
@@ -54,7 +54,7 @@ const ChatContent = ({ data, handleMessageSend }) => {
                         </Typography>
                       } />
                   </Grid>
-                  <Grid item>
+                  <Grid>
                     <Typography
                       variant="caption"
                       display="block"
@@ -80,7 +80,7 @@ const ChatContent = ({ data, handleMessageSend }) => {
           alignItems="center"
           
         >
-          <Grid item xs={10}>
+          <Grid xs={10}>
             <TextField
               id="message"
               label="Add comment"
@@ -90,7 +90,7 @@ const ChatContent = ({ data, handleMessageSend }) => {
               onChange={(e) => setComment(e.target.value)}
             />
           </Grid>
-          <Grid item xs={2}>
+          <Grid xs={2}>
             <Box paddingLeft={1}>
               <Button
                 variant="contained"

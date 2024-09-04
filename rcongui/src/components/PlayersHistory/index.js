@@ -12,11 +12,11 @@ import Pagination from '@mui/material/Pagination';
 import {
   Button,
   Chip,
-  Grid,
   LinearProgress,
   TextField,
   Typography,
 } from "@mui/material";
+import Grid from "@mui/material/Unstable_Grid2";
 import { ReasonDialog } from "../PlayerView/playerActions";
 import { omitBy } from "lodash/object";
 import SearchBar from "./searchBar";
@@ -78,7 +78,7 @@ class FlagDialog extends React.Component {
             justifyContent="center"
             spacing={2}
           >
-            <Grid item xs={12}>
+            <Grid xs={12}>
               <TextField
                 label="Comment"
                 value={comment}
@@ -93,7 +93,7 @@ class FlagDialog extends React.Component {
             justifyContent="center"
             spacing={2}
           >
-            <Grid item xs={12}>
+            <Grid xs={12}>
             <EmojiPicker
                 style={{ border: '1px solid red' }}
                 perLine={8}
@@ -605,7 +605,7 @@ class PlayersHistory extends React.Component {
     // It should be refactored so that the search bar does not trigger useless renderings
     return (
       <Grid container spacing={1}>
-        <Grid item xs={12}>
+        <Grid xs={12}>
           <SearchBar
             pageSize={pageSize}
             setPageSize={(v) => this.setState({ pageSize: v })}
@@ -632,7 +632,7 @@ class PlayersHistory extends React.Component {
             setFlags={this.setFlags}
           />
         </Grid>
-        <Grid item xs={12}>
+        <Grid xs={12}>
           <MyPagination
             pageSize={pageSize}
             page={page}
@@ -642,7 +642,7 @@ class PlayersHistory extends React.Component {
             total={total}
           />
         </Grid>
-        <Grid item xs={12}>
+        <Grid xs={12}>
           {isLoading ? <LinearProgress color="secondary" /> : ""}
           <PlayerGrid
             players={playersHistory}
@@ -661,7 +661,7 @@ class PlayersHistory extends React.Component {
             onAddToWatchList={this.onAddToWatchList}
           />
         </Grid>
-        <Grid item xs={12}>
+        <Grid xs={12}>
           <MyPagination
             pageSize={pageSize}
             page={page}

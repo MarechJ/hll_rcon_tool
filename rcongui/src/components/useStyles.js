@@ -22,12 +22,12 @@ const styles = {
         marginLeft: theme.spacing(1),
         width: "auto",
       },
-      [theme.breakpoints.down('sm')]: {
+      [theme.breakpoints.down('md')]: {
         display: "none",
       },
     },
     paddingXs: {
-      [theme.breakpoints.down('sm')]: {
+      [theme.breakpoints.down('md')]: {
         paddingTop: theme.spacing(2),
       },
     },

@@ -1,4 +1,4 @@
-import { Grid, ImageList, ImageListItem } from "@mui/material";
+import { ImageList, ImageListItem } from "@mui/material";
 import React from "react";
 import { ActionButton } from "./PlayerTile/ActionButton";
 import { PlayerHeader } from "./PlayerTile/PlayerHeader";
@@ -6,6 +6,7 @@ import { PlayerFlags } from "./PlayerTile/PlayerFlags";
 import { PlayerSighthings } from "./PlayerTile/PlayerSighthings";
 import { PlayerPenalties } from "./PlayerTile/PlayerPenalties";
 import { PlayerBan } from "./PlayerTile/PlayerBan";
+import Grid from "@mui/material/Unstable_Grid2";
 
 const PlayerGrid = ({
   players,
@@ -33,7 +34,7 @@ const PlayerGrid = ({
 
   return (
     <Grid container>
-      <Grid item xs={12}>
+      <Grid xs={12}>
         <ImageList cols={size} cellHeight={240} spacing={12}>
           {players.map((player) => {
             return (
@@ -53,7 +54,7 @@ const PlayerGrid = ({
                     <PlayerSighthings player={player} />
                     <PlayerPenalties player={player} />
                     <Grid container justifyContent="center">
-                      <Grid item>
+                      <Grid>
                         <ActionButton
                           blacklisted={player.get("is_blacklisted")}
                           onUnBlacklist={() => onUnBlacklist(player)}

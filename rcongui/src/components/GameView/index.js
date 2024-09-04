@@ -1,6 +1,5 @@
 import React, { Fragment } from "react";
 import {
-  Grid,
   Link,
   Modal,
   Typography,
@@ -14,6 +13,7 @@ import {
   Select,
   MenuItem,
 } from "@mui/material";
+import Grid from "@mui/material/Unstable_Grid2";
 import Autocomplete from '@mui/material/Autocomplete';
 import WarningIcon from "@mui/icons-material/Warning";
 import { fromJS, Map, List as IList, OrderedSet } from "immutable";
@@ -210,7 +210,7 @@ const Team = ({
             justifyContent="space-between"
             spacing={2}
           >
-            <Grid item xs={9}>
+            <Grid xs={9}>
               <Typography variant="h4" align="left">
                 {teamName} {teamData.get("count", 0)}/50{" "}
                 <Link onClick={onOpenAll} component="button">
@@ -224,7 +224,6 @@ const Team = ({
                 </Link>
               </Typography>
             </Grid>
-            <Grid item={3}></Grid>
           </Grid>
         </ListSubheader>
       }
@@ -564,7 +563,7 @@ const GameView = () => {
     (<Grid container spacing={2}>
       {teamView ? (
         <Fragment>
-          <Grid item xs={12}>
+          <Grid xs={12}>
             <LinearProgress
               style={{ visibility: isLoading ? "visible" : "hidden" }}
             />
@@ -605,14 +604,14 @@ const GameView = () => {
               setConfirmAction(false);
             }}
           />
-          <Grid item xs={12}>
+          <Grid xs={12}>
             <Grid
               container
               alignItems="center"
               justifyContent="space-between"
               spacing={2}
             >
-              <Grid item xs={12}>
+              <Grid xs={12}>
                 <Autocomplete
                   multiple
                   clearOnEscape
@@ -633,7 +632,7 @@ const GameView = () => {
                   )}
                 />
               </Grid>
-              <Grid item>
+              <Grid>
                 <PlayerActions
                   size="default"
                   displayCount={12}
@@ -659,14 +658,14 @@ const GameView = () => {
                   onBlacklist={handleBlacklistOpen}
                 />
               </Grid>
-              <Grid item>
+              <Grid>
                 <Padlock
                   handleChange={setShowOnlySelected}
                   checked={showOnlySelected}
                   label="Only show selected players"
                 />
               </Grid>
-              <Grid item>
+              <Grid>
                 <FormControl size="small" style={{ minWidth: "120px" }}>
                   <InputLabel htmlFor="age-native-simple">Sort by</InputLabel>
                   <Select
@@ -687,7 +686,7 @@ const GameView = () => {
                   </Select>
                 </FormControl>
               </Grid>
-              <Grid item>
+              <Grid>
                 <TextField
                   style={{ minWidth: "125px" }}
                   type="number"
@@ -706,7 +705,7 @@ const GameView = () => {
               { label: "Axis", name: "axis" },
               { label: "Unassigned", name: "none" }
             ].map((team) => (
-              <Grid item xs={12} md={12} lg={team.name === "none" ? 12 : 6}>
+              <Grid xs={12} md={12} lg={team.name === "none" ? 12 : 6}>
                 <Team
                   key={team.name}
                   teamName={team.label}
@@ -723,7 +722,7 @@ const GameView = () => {
             ))}
         </Fragment>
       ) : (
-        <Grid item xs={12}>
+        <Grid xs={12}>
           <LinearProgress />
         </Grid>
       )}

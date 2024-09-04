@@ -8,15 +8,15 @@ import {
   TextField,
   Typography,
   Snackbar,
-  makeStyles,
-  createStyles,
   Accordion,
   AccordionSummary,
   AccordionDetails,
   AccordionActions,
   List,
   IconButton,
-} from "@material-ui/core";
+} from "@mui/material";
+import makeStyles from '@mui/styles/makeStyles';
+import createStyles from '@mui/styles/createStyles';
 import React from "react";
 import {
   getVotemapConfig,
@@ -36,11 +36,11 @@ import {
   textFieldConfigs,
 } from "./configs-data";
 import { isEmpty, isEqual } from "lodash";
-import { Alert } from "@material-ui/lab";
-import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
+import { Alert } from '@mui/material';
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { MapAutocomplete } from "../map-autocomplete";
 import { MapListItem } from "../map-list-item";
-import DeleteIcon from "@material-ui/icons/Delete";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -245,242 +245,240 @@ const VoteMapConfig = ({ maps }) => {
     getWhitelist();
   }, [maps]);
 
-  return (
-    <>
-      <Snackbar
-        open={incomingChanges !== null}
-        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+  return (<>
+    <Snackbar
+      open={incomingChanges !== null}
+      anchorOrigin={{ vertical: "top", horizontal: "center" }}
+    >
+      <Alert
+        severity="warning"
+        action={
+          <Button
+            color="inherit"
+            size="small"
+            onClick={acceptIncomingConfigChanges}
+          >
+            Accept changes
+          </Button>
+        }
       >
-        <Alert
-          severity="warning"
-          action={
-            <Button
-              color="inherit"
-              size="small"
-              onClick={acceptIncomingConfigChanges}
-            >
-              Accept changes
-            </Button>
-          }
+        The config has changed!
+      </Alert>
+    </Snackbar>
+    <Box className={classes.container}>
+      <Box component={"section"} className={classes.section}>
+        <Box
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            paddingBottom: 4,
+          }}
         >
-          The config has changed!
-        </Alert>
-      </Snackbar>
-      <Box className={classes.container}>
-        <Box component={"section"} className={classes.section}>
-          <Box
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              paddingBottom: 4,
+          <Padlock
+            label="Enabled"
+            checked={config.enabled ?? false}
+            handleChange={handleEnableToggle}
+          />
+
+          <Button
+            size="small"
+            variant="outlined"
+            color="secondary"
+            onClick={() => {
+              if (window.confirm("Are you sure?") === true) {
+                resetState();
+              }
             }}
           >
-            <Padlock
-              label="Enabled"
-              checked={config.enabled ?? false}
-              handleChange={handleEnableToggle}
-            />
-
-            <Button
-              size="small"
-              variant="outlined"
-              color="secondary"
-              onClick={() => {
-                if (window.confirm("Are you sure?") === true) {
-                  resetState();
-                }
-              }}
-            >
-              Reset selection & votes
-            </Button>
-          </Box>
-
-          <Box component={Paper}>
-            <VoteStatus voteStatus={status} />
-          </Box>
+            Reset selection & votes
+          </Button>
         </Box>
 
-        <Accordion>
-          <AccordionSummary
-            expandIcon={<ExpandMoreIcon />}
-            aria-controls="panel1a-content"
-            id="panel1a-header"
-          >
-            <Typography className={classes.heading}>In-Game Texts</Typography>
-          </AccordionSummary>
+        <Box component={Paper}>
+          <VoteStatus voteStatus={status} />
+        </Box>
+      </Box>
 
-          <AccordionDetails>
-            <Box component={"section"} className={classes.section}>
-              <Box className={classes.messages}>
-                {messageFieldConfigs.map((configItem) => (
-                  <TextField
-                    key={configItem.name}
-                    className={classes.spacing}
-                    fullWidth
-                    variant="filled"
-                    multiline
-                    rows={configItem.rows}
-                    label={configItem.label}
-                    helperText={configItem.helperText}
-                    value={config[configItem.name] ?? ""}
-                    onChange={handleConfigChange(configItem.name)}
-                  />
-                ))}
-              </Box>
-            </Box>
-          </AccordionDetails>
+      <Accordion>
+        <AccordionSummary
+          expandIcon={<ExpandMoreIcon />}
+          aria-controls="panel1a-content"
+          id="panel1a-header"
+        >
+          <Typography className={classes.heading}>In-Game Texts</Typography>
+        </AccordionSummary>
 
-          <AccordionActions>
-            <Button
-              color={hasChanges ? "secondary" : "default"}
-              size="small"
-              variant="outlined"
-              onClick={updateConfig}
-            >
-              Save changes
-            </Button>
-          </AccordionActions>
-        </Accordion>
-        <Accordion>
-          <AccordionSummary
-            expandIcon={<ExpandMoreIcon />}
-            aria-controls="panel2a-content"
-            id="panel2a-header"
-          >
-            <Typography className={classes.heading}>Other settings</Typography>
-          </AccordionSummary>
-
-          <AccordionDetails>
-            <Box component={"section"} className={classes.section}>
-              <FormControl className={classes.spacing}>
-                <InputLabel>Default map method (when no votes)</InputLabel>
-                <NativeSelect
-                  value={config.default_method ?? ""}
-                  onChange={handleConfigChange("default_method")}
-                >
-                  {defaultMapOptions.map((option) => (
-                    <option key={option.name} value={option.name}>
-                      {option.label}
-                    </option>
-                  ))}
-                </NativeSelect>
-              </FormControl>
-
-              {padlockConfigs.map(({ name, label }) => (
-                <Padlock
-                  key={name}
-                  label={label}
-                  checked={config[name] ?? false}
-                  handleChange={handleConfigChange(name)}
+        <AccordionDetails>
+          <Box component={"section"} className={classes.section}>
+            <Box className={classes.messages}>
+              {messageFieldConfigs.map((configItem) => (
+                <TextField
+                  key={configItem.name}
+                  className={classes.spacing}
+                  fullWidth
+                  variant="filled"
+                  multiline
+                  rows={configItem.rows}
+                  label={configItem.label}
+                  helperText={configItem.helperText}
+                  value={config[configItem.name] ?? ""}
+                  onChange={handleConfigChange(configItem.name)}
                 />
               ))}
-
-              <Box className={classes.numberFields}>
-                {textFieldConfigs.map((configItem) => (
-                  <TextField
-                    key={configItem.name}
-                    variant="filled"
-                    fullWidth
-                    type="number"
-                    inputProps={configItem.inputProps}
-                    label={configItem.label}
-                    helperText={configItem.helperText}
-                    value={config[configItem.name] ?? false}
-                    onChange={handleConfigChange(configItem.name)}
-                  />
-                ))}
-              </Box>
             </Box>
-          </AccordionDetails>
+          </Box>
+        </AccordionDetails>
 
-          <AccordionActions>
-            <Button
-              color={hasChanges ? "secondary" : "default"}
-              size="small"
-              variant="outlined"
-              onClick={updateConfig}
-            >
-              Save changes
-            </Button>
-          </AccordionActions>
-        </Accordion>
-
-        <Accordion>
-          <AccordionSummary
-            expandIcon={<ExpandMoreIcon />}
-            aria-controls="panel2a-content"
-            id="panel2a-header"
+        <AccordionActions>
+          <Button
+            color={hasChanges ? "secondary" : "default"}
+            size="small"
+            variant="outlined"
+            onClick={updateConfig}
           >
-            <Typography className={classes.heading}>
-              {"Allowed maps (Whitelist)"}
-            </Typography>
-          </AccordionSummary>
+            Save changes
+          </Button>
+        </AccordionActions>
+      </Accordion>
+      <Accordion>
+        <AccordionSummary
+          expandIcon={<ExpandMoreIcon />}
+          aria-controls="panel2a-content"
+          id="panel2a-header"
+        >
+          <Typography className={classes.heading}>Other settings</Typography>
+        </AccordionSummary>
 
-          <AccordionActions>
-            <Button size="small" variant="outlined" onClick={getWhitelist}>
-              Refresh
-            </Button>
-            <Button
-              color={"secondary"}
-              size="small"
-              variant="outlined"
-              onClick={submitWhitelist}
-            >
-              Save whitelist
-            </Button>
-          </AccordionActions>
-
-          <AccordionDetails>
-            <Box component={"section"} className={classes.section}>
-              <Box style={{ display: "flex", gap: "0.5rem" }}>
-                <MapAutocomplete
-                  options={autocompleteSelection}
-                  style={{ flexGrow: 1 }}
-                  onChange={(e, v) => setMapsToAdd(v)}
-                  value={mapsToAdd}
-                />
-                <Button
-                  size="small"
-                  variant="outlined"
-                  onClick={() => {
-                    setWhitelist(whitelist.concat(mapsToAdd));
-                    setMapsToAdd([]);
-                  }}
-                  style={{ width: 60 }}
-                >
-                  Add
-                </Button>
-              </Box>
-              <List dense={true}>
-                {whitelistSorted.map((thisMapLayer, index) => (
-                  <MapListItem
-                    key={`${index}#${thisMapLayer.id}`}
-                    mapLayer={thisMapLayer}
-                    renderAction={(thisMapLayer) => (
-                      <IconButton
-                        edge="end"
-                        aria-label="delete"
-                        onClick={() =>
-                          setWhitelist((prevWhitelist) =>
-                            prevWhitelist.filter(
-                              (mapLayer) => mapLayer.id !== thisMapLayer.id
-                            )
-                          )
-                        }
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    )}
-                  />
+        <AccordionDetails>
+          <Box component={"section"} className={classes.section}>
+            <FormControl className={classes.spacing}>
+              <InputLabel>Default map method (when no votes)</InputLabel>
+              <NativeSelect
+                value={config.default_method ?? ""}
+                onChange={handleConfigChange("default_method")}
+              >
+                {defaultMapOptions.map((option) => (
+                  <option key={option.name} value={option.name}>
+                    {option.label}
+                  </option>
                 ))}
-              </List>
+              </NativeSelect>
+            </FormControl>
+
+            {padlockConfigs.map(({ name, label }) => (
+              <Padlock
+                key={name}
+                label={label}
+                checked={config[name] ?? false}
+                handleChange={handleConfigChange(name)}
+              />
+            ))}
+
+            <Box className={classes.numberFields}>
+              {textFieldConfigs.map((configItem) => (
+                <TextField
+                  key={configItem.name}
+                  variant="filled"
+                  fullWidth
+                  type="number"
+                  inputProps={configItem.inputProps}
+                  label={configItem.label}
+                  helperText={configItem.helperText}
+                  value={config[configItem.name] ?? false}
+                  onChange={handleConfigChange(configItem.name)}
+                />
+              ))}
             </Box>
-          </AccordionDetails>
-        </Accordion>
-      </Box>
-    </>
-  );
+          </Box>
+        </AccordionDetails>
+
+        <AccordionActions>
+          <Button
+            color={hasChanges ? "secondary" : "default"}
+            size="small"
+            variant="outlined"
+            onClick={updateConfig}
+          >
+            Save changes
+          </Button>
+        </AccordionActions>
+      </Accordion>
+
+      <Accordion>
+        <AccordionSummary
+          expandIcon={<ExpandMoreIcon />}
+          aria-controls="panel2a-content"
+          id="panel2a-header"
+        >
+          <Typography className={classes.heading}>
+            {"Allowed maps (Whitelist)"}
+          </Typography>
+        </AccordionSummary>
+
+        <AccordionActions>
+          <Button size="small" variant="outlined" onClick={getWhitelist}>
+            Refresh
+          </Button>
+          <Button
+            color={"secondary"}
+            size="small"
+            variant="outlined"
+            onClick={submitWhitelist}
+          >
+            Save whitelist
+          </Button>
+        </AccordionActions>
+
+        <AccordionDetails>
+          <Box component={"section"} className={classes.section}>
+            <Box style={{ display: "flex", gap: "0.5rem" }}>
+              <MapAutocomplete
+                options={autocompleteSelection}
+                style={{ flexGrow: 1 }}
+                onChange={(e, v) => setMapsToAdd(v)}
+                value={mapsToAdd}
+              />
+              <Button
+                size="small"
+                variant="outlined"
+                onClick={() => {
+                  setWhitelist(whitelist.concat(mapsToAdd));
+                  setMapsToAdd([]);
+                }}
+                style={{ width: 60 }}
+              >
+                Add
+              </Button>
+            </Box>
+            <List dense={true}>
+              {whitelistSorted.map((thisMapLayer, index) => (
+                <MapListItem
+                  key={`${index}#${thisMapLayer.id}`}
+                  mapLayer={thisMapLayer}
+                  renderAction={(thisMapLayer) => (
+                    <IconButton
+                      edge="end"
+                      aria-label="delete"
+                      onClick={() =>
+                        setWhitelist((prevWhitelist) =>
+                          prevWhitelist.filter(
+                            (mapLayer) => mapLayer.id !== thisMapLayer.id
+                          )
+                        )
+                      }
+                      size="large">
+                      <DeleteIcon />
+                    </IconButton>
+                  )}
+                />
+              ))}
+            </List>
+          </Box>
+        </AccordionDetails>
+      </Accordion>
+    </Box>
+  </>);
 };
 
 export default VoteMapConfig;

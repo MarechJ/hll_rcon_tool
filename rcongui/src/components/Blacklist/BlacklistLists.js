@@ -5,9 +5,9 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
-  Grid,
   LinearProgress,
-} from "@material-ui/core";
+} from "@mui/material";
+import Grid from "@mui/material/Unstable_Grid2";
 import React from "react";
 import {
   get,
@@ -21,7 +21,7 @@ import BlacklistListCreateDialog, {
 } from "./BlacklistListCreateDialog";
 import { Link } from "react-router-dom";
 
-const BlacklistLists = ({ classes }) => {
+const BlacklistLists = () => {
   const [isLoading, setIsLoading] = React.useState(false);
   const [blacklists, setBlacklists] = React.useState([]);
   const [servers, setServers] = React.useState({});
@@ -145,18 +145,16 @@ const BlacklistLists = ({ classes }) => {
   return (
     <React.Fragment>
       <Grid container spacing={3} direction="column" justifyContent="center">
-        <Grid item>
+        <Grid>
           {isLoading ? <LinearProgress color="secondary" /> : ""}
         </Grid>
-        <Grid item container spacing={5} direction="column" alignItems="center">
+        <Grid container spacing={5} direction="column" alignItems="center">
           {blacklists.map((blacklist) => (
             <Grid
               key={blacklist.id}
-              item
               style={{ width: "100%", maxWidth: 1600 }}
             >
               <BlacklistListTile
-                classes={globalClasses}
                 servers={servers}
                 blacklist={blacklist}
                 onEdit={onEditBlacklist}
@@ -165,15 +163,15 @@ const BlacklistLists = ({ classes }) => {
             </Grid>
           ))}
         </Grid>
-        <Grid item>
+        <Grid>
           <Grid container spacing={2} justifyContent="center">
-            <Grid item>
+            <Grid>
               <BlacklistListCreateButton
                 servers={servers}
                 onSubmit={onBlacklistCreate}
               />
             </Grid>
-            <Grid item>
+            <Grid>
               <Button
                 component={Link}
                 to="/blacklists"

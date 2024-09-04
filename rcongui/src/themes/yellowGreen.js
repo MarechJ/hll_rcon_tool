@@ -1,6 +1,6 @@
-import { createTheme } from '@mui/material/styles';
+import { createTheme, adaptV4Theme } from '@mui/material/styles';
 
-const YellowGreenTheme = createTheme({
+const YellowGreenTheme = createTheme(adaptV4Theme({
   palette: {
     secondary: {
       light: '#5edfca',
@@ -13,6 +13,6 @@ const YellowGreenTheme = createTheme({
       dark: '#c68400',
     },
   },
-});
+}));
 
 export default YellowGreenTheme;
