@@ -2,18 +2,16 @@ import {
   Box,
   Button,
   createStyles,
-  IconButton,
   List,
   makeStyles,
 } from "@material-ui/core";
 import React from "react";
-import { changeMap, get, getServerStatus } from "../../../utils/fetchUtils";
+import {
+  changeMap,
+} from "../../../utils/fetchUtils";
 import MapSearch from "./map-search";
 import { MapListItem } from "../map-list-item";
 import CheckCircleOutlineIcon from "@material-ui/icons/CheckCircleOutline";
-import ReplayIcon from "@material-ui/icons/Replay";
-import LockIcon from "@material-ui/icons/Lock";
-import Skeleton from "@material-ui/lab/Skeleton";
 import { unifiedGamemodeName } from "../helpers";
 
 const useStyles = makeStyles((theme) =>
@@ -30,7 +28,6 @@ const useStyles = makeStyles((theme) =>
       alignItems: "center",
     },
     maps: {
-      maxWidth: theme.breakpoints.values.sm,
       position: "relative",
       overflow: "auto",
       minHeight: 500,
@@ -39,11 +36,8 @@ const useStyles = makeStyles((theme) =>
   })
 );
 
-const UPDATE_INTERVAL = 60 * 1000;
 
-function MapChange() {
-  const [currentMap, setCurrentMap] = React.useState(null);
-  const [maps, setMaps] = React.useState([]);
+function MapChange({ maps }) {
   const [nameFilter, setNameFilter] = React.useState("");
   const [modeFilters, setModeFilters] = React.useState({
     warfare: true,
@@ -51,29 +45,12 @@ function MapChange() {
     skirmish: false,
   });
   const [selected, setSelected] = React.useState("");
-  const statusIntervalRef = React.useRef(null);
   const classes = useStyles();
   const filteredMaps = maps.filter(
     (map) =>
       modeFilters[unifiedGamemodeName(map.game_mode)] &&
       map.pretty_name.toLowerCase().includes(nameFilter.toLowerCase())
   );
-
-  const updateServerStatus = async () => {
-    const status = await getServerStatus();
-    if (status) {
-      setCurrentMap(status.map);
-    }
-  };
-
-  const getMaps = async () => {
-    const response = await get("get_maps");
-    const data = await response.json();
-    const mapLayers = data.result;
-    if (mapLayers) {
-      setMaps(mapLayers);
-    }
-  };
 
   const handleOnInputChange = (e) => {
     setNameFilter(e.target.value);
@@ -84,10 +61,6 @@ function MapChange() {
     setSelected("");
   };
 
-  const handleResetMap = () => {
-    changeMap(currentMap.id);
-  };
-
   const handleModeFilterClick = (filter) => {
     setModeFilters((prevFilters) => ({
       ...prevFilters,
@@ -95,55 +68,8 @@ function MapChange() {
     }));
   };
 
-  React.useEffect(() => {
-    updateServerStatus();
-    getMaps();
-    statusIntervalRef.current = setInterval(
-      updateServerStatus,
-      UPDATE_INTERVAL
-    );
-    return () => clearInterval(statusIntervalRef.current);
-  }, []);
-
   return (
     <Box className={classes.main}>
-      <Box className={classes.panel}>
-        <Button
-          startIcon={<ReplayIcon />}
-          color="secondary"
-          onClick={handleResetMap}
-          variant="outlined"
-          size="small"
-        >
-          Map Reset
-        </Button>
-        <Button
-          startIcon={<LockIcon />}
-          disabled
-          variant="outlined"
-          size="small"
-        >
-          Switch Allies
-        </Button>
-        <Button
-          startIcon={<LockIcon />}
-          disabled
-          variant="outlined"
-          size="small"
-        >
-          Switch Axis
-        </Button>
-      </Box>
-      {currentMap ? (
-        <MapListItem
-          style={{ borderBottom: "none" }}
-          mapLayer={currentMap}
-          primary={`>>> ${currentMap.pretty_name} <<<`}
-          component={Box}
-        />
-      ) : (
-        <Skeleton variant="rect" height={60} />
-      )}
       <MapSearch
         onChange={handleOnInputChange}
         filters={modeFilters}
@@ -160,14 +86,15 @@ function MapChange() {
             mapLayer={mapLayer}
             renderAction={(mapLayer) =>
               selected === mapLayer.id && (
-                <IconButton
+                <Button
+                  endIcon={<CheckCircleOutlineIcon />}
                   edge="end"
                   color="secondary"
                   aria-label="confirm"
                   onClick={() => handleConfirmMap(mapLayer)}
                 >
-                  <CheckCircleOutlineIcon />
-                </IconButton>
+                  Confirm
+                </Button>
               )
             }
           />

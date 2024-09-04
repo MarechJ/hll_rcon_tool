@@ -228,6 +228,18 @@ async function getServerStatus() {
   }
 }
 
+async function getGameState() {
+  try {
+    const response = await get("get_gamestate");
+    const data = await response.json();
+    if (data.result) {
+      return data.result;
+    }    
+  } catch (error) {
+    handle_http_errors(error)
+  }
+}
+
 async function getVips() {
   try {
     const response = await get("get_vip_ids");
@@ -348,6 +360,42 @@ async function getMapObjectives() {
   }
 }
 
+async function getVotemapWhitelist() {
+  try {
+    const response = await get("get_votemap_whitelist")
+    const data = await response.json()
+    if (data.result) {
+      return data.result;
+    }    
+  } catch (error) {
+    handle_http_errors(error)
+  }
+}
+
+async function setVotemapWhitelist(payload) {
+  try {
+    const response = await execute("set_votemap_whitelist", { map_names: payload });
+    const data = await showResponse(response, "set_votemap_whitelist", true)
+    if (data) {
+      return data?.arguments?.map_names;
+    }    
+  } catch (error) {
+    handle_http_errors(error)
+  }
+}
+
+async function resetVotemapWhitelist() {
+  try {
+    const response = await execute("reset_map_votemap_whitelist", {});
+    const data = await showResponse(response, "reset_map_votemap_whitelist", true)
+    if (data.result) {
+      return data.result;
+    }    
+  } catch (error) {
+    handle_http_errors(error)
+  }
+}
+
 export {
   postData,
   showResponse,
@@ -371,4 +419,8 @@ export {
   changeMap,
   changeGameLayout,
   getMapObjectives,
+  getGameState,
+  getVotemapWhitelist,
+  setVotemapWhitelist,
+  resetVotemapWhitelist,
 };

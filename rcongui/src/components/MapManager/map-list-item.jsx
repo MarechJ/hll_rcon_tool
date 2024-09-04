@@ -5,7 +5,7 @@ import ListItem from "@material-ui/core/ListItem";
 import ListItemAvatar from "@material-ui/core/ListItemAvatar";
 import ListItemText from "@material-ui/core/ListItemText";
 import { ListItemSecondaryAction, createStyles } from "@material-ui/core";
-import { MapAvatar, MapDetails } from "./map-details";
+import { MapAvatar, MapDescription } from "./map-details";
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -25,7 +25,7 @@ export function MapListItem({ mapLayer, primary, secondary, renderAction, ...pro
       </ListItemAvatar>
       <ListItemText
         primary={primary ?? mapLayer.map.pretty_name}
-        secondary={secondary ?? <MapDetails mapLayer={mapLayer} />}
+        secondary={secondary ?? <MapDescription mapLayer={mapLayer} />}
       />
       {renderAction && (
         <ListItemSecondaryAction>
