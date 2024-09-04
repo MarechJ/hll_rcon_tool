@@ -11,7 +11,7 @@ export const ChatCommands = ({
   const notes = `
   {
     "enabled": false,
-
+  
     /* A list of commands, their trigger words, the message to send to the player and a description */
     "command_words": [
       {
@@ -30,6 +30,36 @@ export const ChatCommands = ({
         ],
         "message": "You can join our discord at {discord_invite_url}",
         "description": "Discord invite"
+      },
+      {
+        "words": [
+          "!switch"
+        ],
+        "message": null,
+        /* Can hold a list of commands that should be executed (in an undefined order). The syntax is the same as in AutoSettings commands. */
+        "command": {
+          "switch_player_now": {
+            /* Param values can have context parameters replace. Context parameters are things like player_name or player_id of the player issuing the command. */
+            "player_name": "{player_name}"
+          }
+        },
+        "enabled": true,
+        "description": "Switch yourself in side"
+      },
+      {
+        "words": [
+          "!admin"
+        ],
+        "message": null,
+        "command": {
+          "add_admin": {
+            "role": "junior",
+            "player_id": "{player_id}",
+            "description": "{player_name}"
+          }
+        },
+        "enabled": true,
+        "description": "Add yourself to admin cam list"
       }
     ],
     /* A list of commands that will send a description of all commands to the player */
