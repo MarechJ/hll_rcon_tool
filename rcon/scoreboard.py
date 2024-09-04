@@ -363,6 +363,7 @@ class LiveStats(BaseStats):
 
 class TimeWindowStats(BaseStats):
     def __init__(self):
+        super().__init__()
         self.match_end_result_regex = re.compile("MATCH ENDED `.+` ALLIED \((\d) - (\d)\) AXIS")
 
     def _set_start_end_times(
