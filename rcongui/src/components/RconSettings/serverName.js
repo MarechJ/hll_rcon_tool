@@ -1,4 +1,5 @@
-import { Button, Grid, TextField } from "@mui/material";
+import { Button, TextField } from "@mui/material";
+import Grid from "@mui/material/Unstable_Grid2";
 import React from "react";
 import {
   get,
@@ -27,7 +28,7 @@ const ServerName = () => {
 
   return (
     <Grid container>
-      <Grid item xs={10}>
+      <Grid xs={10}>
         <TextField
           fullWidth
           lable="Server Name. ONLY FOR GTX USER (and if configured)"
@@ -35,7 +36,7 @@ const ServerName = () => {
           onChange={(e) => setName(e.target.value)}
         />
       </Grid>
-      <Grid item xs={2}>
+      <Grid xs={2}>
         <Button variant="outlined" onClick={save}>
           SAVE
         </Button>

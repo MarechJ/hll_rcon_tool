@@ -1,7 +1,6 @@
 import {
   AppBar,
   Link,
-  Grid,
   Toolbar,
   Typography,
   LinearProgress,
@@ -9,6 +8,7 @@ import {
   ImageListItem,
   ImageListItemBar,
 } from "@mui/material";
+import Grid from "@mui/material/Unstable_Grid2";
 import React from "react";
 import { get, handle_http_errors, showResponse } from "../../utils/fetchUtils";
 import { List as iList, Map, fromJS } from "immutable";
@@ -135,7 +135,7 @@ const LiveScore = ({ endpoint, explainText, title }) => {
       justifyContent="center"
     >
       <Grid
-        item
+        
         xs={12}
       >
         {process.env.REACT_APP_PUBLIC_BUILD ? (
@@ -232,15 +232,15 @@ const LiveHeader = ({
         <ImageList cols={1}>
           <ImageListItem>
             <Grid container spacing={1}>
-              <Grid item xs={12}>
+              <Grid xs={12}>
                 <Typography variant="h4" display="inline" color="inherit">
                   {title}
                 </Typography>
               </Grid>
-              <Grid item xs={12}>
+              <Grid xs={12}>
                 <Typography variant="body2">{explainText}</Typography>
               </Grid>
-              <Grid item xs={12}>
+              <Grid xs={12}>
                 <Typography variant="caption">
                   Auto-refresh every {refreshIntervalSec} seconds:{" "}
                   <Link onClick={() => setPaused(!isPaused)} color="secondary">
@@ -249,7 +249,7 @@ const LiveHeader = ({
                   - Last update: {lastRefresh}
                 </Typography>
               </Grid>
-              <Grid item xs={12}>
+              <Grid xs={12}>
                 <LinearProgress
                   style={{ visibility: isLoading ? "visible" : "hidden" }}
                   

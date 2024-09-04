@@ -1,12 +1,12 @@
 import React from "react";
 import {
-  Grid,
   IconButton,
   List,
   ListItem,
   ListItemSecondaryAction,
   ListItemText,
 } from "@mui/material";
+import Grid from "@mui/material/Unstable_Grid2";
 import DeleteIcon from "@mui/icons-material/Delete";
 import TextHistory, { getAllNamespaces } from "../textHistory";
 import InputLabel from "@mui/material/InputLabel";

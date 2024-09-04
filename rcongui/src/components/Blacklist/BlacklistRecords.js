@@ -1,9 +1,9 @@
 import {
   Box,
   Button,
-  Grid,
   LinearProgress,
 } from "@mui/material";
+import Grid from "@mui/material/Unstable_Grid2";
 import BlacklistRecordsSearch from "./BlacklistRecordsSearch";
 import React from "react";
 import {
@@ -19,6 +19,7 @@ import BlacklistRecordGrid from "./BlacklistRecordGrid";
 import { List, fromJS } from "immutable";
 import { BlacklistRecordCreateButton } from "./BlacklistRecordCreateDialog";
 import { Skeleton } from '@mui/material';
+import { Link } from "react-router-dom";
 
 async function getBlacklistRecords(searchParams) {
   let path = "get_blacklist_records?" + new URLSearchParams(
@@ -96,11 +97,11 @@ const BlacklistRecords = () => {
   if (isLoading) {
     return (
       (<Grid container spacing={4} justifyContent="center">
-        <Grid item xl={6} xs={12}>
+        <Grid xl={6} xs={12}>
           <Skeleton variant="rectangular" height={140} />
         </Grid>
-        <Grid container item xl={3} xs={12} justifyContent="center" spacing={2}>
-          <Grid item xl={12}>
+        <Grid container  xl={3} xs={12} justifyContent="center" spacing={2}>
+          <Grid xl={12}>
             <Skeleton
               variant="rectangular"
               width={200}
@@ -108,7 +109,7 @@ const BlacklistRecords = () => {
               style={{ margin: "0 auto", borderRadius: 5 }}
             />
           </Grid>
-          <Grid item xl={12}>
+          <Grid xl={12}>
             <Skeleton
               variant="rectangular"
               width={155}
@@ -117,7 +118,7 @@ const BlacklistRecords = () => {
             />
           </Grid>
         </Grid>
-        <Grid item xs={12}>
+        <Grid xs={12}>
           <Skeleton
             variant="rectangular"
             width={360}
@@ -125,10 +126,10 @@ const BlacklistRecords = () => {
             style={{ margin: "0 auto" }}
           />
         </Grid>
-        <Grid item xs={12}>
+        <Grid xs={12}>
           <Skeleton variant="rectangular" height={140} />
         </Grid>
-        <Grid item xs={12}>
+        <Grid xs={12}>
           <Skeleton
             variant="rectangular"
             width={360}
@@ -142,14 +143,14 @@ const BlacklistRecords = () => {
 
   return (
     (<Grid container spacing={4} justifyContent="center">
-      <Grid item xl={6} xs={12}>
+      <Grid xl={6} xs={12}>
         <BlacklistRecordsSearch
           blacklists={blacklists}
           onSearch={setSearchQuery}
           disabled={isLoading || isFetching}
         />
       </Grid>
-      <Grid item xl={3} xs={12}>
+      <Grid xl={3} xs={12}>
         <Grid
           container
           spacing={3}
@@ -158,7 +159,7 @@ const BlacklistRecords = () => {
           justifyContent="center"
           style={{ paddingTop: 6 }}
         >
-          <Grid item xl={12}>
+          <Grid xl={12}>
             <BlacklistRecordCreateButton
               blacklists={blacklists}
               onSubmit={createRecord}
@@ -166,7 +167,7 @@ const BlacklistRecords = () => {
               Create New Record
             </BlacklistRecordCreateButton>
           </Grid>
-          <Grid item xl={12}>
+          <Grid xl={12}>
             <Button
               component={Link}
               to={"/blacklists/manage"}
@@ -179,7 +180,7 @@ const BlacklistRecords = () => {
           </Grid>
         </Grid>
       </Grid>
-      <Grid item xs={12}>
+      <Grid xs={12}>
         <MyPagination
           pageSize={searchQuery.pageSize}
           page={page}
@@ -187,7 +188,7 @@ const BlacklistRecords = () => {
           total={totalRecords}
         />
       </Grid>
-      <Grid item xs={12}>
+      <Grid xs={12}>
         {isFetching ? <LinearProgress color="secondary" /> : ""}
         <BlacklistRecordGrid
           blacklists={blacklists}
@@ -195,7 +196,7 @@ const BlacklistRecords = () => {
           onRefresh={loadRecords}
         />
       </Grid>
-      <Grid item xs={12}>
+      <Grid xs={12}>
         <MyPagination
           pageSize={searchQuery.pageSize}
           page={page}

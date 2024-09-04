@@ -6,7 +6,6 @@ import {
   CardHeader,
   FormControl,
   FormControlLabel,
-  Grid,
   IconButton,
   InputLabel,
   MenuItem,
@@ -20,6 +19,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import data from '@emoji-mart/data'
 import EmojiPicker from "@emoji-mart/react";
+import Grid from "@mui/material/Unstable_Grid2";
 
 const SearchBar = ({
   name,
@@ -58,14 +58,14 @@ const SearchBar = ({
         alignItems="center"
         justifyContent="space-evenly"
       >
-        <Grid item>
+        <Grid>
           <TextField
             label="Search by Name"
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
         </Grid>
-        <Grid item>
+        <Grid>
           <FormControlLabel
             control={
               <Switch
@@ -78,7 +78,7 @@ const SearchBar = ({
             labelPlacement="top"
           />
         </Grid>
-        <Grid item>
+        <Grid>
           <FormControlLabel
             control={
               <Switch
@@ -91,14 +91,14 @@ const SearchBar = ({
             labelPlacement="top"
           />
         </Grid>
-        <Grid item>
+        <Grid>
           <TextField
             label="Search by Player ID"
             value={playerId}
             onChange={(e) => setPlayerId(e.target.value)}
           />
         </Grid>
-        <Grid item>
+        <Grid>
           <TextField
             label="Flag"
             value={flags}
@@ -132,14 +132,14 @@ const SearchBar = ({
           )}
         </Grid>
 
-        <Grid item>
+        <Grid>
           <TextField
             label="Steam country (iso)"
             value={country}
             onChange={(e) => setCountry(e.target.value)}
           />
         </Grid>
-        <Grid item>
+        <Grid>
           {/* <MuiPickersUtilsProvider utils={MomentUtils}>
             <DateTimePicker
               label="Last seen from"
@@ -156,7 +156,7 @@ const SearchBar = ({
             />
           </LocalizationProvider>
         </Grid>
-        <Grid item>
+        <Grid>
           {/* <MuiPickersUtilsProvider utils={MomentUtils}>
             <DateTimePicker
               label="Last seen until"
@@ -173,7 +173,7 @@ const SearchBar = ({
             />
           </LocalizationProvider>
         </Grid>
-        <Grid item>
+        <Grid>
           <FormControlLabel
             control={
               <Switch
@@ -186,7 +186,7 @@ const SearchBar = ({
             labelPlacement="top"
           />
         </Grid>
-        <Grid item>
+        <Grid>
           <FormControlLabel
             control={
               <Switch
@@ -199,7 +199,7 @@ const SearchBar = ({
             labelPlacement="top"
           />
         </Grid>
-        <Grid item xs={4} xl={1}>
+        <Grid xs={4} xl={1}>
           <FormControl fullWidth>
             <InputLabel>Page size</InputLabel>
             <Select
@@ -218,7 +218,7 @@ const SearchBar = ({
             </Select>
           </FormControl>
         </Grid>
-        <Grid item>
+        <Grid>
           <Button
             type="submit"
             variant="contained"

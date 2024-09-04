@@ -1,4 +1,15 @@
-import { Box, Button, Checkbox, FormControl, FormControlLabel, FormGroup, FormLabel } from "@mui/material";
+import {
+  Box,
+  Button,
+  Checkbox,
+  CircularProgress,
+  FormControl,
+  FormControlLabel,
+  FormGroup,
+  FormLabel,
+} from "@mui/material";
+import createStyles from '@mui/styles/createStyles';
+import makeStyles from '@mui/styles/makeStyles';
 import React from "react";
 import { changeGameLayout, getMapObjectives, getServerStatus } from "../../../utils/fetchUtils";
 import {
@@ -28,94 +39,94 @@ const reduceToInts = (arr) =>
     return acc.concat(i === -1 ? null : i - 1);
   }, []);
 
-  const Container = styled('div')(({ theme }) => ({
-    display: "flex",
-    flexDirection: "column",
-    gap: theme.spacing(1),
-  }));
-  
-  const ActionPanel = styled('div')(({ theme }) => ({
-    display: "flex",
-    flexDirection: "row",
-    gap: theme.spacing(1),
-    alignItems: "center",
-  }));
-  
-  const MapWrapper = styled('div')({
-    position: "absolute",
-    top: 0,
-    left: 0,
-    width: "100%",
-    height: "100%",
-  });
-  
-  const MapImg = styled('img')({
-    width: "100%",
-    height: "100%",
-    touchAction: "none",
-  });
-  
-  const ObjectivesGrid = styled('div')({
-    position: "relative",
-    display: "grid",
-    gridTemplateColumns: "repeat(5, 1fr)",
-    gridTemplateRows: "repeat(5, 1fr)",
-    width: "100%",
-    height: "100%",
-  });
-  
-  const ControlGrid = styled('div')(({ theme }) => ({
-    position: "relative",
-    display: "grid",
-    gridTemplateColumns: "repeat(5, 1fr)",
-    gridTemplateRows: "repeat(5, 1fr)",
-    gap: theme.spacing(0.5),
-    width: "100%",
-    height: "100%",
-  }));
-  
-  const ObjectivesContainer = styled('div')({
-    position: "relative",
-    maxWidth: 650,
-    minWidth: 280,
-    aspectRatio: "1 / 1",
-  });
-  
-  const ControlContainer = styled('div')(({ theme }) => ({
-    width: "fit-content",
-    display: "flex",
-    flexDirection: "column",
-    gap: theme.spacing(2),
-  }));
-  
-  const ControlButton = styled('button')(({ theme, state }) => ({
-    border: "4px ridge black",
-    minWidth: 0,
-    padding: 0,
-    borderRadius: 0,
-    opacity: 0.35,
+const Container = styled('div')(({ theme }) => ({
+  display: "flex",
+  flexDirection: "column",
+  gap: theme.spacing(1),
+}));
+
+const ActionPanel = styled('div')(({ theme }) => ({
+  display: "flex",
+  flexDirection: "row",
+  gap: theme.spacing(1),
+  alignItems: "center",
+}));
+
+const MapWrapper = styled('div')({
+  position: "absolute",
+  top: 0,
+  left: 0,
+  width: "100%",
+  height: "100%",
+});
+
+const MapImg = styled('img')({
+  width: "100%",
+  height: "100%",
+  touchAction: "none",
+});
+
+const ObjectivesGrid = styled('div')({
+  position: "relative",
+  display: "grid",
+  gridTemplateColumns: "repeat(5, 1fr)",
+  gridTemplateRows: "repeat(5, 1fr)",
+  width: "100%",
+  height: "100%",
+});
+
+const ControlGrid = styled('div')(({ theme }) => ({
+  position: "relative",
+  display: "grid",
+  gridTemplateColumns: "repeat(5, 1fr)",
+  gridTemplateRows: "repeat(5, 1fr)",
+  gap: theme.spacing(0.5),
+  width: "100%",
+  height: "100%",
+}));
+
+const ObjectivesContainer = styled('div')({
+  position: "relative",
+  maxWidth: 650,
+  minWidth: 280,
+  aspectRatio: "1 / 1",
+});
+
+const ControlContainer = styled('div')(({ theme }) => ({
+  width: "fit-content",
+  display: "flex",
+  flexDirection: "column",
+  gap: theme.spacing(2),
+}));
+
+const ControlButton = styled('button')(({ theme, state }) => ({
+  border: "4px ridge black",
+  minWidth: 0,
+  padding: 0,
+  borderRadius: 0,
+  opacity: 0.35,
+  "&:hover": {
+    borderStyle: "inset",
+  },
+  ...(state === true && {
+    background: theme.palette.success.main,
+    borderStyle: "inset",
     "&:hover": {
-      borderStyle: "inset",
+      background: theme.palette.success.dark,
     },
-    ...(state === true && {
-      background: theme.palette.success.main,
-      borderStyle: "inset",
-      "&:hover": {
-        background: theme.palette.success.dark,
-      },
-    }),
-    ...(state === false && {
-      backgroundImage:
-        "repeating-linear-gradient(45deg, #ff7700 0, #ff7700 2px, transparent 0, transparent 50%);",
-      backgroundSize: "10px 10px",
-    }),
-    ...(state === null && {
-      backgroundImage:
-        "repeating-linear-gradient(45deg, #000 0, #000 2px, transparent 0, transparent 50%);",
-      backgroundSize: "20px 20px",
-    }),
-  }));
-  
+  }),
+  ...(state === false && {
+    backgroundImage:
+      "repeating-linear-gradient(45deg, #ff7700 0, #ff7700 2px, transparent 0, transparent 50%);",
+    backgroundSize: "10px 10px",
+  }),
+  ...(state === null && {
+    backgroundImage:
+      "repeating-linear-gradient(45deg, #000 0, #000 2px, transparent 0, transparent 50%);",
+    backgroundSize: "20px 20px",
+  }),
+}));
+
 
 function MapObjectives() {
   const [currentMap, setCurrentMap] = React.useState(null);

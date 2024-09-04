@@ -20,7 +20,7 @@ import Autocomplete from '@mui/material/Autocomplete';
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Checkbox from "@mui/material/Checkbox";
 import { getSharedMessages } from "../../utils/fetchUtils";
-import { Grid } from "@mui/material";
+import Grid from "@mui/material/Unstable_Grid2";
 import Tooltip from "@mui/material/Tooltip";
 import MessageIcon from "@mui/icons-material/Message";
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -34,7 +34,7 @@ const Duration = ({
   onMultiplierChange,
 }) => (
   <Grid container spacing={1}>
-    <Grid item>
+    <Grid>
       <TextField
         style={{ minWidth: "200px" }}
         label="TempBan Duration number"
@@ -45,7 +45,7 @@ const Duration = ({
         onChange={(event) => onNumberChange(event.target.value)}
       />
     </Grid>
-    <Grid item>
+    <Grid>
       <TextField
         style={{ minWidth: "200px" }}
         select

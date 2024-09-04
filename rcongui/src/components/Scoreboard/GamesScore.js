@@ -1,12 +1,11 @@
 import {
-  Grid,
   Typography,
   ImageList,
   ImageListItem,
   ImageListItemBar,
   IconButton,
 } from "@mui/material";
-import useMediaQuery from "@mui/material/useMediaQuery";
+import Grid from "@mui/material/Unstable_Grid2";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import LinkIcon from "@mui/icons-material/Link";
 import CheckIcon from "@mui/icons-material/Check";
@@ -116,23 +115,23 @@ const GamesScore = () => {
       justifyContent="center"
       
     >
-      <Grid item xs={12}>
+      <Grid xs={12}>
         <Typography color="secondary" variant="h4">
           {serverState.get("name", new Map()).get("name")}
         </Typography>
       </Grid>
       {!maps.size ? (
-        <Grid item>
+        <Grid>
           <Typography variant="h2">No games recorded yet</Typography>
         </Grid>
       ) : (
-        <Grid item>
+        <Grid>
           <Typography variant="caption">
             Select a game below to see its stats
           </Typography>
         </Grid>
       )}
-      <Grid item xs={12}>
+      <Grid xs={12}>
         <div>
           <ImageList
             cols={2}

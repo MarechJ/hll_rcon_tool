@@ -1,6 +1,6 @@
 import React from "react";
 import "react-toastify/dist/ReactToastify.css";
-import Grid from "@mui/material/Grid";
+import Grid from "@mui/material/Unstable_Grid2";
 import Link from "@mui/material/Link";
 import { Link as RouterLink } from "react-router-dom";
 import TextField from "@mui/material/TextField";
@@ -96,7 +96,7 @@ export class LoginBox extends React.Component {
           >
             <DialogContent>
               <Grid container spacing={1}>
-                <Grid item>
+                <Grid>
                   <TextField
                     autoFocus
                     size="small"

@@ -6,9 +6,6 @@ import {
 import MapSearch from "./map-search";
 import { MapListItem } from "../map-list-item";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
-import ReplayIcon from "@mui/icons-material/Replay";
-import LockIcon from "@mui/icons-material/Lock";
-import Skeleton from '@mui/material/Skeleton';
 import { unifiedGamemodeName } from "../helpers";
 import { styled } from '@mui/material/styles';
 

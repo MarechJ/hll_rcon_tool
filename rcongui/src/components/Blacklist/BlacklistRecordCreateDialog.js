@@ -6,11 +6,13 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
-import { FormControl, Grid, InputLabel, MenuItem, Select, Typography } from "@mui/material";
+import { FormControl, InputLabel, MenuItem, Select, Typography } from "@mui/material";
 import moment from "moment";
 import { getServerStatus, getSharedMessages } from "../../utils/fetchUtils";
 import TextHistory from "../textHistory";
 import { TimePickerButtons } from "../shared/time-picker-buttons";
+import Grid from "@mui/material/Unstable_Grid2";
+
 
 const presetTimes = [
   [1, "hour"],
@@ -191,7 +193,7 @@ export default function BlacklistRecordCreateDialog({
             />
             {/* EXPIRY */}
             <Grid container spacing={2} alignItems="center">
-              <Grid item xs={12}>
+              <Grid xs={12}>
                 <TextField
                   margin="dense"
                   id="expiresAt"
@@ -207,35 +209,25 @@ export default function BlacklistRecordCreateDialog({
                   variant="standard"
                 />
               </Grid>
-              <Grid item xs={4}>
-                <Select
-                  value={""}
-                  onChange={(e) => {
-                    e.target.value
-                      ? setExpiresAt(
-                          moment()
-                            .add(e.target.value, "seconds")
-                            .format("YYYY-MM-DDTHH:mm")
-                        )
-                      : setExpiresAt("");
-                  }}
-                  fullWidth
-                  displayEmpty
-                >
-                  <MenuItem value="">
-                    <em>Preset Times</em>
-                  </MenuItem>
-                  {presetTimes.map(({ value, label }) => (
-                    <MenuItem key={label} value={value}>
-                      {label}
-                    </MenuItem>
-                  ))}
-                </Select>
+              <Grid xs={12}>
+                {presetTimes.map(([amount, unit], index) => (
+                  <TimePickerButtons
+                    key={unit + index}
+                    amount={amount}
+                    unit={unit}
+                    expirationTimestamp={expiresAt}
+                    setExpirationTimestamp={(timestamp) => {
+                      setExpiresAt(
+                        moment(timestamp).format("YYYY-MM-DDTHH:mm")
+                      );
+                    }}
+                  />
+                ))}
               </Grid>
             </Grid>
             {/* REASON */}
             <Grid container spacing={2} alignItems="top">
-              <Grid item xs={8}>
+              <Grid xs={8}>
                 <TextField
                   required
                   multiline
@@ -253,7 +245,7 @@ export default function BlacklistRecordCreateDialog({
               {duration}, {expires}, {ban_id}, {blacklist_name}"
                 />
               </Grid>
-              <Grid item xs={4}>
+              <Grid xs={4}>
                 <Select
                   id="saved-messages-select"
                   value={selectedMessage}

@@ -1,5 +1,4 @@
 import {
-  Grid,
   IconButton,
   InputLabel,
   Paper,
@@ -10,6 +9,8 @@ import React from "react";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { SYNC_METHODS } from "./BlacklistListCreateDialog";
+import Grid from "@mui/material/Unstable_Grid2";
+
 
 const BlacklistListTile = ({
   blacklist,
@@ -30,17 +31,17 @@ const BlacklistListTile = ({
         spacing={2}
         style={{paddingLeft: 18}}
       >
-        <Grid item>
+        <Grid>
           <Typography variant="h6" color="textSecondary">#{blacklist.id}</Typography>
         </Grid>
-        <Grid item xs={2}>
+        <Grid xs={2}>
           <InputLabel align="left">Blacklist Name</InputLabel>
           <Typography align="left">
             {blacklist.name}
           </Typography>
         </Grid>
 
-        <Grid item xs={6}>
+        <Grid xs={6}>
           <InputLabel align="left">Servers</InputLabel>
           {
             blacklist.servers === null
@@ -57,24 +58,26 @@ const BlacklistListTile = ({
           }
         </Grid>
         
-        <Grid item xs={2}>
+        <Grid xs={2}>
           <InputLabel align="left">Sync Method</InputLabel>
           <Typography align="left">{SYNC_METHODS[blacklist.sync]}</Typography>
         </Grid>
         
-        <Grid item>
+        <Grid>
           <Tooltip title="Edit">
             <IconButton onClick={() => onEdit(blacklist)} size="large">
               <EditIcon/>
             </IconButton>
           </Tooltip>
           <Tooltip title="Delete">
-            <IconButton
-              onClick={() => onDelete(blacklist)}
-              disabled={blacklist.id === 0}
-              size="large">
-              <DeleteIcon/>
-            </IconButton>
+            <span>
+              <IconButton
+                onClick={() => onDelete(blacklist)}
+                disabled={blacklist.id === 0}
+                size="large">
+                <DeleteIcon/>
+              </IconButton>
+            </span>
           </Tooltip>
         </Grid>
       </Grid>

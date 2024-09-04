@@ -1,10 +1,11 @@
 import React from "react";
-import { Grid, TextField } from "@mui/material";
+import { TextField } from "@mui/material";
 import Autocomplete from '@mui/material/Autocomplete';
 import SplitButton from "../splitButton";
 import TextHistory from "../textHistory";
 import { getSharedMessages } from "../../utils/fetchUtils";
 import { ForwardCheckBox } from "../commonComponent";
+import Grid from "@mui/material/Unstable_Grid2";
 
 const ServerMessage = ({
   type,
@@ -29,7 +30,7 @@ const ServerMessage = ({
         alignContent="center"
         justifyContent="center"
       >
-      <Grid item xs={12} >
+      <Grid xs={12} >
         <Autocomplete
           freeSolo
           options={sharedMessages.concat(textHistory.getTexts())}
@@ -49,10 +50,10 @@ const ServerMessage = ({
           )}
         />
       </Grid>
-      <Grid item>
+      <Grid>
         <ForwardCheckBox bool={forward} onChange={onForwardChange} />
       </Grid>
-      <Grid item>
+      <Grid>
         <SplitButton
           options={[
             `Set ${type}`,

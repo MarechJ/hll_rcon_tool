@@ -1,6 +1,6 @@
-import { createTheme } from '@mui/material/styles';
+import { createTheme, adaptV4Theme } from '@mui/material/styles';
 
-const RedTheme = createTheme({
+const RedTheme = createTheme(adaptV4Theme({
   palette: {
     primary: {
       light: '#ff7961',
@@ -13,6 +13,6 @@ const RedTheme = createTheme({
       dark: '#1b3039',
     },
   },
-});
+}));
 
 export default RedTheme;

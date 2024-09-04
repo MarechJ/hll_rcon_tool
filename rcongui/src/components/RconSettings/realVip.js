@@ -1,13 +1,7 @@
 import React from "react";
 import {
-  Button,
-  Grid,
-  IconButton,
-  Link,
   TextField,
-  Typography,
   Switch,
-  Tooltip,
   FormControlLabel,
 } from "@mui/material";
 import {
@@ -16,6 +10,7 @@ import {
   postData,
   showResponse,
 } from "../../utils/fetchUtils";
+import Grid from "@mui/material/Unstable_Grid2";
 
 const RealVip = () => {
   const [enabled, setEnabled] = React.useState(null);
@@ -51,7 +46,7 @@ const RealVip = () => {
 
   return (
     <Grid container>
-      <Grid item xs={12}>
+      <Grid xs={12}>
         <FormControlLabel
           control={
             <Switch
@@ -62,7 +57,7 @@ const RealVip = () => {
           label="Real VIP enabled"
         />
       </Grid>
-      <Grid item xs={6}>
+      <Grid xs={6}>
         <TextField
           type="number"
           InputProps={{ inputProps: { min: 0, max: 100 } }}
@@ -71,7 +66,7 @@ const RealVip = () => {
           onChange={(e) => setMaxVipSlot(e.target.value)}
         />
       </Grid>
-      <Grid item xs={6}>
+      <Grid xs={6}>
         <TextField
           type="number"
           InputProps={{ inputProps: { min: 0, max: 100 } }}

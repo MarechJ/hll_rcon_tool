@@ -5,7 +5,7 @@ import Button from "@mui/material/Button";
 import Dialog from "@mui/material/Dialog";
 import { Duration, PlayerActions } from "./playerActions";
 import { Reason } from "./textInputBar";
-import Grid from "@mui/material/Grid";
+import Grid from "@mui/material/Unstable_Grid2";
 import { DialogActions, DialogContent, DialogTitle } from "../dialog";
 import { join } from "lodash/array";
 import TextHistory from "../textHistory";
@@ -82,7 +82,7 @@ const GroupActions = ({
         />
 
         <Grid container>
-          <Grid item xs={12} xl={12} >
+          <Grid xs={12} xl={12} >
             <Reason
               message={message}
               handleMessageChange={setMessage}
@@ -92,7 +92,7 @@ const GroupActions = ({
               textHistory={textHistory}
             />
           </Grid>
-          <Grid item xs={12} xl={12} >
+          <Grid xs={12} xl={12} >
             <TextField
               multiline
               rows={1}
@@ -105,7 +105,7 @@ const GroupActions = ({
               helperText="A comment that will NOT be displayed to the player"
             />
           </Grid>
-          <Grid item xs={12} xl={12} >
+          <Grid xs={12} xl={12} >
             <PlayerActions
               handleAction={(actionType) =>
                 selectedPlayers.forEach((p) => {
@@ -127,7 +127,7 @@ const GroupActions = ({
               displayCount={nbButton}
             />
           </Grid>
-          <Grid item xs={12} xl={12} >
+          <Grid xs={12} xl={12} >
             <Duration
               durationNumber={durationNumber}
               onNumberChange={(number) => setDurationNumber(number)}

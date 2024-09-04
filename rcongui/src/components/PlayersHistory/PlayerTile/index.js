@@ -1,10 +1,11 @@
-import { Grid, ImageListItem } from "@mui/material";
+import { ImageListItem } from "@mui/material";
 import React from "react";
 import { ActionButton } from "./ActionButton";
 import { PlayerHeader } from "./PlayerHeader";
 import { PlayerFlags } from "./PlayerFlags";
 import { PlayerSighthings } from "./PlayerSighthings";
 import { PlayerPenalties } from "./PlayerPenalties";
+import Grid from "@mui/material/Unstable_Grid2";
 
 export default ({ onDeleteFlag, player }) => {
 
@@ -23,7 +24,7 @@ export default ({ onDeleteFlag, player }) => {
         <PlayerSighthings player={player} />
         <PlayerPenalties player={player} />
         <Grid container justifyContent="center">
-          <Grid item>
+          <Grid>
             <ActionButton
               blacklisted={false}
               onUnBlacklist={() => null}

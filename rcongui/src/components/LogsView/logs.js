@@ -9,7 +9,7 @@ import MenuItem from "@mui/material/MenuItem";
 import FormControl from "@mui/material/FormControl";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Select from "@mui/material/Select";
-import Grid from "@mui/material/Grid";
+import Grid from "@mui/material/Unstable_Grid2";
 import { Button, IconButton, Switch } from "@mui/material";
 import Autocomplete from '@mui/material/Autocomplete';
 import TextField from "@mui/material/TextField";
@@ -190,7 +190,7 @@ class Logs extends React.Component {
       (<React.Fragment>
         <Grid container justifyContent="flex-start">
           <Grid
-            item
+            
             xs={12}
           >
             <h1 >
@@ -219,7 +219,7 @@ class Logs extends React.Component {
           </Grid>
         </Grid>
         <Grid container justifyContent="space-around" >
-          <Grid  item xs={12} sm={12} md={12} lg={2}>
+          <Grid   xs={12} sm={12} md={12} lg={2}>
             <Selector
               values={limitOptions}
               onChange={this.setLimit}
@@ -227,7 +227,7 @@ class Logs extends React.Component {
               kind="Show last N lines"
             />
           </Grid>
-          <Grid  item xs={12} sm={12} md={12} lg={2}>
+          <Grid   xs={12} sm={12} md={12} lg={2}>
             <FormControl fullWidth>
               <InputLabel shrink>Inclusive/Exclusive</InputLabel>
               <Select
@@ -240,7 +240,7 @@ class Logs extends React.Component {
               </Select>
             </FormControl>
           </Grid>
-          <Grid  item xs={12} sm={12} md={12} lg={3}>
+          <Grid   xs={12} sm={12} md={12} lg={3}>
             <Autocomplete
               id="tags-outlined"
               multiple
@@ -259,7 +259,7 @@ class Logs extends React.Component {
               )}
             />
           </Grid>
-          <Grid  item xs={12} sm={12} md={12} lg={4}>
+          <Grid   xs={12} sm={12} md={12} lg={4}>
             <Autocomplete
               id="tags-outlined"
               multiple
@@ -289,7 +289,7 @@ class Logs extends React.Component {
               )}
             />
           </Grid>
-          <Grid  item xs={12} sm={12} md={12} lg={1}>
+          <Grid   xs={12} sm={12} md={12} lg={1}>
             <Button
               
               disableElevation
@@ -302,7 +302,7 @@ class Logs extends React.Component {
           </Grid>
         </Grid>
         <Grid container justifyContent="center" alignItems="center">
-          <Grid item  xs={12}>
+          <Grid  xs={12}>
             <Paper >
               {logs.map((l) => (
                 <pre

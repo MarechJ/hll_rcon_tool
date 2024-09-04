@@ -2,7 +2,6 @@ import React from "react";
 import { Link as RouterLink } from "react-router-dom";
 import {
   Avatar,
-  Grid,
   ImageList,
   ImageListItem,
   IconButton,
@@ -15,6 +14,7 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
+import Grid from "@mui/material/Unstable_Grid2";
 import FileCopyIcon from "@mui/icons-material/FileCopy";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
@@ -212,7 +212,7 @@ const BlacklistRecordTile = ({
           spacing={0}
           
         >
-          <Grid item>
+          <Grid>
             <Tooltip title={createdAt.format("LLLL")} arrow>
               <small>
                 Banned {moment.duration(now.diff(createdAt)).humanize()} ago
@@ -220,7 +220,7 @@ const BlacklistRecordTile = ({
               </small>
             </Tooltip>
           </Grid>
-          <Grid item>
+          <Grid>
             <Tooltip title={expiresAt ? expiresAt.format("LLLL") : "Permanent"} arrow>
               <small>
                 {expiresAt
@@ -317,7 +317,7 @@ const BlacklistRecordGrid = ({
     return (
       <React.Fragment>
         <Grid container>
-          <Grid item xs={12}>
+          <Grid xs={12}>
             <ImageList cols={size} cellHeight={210} spacing={12}>
               {records.map((record) => {
                 return (

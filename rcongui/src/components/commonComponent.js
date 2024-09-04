@@ -3,13 +3,13 @@ import {
   Button,
   Checkbox,
   FormControlLabel,
-  Grid,
   Popover,
   Tooltip,
 } from "@mui/material";
 import Chip from "@mui/material/Chip";
 import Autocomplete from '@mui/material/Autocomplete';
 import TextField from "@mui/material/TextField";
+import Grid from "@mui/material/Unstable_Grid2";
 
 export const WithPopver = ({ popoverContent, children }) => {
   const [anchorEl, setAnchorEl] = React.useState(null);
@@ -64,7 +64,7 @@ export const ManualPlayerInput = ({
   tooltipText,
 }) => (
   <Grid container spacing={1} justifyContent="space-between">
-    <Grid item xs={6} md={3}>
+    <Grid xs={6} md={3}>
       <TextField
         id="playerId"
         label="Player ID"
@@ -75,7 +75,7 @@ export const ManualPlayerInput = ({
         onChange={(e) => setPlayerId(e.target.value)}
       />
     </Grid>
-    <Grid item xs={6} md={3}>
+    <Grid xs={6} md={3}>
       <TextField
         id="name"
         label="Player name"
@@ -85,7 +85,7 @@ export const ManualPlayerInput = ({
         onChange={(e) => setName(e.target.value)}
       />
     </Grid>
-    <Grid item xs={12} md={4}>
+    <Grid xs={12} md={4}>
       <Autocomplete
         freeSolo
         fullWidth
@@ -99,7 +99,7 @@ export const ManualPlayerInput = ({
       />
     </Grid>
     <Grid
-      item
+      
       xs={12}
       md={2}
     >

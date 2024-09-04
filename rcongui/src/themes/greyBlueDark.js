@@ -1,6 +1,6 @@
-import { createTheme } from '@mui/material/styles';
+import { createTheme, adaptV4Theme } from '@mui/material/styles';
 
-const GreyBlueDarkTheme = createTheme({
+const GreyBlueDarkTheme = createTheme(adaptV4Theme({
   editor: 'vs-dark',
   palette: {
     mode: 'dark',
@@ -24,6 +24,6 @@ const GreyBlueDarkTheme = createTheme({
       disabled: 'rgba(255, 255, 255, 0.5)',
     },
   },
-});
+}));
 
 export default GreyBlueDarkTheme;

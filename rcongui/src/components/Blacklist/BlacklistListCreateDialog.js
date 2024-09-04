@@ -6,7 +6,8 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
-import { Checkbox, FormControl, FormControlLabel, FormGroup, Grid, InputLabel, MenuItem, Select, Switch, Typography } from '@mui/material';
+import { Checkbox, FormControl, FormControlLabel, FormGroup, InputLabel, MenuItem, Select, Switch, Typography } from '@mui/material';
+import Grid from "@mui/material/Unstable_Grid2";
 
 export const SYNC_METHODS = {
   kick_only: "Kick Only",
@@ -92,7 +93,7 @@ export default function BlacklistListCreateDialog({
         </DialogContentText>
 
         <Grid container justifyContent="space-between" spacing={4}>
-          <Grid item xs={6}>
+          <Grid xs={6}>
             <TextField
               required
               id="name"
@@ -105,7 +106,7 @@ export default function BlacklistListCreateDialog({
               variant="standard"
             />
           </Grid>
-          <Grid item xs={6}>
+          <Grid xs={6}>
             <FormControl required fullWidth>
               <InputLabel>Sync Method</InputLabel>
               <Select
@@ -127,7 +128,7 @@ export default function BlacklistListCreateDialog({
         <Typography variant="h6">Servers</Typography>
 
         <Grid container alignContent="flex-start">
-          <Grid item xs={6}>
+          <Grid xs={6}>
             <FormGroup>
               {Object.entries(servers).map(([number, name]) => (
                 <FormControlLabel key={number} label={name} control={
@@ -140,7 +141,7 @@ export default function BlacklistListCreateDialog({
               ))}
             </FormGroup>
           </Grid>
-          <Grid item xs={6}>
+          <Grid xs={6}>
             <FormControlLabel
               label="Enable on all servers"
               control={

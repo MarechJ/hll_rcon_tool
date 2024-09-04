@@ -27,11 +27,11 @@ import {
   Badge,
   Checkbox,
   Chip,
-  Grid,
   ListItemAvatar,
 } from "@mui/material";
 import makePlayerProfileUrl from "../../utils/makePlayerProfileUrl";
 import moment from "moment";
+import Grid from "@mui/material/Unstable_Grid2";
 
 
 const zeroPad = (num, places) => String(num).padStart(places, "0");
@@ -159,7 +159,7 @@ const formatPunitions = (profile) => {
 const ScoreChips = ({ player }) => {
   return (
     <Fragment>
-      <Grid item>
+      <Grid>
         <Chip
           size="small"
           variant="outlined"
@@ -172,7 +172,7 @@ const ScoreChips = ({ player }) => {
           label={player.get("combat", 0)}
         />
       </Grid>
-      <Grid item>
+      <Grid>
         <Chip
           size="small"
           variant="outlined"
@@ -185,7 +185,7 @@ const ScoreChips = ({ player }) => {
           label={player.get("offense", 0)}
         />
       </Grid>
-      <Grid item>
+      <Grid>
         <Chip
           size="small"
           variant="outlined"
@@ -198,7 +198,7 @@ const ScoreChips = ({ player }) => {
           label={player.get("defense", 0)}
         />
       </Grid>
-      <Grid item>
+      <Grid>
         <Chip
           size="small"
           variant="outlined"
@@ -219,21 +219,21 @@ const KDChips = ({ player }) => {
 
   return (
     <Fragment>
-      <Grid item>
+      <Grid>
         <Chip
           size="small"
           variant="outlined"
           label={`K: ${player.get("kills")}`}
         />
       </Grid>
-      <Grid item>
+      <Grid>
         <Chip
           size="small"
           variant="outlined"
           label={`D: ${player.get("deaths")}`}
         />
       </Grid>
-      <Grid item>
+      <Grid>
         <Chip
           size="small"
           variant="outlined"
@@ -243,7 +243,7 @@ const KDChips = ({ player }) => {
         />
       </Grid>
       {player.get("loadout") ? (
-        <Grid item>
+        <Grid>
           <Chip size="small" label={player.get("loadout", "")} />
         </Grid>
       ) : (

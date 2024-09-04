@@ -1,6 +1,5 @@
 import React from "react";
 import {
-  Grid,
   IconButton,
   List,
   ListItem,
@@ -15,6 +14,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
 import { ForwardCheckBox } from "../commonComponent";
 import { get, handle_http_errors, showResponse } from "../../utils/fetchUtils";
+import Grid from "@mui/material/Unstable_Grid2";
 
 import moment from "moment";
 import { VipExpirationDialog } from "../VipDialog";
@@ -30,7 +30,7 @@ const AddVipItem = ({
 }) => (
   <ListItem>
     <Grid container>
-      <Grid item xs={6} >
+      <Grid xs={6} >
         <TextField
           InputLabelProps={{
             shrink: true,
@@ -40,7 +40,7 @@ const AddVipItem = ({
           onChange={(e) => setName(e.target.value)}
         />
       </Grid>
-      <Grid item xs={6} >
+      <Grid xs={6} >
         <TextField
           InputLabelProps={{
             shrink: true,
@@ -108,7 +108,7 @@ const VipUpload = () => {
 
   return (
     <Grid container spacing={1}>
-      <Grid item xs={6}>
+      <Grid xs={6}>
         <Button
           fullWidth
           type="link"
@@ -119,7 +119,7 @@ const VipUpload = () => {
           Download VIPs
         </Button>
       </Grid>
-      <Grid item xs={6}>
+      <Grid xs={6}>
         {isFilePicked ? (
           <Button
             fullWidth
@@ -146,7 +146,7 @@ const VipUpload = () => {
       </Grid>
 
       {result ? (
-        <Grid item xs={12}>
+        <Grid xs={12}>
           <Typography variant="body2" color="secondary">
             The job may take a while, here's the current status, do not resubmit
             unless you see a "finished" or "failed" status:{" "}

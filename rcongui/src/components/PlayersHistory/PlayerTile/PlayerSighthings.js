@@ -1,4 +1,4 @@
-import { Grid } from "@mui/material";
+import Grid from "@mui/material/Unstable_Grid2";
 import React from "react";
 import Tooltip from "@mui/material/Tooltip";
 import moment from "moment";
@@ -37,7 +37,7 @@ export const PlayerSighthings = ({ player }) => {
       spacing={0}
     >
       {vip_expiration ? (
-        <Grid item xs={12}>
+        <Grid xs={12}>
           <Tooltip title={vip_expiration.format("LLLL")} arrow>
             {vipDisplay}
           </Tooltip>
@@ -45,14 +45,14 @@ export const PlayerSighthings = ({ player }) => {
       ) : (
         ""
       )}
-      <Grid item xs={6}>
+      <Grid xs={6}>
         <Tooltip title={first_seen.format("LLLL")} arrow>
           <small>
             First seen {moment.duration(now.diff(first_seen)).humanize()} ago
           </small>
         </Tooltip>
       </Grid>
-      <Grid item xs={6}>
+      <Grid xs={6}>
         <Tooltip title={last_seen.format("LLLL")} arrow>
           <small>
             Last seen {moment.duration(now.diff(last_seen)).humanize()} ago

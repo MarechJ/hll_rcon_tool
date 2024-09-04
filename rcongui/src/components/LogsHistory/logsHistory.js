@@ -3,7 +3,7 @@ import {
   postData,
   showResponse,
 } from "../../utils/fetchUtils";
-import Grid from "@mui/material/Grid";
+import Grid from "@mui/material/Unstable_Grid2";
 import { DesktopDateTimePicker } from '@mui/x-date-pickers/DesktopDateTimePicker';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -32,17 +32,17 @@ const LogsFilter = ({ onSubmit, onChange }) => {
 
   return (
     (<Grid container spacing={1}>
-      <Grid item xs={12} >
+      <Grid xs={12} >
         <form >
           <Grid container spacing={1} justifyContent="space-evenly">
-            <Grid item>
+            <Grid>
               <TextField
                 label="Player ID"
                 value={playerId}
                 onChange={(e) => setPlayerId(e.target.value)}
               />
             </Grid>
-            <Grid item>
+            <Grid>
               <TextField
                 label="Name"
                 value={name}
@@ -61,7 +61,7 @@ const LogsFilter = ({ onSubmit, onChange }) => {
                 className="MuiFormLabel-root"
               />
             </Grid>
-            <Grid item>
+            <Grid>
               <TextField
                 label="Type"
                 value={type}
@@ -81,14 +81,14 @@ const LogsFilter = ({ onSubmit, onChange }) => {
                 className="MuiFormLabel-root"
               />
             </Grid>
-            <Grid item>
+            <Grid>
               <TextField
                 label="Server filter"
                 value={server}
                 onChange={(e) => setServer(e.target.value)}
               />
             </Grid>
-            <Grid item>
+            <Grid>
               <TextField
                 label="Limit"
                 type="number"
@@ -96,7 +96,7 @@ const LogsFilter = ({ onSubmit, onChange }) => {
                 onChange={(e) => setLimit(e.target.value)}
               />
             </Grid>
-            <Grid item>
+            <Grid>
               {/* <MuiPickersUtilsProvider utils={MomentUtils}>
                 <DateTimePicker
                   label="From time"
@@ -113,7 +113,7 @@ const LogsFilter = ({ onSubmit, onChange }) => {
                 />
               </LocalizationProvider>
             </Grid>
-            <Grid item>
+            <Grid>
               {/* <MuiPickersUtilsProvider utils={MomentUtils}>
                 <DateTimePicker
                   label="Till time"
@@ -130,7 +130,7 @@ const LogsFilter = ({ onSubmit, onChange }) => {
               />
             </LocalizationProvider>
             </Grid>
-            <Grid item>
+            <Grid>
               <FormControl >
                 <InputLabel id="time_sort_label">Time sort</InputLabel>
                 <Select
@@ -143,7 +143,7 @@ const LogsFilter = ({ onSubmit, onChange }) => {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item>
+            <Grid>
               <Button
                 variant="contained"
                 color="primary"
@@ -366,21 +366,21 @@ class LogsHistory extends React.Component {
 
     return (
       (<Grid container>
-        <Grid item xs={12}>
+        <Grid xs={12}>
           <LogsFilter onSubmit={this.getHistoricalLogs} />
         </Grid>
         {isLoading ? (
-          <Grid itemx xs={12} >
+          <Grid xs={12} >
             <LinearProgress color="secondary" />
           </Grid>
         ) : (
           ""
         )}
-        <Grid item xs={12}>
+        <Grid xs={12}>
           <Grid container justifyContent="center">
-            <Grid item>
+            <Grid>
               <Grid container justifyContent="center">
-                <Grid item>
+                <Grid>
                   <MUIDataTable
                     title={"Game logs"}
                     data={this.state.logs}

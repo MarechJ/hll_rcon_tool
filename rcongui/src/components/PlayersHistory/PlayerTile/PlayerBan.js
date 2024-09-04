@@ -1,7 +1,8 @@
 import React from "react";
-import { Grid, Typography } from "@mui/material";
+import { Typography } from "@mui/material";
 import { fromJS } from "immutable";
 import { reduce } from "lodash";
+import Grid from "@mui/material/Unstable_Grid2";
 
 export function banListFromServer(data) {
   // console.log(`banListFromServer ${JSON.stringify(data)}`)
@@ -40,7 +41,7 @@ export const PlayerBan = ({ bans, player }) => {
       spacing={0}
     >
       {formattedBans.map((formattedBan) => (
-        <Grid item xs={6}>
+        <Grid xs={6}>
           <Typography variant="h7" color="secondary">
             {formattedBan}
           </Typography>

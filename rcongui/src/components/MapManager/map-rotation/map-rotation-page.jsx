@@ -1,4 +1,6 @@
-import { createStyles, makeStyles, Typography } from "@material-ui/core";
+import { Typography } from "@mui/material";
+import createStyles from '@mui/styles/createStyles';
+import makeStyles from '@mui/styles/makeStyles';
 import MapRotationSettings from "./map-rotation-config";
 import MapRotation from "./map-rotation";
 

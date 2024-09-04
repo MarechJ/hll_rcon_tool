@@ -1,5 +1,5 @@
 import React from "react";
-import Grid from "@mui/material/Grid";
+import Grid from "@mui/material/Unstable_Grid2";
 import ListItemText from "@mui/material/ListItemText";
 import LinearProgress from "@mui/material/LinearProgress";
 import "react-toastify/dist/ReactToastify.css";
@@ -43,9 +43,9 @@ const AutoRefreshBar = ({
   return (
     (<React.Fragment>
       <Grid  container justifyContent="flex-start">
-        <Grid item xs={12}>
+        <Grid xs={12}>
           <Grid container justifyContent="space-between">
-            <Grid style={{ textAlign: "left" }} item xs={6}>
+            <Grid style={{ textAlign: "left" }}  xs={6}>
               <h1>
                 Players view{" "}
                 <IconButton onClick={onFullScreenClick} size="large">
@@ -53,7 +53,7 @@ const AutoRefreshBar = ({
                 </IconButton>
               </h1>
             </Grid>
-            <Grid item xs={6} style={{ textAlign: "right" }}>
+            <Grid xs={6} style={{ textAlign: "right" }}>
               <ButtonGroup
                 
                 orientation="vertical"
@@ -67,7 +67,7 @@ const AutoRefreshBar = ({
             </Grid>
           </Grid>
         </Grid>
-        <Grid item xs={12}>
+        <Grid xs={12}>
           <Link
             style={{ cursor: "pointer" }}
             onClick={() =>

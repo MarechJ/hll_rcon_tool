@@ -1,6 +1,6 @@
-import { createTheme } from '@mui/material/styles';
+import { createTheme, adaptV4Theme } from '@mui/material/styles';
 
-const GreenYellowDarkTheme = createTheme({
+const GreenYellowDarkTheme = createTheme(adaptV4Theme({
   palette: {
     mode: 'dark',
     primary: {
@@ -23,6 +23,6 @@ const GreenYellowDarkTheme = createTheme({
       disabled: 'rgba(255, 255, 255, 0.5)',
     },
   },
-});
+}));
 
 export default GreenYellowDarkTheme;
