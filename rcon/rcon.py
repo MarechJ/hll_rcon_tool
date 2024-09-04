@@ -2,6 +2,7 @@ import logging
 import os
 import random
 import re
+import time
 from concurrent.futures import Future, ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
 from functools import cached_property
@@ -44,8 +45,8 @@ from rcon.utils import (
     default_player_info_dict,
     get_server_number,
     parse_raw_player_info,
-    strtobool,
 )
+from rcon.user_config.utils import BaseUserConfig
 
 PLAYER_ID = "player_id"
 NAME = "name"
@@ -53,6 +54,8 @@ ROLE = "role"
 
 TEMP_BAN = "temp"
 PERMA_BAN = "perma"
+
+USER_CONFIG_NAME_PATTERN = re.compile(r"set_.*_config")
 
 # The base level of actions that will always show up in the Live view
 # actions filter from the call to `get_recent_logs`
@@ -107,6 +110,41 @@ def get_rcon(credentials: ServerInfoType | None = None):
     if CTL is None:
         CTL = Rcon(credentials)
     return CTL
+
+
+def do_run_commands(rcon, commands):
+    for command, params in commands.items():
+        try:
+            logger.info("Applying %s %s", command, params)
+
+            # Allow people to apply partial changes to a user config to make
+            # auto settings less gigantic
+            if is_user_config_func(command):
+                # super dirty we should probably make an actual look up table
+                # but all the names are consistent
+                get_config_command = f"g{command[1:]}"
+                config: BaseUserConfig = rcon.__getattribute__(get_config_command)()
+                # get the existing config, override anything set in params
+                merged_params = config.model_dump() | params
+
+                if "by" not in merged_params:
+                    merged_params["by"] = "AutoSettings"
+
+                rcon.__getattribute__(command)(**merged_params)
+            else:
+                # Non user config settings
+                rcon.__getattribute__(command)(**params)
+        except AttributeError as e:
+            logger.exception(
+                "%s is not a valid command, double check the name!", command
+            )
+        except Exception as e:
+            logger.exception("Unable to apply %s %s: %s", command, params, e)
+        time.sleep(5)  # go easy on the server
+
+
+def is_user_config_func(name: str) -> bool:
+    return re.match(USER_CONFIG_NAME_PATTERN, name) is not None
 
 
 class Rcon(ServerCtl):

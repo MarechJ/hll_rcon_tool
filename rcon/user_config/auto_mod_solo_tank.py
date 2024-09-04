@@ -84,7 +84,7 @@ class AutoModNoSoloTankUserConfig(BaseUserConfig):
 
     @staticmethod
     def save_to_db(values: AutoModNoSoloTankType, dry_run=False) -> None:
-        key_check(AutoModNoSoloTankType.__required_keys__, values.keys())
+        key_check(AutoModNoSoloTankType.__required_keys__, AutoModNoSoloTankType.__optional_keys__, values.keys())
 
         validated_conf = AutoModNoSoloTankUserConfig(
             enabled=values.get("enabled"),

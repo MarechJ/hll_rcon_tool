@@ -6,20 +6,18 @@ from functools import wraps
 from threading import Timer
 from typing import Final
 
+from discord.utils import escape_markdown
 from discord_webhook import DiscordEmbed
 
 import rcon.steam_utils as steam_utils
-from discord.utils import escape_markdown
 from rcon.blacklist import (
     apply_blacklist_punishment,
     blacklist_or_ban,
     is_player_blacklisted,
-    synchronize_ban,
 )
 from rcon.cache_utils import invalidates
 from rcon.commands import CommandFailedError, HLLServerError
 from rcon.discord import (
-    dict_to_discord,
     get_prepared_discord_hooks,
     send_to_discord_audit,
 )
@@ -42,6 +40,7 @@ from rcon.player_history import (
     save_start_player_session,
 )
 from rcon.rcon import Rcon, StructuredLogLineWithMetaData
+from rcon.rcon import do_run_commands
 from rcon.recent_actions import get_recent_actions
 from rcon.types import (
     MessageVariableContext,
@@ -117,13 +116,35 @@ def chat_commands(rcon: Rcon, struct_log: StructuredLogLineWithMetaData):
     chat_words = set(chat_message.split())
     for command in config.command_words:
         if not (
-            triggered_word := chat_contains_command_word(
-                chat_words, command.words, command.help_words
-            )
+                triggered_word := chat_contains_command_word(
+                    chat_words, command.words, command.help_words
+                )
         ):
             continue
 
-        if is_command_word(triggered_word):
+        if not command.enabled:
+            continue
+
+        ctx = {
+            MessageVariableContext.player_name.value: struct_log[
+                "player_name_1"
+            ],
+            MessageVariableContext.player_id.value: player_id,
+            MessageVariableContext.last_victim_player_id.value: player_cache.last_victim_player_id,
+            MessageVariableContext.last_victim_name.value: player_cache.last_victim_name,
+            MessageVariableContext.last_victim_weapon.value: player_cache.last_victim_weapon,
+            MessageVariableContext.last_nemesis_player_id.value: player_cache.last_nemesis_player_id,
+            MessageVariableContext.last_nemesis_name.value: player_cache.last_nemesis_name,
+            MessageVariableContext.last_nemesis_weapon.value: player_cache.last_nemesis_weapon,
+            MessageVariableContext.last_tk_nemesis_player_id.value: player_cache.last_tk_nemesis_player_id,
+            MessageVariableContext.last_tk_nemesis_name.value: player_cache.last_tk_nemesis_name,
+            MessageVariableContext.last_tk_nemesis_weapon.value: player_cache.last_tk_nemesis_weapon,
+            MessageVariableContext.last_tk_victim_player_id.value: player_cache.last_tk_victim_player_id,
+            MessageVariableContext.last_tk_victim_name.value: player_cache.last_tk_victim_name,
+            MessageVariableContext.last_tk_victim_weapon.value: player_cache.last_tk_victim_weapon,
+        }
+
+        if is_command_word(triggered_word) and command.message is not None:
             message_vars: list[str] = re.findall(MESSAGE_VAR_RE, command.message)
             populated_variables = populate_message_variables(
                 vars=message_vars, player_id=player_id
@@ -131,29 +152,21 @@ def chat_commands(rcon: Rcon, struct_log: StructuredLogLineWithMetaData):
             formatted_message = format_message_string(
                 command.message,
                 populated_variables=populated_variables,
-                context={
-                    MessageVariableContext.player_name.value: struct_log[
-                        "player_name_1"
-                    ],
-                    MessageVariableContext.player_id.value: player_id,
-                    MessageVariableContext.last_victim_player_id.value: player_cache.last_victim_player_id,
-                    MessageVariableContext.last_victim_name.value: player_cache.last_victim_name,
-                    MessageVariableContext.last_victim_weapon.value: player_cache.last_victim_weapon,
-                    MessageVariableContext.last_nemesis_player_id.value: player_cache.last_nemesis_player_id,
-                    MessageVariableContext.last_nemesis_name.value: player_cache.last_nemesis_name,
-                    MessageVariableContext.last_nemesis_weapon.value: player_cache.last_nemesis_weapon,
-                    MessageVariableContext.last_tk_nemesis_player_id.value: player_cache.last_tk_nemesis_player_id,
-                    MessageVariableContext.last_tk_nemesis_name.value: player_cache.last_tk_nemesis_name,
-                    MessageVariableContext.last_tk_nemesis_weapon.value: player_cache.last_tk_nemesis_weapon,
-                    MessageVariableContext.last_tk_victim_player_id.value: player_cache.last_tk_victim_player_id,
-                    MessageVariableContext.last_tk_victim_name.value: player_cache.last_tk_victim_name,
-                    MessageVariableContext.last_tk_victim_weapon.value: player_cache.last_tk_victim_weapon,
-                },
+                context=ctx,
             )
             rcon.message_player(
                 player_id=struct_log["player_id_1"],
                 message=formatted_message,
                 save_message=False,
+            )
+        elif is_command_word(triggered_word) and command.command is not None:
+            do_run_commands(
+                rcon,
+                {
+                    name: {
+                        k: format_message_string(v, context=ctx) for (k, v) in params.items()
+                    } for (name, params) in command.command.items()
+                },
             )
         # Help words describe a specific command
         elif is_help_word(triggered_word):
@@ -305,11 +318,11 @@ def ban_if_blacklisted(rcon: Rcon, player_id: str, name: str):
 
 
 def should_ban(
-    bans: SteamBansType | None,
-    max_game_bans: float,
-    max_days_since_ban: int,
-    player_flags: list[PlayerFlagType] = [],
-    whitelist_flags: list[str] = [],
+        bans: SteamBansType | None,
+        max_game_bans: float,
+        max_days_since_ban: int,
+        player_flags: list[PlayerFlagType] = [],
+        whitelist_flags: list[str] = [],
 ) -> bool | None:
     if not bans:
         return
@@ -361,11 +374,11 @@ def ban_if_has_vac_bans(rcon: Rcon, player_id: str, name: str):
             return
 
         if should_ban(
-            bans,
-            max_game_bans,
-            max_days_since_ban,
-            player_flags=player.flags,
-            whitelist_flags=whitelist_flags,
+                bans,
+                max_game_bans,
+                max_days_since_ban,
+                player_flags=player.flags,
+                whitelist_flags=whitelist_flags,
         ):
             days_since_last_ban = bans["DaysSinceLastBan"]
             reason = config.ban_on_vac_history_reason.format(
@@ -407,7 +420,7 @@ def inject_player_ids(func):
 @on_connected()
 @inject_player_ids
 def handle_on_connect(
-    rcon: Rcon, struct_log: StructuredLogLineWithMetaData, name: str, player_id: str
+        rcon: Rcon, struct_log: StructuredLogLineWithMetaData, name: str, player_id: str
 ):
     try:
         rcon.get_players.cache_clear()
@@ -448,7 +461,7 @@ def handle_on_disconnect(rcon, struct_log, _, player_id: str):
 @on_connected(0)
 @inject_player_ids
 def update_player_steaminfo_on_connect(
-    rcon, struct_log: StructuredLogLineWithMetaData, _, player_id: str
+        rcon, struct_log: StructuredLogLineWithMetaData, _, player_id: str
 ):
     if not player_id:
         logger.error(

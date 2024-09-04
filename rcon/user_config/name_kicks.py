@@ -41,7 +41,7 @@ class NameKickUserConfig(BaseUserConfig):
 
     @staticmethod
     def save_to_db(values: NameKickType, dry_run=False):
-        key_check(NameKickType.__required_keys__, values.keys())
+        key_check(NameKickType.__required_keys__, NameKickType.__optional_keys__, values.keys())
 
         validated_conf = NameKickUserConfig(
             regular_expressions=values.get("regular_expressions"),

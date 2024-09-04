@@ -84,7 +84,7 @@ class VoteMapUserConfig(BaseUserConfig):
 
     @staticmethod
     def save_to_db(values: VoteMapType, dry_run=False):
-        key_check(VoteMapType.__required_keys__, values.keys())
+        key_check(VoteMapType.__required_keys__, VoteMapType.__optional_keys__, values.keys())
 
         validated_conf = VoteMapUserConfig(
             enabled=values.get("enabled"),

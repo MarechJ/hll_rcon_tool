@@ -25,7 +25,7 @@ class ExpiredVipsUserConfig(BaseUserConfig):
 
     @staticmethod
     def save_to_db(values: ExpiredVipsType, dry_run=False):
-        key_check(ExpiredVipsType.__required_keys__, values.keys())
+        key_check(ExpiredVipsType.__required_keys__, ExpiredVipsType.__optional_keys__, values.keys())
 
         validated_conf = ExpiredVipsUserConfig(
             enabled=values.get("enabled"),

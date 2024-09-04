@@ -132,7 +132,7 @@ class AutoModLevelUserConfig(BaseUserConfig):
 
     @staticmethod
     def save_to_db(values: AutoModLevelType, dry_run=False):
-        key_check(AutoModLevelType.__required_keys__, values.keys())
+        key_check(AutoModLevelType.__required_keys__, AutoModLevelType.__optional_keys__, values.keys())
 
         validated_conf = AutoModLevelUserConfig(
             enabled=values.get("enabled"),

@@ -88,7 +88,7 @@ class AutoModNoLeaderUserConfig(BaseUserConfig):
 
     @staticmethod
     def save_to_db(values: AutoModNoLeaderType, dry_run=False):
-        key_check(AutoModNoLeaderType.__required_keys__, values.keys())
+        key_check(AutoModNoLeaderType.__required_keys__, AutoModNoLeaderType.__optional_keys__, values.keys())
 
         validated_conf = AutoModNoLeaderUserConfig(
             enabled=values.get("enabled"),

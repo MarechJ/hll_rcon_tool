@@ -33,7 +33,7 @@ class BaseStandardMessageUserConfig(BaseUserConfig):
 
     @classmethod
     def save_to_db(cls, values, dry_run=False):
-        key_check(StandardMessageType.__required_keys__, values.keys())
+        key_check(StandardMessageType.__required_keys__, StandardMessageType.__optional_keys__, values.keys())
         messages: list[str] = values.get("messages")
         _listType(values=messages)  # type: ignore
 
@@ -117,7 +117,7 @@ class StandardBroadcastMessagesUserConfig(BaseUserConfig):
 
     @staticmethod
     def save_to_db(values: StandardBroadcastMessagesType, dry_run=False):
-        key_check(StandardBroadcastMessagesType.__required_keys__, values.keys())
+        key_check(StandardBroadcastMessagesType.__required_keys__, StandardBroadcastMessagesType.__optional_keys__, values.keys())
 
         raw_messages = values.get("messages")
         _listType(values=raw_messages)  # type: ignore

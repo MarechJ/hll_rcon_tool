@@ -1,5 +1,4 @@
 import logging
-import re
 import time
 from datetime import datetime
 
@@ -8,13 +7,11 @@ import pytz
 from rcon.api_commands import get_rcon_api
 from rcon.audit import ingame_mods, online_mods
 from rcon.commands import BrokenHllConnection, CommandFailedError
+from rcon.rcon import do_run_commands
 from rcon.user_config.auto_settings import AutoSettingsConfig
-from rcon.user_config.utils import BaseUserConfig
 
 
 logger = logging.getLogger(__name__)
-
-USER_CONFIG_NAME_PATTERN = re.compile(r"set_.*_config")
 
 
 def _get_current_map_metric(rcon):
@@ -32,10 +29,6 @@ METRICS = {
     "current_map": _get_current_map_metric,
     "time_of_day": lambda tz: datetime.now(tz=tz),
 }
-
-
-def is_user_config_func(name: str) -> bool:
-    return re.match(USER_CONFIG_NAME_PATTERN, name) is not None
 
 
 class BaseCondition:
@@ -194,37 +187,6 @@ def create_condition(name, **kwargs):
         return TimeOfDayCondition(**kwargs)
     else:
         raise ValueError("Invalid condition type: %s" % name)
-
-
-def do_run_commands(rcon, commands):
-    for command, params in commands.items():
-        try:
-            logger.info("Applying %s %s", command, params)
-
-            # Allow people to apply partial changes to a user config to make
-            # auto settings less gigantic
-            if is_user_config_func(command):
-                # super dirty we should probably make an actual look up table
-                # but all the names are consistent
-                get_config_command = f"g{command[1:]}"
-                config: BaseUserConfig = rcon.__getattribute__(get_config_command)()
-                # get the existing config, override anything set in params
-                merged_params = config.model_dump() | params
-
-                if "by" not in merged_params:
-                    merged_params["by"] = "AutoSettings"
-
-                rcon.__getattribute__(command)(**merged_params)
-            else:
-                # Non user config settings
-                rcon.__getattribute__(command)(**params)
-        except AttributeError as e:
-            logger.exception(
-                "%s is not a valid command, double check the name!", command
-            )
-        except Exception as e:
-            logger.exception("Unable to apply %s %s: %s", command, params, e)
-        time.sleep(5)  # go easy on the server
 
 
 def run():

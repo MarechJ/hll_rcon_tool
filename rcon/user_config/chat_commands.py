@@ -1,9 +1,10 @@
 import re
 from functools import cached_property
-from typing import Iterable, TypedDict
+from typing import Iterable, TypedDict, NotRequired
 
 from pydantic import BaseModel, Field, field_validator
 
+from rcon.rcon import get_rcon
 from rcon.types import MessageVariable, MessageVariableContext
 from rcon.user_config.utils import BaseUserConfig, _listType, key_check, set_user_config
 
@@ -39,7 +40,9 @@ def is_description_word(words: Iterable[str], description_words: Iterable[str]):
 
 class ChatCommandType(TypedDict):
     words: list[str]
-    message: str
+    message: NotRequired[str]
+    command: NotRequired[dict[str, dict]]
+    enabled: NotRequired[bool]
     description: str
 
 
@@ -51,7 +54,9 @@ class ChatCommandsType(TypedDict):
 
 class ChatCommand(BaseModel):
     words: list[str] = Field(default_factory=list)
-    message: str = Field(default="")
+    message: str | None = Field(default=None)
+    command: dict[str, dict] | None = Field(default=None)
+    enabled: bool = Field(default=True)
     description: str | None = Field(default=None)
 
     @cached_property
@@ -60,7 +65,9 @@ class ChatCommand(BaseModel):
 
     @field_validator("message")
     @classmethod
-    def only_valid_variables(cls, v: str) -> str:
+    def only_valid_variables(cls, v: str | None) -> str | None:
+        if v is None:
+            return None
         for match in re.findall(MESSAGE_VAR_RE, v):
             # Has to either be a valid MessageVariable or MessageVariableContext
             try:
@@ -82,6 +89,16 @@ class ChatCommand(BaseModel):
                     f"'{word}' command word must start with one of: {VALID_COMMAND_PREFIXES}"
                 )
 
+        return vs
+
+    @field_validator("command")
+    @classmethod
+    def only_valid_commands(cls, vs: dict[str, dict] | None) -> dict[str, dict] | None:
+        for name in vs:
+            try:
+                get_rcon().__getattribute__(name)
+            except AttributeError:
+                raise ValueError(f"'{name}' is not a valid RCon command.")
         return vs
 
 
@@ -113,21 +130,22 @@ class ChatCommandsUserConfig(BaseUserConfig):
 
     @staticmethod
     def save_to_db(values: ChatCommandsType, dry_run=False) -> None:
-        key_check(ChatCommandsType.__required_keys__, values.keys())
+        key_check(ChatCommandsType.__required_keys__, ChatCommandsType.__optional_keys__, values.keys())
 
         raw_command_words = values.get("command_words")
         _listType(values=raw_command_words)
 
         for obj in raw_command_words:
-            key_check(ChatCommandType.__required_keys__, obj.keys())
+            key_check(ChatCommandType.__required_keys__, ChatCommandType.__optional_keys__, obj.keys())
 
         validated_words = []
         for raw_word in raw_command_words:
             words = raw_word.get("words")
             message = raw_word.get("message")
+            command = raw_word.get("command")
             description = raw_word.get("description")
             validated_words.append(
-                ChatCommand(words=words, message=message, description=description)
+                ChatCommand(words=words, message=message, description=description, command=command)
             )
 
         validated_conf = ChatCommandsUserConfig(

@@ -64,7 +64,7 @@ class AutoBroadcastUserConfig(BaseUserConfig):
 
     @staticmethod
     def save_to_db(values: AutoBroadcastType, dry_run=False):
-        key_check(AutoBroadcastType.__required_keys__, values.keys())
+        key_check(AutoBroadcastType.__required_keys__, AutoBroadcastType.__optional_keys__, values.keys())
 
         raw_messages = values.get("messages")
         _listType(values=raw_messages)  # type: ignore

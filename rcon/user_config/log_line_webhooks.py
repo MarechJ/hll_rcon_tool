@@ -26,13 +26,13 @@ class LogLineWebhookUserConfig(BaseUserConfig):
 
     @staticmethod
     def save_to_db(values: LogLineType, dry_run=False):
-        key_check(LogLineType.__required_keys__, values.keys())
+        key_check(LogLineType.__required_keys__, LogLineType.__optional_keys__, values.keys())
         raw_objects: list[LogLineWebhookType] = values.get("webhooks")
         _listType(values=raw_objects)  # type: ignore
 
         validated_log_lines: list[LogLineWebhook] = []
         for obj in raw_objects:
-            key_check(LogLineWebhookType.__required_keys__, obj.keys())
+            key_check(LogLineWebhookType.__required_keys__, LogLineWebhookType.__optional_keys__, obj.keys())
 
             raw_webhook = obj.get("webhook")
             raw_log_types = obj.get("log_types")

@@ -155,7 +155,7 @@ class AutoModSeedingUserConfig(BaseUserConfig):
 
     @staticmethod
     def save_to_db(values: AutoModSeedingType, dry_run=False):
-        key_check(AutoModSeedingType.__required_keys__, values.keys())
+        key_check(AutoModSeedingType.__required_keys__, AutoModSeedingType.__optional_keys__, values.keys())
 
         disallowed_roles = DisallowedRoles(
             min_players=values.get("disallowed_roles").get("min_players"),
