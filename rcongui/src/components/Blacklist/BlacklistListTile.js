@@ -12,7 +12,7 @@ import DeleteIcon from "@material-ui/icons/Delete";
 import { SYNC_METHODS } from "./BlacklistListCreateDialog";
 
 const BlacklistListTile = ({
-  classes: globalClasses,
+  classes,
   blacklist,
   servers,
   onEdit,
@@ -29,7 +29,7 @@ const BlacklistListTile = ({
         justify="space-between"
         alignItems="center"
         spacing={2}
-        className={globalClasses.padding}
+        className={classes.padding}
         style={{paddingLeft: 18}}
       >
         <Grid item>
@@ -71,9 +71,11 @@ const BlacklistListTile = ({
             </IconButton>
           </Tooltip>
           <Tooltip title="Delete">
-            <IconButton onClick={() => onDelete(blacklist)} disabled={blacklist.id === 0}>
-              <DeleteIcon/>
-            </IconButton>
+            <span>
+              <IconButton onClick={() => onDelete(blacklist)} disabled={blacklist.id === 0}>
+                <DeleteIcon/>
+              </IconButton>
+            </span>
           </Tooltip>
         </Grid>
       </Grid>
