@@ -117,6 +117,20 @@ const VoteMapConfig = ({ maps }) => {
     return Object.values(mapSelection);
   }, [maps, whitelist]);
 
+  const whitelistSorted = React.useMemo(() => {
+    const sorted = [...whitelist];
+    sorted.sort((mapA, mapB) => {
+      if (mapA.pretty_name < mapB.pretty_name) {
+        return -1;
+      }
+      if (mapA.pretty_name > mapB.pretty_name) {
+        return 1;
+      }
+      return 0;
+    });
+    return sorted;
+  }, [whitelist]);
+
   async function updateConfig() {
     await updateVotemapConfig(config);
     await getConfig();
@@ -419,7 +433,6 @@ const VoteMapConfig = ({ maps }) => {
 
           <AccordionDetails>
             <Box component={"section"} className={classes.section}>
-              {/* TODO: Provide only those that are not in the list */}
               <Box style={{ display: "flex", gap: "0.5rem" }}>
                 <MapAutocomplete
                   options={autocompleteSelection}
@@ -440,7 +453,7 @@ const VoteMapConfig = ({ maps }) => {
                 </Button>
               </Box>
               <List dense={true}>
-                {whitelist.map((thisMapLayer, index) => (
+                {whitelistSorted.map((thisMapLayer, index) => (
                   <MapListItem
                     key={`${index}#${thisMapLayer.id}`}
                     mapLayer={thisMapLayer}
