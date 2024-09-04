@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import {
   Box,
   Button,
-  ButtonGroup,
   Dialog,
   DialogActions,
   DialogContent,
@@ -15,51 +14,14 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import moment from "moment";
 import { PlayerVipSummary } from "./PlayerVipSummary";
 import { ForwardCheckBox } from "../commonComponent";
+import { TimePickerButtons } from "../shared/time-picker-buttons";
 
-const vipButtons = [
+const presetTimes = [
   [2, "hours"],
   [1, "day"],
   [1, "week"],
   [1, "month"]
 ];
-
-const VipTimeButtons = ({
-  amount,
-  unit,
-  expirationTimestamp,
-  setExpirationTimestamp,
-}) => {
-
-  const adjustTimestamp = (amount, unit) => {
-    const after = moment(expirationTimestamp).add(amount, unit);
-    const now = moment();
-
-    if (after.isBefore(now)) {
-      setExpirationTimestamp(now.format())
-      return;
-    }
-
-    setExpirationTimestamp(after.format());
-  };
-
-  const setTimestamp = (amount, unit) => {
-    setExpirationTimestamp(moment().add(amount, unit).format());
-  };
-
-  return (
-    <ButtonGroup variant="outlined" size="small" style={{ display: "flex", marginBottom: 4 }}>
-      <Button style={{ display: "block", width: "100%", maxWidth: "2rem" }} onClick={() => adjustTimestamp(-amount, unit)}>
-        -
-      </Button>
-      <Button style={{ display: "block", width: "100%" }} onClick={() => setTimestamp(amount, unit)}>
-        {amount} {unit}
-      </Button>
-      <Button style={{ display: "block", width: "100%", maxWidth: "2rem" }} onClick={() => adjustTimestamp(amount, unit)}>
-        +
-      </Button>
-    </ButtonGroup>
-  );
-};
 
 /**
  * 
@@ -141,8 +103,8 @@ export function VipExpirationDialog({ open, vips, onDeleteVip, handleClose, hand
         </LocalizationProvider>
           <Box>
             <Button variant="outlined" size="small" color="secondary" style={{ display: "block", width: "100%", marginBottom: 4 }} onClick={() => setExpirationTimestamp(moment().add(15, "minutes"))}>Help to join!</Button>
-            {vipButtons.map(([amount, unit], index) => (
-              <VipTimeButtons
+            {presetTimes.map(([amount, unit], index) => (
+              <TimePickerButtons
                 key={unit + index}
                 amount={amount}
                 unit={unit}

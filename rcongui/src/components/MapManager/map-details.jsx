@@ -1,19 +1,39 @@
-import { Avatar, Box, Divider, Typography } from "@mui/material";
+import {
+  Avatar,
+  Box,
+  Divider,
+  makeStyles,
+  Typography,
+} from "@material-ui/core";
 import { getMapLayerImageSrc, unifiedGamemodeName } from "./helpers";
-import { styled } from "@mui/material/styles"
 
-const Wrapper = styled('div')(({ theme }) => ({
-  display: "flex",
-  flexWrap: "wrap",
-  gap: theme.spacing(0.5),
-  textTransform: "capitalize",
+const useStyles = makeStyles((theme) => ({
+  descriptionRoot: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: theme.spacing(0.5),
+    textTransform: "capitalize",
+  },
+  mapBox: {
+    display: "flex",
+    gap: theme.spacing(1),
+    alignItems: "center",
+  },
+  mapBoxAvatar: {
+    display: "none",
+    [theme.breakpoints.up("sm")]: {
+      display: "block",
+    },
+  },
 }));
 
-export function MapDetails({ mapLayer }) {
-  const gameMode = unifiedGamemodeName(mapLayer.game_mode)
+export function MapDescription({ mapLayer }) {
+  const classes = useStyles();
+
+  const gameMode = unifiedGamemodeName(mapLayer.game_mode);
 
   return (
-    <Wrapper>
+    <Box className={classes.descriptionRoot}>
       <Typography variant="caption">{gameMode}</Typography>
       {gameMode === "offensive" && (
         <>
@@ -23,12 +43,36 @@ export function MapDetails({ mapLayer }) {
       )}
       <Divider orientation="vertical" flexItem />
       <Typography variant="caption">{mapLayer.environment}</Typography>
-    </Wrapper>
+    </Box>
+  );
+}
+
+export function MapAvatar({ mapLayer, ...props }) {
+  return <Avatar src={getMapLayerImageSrc(mapLayer)} {...props} />;
+}
+
+export function MapDetail({ mapLayer }) {
+  const classes = useStyles();
+
+  return (
+    <Box className={classes.mapBox}>
+      <MapAvatar mapLayer={mapLayer} className={classes.mapBoxAvatar} />
+      <Box>
+        <Typography variant="subtitle1">{mapLayer.map.pretty_name}</Typography>
+        <MapDescription mapLayer={mapLayer} />
+      </Box>
+    </Box>
   );
 }
 
 export function MapAvatar({ mapLayer }) {
   return (
-    <Avatar src={getMapLayerImageSrc(mapLayer)} />
-  )
+    <Box className={classes.mapBox}>
+      <MapAvatar mapLayer={mapLayer} className={classes.mapBoxAvatar} />
+      <Box>
+        <Typography variant="subtitle1">{mapLayer.map.pretty_name}</Typography>
+        <MapDescription mapLayer={mapLayer} />
+      </Box>
+    </Box>
+  );
 }

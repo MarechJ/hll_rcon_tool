@@ -50,7 +50,7 @@ const UserSetting = ({
         .then((res) => showResponse(res, endpoint, true))
         .then((res) => {
           if (res?.error) {
-            setErrors(JSON.parse(res.error));
+            setErrors([res.error]);
           }
         });
     } catch (error) {

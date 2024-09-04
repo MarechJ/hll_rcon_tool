@@ -18,7 +18,8 @@ import Pagination from '@mui/material/Pagination';
 import BlacklistRecordGrid from "./BlacklistRecordGrid";
 import { List, fromJS } from "immutable";
 import { BlacklistRecordCreateButton } from "./BlacklistRecordCreateDialog";
-import { Skeleton } from '@mui/material';
+import { Skeleton } from "@material-ui/lab";
+import { Link } from "react-router-dom";
 
 async function getBlacklistRecords(searchParams) {
   let path = "get_blacklist_records?" + new URLSearchParams(
@@ -168,13 +169,11 @@ const BlacklistRecords = () => {
           </Grid>
           <Grid item xl={12}>
             <Button
+              component={Link}
+              to={"/blacklists/manage"}
               variant="contained"
               color="primary"
               size="large"
-              onClick={(e) => {
-                e.preventDefault();
-                window.location.hash = "#/blacklists/manage";
-              }}
             >
               Manage Lists
             </Button>

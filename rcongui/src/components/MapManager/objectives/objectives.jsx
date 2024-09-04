@@ -1,4 +1,15 @@
-import { Box, Button, Checkbox, FormControl, FormControlLabel, FormGroup, FormLabel } from "@mui/material";
+import {
+  Box,
+  Button,
+  Checkbox,
+  CircularProgress,
+  createStyles,
+  FormControl,
+  FormControlLabel,
+  FormGroup,
+  FormLabel,
+  makeStyles,
+} from "@material-ui/core";
 import React from "react";
 import { changeGameLayout, getMapObjectives, getServerStatus } from "../../../utils/fetchUtils";
 import {
@@ -11,6 +22,7 @@ import clsx from "clsx";
 import { styled } from "@mui/material/styles"
 
 const UPDATE_INTERVAL = 5 * 1000;
+const CONFIRM_DELAY = 10 * 1000;
 
 const flip = (o) =>
   o.map((row, x) => {
@@ -123,7 +135,10 @@ function MapObjectives() {
     "2": false,
   });
   const [objectives, setObjectives] = React.useState(null);
+  const [isSaving, setIsSaving] = React.useState(false);
   const statusIntervalRef = React.useRef(null);
+  const savingTimeoutRef = React.useRef(null);
+  const classes = useStyles();
 
   const updateServerStatus = async () => {
     const status = await getServerStatus();
@@ -183,6 +198,7 @@ function MapObjectives() {
   }
 
   const handleChangeLayoutClick = async () => {
+    setIsSaving(true);
     const chosenObjectives = reduceToInts(
       objectives[1][0] !== null ? flip(objectives) : objectives
     );
@@ -219,6 +235,13 @@ function MapObjectives() {
   const handleConstraintChange = (event) => {
     setRandomConstraint({ ...randomConstraint, [event.target.name]: event.target.checked });
   };
+
+  React.useEffect(() => {
+    if (isSaving) {
+      savingTimeoutRef.current = setTimeout(() => setIsSaving(false), CONFIRM_DELAY)
+    }
+    return () => clearTimeout(savingTimeoutRef.current)
+  }, [isSaving])
 
   React.useEffect(() => {
     updateServerStatus();
@@ -262,6 +285,8 @@ function MapObjectives() {
     <Container>
       <ActionPanel>
         <Button
+          disabled={isSaving}
+          startIcon={isSaving && <CircularProgress size={20} />}
           color="secondary"
           variant="outlined"
           size="small"

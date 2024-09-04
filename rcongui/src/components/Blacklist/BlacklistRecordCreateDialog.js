@@ -10,22 +10,13 @@ import { FormControl, Grid, InputLabel, MenuItem, Select, Typography } from "@mu
 import moment from "moment";
 import { getServerStatus, getSharedMessages } from "../../utils/fetchUtils";
 import TextHistory from "../textHistory";
+import { TimePickerButtons } from "../shared/time-picker-buttons";
 
-const ONE_HOUR = 60 * 60;
-const ONE_DAY = ONE_HOUR * 24;
 const presetTimes = [
-  { label: "1 hour", value: ONE_HOUR },
-  { label: "6 hours", value: ONE_HOUR * 6 },
-  { label: "12 hours", value: ONE_HOUR * 12 },
-  { label: "1 day", value: ONE_DAY },
-  { label: "2 days", value: ONE_DAY * 2 },
-  { label: "3 days", value: ONE_DAY * 3 },
-  { label: "5 days", value: ONE_DAY * 5 },
-  { label: "7 days", value: ONE_DAY * 7 },
-  { label: "14 days", value: ONE_DAY * 14 },
-  { label: "30 days", value: ONE_DAY * 30 },
-  { label: "365 days", value: ONE_DAY * 365 },
-  { label: "Never", value: null },
+  [1, "hour"],
+  [1, "day"],
+  [1, "week"],
+  [1, "month"],
 ];
 
 function BlacklistServerWarning({ blacklist, currentServer }) {
@@ -89,11 +80,14 @@ export default function BlacklistRecordCreateDialog({
   React.useEffect(() => {
     if (open) {
       const messageType = "punishments";
+      const locallyStoredMessages = new TextHistory(messageType).getTexts();
+      setPunishMessages(locallyStoredMessages);
+
       getServerStatus()
         .then((server) => setCurrentServer(server))
         .catch(() => setCurrentServer({}));
+
       getSharedMessages(messageType).then((sharedMessages) => {
-        const locallyStoredMessages = new TextHistory(messageType).getTexts();
         setPunishMessages(sharedMessages.concat(locallyStoredMessages));
       });
     }
@@ -119,7 +113,7 @@ export default function BlacklistRecordCreateDialog({
   }, [open]);
 
   React.useEffect(() => {
-    if (blacklists.length == 1) {
+    if (blacklists?.length == 1) {
       setBlacklist(blacklists[0]);
     }
   });
@@ -197,7 +191,7 @@ export default function BlacklistRecordCreateDialog({
             />
             {/* EXPIRY */}
             <Grid container spacing={2} alignItems="center">
-              <Grid item xs={8}>
+              <Grid item xs={12}>
                 <TextField
                   margin="dense"
                   id="expiresAt"
@@ -213,30 +207,20 @@ export default function BlacklistRecordCreateDialog({
                   variant="standard"
                 />
               </Grid>
-              <Grid item xs={4}>
-                <Select
-                  value={""}
-                  onChange={(e) => {
-                    e.target.value
-                      ? setExpiresAt(
-                          moment()
-                            .add(e.target.value, "seconds")
-                            .format("YYYY-MM-DDTHH:mm")
-                        )
-                      : setExpiresAt("");
-                  }}
-                  fullWidth
-                  displayEmpty
-                >
-                  <MenuItem value="">
-                    <em>Preset Times</em>
-                  </MenuItem>
-                  {presetTimes.map(({ value, label }) => (
-                    <MenuItem key={label} value={value}>
-                      {label}
-                    </MenuItem>
-                  ))}
-                </Select>
+              <Grid item xs={12}>
+                {presetTimes.map(([amount, unit], index) => (
+                  <TimePickerButtons
+                    key={unit + index}
+                    amount={amount}
+                    unit={unit}
+                    expirationTimestamp={expiresAt}
+                    setExpirationTimestamp={(timestamp) => {
+                      setExpiresAt(
+                        moment(timestamp).format("YYYY-MM-DDTHH:mm")
+                      );
+                    }}
+                  />
+                ))}
               </Grid>
             </Grid>
             {/* REASON */}

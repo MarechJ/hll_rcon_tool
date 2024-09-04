@@ -1,53 +1,77 @@
 import {
   Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   Grid,
-  IconButton,
-  InputLabel,
   LinearProgress,
-  Paper,
-  Tooltip,
-  Typography,
-} from "@mui/material";
+} from "@material-ui/core";
 import React from "react";
-import { get, handle_http_errors, postData, showResponse } from "../../utils/fetchUtils";
-import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/Delete";
+import {
+  get,
+  handle_http_errors,
+  postData,
+  showResponse,
+} from "../../utils/fetchUtils";
 import BlacklistListTile from "./BlacklistListTile";
-import BlacklistListCreateDialog, { BlacklistListCreateButton } from "./BlacklistListCreateDialog";
-const SYNC_METHODS = {
-  kick_only: "Kick Only",
-  ban_on_connect: "Ban On Connect",
-  ban_immediately: "Ban Immediately",
-}
-const BlacklistLists = () => {
+import BlacklistListCreateDialog, {
+  BlacklistListCreateButton,
+} from "./BlacklistListCreateDialog";
+import { Link } from "react-router-dom";
 
+const BlacklistLists = ({ classes }) => {
   const [isLoading, setIsLoading] = React.useState(false);
   const [blacklists, setBlacklists] = React.useState([]);
   const [servers, setServers] = React.useState({});
-  
+  const [selectedBlacklist, setSelectedBlacklist] = React.useState(null);
   const [editDialogOpen, setEditDialogOpen] = React.useState(false);
-  const [editDialogInitialValues, setEditDialogInitialValues] = React.useState();
+  const [editDialogInitialValues, setEditDialogInitialValues] =
+    React.useState();
+
+  function handleCloseDeleteDialog() {
+    setSelectedBlacklist(null);
+  }
+
+  function handleDeleteClick(blacklist) {
+    setSelectedBlacklist(blacklist);
+  }
+
+  function handleBlacklistDelete() {
+    deleteBlacklist(selectedBlacklist);
+    handleCloseDeleteDialog();
+  }
 
   function loadServers() {
     return Promise.all([
       get("get_connection_info")
-        .then((response) => showResponse(response, "get_connection_info", false))
+        .then((response) =>
+          showResponse(response, "get_connection_info", false)
+        )
         .then((data) => {
           if (data.result) {
-            servers[data.result.server_number] = data.result.name;
+            setServers((prevState) => ({
+              ...prevState,
+              [data.result.server_number]: data.result.name,
+            }));
           }
         })
         .catch(handle_http_errors),
       get("get_server_list")
         .then((response) => showResponse(response, "get_server_list", false))
         .then((data) => {
-          data.result?.forEach(
-            (server) => {
-              servers[server.server_number] = server.name;
-            }
-          );
+          if (data?.result) {
+            setServers((prevState) => ({
+              ...prevState,
+              ...data.result.reduce((acc, server) => {
+                acc[server.server_number] = server.name;
+                return acc;
+              }, {}),
+            }));
+          }
         })
-        .catch(handle_http_errors)
+        .catch(handle_http_errors),
     ]);
   }
 
@@ -74,14 +98,14 @@ const BlacklistLists = () => {
       .catch(handle_http_errors)
       .then(loadBlacklists);
   }
-  
+
   function onEditBlacklist(blacklist) {
     setEditDialogInitialValues({
       id: blacklist.id,
       name: blacklist.name,
       servers: blacklist.servers,
-      syncMethod: blacklist.sync
-    })
+      syncMethod: blacklist.sync,
+    });
     setEditDialogOpen(true);
   }
 
@@ -100,7 +124,7 @@ const BlacklistLists = () => {
       .then(loadBlacklists);
   }
 
-  function onDeleteBlacklist(blacklist) {
+  function deleteBlacklist(blacklist) {
     postData(`${process.env.REACT_APP_API_URL}delete_blacklist`, {
       blacklist_id: blacklist.id,
     })
@@ -110,7 +134,7 @@ const BlacklistLists = () => {
       .catch(handle_http_errors)
       .then(loadBlacklists);
   }
-  
+
   React.useEffect(() => {
     setIsLoading(true);
     loadServers()
@@ -119,19 +143,24 @@ const BlacklistLists = () => {
   }, []);
 
   return (
-    (<React.Fragment>
+    <React.Fragment>
       <Grid container spacing={3} direction="column" justifyContent="center">
         <Grid item>
           {isLoading ? <LinearProgress color="secondary" /> : ""}
         </Grid>
         <Grid item container spacing={5} direction="column" alignItems="center">
           {blacklists.map((blacklist) => (
-            <Grid key={blacklist.id} item style={{width: "100%", maxWidth: 1600}}>
+            <Grid
+              key={blacklist.id}
+              item
+              style={{ width: "100%", maxWidth: 1600 }}
+            >
               <BlacklistListTile
+                classes={globalClasses}
                 servers={servers}
                 blacklist={blacklist}
                 onEdit={onEditBlacklist}
-                onDelete={onDeleteBlacklist}
+                onDelete={handleDeleteClick}
               />
             </Grid>
           ))}
@@ -146,13 +175,11 @@ const BlacklistLists = () => {
             </Grid>
             <Grid item>
               <Button
+                component={Link}
+                to="/blacklists"
                 variant="contained"
                 color="primary"
                 size="large"
-                onClick={(e) => {
-                  e.preventDefault();
-                  window.location.hash = "#/blacklists";
-                }}
               >
                 Back To Records
               </Button>
@@ -160,6 +187,7 @@ const BlacklistLists = () => {
           </Grid>
         </Grid>
       </Grid>
+      {/* CREATE DIALOG */}
       <BlacklistListCreateDialog
         open={editDialogOpen}
         setOpen={setEditDialogOpen}
@@ -167,8 +195,34 @@ const BlacklistLists = () => {
         onSubmit={onEditDialogSubmit}
         initialValues={editDialogInitialValues}
       />
-    </React.Fragment>)
+      {/* DELETE DIALOG */}
+      <Dialog
+        open={selectedBlacklist !== null}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">
+          {selectedBlacklist
+            ? `Delete blacklist "${selectedBlacklist?.name}"?`
+            : "Loading..."}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            Are you certain you want to permanently delete the blacklist and all
+            associated records?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDeleteDialog} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={handleBlacklistDelete} color="secondary" autoFocus>
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </React.Fragment>
   );
-}
+};
 
 export default BlacklistLists;

@@ -69,12 +69,11 @@ const BlacklistListTile = ({
             </IconButton>
           </Tooltip>
           <Tooltip title="Delete">
-            <IconButton
-              onClick={() => onDelete(blacklist)}
-              disabled={blacklist.id === 0}
-              size="large">
-              <DeleteIcon/>
-            </IconButton>
+            <span>
+              <IconButton onClick={() => onDelete(blacklist)} disabled={blacklist.id === 0}>
+                <DeleteIcon/>
+              </IconButton>
+            </span>
           </Tooltip>
         </Grid>
       </Grid>

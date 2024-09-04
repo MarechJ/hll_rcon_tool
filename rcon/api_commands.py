@@ -1,8 +1,9 @@
+import functools
 import inspect
 from collections import defaultdict
 from datetime import datetime, timedelta
 from logging import getLogger
-from typing import Any, Iterable, Literal, Optional, Sequence, Type
+from typing import Any, Dict, Iterable, Literal, Optional, Sequence, Type
 
 from rcon import blacklist, game_logs, maps, player_history
 from rcon.audit import ingame_mods, online_mods
@@ -20,7 +21,6 @@ from rcon.scoreboard import TimeWindowStats
 from rcon.settings import SERVER_INFO
 from rcon.types import (
     AdminUserType,
-    BlacklistRecordWithPlayerType,
     BlacklistSyncMethod,
     BlacklistType,
     BlacklistWithRecordsType,
@@ -77,6 +77,23 @@ PLAYER_ID = "player_id"
 
 CTL: Optional["RconAPI"] = None
 
+
+def parameter_aliases(alias_to_param: Dict[str, str]):
+    """Specify parameter aliases of a function. This might be useful to preserve backwards
+    compatibility or to handle parameters named after a Python reserved keyword.
+    
+    Takes a mapping of aliases to their parameter name."""
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            for alias, param in alias_to_param.items():
+                if alias in kwargs:
+                    kwargs[param] = kwargs.pop(alias)
+            return func(*args, **kwargs)
+        
+        wrapper._parameter_aliases = alias_to_param
+        return wrapper
+    return decorator
 
 def get_rcon_api(credentials: ServerInfoType | None = None) -> "RconAPI":
     """Return a initialized Rcon connection to the game server
@@ -561,6 +578,9 @@ class RconAPI(Rcon):
     def get_ingame_mods(self) -> list[AdminUserType]:
         return ingame_mods()
 
+    @parameter_aliases({
+        "from": "from_",
+    })
     def get_historical_logs(
         self,
         player_name: str | None = None,

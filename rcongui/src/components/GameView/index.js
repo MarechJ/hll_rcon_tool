@@ -544,8 +544,10 @@ const GameView = () => {
 
   async function handleBlacklistOpen(player) {
     const blacklists = await getBlacklists();
-    setBlacklists(blacklists);
-    setBlacklistDialogOpen(true)
+    if (blacklists) {
+      setBlacklists(blacklists);
+      setBlacklistDialogOpen(true)
+    }
   }
 
   function selectedPlayersToRows() {

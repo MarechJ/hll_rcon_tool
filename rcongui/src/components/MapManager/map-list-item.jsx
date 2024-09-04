@@ -4,7 +4,7 @@ import ListItem from "@mui/material/ListItem";
 import ListItemAvatar from "@mui/material/ListItemAvatar";
 import ListItemText from "@mui/material/ListItemText";
 import { ListItemSecondaryAction } from "@mui/material";
-import { MapAvatar, MapDetails } from "./map-details";
+import { MapAvatar, MapDescription } from "./map-details";
 import { styled } from '@mui/material/styles';
 
 const StyledListItem = styled(ListItem)(({
@@ -20,7 +20,7 @@ export function MapListItem({ mapLayer, primary, secondary, renderAction, ...pro
       </ListItemAvatar>
       <ListItemText
         primary={primary ?? mapLayer.map.pretty_name}
-        secondary={secondary ?? <MapDetails mapLayer={mapLayer} />}
+        secondary={secondary ?? <MapDescription mapLayer={mapLayer} />}
       />
       {renderAction && (
         <ListItemSecondaryAction>

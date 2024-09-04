@@ -34,11 +34,9 @@ const BlacklistRecordTile = ({
   onDelete,
 }) => {
   const [showAll, setShowAll] = React.useState(false);
-  const [isExpired, setIsExpired] = React.useState(!record.get("is_active"));
-  const [expiresAt, setExpiresAt] = React.useState(
-    record.get("expires_at") ? moment(record.get("expires_at")) : null
-  );
 
+  const expiresAt = record.get("expires_at") ? moment(record.get("expires_at")) : null
+  const isExpired = !record.get("is_active")
   const player = record.get("player");
   const playerNames = player.get("names", List());
   const firstName = playerNames.get(0) ? playerNames.get(0).get("name") : undefined;
@@ -237,8 +235,6 @@ const BlacklistRecordTile = ({
           isExpired={isExpired}
           onEdit={() => onEdit(record)}
           onExpire={() => {
-            setIsExpired(true);
-            setExpiresAt(now);
             onExpire(record);
           }}
           onDelete={() => onDelete(record)}
@@ -279,8 +275,8 @@ const BlacklistRecordGrid = ({
         .then((response) =>
           showResponse(response, `Record ${recordId} was edited`, true)
         )
+        .then(result => result && !result.failed && onRefresh())
         .catch(handle_http_errors)
-        .then(onRefresh);
     }
 
     function onExpireRecord(record) {
@@ -291,8 +287,8 @@ const BlacklistRecordGrid = ({
         .then((response) =>
           showResponse(response, `Record ${record.get("id")} was edited`, true)
         )
+        .then(result => result && !result.failed && onRefresh())
         .catch(handle_http_errors)
-        .then(onRefresh);
     }
 
     function onDeleteRecord(record) {
@@ -302,8 +298,8 @@ const BlacklistRecordGrid = ({
         .then((response) =>
           showResponse(response, `Record ${record.get("id")} was deleted`, true)
         )
+        .then(result => result && !result.failed && onRefresh())
         .catch(handle_http_errors)
-        .then(onRefresh);
     }
 
     const size = {
