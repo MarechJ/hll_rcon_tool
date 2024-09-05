@@ -1,16 +1,16 @@
 import * as React from "react";
 import DraggableList from "./map-rotation-list";
-import { reorder } from "../helpers";
+import { reorder } from "../../../../components/MapManager/helpers";
 import {
   changeMap,
   get,
   handle_http_errors,
   postData,
   showResponse,
-} from "../../../utils/fetchUtils";
+} from "../../../../utils/fetchUtils";
 import { Box, Button, CircularProgress } from "@mui/material";
 import { Alert } from '@mui/material';
-import { MapAutocomplete } from "../map-autocomplete";
+import { MapAutocomplete } from "../../../../components/MapManager/map-autocomplete";
 import Grid from "@mui/material/Unstable_Grid2";
 
 const Title = styled(Typography)(({ theme }) => ({

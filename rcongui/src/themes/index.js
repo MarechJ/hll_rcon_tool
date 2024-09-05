@@ -13,9 +13,9 @@ import _HLL_No_Background from './hllNoBg';
 import _GreyBlueDark from './greyBlueDark';
 import _CamoLight from './camoLight';
 import _CamoDark from './camoDark';
-import { createTheme, adaptV4Theme } from '@mui/material/styles';
+import { createTheme } from '@mui/material/styles';
 
-const withOtherStyles = (theme) => createTheme(adaptV4Theme(theme, {
+const withOtherStyles = (theme) => createTheme(theme, {
   breakpoints: {
     values: {
       xs: 0,
@@ -61,7 +61,7 @@ const withOtherStyles = (theme) => createTheme(adaptV4Theme(theme, {
       ]
     }
   }
-}))
+})
 
 export default {
   CamoDark: withOtherStyles(_CamoDark),

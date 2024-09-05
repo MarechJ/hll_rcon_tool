@@ -9,17 +9,17 @@ import {
 } from "@mui/material";
 import Grid from "@mui/material/Unstable_Grid2";
 import React from "react";
-import { get, handle_http_errors, postData, showResponse } from "../../utils/fetchUtils";
-import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/Delete";
-import BlacklistListTile from "./BlacklistListTile";
-import BlacklistListCreateDialog, { BlacklistListCreateButton } from "./BlacklistListCreateDialog";
-const SYNC_METHODS = {
-  kick_only: "Kick Only",
-  ban_on_connect: "Ban On Connect",
-  ban_immediately: "Ban Immediately",
-}
-const BlacklistLists = () => {
+import {
+  get,
+  handle_http_errors,
+  postData,
+  showResponse,
+} from "../../../utils/fetchUtils";
+import BlacklistListTile from "../../../components/Blacklist/BlacklistListTile";
+import BlacklistListCreateDialog, {
+  BlacklistListCreateButton,
+} from "../../../components/Blacklist/BlacklistListCreateDialog";
+import { Link } from "react-router-dom";
 
 const BlacklistLists = () => {
   const [isLoading, setIsLoading] = React.useState(false);

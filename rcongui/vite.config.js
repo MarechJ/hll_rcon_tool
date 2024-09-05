@@ -16,7 +16,7 @@ export default defineConfig(({command, mode}) => {
       proxy: {
         '/api': {
           // Change to your backend endpoint.`RCONWEB_PORT` in main .env file.
-          target: 'http://localhost:8011',
+          target: 'http://localhost:8000',
           changeOrigin: true,
         },
       }
@@ -26,7 +26,7 @@ export default defineConfig(({command, mode}) => {
       proxy: {
         '/api': {
           // Change to your backend endpoint.`RCONWEB_PORT` in main .env file.
-          target: 'http://localhost:8011',
+          target: 'http://localhost:8000',
           changeOrigin: true,
         },
       }

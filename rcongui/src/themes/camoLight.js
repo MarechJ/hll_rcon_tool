@@ -1,6 +1,6 @@
-import { createTheme, adaptV4Theme } from '@mui/material/styles';
+import { createTheme } from '@mui/material/styles';
 
-const CamoLight = createTheme(adaptV4Theme({
+const CamoLight = createTheme({
   palette: {
     mode: 'light',
     primary: {
@@ -23,6 +23,6 @@ const CamoLight = createTheme(adaptV4Theme({
       disabled: 'rgba(0, 0, 0, 0.5)',
     },
   },
-}));
+});
 
 export default CamoLight;

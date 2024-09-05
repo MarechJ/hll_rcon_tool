@@ -15,12 +15,12 @@ import {
   changeGameLayout,
   getMapObjectives,
   getServerStatus,
-} from "../../../utils/fetchUtils";
+} from "../../../../utils/fetchUtils";
 import {
   generateObjectivesGrid,
   getTacMapImageSrc,
   unifiedGamemodeName,
-} from "../helpers";
+} from "../../../../components/MapManager/helpers";
 import { Alert, AlertTitle, Skeleton } from "@mui/material";
 import clsx from "clsx";
 import { styled } from "@mui/material/styles";

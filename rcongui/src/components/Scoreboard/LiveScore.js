@@ -13,74 +13,9 @@ import React from "react";
 import { get, handle_http_errors, showResponse } from "../../utils/fetchUtils";
 import { List as iList, Map, fromJS } from "immutable";
 import moment from "moment";
-import useMediaQuery from "@mui/material/useMediaQuery";
 import Scores from "./Scores";
-import { Link as RouterLink } from "react-router-dom";
 
-const LiveSessionScore = () => (
-  <LiveScore
-    endpoint="get_live_scoreboard"
-    title="LIVE SESSIONS"
-    explainText={
-      <React.Fragment>
-        Only ingame players are shown. Stats are reset on disconnection, not per
-        game, check the{" "}
-        <Link
-          variant="button"
-          color="inherit"
-          component={RouterLink}
-          to="/livegamescore"
-        >
-          Live Game
-        </Link>{" "}
-        or{" "}
-        <Link
-          variant="button"
-          color="inherit"
-          component={RouterLink}
-          to="/gamescoreboard"
-        >
-          Past games
-        </Link>{" "}
-        for historical data. Real deaths only are counted (e.g. not redeploys /
-        revives)
-      </React.Fragment>
-    }
-  />
-);
-
-const LiveGameScore = () => (
-  <LiveScore
-    endpoint="get_live_game_stats"
-    title="CURRENT GAME"
-    explainText={
-      <React.Fragment>
-        All players that are or were in the game are shown, check the{" "}
-        <Link
-          variant="button"
-          color="inherit"
-          component={RouterLink}
-          to="/livescore"
-        >
-          Live Sessions
-        </Link>{" "}
-        for live stats accross several games or{" "}
-        <Link
-          variant="button"
-          color="inherit"
-          component={RouterLink}
-          to="/gamescoreboard"
-        >
-          Past games
-        </Link>{" "}
-        for historical data. Real deaths only are counted (e.g. not redeploys /
-        revives)
-      </React.Fragment>
-    }
-  />
-);
-
-const LiveScore = ({ endpoint, explainText, title }) => {
+export const LiveScore = ({ endpoint, explainText, title }) => {
   const [stats, setStats] = React.useState(new iList());
   const [serverState, setServerState] = React.useState(new Map());
   const [isLoading, setIsLoading] = React.useState(true);
@@ -201,7 +136,7 @@ const LiveScore = ({ endpoint, explainText, title }) => {
   </>);
 };
 
-const LiveHeader = ({
+export const LiveHeader = ({
   serverState,
   started,
   lastRefresh,
@@ -287,5 +222,3 @@ const LiveHeader = ({
     </AppBar>
   );
 };
-
-export { LiveGameScore, LiveSessionScore };

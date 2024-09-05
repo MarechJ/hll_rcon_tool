@@ -1,6 +1,6 @@
-import { createTheme, adaptV4Theme } from '@mui/material/styles';
+import { createTheme } from '@mui/material/styles';
 
-const hllNoBg = createTheme(adaptV4Theme({
+const hllNoBg = createTheme({
   palette: {
     primary: {
       light: '#484848',
@@ -31,6 +31,6 @@ const hllNoBg = createTheme(adaptV4Theme({
       },
     },
   },
-}));
+});
 
 export default hllNoBg;
