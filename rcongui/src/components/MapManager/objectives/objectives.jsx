@@ -8,18 +8,22 @@ import {
   FormGroup,
   FormLabel,
 } from "@mui/material";
-import createStyles from '@mui/styles/createStyles';
-import makeStyles from '@mui/styles/makeStyles';
+import createStyles from "@mui/styles/createStyles";
+import makeStyles from "@mui/styles/makeStyles";
 import React from "react";
-import { changeGameLayout, getMapObjectives, getServerStatus } from "../../../utils/fetchUtils";
+import {
+  changeGameLayout,
+  getMapObjectives,
+  getServerStatus,
+} from "../../../utils/fetchUtils";
 import {
   generateObjectivesGrid,
   getTacMapImageSrc,
   unifiedGamemodeName,
 } from "../helpers";
-import { Alert, AlertTitle, Skeleton } from '@mui/material';
+import { Alert, AlertTitle, Skeleton } from "@mui/material";
 import clsx from "clsx";
-import { styled } from "@mui/material/styles"
+import { styled } from "@mui/material/styles";
 
 const UPDATE_INTERVAL = 5 * 1000;
 const CONFIRM_DELAY = 10 * 1000;
@@ -39,20 +43,20 @@ const reduceToInts = (arr) =>
     return acc.concat(i === -1 ? null : i - 1);
   }, []);
 
-const Container = styled('div')(({ theme }) => ({
+const Container = styled("div")(({ theme }) => ({
   display: "flex",
   flexDirection: "column",
   gap: theme.spacing(1),
 }));
 
-const ActionPanel = styled('div')(({ theme }) => ({
+const ActionPanel = styled("div")(({ theme }) => ({
   display: "flex",
   flexDirection: "row",
   gap: theme.spacing(1),
   alignItems: "center",
 }));
 
-const MapWrapper = styled('div')({
+const MapWrapper = styled("div")({
   position: "absolute",
   top: 0,
   left: 0,
@@ -60,13 +64,13 @@ const MapWrapper = styled('div')({
   height: "100%",
 });
 
-const MapImg = styled('img')({
+const MapImg = styled("img")({
   width: "100%",
   height: "100%",
   touchAction: "none",
 });
 
-const ObjectivesGrid = styled('div')({
+const ObjectivesGrid = styled("div")({
   position: "relative",
   display: "grid",
   gridTemplateColumns: "repeat(5, 1fr)",
@@ -75,7 +79,7 @@ const ObjectivesGrid = styled('div')({
   height: "100%",
 });
 
-const ControlGrid = styled('div')(({ theme }) => ({
+const ControlGrid = styled("div")(({ theme }) => ({
   position: "relative",
   display: "grid",
   gridTemplateColumns: "repeat(5, 1fr)",
@@ -85,58 +89,66 @@ const ControlGrid = styled('div')(({ theme }) => ({
   height: "100%",
 }));
 
-const ObjectivesContainer = styled('div')({
+const ObjectivesContainer = styled("div")({
   position: "relative",
   maxWidth: 650,
   minWidth: 280,
   aspectRatio: "1 / 1",
 });
 
-const ControlContainer = styled('div')(({ theme }) => ({
+const ControlContainer = styled("div")(({ theme }) => ({
   width: "fit-content",
   display: "flex",
   flexDirection: "column",
   gap: theme.spacing(2),
 }));
 
-const ControlButton = styled('button')(({ theme, state }) => ({
-  border: "4px ridge black",
-  minWidth: 0,
-  padding: 0,
-  borderRadius: 0,
-  opacity: 0.35,
-  "&:hover": {
-    borderStyle: "inset",
-  },
-  ...(state === true && {
-    background: theme.palette.success.main,
-    borderStyle: "inset",
+const ControlButton = styled("button")(({ theme, state }) => 
+  ({
+    border: "4px ridge black",
+    minWidth: 0,
+    padding: 0,
+    borderRadius: 0,
+    opacity: 0.35,
+    cursor: "pointer",
     "&:hover": {
-      background: theme.palette.success.dark,
+      borderStyle: "inset",
     },
-  }),
-  ...(state === false && {
-    backgroundImage:
-      "repeating-linear-gradient(45deg, #ff7700 0, #ff7700 2px, transparent 0, transparent 50%);",
-    backgroundSize: "10px 10px",
-  }),
-  ...(state === null && {
-    backgroundImage:
-      "repeating-linear-gradient(45deg, #000 0, #000 2px, transparent 0, transparent 50%);",
-    backgroundSize: "20px 20px",
-  }),
-}));
-
+    "&:disabled": {
+      backgroundImage:
+        "repeating-linear-gradient(45deg, #ff7700 0, #ff7700 2px, transparent 0, transparent 50%)",
+      backgroundSize: "10px 10px",
+      cursor: "no-drop",
+      "&:hover": {
+        borderStyle: "ridge",
+      },
+    },
+    ...(state === true && {
+      background: theme.palette.success.main,
+      borderStyle: "inset",
+      "&:hover": {
+        background: theme.palette.success.dark,
+      },
+    }),
+    ...(state === null && {
+      backgroundImage:
+        "repeating-linear-gradient(45deg, #000 0, #000 2px, transparent 0, transparent 50%)",
+      backgroundSize: "20px 20px",
+      cursor: "no-drop",
+    }),
+  })
+);
 
 function MapObjectives() {
   const [currentMap, setCurrentMap] = React.useState(null);
   const [randomConstraint, setRandomConstraint] = React.useState({
-    "1": false,
-    "2": false,
+    1: false,
+    2: false,
   });
   const [objectives, setObjectives] = React.useState(null);
   const [isSaving, setIsSaving] = React.useState(false);
   const statusIntervalRef = React.useRef(null);
+  const savingTimeoutRef = React.useRef(null);
 
   const updateServerStatus = async () => {
     const status = await getServerStatus();
@@ -192,8 +204,8 @@ function MapObjectives() {
   };
 
   const handleResetLayoutClick = () => {
-    setObjectives(generateObjectivesGrid(currentMap.map.orientation))
-  }
+    setObjectives(generateObjectivesGrid(currentMap.map.orientation));
+  };
 
   const handleChangeLayoutClick = async () => {
     setIsSaving(true);
@@ -201,10 +213,13 @@ function MapObjectives() {
       objectives[1][0] !== null ? flip(objectives) : objectives
     );
 
-    const constraintValue = Object.entries(randomConstraint).reduce((acc, [value, used]) => {
-      if (used) return acc + Number(value);
-      return acc;
-    }, 0)
+    const constraintValue = Object.entries(randomConstraint).reduce(
+      (acc, [value, used]) => {
+        if (used) return acc + Number(value);
+        return acc;
+      },
+      0
+    );
 
     const newLayout = await changeGameLayout({
       objectives: chosenObjectives,
@@ -214,32 +229,40 @@ function MapObjectives() {
     const mapObjectives = await getMapObjectives();
     if (mapObjectives && newLayout) {
       // generate clear grid
-      const finalObjectives = generateObjectivesGrid(currentMap.map.orientation);
+      const finalObjectives = generateObjectivesGrid(
+        currentMap.map.orientation
+      );
       const isHorizontal = currentMap.map.orientation === "horizontal";
       // update the grid with the new objectives
       newLayout.forEach((objective, rowIndex) => {
-        const row = rowIndex
-        const col = mapObjectives[rowIndex].indexOf(objective)
+        const row = rowIndex;
+        const col = mapObjectives[rowIndex].indexOf(objective);
         if (isHorizontal) {
           finalObjectives[col + 1][row] = true;
         } else {
           finalObjectives[row][col + 1] = true;
         }
-      })
+      });
       setObjectives(finalObjectives);
     }
   };
 
   const handleConstraintChange = (event) => {
-    setRandomConstraint({ ...randomConstraint, [event.target.name]: event.target.checked });
+    setRandomConstraint({
+      ...randomConstraint,
+      [event.target.name]: event.target.checked,
+    });
   };
 
   React.useEffect(() => {
     if (isSaving) {
-      savingTimeoutRef.current = setTimeout(() => setIsSaving(false), CONFIRM_DELAY)
+      savingTimeoutRef.current = setTimeout(
+        () => setIsSaving(false),
+        CONFIRM_DELAY
+      );
     }
-    return () => clearTimeout(savingTimeoutRef.current)
-  }, [isSaving])
+    return () => clearTimeout(savingTimeoutRef.current);
+  }, [isSaving]);
 
   React.useEffect(() => {
     updateServerStatus();
@@ -258,24 +281,25 @@ function MapObjectives() {
 
   if (currentMap && unifiedGamemodeName(currentMap.game_mode) === "skirmish") {
     return (
-      (<Container>
+      <Container>
         <Alert severity="error">
-            <AlertTitle>Error</AlertTitle>
-            <strong>{currentMap.pretty_name}</strong> - Skirmish mode cannot have the game layout changed!
+          <AlertTitle>Error</AlertTitle>
+          <strong>{currentMap.pretty_name}</strong> - Skirmish mode cannot have
+          the game layout changed!
         </Alert>
         <Skeleton variant="rectangular" height={650} />
         <Skeleton variant="rectangular" height={250} />
-      </Container>)
+      </Container>
     );
   }
 
   if (!objectives) {
     return (
-      (<Container>
+      <Container>
         <Skeleton variant="rectangular" height={30} />
         <Skeleton variant="rectangular" height={650} />
         <Skeleton variant="rectangular" height={250} />
-      </Container>)
+      </Container>
     );
   }
 
@@ -327,17 +351,30 @@ function MapObjectives() {
       )}
       <Box>
         <Alert severity="info">
-          If you do not select one or more objectives, they will be chosen randomly based on the following criteria:
+          If you do not select one or more objectives, they will be chosen
+          randomly based on the following criteria:
         </Alert>
         <FormControl component="fieldset">
           <FormLabel component="legend">Optional criteria</FormLabel>
           <FormGroup>
             <FormControlLabel
-              control={<Checkbox checked={randomConstraint["1"]} name={"1"} onChange={handleConstraintChange} />}
+              control={
+                <Checkbox
+                  checked={randomConstraint["1"]}
+                  name={"1"}
+                  onChange={handleConstraintChange}
+                />
+              }
               label="Objectives must be adjacent"
             />
             <FormControlLabel
-              control={<Checkbox checked={randomConstraint["2"]} name={"2"} onChange={handleConstraintChange} />}
+              control={
+                <Checkbox
+                  checked={randomConstraint["2"]}
+                  name={"2"}
+                  onChange={handleConstraintChange}
+                />
+              }
               label="Objectives must not be aligned in a straight line"
             />
           </FormGroup>

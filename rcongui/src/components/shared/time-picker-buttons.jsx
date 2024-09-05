@@ -3,7 +3,7 @@ import {
   Button,
   ButtonGroup,
 } from "@mui/material";
-import moment from "moment";
+import dayjs from "dayjs";
 
 export const TimePickerButtons = ({
   amount,
@@ -13,8 +13,9 @@ export const TimePickerButtons = ({
 }) => {
 
   const adjustTimestamp = (amount, unit) => {
-    const after = moment(expirationTimestamp).add(amount, unit);
-    const now = moment();
+    const after = dayjs(expirationTimestamp).add(amount, unit);
+    const now = dayjs();
+    console.log({expirationTimestamp, after, now})
 
     if (after.isBefore(now)) {
       setExpirationTimestamp(now.format())
@@ -25,7 +26,7 @@ export const TimePickerButtons = ({
   };
 
   const setTimestamp = (amount, unit) => {
-    setExpirationTimestamp(moment().add(amount, unit).format());
+    setExpirationTimestamp(dayjs().add(amount, unit).format());
   };
 
   return (

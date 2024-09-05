@@ -16,9 +16,13 @@ export function MapAutocomplete({ options, onChange, ...props }) {
       renderInput={(params) => (
         <TextField {...params} variant="outlined" label="Select maps" />
       )}
-      renderOption={(option) => (
-        <MapDetail mapLayer={option} />
-      )}
+      renderOption={(props, option) => {
+        return (
+          <li {...props}>
+            <MapDetail mapLayer={option} />
+          </li>
+        );
+      }}
       {...props}
     />
   );
