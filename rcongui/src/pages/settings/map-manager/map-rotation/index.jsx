@@ -12,13 +12,16 @@ import { Box, Button, CircularProgress } from "@mui/material";
 import { Alert } from '@mui/material';
 import { MapAutocomplete } from "../../../../components/MapManager/map-autocomplete";
 import Grid from "@mui/material/Unstable_Grid2";
+import { useOutletContext } from "react-router-dom";
 
-const Title = styled(Typography)(({ theme }) => ({
-  marginTop: theme.spacing(2),
-  marginBottom: theme.spacing(2),
-  borderBottom: "1px solid",
-  borderColor: theme.palette.divider,
-}));
+const MapRotation = () => {
+  const { maps } = useOutletContext();
+  const [currentRotation, setCurrentRotation] = React.useState([]);
+  const [rotation, setRotation] = React.useState([]);
+  const [mapsToAdd, setMapsToAdd] = React.useState([]);
+  const [rotationIsSaving, setRotationIsSaving] = React.useState(false);
+  const [voteMapConfig, setVoteMapConfig] = React.useState({});
+  const [lastRefresh, setLastRefresh] = React.useState(null);
 
 function MapRotationConfig() {
 

@@ -58,5 +58,5 @@ export const generateObjectivesGrid = (orientation) => {
     });
 };
 
-export const getMapLayerImageSrc = (mapLayer) => `maps/icons/${mapLayer.image_name}`;
-export const getTacMapImageSrc = (mapLayer) => `tac-maps/${mapLayer.map.id}.webp`;
+export const getMapLayerImageSrc = (mapLayer) => `/maps/icons/${mapLayer.image_name}`;
+export const getTacMapImageSrc = (mapLayer) => `/tac-maps/${mapLayer.map.id}.webp`;

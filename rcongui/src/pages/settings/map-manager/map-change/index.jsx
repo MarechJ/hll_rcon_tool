@@ -8,6 +8,7 @@ import { MapListItem } from "../../../../components/MapManager/map-list-item";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import { unifiedGamemodeName } from "../../../../components/MapManager/helpers";
 import { styled } from '@mui/material/styles';
+import { useOutletContext } from "react-router-dom";
 
 const Main = styled('div')(({ theme }) => ({
   display: "flex",
@@ -32,7 +33,8 @@ const Maps = styled(List)(({ theme }) => ({
 
 
 
-function MapChange({ maps }) {
+function MapChange() {
+  const { maps } = useOutletContext();
   const [nameFilter, setNameFilter] = React.useState("");
   const [modeFilters, setModeFilters] = React.useState({
     warfare: true,

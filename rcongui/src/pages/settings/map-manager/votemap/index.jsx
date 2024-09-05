@@ -26,8 +26,8 @@ import {
   resetVotemapWhitelist,
   setVotemapWhitelist,
   updateVotemapConfig,
-} from "../../../utils/fetchUtils";
-import Padlock from "../../shared/padlock";
+} from "../../../../utils/fetchUtils";
+import Padlock from "../../../../components/shared/padlock";
 import { VoteStatus } from "./vote-status";
 import {
   defaultMapOptions,
@@ -38,9 +38,10 @@ import {
 import { isEmpty, isEqual } from "lodash";
 import { Alert } from '@mui/material';
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import { MapAutocomplete } from "../map-autocomplete";
-import { MapListItem } from "../map-list-item";
+import { MapAutocomplete } from "../../../../components/MapManager/map-autocomplete";
+import { MapListItem } from "../../../../components/MapManager/map-list-item";
 import DeleteIcon from "@mui/icons-material/Delete";
+import { useOutletContext } from "react-router-dom";
 
 const Messages = styled('div')(({ theme }) => ({
   maxWidth: theme.breakpoints.values.md,
@@ -65,7 +66,8 @@ const NumberFields = styled('div')(({ theme }) => ({
 
 const UPDATE_INTERVAL = 15 * 1000;
 
-const VoteMapConfig = ({ maps }) => {
+const VoteMapConfig = () => {
+  const { maps } = useOutletContext();
   const [_config, setConfig] = React.useState({});
   const [configChanges, setConfigChanges] = React.useState({});
   const [whitelist, setWhitelist] = React.useState([]);

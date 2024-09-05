@@ -2,13 +2,9 @@ import React, { useState, useEffect } from "react";
 import { get, postData, showResponse } from "../../utils/fetchUtils";
 import Editor from "@monaco-editor/react";
 import { Button } from "@mui/material";
-import { withRouter } from "react-router";
 import Grid from "@mui/material/Unstable_Grid2";
 import { CopyBlock, dracula } from "react-code-blocks";
 import { toast } from "react-toastify";
-
-const endpointToNames = new Map();
-endpointToNames.set("get_audit_discord_webhooks_config", "Audit Webhooks");
 
 const UserSetting = ({
   description,
@@ -17,14 +13,14 @@ const UserSetting = ({
   validateEndpoint,
   describeEndpoint,
   notes,
+  data,
 }) => {
-  const [data, setData] = useState("");
   const [errors, setErrors] = useState([]);
   const [schema, setSchema] = useState("");
 
-  useEffect(() => {
-    getData(getEndpoint);
-  }, [getEndpoint]);
+  // useEffect(() => {
+  //   getData(getEndpoint);
+  // }, [getEndpoint]);
 
   useEffect(() => {
     get(describeEndpoint)
@@ -32,13 +28,12 @@ const UserSetting = ({
       .then((res) => setSchema(JSON.stringify(res?.result, null, 2)));
   }, [describeEndpoint]);
 
-  const getData = (endpoint) => {
-    setErrors([]);
-    console.log(`fetching data from ${endpoint}`);
-    get(endpoint)
-      .then((res) => showResponse(res, endpoint, true))
-      .then((res) => setData(JSON.stringify(res?.result, null, 2)));
-  };
+  // const getData = (endpoint) => {
+  //   setErrors([]);
+  //   get(endpoint)
+  //     .then((res) => showResponse(res, endpoint, true))
+  //     .then((res) => setData(JSON.stringify(res?.result, null, 2)));
+  // };
 
   const sendData = (endpoint) => {
     setErrors([]);
@@ -64,7 +59,7 @@ const UserSetting = ({
         <h1>{description}</h1>
       </Grid>
       <Grid xs={12}>
-        <Button onClick={() => getData(getEndpoint)}>Refresh</Button>
+        {/* <Button onClick={() => getData(getEndpoint)}>Refresh</Button> */}
         <Button onClick={() => sendData(validateEndpoint)}>Validate</Button>
         <Button onClick={() => sendData(setEndpoint)}>Save</Button>
       </Grid>
@@ -81,7 +76,7 @@ const UserSetting = ({
           height="50vh"
           defaultLanguage="json"
           value={data}
-          onChange={setData}
+          // onChange={setData}
           defaultValue={""}
           theme="vs-dark"
         />
@@ -115,7 +110,7 @@ const UserSetting = ({
         })}
       </Grid>
       <Grid xs={12}>
-        <Button onClick={() => getData(getEndpoint)}>Refresh</Button>
+        {/* <Button onClick={() => getData(getEndpoint)}>Refresh</Button> */}
         <Button onClick={() => sendData(validateEndpoint)}>Validate</Button>
         <Button onClick={() => sendData(setEndpoint)}>Save</Button>
       </Grid>
@@ -135,4 +130,4 @@ const UserSetting = ({
   </>);
 };
 
-export default withRouter(UserSetting);
+export default UserSetting;

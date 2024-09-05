@@ -4,11 +4,11 @@ export const navMenus = [
     links: [
       {
         name: "Live",
-        to: "/",
+        to: "views/live",
       },
       {
-        name: "Game",
-        to: "/gameview",
+        name: "Team",
+        to: "views/team",
       },
     ],
   },
@@ -17,23 +17,19 @@ export const navMenus = [
     links: [
       {
         name: "Players",
-        to: "/history",
+        to: "records/players",
       },
       {
         name: "Blacklist",
-        to: "/blacklists",
+        to: "records/blacklists",
       },
       {
-        name: "Logs",
-        to: "/logs",
+        name: "Game Logs",
+        to: "records/game-logs",
       },
       {
         name: "Audit Logs",
-        to: "/auditlogs",
-      },
-      {
-        name: "Combined",
-        to: "/combined_history",
+        to: "records/audit-logs",
       },
     ],
   },
@@ -50,55 +46,55 @@ export const navMenus = [
       },
       {
         name: "Audit Webhooks",
-        to: "/settings/audit-webhooks",
+        to: "/settings/webhooks/audit",
       },
       {
         name: "Admin Ping Webhooks",
-        to: "/settings/admin-webhooks",
+        to: "/settings/webhooks/admin",
       },
       {
         name: "Watchlist Webhooks",
-        to: "/settings/watchlist-webhooks",
+        to: "/settings/webhooks/watchlist",
       },
       {
         name: "Camera Webhooks",
-        to: "/settings/camera-webhooks",
+        to: "/settings/webhooks/camera",
       },
       {
         name: "Chat Webhooks",
-        to: "/settings/chat-webhooks",
+        to: "/settings/webhooks/chat",
       },
       {
         name: "Kill/TK Webhooks",
-        to: "/settings/kill-webhooks",
+        to: "/settings/webhooks/kills",
       },
       {
         name: "Level Auto Mod",
-        to: "/settings/automod-level",
+        to: "/settings/automods/level",
       },
       {
         name: "No Leader Auto Mod",
-        to: "/settings/automod-no-leader",
+        to: "/settings/automods/no-leader",
       },
       {
         name: "Seeding Auto Mod",
-        to: "/settings/automod-seeding",
+        to: "/settings/automods/seeding",
       },
       {
         name: "No Solo Tank Auto Mod",
-        to: "/settings/automod-solo-tank",
+        to: "/settings/automods/no-solo-tank",
       },
       {
         name: "RCON Game Server Connection",
-        to: "/settings/rcon-gameserver",
+        to: "/settings/others/game-server",
       },
       {
         name: "CRCON Settings",
-        to: "/settings/rcon-server",
+        to: "/settings/others/crcon",
       },
       {
         name: "Chat Commands",
-        to: "/settings/chat-commands",
+        to: "/settings/others/chat-commands",
       },
       {
         name: "RCon Chat Commands",
@@ -106,39 +102,39 @@ export const navMenus = [
       },
       {
         name: "Scorebot",
-        to: "/settings/scorebot",
+        to: "/settings/others/scorebot",
       },
       {
         name: "Steam API",
-        to: "/settings/steam",
+        to: "/settings/others/steam",
       },
       {
         name: "VAC/Game Bans",
-        to: "/settings/vac-gamebans",
+        to: "/settings/others/vac-bans",
       },
       {
         name: "TK Ban On Connect",
-        to: "/settings/tk-ban",
+        to: "/settings/others/tk-bans",
       },
       {
         name: "Name Kicks",
-        to: "/settings/name-kicks",
+        to: "/settings/others/name-kicks",
       },
       {
         name: "Log Line Webhooks",
-        to: "/settings/log-lines",
+        to: "/settings/webhooks/log-line",
       },
       {
         name: "Expired VIP",
-        to: "/settings/expired-vip",
+        to: "/settings/others/expired-vip",
       },
       {
         name: "GTX Server Name Change",
-        to: "/settings/gtx-server-name-change",
+        to: "/settings/others/gtx-server",
       },
       {
         name: "Log Stream",
-        to: "/settings/log-stream",
+        to: "/settings/others/log-stream",
       },
       {
         name: "Seed VIP",
@@ -151,15 +147,15 @@ export const navMenus = [
     links: [
       {
         name: "Live Sessions",
-        to: "/livescore",
+        to: "stats/live-sessions",
       },
       {
         name: "Live Game",
-        to: "/livegamescore",
+        to: "stats/live-game",
       },
       {
         name: "Games",
-        to: "/gamescoreboard",
+        to: "stats/games",
       },
     ],
   },

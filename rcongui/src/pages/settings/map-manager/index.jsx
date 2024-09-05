@@ -1,13 +1,13 @@
 import React from "react";
 import { Grid, Tab, Tabs, useTheme, useMediaQuery, Container, Box } from "@mui/material";
 import makeStyles from '@mui/styles/makeStyles';
-import { Link, Switch, Route } from "react-router-dom";
+import { Link, Outlet, Route, useLocation } from "react-router-dom";
 import VoteMapConfig from "./votemap/index.jsx";
 import MapRotationConfig from "./map-rotation";
 import MapChange from "./map-change";
 import MapObjectives from "./objectives";
-import { MapState } from "./map-state.jsx";
-import { get, getGameState } from "../../utils/fetchUtils.js";
+import { MapState } from "../../../components/MapManager/map-state";
+import { get, getGameState } from "../../../utils/fetchUtils.js";
 
 const tabs = {
   change: 0,
@@ -36,14 +36,19 @@ const useStyles = makeStyles((theme) => ({
 
 const UPDATE_INTERVAL = 60 * 1000;
 
-export function MapManager({ match }) {
+function MapManager({ match }) {
   const theme = useTheme();
   const classes = useStyles();
   const isMdScreen = useMediaQuery(theme.breakpoints.up("md"));
   const [gameState, setGameState] = React.useState(null);
   const [maps, setMaps] = React.useState([]);
   const statusIntervalRef = React.useRef(null);
-  let location = match.params.path;
+  
+  const pathRoot = '/settings/maps';
+
+  const location = useLocation();
+
+  const currentTab = location?.pathname ?? '';
 
   const updateGameState = async () => {
     const state = await getGameState();
@@ -75,37 +80,17 @@ export function MapManager({ match }) {
           <Tabs
             orientation={isMdScreen ? "vertical" : "horizontal"}
             variant={!isMdScreen ? "scrollable" : "fullWidth"}
-            value={tabs[location]}
+            value={currentTab}
             aria-label="nav tabs example"
-            scrollButtons
-            allowScrollButtonsMobile>
-            <LinkTab label="Map Change" to="change" {...a11yProps(0)} />
-            <LinkTab label="Rotation" to="rotation" {...a11yProps(1)} />
-            <LinkTab label="Objectives" to="objectives" {...a11yProps(2)} />
-            <LinkTab label="Votemap" to="votemap" {...a11yProps(3)} />
+            className={classes.tabs}
+          >
+            <LinkTab label="Map Change" to={pathRoot + "/change"} {...a11yProps(0)} />
+            <LinkTab label="Rotation" to={pathRoot + "/rotation"} {...a11yProps(1)} />
+            <LinkTab label="Objectives" to={pathRoot + "/objectives"} {...a11yProps(2)} />
+            <LinkTab label="Votemap" to={pathRoot + "/votemap"} {...a11yProps(3)} />
           </Tabs>
         </Grid>
-        <Grid xs={12} md={10}>
-          <Box className={classes.main}>
-            <MapState gameState={gameState} />
-            <Box className={classes.page}>
-              <Switch>
-                <TabPanel path={"/settings/maps/change"} index={0}>
-                  <MapChange maps={maps} />
-                </TabPanel>
-                <TabPanel path={"/settings/maps/rotation"} index={1}>
-                  <MapRotationConfig maps={maps} />
-                </TabPanel>
-                <TabPanel path={"/settings/maps/objectives"} index={2}>
-                  <MapObjectives />
-                </TabPanel>
-                <TabPanel path={"/settings/maps/votemap"} index={3}>
-                  <VoteMapConfig maps={maps} />
-                </TabPanel>
-              </Switch>
-            </Box>
-          </Box>
-        </Grid>
+        <Outlet context={{ maps }} />
       </Grid>
     </Container>
   );
@@ -137,3 +122,5 @@ function a11yProps(index) {
     "aria-controls": `nav-tabpanel-${index}`,
   };
 }
+
+export default MapManager;

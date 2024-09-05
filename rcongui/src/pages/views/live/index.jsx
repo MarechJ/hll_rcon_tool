@@ -1,5 +1,4 @@
 import React from "react";
-import "react-toastify/dist/ReactToastify.css";
 import Grid from "@mui/material/Unstable_Grid2";
 import PlayerView from "../../../components/PlayerView";
 import Logs from "../../../components/LogsView/logs";
