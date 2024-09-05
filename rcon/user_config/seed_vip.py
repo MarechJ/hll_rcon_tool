@@ -155,7 +155,7 @@ class Reward(pydantic.BaseModel):
 class SeedVIPUserConfig(BaseUserConfig):
     enabled: bool = Field(default=False)
     dry_run: bool = Field(default=True)
-    language: str | None = Field(default=None)
+    language: str | None = Field(default="en_US")
     hooks: list[DiscordWebhook] = Field(default_factory=list)
     player_announce_thresholds: list[int] = Field(default=[10, 20, 30])
     poll_time_seeding: int = Field(default=30, ge=0)
