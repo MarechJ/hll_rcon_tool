@@ -332,7 +332,7 @@ const VoteMapConfig = ({ maps }) => {
 
         <AccordionActions>
           <Button
-            color={hasChanges ? "secondary" : "default"}
+            color={hasChanges ? "secondary" : "inherit"}
             size="small"
             variant="outlined"
             onClick={updateConfig}
@@ -395,7 +395,7 @@ const VoteMapConfig = ({ maps }) => {
 
         <AccordionActions>
           <Button
-            color={hasChanges ? "secondary" : "default"}
+            color={hasChanges ? "secondary" : "inherit"}
             size="small"
             variant="outlined"
             onClick={updateConfig}
