@@ -14,11 +14,11 @@ import {
   handle_http_errors,
   postData,
   showResponse,
-} from "../../utils/fetchUtils";
-import BlacklistListTile from "./BlacklistListTile";
+} from "../../../utils/fetchUtils";
+import BlacklistListTile from "../../../components/Blacklist/BlacklistListTile";
 import BlacklistListCreateDialog, {
   BlacklistListCreateButton,
-} from "./BlacklistListCreateDialog";
+} from "../../../components/Blacklist/BlacklistListCreateDialog";
 import { Link } from "react-router-dom";
 
 const BlacklistLists = () => {

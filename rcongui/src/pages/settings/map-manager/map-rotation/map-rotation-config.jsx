@@ -1,7 +1,7 @@
 import * as React from "react";
-import {get, handle_http_errors, postData, showResponse,} from "../../../utils/fetchUtils";
+import {get, handle_http_errors, postData, showResponse,} from "../../../../utils/fetchUtils";
 import {Typography} from "@mui/material";
-import Padlock from "../../shared/padlock";
+import Padlock from "../../../../components/shared/padlock";
 import Grid from "@mui/material/Unstable_Grid2";
 
 const MapRotationSettings = () => {

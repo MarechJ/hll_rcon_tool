@@ -23,7 +23,7 @@ import ListItem from "@mui/material/ListItem";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import Collapse from "@mui/material/Collapse";
-import { PlayerItem, KDChips, ScoreChips } from "../PlayerView/playerList";
+import { PlayerItem, KDChips, ScoreChips } from "../../../components/PlayerView/playerList";
 import {
   addPlayerToBlacklist,
   get,
@@ -31,16 +31,16 @@ import {
   handle_http_errors,
   postData,
   showResponse,
-} from "../../utils/fetchUtils";
+} from "../../../utils/fetchUtils";
 import {
   Duration,
   PlayerActions,
   ReasonDialog,
-} from "../PlayerView/playerActions";
+} from "../../../components/PlayerView/playerActions";
 import { toast } from "react-toastify";
-import { FlagDialog } from "../PlayersHistory";
-import Padlock from "../shared/padlock";
-import BlacklistRecordCreateDialog from "../Blacklist/BlacklistRecordCreateDialog";
+import { FlagDialog } from "../../records/players";
+import Padlock from "../../../components/shared/padlock";
+import BlacklistRecordCreateDialog from "../../../components/Blacklist/BlacklistRecordCreateDialog";
 
 const Squad = ({
   squadName,

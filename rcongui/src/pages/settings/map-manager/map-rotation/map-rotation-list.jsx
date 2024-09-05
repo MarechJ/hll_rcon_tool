@@ -14,7 +14,7 @@ import createStyles from '@mui/styles/createStyles';
 import Avatar from "@mui/material/Avatar";
 import DeleteIcon from "@mui/icons-material/Delete";
 import InputIcon from "@mui/icons-material/Input";
-import { MapDescription } from "../map-details";
+import { MapDescription } from "../../../../components/MapManager/map-details";
 
 const useStyles = makeStyles((theme) =>
   createStyles({

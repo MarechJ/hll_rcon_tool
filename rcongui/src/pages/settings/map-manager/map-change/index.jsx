@@ -2,11 +2,11 @@ import { Box, Button, IconButton, List } from "@mui/material";
 import React from "react";
 import {
   changeMap,
-} from "../../../utils/fetchUtils";
+} from "../../../../utils/fetchUtils";
 import MapSearch from "./map-search";
-import { MapListItem } from "../map-list-item";
+import { MapListItem } from "../../../../components/MapManager/map-list-item";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
-import { unifiedGamemodeName } from "../helpers";
+import { unifiedGamemodeName } from "../../../../components/MapManager/helpers";
 import { styled } from '@mui/material/styles';
 
 const Main = styled('div')(({ theme }) => ({

@@ -6,7 +6,7 @@ import {
   postData,
   sendAction,
   showResponse,
-} from "../../utils/fetchUtils";
+} from "../../../utils/fetchUtils";
 import { toast } from "react-toastify";
 import Pagination from '@mui/material/Pagination';
 import {
@@ -17,9 +17,9 @@ import {
   Typography,
 } from "@mui/material";
 import Grid from "@mui/material/Unstable_Grid2";
-import { ReasonDialog } from "../PlayerView/playerActions";
+import { ReasonDialog } from "../../../components/PlayerView/playerActions";
 import { omitBy } from "lodash/object";
-import SearchBar from "./searchBar";
+import SearchBar from "../../../components/PlayersHistory/searchBar";
 import { fromJS, List, Map } from "immutable";
 import FlagIcon from "@mui/icons-material/Flag";
 import data from '@emoji-mart/data'
@@ -27,12 +27,12 @@ import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
-import { getEmojiFlag } from "../../utils/emoji";
-import PlayerGrid from "./playerGrid";
-import { VipExpirationDialog } from "../VipDialog";
-import { vipListFromServer } from "../VipDialog/vipFromServer";
-import { banListFromServer } from "../PlayersHistory/PlayerTile/PlayerBan";
-import BlacklistRecordCreateDialog from "../Blacklist/BlacklistRecordCreateDialog";
+import { getEmojiFlag } from "../../../utils/emoji";
+import PlayerGrid from "../../../components/PlayersHistory/playerGrid";
+import { VipExpirationDialog } from "../../../components/VipDialog";
+import { vipListFromServer } from "../../../components/VipDialog/vipFromServer";
+import { banListFromServer } from "../../../components/PlayersHistory/PlayerTile/PlayerBan";
+import BlacklistRecordCreateDialog from "../../../components/Blacklist/BlacklistRecordCreateDialog";
 import EmojiPicker from "@emoji-mart/react";
 
 const PlayerSummary = ({ player, flag }) => (

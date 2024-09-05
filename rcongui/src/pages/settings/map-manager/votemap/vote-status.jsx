@@ -1,6 +1,6 @@
 import * as React from "react";
 import { List, Typography } from "@mui/material";
-import { MapListItem } from "../map-list-item";
+import { MapListItem } from "../../../../components/MapManager/map-list-item";
 
 export function VoteStatus({ voteStatus, ...props }) {
   return voteStatus.length ? (

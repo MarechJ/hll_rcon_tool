@@ -2,10 +2,10 @@ import React from "react";
 import { Grid, Tab, Tabs, useTheme, useMediaQuery, Container, Box } from "@mui/material";
 import makeStyles from '@mui/styles/makeStyles';
 import { Link, Switch, Route } from "react-router-dom";
-import VoteMapConfig from "./votemap/votemap";
-import MapRotationConfig from "./map-rotation/map-rotation";
-import MapChange from "./map-change/map-change";
-import MapObjectives from "./objectives/objectives";
+import VoteMapConfig from "./votemap/index.jsx";
+import MapRotationConfig from "./map-rotation";
+import MapChange from "./map-change";
+import MapObjectives from "./objectives";
 import { MapState } from "./map-state.jsx";
 import { get, getGameState } from "../../utils/fetchUtils.js";
 

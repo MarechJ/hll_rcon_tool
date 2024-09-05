@@ -1,6 +1,6 @@
-import { createTheme, adaptV4Theme } from '@mui/material/styles';
+import { createTheme } from '@mui/material/styles';
 
-const PurplePinkTheme = createTheme(adaptV4Theme({
+const PurplePinkTheme = createTheme({
   palette: {
     primary: {
       light: '#d05ce3',
@@ -13,6 +13,6 @@ const PurplePinkTheme = createTheme(adaptV4Theme({
       dark: '#c48b9f',
     },
   },
-}));
+});
 
 export default PurplePinkTheme;
