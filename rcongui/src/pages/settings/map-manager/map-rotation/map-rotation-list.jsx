@@ -15,6 +15,7 @@ import Avatar from "@mui/material/Avatar";
 import DeleteIcon from "@mui/icons-material/Delete";
 import InputIcon from "@mui/icons-material/Input";
 import { MapDescription } from "../../../../components/MapManager/map-details";
+import { getMapLayerImageSrc } from "../../../../components/MapManager/helpers";
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -59,7 +60,7 @@ const DraggableList = React.memo(({ maps, onDragEnd, onRemove, onChange, isSaved
                     }
                   >
                     <ListItemAvatar>
-                      <Avatar src={`maps/${mapLayer.image_name}`} />
+                      <Avatar src={getMapLayerImageSrc(mapLayer)} />
                     </ListItemAvatar>
                     <ListItemText
                       primary={mapLayer.map.pretty_name}

@@ -12,8 +12,10 @@ import { Box, Button, CircularProgress } from "@mui/material";
 import { Alert } from '@mui/material';
 import { MapAutocomplete } from "../../../../components/MapManager/map-autocomplete";
 import Grid from "@mui/material/Unstable_Grid2";
+import { useOutletContext } from "react-router-dom";
 
-const MapRotation = ({ maps }) => {
+const MapRotation = () => {
+  const { maps } = useOutletContext();
   const [currentRotation, setCurrentRotation] = React.useState([]);
   const [rotation, setRotation] = React.useState([]);
   const [mapsToAdd, setMapsToAdd] = React.useState([]);
