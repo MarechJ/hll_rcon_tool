@@ -32,6 +32,7 @@ class MapType(typing_extensions.TypedDict):
     shortname: str
     allies: "Faction"
     axis: "Faction"
+    orientation: str
 
 
 class LayerType(typing_extensions.TypedDict):
@@ -57,6 +58,10 @@ class FactionType(typing_extensions.TypedDict):
 # interacts with the CRCON API and enables much easier parsing of results
 # for example where result is a plain python dictionary containing a serialized Layer:
 # Layer.model_validate(result)
+class Orientation(str, Enum):
+    HORIZONTAL = "horizontal"
+    VERTICAL = "vertical"
+
 class GameMode(str, Enum):
     WARFARE = "warfare"
     OFFENSIVE = "offensive"
@@ -121,6 +126,7 @@ class Map(pydantic.BaseModel):
     shortname: str
     allies: "Faction"
     axis: "Faction"
+    orientation: Orientation
 
     def __str__(self) -> str:
         return self.id
@@ -226,6 +232,7 @@ MAPS = {
             shortname=UNKNOWN_MAP_NAME,
             allies=Faction(name=FactionName.US.value, team=Team.ALLIES),
             axis=Faction(name=FactionName.GER.value, team=Team.AXIS),
+            orientation=Orientation.VERTICAL,
         ),
         Map(
             id="stmereeglise",
@@ -235,6 +242,7 @@ MAPS = {
             shortname="SME",
             allies=Faction(name=FactionName.US.value, team=Team.ALLIES),
             axis=Faction(name=FactionName.GER.value, team=Team.AXIS),
+            orientation=Orientation.HORIZONTAL,
         ),
         Map(
             id="stmariedumont",
@@ -244,6 +252,7 @@ MAPS = {
             shortname="SMDM",
             allies=Faction(name=FactionName.US.value, team=Team.ALLIES),
             axis=Faction(name=FactionName.GER.value, team=Team.AXIS),
+            orientation=Orientation.VERTICAL,
         ),
         Map(
             id="utahbeach",
@@ -253,6 +262,7 @@ MAPS = {
             shortname="Utah",
             allies=Faction(name=FactionName.US.value, team=Team.ALLIES),
             axis=Faction(name=FactionName.GER.value, team=Team.AXIS),
+            orientation=Orientation.HORIZONTAL,
         ),
         Map(
             id="omahabeach",
@@ -262,6 +272,7 @@ MAPS = {
             shortname="Omaha",
             allies=Faction(name=FactionName.US.value, team=Team.ALLIES),
             axis=Faction(name=FactionName.GER.value, team=Team.AXIS),
+            orientation=Orientation.HORIZONTAL,
         ),
         Map(
             id="purpleheartlane",
@@ -271,6 +282,7 @@ MAPS = {
             shortname="PHL",
             allies=Faction(name=FactionName.US.value, team=Team.ALLIES),
             axis=Faction(name=FactionName.GER.value, team=Team.AXIS),
+            orientation=Orientation.VERTICAL,
         ),
         Map(
             id="carentan",
@@ -280,6 +292,7 @@ MAPS = {
             shortname="Carentan",
             allies=Faction(name=FactionName.US.value, team=Team.ALLIES),
             axis=Faction(name=FactionName.GER.value, team=Team.AXIS),
+            orientation=Orientation.HORIZONTAL,
         ),
         Map(
             id="hurtgenforest",
@@ -289,6 +302,7 @@ MAPS = {
             shortname="Hurtgen",
             allies=Faction(name=FactionName.US.value, team=Team.ALLIES),
             axis=Faction(name=FactionName.GER.value, team=Team.AXIS),
+            orientation=Orientation.HORIZONTAL,
         ),
         Map(
             id="hill400",
@@ -298,6 +312,7 @@ MAPS = {
             shortname="Hill 400",
             allies=Faction(name=FactionName.US.value, team=Team.ALLIES),
             axis=Faction(name=FactionName.GER.value, team=Team.AXIS),
+            orientation=Orientation.HORIZONTAL,
         ),
         Map(
             id="foy",
@@ -307,6 +322,7 @@ MAPS = {
             shortname="Foy",
             allies=Faction(name=FactionName.US.value, team=Team.ALLIES),
             axis=Faction(name=FactionName.GER.value, team=Team.AXIS),
+            orientation=Orientation.VERTICAL,
         ),
         Map(
             id="kursk",
@@ -316,6 +332,7 @@ MAPS = {
             shortname="Kursk",
             allies=Faction(name=FactionName.RUS.value, team=Team.ALLIES),
             axis=Faction(name=FactionName.GER.value, team=Team.AXIS),
+            orientation=Orientation.VERTICAL,
         ),
         Map(
             id="stalingrad",
@@ -325,6 +342,7 @@ MAPS = {
             shortname="Stalingrad",
             allies=Faction(name=FactionName.RUS.value, team=Team.ALLIES),
             axis=Faction(name=FactionName.GER.value, team=Team.AXIS),
+            orientation=Orientation.HORIZONTAL,
         ),
         Map(
             id="remagen",
@@ -334,6 +352,7 @@ MAPS = {
             shortname="Remagen",
             allies=Faction(name=FactionName.US.value, team=Team.ALLIES),
             axis=Faction(name=FactionName.GER.value, team=Team.AXIS),
+            orientation=Orientation.VERTICAL,
         ),
         Map(
             id="kharkov",
@@ -343,6 +362,7 @@ MAPS = {
             shortname="Kharkov",
             allies=Faction(name=FactionName.RUS.value, team=Team.ALLIES),
             axis=Faction(name=FactionName.GER.value, team=Team.AXIS),
+            orientation=Orientation.VERTICAL,
         ),
         Map(
             id="driel",
@@ -352,6 +372,7 @@ MAPS = {
             shortname="Driel",
             allies=Faction(name=FactionName.GB.value, team=Team.ALLIES),
             axis=Faction(name=FactionName.GER.value, team=Team.AXIS),
+            orientation=Orientation.VERTICAL,
         ),
         Map(
             id="elalamein",
@@ -361,6 +382,7 @@ MAPS = {
             shortname="Alamein",
             allies=Faction(name=FactionName.GB.value, team=Team.ALLIES),
             axis=Faction(name=FactionName.GER.value, team=Team.AXIS),
+            orientation=Orientation.HORIZONTAL,
         ),
         Map(
             id="mortain",
@@ -370,6 +392,7 @@ MAPS = {
             shortname="MOR",
             allies=Faction(name=FactionName.US.value, team=Team.ALLIES),
             axis=Faction(name=FactionName.GER.value, team=Team.AXIS),
+            orientation=Orientation.HORIZONTAL,
         ),
     )
 }
@@ -920,6 +943,7 @@ def parse_layer(layer_name: str | Layer) -> Layer:
             shortname=tag,
             allies=Faction(name=FactionName.US.value, team=Team.ALLIES),
             axis=Faction(name=FactionName.GER.value, team=Team.AXIS),
+            orientation=Orientation.VERTICAL,
         )
 
     try:
@@ -967,6 +991,7 @@ def _parse_legacy_layer(layer_name: str):
             shortname=name.capitalize(),
             allies=Faction(name=FactionName.US.value, team=Team.ALLIES),
             axis=Faction(name=FactionName.GER.value, team=Team.AXIS),
+            orientation=Orientation.VERTICAL,
         )
 
     result = Layer(id=layer_name, map=map_, game_mode=GameMode.WARFARE)

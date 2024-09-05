@@ -96,9 +96,12 @@ class SeedingRulesAutomod:
 
         disallowed_roles = set(self.config.disallowed_roles.roles.values())
         disallowed_weapons = set(self.config.disallowed_weapons.weapons.values())
+        enforce_cap_fight_maxplayers = self.config.enforce_cap_fight.max_players
 
         if self.config.announcement_enabled and (
-            len(disallowed_roles) != 0 or len(disallowed_weapons) != 0
+            len(disallowed_roles) != 0
+            or len(disallowed_weapons) != 0
+            or enforce_cap_fight_maxplayers != 0
         ):
             if all([self._is_seeding_rule_disabled(r) for r in SEEDING_RULE_NAMES]):
                 return p
@@ -114,7 +117,7 @@ class SeedingRulesAutomod:
                 message = message.format(**data)
             except KeyError:
                 self.logger.warning(
-                    "The automod message for disallowed weapons (%s) contains an invalid key",
+                    "The automod message contains an invalid key for disallowed_roles and/or disallowed_weapons (%s)",
                     message,
                 )
 

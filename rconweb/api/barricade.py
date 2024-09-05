@@ -130,7 +130,7 @@ class BarricadeConsumer(AsyncJsonWebsocketConsumer):
                 self._last_seen_session = rows[-1][1]
                 await self.send_request(
                     ServerRequestType.SCAN_PLAYERS,
-                    ScanPlayersRequestPayload(player_ids=[row[0] for row in rows]),
+                    ScanPlayersRequestPayload(player_ids=[row[0] for row in rows]).model_dump(),
                 )
             except Exception:
                 logger.exception("Failed to perform scan_players task")
@@ -327,9 +327,10 @@ class BarricadeConsumer(AsyncJsonWebsocketConsumer):
         BlacklistCommandHandler.send(
             BlacklistCommand(
                 command=BlacklistCommandType.BARRICADE_WARN_ONLINE,
+                server_mask=None,
                 payload=BlacklistBarricadeWarnOnlineCommand(
                     player_ids=[player.player_id for player in payload.players]
-                ),
+                ).model_dump(),
             )
         )
 

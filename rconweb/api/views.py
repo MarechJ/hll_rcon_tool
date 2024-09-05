@@ -192,6 +192,7 @@ def expose_api_endpoint(
     @wraps(func)
     def wrapper(request: HttpRequest):
         parameters = inspect.signature(func).parameters
+        aliases = getattr(func, "_parameter_aliases", {})
         arguments = {}
         failure = False
         others = None
@@ -219,6 +220,9 @@ def expose_api_endpoint(
             # Scrape out special case parameters, like the author of a request is the user name making the request
             # This does not cast argument types, so things that come in from GET parameters are all going to be strings
             # so we need to handle this properly inside methods if the types matter
+            for alias, pname in aliases.items():
+                if alias in data:
+                    data[pname] = data.pop(alias)
             for pname, param in parameters.items():
                 if pname in ("by", "admin_name"):
                     arguments[pname] = request.user.username
@@ -583,6 +587,9 @@ ENDPOINT_PERMISSIONS: dict[Callable, list[str] | set[str] | str] = {
         "api.can_remove_temp_bans",
         "api.can_remove_perma_bans",
     },
+    rcon_api.get_objective_row: "api.can_view_current_map",
+    rcon_api.get_objective_rows: "api.can_view_current_map",
+    rcon_api.set_game_layout: "api.can_change_game_layout",
     rcon_api.get_seed_vip_config: "api.can_view_seed_vip_config",
     rcon_api.set_seed_vip_config: "api.can_change_seed_vip_config",
     rcon_api.validate_seed_vip_config: "api.can_change_seed_vip_config",
@@ -638,6 +645,8 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.get_detailed_players: ["GET"],
     rcon_api.get_expired_vip_config: ["GET"],
     rcon_api.get_gamestate: ["GET"],
+    rcon_api.get_objective_row: ["GET"],
+    rcon_api.get_objective_rows: ["GET"],
     rcon_api.get_historical_logs: ["GET", "POST"],
     rcon_api.get_idle_autokick_time: ["GET"],
     rcon_api.get_ingame_mods: ["GET"],
@@ -729,6 +738,7 @@ RCON_ENDPOINT_HTTP_METHODS: dict[Callable, list[str]] = {
     rcon_api.set_chat_commands_config: ["POST"],
     rcon_api.set_chat_discord_webhooks_config: ["POST"],
     rcon_api.set_expired_vip_config: ["POST"],
+    rcon_api.set_game_layout: ["POST"],
     rcon_api.set_idle_autokick_time: ["POST"],
     rcon_api.set_kills_discord_webhooks_config: ["POST"],
     rcon_api.set_log_line_webhook_config: ["POST"],
@@ -844,10 +854,10 @@ commands = [
 if not os.getenv("HLL_MAINTENANCE_CONTAINER"):
     logger.info("Initializing endpoints")
 
-    try:
-        # Dynamically register all the methods from ServerCtl
-        # TODO: remove deprecated endpoints check once endpoints are removed
-        for func in ENDPOINT_PERMISSIONS.keys():
+    # Dynamically register all the methods from ServerCtl
+    # TODO: remove deprecated endpoints check once endpoints are removed
+    for func in ENDPOINT_PERMISSIONS.keys():
+        try:
             name = func.__name__
             commands.append(
                 (
@@ -860,9 +870,10 @@ if not os.getenv("HLL_MAINTENANCE_CONTAINER"):
                     ),
                 ),
             )
-        logger.info("Done Initializing endpoints")
-    except:
-        logger.exception(
-            "Failed to initialized endpoints - Most likely bad configuration"
-        )
-        raise
+        except:
+            logger.exception(
+                "Failed to initialized endpoint for %r - Most likely bad configuration",
+                func,
+            )
+            raise
+    logger.info("Done Initializing endpoints")

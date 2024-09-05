@@ -40,7 +40,7 @@ import {
 } from "../PlayerView/playerActions";
 import { toast } from "react-toastify";
 import { FlagDialog } from "../PlayersHistory";
-import Padlock from "../SettingsView/padlock";
+import Padlock from "../shared/padlock";
 import BlacklistRecordCreateDialog from "../Blacklist/BlacklistRecordCreateDialog";
 
 const useStyles = makeStyles((theme) => ({
@@ -314,8 +314,8 @@ const GameView = ({ classes: globalClasses }) => {
   const [selectedPlayers, setSelectedPlayers] = React.useState(
     new OrderedSet()
   );
-  const [resfreshFreqSecs, setResfreshFreqSecs] = React.useState(5);
-  const [intervalHandle, setIntervalHandle] = React.useState(null);
+  const [refreshFreqSecs, setResfreshFreqSecs] = React.useState(5);
+  const intervalHandleRef = React.useRef(null);
   const [flag, setFlag] = React.useState(false);
   const [blacklistDialogOpen, setBlacklistDialogOpen] = React.useState(false);
   const [blacklists, setBlacklists] = React.useState([]);
@@ -476,30 +476,23 @@ const GameView = ({ classes: globalClasses }) => {
       .catch(handle_http_errors);
   };
 
-  const myInterval = React.useMemo(
-    () => (func, ms) => {
-      const handle = setTimeout(async () => {
-        try {
-          await func();
-        } catch (e) {
-          console.warn("Error in periodic refresh", e);
-        }
-        myInterval(func, ms);
-      }, ms);
-      setIntervalHandle(handle);
-    },
-    []
-  );
-
   React.useEffect(() => {
     loadData();
   }, []);
 
   React.useEffect(() => {
-    clearTimeout(intervalHandle);
-    myInterval(loadData, resfreshFreqSecs * 1000);
-    return () => clearInterval(intervalHandle);
-  }, [resfreshFreqSecs, myInterval]);
+    // Set up the interval
+    intervalHandleRef.current = setInterval(() => {
+      loadData().catch(e => console.warn("Error in periodic refresh", e));
+    }, refreshFreqSecs * 1000);
+
+    // Clear the interval on component unmount or when refreshFreqSecs changes
+    return () => {
+      if (intervalHandleRef.current) {
+        clearInterval(intervalHandleRef.current);
+      }
+    };
+  }, [refreshFreqSecs]);
 
   const isMessageLessAction = (actionType) =>
     actionType.startsWith("switch_") || actionType.startsWith("unwatch_");
@@ -568,9 +561,12 @@ const GameView = ({ classes: globalClasses }) => {
   };
 
   function blacklistManyPlayers(payload) {
-    const filteredPlayers = playerNamesToPlayerId?.filter(p => p !== undefined).toJS();
+    const playersToBlacklist = selectedPlayers
+    .toJS()
+    .map(playerName => playerNamesToPlayerId.get(playerName))
+    .filter(p => p !== undefined)
 
-    Promise.allSettled(Object.entries(filteredPlayers).map(([_, playerId]) => (
+    Promise.allSettled(playersToBlacklist.map((playerId) => (
       addPlayerToBlacklist({
         ...payload,
         playerId,
@@ -581,17 +577,20 @@ const GameView = ({ classes: globalClasses }) => {
 
   async function handleBlacklistOpen(player) {
     const blacklists = await getBlacklists();
-    setBlacklists(blacklists);
-    setBlacklistDialogOpen(true)
+    if (blacklists) {
+      setBlacklists(blacklists);
+      setBlacklistDialogOpen(true)
+    }
   }
 
   function selectedPlayersToRows() {
-    const filteredPlayers = playerNamesToPlayerId?.filter(p => p !== undefined).toJS();
-    const selected = []
-    for (const [player, id] of Object.entries(filteredPlayers)) {
-      selected.push(`${player} -> ${id}`)
-    }
-    return selected.join(",\n")
+    return selectedPlayers
+    .toJS()
+    .filter(p => playerNamesToPlayerId.get(p) !== undefined)
+    .map(player => {
+      const id = playerNamesToPlayerId.get(player)
+      return `${player} -> ${id}`
+    }).join(",\n")
   }
 
   return (
@@ -729,7 +728,7 @@ const GameView = ({ classes: globalClasses }) => {
                   inputProps={{ min: 2, max: 6000 }}
                   label="Refresh seconds"
                   helperText=""
-                  value={resfreshFreqSecs}
+                  value={refreshFreqSecs}
                   onChange={(e) => setResfreshFreqSecs(e.target.value)}
                 />
               </Grid>

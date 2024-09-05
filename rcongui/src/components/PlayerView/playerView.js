@@ -119,7 +119,9 @@ class PlayerView extends Component {
   
   async handleBlacklistOpen(player) {
     const blacklists = await getBlacklists();
-    this.setState({ blacklists, blacklistOpen: true, playerTarget: player })
+    if (blacklists) {
+      this.setState({ blacklists, blacklistOpen: true, playerTarget: player })
+    }
   }
 
   handleVipDialogOpen(player) {
@@ -131,28 +133,34 @@ class PlayerView extends Component {
 
   async getVips() {
     const vips = await getVips();
-    this.setState({ vipPlayers: vips })
+    if (vips) {
+      this.setState({ vipPlayers: vips })
+    }
   }
 
   async addPlayerVip(player, expiresAt, forward) {
     // action
-    await addPlayerVip({
+    const result = await addPlayerVip({
       player_id: player.get("player_id"),
       description: player.get("name"),
       expiration: expiresAt,
       forward: forward,
     })
-    // update state
-    await this.loadPlayers()
-    await this.getVips()
+    if (result) {
+      // update state
+      await this.loadPlayers()
+      await this.getVips()
+    }
   }
 
   async removePlayerVip(player) {
     // action
-    await removePlayerVip({ player_id: player.get("player_id") })
-    // update state
-    await this.loadPlayers()
-    await this.getVips()
+    const result = await removePlayerVip({ player_id: player.get("player_id") })
+    if (result) {
+      // update state
+      await this.loadPlayers()
+      await this.getVips()
+    }
   }
 
   unBan(ban) {

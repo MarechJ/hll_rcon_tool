@@ -56,7 +56,28 @@ class MessageVariable(enum.Enum):
     next_map = "next_map"
     map_rotation = "map_rotation"
 
-    # TODO: vote map stuff
+    # Deprecated: Taken over from previous auto-broadcast implementation
+    admin_names = "admin_names"
+    owner_names = "owner_names"
+    senior_names = "senior_names"
+    junior_names = "junior_names"
+    vip_names = "vip_names"
+    random_vip_name = "random_vip_name"
+    online_mods = "online_mods"
+    ingame_mods = "ingame_mods"
+
+    # vote map
+    votenextmap_line = "votenextmap_line"
+    votenextmap_noscroll = "votenextmap_noscroll"
+    votenextmap_vertical = "votenextmap_vertical"
+    votenextmap_by_mod_line = "votenextmap_by_mod_line"
+    votenextmap_by_mod_vertical = "votenextmap_by_mod_vertical"
+    votenextmap_by_mod_vertical_all = "votenextmap_by_mod_vertical_all"
+    votenextmap_by_mod_split = "votenextmap_by_mod_split"
+    total_votes = "votenextmap_line"
+    winning_maps_short = "winning_maps_short"
+    winning_maps_all = "winning_maps_all"
+    scrolling_votemap = "scrolling_votemap"
 
     # game stats
     top_kills_player_name = "top_kills_player_name"
@@ -439,6 +460,7 @@ class MapsType(TypedDict):
     end: Optional[datetime.datetime]
     server_number: Optional[int]
     map_name: str
+    result: Optional[dict[str, int]]
     player_stats: List[PlayerStatsType]
 
 
@@ -477,6 +499,14 @@ class AuditLogType(TypedDict):
     command: str
     command_arguments: Optional[str]
     command_result: Optional[str]
+
+
+class PlayerActionState(enum.Enum):
+    KICK = 0
+    PUNISH = 1
+    TEMPBAN = 2
+    PERMABAN = 3
+    MESSAGE = 4
 
 
 class PenaltyCountType(TypedDict):
@@ -761,3 +791,8 @@ class DjangoUserPermissions(TypedDict):
     permissions: list[DjangoPermission]
     groups: list[DjangoGroup]
     is_superuser: bool
+
+
+class GameLayoutRandomConstraints(enum.IntFlag):
+    ALWAYS_ADJACENT = enum.auto()
+    ALWAYS_DIAGONAL = enum.auto()

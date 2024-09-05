@@ -8,14 +8,14 @@ from typing import Final
 
 from discord_webhook import DiscordEmbed
 
+import rcon.steam_utils as steam_utils
+from discord.utils import escape_markdown
 from rcon.blacklist import (
     apply_blacklist_punishment,
     blacklist_or_ban,
     is_player_blacklisted,
     synchronize_ban,
 )
-import rcon.steam_utils as steam_utils
-from discord.utils import escape_markdown
 from rcon.cache_utils import invalidates
 from rcon.commands import CommandFailedError, HLLServerError
 from rcon.discord import (
@@ -37,7 +37,6 @@ from rcon.models import enter_session
 from rcon.player_history import (
     _get_set_player,
     get_player,
-    safe_save_player_action,
     save_end_player_session,
     save_player,
     save_start_player_session,
@@ -222,7 +221,7 @@ def handle_new_match_start(rcon: Rcon, struct_log):
         # Check that the log is less than 5min old
         if (datetime.utcnow() - log_time).total_seconds() < 5 * 60:
             # then we use the current map to be more accurate
-            if current_map.map.name.lower() == log_map_name.lower():
+            if current_map.map.name.lower() == log_map_name.lower().removesuffix(" night"):
                 map_name_to_save = current_map
                 guessed = False
             else:
