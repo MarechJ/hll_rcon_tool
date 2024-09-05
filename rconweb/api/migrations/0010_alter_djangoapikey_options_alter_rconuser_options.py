@@ -39,7 +39,6 @@ class Migration(migrations.Migration):
                     ("can_add_player_watch", "Can add a watch to players"),
                     ("can_add_vip", "Can add VIP status to players"),
                     ("can_ban_profanities", "Can ban profanities (censored game chat)"),
-                    ("can_blacklist_players", "Can add players to the blacklist"),
                     (
                         "can_change_auto_broadcast_config",
                         "Can change the automated broadcast settings",
@@ -161,16 +160,12 @@ class Migration(migrations.Migration):
                         "can_unban_profanities",
                         "Can unban profanities (censored game chat)",
                     ),
-                    (
-                        "can_unblacklist_players",
-                        "Can remove players from the blacklist",
-                    ),
                     ("can_unflag_player", "Can remove flags from players"),
                     ("can_upload_vip_list", "Can upload a VIP list"),
                     ("can_view_admin_groups", "Can view available admin roles"),
                     (
                         "can_view_admin_ids",
-                        "Can view the name/steam IDs/role of everyone with a HLL games erver admin role",
+                        "Can view the name/steam IDs/role of everyone with a HLL game server admin role",
                     ),
                     (
                         "can_view_admins",
@@ -296,7 +291,6 @@ class Migration(migrations.Migration):
                         "Can view the amount of time left in the round",
                     ),
                     ("can_view_server_name", "Can view the server name"),
-                    ("can_view_server_stats", "Can view the get_server_stats endpoint"),
                     (
                         "can_view_shared_standard_messages",
                         "Can view the shared standard messages",

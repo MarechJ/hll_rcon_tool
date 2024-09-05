@@ -19,7 +19,7 @@ import {
 import Blacklist from "./blacklist";
 import { toast } from "react-toastify";
 import _ from "lodash";
-import Padlock from "../../components/SettingsView/padlock";
+import Padlock from "../shared/padlock";
 import TextHistoryManager, { SelectNameSpace } from "./textHistoryManager";
 import TextHistory from "../textHistory";
 import ServicesList from "../Services";
@@ -39,7 +39,7 @@ import AutoSettings from "./autoSettings";
 
 const ManualWatchList = ({ classes }) => {
   const [name, setName] = React.useState("");
-  const [steamId64, setSteamId64] = React.useState("");
+  const [playerId, setPlayerId] = React.useState("");
   const [reason, setReason] = React.useState("");
   const [sharedMessages, setSharedMessages] = React.useState([]);
 
@@ -52,8 +52,8 @@ const ManualWatchList = ({ classes }) => {
     <ManualPlayerInput
       name={name}
       setName={setName}
-      steam_id={steamId64}
-      setSteamId={setSteamId64}
+      playerId={playerId}
+      setPlayerId={setPlayerId}
       reason={reason}
       setReason={setReason}
       textHistory={textHistory}
@@ -61,7 +61,7 @@ const ManualWatchList = ({ classes }) => {
       classes={classes}
       actionName="Watch"
       tooltipText="You will get a notification on you watchlist discord hook when this player enters your server"
-      onSubmit={() => addPlayerToWatchList(steamId64, reason, null, name)}
+      onSubmit={() => addPlayerToWatchList(playerId, reason, null, name)}
     />
   );
 };
@@ -334,6 +334,17 @@ class RconSettings extends React.Component {
         )
       )
       .then((data) => {
+        // This is janky, but convert saved broadcasts from an object to a string
+        let formattedMessages = new Array();
+        if (this.state.standardMessagesType == "broadcast") {
+          data.result.messages.forEach((m) =>
+            formattedMessages.push(`${m.time_sec} ${m.message}`)
+          );
+          data.result.messages = formattedMessages;
+        }
+        return data;
+      })
+      .then((data) => {
         return (
           !data.failed &&
           this.setState({
@@ -396,11 +407,8 @@ class RconSettings extends React.Component {
   }
 
   async reconnectToGameServer() {
-    return postData(
-      `${process.env.REACT_APP_API_URL}do_reconnect_gameserver`,
-      {}
-    )
-      .then((res) => showResponse(res, "do_reconnect_gameserver", true))
+    return postData(`${process.env.REACT_APP_API_URL}reconnect_gameserver`, {})
+      .then((res) => showResponse(res, "reconnect_gameserver", true))
       .catch(handle_http_errors);
   }
 
@@ -537,10 +545,10 @@ class RconSettings extends React.Component {
             }
             placeholder="Insert your messages here, one per line, with format: <number of seconds to display> <a message (write: \n if you want a line return)>"
             variant="outlined"
-            helperText="You can use the following variables in the text using the following syntax: '60 Welcome to {servername}. The next map is {nextmap}.'
-            (nextmap, maprotation, servername, vips, randomvip, votenextmap_line, votenextmap_line, votenextmap_noscroll, votenextmap_vertical,
-            votenextmap_by_mod_line, votenextmap_by_mod_vertical, votenextmap_by_mod_vertical_all, votenextmap_by_mod_split, total_votes,
-            winning_maps_short, winning_maps_all, scrolling_votemap, online_mods, ingame_mods)"
+            helperText="You can use the following variables in the text using the following syntax: '60 Welcome to {server_name}. The next map is {next_map}.'
+            (admin_names, ingame_mods, junior_names, map_rotation, next_map, online_mods, owner_names, random_vip_name, scrolling_votemap, senior_names, 
+            server_name, vip_names, votenextmap_by_mod_line, votenextmap_by_mod_split, votenextmap_by_mod_vertical, votenextmap_by_mod_vertical_all, 
+            votenextmap_line, votenextmap_line, votenextmap_noscroll, votenextmap_vertical, winning_maps_all, winning_maps_short)"
           />
         </Grid>
         <Grid item xs={12}>
@@ -611,12 +619,6 @@ class RconSettings extends React.Component {
           >
             Save shared messages
           </Button>
-        </Grid>
-        <Grid item className={classes.paddingTop} justify="center" xs={12}>
-          <Typography variant="h5">Blacklist player by Steam ID</Typography>
-        </Grid>
-        <Grid item className={classes.paddingTop} justify="center" xs={12}>
-          <Blacklist classes={classes} />
         </Grid>
         <Grid item className={classes.paddingTop} justify="center" xs={12}>
           <Typography variant="h5">Add player to watchlist</Typography>

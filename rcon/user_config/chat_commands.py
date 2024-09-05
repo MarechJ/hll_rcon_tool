@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field, field_validator
 from rcon.types import MessageVariable, MessageVariableContext
 from rcon.user_config.utils import BaseUserConfig, _listType, key_check, set_user_config
 
-MESSAGE_VAR_RE = re.compile(r"\{(.*?)\}")
+MESSAGE_VAR_RE = re.compile(r"\{(.*?)}")
 VALID_COMMAND_PREFIXES = ("!", "@")
 HELP_PREFIX = "?"
 
@@ -137,4 +137,4 @@ class ChatCommandsUserConfig(BaseUserConfig):
         )
 
         if not dry_run:
-            set_user_config(ChatCommandsUserConfig.KEY(), validated_conf.model_dump())
+            set_user_config(ChatCommandsUserConfig.KEY(), validated_conf)

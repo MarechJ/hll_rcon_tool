@@ -5,6 +5,7 @@ Revises: ec5fc1135ddb
 Create Date: 2021-05-09 22:49:41.244941
 
 """
+
 import sqlalchemy as sa
 from alembic import op
 from sqlalchemy.dialects import postgresql

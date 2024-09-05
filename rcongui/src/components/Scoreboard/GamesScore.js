@@ -17,7 +17,6 @@ import { List as iList, Map, fromJS, List } from "immutable";
 import moment from "moment";
 import { useTheme } from "@material-ui/core/styles";
 import Scores from "./Scores";
-import { getMapImageUrl } from "./utils";
 import { fade } from "@material-ui/core/styles/colorManipulator";
 import { CopyToClipboard } from "react-copy-to-clipboard";
 import { useParams } from "react-router-dom";
@@ -95,7 +94,6 @@ const useStyles = makeStyles((theme) => ({
 const GamesScore = ({ classes }) => {
   let { slug } = useParams();
   slug = parseInt(slug);
-  console.log("Slug ", slug);
   const styles = useStyles();
   const [scores, setScores] = React.useState(new iList());
   const [serverState, setServerState] = React.useState(new Map());
@@ -124,7 +122,6 @@ const GamesScore = ({ classes }) => {
   };
   const doSelectMap = (map_id) => {
     window.location.hash = `#/gamescoreboard/${map_id}`;
-    console.log(`Change to ${map_id}`);
   };
 
   const [hasCopiedLink, setHasCopiedLink] = React.useState(false);
@@ -140,8 +137,8 @@ const GamesScore = ({ classes }) => {
   const getData = () => {
     setIsLoading(true);
 
-    get("public_info")
-      .then((res) => showResponse(res, "public_info", false))
+    get("get_public_info")
+      .then((res) => showResponse(res, "get_public_info", false))
       .then((data) => setServerState(fromJS(data.result)))
       .then(() => setIsLoading(false))
       .catch(handle_http_errors);
@@ -182,12 +179,12 @@ const GamesScore = ({ classes }) => {
     getData();
   }, []);
 
-  document.title = serverState.get("name", "HLL Stats");
+  document.title = serverState.get("name", new Map()).get("name", "HLL Stats");
   let started = serverState.get("current_map", new Map()).get("start");
   started = started
     ? new Date(Date.now() - new Date(started * 1000))
-      .toISOString()
-      .substr(11, 8)
+        .toISOString()
+        .substr(11, 8)
     : "N/A";
 
   return (
@@ -200,7 +197,7 @@ const GamesScore = ({ classes }) => {
       >
         <Grid item xs={12} className={styles.transparentPaper}>
           <Typography color="secondary" variant="h4">
-            {serverState.get("name")}
+            {serverState.get("name", new Map()).get("name")}
           </Typography>
         </Grid>
         {!maps.size ? (
@@ -221,12 +218,12 @@ const GamesScore = ({ classes }) => {
                 xl
                   ? Math.min(maps.size, 8.5)
                   : lg
-                    ? Math.min(maps.size, 5.5)
-                    : md
-                      ? Math.min(maps.size, 3.5)
-                      : sm
-                        ? Math.min(maps.size, 2.5)
-                        : Math.min(maps.size, 1.5)
+                  ? Math.min(maps.size, 5.5)
+                  : md
+                  ? Math.min(maps.size, 3.5)
+                  : sm
+                  ? Math.min(maps.size, 2.5)
+                  : Math.min(maps.size, 1.5)
               }
               className={styles.gridList}
             >
@@ -237,21 +234,31 @@ const GamesScore = ({ classes }) => {
                 const isSelected = (isReturn, isNotReturn) =>
                   m.get("id") === slug ? isReturn : isNotReturn;
 
+                let score = '';
+                if (m.get('result')) {
+                  score = <div>Axis {m.get('result').get('axis')} - {m.get('result').get('allied')} Allied</div>
+                }
                 return (
                   <GridListTile
                     className={styles.clickable}
                     onClick={() => doSelectMap(m.get("id"))}
                     key={`${m.get("name")}${m.get("start")}${m.get("end")}`}
                   >
-                    <img alt="Map" src={getMapImageUrl(m.get('map_name'))} />
+                    <img
+                      alt="Map"
+                      src={`maps/${m.get("map", new Map()).get("image_name")}`}
+                    />
 
                     <GridListTileBar
                       className={isSelected(
                         styles.selectedTitleBarTop,
                         styles.titleBarTop
                       )}
-                      title={m.get("long_name")}
-                      subtitle={`${duration.humanize()}`}
+                      title={m.get("map", new Map()).get("pretty_name")}
+                      subtitle={<>
+                        <div>{duration.humanize()}</div>
+                        {score}
+                      </>}
                       titlePosition="top"
                     />
                     <GridListTileBar

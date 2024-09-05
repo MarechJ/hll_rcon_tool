@@ -4,24 +4,24 @@ import os
 import pathlib
 import sys
 import time
-from typing import Callable
+from contextlib import contextmanager
+from typing import Callable, Generator
 from urllib.parse import urljoin
 
+from datetime import timedelta
 import requests
 from requests.exceptions import ConnectionError, RequestException
+from sqlalchemy import create_engine, select
+from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
 
 import discord
 from discord.embeds import Embed
 from discord.errors import HTTPException, NotFound
-from rcon.scoreboard import STAT_DISPLAY_LOOKUP, get_stat, get_stat_post_processor
-from rcon.user_config.scorebot import ScorebotUserConfig, StatTypes
 from rcon.maps import UNKNOWN_MAP_NAME
+from rcon.scoreboard import STAT_DISPLAY_LOOKUP, get_stat, get_stat_post_processor
+from rcon.types import PlayerStatsType, PublicInfoType
+from rcon.user_config.scorebot import ScorebotUserConfig, StatTypes
 from rcon.utils import get_server_number
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, Session
-from sqlalchemy import create_engine, select
-from typing import Generator
-from rcon.types import PublicInfoType, PlayerStatsType
-from contextlib import contextmanager
 
 # TODO: This env var isn't actually exposed anywhere
 root_path = os.getenv("DISCORD_BOT_DATA_PATH", "/data")
@@ -83,62 +83,13 @@ def cleanup_orphaned_messages(
         session.delete(res)
 
 
-# TODO: Need to update this when we get Abu style maps in
-map_to_pict = {
-    "carentan": "maps/carentan.webp",
-    "carentan_night": "maps/carentan-night.webp",
-    "driel": "maps/driel.webp",
-    "driel_night": "maps/driel-night.webp",
-    "drl": "maps/driel.webp",
-    "drl_night": "maps/driel-night.webp",
-    "elalamein": "maps/elalamein.webp",
-    "elalamein_night": "maps/elalamein-night.webp",
-    "ela": "maps/elalamein.webp",
-    "ela_night": "maps/elalamein-night.webp",
-    "foy": "maps/foy.webp",
-    "foy_night": "maps/foy-night.webp",
-    "hill400": "maps/hill400.webp",
-    "hill400_night": "maps/hill400-night.webp",
-    "hurtgenforest": "maps/hurtgen.webp",
-    "hurtgenforest_night": "maps/hurtgen-night.webp",
-    "kharkov": "maps/kharkov.webp",
-    "kharkov_night": "maps/kharkov-night.webp",
-    "kursk": "maps/kursk.webp",
-    "kursk_night": "maps/kursk-night.webp",
-    "mortain": "maps/mortain.webp",
-    "mortain_night": "maps/mortain.webp",
-    "omahabeach": "maps/omaha.webp",
-    "omahabeach_night": "maps/omaha-night.webp",
-    "purpleheartlane": "maps/phl.webp",
-    "purpleheartlane_night": "maps/phl-night.webp",
-    "stalingrad": "maps/stalingrad.webp",
-    "stalingrad_night": "maps/stalingrad-night.webp",
-    "stmariedumont": "maps/smdm.webp",
-    "stmariedumont_night": "maps/smdm-night.webp",
-    "smdm": "maps/smdm.webp",
-    "smdm_night": "maps/smdm-night.webp",
-    "stmereeglise": "maps/sme.webp",
-    "stmereeglise_night": "maps/sme-night.webp",
-    "utahbeach": "maps/utah.webp",
-    "utahbeach_night": "maps/utah-night.webp",
-    UNKNOWN_MAP_NAME: "maps/unknown.webp",
-}
-
-
-# TODO: Update this when we get improved map types
 def get_map_image(server_info: PublicInfoType, config: ScorebotUserConfig):
-    map_name: str = server_info["current_map"]["name"]
-
     try:
-        base_map_name, _ = map_name.lower().split("_", maxsplit=1)
-    except ValueError:
-        base_map_name = map_name
+        image_name = server_info["current_map"]["map"]["image_name"]
+        url = urljoin(str(config.base_scoreboard_url), f"maps/{image_name}")
+    except (IndexError, KeyError, TypeError) as e:
+        url = urljoin(str(config.base_scoreboard_url), f"maps/{UNKNOWN_MAP_NAME}.webp")
 
-    if "night" in map_name.lower():
-        base_map_name = base_map_name + "_night"
-
-    img = map_to_pict.get(base_map_name, UNKNOWN_MAP_NAME)
-    url = urljoin(str(config.base_scoreboard_url), img)
     return url
 
 
@@ -152,19 +103,21 @@ def get_header_embed(public_info: PublicInfoType, config: ScorebotUserConfig):
         elapsed_time_minutes = 0.0
 
     embed = discord.Embed(
-        title=f"{public_info['name']}",
-        description=f"**{public_info['current_map']['human_name']} - {config.elapsed_time_text}{round(elapsed_time_minutes)} min. - {public_info['player_count']}/{public_info['max_player_count']} {config.players_text}**",
+        title=f"{public_info['name']['name']}",
+        description=f"**{public_info['current_map']['map']['pretty_name']} - {config.elapsed_time_text}{round(elapsed_time_minutes)} min. - {public_info['player_count']}/{public_info['max_player_count']} {config.players_text}**",
         color=13734400,
         timestamp=datetime.datetime.utcnow(),
         url=str(config.base_scoreboard_url),
     )
-    total_votes = public_info["vote_status"]["total_votes"]
-    winning_map_votes = 0
-    if len(public_info["vote_status"]["winning_maps"]) >= 1:
-        winning_map_votes = public_info["vote_status"]["winning_maps"][0][1]
+
+    total_votes = sum(len(m["voters"]) for m in public_info["vote_status"])
+    try:
+        winning_map_votes = len(public_info["vote_status"][0]["voters"])
+    except IndexError:
+        winning_map_votes = 0
 
     embed.add_field(
-        name=f"{config.next_map_text} {public_info['next_map']['human_name']}",
+        name=f"{config.next_map_text} {public_info['next_map']['map']['pretty_name']}",
         value=f"{winning_map_votes}/{total_votes} {config.vote_text}",
     )
 
@@ -172,13 +125,13 @@ def get_header_embed(public_info: PublicInfoType, config: ScorebotUserConfig):
 
     embed.add_field(
         name=f"{config.allied_players_text}",
-        value=f"{public_info['players']['allied']}",
+        value=f"{public_info['player_count_by_team']['allied']}",
         inline=True,
     )
 
     embed.add_field(
         name=f"{config.axis_players_text}",
-        value=f"{public_info['players']['axis']}",
+        value=f"{public_info['player_count_by_team']['axis']}",
         inline=True,
     )
 
@@ -194,7 +147,7 @@ def get_header_embed(public_info: PublicInfoType, config: ScorebotUserConfig):
 
     embed.add_field(
         name=f"{config.time_remaining_text}",
-        value=f"{public_info['raw_time_remaining']}",
+        value=f"{timedelta(seconds=public_info['time_remaining'])}",
         inline=True,
     )
 
@@ -291,7 +244,6 @@ def send_or_edit_message(
     message_id: int | None = None,
     edit: bool = True,
 ):
-
     try:
         # Force creation of a new message if message ID isn't set
         if not edit or message_id is None:

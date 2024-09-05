@@ -25,16 +25,16 @@ Please change your name in Steam and restart your game to avoid this.
 Please ask T17 to prioritize fixing this bug."""
 
 
-INVALID_NAME_AUDIT_MESSAGE = """Player with an invalid name (ends in whitespace or a partial character when truncated) joined: {name} ({steam_id_64}
+INVALID_NAME_AUDIT_MESSAGE = """Player with an invalid name (ends in whitespace or a partial character when truncated) joined: {name} ({player_id}
 This will cause errors with various auto mods (no leader, etc) and the `playerinfo` RCON command will not work.
 The player will show as 'unassigned' in Gameview.
 Action taken = {action}"""
-PINEAPPLE_NAMES_AUDIT_UNBAN_MESSAGE = "Unbanning {name} ({steam_id_64}) that was temp banned since the `kick` command will not work with their name"
+PINEAPPLE_NAMES_AUDIT_UNBAN_MESSAGE = "Unbanning {name} ({player_id}) that was temp banned since the `kick` command will not work with their name"
 
 WINDOWS_STORE_PLAYER_MESSAGE = "Windows store players are not allowed on this server."
 
 WINDOWS_STORE_AUDIT_MESSAGE = (
-    "Windows store player {name} ({steam_id_64} connected, action taken = {action})"
+    "Windows store player {name} ({player_id} connected, action taken = {action})"
 )
 
 
@@ -69,9 +69,9 @@ class RconServerSettingsType(TypedDict):
     server_url: HttpUrl
     discord_invite_url: HttpUrl
     lock_stats_api: bool
-    unban_does_unblacklist: bool
-    unblacklist_does_unban: bool
-    broadcast_temp_bans: bool
+    # unban_does_unblacklist: bool
+    # unblacklist_does_unban: bool
+    # broadcast_temp_bans: bool
     broadcast_unbans: bool
     lock_stats_api: bool
     live_stats_refresh_seconds: int
@@ -142,10 +142,10 @@ class RconServerSettingsUserConfig(BaseUserConfig):
     discord_invite_url: Optional[HttpUrl] = Field(default=None)
 
     lock_stats_api: bool = Field(default=False)
-    unban_does_unblacklist: bool = Field(default=True)
-    unblacklist_does_unban: bool = Field(default=True)
-    broadcast_temp_bans: bool = Field(default=True)
-    broadcast_unbans: bool = Field(default=True)
+    # unban_does_unblacklist: bool = Field(default=True)
+    # unblacklist_does_unban: bool = Field(default=True)
+    # broadcast_temp_bans: bool = Field(default=True)
+    broadcast_unbans: bool = Field(default=False)
 
     lock_stats_api: bool = Field(default=False)
     live_stats_refresh_seconds: int = Field(default=15)
@@ -204,9 +204,9 @@ class RconServerSettingsUserConfig(BaseUserConfig):
             server_url=values.get("server_url"),
             discord_invite_url=values.get("discord_invite_url"),
             lock_stats_api=values.get("lock_stats_api"),
-            unban_does_unblacklist=values.get("unban_does_unblacklist"),
-            unblacklist_does_unban=values.get("unblacklist_does_unban"),
-            broadcast_temp_bans=values.get("broadcast_temp_bans"),
+            # unban_does_unblacklist=values.get("unban_does_unblacklist"),
+            # unblacklist_does_unban=values.get("unblacklist_does_unban"),
+            # broadcast_temp_bans=values.get("broadcast_temp_bans"),
             broadcast_unbans=values.get("broadcast_unbans"),
             live_stats_refresh_seconds=values.get("live_stats_refresh_seconds"),
             live_stats_refresh_current_game_seconds=values.get(
@@ -218,6 +218,4 @@ class RconServerSettingsUserConfig(BaseUserConfig):
         )
 
         if not dry_run:
-            set_user_config(
-                RconServerSettingsUserConfig.KEY(), validated_conf.model_dump()
-            )
+            set_user_config(RconServerSettingsUserConfig.KEY(), validated_conf)

@@ -92,7 +92,6 @@ const AuditLog = ({ classes }) => {
     get("get_audit_logs_autocomplete")
       .then((res) => res.json())
       .then((res) => {
-        console.log(res);
         if (res) {
           if (res.result?.usernames) {
             setUsernames(fromJS(res.result.usernames));

@@ -12,7 +12,7 @@ class Blacklist extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      steam_id: "",
+      playerId: "",
       name: "",
       reason: "",
       sharedMessages: [],
@@ -23,14 +23,14 @@ class Blacklist extends React.Component {
 
   async blacklistPlayer() {
     return postData(`${process.env.REACT_APP_API_URL}blacklist_player`, {
-      steam_id_64: this.state.steam_id,
+      playerId: this.state.playerId,
       name: this.state.name,
       reason: this.state.reason,
     })
       .then((res) => showResponse(res, "blacklist_player", true))
       .then(
         (res) =>
-          !res.failed && this.setState({ steam_id: "", name: "", reason: "" })
+          !res.failed && this.setState({ playerId: "", name: "", reason: "" })
       )
       .catch(handle_http_errors);
   }
@@ -42,7 +42,7 @@ class Blacklist extends React.Component {
   }
 
   render() {
-    const { steam_id, name, reason, sharedMessages } = this.state;
+    const { playerId, name, reason, sharedMessages } = this.state;
     const { classes } = this.props;
     const textHistory = new TextHistory("punishments");
 
@@ -50,8 +50,8 @@ class Blacklist extends React.Component {
       <ManualPlayerInput
         name={name}
         setName={(val) => this.setState({ name: val })}
-        steam_id={steam_id}
-        setSteamId={(val) => this.setState({ steam_id: val })}
+        playerId={playerId}
+        setPlayerId={(val) => this.setState({ playerId: val })}
         reason={reason}
         setReason={(val) => this.setState({ reason: val })}
         textHistory={textHistory}

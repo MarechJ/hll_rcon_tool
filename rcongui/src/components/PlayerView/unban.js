@@ -38,7 +38,7 @@ const Unban = ({
             id="tags-outlined"
             options={bannedPlayers}
             renderOption={(option) => `[${option.type}] ${option.raw}`}
-            getOptionLabel={(option) => `${option.name} ${option.steam_id_64}`}
+            getOptionLabel={(option) => `${option.name} ${option.player_id}`}
             filterSelectedOptions
             onChange={(e, val) => setSelectedPlayers(val)}
             renderInput={(params) => (

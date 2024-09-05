@@ -1,27 +1,29 @@
-import pytest
-from rcon.vote_map import VoteMap
-from rcon.maps import (
-    Layer,
-    MAPS,
-    Gamemode,
-    get_opposite_side,
-    Team,
-    parse_layer,
-    _parse_legacy_layer,
-    Environment,
-)
 from collections import Counter
+
+import pytest
+
+from rcon.maps import (
+    MAPS,
+    Environment,
+    GameMode,
+    Layer,
+    Team,
+    _parse_legacy_layer,
+    get_opposite_side,
+    parse_layer,
+)
+from rcon.vote_map import VoteMap
 
 SMDM_WARFARE = Layer(
     id="stmariedumont_warfare",
     map=MAPS["stmariedumont"],
-    gamemode=Gamemode.WARFARE,
+    game_mode=GameMode.WARFARE,
 )
 
 SME_WARFARE = Layer(
     id="stmereeglise_warfare",
     map=MAPS["stmereeglise"],
-    gamemode=Gamemode.WARFARE,
+    game_mode=GameMode.WARFARE,
 )
 
 
@@ -102,7 +104,7 @@ def test_get_opposite_side(team, expected):
             Layer(
                 id="DRL_S_1944_P_Skirmish",
                 map=MAPS["driel"],
-                gamemode=Gamemode.CONTROL,
+                game_mode=GameMode.CONTROL,
                 environment=Environment.DAWN,
             ),
         ),
@@ -111,7 +113,7 @@ def test_get_opposite_side(team, expected):
             Layer(
                 id="DRL_S_1944_Night_P_Skirmish",
                 map=MAPS["driel"],
-                gamemode=Gamemode.CONTROL,
+                game_mode=GameMode.CONTROL,
                 environment=Environment.NIGHT,
             ),
         ),
@@ -120,7 +122,7 @@ def test_get_opposite_side(team, expected):
             Layer(
                 id="DRL_S_1944_Day_P_Skirmish",
                 map=MAPS["driel"],
-                gamemode=Gamemode.CONTROL,
+                game_mode=GameMode.CONTROL,
                 environment=Environment.DAY,
             ),
         ),
@@ -129,7 +131,7 @@ def test_get_opposite_side(team, expected):
             Layer(
                 id="ELA_S_1942_P_Skirmish",
                 map=MAPS["driel"],
-                gamemode=Gamemode.CONTROL,
+                game_mode=GameMode.CONTROL,
                 environment=Environment.DAY,
             ),
         ),
@@ -138,7 +140,7 @@ def test_get_opposite_side(team, expected):
             Layer(
                 id="ELA_S_1942_Night_P_Skirmish",
                 map=MAPS["driel"],
-                gamemode=Gamemode.CONTROL,
+                game_mode=GameMode.CONTROL,
                 environment=Environment.DUSK,
             ),
         ),
@@ -156,7 +158,25 @@ def test_parse_layer(layer_name, expected):
             Layer(
                 id="elalamein_offensive_CW",
                 map=MAPS["elalamein"],
-                gamemode=Gamemode.OFFENSIVE,
+                game_mode=GameMode.OFFENSIVE,
+                attackers=Team.ALLIES,
+            ),
+        ),
+        (
+            "hill400_offensive_US",
+            Layer(
+                id="hill400_offensive_US",
+                map=MAPS["hill400"],
+                game_mode=GameMode.OFFENSIVE,
+                attackers=Team.ALLIES,
+            ),
+        ),
+        (
+            "hill400_offensive_us",
+            Layer(
+                id="hill400_offensive_us",
+                map=MAPS["hill400"],
+                game_mode=GameMode.OFFENSIVE,
                 attackers=Team.ALLIES,
             ),
         ),

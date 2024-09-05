@@ -10,9 +10,6 @@ networks:
 # for merging later, if they're defined under services: docker will want to start them
 # compose ignores any fields that start with x-
 x-backend: &backend
-  build:
-    context: .
-    dockerfile: Dockerfile
   image: ${BACKEND_DOCKER_REPOSITORY}:${TAGGED_VERSION}
   environment: &backend-env
     LOGGING_LEVEL: "INFO"
@@ -57,9 +54,6 @@ x-backend: &backend
     - ./static:/static/
     - ./config:/config/
 x-supervisor: &supervisor
-  build:
-    context: .
-    dockerfile: Dockerfile
   image: ${BACKEND_DOCKER_REPOSITORY}:${TAGGED_VERSION}
   restart: on-failure
   command: supervisor
@@ -68,6 +62,9 @@ x-supervisor: &supervisor
     - ./supervisor_data:/data
     - ./config:/config/
 x-frontend: &frontend
+  build:
+    context: .
+    dockerfile: Dockerfile-frontend
   image: ${FRONTEND_DOCKER_REPOSITORY}:${TAGGED_VERSION}
   environment:
     RCONWEB_EXTERNAL_ADDRESS: ${RCONWEB_EXTERNAL_ADDRESS}

@@ -30,8 +30,8 @@ const AddAdminItem = ({
   classes,
   name,
   setName,
-  steamID64,
-  setSteamID64,
+  playerId,
+  setPlayerId,
   role,
   setRole,
   roles,
@@ -54,9 +54,9 @@ const AddAdminItem = ({
           InputLabelProps={{
             shrink: true,
           }}
-          label="SteamID64"
-          value={steamID64}
-          onChange={(e) => setSteamID64(e.target.value)}
+          label="Player ID"
+          value={playerId}
+          onChange={(e) => setPlayerId(e.target.value)}
         />
       </Grid>
       <Grid item xs={4} className={classes.paddingLeft}>
@@ -73,9 +73,9 @@ const AddAdminItem = ({
         edge="end"
         aria-label="delete"
         onClick={() =>
-          onAdd(name, steamID64, role).then(() => {
+          onAdd(name, playerId, role).then(() => {
             setName("");
-            setSteamID64("");
+            setPlayerId("");
             setRole("");
           })
         }
@@ -94,7 +94,7 @@ const AdminsEditableList = ({
   onAdd,
 }) => {
   const [name, setName] = React.useState("");
-  const [steamID64, setSteamID64] = React.useState("");
+  const [playerId, setPlayerId] = React.useState("");
   const [role, setRole] = React.useState("");
 
   return (
@@ -104,24 +104,24 @@ const AdminsEditableList = ({
           classes={classes}
           name={name}
           setName={setName}
-          steamID64={steamID64}
-          setSteamID64={setSteamID64}
+          playerId={playerId}
+          setPlayerId={setPlayerId}
           roles={roles}
           role={role}
           setRole={setRole}
           onAdd={onAdd}
         />
         {peopleList.map((obj) => (
-          <ListItem key={obj.steam_id_64}>
+          <ListItem key={obj.player_id}>
             <ListItemText
               primary={"[" + obj.role + "] " + obj.name}
-              secondary={obj.steam_id_64}
+              secondary={obj.player_id}
             />
             <ListItemSecondaryAction>
               <IconButton
                 edge="end"
                 aria-label="delete"
-                onClick={() => onDelete(obj.name, obj.steam_id_64, obj.role)}
+                onClick={() => onDelete(obj.name, obj.player_id, obj.role)}
               >
                 <DeleteIcon />
               </IconButton>
@@ -132,8 +132,8 @@ const AdminsEditableList = ({
           classes={classes}
           name={name}
           setName={setName}
-          steamID64={steamID64}
-          setSteamID64={setSteamID64}
+          playerId={playerId}
+          setPlayerId={setPlayerId}
           roles={roles}
           role={role}
           setRole={setRole}

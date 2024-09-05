@@ -17,7 +17,7 @@ from rcon.commands import CommandFailedError, HLLServerError
 from rcon.discord import send_to_discord_audit
 from rcon.hooks import inject_player_ids
 from rcon.rcon import Rcon, get_rcon
-from rcon.types import StructuredLogLineType, GetDetailedPlayer
+from rcon.types import GetDetailedPlayer, StructuredLogLineType
 from rcon.user_config.auto_mod_level import AutoModLevelUserConfig
 from rcon.user_config.auto_mod_no_leader import AutoModNoLeaderUserConfig
 from rcon.user_config.auto_mod_seeding import AutoModSeedingUserConfig
@@ -72,38 +72,44 @@ def _do_punitions(
         try:
             if method == ActionMethod.MESSAGE:
                 if not aplayer.details.dry_run:
-                    rcon.do_message_player(
+                    rcon.message_player(
                         aplayer.name,
-                        aplayer.steam_id_64,
+                        aplayer.player_id,
                         aplayer.details.message,
                         by=aplayer.details.author,
                     )
                 audit(
-                    aplayer.details.discord_audit_url,
-                    f"-> WARNING: {aplayer}",
-                    aplayer.details.author,
+                    discord_webhook_url=aplayer.details.discord_audit_url,
+                    command_name="message_player",
+                    msg=f"-> WARNING: {aplayer}",
+                    author=aplayer.details.author,
                 )
 
             if method == ActionMethod.PUNISH:
                 if not aplayer.details.dry_run:
-                    rcon.do_punish(
+                    rcon.punish(
                         aplayer.name, aplayer.details.message, by=aplayer.details.author
                     )
                 audit(
-                    aplayer.details.discord_audit_url,
-                    f"--> PUNISHING: {aplayer}",
-                    aplayer.details.author,
+                    discord_webhook_url=aplayer.details.discord_audit_url,
+                    command_name="punish",
+                    msg=f"--> PUNISHING: {aplayer}",
+                    author=aplayer.details.author,
                 )
 
             if method == ActionMethod.KICK:
                 if not aplayer.details.dry_run:
-                    rcon.do_kick(
-                        aplayer.name, aplayer.details.message, by=aplayer.details.author
+                    rcon.kick(
+                        player_name=aplayer.name,
+                        reason=aplayer.details.message,
+                        by=aplayer.details.author,
+                        player_id=aplayer.player_id,
                     )
                 audit(
-                    aplayer.details.discord_audit_url,
-                    f"---> KICKING <---: {aplayer}",
-                    aplayer.details.author,
+                    discord_webhook_url=aplayer.details.discord_audit_url,
+                    command_name="kick",
+                    msg=f"---> KICKING <---: {aplayer}",
+                    author=aplayer.details.author,
                 )
         except (CommandFailedError, HLLServerError):
             logger.warning(
@@ -114,9 +120,10 @@ def _do_punitions(
                     m.player_punish_failed(aplayer)
             elif method == ActionMethod.KICK:
                 audit(
-                    aplayer.details.discord_audit_url,
-                    f"---> KICK FAILED, will retry <---: {aplayer}",
-                    aplayer.details.author,
+                    discord_webhook_url=aplayer.details.discord_audit_url,
+                    command_name="kick",
+                    msg=f"---> KICK FAILED, will retry <---: {aplayer}",
+                    author=aplayer.details.author,
                 )
 
 
@@ -183,10 +190,16 @@ def punish_squads(rcon: Rcon, r: Redis):
     set_first_run_done(r)
 
 
-def audit(discord_webhook_url: HttpUrl | None, msg: str, author: str):
+def audit(
+    discord_webhook_url: HttpUrl | None, command_name: str, msg: str, author: str
+):
     if discord_webhook_url is not None:
         send_to_discord_audit(
-            msg, by=author, webhookurls=[discord_webhook_url], silent=False
+            message=msg,
+            command_name=command_name,
+            by=author,
+            webhookurls=[discord_webhook_url],
+            silent=False,
         )
 
 
@@ -218,7 +231,7 @@ pendingTimers = {}
 
 @rcon.game_logs.on_connected()
 @inject_player_ids
-def on_connected(rcon: Rcon, _, name: str, steam_id_64: str):
+def on_connected(rcon: Rcon, _, name: str, player_id: str):
     red = get_redis_client()
     if not is_first_run_done(red):
         logger.debug(
@@ -243,29 +256,27 @@ def on_connected(rcon: Rcon, _, name: str, steam_id_64: str):
         on_connected_hook = getattr(mod, "on_connected", None)
         if callable(on_connected_hook):
             punitions_to_apply.merge(
-                mod.on_connected(name, steam_id_64, detailed_player_info)
+                mod.on_connected(name, player_id, detailed_player_info)
             )
 
     def notify_player():
         try:
             for p in punitions_to_apply.warning:
-                rcon.do_message_player(
-                    steam_id_64=p.steam_id_64,
+                rcon.message_player(
+                    player_id=p.player_id,
                     message=p.details.message,
                     by=p.details.author,
                     save_message=False,
                 )
         except Exception as e:
-            logger.error(
-                "Could not message player '%s' (%s) : %s", name, steam_id_64, e
-            )
+            logger.error("Could not message player '%s' (%s) : %s", name, player_id, e)
 
     if len(punitions_to_apply.warning) == 0:
         return
 
     # The player might not yet have finished connecting in order to send messages.
     t = Timer(20, notify_player)
-    pendingTimers[steam_id_64] = t
+    pendingTimers[player_id] = t
     t.start()
 
 

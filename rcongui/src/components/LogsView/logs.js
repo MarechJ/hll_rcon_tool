@@ -32,33 +32,29 @@ const formatClass = (action, classes, highlightLogs) => {
       if (action.toLowerCase().includes("axis")) {
         return classes.logsChatAxis;
       }
-    }
-    else if (action.toLowerCase().includes("admin")) {
+    } else if (action.toLowerCase().includes("admin")) {
       return classes.logsAdmin;
-    }
-    else if (action.toLowerCase().includes("tk")) {
+    } else if (action.toLowerCase().includes("tk")) {
       return classes.logsTK;
-    }
-    else if (action.toLowerCase().includes("match")) {
+    } else if (action.toLowerCase().includes("match")) {
       return classes.logsMatch;
-    }
-    else if (action.toLowerCase().includes("vote")) {
+    } else if (action.toLowerCase().includes("vote")) {
       return classes.logsVote;
-    }
-    else switch (action.toLowerCase()) {
-      case "message":
-        return classes.logsMessage;
-      case "team kill":
-        return classes.logsTeamKill;
-      case "kill":
-        return classes.logsKill;
-      case "teamswitch":
-        return classes.logsTeamSwitch;
-      case "disconnected":
-        return classes.logsDisconnected;
-      case "connected":
-        return classes.logsConnected;
-    }
+    } else
+      switch (action.toLowerCase()) {
+        case "message":
+          return classes.logsMessage;
+        case "team kill":
+          return classes.logsTeamKill;
+        case "kill":
+          return classes.logsKill;
+        case "teamswitch":
+          return classes.logsTeamSwitch;
+        case "disconnected":
+          return classes.logsDisconnected;
+        case "connected":
+          return classes.logsConnected;
+      }
   }
   return classes.logs;
 };
@@ -100,10 +96,6 @@ const Selector = ({
 class Logs extends React.Component {
   constructor(props) {
     super(props);
-    console.log(
-      "logs_action_type",
-      JSON.parse(localStorage.getItem("logs_action_type"))
-    );
     this.state = {
       logs: [],
       actions: [],
@@ -145,9 +137,8 @@ class Logs extends React.Component {
 
   loadLogs() {
     const { actionsFilter, playersFilter, limit, inclusiveFilter } = this.state;
-
     return postData(`${process.env.REACT_APP_API_URL}get_recent_logs`, {
-      end: limit,
+      end: parseInt(limit),
       filter_action: actionsFilter,
       filter_player: playersFilter,
       inclusive_filter: inclusiveFilter,
@@ -320,7 +311,10 @@ class Logs extends React.Component {
           <Grid item className={classes.padding} xs={12}>
             <Paper className={classes.paperLogs}>
               {logs.map((l) => (
-                <pre key={l.raw} className={formatClass(l.action, classes, highlightLogs)}>
+                <pre
+                  key={l.raw}
+                  className={formatClass(l.action, classes, highlightLogs)}
+                >
                   {moment(new Date(l.timestamp_ms)).format(
                     "HH:mm:ss - ddd, MMM D"
                   ) +
