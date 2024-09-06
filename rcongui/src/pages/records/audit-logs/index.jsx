@@ -8,16 +8,12 @@ import {
 import InputLabel from "@mui/material/InputLabel";
 import FormControl from "@mui/material/FormControl";
 import Select from "@mui/material/Select";
-
 import { Button } from "@mui/material";
 import Autocomplete from '@mui/material/Autocomplete';
 import TextField from "@mui/material/TextField";
 import moment from "moment";
 import { List as IList, fromJS } from "immutable";
-
 import Grid from "@mui/material/Unstable_Grid2";
-
-import MUIDataTable from "mui-datatables";
 
 const AuditLogsTable = ({ auditLogs }) => {
   const [myRowPerPage, setRowPerPage] = React.useState(
@@ -55,12 +51,7 @@ const AuditLogsTable = ({ auditLogs }) => {
   return (
     (<Grid container justifyContent="center">
       <Grid>
-        <MUIDataTable
-          title={"Audit logs"}
-          data={auditLogs.toJS()}
-          columns={columns}
-          options={options}
-        />
+      {"Audit logs"}
       </Grid>
     </Grid>)
   );

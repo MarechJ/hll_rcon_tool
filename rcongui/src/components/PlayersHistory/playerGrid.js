@@ -6,7 +6,7 @@ import { PlayerFlags } from "./PlayerTile/PlayerFlags";
 import { PlayerSighthings } from "./PlayerTile/PlayerSighthings";
 import { PlayerPenalties } from "./PlayerTile/PlayerPenalties";
 import { PlayerBan } from "./PlayerTile/PlayerBan";
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid2";
 
 const PlayerGrid = ({
   players,
@@ -33,8 +33,8 @@ const PlayerGrid = ({
   }[2];
 
   return (
-    <Grid container>
-      <Grid xs={12}>
+    (<Grid container>
+      <Grid size={12}>
         <ImageList cols={size} cellHeight={240} spacing={12}>
           {players.map((player) => {
             return (
@@ -84,7 +84,7 @@ const PlayerGrid = ({
           })}
         </ImageList>
       </Grid>
-    </Grid>
+    </Grid>)
   );
 };
 

@@ -6,7 +6,7 @@ import {
   ListItemSecondaryAction,
   ListItemText,
 } from "@mui/material";
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid2";
 import DeleteIcon from "@mui/icons-material/Delete";
 import TextHistory, { getAllNamespaces } from "../textHistory";
 import InputLabel from "@mui/material/InputLabel";
@@ -68,26 +68,28 @@ const TextHistoryManager = () => {
   const nameSpaces = getAllNamespaces();
 
   return (
-    <Grid container>
+    (<Grid container>
       {nameSpaces.length > 0 ? (
         <React.Fragment>
-          <Grid lg={12}>
+          <Grid size={{
+            lg: 12
+          }}>
             <SelectNameSpace
               value={namespace}
               handleChange={setNamespace}
               values={nameSpaces}
             />
           </Grid>
-          <Grid xs={12}>
+          <Grid size={12}>
             <TextHistoryList namespace={namespace} />
           </Grid>
         </React.Fragment>
       ) : (
-        <Grid xs={12}>
+        <Grid size={12}>
           No text recorded yet
         </Grid>
       )}
-    </Grid>
+    </Grid>)
   );
 };
 

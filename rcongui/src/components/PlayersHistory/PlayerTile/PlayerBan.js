@@ -2,7 +2,7 @@ import React from "react";
 import { Typography } from "@mui/material";
 import { fromJS } from "immutable";
 import { reduce } from "lodash";
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid2";
 
 export function banListFromServer(data) {
   // console.log(`banListFromServer ${JSON.stringify(data)}`)
@@ -36,12 +36,12 @@ export const PlayerBan = ({ bans, player }) => {
   );
   return (
     (<Grid
-      container
-      justifyContent="space-between"
-      spacing={0}
-    >
+        container
+        justifyContent="space-between"
+        spacing={0}
+      >
       {formattedBans.map((formattedBan) => (
-        <Grid xs={6}>
+        <Grid size={6}>
           <Typography variant="h7" color="secondary">
             {formattedBan}
           </Typography>

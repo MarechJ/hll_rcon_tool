@@ -8,7 +8,7 @@ import {
   ImageListItem,
   ImageListItemBar,
 } from "@mui/material";
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid2";
 import React from "react";
 import { get, handle_http_errors, showResponse } from "../../utils/fetchUtils";
 import { List as iList, Map, fromJS } from "immutable";
@@ -71,7 +71,7 @@ export const LiveScore = ({ endpoint, explainText, title }) => {
     >
       <Grid
         
-        xs={12}
+        size={12}
       >
         {process.env.REACT_APP_PUBLIC_BUILD ? (
           <Typography color="secondary" variant="h4">
@@ -92,11 +92,12 @@ export const LiveScore = ({ endpoint, explainText, title }) => {
 
       {process.env.REACT_APP_PUBLIC_BUILD ? (
         <Grid
-          xs={12}
-          md={10}
-          lg={10}
-          xl={8}
-        >
+          size={{
+            xs: 12,
+            md: 10,
+            lg: 10,
+            xl: 8
+          }}>
           <LiveHeader
             serverState={serverState}
             started={started}
@@ -162,20 +163,20 @@ export const LiveHeader = ({
   }, [serverState]);
 
   return (
-    <AppBar position="relative" style={{ minHeight: "144px" }}>
+    (<AppBar position="relative" style={{ minHeight: "144px" }}>
       <Toolbar>
         <ImageList cols={1}>
           <ImageListItem>
             <Grid container spacing={1}>
-              <Grid xs={12}>
+              <Grid size={12}>
                 <Typography variant="h4" display="inline" color="inherit">
                   {title}
                 </Typography>
               </Grid>
-              <Grid xs={12}>
+              <Grid size={12}>
                 <Typography variant="body2">{explainText}</Typography>
               </Grid>
-              <Grid xs={12}>
+              <Grid size={12}>
                 <Typography variant="caption">
                   Auto-refresh every {refreshIntervalSec} seconds:{" "}
                   <Link onClick={() => setPaused(!isPaused)} color="secondary">
@@ -184,7 +185,7 @@ export const LiveHeader = ({
                   - Last update: {lastRefresh}
                 </Typography>
               </Grid>
-              <Grid xs={12}>
+              <Grid size={12}>
                 <LinearProgress
                   style={{ visibility: isLoading ? "visible" : "hidden" }}
                   
@@ -219,6 +220,6 @@ export const LiveHeader = ({
           </ImageListItem>
         </ImageList>
       </Toolbar>
-    </AppBar>
+    </AppBar>)
   );
 };

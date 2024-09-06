@@ -5,7 +5,7 @@ import { PlayerHeader } from "./PlayerHeader";
 import { PlayerFlags } from "./PlayerFlags";
 import { PlayerSighthings } from "./PlayerSighthings";
 import { PlayerPenalties } from "./PlayerPenalties";
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid2";
 
 export default ({ onDeleteFlag, player }) => {
 

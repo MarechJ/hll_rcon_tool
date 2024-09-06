@@ -11,7 +11,7 @@ import moment from "moment";
 import { getServerStatus, getSharedMessages } from "../../utils/fetchUtils";
 import TextHistory from "../textHistory";
 import { TimePickerButtons } from "../shared/time-picker-buttons";
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid2";
 
 
 const presetTimes = [
@@ -129,7 +129,7 @@ export default function BlacklistRecordCreateDialog({
   };
 
   return (
-    <Dialog
+    (<Dialog
       open={open}
       onClose={handleClose}
       PaperProps={{
@@ -193,7 +193,7 @@ export default function BlacklistRecordCreateDialog({
             />
             {/* EXPIRY */}
             <Grid container spacing={2} alignItems="center">
-              <Grid xs={12}>
+              <Grid size={12}>
                 <TextField
                   margin="dense"
                   id="expiresAt"
@@ -209,7 +209,7 @@ export default function BlacklistRecordCreateDialog({
                   variant="standard"
                 />
               </Grid>
-              <Grid xs={12}>
+              <Grid size={12}>
                 {presetTimes.map(([amount, unit], index) => (
                   <TimePickerButtons
                     key={unit + index}
@@ -227,7 +227,7 @@ export default function BlacklistRecordCreateDialog({
             </Grid>
             {/* REASON */}
             <Grid container spacing={2} alignItems="top">
-              <Grid xs={8}>
+              <Grid size={8}>
                 <TextField
                   required
                   multiline
@@ -245,7 +245,7 @@ export default function BlacklistRecordCreateDialog({
               {duration}, {expires}, {ban_id}, {blacklist_name}"
                 />
               </Grid>
-              <Grid xs={4}>
+              <Grid size={4}>
                 <Select
                   id="saved-messages-select"
                   value={selectedMessage}
@@ -280,7 +280,7 @@ export default function BlacklistRecordCreateDialog({
           {submitText}
         </Button>
       </DialogActions>
-    </Dialog>
+    </Dialog>)
   );
 }
 

@@ -1,4 +1,4 @@
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid2";
 import React from "react";
 import { WithPopver } from "../../commonComponent";
 import moment from "moment";
@@ -29,7 +29,7 @@ export const Penalites = ({ player }) => (
 
 export const PlayerPenalties = ({ player }) => (
   <Grid container>
-    <Grid xs={12}>
+    <Grid size={12}>
       <WithPopver
         popoverContent={<Penalites player={player} />}
       >

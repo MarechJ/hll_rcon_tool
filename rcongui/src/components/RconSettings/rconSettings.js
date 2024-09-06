@@ -14,7 +14,7 @@ import {
   postData,
   showResponse,
 } from "../../utils/fetchUtils";
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid2";
 import _ from "lodash";
 import Padlock from "../shared/padlock";
 import TextHistoryManager, { SelectNameSpace } from "./textHistoryManager";
@@ -75,7 +75,7 @@ const Hook = ({
 
   return (
     (<Grid container spacing={1}>
-      <Grid xs={4}>
+      <Grid size={4}>
         <TextField
           label="webhook url"
           fullWidth
@@ -84,7 +84,7 @@ const Hook = ({
           helperText="Discord hook url"
         />
       </Grid>
-      <Grid xs={6}>
+      <Grid size={6}>
         <WordList
           label="Roles"
           helperText="Add roles to be pinged, hit enter to validate"
@@ -93,7 +93,7 @@ const Hook = ({
           onWordsChange={setMyRoles}
         />
       </Grid>
-      <Grid xs={2}>
+      <Grid size={2}>
         {actionType === "delete" ? (
           <React.Fragment>
             <IconButton edge="start" onClick={() => onDeleteHook(myHook, myRoles)} size="large">
@@ -148,10 +148,10 @@ const WebhooksConfig = () => {
     );
   }
   return (
-    <React.Fragment>
+    (<React.Fragment>
       {hooks.map((hookConfig) => (
         <Grid container>
-          <Grid xs={12}>
+          <Grid size={12}>
             <Typography variant="h6" style={{ "text-transform": "capitalize" }}>
               For: {hookConfig.name}
             </Typography>
@@ -177,7 +177,7 @@ const WebhooksConfig = () => {
               )}
             </Grid>
           </Grid>
-          <Grid xs={12}>
+          <Grid size={12}>
             <Hook
               actionType="add"
               onAddHook={(hook, roles) => {
@@ -188,7 +188,7 @@ const WebhooksConfig = () => {
           </Grid>
         </Grid>
       ))}
-    </React.Fragment>
+    </React.Fragment>)
   );
 };
 
@@ -462,13 +462,13 @@ class RconSettings extends React.Component {
 
     return (
       (<Grid container spacing={3}>
-        <Grid xs={12}>
+        <Grid size={12}>
           <h2>Advanced RCON settings</h2>
         </Grid>
-        <Grid xs={12} >
+        <Grid size={12} >
           <Typography variant="h6">Automated broadcast cycle</Typography>
         </Grid>
-        <Grid xs={12}>
+        <Grid size={12}>
           <Grid container justifyContent="space-evenly">
             <Grid>
               <Padlock
@@ -498,7 +498,7 @@ class RconSettings extends React.Component {
             </Grid>
           </Grid>
         </Grid>
-        <Grid xs={12}>
+        <Grid size={12}>
           <TextField
             fullWidth
             label="Auto broadcast messages"
@@ -522,7 +522,7 @@ class RconSettings extends React.Component {
             votenextmap_line, votenextmap_line, votenextmap_noscroll, votenextmap_vertical, winning_maps_all, winning_maps_short)"
           />
         </Grid>
-        <Grid xs={12}>
+        <Grid size={12}>
           <Button
             fullWidth
             onClick={this.saveBroadCastMessages}
@@ -531,7 +531,7 @@ class RconSettings extends React.Component {
             Save auto broadcast messages
           </Button>
         </Grid>
-        <Grid xs={12} >
+        <Grid size={12} >
           <Typography variant="h6">
             Manage your personal text history
           </Typography>
@@ -544,14 +544,14 @@ class RconSettings extends React.Component {
           alignItems="center"
           
         >
-          <Grid xs={12}>
+          <Grid size={12}>
             <TextHistoryManager  />
           </Grid>
         </Grid>
-        <Grid xs={12} >
+        <Grid size={12} >
           <Typography variant="h6">Manage shared standard messages</Typography>
         </Grid>
-        <Grid xs={12} >
+        <Grid size={12} >
           <SelectNameSpace
             value={standardMessagesType}
             handleChange={(v) =>
@@ -563,7 +563,7 @@ class RconSettings extends React.Component {
             values={["punishments", "welcome", "broadcast"]}
           />
         </Grid>
-        <Grid xs={12}>
+        <Grid size={12}>
           <TextField
             fullWidth
             label="Shared standard messages"
@@ -582,7 +582,7 @@ class RconSettings extends React.Component {
             helperText="Set one message per line. If you want a line return in one of the message write: \n"
           />
         </Grid>
-        <Grid xs={12}>
+        <Grid size={12}>
           <Button
             fullWidth
             onClick={this.saveStandardMessages}
@@ -591,18 +591,22 @@ class RconSettings extends React.Component {
             Save shared messages
           </Button>
         </Grid>
-        <Grid  justifyContent="center" xs={12}>
+        <Grid  justifyContent="center" size={12}>
           <Typography variant="h5">Add player to watchlist</Typography>
         </Grid>
-        <Grid xs={12}>
+        <Grid size={12}>
           <ManualWatchList  />
         </Grid>
-        <Grid  justifyContent="center" xs={12}>
+        <Grid  justifyContent="center" size={12}>
           <Typography variant="h5">Manage services</Typography>
         </Grid>
-        <Grid  justifyContent="center" xs={12}>
+        <Grid  justifyContent="center" size={12}>
           <Grid container justifyContent="center">
-            <Grid md={8} xs={12}>
+            <Grid
+              size={{
+                md: 8,
+                xs: 12
+              }}>
               <ServicesList  />
             </Grid>
           </Grid>
@@ -628,7 +632,7 @@ class RconSettings extends React.Component {
         >
           <WebhooksConfig type="camera" />
         </Grid> */}
-        <Grid  justifyContent="center" xs={12}>
+        <Grid  justifyContent="center" size={12}>
           <Typography variant="h5">
             Auto votekick toggle{" "}
             <Tooltip title="When enabled this feature manages the votekicks ingame by turning it off if the conditions you set below are met, and turning it back on if they are NOT met">
@@ -644,7 +648,7 @@ class RconSettings extends React.Component {
           alignItems="center"
           spacing={1}
         >
-          <Grid xs={12}>
+          <Grid size={12}>
             <TextField
               type="number"
               label="# ingame moderator"
@@ -708,7 +712,7 @@ class RconSettings extends React.Component {
             />
           </Grid>
         </Grid>
-        <Grid  justifyContent="center" xs={12}>
+        <Grid  justifyContent="center" size={12}>
           <Typography variant="h5">Camera notification config</Typography>
         </Grid>
         <Grid
@@ -738,7 +742,7 @@ class RconSettings extends React.Component {
           justifyContent="center"
           alignItems="center"
         >
-          <Grid xs={12}>
+          <Grid size={12}>
             <Typography variant="h5">
               Real VIP slots{" "}
               <Tooltip
@@ -753,7 +757,7 @@ class RconSettings extends React.Component {
               </Tooltip>{" "}
             </Typography>
           </Grid>
-          <Grid xs={12}>
+          <Grid size={12}>
             <RealVip  />
           </Grid>
         </Grid>
@@ -763,7 +767,7 @@ class RconSettings extends React.Component {
           justifyContent="center"
           alignItems="center"
         >
-          <Grid xs={12}>
+          <Grid size={12}>
             <Typography variant="h5">
               Server Name{" "}
               <Tooltip title="Only users with a GTX server can use this, it won't work for others. GTX users must set extra info in config/config.yml for it to work. The name change is only applied after a change of map">
@@ -771,7 +775,7 @@ class RconSettings extends React.Component {
               </Tooltip>{" "}
             </Typography>
           </Grid>
-          <Grid xs={12}>
+          <Grid size={12}>
             <ServerName  />
           </Grid>
         </Grid>
@@ -781,7 +785,7 @@ class RconSettings extends React.Component {
           justifyContent="center"
           alignItems="center"
         >
-          <Grid xs={12}>
+          <Grid size={12}>
             <Typography variant="h5" gutterBottom>
               Auto settings
             </Typography>
@@ -790,7 +794,7 @@ class RconSettings extends React.Component {
             </Typography>
           </Grid>
         </Grid>
-        <Grid xs={12}>
+        <Grid size={12}>
           <AutoSettings
             words={autosettings}
             onWordsChange={(words, event) =>
@@ -804,10 +808,10 @@ class RconSettings extends React.Component {
         </Grid>
         <Grid
           
-          xs={12}
           alignContent="center"
           justifyContent="center"
           alignItems="center"
+          size={12}
         >
           <Button
             color="secondary"
@@ -819,10 +823,10 @@ class RconSettings extends React.Component {
         </Grid>
         <Grid
           
-          xs={12}
           alignContent="center"
           justifyContent="center"
           alignItems="center"
+          size={12}
         >
           <Button
             color="secondary"

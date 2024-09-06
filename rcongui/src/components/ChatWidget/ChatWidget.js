@@ -11,7 +11,7 @@ import {
 import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
 import moment from "moment";
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid2";
 
 
 const AlwaysScrollToBottom = () => {
@@ -80,7 +80,7 @@ const ChatContent = ({ data, handleMessageSend }) => {
           alignItems="center"
           
         >
-          <Grid xs={10}>
+          <Grid size={10}>
             <TextField
               id="message"
               label="Add comment"
@@ -90,7 +90,7 @@ const ChatContent = ({ data, handleMessageSend }) => {
               onChange={(e) => setComment(e.target.value)}
             />
           </Grid>
-          <Grid xs={2}>
+          <Grid size={2}>
             <Box paddingLeft={1}>
               <Button
                 variant="contained"

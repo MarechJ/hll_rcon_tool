@@ -19,7 +19,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import data from '@emoji-mart/data'
 import EmojiPicker from "@emoji-mart/react";
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid2";
 
 const SearchBar = ({
   name,
@@ -199,7 +199,11 @@ const SearchBar = ({
             labelPlacement="top"
           />
         </Grid>
-        <Grid xs={4} xl={1}>
+        <Grid
+          size={{
+            xs: 4,
+            xl: 1
+          }}>
           <FormControl fullWidth>
             <InputLabel>Page size</InputLabel>
             <Select

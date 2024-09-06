@@ -31,7 +31,7 @@ import {
 } from "@mui/material";
 import makePlayerProfileUrl from "../../utils/makePlayerProfileUrl";
 import moment from "moment";
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid2";
 
 
 const zeroPad = (num, places) => String(num).padStart(places, "0");

@@ -1,5 +1,5 @@
 import { Button, TextField } from "@mui/material";
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid2";
 import React from "react";
 import {
   get,
@@ -27,8 +27,8 @@ const ServerName = () => {
   };
 
   return (
-    <Grid container>
-      <Grid xs={10}>
+    (<Grid container>
+      <Grid size={10}>
         <TextField
           fullWidth
           lable="Server Name. ONLY FOR GTX USER (and if configured)"
@@ -36,12 +36,12 @@ const ServerName = () => {
           onChange={(e) => setName(e.target.value)}
         />
       </Grid>
-      <Grid xs={2}>
+      <Grid size={2}>
         <Button variant="outlined" onClick={save}>
           SAVE
         </Button>
       </Grid>
-    </Grid>
+    </Grid>)
   );
 };
 

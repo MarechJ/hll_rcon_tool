@@ -5,7 +5,7 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid2";
 import { range } from "lodash/util";
 import {
   get,
@@ -32,7 +32,7 @@ const ProfanityFiler = ({
   onFowardChange,
 }) => (
   <Grid container>
-    <Grid xs={12}>
+    <Grid size={12}>
       <WordList
         words={words}
         onWordsChange={onWordsChange}
@@ -330,7 +330,7 @@ class HLLSettings extends React.Component {
 
     return (
       (<Grid container spacing={3} >
-        <Grid xs={12}>
+        <Grid size={12}>
           <h2>HLL Game Server settings </h2>
           <small>(1min autorefresh)</small>
           <AutoRefreshLine
@@ -340,7 +340,11 @@ class HLLSettings extends React.Component {
             
           />
         </Grid>
-        <Grid  sm={6} xs={12}>
+        <Grid
+          size={{
+            sm: 6,
+            xs: 12
+          }}>
           <ServerMessage
             autocompleteKey="welcome"
             type="Welcome message"
@@ -359,7 +363,11 @@ class HLLSettings extends React.Component {
             }
           />
         </Grid>
-        <Grid  sm={6} xs={12}>
+        <Grid
+          size={{
+            sm: 6,
+            xs: 12
+          }}>
           <ServerMessage
             autocompleteKey="broadcast"
             type="Broadcast message"
@@ -383,7 +391,11 @@ class HLLSettings extends React.Component {
             }
           />
         </Grid>
-        <Grid  xs={12} md={6}>
+        <Grid
+          size={{
+            xs: 12,
+            md: 6
+          }}>
           <CollapseCard
             title="Manage VIPs"
             
@@ -413,7 +425,11 @@ class HLLSettings extends React.Component {
             />
           </CollapseCard>
         </Grid>
-        <Grid  xs={12} md={6}>
+        <Grid
+          size={{
+            xs: 12,
+            md: 6
+          }}>
           <CollapseCard
             title="Manage Console admins"
             
@@ -442,9 +458,9 @@ class HLLSettings extends React.Component {
         <Grid
           container
           
-          xs={12}
           alignContent="center"
           justifyContent="center"
+          size={12}
         >
           <Grid>
             <Padlock
@@ -471,7 +487,11 @@ class HLLSettings extends React.Component {
             />
           </Grid>
         </Grid>
-        <Grid  xs={12} md={6}>
+        <Grid
+          size={{
+            xs: 12,
+            md: 6
+          }}>
           <NumSlider
             
             disabled={lockedSliders}
@@ -493,7 +513,11 @@ class HLLSettings extends React.Component {
             }
           />
         </Grid>
-        <Grid  xs={12} md={6}>
+        <Grid
+          size={{
+            xs: 12,
+            md: 6
+          }}>
           <NumSlider
             
             disabled={lockedSliders}
@@ -514,7 +538,11 @@ class HLLSettings extends React.Component {
             }
           />
         </Grid>
-        <Grid  xs={12} md={6}>
+        <Grid
+          size={{
+            xs: 12,
+            md: 6
+          }}>
           <NumSlider
             
             disabled={lockedSliders}
@@ -539,7 +567,11 @@ class HLLSettings extends React.Component {
             }
           />
         </Grid>
-        <Grid  xs={12} md={6}>
+        <Grid
+          size={{
+            xs: 12,
+            md: 6
+          }}>
           <NumSlider
             
             disabled={lockedSliders}
@@ -562,7 +594,11 @@ class HLLSettings extends React.Component {
             }
           />
         </Grid>
-        <Grid  xs={12} md={6}>
+        <Grid
+          size={{
+            xs: 12,
+            md: 6
+          }}>
           <NumSlider
             
             disabled={lockedSliders}
@@ -584,7 +620,11 @@ class HLLSettings extends React.Component {
             }
           />
         </Grid>
-        <Grid  xs={12} md={6}>
+        <Grid
+          size={{
+            xs: 12,
+            md: 6
+          }}>
           <NumSlider
             
             disabled={lockedSliders}
@@ -605,7 +645,11 @@ class HLLSettings extends React.Component {
             }
           />
         </Grid>
-        <Grid  xs={12} md={6}>
+        <Grid
+          size={{
+            xs: 12,
+            md: 6
+          }}>
           <Padlock
             label="Auto balance enabled"
             checked={autobalanceEnabled}
@@ -617,7 +661,11 @@ class HLLSettings extends React.Component {
             }
           />
         </Grid>
-        <Grid  xs={12} md={6}>
+        <Grid
+          size={{
+            xs: 12,
+            md: 6
+          }}>
           <Padlock
             label="Vote kicks allowed"
             checked={votekickEnabled}
@@ -629,9 +677,9 @@ class HLLSettings extends React.Component {
             }
           />
         </Grid>
-        <Grid xs={12}>
+        <Grid size={12}>
           <Grid container spacing={1}>
-            <Grid xs={12}>
+            <Grid size={12}>
               <TextField
                 fullWidth
                 label="Vote kick threshold"
@@ -642,7 +690,7 @@ class HLLSettings extends React.Component {
                 helperText="Use the following format, Error: First entry must be for 0 Players (you can add as many pairs as you want): player count,votekick threshold... example: 0,1,10,5,25,12,50,20"
               />
             </Grid>
-            <Grid xs={6}>
+            <Grid size={6}>
               <Button
                 fullWidth
                 variant="outlined"
@@ -653,7 +701,7 @@ class HLLSettings extends React.Component {
                 SAVE
               </Button>
             </Grid>
-            <Grid xs={6}>
+            <Grid size={6}>
               <Button
                 fullWidth
                 variant="outlined"
@@ -666,7 +714,7 @@ class HLLSettings extends React.Component {
             </Grid>
           </Grid>
         </Grid>
-        <Grid xs={12}>
+        <Grid size={12}>
           <ProfanityFiler
             words={profanities}
             onWordsChange={(words) => this.setState({ profanities: words })}

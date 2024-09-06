@@ -1,7 +1,7 @@
 import { Button, FormControl, FormControlLabel, InputLabel, MenuItem, Select, Switch, TextField } from "@mui/material";
 import React from "react";
 import { get, handle_http_errors, showResponse } from "../../utils/fetchUtils";
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid2";
 
 const BlacklistRecordsSearch = ({
   blacklists,
@@ -23,7 +23,7 @@ const BlacklistRecordsSearch = ({
         alignItems="center"
         justifyContent="space-evenly"
       >
-        <Grid xs={4}>
+        <Grid size={4}>
           <TextField
             fullWidth
             label="Search by player ID"
@@ -31,7 +31,7 @@ const BlacklistRecordsSearch = ({
             onChange={(e) => setPlayerIdQuery(e.target.value)}
           />
         </Grid>
-        <Grid xs={8}>
+        <Grid size={8}>
           <TextField
             fullWidth
             label="Search by name or reason"
@@ -39,7 +39,7 @@ const BlacklistRecordsSearch = ({
             onChange={(e) => setReasonQuery(e.target.value)}
           />
         </Grid>
-        <Grid xs={4}>
+        <Grid size={4}>
           <FormControl fullWidth>
             <InputLabel>Blacklist</InputLabel>
             <Select
@@ -53,7 +53,7 @@ const BlacklistRecordsSearch = ({
             </Select>
           </FormControl>
         </Grid>
-        <Grid xs={3}>
+        <Grid size={3}>
           <FormControlLabel
             control={
               <Switch
@@ -66,7 +66,7 @@ const BlacklistRecordsSearch = ({
             labelPlacement="top"
           />
         </Grid>
-        <Grid xs={2}>
+        <Grid size={2}>
           <FormControl fullWidth>
             <InputLabel>Page size</InputLabel>
             <Select
@@ -85,7 +85,7 @@ const BlacklistRecordsSearch = ({
             </Select>
           </FormControl>
         </Grid>
-        <Grid xs={3}>
+        <Grid size={3}>
           <Button
             type="submit"
             disabled={disabled}

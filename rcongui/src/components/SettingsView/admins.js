@@ -13,7 +13,7 @@ import {
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid2";
 
 const AdminRole = ({ role, setRole, roles }) => (
   <FormControl >
@@ -38,7 +38,7 @@ const AddAdminItem = ({
 }) => (
   <ListItem>
     <Grid container>
-      <Grid xs={4} >
+      <Grid size={4} >
         <TextField
           InputLabelProps={{
             shrink: true,
@@ -48,7 +48,7 @@ const AddAdminItem = ({
           onChange={(e) => setName(e.target.value)}
         />
       </Grid>
-      <Grid xs={4} >
+      <Grid size={4} >
         <TextField
           InputLabelProps={{
             shrink: true,
@@ -58,7 +58,7 @@ const AddAdminItem = ({
           onChange={(e) => setPlayerId(e.target.value)}
         />
       </Grid>
-      <Grid xs={4} >
+      <Grid size={4} >
         <AdminRole
           
           role={role}

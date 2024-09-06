@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, Typography } from "@mui/material";
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid2";
 import {
   get as apiGet,
   handle_http_errors,
@@ -29,8 +29,8 @@ const Footer = () => {
   }, []);
 
   return (
-    <Grid container>
-      <Grid xs={12}>
+    (<Grid container>
+      <Grid size={12}>
         <Typography
           color="textSecondary"
           variant="caption"
@@ -49,7 +49,7 @@ const Footer = () => {
         </Typography>
       </Grid>
       {!process.env.REACT_APP_PUBLIC_BUILD ? (
-        <Grid xs={12}>
+        <Grid size={12}>
           <Typography
             color="textSecondary"
             variant="caption"
@@ -67,7 +67,7 @@ const Footer = () => {
       ) : (
         ""
       )}
-    </Grid>
+    </Grid>)
   );
 };
 

@@ -9,7 +9,7 @@ import React from "react";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { SYNC_METHODS } from "./BlacklistListCreateDialog";
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid2";
 
 
 const BlacklistListTile = ({
@@ -34,14 +34,14 @@ const BlacklistListTile = ({
         <Grid>
           <Typography variant="h6" color="textSecondary">#{blacklist.id}</Typography>
         </Grid>
-        <Grid xs={2}>
+        <Grid size={2}>
           <InputLabel align="left">Blacklist Name</InputLabel>
           <Typography align="left">
             {blacklist.name}
           </Typography>
         </Grid>
 
-        <Grid xs={6}>
+        <Grid size={6}>
           <InputLabel align="left">Servers</InputLabel>
           {
             blacklist.servers === null
@@ -58,7 +58,7 @@ const BlacklistListTile = ({
           }
         </Grid>
         
-        <Grid xs={2}>
+        <Grid size={2}>
           <InputLabel align="left">Sync Method</InputLabel>
           <Typography align="left">{SYNC_METHODS[blacklist.sync]}</Typography>
         </Grid>

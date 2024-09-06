@@ -5,7 +5,7 @@ import SplitButton from "../splitButton";
 import TextHistory from "../textHistory";
 import { getSharedMessages } from "../../utils/fetchUtils";
 import { ForwardCheckBox } from "../commonComponent";
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid2";
 
 const ServerMessage = ({
   type,
@@ -24,13 +24,13 @@ const ServerMessage = ({
 
   return (
     (<Grid
-        container
-        xs={12}
-        alignItems="center"
-        alignContent="center"
-        justifyContent="center"
-      >
-      <Grid xs={12} >
+          container
+          alignItems="center"
+          alignContent="center"
+          justifyContent="center"
+          size={12}
+        >
+      <Grid size={12} >
         <Autocomplete
           freeSolo
           options={sharedMessages.concat(textHistory.getTexts())}

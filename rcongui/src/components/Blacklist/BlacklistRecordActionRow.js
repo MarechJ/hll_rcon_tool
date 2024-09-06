@@ -4,7 +4,7 @@ import Tooltip from "@mui/material/Tooltip";
 import EditIcon from "@mui/icons-material/Edit";
 import TimerOffIcon from "@mui/icons-material/TimerOff";
 import DeleteIcon from "@mui/icons-material/Delete";
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid2";
 
 
 const BlacklistRecordActionRow = ({

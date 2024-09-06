@@ -16,13 +16,6 @@ const Main = styled('div')(({ theme }) => ({
   gap: theme.spacing(1),
 }));
 
-const Panel = styled('div')(({ theme }) => ({
-  display: "flex",
-  flexDirection: "row",
-  gap: theme.spacing(1),
-  alignItems: "center",
-}));
-
 const Maps = styled(List)(({ theme }) => ({
   maxWidth: theme.breakpoints.values.sm,
   position: "relative",

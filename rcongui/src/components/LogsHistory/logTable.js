@@ -1,9 +1,7 @@
 import React from "react";
 import Link from "@mui/material/Link";
 import moment from "moment";
-import Grid from "@mui/material/Unstable_Grid2";
-
-import MUIDataTable from "mui-datatables";
+import Grid from "@mui/material/Grid2";
 
 export default function LogsTable({ logs, downloadCSV }) {
   const [myRowPerPage, setRowPerPage] = React.useState(
@@ -87,12 +85,7 @@ export default function LogsTable({ logs, downloadCSV }) {
   return (
     (<Grid container justifyContent="center">
       <Grid>
-        <MUIDataTable
-          title={"Game logs"}
-          data={logs}
-          columns={columns}
-          options={options}
-        />
+        {"Game Logs"}
       </Grid>
     </Grid>)
   );

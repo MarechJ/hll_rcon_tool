@@ -3,7 +3,7 @@ import React from "react";
 import { List } from "immutable";
 import Tooltip from "@mui/material/Tooltip";
 import { getEmojiFlag } from "../../../utils/emoji";
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid2";
 
 export const PlayerFlags = ({ player, onDeleteFlag }) => {
   return (

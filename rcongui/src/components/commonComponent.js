@@ -9,7 +9,7 @@ import {
 import Chip from "@mui/material/Chip";
 import Autocomplete from '@mui/material/Autocomplete';
 import TextField from "@mui/material/TextField";
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid2";
 
 export const WithPopver = ({ popoverContent, children }) => {
   const [anchorEl, setAnchorEl] = React.useState(null);
@@ -64,7 +64,11 @@ export const ManualPlayerInput = ({
   tooltipText,
 }) => (
   <Grid container spacing={1} justifyContent="space-between">
-    <Grid xs={6} md={3}>
+    <Grid
+      size={{
+        xs: 6,
+        md: 3
+      }}>
       <TextField
         id="playerId"
         label="Player ID"
@@ -75,7 +79,11 @@ export const ManualPlayerInput = ({
         onChange={(e) => setPlayerId(e.target.value)}
       />
     </Grid>
-    <Grid xs={6} md={3}>
+    <Grid
+      size={{
+        xs: 6,
+        md: 3
+      }}>
       <TextField
         id="name"
         label="Player name"
@@ -85,7 +93,11 @@ export const ManualPlayerInput = ({
         onChange={(e) => setName(e.target.value)}
       />
     </Grid>
-    <Grid xs={12} md={4}>
+    <Grid
+      size={{
+        xs: 12,
+        md: 4
+      }}>
       <Autocomplete
         freeSolo
         fullWidth
@@ -99,10 +111,10 @@ export const ManualPlayerInput = ({
       />
     </Grid>
     <Grid
-      
-      xs={12}
-      md={2}
-    >
+      size={{
+        xs: 12,
+        md: 2
+      }}>
       <Tooltip fullWidth title={tooltipText} arrow>
         <Button
           color="secondary"

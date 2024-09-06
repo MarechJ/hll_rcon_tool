@@ -2,7 +2,7 @@ import React from "react";
 import { Button } from "@mui/material";
 import { ForwardCheckBox } from "../commonComponent";
 import Editor from "@monaco-editor/react";
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid2";
 
 const AutoSettings = ({
   words,
@@ -13,7 +13,7 @@ const AutoSettings = ({
   onEditorMount,
 }) => (
   <Grid container>
-    <Grid xs={12}>
+    <Grid size={12}>
       <Editor
         height="90vh"
         defaultLanguage="json"
@@ -26,7 +26,7 @@ const AutoSettings = ({
         onMount={onEditorMount}
       />
     </Grid>
-    <Grid xs={12}>
+    <Grid size={12}>
       <ForwardCheckBox bool={forward} onChange={onFowardChange} />
       <Button variant="outlined" color="secondary" onClick={onSave}>
         Save

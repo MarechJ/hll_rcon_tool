@@ -20,7 +20,7 @@ import Autocomplete from '@mui/material/Autocomplete';
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Checkbox from "@mui/material/Checkbox";
 import { getSharedMessages } from "../../utils/fetchUtils";
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid2";
 import Tooltip from "@mui/material/Tooltip";
 import MessageIcon from "@mui/icons-material/Message";
 import VisibilityIcon from "@mui/icons-material/Visibility";
