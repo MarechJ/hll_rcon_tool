@@ -13,7 +13,7 @@ import {
 import Grid from "@mui/material/Grid2";
 
 const RealVip = () => {
-  const [enabled, setEnabled] = React.useState(null);
+  const [enabled, setEnabled] = React.useState(false);
   const [maxVipSlot, setMaxVipSlot] = React.useState(-1);
   const [minVipSlot, setMinVipSlot] = React.useState(-1);
   const isFirstRender = React.useRef(true);
@@ -60,7 +60,9 @@ const RealVip = () => {
       <Grid size={6}>
         <TextField
           type="number"
-          InputProps={{ inputProps: { min: 0, max: 100 } }}
+          slotProps={{
+            input: { min: 0, max: 100 }
+          }}
           label="Max num of VIP slot"
           value={maxVipSlot}
           onChange={(e) => setMaxVipSlot(e.target.value)}
@@ -69,7 +71,9 @@ const RealVip = () => {
       <Grid size={6}>
         <TextField
           type="number"
-          InputProps={{ inputProps: { min: 0, max: 100 } }}
+          slotProps={{
+            input: { min: 0, max: 100 }
+          }}
           label="Min num of VIP slot"
           value={minVipSlot}
           onChange={(e) => setMinVipSlot(e.target.value)}

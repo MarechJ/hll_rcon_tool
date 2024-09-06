@@ -503,7 +503,7 @@ class RconSettings extends React.Component {
             fullWidth
             label="Auto broadcast messages"
             multiline
-            rows={4}
+            minRows={4}
             maxRows={30}
             value={_.join(
               broadcastMessages.map((m) => m.replace(/\n/g, "\\n")),
@@ -568,8 +568,8 @@ class RconSettings extends React.Component {
             fullWidth
             label="Shared standard messages"
             multiline
+            minRows={4}
             maxRows={30}
-            rows={4}
             value={_.join(
               standardMessages.map((m) => m.replace(/\n/g, "\\n")),
               "\n"

@@ -50,7 +50,7 @@ const Reason = ({
             {...params}
             label={label}
             multiline
-            rows={1}
+            minRows={1}
             maxRows={10}
             margin="dense"
             helperText={helperText}

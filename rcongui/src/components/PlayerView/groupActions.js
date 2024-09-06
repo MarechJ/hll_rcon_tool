@@ -103,7 +103,7 @@ const GroupActions = ({
             }}>
             <TextField
               multiline
-              rows={1}
+              minRows={1}
               maxRows={10}
               fullWidth
               value={comment}
