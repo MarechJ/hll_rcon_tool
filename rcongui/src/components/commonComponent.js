@@ -115,18 +115,20 @@ export const ManualPlayerInput = ({
         xs: 12,
         md: 2
       }}>
-      <Tooltip fullWidth title={tooltipText} arrow>
-        <Button
-          color="secondary"
-          variant="outlined"
-          disabled={playerId === "" || reason === ""}
-          onClick={() => {
-            onSubmit();
-            textHistory.saveText(reason);
-          }}
-        >
-          {actionName}
-        </Button>
+      <Tooltip title={tooltipText} arrow>
+        <span>
+          <Button
+            color="secondary"
+            variant="outlined"
+            disabled={playerId === "" || reason === ""}
+            onClick={() => {
+              onSubmit();
+              textHistory.saveText(reason);
+            }}
+          >
+            {actionName}
+          </Button>
+        </span>
       </Tooltip>
     </Grid>
   </Grid>
@@ -164,11 +166,12 @@ export const WordList = ({
       renderTags={(value, getTagProps) =>
         value.map((option, index) => (
           <Chip
-            color="primary"
-            size="small"
-            variant="outlined"
-            label={option}
-            {...getTagProps({ index })}
+          color="primary"
+          size="small"
+          variant="outlined"
+          label={option}
+          {...getTagProps({ index })}
+          key={'chip' + option + index}
           />
         ))
       }

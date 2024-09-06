@@ -27,7 +27,7 @@ const SelectNameSpace = ({ value, values, handleChange }) => (
     >
       <option value="" />
       {values.map((v) => (
-        <option value={v}>{v}</option>
+        <option key={'history-option'+ v} value={v}>{v}</option>
       ))}
     </Select>
   </FormControl>

@@ -9,51 +9,55 @@ import InputLabel from "@mui/material/InputLabel";
 import FormControl from "@mui/material/FormControl";
 import Select from "@mui/material/Select";
 import { Button } from "@mui/material";
-import Autocomplete from '@mui/material/Autocomplete';
+import Autocomplete from "@mui/material/Autocomplete";
 import TextField from "@mui/material/TextField";
-import moment from "moment";
 import { List as IList, fromJS } from "immutable";
 import Grid from "@mui/material/Grid2";
+import { DataGrid, GridToolbar } from "@mui/x-data-grid";
+import dayjs from "dayjs";
+
+const columns = [
+  { field: "id", headerName: "ID", width: 70, sortable: false },
+  {
+    field: "creation_time",
+    headerName: "Time",
+    width: 160,
+    valueFormatter: (value) => dayjs(value).format("lll"),
+  },
+  { field: "username", headerName: "Initiator", width: 120 },
+  {
+    field: "command",
+    headerName: "Type",
+    width: 120,
+  },
+  {
+    field: "command_arguments",
+    headerName: "Parameters",
+    sortable: false,
+    minWidth: 300,
+  },
+  { field: "command_result", headerName: "Result", flex: 1, sortable: false },
+];
 
 const AuditLogsTable = ({ auditLogs }) => {
-  const [myRowPerPage, setRowPerPage] = React.useState(
-    window.localStorage.getItem("auditlogs_row_per_page") || 50
-  );
-  const saveRowsPerPage = (rowPerPage) => {
-    window.localStorage.setItem("auditlogs_row_per_page", rowPerPage);
-    setRowPerPage(rowPerPage);
-  };
-  const columns = [
-    {
-      name: "creation_time",
-      label: "Time",
-      options: {
-        customBodyRenderLite: (dataIndex) =>
-          moment.utc(auditLogs.get(dataIndex)?.get("creation_time")).local().format(
-            "ddd Do MMM HH:mm:ss"
-          ),
-      },
-    },
-    { name: "username", label: "User name" },
-    { name: "command", label: "Command" },
-    { name: "command_arguments", label: "Command Parameters" },
-    { name: "command_result", label: "Command Result" },
-  ];
-
-  const options = {
-    filter: false,
-    rowsPerPage: myRowPerPage,
-    selectableRows: "none",
-    rowsPerPageOptions: [10, 25, 50, 100, 250, 500, 1000],
-    onChangeRowsPerPage: saveRowsPerPage,
-  };
+  console.log({ auditLogs });
 
   return (
-    (<Grid container justifyContent="center">
-      <Grid>
-      {"Audit logs"}
-      </Grid>
-    </Grid>)
+    <DataGrid
+      rows={auditLogs}
+      columns={columns}
+      initialState={{
+        pagination: {
+          paginationModel: {
+            pageSize: 100,
+          },
+        },
+        density: "compact",
+      }}
+      pageSizeOptions={[10, 25, 50, 100]}
+      slots={{ toolbar: GridToolbar }}
+      disableRowSelectionOnClick
+    />
   );
 };
 
@@ -67,12 +71,15 @@ const AuditLog = () => {
   const [timeSort, setTimeSort] = React.useState("desc");
 
   const getAuditLogs = () => {
-    get("get_audit_logs?" + new URLSearchParams({
-      usernames: usernameSearch,
-      commands: commandSearch,
-      parameters: paramSearch,
-      time_sort: timeSort,
-    }))
+    get(
+      "get_audit_logs?" +
+        new URLSearchParams({
+          usernames: usernameSearch,
+          commands: commandSearch,
+          parameters: paramSearch,
+          time_sort: timeSort,
+        })
+    )
       .then((res) => showResponse(res, "get_audit_logs", false))
       .then((res) => {
         setAuditLogs(fromJS(res.result));
@@ -101,12 +108,7 @@ const AuditLog = () => {
   }, []);
 
   return (
-    (<Grid
-        container
-        spacing={2}
-        justifyContent="flex-start"
-        alignItems="center"
-      >
+    <Grid container spacing={2} justifyContent="flex-start" alignItems="center">
       <Grid size={3}>
         <Autocomplete
           multiple
@@ -178,9 +180,9 @@ const AuditLog = () => {
         </Button>
       </Grid>
       <Grid size={12}>
-        <AuditLogsTable auditLogs={auditLogs} />
+        <AuditLogsTable auditLogs={auditLogs.toJS()} />
       </Grid>
-    </Grid>)
+    </Grid>
   );
 };
 

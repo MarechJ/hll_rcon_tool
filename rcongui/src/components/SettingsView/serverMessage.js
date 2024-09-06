@@ -39,8 +39,7 @@ const ServerMessage = ({
           renderInput={(params) => (
             <TextField
               multiline
-              rows={4}
-              maxRows={40}
+              rows={5}
               {...params}
               label={type}
               margin="normal"

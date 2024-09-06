@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { get, postData, showResponse } from "../../utils/fetchUtils";
+import { get, postData, showResponse } from "@/utils/fetchUtils";
 import Editor from "@monaco-editor/react";
 import { Button } from "@mui/material";
 import Grid from "@mui/material/Grid2";

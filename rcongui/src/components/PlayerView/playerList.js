@@ -347,7 +347,7 @@ const PlayerItem = ({
             <Link
               color="inherit"
               component={RouterLink}
-              to={`/player/${player.get("player_id")}`}
+              to={`/records/players/${player.get("player_id")}`}
             >
               {player_id} <Icon component={OpenInNewIcon} fontSize="inherit" />
             </Link>

@@ -4,6 +4,7 @@ import Dashboard from "../pages/dashboard";
 import LiveView from "../pages/views/live";
 import TeamView from "../pages/views/team";
 import PlayerRecords from "../pages/records/players"
+import Blacklists from "../pages/records/blacklists/manage"
 import BlacklistRecords from "../pages/records/blacklists"
 import GameLogsRecords from "../pages/records/game-logs"
 import AuditLogsRecords from "../pages/records/audit-logs"
@@ -17,7 +18,10 @@ import MapRotation from "../pages/settings/map-manager/map-rotation"
 import MapObjectives from "../pages/settings/map-manager/objectives"
 import MapVotemap from "../pages/settings/map-manager/votemap"
 import ConfigDetail from "../pages/settings/[configs]/detail"
+import PlayerProfile from "../pages/records/players/[playerId]"
 import { loader as configLoader } from "../pages/settings/[configs]/detail"
+import { loader as playerProfileLoader } from "../pages/records/players/[playerId]"
+import { action as playerProfileAction } from "../pages/records/players/[playerId]"
 
 const router = createBrowserRouter([
     {
@@ -46,14 +50,21 @@ const router = createBrowserRouter([
                 children: [
                     {
                         path: 'players',
-                        element: <PlayerRecords />
+                        element: <PlayerRecords />,
+                    },
+                    {
+                        path: 'players/:playerId',
+                        element: <PlayerProfile />,
+                        loader: playerProfileLoader,
+                        action: playerProfileAction,
                     },
                     {
                         path: 'blacklists',
                         element: <BlacklistRecords />,
-                        children: [
-                            // TODO
-                        ]
+                    },
+                    {
+                        path: 'blacklists/manage',
+                        element: <Blacklists />,
                     },
                     {
                         path: 'game-logs',
@@ -99,10 +110,6 @@ const router = createBrowserRouter([
                         element: <ConfigDetail />,
                         errorElement: <h1>CONFIG NOT FOUND</h1>,
                         loader: configLoader,
-                        // shouldRevalidate: ({ pathname }) => {
-                        //     const match = matchPath(':category/:type', pathname);
-                        //     return match && ['automods', 'webhooks', 'others'].includes(match.params.category);
-                        // }
                     },
                 ]
             },

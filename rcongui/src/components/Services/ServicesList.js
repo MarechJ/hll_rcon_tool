@@ -130,7 +130,7 @@ class ServicesList extends React.Component {
         <Grid size={12}>
           {services.map((s) => (
             <Process
-              
+              key={s.get("name")}
               name={s.get("name")}
               description={s.get("info")}
               status={s.get("statename")}

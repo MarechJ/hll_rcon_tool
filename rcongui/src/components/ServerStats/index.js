@@ -72,7 +72,7 @@ function DetailsDialog({
   hasNextDataPoint,
 }) {
   return (
-    <Dialog
+  <Dialog
       open={
         datasetElementIndex !== null &&
         datasetsIndex !== null &&
@@ -95,7 +95,7 @@ function DetailsDialog({
               {dataPoint.players.map((el) => (
                 <li key={el[1]}>
                   <Typography variant="body2">
-                    <Link href={`#/player/${el[1]}`}> {el[0]}</Link>
+                    <Link href={`/records/players/${el[1]}`}> {el[0]}</Link>
                     {el[1]} {el[2] ? <StarIcon fontSize="inherit" /> : ""}
                   </Typography>
                 </li>

@@ -150,7 +150,7 @@ class ReasonDialog extends React.Component {
               <TextField
                 {...params}
                 multiline
-                rows={4}
+                minRows={4}
                 maxRows={10}
                 label={actionType === "message_player" ? "Message" : "Reason"}
                 margin="dense"
@@ -162,7 +162,7 @@ class ReasonDialog extends React.Component {
           {open.actionType !== "message_player" ? (
             <TextField
               multiline
-              rows={4}
+              minRows={4}
               maxRows={10}
               fullWidth
               value={comment}

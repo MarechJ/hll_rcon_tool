@@ -1,226 +1,236 @@
 import {
   Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
   LinearProgress,
 } from "@mui/material";
 import Grid from "@mui/material/Grid2";
+import BlacklistRecordsSearch from "@/components/Blacklist/BlacklistRecordsSearch";
 import React from "react";
 import {
+  addPlayerToBlacklist,
   get,
+  getBlacklists,
   handle_http_errors,
-  postData,
   showResponse,
 } from "../../../utils/fetchUtils";
-import BlacklistListTile from "../../../components/Blacklist/BlacklistListTile";
-import BlacklistListCreateDialog, {
-  BlacklistListCreateButton,
-} from "../../../components/Blacklist/BlacklistListCreateDialog";
+import Pagination from '@mui/material/Pagination';
+import BlacklistRecordGrid from "../../../components/Blacklist/BlacklistRecordGrid";
+import { List, fromJS } from "immutable";
+import { BlacklistRecordCreateButton } from "../../../components/Blacklist/BlacklistRecordCreateDialog";
+import { Skeleton } from '@mui/material';
 import { Link } from "react-router-dom";
 
-const BlacklistLists = () => {
-  const [isLoading, setIsLoading] = React.useState(false);
+async function getBlacklistRecords(searchParams) {
+  let path = "get_blacklist_records?" + new URLSearchParams(
+    Object.entries(searchParams)
+      .filter(([_, v]) => v || v === 0)
+  );
+  const response = await get(path)
+  return showResponse(response, "get_blacklist_records")
+}
+
+const MyPagination = ({ pageSize, total, page, setPage }) => (
+  <Pagination
+    count={Math.ceil(total / pageSize)}
+    page={page}
+    onChange={(e, val) => setPage(val)}
+    variant="outlined"
+    color="standard"
+    showFirstButton
+    showLastButton
+  />
+);
+
+const BlacklistRecords = () => {
+  // inital state, first render
+  const [isLoading, setIsLoading] = React.useState(true);
+  // when fetching loading records
+  const [isFetching, setIsFetching] = React.useState(false);
   const [blacklists, setBlacklists] = React.useState([]);
-  const [servers, setServers] = React.useState({});
-  const [selectedBlacklist, setSelectedBlacklist] = React.useState(null);
-  const [editDialogOpen, setEditDialogOpen] = React.useState(false);
-  const [editDialogInitialValues, setEditDialogInitialValues] =
-    React.useState();
-
-  function handleCloseDeleteDialog() {
-    setSelectedBlacklist(null);
-  }
-
-  function handleDeleteClick(blacklist) {
-    setSelectedBlacklist(blacklist);
-  }
-
-  function handleBlacklistDelete() {
-    deleteBlacklist(selectedBlacklist);
-    handleCloseDeleteDialog();
-  }
-
-  function loadServers() {
-    return Promise.all([
-      get("get_connection_info")
-        .then((response) =>
-          showResponse(response, "get_connection_info", false)
-        )
-        .then((data) => {
-          if (data.result) {
-            setServers((prevState) => ({
-              ...prevState,
-              [data.result.server_number]: data.result.name,
-            }));
-          }
-        })
-        .catch(handle_http_errors),
-      get("get_server_list")
-        .then((response) => showResponse(response, "get_server_list", false))
-        .then((data) => {
-          if (data?.result) {
-            setServers((prevState) => ({
-              ...prevState,
-              ...data.result.reduce((acc, server) => {
-                acc[server.server_number] = server.name;
-                return acc;
-              }, {}),
-            }));
-          }
-        })
-        .catch(handle_http_errors),
-    ]);
-  }
-
-  function loadBlacklists() {
-    return get("get_blacklists")
-      .then((response) => showResponse(response, "get_blacklists", false))
-      .then((data) => {
-        if (data.result) {
-          setBlacklists(data.result);
-        }
-      })
-      .catch(handle_http_errors);
-  }
-
-  function onBlacklistCreate(data) {
-    postData(`${process.env.REACT_APP_API_URL}create_blacklist`, {
-      name: data.name,
-      servers: data.servers,
-      sync: data.syncMethod,
-    })
-      .then((response) =>
-        showResponse(response, `Blacklist ${data.name} was created`, true)
-      )
-      .catch(handle_http_errors)
-      .then(loadBlacklists);
-  }
-
-  function onEditBlacklist(blacklist) {
-    setEditDialogInitialValues({
-      id: blacklist.id,
-      name: blacklist.name,
-      servers: blacklist.servers,
-      syncMethod: blacklist.sync,
-    });
-    setEditDialogOpen(true);
-  }
-
-  function onEditDialogSubmit(data) {
-    const blacklistId = editDialogInitialValues.id;
-    postData(`${process.env.REACT_APP_API_URL}edit_blacklist`, {
-      blacklist_id: blacklistId,
-      name: data.name,
-      servers: data.servers,
-      sync_method: data.syncMethod,
-    })
-      .then((response) =>
-        showResponse(response, `Blacklist ${data.name} was edited`, true)
-      )
-      .catch(handle_http_errors)
-      .then(loadBlacklists);
-  }
-
-  function deleteBlacklist(blacklist) {
-    postData(`${process.env.REACT_APP_API_URL}delete_blacklist`, {
-      blacklist_id: blacklist.id,
-    })
-      .then((response) =>
-        showResponse(response, `Blacklist ${blacklist.name} was deleted`, true)
-      )
-      .catch(handle_http_errors)
-      .then(loadBlacklists);
-  }
+  const [records, setRecords] = React.useState(List());
+  const [totalRecords, setTotalRecords] = React.useState(0);
+  const [page, setPage] = React.useState(1);
+  const [searchQuery, setSearchQuery] = React.useState({
+    player_id: undefined,
+    reason: undefined,
+    blacklist_id: undefined,
+    exclude_expired: false,
+    page_size: 50,
+  });
 
   React.useEffect(() => {
-    setIsLoading(true);
-    loadServers()
-      .then(loadBlacklists)
-      .finally(() => setIsLoading(false));
-  }, []);
+    if (!blacklists.length) {
+      loadBlacklists();
+    }
+    loadRecords();
+  }, [searchQuery, page]);
+
+  async function loadBlacklists() {
+    setBlacklists(await getBlacklists());
+  }
+
+  async function loadRecords() {
+    setIsFetching(true);
+    try {
+      const data = await getBlacklistRecords({ ...searchQuery, page });
+      const records = data.result;
+      if (records) {
+        setRecords(fromJS(records.records));
+        setTotalRecords(records.total);
+      }
+      setIsFetching(false);
+      // delay UI, this can be removed along with skeletons
+      await new Promise((res) => setTimeout(res, 500));
+      setIsLoading(false);
+    } catch (error) {
+      handle_http_errors(error);
+    }
+  }
+
+  async function createRecord(recordDetails) {
+    await addPlayerToBlacklist(recordDetails);
+    loadRecords();
+  }
+
+  // If you don't like the loading skeletons, just return `null`
+  if (isLoading) {
+    return (
+      (<Grid container spacing={4} justifyContent="center">
+        <Grid
+          size={{
+            xl: 6,
+            xs: 12
+          }}>
+          <Skeleton variant="rectangular" height={140} />
+        </Grid>
+        <Grid
+          container
+          justifyContent="center"
+          spacing={2}
+          size={{
+            xl: 3,
+            xs: 12
+          }}>
+          <Grid size={{
+            xl: 12
+          }}>
+            <Skeleton
+              variant="rectangular"
+              width={200}
+              height={42}
+              style={{ margin: "0 auto", borderRadius: 5 }}
+            />
+          </Grid>
+          <Grid size={{
+            xl: 12
+          }}>
+            <Skeleton
+              variant="rectangular"
+              width={155}
+              height={42}
+              style={{ margin: "0 auto", borderRadius: 5 }}
+            />
+          </Grid>
+        </Grid>
+        <Grid size={12}>
+          <Skeleton
+            variant="rectangular"
+            width={360}
+            height={32}
+            style={{ margin: "0 auto" }}
+          />
+        </Grid>
+        <Grid size={12}>
+          <Skeleton variant="rectangular" height={140} />
+        </Grid>
+        <Grid size={12}>
+          <Skeleton
+            variant="rectangular"
+            width={360}
+            height={32}
+            style={{ margin: "0 auto" }}
+          />
+        </Grid>
+      </Grid>)
+    );
+  }
 
   return (
-    <React.Fragment>
-      <Grid container spacing={3} direction="column" justifyContent="center">
-        <Grid>
-          {isLoading ? <LinearProgress color="secondary" /> : ""}
-        </Grid>
-        <Grid container spacing={5} direction="column" alignItems="center">
-          {blacklists.map((blacklist) => (
-            <Grid
-              key={blacklist.id}
-              style={{ width: "100%", maxWidth: 1600 }}
+    (<Grid container spacing={4} justifyContent="center">
+      <Grid
+        size={{
+          xl: 6,
+          xs: 12
+        }}>
+        <BlacklistRecordsSearch
+          blacklists={blacklists}
+          onSearch={setSearchQuery}
+          disabled={isLoading || isFetching}
+        />
+      </Grid>
+      <Grid
+        size={{
+          xl: 3,
+          xs: 12
+        }}>
+        <Grid
+          container
+          spacing={3}
+          alignContent="center"
+          alignItems="center"
+          justifyContent="center"
+          style={{ paddingTop: 6 }}
+        >
+          <Grid size={{
+            xl: 12
+          }}>
+            <BlacklistRecordCreateButton
+              blacklists={blacklists}
+              onSubmit={createRecord}
             >
-              <BlacklistListTile
-                servers={servers}
-                blacklist={blacklist}
-                onEdit={onEditBlacklist}
-                onDelete={handleDeleteClick}
-              />
-            </Grid>
-          ))}
-        </Grid>
-        <Grid>
-          <Grid container spacing={2} justifyContent="center">
-            <Grid>
-              <BlacklistListCreateButton
-                servers={servers}
-                onSubmit={onBlacklistCreate}
-              />
-            </Grid>
-            <Grid>
-              <Button
-                component={Link}
-                to="/blacklists"
-                variant="contained"
-                color="primary"
-                size="large"
-              >
-                Back To Records
-              </Button>
-            </Grid>
+              Create New Record
+            </BlacklistRecordCreateButton>
+          </Grid>
+          <Grid size={{
+            xl: 12
+          }}>
+            <Button
+              component={Link}
+              to={"manage"}
+              variant="contained"
+              color="primary"
+              size="large"
+            >
+              Manage Lists
+            </Button>
           </Grid>
         </Grid>
       </Grid>
-      {/* CREATE DIALOG */}
-      <BlacklistListCreateDialog
-        open={editDialogOpen}
-        setOpen={setEditDialogOpen}
-        servers={servers}
-        onSubmit={onEditDialogSubmit}
-        initialValues={editDialogInitialValues}
-      />
-      {/* DELETE DIALOG */}
-      <Dialog
-        open={selectedBlacklist !== null}
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description"
-      >
-        <DialogTitle id="alert-dialog-title">
-          {selectedBlacklist
-            ? `Delete blacklist "${selectedBlacklist?.name}"?`
-            : "Loading..."}
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText id="alert-dialog-description">
-            Are you certain you want to permanently delete the blacklist and all
-            associated records?
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDeleteDialog} color="primary">
-            Cancel
-          </Button>
-          <Button onClick={handleBlacklistDelete} color="secondary" autoFocus>
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </React.Fragment>
+      <Grid size={12}>
+        <MyPagination
+          pageSize={searchQuery.pageSize}
+          page={page}
+          setPage={setPage}
+          total={totalRecords}
+        />
+      </Grid>
+      <Grid size={12}>
+        {isFetching ? <LinearProgress color="secondary" /> : ""}
+        <BlacklistRecordGrid
+          blacklists={blacklists}
+          records={records}
+          onRefresh={loadRecords}
+        />
+      </Grid>
+      <Grid size={12}>
+        <MyPagination
+          pageSize={searchQuery.pageSize}
+          page={page}
+          setPage={setPage}
+          total={totalRecords}
+        />
+      </Grid>
+    </Grid>)
   );
 };
 
-export default BlacklistLists;
+export default BlacklistRecords;

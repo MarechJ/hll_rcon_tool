@@ -14,8 +14,34 @@ import FormControl from "@mui/material/FormControl";
 import Select from "@mui/material/Select";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Switch from "@mui/material/Switch";
-import moment from "moment";
 import Link from "@mui/material/Link";
+import { DataGrid, GridToolbar } from "@mui/x-data-grid";
+import dayjs from "dayjs";
+
+const columns = [
+  { field: 'id', headerName: 'ID', width: 70, sortable: false },
+  {
+    field: 'event_time',
+    headerName: 'Time',
+    width: 160,
+    valueFormatter: (value) => dayjs(value).format('lll')
+  },
+  {
+    field: 'type',
+    headerName: 'Type',
+    width: 120,
+  },
+  {
+    field: 'content',
+    headerName: 'Content',
+    flex: 1,
+    align: 'left',
+    sortable: false,
+  },
+  { field: 'player1_name', headerName: 'Initiator', width: 120 },
+  { field: 'player2_name', headerName: 'Receiver', width: 120 },
+  { field: 'server', headerName: 'Server', width: 80 },
+];
 
 const LogsFilter = ({ onSubmit, onChange }) => {
   const [name, setName] = React.useState("");
@@ -96,36 +122,22 @@ const LogsFilter = ({ onSubmit, onChange }) => {
               />
             </Grid>
             <Grid>
-              {/* <MuiPickersUtilsProvider utils={MomentUtils}>
-                <DateTimePicker
-                  label="From time"
-                  format="YYYY/MM/DD HH:mm"
-                  value={from}
-                  onChange={setFrom}
-                />
-              </MuiPickersUtilsProvider> */}
               <LocalizationProvider dateAdapter={AdapterDayjs}>
                 <DesktopDateTimePicker
+                  value={from}
                   label="From time"
-                  onChange={(value) => console.log(value)} // send value to hook form
-                  format='LLL'
+                  onChange={setFrom} // send value to hook form
+                  format='YYYY/MM/DD HH:mm'
                 />
               </LocalizationProvider>
             </Grid>
             <Grid>
-              {/* <MuiPickersUtilsProvider utils={MomentUtils}>
-                <DateTimePicker
-                  label="Till time"
-                  format="YYYY/MM/DD HH:mm"
-                  value={till}
-                  onChange={setTill}
-                />
-              </MuiPickersUtilsProvider> */}
             <LocalizationProvider dateAdapter={AdapterDayjs}>
               <DesktopDateTimePicker
                 label="Till time"
-                onChange={(value) => console.log(value)} // send value to hook form
-                format='LLL'
+                onChange={setTill} // send value to hook form
+                format='YYYY/MM/DD HH:mm'
+                value={till}
               />
             </LocalizationProvider>
             </Grid>
@@ -217,76 +229,6 @@ class LogsHistory extends React.Component {
     this.setState({ myRowPerPage: rowPerPage });
   };
 
-  columns = [
-    {
-      name: "event_time",
-      label: "Time",
-      options: {
-        customBodyRenderLite: (dataIndex) =>
-          moment(this.state.logs[dataIndex]?.event_time)
-            .local()
-            .format("ddd Do MMM HH:mm:ss"),
-      },
-    },
-    { name: "type", label: "Type" },
-    { name: "content", label: "Content" },
-    {
-      name: "player1_id",
-      label: "Name 1",
-      options: {
-        customBodyRenderLite: (dataIndex) => {
-          let id = this.state.logs[dataIndex]?.player1_id;
-          let name = this.state.logs[dataIndex]?.player1_name;
-          return id ? (
-            <Link
-              color="inherit"
-              target="_blank"
-              href={`/api/get_player_profile?player_id=${id}`}
-            >
-              {name}
-            </Link>
-          ) : (
-            name
-          );
-        },
-      },
-    },
-    {
-      name: "player2_id",
-      label: "Name 2",
-      options: {
-        customBodyRenderLite: (dataIndex) => {
-          let id = this.state.logs[dataIndex]?.player2_id;
-          let name = this.state.logs[dataIndex]?.player2_name;
-          return id ? (
-            <Link
-              color="inherit"
-              target="_blank"
-              href={`/api/get_player_profile?player_id=${id}`}
-            >
-              {name}
-            </Link>
-          ) : (
-            name
-          );
-        },
-      },
-    },
-    { name: "server", label: "Server" },
-  ];
-
-  options = {
-    filter: false,
-    rowsPerPage: 10,
-    selectableRows: "none",
-    rowsPerPageOptions: [10, 25, 50, 100, 250, 500, 1000],
-    onChangeRowsPerPage: this.saveRowsPerPage,
-    onDownload: () => {
-      this.handleDownload();
-      return false;
-    },
-  };
-
   getHistoricalLogs(
     name = null,
     type = null,
@@ -376,15 +318,21 @@ class LogsHistory extends React.Component {
           ""
         )}
         <Grid size={12}>
-          <Grid container justifyContent="center">
-            <Grid>
-              <Grid container justifyContent="center">
-                <Grid>
-                  {"Game Logs"}
-                </Grid>
-              </Grid>
-            </Grid>
-          </Grid>
+        <DataGrid
+        rows={this.state.logs}
+        columns={columns}
+        initialState={{
+          pagination: {
+            paginationModel: {
+              pageSize: 100,
+            },
+          },
+          density: 'compact',
+        }}
+        pageSizeOptions={[10, 25, 50, 100]}
+        slots={{ toolbar: GridToolbar }}
+        disableRowSelectionOnClick
+      />
         </Grid>
       </Grid>)
     );

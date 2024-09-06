@@ -6,17 +6,6 @@ import SearchIcon from "@mui/icons-material/Search";
 import { Chip, InputBase } from "@mui/material";
 import { styled } from '@mui/styles';
 
-const Wrapper = styled(Paper)(({ theme }) => ({
-  padding: "2px 4px",
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  maxWidth: theme.breakpoints.values.sm,
-  [theme.breakpoints.up("sm")]: {
-    flexDirection: "row",
-  },
-}));
-
 const SearchWrapper = styled('div')({
   display: "flex",
   alignItems: "center",
@@ -24,10 +13,6 @@ const SearchWrapper = styled('div')({
   width: "100%",
 });
 
-const StyledInput = styled(InputBase)(({ theme }) => ({
-  marginLeft: theme.spacing(1),
-  flex: 1,
-}));
 
 const StyledIconButton = styled(IconButton)({
   padding: 10,
@@ -61,11 +46,26 @@ const ChipsWrapper = styled('div')(({ theme }) => ({
   },
 }));
 
+const StyledInputBase = styled(InputBase)(({ theme }) => ({
+  root: {
+    marginLeft: theme.spacing(1),
+    flex: 1,
+  },
+}));
+
 
 export default function MapSearch({ onChange, onSearch, onFilter, filters }) {
 
   return (
-    (<Wrapper>
+    <Paper sx={(theme) => ({
+      padding: "2px 4px",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      [theme.breakpoints.up("sm")]: {
+        flexDirection: "row",
+      }
+    })}>
       <SearchWrapper>
         <StyledIconButton
           aria-label="search"
@@ -74,7 +74,11 @@ export default function MapSearch({ onChange, onSearch, onFilter, filters }) {
           <SearchIcon />
         </StyledIconButton>
         <StyledDivider orientation="vertical" />
-        <StyledInput
+        <InputBase
+          sx={(theme) => ({
+            marginLeft: theme.spacing(1),
+            flex: 1,
+          })}
           placeholder="Search Map"
           inputProps={{ "aria-label": "search maps" }}
           onChange={onChange}
@@ -93,6 +97,6 @@ export default function MapSearch({ onChange, onSearch, onFilter, filters }) {
           />
         ))}
       </ChipsWrapper>
-    </Wrapper>)
+    </Paper>
   );
 }
