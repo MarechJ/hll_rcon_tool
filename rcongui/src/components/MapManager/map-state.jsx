@@ -1,12 +1,11 @@
 import { Box, Typography } from "@mui/material";
-import createStyles from '@mui/styles/createStyles';
-import makeStyles from '@mui/styles/makeStyles';
+import { makeStyles } from '@mui/styles';
 import React from "react";
 import Skeleton from '@mui/material/Skeleton';
 import { MapDetail } from "./map-details";
 
 const useStyles = makeStyles((theme) =>
-  createStyles({
+  ({
     main: {
       maxWidth: theme.breakpoints.values.sm,
       display: "flex",

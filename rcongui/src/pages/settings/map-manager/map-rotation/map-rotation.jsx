@@ -11,7 +11,7 @@ import {
 import { Box, Button, CircularProgress } from "@mui/material";
 import { Alert } from '@mui/material';
 import { MapAutocomplete } from "../../../../components/MapManager/map-autocomplete";
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid2";
 import { useOutletContext } from "react-router-dom";
 
 const MapRotation = () => {
@@ -100,8 +100,8 @@ const MapRotation = () => {
   );
 
   return (
-    <Grid container spacing={2}>
-      <Grid xs={12}>
+    (<Grid container spacing={2}>
+      <Grid size={12}>
         {voteMapConfig.enabled && (
           <Alert style={{ margin: "0.25rem 0 1rem 0" }} severity="warning">
             You can't change the rotation while votemap is on
@@ -153,7 +153,7 @@ const MapRotation = () => {
           </Button>
         </Box>
       </Grid>
-      <Grid xs={12}>
+      <Grid size={12}>
         <DraggableList
           maps={rotation}
           onDragEnd={onDragEnd}
@@ -162,7 +162,7 @@ const MapRotation = () => {
           isSaved={hasChanged}
         />
       </Grid>
-    </Grid>
+    </Grid>)
   );
 };
 

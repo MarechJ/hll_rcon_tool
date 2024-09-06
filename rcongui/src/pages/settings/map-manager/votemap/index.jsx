@@ -15,8 +15,7 @@ import {
   List,
   IconButton,
 } from "@mui/material";
-import makeStyles from '@mui/styles/makeStyles';
-import createStyles from '@mui/styles/createStyles';
+import { makeStyles } from '@mui/styles';
 import React from "react";
 import {
   getVotemapConfig,
@@ -44,7 +43,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import { useOutletContext } from "react-router-dom";
 
 const useStyles = makeStyles((theme) =>
-  createStyles({
+  ({
     spacing: {
       marginTop: theme.spacing(1),
       marginBottom: theme.spacing(1),

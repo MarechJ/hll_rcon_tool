@@ -16,7 +16,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid2";
 import { ReasonDialog } from "../../../components/PlayerView/playerActions";
 import { omitBy } from "lodash/object";
 import SearchBar from "../../../components/PlayersHistory/searchBar";
@@ -78,7 +78,7 @@ class FlagDialog extends React.Component {
             justifyContent="center"
             spacing={2}
           >
-            <Grid xs={12}>
+            <Grid size={12}>
               <TextField
                 label="Comment"
                 value={comment}
@@ -93,7 +93,7 @@ class FlagDialog extends React.Component {
             justifyContent="center"
             spacing={2}
           >
-            <Grid xs={12}>
+            <Grid size={12}>
             <EmojiPicker
                 style={{ border: '1px solid red' }}
                 perLine={8}
@@ -604,8 +604,8 @@ class PlayersHistory extends React.Component {
     // Perfomance is crappy. It's less crappy after switcing to immutables but still...
     // It should be refactored so that the search bar does not trigger useless renderings
     return (
-      <Grid container spacing={1}>
-        <Grid xs={12}>
+      (<Grid container spacing={1}>
+        <Grid size={12}>
           <SearchBar
             pageSize={pageSize}
             setPageSize={(v) => this.setState({ pageSize: v })}
@@ -632,7 +632,7 @@ class PlayersHistory extends React.Component {
             setFlags={this.setFlags}
           />
         </Grid>
-        <Grid xs={12}>
+        <Grid size={12}>
           <MyPagination
             pageSize={pageSize}
             page={page}
@@ -642,7 +642,7 @@ class PlayersHistory extends React.Component {
             total={total}
           />
         </Grid>
-        <Grid xs={12}>
+        <Grid size={12}>
           {isLoading ? <LinearProgress color="secondary" /> : ""}
           <PlayerGrid
             players={playersHistory}
@@ -661,7 +661,7 @@ class PlayersHistory extends React.Component {
             onAddToWatchList={this.onAddToWatchList}
           />
         </Grid>
-        <Grid xs={12}>
+        <Grid size={12}>
           <MyPagination
             pageSize={pageSize}
             page={page}
@@ -722,7 +722,7 @@ class PlayersHistory extends React.Component {
           onSubmit={this.blacklistPlayer}
           disablePlayerId
         />
-      </Grid>
+      </Grid>)
     );
   }
 }

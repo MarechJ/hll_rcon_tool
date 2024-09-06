@@ -3,7 +3,7 @@ import {
   postData,
   showResponse,
 } from "../../../utils/fetchUtils";
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid2";
 import { DesktopDateTimePicker } from '@mui/x-date-pickers/DesktopDateTimePicker';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -31,7 +31,7 @@ const LogsFilter = ({ onSubmit, onChange }) => {
 
   return (
     (<Grid container spacing={1}>
-      <Grid xs={12} >
+      <Grid size={12} >
         <form >
           <Grid container spacing={1} justifyContent="space-evenly">
             <Grid>
@@ -365,17 +365,17 @@ class LogsHistory extends React.Component {
 
     return (
       (<Grid container>
-        <Grid xs={12}>
+        <Grid size={12}>
           <LogsFilter onSubmit={this.getHistoricalLogs} />
         </Grid>
         {isLoading ? (
-          <Grid xs={12} >
+          <Grid size={12} >
             <LinearProgress color="secondary" />
           </Grid>
         ) : (
           ""
         )}
-        <Grid xs={12}>
+        <Grid size={12}>
           <Grid container justifyContent="center">
             <Grid>
               <Grid container justifyContent="center">

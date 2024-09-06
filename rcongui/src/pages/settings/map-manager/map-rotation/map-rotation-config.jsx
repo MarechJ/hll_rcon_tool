@@ -2,7 +2,7 @@ import * as React from "react";
 import {get, handle_http_errors, postData, showResponse,} from "../../../../utils/fetchUtils";
 import {Typography} from "@mui/material";
 import Padlock from "../../../../components/shared/padlock";
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid2";
 
 const MapRotationSettings = () => {
   const [shuffleEnabled, setShuffleEnabled] = React.useState(false);
@@ -36,13 +36,13 @@ const MapRotationSettings = () => {
 
   return (
     (<Grid
-      container
-      spacing={2}
-      justifyContent="flex-start"
-      alignContent="center"
-      alignItems="center"
-    >
-      <Grid xs={12}>
+        container
+        spacing={2}
+        justifyContent="flex-start"
+        alignContent="center"
+        alignItems="center"
+      >
+      <Grid size={12}>
         <Padlock
           label={<div style={{textAlign: 'start', display: 'flex', flexDirection: 'column'}}>
             <Typography variant={'body'}>Shuffle map rotation</Typography>

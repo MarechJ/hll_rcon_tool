@@ -1,11 +1,10 @@
 import React from "react";
 import Paper from "@mui/material/Paper";
-import InputBase from "@mui/material/InputBase";
 import Divider from "@mui/material/Divider";
 import IconButton from "@mui/material/IconButton";
 import SearchIcon from "@mui/icons-material/Search";
-import { Box, Chip } from "@mui/material";
-import { styled } from '@mui/material/styles';
+import { Chip, InputBase } from "@mui/material";
+import { styled } from '@mui/styles';
 
 const Wrapper = styled(Paper)(({ theme }) => ({
   padding: "2px 4px",
@@ -25,7 +24,7 @@ const SearchWrapper = styled('div')({
   width: "100%",
 });
 
-const StyledInput = styled('input')(({ theme }) => ({
+const StyledInput = styled(InputBase)(({ theme }) => ({
   marginLeft: theme.spacing(1),
   flex: 1,
 }));

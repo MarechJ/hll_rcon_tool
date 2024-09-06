@@ -3,18 +3,16 @@ import * as React from "react";
 import ListItem from "@mui/material/ListItem";
 import ListItemAvatar from "@mui/material/ListItemAvatar";
 import ListItemText from "@mui/material/ListItemText";
-import { ListItemSecondaryAction } from "@mui/material";
+import { ListItemButton, ListItemSecondaryAction } from "@mui/material";
 import { MapAvatar, MapDescription } from "./map-details";
-import { styled } from '@mui/material/styles';
 
-const StyledListItem = styled(ListItem)(({
-  borderBottom: `1px solid gray`,
-}))
 
 export function MapListItem({ mapLayer, primary, secondary, renderAction, ...props }) {
 
+  const ListItemComponent = props.button ? ListItemButton : ListItem;
+
   return (
-    <StyledListItem {...props}>
+    <ListItemComponent sx={{ borderBottom: `1px solid gray` }} {...props}>
       <ListItemAvatar>
         <MapAvatar mapLayer={mapLayer} />
       </ListItemAvatar>
@@ -27,6 +25,6 @@ export function MapListItem({ mapLayer, primary, secondary, renderAction, ...pro
           {renderAction(mapLayer)}
         </ListItemSecondaryAction>
       )}
-    </StyledListItem>
+    </ListItemComponent>
   );
 }
