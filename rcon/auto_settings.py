@@ -1,192 +1,14 @@
 import logging
 import time
-from datetime import datetime
 
 import pytz
 
 from rcon.api_commands import get_rcon_api
-from rcon.audit import ingame_mods, online_mods
-from rcon.commands import BrokenHllConnection, CommandFailedError
+from rcon.conditions import create_condition, Condition
 from rcon.rcon import do_run_commands
 from rcon.user_config.auto_settings import AutoSettingsConfig
 
-
 logger = logging.getLogger(__name__)
-
-
-def _get_current_map_metric(rcon):
-    try:
-        rcon.current_map = str(rcon.get_map())
-    except (CommandFailedError, BrokenHllConnection):
-        logger.exception("Failed to get current map")
-    return str(rcon.current_map)
-
-
-METRICS = {
-    "player_count": lambda rcon: int(rcon.get_slots()["current_players"]),
-    "online_mods": lambda: len(online_mods()),
-    "ingame_mods": lambda: len(ingame_mods()),
-    "current_map": _get_current_map_metric,
-    "time_of_day": lambda tz: datetime.now(tz=tz),
-}
-
-
-class BaseCondition:
-    def __init__(self, min=0, max=100, inverse=False, *args, **kwargs):
-        self.min = int(min)
-        self.max = int(max)
-        self.inverse = bool(inverse)
-
-        self.metric_name = ""
-        self.metric_source = "rcon"
-
-    @property
-    def metric_getter(self):
-        try:
-            return METRICS[self.metric_name]
-        except:
-            return None
-
-    def is_valid(self, **metric_sources):
-        metric_source = metric_sources[self.metric_source]
-        comparand = self.metric_getter(metric_source)
-        res = self.min <= comparand <= self.max
-        logger.info(
-            "Applying condition %s: %s <= %s <= %s = %s. Inverse: %s",
-            self.metric_name,
-            self.min,
-            comparand,
-            self.max,
-            res,
-            self.inverse,
-        )
-        if self.inverse:
-            return not res
-        else:
-            return res
-
-
-class PlayerCountCondition(BaseCondition):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.metric_name = "player_count"
-
-
-class OnlineModsCondition(BaseCondition):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.metric_name = "online_mods"
-        self.metric_source = None
-
-    def is_valid(self, **metric_sources):
-        comparand = self.metric_getter()
-        res = self.min <= comparand <= self.max
-        logger.info(
-            "Applying condition %s: %s <= %s <= %s = %s. Inverse: %s",
-            self.metric_name,
-            self.min,
-            comparand,
-            self.max,
-            res,
-            self.inverse,
-        )
-        if self.inverse:
-            return not res
-        else:
-            return res
-
-
-class IngameModsCondition(OnlineModsCondition):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.metric_name = "ingame_mods"
-        self.metric_source = None
-
-
-class CurrentMapCondition(BaseCondition):
-    def __init__(
-        self, map_names=[], inverse=False, *args, **kwargs
-    ):  # Avoid unexpected arguments
-        self.map_names = map_names
-        self.inverse = inverse
-        self.metric_name = "current_map"
-        self.metric_source = "rcon"
-
-    def is_valid(self, **metric_sources):
-        metric_source = metric_sources[self.metric_source]
-        comparand = self.metric_getter(metric_source)
-        res = comparand in self.map_names
-        logger.info(
-            "Applying condition %s: %s in %s = %s. Inverse: %s",
-            self.metric_name,
-            comparand,
-            self.map_names,
-            res,
-            self.inverse,
-        )
-        if self.inverse:
-            return not res
-        else:
-            return res
-
-
-class TimeOfDayCondition(BaseCondition):
-    def __init__(
-        self, min="00:00", max="23:59", timezone="utc", inverse=False, *args, **kwargs
-    ):  # Avoid unexpected arguments
-        self.min = str(min)
-        self.max = str(max)
-        if self.max in ["24:00", "0:00"]:
-            self.max = "23:59"
-        self.inverse = bool(inverse)
-        if timezone.lower() == "utc":
-            self.tz = pytz.UTC
-        else:
-            self.tz = pytz.timezone(timezone)
-        self.metric_name = "time_of_day"
-        self.metric_source = None
-
-    def is_valid(self, **metric_sources):
-        try:
-            min_h, min_m = [int(i) for i in self.min.split(":")[:2]]
-            max_h, max_m = [int(i) for i in self.max.split(":")[:2]]
-            min = datetime.now(tz=self.tz).replace(hour=min_h, minute=min_m)
-            max = datetime.now(tz=self.tz).replace(hour=max_h, minute=max_m)
-        except:
-            logger.exception("Time Of Day condition is invalid and is ignored")
-            return False  # The condition should fail
-        comparand = datetime.now(tz=self.tz)
-        res = min <= comparand <= max
-        logger.info(
-            "Applying condition %s: %s <= %s:%s <= %s = %s. Inverse: %s",
-            self.metric_name,
-            self.min,
-            comparand.hour,
-            comparand.minute,
-            self.max,
-            res,
-            self.inverse,
-        )
-        if self.inverse:
-            return not res
-        else:
-            return res
-
-
-def create_condition(name, **kwargs):
-    kwargs["inverse"] = kwargs.get("not", False)  # Using "not" would cause issues later
-    if name == "player_count":
-        return PlayerCountCondition(**kwargs)
-    elif name == "online_mods":
-        return OnlineModsCondition(**kwargs)
-    elif name == "ingame_mods":
-        return IngameModsCondition(**kwargs)
-    elif name == "current_map":
-        return CurrentMapCondition(**kwargs)
-    elif name == "time_of_day":
-        return TimeOfDayCondition(**kwargs)
-    else:
-        raise ValueError("Invalid condition type: %s" % name)
 
 
 def run():
@@ -216,7 +38,7 @@ def run():
             )
 
         for rule in config["rules"]:
-            conditions: list[BaseCondition] = []
+            conditions: list[Condition] = []
             commands = rule.get("commands", {})
             for c_name, c_params in rule.get("conditions", {}).items():
                 try:

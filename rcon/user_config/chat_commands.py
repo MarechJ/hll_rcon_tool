@@ -1,16 +1,26 @@
+import logging
 import re
+import typing
 from functools import cached_property
 from typing import Iterable, TypedDict, NotRequired
 
+import pytz
+from django.template.defaultfilters import default
+from django.views.decorators.http import conditional_page
 from pydantic import BaseModel, Field, field_validator
 
-from rcon.rcon import get_rcon
+from rcon.conditions import create_condition, Condition
+from rcon.models import PlayerID
+from rcon.rcon import get_rcon, Rcon
 from rcon.types import MessageVariable, MessageVariableContext
 from rcon.user_config.utils import BaseUserConfig, _listType, key_check, set_user_config
 
 MESSAGE_VAR_RE = re.compile(r"\{(.*?)\}")
 VALID_COMMAND_PREFIXES = ("!", "@")
 HELP_PREFIX = "?"
+
+
+logger = logging.getLogger(__name__)
 
 
 def chat_contains_command_word(
@@ -41,7 +51,8 @@ def is_description_word(words: Iterable[str], description_words: Iterable[str]):
 class ChatCommandType(TypedDict):
     words: list[str]
     message: NotRequired[str]
-    command: NotRequired[dict[str, dict]]
+    commands: NotRequired[dict[str, dict]]
+    conditions: NotRequired[dict[str, typing.Any]]
     enabled: NotRequired[bool]
     description: str
 
@@ -55,9 +66,10 @@ class ChatCommandsType(TypedDict):
 class ChatCommand(BaseModel):
     words: list[str] = Field(default_factory=list)
     message: str | None = Field(default=None)
-    command: dict[str, dict] | None = Field(default=None)
+    commands: dict[str, dict] | None = Field(default=None)
     enabled: bool = Field(default=True)
     description: str | None = Field(default=None)
+    conditions: dict[str, typing.Any] | None = Field(default=None)
 
     @cached_property
     def help_words(self) -> set[str]:
@@ -91,9 +103,11 @@ class ChatCommand(BaseModel):
 
         return vs
 
-    @field_validator("command")
+    @field_validator("commands")
     @classmethod
     def only_valid_commands(cls, vs: dict[str, dict] | None) -> dict[str, dict] | None:
+        if vs is None:
+            return vs
         for name in vs:
             try:
                 get_rcon().__getattribute__(name)
@@ -101,12 +115,39 @@ class ChatCommand(BaseModel):
                 raise ValueError(f"'{name}' is not a valid RCon command.")
         return vs
 
+    def conditions_fulfilled(self, rcon: Rcon, p: PlayerID, ctx: dict[str, str]) -> bool:
+        """
+        Checks if the provided context meets the conditions defined in this command, if any.
+        :param rcon: An instance of RCon to talk to the HLL server where the command was issued on
+        :param p: The player who executed the command
+        :param ctx: A dictionary of keys from MessageVariableContext, with their respective values.
+        :return: True if the context meets all conditions, False otherwise
+        """
+        if self.conditions is None:
+            return True
+        conditions: list[Condition] = []
+        for condition in self.conditions:
+            params = self.conditions[condition]
+            try:
+                conditions.append(create_condition(condition, **params))
+            except ValueError:
+                logger.exception(
+                    "Invalid condition %s %s, ignoring...", condition, params
+                )
+            except pytz.UnknownTimeZoneError:
+                logger.exception(
+                    "Invalid timezone for condition %s %s, ignoring...",
+                    condition,
+                    params,
+                )
+        return all([c.is_valid(rcon=rcon, player_id=p, message_context=ctx) for c in conditions])
+
 
 class ChatCommandsUserConfig(BaseUserConfig):
     enabled: bool = Field(default=False)
     command_words: list[ChatCommand] = Field(default_factory=list)
 
-    # Thes will trigger an automatic help command if `description`s are set on
+    # These will trigger an automatic help command if `description`s are set on
     # `command_words`
     describe_words: list[str] = Field(default_factory=list)
 
@@ -142,11 +183,12 @@ class ChatCommandsUserConfig(BaseUserConfig):
         for raw_word in raw_command_words:
             words = raw_word.get("words")
             message = raw_word.get("message")
-            command = raw_word.get("command")
+            commands = raw_word.get("commands")
+            conditions = raw_word.get("conditions")
             description = raw_word.get("description")
             enabled = raw_word.get("enabled")
             validated_words.append(
-                ChatCommand(words=words, message=message, description=description, command=command, enabled=enabled)
+                ChatCommand(words=words, message=message, description=description, commands=commands, enabled=enabled, conditions=conditions)
             )
 
         validated_conf = ChatCommandsUserConfig(

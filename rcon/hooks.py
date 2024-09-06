@@ -31,7 +31,7 @@ from rcon.game_logs import (
 )
 from rcon.maps import UNKNOWN_MAP_NAME, parse_layer
 from rcon.message_variables import format_message_string, populate_message_variables
-from rcon.models import enter_session
+from rcon.models import enter_session, PlayerID
 from rcon.player_history import (
     _get_set_player,
     get_player,
@@ -85,7 +85,7 @@ def count_vote(rcon: Rcon, struct_log: StructuredLogLineWithMetaData):
         )
 
 
-def initialise_vote_map(rcon: Rcon, struct_log):
+def initialise_vote_map(struct_log):
     logger.info("New match started initializing vote map. %s", struct_log)
     try:
         vote_map = VoteMap()
@@ -93,8 +93,8 @@ def initialise_vote_map(rcon: Rcon, struct_log):
         vote_map.gen_selection()
         vote_map.reset_last_reminder_time()
         vote_map.apply_results()
-    except:
-        logger.exception("Something went wrong in vote map init")
+    except Exception as ex:
+        logger.exception("Something went wrong in vote map init", ex)
 
 
 @on_chat
@@ -141,7 +141,7 @@ def chat_commands(rcon: Rcon, struct_log: StructuredLogLineWithMetaData):
 
         if is_command_word(triggered_word) and command.message is not None:
             chat_message_command(rcon, command, ctx)
-        if is_command_word(triggered_word) and command.command is not None:
+        if is_command_word(triggered_word) and command.commands is not None:
             chat_rcon_command(rcon, command, ctx)
         if is_help_word(triggered_word):
             # Help words describe a specific command
@@ -183,14 +183,27 @@ def chat_message_command(rcon: Rcon, command: ChatCommand, ctx: dict[str, str]):
 
 
 def chat_rcon_command(rcon: Rcon, command: ChatCommand, ctx: dict[str, str]):
-    do_run_commands(
-        rcon,
-        {
-            name: {
-                k: format_message_string(v, context=ctx) for (k, v) in params.items()
-            } for (name, params) in command.command.items()
-        },
-    )
+    player_id = ctx[MessageVariableContext.player_id.value]
+    player: PlayerID
+    with enter_session() as session:
+        player = (
+            session.query(PlayerID)
+            .filter(PlayerID.player_id == player_id)
+            .one_or_none()
+        )
+        if player is None:
+            logger.debug("player executed a command but does not exist in database: %s", player_id)
+        if not command.conditions_fulfilled(rcon, player, ctx):
+            return
+
+        do_run_commands(
+            rcon,
+            {
+                name: {
+                    k: format_message_string(v, context=ctx) for (k, v) in params.items()
+                } for (name, params) in command.commands.items()
+            },
+        )
 
 
 def chat_help_command(rcon: Rcon, command: ChatCommand, ctx: dict[str, str]):
@@ -273,7 +286,7 @@ def handle_new_match_start(rcon: Rcon, struct_log):
     except:
         raise
     finally:
-        initialise_vote_map(rcon, struct_log)
+        initialise_vote_map(struct_log)
         try:
             record_stats_worker(MapsHistory()[1])
         except Exception:
