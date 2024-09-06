@@ -1,5 +1,5 @@
 import { Avatar, Box, Divider, Typography } from "@mui/material";
-import makeStyles from '@mui/styles/makeStyles';
+import { makeStyles } from '@mui/styles';
 import { getMapLayerImageSrc, unifiedGamemodeName } from "./helpers";
 import { styled } from "@mui/material/styles"
 

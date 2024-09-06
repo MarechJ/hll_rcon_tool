@@ -1,12 +1,8 @@
 import React from "react";
-import { Grid, Tab, Tabs, useTheme, useMediaQuery, Container, Box } from "@mui/material";
-import makeStyles from '@mui/styles/makeStyles';
+import { Tab, Tabs, useTheme, useMediaQuery } from "@mui/material";
+import Grid from "@mui/material/Grid2"
+import { makeStyles } from '@mui/styles';
 import { Link, Outlet, Route, useLocation } from "react-router-dom";
-import VoteMapConfig from "./votemap/index.jsx";
-import MapRotationConfig from "./map-rotation/map-rotation.jsx";
-import MapChange from "./map-change";
-import MapObjectives from "./objectives";
-import { MapState } from "../../../components/MapManager/map-state";
 import { get, getGameState } from "../../../utils/fetchUtils.js";
 
 const tabs = {
@@ -74,25 +70,31 @@ function MapManager({ match }) {
   }, []);
 
   return (
-      <Grid container>
-        <Grid xs={12}>
-          <Tabs
-            orientation={isMdScreen ? "vertical" : "horizontal"}
-            variant={!isMdScreen ? "scrollable" : "fullWidth"}
-            value={currentTab}
-            aria-label="nav tabs example"
-            className={classes.tabs}
-          >
-            <LinkTab label="Map Change" to={pathRoot + "/change"} {...a11yProps(0)} />
-            <LinkTab label="Rotation" to={pathRoot + "/rotation"} {...a11yProps(1)} />
-            <LinkTab label="Objectives" to={pathRoot + "/objectives"} {...a11yProps(2)} />
-            <LinkTab label="Votemap" to={pathRoot + "/votemap"} {...a11yProps(3)} />
-          </Tabs>
-        </Grid>
-        <Grid xs={12} className={classes.main}>
-          <Outlet context={{ maps }} />
-        </Grid>
+    (<Grid container>
+      <Grid size={{
+        xs: 12,
+        md: 2,
+      }}>
+        <Tabs
+          orientation={isMdScreen ? "vertical" : "horizontal"}
+          variant={!isMdScreen ? "scrollable" : "fullWidth"}
+          value={currentTab}
+          aria-label="nav tabs example"
+          className={classes.tabs}
+        >
+          <LinkTab label="Map Change" to={pathRoot + "/change"} {...a11yProps(0)} />
+          <LinkTab label="Rotation" to={pathRoot + "/rotation"} {...a11yProps(1)} />
+          <LinkTab label="Objectives" to={pathRoot + "/objectives"} {...a11yProps(2)} />
+          <LinkTab label="Votemap" to={pathRoot + "/votemap"} {...a11yProps(3)} />
+        </Tabs>
       </Grid>
+      <Grid className={classes.main} size={{
+        xs: 12,
+        md: 8,
+      }}>
+        <Outlet context={{ maps }} />
+      </Grid>
+    </Grid>)
   );
 }
 

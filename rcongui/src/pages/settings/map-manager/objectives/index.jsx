@@ -8,8 +8,6 @@ import {
   FormGroup,
   FormLabel,
 } from "@mui/material";
-import createStyles from "@mui/styles/createStyles";
-import makeStyles from "@mui/styles/makeStyles";
 import React from "react";
 import {
   changeGameLayout,
@@ -22,8 +20,7 @@ import {
   unifiedGamemodeName,
 } from "../../../../components/MapManager/helpers";
 import { Alert, AlertTitle, Skeleton } from "@mui/material";
-import clsx from "clsx";
-import { styled } from "@mui/material/styles";
+import { styled } from '@mui/system';
 
 const UPDATE_INTERVAL = 5 * 1000;
 const CONFIRM_DELAY = 10 * 1000;

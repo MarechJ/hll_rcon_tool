@@ -4,15 +4,19 @@ import {
   Card,
   CardContent,
   CardHeader,
-  Unstable_Grid2 as Grid,
   IconButton,
   Typography,
 } from '@mui/material';
+import Grid from "@mui/material/Grid2"
 
 const Dashboard = () => {
   return (
-    <Grid container columnSpacing={2} rowSpacing={2}>
-      <Grid xs={12} md={6}>
+    (<Grid container columnSpacing={2} rowSpacing={2}>
+      <Grid
+        size={{
+          xs: 12,
+          md: 6
+        }}>
         <Card sx={{ minHeight: '10rem', width: '100%' }}>
           <CardHeader
             title={'Title name'}
@@ -33,7 +37,11 @@ const Dashboard = () => {
           </CardContent>
         </Card>
       </Grid>
-      <Grid xs={12} md={6}>
+      <Grid
+        size={{
+          xs: 12,
+          md: 6
+        }}>
         <Card sx={{ minHeight: '10rem' }}>
           <CardHeader
             title={'Title name'}
@@ -54,7 +62,11 @@ const Dashboard = () => {
           </CardContent>
         </Card>
       </Grid>
-      <Grid xs={12} md={6}>
+      <Grid
+        size={{
+          xs: 12,
+          md: 6
+        }}>
         <Card sx={{ minHeight: '10rem' }}>
           <CardHeader
             title={'Title name'}
@@ -75,7 +87,11 @@ const Dashboard = () => {
           </CardContent>
         </Card>
       </Grid>
-      <Grid xs={12} md={6}>
+      <Grid
+        size={{
+          xs: 12,
+          md: 6
+        }}>
         <Card sx={{ minHeight: '10rem' }}>
           <CardHeader
             title={'Title name'}
@@ -96,7 +112,7 @@ const Dashboard = () => {
           </CardContent>
         </Card>
       </Grid>
-    </Grid>
+    </Grid>)
   );
 };
 

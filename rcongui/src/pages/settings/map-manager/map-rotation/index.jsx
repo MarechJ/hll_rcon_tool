@@ -1,11 +1,10 @@
 import { Typography } from "@mui/material";
-import createStyles from '@mui/styles/createStyles';
-import makeStyles from '@mui/styles/makeStyles';
+import { makeStyles } from '@mui/styles';
 import MapRotationSettings from "./map-rotation-config";
 import MapRotation from "./map-rotation";
 
 const useStyles = makeStyles((theme) =>
-  createStyles({
+  ({
     text: {
       marginTop: theme.spacing(2),
       marginBottom: theme.spacing(2),

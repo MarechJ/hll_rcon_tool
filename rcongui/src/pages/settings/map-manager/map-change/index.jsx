@@ -7,7 +7,7 @@ import MapSearch from "./map-search";
 import { MapListItem } from "../../../../components/MapManager/map-list-item";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import { unifiedGamemodeName } from "../../../../components/MapManager/helpers";
-import { styled } from '@mui/material/styles';
+import { styled } from '@mui/styles';
 import { useOutletContext } from "react-router-dom";
 
 const Main = styled('div')(({ theme }) => ({

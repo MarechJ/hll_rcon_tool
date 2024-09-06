@@ -5,7 +5,7 @@ import {
   ImageListItemBar,
   IconButton,
 } from "@mui/material";
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid2";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import LinkIcon from "@mui/icons-material/Link";
 import CheckIcon from "@mui/icons-material/Check";
@@ -115,7 +115,7 @@ const GamesScore = () => {
       justifyContent="center"
       
     >
-      <Grid xs={12}>
+      <Grid size={12}>
         <Typography color="secondary" variant="h4">
           {serverState.get("name", new Map()).get("name")}
         </Typography>
@@ -131,7 +131,7 @@ const GamesScore = () => {
           </Typography>
         </Grid>
       )}
-      <Grid xs={12}>
+      <Grid size={12}>
         <div>
           <ImageList
             cols={2}

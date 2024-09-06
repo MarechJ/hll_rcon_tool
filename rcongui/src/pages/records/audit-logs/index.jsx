@@ -13,7 +13,7 @@ import Autocomplete from '@mui/material/Autocomplete';
 import TextField from "@mui/material/TextField";
 import moment from "moment";
 import { List as IList, fromJS } from "immutable";
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid2";
 
 const AuditLogsTable = ({ auditLogs }) => {
   const [myRowPerPage, setRowPerPage] = React.useState(
@@ -102,12 +102,12 @@ const AuditLog = () => {
 
   return (
     (<Grid
-      container
-      spacing={2}
-      justifyContent="flex-start"
-      alignItems="center"
-    >
-      <Grid xs={3}>
+        container
+        spacing={2}
+        justifyContent="flex-start"
+        alignItems="center"
+      >
+      <Grid size={3}>
         <Autocomplete
           multiple
           clearOnEscape
@@ -128,7 +128,7 @@ const AuditLog = () => {
           )}
         />
       </Grid>
-      <Grid xs={3}>
+      <Grid size={3}>
         <Autocomplete
           multiple
           clearOnEscape
@@ -177,7 +177,7 @@ const AuditLog = () => {
           Search
         </Button>
       </Grid>
-      <Grid xs={12}>
+      <Grid size={12}>
         <AuditLogsTable auditLogs={auditLogs} />
       </Grid>
     </Grid>)

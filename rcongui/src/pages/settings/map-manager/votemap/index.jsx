@@ -15,8 +15,7 @@ import {
   List,
   IconButton,
 } from "@mui/material";
-import makeStyles from '@mui/styles/makeStyles';
-import createStyles from '@mui/styles/createStyles';
+import { makeStyles } from '@mui/styles';
 import React from "react";
 import {
   getVotemapConfig,
@@ -43,26 +42,42 @@ import { MapListItem } from "../../../../components/MapManager/map-list-item";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useOutletContext } from "react-router-dom";
 
-const Messages = styled('div')(({ theme }) => ({
-  maxWidth: theme.breakpoints.values.md,
-}));
-
-const Container = styled('div')(({ theme }) => ({
-  display: "flex",
-  flexDirection: "column",
-  gap: theme.spacing(2),
-  marginTop: theme.spacing(1),
-  marginBottom: theme.spacing(1),
-}));
-
-const NumberFields = styled('div')(({ theme }) => ({
-  display: "flex",
-  flexDirection: "column",
-  gap: theme.spacing(1),
-  maxWidth: theme.breakpoints.values.sm,
-  marginTop: theme.spacing(1),
-  marginBottom: theme.spacing(1),
-}));
+const useStyles = makeStyles((theme) =>
+  ({
+    spacing: {
+      marginTop: theme.spacing(1),
+      marginBottom: theme.spacing(1),
+    },
+    messages: {
+      maxWidth: theme.breakpoints.values.md,
+    },
+    container: {
+      display: "flex",
+      flexDirection: "column",
+      gap: theme.spacing(2),
+    },
+    numberFields: {
+      display: "flex",
+      flexDirection: "column",
+      gap: theme.spacing(1),
+      maxWidth: theme.breakpoints.values.sm,
+    },
+    sticky: {
+      position: "sticky",
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      padding: theme.spacing(1),
+      background: theme.palette.background.default,
+      zIndex: theme.zIndex.appBar,
+      top: 0,
+    },
+    section: {
+      position: "relative",
+      width: "100%",
+    },
+  })
+);
 
 const UPDATE_INTERVAL = 15 * 1000;
 
