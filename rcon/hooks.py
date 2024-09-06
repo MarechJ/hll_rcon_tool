@@ -57,7 +57,7 @@ from rcon.user_config.chat_commands import (
     chat_contains_command_word,
     is_command_word,
     is_description_word,
-    is_help_word,
+    is_help_word, ChatCommand,
 )
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.real_vip import RealVipUserConfig
@@ -114,79 +114,38 @@ def chat_commands(rcon: Rcon, struct_log: StructuredLogLineWithMetaData):
 
     player_cache = event_cache.get(player_id, MostRecentEvents())
     chat_words = set(chat_message.split())
-    for command in config.command_words:
-        if not (
-                triggered_word := chat_contains_command_word(
-                    chat_words, command.words, command.help_words
-                )
-        ):
-            continue
+    ctx = {
+        MessageVariableContext.player_name.value: struct_log[
+            "player_name_1"
+        ],
+        MessageVariableContext.player_id.value: player_id,
+        MessageVariableContext.last_victim_player_id.value: player_cache.last_victim_player_id,
+        MessageVariableContext.last_victim_name.value: player_cache.last_victim_name,
+        MessageVariableContext.last_victim_weapon.value: player_cache.last_victim_weapon,
+        MessageVariableContext.last_nemesis_player_id.value: player_cache.last_nemesis_player_id,
+        MessageVariableContext.last_nemesis_name.value: player_cache.last_nemesis_name,
+        MessageVariableContext.last_nemesis_weapon.value: player_cache.last_nemesis_weapon,
+        MessageVariableContext.last_tk_nemesis_player_id.value: player_cache.last_tk_nemesis_player_id,
+        MessageVariableContext.last_tk_nemesis_name.value: player_cache.last_tk_nemesis_name,
+        MessageVariableContext.last_tk_nemesis_weapon.value: player_cache.last_tk_nemesis_weapon,
+        MessageVariableContext.last_tk_victim_player_id.value: player_cache.last_tk_victim_player_id,
+        MessageVariableContext.last_tk_victim_name.value: player_cache.last_tk_victim_name,
+        MessageVariableContext.last_tk_victim_weapon.value: player_cache.last_tk_victim_weapon,
+    }
 
+    for command in config.command_words:
         if not command.enabled:
             continue
-
-        ctx = {
-            MessageVariableContext.player_name.value: struct_log[
-                "player_name_1"
-            ],
-            MessageVariableContext.player_id.value: player_id,
-            MessageVariableContext.last_victim_player_id.value: player_cache.last_victim_player_id,
-            MessageVariableContext.last_victim_name.value: player_cache.last_victim_name,
-            MessageVariableContext.last_victim_weapon.value: player_cache.last_victim_weapon,
-            MessageVariableContext.last_nemesis_player_id.value: player_cache.last_nemesis_player_id,
-            MessageVariableContext.last_nemesis_name.value: player_cache.last_nemesis_name,
-            MessageVariableContext.last_nemesis_weapon.value: player_cache.last_nemesis_weapon,
-            MessageVariableContext.last_tk_nemesis_player_id.value: player_cache.last_tk_nemesis_player_id,
-            MessageVariableContext.last_tk_nemesis_name.value: player_cache.last_tk_nemesis_name,
-            MessageVariableContext.last_tk_nemesis_weapon.value: player_cache.last_tk_nemesis_weapon,
-            MessageVariableContext.last_tk_victim_player_id.value: player_cache.last_tk_victim_player_id,
-            MessageVariableContext.last_tk_victim_name.value: player_cache.last_tk_victim_name,
-            MessageVariableContext.last_tk_victim_weapon.value: player_cache.last_tk_victim_weapon,
-        }
+        if not (triggered_word := chat_contains_command_word(chat_words, command.words, command.help_words)):
+            continue
 
         if is_command_word(triggered_word) and command.message is not None:
-            message_vars: list[str] = re.findall(MESSAGE_VAR_RE, command.message)
-            populated_variables = populate_message_variables(
-                vars=message_vars, player_id=player_id
-            )
-            formatted_message = format_message_string(
-                command.message,
-                populated_variables=populated_variables,
-                context=ctx,
-            )
-            rcon.message_player(
-                player_id=struct_log["player_id_1"],
-                message=formatted_message,
-                save_message=False,
-            )
-        elif is_command_word(triggered_word) and command.command is not None:
-            do_run_commands(
-                rcon,
-                {
-                    name: {
-                        k: format_message_string(v, context=ctx) for (k, v) in params.items()
-                    } for (name, params) in command.command.items()
-                },
-            )
-        # Help words describe a specific command
-        elif is_help_word(triggered_word):
-            description = command.description
-            if description:
-                rcon.message_player(
-                    player_id=struct_log["player_id_1"],
-                    message=description,
-                    save_message=False,
-                )
-            else:
-                rcon.message_player(
-                    player_id=struct_log["player_id_1"],
-                    message="Command description not set, let the admins know!",
-                    save_message=False,
-                )
-                logger.warning(
-                    "No descriptions set for chat command word(s), %s",
-                    ", ".join(command.words),
-                )
+            chat_message_command(rcon, command, ctx)
+        if is_command_word(triggered_word) and command.command is not None:
+            chat_rcon_command(rcon, command, ctx)
+        if is_help_word(triggered_word):
+            # Help words describe a specific command
+            chat_help_command(rcon, command, ctx)
 
     # Description words trigger the entire help menu, test outside the loop
     # since these are global help words
@@ -194,7 +153,7 @@ def chat_commands(rcon: Rcon, struct_log: StructuredLogLineWithMetaData):
         description = config.describe_chat_commands()
         if description:
             rcon.message_player(
-                player_id=struct_log["player_id_1"],
+                player_id=player_id,
                 message="\n".join(description),
                 save_message=False,
             )
@@ -203,6 +162,56 @@ def chat_commands(rcon: Rcon, struct_log: StructuredLogLineWithMetaData):
                 "No descriptions set for command words, %s",
                 ", ".join(config.describe_words),
             )
+
+
+def chat_message_command(rcon: Rcon, command: ChatCommand, ctx: dict[str, str]):
+    player_id = ctx[MessageVariableContext.player_id.value]
+    message_vars: list[str] = re.findall(MESSAGE_VAR_RE, command.message)
+    populated_variables = populate_message_variables(
+        vars=message_vars, player_id=player_id
+    )
+    formatted_message = format_message_string(
+        command.message,
+        populated_variables=populated_variables,
+        context=ctx,
+    )
+    rcon.message_player(
+        player_id=player_id,
+        message=formatted_message,
+        save_message=False,
+    )
+
+
+def chat_rcon_command(rcon: Rcon, command: ChatCommand, ctx: dict[str, str]):
+    do_run_commands(
+        rcon,
+        {
+            name: {
+                k: format_message_string(v, context=ctx) for (k, v) in params.items()
+            } for (name, params) in command.command.items()
+        },
+    )
+
+
+def chat_help_command(rcon: Rcon, command: ChatCommand, ctx: dict[str, str]):
+    player_id = ctx[MessageVariableContext.player_id.value]
+    description = command.description
+    if description:
+        rcon.message_player(
+            player_id=player_id,
+            message=description,
+            save_message=False,
+        )
+    else:
+        rcon.message_player(
+            player_id=player_id,
+            message="Command description not set, let the admins know!",
+            save_message=False,
+        )
+        logger.warning(
+            "No descriptions set for chat command word(s), %s",
+            ", ".join(command.words),
+        )
 
 
 @on_match_end
