@@ -14,7 +14,6 @@ import FormControl from "@mui/material/FormControl";
 import Select from "@mui/material/Select";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Switch from "@mui/material/Switch";
-import MUIDataTable from "mui-datatables";
 import moment from "moment";
 import Link from "@mui/material/Link";
 
@@ -381,12 +380,7 @@ class LogsHistory extends React.Component {
             <Grid>
               <Grid container justifyContent="center">
                 <Grid>
-                  <MUIDataTable
-                    title={"Game logs"}
-                    data={this.state.logs}
-                    columns={this.columns}
-                    options={this.options}
-                  />
+                  {"Game Logs"}
                 </Grid>
               </Grid>
             </Grid>

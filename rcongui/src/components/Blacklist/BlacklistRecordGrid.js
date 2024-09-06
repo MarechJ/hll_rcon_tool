@@ -14,7 +14,7 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid2";
 import FileCopyIcon from "@mui/icons-material/FileCopy";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
@@ -315,9 +315,9 @@ const BlacklistRecordGrid = ({
     }[2];
 
     return (
-      <React.Fragment>
+      (<React.Fragment>
         <Grid container>
-          <Grid xs={12}>
+          <Grid size={12}>
             <ImageList cols={size} cellHeight={210} spacing={12}>
               {records.map((record) => {
                 return (
@@ -347,7 +347,7 @@ const BlacklistRecordGrid = ({
           submitText="Save"
           disablePlayerId
         />
-      </React.Fragment>
+      </React.Fragment>)
     );
   }
 

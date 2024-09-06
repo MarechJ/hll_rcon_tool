@@ -12,6 +12,7 @@ import "react-toastify/dist/ReactToastify.css";
 const AppWrapper = styled("div")(() => ({
   display: "flex",
   flexDirection: "column",
+  minHeight: "100vh",
 }));
 
 const Main = styled("main")(({ theme }) => ({
@@ -22,7 +23,6 @@ const Main = styled("main")(({ theme }) => ({
   flexGrow: 1,
   display: "flex",
   flexDirection: "column",
-  height: "100vh",
   overflowY: "auto",
   overflowX: "clip",
   position: "relative",

@@ -6,7 +6,7 @@ import Typography from "@mui/material/Typography";
 import Switch from "@mui/material/Switch";
 import Chip from "@mui/material/Chip";
 import { get, postData, showResponse } from "../../utils/fetchUtils";
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid2";
 
 const StatusToColor = {
   RUNNING: "primary",
@@ -32,13 +32,13 @@ const Process = ({
     justifyContent="space-around"
     spacing={1}
   >
-    <Grid xs={12} spacing={1}>
+    <Grid spacing={1} size={12}>
       <Grid container>
-        <Grid xs={6}>
+        <Grid size={6}>
           <Grid
             container
           >
-            <Grid xs={12}>
+            <Grid size={12}>
               <Typography
                 variant="h6"
               >
@@ -52,7 +52,7 @@ const Process = ({
             </Grid>
           </Grid>
         </Grid>
-        <Grid xs={4}>
+        <Grid size={4}>
           <Chip label={status} color={StatusToColor[status]} />
           <ListItemText
             primary=""
@@ -60,7 +60,7 @@ const Process = ({
             
           />
         </Grid>
-        <Grid xs={2}>
+        <Grid size={2}>
           <Switch checked={isOn} onChange={onToggle} name="Start/Stop" />
         </Grid>
       </Grid>
@@ -126,8 +126,8 @@ class ServicesList extends React.Component {
     const { services } = this.state;
 
     return (
-      <Grid container spacing={1}>
-        <Grid xs={12}>
+      (<Grid container spacing={1}>
+        <Grid size={12}>
           {services.map((s) => (
             <Process
               
@@ -144,7 +144,7 @@ class ServicesList extends React.Component {
             />
           ))}
         </Grid>
-      </Grid>
+      </Grid>)
     );
   }
 }

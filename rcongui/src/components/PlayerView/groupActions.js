@@ -5,7 +5,7 @@ import Button from "@mui/material/Button";
 import Dialog from "@mui/material/Dialog";
 import { Duration, PlayerActions } from "./playerActions";
 import { Reason } from "./textInputBar";
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid2";
 import { DialogActions, DialogContent, DialogTitle } from "../dialog";
 import { join } from "lodash/array";
 import TextHistory from "../textHistory";
@@ -53,10 +53,10 @@ const GroupActions = ({
 
   return (
     (<Dialog
-      onClose={onClose}
-      aria-labelledby="customized-dialog-title"
-      open={open}
-    >
+        onClose={onClose}
+        aria-labelledby="customized-dialog-title"
+        open={open}
+      >
       <DialogTitle id="customized-dialog-title" onClose={onClose}>
         Apply same action on all selected players
       </DialogTitle>
@@ -82,7 +82,11 @@ const GroupActions = ({
         />
 
         <Grid container>
-          <Grid xs={12} xl={12} >
+          <Grid
+            size={{
+              xs: 12,
+              xl: 12
+            }}>
             <Reason
               message={message}
               handleMessageChange={setMessage}
@@ -92,7 +96,11 @@ const GroupActions = ({
               textHistory={textHistory}
             />
           </Grid>
-          <Grid xs={12} xl={12} >
+          <Grid
+            size={{
+              xs: 12,
+              xl: 12
+            }}>
             <TextField
               multiline
               rows={1}
@@ -105,7 +113,11 @@ const GroupActions = ({
               helperText="A comment that will NOT be displayed to the player"
             />
           </Grid>
-          <Grid xs={12} xl={12} >
+          <Grid
+            size={{
+              xs: 12,
+              xl: 12
+            }}>
             <PlayerActions
               handleAction={(actionType) =>
                 selectedPlayers.forEach((p) => {
@@ -127,7 +139,11 @@ const GroupActions = ({
               displayCount={nbButton}
             />
           </Grid>
-          <Grid xs={12} xl={12} >
+          <Grid
+            size={{
+              xs: 12,
+              xl: 12
+            }}>
             <Duration
               durationNumber={durationNumber}
               onNumberChange={(number) => setDurationNumber(number)}

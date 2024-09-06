@@ -16,12 +16,11 @@ import {
   IconButton,
   TextField,
 } from "@mui/material";
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid2";
 import Autocomplete from '@mui/material/Autocomplete';
 import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
 import { PlayerStatProfile } from "./PlayerStatProfile";
-import MUIDataTable from "mui-datatables";
 import { Button } from "@mui/material";
 import { toPairs, sortBy } from "lodash";
 
@@ -268,8 +267,8 @@ const RawScores = ({ scores }) => {
     },
   ]);
   return (
-    <Grid container spacing={2} >
-      <Grid xs={12}>
+    (<Grid container spacing={2} >
+      <Grid size={12}>
         <Button
           onClick={() => {
             window.localStorage.setItem("rawStats", show === 0 ? 1 : 0);
@@ -281,8 +280,9 @@ const RawScores = ({ scores }) => {
         </Button>
       </Grid>{" "}
       {show ? (
-        <Grid xs={12}>
-          <MUIDataTable
+        <Grid size={12}>
+          {"Scores Table"}
+          {/* <MUIDataTable
             options={{
               filter: false,
               rowsPerPage: rowsPerPage,
@@ -321,12 +321,12 @@ const RawScores = ({ scores }) => {
             }}
             data={scores ? scores.toJS() : []}
             columns={columns}
-          />
+          /> */}
         </Grid>
       ) : (
         ""
       )}
-    </Grid>
+    </Grid>)
   );
 };
 
@@ -347,7 +347,7 @@ const Scores = ({ scores, durationToHour, type }) => {
   const undoHighlight = () => setHighlight(null);
 
   return (
-    <React.Fragment>
+    (<React.Fragment>
       {highlight ? (
         <PlayerStatProfile playerScore={highlight} onClose={undoHighlight} />
       ) : (
@@ -358,16 +358,16 @@ const Scores = ({ scores, durationToHour, type }) => {
           {process.env.REACT_APP_PUBLIC_BUILD ? (
             ""
           ) : (
-            <Grid xs={12}>
+            <Grid size={12}>
               <RawScores scores={scores}  />{" "}
             </Grid>
           )}
 
-          <Grid xs={12}>
+          <Grid size={12}>
             <Grid container>
               <Grid
                 
-                xs={12}
+                size={12}
               >
                 <Paper>
                   <Autocomplete
@@ -392,13 +392,19 @@ const Scores = ({ scores, durationToHour, type }) => {
               </Grid>
             </Grid>
           </Grid>
-          <Grid xs={12} >
+          <Grid size={12} >
             <Typography variant="caption">
               You can click on a player to see their details
             </Typography>
           </Grid>
 
-          <Grid xs={12} md={6} lg={3} xl={2}>
+          <Grid
+            size={{
+              xs: 12,
+              md: 6,
+              lg: 3,
+              xl: 2
+            }}>
             <RankBoard
               
               iconUrl={"icons/bomb.png"}
@@ -411,7 +417,13 @@ const Scores = ({ scores, durationToHour, type }) => {
               reversed
             />
           </Grid>
-          <Grid xs={12} md={6} lg={3} xl={2}>
+          <Grid
+            size={{
+              xs: 12,
+              md: 6,
+              lg: 3,
+              xl: 2
+            }}>
             <RankBoard
               
               iconUrl={"icons/invincible.webp"}
@@ -424,7 +436,13 @@ const Scores = ({ scores, durationToHour, type }) => {
               reversed
             />
           </Grid>
-          <Grid xs={12} md={6} lg={3} xl={2}>
+          <Grid
+            size={{
+              xs: 12,
+              md: 6,
+              lg: 3,
+              xl: 2
+            }}>
             <RankBoard
               
               iconUrl={"icons/efficiency.png"}
@@ -437,7 +455,13 @@ const Scores = ({ scores, durationToHour, type }) => {
               reversed
             />
           </Grid>
-          <Grid xs={12} md={6} lg={3} xl={2}>
+          <Grid
+            size={{
+              xs: 12,
+              md: 6,
+              lg: 3,
+              xl: 2
+            }}>
             <RankBoard
               
               iconUrl={"icons/tryhard.png"}
@@ -450,7 +474,13 @@ const Scores = ({ scores, durationToHour, type }) => {
               reversed
             />
           </Grid>
-          <Grid xs={12} md={6} lg={3} xl={2}>
+          <Grid
+            size={{
+              xs: 12,
+              md: 6,
+              lg: 3,
+              xl: 2
+            }}>
             <RankBoard
               
               iconUrl={"icons/stamina.png"}
@@ -463,7 +493,13 @@ const Scores = ({ scores, durationToHour, type }) => {
               reversed
             />
           </Grid>
-          <Grid xs={12} md={6} lg={3} xl={2}>
+          <Grid
+            size={{
+              xs: 12,
+              md: 6,
+              lg: 3,
+              xl: 2
+            }}>
             <RankBoard
               
               iconUrl={"icons/streak_line.png"}
@@ -476,7 +512,13 @@ const Scores = ({ scores, durationToHour, type }) => {
               reversed
             />
           </Grid>
-          <Grid xs={12} md={6} lg={3} xl={2}>
+          <Grid
+            size={{
+              xs: 12,
+              md: 6,
+              lg: 3,
+              xl: 2
+            }}>
             <RankBoard
               
               iconUrl={"icons/nevergiveup.png"}
@@ -489,7 +531,13 @@ const Scores = ({ scores, durationToHour, type }) => {
               reversed
             />
           </Grid>
-          <Grid xs={12} md={6} lg={3} xl={2}>
+          <Grid
+            size={{
+              xs: 12,
+              md: 6,
+              lg: 3,
+              xl: 2
+            }}>
             <RankBoard
               
               iconUrl={"icons/patience.png"}
@@ -502,7 +550,13 @@ const Scores = ({ scores, durationToHour, type }) => {
               reversed
             />
           </Grid>
-          <Grid xs={12} md={6} lg={3} xl={2}>
+          <Grid
+            size={{
+              xs: 12,
+              md: 6,
+              lg: 3,
+              xl: 2
+            }}>
             <RankBoard
               
               iconUrl={"icons/clumsy.png"}
@@ -515,7 +569,13 @@ const Scores = ({ scores, durationToHour, type }) => {
               reversed
             />
           </Grid>
-          <Grid xs={12} md={6} lg={3} xl={2}>
+          <Grid
+            size={{
+              xs: 12,
+              md: 6,
+              lg: 3,
+              xl: 2
+            }}>
             <RankBoard
               
               iconUrl={"icons/glasses.png"}
@@ -528,7 +588,13 @@ const Scores = ({ scores, durationToHour, type }) => {
               reversed
             />
           </Grid>
-          <Grid xs={12} md={6} lg={3} xl={2}>
+          <Grid
+            size={{
+              xs: 12,
+              md: 6,
+              lg: 3,
+              xl: 2
+            }}>
             <RankBoard
               
               iconUrl={"icons/vote.ico"}
@@ -541,7 +607,13 @@ const Scores = ({ scores, durationToHour, type }) => {
               reversed
             />
           </Grid>
-          <Grid xs={12} md={6} lg={3} xl={2}>
+          <Grid
+            size={{
+              xs: 12,
+              md: 6,
+              lg: 3,
+              xl: 2
+            }}>
             <RankBoard
               
               iconUrl={"icons/sleep.png"}
@@ -556,7 +628,13 @@ const Scores = ({ scores, durationToHour, type }) => {
             />
           </Grid>
           <React.Fragment>
-            <Grid xs={12} md={6} lg={3} xl={2}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 6,
+                lg: 3,
+                xl: 2
+              }}>
               <RankBoard
                 
                 iconUrl={"icons/survivor.png"}
@@ -570,7 +648,13 @@ const Scores = ({ scores, durationToHour, type }) => {
                 reversed
               />
             </Grid>
-            <Grid xs={12} md={6} lg={3} xl={2}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 6,
+                lg: 3,
+                xl: 2
+              }}>
               <RankBoard
                 
                 iconUrl={"icons/early.png"}
@@ -583,7 +667,13 @@ const Scores = ({ scores, durationToHour, type }) => {
                 playersFilter={playersFilter}
               />
             </Grid>
-            <Grid xs={12} md={6} lg={3} xl={2}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 6,
+                lg: 3,
+                xl: 2
+              }}>
               <RankBoard
                 
                 iconUrl={"icons/early.png"}
@@ -596,7 +686,13 @@ const Scores = ({ scores, durationToHour, type }) => {
                 reversed
               />
             </Grid>
-            <Grid xs={12} md={6} lg={3} xl={2}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 6,
+                lg: 3,
+                xl: 2
+              }}>
               <RankBoard
                 
                 iconUrl={"icons/early.png"}
@@ -609,7 +705,13 @@ const Scores = ({ scores, durationToHour, type }) => {
                 reversed
               />
             </Grid>
-            <Grid xs={12} md={6} lg={3} xl={2}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 6,
+                lg: 3,
+                xl: 2
+              }}>
               <RankBoard
                 
                 iconUrl={"icons/early.png"}
@@ -622,7 +724,13 @@ const Scores = ({ scores, durationToHour, type }) => {
                 reversed
               />
             </Grid>
-            <Grid xs={12} md={6} lg={3} xl={2}>
+            <Grid
+              size={{
+                xs: 12,
+                md: 6,
+                lg: 3,
+                xl: 2
+              }}>
               <RankBoard
                 
                 iconUrl={"icons/early.png"}
@@ -636,7 +744,7 @@ const Scores = ({ scores, durationToHour, type }) => {
               />
             </Grid>
             {process.env.REACT_APP_PUBLIC_BUILD ? (
-              <Grid xs={12}>
+              <Grid size={12}>
                 <RawScores scores={scores}  />{" "}
               </Grid>
             ) : (
@@ -645,11 +753,11 @@ const Scores = ({ scores, durationToHour, type }) => {
           </React.Fragment>
         </React.Fragment>
       ) : (
-        <Grid xs={12}>
+        <Grid size={12}>
           <Typography variant="h4">No stats available yet</Typography>
         </Grid>
       )}
-    </React.Fragment>
+    </React.Fragment>)
   );
 };
 

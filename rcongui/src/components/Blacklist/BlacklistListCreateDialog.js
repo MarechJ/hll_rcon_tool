@@ -7,7 +7,7 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 import { Checkbox, FormControl, FormControlLabel, FormGroup, InputLabel, MenuItem, Select, Switch, Typography } from '@mui/material';
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid2";
 
 export const SYNC_METHODS = {
   kick_only: "Kick Only",
@@ -69,22 +69,22 @@ export default function BlacklistListCreateDialog({
 
   return (
     (<Dialog
-      open={open}
-      onClose={handleClose}
-      PaperProps={{
-        component: 'form',
-        onSubmit: (event) => {
-          event.preventDefault();
-          const data = {
-            name,
-            servers: serverNumbers,
-            syncMethod,
-          }
-          onSubmit(data);
-          handleClose();
-        },
-      }}
-    >
+        open={open}
+        onClose={handleClose}
+        PaperProps={{
+          component: 'form',
+          onSubmit: (event) => {
+            event.preventDefault();
+            const data = {
+              name,
+              servers: serverNumbers,
+              syncMethod,
+            }
+            onSubmit(data);
+            handleClose();
+          },
+        }}
+      >
       <DialogTitle>{titleText}</DialogTitle>
       <DialogContent>
         <DialogContentText>
@@ -93,7 +93,7 @@ export default function BlacklistListCreateDialog({
         </DialogContentText>
 
         <Grid container justifyContent="space-between" spacing={4}>
-          <Grid xs={6}>
+          <Grid size={6}>
             <TextField
               required
               id="name"
@@ -106,7 +106,7 @@ export default function BlacklistListCreateDialog({
               variant="standard"
             />
           </Grid>
-          <Grid xs={6}>
+          <Grid size={6}>
             <FormControl required fullWidth>
               <InputLabel>Sync Method</InputLabel>
               <Select
@@ -128,7 +128,7 @@ export default function BlacklistListCreateDialog({
         <Typography variant="h6">Servers</Typography>
 
         <Grid container alignContent="flex-start">
-          <Grid xs={6}>
+          <Grid size={6}>
             <FormGroup>
               {Object.entries(servers).map(([number, name]) => (
                 <FormControlLabel key={number} label={name} control={
@@ -141,7 +141,7 @@ export default function BlacklistListCreateDialog({
               ))}
             </FormGroup>
           </Grid>
-          <Grid xs={6}>
+          <Grid size={6}>
             <FormControlLabel
               label="Enable on all servers"
               control={

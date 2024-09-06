@@ -17,7 +17,7 @@ export const loader = async ({ params }) => {
         note = await import(`../_data/${category}/${type}.js`);
                 
         details = configTypes.find(configType => type === configType.path.split('/').slice(-1)[0])
-        console.log(details)
+
         if (!details) throw new Error()
     } catch (error) {
         throw new Response('Webhook not found', { status: 404 });

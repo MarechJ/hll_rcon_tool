@@ -73,10 +73,6 @@ const router = createBrowserRouter([
                         element: <Settings />
                     },
                     {
-                        path: 'automods',
-                        element: <div>AUTOMODS</div>
-                    },
-                    {
                         path: 'maps',
                         element: <MapManager />,
                         children: [
@@ -103,6 +99,10 @@ const router = createBrowserRouter([
                         element: <ConfigDetail />,
                         errorElement: <h1>CONFIG NOT FOUND</h1>,
                         loader: configLoader,
+                        // shouldRevalidate: ({ pathname }) => {
+                        //     const match = matchPath(':category/:type', pathname);
+                        //     return match && ['automods', 'webhooks', 'others'].includes(match.params.category);
+                        // }
                     },
                 ]
             },

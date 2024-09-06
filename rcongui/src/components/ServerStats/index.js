@@ -35,7 +35,7 @@ import {
   Button,
   TextareaAutosize,
 } from "@mui/material";
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid2";
 
 ChartJS.register(
   CategoryScale,
@@ -386,7 +386,7 @@ const ServerStatsPage = () => {
         hasNextDataPoint={hasNextDataPoint}
       />
       <Grid container>
-        <Grid xs={12}>
+        <Grid size={12}>
           {showControls ? (
             <MetricsParams
               from={from}
@@ -412,10 +412,10 @@ const ServerStatsPage = () => {
         alignItems="center"
         style={{ paddingTop: 0 }}
       >
-        <Grid xs={12}>
+        <Grid size={12}>
           {dataLoading ? <LinearProgress color="secondary" /> : ""}
         </Grid>
-        <Grid xs={12}>
+        <Grid size={12}>
           <Bar
             options={{
               onClick: (e, el) => {

@@ -5,7 +5,7 @@ import { Box, Button, Chip, Drawer, TextField } from "@mui/material";
 import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
 import moment from "moment";
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid2";
 
 const MessageHistory = ({ data }) => {
   const [comment, setComment] = React.useState("");

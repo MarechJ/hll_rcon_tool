@@ -3,7 +3,7 @@ import { Grid, Tab, Tabs, useTheme, useMediaQuery, Container, Box } from "@mui/m
 import makeStyles from '@mui/styles/makeStyles';
 import { Link, Outlet, Route, useLocation } from "react-router-dom";
 import VoteMapConfig from "./votemap/index.jsx";
-import MapRotationConfig from "./map-rotation";
+import MapRotationConfig from "./map-rotation/map-rotation.jsx";
 import MapChange from "./map-change";
 import MapObjectives from "./objectives";
 import { MapState } from "../../../components/MapManager/map-state";
@@ -74,9 +74,8 @@ function MapManager({ match }) {
   }, []);
 
   return (
-    <Container maxWidth="xl" className={classes.container}>
       <Grid container>
-        <Grid xs={12} md={true}>
+        <Grid xs={12}>
           <Tabs
             orientation={isMdScreen ? "vertical" : "horizontal"}
             variant={!isMdScreen ? "scrollable" : "fullWidth"}
@@ -90,9 +89,10 @@ function MapManager({ match }) {
             <LinkTab label="Votemap" to={pathRoot + "/votemap"} {...a11yProps(3)} />
           </Tabs>
         </Grid>
-        <Outlet context={{ maps }} />
+        <Grid xs={12} className={classes.main}>
+          <Outlet context={{ maps }} />
+        </Grid>
       </Grid>
-    </Container>
   );
 }
 
