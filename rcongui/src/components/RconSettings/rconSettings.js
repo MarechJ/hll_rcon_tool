@@ -16,12 +16,11 @@ import {
 } from "../../utils/fetchUtils";
 import Grid from "@mui/material/Grid2";
 import _ from "lodash";
-import Padlock from "../shared/padlock";
+import Padlock from "@/components/shared/Padlock";
 import TextHistoryManager, { SelectNameSpace } from "./textHistoryManager";
 import TextHistory from "../textHistory";
 import ServicesList from "../Services";
 import InputLabel from "@mui/material/InputLabel";
-import MenuItem from "@mui/material/MenuItem";
 import FormHelperText from "@mui/material/FormHelperText";
 import FormControl from "@mui/material/FormControl";
 import Select from "@mui/material/Select";

@@ -19,7 +19,7 @@ import AdminsEditableList from "./admins";
 import CollapseCard from "../collapseCard";
 import ServerMessage from "./serverMessage";
 import NumSlider from "./numSlider";
-import Padlock from "../shared/padlock";
+import Padlock from "@/components/shared/Padlock";
 import AutoRefreshLine from "../autoRefreshLine";
 import { ForwardCheckBox, WordList } from "../commonComponent";
 import { Help as HelpIcon } from "@mui/icons-material"

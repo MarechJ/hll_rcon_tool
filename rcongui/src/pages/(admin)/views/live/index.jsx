@@ -2,6 +2,7 @@ import React from "react";
 import Grid from "@mui/material/Grid2";
 import PlayerView from "@/components/PlayerView";
 import Logs from "@/components/LogsView/logs";
+import GameLogs from "@/components/LiveLogs"
 
 const Live = () => {
   const [mdSize, setMdSize] = React.useState(6);
@@ -29,15 +30,7 @@ const Live = () => {
           sm: 12,
           md: mdSize
         }}>
-        <Logs
-          onFullScreen={() => {
-            direction === "column-reverse"
-              ? setDirection("")
-              : setDirection("column-reverse");
-            toggleMdSize();
-          }}
-          isFullScreen={isFullScreen()}
-        />
+        <GameLogs />
       </Grid>
     </Grid>)
   );
