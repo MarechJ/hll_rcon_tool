@@ -72,7 +72,7 @@ const Header = () => {
             <nav>
               {navMenus.map((menu) => (
                 <React.Fragment key={menu.name}>
-                  <Button color="inherit" onClick={handleOpenMenu(menu.name)}>
+                  <Button onClick={handleOpenMenu(menu.name)}>
                     {menu.name}
                   </Button>
                   <Menu
@@ -88,7 +88,7 @@ const Header = () => {
                     }}
                   >
                     {menu.links.map((link) => (
-                      <MenuItem component={RouterLink} to={link.to} key={link.to} color="inherit" onClick={handleCloseMenu(menu.name)}>
+                      <MenuItem component={RouterLink} to={link.to} key={link.to} onClick={handleCloseMenu(menu.name)}>
                         {link.name}
                       </MenuItem>
                     ))}

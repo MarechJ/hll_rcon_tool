@@ -8,7 +8,6 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import SelectContent from './SelectContent';
 import MenuContent from './MenuContent';
-import CardAlert from './CardAlert';
 import OptionsMenu from './OptionsMenu';
 import { useLoaderData } from 'react-router-dom';
 
@@ -27,7 +26,6 @@ const Drawer = styled(MuiDrawer)({
 
 export default function SideMenu() {
   const data = useLoaderData();
-  console.log({data})
   return (
     <Drawer
       variant="permanent"
