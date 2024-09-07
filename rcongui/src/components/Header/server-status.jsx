@@ -1,22 +1,19 @@
 import React, { useState, useEffect, useRef } from "react";
-import "react-toastify/dist/ReactToastify.css";
-import { get, handle_http_errors, showResponse } from "../../utils/fetchUtils";
-import Menu from "@mui/material/Menu";
-import MenuItem from "@mui/material/MenuItem";
-import Link from "@mui/material/Link";
-import { fromJS, List } from "immutable";
-import { IconButton, Typography } from "@mui/material";
-import SwapVertIcon from '@mui/icons-material/SwapVert';
+import { get, showResponse } from "../../utils/fetchUtils";
+import { Typography } from "@mui/material";
 import { styled } from "@mui/material/styles";
 
 const Wrapper = styled('div')(({ theme }) => ({
   paddingLeft: theme.spacing(1),
+  color: theme.palette.text.primary
 }));
 
 const MenuBox = styled('div')(({ theme }) => ({
   display: "flex",
   gap: theme.spacing(1),
 }));
+
+const refreshInterval = 15 * 1000;
 
 const ServerStatus = () => {
   const [name, setName] = useState("");
@@ -27,8 +24,6 @@ const ServerStatus = () => {
   const [balance, setBalance] = useState("0vs0");
   const [score, setScore] = useState("0:0");
   const intervalRef = useRef(null);
-
-  const refreshInterval = 15 * 1000;
 
   const load = async () => {
     return get(`get_status`)
@@ -73,7 +68,7 @@ const ServerStatus = () => {
   return (
     (<Wrapper>
       <MenuBox>
-        <Typography variant="subtitle2" component={"span"} color="inherit">
+        <Typography variant="subtitle2" component={"span"}>
           {name}
         </Typography>
       </MenuBox>
