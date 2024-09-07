@@ -1,5 +1,6 @@
 import logging
 import re
+import shlex
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from functools import wraps
@@ -73,6 +74,7 @@ from rcon.vote_map import VoteMap
 from rcon.workers import record_stats_worker, temporary_broadcast, temporary_welcome
 
 logger = logging.getLogger(__name__)
+arg_re = re.compile("\$(\d+)")
 
 
 @on_chat
@@ -142,7 +144,7 @@ def chat_commands(rcon: Rcon, struct_log: StructuredLogLineWithMetaData):
         if is_command_word(triggered_word) and command.message is not None:
             chat_message_command(rcon, command, ctx)
         if is_command_word(triggered_word) and command.commands is not None:
-            chat_rcon_command(rcon, command, ctx)
+            chat_rcon_command(rcon, command, ctx, triggered_word, chat_message)
         if is_help_word(triggered_word):
             # Help words describe a specific command
             chat_help_command(rcon, command, ctx)
@@ -182,7 +184,7 @@ def chat_message_command(rcon: Rcon, command: ChatCommand, ctx: dict[str, str]):
     )
 
 
-def chat_rcon_command(rcon: Rcon, command: ChatCommand, ctx: dict[str, str]):
+def chat_rcon_command(rcon: Rcon, command: ChatCommand, ctx: dict[str, str], triggering_word: str, msg: str):
     player_id = ctx[MessageVariableContext.player_id.value]
     player: PlayerID
     with enter_session() as session:
@@ -196,14 +198,29 @@ def chat_rcon_command(rcon: Rcon, command: ChatCommand, ctx: dict[str, str]):
         if not command.conditions_fulfilled(rcon, player, ctx):
             return
 
-        do_run_commands(
-            rcon,
-            {
-                name: {
-                    k: format_message_string(v, context=ctx) for (k, v) in params.items()
-                } for (name, params) in command.commands.items()
-            },
-        )
+        arguments = msg[msg.find(triggering_word) + len(triggering_word) + 1:]
+        args = shlex.split(arguments)
+        expected_argument_count = 0
+        for (_, params) in command.commands.items():
+            for (_, v) in params.items():
+                for a in arg_re.findall(v):
+                    if int(a) > expected_argument_count:
+                        expected_argument_count = int(a)
+        if len(args) != expected_argument_count:
+            logger.info(
+                "provided message does not have expected number of arguments. Expected %d, got %d. Message: %s, Command: %s",
+                expected_argument_count, len(args), msg, triggering_word)
+            return
+
+        commands: dict[str, dict[str, str]] = {}
+        for (name, params) in command.commands.items():
+            commands[name] = {}
+            for (k, v) in params.items():
+                for i, a in enumerate(args):
+                    v = v.replace(f'${i+1}', a)
+                commands[name][k] = format_message_string(v, context=ctx)
+
+        do_run_commands(rcon, commands)
 
 
 def chat_help_command(rcon: Rcon, command: ChatCommand, ctx: dict[str, str]):
