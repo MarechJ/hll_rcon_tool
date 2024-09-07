@@ -26,7 +26,7 @@ import {
   setVotemapWhitelist,
   updateVotemapConfig,
 } from "@/utils/fetchUtils";
-import Padlock from "@/components/shared/padlock";
+import Padlock from "@/components/shared/Padlock";
 import { VoteStatus } from "./vote-status";
 import {
   defaultMapOptions,

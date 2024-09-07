@@ -8,11 +8,10 @@ import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
 import { FormControl, InputLabel, MenuItem, Select, Typography } from "@mui/material";
 import moment from "moment";
-import { getServerStatus, getSharedMessages } from "../../utils/fetchUtils";
+import { getServerStatus, getSharedMessages } from "@/utils/fetchUtils";
 import TextHistory from "../textHistory";
-import { TimePickerButtons } from "../shared/time-picker-buttons";
+import { TimePickerButtons } from "@/components/shared/TimePickerButtons";
 import Grid from "@mui/material/Grid2";
-
 
 const presetTimes = [
   [1, "hour"],

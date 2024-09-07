@@ -13,7 +13,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { PlayerVipSummary } from "./PlayerVipSummary";
 import { ForwardCheckBox } from "../commonComponent";
-import { TimePickerButtons } from "../shared/time-picker-buttons";
+import { TimePickerButtons } from "@/components/shared/TimePickerButtons";
 import dayjs from "dayjs";
 
 const presetTimes = [

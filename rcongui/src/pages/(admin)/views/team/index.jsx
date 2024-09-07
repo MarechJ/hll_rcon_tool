@@ -38,8 +38,8 @@ import {
   ReasonDialog,
 } from "@/components/PlayerView/playerActions";
 import { toast } from "react-toastify";
-import { FlagDialog } from "../../records/players";
-import Padlock from "@/components/shared/padlock";
+import { FlagDialog } from "@/pages/(admin)/records/players";
+import Padlock from "@/components/shared/Padlock";
 import BlacklistRecordCreateDialog from "@/components/Blacklist/BlacklistRecordCreateDialog";
 
 const Squad = ({
