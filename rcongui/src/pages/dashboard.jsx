@@ -11,11 +11,11 @@ import Grid from "@mui/material/Grid2"
 
 const Dashboard = () => {
   return (
-    (<Grid container columnSpacing={2} rowSpacing={2}>
+    <Grid container columnSpacing={2} rowSpacing={2}>
       <Grid
         size={{
           xs: 12,
-          md: 6
+          lg: 6
         }}>
         <Card sx={{ minHeight: '10rem', width: '100%' }}>
           <CardHeader
@@ -40,7 +40,7 @@ const Dashboard = () => {
       <Grid
         size={{
           xs: 12,
-          md: 6
+          lg: 6
         }}>
         <Card sx={{ minHeight: '10rem' }}>
           <CardHeader
@@ -65,7 +65,7 @@ const Dashboard = () => {
       <Grid
         size={{
           xs: 12,
-          md: 6
+          lg: 6
         }}>
         <Card sx={{ minHeight: '10rem' }}>
           <CardHeader
@@ -90,7 +90,7 @@ const Dashboard = () => {
       <Grid
         size={{
           xs: 12,
-          md: 6
+          lg: 6
         }}>
         <Card sx={{ minHeight: '10rem' }}>
           <CardHeader
@@ -112,7 +112,7 @@ const Dashboard = () => {
           </CardContent>
         </Card>
       </Grid>
-    </Grid>)
+    </Grid>
   );
 };
 

@@ -1,7 +1,7 @@
 import { Outlet } from "react-router-dom"
 
-const WebhooksRoot = () => {
+const VariousConfigsRoot = () => {
     return <Outlet />
 }
 
-export default WebhooksRoot;
+export default VariousConfigsRoot;

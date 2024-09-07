@@ -14,13 +14,11 @@ const UserSetting = ({
   describeEndpoint,
   notes,
   data,
+  setEditorContent,
+  refresh,
 }) => {
   const [errors, setErrors] = useState([]);
   const [schema, setSchema] = useState("");
-
-  // useEffect(() => {
-  //   getData(getEndpoint);
-  // }, [getEndpoint]);
 
   useEffect(() => {
     get(describeEndpoint)
@@ -59,12 +57,11 @@ const UserSetting = ({
         <h1>{description}</h1>
       </Grid>
       <Grid size={12}>
-        {/* <Button onClick={() => getData(getEndpoint)}>Refresh</Button> */}
+        <Button onClick={refresh}>Refresh</Button>
         <Button onClick={() => sendData(validateEndpoint)}>Validate</Button>
         <Button onClick={() => sendData(setEndpoint)}>Save</Button>
       </Grid>
       <Grid
-        
         justifyContent="center"
         spacing={2}
         alignItems="center"
@@ -72,12 +69,10 @@ const UserSetting = ({
         size={12}
       >
         <Editor
-          width="90vw"
-          height="50vh"
+          height="70vh"
           defaultLanguage="json"
+          onChange={setEditorContent}
           value={data}
-          // onChange={setData}
-          defaultValue={""}
           theme="vs-dark"
         />
       </Grid>
@@ -118,13 +113,13 @@ const UserSetting = ({
     <Grid size={12}>
       <h1>Documentation</h1>
       <div style={{ textAlign: "left" }}>
-        <CopyBlock text={notes} language="json" wrapLines theme={dracula} />
+        <CopyBlock wrapLongLines text={notes} language="json" wrapLines theme={dracula} />
       </div>
     </Grid>
     <Grid size={12}>
       <h1>Model Schema</h1>
       <div style={{ textAlign: "left" }}>
-        <CopyBlock text={schema} language="json" wrapLines theme={dracula} />
+        <CopyBlock wrapLongLines text={schema} language="json" wrapLines theme={dracula} />
       </div>
     </Grid>
   </>);

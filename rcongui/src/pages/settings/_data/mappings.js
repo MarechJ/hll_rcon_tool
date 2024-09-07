@@ -86,12 +86,12 @@ export const others = [
         name: 'Steam API',
     },
     {
-        path: '/settings/others/vac-gamebans',
+        path: '/settings/others/vac-bans',
         command: 'vac_game_bans_config',
         name: 'VAC/Game Bans',
     },
     {
-        path: '/settings/others/tk-ban',
+        path: '/settings/others/tk-bans',
         command: 'tk_ban_on_connect_config',
         name: 'TK Ban On Connect',
     },
