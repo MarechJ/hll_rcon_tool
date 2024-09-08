@@ -19,7 +19,7 @@ import { ReasonDialog } from "./playerActions";
 import GroupActions from "./groupActions";
 import Unban from "./unban";
 import { fromJS, List, Map, OrderedSet } from "immutable";
-import { FlagDialog } from "@/pages/(admin)/records/players";
+import { FlagDialog } from "@/pages/admin/records/players";
 import { getEmojiFlag } from "@/utils/emoji";
 import BlacklistRecordCreateDialog from "../Blacklist/BlacklistRecordCreateDialog";
 import { VipExpirationDialog } from "../VipDialog";

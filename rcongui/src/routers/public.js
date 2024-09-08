@@ -1,5 +1,5 @@
 import { createBrowserRouter } from "react-router-dom";
-import Root from "@/pages/(public)/root"
+import Root from "@/pages/public/root"
 
 const router = createBrowserRouter([
     {

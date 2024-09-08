@@ -51,6 +51,7 @@ const handleHttpError = (error) => {
 }
 
 export const loader = async ({ params }) => {
+  console.log("LOADER RUNNING")
   const { category, type } = params;
   let note, data, details, configTypes, schema;
 
@@ -62,15 +63,34 @@ export const loader = async ({ params }) => {
 
     configTypes = configMappingModule[category];
 
-    note = await import(`../_data/${category}/${type}.js`);
-
     details = configTypes.find(
       (configType) => type === configType.path.split("/").slice(-1)[0]
     );
 
     if (!details) throw new Error();
   } catch (error) {
-    throw new Response("Webhook not found", { status: 404 });
+    throw json(
+      {
+        message: "This config is not known.",
+        error: error?.message,
+        command: error?.command,
+      },
+      { status: 404 }
+    );
+  }
+
+  try {
+    note = await import(`../_data/${category}/${type}.js`);
+
+  } catch (error) { 
+    throw json(
+      {
+        message: "Unable to locate the documentation file.",
+        error: error?.message,
+        command: error?.command,
+      },
+      { status: 404 }
+    );
   }
 
   let response
