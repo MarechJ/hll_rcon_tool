@@ -11,24 +11,21 @@ import {
   Legend,
   registerables,
 } from "chart.js";
-import StarIcon from "@material-ui/icons/Star";
-import LinearProgress from "@material-ui/core/LinearProgress";
-import Switch from "@material-ui/core/Switch";
-import FormGroup from "@material-ui/core/FormGroup";
-import FormControlLabel from "@material-ui/core/FormControlLabel";
-import FormControl from "@material-ui/core/FormControl";
-import MomentUtils from "@date-io/moment";
-import { DateTimePicker, MuiPickersUtilsProvider } from "@material-ui/pickers";
+import StarIcon from "@mui/icons-material/Star";
+import LinearProgress from "@mui/material/LinearProgress";
+import Switch from "@mui/material/Switch";
+import FormGroup from "@mui/material/FormGroup";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import FormControl from "@mui/material/FormControl";
+import { DesktopDateTimePicker } from '@mui/x-date-pickers/DesktopDateTimePicker';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import palette from "google-palette";
-import "chartjs-adapter-moment";
 import { Bar } from "react-chartjs-2";
-import { makeStyles } from "@material-ui/core/styles";
 import { get, handle_http_errors, showResponse } from "../../utils/fetchUtils";
-import { fromJS } from "immutable";
 import {
   Dialog,
   DialogTitle,
-  Grid,
   Link,
   Modal,
   Typography,
@@ -37,7 +34,8 @@ import {
   DialogContentText,
   Button,
   TextareaAutosize,
-} from "@material-ui/core";
+} from "@mui/material";
+import Grid from "@mui/material/Grid2";
 
 ChartJS.register(
   CategoryScale,
@@ -63,20 +61,6 @@ function hexToRgb(hex) {
     : null;
 }
 
-const useStyles = makeStyles((theme) => ({
-  modal: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  paper: {
-    backgroundColor: theme.palette.background.paper,
-    border: "2px solid #000",
-    boxShadow: theme.shadows[5],
-    padding: theme.spacing(2, 4, 3),
-  },
-}));
-
 function DetailsDialog({
   datasetElementIndex,
   datasetsIndex,
@@ -88,7 +72,7 @@ function DetailsDialog({
   hasNextDataPoint,
 }) {
   return (
-    <Dialog
+  <Dialog
       open={
         datasetElementIndex !== null &&
         datasetsIndex !== null &&
@@ -111,7 +95,7 @@ function DetailsDialog({
               {dataPoint.players.map((el) => (
                 <li key={el[1]}>
                   <Typography variant="body2">
-                    <Link href={`#/player/${el[1]}`}> {el[0]}</Link>
+                    <Link href={`/records/players/${el[1]}`}> {el[0]}</Link>
                     {el[1]} {el[2] ? <StarIcon fontSize="inherit" /> : ""}
                   </Typography>
                 </li>
@@ -156,34 +140,48 @@ function MetricsParams({
   toggleShowControls,
 }) {
   return (
-    <Grid
+    (<Grid
       container
       alignContent="center"
       alignItems="center"
-      justify="center"
+      justifyContent="center"
       spacing={2}
     >
-      <Grid item>
-        <MuiPickersUtilsProvider utils={MomentUtils}>
+      <Grid>
+        {/* <MuiPickersUtilsProvider utils={MomentUtils}>
           <DateTimePicker
             label="From time"
             format="YYYY/MM/DD HH:mm"
             value={from}
             onChange={setFrom}
           />
-        </MuiPickersUtilsProvider>
+        </MuiPickersUtilsProvider> */}
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DesktopDateTimePicker
+              label="From time"
+              onChange={(value) => console.log(value)} // send value to hook form
+              format='LLL'
+            />
+          </LocalizationProvider>
       </Grid>
-      <Grid item>
-        <MuiPickersUtilsProvider utils={MomentUtils}>
+      <Grid>
+        {/* <MuiPickersUtilsProvider utils={MomentUtils}>
           <DateTimePicker
             label="Till time"
             format="YYYY/MM/DD HH:mm"
             value={till}
             onChange={setTill}
           />
-        </MuiPickersUtilsProvider>
+        </MuiPickersUtilsProvider> */}
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DesktopDateTimePicker
+              label="Till time"
+              onChange={(value) => console.log(value)} // send value to hook form
+              format='LLL'
+            />
+          </LocalizationProvider>
       </Grid>
-      <Grid item>
+      <Grid>
         <Grid container direction="column">
           <Link
             component="button"
@@ -214,7 +212,7 @@ function MetricsParams({
           </Link>
         </Grid>
       </Grid>
-      <Grid item>
+      <Grid>
         <FormControl component="fieldset">
           <FormGroup aria-label="position" row>
             <FormControlLabel
@@ -226,21 +224,21 @@ function MetricsParams({
           </FormGroup>
         </FormControl>
       </Grid>
-      <Grid item>
+      <Grid>
         <Button onClick={loadData} variant="contained" color="primary">
           Load data
         </Button>
       </Grid>
-      <Grid item>
+      <Grid>
         <Button onClick={toggleShowControls} variant="text">
           Hide controls
         </Button>
       </Grid>
-    </Grid>
+    </Grid>)
   );
 }
 
-const ServerStatsPage = ({ classes }) => {
+const ServerStatsPage = () => {
   const [stats, setStats] = React.useState({});
   const [dataPoint, setDatapoint] = React.useState({});
   const [datasetsIndex, setDatasetsIndex] = React.useState(null);
@@ -277,7 +275,6 @@ const ServerStatsPage = ({ classes }) => {
       ),
     [stats]
   );
-  const styles = useStyles();
   const datasets = React.useMemo(
     () =>
       Object.keys(stats)
@@ -389,7 +386,7 @@ const ServerStatsPage = ({ classes }) => {
         hasNextDataPoint={hasNextDataPoint}
       />
       <Grid container>
-        <Grid item xs={12}>
+        <Grid size={12}>
           {showControls ? (
             <MetricsParams
               from={from}
@@ -411,15 +408,14 @@ const ServerStatsPage = ({ classes }) => {
       <Grid
         container
         spacing={2}
-        className={classes.doublePadding}
         alignContent="center"
         alignItems="center"
         style={{ paddingTop: 0 }}
       >
-        <Grid item xs={12}>
+        <Grid size={12}>
           {dataLoading ? <LinearProgress color="secondary" /> : ""}
         </Grid>
-        <Grid item xs={12}>
+        <Grid size={12}>
           <Bar
             options={{
               onClick: (e, el) => {

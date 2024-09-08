@@ -1,11 +1,9 @@
-import React from "react";
-import { Emoji, getEmojiDataFromNative } from "emoji-mart";
-import data from "emoji-mart/data/all.json";
+import React from 'react';
+import data from '@emoji-mart/data'
+import { init } from 'emoji-mart'
 
-export function getEmojiFlag(flag, size = 22) {
-  const emo = getEmojiDataFromNative(flag, "apple", data);
-  if (emo) {
-    return <Emoji emoji={emo} set="apple" size={size} />;
-  }
-  return flag;
+init({ data })
+
+export function getEmojiFlag(flag) {
+  return flag
 }

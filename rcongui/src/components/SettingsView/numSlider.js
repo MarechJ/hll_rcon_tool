@@ -1,8 +1,7 @@
 import React from "react";
-import { Slider, Typography } from "@material-ui/core";
+import { Slider, Typography } from "@mui/material";
 
 const NumSlider = ({
-  classes,
   text,
   min = 0,
   max,
@@ -15,11 +14,11 @@ const NumSlider = ({
   disabled,
   showValue,
 }) => (
-  <div className={classes.slider}>
+  <div >
     <Typography variant="h5" id="discrete-slider-always" gutterBottom>
       {text}
     </Typography>
-    <Typography variant="caption" color="textSecondary">
+    <Typography variant="caption">
       {helpText}
     </Typography>
     <Slider

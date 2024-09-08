@@ -1,7 +1,8 @@
 import React from "react";
-import { Button, Grid, Typography } from "@material-ui/core";
+import { Button } from "@mui/material";
 import { ForwardCheckBox } from "../commonComponent";
 import Editor from "@monaco-editor/react";
+import Grid from "@mui/material/Grid2";
 
 const AutoSettings = ({
   words,
@@ -10,10 +11,9 @@ const AutoSettings = ({
   forward,
   onFowardChange,
   onEditorMount,
-  theme,
 }) => (
   <Grid container>
-    <Grid xs={12}>
+    <Grid size={12}>
       <Editor
         height="90vh"
         defaultLanguage="json"
@@ -24,10 +24,9 @@ const AutoSettings = ({
           tabSize: 2,
         }}
         onMount={onEditorMount}
-        theme={theme}
       />
     </Grid>
-    <Grid xs={12}>
+    <Grid size={12}>
       <ForwardCheckBox bool={forward} onChange={onFowardChange} />
       <Button variant="outlined" color="secondary" onClick={onSave}>
         Save

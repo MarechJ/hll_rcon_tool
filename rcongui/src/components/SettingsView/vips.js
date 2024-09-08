@@ -1,6 +1,5 @@
 import React from "react";
 import {
-  Grid,
   IconButton,
   List,
   ListItem,
@@ -10,11 +9,12 @@ import {
   Button,
   Tooltip,
   Typography,
-} from "@material-ui/core";
-import DeleteIcon from "@material-ui/icons/Delete";
-import AddIcon from "@material-ui/icons/Add";
+} from "@mui/material";
+import DeleteIcon from "@mui/icons-material/Delete";
+import AddIcon from "@mui/icons-material/Add";
 import { ForwardCheckBox } from "../commonComponent";
 import { get, handle_http_errors, showResponse } from "../../utils/fetchUtils";
+import Grid from "@mui/material/Grid2";
 
 import moment from "moment";
 import { VipExpirationDialog } from "../VipDialog";
@@ -22,7 +22,6 @@ import { fromJS } from "immutable";
 import { vipListFromServer } from "../VipDialog/vipFromServer";
 
 const AddVipItem = ({
-  classes,
   name,
   setName,
   playerId,
@@ -31,7 +30,7 @@ const AddVipItem = ({
 }) => (
   <ListItem>
     <Grid container>
-      <Grid item xs={6} className={classes.paddingRight}>
+      <Grid size={6} >
         <TextField
           InputLabelProps={{
             shrink: true,
@@ -41,7 +40,7 @@ const AddVipItem = ({
           onChange={(e) => setName(e.target.value)}
         />
       </Grid>
-      <Grid item xs={6} className={classes.paddingLeft}>
+      <Grid size={6} >
         <TextField
           InputLabelProps={{
             shrink: true,
@@ -57,7 +56,7 @@ const AddVipItem = ({
         edge="end"
         aria-label="delete"
         onClick={() => onAdd(name, playerId)}
-      >
+        size="large">
         <AddIcon />
       </IconButton>
     </ListItemSecondaryAction>
@@ -70,7 +69,7 @@ function setIntervalLimited(callback, interval, x) {
   }
 }
 
-const VipUpload = ({ classes }) => {
+const VipUpload = () => {
   const [selectedFile, setSelectedFile] = React.useState();
   const [isFilePicked, setIsFilePicked] = React.useState(false);
   const [result, setResult] = React.useState(null);
@@ -108,8 +107,8 @@ const VipUpload = ({ classes }) => {
     getResult() && setIntervalLimited(getResult, 2000, 500);
 
   return (
-    <Grid container spacing={1}>
-      <Grid item xs={6}>
+    (<Grid container spacing={1}>
+      <Grid size={6}>
         <Button
           fullWidth
           type="link"
@@ -120,7 +119,7 @@ const VipUpload = ({ classes }) => {
           Download VIPs
         </Button>
       </Grid>
-      <Grid item xs={6}>
+      <Grid size={6}>
         {isFilePicked ? (
           <Button
             fullWidth
@@ -145,9 +144,8 @@ const VipUpload = ({ classes }) => {
           </Tooltip>
         )}
       </Grid>
-
       {result ? (
-        <Grid item xs={12}>
+        <Grid size={12}>
           <Typography variant="body2" color="secondary">
             The job may take a while, here's the current status, do not resubmit
             unless you see a "finished" or "failed" status:{" "}
@@ -157,7 +155,7 @@ const VipUpload = ({ classes }) => {
       ) : (
         ""
       )}
-    </Grid>
+    </Grid>)
   );
 };
 
@@ -170,7 +168,6 @@ function nameOf(playerObj) {
 }
 
 const VipEditableList = ({
-  classes,
   peopleList,
   onDelete,
   onAdd,
@@ -209,11 +206,11 @@ const VipEditableList = ({
   }
 
   return (
-    <React.Fragment>
+    (<React.Fragment>
       <List dense>
         <ForwardCheckBox bool={forward} onChange={onFowardChange} />
         <AddVipItem
-          classes={classes}
+          
           name={name}
           setName={setName}
           playerId={player_id}
@@ -231,14 +228,14 @@ const VipEditableList = ({
                 edge="end"
                 aria-label="delete"
                 onClick={() => onDelete(obj.name, obj.player_id)}
-              >
+                size="large">
                 <DeleteIcon />
               </IconButton>
             </ListItemSecondaryAction>
           </ListItem>
         ))}
         <AddVipItem
-          classes={classes}
+          
           name={name}
           setName={setName}
           playerId={player_id}
@@ -265,7 +262,7 @@ const VipEditableList = ({
           }}
         />
       </List>
-    </React.Fragment>
+    </React.Fragment>)
   );
 };
 

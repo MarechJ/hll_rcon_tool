@@ -1,4 +1,5 @@
-import { Button, Grid, TextField } from "@material-ui/core";
+import { Button, TextField } from "@mui/material";
+import Grid from "@mui/material/Grid2";
 import React from "react";
 import {
   get,
@@ -7,7 +8,7 @@ import {
   showResponse,
 } from "../../utils/fetchUtils";
 
-const ServerName = ({ classes }) => {
+const ServerName = () => {
   const [name, setName] = React.useState("");
   const isFirstRender = React.useRef(true);
 
@@ -26,8 +27,8 @@ const ServerName = ({ classes }) => {
   };
 
   return (
-    <Grid container className={classes.doublePadding}>
-      <Grid item xs={10}>
+    (<Grid container>
+      <Grid size={10}>
         <TextField
           fullWidth
           lable="Server Name. ONLY FOR GTX USER (and if configured)"
@@ -35,12 +36,12 @@ const ServerName = ({ classes }) => {
           onChange={(e) => setName(e.target.value)}
         />
       </Grid>
-      <Grid item xs={2}>
+      <Grid size={2}>
         <Button variant="outlined" onClick={save}>
           SAVE
         </Button>
       </Grid>
-    </Grid>
+    </Grid>)
   );
 };
 

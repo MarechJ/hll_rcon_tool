@@ -1,157 +1,279 @@
+import HomeIcon from '@mui/icons-material/Home';
+import SportsEsportsIcon from '@mui/icons-material/SportsEsports';
+import BoltIcon from '@mui/icons-material/Bolt';
+import GroupsIcon from '@mui/icons-material/Groups';
+import PeopleIcon from '@mui/icons-material/PeopleAlt';
+import TextSnippetIcon from '@mui/icons-material/TextSnippet';
+import SimCardAlertIcon from '@mui/icons-material/SimCardAlert';
+import SmartToyIcon from '@mui/icons-material/SmartToy';
+import WebhookIcon from '@mui/icons-material/Webhook';
+import SettingsIcon from '@mui/icons-material/Settings';
+import DnsIcon from '@mui/icons-material/Dns';
+import PersonOffIcon from '@mui/icons-material/PersonOff';
+import NoTransferIcon from '@mui/icons-material/NoTransfer';
+import SpaIcon from '@mui/icons-material/Spa';
+import RemoveRedEyeIcon from '@mui/icons-material/RemoveRedEye';
+import RestaurantIcon from '@mui/icons-material/Restaurant';
+import ChatIcon from '@mui/icons-material/Chat';
+import VideocamIcon from '@mui/icons-material/Videocam';
+import PrivacyTipIcon from '@mui/icons-material/PrivacyTip';
+import RateReviewIcon from '@mui/icons-material/RateReview';
+import TimerOffIcon from '@mui/icons-material/TimerOff';
+import DriveFileRenameOutlineIcon from '@mui/icons-material/DriveFileRenameOutline';
+import SportsMartialArtsIcon from '@mui/icons-material/SportsMartialArts';
+import CableIcon from '@mui/icons-material/Cable';
+import ScoreboardIcon from '@mui/icons-material/Scoreboard';
+import GavelIcon from '@mui/icons-material/Gavel';
+import BrowseGalleryIcon from '@mui/icons-material/BrowseGallery';
+import HourglassBottomIcon from '@mui/icons-material/HourglassBottom';
+import MiscellaneousServicesIcon from '@mui/icons-material/MiscellaneousServices';
+import NoStrollerIcon from '@mui/icons-material/NoStroller';
+import MapIcon from '@mui/icons-material/Map';
+import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
+import FolderIcon from '@mui/icons-material/Folder';
+import ViewCarouselIcon from '@mui/icons-material/ViewCarousel';
+import AnalyticsIcon from '@mui/icons-material/Analytics';
+import StreamIcon from '@mui/icons-material/Stream';
+import ThreeSixtyIcon from '@mui/icons-material/ThreeSixty';
+import RestartAltIcon from '@mui/icons-material/RestartAlt';
+import HowToVoteIcon from '@mui/icons-material/HowToVote';
+import AdsClickIcon from '@mui/icons-material/AdsClick';
+
 export const navMenus = [
   {
-    name: "views",
+    links: [
+      {
+        name: "Home",
+        to: "/",
+        icon: <HomeIcon />,
+      },
+    ]
+  },
+  {
+    name: "Views",
+    icon: <ViewCarouselIcon />,
     links: [
       {
         name: "Live",
-        to: "/",
+        to: "views/live",
+        icon: <BoltIcon />,
       },
       {
-        name: "Game",
-        to: "/gameview",
+        name: "Team",
+        to: "views/team",
+        icon: <GroupsIcon />,
       },
     ],
   },
   {
-    name: "records",
+    name: "Maps",
+    icon: <MapIcon />,
+    links: [
+      {
+        name: 'Change',
+        to: '/settings/maps/change',
+        icon: <RestartAltIcon />,
+      },
+      {
+        name: 'Rotation',
+        to: '/settings/maps/rotation',
+        icon: <ThreeSixtyIcon />,
+      },
+      {
+        name: 'Objectives',
+        to: '/settings/maps/objectives',
+        icon: <AdsClickIcon />,
+      },
+      {
+        name: 'Votemap',
+        to: '/settings/maps/votemap',
+        icon: <HowToVoteIcon />,
+      },
+    ]
+  },
+  {
+    name: "Records",
+    icon: <FolderIcon />,
     links: [
       {
         name: "Players",
-        to: "/history",
+        to: "records/players",
+        icon: <PeopleIcon />,
       },
       {
         name: "Blacklist",
-        to: "/blacklists",
+        to: "records/blacklists",
+        icon: <AccountBalanceIcon />,
       },
       {
-        name: "Logs",
-        to: "/logs",
+        name: "Game Logs",
+        to: "records/game-logs",
+        icon: <TextSnippetIcon />,
       },
       {
         name: "Audit Logs",
-        to: "/auditlogs",
-      },
-      {
-        name: "Combined",
-        to: "/combined_history",
+        to: "records/audit-logs",
+        icon: <TextSnippetIcon />,
       },
     ],
   },
   {
-    name: "settings",
+    name: "Settings",
+    icon: <SettingsIcon />,
     links: [
       {
-        name: "Settings",
+        name: "General",
         to: "/settings",
+        icon: <SettingsIcon />,
+      },
+    ],
+  },
+  {
+    name: 'Webhooks',
+    icon: <WebhookIcon />,
+    links: [
+      {
+        name: "Audit",
+        to: "/settings/webhooks/audit",
+        icon: <SimCardAlertIcon />,
       },
       {
-        name: "Map Manager",
-        to: "/settings/maps/change"
+        name: "Admin Ping",
+        to: "/settings/webhooks/admin-ping",
+        icon: <PrivacyTipIcon />,
       },
       {
-        name: "Audit Webhooks",
-        to: "/settings/audit-webhooks",
+        name: "Watchlist",
+        to: "/settings/webhooks/watchlist",
+        icon: <RemoveRedEyeIcon />,
       },
       {
-        name: "Admin Ping Webhooks",
-        to: "/settings/admin-webhooks",
+        name: "Camera",
+        to: "/settings/webhooks/camera",
+        icon: <VideocamIcon />,
       },
       {
-        name: "Watchlist Webhooks",
-        to: "/settings/watchlist-webhooks",
+        name: "Chat",
+        to: "/settings/webhooks/chat",
+        icon: <ChatIcon />,
       },
       {
-        name: "Camera Webhooks",
-        to: "/settings/camera-webhooks",
+        name: "Kill/TK",
+        to: "/settings/webhooks/kills",
+        icon: <RestaurantIcon />,
       },
       {
-        name: "Chat Webhooks",
-        to: "/settings/chat-webhooks",
+        name: "Log Line",
+        to: "/settings/webhooks/log-line",
+        icon: <TextSnippetIcon />,
+      },
+    ]
+  },
+  {
+    name: "Automods",
+    icon: <SmartToyIcon />,
+    links: [
+      {
+        name: "Level",
+        to: "/settings/automods/level",
+        icon: <NoStrollerIcon />,
       },
       {
-        name: "Kill/TK Webhooks",
-        to: "/settings/kill-webhooks",
+        name: "No Leader",
+        to: "/settings/automods/no-leader",
+        icon: <PersonOffIcon />,
       },
       {
-        name: "Level Auto Mod",
-        to: "/settings/automod-level",
+        name: "Seeding",
+        to: "/settings/automods/seeding",
+        icon: <SpaIcon />,
       },
       {
-        name: "No Leader Auto Mod",
-        to: "/settings/automod-no-leader",
+        name: "No Solo Tank",
+        to: "/settings/automods/no-solo-tank",
+        icon: <NoTransferIcon />,
       },
-      {
-        name: "Seeding Auto Mod",
-        to: "/settings/automod-seeding",
-      },
-      {
-        name: "No Solo Tank Auto Mod",
-        to: "/settings/automod-solo-tank",
-      },
+    ]
+  },
+  {
+    name: 'Others',
+    icon: <MiscellaneousServicesIcon />,
+    links: [
       {
         name: "RCON Game Server Connection",
-        to: "/settings/rcon-gameserver",
+        to: "/settings/others/game-server",
+        icon: <CableIcon />,
       },
       {
         name: "CRCON Settings",
-        to: "/settings/rcon-server",
+        to: "/settings/others/crcon",
+        icon: <DnsIcon />,
       },
       {
         name: "Chat Commands",
-        to: "/settings/chat-commands",
+        to: "/settings/others/chat-commands",
+        icon: <RateReviewIcon />,
       },
       {
         name: "Scorebot",
-        to: "/settings/scorebot",
+        to: "/settings/others/scorebot",
+        icon: <ScoreboardIcon />,
       },
       {
         name: "Steam API",
-        to: "/settings/steam",
+        to: "/settings/others/steam",
+        icon: <RemoveRedEyeIcon />,
       },
       {
         name: "VAC/Game Bans",
-        to: "/settings/vac-gamebans",
+        to: "/settings/others/vac-bans",
+        icon: <AccountBalanceIcon />,
       },
       {
         name: "TK Ban On Connect",
-        to: "/settings/tk-ban",
+        to: "/settings/others/tk-bans",
+        icon: <GavelIcon />,
       },
       {
         name: "Name Kicks",
-        to: "/settings/name-kicks",
-      },
-      {
-        name: "Log Line Webhooks",
-        to: "/settings/log-lines",
+        to: "/settings/others/name-kicks",
+        icon: <SportsMartialArtsIcon />,
       },
       {
         name: "Expired VIP",
-        to: "/settings/expired-vip",
+        to: "/settings/others/expired-vip",
+        icon: <TimerOffIcon />,
       },
       {
         name: "GTX Server Name Change",
-        to: "/settings/gtx-server-name-change",
+        to: "/settings/others/gtx-server",
+        icon: <DriveFileRenameOutlineIcon />,
       },
       {
         name: "Log Stream",
-        to: "/settings/log-stream",
+        to: "/settings/others/log-stream",
+        icon: <StreamIcon />,
       },
     ],
   },
   {
-    name: "stats",
+    name: "Stats",
+    icon: <AnalyticsIcon />,
     links: [
       {
         name: "Live Sessions",
-        to: "/livescore",
+        to: "stats/live-sessions",
+        icon: <BrowseGalleryIcon />,
       },
       {
         name: "Live Game",
-        to: "/livegamescore",
+        to: "stats/live-game",
+        icon: <SportsEsportsIcon />,
       },
       {
         name: "Games",
-        to: "/gamescoreboard",
+        to: "stats/games",
+        icon: <HourglassBottomIcon />,
       },
     ],
   },
