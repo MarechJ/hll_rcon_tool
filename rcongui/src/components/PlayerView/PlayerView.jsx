@@ -1,5 +1,4 @@
 import React, { Component } from "react";
-import "react-toastify/dist/ReactToastify.css";
 import {
   addPlayerToBlacklist,
   addPlayerVip,
@@ -11,14 +10,10 @@ import {
   removePlayerVip,
   showResponse,
 } from "@/utils/fetchUtils";
-import AutoRefreshBar from "./header";
-import TextInputBar from "./textInputBar";
 import CompactList from "./playerList";
 import Chip from "@mui/material/Chip";
 import { ReasonDialog } from "./playerActions";
-import GroupActions from "./groupActions";
-import Unban from "./unban";
-import { fromJS, List, Map, OrderedSet } from "immutable";
+import { fromJS, List } from "immutable";
 import { FlagDialog } from "@/pages/admin/records/players";
 import { getEmojiFlag } from "@/utils/emoji";
 import BlacklistRecordCreateDialog from "../Blacklist/BlacklistRecordCreateDialog";
@@ -327,27 +322,6 @@ class PlayerView extends Component {
 
     return (
       <React.Fragment>
-        <AutoRefreshBar
-          intervalFunction={this.loadPlayers}
-          everyMs={15000}
-          refreshIntevalMs={100}
-          onGroupActionClick={() => this.setState({ openGroupAction: true })}
-          onUnbanClick={() => {
-            this.loadBans();
-            this.setState({ openUnban: true });
-          }}
-          isFullScreen={isFullScreen}
-          onFullScreenClick={onFullScreen}
-        />
-        <TextInputBar
-          handleChange={this.filterChange}
-          total={players.size}
-          showCount={filteredPlayers.size}
-          handleMessageChange={(text) => this.setState({ actionMessage: text })}
-          actionMessage={actionMessage}
-          sortType={sortType}
-          handleSortTypeChange={this.sortTypeChange}
-        />
 
         <CompactList
           sortType={sortType}
@@ -374,20 +348,6 @@ class PlayerView extends Component {
           onDeleteFlag={(flagId) => this.deleteFlag(flagId)}
           onBlacklist={this.handleBlacklistOpen}
           onVipDialogOpen={this.handleVipDialogOpen}
-        />
-
-        <GroupActions
-          onClose={() => this.setState({ openGroupAction: false })}
-          open={openGroupAction}
-          players={players} /* Todo handle immuatable */
-          handleAction={this.handleAction}
-        />
-        <Unban
-          open={openUnban}
-          onReload={this.loadBans}
-          handleUnban={this.unBan}
-          bannedPlayers={bannedPlayers}
-          onClose={() => this.setState({ openUnban: false })}
         />
         <ReasonDialog
           open={doConfirm}

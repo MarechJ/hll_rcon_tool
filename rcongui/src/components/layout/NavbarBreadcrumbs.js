@@ -36,7 +36,7 @@ export default function NavbarBreadcrumbs() {
             <Typography key={`${i}${j}`} variant="body1">{c}</Typography>
           ))
         } else {
-          return <Typography key={i} variant="body1" sx={arr.length - 1 === i && { color: 'text.primary', fontWeight: 600 }}>{crumb}</Typography>
+          return <Typography key={i} variant="body1" sx={arr.length - 1 === i ? { color: 'text.primary', fontWeight: 600 } : {}}>{crumb}</Typography>
         }
       })}
     </StyledBreadcrumbs>

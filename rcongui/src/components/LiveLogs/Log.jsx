@@ -1,53 +1,8 @@
-import { Typography } from '@mui/material';
-import { blue, grey, orange, red } from '@mui/material/colors';
-import { styled, darken, lighten } from '@mui/material/styles';
-import moment from 'moment';
-
-/*
->>> LOG ACTION TYPES <<<
-
-"ADMIN",
-"ADMIN BANNED",
-"ADMIN KICKED",
-"ADMIN MISC",
-"CAMERA",
-"CHAT",
-"CHAT[Allies]",
-"CHAT[Allies][Team]",
-"CHAT[Allies][Unit]",
-"CHAT[Axis]",
-"CHAT[Axis][Team]",
-"CHAT[Axis][Unit]",
-"CONNECTED",
-"DISCONNECTED",
-"KILL",
-"MATCH",
-"MATCH ENDED",
-"MATCH START",
-"MESSAGE",
-"TEAM KILL",
-"TEAMSWITCH",
-"TK AUTO",
-"TK AUTO BANNED",
-"TK AUTO KICKED",
-"VOTE",
-"VOTE COMPLETED",
-"VOTE EXPIRED",
-"VOTE STARTED"
-*/
+import { styled } from '@mui/material/styles';
+import Line from "./LogLine"
+import dayjs from 'dayjs';
 
 const TIME_FORMAT = 'HH:mm:ss, MMM DD';
-
-const getTeamColor = (team) => {
-  switch (team) {
-    case 'Allies':
-      return blue['600'];
-    case 'Axis':
-      return red['600'];
-    default:
-      return grey['600'];
-  }
-};
 
 const getTeamForLog = (log) => {
   let team;
@@ -104,52 +59,6 @@ const getLogSeverity = (log) => {
   }
 };
 
-const getLineBgColor = (severity, theme) => {
-  const mode = theme.palette.mode;
-  switch (severity) {
-    case 'info':
-    case 'warning':
-      return theme.palette[severity][mode];
-  }
-};
-
-const getLineTextColor = (severity, theme, team) => {
-  const mode = theme.palette.mode;
-  switch (severity) {
-    case 'info':
-    case 'warning':
-      return theme.palette.getContrastText(theme.palette[severity][mode]);
-    case 'chat':
-      const teamColor = getTeamColor(team);
-      return mode === 'light' ? darken(teamColor, 0.2) : lighten(teamColor, 0.5);
-    default:
-      return mode === 'light'
-        ? darken(theme.palette.background.paper, 0.2)
-        : lighten(theme.palette.background.paper, 0.2);
-  }
-};
-
-export const Line = styled(Typography, {
-  shouldForwardProp: (prop) => prop !== 'team' && prop !== 'severity',
-})(({ theme, team, severity }) => ({
-  borderLeftWidth: '4px',
-  borderLeftColor: getTeamColor(team),
-  borderLeftStyle: 'solid',
-  paddingLeft: theme.spacing(0.5),
-  tabSize: 2,
-  fontFamily: 'monospace',
-  fontSize: '0.8em',
-  margin: 0,
-  '&:hover, &:focus': {
-    background: theme.palette.action.hover,
-  },
-  '.highlighted &': {
-    color: getLineTextColor(severity, theme, team),
-    background: getLineBgColor(severity, theme),
-    fontWeight: severity !== 'normal' && 'bold',
-  }
-}));
-
 const actionToEmoji = {
   ADMIN: '🚨',
   'ADMIN MISC': '🚨',
@@ -199,7 +108,7 @@ const Action = styled('span', {
 }));
 
 const Log = ({ log }) => {
-  const timestamp = moment(new Date(log.timestamp_ms)).format(TIME_FORMAT);
+  const timestamp = dayjs(new Date(log.timestamp_ms)).format(TIME_FORMAT);
 
   return (
     <Line

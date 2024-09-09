@@ -38,6 +38,11 @@ import ThreeSixtyIcon from '@mui/icons-material/ThreeSixty';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import HowToVoteIcon from '@mui/icons-material/HowToVote';
 import AdsClickIcon from '@mui/icons-material/AdsClick';
+import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
+import ElectricalServicesIcon from '@mui/icons-material/ElectricalServices';
+import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
+import GradeIcon from '@mui/icons-material/Grade';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 
 export const navMenus = [
   {
@@ -115,6 +120,16 @@ export const navMenus = [
         to: "records/audit-logs",
         icon: <TextSnippetIcon />,
       },
+      {
+        name: "Admins",
+        to: "records/admin",
+        icon: <AdminPanelSettingsIcon />,
+      },
+      {
+        name: "Vips",
+        to: "records/vip",
+        icon: <GradeIcon />,
+      },
     ],
   },
   {
@@ -125,6 +140,21 @@ export const navMenus = [
         name: "General",
         to: "/settings",
         icon: <SettingsIcon />,
+      },
+      {
+        name: "Services",
+        to: "/settings/services",
+        icon: <ElectricalServicesIcon />,
+      },
+      {
+        name: "Messages",
+        to: "/settings/messages",
+        icon: <LibraryBooksIcon />,
+      },
+      {
+        name: "Autosettings",
+        to: "/settings/autosettings",
+        icon: <SettingsSuggestIcon />,
       },
     ],
   },
@@ -193,6 +223,21 @@ export const navMenus = [
         to: "/settings/automods/no-solo-tank",
         icon: <NoTransferIcon />,
       },
+      {
+        name: "VAC/Game Bans",
+        to: "/settings/others/vac-bans",
+        icon: <AccountBalanceIcon />,
+      },
+      {
+        name: "TK Ban On Connect",
+        to: "/settings/others/tk-bans",
+        icon: <GavelIcon />,
+      },
+      {
+        name: "Name Kicks",
+        to: "/settings/others/name-kicks",
+        icon: <SportsMartialArtsIcon />,
+      },
     ]
   },
   {
@@ -227,21 +272,6 @@ export const navMenus = [
         name: "Steam API",
         to: "/settings/others/steam",
         icon: <RemoveRedEyeIcon />,
-      },
-      {
-        name: "VAC/Game Bans",
-        to: "/settings/others/vac-bans",
-        icon: <AccountBalanceIcon />,
-      },
-      {
-        name: "TK Ban On Connect",
-        to: "/settings/others/tk-bans",
-        icon: <GavelIcon />,
-      },
-      {
-        name: "Name Kicks",
-        to: "/settings/others/name-kicks",
-        icon: <SportsMartialArtsIcon />,
       },
       {
         name: "Expired VIP",

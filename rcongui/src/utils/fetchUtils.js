@@ -1,5 +1,5 @@
 import React from "react";
-
+import { json } from "react-router-dom";
 import { toast } from "react-toastify";
 
 const CRCON_API = `${process.env.REACT_APP_API_URL}`
@@ -8,9 +8,34 @@ export function execute(command, data) {
   return postData(CRCON_API + command, data)
 }
 
-function LoginError(message) {
+export const handleHttpError = (error) => {
+  switch (error.name) {
+    case "PermissionError":
+      throw json(
+        {
+          message: "You don't have permissions to do that!",
+          error: error?.name,
+          command: error?.command,
+        },
+        { status: 403 }
+      );        
+    case "AuthError":
+      throw json(
+        {
+          message: "You are not authenticated!",
+          error: error?.name,
+          command: error?.command,
+        },
+        { status: 401 }
+      );        
+    default:
+      break;
+  }
+}
+
+function AuthError(message) {
   this.message = message;
-  this.name = "LoginError";
+  this.name = "AuthError";
 }
 
 function PermissionError(message, command) {
@@ -19,14 +44,9 @@ function PermissionError(message, command) {
   this.name = "PermissionError";
 }
 
-function InvalidLogin(message) {
-  this.message = message;
-  this.name = "InvalidLogin";
-}
-
 async function handle_response_status(response) {
   if (response.status === 401) {
-    throw new LoginError("You must be logged in!");
+    throw new AuthError("You must be logged in!");
   }
 
   if (response.status === 403) {
@@ -41,7 +61,7 @@ async function handle_response_status(response) {
 
 async function handle_http_errors(error) {
   // TODO: uncomment and limit amount of toasts
-  if (error.name === "LoginError") {
+  if (error.name === "AuthError") {
     toast.warn("Please login!", {
       toastId: "Must login",
       position: toast.POSITION.BOTTOM_RIGHT,
@@ -74,10 +94,10 @@ async function handle_http_errors(error) {
 }
 
 async function get(path) {
-  const response = await fetch(`${process.env.REACT_APP_API_URL}${path}`, {
+  const response = await fetch(`${CRCON_API}${path}`, {
     method: "GET", // *GET, POST, PUT, DELETE, etc.
     mode: "cors", // no-cors, *cors, same-origin
-    cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
+    cache: "default", // *default, no-cache, reload, force-cache, only-if-cached
     credentials: "include", // include, *same-origin, omit
     redirect: "follow", // manual, *follow, error
     referrerPolicy: "origin", // no-referrer, *client
@@ -91,26 +111,20 @@ async function postData(url = "", data = {}) {
   const response = await fetch(url, {
     method: "POST", // *GET, POST, PUT, DELETE, etc.
     mode: "cors", // no-cors, *cors, same-origin
-    cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
+    cache: "default", // *default, no-cache, reload, force-cache, only-if-cached
     credentials: "include", // include, *same-origin, omit
     headers: {
       "Content-Type": "application/json",
     },
-
     redirect: "follow", // manual, *follow, error
     referrerPolicy: "origin", // no-referrer, *client
     body: JSON.stringify(data), // body data type must match "Content-Type" header
   });
 
-  if (url.endsWith("login") && response.status === 401) {
-    throw new InvalidLogin("bad login");
-  }
   return handle_response_status(response); // parses JSON response into native JavaScript objects
 }
 
 async function showResponse(response, command, showSuccess) {
-  // TODO: limit the amount of toasts
-  // TODO: show message when not allowed due to permissions
   if (!response.ok) {
     toast.error(`Game server failed to return for ${command}`, {
       toastId: "connectionError",
@@ -403,7 +417,7 @@ export {
   handle_http_errors,
   getSharedMessages,
   PermissionError,
-  LoginError,
+  AuthError,
   sendAction,
   addPlayerToWatchList,
   addPlayerToBlacklist,
