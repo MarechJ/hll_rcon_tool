@@ -3,10 +3,10 @@ import { createTheme, ThemeProvider, styled } from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
-import ToggleColorMode from '@/components/dashboard-components/ToggleColorMode';
+import ToggleColorMode from '@/components/layout/ToggleColorMode';
 import getDashboardTheme from '@/themes/getDashboardTheme';
 import ServerStatus from '@/components/Header/server-status';
-import ToggleWidthMode from '@/components/dashboard-components/ToggleWidthMode';
+import ToggleWidthMode from '@/components/layout/ToggleWidthMode';
 
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
   position: 'relative',
