@@ -245,7 +245,7 @@ def reward_players(
 ):
     logger.info(f"Rewarding players with VIP {config.dry_run=}")
     logger.info(f"Total={len(to_add_vip_steam_ids)} {to_add_vip_steam_ids=}")
-    logger.debug(f"Total={len(current_vips)=} {current_vips=}")
+    logger.info(f"Total={len(current_vips)=} {current_vips=}")
     for player_id in to_add_vip_steam_ids:
         player = current_vips.get(player_id)
         expiration_date = expiration_timestamps[player_id]
