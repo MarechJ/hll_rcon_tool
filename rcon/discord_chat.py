@@ -104,8 +104,8 @@ class DiscordWebhookHandler:
             message = discord.utils.escape_mentions(message)
         message = discord.utils.escape_markdown(message)
 
-        player = log["player"].ljust(25)
-        steam_id = log["steam_id_64_1"]
+        player = log["player_name_1"].ljust(25)
+        player_id = log["player_id_1"]
         action = log["action"]
         action = action.split("CHAT")[1]
         color = CHAT_ACTION_TO_COLOR[action]
@@ -114,7 +114,7 @@ class DiscordWebhookHandler:
             description=message, color=color, timestamp=datetime.utcnow()
         )
         embed.set_author(
-            name=f"{player} {action}", url=STEAM_PROFILE_URL.format(id64=steam_id)
+            name=f"{player} {action}", url=STEAM_PROFILE_URL.format(id64=player_id)
         )
         embed.set_footer(text=self.server_settings.short_name)
 
@@ -127,7 +127,7 @@ class DiscordWebhookHandler:
         content = ""
         triggered = False
         if self.admin_wh_config.trigger_words:
-            msg_words = re.split("([^a-zA-Z!@])", message)
+            msg_words = re.split(r"([^a-zA-Z!@\d])", message)
             for trigger_word in self.admin_wh_config.trigger_words:
                 for i, msg_word in enumerate(msg_words):
                     if trigger_word == msg_word.lower():
@@ -156,11 +156,11 @@ class DiscordWebhookHandler:
 
     def create_kill_message(self, log):
         action = log["action"]
-        player1 = escape_string(log["player"])
-        player2 = escape_string(log["player2"])
-        id_1 = log["steam_id_64_1"]
+        player1 = escape_string(log["player_name_1"])
+        player2 = escape_string(log["player_name_2"])
+        id_1 = log["player_id_1"]
         killer_id_link = f"[{player1}]({STEAM_PROFILE_URL.format(id64=id_1)})"
-        id_2 = log["steam_id_64_2"]
+        id_2 = log["player_id_2"]
         victim_id_link = f"[{player2}]({STEAM_PROFILE_URL.format(id64=id_2)})"
 
         color = KILL_ACTION_TO_COLOR[action]

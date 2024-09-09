@@ -1,5 +1,8 @@
+from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import User
 from django.db import models
+
+from rconweb.settings import SECRET_KEY
 
 
 class DjangoAPIKey(models.Model):
@@ -14,14 +17,22 @@ class DjangoAPIKey(models.Model):
     def __str__(self) -> str:
         return f"{self.api_key}"
 
+    def save(self, *args, **kwargs):
+        """Hash the API key"""
+        # If we don't include the salt, the hasher generates its own
+        self.api_key = make_password(self.api_key, salt=SECRET_KEY.replace("$", ""))
+        super().save()
+
     class Meta:
         ordering = ("date_modified",)
         verbose_name = "Django API Key"
 
 
 class SteamPlayer(models.Model):
+    """Associate a players in game ID (steam or windows) with their Django user"""
+
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    steam_id_64 = models.CharField(max_length=100)
+    steam_id_64 = models.CharField(max_length=100, verbose_name="Player ID")
     default_permissions = ()
 
 
@@ -43,7 +54,6 @@ class RconUser(User):
             ("can_add_player_watch", "Can add a watch to players"),
             ("can_add_vip", "Can add VIP status to players"),
             ("can_ban_profanities", "Can ban profanities (censored game chat)"),
-            ("can_blacklist_players", "Can add players to the blacklist"),
             (
                 "can_change_auto_broadcast_config",
                 "Can change the automated broadcast settings",
@@ -117,13 +127,12 @@ class RconUser(User):
             ("can_temp_ban_players", "Can temporarily ban players"),
             ("can_toggle_services", "Can enable/disable services (automod, etc)"),
             ("can_unban_profanities", "Can unban profanities (censored game chat)"),
-            ("can_unblacklist_players", "Can remove players from the blacklist"),
             ("can_unflag_player", "Can remove flags from players"),
             ("can_upload_vip_list", "Can upload a VIP list"),
             ("can_view_admin_groups", "Can view available admin roles"),
             (
                 "can_view_admin_ids",
-                "Can view the name/steam IDs/role of everyone with a HLL games erver admin role",
+                "Can view the name/steam IDs/role of everyone with a HLL game server admin role",
             ),
             ("can_view_admins", "Can view users with HLL game server admin roles"),
             ("can_view_all_maps", "Can view all possible maps"),
@@ -139,7 +148,7 @@ class RconUser(User):
             ("can_view_auto_settings", "Can view auto settings"),
             ("can_view_autobalance_enabled", "Can view if autobalance is enabled"),
             ("can_view_autobalance_threshold", "Can view the autobalance threshold"),
-            ("can_view_available_services", "Can view serviecs (automod, etc)"),
+            ("can_view_available_services", "Can view services (automod, etc)"),
             ("can_view_broadcast_message", "Can view the current broadcast message"),
             ("can_view_camera_config", "Can view camera notification settings"),
             ("can_view_connection_info", "Can view CRCON's connection info"),
@@ -205,7 +214,7 @@ class RconUser(User):
             ),
             (
                 "can_view_players",
-                "Can view get_players_fast endpoint for all connected players ",
+                "Can view get_players endpoint for all connected players ",
             ),
             ("can_view_profanities", "Can view profanities (censored game chat)"),
             ("can_view_queue_length", "Can view the maximum size of the server queue"),
@@ -216,7 +225,6 @@ class RconUser(User):
                 "Can view the amount of time left in the round",
             ),
             ("can_view_server_name", "Can view the server name"),
-            ("can_view_server_stats", "Can view the get_server_stats endpoint"),
             (
                 "can_view_shared_standard_messages",
                 "Can view the shared standard messages",
@@ -415,6 +423,27 @@ class RconUser(User):
                 "can_restart_webserver",
                 "Can restart the webserver (Not a complete Docker restart)",
             ),
-            ("can_view_message_on_connect_config", "Can view message on connect config")
-            ("can_change_message_on_connect_config", "Can change message on connect config")
+            ("can_view_chat_commands_config", "Can view the chat commands config"),
+            ("can_change_chat_commands_config", "Can change the chat commands config"),
+            ("can_view_log_stream_config", "Can view the Log Stream config"),
+            ("can_change_log_stream_config", "Can change the Log Stream config"),
+            ("can_view_blacklists", "Can view available blacklists"),
+            ("can_add_blacklist_records", "Can add players to blacklists"),
+            (
+                "can_change_blacklist_records",
+                "Can unblacklist players and edit blacklist records",
+            ),
+            ("can_delete_blacklist_records", "Can delete blacklist records"),
+            ("can_create_blacklists", "Can create blacklists"),
+            ("can_change_blacklists", "Can change blacklists"),
+            ("can_delete_blacklists", "Can delete blacklists"),
+            ("can_change_game_layout", "Can change game layout"),
+            (
+                "can_view_message_on_connect_config",
+                "Can view message on connect config",
+            ),
+            (
+                "can_change_message_on_connect_config",
+                "Can change message on connect config",
+            ),
         )

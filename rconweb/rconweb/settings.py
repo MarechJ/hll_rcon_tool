@@ -9,24 +9,41 @@ https://docs.djangoproject.com/en/3.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.0/ref/settings/
 """
+
 import logging
 import os
 import re
 import socket
+from subprocess import PIPE, run
 
 import sentry_sdk
 from sentry_sdk import configure_scope
 from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
 
-from rcon.rcon import Rcon
-from rcon.settings import SERVER_INFO
+from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
+
+HLL_MAINTENANCE_CONTAINER = os.getenv("HLL_MAINTENANCE_CONTAINER")
+
 
 try:
-    ENVIRONMENT = re.sub(
-        "[^0-9a-zA-Z]+", "", (Rcon(SERVER_INFO).get_name() or "default").strip()
-    )[:64]
-except:
+    TAG_VERSION = (
+        run(["git", "describe", "--tags"], stdout=PIPE, stderr=PIPE)
+        .stdout.decode()
+        .strip()
+    )
+except Exception:
+    TAG_VERSION = "unknown"
+
+HLL_MAINTENANCE_CONTAINER = os.getenv("HLL_MAINTENANCE_CONTAINER")
+
+
+try:
+    config = RconServerSettingsUserConfig.load_from_db()
+    ENVIRONMENT = re.sub("[^0-9a-zA-Z]+", "", (config.short_name or "default").strip())[
+        :64
+    ]
+except Exception:
     ENVIRONMENT = "undefined"
 
 LOGGING = {
@@ -34,7 +51,7 @@ LOGGING = {
     "disable_existing_loggers": False,
     "formatters": {
         "console": {
-            "format": f"[%(asctime)s][%(levelname)s][{ENVIRONMENT}] %(name)s "
+            "format": f"[%(asctime)s][%(levelname)s][{ENVIRONMENT}][{TAG_VERSION}] %(name)s "
             "%(filename)s:%(funcName)s:%(lineno)d | %(message)s",
         },
     },
@@ -94,6 +111,21 @@ with configure_scope() as scope:
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+# Needed for WS broadcasting functionality
+# See https://channels.readthedocs.io/en/stable/topics/channel_layers.html
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [
+                {
+                    "address": os.getenv("HLL_REDIS_URL"),
+                }
+            ],
+        },
+    },
+}
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
@@ -131,22 +163,29 @@ SESSION_COOKIE_SAMESITE = "Lax"
 # Required as of Django 4.0 otherwise it causes CSRF issues
 # if we don't include the origin
 CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS.copy()
-from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 
-rcon_config = RconServerSettingsUserConfig.load_from_db()
-if host := rcon_config.server_url:
-    host = str(host)
-    # Django doesn't like the trailing / in a URL
-    if host[-1] == "/":
-        CSRF_TRUSTED_ORIGINS.append(host[:-1])
-    else:
-        CSRF_TRUSTED_ORIGINS.append(host)
+if not HLL_MAINTENANCE_CONTAINER:
+    from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
+
+    rcon_config = RconServerSettingsUserConfig.load_from_db()
+    if host := rcon_config.server_url:
+        host = str(host)
+        # Django doesn't like the trailing / in a URL
+        if host[-1] == "/":
+            CSRF_TRUSTED_ORIGINS.append(host[:-1])
+        else:
+            CSRF_TRUSTED_ORIGINS.append(host)
 
 if DEBUG:
+    # Chrome requires these to be set or it won't allow cookies to save between
+    # cross origin requests, by default in debug the backend runs on localhost:8000
+    #  and the frontend on localhost:3000 which are considered different domains
+    SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SAMESITE = "None"
     SESSION_COOKIE_SAMESITE = "None"
 
 INSTALLED_APPS = [
+    "daphne",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -192,6 +231,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "rconweb.wsgi.application"
+ASGI_APPLICATION = "rconweb.asgi.application"
 
 
 # Database

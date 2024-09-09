@@ -9,6 +9,7 @@ from sqlalchemy import and_, or_
 from rcon.models import AuditLog, enter_session
 
 from .auth import api_response, login_required
+from .decorators import require_http_methods
 from .utils import _get_data
 
 logger = logging.getLogger("rconweb")
@@ -51,7 +52,10 @@ def record_audit(func):
 
 def auto_record_audit(name):
     def wrapper(func):
-        if name.startswith("do_") or name.startswith("set_"):
+        # A few get_ methods can be called w/ POST but don't modify anything
+        # so filtering like this should work since this is only for the RconAPI exposed
+        # endpoints, manually defined endpoints use the @record_audit endpoint
+        if not name.startswith("get_") and not name.startswith("validate_"):
             return record_audit(func)
         else:
             return func
@@ -62,6 +66,7 @@ def auto_record_audit(name):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_view_audit_logs_autocomplete", raise_exception=True)
+@require_http_methods(["GET"])
 def get_audit_logs_autocomplete(request):
     failed = False
     error = None
@@ -88,6 +93,7 @@ def get_audit_logs_autocomplete(request):
 @csrf_exempt
 @login_required()
 @permission_required("api.can_view_audit_logs", raise_exception=True)
+@require_http_methods(["GET"])
 def get_audit_logs(request):
     data = _get_data(request)
     and_conditions = []

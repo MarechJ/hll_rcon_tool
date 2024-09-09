@@ -17,4 +17,4 @@ class SteamUserConfig(BaseUserConfig):
         validated_conf = SteamUserConfig(api_key=values.get("api_key"))
 
         if not dry_run:
-            set_user_config(SteamUserConfig.KEY(), validated_conf.model_dump())
+            set_user_config(SteamUserConfig.KEY(), validated_conf)

@@ -1,9 +1,14 @@
 import React, { Component } from "react";
 import "react-toastify/dist/ReactToastify.css";
 import {
+  addPlayerToBlacklist,
+  addPlayerVip,
   get,
+  getBlacklists,
+  getVips,
   handle_http_errors,
   postData,
+  removePlayerVip,
   showResponse,
 } from "../../utils/fetchUtils";
 import AutoRefreshBar from "./header";
@@ -13,9 +18,11 @@ import Chip from "@material-ui/core/Chip";
 import { ReasonDialog } from "./playerActions";
 import GroupActions from "./groupActions";
 import Unban from "./unban";
-import { fromJS, List } from "immutable";
+import { fromJS, List, Map, OrderedSet } from "immutable";
 import { FlagDialog } from "../PlayersHistory";
 import { getEmojiFlag } from "../../utils/emoji";
+import BlacklistRecordCreateDialog from "../Blacklist/BlacklistRecordCreateDialog";
+import { VipExpirationDialog } from "../VipDialog";
 
 function stripDiacritics(string) {
   return typeof string.normalize !== "undefined"
@@ -35,7 +42,7 @@ const PlayerSummary = ({ player, flag }) => {
           ? player.get("names", []).map((n) => <Chip label={n.get("name")} />)
           : "No name recorded"}
       </p>
-      <p>Steamd id: {player.get("steam_id_64", "")}</p>
+      <p>Player ID: {player.get("player_id", "")}</p>
     </React.Fragment>
   ) : (
     ""
@@ -60,6 +67,11 @@ class PlayerView extends Component {
       openGroupAction: false,
       openUnban: false,
       flag: false,
+      blacklistOpen: false,
+      blacklists: [],
+      playerTarget: null,
+      vipDialogOpen: false,
+      vipPlayers: [],
     };
 
     this.onPlayerSelected = this.onPlayerSelected.bind(this);
@@ -71,12 +83,18 @@ class PlayerView extends Component {
     this.unBan = this.unBan.bind(this);
     this.addFlagToPlayer = this.addFlagToPlayer.bind(this);
     this.deleteFlag = this.deleteFlag.bind(this);
+    this.blacklistPlayer = this.blacklistPlayer.bind(this)
+    this.handleBlacklistOpen = this.handleBlacklistOpen.bind(this)
+    this.handleVipDialogOpen = this.handleVipDialogOpen.bind(this)
+    this.removePlayerVip = this.removePlayerVip.bind(this);
+    this.addPlayerVip = this.addPlayerVip.bind(this)
+    this.getVips = this.getVips.bind(this);
     this.sortTypeChange = this.sortTypeChange.bind(this);
   }
 
   addFlagToPlayer(playerObj, flag, comment = null) {
     return postData(`${process.env.REACT_APP_API_URL}flag_player`, {
-      steam_id_64: playerObj.get("steam_id_64"),
+      player_id: playerObj.get("player_id"),
       flag: flag,
       comment: comment,
     })
@@ -95,9 +113,59 @@ class PlayerView extends Component {
       .catch(handle_http_errors);
   }
 
+  blacklistPlayer(payload) {
+    addPlayerToBlacklist(payload)
+  }
+  
+  async handleBlacklistOpen(player) {
+    const blacklists = await getBlacklists();
+    if (blacklists) {
+      this.setState({ blacklists, blacklistOpen: true, playerTarget: player })
+    }
+  }
+
+  handleVipDialogOpen(player) {
+    this.setState({
+      vipDialogOpen: true,
+      playerTarget: player,
+    })
+  }
+
+  async getVips() {
+    const vips = await getVips();
+    if (vips) {
+      this.setState({ vipPlayers: vips })
+    }
+  }
+
+  async addPlayerVip(player, expiresAt, forward) {
+    // action
+    const result = await addPlayerVip({
+      player_id: player.get("player_id"),
+      description: player.get("name"),
+      expiration: expiresAt,
+      forward: forward,
+    })
+    if (result) {
+      // update state
+      await this.loadPlayers()
+      await this.getVips()
+    }
+  }
+
+  async removePlayerVip(player) {
+    // action
+    const result = await removePlayerVip({ player_id: player.get("player_id") })
+    if (result) {
+      // update state
+      await this.loadPlayers()
+      await this.getVips()
+    }
+  }
+
   unBan(ban) {
     postData(`${process.env.REACT_APP_API_URL}unban`, {
-      steam_id_64: ban.steam_id_64,
+      player_id: ban.player_id,
     })
       .then((response) =>
         showResponse(response, `Remove ${ban.type} ban for ${ban.name}`, true)
@@ -112,7 +180,7 @@ class PlayerView extends Component {
     message = null,
     comment = null,
     duration_hours = 2,
-    steam_id_64 = null,
+    player_id = null,
     save_message = true
   ) {
     if (message === null) {
@@ -128,46 +196,42 @@ class PlayerView extends Component {
         doConfirm: {
           player: player_name,
           actionType: actionType,
-          steam_id_64: steam_id_64,
+          player_id: player_id,
         },
       });
     } else {
       const data = {
-        player: player_name,
-        steam_id_64: steam_id_64,
+        player_name: player_name,
+        player_id: player_id,
         reason: message,
         comment: comment,
         duration_hours: duration_hours,
         message: message,
         save_message: save_message,
       };
-      if (actionType === "temp_ban") {
-        data["forward"] = "yes";
-      }
-      postData(`${process.env.REACT_APP_API_URL}do_${actionType}`, data)
+
+      postData(`${process.env.REACT_APP_API_URL}${actionType}`, data)
         .then((response) =>
           showResponse(response, `${actionType} ${player_name}`, true)
         )
         .then(this.loadPlayers)
         .catch(handle_http_errors);
     }
-    // Work around to the fact that the steam is not always know in this scope (as is changes the behaviour of the temp / perma ban commands)
+    // Work around to the fact that the player ID is not always know in this scope (as is changes the behaviour of the temp / perma ban commands)
     if (comment) {
-      let steamid = steam_id_64;
-      if (!steamid) {
+      let playerId = player_id;
+      if (!playerId) {
         try {
-          console.log(this.state.players);
-          steamid = this.state.players
+          playerId = this.state.players
             .filter((p) => p.get("name") === player_name)
             .get(0)
-            .get("steam_id_64");
-          console.log(steamid);
+            .get("player_id");
         } catch (err) {
-          console.log("Unable to get steamId", err);
+          console.log("Unable to get player ID", err);
         }
       }
       postData(`${process.env.REACT_APP_API_URL}post_player_comment`, {
-        steam_id_64: steamid,
+        player_id: playerId,
         comment: comment,
       })
         .then((response) =>
@@ -207,10 +271,6 @@ class PlayerView extends Component {
     );
   }
 
-  componentDidMount() {
-    this.loadPlayers();
-  }
-
   filterChange(filter) {
     clearTimeout(this.state.filterTimeout); // switch to lodash debounce
     this.setState({
@@ -244,6 +304,7 @@ class PlayerView extends Component {
 
   componentDidMount() {
     this.loadPlayers();
+    this.getVips();
   }
   render() {
     const { classes, isFullScreen, onFullScreen } = this.props;
@@ -257,6 +318,11 @@ class PlayerView extends Component {
       sortType,
       bannedPlayers,
       flag,
+      blacklistOpen,
+      blacklists,
+      playerTarget,
+      vipDialogOpen,
+      vipPlayers,
     } = this.state;
 
     return (
@@ -294,7 +360,7 @@ class PlayerView extends Component {
             message = null,
             comment = null,
             duration_hours = 2,
-            steam_id_64 = null
+            player_id = null
           ) =>
             this.handleAction(
               actionType,
@@ -302,12 +368,14 @@ class PlayerView extends Component {
               message,
               comment,
               duration_hours,
-              steam_id_64
+              player_id
             )
           }
           handleToggle={() => 1}
           onFlag={(player) => this.setState({ flag: player })}
           onDeleteFlag={(flagId) => this.deleteFlag(flagId)}
+          onBlacklist={this.handleBlacklistOpen}
+          onVipDialogOpen={this.handleVipDialogOpen}
         />
 
         <GroupActions
@@ -334,7 +402,7 @@ class PlayerView extends Component {
             reason,
             comment,
             duration_hours = 2,
-            steam_id_64 = null
+            player_id = null
           ) => {
             this.handleAction(
               action,
@@ -342,7 +410,7 @@ class PlayerView extends Component {
               reason,
               comment,
               duration_hours,
-              steam_id_64
+              player_id
             );
             this.setState({ doConfirm: false });
           }}
@@ -352,6 +420,22 @@ class PlayerView extends Component {
           handleClose={() => this.setState({ flag: false })}
           handleConfirm={this.addFlagToPlayer}
           SummaryRenderer={PlayerSummary}
+        />
+        <BlacklistRecordCreateDialog
+          open={blacklistOpen}
+          blacklists={blacklists}
+          initialValues={playerTarget && { playerId: playerTarget.get("player_id") }}
+          onSubmit={this.blacklistPlayer}
+          setOpen={() => this.setState({ blacklistOpen: !blacklistOpen })}
+          disablePlayerId={true}
+        />
+        <VipExpirationDialog
+          open={vipDialogOpen}
+          player={playerTarget}
+          vips={vipPlayers}
+          onDeleteVip={this.removePlayerVip}
+          handleClose={() => this.setState({ vipDialogOpen: false, playerTarget: null })}
+          handleConfirm={this.addPlayerVip}
         />
       </React.Fragment>
     );

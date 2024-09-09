@@ -1,29 +1,36 @@
 import csv
+import datetime
 import json
 import logging
 from dataclasses import asdict, dataclass
 from functools import wraps
-from typing import Any
+from typing import Any, Sequence
 
+import orjson
+import pydantic
+from channels.db import database_sync_to_async
+from channels.security.websocket import WebsocketDenier
 from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.hashers import make_password
-from django.contrib.auth.models import Permission, User
+from django.contrib.auth.models import Permission, User, Group
 from django.core.exceptions import PermissionDenied
 from django.db.models.signals import post_delete, post_save
-from django.http import HttpResponse, JsonResponse, QueryDict
+from django.http import HttpResponse, QueryDict
 from django.views.decorators.csrf import csrf_exempt
 
+from rcon.types import DjangoGroup, DjangoPermission, DjangoUserPermissions
 from rcon.audit import heartbeat, ingame_mods, online_mods, set_registered_mods
 from rcon.cache_utils import ttl_cache
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
-from rconweb.settings import SECRET_KEY
+from rconweb.settings import SECRET_KEY, TAG_VERSION
 
+from .decorators import require_content_type, require_http_methods
 from .models import DjangoAPIKey, SteamPlayer
 
 logger = logging.getLogger("rconweb")
 
-AUTHORIZATION_HEADER = "HTTP_AUTHORIZATION"
+HTTP_AUTHORIZATION_HEADER = "HTTP_AUTHORIZATION"
+AUTHORIZATION = "AUTHORIZATION"
 BEARER = ("BEARER", "BEARER:")
 
 
@@ -37,6 +44,66 @@ post_save.connect(update_mods, sender=SteamPlayer)
 post_delete.connect(update_mods, sender=SteamPlayer)
 
 
+@database_sync_to_async
+def get_user(api_key) -> User:
+    user = DjangoAPIKey.objects.get(api_key=api_key)
+    return user.user
+
+
+@database_sync_to_async
+def has_perms(scope, perms: tuple[str, ...]) -> bool:
+    return scope["user"].has_perms(perms)
+
+
+class APITokenAuthMiddleware:
+    def __init__(self, app, perms: str | Sequence[str]) -> None:
+        self.app = app
+        if isinstance(perms, str):
+            self.perms = (perms,)
+        else:
+            self.perms = tuple(perms)
+
+    async def __call__(self, scope, receive, send):
+        ENDPOINT = scope["path"]
+        logger.info("Incoming websocket connection on %s", ENDPOINT)
+        headers = dict(scope["headers"])
+        headers = {k.decode(): v.decode() for k, v in headers.items()}
+        try:
+            header_name, raw_api_key = headers.get("authorization", "").split(
+                maxsplit=1
+            )
+            if not header_name.upper().strip() in BEARER:
+                raw_api_key = None
+        except (KeyError, ValueError):
+            raw_api_key = None
+            logger.info(f"Couldn't parse API key {raw_api_key=}")
+
+        try:
+            # If we don't include the salt, the hasher generates its own
+            # and it will generate different hashed values every time
+            hashed_api_key = make_password(raw_api_key, salt=SECRET_KEY)
+
+            # Retrieve the user to use the normal authentication system
+            # to include their permissions
+            scope["user"] = await get_user(hashed_api_key)
+        except DjangoAPIKey.DoesNotExist:
+            scope["user"] = None
+            logger.info(
+                "API key not associated with a user, denying connection to %s", ENDPOINT
+            )
+            denier = WebsocketDenier()
+            return await denier(scope, receive, send)
+
+        if not await has_perms(scope, self.perms):
+            logger.warning(
+                "User %s does not have permission to view %s", scope["user"], ENDPOINT
+            )
+            denier = WebsocketDenier()
+            return await denier(scope, receive, send)
+
+        return await self.app(scope, receive, send)
+
+
 @dataclass
 class RconResponse:
     result: Any = None
@@ -45,6 +112,7 @@ class RconResponse:
     failed: bool = True
     error: str = None
     forwards_results: Any = None
+    version: str | None = None
 
     def to_dict(self):
         # asdict() cannot convert a Django QueryDict properly
@@ -53,24 +121,53 @@ class RconResponse:
         return asdict(self)
 
 
+class RconJsonResponse(HttpResponse):
+    """Similar to JsonResponse but use orjson for speed + automatically serialize pydantic objects"""
+
+    @staticmethod
+    def _orjson_dump_pydantic(o):
+        if isinstance(o, pydantic.BaseModel):
+            return o.model_dump()
+        elif isinstance(o, datetime.timedelta):
+            return o.total_seconds()
+        else:
+            raise ValueError(f"Cannot serialize {o}, {type(o)} to JSON")
+
+    def __init__(self, data, **kwargs):
+        data = orjson.dumps(
+            data,
+            default=RconJsonResponse._orjson_dump_pydantic,
+            option=orjson.OPT_NON_STR_KEYS,
+        )
+        kwargs.setdefault("content_type", "application/json")
+        super().__init__(content=data, **kwargs)
+
+
 def api_response(*args, **kwargs):
     status_code = kwargs.pop("status_code", 200)
-    return JsonResponse(RconResponse(*args, **kwargs).to_dict(), status=status_code)
+    return RconJsonResponse(
+        RconResponse(version=TAG_VERSION, *args, **kwargs).to_dict(), status=status_code
+    )
 
 
 def api_csv_response(content, name, header):
+    # TODO Probably want to put command name, etc. in this like the other
+    # RCON response methods
     response = HttpResponse(
         content_type="text/csv",
     )
     response["Content-Disposition"] = 'attachment; filename="%s"' % name
 
     writer = csv.DictWriter(response, fieldnames=header, dialect="excel")
+    writer.writerow({k: k for k in header})
     writer.writerows(content)
 
     return response
 
 
 @csrf_exempt
+@require_http_methods(["POST"])
+@require_content_type()
 def do_login(request):
     try:
         data = json.loads(request.body)
@@ -102,17 +199,18 @@ def get_moderators_accounts():
 
 
 @csrf_exempt
+@require_http_methods(["GET"])
 def is_logged_in(request):
     is_auth = request.user.is_authenticated
     if is_auth:
         try:
-            steam_id = None
+            player_id = None
             try:
-                steam_id = request.user.steamplayer.steam_id_64
+                player_id = request.user.steamplayer.steam_id_64
             except:
-                logger.warning("%s's steam id is not set ", request.user.username)
+                logger.warning("%s's player ID is not set", request.user.username)
             try:
-                heartbeat(request.user.username, steam_id)
+                heartbeat(request.user.username, player_id)
             except:
                 logger.exception("Unable to register mods")
         except:
@@ -123,9 +221,35 @@ def is_logged_in(request):
 
 
 @csrf_exempt
+@require_http_methods(["GET", "POST"])
 def do_logout(request):
     logout(request)
     return api_response(result=True, command="logout", failed=False)
+
+
+def check_api_key(request):
+    # Extract the header and bearer key if present, otherwise fall back on
+    # requiring the user to be logged in
+    try:
+        header_name, raw_api_key = request.META[HTTP_AUTHORIZATION_HEADER].split(
+            maxsplit=1
+        )
+        if not header_name.upper().strip() in BEARER:
+            raw_api_key = None
+    except (KeyError, ValueError):
+        raw_api_key = None
+
+    try:
+        # If we don't include the salt, the hasher generates its own
+        # and it will generate different hashed values every time
+        hashed_api_key = make_password(raw_api_key, salt=SECRET_KEY.replace("$", ""))
+        api_key_model = DjangoAPIKey.objects.get(api_key=hashed_api_key)
+
+        # Retrieve the user to use the normal authentication system
+        # to include their permissions
+        request.user = api_key_model.user
+    except DjangoAPIKey.DoesNotExist:
+        pass
 
 
 def login_required():
@@ -136,28 +260,8 @@ def login_required():
     def decorator(func):
         @wraps(func)
         def wrapper(request, *args, **kwargs):
-            # Extract the header and bearer key if present, otherwise fall back on
-            # requiring the user to be logged in
-            try:
-                header_name, raw_api_key = request.META[AUTHORIZATION_HEADER].split(
-                    maxsplit=1
-                )
-                if not header_name.upper().strip() in BEARER:
-                    raw_api_key = None
-            except (KeyError, ValueError):
-                raw_api_key = None
-
-            try:
-                # If we don't include the salt, the hasher generates its own
-                # and it will generate different hashed values every time
-                hashed_api_key = make_password(raw_api_key, salt=SECRET_KEY)
-                api_key_model = DjangoAPIKey.objects.get(api_key=hashed_api_key)
-
-                # Retrieve the user to use the normal authentication system
-                # to include their permissions
-                request.user = api_key_model.user
-            except DjangoAPIKey.DoesNotExist:
-                pass
+            # Check if API-Key is used
+            check_api_key(request)
 
             if not request.user.is_authenticated:
                 return api_response(
@@ -201,6 +305,9 @@ def stats_login_required(func):
 
     @wraps(func)
     def wrapper(request, *args, **kwargs):
+        # Check if API-Key is used
+        check_api_key(request)
+
         if not request.user.is_authenticated:
             return api_response(
                 command=request.path,
@@ -219,46 +326,41 @@ def stats_login_required(func):
     return wrapper
 
 
-# TODO: Login required?
-@csrf_exempt
-@permission_required("api.can_view_online_admins", raise_exception=True)
-def get_online_mods(request):
-    return api_response(
-        command="get_online_mods",
-        result=online_mods(),
-        failed=False,
-    )
-
-
-@csrf_exempt
-@permission_required("api.can_view_ingame_admins", raise_exception=True)
-def get_ingame_mods(request):
-    return api_response(
-        command="get_ingame_mods",
-        result=ingame_mods(),
-        failed=False,
-    )
-
-
 @csrf_exempt
 @login_required()
+@require_http_methods(["GET"])
 def get_own_user_permissions(request):
     command_name = "get_own_user_permissions"
 
+    unique_permissions: set[tuple[str, str]] = set()
+    trimmed_groups: list[DjangoGroup] = []
+
     permissions = Permission.objects.filter(user=request.user)
-    trimmed_permissions = [
+    for p in permissions.values():
+        unique_permissions.add((p["codename"], p["name"]))
+
+    groups = Group.objects.filter(user=request.user)
+    for g in groups:
+        trimmed_groups.append({"name": g.name})
+        for p in g.permissions.values():
+            unique_permissions.add((p["codename"], p["name"]))
+
+    trimmed_permissions: list[DjangoPermission] = [
         {
-            "permission": p["codename"],
-            "description": p["name"],
+            "permission": permission,
+            "description": description,
         }
-        for p in permissions.values()
+        for permission, description in unique_permissions
     ]
+
+    result: DjangoUserPermissions = {
+        "permissions": trimmed_permissions,
+        "groups": trimmed_groups,
+        "is_superuser": request.user.is_superuser,
+    }
 
     return api_response(
         command=command_name,
-        result={
-            "permissions": trimmed_permissions,
-            "is_superuser": request.user.is_superuser,
-        },
+        result=result,
         failed=False,
     )

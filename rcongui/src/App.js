@@ -25,7 +25,6 @@ import {
   LiveSessionScore,
 } from "./components/Scoreboard/LiveScore";
 import ServerInfo from "./components/Embeds/ServerInfo";
-import ServerStatsPage from "./components/ServerStats";
 import GameView from "./components/GameView";
 import AuditLog from "./components/AuditLog";
 import {
@@ -53,8 +52,13 @@ import {
   NameKicks,
   MessageOnConnect,
   ExpiredVIP,
-  GTXNameChange
+  GTXNameChange,
+  ChatCommands,
+  LogStream,
 } from "./components/UserSettings/miscellaneous";
+import BlacklistRecords from "./components/Blacklist/BlacklistRecords";
+import BlacklistLists from "./components/Blacklist/BlacklistLists";
+import { MapManager } from "./components/MapManager/map-manager";
 
 const Live = ({ classes }) => {
   const [mdSize, setMdSize] = React.useState(6);
@@ -358,11 +362,11 @@ const hllNoBg = createMuiTheme({
 function App() {
   const [isEmbed, setIsEmbed] = React.useState(false);
   const [userTheme, setThemeName] = React.useState(
-    localStorage.getItem("theme")
+    localStorage.getItem("crconTheme")
   );
   const setTheme = (name) => {
     setThemeName(name);
-    localStorage.setItem("theme", name);
+    localStorage.setItem("crconTheme", name);
   };
 
   React.useEffect(() => {
@@ -390,14 +394,14 @@ function App() {
       ? hllNoBg
       : hll
     : themes[userTheme]
-      ? themes[userTheme]
-      : lightTheme;
+    ? themes[userTheme]
+    : lightTheme;
   const classes = useStyles();
 
   const Router = isEmbed ? BrowserRouter : HashRouter;
 
   return (
-    <div className={"App " + classes.root}>
+    <div className={"App"}>
       <ThemeProvider theme={theme}>
         {isEmbed ? "" : <CssBaseline />}
         <ToastContainer />
@@ -410,56 +414,58 @@ function App() {
             <ScoreMenu classes={classes} />
           )}
 
-          <Switch>
-            <Route path="/gameview" exact>
-              <GameView classes={classes} />
-            </Route>
-            <Route path="/serverinfo" exact>
-              <ServerInfo classes={classes} />
-            </Route>
-            <Route path="/auditlogs" exact>
-              <AuditLog classes={classes} />
-            </Route>
-            <Route
-              path="/livescore"
-              default={process.env.REACT_APP_PUBLIC_BUILD}
-              exact
-            >
-              <LiveSessionScore classes={classes} />
-            </Route>
-            <Route
-              path={process.env.REACT_APP_PUBLIC_BUILD ? "/" : "/livegamescore"}
-              default={process.env.REACT_APP_PUBLIC_BUILD}
-              exact
-            >
-              <LiveGameScore classes={classes} />
-            </Route>
-            <Route path="/gamescoreboard/:slug">
-              <GamesScore classes={classes} />
-            </Route>
-            <Route path="/gamescoreboard">
-              <GamesScore classes={classes} />
-            </Route>
-            {!process.env.REACT_APP_PUBLIC_BUILD ? (
-              <React.Fragment>
-                <Route path="/" exact>
-                  <Live classes={classes} />
-                </Route>
-                <Route path="/history">
-                  <Grid container>
-                    <Grid item sm={12} lg={12}>
-                      <PlayersHistory classes={classes} />
+          <div className={classes.grow}>
+            <Switch>
+              <Route path="/gameview" exact>
+                <GameView classes={classes} />
+              </Route>
+              <Route path="/serverinfo" exact>
+                <ServerInfo classes={classes} />
+              </Route>
+              <Route path="/auditlogs" exact>
+                <AuditLog classes={classes} />
+              </Route>
+              <Route
+                path="/livescore"
+                default={process.env.REACT_APP_PUBLIC_BUILD}
+                exact
+              >
+                <LiveSessionScore classes={classes} />
+              </Route>
+              <Route
+                path={
+                  process.env.REACT_APP_PUBLIC_BUILD ? "/" : "/livegamescore"
+                }
+                default={process.env.REACT_APP_PUBLIC_BUILD}
+                exact
+              >
+                <LiveGameScore classes={classes} />
+              </Route>
+              <Route path="/gamescoreboard/:slug">
+                <GamesScore classes={classes} />
+              </Route>
+              <Route path="/gamescoreboard">
+                <GamesScore classes={classes} />
+              </Route>
+              {!process.env.REACT_APP_PUBLIC_BUILD ? (
+                <React.Fragment>
+                  <Route path="/" exact>
+                    <Live classes={classes} />
+                  </Route>
+                  <Route path="/history">
+                    <Grid container>
+                      <Grid item sm={12} lg={12}>
+                        <PlayersHistory classes={classes} />
+                      </Grid>
                     </Grid>
-                  </Grid>
-                </Route>
-                <Route path="/player/:steamId64">
-                  <Grid container>
-                    <PlayerInfo classes={classes} />
-                  </Grid>
-                </Route>
-                <Route path="/settings/">
+                  </Route>
+                  <Route path="/player/:playerId">
+                    <Grid container>
+                      <PlayerInfo classes={classes} />
+                    </Grid>
+                  </Route>
                   <Switch>
-                    <Route path="/settings/settings">
+                    <Route exact path="/settings">
                       <Grid container>
                         <Grid item sm={12} lg={6}>
                           <HLLSettings classes={classes} />
@@ -474,6 +480,7 @@ function App() {
                         </Grid>
                       </Grid>
                     </Route>
+                    <Route path="/settings/maps/:path" component={MapManager} />
                     <Route path="/settings/audit-webhooks">
                       <Grid container spacing={2}>
                         <AuditWebhooks
@@ -586,7 +593,7 @@ function App() {
                     </Route>
                     <Route path="/settings/automod-solo-tank">
                       <Grid container spacing={2}>
-                        <SeedingAutoMod
+                        <NoSoloTankAutoMod
                           description="No Solo Tank Auto Mod"
                           getEndpoint="get_auto_mod_solo_tank_config"
                           setEndpoint="set_auto_mod_solo_tank_config"
@@ -614,6 +621,17 @@ function App() {
                           setEndpoint="set_rcon_server_settings_config"
                           validateEndpoint="validate_rcon_server_settings_config"
                           describeEndpoint="describe_rcon_server_settings_config"
+                        />
+                      </Grid>
+                    </Route>
+                    <Route path="/settings/chat-commands">
+                      <Grid container spacing={2}>
+                        <ChatCommands
+                          description="Chat Commands Settings"
+                          getEndpoint="get_chat_commands_config"
+                          setEndpoint="set_chat_commands_config"
+                          validateEndpoint="validate_chat_commands_config"
+                          describeEndpoint="describe_chat_commands_config"
                         />
                       </Grid>
                     </Route>
@@ -705,50 +723,72 @@ function App() {
                         />
                       </Grid>
                     </Route>
+                    <Route path="/settings/log-stream">
+                      <Grid container spacing={2}>
+                        <LogStream
+                          description="Log Stream"
+                          getEndpoint="get_log_stream_config"
+                          setEndpoint="set_log_stream_config"
+                          validateEndpoint="validate_log_stream_config"
+                          describeEndpoint="describe_log_stream_config"
+                        />
+                      </Grid>
+                    </Route>
                   </Switch>
-                </Route>
-                <Route path="/services">
-                  <Grid container>
-                    <Grid item sm={12} lg={12}>
-                      <ServicesList classes={classes} />
+                  <Route path="/services">
+                    <Grid container>
+                      <Grid item sm={12} lg={12}>
+                        <ServicesList classes={classes} />
+                      </Grid>
                     </Grid>
-                  </Grid>
-                </Route>
-                <Route path="/logs">
-                  <Grid container>
-                    <Grid item sm={12} lg={12}>
-                      <LogsHistory classes={classes} />
+                  </Route>
+                  <Route path="/logs">
+                    <Grid container>
+                      <Grid item sm={12} lg={12}>
+                        <LogsHistory classes={classes} />
+                      </Grid>
                     </Grid>
-                  </Grid>
-                </Route>
-                <Route path="/combined_history">
-                  <Grid container spacing={2}>
-                    <Grid item sm={12}>
-                      <Typography variant="h4">Players</Typography>
+                  </Route>
+                  <Route path="/blacklists">
+                    <Switch>
+                      <Route path="/blacklists/manage">
+                        <Grid container>
+                          <Grid item sm={12} lg={12}>
+                            <BlacklistLists classes={classes} />
+                          </Grid>
+                        </Grid>
+                      </Route>
+                      <Route path="/blacklists/" exact>
+                        <Grid container>
+                          <Grid item sm={12} lg={12}>
+                            <BlacklistRecords classes={classes} />
+                          </Grid>
+                        </Grid>
+                      </Route>
+                    </Switch>
+                  </Route>
+                  <Route path="/combined_history">
+                    <Grid container spacing={2}>
+                      <Grid item sm={12}>
+                        <Typography variant="h4">Players</Typography>
+                      </Grid>
+                      <Grid item sm={12}>
+                        <PlayersHistory classes={classes} />
+                      </Grid>
+                      <Grid item sm={12}>
+                        <Typography variant="h4">Historical Logs</Typography>
+                      </Grid>
+                      <Grid item sm={12}>
+                        <LogsHistory classes={classes} />
+                      </Grid>
                     </Grid>
-                    <Grid item sm={12}>
-                      <PlayersHistory classes={classes} />
-                    </Grid>
-                    <Grid item sm={12}>
-                      <Typography variant="h4">Historical Logs</Typography>
-                    </Grid>
-                    <Grid item sm={12}>
-                      <LogsHistory classes={classes} />
-                    </Grid>
-                  </Grid>
-                </Route>
-                <Route path="/server">
-                  <Grid container>
-                    <Grid item sm={12} lg={12}>
-                      <ServerStatsPage classes={classes} />
-                    </Grid>
-                  </Grid>
-                </Route>
-              </React.Fragment>
-            ) : (
-              ""
-            )}
-          </Switch>
+                  </Route>
+                </React.Fragment>
+              ) : (
+                ""
+              )}
+            </Switch>
+          </div>
           {isEmbed ? "" : <Footer classes={classes} />}
         </Router>
       </ThemeProvider>

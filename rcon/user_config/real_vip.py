@@ -2,7 +2,7 @@ from typing import TypedDict
 
 from pydantic import Field
 
-from rcon.user_config.utils import BaseUserConfig, set_user_config
+from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
 
 
 class RealVipConfigType(TypedDict):
@@ -18,6 +18,7 @@ class RealVipUserConfig(BaseUserConfig):
 
     @staticmethod
     def save_to_db(values: RealVipConfigType, dry_run=False):
+        key_check(RealVipConfigType.__required_keys__, values.keys())
         validated_conf = RealVipUserConfig(
             enabled=values.get("enabled"),
             desired_total_number_vips=values.get("desired_total_number_vips"),
@@ -25,4 +26,4 @@ class RealVipUserConfig(BaseUserConfig):
         )
 
         if not dry_run:
-            set_user_config(validated_conf.KEY(), validated_conf.model_dump())
+            set_user_config(validated_conf.KEY(), validated_conf)

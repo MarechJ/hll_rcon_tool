@@ -28,10 +28,10 @@ def test_ban_excluded_weapon(*args):
         "version": 1,
         "timestamp_ms": 1612695641000,
         "action": "TEAM KILL",
-        "player": "[ARC] DYDSO ★ツ",
-        "steam_id_64_1": 76561198091327692,
-        "player2": "Francky Mc Fly",
-        "steam_id_64_1": 76561198091327692,
+        "player_name_1": "[ARC] DYDSO ★ツ",
+        "player_id_1": 76561198091327692,
+        "player_name_2": "Francky Mc Fly",
+        "player_id_1": 76561198091327692,
         "weapon": "None",
         "raw": "[646 ms (1612695641)] TEAM KILL: [ARC] DYDSO ★ツ(Axis/76561198091327692) -> Francky Mc Fly(Axis/76561198133214514) with None",
         "content": "[ARC] DYDSO ★ツ(Axis/76561198091327692) -> Francky Mc Fly(Axis/76561198133214514) with None",
@@ -44,23 +44,26 @@ def test_ban_excluded_weapon(*args):
             "creation_time": "2021-02-07T11:02:11.725",
             "timestamp_ms": 1612695428000,
             "action": "CONNECTED",
-            "player": "[ARC] DYDSO ★ツ",
-            "player2": None,
+            "player_name_1": "[ARC] DYDSO ★ツ",
+            "player_name_2": None,
             "weapon": None,
-            "steam_id_64_1": None,
-            "steam_id_64_1": None,
+            "player_id_1": None,
+            "player_id_1": None,
             "raw": "[600 ms (1612695428)] CONNECTED [ARC] DYDSO ★ツ",
             "content": "[ARC] DYDSO ★ツ",
             "server": "1",
         },
     ]
 
-    with mock.patch("rcon.game_logs.RecordedRcon") as rcon, mock.patch(
-        "rcon.game_logs.get_recent_logs", return_value={"logs": logs}
-    ) as get:
+    with (
+        mock.patch("rcon.game_logs.Rcon") as rcon,
+        mock.patch(
+            "rcon.game_logs.get_recent_logs", return_value={"logs": logs}
+        ) as get,
+    ):
         rcon.get_vips_ids = mock.MagicMock(return_value=[])
         auto_ban_if_tks_right_after_connection(rcon, tk_log)
-        rcon.do_perma_ban.assert_not_called()
+        rcon.perma_ban.assert_not_called()
 
 
 @mock.patch("rcon.game_logs.get_player_profile", autospec=True, return_value=None)
@@ -69,10 +72,10 @@ def test_ban_success(*args):
         "version": 1,
         "timestamp_ms": 1612695641000,
         "action": "TEAM KILL",
-        "player": "[ARC] DYDSO ★ツ",
-        "steam_id_64_1": 76561198091327692,
-        "player2": "Francky Mc Fly",
-        "steam_id_64_1": 76561198091327692,
+        "player_name_1": "[ARC] DYDSO ★ツ",
+        "player_id_1": 76561198091327692,
+        "player_name_2": "Francky Mc Fly",
+        "player_id_1": 76561198091327692,
         "weapon": "G43",
         "raw": "[646 ms (1612695641)] TEAM KILL: [ARC] DYDSO ★ツ(Axis/76561198091327692) -> Francky Mc Fly(Axis/76561198133214514) with None",
         "content": "[ARC] DYDSO ★ツ(Axis/76561198091327692) -> Francky Mc Fly(Axis/76561198133214514) with None",
@@ -85,11 +88,11 @@ def test_ban_success(*args):
             "creation_time": "2021-02-07T11:02:11.725",
             "timestamp_ms": 1612695428000,
             "action": "CONNECTED",
-            "player": "[ARC] DYDSO ★ツ",
-            "player2": None,
+            "player_name_1": "[ARC] DYDSO ★ツ",
+            "player_name_2": None,
             "weapon": None,
-            "steam_id_64_1": None,
-            "steam_id_64_1": None,
+            "player_id_1": None,
+            "player_id_1": None,
             "raw": "[600 ms (1612695428)] CONNECTED [ARC] DYDSO ★ツ",
             "content": "[ARC] DYDSO ★ツ",
             "server": "1",
@@ -109,12 +112,15 @@ def test_ban_success(*args):
             has_flag=["✅"], is_vip=True, has_at_least_n_sessions=10
         ),
     )
-    with mock.patch("rcon.game_logs.Rcon") as rcon, mock.patch(
-        "rcon.game_logs.get_recent_logs", return_value={"logs": logs}
-    ) as get:
+    with (
+        mock.patch("rcon.game_logs.Rcon") as rcon,
+        mock.patch(
+            "rcon.game_logs.get_recent_logs", return_value={"logs": logs}
+        ) as get,
+    ):
         rcon.get_vips_ids = mock.MagicMock(return_value=[])
         auto_ban_if_tks_right_after_connection(rcon, tk_log, config)
-        rcon.do_perma_ban.assert_called()
+        rcon.perma_ban.assert_called()
 
 
 @mock.patch("rcon.game_logs.get_player_profile", autospec=True, return_value=None)
@@ -123,10 +129,10 @@ def test_ban_ignored_kill(*args):
         "version": 1,
         "timestamp_ms": 1612695641000,
         "action": "TEAM KILL",
-        "player": "[ARC] DYDSO ★ツ",
-        "steam_id_64_1": 76561198091327692,
-        "player2": "Francky Mc Fly",
-        "steam_id_64_1": 76561198091327692,
+        "player_name_1": "[ARC] DYDSO ★ツ",
+        "player_id_1": 76561198091327692,
+        "player_name_2": "Francky Mc Fly",
+        "player_id_1": 76561198091327692,
         "weapon": "G43",
         "raw": "[646 ms (1612695641)] TEAM KILL: [ARC] DYDSO ★ツ(Axis/76561198091327692) -> Francky Mc Fly(Axis/76561198133214514) with None",
         "content": "[ARC] DYDSO ★ツ(Axis/76561198091327692) -> Francky Mc Fly(Axis/76561198133214514) with None",
@@ -137,10 +143,10 @@ def test_ban_ignored_kill(*args):
             "version": 1,
             "timestamp_ms": 1612695641000,
             "action": "KILL",
-            "player": "[ARC] DYDSO ★ツ",
-            "steam_id_64_1": 76561198091327692,
-            "player2": "Francky Mc Fly",
-            "steam_id_64_1": 76561198091327692,
+            "player_name_1": "[ARC] DYDSO ★ツ",
+            "player_id_1": 76561198091327692,
+            "player_name_2": "Francky Mc Fly",
+            "player_id_1": 76561198091327692,
             "weapon": "G43",
             "raw": "[646 ms (1612695641)] TEAM KILL: [ARC] DYDSO ★ツ(Axis/76561198091327692) -> Francky Mc Fly(Axis/76561198133214514) with None",
             "content": "[ARC] DYDSO ★ツ(Axis/76561198091327692) -> Francky Mc Fly(Axis/76561198133214514) with None",
@@ -151,11 +157,11 @@ def test_ban_ignored_kill(*args):
             "creation_time": "2021-02-07T11:02:11.725",
             "timestamp_ms": 1612695428000,
             "action": "CONNECTED",
-            "player": "[ARC] DYDSO ★ツ",
-            "player2": None,
+            "player_name_1": "[ARC] DYDSO ★ツ",
+            "player_name_2": None,
             "weapon": None,
-            "steam_id_64_1": None,
-            "steam_id_64_1": None,
+            "player_id_1": None,
+            "player_id_1": None,
             "raw": "[600 ms (1612695428)] CONNECTED [ARC] DYDSO ★ツ",
             "content": "[ARC] DYDSO ★ツ",
             "server": "1",
@@ -174,12 +180,15 @@ def test_ban_ignored_kill(*args):
             has_flag=["✅"], is_vip=True, has_at_least_n_sessions=10
         ),
     )
-    with mock.patch("rcon.game_logs.Rcon") as rcon, mock.patch(
-        "rcon.game_logs.get_recent_logs", return_value={"logs": logs}
-    ) as get:
+    with (
+        mock.patch("rcon.game_logs.Rcon") as rcon,
+        mock.patch(
+            "rcon.game_logs.get_recent_logs", return_value={"logs": logs}
+        ) as get,
+    ):
         rcon.get_vips_ids = mock.MagicMock(return_value=[])
         auto_ban_if_tks_right_after_connection(rcon, tk_log, config)
-        rcon.do_perma_ban.assert_not_called()
+        rcon.perma_ban.assert_not_called()
 
 
 @mock.patch("rcon.game_logs.get_player_profile", autospec=True, return_value=None)
@@ -188,10 +197,10 @@ def test_ban_count_one_death(*args):
         "version": 1,
         "timestamp_ms": 1612695641000,
         "action": "TEAM KILL",
-        "player": "[ARC] DYDSO ★ツ",
-        "steam_id_64_1": 76561198091327692,
-        "player2": "Francky Mc Fly",
-        "steam_id_64_1": 76561198091327692,
+        "player_name_1": "[ARC] DYDSO ★ツ",
+        "player_id_1": 76561198091327692,
+        "player_name_2": "Francky Mc Fly",
+        "player_id_1": 76561198091327692,
         "weapon": "G43",
         "raw": "[646 ms (1612695641)] TEAM KILL: [ARC] DYDSO ★ツ(Axis/76561198091327692) -> Francky Mc Fly(Axis/76561198133214514) with None",
         "content": "[ARC] DYDSO ★ツ(Axis/76561198091327692) -> Francky Mc Fly(Axis/76561198133214514) with None",
@@ -202,10 +211,10 @@ def test_ban_count_one_death(*args):
             "version": 1,
             "timestamp_ms": 1612695641000,
             "action": "KILL",
-            "player2": "[ARC] DYDSO ★ツ",
-            "steam_id_64_2": 76561198091327692,
-            "player": "Francky Mc Fly",
-            "steam_id_64_1": 76561198091327692,
+            "player_name_2": "[ARC] DYDSO ★ツ",
+            "player_id_2": 76561198091327692,
+            "player_name_1": "Francky Mc Fly",
+            "player_id_1": 76561198091327692,
             "weapon": "G43",
             "raw": "[646 ms (1612695641)] TEAM KILL: [ARC] DYDSO ★ツ(Axis/76561198091327692) -> Francky Mc Fly(Axis/76561198133214514) with None",
             "content": "[ARC] DYDSO ★ツ(Axis/76561198091327692) -> Francky Mc Fly(Axis/76561198133214514) with None",
@@ -216,11 +225,11 @@ def test_ban_count_one_death(*args):
             "creation_time": "2021-02-07T11:02:11.725",
             "timestamp_ms": 1612695428000,
             "action": "CONNECTED",
-            "player": "[ARC] DYDSO ★ツ",
-            "player2": None,
+            "player_name_1": "[ARC] DYDSO ★ツ",
+            "player_name_2": None,
             "weapon": None,
-            "steam_id_64_1": None,
-            "steam_id_64_1": None,
+            "player_id_1": None,
+            "player_id_1": None,
             "raw": "[600 ms (1612695428)] CONNECTED [ARC] DYDSO ★ツ",
             "content": "[ARC] DYDSO ★ツ",
             "server": "1",
@@ -241,12 +250,15 @@ def test_ban_count_one_death(*args):
         ),
     )
 
-    with mock.patch("rcon.game_logs.Rcon") as rcon, mock.patch(
-        "rcon.game_logs.get_recent_logs", return_value={"logs": logs}
-    ) as get:
+    with (
+        mock.patch("rcon.game_logs.Rcon") as rcon,
+        mock.patch(
+            "rcon.game_logs.get_recent_logs", return_value={"logs": logs}
+        ) as get,
+    ):
         rcon.get_vips_ids = mock.MagicMock(return_value=[])
         auto_ban_if_tks_right_after_connection(rcon, tk_log, config)
-        rcon.do_perma_ban.assert_called()
+        rcon.perma_ban.assert_called()
 
 
 @mock.patch("rcon.game_logs.get_player_profile", autospec=True, return_value=None)
@@ -255,10 +267,10 @@ def test_ban_ignored_2_death(*args):
         "version": 1,
         "timestamp_ms": 1612695641000,
         "action": "TEAM KILL",
-        "player": "[ARC] DYDSO ★ツ",
-        "steam_id_64_1": 76561198091327692,
-        "player2": "Francky Mc Fly",
-        "steam_id_64_1": 76561198091327692,
+        "player_name_1": "[ARC] DYDSO ★ツ",
+        "player_id_1": 76561198091327692,
+        "player_name_2": "Francky Mc Fly",
+        "player_id_1": 76561198091327692,
         "weapon": "G43",
         "raw": "[646 ms (1612695641)] TEAM KILL: [ARC] DYDSO ★ツ(Axis/76561198091327692) -> Francky Mc Fly(Axis/76561198133214514) with None",
         "content": "[ARC] DYDSO ★ツ(Axis/76561198091327692) -> Francky Mc Fly(Axis/76561198133214514) with None",
@@ -269,10 +281,10 @@ def test_ban_ignored_2_death(*args):
             "version": 1,
             "timestamp_ms": 1612695641000,
             "action": "KILL",
-            "player2": "[ARC] DYDSO ★ツ",
-            "steam_id_64_2": 76561198091327692,
-            "player": "Francky Mc Fly",
-            "steam_id_64_1": 76561198091327692,
+            "player_name_2": "[ARC] DYDSO ★ツ",
+            "player_id_2": 76561198091327692,
+            "player_name_1": "Francky Mc Fly",
+            "player_id_1": 76561198091327692,
             "weapon": "G43",
             "raw": "[646 ms (1612695641)] TEAM KILL: [ARC] DYDSO ★ツ(Axis/76561198091327692) -> Francky Mc Fly(Axis/76561198133214514) with None",
             "content": "[ARC] DYDSO ★ツ(Axis/76561198091327692) -> Francky Mc Fly(Axis/76561198133214514) with None",
@@ -281,10 +293,10 @@ def test_ban_ignored_2_death(*args):
             "version": 1,
             "timestamp_ms": 1612695641000,
             "action": "KILL",
-            "player2": "[ARC] DYDSO ★ツ",
-            "steam_id_64_2": 76561198091327692,
-            "player": "Francky Mc Fly",
-            "steam_id_64_1": 76561198091327692,
+            "player_name_2": "[ARC] DYDSO ★ツ",
+            "player_id_2": 76561198091327692,
+            "player_name_1": "Francky Mc Fly",
+            "player_id_1": 76561198091327692,
             "weapon": "G43",
             "raw": "[646 ms (1612695641)] TEAM KILL: [ARC] DYDSO ★ツ(Axis/76561198091327692) -> Francky Mc Fly(Axis/76561198133214514) with None",
             "content": "[ARC] DYDSO ★ツ(Axis/76561198091327692) -> Francky Mc Fly(Axis/76561198133214514) with None",
@@ -295,11 +307,11 @@ def test_ban_ignored_2_death(*args):
             "creation_time": "2021-02-07T11:02:11.725",
             "timestamp_ms": 1612695428000,
             "action": "CONNECTED",
-            "player": "[ARC] DYDSO ★ツ",
-            "player2": None,
+            "player_name_1": "[ARC] DYDSO ★ツ",
+            "player_name_2": None,
             "weapon": None,
-            "steam_id_64_1": None,
-            "steam_id_64_1": None,
+            "player_id_1": None,
+            "player_id_1": None,
             "raw": "[600 ms (1612695428)] CONNECTED [ARC] DYDSO ★ツ",
             "content": "[ARC] DYDSO ★ツ",
             "server": "1",
@@ -320,9 +332,12 @@ def test_ban_ignored_2_death(*args):
         ),
     )
 
-    with mock.patch("rcon.game_logs.Rcon") as rcon, mock.patch(
-        "rcon.game_logs.get_recent_logs", return_value={"logs": logs}
-    ) as get:
+    with (
+        mock.patch("rcon.game_logs.Rcon") as rcon,
+        mock.patch(
+            "rcon.game_logs.get_recent_logs", return_value={"logs": logs}
+        ) as get,
+    ):
         rcon.get_vips_ids = mock.MagicMock(return_value=[])
         auto_ban_if_tks_right_after_connection(rcon, tk_log, config)
-        rcon.do_perma_ban.assert_not_called()
+        rcon.perma_ban.assert_not_called()

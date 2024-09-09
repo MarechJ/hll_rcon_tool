@@ -1,6 +1,57 @@
 import React from "react";
 import UserSetting from ".";
 
+export const ChatCommands = ({
+  description,
+  getEndpoint,
+  setEndpoint,
+  validateEndpoint,
+  describeEndpoint,
+}) => {
+  const notes = `
+  {
+    "enabled": false,
+
+    /* A list of commands, their trigger words, the message to send to the player and a description */
+    "command_words": [
+      {
+        /* Only ! or @ are valid command prefixes */
+        "words": [
+          "!wkm",
+          "@wkm"
+        ],
+        "message": "You were last killed by {last_nemesis_name} with {last_nemesis_weapon}",
+        /* A short description of what the command does for the 'describe_words' commands */
+        "description": "Who killed me"
+      },
+      {
+        "words": [
+          "!discord"
+        ],
+        "message": "You can join our discord at {discord_invite_url}",
+        "description": "Discord invite"
+      }
+    ],
+    /* A list of commands that will send a description of all commands to the player */
+    "describe_words": [
+      "!help",
+      "@help"
+    ]
+  }
+  `;
+
+  return (
+    <UserSetting
+      description={description}
+      getEndpoint={getEndpoint}
+      setEndpoint={setEndpoint}
+      validateEndpoint={validateEndpoint}
+      describeEndpoint={describeEndpoint}
+      notes={notes}
+    />
+  );
+};
+
 export const RconConnectionSettings = ({
   description,
   getEndpoint,
@@ -78,17 +129,6 @@ export const RconServerSettings = ({
         */
         "lock_stats_api": false,
 
-        /* If you unban a player (temp or perma) it will also remove their blacklist (if any) */
-        "unban_does_unblacklist": true,
-
-        /* Same as above but the other way around, remove a player from the blacklist will unban him */
-        "unblacklist_does_unban": true,
-        
-        /*
-            This option when turned on will forward your temp ban to all your servers
-            When it is off the temp ban is only applied on the server where the command was received
-        */
-        "broadcast_temp_bans": true,
 
         /*
             This option when turned on will forward the unban to all your servers
@@ -108,6 +148,68 @@ export const RconServerSettings = ({
             player disconnect and reconnected multiple times, all his/her stats are counted
         */
         "live_stats_refresh_current_game_seconds": 5
+
+        /* This allows you to automatically action players with names that case RCON bugs */
+        "invalid_names": {
+          "enabled": false,
+          /* 
+            null: Do nothing
+            "warn": Message the player when they connect
+            "kick": Kick the player from the server
+            "ban": Temporarily ban the player
+          */
+          "action": null,
+
+          /* The message used when actioning a player whose name ends in white space */
+          "whitespace_name_player_message": "Your name ends in whitespace (or has whitespace in the 20th character)\\n\\nBecause of a bug in the game admin tools this server uses will not work properly,\\nyou might suffer auto-moderation actions as a false-positive.\\n\\nPlease change your name in Steam and restart your game to avoid this.\\n\\nPlease ask T17 to prioritize fixing this bug.",
+          
+          /* The message used when actioning a player whose name is incorrectly shortened by the game server */
+          "pineapple_name_player_message": "Your name has a special character around the 20th character (because it is truncated as it is too long)\\n\\nBecause of a bug in the game, admin tools this server uses will not work properly.\\n\\nPlease change your name in Steam and restart your game to avoid this.\\n\\nPlease ask T17 to prioritize fixing this bug.",
+          
+          /* The message sent to the discord audit log, {name} {player_id} and {action} are valid message variables */
+          "audit_message": "Player with an invalid name (ends in whitespace or a partial character when truncated) joined: {name} ({player_id}\\nThis will cause errors with various auto mods (no leader, etc) and the \`playerinfo\` RCON command will not work.\\nThe player will show as 'unassigned' in Gameview.\\nAction taken = {action}",
+          
+          /* Due to a bug with how the kick command works, if a player can't be kicked they'll be removed by temporarily banning them, {name} {player_id} and {action} are valid message variables */
+          "audit_kick_unban_message": "Unbanning {name} ({player_id}) that was temp banned since the \`kick\` command will not work with their name",
+          "audit_message_author": "CRCON",
+          
+          /* The length in hours if a player is temporarily banned */
+          "ban_length_hours": 1
+        },
+
+        /* This allows you to automatically action windows store players when they connect if your GSP is not updated to allow you to edit your Server.ini file */
+        "windows_store_players": {
+          "enabled": false,
+          
+          /*
+            null: Do nothing
+            "kick": Kick the player from the server
+            "temp ban": Temporarily ban the player
+            "perma ban": Permanently ban the player
+          */
+          "action": null,
+
+          /* The message used when actioning a player */
+          "player_message": "Windows store players are not allowed on this server.",
+          
+          /* The message sent to the discord audit log, {name} {player_id} and {action} are valid message variables */
+          "audit_message": "Windows store player {name} ({player_id} connected, action taken = {action})",
+          "audit_message_author": "CRCON",
+
+          /* The length in hours if a player is temporarily banned */
+          "temp_ban_length_hours": 1
+        },
+
+        /* Enhancement for all admin messages */
+        "message_enhancements": {
+          "enabled": false,
+
+          /* A header note that is shown for all admin message popups */
+          "message_header": "",
+          
+          /* A footer note that is shown for all admin message popups */
+          "message_footer": ""
+        }
     }
     `;
 
@@ -576,6 +678,41 @@ export const GTXNameChange = ({
         /* This is the SFTP port for your game server */
         "port": 9933
           
+    }
+    `;
+
+  return (
+    <UserSetting
+      description={description}
+      getEndpoint={getEndpoint}
+      setEndpoint={setEndpoint}
+      validateEndpoint={validateEndpoint}
+      describeEndpoint={describeEndpoint}
+      notes={notes}
+    />
+  );
+};
+
+export const LogStream = ({
+  description,
+  getEndpoint,
+  setEndpoint,
+  validateEndpoint,
+  describeEndpoint,
+}) => {
+  const notes = `
+    {
+        /*
+            The log_stream is a Redis stream that stores logs from the game server in sequential order on a transient basis (they are not persisted to the database and are cleared on service startup) to support pushing new logs to external tools through a websocket endpoint.
+
+            Parameters :
+            - stream_size: The number of logs the stream will retain before discarding the oldest logs.
+            - startup_since_mins: The number of minutes of logs to request from the game service when the service starts up
+            - refresh_frequency_sec: The poll rate for asking for new logs from the game server
+            - refresh_since_mins The number of minutes of logs to request from the game service each loop
+
+            See https://github.com/MarechJ/hll_rcon_tool/wiki/Streaming-Logs for a detailed description.
+        */
     }
     `;
 

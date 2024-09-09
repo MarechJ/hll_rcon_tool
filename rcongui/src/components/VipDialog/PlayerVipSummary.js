@@ -1,34 +1,61 @@
 import React from "react";
-import { Chip, Grid, Typography } from "@material-ui/core";
+import { Box, Typography } from "@material-ui/core";
+import { Skeleton } from "@material-ui/lab";
+import moment from "moment";
 
-export function PlayerVipSummary({ player, isVip }) {
-  const playerNames =
-    player && player.get("names")
-      ? player.get("names").map((name) => <Chip label={name.get("name")} />)
-      : "No name recorded";
 
-  let vipExpirationTimestamp = "Not VIP";
+export function PlayerVipSummary({ player, vipExpiration }) {
 
-  if (isVip) {
-    vipExpirationTimestamp =
-      player && player.get("vip_expiration")
-        ? player.get("vip_expiration")
-        : "Never";
+  if (!player) {
+    return (
+      <>
+        <Skeleton animation="wave" />
+        <Skeleton animation="wave" />
+        <Skeleton animation="wave" />
+      </>
+    )
   }
 
   return (
-    <Grid container>
-      <Grid item xs={12}>
-        <Typography variant="body2">Name: {playerNames}</Typography>
-      </Grid>
-      <Grid item xs={12}>
-        <Typography>Steam ID: {player && player.get("steam_id_64")}</Typography>
-      </Grid>
-      <Grid item xs={12}>
-        <Typography>
-          Current VIP Expiration: {vipExpirationTimestamp}
-        </Typography>
-      </Grid>
-    </Grid>
+    <Box style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+      <Typography>Name: <span style={{ fontWeight: 500 }}>{getPlayerNames(player)}</span></Typography>
+      <Typography>Player ID: <span style={{ fontWeight: 500 }}>{player.get("player_id")}</span></Typography>
+      <Typography>VIP Expires: <span style={{ fontWeight: 500 }}>{getExpirationDate(vipExpiration)}</span></Typography>
+    </Box>
   );
+}
+
+function getExpirationDate(vipExpiration) {
+  return vipExpiration ? `${moment(vipExpiration).format("lll")} (${moment(vipExpiration).fromNow()})` : "/"
+}
+
+function getPlayerNames(player) {
+  let output = "No name recorded yet";
+
+  if (player?.get("names")) {
+    /* get_history_players.result.names[{
+      created: string
+      id: number
+      last_seen: string
+      name: string
+      player_id: string
+    }]
+    */
+    output = player.get("names").map(details => details.get("name")).join(", ")
+  }
+
+  if (player?.get("name")) {
+    /* get_players.result[{
+      country: null | string
+      is_vip: boolean
+      name: string
+      player_id: string
+      profile: PlayerProfile
+      steam_bans: null | []
+    }]
+    */
+    output = player.get("name")
+  }
+
+  return output;
 }

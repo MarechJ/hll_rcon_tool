@@ -18,8 +18,29 @@ class SteamPlayerInline(admin.StackedInline):
     verbose_name_plural = "steamid"
 
 
+class DjangoAPIKeyAdminForm(forms.ModelForm):
+    class Meta:
+        model = DjangoAPIKey
+        fields = "__all__"
+
+    def clean_api_key(self):
+        if len(self.cleaned_data["api_key"]) < 32:
+            raise forms.ValidationError("Minimum API key length is 32 characters")
+
+        if DjangoAPIKey.objects.filter(
+            api_key=make_password(
+                self.cleaned_data["api_key"], salt=SECRET_KEY.replace("$", "")
+            )
+        ).exists():
+            raise forms.ValidationError("Duplicate API keys are not allowed")
+
+        return self.cleaned_data["api_key"]
+
+
 class DjangoAPIKeyInline(admin.StackedInline):
     model = DjangoAPIKey
+    form = DjangoAPIKeyAdminForm
+
     can_delete = True
     verbose_name_plural = "API Keys"
 
@@ -35,32 +56,10 @@ class UserAdmin(BaseUserAdmin):
     # inlines = [SteamPlayerInline]
 
 
-class DjangoAPIKeyAdminForm(forms.ModelForm):
-    class Meta:
-        model = DjangoAPIKey
-        fields = "__all__"
-
-    def clean_api_key(self):
-        if len(self.cleaned_data["api_key"]) < 32:
-            raise forms.ValidationError("Minimum API key length is 32 characters")
-
-        if DjangoAPIKey.objects.filter(
-            api_key=make_password(self.cleaned_data["api_key"], salt=SECRET_KEY)
-        ).exists():
-            raise forms.ValidationError("Duplicate API keys are not allowed")
-
-        return self.cleaned_data["api_key"]
-
-
 class DjangoAPIKeyAdmin(admin.ModelAdmin):
     list_display = ("user", "api_key", "date_created", "date_modified", "notes")
     list_filter = ("user",)
     search_fields = ("notes",)
-
-    def save_model(self, request, obj, form, change) -> None:
-        # If we don't include the salt, the hasher generates its own
-        obj.api_key = make_password(obj.api_key, salt=SECRET_KEY)
-        return super().save_model(request, obj, form, change)
 
     def get_form(self, request, obj=None, **kwargs):
         form = super().get_form(request, obj, **kwargs)

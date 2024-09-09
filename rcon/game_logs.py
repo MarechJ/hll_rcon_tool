@@ -10,34 +10,47 @@ from functools import partial
 from typing import Callable, DefaultDict, Dict, Iterable
 
 import discord_webhook
+import redis.exceptions
+from dateutil import parser
 from pydantic import HttpUrl
 from sqlalchemy import and_, desc, or_
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
 
+from discord.utils import escape_markdown
+from rcon.blacklist import blacklist_or_ban
 from rcon.cache_utils import get_redis_client, ttl_cache
 from rcon.discord import make_hook, send_to_discord_audit
-from rcon.models import LogLine, PlayerSteamID, enter_session
+from rcon.models import LogLine, PlayerID, enter_session
 from rcon.player_history import (
-    add_player_to_blacklist,
     get_player_profile,
     player_has_flag,
 )
-from rcon.rcon import LOG_ACTIONS, Rcon
-from rcon.settings import SERVER_INFO
+from rcon.rcon import LOG_ACTIONS, Rcon, get_rcon
 from rcon.types import (
+    AllLogTypes,
     GetDetailedPlayer,
     ParsedLogsType,
     PlayerStat,
     StructuredLogLineWithMetaData,
-    AllLogTypes,
 )
 from rcon.user_config.ban_tk_on_connect import BanTeamKillOnConnectUserConfig
 from rcon.user_config.log_line_webhooks import (
     DiscordMentionWebhook,
     LogLineWebhookUserConfig,
 )
+from rcon.user_config.log_stream import LogStreamUserConfig
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
-from rcon.utils import FixedLenList, MapsHistory
+from rcon.utils import (
+    FixedLenList,
+    MapsHistory,
+    Stream,
+    StreamID,
+    StreamNoElements,
+    StreamOlderElement,
+    get_server_number,
+    strtobool,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -117,9 +130,18 @@ def on_chat_allies(func):
     return func
 
 
-def on_connected(func):
-    HOOKS[AllLogTypes.connected.value].append(func)
-    return func
+def on_connected(insert_at: int | None = None):
+    """Insert the given hook at `insert_at` position, or the end"""
+
+    def wrapper(func):
+        if isinstance(insert_at, int):
+            HOOKS[AllLogTypes.connected.value].insert(insert_at, func)
+        else:
+            HOOKS[AllLogTypes.connected.value].append(func)
+
+        return func
+
+    return wrapper
 
 
 def on_disconnected(func):
@@ -191,7 +213,7 @@ def send_log_line_webhook_message(
     allowed_mentions = make_allowed_mentions(mentions)
 
     content = " ".join(mentions)
-    description: str = log_line["line_without_time"]
+    description: str = escape_markdown(log_line["line_without_time"])
     embed = discord_webhook.DiscordEmbed(
         description=description,
         timestamp=datetime.datetime.utcfromtimestamp(log_line["timestamp_ms"] / 1000),
@@ -201,7 +223,7 @@ def send_log_line_webhook_message(
 
     wh.content = content
     wh.add_embed(embed)
-    wh.allowed_mentions = allowed_mentions["user"] + allowed_mentions["roles"]
+    wh.allowed_mentions = allowed_mentions
     wh.execute()
 
 
@@ -229,11 +251,115 @@ def load_generic_hooks():
 MAX_FAILS = 10
 
 
+class LogStream:
+    # Each CRCON uses its own redis database, no need for keys to be unique across servers
+    def __init__(
+        self,
+        rcon: Rcon | None = None,
+        red: redis.StrictRedis | None = None,
+        key="log_stream",
+        maxlen: int | None = None,
+    ) -> None:
+        config = LogStreamUserConfig.load_from_db()
+        self.rcon = rcon or get_rcon()
+        self.red = red or get_redis_client()
+        self.log_history_key = key
+        self.log_stream = Stream(key=key, maxlen=maxlen or config.stream_size)
+
+    def clear(self):
+        logger.info("Clearing stream")
+        self.red.delete(self.log_history_key)
+
+    def bucket_by_timestamp(self, logs: list[StructuredLogLineWithMetaData]):
+        """Organize logs by their game server timestamp
+
+        Redis streams must be in sequential order, we use custom keys that are the
+        unix timestamp of the time the log occurred on the game server, but each
+        timestamp can have multiple logs.
+
+        Return each unique timestamp and the logs that occured at that time
+        """
+        # logs has the newest logs first, oldest last
+        buckets: dict[datetime.datetime, list[StructuredLogLineWithMetaData]] = (
+            defaultdict(list)
+        )
+
+        ordered_logs: list[
+            tuple[datetime.datetime, list[StructuredLogLineWithMetaData]]
+        ] = []
+
+        for log in reversed(logs):
+            timestamp = datetime.datetime.fromtimestamp(log["timestamp_ms"] / 1000)
+            buckets[timestamp].append(log)
+
+        for timestamp in buckets.keys():
+            ordered_logs.append((timestamp, buckets[timestamp]))
+
+        return ordered_logs
+
+    def run(
+        self,
+        loop_frequency_secs: int | None = None,
+        initial_since_min: int | None = None,
+        active_since_min: int | None = None,
+    ):
+        """Poll the game server and add new logs to the stream"""
+
+        config = LogStreamUserConfig.load_from_db()
+
+        since_min = initial_since_min or config.startup_since_mins
+        logs = self.rcon.get_structured_logs(since_min_ago=since_min)["logs"]
+        since_min = active_since_min or config.refresh_since_mins
+
+        last_seen_id = None
+        while True:
+            config = LogStreamUserConfig.load_from_db()
+            if not config.enabled:
+                break
+            ordered_logs = self.bucket_by_timestamp(logs)
+            new_logs = 0
+            for timestamp, log_bucket in ordered_logs:
+                for idx, log in enumerate(log_bucket):
+                    timestamp_ms = log["timestamp_ms"] // 1000
+                    stream_id = f"{timestamp_ms}-{idx}"
+                    try:
+                        last_seen_id = self.log_stream.add(custom_id=stream_id, obj=log)
+                        new_logs += 1
+                    except StreamOlderElement:
+                        continue
+
+            if new_logs:
+                logger.info(f"Added {new_logs} new logs {last_seen_id=}")
+            time.sleep(loop_frequency_secs or config.refresh_frequency_sec)
+            logs = self.rcon.get_structured_logs(since_min_ago=since_min)["logs"]
+
+    def logs_since(
+        self, last_seen: StreamID | None = None, block_ms=500
+    ) -> list[tuple[StreamID, StructuredLogLineWithMetaData]]:
+        """Return a list of logs more recent than the last_seen ID"""
+        try:
+            if last_seen is None:
+                logs: list[tuple[StreamID, StructuredLogLineWithMetaData]] = []
+                tail_log: tuple[StreamID, StructuredLogLineWithMetaData] = (
+                    self.log_stream.tail()
+                )
+                if tail_log:
+                    logs.append(tail_log)
+            else:
+                logs: list[tuple[StreamID, StructuredLogLineWithMetaData]] = (
+                    self.log_stream.read(last_id=last_seen, block_ms=block_ms)
+                )
+            return logs
+        except StreamNoElements:
+            response: list[tuple[StreamID, StructuredLogLineWithMetaData]] = []
+            return response
+
+
 class LogLoop:
     log_history_key = "log_history"
 
     def __init__(self):
-        self.rcon = Rcon(SERVER_INFO)
+        self.rcon = get_rcon()
         self.red = get_redis_client()
         self.duplicate_guard_key = "unique_logs"
         self.log_history = self.get_log_history_list()
@@ -242,7 +368,7 @@ class LogLoop:
 
     @staticmethod
     def get_log_history_list() -> FixedLenList:
-        return FixedLenList(key=LogLoop.log_history_key, max_len=100000)
+        return FixedLenList(key=LogLoop.log_history_key, max_len=100_000)
 
     def run(self, loop_frequency_secs=2, cleanup_frequency_minutes=10):
         since_min = 180
@@ -287,22 +413,28 @@ class LogLoop:
         # from the previous map may leak into the current one
         if m["start"] > datetime.datetime.now().timestamp() - 30:
             return
-        for steam_id in players:
-            player = players.get(steam_id)
+        for player_id in players:
+            player = players.get(player_id)
             map_players = m.setdefault("player_stats", dict())
             p = map_players.get(
-                steam_id,
+                player_id,
                 PlayerStat(
                     combat=player["combat"],
+                    p_combat=0,
                     offense=player["offense"],
+                    p_offense=0,
                     defense=player["defense"],
+                    p_defense=0,
                     support=player["support"],
+                    p_support=0,
                 ),
             )
             for stat in ["combat", "offense", "defense", "support"]:
-                if player[stat] > p[stat]:
-                    p[stat] = player[stat]
-            map_players[steam_id] = p
+                if player[stat] < p[stat]:
+                    p["p_" + stat] = p["p_" + stat] + p[stat]
+
+                p[stat] = player[stat]
+            map_players[player_id] = p
         maps.update(0, m)
 
     def record_line(self, log: StructuredLogLineWithMetaData):
@@ -319,7 +451,7 @@ class LogLoop:
         if not isinstance(last_line, dict):
             logger.error("Can't check against last_line, invalid_format %s", last_line)
         elif last_line and last_line["timestamp_ms"] > log["timestamp_ms"]:
-            logger.error("Received old log record, ignoring")
+            logger.warning("Received old log record, ignoring")
             return None
 
         self.log_history.add(log)
@@ -379,7 +511,7 @@ class LogRecorder:
     def __init__(self, dump_frequency_min=5, run_immediately=False):
         self.dump_frequency_min = dump_frequency_min
         self.run_immediately = run_immediately
-        self.server_id = os.getenv("SERVER_NUMBER")
+        self.server_id = get_server_number()
         if not self.server_id:
             raise ValueError("SERVER_NUMBER is not set, can't record logs")
 
@@ -413,19 +545,17 @@ class LogRecorder:
                 return to_store
         return to_store
 
-    def _get_steamid_record(self, sess, steam_id_64):
-        if not steam_id_64:
+    def _get_player_id_record(self, sess: Session, player_id: str):
+        if not player_id:
             return None
         return (
-            sess.query(PlayerSteamID)
-            .filter(PlayerSteamID.steam_id_64 == steam_id_64)
-            .one_or_none()
+            sess.query(PlayerID).filter(PlayerID.player_id == player_id).one_or_none()
         )
 
     def _save_logs(self, sess, to_store: list[StructuredLogLineWithMetaData]):
         for log in to_store:
-            steamid_1 = self._get_steamid_record(sess, log["steam_id_64_1"])
-            steamid_2 = self._get_steamid_record(sess, log["steam_id_64_2"])
+            player_1 = self._get_player_id_record(sess, log["player_id_1"])
+            player_2 = self._get_player_id_record(sess, log["player_id_2"])
             try:
                 sess.add(
                     LogLine(
@@ -434,10 +564,10 @@ class LogRecorder:
                             log["timestamp_ms"] // 1000
                         ),
                         type=log["action"],
-                        player1_name=log["player"],
-                        player2_name=log["player2"],
-                        steamid1=steamid_1,
-                        steamid2=steamid_2,
+                        player1_name=log["player_name_1"],
+                        player2_name=log["player_name_2"],
+                        player_1=player_1,
+                        player_2=player_2,
                         raw=log["raw"],
                         content=log["message"],
                         server=os.getenv("SERVER_NUMBER"),
@@ -512,14 +642,14 @@ def is_action(action_filter, action, exact_match=False):
 
 
 def get_recent_logs(
-    start=0,
-    end=100000,
-    player_search=None,
-    action_filter=None,
-    min_timestamp=None,
-    exact_player_match=False,
-    exact_action=False,
-    inclusive_filter=True,
+    start: int = 0,
+    end: int = 100000,
+    player_search: list[str] | str = [],
+    action_filter: list[str] = [],
+    min_timestamp: float | None = None,
+    exact_player_match: bool = False,
+    exact_action: bool = False,
+    inclusive_filter: bool = True,
 ) -> ParsedLogsType:
     # The default behavior is to only show log lines with actions in `actions_filter`
     # inclusive_filter=True retains this default behavior
@@ -527,6 +657,20 @@ def get_recent_logs(
     # `actions_filter`
     log_list = LogLoop.get_log_history_list()
     all_logs = log_list
+
+    if not isinstance(start, int):
+        start = 0
+
+    if not isinstance(end, int):
+        end = 1000
+
+    if not isinstance(min_timestamp, float) and min_timestamp:
+        min_timestamp = float(min_timestamp)
+
+    exact_player_match = strtobool(exact_player_match)
+    exact_action = strtobool(exact_action)
+    inclusive_filter = strtobool(inclusive_filter)
+
     if start != 0:
         all_logs = log_list[start : min(end, len(log_list))]
     logs: list[StructuredLogLineWithMetaData] = []
@@ -547,8 +691,10 @@ def get_recent_logs(
         if player_search:
             for player_name_search in player_search:
                 if is_player(
-                    player_name_search, line["player"], exact_player_match
-                ) or is_player(player_name_search, line["player2"], exact_player_match):
+                    player_name_search, line["player_name_1"], exact_player_match
+                ) or is_player(
+                    player_name_search, line["player_name_2"], exact_player_match
+                ):
                     # Filter out anything that isn't in action_filter
                     if (
                         action_filter
@@ -583,9 +729,9 @@ def get_recent_logs(
         elif not player_search and not action_filter:
             logs.append(line)
 
-        if p1 := line["player"]:
+        if p1 := line["player_name_1"]:
             all_players.add(p1)
-        if p2 := line["player2"]:
+        if p2 := line["player_name_2"]:
             all_players.add(p2)
         actions.add(line["action"])
 
@@ -597,11 +743,11 @@ def get_recent_logs(
 
 
 def is_player_death(player, log):
-    return log["action"] == "KILL" and player == log["player2"]
+    return log["action"] == "KILL" and player == log["player_name_2"]
 
 
 def is_player_kill(player, log):
-    return log["action"] == "KILL" and player == log["player"]
+    return log["action"] == "KILL" and player == log["player_name_1"]
 
 
 @on_tk
@@ -615,16 +761,16 @@ def auto_ban_if_tks_right_after_connection(
     if not config or not config.enabled:
         return
 
-    player_name = log["player"]
-    player_steam_id = log["steam_id_64_1"]
+    player_name = log["player_name_1"]
+    player_id = log["player_id_1"]
     player_profile = None
     vips = {}
     try:
-        player_profile = get_player_profile(player_steam_id, 0)
+        player_profile = get_player_profile(player_id, 0)
     except:
         logger.exception("Unable to get player profile")
     try:
-        vips = set(v["steam_id_64"] for v in rcon.get_vip_ids())
+        vips = set(v["player_id"] for v in rcon.get_vip_ids())
     except:
         logger.exception("Unable to get VIPS")
 
@@ -644,12 +790,13 @@ def auto_ban_if_tks_right_after_connection(
     tk_tolerance_count = config.teamkill_tolerance_count
 
     if player_profile:
-        if whitelist_players.is_vip and player_steam_id in vips:
+        if whitelist_players.is_vip and player_id in vips:
             logger.debug("Not checking player because he's VIP")
             return
 
         if (
-            player_profile["sessions_count"]
+            whitelist_players.has_at_least_n_sessions != 0
+            and player_profile["sessions_count"]
             >= whitelist_players.has_at_least_n_sessions
         ):
             logger.debug(
@@ -679,7 +826,7 @@ def auto_ban_if_tks_right_after_connection(
             continue
         if (
             log["action"] == "TEAM KILL"
-            and log["player"] == player_name
+            and log["player_name_1"] == player_name
             and last_action_is_connect
         ):
             if excluded_weapons and log["weapon"].lower() in excluded_weapons:
@@ -698,15 +845,13 @@ def auto_ban_if_tks_right_after_connection(
                 logger.info(
                     "Banning player %s for TEAMKILL after connect %s", player_name, log
                 )
-                try:
-                    rcon.do_perma_ban(
-                        steam_id_64=player_steam_id,
-                        reason=reason,
-                        by=author,
-                    )
-                except:
-                    logger.exception("Can't perma, trying blacklist")
-                    add_player_to_blacklist(player_steam_id, reason, by=author)
+                blacklist_or_ban(
+                    rcon=rcon,
+                    blacklist_id=config.blacklist_id,
+                    player_id=player_id,
+                    reason=reason,
+                    admin_name=author,
+                )
                 logger.info(
                     "Banned player %s for TEAMKILL after connect %s", player_name, log
                 )
@@ -717,7 +862,8 @@ def auto_ban_if_tks_right_after_connection(
                 else:
                     webhookurls = [webhook]
                 send_to_discord_audit(
-                    discord_msg.format(player=player_name),
+                    message=discord_msg.format(player=player_name),
+                    command_name="blacklist",
                     by=author,
                     webhookurls=webhookurls,
                 )
@@ -732,18 +878,28 @@ def auto_ban_if_tks_right_after_connection(
 
 
 def get_historical_logs_records(
-    sess,
-    player_name=None,
-    action=None,
-    steam_id_64=None,
-    limit=1000,
-    from_=None,
-    till=None,
-    time_sort="desc",
-    exact_player_match=False,
-    exact_action=True,
-    server_filter=None,
+    sess: Session,
+    player_name: str | None = None,
+    action: str | None = None,
+    player_id: str | None = None,
+    limit: int = 1000,
+    from_: datetime.datetime | None = None,
+    till: datetime.datetime | None = None,
+    time_sort: str = "desc",
+    exact_player_match: bool = False,
+    exact_action: bool = True,
+    server_filter: str | None = None,
 ):
+    limit = int(limit)
+    exact_player_match = strtobool(exact_player_match)
+    exact_action = strtobool(exact_action)
+
+    if isinstance(from_, str):
+        from_ = parser.parse(from_)
+
+    if isinstance(till, str):
+        till = parser.parse(till)
+
     names = []
     name_filters = []
 
@@ -762,16 +918,14 @@ def get_historical_logs_records(
 
     q = q.filter(and_(*time_filter))
 
-    if steam_id_64:
+    if player_id:
         # Handle not found
         player = (
-            sess.query(PlayerSteamID)
-            .filter(PlayerSteamID.steam_id_64 == steam_id_64)
-            .one_or_none()
+            sess.query(PlayerID).filter(PlayerID.player_id == player_id).one_or_none()
         )
         id_ = player.id if player else 0
         q = q.filter(
-            or_(LogLine.player1_steamid == id_, LogLine.player2_steamid == id_)
+            or_(LogLine.player1_player_id == id_, LogLine.player2_player_id == id_)
         )
 
     if player_name and not exact_player_match:
@@ -806,24 +960,23 @@ def get_historical_logs_records(
 
 
 def get_historical_logs(
-    player_name=None,
-    action=None,
-    steam_id_64=None,
-    limit=1000,
-    from_=None,
-    till=None,
+    player_name: str | None = None,
+    action: str | None = None,
+    player_id: str | None = None,
+    limit: int = 1000,
+    from_: datetime.datetime | None = None,
+    till: datetime.datetime | None = None,
     time_sort="desc",
-    exact_player_match=False,
-    exact_action=True,
-    server_filter=None,
-    output=None,
+    exact_player_match: bool = False,
+    exact_action: bool = True,
+    server_filter: str | None = None,
 ):
     with enter_session() as sess:
         res = get_historical_logs_records(
             sess,
             player_name,
             action,
-            steam_id_64,
+            player_id,
             limit,
             from_,
             till,
@@ -832,15 +985,5 @@ def get_historical_logs(
             exact_action,
             server_filter,
         )
-        lines = []
-        for r in res:
-            r = r.to_dict()
-            if output != "CSV" and output != "csv":
-                r["event_time"] = r["event_time"].timestamp()
-            else:
-                del r["id"]
-                del r["version"]
-                del r["creation_time"]
-                del r["raw"]
-            lines.append(r)
-        return lines
+
+        return [row.to_dict() for row in res]

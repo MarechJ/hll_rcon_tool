@@ -8,6 +8,7 @@ from rcon.discord import send_to_discord_audit
 
 from .audit_log import record_audit
 from .auth import api_response, login_required
+from .decorators import require_content_type, require_http_methods
 from .utils import _get_data
 
 supervisor_client = None
@@ -28,10 +29,12 @@ def get_supervisor_client():
 @csrf_exempt
 @login_required()
 @permission_required("api.can_view_available_services", raise_exception=True)
+@require_http_methods(["GET"])
 def get_services(request):
     info = {
         "broadcasts": "The automatic broadcasts.",
         "log_event_loop": "Blacklist enforcement, chat/kill forwarding, player history, etc...",
+        "log_stream": "Optionally store game server logs in a redis stream",
         "auto_settings": "Applies commands automaticaly based on your rules.",
         "cron": "The scheduler, cleans logs and whatever you added.",
     }
@@ -56,6 +59,8 @@ def get_services(request):
 @login_required()
 @permission_required("api.can_toggle_services", raise_exception=True)
 @record_audit
+@require_http_methods(["POST"])
+@require_content_type()
 def do_service(request):
     data = _get_data(request)
     client = get_supervisor_client()
@@ -77,7 +82,9 @@ def do_service(request):
     try:
         res = actions[action.upper()](service_name)
         send_to_discord_audit(
-            f"do_service {service_name} {action}", request.user.username
+            message=f"{service_name} {action}",
+            command_name=f"service {action}",
+            by=request.user.username,
         )
     except Fault as e:
         error = repr(e)

@@ -8,12 +8,15 @@ import HowToRegIcon from "@material-ui/icons/HowToReg";
 import AccessTimeIcon from "@material-ui/icons/AccessTime";
 import BlockIcon from "@material-ui/icons/Block";
 import VisibilityIcon from "@material-ui/icons/Visibility";
+import ReportIcon from "@material-ui/icons/Report";
+
 
 export const ActionButton = ({
   blacklisted,
   onUnBlacklist,
   onBlacklist,
   onTempBan,
+  onPermaBan,
   onUnban,
   onflag,
   isVip,
@@ -25,56 +28,60 @@ export const ActionButton = ({
 }) => {
   return (
     <ButtonGroup size="small" variant="text">
-      <Button>
-        {blacklisted ? (
-          <Tooltip
-            title="Remove the player from the blacklist. This will also remove any bans already applied."
-            arrow
-          >
-            <BlockIcon size="small" color="primary" onClick={onUnBlacklist} />
-          </Tooltip>
-        ) : (
-          <Tooltip
-            title="Add the player to the blacklist. They will be perma banned at their next connection (applies to all servers)"
-            arrow
-          >
-            <BlockIcon size="small" onClick={onBlacklist} />
-          </Tooltip>
-        )}
-      </Button>
-
-      <Button>
+      {blacklisted ? (
         <Tooltip
-          title="Apply temp ban to player (time will start from now). (applied to all servers)"
+          title="Remove the player from the blacklist. This will also remove any bans already applied."
           arrow
         >
+          <Button>
+            <BlockIcon size="small" color="primary" onClick={onUnBlacklist} />
+          </Button>
+        </Tooltip>
+      ) : (
+        <Tooltip
+          title="Blacklist the player"
+          arrow
+        >
+          <Button>
+            <BlockIcon size="small" onClick={onBlacklist} />
+          </Button>
+        </Tooltip>
+      )}
+
+      <Tooltip
+        title="Apply temp ban to player (time will start from now). Applies only to the current server, use the Blacklist feature with an expiration date to apply to all servers"
+        arrow
+      >
+        <Button>
           <AccessTimeIcon size="small" onClick={onTempBan} />
-        </Tooltip>
-      </Button>
+        </Button>
+      </Tooltip>
+      <Tooltip
+        title="Apply perma ban to player. Applies only to the current server, use the Blacklist feature to apply to all servers"
+        arrow
+      >
+        <Button>
+          <ReportIcon size="small" onClick={onPermaBan} />
+        </Button>
+      </Tooltip>
 
-      <Button>
-        <Tooltip title="Remove all bans (temp or perma)" arrow>
+      <Tooltip title="Remove all bans (temp or perma)" arrow>
+        <Button>
           <HowToRegIcon size="small" onClick={onUnban} />
-        </Tooltip>
-      </Button>
+        </Button>
+      </Tooltip>
 
-      <Button>
-        <Tooltip title="Add a Flag to the player" arrow>
+      <Tooltip title="Add a Flag to the player" arrow>
+        <Button>
           <FlagIcon size="small" onClick={onflag} />
-        </Tooltip>
-      </Button>
+        </Button>
+      </Tooltip>
 
-      <Button>
-        {isVip ? (
-          <Tooltip title="Remove player from VIPs." arrow>
-            <StarBorder color="primary" onClick={onAddVip} />
-          </Tooltip>
-        ) : (
-          <Tooltip title="Add player to VIPs." arrow>
-            <StarIcon size="small" onClick={onAddVip} />
-          </Tooltip>
-        )}
-      </Button>
+      <Tooltip title="Manage player's VIP" arrow>
+        <Button color={isVip && "secondary"}>
+          <StarIcon size="small" onClick={onAddVip} />
+        </Button>
+      </Tooltip>
 
       <Button>
         {isWatched ? (

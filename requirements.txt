@@ -1,26 +1,29 @@
-Click==8.1.0
-Django==4.2.7
-django-cors-headers==4.2.0
-redis==5.0.1
-sqlalchemy==2.0.23
+Click==8.1.7
+Django==4.2.15
+django-cors-headers==4.4.0
+redis==5.0.8
+sqlalchemy==2.0.32
+channels==4.1.0
+channels-redis==4.2.0
+orjson==3.10.7
 simplejson==3.19.2
 psycopg2-binary
-sentry-sdk==0.17.1
-python-dateutil==2.8.2
-git+https://github.com/cemathey/python-discord-webhook.git@4d79ab09526b96a2cc86c50ca1c609d7b644c6c7
-requests==2.31.0
+sentry-sdk[django]==2.13.0
+python-dateutil==2.9.0.post0
+discord-webhook[async]
+requests==2.32.2
 steam==1.4.4
 # Alembic does not use semantic versioning, so be careful with the version numbers https://alembic.sqlalchemy.org/en/latest/front.html#versioning-scheme
-alembic==1.12.1
-# rq-scheduler doesn't work with rq > 1.13.0 right now because of a deprecated `ColorizingStreamHandler` import
-rq==1.15.1
+alembic==1.13.2
+rq==1.16.2
 rq-scheduler==0.13.1
-paramiko==3.3.1
+paramiko==3.4.1
 ftpretty==0.4.0
 pytz>=2023.3
 pandas>=1.4.1,<2.0.0
-pydantic==2.3.0
-discord.py==2.3.2
+numpy>=1.26.0,<2.0.0
+pydantic==2.7.4
+discord.py==2.4.0
 # django-directory
 # django-dirctory is currently incompatible with Django 4.0+, PR is pending to fix django-directory upstream
 git+https://github.com/cemathey/django-directory@f51ee1e8dc50edf453fee4a0d9631c0e46fe9433

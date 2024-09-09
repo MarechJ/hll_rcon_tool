@@ -18,9 +18,9 @@ import KeyboardArrowUpIcon from "@material-ui/icons/KeyboardArrowUp";
 import KeyboardArrowDownIcon from "@material-ui/icons/KeyboardArrowDown";
 import { pure } from "recompose";
 import { getName } from "country-list";
-import makeSteamProfileUrl from "../../../utils/makeSteamProfileUrl";
+import makePlayerProfileUrl from "../../../utils/makePlayerProfileUrl";
 
-const getCountry = (country) => {
+export const getCountry = (country) => {
   if (country === "" || country === null) {
     return "";
   }
@@ -60,9 +60,10 @@ export const PlayerHeader = pure(({ classes, player }) => {
         <Link
           target="_blank"
           color="inherit"
-          href={makeSteamProfileUrl(player.get(
-            "steam_id_64"
-          ))}
+          href={makePlayerProfileUrl(
+            player.get("player_id"),
+            firstName.get("name")
+          )}
         >
           <Avatar src={avatarUrl}>{firstNameLetter}</Avatar>
         </Link>
@@ -98,7 +99,7 @@ export const PlayerHeader = pure(({ classes, player }) => {
                 ) : (
                   ""
                 )}
-                {namesByMatch.get(0, "")} {getCountry(country)}
+                {namesByMatch.get(0, firstName?.get("name"))} {getCountry(country)}
               </Typography>
             )}
           </React.Fragment>
@@ -107,9 +108,9 @@ export const PlayerHeader = pure(({ classes, player }) => {
           <Link
             color="inherit"
             component={RouterLink}
-            to={`/player/${player.get("steam_id_64")}`}
+            to={`/player/${player.get("player_id")}`}
           >
-            {player.get("steam_id_64")}
+            {player.get("player_id")}
           </Link>
         }
       />
@@ -125,7 +126,7 @@ export const PlayerHeader = pure(({ classes, player }) => {
                   alert("This feature only works if your rcon uses HTTPS");
                   return;
                 }
-                var text = player.get("steam_id_64");
+                var text = player.get("player_id");
                 navigator.clipboard.writeText(text).then(
                   function () {
                     console.log("Async: Copying to clipboard was successful!");
@@ -149,13 +150,14 @@ export const PlayerHeader = pure(({ classes, player }) => {
                   .get("names")
                   .first()
                   .get("name")}\nAliases: ${player
-                  .get("names", new List())
-                  .map((n) => n.get("name"))
-                  .join(" | ")}\nSteamID: ${player.get(
-                  "steam_id_64"
-                )}\nSteam URL: ${makeSteamProfileUrl(player.get(
-                  "steam_id_64"
-                ))}\nType of issue:\nDescription:\nEvidence:`;
+                    .get("names", new List())
+                    .map((n) => n.get("name"))
+                    .join(" | ")}\nPlayer ID: ${player.get(
+                      "player_id"
+                    )}\nSteam URL: ${makePlayerProfileUrl(
+                      player.get("player_id"),
+                      player.get("names").first().get("name")
+                    )}\nType of issue:\nDescription:\nEvidence:`;
                 if (navigator.clipboard === undefined) {
                   alert(`This feature only works if your rcon uses HTTPS.`);
                   return;

@@ -7,9 +7,10 @@ import {
 import InputLabel from "@material-ui/core/InputLabel";
 import MenuItem from "@material-ui/core/MenuItem";
 import FormControl from "@material-ui/core/FormControl";
+import FormControlLabel from "@material-ui/core/FormControlLabel";
 import Select from "@material-ui/core/Select";
 import Grid from "@material-ui/core/Grid";
-import { Button, IconButton } from "@material-ui/core";
+import { Button, IconButton, Switch } from "@material-ui/core";
 import Autocomplete from "@material-ui/lab/Autocomplete";
 import TextField from "@material-ui/core/TextField";
 import RefreshIcon from "@material-ui/icons/Refresh";
@@ -20,6 +21,43 @@ import AutoRefreshLine from "../autoRefreshLine";
 import ListItemText from "@material-ui/core/ListItemText";
 import FullscreenIcon from "@material-ui/icons/Fullscreen";
 import FullscreenExitIcon from "@material-ui/icons/FullscreenExit";
+
+const formatClass = (action, classes, highlightLogs) => {
+  // if the message is a chat message
+  if (highlightLogs) {
+    if (action.toLowerCase().includes("chat")) {
+      if (action.toLowerCase().includes("allies")) {
+        return classes.logsChatAllies;
+      }
+      if (action.toLowerCase().includes("axis")) {
+        return classes.logsChatAxis;
+      }
+    } else if (action.toLowerCase().includes("admin")) {
+      return classes.logsAdmin;
+    } else if (action.toLowerCase().includes("tk")) {
+      return classes.logsTK;
+    } else if (action.toLowerCase().includes("match")) {
+      return classes.logsMatch;
+    } else if (action.toLowerCase().includes("vote")) {
+      return classes.logsVote;
+    } else
+      switch (action.toLowerCase()) {
+        case "message":
+          return classes.logsMessage;
+        case "team kill":
+          return classes.logsTeamKill;
+        case "kill":
+          return classes.logsKill;
+        case "teamswitch":
+          return classes.logsTeamSwitch;
+        case "disconnected":
+          return classes.logsDisconnected;
+        case "connected":
+          return classes.logsConnected;
+      }
+  }
+  return classes.logs;
+};
 
 const Selector = ({
   classes,
@@ -58,10 +96,6 @@ const Selector = ({
 class Logs extends React.Component {
   constructor(props) {
     super(props);
-    console.log(
-      "logs_action_type",
-      JSON.parse(localStorage.getItem("logs_action_type"))
-    );
     this.state = {
       logs: [],
       actions: [],
@@ -82,6 +116,9 @@ class Logs extends React.Component {
       limitOptions: [
         100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000, 100000,
       ],
+      highlightLogs: localStorage.getItem("logs_highlight_logs")
+        ? localStorage.getItem("logs_highlight_logs") === 'true'
+        : false,
     };
 
     this.loadLogs = this.loadLogs.bind(this);
@@ -89,6 +126,7 @@ class Logs extends React.Component {
     this.setActionsFilterInclusivity =
       this.setActionsFilterInclusivity.bind(this);
     this.setLimit = this.setLimit.bind(this);
+    this.setHighlightLogs = this.setHighlightLogs.bind(this);
   }
 
   componentDidMount() {
@@ -99,9 +137,8 @@ class Logs extends React.Component {
 
   loadLogs() {
     const { actionsFilter, playersFilter, limit, inclusiveFilter } = this.state;
-
     return postData(`${process.env.REACT_APP_API_URL}get_recent_logs`, {
-      end: limit,
+      end: parseInt(limit),
       filter_action: actionsFilter,
       filter_player: playersFilter,
       inclusive_filter: inclusiveFilter,
@@ -132,6 +169,11 @@ class Logs extends React.Component {
     localStorage.setItem("logs_limit", limit);
   }
 
+  setHighlightLogs(highlightLogs) {
+    this.setState({ highlightLogs });
+    localStorage.setItem("logs_highlight_logs", highlightLogs);
+  }
+
   render() {
     const { classes, isFullScreen, onFullScreen } = this.props;
     const {
@@ -143,6 +185,7 @@ class Logs extends React.Component {
       limitOptions,
       inclusiveFilter,
       playersFilter,
+      highlightLogs,
     } = this.state;
 
     return (
@@ -158,6 +201,17 @@ class Logs extends React.Component {
               <IconButton onClick={onFullScreen}>
                 {isFullScreen ? <FullscreenExitIcon /> : <FullscreenIcon />}
               </IconButton>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={highlightLogs}
+                    onChange={(e) => this.setHighlightLogs(e.target.checked)}
+                    color="primary"
+                  />
+                }
+                label="Highlight Logs"
+                labelPlacement="top"
+              />
             </h1>
             <ListItemText secondary="30s auto refresh" />
             <AutoRefreshLine
@@ -257,7 +311,10 @@ class Logs extends React.Component {
           <Grid item className={classes.padding} xs={12}>
             <Paper className={classes.paperLogs}>
               {logs.map((l) => (
-                <pre key={l.raw} className={classes.logs}>
+                <pre
+                  key={l.raw}
+                  className={formatClass(l.action, classes, highlightLogs)}
+                >
                   {moment(new Date(l.timestamp_ms)).format(
                     "HH:mm:ss - ddd, MMM D"
                   ) +

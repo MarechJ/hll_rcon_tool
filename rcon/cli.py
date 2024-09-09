@@ -8,17 +8,20 @@ from typing import Any, Set, Type
 import click
 import pydantic
 import yaml
+from sqlalchemy import func as pg_func
+from sqlalchemy import select, text, update
 
 import rcon.expiring_vips.service
 import rcon.user_config
 import rcon.user_config.utils
 from rcon import auto_settings, broadcast, game_logs, routines
 from rcon.automods import automod
+from rcon.blacklist import BlacklistCommandHandler
 from rcon.cache_utils import RedisCached, get_redis_pool, invalidates
 from rcon.discord_chat import get_handler
-from rcon.game_logs import LogLoop, load_generic_hooks
-from rcon.models import enter_session, install_unaccent
-from rcon.rcon import Rcon
+from rcon.game_logs import LogLoop, LogStream, load_generic_hooks
+from rcon.models import PlayerID, enter_session, install_unaccent
+from rcon.rcon import get_rcon
 from rcon.scoreboard import live_stats_loop
 from rcon.server_stats import (
     save_server_stats_for_last_hours,
@@ -26,7 +29,8 @@ from rcon.server_stats import (
 )
 from rcon.settings import SERVER_INFO
 from rcon.steam_utils import enrich_db_users
-from rcon.user_config.auto_settings import AutoSettingsConfig, seed_default_config
+from rcon.user_config.auto_settings import AutoSettingsConfig
+from rcon.user_config.log_stream import LogStreamUserConfig
 from rcon.user_config.webhooks import (
     BaseMentionWebhookUserConfig,
     BaseUserConfig,
@@ -40,9 +44,6 @@ logger = logging.getLogger(__name__)
 @click.group()
 def cli():
     pass
-
-
-ctl = Rcon(SERVER_INFO)
 
 
 @cli.command(name="live_stats_loop")
@@ -70,8 +71,8 @@ def save_recent_stats():
 def run_enrich_db_users():
     try:
         enrich_db_users()
-    except:
-        logger.exception("DB users enrichment stopped")
+    except Exception as e:
+        logger.exception("DB users enrichment stopped: %s", e)
         sys.exit(1)
 
 
@@ -85,6 +86,19 @@ def run_log_loop():
         except:
             logger.exception("Chat recorder stopped")
             sys.exit(1)
+
+
+@cli.command(name="log_stream")
+def run_log_stream():
+    try:
+        config = LogStreamUserConfig.load_from_db()
+        stream = LogStream()
+        stream.clear()
+        if config.enabled:
+            stream.run()
+    except:
+        logger.exception("Log stream stopped")
+        sys.exit(1)
 
 
 @cli.command(name="deprecated_log_loop")
@@ -117,6 +131,11 @@ def run_automod():
     automod.run()
 
 
+@cli.command(name="blacklists")
+def run_blacklists():
+    BlacklistCommandHandler().run()
+
+
 @cli.command(name="log_recorder")
 @click.option("-t", "--frequency-min", default=5)
 @click.option("-n", "--now", is_flag=True)
@@ -126,7 +145,6 @@ def run_log_recorder(frequency_min, now):
 
 def init(force=False):
     install_unaccent()
-    seed_default_config()
 
 
 @cli.command(name="init_db")
@@ -138,6 +156,7 @@ def do_init(force):
 @cli.command(name="set_maprotation")
 @click.argument("maps", nargs=-1)
 def maprot(maps):
+    ctl = get_rcon()
     ctl.set_maprotation(list(maps))
 
 
@@ -155,10 +174,11 @@ def unregister():
 @click.argument("file", type=click.File("r"))
 @click.option("-p", "--prefix", default="")
 def importvips(file, prefix):
+    ctl = get_rcon()
     for line in file:
         line = line.strip()
-        steamid, name = line.split(" ", 1)
-        ctl.do_add_vip(name=f"{prefix}{name}", steam_id_64=steamid)
+        player_id, name = line.split(" ", 1)
+        ctl.add_vip(player_id=player_id, description=f"{prefix}{name}")
 
 
 @cli.command(name="clear_cache")
@@ -168,7 +188,8 @@ def clear():
 
 @cli.command
 def export_vips():
-    print("/n".join(f"{d['steam_id_64']} {d['name']}" for d in ctl.get_vip_ids()))
+    ctl = get_rcon()
+    print("/n".join(f"{d['player_id']} {d['name']}" for d in ctl.get_vip_ids()))
 
 
 def do_print(func):
@@ -362,7 +383,7 @@ def set_user_settings(server: int, input: click.Path, dry_run=True):
                 server=server, cls_name=cls.__name__
             )
             print(f"setting {key=} class={cls.__name__}")
-            rcon.user_config.utils.set_user_config(key, model.model_dump())
+            rcon.user_config.utils.set_user_config(key, model)
 
         if auto_settings_key in user_settings:
             rcon.user_config.utils.set_user_config(
@@ -397,14 +418,171 @@ def reset_user_settings(server: int):
             server=server, cls_name=cls.__name__
         )
         print(f"Resetting {key}")
-        rcon.user_config.utils.set_user_config(key, model.model_dump())
+        rcon.user_config.utils.set_user_config(key, model)
 
     print("Done")
+
+
+def _merge_duplicate_player_ids(existing_ids: set[str] | None = None):
+    logger.info(f"Merging duplicate player ID records")
+    players = {}
+
+    with enter_session() as session:
+        if existing_ids:
+            logger.info(
+                f"Attempting to merge {len(existing_ids)} already converted IDs"
+            )
+            stmt = select(PlayerID).filter(PlayerID.player_id.in_(existing_ids))
+        else:
+            stmt = select(PlayerID)
+        rows = session.execute(stmt).scalars()
+
+        for player in rows:
+            id_, steamid = player.id, player.player_id
+
+            if steamid in players:
+                players[steamid].append(id_)
+            else:
+                players[steamid] = [id_]
+
+        duplicate_players = dict(filter(lambda p: len(p[1]) > 1, players.items()))
+        for steamid, ids in duplicate_players.items():
+            logger.info(f"Merging {steamid}")
+            keep = ids.pop(0)
+
+            session.execute(
+                text(
+                    "UPDATE blacklist_record SET player_id_id = :keep WHERE player_id_id = ANY(:ids)"
+                ),
+                {"keep": keep, "ids": ids},
+            )
+            session.execute(
+                text(
+                    "UPDATE log_lines SET player1_steamid = :keep WHERE player1_steamid = ANY(:ids)"
+                ),
+                {"keep": keep, "ids": ids},
+            )
+            session.execute(
+                text(
+                    "UPDATE log_lines SET player2_steamid = :keep WHERE player2_steamid = ANY(:ids)"
+                ),
+                {"keep": keep, "ids": ids},
+            )
+            session.execute(
+                text(
+                    "UPDATE player_at_count SET playersteamid_id = :keep WHERE playersteamid_id = ANY(:ids)"
+                ),
+                {"keep": keep, "ids": ids},
+            )
+            session.execute(
+                text(
+                    "UPDATE player_blacklist SET playersteamid_id = :keep WHERE playersteamid_id = ANY(:ids)"
+                ),
+                {"keep": keep, "ids": ids},
+            )
+            session.execute(
+                text(
+                    "UPDATE player_comments SET playersteamid_id = :keep WHERE playersteamid_id = ANY(:ids)"
+                ),
+                {"keep": keep, "ids": ids},
+            )
+            session.execute(
+                text(
+                    "UPDATE player_flags SET playersteamid_id = :keep WHERE playersteamid_id = ANY(:ids)"
+                ),
+                {"keep": keep, "ids": ids},
+            )
+            session.execute(
+                text(
+                    "UPDATE player_optins SET playersteamid_id = :keep WHERE playersteamid_id = ANY(:ids)"
+                ),
+                {"keep": keep, "ids": ids},
+            )
+            session.execute(
+                text(
+                    "UPDATE player_sessions SET playersteamid_id = :keep WHERE playersteamid_id = ANY(:ids)"
+                ),
+                {"keep": keep, "ids": ids},
+            )
+            session.execute(
+                text(
+                    "UPDATE player_stats SET playersteamid_id = :keep WHERE playersteamid_id = ANY(:ids)"
+                ),
+                {"keep": keep, "ids": ids},
+            )
+            session.execute(
+                text(
+                    "UPDATE player_vip SET playersteamid_id = :keep WHERE playersteamid_id = ANY(:ids)"
+                ),
+                {"keep": keep, "ids": ids},
+            )
+            session.execute(
+                text(
+                    "UPDATE player_watchlist SET playersteamid_id = :keep WHERE playersteamid_id = ANY(:ids)"
+                ),
+                {"keep": keep, "ids": ids},
+            )
+            session.execute(
+                text(
+                    "UPDATE players_actions SET playersteamid_id = :keep WHERE playersteamid_id = ANY(:ids)"
+                ),
+                {"keep": keep, "ids": ids},
+            )
+            session.execute(
+                text("DELETE FROM steam_info WHERE playersteamid_id = ANY(:ids)"),
+                {"ids": ids},
+            )
+            session.execute(
+                text("DELETE FROM player_names WHERE playersteamid_id = ANY(:ids)"),
+                {"ids": ids},
+            )
+            session.execute(
+                text("DELETE FROM steam_id_64 WHERE id = ANY(:ids)"), {"ids": ids}
+            )
+    logger.info(f"Duplicate player ID merge complete")
+
+
+@cli.command(name="merge_duplicate_player_ids")
+def merge_duplicate_player_ids():
+    _merge_duplicate_player_ids()
+
+
+@cli.command(name="convert_win_player_ids")
+def convert_win_player_ids():
+    player_ids_to_merge: set[str] = set()
+    updated = 0
+    with enter_session() as session:
+        logger.info(f"Converting old style windows store player IDs to new style")
+        old_style_stmt = select(PlayerID).filter(PlayerID.player_id.like("%-%"))
+        old_style_rows = session.execute(old_style_stmt).scalars()
+
+        for p in old_style_rows:
+            logger.info(f"updating {p.player_id}")
+            already_exists_stmt = select(PlayerID).filter(
+                PlayerID.player_id == pg_func.md5(p.player_id)
+            )
+            res = session.execute(already_exists_stmt).one_or_none()
+            if res:
+                logger.info(f"{p.player_id} already has a converted ID")
+                player_ids_to_merge.add(p.player_id)
+            else:
+                updated += 1
+                p.player_id = pg_func.md5(p.player_id)
+
+        logger.info(f"Converted {updated} player IDs")
+
+    if player_ids_to_merge:
+        logger.info(
+            f"{len(player_ids_to_merge)} old style player IDs already existed, merging them"
+        )
+        _merge_duplicate_player_ids(existing_ids=player_ids_to_merge)
 
 
 PREFIXES_TO_EXPOSE = ["get_", "set_", "do_"]
 EXCLUDED: Set[str] = {"set_maprotation", "connection_pool"}
 
+# For this to work correctly with click it has to be at the top level of the module and ran on import
+ctl = get_rcon()
 # Dynamically register all the methods from ServerCtl
 # use dir instead of inspect.getmembers to avoid touching cached_property
 # members that would be initialized even if we want to skip them, like connection_pool

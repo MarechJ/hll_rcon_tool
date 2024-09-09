@@ -2,6 +2,12 @@ import React from "react";
 
 import { toast } from "react-toastify";
 
+const CRCON_API = `${process.env.REACT_APP_API_URL}`
+
+export function execute(command, data) {
+  return postData(CRCON_API + command, data)
+}
+
 function LoginError(message) {
   this.message = message;
   this.name = "LoginError";
@@ -148,9 +154,11 @@ async function sendAction(command, parameters) {
 
 async function _checkResult(data) {
   if (data.result) {
-    let unescaped = data.result.messages.map(ele => ele.replaceAll(/\\n/g, '\n'))
-    unescaped = unescaped.map(ele => ele.replaceAll(/\\t/g, '\t'))
-    return unescaped
+    let unescaped = data.result.messages.map((ele) =>
+      ele.replaceAll(/\\n/g, "\n")
+    );
+    unescaped = unescaped.map((ele) => ele.replaceAll(/\\t/g, "\t"));
+    return unescaped;
   }
   return [];
 }
@@ -164,16 +172,228 @@ async function getSharedMessages(namespace) {
     .then(_checkResult);
 }
 
-async function addPlayerToWatchList(steam_id_64, reason, playerName) {
-  return postData(`${process.env.REACT_APP_API_URL}do_watch_player`, {
-    steam_id_64: steam_id_64,
+async function addPlayerToWatchList(player_id, reason, playerName) {
+  return postData(`${process.env.REACT_APP_API_URL}watch_player`, {
+    player_id: player_id,
     reason: reason,
     player_name: playerName,
   })
     .then((response) =>
-      showResponse(response, `PlayerID ${steam_id_64} watched`, true)
+      showResponse(response, `Player ID ${player_id} watched`, true)
     )
     .catch(handle_http_errors);
+}
+
+async function addPlayerToBlacklist({
+  blacklistId,
+  playerId,
+  expiresAt,
+  reason
+}) {
+  try {
+    const response = await postData(`${process.env.REACT_APP_API_URL}add_blacklist_record`, {
+      blacklist_id: blacklistId,
+      player_id: playerId,
+      expires_at: expiresAt || null,
+      reason
+    })
+
+    return showResponse(response, `Player ID ${playerId} was blacklisted`, true)
+  } catch (error) {
+    handle_http_errors(error)
+  }
+}
+
+async function getBlacklists() {
+  try {
+    const response = await get("get_blacklists")
+    const data = await showResponse(response, "get_blacklists", false)
+    if (data.result) {
+      return data.result;
+    }    
+  } catch (error) {
+    handle_http_errors(error)
+  }
+}
+
+async function getServerStatus() {
+  try {
+    const response = await get("get_status");
+    const data = await response.json();
+    if (data.result) {
+      return data.result;
+    }    
+  } catch (error) {
+    handle_http_errors(error)
+  }
+}
+
+async function getGameState() {
+  try {
+    const response = await get("get_gamestate");
+    const data = await response.json();
+    if (data.result) {
+      return data.result;
+    }    
+  } catch (error) {
+    handle_http_errors(error)
+  }
+}
+
+async function getVips() {
+  try {
+    const response = await get("get_vip_ids");
+    const data = await response.json();
+    if (data.result) {
+      return data.result;
+    }    
+  } catch (error) {
+    handle_http_errors(error)
+  }
+}
+
+async function addPlayerVip(player) {
+  try {
+    const response = await execute("add_vip", player);
+    const data = await showResponse(response, "add_vip", true)
+    if (data.result) {
+      return data.result;
+    }    
+  } catch (error) {
+    handle_http_errors(error)
+  }
+}
+
+async function removePlayerVip(player) {
+  try {
+    const response = await execute("remove_vip", player);
+    const data = await showResponse(response, "remove_vip", true)
+    if (data.result) {
+      return data.result;
+    }    
+  } catch (error) {
+    handle_http_errors(error)
+  }
+}
+
+async function resetVotemapState() {
+  try {
+    const response = await execute("reset_votemap_state");
+    const data = await showResponse(response, "reset_votemap_state", true)
+    if (data.result) {
+      return data.result;
+    }
+  } catch (error) {
+    handle_http_errors(error)
+  }
+}
+
+async function updateVotemapConfig(config) {
+  try {
+    const response = await execute("set_votemap_config", config);
+    const data = await showResponse(response, "set_votemap_config", true)
+    if (data.result) {
+      return data.result;
+    }    
+  } catch (error) {
+    handle_http_errors(error)
+  }
+}
+
+async function getVotemapStatus() {
+  try {
+    const response = await get("get_votemap_status")
+    const data = await response.json()
+    if (data.result) {
+      return data.result;
+    }    
+  } catch (error) {
+    handle_http_errors(error)
+  }
+}
+
+async function getVotemapConfig() {
+  try {
+    const response = await get("get_votemap_config")
+    const data = await response.json()
+    if (data.result) {
+      return data.result;
+    }    
+  } catch (error) {
+    handle_http_errors(error)
+  }
+}
+
+async function changeMap(mapId) {
+  try {
+    const response = await execute("set_map", { map_name: mapId });
+    const data = await showResponse(response, `Map changed to ${mapId}`, true)
+    if (data.result) {
+      return data.result;
+    }    
+  } catch (error) {
+    handle_http_errors(error)
+  }
+}
+
+async function changeGameLayout(payload) {
+  try {
+    const response = await execute("set_game_layout", payload);
+    const data = await showResponse(response, "set_game_layout", true)
+    if (data.result) {
+      return data.result;
+    }    
+  } catch (error) {
+    handle_http_errors(error)
+  }
+}
+
+async function getMapObjectives() {
+  try {
+    const response = await get("get_objective_rows")
+    const data = await response.json()
+    if (data.result) {
+      return data.result;
+    }    
+  } catch (error) {
+    handle_http_errors(error)
+  }
+}
+
+async function getVotemapWhitelist() {
+  try {
+    const response = await get("get_votemap_whitelist")
+    const data = await response.json()
+    if (data.result) {
+      return data.result;
+    }    
+  } catch (error) {
+    handle_http_errors(error)
+  }
+}
+
+async function setVotemapWhitelist(payload) {
+  try {
+    const response = await execute("set_votemap_whitelist", { map_names: payload });
+    const data = await showResponse(response, "set_votemap_whitelist", true)
+    if (data) {
+      return data?.arguments?.map_names;
+    }    
+  } catch (error) {
+    handle_http_errors(error)
+  }
+}
+
+async function resetVotemapWhitelist() {
+  try {
+    const response = await execute("reset_map_votemap_whitelist", {});
+    const data = await showResponse(response, "reset_map_votemap_whitelist", true)
+    if (data.result) {
+      return data.result;
+    }    
+  } catch (error) {
+    handle_http_errors(error)
+  }
 }
 
 export {
@@ -186,4 +406,21 @@ export {
   LoginError,
   sendAction,
   addPlayerToWatchList,
+  addPlayerToBlacklist,
+  getBlacklists,
+  getServerStatus,
+  addPlayerVip,
+  removePlayerVip,
+  getVips,
+  resetVotemapState,
+  getVotemapStatus,
+  getVotemapConfig,
+  updateVotemapConfig,
+  changeMap,
+  changeGameLayout,
+  getMapObjectives,
+  getGameState,
+  getVotemapWhitelist,
+  setVotemapWhitelist,
+  resetVotemapWhitelist,
 };

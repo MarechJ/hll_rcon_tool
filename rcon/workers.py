@@ -5,7 +5,6 @@ from concurrent.futures import as_completed
 from datetime import timedelta
 from typing import Set
 
-from dateutil import relativedelta
 from rq import Queue
 from rq.job import Job
 from sqlalchemy import and_
@@ -14,11 +13,10 @@ from sqlalchemy.orm import Session
 from rcon.cache_utils import get_redis_client
 from rcon.models import Maps, PlayerStats, enter_session
 from rcon.player_history import get_player
-from rcon.rcon import Rcon
 from rcon.scoreboard import TimeWindowStats
-from rcon.settings import SERVER_INFO
 from rcon.types import MapInfo, PlayerStat
 from rcon.utils import INDEFINITE_VIP_DATE
+
 logger = logging.getLogger("rcon")
 
 
@@ -28,9 +26,9 @@ def get_queue(redis_client=None):
 
 
 def broadcast(msg):
-    from rcon.rcon import Rcon
+    from rcon.api_commands import get_rcon_api
 
-    rcon = Rcon(SERVER_INFO)
+    rcon = get_rcon_api()
     rcon.set_broadcast(msg)
 
 
@@ -41,23 +39,23 @@ def temporary_broadcast(rcon, message, seconds):
 
 
 def welcome(msg):
-    from rcon.rcon import Rcon
+    from rcon.api_commands import get_rcon_api
 
-    rcon = Rcon(SERVER_INFO)
+    rcon = get_rcon_api()
     rcon.set_welcome_message(msg)
 
 
 def temporary_welcome(rcon, message, seconds):
-    prev = rcon.set_welcome_message(message, save=False)
+    prev = rcon.set_welcome_message(message)
     queue = get_queue()
     queue.enqueue_in(timedelta(seconds=seconds), welcome, prev)
 
 
 def temp_welcome_standalone(msg, seconds):
-    from rcon.rcon import Rcon
+    from rcon.api_commands import get_rcon_api
 
-    rcon = Rcon(SERVER_INFO)
-    prev = rcon.set_welcome_message(msg, save=False)
+    rcon = get_rcon_api()
+    prev = rcon.set_welcome_message(msg)
     queue = get_queue()
     queue.enqueue_in(timedelta(seconds), welcome, prev)
 
@@ -114,13 +112,15 @@ def record_stats(map_info: MapInfo):
 
 
 def _record_stats(map_info: MapInfo):
-    start = datetime.datetime.utcfromtimestamp(map_info.get("start"))
-    end = datetime.datetime.utcfromtimestamp(map_info.get("end"))
+    raw_start = map_info.get("start")
+    raw_end = map_info.get("end")
 
-    if not start or not end:
+    if not raw_start or not raw_end:
         logger.error("Can't record stats, no time info for %s", map_info)
         return
 
+    start = datetime.datetime.utcfromtimestamp(raw_start)
+    end = datetime.datetime.utcfromtimestamp(raw_end)
     with enter_session() as sess:
         map_ = get_or_create_map(
             sess=sess,
@@ -134,49 +134,64 @@ def _record_stats(map_info: MapInfo):
 
 
 def record_stats_from_map(
-    sess: Session, map_, ps: dict[str, PlayerStat] = (), force: bool = False
+    sess: Session, map_: Maps, ps: dict[str, PlayerStat] = (), force: bool = False
 ):
     stats = TimeWindowStats()
     player_stats = stats.get_players_stats_at_time(
         from_=map_.start, until=map_.end, server_number=str(map_.server_number)
     )
+    map_.result = stats.map_result(from_=map_.start, until=map_.end, server_number=str(map_.server_number))
+    sess.add(map_)
 
     seen_players: Set[str] = set()
     for player, stats in player_stats.items():
-        if steam_id_64 := stats.get("steam_id_64"):
+        if player_id := stats.get("player_id"):
             # If a player has changed their name and had stats recorded under two or more
             # names in the same match it will otherwise try to insert duplicate records
             # This will only record stats for the first instance of the player it sees, the other(s)
             # will be lost of course
-            if steam_id_64 in seen_players:
-                logger.info(f"Failed to record duplicate stats for {steam_id_64}")
+            if player_id in seen_players:
+                logger.info(f"Failed to record duplicate stats for {player_id}")
                 continue
-            seen_players.add(steam_id_64)
+            seen_players.add(player_id)
 
-            player_record = get_player(sess, steam_id_64=steam_id_64)
+            player_record = get_player(sess, player_id=player_id)
             if not player_record:
-                logger.error("Can't find DB record for %s", steam_id_64)
+                logger.error("Can't find DB record for %s", player_id)
                 continue
 
             existing: PlayerStats | None = (
                 sess.query(PlayerStats)
                 .filter(
                     PlayerStats.map_id == map_.id,
-                    PlayerStats.playersteamid_id == player_record.id,
+                    PlayerStats.player_id_id == player_record.id,
                 )
                 .one_or_none()
             )
-            default_stat = PlayerStat(combat=0, offense=0, defense=0, support=0)
+            default_stat = PlayerStat(
+                combat=0,
+                offense=0,
+                defense=0,
+                support=0,
+                p_combat=0,
+                p_offense=0,
+                p_defense=0,
+                p_support=0,
+            )
             if existing is not None:
                 default_stat = PlayerStat(
                     combat=existing.combat,
+                    p_combat=0,
                     offense=existing.offense,
+                    p_offense=0,
                     defense=existing.defense,
+                    p_defense=0,
                     support=existing.support,
+                    p_support=0,
                 )
-            map_stats = ps.get(steam_id_64, default_stat)
+            map_stats: PlayerStat = ps.get(player_id, default_stat)
             player_stat = dict(
-                playersteamid_id=player_record.id,
+                player_id_id=player_record.id,
                 map_id=map_.id,
                 name=stats.get("player"),
                 kills=stats.get("kills"),
@@ -200,10 +215,10 @@ def record_stats_from_map(
                 most_killed=stats.get("most_killed"),
                 death_by=stats.get("death_by"),
                 death_by_weapons=stats.get("death_by_weapons"),
-                combat=map_stats.get("combat"),
-                offense=map_stats.get("offense"),
-                defense=map_stats.get("defense"),
-                support=map_stats.get("support"),
+                combat=map_stats.get("combat", 0) + map_stats.get("p_combat", 0),
+                offense=map_stats.get("offense", 0) + map_stats.get("p_offense", 0),
+                defense=map_stats.get("defense", 0) + map_stats.get("p_defense", 0),
+                support=map_stats.get("support", 0) + map_stats.get("p_support", 0),
             )
             if existing is not None and force != True:
                 continue
@@ -242,7 +257,7 @@ def record_stats_from_map(
                 player_stat_record = PlayerStats(**player_stat)
                 sess.add(player_stat_record)
         else:
-            logger.error("Stat object does not contain a steam id: %s", stats)
+            logger.error("Stat object does not contain a player ID: %s", stats)
 
 
 def get_job_results(job_key):
@@ -279,47 +294,49 @@ def worker_bulk_vip(name_ids, job_key, mode="override"):
 
 
 def bulk_vip(name_ids, mode="override"):
+    from rcon.api_commands import get_rcon_api
+
+    ctl = get_rcon_api()
     errors = []
-    ctl = Rcon(SERVER_INFO)
     logger.info(f"bulk_vip name_ids {name_ids[0]} type {type(name_ids)}")
     vips = ctl.get_vip_ids()
 
     removal_futures = {
-        ctl.run_in_pool("do_remove_vip", vip["steam_id_64"]): vip
+        ctl.run_in_pool("remove_vip", vip["player_id"]): vip
         for idx, vip in enumerate(vips)
     }
     for future in as_completed(removal_futures):
         try:
             result = future.result()
-            if result != "SUCCESS":
+            if not result:
                 errors.append(f"Failed to add {removal_futures[future]}")
         except Exception:
             logger.exception(f"Failed to remove vip from {removal_futures[future]}")
 
     processed_additions = []
-    for name, steam_id, expiration_timestamp in name_ids:
+    for description, player_id, expiration_timestamp in name_ids:
         if not expiration_timestamp:
             expiration_timestamp = INDEFINITE_VIP_DATE.isoformat()
         else:
             expiration_timestamp = expiration_timestamp.isoformat()
 
-        processed_additions.append((name, steam_id, expiration_timestamp))
+        processed_additions.append((description, player_id, expiration_timestamp))
 
     add_futures = {
         ctl.run_in_pool(
-            "do_add_vip",
-            name,
-            steam_id,
+            "add_vip",
+            player_id=player_id,
+            description=description,
             expiration=expiration_timestamp,
-        ): steam_id
-        for idx, (name, steam_id, expiration_timestamp) in enumerate(
+        ): player_id
+        for idx, (description, player_id, expiration_timestamp) in enumerate(
             processed_additions
         )
     }
     for future in as_completed(add_futures):
         try:
             result = future.result()
-            if result != "SUCCESS":
+            if not result:
                 errors.append(f"Failed to add {add_futures[future]}")
         except Exception:
             logger.exception(f"Failed to add vip to {add_futures[future]}")

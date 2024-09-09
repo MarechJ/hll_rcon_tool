@@ -5,24 +5,34 @@ import os
 import unicodedata
 from functools import cmp_to_key
 
-from sqlalchemy import func
-from sqlalchemy.orm import contains_eager, selectinload
+from dateutil import parser
+from sqlalchemy import func, or_
+from sqlalchemy.orm import Session, contains_eager, selectinload
 from sqlalchemy.sql.functions import ReturnTypeFromArgs
 
 from rcon.commands import CommandFailedError
 from rcon.models import (
-    BlacklistedPlayer,
+    BlacklistRecord,
+    PlayerActionState,
     PlayerComment,
     PlayerFlag,
+    PlayerID,
     PlayerName,
     PlayersAction,
     PlayerSession,
-    PlayerSteamID,
     SteamInfo,
     WatchList,
     enter_session,
 )
+from rcon.types import (
+    PlayerActionState,
+    PlayerActionType,
+    PlayerCommentType,
+    PlayerFlagType,
+    PlayerProfileType,
+)
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
+from rcon.utils import strtobool
 
 
 class unaccent(ReturnTypeFromArgs):
@@ -32,26 +42,22 @@ class unaccent(ReturnTypeFromArgs):
 logger = logging.getLogger(__name__)
 
 
-def player_has_flag(player_dict, flag):
+def player_has_flag(player_dict, flag) -> bool:
     flags = player_dict.get("flags") or []
 
     return flag in {flag["flag"] for flag in flags}
 
 
-def get_player(sess, steam_id_64) -> PlayerSteamID | None:
-    return (
-        sess.query(PlayerSteamID)
-        .filter(PlayerSteamID.steam_id_64 == steam_id_64)
-        .one_or_none()
-    )
+def get_player(sess: Session, player_id: str) -> PlayerID | None:
+    return sess.query(PlayerID).filter(PlayerID.player_id == player_id).one_or_none()
 
 
-def get_player_profile(steam_id_64, nb_sessions):
+def get_player_profile(player_id: str, nb_sessions: int):
+    nb_sessions = int(nb_sessions)
+
     with enter_session() as sess:
         player = (
-            sess.query(PlayerSteamID)
-            .filter(PlayerSteamID.steam_id_64 == steam_id_64)
-            .one_or_none()
+            sess.query(PlayerID).filter(PlayerID.player_id == player_id).one_or_none()
         )
         if player is None:
             return
@@ -60,31 +66,31 @@ def get_player_profile(steam_id_64, nb_sessions):
 
 def get_player_profile_by_ids(sess, ids):
     return (
-        sess.query(PlayerSteamID)
-        .filter(PlayerSteamID.id.in_(ids))
+        sess.query(PlayerID)
+        .filter(PlayerID.id.in_(ids))
         .options(
-            selectinload(PlayerSteamID.names),
-            selectinload(PlayerSteamID.received_actions),
-            selectinload(PlayerSteamID.blacklist),
-            selectinload(PlayerSteamID.flags),
-            selectinload(PlayerSteamID.watchlist),
-            selectinload(PlayerSteamID.steaminfo),
+            selectinload(PlayerID.names),
+            selectinload(PlayerID.received_actions),
+            selectinload(PlayerID.b),
+            selectinload(PlayerID.flags),
+            selectinload(PlayerID.watchlist),
+            selectinload(PlayerID.steaminfo),
         )
         .all()
     )
 
 
-def get_player_profile_by_steam_ids(sess, steam_ids):
+def get_player_profile_by_player_ids(sess, player_ids):
     return (
-        sess.query(PlayerSteamID)
-        .filter(PlayerSteamID.steam_id_64.in_(steam_ids))
+        sess.query(PlayerID)
+        .filter(PlayerID.player_id.in_(player_ids))
         .options(
-            selectinload(PlayerSteamID.names),
-            selectinload(PlayerSteamID.received_actions),
-            selectinload(PlayerSteamID.blacklist),
-            selectinload(PlayerSteamID.flags),
-            selectinload(PlayerSteamID.watchlist),
-            selectinload(PlayerSteamID.steaminfo),
+            selectinload(PlayerID.names),
+            selectinload(PlayerID.received_actions),
+            selectinload(PlayerID.blacklists),
+            selectinload(PlayerID.flags),
+            selectinload(PlayerID.watchlist),
+            selectinload(PlayerID.steaminfo),
         )
         .all()
     )
@@ -92,29 +98,32 @@ def get_player_profile_by_steam_ids(sess, steam_ids):
 
 def get_player_profile_by_id(id, nb_sessions):
     with enter_session() as sess:
-        player = sess.query(PlayerSteamID).filter(PlayerSteamID.id == id).one_or_none()
+        player = sess.query(PlayerID).filter(PlayerID.id == id).one_or_none()
         if player is None:
             return
         return player.to_dict(limit_sessions=nb_sessions)
 
 
-def _get_profiles(sess, steam_ids, nb_sessions=0):
-    return (
-        sess.query(PlayerSteamID).filter(PlayerSteamID.steam_id_64.in_(steam_ids)).all()
-    )
+def _get_profiles(sess, player_ids, nb_sessions=0):
+    return sess.query(PlayerID).filter(PlayerID.player_id.in_(player_ids)).all()
 
 
-def get_profiles(steam_ids, nb_sessions=1):
+def get_profiles(player_ids, nb_sessions=1):
     with enter_session() as sess:
-        players = _get_profiles(sess, steam_ids, nb_sessions)
+        players = _get_profiles(sess, player_ids, nb_sessions)
 
         return [p.to_dict(limit_sessions=nb_sessions) for p in players]
 
 
-def _get_set_player(sess, player_name, steam_id_64, timestamp=None):
-    player = get_player(sess, steam_id_64)
+def _get_set_player(
+    sess: Session,
+    player_id: str,
+    player_name: str | None = None,
+    timestamp: float | None = None,
+):
+    player = get_player(sess, player_id)
     if player is None:
-        player = _save_steam_id(sess, steam_id_64)
+        player = _save_player_id(sess, player_id)
     if player_name:
         _save_player_alias(
             sess, player, player_name, timestamp or datetime.datetime.now().timestamp()
@@ -128,19 +137,33 @@ def remove_accent(s):
 
 
 def get_players_by_appearance(
-    page=1,
-    page_size=500,
-    last_seen_from: datetime.datetime = None,
-    last_seen_till: datetime.datetime = None,
-    player_name=None,
-    blacklisted=None,
-    steam_id_64=None,
-    is_watched=None,
-    exact_name_match=False,
-    ignore_accent=True,
-    flags=None,
-    country=None,
+    page: int = 1,
+    page_size: int = 500,
+    last_seen_from: datetime.datetime | None = None,
+    last_seen_till: datetime.datetime | None = None,
+    player_id: str | None = None,
+    player_name: str | None = None,
+    blacklisted: bool | None = None,
+    is_watched: bool | None = None,
+    exact_name_match: bool = False,
+    ignore_accent: bool = True,
+    flags: str | list[str] | None = None,
+    country: str | None = None,
 ):
+    page = int(page)
+    page_size = int(page_size)
+
+    if isinstance(last_seen_from, str):
+        last_seen_from = parser.parse(last_seen_from)
+
+    if isinstance(last_seen_till, str):
+        last_seen_till = parser.parse(last_seen_till)
+
+    blacklisted = strtobool(blacklisted)
+    is_watched = strtobool(is_watched)
+    exact_name_match = strtobool(exact_name_match)
+    ignore_accent = strtobool(ignore_accent)
+
     if page <= 0:
         raise ValueError("page needs to be >= 1")
     if page_size <= 0:
@@ -149,7 +172,7 @@ def get_players_by_appearance(
     with enter_session() as sess:
         sub = (
             sess.query(
-                PlayerSession.playersteamid_id,
+                PlayerSession.player_id_id,
                 func.min(
                     func.coalesce(PlayerSession.start, PlayerSession.created)
                 ).label("first"),
@@ -157,17 +180,15 @@ def get_players_by_appearance(
                     "last"
                 ),
             )
-            .group_by(PlayerSession.playersteamid_id)
+            .group_by(PlayerSession.player_id_id)
             .subquery()
         )
-        query = sess.query(PlayerSteamID, sub.c.first, sub.c.last).outerjoin(
-            sub, sub.c.playersteamid_id == PlayerSteamID.id
+        query = sess.query(PlayerID, sub.c.first, sub.c.last).outerjoin(
+            sub, sub.c.player_id_id == PlayerID.id
         )
 
-        if steam_id_64:
-            query = query.filter(
-                PlayerSteamID.steam_id_64.ilike("%{}%".format(steam_id_64))
-            )
+        if player_id:
+            query = query.filter(PlayerID.player_id.ilike("%{}%".format(player_id)))
 
         if player_name:
             search = PlayerName.name
@@ -175,32 +196,38 @@ def get_players_by_appearance(
                 search = unaccent(PlayerName.name)
                 player_name = remove_accent(player_name)
             if not exact_name_match:
-                query = query.join(PlayerSteamID.names).filter(
+                query = query.join(PlayerID.names).filter(
                     search.ilike("%{}%".format(player_name))
                 )
             else:
-                query = query.join(PlayerSteamID.names).filter(search == player_name)
+                query = query.join(PlayerID.names).filter(search == player_name)
 
         if blacklisted is True:
-            query = (
-                query.join(PlayerSteamID.blacklist)
-                .filter(BlacklistedPlayer.is_blacklisted == True)
-                .options(contains_eager(PlayerSteamID.blacklist))
+            query = query.filter(
+                sess.query(BlacklistRecord)
+                .where(
+                    BlacklistRecord.player_id_id == PlayerID.id,
+                    or_(
+                        BlacklistRecord.expires_at.is_(None),
+                        BlacklistRecord.expires_at < func.now(),
+                    ),
+                )
+                .exists()
             )
         if is_watched is True:
             query = (
-                query.join(PlayerSteamID.watchlist)
+                query.join(PlayerID.watchlist)
                 .filter(WatchList.is_watched == True)
-                .options(contains_eager(PlayerSteamID.watchlist))
+                .options(contains_eager(PlayerID.watchlist))
             )
 
         if flags:
             if not isinstance(flags, list):
                 flags = [flags]
-            query = query.join(PlayerSteamID.flags).filter(PlayerFlag.flag.in_(flags))
+            query = query.join(PlayerID.flags).filter(PlayerFlag.flag.in_(flags))
 
         if country:
-            query = query.join(PlayerSteamID.steaminfo).filter(
+            query = query.join(PlayerID.steaminfo).filter(
                 SteamInfo.country == country.upper()
             )
 
@@ -212,7 +239,7 @@ def get_players_by_appearance(
         total = query.count()
         page = min(max(math.ceil(total / page_size), 1), page)
         players = (
-            query.order_by(func.coalesce(sub.c.last, PlayerSteamID.created).desc())
+            query.order_by(func.coalesce(sub.c.last, PlayerID.created).desc())
             .limit(page_size)
             .offset((page - 1) * page_size)
             .all()
@@ -243,12 +270,12 @@ def get_players_by_appearance(
                     "names_by_match": sorted(
                         (n.name for n in p[0].names), key=cmp_to_key(sort_name_match)
                     ),
-                    "first_seen_timestamp_ms": int(p[1].timestamp() * 1000)
-                    if p[1]
-                    else None,
-                    "last_seen_timestamp_ms": int(p[2].timestamp() * 1000)
-                    if p[2]
-                    else None,
+                    "first_seen_timestamp_ms": (
+                        int(p[1].timestamp() * 1000) if p[1] else None
+                    ),
+                    "last_seen_timestamp_ms": (
+                        int(p[2].timestamp() * 1000) if p[2] else None
+                    ),
                     "vip_expiration": p[0].vip.expiration if p[0].vip else None,
                 }
                 for p in players
@@ -258,22 +285,22 @@ def get_players_by_appearance(
         }
 
 
-def _save_steam_id(sess, steam_id_64):
-    steamid = get_player(sess, steam_id_64)
+def _save_player_id(sess, player_id: str) -> PlayerID:
+    player = get_player(sess, player_id)
 
-    if not steamid:
-        steamid = PlayerSteamID(steam_id_64=steam_id_64)
-        sess.add(steamid)
-        logger.info("Adding first time seen steamid %s", steam_id_64)
+    if not player:
+        player = PlayerID(player_id=player_id)
+        sess.add(player)
+        logger.info("Adding first time seen %s", player_id)
         sess.commit()
 
-    return steamid
+    return player
 
 
-def _save_player_alias(sess, steamid, player_name, timestamp=None):
+def _save_player_alias(sess, player: PlayerID, player_name: str, timestamp=None):
     name = (
         sess.query(PlayerName)
-        .filter(PlayerName.name == player_name, PlayerName.steamid == steamid)
+        .filter(PlayerName.name == player_name, PlayerName.player == player)
         .one_or_none()
     )
 
@@ -282,11 +309,9 @@ def _save_player_alias(sess, steamid, player_name, timestamp=None):
     else:
         dt = datetime.datetime.now()
     if not name:
-        name = PlayerName(name=player_name, steamid=steamid, last_seen=dt)
+        name = PlayerName(name=player_name, player=player, last_seen=dt)
         sess.add(name)
-        logger.info(
-            "Adding player %s with new name %s", steamid.steam_id_64, player_name
-        )
+        logger.info("Adding player %s with new name %s", player.player_id, player_name)
         sess.commit()
     else:
         name.last_seen = dt
@@ -295,37 +320,51 @@ def _save_player_alias(sess, steamid, player_name, timestamp=None):
     return name
 
 
-def save_player(player_name, steam_id_64, timestamp=None):
+def save_player(player_name: str, player_id: str, timestamp: int | None = None) -> None:
+    """Create a PlayerID record if non existent and save the player name alias"""
     with enter_session() as sess:
-        steamid = _save_steam_id(sess, steam_id_64)
+        player = _save_player_id(sess, player_id)
         _save_player_alias(
-            sess, steamid, player_name, timestamp or datetime.datetime.now()
+            sess, player, player_name, timestamp or datetime.datetime.now().timestamp()
         )
 
 
 def save_player_action(
-    rcon, action_type, player_name, by, reason="", steam_id_64=None, timestamp=None
+    rcon,
+    action_type: PlayerActionState,
+    player_name: str,
+    by: str,
+    reason: str = "",
+    player_id: str | None = None,
+    timestamp=None,
 ):
     with enter_session() as sess:
-        _steam_id_64 = (
-            steam_id_64
-            or rcon.get_player_info(player_name, can_fail=True)["steam_id_64"]
+        player_id = (
+            player_id or rcon.get_player_info(player_name, can_fail=True)["player_id"]
         )
-        player = _get_set_player(sess, player_name, _steam_id_64, timestamp=timestamp)
+        player = _get_set_player(
+            sess, player_name=player_name, player_id=player_id, timestamp=timestamp
+        )
         sess.add(
             PlayersAction(
-                action_type=action_type.upper(), steamid=player, reason=reason, by=by
+                action_type=action_type.name.upper(),
+                player=player,
+                reason=reason,
+                by=by,
             )
         )
 
 
 def safe_save_player_action(
-    rcon, action_type, player_name, by, reason="", steam_id_64=None
+    rcon,
+    action_type: PlayerActionState,
+    player_name: str,
+    by: str,
+    reason: str = "",
+    player_id: str | None = None,
 ):
     try:
-        return save_player_action(
-            rcon, action_type, player_name, by, reason, steam_id_64
-        )
+        return save_player_action(rcon, action_type, player_name, by, reason, player_id)
     except Exception as e:
         logger.exception(
             "Failed to record player action: %s %s", action_type, player_name
@@ -334,7 +373,7 @@ def safe_save_player_action(
 
 
 def save_start_player_session(
-    steam_id_64, timestamp, server_name=None, server_number=None
+    player_id: str, timestamp, server_name: str | None = None, server_number=None
 ):
     config = RconServerSettingsUserConfig.load_from_db()
 
@@ -342,30 +381,30 @@ def save_start_player_session(
     server_number = server_number or os.getenv("SERVER_NUMBER")
 
     with enter_session() as sess:
-        player = get_player(sess, steam_id_64)
+        player = get_player(sess, player_id)
         if not player:
             logger.error(
-                "Can't record player session for %s, player not found", steam_id_64
+                "Can't record player session for %s, player not found", player_id
             )
             return
 
         start_time = datetime.datetime.fromtimestamp(timestamp)
         already_saved = (
             sess.query(PlayerSession)
-            .filter(PlayerSession.steamid == player)
+            .filter(PlayerSession.player == player)
             .filter(PlayerSession.start == start_time)
             .first()
         )
 
         if already_saved is not None:
             logger.info(
-                f"Player session starting at {start_time} for player {steam_id_64} already recorded, skipping..."
+                f"Player session starting at {start_time} for player {player_id} already recorded, skipping..."
             )
             return
 
         sess.add(
             PlayerSession(
-                steamid=player,
+                player=player,
                 start=start_time,
                 server_name=server_name,
                 server_number=server_number,
@@ -373,143 +412,123 @@ def save_start_player_session(
         )
         logger.info(
             "Recorded player %s session start at %s",
-            steam_id_64,
+            player_id,
             datetime.datetime.fromtimestamp(timestamp),
         )
         sess.commit()
 
 
-def save_end_player_session(steam_id_64, timestamp):
+def save_end_player_session(player_id: str, timestamp):
     with enter_session() as sess:
-        player = get_player(sess, steam_id_64)
+        player = get_player(sess, player_id)
         if not player:
             logger.error(
-                "Can't record player session for %s, player not found", steam_id_64
+                "Can't record player session for %s, player not found", player_id
             )
             return
 
         last_session = (
             sess.query(PlayerSession)
-            .filter(PlayerSession.steamid == player)
+            .filter(PlayerSession.player == player)
             .order_by(PlayerSession.created.desc())
             .first()
         )
 
+        if last_session is None:
+            logger.warning(
+                "Can't record player session for %s, last session not found",
+                player_id,
+            )
+            return
+
         if last_session.end:
             logger.warning(
                 "Last session was already ended for %s. Creating a new one instead",
-                steam_id_64,
+                player_id,
             )
             last_session = PlayerSession(
-                steamid=player,
+                player=player,
             )
         last_session.end = datetime.datetime.fromtimestamp(timestamp)
-        logger.info(
-            "Recorded player %s session end at %s", steam_id_64, last_session.end
-        )
+        logger.info("Recorded player %s session end at %s", player_id, last_session.end)
         sess.commit()
 
 
-def add_flag_to_player(steam_id_64, flag, comment=None, player_name=None):
+def add_flag_to_player(
+    player_id: str,
+    flag: str,
+    comment: str | None = None,
+    player_name: str | None = None,
+) -> tuple[PlayerProfileType, PlayerFlagType]:
     with enter_session() as sess:
-        player = _get_set_player(sess, player_name=player_name, steam_id_64=steam_id_64)
-        exits = (
+        player = _get_set_player(sess, player_name=player_name, player_id=player_id)
+        exists = (
             sess.query(PlayerFlag)
-            .filter(PlayerFlag.playersteamid_id == player.id, PlayerFlag.flag == flag)
+            .filter(PlayerFlag.player_id_id == player.id, PlayerFlag.flag == flag)
             .all()
         )
-        if exits:
+        if exists:
             logger.warning("Flag already exists")
             raise CommandFailedError("Flag already exists")
-        new = PlayerFlag(flag=flag, comment=comment, steamid=player)
+        new = PlayerFlag(flag=flag, comment=comment, player=player)
         sess.add(new)
         sess.commit()
         res = player.to_dict()
         return res, new.to_dict()
 
 
-def remove_flag(flag_id):
+def remove_flag(
+    flag_id: int | None = None, player_id: str | None = None, flag: str | None = None
+) -> tuple[PlayerProfileType, PlayerFlagType]:
     with enter_session() as sess:
-        exits = (
-            sess.query(PlayerFlag).filter(PlayerFlag.id == int(flag_id)).one_or_none()
-        )
-        if not exits:
-            logger.warning("Flag does not exists")
-            raise CommandFailedError("Flag does not exists")
-        player = exits.steamid.to_dict()
-        flag = exits.to_dict()
-        sess.delete(exits)
-        sess.commit()
-
-    return player, flag
-
-
-def add_player_to_blacklist(steam_id_64, reason, name=None, by=None):
-    # TODO save author of blacklist
-    with enter_session() as sess:
-        player = _get_set_player(sess, steam_id_64=steam_id_64, player_name=name)
-        if not player:
-            raise CommandFailedError(f"Player with steam id {steam_id_64} not found")
-
-        if player.blacklist:
-            if player.blacklist.is_blacklisted:
-                logger.warning(
-                    "Player %s was already blacklisted with %s, updating reason to %s",
-                    str(player),
-                    player.blacklist.reason,
-                    reason,
-                )
-            player.blacklist.is_blacklisted = True
-            player.blacklist.reason = reason
-            player.blacklist.by = by
+        if isinstance(flag_id, int):
+            exists = (
+                sess.query(PlayerFlag)
+                .filter(PlayerFlag.id == int(flag_id))
+                .one_or_none()
+            )
         else:
-            logger.info("Player %s blacklisted for %s", str(player), reason)
-            sess.add(
-                BlacklistedPlayer(
-                    steamid=player, is_blacklisted=True, reason=reason, by=by
-                )
+            exists = (
+                sess.query(PlayerFlag)
+                .filter(PlayerID.player_id == player_id)
+                .filter(PlayerFlag.flag == flag)
+                .one_or_none()
             )
 
+        if not exists:
+            logger.warning("Flag does not exists")
+            raise CommandFailedError("Flag does not exists")
+        player = exists.player.to_dict()
+        old_flag = exists.to_dict()
+        sess.delete(exists)
         sess.commit()
 
+    return player, old_flag
 
-def remove_player_from_blacklist(steam_id_64):
+
+def get_player_messages(player_id: str) -> list[PlayerActionType]:
     with enter_session() as sess:
-        player = get_player(sess, steam_id_64)
-        if not player:
-            raise CommandFailedError(f"Player with steam id {steam_id_64} not found")
-
-        if not player.blacklist:
-            raise CommandFailedError(f"Player {player} was not blacklisted")
-
-        player.blacklist.is_blacklisted = False
-        sess.commit()
-
-
-def get_player_messages(steam_id_64):
-    with enter_session() as sess:
-        player = (
-            sess.query(PlayerSteamID).filter_by(steam_id_64=steam_id_64).one_or_none()
-        )
+        player = sess.query(PlayerID).filter_by(player_id=player_id).one_or_none()
+        actions: list[PlayerActionType] = []
         if player:
-            return [
+            actions = [
                 action.to_dict()
                 for action in player.received_actions
-                if action.action_type == "MESSAGE"
+                if action.action_type == PlayerActionState.MESSAGE.value
             ]
-        else:
-            raise Exception
+
+        return actions
 
 
-def get_player_comments(steam_id_64):
+def get_player_comments(player_id: str) -> list[PlayerCommentType]:
     with enter_session() as sess:
-        player = sess.query(PlayerSteamID).filter_by(steam_id_64=steam_id_64).one()
+        player = sess.query(PlayerID).filter_by(player_id=player_id).one()
         return [c.to_dict() for c in player.comments]
 
 
-def post_player_comments(steam_id_64, comment, user="Bot"):
+def post_player_comment(player_id: str, comment, user: str = "Bot"):
     with enter_session() as sess:
-        player = sess.query(PlayerSteamID).filter_by(steam_id_64=steam_id_64).one()
+        player = sess.query(PlayerID).filter_by(player_id=player_id).one()
         player.comments.append(PlayerComment(content=comment, by=user))
         sess.commit()
 
@@ -554,8 +573,6 @@ if __name__ == "__main__":
             * 1000
         ),
     )
-    add_player_to_blacklist("4242", "test")
-    remove_player_from_blacklist("4242")
 
     import pprint
 

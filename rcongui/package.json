@@ -18,6 +18,7 @@
     "@testing-library/user-event": "^7.1.2",
     "chart.js": "^3.9.1",
     "chartjs-adapter-moment": "^1.0.0",
+    "clsx": "^2.1.1",
     "country-list": "^2.2.0",
     "emoji-mart": "^3.0.0",
     "faker": "^4.1.0",
@@ -41,7 +42,7 @@
   "devDependencies": {
     "@vitejs/plugin-react": "^4.0.0",
     "prettier": "^2.8.8",
-    "vite": "^4.3.9"
+    "vite": "^4.5.3"
   },
   "scripts": {
     "start": "vite",

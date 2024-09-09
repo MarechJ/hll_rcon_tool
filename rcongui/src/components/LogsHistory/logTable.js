@@ -19,7 +19,10 @@ export default function LogsTable({ logs, downloadCSV }) {
       label: "Time",
       options: {
         customBodyRenderLite: (dataIndex) =>
-          moment.unix(logs[dataIndex].event_time).local().format("ddd Do MMM HH:mm:ss"),
+          moment
+            .unix(logs[dataIndex].event_time)
+            .local()
+            .format("ddd Do MMM HH:mm:ss"),
       },
     },
     { name: "type", label: "Type" },
@@ -32,7 +35,11 @@ export default function LogsTable({ logs, downloadCSV }) {
           let id = logs[dataIndex].player1_id;
           let name = logs[dataIndex].player_name;
           return id ? (
-            <Link color="inherit" target="_blank" href={`/api/player?id=${id}`}>
+            <Link
+              color="inherit"
+              target="_blank"
+              href={`/api/get_player_profile?player_id=${id}`}
+            >
               {name}
             </Link>
           ) : (
@@ -49,7 +56,11 @@ export default function LogsTable({ logs, downloadCSV }) {
           let id = logs[dataIndex].player2_id;
           let name = logs[dataIndex].player2_name;
           return id ? (
-            <Link color="inherit" target="_blank" href={`/api/player?id=${id}`}>
+            <Link
+              color="inherit"
+              target="_blank"
+              href={`/api/get_player_profile?player_id=${id}`}
+            >
               {name}
             </Link>
           ) : (

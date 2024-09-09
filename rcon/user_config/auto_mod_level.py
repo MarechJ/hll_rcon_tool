@@ -7,6 +7,7 @@ from typing_extensions import Annotated
 from rcon.types import Roles
 from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
 
+
 ANNOUNCE_MESSAGE = "This server is under level thresholds control.\n\n{min_level_msg}{max_level_msg}{level_thresholds_msg}\nThanks for understanding."
 FORCEKICK_MESSAGE = "You violated level thresholds rules on this server: {violation}."
 MIN_LEVEL_MESSAGE = "Access to this server is not allowed under level {level}"
@@ -25,28 +26,40 @@ class RoleType(TypedDict):
 
 class AutoModLevelType(TypedDict):
     enabled: bool
+    dry_run: bool
     discord_webhook_url: Optional[HttpUrl]
+
+    whitelist_flags: list[str]
+    dont_do_anything_below_this_number_of_players: int
+
     announcement_enabled: bool
+    only_announce_impacted_players: bool
     announcement_message: str
+
+    number_of_warnings: int
+    warning_interval_seconds: int
+    warning_message: str
+
+    number_of_punishments: int
+    min_squad_players_for_punish: int
+    min_server_players_for_punish: int
+    punish_interval_seconds: int
+    punish_message: str
+
+    kick_after_max_punish: bool
+    min_squad_players_for_kick: int
+    min_server_players_for_kick: int
+    kick_grace_period_seconds: int
+    kick_message: str
+
     force_kick_message: str
     min_level: int
     min_level_message: str
     max_level: int
     max_level_message: str
     violation_message: str
+    levelbug_enabled: bool
     level_thresholds: dict[Roles, "Role"]
-
-    number_of_warnings: int
-    warning_message: str
-    warning_interval_seconds: int
-
-    number_of_punishments: int
-    punish_message: str
-    punish_interval_seconds: int
-
-    kick_after_max_punish: bool
-    kick_grace_period_seconds: int
-    kick_message: str
 
 
 class Role(BaseModel):
@@ -73,30 +86,42 @@ def validate_level_thresholds(vs):
 
 class AutoModLevelUserConfig(BaseUserConfig):
     enabled: bool = Field(default=False)
+    dry_run: bool = Field(default=False)
     discord_webhook_url: Optional[HttpUrl] = Field(default=None)
-    announcement_enabled: bool = Field(default=True)
+
+    whitelist_flags: list[str] = Field(default_factory=list)
+    dont_do_anything_below_this_number_of_players: int = Field(ge=0, le=100, default=0)
+
+    announcement_enabled: bool = Field(default=False)
+    only_announce_impacted_players: bool = Field(default=True)
     announcement_message: str = Field(default=ANNOUNCE_MESSAGE)
+
+    number_of_warnings: int = Field(ge=-1, default=2)
+    warning_interval_seconds: int = Field(ge=1, default=60)
+    warning_message: str = Field(default=WARNING_MESSAGE)
+
+    number_of_punishments: int = Field(ge=-1, default=2)
+    min_squad_players_for_punish: int = Field(ge=0, le=6, default=0)
+    min_server_players_for_punish: int = Field(ge=0, le=100, default=0)
+    punish_interval_seconds: int = Field(ge=1, default=60)
+    punish_message: str = Field(default=PUNISH_MESSAGE)
+
+    kick_after_max_punish: bool = Field(default=True)
+    min_squad_players_for_kick: int = Field(ge=0, le=6, default=0)
+    min_server_players_for_kick: int = Field(ge=0, le=100, default=0)
+    kick_grace_period_seconds: int = Field(ge=1, default=60)
+    kick_message: str = Field(default=KICK_MESSAGE)
+
     force_kick_message: str = Field(default=FORCEKICK_MESSAGE)
     min_level: int = Field(ge=0, le=500, default=0)
     min_level_message: str = Field(default=MIN_LEVEL_MESSAGE)
     max_level: int = Field(ge=0, le=500, default=0)
     max_level_message: str = Field(default=MAX_LEVEL_MESSAGE)
     violation_message: str = Field(default=VIOLATION_MESSAGE)
+    levelbug_enabled: bool = Field(default=False)
     level_thresholds: Annotated[
         dict[Roles, Role], BeforeValidator(validate_level_thresholds)
     ] = Field(default_factory=dict)
-
-    number_of_warnings: int = Field(ge=-1, default=2)
-    warning_message: str = Field(default=WARNING_MESSAGE)
-    warning_interval_seconds: int = Field(ge=1, default=60)
-
-    number_of_punishments: int = Field(ge=-1, default=2)
-    punish_message: str = Field(default=PUNISH_MESSAGE)
-    punish_interval_seconds: int = Field(ge=1, default=60)
-
-    kick_after_max_punish: bool = Field(default=True)
-    kick_grace_period_seconds: int = Field(ge=1, default=120)
-    kick_message: str = Field(default=KICK_MESSAGE)
 
     @field_serializer("discord_webhook_url")
     def serialize_server_url(self, discord_webhook_url: HttpUrl, _info):
@@ -111,26 +136,37 @@ class AutoModLevelUserConfig(BaseUserConfig):
 
         validated_conf = AutoModLevelUserConfig(
             enabled=values.get("enabled"),
+            dry_run=values.get("dry_run"),
             discord_webhook_url=values.get("discord_webhook_url"),
+            whitelist_flags=values.get("whitelist_flags"),
+            dont_do_anything_below_this_number_of_players=values.get(
+                "dont_do_anything_below_this_number_of_players"
+            ),
             announcement_enabled=values.get("announcement_enabled"),
+            only_announce_impacted_players=values.get("only_announce_impacted_players"),
             announcement_message=values.get("announcement_message"),
+            number_of_warnings=values.get("number_of_warnings"),
+            warning_interval_seconds=values.get("warning_interval_seconds"),
+            warning_message=values.get("warning_message"),
+            number_of_punishments=values.get("number_of_punishments"),
+            min_squad_players_for_punish=values.get("min_squad_players_for_punish"),
+            min_server_players_for_punish=values.get("min_server_players_for_punish"),
+            punish_interval_seconds=values.get("punish_interval_seconds"),
+            punish_message=values.get("punish_message"),
+            kick_after_max_punish=values.get("kick_after_max_punish"),
+            min_squad_players_for_kick=values.get("min_squad_players_for_kick"),
+            min_server_players_for_kick=values.get("min_server_players_for_kick"),
+            kick_grace_period_seconds=values.get("kick_grace_period_seconds"),
+            kick_message=values.get("kick_message"),
             force_kick_message=values.get("force_kick_message"),
             min_level=values.get("min_level"),
             min_level_message=values.get("min_level_message"),
             max_level=values.get("max_level"),
             max_level_message=values.get("max_level_message"),
             violation_message=values.get("violation_message"),
+            levelbug_enabled=values.get("levelbug_enabled"),
             level_thresholds=values.get("level_thresholds"),
-            number_of_warnings=values.get("number_of_warnings"),
-            warning_message=values.get("warning_message"),
-            warning_interval_seconds=values.get("warning_interval_seconds"),
-            number_of_punishments=values.get("number_of_punishments"),
-            punish_message=values.get("punish_message"),
-            punish_interval_seconds=values.get("punish_interval_seconds"),
-            kick_after_max_punish=values.get("kick_after_max_punish"),
-            kick_grace_period_seconds=values.get("kick_grace_period_seconds"),
-            kick_message=values.get("kick_message"),
         )
 
         if not dry_run:
-            set_user_config(AutoModLevelUserConfig.KEY(), validated_conf.model_dump())
+            set_user_config(AutoModLevelUserConfig.KEY(), validated_conf)

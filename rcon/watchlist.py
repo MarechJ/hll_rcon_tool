@@ -8,30 +8,30 @@ from rcon.hooks import inject_player_ids
 from rcon.models import WatchList, enter_session
 from rcon.player_history import _get_set_player, get_player
 from rcon.rcon import CommandFailedError, Rcon
-from rcon.types import PlayerProfileType
+from rcon.types import PlayerProfileType, StructuredLogLineWithMetaData
 from rcon.user_config.webhooks import WatchlistWebhooksUserConfig
 
 
-@on_connected
+@on_connected()
 @inject_player_ids
-def watchdog(rcon: Rcon, log, name: str, steam_id_64: str):
-    watcher = PlayerWatch(steam_id_64)
+def watchdog(rcon: Rcon, log: StructuredLogLineWithMetaData, name: str, player_id: str):
+    watcher = PlayerWatch(player_id)
     if watcher.is_watched():
         watcher.increment_watch()
         if hooks := get_prepared_discord_hooks(WatchlistWebhooksUserConfig):
             watched_player = watcher.get_watch()
-            player_name = log["player"]
+            player_name = log["player_name_1"]
 
             if watched_player and watched_player["watchlist"]:
                 timestamp = int(watched_player["watchlist"]["modified"].timestamp())
-                steam_id_64 = watched_player["steam_id_64"]
+                player_id = watched_player["player_id"]
                 watched_by = watched_player["watchlist"]["by"]
                 session_count = watched_player["watchlist"]["count"]
                 reason = watched_player["watchlist"]["reason"]
                 names = ", ".join(n["name"] for n in watched_player["names"])
 
                 embed = DiscordEmbed(
-                    title=f"{player_name}  - {steam_id_64}",
+                    title=f"{player_name}  - {player_id}",
                     description=f"""AKA: {names}
                     
                     Watched on: <t:{timestamp}:f> (<t:{timestamp}:R>)
@@ -47,12 +47,12 @@ def watchdog(rcon: Rcon, log, name: str, steam_id_64: str):
 
 
 class PlayerWatch:
-    def __init__(self, steam_id_64):
-        self.steam_id_64 = steam_id_64
+    def __init__(self, player_id: str):
+        self.player_id = player_id
 
     def increment_watch(self) -> None:
         with enter_session() as sess:
-            player = get_player(sess, self.steam_id_64)
+            player = get_player(sess, self.player_id)
             if not player:
                 raise ValueError(
                     "Tried to increase the watch count of a non-existent player"
@@ -61,7 +61,7 @@ class PlayerWatch:
 
     def get_watch(self) -> PlayerProfileType | None:
         with enter_session() as sess:
-            player = get_player(sess, self.steam_id_64)
+            player = get_player(sess, self.player_id)
             if not player:
                 return None
             return player.to_dict()
@@ -72,7 +72,7 @@ class PlayerWatch:
 
     def unwatch(self):
         with enter_session() as sess:
-            player = get_player(sess, self.steam_id_64)
+            player = get_player(sess, self.player_id)
             if not player:
                 raise CommandFailedError(
                     "Can't remove player to watchlist, player not found"
@@ -87,7 +87,7 @@ class PlayerWatch:
     def watch(self, reason: str, by: str, player_name: str = ""):
         with enter_session() as sess:
             player = _get_set_player(
-                sess, player_name=player_name, steam_id_64=self.steam_id_64
+                sess, player_name=player_name, player_id=self.player_id
             )
             if player.watchlist:
                 player.watchlist.modified = datetime.utcnow()
@@ -97,7 +97,7 @@ class PlayerWatch:
                 player.watchlist.count = 0
             else:
                 watch = WatchList(
-                    steamid=player,
+                    player=player,
                     is_watched=True,
                     reason=reason,
                     by=by,

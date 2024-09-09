@@ -2,230 +2,422 @@ import datetime
 import logging
 import math
 import time
-from typing import List, Mapping
+from dataclasses import dataclass
+from functools import wraps
+from typing import Any, Iterable, Sequence
 
 import steam.exceptions
+from sqlalchemy import or_, select
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.sql.expression import func
 from steam.webapi import WebAPI
 
 from rcon.cache_utils import ttl_cache
-from rcon.models import PlayerSteamID, SteamInfo
-from rcon.types import SteamBanResultType, SteamBansType
+from rcon.models import PlayerID, SteamInfo, enter_session
+from rcon.types import SteamBansType, SteamInfoType, SteamPlayerSummaryType
 from rcon.user_config.steam import SteamUserConfig
+from rcon.utils import batched
 
 logger = logging.getLogger(__name__)
+last_steam_api_key_warning = datetime.datetime.now()
+
+STEAM_API_MAX_STEAM_IDS = 100
+
+STEAM_API: WebAPI | None = None
+
+
+def get_steam_api() -> WebAPI:
+    """Maintain a single initialized instance of the Steam WebAPI"""
+    global STEAM_API
+    if STEAM_API is None:
+        api_key = get_steam_api_key()
+        STEAM_API = WebAPI(key=api_key)
+
+    return STEAM_API
 
 
 def get_steam_api_key() -> str | None:
+    """Return the servers steam API key if configured"""
+    global last_steam_api_key_warning
+
     config = SteamUserConfig.load_from_db()
     if config.api_key is None or config.api_key == "":
-        logger.warning("Steam API key is not set some features will be disabled.")
+        timestamp = datetime.datetime.now()
+        # Only log once an hour or it is super spammy
+        if (timestamp - last_steam_api_key_warning).total_seconds() > 3600:
+            logger.warning("Steam API key is not set some features will be disabled.")
+            last_steam_api_key_warning = timestamp
 
     return config.api_key
 
 
-@ttl_cache(60 * 60 * 24, cache_falsy=False, is_method=False)
-def get_steam_profile(steamd_id):
-    profiles = get_steam_profiles([steamd_id])
-    if not profiles or len(profiles) == 0:
-        return None
-    return profiles[0]
+def is_steam_id_64(player_id: str) -> bool:
+    """Test if an ID is a steam_id_64 or a windows store ID"""
+    if len(player_id) == 17 and player_id.isdigit():
+        return True
+    return False
 
 
-@ttl_cache(60 * 60 * 24, cache_falsy=False, is_method=False)
-def get_steam_profiles(steam_ids):
-    steam_key = get_steam_api_key()
+def filter_steam_ids():
+    """Remove any non steam ID player IDs from `player_ids`"""
 
-    if not steam_key:
-        return None
+    def decorator(f):
+        @wraps(f)
+        def wrapper(player_ids: Iterable[str], *args, **kwargs):
+            # Remove any duplicates and sort to force redis cache hits even if the
+            # originating call has steam IDs in different orders
+            player_ids = sorted(set([id_ for id_ in player_ids if is_steam_id_64(id_)]))
+            return f(player_ids=player_ids, *args, **kwargs)
 
-    try:
-        api = WebAPI(key=steam_key)
-        return api.ISteamUser.GetPlayerSummaries(steamids=",".join(steam_ids))[
-            "response"
-        ]["players"]
-    except steam.exceptions.SteamError as e:
-        logger.error(e)
-        return None
-    except AttributeError:
-        logger.error("Steam API key is invalid, can't fetch steam profile")
-        return None
-    except IndexError:
-        logger.error("Steam: no player found")
-    except:
-        logger.error("Unexpected error while fetching steam profile")
-        return None
+        return wrapper
+
+    return decorator
 
 
-@ttl_cache(60 * 60 * 24 * 7, cache_falsy=True, is_method=False)
-def get_player_country_code(steamd_id):
-    profile = get_steam_profile(steamd_id)
+@dataclass
+class ReturnValue:
+    """Used to return a pickleable/callable object for the redis cache
 
+    This avoids errors like:
+        AttributeError: Can't pickle local object 'filter_steam_id.<locals>.decorator.<locals>.wrapper.<locals>.<lambda>'
+
+    """
+
+    def __init__(self, value: Any = None):
+        self.value = value
+
+    def __call__(self, *args: Any, **kwds: Any) -> Any:
+        return self.value
+
+
+def filter_steam_id(return_value: Any = None):
+    """Return `return_value` if the wrapped function is called with a non steam ID"""
+
+    def decorator(f):
+        @wraps(f)
+        def wrapper(player_id: str, *args, **kwargs):
+            if is_steam_id_64(player_id):
+                return f(player_id=player_id, *args, **kwargs)
+            else:
+                return ReturnValue(value=return_value)()
+
+        return wrapper
+
+    return decorator
+
+
+@filter_steam_id()
+def fetch_steam_player_summary_player(
+    player_id: str,
+) -> SteamPlayerSummaryType | None:
+    """Fetch a single players steam profile
+
+    This should never be used in any context where you know more than one steam ID
+    in advance, instead use `fetch_steam_player_summary_mult_players` and pass all
+    the steam IDs at once to reduce API calls
+    """
+    player_prof = fetch_steam_player_summary_mult_players(player_ids=[player_id])
+    if player_prof:
+        return player_prof.get(player_id)
+
+
+@ttl_cache(60 * 60 * 12, cache_falsy=False, is_method=False)
+@filter_steam_ids()
+def fetch_steam_player_summary_mult_players(
+    player_ids: Iterable[str],
+) -> dict[str, SteamPlayerSummaryType]:
+    """Fetch steam API profile info for each player
+
+    https://partner.steamgames.com/doc/webapi/isteamuser
+
+    This should be used in any context where we're querying more than a single
+    player at a time because we can batch API calls for up to 100 steam IDs at a time
+    """
+    api = get_steam_api()
+
+    # The steam API limits requests to 100 steam IDs at a time, process multiple
+    # requests for any list larger than 100, but fit as many steam IDs into the
+    # same API request as possible to help with rate limiting
+    raw_profiles: list[SteamPlayerSummaryType] = []
+
+    if api.key:
+        for chunk in batched(player_ids, STEAM_API_MAX_STEAM_IDS):
+            chunk_steam_ids = ",".join(chunk)
+            try:
+                logger.info("Fetching player summaries for %s steam IDs", len(chunk))
+                raw_result = api.ISteamUser.GetPlayerSummaries(steamids=chunk_steam_ids)
+                chunk_profiles: list[SteamPlayerSummaryType] = raw_result["response"][
+                    "players"
+                ]
+                raw_profiles.extend(chunk_profiles)
+            except steam.exceptions.SteamError as e:
+                logger.error(e)
+            except AttributeError:
+                logger.error("Steam API key is invalid, can't fetch steam profile")
+                break
+            except IndexError:
+                logger.error("Steam: no player(s) found")
+            except Exception as e:
+                logger.exception(e)
+                logger.error("Unexpected error while fetching steam profile")
+
+    return {raw["steamid"]: raw for raw in raw_profiles}
+
+
+@ttl_cache(60 * 60 * 12, cache_falsy=False, is_method=False)
+@filter_steam_ids()
+def fetch_steam_bans_mult_players(
+    player_ids: Sequence[str],
+) -> dict[str, SteamBansType]:
+    """Fetch steam API ban info for each player
+
+    https://partner.steamgames.com/doc/webapi/isteamuser
+
+    This should be used in any context where we're querying more than a single
+    player at a time because we can batch API calls for up to 100 steam IDs at a time
+    """
+    api = get_steam_api()
+
+    # The steam API limits requests to 100 steam IDs at a time, process multiple
+    # requests for any list larger than 100, but fit as many steam IDs into the
+    # same API request as possible to help with rate limiting
+    raw_bans: list[SteamBansType] = []
+    if api.key:
+        try:
+            for chunk in batched(player_ids, STEAM_API_MAX_STEAM_IDS):
+                chunk_steam_ids = ",".join(chunk)
+                logger.info("Fetching player bans for %s steam IDs", len(chunk))
+                raw_result = api.ISteamUser.GetPlayerBans(  # type: ignore
+                    steamids=chunk_steam_ids
+                )
+                chunk_bans: SteamBansType = raw_result["players"]
+                raw_bans.extend(chunk_bans)  # type: ignore
+
+        except steam.exceptions.SteamError as e:
+            logger.error(e)
+        except AttributeError:
+            logger.error("Steam API key is invalid, can't fetch steam profile")
+        except IndexError:
+            logger.error("Steam no player found")
+        except:
+            logger.error("Unexpected error while fetching steam bans")
+
+    return {raw["SteamId"]: raw for raw in raw_bans}
+
+
+@filter_steam_id()
+def fetch_steam_bans_player(player_id: str) -> SteamBansType | None:
+    """Fetch a single players steam bans
+
+    This should never be used in any context where you know more than one steam ID
+    in advance, instead use `fetch_steam_bans_mult_players` and pass all
+    the steam IDs at once to reduce API calls
+    """
+    player = fetch_steam_bans_mult_players(player_ids=[player_id])
+    if player:
+        return player.get(player_id)
+
+
+@ttl_cache(60 * 60 * 12, cache_falsy=False, is_method=False)
+def get_steam_profiles_mult_players(
+    steam_id_64s: Iterable[str], sess: Session | None = None
+) -> dict[str, SteamInfoType | None]:
+    """Query the database for the specified players steam info (profile/country/bans)"""
+    stmt = (
+        select(PlayerID)
+        .options(joinedload(PlayerID.steaminfo))
+        .where(PlayerID.player_id.in_(steam_id_64s))
+    )
+
+    profiles: dict[str, SteamInfoType | None] = dict.fromkeys(steam_id_64s, None)
+    if sess is None:
+        with enter_session() as sess:
+            # Needed to avoid an DetachedInstanceError error
+            sess.expire_on_commit = False
+            players = sess.scalars(stmt).all()
+    else:
+        players = sess.scalars(stmt).all()
+
+    for p in players:
+        profiles[p.player_id] = p.steaminfo.to_dict() if p.steaminfo else None
+
+    return profiles
+
+
+@ttl_cache(60 * 60 * 12, cache_falsy=False, is_method=False)
+def get_steam_profile(
+    steam_id_64: str, sess: Session | None = None
+) -> SteamInfoType | None:
+    """Query the database for a specific players steam info (profile/country/bans)"""
+    return get_steam_profiles_mult_players(steam_id_64s=[steam_id_64], sess=sess).get(
+        steam_id_64
+    )
+
+
+def _get_player_country_code(profile: SteamPlayerSummaryType | None):
+    """Extract a players 2 digit ISO 3166 country code from their steam profile"""
     if not profile:
         return None
 
     is_private = profile.get("communityvisibilitystate", 1) != 3
-    return profile.get("loccountrycode", "private" if is_private else "")
+    return profile.get("loccountrycode", "private" if is_private else None)
 
 
-@ttl_cache(60 * 60, cache_falsy=True, is_method=False)
-def get_players_country_code(steamd_ids: List[str]) -> Mapping:
-    profiles = get_steam_profiles(steamd_ids)
+def update_db_player_info(sess: Session, players: list[PlayerID]) -> tuple[int, int]:
+    """Fetch steam API info for each player and update their database record
 
-    result = dict.fromkeys(steamd_ids, {"country": None})
-    if not profiles:
-        return result
+    This should be used in any context where we're updating more than a single
+    player at a time because we can batch API calls for up to 100 steam IDs at a time
 
-    for profile in profiles:
-        is_private = profile.get("communityvisibilitystate", 1) != 3
-        country = profile.get("loccountrycode", "private" if is_private else "")
-        result[profile["steamid"]] = {"country": country}
+    Args:
+        sess: An sqlalchemy session, unused but included to force it to only be
+            called from within an active session so the database records will be updated
+        player: A list of player records
+    """
+    steam_id_64s = [player.player_id for player in players]
+    profiles = fetch_steam_player_summary_mult_players(player_ids=steam_id_64s)
+    bans = fetch_steam_bans_mult_players(player_ids=steam_id_64s)
 
-    return result
+    for player in players:
+        player_prof = profiles.get(player.player_id)
+        player_ban = bans.get(player.player_id)
 
+        # Don't edit the record and change the updated time if we have no new information
+        if player_prof is None and player_ban is None:
+            continue
 
-@ttl_cache(60 * 60 * 12, cache_falsy=False, is_method=False)
-def get_player_bans(steamd_id) -> SteamBansType | None:
-    steam_key = get_steam_api_key()
+        country_code = _get_player_country_code(player_prof)
+        if player.steaminfo:
+            # Don't overwrite existing info if there are errors making
+            # the steam API calls
+            if player_prof:
+                player.steaminfo.profile = player_prof
 
-    if not steam_key:
-        return None
+            if player_ban:
+                player.steaminfo.bans = player_ban
 
-    try:
-        api = WebAPI(key=steam_key)
-        bans = api.ISteamUser.GetPlayerBans(steamids=steamd_id)["players"][0]
-    except steam.exceptions.SteamError as e:
-        logger.error(e)
-        return None
-    except AttributeError:
-        logger.error("Steam API key is invalid, can't fetch steam profile")
-        return None
-    except IndexError:
-        logger.error("Steam no player found")
-        return None
-    except:
-        logger.error("Unexpected error while fetching steam bans")
-        return None
+            if country_code:
+                player.steaminfo.country = country_code
+        else:
+            player.steaminfo = SteamInfo(
+                profile=player_prof,
+                bans=player_ban,
+                country=country_code,
+                player=player,
+            )
 
-    if not bans:
-        bans = {}
-    return bans
-
-
-@ttl_cache(60 * 60, cache_falsy=False, is_method=False)
-def get_players_ban(steamd_ids: List):
-    steam_key = get_steam_api_key()
-
-    if not steam_key:
-        return None
-
-    try:
-        api = WebAPI(key=steam_key)
-        bans = api.ISteamUser.GetPlayerBans(steamids=",".join(steamd_ids))["players"]
-    except steam.exceptions.SteamError as e:
-        logger.error(e)
-        return None
-    except AttributeError:
-        logger.error("Steam API key is invalid, can't fetch steam profile")
-        return None
-    except IndexError:
-        logger.error("Steam no player found")
-        return None
-    except:
-        logger.error("Unexpected error while fetching steam bans")
-        return None
-
-    return bans
+    return len(profiles), len(bans)
 
 
-@ttl_cache(60 * 60 * 12, cache_falsy=False, is_method=False)
-def get_players_have_bans(steamd_ids: List) -> Mapping[str, SteamBanResultType]:
-    player_bans = get_players_ban(steamd_ids)
+def update_missing_old_steam_info_single_player(
+    sess: Session,
+    player: PlayerID,
+    age_limit: datetime.timedelta = datetime.timedelta(hours=12),
+):
+    """Fetch steam API info if missing or older than age_limit for a single player
 
-    result = dict.fromkeys(steamd_ids, {"steam_bans": None})
-    if player_bans is None:
-        logger.warning("Unable to read bans for %s" % steamd_ids)
-        return result
+    Since this only calls the API for a single steam ID at a time and the requests
+    can include up to 100 steam IDs, this should only be used in the context where we're
+    updating info for a single player at a time, like when they connect to the game server
 
-    for bans in player_bans:
-        bans["has_bans"] = any(
-            bans.get(k)
-            for k in [
-                "VACBanned",
-                "NumberOfVACBans",
-                "DaysSinceLastBan",
-                "NumberOfGameBans",
-            ]
+    Args:
+        sess: An sqlalchemy session, unused but included to force it to only be
+            called from within an active session so the database records will be updated
+        player: The desired players database record
+        age_limit: timedelta after which a refresh will be attempted from the steam API
+    """
+
+    profile = None
+    country_code = None
+    bans = None
+    if (
+        player.steaminfo is None
+        or player.steaminfo
+        and player.steaminfo.updated
+        and (datetime.datetime.utcnow() - player.steaminfo.updated) >= age_limit
+    ):
+        # Fetch both the profile and bans
+        profile = fetch_steam_player_summary_player(player.player_id)
+        country_code = _get_player_country_code(profile)
+        bans = fetch_steam_bans_player(player.player_id)
+
+    elif player.steaminfo and player.steaminfo.bans is None:
+        # Fetch the bans if they're missing
+        bans = fetch_steam_bans_player(player.player_id)
+    elif (
+        player.steaminfo
+        and player.steaminfo.profile is None
+        or player.steaminfo.country is None
+    ):
+        # Fetch the profile if the profile or country code is missing
+        profile = fetch_steam_player_summary_player(player.player_id)
+        country_code = _get_player_country_code(profile)
+
+    if player.steaminfo is None:
+        steam_info = SteamInfo(
+            profile=profile, country=country_code, bans=bans, player=player
         )
-        result[bans["SteamId"]] = {"steam_bans": bans}
-        del bans["SteamId"]
-
-    return result
-
-
-@ttl_cache(60 * 60 * 12, cache_falsy=False, is_method=False)
-def get_player_has_bans(steamd_id):
-    bans = get_player_bans(steamd_id)
-
-    if bans is None:
-        logger.warning("Unable to read bans for %s" % steamd_id)
-        bans = {}
-
-    bans["has_bans"] = any(
-        bans.get(k)
-        for k in [
-            "VACBanned",
-            "NumberOfVACBans",
-            "DaysSinceLastBan",
-            "NumberOfGameBans",
-        ]
-    )
-    return bans
-
-
-def update_db_player_info(player: PlayerSteamID, steam_profile):
-    if not player.steaminfo:
-        player.steaminfo = SteamInfo()
-    player.steaminfo.profile = steam_profile
-    player.steaminfo.country = steam_profile.get("loccountrycode")
+        sess.add(steam_info)
+        player.steaminfo = steam_info
+    else:
+        if profile:
+            player.steaminfo.profile = profile
+        if country_code:
+            player.steaminfo.country = country_code
+        if bans:
+            player.steaminfo.bans = bans
 
 
 def enrich_db_users(chunk_size=100, update_from_days_old=30):
-    from sqlalchemy import or_
-
-    from rcon.models import PlayerSteamID, SteamInfo, enter_session
-
+    """Use the Steam API to update steam profiles/bans for missing or old records"""
     max_age = datetime.datetime.utcnow() - datetime.timedelta(days=update_from_days_old)
     with enter_session() as sess:
-        query = (
-            sess.query(PlayerSteamID)
+        # Missing JSONB records are surprisingly difficult to identify depending
+        # on how they've been persisted but JSONB.NULL should cover the different cases
+        # This query can also return many thousands of results, using stream_results and
+        # yield_per doesn't fetch all of the results at once, but pages through them
+        stmt = (
+            select(PlayerID)
+            .execution_options(stream_results=True, yield_per=chunk_size)
             .outerjoin(SteamInfo)
-            .filter(or_(PlayerSteamID.steaminfo == None, SteamInfo.updated <= max_age))
+            .where(func.length(PlayerID.player_id) == 17)
+            .where(
+                or_(
+                    PlayerID.steaminfo == None,
+                    SteamInfo.updated <= max_age,
+                    SteamInfo.bans == JSONB.NULL,
+                    SteamInfo.profile == JSONB.NULL,
+                )
+            )
         )
 
-        pages = math.ceil(query.count() / chunk_size)
-        for page in range(pages):
-            by_ids = {p.steam_id_64: p for p in query.limit(chunk_size).all()}
-            if not by_ids:
-                logger.warning("Empty query results")
-                continue
-            profiles = get_steam_profiles(list(by_ids.keys()))
-            logger.info(
-                "Updating steam profiles page %s of %s - result count (query) %s - result count (steam) %s",
-                page + 1,
-                pages,
-                len(by_ids),
-                len(profiles),
-            )
-            for p in profiles:
-                player = by_ids.get(p["steamid"])
-                if not player:
-                    logger.warning("Unable to find player %s", p["steamid"])
+        logger.info("Updating steam profiles/bans for missing/old users")
+        for idx, player_chunks in enumerate(sess.scalars(stmt).partitions()):
+            try:
+                players = list(player_chunks)
+                if not players:
+                    logger.warning("Empty query results for page %s", idx)
                     continue
-                # logger.debug("Saving info for %s: %s", player.steam_id_64, p)
-                update_db_player_info(player=player, steam_profile=p)
+                logger.info(
+                    "Updating page %s steam profile/bans, first steam ID of page: %s",
+                    idx + 1,
+                    players[0],
+                )
+                num_profs, num_bans = update_db_player_info(sess, players=players)
 
-            sess.commit()
-            time.sleep(5)
+                logger.info(
+                    "%s profiles, %s bans fetched from steam API",
+                    num_profs,
+                    num_bans,
+                )
+            except Exception as e:
+                logger.exception(e)
+                logger.error("Error while fetching page %s: %s", idx + 1, e)
+
+            # Shouldn't really need this with how many API calls we should be able to make
+            # but just to be on the safe side
+            time.sleep(1)
 
 
 if __name__ == "__main__":

@@ -9,13 +9,17 @@ from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
 class VoteMapType(TypedDict):
     enabled: bool
     default_method: "DefaultMethods"
-    number_of_options: int
-    ratio_of_offensives: float
     number_last_played_to_exclude: int
+    num_warfare_options: int
+    num_offensive_options: int
+    num_skirmish_control_options: int
     consider_offensive_same_map: bool
+    consider_skirmishes_as_same_map: bool
     allow_consecutive_offensives: bool
     allow_consecutive_offensives_opposite_sides: bool
     allow_default_to_offensive: bool
+    allow_consecutive_skirmishes: bool
+    allow_default_to_skirmish: bool
     instruction_text: str
     thank_you_text: str | None
     no_vote_text: str
@@ -60,13 +64,17 @@ class VoteMapUserConfig(BaseUserConfig):
     default_method: DefaultMethods = Field(
         default=DefaultMethods.least_played_suggestions
     )
-    number_of_options: int = Field(ge=0, default=5)
-    ratio_of_offensives: float = Field(ge=0.0, default=0.5)
     number_last_played_to_exclude: int = Field(ge=0, default=3)
+    num_warfare_options: int = Field(ge=0, default=4)
+    num_offensive_options: int = Field(ge=0, default=2)
+    num_skirmish_control_options: int = Field(ge=0, default=1)
     consider_offensive_same_map: bool = Field(default=True)
+    consider_skirmishes_as_same_map: bool = Field(default=True)
     allow_consecutive_offensives: bool = Field(default=True)
     allow_consecutive_offensives_opposite_sides: bool = Field(default=False)
     allow_default_to_offensive: bool = Field(default=False)
+    allow_consecutive_skirmishes: bool = Field(default=False)
+    allow_default_to_skirmish: bool = Field(default=False)
     instruction_text: str = Field(default=INSTRUCTION_TEXT)
     thank_you_text: str | None = Field(default=THANK_YOU_TEXT)
     no_vote_text: str = Field(default=NO_VOTE_TEXT)
@@ -81,15 +89,21 @@ class VoteMapUserConfig(BaseUserConfig):
         validated_conf = VoteMapUserConfig(
             enabled=values.get("enabled"),
             default_method=values.get("default_method"),
-            number_of_options=values.get("number_of_options"),
-            ratio_of_offensives=values.get("ratio_of_offensives"),
+            num_warfare_options=values.get("num_warfare_options"),
+            num_offensive_options=values.get("num_offensive_options"),
+            num_skirmish_control_options=values.get("num_skirmish_control_options"),
             number_last_played_to_exclude=values.get("number_last_played_to_exclude"),
             consider_offensive_same_map=values.get("consider_offensive_same_map"),
+            consider_skirmishes_as_same_map=values.get(
+                "consider_skirmishes_as_same_map"
+            ),
             allow_consecutive_offensives=values.get("allow_consecutive_offensives"),
             allow_consecutive_offensives_opposite_sides=values.get(
                 "allow_consecutive_offensives_opposite_sides"
             ),
             allow_default_to_offensive=values.get("allow_default_to_offensive"),
+            allow_consecutive_skirmishes=values.get("allow_consecutive_skirmishes"),
+            allow_default_to_skirmish=values.get("allow_default_to_skirmish"),
             instruction_text=values.get("instruction_text"),
             thank_you_text=values.get("thank_you_text"),
             no_vote_text=values.get("no_vote_text"),
@@ -99,4 +113,4 @@ class VoteMapUserConfig(BaseUserConfig):
         )
 
         if not dry_run:
-            set_user_config(VoteMapUserConfig.KEY(), validated_conf.model_dump())
+            set_user_config(VoteMapUserConfig.KEY(), validated_conf)

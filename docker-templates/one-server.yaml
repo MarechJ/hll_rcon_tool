@@ -1,0 +1,142 @@
+include:
+  - docker-compose-common-components.yaml
+
+networks:
+  common:
+  server1:
+
+# This is defined here and not in common-components because anchors don't
+# work between files and are prefixed with x- because they are just anchors
+# for merging later, if they're defined under services: docker will want to start them
+# compose ignores any fields that start with x-
+x-backend: &backend
+  image: ${BACKEND_DOCKER_REPOSITORY}:${TAGGED_VERSION}
+  environment: &backend-env
+    LOGGING_LEVEL: "INFO"
+    LOGGING_PATH: /logs/
+    CONFIG_DIR: /config/
+    HLL_REDIS_HOST: ${HLL_REDIS_HOST}
+    HLL_REDIS_PORT: ${HLL_REDIS_HOST_PORT}
+    HLL_DB_USER: ${HLL_DB_USER}
+    HLL_DB_PASSWORD: ${HLL_DB_PASSWORD}
+    HLL_DB_NAME: ${HLL_DB_NAME}
+    HLL_DB_HOST: ${HLL_DB_HOST}
+    HLL_DB_HOST_PORT: ${HLL_DB_HOST_PORT}
+    HLL_DB_URL: postgresql://${HLL_DB_USER}:${HLL_DB_PASSWORD}@${HLL_DB_HOST}:${HLL_DB_HOST_PORT}/${HLL_DB_NAME}
+    RCONWEB_API_SECRET: ${RCONWEB_API_SECRET}
+    SUPERVISOR_RPC_URL: http://supervisor:9001/RPC2
+    NB_API_WORKERS: ${NB_API_WORKERS}
+    NB_API_THREADS: ${NB_API_THREADS}
+    RCONWEB_EXTERNAL_ADDRESS: ${RCONWEB_EXTERNAL_ADDRESS}
+    DONT_SEED_ADMIN_USER: ${DONT_SEED_ADMIN_USER}
+  command: web
+  restart: on-failure
+  healthcheck:
+    test:
+      [
+        "CMD-SHELL",
+        "if [ -e /code/rconweb/gunicorn.pid ]; then echo 0; else echo 1; fi",
+      ]
+    start_period: 30s
+    interval: 15s
+    timeout: 30s
+    retries: 5
+  depends_on:
+    postgres:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+    maintenance:
+      condition: service_healthy
+  volumes:
+    - ./logs:/logs/
+    - ./servicediscovery:/servicediscovery
+    - ./static:/static/
+    - ./config:/config/
+x-supervisor: &supervisor
+  image: ${BACKEND_DOCKER_REPOSITORY}:${TAGGED_VERSION}
+  restart: on-failure
+  command: supervisor
+  volumes:
+    - ./logs:/logs/
+    - ./supervisor_data:/data
+    - ./config:/config/
+x-frontend: &frontend
+  build:
+    context: .
+    dockerfile: Dockerfile-frontend
+  image: ${FRONTEND_DOCKER_REPOSITORY}:${TAGGED_VERSION}
+  environment:
+    RCONWEB_EXTERNAL_ADDRESS: ${RCONWEB_EXTERNAL_ADDRESS}
+  restart: always
+  volumes:
+    - ./static:/static/
+    - ./certs:/certs/
+
+services:
+  ########### SERVER 1  #############
+  backend_1:
+    <<: *backend
+    environment: &env_1
+      <<: *backend-env
+      SERVER_NUMBER: ${SERVER_NUMBER}
+      HLL_HOST: ${HLL_HOST}
+      HLL_PORT: ${HLL_PORT}
+      HLL_PASSWORD: ${HLL_PASSWORD}
+      HLL_REDIS_DB: ${HLL_REDIS_DB}
+      HLL_REDIS_URL: redis://${HLL_REDIS_HOST}:${HLL_REDIS_HOST_PORT}/${HLL_REDIS_DB}
+      RCONWEB_PORT: ${RCONWEB_PORT}
+      PUBLIC_STATS_PORT: ${PUBLIC_STATS_PORT}
+      PUBLIC_STATS_PORT_HTTPS: ${PUBLIC_STATS_PORT_HTTPS}
+      GTX_SERVER_NAME_CHANGE_USERNAME: ${GTX_SERVER_NAME_CHANGE_USERNAME}
+      GTX_SERVER_NAME_CHANGE_PASSWORD: ${GTX_SERVER_NAME_CHANGE_PASSWORD}
+      SENTRY_DSN: ${SENTRY_DSN}
+    hostname: api_1
+    networks:
+      common:
+      server1:
+        aliases:
+          - backend
+  supervisor_1:
+    <<: *supervisor
+    environment:
+      <<: *env_1
+    depends_on:
+      backend_1:
+        condition: service_healthy
+    networks:
+      common:
+      server1:
+        aliases:
+          - supervisor
+  frontend_1:
+    <<: *frontend
+    ports:
+      - ${RCONWEB_PORT}:80
+      - ${RCONWEB_PORT_HTTPS}:443
+      - ${PUBLIC_STATS_PORT}:81
+      - ${PUBLIC_STATS_PORT_HTTPS}:444
+    depends_on:
+      backend_1:
+        condition: service_healthy
+    networks:
+      common:
+      server1:
+
+  ########### SERVER 2  #############
+
+  ########### SERVER 3  #############
+
+  ########### SERVER 4  #############
+
+  ########### SERVER 5  #############
+
+  ########### SERVER 6  #############
+
+  ########### SERVER 7  #############
+
+  ########### SERVER 8  #############
+
+  ########### SERVER 9  #############
+
+  ########### SERVER 10 #############
