@@ -5,8 +5,12 @@ import relativeTimePlugin from 'dayjs/plugin/relativeTime';
 import durationPlugin from 'dayjs/plugin/duration';
 import publicRouter from "../src/routers/public"
 import adminRouter from "../src/routers/admin"
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const isPublicBuild = typeof process.env.REACT_APP_PUBLIC_BUILD === "string";
+
+// Create a query client for React Query
+const queryClient = new QueryClient();
 
 const App = () => {
   dayjs.extend(relativeTimePlugin);
@@ -16,7 +20,9 @@ const App = () => {
 
   return (
     <React.StrictMode>
-      <RouterProvider router={router} />
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>
     </React.StrictMode>
   );
 };

@@ -10,7 +10,7 @@ import {
   Link,
 } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { get } from "@/utils/fetchUtils";
+import { get, handleHttpError } from "@/utils/fetchUtils";
 import Editor from "@monaco-editor/react";
 import { Box, Button, Stack, Typography, useTheme } from "@mui/material";
 import { CopyBlock, a11yDark, a11yLight } from "react-code-blocks";
@@ -18,40 +18,7 @@ import { toast } from "react-toastify";
 import { execute } from "@/utils/fetchUtils";
 import { red } from "@mui/material/colors";
 
-const handleHttpError = (error) => {
-  switch (error.name) {
-    case "PermissionError":
-      throw json(
-        {
-          message: "You are not authorized!",
-          error: error?.name,
-          command: error?.command,
-        },
-        { status: 403 }
-      );        
-    case "LoginError":
-      throw json(
-        {
-          message: "You are not authenticated!",
-          error: error?.name,
-          command: error?.command,
-        },
-        { status: 401 }
-      );        
-    default:
-      throw json(
-        {
-          message: error?.message,
-          error: error?.name,
-          command: error?.command,
-        },
-        { status: 400 }
-      );  
-  }
-}
-
 export const loader = async ({ params }) => {
-  console.log("LOADER RUNNING")
   const { category, type } = params;
   let note, data, details, configTypes, schema;
 

@@ -2,15 +2,17 @@ import * as React from 'react';
 import { createTheme, ThemeProvider, alpha } from '@mui/material/styles';
 import { Container, Box, Stack, CssBaseline } from '@mui/material';
 import getDashboardTheme from '@/themes/getDashboardTheme';
-import AppNavbar from '@/components/dashboard-components/AppNavbar';
-import Header from '@/components/dashboard-components/Header';
-import SideMenu from '@/components/dashboard-components/SideMenu';
+import AppNavbar from '@/components/layout/AppNavbar';
+import Header from '@/components/layout/Header';
+import SideMenu from '@/components/layout/SideMenu';
 import TemplateFrame from '@/pages/TemplateFrame';
 import { ToastContainer } from "react-toastify";
 import { defer, Outlet, redirect } from "react-router-dom";
 import { useStorageState } from "@/hooks/useStorageState"
 import { get } from '@/utils/fetchUtils';
 import "react-toastify/dist/ReactToastify.css";
+import { ActionDialogProvider } from '@/hooks/useActionDialog';
+import { PlayerSidebarProvider } from '@/hooks/usePlayerSidebar';
 
 const fetchResource = async (url, errorMessage) => {
   try {
@@ -132,7 +134,11 @@ export default function Root() {
             >
               <Header />
               <Container maxWidth={widthMode}>
-                <Outlet />
+                <ActionDialogProvider>
+                  <PlayerSidebarProvider>
+                    <Outlet />
+                  </PlayerSidebarProvider>                  
+                </ActionDialogProvider>
               </Container>
             </Stack>
           </Box>
