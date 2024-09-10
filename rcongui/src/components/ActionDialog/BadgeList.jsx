@@ -19,14 +19,7 @@ export const BadgeList = ({ recipients }) => {
       }}
       component="ul"
     >
-      {/* TODO */}
-      {/* Move this up to the parent component??? */}
-      {recipients.map(({ recipient, status }) => {
-        let removedClanName = recipient.name.replace(/^\[([^\]]*)\]/, ''); // remove `[clantags]`
-        let shortedName = removedClanName.substring(0, 6);
-        let label =
-          removedClanName.length > 6 ? shortedName + '...' : shortedName;
-
+      {recipients.map(({ recipient, status, label }) => {
         return (
           <ListItem key={recipient.player_id}>
             <Tooltip title={recipient.name}>

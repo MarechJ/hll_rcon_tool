@@ -1,6 +1,8 @@
 import { Avatar, Badge, Box, Stack, Tooltip, Typography } from '@mui/material';
 import { styled } from '@mui/styles';
-import { CountryFlag } from '../../../../components/CountryFlag';
+import { CountryFlag } from '@/components/CountryFlag';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import StarIcon from '@mui/icons-material/Star';
 
 // TODO
 // What is the type prop for?
@@ -18,7 +20,7 @@ export const columns = [
   // {
   //   field: 'team',
   //   headerName: 'Team',
-  //   width: 50,
+  //   width: 75,
   //   renderCell: (params) => {
   //     const [allies, axis] = ['1001546200681566330', '1001525586839208006'];
   //     const src = (team) =>
@@ -46,7 +48,7 @@ export const columns = [
   // },
   {
     field: 'assignment',
-    headerName: 'Assignment',
+    headerName: 'Unit',
     width: 75,
     valueGetter: (value, row) => {
       return `${row.team}-${row.unit_name}-${row.role}`;
@@ -114,7 +116,7 @@ export const columns = [
   {
     field: 'level',
     headerName: 'Level',
-    width: 50,
+    width: 75,
   },
   {
     field: 'name',
@@ -124,7 +126,7 @@ export const columns = [
   {
     field: 'country',
     headerName: 'Country',
-    width: 50,
+    width: 75,
     renderCell: (params) => {
       if (!params.value || params.value === 'private') return null;
 
@@ -134,14 +136,26 @@ export const columns = [
     },
   },
   {
-    field: 'player_id',
-    headerName: 'ID',
+    field: 'is_watched',
+    headerName: 'Watched',
+    type: 'boolean',
+    width: 75,
+    renderHeader: () => (
+      <Box sx={{ display: 'grid', alignContent: 'center', justifyItems: 'center' }}>
+        <VisibilityIcon />
+      </Box>
+    ),
   },
   {
     field: 'is_vip',
     headerName: 'VIP',
     type: 'boolean',
-    width: 50,
+    width: 75,
+    renderHeader: () => (
+      <Box sx={{ display: 'grid', alignContent: 'center', justifyItems: 'center' }}>
+        <StarIcon />
+      </Box>
+    ),
   },
   {
     field: 'flags',
@@ -176,32 +190,36 @@ export const columns = [
     type: 'number',
     width: 75,
   },
+  {
+    field: 'player_id',
+    headerName: 'ID',
+  },
   // {
   //   field: 'punish_times',
   //   headerName: '# Punish',
   //   type: 'number',
-  //   width: 50,
+  //   width: 75,
   //   valueFormatter: (value) => (value === 0 ? '' : value),
   // },
   // {
   //   field: 'kicked_times',
   //   headerName: '# Kick',
   //   type: 'number',
-  //   width: 50,
+  //   width: 75,
   //   valueFormatter: (value) => (value === 0 ? '' : value),
   // },
   // {
   //   field: 'tempban_times',
   //   headerName: '# TempBan',
   //   type: 'number',
-  //   width: 50,
+  //   width: 75,
   //   valueFormatter: (value) => (value === 0 ? '' : value),
   // },
   // {
   //   field: 'permaban_times',
   //   headerName: '# PermaBan',
   //   type: 'number',
-  //   width: 50,
+  //   width: 75,
   //   valueFormatter: (value) => (value === 0 ? '' : value),
   // },
 ];

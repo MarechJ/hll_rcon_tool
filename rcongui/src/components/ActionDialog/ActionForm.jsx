@@ -11,17 +11,24 @@ const ACTION_STATUS = {
 };
 
 const initRecipients = (recipients) =>
-  recipients.map((recipient) => ({
-    recipient: recipient,
-    status: recipient.status ?? ACTION_STATUS.default,
-  }));
+  recipients.map((recipient) => {
+    let removedClanName = recipient.name.replace(/^\[([^\]]*)\]/, ''); // remove `[clantags]`
+    let shortedName = removedClanName.substring(0, 8);
+    let label = removedClanName.length > 6 ? shortedName + '...' : shortedName;
+    return ({
+      recipient: recipient,
+      status: recipient.status ?? ACTION_STATUS.default,
+      label,
+    })
+  });
 
 export const ActionForm = ({
-  submitRef,
   action,
+  actionHandlers,
   recipients,
   defaultValues, // not yet used
 }) => {
+
   const {
     handleSubmit,
     control,
@@ -29,15 +36,23 @@ export const ActionForm = ({
     setValue,
   } = useForm();
 
-  const [recipientStates, setRecipientStates] = React.useState(
-    initRecipients(recipients)
-  );
+  const { submitRef, closeDialog, setLoading } = actionHandlers;
+
+  const [recipientStates, setRecipientStates] = React.useState(initRecipients(recipients));
+  const [submiting, setSubmiting] = React.useState(false);
+  const closeDialogTimeoutRef = React.useRef(null);
 
   React.useEffect(() => {
     setRecipientStates(initRecipients(recipients));
   }, [recipients]);
 
+  React.useEffect(() => {
+    return () => clearTimeout(closeDialogTimeoutRef.current);
+  }, [])
+
   const onSubmit = React.useCallback(async (data) => {
+    let allSuccess = true;
+    setLoading(true)
     // get list of all selected players and ids
     const steamIds = recipientStates.map(
       ({ recipient }) => recipient.player_id
@@ -46,14 +61,14 @@ export const ActionForm = ({
     // map each to a request payload
     const payloads = [];
     for (let i = 0; i < players.length; i++) {
-      payloads.push({ player: players[i], player_id: steamIds[i], ...data });
+      payloads.push({ player_name: players[i], player_id: steamIds[i], ...data });
     }
     // now map payloads to requests
     const requests = payloads.map((payload) => action.execute(payload));
     // Update UI to signalize pending state
     setRecipientStates((prevState) =>
-      prevState.map(({ recipient }) => ({
-        recipient,
+      prevState.map((state) => ({
+        ...state,
         status: ACTION_STATUS.pending,
       }))
     );
@@ -66,32 +81,46 @@ export const ActionForm = ({
     }, {});
     // determine statuses based on the response's return value
     for (const response of responses) {
+      let result, player, player_id;
+
       if (response.status === 'fulfilled') {
-        const result = await response.value.json();
-        const { player, player_id } = result.arguments;
+        result = await response.value.json();
+        player = result.arguments.player
+        player_id = result.arguments.player_id
+        console.log({ player, player_id })
         if (!result.failed) {
           idsToStatus[player_id] = ACTION_STATUS.success;
         } else {
+          allSuccess = false;
           idsToStatus[player_id] = ACTION_STATUS.error;
         }
+
       } else {
+        allSuccess = false;
         idsToStatus[player_id] = ACTION_STATUS.error;
       }
     }
     // update UI
     setRecipientStates((prevStatePlayers) => {
-      return prevStatePlayers.map(({ recipient }) => {
+      return prevStatePlayers.map((state) => {
+        const { recipient } = state;
         let nextStatus =
           idsToStatus[recipient.player_id] === ACTION_STATUS.pending
             ? ACTION_STATUS.error
             : idsToStatus[recipient.player_id];
 
         return {
-          recipient,
+          ...state,
           status: nextStatus,
         };
       });
     });
+
+    if (allSuccess) {
+      setTimeout(closeDialog, 1000)
+    } else {
+      setLoading(false)
+    }
   }, []);
 
   const ActionFields = action.component;
@@ -110,5 +139,5 @@ export const ActionForm = ({
         </Button>
       </form>
     </React.Fragment>
-  );
+  ); 
 };

@@ -14,6 +14,7 @@ export const playerToRow = (player) => ({
   tempban_times: player?.profile?.penalty_count?.TEMPBAN,
   permaban_times: player?.profile?.penalty_count?.PERMABAN,
   flags: player?.profile?.flags,
+  is_watched: player?.profile?.watchlist?.is_watched,
 });
 
 const PlayersTable = ({ data: teamData, rows, columns, ...props }) => {
@@ -33,6 +34,7 @@ const PlayersTable = ({ data: teamData, rows, columns, ...props }) => {
         density: 'compact',
       },
       disableRowSelectionOnClick: true,
+      disableColumnMenu: true,
       slots: {
         toolbar: TableToolbar,
         noRowsOverlay: NoRowsOverlay,
