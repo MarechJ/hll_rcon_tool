@@ -10,6 +10,7 @@ import StarIcon from '@mui/icons-material/Star';
 import FlagIcon from '@mui/icons-material/Flag';
 import HowToRegIcon from '@mui/icons-material/HowToReg';
 import AddCommentIcon from '@mui/icons-material/AddComment';
+import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import { execute } from '@/utils/fetchUtils';
 import { MessageFormFields } from '@/components/ActionDialog/actionFields/MessageFormFields';
 import { PunishFormFields } from '@/components/ActionDialog/actionFields/PunishFormFields';
@@ -40,7 +41,7 @@ export const messageAction = {
     description: 'Show message in top right corner of game interface.',
     component: MessageFormFields,
     icon: <MessageIcon />,
-    execute: executeAction('do_message_player'),
+    execute: executeAction('message_player'),
 };
 
 export const watchAction = {
@@ -48,7 +49,7 @@ export const watchAction = {
     description: 'Send Discord message upon player connection (using webhook config).',
     component: WatchFormFields,
     icon: <RemoveRedEyeIcon />,
-    execute: executeAction('do_watch_player'),
+    execute: executeAction('watch_player'),
 };
 
 export const vipAction = {
@@ -56,7 +57,7 @@ export const vipAction = {
     description: 'Manage VIP.',
     component: AddVipFormFields,
     icon: <StarIcon />,
-    execute: executeAction('do_add_vip'),
+    execute: executeAction('add_vip'),
 };
 
 export const switchAction = {
@@ -64,7 +65,7 @@ export const switchAction = {
     description: 'Move player to opposite team.',
     component: ConfirmationOnly,
     icon: <SyncIcon />,
-    execute: executeAction('do_switch_player_now'),
+    execute: executeAction('switch_player_now'),
 };
 
 export const switchOnDeathAction = {
@@ -72,7 +73,7 @@ export const switchOnDeathAction = {
     description: 'Move player to opposite team upon death.',
     component: ConfirmationOnly,
     icon: <SyncLockIcon />,
-    execute: executeAction('do_switch_player_on_death'),
+    execute: executeAction('switch_player_on_death'),
 };
 
 export const punishAction = {
@@ -80,7 +81,7 @@ export const punishAction = {
     description: 'Kill player in-game if alive.',
     component: PunishFormFields,
     icon: <WarningIcon />,
-    execute: executeAction('do_punish'),
+    execute: executeAction('punish'),
 };
 
 export const kickAction = {
@@ -88,7 +89,7 @@ export const kickAction = {
     description: 'Remove player from server.',
     component: PunishFormFields,
     icon: <SportsMartialArtsIcon />,
-    execute: executeAction('do_kick'),
+    execute: executeAction('kick'),
 };
 
 export const tempBanAction = {
@@ -96,7 +97,9 @@ export const tempBanAction = {
     description: 'Issue immediate temporary ban to player.',
     component: TempBanFormFields,
     icon: <GavelIcon />,
-    execute: executeAction('do_temp_ban'),
+    execute: executeAction('temp_ban'),
+    deprecated: true,
+    deprecationNote: "We suggest utilizing blacklists for more effective ban management.",
 };
 
 export const permaBanAction = {
@@ -104,8 +107,18 @@ export const permaBanAction = {
     description: 'Initiate immediate indefinite ban to player.',
     component: PermaBanFormFields,
     icon: <BlockIcon />,
-    execute: executeAction('do_perma_ban'),
+    execute: executeAction('perma_ban'),
+    deprecated: true,
+    deprecationNote: "We suggest utilizing blacklists for more effective ban management.",
 };
+
+export const blacklistAction = {
+    name: 'blacklist',
+    description: 'Add player to a blacklist.',
+    component: null,
+    icon: AccountBalanceIcon,
+    execute: executeAction('add_blacklist_record'),
+}
 
 export const flagAction = {
     name: 'flag',
@@ -131,9 +144,6 @@ export const clearAccountAction = {
     execute: executeAction('unban'),
 };
 
-// TODO
-// Forget about generating one-click remove buttons,
-// always open the dialog to manage the player
 
 // TODO
 // A function that takes in either Player object or params as `hasVIP`

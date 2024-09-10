@@ -36,7 +36,7 @@ export default function ActionMenu({ handleActionClick, actionList, ...props }) 
         {actionList.map((action) => (
           <MenuItem key={action.name} onClick={() => { handleClose(); handleActionClick(action) }}>
             <ListItemIcon>{action.icon}</ListItemIcon>
-            <Typography variant="inherit">{action.name[0].toUpperCase() + action.name.slice(1)}</Typography>
+            <Typography variant="inherit" sx={{ textDecoration: action.depraceted ? "line-through" : "" }}>{action.name[0].toUpperCase() + action.name.slice(1)}</Typography>
           </MenuItem>
         ))}
       </Menu>
