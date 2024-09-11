@@ -20,7 +20,7 @@ import {
 import { Close } from '@mui/icons-material';
 import { TabContext, TabPanel } from '@mui/lab';
 import { styled } from '@mui/system';
-import ActionMenu from '../ActionMenu';
+import ActionMenu from '@/features/player-action/ActionMenu';
 import dayjs from 'dayjs';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
@@ -36,7 +36,7 @@ import { useActionDialog } from '@/hooks/useActionDialog';
 import { usePlayerSidebar } from '@/hooks/usePlayerSidebar';
 import { CountryFlag } from '../CountryFlag';
 import { get } from '@/utils/fetchUtils';
-import { playerGameActions, playerProfileActions } from '../ActionMenu/actions';
+import { playerGameActions, playerProfileActions } from '@/features/player-action/actions';
 
 const OnlineStatusBadge = styled(Badge, {
   shouldForwardProp: (props) => props !== 'isOnline',
@@ -259,11 +259,7 @@ const Messages = ({ messages }) => {
 export const PlayerDetailDrawer = () => {
   const [openedTab, setOpenedTab] = React.useState('1');
 
-  const {
-    setOpen: setActionDialogOpen,
-    setAction,
-    setRecipients,
-  } = useActionDialog();
+  const { openDialog } = useActionDialog();
 
   const { open, setOpen, player } = usePlayerSidebar();
 
@@ -318,9 +314,7 @@ export const PlayerDetailDrawer = () => {
   }
 
   const handleActionClick = (recipients) => (action) => {
-    setAction(action);
-    setRecipients(recipients);
-    setActionDialogOpen(true);
+    openDialog(action, recipients)
   };
 
   const handleTabChange = (event, newValue) => {

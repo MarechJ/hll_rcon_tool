@@ -26,6 +26,7 @@ import { columns } from "./columns";
 import { useAsyncInterval, useInterval } from "@/hooks/useInterval";
 import { Header } from "@/components/game/Header";
 import { extractPlayers, extractTeamState } from "@/utils/extractPlayers";
+// import teamData from "./data.json"
 
 const StyledToggleButtonGroup = styled(ToggleButtonGroup)(({ theme }) => ({
   [`& .${toggleButtonGroupClasses.grouped}`]: {
@@ -146,8 +147,6 @@ const Live = () => {
   const [open, setOpen] = React.useState(false);
   const { data: teamData } = useAsyncInterval(getTeamView, interval * 1000);
   const { data: gameState } = useAsyncInterval(getGameState, interval * 1000);
-
-  console.log({gameState})
 
   const gameStateProp = React.useMemo(() => {
     if (gameState && teamData) {

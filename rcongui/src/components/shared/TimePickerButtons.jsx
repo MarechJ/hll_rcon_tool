@@ -15,18 +15,17 @@ export const TimePickerButtons = ({
   const adjustTimestamp = (amount, unit) => {
     const after = dayjs(expirationTimestamp).add(amount, unit);
     const now = dayjs();
-    console.log({expirationTimestamp, after, now})
 
     if (after.isBefore(now)) {
-      setExpirationTimestamp(now.format())
+      setExpirationTimestamp(now)
       return;
     }
 
-    setExpirationTimestamp(after.format());
+    setExpirationTimestamp(after);
   };
 
   const setTimestamp = (amount, unit) => {
-    setExpirationTimestamp(dayjs().add(amount, unit).format());
+    setExpirationTimestamp(dayjs().add(amount, unit));
   };
 
   return (

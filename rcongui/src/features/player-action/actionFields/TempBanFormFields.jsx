@@ -1,8 +1,8 @@
 import React from 'react';
-import { ReasonField } from '../../form/custom/ReasonField'
-import { DurationField } from '../../form/custom/DurationField';
+import { ReasonField } from '../../../components/form/custom/ReasonField'
+import { DurationField } from '../../../components/form/custom/DurationField';
 import { Stack } from '@mui/material'
-import { ForwardField } from '../../form/custom/ForwardField';
+import { ForwardField } from '../../../components/form/custom/ForwardField';
 
 export const TempBanFormFields = ({ control, errors }) => {
   return (

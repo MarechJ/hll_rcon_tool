@@ -1,4 +1,4 @@
-import { CommentField } from "../../form/custom/CommentField"
+import { CommentField } from "../../../components/form/custom/CommentField"
 
 export const AddCommentFormFields = ({ control, errors, ...props }) => {
     return (

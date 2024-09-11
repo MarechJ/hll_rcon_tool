@@ -8,9 +8,9 @@ import {
   GridToolbarDensitySelector,
 } from '@mui/x-data-grid';
 import { useActionDialog } from '@/hooks/useActionDialog';
-import ActionMenu from '../../../../components/ActionMenu';
+import ActionMenu from '@/features/player-action/ActionMenu';
 import { styled } from '@mui/styles';
-import { playerGameActions } from '../../../../components/ActionMenu/actions';
+import { playerGameActions } from '@/features/player-action/actions';
 
 const DesktopActionMenu = styled(Stack)(({ theme }) => ({
   display: 'flex',  
@@ -32,12 +32,10 @@ const MobileActionMenu = styled(Box)(({ theme }) => ({
 export const TableToolbar = () => {
   const apiRef = useGridApiContext();
   const selectedRows = apiRef.current.getSelectedRows();
-  const { setOpen, setAction, setRecipients } = useActionDialog();
+  const { openDialog } = useActionDialog();
 
   const handleActionClick = (recipients) => (action) => {
-    setAction(action);
-    setRecipients(recipients);
-    setOpen(true);
+    openDialog(action, recipients)
   };
 
   if (selectedRows.size) {

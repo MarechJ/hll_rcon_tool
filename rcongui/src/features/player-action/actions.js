@@ -12,25 +12,30 @@ import HowToRegIcon from '@mui/icons-material/HowToReg';
 import AddCommentIcon from '@mui/icons-material/AddComment';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import { execute } from '@/utils/fetchUtils';
-import { MessageFormFields } from '@/components/ActionDialog/actionFields/MessageFormFields';
-import { PunishFormFields } from '@/components/ActionDialog/actionFields/PunishFormFields';
-import { WatchFormFields } from '@/components/ActionDialog/actionFields/WatchFormFields';
-import { ConfirmationOnly } from '@/components/ActionDialog/actionFields/ConfirmationOnly';
-import { AddVipFormFields } from '@/components/ActionDialog/actionFields/AddVipFormFields';
-import { TempBanFormFields } from '@/components/ActionDialog/actionFields/TempBanFormFields';
-import { PermaBanFormFields } from '@/components/ActionDialog/actionFields/PermaBanFormFields';
-import { AddFlagFormFields } from '@/components/ActionDialog/actionFields/AddFlagFormFields';
-import { AddCommentFormFields } from '@/components/ActionDialog/actionFields/AddCommentFormFields';
+import { MessageFormFields } from '@/features/player-action/actionFields/MessageFormFields';
+import { PunishFormFields } from '@/features/player-action/actionFields/PunishFormFields';
+import { WatchFormFields } from '@/features/player-action/actionFields/WatchFormFields';
+import { ConfirmationOnly } from '@/features/player-action/actionFields/ConfirmationOnly';
+import { AddVipFormFields } from '@/features/player-action/actionFields/AddVipFormFields';
+import { TempBanFormFields } from '@/features/player-action/actionFields/TempBanFormFields';
+import { PermaBanFormFields } from '@/features/player-action/actionFields/PermaBanFormFields';
+import { AddFlagFormFields } from '@/features/player-action/actionFields/AddFlagFormFields';
+import { AddCommentFormFields } from '@/features/player-action/actionFields/AddCommentFormFields';
+import { BlacklistPlayerFormFields } from '@/features/player-action/actionFields/BlacklistPlayerFields';
 
-// In the UI, it does not make sense to ask for a reason and message
-// at the same time as they are the same thing. However, the API
-// expects both in the payload.
 const executeAction = (command) => async (payload) => {
+    // In the UI, it does not make sense to ask for a reason and message
+    // at the same time as they are the same thing. However, the API
+    // expects both in the payload.
     if ('reason' in payload) {
-        payload.message = payload.reason
+        payload.message = payload.reason;
     }
     if ('player' in payload) {
-        payload.name = payload.player
+        payload.name = payload.player;
+    }
+    // v10.x.x 'add_vip' change param from 'name' to 'description'
+    if (command === 'add_vip') {
+        payload.description = payload.player_name;
     }
     return await execute(command, payload)
 }
@@ -115,9 +120,10 @@ export const permaBanAction = {
 export const blacklistAction = {
     name: 'blacklist',
     description: 'Add player to a blacklist.',
-    component: null,
-    icon: AccountBalanceIcon,
+    component: BlacklistPlayerFormFields,
+    icon: <AccountBalanceIcon />,
     execute: executeAction('add_blacklist_record'),
+    context: ["get_blacklists"],
 }
 
 export const flagAction = {
@@ -169,6 +175,7 @@ export const playerProfileActions = [
     watchAction,
     vipAction,
     clearAccountAction,
+    blacklistAction,
     tempBanAction,
     permaBanAction,
     flagAction,
@@ -184,6 +191,7 @@ export const playerGameActions = [
     switchOnDeathAction,
     punishAction,
     kickAction,
+    blacklistAction,
     tempBanAction,
     permaBanAction,
     flagAction,

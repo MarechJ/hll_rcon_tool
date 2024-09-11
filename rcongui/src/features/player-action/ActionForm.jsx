@@ -23,23 +23,18 @@ const initRecipients = (recipients) =>
   });
 
 export const ActionForm = ({
-  action,
+  state: actionState,
   actionHandlers,
-  recipients,
-  defaultValues, // not yet used
 }) => {
 
   const {
     handleSubmit,
-    control,
     formState: { errors },
-    setValue,
+    ...restForm
   } = useForm();
-
-  const { submitRef, closeDialog, setLoading } = actionHandlers;
-
+  const { recipients, action } = actionState;
+  const { submitRef, closeDialog, setLoading, setError } = actionHandlers;
   const [recipientStates, setRecipientStates] = React.useState(initRecipients(recipients));
-  const [submiting, setSubmiting] = React.useState(false);
   const closeDialogTimeoutRef = React.useRef(null);
 
   React.useEffect(() => {
@@ -81,23 +76,23 @@ export const ActionForm = ({
     }, {});
     // determine statuses based on the response's return value
     for (const response of responses) {
-      let result, player, player_id;
-
-      if (response.status === 'fulfilled') {
+      let result, player_id;
+      // if fulfilled it also contains Response object as 'value` param
+      if (response.status === 'fulfilled' && response.value.ok) {
         result = await response.value.json();
-        player = result.arguments.player
         player_id = result.arguments.player_id
-        console.log({ player, player_id })
         if (!result.failed) {
           idsToStatus[player_id] = ACTION_STATUS.success;
         } else {
           allSuccess = false;
           idsToStatus[player_id] = ACTION_STATUS.error;
         }
-
+      // otherwise it contains the error object as 'reason' param 
       } else {
         allSuccess = false;
-        idsToStatus[player_id] = ACTION_STATUS.error;
+        // Change this if you want to obtain the message from the server
+        // response.value = Response object
+        setError(response.reason)
       }
     }
     // update UI
@@ -105,7 +100,7 @@ export const ActionForm = ({
       return prevStatePlayers.map((state) => {
         const { recipient } = state;
         let nextStatus =
-          idsToStatus[recipient.player_id] === ACTION_STATUS.pending
+          idsToStatus[recipient.player_id] !== ACTION_STATUS.success
             ? ACTION_STATUS.error
             : idsToStatus[recipient.player_id];
 
@@ -129,7 +124,7 @@ export const ActionForm = ({
     <React.Fragment>
       <BadgeList recipients={recipientStates} />
       <form onSubmit={handleSubmit(onSubmit)}>
-        <ActionFields control={control} errors={errors} setValue={setValue} />
+        <ActionFields errors={errors} {...restForm} {...actionState} />
         <Button
           ref={submitRef}
           type="submit"
