@@ -1,6 +1,6 @@
 import { Stack } from '@mui/material'
-import { ReasonField } from '../../form/custom/ReasonField'
-import { ForwardField } from '../../form/custom/ForwardField';
+import { ReasonField } from '../../../components/form/custom/ReasonField'
+import { ForwardField } from '../../../components/form/custom/ForwardField';
 
 export const PermaBanFormFields = ({ control, errors }) => {
   return (

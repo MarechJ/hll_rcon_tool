@@ -1,7 +1,8 @@
 import { TimePickerButtons } from "@/components/shared/TimePickerButtons";
-import { ExpirationField } from "../../form/custom/ExpirationField";
-import { ForwardField } from "../../form/custom/ForwardField";
+import { ExpirationField } from "../../../components/form/custom/ExpirationField";
+import { ForwardField } from "../../../components/form/custom/ForwardField";
 import { Box, Button, Stack } from "@mui/material";
+import dayjs from "dayjs";
 
 const presetTimes = [
   [2, "hours"],
@@ -10,7 +11,8 @@ const presetTimes = [
   [1, "month"],
 ];
 
-export const AddVipFormFields = ({ control, errors }) => {
+export const AddVipFormFields = ({ control, errors, setValue, getValues }) => {
+
   return (
     <Stack gap={3}>
       <ForwardField control={control} errors={errors} />
@@ -21,7 +23,7 @@ export const AddVipFormFields = ({ control, errors }) => {
           size="small"
           color="secondary"
           style={{ display: "block", width: "100%", marginBottom: 4 }}
-          onClick={() => setExpirationTimestamp(dayjs().add(15, "minutes"))}
+          onClick={() => setValue('expiration', dayjs().add(15, "minutes"))}
         >
           Help to join!
         </Button>
@@ -30,8 +32,8 @@ export const AddVipFormFields = ({ control, errors }) => {
             key={unit + index}
             amount={amount}
             unit={unit}
-            expirationTimestamp={() => {}}
-            setExpirationTimestamp={() => {}}
+            expirationTimestamp={getValues()?.expiration ?? dayjs()}
+            setExpirationTimestamp={(value) => { setValue('expiration', value, { shouldTouch: true }) }}
           />
         ))}
         <Button
@@ -39,7 +41,7 @@ export const AddVipFormFields = ({ control, errors }) => {
           size="small"
           color="secondary"
           style={{ display: "block", width: "100%" }}
-          onClick={() => setExpirationTimestamp("3000-01-01T00:00:00+00:00")}
+          onClick={() => setValue('expiration', dayjs("3000-01-01T00:00:00+00:00"))}
         >
           Indefinite
         </Button>

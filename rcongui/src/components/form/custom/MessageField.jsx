@@ -10,7 +10,7 @@ export const MessageField = ({ control, errors, ...props }) => {
       name={'message'}
       label={'Message'}
       control={control}
-      rules={{ required: 'Message is required', minLength: { value: 5, message: 'Must be at least 5 characters long.' } }}
+      rules={{ required: 'Message is required' }}
       helperText={hasError ? error.message : 'The message displayed to the player.'}
       multiline
       minRows={5}

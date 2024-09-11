@@ -21,11 +21,12 @@ export const ExpirationField = ({ control, errors, ...props }) => {
       } }}
       error={error}
       disablePast
+      maxDate={dayjs("3000-01-01T00:00:00+00:00")}
       slotProps={{
         textField: {
           helperText: hasError
             ? error.message
-            : 'The date the VIP will expire.',
+            : 'The date this action will expire.',
         },
       }}
     />
