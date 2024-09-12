@@ -1,4 +1,4 @@
-import { ControlledCheckbox } from '../core/ControlledCheckbox';
+import { ControlledCheckbox } from '@/components/form/core/ControlledCheckbox';
 
 export const ForwardField = ({ control, errors, ...props }) => {
   const error = errors['forward'];

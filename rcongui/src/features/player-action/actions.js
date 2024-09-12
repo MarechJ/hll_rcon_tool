@@ -12,16 +12,16 @@ import HowToRegIcon from '@mui/icons-material/HowToReg';
 import AddCommentIcon from '@mui/icons-material/AddComment';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import { execute } from '@/utils/fetchUtils';
-import { MessageFormFields } from '@/features/player-action/actionFields/MessageFormFields';
-import { PunishFormFields } from '@/features/player-action/actionFields/PunishFormFields';
-import { WatchFormFields } from '@/features/player-action/actionFields/WatchFormFields';
-import { ConfirmationOnly } from '@/features/player-action/actionFields/ConfirmationOnly';
-import { AddVipFormFields } from '@/features/player-action/actionFields/AddVipFormFields';
-import { TempBanFormFields } from '@/features/player-action/actionFields/TempBanFormFields';
-import { PermaBanFormFields } from '@/features/player-action/actionFields/PermaBanFormFields';
-import { AddFlagFormFields } from '@/features/player-action/actionFields/AddFlagFormFields';
-import { AddCommentFormFields } from '@/features/player-action/actionFields/AddCommentFormFields';
-import { BlacklistPlayerFormFields } from '@/features/player-action/actionFields/BlacklistPlayerFields';
+import { MessageFormFields } from '@/features/player-action/forms/MessageFormFields';
+import { PunishFormFields } from '@/features/player-action/forms/PunishFormFields';
+import { WatchFormFields } from '@/features/player-action/forms/WatchFormFields';
+import { ConfirmationOnly } from '@/features/player-action/forms/ConfirmationOnly';
+import { AddVipFormFields } from '@/features/player-action/forms/AddVipFormFields';
+import { TempBanFormFields } from '@/features/player-action/forms/TempBanFormFields';
+import { PermaBanFormFields } from '@/features/player-action/forms/PermaBanFormFields';
+import { AddFlagFormFields } from '@/features/player-action/forms/AddFlagFormFields';
+import { AddCommentFormFields } from '@/features/player-action/forms/AddCommentFormFields';
+import { BlacklistPlayerFormFields } from '@/features/player-action/forms/BlacklistPlayerFields';
 
 const executeAction = (command) => async (payload) => {
     // In the UI, it does not make sense to ask for a reason and message

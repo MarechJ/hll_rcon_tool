@@ -1,4 +1,4 @@
-import { ControlledTextInput } from "../core/ControlledTextInput";
+import { ControlledTextInput } from "@/components/form/core/ControlledTextInput";
 
 export const CommentField = ({ control, errors, ...props }) => {
   const error = errors['comment'];

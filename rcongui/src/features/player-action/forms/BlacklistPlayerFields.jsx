@@ -1,6 +1,6 @@
 import { TimePickerButtons } from "@/components/shared/TimePickerButtons";
-import { ExpirationField } from "@/components/form/custom/ExpirationField";
-import { ReasonField } from "@/components/form/custom/ReasonField";
+import { ExpirationField } from "../fields/ExpirationField";
+import { ReasonField } from "../fields/ReasonField";
 import { Box, Stack } from "@mui/material";
 import dayjs from "dayjs";
 import { ControlledSelect } from "@/components/form/core/ControlledSelect";
@@ -42,7 +42,7 @@ export const BlacklistPlayerFormFields = ({ control, errors, setValue, getValues
           />
         ))}
       </Box>
-      <ReasonField control={control} errors={errors} />
+      <ReasonField control={control} errors={errors} setValue={setValue} />
     </Stack>
   );
 };

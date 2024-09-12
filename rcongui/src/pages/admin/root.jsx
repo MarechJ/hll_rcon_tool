@@ -88,8 +88,8 @@ export const loader = async () => {
 }
 
 export default function Root() {
-  const [mode, setMode] = useStorageState("crcon-mode", "dark");
-  const [widthMode, setWidthMode] = useStorageState("crcon-width", "xl");
+  const [mode, setMode] = useStorageState("mode", "dark");
+  const [widthMode, setWidthMode] = useStorageState("width", "xl");
   const dashboardTheme = createTheme(getDashboardTheme(mode));
 
   const toggleColorMode = () => {

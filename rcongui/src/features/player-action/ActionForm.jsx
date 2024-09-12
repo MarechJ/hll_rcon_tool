@@ -31,7 +31,14 @@ export const ActionForm = ({
     handleSubmit,
     formState: { errors },
     ...restForm
-  } = useForm();
+  } = useForm({
+    // to make the text inputs detect any change when calling
+    // setValue from the react-hook-form
+    defaultValues: {
+      message: '',
+      reason: '',
+    }
+  });
   const { recipients, action } = actionState;
   const { submitRef, closeDialog, setLoading, setError } = actionHandlers;
   const [recipientStates, setRecipientStates] = React.useState(initRecipients(recipients));
