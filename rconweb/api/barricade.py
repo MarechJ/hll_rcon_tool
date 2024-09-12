@@ -168,7 +168,7 @@ class BarricadeConsumer(AsyncJsonWebsocketConsumer):
 
         try:
             # Wait for response
-            response: ResponseBody = await asyncio.wait_for(fut, timeout=10)
+            response: dict | None = await asyncio.wait_for(fut, timeout=10)
         except asyncio.TimeoutError:
             logger.error("Barricade did not respond in time to request: %r", request)
             raise
@@ -185,7 +185,7 @@ class BarricadeConsumer(AsyncJsonWebsocketConsumer):
             if request.id in self._waiters:
                 del self._waiters[request.id]
 
-        return response.response
+        return response
 
     async def handle_request(self, request: RequestBody):
         if request.id in self._processing:
