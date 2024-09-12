@@ -1,6 +1,6 @@
 import { TimePickerButtons } from "@/components/shared/TimePickerButtons";
-import { ExpirationField } from "../../../components/form/custom/ExpirationField";
-import { ForwardField } from "../../../components/form/custom/ForwardField";
+import { ExpirationField } from "../fields/ExpirationField";
+import { ForwardField } from "../fields/ForwardField";
 import { Box, Button, Stack } from "@mui/material";
 import dayjs from "dayjs";
 

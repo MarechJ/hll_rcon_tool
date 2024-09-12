@@ -1,5 +1,5 @@
 import { Stack, TextField, useTheme } from '@mui/material';
-import { ControlledTextInput } from '../../../components/form/core/ControlledTextInput';
+import { ControlledTextInput } from '@/components/form/core/ControlledTextInput';
 import EmojiPicker from '@emoji-mart/react';
 import emojis from '@emoji-mart/data';
 import React from 'react';

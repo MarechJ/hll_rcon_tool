@@ -1,6 +1,6 @@
 import React from 'react';
 import dayjs from 'dayjs';
-import { ControlledDesktopDateTimePicker } from '../core/ControlledDesktopDateTimePicker';
+import { ControlledDesktopDateTimePicker } from '@/components/form/core/ControlledDesktopDateTimePicker';
 
 export const ExpirationField = ({ control, errors, ...props }) => {
   const error = errors['expiration'];

@@ -87,7 +87,7 @@ const LiveLogs = () => {
   const { initialLogsView } = useLoaderData();
   // Using custom hook that synchronizes the components state
   // and the browser's local storage
-  const [logsConfig, setLogsConfig] = useStorageState("crcon-logs-config", {
+  const [logsConfig, setLogsConfig] = useStorageState("logs-config", {
     players: [],
     actions: [],
     inclusive: true,

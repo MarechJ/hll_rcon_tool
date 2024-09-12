@@ -128,7 +128,7 @@ const MainWrapper = styled(Stack)(({ theme }) => ({
 
 export default function Login() {
   const [loading, setLoading] = React.useState(false);
-  const [mode] = useStorageState('crcon-mode', 'dark')
+  const [mode] = useStorageState('mode', 'dark')
 
   const {
     handleSubmit,
