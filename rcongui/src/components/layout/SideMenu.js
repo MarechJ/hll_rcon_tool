@@ -9,7 +9,6 @@ import Typography from '@mui/material/Typography';
 import SelectContent from './SelectContent';
 import MenuContent from './MenuContent';
 import OptionsMenu from './OptionsMenu';
-import { useLoaderData } from 'react-router-dom';
 
 const drawerWidth = 240;
 
@@ -30,7 +29,6 @@ const Drawer = styled(MuiDrawer, {
 }));
 
 export default function SideMenu({ open }) {
-  const data = useLoaderData();
   return (
     <Drawer
       variant="permanent"
