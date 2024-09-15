@@ -13,7 +13,9 @@ import { useLoaderData } from 'react-router-dom';
 
 const drawerWidth = 240;
 
-const Drawer = styled(MuiDrawer)({
+const Drawer = styled(MuiDrawer, {
+  shouldForwardProp: (prop) => prop !== 'open',
+})(({ theme, open }) => ({
   width: drawerWidth,
   flexShrink: 0,
   boxSizing: 'border-box',
@@ -21,15 +23,20 @@ const Drawer = styled(MuiDrawer)({
   [`& .${drawerClasses.paper}`]: {
     width: drawerWidth,
     boxSizing: 'border-box',
+    ...(!open && {
+      width: 0,
+    }),
   },
-});
+}));
 
-export default function SideMenu() {
+export default function SideMenu({ open }) {
   const data = useLoaderData();
   return (
     <Drawer
       variant="permanent"
+      open={open}
       sx={{
+        width: open ? drawerWidth : 0,
         display: { xs: 'none', lg: 'block' },
         [`& .${drawerClasses.paper}`]: {
           backgroundColor: 'background.paper',

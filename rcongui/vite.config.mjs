@@ -23,7 +23,7 @@ export default defineConfig(({ command, mode }) => {
       port: 3000,
       proxy: {
         '/api': {
-          target: 'http://localhost:8011',
+          target: 'http://localhost:8010',
           changeOrigin: true,
         },
       },
@@ -32,7 +32,7 @@ export default defineConfig(({ command, mode }) => {
       port: 3000,
       proxy: {
         '/api': {
-          target: 'http://localhost:8011',
+          target: 'http://localhost:8010',
           changeOrigin: true,
         },
       },
@@ -42,21 +42,21 @@ export default defineConfig(({ command, mode }) => {
       include: /src\/.*\.jsx?$/,
       exclude: [],
     },
-    // optimizeDeps: {
-    //   esbuildOptions: {
-    //     loader: { '.js': 'jsx' },
-    //     plugins: [
-    //       {
-    //         name: 'load-js-files-as-jsx',
-    //         setup(build) {
-    //           build.onLoad({ filter: /src\/.*\.js$/ }, async (args) => ({
-    //             loader: 'jsx',
-    //             contents: await fs.readFile(args.path, 'utf8'),
-    //           }));
-    //         },
-    //       },
-    //     ],
-    //   },
-    // },
+    optimizeDeps: {
+      esbuildOptions: {
+        loader: { '.js': 'jsx' },
+        plugins: [
+          {
+            name: 'load-js-files-as-jsx',
+            setup(build) {
+              build.onLoad({ filter: /src\/.*\.js$/ }, async (args) => ({
+                loader: 'jsx',
+                contents: await fs.readFile(args.path, 'utf8'),
+              }));
+            },
+          },
+        ],
+      },
+    },
   };
 });
