@@ -91,6 +91,11 @@ export default function Root() {
   const [mode, setMode] = useStorageState("mode", "dark");
   const [widthMode, setWidthMode] = useStorageState("width", "xl");
   const dashboardTheme = createTheme(getDashboardTheme(mode));
+  const [openDrawer, setOpenDrawer] = React.useState(true);
+
+  const toggleDrawer = () => {
+    setOpenDrawer(prev => !prev);
+  };
 
   const toggleColorMode = () => {
     const newMode = mode === 'dark' ? 'light' : 'dark';
@@ -108,11 +113,13 @@ export default function Root() {
       widthMode={widthMode}
       toggleColorMode={toggleColorMode}
       toggleWidthMode={toggleWidthMode}
+      toggleDrawer={toggleDrawer}
+      openDrawer={openDrawer}
     >
       <ThemeProvider theme={dashboardTheme}>
         <CssBaseline enableColorScheme />
         <Box sx={{ display: 'flex' }}>
-          <SideMenu />
+          <SideMenu open={openDrawer} />
           <AppNavbar />
           {/* Main content */}
           <Box
