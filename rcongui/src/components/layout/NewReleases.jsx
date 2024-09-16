@@ -84,7 +84,9 @@ export default function NewReleases() {
           releases: newReleases.slice(0, 6),
         });
       } catch (error) {
-        return setReleasesStore(storedStore);
+        if (storedStore !== null) {
+          return setReleasesStore(storedStore);
+        }
       }
     };
     loadReleases();
