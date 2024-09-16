@@ -168,6 +168,25 @@ const router = createBrowserRouter([
                         element: <MessagesSettings />,
                         loader: messagesLoader,
                         action: messagesAction,
+                        children: [
+                            {
+                                path: 'standard',
+                                index: true,
+                                handle: { crumb: () => <span>Standard</span> },
+                            },
+                            {
+                                path: 'punishments',
+                                handle: { crumb: () => <span>Punishments</span> },
+                            },
+                            {
+                                path: 'welcome',
+                                handle: { crumb: () => <span>Welcome</span> },
+                            },
+                            {
+                                path: 'broadcast',
+                                handle: { crumb: () => <span>Broadcast</span> },
+                            }
+                        ]
                     },
                     {
                         path: 'autosettings',
