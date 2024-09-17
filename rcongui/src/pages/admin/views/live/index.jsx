@@ -26,7 +26,7 @@ import { columns } from "./columns";
 import { useAsyncInterval, useInterval } from "@/hooks/useInterval";
 import { Header } from "@/components/game/Header";
 import { extractPlayers, extractTeamState } from "@/utils/extractPlayers";
-import teamData from "./data.json"
+// import teamData from "./data.json"
 
 const StyledToggleButtonGroup = styled(ToggleButtonGroup)(({ theme }) => ({
   [`& .${toggleButtonGroupClasses.grouped}`]: {
@@ -44,7 +44,7 @@ const StyledToggleButtonGroup = styled(ToggleButtonGroup)(({ theme }) => ({
     },
 }));
 
-function CustomizedDividers() {
+export function CustomizedDividers() {
   const [alignment, setAlignment] = React.useState("left");
   const [formats, setFormats] = React.useState(() => ["italic"]);
 
@@ -145,7 +145,7 @@ const Live = () => {
   const [mdSize, setMdSize] = React.useState(6);
   const [direction, setDirection] = React.useState("");
   const [open, setOpen] = React.useState(false);
-  // const { data: teamData } = useAsyncInterval(getTeamView, interval * 1000);
+  const { data: teamData } = useAsyncInterval(getTeamView, interval * 1000);
   const { data: gameState } = useAsyncInterval(getGameState, interval * 1000);
 
   const gameStateProp = React.useMemo(() => {

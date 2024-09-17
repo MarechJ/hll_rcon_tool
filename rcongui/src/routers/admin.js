@@ -45,8 +45,10 @@ import { loader as servicesLoader } from "../pages/admin/settings/services"
 import { action as servicesAction } from "../pages/admin/settings/services"
 
 import MessagesSettings from "../pages/admin/settings/messages"
-import { loader as messagesLoader } from "../pages/admin/settings/messages"
-import { action as messagesAction } from "../pages/admin/settings/messages"
+import { loader as messagesLoader } from "../pages/admin/settings/messages/detail"
+import { action as messagesAction } from "../pages/admin/settings/messages/detail"
+import BroadcastMessages from "../pages/admin/settings/messages/broadcast"
+import MessagesDetail from "../pages/admin/settings/messages/detail"
 
 import AutoSettings from "../pages/admin/settings/autosettings"
 import { loader as autosettingsLoader } from "../pages/admin/settings/autosettings"
@@ -163,32 +165,6 @@ const router = createBrowserRouter([
                         action: servicesAction,
                     },
                     {
-                        path: 'messages',
-                        handle: { crumb: () => <span>Messages</span> },
-                        element: <MessagesSettings />,
-                        loader: messagesLoader,
-                        action: messagesAction,
-                        children: [
-                            {
-                                path: 'standard',
-                                index: true,
-                                handle: { crumb: () => <span>Standard</span> },
-                            },
-                            {
-                                path: 'punishments',
-                                handle: { crumb: () => <span>Punishments</span> },
-                            },
-                            {
-                                path: 'welcome',
-                                handle: { crumb: () => <span>Welcome</span> },
-                            },
-                            {
-                                path: 'broadcast',
-                                handle: { crumb: () => <span>Broadcast</span> },
-                            }
-                        ]
-                    },
-                    {
                         path: 'autosettings',
                         handle: { crumb: () => <span>Autosettings</span> },
                         element: <AutoSettings />,
@@ -219,6 +195,28 @@ const router = createBrowserRouter([
                                 path: 'votemap',
                                 handle: { crumb: () => <Link to={'/settings/maps/votemap'}>Votemap</Link> },
                                 element: <MapVotemap />,
+                            }
+                        ]
+                    },
+                    {
+                        path: 'messages',
+                        handle: { crumb: () => <span>Messages</span> },
+                        element: <MessagesSettings />,
+                        errorElement: <SharedErrorElement />,
+                        children: [
+                            {
+                                path: ':type',
+                                handle: { crumb: () => <span>Detail</span> },
+                                loader: messagesLoader,
+                                action: messagesAction,
+                                element: <MessagesDetail />,
+                            },
+                            {
+                                path: 'broadcast',
+                                handle: { crumb: () => <span>Broadcast</span> },
+                                loader: messagesLoader,
+                                action: messagesAction,
+                                element: <BroadcastMessages />,
                             }
                         ]
                     },
