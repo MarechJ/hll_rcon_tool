@@ -1,35 +1,16 @@
 import React from "react";
-import Box from "@mui/material/Box";
-import Tabs from "@mui/material/Tabs";
-import Tab from "@mui/material/Tab";
-import { Link, Outlet, useNavigate } from "react-router-dom";
-import { UnderConstruction } from "@/components/UnderConstruction";
+import { Link, Outlet } from "react-router-dom";
 import {
   Avatar,
-  Divider,
-  IconButton,
-  InputBase,
+  Box,
   ListItemAvatar,
   ListItemText,
   ListSubheader,
   MenuItem,
-  Paper,
   Select,
   selectClasses,
-  Stack,
-  styled,
 } from "@mui/material";
 import DevicesRoundedIcon from "@mui/icons-material/DevicesRounded";
-import AddCircleIcon from "@mui/icons-material/AddCircle";
-
-export const loader = async (o) => {
-  console.log(o)
-  return null;
-};
-
-export const action = async () => {
-  return null;
-};
 
 const messageTypes = [
   {
@@ -50,35 +31,15 @@ const messageTypes = [
   },
 ];
 
-const SearchWrapper = styled(Box)({
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "start",
-  width: "100%",
-});
-
-const StyledIconButton = styled(IconButton)({
-  padding: 10,
-});
-
-const StyledDivider = styled(Divider)({
-  height: 28,
-  margin: 4,
-});
-
-function Panel() {
+const MessagesRoot = () => {
   const [value, setValue] = React.useState("Standard");
-  const navigate = useNavigate();
 
   const handleChange = (event) => {
     setValue(event.target.value);
-    navigate(
-      messageTypes.find((type) => type.name === event.target.value).href
-    );
   };
 
   return (
-    <Stack direction={"column"} sx={{ minWidth: 300 }}>
+    <Box>
       <Select
         labelId="messages-select"
         id="messages-simple-select"
@@ -113,7 +74,13 @@ function Panel() {
       >
         <ListSubheader sx={{ pt: 0 }}>Messages</ListSubheader>
         {messageTypes?.map((type) => (
-          <MenuItem key={type.name} value={type.name}>
+          <MenuItem
+            key={type.name}
+            value={type.name}
+            component={Link}
+            href={type.href}
+            to={type.href}
+          >
             <ListItemAvatar>
               <Avatar alt={type.name}>
                 <DevicesRoundedIcon sx={{ fontSize: "1rem" }} />
@@ -130,44 +97,9 @@ function Panel() {
           </MenuItem>
         ))}
       </Select>
-      <Paper
-        sx={(theme) => ({
-          padding: "2px 4px",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          borderRadius: 0,
-        })}
-      >
-        <SearchWrapper>
-          <InputBase
-            sx={(theme) => ({
-              marginLeft: theme.spacing(1),
-              flex: 1,
-            })}
-            placeholder="Search Message"
-            inputProps={{ "aria-label": "search messages" }}
-            onChange={() => {}}
-          />
-          <StyledDivider orientation="vertical" />
-          <StyledIconButton aria-label="search" onClick={() => {}} size="large">
-            <AddCircleIcon />
-          </StyledIconButton>
-        </SearchWrapper>
-      </Paper>
-    </Stack>
-  );
-}
-
-const Messages = () => {
-  return (
-    <Stack direction={"row"}>
-      <Panel />
-      <Box sx={{ flexGrow: 1, background: "green", width: "100%" }}>
-        <Outlet context={{ hello: "World" }} />
-      </Box>
-    </Stack>
+      <Outlet />
+    </Box>
   );
 };
 
-export default Messages;
+export default MessagesRoot;
