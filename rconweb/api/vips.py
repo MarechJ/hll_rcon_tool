@@ -46,7 +46,8 @@ def upload_vips(request):
     vips = []
     if request.method == "POST":
         for name, data in request.FILES.items():
-            for line in data:
+            for idx, line in enumerate(data):
+                idx += 1
                 expiration_timestamp = None
                 try:
                     line = line.decode()
@@ -65,7 +66,7 @@ def upload_vips(request):
                             expiration_timestamp = parser.parse(possible_timestamp)
                         except:
                             logger.warning(
-                                f"Unable to parse {possible_timestamp=} for {name=} {player_id=}"
+                                f"#{idx} Unable to parse {possible_timestamp=} for {name=} {player_id=}"
                             )
                             # The last chunk should be treated as part of the players name if it's not a valid date
                             name += possible_timestamp
@@ -74,12 +75,12 @@ def upload_vips(request):
                         player_id
                     ):
                         errors.append(
-                            f"{line} has an invalid player ID: `{player_id}`, expected a 17 digit steam id or a windows store id. {is_steam_id=} {is_win_id=}"
+                            f"#{idx} {line} has an invalid player ID: `{player_id}`, expected a 17 digit steam id or a windows store id. {is_steam_id_64(player_id)=} {is_windows_store_id(player_id)=}"
                         )
                         continue
                     if not name:
                         errors.append(
-                            f"{line} doesn't have a name attached to the player ID"
+                            f"#{idx}  {line} doesn't have a name attached to the player ID"
                         )
                         continue
                     vips.append((name, player_id, expiration_timestamp))
@@ -87,7 +88,7 @@ def upload_vips(request):
                     errors.append("File encoding is not supported. Must use UTF8")
                     break
                 except Exception as e:
-                    errors.append(f"Error on line {line} {repr(2)}")
+                    errors.append(f"#{idx} Error on line {line}: {e}")
     else:
         return api_response(error="Bad method", status_code=400)
 
