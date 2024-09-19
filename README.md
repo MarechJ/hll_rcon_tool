@@ -651,7 +651,8 @@ Yes. Restart it. This may sound strange, but it is mandatory :
 to be taken in account, the `server_url` value you've just set has to be read during the CRCON Docker containers start.
 
 ```shell
-docker compose restart
+docker compose down
+docker compose up -d --remove-orphans
 ```
 
 ---
