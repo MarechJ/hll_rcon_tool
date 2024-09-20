@@ -101,16 +101,16 @@ class BarricadeConsumer(AsyncJsonWebsocketConsumer):
         self._last_seen_session = datetime.utcnow()
         self._scan_players_task = None
 
-    async def websocket_connect(self, *args, **kwargs):
-        await super().websocket_connect(*args, **kwargs)
+    async def connect(self):
         logger.info("Accepted connection with Barricade client")
+
+        await self.accept()
 
         if self._scan_players_task and not self._scan_players_task.done():
             self._scan_players_task.cancel()
         self._scan_players_task = asyncio.create_task(self._scan_players_loop())
 
-    async def websocket_disconnect(self, message):
-        await super().websocket_disconnect(message)
+    async def disconnect(self, code):
         logger.info("Closed connection with Barricade client")
 
         if self._scan_players_task and not self._scan_players_task.done():
@@ -168,7 +168,7 @@ class BarricadeConsumer(AsyncJsonWebsocketConsumer):
 
         try:
             # Wait for response
-            response: ResponseBody = await asyncio.wait_for(fut, timeout=10)
+            response: dict | None = await asyncio.wait_for(fut, timeout=10)
         except asyncio.TimeoutError:
             logger.error("Barricade did not respond in time to request: %r", request)
             raise
@@ -185,7 +185,7 @@ class BarricadeConsumer(AsyncJsonWebsocketConsumer):
             if request.id in self._waiters:
                 del self._waiters[request.id]
 
-        return response.response
+        return response
 
     async def handle_request(self, request: RequestBody):
         if request.id in self._processing:
