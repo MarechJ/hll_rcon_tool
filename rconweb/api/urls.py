@@ -189,6 +189,10 @@ endpoints: list[tuple[str, Callable]] = [
         "describe_chat_commands_config",
         user_settings.describe_chat_commands_config,
     ),
+    (
+        "describe_rcon_chat_commands_config",
+        user_settings.describe_rcon_chat_commands_config,
+    ),
     ("describe_real_vip_config", user_settings.describe_real_vip_config),
     ("describe_log_stream_config", user_settings.describe_log_stream_config),
     ("get_all_discord_webhooks_config", user_settings.get_all_discord_webhooks_config),
