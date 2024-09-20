@@ -30,20 +30,58 @@ export const ChatCommands = ({
         ],
         "message": "You can join our discord at {discord_invite_url}",
         "description": "Discord invite"
-      },
+      }
+    ],
+    /* A list of commands that will send a description of all commands to the player */
+    "describe_words": [
+      "!help",
+      "@help"
+    ]
+  }
+  `;
+
+  return (
+    <UserSetting
+      description={description}
+      getEndpoint={getEndpoint}
+      setEndpoint={setEndpoint}
+      validateEndpoint={validateEndpoint}
+      describeEndpoint={describeEndpoint}
+      notes={notes}
+    />
+  );
+};
+
+export const RConChatCommands = ({
+  description,
+  getEndpoint,
+  setEndpoint,
+  validateEndpoint,
+  describeEndpoint,
+}) => {
+  const notes = `
+  {
+    "enabled": false,
+  
+    /* A list of commands, their trigger words, the rcon commands to execute and a description */
+    "command_words": [
       {
+        /* Only ! or @ are valid command prefixes */
         "words": [
-          "!switch"
+          "!switch",
+          "@switch"
         ],
-        "message": null,
         /* Can hold a list of commands that should be executed (in an undefined order). The syntax is the same as in AutoSettings commands. */
-        "command": {
+        "commands": {
           "switch_player_now": {
-            /* Param values can have context parameters replace. Context parameters are things like player_name or player_id of the player issuing the command. */
+            /* Parameters of the command to execute, see the API documentation (/api/get_api_documentation) for possible parameters */
+            /* Parameter values can have context parameters replace. Context parameters are things like player_name or player_id of the player issuing the command. */
             "player_name": "{player_name}"
           }
         },
-        "enabled": true,
+        /* Whether the command is enabled or not (true == enabled) */
+        "enabled": false,
+        /* A short description of what the command does for the 'describe_words' commands */
         "description": "Switch yourself in side"
       },
       {
@@ -58,7 +96,7 @@ export const ChatCommands = ({
             "description": "{player_name}"
           }
         },
-        "enabled": true,
+        "enabled": false,
         "description": "Add yourself to admin cam list"
       }
     ],

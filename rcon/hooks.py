@@ -58,8 +58,9 @@ from rcon.user_config.chat_commands import (
     chat_contains_command_word,
     is_command_word,
     is_description_word,
-    is_help_word, ChatCommand,
+    is_help_word, ChatCommand, BaseChatCommand,
 )
+from rcon.user_config.rcon_chat_commands import RConChatCommandsUserConfig, RConChatCommand
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.real_vip import RealVipUserConfig
 from rcon.user_config.vac_game_bans import VacGameBansUserConfig
@@ -101,8 +102,15 @@ def initialise_vote_map(struct_log):
 
 @on_chat
 def chat_commands(rcon: Rcon, struct_log: StructuredLogLineWithMetaData):
-    config = ChatCommandsUserConfig.load_from_db()
-    if not config.enabled:
+    chat_config = ChatCommandsUserConfig.load_from_db()
+    rcon_config = RConChatCommandsUserConfig.load_from_db()
+
+    words: list[BaseChatCommand] = []
+    if chat_config.enabled:
+        words.extend(chat_config.command_words)
+    if rcon_config.enabled:
+        words.extend(rcon_config.command_words)
+    if len(words) == 0:
         return
 
     chat_message = struct_log["sub_content"]
@@ -135,15 +143,13 @@ def chat_commands(rcon: Rcon, struct_log: StructuredLogLineWithMetaData):
         MessageVariableContext.last_tk_victim_weapon.value: player_cache.last_tk_victim_weapon,
     }
 
-    for command in config.command_words:
-        if not command.enabled:
-            continue
+    for command in words:
         if not (triggered_word := chat_contains_command_word(chat_words, command.words, command.help_words)):
             continue
 
-        if is_command_word(triggered_word) and command.message is not None:
+        if is_command_word(triggered_word) and isinstance(command, ChatCommand):
             chat_message_command(rcon, command, ctx)
-        if is_command_word(triggered_word) and command.commands is not None:
+        if is_command_word(triggered_word) and isinstance(command, RConChatCommand) and command.enabled:
             chat_rcon_command(rcon, command, ctx, triggered_word, chat_message)
         if is_help_word(triggered_word):
             # Help words describe a specific command
@@ -151,8 +157,8 @@ def chat_commands(rcon: Rcon, struct_log: StructuredLogLineWithMetaData):
 
     # Description words trigger the entire help menu, test outside the loop
     # since these are global help words
-    if is_description_word(chat_words, config.describe_words):
-        description = config.describe_chat_commands()
+    if is_description_word(chat_words, chat_config.describe_words):
+        description = chat_config.describe_chat_commands()
         if description:
             rcon.message_player(
                 player_id=player_id,
@@ -162,7 +168,7 @@ def chat_commands(rcon: Rcon, struct_log: StructuredLogLineWithMetaData):
         else:
             logger.warning(
                 "No descriptions set for command words, %s",
-                ", ".join(config.describe_words),
+                ", ".join(chat_config.describe_words),
             )
 
 
@@ -184,7 +190,7 @@ def chat_message_command(rcon: Rcon, command: ChatCommand, ctx: dict[str, str]):
     )
 
 
-def chat_rcon_command(rcon: Rcon, command: ChatCommand, ctx: dict[str, str], triggering_word: str, msg: str):
+def chat_rcon_command(rcon: Rcon, command: RConChatCommand, ctx: dict[str, str], triggering_word: str, msg: str):
     player_id = ctx[MessageVariableContext.player_id.value]
     player: PlayerID
     with enter_session() as session:
@@ -217,13 +223,13 @@ def chat_rcon_command(rcon: Rcon, command: ChatCommand, ctx: dict[str, str], tri
             commands[name] = {}
             for (k, v) in params.items():
                 for i, a in enumerate(args):
-                    v = v.replace(f'${i+1}', a)
+                    v = v.replace(f'${i + 1}', a)
                 commands[name][k] = format_message_string(v, context=ctx)
 
         do_run_commands(rcon, commands)
 
 
-def chat_help_command(rcon: Rcon, command: ChatCommand, ctx: dict[str, str]):
+def chat_help_command(rcon: Rcon, command: BaseChatCommand, ctx: dict[str, str]):
     player_id = ctx[MessageVariableContext.player_id.value]
     description = command.description
     if description:
