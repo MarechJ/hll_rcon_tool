@@ -4,12 +4,13 @@ from functools import cached_property
 
 import pytz
 from pydantic import Field, field_validator
+from sqlalchemy.orm import Session
 
 from rcon.conditions import Condition, create_condition
 from rcon.models import PlayerID
 from rcon.rcon import get_rcon, Rcon
 from rcon.user_config.chat_commands import BaseChatCommandType, BaseChatCommand, BaseChatCommandUserConfig
-from rcon.user_config.utils import key_check, _listType, set_user_config
+from rcon.user_config.utils import key_check, _listType, set_user_config, _set_default
 
 logger = logging.getLogger(__name__)
 
@@ -108,3 +109,24 @@ class RConChatCommandsUserConfig(BaseChatCommandUserConfig):
 
         if not dry_run:
             set_user_config(RConChatCommandsUserConfig.KEY(), validated_conf)
+
+    @classmethod
+    def seed_db(cls, sess: Session):
+        _set_default(sess, key=cls.KEY(), val=RConChatCommandsUserConfig(
+            command_words=[
+                RConChatCommand(
+                    words=["!switch", "@switch"],
+                    enabled=False,
+                    description="Switch yourself in side",
+                    conditions={"player_flag": {"flags": ["👍"]}, "player_count": {"max": 49, "min": 0}},
+                    commands={"switch_player_now": {"player_name": "{player_name}"}}
+                ),
+                RConChatCommand(
+                    words=["!admin"],
+                    enabled=False,
+                    conditions={"player_id": {"player_ids": ["765611...", "765612..."]}},
+                    description="Add yourself to admin cam list",
+                    commands={"add_admin": {"role": "junior", "player_id": "{player_id}", "description": "{player_name}"}}
+                ),
+            ]
+        ))
