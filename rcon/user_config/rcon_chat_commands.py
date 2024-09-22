@@ -77,7 +77,22 @@ class RConChatCommand(BaseChatCommand):
 
 
 class RConChatCommandsUserConfig(BaseChatCommandUserConfig):
-    command_words: list[RConChatCommand] = Field(default_factory=list)
+    command_words: list[RConChatCommand] = Field(default=[
+        RConChatCommand(
+            words=["!switch", "@switch"],
+            enabled=False,
+            description="Switch yourself in side",
+            conditions={"player_flag": {"flags": ["👍"]}, "player_count": {"max": 49, "min": 0}},
+            commands={"switch_player_now": {"player_name": "{player_name}"}}
+        ),
+        RConChatCommand(
+            words=["!admin"],
+            enabled=False,
+            conditions={"player_id": {"player_ids": ["765611...", "765612..."]}},
+            description="Add yourself to admin cam list",
+            commands={"add_admin": {"role": "junior", "player_id": "{player_id}", "description": "{player_name}"}}
+        ),
+    ])
 
     @staticmethod
     def save_to_db(values: RConChatCommandsType, dry_run=False) -> None:
@@ -109,24 +124,3 @@ class RConChatCommandsUserConfig(BaseChatCommandUserConfig):
 
         if not dry_run:
             set_user_config(RConChatCommandsUserConfig.KEY(), validated_conf)
-
-    @classmethod
-    def seed_db(cls, sess: Session):
-        _set_default(sess, key=cls.KEY(), val=RConChatCommandsUserConfig(
-            command_words=[
-                RConChatCommand(
-                    words=["!switch", "@switch"],
-                    enabled=False,
-                    description="Switch yourself in side",
-                    conditions={"player_flag": {"flags": ["👍"]}, "player_count": {"max": 49, "min": 0}},
-                    commands={"switch_player_now": {"player_name": "{player_name}"}}
-                ),
-                RConChatCommand(
-                    words=["!admin"],
-                    enabled=False,
-                    conditions={"player_id": {"player_ids": ["765611...", "765612..."]}},
-                    description="Add yourself to admin cam list",
-                    commands={"add_admin": {"role": "junior", "player_id": "{player_id}", "description": "{player_name}"}}
-                ),
-            ]
-        ))
