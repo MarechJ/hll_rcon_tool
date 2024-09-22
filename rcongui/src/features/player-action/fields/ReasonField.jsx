@@ -20,34 +20,32 @@ export const ReasonField = ({ control, errors, setValue, ...props }) => {
     }
   };
 
-  console.log({storedMessages})
-
   return (
     <>
       <ControlledTextInput
         error={hasError}
+        name={"reason"}
+        label={"Reason"}
+        control={control}
         rules={{ required: "Reason is required" }}
         helperText={
           hasError ? error.message : "The message displayed to the player."
         }
-        name={"reason"}
-        label={"Reason"}
         multiline
         minRows={5}
         fullWidth
-        control={control}
         {...props}
       />
       <Select
-        id="saved-messages-select"
+        id="saved-reasons-select"
         value={selectedMessage}
         onChange={handleOnSelectChange}
-        inputProps={{ "aria-label": "Saved Messages" }}
+        inputProps={{ "aria-label": "Saved Reasons" }}
         fullWidth
         displayEmpty
       >
         <MenuItem value="">
-          <em>Saved Messages</em>
+          <em>Saved Reasons</em>
         </MenuItem>
         {storedMessages.map((message, i) => {
           return (
