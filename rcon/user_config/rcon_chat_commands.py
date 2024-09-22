@@ -92,6 +92,13 @@ class RConChatCommandsUserConfig(BaseChatCommandUserConfig):
             description="Add yourself to admin cam list",
             commands={"add_admin": {"role": "junior", "player_id": "{player_id}", "description": "{player_name}"}}
         ),
+        RConChatCommand(
+            words=["!redeploy"],
+            enabled=False,
+            conditions={"player_count": {"max": 49, "min": 0}},
+            description="Punishes yourself to redeploy in 10s instead of 20s.",
+            commands={"punish": {"player_name": "{player_name}", "reason": "Executing redeploy command"}}
+        ),
     ])
 
     @staticmethod
