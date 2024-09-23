@@ -97,6 +97,7 @@ class ChatCommand(BaseChatCommand):
 
 
 class BaseChatCommandUserConfig(BaseUserConfig):
+    command_words: list[BaseChatCommand] = []
     enabled: bool = Field(default=False)
 
     # These will trigger an automatic help command if `description`s are set on
