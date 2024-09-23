@@ -791,6 +791,8 @@ class DjangoUserPermissions(TypedDict):
     permissions: list[DjangoPermission]
     groups: list[DjangoGroup]
     is_superuser: bool
+    username: str
+    player_id: str
 
 
 class GameLayoutRandomConstraints(enum.IntFlag):
