@@ -2,7 +2,7 @@ from typing import TypedDict
 
 from pydantic import Field
 
-from rcon.user_config.utils import BaseUserConfig, set_user_config
+from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
 
 
 class LogStreamConfigType(TypedDict):
@@ -22,6 +22,7 @@ class LogStreamUserConfig(BaseUserConfig):
 
     @staticmethod
     def save_to_db(values: LogStreamConfigType, dry_run=False):
+        key_check(LogStreamConfigType.__required_keys__, values.keys())
         validated_conf = LogStreamUserConfig(
             enabled=values.get("enabled"),
             stream_size=values.get("stream_size"),

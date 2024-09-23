@@ -59,3 +59,22 @@ export const textFieldConfigs = [
         inputProps: { min: 0, max: 6, step: 1 },
     },
 ];
+
+export const defaultMapOptions = [
+    {
+        name: "least_played_from_suggestions",
+        label: "Pick least played map from suggestions",
+    },
+    {
+        name: "least_played_from_all_map",
+        label: "Pick least played map from all maps",
+    },
+    {
+        name: "random_from_suggestions",
+        label: " Pick randomly from suggestions",
+    },
+    {
+        name: "random_from_all_maps",
+        label: "Pick randomly from all maps",
+    },
+]

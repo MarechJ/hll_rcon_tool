@@ -545,10 +545,10 @@ class RconSettings extends React.Component {
             }
             placeholder="Insert your messages here, one per line, with format: <number of seconds to display> <a message (write: \n if you want a line return)>"
             variant="outlined"
-            helperText="You can use the following variables in the text using the following syntax: '60 Welcome to {servername}. The next map is {nextmap}.'
-            (nextmap, maprotation, servername, vips, randomvip, votenextmap_line, votenextmap_line, votenextmap_noscroll, votenextmap_vertical,
-            votenextmap_by_mod_line, votenextmap_by_mod_vertical, votenextmap_by_mod_vertical_all, votenextmap_by_mod_split, total_votes,
-            winning_maps_short, winning_maps_all, scrolling_votemap, online_mods, ingame_mods)"
+            helperText="You can use the following variables in the text using the following syntax: '60 Welcome to {server_name}. The next map is {next_map}.'
+            (admin_names, ingame_mods, junior_names, map_rotation, next_map, online_mods, owner_names, random_vip_name, scrolling_votemap, senior_names, 
+            server_name, vip_names, votenextmap_by_mod_line, votenextmap_by_mod_split, votenextmap_by_mod_vertical, votenextmap_by_mod_vertical_all, 
+            votenextmap_line, votenextmap_line, votenextmap_noscroll, votenextmap_vertical, winning_maps_all, winning_maps_short)"
           />
         </Grid>
         <Grid item xs={12}>

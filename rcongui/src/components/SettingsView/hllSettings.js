@@ -20,6 +20,7 @@ import NumSlider from "./numSlider";
 import Padlock from "../shared/padlock";
 import AutoRefreshLine from "../autoRefreshLine";
 import { ForwardCheckBox, WordList } from "../commonComponent";
+import { chunk } from "lodash";
 
 const ProfanityFiler = ({
   words,
@@ -254,8 +255,12 @@ class HLLSettings extends React.Component {
   }
 
   async saveVotekickThreshold() {
+    const threshold_pairs = chunk(this.state.votekickThreshold
+      .split(",")
+      .map(n => Number(n.trim())), 2)
+
     return postData(`${process.env.REACT_APP_API_URL}set_votekick_thresholds`, {
-      threshold_pairs: this.state.votekickThreshold,
+      threshold_pairs,
     })
       .then((res) => showResponse(res, "set_votekick_thresholds", true))
       .then(this.loadVotekickThreshold)

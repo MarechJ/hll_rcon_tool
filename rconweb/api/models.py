@@ -132,7 +132,7 @@ class RconUser(User):
             ("can_view_admin_groups", "Can view available admin roles"),
             (
                 "can_view_admin_ids",
-                "Can view the name/steam IDs/role of everyone with a HLL games erver admin role",
+                "Can view the name/steam IDs/role of everyone with a HLL game server admin role",
             ),
             ("can_view_admins", "Can view users with HLL game server admin roles"),
             ("can_view_all_maps", "Can view all possible maps"),
