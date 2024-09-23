@@ -26,7 +26,11 @@ class VacGameBansUserConfig(BaseUserConfig):
 
     @staticmethod
     def save_to_db(values: VacGameBansType, dry_run=False):
-        key_check(VacGameBansType.__required_keys__, VacGameBansType.__optional_keys__, values.keys())
+        key_check(
+            VacGameBansType.__required_keys__,
+            VacGameBansType.__optional_keys__,
+            values.keys(),
+        )
 
         validated_conf = VacGameBansUserConfig(
             vac_history_days=values.get("vac_history_days"),

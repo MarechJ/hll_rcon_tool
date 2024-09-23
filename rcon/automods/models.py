@@ -7,7 +7,6 @@ from typing import List, Mapping, Optional, TypedDict
 from pydantic import HttpUrl
 from pydantic.dataclasses import dataclass
 
-
 logger = logging.getLogger(__name__)
 
 

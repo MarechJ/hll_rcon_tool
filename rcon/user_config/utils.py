@@ -22,7 +22,9 @@ def all_subclasses(cls):
     )
 
 
-def key_check(mandatory_keys: frozenset, optional_keys: frozenset, provided_keys: Iterable[str]):
+def key_check(
+    mandatory_keys: frozenset, optional_keys: frozenset, provided_keys: Iterable[str]
+):
     missing_keys = mandatory_keys - set(provided_keys)
     extra_keys = set(provided_keys) - mandatory_keys - optional_keys
     if extra_keys or missing_keys:

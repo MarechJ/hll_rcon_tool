@@ -178,10 +178,10 @@ def audit(func_name, request, arguments):
 
 # This is were all the RCON commands are turned into HTTP endpoints
 def expose_api_endpoint(
-        func: Callable,
-        command_name: str,
-        permissions: list[str] | set[str] | str,
-        endpoint_allowed_http_methods: dict[Callable, list[str]],
+    func: Callable,
+    command_name: str,
+    permissions: list[str] | set[str] | str,
+    endpoint_allowed_http_methods: dict[Callable, list[str]],
 ):
     @csrf_exempt
     @login_required()
@@ -191,7 +191,7 @@ def expose_api_endpoint(
     @wraps(func)
     def wrapper(request: HttpRequest):
         parameters = inspect.signature(func).parameters
-        aliases = getattr(func, '_parameter_aliases', {})
+        aliases = getattr(func, "_parameter_aliases", {})
         arguments = {}
         failure = False
         others = None
@@ -247,9 +247,9 @@ def expose_api_endpoint(
             # endpoints, manually defined endpoints use the @record_audit endpoint
             # also skip auditing user config endpoints, those are handled in RconAPI
             if (
-                    not command_name.startswith("get_")
-                    and not command_name.startswith("validate_")
-                    and not command_name.endswith("_config")
+                not command_name.startswith("get_")
+                and not command_name.startswith("validate_")
+                and not command_name.endswith("_config")
             ):
                 audit(command_name, request, arguments)
 
@@ -871,7 +871,8 @@ if not os.getenv("HLL_MAINTENANCE_CONTAINER"):
             )
         except:
             logger.exception(
-                "Failed to initialized endpoint for %r - Most likely bad configuration", func
+                "Failed to initialized endpoint for %r - Most likely bad configuration",
+                func,
             )
             raise
     logger.info("Done Initializing endpoints")

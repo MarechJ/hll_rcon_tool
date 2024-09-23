@@ -4,11 +4,12 @@ from typing import Callable
 
 import pytz
 
-from rcon.audit import online_mods, ingame_mods
-from rcon.commands import CommandFailedError, BrokenHllConnection
+from rcon.audit import ingame_mods, online_mods
+from rcon.commands import BrokenHllConnection, CommandFailedError
 from rcon.models import PlayerID
 
 logger = logging.getLogger(__name__)
+
 
 def _get_current_map_metric(rcon):
     try:
@@ -16,6 +17,7 @@ def _get_current_map_metric(rcon):
     except (CommandFailedError, BrokenHllConnection):
         logger.exception("Failed to get current map")
     return str(rcon.current_map)
+
 
 player_flags: Callable[[PlayerID], list[str]] = lambda p: [f.flag for f in p.flags]
 player_id: Callable[[PlayerID], str] = lambda p: p.player_id
@@ -29,6 +31,7 @@ METRICS = {
     "player_flags": player_flags,
     "player_id": player_id,
 }
+
 
 def create_condition(name, **kwargs):
     kwargs["inverse"] = kwargs.get("not", False)  # Using "not" would cause issues later
@@ -48,6 +51,7 @@ def create_condition(name, **kwargs):
         return PlayerIdCondition(**kwargs)
     else:
         raise ValueError("Invalid condition type: %s" % name)
+
 
 class Condition:
     def __init__(self, min=0, max=100, inverse=False, *args, **kwargs):
@@ -130,9 +134,7 @@ class ListCondition(Condition):
 
 
 class CurrentMapCondition(ListCondition):
-    def __init__(
-            self, map_names=[], *args, **kwargs
-    ):
+    def __init__(self, map_names=[], *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.values = map_names
         self.metric_name = "current_map"
@@ -140,9 +142,7 @@ class CurrentMapCondition(ListCondition):
 
 
 class PlayerFlagCondition(Condition):
-    def __init__(
-            self, flags=[], *args, **kwargs
-    ):
+    def __init__(self, flags=[], *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.flags = flags
         self.metric_name = "player_flags"
@@ -162,15 +162,13 @@ class PlayerFlagCondition(Condition):
             self.metric_name,
             comparand,
             self.flags,
-            res
+            res,
         )
         return res
 
 
 class PlayerIdCondition(ListCondition):
-    def __init__(
-            self, player_ids=[], *args, **kwargs
-    ):
+    def __init__(self, player_ids=[], *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.values = player_ids
         self.metric_name = "player_id"
@@ -179,7 +177,7 @@ class PlayerIdCondition(ListCondition):
 
 class TimeOfDayCondition(Condition):
     def __init__(
-            self, min="00:00", max="23:59", timezone="utc", inverse=False, *args, **kwargs
+        self, min="00:00", max="23:59", timezone="utc", inverse=False, *args, **kwargs
     ):
         super().__init__(*args, **kwargs)
         self.min = str(min)

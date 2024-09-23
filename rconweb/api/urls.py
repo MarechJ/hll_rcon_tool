@@ -9,13 +9,13 @@ from . import (
     audit_log,
     auth,
     auto_settings,
+    history,
     multi_servers,
     scoreboards,
     services,
     user_settings,
     views,
     vips,
-    history,
 )
 from .auth import api_response
 from .decorators import ENDPOINT_HTTP_METHODS

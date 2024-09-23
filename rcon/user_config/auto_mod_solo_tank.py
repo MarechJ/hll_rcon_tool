@@ -5,7 +5,6 @@ from pydantic import Field, HttpUrl, field_serializer, field_validator
 from rcon.types import Roles
 from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
 
-
 WARNING_MESSAGE = """Warning, {player_name} !
 
 You can't play solo tank on this server !
@@ -84,7 +83,11 @@ class AutoModNoSoloTankUserConfig(BaseUserConfig):
 
     @staticmethod
     def save_to_db(values: AutoModNoSoloTankType, dry_run=False) -> None:
-        key_check(AutoModNoSoloTankType.__required_keys__, AutoModNoSoloTankType.__optional_keys__, values.keys())
+        key_check(
+            AutoModNoSoloTankType.__required_keys__,
+            AutoModNoSoloTankType.__optional_keys__,
+            values.keys(),
+        )
 
         validated_conf = AutoModNoSoloTankUserConfig(
             enabled=values.get("enabled"),

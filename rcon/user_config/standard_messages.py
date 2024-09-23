@@ -1,13 +1,10 @@
 import json
-from typing import Any, TypedDict
-
-
 import os
 from logging import getLogger
+from typing import Any, TypedDict
 
 logger = getLogger(__name__)
 from typing import Self
-from rcon.user_config.utils import get_user_config
 
 import pydantic
 from pydantic import Field
@@ -17,7 +14,13 @@ from rcon.user_config.auto_broadcast import (
     AutoBroadcastMessageType,
     RawAutoBroadCastMessage,
 )
-from rcon.user_config.utils import BaseUserConfig, _listType, key_check, set_user_config
+from rcon.user_config.utils import (
+    BaseUserConfig,
+    _listType,
+    get_user_config,
+    key_check,
+    set_user_config,
+)
 
 
 class StandardMessageType(TypedDict):
@@ -33,7 +36,11 @@ class BaseStandardMessageUserConfig(BaseUserConfig):
 
     @classmethod
     def save_to_db(cls, values, dry_run=False):
-        key_check(StandardMessageType.__required_keys__, StandardMessageType.__optional_keys__, values.keys())
+        key_check(
+            StandardMessageType.__required_keys__,
+            StandardMessageType.__optional_keys__,
+            values.keys(),
+        )
         messages: list[str] = values.get("messages")
         _listType(values=messages)  # type: ignore
 
@@ -117,7 +124,11 @@ class StandardBroadcastMessagesUserConfig(BaseUserConfig):
 
     @staticmethod
     def save_to_db(values: StandardBroadcastMessagesType, dry_run=False):
-        key_check(StandardBroadcastMessagesType.__required_keys__, StandardBroadcastMessagesType.__optional_keys__, values.keys())
+        key_check(
+            StandardBroadcastMessagesType.__required_keys__,
+            StandardBroadcastMessagesType.__optional_keys__,
+            values.keys(),
+        )
 
         raw_messages = values.get("messages")
         _listType(values=raw_messages)  # type: ignore

@@ -34,15 +34,13 @@ class AutoSettingsConfig:
 DEFAULT_AUTO_SETTINGS = {
     "always_apply_defaults": False,
     "can_invoke_multiple_rules": False,
-    "defaults": {
-    },
+    "defaults": {},
     "rules": [],
     "_available_settings": {
         "always_apply_defaults": "Whether or not to apply the settings defined in the default section in each iteration. Allowed values: true / false",
         "can_invoke_multiple_rules": "Whether or not to allow the invocation of multiple rules e.g. don't stop after the first fulfilled rule. Allowed values: true / false",
     },
-    "_available_commands": {
-    },
+    "_available_commands": {},
     "_available_conditions": {
         "player_count": {"min": 0, "max": 100, "not": False},
         "time_of_day": {

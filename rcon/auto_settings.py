@@ -4,7 +4,7 @@ import time
 import pytz
 
 from rcon.api_commands import get_rcon_api
-from rcon.conditions import create_condition, Condition
+from rcon.conditions import Condition, create_condition
 from rcon.rcon import do_run_commands
 from rcon.user_config.auto_settings import AutoSettingsConfig
 

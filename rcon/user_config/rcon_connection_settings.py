@@ -19,7 +19,11 @@ class RconConnectionSettingsUserConfig(BaseUserConfig):
 
     @staticmethod
     def save_to_db(values: RconConnectionSettingsType, dry_run=False):
-        key_check(RconConnectionSettingsType.__required_keys__, RconConnectionSettingsType.__optional_keys__, values.keys())
+        key_check(
+            RconConnectionSettingsType.__required_keys__,
+            RconConnectionSettingsType.__optional_keys__,
+            values.keys(),
+        )
 
         validated_conf = RconConnectionSettingsUserConfig(
             thread_pool_size=values.get("thread_pool_size"),

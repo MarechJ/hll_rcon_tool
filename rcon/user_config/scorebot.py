@@ -225,7 +225,11 @@ class ScorebotUserConfig(BaseUserConfig):
 
     @staticmethod
     def save_to_db(values: ScorebotConfigType, dry_run=False):
-        key_check(ScorebotConfigType.__required_keys__, ScorebotConfigType.__optional_keys__, values.keys())
+        key_check(
+            ScorebotConfigType.__required_keys__,
+            ScorebotConfigType.__optional_keys__,
+            values.keys(),
+        )
 
         validated_conf = ScorebotUserConfig(
             all_stats_text=values.get("all_stats_text"),

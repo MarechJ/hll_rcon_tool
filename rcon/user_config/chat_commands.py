@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 def chat_contains_command_word(
-        chat_words: Iterable[str], command_words: Iterable[str], help_words: Iterable[str]
+    chat_words: Iterable[str], command_words: Iterable[str], help_words: Iterable[str]
 ) -> str | None:
     # Force deterministic results if a user puts two command words in the same chat message
     for word in sorted(chat_words):
@@ -27,7 +27,7 @@ def chat_contains_command_word(
 
 
 def is_command_word(
-        word: str, prefixes: Iterable[str] = VALID_COMMAND_PREFIXES
+    word: str, prefixes: Iterable[str] = VALID_COMMAND_PREFIXES
 ) -> bool:
     return any(word.startswith(prefix) for prefix in prefixes)
 
@@ -127,13 +127,21 @@ class ChatCommandsUserConfig(BaseChatCommandUserConfig):
 
     @staticmethod
     def save_to_db(values: ChatCommandsType, dry_run=False) -> None:
-        key_check(ChatCommandsType.__required_keys__, ChatCommandsType.__optional_keys__, values.keys())
+        key_check(
+            ChatCommandsType.__required_keys__,
+            ChatCommandsType.__optional_keys__,
+            values.keys(),
+        )
 
         raw_command_words = values.get("command_words")
         _listType(values=raw_command_words)
 
         for obj in raw_command_words:
-            key_check(ChatCommandType.__required_keys__, ChatCommandType.__optional_keys__, obj.keys())
+            key_check(
+                ChatCommandType.__required_keys__,
+                ChatCommandType.__optional_keys__,
+                obj.keys(),
+            )
 
         validated_words = []
         for raw_word in raw_command_words:

@@ -155,7 +155,11 @@ class RconServerSettingsUserConfig(BaseUserConfig):
 
     @staticmethod
     def save_to_db(values: RconServerSettingsType, dry_run=False):
-        key_check(RconServerSettingsType.__required_keys__, RconServerSettingsType.__optional_keys__, values.keys())
+        key_check(
+            RconServerSettingsType.__required_keys__,
+            RconServerSettingsType.__optional_keys__,
+            values.keys(),
+        )
 
         raw_invalid_names = values.get("invalid_names")
         validated_invalid_names = InvalidName(

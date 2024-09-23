@@ -1,16 +1,17 @@
 import asyncio
 import itertools
-from cachetools import TTLCache
 from datetime import datetime
-from django.urls import path
-from channels.db import database_sync_to_async
-from channels.generic.websocket import AsyncJsonWebsocketConsumer
-import pydantic
 from logging import getLogger
 
+import pydantic
+from cachetools import TTLCache
+from channels.db import database_sync_to_async
+from channels.generic.websocket import AsyncJsonWebsocketConsumer
+from django.urls import path
 from sqlalchemy import exists, func
 
 from rcon import models
+from rcon.barricade import *
 from rcon.blacklist import (
     BlacklistBarricadeWarnOnlineCommand,
     BlacklistCommand,
@@ -20,7 +21,6 @@ from rcon.blacklist import (
     get_player_blacklist_records,
     remove_record_from_blacklist,
 )
-from rcon.barricade import *
 
 logger = getLogger("rconweb")
 
@@ -130,7 +130,9 @@ class BarricadeConsumer(AsyncJsonWebsocketConsumer):
                 self._last_seen_session = rows[-1][1]
                 await self.send_request(
                     ServerRequestType.SCAN_PLAYERS,
-                    ScanPlayersRequestPayload(player_ids=[row[0] for row in rows]).model_dump(),
+                    ScanPlayersRequestPayload(
+                        player_ids=[row[0] for row in rows]
+                    ).model_dump(),
                 )
             except Exception:
                 logger.exception("Failed to perform scan_players task")

@@ -7,10 +7,10 @@ from functools import wraps
 from threading import Timer
 from typing import Final
 
-from discord.utils import escape_markdown
 from discord_webhook import DiscordEmbed
 
 import rcon.steam_utils as steam_utils
+from discord.utils import escape_markdown
 from rcon.blacklist import (
     apply_blacklist_punishment,
     blacklist_or_ban,
@@ -18,10 +18,7 @@ from rcon.blacklist import (
 )
 from rcon.cache_utils import invalidates
 from rcon.commands import CommandFailedError, HLLServerError
-from rcon.discord import (
-    get_prepared_discord_hooks,
-    send_to_discord_audit,
-)
+from rcon.discord import get_prepared_discord_hooks, send_to_discord_audit
 from rcon.game_logs import (
     on_camera,
     on_chat,
@@ -32,7 +29,7 @@ from rcon.game_logs import (
 )
 from rcon.maps import UNKNOWN_MAP_NAME, parse_layer
 from rcon.message_variables import format_message_string, populate_message_variables
-from rcon.models import enter_session, PlayerID
+from rcon.models import PlayerID, enter_session
 from rcon.player_history import (
     _get_set_player,
     get_player,
@@ -40,8 +37,7 @@ from rcon.player_history import (
     save_player,
     save_start_player_session,
 )
-from rcon.rcon import Rcon, StructuredLogLineWithMetaData
-from rcon.rcon import do_run_commands
+from rcon.rcon import Rcon, StructuredLogLineWithMetaData, do_run_commands
 from rcon.recent_actions import get_recent_actions
 from rcon.types import (
     MessageVariableContext,
@@ -54,13 +50,18 @@ from rcon.types import (
 from rcon.user_config.camera_notification import CameraNotificationUserConfig
 from rcon.user_config.chat_commands import (
     MESSAGE_VAR_RE,
+    BaseChatCommand,
+    ChatCommand,
     ChatCommandsUserConfig,
     chat_contains_command_word,
     is_command_word,
     is_description_word,
-    is_help_word, ChatCommand, BaseChatCommand,
+    is_help_word,
 )
-from rcon.user_config.rcon_chat_commands import RConChatCommandsUserConfig, RConChatCommand
+from rcon.user_config.rcon_chat_commands import (
+    RConChatCommand,
+    RConChatCommandsUserConfig,
+)
 from rcon.user_config.rcon_server_settings import RconServerSettingsUserConfig
 from rcon.user_config.real_vip import RealVipUserConfig
 from rcon.user_config.vac_game_bans import VacGameBansUserConfig
@@ -125,9 +126,7 @@ def chat_commands(rcon: Rcon, struct_log: StructuredLogLineWithMetaData):
     player_cache = event_cache.get(player_id, MostRecentEvents())
     chat_words = set(chat_message.split())
     ctx = {
-        MessageVariableContext.player_name.value: struct_log[
-            "player_name_1"
-        ],
+        MessageVariableContext.player_name.value: struct_log["player_name_1"],
         MessageVariableContext.player_id.value: player_id,
         MessageVariableContext.last_victim_player_id.value: player_cache.last_victim_player_id,
         MessageVariableContext.last_victim_name.value: player_cache.last_victim_name,
@@ -144,12 +143,20 @@ def chat_commands(rcon: Rcon, struct_log: StructuredLogLineWithMetaData):
     }
 
     for command in words:
-        if not (triggered_word := chat_contains_command_word(chat_words, command.words, command.help_words)):
+        if not (
+            triggered_word := chat_contains_command_word(
+                chat_words, command.words, command.help_words
+            )
+        ):
             continue
 
         if is_command_word(triggered_word) and isinstance(command, ChatCommand):
             chat_message_command(rcon, command, ctx)
-        if is_command_word(triggered_word) and isinstance(command, RConChatCommand) and command.enabled:
+        if (
+            is_command_word(triggered_word)
+            and isinstance(command, RConChatCommand)
+            and command.enabled
+        ):
             chat_rcon_command(rcon, command, ctx, triggered_word, chat_message)
         if is_help_word(triggered_word):
             # Help words describe a specific command
@@ -190,7 +197,13 @@ def chat_message_command(rcon: Rcon, command: ChatCommand, ctx: dict[str, str]):
     )
 
 
-def chat_rcon_command(rcon: Rcon, command: RConChatCommand, ctx: dict[str, str], triggering_word: str, msg: str):
+def chat_rcon_command(
+    rcon: Rcon,
+    command: RConChatCommand,
+    ctx: dict[str, str],
+    triggering_word: str,
+    msg: str,
+):
     player_id = ctx[MessageVariableContext.player_id.value]
     player: PlayerID
     with enter_session() as session:
@@ -200,30 +213,37 @@ def chat_rcon_command(rcon: Rcon, command: RConChatCommand, ctx: dict[str, str],
             .one_or_none()
         )
         if player is None:
-            logger.debug("player executed a command but does not exist in database: %s", player_id)
+            logger.debug(
+                "player executed a command but does not exist in database: %s",
+                player_id,
+            )
         if not command.conditions_fulfilled(rcon, player, ctx):
             return
 
-        arguments = msg[msg.find(triggering_word) + len(triggering_word) + 1:]
+        arguments = msg[msg.find(triggering_word) + len(triggering_word) + 1 :]
         args = shlex.split(arguments)
         expected_argument_count = 0
-        for (_, params) in command.commands.items():
-            for (_, v) in params.items():
+        for _, params in command.commands.items():
+            for _, v in params.items():
                 for a in arg_re.findall(v):
                     if int(a) > expected_argument_count:
                         expected_argument_count = int(a)
         if len(args) != expected_argument_count:
             logger.info(
                 "provided message does not have expected number of arguments. Expected %d, got %d. Message: %s, Command: %s",
-                expected_argument_count, len(args), msg, triggering_word)
+                expected_argument_count,
+                len(args),
+                msg,
+                triggering_word,
+            )
             return
 
         commands: dict[str, dict[str, str]] = {}
-        for (name, params) in command.commands.items():
+        for name, params in command.commands.items():
             commands[name] = {}
-            for (k, v) in params.items():
+            for k, v in params.items():
                 for i, a in enumerate(args):
-                    v = v.replace(f'${i + 1}', a)
+                    v = v.replace(f"${i + 1}", a)
                 commands[name][k] = format_message_string(v, context=ctx)
 
         do_run_commands(rcon, commands)
@@ -279,7 +299,9 @@ def handle_new_match_start(rcon: Rcon, struct_log):
         # Check that the log is less than 5min old
         if (datetime.utcnow() - log_time).total_seconds() < 5 * 60:
             # then we use the current map to be more accurate
-            if current_map.map.name.lower() == log_map_name.lower().removesuffix(" night"):
+            if current_map.map.name.lower() == log_map_name.lower().removesuffix(
+                " night"
+            ):
                 map_name_to_save = current_map
                 guessed = False
             else:
@@ -363,11 +385,11 @@ def ban_if_blacklisted(rcon: Rcon, player_id: str, name: str):
 
 
 def should_ban(
-        bans: SteamBansType | None,
-        max_game_bans: float,
-        max_days_since_ban: int,
-        player_flags: list[PlayerFlagType] = [],
-        whitelist_flags: list[str] = [],
+    bans: SteamBansType | None,
+    max_game_bans: float,
+    max_days_since_ban: int,
+    player_flags: list[PlayerFlagType] = [],
+    whitelist_flags: list[str] = [],
 ) -> bool | None:
     if not bans:
         return
@@ -419,11 +441,11 @@ def ban_if_has_vac_bans(rcon: Rcon, player_id: str, name: str):
             return
 
         if should_ban(
-                bans,
-                max_game_bans,
-                max_days_since_ban,
-                player_flags=player.flags,
-                whitelist_flags=whitelist_flags,
+            bans,
+            max_game_bans,
+            max_days_since_ban,
+            player_flags=player.flags,
+            whitelist_flags=whitelist_flags,
         ):
             days_since_last_ban = bans["DaysSinceLastBan"]
             reason = config.ban_on_vac_history_reason.format(
@@ -465,7 +487,7 @@ def inject_player_ids(func):
 @on_connected()
 @inject_player_ids
 def handle_on_connect(
-        rcon: Rcon, struct_log: StructuredLogLineWithMetaData, name: str, player_id: str
+    rcon: Rcon, struct_log: StructuredLogLineWithMetaData, name: str, player_id: str
 ):
     try:
         rcon.get_players.cache_clear()
@@ -506,7 +528,7 @@ def handle_on_disconnect(rcon, struct_log, _, player_id: str):
 @on_connected(0)
 @inject_player_ids
 def update_player_steaminfo_on_connect(
-        rcon, struct_log: StructuredLogLineWithMetaData, _, player_id: str
+    rcon, struct_log: StructuredLogLineWithMetaData, _, player_id: str
 ):
     if not player_id:
         logger.error(

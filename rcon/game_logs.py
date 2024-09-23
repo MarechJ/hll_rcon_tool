@@ -22,10 +22,7 @@ from rcon.blacklist import blacklist_or_ban
 from rcon.cache_utils import get_redis_client, ttl_cache
 from rcon.discord import make_hook, send_to_discord_audit
 from rcon.models import LogLine, PlayerID, enter_session
-from rcon.player_history import (
-    get_player_profile,
-    player_has_flag,
-)
+from rcon.player_history import get_player_profile, player_has_flag
 from rcon.rcon import LOG_ACTIONS, Rcon, get_rcon
 from rcon.types import (
     AllLogTypes,

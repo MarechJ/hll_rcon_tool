@@ -5,7 +5,6 @@ from pydantic import BaseModel, Field, HttpUrl, field_serializer, field_validato
 from rcon.types import Roles
 from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
 
-
 WARNING_MESSAGE = """Warning, {player_name}! You violate seeding rules on this server: {violation}
 You will be punished after {max_warnings} warnings (you already received {received_warnings}), then kicked.
 Next check will happen automatically in {next_check_seconds}s."""
@@ -155,7 +154,11 @@ class AutoModSeedingUserConfig(BaseUserConfig):
 
     @staticmethod
     def save_to_db(values: AutoModSeedingType, dry_run=False):
-        key_check(AutoModSeedingType.__required_keys__, AutoModSeedingType.__optional_keys__, values.keys())
+        key_check(
+            AutoModSeedingType.__required_keys__,
+            AutoModSeedingType.__optional_keys__,
+            values.keys(),
+        )
 
         disallowed_roles = DisallowedRoles(
             min_players=values.get("disallowed_roles").get("min_players"),

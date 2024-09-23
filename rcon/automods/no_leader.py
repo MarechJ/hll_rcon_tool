@@ -26,7 +26,6 @@ from rcon.automods.num_or_inf import num_or_inf
 from rcon.types import GameState
 from rcon.user_config.auto_mod_no_leader import AutoModNoLeaderUserConfig
 
-
 LEADER_WATCH_RESET_SECS = 120
 AUTOMOD_USERNAME = "NoLeaderWatch"
 
