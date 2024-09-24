@@ -1,8 +1,9 @@
 import logging
 import re
 from functools import cached_property
-from typing import Iterable, TypedDict
+from typing import Iterable, TypedDict, NotRequired, Optional
 
+from django.template.defaultfilters import title
 from pydantic import BaseModel, Field, field_validator
 
 from rcon.types import MessageVariable, MessageVariableContext
@@ -55,9 +56,10 @@ class ChatCommandsType(TypedDict):
     describe_words: list[str]
 
 
-class BaseChatCommand(BaseModel):
-    words: list[str] = Field(default_factory=list)
-    description: str | None = Field(default=None)
+class ChatCommand(BaseModel):
+    words: list[str] = Field(default_factory=list, title="Words", description="A lit of words that trigger this command. Needs to be prefixed with either one of " + ", ".join(VALID_COMMAND_PREFIXES))
+    message: str = Field(default="", title="Message", description="The message send to the player in-game when the command is triggered. Allows the use of message placeholders.")
+    description: str = Field(default="", title="Description", description="An optional description that is shown to the player when one of the describe words is used.")
 
     @cached_property
     def help_words(self) -> set[str]:
@@ -75,34 +77,11 @@ class BaseChatCommand(BaseModel):
         return vs
 
 
-class ChatCommand(BaseChatCommand):
-    message: str | None = Field(default=None)
+class ChatCommandsUserConfig(BaseUserConfig):
+    enabled: bool = Field(default=False, title="Enabled", description="Whether chat commands is enabled on the server or not.")
+    command_words: list[ChatCommand] = Field(default_factory=list, title="Command Words", description="Commands that are available to player on the server.")
 
-    @field_validator("message")
-    @classmethod
-    def only_valid_variables(cls, v: str | None) -> str | None:
-        if v is None:
-            return None
-        for match in re.findall(MESSAGE_VAR_RE, v):
-            # Has to either be a valid MessageVariable or MessageVariableContext
-            try:
-                MessageVariable[match]
-            except KeyError:
-                try:
-                    MessageVariableContext[match]
-                except KeyError:
-                    raise ValueError(f"{match} is not a valid message variable")
-
-        return v
-
-
-class BaseChatCommandUserConfig(BaseUserConfig):
-    command_words: list[BaseChatCommand] = []
-    enabled: bool = Field(default=False)
-
-    # These will trigger an automatic help command if `description`s are set on
-    # `command_words`
-    describe_words: list[str] = Field(default_factory=list)
+    describe_words: list[str] = Field(default_factory=list, title="Describe words", description="These will trigger an automatic help command if `description`'s are set on Command Words.")
 
     @field_validator("describe_words")
     @classmethod
@@ -119,7 +98,7 @@ class BaseChatCommandUserConfig(BaseUserConfig):
         return [
             f"{', '.join(word.words)} | {word.description}"
             for word in self.command_words
-            if word.description
+            if word.description and word.description != ""
         ]
 
 
