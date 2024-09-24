@@ -21,6 +21,7 @@ import {materialCells, materialRenderers} from "@jsonforms/material-renderers";
 import {Generate} from "@jsonforms/core";
 import ButtonGroup from "@mui/material/ButtonGroup";
 import {createTheme, ThemeProvider} from "@mui/material/styles";
+import {customRenderers} from "@/pages/admin/settings/[configs]/renderer";
 
 export const loader = async ({params}) => {
   const {category, type} = params;
@@ -242,7 +243,7 @@ const ConfigPage = () => {
                 }}
                 schema={schema}
                 uischema={Generate.uiSchema(schema)}
-                renderers={materialRenderers}
+                renderers={[...customRenderers, ...materialRenderers]}
                 cells={materialCells}
               />
             </ThemeProvider> :
