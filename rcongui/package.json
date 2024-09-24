@@ -59,7 +59,10 @@
     "react-hook-form": "^7.53.0",
     "react-router-dom": "^6.26.1",
     "react-toastify": "^10.0.5",
-    "tiny-invariant": "^1.2.0"
+    "tiny-invariant": "^1.2.0",
+    "@jsonforms/core": "^3.4.0",
+    "@jsonforms/react": "^3.4.0",
+    "@jsonforms/material-renderers": "^3.4.0"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.2.1",

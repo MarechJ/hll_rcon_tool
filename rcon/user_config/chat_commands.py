@@ -1,7 +1,8 @@
 import re
 from functools import cached_property
-from typing import Iterable, TypedDict
+from typing import Iterable, TypedDict, NotRequired, Optional
 
+from django.template.defaultfilters import title
 from pydantic import BaseModel, Field, field_validator
 
 from rcon.types import MessageVariable, MessageVariableContext
@@ -50,9 +51,9 @@ class ChatCommandsType(TypedDict):
 
 
 class ChatCommand(BaseModel):
-    words: list[str] = Field(default_factory=list)
-    message: str = Field(default="")
-    description: str | None = Field(default=None)
+    words: list[str] = Field(default_factory=list, title="Words", description="A lit of words that trigger this command. Needs to be prefixed with either one of " + ", ".join(VALID_COMMAND_PREFIXES))
+    message: str = Field(default="", title="Message", description="The message send to the player in-game when the command is triggered. Allows the use of message placeholders.")
+    description: str = Field(default="", title="Description", description="An optional description that is shown to the player when one of the describe words is used.")
 
     @cached_property
     def help_words(self) -> set[str]:
@@ -86,12 +87,10 @@ class ChatCommand(BaseModel):
 
 
 class ChatCommandsUserConfig(BaseUserConfig):
-    enabled: bool = Field(default=False)
-    command_words: list[ChatCommand] = Field(default_factory=list)
+    enabled: bool = Field(default=False, title="Enabled", description="Whether chat commands is enabled on the server or not.")
+    command_words: list[ChatCommand] = Field(default_factory=list, title="Command Words", description="Commands that are available to player on the server.")
 
-    # Thes will trigger an automatic help command if `description`s are set on
-    # `command_words`
-    describe_words: list[str] = Field(default_factory=list)
+    describe_words: list[str] = Field(default_factory=list, title="Describe words", description="These will trigger an automatic help command if `description`'s are set on Command Words.")
 
     @field_validator("describe_words")
     @classmethod
@@ -108,7 +107,7 @@ class ChatCommandsUserConfig(BaseUserConfig):
         return [
             f"{', '.join(word.words)} | {word.description}"
             for word in self.command_words
-            if word.description
+            if word.description and word.description != ""
         ]
 
     @staticmethod

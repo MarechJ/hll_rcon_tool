@@ -1,25 +1,29 @@
 import {
   Form,
   isRouteErrorResponse,
+  json,
+  Link,
   useActionData,
   useLoaderData,
   useRevalidator,
   useRouteError,
   useSubmit,
-  json,
-  Link,
 } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { get, handleHttpError } from "@/utils/fetchUtils";
+import {useEffect, useState} from "react";
+import {execute, get, handleHttpError} from "@/utils/fetchUtils";
 import Editor from "@monaco-editor/react";
-import { Box, Button, Stack, Typography, useTheme } from "@mui/material";
-import { CopyBlock, a11yDark, a11yLight } from "react-code-blocks";
-import { toast } from "react-toastify";
-import { execute } from "@/utils/fetchUtils";
-import { red } from "@mui/material/colors";
+import {Box, Button, Stack, Typography, useTheme} from "@mui/material";
+import {a11yDark, a11yLight, CopyBlock} from "react-code-blocks";
+import {toast} from "react-toastify";
+import {red} from "@mui/material/colors";
+import {JsonForms} from "@jsonforms/react";
+import {materialCells, materialRenderers} from "@jsonforms/material-renderers";
+import {Generate} from "@jsonforms/core";
+import ButtonGroup from "@mui/material/ButtonGroup";
+import {createTheme, ThemeProvider} from "@mui/material/styles";
 
-export const loader = async ({ params }) => {
-  const { category, type } = params;
+export const loader = async ({params}) => {
+  const {category, type} = params;
   let note, data, details, configTypes, schema;
 
   // Dynamically load JSON based on route parameters
@@ -42,21 +46,21 @@ export const loader = async ({ params }) => {
         error: error?.message,
         command: error?.command,
       },
-      { status: 404 }
+      {status: 404}
     );
   }
 
   try {
     note = await import(`../_data/${category}/${type}.js`);
 
-  } catch (error) { 
+  } catch (error) {
     throw json(
       {
         message: "Unable to locate the documentation file.",
         error: error?.message,
         command: error?.command,
       },
-      { status: 404 }
+      {status: 404}
     );
   }
 
@@ -68,14 +72,14 @@ export const loader = async ({ params }) => {
   }
 
   data = await response.json();
-  if (!data || data.failed) throw new Response("Could not load config data", { status: 400 });
+  if (!data || data.failed) throw new Response("Could not load config data", {status: 400});
 
   try {
     response = await get(`describe_${details.command}`);
     schema = await response.json();
     if (!schema || schema.failed) throw new Error();
   } catch (error) {
-    throw new Response("Could not load schema data", { status: 400 });
+    throw new Response("Could not load schema data", {status: 400});
   }
 
   return {
@@ -86,14 +90,14 @@ export const loader = async ({ params }) => {
   };
 };
 
-export const action = async ({ request }) => {
+export const action = async ({request}) => {
   let formData = await request.formData();
   let name = formData.get("name");
   let config = formData.get("config");
   let error = null;
   let response;
 
-  if (!(name && config)) return { ok: false, error: "Missing parameters" };
+  if (!(name && config)) return {ok: false, error: "Missing parameters"};
 
   config = JSON.parse(config);
 
@@ -115,32 +119,35 @@ export const action = async ({ request }) => {
         error: data?.error,
         command: data?.command,
       },
-      { status: 400 }
+      {status: 400}
     );
   }
 
   error = data.error;
 
   if (error) {
-    return { ok: false, error };
+    return {ok: false, error};
   }
 
   response = await execute(`set_${name}`, config);
 
-  return { ok: true };
+  return {ok: true};
 };
 
 const ConfigPage = () => {
-  const { note, command, name, data, schema } = useLoaderData();
+  const {note, command, name, data, schema} = useLoaderData();
   const [validationErrors, setValidationErrors] = useState(null);
-  const [editorContent, setEditorContent] = useState(JSON.stringify(data, null, 2));
+  const [jsonData, setJsonData] = useState(data);
+  const [editorContent, setEditorContent] = useState("");
+  const [mode, setMode] = useState("visual");
   const revalidator = useRevalidator();
   const actionData = useActionData();
   const submit = useSubmit();
   const theme = useTheme();
 
   useEffect(() => {
-      setEditorContent(JSON.stringify(data, null, 2));
+    setEditorContent(JSON.stringify(data, null, 2));
+    setJsonData(data);
   }, [data]);
 
   useEffect(() => {
@@ -161,7 +168,7 @@ const ConfigPage = () => {
     const formData = new FormData();
     formData.append("config", editorContent);
     formData.append("name", command);
-    submit(formData, { method: "post" });
+    submit(formData, {method: "post"});
     e.preventDefault();
   };
 
@@ -170,50 +177,107 @@ const ConfigPage = () => {
     setValidationErrors(null)
   };
 
+  function updateMode(mode) {
+    if (mode === "visual") {
+      try {
+        setJsonData(JSON.parse(editorContent));
+      } catch (e) {
+        setValidationErrors("Invalid JSON: " + e);
+      }
+    } else if (jsonData) {
+      setEditorContent(JSON.stringify(jsonData, null, 2));
+    }
+    setMode(mode);
+  }
+
+  const visualTheme = createTheme({
+    ...theme,
+    components: {
+      ...theme.components,
+      ...{
+        MuiFormControl: {
+          ...theme.components.MuiFormControl,
+          styleOverrides: {
+            root: {
+              marginTop: '14px',
+            },
+          },
+        },
+      }
+    },
+  });
+
   return (
-    <Stack direction={"column"}>
-      <Typography variant="h3">{name}</Typography>
+    <Stack direction={"column"} spacing={4}>
       <Form method="post" onSubmit={handleSubmit}>
-        <Stack direction={"row"}>
-          <Button onClick={handleRefresh}>Refresh</Button>
-          <Button type="submit">Submit</Button>
+        <Stack direction={"row"} justifyContent={"space-between"}>
+          <Typography variant="h3">
+            {name}
+          </Typography>
+          <ButtonGroup variant="outlined">
+            <Button variant={mode === "visual" ? "contained" : "outlined"}
+                    onClick={() => updateMode('visual')}>Visual</Button>
+            <Button variant={mode === "code" ? "contained" : "outlined"}
+                    onClick={() => updateMode('code')}>Code</Button>
+          </ButtonGroup>
         </Stack>
-        {validationErrors && (
-          <Box sx={{ mb: 2 }}>
-            <CopyBlock
-              wrapLongLines
-              text={JSON.stringify(validationErrors, null, 2)}
-              language="json"
-              theme={theme.palette.mode === "dark" ? a11yDark : a11yLight}
-              customStyle={{ border: `2px solid ${red["600"]}` }}
-            />
-          </Box>
-        )}
-        <Editor
-          height="70vh"
-          defaultLanguage="json"
-          value={editorContent}
-          defaultValue=""
-          theme={theme.palette.mode === "dark" ? "vs-dark" : "vs-light"}
-          onChange={(value) => setEditorContent(value)}
-        />
+        <Stack spacing={2} direction={"column"}>
+          {validationErrors && (
+            <Box sx={{mb: 2}}>
+              <CopyBlock
+                wrapLongLines
+                text={JSON.stringify(validationErrors, null, 2)}
+                language="json"
+                theme={theme.palette.mode === "dark" ? a11yDark : a11yLight}
+                customStyle={{border: `2px solid ${red["600"]}`}}
+              />
+            </Box>
+          )}
+          {mode === "visual" ? <ThemeProvider theme={visualTheme}>
+              <JsonForms
+                data={jsonData}
+                onChange={({data}) => {
+                  setEditorContent(JSON.stringify(data, null, 2));
+                  setJsonData(data);
+                }}
+                schema={schema}
+                uischema={Generate.uiSchema(schema)}
+                renderers={materialRenderers}
+                cells={materialCells}
+              />
+            </ThemeProvider> :
+            <Editor
+              height="70vh"
+              defaultLanguage="json"
+              value={editorContent}
+              defaultValue=""
+              theme={theme.palette.mode === "dark" ? "vs-dark" : "vs-light"}
+              onChange={(value) => setEditorContent(value)}
+            />}
+          <Stack direction={"row"} spacing={1}>
+            <Button variant={'outlined'} onClick={handleRefresh}>Refresh</Button>
+            <Button variant={'contained'} type="submit">Submit</Button>
+          </Stack>
+        </Stack>
       </Form>
-      <Typography variant="h4">Documentation</Typography>
-      <CopyBlock
-        wrapLongLines
-        text={note}
-        language="json"
-        wrapLines
-        theme={theme.palette.mode === "dark" ? a11yDark : a11yLight}
-      />
-      <Typography variant="h4">Model Schema</Typography>
-      <CopyBlock
-        wrapLongLines
-        text={JSON.stringify(schema, null, 2)}
-        language="json"
-        wrapLines
-        theme={theme.palette.mode === "dark" ? a11yDark : a11yLight}
-      />
+      {mode === "code" ? <>
+        <Typography variant="h4">Documentation</Typography>
+        <CopyBlock
+          wrapLongLines
+          text={note}
+          language="json"
+          wrapLines
+          theme={theme.palette.mode === "dark" ? a11yDark : a11yLight}
+        />
+        <Typography variant="h4">Model Schema</Typography>
+        <CopyBlock
+          wrapLongLines
+          text={JSON.stringify(schema, null, 2)}
+          language="json"
+          wrapLines
+          theme={theme.palette.mode === "dark" ? a11yDark : a11yLight}
+        />
+      </> : <></>}
     </Stack>
   );
 };
