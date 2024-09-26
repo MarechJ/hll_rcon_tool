@@ -12,6 +12,7 @@ export default defineConfig(({ command, mode }) => {
       'process.env.REACT_APP_API_URL': JSON.stringify(env.REACT_APP_API_URL),
     },
     resolve: {
+      extensions: ['.js', '.jsx'],
       alias: {
         '@': path.resolve(__dirname, './src'),
       },
