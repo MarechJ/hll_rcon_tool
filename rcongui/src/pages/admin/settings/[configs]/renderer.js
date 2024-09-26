@@ -1,5 +1,4 @@
-import {createCombinatorRenderInfos, rankWith} from "@jsonforms/core";
-import {and, schemaMatches, schemaTypeIs, uiTypeIs} from "@jsonforms/core";
+import {and, createCombinatorRenderInfos, rankWith, schemaMatches, schemaTypeIs, uiTypeIs} from "@jsonforms/core";
 import {JsonFormsDispatch, withJsonFormsAnyOfProps, withJsonFormsControlProps} from "@jsonforms/react";
 import React, {useCallback} from "react";
 import {Unwrapped} from "@jsonforms/material-renderers";
@@ -23,7 +22,7 @@ const nullableTextControl = (props) => {
     }
   }, [props.handleChange]);
 
-  return <MaterialTextControl {...props} handleChange={nullableChange} />;
+  return <MaterialTextControl {...props} handleChange={nullableChange}/>;
 }
 
 const NullableTextControl = withJsonFormsControlProps(nullableTextControl);
