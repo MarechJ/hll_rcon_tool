@@ -6,6 +6,8 @@ import { MatchMap, ScoreboardMap } from '../../utils/queries/types';
 import dayjs from 'dayjs';
 import LocalizedFormat from 'dayjs/plugin/localizedFormat';
 import Image from 'next/image';
+import Link from 'next/link';
+import { Button } from '@shared/components/ui/button';
 
 dayjs.extend(LocalizedFormat);
 
@@ -13,6 +15,14 @@ export const columns: ColumnDef<ScoreboardMap>[] = [
     {
         accessorKey: 'id',
         header: "ID",
+        cell: ({ cell }) => {
+          const matchId =  cell.getValue() as string;
+          return (
+            <Button asChild variant={'link'}>
+              <Link href={`/matches/${matchId}`}>{matchId}</Link>
+            </Button>
+          )
+        }
       },
   {
     header: 'Map',
