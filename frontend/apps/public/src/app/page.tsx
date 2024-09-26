@@ -4,8 +4,8 @@ import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { fetchPublicInfo, publicInfoOptions } from "../utils/queries/public-info";
 import { Metadata } from "next";
 import { liveGameStatsOptions } from "../utils/queries/live-game-stats";
-import GameState from "./game-state";
-import LiveGameStats from "./game-stats";
+import LiveGameStats from "./live-game-stats";
+import LiveGameState from "./live-game-info";
 
 export async function generateMetadata(): Promise<Metadata> {
   const data = await fetchPublicInfo();
@@ -24,7 +24,7 @@ export default function Index() {
     <>
       <HydrationBoundary state={dehydrate(queryClient)}>
         <Suspense fallback={<div>Loading...</div>}>
-          <GameState />
+          <LiveGameState />
         </Suspense>
       </HydrationBoundary>
       <HydrationBoundary state={dehydrate(queryClient)}>

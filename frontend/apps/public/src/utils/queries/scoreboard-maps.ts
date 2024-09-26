@@ -3,7 +3,7 @@ import {
   useSuspenseQuery,
 } from '@tanstack/react-query';
 import { getBaseURL } from '@shared/lib/getBaseURL';
-import { CRCON_Response, ScoreboardMaps } from './types';
+import { CRCON_Response, ScoreboardMap, ScoreboardMaps, ScoreboardMapStats } from './types';
 
 const baseURL = getBaseURL();
 
@@ -32,7 +32,7 @@ export async function fetchGameDetail(gameId: number) {
     `${baseURL}/api/get_map_scoreboard?map_id=${gameId}`
   );
 
-  const data: CRCON_Response<ScoreboardMaps> = await response.json();
+  const data: CRCON_Response<ScoreboardMapStats> = await response.json();
 
   if (data && data.error) {
     throw new Error(data.error);

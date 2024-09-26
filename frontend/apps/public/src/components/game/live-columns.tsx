@@ -3,15 +3,13 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { Button } from '@shared/components/ui/button';
 import { Player } from './types';
-import { useLivePageStore } from '../../utils/stores/useLivePageStore';
 import { IconHeader as Header } from './column-header';
 
-export const columns: ColumnDef<Player>[] = [
+export const columns = (handlePlayerClick: (id: string) => void): ColumnDef<Player>[] => [
   {
     accessorKey: 'player',
     header: () => <div>Player</div>,
-    cell: ({ row, column }) => {
-      const setPlayer = useLivePageStore((state) => state.setPlayer);
+    cell: ({ row }) => {
       const name = String(row.getValue('player'));
       const id = String(row.getValue('player_id'));
 
@@ -20,7 +18,7 @@ export const columns: ColumnDef<Player>[] = [
           variant={'link'}
           className="pl-0"
           onClick={() => {
-            setPlayer(id);
+            handlePlayerClick(id);
           }}
         >
           {name}

@@ -11,6 +11,10 @@ type MapTeam = {
   name: Nation;
   team: Team;
 }
+type MatchScore = {
+  allies: number;
+  axis: number;
+}
 
 type MatchMap = {
   id: string;
@@ -49,9 +53,9 @@ type ScoreboardMap = {
 
 // TODO
 // Fix after https://github.com/MarechJ/hll_rcon_tool/issues/657 issue has been resolved
-type ScoreboardMapStats = Omit<ScoreboardMap, 'map'> & {
+type ScoreboardMapStats = Omit<ScoreboardMap, 'player_stats'> & {
   player_stats: Player[];
-  map_name: string;
+  // map_name: string;
 }
 
 export type CRCON_Response<T> = {
