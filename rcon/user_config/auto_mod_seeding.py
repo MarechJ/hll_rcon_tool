@@ -1,6 +1,8 @@
 from typing import Optional, TypedDict
 
+from numpy.core.defchararray import title
 from pydantic import BaseModel, Field, HttpUrl, field_serializer, field_validator
+from steam.protobufs.steammessages_unified_base_pb2 import description
 
 from rcon.types import Roles
 from rcon.user_config.utils import BaseUserConfig, key_check, set_user_config
@@ -83,59 +85,59 @@ class AutoModSeedingType(TypedDict):
 
 
 class DisallowedRoles(BaseModel):
-    min_players: int = Field(ge=0, le=100, default=0)
-    max_players: int = Field(ge=0, le=100, default=100)
-    roles: dict[Roles, str] = Field(default_factory=dict)
-    violation_message: str = Field(default=DISALLOWED_ROLES_VIOLATION_MESSAGE)
+    min_players: int = Field(ge=0, le=100, default=0, title="Minimum Players", description="The minimum players on the server to enforce this rule")
+    max_players: int = Field(ge=0, le=100, default=100, title="Maximum Players", description="The maximum players on the server to enforce this rule")
+    roles: dict[Roles, str] = Field(default_factory=dict, title="Disallowed Roles", description="The list of roles that are not allowed while server is seeding")
+    violation_message: str = Field(default=DISALLOWED_ROLES_VIOLATION_MESSAGE, title="Violation Message", description="The message send to the player when they use one of the disallowed roles")
 
 
 class DisallowedWeapons(BaseModel):
-    min_players: int = Field(ge=0, le=100, default=0)
-    max_players: int = Field(ge=0, le=100, default=100)
-    weapons: dict[str, str] = Field(default_factory=dict)
-    violation_message: str = Field(default=DISALLOWED_WEAPONS_VIOLATION_MESSAGE)
+    min_players: int = Field(ge=0, le=100, default=0, title="Minimum Players", description="The minimum players on the server to enforce this rule")
+    max_players: int = Field(ge=0, le=100, default=100, title="Maximum Players", description="The maximum players on the server to enforce this rule")
+    weapons: dict[str, str] = Field(default_factory=dict, title="Disallowed Weapons", description="The list of weapons that are not allowed while server is seeding")
+    violation_message: str = Field(default=DISALLOWED_WEAPONS_VIOLATION_MESSAGE, title="Violation Message", description="The message send to the player when they use one of the disallowed roles")
 
 
 class EnforceCapFight(BaseModel):
-    min_players: int = Field(ge=0, le=100, default=0)
-    max_players: int = Field(ge=0, le=100, default=100)
-    max_caps: int = Field(ge=2, le=4, default=3)
-    skip_warning: bool = Field(default=False)
-    violation_message: str = Field(default=ENFORCE_CAP_FIGHT_VIOLATION_MESSAGE)
+    min_players: int = Field(ge=0, le=100, default=0, title="Minimum Players", description="The minimum players on the server to enforce this rule")
+    max_players: int = Field(ge=0, le=100, default=100, title="Maximum Players", description="The maximum players on the server to enforce this rule")
+    max_caps: int = Field(ge=2, le=4, default=3, title="Maximum capped Points", description="The maximum number of cap points that can be capped by one team. Starting to cap another point will violate this rule")
+    skip_warning: bool = Field(default=False, title="Skip Warning", description="If set to true the Automod will skip the warning punishment level and directly continue to punish when this rule is violated. Enable this, if capping more points than allowed should absolutely be prevented. The game will report that a point is being capped no later than 60 seconds after the cap begins to cap, which could mean that the Automod may reach a corrective measure (punish, kick) too late (if warning is, e.g., set to 60 seconds)")
+    violation_message: str = Field(default=ENFORCE_CAP_FIGHT_VIOLATION_MESSAGE, title="Violation Message", description="The message send to the player when they use one of the disallowed roles")
 
 
 class AutoModSeedingUserConfig(BaseUserConfig):
-    enabled: bool = Field(default=False)
-    dry_run: bool = Field(default=False)
-    discord_webhook_url: Optional[HttpUrl] = Field(default=None)
+    enabled: bool = Field(default=False, title="Enable", description="Whether the Level Automod is enabled or not")
+    dry_run: bool = Field(default=False, title="Dry-Run", description="If checked and if the Automod is enabled, no actions are done to the players. You can observe what actions the Automod would've done in the audit logs")
+    discord_webhook_url: Optional[HttpUrl] = Field(default=None, title="Discord Webhook URL", description="A webhook URL for a Discord channel to write audit messages (what the Automod did) to")
 
-    whitelist_flags: list[str] = Field(default_factory=list)
-    immune_roles: list[Roles] = Field(default_factory=list)
-    immune_player_level: int = Field(ge=0, le=500, default=0)
-    dont_do_anything_below_this_number_of_players: int = Field(ge=0, le=100, default=0)
+    whitelist_flags: list[str] = Field(default_factory=list, title="Whitelist Flags", description="Players having one of the flags will be excluded from actions of the Automod")
+    immune_roles: list[Roles] = Field(default_factory=list, title="Immune Roles", description="Players playing these roles are exempted from actions done by the Automod")
+    immune_player_level: int = Field(ge=0, le=500, default=0, title="Minimum Level", description="Player having a level lower or equal than this level are exempted from actions done by the Automod")
+    dont_do_anything_below_this_number_of_players: int = Field(ge=0, le=100, default=0, title="Minimum Players", description="The minimum number of players that need to be on the server. If less players are online, the Automod does not do any action")
 
-    announcement_enabled: bool = Field(default=False)
-    announcement_message: str = Field(default=ANNOUNCEMENT_MESSAGE)
+    announcement_enabled: bool = Field(default=False, title="Enable Announcement Message", description="Whether connecting players get a notification that the server is currently seeding")
+    announcement_message: str = Field(default=ANNOUNCEMENT_MESSAGE, title="Announcement Message", description="The message to send to players connecting to the server when it is seeding")
 
-    number_of_warnings: int = Field(default=2)
-    warning_interval_seconds: int = Field(default=60)
-    warning_message: str = Field(default=WARNING_MESSAGE)
+    number_of_warnings: int = Field(default=2, title="Number of warnings", description="The amount the Automod sends a warning message to the player before transitioning to the next punishment level")
+    warning_interval_seconds: int = Field(default=60, title="Warning interval", description="The time in seconds between the same player is warned by the Automod")
+    warning_message: str = Field(default=WARNING_MESSAGE, title="Warning message", description="The message that is send to a player as a warning")
 
-    number_of_punishments: int = Field(ge=-1, default=2)
-    min_squad_players_for_punish: int = Field(ge=0, le=6, default=0)
-    min_server_players_for_punish: int = Field(ge=0, le=100, default=0)
-    punish_interval_seconds: int = Field(default=60)
-    punish_message: str = Field(default=PUNISH_MESSAGE)
+    number_of_punishments: int = Field(ge=-1, default=2, title="Number of punishes", description="The amount the Automod punishes the player before transitioning to the next punishment level")
+    min_squad_players_for_punish: int = Field(ge=0, le=6, default=0, title="Punishment minimum squad players", description="Minimum number of players in the squad of an impacted player to punish")
+    min_server_players_for_punish: int = Field(ge=0, le=100, default=0, title="Punishment minimum server players", description="Minimum number of players on the server for an impacted player to punish")
+    punish_interval_seconds: int = Field(ge=0, default=60, title="Punish Interval", description="The interval in seconds in which the player is punished")
+    punish_message: str = Field(default=PUNISH_MESSAGE, title="Punish message", description="The message that the player sees when punished")
 
-    kick_after_max_punish: bool = Field(default=True)
-    min_squad_players_for_kick: int = Field(ge=0, le=6, default=0)
-    min_server_players_for_kick: int = Field(ge=0, le=100, default=0)
-    kick_grace_period_seconds: int = Field(default=60)
-    kick_message: str = Field(default=KICK_MESSAGE)
+    kick_after_max_punish: bool = Field(default=True, title="Enable Kick", description="Whether kicking a player is enabled as a stage of the Automod after all punishments are exhausted")
+    min_squad_players_for_kick: int = Field(ge=0, le=6, default=0, title="Kick minimum squad players", description="Minimum number of players in the squad of an impacted player to be kicked")
+    min_server_players_for_kick: int = Field(ge=0, le=100, default=0, title="Kick minimum server players", description="Minimum number of players on the server for an impacted player to be kicked")
+    kick_grace_period_seconds: int = Field(ge=0, default=60, title="Kick Grace Period", description="A grace period in seconds since the last punishment the player has time to remediate the missing squad leader violation before they are kicked")
+    kick_message: str = Field(default=KICK_MESSAGE, title="Kick message", description="The message the player sees when they are kicked by the Automod")
 
-    disallowed_roles: DisallowedRoles = Field(default_factory=DisallowedRoles)
-    disallowed_weapons: DisallowedWeapons = Field(default_factory=DisallowedWeapons)
-    enforce_cap_fight: EnforceCapFight = Field(default_factory=EnforceCapFight)
+    disallowed_roles: DisallowedRoles = Field(default_factory=DisallowedRoles, title="Disallowed Roles", description="Player Role-based rules to enforce while seeding")
+    disallowed_weapons: DisallowedWeapons = Field(default_factory=DisallowedWeapons, title="Disallowed Weapons", description="Weapons-based rules to enforce while seeding")
+    enforce_cap_fight: EnforceCapFight = Field(default_factory=EnforceCapFight, title="Cap Fight Enforcement", description="Cap-based rules to enforce while seeding")
 
     @field_serializer("discord_webhook_url")
     def serialize_server_url(self, discord_webhook_url: HttpUrl, _info):

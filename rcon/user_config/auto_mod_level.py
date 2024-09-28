@@ -1,5 +1,6 @@
 from typing import Optional, TypedDict
 
+from django.template.defaultfilters import default
 from pydantic import BaseModel, BeforeValidator, Field, HttpUrl, field_serializer
 from pydantic.functional_validators import BeforeValidator
 from typing_extensions import Annotated
@@ -63,9 +64,9 @@ class AutoModLevelType(TypedDict):
 
 
 class Role(BaseModel):
-    label: str
-    min_players: int = Field(ge=0, le=100)
-    min_level: int = Field(ge=0, le=500)
+    label: str = Field(default="", title="Label", description="The label/name of the role that will be used in messages send to the player")
+    min_players: int = Field(ge=0, le=100, title="Minimum Players", description="The minimum players on the server to enforce this rule")
+    min_level: int = Field(ge=0, le=500, title="Minimum Level", description="The minimum level of the player to enforce this rule")
 
 
 def validate_level_thresholds(vs):
@@ -89,7 +90,7 @@ class AutoModLevelUserConfig(BaseUserConfig):
     dry_run: bool = Field(default=False, title="Dry-Run", description="If checked and if the Level Automod is enabled, no actions are done to the players. You can observe what actions the Automod would've done in the audit logs")
     discord_webhook_url: Optional[HttpUrl] = Field(default=None, title="Discord Webhook URL", description="A webhook URL for a Discord channel to write audit messages (what the Automod did) to")
 
-    whitelist_flags: list[str] = Field(default_factory=list, title="Whitelist Flags", description="Players having one of the flags will be excluded from action sof the Automod")
+    whitelist_flags: list[str] = Field(default_factory=list, title="Whitelist Flags", description="Players having one of the flags will be excluded from actions of the Automod")
     dont_do_anything_below_this_number_of_players: int = Field(ge=0, le=100, default=0, title="Min Player Threshold", description="If the player count of the server is beneath this threshold, it will not do anything")
 
     announcement_enabled: bool = Field(default=False, title="Enable Announcements", description="Send an announcement message to players, who connect to the server, that it is under level threshold enforcement")
@@ -106,7 +107,7 @@ class AutoModLevelUserConfig(BaseUserConfig):
     punish_interval_seconds: int = Field(ge=1, default=60, title="Punish Interval", description="The interval in seconds in which the player is punished, if they did not remediate the level threshold")
     punish_message: str = Field(default=PUNISH_MESSAGE, title="Punish message", description="The message the player sees when they are punished by the level Automod")
 
-    kick_after_max_punish: bool = Field(default=True, title="Enable Kick", description="Whether kicking a player is enabled as a stage of the level Automod after all punishments are exhausted")
+    kick_after_max_punish: bool = Field(default=True, title="Enable Kick", description="Whether kicking a player is enabled as a stage of the Automod after all punishments are exhausted")
     min_squad_players_for_kick: int = Field(ge=0, le=6, default=0, title="Kick minimum squad players", description="Minimum number of players in the squad of an impacted player to be kicked")
     min_server_players_for_kick: int = Field(ge=0, le=100, default=0, title="Kick minimum server players", description="Minimum number of players on the server for an impacted player to be kicked")
     kick_grace_period_seconds: int = Field(ge=1, default=60, title="Kick Grace Period", description="A grace period in seconds since the last punishment the player has time to remediate the level violation before they are kicked")
