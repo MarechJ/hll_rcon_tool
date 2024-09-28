@@ -22,17 +22,27 @@ export default async function MatchDetailPage({ params }: Params) {
     return <h1>Match with ID {matchId} not found</h1>;
   }
 
+  const totalSeconds = dayjs(game.end).diff(dayjs(game.start), 'seconds');
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  // Format the result as hh:mm:ss
+  const formattedTime = `${String(hours).padStart(2, '0')}:${String(
+    minutes
+  ).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
   const gameOverviewProps = {
-    time: dayjs(dayjs(game.end).diff(dayjs(game.start))).format('hh:mm:ss'),
-    axis: game.map.map.axis,
-    allies: game.map.map.allies,
-    mapName: game.map.pretty_name,
-    mode: game.map.game_mode,
+    time: formattedTime,
+    axis: game.map_name.map.axis,
+    allies: game.map_name.map.allies,
+    mapName: game.map_name.pretty_name,
+    mode: game.map_name.game_mode,
     score: {
       allies: game.result?.allied,
-      axis: game.result?.axis
-    }
-  }
+      axis: game.result?.axis,
+    },
+  };
 
   return (
     <>

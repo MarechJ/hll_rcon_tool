@@ -6,6 +6,7 @@ import { Metadata } from "next";
 import { liveGameStatsOptions } from "../utils/queries/live-game-stats";
 import LiveGameStats from "./live-game-stats";
 import LiveGameState from "./live-game-info";
+import { liveSessionStatsOptions } from "../utils/queries/live-session-stats";
 
 export async function generateMetadata(): Promise<Metadata> {
   const data = await fetchPublicInfo();
@@ -19,6 +20,7 @@ export default function Index() {
   const queryClient = getQueryClient()
   void queryClient.prefetchQuery(publicInfoOptions)
   void queryClient.prefetchQuery(liveGameStatsOptions)
+  void queryClient.prefetchQuery(liveSessionStatsOptions)
 
   return (
     <>

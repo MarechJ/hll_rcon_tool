@@ -18,7 +18,7 @@ export default function LiveGameInfo({ game }: { game: PublicInfo }) {
   return (
     <article id="game-state">
       <h2 className="sr-only">Game Info</h2>
-      <div className="flex flex-col-reverse xl:flex-row divide-y-2">
+      <div className="flex flex-col-reverse xl:flex-row divide-y xl:divide-y-0">
         <GameOverview
           allies={allies}
           axis={axis}
@@ -29,7 +29,7 @@ export default function LiveGameInfo({ game }: { game: PublicInfo }) {
           score={{ axis: game.score.axis, allies: game.score.allied }}
           time={remainingTime}
         />
-        <aside className="flex flex-row w-full xl:w-1/3 divide-x-2">
+        <aside className="flex flex-row w-full xl:w-1/3 divide-x">
           <MapFigure
             text={'Now'}
             src={`/maps/${game.current_map.map.image_name}`}
@@ -39,6 +39,7 @@ export default function LiveGameInfo({ game }: { game: PublicInfo }) {
             text={'Up next'}
             src={`/maps/${game.next_map.map.image_name}`}
             name={game.next_map.map.pretty_name}
+            muted
           />
         </aside>
       </div>

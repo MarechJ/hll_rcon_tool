@@ -26,7 +26,7 @@ export const Header = ({
           variant="ghost"
           size="icon"
           onClick={onClick}
-          className="justify-end px-1 w-10"
+          className="border px-1 min-w-10"
         >
           {header}
         </Button>
@@ -52,7 +52,7 @@ export const IconHeader = ({
         <TooltipTrigger asChild>
           <Button
             size="icon"
-            className="size-6 dark:bg-background"
+            className="size-6 dark:bg-transparent dark:border"
             onClick={onClick}
           >
             <Image alt={desc} src={src} width={16} height={16} />
