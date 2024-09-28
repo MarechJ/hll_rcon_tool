@@ -9,10 +9,10 @@ export default {
             href: "/matches",
             label: "Last Games",
         },
-        {
-            href: "#",
-            label: "Statistics",
-            disabled: true,
-        },
+        // {
+        //     href: "#",
+        //     label: "VIP",
+        //     disabled: true,
+        // },
     ]
 }
