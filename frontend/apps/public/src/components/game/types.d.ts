@@ -143,7 +143,7 @@ type Team = {
     death_by_weapons: Record<Weapon, number>;
   }
   
-  export interface Player {
+  export type Player = {
     id: number;
     player_id: string;
     steam_id_64: string;
@@ -176,6 +176,10 @@ type Team = {
     weapons: Record<Weapon, number>;
     death_by_weapons: Record<Weapon, number>;
   }
+
+  export type PlayerWithStatus = {
+    is_online: boolean
+  } & Player
   
   export interface Steaminfo {
     id: number;

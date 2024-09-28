@@ -42,7 +42,7 @@ type ScoreboardMap = {
   creation_time: string;
   start: ISO_8601_Timestamp;
   end: ISO_8601_Timestamp;
-  map: MatchMap;
+  map_name: MatchMap;
   result: {
     allied: number;
     axis: number;
@@ -66,6 +66,10 @@ export type CRCON_Response<T> = {
   forward_results: boolean | null;
   result: T;
   version: string;
+};
+
+export type Broken_CRCON_Response<T> = Omit<CRCON_Response<T>, 'error'> & {
+  error: null[] | string[];
 };
 
 export type PublicInfo = {

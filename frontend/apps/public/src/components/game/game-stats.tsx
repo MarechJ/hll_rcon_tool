@@ -1,18 +1,24 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { DataTable } from './live-table';
 import { columns as liveColumns } from './live-columns';
 import { PlayerGameDetail } from './player-game-detail';
-import { Player } from './types';
+import { Player, PlayerWithStatus } from './types';
 
-export default function GameStats({ stats }: { stats: Player[] }) {
-  const [selectedPlayer, setSelectedPlayer] = useState<Player | undefined>();
+export default function GameStats({ stats }: { stats: Player[] | PlayerWithStatus[] }) {
+  const [selectedPlayerId, setSelectedPlayerId] = useState<
+    string | undefined
+  >();
 
   const handlePlayerClick = (id: string) => {
-    const player = stats.find((player) => player.player_id == id);
-    setSelectedPlayer(player);
+    setSelectedPlayerId(id);
   };
+
+  const selectedPlayer = useMemo(
+    () => stats.find((player) => player.player_id === selectedPlayerId),
+    [stats, selectedPlayerId]
+  );
 
   return (
     <section id="game-statistics">

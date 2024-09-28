@@ -10,7 +10,7 @@ const nColSize = 40
 export const columns: ColumnDef<Faceoff>[] = [
   {
     accessorKey: "name",
-    header: 'Encounters',
+    header: 'Player',
   },
   {
     accessorKey: "kills",
@@ -23,7 +23,7 @@ export const columns: ColumnDef<Faceoff>[] = [
         }}
       />
     ),
-    cell: ({ cell }) => <div className='text-right px-1'>{String(cell.getValue())}</div>,
+    cell: ({ cell }) => <div className='text-center px-1'>{String(cell.getValue())}</div>,
     size: nColSize,
   },
   {
@@ -37,7 +37,7 @@ export const columns: ColumnDef<Faceoff>[] = [
         }}
       />
     ),
-    cell: ({ cell }) => <div className='text-right px-1'>{String(cell.getValue())}</div>,
+    cell: ({ cell }) => <div className='text-center px-1'>{String(cell.getValue())}</div>,
     size: nColSize,
   },
   {
@@ -56,7 +56,7 @@ export const columns: ColumnDef<Faceoff>[] = [
     cell: ({ cell }) => {
         const diff = Number(cell.getValue());
         const textColor = diff > 0 ? 'text-green-600' : diff < 0 ? 'text-red-600' : '';
-        return <div className={clsx(textColor, 'text-right px-1')}>{diff}</div>
+        return <div className={clsx(textColor, 'text-center px-1')}>{diff}</div>
     }
   }
 ];

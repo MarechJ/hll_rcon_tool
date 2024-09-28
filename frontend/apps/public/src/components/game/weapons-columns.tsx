@@ -13,7 +13,7 @@ type WeaponKillCount = {
 export const killByColumns: ColumnDef<WeaponKillCount>[] = [
   {
     accessorKey: 'name',
-    header: 'Kills by',
+    header: 'Weapon',
   },
   {
     accessorKey: 'count',
@@ -27,7 +27,7 @@ export const killByColumns: ColumnDef<WeaponKillCount>[] = [
       />
     ),
     cell: ({ cell }) => (
-      <div className="text-right px-1">{String(cell.getValue())}</div>
+      <div className="text-center px-1">{String(cell.getValue())}</div>
     ),
     size: nColSize,
   },
@@ -36,7 +36,7 @@ export const killByColumns: ColumnDef<WeaponKillCount>[] = [
 export const deathByColumns: ColumnDef<WeaponKillCount>[] = [
   {
     accessorKey: 'name',
-    header: 'Deaths by',
+    header: 'Weapon',
   },
   {
     accessorKey: 'count',
@@ -50,7 +50,7 @@ export const deathByColumns: ColumnDef<WeaponKillCount>[] = [
       />
     ),
     cell: ({ cell }) => (
-      <div className="text-right px-1">{String(cell.getValue())}</div>
+      <div className="text-center px-1">{String(cell.getValue())}</div>
     ),
     size: nColSize,
   },
