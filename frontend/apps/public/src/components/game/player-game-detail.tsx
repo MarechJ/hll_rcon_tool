@@ -7,6 +7,7 @@ import {
   HeartCrackIcon,
   SkullIcon,
   ChevronsUpDownIcon,
+  Gamepad2Icon,
 } from 'lucide-react';
 import { mergeKillsDeaths } from './utils';
 import { SimpleTable } from './simple-table';
@@ -22,6 +23,9 @@ import {
 } from '@shared/components/ui/collapsible';
 import Image from 'next/image';
 import { isPlayerWithStatus, Status } from './player-status';
+import { SimpleIcon } from '@shared/components/simple-icon';
+import { siSteam } from 'simple-icons';
+import Link from 'next/link';
 
 const points = [
   { key: 'kills', label: 'K', icon: '/roles/infantry.png' },
@@ -62,14 +66,49 @@ export function PlayerGameDetail({
 
   return (
     <div className="divide-y md:sticky md:top-14 border md:border-l-0 pb-2">
-      <h3 className="flex justify-center items-center gap-2 text-xl text-center px-2 h-12">
-        {isPlayerWithStatus(player) && player.is_online ? (
-          <Status player={player} className="animate-ping" />
-        ) : isPlayerWithStatus(player) ? (
-          <Status player={player} />
-        ) : null}{' '}
-        {player.player}
-      </h3>
+      <div className="flex justify-between items-center gap-1 px-2 h-12">
+        <div className="flex justify-center items-center gap-2 grow">
+          {isPlayerWithStatus(player) && player.is_online ? (
+            <Status player={player} className="animate-ping" />
+          ) : isPlayerWithStatus(player) ? (
+            <Status player={player} />
+          ) : null}
+          <h3 className="text-xl text-center">{player.player}</h3>
+        </div>
+        <div className="flex flex-row justify-center items-center">
+          <Button size={'icon'} variant={'outline'} asChild>
+            {isSteamPlayer(player) ? (
+              <Link href={getSteamProfileUrl(player.player_id)} target='_blank'>
+                <SimpleIcon
+                  icon={siSteam}
+                  size={20}
+                  className="dark:fill-current"
+                />
+              </Link>
+            ) : (
+              <Link href={getXboxProfileUrl(player.player)} target='_blank'>
+                <Gamepad2Icon />
+              </Link>
+            )}
+          </Button>
+          {/* <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size={'xs'}
+                  variant={'ghost'}
+                  className="text-orange-400 hover:text-orange-600"
+                >
+                  <MessageSquareWarningIcon />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Report player</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider> */}
+        </div>
+      </div>
       <ScrollArea className="h-player-detail">
         <div className="divide-y">
           <section className="flex flex-row divide-x justify-around h-10">
@@ -155,7 +194,11 @@ function CollapsibleSection({
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       <CollapsibleTrigger asChild>
-        <Button variant="ghost" size="default" className="w-full justify-start rounded-none pl-1">
+        <Button
+          variant="ghost"
+          size="default"
+          className="w-full justify-start rounded-none pl-1"
+        >
           {name}
           <ChevronsUpDownIcon className="h-4 w-4" />
           <span className="sr-only">Toggle {name}</span>
@@ -164,4 +207,17 @@ function CollapsibleSection({
       <CollapsibleContent>{children}</CollapsibleContent>
     </Collapsible>
   );
+}
+
+function isSteamPlayer(player: Player) {
+  const { player_id: id } = player;
+  return id.length === 17 && !Number.isNaN(Number(id));
+}
+
+function getSteamProfileUrl(id: string) {
+  return `https://steamcommunity.com/profiles/${id}`;
+}
+
+function getXboxProfileUrl(playerName: string) {
+  return `https://xboxgamertag.com/search/${playerName}`;
 }
